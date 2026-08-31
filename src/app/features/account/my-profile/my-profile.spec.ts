@@ -774,3 +774,151 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     expect(enlaceDeEdicion()).not.toBeNull();
   });
 });
+
+/**
+ * La foto de perfil de la persona (`profiles.persons.photo_file_id`).
+ *
+ * Va en su propio `describe`, con su propio montaje, porque necesita
+ * controlar qué trae `GET /profiles/patients/me` en cada prueba —
+ * `resolverPerfilCompleto` del arnés compartido siempre responde sin foto.
+ */
+describe('MyProfile · foto de perfil', () => {
+  let fixture: ComponentFixture<MyProfile>;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] }),
+      refreshToken: 'r-1',
+    });
+    fixture = TestBed.createComponent(MyProfile);
+    http = TestBed.inject(HttpTestingController);
+    resolverEstadosDeCaso(http);
+    fixture.detectChanges();
+
+    // El resumen no importa para estas pruebas: se responde con lo mínimo y
+    // se saca de en medio.
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN_SIN_VERIFICAR);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0 });
+  });
+
+  afterEach(() => http.verify());
+
+  /** Fabrica un evento `change` de `<input type="file">` con un solo archivo. */
+  function eventoDeArchivo(archivo: File): Event {
+    return { target: { files: [archivo], value: '' } } as unknown as Event;
+  }
+
+  /** El perfil propio, con lo mínimo obligatorio y lo que se le pase encima. */
+  function perfilCon(extra: Record<string, unknown>): Record<string, unknown> {
+    return {
+      personId: 'per-1',
+      patientProfileId: 'pp-1',
+      identityVerified: false,
+      coverages: [],
+      guardians: [],
+      ...extra,
+    };
+  }
+
+  it('sin foto declarada, no pide ninguna URL de descarga', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({}));
+    fixture.detectChanges();
+
+    http.verify();
+  });
+
+  it('con foto ya guardada, resuelve la URL y la pinta', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
+
+    http
+      .expectOne('/common/files/f-1/download-url')
+      .flush({ url: '/media/f-1', expiresAt: new Date().toISOString() });
+    fixture.detectChanges();
+
+    const fotoUrl = (
+      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
+    ).fotoUrl();
+    expect(fotoUrl).toBe('/media/f-1');
+  });
+
+  it('si la URL inicial no se puede resolver, degrada a null sin romper la pantalla', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
+
+    http
+      .expectOne('/common/files/f-1/download-url')
+      .error(new ProgressEvent('error'), { status: 500 });
+    fixture.detectChanges();
+
+    const fotoUrl = (
+      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
+    ).fotoUrl();
+    expect(fotoUrl).toBeNull();
+  });
+
+  it('sube la foto elegida, la fija y pinta la URL resuelta', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({}));
+    fixture.detectChanges();
+
+    const alElegirFoto = (
+      fixture.componentInstance as unknown as { alElegirFoto: (e: Event) => void }
+    ).alElegirFoto.bind(fixture.componentInstance);
+    alElegirFoto(eventoDeArchivo(new File(['x'], 'foto.png', { type: 'image/png' })));
+
+    const subida = http.expectOne('/common/files/upload');
+    expect(subida.request.method).toBe('POST');
+    subida.flush({ id: 'f-2' });
+
+    const puesta = http.expectOne('/profiles/patients/me/photo');
+    expect(puesta.request.method).toBe('PUT');
+    expect(puesta.request.body).toEqual({ fileId: 'f-2' });
+    puesta.flush(perfilCon({ photoFileId: 'f-2' }));
+
+    http
+      .expectOne('/common/files/f-2/download-url')
+      .flush({ url: '/media/f-2', expiresAt: new Date().toISOString() });
+    fixture.detectChanges();
+
+    const fotoUrl = (
+      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
+    ).fotoUrl();
+    expect(fotoUrl).toBe('/media/f-2');
+  });
+
+  it('un profesional no ve el control: la tarjeta de paciente no se carga para él', () => {
+    // El montaje del `beforeEach` deja `/profiles/patients/me` pendiente:
+    // hay que cerrarlo antes de resetear el módulo, o `http.verify()` de
+    // ESE arnés protesta por una petición que ya nadie va a responder.
+    http.expectOne('/profiles/patients/me').flush(perfilCon({}));
+
+    // Sesión distinta, montaje propio: `esProfesional()` decide en el
+    // constructor y una sesión abierta después ya no cambia esa decisión.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-2', hpid: 'hp-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] }),
+      refreshToken: 'r-1',
+    });
+    const otroFixture = TestBed.createComponent(MyProfile);
+    const otroHttp = TestBed.inject(HttpTestingController);
+    resolverEstadosDeCaso(otroHttp);
+    otroFixture.detectChanges();
+    otroHttp
+      .expectOne('/profiles/practitioners/me/summary')
+      .error(new ProgressEvent('error'), { status: 500 });
+    otroFixture.detectChanges();
+
+    expect(
+      (otroFixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-foto"]'),
+    ).toBeNull();
+    otroHttp.verify();
+  });
+});

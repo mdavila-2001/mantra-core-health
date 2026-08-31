@@ -576,4 +576,150 @@ describe('PractitionerProfileView', () => {
     });
   });
 
+  /* -- La foto del dueño: sube, fija y — si hay vitrina — la repite (carril 05) */
+
+  describe('alElegirFoto', () => {
+    /** PNG mínimo: el tipo es lo único que el handler necesita. */
+    function archivoFoto(): File {
+      return new File(['x'], 'foto.png', { type: 'image/png' });
+    }
+
+    /**
+     * Respuesta mínima válida de `PUT /profiles/practitioners/:id/photo`.
+     *
+     * `traducirPerfilPropio` llama `.map()` sobre `specialties`, `credentials`,
+     * `licenses` y `affiliations`: sin esos cuatro arreglos —aunque sea
+     * vacíos— la traducción revienta antes de que el flujo llegue a
+     * `propagarAVitrina`, y el pedido a `/community/profiles/me` nunca sale.
+     */
+    function respuestaFoto(photoFileId: string) {
+      return {
+        profileId: 'prac-1',
+        photoFileId,
+        createdAt: new Date().toISOString(),
+        specialties: [],
+        credentials: [],
+        licenses: [],
+        affiliations: [],
+      };
+    }
+
+    /** Simula elegir un archivo en el input de foto y dispara `change`. */
+    function eligeFoto(host: HTMLElement, archivo: File): void {
+      const input = host.querySelector<HTMLInputElement>('[data-testid="perfil-foto"]');
+      if (input === null) {
+        throw new Error('No está el input de la foto — ¿esPropio=false?');
+      }
+      Object.defineProperty(input, 'files', { value: [archivo], configurable: true });
+      input.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+    }
+
+    it('sube, fija la foto profesional y la pinta', () => {
+      const host = montar(PERFIL, true);
+
+      eligeFoto(host, archivoFoto());
+
+      http.expectOne('/common/files/upload').flush({ id: 'file-1' });
+      http
+        .expectOne('/profiles/practitioners/prac-1/photo')
+        .flush(respuestaFoto('file-1'));
+      // Sin vitrina: la propagación no dispara ningún pedido más.
+      http.expectOne('/community/profiles/me').flush(null);
+      http
+        .expectOne('/common/files/file-1/download-url')
+        .flush({ url: '/media/file-1', expiresAt: new Date().toISOString() });
+      fixture.detectChanges();
+
+      const img = host.querySelector('.profesional__foto .avatar__image');
+      expect(img?.getAttribute('src')).toBe('/media/file-1');
+    });
+
+    it('con vitrina existente, repite la foto como avatar sin perder lo ya declarado', () => {
+      const host = montar(PERFIL, true);
+
+      eligeFoto(host, archivoFoto());
+
+      http.expectOne('/common/files/upload').flush({ id: 'file-1' });
+      http
+        .expectOne('/profiles/practitioners/prac-1/photo')
+        .flush(respuestaFoto('file-1'));
+
+      http.expectOne('/community/profiles/me').flush({
+        id: 'vit-1',
+        tenantId: 'ten-1',
+        targetId: 'prac-1',
+        slug: 'dra-lucia-salas',
+        displayName: 'Dra. Lucía Salas',
+        headline: 'Cardióloga',
+        biography: 'Bio',
+        acceptsReviews: true,
+        visibility: 'PUBLIC',
+        statusConceptId: 'st-1',
+      });
+
+      const puesta = http.expectOne('/community/profiles/me');
+      expect(puesta.request.method).toBe('PUT');
+      expect(puesta.request.body).toEqual({
+        tenantId: 'ten-1',
+        slug: 'dra-lucia-salas',
+        displayName: 'Dra. Lucía Salas',
+        headline: 'Cardióloga',
+        biography: 'Bio',
+        acceptsReviews: true,
+        avatarFileId: 'file-1',
+      });
+      puesta.flush({
+        id: 'vit-1',
+        tenantId: 'ten-1',
+        targetId: 'prac-1',
+        slug: 'dra-lucia-salas',
+        displayName: 'Dra. Lucía Salas',
+        visibility: 'PUBLIC',
+        statusConceptId: 'st-1',
+        avatarFileId: 'file-1',
+      });
+
+      http
+        .expectOne('/common/files/file-1/download-url')
+        .flush({ url: '/media/file-1', expiresAt: new Date().toISOString() });
+      fixture.detectChanges();
+
+      const img = host.querySelector('.profesional__foto .avatar__image');
+      expect(img?.getAttribute('src')).toBe('/media/file-1');
+    });
+
+    it('si falla la propagación a la vitrina, la foto profesional igual se pinta', () => {
+      // Best-effort: lo que ya se guardó arriba no debe perderse por un error
+      // accesorio.
+      const host = montar(PERFIL, true);
+
+      eligeFoto(host, archivoFoto());
+
+      http.expectOne('/common/files/upload').flush({ id: 'file-1' });
+      http
+        .expectOne('/profiles/practitioners/prac-1/photo')
+        .flush(respuestaFoto('file-1'));
+      http
+        .expectOne('/community/profiles/me')
+        .flush('boom', { status: 500, statusText: 'Error' });
+
+      http
+        .expectOne('/common/files/file-1/download-url')
+        .flush({ url: '/media/file-1', expiresAt: new Date().toISOString() });
+      fixture.detectChanges();
+
+      const img = host.querySelector('.profesional__foto .avatar__image');
+      expect(img?.getAttribute('src')).toBe('/media/file-1');
+      // El fallo fue accesorio (la propagación a la vitrina): no queda como
+      // mensaje de error de la subida, que sí funcionó.
+      expect(host.textContent).not.toContain('No pudimos subir la foto');
+    });
+
+    it('un visitante no ve el control de foto: nadie le cambia la foto a nadie', () => {
+      const host = montar(PERFIL, false);
+
+      expect(host.querySelector('[data-testid="perfil-foto"]')).toBeNull();
+    });
+  });
 });

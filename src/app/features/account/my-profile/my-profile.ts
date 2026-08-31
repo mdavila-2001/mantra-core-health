@@ -1,10 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { rolesConEtiqueta } from '../../../core/auth/role-labels';
+import { FilesClient } from '../../../core/data-access/files/files.client';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
@@ -23,6 +24,7 @@ import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../../core/identity-assur
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -112,6 +114,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
   selector: 'app-my-profile',
   imports: [
     Alert,
+    Avatar,
     Badge,
     Card,
     DatePipe,
@@ -130,6 +133,7 @@ export class MyProfile {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly identity = inject(IdentityClient);
+  private readonly files = inject(FilesClient);
   // Declara que esta pantalla necesita los estados de caso resueltos contra
   // terminología: al inyectarlo se resuelven, y `toCaseStatusPresentation` los
   // encuentra. Sin esto los sellos se verían en neutro.
@@ -170,6 +174,25 @@ export class MyProfile {
    * no se dibujan.
    */
   protected readonly perfil = signal<OwnPatientProfile | null>(null);
+
+  /* -- La foto de perfil ---------------------------------------------------
+     Mismo patrón que `practitioner-profile-view` y `public-profile-preview`:
+     el id viaja en `perfil().photoFileId`, y pintarlo exige resolverlo con
+     `FilesClient.downloadUrl` — no es una URL servida por la API, como sí lo
+     es el avatar de la vitrina pública. */
+
+  /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
+  protected readonly subiendoFoto = signal(false);
+  /** Qué salió mal, si salió mal. Vacío es que no pasó nada. */
+  protected readonly errorDeFoto = signal('');
+  /**
+   * La URL resuelta de la foto, propia o recién subida.
+   *
+   * Adorno: si la resolución falla, queda `null` y el avatar cae a
+   * iniciales — nunca tumba la tarjeta que muestra los datos propios de
+   * alguien.
+   */
+  protected readonly fotoUrl = signal<string | null>(null);
 
   protected readonly datos = computed(() => dataOf(this.resumen()));
 
@@ -394,11 +417,21 @@ export class MyProfile {
    */
   private cargarPerfil(): void {
     this.perfil.set(null);
+    this.fotoUrl.set(null);
     if (!this.debeLeerResumenDePaciente()) return;
 
     this.profiles.getOwnPatientProfile().subscribe({
       next: (p) => {
         this.perfil.set(p);
+        if (p.photoFileId !== undefined) {
+          this.files
+            .downloadUrl(p.photoFileId)
+            .pipe(
+              map((descarga) => descarga.url),
+              catchError(() => of<string | null>(null)),
+            )
+            .subscribe((url) => this.fotoUrl.set(url));
+        }
         const uuids = [
           p.issuerAdministrativeAreaConceptId,
           p.residenceMunicipalityConceptId,
@@ -494,6 +527,50 @@ export class MyProfile {
           this.resumen.set(ready(resumen));
         },
         error: (error: unknown) => this.resumen.set(errorToViewState<OwnPatientSummary>(error)),
+      });
+  }
+
+  /**
+   * Sube la foto elegida y la fija como foto de perfil propia.
+   *
+   * Espejo de `alElegirFoto` en `practitioner-profile-view`: dos llamadas
+   * —subir los bytes, después fijar el id— y una tercera para resolver la
+   * URL con la que pintar. Sin «quitar foto» en esta primera pasada, en
+   * paridad con el perfil profesional; el cliente ya tiene el método
+   * (`removeOwnPatientPhoto`) para cuando haga falta.
+   */
+  protected alElegirFoto(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
+    // seguidas no dispara `change` y parece que el botón dejó de andar.
+    entrada.value = '';
+    if (!archivo || this.subiendoFoto()) {
+      return;
+    }
+
+    this.subiendoFoto.set(true);
+    this.errorDeFoto.set('');
+
+    this.files
+      .upload(archivo, 'IMAGE', 'NORMAL')
+      .pipe(
+        switchMap((subido) => this.profiles.setOwnPatientPhoto(subido.id)),
+        switchMap((guardado) =>
+          guardado.photoFileId === undefined
+            ? of(null)
+            : this.files.downloadUrl(guardado.photoFileId).pipe(map((descarga) => descarga.url)),
+        ),
+      )
+      .subscribe({
+        next: (url) => {
+          this.subiendoFoto.set(false);
+          this.fotoUrl.set(url);
+        },
+        error: () => {
+          this.subiendoFoto.set(false);
+          this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
+        },
       });
   }
 }
