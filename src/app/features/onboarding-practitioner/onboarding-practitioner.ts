@@ -46,7 +46,10 @@ const ETAPAS: Readonly<
     titulo: 'Tu foto',
     explica: 'Una foto tuya. Quien busca médico elige a una persona, no a un nombre en una lista.',
     accion: 'Subir mi foto',
-    ruta: '/my-account/edit',
+    // No es `/my-account/edit`: ahí no hay control de foto. El retrato de
+    // «Mi perfil» (`/my-account`) es el disparador de la subida — el paso
+    // enlaza a la pantalla que ya sabe hacer el trabajo, no duplica el control.
+    ruta: '/my-account',
   },
   organizations: {
     titulo: 'Dónde atendés',
