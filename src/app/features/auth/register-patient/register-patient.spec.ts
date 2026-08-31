@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { RegisterPatient } from './register-patient';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
@@ -12,13 +12,6 @@ const RESPUESTA = {
   patientProfileId: 'pp-1',
   patientCode: 'PAC-1',
   emailVerificationSent: false,
-};
-
-const RESPUESTA_PRO = {
-  userId: 'u',
-  personId: 'p',
-  practitionerProfileId: 'pp',
-  practitionerCode: 'PRO-1',
 };
 
 class AlmacenFalso {
@@ -48,7 +41,6 @@ const CATALOGO_MUNICIPIOS = '/terminology/value-sets?code=VS_BO_MUNICIPALITY';
 
 /** La del catálogo de ocupaciones de Bolivia, que dispara el mismo constructor. */
 const CATALOGO_OCUPACIONES = '/terminology/value-sets?code=VS_BO_OCCUPATION';
-const CATALOGO_ESPECIALIDADES = '/terminology/value-sets?code=VS_MEDICAL_SPECIALTY';
 
 /** La del catálogo de empresas de Bolivia, que dispara el mismo constructor. */
 const CATALOGO_EMPRESAS = '/terminology/value-sets?code=VS_BO_EMPLOYER';
@@ -67,14 +59,13 @@ describe('RegisterPatient', () => {
   let navegaciones: string[];
 
   /**
-   * Monta la pantalla para un tipo de alta.
+   * Monta la pantalla.
    *
-   * El tipo llega como **dato de la ruta** (`tipoDeCuenta`), no como una
-   * pestaña dentro de la pantalla: cada alta tiene su URL desde que la rejilla
-   * de `/auth/register` decide cuál es. Por eso una prueba de profesional monta
-   * otro componente en vez de llamar a un método que cambie de modo.
+   * Sin `ActivatedRoute` falso: cada alta tiene su URL y su componente desde
+   * que el alta de profesional se separó a `register-practitioner`, así que el
+   * tipo de cuenta ya no viaja como dato de ruta ni se lee desde acá.
    */
-  async function montar(tipo: 'paciente' | 'profesional' = 'paciente'): Promise<void> {
+  async function montar(): Promise<void> {
     navegaciones = [];
     TestBed.resetTestingModule();
 
@@ -85,10 +76,6 @@ describe('RegisterPatient', () => {
         provideHttpClientTesting(),
         // Router real: la plantilla tiene `routerLink` y necesita su contexto.
         provideRouter([]),
-        {
-          provide: ActivatedRoute,
-          useValue: { snapshot: { data: { tipoDeCuenta: tipo } } },
-        },
         { provide: RefreshTokenStorage, useClass: AlmacenFalso },
       ],
     }).compileComponents();
@@ -106,7 +93,7 @@ describe('RegisterPatient', () => {
   }
 
   beforeEach(async () => {
-    await montar('paciente');
+    await montar();
   });
 
   afterEach(() => {
@@ -316,44 +303,6 @@ describe('RegisterPatient', () => {
       guardianName: extra.guardianName ?? '',
       guardianPhone: extra.guardianPhone ?? '',
       billingTaxId: extra.billingTaxId ?? '',
-    });
-  }
-
-  function completarProfesional(
-    extra: Partial<
-      Record<
-        | 'professionalTitle'
-        | 'phone'
-        | 'middleName'
-        | 'motherLastName'
-        | 'nationalId'
-        | 'regulatoryAuthority'
-        | 'specialtyPrimary'
-        | 'specialtySecond'
-        | 'specialtyThird',
-        string
-      >
-    > = {},
-  ): void {
-    component.formProfesional.setValue({
-      name: 'Ana',
-      middleName: extra.middleName ?? '',
-      lastName: 'Paz',
-      motherLastName: extra.motherLastName ?? '',
-      nationalId: extra.nationalId ?? '',
-      email: 'ana@hospital.test',
-      password: 'secreto12',
-      licenseNumber: 'MP-12345',
-      credentialNumber: 'TIT-6789',
-      regulatoryAuthority: extra.regulatoryAuthority ?? '',
-      professionalTitle: extra.professionalTitle ?? '',
-      phone: extra.phone ?? '',
-      birthDate: null,
-      licenseIssueDate: null,
-      issuerAdministrativeAreaConceptId: null,
-      specialtyPrimary: extra.specialtyPrimary ?? '',
-      specialtySecond: extra.specialtySecond ?? '',
-      specialtyThird: extra.specialtyThird ?? '',
     });
   }
 
@@ -960,283 +909,6 @@ describe('RegisterPatient', () => {
     component.goToLogin();
 
     expect(navegaciones).toEqual(['/auth']);
-  });
-
-  describe('alta de profesional', () => {
-    beforeEach(async () => {
-      await montar('profesional');
-    });
-
-    it('tiene seis páginas, ninguna de más de cuatro preguntas', () => {
-      // Seis y no cinco porque el límite es de campos por página, no de
-      // páginas: apretar seis en una para tener una página menos es lo que
-      // este motor vino a deshacer. La sexta son las especialidades, que
-      // entraron con página propia por esa misma regla.
-      const paginas = component.paginasProfesional();
-
-      expect(paginas.length).toBe(6);
-      for (const pagina of paginas) {
-        expect(pagina.campos.length).toBeLessThanOrEqual(4);
-      }
-    });
-
-    it('cada campo escribe en un control que existe', () => {
-      for (const pagina of component.paginasProfesional()) {
-        for (const campo of pagina.campos) {
-          if (campo.control === 'custom') continue;
-          expect(
-            component.formProfesional.get(campo.key),
-            `el campo «${campo.key}» no existe en el formulario`,
-          ).not.toBeNull();
-        }
-      }
-    });
-
-    /**
-     * Las especialidades EN el alta — registro del cliente, módulo Médico §1.4.2
-     * y §1.4.4.
-     *
-     * Lo que fijan: que se ofrecen las de la profesión elegida y no las otras
-     * (un odontólogo no es cardiólogo), que el colegio cambia solo sin pisar una
-     * elección explícita, y que los conceptos VIAJAN en el cuerpo — el cliente
-     * lo arma nombre por nombre y descarta en silencio lo que no nombra.
-     */
-    describe('las especialidades del alta', () => {
-      /** Responde el catálogo con dos médicas y dos odontológicas. */
-      function catalogoDeEspecialidades(): void {
-        http.expectOne(CATALOGO_ESPECIALIDADES).flush({
-          items: [{ id: 'vs-esp', internalCode: 'VS_MEDICAL_SPECIALTY', name: 'Especialidades' }],
-        });
-        http.expectOne('/terminology/value-sets/vs-esp/$expand?limit=200').flush({
-          items: [
-            { conceptId: 'e-cardio', code: 'CARDIOLOGIA', display: 'Cardiología' },
-            { conceptId: 'e-pedia', code: 'PEDIATRIA', display: 'Pediatría' },
-            { conceptId: 'e-endo', code: 'ENDODONCIA', display: 'Endodoncia' },
-            { conceptId: 'e-orto', code: 'ORTODONCIA', display: 'Ortodoncia' },
-          ],
-          count: 4,
-          limit: 200,
-          nextCursor: null,
-        });
-      }
-
-      function opcionesDeLaPagina(): readonly { value: string; label: string }[] {
-        const pagina = component
-          .paginasProfesional()
-          .find((p) => p.titulo === 'Tus especialidades');
-        return (pagina?.campos[0].options ?? []) as readonly {
-          value: string;
-          label: string;
-        }[];
-      }
-
-      /**
-       * **El orden real, que es el que fallaba.**
-       *
-       * Las dos pruebas de abajo ponen el título ANTES de leer las páginas por
-       * primera vez, y así pasaban incluso con el defecto: el `computed` se
-       * estrenaba con el título ya elegido. En la pantalla el orden es el
-       * inverso —el catálogo llega al abrir el paso, la persona elige su
-       * profesión después—, y ahí el `computed` ya estaba calculado con el
-       * título vacío y no volvía a correr, porque el valor de un `FormControl`
-       * no es una señal y no lo despierta.
-       *
-       * Resultado en producción: un odontólogo veía las 52 médicas con las 11
-       * suyas al final. El stakeholder lo reportó como «no están las
-       * especialidades de odontología».
-       */
-      it('filtra aunque las opciones ya se hayan leído antes de elegir profesión', () => {
-        catalogoDeEspecialidades();
-        // Se leen una vez, como al pintar el paso: acá el título está vacío y
-        // corresponde ofrecer todo.
-        expect(opcionesDeLaPagina().map((o) => o.value)).toEqual([
-          'e-cardio',
-          'e-pedia',
-          'e-endo',
-          'e-orto',
-        ]);
-
-        component.formProfesional.controls.professionalTitle.setValue(
-          'Odontólogo / Odontóloga',
-        );
-        fixture.detectChanges();
-
-        expect(opcionesDeLaPagina().map((o) => o.value)).toEqual(['e-endo', 'e-orto']);
-      });
-
-      it('un odontólogo ve las odontológicas y NO las médicas', () => {
-        catalogoDeEspecialidades();
-        component.formProfesional.controls.professionalTitle.setValue(
-          'Odontólogo / Odontóloga',
-        );
-        fixture.detectChanges();
-
-        const valores = opcionesDeLaPagina().map((o) => o.value);
-        expect(valores).toEqual(['e-endo', 'e-orto']);
-      });
-
-      it('un médico ve las médicas y NO las odontológicas', () => {
-        catalogoDeEspecialidades();
-        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
-        fixture.detectChanges();
-
-        const valores = opcionesDeLaPagina().map((o) => o.value);
-        expect(valores).toEqual(['e-cardio', 'e-pedia']);
-      });
-
-      it('el colegio cambia solo al elegir la profesión', () => {
-        catalogoDeEspecialidades();
-        const autoridad = component.formProfesional.controls.regulatoryAuthority;
-
-        component.formProfesional.controls.professionalTitle.setValue(
-          'Odontólogo / Odontóloga',
-        );
-        expect(autoridad.value).toBe('Colegio de Odontólogos de Bolivia');
-
-        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
-        expect(autoridad.value).toBe('Colegio Médico de Bolivia');
-      });
-
-      it('pero NO pisa una autoridad elegida a mano', () => {
-        // El automatismo es una ayuda, no una regla: quien eligió SEDES sabe
-        // por qué, y verlo cambiar solo sería peor que no tener automatismo.
-        catalogoDeEspecialidades();
-        const autoridad = component.formProfesional.controls.regulatoryAuthority;
-        autoridad.setValue('Servicio Departamental de Salud (SEDES)');
-
-        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
-
-        expect(autoridad.value).toBe('Servicio Departamental de Salud (SEDES)');
-      });
-
-      it('cambiar de profesión limpia una especialidad que ya no corresponde', () => {
-        // Un desplegable con un valor que no está entre sus opciones muestra un
-        // vacío que miente: parece que no elegiste y el cuerpo lo manda igual.
-        catalogoDeEspecialidades();
-        component.formProfesional.controls.professionalTitle.setValue(
-          'Odontólogo / Odontóloga',
-        );
-        component.formProfesional.controls.specialtyPrimary.setValue('e-endo');
-
-        component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
-
-        expect(component.formProfesional.controls.specialtyPrimary.value).toBe('');
-      });
-
-      it('las especialidades elegidas VIAJAN en el cuerpo, en orden', () => {
-        catalogoDeEspecialidades();
-        completarProfesional({
-          professionalTitle: 'Médico / Médica',
-          specialtyPrimary: 'e-cardio',
-          specialtySecond: 'e-pedia',
-        });
-        component.submit();
-
-        const req = http.expectOne('/iam/auth/register-practitioner');
-        expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio', 'e-pedia']);
-        req.flush(RESPUESTA_PRO);
-      });
-
-      it('sin especialidades el cuerpo no las menciona', () => {
-        catalogoDeEspecialidades();
-        completarProfesional();
-        component.submit();
-
-        const req = http.expectOne('/iam/auth/register-practitioner');
-        expect(req.request.body.specialtyConceptIds).toBeUndefined();
-        req.flush(RESPUESTA_PRO);
-      });
-
-      it('elegir la misma dos veces declara una', () => {
-        catalogoDeEspecialidades();
-        completarProfesional({
-          professionalTitle: 'Médico / Médica',
-          specialtyPrimary: 'e-cardio',
-          specialtySecond: 'e-cardio',
-        });
-        component.submit();
-
-        const req = http.expectOne('/iam/auth/register-practitioner');
-        expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio']);
-        req.flush(RESPUESTA_PRO);
-      });
-    });
-
-    it('va a otro endpoint y manda los cinco campos obligatorios', () => {
-      completarProfesional();
-      component.submit();
-
-      const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.method).toBe('POST');
-      // El identificador de acceso es el correo, no el documento. El nombre va
-      // en partes, igual que en el alta de paciente.
-      expect(req.request.body).toEqual({
-        name: 'Ana',
-        lastName: 'Paz',
-        email: 'ana@hospital.test',
-        password: 'secreto12',
-        licenseNumber: 'MP-12345',
-        credentialNumber: 'TIT-6789',
-      });
-
-      req.flush(RESPUESTA_PRO);
-    });
-
-    it('agrega segundo nombre y apellido materno solo si se completaron', () => {
-      completarProfesional({ middleName: 'Lucía', motherLastName: 'Rojas' });
-      component.submit();
-
-      const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.middleName).toBe('Lucía');
-      expect(req.request.body.motherLastName).toBe('Rojas');
-
-      req.flush(RESPUESTA_PRO);
-    });
-
-    it('agrega título y teléfono solo si se completaron', () => {
-      completarProfesional({ professionalTitle: 'Cardiología', phone: '+591 70012345' });
-      component.submit();
-
-      const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.professionalTitle).toBe('Cardiología');
-      expect(req.request.body.phone).toBe('+591 70012345');
-
-      req.flush(RESPUESTA_PRO);
-    });
-
-    it('manda el municipio de residencia, sin su departamento', () => {
-      completarProfesional();
-      component.municipioProfesional.set(MUNICIPIO_SACABA);
-      component.submit();
-
-      const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.residenceMunicipalityConceptId).toBe(MUNICIPIO_SACABA);
-      expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
-        'residenceAdministrativeAreaConceptId',
-      );
-
-      req.flush(RESPUESTA_PRO);
-    });
-
-    it('exige matrícula y credencial: sin habilitación no hay alta', () => {
-      completarProfesional();
-      component.formProfesional.patchValue({ licenseNumber: '', credentialNumber: '' });
-      component.submit();
-
-      expect(component.formProfesional.controls.licenseNumber.touched).toBe(true);
-      // A qué página lleva un campo inválido lo decide el motor, y lo fija su
-      // propia prueba. Acá lo que importa es que no se gastó un viaje a la API:
-      // lo confirma el `verify()` del `afterEach`.
-    });
-
-    it('la confirmación dice que se entra con el correo, no con el documento', () => {
-      completarProfesional();
-      component.submit();
-      http.expectOne('/iam/auth/register-practitioner').flush(RESPUESTA_PRO);
-
-      expect(component.registered()).toBe(true);
-      expect(component.accessHint()).toBe('tu correo');
-    });
   });
 
   describe('validaciones', () => {
