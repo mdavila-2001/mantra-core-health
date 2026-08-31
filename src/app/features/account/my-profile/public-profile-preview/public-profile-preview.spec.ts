@@ -218,4 +218,125 @@ describe('PublicProfilePreview', () => {
       headline: 'Cardióloga',
     });
   });
+
+  /* -- La portada: espejo de la foto, columna independiente ------------------ */
+
+  it('sin cover, la vista previa muestra el degradado de respaldo', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(null as never);
+
+    expect(interno<() => { coverUrl: string | null }>('vistaPrevia')().coverUrl).toBeNull();
+  });
+
+  it('subir una portada sin vitrina guardada no manda nada', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(null as never);
+
+    interno<(e: Event) => void>('alElegirPortada')(
+      eventoDeArchivo(new File(['x'], 'portada.png', { type: 'image/png' })),
+    );
+
+    http.verify();
+  });
+
+  it('subir una portada con vitrina guardada la sube y la cuelga de la vitrina', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush({
+      id: 'pp-1',
+      tenantId: 't-1',
+      targetId: 'hp-1',
+      slug: 'dra-salas',
+      displayName: 'Dra. Salas',
+      headline: null,
+      biography: null,
+      acceptsReviews: true,
+      verificationStatusConceptId: null,
+      avatarFileId: null,
+      coverFileId: null,
+      statusConceptId: 'st-activo',
+    });
+    expect(interno<() => boolean>('sinPortada')()).toBe(true);
+
+    interno<(e: Event) => void>('alElegirPortada')(
+      eventoDeArchivo(new File(['x'], 'portada.png', { type: 'image/png' })),
+    );
+
+    const subida = http.expectOne('/common/files/upload');
+    expect(subida.request.method).toBe('POST');
+    subida.flush({ id: 'c-1' } as never);
+
+    const put = http.expectOne('/community/profiles/me');
+    // El avatar no se menciona: la portada no pisa lo que ya haya del avatar.
+    expect(put.request.body).toMatchObject({ coverFileId: 'c-1' });
+    expect(put.request.body).not.toHaveProperty('avatarFileId');
+    put.flush({
+      id: 'pp-1',
+      tenantId: 't-1',
+      targetId: 'hp-1',
+      slug: 'dra-salas',
+      displayName: 'Dra. Salas',
+      headline: null,
+      biography: null,
+      acceptsReviews: true,
+      verificationStatusConceptId: null,
+      avatarFileId: null,
+      coverFileId: 'c-1',
+      statusConceptId: 'st-activo',
+    });
+
+    expect(interno<() => { coverUrl: string | null }>('vistaPrevia')().coverUrl).toBe(
+      '/public/media/c-1',
+    );
+    expect(interno<() => boolean>('sinPortada')()).toBe(false);
+  });
+
+  it('quitar la portada manda coverFileId en null y vuelve al degradado', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush({
+      id: 'pp-1',
+      tenantId: 't-1',
+      targetId: 'hp-1',
+      slug: 'dra-salas',
+      displayName: 'Dra. Salas',
+      headline: null,
+      biography: null,
+      acceptsReviews: true,
+      verificationStatusConceptId: null,
+      avatarFileId: null,
+      coverFileId: 'c-1',
+      statusConceptId: 'st-activo',
+    });
+    expect(interno<() => boolean>('sinPortada')()).toBe(false);
+
+    interno<() => void>('quitarPortada')();
+
+    const put = http.expectOne('/community/profiles/me');
+    expect(put.request.body).toMatchObject({ coverFileId: null });
+    put.flush({
+      id: 'pp-1',
+      tenantId: 't-1',
+      targetId: 'hp-1',
+      slug: 'dra-salas',
+      displayName: 'Dra. Salas',
+      headline: null,
+      biography: null,
+      acceptsReviews: true,
+      verificationStatusConceptId: null,
+      avatarFileId: null,
+      coverFileId: null,
+      statusConceptId: 'st-activo',
+    });
+
+    expect(interno<() => { coverUrl: string | null }>('vistaPrevia')().coverUrl).toBeNull();
+    expect(interno<() => boolean>('sinPortada')()).toBe(true);
+  });
+
+  it('quitar la portada sin vitrina no manda nada', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(null as never);
+
+    interno<() => void>('quitarPortada')();
+
+    http.verify();
+  });
 });
