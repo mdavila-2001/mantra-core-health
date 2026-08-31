@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
-import type { NavIconName } from '../../../../shared/components/atoms/nav-icon/nav-icon.types';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
 
 /** Una explicación: por qué se pide lo que se está pidiendo en este paso. */
 export interface TarjetaDeAyuda {

@@ -1490,25 +1490,22 @@ export const routes: Routes = [
     // toda visita paga —incluida la de quien sólo entra a leer—. Mismo
     // criterio que la vitrina de diseño.
     loadComponent: () =>
-      import('./features/auth/register-patient/register-patient').then(
-        (m) => m.RegisterPatient,
-      ),
-    // El tipo viaja como dato de la ruta y no leyendo el último segmento de la
-    // URL: si mañana la dirección cambia, cambia acá y no dentro del componente.
-    data: { tipoDeCuenta: 'paciente' },
+      import('./features/auth/register-patient/register-patient').then((m) => m.RegisterPatient),
     title: 'AloVida - Crear cuenta de paciente',
   },
   {
+    // Cada alta monta SU componente. Las dos vivían en `RegisterPatient`, que
+    // decidía cuál dibujar leyendo `data.tipoDeCuenta`; eran dos formularios,
+    // dos juegos de páginas y dos endpoints en la misma clase, así que el dato
+    // de ruta se fue con la separación y lo que queda es lo que ya decía la
+    // URL.
     path: 'auth/register/practitioner',
-    // Diferida: el alta arrastra el árbol de municipios y el combobox de
-    // ocupaciones, y con import directo eso viaja en el bundle inicial que
-    // toda visita paga —incluida la de quien sólo entra a leer—. Mismo
-    // criterio que la vitrina de diseño.
+    // Diferida por lo mismo que el alta de paciente: arrastra el árbol de
+    // municipios y el catálogo de especialidades.
     loadComponent: () =>
-      import('./features/auth/register-patient/register-patient').then(
-        (m) => m.RegisterPatient,
+      import('./features/auth/register-practitioner/register-practitioner').then(
+        (m) => m.RegisterPractitioner,
       ),
-    data: { tipoDeCuenta: 'profesional' },
     title: 'AloVida - Crear cuenta de profesional',
   },
   {
