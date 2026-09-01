@@ -115,6 +115,15 @@ export class PublicProfilePreview {
    */
   protected readonly fotoRecien = signal<string | null>(null);
 
+  /* -- La portada de la vitrina ------------------------------------------- */
+
+  /** Mientras la portada viaja. Bloquea el control para no subir dos veces. */
+  protected readonly subiendoPortada = signal(false);
+  /** Qué salió mal, si salió mal. Vacío es que no pasó nada. */
+  protected readonly errorDePortada = signal('');
+  /** Igual que {@link fotoRecien}: ruta del servidor, nunca `blob:`. */
+  protected readonly portadaRecien = signal<string | null>(null);
+
   protected readonly slugValido = computed(() => SLUG_VALIDO.test(this.slug()));
 
   protected readonly puedeGuardar = computed(
@@ -159,7 +168,7 @@ export class PublicProfilePreview {
       headline: vacio(this.headline()),
       biography: vacio(this.biography()),
       avatarUrl: this.fotoRecien() ?? this.avatarUrlDe(publicado),
-      coverUrl: null,
+      coverUrl: this.portadaRecien() ?? this.coverUrlDe(publicado),
       verified: publicado?.verificationStatusConceptId !== undefined,
       city: null,
       address: null,
@@ -180,9 +189,20 @@ export class PublicProfilePreview {
     return estado.status === 'ready' && estado.data?.avatarFileId == null;
   });
 
+  /** Si la vitrina todavía no tiene portada. Mismo criterio que {@link sinFoto}. */
+  protected readonly sinPortada = computed(() => {
+    const estado = this.perfil();
+    return estado.status === 'ready' && estado.data?.coverFileId == null;
+  });
+
   /** La URL servida por la API para el avatar ya guardado, o `null`. */
   private avatarUrlDe(perfil: OwnPublicProfile | null): string | null {
     return perfil?.avatarFileId == null ? null : `/public/media/${perfil.avatarFileId}`;
+  }
+
+  /** La URL servida por la API para la portada ya guardada, o `null`. */
+  private coverUrlDe(perfil: OwnPublicProfile | null): string | null {
+    return perfil?.coverFileId == null ? null : `/public/media/${perfil.coverFileId}`;
   }
 
   constructor() {
@@ -296,6 +316,95 @@ export class PublicProfilePreview {
         error: () => {
           this.subiendoFoto.set(false);
           this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
+        },
+      });
+  }
+
+  /**
+   * Sube la portada elegida y la cuelga de la vitrina ya guardada.
+   *
+   * Espejo de {@link alElegirFoto}: mismo `PUT` completo, misma exigencia de
+   * {@link tieneVitrina} por la misma razón (el `PUT` pide `slug`/
+   * `displayName`/`tenantId`, que sin vitrina previa no tienen de dónde salir).
+   */
+  protected alElegirPortada(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    entrada.value = '';
+    const tenantId = this.auth.activeTenantId();
+    if (!archivo || this.subiendoPortada() || !this.tieneVitrina() || tenantId === null) {
+      return;
+    }
+
+    this.subiendoPortada.set(true);
+    this.errorDePortada.set('');
+
+    this.files
+      .upload(archivo, 'IMAGE', 'NORMAL')
+      .pipe(
+        switchMap((subido) =>
+          this.community.upsertOwnProfile({
+            tenantId,
+            slug: this.slug().trim(),
+            displayName: this.displayName().trim(),
+            headline: this.headline().trim() || undefined,
+            biography: this.biography().trim() || undefined,
+            acceptsReviews: this.acceptsReviews(),
+            coverFileId: subido.id,
+          }),
+        ),
+      )
+      .subscribe({
+        next: (perfil) => {
+          this.subiendoPortada.set(false);
+          this.sembrarFormulario(perfil);
+          this.perfil.set(ready(perfil));
+          this.portadaRecien.set(this.coverUrlDe(perfil));
+          this.toasts.success('Tu portada quedó guardada.', 'Perfil público');
+        },
+        error: () => {
+          this.subiendoPortada.set(false);
+          this.errorDePortada.set('No pudimos subir la portada. Probá con otra imagen.');
+        },
+      });
+  }
+
+  /**
+   * Quita la portada de la vitrina.
+   *
+   * `coverFileId: null` la borra; el archivo no se toca — mismo criterio que
+   * quitar la foto profesional en `practitioner-profile-view`. Idempotente.
+   */
+  protected quitarPortada(): void {
+    const tenantId = this.auth.activeTenantId();
+    if (tenantId === null || !this.tieneVitrina() || this.subiendoPortada()) {
+      return;
+    }
+
+    this.subiendoPortada.set(true);
+    this.errorDePortada.set('');
+
+    this.community
+      .upsertOwnProfile({
+        tenantId,
+        slug: this.slug().trim(),
+        displayName: this.displayName().trim(),
+        headline: this.headline().trim() || undefined,
+        biography: this.biography().trim() || undefined,
+        acceptsReviews: this.acceptsReviews(),
+        coverFileId: null,
+      })
+      .subscribe({
+        next: (perfil) => {
+          this.subiendoPortada.set(false);
+          this.sembrarFormulario(perfil);
+          this.perfil.set(ready(perfil));
+          this.portadaRecien.set(null);
+          this.toasts.success('Quitamos tu portada.', 'Perfil público');
+        },
+        error: () => {
+          this.subiendoPortada.set(false);
+          this.errorDePortada.set('No pudimos quitar la portada. Probá de nuevo.');
         },
       });
   }

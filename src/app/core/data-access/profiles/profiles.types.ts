@@ -595,6 +595,14 @@ export interface OwnPatientProfile {
   /** A nombre de quién sale el comprobante — la razón social del NIT. */
   readonly taxHolderName?: string;
   readonly email?: string;
+  /**
+   * Foto de perfil (`profiles.persons.photo_file_id`).
+   *
+   * Es la foto de la **persona**, no del perfil de paciente: la misma que,
+   * de tener perfil profesional, comparte con `health_practitioner_profiles`
+   * sólo si esta cuenta la fija por acá — son columnas independientes.
+   */
+  readonly photoFileId?: string;
   readonly homeAddress?: OwnAddress;
   readonly workAddress?: OwnAddress;
   /** Siempre presentes, vacías si no declaró nada. */

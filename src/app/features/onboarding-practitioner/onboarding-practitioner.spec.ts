@@ -125,6 +125,21 @@ describe('OnboardingPractitioner', () => {
     expect(fixture.nativeElement.querySelectorAll('.alta__etapa--actual')).toHaveLength(0);
   });
 
+  it('el paso de la foto enlaza a Mi perfil, donde el retrato sube la foto', () => {
+    // `/my-account/edit` no tiene control de foto — ver
+    // `practitioner-profile-edit`. El disparador real es el retrato de
+    // `/my-account` (`practitioner-profile-view`).
+    montar();
+    responder(aMedias(), 'photo');
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    const enlace = Array.from(raiz.querySelectorAll<HTMLAnchorElement>('a')).find((candidato) =>
+      candidato.textContent?.includes('Subir mi foto'),
+    );
+
+    expect(enlace?.getAttribute('href')).toBe('/my-account');
+  });
+
   it('una cuenta sin perfil profesional no ve un error, ve que no le corresponde', () => {
     montar();
     http

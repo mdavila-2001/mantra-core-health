@@ -122,6 +122,14 @@ export interface OwnPublicProfile {
    * rechazo y tendría que dejar que la persona llene el formulario entero.
    */
   readonly avatarFileId?: string;
+  /**
+   * La portada de la vitrina, si subió alguna.
+   *
+   * Independiente del avatar: son dos columnas del servidor
+   * (`avatar_file_id`/`cover_file_id`) sin relación entre sí — una vitrina
+   * puede tener una sin la otra.
+   */
+  readonly coverFileId?: string;
   /** Lo otorga la plataforma; se muestra, no se declara. */
   readonly verificationStatusConceptId?: string;
   readonly statusConceptId: string;
@@ -158,6 +166,14 @@ export interface UpsertOwnPublicProfile {
    * **Omitirlo conserva la que haya**, igual que `visibility`; `null` la quita.
    */
   readonly avatarFileId?: string | null;
+
+  /**
+   * La portada de la vitrina, ya subida por `POST /common/files/upload`.
+   *
+   * Mismo trato que {@link avatarFileId}: se manda el id, omitirlo conserva
+   * la que haya y `null` la quita. Es una columna independiente del avatar.
+   */
+  readonly coverFileId?: string | null;
 }
 
 // ─── Publicaciones ───────────────────────────────────────────────────────────
