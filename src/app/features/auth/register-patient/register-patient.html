@@ -64,6 +64,7 @@
             [form]="formPaciente"
             label="Crear cuenta"
             submitLabel="Crear cuenta"
+            [iconOnlyNav]="true"
             [pending]="isSubmitting()"
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
@@ -120,15 +121,33 @@
                         [value]="extra"
                         (valueChange)="escribirNombreExtra($index, $event)"
                       />
+                      <!-- Botón de ícono, con el nombre accesible diciendo QUÉ
+                           quita: «Quitar» a secas, repetido cuatro veces en la
+                           misma página, deja a quien usa lector de pantalla con
+                           cuatro botones idénticos y ninguna forma de saber
+                           cuál es cuál. El mismo texto va en el globo, que
+                           aparece con el puntero y con el foco del teclado.
+
+                           El glifo es `remove`, y entró al set para esto. La
+                           primera versión usaba `arrow-left` —el set no tenía
+                           uno de «quitar»— y eso ponía **el mismo dibujo que el
+                           botón «Atrás» de este mismo formulario**: dos
+                           acciones distintas con el mismo glifo en la misma
+                           página rompen lo único que un ícono aporta, que es el
+                           reconocimiento. El `aria-label` es el que dice qué
+                           hace; el dibujo tiene que acompañar, no contradecir. -->
                       <button
                         app-button
                         type="button"
                         variant="ghost"
                         size="sm"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar el nombre ' + ($index + 4)"
+                        [appTooltip]="'Quitar el nombre ' + ($index + 4)"
                         [attr.data-testid]="'registro-quitar-nombre-' + $index"
                         (clicked)="quitarNombre($index)"
                       >
-                        Quitar
+                        <app-nav-icon name="remove" />
                       </button>
                     </div>
                   </app-form-field>
@@ -241,6 +260,13 @@
                     >
                       Listo, guardamos esta dirección.
                     </p>
+                    <!-- AC-03-9: el punto se guarda, pero el nombre de la
+                         calle no se resuelve. Se dice acá, al lado del mapa, y
+                         el alta sigue. Nunca se rellena la dirección con un
+                         texto inventado. -->
+                    <p class="registro__ubicacion-aviso" data-testid="registration-home-geocoding-notice">
+                      {{ avisoSinGeocodificacion }}
+                    </p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -251,8 +277,17 @@
                       >
                         Volver a ubicarme
                       </button>
-                      <button app-button variant="ghost" size="sm" (clicked)="quitarUbicacion()">
-                        Quitar
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        aria-label="Quitar la ubicación de tu domicilio"
+                        appTooltip="Quitar la ubicación de tu domicilio"
+                        data-testid="registration-home-location-remove"
+                        (clicked)="quitarUbicacion()"
+                      >
+                        <app-nav-icon name="remove" />
                       </button>
                     </div>
                   } @else {
@@ -320,24 +355,153 @@
               </p>
             </ng-template>
 
-            <ng-template appCampoPersonalizado="municipio">
+            <!-- La localidad de residencia: mapa de departamentos + select de
+                 ciudad acotado a lo elegido (AC-03-6, AC-03-7). Es OBLIGATORIA,
+                 así que el aviso de catálogo caído es lo único que deja
+                 continuar: sin él, un fallo de red dejaría el alta trabada sin
+                 explicación. -->
+            <ng-template appCampoPersonalizado="residenceMunicipalityConceptId">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de municipios.
+                  No pudimos traer el catálogo de ciudades, y tu localidad hace falta para
+                  seguir.
                   <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
                     Reintentar
                   </button>
                 </p>
               } @else {
-                <app-tree-select
-                  data-testid="registro-municipio"
-                  [groups]="arbolMunicipios()"
-                  [(value)]="municipioPaciente"
-                  placeholder="Sin especificar"
-                  dialogTitle="¿Dónde vivís?"
-                  searchPlaceholder="Buscar municipio o departamento…"
-                  emptyMessage="Ningún municipio coincide con esa búsqueda."
+                <app-location-picker
+                  testId="registration-residence"
+                  [ramas]="ramasMunicipios()"
+                  [value]="municipioPaciente()"
+                  (valueChange)="elegirMunicipio($event)"
+                  mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
+                  municipalityLabel="Localidad de residencia"
+                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+                  [required]="true"
+                  [errorMessage]="errorDeMunicipio()"
                 />
+              }
+            </ng-template>
+
+            <!-- La localidad del trabajo: el mismo control, opcional. -->
+            <ng-template appCampoPersonalizado="workMunicipalityConceptId">
+              @if (catalogoMunicipiosCaido()) {
+                <p class="registro__catalogo-caido">
+                  No pudimos traer el catálogo de ciudades. Podés seguir sin esto.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <app-location-picker
+                  testId="registration-work"
+                  [ramas]="ramasMunicipios()"
+                  [value]="municipioTrabajo()"
+                  (valueChange)="elegirMunicipioDeTrabajo($event)"
+                  mapLabel="Mapa de Bolivia: elegí el departamento donde trabajás"
+                  municipalityLabel="Localidad de trabajo (opcional)"
+                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+                />
+              }
+            </ng-template>
+
+            <!-- La ubicación del lugar de trabajo. Es el mismo mapa y el mismo
+                 permiso del navegador que el domicilio, con su propio estado:
+                 son dos puntos distintos y confirmar uno no confirma el otro. -->
+            <ng-template appCampoPersonalizado="gpsTrabajo">
+              @if (gpsTrabajo(); as punto) {
+                <div class="registro__ubicacion">
+                  <app-map
+                    class="registro__mapa"
+                    data-testid="registration-work-map"
+                    [pines]="pinesTrabajo()"
+                    [centro]="punto"
+                    [zoom]="17"
+                    etiqueta="El lugar donde trabajás, en el mapa"
+                  />
+
+                  @if (direccionTrabajoConfirmada()) {
+                    <p
+                      appAnuncio
+                      class="registro__ubicacion-estado"
+                      data-testid="registration-work-location-confirmed"
+                    >
+                      Listo, guardamos este punto.
+                    </p>
+                    <p
+                      class="registro__ubicacion-aviso"
+                      data-testid="registration-work-geocoding-notice"
+                    >
+                      {{ avisoSinGeocodificacion }}
+                    </p>
+                    <div class="registro__ubicacion-acciones">
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        [isLoading]="pidiendoGpsTrabajo()"
+                        (clicked)="usarMiUbicacionDeTrabajo()"
+                      >
+                        Volver a ubicarme
+                      </button>
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        aria-label="Quitar la ubicación de tu lugar de trabajo"
+                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
+                        data-testid="registration-work-location-remove"
+                        (clicked)="quitarUbicacionDeTrabajo()"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </div>
+                  } @else {
+                    <p class="registro__ubicacion-estado">
+                      ¿Es acá donde trabajás? Movete por el mapa para comprobarlo.
+                    </p>
+                    <div class="registro__ubicacion-acciones">
+                      <button
+                        app-button
+                        variant="primary"
+                        size="sm"
+                        data-testid="registration-work-location-confirm"
+                        (clicked)="confirmarDireccionDeTrabajo()"
+                      >
+                        Confirmar este punto
+                      </button>
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        [isLoading]="pidiendoGpsTrabajo()"
+                        (clicked)="usarMiUbicacionDeTrabajo()"
+                      >
+                        Volver a ubicarme
+                      </button>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="registro__ubicacion">
+                  <button
+                    app-button
+                    variant="secondary"
+                    size="sm"
+                    data-testid="registration-work-location-use"
+                    [isLoading]="pidiendoGpsTrabajo()"
+                    (clicked)="usarMiUbicacionDeTrabajo()"
+                  >
+                    Usar mi ubicación
+                  </button>
+                  @if (gpsTrabajoRechazado()) {
+                    <span class="registro__ubicacion-aviso">
+                      No pudimos obtener tu ubicación. Podés seguir sin esto.
+                    </span>
+                  }
+                </p>
               }
             </ng-template>
           </app-paginated-form>

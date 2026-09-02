@@ -108,7 +108,7 @@ describe('homeGuard · a dónde manda la raíz', () => {
     const resultado = ejecutar();
 
     expect(resultado).toBeInstanceOf(UrlTree);
-    expect(router.serializeUrl(resultado as UrlTree)).toBe('/publicaciones');
+    expect(router.serializeUrl(resultado as UrlTree)).toBe('/posts');
   });
 
   it('con sesión manda al panel', () => {

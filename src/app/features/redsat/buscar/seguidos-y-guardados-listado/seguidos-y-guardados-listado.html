@@ -6,11 +6,14 @@
       </div>
 
     </div>
-    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Seguidos y guardados">
-      <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Seguidos</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" aria-disabled="true" data-sin-destino="">Guardados</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/calificar-la-atencion-formulario">Atenciones sin calificar</a>
-    </div>
+    <!-- Carril 01 · AC-01-4 — Esto decía ser pestañas y no lo era. De las tres,
+         dos eran maniquíes (`data-sin-destino`, `aria-disabled`) que no abrían
+         nada, y la tercera navegaba a OTRA pantalla, que es justo lo que una
+         pestaña no hace. La pantalla muestra una sola lista, así que queda el
+         único destino real, dicho como lo que es: un enlace. -->
+    <nav class="app-page-nav" aria-label="Atenciones">
+      <a app-button="" data-variante="secundario" data-tam="sm" routerLink="/buscar/calificar-la-atencion-formulario">Atenciones sin calificar</a>
+    </nav>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de lo que seguís">
       <label class="app-search-field" app-search-field="">
         <span class="solo-lectores">Buscá entre lo que seguís</span>

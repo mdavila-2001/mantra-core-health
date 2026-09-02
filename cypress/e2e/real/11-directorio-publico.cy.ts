@@ -48,7 +48,7 @@ describe('Directorio público · sin sesión', () => {
   // ─── P4-E2E-001 ────────────────────────────────────────────────────────────
 
   it('P4-E2E-001 · buscar, encontrar y abrir una ficha sin cuenta', () => {
-    cy.visit('/buscar');
+    cy.visit('/search');
     estable();
 
     cy.contains('a', /Marisol Quispe/i).should('be.visible').click();
@@ -63,7 +63,7 @@ describe('Directorio público · sin sesión', () => {
   });
 
   it('el texto buscado viaja en `?q=` y acota la lista', () => {
-    cy.visit('/buscar?q=Mamani');
+    cy.visit('/search?q=Mamani');
     estable();
 
     cy.contains('a', /Iván Mamani/i).should('be.visible');
@@ -106,7 +106,7 @@ describe('Directorio público · sin sesión', () => {
   });
 
   it('el perfil despublicado no aparece en la búsqueda anónima', () => {
-    cy.visit('/buscar');
+    cy.visit('/search');
     estable();
 
     cy.contains(/oculto/i).should('not.exist');

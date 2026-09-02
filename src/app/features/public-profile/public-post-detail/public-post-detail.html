@@ -24,7 +24,7 @@
 
   @if (publicacion(); as post) {
     <div class="publicacion-suelta">
-      <app-publicacion-post
+      <app-public-post-card
         [post]="post"
         [slug]="perfil.slug"
         [autorNombre]="perfil.displayName"
@@ -48,6 +48,6 @@
     </div>
   </div>
   <section class="app-card">
-    <p><a app-link routerLink="/buscar">Volver al buscador</a></p>
+    <p><a app-link routerLink="/search">Volver al buscador</a></p>
   </section>
 }

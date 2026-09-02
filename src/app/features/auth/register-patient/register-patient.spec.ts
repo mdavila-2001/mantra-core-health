@@ -191,12 +191,20 @@ describe('RegisterPatient', () => {
       });
 
       expect(component.catalogoMunicipiosCaido()).toBe(false);
-      expect(component.arbolMunicipios()).toEqual([
-        { label: 'Cochabamba', items: [{ value: 'm-1', label: 'Sacaba' }] },
-        {
-          label: 'Santa Cruz',
-          items: [{ value: 'm-2', label: 'Santa Cruz de la Sierra' }],
-        },
+      // Lo que se guarda ahora son las ramas del catálogo tal cual, sin
+      // traducir a los grupos de `app-tree-select`: quien las dibuja es
+      // `app-location-picker`, que necesita la rama entera —con la sigla del
+      // departamento— para acotar el select de ciudad al departamento pulsado
+      // en el mapa (AC-03-7).
+      expect(
+        component.ramasMunicipios().map((rama) => ({
+          sigla: rama.sigla,
+          nombre: rama.nombre,
+          municipios: rama.municipios.map((municipio) => municipio.nombre),
+        })),
+      ).toEqual([
+        { sigla: 'CB', nombre: 'Cochabamba', municipios: ['Sacaba'] },
+        { sigla: 'SC', nombre: 'Santa Cruz', municipios: ['Santa Cruz de la Sierra'] },
       ]);
     });
 
@@ -264,7 +272,7 @@ describe('RegisterPatient', () => {
 
       // Una rama que solo se puede abrir para descubrir que no hay nada adentro
       // es peor que no estar.
-      expect(component.arbolMunicipios().map((rama) => rama.label)).toEqual(['Cochabamba']);
+      expect(component.ramasMunicipios().map((rama) => rama.nombre)).toEqual(['Cochabamba']);
     });
   });
 
@@ -277,10 +285,12 @@ describe('RegisterPatient', () => {
     extra: Partial<
       Record<
         | 'email'
+        | 'phone'
         | 'middleName'
         | 'thirdName'
         | 'motherLastName'
         | 'homeAddressLines'
+        | 'workAddressLines'
         | 'workEmployerFreeText'
         | 'guardianName'
         | 'guardianPhone'
@@ -297,14 +307,46 @@ describe('RegisterPatient', () => {
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
       password: 'secreto12',
-      email: extra.email ?? '',
+      // Los cinco que AC-03-3 volvió obligatorios se completan acá: sin ellos
+      // el formulario es inválido y `submit()` no llega a salir, así que toda
+      // prueba de envío los necesita. El que comprueba que cada uno frena el
+      // alta es su propia prueba, más abajo.
+      email: extra.email ?? 'ana@ejemplo.test',
+      phone: extra.phone ?? '+591 70012345',
+      birthDate: new Date(1990, 4, 17),
+      sexAtBirth: 'FEMALE',
       homeAddressLines: extra.homeAddressLines ?? '',
+      workAddressLines: extra.workAddressLines ?? '',
       workEmployerFreeText: extra.workEmployerFreeText ?? '',
       guardianName: extra.guardianName ?? '',
       guardianPhone: extra.guardianPhone ?? '',
       billingTaxId: extra.billingTaxId ?? '',
     });
+    // La localidad de residencia pasa por su método: escribe el control **y**
+    // el signal que lo espeja, y es el único que escribe los dos.
+    component.elegirMunicipio(MUNICIPIO_SACABA);
   }
+
+  /**
+   * Lo que **siempre** viaja desde que AC-03-3 fijó los obligatorios.
+   *
+   * Existe para que cada prueba de envío diga sólo lo suyo: sin esto, las nueve
+   * que comprueban un campo concreto tendrían que repetir los nueve
+   * obligatorios, y agregar un obligatorio décimo sería tocar las nueve.
+   */
+  const OBLIGATORIOS_ENVIADOS = {
+    nationalId: '1234567',
+    name: 'Ana',
+    lastName: 'Paz',
+    password: 'secreto12',
+    email: 'ana@ejemplo.test',
+    phone: '+591 70012345',
+    // Fecha local, no UTC: `new Date(1990, 4, 17).toISOString()` daría el 16 en
+    // cualquier huso al oeste de Greenwich, que es donde está Bolivia.
+    birthDate: '1990-05-17',
+    sexAtBirth: 'FEMALE',
+    residenceMunicipalityConceptId: MUNICIPIO_SACABA,
+  };
 
   /**
    * Las páginas que declara la pantalla.
@@ -317,27 +359,106 @@ describe('RegisterPatient', () => {
    * dos copias cambie.
    */
   describe('las páginas del alta de paciente', () => {
-    it('son nueve, y ninguna pide más de cuatro cosas', () => {
+    /**
+     * AC-03-2, el tope que no se relaja. Diez páginas: el tope es de **campos
+     * por página**, no de páginas, y apretar el orden pedido en menos pasos es
+     * exactamente lo que este motor vino a deshacer. Los tres nombres siguen
+     * yendo en un campo proyectado para que los apellidos entren en la misma.
+     */
+    it('ninguna página pide más de cuatro cosas', () => {
       const paginas = component.paginasPaciente();
 
-      // Ocho desde que el alta cubre los campos mínimos del registro del
-      // cliente: domicilio, trabajo, seguros y tutor son cuatro páginas más.
-      // El tope es de campos por página, no de páginas: los tres nombres van
-      // en un campo proyectado para que los apellidos entren en la misma.
-      expect(paginas.length).toBe(8);
+      expect(paginas.length).toBe(10);
       for (const pagina of paginas) {
-        expect(pagina.campos.length).toBeLessThanOrEqual(4);
+        expect(
+          pagina.campos.length,
+          `«${pagina.titulo}» pide ${pagina.campos.length}`,
+        ).toBeLessThanOrEqual(4);
       }
     });
 
-    it('empieza por el documento: si ya hay cuenta, el choque salta en la primera', () => {
-      const primera = component.paginasPaciente()[0];
+    /**
+     * AC-03-1, el orden que pidió el propietario: nombres y apellidos → CI +
+     * expedición → fecha de nacimiento → sexo → ocupación → celular → contacto
+     * de emergencia → residencia → trabajo → correo → seguros → facturación.
+     *
+     * Se comprueba por `clave` y no por título: el título es prosa que se
+     * reescribe cuando se lee mal, y `paginarCampos` además le agrega «(1 de
+     * 2)» al partir una sección larga.
+     */
+    it('presenta los bloques en el orden pedido (AC-03-1)', () => {
+      expect(component.paginasPaciente().map((pagina) => pagina.clave)).toEqual([
+        'name',
+        'document',
+        'profile',
+        'contact',
+        'residence',
+        'work',
+        'work-location',
+        'access',
+        'insurance',
+        'billing',
+      ]);
+    });
 
-      expect(primera.campos[0].key).toBe('nationalId');
-      // Y la contraseña va al final: es lo único que no se corrige después
-      // desde el perfil.
+    /**
+     * Dentro del bloque de perfil, el orden también es el pedido: fecha de
+     * nacimiento, después sexo, después ocupación. Es la mitad de AC-03-1 que
+     * un recuento de páginas no ve.
+     */
+    it('dentro de cada bloque, los campos van en el orden pedido', () => {
+      const porClave = (clave: string) =>
+        component
+          .paginasPaciente()
+          .find((pagina) => pagina.clave === clave)
+          ?.campos.map((campo) => campo.key);
+
+      expect(porClave('profile')).toEqual([
+        'birthDate',
+        'sexAtBirth',
+        'occupationConceptId',
+      ]);
+      expect(porClave('contact')).toEqual(['phone', 'guardianName', 'guardianPhone']);
+      expect(porClave('residence')).toEqual([
+        'residenceMunicipalityConceptId',
+        'homeAddressLines',
+        'gpsDomicilio',
+      ]);
+      expect(porClave('access')).toEqual(['email', 'password']);
+      expect(porClave('billing')).toEqual(['billingTaxId']);
+    });
+
+    /**
+     * Los tres bloques que el pedido incluye y esta pantalla NO pregunta,
+     * porque no tienen dónde guardarse: zona (AC-03-10), relación del contacto
+     * de emergencia (AC-03-11) y razón social (AC-03-12). La prueba está para
+     * que aparezcan **con su columna**, no de contrabando: el día que alguien
+     * agregue el campo sin el destino, esto se pone rojo.
+     */
+    it('no pregunta lo que no tiene dónde guardarse', () => {
+      const claves = component
+        .paginasPaciente()
+        .flatMap((pagina) => pagina.campos.map((campo) => campo.key));
+
+      expect(claves).not.toContain('homeZone');
+      expect(claves).not.toContain('workZone');
+      expect(claves).not.toContain('guardianRelationship');
+      expect(claves).not.toContain('billingLegalName');
+    });
+
+    it('empieza por el nombre y termina por la facturación', () => {
+      const primera = component.paginasPaciente()[0];
+      expect(primera.campos[0].key).toBe('name');
+
       const ultima = component.paginasPaciente().at(-1);
-      expect(ultima?.campos.map((campo) => campo.key)).toContain('password');
+      expect(ultima?.campos.map((campo) => campo.key)).toEqual(['billingTaxId']);
+    });
+
+    /** Cada página lleva su glifo del set cerrado del nav (AC-04-3). */
+    it('cada página declara su ícono', () => {
+      for (const pagina of component.paginasPaciente()) {
+        expect(pagina.icon, `«${pagina.titulo}» no declara ícono`).toBeDefined();
+      }
     });
 
     /**
@@ -358,15 +479,23 @@ describe('RegisterPatient', () => {
     });
 
     /**
-     * El árbol de municipios no lo dibuja el motor: es un campo `custom` que
-     * proyecta esta pantalla. Si dejara de serlo, el motor le reservaría el
-     * sitio y no pondría nada adentro.
+     * El mapa de departamentos y el select de ciudad no los dibuja el motor:
+     * son un campo `custom` que proyecta esta pantalla. Si dejaran de serlo, el
+     * motor le reservaría el sitio y no pondría nada adentro.
+     *
+     * Y son **un** campo, no dos: son un solo dato —la localidad— con dos
+     * formas de llegar a él. Contarlos como dos habría hecho que la página de
+     * residencia pasara el tope de cuatro.
      */
-    it('el municipio va como campo proyectado', () => {
+    it('la localidad va como un único campo proyectado', () => {
       const campos = component.paginasPaciente().flatMap((pagina) => pagina.campos);
-      const municipio = campos.find((campo) => campo.key === 'municipio');
 
-      expect(municipio?.control).toBe('custom');
+      expect(
+        campos.find((campo) => campo.key === 'residenceMunicipalityConceptId')?.control,
+      ).toBe('custom');
+      expect(
+        campos.find((campo) => campo.key === 'workMunicipalityConceptId')?.control,
+      ).toBe('custom');
     });
 
     it('el motor está montado y sirve la primera página', () => {
@@ -374,9 +503,41 @@ describe('RegisterPatient', () => {
       const html = fixture.nativeElement as HTMLElement;
 
       expect(html.querySelector('app-paginated-form')).not.toBeNull();
-      // El documento se ve; la contraseña, que vive en la última página, no.
-      expect(html.querySelector('[data-testid="registro-documento"]')).not.toBeNull();
+      // El nombre se ve; el documento, que vive en la segunda página, no.
+      expect(html.querySelector('[data-testid="registro-nombre"]')).not.toBeNull();
+      expect(html.querySelector('[data-testid="registro-documento"]')).toBeNull();
       expect(html.querySelector('[data-testid="registro-password"]')).toBeNull();
+    });
+
+    /**
+     * AC-04-5: «Siguiente» y «Atrás» son botones de ícono en esta pantalla. El
+     * interruptor entra apagado en el motor —lo montan 53 plantillas— y se
+     * enciende acá, que es donde el propietario lo pidió.
+     */
+    it('la navegación del motor va en modo ícono', () => {
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+      const siguiente = html.querySelector('[data-testid="paginated-form-continuar"]');
+
+      // El nombre accesible sigue en castellano: lo que cambia es el dibujo, no
+      // lo que anuncia un lector de pantalla.
+      expect(siguiente?.getAttribute('aria-label')).toBe('Siguiente');
+      expect(siguiente?.querySelector('app-nav-icon')).not.toBeNull();
+    });
+
+    /**
+     * AC-04-6 y AC-04-7: el botón que quita una casilla de nombre es de ícono,
+     * y su nombre accesible dice **qué** quita. «Quitar» a secas, repetido
+     * cuatro veces en la misma página, deja cuatro botones idénticos.
+     */
+    it('«Quitar» es un botón de ícono que dice qué quita', () => {
+      component.agregarNombre();
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+      const quitar = html.querySelector('[data-testid="registro-quitar-nombre-0"]');
+
+      expect(quitar?.getAttribute('aria-label')).toBe('Quitar el nombre 4');
+      expect(quitar?.querySelector('app-nav-icon')).not.toBeNull();
     });
 
     /**
@@ -386,36 +547,122 @@ describe('RegisterPatient', () => {
      */
     it('el departamento cambia de `select` a proyectado si su catálogo se cae', () => {
       const antes = component
-        .paginasPaciente()[0]
+        .paginasPaciente()[1]
         .campos.find((campo) => campo.key === 'issuerAdministrativeAreaConceptId');
       expect(antes?.control).toBe('select');
 
       http.expectOne(CATALOGO).flush(null, { status: 401, statusText: 'Unauthorized' });
 
       const despues = component
-        .paginasPaciente()[0]
+        .paginasPaciente()[1]
         .campos.find((campo) => campo.key === 'issuerAdministrativeAreaConceptId');
       expect(despues?.control).toBe('custom');
     });
   });
 
-  it('manda solo los campos obligatorios cuando no hay correo ni nombres opcionales', () => {
+  it('manda sólo los obligatorios cuando lo opcional quedó vacío', () => {
     completar();
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-patient');
     expect(req.request.method).toBe('POST');
-    // Un correo vacío no es lo mismo que no mandar el campo:
+    // Un campo vacío no es lo mismo que no mandar el campo:
     // `forbidNonWhitelisted` rechaza lo que sobra. Mismo criterio para el
     // segundo nombre y el apellido materno, que mucha gente no tiene.
-    expect(req.request.body).toEqual({
-      nationalId: '1234567',
-      name: 'Ana',
-      lastName: 'Paz',
-      password: 'secreto12',
-    });
+    expect(req.request.body).toEqual(OBLIGATORIOS_ENVIADOS);
 
     req.flush(RESPUESTA);
+  });
+
+  /* ---- AC-03-3 / AC-03-4: qué es obligatorio, y qué no ---- */
+
+  /**
+   * Los seis que el propietario listó (TAREA 03 §1.2), más los tres que el
+   * servidor exige por contrato y que su lista no nombra: nombre, apellido
+   * paterno y contraseña. AC-03-4 los contempla explícitamente («más lo que el
+   * servidor exija por contrato, ver P-03-2»); un alta que crea una persona sin
+   * nombre no es un alta, y sin contraseña no hay con qué entrar.
+   */
+  describe('obligatoriedad (AC-03-3, AC-03-4)', () => {
+    const OBLIGATORIOS = [
+      'nationalId',
+      'email',
+      'sexAtBirth',
+      'phone',
+      'birthDate',
+      'residenceMunicipalityConceptId',
+      // Los tres del contrato del servidor. Ver P-03-2.
+      'name',
+      'lastName',
+      'password',
+    ] as const;
+
+    const OPCIONALES = [
+      'middleName',
+      'thirdName',
+      'motherLastName',
+      'issuerAdministrativeAreaConceptId',
+      'occupationConceptId',
+      'occupationFreeText',
+      'homeAddressLines',
+      'workMunicipalityConceptId',
+      'workAddressLines',
+      'workEmployerFreeText',
+      'guardianName',
+      'guardianPhone',
+      'privateInsurancePlanId',
+      'publicInsurancePlanId',
+      'billingTaxId',
+    ] as const;
+
+    it('cada obligatorio, vacío, deja el formulario inválido y frena el envío', () => {
+      for (const clave of OBLIGATORIOS) {
+        completar();
+        if (clave === 'residenceMunicipalityConceptId') {
+          component.elegirMunicipio(null);
+        } else {
+          component.formPaciente.get(clave)?.setValue(
+            clave === 'birthDate' || clave === 'sexAtBirth' ? null : '',
+          );
+        }
+
+        expect(
+          component.formPaciente.get(clave)?.invalid,
+          `«${clave}» tendría que ser obligatorio`,
+        ).toBe(true);
+
+        component.submit();
+        http.expectNone('/iam/auth/register-patient');
+      }
+    });
+
+    it('nada más es obligatorio: con los nueve completos el alta sale', () => {
+      completar();
+      for (const clave of OPCIONALES) {
+        expect(
+          component.formPaciente.get(clave)?.invalid,
+          `«${clave}» no tendría que ser obligatorio`,
+        ).toBe(false);
+      }
+
+      component.submit();
+      http.expectOne('/iam/auth/register-patient').flush(RESPUESTA);
+      expect(component.registered()).toBe(true);
+    });
+
+    /**
+     * Es la inversión de contrato de AC-03-3, y la que más cuesta: el correo
+     * era opcional **a propósito** —«podés entrar sin él, con tu documento»— y
+     * la ayuda del paso lo decía con esas palabras. Sigue sin ser el
+     * identificador de acceso; lo que cambió es que ahora hace falta igual.
+     */
+    it('sin correo el alta no sale, aunque el documento siga siendo el usuario', () => {
+      completar({ email: '' });
+
+      expect(component.formPaciente.controls.email.hasError('required')).toBe(true);
+      component.submit();
+      http.expectNone('/iam/auth/register-patient');
+    });
   });
 
   /**
@@ -429,12 +676,9 @@ describe('RegisterPatient', () => {
 
     const req = http.expectOne('/iam/auth/register-patient');
     expect(req.request.body).toEqual({
-      nationalId: '1234567',
-      name: 'Ana',
+      ...OBLIGATORIOS_ENVIADOS,
       middleName: 'María',
-      lastName: 'Paz',
       motherLastName: 'Quiroga',
-      password: 'secreto12',
     });
 
     req.flush(RESPUESTA);
@@ -446,12 +690,9 @@ describe('RegisterPatient', () => {
 
     const req = http.expectOne('/iam/auth/register-patient');
     expect(req.request.body).toEqual({
-      nationalId: '1234567',
-      name: 'Ana',
+      ...OBLIGATORIOS_ENVIADOS,
       middleName: 'María Eugenia',
-      lastName: 'Paz',
       motherLastName: 'Quiroga',
-      password: 'secreto12',
     });
 
     req.flush(RESPUESTA);
@@ -474,11 +715,8 @@ describe('RegisterPatient', () => {
 
     const req = http.expectOne('/iam/auth/register-patient');
     expect(req.request.body).toEqual({
-      nationalId: '1234567',
-      name: 'Ana',
+      ...OBLIGATORIOS_ENVIADOS,
       middleName: 'María Eugenia Fernanda Belén',
-      lastName: 'Paz',
-      password: 'secreto12',
     });
 
     req.flush(RESPUESTA);
@@ -502,10 +740,7 @@ describe('RegisterPatient', () => {
 
     const req = http.expectOne('/iam/auth/register-patient');
     expect(req.request.body).toEqual({
-      nationalId: '1234567',
-      name: 'Ana',
-      lastName: 'Paz',
-      password: 'secreto12',
+      ...OBLIGATORIOS_ENVIADOS,
       occupationFreeText: 'Apicultor',
     });
 
@@ -522,10 +757,7 @@ describe('RegisterPatient', () => {
 
     const req = http.expectOne('/iam/auth/register-patient');
     expect(req.request.body).toEqual({
-      nationalId: '1234567',
-      name: 'Ana',
-      lastName: 'Paz',
-      password: 'secreto12',
+      ...OBLIGATORIOS_ENVIADOS,
       occupationConceptId: 'o-1',
     });
 
@@ -605,9 +837,6 @@ describe('RegisterPatient', () => {
       sexAtBirth: 'FEMALE',
       issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
     });
-    // El municipio sigue aparte: es el campo proyectado, el único que el motor
-    // no escribe.
-    component.municipioPaciente.set(MUNICIPIO_SACABA);
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-patient');
@@ -652,11 +881,7 @@ describe('RegisterPatient', () => {
     const req = http.expectOne('/iam/auth/register-patient');
     const enviado = Object.keys(req.request.body as Record<string, unknown>);
     expect(enviado).not.toContain('issuerAdministrativeAreaConceptId');
-    expect(enviado).not.toContain('residenceMunicipalityConceptId');
-    expect(enviado).not.toContain('birthDate');
-    expect(enviado).not.toContain('phone');
     expect(enviado).not.toContain('gender');
-    expect(enviado).not.toContain('sexAtBirth');
     expect(enviado).not.toContain('occupationConceptId');
     expect(enviado).not.toContain('occupationFreeText');
     // Y los del alta completa: calle, coordenadas, trabajo, tutor, seguros, NIT.
@@ -664,6 +889,9 @@ describe('RegisterPatient', () => {
     expect(enviado).not.toContain('homeLatitude');
     expect(enviado).not.toContain('workEmployerConceptId');
     expect(enviado).not.toContain('workEmployerFreeText');
+    expect(enviado).not.toContain('workMunicipalityConceptId');
+    expect(enviado).not.toContain('workAddressLines');
+    expect(enviado).not.toContain('workLatitude');
     expect(enviado).not.toContain('guardianName');
     expect(enviado).not.toContain('guardianPhone');
     expect(enviado).not.toContain('privateInsurancePlanId');
@@ -800,14 +1028,78 @@ describe('RegisterPatient', () => {
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-patient');
-    expect(req.request.body.workEmployerConceptId).toBe(EMPRESA_ENTEL);
-    // La empresa reemplazó a la dirección del trabajo: nada de eso viaja ya.
+    expect(req.request.body).toMatchObject({ workEmployerConceptId: EMPRESA_ENTEL });
+    // La empresa **ya no** reemplaza a la dirección del trabajo (AC-03-1
+    // devolvió los cuatro campos al alta), pero lo que no se completó sigue sin
+    // viajar: vacío no es lo mismo que ausente.
     const enviado = Object.keys(req.request.body as Record<string, unknown>);
     expect(enviado).not.toContain('workAddressLines');
     expect(enviado).not.toContain('workMunicipalityConceptId');
     expect(enviado).not.toContain('workLatitude');
 
     req.flush(RESPUESTA);
+  });
+
+  /* ---- El lugar de trabajo, que vuelve al alta (AC-03-1, P-03-4) ---- */
+
+  /**
+   * Revierte una decisión escrita: el alta había dejado de preguntar municipio,
+   * calle y coordenadas del trabajo porque «casi nadie las completaba». El
+   * propietario las volvió a pedir y el DTO nunca dejó de aceptarlas. Siguen
+   * siendo opcionales: lo que no se completa, no viaja.
+   */
+  it('manda los cuatro campos del lugar de trabajo cuando se completaron', () => {
+    completar({ workAddressLines: '  Calle Libertad #120  ' });
+    component.elegirMunicipioDeTrabajo(MUNICIPIO_SACABA);
+    component.gpsTrabajo.set({ lat: -17.4, lng: -66.1 });
+    component.confirmarDireccionDeTrabajo();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body).toMatchObject({
+      workMunicipalityConceptId: MUNICIPIO_SACABA,
+      // Recortada, como la calle del domicilio.
+      workAddressLines: 'Calle Libertad #120',
+      workLatitude: -17.4,
+      workLongitude: -66.1,
+    });
+
+    req.flush(RESPUESTA);
+  });
+
+  /** Mismo criterio que el domicilio: un punto no mirado no es una dirección. */
+  it('no manda el punto del trabajo mientras no se confirme en el mapa', () => {
+    completar();
+    component.gpsTrabajo.set({ lat: -17.4, lng: -66.1 });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    const enviado = Object.keys(req.request.body as Record<string, unknown>);
+    expect(enviado).not.toContain('workLatitude');
+    expect(enviado).not.toContain('workLongitude');
+
+    req.flush(RESPUESTA);
+  });
+
+  it('quitar el punto del trabajo se lleva también su confirmación', () => {
+    component.gpsTrabajo.set({ lat: -17.4, lng: -66.1 });
+    component.confirmarDireccionDeTrabajo();
+    expect(component.direccionTrabajoConfirmada()).toBe(true);
+
+    component.quitarUbicacionDeTrabajo();
+
+    expect(component.gpsTrabajo()).toBeNull();
+    expect(component.direccionTrabajoConfirmada()).toBe(false);
+  });
+
+  it('el mapa del trabajo recibe su propio pin, distinto del de casa', () => {
+    expect(component.pinesTrabajo()).toEqual([]);
+
+    component.gpsTrabajo.set({ lat: -17.4, lng: -66.1 });
+
+    expect(component.pinesTrabajo()).toHaveLength(1);
+    // Y no contagia al del domicilio: son dos puntos distintos.
+    expect(component.pinesDomicilio()).toEqual([]);
   });
 
   /**

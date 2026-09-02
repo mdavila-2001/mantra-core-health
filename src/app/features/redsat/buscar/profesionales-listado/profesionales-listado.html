@@ -6,14 +6,6 @@
       </div>
 
     </div>
-    <div role="tablist" class="app-tabs" app-tabs="" aria-label="Qué estás buscando">
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar">Todo</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Profesionales</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/medicamentos">Medicamentos</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/hospitales">Hospitales y clínicas</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/diagnostico">Laboratorios e imagen</a>
-      <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras">Aseguradoras</a>
-    </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
       <label class="app-search-field" app-search-field="">
         <span class="solo-lectores">Buscá por nombre, especialidad u organización</span>
@@ -29,6 +21,43 @@
         />
       </label>
       <div class="app-filter-bar__fila">
+      <!-- AC-02-7 — El filtro por especialidad. Las opciones salen del catálogo
+           `VS_MEDICAL_SPECIALTY`, nunca de una lista escrita acá; el valor que
+           viaja es el `conceptId`, que es lo que el servidor valida. -->
+      <div class="app-form-field" app-form-field="">
+        <label class="app-form-field__label" for="f-especialidad">Especialidad</label>
+        @if (catalogoCaido()) {
+          <!-- AC-02-9 / AC-02-14 — Un catálogo caído no bloquea el directorio:
+               se sigue viendo sin filtrar, y se puede reintentar. -->
+          <p class="app-form-field__ayuda" role="status">
+            No pudimos leer el catálogo de especialidades.
+            <button app-button="" data-variante="fantasma" data-tam="sm" type="button" (click)="leerCatalogo()">Reintentar</button>
+          </p>
+        } @else {
+          <span class="app-select-envoltorio">
+            <select
+              class="app-select"
+              app-select=""
+              id="f-especialidad"
+              [value]="especialidadElegida()"
+              (change)="alElegirEspecialidad($any($event.target).value)"
+            >
+              <!-- `[selected]` por opción y no sólo `[value]` en el select: la
+                   propiedad del select se fija antes de que `@for` dibuje las
+                   opciones, así que al llegar por una URL con `?specialty=` el
+                   desplegable se quedaba en «Todas». -->
+              <option value="" [selected]="especialidadElegida() === ''">Todas las especialidades</option>
+              @for (especialidad of especialidades(); track especialidad.conceptId) {
+                <option
+                  [value]="especialidad.conceptId"
+                  [selected]="especialidad.conceptId === especialidadElegida()"
+                >{{ especialidad.display }}</option>
+              }
+            </select>
+            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+          </span>
+        }
+      </div>
       <div class="app-form-field" app-form-field="">
         <label class="app-form-field__label" for="f-verificados">
           <input
@@ -97,7 +126,7 @@
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg></span>
         <h2>Ningún profesional coincide con esos filtros</h2>
         <p>Un profesional aparece acá cuando tiene perfil público activo y al menos una especialidad registrada. Si buscabas por obra social, probá sacando ese filtro: el convenio se acuerda por sede, y puede estar cargado en la organización y no en la ficha del médico.</p>
-        <a app-button="" data-variante="secundario" routerLink="/buscar"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
       </div>
       </div>
         }

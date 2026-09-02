@@ -37,9 +37,23 @@ import type {
  */
 export type EstadoBusqueda = 'carga' | 'datos' | 'vacio' | 'error';
 
-/** Cómo se lee una página. La cierra quien crea el store sobre su endpoint. */
+/**
+ * Cómo se lee una página. La cierra quien crea el store sobre su endpoint.
+ *
+ * ## Por qué los filtros propios llegan por parámetro y no se leen del store
+ *
+ * Porque la primera lectura ocurre **dentro del constructor** de
+ * `BusquedaPublica` —`queryParamMap` emite de forma síncrona al suscribirse—,
+ * y en ese momento el campo del componente que guarda el store todavía no está
+ * asignado. Una lectura que hiciera `this.busqueda.parametro('specialty')`
+ * reventaría con un `TypeError` en el primer render; y como el flujo atrapa el
+ * error para poder reintentar, la pantalla quedaría en estado de error sin una
+ * sola pista en la consola.
+ */
 export type LecturaDeBusqueda = (
   filtros: PublicSearchQuery,
+  /** Los filtros declarados que viajan en la URL, ya resueltos. `''` = sin filtro. */
+  parametros: Readonly<Record<string, string>>,
 ) => Observable<PublicPage<PublicSearchResult>>;
 
 /** Cuántos resultados pide una página. El servidor recorta a `[1, 50]`. */
@@ -92,6 +106,30 @@ export class BusquedaPublica {
   /** La ciudad, `''` = sin filtro. */
   readonly ciudad = signal('');
 
+  /**
+   * Los filtros propios del vertical que viajan **en la URL** (AC-02-7).
+   *
+   * ## Por qué en la URL y no en una señal de la pantalla
+   *
+   * Por lo mismo que `?q=`: un directorio filtrado tiene que poder pegarse en
+   * un mensaje, y el SSR no tiene una pantalla que leer —sólo la dirección—.
+   * Un filtro guardado sólo en memoria renderiza en el servidor la lista sin
+   * filtrar y la corrige después de hidratar, que es exactamente el parpadeo
+   * que AC-02-11 prohíbe.
+   *
+   * Clave = nombre del parámetro (en inglés, TAREA-29); valor = `''` cuando no
+   * hay filtro. Los declara la pantalla al construir el store, porque son
+   * distintos por vertical.
+   */
+  private readonly _parametros = signal<Readonly<Record<string, string>>>({});
+
+  readonly parametros = this._parametros.asReadonly();
+
+  /** El valor de un filtro de URL, o `''`. */
+  parametro(nombre: string): string {
+    return this._parametros()[nombre] ?? '';
+  }
+
   private readonly _estado = signal<EstadoBusqueda>('carga');
   private readonly _resultados = signal<readonly PublicSearchResult[]>([]);
   private readonly _nextCursor = signal<string | null>(null);
@@ -139,10 +177,23 @@ export class BusquedaPublica {
    */
   private readonly tecleo = new Subject<string>();
 
-  constructor(private readonly lectura: LecturaDeBusqueda) {
+  /* El store se construye como campo de su componente, o sea dentro del
+     contexto de inyección: `inject()` acá es válido y evita cargar el
+     constructor con dos parámetros que no dicen nada. */
+  private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
+
+  constructor(
+    private readonly lectura: LecturaDeBusqueda,
+    /**
+     * Qué parámetros de la URL, además de `q`, son filtros de esta pantalla.
+     * Ejemplo: `['specialty']` en el directorio de profesionales.
+     */
+    private readonly nombresDeParametros: readonly string[] = [],
+  ) {
     const destroyRef = inject(DestroyRef);
-    const ruta = inject(ActivatedRoute);
-    const router = inject(Router);
+    const ruta = this.ruta;
+    const router = this.router;
 
     this.tecleo
       .pipe(debounceTime(PAUSA_AL_ESCRIBIR_MS), distinctUntilChanged(), takeUntilDestroyed(destroyRef))
@@ -162,7 +213,7 @@ export class BusquedaPublica {
       .pipe(
         tap(() => this._estado.set('carga')),
         switchMap((filtros) =>
-          this.lectura(filtros).pipe(
+          this.lectura(filtros, this._parametros()).pipe(
             // El error se convierte en un valor para que el flujo siga vivo:
             // un `error` que sube mata la suscripción, y la pantalla quedaría
             // sin poder reintentar sin recargarse entera.
@@ -186,16 +237,51 @@ export class BusquedaPublica {
     // servidor la renderiza con resultados —el SSR no tiene una caja que
     // leer, sólo la URL— y el buscador del header público, que vive en otro
     // componente y no conoce a este, sólo tiene que navegar.
+    //
+    // Los filtros extra viajan por el MISMO canal que `q` y no por uno propio:
+    // dos suscripciones al mismo `queryParamMap` dispararían dos lecturas por
+    // cada cambio que toque las dos cosas —elegir una especialidad teniendo
+    // texto escrito—, y `switchMap` cancelaría la primera a mitad de vuelo.
     ruta.queryParamMap
       .pipe(
-        map((params) => params.get('q') ?? ''),
-        distinctUntilChanged(),
+        map((params) => ({
+          q: params.get('q') ?? '',
+          extra: Object.fromEntries(
+            this.nombresDeParametros.map((nombre) => [nombre, params.get(nombre) ?? '']),
+          ),
+        })),
+        distinctUntilChanged(
+          (anterior, actual) =>
+            anterior.q === actual.q &&
+            this.nombresDeParametros.every(
+              (nombre) => anterior.extra[nombre] === actual.extra[nombre],
+            ),
+        ),
         takeUntilDestroyed(destroyRef),
       )
-      .subscribe((q) => {
+      .subscribe(({ q, extra }) => {
         this.texto.set(q);
+        this._parametros.set(extra);
         this.buscar();
       });
+  }
+
+  /**
+   * Fija un filtro de URL, o lo quita con `''`.
+   *
+   * No llama a `buscar()`: la lectura la dispara el cambio de la dirección,
+   * igual que con `q`. Llamarla acá además pediría dos veces.
+   *
+   * `replaceUrl` es `false` a propósito, al revés que al teclear: elegir una
+   * especialidad **sí** es navegar, y «atrás» tiene que deshacerlo.
+   */
+  filtrarPor(nombre: string, valor: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      // `null` quita el parámetro; `''` dejaría `?specialty=` colgando.
+      queryParams: { [nombre]: valor === '' ? null : valor },
+      queryParamsHandling: 'merge',
+    });
   }
 
   /**

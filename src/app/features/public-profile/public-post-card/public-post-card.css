@@ -152,24 +152,14 @@
   text-decoration: underline;
 }
 
-/* Varias imágenes: un carrusel deslizable con encaje, y un asomo de la
-   siguiente para que se note que hay más. */
+/* AC-01-7 — Varias imágenes: una por vez, con pasos. Acá había
+   `overflow-x: auto` + `scroll-snap-type: x mandatory` y ningún control; el
+   único mecanismo era deslizar. Ya no queda scroll libre: si estas tres
+   propiedades vuelven, vuelve el defecto. */
 .publicacion__medios {
   display: grid;
   gap: 2px;
-}
-
-.publicacion__medios[data-cantidad='varias'] {
-  grid-auto-flow: column;
-  grid-auto-columns: 85%;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
-  overscroll-behavior-x: contain;
-}
-
-.publicacion__medios[data-cantidad='varias'] .publicacion__imagen {
-  scroll-snap-align: center;
+  position: relative;
 }
 
 .publicacion__imagen {
@@ -182,6 +172,13 @@
 
 .publicacion__medios[data-cantidad='una'] .publicacion__imagen {
   aspect-ratio: 16 / 9;
+}
+
+/* El menú va al extremo de la cabecera, empujado por el margen automático: la
+   firma ocupa lo suyo y el botón queda pegado al borde sin ancho fijo. */
+.publicacion__preferencias {
+  margin-inline-start: auto;
+  align-self: flex-start;
 }
 
 .publicacion__resumen {
@@ -199,8 +196,78 @@
   gap: 4px;
 }
 
-@media (max-width: 40rem) {
-  .publicacion__medios[data-cantidad='varias'] {
-    grid-auto-columns: 90%;
-  }
+/* Los contadores son botones y tienen que verse como el texto que eran: lo que
+   cambia al pasar el puntero es el subrayado, no una caja nueva. */
+.publicacion__contador-boton {
+  /* 44 px de área táctil sin engordar la fila. */
+  min-block-size: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.publicacion__contador-boton:hover {
+  text-decoration: underline;
+}
+
+/* ---- los pasos de la galería (AC-01-8) ---------------------------------- */
+
+/* Sobre la imagen y no debajo: debajo empujaría el resumen de la tarjeta y
+   cada publicación con varias fotos mediría 44 px más que sus vecinas. */
+.publicacion__pasos {
+  position: absolute;
+  inset-inline: var(--e3);
+  inset-block-end: var(--e3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  pointer-events: none;
+}
+
+.publicacion__paso {
+  /* 44×44 aunque el chevrón mida 20: es el área táctil mínima. */
+  inline-size: 44px;
+  block-size: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.publicacion__paso svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.publicacion__paso:hover:not(:disabled) {
+  background: rgb(0 0 0 / 0.72);
+}
+
+/* En el extremo el botón sigue ahí —para que la fila no salte— pero se ve y
+   se anuncia como inoperable. */
+.publicacion__paso:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.publicacion__contador {
+  margin: 0;
+  padding: 2px var(--e2);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }

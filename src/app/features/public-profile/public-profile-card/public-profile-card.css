@@ -402,7 +402,7 @@
 }
 
 /* Cada `<li>` es sólo el ancla de la lista; la tarjeta la dibuja
-   `app-publicacion-post`, que se comparte con la vista de una publicación
+   `app-public-post-card`, que se comparte con la vista de una publicación
    suelta. */
 
 @media (max-width: 48rem) {

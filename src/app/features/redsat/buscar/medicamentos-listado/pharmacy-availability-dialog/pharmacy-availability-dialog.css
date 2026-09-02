@@ -1,0 +1,149 @@
+/* ============================================================================
+    «Dónde conseguirlo» — el contenido del modal de farmacias.
+
+    Mobile-first: la única consulta de medio es `min-width`. El marco, el fondo
+    y el bloqueo del scroll los pone `content-dialog`.
+
+    Las reglas de la fila vienen del expansor que este modal reemplaza: la
+    sincronía lista ↔ mapa ya funcionaba y se mudó tal cual, incluido el
+    resaltado.
+    ========================================================================== */
+
+.farmacias__mapa {
+    margin: 0 0 var(--sp-4);
+}
+
+/* Alto fijo y no `aspect-ratio`: en el teléfono, dentro de un modal ya acotado
+   en alto, una proporción 16:9 deja el mapa de 190 px y no se lee una calle. */
+.farmacias__mapa app-map {
+    display: block;
+    block-size: 15rem;
+    border-radius: var(--r-md);
+    overflow: hidden;
+}
+
+.farmacias__pie,
+.farmacias__aviso,
+.farmacias__vacio {
+    margin: var(--sp-2) 0 var(--sp-3);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.farmacias__vacio {
+    margin: 0;
+}
+
+/* ---- la lista ----------------------------------------------------------- */
+
+.farmacias__lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.farmacia {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+    transition:
+        border-color var(--dur-fast) var(--ease-standard),
+        background var(--dur-fast) var(--ease-standard);
+}
+
+/* El resaltado es el mismo que el del pin: es la única forma de saber, sin
+   contar, cuál fila corresponde a cuál marca del mapa. */
+.farmacia--elegida {
+    border-color: var(--brand-secondary);
+    background: var(--bg-inset);
+}
+
+.farmacia__codigo {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 28px;
+    block-size: 28px;
+    border-radius: var(--r-full);
+    background: var(--brand-primary);
+    color: var(--c-ivory-100);
+    font-family: var(--font-display);
+    font-size: var(--fs-caption);
+    font-weight: 700;
+}
+
+.farmacia__datos {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-inline-size: 0;
+}
+
+.farmacia__nombre {
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.farmacia__direccion,
+.farmacia__detalle,
+.farmacia__entrega {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    overflow-wrap: anywhere;
+}
+
+/* El aviso de la farmacia que el mapa no puede ubicar. Va en palabras y no en
+   un color: el estado nunca se comunica sólo por color. */
+.farmacia__sin-mapa {
+    margin-block-start: var(--sp-1);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-style: italic;
+}
+
+.farmacia__cierre {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: end;
+}
+
+.farmacia__precio {
+    font-family: var(--font-display);
+    font-size: var(--fs-body-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.farmacia__km {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .farmacia {
+        transition: none;
+    }
+}
+
+@media (min-width: 48rem) {
+    .farmacias__mapa app-map {
+        block-size: 20rem;
+    }
+}

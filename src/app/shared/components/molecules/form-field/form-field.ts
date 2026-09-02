@@ -19,6 +19,17 @@ import {
  *   <app-input type="text" [(value)]="nombre" />
  * </app-form-field>
  * ```
+ *
+ * ## `hint` y `description` no son lo mismo
+ *
+ * El `hint` va **debajo del campo y siempre visible**: es la ayuda que se lee
+ * sin hacer nada. La `description` es la explicación larga, que aparece al
+ * apuntar el campo o al enfocarlo con el teclado y se va cuando el foco se va.
+ *
+ * La segunda **suma**, no reemplaza: si se mudara el `hint` a un globo, el dato
+ * dejaría de existir en el teléfono —donde no hay puntero— y el campo se
+ * quedaría sin su `aria-describedby`, que es lo que el ADR-0008 exige. Por eso
+ * las dos describen al control a la vez, y ninguna le quita el sitio a la otra.
  */
 @Component({
   selector: 'app-form-field',
@@ -37,6 +48,16 @@ export class FormField implements FormControlContext {
   readonly errorMessage = input<string>('');
   readonly required = input<boolean>(false);
 
+  /**
+   * La explicación del campo, la que aparece al apuntarlo o al enfocarlo.
+   *
+   * Vacía —lo normal— no dibuja nada. No sustituye al `hint`: ver la nota de
+   * la clase. Se muestra con `:hover` y con `:focus-within` —no sólo con el
+   * puntero, que en un teléfono no existe— y viaja siempre en el
+   * `aria-describedby` del control, tenga o no puntero quien lo lea.
+   */
+  readonly description = input<string>('');
+
   /** Lo baja a `false` un control que no puede ser destino de un `for`. */
   readonly controlLabelable = signal(true);
 
@@ -47,13 +68,24 @@ export class FormField implements FormControlContext {
   readonly labelId = computed(() => `${this.baseId}-label`);
   protected readonly hintId = computed(() => `${this.baseId}-hint`);
   protected readonly errorId = computed(() => `${this.baseId}-error`);
+  protected readonly descriptionId = computed(() => `${this.baseId}-description`);
 
-  /** El error reemplaza al hint, así que solo uno de los dos describe al control. */
+  /**
+   * El error reemplaza al hint, así que solo uno de los dos describe al
+   * control. La `description` se suma a lo que quede: es información distinta
+   * —qué es este campo— y no compite con «esto está mal» ni con «escribilo
+   * así».
+   */
   readonly describedBy = computed<string | null>(() => {
-    if (this.errorMessage()) {
-      return this.errorId();
-    }
-    return this.hint() ? this.hintId() : null;
+    const principal = this.errorMessage()
+      ? this.errorId()
+      : this.hint()
+        ? this.hintId()
+        : null;
+    const partes = [principal, this.description() ? this.descriptionId() : null].filter(
+      (id): id is string => id !== null,
+    );
+    return partes.length === 0 ? null : partes.join(' ');
   });
 
   readonly invalid = computed(() => this.errorMessage().length > 0);

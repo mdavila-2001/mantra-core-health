@@ -1,0 +1,63 @@
+<!-- Sin catálogo no hay mapa: las siluetas están, pero sin `conceptId` no hay
+     nada que elegir, y un dibujo que no se puede pulsar es peor que su
+     ausencia. Quien monta este componente muestra ahí su «Reintentar». -->
+@if (dibujables().length > 0) {
+  <div class="department-map">
+    <svg
+      class="department-map__lienzo"
+      [attr.viewBox]="viewBox"
+      role="group"
+      [attr.aria-label]="etiqueta()"
+      focusable="false"
+    >
+      @for (departamento of dibujables(); track departamento.conceptId) {
+        <g
+          class="department-map__departamento"
+          [class.department-map__departamento--elegido]="departamento.conceptId === value()"
+        >
+          <!-- El `role="button"` y el `tabindex` son lo que convierte un dibujo
+               en un control: sin ellos el mapa sería un adorno que sólo
+               funciona con el dedo. El nombre accesible es el completo
+               («Santa Cruz»), no la sigla, que es lo que se dibuja adentro. -->
+          <path
+            class="department-map__forma"
+            role="button"
+            tabindex="0"
+            [attr.d]="departamento.d"
+            [attr.aria-pressed]="departamento.conceptId === value()"
+            [attr.aria-label]="departamento.nombre"
+            [attr.data-testid]="testId() + '-' + departamento.sigla"
+            (click)="elegir(departamento.conceptId)"
+            (keydown.enter)="elegir(departamento.conceptId)"
+            (keydown.space)="elegirConBarra($event, departamento.conceptId)"
+          />
+          <!-- La sigla, no el nombre: a 390 px «Santa Cruz» no entra en su
+               departamento y «Chuquisaca» tampoco. La sigla es además la que la
+               cédula imprime. Va `aria-hidden` porque el nombre completo ya
+               está en el `aria-label` del control. -->
+          <text
+            class="department-map__sigla"
+            [attr.x]="departamento.etiqueta.x"
+            [attr.y]="departamento.etiqueta.y"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            aria-hidden="true"
+          >
+            {{ departamento.sigla }}
+          </text>
+        </g>
+      }
+    </svg>
+
+    <!-- La tercera señal de lo elegido, además del relleno y del trazo: en
+         palabras. Es la que sirve cuando no se distinguen los colores y la que
+         un lector de pantalla anuncia al cambiar. -->
+    <p class="department-map__elegido" aria-live="polite" [attr.data-testid]="testId() + '-elegido'">
+      @if (nombreElegido(); as nombre) {
+        Departamento elegido: <strong>{{ nombre }}</strong>
+      } @else {
+        Todavía no elegiste departamento.
+      }
+    </p>
+  </div>
+}

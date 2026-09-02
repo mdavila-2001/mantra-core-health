@@ -1,0 +1,118 @@
+<app-content-dialog
+  [heading]="'Dónde conseguir ' + medicationName()"
+  description="Cada farmacia reporta su precio y su stock, y pueden cambiar entre que lo ves y que llegás. Si el viaje es largo, llamá antes."
+  (opened)="handleOpened()"
+  (closed)="handleClosed()"
+>
+  @if (loading()) {
+    <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+      <span class="solo-lectores">Buscando farmacias…</span>
+      <span class="app-skeleton"></span>
+      <span class="app-skeleton"></span>
+      <span class="app-skeleton"></span>
+    </div>
+  } @else if (failed()) {
+    <div class="app-alert" app-alert="" data-tono="error" role="alert">
+      <div class="app-alert__cuerpo">
+        <strong>No pudimos consultar las farmacias.</strong>
+        <p>Volvé a intentarlo en un momento.</p>
+      </div>
+    </div>
+  } @else if (visibleOffers().length === 0) {
+    <p class="farmacias__vacio">
+      Ninguna farmacia de la red publicó este medicamento hoy. Puede que alguna lo tenga sin
+      publicar su inventario: preguntá por el principio activo, que es como figura en tu receta.
+    </p>
+  } @else {
+    <!-- El mapa. Se monta recién con el diálogo abierto: Leaflet mide el
+         contenedor al montarse y adentro de un `<dialog>` cerrado mide 0×0. -->
+    @if (mapReady() && pins().length > 0) {
+      <figure class="farmacias__mapa">
+        <app-map
+          [pines]="pins()"
+          [etiqueta]="mapLabel()"
+          [centro]="mapCenter()"
+          [zoom]="mapZoom()"
+          [(seleccionado)]="selectedPharmacy"
+          (pinElegido)="focusPharmacy($event)"
+        />
+        <figcaption class="farmacias__pie">
+          Mapa de OpenStreetMap. Las distancias son en línea recta, no de recorrido: el tiempo
+          real de viaje depende del tráfico.
+        </figcaption>
+      </figure>
+    }
+
+    @if (unmappedCount() > 0) {
+      <!-- Las que no tienen coordenadas siguen en la lista: una farmacia que
+           tiene el remedio y no aparece porque nadie la geocodificó es un
+           viaje que alguien no hizo (AC-06-12). -->
+      <p class="farmacias__aviso" role="status" data-testid="pharmacies-unmapped">
+        {{ unmappedCount() }}
+        {{ unmappedCount() === 1 ? 'farmacia no está' : 'farmacias no están' }} en el mapa porque
+        todavía no publicaron su ubicación. {{ unmappedCount() === 1 ? 'Está' : 'Están' }} igual en
+        la lista, con su dirección escrita.
+      </p>
+    }
+
+    <!-- La lista, no una grilla: es la alternativa textual del mapa y el orden
+         que devolvió el servidor —stock, después distancia, después precio— es
+         el que hay que poder recorrer. -->
+    <ul class="farmacias__lista" data-testid="pharmacies-list">
+      @for (oferta of visibleOffers(); track oferta.codigo) {
+        <li
+          class="farmacia"
+          [id]="'pharmacy-offer-' + oferta.codigo"
+          [class.farmacia--elegida]="selectedPharmacy() === oferta.codigo"
+          (mouseenter)="selectedPharmacy.set(oferta.codigo)"
+        >
+          <span class="farmacia__codigo" aria-hidden="true">{{ oferta.codigo }}</span>
+
+          <div class="farmacia__datos">
+            <span class="farmacia__nombre">{{ oferta.pharmacyName }}</span>
+
+            @if (oferta.addressText !== null) {
+              <span class="farmacia__direccion">
+                {{ oferta.addressText }}@if (oferta.city !== null) {
+                  , {{ oferta.city }}
+                }
+              </span>
+            }
+
+            <span class="farmacia__detalle">
+              @if (oferta.brandName !== null) {
+                {{ oferta.brandName }}
+              }
+              @if (oferta.presentation !== null) {
+                · {{ oferta.presentation }}
+              }
+            </span>
+
+            <span class="farmacia__entrega">
+              @if (oferta.pickup) {
+                Retiro en farmacia
+              }
+              @if (oferta.homeDelivery) {
+                · Envío a domicilio
+              }
+            </span>
+
+            @if (!isLocatable(oferta)) {
+              <span class="farmacia__sin-mapa">Ubicación no disponible en el mapa</span>
+            }
+          </div>
+
+          <div class="farmacia__cierre">
+            <span class="farmacia__precio num">{{ priceOf(oferta) }}</span>
+            @if (distanceOf(oferta); as km) {
+              <span class="farmacia__km">{{ km }} en línea recta</span>
+            }
+            <app-badge [variant]="oferta.inStock ? 'success' : 'warning'">
+              {{ oferta.inStock ? 'Disponible hoy' : 'Sin stock hoy' }}
+            </app-badge>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</app-content-dialog>

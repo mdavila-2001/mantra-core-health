@@ -29,6 +29,7 @@ import { Input } from '../../atoms/input/input';
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import type { InputType } from '../../atoms/input/input.types';
 import { Progress } from '../../atoms/progress/progress';
+import { Tooltip } from '../../atoms/tooltip/tooltip';
 import { Switch } from '../../atoms/switch/switch';
 import { Select } from '../../atoms/select/select';
 import { Textarea } from '../../atoms/textarea/textarea';
@@ -94,6 +95,38 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
  *   foco y una región viva anuncia «Paso 2 de 4: Datos de contacto». Sin eso,
  *   quien navega con teclado o lector se queda en el botón «Siguiente» de una
  *   página que ya no existe.
+ *
+ * ## Lo que trajo la TAREA 04, y por qué unas cosas vienen encendidas y otras no
+ *
+ * Cinco de los siete pedidos visuales del alta no eran del alta: eran de este
+ * motor, que montan **53 plantillas de `features/`**. Tocarlo cambia 53
+ * pantallas a la vez, así que cada pieza nueva se decidió una por una, y no en
+ * bloque. La regla que se siguió: **enciende por defecto lo que no puede
+ * empeorar ninguna de las 53; entra apagado lo que cambia lo que una pantalla
+ * ya decía.**
+ *
+ * - **La punta de la barra** (`showMarker` del `app-progress`) viene
+ *   **encendida**. Es decoración pura: no toca el `role`, ni los `aria-value*`,
+ *   ni el ancho del relleno, y se apaga sola bajo `prefers-reduced-motion`.
+ *   Ninguna de las 53 depende de que la barra no tenga punta. El átomo, en
+ *   cambio, la trae apagada, porque también lo usan las subidas de archivo y
+ *   ahí serían ocho círculos latiendo a la vez.
+ * - **Los pasos interactivos** (`interactiveSteps`) vienen **encendidos**.
+ *   Agregan navegación, no la quitan: el único destino que un paso puede abrir
+ *   es uno **al que ya se llegó**, y hacia adelante se revalida lo que queda en
+ *   medio, así que no hay estado alcanzable por el stepper que no fuera
+ *   alcanzable con «Atrás» y «Siguiente». Lo que sí cambia es el orden de
+ *   tabulación —aparecen N paradas arriba del formulario— y por eso queda como
+ *   entrada: una pantalla que no lo quiera lo apaga con
+ *   `[interactiveSteps]="false"`. El `app-stepper` suelto, que montan otras
+ *   tres pantallas sin nada a dónde navegar, sigue con los pasos inertes.
+ * - **Los botones sólo-ícono** (`iconOnlyNav`) entran **apagados**. Acá sí se
+ *   quita algo: un botón que decía «Atrás» pasaría a decirlo sólo con una
+ *   flecha, y hay recorridos de navegador —y pruebas— que buscan ese texto en
+ *   53 pantallas. Lo enciende la pantalla que lo quiera.
+ * - **El ícono y la descripción por campo** no necesitaron interruptor: sólo se
+ *   dibujan cuando el campo los declara (`icono`, `description`), y hoy no los
+ *   declara ninguna pantalla que no sea la que los pidió.
  */
 @Component({
   selector: 'app-paginated-form',
@@ -114,6 +147,7 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     Stepper,
     Switch,
     Textarea,
+    Tooltip,
   ],
   templateUrl: './paginated-form.html',
   styleUrl: './paginated-form.css',
@@ -161,6 +195,30 @@ export class PaginatedForm {
    */
   readonly cancelLabel = input<string>('');
 
+  /**
+   * Los pasos del indicador son botones y llevan a su página.
+   *
+   * Encendido por defecto: ver la nota de la clase. Se apaga con
+   * `[interactiveSteps]="false"` en una pantalla que no quiera las paradas de
+   * tabulación de arriba.
+   */
+  readonly interactiveSteps = input(true, { transform: booleanAttribute });
+
+  /**
+   * «Atrás» y «Siguiente» pasan a ser botones de sólo ícono.
+   *
+   * Apagado por defecto **a propósito**: convierte texto en dibujo, y eso sí
+   * le quita algo a las 53 pantallas que montan este motor. Con él encendido
+   * los dos botones conservan su nombre accesible en castellano y suman un
+   * globo de ayuda, alcanzable con el puntero y con el foco del teclado.
+   *
+   * El botón de la **última página no se convierte nunca**: ahí no dice
+   * «Siguiente», dice «Crear cuenta» o «Revocar la aserción», y un ícono que en
+   * realidad envía un formulario esconde lo que hace —que es la mitad del
+   * motivo por el que ese botón cambia de rótulo—.
+   */
+  readonly iconOnlyNav = input(false, { transform: booleanAttribute });
+
   /** Se emite en la última página, y sólo si todo el formulario es válido. */
   readonly enviado = output<void>();
 
@@ -188,6 +246,16 @@ export class PaginatedForm {
 
   private readonly indice = signal(0);
 
+  /**
+   * Hasta dónde se llegó alguna vez. Base 0.
+   *
+   * Es lo que separa un paso «al que se puede volver» de uno «que todavía no
+   * existe». Se lleva aparte del índice porque el índice retrocede —con
+   * «Atrás», con un salto del indicador o con un envío que rebota a la página
+   * del error— y lo visitado no se desvisita.
+   */
+  private readonly visitedIndex = signal(0);
+
   readonly total = computed(() => this.paginas().length);
 
   /** Base 1, que es como se cuenta de cara a la persona. */
@@ -200,6 +268,14 @@ export class PaginatedForm {
   readonly esUltima = computed(() => this.posicion() >= this.total());
 
   readonly esPrimera = computed(() => this.indice() === 0);
+
+  /**
+   * Si el botón de continuar se dibuja como ícono.
+   *
+   * Nunca en la última página: ahí el botón dice qué hace —«Crear cuenta»— y
+   * una flecha en su lugar escondería que lo que viene es enviar.
+   */
+  protected readonly nextAsIcon = computed(() => this.iconOnlyNav() && !this.esUltima());
 
   /** Páginas terminadas sobre el total, en tanto por ciento. */
   readonly avance = computed(() =>
@@ -224,6 +300,17 @@ export class PaginatedForm {
       label: pagina.titulo,
       status:
         posicion < this.indice() ? 'complete' : posicion === this.indice() ? 'current' : 'upcoming',
+      ...(pagina.icon === undefined ? {} : { icon: pagina.icon }),
+      // Un paso al que nunca se llegó no se abre: iría salteando la validación
+      // de todo lo que hay en medio y dejaría a la persona en la última página
+      // con un botón que rebota sin explicar a dónde. Queda con `aria-disabled`
+      // —enfocable— y con el motivo escrito, no escondido.
+      ...(posicion > this.visitedIndex()
+        ? {
+            disabled: true,
+            disabledReason: 'Todavía no llegaste acá: completá los pasos anteriores.',
+          }
+        : {}),
     })),
   );
 
@@ -262,6 +349,14 @@ export class PaginatedForm {
           }
         }
       }
+    });
+
+    // Lo visitado no se desvisita. Va en un efecto y no dentro de `avanzar()`
+    // porque el índice también se mueve solo —al enviar con un error tres
+    // páginas atrás— y ahí también se estuvo en esa página.
+    effect(() => {
+      const actual = this.indice();
+      this.visitedIndex.update((maximo) => Math.max(maximo, actual));
     });
 
     // La página visible, hacia afuera. Va en un efecto y no en `avanzar()` /
@@ -335,7 +430,7 @@ export class PaginatedForm {
   }
 
   protected avanzar(): void {
-    if (!this.paginaEsValida()) return;
+    if (!this.paginaEsValida(this.indice())) return;
     if (this.esUltima()) return;
     this.indice.update((actual) => actual + 1);
   }
@@ -345,6 +440,43 @@ export class PaginatedForm {
     // que está mal en la página de la que se vuelve.
     if (this.esPrimera()) return;
     this.indice.update((actual) => actual - 1);
+  }
+
+  /**
+   * El salto que pide el indicador de pasos.
+   *
+   * Las tres reglas, en orden:
+   *
+   * - **Hacia atrás se va siempre**, sin validar, por lo mismo que «Atrás»:
+   *   volver a corregir algo no puede quedar bloqueado por lo que está mal en
+   *   la página de la que se vuelve. Lo escrito queda donde estaba —el dato
+   *   vive en el `FormGroup` de la pantalla, no acá—.
+   * - **A un paso al que nunca se llegó, no se va.** Ese control ya viene
+   *   `aria-disabled` y diciendo por qué; esto es el cierre del mismo candado
+   *   del lado de la lógica, para que no dependa de que la vista lo respete.
+   * - **Hacia adelante se revalida lo que queda en medio**, página por página,
+   *   igual que si se hubieran pulsado los «Siguiente» de a uno. En la primera
+   *   que esté mal, el salto se detiene ahí —con los errores ya pintados— en
+   *   vez de llevar a destino saltando la validación.
+   */
+  protected goToStep(destino: number): void {
+    const actual = this.indice();
+    if (destino === actual || destino < 0 || destino >= this.total()) return;
+
+    if (destino < actual) {
+      this.indice.set(destino);
+      return;
+    }
+
+    if (destino > this.visitedIndex()) return;
+
+    for (let posicion = actual; posicion < destino; posicion += 1) {
+      if (!this.paginaEsValida(posicion)) {
+        this.indice.set(posicion);
+        return;
+      }
+    }
+    this.indice.set(destino);
   }
 
   /** El botón de la última página. Valida **todo**, no sólo lo visible. */
@@ -385,9 +517,9 @@ export class PaginatedForm {
     this.avanzar();
   }
 
-  /** Marca lo de esta página y responde si se puede pasar. */
-  private paginaEsValida(): boolean {
-    const pagina = this.pagina();
+  /** Marca lo de una página y responde si se puede pasar de ella. */
+  private paginaEsValida(posicion: number): boolean {
+    const pagina = this.paginas()[posicion] ?? null;
     if (pagina === null) return true;
 
     let valida = true;

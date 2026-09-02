@@ -11,13 +11,20 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
+import { PublicNavRail } from '@shared/components/organisms/public-nav-rail/public-nav-rail';
 import { RedsatThemeToggleDirective } from '@core/redsat/redsat-theme-toggle.directive';
 
 import { RedsatDesignNotice } from './redsat-design-notice';
 
 @Component({
   selector: 'app-redsat-public-shell',
-  imports: [RedsatDesignNotice, RouterLink, RouterOutlet, RedsatThemeToggleDirective],
+  imports: [
+    PublicNavRail,
+    RedsatDesignNotice,
+    RouterLink,
+    RouterOutlet,
+    RedsatThemeToggleDirective,
+  ],
   templateUrl: './redsat-public-shell.html',
 })
 export class RedsatPublicShell {
@@ -35,7 +42,7 @@ export class RedsatPublicShell {
    * el botón de búsqueda que el teclado móvil ya dibuja para `type="search"`—,
    * que además es lo que un lector de pantalla anuncia como tal.
    *
-   * Va siempre a `/buscar` y no al vertical en el que se esté: quien escribe
+   * Va siempre a `/search` y no al vertical en el que se esté: quien escribe
    * en la caja del marco no está acotando la lista que ve, está empezando otra
    * búsqueda.
    */
@@ -44,7 +51,7 @@ export class RedsatPublicShell {
     const formulario = evento.target as HTMLFormElement;
     const q = new FormData(formulario).get('q');
     const texto = typeof q === 'string' ? q.trim() : '';
-    void this.router.navigate(['/buscar'], {
+    void this.router.navigate(['/search'], {
       queryParams: { q: texto === '' ? null : texto },
     });
   }

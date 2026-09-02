@@ -3359,6 +3359,46 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 .app-public-header__buscador { flex: 1 1 auto; max-width: 520px; min-width: 160px; }
 .app-public-header__acciones { margin-left: auto; display: flex; align-items: center; gap: var(--e2); flex: none; }
 
+/* Carril 01 · AC-01-2 — El cuerpo del marco público es rail + contenido.
+   Antes el `<main>` colgaba directo del shell (`.app-public-shell > main`), y
+   esa regla queda acá abajo por si alguna pantalla portada todavía lo hace.
+
+   Mobile-first a propósito, contra la costumbre `max-width` del resto de este
+   archivo: por debajo de 900 px el rail es una barra horizontal arriba —un
+   riel vertical de 64 px se come una quinta parte de una pantalla de 390— y
+   recién desde ahí se para. Es el mismo umbral de 900 que ya usa el resto del
+   marco: dos quiebres a 20 px de distancia dejan un rango donde el marco cree
+   una cosa y el rail otra. */
+.app-public-shell__cuerpo {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+}
+.app-public-shell__cuerpo > main { flex: 1; min-width: 0; }
+.app-public-shell__rail { flex: none; }
+
+@media (min-width: 900px) {
+  .app-public-shell__cuerpo { flex-direction: row; align-items: flex-start; }
+  /* El rail acompaña el scroll: en `/buscar/medicamentos` la lista mide varias
+     pantallas y un rail que se va con ella deja de ser navegación. Se pega
+     debajo del header, que es `sticky` y mide `--h-header`. */
+  .app-public-shell__rail {
+    position: sticky; top: var(--h-header);
+    align-self: stretch;
+    max-height: calc(100vh - var(--h-header));
+    overflow-y: auto;
+  }
+}
+
+/* AC-01-6 — El aire de arriba no puede superar al del resto de la pantalla.
+   `.app-main__inner` abre con `--e8` mientras un listado separa sus bloques
+   con `--e6`, así que el título quedaba flotando en más aire que el que hay
+   entre secciones. Se corrige **sólo dentro del marco público**: el mismo
+   selector global toca 116 pantallas con sesión que nadie reportó. */
+.app-public-shell__cuerpo > .app-main__inner { padding-top: var(--e6); }
+
+/* El enlace que quedó donde había pestañas maniquí (AC-01-4). */
+.app-page-nav { display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; }
+
 .app-public-shell > main { flex: 1; }
 
 /* Pie público: la letra chica obligatoria de la regla 2 del hogar —quién paga

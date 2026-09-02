@@ -1,0 +1,42 @@
+/* ============================================================================
+    Menú de preferencias — MOBILE-FIRST (§0.1): sólo `min-width`.
+
+    El panel lo estila `molecules/menu`; acá vive nada más que el disparador.
+    ========================================================================== */
+
+:host {
+    display: inline-flex;
+}
+
+.post-preferences__disparador {
+    /* 44×44 aunque el glifo de tres puntos mida 20: es el área táctil mínima,
+       y en una tarjeta de feed este botón queda al lado del avatar. */
+    inline-size: 44px;
+    block-size: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.post-preferences__disparador svg {
+    inline-size: 20px;
+    block-size: 20px;
+}
+
+.post-preferences__disparador:hover {
+    background: var(--bg-inset);
+    color: var(--text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .post-preferences__disparador {
+        transition: none;
+    }
+}

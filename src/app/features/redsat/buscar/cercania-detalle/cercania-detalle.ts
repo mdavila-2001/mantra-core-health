@@ -179,7 +179,7 @@ export class BuscarCercaniaDetalle {
     const q = new FormData(evento.target as HTMLFormElement).get('zona');
     const texto = typeof q === 'string' ? q.trim() : '';
     if (texto === '') return;
-    void this.router.navigate(['/buscar'], { queryParams: { q: texto } });
+    void this.router.navigate(['/search'], { queryParams: { q: texto } });
   }
 
   private consultar(lat: number, lng: number): void {

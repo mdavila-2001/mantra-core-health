@@ -129,6 +129,64 @@ describe('Progress', () => {
     });
   });
 
+  describe('la punta', () => {
+    function punta(): HTMLElement | null {
+      return host().querySelector<HTMLElement>('.progress__marker');
+    }
+
+    it('no se dibuja por defecto: el átomo también sirve a las subidas de archivo', async () => {
+      await setInputs({ value: 40 });
+
+      expect(punta()).toBeNull();
+      expect(host().classList.contains('progress--with-marker')).toBe(false);
+    });
+
+    it('con showMarker aparece en la posición del avance, y se mueve con él', async () => {
+      await setInputs({ value: 25, showMarker: true });
+
+      expect(punta()).not.toBeNull();
+      expect(punta()!.style.left).toBe('25%');
+
+      await setInputs({ value: 75 });
+      expect(punta()!.style.left).toBe('75%');
+    });
+
+    it('el riel deja de recortar cuando hay punta: si cupiera dentro no sería punta', async () => {
+      await setInputs({ value: 40, showMarker: true });
+
+      expect(host().classList.contains('progress--with-marker')).toBe(true);
+    });
+
+    it('en indeterminada no hay punta: señalaría un lugar inventado', async () => {
+      await setInputs({ value: null, showMarker: true });
+
+      expect(punta()).toBeNull();
+      expect(host().classList.contains('progress--with-marker')).toBe(false);
+    });
+
+    it('no aporta nada al lector de pantalla: el avance ya viaja en los aria-value*', async () => {
+      await setInputs({ value: 60, showMarker: true });
+
+      expect(punta()!.getAttribute('aria-hidden')).toBe('true');
+      // Encenderla no cambia una palabra de lo que se anuncia.
+      expect(host().getAttribute('aria-valuenow')).toBe('60');
+      expect(host().getAttribute('role')).toBe('progressbar');
+    });
+
+    /** El ámbar es el punto de acción único: tampoco entra por la punta. */
+    it('el brillo sale de la propia tinta, no de un color nuevo', () => {
+      const css = readFileSync(PROGRESS_CSS, 'utf8');
+      const marcador = css.slice(css.indexOf('.progress__marker'));
+
+      expect(marcador).toContain('var(--_progress-fill)');
+      expect(marcador).not.toContain('--c-amber');
+      expect(marcador).not.toContain('--brand-accent');
+      // Ningún color escrito a mano: todo sale de un token.
+      expect(marcador).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+      expect(marcador).not.toMatch(/rgba?\(/);
+    });
+  });
+
   describe('prefers-reduced-motion', () => {
     it('la animación indeterminada se ralentiza: una barra quieta se lee colgada', () => {
       const css = readFileSync(PROGRESS_CSS, 'utf8');
@@ -136,6 +194,23 @@ describe('Progress', () => {
 
       expect(bloque).toContain('animation-duration: 3s !important');
       expect(bloque).toContain('animation-iteration-count: infinite !important');
+    });
+
+    it('la punta queda QUIETA: el pulso no informa nada que el ancho no diga ya', () => {
+      const css = readFileSync(PROGRESS_CSS, 'utf8');
+      const reduce = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
+
+      expect(reduce).toContain('.progress__marker');
+      expect(reduce).toContain('animation: none !important');
+    });
+
+    it('el pulso sólo existe con movimiento permitido, no al revés', () => {
+      const css = readFileSync(PROGRESS_CSS, 'utf8');
+      const permitido = css.slice(css.indexOf('@media (prefers-reduced-motion: no-preference)'));
+
+      // La animación se DECLARA dentro de `no-preference`: así no existe
+      // siquiera para quien pidió no verla, en vez de declararse y apagarse.
+      expect(permitido).toContain('progress-marker-pulse');
     });
   });
 });

@@ -215,10 +215,19 @@ describe('rutas del armazón', () => {
    * lista escrita a mano, para que borrar una sección haga fallar esto.
    */
   it('cada dirección vieja redirige a una ruta que existe', () => {
+    // Se cuentan también las **hijas** de las rutas de primer nivel: desde
+    // TAREA-29 hay direcciones viejas que apuntan a una hija —`buscar/hospitales`
+    // manda a `/search/hospitals`—, y sin esto la comprobación las daba por
+    // inexistentes aunque el router las resuelva.
     const destinos = [
       ...APP_SECTIONS.map((s) => `/${s.path}`),
       ...hijas.filter((r) => r.redirectTo === undefined).map((r) => `/${r.path ?? ''}`),
       ...routes.filter((r) => r.redirectTo === undefined).map((r) => `/${r.path ?? ''}`),
+      ...routes.flatMap((padre) =>
+        (padre.children ?? [])
+          .filter((hija) => hija.redirectTo === undefined && (hija.path ?? '') !== '')
+          .map((hija) => `/${padre.path ?? ''}/${hija.path ?? ''}`),
+      ),
     ];
 
     // `redirectTo` admite además una función desde Angular 19; las tablas de
@@ -400,14 +409,14 @@ describe('rutas públicas del buscador', () => {
   it.each([
     // La portada: el compilado de lo último de todos los profesionales, que es
     // adonde `homeGuard` manda a quien entra sin sesión.
-    ['/publicaciones'],
-    ['/buscar'],
-    ['/buscar/profesionales'],
-    ['/buscar/medicamentos'],
-    ['/buscar/hospitales'],
-    ['/buscar/diagnostico'],
-    ['/buscar/aseguradoras'],
-    ['/buscar/mapa'],
+    ['/posts'],
+    ['/search'],
+    ['/search/practitioners'],
+    ['/search/medications'],
+    ['/search/hospitals'],
+    ['/search/diagnostics'],
+    ['/search/insurers'],
+    ['/search/map'],
   ])('%s resuelve', async (url) => {
     expect(await resuelve(url)).toBe(true);
   });
@@ -433,10 +442,46 @@ describe('rutas públicas del buscador', () => {
     expect(await resuelve('/buscar/perfil-profesional-detalle')).toBe(true);
   });
 
+  // ─── TAREA-29: las direcciones viejas siguen abriendo ──────────────────────
+
+  /**
+   * Son las URL que la gente **pega en un mensaje**. Un renombre sin redirect
+   * las convierte en 404 para todo el que las tenga guardadas.
+   */
+  it.each([
+    ['/publicaciones', '/posts'],
+    ['/buscar', '/search'],
+    ['/buscar/profesionales', '/search/practitioners'],
+    ['/buscar/medicamentos', '/search/medications'],
+    ['/buscar/hospitales', '/search/hospitals'],
+    ['/buscar/diagnostico', '/search/diagnostics'],
+    ['/buscar/aseguradoras', '/search/insurers'],
+    ['/buscar/sintomas', '/search/symptoms'],
+    ['/buscar/mapa', '/search/map'],
+  ])('%s redirige a %s', async (vieja, nueva) => {
+    await router.navigateByUrl(vieja);
+
+    expect(location.path().split('?')[0]).toBe(nueva);
+  });
+
+  /**
+   * El redirect de `buscar` es de coincidencia EXACTA, no de prefijo.
+   *
+   * Con prefijo habría cubierto las siete rutas de una línea y se habría
+   * llevado puestas las doce pantallas portadas que el archivo generado
+   * declara bajo el mismo `buscar` — que es lo que fija la prueba de retroceso
+   * de acá arriba, y por eso las dos tienen que estar verdes a la vez.
+   */
+  it('el redirect de `buscar` no se traga a las pantallas portadas', async () => {
+    await router.navigateByUrl('/buscar/seguidos-y-guardados-listado');
+
+    expect(location.path()).toBe('/buscar/seguidos-y-guardados-listado');
+  });
+
   // ─── El texto buscado viaja en la URL ──────────────────────────────────────
 
   it('`?q=` sobrevive a la navegación: una búsqueda se puede pegar en un mensaje', async () => {
-    await router.navigateByUrl('/buscar?q=cardiolog%C3%ADa');
+    await router.navigateByUrl('/search?q=cardiolog%C3%ADa');
 
     expect(location.path()).toContain('q=cardiolog');
   });

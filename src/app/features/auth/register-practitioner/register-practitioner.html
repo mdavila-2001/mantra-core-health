@@ -54,6 +54,7 @@
             [form]="formProfesional"
             label="Crear cuenta"
             submitLabel="Crear cuenta"
+            [iconOnlyNav]="true"
             [pending]="isSubmitting()"
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
@@ -67,23 +68,27 @@
               </p>
             </ng-template>
 
+            <!-- La localidad de residencia: el mismo mapa de departamentos y
+                 el mismo select acotado que el alta de paciente
+                 (`app-location-picker`). Acá es opcional, así que un catálogo
+                 caído no frena el alta: se avisa y se sigue (AC-05-15). -->
             <ng-template appCampoPersonalizado="municipio">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de municipios.
+                  No pudimos traer el catálogo de ciudades. Podés seguir sin esto.
                   <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
                     Reintentar
                   </button>
                 </p>
               } @else {
-                <app-tree-select
-                  data-testid="registro-pro-municipio"
-                  [groups]="arbolMunicipios()"
-                  [(value)]="municipioProfesional"
-                  placeholder="Sin especificar"
-                  dialogTitle="¿Dónde vivís?"
-                  searchPlaceholder="Buscar municipio o departamento…"
-                  emptyMessage="Ningún municipio coincide con esa búsqueda."
+                <app-location-picker
+                  testId="registration-practitioner-residence"
+                  [ramas]="ramasMunicipios()"
+                  [value]="municipioProfesional()"
+                  (valueChange)="municipioProfesional.set($event)"
+                  mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
+                  municipalityLabel="Localidad de residencia (opcional)"
+                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
                 />
               }
             </ng-template>

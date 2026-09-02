@@ -93,6 +93,13 @@ export const NAV_ICON_NAMES = [
   'sliders',
   'history',
   'teach',
+
+  // Dirección: los dos únicos que NO nombran una sección. Los pide el motor de
+  // formularios por partes para sus botones «Atrás» y «Siguiente» sin texto.
+  // El porqué está donde se dibujan: `atoms/nav-icon/nav-icon.types.ts`.
+  'arrow-left',
+  'arrow-right',
+  'remove',
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 

@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type { PublicFeedPost } from '@core/data-access/public-directory/public-directory.types';
+import { ToastService } from '@shared/components/molecules/toast/toast.service';
 import { inicialesDe } from '@shared/text/iniciales';
-import { PublicacionPost } from '../../../public-profile/publicacion-post/publicacion-post';
+import { ReportPost } from '../../../feed/report-post/report-post';
+import { PublicPostCard } from '../../../public-profile/public-post-card/public-post-card';
 
 /** En qué estado está la pantalla, para el `@switch` de la plantilla. */
 type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
@@ -29,13 +31,65 @@ type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
  */
 @Component({
   selector: 'app-feed-publicaciones',
-  imports: [RouterLink, PublicacionPost],
+  imports: [ReportPost, RouterLink, PublicPostCard],
   templateUrl: './feed-publicaciones.html',
   styleUrl: './feed-publicaciones.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedPublicaciones {
   private readonly directorio = inject(PublicDirectoryClient);
+  private readonly avisos = inject(ToastService);
+  private readonly router = inject(Router);
+
+  /* ---- las tres acciones de dominio del menú (AC-01-15) ------------------ */
+
+  /**
+   * Qué publicación se está denunciando, o `null`.
+   *
+   * El formulario de denuncia reemplaza a la tarjeta en su lugar de la lista,
+   * como ya hace el muro con sesión (`features/feed/feed.html`): abrirlo en un
+   * modal sacaría de contexto de qué publicación se está hablando.
+   */
+  protected readonly denunciando = signal<string | null>(null);
+
+  protected abrirDenuncia(postId: string): void {
+    this.denunciando.set(postId);
+  }
+
+  protected cerrarDenuncia(): void {
+    this.denunciando.set(null);
+  }
+
+  /**
+   * «No ver más este tipo de publicaciones» — **sin destino todavía**.
+   *
+   * No hay dónde guardarlo: no existe tabla de preferencias de feed. Lo más
+   * cercano es `community.user_blocks`, que bloquea al **autor** y no es lo
+   * mismo, y `community.topics` / `content_hashtags`, que etiquetan el
+   * contenido. Cuál de esos tres es «este tipo» es la pregunta abierta P-01-3
+   * de la ficha, y hasta que se responda no se modela nada.
+   *
+   * Se avisa en vez de callar: un ítem de menú que no hace nada al tocarlo se
+   * lee como una aplicación rota, y esconderlo iría contra AC-01-15, que exige
+   * las siete entradas.
+   */
+  protected pedirOcultar(): void {
+    this.avisos.info('Todavía no podés ajustar qué tipo de publicaciones ves. Está en camino.');
+  }
+
+  /**
+   * «Contactarme con este doctor» — **sin destino definido** (P-01-1).
+   *
+   * El pedido no dice por dónde: el chat interno (`community/conversations`,
+   * que existe), una solicitud de consulta, o el teléfono de la ficha. Son tres
+   * implementaciones distintas y elegir una por cuenta propia es decidir el
+   * producto. Mientras tanto se manda a la ficha del profesional, que es donde
+   * están sus vías de contacto reales, y se dice que es eso.
+   */
+  protected pedirContacto(slug: string): void {
+    this.avisos.info('Sus vías de contacto están en su perfil.');
+    void this.router.navigate(['/p', slug]);
+  }
 
   protected readonly publicaciones = signal<readonly PublicFeedPost[]>([]);
   protected readonly cursor = signal<string | null>(null);

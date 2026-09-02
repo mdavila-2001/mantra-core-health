@@ -230,6 +230,11 @@ export class IamClient {
         ? {}
         : { professionalTitle: registration.professionalTitle }),
       ...(registration.phone === undefined ? {} : { phone: registration.phone }),
+      // El sexo al nacer, que el alta pregunta desde AC-05-7. El DTO del
+      // backend lo aceptaba desde siempre; lo que no existía era ni la pregunta
+      // ni este renglón — que es exactamente el descarte en silencio contra el
+      // que avisa el comentario de arriba.
+      ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
     });
   }
 

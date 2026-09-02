@@ -114,7 +114,7 @@ describe('mapeador de resultados públicos', () => {
 
   /** Un medicamento no es un perfil y no tiene ficha: no puede llevar a `/p/`. */
   it('un medicamento no lleva a una ficha que no existe', () => {
-    expect(rutaDeFicha(fila({ kind: 'MEDICATION', slug: 'losartan' }))).toBe('/buscar/medicamentos');
+    expect(rutaDeFicha(fila({ kind: 'MEDICATION', slug: 'losartan' }))).toBe('/search/medications');
   });
 
   // ─── Lo que no se inventa ──────────────────────────────────────────────────

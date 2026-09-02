@@ -54,8 +54,8 @@ export const authGuard: CanActivateFn = tracedGuard('authGuard', () => {
  * superficie pública es la puerta de entrada, el login es lo que pide una
  * acción concreta.
  *
- * El destino sin sesión es `/publicaciones` —el compilado de lo último que
- * escribieron los profesionales— y no `/buscar`. Quien entra por primera vez no
+ * El destino sin sesión es `/posts` —el compilado de lo último que
+ * escribieron los profesionales— y no `/search`. Quien entra por primera vez no
  * trae el nombre de un médico en la cabeza, así que un buscador le pide de
  * entrada justamente el dato que no tiene; un feed se lee sin saber nada de
  * antemano, y de cada publicación se llega a la ficha de quien la escribió.
@@ -71,5 +71,5 @@ export const homeGuard: CanActivateFn = tracedGuard('homeGuard', () => {
   const session = inject(SessionStore);
   const router = inject(Router);
 
-  return router.createUrlTree([session.isAuthenticated() ? '/dashboard' : '/publicaciones']);
+  return router.createUrlTree([session.isAuthenticated() ? '/dashboard' : '/posts']);
 });

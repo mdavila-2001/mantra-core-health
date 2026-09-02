@@ -355,6 +355,29 @@ import type { NavIconName } from './nav-icon.types';
           <path d="M21.2 8v5.2" />
         }
 
+        @case ('arrow-left') {
+          <!-- Flecha a la izquierda: «Atrás» del motor de formularios. Los dos
+               únicos glifos del set que no nombran una sección; el porqué está
+               en nav-icon.types.ts. Asta larga y punta corta, misma caja de
+               24 y mismo aire a los lados que el resto. -->
+          <path d="M19.6 12H4.4" />
+          <path d="m10.6 5.8-6.2 6.2 6.2 6.2" />
+        }
+        @case ('remove') {
+          <!-- Un menos dentro de un aro: «sacá esto de la lista». No es una
+               papelera —no se borra nada— ni una cruz, que a este tamaño se
+               confunde con «cerrar». El aro le da el mismo peso visual que el
+               resto del set, que casi todo dibuja una figura cerrada. -->
+          <circle cx="12" cy="12" r="8.2" />
+          <path d="M8.4 12h7.2" />
+        }
+        @case ('arrow-right') {
+          <!-- Flecha a la derecha: «Siguiente». Espejo exacto de arrow-left,
+               para que los dos botones del mismo par pesen igual. -->
+          <path d="M4.4 12h15.2" />
+          <path d="m13.4 5.8 6.2 6.2-6.2 6.2" />
+        }
+
         @default {
           <!-- Casita con puerta: el punto de partida, y el que se dibuja
                cuando el nombre no está en el set. Nunca se deja un hueco donde

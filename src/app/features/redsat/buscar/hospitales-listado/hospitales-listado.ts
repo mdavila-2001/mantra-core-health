@@ -5,10 +5,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
-import { aCentro } from '../public-result.mapper';
 import { BusquedaPublica } from '@core/data-access/public-directory/public-search.store';
+import { CardDetailPanel } from '@shared/components/molecules/card-detail-panel/card-detail-panel';
 
 import { CentroCard } from '../centro-card/centro-card';
+import { toFacilityCard, type FacilityCard } from './facility-card.mapper';
+import { FacilityDirectionsDialog } from './facility-directions-dialog/facility-directions-dialog';
 
 /**
  * Las ciudades que se ofrecen como chip.
@@ -68,9 +70,9 @@ const CIUDADES = [
  */
 @Component({
   selector: 'app-redsat-buscar-hospitales-listado',
-  imports: [RouterLink, CentroCard],
+  imports: [CardDetailPanel, CentroCard, FacilityDirectionsDialog, RouterLink],
   templateUrl: './hospitales-listado.html',
-  styleUrl: './hospitales-listado.css',
+  styleUrls: ['./hospitales-listado.css', '../centro-card/centro-grid.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuscarHospitalesListado {
@@ -95,7 +97,18 @@ export class BuscarHospitalesListado {
     this.directorio.searchOrganizations(filtros),
   );
 
-  protected readonly centros = computed(() => this.busqueda.resultados().map(aCentro));
+  protected readonly centros = computed<readonly FacilityCard[]>(() =>
+    this.busqueda.resultados().map(toFacilityCard),
+  );
+
+  /**
+   * El establecimiento cuyo «Cómo llegar» está abierto; `null` si ninguno.
+   *
+   * Uno solo a la vez y colgado de la pantalla, no de la tarjeta: el diálogo es
+   * modal, y montar veinticinco mapas de Leaflet —uno por tarjeta, apagados—
+   * descarga el chunk veinticinco veces para no mostrar nada.
+   */
+  protected readonly comoLlegar = signal<FacilityCard | null>(null);
 
   /**
    * El recuento de arriba de la grilla.
@@ -118,6 +131,15 @@ export class BuscarHospitalesListado {
   /** Escribir lleva el texto a `?q=`; el cambio de la URL dispara la lectura. */
   protected alEscribir(valor: string): void {
     this.busqueda.escribir(valor);
+  }
+
+  /** Abre «Cómo llegar» del establecimiento elegido. */
+  protected abrirComoLlegar(centro: FacilityCard): void {
+    this.comoLlegar.set(centro);
+  }
+
+  protected cerrarComoLlegar(): void {
+    this.comoLlegar.set(null);
   }
 
   /**

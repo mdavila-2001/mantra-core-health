@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
+import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { RegisterPractitioner } from './register-practitioner';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 
@@ -126,6 +127,7 @@ describe('RegisterPractitioner', () => {
       professionalTitle: extra.professionalTitle ?? '',
       phone: extra.phone ?? '',
       birthDate: null,
+      sexAtBirth: null,
       licenseIssueDate: null,
       issuerAdministrativeAreaConceptId: null,
       specialtyPrimary: extra.specialtyPrimary ?? '',
@@ -163,321 +165,173 @@ describe('RegisterPractitioner', () => {
   }
 
   /**
-   * **La red de seguridad de la mudanza.**
+   * **El orden del recorrido, y qué pide cada bloque (AC-05-1, AC-05-2).**
    *
-   * El alta de profesional vivía dentro de `register-patient` y salió de ahí
-   * tal cual: mismo orden, mismos campos, mismos rótulos y mismos `data-testid`.
-   * Este volcado se capturó CORRIENDO el componente viejo antes de moverlo, así
-   * que si la mudanza cambió algo sin querer, falla acá y dice exactamente qué.
+   * Acá vivía un volcado literal de las seis páginas, capturado corriendo el
+   * componente **antes** de que el alta de profesional saliera de
+   * `register-patient`: era la red de seguridad de esa mudanza, y su propio
+   * comentario decía que «cuando la tarjeta 05 reordene los campos, este
+   * literal se actualiza a propósito y ese diff es la revisión del
+   * reordenamiento». Esto es ese momento.
    *
-   * No es un test que haya que preservar para siempre: cuando la tarjeta 05
-   * reordene los campos (F2), este literal se actualiza a propósito y **ese
-   * diff es la revisión del reordenamiento**.
+   * Lo que lo reemplaza no comprueba menos, comprueba **otra cosa**: el volcado
+   * fijaba que nada hubiera cambiado; estas pruebas fijan lo que el propietario
+   * pidió que fuera cierto —el orden de los bloques, qué campos trae cada uno,
+   * el tope de cuatro y los tres bloques que NO se preguntan porque no tienen
+   * dónde guardarse—. Un volcado literal de nueve páginas se actualiza pegando
+   * lo que salga, y entonces deja de revisar nada.
    */
-  it('declara las seis páginas tal como estaban antes de separarse del alta de paciente', () => {
-    expect(estructuraDeclarada()).toEqual([
-      {
-        clave: 'nombre',
-        titulo: '¿Cómo te llamás?',
-        hint: 'Como figura en tu documento. Si no tenés alguno, dejalo vacío.',
-        campos: [
-          {
-            key: 'name',
-            control: 'text',
-            label: 'Nombre',
-            required: true,
-            testId: 'registro-pro-nombre',
-            ancho: 'mitad',
-            hint: null,
-            placeholder: 'Ana',
-            autocomplete: 'given-name',
-            icono: null,
-            mensajeDeError: 'Ingresá tu nombre.',
-          },
-          {
-            key: 'middleName',
-            control: 'text',
-            label: 'Segundo nombre',
-            required: false,
-            testId: 'registro-pro-segundo-nombre',
-            ancho: 'mitad',
-            hint: 'Si no tenés, dejalo vacío.',
-            placeholder: 'Lucía',
-            autocomplete: 'additional-name',
-            icono: null,
-            mensajeDeError: null,
-          },
-          {
-            key: 'lastName',
-            control: 'text',
-            label: 'Apellido paterno',
-            required: true,
-            testId: 'registro-pro-apellido-paterno',
-            ancho: 'mitad',
-            hint: null,
-            placeholder: 'Rojas',
-            autocomplete: 'family-name',
-            icono: null,
-            mensajeDeError: 'Ingresá tu apellido paterno.',
-          },
-          {
-            key: 'motherLastName',
-            control: 'text',
-            label: 'Apellido materno',
-            required: false,
-            testId: 'registro-pro-apellido-materno',
-            ancho: 'mitad',
-            hint: 'Si no llevás, dejalo vacío.',
-            placeholder: 'Paz',
-            autocomplete: 'family-name',
-            icono: null,
-            mensajeDeError: null,
-          },
-        ],
-      },
-      {
-        clave: 'documento',
-        titulo: 'Tus datos',
-        hint: 'Todo opcional: se guarda en tu perfil profesional.',
-        campos: [
-          {
-            key: 'nationalId',
-            control: 'text',
-            label: 'Cédula de identidad (opcional)',
-            required: false,
-            testId: 'registro-pro-documento',
-            ancho: 'mitad',
-            hint: 'Se guarda como tu documento oficial.',
-            placeholder: '1234567',
-            autocomplete: 'off',
-            icono: 'patients',
-            mensajeDeError: 'Letras, números, punto y guion.',
-          },
-          {
-            key: 'issuerAdministrativeAreaConceptId',
-            control: 'select',
-            label: 'Departamento de emisión (opcional)',
-            required: false,
-            testId: 'registro-pro-departamento-ci',
-            ancho: 'mitad',
-            hint: 'El «SC», «LP»... de tu cédula.',
-            placeholder: 'Sin especificar',
-            autocomplete: null,
-            icono: null,
-            mensajeDeError: null,
-          },
-          {
-            key: 'birthDate',
-            control: 'date',
-            label: 'Fecha de nacimiento (opcional)',
-            required: false,
-            testId: null,
-            ancho: 'completo',
-            hint: null,
-            placeholder: null,
-            autocomplete: null,
-            icono: null,
-            mensajeDeError: null,
-          },
-          {
-            key: 'municipio',
-            control: 'custom',
-            label: '¿Dónde vivís? (opcional)',
-            required: false,
-            testId: null,
-            ancho: 'completo',
-            hint: 'Buscá tu municipio, o abrí tu departamento.',
-            placeholder: null,
-            autocomplete: null,
-            icono: null,
-            mensajeDeError: null,
-          },
-        ],
-      },
-      {
-        clave: 'habilitacion',
-        titulo: 'Tu habilitación para ejercer',
-        hint: 'Sin matrícula y número de colegio no podemos darte de alta.',
-        campos: [
-          {
-            key: 'licenseNumber',
-            control: 'text',
-            label: 'Número de matrícula',
-            required: true,
-            testId: 'registro-pro-matricula',
-            ancho: 'mitad',
-            hint: 'La que te habilita a ejercer, la del registro del Ministerio.',
-            placeholder: 'MP-12345',
-            autocomplete: 'off',
-            icono: 'shield',
-            mensajeDeError: 'Ingresá tu matrícula profesional.',
-          },
-          {
-            key: 'credentialNumber',
-            control: 'text',
-            label: 'Número de credencial',
-            required: true,
-            testId: 'registro-pro-credencial',
-            ancho: 'mitad',
-            hint: 'El de tu colegio profesional.',
-            placeholder: 'TIT-6789',
-            autocomplete: 'off',
-            icono: 'briefcase',
-            mensajeDeError: 'Ingresá el número de tu colegio.',
-          },
-          {
-            key: 'regulatoryAuthority',
-            control: 'select',
-            label: 'Autoridad reguladora (opcional)',
-            required: false,
-            testId: 'registro-pro-autoridad',
-            ancho: 'completo',
-            hint: 'Quién emitió tu matrícula.',
-            placeholder: 'Sin especificar',
-            autocomplete: null,
-            icono: null,
-            mensajeDeError: null,
-          },
-          {
-            key: 'licenseIssueDate',
-            control: 'date',
-            label: 'Fecha de inscripción de la matrícula (opcional)',
-            required: false,
-            testId: null,
-            ancho: 'completo',
-            hint: 'Cuándo te registraste, no cuándo vence.',
-            placeholder: null,
-            autocomplete: null,
-            icono: null,
-            mensajeDeError: null,
-          },
-        ],
-      },
-      {
-        clave: 'practica',
-        titulo: 'Tu práctica',
-        hint: 'Lo que van a ver tus pacientes. Podés completarlo después.',
-        campos: [
-          {
-            key: 'professionalTitle',
-            control: 'select',
-            label: 'Título profesional (opcional)',
-            required: false,
-            testId: 'registro-pro-titulo',
-            ancho: 'completo',
-            hint: 'Cómo aparecés en tu ficha. Al elegirlo, la lista de especialidades y el colegio se acomodan solos.',
-            placeholder: 'Sin especificar',
-            autocomplete: null,
-            icono: null,
-            mensajeDeError: null,
-          },
-          {
-            key: 'phone',
-            control: 'tel',
-            label: 'Teléfono (opcional)',
-            required: false,
-            testId: 'registro-pro-telefono',
-            ancho: 'completo',
-            hint: 'Elegí el país si tu número no es de Bolivia.',
-            placeholder: null,
-            autocomplete: 'tel',
-            icono: 'phone',
-            mensajeDeError: 'El número está incompleto para el país elegido.',
-          },
-        ],
-      },
-      {
-        clave: 'especialidades',
-        titulo: 'Tus especialidades',
-        hint: 'Hasta tres. Son lo que un paciente busca cuando necesita a alguien como vos.',
-        campos: [
-          {
-            key: 'specialtyPrimary',
-            control: 'select',
-            label: 'Especialidad principal (opcional)',
-            required: false,
-            testId: 'registro-pro-especialidad-1',
-            ancho: 'completo',
-            hint: 'La que responde «¿de qué sos?».',
-            placeholder: 'Sin especialidad',
-            autocomplete: null,
-            icono: null,
-            mensajeDeError: null,
-          },
-          {
-            key: 'specialtySecond',
-            control: 'select',
-            label: 'Segunda especialidad (opcional)',
-            required: false,
-            testId: 'registro-pro-especialidad-2',
-            ancho: 'completo',
-            hint: null,
-            placeholder: 'Sin especificar',
-            autocomplete: null,
-            icono: null,
-            mensajeDeError: null,
-          },
-          {
-            key: 'specialtyThird',
-            control: 'select',
-            label: 'Tercera especialidad (opcional)',
-            required: false,
-            testId: 'registro-pro-especialidad-3',
-            ancho: 'completo',
-            hint: null,
-            placeholder: 'Sin especificar',
-            autocomplete: null,
-            icono: null,
-            mensajeDeError: null,
-          },
-        ],
-      },
-      {
-        clave: 'acceso',
-        titulo: 'Tu acceso',
-        hint: 'Con este correo y esta contraseña vas a iniciar sesión.',
-        campos: [
-          {
-            key: 'email',
-            control: 'email',
-            label: 'Correo profesional',
-            required: true,
-            testId: 'registro-pro-correo',
-            ancho: 'completo',
-            hint: 'Con este correo vas a iniciar sesión.',
-            placeholder: 'matricula@hospital.bo',
-            autocomplete: 'username',
-            icono: 'mail',
-            mensajeDeError: 'Ingresá un correo válido.',
-          },
-          {
-            key: 'password',
-            control: 'password',
-            label: 'Contraseña',
-            required: true,
-            testId: 'registro-pro-password',
-            ancho: 'completo',
-            hint: 'Al menos 8 caracteres.',
-            placeholder: 'Tu contraseña',
-            autocomplete: 'new-password',
-            icono: 'lock',
-            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
-          },
-        ],
-      },
-    ]);
+  describe('el recorrido del alta', () => {
+    /** Los campos de una página, por su clave. */
+    function camposDe(clave: string): readonly string[] | undefined {
+      return component
+        .paginasProfesional()
+        .find((pagina) => pagina.clave === clave)
+        ?.campos.map((campo) => campo.key);
+    }
+
+    it('presenta los bloques en el orden pedido (AC-05-1)', () => {
+      expect(component.paginasProfesional().map((pagina) => pagina.clave)).toEqual([
+        'name',
+        'document',
+        'profile',
+        'access',
+        'residence',
+        'credentials',
+        'practice',
+        'specialties',
+      ]);
+    });
+
+    it('cada bloque trae los campos que le tocan, en su orden', () => {
+      expect(camposDe('name')).toEqual(['name', 'middleName', 'lastName', 'motherLastName']);
+      expect(camposDe('document')).toEqual([
+        'nationalId',
+        'issuerAdministrativeAreaConceptId',
+      ]);
+      // AC-05-7: el sexo entra al formulario, y va antes de la fecha de
+      // nacimiento, como pide el orden.
+      expect(camposDe('profile')).toEqual(['sexAtBirth', 'birthDate']);
+      expect(camposDe('access')).toEqual(['phone', 'email', 'password']);
+      expect(camposDe('residence')).toEqual(['municipio']);
+      expect(camposDe('credentials')).toEqual([
+        'licenseNumber',
+        'credentialNumber',
+        'regulatoryAuthority',
+        'licenseIssueDate',
+      ]);
+      expect(camposDe('practice')).toEqual(['professionalTitle']);
+      expect(camposDe('specialties')).toEqual([
+        'specialtyPrimary',
+        'specialtySecond',
+        'specialtyThird',
+      ]);
+    });
+
+    /**
+     * Lo que el orden pide y esta pantalla **no** pregunta, porque no tiene
+     * dónde guardarse: segundo teléfono y segundo correo (AC-05-6), zona,
+     * dirección y GPS (AC-05-8), la organización (AC-05-9/-10/-11), las tres
+     * matrículas por separado (AC-05-5), universidad y otros títulos
+     * (AC-05-13).
+     *
+     * La prueba está para que aparezcan **con su destino**, no de contrabando:
+     * el día que alguien agregue el campo sin la columna, esto se pone rojo y
+     * dice cuál.
+     */
+    it('no pregunta lo que no tiene dónde guardarse', () => {
+      const claves = component
+        .paginasProfesional()
+        .flatMap((pagina) => pagina.campos.map((campo) => campo.key));
+
+      for (const ausente of [
+        'workPhone',
+        'workEmail',
+        'homeZone',
+        'homeAddressLines',
+        'organizationName',
+        'healthFacilityConceptId',
+        'ministryLicenseNumber',
+        'sedesLicenseNumber',
+        'collegeLicenseNumber',
+        'issuingInstitutionText',
+        'otherCredentials',
+      ]) {
+        expect(claves, `«${ausente}» no tiene dónde guardarse todavía`).not.toContain(
+          ausente,
+        );
+      }
+    });
+
+    it('cada página declara su ícono', () => {
+      for (const pagina of component.paginasProfesional()) {
+        expect(pagina.icon, `«${pagina.titulo}» no declara ícono`).toBeDefined();
+      }
+    });
+
+    /**
+     * AC-05-16: sin habilitación no hay alta, y se dice **en el campo**, antes
+     * del envío. Los dos números siguen siendo los únicos obligatorios del
+     * recorrido además del correo y la contraseña.
+     */
+    it('la habilitación sigue siendo obligatoria y lo dice en el campo', () => {
+      const habilitacion = component
+        .paginasProfesional()
+        .find((pagina) => pagina.clave === 'credentials');
+
+      const obligatorios = habilitacion?.campos
+        .filter((campo) => campo.required === true)
+        .map((campo) => campo.key);
+      expect(obligatorios).toEqual(['licenseNumber', 'credentialNumber']);
+      for (const campo of habilitacion?.campos ?? []) {
+        if (campo.required !== true) continue;
+        expect(campo.mensajeDeError, `«${campo.key}» no dice por qué hace falta`).toBeTruthy();
+      }
+    });
   });
 
-  it('tiene seis páginas, ninguna de más de cuatro preguntas', () => {
-    // Seis y no cinco porque el límite es de campos por página, no de
-    // páginas: apretar seis en una para tener una página menos es lo que
-    // este motor vino a deshacer. La sexta son las especialidades, que
-    // entraron con página propia por esa misma regla.
+  /**
+   * Lo que esta pantalla **declara**, frente a lo que le llega de la red.
+   *
+   * El rótulo, el control, el ancho y el glifo los decide la pantalla; las
+   * `options` salen del catálogo y cambian con lo que responda la API, así que
+   * no se fijan acá. Los dos casos que importan:
+   *
+   * - un rótulo vacío es siempre un campo **proyectado**: el motor le reserva
+   *   el sitio y esta pantalla pone adentro lo que el motor no sabe dibujar;
+   * - un glifo sale siempre del **set cerrado** del nav. Un nombre fuera del
+   *   set no falla: dibuja el ícono neutro y calla, que es el peor fallo
+   *   posible —se ve bien y miente—.
+   */
+  it('declara rótulo y control por campo, y sus glifos salen del set del nav', () => {
+    const campos = estructuraDeclarada().flatMap((pagina) => pagina.campos);
+    expect(campos.length).toBeGreaterThan(0);
+
+    for (const campo of campos) {
+      if (campo.label === '') {
+        expect(campo.control, `«${campo.key}» no tiene rótulo y no es proyectado`).toBe(
+          'custom',
+        );
+      }
+      if (campo.icono === null) continue;
+      expect(NAV_ICON_NAMES, `«${campo.key}» usa un glifo que no está en el set`).toContain(
+        campo.icono,
+      );
+    }
+  });
+
+  it('tiene ocho páginas, ninguna de más de cuatro preguntas', () => {
+    // Ocho y no menos porque el límite es de **campos por página**, no de
+    // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
+    // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`).
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(6);
+    expect(paginas.length).toBe(8);
     for (const pagina of paginas) {
-      expect(pagina.campos.length).toBeLessThanOrEqual(4);
+      expect(
+        pagina.campos.length,
+        `«${pagina.titulo}» pide ${pagina.campos.length}`,
+      ).toBeLessThanOrEqual(4);
     }
   });
 
@@ -709,6 +563,39 @@ describe('RegisterPractitioner', () => {
     req.flush(RESPUESTA_PRO);
   });
 
+  /**
+   * AC-05-7. El DTO aceptaba `sexAtBirth` desde siempre —lo declara
+   * `RegisterPractitionerDto`—; lo que faltaba era **preguntarlo**. Sigue
+   * siendo opcional, así que vacío no viaja: `forbidNonWhitelisted` rechaza lo
+   * que sobra, y una cadena vacía no es lo mismo que la ausencia del campo.
+   */
+  it('manda el sexo cuando se eligió', () => {
+    completarProfesional();
+    component.formProfesional.controls.sexAtBirth.setValue('FEMALE');
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.sexAtBirth).toBe('FEMALE');
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  /**
+   * Vacío no viaja: `forbidNonWhitelisted` rechaza lo que sobra, y una cadena
+   * vacía no es lo mismo que la ausencia del campo.
+   */
+  it('no manda el sexo si no se eligió: sigue siendo opcional', () => {
+    completarProfesional();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
+      'sexAtBirth',
+    );
+
+    req.flush(RESPUESTA_PRO);
+  });
+
   it('exige matrícula y credencial: sin habilitación no hay alta', () => {
     completarProfesional();
     component.formProfesional.patchValue({ licenseNumber: '', credentialNumber: '' });
@@ -759,7 +646,7 @@ describe('RegisterPractitioner', () => {
       fixture.detectChanges();
 
       expect(component.catalogoMunicipiosCaido()).toBe(true);
-      expect(component.arbolMunicipios()).toEqual([]);
+      expect(component.ramasMunicipios()).toEqual([]);
       expect(navegaciones).toEqual([]);
     });
   });

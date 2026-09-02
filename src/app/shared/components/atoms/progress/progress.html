@@ -1,3 +1,10 @@
 <!-- El relleno es decoración: lo que se anuncia son los aria-value* del host.
      En indeterminada el ancho no significa nada, lo dice la animación. -->
 <span class="progress__fill" [style.width]="isIndeterminate() ? null : fillWidth()"></span>
+
+<!-- La punta: el mismo dato que el relleno, dicho como posición en vez de como
+     largo. `aria-hidden` porque no agrega información: el avance ya viaja en
+     los `aria-value*` del host. -->
+@if (markerVisible()) {
+  <span class="progress__marker" aria-hidden="true" [style.left]="fillWidth()"></span>
+}

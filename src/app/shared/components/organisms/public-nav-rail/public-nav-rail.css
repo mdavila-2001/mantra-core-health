@@ -1,0 +1,137 @@
+/* ============================================================================
+    Rail público — MOBILE-FIRST (§0.1): sólo `min-width`.
+
+    La base es la **barra horizontal** de arriba, que es lo que entra en un
+    teléfono: un rail vertical de 64 px se come una quinta parte del ancho de
+    una pantalla de 390 px. Desde 900 px se para y se vuelve rail de íconos
+    pegado al margen izquierdo, que es lo que pide la tarea.
+
+    900 px es el mismo umbral que ya usa `styles/redsat.css` para reacomodar el
+    marco público. Coincidir es deliberado: dos quiebres distintos a 20 px de
+    distancia producen un rango donde el marco cree una cosa y el rail otra.
+    ========================================================================== */
+
+:host {
+    display: block;
+    font-family: var(--font-body);
+}
+
+.public-nav-rail {
+    display: flex;
+    flex-direction: row;
+    gap: var(--sp-2);
+    /* En móvil la barra desborda a lo ancho antes que envolverse en dos filas:
+       envolverse empuja el contenido de la página hacia abajo de golpe. */
+    overflow-x: auto;
+    /* La barra scrollea; la PÁGINA no. AC-01-6 / AC-02-4 / AC-06-18. */
+    overscroll-behavior-x: contain;
+    padding: var(--sp-2);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+}
+
+.public-nav-rail__group {
+    display: flex;
+    flex-direction: row;
+    gap: var(--sp-1);
+}
+
+/* Los grupos se separan con una línea, no sólo con aire: en la barra
+   horizontal el aire solo no se lee como corte. */
+.public-nav-rail__group + .public-nav-rail__group {
+    padding-inline-start: var(--sp-2);
+    border-inline-start: 1px solid var(--border-default);
+}
+
+.public-nav-rail__list {
+    display: flex;
+    flex-direction: row;
+    gap: var(--sp-1);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.public-nav-rail__link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    /* 44×44 en cualquier ancho, aunque el glifo mida 20. */
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    white-space: nowrap;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.public-nav-rail__link:hover {
+    background: var(--bg-inset);
+    color: var(--text-primary);
+}
+
+/* La página actual se marca con fondo Y con peso: nunca sólo con color. */
+.public-nav-rail__link.is-active {
+    background: var(--st-primary-bg);
+    color: var(--st-primary-fg);
+    font-weight: 600;
+}
+
+.public-nav-rail__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.public-nav-rail__icon svg {
+    inline-size: var(--sp-5);
+    block-size: var(--sp-5);
+}
+
+/* ---- rail vertical, desde tablet ancha ------------------------------------ */
+
+@media (min-width: 900px) {
+    .public-nav-rail {
+        flex-direction: column;
+        gap: var(--sp-4);
+        overflow-x: visible;
+        padding: var(--sp-4) var(--sp-2);
+        border-bottom: 0;
+        border-inline-end: 1px solid var(--border-default);
+        block-size: 100%;
+    }
+
+    .public-nav-rail__group,
+    .public-nav-rail__list {
+        flex-direction: column;
+    }
+
+    .public-nav-rail__group + .public-nav-rail__group {
+        padding-inline-start: 0;
+        padding-block-start: var(--sp-4);
+        border-inline-start: 0;
+        border-block-start: 1px solid var(--border-default);
+    }
+
+    .public-nav-rail__link {
+        padding: var(--sp-2);
+    }
+
+    /* Acá el nombre lo da el tooltip: el rótulo escrito sobraría y obligaría a
+       un rail de 200 px. El `aria-label` del enlace no se toca. */
+    .public-nav-rail__label {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .public-nav-rail__link {
+        transition: none;
+    }
+}
