@@ -139,22 +139,58 @@
   color: var(--text-secondary);
 }
 
-/* La viñeta es un punto de marca dibujado a mano: el `disc` del navegador es
-   negro y grande, y en un texto de 13px se ve como una mancha. */
+/* ==========================================================================
+    Los cuatro puntos del sello: nodos unidos por un riel.
+
+    Sigue siendo una `<ul>` de `<li>` de verdad —un lector de pantalla tiene que
+    anunciar «lista de 4 elementos»—: el riel y los nodos son `::before` y
+    `::after`, contenido generado que no entra en el árbol de accesibilidad. Si
+    esto se hubiera armado con `<div>` y líneas, la lista habría dejado de ser
+    una lista para ganar un dibujo.
+
+    El nodo es un aro y no un punto lleno: hueco, el riel se lee pasando POR
+    detrás y las cuatro promesas se leen como un recorrido —una detrás de otra,
+    en orden— y no como cuatro frases sueltas. El último no tiene riel: no lleva
+    a ninguna parte.
+   ========================================================================== */
 .ayuda__lista li {
   position: relative;
-  padding-inline-start: var(--sp-4);
+  padding-inline-start: var(--sp-5);
 }
 
+/* El riel: del nodo de este ítem al del siguiente, atravesando el hueco de la
+   lista. Va en `::before` —y el nodo en `::after`— por orden de pintado: el
+   segundo se dibuja encima del primero, así el aro tapa el riel sin necesidad
+   de un `z-index` negativo, que dentro de una tarjeta con `backdrop-filter`
+   termina detrás del fondo. El último ítem no lleva riel: no lleva a ninguna
+   parte. */
 .ayuda__lista li::before {
   content: '';
   position: absolute;
+  inset-inline-start: calc(var(--sp-1) + 3.5px);
+  inset-block-start: calc(0.45em + 4px);
+  inset-block-end: calc(-1 * var(--sp-1));
+  inline-size: 2px;
+  background: color-mix(in srgb, var(--brand-secondary) 45%, transparent);
+}
+
+.ayuda__lista li:last-child::before {
+  content: none;
+}
+
+/* El nodo. `0.45em` lo alinea con la primera línea del texto, no con el centro
+   del bloque: un punto centrado sobre tres líneas flota. */
+.ayuda__lista li::after {
+  content: '';
+  position: absolute;
   inset-inline-start: var(--sp-1);
-  inset-block-start: 0.55em;
-  inline-size: 5px;
-  block-size: 5px;
+  inset-block-start: 0.45em;
+  inline-size: 9px;
+  block-size: 9px;
+  border: 2px solid var(--brand-secondary);
   border-radius: var(--r-full);
-  background: var(--brand-secondary);
+  background: var(--bg-surface);
+  box-sizing: border-box;
 }
 
 /* En teléfono la columna va debajo del formulario y no hay nada que animar de

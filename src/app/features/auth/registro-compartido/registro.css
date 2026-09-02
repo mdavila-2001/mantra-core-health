@@ -181,19 +181,30 @@ form {
 }
 
 /* ==========================================================================
-    El conjunto: el alta y la columna que la explica.
+    El conjunto: el alta y las tarjetas que la explican.
 
-    En teléfono es una sola columna y la ayuda cae DEBAJO del formulario, no
-    encima: quien abre la pantalla viene a registrarse, y cuatro tarjetas antes
-    del primer campo son cuatro pantallas de scroll antes de empezar. Abajo
-    queda justo donde alguien duda si sigue.
+    **Una sola columna, en las tres medidas de pantalla**: las tarjetas van
+    SIEMPRE debajo del formulario (TAREA 04, AC-04-9).
 
-    En escritorio se pone al costado, angosta y quieta mientras el formulario
-    scrollea. Es apoyo, no contenido: por eso ocupa 20 rem fijas y el
-    formulario se queda con todo lo demás.
+    Acá había una columna derecha de 20 rem, pegajosa, desde 1024 px, y el
+    teléfono era la excepción que caía debajo. La razón escrita entonces —«la
+    explicación tiene que estar donde está la pregunta»— valía cuando el alta
+    era un formulario largo de trece campos: la pregunta viajaba con el scroll.
+    Desde que el motor sirve CUATRO campos por página, la pregunta no viaja: la
+    página entra completa y no hay scroll del que despegarse, así que la
+    columna lateral dejaba de acompañar nada y pasaba a competir por el ancho
+    con los campos.
+
+    Lo que se conserva del razonamiento viejo es lo que seguía siendo cierto: la
+    ayuda va DESPUÉS del formulario y nunca antes. Quien abre la pantalla viene
+    a registrarse, y cuatro tarjetas antes del primer campo son cuatro pantallas
+    de scroll antes de empezar. Abajo —después del botón— queda justo donde
+    alguien duda si sigue o abandona, que era el motivo original de ponerlas
+    debajo en el teléfono.
    ========================================================================== */
 .registro-conjunto {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-5);
   align-items: start;
 }
@@ -205,21 +216,13 @@ form {
   margin-inline: auto;
 }
 
+/* En pantalla ancha el alta y su ayuda no se estiran a lo ancho de la ventana:
+   una línea de 1400 px no se lee, y un formulario de cuatro campos centrado es
+   lo que la tarjeta ya hacía de sola cuando era la única columna. */
 @media (min-width: 1024px) {
   .registro-conjunto {
-    grid-template-columns: minmax(0, 1fr) 20rem;
+    max-width: 52rem;
+    margin-inline: auto;
     gap: var(--sp-6);
-  }
-
-  .registro-conjunto--solo {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* Se queda a la vista mientras el formulario sube: la explicación tiene que
-     estar donde está la pregunta, y en un alta larga la pregunta viaja.
-     `top` deja el aire de la columna, que es el mismo que respira la tarjeta. */
-  .registro-conjunto__ayuda {
-    position: sticky;
-    top: var(--sp-4);
   }
 }
