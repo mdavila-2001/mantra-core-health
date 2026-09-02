@@ -15,6 +15,8 @@ import { map } from 'rxjs';
 
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
+import { BoDepartmentsCatalog } from '../../core/data-access/terminology/bo-departments.service';
+import type { ValueSetOption } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
@@ -22,8 +24,8 @@ import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Link } from '../../shared/components/atoms/link/link';
-import { Alert } from '../../shared/components/molecules/alert/alert';
-import { Card } from '../../shared/components/molecules/card/card';
+import { Select } from '../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../shared/components/molecules/search-field/search-field';
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
@@ -45,33 +47,26 @@ const TOPE = 25;
  * la lista de todas las historias de una organización es exactamente el dato que
  * no debe existir como pantalla.
  *
- * ## Dos caminos hacia el mismo expediente, y por qué hacen falta los dos
+ * ## Quién busca, y qué ve (TAREA-07, decisión del 2026-09-02)
  *
- * **Buscar por nombre** usa `GET /profiles/patients`, que pide `SECURITY_ADMIN`.
- * **Abrir por identificador** no pide nada: es el camino de quien atiende, que
- * llega con el identificador desde su agenda y a quien el buscador le
- * respondería `403`.
+ * `GET /profiles/patients` era exclusivo de `SECURITY_ADMIN`. Ahora también
+ * pueden buscar `CLINICIAN` y `PRACTITIONER` — **acotados a su organización**:
+ * el backend deriva el alcance de la actividad (agenda, relaciones
+ * asistenciales), no de una columna de tenant, porque la identidad no tiene
+ * una. `resolvePatientSearchScope()`, del lado de la API, documenta el porqué.
+ * Antes esta pantalla tenía un segundo camino —«Abrir por identificador»— para
+ * cuando el buscador respondía `403` a un rol clínico. Ese camino ya no hace
+ * falta: la búsqueda es ahora el camino de todos los roles que llegan acá, y
+ * mantener el atajo hubiera sido dos formas de hacer lo mismo.
  *
- * Si el buscador queda prohibido, la pantalla **no se cae** y tampoco se
- * disculpa: el buscador desaparece y queda el camino que sí es suyo.
- *
- * Antes se pintaba el S5 de la tabla, y ese estado dice «No tenés acceso a esta
- * sección» — un texto escrito para una sección entera. El médico leía que el
- * archivo clínico no era suyo cuando **sí lo es y funciona**: sólo el listado
- * del padrón es de administración. Un rojo en el lugar más visible de la
- * pantalla, para una condición que en su rol es la normal, no informa: asusta.
- *
- * El estado S5 sigue siendo el correcto para un 403 **inesperado**; éste no lo
- * es. La diferencia entre «falló algo» y «este camino no es el tuyo» es
- * justamente lo que el M34 separa, y acá se estaba usando el de la izquierda
- * para lo de la derecha.
+ * Un `403` inesperado (un rol que esta pantalla no anticipa) lo sigue
+ * mostrando `app-data-table` con el estado `forbidden` del M34: no hace falta
+ * reimplementarlo acá.
  */
 @Component({
   selector: 'app-clinical-record',
   imports: [
-    Alert,
     AppButton,
-    Card,
     DataTable,
     FormField,
     Input,
@@ -79,6 +74,7 @@ const TOPE = 25;
     PageHeader,
     RouterLink,
     SearchField,
+    Select,
   ],
   templateUrl: './clinical-record.html',
   styleUrl: './clinical-record.css',
@@ -99,30 +95,43 @@ export class ClinicalRecord {
 
   protected readonly resultados = signal<ViewState<readonly PatientListItem[]>>(loading());
 
-  /** El filtro vigente, leído de la URL. Vacío es «sin filtro», no «buscar nada». */
+  /** El filtro por nombre o código, leído de la URL. Vacío es «sin filtro». */
   protected readonly busqueda = toSignal(
     this.route.queryParamMap.pipe(map((params) => params.get('q') ?? '')),
     { initialValue: '' },
   );
 
-  /** Lo tecleado en «abrir por identificador». No viaja a la URL: es de un uso. */
-  protected readonly identificador = signal('');
-
-  /** El campo admite número por contrato; acá siempre es texto. */
-  protected fijarIdentificador(valor: string | number | null): void {
-    this.identificador.set(valor === null ? '' : String(valor));
-  }
-
-  protected readonly cargando = computed(() => this.resultados().status === 'loading');
+  /** El documento exacto, leído de la URL (AC-07-1). */
+  protected readonly documento = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('nationalId') ?? '')),
+    { initialValue: '' },
+  );
 
   /**
-   * Si el buscador quedó prohibido para esta sesión.
+   * El departamento que lo expidió, leído de la URL (AC-07-2).
    *
-   * Se lee del estado y no de los roles: la autoridad sobre qué puede leerse es
-   * la respuesta del backend, y duplicar su tabla de roles acá garantizaría que
-   * un día digan cosas distintas.
+   * Sólo tiene efecto junto al documento: un carnet sin departamento no es
+   * único en Bolivia, pero el campo del modelo es nullable, así que se ofrece
+   * como filtro opcional, no obligatorio (P-07-3 sigue abierta con el
+   * propietario; mientras tanto, se trata como desempate).
    */
-  protected readonly buscadorProhibido = computed(() => this.resultados().status === 'forbidden');
+  protected readonly departamento = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('issuerAdministrativeAreaConceptId'))),
+    { initialValue: null },
+  );
+
+  /** Lo tecleado en el campo de documento. No viaja a la URL hasta enviarse. */
+  protected readonly documentoTecleado = signal('');
+
+  /** Lo elegido en el desplegable de departamento. Mismo criterio. */
+  protected readonly departamentoElegido = signal<string | null>(null);
+
+  private readonly departamentos = inject(BoDepartmentsCatalog);
+
+  /** Los nueve departamentos de Bolivia, para el desplegable del documento. */
+  protected readonly opcionesDeDepartamento = signal<readonly SelectOption<string>[]>([]);
+
+  protected readonly cargando = computed(() => this.resultados().status === 'loading');
 
   protected readonly columnas = computed<readonly ColumnDef<PatientListItem>[]>(() => [
     { key: 'displayName', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
@@ -135,16 +144,56 @@ export class ClinicalRecord {
   constructor() {
     effect(() => {
       this.busqueda();
+      this.documento();
+      this.departamento();
       untracked(() => this.cargar());
+    });
+
+    // El desplegable es opcional y no bloquea la búsqueda por nombre: si el
+    // catálogo tarda o falla, el campo de documento sigue usable sin él.
+    this.departamentos.listar().subscribe({
+      next: (opciones) => this.opcionesDeDepartamento.set(opciones.map(toSelectOption)),
+      error: () => this.opcionesDeDepartamento.set([]),
     });
   }
 
-  /** La búsqueda se publica en la URL; el efecto hace el resto. */
+  /** La búsqueda por nombre se publica en la URL; el efecto hace el resto. */
   protected buscar(texto: string): void {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: texto === '' ? {} : { q: texto },
       // Reemplaza en vez de apilar: cada tecleo no es un paso del historial.
+      replaceUrl: true,
+    });
+  }
+
+  /** El campo admite número por contrato; acá siempre es texto. */
+  protected fijarDocumento(valor: string | number | null): void {
+    this.documentoTecleado.set(valor === null ? '' : String(valor));
+  }
+
+  /**
+   * Publica el documento (y su departamento) en la URL. Es un envío explícito
+   * y no un filtro en vivo: un carnet a medio teclear no debe buscar.
+   *
+   * Limpia `q` a propósito: documento y nombre son dos formas de encontrar a
+   * la misma persona, no dos filtros que se combinan — combinarlos AND haría
+   * que buscar por documento exigiera además que el nombre coincida.
+   */
+  protected buscarPorDocumento(): void {
+    const documento = this.documentoTecleado().trim();
+    if (documento === '') {
+      return;
+    }
+    const area = this.departamentoElegido();
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        q: null,
+        nationalId: documento,
+        issuerAdministrativeAreaConceptId: area ?? null,
+      },
+      queryParamsHandling: 'merge',
       replaceUrl: true,
     });
   }
@@ -158,38 +207,34 @@ export class ClinicalRecord {
     return patientChartRoute(profileId);
   }
 
-  /**
-   * Abre el expediente por identificador.
-   *
-   * Sin validar la forma del uuid a mano: el backend responde `400` a un
-   * identificador mal formado y `404` a uno que no existe, y el expediente
-   * muestra los dos como corresponde. Repetir la validación acá sólo agregaría
-   * un segundo lugar donde equivocarse.
-   */
-  protected abrirPorIdentificador(): void {
-    const id = this.identificador().trim();
-    if (id === '') {
-      return;
-    }
-    void this.router.navigateByUrl(this.rutaDe(encodeURIComponent(id)));
-  }
-
   private cargar(): void {
     this.resultados.set(loading());
 
+    const documento = this.documento();
     const texto = this.busqueda();
+    const area = this.departamento();
+    const criterio =
+      documento !== ''
+        ? { nationalId: documento, ...(area ? { issuerAdministrativeAreaConceptId: area } : {}) }
+        : texto === ''
+          ? {}
+          : { query: texto };
 
-    this.profiles
-      .searchPatients({ limit: TOPE, ...(texto === '' ? {} : { query: texto }) })
-      .subscribe({
-        next: (pagina) => {
-          if (pagina.items.length > 0) {
-            this.resultados.set(ready(pagina.items));
-            return;
-          }
+    this.profiles.searchPatients({ limit: TOPE, ...criterio }).subscribe({
+      next: (pagina) => {
+        if (pagina.items.length > 0) {
+          this.resultados.set(ready(pagina.items));
+          return;
+        }
 
-          this.resultados.set(
-            texto === ''
+        this.resultados.set(
+          documento !== ''
+            ? empty(
+                { label: 'Ver todos', route: CLINICAL_RECORD_ROUTE },
+                `Ningún paciente tiene el documento «${documento}»` +
+                  (area ? ' en ese departamento.' : '.'),
+              )
+            : texto === ''
               ? empty(
                   { label: 'Ir a Pacientes', route: '/administration/patients' },
                   'Todavía no hay pacientes registrados en esta organización.',
@@ -198,10 +243,15 @@ export class ClinicalRecord {
                   { label: 'Ver todos', route: CLINICAL_RECORD_ROUTE },
                   `Ningún paciente coincide con «${texto}».`,
                 ),
-          );
-        },
-        error: (error: unknown) =>
-          this.resultados.set(errorToViewState<readonly PatientListItem[]>(error)),
-      });
+        );
+      },
+      error: (error: unknown) =>
+        this.resultados.set(errorToViewState<readonly PatientListItem[]>(error)),
+    });
   }
+}
+
+/** `ValueSetOption` → `SelectOption`, para el desplegable de departamento. */
+function toSelectOption(opcion: ValueSetOption): SelectOption<string> {
+  return { value: opcion.conceptId, label: opcion.display };
 }
