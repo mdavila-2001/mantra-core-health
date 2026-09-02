@@ -133,6 +133,36 @@
               }
             </div>
           </fieldset>
+
+          <!-- Decisión 3 · el respiro, con el mismo lenguaje que la duración:
+               fichas, porque es la misma clase de elección. Empieza en «sin
+               respiro» para que no elegir siga siendo lo más rápido. -->
+          <fieldset class="agenda-create__duracion">
+            <legend class="agenda-create__duracion-label">
+              ¿Cuánto descanso entre una consulta y la siguiente?
+            </legend>
+            <div class="agenda-create__fichas">
+              @for (minutos of respiros; track minutos) {
+                <button
+                  type="button"
+                  class="agenda-create__ficha"
+                  [class.agenda-create__ficha--activa]="
+                    grupoDe(dia.indice).controls.respiro.value === minutos
+                  "
+                  [attr.aria-pressed]="grupoDe(dia.indice).controls.respiro.value === minutos"
+                  (click)="elegirRespiro(dia.indice, minutos)"
+                >
+                  {{ minutos === 0 ? 'Sin respiro' : minutos + ' min' }}
+                </button>
+              }
+            </div>
+            <!-- El costo, visible antes de guardar: elegir respiro sobre una
+                 franja corta puede quitar turnos, y ese número no se deduce. -->
+            <p class="agenda-create__consecuencia" aria-live="polite">
+              Entran <strong>{{ turnosDelDia(dia.indice) }}</strong>
+              {{ turnosDelDia(dia.indice) === 1 ? 'turno' : 'turnos' }} en ese horario.
+            </p>
+          </fieldset>
         </fieldset>
       }
 

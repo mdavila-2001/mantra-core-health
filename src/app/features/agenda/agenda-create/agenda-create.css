@@ -117,7 +117,7 @@
   padding: 0;
   margin-bottom: var(--sp-2);
   color: var(--fg-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .agenda-create__fichas {
@@ -203,7 +203,7 @@
 
 .agenda-create__previa-titulo {
   margin: 0 0 var(--sp-2);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   font-weight: 600;
   color: var(--fg-muted);
 }
@@ -224,5 +224,19 @@
 .agenda-create__previa-resto {
   margin: 0 0 var(--sp-2);
   color: var(--fg-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
+
+/* El costo de la elección, dicho en palabras y no sólo en el número de la
+   ficha. `aria-live` en la plantilla lo anuncia al cambiar. */
+.agenda-create__consecuencia {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.agenda-create__consecuencia strong {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+

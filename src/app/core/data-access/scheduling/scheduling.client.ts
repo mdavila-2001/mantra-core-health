@@ -251,6 +251,11 @@ export class SchedulingClient {
           endTime: rule.endTime,
           ...(rule.slotMinutes === undefined ? {} : { slotMinutes: rule.slotMinutes }),
           ...(rule.capacityPerSlot === undefined ? {} : { capacityPerSlot: rule.capacityPerSlot }),
+          // Omitido y no `0`: la columna es anulable y el servidor distingue
+          // «no lo declaró» de «declaró cero». Este cuerpo se arma campo por
+          // campo a propósito —para no filtrar nada que el DTO no acepte— y
+          // por eso agregar uno al tipo NO alcanza: hay que nombrarlo acá.
+          ...(rule.gapMinutes === undefined ? {} : { gapMinutes: rule.gapMinutes }),
         })),
         ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
         ...(template.bookingPolicyId === undefined
