@@ -15,6 +15,19 @@
     <h2 class="dialog__title" [id]="titleId" data-testid="dialogo-titulo">{{ config().title }}</h2>
     <p class="dialog__message" [id]="messageId">{{ config().message }}</p>
 
+    @if (details().length > 0) {
+      <!-- `<dl>` y no una tabla: son pares rótulo/valor, no filas y columnas.
+           La diferencia la nota quien navega con lector de pantalla. -->
+      <dl class="dialog__details" data-testid="dialogo-detalles">
+        @for (dato of details(); track dato.label) {
+          <div class="dialog__detail">
+            <dt class="dialog__detail-label">{{ dato.label }}</dt>
+            <dd class="dialog__detail-value">{{ dato.value }}</dd>
+          </div>
+        }
+      </dl>
+    }
+
     @if (reasonConfig(); as motivo) {
       <div class="dialog__reason">
         <app-form-field
