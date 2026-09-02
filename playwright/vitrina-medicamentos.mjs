@@ -1,7 +1,7 @@
 /**
  * Evidencia visual de la vitrina pública de medicamentos.
  *
- * Recorre `/buscar/medicamentos` como lo haría alguien sin sesión: mira la
+ * Recorre `/search/medications` como lo haría alguien sin sesión: mira la
  * vitrina, mide desde una ciudad, filtra por grupo terapéutico y abre la
  * disponibilidad de un medicamento con su mapa. Cada paso deja una captura.
  *
@@ -22,7 +22,7 @@ const SALIDA = '/home/pablo/Documents/GitHub/ALOVIDA/mantra-core-health/evidenci
  *
  * El de CSP lo produce el script antiparpadeo **en línea** de `index.html`
  * bajo la política del servidor de desarrollo, y aparece igual en pantallas que
- * nadie tocó —se verificó contra `/buscar/profesionales`—. Filtrarlo es lo que
+ * nadie tocó —se verificó contra `/search/practitioners`—. Filtrarlo es lo que
  * hace que el código de salida signifique algo: sin esto el script fallaría
  * siempre y nadie miraría el resultado.
  */
@@ -54,7 +54,7 @@ async function main() {
   };
 
   process.stdout.write('· Abriendo la vitrina…\n');
-  await pagina.goto(`${BASE}/buscar/medicamentos`, { waitUntil: 'networkidle' });
+  await pagina.goto(`${BASE}/search/medications`, { waitUntil: 'networkidle' });
   await pagina.waitForSelector('[data-testid="vitrina-grilla"]', { timeout: 20_000 });
   await capturar('01-vitrina', { fullPage: true });
 
@@ -88,7 +88,7 @@ async function main() {
   await pagina.waitForTimeout(700);
   // El campo del BANNER, no el del encabezado. `getByRole('searchbox')` toma
   // primero el buscador global de la cabecera, y escribir ahí navega a
-  // `/buscar` — con lo que el resto del recorrido capturaba otra pantalla.
+  // `/search` — con lo que el resto del recorrido capturaba otra pantalla.
   const campo = pagina.locator('.vitrina-hero__buscador input');
   await campo.fill('paracetamol');
   await campo.press('Enter');

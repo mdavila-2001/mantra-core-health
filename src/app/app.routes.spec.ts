@@ -400,14 +400,14 @@ describe('rutas públicas del buscador', () => {
   it.each([
     // La portada: el compilado de lo último de todos los profesionales, que es
     // adonde `homeGuard` manda a quien entra sin sesión.
-    ['/publicaciones'],
-    ['/buscar'],
-    ['/buscar/profesionales'],
-    ['/buscar/medicamentos'],
-    ['/buscar/hospitales'],
-    ['/buscar/diagnostico'],
-    ['/buscar/aseguradoras'],
-    ['/buscar/mapa'],
+    ['/posts'],
+    ['/search'],
+    ['/search/practitioners'],
+    ['/search/medications'],
+    ['/search/hospitals'],
+    ['/search/diagnostics'],
+    ['/search/insurers'],
+    ['/search/map'],
   ])('%s resuelve', async (url) => {
     expect(await resuelve(url)).toBe(true);
   });
@@ -436,7 +436,7 @@ describe('rutas públicas del buscador', () => {
   // ─── El texto buscado viaja en la URL ──────────────────────────────────────
 
   it('`?q=` sobrevive a la navegación: una búsqueda se puede pegar en un mensaje', async () => {
-    await router.navigateByUrl('/buscar?q=cardiolog%C3%ADa');
+    await router.navigateByUrl('/search?q=cardiolog%C3%ADa');
 
     expect(location.path()).toContain('q=cardiolog');
   });

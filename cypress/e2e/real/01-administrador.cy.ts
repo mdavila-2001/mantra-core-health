@@ -103,7 +103,7 @@ describe('Recorrido real · administrador', () => {
 
     // El buscador contra el catálogo real: es la mitad del endpoint que el
     // cliente no usaba, y la que enciende la sección.
-    cy.porEtiqueta(/buscar conceptos/i).clear().type('cholera');
+    cy.porEtiqueta(/search conceptos/i).clear().type('cholera');
     estable();
     capturar({ carpeta: 'admin-08-terminologia', titulo: 'Terminología' }, 'buscando-cholera');
 

@@ -56,7 +56,7 @@ export function formatKm(km: number): string {
 /**
  * **Cómo llegar** a un establecimiento concreto (AC-06-13 a AC-06-16).
  *
- * ## Por qué no es `/buscar/mapa`
+ * ## Por qué no es `/search/map`
  *
  * Porque aquella pantalla es «Cerca mío»: abre el mapa genérico **sin el
  * establecimiento elegido**. Quien tocó «Cómo llegar» en la tarjeta del

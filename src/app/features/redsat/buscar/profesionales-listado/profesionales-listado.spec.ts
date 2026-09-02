@@ -85,7 +85,7 @@ describe('BuscarProfesionalesListado · filtro por especialidad', () => {
   let pedidos: PublicPractitionerQuery[];
   let catalogo: { listar: () => Observable<readonly ValueSetOption[]> };
 
-  function montar(url = '/buscar/profesionales'): Promise<RouterTestingHarness> {
+  function montar(url = '/search/practitioners'): Promise<RouterTestingHarness> {
     pedidos = [];
 
     const directorio = {
@@ -103,7 +103,7 @@ describe('BuscarProfesionalesListado · filtro por especialidad', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([
-          { path: 'buscar/profesionales', component: BuscarProfesionalesListado },
+          { path: 'search/practitioners', component: BuscarProfesionalesListado },
         ]),
         { provide: PublicDirectoryClient, useValue: directorio },
         {
@@ -147,7 +147,7 @@ describe('BuscarProfesionalesListado · filtro por especialidad', () => {
   });
 
   it('lo que viaja al servidor es el conceptId, no el rótulo', async () => {
-    const harness = await montar('/buscar/profesionales?specialty=concepto-cardiologia');
+    const harness = await montar('/search/practitioners?specialty=concepto-cardiologia');
     await harness.fixture.whenStable();
 
     expect(pedidos.at(-1)?.specialty).toBe('concepto-cardiologia');
@@ -170,13 +170,13 @@ describe('BuscarProfesionalesListado · filtro por especialidad', () => {
     await harness.fixture.whenStable();
 
     expect(TestBed.inject(Router).url).toBe(
-      '/buscar/profesionales?specialty=concepto-pediatria',
+      '/search/practitioners?specialty=concepto-pediatria',
     );
     expect(pedidos.at(-1)?.specialty).toBe('concepto-pediatria');
   });
 
   it('el desplegable refleja lo que dice la URL', async () => {
-    const harness = await montar('/buscar/profesionales?specialty=concepto-pediatria');
+    const harness = await montar('/search/practitioners?specialty=concepto-pediatria');
     await harness.fixture.whenStable();
 
     expect(select(harness)?.value).toBe('concepto-pediatria');

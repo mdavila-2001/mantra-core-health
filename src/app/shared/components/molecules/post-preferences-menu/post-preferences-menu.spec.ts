@@ -12,7 +12,7 @@ class RutaVacia {}
   imports: [PostPreferencesMenu],
   template: `
     <app-post-preferences-menu
-      [postLink]="['/p', 'dra-lopez', 'publicacion', 'post-1']"
+      [postLink]="['/p', 'dra-lopez', 'post', 'post-1']"
       [profileLink]="['/p', 'dra-lopez']"
       [hasSession]="haySesion()"
       (hideSimilarRequested)="ocultados = ocultados + 1"
@@ -61,9 +61,9 @@ describe('PostPreferencesMenu', () => {
       providers: [
         provideRouter([
           { path: 'p/:slug', component: RutaVacia },
-          { path: 'p/:slug/publicacion/:postId', component: RutaVacia },
+          { path: 'p/:slug/post/:postId', component: RutaVacia },
           { path: 'auth', component: RutaVacia },
-          { path: 'publicaciones', component: RutaVacia },
+          { path: 'posts', component: RutaVacia },
         ]),
       ],
     }).compileComponents();
@@ -71,7 +71,7 @@ describe('PostPreferencesMenu', () => {
     fixture = TestBed.createComponent(HostComponent);
     host = fixture.componentInstance;
     router = TestBed.inject(Router);
-    await router.navigateByUrl('/publicaciones');
+    await router.navigateByUrl('/posts');
     await fixture.whenStable();
   });
 
@@ -119,7 +119,7 @@ describe('PostPreferencesMenu', () => {
       item('openPost')?.click();
       await fixture.whenStable();
 
-      expect(router.url).toBe('/p/dra-lopez/publicacion/post-1');
+      expect(router.url).toBe('/p/dra-lopez/post/post-1');
     });
 
     it('«Ir al perfil del doctor» va al perfil', async () => {
@@ -137,7 +137,7 @@ describe('PostPreferencesMenu', () => {
       item('report')?.click();
       await fixture.whenStable();
 
-      expect(router.url).toBe('/auth?returnUrl=%2Fpublicaciones');
+      expect(router.url).toBe('/auth?returnUrl=%2Fposts');
       expect(host.denuncias).toBe(0);
     });
 
@@ -178,7 +178,7 @@ describe('PostPreferencesMenu', () => {
       await fixture.whenStable();
 
       expect(host.denuncias).toBe(1);
-      expect(router.url).toBe('/publicaciones');
+      expect(router.url).toBe('/posts');
     });
 
     it('«No ver más» emite', async () => {

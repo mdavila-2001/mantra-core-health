@@ -153,7 +153,7 @@ function medicationRows(medication: TarjetaDeMedicamento): CardDetailRow[] {
  *
  * `link: null`. El contrato público sirve cinco prefijos de ficha y ninguno es
  * de medicamento —un medicamento vive en el catálogo de farmacia, no en
- * `community.public_profiles`—. Antes el mapeador devolvía `/buscar/medicamentos`,
+ * `community.public_profiles`—. Antes el mapeador devolvía `/search/medications`,
  * que convertía la tarjeta en un enlace a la pantalla donde ya se estaba.
  */
 export function toMedicationCard(medication: TarjetaDeMedicamento): MedicationCard {

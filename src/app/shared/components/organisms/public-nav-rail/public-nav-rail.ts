@@ -78,12 +78,12 @@ export class PublicNavRail {
    * La entrada que corresponde a la página actual, o `null`.
    *
    * Gana la coincidencia **más específica**: la ruta más larga que sea prefijo
-   * de la URL. Sin eso, estando en `/buscar/profesionales` quedarían activas
-   * esa entrada **y** `/buscar`, y `aria-current="page"` se anunciaría dos
+   * de la URL. Sin eso, estando en `/search/practitioners` quedarían activas
+   * esa entrada **y** `/search`, y `aria-current="page"` se anunciaría dos
    * veces —que es decir «ésta es la página» de dos páginas distintas.
    *
    * Y es prefijo **de ruta**, no de texto: por eso el `${route}/`. Si no,
-   * `/buscar` ganaría dentro de `/buscarcualquiercosa`.
+   * `/search` ganaría dentro de `/buscarcualquiercosa`.
    */
   protected readonly activeRoute = computed<string | null>(() => {
     const url = this.currentUrl();

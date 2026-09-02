@@ -91,7 +91,7 @@ export const serverRoutes: ServerRoute[] = [
   /**
    * El buscador público, también en `Server`.
    *
-   * Mismo criterio que las fichas y por el mismo motivo: `/buscar` y sus seis
+   * Mismo criterio que las fichas y por el mismo motivo: `/search` y sus seis
    * verticales se ven **igual para todo el mundo** —no hay sesión que consultar—
    * y son la puerta de entrada de quien todavía no tiene cuenta. Servidas en
    * `Client` devolverían el cascarón, y una búsqueda compartida en un mensaje
@@ -103,19 +103,19 @@ export const serverRoutes: ServerRoute[] = [
    * contra la API — el texto buscado viaja en la URL, que es justamente lo que
    * el servidor puede leer y una caja de texto no.
    */
-  { path: 'buscar', renderMode: RenderMode.Server },
-  { path: 'buscar/profesionales', renderMode: RenderMode.Server },
-  { path: 'buscar/medicamentos', renderMode: RenderMode.Server },
-  { path: 'buscar/hospitales', renderMode: RenderMode.Server },
-  { path: 'buscar/diagnostico', renderMode: RenderMode.Server },
-  { path: 'buscar/aseguradoras', renderMode: RenderMode.Server },
+  { path: 'search', renderMode: RenderMode.Server },
+  { path: 'search/practitioners', renderMode: RenderMode.Server },
+  { path: 'search/medications', renderMode: RenderMode.Server },
+  { path: 'search/hospitals', renderMode: RenderMode.Server },
+  { path: 'search/diagnostics', renderMode: RenderMode.Server },
+  { path: 'search/insurers', renderMode: RenderMode.Server },
   /**
    * El mapa **no**: abre pidiendo consentimiento para usar la ubicación, y esa
    * pantalla no tiene nada que el servidor pueda resolver. Renderizarla en el
    * servidor sólo adelantaría el botón, y la geolocalización vive en el
    * navegador de todos modos.
    */
-  { path: 'buscar/mapa', renderMode: RenderMode.Client },
+  { path: 'search/map', renderMode: RenderMode.Client },
   { path: 'p/:slug', renderMode: RenderMode.Server },
   { path: 'o/:slug', renderMode: RenderMode.Server },
   { path: 'f/:slug', renderMode: RenderMode.Server },
@@ -136,7 +136,7 @@ export const serverRoutes: ServerRoute[] = [
    * mismas razones que las fichas por slug: un enlace compartido en un mensaje
    * tiene que llegar con su título y su precio adentro.
    */
-  { path: 'promociones/:campaignId', renderMode: RenderMode.Client },
+  { path: 'promotions/:campaignId', renderMode: RenderMode.Client },
   {
     path: '**',
     renderMode: RenderMode.Client,

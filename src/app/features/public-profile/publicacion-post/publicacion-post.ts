@@ -13,7 +13,7 @@ import { PublicacionReacciones } from '../publicacion-reacciones/publicacion-rea
  * firma, cuerpo, imágenes y la fila de interacción.
  *
  * Vive en su propio componente porque se dibuja en **dos** pantallas —el feed
- * de la ficha pública y la vista de una publicación suelta (`/p/:slug/publicacion/:id`)—
+ * de la ficha pública y la vista de una publicación suelta (`/p/:slug/post/:id`)—
  * y dos copias del mismo marcado divergen en la primera corrección. La única
  * diferencia entre las dos es `enfocada`: en la vista suelta el cuerpo va
  * entero y no se recorta.
@@ -111,7 +111,7 @@ export class PublicacionPost {
   protected readonly enlacePost = computed(() => [
     '/p',
     this.slug(),
-    'publicacion',
+    'post',
     this.post().id,
   ]);
 

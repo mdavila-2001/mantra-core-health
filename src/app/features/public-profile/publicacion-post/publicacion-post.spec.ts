@@ -65,7 +65,7 @@ describe('PublicacionPost', () => {
       providers: [
         provideRouter([
           { path: 'p/:slug', component: RutaVacia },
-          { path: 'p/:slug/publicacion/:postId', component: RutaVacia },
+          { path: 'p/:slug/post/:postId', component: RutaVacia },
           { path: 'auth', component: RutaVacia },
         ]),
       ],

@@ -121,7 +121,7 @@ describe('PublicacionComentarios', () => {
       imports: [HostComponent],
       providers: [
         provideRouter([
-          { path: 'publicaciones', component: RutaVacia },
+          { path: 'posts', component: RutaVacia },
           { path: 'auth', component: RutaVacia },
           { path: 'feed', component: RutaVacia },
           { path: 'p/:slug', component: RutaVacia },
@@ -134,7 +134,7 @@ describe('PublicacionComentarios', () => {
       ],
     }).compileComponents();
 
-    await TestBed.inject(Router).navigateByUrl('/publicaciones');
+    await TestBed.inject(Router).navigateByUrl('/posts');
     fixture = TestBed.createComponent(HostComponent);
     await fixture.whenStable();
   }
@@ -272,7 +272,7 @@ describe('PublicacionComentarios', () => {
       botones('comentario-responder')[0]?.click();
       await fixture.whenStable();
 
-      expect(TestBed.inject(Router).url).toBe('/auth?returnUrl=%2Fpublicaciones');
+      expect(TestBed.inject(Router).url).toBe('/auth?returnUrl=%2Fposts');
     });
 
     it('el botón NO se esconde por falta de sesión', async () => {

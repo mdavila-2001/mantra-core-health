@@ -71,14 +71,14 @@ describe('PublicacionReacciones', () => {
       imports: [HostComponent],
       providers: [
         provideRouter([
-          { path: 'publicaciones', component: RutaVacia },
+          { path: 'posts', component: RutaVacia },
           { path: 'p/:slug', component: RutaVacia },
         ]),
         { provide: PublicDirectoryClient, useValue: directorio },
       ],
     }).compileComponents();
 
-    await TestBed.inject(Router).navigateByUrl('/publicaciones');
+    await TestBed.inject(Router).navigateByUrl('/posts');
     fixture = TestBed.createComponent(HostComponent);
     host = fixture.componentInstance;
     await fixture.whenStable();

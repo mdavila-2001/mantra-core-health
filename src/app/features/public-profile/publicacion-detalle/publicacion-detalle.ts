@@ -8,7 +8,7 @@ import { PublicacionPost } from '../publicacion-post/publicacion-post';
 
 /**
  * La vista de **una** publicación, con su URL propia
- * (`/p/:slug/publicacion/:postId`).
+ * (`/p/:slug/post/:postId`).
  *
  * ## Por qué reusa el resolver del perfil
  *

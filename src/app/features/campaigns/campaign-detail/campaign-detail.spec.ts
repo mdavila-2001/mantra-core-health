@@ -58,7 +58,7 @@ describe('CampaignDetail', () => {
    */
   async function montar(campaignId: string): Promise<void> {
     harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl(`/promociones/${campaignId}`, CampaignDetail);
+    await harness.navigateByUrl(`/promotions/${campaignId}`, CampaignDetail);
     harness.detectChanges();
   }
 

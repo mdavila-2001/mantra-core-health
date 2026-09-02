@@ -62,7 +62,7 @@ test.describe('el marco público', () => {
   test('AC-01-2 · el rail dibuja las cuatro secciones como íconos con tooltip', async ({
     page,
   }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
 
     const secciones = page.locator('[data-group="sections"] [data-testid="public-nav-rail-link"]');
     await expect(secciones).toHaveCount(4);
@@ -76,7 +76,7 @@ test.describe('el marco público', () => {
   });
 
   test('AC-01-2 · el tooltip aparece con el puntero Y con el foco de teclado', async ({ page }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
     const primera = page.locator('[data-testid="public-nav-rail-link"]').first();
 
     await primera.hover();
@@ -93,23 +93,23 @@ test.describe('el marco público', () => {
   test('AC-01-3 · el rail marca la página actual una sola vez y sobrevive a la navegación', async ({
     page,
   }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
     await expect(page.locator('[data-testid="public-nav-rail-link"][aria-current="page"]')).toHaveCount(
       1,
     );
 
-    await page.locator('[data-route="/buscar/profesionales"]').click();
-    await page.waitForURL('**/buscar/profesionales');
+    await page.locator('[data-route="/search/practitioners"]').click();
+    await page.waitForURL('**/search/practitioners');
 
     const marcados = page.locator('[data-testid="public-nav-rail-link"][aria-current="page"]');
     await expect(marcados).toHaveCount(1);
-    await expect(marcados).toHaveAttribute('data-route', '/buscar/profesionales');
+    await expect(marcados).toHaveAttribute('data-route', '/search/practitioners');
   });
 
   for (const viewport of VIEWPORTS) {
     test(`AC-01-5 · en ${viewport.nombre} no hay botón hamburguesa`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await abrirSinSesion(page, '/publicaciones');
+      await abrirSinSesion(page, '/posts');
 
       await expect(page.locator('[data-testid="header-menu"]')).toHaveCount(0);
       await expect(page.locator('.app-nav-toggle')).toHaveCount(0);
@@ -119,7 +119,7 @@ test.describe('el marco público', () => {
       page,
     }, testInfo) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await abrirSinSesion(page, '/publicaciones');
+      await abrirSinSesion(page, '/posts');
 
       const desborda = await page.evaluate(
         () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -137,7 +137,7 @@ test.describe('el marco público', () => {
 
 test.describe('la tarjeta de publicación', () => {
   test('AC-01-1 · la fecha no es enlace ni entra en el orden de tabulación', async ({ page }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
     const fecha = page.locator('.publicacion__fecha').first();
     await fecha.waitFor();
 
@@ -149,7 +149,7 @@ test.describe('la tarjeta de publicación', () => {
   test('AC-01-7 y AC-01-8 · el carrusel tiene stepper, «n de N» y extremos deshabilitados', async ({
     page,
   }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
 
     const conVarias = page.locator('.publicacion__medios[data-cantidad="varias"]').first();
     // El feed E2E puede no tener una publicación con dos imágenes: se dice, no
@@ -175,7 +175,7 @@ test.describe('la tarjeta de publicación', () => {
   test('AC-01-9 y AC-01-10 · el contador de reacciones abre el modal de quién reaccionó', async ({
     page,
   }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
 
     const contador = page.locator('[data-testid="publicacion-reacciones"]').first();
     test.skip((await contador.count()) === 0, 'ninguna publicación del feed tiene reacciones');
@@ -195,7 +195,7 @@ test.describe('la tarjeta de publicación', () => {
   test('AC-01-11 · el contador de comentarios abre un desplegable en línea, no un modal', async ({
     page,
   }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
 
     const contador = page.locator('[data-testid="publicacion-comentarios"]').first();
     test.skip((await contador.count()) === 0, 'ninguna publicación del feed tiene comentarios');
@@ -218,7 +218,7 @@ test.describe('la tarjeta de publicación', () => {
 
 test.describe('el menú de preferencias', () => {
   test('AC-01-15 · tiene exactamente las siete entradas del pedido', async ({ page }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
 
     await page.locator('[data-testid="post-preferences-trigger"]').first().click();
     const items = page.locator('app-menu-item');
@@ -236,7 +236,7 @@ test.describe('el menú de preferencias', () => {
   });
 
   test('AC-01-18 · abre con teclado, cierra con Escape y devuelve el foco', async ({ page }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
     const disparador = page.locator('[data-testid="post-preferences-trigger"]').first();
 
     await disparador.focus();
@@ -249,17 +249,17 @@ test.describe('el menú de preferencias', () => {
   });
 
   test('AC-01-17 · sin sesión, «Denunciar» lleva a entrar con retorno', async ({ page }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
 
     await page.locator('[data-testid="post-preferences-trigger"]').first().click();
     await page.locator('app-menu-item[data-action="report"]').click();
 
     await page.waitForURL(/\/auth\?returnUrl=/);
-    expect(new URL(page.url()).searchParams.get('returnUrl')).toBe('/publicaciones');
+    expect(new URL(page.url()).searchParams.get('returnUrl')).toBe('/posts');
   });
 
   test('AC-01-16 · «Ir al perfil del doctor» navega a su ficha', async ({ page }) => {
-    await abrirSinSesion(page, '/publicaciones');
+    await abrirSinSesion(page, '/posts');
 
     await page.locator('[data-testid="post-preferences-trigger"]').first().click();
     await page.locator('app-menu-item[data-action="openProfile"]').click();
@@ -270,13 +270,13 @@ test.describe('el menú de preferencias', () => {
 
 test.describe('AC-01-4 · las pantallas ya no declaran sus propias pestañas', () => {
   const RUTAS = [
-    '/publicaciones',
-    '/buscar',
-    '/buscar/profesionales',
-    '/buscar/medicamentos',
-    '/buscar/hospitales',
-    '/buscar/diagnostico',
-    '/buscar/aseguradoras',
+    '/posts',
+    '/search',
+    '/search/practitioners',
+    '/search/medications',
+    '/search/hospitals',
+    '/search/diagnostics',
+    '/search/insurers',
   ];
 
   for (const ruta of RUTAS) {
@@ -291,7 +291,7 @@ test.describe('AC-01-4 · las pantallas ya no declaran sus propias pestañas', (
 });
 
 test.describe('AC-01-20 · la consola queda limpia', () => {
-  test('recorrer /publicaciones no produce errores de consola', async ({ page }) => {
+  test('recorrer /posts no produce errores de consola', async ({ page }) => {
     const errores: string[] = [];
     page.on('console', (mensaje) => {
       if (mensaje.type() === 'error') {
@@ -300,9 +300,9 @@ test.describe('AC-01-20 · la consola queda limpia', () => {
     });
     page.on('pageerror', (error) => errores.push(String(error)));
 
-    await abrirSinSesion(page, '/publicaciones');
-    await page.locator('[data-route="/buscar/profesionales"]').click();
-    await page.waitForURL('**/buscar/profesionales');
+    await abrirSinSesion(page, '/posts');
+    await page.locator('[data-route="/search/practitioners"]').click();
+    await page.waitForURL('**/search/practitioners');
 
     // Una violación de CSP bloquea EN SILENCIO: sólo se ve acá.
     expect(errores, errores.join('\n')).toEqual([]);

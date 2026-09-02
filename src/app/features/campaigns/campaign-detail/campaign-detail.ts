@@ -100,7 +100,7 @@ export class CampaignDetail {
       next: (publica) =>
         this.state.set(
           publica === null
-            ? notFound({ label: 'Buscar farmacias', route: '/buscar/medicamentos' })
+            ? notFound({ label: 'Buscar farmacias', route: '/search/medications' })
             : ready(publica),
         ),
       error: (error: unknown) => this.state.set(errorToViewState<CampanaPublica>(error)),

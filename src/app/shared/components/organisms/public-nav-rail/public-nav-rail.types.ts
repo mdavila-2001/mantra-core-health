@@ -7,8 +7,8 @@
     Estaban escritas **ocho veces**, dentro de ocho plantillas de
     `features/redsat/buscar/`, y las ocho listas eran distintas: el feed
     ofrecía cuatro pestañas y los verticales otras seis, con rótulos que ni
-    siquiera coincidían entre sí. Quien entraba por `/publicaciones` no podía
-    llegar a `/buscar/medicamentos` sin pasar por `/buscar`, y quien entraba
+    siquiera coincidían entre sí. Quien entraba por `/posts` no podía
+    llegar a `/search/medications` sin pasar por `/search`, y quien entraba
     por un vertical no sabía que existían las publicaciones.
 
     Una sola lista, en el marco, arregla las dos cosas y hace que la corrección
@@ -61,20 +61,20 @@ export const PUBLIC_NAV_RAIL_SECTIONS: readonly PublicNavRailGroup[] = [
     id: 'sections',
     title: 'Secciones',
     entries: [
-      { route: '/publicaciones', label: 'Publicaciones', icon: 'note' },
-      { route: '/buscar', label: 'Buscar', icon: 'directory' },
-      { route: '/buscar/profesionales', label: 'Profesionales', icon: 'stethoscope' },
-      { route: '/buscar/sintomas', label: '¿A quién consulto?', icon: 'survey' },
+      { route: '/posts', label: 'Publicaciones', icon: 'note' },
+      { route: '/search', label: 'Buscar', icon: 'directory' },
+      { route: '/search/practitioners', label: 'Profesionales', icon: 'stethoscope' },
+      { route: '/search/symptoms', label: '¿A quién consulto?', icon: 'survey' },
     ],
   },
   {
     id: 'directories',
     title: 'Directorios',
     entries: [
-      { route: '/buscar/medicamentos', label: 'Medicamentos', icon: 'pill' },
-      { route: '/buscar/hospitales', label: 'Hospitales y clínicas', icon: 'hospital' },
-      { route: '/buscar/diagnostico', label: 'Laboratorios e imagen', icon: 'flask' },
-      { route: '/buscar/aseguradoras', label: 'Aseguradoras', icon: 'umbrella' },
+      { route: '/search/medications', label: 'Medicamentos', icon: 'pill' },
+      { route: '/search/hospitals', label: 'Hospitales y clínicas', icon: 'hospital' },
+      { route: '/search/diagnostics', label: 'Laboratorios e imagen', icon: 'flask' },
+      { route: '/search/insurers', label: 'Aseguradoras', icon: 'umbrella' },
     ],
   },
 ] as const;

@@ -71,7 +71,7 @@ async function abrirAnonimo(page: Page, ruta: string): Promise<void> {
 
 test.describe('P4-E2E-001 · buscar, encontrar y abrir una ficha, sin cuenta', () => {
   test('la búsqueda pública lista perfiles reales y su ficha abre sin sesión', async ({ page }) => {
-    await abrirAnonimo(page, '/buscar');
+    await abrirAnonimo(page, '/search');
 
     // El nombre sale de la API, no de la prueba: si el seed cambia, cambia acá.
     const resultado = page.getByRole('link', { name: /Marisol Quispe/i }).first();
@@ -84,7 +84,7 @@ test.describe('P4-E2E-001 · buscar, encontrar y abrir una ficha, sin cuenta', (
   });
 
   test('el texto buscado viaja en la URL y acota la lista', async ({ page }) => {
-    await abrirAnonimo(page, '/buscar?q=Mamani');
+    await abrirAnonimo(page, '/search?q=Mamani');
 
     await expect(page.getByRole('link', { name: /Iván Mamani/i }).first()).toBeVisible();
     // El otro perfil publicado no coincide con el texto: si apareciera, el
@@ -98,12 +98,12 @@ test.describe('P4-E2E-001 · buscar, encontrar y abrir una ficha, sin cuenta', (
     await page.getByPlaceholder(/Buscá un médico/i).fill('Mamani');
     await page.getByPlaceholder(/Buscá un médico/i).press('Enter');
 
-    await expect(page).toHaveURL(/\/buscar\?q=Mamani/);
+    await expect(page).toHaveURL(/\/search\?q=Mamani/);
     await expect(page.getByRole('link', { name: /Iván Mamani/i }).first()).toBeVisible();
   });
 
   test('la pestaña de profesionales lista sólo profesionales', async ({ page }) => {
-    await abrirAnonimo(page, '/buscar/profesionales');
+    await abrirAnonimo(page, '/search/practitioners');
 
     await expect(page.getByRole('link', { name: /Marisol Quispe/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Iván Mamani/i }).first()).toBeVisible();
@@ -116,7 +116,7 @@ test.describe('P4-E2E-001 · buscar, encontrar y abrir una ficha, sin cuenta', (
       if (cabecera) autorizaciones.push(`${peticion.url()} → ${cabecera}`);
     });
 
-    await abrirAnonimo(page, '/buscar');
+    await abrirAnonimo(page, '/search');
     await abrirAnonimo(page, `/p/${PUBLICADO}`);
 
     const almacenado = await page.evaluate(() => ({ ...window.localStorage }));

@@ -837,6 +837,39 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   'administracion/terminologia': '/administration/terminology',
 };
 
+/**
+ * La superficie de búsqueda pública, renombrada a inglés por TAREA-29.
+ *
+ * ## Por qué van en su propia tabla y no en `RUTAS_HEREDADAS_PUBLICAS`
+ *
+ * Porque estas rutas **son las que la gente comparte**: un enlace a
+ * `/buscar/profesionales?q=cardio` pegado en un mensaje tiene que seguir
+ * abriendo el directorio, no un 404. Separarlas deja ver de un vistazo cuáles
+ * son las del buscador y cuáles las del correo de alta.
+ *
+ * ## `pathMatch: 'full'`, una por una, y no un redirect de prefijo sobre `buscar`
+ *
+ * Un `{ path: 'buscar', redirectTo: 'search' }` con coincidencia por prefijo
+ * habría cubierto las siete de una línea — y se habría llevado puestas las
+ * **doce** pantallas portadas que el archivo GENERADO
+ * `features/redsat/redsat.routes.ts` declara bajo el mismo `buscar`
+ * (`buscador-listado`, `seguidos-y-guardados-listado`,
+ * `calificar-la-atencion-formulario`, las cinco fichas `perfil-*-detalle`…).
+ * Ésas no son de esta tarea y la regla de arrastre dice que no se tocan, así
+ * que cada redirect nombra su ruta exacta y ninguna otra.
+ */
+const RUTAS_HEREDADAS_DEL_BUSCADOR: Readonly<Record<string, string>> = {
+  publicaciones: '/posts',
+  buscar: '/search',
+  'buscar/profesionales': '/search/practitioners',
+  'buscar/medicamentos': '/search/medications',
+  'buscar/hospitales': '/search/hospitals',
+  'buscar/diagnostico': '/search/diagnostics',
+  'buscar/aseguradoras': '/search/insurers',
+  'buscar/sintomas': '/search/symptoms',
+  'buscar/mapa': '/search/map',
+};
+
 /** Las landings públicas, que son las que viajan en los correos. */
 const RUTAS_HEREDADAS_PUBLICAS: Readonly<Record<string, string>> = {
   'auth/organizacion': '/auth/organization',
@@ -892,7 +925,7 @@ function rutasDeFichasPublicas(): Routes {
       ...(prefijo === 'p'
         ? [
             {
-              path: ':slug/publicacion/:postId',
+              path: ':slug/post/:postId',
               data: { kind, pantallaReal: true },
               resolve: { perfil: perfilPublicoResolver },
               loadComponent: () =>
@@ -921,8 +954,8 @@ function rutasDeFichasPublicas(): Routes {
  * `scripts/port-vistas-redsat.mjs` deriva el segmento del **nombre del archivo
  * de la maqueta**, así que la portada quedó en `/buscar/buscador-listado` y los
  * verticales en `/buscar/…-listado`. Sirve para recorrer la bóveda; no sirve
- * como superficie pública. Estas URL son las que la ficha declara —`/buscar`,
- * `/buscar/profesionales`, `/buscar/mapa`—, las que se pegan en un mensaje y
+ * como superficie pública. Estas URL son las que la ficha declara —`/search`,
+ * `/search/practitioners`, `/search/map`—, las que se pegan en un mensaje y
  * las que un buscador indexa, y son cortas y estables porque un directorio
  * público las cambia una sola vez.
  *
@@ -940,10 +973,10 @@ function rutasDeBusquedaPublica(): Routes {
     {
       // La portada pública: lo último que publicaron todos los profesionales.
       // Es el destino por defecto de quien entra sin sesión (ver `homeGuard`),
-      // y va en su propia ruta y no en `/buscar` porque son dos cosas
+      // y va en su propia ruta y no en `/search` porque son dos cosas
       // distintas: acá se lee sin saber a quién buscar, allá se busca a
       // alguien concreto.
-      path: 'publicaciones',
+      path: 'posts',
       loadComponent: () =>
         import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
       children: [
@@ -960,7 +993,7 @@ function rutasDeBusquedaPublica(): Routes {
       ],
     },
     {
-      path: 'buscar',
+      path: 'search',
       loadComponent: () =>
         import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
       children: [
@@ -979,7 +1012,7 @@ function rutasDeBusquedaPublica(): Routes {
           // paciente **al entrar**, y entrar es justamente lo que no hizo quien
           // todavía no sabe a qué médico ir: la pregunta que trae a alguien
           // —«me pasa esto, ¿a quién consulto?»— quedaba detrás del registro.
-          path: 'sintomas',
+          path: 'symptoms',
           title: '¿A qué especialista consultar? — AloVida',
           data: { arquetipo: 'formulario', pantallaReal: true },
           loadComponent: () =>
@@ -988,7 +1021,7 @@ function rutasDeBusquedaPublica(): Routes {
             ),
         },
         {
-          path: 'profesionales',
+          path: 'practitioners',
           title: 'Profesionales de salud — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
@@ -997,7 +1030,7 @@ function rutasDeBusquedaPublica(): Routes {
             ),
         },
         {
-          path: 'medicamentos',
+          path: 'medications',
           title: 'Medicamentos y farmacias — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
@@ -1006,7 +1039,7 @@ function rutasDeBusquedaPublica(): Routes {
             ),
         },
         {
-          path: 'hospitales',
+          path: 'hospitals',
           title: 'Hospitales y clínicas — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
@@ -1015,7 +1048,7 @@ function rutasDeBusquedaPublica(): Routes {
             ),
         },
         {
-          path: 'diagnostico',
+          path: 'diagnostics',
           title: 'Laboratorios e imagen — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
@@ -1024,7 +1057,7 @@ function rutasDeBusquedaPublica(): Routes {
             ),
         },
         {
-          path: 'aseguradoras',
+          path: 'insurers',
           title: 'Aseguradoras y convenios — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
@@ -1035,7 +1068,7 @@ function rutasDeBusquedaPublica(): Routes {
         {
           // V65-12. `mapa` y no `cercania`: es el rótulo de la pestaña y el
           // que la ficha declara.
-          path: 'mapa',
+          path: 'map',
           title: 'Cerca mío — AloVida',
           data: { arquetipo: 'detalle', pantallaReal: true },
           loadComponent: () =>
@@ -1051,8 +1084,8 @@ function rutasDeBusquedaPublica(): Routes {
       // Cuelga del marco público —y no de `administration/`— porque el enlace
       // se manda por mensaje: quien lo recibe tiene que ver la promoción, no
       // una pantalla de login. Va fuera de `buscar` para que la URL sea
-      // `/promociones/:id`: una promoción no es un resultado de búsqueda.
-      path: 'promociones/:campaignId',
+      // `/promotions/:id`: una promoción no es un resultado de búsqueda.
+      path: 'promotions/:campaignId',
       loadComponent: () =>
         import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
       children: [
@@ -1089,7 +1122,7 @@ export const routes: Routes = [
   // es de otra clase en vez de redirigir.
   ...rutasDeFichasPublicas(),
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
-  // pública (`/buscar`) y no al login; con sesión, al panel. Los dos destinos
+  // pública (`/search`) y no al login; con sesión, al panel. Los dos destinos
   // salen del propio `homeGuard` (un `UrlTree`, nunca `true`) porque Angular no
   // deja combinar `canActivate` con `redirectTo` en la misma ruta. Sin
   // `component`/`redirectTo` propios, `children: []` es lo mínimo que exige
@@ -1559,6 +1592,11 @@ export const routes: Routes = [
   // del comodín: si estuvieran primero, `auth/verificar` capturaría antes de
   // que el router llegue a `auth/verify-email`, que es la que pinta algo.
   ...rutasHeredadas(RUTAS_HEREDADAS_PUBLICAS),
+  // TAREA-29 · Las del buscador, por el mismo motivo y con el mismo orden.
+  // Además tienen que ir después del bloque generado de REDSAT: `buscar` a
+  // secas existe en las dos partes, y acá gana la que redirige sólo cuando
+  // ninguna pantalla real coincidió.
+  ...rutasHeredadas(RUTAS_HEREDADAS_DEL_BUSCADOR),
   {
     // Antes esto redirigía a `/`, que mandaba al panel —o al login, vía el
     // guard— a quien escribiera mal una dirección, sin decirle que se había

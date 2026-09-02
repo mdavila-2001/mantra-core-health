@@ -90,7 +90,7 @@ export interface CentroTarjeta {
    * Un medicamento no la tiene: el contrato público sirve cinco prefijos y
    * ninguno es de medicamento. Con `null` el nombre se pinta como texto y la
    * tarjeta no se vuelve un enlace a sí misma, que es lo que hacía antes el
-   * mapeador cuando devolvía `/buscar/medicamentos`.
+   * mapeador cuando devolvía `/search/medications`.
    */
   readonly link: string | null;
   /** Qué es esta entidad, en una línea. `null` si no lo publicó. */

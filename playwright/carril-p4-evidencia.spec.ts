@@ -55,14 +55,14 @@ async function capturar(page: Page, ruta: string, nombre: string): Promise<void>
 
 test.describe('P4 · capturas de la superficie pública', () => {
   test('el recorrido completo, sin sesión', async ({ page }) => {
-    await capturar(page, '/buscar', '01-buscador-unificado');
-    await capturar(page, '/buscar?q=Mamani', '02-buscador-filtrado');
-    await capturar(page, '/buscar/profesionales', '03-profesionales');
-    await capturar(page, '/buscar/medicamentos', '04-medicamentos-vacio');
-    await capturar(page, '/buscar/hospitales', '05-hospitales-vacio');
-    await capturar(page, '/buscar/diagnostico', '06-diagnostico-vacio');
-    await capturar(page, '/buscar/aseguradoras', '07-aseguradoras-vacio');
-    await capturar(page, '/buscar/mapa', '08-mapa-consentimiento');
+    await capturar(page, '/search', '01-buscador-unificado');
+    await capturar(page, '/search?q=Mamani', '02-buscador-filtrado');
+    await capturar(page, '/search/practitioners', '03-profesionales');
+    await capturar(page, '/search/medications', '04-medicamentos-vacio');
+    await capturar(page, '/search/hospitals', '05-hospitales-vacio');
+    await capturar(page, '/search/diagnostics', '06-diagnostico-vacio');
+    await capturar(page, '/search/insurers', '07-aseguradoras-vacio');
+    await capturar(page, '/search/map', '08-mapa-consentimiento');
     await capturar(page, '/p/doctor-uno-e2e', '09-ficha-publica');
     await capturar(page, '/p/doctor-dos-e2e', '10-ficha-publica-dos');
     await capturar(page, '/p/doctor-oculto-e2e', '11-despublicado-404');
@@ -98,8 +98,8 @@ test.describe('P4 · capturas de la superficie pública', () => {
     // En un catálogo a medio poblar el estado vacío es la pantalla más vista, y
     // su texto es lo que más distingue una pantalla de otra. Vale capturarlos
     // aparte para poder compararlos entre sí de un vistazo.
-    await capturar(page, '/buscar/medicamentos', '16-vacio-medicamentos');
-    await capturar(page, '/buscar/diagnostico', '17-vacio-diagnostico');
+    await capturar(page, '/search/medications', '16-vacio-medicamentos');
+    await capturar(page, '/search/diagnostics', '17-vacio-diagnostico');
 
     // Los dos negativos, uno al lado del otro: tienen que ser indistinguibles.
     await capturar(page, '/p/doctor-oculto-e2e', '18-negativo-despublicado');
@@ -112,7 +112,7 @@ test.describe('P4 · capturas de la superficie pública', () => {
     const contexto = await browser.newContext({ colorScheme: 'dark' });
     const page = await contexto.newPage();
 
-    await capturar(page, '/buscar', '20-oscuro-buscador');
+    await capturar(page, '/search', '20-oscuro-buscador');
     await capturar(page, '/p/doctor-uno-e2e', '21-oscuro-ficha');
 
     await contexto.close();
@@ -125,10 +125,10 @@ test.describe('P4 · capturas de la superficie pública', () => {
     const contexto = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await contexto.newPage();
 
-    await capturar(page, '/buscar', '13-movil-buscador');
+    await capturar(page, '/search', '13-movil-buscador');
     await capturar(page, '/p/doctor-uno-e2e', '14-movil-ficha');
-    await capturar(page, '/buscar/profesionales', '22-movil-profesionales');
-    await capturar(page, '/buscar/mapa', '23-movil-mapa');
+    await capturar(page, '/search/practitioners', '22-movil-profesionales');
+    await capturar(page, '/search/map', '23-movil-mapa');
 
     // A 390 px el header público pasa a dos filas: colapsar el buscador a un
     // icono no es salida cuando es el único control de navegación de toda la
@@ -137,7 +137,7 @@ test.describe('P4 · capturas de la superficie pública', () => {
     // resultados tiene su propia caja con el mismo texto, y buscar por marcador
     // devuelve dos elementos —el localizador queda ambiguo y la aserción falla
     // por eso, no porque el campo falte—.
-    await page.goto('/buscar', { waitUntil: 'domcontentloaded' });
+    await page.goto('/search', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#buscador-publico')).toBeVisible();
 
     await contexto.close();

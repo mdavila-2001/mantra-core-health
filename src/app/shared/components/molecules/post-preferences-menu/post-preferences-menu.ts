@@ -89,7 +89,7 @@ export class PostPreferencesMenu {
    * La URL absoluta de la publicación.
    *
    * Absoluta y no relativa porque va al portapapeles y a `navigator.share`: un
-   * `/p/dra-lopez/publicacion/42` pegado en un mensaje no abre nada.
+   * `/p/dra-lopez/post/42` pegado en un mensaje no abre nada.
    *
    * Bajo SSR no hay `location`, así que devuelve la ruta a secas. No importa:
    * copiar y compartir sólo ocurren con un clic, que sólo existe en el

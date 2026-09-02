@@ -41,14 +41,14 @@ describe('PublicNavRail', () => {
       imports: [HostComponent],
       providers: [
         provideRouter([
-          { path: 'publicaciones', component: RutaVacia },
-          { path: 'buscar', pathMatch: 'full', component: RutaVacia },
-          { path: 'buscar/profesionales', component: RutaVacia },
-          { path: 'buscar/sintomas', component: RutaVacia },
-          { path: 'buscar/medicamentos', component: RutaVacia },
-          { path: 'buscar/hospitales', component: RutaVacia },
-          { path: 'buscar/diagnostico', component: RutaVacia },
-          { path: 'buscar/aseguradoras', component: RutaVacia },
+          { path: 'posts', component: RutaVacia },
+          { path: 'search', pathMatch: 'full', component: RutaVacia },
+          { path: 'search/practitioners', component: RutaVacia },
+          { path: 'search/symptoms', component: RutaVacia },
+          { path: 'search/medications', component: RutaVacia },
+          { path: 'search/hospitals', component: RutaVacia },
+          { path: 'search/diagnostics', component: RutaVacia },
+          { path: 'search/insurers', component: RutaVacia },
           { path: 'p/:slug', component: RutaVacia },
         ]),
       ],
@@ -56,7 +56,7 @@ describe('PublicNavRail', () => {
 
     fixture = TestBed.createComponent(HostComponent);
     router = TestBed.inject(Router);
-    await ir('/publicaciones');
+    await ir('/posts');
   });
 
   afterEach(() => {
@@ -147,7 +147,7 @@ describe('PublicNavRail', () => {
 
   describe('la página actual (AC-01-3)', () => {
     it('marca la entrada de la ruta activa, y sólo una', async () => {
-      await ir('/publicaciones');
+      await ir('/posts');
       const marcados = enlaces().filter((a) => a.getAttribute('aria-current') === 'page');
 
       expect(marcados).toHaveLength(1);
@@ -155,21 +155,21 @@ describe('PublicNavRail', () => {
     });
 
     it('gana la coincidencia más específica: la hija, no su padre', async () => {
-      await ir('/buscar/profesionales');
+      await ir('/search/practitioners');
       const marcados = enlaces().filter((a) => a.getAttribute('aria-current') === 'page');
 
-      // Sin esto quedarían marcadas `/buscar/profesionales` **y** `/buscar`, y
+      // Sin esto quedarían marcadas `/search/practitioners` **y** `/search`, y
       // un lector de pantalla anunciaría dos «ésta es la página».
       expect(marcados).toHaveLength(1);
-      expect(marcados[0]?.getAttribute('data-route')).toBe('/buscar/profesionales');
+      expect(marcados[0]?.getAttribute('data-route')).toBe('/search/practitioners');
     });
 
     it('un filtro en la dirección no cambia la sección activa', async () => {
-      await ir('/buscar/profesionales?q=cardio');
+      await ir('/search/practitioners?q=cardio');
       const marcados = enlaces().filter((a) => a.getAttribute('aria-current') === 'page');
 
       expect(marcados).toHaveLength(1);
-      expect(marcados[0]?.getAttribute('data-route')).toBe('/buscar/profesionales');
+      expect(marcados[0]?.getAttribute('data-route')).toBe('/search/practitioners');
     });
 
     it('una ruta que no está en el rail no marca nada', async () => {
@@ -179,7 +179,7 @@ describe('PublicNavRail', () => {
     });
 
     it('la clase de activo acompaña al aria-current, y no lo reemplaza', async () => {
-      await ir('/buscar/medicamentos');
+      await ir('/search/medications');
       const activo = enlaces().find((a) => a.classList.contains('is-active'));
 
       expect(activo?.getAttribute('aria-current')).toBe('page');

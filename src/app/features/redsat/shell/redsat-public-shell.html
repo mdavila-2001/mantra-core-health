@@ -4,13 +4,13 @@
      pública, así que va en el marco y no en cada vista. -->
 <div class="app-public-shell">
   <header class="app-public-header">
-    <a class="app-public-header__marca" routerLink="/buscar">
+    <a class="app-public-header__marca" routerLink="/search">
       <img src="/redsat/imagenes/alovida-logo.svg" alt="" width="34" height="25" />
       <span>AloVida</span>
     </a>
 
     <!-- El buscador del marco: está en las 14 pantallas públicas, así que
-         navega a `/buscar?q=` en vez de tener estado propio. La pantalla de
+         navega a `/search?q=` en vez de tener estado propio. La pantalla de
          resultados lee `?q=`; este componente no la conoce ni le habla. -->
     <form class="app-search-field app-public-header__buscador" (submit)="buscar($event)">
       <label class="solo-lectores" for="buscador-publico"
