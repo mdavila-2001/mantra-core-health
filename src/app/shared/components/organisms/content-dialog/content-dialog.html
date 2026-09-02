@@ -1,0 +1,44 @@
+<!-- El clic es el atajo de ratón para cerrar por el fondo. El equivalente de
+     teclado no falta: `Escape` lo maneja el navegador sobre el `<dialog>` y
+     llega por `(cancel)`. Añadir un keydown acá duplicaría ese camino. -->
+<!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+<dialog
+  #nativeDialog
+  class="content-dialog"
+  data-testid="content-dialog"
+  [attr.aria-labelledby]="headingId"
+  [attr.aria-describedby]="description() === null ? null : descriptionId"
+  (cancel)="handleNativeCancel($event)"
+  (click)="handleBackdropClick($event)"
+>
+  <div class="content-dialog__panel">
+    <header class="content-dialog__encabezado">
+      <div class="content-dialog__texto">
+        <h2 class="content-dialog__titulo" [id]="headingId" data-testid="content-dialog-title">
+          {{ heading() }}
+        </h2>
+        @if (description(); as bajada) {
+          <p class="content-dialog__bajada" [id]="descriptionId">{{ bajada }}</p>
+        }
+      </div>
+
+      <!-- `autofocus` acá y no en el contenido: el foco inicial tiene que caer
+           adentro del modal, y el primer control es el que cierra. -->
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        autofocus
+        data-testid="content-dialog-close"
+        (clicked)="close()"
+      >
+        {{ closeLabel() }}
+      </button>
+    </header>
+
+    <div class="content-dialog__cuerpo">
+      <ng-content />
+    </div>
+  </div>
+</dialog>
