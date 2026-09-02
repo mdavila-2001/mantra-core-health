@@ -154,6 +154,16 @@ export class AppMap implements OnDestroy {
   /** El `id` del pin cuyo CTA se activó en el popup. */
   readonly pinElegido = output<string>();
 
+  /**
+   * El punto del mapa donde alguien hizo clic (TAREA 06, AC-06-14).
+   *
+   * Existe porque «Cómo llegar» tiene que dejar **marcar el origen** a quien no
+   * quiere —o no puede— entregar su ubicación del navegador, y ese punto sólo
+   * lo sabe Leaflet: del lado del template no hay forma de convertir píxeles a
+   * grados. Es aditivo: quien no lo escucha no cambia en nada.
+   */
+  readonly pointPicked = output<PuntoGeo>();
+
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly documento = inject(DOCUMENT);
   private readonly injector = inject(Injector);
@@ -211,6 +221,13 @@ export class AppMap implements OnDestroy {
     mapa.setView(CENTRO_POR_DEFECTO, ZOOM_POR_DEFECTO);
     L.tileLayer(TILES_OSM, { attribution: ATRIBUCION_OSM, maxZoom: ZOOM_MAXIMO }).addTo(mapa);
     this.mapa = mapa;
+    // El bus de eventos de Leaflet no existe en el doble de `map.spec.ts` ni
+    // en jsdom: el mismo resguardo que usa `dialog.ts` con `showModal()`.
+    if (typeof mapa.on === 'function') {
+      mapa.on('click', (evento: Leaflet.LeafletMouseEvent) => {
+        this.pointPicked.emit({ lat: evento.latlng.lat, lng: evento.latlng.lng });
+      });
+    }
     this.listo.set(true);
 
     this.dibujar(this.pines());
