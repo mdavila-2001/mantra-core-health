@@ -8,7 +8,7 @@
  * ```text
  * proxy.conf.json          el `yarn start` del host
  * proxy.conf.docker.json   el contenedor de desarrollo
- * deploy/nginx.conf        el reverse proxy de producción
+ * deploy/api-locations.conf  el reverse proxy (referencia y despliegue)
  * ```
  *
  * No se pueden unificar: los dos primeros son configuración de un servidor de
@@ -47,7 +47,9 @@ function desdeProxyJson(archivo) {
 function desdeNginx(archivo) {
   const conf = read(join(REPO_ROOT, archivo));
   const prefijos = new Set();
-  const location = /location\s+\^~\s+(\/[\w-]+(?:\/[\w-]+)*)\/?\s/g;
+  // El punto entra en la clase de caracteres por `/socket.io`, que es un
+  // prefijo real de la API y no un nombre de archivo.
+  const location = /location\s+\^~\s+(\/[\w.-]+(?:\/[\w.-]+)*)\/?\s/g;
 
   let match;
   while ((match = location.exec(conf)) !== null) {
@@ -59,15 +61,33 @@ function desdeNginx(archivo) {
 const FUENTES = [
   { nombre: 'proxy.conf.json', leer: () => desdeProxyJson('proxy.conf.json') },
   { nombre: 'proxy.conf.docker.json', leer: () => desdeProxyJson('proxy.conf.docker.json') },
-  { nombre: 'deploy/nginx.conf', leer: () => desdeNginx('deploy/nginx.conf') },
+  // Dos archivos y no uno: la lista de la API se extrajo a `api-locations.conf`
+  // para que el proxy de referencia y el del despliegue en Coolify la incluyan
+  // los dos en vez de tener cada uno su copia, pero `/otel` sigue en
+  // `nginx.conf` porque NO va a la API — va al servidor de renderizado. Se leen
+  // juntos para comparar contra la misma superficie de antes.
+  {
+    nombre: 'deploy/api-locations.conf + nginx.conf',
+    // `archivos` existe para esta entrada: la comprobación de existencia de
+    // abajo mira rutas, y el nombre de esta fuente es una etiqueta para el
+    // informe, no un archivo.
+    archivos: ['deploy/api-locations.conf', 'deploy/nginx.conf'],
+    leer: () =>
+      new Set([
+        ...desdeNginx('deploy/api-locations.conf'),
+        ...desdeNginx('deploy/nginx.conf'),
+      ]),
+  },
 ];
 
 const problemas = [];
 const leidas = [];
 
 for (const fuente of FUENTES) {
-  if (!exists(join(REPO_ROOT, fuente.nombre))) {
-    problemas.push(`falta ${fuente.nombre}`);
+  const archivos = fuente.archivos ?? [fuente.nombre];
+  const ausentes = archivos.filter((archivo) => !exists(join(REPO_ROOT, archivo)));
+  if (ausentes.length > 0) {
+    problemas.push(`falta ${ausentes.join(', ')}`);
     continue;
   }
   try {
