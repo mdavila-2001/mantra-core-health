@@ -11,8 +11,10 @@
     ## Por qué es un componente y no un `DialogService.confirm()`
 
     Porque no se confirma nada: se lee una lista paginada con sus cuatro
-    estados. `molecules/modal` pone el `<dialog>` nativo —fondo, inertización,
-    trampa de foco, Escape— y esto pone la lista.
+    estados, y aquél devuelve `boolean` sobre un `message: string`.
+    `organisms/content-dialog` pone el `<dialog>` nativo —fondo, inertización,
+    trampa de foco, Escape, bloqueo del scroll y vuelta del foco— y esto pone
+    la lista.
 
     ## Lo que la lista deliberadamente no muestra
 
@@ -40,7 +42,7 @@ import {
   PUBLIC_PROFILE_PREFIX,
   type PublicPostReaction,
 } from '@core/data-access/public-directory/public-directory.types';
-import { Modal } from '@shared/components/molecules/modal/modal';
+import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
 import { inicialesDe } from '@shared/text/iniciales';
 
 /** Los cuatro estados del M34, con los nombres que ya usa la superficie pública. */
@@ -51,7 +53,7 @@ const TAMANO_DE_PAGINA = 25;
 
 @Component({
   selector: 'app-publicacion-reacciones',
-  imports: [Modal, NgTemplateOutlet, RouterLink],
+  imports: [ContentDialog, NgTemplateOutlet, RouterLink],
   templateUrl: './publicacion-reacciones.html',
   styleUrl: './publicacion-reacciones.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

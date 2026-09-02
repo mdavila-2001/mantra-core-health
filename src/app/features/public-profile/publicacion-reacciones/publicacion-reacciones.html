@@ -1,6 +1,6 @@
-<app-modal
+<app-content-dialog
   [heading]="titulo()"
-  closeLabel="Cerrar la lista de reacciones"
+  closeLabel="Cerrar"
   (closed)="cerrado.emit()"
 >
   @switch (estado()) {
@@ -75,7 +75,7 @@
       </p>
     }
   }
-</app-modal>
+</app-content-dialog>
 
 <!-- El retrato es el mismo con enlace y sin él: sin esta plantilla habría que
      copiar avatar, nombre y titular en las dos ramas. -->
