@@ -1,9 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 
 import { FormsCatalog } from './forms-catalog';
 import type { ChartTemplate } from '../../../core/data-access/chart-templates/chart-templates.types';
+import { SEARCH_PARAM } from '../../../shared/components/organisms/filter-bar/filter-bar';
 
 /**
  * Carril R2-5, punto 5 del reclamo: «NO ESTAN LOS FORMULARIOS … Y DEBE ESTAR
@@ -33,22 +36,39 @@ function plantilla(over: Partial<ChartTemplate> = {}): ChartTemplate {
   };
 }
 
+@Component({ selector: 'app-vista-prueba', template: '' })
+class VistaPrueba {}
+
 describe('FormsCatalog', () => {
   let fixture: ComponentFixture<FormsCatalog>;
   let componente: FormsCatalog;
   let http: HttpTestingController;
+  let router: Router;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        // El explorador que envuelve la grilla lleva la barra de filtros, y esa
+        // guarda su estado en la URL: sin router, el catálogo ni se crea.
+        provideRouter([{ path: 'formularios', component: VistaPrueba }]),
+      ],
     });
 
     http = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
     fixture = TestBed.createComponent(FormsCatalog);
     componente = fixture.componentInstance;
   });
 
   afterEach(() => http.verify());
+
+  /** Deja un término de búsqueda puesto, como lo haría la barra de filtros. */
+  async function buscar(termino: string): Promise<void> {
+    await router.navigate(['/formularios'], { queryParams: { [SEARCH_PARAM]: termino } });
+    await fixture.whenStable();
+  }
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
@@ -86,9 +106,9 @@ describe('FormsCatalog', () => {
       ],
     });
 
-    const grupos = interno<() => readonly { titulo: string; formularios: unknown[] }[]>('grupos')();
-    expect(grupos.map((g) => g.titulo)).toEqual(['Cardiología', 'Pediatría']);
-    expect(grupos[0].formularios).toHaveLength(2);
+    const grupos = interno<() => readonly { label: string; items: unknown[] }[]>('grupos')();
+    expect(grupos.map((g) => g.label)).toEqual(['Cardiología', 'Pediatría']);
+    expect(grupos[0].items).toHaveLength(2);
     expect(interno<() => number>('total')()).toBe(3);
   });
 
@@ -96,11 +116,11 @@ describe('FormsCatalog', () => {
     peticionDelCatalogo().flush([plantilla()]);
     peticionDeEtiquetas().error(new ProgressEvent('error'));
 
-    const grupos = interno<() => readonly { titulo: string }[]>('grupos')();
+    const grupos = interno<() => readonly { label: string }[]>('grupos')();
     // Un fallo leyendo metadatos no puede dejar el catálogo en error: los
     // formularios están, y son lo que el cliente pidió ver.
     expect(grupos).toHaveLength(1);
-    expect(grupos[0].titulo).toBe('esp-cardio');
+    expect(grupos[0].label).toBe('esp-cardio');
   });
 
   it('«usar esta plantilla» la asigna como predeterminada', () => {
@@ -158,9 +178,67 @@ describe('FormsCatalog', () => {
     peticionDelCatalogo().flush([conOrigen]);
     peticionDeEtiquetas().flush({ items: [] });
 
-    const grupos =
-      interno<() => readonly { formularios: readonly ChartTemplate[] }[]>('grupos')();
-    expect(grupos[0].formularios[0].provenance?.organization).toBe('CLAP/SMR — OPS/OMS');
-    expect(grupos[0].formularios[0].provenance?.url).toMatch(/^https:\/\//);
+    const grupos = interno<() => readonly { items: readonly ChartTemplate[] }[]>('grupos')();
+    expect(grupos[0].items[0].provenance?.organization).toBe('CLAP/SMR — OPS/OMS');
+    expect(grupos[0].items[0].provenance?.url).toMatch(/^https:\/\//);
+  });
+
+  /**
+   * El explorador dibuja un buscador; acotar es en memoria sobre lo que ya
+   * llegó, porque el catálogo pide **todas** las plantillas de una vez. Un
+   * buscador que no acota nada es peor que no tenerlo.
+   */
+  describe('buscar acota lo que ya está cargado', () => {
+    function nombresVisibles(): string[] {
+      return interno<() => readonly { items: readonly ChartTemplate[] }[]>('grupos')()
+        .flatMap((grupo) => grupo.items)
+        .map((plantilla) => plantilla.name);
+    }
+
+    beforeEach(() => {
+      peticionDelCatalogo().flush([
+        plantilla({ id: 'a', specialtyConceptId: 'esp-cardio', name: 'Ficha cardiológica' }),
+        plantilla({ id: 'b', specialtyConceptId: 'esp-pedia', name: 'Control de niño sano' }),
+        plantilla({
+          id: 'c',
+          specialtyConceptId: 'esp-cardio',
+          name: 'Riesgo cardiovascular',
+          code: 'CARDIO_RIESGO',
+        }),
+      ]);
+      peticionDeEtiquetas().flush({
+        items: [
+          { conceptId: 'esp-cardio', display: 'Cardiología', code: 'C' },
+          { conceptId: 'esp-pedia', display: 'Pediatría', code: 'P' },
+        ],
+      });
+    });
+
+    it('sin término puesto, el catálogo está entero', () => {
+      expect(nombresVisibles()).toHaveLength(3);
+    });
+
+    it('acota por nombre, sin exigir el acento', async () => {
+      await buscar('cardiologica');
+
+      // «cardiologica» tiene que encontrar «Ficha cardiológica»: casi nadie
+      // escribe el acento en un buscador.
+      expect(nombresVisibles()).toEqual(['Ficha cardiológica']);
+    });
+
+    it('acota también por especialidad y por código', async () => {
+      await buscar('pediatr');
+      expect(nombresVisibles()).toEqual(['Control de niño sano']);
+
+      await buscar('CARDIO_RIESGO');
+      expect(nombresVisibles()).toEqual(['Riesgo cardiovascular']);
+    });
+
+    it('la especialidad que se queda sin formularios no deja su rótulo suelto', async () => {
+      await buscar('pediatr');
+
+      const grupos = interno<() => readonly { label: string }[]>('grupos')();
+      expect(grupos.map((grupo) => grupo.label)).toEqual(['Pediatría']);
+    });
   });
 });

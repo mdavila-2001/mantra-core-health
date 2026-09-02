@@ -1,6 +1,7 @@
-/* El catálogo de formularios estándar: una sección por especialidad, y adentro
-   una tarjeta por formulario. La jerarquía visual es la del pedido —primero la
-   especialidad, después el formulario— y no la de una tabla plana. */
+/* El catálogo de formularios estándar. La jerarquía visual —una sección por
+   especialidad y adentro una tarjeta por formulario— la arma
+   `app-specialty-browser`; acá queda sólo la pinta de la tarjeta, que es lo
+   único propio de este catálogo. */
 
 :host {
   display: block;
@@ -21,27 +22,6 @@
 .catalogo__resumen {
   margin: var(--sp-2) 0 0;
   color: var(--text-muted);
-}
-
-.catalogo__especialidad {
-  margin-block-start: var(--sp-6);
-}
-
-.catalogo__especialidad-titulo {
-  margin: 0 0 var(--sp-3);
-  padding-block-end: var(--sp-2);
-  border-block-end: 1px solid var(--border-default);
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
-  font-weight: 600;
-}
-
-.catalogo__formularios {
-  display: grid;
-  gap: var(--sp-4);
-  /* Se acomoda solo: una columna en un teléfono, tres en un escritorio, sin
-     puntos de corte inventados. */
-  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
 }
 
 .catalogo__formulario {
