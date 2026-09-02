@@ -1,8 +1,10 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { SessionStore } from '@core/auth/session.store';
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
+import { PostPreferencesMenu } from '@shared/components/molecules/post-preferences-menu/post-preferences-menu';
 
 /**
  * Una publicación, con la anatomía de una entrada de feed de red social:
@@ -16,7 +18,7 @@ import type { PublicPostSummary } from '@core/data-access/public-directory/publi
  */
 @Component({
   selector: 'app-publicacion-post',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, PostPreferencesMenu, RouterLink],
   templateUrl: './publicacion-post.html',
   styleUrl: './publicacion-post.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +43,26 @@ export class PublicacionPost {
    */
   readonly autorEnlazado = input(false);
 
+  /* ---- menú de preferencias (AC-01-15 a AC-01-18) ------------------------ */
+
+  /**
+   * Las tres acciones que exigen dominio suben a quien monte la tarjeta.
+   *
+   * La molécula del menú resuelve sola copiar, compartir, navegar y mandar a
+   * `/auth` con retorno; lo que toca a la comunidad —denunciar, dejar de ver,
+   * contactar— sale por acá porque el destinatario cambia según la pantalla, y
+   * porque una tarjeta que llamara a `community.client` dejaría de servir para
+   * dibujar una publicación de cualquier otra cosa.
+   */
+  readonly pedidoDeOcultar = output<string>();
+  readonly pedidoDeDenuncia = output<string>();
+  readonly pedidoDeContacto = output<string>();
+
+  private readonly sesion = inject(SessionStore);
+
+  /** Si hay sesión: decide si el menú actúa o manda a entrar (AC-01-17). */
+  protected readonly haySesion = this.sesion.isAuthenticated;
+
   private readonly expandido = signal(false);
 
   private readonly TOPE_RECORTE = 360;
@@ -57,6 +79,56 @@ export class PublicacionPost {
     'publicacion',
     this.post().id,
   ]);
+
+  /* ---- galería de imágenes (AC-01-7, AC-01-8) ---------------------------- */
+
+  /**
+   * Qué imagen se está viendo, en base 0.
+   *
+   * Se reinicia sola cuando cambia la publicación: el mismo componente se
+   * reutiliza al paginar el feed, y sin esto una publicación de dos imágenes
+   * que cae donde había una de cinco abriría en el índice 4 —fuera de rango—.
+   * Por eso el índice se acota al leerlo en vez de guardarse ya acotado: es un
+   * `computed` derivado, no un estado que haya que recordar sincronizar.
+   */
+  private readonly indiceElegido = signal(0);
+
+  protected readonly tieneVariasImagenes = computed(() => this.post().mediaUrls.length > 1);
+
+  /** El índice válido: acotado al rango de la publicación que se esté viendo. */
+  protected readonly indiceVisible = computed(() => {
+    const ultimo = Math.max(0, this.post().mediaUrls.length - 1);
+    return Math.min(Math.max(this.indiceElegido(), 0), ultimo);
+  });
+
+  /** Lo que ve una persona: 1 de N, no 0 de N. */
+  protected readonly numeroVisible = computed(() => this.indiceVisible() + 1);
+
+  protected readonly imagenVisible = computed(
+    () => this.post().mediaUrls[this.indiceVisible()] ?? '',
+  );
+
+  /**
+   * En los extremos el botón queda `disabled` en vez de dar la vuelta.
+   *
+   * Un carrusel circular sin aviso hace que «siguiente» en la última imagen
+   * devuelva a la primera sin decirlo, y quien no ve la pantalla no tiene cómo
+   * saber que ya recorrió todo.
+   */
+  protected readonly hayAnterior = computed(() => this.indiceVisible() > 0);
+
+  protected readonly haySiguiente = computed(
+    () => this.indiceVisible() < this.post().mediaUrls.length - 1,
+  );
+
+  protected verAnterior(): void {
+    this.indiceElegido.set(Math.max(0, this.indiceVisible() - 1));
+  }
+
+  protected verSiguiente(): void {
+    const ultimo = this.post().mediaUrls.length - 1;
+    this.indiceElegido.set(Math.min(ultimo, this.indiceVisible() + 1));
+  }
 
   protected readonly enlaceAutor = computed(() => ['/p', this.slug()]);
 

@@ -46,6 +46,17 @@ export type { CargadorDeLeaflet } from './map/map';
 export { distanciaEnLineaRectaKm, ordenarPorCercania } from './map/geo';
 export type { EstadoDePin, PinMapa, PuntoGeo } from './map/pin-mapa.types';
 
+/**
+ * El rail de la superficie pública. Reemplaza las ocho copias de `app-tabs`
+ * que vivían dentro de las plantillas de `features/redsat/buscar/`.
+ */
+export { PublicNavRail } from './public-nav-rail/public-nav-rail';
+export { PUBLIC_NAV_RAIL_SECTIONS } from './public-nav-rail/public-nav-rail.types';
+export type {
+  PublicNavRailEntry,
+  PublicNavRailGroup,
+} from './public-nav-rail/public-nav-rail.types';
+
 export { PageHeader } from './page-header/page-header';
 export type { PageHeaderAction } from './page-header/page-header';
 

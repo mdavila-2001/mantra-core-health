@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
@@ -68,6 +68,7 @@ const MY_ORGANIZATIONS_ROUTE = '/my-organizations';
 export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly formTracing = inject(FormTracing);
 
   readonly form = new FormGroup({
@@ -178,7 +179,38 @@ export class Login {
         ? GETTING_STARTED_ROUTE
         : MY_ORGANIZATIONS_ROUTE;
     }
-    return HOME_ROUTE;
+    return this.retornoPedido() ?? HOME_ROUTE;
+  }
+
+  /**
+   * A dónde volver después de entrar, si alguien lo pidió (AC-01-17).
+   *
+   * Lo escribe quien manda acá desde una superficie pública: el menú de
+   * preferencias de una publicación ofrece «Denunciar» sin sesión y necesita
+   * devolver a la persona a la publicación que estaba leyendo, no al panel.
+   *
+   * ## Por qué se valida, y con qué criterio
+   *
+   * Un `returnUrl` que llegue por la barra de direcciones es entrada de
+   * usuario, y navegar a él a ciegas es una redirección abierta: basta un
+   * enlace `/auth?returnUrl=https://otro-sitio` para que un login legítimo
+   * termine en una pantalla ajena que copia la marca.
+   *
+   * Se acepta **sólo** una ruta interna: empieza con `/` y **no** con `//`
+   * —`//evil.com` es una URL protocol-relative, y el navegador la resuelve
+   * como host externo aunque parezca una ruta—. Tampoco se acepta `/\`, que
+   * varios navegadores normalizan igual que `//`.
+   *
+   * Se ignora cuando hay que elegir organización o cuando no hay ninguna: en
+   * los dos casos el destino no es negociable.
+   */
+  private retornoPedido(): string | null {
+    const pedido = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (pedido === null || pedido === '') {
+      return null;
+    }
+    const externo = !pedido.startsWith('/') || /^\/[/\\]/.test(pedido);
+    return externo ? null : pedido;
   }
 
   /**

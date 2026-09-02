@@ -34,11 +34,16 @@
           <p class="publicacion__titular">{{ autorHeadline() }}</p>
         }
         <p class="publicacion__meta">
-          <a class="publicacion__fecha" [routerLink]="enlacePost()">
-            <time [attr.datetime]="p.publishedAt.toISOString()">
-              {{ p.publishedAt | date: 'd MMM y' }}
-            </time>
-          </a>
+          <!-- AC-01-1 — La fecha NO es enlace. Era un `<a>` a la publicación:
+               un destino que no anuncia adónde va («14 ago 2026» no dice
+               «abrir esta publicación»), que aparecía en el orden de
+               tabulación de cada tarjeta del feed, y que duplicaba lo que el
+               menú de preferencias ya ofrece como «Ir a la publicación». El
+               `<time datetime>` queda: lo leen el buscador y el lector de
+               pantalla. -->
+          <time class="publicacion__fecha" [attr.datetime]="p.publishedAt.toISOString()">
+            {{ p.publishedAt | date: 'd MMM y' }}
+          </time>
           <span class="publicacion__punto" aria-hidden="true">·</span>
           <svg
             class="publicacion__globo"
@@ -55,6 +60,20 @@
           <span class="solo-lectores">Publicación pública</span>
         </p>
       </div>
+
+      <!-- AC-01-15 — Las siete opciones del pedido. Es una molécula compartida
+           y no marcado suelto: la misma fila aparece en el feed y en la vista
+           de una publicación suelta. -->
+      <app-post-preferences-menu
+        class="publicacion__preferencias"
+        [postLink]="enlacePost()"
+        [profileLink]="enlaceAutor()"
+        [shareTitle]="autorNombre() + ' en AloVida'"
+        [hasSession]="haySesion()"
+        (hideSimilarRequested)="pedidoDeOcultar.emit(post().id)"
+        (reportRequested)="pedidoDeDenuncia.emit(post().id)"
+        (contactRequested)="pedidoDeContacto.emit(slug())"
+      />
     </header>
 
     <p class="publicacion__cuerpo" [class.publicacion__cuerpo--recortado]="recortado()">@for (
@@ -75,13 +94,53 @@
   </div>
 
   @if (p.mediaUrls.length > 0) {
+    <!-- AC-01-7 — Esto era `overflow-x: auto` con `scroll-snap`, sin un solo
+         control: el `aria-label` decía «Deslizá para ver las N imágenes», que
+         con teclado o con lector de pantalla no es una instrucción que se
+         pueda seguir. Ahora se ve una imagen por vez y se avanza con botones.
+
+         `varias` sigue siendo el gancho de estilo, pero ya no significa
+         «esto scrollea»: significa «esto tiene pasos». -->
     <div
       class="publicacion__medios"
-      [attr.data-cantidad]="p.mediaUrls.length > 1 ? 'varias' : 'una'"
-      [attr.aria-label]="p.mediaUrls.length > 1 ? 'Deslizá para ver las ' + p.mediaUrls.length + ' imágenes' : null"
+      [attr.data-cantidad]="tieneVariasImagenes() ? 'varias' : 'una'"
+      [attr.role]="tieneVariasImagenes() ? 'group' : null"
+      [attr.aria-roledescription]="tieneVariasImagenes() ? 'galería' : null"
+      [attr.aria-label]="tieneVariasImagenes() ? 'Imágenes de la publicación' : null"
     >
-      @for (url of p.mediaUrls; track url) {
-        <img class="publicacion__imagen" [src]="url" alt="" />
+      <img class="publicacion__imagen" [src]="imagenVisible()" alt="" />
+
+      @if (tieneVariasImagenes()) {
+        <div class="publicacion__pasos">
+          <button
+            type="button"
+            class="publicacion__paso"
+            data-testid="imagen-anterior"
+            aria-label="Imagen anterior"
+            [disabled]="!hayAnterior()"
+            (click)="verAnterior()"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+          </button>
+
+          <!-- El «n de N» es texto, no un punto de color: quien no distingue
+               el punto lleno del vacío igual sabe dónde está. `aria-live`
+               para que el cambio se anuncie sin mover el foco. -->
+          <p class="publicacion__contador" aria-live="polite">
+            {{ numeroVisible() }} de {{ p.mediaUrls.length }}
+          </p>
+
+          <button
+            type="button"
+            class="publicacion__paso"
+            data-testid="imagen-siguiente"
+            aria-label="Imagen siguiente"
+            [disabled]="!haySiguiente()"
+            (click)="verSiguiente()"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
+          </button>
+        </div>
       }
     </div>
   }

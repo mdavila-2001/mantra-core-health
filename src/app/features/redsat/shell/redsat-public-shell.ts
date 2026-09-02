@@ -11,13 +11,20 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
+import { PublicNavRail } from '@shared/components/organisms/public-nav-rail/public-nav-rail';
 import { RedsatThemeToggleDirective } from '@core/redsat/redsat-theme-toggle.directive';
 
 import { RedsatDesignNotice } from './redsat-design-notice';
 
 @Component({
   selector: 'app-redsat-public-shell',
-  imports: [RedsatDesignNotice, RouterLink, RouterOutlet, RedsatThemeToggleDirective],
+  imports: [
+    PublicNavRail,
+    RedsatDesignNotice,
+    RouterLink,
+    RouterOutlet,
+    RedsatThemeToggleDirective,
+  ],
   templateUrl: './redsat-public-shell.html',
 })
 export class RedsatPublicShell {
