@@ -23,12 +23,12 @@
 #     `scripts/check-api-prefixes.mjs`).
 #
 # ORDEN DE DESPLIEGUE: primero el stack de la API, después éste. Los dos
-# comparten la red `alovida`, que se crea UNA VEZ en el servidor:
+# comparten la red `alovida`, y **la crea el stack de la API** — acá se toma
+# como `external`. No hace falta crearla a mano en el servidor.
 #
-#     docker network create alovida
-#
-# Se declara `external` en los dos lados a propósito: si uno la creara, el otro
-# fallaría con «network alovida was found but has incorrect label».
+# Por eso el orden no es una recomendación: si este stack se despliega primero,
+# la red no existe todavía y nginx ni siquiera arranca, porque resuelve el
+# upstream `api` al leer la configuración («host not found in upstream "api"»).
 #
 # En Coolify:
 #   Nuevo recurso → Docker Compose → este repositorio, rama `dev`
@@ -104,7 +104,17 @@ services:
     healthcheck:
       # Se pide una ruta que atraviesa el proxy Y el servidor de renderizado:
       # un nginx en pie que no alcanza al SSR no está sano para nadie.
-      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost/auth || exit 1']
+      #
+      # `127.0.0.1` y NO `localhost`: dentro del contenedor `localhost` resuelve
+      # primero a `::1`, y el `listen 80` de nginx solo escucha en IPv4. Con
+      # `localhost` el healthcheck daba «wget: can't connect to remote host:
+      # Connection refused» para siempre — nginx sano, sirviendo tráfico real, y
+      # marcado `unhealthy`. En Coolify eso es un despliegue en rojo que
+      # funciona, que es peor que uno roto.
+      #
+      # `127.0.0.1` está además en los hosts permitidos horneados en el
+      # artefacto, así que el SSR responde 200 y no 400.
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1/auth || exit 1']
       interval: 30s
       timeout: 5s
       retries: 3
@@ -121,7 +131,7 @@ networks:
   # Red privada de este stack: solo la comparten `proxy` y `web`.
   interna:
 
-  # Compartida con el stack de la API. Ver la cabecera.
+  # Compartida con el stack de la API, que es quien la crea. Ver la cabecera.
   alovida:
     external: true
     name: ${ALOVIDA_NETWORK:-alovida}
