@@ -7,6 +7,7 @@ import { SchedulingClient } from '../../../core/data-access/scheduling/schedulin
 import type {
   AgendaResource,
   AgendaSlot,
+  AvailabilityExceptionTypeOption,
   Booking,
   PublishedTemplate,
 } from '../../../core/data-access/scheduling/scheduling.types';
@@ -187,6 +188,15 @@ export class MyAgenda {
 
   /** Si el panel de bloqueo está abierto (D4/D5 del plan de UX). */
   protected readonly bloqueoAbierto = signal(false);
+
+  /**
+   * El catálogo de motivos, cargado la primera vez que se abre el panel.
+   *
+   * No se pide al entrar a la pantalla porque la mayoría de las visitas es
+   * para mirar el mes, no para bloquear. Y no se recarga después: es un
+   * catálogo, no datos que cambien mientras uno decide sus vacaciones.
+   */
+  protected readonly motivosDeBloqueo = signal<readonly AvailabilityExceptionTypeOption[]>([]);
 
   /** Un bloqueo en curso: evita el doble envío de un rango largo. */
   protected readonly bloqueando = signal(false);
@@ -393,6 +403,25 @@ export class MyAgenda {
    * profesional tiene que enterarse de que su bloqueo quedó a medias en vez de
    * ver un mes que parece correcto.
    */
+  /**
+   * Abre el panel y, la primera vez, trae los motivos.
+   *
+   * **Si el catálogo falla, el panel se abre igual.** Un bloqueo con el motivo
+   * por defecto sigue siendo el comportamiento que la pantalla tuvo siempre;
+   * negarle a alguien bloquear su agenda porque no cargó una lista de siete
+   * etiquetas sería cambiar un defecto de datos por uno de disponibilidad.
+   */
+  protected abrirBloqueo(): void {
+    this.bloqueoAbierto.set(true);
+    if (this.motivosDeBloqueo().length > 0) {
+      return;
+    }
+    this.scheduling.listExceptionTypes().subscribe({
+      next: (catalogo) => this.motivosDeBloqueo.set(catalogo.items),
+      error: () => this.motivosDeBloqueo.set([]),
+    });
+  }
+
   protected bloquearRango(pedido: BloqueoPedido): void {
     const recurso = this.recurso();
     if (recurso === null || this.bloqueando()) {
@@ -407,7 +436,7 @@ export class MyAgenda {
     forkJoin(
       intervalos.map((intervalo) =>
         this.scheduling.createException(recurso.id, {
-          exceptionType: 'ABSENCE',
+          exceptionType: pedido.exceptionType,
           startAt: intervalo.startAt.toISOString(),
           endAt: intervalo.endAt.toISOString(),
           reason: pedido.motivo,
@@ -483,7 +512,11 @@ export class MyAgenda {
 
     this.scheduling
       .createException(recurso.id, {
-        exceptionType: 'ABSENCE',
+        // Este atajo pide **texto libre** y nada más, así que su motivo es
+        // literalmente «Otro»: mandarlo como `ABSENCE` etiquetaría de
+        // «Ausencia» algo que la persona escribió a mano, y el paciente vería
+        // una etiqueta que nadie eligió.
+        exceptionType: 'OTHER',
         startAt: desde.toISOString(),
         endAt: hasta.toISOString(),
         reason: motivo,

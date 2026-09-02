@@ -65,17 +65,35 @@
       </p>
     }
 
-    <app-form-field
-      label="¿Por qué?"
-      hint="Lo ves sólo vos, para acordarte cuando mires el mes."
-    >
-      <app-input
-        type="text"
-        placeholder="Congreso, vacaciones, trámite…"
-        [value]="motivo()"
-        (valueChange)="fijarMotivo($event)"
-      />
-    </app-form-field>
+    @if (opcionesDeMotivo().length > 0) {
+      <app-form-field
+        label="¿Por qué?"
+        hint="El motivo se guarda con el bloqueo y es lo que ve tu paciente."
+      >
+        <app-select
+          [options]="opcionesDeMotivo()"
+          [value]="tipo()"
+          (valueChange)="elegirTipo($event)"
+        />
+      </app-form-field>
+    }
+
+    <!-- El texto libre aparece SÓLO cuando el motivo elegido lo exige. Es lo
+         único de este formulario que el paciente no ve, y por eso se dice acá
+         y no en un aviso aparte. -->
+    @if (exigeTexto()) {
+      <app-form-field
+        label="Contá de qué se trata"
+        hint="Esto queda para vos y para quien administre la agenda: tu paciente ve «Otro», no el texto."
+      >
+        <app-input
+          type="text"
+          placeholder="Trámite en el banco, mudanza…"
+          [value]="motivo()"
+          (valueChange)="fijarMotivo($event)"
+        />
+      </app-form-field>
+    }
 
     @if (errorVisible(); as texto) {
       <p class="bloqueo__error" role="alert">{{ texto }}</p>
