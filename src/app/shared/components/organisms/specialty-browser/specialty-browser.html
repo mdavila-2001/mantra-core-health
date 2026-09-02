@@ -1,0 +1,59 @@
+<app-filter-bar
+  [filters]="filters()"
+  [searchLabel]="searchLabel()"
+  (filtersChanged)="filtersChanged.emit($event)"
+/>
+
+<app-view-state-host [state]="state()" (retry)="retry.emit()">
+  <!-- S2 con la forma de lo que viene: bloques de tarjeta, no renglones de
+       texto. Un esqueleto que no se parece al contenido desorienta más de lo
+       que informa. -->
+  <div vsh-skeleton class="specialty-browser__skeleton">
+    <app-skeleton variant="rect" [lines]="3" />
+  </div>
+
+  @if (noMatches()) {
+    <!-- Hay catálogo, pero el filtro no dejó nada. Ver el JSDoc de
+         `noMatchesText`. -->
+    <p class="specialty-browser__no-matches" role="status" data-testid="specialty-browser-empty">
+      {{ noMatchesText() }}
+    </p>
+  } @else {
+    @for (group of groups(); track group.conceptId) {
+      <section class="specialty-browser__group" [attr.aria-labelledby]="headingId(group)">
+        <h3 class="specialty-browser__group-title" [id]="headingId(group)">
+          {{ group.label }}
+          <span class="specialty-browser__count">{{ group.items.length }}</span>
+        </h3>
+
+        <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia
+             cuántos hay antes de leer el primero. -->
+        <ul class="specialty-browser__grid">
+          @for (item of group.items; track item) {
+            <li class="specialty-browser__item">
+              <ng-container
+                [ngTemplateOutlet]="itemTemplate()"
+                [ngTemplateOutletContext]="{ $implicit: item, group: group }"
+              />
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  @if (hasMore()) {
+    <div class="specialty-browser__more">
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        size="sm"
+        data-testid="specialty-browser-more"
+        (clicked)="moreRequested.emit()"
+      >
+        Cargar más
+      </button>
+    </div>
+  }
+</app-view-state-host>

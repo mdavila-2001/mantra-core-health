@@ -56,6 +56,12 @@ export { SideNav } from './side-nav/side-nav';
 export { NAV_ICON_NAMES, NAV_MODES } from './side-nav/side-nav.types';
 export type { NavIconName, NavItem, NavMode, NavSection } from './side-nav/side-nav.types';
 
+export { SpecialtyBrowser } from './specialty-browser/specialty-browser';
+export type {
+  SpecialtyGroup,
+  SpecialtyItemContext,
+} from './specialty-browser/specialty-browser.types';
+
 export { StatusSeal } from './status-seal/status-seal';
 export { STATUS_SEAL_VARIANTS, UNKNOWN_STATUS_VARIANT } from './status-seal/status-seal.types';
 export type { StatusSealVariant } from './status-seal/status-seal.types';

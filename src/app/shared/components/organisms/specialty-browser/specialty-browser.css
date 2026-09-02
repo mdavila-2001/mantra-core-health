@@ -1,0 +1,80 @@
+/* ============================================================================
+    Explorar un catálogo agrupado por especialidad.
+
+    Sólo distribución: la tarjeta la trae el consumidor y decide su propia
+    pinta. Lo único que este archivo resuelve es cuántas entran por fila, cómo
+    se separan los tramos y dónde queda el pie.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.specialty-browser__skeleton {
+  display: block;
+}
+
+.specialty-browser__no-matches {
+  margin: var(--sp-4) 0 0;
+  max-inline-size: 68ch;
+  color: var(--text-secondary);
+}
+
+.specialty-browser__group {
+  margin-block-start: var(--sp-6);
+}
+
+/* El encabezado se pega al desplazar: en un catálogo largo, saber bajo qué
+   especialidad se está mirando es la mitad de la información. */
+.specialty-browser__group-title {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding-block: var(--sp-2);
+  /* Opaco: si no, las tarjetas se leen a través del encabezado al desplazar. */
+  background: var(--bg-base);
+  border-block-end: 1px solid var(--border-default);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+.specialty-browser__count {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+
+/* `auto-fill` con `minmax` y no un número fijo de columnas: el catálogo se abre
+   en un teléfono, en una tablet y en un monitor, y fijar tres columnas obliga a
+   tres reglas de medios que se olvidan de la cuarta pantalla.
+
+   El `min(100%, …)` es lo que impide el desborde lateral: en un contenedor más
+   angosto que la pista mínima, `minmax(18rem, 1fr)` la respeta igual y aparece
+   scroll horizontal. */
+.specialty-browser__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.specialty-browser__item {
+  display: block;
+  /* Las tarjetas de una fila terminan a la misma altura aunque digan distinto. */
+  block-size: 100%;
+}
+
+.specialty-browser__more {
+  display: flex;
+  justify-content: center;
+  margin-block-start: var(--sp-6);
+}
