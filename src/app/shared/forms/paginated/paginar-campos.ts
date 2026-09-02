@@ -61,6 +61,9 @@ function paginarSeccion(seccion: SeccionDeFormulario): readonly PaginaDeFormular
     // la segunda no vio la primera hace un rato, y una explicación que sólo
     // aparece en el primer trozo es una explicación que la mitad no lee.
     ...(seccion.hint === undefined ? {} : { hint: seccion.hint }),
+    // El glifo también: las dos mitades de una sección partida son la misma
+    // pregunta, y en el indicador de pasos tienen que reconocerse como tal.
+    ...(seccion.icon === undefined ? {} : { icon: seccion.icon }),
     ...(seccion.disposicion === undefined ? {} : { disposicion: seccion.disposicion }),
     campos,
   }));
