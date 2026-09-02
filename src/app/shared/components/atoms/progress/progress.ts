@@ -1,5 +1,6 @@
 import {
   afterNextRender,
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -25,6 +26,20 @@ import {
  * ```
  *
  * `label` es obligatorio: una barra sin nombre es un rectángulo que se mueve.
+ *
+ * ## La punta (`showMarker`)
+ *
+ * Con `showMarker` la barra termina en un círculo en la posición del avance,
+ * que viaja con él. Sirve donde el avance es **el estado de quien mira** —el
+ * paso de un formulario— y no donde es el estado de una tarea de fondo: en una
+ * subida de ocho archivos, ocho círculos latiendo son ocho cosas pidiendo
+ * atención a la vez.
+ *
+ * Por eso entra apagado. Es puramente decorativo: no toca el `role`, ni los
+ * `aria-value*`, ni el ancho del relleno, así que encenderlo no cambia nada de
+ * lo que se anuncia. Bajo `prefers-reduced-motion: reduce` el círculo queda
+ * quieto —sin pulso ni halo animado—: a diferencia del modo indeterminado, acá
+ * la animación no informa nada que el ancho no diga ya.
  */
 @Component({
   selector: 'app-progress',
@@ -50,6 +65,16 @@ export class Progress {
   /** Nombre accesible. Obligatorio en los hechos: sin él se avisa en desarrollo. */
   readonly label = input<string>('');
 
+  /**
+   * Dibuja el círculo de la punta, en la posición del avance.
+   *
+   * Apagado por defecto **a propósito**: este átomo lo usan tanto el motor de
+   * formularios como las subidas de archivo, y un default encendido le habría
+   * puesto un círculo latiendo a cada fila de una subida múltiple sin que nadie
+   * lo pidiera. Lo enciende quien sabe que su barra es un recorrido.
+   */
+  readonly showMarker = input(false, { transform: booleanAttribute });
+
   protected readonly min = PROGRESS_MIN;
   protected readonly max = PROGRESS_MAX;
 
@@ -66,10 +91,24 @@ export class Progress {
 
   protected readonly fillWidth = computed(() => `${this.clampedValue() ?? 0}%`);
 
+  /**
+   * La punta sólo existe cuando hay una posición que señalar.
+   *
+   * En indeterminada el ancho no significa nada —lo dice la animación de la
+   * banda—, así que un círculo ahí apuntaría a un lugar inventado.
+   */
+  protected readonly markerVisible = computed(
+    () => this.showMarker() && !this.isIndeterminate(),
+  );
+
   readonly progressClasses = computed(() => {
     const classes = ['progress', `progress--${this.tone()}`, `progress--${this.size()}`];
     if (this.isIndeterminate()) {
       classes.push('progress--indeterminate');
+    }
+    if (this.markerVisible()) {
+      // El riel recorta su contenido; con punta tiene que dejarla asomar.
+      classes.push('progress--with-marker');
     }
     return classes.join(' ');
   });
