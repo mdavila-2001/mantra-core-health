@@ -20,7 +20,8 @@ import type {
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_MINE_ROUTE } from '../agenda.routes';
-import { miRecursoDeAgenda } from '../mi-recurso';
+import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
+import { misRecursosDeAgenda } from '../mi-recurso';
 import { calcularTurnos, type Calculo } from './agenda-turnos';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
@@ -195,6 +196,40 @@ export class AgendaCreate {
   );
 
   /** Quien administra el catálogo puede publicar la agenda de otro recurso. */
+  /**
+   * Las agendas de quien publica. Más de una = atiende en más de una sede.
+   */
+  protected readonly misAgendas = signal<readonly AgendaResource[]>([]);
+
+  /** Sólo se pregunta cuándo hay más de una: elegir entre una no es elegir. */
+  protected readonly eligeSede = computed(() => this.misAgendas().length > 1);
+
+  protected readonly opcionesDeSede = computed<SelectOption<string>[]>(() =>
+    this.misAgendas().map((r) => ({ value: r.id, label: r.name })),
+  );
+
+  /**
+   * Cambia la agenda sobre la que se publica y relee su horario vigente.
+   *
+   * Releer no es opcional: cada sede tiene su propio horario, y dejar en
+   * pantalla el de la anterior haría que alguien publique creyendo que corrige
+   * lo que ya tenía.
+   */
+  protected elegirSede(id: string | null): void {
+    if (id === null || id === this.resourceId()) return;
+    this.resourceId.set(id);
+    this.vigente.set(null);
+    this.scheduling.listTemplates(id).subscribe({
+      next: (pagina) => {
+        const vigente = pagina.items[0];
+        if (vigente === undefined) return;
+        this.vigente.set(vigente);
+        this.cargarSemanaDesde(vigente);
+      },
+      error: () => undefined,
+    });
+  }
+
   protected readonly puedePublicarParaOtro = computed(() =>
     ROLES_DE_CATALOGO.some((rol) => this.auth.roles().includes(rol)),
   );
@@ -248,7 +283,7 @@ export class AgendaCreate {
   protected readonly esCambio = computed(() => this.vigente() !== null);
 
   /** Identificadores ya obtenidos: reintentar no vuelve a crearlos. */
-  private readonly resourceId = signal<string | null>(null);
+  protected readonly resourceId = signal<string | null>(null);
   private readonly policyId = signal<string | null>(null);
   private readonly templateId = signal<string | null>(null);
   protected readonly cuposCreados = signal<number | null>(null);
@@ -413,9 +448,14 @@ export class AgendaCreate {
     // pantalla ya le está diciendo a esa sesión que la sección no es suya.
     if (perfil === null || tenantId === null || !this.puedeCrear()) return;
 
-    miRecursoDeAgenda(this.scheduling, tenantId, perfil).subscribe({
-      next: (recurso) => {
-        if (recurso === null) return;
+    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+      next: (recursos) => {
+        // Todas, no la primera: quien atiende en dos sedes tiene que poder
+        // decir en cuál publica. Antes esta lectura hacía `.find()` y la
+        // segunda agenda no existía para el producto.
+        this.misAgendas.set(recursos);
+        const recurso = recursos[0];
+        if (recurso === undefined) return;
         this.resourceId.set(recurso.id);
         this.scheduling.listTemplates(recurso.id).subscribe({
           next: (pagina) => {

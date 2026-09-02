@@ -227,12 +227,23 @@ export class ClinicalRecord {
           return;
         }
 
+        // El vacío dice el ALCANCE, no un hecho que no comprobamos.
+        //
+        // Antes decía «Ningún paciente tiene el documento X», y era falso: la
+        // persona podía existir con ese documento exacto y no aparecer, porque
+        // esta búsqueda sólo alcanza a los pacientes **con actividad en tu
+        // organización** —una reserva de agenda o una relación asistencial—.
+        //
+        // Se descubrió en un recorrido real: el documento estaba en la base,
+        // con su departamento correcto, y la pantalla afirmaba que no existía.
+        // Un vacío que afirma de más manda a buscar el error donde no está.
         this.resultados.set(
           documento !== ''
             ? empty(
                 { label: 'Ver todos', route: CLINICAL_RECORD_ROUTE },
-                `Ningún paciente tiene el documento «${documento}»` +
-                  (area ? ' en ese departamento.' : '.'),
+                `Ningún paciente de tu organización tiene el documento «${documento}»` +
+                  (area ? ' expedido en ese departamento. ' : '. ') +
+                  ALCANCE_DE_LA_BUSQUEDA,
               )
             : texto === ''
               ? empty(
@@ -241,7 +252,8 @@ export class ClinicalRecord {
                 )
               : empty(
                   { label: 'Ver todos', route: CLINICAL_RECORD_ROUTE },
-                  `Ningún paciente coincide con «${texto}».`,
+                  `Ningún paciente de tu organización coincide con «${texto}». ` +
+                    ALCANCE_DE_LA_BUSQUEDA,
                 ),
         );
       },
@@ -250,6 +262,17 @@ export class ClinicalRecord {
     });
   }
 }
+
+/**
+ * La frase que explica por qué alguien puede existir y no aparecer.
+ *
+ * Se repite en los dos vacíos de búsqueda a propósito: quien no encuentra a una
+ * persona necesita saber **dónde no está buscando**, y esa es la diferencia
+ * entre «no existe» y «no lo alcanzo».
+ */
+const ALCANCE_DE_LA_BUSQUEDA =
+  'La búsqueda alcanza a quienes ya tuvieron un turno o una relación asistencial acá; ' +
+  'alguien que nunca se atendió en esta organización no aparece aunque exista.';
 
 /** `ValueSetOption` → `SelectOption`, para el desplegable de departamento. */
 function toSelectOption(opcion: ValueSetOption): SelectOption<string> {

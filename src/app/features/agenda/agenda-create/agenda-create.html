@@ -78,6 +78,27 @@
     }
 
     <!-- ── Decisión 1 · qué días y en qué horario ────────────────────────── -->
+    <!-- Va PRIMERO y fuera de «avanzadas»: es la pregunta que ordena todo lo
+         que sigue. Publicar el horario correcto en la agenda equivocada no es
+         un detalle de configuración, es haber abierto turnos en otra sede.
+         Sólo aparece con más de una: elegir entre una no es elegir. -->
+    @if (eligeSede()) {
+      <section class="agenda-create__bloque">
+        <h2 class="agenda-create__titulo">¿En qué agenda publicás?</h2>
+        <app-form-field
+          label="Agenda"
+          hint="Atendés en más de un lado. El horario de abajo se publica sólo en la que elijas."
+        >
+          <app-select
+            data-testid="agenda-create-sede"
+            [options]="opcionesDeSede()"
+            [value]="resourceId()"
+            (valueChange)="elegirSede($event)"
+          />
+        </app-form-field>
+      </section>
+    }
+
     <section class="agenda-create__bloque">
       <h2 class="agenda-create__titulo">¿Qué días atendés?</h2>
 
