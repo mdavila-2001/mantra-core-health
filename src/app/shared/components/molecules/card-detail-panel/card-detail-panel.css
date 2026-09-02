@@ -1,0 +1,127 @@
+/* ============================================================================
+    El desplegable «Ver más información» de una tarjeta.
+
+    Mobile-first: las únicas consultas de medio son `min-width`. El panel se
+    dibuja con `position: fixed` porque mientras está abierto cuelga del
+    `<body>`; sus coordenadas las escribe el componente, no esta hoja.
+    ========================================================================== */
+
+:host {
+    display: inline-flex;
+}
+
+.card-detail__trigger {
+    flex: none;
+}
+
+/* ---- el panel ----------------------------------------------------------- */
+
+/* Cerrado no ocupa lugar: si quedara en el flujo con `visibility: hidden`
+   seguiría estirando la celda de la grilla, que es exactamente lo que este
+   componente existe para no hacer. */
+.card-detail__panel {
+    display: none;
+}
+
+.card-detail__panel--open {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    position: fixed;
+    /* Por encima de la grilla y de la tarjeta, por debajo de un diálogo modal
+       —que el navegador dibuja en su propia capa superior. */
+    z-index: 60;
+    padding: var(--sp-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-lg);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-lg);
+    /* El alto máximo lo escribe el componente contra el viewport; lo que sobre
+       se recorre acá adentro, nunca empujando la página. */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.card-detail__panel--open:focus-visible {
+    outline: none;
+    box-shadow:
+        var(--shadow-lg),
+        0 0 0 3px var(--focus-ring);
+}
+
+.card-detail__encabezado {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+
+.card-detail__titulo {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ---- los datos ---------------------------------------------------------- */
+
+.card-detail__datos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0;
+}
+
+/* En el teléfono el rótulo va arriba del valor: en dos columnas, con 358 px de
+   ancho, «Farmacias que lo publican» parte en cuatro líneas y el valor queda
+   colgando de la última. */
+.card-detail__fila {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.card-detail__rotulo {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: 600;
+}
+
+.card-detail__valor {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    /* Una dirección larga se parte en vez de ensanchar el panel: el ancho lo
+       fija la tarjeta y no puede crecer. */
+    overflow-wrap: anywhere;
+}
+
+.card-detail__vacio {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* Desde 30rem el panel ya es lo bastante ancho para las dos columnas. */
+@media (min-width: 30rem) {
+    .card-detail__fila {
+        flex-direction: row;
+        align-items: baseline;
+        gap: var(--sp-3);
+    }
+
+    .card-detail__rotulo {
+        flex: none;
+        inline-size: 42%;
+    }
+
+    .card-detail__valor {
+        flex: 1;
+    }
+}
