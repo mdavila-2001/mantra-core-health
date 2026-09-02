@@ -1,5 +1,5 @@
 /* ============================================================================
-    Lo que la tarjeta de un centro de salud necesita para dibujarse.
+    Lo que la tarjeta de una entidad de salud necesita para dibujarse.
 
     Un tipo propio y no `SearchResultItem`: aquella tarjeta describe **una fila
     de directorio** —figura chica, título, dos líneas de contexto— y ésta
@@ -8,14 +8,59 @@
     mitad de los campos opcionales y ninguna pantalla sabría cuál de las dos
     llegó.
 
-    Todo lo de acá sale de `PublicSearchResult`, campo por campo. La tarjeta
-    **no inventa nada**: lo que la API no sirve, no se pinta. Ver el mapper.
+    Todo lo de acá sale de la API, campo por campo. La tarjeta **no inventa
+    nada**: lo que la API no sirve, no se pinta. Ver los mapeadores de cada
+    vertical (`facility-card.mapper.ts`, `diagnostic-card.mapper.ts`,
+    `insurer-card.mapper.ts`, `medication-card.mapper.ts`).
     ========================================================================== */
 
-/** Un atributo corto de la fila inferior: calificación, turno, distancia. */
+import type { NavIconName } from '@shared/components/atoms/nav-icon/nav-icon.types';
+
+/**
+ * Qué dato es un atributo de la fila inferior.
+ *
+ * Es una unión cerrada y no un `string`: cada clave elige su ícono del set de
+ * navegación, y un nombre libre terminaría en un atributo mudo. Los cuatro
+ * primeros son los del directorio de centros; los seis siguientes entraron con
+ * los otros tres verticales —laboratorios, aseguradoras y medicamentos—, que
+ * muestran **datos distintos** en la misma posición (AC-06-4).
+ */
+export type CentroAttributeKey =
+  | 'puntuacion'
+  | 'turno'
+  | 'lugar'
+  | 'distancia'
+  | 'estudios'
+  | 'ramo'
+  | 'precio'
+  | 'farmacias'
+  | 'receta'
+  | 'grupo';
+
+/**
+ * Qué glifo del set cerrado dibuja cada clave.
+ *
+ * Vive acá y no en la plantilla porque es una decisión de contenido —qué dice
+ * el ícono— y no de maquetado. El set es el de `NavIconName`: la regla del
+ * sistema prohíbe un `<svg>` suelto cuando el glifo ya existe.
+ */
+export const ATTRIBUTE_ICON: Readonly<Record<CentroAttributeKey, NavIconName>> = {
+  puntuacion: 'star',
+  turno: 'calendar',
+  lugar: 'pin',
+  distancia: 'route',
+  estudios: 'flask',
+  ramo: 'umbrella',
+  precio: 'billing',
+  farmacias: 'bag',
+  receta: 'clipboard',
+  grupo: 'labels',
+};
+
+/** Un atributo corto de la fila inferior: calificación, turno, precio, distancia. */
 export interface CentroAtributo {
-  /** Cuál es, para elegir el icono. */
-  readonly clave: 'puntuacion' | 'turno' | 'lugar' | 'distancia';
+  /** Cuál es, para elegir el ícono. */
+  readonly clave: CentroAttributeKey;
   /** El texto ya formateado y listo para pintar. */
   readonly texto: string;
   /**
@@ -33,15 +78,22 @@ export interface CentroSello {
   readonly tono: 'ok' | 'info' | 'aviso' | 'neutro';
 }
 
-/** Un centro de salud, tal como lo pinta la grilla. */
+/** Una entidad de salud, tal como la pinta la grilla. */
 export interface CentroTarjeta {
   /** Clave estable de la lista. */
   readonly id: string;
   /** Nombre visible, con su sede si la tiene. */
   readonly nombre: string;
-  /** Ruta de la ficha. */
-  readonly link: string;
-  /** Qué es este centro, en una línea. `null` si no lo publicó. */
+  /**
+   * Ruta de la ficha, o `null` cuando la entidad **no tiene ficha**.
+   *
+   * Un medicamento no la tiene: el contrato público sirve cinco prefijos y
+   * ninguno es de medicamento. Con `null` el nombre se pinta como texto y la
+   * tarjeta no se vuelve un enlace a sí misma, que es lo que hacía antes el
+   * mapeador cuando devolvía `/buscar/medicamentos`.
+   */
+  readonly link: string | null;
+  /** Qué es esta entidad, en una línea. `null` si no lo publicó. */
   readonly titular: string | null;
   /** Ciudad y calle, ya unidas en la forma en que se leen. */
   readonly donde: string | null;
