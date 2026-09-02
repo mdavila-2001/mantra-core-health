@@ -1,4 +1,10 @@
 <div [class]="wrapperClasses()">
+  <!-- El glifo del campo, cuando quien monta el control lo proyecta. Va DENTRO
+       del marco —no al lado del rótulo— para compartir borde, foco y estado de
+       error con el desplegable, igual que en `app-input`. Sin ícono proyectado
+       no queda ningún hueco: no hay envoltorio. -->
+  <ng-content select="[slot=icon-start]" />
+
   <!-- La selección se marca en cada `<option>` con `[selected]`, y NO con un
        `[value]` sobre el `<select>`.
 
