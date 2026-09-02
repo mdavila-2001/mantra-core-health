@@ -105,6 +105,20 @@ export const NAV_ICON_NAMES = [
   'sliders',
   'history',
   'teach',
+
+  // Dirección: los dos únicos que NO nombran una sección.
+  //
+  // Entraron con el motor de formularios por partes, que necesita decir
+  // «Atrás» y «Siguiente» sin texto (TAREA 04, AC-04-5). No había otra vía: el
+  // sistema prohíbe el SVG suelto en una plantilla, así que un glifo que no
+  // esté acá no se puede dibujar en ningún lado.
+  //
+  // Se declaran aparte y con este comentario para que la regla del set siga
+  // leyéndose bien: los cuarenta y siete de arriba responden «¿qué sección es
+  // esta?»; estos dos responden «¿hacia dónde va este botón?». Un ícono de
+  // dirección NUNCA nombra una sección.
+  'arrow-left',
+  'arrow-right',
 ] as const;
 
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
