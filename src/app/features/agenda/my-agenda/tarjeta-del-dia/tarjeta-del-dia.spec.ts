@@ -1,9 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import type { Signal, WritableSignal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia';
+import type { ModalidadDeAtencion } from '../../../../core/data-access/scheduling/scheduling.types';
+import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 
 const DIA = new Date(2026, 8, 10);
 const DESDE = new Date(2026, 8, 10, 10, 0);
@@ -46,8 +49,29 @@ describe('TarjetaDelDia', () => {
     fixture.detectChanges();
   }
 
-  function api(): Record<string, any> {
-    return fixture.componentInstance as unknown as Record<string, any>;
+  /**
+   * Lo que la prueba usa del componente, tipado.
+   *
+   * `Record<string, any>` dejaba pasar cualquier nombre —un `api()['motvo']`
+   * mal escrito habría fallado en runtime, no al compilar— y además rompía
+   * `yarn lint`, que es el PRIMER paso del CI: con él en rojo, Tipos, Pruebas y
+   * Build no llegan a correr en ningún PR del repositorio.
+   *
+   * Es el mismo patrón que ya usa `agenda-create.spec.ts`: una interfaz con lo
+   * que la prueba toca y un solo `as unknown as` en el borde.
+   */
+  interface Testable {
+    readonly desde: WritableSignal<string>;
+    readonly hasta: WritableSignal<string>;
+    readonly motivo: WritableSignal<string>;
+    readonly paciente: WritableSignal<ReferenceOption | null>;
+    readonly modalidad: WritableSignal<ModalidadDeAtencion>;
+    readonly puedeGuardar: Signal<boolean>;
+    guardar(): void;
+  }
+
+  function api(): Testable {
+    return fixture.componentInstance as unknown as Testable;
   }
 
   afterEach(() => TestBed.resetTestingModule());
@@ -55,31 +79,36 @@ describe('TarjetaDelDia', () => {
   it('el rato tocado prellena desde y hasta', async () => {
     await montar();
 
-    expect(api()['desde']()).toBe('10:00');
-    expect(api()['hasta']()).toBe('10:45');
+    expect(api().desde()).toBe('10:00');
+    expect(api().hasta()).toBe('10:45');
   });
 
   it('sin paciente ni motivo no deja guardar: falta la única cosa', async () => {
     await montar();
 
-    expect(api()['puedeGuardar']()).toBe(false);
+    expect(api().puedeGuardar()).toBe(false);
   });
 
   it('con PACIENTE infiere cita puntual, y lo dice antes de guardar', async () => {
     // La inferencia visible: que la campana al paciente no sea una sorpresa.
     await montar();
-    api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+    api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('le avisamos al paciente');
 
-    api()['guardar']();
+    api().guardar();
     const req = http.expectOne(
       (r) => r.url === '/scheduling/appointments/direct' && r.method === 'POST',
     );
     expect(req.request.body.patientProfileId).toBe('pp-ana');
     expect(req.request.body.durationMinutes).toBe(45);
-    req.flush({ bookingId: 'bk-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+    req.flush({
+      bookingId: 'bk-1',
+      bookableSlotId: 's-1',
+      statusConceptId: 'c',
+      retractedSlots: 0,
+    });
     http.verify();
   });
 
@@ -95,7 +124,7 @@ describe('TarjetaDelDia', () => {
   describe('la modalidad de la atención', () => {
     it('no se ofrece sin paciente: un rato tuyo no se atiende por videollamada', async () => {
       await montar();
-      api()['motivo'].set('Reunión de equipo');
+      api().motivo.set('Reunión de equipo');
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('.tarjeta__modalidad')).toBeNull();
@@ -103,41 +132,51 @@ describe('TarjetaDelDia', () => {
 
     it('aparece al elegir paciente, con presencial marcado', async () => {
       await montar();
-      api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+      api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('.tarjeta__modalidad')).not.toBeNull();
-      expect(api()['modalidad']()).toBe('PRESENCIAL');
+      expect(api().modalidad()).toBe('PRESENCIAL');
     });
 
     it('la teleconsulta VIAJA en el cuerpo de la petición', async () => {
       // Lo que el cliente descartaría si alguien olvidara nombrarla: el POST
       // saldría sin `channel` y nada fallaría — la cita quedaría presencial.
       await montar();
-      api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
-      api()['modalidad'].set('TELECONSULTA');
+      api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+      api().modalidad.set('TELECONSULTA');
       fixture.detectChanges();
 
-      api()['guardar']();
+      api().guardar();
       const req = http.expectOne(
         (r) => r.url === '/scheduling/appointments/direct' && r.method === 'POST',
       );
       expect(req.request.body.channel).toBe('TELECONSULTA');
-      req.flush({ bookingId: 'bk-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+      req.flush({
+        bookingId: 'bk-1',
+        bookableSlotId: 's-1',
+        statusConceptId: 'c',
+        retractedSlots: 0,
+      });
       http.verify();
     });
 
     it('presencial también viaja: elegirlo no es lo mismo que no decir nada', async () => {
       await montar();
-      api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+      api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
       fixture.detectChanges();
 
-      api()['guardar']();
+      api().guardar();
       const req = http.expectOne(
         (r) => r.url === '/scheduling/appointments/direct' && r.method === 'POST',
       );
       expect(req.request.body.channel).toBe('PRESENCIAL');
-      req.flush({ bookingId: 'bk-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+      req.flush({
+        bookingId: 'bk-1',
+        bookableSlotId: 's-1',
+        statusConceptId: 'c',
+        retractedSlots: 0,
+      });
       http.verify();
     });
 
@@ -150,20 +189,19 @@ describe('TarjetaDelDia', () => {
       // aseverar sobre todo el texto probaría que el control existe, no que la
       // frase cambió.
       const inferencia = () =>
-        (fixture.nativeElement.querySelector('.tarjeta__inferencia')?.textContent ??
-          '') as string;
+        (fixture.nativeElement.querySelector('.tarjeta__inferencia')?.textContent ?? '') as string;
 
       await montar();
-      api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+      api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
       fixture.detectChanges();
       expect(inferencia()).toContain('le avisamos al paciente');
       expect(inferencia()).not.toContain('videollamada');
 
-      api()['modalidad'].set('TELECONSULTA');
+      api().modalidad.set('TELECONSULTA');
       fixture.detectChanges();
       expect(inferencia()).toContain('Va por videollamada');
 
-      api()['modalidad'].set('DOMICILIO');
+      api().modalidad.set('DOMICILIO');
       fixture.detectChanges();
       expect(inferencia()).toContain('Vas a su domicilio');
     });
@@ -171,12 +209,12 @@ describe('TarjetaDelDia', () => {
 
   it('con solo MOTIVO infiere tiempo ocupado, y lo dice', async () => {
     await montar();
-    api()['motivo'].set('Reunión de equipo');
+    api().motivo.set('Reunión de equipo');
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('El paciente no ve nada');
 
-    api()['guardar']();
+    api().guardar();
     const req = http.expectOne(
       (r) => r.url === '/scheduling/resources/res-1/exceptions' && r.method === 'POST',
     );
@@ -188,13 +226,18 @@ describe('TarjetaDelDia', () => {
 
   it('la cita lleva el motivo cuando ambos están: es el motivo DE la cita', async () => {
     await montar();
-    api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
-    api()['motivo'].set('Cirugía de implante');
+    api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+    api().motivo.set('Cirugía de implante');
 
-    api()['guardar']();
+    api().guardar();
     const req = http.expectOne((r) => r.url === '/scheduling/appointments/direct');
     expect(req.request.body.reasonText).toBe('Cirugía de implante');
-    req.flush({ bookingId: 'bk-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+    req.flush({
+      bookingId: 'bk-1',
+      bookableSlotId: 's-1',
+      statusConceptId: 'c',
+      retractedSlots: 0,
+    });
     http.verify();
   });
 
@@ -228,9 +271,9 @@ describe('TarjetaDelDia', () => {
     // La regla madre responde con qué, cuándo y dónde; reescribirlo acá sería
     // perder la mitad de la información.
     await montar();
-    api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+    api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
 
-    api()['guardar']();
+    api().guardar();
     http
       .expectOne((r) => r.url === '/scheduling/appointments/direct')
       .flush(
@@ -245,9 +288,9 @@ describe('TarjetaDelDia', () => {
 
   it('la retracción se informa como AVISO, no como pregunta', async () => {
     await montar();
-    api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
+    api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
 
-    api()['guardar']();
+    api().guardar();
     http
       .expectOne((r) => r.url === '/scheduling/appointments/direct')
       .flush({ bookingId: 'bk-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 3 });
@@ -258,11 +301,11 @@ describe('TarjetaDelDia', () => {
 
   it('un rango invertido no deja guardar', async () => {
     await montar();
-    api()['paciente'].set({ value: 'pp-ana', label: 'Ana Quispe' });
-    api()['desde'].set('11:00');
-    api()['hasta'].set('10:00');
+    api().paciente.set({ value: 'pp-ana', label: 'Ana Quispe' });
+    api().desde.set('11:00');
+    api().hasta.set('10:00');
 
-    expect(api()['puedeGuardar']()).toBe(false);
+    expect(api().puedeGuardar()).toBe(false);
   });
 
   it('busca pacientes y arma las opciones sin uuids a la vista', async () => {
