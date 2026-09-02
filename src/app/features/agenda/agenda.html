@@ -351,6 +351,55 @@
 
 <ng-template #celdaSolicitada let-cita>
   <span class="agenda__cuando">{{ cita.solicitada | date: 'd MMM, HH:mm' }}</span>
+<ng-template #celdaPago let-cita>
+  <div class="agenda__pago">
+    @if (cita.pago) {
+      <!-- La etiqueta viene del servidor: la pantalla no traduce estados. -->
+      <app-badge [variant]="cita.pago.state === 'PAID' ? 'success' : 'warning'">
+        {{ cita.pago.label }}
+      </app-badge>
+      @if (cita.pago.insuranceUsed) {
+        <span class="agenda__seguro">con seguro</span>
+      }
+    } @else if (cita.admitePago) {
+      <!-- Un guión y no «pendiente de pago»: pendiente es una afirmación que
+           alguien firmó, esto es que del pago todavía no se dijo nada. -->
+      <span class="agenda__sin-pago">—</span>
+    } @else {
+      <!-- Cancelada o rechazada: no es que falte marcarlo, es que no aplica. -->
+      <span class="agenda__sin-pago">No aplica</span>
+    }
+
+    @if (puedeAtender() && cita.admitePago) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="agenda-pago"
+        [appMenuTrigger]="menuDePago"
+        [isLoading]="operando() === cita.id"
+      >
+        Cambiar
+      </button>
+      <app-menu #menuDePago>
+        @for (opcion of estadosDePago; track opcion.code) {
+          <app-menu-item
+            [disabled]="cita.pago?.state === opcion.code"
+            (selected)="marcarPago(cita, opcion.code)"
+          >
+            {{ opcion.label }}
+          </app-menu-item>
+        }
+        @if (cita.pago) {
+          <!-- El seguro es una marca SEPARADA del estado, por decisión del
+               propietario: se alterna sola y no cambia en qué estado está. -->
+          <app-menu-item (selected)="alternarSeguro(cita)">
+            {{ cita.pago.insuranceUsed ? 'Quitar «con seguro»' : 'Marcar «con seguro»' }}
+          </app-menu-item>
+        }
+      </app-menu>
+    }
+  </div>
 </ng-template>
 
 <ng-template #celdaAccionesCita let-cita>

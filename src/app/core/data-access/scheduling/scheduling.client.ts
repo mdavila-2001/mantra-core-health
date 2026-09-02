@@ -13,6 +13,8 @@ import type {
   AgendaSlotQuery,
   AvailabilityExceptionCreated,
   AvailabilityExceptionTypeList,
+  NewPaymentState,
+  PaymentStateInfo,
   Booking,
   BookingCancellation,
   BookingCancelled,
@@ -174,6 +176,28 @@ export class SchedulingClient {
     return this.http
       .get<WireBookingPage>(this.url('/scheduling/bookings'), { params })
       .pipe(map((body) => ({ ...body, items: body.items.map(toBooking) })));
+  }
+
+  /**
+   * `PUT /scheduling/bookings/:id/payment-state` — marca el pago.
+   *
+   * `PUT` porque es idempotente: hay un estado por cita y volver a mandar el
+   * mismo deja el mismo resultado.
+   *
+   * **Una cita cancelada o rechazada responde 422**, y es la regla del
+   * propietario aplicada donde corresponde. Que la pantalla no ofrezca el botón
+   * ahí es una cortesía, no la garantía.
+   */
+  setPaymentState(
+    bookingId: string,
+    body: NewPaymentState,
+  ): Observable<PaymentStateInfo> {
+    return this.http
+      .put<WirePaymentState>(
+        this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/payment-state`),
+        body,
+      )
+      .pipe(map((wire) => ({ ...wire, markedAt: new Date(wire.markedAt) })));
   }
 
   /** `GET /scheduling/bookings/:id` — una cita concreta (UC-41-15). */
@@ -705,6 +729,7 @@ type WireBooking = Omit<
   | 'rescheduledFrom'
   | 'statusReason'
   | 'delayNotice'
+  | 'paymentState'
 > & {
   readonly startAt?: string | null;
   readonly endAt?: string | null;
@@ -714,6 +739,11 @@ type WireBooking = Omit<
   readonly rescheduledFrom?: string | null;
   readonly statusReason?: WireStatusReason | null;
   readonly delayNotice?: WireDelayNotice | null;
+  readonly paymentState?: WirePaymentState | null;
+};
+
+type WirePaymentState = Omit<PaymentStateInfo, 'markedAt'> & {
+  readonly markedAt: string;
 };
 
 type WireStatusReason = Omit<BookingStatusReason, 'changedAt'> & {
@@ -755,6 +785,7 @@ function toSlot({ startAt, endAt, ...resto }: WireSlot): AgendaSlot {
  * cada pantalla, y tarde o temprano alguna comprueba sólo uno.
  */
 function toBooking({
+  paymentState,
   startAt,
   endAt,
   confirmedAt,
@@ -772,6 +803,17 @@ function toBooking({
     ...optionalDate('confirmedAt', confirmedAt),
     ...optionalDate('checkedInAt', checkedInAt),
     ...optionalDate('rescheduledFrom', rescheduledFrom),
+    // Se OMITE cuando la API no lo mandó, en vez de normalizarse a un estado
+    // por defecto: «nadie marcó nada» y «alguien marcó pendiente» son cosas
+    // distintas, y la diferencia tiene que llegar hasta la pantalla.
+    ...(paymentState === null || paymentState === undefined
+      ? {}
+      : {
+          paymentState: {
+            ...paymentState,
+            markedAt: new Date(paymentState.markedAt),
+          },
+        }),
     ...(statusReason === null || statusReason === undefined
       ? {}
       : {

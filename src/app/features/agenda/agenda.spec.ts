@@ -224,10 +224,16 @@ describe('Agenda', () => {
             conceptId: 'c-pendiente',
             code: 'BOOKING_PENDING_CONFIRMATION',
             display: 'Por confirmar',
+          // TAREA-13 punto 5: hace falta para poder probar que una cita
+          // cancelada NO admite estado de pago.
+          {
+            conceptId: 'c-cancelada',
+            code: 'BOOKING_CANCELLED',
+            display: 'Cancelada',
             codeSystemVersionId: 'csv-1',
           },
         ],
-        count: 3,
+        count: 4,
         limit: 200,
       });
   }
@@ -1079,6 +1085,26 @@ describe('Agenda', () => {
     }
 
     it('separa lo que espera respuesta de lo que ya está agendado', async () => {
+   * EL ESTADO DE PAGO EN LA FILA — TAREA-13, punto 5.
+   *
+   * Lo que se fija acá es la regla del propietario llevada a la pantalla, y una
+   * distinción que es fácil de perder al pintar: **«nadie lo marcó» no es
+   * «pendiente de pago»**. Pendiente es una afirmación que alguien firmó.
+   */
+  describe('Agenda · el estado de pago', () => {
+    it('una cita sin marca NO se muestra como pendiente', async () => {
+      await montar();
+      await responderRecursos();
+      responderResto({ citas: [CITA] });
+
+      const fila = citas().data?.[0] as Record<string, unknown>;
+      // `null`, no un estado por defecto: la celda pinta un guión y no una
+      // etiqueta que nadie escribió.
+      expect(fila['pago']).toBeNull();
+      expect(fila['admitePago']).toBe(true);
+    });
+
+    it('el estado marcado llega con su etiqueta del servidor', async () => {
       await montar();
       await responderRecursos();
       responderResto({
@@ -1147,6 +1173,47 @@ describe('Agenda', () => {
       await responder();
 
       expect(interno<() => number>('pestana')()).toBe(2);
+          {
+            ...CITA,
+            paymentState: {
+              state: 'PARTIALLY_PAID',
+              label: 'Parcialmente pagada',
+              conceptId: 'c-pago-parcial',
+              insuranceUsed: true,
+              markedByUserId: 'u-9',
+              markedAt: '2026-09-01T10:00:00.000Z',
+            },
+          },
+        ],
+      });
+
+      const pago = (citas().data?.[0] as Record<string, unknown>)['pago'] as Record<string, unknown>;
+      // La etiqueta viene del servidor: la pantalla no traduce estados.
+      expect(pago['label']).toBe('Parcialmente pagada');
+      // El seguro es una marca SEPARADA, no un cuarto estado.
+      expect(pago['insuranceUsed']).toBe(true);
+      // Y la fecha llega como Date, no como el string del cable.
+      expect(pago['markedAt']).toBeInstanceOf(Date);
+    });
+
+    it('una cita cancelada no admite estado de pago', async () => {
+      // La mitad excluyente de la regla del propietario. No ofrecer el botón es
+      // una cortesía: la garantía es el 422 del servidor.
+      await montar();
+      await responderRecursos();
+      responderResto({ citas: [{ ...CITA, statusConceptId: 'c-cancelada' }] });
+
+      expect((citas().data?.[0] as Record<string, unknown>)['admitePago']).toBe(false);
+    });
+
+    it('con el estado sin resolver tampoco se ofrece', async () => {
+      // Mismo criterio que las demás acciones de la fila: sobre un estado que
+      // esta versión no sabe leer no se opera.
+      await montar();
+      await responderRecursos();
+      responderResto({ citas: [{ ...CITA, statusConceptId: 'c-desconocido' }] });
+
+      expect((citas().data?.[0] as Record<string, unknown>)['admitePago']).toBe(false);
     });
   });
 });
