@@ -58,6 +58,9 @@ export class Dialog {
   );
   protected readonly isDestructive = computed(() => this.config().destructive === true);
 
+  /** Los pares rótulo/valor, o una lista vacía si este diálogo no muestra datos. */
+  protected readonly details = computed(() => this.config().details ?? []);
+
   /* ---- motivo, cuando el diálogo lo exige (corrección #14) ---------------- */
 
   /** La configuración del campo, o `null` si este diálogo no pide motivo. */
