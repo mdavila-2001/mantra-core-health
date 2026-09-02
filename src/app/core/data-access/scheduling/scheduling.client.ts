@@ -44,6 +44,7 @@ import type {
   WaitlistPage,
   WaitlistQuery,
   PublishedTemplatePage,
+  RetiredTemplate,
   AvailabilityExceptionPage,
   NewDirectAppointment,
   DirectAppointmentCreated,
@@ -282,6 +283,22 @@ export class SchedulingClient {
   }
 
   /**
+   * `DELETE /scheduling/templates/:id` — retira un horario publicado.
+   *
+   * **Retira, no borra.** La plantilla queda en `TPL_RETIRED` y deja de
+   * publicarse; se sueltan los cupos que nadie reservó y se conservan los que
+   * tienen una cita detrás, viva o histórica.
+   *
+   * Responde **409** cuando el horario tiene citas comprometidas, con la lista
+   * de las que hay que resolver primero en `details.bookingIds`.
+   */
+  retireTemplate(templateId: string): Observable<RetiredTemplate> {
+    return this.http.delete<RetiredTemplate>(
+      this.url(`/scheduling/templates/${encodeURIComponent(templateId)}`),
+    );
+  }
+
+  /**
    * `POST /scheduling/templates/:id/generate-slots` — materializa los slots de
    * la plantilla en una ventana (UC-41-03). Idempotente: reejecutar no duplica,
    * los ya existentes vuelven como `skipped`.
@@ -335,7 +352,6 @@ export class SchedulingClient {
     );
   }
 
-
   /**
    * `POST /scheduling/appointments/direct` — la cita puntual (AG-2).
    *
@@ -346,23 +362,20 @@ export class SchedulingClient {
    * mostrar tal cual.
    */
   createDirectAppointment(cita: NewDirectAppointment): Observable<DirectAppointmentCreated> {
-    return this.http.post<DirectAppointmentCreated>(
-      this.url('/scheduling/appointments/direct'),
-      {
-        patientProfileId: cita.patientProfileId,
-        resourceId: cita.resourceId,
-        startAt: cita.startAt,
-        durationMinutes: cita.durationMinutes,
-        ...(cita.reasonText === undefined ? {} : { reasonText: cita.reasonText }),
-        // Ausente = presencial: no se manda un valor que nadie eligió.
-        //
-        // Ojo al agregar campos acá: este cuerpo se arma nombre por nombre, así
-        // que lo que el contrato declare y esta lista no repita **se descarta
-        // en silencio** — la petición sale sin él y nada falla. Es el mismo
-        // patrón que dejó la modalidad sin escribir del lado de la API.
-        ...(cita.channel === undefined ? {} : { channel: cita.channel }),
-      },
-    );
+    return this.http.post<DirectAppointmentCreated>(this.url('/scheduling/appointments/direct'), {
+      patientProfileId: cita.patientProfileId,
+      resourceId: cita.resourceId,
+      startAt: cita.startAt,
+      durationMinutes: cita.durationMinutes,
+      ...(cita.reasonText === undefined ? {} : { reasonText: cita.reasonText }),
+      // Ausente = presencial: no se manda un valor que nadie eligió.
+      //
+      // Ojo al agregar campos acá: este cuerpo se arma nombre por nombre, así
+      // que lo que el contrato declare y esta lista no repita **se descarta
+      // en silencio** — la petición sale sin él y nada falla. Es el mismo
+      // patrón que dejó la modalidad sin escribir del lado de la API.
+      ...(cita.channel === undefined ? {} : { channel: cita.channel }),
+    });
   }
 
   /**

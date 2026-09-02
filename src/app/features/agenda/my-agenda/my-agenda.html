@@ -73,7 +73,13 @@
           (volver)="volverAlMes()"
         />
         <div class="mi-agenda__acciones-dia">
-          <button app-button variant="secondary" size="sm" type="button" (clicked)="bloquearDia(dia)">
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            (clicked)="bloquearDia(dia)"
+          >
             Bloquear este día
           </button>
         </div>
@@ -87,59 +93,105 @@
         />
       }
     } @else {
-    <section class="mi-agenda__tarjeta">
-      <h2 class="mi-agenda__titulo">Atendés estos días</h2>
+      <section class="mi-agenda__tarjeta">
+        <h2 class="mi-agenda__titulo">Atendés estos días</h2>
 
-      <!-- La misma semanita del formulario, en modo lectura: se reconoce de
+        <!-- La misma semanita del formulario, en modo lectura: se reconoce de
            inmediato porque es la que se usó para publicar. -->
-      <ul class="mi-agenda__semana" aria-label="Días que atendés">
-        @for (dia of p.semana; track dia.numero) {
-          <li
-            class="mi-agenda__dia"
-            [class.mi-agenda__dia--activo]="dia.activo"
-            [attr.aria-label]="dia.activo ? dia.largo + ': atendés' : dia.largo + ': no atendés'"
+        <ul class="mi-agenda__semana" aria-label="Días que atendés">
+          @for (dia of p.semana; track dia.numero) {
+            <li
+              class="mi-agenda__dia"
+              [class.mi-agenda__dia--activo]="dia.activo"
+              [attr.aria-label]="dia.activo ? dia.largo + ': atendés' : dia.largo + ': no atendés'"
+            >
+              <span aria-hidden="true">{{ dia.corto }}</span>
+            </li>
+          }
+        </ul>
+
+        <ul class="mi-agenda__franjas">
+          @for (franja of p.franjas; track franja.texto) {
+            <li>{{ franja.texto }}</li>
+          }
+        </ul>
+
+        <p class="mi-agenda__estados">
+          <app-badge variant="success">Vigente</app-badge>
+          @if (p.permanente) {
+            <!-- Las palabras y las mayúsculas son del propietario (punto 5). -->
+            <app-badge variant="secondary">HORARIO PERMANENTE</app-badge>
+          }
+        </p>
+
+        @if (p.vigencia) {
+          <p class="mi-agenda__vigencia">{{ p.vigencia }}</p>
+        } @else {
+          <p class="mi-agenda__vigencia">Sin fecha de fin: rige hasta que lo cambies.</p>
+        }
+
+        <!-- El punto 8, textual del propietario. Es una regla, no una nota al
+           margen: acota qué se puede agendar en estos horarios. -->
+        <app-alert tone="info" title="Estos horarios son para consulta y cita">
+          No son para intervenciones quirúrgicas ni procedimientos prolongados. Sí pueden incluir
+          tratamientos que se hagan en la consulta.
+        </app-alert>
+
+        <div class="mi-agenda__acciones">
+          <a app-button variant="secondary" [routerLink]="[rutaDePublicar]">Cambiar mi horario</a>
+          <button
+            app-button
+            variant="ghost"
+            type="button"
+            [isLoading]="retirando()"
+            (clicked)="retirarHorario()"
           >
-            <span aria-hidden="true">{{ dia.corto }}</span>
-          </li>
-        }
-      </ul>
+            Retirar horario
+          </button>
+        </div>
+      </section>
 
-      <ul class="mi-agenda__franjas">
-        @for (franja of p.franjas; track franja.texto) {
-          <li>{{ franja.texto }}</li>
-        }
-      </ul>
-
-      @if (p.vigencia) {
-        <p class="mi-agenda__vigencia">{{ p.vigencia }}</p>
-      } @else {
-        <p class="mi-agenda__vigencia">Sin fecha de fin: rige hasta que lo cambies.</p>
+      <!-- Punto 2 · los horarios que ya no rigen. Un médico que cambió su horario
+         tres veces necesita ver cuáles rigieron antes, sobre todo si todavía
+         hay pacientes citados en ellos. -->
+      @if (historicos().length > 0) {
+        <section class="mi-agenda__historicos">
+          <h2 class="mi-agenda__historicos-titulo">Horarios anteriores</h2>
+          <p class="mi-agenda__historicos-nota">
+            Ya no se publican. Los turnos que tenían paciente se conservan.
+          </p>
+          <ul class="mi-agenda__historicos-lista">
+            @for (viejo of historicos(); track viejo.id) {
+              <li class="mi-agenda__historico">
+                <span class="mi-agenda__historico-nombre">{{ viejo.name }}</span>
+                <app-badge variant="warning">Retirado</app-badge>
+              </li>
+            }
+          </ul>
+        </section>
       }
 
-      <a app-button variant="secondary" [routerLink]="[rutaDePublicar]">Cambiar mi horario</a>
-    </section>
-
-    <!-- El parche manual del horizonte rodante: nadie regenera cupos todavía,
+      <!-- El parche manual del horizonte rodante: nadie regenera cupos todavía,
          así que una agenda se vacía en silencio si no se avisa. -->
-    @if (seAgotan()) {
-      <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
-        Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
-        >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga publicado.
-        <button
-          app-button
-          size="sm"
-          [isLoading]="generando()"
-          (clicked)="generarSiguientePeriodo()"
-        >
-          Abrir tres meses más
-        </button>
-      </app-alert>
-    } @else if (cuposHastaTexto()) {
-      <p class="mi-agenda__cupos" role="status">
-        Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
-        >.
-      </p>
-    }
+      @if (seAgotan()) {
+        <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
+          Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
+          >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga publicado.
+          <button
+            app-button
+            size="sm"
+            [isLoading]="generando()"
+            (clicked)="generarSiguientePeriodo()"
+          >
+            Abrir tres meses más
+          </button>
+        </app-alert>
+      } @else if (cuposHastaTexto()) {
+        <p class="mi-agenda__cupos" role="status">
+          Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
+          >.
+        </p>
+      }
     }
   }
 </app-view-state-host>

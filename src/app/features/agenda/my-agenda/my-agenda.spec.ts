@@ -87,6 +87,142 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
   }
 
+  /** Responde el listado con una plantilla vigente y N retiradas. */
+  function conHistorico(retiradas: number): void {
+    http.expectOne('/scheduling/resources/res-1/templates').flush({
+      items: [
+        {
+          id: 'tpl-vieja',
+          name: 'Horario anterior',
+          statusConceptId: 'r',
+          retired: true,
+          rules: [],
+        },
+        {
+          id: 'tpl-1',
+          name: 'Horario',
+          statusConceptId: 'c',
+          retired: false,
+          rules: [{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }],
+        },
+      ].slice(retiradas === 0 ? 1 : 0),
+      count: retiradas === 0 ? 1 : 2,
+    });
+    fixture.detectChanges();
+  }
+
+  /* -- El horario vigente, el retirado y el histórico (TAREA-10) ------------ */
+
+  describe('vigente vs retirado', () => {
+    it('no confunde un horario retirado con el vigente aunque sea el más reciente', () => {
+      // El listado devuelve TODAS las plantillas ordenadas por creación. Antes
+      // se tomaba `items[0]`: retirar el horario y recargar dejaba al médico
+      // viendo el retirado como si siguiera atendiendo.
+      crear();
+      conRecurso();
+      http.expectOne('/scheduling/resources/res-1/templates').flush({
+        items: [
+          {
+            id: 'tpl-retirada',
+            name: 'La más reciente, retirada',
+            statusConceptId: 'r',
+            retired: true,
+            rules: [{ dayOfWeek: 3, startTime: '15:00:00', endTime: '19:00:00' }],
+          },
+          {
+            id: 'tpl-viva',
+            name: 'La vigente',
+            statusConceptId: 'c',
+            retired: false,
+            rules: [{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }],
+          },
+        ],
+        count: 2,
+      });
+      fixture.detectChanges();
+      conCuposHasta(new Date('2030-01-01'));
+
+      const texto: string = fixture.nativeElement.textContent;
+      // El lunes es de la vigente; el miércoles, de la retirada.
+      expect(texto).toContain('unes');
+      expect(texto).not.toContain('iércoles');
+    });
+
+    it('los horarios retirados se listan aparte, como historia', () => {
+      crear();
+      conRecurso();
+      conHistorico(1);
+      conCuposHasta(new Date('2030-01-01'));
+
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).toContain('Horarios anteriores');
+      expect(texto).toContain('Horario anterior');
+      expect(texto).toContain('Retirado');
+    });
+
+    it('sin historia no dibuja la sección: no hay nada que contar', () => {
+      crear();
+      conRecurso();
+      conHistorico(0);
+      conCuposHasta(new Date('2030-01-01'));
+
+      expect(fixture.nativeElement.textContent).not.toContain('Horarios anteriores');
+    });
+
+    it('un horario sin fecha de fin lleva la etiqueta HORARIO PERMANENTE', () => {
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }], {
+        retired: false,
+      });
+      conCuposHasta(new Date('2030-01-01'));
+
+      // Las palabras y las mayúsculas son del propietario (punto 5).
+      expect(fixture.nativeElement.textContent).toContain('HORARIO PERMANENTE');
+    });
+
+    it('con fecha de fin no la lleva: no es permanente', () => {
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }], {
+        retired: false,
+        validTo: '2030-12-31T00:00:00.000Z',
+      });
+      conCuposHasta(new Date('2030-01-01'));
+
+      expect(fixture.nativeElement.textContent).not.toContain('HORARIO PERMANENTE');
+    });
+
+    it('avisa que estos horarios no son para cirugías', () => {
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }], {
+        retired: false,
+      });
+      conCuposHasta(new Date('2030-01-01'));
+
+      // Punto 8, textual del propietario: es una regla, no una nota al margen.
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).toContain('para consulta y cita');
+      expect(texto).toContain('quirúrgicas');
+    });
+
+    it('ofrece retirar el horario, y dice retirar y no borrar', () => {
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }], {
+        retired: false,
+      });
+      conCuposHasta(new Date('2030-01-01'));
+
+      const texto: string = fixture.nativeElement.textContent;
+      // «Borrar» prometería algo que el sistema no hace: la plantilla no se
+      // puede borrar nunca, la referencia la auditoría.
+      expect(texto).toContain('Retirar horario');
+      expect(texto).not.toContain('Borrar horario');
+    });
+  });
+
   it('dice el horario en palabras, sin números de día', () => {
     crear();
     conRecurso();
