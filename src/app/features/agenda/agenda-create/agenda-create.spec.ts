@@ -30,6 +30,8 @@ interface Testable {
   grupoDe(indice: number): FormGroup;
   alternarDia(indice: number): void;
   elegirDuracion(indice: number, minutos: number): void;
+  elegirRespiro(indice: number, minutos: number): void;
+  turnosDelDia(indice: number): number;
   repetirElPrimero(): void;
   publicar(): void;
 }
@@ -162,6 +164,23 @@ describe('AgendaCreate', () => {
     fixture.detectChanges();
   }
 
+  /** Un horario vigente que SÍ declara respiro, para la carga. */
+  const VIGENTE_CON_RESPIRO = {
+    id: 'tpl-9',
+    name: 'Horario con respiro',
+    slotMinutes: 30,
+    statusConceptId: 'c',
+    rules: [
+      {
+        dayOfWeek: 2,
+        startTime: '15:00:00',
+        endTime: '19:00:00',
+        slotMinutes: 20,
+        gapMinutes: 10,
+      },
+    ],
+  };
+
   /* -- Cambiar un horario que ya existe (D2 del plan de UX) ----------------- */
 
   describe('cuando ya hay un horario publicado', () => {
@@ -230,6 +249,117 @@ describe('AgendaCreate', () => {
         .expectOne('/scheduling/templates/tpl-2/generate-slots')
         .flush({ templateId: 'tpl-2', created: 40, skipped: 0 });
       fixture.detectChanges();
+    });
+  });
+
+  /* -- El respiro entre consultas (TAREA-10 §3.4) --------------------------- */
+
+  describe('el respiro entre consultas', () => {
+    it('la pantalla lo ofrece, y arranca sin respiro', () => {
+      crear();
+      encenderLunes();
+
+      // Sin respiro por omisión: es lo que la agenda hacía antes de que el
+      // campo existiera, así que abrir el formulario no cambia nada.
+      expect(acc.grupoDe(0).getRawValue().respiro).toBe(0);
+      expect(fixture.nativeElement.textContent).toContain(
+        '¿Cuánto descanso entre una consulta y la siguiente?',
+      );
+    });
+
+    it('sin respiro NO manda el campo: cero declarado y no declarado son distintos', () => {
+      crear();
+      encenderLunes();
+
+      acc.publicar();
+
+      http.expectOne('/scheduling/resources').flush({ id: 'res-1' });
+      const alta = http.expectOne('/scheduling/resources/res-1/templates');
+      // Ni `gapMinutes: 0`: escribir un cero que nadie declaró borraría la
+      // diferencia el día que el default cambie.
+      expect(alta.request.body.rules[0].gapMinutes).toBeUndefined();
+      alta.flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-1/generate-slots')
+        .flush({ templateId: 'tpl-1', created: 8, skipped: 0 });
+      fixture.detectChanges();
+    });
+
+    it('elegido, viaja con la franja', () => {
+      crear();
+      encenderLunes();
+      acc.elegirRespiro(0, 15);
+
+      acc.publicar();
+
+      http.expectOne('/scheduling/resources').flush({ id: 'res-1' });
+      const alta = http.expectOne('/scheduling/resources/res-1/templates');
+      expect(alta.request.body.rules[0].gapMinutes).toBe(15);
+      alta.flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-1/generate-slots')
+        .flush({ templateId: 'tpl-1', created: 6, skipped: 0 });
+      fixture.detectChanges();
+    });
+
+    it('dice cuántos turnos entran, con el respiro contado', () => {
+      crear();
+      encenderLunes();
+      // 09:00–13:00 son 240 minutos. Con turnos de 30: entran 8.
+      expect(acc.turnosDelDia(0)).toBe(8);
+
+      // Con 30 de respiro el paso es 60, y el último turno tiene que entrar
+      // ENTERO: 09:00, 10:00, 11:00, 12:00 → 4.
+      acc.elegirRespiro(0, 30);
+      expect(acc.turnosDelDia(0)).toBe(4);
+    });
+
+    it('el costo se ve antes de guardar, no después', () => {
+      crear();
+      encenderLunes();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Entran');
+      // Elegir respiro sobre una franja corta puede quitar turnos, y ese
+      // número no se deduce leyendo la ficha.
+      acc.elegirRespiro(0, 30);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('4');
+    });
+
+    it('la vista previa cuenta el respiro: no se contradice con el campo', () => {
+      // El defecto que encontró la verificación visual: `calcularTurnos` ya
+      // sabía contar el respiro (AG-4) y nadie se lo pasaba, así que la vista
+      // previa decía «8 turnos» mientras el campo decía «entran 5». Dos
+      // números para la misma franja, los dos en pantalla a la vez.
+      crear();
+      encenderLunes();
+      acc.elegirRespiro(0, 15);
+      fixture.detectChanges();
+
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).toContain('Entran 5 turnos');
+      expect(texto).toContain('Lunes: 5 turnos');
+      // Y los arranques llevan el paso completo: 30 + 15.
+      expect(texto).toContain('09:45');
+    });
+
+    it('el resumen nombra el respiro sólo cuando lo hay', () => {
+      crear();
+      encenderLunes();
+      expect(acc.resumen()).not.toContain('descanso');
+
+      acc.elegirRespiro(0, 15);
+      // «con 0 minutos de descanso» sería ruido en la mayoría de las agendas.
+      expect(acc.resumen()).toContain('15 minutos de descanso');
+    });
+
+    it('un horario vigente con respiro lo carga en la semanita', () => {
+      crearConHorarioVigente({
+        ...VIGENTE_CON_RESPIRO,
+      });
+
+      expect(acc.grupoDe(1).getRawValue().respiro).toBe(10);
     });
   });
 

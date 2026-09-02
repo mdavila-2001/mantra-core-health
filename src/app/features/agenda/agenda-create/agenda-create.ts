@@ -68,6 +68,16 @@ const HORIZONTE_MESES = 3;
 const DURACIONES = [15, 20, 30, 45, 60, 90] as const;
 
 /**
+ * Respiros ofrecidos como fichas, en minutos.
+ *
+ * Empieza en **cero** y cero viene marcado: la mayoría de las agendas no
+ * declara respiro, y obligar a elegir uno convertiría una comodidad en un
+ * trámite. Cuando queda en cero no se manda nada — la columna es anulable y
+ * «no lo dijo» y «dijo que no hay» no significan lo mismo.
+ */
+const RESPIROS = [0, 5, 10, 15, 20, 30] as const;
+
+/**
  * A cuánto se cae la duración cuando el horario vigente no la declara.
  *
  * Media hora: es la duración más frecuente y la que el propio formulario trae
@@ -104,6 +114,7 @@ type DiaGroup = FormGroup<{
   desde: FormControl<string>;
   hasta: FormControl<string>;
   duracion: FormControl<number>;
+  respiro: FormControl<number>;
 }>;
 
 /** Lo que se muestra de un día en la semana visual. */
@@ -176,6 +187,7 @@ export class AgendaCreate {
   protected readonly uuidError = UUID_ERROR;
   protected readonly dias = DIAS;
   protected readonly duraciones = DURACIONES;
+  protected readonly respiros = RESPIROS;
 
   /** Si la sesión puede construir agenda. El backend manda; esto no ofrece 403. */
   protected readonly puedeCrear = computed(() =>
@@ -343,6 +355,11 @@ export class AgendaCreate {
           desde: v.desde,
           hasta: v.hasta,
           duracion: v.duracion,
+          // `calcularTurnos` ya sabía contar el respiro (AG-4) y nadie se lo
+          // pasaba: la vista previa mostraba los turnos SIN él. Con el campo
+          // en pantalla eso se volvía una contradicción visible — «entran 5»
+          // arriba y «8 turnos» abajo, sobre la misma franja.
+          receso: v.respiro,
         };
       }),
     ),
@@ -430,6 +447,9 @@ export class AgendaCreate {
         desde: sinSegundos(regla.startTime),
         hasta: sinSegundos(regla.endTime),
         duracion: regla.slotMinutes ?? plantilla.slotMinutes ?? DURACION_POR_OMISION,
+        // `?? 0` acá y no en el envío: leyendo, ausente ES cero; escribiendo,
+        // ausente y cero son cosas distintas.
+        respiro: regla.gapMinutes ?? 0,
       });
     }
     if (plantilla.validTo !== undefined) {
@@ -476,6 +496,34 @@ export class AgendaCreate {
 
   protected elegirDuracion(indice: number, minutos: number): void {
     this.semana.at(indice).controls.duracion.setValue(minutos);
+  }
+
+  protected elegirRespiro(indice: number, minutos: number): void {
+    this.semana.at(indice).controls.respiro.setValue(minutos);
+  }
+
+  /**
+   * Cuántos turnos entran en la franja de un día, con el respiro contado.
+   *
+   * Delega en {@link calcularTurnos}, que es el mismo cálculo que alimenta la
+   * vista previa de más abajo. **No se reimplementa acá**: dos aritméticas para
+   * el mismo número terminan dando dos números, y en esta pantalla los dos se
+   * ven a la vez.
+   *
+   * @param indice - El día de la semana, por su posición.
+   */
+  protected turnosDelDia(indice: number): number {
+    const v = this.semana.at(indice).getRawValue();
+    const { total } = calcularTurnos([
+      {
+        dia: DIAS[indice].largo,
+        desde: v.desde,
+        hasta: v.hasta,
+        duracion: v.duracion,
+        receso: v.respiro,
+      },
+    ]);
+    return total;
   }
 
   /**
@@ -598,6 +646,9 @@ export class AgendaCreate {
         startTime: v.desde.trim(),
         endTime: v.hasta.trim(),
         slotMinutes: v.duracion,
+        // Sólo si eligió alguno: mandar `0` escribiría un cero que nadie
+        // declaró, y borraría la diferencia el día que el default cambie.
+        ...(v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
         ...opcEntero('capacityPerSlot', capacidad),
       } as ScheduleRule;
     });
@@ -710,7 +761,16 @@ export class AgendaCreate {
     });
 
     const horario = mismoHorario ? ` de ${enHoras(primero.desde)} a ${enHoras(primero.hasta)}` : '';
-    return `${dias}${horario}, consultas de ${primero.duracion} minutos`;
+    // El respiro sólo se nombra si lo hay: «con 0 minutos de descanso» sería
+    // ruido en la gran mayoría de las agendas, que no declaran ninguno.
+    const mismoRespiro = activos.every(
+      (dia) => this.semana.at(dia.indice).getRawValue().respiro === primero.respiro,
+    );
+    const respiro =
+      primero.respiro > 0 && mismoRespiro
+        ? ` y ${primero.respiro} minutos de descanso entre una y otra`
+        : '';
+    return `${dias}${horario}, consultas de ${primero.duracion} minutos${respiro}`;
   });
 }
 
@@ -727,6 +787,9 @@ function nuevoDia(_dayOfWeek: number): DiaGroup {
       validators: [Validators.required, Validators.pattern(HORA)],
     }),
     duracion: new FormControl(30, { nonNullable: true, validators: [Validators.required] }),
+    // Sin respiro por omisión: es lo que la agenda hacía antes de que el campo
+    // existiera, así que abrir el formulario no cambia nada de lo que ya había.
+    respiro: new FormControl(0, { nonNullable: true, validators: [Validators.required] }),
   });
 }
 

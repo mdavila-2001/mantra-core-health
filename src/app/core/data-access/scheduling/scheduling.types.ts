@@ -414,6 +414,18 @@ export interface ScheduleRule {
   readonly endTime: string;
   readonly slotMinutes?: number;
   readonly capacityPerSlot?: number;
+  /**
+   * El respiro entre una consulta y la siguiente, en minutos.
+   *
+   * El generador avanza `slotMinutes + gapMinutes`, pero **cada turno sigue
+   * durando `slotMinutes`**: el respiro separa un turno del siguiente, no
+   * alarga la consulta.
+   *
+   * **Ausente ≡ 0.** La columna es anulable y nadie está obligado a
+   * declararlo, así que el formulario no manda `0` cuando el médico no eligió
+   * respiro: «no lo dijo» y «dijo que no hay» se guardan distinto.
+   */
+  readonly gapMinutes?: number;
 }
 
 /** Cuerpo de `POST /scheduling/resources/:id/templates` (UC-41-02). */
@@ -566,6 +578,13 @@ export interface PublishedRule {
   readonly endTime: string;
   readonly slotMinutes?: number;
   readonly capacityPerSlot?: number;
+  /**
+   * El respiro entre consultas, si la franja lo declara.
+   *
+   * Ausente ≡ 0. El servidor lo omite cuando la columna está nula, para que
+   * «no declarado» y «cero» sigan siendo distinguibles.
+   */
+  readonly gapMinutes?: number;
 }
 
 /** Una plantilla publicada, con sus franjas. */
