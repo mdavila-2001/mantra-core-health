@@ -65,6 +65,27 @@
   margin: 0;
 }
 
+/* El retrato, disparador de la subida — mismo trato que el perfil profesional
+   (`.profesional__foto`), sin la capa de cámara: acá el avatar es más chico y
+   está arriba de la lista de datos, no montado sobre una portada. */
+.mi-perfil__foto {
+  display: inline-block;
+  margin-block-end: var(--sp-3);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.mi-perfil__foto.is-subiendo {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.mi-perfil__foto-error {
+  margin: 0 0 var(--sp-3);
+  color: var(--error-tinta, #8a2f22);
+  font-size: var(--fs-caption);
+}
+
 /* Tablet. El literal es obligado: una media query no admite var(); el token
    --bp-md declara el mismo 780px para el resto del sistema. */
 @media (min-width: 780px) {
@@ -131,6 +152,13 @@
   color: var(--text-muted);
 }
 
+/* La salida a corregir los datos propios. Clase propia y no `mi-perfil__nota`
+   porque no es una nota al pie: es la acción de la tarjeta, y se lee al tamaño
+   del cuerpo. */
+.mi-perfil__accion {
+  margin-block: var(--sp-4) 0;
+}
+
 /* §4.H del plan de UX · los enlaces a lo que salió del menú del médico. En
    fila y con separación clara: son tres destinos hermanos, no una lista. */
 .mi-perfil__enlaces {
@@ -140,4 +168,77 @@
   margin-block-start: var(--sp-4);
   padding-block-start: var(--sp-3);
   border-block-start: 1px solid var(--border-default);
+}
+
+/* --- Seguros y contactos ---------------------------------------------------
+   Van fuera de la lista `dt`/`dd` porque cada uno tiene varios datos y una
+   fila de dos columnas los apretaría. */
+.mi-perfil__subtitulo {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mi-perfil__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.mi-perfil__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: var(--stroke-1) solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.mi-perfil__item-nombre {
+  font-weight: 600;
+}
+
+.mi-perfil__item-detalle {
+  color: var(--fg-muted);
+}
+
+/* La advertencia de «sin verificar» es informativa, no una alarma: ocupa toda
+   la línea siguiente para no competir con el nombre de la aseguradora. */
+.mi-perfil__item-nota {
+  flex-basis: 100%;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+/* El departamento emisor, al lado del documento y en segundo plano. */
+.mi-perfil__sufijo {
+  margin-left: var(--sp-2);
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+/* Lo que la persona todavía no cargó. Se dibuja el renglón igual —es la ficha
+   propia, y ocultarlo impide distinguir «no lo tengo» de «no me lo muestran»—
+   pero con menos peso que un dato real, para que la lista no parezca llena. */
+.mi-perfil__ausente {
+  color: var(--text-tertiary, var(--text-secondary));
+  font-style: italic;
+}
+
+/* El enlace al mapa vive dentro del renglón de la dirección, no debajo: es una
+   acción sobre ese dato, no un dato más. */
+.mi-perfil__mapa {
+  display: inline-block;
+  margin-left: var(--sp-2);
+  font-size: var(--fs-body-sm);
+  color: var(--action);
+  text-decoration: underline;
 }

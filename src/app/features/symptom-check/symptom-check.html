@@ -133,14 +133,20 @@
        respirar» sería el peor resultado posible de este flujo. -->
   @if (alarmas().length > 0) {
     <app-alert tone="error" title="Esto no puede esperar a un turno">
-      <p>
-        Lo que contás
-        @if (alarmas().length === 1) {
-          —{{ alarmas()[0].nombre }}—
-        }
-        puede ser una urgencia.
-        <strong>Andá ahora a una guardia o llamá a emergencias.</strong>
-      </p>
+      @if (mensajeDeAlarma(); as mensaje) {
+        <!-- Hay urgencias que no se contestan con «andá a una guardia» y nada
+             más. Cuando la fila trae su propio mensaje, ése es el que va. -->
+        <p>{{ mensaje }}</p>
+      } @else {
+        <p>
+          Lo que contás
+          @if (alarmas().length === 1) {
+            —{{ alarmas()[0].nombre }}—
+          }
+          puede ser una urgencia.
+          <strong>Andá ahora a una guardia o llamá a emergencias.</strong>
+        </p>
+      }
     </app-alert>
   } @else if (recomendaciones().length > 0) {
     <div class="sintomas__recomendaciones">
@@ -170,7 +176,13 @@
     </div>
   } @else if (texto().trim() !== '' && sintomas().length === 0) {
     <p class="sintomas__sin-coincidencias" role="status">
-      No reconocimos ningún síntoma. Probá con palabras más simples, o tocá una zona de arriba.
+      @if (descartados() !== '') {
+        <!-- Leímos el texto y entendimos que lo negaba. Decirlo es lo que evita
+             que «no reconocimos nada» se lea como «no te leímos». -->
+        Entendimos que <strong>no</strong> tenés {{ descartados() }}. Contanos qué sí sentís.
+      } @else {
+        No reconocimos ningún síntoma. Probá con palabras más simples, o tocá una zona de arriba.
+      }
     </p>
   }
 

@@ -1,0 +1,37 @@
+<!-- `aria-label` y no un `<h2>` visible: la columna es apoyo del formulario, y
+     un titular más compitiendo con el del paso es ruido para todos. Quien
+     navega con lector la encuentra igual, por su nombre de región. -->
+<aside class="ayuda" aria-label="Por qué te pedimos estos datos y cómo los cuidamos">
+  <!-- `track` sobre el propio título: al cambiar de paso el nodo se rehace y la
+       entrada vuelve a correr, así se ve que la explicación cambió con la
+       pregunta en vez de reemplazarse de golpe. -->
+  @for (tarjeta of tarjetas(); track tarjeta.titulo) {
+    <article class="ayuda__tarjeta">
+      <span class="ayuda__glifo" aria-hidden="true">
+        <app-nav-icon [name]="tarjeta.icono" />
+      </span>
+      <div class="ayuda__cuerpo">
+        <h3 class="ayuda__titulo">{{ tarjeta.titulo }}</h3>
+        <p class="ayuda__texto">{{ tarjeta.texto }}</p>
+      </div>
+    </article>
+  }
+
+  <!-- El sello no cambia con el paso: la promesa es la misma se esté
+       contestando lo que se esté contestando, y repetirla en cada tarjeta la
+       gastaría. -->
+  <article class="ayuda__tarjeta ayuda__tarjeta--sello">
+    <span class="ayuda__glifo ayuda__glifo--sello" aria-hidden="true">
+      <app-nav-icon name="shield" />
+    </span>
+    <div class="ayuda__cuerpo">
+      <h3 class="ayuda__titulo">Tus datos están a salvo</h3>
+      <ul class="ayuda__lista">
+        <li>Todo lo que escribís viaja cifrado hasta nuestros servidores.</li>
+        <li>Tu información clínica la ve el profesional que te atiende, nadie más.</li>
+        <li>No vendemos tus datos ni los usamos para publicidad.</li>
+        <li>Podés corregirlos cuando quieras desde tu perfil.</li>
+      </ul>
+    </div>
+  </article>
+</aside>

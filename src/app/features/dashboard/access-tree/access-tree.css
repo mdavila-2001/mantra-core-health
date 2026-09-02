@@ -1,0 +1,450 @@
+/* ═══ El árbol de accesos ═══════════════════════════════════════════════════
+   Todo el color de acá sale de las parejas `--st-*` del sistema —las mismas de
+   las insignias y los avisos—, y esa es toda la decisión de paleta: esas
+   parejas ya están medidas contra WCAG por `scripts/check-contrast.mjs` y ya
+   tienen su versión de tema oscuro. Un color propio por zona habría significado
+   cinco parejas nuevas sin medir, que en oscuro es justo donde se rompen.
+
+   El vocabulario es el real de `styles.css`: `--sp-*`, `--fs-*`/`--lh-*`,
+   `--r-*`, `--text-*`, `--bg-*`, `--border-*`, `--dur-*`, `--ease-*`. */
+
+:host {
+  display: block;
+}
+
+/* ── Tonos ────────────────────────────────────────────────────────────────
+   Un atributo y no una clase por tono: el valor viene del registro
+   (`AccessArea.tone`), y `[attr.data-tono]` lo pasa tal cual sin que la
+   plantilla tenga que enumerar los cinco casos. */
+[data-tono='info'] {
+  --zona-bg: var(--st-info-bg);
+  --zona-fg: var(--st-info-fg);
+  --zona-bd: var(--st-info-bd);
+}
+[data-tono='secondary'] {
+  --zona-bg: var(--st-secondary-bg);
+  --zona-fg: var(--st-secondary-fg);
+  --zona-bd: var(--st-secondary-bd);
+}
+[data-tono='primary'] {
+  --zona-bg: var(--st-primary-bg);
+  --zona-fg: var(--st-primary-fg);
+  --zona-bd: var(--st-primary-bd);
+}
+[data-tono='success'] {
+  --zona-bg: var(--st-success-bg);
+  --zona-fg: var(--st-success-fg);
+  --zona-bd: var(--st-success-bd);
+}
+[data-tono='warning'] {
+  --zona-bg: var(--st-warning-bg);
+  --zona-fg: var(--st-warning-fg);
+  --zona-bd: var(--st-warning-bd);
+}
+
+/* ── Primera pantalla: las zonas ──────────────────────────────────────────
+   Mínimo de 17rem: con cinco tarjetas da tres arriba y dos abajo en
+   escritorio, dos y dos y una en tablet, y una sola columna en teléfono. Sin
+   una consulta de medios, porque el ancho que decide es el de la tarjeta y no
+   el de la pantalla —el panel vive dentro de un armazón con menú lateral que
+   se abre y se cierra—. */
+.arbol__zonas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* La cascada la lleva el CSS y no `appStaggerList`: la directiva anima una
+   sola vez, al montarse, y acá la rejilla se rehace cada vez que se vuelve de
+   una zona. El retraso de cada tarjeta lo pone la plantilla por su posición. */
+.arbol__zonas > li {
+  animation: arbol-sube var(--dur-base) var(--ease-out) both;
+}
+
+.arbol__zona {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  /* `translate` y no `transform`: la propiedad individual no pisa nada de lo
+     que la animación de entrada haga con el resto de la transformación. */
+  transition:
+    translate var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+.arbol__zona:hover,
+.arbol__zona:focus-visible {
+  translate: 0 -2px;
+  border-color: var(--zona-bd);
+  box-shadow: var(--shadow-md);
+}
+
+.arbol__zona:active {
+  translate: 0 0;
+  box-shadow: var(--shadow-sm);
+  background: var(--bg-hover);
+}
+
+/* La baldosa del ícono es lo que hace que la rejilla se lea por color antes
+   que por texto: cinco tonos distintos se distinguen de reojo, cinco dibujos
+   de trazo no. El aro interior la despega del fondo cuando el relleno es
+   suave, sin gastar un borde propio que se sumaría al de la tarjeta. */
+.arbol__zona-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--r-sm);
+  background: var(--zona-bg);
+  color: var(--zona-fg);
+  box-shadow: inset 0 0 0 1px var(--zona-bd);
+  transition:
+    scale var(--dur-fast) var(--ease-spring),
+    rotate var(--dur-fast) var(--ease-spring);
+}
+
+.arbol__zona-icono app-nav-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.arbol__zona:hover .arbol__zona-icono,
+.arbol__zona:focus-visible .arbol__zona-icono {
+  scale: 1.06;
+  rotate: -3deg;
+}
+
+.arbol__zona-texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.arbol__zona-nombre {
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+.arbol__zona-resumen {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+/* Tabular porque son cifras que se comparan en columna de un vistazo. */
+.arbol__zona-cuenta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding-inline: var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--zona-bg);
+  color: var(--zona-fg);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.arbol__chevron {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--text-muted);
+  transition:
+    translate var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.arbol__zona:hover .arbol__chevron,
+.arbol__zona:focus-visible .arbol__chevron {
+  translate: 3px 0;
+  color: var(--zona-fg);
+}
+
+.arbol__pie {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* ── Segunda pantalla: la zona abierta ────────────────────────────────────
+   El radio de firma va acá y en ningún otro lado del panel: el sistema pide
+   UN elemento por pantalla con esa esquina, y éste es el bloque que cambia
+   cuando alguien actúa — el que tiene que verse que es otra cosa. */
+.arbol__abierta {
+  border: 1px solid var(--zona-bd);
+  border-radius: var(--r-signature);
+  background: var(--bg-surface);
+  padding: var(--sp-5);
+  animation: arbol-abre var(--dur-base) var(--ease-out) both;
+}
+
+.arbol__cabecera {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  margin-block-end: var(--sp-5);
+}
+
+/* Fila propia y ancho completo: es el camino de salida, y compartir renglón
+   con el rótulo de la zona lo dejaba pareciendo parte del título. */
+.arbol__volver {
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.arbol__volver:hover,
+.arbol__volver:focus-visible {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.arbol__flecha {
+  width: 1.125rem;
+  height: 1.125rem;
+  transition: translate var(--dur-fast) var(--ease-standard);
+}
+
+.arbol__volver:hover .arbol__flecha {
+  translate: -3px 0;
+}
+
+.arbol__cabecera-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--r-sm);
+  background: var(--zona-bg);
+  color: var(--zona-fg);
+  box-shadow: inset 0 0 0 1px var(--zona-bd);
+}
+
+.arbol__cabecera-icono app-nav-icon {
+  width: 1.625rem;
+  height: 1.625rem;
+}
+
+.arbol__cabecera-texto {
+  min-width: 0;
+}
+
+.arbol__cabecera-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.arbol__cabecera-resumen {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+/* ── Las secciones de la zona ─────────────────────────────────────────────
+   9,5rem de mínimo: lo que hay que acomodar es un ícono con su rótulo, no un
+   párrafo. Entran cinco o seis por fila y la zona más cargada —las once de
+   «Mi cuenta»— cabe en dos. */
+.arbol__accesos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arbol__accesos > li {
+  animation: arbol-sube var(--dur-base) var(--ease-out) both;
+}
+
+.arbol__acceso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-4) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    translate var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+/* El ícono a tamaño de acción, no de adorno: es lo primero que se busca
+   cuando la rejilla se recorre con la vista. Hereda el tono de la zona, así
+   que las once secciones de «Mi cuenta» se leen como un conjunto. */
+.arbol__acceso-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--r-sm);
+  background: var(--zona-bg);
+  color: var(--zona-fg);
+  transition: scale var(--dur-fast) var(--ease-spring);
+}
+
+.arbol__acceso-icono app-nav-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+a.arbol__acceso:hover,
+a.arbol__acceso:focus-visible {
+  translate: 0 -2px;
+  border-color: var(--zona-bd);
+  background: var(--bg-hover);
+}
+
+a.arbol__acceso:hover .arbol__acceso-icono,
+a.arbol__acceso:focus-visible .arbol__acceso-icono {
+  scale: 1.08;
+}
+
+a.arbol__acceso:active {
+  translate: 0 0;
+  background: var(--bg-active);
+}
+
+/* La planificada no es un enlace, y tiene que verse que no lo es sin depender
+   sólo del cursor: nadie pasa el mouse por encima para averiguarlo. */
+.arbol__acceso--planificada {
+  opacity: 0.68;
+}
+
+/* El rótulo se queda: una rejilla de íconos mudos obliga a recorrerlos con el
+   cursor uno por uno para saber cuál es cuál. */
+.arbol__acceso-nombre {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+/* ── Saltar de zona ───────────────────────────────────────────────────────
+   Sin esto, ir de «Mi consulta» a «Mi cuenta» son dos clics y un rebote por
+   la primera pantalla. Con esto es uno, y el árbol se recorre. */
+.arbol__saltos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-5);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.arbol__salto {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.arbol__salto:hover,
+.arbol__salto:focus-visible {
+  border-color: var(--zona-bd);
+  background: var(--zona-bg);
+  color: var(--zona-fg);
+}
+
+.arbol__salto-icono {
+  display: inline-flex;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: var(--zona-fg);
+}
+
+/* ── Movimiento ───────────────────────────────────────────────────────────
+   Cortas a propósito: esto es software clínico y una interfaz que se hace
+   esperar por decoración estorba. El desplazamiento es de diez píxeles, que
+   es el mismo de `appStaggerList` — el gesto de «esto es nuevo» tiene que ser
+   uno solo en toda la aplicación. */
+@keyframes arbol-sube {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes arbol-abre {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+}
+
+/* El bloque global de `styles.css` acorta las animaciones a 0,01 ms pero **no
+   toca los retrasos**: con `both`, cada tarjeta se quedaría invisible durante
+   su retraso y la rejilla aparecería a tirones. Con «reducir movimiento» no
+   hay animación ninguna, que es lo que se pidió. */
+@media (prefers-reduced-motion: reduce) {
+  .arbol__abierta,
+  .arbol__accesos > li,
+  .arbol__zonas > li {
+    animation: none;
+  }
+}

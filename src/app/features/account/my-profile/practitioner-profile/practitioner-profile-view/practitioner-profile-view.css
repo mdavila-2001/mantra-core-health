@@ -162,6 +162,17 @@
   font-weight: 600;
 }
 
+/* El rótulo que reemplaza a la pestaña «Especialidades» cuando la ficha es
+   propia y la de matrículas ya no existe. Un escalón por debajo del título de
+   bloque: sigue siendo un encabezado, pero no compite con él. */
+.profesional__sub-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
 /* Texto corrido: la medida de lectura manda sobre el ancho de la tarjeta. */
 .profesional__bio {
   margin: 0;
@@ -409,5 +420,67 @@
 @media (prefers-reduced-motion: reduce) {
   .profesional__foto-capa {
     transition: none;
+  }
+}
+
+/* --- Tus datos -------------------------------------------------------------
+   Lista de dos columnas, como la ficha del paciente: la etiqueta arriba en
+   pantalla chica y al costado cuando hay lugar. */
+.profesional__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.profesional__dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.profesional__dato dt {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.profesional__dato dd {
+  margin: 0;
+}
+
+.profesional__cifra {
+  font-variant-numeric: tabular-nums;
+}
+
+/* El departamento emisor, junto al documento y en segundo plano. */
+.profesional__sufijo {
+  margin-left: var(--sp-2);
+  color: var(--fg-muted);
+}
+
+@media (min-width: 40rem) {
+  .profesional__dato {
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--sp-4);
+  }
+
+  .profesional__dato dt {
+    flex: 0 0 12rem;
+  }
+}
+
+/* --- Tus datos + tu habilitación, lado a lado ------------------------------
+   Los dos responden preguntas que se hacen juntas —quién es y con qué ejerce—,
+   así que comparten fila cuando hay ancho. Antes vivían en dos pestañas
+   distintas y verlos exigía cambiar de una y bajar. */
+.profesional__filiacion {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+@media (min-width: 52rem) {
+  .profesional__filiacion {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-6);
   }
 }

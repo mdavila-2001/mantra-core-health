@@ -290,32 +290,16 @@ form {
 }
 
 /* ==========================================================================
-    El glifo dentro del campo.
+    El glifo dentro del campo lo estiliza el átomo, no esta pantalla.
 
-    Va en la ranura de ícono del átomo, así que comparte el marco, el foco y el
-    estado de error del control. Apagado en reposo y encendido en foco: es el
-    control diciendo cuál está activo, que en un formulario de dos campos es
-    toda la orientación que hace falta.
+    Vivía acá, en `.login__campo-icono`: medida, color en reposo y encendido en
+    foco. Se subió a `input.css` sin cambiarle nada de lo que hacía, porque era
+    una regla del control y no de esta pantalla — la prueba es que las otras
+    cuatro pantallas de acceso necesitaban exactamente lo mismo y habrían tenido
+    que copiarla, con la de siempre: la que se olvidara de copiarla mostraría un
+    glifo muerto que no se ilumina, y nadie lo notaría hasta verlo al lado de
+    uno que sí.
     ========================================================================== */
-.login__campo-icono {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 1.15rem;
-  block-size: 1.15rem;
-  margin-inline-end: var(--sp-2);
-  color: var(--text-muted);
-  transition: color var(--dur-fast) var(--ease-standard);
-}
-
-.login__campo-icono svg {
-  inline-size: 100%;
-  block-size: 100%;
-}
-
-app-form-field:focus-within .login__campo-icono {
-  color: var(--brand-primary);
-}
 
 /* ==========================================================================
     Entrada, al modo de macOS.

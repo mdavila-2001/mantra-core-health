@@ -106,6 +106,17 @@ export class PractitionerProfileEdit {
   protected readonly bio = signal('');
   protected readonly aceptaNuevos = signal(false);
   protected readonly telemedicina = signal(false);
+
+  /* -- Los datos personales, que hasta ahora no se podían corregir ---------
+     Se declaran al registrarse y despues no habia forma de tocarlos: quien se
+     equivocaba en su apellido lo arrastraba. Mismo alcance que ya tiene el
+     paciente. El documento y el correo NO estan: el primero es un identificador
+     oficial con su circuito, el segundo es la credencial de acceso. */
+  protected readonly nombre = signal('');
+  protected readonly segundoNombre = signal('');
+  protected readonly apellidoPaterno = signal('');
+  protected readonly apellidoMaterno = signal('');
+  protected readonly telefono = signal('');
   protected readonly guardandoPresentacion = signal(false);
 
   protected readonly bioLargoMaximo = 4000;
@@ -252,6 +263,11 @@ export class PractitionerProfileEdit {
   private sembrarFormulario(perfil: OwnPractitionerProfile): void {
     this.titulo.set(perfil.professionalTitle ?? '');
     this.bio.set(perfil.professionalBio ?? '');
+    this.nombre.set(perfil.name ?? '');
+    this.segundoNombre.set(perfil.middleName ?? '');
+    this.apellidoPaterno.set(perfil.lastName ?? '');
+    this.apellidoMaterno.set(perfil.motherLastName ?? '');
+    this.telefono.set(perfil.phone ?? '');
     this.aceptaNuevos.set(perfil.acceptsNewPatients);
     this.telemedicina.set(perfil.telehealthAvailable);
   }
@@ -276,6 +292,11 @@ export class PractitionerProfileEdit {
       professionalBio: string;
       acceptsNewPatients: boolean;
       telehealthAvailable: boolean;
+      name: string;
+      middleName: string;
+      lastName: string;
+      motherLastName: string;
+      phone: string;
     }> = {};
     if (this.titulo() !== (original.professionalTitle ?? '')) {
       cambios.professionalTitle = this.titulo();
@@ -289,6 +310,20 @@ export class PractitionerProfileEdit {
     if (this.telemedicina() !== original.telehealthAvailable) {
       cambios.telehealthAvailable = this.telemedicina();
     }
+    // Los personales viajan igual que los otros: sólo si cambiaron. Una cadena
+    // vacía SÍ viaja —es cómo se borra un segundo nombre— y por eso se compara
+    // contra el original en vez de descartar los vacíos.
+    if (this.nombre() !== (original.name ?? '')) cambios.name = this.nombre();
+    if (this.segundoNombre() !== (original.middleName ?? '')) {
+      cambios.middleName = this.segundoNombre();
+    }
+    if (this.apellidoPaterno() !== (original.lastName ?? '')) {
+      cambios.lastName = this.apellidoPaterno();
+    }
+    if (this.apellidoMaterno() !== (original.motherLastName ?? '')) {
+      cambios.motherLastName = this.apellidoMaterno();
+    }
+    if (this.telefono() !== (original.phone ?? '')) cambios.phone = this.telefono();
 
     if (Object.keys(cambios).length === 0) {
       this.toasts.success('No había ningún cambio para guardar.', 'Perfil');

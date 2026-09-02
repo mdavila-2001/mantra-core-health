@@ -4,6 +4,7 @@ import { ComponentFixture, DeferBlockBehavior, TestBed } from '@angular/core/tes
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { MAXIMO_DE_ZONAS } from '../../core/navigation/access-tree';
 import { resolverEstadosDeCaso } from '../../../testing/case-status';
 import { Dashboard } from './dashboard';
 
@@ -212,102 +213,92 @@ describe('Dashboard', () => {
     expect(pacientes.status).toBe('empty');
   });
 
-  /* -- Carril 02 · corrección #1: «Tus accesos» son íconos ------------------ */
+  /* -- Carril 02 · «Tus accesos» dejó de ser una lista y pasó a ser un árbol -- */
 
   describe('Tus accesos', () => {
-    function accesos(): readonly HTMLAnchorElement[] {
-      fixture.detectChanges();
-      return [
-        ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
-          '[data-testid="panel-acceso"]',
-        ),
-      ];
-    }
-
     function abrirPanel(roles: readonly string[]): void {
       crear({ sub: 'u-1', roles, tenants: ['t-1'] });
       responder([], null);
     }
 
-    it('cada acceso es un ícono, no una tarjeta con la descripción pegada', () => {
-      // Un rol de trabajo: desde J6 el paciente tiene su propio panel y este
-      // no lo ve. Lo que se prueba acá es la forma del acceso, no el rol.
+    function raiz(): HTMLElement {
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    function zonas(): readonly HTMLButtonElement[] {
+      return [...raiz().querySelectorAll<HTMLButtonElement>('[data-testid="panel-zona"]')];
+    }
+
+    function accesos(): readonly HTMLAnchorElement[] {
+      return [...raiz().querySelectorAll<HTMLAnchorElement>('[data-testid="panel-acceso"]')];
+    }
+
+    function abrirZona(id: string): void {
+      zonas()
+        .find((zona) => zona.dataset['zona'] === id)
+        ?.click();
+      fixture.detectChanges();
+    }
+
+    function volver(): void {
+      raiz().querySelector<HTMLButtonElement>('[data-testid="panel-zona-volver"]')?.click();
+      fixture.detectChanges();
+    }
+
+    /** Todas las rutas del árbol, zona por zona. */
+    function todasLasRutas(): readonly string[] {
+      const rutas: string[] = [];
+      for (const id of zonas().map((zona) => zona.dataset['zona'] ?? '')) {
+        abrirZona(id);
+        rutas.push(...accesos().map((acceso) => acceso.dataset['ruta'] ?? ''));
+        volver();
+      }
+      return rutas;
+    }
+
+    it('la doctora ve cinco puertas, no las treinta y dos secciones de un tirón', () => {
+      // Un rol de trabajo: desde J6 el paciente tiene su propio panel y éste no
+      // lo ve. Lo que se prueba acá es la forma del acceso, no el rol.
       abrirPanel(['PRACTITIONER']);
+
+      expect(zonas().length).toBeGreaterThan(0);
+      expect(zonas().length).toBeLessThanOrEqual(MAXIMO_DE_ZONAS);
+      // Y ni un acceso a la vista antes de abrir una: ése era todo el problema.
+      expect(accesos()).toHaveLength(0);
+    });
+
+    it('adentro de una zona están las secciones, con su ícono y su ruta real', () => {
+      abrirPanel(['PRACTITIONER']);
+      abrirZona('consulta');
 
       const primero = accesos()[0];
       expect(primero.querySelector('app-nav-icon svg')).not.toBeNull();
-      // El resumen ya no se pinta como texto permanente: vive en el tooltip.
-      expect(primero.querySelector('.panel__acceso-resumen')).toBeNull();
+      expect(primero.getAttribute('href')).toBe(primero.dataset['ruta']);
+      expect(accesos().map((a) => a.dataset['ruta'])).toContain('/progress-notes');
     });
 
-    it('el resumen viaja en el tooltip y también en el nombre accesible', () => {
+    it('el árbol sigue saliendo del registro: no pierde ninguna sección por el camino', () => {
+      // Ésta es la garantía que el escalón nuevo podía romper en silencio. El
+      // panel y el guard salen del mismo registro; si el reparto se olvidara de
+      // una sección, acá se vería como una ruta que falta y no como un error.
       abrirPanel(['PRACTITIONER']);
 
-      // Los tutoriales y no el glosario: desde F-03 (18/08/2026) el glosario es
-      // de quien atiende y el paciente ya no lo tiene entre sus accesos.
-      const tutoriales = accesos().find((a) => a.dataset['ruta'] === '/tutorials');
-
-      // Dos caminos a propósito: el globo aparece con el puntero **y con el
-      // foco** (lo garantiza `appTooltip`), y el `aria-label` cubre a quien
-      // navega con lector de pantalla sin llegar a enfocar el enlace.
-      expect(tutoriales?.getAttribute('aria-label')).toBe(
-        'Tutoriales. Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
-      );
+      const rutas = todasLasRutas();
+      expect(rutas).toContain('/schedule');
+      expect(rutas).toContain('/glossary');
+      expect(rutas).toContain('/tutorials');
+      // El panel dentro del panel no: es un enlace a la pantalla en la que ya
+      // estás, y ocupaba un lugar de los treinta y dos.
+      expect(rutas).not.toContain('/dashboard');
     });
 
-    it('el rótulo se queda: una rejilla de íconos mudos se recorre a ciegas', () => {
-      abrirPanel(['PRACTITIONER']);
-
-      const rotulos = accesos().map((a) => a.querySelector('.panel__acceso-nombre')?.textContent);
-      expect(rotulos).toContain('Tutoriales');
-      // El glosario sí está, y debe estar: este panel se abre con un rol de
-      // trabajo y F-03 (18/08/2026) hizo del glosario justamente la herramienta
-      // de quien atiende. Que el paciente no lo vea lo fija el registro de
-      // navegación —la sección declara `roles`— y lo prueba
-      // `navigation.service.spec.ts`, no esta rejilla.
-      expect(rotulos).toContain('Glosario');
-    });
-
-    it('cada acceso apunta a una ruta real del registro, no a un destino inventado', () => {
-      abrirPanel(['PRACTITIONER']);
-
-      for (const acceso of accesos()) {
-        expect(acceso.getAttribute('href')).toBe(acceso.dataset['ruta']);
-      }
-    });
-
-    it('lo que está en construcción no se ofrece como si se pudiera entrar', () => {
-      abrirPanel(['BILLING']);
-
-      const planificados = (fixture.nativeElement as HTMLElement).querySelectorAll(
-        '[data-testid="panel-acceso-planificado"]',
-      );
-
-      // Ni ancla ni tooltip: un globo pide foco, y esto no es enfocable
-      // justamente porque no se puede entrar.
-      for (const planificado of planificados) {
-        expect(planificado.tagName.toLowerCase()).not.toBe('a');
-        expect(planificado.getAttribute('aria-describedby')).toBeNull();
-      }
-    });
-
-    it('la Guía de profesionales no está entre los accesos de la doctora', () => {
+    it('la Guía de profesionales no está en ninguna zona de la doctora', () => {
       // Corrección #2. El panel sale de `NavigationService`, el mismo origen
       // que el menú, así que esto también fija que no se puedan desincronizar.
       abrirPanel(['PRACTITIONER', 'CLINICIAN']);
 
-      expect(accesos().map((a) => a.dataset['ruta'])).not.toContain('/directory');
-    });
-
-    /**
-     * La garantía sigue en pie, pero cambió de pantalla: desde J6 el paciente
-     * no ve este panel, y la Guía es uno de los cuatro accesos de «Mi salud».
-     * La prueba vive ahora en `patient-home.spec.ts`.
-     */
-    it('la Guía es de los pacientes, y por eso no está acá', () => {
-      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
-
-      expect(accesos().map((a) => a.dataset['ruta'])).not.toContain('/directory');
+      expect(todasLasRutas()).not.toContain('/directory');
     });
   });
 

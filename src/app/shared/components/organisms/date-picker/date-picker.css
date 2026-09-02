@@ -213,7 +213,7 @@
   margin: 0;
 }
 
-/* Navegación del Calendario: Controles y Selectores de Mes / Año */
+/* Navegación del Calendario: Controles y Encabezado de Mes / Año */
 .calendar-nav {
   display: flex;
   align-items: center;
@@ -236,26 +236,43 @@
   justify-content: center;
 }
 
-.nav-select {
-  background-color: var(--bg-surface-alt, #f8fafc);
-  border: 1px solid var(--border-strong, #cbd5e1);
-  border-radius: var(--r-xs, 4px);
-  padding: 4px var(--sp-2, 8px);
+/* Encabezado tocable: sube a la grilla de años y de ahí a la de meses. */
+.view-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-height: 40px;
+  padding: 4px var(--sp-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
   font-family: var(--font-body);
-  font-size: var(--fs-body, 0.875rem);
+  font-size: var(--fs-body);
   font-weight: 600;
   color: var(--text-primary);
+  text-transform: capitalize;
   cursor: pointer;
-  max-width: 130px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.nav-select:focus-visible {
+.view-switch:hover {
+  background-color: var(--bg-inset);
+}
+
+.view-switch:focus-visible {
   outline: none;
+  box-shadow: 0 0 0 4px var(--focus-ring);
   border-color: var(--brand-primary);
 }
 
-.month-select {
-  text-transform: capitalize;
+.view-switch-caret {
+  width: 16px;
+  height: 16px;
+  color: var(--brand-primary);
+}
+
+.view-switch[aria-expanded='true'] .view-switch-caret {
+  transform: rotate(180deg);
 }
 
 /* Grilla de Días de la Semana */
@@ -308,6 +325,34 @@
   background-color: var(--brand-primary);
   color: var(--text-inverse);
   font-weight: 600;
+}
+
+/* Grillas de Años y Meses: misma celda sin cuadrar, distinto ancho de fila.
+   Los treinta años van de a cinco: seis filas, el alto de la grilla de días. */
+.calendar-grid-years,
+.calendar-grid-months {
+  gap: var(--sp-1);
+}
+
+.calendar-grid-years {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.calendar-grid-months {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.calendar-unit-btn {
+  aspect-ratio: auto;
+  min-height: 44px;
+  padding: 0 var(--sp-1);
+  text-transform: capitalize;
+}
+
+@media (min-width: 780px) {
+  .calendar-unit-btn {
+    min-height: 40px;
+  }
 }
 
 .calendar-day-btn.is-disabled,

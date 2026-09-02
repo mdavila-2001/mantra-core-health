@@ -53,13 +53,23 @@
            leer en zigzag —foto a la izquierda, botón a la derecha, medio metro
            de vacío en el medio— y en una pantalla ancha mostraba cinco
            resultados donde caben doce. -->
-      <ul class="profesionales__grilla">
-        @for (tarjeta of tarjetas(); track tarjeta.id) {
-          <!-- El selector es `li[app-result-card]`: la tarjeta ES el elemento
-               de la lista, no algo que se mete dentro de uno. -->
-          <li app-result-card [resultado]="tarjeta"></li>
+      <div class="profesionales__grupos">
+        @for (grupo of gruposPorEspecialidad(); track grupo.especialidad) {
+          <section class="profesionales__grupo" [attr.aria-label]="grupo.especialidad">
+            <div class="profesionales__grupo-encabezado">
+              <h2>{{ grupo.especialidad }}</h2>
+              <span>{{ grupo.tarjetas.length }} {{ grupo.tarjetas.length === 1 ? 'profesional' : 'profesionales' }}</span>
+            </div>
+            <ul class="profesionales__grilla">
+              @for (tarjeta of grupo.tarjetas; track tarjeta.id) {
+                <!-- El selector es `li[app-result-card]`: la tarjeta ES el elemento
+                     de la lista, no algo que se mete dentro de uno. -->
+                <li app-result-card [resultado]="tarjeta"></li>
+              }
+            </ul>
+          </section>
         }
-      </ul>
+      </div>
       <nav class="app-pagination" app-pagination="" aria-label="Paginación por cursor">
         <p class="app-pagination__nota">{{ busqueda.rotuloDePagina() }}</p>
         <button

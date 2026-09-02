@@ -1,0 +1,105 @@
+<app-auth-split
+  claim="Potenciá tu práctica médica"
+  tagline="Sumate a la red de salud más grande de Bolivia y conectá con miles de pacientes."
+  contentWidth="full"
+>
+  <!-- El alta y la columna que la explica son una sola cosa en pantalla ancha:
+       la pregunta a la izquierda y por qué se hace a la derecha. En teléfono la
+       columna cae debajo del formulario (ver el CSS compartido), que es donde
+       alguien duda si sigue o abandona. Cuando la cuenta ya está creada no hay
+       nada que explicar, así que la columna no se dibuja. -->
+  <div class="registro-conjunto" [class.registro-conjunto--solo]="registered()">
+    <div class="registro">
+      @if (registered()) {
+        <div class="registro__header">
+          <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-exito">
+            Tu cuenta está lista
+          </h1>
+          <p class="registro__subtitle">
+            Ya podés entrar con {{ accessHint }} y la contraseña que elegiste.
+          </p>
+        </div>
+        <button
+          app-button
+          variant="primary"
+          size="lg"
+          class="registro__submit"
+          data-testid="registro-ir-login"
+          (clicked)="goToLogin()"
+        >
+          Ir a iniciar sesión
+        </button>
+      } @else {
+        <div class="registro__header">
+          <h1 class="registro__title">Crear cuenta de profesional</h1>
+        </div>
+
+        @if (errorMessage(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{
+            mensaje
+          }}</app-alert>
+        }
+
+        <!-- La barra de avance, el índice de páginas, el «Atrás», la validación
+           de a una página y el foco que la sigue son del motor: esta pantalla
+           declara qué se pregunta y en qué orden, y nada más.
+
+           Van proyectados el árbol de municipios —el motor no dibuja árboles
+           con búsqueda— y el aviso del departamento, sólo cuando su lectura
+           falló, que es cuando el campo deja de ser un `select`. -->
+        <div class="registro__body">
+          <app-paginated-form
+            data-testid="registro-form-profesional"
+            [paginas]="paginasProfesional()"
+            [form]="formProfesional"
+            label="Crear cuenta"
+            submitLabel="Crear cuenta"
+            [pending]="isSubmitting()"
+            (pasoVisible)="recordarPaso($event)"
+            (enviado)="submit()"
+          >
+            <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
+              <p class="registro__catalogo-caido">
+                No pudimos traer el catálogo de departamentos.
+                <button app-button variant="ghost" size="sm" (clicked)="reintentarDepartamentos()">
+                  Reintentar
+                </button>
+              </p>
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="municipio">
+              @if (catalogoMunicipiosCaido()) {
+                <p class="registro__catalogo-caido">
+                  No pudimos traer el catálogo de municipios.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <app-tree-select
+                  data-testid="registro-pro-municipio"
+                  [groups]="arbolMunicipios()"
+                  [(value)]="municipioProfesional"
+                  placeholder="Sin especificar"
+                  dialogTitle="¿Dónde vivís?"
+                  searchPlaceholder="Buscar municipio o departamento…"
+                  emptyMessage="Ningún municipio coincide con esa búsqueda."
+                />
+              }
+            </ng-template>
+          </app-paginated-form>
+        </div>
+
+        <div class="registro__footer">
+          <p class="registro__pie">
+            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+          </p>
+        </div>
+      }
+    </div>
+
+    @if (!registered()) {
+      <app-registro-ayuda class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
+    }
+  </div>
+</app-auth-split>

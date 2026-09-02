@@ -1,14 +1,19 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { rolesConEtiqueta } from '../../../core/auth/role-labels';
+import { FilesClient } from '../../../core/data-access/files/files.client';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
-import type { OwnPatientSummary } from '../../../core/data-access/profiles/profiles.types';
+import type {
+  OwnAddress,
+  OwnPatientProfile,
+  OwnPatientSummary,
+} from '../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import {
@@ -19,6 +24,7 @@ import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../../core/identity-assur
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -42,12 +48,20 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
  * pasar y no hay forma de pedir el resumen de otra persona. Por eso esta
  * pantalla no tiene parámetro de ruta ni buscador — no le faltan, no van.
  *
- * ## El 403 acá es una puerta, no un muro
+ * ## El perfil no depende de verificarse (F-34)
  *
- * El endpoint exige identidad verificada vigente. Sin ella responde `403` con
- * `IDENTITY_VERIFICATION_REQUIRED`, y `errorToViewState` ya lo traduce a un S5
- * **con acción**: el host de estados pinta el enlace a la pantalla de
- * verificación. Esta pantalla no escribe ni una línea sobre ese caso.
+ * El endpoint responde `200` a todo paciente, verificado o no. Lo único que la
+ * verificación gobierna es el **código de paciente**, que el backend omite
+ * mientras no haya aserción vigente: la fila lo dice en palabras y ofrece el
+ * trámite como invitación. La vista no oculta nada por su cuenta — muestra lo
+ * que el backend le devolvió a esa sesión.
+ *
+ * ## El 403 sigue contemplado, para la API anterior
+ *
+ * Una API previa a F-34 responde `403` con `IDENTITY_VERIFICATION_REQUIRED`, y
+ * `errorToViewState` lo traduce a un S5 **con acción**: el host de estados
+ * pinta el enlace a la pantalla de verificación. Se conserva tal cual para que
+ * el frente y el backend se puedan desplegar en cualquier orden.
  *
  * ## Por qué son tres bloques y no una tarjeta
  *
@@ -100,6 +114,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
   selector: 'app-my-profile',
   imports: [
     Alert,
+    Avatar,
     Badge,
     Card,
     DatePipe,
@@ -118,6 +133,7 @@ export class MyProfile {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly identity = inject(IdentityClient);
+  private readonly files = inject(FilesClient);
   // Declara que esta pantalla necesita los estados de caso resueltos contra
   // terminología: al inyectarlo se resuelven, y `toCaseStatusPresentation` los
   // encuentra. Sin esto los sellos se verían en neutro.
@@ -148,16 +164,47 @@ export class MyProfile {
 
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
+  /**
+   * Los datos completos de filiación, para MOSTRARLOS.
+   *
+   * Va aparte del resumen y no reemplaza a ninguno: el resumen compone el nombre
+   * y trae el estado; éste trae lo que la persona declaró —documento, correo,
+   * direcciones, seguros, tutores—, que hasta ahora sólo se podía ver entrando a
+   * editar. Un fallo acá no rompe la tarjeta: los bloques nuevos sencillamente
+   * no se dibujan.
+   */
+  protected readonly perfil = signal<OwnPatientProfile | null>(null);
+
+  /* -- La foto de perfil ---------------------------------------------------
+     Mismo patrón que `practitioner-profile-view` y `public-profile-preview`:
+     el id viaja en `perfil().photoFileId`, y pintarlo exige resolverlo con
+     `FilesClient.downloadUrl` — no es una URL servida por la API, como sí lo
+     es el avatar de la vitrina pública. */
+
+  /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
+  protected readonly subiendoFoto = signal(false);
+  /** Qué salió mal, si salió mal. Vacío es que no pasó nada. */
+  protected readonly errorDeFoto = signal('');
+  /**
+   * La URL resuelta de la foto, propia o recién subida.
+   *
+   * Adorno: si la resolución falla, queda `null` y el avatar cae a
+   * iniciales — nunca tumba la tarjeta que muestra los datos propios de
+   * alguien.
+   */
+  protected readonly fotoUrl = signal<string | null>(null);
+
   protected readonly datos = computed(() => dataOf(this.resumen()));
 
   /**
    * Si «Tus datos» está cerrado **sólo** porque falta verificar la identidad.
    *
-   * Es el estado normal de todo paciente recién registrado, no un error: el
-   * backend responde 403 con la puerta a verificarse. La tarjeta lo dice en
-   * neutro y con la salida a mano —una alerta roja «No tenés acceso» sobre la
-   * propia cuenta lee como que algo se rompió (feedback de la analista, barrido
-   * del 18/08/2026)—. Cualquier otro 403 sigue pintándose como lo que es.
+   * Desde F-34 el backend ya no cierra esa puerta, así que esto sólo se
+   * enciende contra una API anterior al cambio. Cuando pasa, la tarjeta lo dice
+   * en neutro y con la salida a mano —una alerta roja «No tenés acceso» sobre
+   * la propia cuenta lee como que algo se rompió (feedback de la analista,
+   * barrido del 18/08/2026)—. Cualquier otro 403 sigue pintándose como lo que
+   * es.
    */
   protected readonly verificacionPendiente = computed(() => {
     const estado = this.resumen();
@@ -263,11 +310,156 @@ export class MyProfile {
   constructor() {
     this.cargar();
     this.cargarCasos();
+    this.cargarPerfil();
+  }
+
+
+  /**
+   * La etiqueta de un concepto, o nada.
+   *
+   * Devuelve cadena vacía y no el uuid cuando el catálogo todavía no llegó: un
+   * identificador crudo en la ficha no le dice nada a nadie y delata la
+   * plomería. La fila queda con el dato principal y sin el sufijo.
+   */
+  protected etiquetaDe(conceptId: string): string {
+    return this.etiquetas().get(conceptId)?.display ?? '';
+  }
+
+  /**
+   * La edad, calculada.
+   *
+   * El registro del stakeholder la pide «de manera automática con la fecha de
+   * nacimiento ingresada»: es derivada, no un dato que alguien escriba, así que
+   * no se guarda ni se pide al backend.
+   */
+  protected readonly edad = computed<number | null>(() => {
+    const nacimiento = this.perfil()?.birthDate;
+    if (!nacimiento) return null;
+    const hoy = new Date();
+    let anios = hoy.getFullYear() - nacimiento.getFullYear();
+    // Si todavía no llegó su cumpleaños este año, tiene uno menos.
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) anios -= 1;
+    return anios >= 0 && anios < 130 ? anios : null;
+  });
+
+  /**
+   * Una dirección en una línea.
+   *
+   * Se arma con lo que haya: quien declaró sólo el municipio ve el municipio, y
+   * quien escribió la calle la ve primero. Las coordenadas NO se muestran —un
+   * par de números no le dice nada a quien lee su ficha—; están para el mapa.
+   */
+  protected direccionLegible(dir: OwnAddress): string {
+    const partes = [
+      dir.lines,
+      dir.city ?? (dir.municipalityConceptId ? this.etiquetaDe(dir.municipalityConceptId) : ''),
+    ].filter((parte) => parte !== undefined && parte !== '');
+    return partes.length > 0 ? partes.join(' · ') : 'Sin detalle';
+  }
+
+  /**
+   * El sexo al nacer en palabras.
+   *
+   * Viaja como CÓDIGO (`'FEMALE'`), no como concepto, así que pasarlo por
+   * `etiquetaDe` —que resuelve uuids del catálogo— devolvía cadena vacía y la
+   * ficha dibujaba el renglón «Sexo al nacer» sin nada al lado. Peor que
+   * ocultarlo: parece que la app perdió el dato.
+   *
+   * Las cuatro salen del tipo `BirthSexCode`, no sólo las dos que ofrece el
+   * alta: el dato puede venir de una carga administrativa o de una migración,
+   * y mostrar «INTERSEX» en crudo sería lo mismo que no mostrarlo.
+   */
+  protected sexoEnPalabras(codigo: string): string {
+    const palabras: Record<string, string> = {
+      MALE: 'Masculino',
+      FEMALE: 'Femenino',
+      INTERSEX: 'Intersexual',
+      UNKNOWN: 'Sin determinar',
+    };
+    return palabras[codigo] ?? codigo;
+  }
+
+  /**
+   * El enlace al mapa de una dirección, o `null` si no tiene coordenadas.
+   *
+   * El registro de procesos pide «Ubicación GPS» del domicilio (§1.9) y del
+   * trabajo (§1.11), «en el Google Maps de AloVida». `common.addresses` guarda
+   * `latitude`/`longitude` desde siempre y `OwnAddressDto` ya las devolvía: lo
+   * único que faltaba era dibujarlas.
+   *
+   * Va como enlace y no como mapa embebido a propósito: incrustar un mapa mete
+   * una clave de API y peticiones a un tercero en una pantalla que hoy no las
+   * necesita. El enlace resuelve lo mismo —«llevame ahí»— con una etiqueta.
+   */
+  protected enlaceAlMapa(dir: OwnAddress): string | null {
+    // `== null` cubre `null` y `undefined` de una. La API emitía además un `0`
+    // por una comparación estricta contra `undefined` —ya corregida—, y el 0 se
+    // sigue rechazando acá: una dirección de Santa Cruz no está en el meridiano
+    // de Greenwich, y un enlace al golfo de Guinea es peor que ningún enlace.
+    if (dir.latitude == null || dir.longitude == null) return null;
+    if (dir.latitude === 0 && dir.longitude === 0) return null;
+    return `https://www.google.com/maps/search/?api=1&query=${dir.latitude},${dir.longitude}`;
   }
 
   protected recargar(): void {
     this.cargar();
     this.cargarCasos();
+    this.cargarPerfil();
+  }
+
+  /**
+   * Los datos completos, si la sesión es de paciente.
+   *
+   * Silencioso a propósito: a un profesional esta ruta le responde 404 —no tiene
+   * perfil de paciente— y ese fallo no le falta a nadie. La tarjeta sigue
+   * mostrando lo que el resumen ya trajo.
+   */
+  private cargarPerfil(): void {
+    this.perfil.set(null);
+    this.fotoUrl.set(null);
+    if (!this.debeLeerResumenDePaciente()) return;
+
+    this.profiles.getOwnPatientProfile().subscribe({
+      next: (p) => {
+        this.perfil.set(p);
+        if (p.photoFileId !== undefined) {
+          this.files
+            .downloadUrl(p.photoFileId)
+            .pipe(
+              map((descarga) => descarga.url),
+              catchError(() => of<string | null>(null)),
+            )
+            .subscribe((url) => this.fotoUrl.set(url));
+        }
+        const uuids = [
+          p.issuerAdministrativeAreaConceptId,
+          p.residenceMunicipalityConceptId,
+          p.occupationConceptId,
+          p.homeAddress?.municipalityConceptId,
+          p.workAddress?.municipalityConceptId,
+        ].filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+        if (uuids.length > 0) {
+          this.terminology.readConceptLabels(uuids).subscribe({
+            next: (nuevas) => {
+              this.etiquetas.update((prev) => {
+                const map = new Map(prev);
+                for (const [k, v] of nuevas.entries()) {
+                  map.set(k, v);
+                }
+                return map;
+              });
+            },
+            // Sin etiquetas se muestran los datos que ya llegaron: que el
+            // servidor de terminología no conteste no puede dejar la tarjeta
+            // del perfil en blanco.
+            error: () => this.etiquetas.update((prev) => prev),
+          });
+        }
+      },
+      error: () => this.perfil.set(null),
+    });
   }
 
   /**
@@ -335,6 +527,50 @@ export class MyProfile {
           this.resumen.set(ready(resumen));
         },
         error: (error: unknown) => this.resumen.set(errorToViewState<OwnPatientSummary>(error)),
+      });
+  }
+
+  /**
+   * Sube la foto elegida y la fija como foto de perfil propia.
+   *
+   * Espejo de `alElegirFoto` en `practitioner-profile-view`: dos llamadas
+   * —subir los bytes, después fijar el id— y una tercera para resolver la
+   * URL con la que pintar. Sin «quitar foto» en esta primera pasada, en
+   * paridad con el perfil profesional; el cliente ya tiene el método
+   * (`removeOwnPatientPhoto`) para cuando haga falta.
+   */
+  protected alElegirFoto(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
+    // seguidas no dispara `change` y parece que el botón dejó de andar.
+    entrada.value = '';
+    if (!archivo || this.subiendoFoto()) {
+      return;
+    }
+
+    this.subiendoFoto.set(true);
+    this.errorDeFoto.set('');
+
+    this.files
+      .upload(archivo, 'IMAGE', 'NORMAL')
+      .pipe(
+        switchMap((subido) => this.profiles.setOwnPatientPhoto(subido.id)),
+        switchMap((guardado) =>
+          guardado.photoFileId === undefined
+            ? of(null)
+            : this.files.downloadUrl(guardado.photoFileId).pipe(map((descarga) => descarga.url)),
+        ),
+      )
+      .subscribe({
+        next: (url) => {
+          this.subiendoFoto.set(false);
+          this.fotoUrl.set(url);
+        },
+        error: () => {
+          this.subiendoFoto.set(false);
+          this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
+        },
       });
   }
 }

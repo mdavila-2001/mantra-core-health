@@ -19,7 +19,17 @@ import { MedicalRecord } from './medical-record';
  * 3. **Ningún uuid llega a la pantalla**: todo `*ConceptId` se traduce.
  * 4. **Lo que el catálogo no resuelva se muestra como ausencia**, no como
  *    identificador.
+ * 5. **Ni los diagnósticos ni los formularios se listan sueltos** (F-42): el
+ *    diagnóstico se lee dentro de la atención que lo registró, y los
+ *    formularios se siguen leyendo porque los llevan los documentos.
  */
+
+/** Los encabezados de sección, con los espacios normalizados. */
+function encabezados(raiz: HTMLElement | null | undefined): readonly string[] {
+  return [...(raiz?.querySelectorAll('h2') ?? [])].map((titulo) =>
+    (titulo.textContent ?? '').replace(/\s+/g, ' ').trim(),
+  );
+}
 
 /** base64url **sobre UTF-8**, como el token real. */
 function jwt(payload: Record<string, unknown>): string {
@@ -188,7 +198,8 @@ describe('MedicalRecord', () => {
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
 
     // Los formularios se piden por la ruta propia, sin ningún identificador
-    // de paciente: el servidor lo toma de la sesión.
+    // de paciente: el servidor lo toma de la sesión. La lectura sale aunque la
+    // pantalla no los liste: es lo que los documentos incorporan.
     const formularios = http.expectOne((r) => r.url === '/forms/me/instances');
     expect(formularios.request.params.keys()).toEqual(['limit']);
     formularios.flush(SIN_FORMULARIOS);
@@ -202,14 +213,20 @@ describe('MedicalRecord', () => {
     expect(harness.routeNativeElement?.textContent).toContain('Esta sección es para pacientes');
   });
 
-  it('muestra la atención con su motivo y sus diagnósticos, sin uuid', async () => {
+  it('el diagnóstico se lee dentro de su atención y no como lista aparte', async () => {
     await montar();
     responder();
 
-    const texto = harness.routeNativeElement?.textContent ?? '';
+    const raiz = harness.routeNativeElement;
+    const atenciones = raiz?.querySelector('[data-testid="historia-atenciones"]');
+    const texto = atenciones?.textContent ?? '';
     expect(texto).toContain('Dolor de garganta');
+    // El diagnóstico es el contexto de esa consulta, no un registro suelto.
     expect(texto).toContain('Faringitis aguda');
     expect(texto).not.toContain('con-faringitis');
+    // Y la lista suelta no existe: ésa es la herramienta del profesional.
+    expect(raiz?.querySelector('#historia-diagnosticos')).toBeNull();
+    expect(encabezados(raiz).some((titulo) => titulo.startsWith('Diagnósticos'))).toBe(false);
   });
 
   it('muestra la receta traducida y su indicación', async () => {
@@ -330,48 +347,32 @@ describe('MedicalRecord', () => {
     expect(harness.routeNativeElement?.textContent).not.toContain('No pudimos armar');
   });
 
-  /* ---- los formularios clínicos respondidos ------------------------------- */
+  /* ---- las dos listas que dejaron de mostrarse (F-42) --------------------- */
 
-  it('muestra los formularios respondidos con sus etiquetas y valores legibles', async () => {
+  it('con diagnósticos y formularios cargados, ninguna de las dos listas se dibuja', async () => {
     await montar();
+    // `RESUMEN` trae una condición y `FORMULARIOS` una instancia respondida:
+    // hay datos para ambas listas, y aun así ninguna se pinta.
     responder();
 
     const raiz = harness.routeNativeElement;
-    const seccion = raiz?.querySelector('[data-testid="historia-formularios"]');
-    expect(seccion).not.toBeNull();
-    const texto = seccion?.textContent ?? '';
-    expect(texto).toContain('Formulario clínico');
-    expect(texto).toContain('Tolerancia al ejercicio');
-    expect(texto).toContain('Buena');
-    // La sección es de sólo lectura: ningún formulario de captura ni envío.
-    expect(seccion?.querySelector('form')).toBeNull();
-    expect(seccion?.querySelector('input')).toBeNull();
+    const titulos = encabezados(raiz);
+    // Lo que el paciente viene a buscar sigue en pie…
+    expect(titulos.some((titulo) => titulo.startsWith('Atenciones'))).toBe(true);
+    expect(titulos.some((titulo) => titulo.startsWith('Recetas'))).toBe(true);
+    // …y las dos listas sueltas no están, ni por encabezado ni por contenido.
+    expect(titulos.some((titulo) => titulo.startsWith('Diagnósticos'))).toBe(false);
+    expect(titulos).not.toContain('Formularios clínicos');
+    expect(raiz?.querySelector('#historia-diagnosticos')).toBeNull();
+    expect(raiz?.querySelector('[data-testid="historia-formularios"]')).toBeNull();
+
+    const texto = raiz?.textContent ?? '';
+    expect(texto).not.toContain('Tolerancia al ejercicio');
+    // El valor que el backend enmascaró no llega a la pantalla por ningún lado.
+    expect(texto).not.toContain('SECRETO');
   });
 
-  it('el valor enmascarado muestra el marcador y jamás el contenido', async () => {
-    await montar();
-    responder();
-
-    const raiz = harness.routeNativeElement;
-    const marcador = raiz?.querySelector('[data-testid="historia-respuesta-enmascarada"]');
-    expect(marcador?.textContent).toContain('No disponible por reglas de acceso');
-    // Ni en la respuesta enmascarada ni en ningún otro lugar del documento.
-    expect(raiz?.textContent).not.toContain('SECRETO');
-  });
-
-  it('una cuenta sin formularios ve el vacío declarado', async () => {
-    await montar();
-    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
-    responderFormularios(SIN_FORMULARIOS);
-    harness.detectChanges();
-
-    expect(harness.routeNativeElement?.textContent).toContain(
-      'Todavía no tenés formularios respondidos',
-    );
-  });
-
-  it('si los formularios fallan, la historia igual se muestra y se ofrece reintentar', async () => {
+  it('si la lectura de formularios falla, la historia se muestra igual', async () => {
     await montar();
     http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
@@ -385,9 +386,31 @@ describe('MedicalRecord', () => {
 
     const raiz = harness.routeNativeElement;
     const texto = raiz?.textContent ?? '';
-    // La historia sigue: un fallo de forms no se lleva puestas las atenciones.
+    // Son dos estados separados: un fallo de formularios no se lleva puestas
+    // las atenciones.
     expect(texto).toContain('Dolor de garganta');
-    expect(raiz?.querySelector('[data-testid="historia-formularios-error"]')).not.toBeNull();
-    expect(texto).toContain('Reintentar');
+    // Y como la pantalla ya no los lista, no hay aviso que dar: lo que se
+    // degrada es el bloque de formularios de los documentos.
+    expect(raiz?.querySelector('[data-testid="historia-formularios-error"]')).toBeNull();
+    expect(texto).not.toContain('Reintentar');
+  });
+
+  it('una historia con sólo condiciones se declara vacía', async () => {
+    await montar();
+    // Las condiciones no se listan por su cuenta: sin atenciones, recetas,
+    // alergias ni resultados no queda una sola fila que mirar, y decir que hay
+    // algo registrado sería mandar a buscar lo que no se ve.
+    http
+      .expectOne((r) => r.url === '/clinical/patients/pp-1/summary')
+      .flush({ ...RESUMEN, medicationRequests: [], encounters: [] });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    responderFormularios(SIN_FORMULARIOS);
+    harness.detectChanges();
+
+    const texto = harness.routeNativeElement?.textContent ?? '';
+    expect(texto).toContain('Todavía no hay atenciones');
+    // El vacío llega con su salida, no como una pantalla en blanco.
+    expect(texto).toContain('Pedir un turno');
+    expect(texto).not.toContain('Faringitis aguda');
   });
 });

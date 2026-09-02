@@ -54,8 +54,9 @@ describe('ShellLayout', () => {
            comprobar. */
         provideRouter([
           { path: 'my-account', children: [] },
-          { path: 'my-account/notification-preferences', children: [] },
+          { path: 'my-account/questionnaires', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
+          { path: 'ajustes', children: [] },
         ]),
       ],
     }).compileComponents();
@@ -165,9 +166,12 @@ describe('ShellLayout', () => {
       // Carril P1: el centro de notificaciones. Tampoco exige rol —cualquiera
       // con sesión tiene bandeja, y el backend sólo devuelve la propia—, así
       // que aparece también en una sesión sin roles.
-      // Carril P9: las preferencias de aviso, pegadas a la bandeja.
-      '/my-account/notification-preferences',
       '/notification-center',
+      // «Preferencias de avisos» ya NO está: dejó de ser una sección y pasó a
+      // ser un panel de Ajustes. Y Ajustes tampoco ocupa renglón —declara
+      // `fueraDelMenuPara: [ANY_ROLE]`—, porque se entra por el ícono del
+      // encabezado: configurar no es un destino de trabajo.
+      //
       // La verificación de identidad y su historial salieron del menú mientras
       // el producto no la ofrezca: ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
       '/design-system',
@@ -266,6 +270,102 @@ describe('ShellLayout', () => {
       expect(raiz().querySelector('.app-main__inner router-outlet')).not.toBeNull();
     });
 
+    /**
+     * Los dos escalones plegables de la barra.
+     *
+     * Cincuenta y cinco secciones no entran en una lista: el dominio pliega, y
+     * adentro pliega el bloque de cosas parecidas. Lo que estas pruebas cuidan
+     * no es el `<details>` —eso lo hace el navegador— sino las dos decisiones
+     * que sí son nuestras: qué se dibuja abierto sin que nadie lo toque, y
+     * cuándo un bloque **no** merece ser un desplegable.
+     */
+    describe('los desplegables', () => {
+      function conSesion(roles: readonly string[]) {
+        abrirSesion({ sub: 'u-1', roles, tenants: [] });
+        fixture.detectChanges();
+      }
+
+      it('cada grupo es un desplegable con su ícono y su rótulo', () => {
+        conSesion(['PATIENT']);
+        const grupos = [...raiz().querySelectorAll('[data-testid="nav-grupo"]')];
+
+        expect(grupos.length).toBeGreaterThan(0);
+        for (const grupo of grupos) {
+          expect(grupo.tagName).toBe('DETAILS');
+          // El ícono del grupo va en el `summary`, no adentro: es lo único que
+          // queda a la vista cuando el grupo está plegado.
+          expect(grupo.querySelector('summary app-nav-icon')).not.toBeNull();
+          expect(grupo.querySelector('summary .app-side-nav__eyebrow')?.textContent?.trim()).toBe(
+            grupo.getAttribute('data-grupo'),
+          );
+        }
+      });
+
+      it('todo destino de la barra lleva ícono: ninguno queda mudo', () => {
+        conSesion(['PATIENT']);
+
+        const enlaces = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')];
+        expect(enlaces.length).toBeGreaterThan(0);
+        for (const enlace of enlaces) {
+          expect(enlace.querySelector('app-nav-icon'), enlace.textContent ?? '').not.toBeNull();
+        }
+      });
+
+      it('un bloque de varios destinos es un desplegable; uno de un solo destino, no', () => {
+        // El paciente ve los cuatro directorios —bloque— y un solo chat, que es
+        // todo lo que le queda de «Comunidad». Un desplegable con un renglón
+        // adentro es un clic de más para llegar a lo mismo.
+        conSesion(['PATIENT']);
+
+        const bloques = [...raiz().querySelectorAll('[data-testid="nav-bloque"]')].map((b) =>
+          b.getAttribute('data-bloque'),
+        );
+
+        expect(bloques).toContain('Directorios');
+        expect(bloques).not.toContain('Comunidad');
+        // Y el destino del bloque de uno sigue estando, suelto.
+        expect(
+          [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+            a.getAttribute('data-route'),
+          ),
+        ).toContain('/messaging');
+      });
+
+      it('el grupo y el bloque de la pantalla actual se dibujan abiertos', async () => {
+        conSesion(['PATIENT']);
+        await router.navigateByUrl('/my-account/questionnaires');
+        fixture.detectChanges();
+
+        const grupo = raiz().querySelector<HTMLDetailsElement>('[data-grupo="Mi cuenta"]');
+        const bloque = raiz().querySelector<HTMLDetailsElement>('[data-bloque="Mi salud"]');
+
+        // Nadie los desplegó: si no se abrieran solos, la barra no diría dónde
+        // está uno parado y habría que buscarlo abriendo dominios a mano.
+        expect(grupo?.open).toBe(true);
+        expect(bloque?.open).toBe(true);
+      });
+
+      it('lo que la persona pliega a mano gana sobre eso, y navegar no lo reabre', async () => {
+        conSesion(['PATIENT']);
+        await router.navigateByUrl('/my-account/questionnaires');
+        fixture.detectChanges();
+
+        interno<(clave: string, abierto: boolean) => void>('alPlegar')('Mi cuenta', false);
+        fixture.detectChanges();
+
+        expect(
+          raiz().querySelector<HTMLDetailsElement>('[data-grupo="Mi cuenta"]')?.open,
+        ).toBe(false);
+
+        // Volver a la misma pantalla no le discute la decisión a quien la tomó.
+        await router.navigateByUrl('/my-account');
+        fixture.detectChanges();
+        expect(
+          raiz().querySelector<HTMLDetailsElement>('[data-grupo="Mi cuenta"]')?.open,
+        ).toBe(false);
+      });
+    });
+
     it('el nav pinta un grupo por sección del registro, con sus destinos', () => {
       const grupos = raiz().querySelectorAll('.app-side-nav__group');
       const secciones = interno<() => readonly { label: string }[]>('sections')();
@@ -304,9 +404,19 @@ describe('ShellLayout', () => {
       });
 
       it('en una hija que también está en el menú, gana la hija sobre su padre', async () => {
-        await ir('/my-account/notification-preferences');
+        await ir('/my-account/questionnaires');
 
-        expect(marcadas()).toEqual(['/my-account/notification-preferences']);
+        expect(marcadas()).toEqual(['/my-account/questionnaires']);
+      });
+
+      it('en Ajustes no se marca ningún renglón: no ocupa ninguno', async () => {
+        // No es un olvido de la marca sino la consecuencia de entrar por el
+        // ícono: Ajustes no cuelga de ninguna entrada del menú, así que no hay
+        // renglón que decir «acá estás». Marcar «Mi perfil» —su prefijo más
+        // cercano no es ninguno— mentiría sobre dónde está uno.
+        await ir('/ajustes');
+
+        expect(marcadas()).toEqual([]);
       });
 
       it('en una pantalla que no está en el menú, gana el ancestro más cercano', async () => {
@@ -316,6 +426,23 @@ describe('ShellLayout', () => {
 
         expect(marcadas()).toEqual(['/my-account/appointments']);
       });
+    });
+
+    it('el encabezado ofrece Ajustes como enlace, no como botón', () => {
+      // Enlace y no botón porque navega: se abre en otra pestaña y se copia la
+      // dirección, que es lo que cualquiera espera de algo que lleva a una
+      // pantalla. Y con nombre accesible, porque es un ícono solo.
+      const ajustes = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-ajustes"]');
+
+      expect(ajustes?.tagName).toBe('A');
+      expect(ajustes?.getAttribute('href')).toBe('/ajustes');
+      expect(ajustes?.getAttribute('aria-label')).toBe('Ajustes');
+    });
+
+    it('el conmutador de tema ya no vive suelto en el encabezado', () => {
+      // Se mudó a Ajustes. Suelto acá, el tema parecía la única preferencia
+      // que el producto tiene; ahora es una de tres y viven juntas.
+      expect(raiz().querySelector('[app-theme-toggle]')).toBeNull();
     });
 
     it('el enlace de salto apunta al contenido, que es enfocable por script', () => {

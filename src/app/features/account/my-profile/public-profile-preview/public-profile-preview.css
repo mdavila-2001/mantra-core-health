@@ -121,3 +121,25 @@
   color: var(--error-tinta, #8a2f22);
   font-size: var(--fs-caption);
 }
+
+/* «Cambiar portada» y «Quitar portada», una junto a la otra: sólo aparecen
+   cuando ya hay portada, así que ninguna de las dos necesita explicarse. */
+.vitrina__portada-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.vitrina__portada-quitar {
+  all: unset;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
+.vitrina__portada-quitar:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}

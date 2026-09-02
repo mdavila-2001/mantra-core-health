@@ -55,40 +55,103 @@
     </a>
 
     <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
-         que cambia es cómo se pintan, no de dónde vienen. -->
+         que cambia es cómo se pintan, no de dónde vienen.
+
+         Dos escalones plegables, y los dos son `<details>` nativos: el dominio
+         afuera y el bloque de cosas parecidas adentro. Es `<details>` y no un
+         botón con `aria-expanded` porque el elemento ya trae gratis lo que
+         habría que reimplementar —teclado, semántica de revelado, «buscar en la
+         página» que abre lo cerrado— y porque sin JavaScript la barra sigue
+         siendo navegable.
+
+         Un bloque con **un solo** destino visible no se dibuja como
+         desplegable: sería un clic de más para llegar a lo mismo. Sale suelto,
+         con su ícono, en el lugar que le toca del orden. -->
     @for (grupo of sections(); track grupo.label) {
-      <div class="app-side-nav__group">
-        <p class="app-side-nav__eyebrow">{{ grupo.label }}</p>
-        @for (item of grupo.items; track item.route) {
-          @if (item.disabled) {
-            <!-- Deshabilitado: ni ancla ni foco. Sigue anunciándose como tal. -->
-            <span class="app-side-nav__item is-disabled" aria-disabled="true">
-              <span class="side-nav__label">{{ item.label }}</span>
-            </span>
-          } @else {
-            <!-- Cada entrada del menú es un objetivo posible: los tutoriales
-                 que empiezan por «acá se entra a tal cosa» necesitan señalarla,
-                 y el identificador se deriva de la ruta para que agregar una
-                 sección no obligue a tocar nada de tutoriales. -->
-            <a
-              class="app-side-nav__item side-nav__link"
-              data-testid="nav-enlace"
-              [appTutorialTarget]="'nav-' + item.route.slice(1)"
-              [attr.data-route]="item.route"
-              [routerLink]="item.route"
-              [class.is-activo]="rutaActiva() === item.route"
-              [attr.aria-current]="rutaActiva() === item.route ? 'page' : null"
-            >
-              <span class="side-nav__label">{{ item.label }}</span>
-              @if (item.badge) {
-                <span class="app-badge" data-tono="info">{{ item.badge }}</span>
+      @let claveGrupo = clavePlegable(grupo.label);
+      <details
+        class="app-side-nav__group"
+        data-testid="nav-grupo"
+        [attr.data-grupo]="grupo.label"
+        [open]="abierto(claveGrupo, grupo.items)"
+        (toggle)="alPlegar(claveGrupo, $any($event.target).open)"
+      >
+        <summary class="app-side-nav__group-summary" [class.tiene-la-pantalla]="contieneLaPantalla(grupo.items)">
+          <app-nav-icon [name]="grupo.icon ?? 'directory'" />
+          <span class="app-side-nav__eyebrow">{{ grupo.label }}</span>
+          <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+
+        <div class="app-side-nav__group-cuerpo">
+          @for (bloque of grupo.blocks ?? []; track bloque.label) {
+            @if (bloque.items.length > 1) {
+              @let claveBloque = clavePlegable(grupo.label, bloque.label);
+              <details
+                class="app-side-nav__block"
+                data-testid="nav-bloque"
+                [attr.data-bloque]="bloque.label"
+                [open]="abierto(claveBloque, bloque.items)"
+                (toggle)="alPlegar(claveBloque, $any($event.target).open)"
+              >
+                <summary
+                  class="app-side-nav__item"
+                  [class.is-activo]="contieneLaPantalla(bloque.items)"
+                >
+                  <app-nav-icon [name]="bloque.icon ?? 'directory'" />
+                  <span class="side-nav__label">{{ bloque.label }}</span>
+                  <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+                </summary>
+                <div class="app-side-nav__sub">
+                  @for (item of bloque.items; track item.route) {
+                    <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
+                  }
+                </div>
+              </details>
+            } @else {
+              @for (item of bloque.items; track item.route) {
+                <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
               }
-            </a>
+            }
           }
-        }
-      </div>
+        </div>
+      </details>
     }
   </nav>
+
+  <!-- Un destino de la barra, dibujado igual esté suelto en el grupo o dentro
+       de un bloque: la única diferencia entre los dos casos es la sangría, y
+       ésa la pone la hoja. Una sola plantilla es lo que evita que la marca de
+       «acá estás», el objetivo de tutorial o el `data-route` de las pruebas
+       existan en una rama y en la otra no. -->
+  <ng-template #destino let-item>
+    @if (item.disabled) {
+      <!-- Deshabilitado: ni ancla ni foco. Sigue anunciándose como tal. -->
+      <span class="app-side-nav__item is-disabled" aria-disabled="true">
+        <app-nav-icon [name]="item.icon ?? 'directory'" />
+        <span class="side-nav__label">{{ item.label }}</span>
+      </span>
+    } @else {
+      <!-- Cada entrada del menú es un objetivo posible: los tutoriales que
+           empiezan por «acá se entra a tal cosa» necesitan señalarla, y el
+           identificador se deriva de la ruta para que agregar una sección no
+           obligue a tocar nada de tutoriales. -->
+      <a
+        class="app-side-nav__item side-nav__link"
+        data-testid="nav-enlace"
+        [appTutorialTarget]="'nav-' + item.route.slice(1)"
+        [attr.data-route]="item.route"
+        [routerLink]="item.route"
+        [class.is-activo]="rutaActiva() === item.route"
+        [attr.aria-current]="rutaActiva() === item.route ? 'page' : null"
+      >
+        <app-nav-icon [name]="item.icon ?? 'directory'" />
+        <span class="side-nav__label">{{ item.label }}</span>
+        @if (item.badge) {
+          <span class="app-badge" data-tono="info">{{ item.badge }}</span>
+        }
+      </a>
+    }
+  </ng-template>
 
   <div class="app-main">
     <header class="app-header" app-header>
@@ -146,13 +209,24 @@
           </div>
         }
 
-        <button class="app-theme-toggle" app-theme-toggle>
-          <span class="app-theme-toggle__pista">
-            <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
-            <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
-            <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
-          </span>
-        </button>
+        <!-- Ajustes. Ocupa el lugar que tenía el conmutador de tema, y no por
+             ahorro de espacio: el tema es una preferencia entre varias —avisos,
+             permisos del navegador— y tenerlo suelto acá lo hacía parecer la
+             única. Ahora las tres viven juntas y el encabezado ofrece una sola
+             puerta a todas.
+
+             Es un enlace y no un botón porque lleva a una pantalla: se puede
+             abrir en otra pestaña y se puede copiar la dirección, que es lo que
+             cualquiera espera de algo que navega. -->
+        <a
+          class="app-header__ajustes"
+          routerLink="/ajustes"
+          data-testid="header-ajustes"
+          title="Ajustes"
+          aria-label="Ajustes"
+        >
+          <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </a>
 
         @if (user(); as persona) {
           <div class="menu-anclaje">

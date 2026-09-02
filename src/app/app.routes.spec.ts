@@ -1,4 +1,5 @@
 import { Location } from '@angular/common';
+import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
@@ -397,6 +398,9 @@ describe('rutas públicas del buscador', () => {
   // ─── Las URL que la ficha V65 declara ──────────────────────────────────────
 
   it.each([
+    // La portada: el compilado de lo último de todos los profesionales, que es
+    // adonde `homeGuard` manda a quien entra sin sesión.
+    ['/publicaciones'],
     ['/buscar'],
     ['/buscar/profesionales'],
     ['/buscar/medicamentos'],
@@ -472,5 +476,47 @@ describe('la ruta del comprobante de farmacia (FAR-I5)', () => {
     const ok = await router.navigateByUrl('/my-account/pharmacy-orders/abc/receipt');
     expect(ok).not.toBe(false);
     expect(location.path()).toBe('/my-account/pharmacy-orders/abc/receipt');
+  });
+});
+
+/**
+ * Cada alta pública monta SU componente.
+ *
+ * Las dos vivían en `RegisterPatient`, que elegía qué formulario dibujar
+ * leyendo `data.tipoDeCuenta`. Sin esta prueba, separarlas deja un estado
+ * «verde pero roto» que ningún spec de pantalla ve: los dos componentes pasan
+ * sus propias pruebas mientras `/auth/register/practitioner` sigue montando el
+ * de paciente y, ya sin el dato de ruta, muestra el alta equivocada.
+ */
+describe('las rutas de alta pública', () => {
+  const rutaDe = (path: string) => routes.find((route) => route.path === path);
+
+  /**
+   * El nombre de la clase que monta una ruta diferida.
+   *
+   * Dos detalles, los dos del andamiaje y no de las rutas: `loadComponent` está
+   * tipado como una unión que incluye `DefaultExport` y `Observable` —ninguno
+   * con `name`—, así que se estrecha a `Type` en vez de aflojar la aserción; y
+   * el empaquetador renombra las clases decoradas con un guion bajo delante
+   * (`_RegisterPatient`), que se recorta acá para que la prueba hable del
+   * nombre que está escrito en el código.
+   */
+  async function componenteDe(path: string): Promise<string | undefined> {
+    const cargado = await rutaDe(path)?.loadComponent?.();
+    return (cargado as Type<unknown> | undefined)?.name.replace(/^_+/, '');
+  }
+
+  it('`auth/register/patient` carga el alta de paciente', async () => {
+    expect(await componenteDe('auth/register/patient')).toBe('RegisterPatient');
+  });
+
+  it('`auth/register/practitioner` carga el alta de profesional, no la de paciente', async () => {
+    expect(await componenteDe('auth/register/practitioner')).toBe('RegisterPractitioner');
+  });
+
+  it('ninguna de las dos necesita ya el dato `tipoDeCuenta`', () => {
+    // Se fue con la separación: lo que decide qué alta es, es la URL.
+    expect(rutaDe('auth/register/patient')?.data?.['tipoDeCuenta']).toBeUndefined();
+    expect(rutaDe('auth/register/practitioner')?.data?.['tipoDeCuenta']).toBeUndefined();
   });
 });

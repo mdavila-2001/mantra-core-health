@@ -18,6 +18,10 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import {
+  MODALIDADES,
+  type ModalidadDeAtencion,
+} from '../../../../core/data-access/scheduling/scheduling.types';
 
 /** Un rato ya tomado del día, para avisar el choque ANTES de guardar. */
 export interface RatoDelDia {
@@ -88,6 +92,15 @@ export class TarjetaDelDia {
   protected readonly hasta = signal('');
   protected readonly motivo = signal('');
   protected readonly paciente = signal<ReferenceOption | null>(null);
+  /**
+   * Por qué medio se atiende.
+   *
+   * Arranca en presencial porque es lo que pasa casi siempre; elegirlo
+   * igualmente lo GUARDA, en vez de mandarlo vacío: «nadie lo dijo» y «dijeron
+   * que es presencial» son cosas distintas en la historia del paciente.
+   */
+  protected readonly modalidad = signal<ModalidadDeAtencion>('PRESENCIAL');
+  protected readonly modalidades = MODALIDADES;
   protected readonly candidatos = signal<readonly ReferenceOption[]>([]);
   protected readonly buscando = signal(false);
   protected readonly guardando = signal(false);
@@ -116,7 +129,17 @@ export class TarjetaDelDia {
    */
   protected readonly queVaAPasar = computed<string | null>(() => {
     if (this.paciente() !== null) {
-      return 'Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.';
+      // La modalidad entra en la frase sólo cuando NO es la de siempre: decir
+      // «en el consultorio» en cada cita presencial es ruido, y lo que la
+      // persona necesita confirmar de un vistazo es lo que se sale de la norma.
+      const porVideo = this.modalidad() === 'TELECONSULTA';
+      const aDomicilio = this.modalidad() === 'DOMICILIO';
+      const donde = porVideo
+        ? ' Va por videollamada.'
+        : aDomicilio
+          ? ' Vas a su domicilio.'
+          : '';
+      return `Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.${donde}`;
     }
     if (this.motivo().trim() !== '') {
       return 'Queda como tiempo ocupado tuyo. El paciente no ve nada en ese rato.';
@@ -202,6 +225,7 @@ export class TarjetaDelDia {
           startAt: rango.desde.toISOString(),
           durationMinutes: duracionMin,
           ...(this.motivo().trim() === '' ? {} : { reasonText: this.motivo().trim() }),
+          channel: this.modalidad(),
         })
         .subscribe({
           next: (creado) => {

@@ -88,11 +88,81 @@ export interface PatientRegistration {
   /**
    * Ocupación en texto libre, el respaldo de «no está en la lista».
    *
-   * El backend lo ignora si viene `occupationConceptId`. Este formulario ya no
-   * lo manda —el desplegable cubre la lista completa, con «Otra ocupación» al
-   * final—, y sigue en el contrato porque otros clientes lo usan.
+   * El backend lo ignora si viene `occupationConceptId`, así que los dos nunca
+   * viajan juntos: el alta manda **éste y no el concepto** cuando se eligió
+   * «Otra ocupación» —de los dos datos, el que describe un oficio es el que la
+   * persona escribió—, y sólo el concepto en cualquier otro caso.
    */
   readonly occupationFreeText?: string;
+  /** Calle y número del domicilio, tal como lo escribe la persona. */
+  readonly homeAddressLines?: string;
+  /**
+   * Latitud del domicilio.
+   *
+   * El par va completo o no va: media coordenada no ubica nada y el backend
+   * rechaza el par incompleto.
+   */
+  readonly homeLatitude?: number;
+  /** Longitud del domicilio. Ver {@link PatientRegistration.homeLatitude}. */
+  readonly homeLongitude?: number;
+  /**
+   * Empresa donde trabaja, como concepto de `VS_BO_EMPLOYER`.
+   *
+   * **Reemplaza a la ubicación del trabajo** en el alta: preguntar municipio,
+   * calle y coordenadas del trabajo eran tres campos para un dato que casi
+   * nadie completaba y que no agrupaba a nadie. El empleador es una sola
+   * pregunta, se sabe de memoria, y sí agrupa —salud ocupacional, convenios—.
+   *
+   * Lo siembra `BoEmployersSeedService` en la API y lo lee
+   * {@link BoEmployersCatalog}; el alta manda el uuid del concepto elegido.
+   */
+  readonly workEmployerConceptId?: string;
+  /**
+   * La empresa escrita a mano, para «no está en la lista».
+   *
+   * Viaja **sólo** cuando se eligió el concepto `employer:bo:OTRA`: el catálogo
+   * cubre a los empleadores grandes del país, y el resto —que en Bolivia es la
+   * mayoría de las unidades económicas— se escribe. Ver `bo-employers.catalog.ts`
+   * en la API sobre por qué el catálogo no puede ser exhaustivo.
+   */
+  readonly workEmployerFreeText?: string;
+  /**
+   * Municipio del lugar de trabajo (catálogo `VS_BO_MUNICIPALITY`).
+   *
+   * Sigue en el contrato porque otros clientes lo usan; **este formulario ya no
+   * lo manda**, desde que la página del trabajo pregunta la empresa.
+   */
+  readonly workMunicipalityConceptId?: string;
+  /** Calle y número del lugar de trabajo. Ver {@link PatientRegistration.workMunicipalityConceptId}. */
+  readonly workAddressLines?: string;
+  /** Latitud del trabajo. Mismo par completo que el domicilio, y tampoco lo manda ya el alta. */
+  readonly workLatitude?: number;
+  /** Longitud del trabajo. */
+  readonly workLongitude?: number;
+  /** Nombre del tutor o persona autorizada que acompaña a la persona. */
+  readonly guardianName?: string;
+  /**
+   * Teléfono del tutor.
+   *
+   * No se manda sin `guardianName`: sería un contacto sin dueño y el backend
+   * lo rechaza.
+   */
+  readonly guardianPhone?: string;
+  /**
+   * Plan de la aseguradora privada que la persona declara tener.
+   *
+   * Viaja el **plan**, no la compañía: la cobertura del paciente apunta al plan
+   * y varias compañías publican más de uno.
+   */
+  readonly privateInsurancePlanId?: string;
+  /** Plan del seguro público declarado (CNS, CPS, SUS…). */
+  readonly publicInsurancePlanId?: string;
+  /**
+   * NIT para facturación, sólo el número.
+   *
+   * La razón social no se pide todavía: el modelo no tiene dónde guardarla.
+   */
+  readonly billingTaxId?: string;
   readonly timeZone?: string;
 }
 
@@ -145,6 +215,13 @@ export interface ActivationResult {
 export interface PractitionerRegistration {
   readonly email: string;
   readonly password: string;
+  /**
+   * Las especialidades elegidas EN el alta (hasta 3; la primera queda como
+   * principal). El registro del cliente las pide junto a la profesión — módulo
+   * Médico §1.4.2 — y hasta ahora sólo se podían declarar después, desde el
+   * perfil, adonde la mayoría no volvía.
+   */
+  readonly specialtyConceptIds?: readonly string[];
   /** Nombre de pila. */
   readonly name: string;
   /** Segundo nombre. Opcional: mucha gente no tiene. */

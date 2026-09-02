@@ -1,0 +1,153 @@
+<app-page-header
+  title="Ajustes"
+  subtitle="Lo que configurás sobre tu cuenta: avisos, apariencia y permisos."
+/>
+
+<!-- Vertical: la lista de secciones de unos ajustes se lee como índice, no como
+     pestañas de una ficha. En pantalla angosta la hoja la vuelve horizontal. -->
+<app-tabs class="ajustes__tabs" orientation="vertical">
+  <app-tab label="Avisos">
+    <!-- La pantalla que ocupaba un renglón del menú, ahora panel. Se monta
+         entera: es la misma que ya guardaba contra `PATCH /notifications/me/preferences`. -->
+    <app-notification-preferences />
+  </app-tab>
+
+  <app-tab label="Apariencia">
+    <section class="ajustes__bloque">
+      <h2 class="ajustes__titulo">Tema</h2>
+      <p class="ajustes__detalle">
+        Se guarda en este dispositivo, no en tu cuenta: cada navegador que uses puede tener el suyo.
+      </p>
+
+      <ul class="ajustes__lista" role="radiogroup" aria-label="Tema de la aplicación">
+        @for (tema of temas; track tema.valor) {
+          <li class="ajustes__fila">
+            <label class="ajustes__control">
+              <input
+                type="radio"
+                name="tema"
+                [attr.data-testid]="'tema-' + tema.valor"
+                [checked]="temaElegido() === tema.valor"
+                (change)="elegirTema(tema.valor)"
+              />
+              <span class="ajustes__texto">
+                <span class="ajustes__nombre">{{ tema.rotulo }}</span>
+                <span class="ajustes__detalle">{{ tema.detalle }}</span>
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+
+      <!-- Con «el de mi dispositivo» elegido, lo elegido y lo que se ve no son
+           lo mismo. Decir cuál rige evita la duda de si la opción hizo algo. -->
+      @if (temaElegido() === 'system') {
+        <p class="ajustes__nota" data-testid="tema-resuelto">
+          Ahora mismo tu dispositivo pide el modo
+          {{ temaResuelto() === 'dark' ? 'oscuro' : 'claro' }}.
+        </p>
+      }
+    </section>
+  </app-tab>
+
+  <app-tab label="Permisos">
+    <section class="ajustes__bloque">
+      <h2 class="ajustes__titulo">Permisos del navegador</h2>
+      <p class="ajustes__detalle">
+        Los concede tu navegador, no AloVida. Podemos pedírtelos; quitarlos se hace desde el
+        navegador —ninguna página puede quitarse un permiso a sí misma—.
+      </p>
+
+      <ul class="ajustes__lista">
+        @for (permiso of permisosDelNavegador; track permiso.clave) {
+          <li class="ajustes__fila ajustes__fila--permiso">
+            <span class="ajustes__texto">
+              <span class="ajustes__nombre">{{ permiso.rotulo }}</span>
+              <span class="ajustes__detalle">{{ permiso.paraQue }}</span>
+              @if (estaBloqueado(permiso.clave)) {
+                <span class="ajustes__detalle">
+                  Lo bloqueaste antes. Para volver a permitirlo, cambialo en la configuración de
+                  este sitio en tu navegador: desde acá el cartel ya no vuelve a aparecer.
+                </span>
+              }
+            </span>
+
+            <span class="ajustes__estado">
+              <span
+                class="ajustes__pastilla"
+                [attr.data-tono]="estadoDe(permiso.clave).tono"
+                [attr.data-testid]="'permiso-' + permiso.clave"
+                >{{ estadoDe(permiso.clave).texto }}</span
+              >
+              @if (sePuedePedir(permiso.clave)) {
+                <button
+                  app-button
+                  variant="outline"
+                  size="sm"
+                  [attr.data-testid]="'pedir-' + permiso.clave"
+                  [isLoading]="pidiendo(permiso.clave)"
+                  (clicked)="pedir(permiso.clave)"
+                >
+                  Permitir
+                </button>
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="ajustes__bloque">
+      <h2 class="ajustes__titulo">Tu sesión</h2>
+      <p class="ajustes__detalle">
+        Con qué permisos entrás. Salen del token de tu sesión; quien los concede y los hace cumplir
+        es el servidor, en cada pedido.
+      </p>
+
+      @if (roles().length > 0) {
+        <ul class="ajustes__roles" data-testid="ajustes-roles">
+          @for (rol of roles(); track rol) {
+            <li class="ajustes__pastilla" data-tono="neutro">{{ rol }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="ajustes__nota">Tu sesión no declara ningún rol.</p>
+      }
+    </section>
+
+    <section class="ajustes__bloque">
+      <h2 class="ajustes__titulo">Quién puede ver tus datos</h2>
+      <!-- Se dice lo que hay, no lo que quedaría lindo: la lista no existe
+           porque la API no se la responde a la propia persona. Ver la nota del
+           componente. Una lista vacía acá se leería como «nadie tiene acceso». -->
+      <p class="ajustes__detalle" data-testid="ajustes-accesos-nota">
+        Todavía no podemos mostrarte quién tiene acceso a tu historia clínica: hoy el servidor sólo
+        le responde esa consulta a quien atiende y a quien administra la seguridad. Mientras tanto,
+        pedile la baja del acceso a la organización donde te atendiste.
+      </p>
+
+      @if (administraPermisos()) {
+        <p class="ajustes__nota">
+          Como administrás la seguridad, sí podés hacerlo desde
+          <a routerLink="/administration/delegated-access">Acceso delegado</a>: ahí se otorgan,
+          se acotan y se revocan los permisos delegados, y se administran sus conjuntos.
+        </p>
+      }
+    </section>
+  </app-tab>
+
+  @if (verificacionOfrecida) {
+    <app-tab label="Identidad">
+      <section class="ajustes__bloque">
+        <h2 class="ajustes__titulo">Verificación de identidad</h2>
+        <p class="ajustes__detalle">
+          Validá tu identidad, tu matrícula o una organización a tu cargo, y seguí el trámite.
+        </p>
+        <p class="ajustes__nota">
+          <a routerLink="/my-account/identity/verify">Verificar identidad</a> ·
+          <a routerLink="/my-account/identity/cases">Mis verificaciones</a>
+        </p>
+      </section>
+    </app-tab>
+  }
+</app-tabs>

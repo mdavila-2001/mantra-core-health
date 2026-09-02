@@ -1,0 +1,13 @@
+/* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
+   `../registro-compartido/registro.css`, que esta pantalla y el alta de
+   paciente declaran las dos en su `styleUrls`.
+
+   Acá queda lo que sólo es del alta de profesional. Hoy no hay nada: sus seis
+   páginas las dibuja entera el motor (`app-paginated-form`), y lo único
+   proyectado —la lupa del título, el árbol de municipios y los avisos de
+   catálogo caído— trae su propio estilo o usa `.registro__catalogo-caido`, que
+   es compartido.
+
+   El archivo se queda igual, vacío y declarado: es donde va a aterrizar lo
+   propio de esta pantalla en cuanto la tarjeta 05 le agregue lo suyo —las tres
+   matrículas, los dos contactos y la dirección de trabajo con su mapa—. */

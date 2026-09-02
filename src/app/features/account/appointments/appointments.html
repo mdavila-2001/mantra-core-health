@@ -1,6 +1,6 @@
 <app-page-header
-  title="Mis turnos"
-  subtitle="Los turnos que pediste y los horarios que podés pedir."
+  title="Mis citas"
+  subtitle="Las citas que pediste y los horarios que podés pedir."
 />
 
 @if (sinPerfilDePaciente) {
@@ -16,12 +16,12 @@
 } @else {
   <section class="turnos__bloque" aria-labelledby="turnos-propios">
     <div class="turnos__cabecera">
-      <h2 id="turnos-propios" class="turnos__titulo">Tus turnos</h2>
+      <h2 id="turnos-propios" class="turnos__titulo">Tus citas</h2>
 
       <!-- Lista y calendario son la MISMA colección vista de dos formas
            (corrección #10). La elegida vive en la URL, así que el enlace se
            comparte con la vista puesta y «atrás» la deshace. -->
-      <div class="turnos__vistas" role="group" aria-label="Cómo ver tus turnos">
+      <div class="turnos__vistas" role="group" aria-label="Cómo ver tus citas">
         <button
           app-button
           size="sm"
@@ -47,7 +47,7 @@
 
     @switch (turnos().status) {
       @case ('loading') {
-        <p class="turnos__estado" role="status">Buscando tus turnos…</p>
+        <p class="turnos__estado" role="status">Buscando tus citas…</p>
       }
       @case ('ready') {
         @if (enCalendario()) {
@@ -229,12 +229,12 @@
         }
       }
       @case ('empty') {
-        <app-alert tone="info" title="Todavía no tenés turnos">
+        <app-alert tone="info" title="Todavía no tenés citas">
           Cuando pidas uno, lo vas a ver acá con su fecha y su estado.
         </app-alert>
       }
       @default {
-        <app-alert tone="error" title="No pudimos traer tus turnos">
+        <app-alert tone="error" title="No pudimos traer tus citas">
           Reintentá en un momento.
         </app-alert>
         <button app-button variant="outline" (clicked)="cargarTurnos()">Reintentar</button>
@@ -279,12 +279,12 @@
       <!-- Modo reprogramación: la misma grilla de abajo pasa a mover este
            turno. El aviso dice cuál, y la salida no toca nada. -->
       <div class="turnos__reprogramando">
-        <app-alert tone="info" title="Estás moviendo un turno" data-testid="turnos-reprogramando">
+        <app-alert tone="info" title="Estás moviendo una cita" data-testid="turnos-reprogramando">
           @if (origen.cuando !== null) {
-            Elegí el horario nuevo para el turno del
+            Elegí el horario nuevo para la cita del
             {{ origen.cuando | date: "EEEE d 'de' MMM 'a las' HH:mm" }}.
           } @else {
-            Elegí el horario nuevo para este turno.
+            Elegí el horario nuevo para esta cita.
           }
         </app-alert>
         <button
@@ -294,7 +294,7 @@
           class="turnos__volver"
           (clicked)="cancelarReprogramacion()"
         >
-          Volver sin mover el turno
+          Volver sin mover la cita
         </button>
       </div>
     }
@@ -310,7 +310,7 @@
            qué lista se busca: elegirlo después sería buscar en el conjunto
            equivocado. Dos opciones y no un desplegable — son dos, y un
            desplegable de dos esconde la mitad. -->
-      <div class="turnos__tipo" role="group" aria-label="Con quién querés el turno">
+      <div class="turnos__tipo" role="group" aria-label="Con quién querés la cita">
         <button
           app-button
           [variant]="esLaboratorio() ? 'ghost' : 'primary'"
@@ -439,7 +439,7 @@
               Anotarme en la lista de espera
             </button>
             <p class="turnos__estado">
-              No reserva el turno: te avisamos cuando se libere uno y lo confirmás vos.
+              No reserva la cita: te avisamos cuando se libere un horario y lo confirmás vos.
             </p>
           }
         </div>

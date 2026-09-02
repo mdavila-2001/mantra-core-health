@@ -1,0 +1,5 @@
+ posts_totales | comentarios | reacciones | posts_sin_comentario | etapas_de_trayectoria | especialidades_en_catalogo 
+---------------+-------------+------------+----------------------+-----------------------+----------------------------
+           283 |         569 |       4763 |                    9 |                   179 |                         36
+(1 row)
+

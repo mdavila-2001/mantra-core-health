@@ -20,9 +20,11 @@ function jwt(payload: Record<string, unknown>): string {
 }
 
 /**
- * El resumen propio es la única pantalla de este lote que **no** pide rol: pide
- * identidad verificada. Por eso lo que más importa acá es el 403 — que tiene
- * que llegar como una puerta con salida, no como un muro.
+ * El resumen propio no pide rol y, desde F-34, tampoco identidad verificada: el
+ * backend responde 200 a todo paciente y omite el código de quien no verificó.
+ * Lo que más importa acá son dos cosas — que sin verificar la persona vea sus
+ * datos con el código como fila pendiente, y que el 403 de la API anterior siga
+ * llegando como una puerta con salida y no como un muro.
  */
 const ESTADO = '22222222-2222-4222-8222-222222222222';
 
@@ -33,7 +35,46 @@ const RESUMEN = {
   displayName: 'Ana Salas',
   birthDate: '1985-03-14',
   personStatus: ESTADO,
+  identityVerified: true,
 };
+
+/** El mismo resumen de quien todavía no verificó: sin código, como lo manda la API. */
+const RESUMEN_SIN_VERIFICAR = {
+  personId: 'p-1',
+  patientProfileId: 'pp-1',
+  displayName: 'Ana Salas',
+  birthDate: '1985-03-14',
+  personStatus: ESTADO,
+  identityVerified: false,
+};
+
+
+/**
+ * Atiende la lectura del perfil completo, que la tarjeta pide junto al resumen.
+ *
+ * Va como ayuda y no dentro de cada prueba porque **ninguna de las 19 la
+ * afirma**: sostienen el resumen, los roles y la verificación. Sin responderla,
+ * `verify()` protesta por una petición abierta en todas.
+ *
+ * Por defecto responde un perfil vacío: quien quiera probar los bloques nuevos
+ * le pasa lo suyo.
+ */
+function resolverPerfilCompleto(
+  http: HttpTestingController,
+  perfil: Record<string, unknown> = {},
+): void {
+  const pendientes = http.match('/profiles/patients/me');
+  for (const req of pendientes) {
+    req.flush({
+      personId: 'per-1',
+      patientProfileId: 'pp-1',
+      identityVerified: false,
+      coverages: [],
+      guardians: [],
+      ...perfil,
+    });
+  }
+}
 
 describe('MyProfile', () => {
   let fixture: ComponentFixture<MyProfile>;
@@ -51,6 +92,7 @@ describe('MyProfile', () => {
     // búsqueda quedan en neutro y `verify()` protesta.
     resolverEstadosDeCaso(http);
     fixture.detectChanges();
+    resolverPerfilCompleto(http);
 
     // El historial de verificación **ya no se pide**: la ficha está apagada
     // mientras `VERIFICACION_DE_IDENTIDAD_OFRECIDA` sea `false`, y una lectura
@@ -61,6 +103,198 @@ describe('MyProfile', () => {
   });
 
   afterEach(() => http.verify());
+
+  /**
+   * La ficha muestra TODO lo que la persona declaró.
+   *
+   * Mostraba tres campos de quince: el documento, el correo, las direcciones,
+   * los seguros y el tutor ya viajaban en `GET /profiles/patients/me` y no se
+   * pintaban. Lo que estas pruebas fijan es que se vean, y que lo que no
+   * declaró **no ocupe lugar**: una lista de «Sin registrar» no informa.
+   */
+  describe('los datos completos', () => {
+    /**
+     * Pone el perfil y devuelve el texto de la pantalla.
+     *
+     * Se escribe la señal en vez de responder la petición porque el arnés ya la
+     * atendió en su `beforeEach` —y volver a responderla rompe las 19 pruebas
+     * que sostienen el resto—. Lo que estas pruebas miran es la PLANTILLA: qué
+     * se dibuja con qué datos.
+     */
+    function conPerfil(perfil: Record<string, unknown>): string {
+      http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+      // El resumen dispara la lectura del catálogo para traducir el estado.
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({
+        items: [],
+        count: 0,
+      });
+      // La señal se toma del componente SIN pasar por `interno`: ése liga las
+      // funciones al componente, y una señal ES una función — ligada, pierde
+      // `.set`.
+      const señal = (fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>)[
+        'perfil'
+      ];
+      señal.set({
+        personId: 'per-1',
+        patientProfileId: 'pp-1',
+        identityVerified: false,
+        coverages: [],
+        guardians: [],
+        ...perfil,
+      });
+      fixture.detectChanges();
+      return fixture.nativeElement.textContent as string;
+    }
+
+    it('muestra documento, correo, NIT y las dos direcciones', () => {
+      const texto = conPerfil({
+        nationalId: '7678614',
+        email: 'ana@example.test',
+        taxId: '1234567890',
+        homeAddress: { lines: 'Av. Banzer #1234', city: 'Santa Cruz' },
+        workAddress: { lines: 'Calle Warnes #45', city: 'Santa Cruz' },
+      });
+
+      expect(texto).toContain('7678614');
+      expect(texto).toContain('ana@example.test');
+      expect(texto).toContain('1234567890');
+      expect(texto).toContain('Av. Banzer #1234');
+      expect(texto).toContain('Calle Warnes #45');
+    });
+
+    it('los seguros se ven con su aseguradora, su plan y si son públicos', () => {
+      const texto = conPerfil({
+        coverages: [
+          {
+            carrierName: 'Alianza Vida Seguros',
+            planName: 'AFI Gold',
+            isPublic: false,
+            verified: false,
+          },
+          { carrierName: 'Caja Nacional de Salud', isPublic: true, verified: false },
+        ],
+      });
+
+      expect(texto).toContain('Alianza Vida Seguros');
+      expect(texto).toContain('AFI Gold');
+      expect(texto).toContain('Caja Nacional de Salud');
+      expect(texto).toContain('Público');
+      // Lo declarado al registrarse no está confirmado con la aseguradora, y
+      // decirlo evita que alguien lo dé por hecho.
+      expect(texto).toContain('Sin verificar');
+    });
+
+    it('el tutor se ve con su teléfono: es el dato por el que existe', () => {
+      const texto = conPerfil({
+        guardians: [
+          {
+            displayName: 'Carlos Mamani',
+            phone: '+591 70055443',
+            isEmergencyContact: true,
+            isLegalGuardian: true,
+          },
+        ],
+      });
+
+      expect(texto).toContain('Carlos Mamani');
+      expect(texto).toContain('+591 70055443');
+      expect(texto).toContain('Tutor legal');
+    });
+
+    /**
+     * **Lo que falta también se dibuja — en la ficha PROPIA.**
+     *
+     * Antes cada dato aparecía sólo si existía, con el argumento de que «una
+     * lista de Sin registrar no informa». En la ficha de otro es cierto. Acá no:
+     * quien mira es el dueño del dato, y ocultarle el renglón le impide
+     * distinguir «no lo tengo cargado» de «la app no me lo muestra». Con el
+     * perfil real de Justin se veían **cinco campos de doce**, y siete de los
+     * que faltaban estaban en la base.
+     *
+     * Las SECCIONES enteras sí siguen ocultándose cuando no hay nada: una tarjeta
+     * «Tus seguros» vacía es ruido, no un dato pendiente que el dueño pueda
+     * completar desde ahí.
+     */
+    it('en la ficha propia, lo no declarado se dibuja como «Sin registrar»', () => {
+      const texto = conPerfil({});
+
+      expect(texto).toContain('Documento de identidad');
+      expect(texto).toContain('NIT');
+      expect(texto).toContain('Sin registrar');
+    });
+
+    it('pero una sección entera sin contenido no aparece', () => {
+      const texto = conPerfil({});
+
+      expect(texto).not.toContain('Tus seguros');
+      expect(texto).not.toContain('Contactos y tutores');
+    });
+
+    /**
+     * La API lo devolvía desde siempre y la ficha no lo dibujaba. Y cuando se
+     * dibujó, salía **el renglón vacío**: viaja como código (`'FEMALE'`), no
+     * como concepto, así que `etiquetaDe` —que resuelve uuids— devolvía ''. Se
+     * vio en pantalla antes de que existiera esta prueba.
+     */
+    it('el sexo al nacer se muestra EN PALABRAS, no como código', () => {
+      const texto = conPerfil({ sexAtBirth: 'FEMALE' });
+
+      expect(texto).toContain('Sexo al nacer');
+      expect(texto).toContain('Femenino');
+      expect(texto).not.toContain('FEMALE');
+    });
+
+    /**
+     * El registro de procesos pide la ubicación GPS del domicilio (§1.9) y del
+     * trabajo (§1.11). `common.addresses` guarda latitud y longitud desde
+     * siempre y `OwnAddressDto` ya las devolvía: faltaba dibujarlas.
+     */
+    it('una dirección con coordenadas ofrece el enlace al mapa', () => {
+      const texto = conPerfil({
+        homeAddress: {
+          lines: 'Av. Beni 5100',
+          latitude: '-17.78',
+          longitude: '-63.18',
+        } as never,
+      });
+
+      expect(texto).toContain('Ver en el mapa');
+    });
+
+    it('y una sin coordenadas no lo ofrece: no habría adónde llevar', () => {
+      const texto = conPerfil({
+        homeAddress: { lines: 'Av. Beni 5100' } as never,
+      });
+
+      expect(texto).toContain('Av. Beni 5100');
+      expect(texto).not.toContain('Ver en el mapa');
+    });
+
+    /**
+     * El caso que se vio en pantalla: la API comparaba las coordenadas contra
+     * `undefined` y la columna es nullable, así que emitía `Number(null)` — o
+     * sea **0** — y la ficha enlazaba al golfo de Guinea. La API ya está
+     * corregida; este guardia queda igual porque una dirección de Santa Cruz no
+     * está en el meridiano de Greenwich.
+     */
+    it('las coordenadas 0,0 no son una ubicación: no ofrece el mapa', () => {
+      const texto = conPerfil({
+        homeAddress: { lines: 'Calle Ayacucho 241', latitude: 0, longitude: 0 } as never,
+      });
+
+      expect(texto).toContain('Calle Ayacucho 241');
+      expect(texto).not.toContain('Ver en el mapa');
+    });
+
+    it('la edad se calcula de la fecha, no se pide al servidor', () => {
+      // El registro del cliente la pide «de manera automática».
+      const nacimiento = new Date();
+      nacimiento.setFullYear(nacimiento.getFullYear() - 34);
+      const texto = conPerfil({ birthDate: nacimiento });
+
+      expect(texto).toContain('34 años');
+    });
+  });
 
   function interno<T>(nombre: string): T {
     const valor = (fixture.componentInstance as unknown as Record<string, unknown>)[nombre];
@@ -80,11 +314,13 @@ describe('MyProfile', () => {
     expect(req.request.params.keys()).toEqual([]);
 
     req.flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [],
+        count: 0,
+        limit: 50,
+      });
   });
 
   /**
@@ -125,11 +361,15 @@ describe('MyProfile', () => {
 
   it('traduce el estado de la persona a palabras', () => {
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [{ conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' }],
-      count: 1,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [
+          { conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' },
+        ],
+        count: 1,
+        limit: 50,
+      });
     fixture.detectChanges();
 
     expect(interno<() => string>('estado')()).toBe('Activa');
@@ -154,10 +394,12 @@ describe('MyProfile', () => {
    * trámite ya está en curso, y con las peticiones encadenadas no vería nada.
    */
   it('el historial sobrevive al 403 del resumen', () => {
-    http.expectOne('/profiles/patients/me/summary').flush(
-      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
-      { status: 403, statusText: 'Forbidden' },
-    );
+    http
+      .expectOne('/profiles/patients/me/summary')
+      .flush(
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+        { status: 403, statusText: 'Forbidden' },
+      );
     fixture.detectChanges();
 
     expect(estado().status).toBe('forbidden');
@@ -169,11 +411,13 @@ describe('MyProfile', () => {
 
   function responderResumen(): void {
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-    });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [],
+        count: 0,
+        limit: 50,
+      });
     fixture.detectChanges();
   }
 
@@ -257,10 +501,12 @@ describe('MyProfile', () => {
     // Todo paciente recién registrado pasa por acá: pintarlo como «No tenés
     // acceso» en rojo lee como que algo se rompió, y el mensaje crudo del
     // backend habla de usted (feedback de la analista, barrido del 18/08/2026).
-    http.expectOne('/profiles/patients/me/summary').flush(
-      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
-      { status: 403, statusText: 'Forbidden' },
-    );
+    http
+      .expectOne('/profiles/patients/me/summary')
+      .flush(
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
+        { status: 403, statusText: 'Forbidden' },
+      );
     fixture.detectChanges();
 
     const alerta = alertaDeDatos();
@@ -287,6 +533,92 @@ describe('MyProfile', () => {
     expect(alerta?.textContent).toContain('No tenés acceso a este recurso.');
     expect(alerta?.querySelector('a')).toBeNull();
   });
+
+  /* -- F-34: el perfil no depende de verificarse ---------------------------- */
+
+  /**
+   * La invitación del pie de la lista. Se busca acotada a la columna principal
+   * porque `mi-perfil__nota` también rotula los enlaces del lateral, y el 403
+   * pinta su propio enlace dentro de la alerta: sin acotar, las tres cosas se
+   * confundirían entre sí.
+   */
+  function invitacionAVerificar(): HTMLAnchorElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '.mi-perfil__principal p.mi-perfil__nota a',
+    );
+  }
+
+  /** La lista de datos de «Tus datos» — no la de «Tu acceso», que comparte clase. */
+  function listaDeDatos(): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector(
+      '.mi-perfil__principal .mi-perfil__datos',
+    );
+  }
+
+  /**
+   * Con la verificación apagada, quien no la tiene ve **sus datos y nada más**.
+   *
+   * Ni la insignia «Pendiente de verificación» ni la invitación: las dos nombran
+   * un trámite que el producto hoy no ofrece, y anunciar que falta algo que no
+   * se puede hacer deja a la persona buscando una puerta que no está. Lo que la
+   * tarjeta vacía tapaba —nombre, nacimiento y estado— sigue en pie, que es lo
+   * que F-34 vino a resolver.
+   */
+  it('sin verificar, la persona ve sus datos y no se le nombra un trámite que no se ofrece', () => {
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN_SIN_VERIFICAR);
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [
+          { conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' },
+        ],
+        count: 1,
+        limit: 50,
+      });
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    const texto = raiz.textContent ?? '';
+    expect(texto).toContain('Ana Salas');
+    expect(texto).toContain('14/03/1985');
+    expect(texto).toContain('Activa');
+    // Sin código no se inventa uno, y tampoco se deja el renglón anunciando
+    // que falta un trámite: la fila entera no se dibuja.
+    expect(raiz.querySelector('[data-testid="mi-perfil-codigo"]')).toBeNull();
+    expect(texto).not.toContain('Código de paciente');
+    expect(texto).not.toContain('Pendiente de verificación');
+    expect(texto).not.toContain('PAC-');
+    expect(texto).not.toContain('cuando tu identidad esté verificada');
+    expect(invitacionAVerificar()).toBeNull();
+  });
+
+  it('verificada, ve su código y ya no se le invita a verificarse', () => {
+    responderResumen();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain(RESUMEN.patientCode);
+    expect(texto).not.toContain('Pendiente de verificación');
+    expect(invitacionAVerificar()).toBeNull();
+  });
+
+  /**
+   * Compatibilidad: mientras la API anterior siga desplegada, el 403 tiene que
+   * pintar exactamente la tarjeta neutra de antes — ni la lista de datos ni la
+   * invitación se cuelan por ese camino.
+   */
+  it('con el 403 de la API anterior no se cuelan ni la lista ni la invitación', () => {
+    http
+      .expectOne('/profiles/patients/me/summary')
+      .flush(
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+    fixture.detectChanges();
+
+    expect(alertaDeDatos()?.textContent).toContain('cuando tu identidad esté verificada');
+    expect(listaDeDatos()).toBeNull();
+    expect(invitacionAVerificar()).toBeNull();
+  });
 });
 
 /**
@@ -310,6 +642,7 @@ describe('MyProfile · orden del historial', () => {
     // búsqueda quedan en neutro y `verify()` protesta.
     resolverEstadosDeCaso(http);
     fixture.detectChanges();
+    resolverPerfilCompleto(http);
   });
 
   afterEach(() => http.verify());
@@ -348,5 +681,244 @@ describe('MyProfile · orden del historial', () => {
       fixture.componentInstance as unknown as { casoVigente: () => { id: string } | null }
     ).casoVigente();
     expect(vigente?.id).toBe('c-nuevo');
+  });
+});
+
+/**
+ * La salida a corregir los datos propios.
+ *
+ * Va en su propio `describe` porque hace falta abrir la sesión **antes** de
+ * crear la pantalla: `esProfesional()` decide en el constructor qué resumen se
+ * pide, y una sesión abierta después ya no cambia esa decisión.
+ */
+describe('MyProfile · el enlace a editar los datos propios', () => {
+  let fixture: ComponentFixture<MyProfile>;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  /** Abre la sesión con los claims que se le pasen y monta la pantalla. */
+  function montar(claims: Record<string, unknown>): void {
+    TestBed.inject(SessionStore).start({ accessToken: jwt(claims), refreshToken: 'r-1' });
+    fixture = TestBed.createComponent(MyProfile);
+    resolverEstadosDeCaso(http);
+    fixture.detectChanges();
+    resolverPerfilCompleto(http);
+    // El historial ya no se pide: la ficha está apagada. Ver el `beforeEach` del
+    // primer describe, que lo afirma con `expectNone`.
+    http.expectNone('/identity/me/verification-cases');
+  }
+
+  function enlaceDeEdicion(): HTMLAnchorElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '[data-testid="mi-perfil-editar"]',
+    );
+  }
+
+  it('la paciente ve la salida a corregir sus datos, con su destino real', () => {
+    montar({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [],
+        count: 0,
+        limit: 50,
+      });
+    fixture.detectChanges();
+
+    const enlace = enlaceDeEdicion();
+    expect(enlace?.textContent?.trim()).toBe('Editar tus datos');
+    expect(enlace?.getAttribute('href')).toBe('/my-account/profile/edit');
+  });
+
+  /**
+   * A quien atiende no se le ofrece: el editor lee `GET /profiles/patients/me`,
+   * y a un profesional le responde `404` porque no tiene perfil de paciente.
+   */
+  it('a quien atiende no se le ofrece: no tiene perfil de paciente que editar', () => {
+    montar({ sub: 'u-1', hpid: 'hp-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] });
+    http
+      .expectOne('/profiles/practitioners/me/summary')
+      .error(new ProgressEvent('error'), { status: 500 });
+    fixture.detectChanges();
+
+    expect(enlaceDeEdicion()).toBeNull();
+  });
+
+  /** Mientras el resumen no llegó no hay nada que editar todavía. */
+  it('mientras carga el resumen todavía no se ofrece editar', () => {
+    montar({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+
+    expect(enlaceDeEdicion()).toBeNull();
+
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [],
+        count: 0,
+        limit: 50,
+      });
+    fixture.detectChanges();
+
+    expect(enlaceDeEdicion()).not.toBeNull();
+  });
+});
+
+/**
+ * La foto de perfil de la persona (`profiles.persons.photo_file_id`).
+ *
+ * Va en su propio `describe`, con su propio montaje, porque necesita
+ * controlar qué trae `GET /profiles/patients/me` en cada prueba —
+ * `resolverPerfilCompleto` del arnés compartido siempre responde sin foto.
+ */
+describe('MyProfile · foto de perfil', () => {
+  let fixture: ComponentFixture<MyProfile>;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] }),
+      refreshToken: 'r-1',
+    });
+    fixture = TestBed.createComponent(MyProfile);
+    http = TestBed.inject(HttpTestingController);
+    resolverEstadosDeCaso(http);
+    fixture.detectChanges();
+
+    // El resumen no importa para estas pruebas: se responde con lo mínimo y
+    // se saca de en medio.
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN_SIN_VERIFICAR);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0 });
+  });
+
+  afterEach(() => http.verify());
+
+  /** Fabrica un evento `change` de `<input type="file">` con un solo archivo. */
+  function eventoDeArchivo(archivo: File): Event {
+    return { target: { files: [archivo], value: '' } } as unknown as Event;
+  }
+
+  /** El perfil propio, con lo mínimo obligatorio y lo que se le pase encima. */
+  function perfilCon(extra: Record<string, unknown>): Record<string, unknown> {
+    return {
+      personId: 'per-1',
+      patientProfileId: 'pp-1',
+      identityVerified: false,
+      coverages: [],
+      guardians: [],
+      ...extra,
+    };
+  }
+
+  it('sin foto declarada, no pide ninguna URL de descarga', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({}));
+    fixture.detectChanges();
+
+    http.verify();
+  });
+
+  it('con foto ya guardada, resuelve la URL y la pinta', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
+
+    http
+      .expectOne('/common/files/f-1/download-url')
+      .flush({ url: '/media/f-1', expiresAt: new Date().toISOString() });
+    fixture.detectChanges();
+
+    const fotoUrl = (
+      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
+    ).fotoUrl();
+    expect(fotoUrl).toBe('/media/f-1');
+  });
+
+  it('si la URL inicial no se puede resolver, degrada a null sin romper la pantalla', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
+
+    http
+      .expectOne('/common/files/f-1/download-url')
+      .error(new ProgressEvent('error'), { status: 500 });
+    fixture.detectChanges();
+
+    const fotoUrl = (
+      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
+    ).fotoUrl();
+    expect(fotoUrl).toBeNull();
+  });
+
+  it('sube la foto elegida, la fija y pinta la URL resuelta', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({}));
+    fixture.detectChanges();
+
+    const alElegirFoto = (
+      fixture.componentInstance as unknown as { alElegirFoto: (e: Event) => void }
+    ).alElegirFoto.bind(fixture.componentInstance);
+    alElegirFoto(eventoDeArchivo(new File(['x'], 'foto.png', { type: 'image/png' })));
+
+    const subida = http.expectOne('/common/files/upload');
+    expect(subida.request.method).toBe('POST');
+    subida.flush({ id: 'f-2' });
+
+    const puesta = http.expectOne('/profiles/patients/me/photo');
+    expect(puesta.request.method).toBe('PUT');
+    expect(puesta.request.body).toEqual({ fileId: 'f-2' });
+    puesta.flush(perfilCon({ photoFileId: 'f-2' }));
+
+    http
+      .expectOne('/common/files/f-2/download-url')
+      .flush({ url: '/media/f-2', expiresAt: new Date().toISOString() });
+    fixture.detectChanges();
+
+    const fotoUrl = (
+      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
+    ).fotoUrl();
+    expect(fotoUrl).toBe('/media/f-2');
+  });
+
+  it('un profesional no ve el control: la tarjeta de paciente no se carga para él', () => {
+    // El montaje del `beforeEach` deja `/profiles/patients/me` pendiente:
+    // hay que cerrarlo antes de resetear el módulo, o `http.verify()` de
+    // ESE arnés protesta por una petición que ya nadie va a responder.
+    http.expectOne('/profiles/patients/me').flush(perfilCon({}));
+
+    // Sesión distinta, montaje propio: `esProfesional()` decide en el
+    // constructor y una sesión abierta después ya no cambia esa decisión.
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-2', hpid: 'hp-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] }),
+      refreshToken: 'r-1',
+    });
+    const otroFixture = TestBed.createComponent(MyProfile);
+    const otroHttp = TestBed.inject(HttpTestingController);
+    resolverEstadosDeCaso(otroHttp);
+    otroFixture.detectChanges();
+    otroHttp
+      .expectOne('/profiles/practitioners/me/summary')
+      .error(new ProgressEvent('error'), { status: 500 });
+    otroFixture.detectChanges();
+
+    expect(
+      (otroFixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-foto"]'),
+    ).toBeNull();
+    otroHttp.verify();
   });
 });

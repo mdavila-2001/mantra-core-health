@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppMap } from '@shared/components/organisms/map/map';
 import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
+import { PublicacionPost } from '../publicacion-post/publicacion-post';
 
 import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
 import { inicialesDe } from '@shared/text/iniciales';
@@ -64,7 +65,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  */
 @Component({
   selector: 'app-public-profile-card',
-  imports: [AppButton, DatePipe, AppMap],
+  imports: [AppButton, DatePipe, AppMap, PublicacionPost],
   templateUrl: './public-profile-card.html',
   styleUrl: './public-profile-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,6 +95,53 @@ export class PublicProfileCard {
   readonly escribir = output<void>();
 
   protected readonly rotuloTipo = computed(() => ROTULO_POR_TIPO[this.perfil().kind]);
+
+  /**
+   * Si la ficha es de un **lugar** y no de una persona.
+   *
+   * Cambia tres cosas, y las tres importan: el retrato deja de ser redondo —un
+   * círculo es la convención de «foto de alguien», y una clínica no es
+   * alguien—, el rótulo pasa de «dónde atiende» a «dónde queda», y aparece
+   * «Cómo llegar», que es lo que se quiere hacer con un lugar y no con una
+   * persona.
+   */
+  protected readonly esLugar = computed(() => this.perfil().kind !== 'PRACTITIONER');
+
+  /**
+   * La tira de datos de cabecera: lo que se mira antes de leer nada.
+   *
+   * Sale **entera** de la respuesta pública, dato por dato. Lo que la maqueta
+   * pone además —camas libres, precio de consulta, aseguradoras en convenio—
+   * la API no lo sirve, así que no está. Un horario o un precio inventado en
+   * una ficha de salud no es un pendiente de diseño: es alguien que se cruza la
+   * ciudad para encontrarse con otra cosa.
+   */
+  protected readonly datosClave = computed(() => {
+    const p = this.perfil();
+    const datos: { rotulo: string; valor: string }[] = [];
+
+    if (p.city) datos.push({ rotulo: 'Ciudad', valor: p.city });
+    if (p.address) datos.push({ rotulo: 'Dirección', valor: p.address });
+
+    // «Sin calificar» y no un cero: `ratingCount: 0` es el estado normal de un
+    // directorio recién publicado, y «0,0 ★» diría que la atención se calificó
+    // mal cuando nadie la calificó todavía.
+    const media = this.puntuacion();
+    datos.push({
+      rotulo: 'Calificación',
+      valor:
+        media === null
+          ? 'Sin calificar'
+          : `${media} · ${p.ratingCount} ${p.ratingCount === 1 ? 'opinión' : 'opiniones'}`,
+    });
+
+    datos.push({
+      rotulo: 'Identidad',
+      valor: p.verified ? 'Verificada por AloVida' : 'Declarada por el prestador',
+    });
+
+    return datos;
+  });
 
   /** Las iniciales del cuadrado cuando no hay foto. Ver `shared/text/iniciales`. */
   protected readonly iniciales = computed(() => inicialesDe(this.perfil().displayName));

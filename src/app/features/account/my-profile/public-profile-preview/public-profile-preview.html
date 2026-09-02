@@ -102,6 +102,58 @@
           }
         }
 
+        @if (sinPortada()) {
+          <!-- Espejo del bloque de la foto: sólo se puede subir con vitrina
+               guardada, porque el PUT es completo. -->
+          <app-alert tone="info" title="Tu vitrina no tiene portada">
+            Es la franja que se ve arriba de tu foto en tu ficha pública.
+            @if (tieneVitrina()) {
+              <label class="vitrina__foto-boton">
+                {{ subiendoPortada() ? 'Subiendo…' : 'Subir una portada' }}
+                <input
+                  type="file"
+                  class="solo-lectores"
+                  accept="image/*"
+                  data-testid="vitrina-portada"
+                  [disabled]="subiendoPortada()"
+                  (change)="alElegirPortada($event)"
+                />
+              </label>
+            } @else {
+              Guardá la vitrina primero; después vas a poder subirla acá mismo.
+            }
+          </app-alert>
+          @if (errorDePortada(); as fallo) {
+            <p class="vitrina__foto-error" role="alert">{{ fallo }}</p>
+          }
+        } @else if (tieneVitrina()) {
+          <p class="vitrina__portada-acciones">
+            <label class="vitrina__foto-boton">
+              {{ subiendoPortada() ? 'Subiendo…' : 'Cambiar portada' }}
+              <input
+                type="file"
+                class="solo-lectores"
+                accept="image/*"
+                data-testid="vitrina-portada"
+                [disabled]="subiendoPortada()"
+                (change)="alElegirPortada($event)"
+              />
+            </label>
+            <button
+              type="button"
+              class="vitrina__portada-quitar"
+              data-testid="vitrina-portada-quitar"
+              [disabled]="subiendoPortada()"
+              (click)="quitarPortada()"
+            >
+              Quitar portada
+            </button>
+          </p>
+          @if (errorDePortada(); as fallo) {
+            <p class="vitrina__foto-error" role="alert">{{ fallo }}</p>
+          }
+        }
+
         <app-public-profile-card [perfil]="vistaPrevia()" [preview]="true" />
 
         <p class="vitrina__enlace">{{ enlace() }}</p>

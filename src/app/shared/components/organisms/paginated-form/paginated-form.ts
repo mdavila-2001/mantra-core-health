@@ -166,6 +166,21 @@ export class PaginatedForm {
 
   readonly cancelado = output<void>();
 
+  /**
+   * La página que se está mostrando, cada vez que cambia (y también la primera).
+   *
+   * Existe porque hay pantallas que acompañan al formulario con algo que
+   * depende del paso —el alta pública muestra al costado por qué se pide lo que
+   * se está pidiendo— y ese «algo» no puede vivir acá dentro: el motor sirve
+   * cualquier formulario y no sabe nada del dominio de ninguno.
+   *
+   * Sale la página entera y no su número: quien la recibe la reconoce por
+   * {@link PaginaDeFormulario.clave}, que la declaró él mismo. Un índice
+   * obligaría a la pantalla a contar sus propias páginas —y a volver a
+   * contarlas cada vez que se agregue una en el medio.
+   */
+  readonly pasoVisible = output<PaginaDeFormulario>();
+
   /** Las plantillas de los campos `custom`, por `key`. */
   private readonly personalizados = contentChildren(CampoPersonalizado);
 
@@ -178,7 +193,9 @@ export class PaginatedForm {
   /** Base 1, que es como se cuenta de cara a la persona. */
   readonly posicion = computed(() => Math.min(this.indice() + 1, this.total()));
 
-  readonly pagina = computed<PaginaDeFormulario | null>(() => this.paginas()[this.indice()] ?? null);
+  readonly pagina = computed<PaginaDeFormulario | null>(
+    () => this.paginas()[this.indice()] ?? null,
+  );
 
   readonly esUltima = computed(() => this.posicion() >= this.total());
 
@@ -198,7 +215,9 @@ export class PaginatedForm {
     return nombre === '' ? cola : `${nombre}: ${cola}`;
   });
 
-  readonly mostrarPasos = computed(() => this.total() > 1 && this.total() <= MAX_PASOS_EN_EL_INDICADOR);
+  readonly mostrarPasos = computed(
+    () => this.total() > 1 && this.total() <= MAX_PASOS_EN_EL_INDICADOR,
+  );
 
   readonly pasos = computed<readonly StepperStep[]>(() =>
     this.paginas().map((pagina, posicion) => ({
@@ -243,6 +262,16 @@ export class PaginatedForm {
           }
         }
       }
+    });
+
+    // La página visible, hacia afuera. Va en un efecto y no en `avanzar()` /
+    // `retroceder()` porque el índice también se mueve solo —al enviar con un
+    // error tres páginas atrás, o al encoger las páginas—, y un aviso que sólo
+    // sale cuando se pulsa un botón deja a quien escucha mirando el paso que ya
+    // no es.
+    effect(() => {
+      const pagina = this.pagina();
+      if (pagina !== null) this.pasoVisible.emit(pagina);
     });
 
     // El foco sigue a la página. No en el primer render: robarle el foco a quien

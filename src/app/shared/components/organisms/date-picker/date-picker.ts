@@ -1,10 +1,12 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   ElementRef,
   inject,
+  Injector,
   input,
   model,
   signal,
@@ -12,11 +14,7 @@ import {
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
-import {
-  type DatePickerMode,
-  MIN_DEFAULT_YEAR,
-  MAX_DEFAULT_YEAR,
-} from './date-picker.types';
+import { type DatePickerMode, MAX_DEFAULT_YEAR } from './date-picker.types';
 import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
@@ -31,13 +29,46 @@ export interface CalendarDay {
   readonly isDisabled: boolean;
 }
 
+/** Celda de la grilla de años: uno de los treinta que muestra la página. */
+export interface YearCell {
+  readonly year: number;
+  readonly isSelected: boolean;
+  readonly isDisabled: boolean;
+}
+
+/** Celda de la grilla de meses del año en vista. */
+export interface MonthCell {
+  readonly month: number;
+  readonly name: string;
+  readonly isSelected: boolean;
+  readonly isDisabled: boolean;
+}
+
+/** Nivel visible del diálogo: días del mes, meses del año o años de la página. */
+type PickerPanel = 'days' | 'months' | 'years';
+
 /** Locale del producto: Bolivia. Un solo lugar, no repetido por llamada. */
 const LOCALE = 'es-BO';
 
 const DAYS_PER_WEEK = 7;
+const MONTHS_PER_YEAR = 12;
 const MINUTE_STEP = 5;
 const MINUTES_PER_HOUR = 60;
 const HOURS_PER_DAY = 24;
+
+const YEARS_PER_DECADE = 10;
+
+/** La página de años abarca tres décadas: la del año en vista y las dos previas. */
+const DECADES_PER_YEAR_PAGE = 3;
+
+/** Treinta años por página, en cinco columnas por seis filas. */
+const YEARS_PER_PAGE = YEARS_PER_DECADE * DECADES_PER_YEAR_PAGE;
+
+/** Cinco columnas de años: las seis filas igualan el alto de la grilla de días. */
+const YEAR_GRID_COLUMNS = 5;
+
+/** Los doce meses entran en cuatro columnas por tres filas. */
+const MONTH_GRID_COLUMNS = 4;
 
 /** Mediodía: evita que un cambio de huso corra la fecha al día anterior. */
 const SAFE_HOUR = 12;
@@ -93,7 +124,9 @@ function parseDateOnly(text: string): Date | null {
 /** Nombres desde `Intl`: no se duplican a mano ni quedan pegados a un idioma. */
 function buildMonthNames(): readonly string[] {
   const format = new Intl.DateTimeFormat(LOCALE, MONTH_FORMAT);
-  return Array.from({ length: 12 }, (_, month) => format.format(new Date(2024, month, 1)));
+  return Array.from({ length: MONTHS_PER_YEAR }, (_, month) =>
+    format.format(new Date(2024, month, 1)),
+  );
 }
 
 /** Semana que empieza en lunes, como el calendario local. */
@@ -115,6 +148,41 @@ function isSameDay(a: Date, b: Date): boolean {
 
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+/** Primer año de la década que contiene a `year`: 1985 → 1980. */
+function startOfDecade(year: number): number {
+  return Math.floor(year / YEARS_PER_DECADE) * YEARS_PER_DECADE;
+}
+
+/**
+ * Primer año de la página que contiene a `year` en su última década: 1985 →
+ * 1960, 2000 → 1980. Mirar hacia atrás es lo que acerca los años de nacimiento,
+ * que es lo que se busca en un calendario clínico.
+ */
+function startOfYearPage(year: number): number {
+  return startOfDecade(year) - (DECADES_PER_YEAR_PAGE - 1) * YEARS_PER_DECADE;
+}
+
+/** Medianoche local: compara fechas por día, sin que la hora corra el límite. */
+function dayTime(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+/**
+ * Primera celda utilizable a partir de la preferida: el foco nunca queda sobre
+ * una celda fuera de rango, que no se puede elegir ni enfocar.
+ */
+function usableCell(
+  cells: readonly { readonly isDisabled: boolean }[],
+  preferred: number,
+): number {
+  const clamped = Math.min(Math.max(preferred, 0), cells.length - 1);
+  if (!cells[clamped].isDisabled) {
+    return clamped;
+  }
+  const utilizable = cells.findIndex((cell) => !cell.isDisabled);
+  return utilizable >= 0 ? utilizable : clamped;
 }
 
 /**
@@ -148,11 +216,23 @@ export class DatePicker {
   readonly maxDate = input<Date | string | null>(null);
   readonly allowKeyboard = input<boolean>(true);
 
+  private readonly injector = inject(Injector);
+
   private readonly dialog = viewChild<ElementRef<HTMLDialogElement>>('dialog');
   private readonly trigger = viewChild<ElementRef<HTMLButtonElement>>('trigger');
   private readonly inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
+  private readonly viewSwitch = viewChild<ElementRef<HTMLButtonElement>>('viewSwitch');
 
   protected readonly isOpen = signal(false);
+
+  /** Nivel visible del diálogo. El encabezado sube y baja entre los tres. */
+  protected readonly panel = signal<PickerPanel>('days');
+
+  /** Primer año de los treinta que muestra la grilla de años. */
+  protected readonly yearPageStart = signal<number>(startOfYearPage(MAX_DEFAULT_YEAR));
+
+  /** Roving tabindex: la única celda tabulable de la grilla vigente. */
+  protected readonly activeCell = signal<number>(0);
 
   /** Texto mostrado en el input editable. */
   protected readonly inputText = signal<string>('');
@@ -203,20 +283,35 @@ export class DatePicker {
     return Number.isNaN(d.getTime()) ? null : d;
   });
 
-  protected readonly years = computed<number[]>(() => {
-    const min = this.normalizedMinDate()?.getFullYear() ?? MIN_DEFAULT_YEAR;
+  /**
+   * Los treinta años consecutivos de la página en vista: cinco columnas por
+   * seis filas, todos elegibles de un toque y sin vecinos atenuados.
+   */
+  protected readonly yearCells = computed<YearCell[]>(() => {
+    const start = this.yearPageStart();
     const viewYear = this.viewMonth().getFullYear();
-    const valYear = this.value()?.getFullYear() ?? 0;
-    const maxLimit = this.normalizedMaxDate()?.getFullYear();
 
-    const maxYear = maxLimit ?? Math.max(MAX_DEFAULT_YEAR, viewYear, valYear);
-    const minYear = Math.min(min, maxYear);
+    return Array.from({ length: YEARS_PER_PAGE }, (_, index) => {
+      const year = start + index;
+      return {
+        year,
+        isSelected: year === viewYear,
+        isDisabled: this.isYearOutOfRange(year),
+      };
+    });
+  });
 
-    const list: number[] = [];
-    for (let y = maxYear; y >= minYear; y--) {
-      list.push(y);
-    }
-    return list;
+  /** Los doce meses del año en vista, sin los que quedan fuera del rango. */
+  protected readonly monthCells = computed<MonthCell[]>(() => {
+    const view = this.viewMonth();
+    const year = view.getFullYear();
+
+    return this.monthNames.map((name, month) => ({
+      month,
+      name,
+      isSelected: month === view.getMonth(),
+      isDisabled: this.isMonthOutOfRange(year, month),
+    }));
   });
 
   protected readonly displayValue = computed(() => {
@@ -237,6 +332,25 @@ export class DatePicker {
   });
 
   /**
+   * Texto de la región viva del diálogo. Cambiar de panel o de mes no mueve el
+   * foco, así que sin esto el cambio no llega a quien usa lector de pantalla.
+   */
+  protected readonly panelAnnouncement = computed(() => {
+    const view = this.viewMonth();
+
+    switch (this.panel()) {
+      case 'years': {
+        const start = this.yearPageStart();
+        return `Años ${start} a ${start + YEARS_PER_PAGE - 1}`;
+      }
+      case 'months':
+        return `Meses de ${view.getFullYear()}`;
+      default:
+        return `${this.monthNames[view.getMonth()]} de ${view.getFullYear()}`;
+    }
+  });
+
+  /**
    * Grilla del mes en vista, siempre en semanas completas de lunes a domingo.
    * Deshabilita los días fuera del rango permitido por `minDate` y `maxDate`.
    */
@@ -249,12 +363,8 @@ export class DatePicker {
 
     const min = this.normalizedMinDate();
     const max = this.normalizedMaxDate();
-    const minTime = min
-      ? new Date(min.getFullYear(), min.getMonth(), min.getDate()).getTime()
-      : null;
-    const maxTime = max
-      ? new Date(max.getFullYear(), max.getMonth(), max.getDate()).getTime()
-      : null;
+    const minTime = min ? dayTime(min) : null;
+    const maxTime = max ? dayTime(max) : null;
 
     const firstWeekday = (new Date(year, month, 1).getDay() + 6) % DAYS_PER_WEEK;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -263,10 +373,10 @@ export class DatePicker {
 
     return Array.from({ length: totalCells }, (_, cell) => {
       const date = new Date(year, month, cell - firstWeekday + 1);
-      const dayTime = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+      const cellTime = dayTime(date);
       const isDisabled =
-        (minTime !== null && dayTime < minTime) ||
-        (maxTime !== null && dayTime > maxTime);
+        (minTime !== null && cellTime < minTime) ||
+        (maxTime !== null && cellTime > maxTime);
 
       return {
         date,
@@ -591,16 +701,34 @@ export class DatePicker {
   }
 
   private isOutOfRange(date: Date): boolean {
-    const time = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    return this.hasNoDayInRange(date, date);
+  }
+
+  /** Un año se ofrece solo si alguno de sus días cae dentro del rango. */
+  private isYearOutOfRange(year: number): boolean {
+    return this.hasNoDayInRange(
+      new Date(year, 0, 1),
+      new Date(year, MONTHS_PER_YEAR, 0),
+    );
+  }
+
+  /** Ídem para un mes: el rango puede empezar o terminar dentro de él. */
+  private isMonthOutOfRange(year: number, month: number): boolean {
+    return this.hasNoDayInRange(new Date(year, month, 1), new Date(year, month + 1, 0));
+  }
+
+  /**
+   * Verdadero cuando ningún día entre `from` y `to` entra en `minDate`/`maxDate`.
+   * Compara por día, el mismo criterio que la grilla del mes.
+   */
+  private hasNoDayInRange(from: Date, to: Date): boolean {
     const min = this.normalizedMinDate();
-    if (min) {
-      const minTime = new Date(min.getFullYear(), min.getMonth(), min.getDate()).getTime();
-      if (time < minTime) return true;
+    if (min && dayTime(to) < dayTime(min)) {
+      return true;
     }
     const max = this.normalizedMaxDate();
-    if (max) {
-      const maxTime = new Date(max.getFullYear(), max.getMonth(), max.getDate()).getTime();
-      if (time > maxTime) return true;
+    if (max && dayTime(from) > dayTime(max)) {
+      return true;
     }
     return false;
   }
@@ -616,6 +744,7 @@ export class DatePicker {
     const start = this.value() ?? this.withSafeHour(new Date(defaultYear, 0, 1));
     this.draft.set(start);
     this.viewMonth.set(startOfMonth(start));
+    this.panel.set('days');
     this.isOpen.set(true);
   }
 
@@ -658,25 +787,219 @@ export class DatePicker {
   }
 
   protected shiftMonth(offset: number): void {
+    if (!this.canShiftMonth(offset)) {
+      return;
+    }
     const view = this.viewMonth();
     this.viewMonth.set(new Date(view.getFullYear(), view.getMonth() + offset, 1));
   }
 
   protected shiftYear(offset: number): void {
+    if (!this.canShiftYear(offset)) {
+      return;
+    }
     const view = this.viewMonth();
     this.viewMonth.set(new Date(view.getFullYear() + offset, view.getMonth(), 1));
   }
 
-  protected setMonth(event: Event): void {
-    const month = Number((event.target as HTMLSelectElement).value);
+  /** Una flecha que lleva a un mes entero fuera de rango se apaga. */
+  protected canShiftMonth(offset: number): boolean {
     const view = this.viewMonth();
-    this.viewMonth.set(new Date(view.getFullYear(), month, 1));
+    const target = new Date(view.getFullYear(), view.getMonth() + offset, 1);
+    return !this.isMonthOutOfRange(target.getFullYear(), target.getMonth());
   }
 
-  protected setYear(event: Event): void {
-    const year = Number((event.target as HTMLSelectElement).value);
+  protected canShiftYear(offset: number): boolean {
     const view = this.viewMonth();
-    this.viewMonth.set(new Date(year, view.getMonth(), 1));
+    return !this.isMonthOutOfRange(view.getFullYear() + offset, view.getMonth());
+  }
+
+  /** Ídem con la página vecina de treinta años de la grilla. */
+  protected canShiftYearPage(offset: number): boolean {
+    const start = this.yearPageStart() + offset * YEARS_PER_PAGE;
+    return !this.hasNoDayInRange(
+      new Date(start, 0, 1),
+      new Date(start + YEARS_PER_PAGE - 1, MONTHS_PER_YEAR, 0),
+    );
+  }
+
+  /** El foco se queda en la misma posición de la grilla: el año equivalente. */
+  protected shiftYearPage(offset: number): void {
+    if (!this.canShiftYearPage(offset)) {
+      return;
+    }
+    this.yearPageStart.update((start) => start + offset * YEARS_PER_PAGE);
+    this.activeCell.set(usableCell(this.yearCells(), this.activeCell()));
+  }
+
+  /**
+   * El encabezado sube al panel de años y vuelve a los días. Los tres niveles
+   * son el mismo gesto conocido: año → mes → día.
+   */
+  protected toggleYearPanel(): void {
+    if (this.panel() === 'days') {
+      this.showYears();
+      return;
+    }
+    this.showDays();
+  }
+
+  protected selectYear(cell: YearCell): void {
+    if (cell.isDisabled) {
+      return;
+    }
+    const view = this.viewMonth();
+    this.viewMonth.set(new Date(cell.year, view.getMonth(), 1));
+    this.showMonths();
+  }
+
+  protected selectMonth(cell: MonthCell): void {
+    if (cell.isDisabled) {
+      return;
+    }
+    this.viewMonth.set(new Date(this.viewMonth().getFullYear(), cell.month, 1));
+    this.showDays();
+  }
+
+  protected monthLabel(cell: MonthCell): string {
+    return `${cell.name} de ${this.viewMonth().getFullYear()}`;
+  }
+
+  private showYears(): void {
+    const viewYear = this.viewMonth().getFullYear();
+    const start = startOfYearPage(viewYear);
+    this.yearPageStart.set(start);
+    this.panel.set('years');
+    this.activeCell.set(usableCell(this.yearCells(), viewYear - start));
+    this.focusAfterRender(() => this.focusActiveCell());
+  }
+
+  private showMonths(): void {
+    this.panel.set('months');
+    this.activeCell.set(usableCell(this.monthCells(), this.viewMonth().getMonth()));
+    this.focusAfterRender(() => this.focusActiveCell());
+  }
+
+  private showDays(): void {
+    if (this.panel() === 'days') {
+      return;
+    }
+    this.panel.set('days');
+    // Las celdas que tenían el foco dejan de existir: vuelve al encabezado.
+    this.focusAfterRender(() => this.viewSwitch()?.nativeElement.focus());
+  }
+
+  /**
+   * Teclado de las grillas de años y meses: las flechas mueven el foco entre
+   * celdas utilizables, Inicio y Fin van a los bordes, Re Pág y Av Pág cambian
+   * de página de años, y Enter o Espacio eligen la celda enfocada.
+   */
+  protected handleGridKeydown(event: KeyboardEvent, index: number): void {
+    if (event.key === 'PageUp' || event.key === 'PageDown') {
+      if (this.panel() !== 'years') {
+        return;
+      }
+      event.preventDefault();
+      this.shiftYearPage(event.key === 'PageUp' ? -1 : 1);
+      this.focusAfterRender(() => this.focusActiveCell());
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.selectCell(index);
+      return;
+    }
+
+    const cells = this.currentCells();
+    const target = this.nextCellIndex(cells, index, event.key);
+    if (target === null) {
+      return;
+    }
+    event.preventDefault();
+    this.activeCell.set(target);
+    this.focusActiveCell();
+  }
+
+  private selectCell(index: number): void {
+    if (this.panel() === 'years') {
+      this.selectYear(this.yearCells()[index]);
+      return;
+    }
+    this.selectMonth(this.monthCells()[index]);
+  }
+
+  private currentCells(): readonly { readonly isDisabled: boolean }[] {
+    return this.panel() === 'years' ? this.yearCells() : this.monthCells();
+  }
+
+  /** Una fila de la grilla vigente: los años y los meses no tienen el mismo ancho. */
+  private gridColumns(): number {
+    return this.panel() === 'years' ? YEAR_GRID_COLUMNS : MONTH_GRID_COLUMNS;
+  }
+
+  private nextCellIndex(
+    cells: readonly { readonly isDisabled: boolean }[],
+    from: number,
+    key: string,
+  ): number | null {
+    const columns = this.gridColumns();
+
+    switch (key) {
+      case 'ArrowRight':
+        return this.stepCell(cells, from, 1);
+      case 'ArrowLeft':
+        return this.stepCell(cells, from, -1);
+      case 'ArrowDown':
+        return this.stepCell(cells, from, columns);
+      case 'ArrowUp':
+        return this.stepCell(cells, from, -columns);
+      case 'Home':
+        return usableCell(cells, 0);
+      case 'End':
+        return this.lastUsableCell(cells);
+      default:
+        return null;
+    }
+  }
+
+  /** Avanza en la dirección pedida hasta la primera celda utilizable. */
+  private stepCell(
+    cells: readonly { readonly isDisabled: boolean }[],
+    from: number,
+    offset: number,
+  ): number {
+    const direction = offset > 0 ? 1 : -1;
+    for (let next = from + offset; next >= 0 && next < cells.length; next += direction) {
+      if (!cells[next].isDisabled) {
+        return next;
+      }
+    }
+    return from;
+  }
+
+  private lastUsableCell(cells: readonly { readonly isDisabled: boolean }[]): number {
+    for (let index = cells.length - 1; index >= 0; index--) {
+      if (!cells[index].isDisabled) {
+        return index;
+      }
+    }
+    return cells.length - 1;
+  }
+
+  private focusActiveCell(): void {
+    const cells = this.dialog()?.nativeElement.querySelectorAll<HTMLButtonElement>(
+      '.calendar-unit-btn',
+    );
+    const cell = cells?.[this.activeCell()];
+    if (cell && !cell.disabled) {
+      cell.focus();
+    }
+  }
+
+  /** El foco se mueve recién cuando el panel nuevo está en el DOM. */
+  private focusAfterRender(move: () => void): void {
+    afterNextRender(move, { injector: this.injector });
   }
 
   protected updateHours(event: Event): void {
@@ -690,6 +1013,11 @@ export class DatePicker {
   protected handleDialogKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       event.preventDefault();
+      // Escape cierra de a un nivel: primero el panel abierto, después el diálogo.
+      if (this.panel() !== 'days') {
+        this.showDays();
+        return;
+      }
       this.close();
       return;
     }

@@ -1,7 +1,9 @@
-<app-page-header
-  title="Preferencias de avisos"
-  subtitle="Elegí de qué querés que te avisemos y cuándo."
-/>
+<!-- Panel de Ajustes, ya no pantalla: el `h1` lo pone el encabezado de esa
+     vista, así que acá el título del bloque es un `h2` y sus dos secciones
+     bajan a `h3`. Un segundo `h1` rompería el esquema de encabezados de la
+     página y le mentiría al lector de pantalla sobre dónde está parado. -->
+<h2 class="prefs__encabezado">Avisos</h2>
+<p class="prefs__intro">Elegí de qué querés que te avisemos y cuándo.</p>
 
 @if (error(); as mensaje) {
   <app-alert tone="error" class="prefs__alerta">{{ mensaje }}</app-alert>
@@ -15,7 +17,7 @@
   <p class="prefs__cargando" role="status">Cargando tus preferencias…</p>
 } @else {
   <section class="prefs__bloque">
-    <h2 class="prefs__titulo">Qué avisos recibís</h2>
+    <h3 class="prefs__titulo">Qué avisos recibís</h3>
 
     <ul class="prefs__lista">
       @for (fila of filas(); track fila.category) {
@@ -38,7 +40,7 @@
   </section>
 
   <section class="prefs__bloque">
-    <h2 class="prefs__titulo">Silencio nocturno</h2>
+    <h3 class="prefs__titulo">Silencio nocturno</h3>
 
     <label class="prefs__control">
       <input

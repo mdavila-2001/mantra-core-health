@@ -263,7 +263,7 @@ const PERFIL_PROFESIONAL: TutorialDefinition = {
     {
       id: 'preview',
       title: 'Así te ve un paciente',
-      body: 'La vista previa es el mismo perfil que aparece en el Directorio de médicos, no una maqueta aparte.',
+      body: 'Este botón abre tu vitrina pública: la misma tarjeta que ve un paciente en el Directorio de médicos, no una maqueta aparte. Ahí mismo la configurás.',
       target: 'perfil-preview',
       placement: 'top',
     },
@@ -397,7 +397,7 @@ const NOTIFICACIONES: TutorialDefinition = {
     {
       id: 'preferencias',
       title: 'Elegí de qué te avisamos',
-      body: 'En «Mi cuenta → Preferencias de avisos» activás o silenciás cada familia: recetas y consultas, turnos, mensajes y actividad social.',
+      body: 'Desde el ícono de Ajustes, arriba a la derecha, en «Avisos» activás o silenciás cada familia: recetas y consultas, turnos, mensajes y actividad social.',
     },
     {
       id: 'silencio',

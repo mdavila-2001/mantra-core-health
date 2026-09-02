@@ -10,6 +10,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--e4);
+  /* Una ficha social no se lee a lo ancho de un monitor: la columna se acota a
+     una medida de lectura cómoda y se centra, como la de cualquier perfil de
+     red social. */
+  max-inline-size: 45rem;
+  margin-inline: auto;
 }
 
 /* --- Encabezado ---------------------------------------------------------- */
@@ -158,6 +163,66 @@
   block-size: 17px;
 }
 
+/* La acción secundaria de un lugar («Cómo llegar»): un enlace de ancla, no un
+   botón, porque lleva a una sección de esta misma página. Se le da la forma del
+   botón secundario a mano en vez de usar el átomo, que espera un `<button>`. */
+.perfil__accion-secundaria {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  min-block-size: var(--h-ctrl);
+  padding-inline: var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-marca);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.perfil__accion-secundaria:hover {
+  background: var(--sup-inset);
+}
+
+/* --- Datos clave --------------------------------------------------------- */
+
+/* Auto-fit y no un número de columnas: la tira lleva entre dos y cuatro datos
+   según lo que la organización haya publicado, y una grilla de cuatro fijas
+   dejaría dos huecos cuando publicó dos. */
+.perfil__datos-clave {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--e4);
+  margin: 0;
+  padding: var(--e4) var(--e5);
+  border-block-start: 1px solid var(--filete);
+  background: var(--sup-inset);
+}
+
+.perfil__dato dt {
+  margin: 0 0 2px;
+  color: var(--tinta-3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.perfil__dato dd {
+  margin: 0;
+  color: var(--tinta);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* --- Retrato de un lugar -------------------------------------------------- */
+
+/* Cuadrado de esquinas blandas y no un círculo: el círculo dice «persona», y
+   una clínica recortada en redondo se lee como el avatar de alguien. */
+.perfil__retrato--lugar {
+  border-radius: var(--r-card);
+}
+
 /* --- Secciones ----------------------------------------------------------- */
 
 /* Las secciones siguen siendo `app-card` del sistema —papel, filete, sombra y
@@ -214,47 +279,119 @@
   margin-top: var(--e3);
 }
 
-.perfil__trayectoria {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e4);
+/* --- Trayectoria: línea de tiempo vertical ---------------------------------
+   Un riel continuo con un punto por hito, más marcado en el que sigue vigente
+   —sin `endDate`—, que es el que de verdad importa mirar primero. El riel es
+   un único gradiente de fondo detrás de la columna de puntos, no un borde por
+   ítem: así no se corta entre hito y hito y queda una línea de una pieza. */
+.perfil__linea-tiempo {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.perfil__vinculo + .perfil__vinculo {
-  padding-block-start: var(--e4);
-  border-block-start: 1px solid var(--filete-2);
+.hito {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  column-gap: var(--e3);
 }
 
-.perfil__vinculo-cargo {
+.hito__riel {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+/* El riel: una línea vertical que atraviesa el punto, de arriba a abajo del
+   `<li>`. En el primer y el último hito se recorta a la mitad para no
+   sobresalir de la lista. */
+.hito__riel::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inline-size: 2px;
+  background: var(--filete-2);
+}
+
+.hito:first-child .hito__riel::before {
+  inset-block-start: 50%;
+}
+
+.hito:last-child .hito__riel::before {
+  inset-block-end: 50%;
+}
+
+.hito__punto {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  inline-size: 0.7rem;
+  block-size: 0.7rem;
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  border: 2px solid var(--tinta-2);
+}
+
+.hito--vigente .hito__punto {
+  border-color: var(--tinta-marca);
+  background: var(--tinta-marca);
+}
+
+.hito__cuerpo {
+  padding-block-end: var(--e4);
+}
+
+.hito:last-child .hito__cuerpo {
+  padding-block-end: 0;
+}
+
+.hito__periodo {
   margin: 0;
+  color: var(--tinta-2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.hito--vigente .hito__periodo {
+  color: var(--tinta-marca);
+}
+
+.hito__cargo {
+  margin: var(--e1) 0 0;
   font-weight: 600;
   color: var(--tinta);
 }
 
-.perfil__vinculo-departamento {
+.hito__departamento {
   font-weight: 400;
   color: var(--tinta-2);
 }
 
-.perfil__vinculo-institucion {
-  margin: var(--e1) 0 0;
-  color: var(--tinta);
-}
-
-.perfil__vinculo-periodo {
-  margin: var(--e1) 0 0;
+.hito__institucion {
+  margin: 2px 0 0;
   color: var(--tinta-2);
-  font-size: 14px;
-  text-transform: capitalize;
 }
 
-/* --- Publicaciones: un repositorio de divulgación, con la anatomía de una
-   entrada de feed —firma, cuerpo, imagen y la interacción abajo—. Cada post es
-   una tarjeta con filete propio y no una fila separada por una línea: lo que se
-   lee de arriba a abajo es contenido de peso, no una lista de anuncios. --- */
+/* --- Publicaciones: un feed al estilo de una red social. La sección no es una
+   `app-card` —sería una tarjeta blanca gigante con los posts adentro—: es un
+   título y una pila de tarjetas, cada post la suya, con la imagen a sangre y la
+   interacción al pie. */
+.perfil__feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+}
+
+.perfil__feed-cabecera h2 {
+  margin: 0;
+}
+
+.perfil__feed-cabecera .caption {
+  margin: var(--e1) 0 0;
+}
+
 .perfil__publicaciones {
   display: flex;
   flex-direction: column;
@@ -264,104 +401,9 @@
   list-style: none;
 }
 
-.publicacion {
-  border: 1px solid var(--filete-2);
-  border-radius: var(--r-card);
-  padding: var(--e4);
-  background: var(--sup-tarjeta);
-}
-
-.publicacion__cabecera {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--e3);
-}
-
-.publicacion__avatar {
-  flex: none;
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
-  border-radius: var(--r-pill);
-  object-fit: cover;
-  background: var(--menta);
-}
-
-.publicacion__avatar--iniciales {
-  display: grid;
-  place-items: center;
-  color: var(--tinta-marca);
-  font-family: var(--f-titulo);
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.publicacion__firma {
-  min-inline-size: 0;
-}
-
-.publicacion__autor {
-  margin: 0;
-  font-weight: 600;
-  color: var(--tinta);
-}
-
-.publicacion__titular {
-  margin: 0;
-  font-size: 14px;
-  color: var(--tinta-2);
-}
-
-.publicacion__fecha {
-  margin: 2px 0 0;
-  font-size: 13px;
-  color: var(--tinta-2);
-  text-transform: capitalize;
-}
-
-.publicacion__cuerpo {
-  margin: var(--e3) 0 0;
-  max-inline-size: 70ch;
-  color: var(--tinta);
-  white-space: pre-line;
-  line-height: 1.6;
-}
-
-.publicacion__medios {
-  margin-block-start: var(--e3);
-  display: grid;
-  gap: var(--e2);
-}
-
-.publicacion__medios[data-cantidad='varias'] {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-.publicacion__imagen {
-  inline-size: 100%;
-  max-block-size: 26rem;
-  object-fit: cover;
-  border-radius: var(--r-card);
-  border: 1px solid var(--filete-2);
-}
-
-.publicacion__pie {
-  margin-block-start: var(--e3);
-  padding-block-start: var(--e3);
-  border-block-start: 1px solid var(--filete-2);
-  display: flex;
-  gap: var(--e3);
-}
-
-.publicacion__conteo {
-  font-size: 13px;
-  color: var(--tinta-2);
-}
-
-@media (max-width: 40rem) {
-  .publicacion__medios[data-cantidad='varias'] {
-    grid-template-columns: 1fr;
-  }
-}
+/* Cada `<li>` es sólo el ancla de la lista; la tarjeta la dibuja
+   `app-publicacion-post`, que se comparte con la vista de una publicación
+   suelta. */
 
 @media (max-width: 48rem) {
   .perfil__datos {
