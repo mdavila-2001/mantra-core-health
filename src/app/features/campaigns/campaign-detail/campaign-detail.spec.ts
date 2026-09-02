@@ -75,7 +75,7 @@ describe('CampaignDetail', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'promociones/:campaignId', component: CampaignDetail }]),
+        provideRouter([{ path: 'promotions/:campaignId', component: CampaignDetail }]),
       ],
     });
     client = TestBed.inject(PharmacyCampaignsClient);
