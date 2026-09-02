@@ -28,6 +28,9 @@ import type {
   AgendaResource,
   AgendaSlot,
   Booking,
+  NewPaymentState,
+  PaymentStateCode,
+  PaymentStateInfo,
 } from '../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
@@ -38,6 +41,9 @@ import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
+import { Menu } from '../../shared/components/molecules/menu/menu';
+import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
+import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { Link } from '../../shared/components/atoms/link/link';
 import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
@@ -147,6 +153,21 @@ const CODIGOS_INICIABLES: ReadonlySet<string> = new Set([
 /** El único estado desde el que se cierra una atención. */
 const CODIGO_EN_CURSO = 'BOOKING_IN_PROGRESS';
 
+/**
+ * Estados que **no** admiten estado de pago (TAREA-13 punto 5).
+ *
+ * Es la mitad excluyente de la regla del propietario: «sí es excluyente con
+ * rechazada y cancelada». Rechazar cancela con el motivo `CANCEL_REJECTED`, así
+ * que las dos palabras caen en el mismo código y la lista tiene uno solo.
+ *
+ * Con el código vacío —estado sin resolver— **no se ofrece**, por lo mismo que
+ * las demás acciones: ofrecer sobre un estado desconocido es adivinar.
+ *
+ * Esto NO es la garantía: el servidor responde 422 igual. Es no ofrecer un
+ * botón que va a fallar.
+ */
+const CODIGOS_SIN_PAGO: ReadonlySet<string> = new Set(['BOOKING_CANCELLED']);
+
 /** Estados en los que el backend acepta mover o cancelar una cita vigente. */
 const CODIGOS_VIGENTES: ReadonlySet<string> = new Set(['BOOKING_CONFIRMED', 'BOOKING_CHECKED_IN']);
 
@@ -254,6 +275,22 @@ export interface CitaVisible {
    * ninguna pantalla mostraba. No hizo falta tocar la API para esta columna.
    */
   readonly solicitada: Date;
+  /**
+   * El estado de pago, o `null` si nadie lo marcó (TAREA-13 punto 5).
+   *
+   * `null` **no** es «pendiente de pago»: pendiente es una afirmación que
+   * alguien firmó. La celda los distingue, y por eso muestra un guión y no una
+   * etiqueta.
+   */
+  readonly pago: PaymentStateInfo | null;
+  /**
+   * Si esta cita admite estado de pago.
+   *
+   * Es la regla del propietario —«sí es excluyente con rechazada y
+   * cancelada»— aplicada a la oferta: un botón que va a volver con 422 es un
+   * error con forma de oferta. **La garantía real está en el servidor**, no acá.
+   */
+  readonly admitePago: boolean;
   /** Con la llegada ya registrada, el check-in no se vuelve a ofrecer. */
   readonly llegadaRegistrada: boolean;
 }
@@ -317,6 +354,9 @@ export interface CupoVisible {
     AppButton,
     AppButtonLink,
     Badge,
+    Menu,
+    MenuItem,
+    MenuTrigger,
     StatusSeal,
     DataTable,
     DatePipe,
@@ -356,6 +396,9 @@ export class Agenda {
 
   private readonly celdaSolicitada =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaSolicitada');
+
+  private readonly celdaPago =
+    viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPago');
   private readonly celdaPaciente =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPaciente');
   private readonly celdaFranja =
@@ -890,6 +933,10 @@ export class Agenda {
     { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
     { key: 'paciente', header: 'Paciente', priority: 2, cell: this.celdaPaciente() },
     { key: 'motivo', header: 'Motivo', priority: 3 },
+    // Prioridad 2: en pantalla chica cede antes que el estado de la cita y la
+    // fecha, pero antes que el motivo. Quien mira la agenda en el teléfono
+    // quiere saber a qué hora y con quién; el pago viene después.
+    { key: 'pago', header: 'Pago', priority: 2, cell: this.celdaPago() },
     // La columna sólo existe para quien puede ejecutar las acciones: ofrecer
     // botones que la API va a rechazar con 403 es ofrecer un error.
     ...(this.puedeAtender()
@@ -1116,6 +1163,67 @@ export class Agenda {
    * decenas de veces por turno. Lo destructivo —rechazar— sí lo pide, y además
    * con motivo.
    */
+  /**
+   * Marca el estado de pago de la cita — TAREA-13, punto 5.
+   *
+   * **El seguro se conserva** cuando se cambia sólo el estado, y viceversa: son
+   * dos preguntas distintas, y cambiar una no puede responder la otra por su
+   * cuenta. Sin este cuidado, pasar de «pendiente» a «pagada» borraría en
+   * silencio que la cita se había cubierto con seguro.
+   *
+   * No hay confirmación previa a propósito: es reversible en un clic y queda
+   * firmado con quién y cuándo, así que un diálogo de más sólo agregaría
+   * fricción a una acción que se repite muchas veces por día.
+   */
+  protected marcarPago(cita: CitaVisible, state: PaymentStateCode): void {
+    this.aplicarPago(cita, { state, insuranceUsed: cita.pago?.insuranceUsed ?? false });
+  }
+
+  /** Alterna la marca de seguro sin tocar el estado. */
+  protected alternarSeguro(cita: CitaVisible): void {
+    // Sin estado marcado no hay qué alternar: la marca de seguro acompaña a un
+    // estado, no existe suelta. El menú no la ofrece en ese caso.
+    if (cita.pago === null) {
+      return;
+    }
+    this.aplicarPago(cita, {
+      state: cita.pago.state,
+      insuranceUsed: !cita.pago.insuranceUsed,
+    });
+  }
+
+  private aplicarPago(cita: CitaVisible, cambio: NewPaymentState): void {
+    if (this.operando() !== null) {
+      return;
+    }
+    this.operando.set(cita.id);
+
+    this.scheduling.setPaymentState(cita.id, cambio).subscribe({
+      next: (estado) => {
+        this.operando.set(null);
+        this.toast.success(
+          estado.insuranceUsed ? `${estado.label}, con seguro.` : `${estado.label}.`,
+          'Pago actualizado',
+        );
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFallo(error, 'No se pudo cambiar el estado de pago.');
+      },
+    });
+  }
+
+  /** Los tres estados, para el menú. La etiqueta viene del servidor al leer. */
+  protected readonly estadosDePago: readonly {
+    readonly code: PaymentStateCode;
+    readonly label: string;
+  }[] = [
+    { code: 'PENDING', label: 'Pendiente de pago' },
+    { code: 'PARTIALLY_PAID', label: 'Parcialmente pagada' },
+    { code: 'PAID', label: 'Pagada' },
+  ];
+
   protected aceptarCita(cita: CitaVisible): void {
     if (this.operando() !== null) {
       return;
@@ -1445,15 +1553,18 @@ export class Agenda {
 
   private aCitaVisible(cita: Booking): CitaVisible {
     const paciente = cita.patientProfileId ?? null;
+    const estado = toBookingStatusPresentation(
+      cita.statusConceptId === undefined
+        ? undefined
+        : this.etiquetas().get(cita.statusConceptId),
+      SIN_DATO,
+    );
     return {
       id: cita.id,
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       recurso: this.nombreDeRecurso(cita.resourceId),
-      estado: toBookingStatusPresentation(
-        cita.statusConceptId === undefined ? undefined : this.etiquetas().get(cita.statusConceptId),
-        SIN_DATO,
-      ),
+      estado,
       motivo: cita.reasonText ?? SIN_DATO,
       patientProfileId: paciente,
       rutaPaciente:
@@ -1470,6 +1581,8 @@ export class Agenda {
       },
       llegadaRegistrada: cita.checkedInAt !== undefined,
       solicitada: cita.createdAt,
+      pago: cita.paymentState ?? null,
+      admitePago: estado.code !== '' && !CODIGOS_SIN_PAGO.has(estado.code),
     };
   }
 

@@ -133,6 +133,38 @@ export interface AgendaSlotQuery {
  * `startAt` puede ser `undefined` aunque la cita exista: el instante se toma
  * del cupo, y una cita que quedó sin cupo no tiene ninguno que mostrar.
  */
+/**
+ * Estado de pago de una cita (TAREA-13 punto 5).
+ *
+ * Son **tres**, y el del medio es el que existe porque el propietario lo pidió:
+ * un booleano no puede decir «parcialmente pagada». `reembolsada` quedó fuera
+ * a propósito.
+ */
+export type PaymentStateCode = 'PENDING' | 'PARTIALLY_PAID' | 'PAID';
+
+/**
+ * El estado de pago tal como lo publica la API.
+ *
+ * La **etiqueta la manda el servidor**: la pantalla no traduce estados. Y
+ * `markedByUserId`/`markedAt` viajan siempre porque marcar una cita como pagada
+ * es una afirmación sobre el dinero de alguien y no puede quedar sin autor.
+ */
+export interface PaymentStateInfo {
+  readonly state: PaymentStateCode;
+  readonly label: string;
+  readonly conceptId: string;
+  /** Marca **separada** del estado: se puede estar a medio pagar con seguro o sin él. */
+  readonly insuranceUsed: boolean;
+  readonly markedByUserId: string;
+  readonly markedAt: Date;
+}
+
+/** Cuerpo de `PUT /scheduling/bookings/:id/payment-state`. */
+export interface NewPaymentState {
+  readonly state: PaymentStateCode;
+  readonly insuranceUsed?: boolean;
+}
+
 export interface Booking {
   readonly id: string;
   readonly patientProfileId?: string;
@@ -148,6 +180,14 @@ export interface Booking {
    * registro posterior.
    */
   readonly appointmentId?: string | null;
+  /**
+   * El estado de pago, **si alguien lo marcó**.
+   *
+   * Ausente no es «pendiente de pago»: pendiente es algo que alguien firmó, la
+   * ausencia es que del pago todavía no se dijo nada. Comprobalo con
+   * `if (cita.paymentState)`, nunca con un valor por defecto.
+   */
+  readonly paymentState?: PaymentStateInfo;
   readonly startAt?: Date;
   readonly endAt?: Date;
   readonly statusConceptId: string;
