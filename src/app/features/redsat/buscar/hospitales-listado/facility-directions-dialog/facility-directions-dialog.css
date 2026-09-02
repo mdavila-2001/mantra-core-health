@@ -1,0 +1,119 @@
+/* ============================================================================
+    «Cómo llegar» — el contenido del diálogo. El marco, el fondo y el bloqueo
+    del scroll los pone `content-dialog`; acá va lo de adentro.
+    ========================================================================== */
+
+.llegar__origen {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin-block-end: var(--sp-4);
+}
+
+.llegar__titulo {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.llegar__nota {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.llegar__activo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.llegar__distancia {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.llegar__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+}
+
+/* ---- mapa --------------------------------------------------------------- */
+
+.llegar__mapa {
+    margin: 0 0 var(--sp-4);
+}
+
+/* Alto fijo y no `aspect-ratio`: en el teléfono, con un modal que ya está
+   acotado en alto, una proporción 16:9 deja el mapa de 190 px y no se lee
+   ninguna calle. */
+.llegar__mapa app-map {
+    display: block;
+    block-size: 16rem;
+    border-radius: var(--r-md);
+    overflow: hidden;
+}
+
+.llegar__pie {
+    margin-block-start: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* ---- los mismos datos, escritos ----------------------------------------- */
+
+.llegar__datos {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0;
+}
+
+.llegar__fila {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.llegar__fila dt {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: 600;
+}
+
+.llegar__fila dd {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 48rem) {
+    .llegar__mapa app-map {
+        block-size: 22rem;
+    }
+
+    .llegar__fila {
+        flex-direction: row;
+        align-items: baseline;
+        gap: var(--sp-3);
+    }
+
+    .llegar__fila dt {
+        flex: none;
+        inline-size: 10rem;
+    }
+}
