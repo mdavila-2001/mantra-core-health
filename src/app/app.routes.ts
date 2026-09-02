@@ -860,7 +860,6 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
  */
 const RUTAS_HEREDADAS_DEL_BUSCADOR: Readonly<Record<string, string>> = {
   publicaciones: '/posts',
-  buscar: '/search',
   'buscar/profesionales': '/search/practitioners',
   'buscar/medicamentos': '/search/medications',
   'buscar/hospitales': '/search/hospitals',
@@ -991,6 +990,18 @@ function rutasDeBusquedaPublica(): Routes {
             ),
         },
       ],
+    },
+    {
+      /* TAREA-29 · `/buscar` a secas tiene que seguir abriendo el buscador.
+         No alcanza con un `redirectTo` en la tabla del final: el archivo
+         GENERADO `features/redsat/redsat.routes.ts` declara su propio `buscar`
+         —con `{ path: '', redirectTo: 'buscador-listado' }` adentro— y lo
+         captura antes de que el router llegue ahí. Se declara acá, en el
+         bloque que va primero, y con el redirect en el hijo vacío para que
+         `/buscar/loQueSea` **no** coincida y siga retrocediendo a las doce
+         pantallas portadas que cuelgan de aquél. */
+      path: 'buscar',
+      children: [{ path: '', pathMatch: 'full', redirectTo: '/search' }],
     },
     {
       path: 'search',
