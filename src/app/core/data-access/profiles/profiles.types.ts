@@ -223,10 +223,22 @@ export interface AccountLink {
     la etiqueta la resuelve `terminology`, nunca esta capa.
     ========================================================================== */
 
-/** Filtro del listado. Sin `cursor` pide la primera página. */
+/**
+ * Filtro del listado. Sin `cursor` pide la primera página.
+ *
+ * `nationalId` y `issuerAdministrativeAreaConceptId` son el camino de la
+ * TAREA-07: encontrar a alguien por su documento aunque su nombre o su código
+ * de paciente no contengan el texto buscado. El departamento sólo tiene
+ * efecto junto al documento — un carnet sin departamento no es único en
+ * Bolivia, y `issuerAdministrativeAreaConceptId` es nullable en el modelo.
+ */
 export interface PatientSearchQuery {
   /** Texto libre sobre el código de paciente y el nombre. */
   readonly query?: string;
+  /** Documento de identidad exacto (`common.identifiers.value`). */
+  readonly nationalId?: string;
+  /** Departamento que lo expidió (`VS_BO_DEPARTMENT`). */
+  readonly issuerAdministrativeAreaConceptId?: string;
   /** Cursor opaco devuelto por la página anterior. */
   readonly cursor?: string;
   readonly limit?: number;

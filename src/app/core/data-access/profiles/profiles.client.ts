@@ -88,6 +88,15 @@ export class ProfilesClient {
     if (query.query !== undefined && query.query !== '') {
       params = params.set('q', query.query);
     }
+    if (query.nationalId !== undefined && query.nationalId !== '') {
+      params = params.set('nationalId', query.nationalId);
+    }
+    if (query.issuerAdministrativeAreaConceptId !== undefined) {
+      params = params.set(
+        'issuerAdministrativeAreaConceptId',
+        query.issuerAdministrativeAreaConceptId,
+      );
+    }
     if (query.cursor !== undefined) {
       params = params.set('cursor', query.cursor);
     }
