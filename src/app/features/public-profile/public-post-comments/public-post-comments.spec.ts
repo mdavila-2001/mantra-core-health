@@ -10,7 +10,7 @@ import type {
   PublicPage,
 } from '@core/data-access/public-directory/public-directory.types';
 
-import { comentarioDestacado, PublicacionComentarios } from './publicacion-comentarios';
+import { comentarioDestacado, PublicPostComments } from './public-post-comments';
 
 function comentario(
   id: string,
@@ -85,12 +85,12 @@ describe('comentarioDestacado', () => {
 class RutaVacia {}
 
 @Component({
-  imports: [PublicacionComentarios],
-  template: '<app-publicacion-comentarios postId="post-1" />',
+  imports: [PublicPostComments],
+  template: '<app-public-post-comments postId="post-1" />',
 })
 class HostComponent {}
 
-describe('PublicacionComentarios', () => {
+describe('PublicPostComments', () => {
   let fixture: ComponentFixture<HostComponent>;
   let respuestasPedidas: string[];
 
@@ -166,19 +166,19 @@ describe('PublicacionComentarios', () => {
     it('cada comentario tiene su «Responder»', async () => {
       await montar({ raiz: () => of(pagina([comentario('a'), comentario('b')])) });
 
-      expect(botones('comentario-responder')).toHaveLength(2);
+      expect(botones('comment-reply')).toHaveLength(2);
     });
 
     it('sin respuestas NO se ofrece «Ver N respuestas»', async () => {
       await montar({ raiz: () => of(pagina([comentario('a', { replyCount: 0 })])) });
 
-      expect(botones('comentario-ver-respuestas')).toHaveLength(0);
+      expect(botones('comment-replies-toggle')).toHaveLength(0);
     });
 
     it('con respuestas dice cuántas, y en singular cuando es una', async () => {
       await montar({ raiz: () => of(pagina([comentario('a', { replyCount: 1 })])) });
 
-      expect(botones('comentario-ver-respuestas')[0]?.textContent?.trim()).toBe('Ver 1 respuesta');
+      expect(botones('comment-replies-toggle')[0]?.textContent?.trim()).toBe('Ver 1 respuesta');
     });
 
     it('«Ver N respuestas» las pide y las dibuja', async () => {
@@ -187,7 +187,7 @@ describe('PublicacionComentarios', () => {
         respuestas: () => of(pagina([comentario('r1'), comentario('r2')])),
       });
 
-      botones('comentario-ver-respuestas')[0]?.click();
+      botones('comment-replies-toggle')[0]?.click();
       await fixture.whenStable();
 
       expect(respuestasPedidas).toEqual(['a']);
@@ -202,7 +202,7 @@ describe('PublicacionComentarios', () => {
         respuestas: () => of(pagina([comentario('r1')])),
       });
 
-      const boton = () => botones('comentario-ver-respuestas')[0];
+      const boton = () => botones('comment-replies-toggle')[0];
       expect(boton()?.getAttribute('aria-expanded')).toBe('false');
 
       boton()?.click();
@@ -216,9 +216,9 @@ describe('PublicacionComentarios', () => {
         respuestas: () => of(pagina([comentario('r1')])),
       });
 
-      botones('comentario-ver-respuestas')[0]?.click();
+      botones('comment-replies-toggle')[0]?.click();
       await fixture.whenStable();
-      botones('comentario-ver-respuestas')[0]?.click();
+      botones('comment-replies-toggle')[0]?.click();
       await fixture.whenStable();
 
       expect(root().querySelectorAll('.comentarios__lista--respuestas')).toHaveLength(0);
@@ -269,7 +269,7 @@ describe('PublicacionComentarios', () => {
     it('lleva a /auth con retorno a donde se estaba leyendo', async () => {
       await montar({ raiz: () => of(pagina([comentario('a')])), conSesion: false });
 
-      botones('comentario-responder')[0]?.click();
+      botones('comment-reply')[0]?.click();
       await fixture.whenStable();
 
       expect(TestBed.inject(Router).url).toBe('/auth?returnUrl=%2Fposts');
@@ -278,7 +278,7 @@ describe('PublicacionComentarios', () => {
     it('el botón NO se esconde por falta de sesión', async () => {
       await montar({ raiz: () => of(pagina([comentario('a')])), conSesion: false });
 
-      expect(botones('comentario-responder')).toHaveLength(1);
+      expect(botones('comment-reply')).toHaveLength(1);
     });
   });
 
@@ -319,7 +319,7 @@ describe('PublicacionComentarios', () => {
       });
 
       expect(root().querySelectorAll('.comentario')).toHaveLength(1);
-      botones('comentarios-ver-mas')[0]?.click();
+      botones('comments-load-more')[0]?.click();
       await fixture.whenStable();
 
       expect(root().querySelectorAll('.comentario')).toHaveLength(2);

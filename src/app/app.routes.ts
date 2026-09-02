@@ -929,8 +929,8 @@ function rutasDeFichasPublicas(): Routes {
               data: { kind, pantallaReal: true },
               resolve: { perfil: perfilPublicoResolver },
               loadComponent: () =>
-                import('./features/public-profile/publicacion-detalle/publicacion-detalle').then(
-                  (m) => m.PublicacionDetalle,
+                import('./features/public-profile/public-post-detail/public-post-detail').then(
+                  (m) => m.PublicPostDetail,
                 ),
             },
           ]

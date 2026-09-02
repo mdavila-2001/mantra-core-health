@@ -11,7 +11,7 @@ import type {
   PublicPostReaction,
 } from '@core/data-access/public-directory/public-directory.types';
 
-import { PublicacionReacciones } from './publicacion-reacciones';
+import { PublicPostReactions } from './public-post-reactions';
 
 const DIALOG_CSS = 'src/app/shared/components/organisms/content-dialog/content-dialog.css';
 
@@ -37,17 +37,17 @@ function pagina(
 class RutaVacia {}
 
 @Component({
-  imports: [PublicacionReacciones],
+  imports: [PublicPostReactions],
   template: `
     <button type="button" id="disparador">4</button>
-    <app-publicacion-reacciones postId="post-1" [total]="4" (cerrado)="cierres = cierres + 1" />
+    <app-public-post-reactions postId="post-1" [total]="4" (cerrado)="cierres = cierres + 1" />
   `,
 })
 class HostComponent {
   cierres = 0;
 }
 
-describe('PublicacionReacciones', () => {
+describe('PublicPostReactions', () => {
   let fixture: ComponentFixture<HostComponent>;
   let host: HostComponent;
   let pedidos: { cursor?: string }[];
@@ -144,7 +144,7 @@ describe('PublicacionReacciones', () => {
 
       expect(root().querySelectorAll('.reacciones__persona')).toHaveLength(1);
 
-      root().querySelector<HTMLButtonElement>('[data-testid="reacciones-ver-mas"]')?.click();
+      root().querySelector<HTMLButtonElement>('[data-testid="reactions-load-more"]')?.click();
       await fixture.whenStable();
 
       expect(pedidos[1]?.cursor).toBe('cursor-2');
@@ -154,7 +154,7 @@ describe('PublicacionReacciones', () => {
     it('sin más páginas no ofrece «Ver más»', async () => {
       await montar(() => of(pagina([persona('a')])));
 
-      expect(root().querySelector('[data-testid="reacciones-ver-mas"]')).toBeNull();
+      expect(root().querySelector('[data-testid="reactions-load-more"]')).toBeNull();
     });
   });
 

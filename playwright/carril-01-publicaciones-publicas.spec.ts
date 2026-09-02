@@ -160,8 +160,8 @@ test.describe('la tarjeta de publicación', () => {
     );
 
     const tarjeta = conVarias.locator('xpath=ancestor::article');
-    const anterior = tarjeta.locator('[data-testid="imagen-anterior"]');
-    const siguiente = tarjeta.locator('[data-testid="imagen-siguiente"]');
+    const anterior = tarjeta.locator('[data-testid="image-previous"]');
+    const siguiente = tarjeta.locator('[data-testid="image-next"]');
 
     await expect(anterior).toBeDisabled();
     await expect(siguiente).toBeEnabled();
@@ -177,11 +177,11 @@ test.describe('la tarjeta de publicación', () => {
   }) => {
     await abrirSinSesion(page, '/posts');
 
-    const contador = page.locator('[data-testid="publicacion-reacciones"]').first();
+    const contador = page.locator('[data-testid="post-reactions"]').first();
     test.skip((await contador.count()) === 0, 'ninguna publicación del feed tiene reacciones');
 
     await contador.click();
-    const modal = page.locator('[data-testid="modal"]');
+    const modal = page.locator('[data-testid="content-dialog"]');
     await expect(modal).toBeVisible();
 
     // El foco arranca adentro: `showModal()` lo garantiza.
@@ -197,7 +197,7 @@ test.describe('la tarjeta de publicación', () => {
   }) => {
     await abrirSinSesion(page, '/posts');
 
-    const contador = page.locator('[data-testid="publicacion-comentarios"]').first();
+    const contador = page.locator('[data-testid="post-comments"]').first();
     test.skip((await contador.count()) === 0, 'ninguna publicación del feed tiene comentarios');
 
     await expect(contador).toHaveAttribute('aria-expanded', 'false');
@@ -205,7 +205,7 @@ test.describe('la tarjeta de publicación', () => {
     await expect(contador).toHaveAttribute('aria-expanded', 'true');
 
     // En línea: dentro de la tarjeta, y sin `<dialog>` de por medio.
-    const desplegable = page.locator('app-publicacion-comentarios').first();
+    const desplegable = page.locator('app-public-post-comments').first();
     await expect(desplegable).toBeVisible();
     await expect(desplegable.locator('dialog')).toHaveCount(0);
 

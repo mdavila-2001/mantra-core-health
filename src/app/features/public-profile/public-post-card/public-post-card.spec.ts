@@ -6,9 +6,9 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
 
-import { PublicacionPost } from './publicacion-post';
+import { PublicPostCard } from './public-post-card';
 
-const POST_CSS = 'src/app/features/public-profile/publicacion-post/publicacion-post.css';
+const POST_CSS = 'src/app/features/public-profile/public-post-card/public-post-card.css';
 
 function unPost(mediaUrls: readonly string[]): PublicPostSummary {
   return {
@@ -25,9 +25,9 @@ function unPost(mediaUrls: readonly string[]): PublicPostSummary {
 class RutaVacia {}
 
 @Component({
-  imports: [PublicacionPost],
+  imports: [PublicPostCard],
   template: `
-    <app-publicacion-post
+    <app-public-post-card
       [post]="post()"
       slug="dra-lopez"
       autorNombre="Dra. López"
@@ -40,7 +40,7 @@ class HostComponent {
   readonly post = signal<PublicPostSummary>(unPost([]));
 }
 
-describe('PublicacionPost', () => {
+describe('PublicPostCard', () => {
   let fixture: ComponentFixture<HostComponent>;
   let host: HostComponent;
 
@@ -107,33 +107,33 @@ describe('PublicacionPost', () => {
     it('con una sola imagen no dibuja los pasos', async () => {
       await conImagenes(1);
 
-      expect(boton('imagen-anterior')).toBeNull();
-      expect(boton('imagen-siguiente')).toBeNull();
+      expect(boton('image-previous')).toBeNull();
+      expect(boton('image-next')).toBeNull();
     });
 
     it('con dos o más dibuja los dos botones y el «n de N»', async () => {
       await conImagenes(3);
 
-      expect(boton('imagen-anterior')).not.toBeNull();
-      expect(boton('imagen-siguiente')).not.toBeNull();
+      expect(boton('image-previous')).not.toBeNull();
+      expect(boton('image-next')).not.toBeNull();
       expect(root().querySelector('.publicacion__contador')?.textContent?.trim()).toBe('1 de 3');
     });
 
     it('los botones tienen nombre accesible en castellano', async () => {
       await conImagenes(2);
 
-      expect(boton('imagen-anterior')?.getAttribute('aria-label')).toBe('Imagen anterior');
-      expect(boton('imagen-siguiente')?.getAttribute('aria-label')).toBe('Imagen siguiente');
+      expect(boton('image-previous')?.getAttribute('aria-label')).toBe('Imagen anterior');
+      expect(boton('image-next')?.getAttribute('aria-label')).toBe('Imagen siguiente');
     });
 
     it('avanza y retrocede, y el contador acompaña', async () => {
       await conImagenes(3);
 
-      boton('imagen-siguiente')?.click();
+      boton('image-next')?.click();
       await fixture.whenStable();
       expect(root().querySelector('.publicacion__contador')?.textContent?.trim()).toBe('2 de 3');
 
-      boton('imagen-anterior')?.click();
+      boton('image-previous')?.click();
       await fixture.whenStable();
       expect(root().querySelector('.publicacion__contador')?.textContent?.trim()).toBe('1 de 3');
     });
@@ -145,7 +145,7 @@ describe('PublicacionPost', () => {
       expect(imagenes()).toHaveLength(1);
       expect(imagenes()[0]?.getAttribute('src')).toBe('https://cdn.local/foto-0.jpg');
 
-      boton('imagen-siguiente')?.click();
+      boton('image-next')?.click();
       await fixture.whenStable();
       expect(imagenes()[0]?.getAttribute('src')).toBe('https://cdn.local/foto-1.jpg');
     });
@@ -153,24 +153,24 @@ describe('PublicacionPost', () => {
     it('en el primer paso «anterior» queda deshabilitado', async () => {
       await conImagenes(2);
 
-      expect(boton('imagen-anterior')?.disabled).toBe(true);
-      expect(boton('imagen-siguiente')?.disabled).toBe(false);
+      expect(boton('image-previous')?.disabled).toBe(true);
+      expect(boton('image-next')?.disabled).toBe(false);
     });
 
     it('en el último paso «siguiente» queda deshabilitado: no da la vuelta', async () => {
       await conImagenes(2);
-      boton('imagen-siguiente')?.click();
+      boton('image-next')?.click();
       await fixture.whenStable();
 
-      expect(boton('imagen-siguiente')?.disabled).toBe(true);
-      expect(boton('imagen-anterior')?.disabled).toBe(false);
+      expect(boton('image-next')?.disabled).toBe(true);
+      expect(boton('image-previous')?.disabled).toBe(false);
     });
 
     it('el índice se acota si la publicación cambia por otra con menos imágenes', async () => {
       await conImagenes(5);
-      boton('imagen-siguiente')?.click();
-      boton('imagen-siguiente')?.click();
-      boton('imagen-siguiente')?.click();
+      boton('image-next')?.click();
+      boton('image-next')?.click();
+      boton('image-next')?.click();
       await fixture.whenStable();
       expect(root().querySelector('.publicacion__contador')?.textContent?.trim()).toBe('4 de 5');
 

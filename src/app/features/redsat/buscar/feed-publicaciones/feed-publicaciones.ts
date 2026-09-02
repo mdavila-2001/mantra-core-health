@@ -6,7 +6,7 @@ import type { PublicFeedPost } from '@core/data-access/public-directory/public-d
 import { ToastService } from '@shared/components/molecules/toast/toast.service';
 import { inicialesDe } from '@shared/text/iniciales';
 import { ReportPost } from '../../../feed/report-post/report-post';
-import { PublicacionPost } from '../../../public-profile/publicacion-post/publicacion-post';
+import { PublicPostCard } from '../../../public-profile/public-post-card/public-post-card';
 
 /** En qué estado está la pantalla, para el `@switch` de la plantilla. */
 type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
@@ -31,7 +31,7 @@ type EstadoFeed = 'carga' | 'datos' | 'vacio' | 'error';
  */
 @Component({
   selector: 'app-feed-publicaciones',
-  imports: [ReportPost, RouterLink, PublicacionPost],
+  imports: [ReportPost, RouterLink, PublicPostCard],
   templateUrl: './feed-publicaciones.html',
   styleUrl: './feed-publicaciones.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

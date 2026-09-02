@@ -35,7 +35,7 @@
             data-variante="secundario"
             data-tam="sm"
             type="button"
-            data-testid="comentarios-ver-mas"
+            data-testid="comments-load-more"
             [disabled]="cargandoMas()"
             (click)="verMas()"
           >
@@ -110,7 +110,7 @@
         <button
           type="button"
           class="comentario__accion"
-          data-testid="comentario-responder"
+          data-testid="comment-reply"
           (click)="responder()"
         >
           Responder
@@ -120,7 +120,7 @@
           <button
             type="button"
             class="comentario__accion"
-            data-testid="comentario-ver-respuestas"
+            data-testid="comment-replies-toggle"
             [attr.aria-expanded]="respuestasAbiertas(comentario.id)"
             [disabled]="cargandoRespuestasDe(comentario.id)"
             (click)="alternarRespuestas(comentario.id)"

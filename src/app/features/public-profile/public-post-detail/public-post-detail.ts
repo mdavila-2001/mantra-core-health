@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import type { PerfilPublicoResuelto } from '../public-profile.resolver';
 import { inicialesDe } from '@shared/text/iniciales';
-import { PublicacionPost } from '../publicacion-post/publicacion-post';
+import { PublicPostCard } from '../public-post-card/public-post-card';
 
 /**
  * La vista de **una** publicación, con su URL propia
@@ -20,13 +20,13 @@ import { PublicacionPost } from '../publicacion-post/publicacion-post';
  * inexistente —no se distingue «privada» de «no existe», igual que en la ficha.
  */
 @Component({
-  selector: 'app-publicacion-detalle',
-  imports: [RouterLink, PublicacionPost],
-  templateUrl: './publicacion-detalle.html',
-  styleUrl: './publicacion-detalle.css',
+  selector: 'app-public-post-detail',
+  imports: [RouterLink, PublicPostCard],
+  templateUrl: './public-post-detail.html',
+  styleUrl: './public-post-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PublicacionDetalle {
+export class PublicPostDetail {
   private readonly ruta = inject(ActivatedRoute);
 
   private readonly datos = toSignal(this.ruta.data, { requireSync: true });

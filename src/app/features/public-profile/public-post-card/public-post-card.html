@@ -115,7 +115,7 @@
           <button
             type="button"
             class="publicacion__paso"
-            data-testid="imagen-anterior"
+            data-testid="image-previous"
             aria-label="Imagen anterior"
             [disabled]="!hayAnterior()"
             (click)="verAnterior()"
@@ -133,7 +133,7 @@
           <button
             type="button"
             class="publicacion__paso"
-            data-testid="imagen-siguiente"
+            data-testid="image-next"
             aria-label="Imagen siguiente"
             [disabled]="!haySiguiente()"
             (click)="verSiguiente()"
@@ -156,7 +156,7 @@
         <button
           type="button"
           class="publicacion__contador-boton publicacion__reacciones"
-          data-testid="publicacion-reacciones"
+          data-testid="post-reactions"
           (click)="abrirReacciones()"
         >
           <span class="publicacion__pulgar" aria-hidden="true">👍</span>
@@ -170,7 +170,7 @@
         <button
           type="button"
           class="publicacion__contador-boton"
-          data-testid="publicacion-comentarios"
+          data-testid="post-comments"
           [attr.aria-expanded]="comentariosAbiertos()"
           (click)="alternarComentarios()"
         >
@@ -183,12 +183,12 @@
   <!-- Desplegable en línea, dentro de la tarjeta: el pedido lo separa del modal
        de reacciones a propósito. -->
   @if (comentariosAbiertos()) {
-    <app-publicacion-comentarios [postId]="p.id" />
+    <app-public-post-comments [postId]="p.id" />
   }
 </article>
 
 @if (reaccionesAbiertas()) {
-  <app-publicacion-reacciones
+  <app-public-post-reactions
     [postId]="p.id"
     [total]="p.reactionCount"
     (cerrado)="cerrarReacciones()"

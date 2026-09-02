@@ -77,13 +77,13 @@ export function comentarioDestacado(
 }
 
 @Component({
-  selector: 'app-publicacion-comentarios',
+  selector: 'app-public-post-comments',
   imports: [DatePipe, NgTemplateOutlet, RouterLink],
-  templateUrl: './publicacion-comentarios.html',
-  styleUrl: './publicacion-comentarios.css',
+  templateUrl: './public-post-comments.html',
+  styleUrl: './public-post-comments.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PublicacionComentarios implements OnInit {
+export class PublicPostComments implements OnInit {
   private readonly directorio = inject(PublicDirectoryClient);
   private readonly router = inject(Router);
   private readonly sesion = inject(SessionStore);

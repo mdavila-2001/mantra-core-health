@@ -5,8 +5,8 @@ import { RouterLink } from '@angular/router';
 import { SessionStore } from '@core/auth/session.store';
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
 import { PostPreferencesMenu } from '@shared/components/molecules/post-preferences-menu/post-preferences-menu';
-import { PublicacionComentarios } from '../publicacion-comentarios/publicacion-comentarios';
-import { PublicacionReacciones } from '../publicacion-reacciones/publicacion-reacciones';
+import { PublicPostComments } from '../public-post-comments/public-post-comments';
+import { PublicPostReactions } from '../public-post-reactions/public-post-reactions';
 
 /**
  * Una publicación, con la anatomía de una entrada de feed de red social:
@@ -19,19 +19,19 @@ import { PublicacionReacciones } from '../publicacion-reacciones/publicacion-rea
  * entero y no se recorta.
  */
 @Component({
-  selector: 'app-publicacion-post',
+  selector: 'app-public-post-card',
   imports: [
     DatePipe,
     PostPreferencesMenu,
-    PublicacionComentarios,
-    PublicacionReacciones,
+    PublicPostComments,
+    PublicPostReactions,
     RouterLink,
   ],
-  templateUrl: './publicacion-post.html',
-  styleUrl: './publicacion-post.css',
+  templateUrl: './public-post-card.html',
+  styleUrl: './public-post-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PublicacionPost {
+export class PublicPostCard {
   readonly post = input.required<PublicPostSummary>();
   readonly autorNombre = input.required<string>();
   readonly autorHeadline = input<string | null>(null);

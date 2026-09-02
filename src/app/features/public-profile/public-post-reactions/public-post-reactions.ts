@@ -52,13 +52,13 @@ type EstadoLista = 'carga' | 'datos' | 'vacio' | 'error';
 const TAMANO_DE_PAGINA = 25;
 
 @Component({
-  selector: 'app-publicacion-reacciones',
+  selector: 'app-public-post-reactions',
   imports: [ContentDialog, NgTemplateOutlet, RouterLink],
-  templateUrl: './publicacion-reacciones.html',
-  styleUrl: './publicacion-reacciones.css',
+  templateUrl: './public-post-reactions.html',
+  styleUrl: './public-post-reactions.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PublicacionReacciones implements OnInit {
+export class PublicPostReactions implements OnInit {
   private readonly directorio = inject(PublicDirectoryClient);
 
   readonly postId = input.required<string>();
