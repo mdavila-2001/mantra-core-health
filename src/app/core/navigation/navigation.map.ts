@@ -495,6 +495,32 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // La vista de quien atiende sobre lo facturable de su práctica.
+    //
+    // Los roles son los de quien atiende y no `SECURITY_ADMIN`: la lectura
+    // `GET /billing/service-catalog` **no exige rol** —cualquier profesional que
+    // cotice necesita la lista— mientras que el alta (`POST`) sí lo exige y
+    // sigue viviendo en `administration/services-catalog`. Son la misma tabla
+    // vista desde dos permisos distintos, y por eso son dos pantallas.
+    //
+    // Fuera del menú del médico por §4.H del plan de UX: el cliente dio una
+    // lista **cerrada** de opciones para su panel y `navigation.service.spec`
+    // la fija —«cualquier décima tiene que discutirse»—. La sección se sigue
+    // alcanzando por su ruta y por «Tus accesos», que es lo único que
+    // `fueraDelMenuPara` no toca; darle renglón propio es una decisión de
+    // producto, no de este carril.
+    path: 'my-services',
+    fueraDelMenuPara: ['PRACTITIONER'],
+    label: 'Mis servicios',
+    group: 'Atención',
+    icon: 'tag',
+    roles: ROLES_DE_QUIEN_ATIENDE,
+    availability: 'disponible',
+    summary: 'Consultá el catálogo de servicios de tu práctica y sus precios de referencia.',
+    module: 'M17 billing',
+  },
+
+  {
     // Carril 10. **La ruta NO es `surveys` y eso no es decoración**: `/surveys`
     // es el prefijo del módulo en la API, y el proxy compara por inicio de ruta
     // sin límite de segmento — una sección llamada `surveys` se iría entera al

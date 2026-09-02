@@ -210,6 +210,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/geo/geo-home/geo-home').then((m) => m.GeoHome),
   'administration/services-catalog': () =>
     import('./features/admin/services-catalog/services-catalog').then((m) => m.ServicesCatalog),
+  // La lectura del mismo catálogo, para quien atiende. Diferida: se consulta
+  // antes de cotizar, no al entrar, así que no es la primera pantalla de nadie.
+  'my-services': () => import('./features/my-services/my-services').then((m) => m.MyServices),
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
   questionnaires: () =>
