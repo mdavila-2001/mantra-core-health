@@ -25,14 +25,18 @@
       @switch (busqueda.estado()) {
         @case ('datos') {
       <div data-estado="datos">
-        <ul class="app-resultado-lista">
+        <ul class="centros__grilla">
           @for (tarjeta of tarjetas(); track tarjeta.id) {
-            <li app-search-result [resultado]="tarjeta">
-              <div class="app-resultado__lado">
-                <a app-button data-variante="secundario" data-tam="sm" [routerLink]="tarjeta.link"
-                  >Ver ficha</a
-                >
-              </div>
+            <li app-centro-card [centro]="tarjeta.card">
+              <a
+                app-button
+                data-variante="primario"
+                data-tam="sm"
+                data-testid="diagnostic-profile"
+                [routerLink]="tarjeta.profileLink"
+                >Ver ficha</a
+              >
+              <app-card-detail-panel [heading]="tarjeta.name" [rows]="tarjeta.details" />
             </li>
           }
         </ul>
@@ -73,13 +77,19 @@
         }
         @case ('carga') {
 <div data-estado="carga">
-      <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
+      <!-- Los esqueletos tienen la forma de la tarjeta, no la de una fila: uno
+           que no se parece a lo que va a llegar hace que la página salte
+           cuando llegan los datos, y ese salto se nota más que la espera. -->
+      <ul class="centros__grilla" aria-live="polite" aria-busy="true">
         <span class="solo-lectores">Buscando…</span>
-        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
-        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
-        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
-        <div class="esqueleto-fila"><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span><span class="app-skeleton"></span></div>
-      </div>
+        @for (hueco of huecos; track hueco) {
+          <li class="centros__esqueleto">
+            <span class="centros__esqueleto-portada app-skeleton"></span>
+            <span class="centros__esqueleto-linea app-skeleton"></span>
+            <span class="centros__esqueleto-linea centros__esqueleto-linea--corta app-skeleton"></span>
+          </li>
+        }
+      </ul>
       </div>
         }
         @case ('error') {
