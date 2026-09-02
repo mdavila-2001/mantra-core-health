@@ -224,8 +224,10 @@ describe('Agenda', () => {
             conceptId: 'c-pendiente',
             code: 'BOOKING_PENDING_CONFIRMATION',
             display: 'Por confirmar',
-          // TAREA-13 punto 5: hace falta para poder probar que una cita
-          // cancelada NO admite estado de pago.
+            codeSystemVersionId: 'csv-1',
+          },
+          // TAREA-13 punto 5: hace falta para probar que una cita cancelada NO
+          // admite estado de pago.
           {
             conceptId: 'c-cancelada',
             code: 'BOOKING_CANCELLED',
@@ -1085,26 +1087,6 @@ describe('Agenda', () => {
     }
 
     it('separa lo que espera respuesta de lo que ya está agendado', async () => {
-   * EL ESTADO DE PAGO EN LA FILA — TAREA-13, punto 5.
-   *
-   * Lo que se fija acá es la regla del propietario llevada a la pantalla, y una
-   * distinción que es fácil de perder al pintar: **«nadie lo marcó» no es
-   * «pendiente de pago»**. Pendiente es una afirmación que alguien firmó.
-   */
-  describe('Agenda · el estado de pago', () => {
-    it('una cita sin marca NO se muestra como pendiente', async () => {
-      await montar();
-      await responderRecursos();
-      responderResto({ citas: [CITA] });
-
-      const fila = citas().data?.[0] as Record<string, unknown>;
-      // `null`, no un estado por defecto: la celda pinta un guión y no una
-      // etiqueta que nadie escribió.
-      expect(fila['pago']).toBeNull();
-      expect(fila['admitePago']).toBe(true);
-    });
-
-    it('el estado marcado llega con su etiqueta del servidor', async () => {
       await montar();
       await responderRecursos();
       responderResto({
@@ -1173,6 +1155,34 @@ describe('Agenda', () => {
       await responder();
 
       expect(interno<() => number>('pestana')()).toBe(2);
+    });
+  });
+
+  /**
+   * EL ESTADO DE PAGO EN LA FILA — TAREA-13, punto 5.
+   *
+   * Lo que se fija acá es la regla del propietario llevada a la pantalla, y una
+   * distinción que es fácil de perder al pintar: **«nadie lo marcó» no es
+   * «pendiente de pago»**. Pendiente es una afirmación que alguien firmó.
+   */
+  describe('Agenda · el estado de pago', () => {
+    it('una cita sin marca NO se muestra como pendiente', async () => {
+      await montar();
+      await responderRecursos();
+      responderResto({ citas: [CITA] });
+
+      const fila = citas().data?.[0] as Record<string, unknown>;
+      // `null`, no un estado por defecto: la celda pinta un guión y no una
+      // etiqueta que nadie escribió.
+      expect(fila['pago']).toBeNull();
+      expect(fila['admitePago']).toBe(true);
+    });
+
+    it('el estado marcado llega con su etiqueta del servidor', async () => {
+      await montar();
+      await responderRecursos();
+      responderResto({
+        citas: [
           {
             ...CITA,
             paymentState: {

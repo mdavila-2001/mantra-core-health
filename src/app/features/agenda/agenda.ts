@@ -396,6 +396,7 @@ export class Agenda {
 
   private readonly celdaSolicitada =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaSolicitada');
+
   private readonly celdaPago =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPago');
   private readonly celdaPaciente =

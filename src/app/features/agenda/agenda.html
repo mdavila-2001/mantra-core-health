@@ -351,6 +351,8 @@
 
 <ng-template #celdaSolicitada let-cita>
   <span class="agenda__cuando">{{ cita.solicitada | date: 'd MMM, HH:mm' }}</span>
+</ng-template>
+
 <ng-template #celdaPago let-cita>
   <div class="agenda__pago">
     @if (cita.pago) {
