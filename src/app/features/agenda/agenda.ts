@@ -33,7 +33,7 @@ import { TerminologyClient } from '../../core/data-access/terminology/terminolog
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
-import { empty, loading, ready } from '../../core/view-state/view-state';
+import { empty, loading, ready, stale } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
@@ -247,6 +247,13 @@ export interface CitaVisible {
    * puede probar por separado.
    */
   readonly paramsDelExpediente: Readonly<Record<string, string>>;
+  /**
+   * Cuándo se pidió la cita — la columna «fecha y hora de solicitud» del punto 1.
+   *
+   * Es `appointment_bookings.created_at`, que la lectura **ya traía** y que
+   * ninguna pantalla mostraba. No hizo falta tocar la API para esta columna.
+   */
+  readonly solicitada: Date;
   /** Con la llegada ya registrada, el check-in no se vuelve a ofrecer. */
   readonly llegadaRegistrada: boolean;
 }
@@ -346,6 +353,9 @@ export class Agenda {
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaCuando');
   private readonly celdaEstado =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaEstado');
+
+  private readonly celdaSolicitada =
+    viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaSolicitada');
   private readonly celdaPaciente =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPaciente');
   private readonly celdaFranja =
@@ -587,8 +597,23 @@ export class Agenda {
       : VENTANA_POR_DEFECTO;
   });
 
-  /** Pestaña visible. En la URL para que un enlace pueda apuntar a los cupos. */
-  protected readonly pestana = computed(() => (this.params()?.get('vista') === 'cupos' ? 1 : 0));
+  /**
+   * Pestaña visible. En la URL para que un enlace pueda apuntar a una en
+   * concreto.
+   *
+   * **«Solicitudes» es la primera y la de arranque**, y es un cambio deliberado:
+   * es lo único de esta pantalla que **espera una acción de una persona**. Las
+   * citas agendadas y los cupos se consultan; una solicitud sin responder le
+   * cambia el día a alguien que está esperando.
+   *
+   * `vista=cupos` sigue significando lo mismo que antes, así que los enlaces
+   * que ya existen no se rompen.
+   */
+  protected readonly pestana = computed(() => {
+    const vista = this.params()?.get('vista');
+    if (vista === 'cupos') return 2;
+    return vista === 'citas' ? 1 : 0;
+  });
 
   protected readonly incluirCanceladas = computed(() => this.params()?.get('canceladas') === 'si');
 
@@ -655,7 +680,30 @@ export class Agenda {
    * cuánto hay del otro lado sin cambiar de panel: el panel inactivo no se
    * renderiza, así que un contador dentro del panel no se lee hasta abrirlo.
    */
-  protected readonly rotuloDeCitas = computed(() => rotulo('Citas', cuenta(this.citas())));
+  /**
+   * Lo que espera respuesta — TAREA-13, punto 1.
+   *
+   * **Y sale de la solapa «Citas», no se duplica.** La ficha lo advierte: separar
+   * las solicitudes mejora la lectura pero *«duplica el lugar donde se responde
+   * una solicitud si la solapa queda como está»*. Dos lugares para aceptar la
+   * misma cita es peor que ninguno — el día que uno de los dos cambie, nadie va
+   * a acordarse del otro.
+   */
+  protected readonly solicitudes = computed(() =>
+    filtrarEstado(this.citas(), (cita) => this.porResponder(cita)),
+  );
+
+  /** Lo que ya está agendado: la solapa «Citas» sin las solicitudes. */
+  protected readonly citasAgendadas = computed(() =>
+    filtrarEstado(this.citas(), (cita) => !this.porResponder(cita)),
+  );
+
+  protected readonly rotuloDeSolicitudes = computed(() =>
+    rotulo('Solicitudes', cuenta(this.solicitudes())),
+  );
+  protected readonly rotuloDeCitas = computed(() =>
+    rotulo('Citas', cuenta(this.citasAgendadas())),
+  );
   protected readonly rotuloDeCupos = computed(() => rotulo('Cupos', cuenta(this.cupos())));
 
   /** Si la sesión puede registrar llegadas y cancelar. Roles de los endpoints. */
@@ -856,6 +904,45 @@ export class Agenda {
       : []),
   ]);
 
+  /**
+   * Las columnas de la tabla de solicitudes — TAREA-13, punto 1.
+   *
+   * Son **las cinco que pidió el propietario**, en su orden: estado, cuándo se
+   * pidió, cuándo sería la cita, quién la pide y con quién.
+   *
+   * Dos diferencias con la tabla de citas, y las dos son a propósito:
+   *
+   * - **«Solicitada» va antes que «Cita».** En una lista de cosas por responder,
+   *   lo que ordena es hace cuánto que alguien espera, no cuándo sería el turno.
+   * - **No hay columna de pago.** Una solicitud sin aceptar no se cobra, y
+   *   ofrecer el estado de pago ahí sería ofrecer una acción que el servidor
+   *   permite pero que no significa nada todavía.
+   *
+   * `profesional` es constante mientras la agenda muestre **un** recurso, que es
+   * lo que hace hoy. Se muestra igual porque el propietario la pidió y porque
+   * deja de ser constante en cuanto la tabla mezcle recursos — decisión que **no
+   * tomamos acá**: ensanchar quién ve la agenda de quién es privacidad, no
+   * pantalla (P-13-2).
+   */
+  protected readonly columnasDeSolicitudes = computed<readonly ColumnDef<CitaVisible>[]>(() => [
+    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+    { key: 'solicitada', header: 'Solicitada', priority: 1, cell: this.celdaSolicitada() },
+    { key: 'cuando', header: 'Cita', priority: 1, cell: this.celdaCuando() },
+    { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
+    { key: 'recurso', header: 'Profesional', priority: 3 },
+    { key: 'motivo', header: 'Motivo', priority: 3 },
+    ...(this.puedeAtender()
+      ? [
+          {
+            key: 'acciones',
+            header: 'Acciones',
+            priority: 1,
+            cell: this.celdaAccionesCita(),
+          } satisfies ColumnDef<CitaVisible>,
+        ]
+      : []),
+  ]);
+
   protected readonly columnasDeCupos = computed<readonly ColumnDef<CupoVisible>[]>(() => [
     { key: 'franja', header: 'Franja', priority: 1, cell: this.celdaFranja() },
     { key: 'recurso', header: 'Recurso', priority: 1 },
@@ -933,7 +1020,8 @@ export class Agenda {
   }
 
   protected elegirPestana(indice: number): void {
-    this.publicar({ vista: indice === 1 ? 'cupos' : null });
+    const vista = indice === 2 ? 'cupos' : indice === 1 ? 'citas' : null;
+    this.publicar({ vista });
   }
 
   protected recargar(): void {
@@ -1381,6 +1469,7 @@ export class Agenda {
           : { [CITA_QUERY_PARAM]: cita.appointmentId }),
       },
       llegadaRegistrada: cita.checkedInAt !== undefined,
+      solicitada: cita.createdAt,
     };
   }
 
@@ -1457,6 +1546,32 @@ export class Agenda {
     hasta.setDate(hasta.getDate() + dias);
     return { desde, hasta };
   }
+}
+
+/**
+ * Parte un estado en dos sin perder ninguno de los nueve del M34.
+ *
+ * Las solicitudes y las citas agendadas salen de **la misma lectura**: pedir la
+ * agenda dos veces para partirla en dos tablas sería duplicar una consulta que
+ * ya trae todo. Lo que hay que cuidar es que `loading`, `forbidden`, `offline` y
+ * los demás **sigan siendo los mismos** en las dos: si una tabla se quedara en
+ * `ready` con cero filas mientras la otra está en `error`, la pantalla estaría
+ * mintiendo sobre una de las dos.
+ *
+ * Por eso sólo se toca `ready` y `stale`, que son los únicos que transportan
+ * datos. El resto viaja tal cual.
+ */
+function filtrarEstado<T>(
+  estado: ViewState<readonly T[]>,
+  predicado: (fila: T) => boolean,
+): ViewState<readonly T[]> {
+  if (estado.status === 'ready') {
+    return ready(estado.data.filter(predicado));
+  }
+  if (estado.status === 'stale') {
+    return stale(estado.data.filter(predicado), estado.asOf);
+  }
+  return estado;
 }
 
 /** Cuántas filas transporta un estado, o `null` si todavía no transporta ninguna. */
