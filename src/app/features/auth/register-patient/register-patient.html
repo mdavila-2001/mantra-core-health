@@ -128,16 +128,14 @@
                            cuál es cuál. El mismo texto va en el globo, que
                            aparece con el puntero y con el foco del teclado.
 
-                           El glifo es `arrow-left`, y no hay uno de «quitar»:
-                           el set del nav está cerrado a propósito
-                           (`nav-icon.types.ts`) y agregarle una cruz sería
-                           agregarle un ícono que no nombra ninguna sección, que
-                           es justamente la regla del set. De los cuarenta y
-                           nueve, `arrow-left` es el único que significa
-                           «deshacer esto» sin nombrar otra cosa: `key` es una
-                           llave, `tag` una etiqueta, `flag` un aviso. El
-                           `aria-label` es el que dice qué hace; el dibujo
-                           acompaña. -->
+                           El glifo es `remove`, y entró al set para esto. La
+                           primera versión usaba `arrow-left` —el set no tenía
+                           uno de «quitar»— y eso ponía **el mismo dibujo que el
+                           botón «Atrás» de este mismo formulario**: dos
+                           acciones distintas con el mismo glifo en la misma
+                           página rompen lo único que un ícono aporta, que es el
+                           reconocimiento. El `aria-label` es el que dice qué
+                           hace; el dibujo tiene que acompañar, no contradecir. -->
                       <button
                         app-button
                         type="button"
@@ -149,7 +147,7 @@
                         [attr.data-testid]="'registro-quitar-nombre-' + $index"
                         (clicked)="quitarNombre($index)"
                       >
-                        <app-nav-icon name="arrow-left" />
+                        <app-nav-icon name="remove" />
                       </button>
                     </div>
                   </app-form-field>
@@ -289,7 +287,7 @@
                         data-testid="registration-home-location-remove"
                         (clicked)="quitarUbicacion()"
                       >
-                        <app-nav-icon name="arrow-left" />
+                        <app-nav-icon name="remove" />
                       </button>
                     </div>
                   } @else {
@@ -457,7 +455,7 @@
                         data-testid="registration-work-location-remove"
                         (clicked)="quitarUbicacionDeTrabajo()"
                       >
-                        <app-nav-icon name="arrow-left" />
+                        <app-nav-icon name="remove" />
                       </button>
                     </div>
                   } @else {

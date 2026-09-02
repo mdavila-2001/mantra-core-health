@@ -119,6 +119,20 @@ export const NAV_ICON_NAMES = [
   // dirección NUNCA nombra una sección.
   'arrow-left',
   'arrow-right',
+
+  // Y `remove`, por el mismo motivo y con la misma excusa: tampoco nombra una
+  // sección, responde «¿qué le hace este botón a lo que está al lado?».
+  //
+  // Entra porque la alternativa que se había elegido era peor: los botones de
+  // «Quitar» del alta usaban `arrow-left`, o sea **el mismo dibujo que el botón
+  // «Atrás» del mismo formulario**. Dos acciones distintas con el mismo glifo en
+  // la misma página rompe lo único que un ícono aporta, que es el
+  // reconocimiento — es el defecto que el encabezado de `nav-icon.ts` describe,
+  // visto del otro lado.
+  //
+  // Es un menos y no una papelera ni una cruz: quitar un nombre de más de una
+  // lista no borra nada, y una papelera promete una destrucción que no ocurre.
+  'remove',
 ] as const;
 
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];

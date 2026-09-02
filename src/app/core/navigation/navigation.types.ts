@@ -99,6 +99,7 @@ export const NAV_ICON_NAMES = [
   // El porqué está donde se dibujan: `atoms/nav-icon/nav-icon.types.ts`.
   'arrow-left',
   'arrow-right',
+  'remove',
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 
