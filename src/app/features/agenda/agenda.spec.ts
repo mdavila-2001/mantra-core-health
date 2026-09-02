@@ -217,8 +217,17 @@ describe('Agenda', () => {
             display: 'Abierto',
             codeSystemVersionId: 'csv-1',
           },
+          // TAREA-13: hace falta para distinguir lo que espera respuesta de lo
+          // que ya está agendado. Sin el concepto, `porResponder` no resuelve
+          // el código y la fila no cae en ninguna de las dos tablas.
+          {
+            conceptId: 'c-pendiente',
+            code: 'BOOKING_PENDING_CONFIRMATION',
+            display: 'Por confirmar',
+            codeSystemVersionId: 'csv-1',
+          },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
       });
   }
@@ -827,6 +836,20 @@ describe('Agenda', () => {
      ======================================================================== */
 
   /** El botón de una acción, por su `data-testid`. */
+  /**
+   * Abre la solapa «Citas» y espera al render.
+   *
+   * Hace falta desde que las solicitudes tienen solapa propia y **es la de
+   * arranque** (TAREA-13, punto 1): una cita ya agendada vive en la segunda, y
+   * el panel inactivo no se renderiza. Sin esto, buscar su botón devuelve
+   * `null` por no estar en pantalla, no por no ofrecerse.
+   */
+  async function verSolapaDeCitas(): Promise<void> {
+    interno<(i: number) => void>('elegirPestana')(1);
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+  }
+
   function boton(testid: string): HTMLButtonElement | null {
     return harness.routeNativeElement?.querySelector(`[data-testid="${testid}"]`) ?? null;
   }
@@ -889,6 +912,7 @@ describe('Agenda', () => {
   it('una cita confirmada ofrece iniciar la consulta, sin esperar el día', async () => {
     await montar();
     await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+    await verSolapaDeCitas();
 
     expect(boton('agenda-iniciar')).not.toBeNull();
     expect(boton('agenda-completar')).toBeNull();
@@ -909,6 +933,7 @@ describe('Agenda', () => {
   it('una cita en curso ofrece completarla, y solo eso', async () => {
     await montar();
     await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+    await verSolapaDeCitas();
 
     expect(boton('agenda-completar')).not.toBeNull();
     expect(boton('agenda-iniciar')).toBeNull();
@@ -1035,5 +1060,93 @@ describe('Agenda', () => {
 
     expect(demora().panelDeDemoraAbierto()).toBe(false);
     // `http.verify()` del `afterEach` comprueba que no salió ninguna petición.
+  });
+
+  /**
+   * LA TABLA DE SOLICITUDES — TAREA-13, punto 1.
+   *
+   * Lo que fijan estas pruebas es la mitad del pedido que no es cosmética:
+   * **separar lo que espera respuesta de lo que ya está agendado**, y que
+   * responder una solicitud tenga **un solo lugar**. La ficha advertía que
+   * separarlas «duplica el lugar donde se responde una solicitud si la solapa
+   * queda como está», y eso es justo lo que no puede pasar.
+   */
+  describe('la tabla de solicitudes', () => {
+    function filas(nombre: 'solicitudes' | 'citasAgendadas') {
+      return interno<() => { status: string; data?: readonly Record<string, unknown>[] }>(
+        nombre,
+      )();
+    }
+
+    it('separa lo que espera respuesta de lo que ya está agendado', async () => {
+      await montar();
+      await responderRecursos();
+      responderResto({
+        citas: [
+          { ...CITA, id: 'b-1', statusConceptId: 'c-confirmada' },
+          { ...CITA, id: 'b-2', statusConceptId: 'c-pendiente' },
+        ],
+      });
+
+      expect(filas('solicitudes').data?.map((f) => f['id'])).toEqual(['b-2']);
+      // Y la contraparte: la solicitud NO aparece también en «Citas». Si
+      // apareciera, habría dos lugares para aceptar la misma cita.
+      expect(filas('citasAgendadas').data?.map((f) => f['id'])).toEqual(['b-1']);
+    });
+
+    it('trae la fecha de solicitud, que ninguna pantalla mostraba', async () => {
+      // Es `created_at`, que la lectura ya devolvía. La columna del punto 1 no
+      // necesitó tocar la API.
+      await montar();
+      await responderRecursos();
+      responderResto({ citas: [{ ...CITA, statusConceptId: 'c-pendiente' }] });
+
+      const fila = filas('solicitudes').data?.[0] as Record<string, unknown>;
+      expect(fila['solicitada']).toBeInstanceOf(Date);
+      expect((fila['solicitada'] as Date).toISOString()).toBe('2026-08-01T10:00:00.000Z');
+    });
+
+    it('las dos tablas comparten el estado: si una falla, la otra no finge', async () => {
+      // Salen de la MISMA lectura. Partirlas no puede hacer que una diga
+      // «no hay nada» mientras la otra dice «no se pudo leer».
+      await montar();
+      await responderRecursos();
+      http.expectOne((r) => r.url === '/scheduling/bookings').flush(
+        { message: 'boom' },
+        { status: 500, statusText: 'Server Error' },
+      );
+      http
+        .expectOne((r) => r.url === '/scheduling/slots')
+        .flush({ items: [], count: 0, limit: 100, truncated: false });
+      // La lectura de terminología no llega a pedirse: sin citas no hay
+      // conceptos que resolver. Esperarla acá sería fijar un detalle de
+      // implementación en vez del comportamiento que importa.
+
+      expect(filas('solicitudes').status).toBe(filas('citasAgendadas').status);
+      expect(filas('solicitudes').status).not.toBe('ready');
+    });
+
+    it('el rótulo cuenta sólo las que esperan respuesta', async () => {
+      await montar();
+      await responderRecursos();
+      responderResto({
+        citas: [
+          { ...CITA, id: 'b-1', statusConceptId: 'c-confirmada' },
+          { ...CITA, id: 'b-2', statusConceptId: 'c-pendiente' },
+        ],
+      });
+
+      expect(interno<() => string>('rotuloDeSolicitudes')()).toBe('Solicitudes (1)');
+      expect(interno<() => string>('rotuloDeCitas')()).toBe('Citas (1)');
+    });
+
+    it('`vista=cupos` sigue significando lo mismo que antes', async () => {
+      // Los enlaces que ya existen no se rompen porque las solapas se
+      // reordenaron: los cupos pasaron del índice 1 al 2 y la URL no cambió.
+      await montar({}, '/schedule?vista=cupos');
+      await responder();
+
+      expect(interno<() => number>('pestana')()).toBe(2);
+    });
   });
 });

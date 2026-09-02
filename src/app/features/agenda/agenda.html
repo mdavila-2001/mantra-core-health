@@ -214,6 +214,26 @@
       (selectedIndexChange)="elegirPestana($event)"
       appTutorialTarget="agenda-pestanas"
     >
+      <!-- ─── Solicitudes ───────────────────────────────────────────────── -->
+      <!-- Va primera porque es lo único de esta pantalla que espera una acción
+           de una persona: una solicitud sin responder le cambia el día a
+           alguien que está esperando. Las otras dos se consultan. -->
+      <app-tab [label]="rotuloDeSolicitudes()">
+        <p class="agenda__aviso" role="status">
+          Sólo lo que espera respuesta. Cuando aceptás o rechazás, la solicitud sale de acá:
+          si la aceptaste, pasa a <strong>Citas</strong>.
+        </p>
+
+        <app-data-table
+          appTutorialTarget="agenda-tabla-solicitudes"
+          [state]="solicitudes()"
+          [columns]="columnasDeSolicitudes()"
+          [trackBy]="porCita"
+          caption="Solicitudes de consulta que esperan respuesta"
+          (retry)="recargar()"
+        />
+      </app-tab>
+
       <!-- ─── Citas ─────────────────────────────────────────────────────── -->
       <app-tab [label]="rotuloDeCitas()">
         @if (citasRecortadas()) {
@@ -225,7 +245,7 @@
 
         <app-data-table
           appTutorialTarget="agenda-tabla-citas"
-          [state]="citas()"
+          [state]="citasAgendadas()"
           [columns]="columnasDeCitas()"
           [trackBy]="porCita"
           caption="Citas de la ventana consultada"
@@ -327,6 +347,10 @@
        `POST /scheduling/slots/{id}/holds`, y copiar un uuid a mano es
        exactamente donde se cometen los errores. -->
   <code class="agenda__id">{{ cupo.id }}</code>
+</ng-template>
+
+<ng-template #celdaSolicitada let-cita>
+  <span class="agenda__cuando">{{ cita.solicitada | date: 'd MMM, HH:mm' }}</span>
 </ng-template>
 
 <ng-template #celdaAccionesCita let-cita>
