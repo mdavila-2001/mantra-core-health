@@ -2,6 +2,10 @@
     Stepper — marcadores numerados unidos por un riel. El completado se tiñe
     con la tinta de marca y muestra ✓; el actual se resalta con anillo; el
     pendiente queda apagado. Nunca ámbar: no es el punto de acción.
+
+    El estado NO se distingue sólo por color —hay quien no lo ve—: el
+    completado trae su ✓, el actual el aro lleno y el pendiente el borde
+    punteado. Tres formas distintas antes de mirar la tinta.
     ========================================================================== */
 
 .stepper {
@@ -21,6 +25,59 @@
     align-items: center;
     gap: var(--sp-2);
     min-width: max-content;
+}
+
+/* ---- el paso como control (modo interactivo) ----------------------------- */
+
+/* El botón no se disfraza de botón: hereda la caja del paso y toda su presencia
+   la ponen el marcador y el rótulo, que son los mismos de siempre. Lo único que
+   agrega es área que pulsar y un foco que se ve. */
+.stepper__control {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    /* Área táctil de 44 px en teléfono: el marcador mide 24 y solo no se
+       acierta con el pulgar. El padding vertical la completa sin correr el
+       rótulo de sitio. */
+    min-height: 44px;
+    margin: 0;
+    padding: var(--sp-2) var(--sp-2) var(--sp-2) 0;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+@media (min-width: 780px) {
+    /* Con puntero fino el área de 44 deja de hacer falta y el recorrido vuelve
+       a ocupar el alto de una línea. */
+    .stepper__control {
+        min-height: 0;
+        padding-block: var(--sp-1);
+    }
+}
+
+.stepper__control:hover .stepper__label {
+    color: var(--text-primary);
+}
+
+.stepper__control:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+}
+
+/* El paso cerrado sigue enfocable —dice por qué no se abre—, pero no invita:
+   sin cursor de mano y con la tinta apagada. */
+.stepper__step--cerrado .stepper__control {
+    cursor: not-allowed;
+}
+
+.stepper__step--cerrado .stepper__marker,
+.stepper__step--cerrado .stepper__label {
+    opacity: 0.65;
 }
 
 /* ---- marcador ------------------------------------------------------------ */
@@ -44,6 +101,19 @@
 .stepper__marker svg {
     width: 60%;
     height: 60%;
+}
+
+/* El glifo del paso ocupa algo más que el ✓: es un dibujo con detalle, no dos
+   trazos. */
+.stepper__glifo {
+    inline-size: 62%;
+    block-size: 62%;
+}
+
+/* Pendiente: borde punteado. Es la tercera forma —✓, aro lleno, punteado— con
+   la que el estado se lee sin depender del color. */
+.stepper__step--upcoming .stepper__marker {
+    border-style: dashed;
 }
 
 /* ---- cuerpo -------------------------------------------------------------- */
@@ -95,4 +165,15 @@
    avance de un vistazo. */
 .stepper__step--complete .stepper__connector {
     background: var(--brand-primary);
+}
+
+/* El riel del paso completado se tiñe entero (arriba); el que sale del paso
+   actual queda a medias, para que la línea llena termine donde terminó el
+   avance de verdad. */
+.stepper__step--current .stepper__connector {
+    background: linear-gradient(
+        to right,
+        var(--brand-primary) 50%,
+        var(--border-default) 50%
+    );
 }

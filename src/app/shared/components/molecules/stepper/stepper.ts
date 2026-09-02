@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+} from '@angular/core';
 
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import type { StepperStep } from './stepper.types';
 
 /**
@@ -13,7 +22,24 @@ import type { StepperStep } from './stepper.types';
  *
  * ```html
  * <app-stepper [steps]="pasos()" label="Crear agenda" />
+ * <app-stepper [steps]="pasos()" interactive (stepSelected)="irA($event)" />
  * ```
+ *
+ * ## `interactive`: por qué entra apagado
+ *
+ * Con `interactive` cada paso deja de ser un rótulo y pasa a ser un `<button>`
+ * de verdad, con su foco y su tecla. Es lo que pidió el propietario para el
+ * alta (TAREA 04, AC-04-12), pero este componente **no** lo usa sólo el alta:
+ * lo montan también el detalle de un pedido de farmacia, la puesta en marcha
+ * del administrador y el onboarding del profesional, y ninguno de esos tres
+ * tiene a dónde navegar —su avance lo manda el estado del pedido, no la
+ * persona—. Encenderlo por defecto les habría agregado tres o cuatro paradas
+ * de tabulación que no hacen nada, que es la peor clase de control: el que se
+ * puede enfocar y no responde.
+ *
+ * Y **navegar no es cosa del stepper**: emite `stepSelected` con el índice
+ * pedido y se queda quieto. Quien lo monta decide si se puede ir —y si hay
+ * validación de por medio, la corre él—.
  *
  * ## Accesibilidad
  *
@@ -21,9 +47,15 @@ import type { StepperStep } from './stepper.types';
  * estilo. El paso activo lleva `aria-current="step"`, y el estado de cada uno
  * viaja también como texto para el lector de pantalla —«completado», «paso
  * actual»— porque el color y el ✓ solos no alcanzan.
+ *
+ * En modo interactivo el paso que no se puede abrir queda con `aria-disabled`
+ * y no con el atributo nativo: sigue siendo alcanzable con el teclado y dice
+ * por qué no se puede ir (`disabledReason`), en vez de ser una puerta cerrada
+ * sin cartel.
  */
 @Component({
   selector: 'app-stepper',
+  imports: [NavIcon, NgTemplateOutlet],
   templateUrl: './stepper.html',
   styleUrl: './stepper.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +66,20 @@ export class Stepper {
 
   /** Nombre accesible del recorrido, p. ej. «Crear agenda». */
   readonly label = input<string>('');
+
+  /**
+   * Convierte cada paso en un `<button>`. Apagado por defecto: ver la nota de
+   * la clase.
+   */
+  readonly interactive = input(false, { transform: booleanAttribute });
+
+  /**
+   * El índice del paso que se pidió abrir. **Base 0**, como el arreglo.
+   *
+   * No se emite por un paso con `disabled`: el control sigue enfocable para
+   * poder anunciar por qué no se puede ir, pero pulsarlo no propone nada.
+   */
+  readonly stepSelected = output<number>();
 
   /** Posición del paso actual, para el resumen «Paso 2 de 5». Base 1. */
   protected readonly currentPosition = computed(() => {
@@ -68,5 +114,28 @@ export class Stepper {
       default:
         return 'pendiente';
     }
+  }
+
+  /**
+   * El nombre accesible del botón de un paso.
+   *
+   * Lleva el ordinal adelante porque el botón se anuncia solo, fuera de la
+   * lista: «Identidad» a secas no dice a dónde lleva ni cuál de los cinco es.
+   * Sigue el rótulo visible —requisito 2.5.3 de WCAG: el nombre contiene lo que
+   * se ve—, después el estado, y al final el motivo cuando el paso está
+   * cerrado.
+   */
+  protected nombreDelPaso(step: StepperStep, index: number): string {
+    const base = `Paso ${index + 1} de ${this.total()}: ${step.label}, ${this.estadoTexto(step)}`;
+    const motivo = step.disabled === true ? (step.disabledReason ?? '').trim() : '';
+    return motivo === '' ? base : `${base}. ${motivo}`;
+  }
+
+  /** Se propone el salto; ir o no ir lo decide quien monta el stepper. */
+  protected pedirPaso(step: StepperStep, index: number): void {
+    if (step.disabled === true) {
+      return;
+    }
+    this.stepSelected.emit(index);
   }
 }
