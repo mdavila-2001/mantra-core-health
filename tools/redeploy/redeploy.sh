@@ -109,11 +109,36 @@ PUERTO_WEB="${REDEPLOY_PUERTO_WEB:-4000}"
 WEB=alovida-web
 PROXY=alovida-proxy
 IMAGEN=alovida-front
+# El binario del túnel. El instalador oficial lo deja en `~/bin/devtunnel` tanto
+# en Linux como en macOS, y si está en el PATH se usa el del PATH.
 DEVTUNNEL="${DEVTUNNEL_BIN:-$HOME/bin/devtunnel}"
+[ -x "$DEVTUNNEL" ] || DEVTUNNEL="$(command -v devtunnel 2>/dev/null || printf '%s' "$DEVTUNNEL")"
 
 # La ruta resuelta del propio script: hace falta para relanzarse a sí mismo (ver
 # `recargarse_si_cambio`), y `$0` puede ser relativa a donde lo invocaron.
 RUTA="$RAIZ/tools/redeploy/redeploy.sh"
+
+# Cómo alcanza un contenedor al host, que **no es lo mismo en Linux que en macOS**.
+#
+# En la máquina Linux original se usa `--network host`: ahí el contenedor comparte
+# la pila de red del host, así que `127.0.0.1` es el host de verdad y se esquiva
+# el firewall que filtra el tráfico de los puentes de Docker (la nota de
+# API_PUERTO).
+#
+# En macOS eso **no existe**. Docker Desktop corre los contenedores dentro de una
+# VM Linux, y `--network host` los mete en la red de LA VM, no en la del Mac. Se
+# comprobó y es exactamente lo que pasaba: nginx respondía 200 desde dentro del
+# contenedor mientras `lsof -iTCP:4200` en el Mac no encontraba a nadie
+# escuchando — el túnel, que corre en macOS, no tenía a quién hablarle y el
+# enlace daba 000. Ahí la forma correcta es la contraria: publicar el puerto y
+# llamar al host por `host.docker.internal`.
+if [ "$(uname -s)" = "Darwin" ]; then
+  HOST_DESDE_CONTENEDOR=host.docker.internal
+  RED_DEL_HOST=no
+else
+  HOST_DESDE_CONTENEDOR=127.0.0.1
+  RED_DEL_HOST=si
+fi
 
 LOG="$ESTADO/redeploy.log"
 URL_FILE="$ESTADO/URL"
@@ -122,7 +147,54 @@ TUNEL_PID="$ESTADO/devtunnel.pid"
 VIGILANTE_PID="$ESTADO/vigilante.pid"
 NGINX_GEN="$ESTADO/nginx.generado.conf"
 
-log() { printf '%s | %s\n' "$(date -Is)" "$*" >> "$LOG"; printf '%s\n' "$*"; }
+# `date -Is` es de GNU: el `date` de BSD —el de macOS, donde también se corre
+# esto— responde `invalid argument 's' for -I` y deja cada línea del diario sin
+# marca de tiempo. El formato explícito da la misma cadena ISO 8601 en los dos.
+ahora() { date +%Y-%m-%dT%H:%M:%S%z; }
+
+# `setsid` es de util-linux y **no existe en macOS**, donde también se corre
+# esto. Sin él, las dos líneas que dejaban algo en segundo plano morían con un
+# `command not found` y el proceso no llegaba a arrancar: el vigilante figuraba
+# «parado» un segundo después de decir que estaba arriba, y el enlace se quedaba
+# sin nadie que lo reconstruyera.
+#
+# Lo que `setsid` aporta es desligar al hijo del grupo de procesos de la
+# terminal, para que un cierre de sesión no se lo lleve; `nohup` ya lo protege
+# de SIGHUP, que es el 95 % del caso. Donde `setsid` está se usa —no se pierde
+# nada—, y donde no, el `nohup` suelto hace el trabajo.
+en_segundo_plano() {
+  if command -v setsid >/dev/null 2>&1; then
+    setsid nohup "$@" &
+  else
+    nohup "$@" &
+  fi
+}
+
+log() { printf '%s | %s\n' "$(ahora)" "$*" >> "$LOG"; printf '%s\n' "$*"; }
+
+# `flock` es de util-linux y tampoco existe en macOS. Ahí el `command not found`
+# hacía que la condición se leyera al revés —127 es «falló», y la guarda es un
+# `if ! flock`—: cada pasada del temporizador creía que ya había otra en curso y
+# se retiraba sin desplegar nada. `mkdir` es atómico en cualquier sistema de
+# archivos y no necesita nada instalado.
+CERROJO="$ESTADO/una-vez.lock.d"
+
+tomar_cerrojo() {
+  if ! mkdir "$CERROJO" 2>/dev/null; then
+    local dueno
+    dueno="$(cat "$CERROJO/pid" 2>/dev/null)"
+    # El precio de un cerrojo que no es del núcleo: si la pasada dueña muere sin
+    # soltarlo, nadie lo suelta por ella y el despliegue queda parado para
+    # siempre. Por eso se comprueba de quién es antes de creerle.
+    if [ -n "$dueno" ] && kill -0 "$dueno" 2>/dev/null; then return 1; fi
+    [ -e "$CERROJO" ] && log "PASADA: cerrojo huérfano de la pasada ${dueno:-?}; se recoge"
+    rm -rf "$CERROJO"
+    mkdir "$CERROJO" 2>/dev/null || return 1
+  fi
+  echo $$ > "$CERROJO/pid"
+  trap 'rm -rf "$CERROJO"' EXIT
+  return 0
+}
 
 # ─── El túnel ────────────────────────────────────────────────────────────────
 
@@ -168,13 +240,47 @@ tunel_responde() {
   esac
 }
 
+# Sin binario no hay enlace, y callarlo es lo peor que puede hacer este script:
+# el diario decía «hospedando … → » y «✓ sirviendo en » con la URL vacía, así que
+# el despliegue **parecía correcto** mientras nadie podía entrar. Lo que fallaba
+# —`nohup: …/devtunnel: No such file or directory`— quedaba enterrado en
+# `devtunnel.log`, que nadie mira cuando el resumen dice ✓.
+hay_devtunnel() {
+  [ -x "$DEVTUNNEL" ] && return 0
+  log "TÚNEL: ✗ no hay binario en '$DEVTUNNEL'. El despliegue local sigue, pero NO habrá enlace."
+  log "TÚNEL:   instálalo con  curl -sL https://aka.ms/DevTunnelCliInstall | bash"
+  log "TÚNEL:   o apunta al tuyo con  DEVTUNNEL_BIN=/ruta/a/devtunnel"
+  return 1
+}
+
 arrancar_tunel() {
+  hay_devtunnel || return 1
   # `--host-header` se deja en su valor por defecto (reescribe a `localhost`):
   # así el `server_name localhost` de la configuración de nginx sirve tal cual.
-  setsid nohup "$DEVTUNNEL" host "$TUNEL" >>"$TUNEL_LOG" 2>&1 < /dev/null &
-  echo $! > "$TUNEL_PID"
+  en_segundo_plano "$DEVTUNNEL" host "$TUNEL" >>"$TUNEL_LOG" 2>&1 < /dev/null
+  local pid=$!
+  echo "$pid" > "$TUNEL_PID"
   sleep 5
+  # La URL se escribe siempre que se pueda: `show` la sirve aunque no hospede
+  # nadie, y tenerla es lo que permite generar el `server_name` de nginx.
   url_del_tunel > "$URL_FILE"
+
+  # **Que haya URL no significa que estemos hospedando.** `devtunnel show` contesta
+  # sin sesión iniciada, así que el paso anterior llenaba el archivo y el diario
+  # decía «hospedando» mientras el proceso había muerto un segundo antes con
+  # `Tunnel service response status code: Unauthorized`. Se pregunta por el proceso,
+  # que es lo que de verdad sostiene el enlace.
+  if ! kill -0 "$pid" 2>/dev/null; then
+    log "TÚNEL: ✗ el proceso murió al arrancar. Últimas líneas de su diario:"
+    tail -n 5 "$TUNEL_LOG" 2>/dev/null | while IFS= read -r linea; do log "TÚNEL:   $linea"; done
+    log "TÚNEL:   si dice 'Unauthorized', falta sesión: corré '$DEVTUNNEL user login'"
+    rm -f "$TUNEL_PID"
+    return 1
+  fi
+  if [ ! -s "$URL_FILE" ]; then
+    log "TÚNEL: ⚠ hospedando $TUNEL pero no pude leer su URL ('$DEVTUNNEL show $TUNEL')"
+    return 1
+  fi
   log "TÚNEL: hospedando $TUNEL → $(cat "$URL_FILE") (local :$PUERTO)"
 }
 
@@ -219,10 +325,18 @@ generar_nginx() {
   #   · el `server_name` acepta además el hostname del túnel y `127.0.0.1`, para
   #     que una comprobación por IP no choque con el `default_server` que
   #     devuelve 421.
-  sed -e "s#^\( *\)server api:3000;#\1server 127.0.0.1:${API_PUERTO};#" \
-      -e "s#^\( *\)server web:4000;#\1server 127.0.0.1:${PUERTO_WEB};#" \
-      -e "s#^\( *\)listen 80 default_server;#\1listen 127.0.0.1:${PUERTO} default_server;#" \
-      -e "s#^\( *\)listen 80;#\1listen 127.0.0.1:${PUERTO};#" \
+  # Con `--network host` el contenedor ES el host: escuchar en `127.0.0.1:$PUERTO`
+  # deja el puerto donde el túnel lo espera y sin exponerlo a la red local. Con el
+  # puerto publicado (macOS) hay que escuchar en todas las interfaces DE DENTRO del
+  # contenedor —el tráfico publicado no entra por su loopback—, y quien acota a
+  # loopback es el `-p 127.0.0.1:…` de `docker run`.
+  local escucha
+  if [ "$RED_DEL_HOST" = si ]; then escucha="127.0.0.1:${PUERTO}"; else escucha="${PUERTO}"; fi
+
+  sed -e "s#^\( *\)server api:3000;#\1server ${HOST_DESDE_CONTENEDOR}:${API_PUERTO};#" \
+      -e "s#^\( *\)server web:4000;#\1server ${HOST_DESDE_CONTENEDOR}:${PUERTO_WEB};#" \
+      -e "s#^\( *\)listen 80 default_server;#\1listen ${escucha} default_server;#" \
+      -e "s#^\( *\)listen 80;#\1listen ${escucha};#" \
       -e "s#^\( *\)server_name localhost mantra-core-health.local;#\1server_name localhost 127.0.0.1 mantra-core-health.local ${host_tunel:-localhost} ${host_tunel_alterno:-localhost};#" \
       "$RAIZ/deploy/nginx.conf" > "$NGINX_GEN"
 }
@@ -238,6 +352,31 @@ apagar_dev_server() {
   fi
 }
 
+# Los `include` que arrastra la configuración de producción, montados uno a uno.
+#
+# Antes había un único `-v` con `api-proxy.conf` escrito a mano, y el día que
+# `nginx.conf` se partió en dos —`api-locations.conf`, con los 60 prefijos de la
+# API— el proxy entró en bucle de reinicio: `open() "/etc/nginx/api-locations.conf"
+# failed (2: No such file or directory)`. La lista se saca ahora de los propios
+# `include`, así que el siguiente archivo que se añada se monta solo.
+montajes_incluidos() {
+  local vistos=" " archivo ruta
+  # Dos niveles: `nginx.conf` incluye `api-locations.conf`, y ese incluye
+  # `api-proxy.conf` en cada `location`.
+  for archivo in $(grep -hoE 'include +/etc/nginx/[A-Za-z0-9_.-]+\.conf' \
+                     "$RAIZ/deploy/nginx.conf" "$RAIZ/deploy/api-locations.conf" 2>/dev/null \
+                   | sed 's#.*/##' | sort -u); do
+    case "$vistos" in *" $archivo "*) continue ;; esac
+    ruta="$RAIZ/deploy/$archivo"
+    if [ -f "$ruta" ]; then
+      vistos="$vistos$archivo "
+      printf -- '-v %s:/etc/nginx/%s:ro ' "$ruta" "$archivo"
+    else
+      log "PROXY: ⚠ '$archivo' se incluye en la configuración pero no está en deploy/" >&2
+    fi
+  done
+}
+
 lanzar_proxy() {
   generar_nginx
   docker rm -f "$PROXY" >/dev/null 2>&1
@@ -245,12 +384,20 @@ lanzar_proxy() {
   # nota de API_PUERTO). La configuración generada escucha en
   # `127.0.0.1:$PUERTO`, así que sigue sin quedar expuesto a la red local — el
   # único que tiene que alcanzarlo es el proceso del túnel, que corre acá mismo.
-  docker run -d --name "$PROXY" --network host --restart unless-stopped \
+  local red
+  if [ "$RED_DEL_HOST" = si ]; then
+    red="--network host"
+  else
+    # Sólo en loopback del Mac, como en Linux: el único que tiene que alcanzarlo
+    # es el proceso del túnel, que corre acá mismo.
+    red="-p 127.0.0.1:${PUERTO}:${PUERTO} --add-host=host.docker.internal:host-gateway"
+  fi
+  docker run -d --name "$PROXY" $red --restart unless-stopped \
     --memory "$MEM_PROXY" --memory-swap "$MEM_PROXY" \
     -v "$NGINX_GEN:/etc/nginx/conf.d/default.conf:ro" \
-    -v "$RAIZ/deploy/api-proxy.conf:/etc/nginx/api-proxy.conf:ro" \
+    $(montajes_incluidos) \
     nginx:1.27-alpine >/dev/null || return 1
-  log "PROXY: nginx en 127.0.0.1:$PUERTO (API → 127.0.0.1:$API_PUERTO · SSR → 127.0.0.1:$PUERTO_WEB)"
+  log "PROXY: nginx en 127.0.0.1:$PUERTO (API → $HOST_DESDE_CONTENEDOR:$API_PUERTO · SSR → $HOST_DESDE_CONTENEDOR:$PUERTO_WEB)"
 }
 
 recargar_proxy() {
@@ -360,7 +507,12 @@ podar_imagenes() {
 comprobar_enlace() {
   local host_tunel codigo
   host_tunel="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
-  [ -n "$host_tunel" ] || return 0
+  # Sin URL no hay nada que comprobar, y decir que sí es peor que no decir nada:
+  # `status` llegó a imprimir «enlace sirve: sí» con el enlace vacío.
+  if [ -z "$host_tunel" ]; then
+    [ "${1:-}" = "silencioso" ] || log "ENLACE: ⚠ no hay URL de túnel; no hay enlace que comprobar"
+    return 1
+  fi
   codigo="$(curl -s -o /dev/null -w '%{http_code}' -m 15 \
     -H "Host: $host_tunel" -H "x-forwarded-host: $host_tunel" \
     "http://127.0.0.1:${PUERTO}/" 2>/dev/null)"
@@ -430,7 +582,15 @@ desplegar() {
   comprobar_api
   echo "$commit" > "$ESTADO/COMMIT_DESPLEGADO"
   podar_imagenes
-  log "DESPLIEGUE: ✓ $commit sirviendo en $(cat "$URL_FILE" 2>/dev/null)"
+  # El commit puede estar servido de verdad y el enlace no existir: son dos
+  # cosas distintas y el resumen las separa, porque «✓ sirviendo en » con la URL
+  # en blanco se lee como éxito y no lo es.
+  local url; url="$(cat "$URL_FILE" 2>/dev/null)"
+  if [ -n "$url" ]; then
+    log "DESPLIEGUE: ✓ $commit sirviendo en $url"
+  else
+    log "DESPLIEGUE: ✓ $commit sirviendo en 127.0.0.1:$PUERTO — ⚠ SIN enlace público (ver TÚNEL arriba)"
+  fi
 }
 
 # ─── El disparador: un commit nuevo en dev ───────────────────────────────────
@@ -517,7 +677,7 @@ case "${1:-once}" in
     if [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null; then
       log "El vigilante ya corre (pid $(cat "$VIGILANTE_PID"))"; exit 0
     fi
-    setsid nohup "$RUTA" watch >>"$ESTADO/vigilante.out" 2>&1 < /dev/null &
+    en_segundo_plano "$RUTA" watch >>"$ESTADO/vigilante.out" 2>&1 < /dev/null
     echo $! > "$VIGILANTE_PID"
     log "Vigilante en segundo plano (pid $(cat "$VIGILANTE_PID"))"
     ;;
@@ -530,10 +690,10 @@ case "${1:-once}" in
     # que nada parezca roto—. Un `oneshot` que el temporizador relanza cada minuto no
     # tiene ese estado que perder.
     #
-    # `flock` sin espera porque una construcción pasa de los dos minutos del ciclo: si
-    # la anterior sigue viva, esta se retira en silencio en vez de solaparse.
-    exec 9>"$ESTADO/una-vez.lock"
-    if ! flock -n 9; then
+    # El cerrojo no espera, porque una construcción pasa de los dos minutos del
+    # ciclo: si la anterior sigue viva, esta se retira en silencio en vez de
+    # solaparse.
+    if ! tomar_cerrojo; then
       log "PASADA: ya hay una en curso; esta se retira"
       exit 0
     fi
@@ -547,6 +707,14 @@ case "${1:-once}" in
     # `enable-linger` es la pieza que la gente olvida: sin él, las unidades de usuario sólo
     # viven mientras haya sesión iniciada, así que un reinicio sin login deja el enlace
     # servido por contenedores viejos y a nadie vigilando.
+    # En macOS no hay systemd. Antes esto dejaba un `~/.config/systemd/user` con
+    # dos enlaces simbólicos que no manda nadie, y tres `command not found`
+    # sueltos entre medias: quien lo corría se quedaba creyendo que había
+    # instalado un temporizador. Ahí el equivalente es `start` (o launchd).
+    if ! command -v systemctl >/dev/null 2>&1; then
+      log "SYSTEMD: ✗ esta máquina no tiene systemd (macOS). Usá 'start' para dejar el vigilante corriendo."
+      exit 1
+    fi
     UNIDADES="$HOME/.config/systemd/user"
     mkdir -p "$UNIDADES"
     if [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null; then
@@ -577,7 +745,7 @@ case "${1:-once}" in
   status)
     echo "rama        : origin/$RAMA @ $(git -C "$RAIZ" rev-parse --short "origin/$RAMA" 2>/dev/null) (tu copia local no interviene)"
     echo "desplegado  : $(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || echo '—')"
-    echo "enlace      : $(cat "$URL_FILE" 2>/dev/null || url_del_tunel)"
+    echo "enlace      : $( [ -s "$URL_FILE" ] && cat "$URL_FILE" || url_del_tunel )"
     echo "túnel       : $(tunel_proceso_vivo && echo 'hospedado' || echo 'sin hospedar')"
     # Lo que de verdad se pregunta cuando se pregunta por el estado: si la
     # petición COMO LLEGA POR EL ENLACE funciona. En el ciclo esto es silencioso
@@ -591,6 +759,7 @@ case "${1:-once}" in
     docker ps --filter "name=^${WEB}$" --filter "name=^${PROXY}$" \
       --format 'contenedor  : {{.Names}} · {{.Image}} · {{.Status}}'
     docker stats --no-stream --format 'memoria     : {{.Name}} · {{.MemUsage}}' "$WEB" "$PROXY" 2>/dev/null
+    exit 0
     ;;
 
   proxy)
@@ -609,7 +778,9 @@ case "${1:-once}" in
     proxy_vivo && recargar_proxy
     ;;
 
-  url)  cat "$URL_FILE" 2>/dev/null || url_del_tunel ;;
+  # `[ -s ]` y no `cat … || …`: `cat` de un archivo vacío sale con 0, así que el
+  # respaldo estaba escrito pero era inalcanzable justo cuando hacía falta.
+  url)  if [ -s "$URL_FILE" ]; then cat "$URL_FILE"; else url_del_tunel; fi ;;
   logs) tail -n "${2:-40}" "$LOG" ;;
 
   *) sed -n '2,60p' "$0"; exit 1 ;;
