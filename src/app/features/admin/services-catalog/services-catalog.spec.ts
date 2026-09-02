@@ -8,7 +8,8 @@ import { ServicesCatalog } from './services-catalog';
 
 const RUTA = '/administration/services-catalog';
 
-const PRACTICAS = { items: [{ id: 'pr1', code: 'P1', name: 'Práctica 1' }], count: 1 };
+/** `GET /practices` responde el array pelado, sin envoltorio de página. */
+const PRACTICAS = [{ id: 'pr1', code: 'P1', name: 'Práctica 1' }];
 
 const SERVICIO = {
   id: 's1',
@@ -82,7 +83,7 @@ describe('ServicesCatalog', () => {
   });
 
   it('sin práctica elegida, el catálogo queda vacío sin pedir nada', () => {
-    http.expectOne((r) => r.url === '/practices').flush({ items: [], count: 0 });
+    http.expectOne((r) => r.url === '/practices').flush([]);
     harness.detectChanges();
 
     expect(estado().status).toBe('empty');
