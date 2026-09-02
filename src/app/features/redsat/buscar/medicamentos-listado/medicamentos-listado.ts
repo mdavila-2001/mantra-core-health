@@ -3,30 +3,24 @@
    ya no la sigue: se reescribió contra `GET /public/medications`. */
 
 import { DOCUMENT } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { PublicMarketplaceClient } from '@core/data-access/public-marketplace/public-marketplace.client';
 import type {
   DisponibilidadDeMedicamento,
-  OfertaDeFarmacia,
   PaginaDeVitrina,
   PuntoDeOrigen,
   TarjetaDeMedicamento,
 } from '@core/data-access/public-marketplace/public-marketplace.types';
 
-import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
-import { Chip } from '../../../../shared/components/atoms/chip/chip';
-import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
-import { AppMap } from '../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
+import { AppButton } from '@shared/components/atoms/button/button';
+import { Chip } from '@shared/components/atoms/chip/chip';
+import { CardDetailPanel } from '@shared/components/molecules/card-detail-panel/card-detail-panel';
+import { SearchField } from '@shared/components/molecules/search-field/search-field';
+
+import { CentroCard } from '../centro-card/centro-card';
+import { toMedicationCard, type MedicationCard } from './medication-card.mapper';
+import { PharmacyAvailabilityDialog } from './pharmacy-availability-dialog/pharmacy-availability-dialog';
 
 /** Tope de tarjetas de la vitrina. El backend no deja pasar de 60. */
 const TOPE = 36;
@@ -39,9 +33,6 @@ const TOPE = 36;
  * lo que la pantalla promete no hacer.
  */
 const RADIO_KM = 25;
-
-/** Las letras con que el mapa y las tarjetas se refieren a la misma farmacia. */
-const CODIGOS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 /**
  * Puntos públicos desde donde medir sin entregar la ubicación: las plazas
@@ -61,11 +52,6 @@ export interface PuntoDeReferencia {
   readonly lng: number;
 }
 
-/** Una oferta con la letra que comparte con su pin en el mapa. */
-export interface OfertaVisible extends OfertaDeFarmacia {
-  readonly codigo: string;
-}
-
 /** En qué estado está la vitrina. */
 type Estado = 'carga' | 'datos' | 'vacio' | 'error';
 
@@ -79,6 +65,23 @@ type Estado = 'carga' | 'datos' | 'vacio' | 'error';
  * y la API que la alimenta no devuelve ningún identificador con el que se
  * pudiera armar uno. AloVida no vende medicamentos ni cobra comisión sobre
  * estos precios, y la pantalla lo dice donde se ve, no en letra chica.
+ *
+ * ## La misma tarjeta que los otros tres verticales (AC-06-2, AC-06-3)
+ *
+ * Antes tenía una tarjeta propia (`vitrina-tarjeta`) sin imagen, así que la
+ * misma búsqueda cambiaba de anatomía según la pestaña. Ahora usa `CentroCard`
+ * —portada, logo, nombre, atributos, pie— con los datos de este vertical:
+ * precio desde, en cuántas farmacias se consigue y si requiere receta. La
+ * portada degrada al degradado del tema con las iniciales del principio
+ * activo: `TarjetaDeMedicamento` no trae imagen y una foto de archivo de la
+ * caja no es la caja de este medicamento (P-06-3, regla 00.8).
+ *
+ * ## Las farmacias van a un modal, no a un expansor (AC-06-9)
+ *
+ * El expansor en línea abría un mapa dentro de la celda de la grilla y
+ * empujaba media pantalla de tarjetas. Ahora «Ver farmacias donde está
+ * disponible» abre `PharmacyAvailabilityDialog`, con la misma lista y el mismo
+ * mapa y la misma sincronía entre los dos.
  *
  * ## Por qué ya no usa el buscador público
  *
@@ -102,9 +105,16 @@ type Estado = 'carga' | 'datos' | 'vacio' | 'error';
  */
 @Component({
   selector: 'app-redsat-buscar-medicamentos-listado',
-  imports: [AppButton, AppMap, Badge, Chip, RouterLink, SearchField],
+  imports: [
+    AppButton,
+    CardDetailPanel,
+    CentroCard,
+    Chip,
+    PharmacyAvailabilityDialog,
+    SearchField,
+  ],
   templateUrl: './medicamentos-listado.html',
-  styleUrl: './medicamentos-listado.css',
+  styleUrls: ['./medicamentos-listado.css', '../centro-card/centro-grid.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuscarMedicamentosListado {
@@ -114,6 +124,9 @@ export class BuscarMedicamentosListado {
   protected readonly ciudades = CIUDADES;
   protected readonly radioKm = RADIO_KM;
 
+  /** Cuántos esqueletos dibujar mientras carga. */
+  protected readonly huecos = [0, 1, 2, 3, 4, 5];
+
   /* ---- la vitrina --------------------------------------------------------- */
 
   protected readonly estado = signal<Estado>('carga');
@@ -122,7 +135,9 @@ export class BuscarMedicamentosListado {
   protected readonly texto = signal('');
   protected readonly grupo = signal<string | null>(null);
 
-  protected readonly tarjetas = computed(() => this.pagina()?.items ?? []);
+  protected readonly tarjetas = computed<readonly MedicationCard[]>(() =>
+    (this.pagina()?.items ?? []).map(toMedicationCard),
+  );
   protected readonly grupos = computed(() => this.pagina()?.groups ?? []);
   protected readonly total = computed(() => this.pagina()?.total ?? 0);
 
@@ -134,42 +149,17 @@ export class BuscarMedicamentosListado {
 
   /* ---- el detalle de disponibilidad --------------------------------------- */
 
-  /** El medicamento cuya disponibilidad está abierta; `null` si ninguno. */
+  /** El medicamento cuyo modal de farmacias está abierto; `null` si ninguno. */
   protected readonly abierto = signal<TarjetaDeMedicamento | null>(null);
   protected readonly cargandoDetalle = signal(false);
   protected readonly detalle = signal<DisponibilidadDeMedicamento | null>(null);
   protected readonly errorDetalle = signal(false);
 
-  /** La farmacia resaltada, compartida entre el mapa y las tarjetas. */
-  protected readonly farmaciaElegida = signal<string | null>(null);
-
-  /** Las ofertas con su letra: la referencia que comparten mapa y lista. */
-  protected readonly ofertas = computed<readonly OfertaVisible[]>(() =>
-    (this.detalle()?.offers ?? []).map((oferta, indice) => ({
-      ...oferta,
-      codigo: CODIGOS[indice] ?? String(indice + 1),
-    })),
-  );
-
-  /** Las ofertas traducidas al contrato del organismo de mapa. */
-  protected readonly pines = computed<readonly PinMapa[]>(() =>
-    this.ofertas().map((oferta) => ({
-      // La letra y no el slug: nada del mapa debe poder filtrar identificadores.
-      id: oferta.codigo,
-      codigo: oferta.codigo,
-      lat: oferta.latitude,
-      lng: oferta.longitude,
-      titulo: oferta.pharmacyName,
-      subtitulo: subtituloDePin(oferta),
-      estado: oferta.inStock
-        ? { etiqueta: 'Disponible hoy', tono: 'success' as const }
-        : { etiqueta: 'Sin stock hoy', tono: 'warning' as const },
-      ctaEtiqueta: 'Ver en la lista',
-    })),
-  );
+  /** Las ofertas del medicamento abierto, tal como las devolvió la API. */
+  protected readonly ofertas = computed(() => this.detalle()?.offers ?? []);
 
   /**
-   * Dónde se centra el mapa: en el punto elegido, cuando lo hay.
+   * Dónde se centra el mapa del modal: en el punto elegido, cuando lo hay.
    *
    * Sin esto el mapa encuadra **todos** los pines, y el detalle lista a
    * propósito las farmacias de todo el país —quien abre la ficha quiere saber
@@ -186,14 +176,7 @@ export class BuscarMedicamentosListado {
   /** Escala de ciudad: se ven los barrios y la farmacia de al lado. */
   protected readonly zoomDelMapa = computed(() => (this.origen() === null ? null : 12));
 
-  protected readonly etiquetaDelMapa = computed(() => {
-    const cantidad = this.pines().length;
-    const marcadas = cantidad === 1 ? '1 farmacia marcada' : `${cantidad} farmacias marcadas`;
-    const punto = this.origen();
-    const encuadre =
-      punto === null ? '' : ` El mapa abre centrado en ${punto.etiqueta}; alejá para ver el resto.`;
-    return `${marcadas} en el mapa.${encuadre} La lista completa, con dirección, precio y distancia en línea recta, está debajo.`;
-  });
+  protected readonly etiquetaDelOrigen = computed(() => this.origen()?.etiqueta ?? null);
 
   constructor() {
     this.consultar();
@@ -217,8 +200,8 @@ export class BuscarMedicamentosListado {
           this.pagina.set(pagina);
           this.estado.set(pagina.items.length === 0 ? 'vacio' : 'datos');
           // Un filtro que deja la vitrina vacía también deja sin sentido el
-          // detalle abierto: se cierra en vez de quedar colgando de una
-          // tarjeta que ya no está en pantalla.
+          // modal abierto: se cierra en vez de quedar colgando de una tarjeta
+          // que ya no está en pantalla.
           if (pagina.items.length === 0) this.cerrarDetalle();
         },
         error: () => {
@@ -251,18 +234,12 @@ export class BuscarMedicamentosListado {
 
   /* ---- el detalle --------------------------------------------------------- */
 
-  /** Abre la disponibilidad de una tarjeta; volver a tocarla la cierra. */
-  protected alternarDetalle(tarjeta: TarjetaDeMedicamento): void {
-    if (this.abierto()?.conceptId === tarjeta.conceptId) {
-      this.cerrarDetalle();
-      return;
-    }
-
+  /** Abre el modal de farmacias de una tarjeta y pide su disponibilidad. */
+  protected abrirDetalle(tarjeta: TarjetaDeMedicamento): void {
     this.abierto.set(tarjeta);
     this.detalle.set(null);
     this.errorDetalle.set(false);
     this.cargandoDetalle.set(true);
-    this.farmaciaElegida.set(null);
 
     const punto = this.origen();
     this.vitrina
@@ -289,21 +266,6 @@ export class BuscarMedicamentosListado {
     this.detalle.set(null);
     this.errorDetalle.set(false);
     this.cargandoDetalle.set(false);
-  }
-
-  protected estaAbierto(tarjeta: TarjetaDeMedicamento): boolean {
-    return this.abierto()?.conceptId === tarjeta.conceptId;
-  }
-
-  /** Lleva la vista a la tarjeta de la farmacia cuyo pin se tocó. */
-  protected enfocarFarmacia(codigo: string): void {
-    this.farmaciaElegida.set(codigo);
-    const fila = this.documento.getElementById(`oferta-${codigo}`);
-    if (fila === null) return;
-    const reducirMovimiento =
-      this.documento.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ??
-      false;
-    fila.scrollIntoView({ behavior: reducirMovimiento ? 'auto' : 'smooth', block: 'center' });
   }
 
   /* ---- la ubicación ------------------------------------------------------- */
@@ -342,55 +304,22 @@ export class BuscarMedicamentosListado {
   protected medirDesde(punto: PuntoDeReferencia): void {
     this.origen.set(punto);
     this.consultar();
-    // El detalle abierto se rearma con el nuevo origen: si no, seguiría
+    // El modal abierto se rearma con el nuevo origen: si no, seguiría
     // mostrando las distancias medidas desde el punto anterior.
-    const abierto = this.abierto();
-    if (abierto !== null) {
-      this.abierto.set(null);
-      this.alternarDetalle(abierto);
-    }
+    this.rearmarDetalle();
   }
 
   protected quitarOrigen(): void {
     this.origen.set(null);
     this.consultar();
+    this.rearmarDetalle();
+  }
+
+  private rearmarDetalle(): void {
     const abierto = this.abierto();
     if (abierto !== null) {
-      this.abierto.set(null);
-      this.alternarDetalle(abierto);
+      this.abrirDetalle(abierto);
     }
-  }
-
-  /* ---- formato ------------------------------------------------------------ */
-
-  /**
-   * El precio que encabeza la tarjeta: siempre el más bajo publicado.
-   *
-   * Es el número que «desde» promete, y por eso el rótulo sólo aparece cuando
-   * hay rango: con una sola farmacia —o con todas cobrando lo mismo— «desde»
-   * insinuaría que en algún lado sale más caro, y no es cierto.
-   */
-  protected precioDe(tarjeta: TarjetaDeMedicamento): string {
-    return importe(tarjeta.priceFrom, tarjeta.currency);
-  }
-
-  /** `true` si las farmacias no coinciden en el precio. */
-  protected hayRango(tarjeta: TarjetaDeMedicamento): boolean {
-    return tarjeta.priceFrom !== tarjeta.priceTo;
-  }
-
-  /** «hasta Bs 29,74», para el renglón secundario del rango. */
-  protected precioMaximoDe(tarjeta: TarjetaDeMedicamento): string {
-    return importe(tarjeta.priceTo, tarjeta.currency);
-  }
-
-  /** «1,2 km», con coma decimal. */
-  protected distancia(km: number | null): string | null {
-    return km === null ? null : `${km.toFixed(1).replace('.', ',')} km`;
-  }
-
-  protected importeDe(oferta: OfertaDeFarmacia): string {
-    return importe(oferta.price, oferta.currency);
   }
 }
 
@@ -399,27 +328,4 @@ export class BuscarMedicamentosListado {
 /** El punto, en el contrato que viaja a la API. */
 function puntoGeoDe(punto: PuntoDeReferencia): PuntoDeOrigen {
   return { lat: punto.lat, lng: punto.lng };
-}
-
-/**
- * «Bs 18,50» a partir del texto exacto del backend.
- *
- * El importe **no se convierte a número**: se reformatea el texto. Pasar por
- * `Number` y volver perdería el centavo que la farmacia publicó, que es
- * justamente el dato que la pantalla promete mostrar sin tocar.
- */
-function importe(valor: string, moneda: string): string {
-  const simbolo = moneda === 'BOB' ? 'Bs' : moneda;
-  return `${simbolo} ${valor.replace('.', ',')}`;
-}
-
-/** El renglón secundario del pin: distancia rotulada y dirección, lo que haya. */
-function subtituloDePin(oferta: OfertaDeFarmacia): string | undefined {
-  const partes = [
-    oferta.distanceKm === null
-      ? null
-      : `${oferta.distanceKm.toFixed(1).replace('.', ',')} km en línea recta`,
-    oferta.addressText,
-  ].filter((parte): parte is string => parte !== null);
-  return partes.length === 0 ? undefined : partes.join(' · ');
 }
