@@ -67,6 +67,15 @@ describe('TarjetaDelDia', () => {
     readonly paciente: WritableSignal<ReferenceOption | null>;
     readonly modalidad: WritableSignal<ModalidadDeAtencion>;
     readonly puedeGuardar: Signal<boolean>;
+    /**
+     * El buscador de pacientes y sus resultados.
+     *
+     * Llegaron después de que este accesor pasara a tipado, y el hueco no lo vio
+     * ningún merge: git no ve un conflicto entre «tipar una interfaz» y «usar un
+     * miembro que no declara». Se descubrió compilando.
+     */
+    readonly candidatos: Signal<readonly ReferenceOption[]>;
+    buscarPaciente(texto: string): void;
     guardar(): void;
   }
 
@@ -310,7 +319,7 @@ describe('TarjetaDelDia', () => {
 
   it('busca pacientes y arma las opciones sin uuids a la vista', async () => {
     await montar();
-    api()['buscarPaciente']('ana');
+    api().buscarPaciente('ana');
 
     http
       .expectOne((r) => r.url === '/profiles/patients')
@@ -323,7 +332,7 @@ describe('TarjetaDelDia', () => {
         nextCursor: null,
       });
 
-    const opciones = api()['candidatos']();
+    const opciones = api().candidatos();
     expect(opciones[0].label).toBe('Ana Quispe');
     expect(opciones[0].value).toBe('pp-1');
     http.verify();
