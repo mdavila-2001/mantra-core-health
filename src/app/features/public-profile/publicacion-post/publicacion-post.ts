@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 import { SessionStore } from '@core/auth/session.store';
 import type { PublicPostSummary } from '@core/data-access/public-directory/public-directory.types';
 import { PostPreferencesMenu } from '@shared/components/molecules/post-preferences-menu/post-preferences-menu';
+import { PublicacionComentarios } from '../publicacion-comentarios/publicacion-comentarios';
+import { PublicacionReacciones } from '../publicacion-reacciones/publicacion-reacciones';
 
 /**
  * Una publicación, con la anatomía de una entrada de feed de red social:
@@ -18,7 +20,13 @@ import { PostPreferencesMenu } from '@shared/components/molecules/post-preferenc
  */
 @Component({
   selector: 'app-publicacion-post',
-  imports: [DatePipe, PostPreferencesMenu, RouterLink],
+  imports: [
+    DatePipe,
+    PostPreferencesMenu,
+    PublicacionComentarios,
+    PublicacionReacciones,
+    RouterLink,
+  ],
   templateUrl: './publicacion-post.html',
   styleUrl: './publicacion-post.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,6 +70,33 @@ export class PublicacionPost {
 
   /** Si hay sesión: decide si el menú actúa o manda a entrar (AC-01-17). */
   protected readonly haySesion = this.sesion.isAuthenticated;
+
+  /* ---- los dos contadores, ahora cliqueables (AC-01-9, AC-01-11) --------- */
+
+  /**
+   * El modal de reacciones y el desplegable de comentarios se montan **sólo
+   * mientras están abiertos**, y no ocultos con CSS.
+   *
+   * Los dos piden datos en su constructor. Dejarlos montados haría que cada
+   * tarjeta del feed pidiera su lista de reacciones y su hilo de comentarios al
+   * dibujarse: veinticinco publicaciones en pantalla serían cincuenta
+   * peticiones que nadie miró. Es el mismo defecto que `app-tab` tenía en
+   * `/my-account`.
+   */
+  protected readonly reaccionesAbiertas = signal(false);
+  protected readonly comentariosAbiertos = signal(false);
+
+  protected abrirReacciones(): void {
+    this.reaccionesAbiertas.set(true);
+  }
+
+  protected cerrarReacciones(): void {
+    this.reaccionesAbiertas.set(false);
+  }
+
+  protected alternarComentarios(): void {
+    this.comentariosAbiertos.update((abierto) => !abierto);
+  }
 
   private readonly expandido = signal(false);
 

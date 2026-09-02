@@ -196,6 +196,23 @@
   gap: 4px;
 }
 
+/* Los contadores son botones y tienen que verse como el texto que eran: lo que
+   cambia al pasar el puntero es el subrayado, no una caja nueva. */
+.publicacion__contador-boton {
+  /* 44 px de área táctil sin engordar la fila. */
+  min-block-size: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.publicacion__contador-boton:hover {
+  text-decoration: underline;
+}
+
 /* ---- los pasos de la galería (AC-01-8) ---------------------------------- */
 
 /* Sobre la imagen y no debajo: debajo empujaría el resumen de la tarjeta y

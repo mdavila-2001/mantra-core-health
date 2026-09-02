@@ -1,0 +1,39 @@
+<!-- `Escape` lo maneja el navegador sobre el `<dialog>` y llega por `(cancel)`.
+     Se lo previene y se cierra por el mismo camino que el botón, para que la
+     devolución del foco ocurra una sola vez y en un solo lugar. -->
+<dialog
+  #nativeDialog
+  class="modal"
+  data-testid="modal"
+  [attr.aria-labelledby]="headingId"
+  (cancel)="$event.preventDefault(); cerrar()"
+>
+  <div class="modal__panel">
+    <header class="modal__cabecera">
+      <h2 class="modal__titulo" [id]="headingId">{{ heading() }}</h2>
+      <button
+        type="button"
+        class="modal__cerrar"
+        data-testid="modal-cerrar"
+        [attr.aria-label]="closeLabel()"
+        (click)="cerrar()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M6 6 18 18M18 6 6 18" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="modal__cuerpo">
+      <ng-content />
+    </div>
+  </div>
+</dialog>

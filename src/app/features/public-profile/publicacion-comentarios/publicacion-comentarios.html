@@ -1,0 +1,157 @@
+<!-- AC-01-11 — El desplegable scrollea en LOS DOS ejes y con altura acotada: sin
+     el tope, abrir un hilo de cuarenta comentarios empuja la publicación
+     siguiente fuera de la pantalla de golpe. -->
+<div class="comentarios">
+  @switch (estado()) {
+    @case ('datos') {
+      @if (destacado(); as elegido) {
+        <!-- AC-01-13 — El más destacado va primero y rotulado como tal: si no
+             se dijera, se leería como que el orden cronológico está roto. -->
+        <p class="comentarios__rotulo">Comentario más destacado</p>
+        <ul class="comentarios__lista">
+          <ng-container
+            *ngTemplateOutlet="hilo; context: { $implicit: elegido }"
+          ></ng-container>
+        </ul>
+      }
+
+      @if (resto().length > 0) {
+        @if (destacado()) {
+          <p class="comentarios__rotulo">El resto, del más antiguo al más nuevo</p>
+        }
+        <ul class="comentarios__lista">
+          @for (comentario of resto(); track comentario.id) {
+            <ng-container
+              *ngTemplateOutlet="hilo; context: { $implicit: comentario }"
+            ></ng-container>
+          }
+        </ul>
+      }
+
+      @if (hayMas()) {
+        <p class="comentarios__mas">
+          <button
+            app-button
+            data-variante="secundario"
+            data-tam="sm"
+            type="button"
+            data-testid="comentarios-ver-mas"
+            [disabled]="cargandoMas()"
+            (click)="verMas()"
+          >
+            {{ cargandoMas() ? 'Cargando…' : 'Ver más comentarios' }}
+          </button>
+        </p>
+      }
+    }
+
+    @case ('carga') {
+      <div class="comentarios__esqueleto" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando los comentarios…</span>
+        <span class="app-skeleton"></span>
+        <span class="app-skeleton"></span>
+      </div>
+    }
+
+    @case ('vacio') {
+      <p class="comentarios__vacio">
+        Todavía no hay comentarios visibles en esta publicación.
+      </p>
+    }
+
+    @case ('error') {
+      <div class="app-alert" app-alert data-tono="error" role="alert">
+        <div class="app-alert__cuerpo">
+          <strong>No pudimos leer los comentarios.</strong>
+          <p>Volvé a intentarlo en un momento.</p>
+        </div>
+      </div>
+      <p class="comentarios__mas">
+        <button app-button data-variante="secundario" data-tam="sm" type="button" (click)="reintentar()">
+          Reintentar
+        </button>
+      </p>
+    }
+  }
+</div>
+
+<!-- Un comentario y, si están abiertas, sus respuestas. Es una plantilla
+     porque el destacado y el resto dibujan exactamente lo mismo. -->
+<ng-template #hilo let-comentario>
+  <li class="comentario">
+    <!-- AC-01-12 — Con NOMBRE VISIBLE. El muro con sesión escribe
+         «Perfil a1b2c3d4» cuando no resuelve el autor; acá el nombre viene en
+         la respuesta y se muestra tal cual. -->
+    @if (comentario.author.avatarUrl) {
+      <img class="comentario__avatar" [src]="comentario.author.avatarUrl" alt="" width="32" height="32" />
+    } @else {
+      <span class="comentario__avatar comentario__avatar--iniciales" aria-hidden="true">{{
+        iniciales(comentario.author)
+      }}</span>
+    }
+
+    <div class="comentario__cuerpo">
+      <p class="comentario__firma">
+        @if (enlaceAutor(comentario.author); as destino) {
+          <a class="comentario__autor" [routerLink]="destino">{{
+            comentario.author.displayName
+          }}</a>
+        } @else {
+          <span class="comentario__autor">{{ comentario.author.displayName }}</span>
+        }
+        <time class="comentario__fecha" [attr.datetime]="comentario.createdAt.toISOString()">
+          {{ comentario.createdAt | date: 'd MMM y' }}
+        </time>
+      </p>
+
+      <p class="comentario__texto">{{ comentario.bodyText }}</p>
+
+      <p class="comentario__acciones">
+        <button
+          type="button"
+          class="comentario__accion"
+          data-testid="comentario-responder"
+          (click)="responder()"
+        >
+          Responder
+        </button>
+
+        @if (comentario.replyCount > 0) {
+          <button
+            type="button"
+            class="comentario__accion"
+            data-testid="comentario-ver-respuestas"
+            [attr.aria-expanded]="respuestasAbiertas(comentario.id)"
+            [disabled]="cargandoRespuestasDe(comentario.id)"
+            (click)="alternarRespuestas(comentario.id)"
+          >
+            @if (cargandoRespuestasDe(comentario.id)) {
+              Cargando…
+            } @else if (respuestasAbiertas(comentario.id)) {
+              Ocultar las respuestas
+            } @else {
+              Ver
+              {{ comentario.replyCount }}
+              {{ comentario.replyCount === 1 ? 'respuesta' : 'respuestas' }}
+            }
+          </button>
+        }
+      </p>
+
+      @if (respuestasAbiertas(comentario.id)) {
+        <ul class="comentarios__lista comentarios__lista--respuestas">
+          @for (respuesta of respuestasDe(comentario.id); track respuesta.id) {
+            <ng-container
+              *ngTemplateOutlet="hilo; context: { $implicit: respuesta }"
+            ></ng-container>
+          }
+          @if (respuestasDe(comentario.id).length === 0) {
+            <li class="comentarios__vacio">
+              Las respuestas de este comentario ya no están visibles.
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </li>
+</ng-template>

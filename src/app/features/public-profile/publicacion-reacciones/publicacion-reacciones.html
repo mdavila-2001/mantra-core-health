@@ -1,0 +1,96 @@
+<app-modal
+  [heading]="titulo()"
+  closeLabel="Cerrar la lista de reacciones"
+  (closed)="cerrado.emit()"
+>
+  @switch (estado()) {
+    @case ('datos') {
+      <ul class="reacciones">
+        @for (persona of personas(); track persona.slug) {
+          <li class="reacciones__persona">
+            @if (enlace(persona); as destino) {
+              <a class="reacciones__enlace" [routerLink]="destino">
+                <ng-container
+                  *ngTemplateOutlet="retrato; context: { $implicit: persona }"
+                ></ng-container>
+              </a>
+            } @else {
+              <span class="reacciones__enlace reacciones__enlace--inerte">
+                <ng-container
+                  *ngTemplateOutlet="retrato; context: { $implicit: persona }"
+                ></ng-container>
+              </span>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (hayMas()) {
+        <p class="reacciones__mas">
+          <button
+            app-button
+            data-variante="secundario"
+            type="button"
+            data-testid="reacciones-ver-mas"
+            [disabled]="cargandoMas()"
+            (click)="verMas()"
+          >
+            {{ cargandoMas() ? 'Cargando…' : 'Ver más' }}
+          </button>
+        </p>
+      }
+    }
+
+    @case ('carga') {
+      <div class="reacciones__esqueleto" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando quiénes reaccionaron…</span>
+        <span class="app-skeleton"></span>
+        <span class="app-skeleton"></span>
+        <span class="app-skeleton"></span>
+      </div>
+    }
+
+    @case ('vacio') {
+      <!-- Con 0 reacciones el contador ni se dibuja, así que llegar acá
+           significa que alguien que reaccionó dejó de tener perfil público
+           entre que se contó y que se listó. Se dice, no se muestra una lista
+           vacía sin explicación. -->
+      <p class="reacciones__vacio">
+        Ninguna de las personas que reaccionaron tiene hoy un perfil público
+        visible.
+      </p>
+    }
+
+    @case ('error') {
+      <div class="app-alert" app-alert data-tono="error" role="alert">
+        <div class="app-alert__cuerpo">
+          <strong>No pudimos leer quiénes reaccionaron.</strong>
+          <p>Volvé a intentarlo en un momento.</p>
+        </div>
+      </div>
+      <p class="reacciones__mas">
+        <button app-button data-variante="secundario" type="button" (click)="reintentar()">
+          Reintentar
+        </button>
+      </p>
+    }
+  }
+</app-modal>
+
+<!-- El retrato es el mismo con enlace y sin él: sin esta plantilla habría que
+     copiar avatar, nombre y titular en las dos ramas. -->
+<ng-template #retrato let-persona>
+  @if (persona.avatarUrl) {
+    <img class="reacciones__avatar" [src]="persona.avatarUrl" alt="" width="40" height="40" />
+  } @else {
+    <span class="reacciones__avatar reacciones__avatar--iniciales" aria-hidden="true">{{
+      iniciales(persona)
+    }}</span>
+  }
+  <span class="reacciones__firma">
+    <span class="reacciones__nombre">{{ persona.displayName }}</span>
+    @if (persona.headline) {
+      <span class="reacciones__titular">{{ persona.headline }}</span>
+    }
+  </span>
+</ng-template>

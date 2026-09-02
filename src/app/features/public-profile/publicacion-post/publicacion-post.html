@@ -147,15 +147,50 @@
 
   @if (p.reactionCount > 0 || p.commentCount > 0) {
     <div class="publicacion__resumen">
+      <!-- AC-01-9 / AC-01-11 — Los dos contadores eran `<span>`: pintaban el
+           número y no dejaban tocarlo, mientras que la pregunta que un número
+           produce —«¿quiénes?», «¿qué dijeron?»— no tenía respuesta en ninguna
+           pantalla. Ahora son botones. Con 0 no se dibujan: un botón que abre
+           una lista vacía es una promesa que no se cumple. -->
       @if (p.reactionCount > 0) {
-        <span class="publicacion__reacciones">
+        <button
+          type="button"
+          class="publicacion__contador-boton publicacion__reacciones"
+          data-testid="publicacion-reacciones"
+          (click)="abrirReacciones()"
+        >
           <span class="publicacion__pulgar" aria-hidden="true">👍</span>
           {{ p.reactionCount }}
-        </span>
+          <span class="solo-lectores">
+            {{ p.reactionCount === 1 ? 'reacción: ver quién reaccionó' : 'reacciones: ver quiénes reaccionaron' }}
+          </span>
+        </button>
       }
       @if (p.commentCount > 0) {
-        <span>{{ p.commentCount }} {{ p.commentCount === 1 ? 'comentario' : 'comentarios' }}</span>
+        <button
+          type="button"
+          class="publicacion__contador-boton"
+          data-testid="publicacion-comentarios"
+          [attr.aria-expanded]="comentariosAbiertos()"
+          (click)="alternarComentarios()"
+        >
+          {{ p.commentCount }} {{ p.commentCount === 1 ? 'comentario' : 'comentarios' }}
+        </button>
       }
     </div>
   }
+
+  <!-- Desplegable en línea, dentro de la tarjeta: el pedido lo separa del modal
+       de reacciones a propósito. -->
+  @if (comentariosAbiertos()) {
+    <app-publicacion-comentarios [postId]="p.id" />
+  }
 </article>
+
+@if (reaccionesAbiertas()) {
+  <app-publicacion-reacciones
+    [postId]="p.id"
+    [total]="p.reactionCount"
+    (cerrado)="cerrarReacciones()"
+  />
+}
