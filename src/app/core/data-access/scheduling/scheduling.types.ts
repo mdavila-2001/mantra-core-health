@@ -465,13 +465,57 @@ export interface SlotsGenerated {
   readonly skipped: number;
 }
 
-/** Tipo de excepción de disponibilidad (`ExceptionType`). */
-export type AvailabilityExceptionType = 'ABSENCE' | 'HOLIDAY' | 'EXTRA';
+/**
+ * Tipo de excepción de disponibilidad (`ExceptionType`).
+ *
+ * Son **siete**, no tres. Los cuatro que faltaban —`VACATION`, `CONFERENCE`,
+ * `ERRAND`, `OTHER`— existían en la base desde siempre; lo que no existía era
+ * quien los publicara, así que el front no tenía de dónde sacarlos y mandaba
+ * `ABSENCE` para todo. Ese era el defecto que arregla la TAREA-11 punto 4.
+ *
+ * **No los pongas en un `<select>` a mano.** La lista que se muestra viene de
+ * `GET /scheduling/exception-types`, que además dice cuál exige explicación y
+ * cuál abre horario en vez de cerrarlo. Esta unión existe para tipar el envío,
+ * no para dibujar la pantalla.
+ */
+export type AvailabilityExceptionType =
+  | 'ABSENCE'
+  | 'HOLIDAY'
+  | 'VACATION'
+  | 'CONFERENCE'
+  | 'ERRAND'
+  | 'EXTRA'
+  | 'OTHER';
 export const AVAILABILITY_EXCEPTION_TYPES: readonly AvailabilityExceptionType[] = [
   'ABSENCE',
   'HOLIDAY',
+  'VACATION',
+  'CONFERENCE',
+  'ERRAND',
   'EXTRA',
+  'OTHER',
 ];
+
+/**
+ * Un motivo del catálogo, tal como lo publica la API.
+ *
+ * La pantalla **no decide** ninguna de las tres reglas: el servidor manda la
+ * etiqueta en castellano, si el motivo obliga a escribir texto y si bloquea o
+ * abre horario. Duplicar cualquiera de las tres acá sería tener dos verdades.
+ */
+export interface AvailabilityExceptionTypeOption {
+  readonly type: AvailabilityExceptionType;
+  readonly conceptId: string;
+  readonly label: string;
+  /** Elegirlo obliga a explicar por qué. Hoy es `OTHER`, y sólo él. */
+  readonly requiresText: boolean;
+  /** `false` en `EXTRA`, que **abre** disponibilidad en vez de cerrarla. */
+  readonly blocks: boolean;
+}
+
+export interface AvailabilityExceptionTypeList {
+  readonly items: readonly AvailabilityExceptionTypeOption[];
+}
 
 /** Cuerpo de `POST /scheduling/resources/:id/exceptions` (UC-41-04). */
 export interface NewAvailabilityException {

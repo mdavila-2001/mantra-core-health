@@ -43,6 +43,7 @@
       @if (!diaAbierto()) {
         @if (bloqueoAbierto()) {
           <app-block-form
+            [motivos]="motivosDeBloqueo()"
             (bloquear)="bloquearRango($event)"
             (cancelar)="bloqueoAbierto.set(false)"
           />
@@ -52,7 +53,7 @@
               app-button
               variant="secondary"
               type="button"
-              (clicked)="bloqueoAbierto.set(true)"
+              (clicked)="abrirBloqueo()"
             >
               Bloquear días u horarios
             </button>

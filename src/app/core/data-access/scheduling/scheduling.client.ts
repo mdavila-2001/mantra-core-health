@@ -12,6 +12,7 @@ import type {
   AgendaSlotPage,
   AgendaSlotQuery,
   AvailabilityExceptionCreated,
+  AvailabilityExceptionTypeList,
   Booking,
   BookingCancellation,
   BookingCancelled,
@@ -306,6 +307,23 @@ export class SchedulingClient {
    * los dos aparecen sin cupos, y la diferencia es justamente lo que hay que
    * mostrarle al profesional.
    */
+  /**
+   * El catálogo de motivos de bloqueo (TAREA-11, punto 4).
+   *
+   * Es una lectura de catálogo, no de datos de nadie: no lleva recurso ni
+   * ventana. Se pide una vez al abrir el formulario.
+   *
+   * **La respuesta manda sobre la pantalla.** Trae la etiqueta en castellano,
+   * `requiresText` —hoy sólo `OTHER`— y `blocks`, que distingue el motivo que
+   * abre horario del que lo cierra. Si mañana el propietario agrega un motivo,
+   * aparece solo: acá no hay lista que actualizar.
+   */
+  listExceptionTypes(): Observable<AvailabilityExceptionTypeList> {
+    return this.http.get<AvailabilityExceptionTypeList>(
+      this.url('/scheduling/exception-types'),
+    );
+  }
+
   listExceptions(
     resourceId: string,
     ventana: { from: Date; to: Date },
