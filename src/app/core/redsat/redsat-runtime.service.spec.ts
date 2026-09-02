@@ -395,4 +395,64 @@ describe('RedsatRuntimeService', () => {
       vi.useRealTimers();
     });
   });
+
+  /**
+   * TAREA-08 (fondo reactivo, v4.3): `--fondo-presencia` es lo que
+   * `redsat.css` multiplica sobre la opacidad del fondo en modo claro para
+   * que el celeste **aparezca** con el puntero y se retire al quedarse
+   * quieto (AC-08-6). El servicio se instaló una sola vez en el `beforeAll`
+   * de este archivo —matchMedia sin coincidencias, así que
+   * `prefiereMenosMovimiento()` fue `false` al instalar—, y por eso el
+   * oyente de `mousemove` de `fondoReactivo()` ya está enganchado: estas
+   * pruebas lo ejercitan tal como quedó, sin volver a llamar `instalar()`.
+   */
+  describe('fondoReactivo', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('mover el puntero publica --raton-x/-y y sube la presencia a 1', () => {
+      window.dispatchEvent(new MouseEvent('mousemove', { clientX: 100, clientY: 50 }));
+
+      const raiz = document.documentElement.style;
+      expect(raiz.getPropertyValue('--raton-x')).not.toBe('');
+      expect(raiz.getPropertyValue('--raton-y')).not.toBe('');
+      expect(raiz.getPropertyValue('--fondo-presencia')).toBe('1');
+    });
+
+    it('al quedarse quieto, la presencia vuelve al mismo número que el respaldo de la hoja', () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+      window.dispatchEvent(new MouseEvent('mousemove', { clientX: 10, clientY: 10 }));
+      expect(document.documentElement.style.getPropertyValue('--fondo-presencia')).toBe('1');
+
+      vi.advanceTimersByTime(650);
+
+      // `.35` es el mismo valor que `var(--fondo-presencia, .35)` en
+      // redsat.css: el reposo tras mover el mouse pinta igual que la
+      // primera pintura, antes de que este servicio corriera.
+      expect(document.documentElement.style.getPropertyValue('--fondo-presencia')).toBe('.35');
+
+      vi.useRealTimers();
+    });
+
+    it('mover el puntero de nuevo antes de quedarse quieto reprograma el reposo, no lo acumula', () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+      window.dispatchEvent(new MouseEvent('mousemove', { clientX: 10, clientY: 10 }));
+      vi.advanceTimersByTime(400);
+      window.dispatchEvent(new MouseEvent('mousemove', { clientX: 20, clientY: 20 }));
+      vi.advanceTimersByTime(400);
+
+      // Pasaron 800ms desde el primer movimiento —más que los 650 del reposo—
+      // pero sólo 400 desde el segundo: un único temporizador reprogramado
+      // sigue esperando, no dos que se dispararon por separado.
+      expect(document.documentElement.style.getPropertyValue('--fondo-presencia')).toBe('1');
+
+      vi.advanceTimersByTime(250);
+      expect(document.documentElement.style.getPropertyValue('--fondo-presencia')).toBe('.35');
+
+      vi.useRealTimers();
+    });
+  });
 });
