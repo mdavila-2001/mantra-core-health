@@ -587,9 +587,33 @@ export interface PublishedRule {
   readonly gapMinutes?: number;
 }
 
+/** Lo que deja retirar un horario (`DELETE /scheduling/templates/:id`). */
+export interface RetiredTemplate {
+  readonly id: string;
+  readonly statusConceptId: string;
+  /** Cupos que nadie reservó y dejaron de publicarse. */
+  readonly releasedSlots: number;
+  /**
+   * Cupos conservados por tener una cita detrás.
+   *
+   * Distinto de cero **no es un error**: es el historial que el retiro respeta
+   * a propósito, y la pantalla tiene que decirlo en vez de callarlo.
+   */
+  readonly keptSlots: number;
+}
+
 /** Una plantilla publicada, con sus franjas. */
 export interface PublishedTemplate {
   readonly id: string;
+  /**
+   * Si el horario fue retirado y ya no se publica.
+   *
+   * Viene como booleano desde el servidor —no hay que comparar contra un uuid
+   * de concepto— y es lo que separa el horario vigente del histórico: el
+   * listado devuelve **todas** las plantillas del recurso, retiradas incluidas.
+   */
+  readonly retired: boolean;
+
   readonly name: string;
   readonly rules: readonly PublishedRule[];
   readonly slotMinutes?: number;

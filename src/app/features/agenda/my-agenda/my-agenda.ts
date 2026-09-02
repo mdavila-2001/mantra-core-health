@@ -16,6 +16,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -96,6 +97,14 @@ interface Patron {
   readonly semana: readonly DiaDelPatron[];
   readonly franjas: readonly FranjaVisible[];
   readonly vigencia: string | null;
+  /**
+   * Si el horario no tiene fecha de fin.
+   *
+   * El propietario lo pidió como etiqueta y con esas palabras —`HORARIO
+   * PERMANENTE`, punto 5—: es un estado del horario, y tiene que leerse de un
+   * vistazo junto al resto, no escondido en una frase.
+   */
+  readonly permanente: boolean;
 }
 
 /**
@@ -120,6 +129,7 @@ interface Patron {
   selector: 'app-my-agenda',
   imports: [
     Alert,
+    Badge,
     AppButton,
     AppButtonLink,
     BlockForm,
@@ -149,6 +159,17 @@ export class MyAgenda {
   protected readonly estado = signal<ViewState<PublishedTemplate>>(loading());
 
   /** Hasta cuándo llegan los cupos ya materializados. */
+  /**
+   * Los horarios ya retirados (TAREA-10, punto 2).
+   *
+   * No es decoración: un médico que cambió su horario tres veces necesita ver
+   * cuáles rigieron antes, sobre todo si todavía hay pacientes citados en ellos.
+   */
+  protected readonly historicos = signal<readonly PublishedTemplate[]>([]);
+
+  /** El horario que se está retirando, para el `[isLoading]` del botón. */
+  protected readonly retirando = signal(false);
+
   protected readonly cuposHasta = signal<Date | null>(null);
   protected readonly generando = signal(false);
 
@@ -245,6 +266,10 @@ export class MyAgenda {
         plantilla.validTo === undefined
           ? null
           : `Hasta el ${new Date(plantilla.validTo).toLocaleDateString('es')}`,
+      // El propietario lo pidió con esas palabras y en mayúsculas (punto 5).
+      // Es una etiqueta y no prosa: un horario sin fecha de fin es un estado
+      // del horario, y tiene que leerse de un vistazo junto al resto.
+      permanente: plantilla.validTo === undefined,
     };
   });
 
@@ -300,7 +325,14 @@ export class MyAgenda {
   private leerPlantilla(resourceId: string): void {
     this.scheduling.listTemplates(resourceId).subscribe({
       next: (pagina) => {
-        const vigente = pagina.items[0];
+        // El listado trae TODAS las plantillas del recurso, retiradas
+        // incluidas, ordenadas por creación. Tomar `items[0]` a secas mostraba
+        // un horario retirado como si fuera el vigente —basta con que sea el
+        // más reciente— y el médico que acababa de retirarlo veía que seguía
+        // atendiendo.
+        const vigente = pagina.items.find((plantilla) => !plantilla.retired);
+        this.historicos.set(pagina.items.filter((p) => p.retired));
+
         // Sin plantillas no es un fallo: el recurso existe y todavía no publicó
         // horario. Es el estado de quien creó la agenda y no la completó.
         if (vigente === undefined) {
@@ -586,7 +618,10 @@ export class MyAgenda {
     const dia = this.diaAbierto();
     this.scheduling.deleteException(exceptionId).subscribe({
       next: () => {
-        this.toast.success('Los horarios que retiró no vuelven solos: se regeneran con tu plantilla.', 'Rato ocupado quitado');
+        this.toast.success(
+          'Los horarios que retiró no vuelven solos: se regeneran con tu plantilla.',
+          'Rato ocupado quitado',
+        );
         if (dia !== null) this.cargarDia(dia);
         this.cargarMes();
       },
@@ -745,6 +780,58 @@ export class MyAgenda {
     this.toast.error(mensaje === '' ? `No pudimos ${queSeIntentaba}.` : mensaje, 'No se pudo');
   }
 
+  /**
+   * Retira el horario publicado (TAREA-10, punto 6).
+   *
+   * ## Por qué el botón dice «Retirar» y no «Borrar»
+   *
+   * Porque eso es lo que pasa. `audit.schedule_templates_history` referencia
+   * toda plantilla publicada, así que **ninguna se puede borrar nunca**: el
+   * horario deja de publicarse, se sueltan los cupos que nadie reservó y se
+   * conservan los que tienen una cita detrás. Un botón que dijera «Borrar»
+   * prometería algo que el sistema no hace.
+   *
+   * ## Por qué pregunta antes
+   *
+   * Retirar no se deshace desde la pantalla: para volver atrás hay que publicar
+   * el horario de nuevo. Y aunque no haya citas comprometidas —el servidor lo
+   * rechaza con 409 si las hay—, se sueltan cupos que ya estaban ofrecidos.
+   */
+  protected async retirarHorario(): Promise<void> {
+    const actual = this.estado();
+    if (actual.status !== 'ready' || this.retirando()) return;
+
+    const confirmado = await this.dialogs.confirm({
+      title: 'Retirar este horario',
+      message:
+        'Deja de publicarse y los turnos que nadie reservó se dan de baja. Los que ya tienen paciente se conservan. Para volver atrás hay que publicarlo de nuevo.',
+      confirmLabel: 'Retirar horario',
+      destructive: true,
+    });
+    if (!confirmado) return;
+
+    this.retirando.set(true);
+    this.scheduling.retireTemplate(actual.data.id).subscribe({
+      next: (retiro) => {
+        this.retirando.set(false);
+        // Se dice cuántos se conservaron y no sólo cuántos se soltaron: un
+        // número distinto de cero significa que hay pacientes citados en un
+        // horario que el médico acaba de retirar, y eso tiene que verlo.
+        this.toast.success(
+          retiro.keptSlots > 0
+            ? `Se dieron de baja ${retiro.releasedSlots} turnos libres. Quedan ${retiro.keptSlots} con paciente: seguí atendiéndolos.`
+            : `Se dieron de baja ${retiro.releasedSlots} turnos libres.`,
+          'Horario retirado',
+        );
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.retirando.set(false);
+        this.avisarFallo(error, 'retirar el horario');
+      },
+    });
+  }
+
   protected generarSiguientePeriodo(): void {
     const actual = this.estado();
     const hasta = this.cuposHasta();
@@ -777,9 +864,7 @@ export class MyAgenda {
  * no sumando 24 horas en milisegundos: en un cambio de horario de verano un día
  * dura 23 o 25, y sumar 86 400 000 correría la franja una hora a partir de ahí.
  */
-export function franjasPorDia(
-  pedido: BloqueoPedido,
-): readonly { startAt: Date; endAt: Date }[] {
+export function franjasPorDia(pedido: BloqueoPedido): readonly { startAt: Date; endAt: Date }[] {
   const horaDesde = `${dosDigitos(pedido.desde.getHours())}:${dosDigitos(pedido.desde.getMinutes())}`;
   const horaHasta = `${dosDigitos(pedido.hasta.getHours())}:${dosDigitos(pedido.hasta.getMinutes())}`;
 
