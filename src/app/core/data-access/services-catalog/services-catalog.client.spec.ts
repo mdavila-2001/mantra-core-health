@@ -41,7 +41,8 @@ describe('ServicesCatalogClient', () => {
 
     const req = http.expectOne((r) => r.url === '/practices');
     expect(req.request.method).toBe('GET');
-    req.flush({ items: [{ id: 'pr1', code: 'P1', name: 'Práctica 1' }], count: 1 });
+    // El endpoint responde el array pelado, sin envoltorio de página.
+    req.flush([{ id: 'pr1', code: 'P1', name: 'Práctica 1' }]);
 
     expect(recibidas).toEqual([{ id: 'pr1', code: 'P1', name: 'Práctica 1' }]);
   });

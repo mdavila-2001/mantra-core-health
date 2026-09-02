@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import type { Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
@@ -27,11 +27,15 @@ export class ServicesCatalogClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  /** `GET /practices` — las prácticas de la organización. */
+  /**
+   * `GET /practices` — las prácticas de la organización.
+   *
+   * El endpoint devuelve el **array pelado**, no una página `{ items }`: eso
+   * último era una suposición de este cliente, y con la respuesta real emitía
+   * `undefined` y dejaba a la pantalla clavada en el esqueleto.
+   */
   listPractices(): Observable<readonly Practice[]> {
-    return this.http
-      .get<{ items: readonly Practice[] }>(this.url('/practices'))
-      .pipe(map((body) => body.items));
+    return this.http.get<readonly Practice[]>(this.url('/practices'));
   }
 
   /**
