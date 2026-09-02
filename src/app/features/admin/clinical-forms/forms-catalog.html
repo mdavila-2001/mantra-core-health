@@ -60,7 +60,9 @@
       <!-- ─── Un vistazo del esquema ───────────────────────────────── -->
       <div class="catalogo__campos">
         @for (campo of vistazo(formulario); track campo) {
-          <app-chip variant="neutral" size="sm" [label]="campo" />
+          <!-- El texto va proyectado: es lo que el chip muestra. `label` es solo
+               para el lector de pantalla y acá duplicaría lo mismo. -->
+          <app-chip variant="neutral" size="sm">{{ campo }}</app-chip>
         }
         @if (restantes(formulario); as demas) {
           <span class="catalogo__mas-campos">y {{ demas }} campos más</span>
