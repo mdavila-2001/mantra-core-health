@@ -410,6 +410,18 @@
          un botón que va a volver con 422 es un error con forma de oferta. Con
          el estado sin resolver (código vacío) no se ofrece ninguna. -->
     @if (porResponder(cita)) {
+      <!-- «Ver detalle» va PRIMERO: en una solicitud, lo primero que uno hace
+           no es responder sino mirar qué le están pidiendo. Sólo aparece acá
+           —una cita ya agendada no tiene nada oculto que valga un modal—. -->
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="agenda-detalle"
+        (clicked)="verDetalle(cita)"
+      >
+        Ver detalle
+      </button>
       <!-- Corrección #11: la solicitud del paciente espera respuesta. -->
       <button
         app-button

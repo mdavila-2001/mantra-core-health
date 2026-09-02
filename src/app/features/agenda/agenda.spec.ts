@@ -1226,4 +1226,94 @@ describe('Agenda', () => {
       expect((citas().data?.[0] as Record<string, unknown>)['admitePago']).toBe(false);
     });
   });
+
+  /**
+   * EL MODAL DE DETALLE — TAREA-13, punto 2.
+   *
+   * Lo que se fija acá no es que el modal abra: es **qué muestra y qué no**. El
+   * nombre del paciente tiene compuerta —la API lo manda sólo al titular y al
+   * profesional de esa agenda— y un modal es justo el lugar donde es fácil
+   * saltearla sin darse cuenta.
+   */
+  describe('el modal de detalle de una solicitud', () => {
+    async function montarSolicitud(extra: Record<string, unknown> = {}): Promise<void> {
+      await montar();
+      await responderRecursos();
+      responderResto({
+        citas: [{ ...CITA, statusConceptId: 'c-pendiente', ...extra }],
+      });
+      // `responderResto` no pinta; los que miran el DOM necesitan el render.
+      harness.detectChanges();
+    }
+
+    function fila(): Record<string, unknown> {
+      return interno<() => { data?: readonly Record<string, unknown>[] }>('solicitudes')()
+        .data?.[0] as Record<string, unknown>;
+    }
+
+    function detalle(): readonly { label: string; value: string }[] {
+      return interno<(c: unknown) => readonly { label: string; value: string }[]>(
+        'detalleDeSolicitud',
+      )(fila());
+    }
+
+    it('una solicitud ofrece «ver detalle»', async () => {
+      await montarSolicitud();
+      expect(boton('agenda-detalle')).not.toBeNull();
+    });
+
+    it('una cita ya agendada NO lo ofrece', async () => {
+      // No tiene nada oculto que justifique un modal: lo que hay de ella ya
+      // está en la fila.
+      await montar();
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await verSolapaDeCitas();
+
+      expect(boton('agenda-detalle')).toBeNull();
+    });
+
+    it('muestra el nombre del paciente cuando la API lo mandó', async () => {
+      await montarSolicitud({ patientName: 'Marisol Quispe' });
+
+      const paciente = detalle().find((d) => d.label === 'Paciente');
+      expect(paciente?.value).toBe('Marisol Quispe');
+    });
+
+    it('sin nombre dice que hay paciente, NO quién es', async () => {
+      // Es la misma compuerta que la celda de la tabla. Un modal que la
+      // saltease filtraría la identidad de alguien a quien esa sesión no
+      // atiende — y es el error fácil de cometer al armar un detalle.
+      await montarSolicitud();
+
+      const paciente = detalle().find((d) => d.label === 'Paciente');
+      expect(paciente?.value).toBe('Paciente asignado');
+      // Y en ninguna parte del detalle se cuela el identificador.
+      expect(JSON.stringify(detalle())).not.toContain('p-1');
+    });
+
+    it('lo que falta se dice, no se omite', async () => {
+      // Un dato que desaparece parece un dato que no se pidió. Acá lo que
+      // importa es saber qué falta.
+      await montarSolicitud({ startAt: null, endAt: null, reasonText: undefined });
+
+      const etiquetas = detalle().map((d) => d.label);
+      expect(etiquetas).toContain('Cita');
+      expect(detalle().find((d) => d.label === 'Cita')?.value).toBe('Sin registrar');
+      expect(detalle().find((d) => d.label === 'Motivo')?.value).toBe('Sin registrar');
+    });
+
+    it('trae los siete datos, incluido cuándo se pidió', async () => {
+      await montarSolicitud();
+
+      expect(detalle().map((d) => d.label)).toEqual([
+        'Estado',
+        'Paciente',
+        'Solicitada',
+        'Cita',
+        'Hasta',
+        'Profesional',
+        'Motivo',
+      ]);
+    });
+  });
 });

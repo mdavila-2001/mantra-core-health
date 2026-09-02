@@ -1,10 +1,11 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, formatDate } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  LOCALE_ID,
   signal,
   untracked,
   viewChild,
@@ -50,6 +51,7 @@ import type { SelectOption } from '../../shared/components/atoms/select/select.t
 import { Switch } from '../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../shared/components/molecules/alert/alert';
+import type { DialogDetail } from '../../shared/components/molecules/dialog/dialog.types';
 import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
@@ -242,6 +244,16 @@ export interface CitaVisible {
   readonly motivo: string;
   readonly patientProfileId: string | null;
   readonly rutaPaciente: string | null;
+  /**
+   * Cómo se nombra al paciente en el detalle.
+   *
+   * **Respeta la misma compuerta que la celda de la tabla**: la API manda
+   * `patientName` sólo al titular y al profesional de esa agenda. Sin nombre se
+   * dice «Paciente asignado» —que es información honesta: hay alguien, y no te
+   * corresponde saber quién— y no un espacio en blanco, que se lee como un
+   * error.
+   */
+  readonly paciente: string;
   /** El expediente clínico de la persona citada, si la sesión puede abrirlo. */
   readonly rutaExpediente: string | null;
   /**
@@ -382,6 +394,8 @@ export class Agenda {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialogs = inject(DialogService);
+  /** El idioma activo, para formatear las fechas del detalle fuera de la plantilla. */
+  private readonly idioma = inject(LOCALE_ID);
   private readonly toast = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
@@ -1250,6 +1264,70 @@ export class Agenda {
    * de su turno: rechazar sin decir por qué deja a alguien esperando una
    * explicación que nunca llega.
    */
+  /**
+   * «Ver detalle» — TAREA-13, punto 2.
+   *
+   * Abre el modal con **todo lo que la fila no muestra** y ofrece aceptar desde
+   * ahí, que es la mitad del pedido que no se podía hacer sin salir de la
+   * tabla.
+   *
+   * ## Por qué el diálogo compartido y no un modal nuevo
+   *
+   * `showModal()` trae gratis el fondo, la inertización de lo que queda atrás,
+   * la trampa de foco y el cierre con `Escape`. Un modal propio para esta
+   * pantalla haría esas cuatro cosas otra vez y, como pasa siempre, alguna a
+   * medias. Lo que faltaba era mostrar **datos** y no un párrafo: se agregó
+   * `details` al diálogo, que es parametrizar en vez de clonar.
+   *
+   * ## Rechazar NO está acá, y es a propósito
+   *
+   * Rechazar exige motivo, o sea un segundo diálogo. Encadenar
+   * detalle → rechazar → motivo son tres modales, y el tercero aparece encima
+   * de dos que la persona ya no puede leer. El botón de rechazar se queda en la
+   * fila, a un clic de distancia, con su motivo en un solo paso.
+   *
+   * Es la parte de AC-13-4 que este slice deja abierta a propósito, no por
+   * olvido.
+   */
+  protected async verDetalle(cita: CitaVisible): Promise<void> {
+    const aceptar = await this.dialogs.confirm({
+      title: 'Solicitud de consulta',
+      message: 'Todo lo que el paciente mandó con su pedido.',
+      details: this.detalleDeSolicitud(cita),
+      confirmLabel: 'Aceptar solicitud',
+      cancelLabel: 'Cerrar',
+    });
+    if (aceptar) {
+      this.aceptarCita(cita);
+    }
+  }
+
+  /**
+   * Los datos del detalle, ya en texto.
+   *
+   * Se arman acá y no en el diálogo porque acá es donde se conoce el dominio:
+   * una molécula compartida no tiene por qué saber cómo se escribe una fecha de
+   * turno ni qué significa que no haya motivo.
+   *
+   * **Lo ausente se dice, no se omite.** Una fila sin fecha de cita o sin
+   * motivo deja el rótulo con «Sin registrar»: un dato que desaparece parece un
+   * dato que no se pidió, y acá lo que importa es saber qué falta.
+   */
+  private detalleDeSolicitud(cita: CitaVisible): readonly DialogDetail[] {
+    const fecha = (valor: Date | null): string =>
+      valor === null ? SIN_DATO : formatDate(valor, "EEEE d 'de' MMMM, HH:mm", this.idioma);
+
+    return [
+      { label: 'Estado', value: cita.estado.label },
+      { label: 'Paciente', value: cita.paciente },
+      { label: 'Solicitada', value: fecha(cita.solicitada) },
+      { label: 'Cita', value: fecha(cita.cuando) },
+      { label: 'Hasta', value: fecha(cita.hasta) },
+      { label: 'Profesional', value: cita.recurso },
+      { label: 'Motivo', value: cita.motivo },
+    ];
+  }
+
   protected async rechazarCita(cita: CitaVisible): Promise<void> {
     if (this.operando() !== null) {
       return;
@@ -1569,6 +1647,7 @@ export class Agenda {
       patientProfileId: paciente,
       rutaPaciente:
         paciente !== null && this.puedeVerFichas() ? `/administration/patients/${paciente}` : null,
+      paciente: cita.patientName ?? (paciente === null ? 'Sin paciente' : 'Paciente asignado'),
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,
