@@ -371,6 +371,24 @@ export interface GlossaryTermDetail extends GlossaryTermBase {
   readonly relations: readonly GlossaryRelation[];
   /** Ausente en todos los términos sembrados hoy — ver {@link GlossaryImage}. */
   readonly image?: GlossaryImage;
+  /**
+   * Lo que el sistema de codificación declara de este concepto, por código
+   * (TAREA-25). El backend YA lo devuelve en `GET /terminology/concepts/:id`
+   * —{@link ConceptDetail.properties} lee del mismo mapa—, pero el tipo del
+   * glosario nunca lo declaró: quien intentaba leerlo recibía un error de
+   * tipos, o peor, un `as` que ocultaba `undefined` en runtime sin avisar.
+   *
+   * Deliberadamente `unknown`, mismo motivo que `ConceptDetail.properties`:
+   * el valor es `value_json` libre y no acota su forma.
+   *
+   * Ningún término del glosario tiene hoy `manufacturer`, `dosage_form`,
+   * `route` ni `active_ingredients` — esas cinco propiedades las siembra
+   * `import-ndc.mjs` sobre el `code_system` `ndc`, que no corrió contra esta
+   * base (10 323 conceptos totales, 0 con ese `code_system`). El bloque de
+   * medicamento de la ficha ({@link drugFactsFrom}) se omite entero mientras
+   * eso siga así: es la forma correcta de «ausencia», no un placeholder.
+   */
+  readonly properties: Readonly<Record<string, unknown>>;
 }
 
 /* ---- administración del catálogo -------------------------------------------
@@ -394,12 +412,7 @@ export interface CodeSystemListItem {
  * importadores externos sin fijar estado, y admiten conceptos igual que un
  * borrador.
  */
-export type CodeSystemVersionState =
-  | 'DRAFT'
-  | 'ACTIVE'
-  | 'RETIRED'
-  | 'DEPRECATED'
-  | 'UNKNOWN';
+export type CodeSystemVersionState = 'DRAFT' | 'ACTIVE' | 'RETIRED' | 'DEPRECATED' | 'UNKNOWN';
 
 /** Una versión de un sistema de codificación. */
 export interface CodeSystemVersionListItem {
