@@ -4,6 +4,25 @@
 despliegue de referencia. Lo que falta es **dónde** —el host o el orquestador— y
 el certificado.
 
+> ## Para un VPS con Coolify hay archivos propios
+>
+> [`deploy/docker-compose.coolify.yml`](../../deploy/docker-compose.coolify.yml) +
+> [`deploy/nginx.coolify.conf`](../../deploy/nginx.coolify.conf), con sus variables en
+> [`deploy/.env.coolify.example`](../../deploy/.env.coolify.example). El procedimiento
+> completo —los dos recursos, la red compartida, el orden de despliegue— está en el
+> repositorio de la API, en `docs/operations/coolify.md`.
+>
+> Dos diferencias con el despliegue de referencia de esta página, y las dos vienen de
+> tener el Traefik de Coolify delante:
+>
+> · **`APP_DOMAIN` es obligatoria.** El servidor de renderizado responde 400 a todo
+>   `Host` que no esté en su lista, y la lista horneada en el artefacto solo conoce
+>   `localhost`. El stack arranca en verde —el healthcheck pide `localhost`— y devuelve
+>   400 en cada página al primer visitante real.
+>
+> · **El proxy no valida el `Host` ni publica puertos.** De lo primero ya se encargó
+>   Traefik; lo segundo chocaría con él.
+
 > ## ✅ Decisión de arquitectura: la API va detrás del mismo dominio
 >
 > `PUBLIC_API_BASE_URL` vacía en todos los entornos. Sin CORS, con
@@ -15,6 +34,8 @@ el certificado.
 |---|---|
 | Imagen de producción | [`Dockerfile`](../../Dockerfile) — multietapa, usuario `node`, `HEALTHCHECK` |
 | Reverse proxy | [`deploy/nginx.conf`](../../deploy/nginx.conf) + [`api-proxy.conf`](../../deploy/api-proxy.conf) |
+| Los prefijos que van a la API | [`deploy/api-locations.conf`](../../deploy/api-locations.conf) — un solo archivo, incluido por los dos proxies |
+| Despliegue en Coolify | [`deploy/docker-compose.coolify.yml`](../../deploy/docker-compose.coolify.yml) + [`nginx.coolify.conf`](../../deploy/nginx.coolify.conf) |
 | Despliegue de referencia | [`deploy/docker-compose.prod.yml`](../../deploy/docker-compose.prod.yml) |
 | Pipeline | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) |
 | Versionado del artefacto | Versión y commit estampados por `generate-env.mjs` |

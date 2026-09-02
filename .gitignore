@@ -15,6 +15,12 @@ yarn-error.log
 .env
 .env.*
 !.env.example
+# La plantilla de las variables del despliegue en Coolify. Es documentación:
+# nombres de variables y comentarios, sin un solo valor. Necesita su excepción
+# porque `.env.*` de arriba la barre, y el `!.env.example` de la línea anterior
+# solo salva ese nombre exacto.
+!deploy/.env.coolify.example
+
 # La plantilla de las variables de la suite de Selenium. El `.env.e2e` real,
 # que puede llevar credenciales de un entorno de ensayo, lo sigue cubriendo
 # `.env.*` de arriba.
