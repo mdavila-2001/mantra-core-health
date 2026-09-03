@@ -732,7 +732,20 @@ export interface PublishedException {
   readonly exceptionTypeConceptId: string;
   readonly startAt: string;
   readonly endAt: string;
-  /** Por qué. Lo lee el profesional, no el paciente. */
+  /**
+   * El motivo catalogado, en castellano.
+   *
+   * Lo manda el servidor y **lo ve también el paciente** (9c): es una etiqueta
+   * de lista cerrada y no puede contener nada que el profesional no haya
+   * elegido a propósito.
+   */
+  readonly reasonLabel?: string;
+  /**
+   * La descripción libre. **Sólo la ve quien administra la agenda.**
+   *
+   * Es lo que se escribe al elegir un motivo, y ahí puede aparecer cualquier
+   * cosa — incluido el nombre de un tercero.
+   */
   readonly reason?: string;
   /** `true` cuando la excepción ABRE disponibilidad en vez de cerrarla. */
   readonly isAvailable?: boolean;

@@ -1,0 +1,58 @@
+.bloqueos__seccion {
+  margin-block-end: var(--sp-6);
+}
+
+.bloqueos__titulo {
+  font-size: var(--fs-h3, 1.125rem);
+  margin-block-end: var(--sp-2);
+}
+
+.bloqueos__nota {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  margin-block-end: var(--sp-3);
+}
+
+.bloqueos__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.bloqueos__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md, 8px);
+}
+
+/* Lo que ya pasó se lee más callado, pero se lee: sigue explicando por qué ese
+   día estuvo cerrado. */
+.bloqueos__item--pasado {
+  opacity: 0.75;
+}
+
+.bloqueos__motivo {
+  margin: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.bloqueos__cuando {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+}
+
+.bloqueos__descripcion {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
