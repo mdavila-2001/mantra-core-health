@@ -360,4 +360,49 @@ describe('MyAgenda', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Martes de 09:00 a 13:00');
   });
+
+  /**
+   * VOLVER A ACTIVAR UN HORARIO PAUSADO — «volví del viaje».
+   *
+   * Retirar era un camino de ida: publicar uno nuevo dejaba el viejo en la
+   * lista para siempre. Y reactivar **no repone los cupos**, así que lo que
+   * esta pantalla no puede hacer es dejar creer que sí.
+   */
+  describe('reactivar un horario', () => {
+    it('lo ofrece sobre el horario retirado', () => {
+      crear();
+      conRecurso();
+      conHistorico(1);
+      conCuposHasta(new Date('2030-01-01'));
+
+      const boton = fixture.nativeElement.querySelector('[data-testid="historico-reactivar"]');
+      expect(boton).not.toBeNull();
+    });
+
+    it('llama al endpoint y avisa que faltan los cupos', () => {
+      crear();
+      conRecurso();
+      conHistorico(1);
+      conCuposHasta(new Date('2030-01-01'));
+
+      const boton: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="historico-reactivar"]',
+      );
+      boton?.click();
+      fixture.detectChanges();
+
+      const req = http.expectOne('/scheduling/templates/tpl-vieja/reactivate');
+      expect(req.request.method).toBe('POST');
+      // El aviso es la mitad del arreglo: sin él, el horario queda «vigente» y
+      // sin un solo turno ofrecido, y nadie sabe por qué.
+      req.flush({ id: 'tpl-vieja', statusConceptId: 'c-pub', slotsPendientes: true });
+      fixture.detectChanges();
+
+      // Y recarga: el horario cambió de estado, así que la lista de arriba ya
+      // no describe lo que hay.
+      conRecurso();
+      conHistorico(1);
+      conCuposHasta(new Date('2030-01-01'));
+    });
+  });
 });

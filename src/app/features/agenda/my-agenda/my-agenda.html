@@ -180,6 +180,19 @@
                 >
                   Ver cómo era
                 </button>
+                <!-- «Volví del viaje»: retirar era un camino de ida y publicar
+                     uno nuevo dejaba el viejo en la lista para siempre. -->
+                <button
+                  app-button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  data-testid="historico-reactivar"
+                  [isLoading]="operandoHorario() === viejo.id"
+                  (clicked)="reactivarHorario(viejo)"
+                >
+                  Volver a activarlo
+                </button>
               </li>
             }
           </ul>

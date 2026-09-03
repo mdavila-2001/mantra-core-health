@@ -806,6 +806,41 @@ export class MyAgenda {
     });
   }
 
+  /**
+   * Vuelve a activar un horario pausado — «volví del viaje».
+   *
+   * **Avisa que faltan los cupos**, porque el servidor lo dice y porque sin eso
+   * el horario queda vigente y sin ofrecer un solo turno: quien lo reactivó
+   * vería su agenda «publicada» y vacía, sin ninguna pista de por qué.
+   *
+   * No genera los cupos por su cuenta: la ventana la elige el profesional, y
+   * materializar los del mes pasado abriría turnos en fechas que ya pasaron.
+   */
+  protected reactivarHorario(plantilla: PublishedTemplate): void {
+    if (this.operandoHorario() !== null) return;
+    this.operandoHorario.set(plantilla.id);
+
+    this.scheduling.reactivateTemplate(plantilla.id).subscribe({
+      next: (res) => {
+        this.operandoHorario.set(null);
+        this.toast.success(
+          res.slotsPendientes
+            ? 'Volvé a publicarlo para abrir los turnos: reactivar no los repone.'
+            : 'Ya estaba vigente.',
+          `«${plantilla.name}» volvió a estar vigente`,
+        );
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.operandoHorario.set(null);
+        this.avisarFallo(error, 'No se pudo reactivar el horario.');
+      },
+    });
+  }
+
+  /** El horario sobre el que hay una operación en vuelo. */
+  protected readonly operandoHorario = signal<string | null>(null);
+
   protected volverAlMes(): void {
     this.diaAbierto.set(null);
   }

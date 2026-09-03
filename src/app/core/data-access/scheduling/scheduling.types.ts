@@ -687,6 +687,19 @@ export interface RetiredTemplate {
 }
 
 /** Una plantilla publicada, con sus franjas. */
+/** Lo que responde reactivar un horario pausado. */
+export interface TemplateReactivated {
+  readonly id: string;
+  readonly statusConceptId: string;
+  /**
+   * El horario quedó vigente **sin cupos**: hay que generarlos.
+   *
+   * Retirar borró los libres, y reactivar no los repone a propósito —
+   * materializar los del mes pasado abriría turnos en fechas que ya pasaron.
+   */
+  readonly slotsPendientes: boolean;
+}
+
 export interface PublishedTemplate {
   readonly id: string;
   /**
