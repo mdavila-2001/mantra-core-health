@@ -838,6 +838,9 @@ export class MyAgenda {
     });
   }
 
+  /** A dónde lleva «Cambiar»: la ruta propia que la bitácora pide para editar. */
+  protected readonly rutaEditarHorario = '/schedule/edit';
+
   /** El horario sobre el que hay una operación en vuelo. */
   protected readonly operandoHorario = signal<string | null>(null);
 
