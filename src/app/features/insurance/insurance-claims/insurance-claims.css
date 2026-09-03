@@ -53,7 +53,7 @@
     color: var(--text-primary);
     text-align: start;
     cursor: pointer;
-    border-radius: var(--radius-sm);
+    border-radius: var(--r-sm);
 }
 
 .claims__patient:hover {
@@ -95,7 +95,7 @@
 
 .claims__patient-facts dt {
     margin-block-end: var(--sp-1);
-    font-size: var(--fs-xs);
+    font-size: var(--fs-overline);
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
@@ -112,6 +112,6 @@
     margin-block-end: 0;
     padding-block-start: var(--sp-4);
     border-block-start: 1px solid var(--border-subtle);
-    font-size: var(--fs-sm);
+    font-size: var(--fs-caption);
     color: var(--text-secondary);
 }

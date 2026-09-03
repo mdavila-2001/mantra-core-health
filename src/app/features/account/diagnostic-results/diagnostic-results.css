@@ -21,9 +21,9 @@
 }
 
 .resultados__item {
-  background: var(--surface-1);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--r-md);
   display: grid;
   gap: var(--sp-3);
   padding: var(--sp-4);
@@ -38,8 +38,8 @@
 }
 
 .resultados__titulo {
-  font-size: var(--fs-h4);
-  line-height: var(--lh-h4);
+  font-size: var(--fs-h4, var(--fs-h3));
+  line-height: var(--lh-h4, var(--lh-h3));
   margin: 0;
 }
 
@@ -84,7 +84,7 @@
 
 .resultados__subtitulo {
   font-size: var(--fs-body);
-  font-weight: var(--fw-semibold);
+  font-weight: 600;
   margin: 0;
 }
 

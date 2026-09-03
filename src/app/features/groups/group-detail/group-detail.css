@@ -16,7 +16,7 @@
 .grupo__estado {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .grupo__acciones {
@@ -54,7 +54,7 @@
 
 .grupo__lateral-titulo {
   margin: 0 0 var(--e2);
-  font-size: var(--fs-md);
+  font-size: var(--fs-body);
   color: var(--text-primary);
 }
 

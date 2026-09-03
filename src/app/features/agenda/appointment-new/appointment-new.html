@@ -2,7 +2,7 @@
   title="Agendar una cita"
   subtitle="Elegís el rato, no un turno publicado."
 >
-  <a page-actions [routerLink]="[rutaDeMiAgenda]">Volver a mi agenda</a>
+  <a app-button page-actions variant="ghost" [routerLink]="[rutaDeMiAgenda]">Volver a mi agenda</a>
 </app-page-header>
 
 @if (cargandoAgendas()) {
@@ -10,7 +10,11 @@
 } @else if (agendas().length === 0) {
   <!-- Sin agenda no hay dónde poner la cita, y decirlo así evita que alguien
        complete el formulario para descubrirlo al guardar. -->
-  <app-alert variant="info" data-testid="cita-sin-agenda">
+  <!-- `tone`, no `variant`: es el nombre real del input de `app-alert`.
+       `variant` no existe en el componente y quedaba como atributo suelto sin
+       efecto — el aviso caía siempre en el tono `info` por omisión, que acá
+       coincidía por casualidad con lo que se quería mostrar. -->
+  <app-alert tone="info" data-testid="cita-sin-agenda">
     Todavía no tenés una agenda publicada. Creala desde
     <a [routerLink]="[rutaDeMiAgenda]">Mi agenda</a> y volvé.
   </app-alert>
@@ -74,9 +78,19 @@
     <!-- La duración es libre: la cirugía de tres horas y la consulta de
          cuarenta y cinco conviven, y acotarla a la del turno publicado
          convertiría esto en el formulario del paciente. El select ofrece los
-         atajos; el campo acepta cualquier número de minutos. -->
+         atajos; el campo acepta cualquier número de minutos.
+
+         Los dos escriben el MISMO dato (`duracion`), y el hint de cada uno lo
+         dice en palabras: sin eso, elegir un atajo y después escribir un
+         número en el otro campo se lee como dos requisitos en vez de uno —y
+         el select, al no encontrar el número escrito entre sus atajos, vuelve
+         a mostrar el placeholder, que parece un campo obligatorio vacío. -->
     <div class="cita__duracion">
-      <app-form-field label="Duración" [required]="true">
+      <app-form-field
+        label="Duración"
+        hint="Un atajo. Para otro valor, escribilo en «Minutos exactos»."
+        [required]="true"
+      >
         <app-select
           data-testid="cita-duracion"
           [options]="opcionesDeDuracion"
@@ -86,12 +100,21 @@
       </app-form-field>
       <app-form-field
         label="Minutos exactos"
-        hint="Para una cirugía o un control largo."
+        hint="Reemplaza el atajo de arriba: para una cirugía o un control largo."
       >
+        <!-- No `[(value)]="duracion"`: `app-input[type=number]` emite un
+             **número** (`target.valueAsNumber`), y `duracion` guarda texto
+             —lo mismo que compara `app-select` contra el `value` de cada
+             `<option>` con `===`—. Escribir un atajo acá (30, 60…) dejaba a
+             «Duración» mostrando el placeholder «Seleccionar opción» en vez
+             del atajo que en realidad quedó elegido, porque `30 === '30'`
+             es `false`. Se fuerza a texto en la salida para que las dos
+             mitades del mismo dato nunca dejen de coincidir. -->
         <app-input
           type="number"
           data-testid="cita-duracion-libre"
-          [(value)]="duracion"
+          [value]="duracion()"
+          (valueChange)="actualizarDuracionLibre($event)"
         />
       </app-form-field>
     </div>
@@ -130,7 +153,13 @@
          su mensaje ya dice qué, cuándo y dónde: reescribirlo acá sólo podría
          empeorarlo. -->
     @if (error(); as fallo) {
-      <app-alert variant="error" data-testid="cita-error">{{ fallo }}</app-alert>
+      <!-- Mismo defecto que arriba, acá con más consecuencia: con `variant`
+           en vez de `tone` este aviso caía en el `info` por omisión —azul,
+           `role="status"`, `aria-live="polite"`— en vez del `error` que pide
+           AC-14-7: rojo, ícono de error, `role="alert"`, `aria-live="assertive"`.
+           El 422 con qué/cuándo/dónde se leía como una nota neutra, no como
+           el rechazo que es. -->
+      <app-alert tone="error" data-testid="cita-error">{{ fallo }}</app-alert>
     }
 
     <div class="cita__acciones">

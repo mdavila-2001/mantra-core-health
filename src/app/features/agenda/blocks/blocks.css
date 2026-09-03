@@ -1,3 +1,15 @@
+/* El aviso de alcance (AC-10-2, heredado por «mismo diseño que horarios»). */
+.bloqueos__alcance {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-left: 4px solid var(--st-warning-bd);
+  background: var(--bg-surface-alt);
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  max-width: 46rem;
+}
+
 .bloqueos__seccion {
   margin-block-end: var(--sp-6);
 }

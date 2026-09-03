@@ -16,7 +16,16 @@
     padding: var(--sp-3) var(--sp-4);
     /* el área segura del teléfono (barra de gestos) no puede tapar el botón */
     padding-block-end: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
-    margin-inline: calc(-1 * var(--sp-4));
+    /* Sangra hasta el borde cancelando el padding lateral del marco, que lo
+       publica como `--app-main-inline-padding`.
+
+       Antes se cancelaba con `--sp-4` (16 px) a ciegas, y el marco usa otra
+       escala: `--e4` a `--e8`, de 12 a 40 px según el punto de corte. A 390 px
+       el padding real es 12 y el margen tiraba 16, así que la barra medía
+       398 px en un viewport de 390 y **la página entera** quedaba con scroll
+       horizontal de 4 px. La reserva de `--sp-4` sigue puesta para cuando esta
+       barra se monte fuera del marco. */
+    margin-inline: calc(-1 * var(--app-main-inline-padding, var(--sp-4)));
     background: var(--bg-surface);
     border-block-start: 1px solid var(--border-default);
 }

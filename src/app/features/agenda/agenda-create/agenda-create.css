@@ -18,7 +18,28 @@
 
 .agenda-create__titular {
   margin: 0;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
+}
+
+/* El aviso de alcance (AC-10-2): siempre visible, con borde propio para que
+   se note como regla y no como texto secundario cualquiera. */
+.agenda-create__alcance {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-left: 4px solid var(--st-warning-bd);
+  background: var(--bg-surface-alt);
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  max-width: 46rem;
+}
+
+/* Nota de ayuda simple (p.ej. «se crea una agenda aparte»): el mismo tono
+   apagado que el resto de las notas de la pantalla. */
+.agenda-create__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }
 
 .agenda-create__bloque {
@@ -32,7 +53,7 @@
 
 .agenda-create__titulo {
   margin: 0;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-h3);
   font-weight: 600;
 }
 
@@ -48,10 +69,10 @@
 .agenda-create__dia {
   inline-size: 2.75rem;
   block-size: 2.75rem;
-  border: var(--stroke-2) solid var(--border-default);
+  border: 2px solid var(--border-default);
   border-radius: var(--r-full);
   background: var(--bg-surface);
-  color: var(--fg-default);
+  color: var(--text-primary);
   font-weight: 600;
   cursor: pointer;
 }
@@ -61,19 +82,19 @@
 }
 
 .agenda-create__dia:focus-visible {
-  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline: 2px solid var(--st-primary-bd);
   outline-offset: 2px;
 }
 
 .agenda-create__dia--activo {
   background: var(--st-primary-bg);
-  border-color: var(--st-primary-border);
+  border-color: var(--st-primary-bd);
   color: var(--st-primary-fg);
 }
 
 .agenda-create__vacio {
   margin: 0;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
 }
 
 /* ---- una franja por día activo -------------------------------------------- */
@@ -84,7 +105,7 @@
   gap: var(--sp-3);
   margin: 0;
   padding: var(--sp-3);
-  border: var(--stroke-1) solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   background: var(--bg-surface);
 }
@@ -116,7 +137,7 @@
 .agenda-create__duracion-label {
   padding: 0;
   margin-bottom: var(--sp-2);
-  color: var(--fg-muted);
+  color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
 
@@ -128,21 +149,21 @@
 
 .agenda-create__ficha {
   padding: var(--sp-2) var(--sp-3);
-  border: var(--stroke-1) solid var(--border-default);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-full);
   background: var(--bg-surface);
-  color: var(--fg-default);
+  color: var(--text-primary);
   cursor: pointer;
 }
 
 .agenda-create__ficha:focus-visible {
-  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline: 2px solid var(--st-primary-bd);
   outline-offset: 2px;
 }
 
 .agenda-create__ficha--activa {
   background: var(--st-primary-bg);
-  border-color: var(--st-primary-border);
+  border-color: var(--st-primary-bd);
   color: var(--st-primary-fg);
   font-weight: 600;
 }
@@ -173,22 +194,27 @@
 .agenda-create__politica,
 .agenda-create__tecnico {
   padding: var(--sp-3);
-  border-left: var(--stroke-2) solid var(--border-subtle);
+  border-left: 2px solid var(--border-subtle);
 }
 
 /* ---- resumen y cierre ------------------------------------------------------ */
 
 .agenda-create__resumen {
   margin: 0;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
 }
 
 .agenda-create__cupos {
   margin: var(--sp-2) 0;
 }
 
+/* Cuatro botones («Publicar/Guardar», «Previsualizar», «Limpiar», «Cancelar»)
+   no entran en una fila a 390px: sin envolver, el último quedaba fuera del
+   viewport y se llevaba puesta a la página entera (scrollWidth de la página,
+   no sólo del cuadro de acciones). */
 .agenda-create__acciones {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--sp-3);
 }
 
@@ -196,7 +222,7 @@
 
 .agenda-create__previa {
   padding: var(--sp-3);
-  border: var(--stroke-1) dashed var(--border-default);
+  border: 1px dashed var(--border-default);
   border-radius: var(--r-md);
   background: var(--bg-surface);
 }
@@ -205,7 +231,7 @@
   margin: 0 0 var(--sp-2);
   font-size: var(--fs-caption);
   font-weight: 600;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
 }
 
 .agenda-create__previa-dia {
@@ -217,13 +243,13 @@
 }
 
 .agenda-create__previa-horas {
-  color: var(--fg-muted);
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .agenda-create__previa-resto {
   margin: 0 0 var(--sp-2);
-  color: var(--fg-muted);
+  color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
 
@@ -269,6 +295,14 @@
   padding: var(--sp-2);
   border-bottom: 1px solid var(--border-subtle);
   vertical-align: middle;
+}
+
+/* La columna «Descanso» («Desde», «Hasta», «Dura», Descanso, Turnos): sin un
+   mínimo propio, «Sin respiro» —la opción más larga— quedaba cortada en
+   «Sin respi» en los tres anchos, incluso con lugar de sobra en escritorio. */
+.agenda-create__tabla th:nth-child(5),
+.agenda-create__tabla td:nth-child(5) {
+  min-width: 8rem;
 }
 
 .agenda-create__tabla thead th {

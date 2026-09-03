@@ -16,7 +16,9 @@ import {
   type ModalidadDeAtencion,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
@@ -79,6 +81,7 @@ const DURACION_POR_DEFECTO = 30;
   imports: [
     Alert,
     AppButton,
+    AppButtonLink,
     DatePicker,
     FormField,
     Input,
@@ -214,6 +217,20 @@ export class AppointmentNew {
       this.agendaElegida() !== null,
   );
 
+  /**
+   * Guarda lo que se escribió en «Minutos exactos», siempre como texto.
+   *
+   * `app-input[type=number]` emite un **número** (lee `target.valueAsNumber`),
+   * y `duracion` es la misma variable que compara `app-select` contra el
+   * `value` de cada atajo con `===`. Sin este cruce a texto, escribir un
+   * atajo acá (30, 60…) dejaba a «Duración» mostrando «Seleccionar opción»
+   * en vez del atajo que en realidad quedó elegido, porque `30 === '30'` es
+   * `false` — las dos mitades del mismo dato dejaban de coincidir.
+   */
+  protected actualizarDuracionLibre(valor: string | number | null): void {
+    this.duracion.set(valor === null ? '' : String(valor));
+  }
+
   /** Busca pacientes por nombre o código. La molécula ya espera antes de emitir. */
   protected buscarPaciente(texto: string): void {
     if (texto.trim() === '') {
@@ -292,14 +309,33 @@ export class AppointmentNew {
         },
         error: (error: unknown) => {
           this.guardando.set(false);
-          const estado = errorToViewState<never>(error);
-          this.error.set(
-            'message' in estado && typeof estado.message === 'string'
-              ? estado.message
-              : 'No pudimos agendar la cita.',
-          );
+          this.error.set(this.mensajeDeError(errorToViewState<never>(error)));
         },
       });
+  }
+
+  /**
+   * Saca el texto de un fallo, tal como lo redactó el servidor.
+   *
+   * ## El defecto que corrige
+   *
+   * `validation()` (S4 del M34) **nunca** trae `message` en el nivel de arriba
+   * — sólo en cada `issues[].message`, `ValidationViewState` no declara ese
+   * campo. La regla madre de choque (`assertRangoLibre`) y el choque del
+   * paciente llegan como **`CONFLICT`**, que `errorToViewState` convierte
+   * justamente en ese estado. Leer `estado.message` acá siempre daba
+   * `undefined` y la pantalla mostraba el genérico «No pudimos agendar la
+   * cita.» en vez del texto con qué, cuándo y dónde que pide AC-14-7 — el 422
+   * nunca llegaba a verse, ni una vez.
+   */
+  private mensajeDeError(estado: ViewState<never>): string {
+    if (estado.status === 'validation') {
+      return estado.issues[0]?.message ?? 'No pudimos agendar la cita.';
+    }
+    if ('message' in estado && typeof estado.message === 'string' && estado.message !== '') {
+      return estado.message;
+    }
+    return 'No pudimos agendar la cita.';
   }
 
   /**

@@ -439,8 +439,8 @@
 }
 
 .profesional__dato dt {
-  font-size: var(--fs-sm);
-  color: var(--fg-muted);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
 }
 
 .profesional__dato dd {
@@ -454,7 +454,7 @@
 /* El departamento emisor, junto al documento y en segundo plano. */
 .profesional__sufijo {
   margin-left: var(--sp-2);
-  color: var(--fg-muted);
+  color: var(--text-muted);
 }
 
 @media (min-width: 40rem) {

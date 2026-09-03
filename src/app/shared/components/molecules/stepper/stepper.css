@@ -147,7 +147,7 @@
 }
 
 .stepper__step--complete .stepper__label {
-    color: var(--text-default);
+    color: var(--text-primary);
 }
 
 .stepper__step--current .stepper__marker {

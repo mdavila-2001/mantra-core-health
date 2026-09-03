@@ -17,7 +17,7 @@
   justify-content: space-between;
   gap: var(--e3);
   padding-block-end: var(--e2);
-  border-block-end: 1px solid var(--color-border-subtle, var(--color-border));
+  border-block-end: 1px solid var(--color-border-subtle, var(--border-default));
 }
 
 .profesionales__grupo-encabezado h2 {
@@ -26,12 +26,12 @@
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--text-primary);
 }
 
 .profesionales__grupo-encabezado span {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
   white-space: nowrap;
 }
 

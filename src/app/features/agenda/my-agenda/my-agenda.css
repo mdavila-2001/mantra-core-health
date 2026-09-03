@@ -21,7 +21,7 @@
 
 .mi-agenda__titulo {
   margin: 0;
-  font-size: var(--fs-lg);
+  font-size: var(--fs-h3);
   font-weight: 600;
 }
 
@@ -41,16 +41,16 @@
   place-items: center;
   inline-size: 2.75rem;
   block-size: 2.75rem;
-  border: var(--stroke-2) solid var(--border-subtle);
+  border: 2px solid var(--border-subtle);
   border-radius: var(--r-full);
   background: var(--bg-surface);
-  color: var(--fg-muted);
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
 .mi-agenda__dia--activo {
   background: var(--st-primary-bg);
-  border-color: var(--st-primary-border);
+  border-color: var(--st-primary-bd);
   color: var(--st-primary-fg);
 }
 
@@ -62,7 +62,7 @@
 .mi-agenda__vigencia,
 .mi-agenda__cupos {
   margin: 0;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
 }
 
 .mi-agenda__cupos {
@@ -75,29 +75,29 @@
   display: flex;
   gap: var(--sp-1);
   margin-bottom: var(--sp-4);
-  border-bottom: var(--stroke-1) solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .mi-agenda__solapa {
   padding: var(--sp-2) var(--sp-3);
   border: 0;
-  border-bottom: var(--stroke-2) solid transparent;
+  border-bottom: 2px solid transparent;
   background: none;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
   font: inherit;
   cursor: pointer;
 }
 
 .mi-agenda__solapa:focus-visible {
-  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline: 2px solid var(--st-primary-bd);
   outline-offset: -2px;
 }
 
 /* Activa: subrayado Y color. El subrayado sostiene el estado cuando el color
    no se distingue. */
 .mi-agenda__solapa--activa {
-  border-bottom-color: var(--st-primary-border);
-  color: var(--fg-default);
+  border-bottom-color: var(--st-primary-bd);
+  color: var(--text-primary);
   font-weight: 600;
 }
 

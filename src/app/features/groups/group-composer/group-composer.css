@@ -7,10 +7,10 @@
 .compositor__aviso {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   /* Se lee como una advertencia, no como un pie de página: quien va a contar
      su caso tiene que verlo antes de empezar a escribir. */
-  border-inline-start: 3px solid var(--border-strong, var(--border));
+  border-inline-start: 3px solid var(--border-strong, var(--border-default));
   padding-inline-start: var(--e2);
 }
 

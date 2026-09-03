@@ -175,9 +175,9 @@
    fila de dos columnas los apretaría. */
 .mi-perfil__subtitulo {
   margin: var(--sp-5) 0 var(--sp-2);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   font-weight: 600;
-  color: var(--fg-muted);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -197,7 +197,7 @@
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-3);
-  border: var(--stroke-1) solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   background: var(--bg-surface-alt);
 }
@@ -207,22 +207,22 @@
 }
 
 .mi-perfil__item-detalle {
-  color: var(--fg-muted);
+  color: var(--text-muted);
 }
 
 /* La advertencia de «sin verificar» es informativa, no una alarma: ocupa toda
    la línea siguiente para no competir con el nombre de la aseguradora. */
 .mi-perfil__item-nota {
   flex-basis: 100%;
-  font-size: var(--fs-sm);
-  color: var(--fg-muted);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
 }
 
 /* El departamento emisor, al lado del documento y en segundo plano. */
 .mi-perfil__sufijo {
   margin-left: var(--sp-2);
   font-weight: 400;
-  color: var(--fg-muted);
+  color: var(--text-muted);
 }
 
 /* Lo que la persona todavía no cargó. Se dibuja el renglón igual —es la ficha
@@ -238,7 +238,7 @@
 .mi-perfil__mapa {
   display: inline-block;
   margin-left: var(--sp-2);
-  font-size: var(--fs-body-sm);
-  color: var(--action);
+  font-size: var(--fs-caption);
+  color: var(--brand-primary);
   text-decoration: underline;
 }

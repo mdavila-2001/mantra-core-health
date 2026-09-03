@@ -21,6 +21,30 @@ describe('AccountingClient — Carril 18 (auto-servicio contable del doctor)', (
 
   afterEach(() => http.verify());
 
+  describe('listPractices', () => {
+    /**
+     * La regresión que este caso cierra: el cliente leía `body.items` de una
+     * respuesta que es un **arreglo desnudo**, así que `.map` recibía
+     * `undefined` y explotaba. Como las dos pantallas que la llaman envuelven
+     * la llamada en `catchError(() => of([]))`, el error se veía como «esta
+     * organización no tiene prácticas» — y sin práctica no hay `practiceId`,
+     * que es de lo que cuelgan las cinco lecturas del módulo. La pantalla de
+     * contabilidad entera quedaba inservible sin que nada avisara.
+     *
+     * No había prueba de este método; por eso llegó así.
+     */
+    it('lee el arreglo desnudo que responde /practices, sin envoltorio de página', () => {
+      let recibidas: readonly { readonly id: string }[] | undefined;
+      client.listPractices().subscribe((p) => (recibidas = p));
+
+      const req = http.expectOne((r) => r.url === '/practices');
+      expect(req.request.method).toBe('GET');
+      req.flush([{ id: 'pr1', code: 'P1', name: 'Práctica 1' }]);
+
+      expect(recibidas).toEqual([{ id: 'pr1', code: 'P1', name: 'Práctica 1' }]);
+    });
+  });
+
   describe('listPaidConsultations', () => {
     it('pide las consultas pagadas de la práctica dada', () => {
       client.listPaidConsultations(PRACTICE).subscribe();

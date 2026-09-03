@@ -41,8 +41,8 @@
 .turnos__detalle-titulo {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--fs-h4);
-  line-height: var(--lh-h4);
+  font-size: var(--fs-h4, var(--fs-h3));
+  line-height: var(--lh-h4, var(--lh-h3));
   font-weight: 600;
   color: var(--text-primary);
   text-transform: capitalize;
@@ -218,7 +218,7 @@
    de la hora y con menos peso: la hora sigue siendo lo que se viene a leer. */
 .turnos__sede {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 /* TJ-2 · «reprogramado desde…». Va con la agenda y no como aviso: no es una
@@ -226,5 +226,5 @@
    como uno ajeno. */
 .turnos__reprogramado {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }

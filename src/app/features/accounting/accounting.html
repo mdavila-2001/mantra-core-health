@@ -178,7 +178,7 @@
 
   <h2 class="titulo-de-seccion">Libro diario</h2>
   <app-data-table
-    [state]="diario()"
+    [state]="filasDelDiario()"
     [columns]="columnasDelDiario"
     [trackBy]="claveDeAsiento"
     caption="Asientos de la práctica, del más reciente al más antiguo"
@@ -293,7 +293,7 @@
           />
         </app-form-field>
         <app-data-table
-          [state]="libroMayor()"
+          [state]="filasDelMayor()"
           [columns]="columnasDelMayor"
           [trackBy]="claveDeMovimiento"
           caption="Movimientos posteados de la cuenta elegida, con saldo corrido"
@@ -303,27 +303,35 @@
 
     <app-tab label="Estado de resultados">
       @if (pestanaActiva() === 1) {
+        <!-- Misma tarjeta que el balance de sumas y saldos: los totales van
+             separados del cuerpo de la tabla, no sueltos sobre el fondo de la
+             página — si no, «Resultado del período» se lee como una fila más
+             de la tabla de abajo en vez del cierre del informe. -->
         @if (estadoDeResultados(); as estado) {
           @if (estado.status === 'ready') {
-            <dl class="totales">
-              <div>
-                <dt>Total ingresos</dt>
-                <dd>{{ estado.data.totalRevenue }}</dd>
+            <app-card>
+              <div class="cuadre" appAnuncio [asertivo]="false" [enfocar]="false">
+                <dl class="totales">
+                  <div>
+                    <dt>Total ingresos</dt>
+                    <dd>{{ estado.data.totalRevenue }}</dd>
+                  </div>
+                  <div>
+                    <dt>Total gastos</dt>
+                    <dd>{{ estado.data.totalExpense }}</dd>
+                  </div>
+                  <div>
+                    <dt>Resultado del período</dt>
+                    <dd>{{ estado.data.netIncome }}</dd>
+                  </div>
+                </dl>
               </div>
-              <div>
-                <dt>Total gastos</dt>
-                <dd>{{ estado.data.totalExpense }}</dd>
-              </div>
-              <div>
-                <dt>Resultado del período</dt>
-                <dd>{{ estado.data.netIncome }}</dd>
-              </div>
-            </dl>
-            @if (estado.data.truncated) {
-              <app-alert tone="warning">
-                El informe alcanzó su tope de filas y está <strong>incompleto</strong>.
-              </app-alert>
-            }
+              @if (estado.data.truncated) {
+                <app-alert tone="warning">
+                  El informe alcanzó su tope de filas y está <strong>incompleto</strong>.
+                </app-alert>
+              }
+            </app-card>
           }
         }
         <app-data-table
@@ -337,38 +345,42 @@
 
     <app-tab label="Balance general">
       @if (pestanaActiva() === 2) {
-        <div class="cuadre" appAnuncio [asertivo]="false" [enfocar]="false">
-          @if (selloDelBalanceGeneral(); as sello) {
-            <app-status-seal [variant]="sello.variant" [label]="sello.label" />
-          }
-          @if (balanceGeneral(); as estado) {
-            @if (estado.status === 'ready') {
-              <dl class="totales">
-                <div>
-                  <dt>Total activo</dt>
-                  <dd>{{ estado.data.totalAssets }}</dd>
-                </div>
-                <div>
-                  <dt>Total pasivo</dt>
-                  <dd>{{ estado.data.totalLiabilities }}</dd>
-                </div>
-                <div>
-                  <dt>Total patrimonio</dt>
-                  <dd>{{ estado.data.totalEquity }}</dd>
-                </div>
-              </dl>
-              @if (estado.data.truncated) {
-                <app-alert tone="warning">
-                  El informe alcanzó su tope de filas y está <strong>incompleto</strong>.
-                </app-alert>
+        <!-- Misma tarjeta que el balance de sumas y saldos: ver el comentario
+             de la pestaña «Estado de resultados». -->
+        <app-card>
+          <div class="cuadre" appAnuncio [asertivo]="false" [enfocar]="false">
+            @if (selloDelBalanceGeneral(); as sello) {
+              <app-status-seal [variant]="sello.variant" [label]="sello.label" />
+            }
+            @if (balanceGeneral(); as estado) {
+              @if (estado.status === 'ready') {
+                <dl class="totales">
+                  <div>
+                    <dt>Total activo</dt>
+                    <dd>{{ estado.data.totalAssets }}</dd>
+                  </div>
+                  <div>
+                    <dt>Total pasivo</dt>
+                    <dd>{{ estado.data.totalLiabilities }}</dd>
+                  </div>
+                  <div>
+                    <dt>Total patrimonio</dt>
+                    <dd>{{ estado.data.totalEquity }}</dd>
+                  </div>
+                </dl>
+                @if (estado.data.truncated) {
+                  <app-alert tone="warning">
+                    El informe alcanzó su tope de filas y está <strong>incompleto</strong>.
+                  </app-alert>
+                }
               }
             }
-          }
-        </div>
-        <p class="nota">
-          El patrimonio incluye el resultado del período: sin cerrarlo, activo no cuadraría
-          contra pasivo + patrimonio pese a que la partida doble esté intacta.
-        </p>
+          </div>
+          <p class="nota">
+            El patrimonio incluye el resultado del período: sin cerrarlo, activo no cuadraría
+            contra pasivo + patrimonio pese a que la partida doble esté intacta.
+          </p>
+        </app-card>
         <app-data-table
           [state]="filasDelBalanceGeneral()"
           [columns]="columnasDelEstadoFinanciero"
@@ -422,15 +434,25 @@
         <ul class="filas-del-asiento">
           @for (fila of filasDelAsiento(); track $index) {
             <li class="fila-del-asiento">
-              <span>{{ fila.accountLabel }}</span>
-              <span>{{ fila.direction === 'DEBIT' ? 'Debe' : 'Haber' }}</span>
-              <span>{{ fila.amount }}</span>
-              <button app-button variant="ghost" size="sm" type="button" (clicked)="editarFila($index)">
-                Modificar
-              </button>
-              <button app-button variant="ghost" size="sm" type="button" (clicked)="eliminarFila($index)">
-                Eliminar
-              </button>
+              <span class="fila-del-asiento__cuenta">{{ fila.accountLabel }}</span>
+              <!-- Badge de REDSAT: fondo claro + texto oscuro del mismo tono, así
+                   que debe/haber no dependen sólo del color — el texto "Debe"/
+                   "Haber" ya los distingue, el tono es un refuerzo visual. -->
+              <app-badge
+                class="fila-del-asiento__direccion"
+                [variant]="fila.direction === 'DEBIT' ? 'info' : 'warning'"
+              >
+                {{ fila.direction === 'DEBIT' ? 'Debe' : 'Haber' }}
+              </app-badge>
+              <span class="fila-del-asiento__importe">{{ fila.amount }}</span>
+              <span class="fila-del-asiento__acciones">
+                <button app-button variant="ghost" size="sm" type="button" (clicked)="editarFila($index)">
+                  Modificar
+                </button>
+                <button app-button variant="ghost" size="sm" type="button" (clicked)="eliminarFila($index)">
+                  Eliminar
+                </button>
+              </span>
             </li>
           }
         </ul>

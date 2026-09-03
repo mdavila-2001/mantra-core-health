@@ -88,6 +88,20 @@
   margin-block-start: var(--sp-3);
 }
 
+/* Un código de campo largo y sin espacios (`sensacion_falta_aire_reposo`)
+   es, para el chip, una sola palabra: `app-chip` fija `white-space: nowrap`
+   por diseño — es lo correcto para una etiqueta corta — pero acá el
+   contenido lo pone el catálogo y puede ser más ancho que la tarjeta. Sin
+   esto el chip no se achica ni envuelve su texto y `document.scrollWidth`
+   crece con él. Medido en 390 px: 414 antes de esta regla. Se pisa el
+   `white-space` sólo en este uso, desde afuera, sin tocar `chip.css`. */
+.catalogo__campos app-chip {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .catalogo__mas-campos {
   color: var(--text-muted);
   font-size: var(--fs-caption);

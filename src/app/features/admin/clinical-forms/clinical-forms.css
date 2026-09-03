@@ -12,6 +12,18 @@
   margin-block-start: var(--sp-6);
 }
 
+/* Sin esto, un renglón de la tabla con un código largo y sin espacios
+   (`CARDIO_ANAMNESIS_STANDARD`, por ejemplo) empuja el ancho mínimo de
+   `.formularios__listado` más allá del viewport: el mínimo por defecto de un
+   elemento de grid es el de su contenido, no `0`. `app-data-table` ya se
+   protege a sí misma con la misma regla (ver su CSS), pero eso sólo resuelve
+   su propia caja — el ítem de grid que la contiene, acá, tenía el mismo
+   agujero un nivel más arriba. Medido en 390 px: `document.scrollWidth` de
+   431 con esta regla ausente. */
+.formularios > * {
+  min-inline-size: 0;
+}
+
 .formularios__titulo {
   margin: 0 0 var(--sp-4);
   font-size: var(--fs-h3);

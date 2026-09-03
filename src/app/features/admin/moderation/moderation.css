@@ -54,7 +54,7 @@
 .entrada__fecha {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .entrada__motivo {
@@ -65,7 +65,7 @@
 .entrada__motivo--sin,
 .entrada__decision {
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .entrada__decision {
@@ -90,7 +90,7 @@
 .decision__nota {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .decision__acciones {

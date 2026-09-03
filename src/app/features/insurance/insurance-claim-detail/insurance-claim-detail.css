@@ -14,7 +14,7 @@
     align-items: center;
     gap: var(--sp-2);
     margin-block: 0 var(--sp-4);
-    font-size: var(--fs-lg);
+    font-size: var(--fs-h3);
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -29,13 +29,13 @@
     margin: 0;
     padding: var(--sp-5);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: var(--r-md);
     background: var(--bg-surface);
 }
 
 .claim__facts dt {
     margin-block-end: var(--sp-1);
-    font-size: var(--fs-xs);
+    font-size: var(--fs-overline);
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
@@ -61,7 +61,7 @@
 .claim__disposition strong {
     display: block;
     margin-block-end: var(--sp-1);
-    font-size: var(--fs-xs);
+    font-size: var(--fs-overline);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--text-secondary);
@@ -72,7 +72,7 @@
 .claim__table-scroll {
     overflow-x: auto;
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: var(--r-md);
 }
 
 .claim__table {
@@ -91,7 +91,7 @@
 }
 
 .claim__table thead th {
-    font-size: var(--fs-xs);
+    font-size: var(--fs-overline);
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
@@ -140,7 +140,7 @@
     color: var(--text-link);
     text-align: start;
     cursor: help;
-    border-radius: var(--radius-sm);
+    border-radius: var(--r-sm);
 }
 
 .claim__reference:hover {
@@ -154,13 +154,13 @@
 
 .claim__legend {
     margin-block: 0 var(--sp-2);
-    font-size: var(--fs-sm);
+    font-size: var(--fs-caption);
     color: var(--text-secondary);
 }
 
 .claim__note {
     margin-block: var(--sp-3) 0;
-    font-size: var(--fs-sm);
+    font-size: var(--fs-caption);
     color: var(--text-secondary);
 }
 

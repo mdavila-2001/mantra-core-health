@@ -21,12 +21,20 @@
     margin: 0;
     padding: var(--sp-4);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
+    /* `--radius-md` no existe en styles.css (el token real es `--r-md`): sin
+       fallback, `border-radius` cae a su inicial `0` y la caja quedaba con
+       las esquinas cuadradas, la única de la pantalla que no combina con el
+       resto de las cajas con borde (ver `alert.css`, que usa `--r-md`). */
+    border-radius: var(--r-md);
 }
 
 .cita__modalidad-titulo {
     padding-inline: var(--sp-1);
-    font-size: var(--fs-sm);
+    /* Mismo defecto: `--fs-sm` no existe. `font-size` se hereda del cuerpo del
+       formulario (15 px) en vez de leerse como una leyenda secundaria.
+       `--fs-caption` es el token real, el mismo que usa `form-field.css`
+       para su hint. */
+    font-size: var(--fs-caption);
     font-weight: 600;
     color: var(--text-secondary);
 }
@@ -54,7 +62,8 @@
     border-inline-start: 3px solid var(--border-strong);
     background: var(--bg-inset);
     color: var(--text-secondary);
-    font-size: var(--fs-sm);
+    /* `--fs-sm` tampoco existe acá: ver la nota de `.cita__modalidad-titulo`. */
+    font-size: var(--fs-caption);
 }
 
 .cita__acciones {

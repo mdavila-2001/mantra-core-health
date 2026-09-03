@@ -70,14 +70,14 @@
 
 /* El color acompaña a la palabra, no la reemplaza. */
 .semana__dia[data-estado='bloqueado'] .semana__boton {
-  border-color: var(--st-error-border, var(--border-subtle));
+  border-color: var(--st-error-bd, var(--border-subtle));
 }
 
 .semana__dia[data-estado='lleno'] .semana__boton {
-  border-color: var(--st-warning-border, var(--border-subtle));
+  border-color: var(--st-warning-bd, var(--border-subtle));
 }
 
 .semana__dia[data-estado='libre'] .semana__boton,
 .semana__dia[data-estado='con-reservas'] .semana__boton {
-  border-color: var(--st-success-border, var(--border-subtle));
+  border-color: var(--st-success-bd, var(--border-subtle));
 }

@@ -14,7 +14,7 @@
 .publicacion__fecha {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .publicacion__cuerpo {
@@ -37,7 +37,7 @@
 .publicacion__conteo {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .publicacion__conteo {
@@ -48,14 +48,14 @@
 .publicacion__error {
   margin: var(--e2) 0 0;
   color: var(--st-error-fg);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .publicacion__conteo,
 .publicacion__cerrado,
 .publicacion__sin-perfil {
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .publicacion__hilo {
@@ -98,7 +98,7 @@
 .hilo__autor {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .hilo__cuerpo {
@@ -109,7 +109,7 @@
 .hilo__mas {
   margin: 0;
   color: var(--text-secondary);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 .hilo__form {
