@@ -70,6 +70,20 @@ RAMA="${REDEPLOY_RAMA:-dev}"
 # El worktree desprendido desde el que se construye. Se crea y se borra en cada despliegue.
 TRABAJO="$ESTADO/arbol"
 
+# Cómo se llega al despliegue desde fuera de la máquina.
+#
+#   tailscale  · `tailscale funnel`: el nombre de la máquina en la tailnet
+#                (`<host>.<tailnet>.ts.net`) servido por HTTPS, con certificado
+#                automático y sin sesión que caduque. Es el que se usa.
+#   devtunnel  · el dev tunnel de Microsoft. Se conserva porque el enlace que
+#                circula por ahí es suyo, pero pide `devtunnel user login` cada
+#                vez que la sesión vence, y eso ya dejó el enlace muerto.
+#   ninguna    · sólo local, sin exponer nada.
+#
+# Con `tailscale`, el nombre no se elige ni se sortea: es el de la máquina, y
+# sobrevive a reinicios, a cambios de IP y a que el proceso se caiga.
+EXPOSICION="${REDEPLOY_EXPOSICION:-tailscale}"
+
 # El túnel ya existe y es de la organización. Su puerto publicado es el 4200, y
 # el número del puerto forma parte de la URL: cambiarlo acá cambiaría el enlace,
 # que es justo lo que no puede pasar.
@@ -196,6 +210,54 @@ tomar_cerrojo() {
   return 0
 }
 
+# ─── Tailscale ───────────────────────────────────────────────────────────────
+
+# El nombre público de esta máquina en la tailnet, con el punto final quitado.
+#
+# `--peers=false` no es cosmético: sin él el JSON trae un `DNSName` por cada
+# máquina de la tailnet y quedarse con el primero es apostar a que el nuestro
+# venga antes que los demás.
+nombre_tailscale() {
+  tailscale status --peers=false --json 2>/dev/null \
+    | sed -n 's/.*"DNSName"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+    | head -1 | sed 's/\.$//'
+}
+
+# Funnel expone a INTERNET, así que sólo se toca si se pidió `tailscale`.
+# Requisitos que no se pueden resolver desde acá y por eso se explican:
+#   · Funnel habilitado en la tailnet (lo aprueba el dueño en la consola);
+#   · el usuario, operador de tailscale, o hará falta sudo en cada pasada.
+asegurar_funnel() {
+  local nombre salida
+  if ! command -v tailscale >/dev/null 2>&1; then
+    log "TAILSCALE: ✗ no está instalado en esta máquina"
+    return 1
+  fi
+  nombre="$(nombre_tailscale)"
+  if [ -z "$nombre" ]; then
+    log "TAILSCALE: ✗ no hay sesión ('tailscale up'), o MagicDNS está apagado"
+    return 1
+  fi
+  printf 'https://%s/\n' "$nombre" > "$URL_FILE"
+
+  # Ya servido y apuntando a donde toca: no se toca nada. `funnel` es
+  # idempotente, pero rehacerlo en cada pasada ensucia el diario.
+  if tailscale funnel status 2>/dev/null | grep -q "127.0.0.1:${PUERTO}"; then
+    log "TAILSCALE: funnel sirviendo https://$nombre → 127.0.0.1:$PUERTO"
+    return 0
+  fi
+
+  salida="$(tailscale funnel --bg "$PUERTO" 2>&1 </dev/null)"
+  if [ $? -ne 0 ] || printf '%s' "$salida" | grep -qi 'not enabled\|denied\|access'; then
+    log "TAILSCALE: ✗ no pude activar el funnel:"
+    printf '%s\n' "$salida" | head -6 | while IFS= read -r linea; do log "TAILSCALE:   $linea"; done
+    log "TAILSCALE:   si pide habilitarlo, abrí ese enlace: lo aprueba el dueño de la tailnet."
+    log "TAILSCALE:   si pide permisos, corré una vez: sudo tailscale set --operator=\$USER"
+    return 1
+  fi
+  log "TAILSCALE: funnel sirviendo https://$nombre → 127.0.0.1:$PUERTO"
+}
+
 # ─── El túnel ────────────────────────────────────────────────────────────────
 
 url_del_tunel() {
@@ -285,6 +347,10 @@ arrancar_tunel() {
 }
 
 asegurar_tunel() {
+  case "$EXPOSICION" in
+    tailscale) asegurar_funnel; return $? ;;
+    ninguna)   : > "$URL_FILE"; return 0 ;;
+  esac
   if ! tunel_proceso_vivo; then
     log "TÚNEL: no hay proceso; arrancando"
     arrancar_tunel
@@ -313,9 +379,11 @@ generar_nginx() {
   # El túnel publica el enlace de dos formas —`<id>-<puerto>.<dominio>` y
   # `<id>.<dominio>:<puerto>`— y las dos tienen que pasar el `server_name`, o el
   # `default_server` que devuelve 421 se come una de ellas.
-  dominio="${host_tunel#*.}"
-  id="${host_tunel%%-*}"
-  [ -n "$host_tunel" ] && host_tunel_alterno="${id}.${dominio}"
+  if [ -n "$host_tunel" ] && [ "$EXPOSICION" = devtunnel ]; then
+    dominio="${host_tunel#*.}"
+    id="${host_tunel%%-*}"
+    host_tunel_alterno="${id}.${dominio}"
+  fi
 
   # Cuatro sustituciones sobre la configuración de producción, y ninguna más:
   #   · los dos `upstream` apuntan a puertos de loopback del host en vez de a
@@ -428,11 +496,19 @@ hosts_ssr() {
   local h dominio id
   h="$(sed -E 's#https?://##; s#/$##' "$URL_FILE" 2>/dev/null)"
   [ -n "$h" ] || { echo "localhost,127.0.0.1"; return; }
-  dominio="${h#*.}"          # brs.devtunnels.ms
-  id="${h%%-*}"              # 2ptbhqtv
   # Con puerto y sin él: el `Host` que manda el navegador lo lleva cuando la URL
   # lo lleva, y la comparación del SSR es literal.
-  echo "${h},${h}:${PUERTO},${id}.${dominio},${id}.${dominio}:${PUERTO},localhost,127.0.0.1"
+  if [ "$EXPOSICION" = devtunnel ]; then
+    # El dev tunnel publica el enlace de DOS formas —`<id>-<puerto>.<dominio>` y
+    # `<id>.<dominio>:<puerto>`— y las dos tienen que estar. Con Tailscale hay un
+    # solo nombre, y partirlo por el guión daría un host que no existe
+    # (`pablo-h310…` → `pablo…`).
+    dominio="${h#*.}"          # brs.devtunnels.ms
+    id="${h%%-*}"              # 2ptbhqtv
+    echo "${h},${h}:${PUERTO},${id}.${dominio},${id}.${dominio}:${PUERTO},localhost,127.0.0.1"
+  else
+    echo "${h},${h}:${PUERTO},localhost,127.0.0.1"
+  fi
 }
 
 # Qué hay del otro lado de los prefijos de la API. No corrige nada —no es su
@@ -736,8 +812,15 @@ case "${1:-once}" in
   stop)
     [ -f "$VIGILANTE_PID" ] && kill -TERM "$(cat "$VIGILANTE_PID")" 2>/dev/null
     rm -f "$VIGILANTE_PID"
-    [ -f "$TUNEL_PID" ] && kill -TERM "$(cat "$TUNEL_PID")" 2>/dev/null
-    rm -f "$TUNEL_PID"
+    if [ "$EXPOSICION" = tailscale ]; then
+      # Se retira el funnel: bajar los contenedores y dejar el nombre público
+      # abierto a internet apuntando a un puerto muerto es peor que cerrarlo.
+      tailscale funnel --https=443 off >/dev/null 2>&1 \
+        && log "TAILSCALE: funnel retirado; vuelve con 'start'"
+    else
+      [ -f "$TUNEL_PID" ] && kill -TERM "$(cat "$TUNEL_PID")" 2>/dev/null
+      rm -f "$TUNEL_PID"
+    fi
     docker rm -f "$PROXY" "$WEB" >/dev/null 2>&1
     log "Todo abajo. El enlace $(cat "$URL_FILE" 2>/dev/null) vuelve intacto con 'start'."
     ;;
@@ -746,7 +829,11 @@ case "${1:-once}" in
     echo "rama        : origin/$RAMA @ $(git -C "$RAIZ" rev-parse --short "origin/$RAMA" 2>/dev/null) (tu copia local no interviene)"
     echo "desplegado  : $(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || echo '—')"
     echo "enlace      : $( [ -s "$URL_FILE" ] && cat "$URL_FILE" || url_del_tunel )"
-    echo "túnel       : $(tunel_proceso_vivo && echo 'hospedado' || echo 'sin hospedar')"
+    if [ "$EXPOSICION" = tailscale ]; then
+      echo "exposición  : tailscale funnel $(tailscale funnel status 2>/dev/null | grep -q "127.0.0.1:${PUERTO}" && echo "→ 127.0.0.1:$PUERTO" || echo '⚠ SIN servir')"
+    else
+      echo "exposición  : $EXPOSICION · $(tunel_proceso_vivo && echo 'hospedado' || echo 'sin hospedar')"
+    fi
     # Lo que de verdad se pregunta cuando se pregunta por el estado: si la
     # petición COMO LLEGA POR EL ENLACE funciona. En el ciclo esto es silencioso
     # mientras va bien, así que acá se dice siempre.
