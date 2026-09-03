@@ -18,7 +18,9 @@
          La ficha decía en qué sedes atiende, pero para saber CUÁNDO había que
          salir de acá, entrar a la reserva y elegirlo de una lista. Quien
          compara dos profesionales hacía ese viaje dos veces. -->
-    <section class="ficha__horarios">
+    <!-- `id` para que «Revisar disponibilidad» del directorio caiga acá y no
+         arriba de todo: es el contrato con `ANCLA_HORARIOS`. -->
+    <section class="ficha__horarios" id="horarios">
       <h2 class="ficha__horarios-titulo">Sedes y horarios</h2>
       <app-practitioner-availability
         [practitionerProfileId]="profileIdVisible()"

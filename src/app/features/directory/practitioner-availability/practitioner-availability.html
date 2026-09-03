@@ -85,8 +85,9 @@
                         "
                         (clicked)="reservar(sede, cupo)"
                       >
-                        {{ cupo.startAt | date: 'EEE d' }} ·
-                        {{ cupo.startAt | date: 'HH:mm' }}–{{ cupo.endAt | date: 'HH:mm' }}
+                        {{ cupo.startAt | date: 'EEE d' }} · {{ cupo.startAt | date: 'HH:mm' }}–{{
+                          cupo.endAt | date: 'HH:mm'
+                        }}
                       </button>
                     </li>
                   }

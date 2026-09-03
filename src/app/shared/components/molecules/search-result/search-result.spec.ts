@@ -180,10 +180,6 @@ describe('SearchResult', () => {
     fixture.detectChanges();
 
     const lineas = todos('.app-resultado__meta span').map((s) => s.textContent!.trim());
-    expect(lineas).toEqual([
-      'Cardiología · 14 años',
-      'Clínica Los Olivos',
-      'Sopocachi · 1,2 km',
-    ]);
+    expect(lineas).toEqual(['Cardiología · 14 años', 'Clínica Los Olivos', 'Sopocachi · 1,2 km']);
   });
 });

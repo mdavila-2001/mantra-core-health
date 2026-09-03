@@ -227,6 +227,27 @@ describe('PractitionersDirectory', () => {
     });
   });
 
+  /**
+   * Fila 30 de la bitácora: «cada uno con los botones de REVISAR
+   * DISPONIBILIDAD». El título ya lleva a la ficha; esto tiene que llevar a los
+   * horarios, que es donde se compara a dos profesionales.
+   */
+  it('cada tarjeta ofrece revisar la disponibilidad, anclada en los horarios', () => {
+    montarEnEspecialidad();
+    responder([FILA]);
+    responderConceptos();
+
+    const tarjeta = grupos()[0].profesionales[0];
+    expect(tarjeta.action).toEqual({
+      label: 'Revisar disponibilidad',
+      link: '/directory/per-1',
+      fragment: 'horarios',
+    });
+    // Mismo destino que el título, distinta altura: sin el ancla serían dos
+    // enlaces al mismo lugar.
+    expect(tarjeta.action?.link).toBe(tarjeta.link);
+  });
+
   /* -- 1 · Están todos, sin escribir nada ---------------------------------- */
 
   it('carga la guía al abrir, sin que nadie escriba nada', () => {
