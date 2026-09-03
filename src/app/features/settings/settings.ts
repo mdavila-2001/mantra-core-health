@@ -13,6 +13,8 @@ import {
 import type { ThemeMode } from '../../core/tokens/design-tokens.types';
 import { ThemeService } from '../../core/tokens/theme.service';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
@@ -22,14 +24,30 @@ import { NotificationPreferences } from '../account/notification-preferences/not
 const ROLES_QUE_ADMINISTRAN_PERMISOS: readonly string[] = ['SECURITY_ADMIN'];
 
 /** Las tres opciones de tema, en el orden en que se ofrecen. */
-const TEMAS: readonly { valor: ThemeMode; rotulo: string; detalle: string }[] = [
+const TEMAS: readonly {
+  valor: ThemeMode;
+  rotulo: string;
+  detalle: string;
+  icono: NavIconName;
+}[] = [
   {
     valor: 'system',
     rotulo: 'El de mi dispositivo',
     detalle: 'Sigue la preferencia del sistema y cambia con ella.',
+    icono: 'monitor',
   },
-  { valor: 'light', rotulo: 'Claro', detalle: 'Siempre claro, sin importar el sistema.' },
-  { valor: 'dark', rotulo: 'Oscuro', detalle: 'Siempre oscuro, sin importar el sistema.' },
+  {
+    valor: 'light',
+    rotulo: 'Claro',
+    detalle: 'Siempre claro, sin importar el sistema.',
+    icono: 'sun',
+  },
+  {
+    valor: 'dark',
+    rotulo: 'Oscuro',
+    detalle: 'Siempre oscuro, sin importar el sistema.',
+    icono: 'moon',
+  },
 ];
 
 /** Cómo se llama cada permiso del navegador y para qué lo usa el producto. */
@@ -37,21 +55,25 @@ const PERMISOS: readonly {
   clave: PermisoDelNavegador;
   rotulo: string;
   paraQue: string;
+  icono: NavIconName;
 }[] = [
   {
     clave: 'avisos',
     rotulo: 'Avisos del navegador',
     paraQue: 'Para verlos aunque tengas AloVida en otra pestaña. Tu bandeja funciona igual sin esto.',
+    icono: 'bell',
   },
   {
     clave: 'ubicacion',
     rotulo: 'Ubicación',
     paraQue: 'Para buscar farmacias y consultorios cerca tuyo sin escribir la dirección.',
+    icono: 'pin',
   },
   {
     clave: 'camara',
     rotulo: 'Cámara',
     paraQue: 'Para adjuntar una foto de un estudio o un documento sin salir del navegador.',
+    icono: 'camera',
   },
 ];
 
@@ -97,7 +119,7 @@ const ESTADOS: Readonly<Record<EstadoPermiso, { texto: string; tono: string }>> 
  */
 @Component({
   selector: 'app-settings',
-  imports: [AppButton, NotificationPreferences, PageHeader, RouterLink, Tab, Tabs],
+  imports: [AppButton, NavIcon, NotificationPreferences, PageHeader, RouterLink, Tab, Tabs],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

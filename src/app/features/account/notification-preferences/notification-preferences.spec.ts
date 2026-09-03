@@ -36,6 +36,14 @@ describe('NotificationPreferences', () => {
   const texto = (): string => fixture.nativeElement.textContent as string;
   const consultar = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+  /**
+   * El `data-testid` de una fila de preferencia vive en el host de
+   * `app-switch` (S1: TAREA-17), no en un `<input>` suelto como antes. El
+   * control nativo que de verdad tiene `.checked` y recibe el click está
+   * adentro.
+   */
+  const consultarSwitch = (testid: string): HTMLInputElement | null =>
+    fixture.nativeElement.querySelector(`[data-testid="${testid}"] input[role="switch"]`);
 
   /** El mismo cálculo que hace la pantalla, para no fijar un huso concreto. */
   const aUtc = (horaLocal: string): string => {
@@ -85,15 +93,15 @@ describe('NotificationPreferences', () => {
     http.expectOne('/notifications/preferences/me').flush(preferencias());
     fixture.detectChanges();
 
-    expect((consultar('pref-SOCIAL') as HTMLInputElement).checked).toBe(false);
-    expect((consultar('pref-CLINICAL') as HTMLInputElement).checked).toBe(true);
+    expect(consultarSwitch('pref-SOCIAL')?.checked).toBe(false);
+    expect(consultarSwitch('pref-CLINICAL')?.checked).toBe(true);
   });
 
   it('guarda la categoría que se cambió', () => {
     http.expectOne('/notifications/preferences/me').flush(preferencias());
     fixture.detectChanges();
 
-    consultar('pref-MESSAGES')?.click();
+    consultarSwitch('pref-MESSAGES')?.click();
     fixture.detectChanges();
     consultar('pref-guardar')?.click();
 
@@ -113,7 +121,7 @@ describe('NotificationPreferences', () => {
     http.expectOne('/notifications/preferences/me').flush(preferencias());
     fixture.detectChanges();
 
-    consultar('pref-silencio')?.click();
+    consultarSwitch('pref-silencio')?.click();
     fixture.detectChanges();
     consultar('pref-guardar')?.click();
 
@@ -134,7 +142,7 @@ describe('NotificationPreferences', () => {
       .flush(preferencias({ start: aUtc('22:00'), end: aUtc('07:00') }));
     fixture.detectChanges();
 
-    consultar('pref-silencio')?.click();
+    consultarSwitch('pref-silencio')?.click();
     fixture.detectChanges();
     consultar('pref-guardar')?.click();
 
@@ -152,12 +160,14 @@ describe('NotificationPreferences', () => {
     expect(texto()).toContain('No se pierde ninguno');
   });
 
-  it('cuenta el error de guardado sin perder lo que la persona eligió', () => {
+  it('si el PUT falla, dice el error y el switch vuelve a su valor anterior (AC-17-7)', () => {
     http.expectOne('/notifications/preferences/me').flush(preferencias());
     fixture.detectChanges();
 
-    consultar('pref-CLINICAL')?.click();
+    consultarSwitch('pref-CLINICAL')?.click();
     fixture.detectChanges();
+    expect(consultarSwitch('pref-CLINICAL')?.checked).toBe(false);
+
     consultar('pref-guardar')?.click();
     http
       .expectOne('/notifications/preferences/me')
@@ -165,6 +175,26 @@ describe('NotificationPreferences', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain('No pudimos guardar tus preferencias.');
-    expect((consultar('pref-CLINICAL') as HTMLInputElement).checked).toBe(false);
+    // Nada quedó guardado (el PUT es todo-o-nada): el switch no se queda
+    // «encendido de mentira», vuelve a lo último que el servidor confirmó.
+    expect(consultarSwitch('pref-CLINICAL')?.checked).toBe(true);
+  });
+
+  it('mientras guarda, un segundo clic en «Guardar» no dispara un segundo PUT (AC-17-8)', () => {
+    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    fixture.detectChanges();
+
+    consultarSwitch('pref-CLINICAL')?.click();
+    fixture.detectChanges();
+    consultar('pref-guardar')?.click();
+    fixture.detectChanges();
+
+    // `app-button` con `isLoading` intercepta el click nativo: un segundo
+    // clic mientras el primer PUT sigue en vuelo no emite `clicked`.
+    consultar('pref-guardar')?.click();
+    fixture.detectChanges();
+
+    const unico = http.expectOne('/notifications/preferences/me');
+    unico.flush(preferencias());
   });
 });

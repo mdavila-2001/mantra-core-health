@@ -100,6 +100,14 @@ export const NAV_ICON_NAMES = [
   'arrow-left',
   'arrow-right',
   'remove',
+
+  // Preferencia del dispositivo (TAREA-17): los tres de «Apariencia» y el que
+  // le falta a «Permisos». Igual que `arrow-left`/`remove`, no nombran una
+  // sección. El porqué está donde se dibujan: `atoms/nav-icon/nav-icon.types.ts`.
+  'monitor',
+  'sun',
+  'moon',
+  'camera',
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 

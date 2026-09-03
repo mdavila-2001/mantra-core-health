@@ -22,18 +22,21 @@
     <ul class="prefs__lista">
       @for (fila of filas(); track fila.category) {
         <li class="prefs__fila">
-          <label class="prefs__control">
-            <input
-              type="checkbox"
+          <span class="prefs__texto">
+            <span class="prefs__nombre">{{ fila.titulo }}</span>
+            <span class="prefs__detalle">{{ fila.detalle }}</span>
+          </span>
+          <span class="prefs__derecha">
+            <app-switch
+              class="prefs__switch"
               [attr.data-testid]="'pref-' + fila.category"
+              [label]="fila.titulo"
               [checked]="fila.optedIn"
-              (change)="alternar(fila.category)"
+              [disabled]="guardando()"
+              (checkedChange)="alternar(fila.category, $event)"
             />
-            <span class="prefs__texto">
-              <span class="prefs__nombre">{{ fila.titulo }}</span>
-              <span class="prefs__detalle">{{ fila.detalle }}</span>
-            </span>
-          </label>
+            <app-nav-icon class="prefs__icono" [name]="fila.icono" />
+          </span>
         </li>
       }
     </ul>
@@ -42,13 +45,7 @@
   <section class="prefs__bloque">
     <h3 class="prefs__titulo">Silencio nocturno</h3>
 
-    <label class="prefs__control">
-      <input
-        type="checkbox"
-        data-testid="pref-silencio"
-        [checked]="silencioActivo()"
-        (change)="alternarSilencio()"
-      />
+    <div class="prefs__fila">
       <span class="prefs__texto">
         <span class="prefs__nombre">No mostrarme avisos en este horario</span>
         <!-- Se dice lo que hace, no lo que suena mejor: aplaza. Prometer «no te
@@ -57,7 +54,18 @@
           Los avisos que lleguen en esa franja no aparecen hasta que termina. No se pierde ninguno.
         </span>
       </span>
-    </label>
+      <span class="prefs__derecha">
+        <app-switch
+          class="prefs__switch"
+          data-testid="pref-silencio"
+          label="No mostrarme avisos en este horario"
+          [checked]="silencioActivo()"
+          [disabled]="guardando()"
+          (checkedChange)="alternarSilencio($event)"
+        />
+        <app-nav-icon class="prefs__icono" name="bell" />
+      </span>
+    </div>
 
     @if (silencioActivo()) {
       <div class="prefs__horas">

@@ -133,6 +133,17 @@ export const NAV_ICON_NAMES = [
   // Es un menos y no una papelera ni una cruz: quitar un nombre de más de una
   // lista no borra nada, y una papelera promete una destrucción que no ocurre.
   'remove',
+
+  // Preferencia del dispositivo: los tres del panel «Apariencia» y el que le
+  // falta a «Permisos» (TAREA-17). No nombran una sección del menú, nombran un
+  // valor de una preferencia — la misma excepción que ya vale para
+  // `arrow-left`/`arrow-right`/`remove` un poco más arriba. `camera` sí falta
+  // en el set y no es lo mismo que `scan`: una es la cámara del dispositivo,
+  // la otra la imagenología clínica.
+  'monitor',
+  'sun',
+  'moon',
+  'camera',
 ] as const;
 
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
