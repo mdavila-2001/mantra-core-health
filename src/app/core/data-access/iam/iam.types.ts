@@ -265,6 +265,10 @@ export interface PractitionerRegistration {
    * documento de identidad boliviano registra.
    */
   readonly sexAtBirth?: BirthSexCode;
+  /** Ocupación del catálogo (VS_BO_OCCUPATION). */
+  readonly occupationConceptId?: string;
+  /** Ocupación en texto libre, para cuando no está en el catálogo. */
+  readonly occupationFreeText?: string;
 }
 
 export interface RegisteredPractitioner {

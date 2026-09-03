@@ -235,6 +235,12 @@ export class IamClient {
       // ni este renglón — que es exactamente el descarte en silencio contra el
       // que avisa el comentario de arriba.
       ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
+      ...(registration.occupationConceptId === undefined
+        ? {}
+        : { occupationConceptId: registration.occupationConceptId }),
+      ...(registration.occupationFreeText === undefined
+        ? {}
+        : { occupationFreeText: registration.occupationFreeText }),
     });
   }
 

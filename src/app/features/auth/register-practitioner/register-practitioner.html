@@ -160,6 +160,35 @@
               />
             </ng-template>
 
+            <ng-template appCampoPersonalizado="occupationConceptId">
+              @if (catalogoOcupacionesCaido()) {
+                <p class="registro__catalogo-caido">
+                  No pudimos traer el catálogo de ocupaciones.
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    (clicked)="reintentarOcupaciones()"
+                  >
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <!-- Lupa de búsqueda con catálogo normado SEGIP y opción libre al final -->
+                <app-reference-combobox
+                  data-testid="registro-pro-ocupacion"
+                  label="Ocupación (opcional)"
+                  placeholder="Buscá tu profesión u oficio…"
+                  emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                  [options]="ocupacionesFiltradas()"
+                  [selected]="ocupacionElegida()"
+                  [minQueryLength]="0"
+                  (searched)="busquedaOcupacion.set($event)"
+                  (selectionChange)="elegirOcupacion($event)"
+                />
+              }
+            </ng-template>
+
             <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
               <p class="registro__catalogo-caido">
                 No pudimos traer el catálogo de departamentos.

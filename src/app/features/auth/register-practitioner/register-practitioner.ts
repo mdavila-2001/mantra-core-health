@@ -5,6 +5,10 @@ import { Router, RouterLink } from '@angular/router';
 
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
+  BoOccupationsCatalog,
+  CODIGO_OCUPACION_OTRA,
+} from '../../../core/data-access/terminology/bo-occupations.service';
+import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../../core/data-access/terminology/bo-municipalities.service';
@@ -469,6 +473,8 @@ export class RegisterPractitioner {
     // preguntarlo. Opcional, como el resto de los datos personales de esta
     // alta: lo que acá no se puede dejar en blanco es la habilitación.
     sexAtBirth: new FormControl<BirthSexCode | null>(null),
+    occupationConceptId: new FormControl<string | null>(null),
+    occupationFreeText: new FormControl('', { nonNullable: true }),
     licenseIssueDate: new FormControl<Date | null>(null),
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
     // Las «3 espacios adicionales a la profesión» del registro del cliente
@@ -576,6 +582,82 @@ export class RegisterPractitioner {
   private readonly municipios = inject(BoMunicipalitiesCatalog);
   readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
   readonly catalogoMunicipiosCaido = signal(false);
+
+  /** Ocupación del profesional (VS_BO_OCCUPATION), y su catálogo normado (SEGIP). */
+  private readonly ocupaciones = inject(BoOccupationsCatalog);
+  readonly opcionesOcupacion = signal<readonly (SelectOption<string> & { code: string })[]>([]);
+  readonly catalogoOcupacionesCaido = signal(false);
+
+  /**
+   * Las ocupaciones que se ofrecen para lo que se escribió en la lupa.
+   * El filtrado es en memoria.
+   */
+  readonly ocupacionesFiltradas = computed<readonly ReferenceOption[]>(() => {
+    const busqueda = this.busquedaOcupacion().trim().toLowerCase();
+    const todas = this.opcionesOcupacion();
+    const elegidas = busqueda
+      ? todas.filter((o) => o.label.toLowerCase().includes(busqueda))
+      : todas;
+    return elegidas.map((o) => ({ value: o.value, label: o.label }));
+  });
+
+  /** La ocupación elegida, para que el combobox la muestre al volver atrás. */
+  readonly ocupacionElegida = computed<ReferenceOption | null>(() => {
+    const id = this.formProfesional.controls.occupationConceptId.value;
+    if (!id) return null;
+    const opcion = this.opcionesOcupacion().find((o) => o.value === id);
+    return opcion ? { value: opcion.value, label: opcion.label } : null;
+  });
+
+  /** Lo tecleado en la lupa de ocupaciones. */
+  readonly busquedaOcupacion = signal('');
+
+  /** La ocupación elegida, en una señal para despertar a los computed. */
+  readonly ocupacionSeleccionada = signal<string | null>(null);
+
+  /** Si la ocupación elegida es «Otra ocupación» (para mostrar el campo libre). */
+  readonly ocupacionEsOtra = computed<boolean>(() => {
+    const elegida = this.ocupacionSeleccionada();
+    if (!elegida) return false;
+    const opcion = this.opcionesOcupacion().find((o) => o.value === elegida);
+    return opcion?.code === CODIGO_OCUPACION_OTRA;
+  });
+
+  /**
+   * Guarda la ocupación elegida en el combobox.
+   *
+   * @param opcion - La ocupación elegida, o `null` si la limpió.
+   */
+  elegirOcupacion(opcion: ReferenceOption | null): void {
+    this.formProfesional.controls.occupationConceptId.setValue(opcion?.value ?? null);
+    this.ocupacionSeleccionada.set(opcion?.value ?? null);
+    if (!this.ocupacionEsOtra()) {
+      this.formProfesional.controls.occupationFreeText.setValue('');
+    }
+  }
+
+  private campoOcupacion(): CampoDeFormulario {
+    return {
+      key: 'occupationConceptId',
+      label: 'Ocupación (opcional)',
+      hint: 'Tu profesión u oficio principal según catálogo normado.',
+      control: 'custom',
+    };
+  }
+
+  private campoOtraOcupacion(): readonly CampoDeFormulario[] {
+    if (!this.ocupacionEsOtra()) return [];
+    return [
+      {
+        key: 'occupationFreeText',
+        label: '¿Cuál?',
+        hint: 'Escribí tu ocupación.',
+        control: 'text',
+        placeholder: 'Tu ocupación o cargo',
+        testId: 'registro-pro-ocupacion-otra',
+      },
+    ];
+  }
 
   /**
    * Las especialidades (VS_MEDICAL_SPECIALTY, 63 desde el 27/08), y su catálogo.
@@ -795,6 +877,8 @@ export class RegisterPractitioner {
             maxDate: 'today',
             minDate: new Date(1900, 0, 1),
           },
+          this.campoOcupacion(),
+          ...this.campoOtraOcupacion(),
         ],
       },
       {
@@ -1074,6 +1158,7 @@ export class RegisterPractitioner {
     this.cargarDepartamentos();
     this.cargarMunicipios();
     this.cargarEspecialidades();
+    this.cargarOcupaciones();
     this.acomodarColegioYEspecialidades();
 
     // El aviso de un envío fallido se va en cuanto se corrige algo.
@@ -1244,6 +1329,35 @@ export class RegisterPractitioner {
     this.cargarDepartamentos();
   }
 
+  /**
+   * Trae el catálogo de ocupaciones (VS_BO_OCCUPATION).
+   * Un fallo no bloquea el alta: el campo es opcional.
+   */
+  protected cargarOcupaciones(): void {
+    this.ocupaciones.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoOcupacionesCaido.set(false);
+        this.opcionesOcupacion.set(
+          opciones.map((opcion) => ({
+            value: opcion.conceptId,
+            label: opcion.display,
+            code: opcion.code,
+          })),
+        );
+      },
+      error: () => {
+        this.opcionesOcupacion.set([]);
+        this.catalogoOcupacionesCaido.set(true);
+      },
+    });
+  }
+
+  /** Reintenta la lectura del catálogo de ocupaciones. */
+  protected reintentarOcupaciones(): void {
+    this.ocupaciones.olvidar();
+    this.cargarOcupaciones();
+  }
+
   /* ---- Envío ------------------------------------------------------------- */
 
   /**
@@ -1298,6 +1412,8 @@ export class RegisterPractitioner {
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
     const sexoAlNacer = raw.sexAtBirth;
+    const ocupacion = raw.occupationConceptId;
+    const ocupacionTexto = raw.occupationFreeText.trim();
 
     return {
       email: raw.email.trim(),
@@ -1308,6 +1424,10 @@ export class RegisterPractitioner {
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
+      ...(ocupacion === null || this.ocupacionEsOtra() ? {} : { occupationConceptId: ocupacion }),
+      ...(this.ocupacionEsOtra() && ocupacionTexto !== ''
+        ? { occupationFreeText: ocupacionTexto }
+        : {}),
       nationalId: documento,
       // Sólo tiene sentido con documento: sin CI no hay identificador al que
       // atarle un departamento de emisión.
