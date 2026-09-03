@@ -591,6 +591,14 @@ nombre_libre() {
     docker rm -f "${base}-rescate" >/dev/null 2>&1
     printf '%s\n' "${base}-rescate"
   else
+    # El nombre de siempre está libre otra vez —Docker soltó el cadáver, o
+    # alguien lo limpió—. Hay que retirar el rescate ANTES de crear el nuevo: si
+    # no, los dos quedan vivos peleándose por el mismo puerto del host y el que
+    # llega segundo entra en bucle de reinicio. Pasó, y estuvo dos horas así.
+    if docker ps -a --format '{{.Names}}' | grep -qx "${base}-rescate"; then
+      log "DOCKER: '$base' vuelve a estar libre; se retira '${base}-rescate'"
+      docker rm -f "${base}-rescate" >/dev/null 2>&1
+    fi
     printf '%s\n' "$base"
   fi
 }
