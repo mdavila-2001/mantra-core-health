@@ -27,6 +27,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { BloqueDelDia } from './day-view/day-view';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -47,6 +48,7 @@ import {
 import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
+import { ScheduleGrid } from './schedule-grid/schedule-grid';
 import { AGENDA_CREATE_ROUTE } from '../agenda.routes';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
@@ -150,11 +152,13 @@ const SIN_DATO = 'Sin registrar';
     Badge,
     AppButton,
     AppButtonLink,
+    Tooltip,
     BlockForm,
     DayView,
     TarjetaDelDia,
     MonthView,
     WeekView,
+    ScheduleGrid,
     PageHeader,
     RouterLink,
     ViewStateHost,
@@ -915,6 +919,18 @@ export class MyAgenda {
   }
 
   /** A dónde lleva «Cambiar»: la ruta propia que la bitácora pide para editar. */
+  /**
+   * Las reglas del horario vigente, para la grilla por horas.
+   *
+   * Salen de la plantilla que ya se lee; no hay consulta nueva. Vacías cuando
+   * todavía no publicó nada, que es lo que la grilla muestra como «todavía no
+   * publicaste horarios».
+   */
+  protected readonly reglasVigentes = computed(() => {
+    const e = this.estado();
+    return e.status === 'ready' || e.status === 'stale' ? (e.data?.rules ?? []) : [];
+  });
+
   protected readonly rutaEditarHorario = '/schedule/edit';
 
   /** Los bloqueos, que desde el carril 11 tienen su propio flujo. */
