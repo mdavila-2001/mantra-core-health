@@ -108,6 +108,15 @@ export interface PractitionerSpecialty {
   readonly boardCertified: boolean;
   readonly practiceScopeText?: string;
   readonly verificationStatusConceptId: string;
+  /**
+   * Si la plataforma verificó su matrícula.
+   *
+   * Lo resuelve el servidor: comparar el concepto acá exigiría llevar su uuid
+   * escrito en el cliente. La guía lista el padrón entero —quien se registra
+   * declara una matrícula, no la prueba— y esto es lo que distingue a quien
+   * además la probó.
+   */
+  readonly verified: boolean;
   readonly validFrom?: Date;
   /** Presente sólo si dejó de ejercerla. */
   readonly validTo?: Date;
@@ -702,6 +711,14 @@ export interface PractitionerListItem {
   readonly professionalTitle?: string;
   readonly photoFileId?: string;
   readonly verificationStatusConceptId: string;
+  /**
+   * Si la plataforma verificó su matrícula.
+   *
+   * Lo resuelve el servidor: comparar el concepto acá exigiría llevar su uuid
+   * escrito en el cliente. La guía lista el padrón entero —quien se registra
+   * declara una matrícula, no la prueba— y esto distingue a quien la probó.
+   */
+  readonly verified: boolean;
   readonly acceptsNewPatients: boolean;
   readonly telehealthAvailable: boolean;
   /** Sólo las vigentes, la principal primero. */

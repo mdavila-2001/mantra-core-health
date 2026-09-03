@@ -25,6 +25,7 @@ const FILA = {
   displayName: 'Dra. Lucía Salas',
   professionalTitle: 'Cardióloga',
   verificationStatusConceptId: 'st-ok',
+  verified: true,
   acceptsNewPatients: true,
   telehealthAvailable: false,
   specialties: [{ specialtyConceptId: 'esp-cardio', isPrimary: true }],
@@ -246,6 +247,27 @@ describe('PractitionersDirectory', () => {
     // Mismo destino que el título, distinta altura: sin el ancla serían dos
     // enlaces al mismo lugar.
     expect(tarjeta.action?.link).toBe(tarjeta.link);
+  });
+
+  /**
+   * La guía lista el padrón entero —un perfil nace pendiente por diseño, y
+   * verificarlo exige que una autoridad valide la matrícula—, así que el sello
+   * es lo único que distingue a quien probó lo que declara.
+   */
+  it('marca al verificado y no estampa nada al que todavía no lo está', () => {
+    montarEnEspecialidad();
+    responder([FILA, { ...OTRA, verified: false }]);
+    responderConceptos();
+
+    const todos = grupos().flatMap((g) => g.profesionales);
+    const conSello = todos.find((p) => p.id === 'per-1');
+    const sinSello = todos.find((p) => p.id === 'per-2');
+
+    expect(conSello?.seals?.map((s) => s.label)).toContain('Matrícula verificada');
+    // Al pendiente no se le estampa «sin verificar»: eso diría de él algo que
+    // no es suyo, y el padrón lo publica igual.
+    expect(sinSello?.seals?.map((s) => s.label) ?? []).not.toContain('Matrícula verificada');
+    expect(sinSello?.seals?.map((s) => s.label).join(' ') ?? '').not.toContain('verificar');
   });
 
   /* -- 1 · Están todos, sin escribir nada ---------------------------------- */
