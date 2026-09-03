@@ -58,6 +58,16 @@ const ANCLA_HORARIOS = 'horarios';
 /** Clave del chip de especialidad en la URL. */
 const PARAM_ESPECIALIDAD = 'especialidad';
 
+/**
+ * El valor con el que la URL pide «los que no declaran especialidad».
+ *
+ * No es el id de ninguna especialidad porque no hay ninguna: es su ausencia. Va
+ * en la misma clave a propósito —la portada ofrece una tarjeta más y la lista
+ * la abre igual que a las otras—, y el prefijo lo hace imposible de confundir
+ * con un uuid.
+ */
+const SIN_ESPECIALIDAD_URL = 'sin-especialidad';
+
 /** Tope por página del backend. La guía las junta todas. */
 const POR_PAGINA = 50;
 
@@ -336,15 +346,22 @@ export class PractitionersDirectory {
       .subscribe({
         next: ({ recuento, etiquetas }) => {
           this.totalDeProfesionales.set(recuento.practitionerTotal);
-          this.recuento.set(
-            ready(
-              recuento.items.map((fila) => ({
-                conceptId: fila.specialtyConceptId,
-                nombre: etiquetas.get(fila.specialtyConceptId)?.display ?? SIN_ESPECIALIDAD,
-                cantidad: fila.practitionerCount,
-              })),
-            ),
-          );
+          const tarjetas = recuento.items.map((fila) => ({
+            conceptId: fila.specialtyConceptId,
+            nombre: etiquetas.get(fila.specialtyConceptId)?.display ?? SIN_ESPECIALIDAD,
+            cantidad: fila.practitionerCount,
+          }));
+          // Al final y sólo si hay alguien: es la puerta a los que no declaran
+          // especialidad —quien se registra solo nace así—, y sin esta tarjeta
+          // una guía que se recorre por especialidad no llega nunca a ellos.
+          if (recuento.withoutSpecialtyCount > 0) {
+            tarjetas.push({
+              conceptId: SIN_ESPECIALIDAD_URL,
+              nombre: 'Sin especialidad declarada',
+              cantidad: recuento.withoutSpecialtyCount,
+            });
+          }
+          this.recuento.set(ready(tarjetas));
         },
         error: (error: unknown) =>
           this.recuento.set(errorToViewState<readonly TarjetaDeEspecialidad[]>(error)),
@@ -394,7 +411,11 @@ export class PractitionersDirectory {
     pagina: number,
     specialtyConceptId: string,
   ): Observable<readonly PractitionerListItem[]> {
-    return this.profiles.listPractitioners({ specialtyConceptId, cursor, limit: POR_PAGINA }).pipe(
+    const filtro =
+      specialtyConceptId === SIN_ESPECIALIDAD_URL
+        ? { withoutSpecialty: true }
+        : { specialtyConceptId };
+    return this.profiles.listPractitioners({ ...filtro, cursor, limit: POR_PAGINA }).pipe(
       switchMap((respuesta) => {
         const filas = [...acumulado, ...respuesta.items];
         if (respuesta.nextCursor === null) {

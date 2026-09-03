@@ -751,6 +751,15 @@ export interface SpecialtyCounts {
    * ejerce tres especialidades cuenta una vez acá y tres entre las tarjetas.
    */
   readonly practitionerTotal: number;
+  /**
+   * Cuántos no declaran ninguna especialidad vigente.
+   *
+   * La portada les da su propia tarjeta: quien recorre la guía por especialidad
+   * no llega nunca a quien no tiene ninguna, y así nace **todo el que se
+   * registra solo** — los médicos con cuenta, que son justamente los que
+   * atienden por la app.
+   */
+  readonly withoutSpecialtyCount: number;
 }
 
 export interface PractitionerDirectoryPage {
