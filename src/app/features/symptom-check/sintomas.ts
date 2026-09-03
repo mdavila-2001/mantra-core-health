@@ -262,10 +262,5 @@ export function sugerir(
   yaPuestos: readonly Sintoma[],
   tope = 6,
 ): readonly Sintoma[] {
-  return sugerirDe(
-    parcial,
-    SINTOMAS,
-    new Set(yaPuestos.map((sintoma) => sintoma.id)),
-    tope,
-  );
+  return sugerirDe(parcial, SINTOMAS, new Set(yaPuestos.map((sintoma) => sintoma.id)), tope);
 }

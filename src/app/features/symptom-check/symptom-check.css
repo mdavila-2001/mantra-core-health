@@ -6,107 +6,107 @@
     ========================================================================== */
 
 :host {
-    display: block;
+  display: block;
 }
 
 .sintomas {
-    max-inline-size: 46rem;
+  max-inline-size: 46rem;
 }
 
 .sintomas__titulo {
-    margin: 0 0 var(--sp-2);
-    font-family: var(--font-display);
-    font-size: var(--fs-h2);
-    line-height: var(--lh-h2);
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
 }
 
 .sintomas__texto {
-    margin: 0 0 var(--sp-4);
-    max-inline-size: 60ch;
-    color: var(--text-secondary);
+  margin: 0 0 var(--sp-4);
+  max-inline-size: 60ch;
+  color: var(--text-secondary);
 }
 
 .sintomas__campo {
-    display: block;
-    margin-block-end: var(--sp-4);
+  display: block;
+  margin-block-end: var(--sp-4);
 }
 
 .sintomas__chips,
 .sintomas__sugerencias {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: var(--sp-2);
-    margin-block-end: var(--sp-4);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-4);
 }
 
 .sintomas__chips-rotulo {
-    color: var(--text-secondary);
-    font-size: var(--fs-overline);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* ---- la recomendación --------------------------------------------------- */
 
 .sintomas__subtitulo {
-    margin: var(--sp-5) 0 var(--sp-3);
-    font-size: var(--fs-h3);
-    line-height: var(--lh-h3);
+  margin: var(--sp-5) 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
 }
 
 .sintomas__lista {
-    display: grid;
-    gap: var(--sp-3);
-    margin: 0;
-    padding: 0;
-    list-style: none;
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .sintomas__opcion {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--sp-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
 }
 
 .sintomas__opcion-texto {
-    flex: 1 1 16rem;
-    min-inline-size: 0;
+  flex: 1 1 16rem;
+  min-inline-size: 0;
 }
 
 .sintomas__especialidad {
-    margin: 0;
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
-    font-weight: 600;
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
 }
 
 .sintomas__porque {
-    margin: var(--sp-1) 0 0;
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .sintomas__sin-coincidencias {
-    margin: var(--sp-4) 0 0;
-    max-inline-size: 60ch;
-    color: var(--text-secondary);
+  margin: var(--sp-4) 0 0;
+  max-inline-size: 60ch;
+  color: var(--text-secondary);
 }
 
 /* El descargo no se esconde ni se achica hasta lo ilegible: en una aplicación
    de salud, «esto no es un diagnóstico» tiene que poder leerse. */
 .sintomas__descargo {
-    margin: var(--sp-5) 0 0;
-    padding-block-start: var(--sp-3);
-    border-block-start: 1px solid var(--border-default);
-    max-inline-size: 68ch;
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  margin: var(--sp-5) 0 0;
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+  max-inline-size: 68ch;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 /* ─── Elegir sin escribir ─────────────────────────────────────────────────
