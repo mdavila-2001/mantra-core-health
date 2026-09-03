@@ -201,8 +201,30 @@ export class AgendaCreate {
    */
   protected readonly misAgendas = signal<readonly AgendaResource[]>([]);
 
-  /** Sólo se pregunta cuándo hay más de una: elegir entre una no es elegir. */
-  protected readonly eligeSede = computed(() => this.misAgendas().length > 1);
+  /**
+   * Publicar en una agenda **nueva** en vez de en una que ya existe.
+   *
+   * Sin esto, quien ya tenía una agenda no podía crear una segunda **nunca**:
+   * `crearRecurso` reutiliza el `resourceId` que la pantalla resuelve al
+   * cargar, y ese id siempre estaba puesto. La pantalla decía «Publicar mi
+   * agenda» y en realidad editaba la única que había.
+   *
+   * Es lo que faltaba para que «elegir dónde publicar» signifique algo cuando
+   * todavía no hay dónde: primero hay que poder crear el otro lado.
+   */
+  protected readonly agendaNueva = signal(false);
+
+  /** Cómo se va a llamar la agenda nueva. «Consultorio en la Caja», «Sábados». */
+  protected readonly nombreNuevo = signal('');
+
+  /**
+   * Se pregunta cuándo hay más de una agenda **o** cuando se está creando otra.
+   *
+   * Con una sola y sin crear, elegir entre una no es elegir.
+   */
+  protected readonly eligeSede = computed(
+    () => this.misAgendas().length > 1 || this.misAgendas().length > 0,
+  );
 
   protected readonly opcionesDeSede = computed<SelectOption<string>[]>(() =>
     this.misAgendas().map((r) => ({ value: r.id, label: r.name })),
@@ -215,7 +237,34 @@ export class AgendaCreate {
    * pantalla el de la anterior haría que alguien publique creyendo que corrige
    * lo que ya tenía.
    */
+  /**
+   * Empieza una agenda nueva en vez de editar una existente.
+   *
+   * Suelta el `resourceId` —que es lo único que hacía que `crearRecurso`
+   * reutilizara la de siempre— y limpia el horario vigente en pantalla: el de
+   * la agenda anterior no describe a la que todavía no existe.
+   */
+  protected fijarNombreNuevo(valor: string | number | null): void {
+    this.nombreNuevo.set(valor === null ? '' : String(valor));
+  }
+
+  protected empezarAgendaNueva(): void {
+    this.agendaNueva.set(true);
+    this.resourceId.set(null);
+    this.templateId.set(null);
+    this.policyId.set(null);
+    this.vigente.set(null);
+  }
+
+  /** Vuelve a publicar sobre una agenda que ya existe. */
+  protected volverAAgendaExistente(): void {
+    this.agendaNueva.set(false);
+    const primera = this.misAgendas()[0];
+    if (primera !== undefined) this.elegirSede(primera.id);
+  }
+
   protected elegirSede(id: string | null): void {
+    if (this.agendaNueva()) this.agendaNueva.set(false);
     if (id === null || id === this.resourceId()) return;
     this.resourceId.set(id);
     this.vigente.set(null);
@@ -408,6 +457,13 @@ export class AgendaCreate {
    */
   protected readonly nombreDelRecurso = computed(() => {
     if (!this.publicaSoloLaPropia()) return this.formTecnico.controls.name.value.trim();
+    // Una agenda nueva se llama como la persona quiera: «Consultorio en la
+    // Caja», «Sábados en el centro». Es lo único que la distingue de la otra en
+    // todas las listas del producto, así que no se deriva.
+    if (this.agendaNueva()) {
+      const propio = this.nombreNuevo().trim();
+      if (propio !== '') return propio;
+    }
     const nombre = this.nombreDelTitular();
     return nombre === '' ? 'Mi agenda' : `Agenda de ${nombre}`;
   });
@@ -454,6 +510,10 @@ export class AgendaCreate {
         // decir en cuál publica. Antes esta lectura hacía `.find()` y la
         // segunda agenda no existía para el producto.
         this.misAgendas.set(recursos);
+        // Si ya se pidió empezar una agenda nueva, la lectura no vuelve a
+        // apuntar a la vieja: pisarla acá haría que publicar edite la de
+        // siempre sin que nadie lo note.
+        if (this.agendaNueva()) return;
         const recurso = recursos[0];
         if (recurso === undefined) return;
         this.resourceId.set(recurso.id);

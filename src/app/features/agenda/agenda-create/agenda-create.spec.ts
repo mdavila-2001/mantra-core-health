@@ -34,6 +34,13 @@ interface Testable {
   turnosDelDia(indice: number): number;
   repetirElPrimero(): void;
   publicar(): void;
+  /** Publicar en una agenda nueva en vez de en la que ya existe. */
+  readonly agendaNueva: WritableSignal<boolean>;
+  readonly nombreNuevo: WritableSignal<string>;
+  readonly eligeSede: () => boolean;
+  readonly resourceId: WritableSignal<string | null>;
+  empezarAgendaNueva(): void;
+  volverAAgendaExistente(): void;
 }
 
 /**
@@ -721,5 +728,115 @@ describe('AgendaCreate', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Identificador del recurso');
+  });
+
+  /**
+   * CREAR UNA SEGUNDA AGENDA — la mitad que faltaba.
+   *
+   * La pantalla decía «Publicar mi agenda» y, para quien ya tenía una,
+   * **editaba la única que había**: `crearRecurso` reutiliza el `resourceId`
+   * que la carga resuelve, y ese id siempre estaba puesto. O sea que un
+   * profesional no podía abrir una agenda en otra sede **nunca**.
+   *
+   * Se encontró recorriendo el producto: «no sé dónde publicar mis horarios»
+   * no era un problema de encontrar el botón, era que no había segundo lado.
+   */
+  describe('una segunda agenda', () => {
+    it('con una agenda existente, se ofrece crear otra', () => {
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        name: 'Horario',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        rules: [],
+      });
+
+      // El bloque de elección aparece aunque haya una sola: es donde vive la
+      // salida hacia la segunda.
+      expect(acc.eligeSede()).toBe(true);
+      expect(acc.agendaNueva()).toBe(false);
+      expect(acc.resourceId()).toBe('res-1');
+    });
+
+    it('al empezar una nueva, publicar CREA un recurso en vez de reusar', () => {
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        name: 'Horario',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        rules: [],
+      });
+
+      acc.empezarAgendaNueva();
+      fixture.detectChanges();
+      // Soltar el id es lo único que hace que el alta cree en vez de editar.
+      expect(acc.resourceId()).toBeNull();
+
+      acc.nombreNuevo.set('Consultorio en la Caja');
+      encenderLunes();
+      acc.publicar();
+
+      const alta = http.expectOne('/scheduling/resources');
+      expect(alta.request.method).toBe('POST');
+      // Y el nombre es el que escribió, no uno derivado de su propio nombre:
+      // es lo único que distingue las dos agendas en todas las listas.
+      expect((alta.request.body as { name: string }).name).toBe('Consultorio en la Caja');
+      alta.flush({ id: 'res-2', name: 'Consultorio en la Caja', stateConceptId: 'c' });
+
+      http
+        .expectOne('/scheduling/resources/res-2/templates')
+        .flush({ id: 'tpl-2', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne((r) => r.url === '/scheduling/templates/tpl-2/generate-slots')
+        .flush({ created: 4, skipped: 0 });
+
+      expect(acc.publicado()).toBe(true);
+    });
+
+    it('sin nombre propio, la agenda nueva no se queda sin nombre', () => {
+      // Cae al derivado en vez de mandar una cadena vacía, que el servidor
+      // rechazaría y dejaría al médico sin saber qué campo llenar.
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        name: 'Horario',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        rules: [],
+      });
+
+      acc.empezarAgendaNueva();
+      encenderLunes();
+      acc.publicar();
+
+      const alta = http.expectOne('/scheduling/resources');
+      expect((alta.request.body as { name: string }).name).toBe('Agenda de Dra. Elena Salas');
+      alta.flush({ id: 'res-2', name: 'x', stateConceptId: 'c' });
+      http
+        .expectOne('/scheduling/resources/res-2/templates')
+        .flush({ id: 'tpl-2', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne((r) => r.url === '/scheduling/templates/tpl-2/generate-slots')
+        .flush({ created: 4, skipped: 0 });
+    });
+
+    it('«mejor una que ya tengo» vuelve a la existente', () => {
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        name: 'Horario',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        rules: [],
+      });
+
+      acc.empezarAgendaNueva();
+      expect(acc.resourceId()).toBeNull();
+
+      acc.volverAAgendaExistente();
+      fixture.detectChanges();
+
+      expect(acc.agendaNueva()).toBe(false);
+      expect(acc.resourceId()).toBe('res-1');
+      http.expectOne('/scheduling/resources/res-1/templates').flush({ items: [], count: 0 });
+    });
   });
 });

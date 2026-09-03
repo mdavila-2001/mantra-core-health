@@ -85,17 +85,62 @@
     @if (eligeSede()) {
       <section class="agenda-create__bloque">
         <h2 class="agenda-create__titulo">¿En qué agenda publicás?</h2>
-        <app-form-field
-          label="Agenda"
-          hint="Atendés en más de un lado. El horario de abajo se publica sólo en la que elijas."
-        >
-          <app-select
-            data-testid="agenda-create-sede"
-            [options]="opcionesDeSede()"
-            [value]="resourceId()"
-            (valueChange)="elegirSede($event)"
-          />
-        </app-form-field>
+
+        @if (!agendaNueva()) {
+          <app-form-field
+            label="Agenda"
+            hint="El horario de abajo se publica sólo en la que elijas."
+          >
+            <app-select
+              data-testid="agenda-create-sede"
+              [options]="opcionesDeSede()"
+              [value]="resourceId()"
+              (valueChange)="elegirSede($event)"
+            />
+          </app-form-field>
+
+          <!-- Sin esto, quien ya tenía una agenda no podía crear una segunda
+               nunca: la pantalla decía «Publicar mi agenda» y en realidad
+               editaba la única que había. -->
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            data-testid="agenda-create-nueva"
+            (clicked)="empezarAgendaNueva()"
+          >
+            Atiendo en otro lado — crear otra agenda
+          </button>
+        } @else {
+          <app-form-field
+            label="¿Cómo se llama esta agenda?"
+            hint="Como la reconocerías vos: «Consultorio en la Caja», «Sábados en el centro»."
+          >
+            <app-input
+              data-testid="agenda-create-nombre"
+              placeholder="Consultorio en la Caja"
+              [value]="nombreNuevo()"
+              (valueChange)="fijarNombreNuevo($event)"
+            />
+          </app-form-field>
+
+          <p class="agenda-create__nota">
+            Se crea una agenda aparte de la que ya tenías. La otra sigue con sus turnos abiertos:
+            publicar acá no la toca.
+          </p>
+
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            data-testid="agenda-create-volver"
+            (clicked)="volverAAgendaExistente()"
+          >
+            Mejor publicar en una que ya tengo
+          </button>
+        }
       </section>
     }
 
