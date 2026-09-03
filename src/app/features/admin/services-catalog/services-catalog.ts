@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 
 import { ServicesCatalogClient } from '../../../core/data-access/services-catalog/services-catalog.client';
@@ -92,6 +92,7 @@ const MAX_NOMBRE = 200;
     Input,
     PageHeader,
     ReactiveFormsModule,
+    RouterLink,
     SearchField,
     Select,
   ],

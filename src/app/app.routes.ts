@@ -147,6 +147,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/brokers': () =>
     import('./features/insurance/broker-directory/broker-directory').then((m) => m.BrokerDirectory),
+  'administration/insurance-claims': () =>
+    import('./features/insurance/insurance-claims/insurance-claims').then(
+      (m) => m.InsuranceClaims,
+    ),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'my-organizations': () =>
@@ -462,6 +466,26 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
         .then((m) => m.LaboratoryDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El detalle de una solicitud de seguro (TAREA-16): se llega desde el
+    // listado, nunca desde el menú.
+    //
+    // **Con el guard de sección, igual que su listado.** La sección declara
+    // `SECURITY_ADMIN` porque es el único rol que la plataforma sabe emitir
+    // para esto —los `BILLING`/`FINANCE` que nombran las escrituras del ciclo
+    // del reclamo no existen en el `RoleCode` cerrado de la API—, y dejar el
+    // detalle destapado mientras el listado se pide con rol es una
+    // inconsistencia: la dirección se escribe a mano. La barrera de verdad
+    // sigue siendo el alcance por tenant del servidor, que responde el mismo
+    // 404 para una solicitud ajena que para un uuid inexistente.
+    path: 'administration/insurance-claims/:claimId',
+    title: `${APP_TITLE} - Solicitud de seguro`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/insurance/insurance-claim-detail/insurance-claim-detail')
+        .then((m) => m.InsuranceClaimDetail)
         .catch(() => chunkFallido()),
   },
   {
@@ -1203,6 +1227,27 @@ export const routes: Routes = [
       // de plantillas, no había forma de volver a leerlo.
       pantallaDeOperacion('schedule', 'mine', 'Mi agenda', () =>
         import('./features/agenda/my-agenda/my-agenda').then((m) => m.MyAgenda),
+      ),
+      // El alta de cita del profesional (TAREA-14). Dirección propia porque el
+      // pedido es justamente poder agendar **sin pasar por el calendario**:
+      // hasta acá la única forma era tocar un rato del día y abrir la tarjeta,
+      // que exige llegar primero al día correcto.
+      // El importador del arancel (TAREA-22 · S2). Cuelga del catálogo de
+      // servicios: se llega desde ahí, que es donde uno mira su lista y se da
+      // cuenta de que le falta un procedimiento.
+      pantallaDeOperacion(
+        'administration/services-catalog',
+        'import',
+        'Importar del arancel',
+        () =>
+          import(
+            './features/admin/services-catalog/procedure-import/procedure-import'
+          ).then((m) => m.ProcedureImport),
+      ),
+      pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
+        import('./features/agenda/appointment-new/appointment-new').then(
+          (m) => m.AppointmentNew,
+        ),
       ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
         import('./features/delegated-access/practitioner-delegate-form/practitioner-delegate-form').then(

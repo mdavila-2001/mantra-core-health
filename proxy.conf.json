@@ -82,6 +82,7 @@
       "/system-context",
       "/insurance-carriers",
       "/insurance-brokers",
+      "/insurance-claims",
       "/cds",
       "/billing/service-catalog",
       "/diagnostics/patients",
