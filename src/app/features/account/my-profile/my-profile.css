@@ -239,6 +239,6 @@
   display: inline-block;
   margin-left: var(--sp-2);
   font-size: var(--fs-caption);
-  color: var(--text-link);
+  color: var(--brand-primary);
   text-decoration: underline;
 }

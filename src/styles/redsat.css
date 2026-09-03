@@ -3499,7 +3499,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
   box-shadow: var(--sombra-1);
   transition: border-color var(--mov-rapido) var(--curva), box-shadow var(--mov-medio) var(--curva);
 }
-.app-resultado:hover, .app-resultado:focus-within { border-color: var(--accent); box-shadow: var(--sombra-2); }
+.app-resultado:hover, .app-resultado:focus-within { border-color: var(--petroleo); box-shadow: var(--sombra-2); }
 .app-resultado__figura {
   width: 56px; height: 56px; border-radius: var(--r-menu);
   background: var(--sup-inset); color: var(--petroleo-p);
@@ -3544,7 +3544,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
    color: en escala de grises la diferencia se sigue leyendo.               */
 .app-declaracion { display: flex; flex-direction: column; gap: var(--e3); }
 .app-declaracion__item { padding-left: var(--e4); border-left: 3px solid var(--filete); }
-.app-declaracion__item[data-origen="verificado"] { border-left-color: var(--accent); }
+.app-declaracion__item[data-origen="verificado"] { border-left-color: var(--petroleo); }
 .app-declaracion__item dt { font-weight: 600; color: var(--tinta); display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; }
 .app-declaracion__item dd { margin: var(--e1) 0 0; color: var(--tinta-2); }
 

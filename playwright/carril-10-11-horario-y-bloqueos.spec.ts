@@ -186,14 +186,14 @@ test('sin scroll horizontal en 390/768/1440 px, en las tres rutas — con captur
       // arrancar recién cuando cambia la ruta, después de que el título ya
       // pintó — una carrera real que una corrida completa mostró: la tabla
       // llegó a capturarse vacía una vez, con las siete filas en «No atendés».
-      await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => {});
+      await page.waitForLoadState('networkidle', { timeout: 8000 }).catch(() => undefined);
       // Bloqueos encadena DOS pedidos (catálogo, después lista): a veces la
       // red se ve «quieta» entre uno y el otro y la captura agarraba el
       // esqueleto de carga en vez del estado vacío real.
       await page
         .locator('.view-state-host__loading')
         .waitFor({ state: 'detached', timeout: 10000 })
-        .catch(() => {});
+        .catch(() => undefined);
 
       const medida = await page.evaluate(() => {
         const doc = document.documentElement;

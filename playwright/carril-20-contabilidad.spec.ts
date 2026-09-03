@@ -253,7 +253,7 @@ test.describe('Carril 20 · módulo contable — auditoría visual', () => {
       // `app-select` pone el `value` real de cada `<option>` como el índice de
       // `$index` (ver `select.html`), no el valor del modelo — así que se
       // elige por **rótulo**, no por 'DEBIT'/'CREDIT'.
-      const filas: Array<{ label: 'Debe' | 'Haber'; amount: string }> = [
+      const filas: { label: 'Debe' | 'Haber'; amount: string }[] = [
         { label: 'Debe', amount: '100.00' },
         { label: 'Haber', amount: '35.00' },
       ];
