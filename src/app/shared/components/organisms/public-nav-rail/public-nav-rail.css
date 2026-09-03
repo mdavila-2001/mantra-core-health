@@ -17,6 +17,16 @@
 }
 
 .public-nav-rail {
+    /* `relative` no es decoración: sin él, el `<h2 class="sr-only">` de cada
+       grupo —que es `position: absolute`— toma como bloque contenedor a un
+       ancestro de AFUERA del contenedor de scroll, se planta en su posición
+       estática dentro del contenido desplazado, y el `overflow` de acá no lo
+       recorta. Resultado medido a 390 px: un rótulo de 1 px, invisible,
+       estirando la página a 626 y haciéndola scrollear a lo ancho.
+
+       Lo encontró Playwright en el navegador. No se ve leyendo el CSS, y en
+       pantalla se manifiesta como una página que se corre al arrastrar. */
+    position: relative;
     display: flex;
     flex-direction: row;
     gap: var(--sp-2);
@@ -89,7 +99,19 @@
     flex-shrink: 0;
 }
 
-.public-nav-rail__icon svg {
+/* Se mide el HOST `app-nav-icon`, no el `<svg>` de adentro.
+
+   El átomo dibuja su glifo con `width/height: 100%`, así que el tamaño lo pone
+   quien lo monta — y con la encapsulación de Angular una regla
+   `.public-nav-rail__icon svg` **nunca alcanza** a ese `<svg>`: pertenece a la
+   vista de `app-nav-icon`, no a ésta, y el selector compilado le pide el
+   atributo de este componente. Sin medida, el `100%` no tiene contra qué
+   resolver y el navegador cae al tamaño por defecto de un reemplazado: 300 px.
+
+   Lo encontró Playwright, no una lectura: a 390 px cada ícono medía 300, el
+   rail entero 546, y la página scrolleaba a lo ancho. En pantalla se veía
+   «raro», no roto. */
+.public-nav-rail__icon app-nav-icon {
     inline-size: var(--sp-5);
     block-size: var(--sp-5);
 }
