@@ -188,3 +188,35 @@
     padding-top: 0;
   }
 }
+
+/* -- Paginación por días y detalle de la tarjeta --------------------------- */
+
+.dia__paginacion {
+  display: flex;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-2);
+}
+
+/* La tarjeta con detalle se ve tocable: lo que se puede abrir tiene que
+   parecerlo, o nadie lo intenta. */
+.dia__bloque--cliqueable {
+  position: relative;
+}
+
+.dia__detalle {
+  position: absolute;
+  inset-block-start: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm, 6px);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  padding: 2px var(--sp-2);
+  cursor: pointer;
+}
+
+.dia__detalle:hover,
+.dia__detalle:focus-visible {
+  color: inherit;
+}

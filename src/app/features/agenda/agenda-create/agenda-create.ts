@@ -20,7 +20,8 @@ import type {
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_MINE_ROUTE } from '../agenda.routes';
-import { miRecursoDeAgenda } from '../mi-recurso';
+import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
+import { misRecursosDeAgenda } from '../mi-recurso';
 import { calcularTurnos, type Calculo } from './agenda-turnos';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
@@ -31,6 +32,8 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import type { DialogDetail } from '../../../shared/components/molecules/dialog/dialog.types';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
@@ -178,6 +181,7 @@ interface DiaVisible {
 })
 export class AgendaCreate {
   private readonly scheduling = inject(SchedulingClient);
+  private readonly dialogs = inject(DialogService);
   private readonly organizaciones = inject(MedicalOrganizationClient);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
@@ -189,12 +193,130 @@ export class AgendaCreate {
   protected readonly duraciones = DURACIONES;
   protected readonly respiros = RESPIROS;
 
+  /* -- La tabla, que es la forma que pidió el propietario ------------------- */
+
+  /**
+   * Las horas del día, cada media hora.
+   *
+   * El pedido original dice «Desde (horas del día)» y «Hasta (horas del día)»
+   * como **selects**, no como texto. Media hora y no una: publicar de 8:30 a
+   * 12:30 es corriente en un consultorio, y una lista sólo de horas en punto
+   * obligaría a no poder expresarlo.
+   */
+  protected readonly horasDelDia: readonly SelectOption<string>[] = Array.from(
+    { length: 48 },
+    (_, i) => {
+      const hh = String(Math.floor(i / 2)).padStart(2, '0');
+      const mm = i % 2 === 0 ? '00' : '30';
+      return { value: `${hh}:${mm}`, label: `${hh}:${mm}` };
+    },
+  );
+
+  protected readonly opcionesDeDuracion: readonly SelectOption<number>[] = DURACIONES.map(
+    (m) => ({ value: m, label: `${m} min` }),
+  );
+
+  protected readonly opcionesDeRespiro: readonly SelectOption<number>[] = RESPIROS.map((m) => ({
+    value: m,
+    label: m === 0 ? 'Sin respiro' : `${m} min`,
+  }));
+
+  /** Fija un valor de la fila sin que la plantilla tenga que saber de formularios. */
+  protected fijarDeLaFila(indice: number, campo: string, valor: unknown): void {
+    if (valor === null || valor === undefined) return;
+    this.semana.at(indice).get(campo)?.setValue(valor as never);
+    this.versionDeLaSemana.update((v) => v + 1);
+  }
+
   /** Si la sesión puede construir agenda. El backend manda; esto no ofrece 403. */
   protected readonly puedeCrear = computed(() =>
     ROLES_QUE_CREAN.some((rol) => this.auth.roles().includes(rol)),
   );
 
   /** Quien administra el catálogo puede publicar la agenda de otro recurso. */
+  /**
+   * Las agendas de quien publica. Más de una = atiende en más de una sede.
+   */
+  protected readonly misAgendas = signal<readonly AgendaResource[]>([]);
+
+  /**
+   * Publicar en una agenda **nueva** en vez de en una que ya existe.
+   *
+   * Sin esto, quien ya tenía una agenda no podía crear una segunda **nunca**:
+   * `crearRecurso` reutiliza el `resourceId` que la pantalla resuelve al
+   * cargar, y ese id siempre estaba puesto. La pantalla decía «Publicar mi
+   * agenda» y en realidad editaba la única que había.
+   *
+   * Es lo que faltaba para que «elegir dónde publicar» signifique algo cuando
+   * todavía no hay dónde: primero hay que poder crear el otro lado.
+   */
+  protected readonly agendaNueva = signal(false);
+
+  /** Cómo se va a llamar la agenda nueva. «Consultorio en la Caja», «Sábados». */
+  protected readonly nombreNuevo = signal('');
+
+  /**
+   * Se pregunta cuándo hay más de una agenda **o** cuando se está creando otra.
+   *
+   * Con una sola y sin crear, elegir entre una no es elegir.
+   */
+  protected readonly eligeSede = computed(
+    () => this.misAgendas().length > 1 || this.misAgendas().length > 0,
+  );
+
+  protected readonly opcionesDeSede = computed<SelectOption<string>[]>(() =>
+    this.misAgendas().map((r) => ({ value: r.id, label: r.name })),
+  );
+
+  /**
+   * Cambia la agenda sobre la que se publica y relee su horario vigente.
+   *
+   * Releer no es opcional: cada sede tiene su propio horario, y dejar en
+   * pantalla el de la anterior haría que alguien publique creyendo que corrige
+   * lo que ya tenía.
+   */
+  /**
+   * Empieza una agenda nueva en vez de editar una existente.
+   *
+   * Suelta el `resourceId` —que es lo único que hacía que `crearRecurso`
+   * reutilizara la de siempre— y limpia el horario vigente en pantalla: el de
+   * la agenda anterior no describe a la que todavía no existe.
+   */
+  protected fijarNombreNuevo(valor: string | number | null): void {
+    this.nombreNuevo.set(valor === null ? '' : String(valor));
+  }
+
+  protected empezarAgendaNueva(): void {
+    this.agendaNueva.set(true);
+    this.resourceId.set(null);
+    this.templateId.set(null);
+    this.policyId.set(null);
+    this.vigente.set(null);
+  }
+
+  /** Vuelve a publicar sobre una agenda que ya existe. */
+  protected volverAAgendaExistente(): void {
+    this.agendaNueva.set(false);
+    const primera = this.misAgendas()[0];
+    if (primera !== undefined) this.elegirSede(primera.id);
+  }
+
+  protected elegirSede(id: string | null): void {
+    if (this.agendaNueva()) this.agendaNueva.set(false);
+    if (id === null || id === this.resourceId()) return;
+    this.resourceId.set(id);
+    this.vigente.set(null);
+    this.scheduling.listTemplates(id).subscribe({
+      next: (pagina) => {
+        const vigente = pagina.items[0];
+        if (vigente === undefined) return;
+        this.vigente.set(vigente);
+        this.cargarSemanaDesde(vigente);
+      },
+      error: () => undefined,
+    });
+  }
+
   protected readonly puedePublicarParaOtro = computed(() =>
     ROLES_DE_CATALOGO.some((rol) => this.auth.roles().includes(rol)),
   );
@@ -248,7 +370,7 @@ export class AgendaCreate {
   protected readonly esCambio = computed(() => this.vigente() !== null);
 
   /** Identificadores ya obtenidos: reintentar no vuelve a crearlos. */
-  private readonly resourceId = signal<string | null>(null);
+  protected readonly resourceId = signal<string | null>(null);
   private readonly policyId = signal<string | null>(null);
   private readonly templateId = signal<string | null>(null);
   protected readonly cuposCreados = signal<number | null>(null);
@@ -373,6 +495,13 @@ export class AgendaCreate {
    */
   protected readonly nombreDelRecurso = computed(() => {
     if (!this.publicaSoloLaPropia()) return this.formTecnico.controls.name.value.trim();
+    // Una agenda nueva se llama como la persona quiera: «Consultorio en la
+    // Caja», «Sábados en el centro». Es lo único que la distingue de la otra en
+    // todas las listas del producto, así que no se deriva.
+    if (this.agendaNueva()) {
+      const propio = this.nombreNuevo().trim();
+      if (propio !== '') return propio;
+    }
     const nombre = this.nombreDelTitular();
     return nombre === '' ? 'Mi agenda' : `Agenda de ${nombre}`;
   });
@@ -413,9 +542,18 @@ export class AgendaCreate {
     // pantalla ya le está diciendo a esa sesión que la sección no es suya.
     if (perfil === null || tenantId === null || !this.puedeCrear()) return;
 
-    miRecursoDeAgenda(this.scheduling, tenantId, perfil).subscribe({
-      next: (recurso) => {
-        if (recurso === null) return;
+    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+      next: (recursos) => {
+        // Todas, no la primera: quien atiende en dos sedes tiene que poder
+        // decir en cuál publica. Antes esta lectura hacía `.find()` y la
+        // segunda agenda no existía para el producto.
+        this.misAgendas.set(recursos);
+        // Si ya se pidió empezar una agenda nueva, la lectura no vuelve a
+        // apuntar a la vieja: pisarla acá haría que publicar edite la de
+        // siempre sin que nadie lo note.
+        if (this.agendaNueva()) return;
+        const recurso = recursos[0];
+        if (recurso === undefined) return;
         this.resourceId.set(recurso.id);
         this.scheduling.listTemplates(recurso.id).subscribe({
           next: (pagina) => {
@@ -557,6 +695,75 @@ export class AgendaCreate {
    * propósito —el resto del repo tampoco los usa en componentes— y el guardado
    * parcial hace que un reintento retome donde falló.
    */
+  /**
+   * «Previsualizar horario» — el modal del pedido original.
+   *
+   * La vista previa ya vive en línea más arriba, y se deja donde está: mirarla
+   * mientras se escribe es mejor que abrir algo para verla. Este botón la trae
+   * **al pie**, que es donde uno decide publicar, sin obligar a subir a
+   * buscarla.
+   *
+   * Se arma con el mismo `calcularTurnos` que la de arriba —no con una cuenta
+   * paralela— porque dos cálculos del mismo número terminan discrepando, y ya
+   * pasó una vez en esta pantalla.
+   */
+  protected async abrirVistaPrevia(): Promise<void> {
+    const calculo = this.vistaPrevia();
+    const detalles: DialogDetail[] = calculo.porDia.map((dia) => ({
+      label: dia.dia.charAt(0).toUpperCase() + dia.dia.slice(1),
+      value:
+        dia.turnos.length === 0
+          ? 'Sin turnos'
+          : `${dia.turnos.length} ${dia.turnos.length === 1 ? 'turno' : 'turnos'} · ` +
+            dia.turnos.map((t) => t.desde).join(' · '),
+    }));
+
+    await this.dialogs.confirm({
+      title: 'Así va a quedar tu horario',
+      message: `${calculo.total} ${calculo.total === 1 ? 'turno' : 'turnos'} por semana.`,
+      details: detalles,
+      confirmLabel: 'Está bien',
+      cancelLabel: 'Volver a editar',
+    });
+  }
+
+  /**
+   * «Limpiar campos» — deja el formulario en blanco.
+   *
+   * Pide confirmación porque **no hay deshacer**: quien lo toca sin querer
+   * pierde la semana que acaba de armar, y armarla es el trabajo entero de esta
+   * pantalla.
+   *
+   * No toca la agenda ya publicada: limpia el formulario, no el horario. Se
+   * dice en el mensaje porque «limpiar» a secas asusta justo a quien no debería
+   * asustarse.
+   */
+  protected async limpiarCampos(): Promise<void> {
+    const seguro = await this.dialogs.confirm({
+      title: 'Limpiar el formulario',
+      message:
+        'Se borra lo que escribiste acá y volvés a empezar. Tu horario ya publicado no se toca.',
+      confirmLabel: 'Limpiar',
+      cancelLabel: 'Volver',
+      destructive: true,
+    });
+    if (!seguro) return;
+
+    // Se reconstruye cada día con la fábrica en vez de listar los valores acá:
+    // duplicar los valores por defecto es garantizar que un día se separen.
+    for (let i = 0; i < DIAS.length; i++) {
+      this.semana.at(i).reset(nuevoDia(DIAS[i].numero).getRawValue());
+    }
+    this.formGeneral.reset({
+      practiceId: '',
+      tieneFin: 'no',
+      capacidadPorTurno: '1',
+      timeZone: '',
+    });
+    this.fechaDeFin.set(null);
+    this.versionDeLaSemana.update((v) => v + 1);
+  }
+
   protected publicar(): void {
     if (this.cargando()) return;
 

@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  LOCALE_ID,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { formatDate } from '@angular/common';
+import { calcularTurnos } from '../agenda-create/agenda-turnos';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -14,11 +23,14 @@ import type {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import type { BloqueDelDia } from './day-view/day-view';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import type { DialogDetail } from '../../../shared/components/molecules/dialog/dialog.types';
+import { patientChartRoute } from '../../clinical-record/clinical-record.routes';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -126,6 +138,9 @@ interface Patron {
  * leerlo. Es literalmente la primera vez que un médico ve su propio horario
  * después de publicarlo.
  */
+/** Lo que se muestra cuando un dato no está. */
+const SIN_DATO = 'Sin registrar';
+
 @Component({
   selector: 'app-my-agenda',
   imports: [
@@ -149,6 +164,9 @@ export class MyAgenda {
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
+  private readonly router = inject(Router);
+  /** El idioma activo, para formatear fechas fuera de la plantilla. */
+  private readonly idioma = inject(LOCALE_ID);
   private readonly terminology = inject(TerminologyClient);
   private readonly toast = inject(ToastService);
 
@@ -659,6 +677,132 @@ export class MyAgenda {
         this.cargarMes();
       },
       error: (error: unknown) => this.avisarFallo(error, 'quitar ese rato ocupado'),
+    });
+  }
+
+  /**
+   * Va al día siguiente o al anterior sin volver al mes.
+   *
+   * Si el día nuevo cae en otro mes, **se recarga el mes**: los cupos y los
+   * bloqueos que la vista usa son los del mes cargado, y sin esto el 1 de
+   * febrero se vería vacío viniendo del 31 de enero.
+   */
+  protected moverDia(desplazamiento: number): void {
+    const actual = this.diaAbierto();
+    if (actual === null) return;
+
+    const nuevo = new Date(actual);
+    nuevo.setDate(nuevo.getDate() + desplazamiento);
+    this.diaAbierto.set(nuevo);
+
+    if (nuevo.getMonth() !== actual.getMonth() || nuevo.getFullYear() !== actual.getFullYear()) {
+      this.mesVisible.set(primerDiaDelMes(nuevo));
+      this.cargarMes();
+    }
+    this.cargarDia(nuevo);
+  }
+
+  /**
+   * El modal de detalle de una actividad — corazón del pedido del carril 12.
+   *
+   * «Cards al estilo de Google Calendar que son cliqueables que abren un modal
+   * con todo el detalle de la actividad. Debe tener un botón que lleve a la
+   * vista correspondiente además del botón de cerrar.»
+   *
+   * **El botón que lleva a la vista correspondiente cambia según qué sea.** Una
+   * cita lleva al expediente de quien viene; un rato ocupado no lleva a ningún
+   * lado, y entonces no se ofrece: un botón que no va a ninguna parte es peor
+   * que ninguno.
+   */
+  protected async verDetalleDelBloque(bloque: BloqueDelDia): Promise<void> {
+    const hora = (valor: Date): string => formatDate(valor, 'HH:mm', this.idioma);
+    const detalles: DialogDetail[] = [
+      { label: 'Cuándo', value: `${hora(bloque.desde)} – ${hora(bloque.hasta)}` },
+      { label: 'Qué es', value: bloque.tipo === 'cita' ? 'Cita' : 'Tiempo ocupado' },
+    ];
+
+    if (bloque.tipo === 'cita') {
+      detalles.push({ label: 'Estado', value: bloque.estado });
+      detalles.push({ label: 'Paciente', value: bloque.paciente || SIN_DATO });
+      if (bloque.cita?.reasonText !== undefined) {
+        detalles.push({ label: 'Motivo', value: bloque.cita.reasonText });
+      }
+    } else if (bloque.motivo !== null) {
+      detalles.push({ label: 'Motivo', value: bloque.motivo });
+    }
+
+    const perfil = bloque.cita?.patientProfileId;
+    const puedeAbrirExpediente = bloque.tipo === 'cita' && perfil !== undefined;
+
+    const ir = await this.dialogs.confirm({
+      title: bloque.tipo === 'cita' ? 'Detalle de la cita' : 'Detalle del rato ocupado',
+      message: formatDate(bloque.desde, "EEEE d 'de' MMMM", this.idioma),
+      details: detalles,
+      confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
+      cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
+    });
+
+    if (ir && puedeAbrirExpediente && perfil !== undefined) {
+      void this.router.navigate([patientChartRoute(perfil)]);
+    }
+  }
+
+  /**
+   * «Cómo se veía antes ese horario» — punto 3 del carril 10.
+   *
+   * El pedido pide un modal con **el mismo organismo que el oficial**. Se
+   * resuelve con el mismo `calcularTurnos` que usa la pantalla de publicar: no
+   * hay dos maneras de contar los turnos de una franja, y tener dos sería
+   * garantizar que un día digan cosas distintas sobre el mismo horario.
+   *
+   * No hace falta pedir nada al servidor: la lectura de plantillas **ya trae
+   * las reglas** de cada una, retiradas incluidas.
+   */
+  protected async verHorarioViejo(plantilla: PublishedTemplate): Promise<void> {
+    const calculo = calcularTurnos(
+      [...plantilla.rules]
+        .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+        .map((regla) => ({
+          dia: NOMBRE_DEL_DIA[regla.dayOfWeek] ?? `Día ${regla.dayOfWeek}`,
+          desde: regla.startTime.slice(0, 5),
+          hasta: regla.endTime.slice(0, 5),
+          duracion: regla.slotMinutes ?? plantilla.slotMinutes ?? 30,
+          receso: regla.gapMinutes ?? 0,
+        })),
+    );
+
+    const detalles: DialogDetail[] = calculo.porDia.map((dia) => ({
+      label: dia.dia.charAt(0).toUpperCase() + dia.dia.slice(1),
+      value:
+        dia.turnos.length === 0
+          ? 'Sin turnos'
+          : `${dia.turnos[0].desde} a ${dia.turnos[dia.turnos.length - 1].hasta} · ` +
+            `${dia.turnos.length} ${dia.turnos.length === 1 ? 'turno' : 'turnos'}`,
+    }));
+
+    // La vigencia, que es lo que uno viene a mirar en un horario viejo.
+    if (plantilla.validFrom !== undefined) {
+      detalles.unshift({
+        label: 'Rigió desde',
+        value: formatDate(plantilla.validFrom, "d 'de' MMMM yyyy", this.idioma),
+      });
+    }
+    if (plantilla.validTo !== undefined) {
+      detalles.unshift({
+        label: 'Hasta',
+        value: formatDate(plantilla.validTo, "d 'de' MMMM yyyy", this.idioma),
+      });
+    }
+
+    await this.dialogs.confirm({
+      title: `Así era «${plantilla.name}»`,
+      message:
+        calculo.total === 0
+          ? 'Este horario no llegó a tener turnos.'
+          : `${calculo.total} ${calculo.total === 1 ? 'turno' : 'turnos'} por semana.`,
+      details: detalles,
+      confirmLabel: 'Cerrar',
+      cancelLabel: 'Volver',
     });
   }
 

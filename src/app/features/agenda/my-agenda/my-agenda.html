@@ -71,6 +71,8 @@
           [etiquetas]="estadosResueltos()"
           [puedeRegistrarLlegada]="puedeRegistrarLlegada()"
           (accionPedida)="ejecutar($event)"
+          (diaCambiado)="moverDia($event)"
+          (detallePedido)="verDetalleDelBloque($event)"
           (volver)="volverAlMes()"
         />
         <div class="mi-agenda__acciones-dia">
@@ -166,6 +168,18 @@
               <li class="mi-agenda__historico">
                 <span class="mi-agenda__historico-nombre">{{ viejo.name }}</span>
                 <app-badge variant="warning">Retirado</app-badge>
+                <!-- «Un botón que muestra el preview con un modal de cómo se
+                     veía antes ese horario» — punto 3 del pedido. -->
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="historico-preview"
+                  (clicked)="verHorarioViejo(viejo)"
+                >
+                  Ver cómo era
+                </button>
               </li>
             }
           </ul>

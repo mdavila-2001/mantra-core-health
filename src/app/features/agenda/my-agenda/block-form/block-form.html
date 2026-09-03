@@ -81,19 +81,27 @@
     <!-- El texto libre aparece SÓLO cuando el motivo elegido lo exige. Es lo
          único de este formulario que el paciente no ve, y por eso se dice acá
          y no en un aviso aparte. -->
-    @if (exigeTexto()) {
-      <app-form-field
-        label="Contá de qué se trata"
-        hint="Esto queda para vos y para quien administre la agenda: tu paciente ve «Otro», no el texto."
-      >
-        <app-input
-          type="text"
-          placeholder="Trámite en el banco, mudanza…"
-          [value]="motivo()"
-          (valueChange)="fijarMotivo($event)"
-        />
-      </app-form-field>
-    }
+    <!-- La descripción es un campo APARTE del motivo, y el pedido original lo
+         dice así: «quiero un motivo (catalogable) **y** una descripción». Se
+         había hecho excluyente —texto sólo con «Otro»— y eso no era lo pedido.
+         Sigue siendo opcional salvo que el motivo elegido exija explicación. -->
+    <app-form-field
+      [label]="exigeTexto() ? 'Contá de qué se trata' : 'Descripción'"
+      [hint]="
+        exigeTexto()
+          ? 'Elegiste «Otro»: hace falta para que se entienda.'
+          : 'Opcional. Queda para vos y para quien administre la agenda: tu paciente ve el motivo, no esto.'
+      "
+      [required]="exigeTexto()"
+    >
+      <app-input
+        type="text"
+        data-testid="bloqueo-descripcion"
+        placeholder="Trámite en el banco, mudanza…"
+        [value]="motivo()"
+        (valueChange)="fijarMotivo($event)"
+      />
+    </app-form-field>
 
     @if (errorVisible(); as texto) {
       <p class="bloqueo__error" role="alert">{{ texto }}</p>

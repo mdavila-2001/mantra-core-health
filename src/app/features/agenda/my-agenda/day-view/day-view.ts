@@ -164,6 +164,26 @@ export class DayView {
   /** Volver al mes. */
   readonly volver = output<void>();
 
+  /**
+   * Ir al día siguiente o al anterior — «un botón de ver mañana, y así
+   * sucesivamente» del pedido original.
+   *
+   * Emite el desplazamiento en días y no la fecha ya calculada: sumar un día es
+   * cosa del calendario, y hacerlo acá con `+24h` se rompe el día que cambia el
+   * horario de verano. Quien tiene la agenta cargada sabe recorrerla.
+   */
+  readonly diaCambiado = output<number>();
+
+  /**
+   * Alguien tocó una tarjeta y quiere ver todo lo de ese rato.
+   *
+   * El pedido original: «cards al estilo de Google Calendar que son cliqueables
+   * que abren un modal con todo el detalle de la actividad». El modal lo arma
+   * quien tiene los datos completos —esta vista sólo dibuja—, así que acá se
+   * emite el bloque y se decide afuera.
+   */
+  readonly detallePedido = output<BloqueDelDia>();
+
   protected readonly titulo = computed(() =>
     this.dia().toLocaleDateString('es-BO', {
       weekday: 'long',

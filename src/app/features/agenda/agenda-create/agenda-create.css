@@ -240,3 +240,63 @@
   font-variant-numeric: tabular-nums;
 }
 
+
+/* -- La tabla de horarios (forma pedida en la bitácora) -------------------- */
+
+/* Seis columnas no entran en un teléfono: la tabla scrollea sola dentro de su
+   caja y la página nunca se va de lado. */
+.agenda-create__tabla-scroll {
+  overflow-x: auto;
+  margin-block: var(--sp-3);
+}
+
+.agenda-create__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 44rem;
+}
+
+.agenda-create__tabla-caption {
+  text-align: left;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  padding-block-end: var(--sp-2);
+}
+
+.agenda-create__tabla th,
+.agenda-create__tabla td {
+  text-align: left;
+  padding: var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.agenda-create__tabla thead th {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* El día encendido se distingue por peso, no sólo por color: quien no
+   distingue tonos tiene que poder leer qué filas cuentan. */
+.agenda-create__fila--activa .agenda-create__fila-dia {
+  font-weight: 600;
+}
+
+.agenda-create__fila-check {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.agenda-create__fila-apagada {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.agenda-create__fila-turnos {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

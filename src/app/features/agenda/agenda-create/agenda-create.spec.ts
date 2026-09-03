@@ -6,6 +6,7 @@ import { FormArray, FormGroup } from '@angular/forms';
 import { provideRouter } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { DialogService } from '@shared/components/molecules/dialog/dialog-service';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { AgendaCreate } from './agenda-create';
 
@@ -34,6 +35,16 @@ interface Testable {
   turnosDelDia(indice: number): number;
   repetirElPrimero(): void;
   publicar(): void;
+  /** Publicar en una agenda nueva en vez de en la que ya existe. */
+  readonly agendaNueva: WritableSignal<boolean>;
+  readonly nombreNuevo: WritableSignal<string>;
+  readonly eligeSede: () => boolean;
+  readonly resourceId: WritableSignal<string | null>;
+  fijarDeLaFila(indice: number, campo: string, valor: unknown): void;
+  empezarAgendaNueva(): void;
+  volverAAgendaExistente(): void;
+  /** «Limpiar campos» del pedido original. */
+  limpiarCampos(): Promise<void>;
 }
 
 /**
@@ -49,6 +60,14 @@ describe('AgendaCreate', () => {
   let fixture: ComponentFixture<AgendaCreate>;
   let http: HttpTestingController;
   let acc: Testable;
+
+  /**
+   * Qué contesta el diálogo. Sin este doble, `confirm()` monta el `<dialog>`
+   * real y espera un clic que en una prueba no llega nunca: el `await` queda
+   * colgado y la prueba muere por tiempo, no por comportamiento.
+   */
+  let respuestaDelDialogo = true;
+  const dialogsFalsos = { confirm: () => Promise.resolve(respuestaDelDialogo) };
 
   function crear(
     roles: readonly string[] = ['PRACTITIONER'],
@@ -70,6 +89,7 @@ describe('AgendaCreate', () => {
           },
         },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
+        { provide: DialogService, useValue: dialogsFalsos },
       ],
     });
     fixture = TestBed.createComponent(AgendaCreate);
@@ -125,6 +145,7 @@ describe('AgendaCreate', () => {
           },
         },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
+        { provide: DialogService, useValue: dialogsFalsos },
       ],
     });
     fixture = TestBed.createComponent(AgendaCreate);
@@ -262,9 +283,12 @@ describe('AgendaCreate', () => {
       // Sin respiro por omisión: es lo que la agenda hacía antes de que el
       // campo existiera, así que abrir el formulario no cambia nada.
       expect(acc.grupoDe(0).getRawValue().respiro).toBe(0);
-      expect(fixture.nativeElement.textContent).toContain(
-        '¿Cuánto descanso entre una consulta y la siguiente?',
-      );
+      // Desde que el formulario es una tabla —la forma que pidió el
+      // propietario— el respiro es una COLUMNA, no una pregunta suelta. Lo que
+      // se comprueba sigue siendo lo mismo: que la opción está a la vista.
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).toContain('Descanso');
+      expect(texto).toContain('Sin respiro');
     });
 
     it('sin respiro NO manda el campo: cero declarado y no declarado son distintos', () => {
@@ -319,11 +343,16 @@ describe('AgendaCreate', () => {
       encenderLunes();
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.textContent).toContain('Entran');
-      // Elegir respiro sobre una franja corta puede quitar turnos, y ese
-      // número no se deduce leyendo la ficha.
+      // La columna «Turnos» de la fila: el costo en el mismo renglón donde se
+      // elige, que es donde se lo mira.
+      expect(fixture.nativeElement.textContent).toContain('Turnos');
+      expect(acc.turnosDelDia(0)).toBe(8);
+
+      // Elegir respiro sobre una franja corta quita turnos, y ese número no se
+      // deduce leyendo la fila.
       acc.elegirRespiro(0, 30);
       fixture.detectChanges();
+      expect(acc.turnosDelDia(0)).toBe(4);
       expect(fixture.nativeElement.textContent).toContain('4');
     });
 
@@ -338,7 +367,9 @@ describe('AgendaCreate', () => {
       fixture.detectChanges();
 
       const texto: string = fixture.nativeElement.textContent;
-      expect(texto).toContain('Entran 5 turnos');
+      // El número de la fila y el de la vista previa son el MISMO cálculo. Lo
+      // que esta prueba impide es que vuelvan a separarse.
+      expect(acc.turnosDelDia(0)).toBe(5);
       expect(texto).toContain('Lunes: 5 turnos');
       // Y los arranques llevan el paso completo: 30 + 15.
       expect(texto).toContain('09:45');
@@ -721,5 +752,230 @@ describe('AgendaCreate', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Identificador del recurso');
+  });
+
+  /**
+   * CREAR UNA SEGUNDA AGENDA — la mitad que faltaba.
+   *
+   * La pantalla decía «Publicar mi agenda» y, para quien ya tenía una,
+   * **editaba la única que había**: `crearRecurso` reutiliza el `resourceId`
+   * que la carga resuelve, y ese id siempre estaba puesto. O sea que un
+   * profesional no podía abrir una agenda en otra sede **nunca**.
+   *
+   * Se encontró recorriendo el producto: «no sé dónde publicar mis horarios»
+   * no era un problema de encontrar el botón, era que no había segundo lado.
+   */
+  describe('una segunda agenda', () => {
+    it('con una agenda existente, se ofrece crear otra', () => {
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        name: 'Horario',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        rules: [],
+      });
+
+      // El bloque de elección aparece aunque haya una sola: es donde vive la
+      // salida hacia la segunda.
+      expect(acc.eligeSede()).toBe(true);
+      expect(acc.agendaNueva()).toBe(false);
+      expect(acc.resourceId()).toBe('res-1');
+    });
+
+    it('al empezar una nueva, publicar CREA un recurso en vez de reusar', () => {
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        name: 'Horario',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        rules: [],
+      });
+
+      acc.empezarAgendaNueva();
+      fixture.detectChanges();
+      // Soltar el id es lo único que hace que el alta cree en vez de editar.
+      expect(acc.resourceId()).toBeNull();
+
+      acc.nombreNuevo.set('Consultorio en la Caja');
+      encenderLunes();
+      acc.publicar();
+
+      const alta = http.expectOne('/scheduling/resources');
+      expect(alta.request.method).toBe('POST');
+      // Y el nombre es el que escribió, no uno derivado de su propio nombre:
+      // es lo único que distingue las dos agendas en todas las listas.
+      expect((alta.request.body as { name: string }).name).toBe('Consultorio en la Caja');
+      alta.flush({ id: 'res-2', name: 'Consultorio en la Caja', stateConceptId: 'c' });
+
+      http
+        .expectOne('/scheduling/resources/res-2/templates')
+        .flush({ id: 'tpl-2', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne((r) => r.url === '/scheduling/templates/tpl-2/generate-slots')
+        .flush({ created: 4, skipped: 0 });
+
+      expect(acc.publicado()).toBe(true);
+    });
+
+    it('sin nombre propio, la agenda nueva no se queda sin nombre', () => {
+      // Cae al derivado en vez de mandar una cadena vacía, que el servidor
+      // rechazaría y dejaría al médico sin saber qué campo llenar.
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        name: 'Horario',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        rules: [],
+      });
+
+      acc.empezarAgendaNueva();
+      encenderLunes();
+      acc.publicar();
+
+      const alta = http.expectOne('/scheduling/resources');
+      expect((alta.request.body as { name: string }).name).toBe('Agenda de Dra. Elena Salas');
+      alta.flush({ id: 'res-2', name: 'x', stateConceptId: 'c' });
+      http
+        .expectOne('/scheduling/resources/res-2/templates')
+        .flush({ id: 'tpl-2', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne((r) => r.url === '/scheduling/templates/tpl-2/generate-slots')
+        .flush({ created: 4, skipped: 0 });
+    });
+
+    it('«mejor una que ya tengo» vuelve a la existente', () => {
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        name: 'Horario',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        rules: [],
+      });
+
+      acc.empezarAgendaNueva();
+      expect(acc.resourceId()).toBeNull();
+
+      acc.volverAAgendaExistente();
+      fixture.detectChanges();
+
+      expect(acc.agendaNueva()).toBe(false);
+      expect(acc.resourceId()).toBe('res-1');
+      http.expectOne('/scheduling/resources/res-1/templates').flush({ items: [], count: 0 });
+    });
+  });
+
+  /**
+   * «LIMPIAR CAMPOS» — punto del pedido original que faltaba.
+   *
+   * Pide confirmación porque **no hay deshacer**: quien lo toca sin querer
+   * pierde la semana que acaba de armar, y armarla es el trabajo entero de esta
+   * pantalla.
+   */
+  describe('limpiar campos', () => {
+    it('deja la semana en blanco cuando se confirma', async () => {
+      crear();
+      acc.alternarDia(0);
+      acc.grupoDe(0).controls['desde'].setValue('07:00');
+      fixture.detectChanges();
+      expect(acc.sinDias()).toBe(false);
+
+      await acc.limpiarCampos();
+      fixture.detectChanges();
+
+      expect(acc.sinDias()).toBe(true);
+      // Y vuelve al valor de fábrica, no a lo que había escrito.
+      expect(acc.grupoDe(0).controls['desde'].value).toBe('09:00');
+    });
+
+    it('no borra nada si se cancela', async () => {
+      // El diálogo devuelve `false` al cancelar **y** en el servidor, donde no
+      // hay quién conteste. Las dos situaciones tienen que dejar el formulario
+      // intacto: un «limpiar» que limpia igual sería peor que no preguntar.
+      crear();
+      acc.alternarDia(0);
+      fixture.detectChanges();
+
+      respuestaDelDialogo = false;
+      await acc.limpiarCampos();
+      respuestaDelDialogo = true;
+      fixture.detectChanges();
+
+      expect(acc.sinDias()).toBe(false);
+      expect(acc.grupoDe(0).controls['activo'].value).toBe(true);
+    });
+  });
+
+  /**
+   * LA FORMA DE TABLA — lo que pedía la bitácora original.
+   *
+   * «Una tabla donde cada día de la semana es una fila, las columnas que son
+   * selects son: Desde, Hasta, Tamaño del slot». Antes eran fichas por día y un
+   * panel desplegable: funcionaba y publicaba bien, pero no era la forma
+   * pedida, y quien pidió una tabla no reconoce un acordeón.
+   */
+  describe('el formulario como tabla', () => {
+    it('los SIETE días están siempre, encendidos o no', () => {
+      // En una tabla se lee de un golpe qué días atendés y cuáles no. Con
+      // paneles había que abrir uno por uno para saberlo.
+      crear();
+      const texto: string = fixture.nativeElement.textContent;
+
+      for (const dia of ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']) {
+        expect(texto).toContain(dia);
+      }
+      // Y los apagados lo dicen, en vez de desaparecer.
+      expect(texto).toContain('No atendés');
+    });
+
+    it('las columnas son las que pidió el original', () => {
+      crear();
+      const texto: string = fixture.nativeElement.textContent;
+
+      expect(texto).toContain('Desde');
+      expect(texto).toContain('Hasta');
+      expect(texto).toContain('Dura');
+      expect(texto).toContain('Descanso');
+    });
+
+    it('las horas son un select, no texto libre', () => {
+      // El original dice «Desde (horas del día)» como select. Media hora y no
+      // una: de 8:30 a 12:30 es corriente en un consultorio.
+      crear();
+      encenderLunes();
+      const texto: string = fixture.nativeElement.textContent;
+
+      expect(texto).toContain('08:30');
+      expect(texto).toContain('23:30');
+    });
+
+    it('elegir en la fila cambia el horario de ese día', () => {
+      crear();
+      encenderLunes();
+
+      acc.fijarDeLaFila(0, 'desde', '07:00');
+      acc.fijarDeLaFila(0, 'hasta', '11:00');
+      fixture.detectChanges();
+
+      expect(acc.grupoDe(0).getRawValue().desde).toBe('07:00');
+      // Y el número de la fila se recalcula solo: 4 horas de 30 minutos.
+      expect(acc.turnosDelDia(0)).toBe(8);
+    });
+
+    it('un día apagado no viaja al servidor', () => {
+      // La casilla de la fila es lo que decide, igual que antes lo decidía la
+      // ficha. Si un día apagado publicara, abriría turnos que nadie pidió.
+      crear();
+      encenderLunes();
+      acc.publicar();
+
+      http.expectOne('/scheduling/resources').flush({ id: 'res-1' });
+      const alta = http.expectOne('/scheduling/resources/res-1/templates');
+      expect(alta.request.body.rules).toHaveLength(1);
+      alta.flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-1/generate-slots')
+        .flush({ templateId: 'tpl-1', created: 8, skipped: 0 });
+      fixture.detectChanges();
+    });
   });
 });
