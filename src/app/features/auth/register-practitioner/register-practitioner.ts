@@ -30,6 +30,8 @@ import {
   RegistroAyuda,
   type TarjetaDeAyuda,
 } from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
@@ -406,6 +408,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     AnnounceOnAppear,
     PaginatedForm,
     CampoPersonalizado,
+    ReferenceCombobox,
     RegistroAyuda,
   ],
   templateUrl: './register-practitioner.html',
@@ -527,6 +530,43 @@ export class RegisterPractitioner {
    * el control manda, esto lo espeja para el grafo de señales.
    */
   private readonly tituloProfesionalElegido = signal('');
+
+  /**
+   * Lo escrito en la lupa del título. **Nunca reemplaza al valor del control**:
+   * el `FormControl` sigue siendo el que manda, y de él cuelgan el colegio
+   * automático y el filtro de especialidades.
+   */
+  readonly busquedaTituloProfesional = signal('');
+
+  /** Las doce opciones locales, acotadas por lo que se escribió. */
+  readonly titulosProfesionalesFiltrados = computed<readonly ReferenceOption[]>(() => {
+    const busqueda = this.busquedaTituloProfesional().trim().toLowerCase();
+    // Sin peticiones: la lista es cerrada y ya está en memoria. Una lupa que
+    // consulta al servidor para filtrar doce opciones agrega latencia y un
+    // estado de error donde no hacía falta ninguno.
+    return busqueda === ''
+      ? OPCIONES_TITULO_PROFESIONAL
+      : OPCIONES_TITULO_PROFESIONAL.filter((opcion) =>
+          opcion.label.toLowerCase().includes(busqueda),
+        );
+  });
+
+  /** La opción elegida, para que el rótulo vuelva al regresar a este paso. */
+  readonly tituloProfesionalSeleccionado = computed<ReferenceOption | null>(() => {
+    const valor = this.tituloProfesionalElegido();
+    return OPCIONES_TITULO_PROFESIONAL.find((opcion) => opcion.value === valor) ?? null;
+  });
+
+  /**
+   * Escribe la elección en el mismo control de siempre.
+   *
+   * Es la línea que conserva la cadena entera: `professionalTitle` →
+   * `regulatoryAuthority` → especialidades válidas. Escribir el título en un
+   * estado propio de la lupa la habría cortado en silencio.
+   */
+  elegirTituloProfesional(opcion: ReferenceOption | null): void {
+    this.formProfesional.controls.professionalTitle.setValue(opcion?.value ?? '');
+  }
 
   /**
    * Las páginas del alta, en el orden que pide AC-05-1.
@@ -828,10 +868,11 @@ export class RegisterPractitioner {
             hint: 'Al elegirlo, la lista de especialidades y el colegio se acomodan solos.',
             description:
               'Es como aparecés en tu ficha pública. Sale de una lista cerrada para que la misma profesión no figure escrita de cuatro maneras distintas.',
-            control: 'select',
-            options: OPCIONES_TITULO_PROFESIONAL,
-            placeholder: 'Sin especificar',
-            testId: 'registro-pro-titulo',
+            // `custom` y no `select`: la pantalla proyecta acá una lupa. La
+            // lista sigue siendo cerrada —son doce— pero se busca escribiendo,
+            // como Ocupación en el mismo formulario. Que dos campos vecinos con
+            // el mismo trabajo se manejaran distinto era la queja.
+            control: 'custom',
             icono: 'teach',
           },
         ],
