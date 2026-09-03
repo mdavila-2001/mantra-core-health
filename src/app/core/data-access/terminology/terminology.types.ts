@@ -210,11 +210,17 @@ export interface GlossaryTermTag {
 
    `CatalogConcepts` es una tabla compartida por **todos** los enums de la
    plataforma; lo que hace que una fila sea «un término del glosario» es
-   pertenecer al value set paraguas `glossary-all-terms` — el backend lo aplica
-   scopeando automáticamente cualquier lectura hecha con `lang=ES`, que es como
-   este cliente llama siempre a `searchGlossary`/`readGlossaryTerm`. Acá no hace
-   falta pedirlo explícitamente: no cambia ni un parámetro, sólo lo que el
-   backend devuelve dentro del mismo contrato.
+   pertenecer al value set paraguas `glossary-all-terms`. El backend resuelve
+   ese paraguas y acota por él en dos casos, ninguno atado a `lang=ES`:
+   (a) la lectura de un término puntual (`readGlossaryTerm`) siempre lo hace;
+   (b) la búsqueda por texto (`searchGlossary`) lo hace porque este cliente
+   siempre manda `includeValueSets=true` sin `valueSetId` explícito — el
+   backend interpreta esa combinación como «acotá al paraguas del glosario»
+   (antes del arreglo del 2026-09-02 no lo hacía: una búsqueda por texto sin
+   categoría devolvía el concepto pelado, sin `category`/`tags`/`status`;
+   ver `ConceptsService.searchConcepts`). Acá no hace falta pedirlo con un
+   parámetro propio: es la combinación `includeValueSets` + ausencia de
+   `valueSetId` la que dispara el acotamiento, no el idioma.
    --------------------------------------------------------------------------- */
 
 /** Los seis tipos de relación clínica tipada entre dos términos del glosario. */
