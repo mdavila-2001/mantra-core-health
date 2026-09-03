@@ -1229,6 +1229,18 @@ export const routes: Routes = [
       // pedido es justamente poder agendar **sin pasar por el calendario**:
       // hasta acá la única forma era tocar un rato del día y abrir la tarjeta,
       // que exige llegar primero al día correcto.
+      // El importador del arancel (TAREA-22 · S2). Cuelga del catálogo de
+      // servicios: se llega desde ahí, que es donde uno mira su lista y se da
+      // cuenta de que le falta un procedimiento.
+      pantallaDeOperacion(
+        'administration/services-catalog',
+        'import',
+        'Importar del arancel',
+        () =>
+          import(
+            './features/admin/services-catalog/procedure-import/procedure-import'
+          ).then((m) => m.ProcedureImport),
+      ),
       pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
         import('./features/agenda/appointment-new/appointment-new').then(
           (m) => m.AppointmentNew,
