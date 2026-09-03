@@ -301,7 +301,8 @@ describe('RegisterPatient', () => {
         | 'workEmployerFreeText'
         | 'guardianName'
         | 'guardianPhone'
-        | 'billingTaxId',
+        | 'billingTaxId'
+        | 'billingLegalName',
         string
       >
     > = {},
@@ -328,6 +329,7 @@ describe('RegisterPatient', () => {
       guardianName: extra.guardianName ?? '',
       guardianPhone: extra.guardianPhone ?? '',
       billingTaxId: extra.billingTaxId ?? '',
+      billingLegalName: extra.billingLegalName ?? '',
     });
     // La localidad de residencia pasa por su método: escribe el control **y**
     // el signal que lo espeja, y es el único que escribe los dos.
@@ -432,7 +434,7 @@ describe('RegisterPatient', () => {
         'gpsDomicilio',
       ]);
       expect(porClave('access')).toEqual(['email', 'password']);
-      expect(porClave('billing')).toEqual(['billingTaxId']);
+      expect(porClave('billing')).toEqual(['billingTaxId', 'billingLegalName']);
     });
 
     /**
@@ -450,7 +452,6 @@ describe('RegisterPatient', () => {
       expect(claves).not.toContain('homeZone');
       expect(claves).not.toContain('workZone');
       expect(claves).not.toContain('guardianRelationship');
-      expect(claves).not.toContain('billingLegalName');
     });
 
     it('empieza por el nombre y termina por la facturación', () => {
@@ -458,7 +459,10 @@ describe('RegisterPatient', () => {
       expect(primera.campos[0].key).toBe('name');
 
       const ultima = component.paginasPaciente().at(-1);
-      expect(ultima?.campos.map((campo) => campo.key)).toEqual(['billingTaxId']);
+      expect(ultima?.campos.map((campo) => campo.key)).toEqual([
+        'billingTaxId',
+        'billingLegalName',
+      ]);
     });
 
     /** Cada página lleva su glifo del set cerrado del nav (AC-04-3). */
@@ -904,18 +908,24 @@ describe('RegisterPatient', () => {
     expect(enviado).not.toContain('privateInsurancePlanId');
     expect(enviado).not.toContain('publicInsurancePlanId');
     expect(enviado).not.toContain('billingTaxId');
+    expect(enviado).not.toContain('billingLegalName');
 
     req.flush(RESPUESTA);
   });
 
   it('manda la calle y el NIT cuando se completaron', () => {
-    completar({ homeAddressLines: '  Av. Banzer #42  ', billingTaxId: ' 1023456789 ' });
+    completar({
+      homeAddressLines: '  Av. Banzer #42  ',
+      billingTaxId: ' 1023456789 ',
+      billingLegalName: '  Empresa SRL  ',
+    });
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-patient');
     // Recortados: un espacio de más no es parte de la dirección ni del NIT.
     expect(req.request.body.homeAddressLines).toBe('Av. Banzer #42');
     expect(req.request.body.billingTaxId).toBe('1023456789');
+    expect(req.request.body.billingLegalName).toBe('Empresa SRL');
 
     req.flush(RESPUESTA);
   });

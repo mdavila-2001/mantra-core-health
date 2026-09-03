@@ -159,10 +159,12 @@ export interface PatientRegistration {
   readonly publicInsurancePlanId?: string;
   /**
    * NIT para facturación, sólo el número.
-   *
-   * La razón social no se pide todavía: el modelo no tiene dónde guardarla.
    */
   readonly billingTaxId?: string;
+  /**
+   * Nombre o Razón Social asociada al NIT para la emisión de facturas.
+   */
+  readonly billingLegalName?: string;
   readonly timeZone?: string;
 }
 

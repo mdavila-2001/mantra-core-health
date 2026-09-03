@@ -17,8 +17,18 @@
       Avisar demora
     </button>
   }
+  @if (esQuienAtiende()) {
+    <!-- La puerta a las pantallas del horario. Sin esto se entra por «Turnos» y
+         no hay por dónde seguir: «Mi agenda» enlaza a los bloqueos y a cambiar
+         el horario, pero nadie enlazaba a «Mi agenda». -->
+    <a app-button page-actions variant="primary" [routerLink]="rutaMiAgenda">Mi agenda</a>
+  }
   @if (puedeCrearAgenda()) {
-    <a app-button page-actions variant="primary" [routerLink]="rutaCrearAgenda">Crear agenda</a>
+    <!-- Secundario a propósito: publicar el horario se hace una vez; mirar la
+         agenda es a lo que se entra todos los días. -->
+    <a app-button page-actions variant="secondary" [routerLink]="rutaCrearAgenda">
+      Crear agenda
+    </a>
   }
   @if (esQuienAtiende()) {
     <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta a las visitas.

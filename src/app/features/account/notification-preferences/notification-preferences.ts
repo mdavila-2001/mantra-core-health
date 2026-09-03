@@ -15,6 +15,9 @@ import type {
 } from '../../../core/data-access/notifications/notifications.types';
 import { NotificationsStore } from '../../../core/notifications/notifications.store';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
+import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 
 /**
@@ -56,6 +59,18 @@ const ORDEN: readonly NotificationCategory[] = [
 ];
 
 /**
+ * El ícono decorativo de cada renglón (AC-17-2). Del set cerrado de
+ * `atoms/nav-icon/`, no uno nuevo: «Recetas y consultas» ya se reconoce en el
+ * resto del producto con `note`, «Turnos» con `calendar`, y así.
+ */
+const ICONOS: Readonly<Record<NotificationCategory, NavIconName>> = {
+  CLINICAL: 'note',
+  SCHEDULING: 'calendar',
+  MESSAGES: 'chat',
+  SOCIAL: 'people',
+};
+
+/**
  * Preferencias de notificación — carril P9.
  *
  * ## La hora se escribe en local y se guarda en UTC
@@ -78,7 +93,7 @@ const ORDEN: readonly NotificationCategory[] = [
  */
 @Component({
   selector: 'app-notification-preferences',
-  imports: [Alert, AppButton, FormsModule],
+  imports: [Alert, AppButton, FormsModule, NavIcon, Switch],
   templateUrl: './notification-preferences.html',
   styleUrl: './notification-preferences.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -98,11 +113,25 @@ export class NotificationPreferences {
   protected readonly desde = signal('22:00');
   protected readonly hasta = signal('07:00');
 
-  /** Las categorías ordenadas y con su rótulo legible. */
+  /**
+   * Lo último que el servidor confirmó. Guardar es todo-o-nada (un solo
+   * `PUT`), así que si falla no hay «la mitad se guardó»: se vuelve acá
+   * entero — categorías y silencio — y no sólo el campo que se tocó último
+   * (AC-17-7). Arranca igual a lo que trae `cargar()`.
+   */
+  private confirmadas: {
+    categorias: readonly CategoryPreference[];
+    silencioActivo: boolean;
+    desde: string;
+    hasta: string;
+  } = { categorias: [], silencioActivo: false, desde: '22:00', hasta: '07:00' };
+
+  /** Las categorías ordenadas y con su rótulo legible e ícono. */
   protected readonly filas = computed(() =>
     ORDEN.map((category) => ({
       category,
       ...ROTULOS[category],
+      icono: ICONOS[category],
       optedIn:
         this.categorias().find((fila) => fila.category === category)?.optedIn ??
         true,
@@ -113,22 +142,31 @@ export class NotificationPreferences {
     this.cargar();
   }
 
-  protected alternar(category: NotificationCategory): void {
+  /**
+   * El `app-switch` manda su valor nuevo ya resuelto (`checkedChange`): se
+   * escribe tal cual, no se invierte el anterior.
+   */
+  protected alternar(category: NotificationCategory, optedIn: boolean): void {
+    if (this.guardando()) {
+      // El botón «Guardar» ya bloquea un segundo clic mientras guarda
+      // (AC-17-8); esto cubre además que un switch se toque en ese mismo
+      // instante y quede un valor que el PUT en vuelo no va a mandar.
+      return;
+    }
     this.categorias.update((filas) => {
       const existe = filas.some((fila) => fila.category === category);
       return existe
-        ? filas.map((fila) =>
-            fila.category === category
-              ? { category, optedIn: !fila.optedIn }
-              : fila,
-          )
-        : [...filas, { category, optedIn: false }];
+        ? filas.map((fila) => (fila.category === category ? { category, optedIn } : fila))
+        : [...filas, { category, optedIn }];
     });
     this.guardado.set(false);
   }
 
-  protected alternarSilencio(): void {
-    this.silencioActivo.set(!this.silencioActivo());
+  protected alternarSilencio(activo: boolean): void {
+    if (this.guardando()) {
+      return;
+    }
+    this.silencioActivo.set(activo);
     this.guardado.set(false);
   }
 
@@ -156,6 +194,10 @@ export class NotificationPreferences {
           this.store.refrescar();
         },
         error: () => {
+          // Nada quedó guardado: el switch (y el resto del formulario)
+          // vuelve a lo último confirmado, no se queda «encendido de
+          // mentira» (AC-17-7).
+          this.restaurarConfirmadas();
           this.guardando.set(false);
           this.error.set('No pudimos guardar tus preferencias.');
         },
@@ -185,6 +227,19 @@ export class NotificationPreferences {
       this.desde.set(aLocal(silencio.start));
       this.hasta.set(aLocal(silencio.end));
     }
+    this.confirmadas = {
+      categorias,
+      silencioActivo: silencio !== null,
+      desde: silencio !== null ? aLocal(silencio.start) : this.desde(),
+      hasta: silencio !== null ? aLocal(silencio.end) : this.hasta(),
+    };
+  }
+
+  private restaurarConfirmadas(): void {
+    this.categorias.set(this.confirmadas.categorias);
+    this.silencioActivo.set(this.confirmadas.silencioActivo);
+    this.desde.set(this.confirmadas.desde);
+    this.hasta.set(this.confirmadas.hasta);
   }
 }
 

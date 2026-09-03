@@ -76,8 +76,33 @@
           (detallePedido)="verDetalleDelBloque($event)"
           (movimientoPedido)="moverHorario($event)"
           (cierrePedido)="cerrarRato($event)"
+          (ratoTocado)="abrirTarjeta($event)"
+          (quitarOcupado)="quitarOcupado($event)"
           (volver)="volverAlMes()"
         />
+
+        <!-- LA TARJETA (AG-5): el único gesto de creación del calendario.
+             Tocar un rato libre del día la abre con esa franja ya puesta.
+
+             Estuvo escrita y desconectada: el componente existía y estaba en
+             los `imports`, `abrirTarjeta`, `ratoParaCrear`, `tarjetaCreo` y
+             `ratosTomadosDelDia` estaban en el componente, y `day-view` emitía
+             `ratoTocado` — pero la plantilla nunca la dibujaba ni escuchaba ese
+             evento. Tocar un hueco no hacía nada, y no había forma de darle
+             una cita a un paciente desde el calendario. -->
+        @if (ratoParaCrear(); as rato) {
+          @if (recurso(); as elRecurso) {
+            <app-tarjeta-del-dia
+              [dia]="dia"
+              [resourceId]="elRecurso.id"
+              [desdeInicial]="rato.desde"
+              [hastaInicial]="rato.hasta"
+              [ratosTomados]="ratosTomadosDelDia()"
+              (creada)="tarjetaCreo(dia)"
+              (cerrada)="cerrarTarjeta()"
+            />
+          }
+        }
         <div class="mi-agenda__acciones-dia">
           <button
             app-button

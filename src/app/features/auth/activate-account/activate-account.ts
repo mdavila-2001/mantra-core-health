@@ -176,6 +176,8 @@ export class ActivateAccount {
   }
 
   protected goToLogin(): void {
-    void this.router.navigateByUrl('/auth');
+    void this.router.navigate(['/auth'], {
+      queryParams: { returnUrl: '/my-account/profile/edit' },
+    });
   }
 }

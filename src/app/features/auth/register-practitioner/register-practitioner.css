@@ -1,13 +1,44 @@
 /* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
    `../registro-compartido/registro.css`, que esta pantalla y el alta de
-   paciente declaran las dos en su `styleUrls`.
+   paciente declaran las dos en su `styleUrls`. */
 
-   Acá queda lo que sólo es del alta de profesional. Hoy no hay nada: sus seis
-   páginas las dibuja entera el motor (`app-paginated-form`), y lo único
-   proyectado —la lupa del título, el árbol de municipios y los avisos de
-   catálogo caído— trae su propio estilo o usa `.registro__catalogo-caido`, que
-   es compartido.
+/* Las casillas de nombre: entran como UN campo de la página para que los
+   apellidos quepan en la misma pantalla, así que la separación entre ellas la
+   pone este bloque y no el motor. En pantalla ancha van de a dos, como el par
+   de apellidos de abajo. */
+.registro__nombres {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  width: 100%;
+}
 
-   El archivo se queda igual, vacío y declarado: es donde va a aterrizar lo
-   propio de esta pantalla en cuanto la tarjeta 05 le agregue lo suyo —las tres
-   matrículas, los dos contactos y la dirección de trabajo con su mapa—. */
+.registro__nombre {
+  width: 100%;
+}
+
+/* La casilla agregada y su botón de quitar, en la misma línea. */
+.registro__nombre-extra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.registro__nombre-extra app-input {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 40rem) {
+  .registro__nombres {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .registro__nombre {
+    /* Dos por fila: la mitad, menos la mitad del hueco. */
+    width: calc(50% - (var(--sp-4) / 2));
+  }
+}
+

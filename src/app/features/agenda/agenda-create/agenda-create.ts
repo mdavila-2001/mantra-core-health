@@ -33,6 +33,7 @@ import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import type { DialogDetail } from '../../../shared/components/molecules/dialog/dialog.types';
+import { Router } from '@angular/router';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -182,6 +183,7 @@ interface DiaVisible {
 export class AgendaCreate {
   private readonly scheduling = inject(SchedulingClient);
   private readonly dialogs = inject(DialogService);
+  private readonly router = inject(Router);
   private readonly organizaciones = inject(MedicalOrganizationClient);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
@@ -903,9 +905,44 @@ export class AgendaCreate {
           this.compararConLoGenerado(resultado.created);
           this.estado.set(ready(null));
           this.publicado.set(true);
+          void this.avisarQueQuedoPublicado(resultado.created);
         },
         error: (error: unknown) => this.fallar(error),
       });
+  }
+
+  /**
+   * El modal de éxito que pide AC-10-7, y por qué además queda la pantalla.
+   *
+   * El pedido dice «modal de éxito (no una pantalla)». Se hacen las dos cosas y
+   * no es indecisión: el modal es el instante —«listo, y esto es lo que se
+   * abrió»— y se va cuando lo cerrás; la pantalla de atrás es el registro, que
+   * sigue ahí si lo cerraste sin leer o si volvés con el botón de atrás.
+   *
+   * El botón principal lleva a «Mi agenda» porque la pregunta que sigue a
+   * publicar es «¿cómo quedó?», no «¿qué otra cosa hago?». Quien prefiera
+   * quedarse cierra el modal y la pantalla de éxito lo espera con el mismo
+   * enlace.
+   */
+  private async avisarQueQuedoPublicado(cupos: number): Promise<void> {
+    const irAVerla = await this.dialogs.confirm({
+      title: this.esCambio()
+        ? 'Listo, tu horario quedó cambiado'
+        : 'Listo, tu agenda ya está publicada',
+      message: `${this.resumen()}. Los pacientes ya pueden reservar.`,
+      details: [
+        {
+          label: 'Turnos abiertos',
+          value: `${cupos} para los próximos meses`,
+        },
+      ],
+      confirmLabel: 'Ver mi agenda',
+      cancelLabel: 'Quedarme acá',
+    });
+
+    if (irAVerla) {
+      void this.router.navigateByUrl(this.rutaDeMiAgenda);
+    }
   }
 
   /**

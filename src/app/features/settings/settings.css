@@ -43,9 +43,24 @@
 }
 
 .ajustes__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
   border: 1px solid var(--border-default);
   border-radius: var(--radio-md, 0.75rem);
   background: var(--bg-surface);
+}
+
+/* Ícono decorativo a la derecha del renglón (AC-17-2, TAREA-17 §1). Nunca
+   aporta el nombre accesible: sigue siendo `aria-hidden` en `app-nav-icon`. */
+.ajustes__icono {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-inline-end: var(--e3);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  align-self: center;
 }
 
 /* El permiso no es una casilla: el estado lo decide el navegador, así que la

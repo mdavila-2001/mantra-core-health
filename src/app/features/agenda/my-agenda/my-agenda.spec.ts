@@ -123,6 +123,66 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
   }
 
+  /* -- La tarjeta: dar una cita desde el calendario (AG-5) ------------------- */
+
+  /**
+   * La prueba que faltaba, y que explica por qué «no se puede darle una cita a
+   * un paciente desde el calendario».
+   *
+   * La tarjeta estaba **escrita, importada y desconectada**: el componente
+   * existía con su formulario completo, `MyAgenda` lo declaraba en `imports`,
+   * y `abrirTarjeta`, `ratoParaCrear`, `tarjetaCreo` y `ratosTomadosDelDia`
+   * estaban todos en la clase. `day-view` emitía `ratoTocado`. Lo único que
+   * faltaba era que la plantilla dibujara `<app-tarjeta-del-dia>` y escuchara
+   * ese evento — así que tocar un hueco del día no hacía absolutamente nada.
+   *
+   * Todo compilaba. Todas las pruebas pasaban. Ninguna miraba la plantilla.
+   */
+  it('tocar un rato libre del día abre la tarjeta para dar la cita', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+    conCuposHasta(new Date('2030-01-01'));
+
+    // `abrirTarjeta` es lo que la plantilla ahora conecta a `(ratoTocado)`.
+    const componente = fixture.componentInstance as unknown as {
+      solapa: { set(v: 'patron' | 'mes'): void };
+      diaAbierto: { set(v: Date | null): void };
+      abrirTarjeta(rato: { desde: Date; hasta: Date }): void;
+    };
+    // El día vive en la solapa del mes; la pantalla abre en «patrón».
+    componente.solapa.set('mes');
+    componente.diaAbierto.set(new Date(2026, 8, 10, 0, 0, 0));
+    componente.abrirTarjeta({
+      desde: new Date(2026, 8, 10, 10, 0),
+      hasta: new Date(2026, 8, 10, 10, 45),
+    });
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('app-tarjeta-del-dia'),
+      'la tarjeta no se dibuja: no hay forma de dar una cita desde el calendario',
+    ).not.toBeNull();
+  });
+
+  it('sin rato tocado la tarjeta no ocupa la pantalla', () => {
+    // No se dibuja siempre: el día abierto es para leerlo, y un formulario
+    // permanente empujaría la agenda hacia abajo cada vez que se abre un día.
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+    conCuposHasta(new Date('2030-01-01'));
+    const componente = fixture.componentInstance as unknown as {
+      solapa: { set(v: 'patron' | 'mes'): void };
+      diaAbierto: { set(v: Date | null): void };
+    };
+    componente.solapa.set('mes');
+    componente.diaAbierto.set(new Date(2026, 8, 10));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-tarjeta-del-dia')).toBeNull();
+  });
+
   /* -- El horario vigente, el retirado y el histórico (TAREA-10) ------------ */
 
   describe('vigente vs retirado', () => {

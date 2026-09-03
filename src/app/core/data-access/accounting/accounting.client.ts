@@ -5,7 +5,14 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
+  BalanceSheet,
   ChartOfAccounts,
+  FinancialStatementLine,
+  FinancialStatementQuery,
+  GeneralLedgerEntry,
+  GeneralLedgerPage,
+  GeneralLedgerQuery,
+  IncomeStatement,
   JournalPage,
   JournalQuery,
   JournalTransaction,
@@ -13,6 +20,8 @@ import type {
   LedgerAccount,
   LedgerEntry,
   PaidConsultation,
+  PostedJournalResult,
+  PostJournalInput,
   Practice,
   PractitionerEntryResult,
   RegisterConsultationIncomeInput,
@@ -150,9 +159,111 @@ export class AccountingClient {
       .pipe(map(aResultado));
   }
 
+  /**
+   * `GET /accounting/general-ledger` — el libro mayor de **una** cuenta, con
+   * saldo corrido. Pagina por cursor (AC-20-14): pasar `query.cursor` con el
+   * `nextCursor` de la página anterior, nunca un número de página.
+   */
+  generalLedger(practiceId: string, query: GeneralLedgerQuery): Observable<GeneralLedgerPage> {
+    let params = new HttpParams()
+      .set('practiceId', practiceId)
+      .set('accountId', query.accountId);
+    if (query.from !== undefined) params = params.set('from', query.from);
+    if (query.to !== undefined) params = params.set('to', query.to);
+    if (query.cursor !== undefined) params = params.set('cursor', query.cursor);
+    if (query.limit !== undefined) params = params.set('limit', String(query.limit));
+
+    return this.http
+      .get<RespuestaMayor>(this.url('/accounting/general-ledger'), { params })
+      .pipe(map(aLibroMayor));
+  }
+
+  /**
+   * `GET /accounting/income-statement` — ingresos y gastos posteados de la
+   * ventana pedida. Agrega desde la misma fuente que el libro mayor: no debe
+   * dar un número distinto para la misma cuenta y período.
+   */
+  incomeStatement(
+    practiceId: string,
+    query: FinancialStatementQuery = {},
+  ): Observable<IncomeStatement> {
+    return this.http
+      .get<RespuestaEstadoDeResultados>(this.url('/accounting/income-statement'), {
+        params: conFiltrosFinancieros(new HttpParams().set('practiceId', practiceId), query),
+      })
+      .pipe(
+        map((body) => ({
+          ...body,
+          revenueItems: body.revenueItems.map(aLineaFinanciera),
+          expenseItems: body.expenseItems.map(aLineaFinanciera),
+        })),
+      );
+  }
+
+  /**
+   * `GET /accounting/balance-sheet` — activo, pasivo y patrimonio a una
+   * fecha de corte (`query.to`). Distinto del balance de sumas y saldos.
+   */
+  balanceSheet(
+    practiceId: string,
+    query: FinancialStatementQuery = {},
+  ): Observable<BalanceSheet> {
+    return this.http
+      .get<RespuestaBalanceGeneral>(this.url('/accounting/balance-sheet'), {
+        params: conFiltrosFinancieros(new HttpParams().set('practiceId', practiceId), query),
+      })
+      .pipe(
+        map((body) => ({
+          ...body,
+          assetItems: body.assetItems.map(aLineaFinanciera),
+          liabilityItems: body.liabilityItems.map(aLineaFinanciera),
+          equityItems: body.equityItems.map(aLineaFinanciera),
+        })),
+      );
+  }
+
+  /**
+   * `POST /accounting/journal-transactions/drafts` — MODO CONTADOR (TAREA-20
+   * S2): crea el asiento de N filas en borrador, **sin postear**. El servidor
+   * sigue exigiendo que balancee antes de guardar (P-20-2, sin resolver): el
+   * front no debilita esa validación, sólo la anticipa en vivo.
+   */
+  createJournalDraft(input: PostJournalInput): Observable<PostedJournalResult> {
+    return this.http
+      .post<WirePosteo>(this.url('/accounting/journal-transactions/drafts'), input)
+      .pipe(map(aPosteo));
+  }
+
+  /**
+   * `POST /accounting/journal-transactions` — MODO CONTADOR: registra y
+   * postea el asiento de N filas en un solo paso (atajo directo, sin pasar
+   * por revisión/aprobación).
+   */
+  postJournal(input: PostJournalInput): Observable<PostedJournalResult> {
+    return this.http
+      .post<WirePosteo>(this.url('/accounting/journal-transactions'), input)
+      .pipe(map(aPosteo));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/** Añade los filtros de estado de resultados / balance general sólo si vienen. */
+function conFiltrosFinancieros(
+  params: HttpParams,
+  query: FinancialStatementQuery,
+): HttpParams {
+  let resultado = params;
+  if (query.fiscalPeriodId !== undefined) {
+    resultado = resultado.set('fiscalPeriodId', query.fiscalPeriodId);
+  }
+  if (query.from !== undefined) resultado = resultado.set('from', query.from);
+  if (query.to !== undefined) resultado = resultado.set('to', query.to);
+  if (query.cursor !== undefined) resultado = resultado.set('cursor', query.cursor);
+  if (query.limit !== undefined) resultado = resultado.set('limit', String(query.limit));
+  return resultado;
 }
 
 /**
@@ -307,4 +418,92 @@ function aConsultaPagada(body: WireConsultaPagada): PaidConsultation {
 
 function aResultado(body: WireResultado): PractitionerEntryResult {
   return sinNulos(body as ConNulos<PractitionerEntryResult>);
+}
+
+/* ---- TAREA-20 S3: libro mayor, estado de resultados, balance general ----- */
+
+type WireMovimiento = ConNulos<Omit<GeneralLedgerEntry, 'transactionDate'>> & {
+  readonly transactionDate: string;
+};
+type WireLineaFinanciera = ConNulos<FinancialStatementLine>;
+
+interface RespuestaMayor {
+  readonly accountId: string;
+  readonly code: string | null;
+  readonly name: string | null;
+  readonly normalBalanceConceptId: string | null;
+  readonly currencyConceptId: string | null;
+  readonly openingBalance: string;
+  readonly items: readonly WireMovimiento[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+interface RespuestaEstadoDeResultados {
+  readonly revenueItems: readonly WireLineaFinanciera[];
+  readonly expenseItems: readonly WireLineaFinanciera[];
+  readonly totalRevenue: string;
+  readonly totalExpense: string;
+  readonly netIncome: string;
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+  readonly truncated: boolean;
+}
+
+interface RespuestaBalanceGeneral {
+  readonly assetItems: readonly WireLineaFinanciera[];
+  readonly liabilityItems: readonly WireLineaFinanciera[];
+  readonly equityItems: readonly WireLineaFinanciera[];
+  readonly netIncomeOfPeriod: string;
+  readonly totalAssets: string;
+  readonly totalLiabilities: string;
+  readonly totalEquity: string;
+  readonly totalLiabilitiesAndEquity: string;
+  readonly balanced: boolean;
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+  readonly truncated: boolean;
+}
+
+function aMovimiento(body: WireMovimiento): GeneralLedgerEntry {
+  const { transactionDate, ...resto } = body;
+  return {
+    ...sinNulos(resto),
+    transactionDate: maybeDateOnly(transactionDate) ?? new Date(transactionDate),
+  };
+}
+
+function aLibroMayor(body: RespuestaMayor): GeneralLedgerPage {
+  const { code, name, normalBalanceConceptId, currencyConceptId, items, ...resto } = body;
+  return {
+    ...resto,
+    ...sinNulos({ code, name, normalBalanceConceptId, currencyConceptId }),
+    items: items.map(aMovimiento),
+  };
+}
+
+function aLineaFinanciera(body: WireLineaFinanciera): FinancialStatementLine {
+  return sinNulos(body);
+}
+
+/* ---- TAREA-20 S2: MODO CONTADOR ------------------------------------------- */
+
+interface WirePosteo {
+  readonly id: string;
+  readonly transactionNumber: string;
+  readonly status: string;
+  readonly totalAmount: string;
+  readonly lineCount: number;
+  readonly postedAt: string | null;
+}
+
+function aPosteo(body: WirePosteo): PostedJournalResult {
+  const { postedAt, ...resto } = body;
+  return {
+    ...resto,
+    ...(maybeDate(postedAt) === undefined ? {} : { postedAt: maybeDate(postedAt) }),
+  };
 }

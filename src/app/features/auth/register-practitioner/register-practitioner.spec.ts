@@ -103,6 +103,7 @@ describe('RegisterPractitioner', () => {
         | 'professionalTitle'
         | 'phone'
         | 'middleName'
+        | 'thirdName'
         | 'motherLastName'
         | 'nationalId'
         | 'regulatoryAuthority'
@@ -116,9 +117,10 @@ describe('RegisterPractitioner', () => {
     component.formProfesional.setValue({
       name: 'Ana',
       middleName: extra.middleName ?? '',
+      thirdName: extra.thirdName ?? '',
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
-      nationalId: extra.nationalId ?? '',
+      nationalId: extra.nationalId ?? '1234567',
       email: 'ana@hospital.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
@@ -204,7 +206,7 @@ describe('RegisterPractitioner', () => {
     });
 
     it('cada bloque trae los campos que le tocan, en su orden', () => {
-      expect(camposDe('name')).toEqual(['name', 'middleName', 'lastName', 'motherLastName']);
+      expect(camposDe('name')).toEqual(['name', 'lastName', 'motherLastName']);
       expect(camposDe('document')).toEqual([
         'nationalId',
         'issuerAdministrativeAreaConceptId',
@@ -586,6 +588,7 @@ describe('RegisterPractitioner', () => {
     expect(req.request.body).toEqual({
       name: 'Ana',
       lastName: 'Paz',
+      nationalId: '1234567',
       email: 'ana@hospital.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
@@ -593,6 +596,12 @@ describe('RegisterPractitioner', () => {
     });
 
     req.flush(RESPUESTA_PRO);
+  });
+
+  it('el documento de identidad es obligatorio para el profesional boliviano', () => {
+    completarProfesional({ nationalId: '' });
+    expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
+    expect(component.formProfesional.controls.nationalId.errors?.['required']).toBe(true);
   });
 
   it('agrega segundo nombre y apellido materno solo si se completaron', () => {
@@ -604,6 +613,44 @@ describe('RegisterPractitioner', () => {
     expect(req.request.body.motherLastName).toBe('Rojas');
 
     req.flush(RESPUESTA_PRO);
+  });
+
+  it('manda el tercer nombre concatenado en middleName cuando se completó', () => {
+    completarProfesional({ middleName: 'María', thirdName: 'Eugenia', motherLastName: 'Rojas' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.middleName).toBe('María Eugenia');
+    expect(req.request.body.motherLastName).toBe('Rojas');
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('manda los nombres agregados dentro de middleName', () => {
+    completarProfesional({ middleName: 'María', thirdName: 'Eugenia' });
+    component.agregarNombre();
+    component.agregarNombre();
+    component.agregarNombre();
+    component.escribirNombreExtra(0, 'Fernanda');
+    // La del medio queda vacía a propósito: no debe dejar un doble espacio.
+    component.escribirNombreExtra(2, 'Belén');
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.middleName).toBe('María Eugenia Fernanda Belén');
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('quitar una casilla agregada saca ese nombre y deja los otros', () => {
+    component.agregarNombre();
+    component.agregarNombre();
+    component.escribirNombreExtra(0, 'Fernanda');
+    component.escribirNombreExtra(1, 'Belén');
+
+    component.quitarNombre(0);
+
+    expect(component.nombresExtra()).toEqual(['Belén']);
   });
 
   it('agrega título y teléfono solo si se completaron', () => {

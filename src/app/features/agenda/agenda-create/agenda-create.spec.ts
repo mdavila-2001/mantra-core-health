@@ -67,7 +67,14 @@ describe('AgendaCreate', () => {
    * colgado y la prueba muere por tiempo, no por comportamiento.
    */
   let respuestaDelDialogo = true;
-  const dialogsFalsos = { confirm: () => Promise.resolve(respuestaDelDialogo) };
+  /** El último diálogo que se pidió, para poder mirarlo desde una prueba. */
+  let ultimoDialogo: Record<string, unknown> | null = null;
+  const dialogsFalsos = {
+    confirm: (config: Record<string, unknown>) => {
+      ultimoDialogo = config;
+      return Promise.resolve(respuestaDelDialogo);
+    },
+  };
 
   function crear(
     roles: readonly string[] = ['PRACTITIONER'],
@@ -78,7 +85,7 @@ describe('AgendaCreate', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'schedule/mine', children: [] }]),
         {
           provide: AuthService,
           useValue: {
@@ -134,7 +141,7 @@ describe('AgendaCreate', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'schedule/mine', children: [] }]),
         {
           provide: AuthService,
           useValue: {
@@ -252,6 +259,35 @@ describe('AgendaCreate', () => {
       expect(fixture.nativeElement.textContent).toContain(
         'Los turnos ya abiertos no se cierran solos',
       );
+    });
+
+    /**
+     * AC-10-7 pide «un modal de éxito (no una pantalla)». Se hacen las dos:
+     * el modal es el instante y se va al cerrarlo; la pantalla de atrás es el
+     * registro, que sigue ahí si lo cerraste sin leer o si volvés con atrás.
+     */
+    it('al publicar avisa con un modal, y dice cuántos turnos abrió', async () => {
+      // `false` = «Quedarme acá»: sin esto el modal navega y la prueba se va
+      // de la pantalla que está midiendo.
+      respuestaDelDialogo = false;
+      ultimoDialogo = null;
+
+      crearConHorarioVigente(VIGENTE);
+      acc.publicar();
+      http
+        .expectOne('/scheduling/resources/res-1/templates')
+        .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-2/generate-slots')
+        .flush({ templateId: 'tpl-2', created: 40, skipped: 0 });
+      await fixture.whenStable();
+
+      expect(ultimoDialogo).not.toBeNull();
+      expect(String(ultimoDialogo?.['title'])).toContain('Listo');
+      // El número que importa: sin él el modal dice «listo» y no dice de qué.
+      expect(JSON.stringify(ultimoDialogo?.['details'])).toContain('40');
+
+      respuestaDelDialogo = true;
     });
 
     it('reusa el recurso: cambiar el horario NO crea una segunda agenda', () => {

@@ -11,7 +11,15 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
   let fixture: ComponentFixture<Accounting>;
   let http: HttpTestingController;
 
-  /** Los cuatro pedidos que cuelgan de la práctica elegida (sin `/practices`). */
+  /**
+   * Los pedidos que cuelgan de la práctica elegida (sin `/practices`).
+   *
+   * `general-ledger` sale último a propósito: depende de `cuentaDelMayor`, un
+   * `linkedSignal` que recién elige la primera cuenta cuando responde
+   * `/accounting/accounts` — así que hace falta un tick de detección de
+   * cambios entre medio para que la pestaña «Libro mayor» (activa por
+   * omisión) dispare su pedido.
+   */
   function flushDependientesDeLaPractica(): void {
     http.expectOne((r) => r.url === '/accounting/trial-balance').flush({
       items: [],
@@ -37,6 +45,22 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
     http
       .expectOne((r) => r.url === '/accounting/practitioner/paid-consultations')
       .flush({ items: [], count: 0 });
+
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url === '/accounting/general-ledger')
+      .flush({
+        accountId: 'acc-1',
+        code: '1000',
+        name: 'Caja',
+        normalBalanceConceptId: 'b',
+        currencyConceptId: null,
+        openingBalance: '0.00',
+        items: [],
+        count: 0,
+        limit: 100,
+        nextCursor: null,
+      });
   }
 
   function flushCarga(): void {

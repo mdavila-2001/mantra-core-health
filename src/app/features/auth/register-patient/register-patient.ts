@@ -551,6 +551,9 @@ export class RegisterPatient {
         nonNullable: true,
         validators: [nitValido],
       }),
+      billingLegalName: new FormControl('', {
+        nonNullable: true,
+      }),
     },
     {
       // Un teléfono de tutor sin nombre sería un contacto sin dueño: imposible de
@@ -781,8 +784,8 @@ export class RegisterPatient {
    * - **Relación del contacto de emergencia** (AC-03-11). Es un value set que no
    *   existe en ninguna capa —ni catálogo, ni columna—, y la regla del proyecto
    *   prohíbe resolverlo con un `enum` de TypeScript.
-   * - **Razón social** de facturación (AC-03-12). Tampoco existe: lo dice el
-   *   propio contrato del front, en el JSDoc de `billingTaxId`.
+   * - **Razón social** de facturación: Se captura mediante `billingLegalName`
+   *   y viaja asociada al NIT para la emisión de facturas.
    *
    * Pasa por `paginarCampos` aunque ninguna sección llegue a cinco campos: es
    * la función la que hace cumplir el tope, y declararlo a mano sería confiar en
@@ -1067,11 +1070,6 @@ export class RegisterPatient {
         titulo: 'Datos de facturación',
         clave: 'billing',
         icon: 'billing',
-        // Una sola pregunta en la última página, y no pegada al seguro: el
-        // pedido las nombra como dos bloques distintos y son dos cosas
-        // distintas —qué te cubre y a nombre de quién se factura—. La «Razón
-        // Social» que el bloque también pide no está: no existe en ninguna capa
-        // (AC-03-12). Ver el JSDoc de arriba.
         hint: 'Opcional. Sólo para las facturas que recibís.',
         campos: [
           {
@@ -1085,6 +1083,17 @@ export class RegisterPatient {
             testId: 'registro-nit',
             icono: 'billing',
             mensajeDeError: 'El NIT es sólo números.',
+          },
+          {
+            key: 'billingLegalName',
+            label: 'Nombre o Razón Social (opcional)',
+            hint: 'A nombre de quién se emite la factura.',
+            description:
+              'Si declarás NIT, ingresá el nombre o razón social correspondiente.',
+            control: 'text',
+            placeholder: 'Carlos Roca Aguilera',
+            testId: 'registro-razon-social',
+            icono: 'billing',
           },
         ],
       },
@@ -1967,6 +1976,7 @@ export class RegisterPatient {
     const seguroPrivado = raw.privateInsurancePlanId;
     const seguroPublico = raw.publicInsurancePlanId;
     const nit = raw.billingTaxId.trim();
+    const razonSocial = raw.billingLegalName.trim();
     const otraOcupacion = this.ocupacionEsOtra() ? raw.occupationFreeText.trim() : '';
 
     return {
@@ -2023,6 +2033,7 @@ export class RegisterPatient {
       ...(seguroPrivado === null ? {} : { privateInsurancePlanId: seguroPrivado }),
       ...(seguroPublico === null ? {} : { publicInsurancePlanId: seguroPublico }),
       ...(nit === '' ? {} : { billingTaxId: nit }),
+      ...(razonSocial === '' ? {} : { billingLegalName: razonSocial }),
     };
   }
 }
