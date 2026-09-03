@@ -109,7 +109,9 @@ describe('RegisterPractitioner', () => {
         | 'regulatoryAuthority'
         | 'specialtyPrimary'
         | 'specialtySecond'
-        | 'specialtyThird',
+        | 'specialtyThird'
+        | 'occupationConceptId'
+        | 'occupationFreeText',
         string
       >
     > = {},
@@ -130,6 +132,8 @@ describe('RegisterPractitioner', () => {
       phone: extra.phone ?? '',
       birthDate: null,
       sexAtBirth: null,
+      occupationConceptId: extra.occupationConceptId ?? null,
+      occupationFreeText: extra.occupationFreeText ?? '',
       licenseIssueDate: null,
       issuerAdministrativeAreaConceptId: null,
       specialtyPrimary: extra.specialtyPrimary ?? '',
@@ -213,7 +217,7 @@ describe('RegisterPractitioner', () => {
       ]);
       // AC-05-7: el sexo entra al formulario, y va antes de la fecha de
       // nacimiento, como pide el orden.
-      expect(camposDe('profile')).toEqual(['sexAtBirth', 'birthDate']);
+      expect(camposDe('profile')).toEqual(['sexAtBirth', 'birthDate', 'occupationConceptId']);
       expect(camposDe('access')).toEqual(['phone', 'email', 'password']);
       expect(camposDe('residence')).toEqual(['municipio']);
       expect(camposDe('credentials')).toEqual([
@@ -456,12 +460,13 @@ describe('RegisterPractitioner', () => {
 
       expect(filtradas.length).toBeGreaterThan(0);
       expect(filtradas.every((o) => o.label.toLowerCase().includes('odont'))).toBe(true);
-      // Ninguna petición NUEVA: quedan las tres lecturas de catálogo que el
-      // componente hace al nacer —departamentos, municipios y especialidades—
-      // y nada más. La lista de títulos es cerrada y ya está en memoria; si
-      // esto empezara a consultar, el número subiría acá antes que en
+      // Ninguna petición NUEVA: quedan las cuatro lecturas de catálogo que el
+      // componente hace al nacer —departamentos, municipios, especialidades y
+      // ocupaciones— y nada más. La lista de títulos es cerrada y ya está en
+      // memoria; si esto empezara a consultar, el número subiría acá antes que en
       // producción.
       expect(http.match(() => true).map((p) => p.request.url)).toEqual([
+        '/terminology/value-sets',
         '/terminology/value-sets',
         '/terminology/value-sets',
         '/terminology/value-sets',
@@ -573,6 +578,77 @@ describe('RegisterPractitioner', () => {
 
       const req = http.expectOne('/iam/auth/register-practitioner');
       expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio']);
+      req.flush(RESPUESTA_PRO);
+    });
+  });
+
+  describe('ocupación normada y buscador (M-1.4.1 / M-1.4.2)', () => {
+    it('el bloque de perfil incluye el campo de ocupación', () => {
+      const profile = component.paginasProfesional().find((p) => p.clave === 'profile');
+      expect(profile?.campos.map((c) => c.key)).toEqual([
+        'sexAtBirth',
+        'birthDate',
+        'occupationConceptId',
+      ]);
+    });
+
+    it('la lupa filtra las ocupaciones en local', () => {
+      component.opcionesOcupacion.set([
+        { value: 'o-1', label: 'Médico General', code: 'MED_GEN' },
+        { value: 'o-2', label: 'Odontólogo', code: 'ODONT' },
+        { value: 'o-3', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
+      ]);
+
+      component.busquedaOcupacion.set('médico');
+      expect(component.ocupacionesFiltradas()).toEqual([
+        { value: 'o-1', label: 'Médico General' },
+      ]);
+
+      component.busquedaOcupacion.set('');
+      expect(component.ocupacionesFiltradas()).toHaveLength(3);
+    });
+
+    it('elegir una ocupación normada la envía en occupationConceptId', () => {
+      component.opcionesOcupacion.set([
+        { value: 'o-1', label: 'Médico General', code: 'MED_GEN' },
+      ]);
+      completarProfesional();
+      component.elegirOcupacion({ value: 'o-1', label: 'Médico General' });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.occupationConceptId).toBe('o-1');
+      expect(req.request.body.occupationFreeText).toBeUndefined();
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('elegir «Otra ocupación» abre el campo de texto libre y lo envía en occupationFreeText', () => {
+      component.opcionesOcupacion.set([
+        { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
+      ]);
+      completarProfesional();
+      component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
+      fixture.detectChanges();
+
+      const profile = component.paginasProfesional().find((p) => p.clave === 'profile');
+      expect(profile?.campos.map((c) => c.key)).toContain('occupationFreeText');
+
+      component.formProfesional.controls.occupationFreeText.setValue('Médico Cirujano Investigador');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.occupationConceptId).toBeUndefined();
+      expect(req.request.body.occupationFreeText).toBe('Médico Cirujano Investigador');
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('sin ocupación seleccionada no envía ni conceptId ni freeText', () => {
+      completarProfesional();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.occupationConceptId).toBeUndefined();
+      expect(req.request.body.occupationFreeText).toBeUndefined();
       req.flush(RESPUESTA_PRO);
     });
   });
