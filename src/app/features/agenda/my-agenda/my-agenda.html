@@ -138,6 +138,18 @@
           >
             ✎ Cambiar
           </a>
+          <!-- Los bloqueos tienen pantalla propia desde que se les dio el mismo
+               flujo que a los horarios. Desde acá se llega, que es donde uno
+               mira su agenda y se acuerda de que cerró algo. -->
+          <a
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="ver-bloqueos"
+            [routerLink]="rutaBloqueos"
+          >
+            Ver mis bloqueos
+          </a>
         </p>
 
         @if (p.vigencia) {
