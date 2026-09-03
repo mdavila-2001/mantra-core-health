@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
-import type { AgendaSlot, Booking } from '../../../../core/data-access/scheduling/scheduling.types';
+import type {
+  ActivityTypeOption,
+  AgendaSlot, Booking } from '../../../../core/data-access/scheduling/scheduling.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BloqueoDelMes } from '../month-view/month-view';
@@ -28,6 +30,25 @@ export interface RatoTocado {
 }
 
 /** Un bloque de la línea de horas. */
+/** Los tonos que el badge del sistema de diseño sabe pintar. */
+export type TonoDeBadge = 'primary' | 'secondary' | 'info' | 'success' | 'warning';
+
+/** Los que la API puede mandar hoy. `error` NO está: es el de los bloqueos. */
+const TONOS: readonly TonoDeBadge[] = ['primary', 'secondary', 'info', 'success', 'warning'];
+
+/**
+ * El tono que manda el servidor, o uno neutro si no lo conocemos.
+ *
+ * La guarda no es defensiva de más: el catálogo es del servidor y puede ganar
+ * una tipología con un tono que este front todavía no compila. Que entonces se
+ * pinte neutra es mejor que que la agenda no cargue — y **jamás cae en `error`**,
+ * que es el de los bloqueos: una actividad pintada de rojo diría que el rato
+ * está cerrado cuando no lo está.
+ */
+function aTono(valor: string): TonoDeBadge {
+  return TONOS.includes(valor as TonoDeBadge) ? (valor as TonoDeBadge) : 'secondary';
+}
+
 export interface BloqueDelDia {
   readonly clave: string;
   readonly desde: Date;
@@ -46,6 +67,14 @@ export interface BloqueDelDia {
   readonly estado: string;
   /** El código del estado, para decidir qué acciones ofrecer. */
   readonly statusCode: string;
+  /**
+   * Qué clase de actividad es: consulta, procedimiento, control…
+   *
+   * El propietario lo pidió así: «con otros colores los otros procedimientos
+   * (TURNOS, OPERACIONES, ETC.) catalogado por tipología raíz». `null` cuando
+   * la reserva no declara tipo, que es lo corriente en una consulta común.
+   */
+  readonly tipologia: { readonly label: string; readonly tone: TonoDeBadge } | null;
   /** El rótulo del tiempo ocupado. */
   readonly motivo: string | null;
   /** El id de la excepción, para poder quitarla. */
@@ -135,6 +164,32 @@ export class DayView {
   readonly bloqueos = input.required<readonly BloqueoDelMes[]>();
 
   /**
+   * Las tipologías, para poder pintar cada actividad.
+   *
+   * Entra por input y no se pide acá: esta vista sólo dibuja, y quien la usa ya
+   * tiene el catálogo cargado. Con la lista vacía todo se ve como hasta ahora
+   * — un catálogo que no cargó no puede dejar la agenda en blanco.
+   */
+  readonly tipologias = input<readonly ActivityTypeOption[]>([]);
+
+  /**
+   * La tipología de una cita, o `null` si no declara ninguna.
+   *
+   * `null` es el caso corriente y no un error: una consulta común no necesita
+   * decir que es una consulta. Lo que el propietario quiere distinguir son las
+   * OTRAS —operaciones, controles, teleconsultas—, y pintar todas obligaría a
+   * mirar el color hasta en lo que no lo necesita.
+   */
+  private tipologiaDe(cita: Booking): { label: string; tone: TonoDeBadge } | null {
+    const concepto = cita.typeConceptId;
+    if (concepto === undefined) return null;
+    const encontrada = this.tipologias().find((t) => t.conceptId === concepto);
+    return encontrada === undefined
+      ? null
+      : { label: encontrada.label, tone: aTono(encontrada.tone) };
+  }
+
+  /**
    * Si quien mira puede registrar la llegada.
    *
    * **`POST /scheduling/bookings/:id/check-in` no admite `PRACTITIONER`**:
@@ -220,6 +275,7 @@ export class DayView {
         paciente: '',
         estado: '',
         statusCode: '',
+        tipologia: null,
         motivo: bloqueo.motivo,
         excepcionId: bloqueo.id ?? null,
         alturaPx: this.altura(bloqueo.desde, bloqueo.hasta, true),
@@ -245,6 +301,7 @@ export class DayView {
           paciente: '',
           estado: '',
           statusCode: '',
+          tipologia: null,
           motivo: null,
           excepcionId: null,
           alturaPx: this.altura(cupo.startAt, hasta, true),
@@ -263,6 +320,7 @@ export class DayView {
         paciente: cita.patientName ?? 'Paciente sin nombre registrado',
         estado: this.etiquetas().get(cita.statusConceptId)?.display ?? 'Reservado',
         statusCode: this.etiquetas().get(cita.statusConceptId)?.code ?? '',
+        tipologia: this.tipologiaDe(cita),
         motivo: null,
         excepcionId: null,
         alturaPx: this.altura(cupo.startAt, hasta, true),
@@ -288,6 +346,7 @@ export class DayView {
             paciente: '',
             estado: '',
             statusCode: '',
+            tipologia: null,
             motivo: null,
             excepcionId: null,
             alturaPx: this.altura(anterior.hasta, bloque.desde, false),

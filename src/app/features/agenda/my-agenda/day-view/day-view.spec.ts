@@ -340,4 +340,78 @@ describe('DayView', () => {
       expect(vistos).toEqual([1, -1]);
     });
   });
+
+  /**
+   * EL COLOR POR TIPOLOGÍA — carril 12, y estaba bloqueado hasta hoy.
+   *
+   * «Con otros colores los otros procedimientos (TURNOS, OPERACIONES, ETC.)
+   * catalogado por tipología raíz». La columna existía y no había conceptos que
+   * ponerle; ahora el catálogo los publica con su tono.
+   */
+  describe('la tipología de la actividad', () => {
+    const CATALOGO = [
+      { type: 'PROCEDURE', conceptId: 'c-proc', label: 'Operación o procedimiento', tone: 'warning' },
+      { type: 'FOLLOW_UP', conceptId: 'c-ctrl', label: 'Control', tone: 'info' },
+    ];
+
+    function montarConTipologia(typeConceptId: string | undefined, catalogo = CATALOGO): void {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      fixture = TestBed.createComponent(DayView);
+      fixture.componentRef.setInput('dia', DIA);
+      fixture.componentRef.setInput('cupos', [
+        { id: 's-1', startAt: new Date(2026, 8, 10, 9), endAt: new Date(2026, 8, 10, 9, 30) },
+      ]);
+      fixture.componentRef.setInput('citas', [
+        {
+          id: 'b-1',
+          bookableSlotId: 's-1',
+          statusConceptId: 'c-confirmada',
+          patientName: 'Ana',
+          ...(typeConceptId === undefined ? {} : { typeConceptId }),
+        },
+      ]);
+      fixture.componentRef.setInput('bloqueos', []);
+      fixture.componentRef.setInput('etiquetas', ETIQUETAS);
+      fixture.componentRef.setInput('tipologias', catalogo);
+      fixture.componentRef.setInput('puedeRegistrarLlegada', true);
+      fixture.detectChanges();
+    }
+
+    it('pinta la actividad con la etiqueta Y el tono del servidor', () => {
+      // La palabra va CON el color, no en su lugar: el color distingue de un
+      // vistazo, la palabra lo hace legible para quien no lo distingue.
+      montarConTipologia('c-proc');
+      expect(fixture.nativeElement.textContent).toContain('Operación o procedimiento');
+    });
+
+    it('una consulta común NO lleva etiqueta', () => {
+      // Pintar todo obliga a mirar el color hasta donde no informa. Lo que el
+      // propietario quiere distinguir son las OTRAS actividades.
+      montarConTipologia(undefined);
+      expect(fixture.nativeElement.querySelector('[data-testid="dia-tipologia"]')).toBeNull();
+    });
+
+    it('un tipo que el catálogo no conoce no rompe: se pinta sin etiqueta', () => {
+      montarConTipologia('c-que-no-existe');
+      expect(fixture.nativeElement.querySelector('[data-testid="dia-tipologia"]')).toBeNull();
+    });
+
+    it('sin catálogo el día se ve como antes', () => {
+      // Un catálogo que no cargó no puede dejar la agenda en blanco.
+      montarConTipologia('c-proc', []);
+      expect(fixture.nativeElement.textContent).toContain('Ana');
+    });
+
+    it('un tono desconocido cae en neutro y NUNCA en error', () => {
+      // `error` es el de los bloqueos. Una actividad pintada de rojo diría que
+      // el rato está cerrado cuando no lo está.
+      montarConTipologia('c-raro', [
+        { type: 'X', conceptId: 'c-raro', label: 'Rara', tone: 'fucsia' },
+      ]);
+      const badge = fixture.nativeElement.querySelector('[data-testid="dia-tipologia"]');
+      expect(badge).not.toBeNull();
+      expect(badge?.className ?? '').not.toContain('error');
+    });
+  });
 });

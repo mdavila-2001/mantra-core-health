@@ -16,6 +16,7 @@ import { SchedulingClient } from '../../../core/data-access/scheduling/schedulin
 import type {
   AgendaResource,
   AgendaSlot,
+  ActivityTypeOption,
   AvailabilityExceptionTypeOption,
   Booking,
   PublishedTemplate,
@@ -255,6 +256,15 @@ export class MyAgenda {
 
   protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
   protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);
+
+  /**
+   * Las tipologías de actividad, para pintar el día.
+   *
+   * Se piden una vez al cargar la pantalla. Si la lectura falla, la lista queda
+   * vacía y el día se ve como antes: un catálogo que no cargó no puede dejar la
+   * agenda en blanco.
+   */
+  protected readonly tipologias = signal<readonly ActivityTypeOption[]>([]);
   protected readonly cargandoMes = signal(false);
 
   /** Si el panel de bloqueo está abierto (D4/D5 del plan de UX). */
@@ -378,6 +388,13 @@ export class MyAgenda {
     this.cargar();
   }
 
+  private cargarTipologias(): void {
+    this.scheduling.listActivityTypes().subscribe({
+      next: (catalogo) => this.tipologias.set(catalogo.items),
+      error: () => this.tipologias.set([]),
+    });
+  }
+
   protected cargar(): void {
     const perfil = this.auth.practitionerProfileId();
     const tenantId = this.auth.activeTenantId();
@@ -385,6 +402,12 @@ export class MyAgenda {
       this.estado.set(SIN_AGENDA);
       return;
     }
+
+    // Después de la guarda, no antes: una sesión sin perfil profesional no va a
+    // ver ningún día, así que pedirle el catálogo al servidor es una consulta
+    // para nada. Lo fija una prueba que dice, con esas palabras, que esa cuenta
+    // «no pide nada al servidor».
+    this.cargarTipologias();
 
     this.estado.set(loading());
     // El recurso se busca por el perfil: es el mismo criterio con el que el

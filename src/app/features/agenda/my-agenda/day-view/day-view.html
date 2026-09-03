@@ -83,7 +83,20 @@
                 {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
               </span>
               <div class="dia__cuerpo">
-                <p class="dia__paciente">{{ bloque.paciente }}</p>
+                <p class="dia__paciente">
+                  {{ bloque.paciente }}
+                  <!-- «Con otros colores los otros procedimientos, catalogado
+                       por tipología raíz». La etiqueta va CON el color y no
+                       sola: el color distingue de un vistazo, la palabra lo
+                       hace legible para quien no lo distingue. Una consulta
+                       común no la lleva — pintar todo obliga a mirar el color
+                       hasta donde no informa. -->
+                  @if (bloque.tipologia; as tipo) {
+                    <app-badge [variant]="tipo.tone" data-testid="dia-tipologia">
+                      {{ tipo.label }}
+                    </app-badge>
+                  }
+                </p>
                 <!-- El motivo se muestra acá y NO en la agenda de la
                      organización: para quien va a recibir a esa persona en diez
                      minutos, saber por qué viene es el trabajo. -->
