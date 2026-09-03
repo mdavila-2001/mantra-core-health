@@ -271,7 +271,18 @@
 
       <div class="dialog-actions">
         <button app-button variant="ghost" size="sm" (clicked)="close()">Cancelar</button>
-        <button app-button variant="primary" size="sm" (clicked)="confirm()">Confirmar</button>
+        <!-- Deshabilitado hasta que haya día, mes y año elegidos. Antes aceptaba
+             el 1 de enero con el que el calendario se posiciona al abrir. -->
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          [disabled]="!canConfirm()"
+          data-testid="date-picker-confirm"
+          (clicked)="confirm()"
+        >
+          Confirmar
+        </button>
       </div>
     </div>
   </dialog>
