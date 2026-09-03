@@ -258,7 +258,7 @@ describe('PractitionerAvailability', () => {
     ).click();
 
     expect(navegar).toHaveBeenCalledWith(
-      ['/schedule/book/slot-1'],
+      ['/my-account/appointments/book/slot-1'],
       expect.objectContaining({
         queryParams: expect.objectContaining({ recurso: 'res-1' }),
       }),
