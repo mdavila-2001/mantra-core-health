@@ -1,0 +1,51 @@
+/* Una grilla de siete columnas no entra en un teléfono: scrollea dentro de su
+   caja y la página nunca se va de lado. */
+.grilla__scroll {
+  overflow-x: auto;
+}
+
+.grilla {
+  border-collapse: collapse;
+  min-width: 22rem;
+  width: 100%;
+}
+
+.grilla__caption {
+  text-align: left;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  padding-block-end: var(--sp-2);
+}
+
+.grilla th,
+.grilla td {
+  border: 1px solid var(--border-subtle);
+  padding: 0;
+  height: 1.5rem;
+}
+
+.grilla thead th,
+.grilla__hora {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 2px var(--sp-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.grilla__hora {
+  text-align: right;
+}
+
+.grilla__celda--atiende {
+  background: var(--st-success-bg, var(--c-mint-100, #d9f2e6));
+}
+
+.grilla__oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
