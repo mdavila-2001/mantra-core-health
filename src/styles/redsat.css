@@ -3397,18 +3397,56 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
   flex: 1; min-height: 0;
   display: flex; flex-direction: column;
 }
-.app-public-shell__cuerpo > main { flex: 1; min-width: 0; }
+/* El contenido y el pie, en una sola columna a la derecha del rail. El pie era
+   hermano del cuerpo, así que el rail no podía pasarlo: su superficie se
+   cortaba justo donde empezaba la letra chica. */
+.app-public-shell__columna {
+  flex: 1; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column;
+}
+.app-public-shell__columna > main { min-width: 0; }
+/* El pie va abajo con `margin: auto`, y NO estirando el `main` con `flex: 1`.
+   Con `flex: 1` el `main` toma `flex-basis: 0` dentro de una columna sin altura
+   definida, y resuelve a su tamaño de contenido en vez de al hueco disponible:
+   medido, sumaba 85 px y le ponía barra de scroll a una página que entraba
+   entera. El margen automático no depende de que la altura sea definida. */
+.app-public-shell__columna > .app-public-pie { margin-block-start: auto; }
 .app-public-shell__rail { flex: none; }
 
 @media (min-width: 900px) {
   .app-public-shell__cuerpo { flex-direction: row; align-items: flex-start; }
-  /* El rail acompaña el scroll: en `/buscar/medicamentos` la lista mide varias
-     pantallas y un rail que se va con ella deja de ser navegación. Se pega
-     debajo del header, que es `sticky` y mide `--h-header`. */
+  /* El rail llega hasta abajo Y acompaña el scroll, que no es lo mismo y hacen
+     falta las dos cosas:
+
+     `align-self: stretch` le da la altura entera de la columna —incluido el
+     pie—, así que su superficie no se corta a media página.
+
+     `sticky` es para lo otro: en `/search/medications` la lista mide varias
+     pantallas, y una navegación que se va con el scroll deja de ser
+     navegación. Se pega debajo del header, que mide `--h-header`.
+
+     El tope de alto es lo que hace convivir a las dos: sin él, `stretch` sobre
+     una página de tres pantallas daría un rail de tres pantallas y `sticky` no
+     tendría nada que fijar. */
   .app-public-shell__rail {
     position: sticky; top: var(--h-header);
-    align-self: stretch;
-    max-height: calc(100vh - var(--h-header));
+    /* Alto propio, y NO `align-self: stretch`.
+
+       `stretch` le daba la altura de la columna —que es lo que se quería— pero
+       de paso estiraba también al contenido, y el listado crecía 85 px: una
+       página que entraba entera pasaba a tener barra de scroll. Con la altura
+       pedida acá el rail llega igual hasta abajo del viewport, y el `main`
+       conserva su caja.
+
+       Pegado bajo el header y con su propio scroll: en `/search/medications` la
+       lista mide varias pantallas, y una navegación que se va con el scroll
+       deja de ser navegación. */
+    align-self: flex-start;
+    /* Altura DEFINIDA, no `min-height`: el `<nav>` de adentro se estira con
+       `block-size: 100%`, y un porcentaje no resuelve contra un mínimo. Con
+       `min-height` el host medía bien y la superficie blanca se quedaba a
+       media altura igual. */
+    height: calc(100vh - var(--h-header));
     overflow-y: auto;
   }
 }
