@@ -1,0 +1,33 @@
+# Receptor del webhook de GitHub: convierte un `push` a dev en un redespliegue
+# inmediato, sin esperar a la siguiente pasada del temporizador.
+#
+# Convive con `alovida-redeploy.timer` a propósito y no lo reemplaza: el
+# temporizador es la red de seguridad para cuando el webhook no llega —GitHub
+# caído, la máquina apagada, el túnel reiniciándose—. Los dos arrancan la MISMA
+# unidad `alovida-redeploy.service`, y el cerrojo de `redeploy.sh` impide que
+# dos pasadas se solapen.
+#
+# El secreto va en un archivo aparte y no en esta unidad: las unidades se
+# versionan en el repositorio y un `EnvironmentFile` no.
+#
+#   install -m 600 /dev/null ~/.config/alovida-redeploy-webhook.env
+#   printf 'REDEPLOY_WEBHOOK_SECRET=%s\n' "$(openssl rand -hex 32)" \
+#     > ~/.config/alovida-redeploy-webhook.env
+[Unit]
+Description=Webhook de GitHub para el redespliegue del front de ALOVIDA
+Documentation=file:///home/pablo/Documents/GitHub/ALOVIDA/mantra-core-health/tools/redeploy/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pablo/Documents/GitHub/ALOVIDA/mantra-core-health
+EnvironmentFile=%h/.config/alovida-redeploy-webhook.env
+ExecStart=/usr/bin/python3 /home/pablo/Documents/GitHub/ALOVIDA/mantra-core-health/tools/redeploy/webhook.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

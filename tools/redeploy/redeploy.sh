@@ -47,6 +47,7 @@
 #   tools/redeploy/redeploy.sh once      # despliega el último commit de dev y sale
 #   tools/redeploy/redeploy.sh una-vez   # una pasada del ciclo (lo que llama systemd)
 #   tools/redeploy/redeploy.sh systemd   # instala el temporizador: sobrevive a los reinicios
+#   tools/redeploy/redeploy.sh webhook   # despliegue inmediato por webhook de GitHub (además del temporizador)
 #   tools/redeploy/redeploy.sh start     # deja el vigilante en segundo plano (sin systemd)
 #   tools/redeploy/redeploy.sh status    # qué hay vivo y en qué commit
 #   tools/redeploy/redeploy.sh url       # el enlace
@@ -813,6 +814,60 @@ case "${1:-once}" in
       exit 0
     fi
     ciclo
+    ;;
+
+  webhook)
+    # Deja el receptor del webhook escuchando y publica su ruta por el Funnel.
+    #
+    # NO retira el temporizador: el webhook adelanta el despliegue, y el
+    # temporizador sigue siendo quien garantiza que ocurra si el aviso no llega.
+    if ! command -v systemctl >/dev/null 2>&1; then
+      log "WEBHOOK: ✗ esta máquina no tiene systemd; el receptor se corre a mano con tools/redeploy/webhook.py"
+      exit 1
+    fi
+    UNIDADES="$HOME/.config/systemd/user"
+    SECRETO_ENV="$HOME/.config/alovida-redeploy-webhook.env"
+    PUERTO_HOOK="${REDEPLOY_WEBHOOK_PUERTO:-9099}"
+    RUTA_HOOK="${REDEPLOY_WEBHOOK_RUTA:-/webhook/front}"
+    mkdir -p "$UNIDADES" "$HOME/.config"
+
+    # El secreto se genera una vez y no se vuelve a tocar: regenerarlo en cada
+    # pasada dejaría el webhook de GitHub firmando con uno viejo.
+    if [ ! -s "$SECRETO_ENV" ]; then
+      umask 077
+      printf 'REDEPLOY_WEBHOOK_SECRET=%s\n' "$(openssl rand -hex 32)" > "$SECRETO_ENV"
+      chmod 600 "$SECRETO_ENV"
+      log "WEBHOOK: secreto nuevo en $SECRETO_ENV"
+    fi
+
+    ln -sf "$RAIZ/tools/redeploy/systemd/alovida-redeploy-webhook.service" "$UNIDADES/"
+    systemctl --user daemon-reload
+    systemctl --user enable --now alovida-redeploy-webhook.service >/dev/null 2>&1
+    sleep 1
+    if ! systemctl --user is-active --quiet alovida-redeploy-webhook.service; then
+      log "WEBHOOK: ✗ el receptor no arrancó. Mirá: journalctl --user -u alovida-redeploy-webhook -n 20"
+      exit 1
+    fi
+
+    # Se publica sólo esa ruta, no el puerto entero: el resto del Funnel sigue
+    # sirviendo la aplicación en `/`.
+    if [ "$EXPOSICION" = tailscale ]; then
+      nombre="$(nombre_tailscale)"
+      if tailscale funnel --bg --set-path "$RUTA_HOOK" "$PUERTO_HOOK" </dev/null >/dev/null 2>&1; then
+        log "WEBHOOK: escuchando en https://${nombre}${RUTA_HOOK}"
+      else
+        log "WEBHOOK: ⚠ el receptor corre, pero no pude publicar la ruta por el funnel"
+      fi
+    fi
+
+    echo
+    echo "En GitHub → Settings → Webhooks → Add webhook:"
+    echo "  Payload URL   : https://$(nombre_tailscale)${RUTA_HOOK}"
+    echo "  Content type  : application/json"
+    echo "  Secret        : $(sed -n 's/^REDEPLOY_WEBHOOK_SECRET=//p' "$SECRETO_ENV")"
+    echo "  Eventos       : sólo 'push'"
+    echo
+    echo "El temporizador sigue puesto como respaldo; los dos disparan la misma unidad."
     ;;
 
   systemd)
