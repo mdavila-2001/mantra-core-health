@@ -1328,6 +1328,77 @@ export class Agenda {
     ];
   }
 
+  /**
+   * «Ver historial de solicitudes» — punto 4 del pedido original.
+   *
+   * Muestra **todas** las solicitudes de esa persona, **incluidas las
+   * rechazadas y canceladas**, de la más reciente a la más vieja. Ese
+   * `includeCancelled` no es un detalle: el historial existe justamente para
+   * ver el patrón —quién pide y no viene, a quién se le rechazó y por qué— y
+   * esconder lo cancelado lo volvería una lista de buenas noticias.
+   *
+   * Se lee al abrir y no al cargar la tabla: es una consulta por paciente, y
+   * pedir el historial de cada fila de la agenda sería el mismo defecto que ya
+   * evitamos en la columna de pago.
+   */
+  protected verHistorialDelPaciente(cita: CitaVisible): void {
+    const paciente = cita.patientProfileId;
+    if (paciente === null || this.operando() !== null) {
+      return;
+    }
+    this.operando.set(cita.id);
+
+    this.scheduling
+      .searchBookings({ patientProfileId: paciente, includeCancelled: true, limit: 50 })
+      .subscribe({
+        next: (pagina) => {
+          this.operando.set(null);
+          void this.mostrarHistorial(cita, pagina.items);
+        },
+        error: (error: unknown) => {
+          this.operando.set(null);
+          this.avisarFallo(error, 'No se pudo leer el historial.');
+        },
+      });
+  }
+
+  private async mostrarHistorial(
+    cita: CitaVisible,
+    solicitudes: readonly Booking[],
+  ): Promise<void> {
+    // De la más reciente a la más vieja: en un historial, lo último es lo que
+    // explica lo de ahora.
+    const ordenadas = [...solicitudes].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
+
+    const detalles: DialogDetail[] = ordenadas.map((s) => {
+      const estado = toBookingStatusPresentation(
+        s.statusConceptId === undefined ? undefined : this.etiquetas().get(s.statusConceptId),
+        SIN_DATO,
+      );
+      const cuando =
+        s.startAt === undefined
+          ? SIN_DATO
+          : formatDate(s.startAt, "d 'de' MMMM, HH:mm", this.idioma);
+      return {
+        label: formatDate(s.createdAt, 'd MMM yyyy', this.idioma),
+        value: `${estado.label} · cita ${cuando}${s.reasonText === undefined ? '' : ` · ${s.reasonText}`}`,
+      };
+    });
+
+    await this.dialogs.confirm({
+      title: `Historial de ${cita.paciente}`,
+      message:
+        ordenadas.length === 0
+          ? 'Esta persona todavía no pidió ningún turno acá.'
+          : `${ordenadas.length} ${ordenadas.length === 1 ? 'solicitud' : 'solicitudes'}, de la más reciente a la más vieja. Incluye las rechazadas y canceladas.`,
+      details: detalles,
+      confirmLabel: 'Cerrar',
+      cancelLabel: 'Volver',
+    });
+  }
+
   protected async rechazarCita(cita: CitaVisible): Promise<void> {
     if (this.operando() !== null) {
       return;

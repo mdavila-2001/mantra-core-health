@@ -188,6 +188,27 @@ describe('BlockForm · el motivo', () => {
     expect(api().error()).toBeNull();
   });
 
+  it('la descripción es un campo APARTE, siempre disponible', async () => {
+    // El pedido original dice «un motivo (catalogable) **y** una descripción».
+    // Estaban hechos excluyentes —texto libre sólo con «Otro»— y eso no era lo
+    // pedido: con vacaciones también se puede querer anotar algo.
+    await montar();
+    rangoValido();
+    api().tipo.set('VACATION');
+    api().motivo.set('Me voy a Tarija');
+
+    expect(api().exigeTexto()).toBe(false);
+    expect(api().error()).toBeNull();
+
+    let emitido: BloqueoPedido | null = null;
+    fixture.componentInstance.bloquear.subscribe((p: BloqueoPedido) => (emitido = p));
+    api().enviar();
+
+    // Y viaja: una descripción que no llega al servidor es un campo decorativo.
+    expect(emitido!.motivo).toBe('Me voy a Tarija');
+    expect(emitido!.exceptionType).toBe('VACATION');
+  });
+
   it('con un motivo que NO exige texto, el texto vacío no estorba', async () => {
     // Antes el texto libre era obligatorio siempre: elegir «Vacaciones» y no
     // escribir nada más era un formulario inválido sin razón.

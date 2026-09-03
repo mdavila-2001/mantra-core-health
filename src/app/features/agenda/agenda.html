@@ -422,6 +422,21 @@
       >
         Ver detalle
       </button>
+      <!-- Punto 4 del pedido: el historial de esa persona, con las rechazadas y
+           canceladas incluidas. Sólo si sabemos de quién: sin paciente no hay
+           historial que mostrar. -->
+      @if (cita.patientProfileId) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          data-testid="agenda-historial"
+          [isLoading]="operando() === cita.id"
+          (clicked)="verHistorialDelPaciente(cita)"
+        >
+          Ver historial
+        </button>
+      }
       <!-- Corrección #11: la solicitud del paciente espera respuesta. -->
       <button
         app-button

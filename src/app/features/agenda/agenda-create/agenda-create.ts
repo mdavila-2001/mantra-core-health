@@ -32,6 +32,8 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import type { DialogDetail } from '../../../shared/components/molecules/dialog/dialog.types';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
@@ -179,6 +181,7 @@ interface DiaVisible {
 })
 export class AgendaCreate {
   private readonly scheduling = inject(SchedulingClient);
+  private readonly dialogs = inject(DialogService);
   private readonly organizaciones = inject(MedicalOrganizationClient);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
@@ -657,6 +660,75 @@ export class AgendaCreate {
    * propósito —el resto del repo tampoco los usa en componentes— y el guardado
    * parcial hace que un reintento retome donde falló.
    */
+  /**
+   * «Previsualizar horario» — el modal del pedido original.
+   *
+   * La vista previa ya vive en línea más arriba, y se deja donde está: mirarla
+   * mientras se escribe es mejor que abrir algo para verla. Este botón la trae
+   * **al pie**, que es donde uno decide publicar, sin obligar a subir a
+   * buscarla.
+   *
+   * Se arma con el mismo `calcularTurnos` que la de arriba —no con una cuenta
+   * paralela— porque dos cálculos del mismo número terminan discrepando, y ya
+   * pasó una vez en esta pantalla.
+   */
+  protected async abrirVistaPrevia(): Promise<void> {
+    const calculo = this.vistaPrevia();
+    const detalles: DialogDetail[] = calculo.porDia.map((dia) => ({
+      label: dia.dia.charAt(0).toUpperCase() + dia.dia.slice(1),
+      value:
+        dia.turnos.length === 0
+          ? 'Sin turnos'
+          : `${dia.turnos.length} ${dia.turnos.length === 1 ? 'turno' : 'turnos'} · ` +
+            dia.turnos.map((t) => t.desde).join(' · '),
+    }));
+
+    await this.dialogs.confirm({
+      title: 'Así va a quedar tu horario',
+      message: `${calculo.total} ${calculo.total === 1 ? 'turno' : 'turnos'} por semana.`,
+      details: detalles,
+      confirmLabel: 'Está bien',
+      cancelLabel: 'Volver a editar',
+    });
+  }
+
+  /**
+   * «Limpiar campos» — deja el formulario en blanco.
+   *
+   * Pide confirmación porque **no hay deshacer**: quien lo toca sin querer
+   * pierde la semana que acaba de armar, y armarla es el trabajo entero de esta
+   * pantalla.
+   *
+   * No toca la agenda ya publicada: limpia el formulario, no el horario. Se
+   * dice en el mensaje porque «limpiar» a secas asusta justo a quien no debería
+   * asustarse.
+   */
+  protected async limpiarCampos(): Promise<void> {
+    const seguro = await this.dialogs.confirm({
+      title: 'Limpiar el formulario',
+      message:
+        'Se borra lo que escribiste acá y volvés a empezar. Tu horario ya publicado no se toca.',
+      confirmLabel: 'Limpiar',
+      cancelLabel: 'Volver',
+      destructive: true,
+    });
+    if (!seguro) return;
+
+    // Se reconstruye cada día con la fábrica en vez de listar los valores acá:
+    // duplicar los valores por defecto es garantizar que un día se separen.
+    for (let i = 0; i < DIAS.length; i++) {
+      this.semana.at(i).reset(nuevoDia(DIAS[i].numero).getRawValue());
+    }
+    this.formGeneral.reset({
+      practiceId: '',
+      tieneFin: 'no',
+      capacidadPorTurno: '1',
+      timeZone: '',
+    });
+    this.fechaDeFin.set(null);
+    this.versionDeLaSemana.update((v) => v + 1);
+  }
+
   protected publicar(): void {
     if (this.cargando()) return;
 

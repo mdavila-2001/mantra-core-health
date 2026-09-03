@@ -284,9 +284,13 @@
       <h2 class="agenda-create__titulo">¿Este horario tiene fecha de fin?</h2>
 
       <div class="agenda-create__opciones" role="radiogroup" aria-label="Vigencia del horario">
+        <!-- «NUNCA CAMBIAR» son las palabras del pedido, y se usan tal cual:
+             la lista de horarios ya etiqueta a éste como HORARIO PERMANENTE, y
+             que las dos pantallas lo nombren distinto obliga a deducir que
+             hablan de lo mismo. -->
         <label class="agenda-create__opcion">
           <input type="radio" formControlName="tieneFin" value="no" />
-          <span>No, hasta nuevo aviso</span>
+          <span>Nunca cambia — horario permanente</span>
         </label>
         <label class="agenda-create__opcion">
           <input type="radio" formControlName="tieneFin" value="si" />
@@ -412,6 +416,33 @@
     <div class="agenda-create__acciones">
       <button app-button type="submit" [isLoading]="cargando()" [disabled]="sinDias()">
         {{ esCambio() ? 'Guardar mi horario' : 'Publicar mi agenda' }}
+      </button>
+
+      <!-- «Previsualizar horario» del pedido original. La vista previa ya está
+           en línea más arriba; esto la trae al pie, que es donde uno decide
+           publicar, sin obligar a subir a buscarla. -->
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        data-testid="agenda-create-previsualizar"
+        [disabled]="sinDias()"
+        (clicked)="abrirVistaPrevia()"
+      >
+        Previsualizar horario
+      </button>
+
+      <!-- «Limpiar campos» del pedido original: deja el formulario en blanco.
+           Pide confirmación porque no hay deshacer, y quien lo toca sin querer
+           pierde la semana que acaba de armar. -->
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        data-testid="agenda-create-limpiar"
+        (clicked)="limpiarCampos()"
+      >
+        Limpiar campos
       </button>
     </div>
   </form>

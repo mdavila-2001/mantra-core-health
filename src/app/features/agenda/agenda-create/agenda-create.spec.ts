@@ -6,6 +6,7 @@ import { FormArray, FormGroup } from '@angular/forms';
 import { provideRouter } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { DialogService } from '@shared/components/molecules/dialog/dialog-service';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { AgendaCreate } from './agenda-create';
 
@@ -41,6 +42,8 @@ interface Testable {
   readonly resourceId: WritableSignal<string | null>;
   empezarAgendaNueva(): void;
   volverAAgendaExistente(): void;
+  /** «Limpiar campos» del pedido original. */
+  limpiarCampos(): Promise<void>;
 }
 
 /**
@@ -56,6 +59,14 @@ describe('AgendaCreate', () => {
   let fixture: ComponentFixture<AgendaCreate>;
   let http: HttpTestingController;
   let acc: Testable;
+
+  /**
+   * Qué contesta el diálogo. Sin este doble, `confirm()` monta el `<dialog>`
+   * real y espera un clic que en una prueba no llega nunca: el `await` queda
+   * colgado y la prueba muere por tiempo, no por comportamiento.
+   */
+  let respuestaDelDialogo = true;
+  const dialogsFalsos = { confirm: () => Promise.resolve(respuestaDelDialogo) };
 
   function crear(
     roles: readonly string[] = ['PRACTITIONER'],
@@ -77,6 +88,7 @@ describe('AgendaCreate', () => {
           },
         },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
+        { provide: DialogService, useValue: dialogsFalsos },
       ],
     });
     fixture = TestBed.createComponent(AgendaCreate);
@@ -132,6 +144,7 @@ describe('AgendaCreate', () => {
           },
         },
         { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
+        { provide: DialogService, useValue: dialogsFalsos },
       ],
     });
     fixture = TestBed.createComponent(AgendaCreate);
@@ -837,6 +850,47 @@ describe('AgendaCreate', () => {
       expect(acc.agendaNueva()).toBe(false);
       expect(acc.resourceId()).toBe('res-1');
       http.expectOne('/scheduling/resources/res-1/templates').flush({ items: [], count: 0 });
+    });
+  });
+
+  /**
+   * «LIMPIAR CAMPOS» — punto del pedido original que faltaba.
+   *
+   * Pide confirmación porque **no hay deshacer**: quien lo toca sin querer
+   * pierde la semana que acaba de armar, y armarla es el trabajo entero de esta
+   * pantalla.
+   */
+  describe('limpiar campos', () => {
+    it('deja la semana en blanco cuando se confirma', async () => {
+      crear();
+      acc.alternarDia(0);
+      acc.grupoDe(0).controls['desde'].setValue('07:00');
+      fixture.detectChanges();
+      expect(acc.sinDias()).toBe(false);
+
+      await acc.limpiarCampos();
+      fixture.detectChanges();
+
+      expect(acc.sinDias()).toBe(true);
+      // Y vuelve al valor de fábrica, no a lo que había escrito.
+      expect(acc.grupoDe(0).controls['desde'].value).toBe('09:00');
+    });
+
+    it('no borra nada si se cancela', async () => {
+      // El diálogo devuelve `false` al cancelar **y** en el servidor, donde no
+      // hay quién conteste. Las dos situaciones tienen que dejar el formulario
+      // intacto: un «limpiar» que limpia igual sería peor que no preguntar.
+      crear();
+      acc.alternarDia(0);
+      fixture.detectChanges();
+
+      respuestaDelDialogo = false;
+      await acc.limpiarCampos();
+      respuestaDelDialogo = true;
+      fixture.detectChanges();
+
+      expect(acc.sinDias()).toBe(false);
+      expect(acc.grupoDe(0).controls['activo'].value).toBe(true);
     });
   });
 });
