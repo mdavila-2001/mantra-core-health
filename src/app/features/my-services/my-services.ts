@@ -148,6 +148,12 @@ export class MyServices {
   private readonly catalogo = signal<ViewState<readonly ServiceCatalogItem[]>>(loading());
   private readonly cursorSiguiente = signal<string | null>(null);
 
+  /**
+   * Qué lectura del catálogo es la vigente. Cada primera página abre una nueva
+   * y jubila a la anterior con todo lo que tuviera en vuelo.
+   */
+  private generacionDeLectura = 0;
+
   protected readonly cargandoMas = signal(false);
 
   /**
@@ -213,17 +219,20 @@ export class MyServices {
       return;
     }
 
+    // No abre lectura nueva: se apila sobre la vigente, y sólo sobre ésa.
+    const generacion = this.generacionDeLectura;
+
     this.cargandoMas.set(true);
     this.catalog.search(practiceId, { limit: SERVICIOS_POR_PAGINA, cursor }).subscribe({
       next: (pagina) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(generacion)) {
           return;
         }
         this.cargandoMas.set(false);
         this.apilar(pagina);
       },
       error: (error: unknown) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(generacion)) {
           return;
         }
         this.cargandoMas.set(false);
@@ -245,6 +254,10 @@ export class MyServices {
   }
 
   private cargarPrimeraPagina(): void {
+    // Antes que nada, y también cuando no haya práctica: vaciar el selector
+    // jubila igual lo que esté en vuelo.
+    const generacion = ++this.generacionDeLectura;
+
     this.cursorSiguiente.set(null);
     // Una página en vuelo de la práctica anterior ya no cuenta: su respuesta se
     // descarta, y el botón no puede quedarse cargando por ella.
@@ -263,7 +276,7 @@ export class MyServices {
 
     this.catalog.search(practiceId, { limit: SERVICIOS_POR_PAGINA }).subscribe({
       next: (pagina) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(generacion)) {
           return;
         }
         this.cursorSiguiente.set(pagina.nextCursor);
@@ -274,7 +287,7 @@ export class MyServices {
         );
       },
       error: (error: unknown) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(generacion)) {
           return;
         }
         this.cursorSiguiente.set(null);
@@ -284,14 +297,17 @@ export class MyServices {
   }
 
   /**
-   * Si la respuesta que llegó es de una práctica que ya no es la elegida.
+   * Si la respuesta que llegó es de una lectura que ya quedó atrás.
    *
-   * Dos lecturas en vuelo terminan en el orden que quiera la red: sin esto, la
-   * página lenta de la práctica anterior pisa a la que ya se está mirando y la
-   * pantalla muestra servicios de otra práctica bajo su nombre.
+   * Dos lecturas en vuelo terminan en el orden que quiera la red, y comparar
+   * por práctica no alcanzaba: volver a la misma —pr1, pr2, pr1— readmitía las
+   * respuestas de la visita anterior, que pasaban la guarda porque la práctica
+   * volvía a coincidir. Lo grave era una página apilada de aquella visita: al
+   * volver ya no tiene sobre qué apilarse, y se sumaba a la lectura nueva
+   * dejando la lista mezclada bajo un cursor que no le corresponde.
    */
-  private llegoTarde(practiceId: string): boolean {
-    return this.practicaElegida() !== practiceId;
+  private llegoTarde(generacion: number): boolean {
+    return this.generacionDeLectura !== generacion;
   }
 
   private apilar(pagina: ServiceCatalogPage): void {

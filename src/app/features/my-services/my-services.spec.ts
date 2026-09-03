@@ -306,6 +306,62 @@ describe('MyServices', () => {
     expect(texto()).not.toContain('Consulta general');
   });
 
+  it('volver a la misma práctica invalida lo que quedó en vuelo de la visita anterior', () => {
+    responderPracticas(DOS_PRACTICAS);
+    const primeraVisitaAPr1 = peticionDelCatalogo();
+
+    interno<(id: string | null) => void>('cambiarPractica')('pr2');
+    harness.detectChanges();
+    const dePr2 = http.match((r) => r.url === '/billing/service-catalog')[0];
+
+    interno<(id: string | null) => void>('cambiarPractica')('pr1');
+    harness.detectChanges();
+    const segundaVisitaAPr1 = http.match((r) => r.url === '/billing/service-catalog')[0];
+
+    segundaVisitaAPr1.flush(pagina([servicio({ id: 'nuevo', name: 'Consulta nueva' })]));
+    harness.detectChanges();
+
+    // Las dos lecturas viejas terminan después. La de pr1 vuelve a coincidir con
+    // la práctica elegida, así que sólo la generación la distingue de la vigente.
+    primeraVisitaAPr1.flush(pagina([servicio()]));
+    dePr2.flush(pagina([servicio({ id: 's9', practiceId: 'pr2', name: 'Consulta pr2' })]));
+    harness.detectChanges();
+
+    expect(servicios().map((s) => s.id)).toEqual(['nuevo']);
+    expect(texto()).not.toContain('Consulta general');
+    expect(estado().status).toBe('ready');
+  });
+
+  it('una página apilada de la visita anterior no revive al volver a la práctica', () => {
+    responderPracticas(DOS_PRACTICAS);
+    peticionDelCatalogo().flush(pagina([servicio()], 'cursor-2'));
+    harness.detectChanges();
+
+    interno<() => void>('cargarMas')();
+    const paginaDosVieja = peticionDelCatalogo();
+
+    interno<(id: string | null) => void>('cambiarPractica')('pr2');
+    harness.detectChanges();
+    const dePr2 = http.match((r) => r.url === '/billing/service-catalog')[0];
+
+    interno<(id: string | null) => void>('cambiarPractica')('pr1');
+    harness.detectChanges();
+    const segundaVisitaAPr1 = http.match((r) => r.url === '/billing/service-catalog')[0];
+
+    segundaVisitaAPr1.flush(pagina([servicio({ id: 'a', name: 'Fresca' })], 'cursor-b'));
+    harness.detectChanges();
+
+    // La página 2 de la visita anterior ya no tiene sobre qué apilarse: apilarla
+    // mezclaría dos lecturas y dejaría el cursor de la vieja mandando.
+    paginaDosVieja.flush(pagina([servicio({ id: 'b', name: 'Zombi' })]));
+    dePr2.flush(pagina([]));
+    harness.detectChanges();
+
+    expect(servicios().map((s) => s.id)).toEqual(['a']);
+    expect(texto()).not.toContain('Zombi');
+    expect(boton('my-services-load-more')).not.toBeNull();
+  });
+
   it('con una sola práctica no hay selector: elegir entre una no es elegir', () => {
     responderPracticas();
     peticionDelCatalogo().flush(pagina([servicio()]));
