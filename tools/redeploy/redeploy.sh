@@ -582,12 +582,16 @@ esperar_sano() {
 # un nombre alterno sirve igual de bien y devuelve el servicio en el acto.
 # `docker rm -f` se intenta primero: si funciona —que es lo normal— no se cambia
 # nada y el nombre de siempre se conserva.
+# Lo que esta función IMPRIME es el nombre a usar: se consume con `$(...)`. Por
+# eso cada `log` va a stderr — `log` escribe también en stdout, y sin redirigir
+# el aviso se cuela dentro del nombre y `docker run` responde «Invalid container
+# name». (Mismo motivo que en `montajes_incluidos`.)
 nombre_libre() {
   local base="$1"
   docker rm -f "$base" >/dev/null 2>&1
   if docker ps -a --format '{{.Names}}' | grep -qx "$base"; then
-    log "DOCKER: ⚠ '$base' quedó en estado 'Dead' y no se deja quitar; se usa '${base}-rescate'"
-    log "DOCKER:   se limpia solo con 'docker container prune -f', o reiniciando el demonio"
+    log "DOCKER: ⚠ '$base' quedó en estado 'Dead' y no se deja quitar; se usa '${base}-rescate'" >&2
+    log "DOCKER:   se limpia solo con 'docker container prune -f', o reiniciando el demonio" >&2
     docker rm -f "${base}-rescate" >/dev/null 2>&1
     printf '%s\n' "${base}-rescate"
   else
@@ -596,7 +600,7 @@ nombre_libre() {
     # no, los dos quedan vivos peleándose por el mismo puerto del host y el que
     # llega segundo entra en bucle de reinicio. Pasó, y estuvo dos horas así.
     if docker ps -a --format '{{.Names}}' | grep -qx "${base}-rescate"; then
-      log "DOCKER: '$base' vuelve a estar libre; se retira '${base}-rescate'"
+      log "DOCKER: '$base' vuelve a estar libre; se retira '${base}-rescate'" >&2
       docker rm -f "${base}-rescate" >/dev/null 2>&1
     fi
     printf '%s\n' "$base"
