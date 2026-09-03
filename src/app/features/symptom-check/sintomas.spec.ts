@@ -173,9 +173,9 @@ describe('explicar', () => {
   });
 
   it('con varios usa la conjunción en castellano, no comas hasta el final', () => {
-    expect(
-      explicar({ nombre: 'X', peso: 1, porque: ['fiebre', 'tos', 'dolor de garganta'] }),
-    ).toBe('Por fiebre, tos y dolor de garganta');
+    expect(explicar({ nombre: 'X', peso: 1, porque: ['fiebre', 'tos', 'dolor de garganta'] })).toBe(
+      'Por fiebre, tos y dolor de garganta',
+    );
   });
 });
 

@@ -252,7 +252,11 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'me falta el aire', sintomas: [], alarmas: ['falta-de-aire'] },
   { texto: 'me desmaye esta manana', sintomas: [], alarmas: ['perdida-de-conciencia'] },
   { texto: 'no puedo mover el brazo izquierdo', sintomas: [], alarmas: ['debilidad-de-un-lado'] },
-  { texto: 'se me tuerce la boca y no puedo hablar bien', sintomas: [], alarmas: ['debilidad-de-un-lado'] },
+  {
+    texto: 'se me tuerce la boca y no puedo hablar bien',
+    sintomas: [],
+    alarmas: ['debilidad-de-un-lado'],
+  },
   { texto: 'vomite sangre', sintomas: [], alarmas: ['sangrado-abundante'] },
   { texto: 'no para de sangrar', sintomas: [], alarmas: ['sangrado-abundante'] },
   { texto: 'tuve una convulsion', sintomas: [], alarmas: ['convulsion'] },
@@ -299,8 +303,14 @@ export const BANCO: readonly CasoDelBanco[] = [
     texto: 'buenas, hace como 4 dias que tengo dolor de cabeza y no se me va con nada',
     sintomas: ['dolor-de-cabeza'],
   },
-  { texto: 'ando con la garganta muy inflamada y me cuesta tragar', sintomas: ['dolor-de-garganta'] },
-  { texto: 'mi hija de 3 anos tiene fiebre y vomita', sintomas: ['control-de-nino', 'fiebre', 'nauseas'] },
+  {
+    texto: 'ando con la garganta muy inflamada y me cuesta tragar',
+    sintomas: ['dolor-de-garganta'],
+  },
+  {
+    texto: 'mi hija de 3 anos tiene fiebre y vomita',
+    sintomas: ['control-de-nino', 'fiebre', 'nauseas'],
+  },
   {
     texto: 'tengo tos desde hace un mes y me falta el aire cuando camino',
     sintomas: ['tos'],
@@ -393,8 +403,15 @@ export const BANCO: readonly CasoDelBanco[] = [
      que quedaron eran expectativas mías demasiado estrictas —un chip de más
      que igual es correcto, o dos alarmas que llevan a la misma guardia—, y
      están anotados uno por uno. */
-  { texto: 'hola doctor, tengo un dolor en el pecho cuando camino rapido', sintomas: [], alarmas: ['dolor-de-pecho'] },
-  { texto: 'hace 3 dias que ando con dolor de garganta y fiebre alta', sintomas: ['dolor-de-garganta', 'fiebre'] },
+  {
+    texto: 'hola doctor, tengo un dolor en el pecho cuando camino rapido',
+    sintomas: [],
+    alarmas: ['dolor-de-pecho'],
+  },
+  {
+    texto: 'hace 3 dias que ando con dolor de garganta y fiebre alta',
+    sintomas: ['dolor-de-garganta', 'fiebre'],
+  },
   { texto: 'me pica todo el cuerpo desde que tome el antibiotico', sintomas: ['erupcion'] },
   { texto: 'tengo la vista cansada de la computadora', sintomas: ['necesito-lentes'] },
   { texto: 'se me duermen los dedos de la mano al despertar', sintomas: ['hormigueo'] },
@@ -416,12 +433,18 @@ export const BANCO: readonly CasoDelBanco[] = [
     texto: 'tengo las manos hinchadas y me duelen las articulaciones',
     sintomas: ['dolor-de-mano', 'dolor-articular'],
   },
-  { texto: 'queria consultar por un dolor de cadera que no se me pasa', sintomas: ['dolor-de-cadera'] },
+  {
+    texto: 'queria consultar por un dolor de cadera que no se me pasa',
+    sintomas: ['dolor-de-cadera'],
+  },
   { texto: 'tengo hormigueo en los pies por la diabetes', sintomas: ['hormigueo', 'azucar-alta'] },
   { texto: 'me arde muchisimo al hacer pis', sintomas: ['ardor-al-orinar'] },
   { texto: 'tengo la regla muy abundante este mes', sintomas: ['sangrado-menstrual-abundante'] },
   { texto: 'necesito un certificado para el gimnasio', sintomas: ['certificado'] },
-  { texto: 'no me baja la regla hace 2 meses y no estoy embarazada', sintomas: ['atraso-menstrual'] },
+  {
+    texto: 'no me baja la regla hace 2 meses y no estoy embarazada',
+    sintomas: ['atraso-menstrual'],
+  },
   { texto: 'me salieron unas ronchas que me pican mucho', sintomas: ['erupcion'] },
   { texto: 'tengo caida de cabello y las unas quebradizas', sintomas: ['caida-de-pelo'] },
   { texto: 'me duele el oido y tengo fiebre', sintomas: ['dolor-de-oido', 'fiebre'] },
@@ -451,7 +474,10 @@ export const BANCO: readonly CasoDelBanco[] = [
   { texto: 'tengo mucha sed y orino mucho de noche', sintomas: ['azucar-alta'] },
   { texto: 'quiero dejar el cigarrillo', sintomas: ['adiccion'] },
   { texto: 'me siento sola y lloro seguido', sintomas: ['tristeza'] },
-  { texto: 'tuve relaciones sin cuidarme y tengo miedo', sintomas: ['infeccion-de-transmision-sexual'] },
+  {
+    texto: 'tuve relaciones sin cuidarme y tengo miedo',
+    sintomas: ['infeccion-de-transmision-sexual'],
+  },
   { texto: 'me duele al tener relaciones con mi pareja', sintomas: ['dolor-al-tener-relaciones'] },
   { texto: 'tengo un bulto en el cuello que crecio', sintomas: ['ganglios'] },
   { texto: 'me salen moretones sin golpearme', sintomas: ['moretones'] },
@@ -470,8 +496,16 @@ export const BANCO: readonly CasoDelBanco[] = [
   },
   // Reconoce la hemorragia y no el embarazo —«30 semanas» no dice «embarazada»
   // en ninguna palabra—, y las dos alarmas llevan a la misma guardia.
-  { texto: 'estoy de 30 semanas y estoy perdiendo sangre', sintomas: [], alarmas: ['sangrado-abundante'] },
-  { texto: 'me duele la cabeza como nunca en la vida, de golpe', sintomas: [], alarmas: ['dolor-de-cabeza-subito'] },
+  {
+    texto: 'estoy de 30 semanas y estoy perdiendo sangre',
+    sintomas: [],
+    alarmas: ['sangrado-abundante'],
+  },
+  {
+    texto: 'me duele la cabeza como nunca en la vida, de golpe',
+    sintomas: [],
+    alarmas: ['dolor-de-cabeza-subito'],
+  },
   { texto: 'no aguanto mas, no quiero vivir', sintomas: [], alarmas: ['ideas-suicidas'] },
   { texto: 'queria saber si atienden los sabados', sintomas: [] },
   { texto: 'necesito cambiar mi turno del martes', sintomas: [] },

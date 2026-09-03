@@ -189,9 +189,9 @@ describe('el motor contra una tabla cualquiera', () => {
       },
     ];
 
-    expect(analizar('tengo la pata de palo rota', tabla).sintomas.map((c) => c.sintoma.id)).toEqual([
-      'inventado',
-    ]);
+    expect(analizar('tengo la pata de palo rota', tabla).sintomas.map((c) => c.sintoma.id)).toEqual(
+      ['inventado'],
+    );
   });
 });
 

@@ -183,13 +183,7 @@ export const SINTOMAS_DE_ALARMA: readonly Sintoma[] = [
   {
     id: 'derrame-cerebral',
     nombre: 'signos de derrame',
-    sinonimos: [
-      'derrame cerebral',
-      'acv',
-      'embolia',
-      'trombosis cerebral',
-      'me dio un derrame',
-    ],
+    sinonimos: ['derrame cerebral', 'acv', 'embolia', 'trombosis cerebral', 'me dio un derrame'],
     alarma: true,
     especialidades: [],
   },
@@ -494,13 +488,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-cabeza',
     nombre: 'dolor de cabeza',
-    sinonimos: [
-      'cefalea',
-      'jaqueca',
-      'migrana',
-      'me parte la cabeza',
-      'presion en la cabeza',
-    ],
+    sinonimos: ['cefalea', 'jaqueca', 'migrana', 'me parte la cabeza', 'presion en la cabeza'],
     // «nuca» va acá y no en el cuello: el dolor de nuca que alguien escribe en
     // una pantalla de síntomas casi siempre viene con la presión alta.
     partes: ['cabeza', 'sien', 'nuca', 'craneo'],
@@ -550,12 +538,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'temblor',
     nombre: 'temblor',
-    sinonimos: [
-      'temblor',
-      'me tiemblan las manos',
-      'tiemblo',
-      'temblor en las manos',
-    ],
+    sinonimos: ['temblor', 'me tiemblan las manos', 'tiemblo', 'temblor en las manos'],
     especialidades: [
       { nombre: 'Neurología', peso: 3 },
       { nombre: 'Endocrinología', peso: 1 },
@@ -631,9 +614,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'presbicia',
       'miopia',
     ],
-    especialidades: [
-      { nombre: 'Oftalmología', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Oftalmología', peso: 3 }],
   },
 
   /* --- Oído, nariz y garganta -------------------------------------------- */
@@ -695,12 +676,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'sangrado-de-nariz',
     nombre: 'sangrado de nariz',
-    sinonimos: [
-      'me sangra la nariz',
-      'sangrado de nariz',
-      'epistaxis',
-      'sangre por la nariz',
-    ],
+    sinonimos: ['me sangra la nariz', 'sangrado de nariz', 'epistaxis', 'sangre por la nariz'],
     especialidades: [
       { nombre: 'Otorrinolaringología', peso: 3 },
       { nombre: 'Medicina general', peso: 1 },
@@ -720,9 +696,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'voz ronca',
       'me duele al hablar',
     ],
-    especialidades: [
-      { nombre: 'Otorrinolaringología', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Otorrinolaringología', peso: 3 }],
   },
   {
     id: 'ronquidos',
@@ -756,9 +730,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'absceso dental',
     ],
     partes: ['muela', 'diente', 'encia'],
-    especialidades: [
-      { nombre: 'Odontología', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Odontología', peso: 3 }],
   },
   {
     id: 'llagas-en-la-boca',
@@ -787,22 +759,14 @@ export const SINTOMAS: readonly Sintoma[] = [
       'implante dental',
       'mal aliento',
     ],
-    especialidades: [
-      { nombre: 'Odontología', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Odontología', peso: 3 }],
   },
 
   /* --- Pecho y respiración ----------------------------------------------- */
   {
     id: 'tos',
     nombre: 'tos',
-    sinonimos: [
-      'tos',
-      'tos seca',
-      'tos con flema',
-      'no paro de toser',
-      'tos de noche',
-    ],
+    sinonimos: ['tos', 'tos seca', 'tos con flema', 'no paro de toser', 'tos de noche'],
     especialidades: [
       { nombre: 'Neumología', peso: 3 },
       { nombre: 'Medicina general', peso: 2 },
@@ -895,12 +859,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-panza',
     nombre: 'dolor de panza',
-    sinonimos: [
-      'retorcijones',
-      'colicos',
-      'me duele la boca del estomago',
-      'punzadas en la panza',
-    ],
+    sinonimos: ['retorcijones', 'colicos', 'me duele la boca del estomago', 'punzadas en la panza'],
     // Cada país tiene su palabra y ninguna se deduce de otra: van todas.
     partes: ['panza', 'estomago', 'barriga', 'guata', 'vientre', 'abdomen'],
     especialidades: [
@@ -946,14 +905,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'nauseas',
     nombre: 'náuseas o vómitos',
-    sinonimos: [
-      'nauseas',
-      'ganas de vomitar',
-      'vomito',
-      'asco',
-      'descompostura',
-      'arcadas',
-    ],
+    sinonimos: ['nauseas', 'ganas de vomitar', 'vomito', 'asco', 'descompostura', 'arcadas'],
     especialidades: [
       { nombre: 'Gastroenterología', peso: 3 },
       { nombre: 'Medicina general', peso: 2 },
@@ -1012,12 +964,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-espalda',
     nombre: 'dolor de espalda',
-    sinonimos: [
-      'lumbago',
-      'ciatica',
-      'me quede duro de la espalda',
-      'contractura en la espalda',
-    ],
+    sinonimos: ['lumbago', 'ciatica', 'me quede duro de la espalda', 'contractura en la espalda'],
     partes: ['espalda', 'cintura', 'columna', 'lumbar'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1044,11 +991,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-hombro',
     nombre: 'dolor de hombro',
-    sinonimos: [
-      'no puedo levantar el brazo',
-      'tendinitis en el hombro',
-      'manguito rotador',
-    ],
+    sinonimos: ['no puedo levantar el brazo', 'tendinitis en el hombro', 'manguito rotador'],
     partes: ['hombro'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1058,12 +1001,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-rodilla',
     nombre: 'dolor de rodilla',
-    sinonimos: [
-      'rodilla hinchada',
-      'me falla la rodilla',
-      'me truena la rodilla',
-      'menisco',
-    ],
+    sinonimos: ['rodilla hinchada', 'me falla la rodilla', 'me truena la rodilla', 'menisco'],
     partes: ['rodilla'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1074,10 +1012,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-cadera',
     nombre: 'dolor de cadera',
-    sinonimos: [
-      'cadera desgastada',
-      'me duele al caminar la cadera',
-    ],
+    sinonimos: ['cadera desgastada', 'me duele al caminar la cadera'],
     partes: ['cadera'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1088,11 +1023,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-mano',
     nombre: 'dolor de mano o muñeca',
-    sinonimos: [
-      'tunel carpiano',
-      'no puedo cerrar la mano',
-      'dedos rigidos',
-    ],
+    sinonimos: ['tunel carpiano', 'no puedo cerrar la mano', 'dedos rigidos'],
     partes: ['mano', 'muneca', 'codo'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1103,12 +1034,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-pie',
     nombre: 'dolor de pie o tobillo',
-    sinonimos: [
-      'fascitis plantar',
-      'me duele el talon',
-      'juanete',
-      'espolon',
-    ],
+    sinonimos: ['fascitis plantar', 'me duele el talon', 'juanete', 'espolon'],
     partes: ['pie', 'tobillo'],
     especialidades: [
       { nombre: 'Traumatología', peso: 3 },
@@ -1178,30 +1104,14 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'acne',
     nombre: 'acné',
-    sinonimos: [
-      'acne',
-      'granos en la cara',
-      'espinillas',
-      'barros',
-      'puntos negros',
-    ],
-    especialidades: [
-      { nombre: 'Dermatología', peso: 3 },
-    ],
+    sinonimos: ['acne', 'granos en la cara', 'espinillas', 'barros', 'puntos negros'],
+    especialidades: [{ nombre: 'Dermatología', peso: 3 }],
   },
   {
     id: 'hongos',
     nombre: 'hongos en la piel o las uñas',
-    sinonimos: [
-      'hongos',
-      'pie de atleta',
-      'unas amarillas',
-      'micosis',
-      'hongos en la piel',
-    ],
-    especialidades: [
-      { nombre: 'Dermatología', peso: 3 },
-    ],
+    sinonimos: ['hongos', 'pie de atleta', 'unas amarillas', 'micosis', 'hongos en la piel'],
+    especialidades: [{ nombre: 'Dermatología', peso: 3 }],
   },
   {
     id: 'caida-de-pelo',
@@ -1223,13 +1133,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'lunar-que-cambio',
     nombre: 'un lunar que cambió',
-    sinonimos: [
-      'lunar',
-      'me cambio un lunar',
-      'mancha que crece',
-      'lunar raro',
-      'verruga',
-    ],
+    sinonimos: ['lunar', 'me cambio un lunar', 'mancha que crece', 'lunar raro', 'verruga'],
     especialidades: [
       { nombre: 'Dermatología', peso: 3 },
       { nombre: 'Oncología', peso: 1 },
@@ -1344,9 +1248,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'problemas de pareja',
       'terapia de pareja',
     ],
-    especialidades: [
-      { nombre: 'Psicología', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Psicología', peso: 3 }],
   },
   {
     id: 'adiccion',
@@ -1458,12 +1360,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'sangre-en-la-orina',
     nombre: 'sangre en la orina',
-    sinonimos: [
-      'sangre en la orina',
-      'orino sangre',
-      'orina roja',
-      'hematuria',
-    ],
+    sinonimos: ['sangre en la orina', 'orino sangre', 'orina roja', 'hematuria'],
     especialidades: [
       { nombre: 'Urología', peso: 3 },
       { nombre: 'Nefrología', peso: 2 },
@@ -1502,15 +1399,9 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-de-testiculos',
     nombre: 'dolor o bulto en los testículos',
-    sinonimos: [
-      'bulto en el testiculo',
-      'varicocele',
-      'me duelen los testiculos',
-    ],
+    sinonimos: ['bulto en el testiculo', 'varicocele', 'me duelen los testiculos'],
     partes: ['testiculo'],
-    especialidades: [
-      { nombre: 'Urología', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Urología', peso: 3 }],
   },
   {
     id: 'problemas-de-ereccion',
@@ -1577,9 +1468,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'sangro fuera de la regla',
       'me dura mucho la regla',
     ],
-    especialidades: [
-      { nombre: 'Ginecología', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Ginecología', peso: 3 }],
   },
   {
     id: 'control-embarazo',
@@ -1608,9 +1497,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'mal olor vaginal',
       'ardor vaginal',
     ],
-    especialidades: [
-      { nombre: 'Ginecología', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Ginecología', peso: 3 }],
   },
   {
     id: 'control-ginecologico',
@@ -1623,9 +1510,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'mamografia',
       'ecografia mamaria',
     ],
-    especialidades: [
-      { nombre: 'Ginecología', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Ginecología', peso: 3 }],
   },
   {
     id: 'bulto-en-la-mama',
@@ -1680,11 +1565,7 @@ export const SINTOMAS: readonly Sintoma[] = [
   {
     id: 'dolor-al-tener-relaciones',
     nombre: 'dolor en las relaciones',
-    sinonimos: [
-      'dolor al tener relaciones',
-      'dolor en las relaciones',
-      'dispareunia',
-    ],
+    sinonimos: ['dolor al tener relaciones', 'dolor en las relaciones', 'dispareunia'],
     especialidades: [
       { nombre: 'Ginecología', peso: 3 },
       { nombre: 'Urología', peso: 2 },
@@ -1726,9 +1607,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'mi nene',
       'mi nena',
     ],
-    especialidades: [
-      { nombre: 'Pediatría', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Pediatría', peso: 3 }],
   },
   {
     id: 'desarrollo-del-nino',
@@ -1780,9 +1659,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'resultado de mis analisis',
       'necesito que me vean unos analisis',
     ],
-    especialidades: [
-      { nombre: 'Medicina general', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Medicina general', peso: 3 }],
   },
   {
     id: 'receta',
@@ -1793,9 +1670,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'se me termino el remedio',
       'repetir receta',
     ],
-    especialidades: [
-      { nombre: 'Medicina general', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Medicina general', peso: 3 }],
   },
   {
     id: 'certificado',
@@ -1807,9 +1682,7 @@ export const SINTOMAS: readonly Sintoma[] = [
       'certificado para el trabajo',
       'carpeta medica',
     ],
-    especialidades: [
-      { nombre: 'Medicina general', peso: 3 },
-    ],
+    especialidades: [{ nombre: 'Medicina general', peso: 3 }],
   },
   {
     id: 'vacunas',

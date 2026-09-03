@@ -42,6 +42,15 @@ import { ultimaFrase } from './texto';
 const POR_PAGINA = 50;
 
 /**
+ * Sin especialidades conocidas.
+ *
+ * Una sola instancia: el mapa vacío es el estado inicial y el de todos los
+ * fallos, y crear uno nuevo en cada rama haría que la señal se considere
+ * cambiada cada vez que algo falla.
+ */
+const VACIO: ReadonlyMap<string, string> = new Map();
+
+/**
  * **¿Qué te pasa?** — el punto de entrada del paciente (Frente C del plan de UX
  * del 22/08/2026).
  *
@@ -159,10 +168,10 @@ export class SymptomCheck {
    */
   private readonly especialidadesDisponibles = toSignal(
     toObservable(this.haceFalta).pipe(
-      switchMap((hace) => (hace ? this.leerEspecialidades() : of(new Set<string>()))),
-      catchError(() => of(new Set<string>())),
+      switchMap((hace) => (hace ? this.leerEspecialidades() : of(VACIO))),
+      catchError(() => of(VACIO)),
     ),
-    { initialValue: new Set<string>() as ReadonlySet<string> },
+    { initialValue: VACIO },
   );
 
   /**
@@ -202,7 +211,9 @@ export class SymptomCheck {
     // Con una alarma en el texto no se recomienda nada: la pantalla entera pasa
     // a decir «andá a urgencias», y una lista de especialidades debajo
     // competiría con ese mensaje.
-    this.alarmas().length > 0 ? [] : recomendar(this.sintomas(), this.especialidadesDisponibles()),
+    this.alarmas().length > 0
+      ? []
+      : recomendar(this.sintomas(), new Set(this.especialidadesDisponibles().keys())),
   );
 
   /**
@@ -321,14 +332,26 @@ export class SymptomCheck {
   /**
    * Salta al directorio de médicos con esa especialidad puesta.
    *
-   * Va por el **nombre** y no por el `conceptId` porque la tabla de síntomas se
-   * escribe con nombres —ver `sintomas.datos.ts`— y el directorio ya sabe
-   * filtrar en memoria por su chip. El identificador lo resuelve el propio
-   * directorio, que es quien tiene los grupos cargados.
+   * Va por `conceptId` cuando se lo sabe. Antes iba por nombre, y el comentario
+   * de entonces daba la razón correcta para entonces: el directorio filtraba en
+   * memoria por su chip, así que el texto alcanzaba. **Eso cambió**: ahora el
+   * directorio acota por `?especialidad=<conceptId>` contra el servidor, y una
+   * búsqueda de texto sólo funciona de rebote, porque el buscador matchea el
+   * encabezado del grupo.
+   *
+   * El identificador no cuesta una consulta: la lista de especialidades con
+   * gente ya se lee para no recomendar una vacía, y lo único que faltaba era no
+   * tirar el concepto al quedarse con el nombre.
+   *
+   * Sin identificador —sesión pública, o un nombre de la tabla de síntomas que
+   * el catálogo no tiene— se cae al texto, que es como funcionaba hasta ahora:
+   * peor destino, nunca una pantalla rota.
    */
   protected verProfesionales(nombre: string): void {
+    const conceptId = this.especialidadesDisponibles().get(normalizar(nombre));
     void this.router.navigate([this.rutaDeResultados()], {
-      queryParams: { q: nombre },
+      queryParams:
+        conceptId === undefined || conceptId === '' ? { q: nombre } : { especialidad: conceptId },
     });
   }
 
@@ -339,7 +362,7 @@ export class SymptomCheck {
    * plataforma, que es lo único que hace falta acá. Recorrer el cursor entero
    * sería traerse el directorio para leer una lista de nombres.
    */
-  private leerEspecialidades(): Observable<ReadonlySet<string>> {
+  private leerEspecialidades(): Observable<ReadonlyMap<string, string>> {
     if (this.sinSesion()) {
       return this.leerEspecialidadesPublicas();
     }
@@ -351,16 +374,21 @@ export class SymptomCheck {
           ),
         ];
         if (ids.length === 0) {
-          return of(new Set<string>());
+          return of(VACIO);
         }
         // El catálogo traduce los conceptos a nombres; sin él no hay con qué
         // cruzar la tabla, y se devuelve vacío, que desactiva el filtro.
         return this.terminology.readConceptLabels(ids).pipe(
           map(
             (etiquetas: ConceptLabels) =>
-              new Set([...etiquetas.values()].map((opcion) => normalizar(opcion.display))),
+              new Map(
+                [...etiquetas.entries()].map(([conceptId, opcion]) => [
+                  normalizar(opcion.display),
+                  conceptId,
+                ]),
+              ) as ReadonlyMap<string, string>,
           ),
-          catchError(() => of(new Set<string>())),
+          catchError(() => of(VACIO)),
         );
       }),
     );
@@ -376,18 +404,22 @@ export class SymptomCheck {
    * alcanza para lo único que hace falta acá, que es no recomendar una
    * especialidad sin nadie detrás.
    */
-  private leerEspecialidadesPublicas(): Observable<ReadonlySet<string>> {
+  private leerEspecialidadesPublicas(): Observable<ReadonlyMap<string, string>> {
     return this.publico.searchPractitioners({ limit: POR_PAGINA }).pipe(
       map(
         (pagina) =>
-          new Set(
+          // Sin concepto: el buscador público no expone identificadores
+          // internos. El valor vacío es lo que hace caer la navegación al
+          // texto, que sin sesión es el único destino posible.
+          new Map(
             pagina.items
               .flatMap((fila) => (fila.headline ?? '').split(/[·,|]/))
               .map((parte) => normalizar(parte))
-              .filter((parte) => parte !== ''),
-          ) as ReadonlySet<string>,
+              .filter((parte) => parte !== '')
+              .map((nombre) => [nombre, '']),
+          ) as ReadonlyMap<string, string>,
       ),
-      catchError(() => of(new Set<string>())),
+      catchError(() => of(VACIO)),
     );
   }
 }
