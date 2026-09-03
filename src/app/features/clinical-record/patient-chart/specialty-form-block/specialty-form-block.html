@@ -15,7 +15,40 @@
     <app-alert tone="error" data-testid="formulario-especialidad-error">{{ mensaje }}</app-alert>
   }
 
-  @if (!hayEncuentro()) {
+  <!-- El selector, arriba de todo y siempre.
+
+       Estaba dentro del `<form>`, es decir, detrás de la cadena de estados del
+       motor de `forms`: con una ficha ya respondida el modo lectura lo tapaba, y
+       entonces no había forma de llegar al diagnóstico. Acá arriba, elegir qué
+       se va a completar no depende de si el catálogo cargó ni de lo que este
+       encuentro ya tenga escrito. -->
+  <app-form-field label="Qué vas a completar" hint="Una sola cosa por vez.">
+    <app-select
+      [options]="opcionesDePlantilla()"
+      [value]="plantillaId()"
+      (valueChange)="elegirPlantilla($event)"
+    />
+  </app-form-field>
+
+  @if (bloquePropio()) {
+    <!-- Las tres que no pasan por `forms`: cada una escribe donde corresponde
+         —`clinical.conditions`, el histórico de procedimientos, las órdenes del
+         circuito diagnóstico— y trae su propio formulario y su propia lista. -->
+    @if (esDiagnostico()) {
+      <app-diagnosis-block
+        [patientProfileId]="patientProfileId()"
+        [encounterId]="encounterId()"
+        (cambio)="cambio.emit()"
+      />
+    } @else if (esProcedimientos()) {
+      <app-procedures-block [patientProfileId]="patientProfileId()" [encounterId]="encounterId()" />
+    } @else if (esLaboratorio()) {
+      <app-diagnostics-block
+        [patientProfileId]="patientProfileId()"
+        [encounterId]="encounterId()"
+      />
+    }
+  } @else if (!hayEncuentro()) {
     <app-alert tone="info" title="Abrí el encuentro para completar">
       El formulario clínico se completa dentro de la consulta que lo motivó. Registrá el encuentro
       acá arriba y el formulario aparece.
@@ -83,11 +116,7 @@
   } @else if (errorDePlantillas(); as mensaje) {
     <!-- Un fallo de lectura se dice: sin esto quedaba un formulario hueco, que
          se lee como «no hay nada para completar». -->
-    <app-alert
-      tone="error"
-      title="No pudimos traer las plantillas"
-      data-testid="plantillas-error"
-    >
+    <app-alert tone="error" title="No pudimos traer las plantillas" data-testid="plantillas-error">
       {{ mensaje }}
     </app-alert>
     <button app-button variant="outline" size="sm" (clicked)="recargarPlantillas()">
@@ -97,27 +126,17 @@
     <!-- Problema real de datos: no hay NINGUNA plantilla cargada, ni siquiera
          las transversales. Distinto de que la especialidad no tenga la suya. -->
     <app-alert tone="info" title="Sin plantillas todavía" data-testid="catalogo-vacio">
-      Todavía no hay ninguna plantilla de formulario clínico cargada. Un admin de especialidad
-      las crea en «Formularios clínicos».
+      Todavía no hay ninguna plantilla de formulario clínico cargada. Un admin de especialidad las
+      crea en «Formularios clínicos».
     </app-alert>
   } @else {
     <form class="formulario-especialidad__formulario" (submit)="$event.preventDefault()">
       @if (sinFichaPropia()) {
         <!-- Situación normal, no un error: se avisa discreto y se sigue. -->
         <p class="formulario-especialidad__aviso" data-testid="sin-ficha-propia">
-          Tu especialidad todavía no tiene una ficha específica. Te ofrecemos las fichas
-          generales, que sirven para cualquier consulta.
+          Tu especialidad todavía no tiene una ficha específica. Te ofrecemos las fichas generales,
+          que sirven para cualquier consulta.
         </p>
-      }
-
-      @if (opcionesDePlantilla().length > 1) {
-        <app-form-field label="Plantilla" hint="Qué formulario vas a completar.">
-          <app-select
-            [options]="opcionesDePlantilla()"
-            [value]="plantillaId()"
-            (valueChange)="elegirPlantilla($event)"
-          />
-        </app-form-field>
       }
 
       @if (puedeVerTodas()) {
@@ -170,48 +189,48 @@
               }
             </fieldset>
           } @else {
-          <app-form-field
-            [label]="campo.name"
-            [required]="campo.required"
-            data-testid="campo-especialidad"
-          >
-            @switch (tipoDibujable(campo.dataType)) {
-              @case ('boolean') {
-                <app-checkbox
-                  [checked]="valorBooleano(campo.fieldId)"
-                  (checkedChange)="actualizarValor(campo.fieldId, $event)"
-                  [label]="campo.name"
-                  [hideLabel]="true"
-                />
+            <app-form-field
+              [label]="campo.name"
+              [required]="campo.required"
+              data-testid="campo-especialidad"
+            >
+              @switch (tipoDibujable(campo.dataType)) {
+                @case ('boolean') {
+                  <app-checkbox
+                    [checked]="valorBooleano(campo.fieldId)"
+                    (checkedChange)="actualizarValor(campo.fieldId, $event)"
+                    [label]="campo.name"
+                    [hideLabel]="true"
+                  />
+                }
+                @case ('integer') {
+                  <app-input
+                    type="number"
+                    [value]="valorNumero(campo.fieldId)"
+                    (valueChange)="actualizarValor(campo.fieldId, $event)"
+                  />
+                }
+                @case ('decimal') {
+                  <app-input
+                    type="number"
+                    [value]="valorNumero(campo.fieldId)"
+                    (valueChange)="actualizarValor(campo.fieldId, $event)"
+                  />
+                }
+                @case ('date') {
+                  <app-date-picker
+                    [value]="valorFecha(campo.fieldId)"
+                    (valueChange)="actualizarValor(campo.fieldId, $event)"
+                  />
+                }
+                @default {
+                  <app-input
+                    [value]="valorTexto(campo.fieldId)"
+                    (valueChange)="actualizarValor(campo.fieldId, $event)"
+                  />
+                }
               }
-              @case ('integer') {
-                <app-input
-                  type="number"
-                  [value]="valorNumero(campo.fieldId)"
-                  (valueChange)="actualizarValor(campo.fieldId, $event)"
-                />
-              }
-              @case ('decimal') {
-                <app-input
-                  type="number"
-                  [value]="valorNumero(campo.fieldId)"
-                  (valueChange)="actualizarValor(campo.fieldId, $event)"
-                />
-              }
-              @case ('date') {
-                <app-date-picker
-                  [value]="valorFecha(campo.fieldId)"
-                  (valueChange)="actualizarValor(campo.fieldId, $event)"
-                />
-              }
-              @default {
-                <app-input
-                  [value]="valorTexto(campo.fieldId)"
-                  (valueChange)="actualizarValor(campo.fieldId, $event)"
-                />
-              }
-            }
-          </app-form-field>
+            </app-form-field>
           }
         }
       }
@@ -235,10 +254,7 @@
            guardado siguiente abría una nota nueva en vez de versionar la suya.
            La nota ya quedó persistida y el aviso lo dice; la pestaña «Notas» se
            pone al día en la próxima lectura de la ficha. -->
-      <app-free-note-block
-        [patientProfileId]="patientProfileId()"
-        [encounterId]="encounterId()"
-      />
+      <app-free-note-block [patientProfileId]="patientProfileId()" [encounterId]="encounterId()" />
     }
   }
 </app-card>
