@@ -68,8 +68,13 @@ export interface PatientRegistration {
    * los dos en `common.addresses`. Mandar el par desde acá abriría la puerta a
    * que llegara incoherente —el municipio de uno con el departamento de otro— y
    * no habría criterio para decidir cuál gana.
+   *
+   * **Obligatorio**, como en el DTO del servidor: `RegisterPatientDto` lo
+   * declara sin `@IsOptional`, así que un alta sin él vuelve con 400. El tipo lo
+   * decía opcional, y esa asimetría hacía que el compilador aceptara construir
+   * un alta que la API iba a rechazar — un error que sólo aparecía en runtime.
    */
-  readonly residenceMunicipalityConceptId?: string;
+  readonly residenceMunicipalityConceptId: string;
   /** Teléfono de contacto, en E.164 o formato nacional. */
   readonly phone?: string;
   /** Género administrativo (HL7 AdministrativeGender). */
@@ -129,13 +134,21 @@ export interface PatientRegistration {
   /**
    * Municipio del lugar de trabajo (catálogo `VS_BO_MUNICIPALITY`).
    *
-   * Sigue en el contrato porque otros clientes lo usan; **este formulario ya no
-   * lo manda**, desde que la página del trabajo pregunta la empresa.
+   * **El alta lo vuelve a mandar** (AC-03-1): la página del trabajo pregunta la
+   * empresa *y* dónde queda. El JSDoc anterior decía que este formulario «ya no
+   * lo manda», y era cierto durante el tiempo en que la empresa reemplazó a la
+   * ubicación; el propietario la volvió a pedir y el contrato nunca dejó de
+   * aceptarla.
    */
   readonly workMunicipalityConceptId?: string;
   /** Calle y número del lugar de trabajo. Ver {@link PatientRegistration.workMunicipalityConceptId}. */
   readonly workAddressLines?: string;
-  /** Latitud del trabajo. Mismo par completo que el domicilio, y tampoco lo manda ya el alta. */
+  /**
+   * Latitud del trabajo.
+   *
+   * Mismo par completo que el domicilio, y sólo viaja si la persona confirmó el
+   * punto sobre el mapa. Ver {@link PatientRegistration.workMunicipalityConceptId}.
+   */
   readonly workLatitude?: number;
   /** Longitud del trabajo. */
   readonly workLongitude?: number;
@@ -148,6 +161,20 @@ export interface PatientRegistration {
    * lo rechaza.
    */
   readonly guardianPhone?: string;
+  /**
+   * Qué es esa persona del paciente: madre, cónyuge, amistad…
+   *
+   * Concepto del conjunto `related-person-relationship`, que gobierna
+   * `profiles.related_persons.relationship_concept_id` y se lee por campo
+   * destino (`?target=`). Es un uuid, no un código legible: el cliente ya lee la
+   * enumeración para poblar su desplegable, así que devuelve el identificador
+   * que esa misma lectura le dio.
+   *
+   * No se manda sin `guardianName`, por lo mismo que el teléfono: un parentesco
+   * sin persona no describe a nadie. Ausente, el backend escribe «tutor o
+   * representante legal», que es lo que escribía antes de que existiera.
+   */
+  readonly guardianRelationshipConceptId?: string;
   /**
    * Plan de la aseguradora privada que la persona declara tener.
    *

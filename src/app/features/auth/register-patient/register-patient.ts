@@ -32,6 +32,7 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../../core/data-access/terminology/bo-municipalities.service';
+import { RelatedPersonRelationshipsCatalog } from '../../../core/data-access/system-context/related-person-relationships.service';
 import type {
   BirthSexCode,
   PatientRegistration,
@@ -140,6 +141,23 @@ const PIN_TRABAJO = 'trabajo';
  */
 const AVISO_SIN_GEOCODIFICACION =
   'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escribila vos arriba.';
+
+/**
+ * Lo que se le dice a quien capturó un punto y no lo confirmó.
+ *
+ * **El dato se perdía en silencio.** Sólo viaja al alta lo confirmado sobre el
+ * mapa (`datosPaciente`), y eso está bien —el GPS acierta la manzana, no la
+ * puerta, y entre «esto es lo que encontramos» y «esta es mi dirección» tiene
+ * que haber alguien mirando el plano—; lo que estaba mal es que quien se
+ * quedaba a medias avanzaba de página creyendo que su ubicación ya estaba
+ * guardada, y nadie se lo decía.
+ *
+ * El aviso **no bloquea ni confirma por su cuenta**: la confirmación sigue
+ * siendo un acto de la persona. Sólo deja de ser silenciosa la consecuencia de
+ * no hacerla.
+ */
+const AVISO_UBICACION_SIN_CONFIRMAR =
+  'Todavía no confirmaste este punto, así que no se va a guardar. Pulsá el botón de confirmar si es el lugar correcto.';
 
 /**
  * Cuánto se espera al navegador antes de dar la ubicación por perdida.
@@ -544,6 +562,12 @@ export class RegisterPatient {
         nonNullable: true,
         validators: [telefonoCompleto],
       }),
+      // Qué es esa persona del paciente, como concepto de
+      // `related-person-relationship` (AC-03-11). Opcional, y sin validador
+      // propio: exigirlo convertiría en obligatorio un contacto que no lo es.
+      // Sin parentesco declarado la API escribe «tutor o representante legal»,
+      // que es lo que escribía siempre.
+      guardianRelationshipConceptId: new FormControl<string | null>(null),
       // Los seguros declarados: el valor es el **plan**, no la compañía.
       privateInsurancePlanId: new FormControl<string | null>(null),
       publicInsurancePlanId: new FormControl<string | null>(null),
@@ -592,12 +616,139 @@ export class RegisterPatient {
     this.formPaciente.controls.residenceMunicipalityConceptId.setValue(conceptId);
     this.formPaciente.controls.residenceMunicipalityConceptId.markAsTouched();
     this.municipioPaciente.set(conceptId);
+    this.sembrarDireccion(this.formPaciente.controls.homeAddressLines, conceptId);
   }
 
   /** Lo mismo, para el lugar de trabajo. Opcional: no se marca como tocado. */
   elegirMunicipioDeTrabajo(conceptId: string | null): void {
     this.formPaciente.controls.workMunicipalityConceptId.setValue(conceptId);
     this.municipioTrabajo.set(conceptId);
+    this.sembrarDireccion(this.formPaciente.controls.workAddressLines, conceptId);
+  }
+
+  /**
+   * Lo último que el formulario sembró en cada «dirección 1».
+   *
+   * Es lo que permite distinguir **lo que puso el formulario de lo que escribió
+   * la persona**, que es la única pregunta que importa para saber si un
+   * prellenado puede reescribirse. El valor del control no alcanza: «Sacaba»
+   * puede haberlo puesto la elección de la localidad o haberlo tecleado alguien,
+   * y las dos cosas se tratan al revés.
+   *
+   * Se indexa por control y no por página porque son dos campos independientes
+   * —domicilio y trabajo— con su propia historia. Vacío significa «acá el
+   * formulario no escribió nada».
+   */
+  private readonly direccionSembrada = new WeakMap<FormControl<string>, string>();
+
+  /**
+   * Copia el nombre de la localidad elegida a su «dirección 1».
+   *
+   * ## Qué problema resuelve, y cuál NO
+   *
+   * El pedido es «copiar el nombre del lugar que se elige en el mapa a la
+   * dirección» (AC-03-8). La lectura literal —convertir el pin del GPS en «Av.
+   * Banzer 3er anillo»— exige un geocodificador externo y la política de
+   * seguridad del servidor no lo permite (ver {@link AVISO_SIN_GEOCODIFICACION});
+   * abrirla es una decisión de arquitectura que no se toma desde este carril.
+   *
+   * Lo que sí sabe el sistema, sin salir a la red, es **cómo se llama la
+   * localidad que la persona acaba de elegir**. Eso es lo que se copia: un
+   * arranque cierto de la dirección, sobre el que se sigue escribiendo la calle
+   * y el número.
+   *
+   * ## La regla: el formulario sólo reescribe lo que él mismo puso
+   *
+   * «Sólo si está vacío» no alcanza en cuanto se puede **corregir** la
+   * localidad, que es lo normal —se elige el departamento equivocado, se busca
+   * la ciudad y se cambia—. Con esa guarda sola, elegir Sacaba y corregir a
+   * Quillacollo dejaba el municipio nuevo con la dirección vieja: viajaba
+   * «Quillacollo» con «Sacaba» escrito al lado. Un domicilio que no existe es
+   * peor que un campo vacío, porque nadie lo vuelve a mirar.
+   *
+   * Por eso se recuerda lo sembrado ({@link direccionSembrada}) y se decide así:
+   *
+   * - **Vacío, o exactamente lo que sembró el formulario** → se re-siembra con
+   *   el nombre nuevo. Es un valor del que nadie es dueño.
+   * - **Distinto de lo sembrado** → lo escribió la persona y no se toca, ni para
+   *   corregir la localidad ni para nada.
+   * - **Al soltar la localidad** → se limpia, pero sólo si lo que hay es lo
+   *   sembrado: el nombre de una localidad que ya no está elegida no describe a
+   *   nadie. Lo escrito a mano sobrevive.
+   *
+   * ## Dos cuidados que no cambian
+   *
+   * - **No se marca `touched` ni `dirty`**, tampoco al re-sembrar ni al
+   *   limpiar: no lo escribió la persona, y marcarlo dispararía la validación y
+   *   los mensajes de un campo que nadie tocó.
+   * - **Sin nombre, no se escribe nada.** Si el catálogo no cargó todavía, el
+   *   municipio no se encuentra en el árbol y el campo queda como estaba. Nunca
+   *   se rellena con un identificador ni con un texto inventado.
+   *
+   * @param control - El control de «dirección 1» que corresponde.
+   * @param conceptId - La localidad elegida, o `null` si se soltó.
+   */
+  private sembrarDireccion(
+    control: FormControl<string>,
+    conceptId: string | null,
+  ): void {
+    const actual = control.value.trim();
+    const sembrado = this.direccionSembrada.get(control);
+    // De lo que hay ahí no es dueño nadie: o está vacío, o es exactamente lo
+    // que puso el formulario la vez anterior.
+    const esNuestro = actual === '' || actual === sembrado;
+    if (!esNuestro) {
+      return;
+    }
+
+    if (conceptId === null) {
+      this.escribirDireccionSembrada(control, '');
+      return;
+    }
+
+    const nombre = this.nombreDeMunicipio(conceptId);
+    if (nombre === null) {
+      return;
+    }
+
+    this.escribirDireccionSembrada(control, nombre);
+  }
+
+  /**
+   * Escribe en una «dirección 1» **en nombre del formulario**, y lo anota.
+   *
+   * Anotarlo es la mitad que hace que la regla funcione la vez siguiente: sin
+   * dejar registro de lo que se acaba de poner, el próximo cambio de localidad
+   * no sabría si ese texto es suyo o de la persona.
+   *
+   * @param control - El control de «dirección 1» que corresponde.
+   * @param valor - El nombre de la localidad, o `''` para limpiar.
+   */
+  private escribirDireccionSembrada(
+    control: FormControl<string>,
+    valor: string,
+  ): void {
+    // `emitEvent: false` no: el cambio tiene que llegar al `valueChanges` que
+    // limpia el error del envío anterior, igual que si se hubiera tecleado.
+    // Y sin `markAsTouched`/`markAsDirty`: no lo escribió la persona.
+    control.setValue(valor);
+    this.direccionSembrada.set(control, valor);
+  }
+
+  /**
+   * Cómo se llama el municipio de un concepto, según el árbol ya cargado.
+   *
+   * @param conceptId - El municipio buscado.
+   * @returns Su nombre, o `null` si el árbol todavía no lo tiene.
+   */
+  private nombreDeMunicipio(conceptId: string): string | null {
+    for (const rama of this.ramasMunicipios()) {
+      const municipio = rama.municipios.find((m) => m.conceptId === conceptId);
+      if (municipio !== undefined) {
+        return municipio.nombre;
+      }
+    }
+    return null;
   }
 
   /**
@@ -707,6 +858,9 @@ export class RegisterPatient {
   /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
 
+  /** El aviso del punto capturado sin confirmar. Ver la constante. */
+  protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
+
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
   readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
@@ -744,6 +898,17 @@ export class RegisterPatient {
   readonly catalogoMunicipiosCaido = signal(false);
 
   /**
+   * El parentesco del contacto de emergencia, y su catálogo (AC-03-11).
+   *
+   * Es el único catálogo de esta pantalla que se lee por **campo destino** y no
+   * por código de conjunto de valores: su columna declara enumeración dinámica.
+   * Ver {@link RelatedPersonRelationshipsCatalog}.
+   */
+  private readonly parentescos = inject(RelatedPersonRelationshipsCatalog);
+  readonly opcionesParentesco = signal<readonly SelectOption<string>[]>([]);
+  readonly catalogoParentescosCaido = signal(false);
+
+  /**
    * Las páginas del alta de paciente, en el orden que pide AC-03-1.
    *
    * ## El orden, y de dónde sale
@@ -779,11 +944,21 @@ export class RegisterPatient {
    *
    * - **Zona / barrio**, en residencia y en trabajo (AC-03-10). `common.addresses`
    *   no tiene columna de zona y el DTO no tiene el campo. Acá no hay
-   *   migraciones (ADR-0021): el cambio va por el pipeline del modelo, que no
-   *   está disponible en este workspace.
-   * - **Relación del contacto de emergencia** (AC-03-11). Es un value set que no
-   *   existe en ninguna capa —ni catálogo, ni columna—, y la regla del proyecto
-   *   prohíbe resolverlo con un `enum` de TypeScript.
+   *   migraciones (ADR-0021): el cambio va por el pipeline del modelo
+   *   (`.puml` → generadores), que **sí está disponible** —vive en el repo
+   *   `mantra-core-health-model`— y se coordina con quien lo lleva. Es el único
+   *   pendiente del alta con dependencia de un tercero, y por eso va como
+   *   entrega aparte y no atado a ésta.
+   *
+   * ## Lo que sí pregunta desde esta entrega
+   *
+   * - **Relación del contacto de emergencia** (AC-03-11). Ya no falta nada:
+   *   la columna `profiles.related_persons.relationship_concept_id` existía, el
+   *   conjunto `related-person-relationship` también —con un solo miembro—, y
+   *   lo que faltaba eran los conceptos, el campo del alta y el desplegable.
+   *   Se lee por campo destino (`?target=`) y **no** con un `enum` de
+   *   TypeScript, que es lo que la regla del proyecto prohíbe. Ver
+   *   {@link campoRelacionDelContacto}.
    * - **Razón social** de facturación: Se captura mediante `billingLegalName`
    *   y viaja asociada al NIT para la emisión de facturas.
    *
@@ -946,8 +1121,10 @@ export class RegisterPatient {
             mensajeDeError: 'Para guardar el teléfono, contanos también su nombre.',
           },
           // La «Relación» que el orden pide junto al contacto de emergencia
-          // (AC-03-11) no está: es un value set que no existe y una columna que
-          // tampoco. Ver el JSDoc de arriba.
+          // (AC-03-11). Va la cuarta y última de la página: el tope del motor
+          // son cuatro campos, así que agregar un quinto acá partiría la
+          // pregunta del contacto en dos páginas.
+          this.campoRelacionDelContacto(),
         ],
       },
       {
@@ -1133,6 +1310,51 @@ export class RegisterPatient {
           testId,
           // La otra mitad del renglón del documento. Ver la página que lo usa.
           ancho: 'mitad',
+        };
+  }
+
+  /**
+   * El campo de «Relación» del contacto de emergencia (AC-03-11).
+   *
+   * ## Por qué es opcional
+   *
+   * Porque el contacto entero lo es: pedir el parentesco de una persona que
+   * quizá no se declaró no tiene sentido, y volverlo obligatorio en cuanto hay
+   * nombre convertiría en una traba lo que hoy se contesta en un segundo. La
+   * bitácora lo pide junto al contacto, no como requisito.
+   *
+   * ## Por qué el valor es un uuid y no una palabra
+   *
+   * Porque `profiles.related_persons.relationship_concept_id` es una columna de
+   * concepto, y el conjunto que la gobierna se publica como enumeración
+   * dinámica. Lo que se manda es el `conceptId` que el propio catálogo devolvió;
+   * lo que se ve es la palabra en castellano de {@link ETIQUETAS_PARENTESCO}.
+   * Un `enum` de TypeScript acá sería inventar una taxonomía paralela a la del
+   * modelo, que es exactamente lo que la regla del proyecto prohíbe.
+   *
+   * ## Y por qué desaparece si el catálogo no cargó
+   *
+   * Misma mecánica que el departamento emisor y los seguros: sin opciones, un
+   * `select` es un desplegable vacío indistinguible de un catálogo que de verdad
+   * no tiene ninguna. El campo pasa a `custom` y la pantalla proyecta ahí el
+   * aviso con su «Reintentar». El alta sigue en pie: es opcional.
+   */
+  private campoRelacionDelContacto(): CampoDeFormulario {
+    const base = {
+      key: 'guardianRelationshipConceptId',
+      label: 'Su relación con vos (opcional)',
+      hint: 'Qué es tuyo el contacto de emergencia: madre, pareja, una amistad…',
+    } as const;
+
+    return this.catalogoParentescosCaido()
+      ? { ...base, control: 'custom' }
+      : {
+          ...base,
+          control: 'select',
+          options: this.opcionesParentesco(),
+          placeholder: 'Sin especificar',
+          testId: 'registro-tutor-relacion',
+          icono: 'people',
         };
   }
 
@@ -1720,6 +1942,7 @@ export class RegisterPatient {
     this.cargarOcupaciones();
     this.cargarEmpresas();
     this.cargarAseguradoras();
+    this.cargarParentescos();
 
     // El aviso de un envío fallido se va en cuanto se corrige algo.
     //
@@ -1901,6 +2124,41 @@ export class RegisterPatient {
     this.cargarEmpresas();
   }
 
+  /**
+   * Trae los parentescos publicados, para «¿qué es tuyo el contacto?».
+   *
+   * Mismo criterio que los demás ante un fallo: el campo es opcional, así que
+   * sin catálogo la persona se registra igual y su contacto queda con el valor
+   * por defecto que escribe la API.
+   *
+   * Las etiquetas se traducen acá, por código: el catálogo devuelve su `display`
+   * en inglés técnico —«Mother relationship»— porque es terminología, no copy de
+   * producto.
+   */
+  protected cargarParentescos(): void {
+    this.parentescos.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoParentescosCaido.set(false);
+        this.opcionesParentesco.set(
+          opciones.map((opcion) => ({
+            value: opcion.conceptId,
+            label: this.parentescos.etiquetaDe(opcion),
+          })),
+        );
+      },
+      error: () => {
+        this.opcionesParentesco.set([]);
+        this.catalogoParentescosCaido.set(true);
+      },
+    });
+  }
+
+  /** Reintenta la lectura del catálogo de parentescos. Ver `reintentarDepartamentos`. */
+  protected reintentarParentescos(): void {
+    this.parentescos.olvidar();
+    this.cargarParentescos();
+  }
+
   /** Reintenta la lectura del árbol de municipios. Ver `reintentarDepartamentos`. */
   protected reintentarMunicipios(): void {
     this.municipios.olvidar();
@@ -1973,6 +2231,7 @@ export class RegisterPatient {
     const gpsTrabajo = this.direccionTrabajoConfirmada() ? this.gpsTrabajo() : null;
     const nombreTutor = raw.guardianName.trim();
     const telefonoTutor = raw.guardianPhone.trim();
+    const relacionTutor = raw.guardianRelationshipConceptId;
     const seguroPrivado = raw.privateInsurancePlanId;
     const seguroPublico = raw.publicInsurancePlanId;
     const nit = raw.billingTaxId.trim();
@@ -1996,7 +2255,14 @@ export class RegisterPatient {
       ...(departamento === null ? {} : { issuerAdministrativeAreaConceptId: departamento }),
       // Sólo el municipio: el departamento de residencia lo deriva el backend
       // del código del INE, para que el par no pueda llegar incoherente.
-      ...(municipio === null ? {} : { residenceMunicipalityConceptId: municipio }),
+      //
+      // Va siempre, sin condicional: el contrato lo declara obligatorio —igual
+      // que el DTO del servidor— y el control lo valida, así que `submit()` no
+      // llega hasta acá sin él. La cadena vacía es la red por si alguien
+      // llamara a este método sin pasar por esa comprobación: hace que la API
+      // conteste 400 nombrando el campo, en vez de un cuerpo al que le falta
+      // una propiedad obligatoria.
+      residenceMunicipalityConceptId: municipio ?? '',
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(telefono === '' ? {} : { phone: telefono }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
@@ -2030,6 +2296,13 @@ export class RegisterPatient {
       // contacto sin dueño, y el formulario ya lo impide antes de llegar acá.
       ...(nombreTutor === '' ? {} : { guardianName: nombreTutor }),
       ...(nombreTutor === '' || telefonoTutor === '' ? {} : { guardianPhone: telefonoTutor }),
+      // El parentesco sólo viaja si hay contacto **y** si se eligió uno: sin
+      // contacto no describe a nadie, y sin elección la API escribe su valor
+      // por defecto —«tutor o representante legal»—, que es lo que escribía
+      // antes de que este campo existiera.
+      ...(nombreTutor === '' || relacionTutor === null
+        ? {}
+        : { guardianRelationshipConceptId: relacionTutor }),
       ...(seguroPrivado === null ? {} : { privateInsurancePlanId: seguroPrivado }),
       ...(seguroPublico === null ? {} : { publicInsurancePlanId: seguroPublico }),
       ...(nit === '' ? {} : { billingTaxId: nit }),

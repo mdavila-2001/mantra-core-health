@@ -168,6 +168,12 @@ export class IamClient {
       ...(registration.guardianPhone === undefined
         ? {}
         : { guardianPhone: registration.guardianPhone }),
+      ...(registration.guardianRelationshipConceptId === undefined
+        ? {}
+        : {
+            guardianRelationshipConceptId:
+              registration.guardianRelationshipConceptId,
+          }),
       ...(registration.privateInsurancePlanId === undefined
         ? {}
         : { privateInsurancePlanId: registration.privateInsurancePlanId }),
@@ -177,6 +183,13 @@ export class IamClient {
       ...(registration.billingTaxId === undefined
         ? {}
         : { billingTaxId: registration.billingTaxId }),
+      // La razón social viaja con el NIT: es a nombre de quién se emite la
+      // factura. Faltaba en esta lista —el contrato la declara y el alta la
+      // completa—, así que se descartaba en silencio justo antes del POST, que
+      // es el modo de fallo que advierte el comentario de `registerPractitioner`.
+      ...(registration.billingLegalName === undefined
+        ? {}
+        : { billingLegalName: registration.billingLegalName }),
       ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),
     });
   }
