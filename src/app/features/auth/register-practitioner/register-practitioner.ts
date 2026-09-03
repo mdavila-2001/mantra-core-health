@@ -19,6 +19,10 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Input as AppInput } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -401,6 +405,8 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   imports: [
     RouterLink,
     AppButton,
+    NavIcon,
+    Tooltip,
     LocationPicker,
     Link,
     Alert,
@@ -410,6 +416,8 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     CampoPersonalizado,
     ReferenceCombobox,
     RegistroAyuda,
+    FormField,
+    AppInput,
   ],
   templateUrl: './register-practitioner.html',
   styleUrls: ['../registro-compartido/registro.css', './register-practitioner.css'],
@@ -424,6 +432,7 @@ export class RegisterPractitioner {
     // cual sea el perfil, y el backend compone con ellas el nombre que muestra.
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     middleName: new FormControl('', { nonNullable: true }),
+    thirdName: new FormControl('', { nonNullable: true }),
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     motherLastName: new FormControl('', { nonNullable: true }),
     email: new FormControl('', {
@@ -478,6 +487,78 @@ export class RegisterPractitioner {
    * conoce.
    */
   readonly municipioProfesional = signal<string | null>(null);
+
+  /**
+   * Casillas de nombres adicionales (cuarto, quinto, …) agregadas por el usuario.
+   */
+  readonly nombresExtra = signal<readonly string[]>([]);
+
+  /** Suma una casilla vacía de nombre. */
+  agregarNombre(): void {
+    this.nombresExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /**
+   * Quita una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   */
+  quitarNombre(indice: number): void {
+    this.nombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /**
+   * Escribe en una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   * @param valor - Lo que se escribió.
+   */
+  escribirNombreExtra(indice: number, valor: string | number | null): void {
+    const texto = valor === null ? '' : String(valor);
+    this.nombresExtra.update((actuales) =>
+      actuales.map((nombre, i) => (i === indice ? texto : nombre)),
+    );
+  }
+
+  /**
+   * El valor de un control de nombre, para el campo proyectado.
+   *
+   * @param key - Cuál de los tres controles de nombre.
+   */
+  valorDeNombre(key: 'name' | 'middleName' | 'thirdName'): string {
+    return this.formProfesional.controls[key].value;
+  }
+
+  /**
+   * Escribe en un control de nombre desde el campo proyectado.
+   *
+   * @param key - Cuál de los tres controles de nombre.
+   * @param valor - Lo que se escribió.
+   */
+  escribirNombre(key: 'name' | 'middleName' | 'thirdName', valor: string | number | null): void {
+    this.formProfesional.controls[key].setValue(valor === null ? '' : String(valor));
+  }
+
+  /** Si hay que pintar en rojo el primer nombre. */
+  readonly primerNombreEnRojo = computed(() => {
+    const control = this.formProfesional.controls.name;
+    return control.touched && control.invalid;
+  });
+
+  /**
+   * Los nombres que no son el primero, en una sola cadena.
+   *
+   * El segundo, el tercero y los que se hayan agregado, separados por espacio y
+   * sin los vacíos. La base guarda todo esto en `middle_name`: no hay columna
+   * de tercer nombre, y `varchar` sin restricción admite los espacios.
+   */
+  private nombresAdicionales(): string {
+    const raw = this.formProfesional.getRawValue();
+    return [raw.middleName, raw.thirdName, ...this.nombresExtra()]
+      .map((nombre) => nombre.trim())
+      .filter((nombre) => nombre !== '')
+      .join(' ');
+  }
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
@@ -629,29 +710,17 @@ export class RegisterPractitioner {
         clave: 'name',
         icon: 'people',
         hint: 'Como figura en tu documento. Si no tenés alguno, dejalo vacío.',
-        // De a dos por renglón, igual que en el alta de paciente: son las
-        // cuatro partes de un mismo nombre y ninguna necesita la fila entera.
+        // Nombres y apellidos van juntos en una página, como pide el registro
+        // del cliente. Los tres nombres entran en UN campo proyectado —bajo la
+        // `key` de `name`, para que el motor siga validando el obligatorio y
+        // sepa a qué página volver al enviar— porque son cuatro casillas y el
+        // tope del motor es de cuatro campos por página.
         campos: [
           {
             key: 'name',
-            label: 'Nombre',
-            control: 'text',
-            required: true,
-            autocomplete: 'given-name',
-            placeholder: 'Ana',
-            testId: 'registro-pro-nombre',
-            ancho: 'mitad',
+            label: '',
+            control: 'custom',
             mensajeDeError: 'Ingresá tu nombre.',
-          },
-          {
-            key: 'middleName',
-            label: 'Segundo nombre',
-            hint: 'Si no tenés, dejalo vacío.',
-            control: 'text',
-            autocomplete: 'additional-name',
-            placeholder: 'Lucía',
-            testId: 'registro-pro-segundo-nombre',
-            ancho: 'mitad',
           },
           {
             key: 'lastName',
@@ -1220,7 +1289,7 @@ export class RegisterPractitioner {
     const raw = this.formProfesional.getRawValue();
     const titulo = raw.professionalTitle.trim();
     const telefono = raw.phone.trim();
-    const segundoNombre = raw.middleName.trim();
+    const segundoNombre = this.nombresAdicionales();
     const apellidoMaterno = raw.motherLastName.trim();
     const documento = raw.nationalId.trim();
     const autoridad = raw.regulatoryAuthority.trim();
