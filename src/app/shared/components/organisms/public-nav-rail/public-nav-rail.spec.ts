@@ -209,5 +209,32 @@ describe('PublicNavRail', () => {
     it('respeta prefers-reduced-motion', () => {
       expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     });
+
+    /* ---- las dos que encontró el navegador, no jsdom -------------------- */
+
+    it('el tamaño del glifo se le pide al HOST, no al svg de adentro', () => {
+      // `nav-icon` dibuja con `width/height: 100%`, así que la medida la pone
+      // quien lo monta. Una regla sobre `svg` **no lo alcanza**: ese elemento
+      // pertenece a la vista del átomo, no a ésta, y el selector compilado le
+      // exige el atributo de este componente. Sin medida, el `100%` no tiene
+      // contra qué resolver y el navegador cae al tamaño por defecto de un
+      // reemplazado: 300 px por ícono, medidos a 390 de viewport.
+      expect(css).toContain('.public-nav-rail__icon app-nav-icon');
+      expect(css).not.toMatch(/\.public-nav-rail__icon\s+svg\s*\{/);
+    });
+
+    it('el contenedor de scroll es el bloque contenedor de lo absoluto', () => {
+      // El `<h2 class="sr-only">` de cada grupo es `position: absolute`. Con el
+      // rail en `static`, su bloque contenedor queda FUERA del contenedor de
+      // scroll: se planta en su posición estática dentro del contenido
+      // desplazado y el `overflow` de acá no lo recorta. Medido: un rótulo de
+      // 1 px, invisible, estirando la página de 390 a 626 y haciéndola
+      // scrollear a lo ancho.
+      const contenedor = css.slice(css.indexOf('.public-nav-rail {'));
+      const bloque = contenedor.slice(0, contenedor.indexOf('}'));
+
+      expect(bloque).toContain('position: relative');
+      expect(bloque).toContain('overflow-x: auto');
+    });
   });
 });
