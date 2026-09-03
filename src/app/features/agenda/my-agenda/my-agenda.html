@@ -87,13 +87,50 @@
           </button>
         </div>
       } @else {
-        <app-month-view
-          [mes]="mesVisible()"
-          [cupos]="cuposDelMes()"
-          [bloqueos]="bloqueosDelMes()"
-          (mesElegido)="cambiarMes($event)"
-          (diaElegido)="abrirDia($event)"
-        />
+        <!-- «Un botón para ver la semana y otro para ver el mes», del pedido
+             original. No se reemplazan: responden preguntas distintas. -->
+        <div class="mi-agenda__vistas" role="group" aria-label="Cómo mirar la agenda">
+          <button
+            app-button
+            [variant]="vista() === 'mes' ? 'secondary' : 'ghost'"
+            size="sm"
+            type="button"
+            data-testid="ver-mes"
+            [attr.aria-pressed]="vista() === 'mes'"
+            (clicked)="verMes()"
+          >
+            Mes
+          </button>
+          <button
+            app-button
+            [variant]="vista() === 'semana' ? 'secondary' : 'ghost'"
+            size="sm"
+            type="button"
+            data-testid="ver-semana"
+            [attr.aria-pressed]="vista() === 'semana'"
+            (clicked)="verSemana()"
+          >
+            Semana
+          </button>
+        </div>
+
+        @if (vista() === 'semana') {
+          <app-week-view
+            [semana]="semanaVisible()"
+            [cupos]="cuposDelMes()"
+            [bloqueos]="bloqueosDelMes()"
+            (semanaElegida)="cambiarSemana($event)"
+            (diaElegido)="abrirDia($event)"
+          />
+        } @else {
+          <app-month-view
+            [mes]="mesVisible()"
+            [cupos]="cuposDelMes()"
+            [bloqueos]="bloqueosDelMes()"
+            (mesElegido)="cambiarMes($event)"
+            (diaElegido)="abrirDia($event)"
+          />
+        }
       }
     } @else {
       <section class="mi-agenda__tarjeta">
@@ -125,6 +162,31 @@
             <!-- Las palabras y las mayúsculas son del propietario (punto 5). -->
             <app-badge variant="secondary">HORARIO PERMANENTE</app-badge>
           }
+          <!-- «Editar sobre la fila», del pedido original. Va acá y no en un
+               menú: cambiar el horario es lo que uno viene a hacer a esta
+               pantalla después de mirarlo. -->
+          <a
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="horario-editar"
+            [routerLink]="rutaEditarHorario"
+            aria-label="Cambiar mi horario"
+          >
+            ✎ Cambiar
+          </a>
+          <!-- Los bloqueos tienen pantalla propia desde que se les dio el mismo
+               flujo que a los horarios. Desde acá se llega, que es donde uno
+               mira su agenda y se acuerda de que cerró algo. -->
+          <a
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="ver-bloqueos"
+            [routerLink]="rutaBloqueos"
+          >
+            Ver mis bloqueos
+          </a>
         </p>
 
         @if (p.vigencia) {
@@ -179,6 +241,19 @@
                   (clicked)="verHorarioViejo(viejo)"
                 >
                   Ver cómo era
+                </button>
+                <!-- «Volví del viaje»: retirar era un camino de ida y publicar
+                     uno nuevo dejaba el viejo en la lista para siempre. -->
+                <button
+                  app-button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  data-testid="historico-reactivar"
+                  [isLoading]="operandoHorario() === viejo.id"
+                  (clicked)="reactivarHorario(viejo)"
+                >
+                  Volver a activarlo
                 </button>
               </li>
             }

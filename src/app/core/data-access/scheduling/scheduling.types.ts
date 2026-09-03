@@ -687,6 +687,19 @@ export interface RetiredTemplate {
 }
 
 /** Una plantilla publicada, con sus franjas. */
+/** Lo que responde reactivar un horario pausado. */
+export interface TemplateReactivated {
+  readonly id: string;
+  readonly statusConceptId: string;
+  /**
+   * El horario quedó vigente **sin cupos**: hay que generarlos.
+   *
+   * Retirar borró los libres, y reactivar no los repone a propósito —
+   * materializar los del mes pasado abriría turnos en fechas que ya pasaron.
+   */
+  readonly slotsPendientes: boolean;
+}
+
 export interface PublishedTemplate {
   readonly id: string;
   /**
@@ -719,7 +732,20 @@ export interface PublishedException {
   readonly exceptionTypeConceptId: string;
   readonly startAt: string;
   readonly endAt: string;
-  /** Por qué. Lo lee el profesional, no el paciente. */
+  /**
+   * El motivo catalogado, en castellano.
+   *
+   * Lo manda el servidor y **lo ve también el paciente** (9c): es una etiqueta
+   * de lista cerrada y no puede contener nada que el profesional no haya
+   * elegido a propósito.
+   */
+  readonly reasonLabel?: string;
+  /**
+   * La descripción libre. **Sólo la ve quien administra la agenda.**
+   *
+   * Es lo que se escribe al elegir un motivo, y ahí puede aparecer cualquier
+   * cosa — incluido el nombre de un tercero.
+   */
   readonly reason?: string;
   /** `true` cuando la excepción ABRE disponibilidad en vez de cerrarla. */
   readonly isAvailable?: boolean;

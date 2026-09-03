@@ -1,0 +1,78 @@
+<section class="semana" aria-label="Tu semana">
+  <header class="semana__barra">
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      data-testid="semana-anterior"
+      aria-label="Semana anterior"
+      (clicked)="anterior()"
+    >
+      ←
+    </button>
+
+    <div class="semana__cabecera">
+      <h3 class="semana__titulo">
+        {{ rotulo().desde | date: 'd MMM' }} – {{ rotulo().hasta | date: 'd MMM' }}
+      </h3>
+      <p class="semana__resumen" role="status">
+        @if (totalLibres() === 0) {
+          Sin turnos libres esta semana.
+        } @else {
+          {{ totalLibres() }} {{ totalLibres() === 1 ? 'turno libre' : 'turnos libres' }}.
+        }
+      </p>
+    </div>
+
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      data-testid="semana-siguiente"
+      aria-label="Semana siguiente"
+      (clicked)="siguiente()"
+    >
+      →
+    </button>
+  </header>
+
+  <ol class="semana__dias">
+    @for (dia of dias(); track dia.fecha.getTime()) {
+      <li class="semana__dia" [attr.data-estado]="dia.estado">
+        <button
+          type="button"
+          class="semana__boton"
+          [attr.data-testid]="'semana-dia'"
+          (click)="diaElegido.emit(dia.fecha)"
+        >
+          <span class="semana__nombre">{{ dia.fecha | date: 'EEE' }}</span>
+          <span class="semana__numero">{{ dia.fecha | date: 'd' }}</span>
+
+          <!-- El estado se dice con PALABRAS además de con color: quien no
+               distingue tonos tiene que poder leer si el día está cerrado. -->
+          @switch (dia.estado) {
+            @case ('bloqueado') {
+              <span class="semana__estado">{{ dia.motivo ?? 'Cerrado' }}</span>
+            }
+            @case ('sin-agenda') {
+              <span class="semana__estado">No atendés</span>
+            }
+            @case ('lleno') {
+              <span class="semana__estado">Lleno · {{ dia.tomados }}</span>
+            }
+            @default {
+              <span class="semana__estado">
+                {{ dia.libres }} {{ dia.libres === 1 ? 'libre' : 'libres' }}
+                @if (dia.tomados > 0) {
+                  · {{ dia.tomados }} con paciente
+                }
+              </span>
+            }
+          }
+        </button>
+      </li>
+    }
+  </ol>
+</section>

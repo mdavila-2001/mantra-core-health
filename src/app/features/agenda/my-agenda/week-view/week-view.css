@@ -1,0 +1,83 @@
+.semana__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+}
+
+.semana__cabecera {
+  text-align: center;
+}
+
+.semana__titulo {
+  margin: 0;
+  font-size: var(--fs-h3, 1.125rem);
+}
+
+.semana__resumen {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* Siete columnas en escritorio; en teléfono se apilan de a dos, que es donde
+   los números todavía se leen. */
+.semana__dias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+@media (min-width: 640px) {
+  .semana__dias {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+.semana__boton {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md, 8px);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.semana__nombre {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.semana__numero {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.semana__estado {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* El color acompaña a la palabra, no la reemplaza. */
+.semana__dia[data-estado='bloqueado'] .semana__boton {
+  border-color: var(--st-error-border, var(--border-subtle));
+}
+
+.semana__dia[data-estado='lleno'] .semana__boton {
+  border-color: var(--st-warning-border, var(--border-subtle));
+}
+
+.semana__dia[data-estado='libre'] .semana__boton,
+.semana__dia[data-estado='con-reservas'] .semana__boton {
+  border-color: var(--st-success-border, var(--border-subtle));
+}

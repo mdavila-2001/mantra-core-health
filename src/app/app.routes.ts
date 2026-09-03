@@ -1183,6 +1183,21 @@ export const routes: Routes = [
       pantallaDeOperacion('schedule', 'new', 'Publicar mi agenda', () =>
         import('./features/agenda/agenda-create/agenda-create').then((m) => m.AgendaCreate),
       ),
+      // `/schedule/edit`, que la bitácora pide como ruta APARTE de `/new`. Es
+      // la misma pantalla: el formulario ya sabía distinguir alta de cambio
+      // —precarga el horario vigente y el botón dice «Guardar»—, lo que no
+      // tenía era una dirección propia. Sin ella, «editar mi horario» no se
+      // podía enlazar desde ningún lado ni compartir.
+      pantallaDeOperacion('schedule', 'edit', 'Cambiar mi horario', () =>
+        import('./features/agenda/agenda-create/agenda-create').then((m) => m.AgendaCreate),
+      ),
+      // Los bloqueos, con el mismo flujo que los horarios. Es lo que el pedido
+      // original del carril 11 dice en mayúsculas: «TIENE EL MISMO DISEÑO Y
+      // RUTAS QUE TODO EL FLUJO DE HORARIOS». Hasta acá eran un panel dentro de
+      // «Mi agenda», sin lista, sin históricos y sin dirección propia.
+      pantallaDeOperacion('schedule', 'blocks', 'Bloqueos de agenda', () =>
+        import('./features/agenda/blocks/blocks').then((m) => m.Blocks),
+      ),
       // «Mi agenda» (MAC-4): el horario publicado, en palabras. Es la primera
       // pantalla donde un médico ve lo que publicó — hasta que existió el GET
       // de plantillas, no había forma de volver a leerlo.
