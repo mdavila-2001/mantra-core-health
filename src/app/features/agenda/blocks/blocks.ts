@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
+  AvailabilityExceptionType,
   AvailabilityExceptionTypeOption,
   PublishedException,
 } from '../../../core/data-access/scheduling/scheduling.types';
@@ -27,6 +28,11 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { misRecursosDeAgenda } from '../mi-recurso';
+import {
+  BlockForm,
+  type BloqueoEnEdicion,
+  type BloqueoPedido,
+} from '../my-agenda/block-form/block-form';
 
 /** Un bloqueo listo para pintar, con su motivo ya en palabras. */
 export interface BloqueoVisible {
@@ -37,6 +43,8 @@ export interface BloqueoVisible {
   readonly motivo: string;
   /** La descripción libre, sólo para quien administra la agenda. */
   readonly descripcion: string | null;
+  /** La clave del motivo, para poder precargarla al editar. */
+  readonly tipo: AvailabilityExceptionType;
   readonly cuando: string;
   /** Ya terminó: va al histórico y no se puede quitar de la agenda futura. */
   readonly pasado: boolean;
@@ -73,6 +81,7 @@ const MESES_ADELANTE = 12;
     AppButton,
     AppButtonLink,
     Badge,
+    BlockForm,
     PageHeader,
     RouterLink,
     ViewStateHost,
@@ -91,6 +100,72 @@ export class Blocks {
   protected readonly estado = signal<ViewState<readonly BloqueoVisible[]>>(loading());
   protected readonly motivos = signal<readonly AvailabilityExceptionTypeOption[]>([]);
   protected readonly borrando = signal<string | null>(null);
+  protected readonly guardando = signal(false);
+
+  /**
+   * El bloqueo que se está corrigiendo, o `null` si no hay ninguno.
+   *
+   * Se edita **con el mismo formulario que se crea**: escribir uno aparte es
+   * el camino corto que termina con dos formularios que divergen.
+   */
+  protected readonly editando = signal<BloqueoEnEdicion | null>(null);
+
+  protected editar(b: BloqueoVisible): void {
+    this.editando.set({
+      id: b.id,
+      desde: b.desde,
+      hasta: b.hasta,
+      exceptionType: b.tipo,
+      descripcion: b.descripcion,
+    });
+  }
+
+  protected cancelarEdicion(): void {
+    this.editando.set(null);
+  }
+
+  /**
+   * Guarda la corrección.
+   *
+   * Manda el rango completo aunque no se haya tocado: el formulario devuelve
+   * los dos instantes ya armados, y recalcular acá cuál cambió sería repetir
+   * una cuenta que él ya hizo.
+   */
+  protected guardar(pedido: BloqueoPedido): void {
+    const actual = this.editando();
+    if (actual === null || this.guardando()) return;
+
+    this.guardando.set(true);
+    this.scheduling
+      .updateException(actual.id, {
+        exceptionType: pedido.exceptionType,
+        reason: pedido.motivo,
+        startAt: pedido.desde.toISOString(),
+        endAt: pedido.hasta.toISOString(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.guardando.set(false);
+          this.editando.set(null);
+          this.toast.success(
+            res.blockedSlots > 0
+              ? `Se cerraron ${res.blockedSlots} ${res.blockedSlots === 1 ? 'turno' : 'turnos'} que quedaron dentro.`
+              : 'Los turnos que ya estaban cerrados siguen cerrados.',
+            'Bloqueo corregido',
+          );
+          this.cargar();
+        },
+        error: (error: unknown) => {
+          this.guardando.set(false);
+          this.toast.error(
+            errorToViewState(error).status === 'forbidden'
+              ? 'Esa agenda no es tuya.'
+              : 'No se pudo guardar el cambio.',
+            'No se guardó',
+          );
+        },
+      });
+  }
 
   private readonly recursoId = signal<string | null>(null);
 
@@ -141,7 +216,30 @@ export class Blocks {
     });
   }
 
+  /**
+   * Lee el catálogo **y después** los bloqueos, en ese orden.
+   *
+   * No es cosmético: cada bloqueo resuelve su motivo contra el catálogo para
+   * poder precargarlo al editar. Al revés —que es como estaba— la lista se
+   * arma con el catálogo vacío y **todos** los motivos caen en el respaldo.
+   *
+   * Si el catálogo falla se leen igual: la lista se ve, y lo único que se
+   * pierde es la precarga del motivo al corregir.
+   */
   private leerBloqueos(resourceId: string): void {
+    this.scheduling.listExceptionTypes().subscribe({
+      next: (catalogo) => {
+        this.motivos.set(catalogo.items);
+        this.leerLista(resourceId);
+      },
+      error: () => {
+        this.motivos.set([]);
+        this.leerLista(resourceId);
+      },
+    });
+  }
+
+  private leerLista(resourceId: string): void {
     const desde = new Date();
     desde.setMonth(desde.getMonth() - MESES_ATRAS);
     const hasta = new Date();
@@ -162,12 +260,6 @@ export class Blocks {
       error: (error: unknown) =>
         this.estado.set(errorToViewState<readonly BloqueoVisible[]>(error)),
     });
-
-    // El catálogo, para que el formulario de al lado no lo vuelva a pedir.
-    this.scheduling.listExceptionTypes().subscribe({
-      next: (catalogo) => this.motivos.set(catalogo.items),
-      error: () => this.motivos.set([]),
-    });
   }
 
   private aVisible(x: PublishedException): BloqueoVisible {
@@ -186,6 +278,12 @@ export class Blocks {
       // La etiqueta la manda el servidor. Si no vino, se dice que no se sabe en
       // vez de inventar un motivo.
       motivo: x.reasonLabel ?? 'Sin motivo registrado',
+      // El tipo se resuelve contra el catálogo: la lectura manda el concepto y
+      // el formulario necesita la clave. Sin coincidencia cae en `ABSENCE`,
+      // que es lo que la pantalla mandaba antes de que hubiera catálogo.
+      tipo:
+        this.motivos().find((m) => m.conceptId === x.exceptionTypeConceptId)?.type ??
+        'ABSENCE',
       descripcion: x.reason ?? null,
       cuando: todoElDia
         ? `${dia(desde)} — días completos`

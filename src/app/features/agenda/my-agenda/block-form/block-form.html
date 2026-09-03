@@ -1,5 +1,7 @@
 <app-card variant="outlined" padding="lg" class="bloqueo">
-  <h3 class="bloqueo__titulo">Bloquear días u horarios</h3>
+  <h3 class="bloqueo__titulo">
+    {{ esEdicion() ? 'Cambiar este bloqueo' : 'Bloquear días u horarios' }}
+  </h3>
   <p class="bloqueo__texto">
     Los turnos libres del período dejan de ofrecerse. Las citas ya reservadas
     <strong>no se tocan</strong>: si querés cancelarlas, hacelo una por una desde el día.
@@ -103,12 +105,23 @@
       />
     </app-form-field>
 
+    <!-- La consecuencia real de editar, dicha antes de guardar: es la P-11-3
+         resuelta, y si no se dijera, achicar un bloqueo dejaría al profesional
+         esperando turnos que no van a volver. -->
+    @if (esEdicion()) {
+      <p class="bloqueo__nota">
+        Si <strong>agrandás</strong> el rango se cierran los turnos nuevos que queden adentro. Si
+        lo <strong>achicás</strong>, los que ya estaban cerrados <strong>no vuelven</strong>: para
+        reabrirlos hay que volver a publicar el horario.
+      </p>
+    }
+
     @if (errorVisible(); as texto) {
       <p class="bloqueo__error" role="alert">{{ texto }}</p>
     }
 
     <div class="bloqueo__acciones">
-      <button app-button type="submit" variant="primary">Bloquear</button>
+      <button app-button type="submit" variant="primary">{{ esEdicion() ? 'Guardar cambios' : 'Bloquear' }}</button>
       <button app-button type="button" variant="ghost" (clicked)="cancelar.emit()">
         Cancelar
       </button>

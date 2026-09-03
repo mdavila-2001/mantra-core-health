@@ -597,6 +597,23 @@ export interface SlotsShifted {
   readonly shiftMinutes: number;
 }
 
+/** Cuerpo de `PATCH /scheduling/exceptions/:id`. Todo opcional. */
+export interface UpdateAvailabilityException {
+  readonly exceptionType?: AvailabilityExceptionType;
+  readonly reason?: string;
+  readonly startAt?: string;
+  readonly endAt?: string;
+}
+
+export interface AvailabilityExceptionUpdated {
+  /** El MISMO id: editar no borra y recrea. */
+  readonly id: string;
+  readonly startAt: string;
+  readonly endAt: string;
+  /** Cupos cerrados porque el rango creció. Achicar no reabre ninguno. */
+  readonly blockedSlots: number;
+}
+
 /** Cuerpo de `POST /scheduling/resources/:id/close-slots`. */
 export interface CloseSlotsRequest {
   readonly exceptionType: AvailabilityExceptionType;

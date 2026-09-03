@@ -11,6 +11,11 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 const TENANT = 't-1';
 const PERFIL = 'hp-1';
 
+/** El catálogo, para que el motivo se resuelva y se pueda precargar. */
+const CATALOGO = [
+  { type: 'VACATION', conceptId: 'c-1', label: 'Vacaciones', requiresText: false, blocks: true },
+];
+
 /**
  * LOS BLOQUEOS, CON SU PROPIO FLUJO — carril 11.
  *
@@ -64,10 +69,13 @@ describe('Blocks', () => {
       count: 1,
     });
     fixture.detectChanges();
+    // El catálogo va PRIMERO: cada bloqueo resuelve su motivo contra él para
+    // poder precargarlo al editar. Al revés, todos caerían en el respaldo.
+    http.expectOne('/scheduling/exception-types').flush({ items: CATALOGO });
+    fixture.detectChanges();
     http
       .expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions')
       .flush({ items, count: items.length });
-    http.expectOne('/scheduling/exception-types').flush({ items: [] });
     fixture.detectChanges();
   }
 
@@ -156,5 +164,48 @@ describe('Blocks', () => {
     // de pantalla vacía.
     crear(null);
     expect(acc().vigentes()).toEqual([]);
+  });
+
+  /**
+   * CORREGIR UN BLOQUEO — AC-11-7, con el mismo formulario que lo crea.
+   *
+   * Escribir uno aparte para editar es el camino corto que termina con dos
+   * formularios que divergen: uno gana un campo, el otro no, y a los seis
+   * meses nadie sabe cuál es el bueno.
+   */
+  describe('corregir un bloqueo', () => {
+    function editando(): { id: string; exceptionType: string } | null {
+      return (
+        fixture.componentInstance as never as {
+          editando: () => { id: string; exceptionType: string } | null;
+        }
+      ).editando();
+    }
+
+    it('precarga el motivo resuelto contra el catálogo', () => {
+      // Sin el catálogo leído antes, el motivo caería en el respaldo y editar
+      // cambiaría el tipo del bloqueo sin que nadie lo pidiera.
+      crear();
+      responder([bloqueo('b-1', 5)]);
+
+      const boton: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="bloqueo-editar"]',
+      );
+      boton?.click();
+      fixture.detectChanges();
+
+      expect(editando()?.id).toBe('b-1');
+      expect(editando()?.exceptionType).toBe('VACATION');
+    });
+
+    it('sólo lo vigente se puede corregir', () => {
+      // Un bloqueo que ya pasó no se toca: corregirlo no cambia ningún turno.
+      crear();
+      responder([bloqueo('b-viejo', -30)]);
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="bloqueo-editar"]'),
+      ).toBeNull();
+    });
   });
 });
