@@ -186,3 +186,127 @@ export interface PractitionerEntryResult {
   readonly invoiceId?: string;
   readonly notificationRequestId?: string;
 }
+
+/* ============================================================================
+    TAREA-20 S2 — MODO CONTADOR: asiento de N filas.
+    ========================================================================== */
+
+/** Una fila del formulario de N filas, antes de enviarla. */
+export interface JournalLineInput {
+  readonly accountId: string;
+  readonly direction: 'DEBIT' | 'CREDIT';
+  /** Decimal como texto, positivo. */
+  readonly amount: string;
+  readonly memo?: string;
+}
+
+/** Cuerpo de `POST /accounting/journal-transactions` y `.../drafts`. */
+export interface PostJournalInput {
+  readonly practiceId: string;
+  readonly transactionDate: string;
+  readonly description?: string;
+  readonly lines: readonly JournalLineInput[];
+}
+
+/** Respuesta al crear o postear un asiento. */
+export interface PostedJournalResult {
+  readonly id: string;
+  readonly transactionNumber: string;
+  readonly status: string;
+  readonly totalAmount: string;
+  readonly lineCount: number;
+  readonly postedAt?: Date;
+}
+
+/* ============================================================================
+    TAREA-20 S3 — libro mayor, estado de resultados, balance general.
+    ========================================================================== */
+
+/** Un movimiento del libro mayor de una cuenta, con saldo corrido. */
+export interface GeneralLedgerEntry {
+  readonly id: string;
+  readonly transactionId: string;
+  readonly transactionNumber?: string;
+  readonly transactionDate: Date;
+  readonly directionConceptId: string;
+  /** Decimal como texto. */
+  readonly debit: string;
+  /** Decimal como texto. */
+  readonly credit: string;
+  /** Saldo acumulado, con signo por naturaleza, decimal como texto. */
+  readonly runningBalance: string;
+  readonly memo?: string;
+}
+
+/** El libro mayor de una cuenta: una página de movimientos con saldo corrido. */
+export interface GeneralLedgerPage {
+  readonly accountId: string;
+  readonly code?: string;
+  readonly name?: string;
+  readonly normalBalanceConceptId?: string;
+  readonly currencyConceptId?: string;
+  /** Saldo antes de la primera fila de esta página, decimal como texto. */
+  readonly openingBalance: string;
+  readonly items: readonly GeneralLedgerEntry[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
+/** Filtros del libro mayor. */
+export interface GeneralLedgerQuery {
+  readonly accountId: string;
+  readonly from?: string;
+  readonly to?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Una cuenta agregada en un estado financiero. */
+export interface FinancialStatementLine {
+  readonly accountId: string;
+  readonly code?: string;
+  readonly name?: string;
+  readonly accountTypeConceptId: string;
+  /** Decimal como texto, con signo por naturaleza. */
+  readonly amount: string;
+}
+
+/** Filtros compartidos por estado de resultados y balance general. */
+export interface FinancialStatementQuery {
+  readonly fiscalPeriodId?: string;
+  readonly from?: string;
+  readonly to?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** El estado de resultados de una ventana. */
+export interface IncomeStatement {
+  readonly revenueItems: readonly FinancialStatementLine[];
+  readonly expenseItems: readonly FinancialStatementLine[];
+  readonly totalRevenue: string;
+  readonly totalExpense: string;
+  readonly netIncome: string;
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+  readonly truncated: boolean;
+}
+
+/** El balance general a una fecha de corte. */
+export interface BalanceSheet {
+  readonly assetItems: readonly FinancialStatementLine[];
+  readonly liabilityItems: readonly FinancialStatementLine[];
+  readonly equityItems: readonly FinancialStatementLine[];
+  readonly netIncomeOfPeriod: string;
+  readonly totalAssets: string;
+  readonly totalLiabilities: string;
+  readonly totalEquity: string;
+  readonly totalLiabilitiesAndEquity: string;
+  readonly balanced: boolean;
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+  readonly truncated: boolean;
+}
