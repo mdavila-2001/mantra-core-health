@@ -1,0 +1,70 @@
+/* El selector de práctica acotado: un `<select>` a todo el ancho parece un
+   campo de formulario largo y no la elección de destino que es. */
+.importar__practica {
+    margin-block-end: var(--sp-5);
+    max-inline-size: 24rem;
+}
+
+/* La tarjeta del procedimiento: alto flexible pero acción siempre abajo, para
+   que en una grilla de tarjetas desparejas los botones queden alineados. */
+.procedimiento {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    block-size: 100%;
+    padding: var(--sp-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+}
+
+.procedimiento__nombre {
+    margin: 0;
+    font-size: var(--fs-body);
+    font-weight: 600;
+    color: var(--text-primary);
+    /* Los nombres del arancel son largos y a veces vienen sin espacios por el
+       reconocimiento óptico: rompen dentro de la tarjeta, no la ensanchan. */
+    overflow-wrap: anywhere;
+}
+
+.procedimiento__grupo {
+    /* Una línea, con puntos suspensivos y el texto entero en el `title`.
+       En las filas dañadas por el reconocimiento óptico este campo trae
+       párrafos —«['ercae de raices nerviosas tordcicas o lumbares por via
+       epidural EE \»—, y sin acotarlo ocupa media tarjeta y empuja el precio
+       fuera de la vista. No se filtra ni se corrige: el dato es el que es. */
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* El precio en su propio renglón: es lo que se compara entre tarjetas, y
+   pegado al encabezado del arancel se perdía adentro del ruido. */
+.procedimiento__precio {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.procedimiento__aviso {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--sp-2);
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+}
+
+/* `margin-block-start: auto` y no `flex: 1` en el bloque de arriba: empuja la
+   acción al pie sin depender de que la tarjeta tenga altura definida. */
+.procedimiento__accion {
+    margin-block-start: auto;
+    padding-block-start: var(--sp-2);
+}

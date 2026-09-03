@@ -8,11 +8,29 @@
 :host {
     display: block;
     font-family: var(--font-body);
+    /* Sin esto, el `overflow-x` de más abajo no acota nada.
+       El ancho mínimo por defecto de un elemento —`auto`— es el de su
+       contenido, así que dentro de un contenedor flex o grid el host crece
+       hasta lo que mida la tabla y la caja con `overflow` nunca llega a ser más
+       angosta que ella. Medido en el listado de solicitudes a 390 px: tabla de
+       708 px y `document.scrollWidth` de 686 — la página entera se corría a lo
+       ancho aunque la tabla declaraba su propio scroll. */
+    min-inline-size: 0;
 }
 
 /* Una tabla ancha se desplaza dentro de su caja, no rompe la página. */
 .data-table__scroll {
     overflow-x: auto;
+    /* Misma razón que en el host, un nivel más adentro. */
+    min-inline-size: 0;
+    /* `relative` para que esta caja sea el bloque contenedor de lo que tenga
+       dentro con `position: absolute`.
+       Sin él, `overflow` **no recorta** a un descendiente absoluto cuyo bloque
+       contenedor esté más arriba: el texto sólo-lectores del encabezado de
+       detalle (`.sr-only`, que es absoluto) quedaba en x=409 medido contra el
+       marco de la aplicación y estiraba el ancho de scroll de la página a 410
+       en un viewport de 390 — la tabla ya no desbordaba y la página sí. */
+    position: relative;
 }
 
 .data-table__table {
@@ -50,6 +68,13 @@ thead .data-table__cell {
 
 .data-table__row:hover {
     background: var(--bg-inset);
+}
+
+/* Una fila que navega tiene que decirlo antes del clic: el cambio de fondo al
+   pasar por encima lo hacen todas, así que por sí solo no distingue «se puede
+   leer» de «se puede abrir». El cursor es lo que lo declara. */
+.data-table__row--navigable {
+    cursor: pointer;
 }
 
 .data-table__sort {

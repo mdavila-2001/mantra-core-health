@@ -49,7 +49,7 @@ import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-di
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
 import { ScheduleGrid } from './schedule-grid/schedule-grid';
-import { AGENDA_CREATE_ROUTE } from '../agenda.routes';
+import { AGENDA_CREATE_ROUTE, APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
 const NOMBRE_DEL_DIA = [
@@ -940,6 +940,15 @@ export class MyAgenda {
 
   /** Los bloqueos, que desde el carril 11 tienen su propio flujo. */
   protected readonly rutaBloqueos = '/schedule/blocks';
+
+  /**
+   * El alta de cita sin pasar por el calendario (TAREA-14).
+   *
+   * La entrada va acá porque es donde uno mira su agenda y se acuerda de que
+   * acordó una cita en el consultorio: hasta ahora la única forma de crearla
+   * era encontrar el día, tocar el rato y abrir la tarjeta.
+   */
+  protected readonly rutaAgendarCita = APPOINTMENT_NEW_ROUTE;
 
   /** El horario sobre el que hay una operación en vuelo. */
   protected readonly operandoHorario = signal<string | null>(null);

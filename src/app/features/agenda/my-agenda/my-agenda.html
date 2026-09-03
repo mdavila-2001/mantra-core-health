@@ -230,6 +230,17 @@
           >
             Ver mis bloqueos
           </a>
+          <!-- Agendar una cita sin ir a buscar el día: es lo que uno quiere
+               hacer justo después de acordarla en el consultorio. -->
+          <a
+            app-button
+            variant="secondary"
+            size="sm"
+            data-testid="agendar-cita"
+            [routerLink]="rutaAgendarCita"
+          >
+            Agendar una cita
+          </a>
         </p>
 
         @if (p.vigencia) {

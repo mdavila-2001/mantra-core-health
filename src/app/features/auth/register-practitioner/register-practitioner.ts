@@ -447,10 +447,12 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
-    // Documento de identidad boliviano: obligatorio según normativa y registro del cliente (§1.2).
+    // Documento de identidad boliviano: opcional para el profesional. El médico
+    // se identifica por su matrícula profesional (licenseNumber), no por su CI.
+    // Si se ingresa, debe cumplir con el formato de documento válido.
     nationalId: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(DOCUMENTO_VALIDO)],
+      validators: [Validators.pattern(DOCUMENTO_VALIDO)],
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     credentialNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -785,8 +787,38 @@ export class RegisterPractitioner {
    * `paginarCampos`: es la función la que hace cumplir el tope, y declararlo a
    * mano sería confiar en que quien agregue el campo trece se acuerde de contar.
    */
-  readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() =>
-    paginarCampos([
+  readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() => {
+    const titulo = this.tituloProfesionalElegido();
+    const esOdontologo = titulo === TITULO_ODONTOLOGO;
+    const esMedico = TITULOS_MEDICOS.has(titulo);
+
+    const rotuloMatricula = esOdontologo
+      ? 'Matrícula de Odontólogo'
+      : esMedico
+        ? 'Matrícula Profesional (Médico)'
+        : 'Matrícula profesional';
+
+    const hintMatricula = esOdontologo
+      ? 'La de tu habilitación profesional como odontólogo.'
+      : 'La que te habilita a ejercer, la del registro del Ministerio.';
+
+    const placeholderMatricula = esOdontologo ? 'ODO-12345' : 'MP-12345';
+
+    const rotuloColegio = esOdontologo
+      ? 'Registro del Colegio de Odontólogos'
+      : esMedico
+        ? 'Registro del Colegio Médico'
+        : 'Número de colegio';
+
+    const hintColegio = esOdontologo
+      ? 'El de tu colegio profesional de odontólogos.'
+      : esMedico
+        ? 'El de tu Colegio Médico departamental o nacional.'
+        : 'El de tu colegio profesional.';
+
+    const placeholderColegio = esOdontologo ? 'COL-ODO-6789' : 'TIT-6789';
+
+    return paginarCampos([
       {
         titulo: '¿Cómo te llamás?',
         clave: 'name',
@@ -831,12 +863,11 @@ export class RegisterPractitioner {
         titulo: 'Tu documento de identidad',
         clave: 'document',
         icon: 'patients',
-        hint: 'Obligatorio. Identifica a la persona detrás de la matrícula.',
+        hint: 'Opcional. Identifica a la persona detrás de la matrícula.',
         campos: [
           {
             key: 'nationalId',
-            label: 'Cédula de identidad',
-            required: true,
+            label: 'Cédula de identidad (opcional)',
             hint: 'Se guarda como tu documento oficial.',
             description:
               'No es con lo que iniciás sesión —eso es tu correo—, pero es lo que ata tu matrícula a una persona.',
@@ -849,7 +880,7 @@ export class RegisterPractitioner {
             // pareja que en el alta de paciente, y por lo mismo — el número y
             // su expedición son un solo documento.
             ancho: 'mitad',
-            mensajeDeError: 'Ingresá tu cédula de identidad.',
+            mensajeDeError: 'Ingresá un documento válido: letras, números, punto y guion.',
           },
           this.campoDepartamentoEmisor('registro-pro-departamento-ci'),
         ],
@@ -957,14 +988,14 @@ export class RegisterPractitioner {
         campos: [
           {
             key: 'licenseNumber',
-            label: 'Matrícula profesional',
-            hint: 'La que te habilita a ejercer, la del registro del Ministerio.',
+            label: rotuloMatricula,
+            hint: hintMatricula,
             description:
               'Es la que comprobamos antes de que aparezcas en el directorio: es lo que le da certeza a quien te elige sin conocerte.',
             control: 'text',
             required: true,
             autocomplete: 'off',
-            placeholder: 'MP-12345',
+            placeholder: placeholderMatricula,
             testId: 'registro-pro-matricula',
             icono: 'shield',
             // Los dos números de la habilitación, en el mismo renglón: se
@@ -974,12 +1005,12 @@ export class RegisterPractitioner {
           },
           {
             key: 'credentialNumber',
-            label: 'Número de colegio',
-            hint: 'El de tu colegio profesional.',
+            label: rotuloColegio,
+            hint: hintColegio,
             control: 'text',
             required: true,
             autocomplete: 'off',
-            placeholder: 'TIT-6789',
+            placeholder: placeholderColegio,
             testId: 'registro-pro-credencial',
             icono: 'briefcase',
             ancho: 'mitad',
@@ -1064,8 +1095,8 @@ export class RegisterPractitioner {
           },
         ],
       },
-    ]),
-  );
+    ]);
+  });
 
   /**
    * El campo del departamento que emitió el documento.
@@ -1428,10 +1459,12 @@ export class RegisterPractitioner {
       ...(this.ocupacionEsOtra() && ocupacionTexto !== ''
         ? { occupationFreeText: ocupacionTexto }
         : {}),
-      nationalId: documento,
+      ...(documento === '' ? {} : { nationalId: documento }),
       // Sólo tiene sentido con documento: sin CI no hay identificador al que
       // atarle un departamento de emisión.
-      ...(departamento === null ? {} : { issuerAdministrativeAreaConceptId: departamento }),
+      ...(documento !== '' && departamento !== null
+        ? { issuerAdministrativeAreaConceptId: departamento }
+        : {}),
       ...(municipio === null ? {} : { residenceMunicipalityConceptId: municipio }),
       licenseNumber: raw.licenseNumber.trim(),
       credentialNumber: raw.credentialNumber.trim(),

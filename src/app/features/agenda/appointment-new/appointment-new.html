@@ -1,0 +1,149 @@
+<app-page-header
+  title="Agendar una cita"
+  subtitle="Elegís el rato, no un turno publicado."
+>
+  <a page-actions [routerLink]="[rutaDeMiAgenda]">Volver a mi agenda</a>
+</app-page-header>
+
+@if (cargandoAgendas()) {
+  <p class="cita__cargando">Buscando tus agendas…</p>
+} @else if (agendas().length === 0) {
+  <!-- Sin agenda no hay dónde poner la cita, y decirlo así evita que alguien
+       complete el formulario para descubrirlo al guardar. -->
+  <app-alert variant="info" data-testid="cita-sin-agenda">
+    Todavía no tenés una agenda publicada. Creala desde
+    <a [routerLink]="[rutaDeMiAgenda]">Mi agenda</a> y volvé.
+  </app-alert>
+} @else {
+  <form class="cita" (submit)="$event.preventDefault(); guardar()">
+    <!-- La agenda sólo se pregunta si hay más de una. Elegirla ES elegir la
+         sede: son el mismo dato, y preguntar las dos por separado invita a que
+         no coincidan.
+
+         **No hay campo de profesional, y no falta.** La cita nace en la agenda
+         de quien tiene la sesión; el servidor impone lo mismo, así que forzar
+         otra responde 403. -->
+    @if (hayQueElegirAgenda()) {
+      <app-form-field
+        label="¿En qué consultorio?"
+        hint="Elegir la agenda es elegir la sede."
+        [required]="true"
+      >
+        <app-select
+          data-testid="cita-agenda"
+          [options]="opcionesDeAgenda()"
+          [value]="agendaElegida()"
+          (valueChange)="agendaElegida.set($event)"
+        />
+      </app-form-field>
+    }
+
+    <app-form-field label="¿Con quién?" [required]="true">
+      <app-reference-combobox
+        data-testid="cita-paciente"
+        [selected]="paciente()"
+        [options]="candidatos()"
+        [loading]="buscando()"
+        placeholder="Nombre o código del paciente"
+        emptyMessage="Ningún paciente coincide"
+        (searched)="buscarPaciente($event)"
+        (selectionChange)="paciente.set($event)"
+      />
+    </app-form-field>
+
+    <div class="cita__cuando">
+      <!-- El día va con el organismo del sistema y no con un `<input
+           type="date">`: el nativo se dibuja distinto en cada navegador, y el
+           del sistema ya resuelve el teclado, el foco y el formato de acá. -->
+      <app-form-field label="Día" [required]="true">
+        <app-date-picker
+          data-testid="cita-fecha"
+          [minDate]="hoy"
+          [value]="dia()"
+          (valueChange)="dia.set($event)"
+        />
+      </app-form-field>
+      <!-- La hora es un campo de texto, igual que en la tarjeta del día: el
+           producto no tiene todavía un selector de hora propio, y el nativo
+           traería el mismo problema que el de fecha. -->
+      <app-form-field label="Hora de inicio" hint="En 24 horas: 09:30" [required]="true">
+        <app-input data-testid="cita-hora" [(value)]="hora" placeholder="09:30" />
+      </app-form-field>
+    </div>
+
+    <!-- La duración es libre: la cirugía de tres horas y la consulta de
+         cuarenta y cinco conviven, y acotarla a la del turno publicado
+         convertiría esto en el formulario del paciente. El select ofrece los
+         atajos; el campo acepta cualquier número de minutos. -->
+    <div class="cita__duracion">
+      <app-form-field label="Duración" [required]="true">
+        <app-select
+          data-testid="cita-duracion"
+          [options]="opcionesDeDuracion"
+          [value]="duracion()"
+          (valueChange)="duracion.set($event ?? '')"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Minutos exactos"
+        hint="Para una cirugía o un control largo."
+      >
+        <app-input
+          type="number"
+          data-testid="cita-duracion-libre"
+          [(value)]="duracion"
+        />
+      </app-form-field>
+    </div>
+
+    <fieldset class="cita__modalidad">
+      <legend class="cita__modalidad-titulo">¿Cómo lo atendés?</legend>
+      <div class="cita__modalidad-opciones">
+        @for (opcion of modalidades; track opcion.valor) {
+          <label class="cita__modalidad-opcion">
+            <input
+              type="radio"
+              name="modalidad"
+              [value]="opcion.valor"
+              [checked]="modalidad() === opcion.valor"
+              (change)="modalidad.set(opcion.valor)"
+            />
+            <span>{{ opcion.nombre }}</span>
+          </label>
+        }
+      </div>
+    </fieldset>
+
+    <app-form-field label="Motivo" hint="Lo ve el paciente en su aviso.">
+      <app-input
+        data-testid="cita-motivo"
+        [(value)]="motivo"
+        placeholder="Control de presión"
+      />
+    </app-form-field>
+
+    @if (queVaAPasar(); as aviso) {
+      <p class="cita__aviso" data-testid="cita-que-pasa">{{ aviso }}</p>
+    }
+
+    <!-- El 422 del servidor, tal cual. La regla madre cruza todas las sedes y
+         su mensaje ya dice qué, cuándo y dónde: reescribirlo acá sólo podría
+         empeorarlo. -->
+    @if (error(); as fallo) {
+      <app-alert variant="error" data-testid="cita-error">{{ fallo }}</app-alert>
+    }
+
+    <div class="cita__acciones">
+      <a app-button variant="ghost" [routerLink]="[rutaDeMiAgenda]">Cancelar</a>
+      <button
+        app-button
+        variant="primary"
+        type="submit"
+        data-testid="cita-guardar"
+        [disabled]="!puedeGuardar()"
+      >
+        {{ guardando() ? 'Agendando…' : 'Agendar la cita' }}
+      </button>
+    </div>
+  </form>
+}

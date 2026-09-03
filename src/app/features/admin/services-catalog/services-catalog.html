@@ -3,6 +3,18 @@
   subtitle="La lista fija de servicios sobre la que cada médico arma su presupuesto."
   [breadcrumbs]="breadcrumbs()"
 >
+  <!-- Importar del arancel: la vía corta para no escribir a mano un
+       procedimiento que el arancel de honorarios ya define, con su precio de
+       referencia. -->
+  <a
+    app-button
+    page-actions
+    variant="secondary"
+    data-testid="catalogo-servicios-importar"
+    [routerLink]="['/administration/services-catalog/import']"
+  >
+    Importar producto
+  </a>
   <button
     app-button
     page-actions

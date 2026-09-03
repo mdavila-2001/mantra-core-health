@@ -1,0 +1,141 @@
+<app-page-header
+  title="Solicitudes de seguro"
+  subtitle="Lo que se presentó a cada aseguradora, con lo que aprobó."
+/>
+
+<!-- El filtro por aseguradora. Es el único que la API aplica de verdad: el
+     rango de fechas y el estado existen en el contrato y todavía no tienen
+     control en pantalla, y un selector que no filtra es peor que ninguno. -->
+<form class="claims__filters" (submit)="$event.preventDefault()">
+  <app-form-field label="Aseguradora" controlId="claims-carrier">
+    <app-select
+      id="claims-carrier"
+      data-testid="claims-carrier-filter"
+      [options]="carrierOptions()"
+      [value]="carrierFilter()"
+      (valueChange)="filterByCarrier($event)"
+    />
+  </app-form-field>
+</form>
+
+<app-data-table
+  [state]="results()"
+  [columns]="columns()"
+  [trackBy]="byId"
+  [cursor]="cursor()"
+  rowNavigable
+  caption="Solicitudes de seguro presentadas"
+  (rowActivated)="openClaim($event)"
+  (cursorChanged)="move($event)"
+  (retry)="retry()"
+/>
+
+<!-- ---- celdas ------------------------------------------------------------ -->
+
+<!-- El identificador es un enlace real: está en el orden de tabulación,
+     anuncia adónde lleva y se puede abrir en otra pestaña. La fila entera
+     también navega, pero eso es comodidad de puntero — no sustituye a esto. -->
+<ng-template #claimCell let-claim>
+  <a
+    class="claims__link"
+    data-testid="claim-link"
+    [routerLink]="['/administration/insurance-claims', claim.id]"
+  >
+    {{ claim.claimIdentifier }}
+  </a>
+  @if (claim.hasOpenDispute) {
+    <app-badge variant="warning" size="sm">Reclamada</app-badge>
+  }
+</ng-template>
+
+<!-- El nombre del paciente abre su ficha. Es un `<button>` y no un `<div>` con
+     `(click)`: así responde a Enter y a Espacio sin que haya que reimplementar
+     el teclado, que es lo que pide AC-16-3. -->
+<ng-template #patientCell let-claim>
+  <button
+    type="button"
+    class="claims__patient"
+    data-testid="claim-patient"
+    [attr.aria-label]="
+      'Ver los datos de ' + (claim.patient.displayName ?? claim.patient.patientCode ?? 'el paciente')
+    "
+    (click)="patientOnView.set(claim)"
+  >
+    {{ claim.patient.displayName ?? claim.patient.patientCode ?? 'Paciente sin nombre registrado' }}
+  </button>
+</ng-template>
+
+<ng-template #billedCell let-claim>
+  <span class="claims__money">{{ money(claim.billedTotal) }}</span>
+</ng-template>
+
+<!-- El total aprobado vacío se dice con palabras, no con «0.00»: un cero es un
+     dictamen que denegó todo, y esto es la ausencia de dictamen. -->
+<ng-template #approvedCell let-claim>
+  <span
+    class="claims__money"
+    [class.claims__money--absent]="claim.approvedTotal === null"
+    data-testid="claim-approved"
+  >
+    {{ money(claim.approvedTotal) }}
+  </span>
+</ng-template>
+
+<ng-template #submittedCell let-claim>
+  @if (claim.submittedAt) {
+    <time class="claims__date" [attr.datetime]="claim.submittedAt.toISOString()">
+      {{ claim.submittedAt.toLocaleDateString('es-BO') }}
+    </time>
+  } @else {
+    <span class="claims__absent">Sin enviar</span>
+  }
+</ng-template>
+
+<ng-template #statusCell let-claim>
+  @if (claim.status) {
+    <app-badge variant="info" size="sm">{{ claim.status.display }}</app-badge>
+  } @else {
+    <span class="claims__absent">Sin estado</span>
+  }
+</ng-template>
+
+<!-- ---- ficha del paciente ------------------------------------------------ -->
+
+@if (patientOnView(); as claim) {
+  <app-content-dialog
+    heading="Datos del paciente"
+    [description]="'Solicitud ' + claim.claimIdentifier"
+    (closed)="patientOnView.set(null)"
+  >
+    <dl class="claims__patient-facts" data-testid="claim-patient-popup">
+      <div>
+        <dt>Nombre</dt>
+        <dd>{{ claim.patient.displayName ?? 'Sin nombre registrado' }}</dd>
+      </div>
+      <div>
+        <dt>Código de paciente</dt>
+        <dd>{{ claim.patient.patientCode ?? 'Sin registrar' }}</dd>
+      </div>
+      <div>
+        <dt>Afiliado</dt>
+        <dd>{{ claim.patient.memberIdentifier ?? 'Sin registrar' }}</dd>
+      </div>
+      <div>
+        <dt>Seguro</dt>
+        <dd>{{ claim.carrierName }}</dd>
+      </div>
+      <div>
+        <dt>Póliza</dt>
+        <dd>{{ claim.policyIdentifier ?? 'Sin registrar' }}</dd>
+      </div>
+    </dl>
+
+    <!-- Deliberadamente no hay motivo de consulta ni diagnóstico. Una pantalla
+         de seguros identifica al paciente y su cobertura; el historial clínico
+         no es lo que se está mirando. -->
+    <p class="claims__patient-note">
+      Esta ficha muestra la identificación y la cobertura. No incluye datos
+      clínicos.
+    </p>
+  </app-content-dialog>
+}

@@ -23,9 +23,14 @@ services:
     # en recuperación con la demo a un día. Con un tope, el que se queda sin aire
     # es el que lo gasta, y se reinicia solo.
     #
-    # 3 GB es holgado para compilar esta aplicación (el build de producción cabe
-    # en menos de 2) y deja sitio para la API y la base en una máquina de 16 GB.
-    mem_limit: 3g
+    # 3 GB dejó de alcanzar (2026-09-03): el build en frío de `ng serve` —el que
+    # corre sin caché en `.angular`, típicamente el primer arranque tras un
+    # `docker compose up` sobre un volumen nuevo— mide ~3,6 GB de pico (ng serve
+    # + esbuild + yarn como PID 1), y el kernel mataba el contenedor antes de
+    # que llegara a servir nada: loop de reinicio con "Building..." como único
+    # log. Medido corriendo la misma imagen sin techo. 6 GB deja margen sobre
+    # ese pico y sigue dejando sitio para la API y la base en una máquina de 16 GB.
+    mem_limit: 6g
 
     environment:
       # El heap de Node, por debajo del techo del contenedor: así el recolector

@@ -653,6 +653,53 @@ describe('RegisterPractitioner', () => {
     });
   });
 
+  describe('rótulos dinámicos de matrícula y colegio según profesión (M-1.4.3)', () => {
+    function campoCredencial(key: 'licenseNumber' | 'credentialNumber') {
+      const pagina = component.paginasProfesional().find((p) => p.clave === 'credentials');
+      return pagina?.campos.find((c) => c.key === key);
+    }
+
+    it('por defecto muestra los rótulos generales de matrícula y colegio', () => {
+      expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula profesional');
+      expect(campoCredencial('credentialNumber')?.label).toBe('Número de colegio');
+    });
+
+    it('al seleccionar Odontólogo cambia a Matrícula de Odontólogo y Registro del Colegio de Odontólogos', () => {
+      component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
+      fixture.detectChanges();
+
+      expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula de Odontólogo');
+      expect(campoCredencial('licenseNumber')?.placeholder).toBe('ODO-12345');
+      expect(campoCredencial('credentialNumber')?.label).toBe('Registro del Colegio de Odontólogos');
+      expect(campoCredencial('credentialNumber')?.placeholder).toBe('COL-ODO-6789');
+    });
+
+    it('al seleccionar Médico cambia a Matrícula Profesional (Médico) y Registro del Colegio Médico', () => {
+      component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+      fixture.detectChanges();
+
+      expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula Profesional (Médico)');
+      expect(campoCredencial('licenseNumber')?.placeholder).toBe('MP-12345');
+      expect(campoCredencial('credentialNumber')?.label).toBe('Registro del Colegio Médico');
+      expect(campoCredencial('credentialNumber')?.placeholder).toBe('TIT-6789');
+    });
+
+    it('al cambiar de profesión los rótulos se actualizan reactivamente', () => {
+      component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
+      fixture.detectChanges();
+      expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula de Odontólogo');
+
+      component.formProfesional.controls.professionalTitle.setValue('Médico especialista / Médica especialista');
+      fixture.detectChanges();
+      expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula Profesional (Médico)');
+
+      component.formProfesional.controls.professionalTitle.setValue('Licenciado / Licenciada en Nutrición');
+      fixture.detectChanges();
+      expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula profesional');
+      expect(campoCredencial('credentialNumber')?.label).toBe('Número de colegio');
+    });
+  });
+
   it('va a otro endpoint que el alta de paciente y manda los cinco campos obligatorios', () => {
     completarProfesional();
     component.submit();
@@ -674,10 +721,21 @@ describe('RegisterPractitioner', () => {
     req.flush(RESPUESTA_PRO);
   });
 
-  it('el documento de identidad es obligatorio para el profesional boliviano', () => {
+  it('el documento de identidad es opcional para el profesional y no viaja si está vacío', () => {
     completarProfesional({ nationalId: '' });
+    expect(component.formProfesional.controls.nationalId.valid).toBe(true);
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.nationalId).toBeUndefined();
+    expect(req.request.body.issuerAdministrativeAreaConceptId).toBeUndefined();
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('si se ingresa un documento de identidad con formato inválido, el control se invalida', () => {
+    completarProfesional({ nationalId: 'CI Con Espacios!' });
     expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
-    expect(component.formProfesional.controls.nationalId.errors?.['required']).toBe(true);
   });
 
   it('agrega segundo nombre y apellido materno solo si se completaron', () => {

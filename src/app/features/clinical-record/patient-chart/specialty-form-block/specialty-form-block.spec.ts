@@ -3,7 +3,13 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { SpecialtyFormBlock, PLANTILLA_HOJA_LIBRE } from './specialty-form-block';
+import {
+  BLOQUE_DIAGNOSTICO,
+  BLOQUE_LABORATORIO,
+  BLOQUE_PROCEDIMIENTOS,
+  PLANTILLA_HOJA_LIBRE,
+  SpecialtyFormBlock,
+} from './specialty-form-block';
 
 /**
  * Completar la plantilla de la especialidad dentro del encuentro — carril 2,
@@ -71,9 +77,7 @@ describe('SpecialtyFormBlock', () => {
     // preseleccionar su plantilla. La mayoría de los casos no la ejerce, así
     // que se drena acá: sin perfil profesional —lo que responde el 404— el
     // bloque sigue funcionando con el selector de siempre.
-    for (const perfil of http.match(
-      (r) => r.url === '/profiles/practitioners/me/summary',
-    )) {
+    for (const perfil of http.match((r) => r.url === '/profiles/practitioners/me/summary')) {
       if (!perfil.cancelled) {
         perfil.flush({ code: 'NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
       }
@@ -120,19 +124,41 @@ describe('SpecialtyFormBlock', () => {
   /**
    * Las **plantillas** que ofrece el desplegable.
    *
-   * Deja fuera la hoja en blanco a propósito: no es una plantilla sino la
-   * opción de no usar ninguna, y siempre está. Si contara, cada prueba sobre
-   * qué fichas se ofrecen tendría que sumarle uno, y el número dejaría de decir
-   * lo que la prueba quiere decir. Que la hoja esté, y esté primera, lo fija su
-   * propia prueba.
+   * Deja fuera las cuatro entradas fijas a propósito —diagnóstico, hoja en
+   * blanco, procedimiento y laboratorio—: no son plantillas del catálogo sino
+   * lo que se puede completar sin ninguna, y están siempre. Si contaran, cada
+   * prueba sobre qué fichas se ofrecen tendría que sumarles cuatro, y el número
+   * dejaría de decir lo que la prueba quiere decir. Que estén, y en qué orden,
+   * lo fija su propia prueba.
    */
+  const ENTRADAS_FIJAS: readonly string[] = [
+    BLOQUE_DIAGNOSTICO,
+    PLANTILLA_HOJA_LIBRE,
+    BLOQUE_PROCEDIMIENTOS,
+    BLOQUE_LABORATORIO,
+  ];
+
   function etiquetasOfrecidas(): string[] {
     return opcionesCrudas()
-      .filter((opcion) => opcion.value !== PLANTILLA_HOJA_LIBRE)
+      .filter((opcion) => !ENTRADAS_FIJAS.includes(opcion.value))
       .map((opcion) => opcion.label);
   }
 
-  /** El desplegable tal cual, con la hoja en blanco incluida. */
+  /**
+   * Vacía las lecturas que dispara el bloque recién montado.
+   *
+   * Diagnóstico, procedimiento y laboratorio traen cada uno sus catálogos y su
+   * histórico. Esta prueba mira que se dibuje el bloque correcto, no lo que
+   * cada uno hace con sus datos, pero el `afterEach` verifica que no queden
+   * peticiones sin responder: se les contesta vacío y listo.
+   */
+  function drenarLecturasDelBloque(): void {
+    for (const peticion of http.match(() => true)) {
+      peticion.flush({ items: [], options: [], nextCursor: null });
+    }
+  }
+
+  /** El desplegable tal cual, con las entradas fijas incluidas. */
   function opcionesCrudas(): readonly { value: string; label: string }[] {
     return interno<() => readonly { value: string; label: string }[]>('opcionesDePlantilla')();
   }
@@ -144,9 +170,7 @@ describe('SpecialtyFormBlock', () => {
   function peticionDeRespuesta() {
     return http.expectOne(
       (r) =>
-        r.url === '/forms/instances' &&
-        r.method === 'GET' &&
-        r.params.get('encounter') === 'enc-1',
+        r.url === '/forms/instances' && r.method === 'GET' && r.params.get('encounter') === 'enc-1',
     );
   }
 
@@ -166,7 +190,14 @@ describe('SpecialtyFormBlock', () => {
     ...INSTANCIA,
     values: [
       { id: 'v-1', fieldId: 'f-1', dataType: 'string', value: 'Buena', ordinal: 0, masked: false },
-      { id: 'v-2', fieldId: 'f-2', dataType: 'boolean', value: 'SECRETO', ordinal: 1, masked: true },
+      {
+        id: 'v-2',
+        fieldId: 'f-2',
+        dataType: 'boolean',
+        value: 'SECRETO',
+        ordinal: 1,
+        masked: true,
+      },
     ],
   };
 
@@ -175,9 +206,7 @@ describe('SpecialtyFormBlock', () => {
     peticionDePlantillas().flush([PLANTILLA]);
     fixture.detectChanges();
     peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
-    http
-      .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
-      .flush(DETALLE);
+    http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
     fixture.detectChanges();
   }
 
@@ -343,9 +372,7 @@ describe('SpecialtyFormBlock', () => {
 
     // La relectura posterior encuentra la instancia recién guardada.
     peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
-    http
-      .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
-      .flush(DETALLE);
+    http.expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET').flush(DETALLE);
     fixture.detectChanges();
 
     const html = fixture.nativeElement as HTMLElement;
@@ -421,28 +448,30 @@ describe('SpecialtyFormBlock', () => {
   it('una especialidad que ya no ejerce no decide la plantilla', () => {
     peticionDePlantillas().flush([PLANTILLA, { ...PLANTILLA, id: 'tpl-2' }]);
 
-    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush({
-      profileId: 'hp-1',
-      personId: 'per-1',
-      practitionerCode: 'MP-1',
-      specialties: [
-        {
-          id: 'sp-vieja',
-          specialtyConceptId: 'sp-1',
-          isPrimary: true,
-          boardCertified: false,
-          verificationStatusConceptId: 'vs-1',
-          // Dejó de ejercerla: no puede decidir qué ficha se le ofrece hoy.
-          validTo: '2025-01-01',
-        },
-      ],
-      credentials: [],
-      licenses: [],
-      languages: [],
-      affiliations: [],
-      activity: {},
-      createdAt: '2026-08-17T14:00:00.000Z',
-    });
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
+      .flush({
+        profileId: 'hp-1',
+        personId: 'per-1',
+        practitionerCode: 'MP-1',
+        specialties: [
+          {
+            id: 'sp-vieja',
+            specialtyConceptId: 'sp-1',
+            isPrimary: true,
+            boardCertified: false,
+            verificationStatusConceptId: 'vs-1',
+            // Dejó de ejercerla: no puede decidir qué ficha se le ofrece hoy.
+            validTo: '2025-01-01',
+          },
+        ],
+        credentials: [],
+        licenses: [],
+        languages: [],
+        affiliations: [],
+        activity: {},
+        createdAt: '2026-08-17T14:00:00.000Z',
+      });
 
     expect(interno<() => string | null>('plantillaId')()).toBeNull();
   });
@@ -456,28 +485,30 @@ describe('SpecialtyFormBlock', () => {
   it('una especialidad con recertificación futura sigue decidiendo la plantilla', () => {
     peticionDePlantillas().flush([PLANTILLA, { ...PLANTILLA, id: 'tpl-2' }]);
 
-    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush({
-      profileId: 'hp-1',
-      personId: 'per-1',
-      practitionerCode: 'MP-1',
-      specialties: [
-        {
-          id: 'sp-vigente',
-          specialtyConceptId: 'sp-1',
-          isPrimary: true,
-          boardCertified: true,
-          verificationStatusConceptId: 'vs-1',
-          validFrom: '2020-01-01',
-          validTo: '2030-01-01',
-        },
-      ],
-      credentials: [],
-      licenses: [],
-      languages: [],
-      affiliations: [],
-      activity: {},
-      createdAt: '2026-08-17T14:00:00.000Z',
-    });
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
+      .flush({
+        profileId: 'hp-1',
+        personId: 'per-1',
+        practitionerCode: 'MP-1',
+        specialties: [
+          {
+            id: 'sp-vigente',
+            specialtyConceptId: 'sp-1',
+            isPrimary: true,
+            boardCertified: true,
+            verificationStatusConceptId: 'vs-1',
+            validFrom: '2020-01-01',
+            validTo: '2030-01-01',
+          },
+        ],
+        credentials: [],
+        licenses: [],
+        languages: [],
+        affiliations: [],
+        activity: {},
+        createdAt: '2026-08-17T14:00:00.000Z',
+      });
 
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-1');
   });
@@ -486,27 +517,29 @@ describe('SpecialtyFormBlock', () => {
   it('una especialidad que todavía no empezó no decide la plantilla', () => {
     peticionDePlantillas().flush([PLANTILLA, { ...PLANTILLA, id: 'tpl-2' }]);
 
-    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush({
-      profileId: 'hp-1',
-      personId: 'per-1',
-      practitionerCode: 'MP-1',
-      specialties: [
-        {
-          id: 'sp-futura',
-          specialtyConceptId: 'sp-1',
-          isPrimary: true,
-          boardCertified: false,
-          verificationStatusConceptId: 'vs-1',
-          validFrom: '2030-01-01',
-        },
-      ],
-      credentials: [],
-      licenses: [],
-      languages: [],
-      affiliations: [],
-      activity: {},
-      createdAt: '2026-08-17T14:00:00.000Z',
-    });
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
+      .flush({
+        profileId: 'hp-1',
+        personId: 'per-1',
+        practitionerCode: 'MP-1',
+        specialties: [
+          {
+            id: 'sp-futura',
+            specialtyConceptId: 'sp-1',
+            isPrimary: true,
+            boardCertified: false,
+            verificationStatusConceptId: 'vs-1',
+            validFrom: '2030-01-01',
+          },
+        ],
+        credentials: [],
+        licenses: [],
+        languages: [],
+        affiliations: [],
+        activity: {},
+        createdAt: '2026-08-17T14:00:00.000Z',
+      });
 
     expect(interno<() => string | null>('plantillaId')()).toBeNull();
   });
@@ -745,8 +778,58 @@ describe('SpecialtyFormBlock', () => {
     fixture.detectChanges();
 
     const opciones = opcionesCrudas();
-    expect(opciones[0].value).toBe(PLANTILLA_HOJA_LIBRE);
-    expect(opciones[0].label).toContain('Hoja en blanco');
+    expect(opciones.slice(0, 4).map((opcion) => opcion.value)).toEqual([
+      BLOQUE_DIAGNOSTICO,
+      PLANTILLA_HOJA_LIBRE,
+      BLOQUE_PROCEDIMIENTOS,
+      BLOQUE_LABORATORIO,
+    ]);
+    expect(opciones[1].label).toContain('Hoja en blanco');
+  });
+
+  /**
+   * Las tres entradas que no pasan por `forms` se dibujan por encima de la
+   * cadena de estados del motor, y no dentro: es lo que las deja alcanzables
+   * cuando el encuentro ya tiene una ficha respondida —el modo lectura tapaba
+   * el selector— o cuando el catálogo ni siquiera cargó.
+   */
+  it('elegir el diagnóstico dibuja su bloque y ninguna ficha', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+    responderEspecialidad('sp-odonto');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    interno<(id: string | null) => void>('elegirPlantilla')(BLOQUE_DIAGNOSTICO);
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('app-diagnosis-block')).not.toBeNull();
+    expect(html.querySelector('[data-testid="campo-especialidad"]')).toBeNull();
+    expect(html.querySelector('[data-testid="campo-odontograma"]')).toBeNull();
+    drenarLecturasDelBloque();
+  });
+
+  it('el procedimiento y el laboratorio traen cada uno su bloque', () => {
+    peticionDePlantillas().flush([PLANTILLA_ODONTO]);
+    responderEspecialidad('sp-odonto');
+    fixture.detectChanges();
+    peticionDeRespuesta().flush(LISTADO_VACIO);
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    const elegir = interno<(id: string | null) => void>('elegirPlantilla');
+
+    elegir(BLOQUE_PROCEDIMIENTOS);
+    fixture.detectChanges();
+    expect(html.querySelector('app-procedures-block')).not.toBeNull();
+    expect(html.querySelector('app-diagnostics-block')).toBeNull();
+
+    elegir(BLOQUE_LABORATORIO);
+    fixture.detectChanges();
+    expect(html.querySelector('app-diagnostics-block')).not.toBeNull();
+    expect(html.querySelector('app-procedures-block')).toBeNull();
+    drenarLecturasDelBloque();
   });
 
   it('elegir la hoja en blanco esconde los campos y saca el botón de completar', () => {
@@ -858,9 +941,7 @@ describe('SpecialtyFormBlock', () => {
     const esOdontograma = interno<(campo: unknown) => boolean>('esOdontograma');
     expect(esOdontograma(PLANTILLA_ODONTO.fields[0])).toBe(true);
     // Otro campo `json` cualquiera NO se dibuja como una boca.
-    expect(
-      esOdontograma({ ...PLANTILLA_ODONTO.fields[0], code: 'X.otra_cosa' }),
-    ).toBe(false);
+    expect(esOdontograma({ ...PLANTILLA_ODONTO.fields[0], code: 'X.otra_cosa' })).toBe(false);
   });
 
   it('registrar el estado de una pieza arma el mapa y sugiere los índices', () => {
@@ -917,15 +998,15 @@ describe('SpecialtyFormBlock', () => {
     interno<(fieldId: string, codigo: string) => void>('fijarEstado')('f-odo', '1');
     interno<() => void>('completar')();
 
-    const apertura = http.expectOne(
-      (r) => r.url === '/forms/instances' && r.method === 'POST',
-    );
+    const apertura = http.expectOne((r) => r.url === '/forms/instances' && r.method === 'POST');
     apertura.flush(INSTANCIA);
 
     const captura = http.expectOne(
       (r) => r.url === '/forms/instances/inst-9/values' && r.method === 'POST',
     );
-    const body = captura.request.body as { values: { fieldId: string; dataType: string; value: unknown }[] };
+    const body = captura.request.body as {
+      values: { fieldId: string; dataType: string; value: unknown }[];
+    };
     const odontograma = body.values.find((valor) => valor.fieldId === 'f-odo')!;
     expect(odontograma.dataType).toBe('json');
     expect(odontograma.value).toEqual({ '16': '1' });
