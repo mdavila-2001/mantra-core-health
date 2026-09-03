@@ -71,6 +71,8 @@
           [etiquetas]="estadosResueltos()"
           [puedeRegistrarLlegada]="puedeRegistrarLlegada()"
           (accionPedida)="ejecutar($event)"
+          (diaCambiado)="moverDia($event)"
+          (detallePedido)="verDetalleDelBloque($event)"
           (volver)="volverAlMes()"
         />
         <div class="mi-agenda__acciones-dia">

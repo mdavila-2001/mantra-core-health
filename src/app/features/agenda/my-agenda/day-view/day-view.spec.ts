@@ -309,4 +309,35 @@ describe('DayView', () => {
     expect(fixture.nativeElement.textContent).toContain('No atendés este día');
     expect(fixture.nativeElement.textContent).toContain('Agregar');
   });
+
+  /**
+   * RECORRER EL DÍA Y ABRIR LA TARJETA — carril 12 del pedido original.
+   *
+   * «Un botón de ver mañana, y así sucesivamente» y «cards al estilo de Google
+   * Calendar que son cliqueables que abren un modal con todo el detalle».
+   */
+  describe('recorrer y abrir', () => {
+    function porTestid(id: string): HTMLElement | null {
+      return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+    }
+
+    it('ofrece ayer y mañana', () => {
+      montar();
+      expect(porTestid('dia-anterior')).not.toBeNull();
+      expect(porTestid('dia-siguiente')).not.toBeNull();
+    });
+
+    it('emite el DESPLAZAMIENTO, no la fecha ya calculada', () => {
+      // Sumar un día es cosa del calendario: hacerlo acá con `+24h` se rompe el
+      // día que cambia el horario de verano.
+      montar();
+      const vistos: number[] = [];
+      fixture.componentInstance.diaCambiado.subscribe((d: number) => vistos.push(d));
+
+      porTestid('dia-siguiente')?.click();
+      porTestid('dia-anterior')?.click();
+
+      expect(vistos).toEqual([1, -1]);
+    });
+  });
 });

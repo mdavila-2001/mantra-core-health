@@ -6,6 +6,34 @@
     <div class="dia__cabecera">
       <h3 class="dia__titulo">{{ titulo() }}</h3>
       <p class="dia__resumen" role="status">{{ resumen() }}</p>
+
+      <!-- «Un botón de ver mañana, y así sucesivamente» del pedido original.
+           Recorrer día por día es lo que uno hace mirando la agenda: volver al
+           mes para tocar el siguiente son dos gestos donde alcanzaba uno. -->
+      <div class="dia__paginacion">
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="dia-anterior"
+          aria-label="Ver el día anterior"
+          (clicked)="diaCambiado.emit(-1)"
+        >
+          ← Ayer
+        </button>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="dia-siguiente"
+          aria-label="Ver el día siguiente"
+          (clicked)="diaCambiado.emit(1)"
+        >
+          Mañana →
+        </button>
+      </div>
     </div>
     <button
       app-button
@@ -29,11 +57,26 @@
   } @else {
     <ol class="dia__linea">
       @for (bloque of bloques(); track bloque.clave) {
+        <!-- Cliqueable sólo lo que TIENE detalle: el aire entre bloques no es
+             una actividad, y un clic que no hace nada enseña a no confiar en
+             los clics. -->
         <li
           class="dia__bloque"
+          [class.dia__bloque--cliqueable]="bloque.tipo === 'cita' || bloque.tipo === 'ocupado'"
           [attr.data-tipo]="bloque.tipo"
           [style.min-height.px]="bloque.alturaPx"
         >
+          @if (bloque.tipo === 'cita' || bloque.tipo === 'ocupado') {
+            <button
+              type="button"
+              class="dia__detalle"
+              data-testid="dia-detalle"
+              [attr.aria-label]="'Ver el detalle de ' + (bloque.paciente || bloque.motivo || 'este rato')"
+              (click)="detallePedido.emit(bloque)"
+            >
+              <span aria-hidden="true">Ver detalle</span>
+            </button>
+          }
           @switch (bloque.tipo) {
             @case ('cita') {
               <span class="dia__hora">
