@@ -378,6 +378,27 @@ import type { NavIconName } from './nav-icon.types';
           <path d="m13.4 5.8 6.2 6.2-6.2 6.2" />
         }
 
+        @case ('monitor') {
+          <!-- Pantalla con base: «el de mi dispositivo», la preferencia que
+               sigue al sistema en vez de fijar un valor. -->
+          <rect x="3" y="4.5" width="18" height="12" rx="1.8" />
+          <path d="M9 20.5h6M12 16.5v4" />
+        }
+        @case ('sun') {
+          <!-- Sol: el tema claro. -->
+          <circle cx="12" cy="12" r="4.3" />
+          <path d="M12 2.6v2.4M12 19v2.4M4.6 12H2.2M21.8 12h-2.4M5.6 5.6l1.7 1.7M16.7 16.7l1.7 1.7M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7" />
+        }
+        @case ('moon') {
+          <!-- Luna en creciente: el tema oscuro. -->
+          <path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a7 7 0 0 0 10.7 10.7z" />
+        }
+        @case ('camera') {
+          <!-- Cámara con su lente: el permiso de cámara del navegador. -->
+          <path d="M4.5 8.2A1.8 1.8 0 0 1 6.3 6.4h2l1-1.6h5.4l1 1.6h2a1.8 1.8 0 0 1 1.8 1.8v9.4a1.8 1.8 0 0 1-1.8 1.8H6.3a1.8 1.8 0 0 1-1.8-1.8z" />
+          <circle cx="12" cy="13" r="3.4" />
+        }
+
         @default {
           <!-- Casita con puerta: el punto de partida, y el que se dibuja
                cuando el nombre no está en el set. Nunca se deja un hueco donde
