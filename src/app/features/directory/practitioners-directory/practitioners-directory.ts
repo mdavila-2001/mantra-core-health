@@ -520,6 +520,13 @@ function toResultado(
   }
 
   const sellos = [];
+  // El sello de matrícula verificada, primero: es lo que distingue a quien
+  // probó lo que declara del resto del padrón, y la guía los lista a todos.
+  // Sólo se marca al verificado: estampar «sin verificar» a quien todavía no
+  // pasó por el trámite dice de él algo que no es suyo.
+  if (fila.verified) {
+    sellos.push({ label: 'Matrícula verificada', tone: 'ok' as const });
+  }
   // Disponibilidad con palabras: es lo que decide si quien busca puede pedir
   // turno, y decirlo sólo con color lo deja fuera de un lector de pantalla.
   sellos.push(
