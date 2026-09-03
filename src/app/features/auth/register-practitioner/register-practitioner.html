@@ -59,6 +59,25 @@
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
           >
+            <!-- El título profesional se busca escribiendo, igual que
+                 Ocupación: la lista es cerrada —son doce— pero el filtro es
+                 local, sin una sola petición más. Escribe en el mismo
+                 `FormControl`, que es de donde cuelgan el colegio automático y
+                 la limpieza de especialidades. -->
+            <ng-template appCampoPersonalizado="professionalTitle">
+              <app-reference-combobox
+                data-testid="registro-pro-titulo"
+                label="Título profesional (opcional)"
+                placeholder="Buscá tu título profesional…"
+                emptyMessage="Ningún título profesional coincide."
+                [options]="titulosProfesionalesFiltrados()"
+                [selected]="tituloProfesionalSeleccionado()"
+                [minQueryLength]="0"
+                (searched)="busquedaTituloProfesional.set($event)"
+                (selectionChange)="elegirTituloProfesional($event)"
+              />
+            </ng-template>
+
             <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
               <p class="registro__catalogo-caido">
                 No pudimos traer el catálogo de departamentos.

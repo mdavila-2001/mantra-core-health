@@ -433,6 +433,74 @@ describe('RegisterPractitioner', () => {
       expect(valores).toEqual(['e-cardio', 'e-pedia']);
     });
 
+    it('el título profesional se busca con lupa, y sigue siendo lista cerrada', () => {
+      // El campo era un `select` nativo con las doce opciones cargadas y sin
+      // búsqueda visible, al lado de Ocupación, que sí la tenía. Dos campos
+      // vecinos con el mismo trabajo comportándose distinto era la queja.
+      const campo = component
+        .paginasProfesional()
+        .flatMap((pagina) => pagina.campos)
+        .find((c) => c.key === 'professionalTitle');
+
+      expect(campo?.control).toBe('custom');
+      // Doce, y las doce disponibles sin escribir nada: la lupa acota, no
+      // esconde.
+      expect(component.titulosProfesionalesFiltrados()).toHaveLength(12);
+    });
+
+    it('la lupa filtra en local, sin pedirle nada al servidor', () => {
+      component.busquedaTituloProfesional.set('odont');
+      const filtradas = component.titulosProfesionalesFiltrados();
+
+      expect(filtradas.length).toBeGreaterThan(0);
+      expect(filtradas.every((o) => o.label.toLowerCase().includes('odont'))).toBe(true);
+      // Ninguna petición NUEVA: quedan las tres lecturas de catálogo que el
+      // componente hace al nacer —departamentos, municipios y especialidades—
+      // y nada más. La lista de títulos es cerrada y ya está en memoria; si
+      // esto empezara a consultar, el número subiría acá antes que en
+      // producción.
+      expect(http.match(() => true).map((p) => p.request.url)).toEqual([
+        '/terminology/value-sets',
+        '/terminology/value-sets',
+        '/terminology/value-sets',
+      ]);
+
+      // Y sin texto vuelven las doce: escribir y borrar no deja el campo vacío.
+      component.busquedaTituloProfesional.set('');
+      expect(component.titulosProfesionalesFiltrados()).toHaveLength(12);
+    });
+
+    it('elegir en la lupa escribe en el control, y arrastra colegio y especialidades', () => {
+      // Lo que esta prueba protege es la CADENA. Si la lupa guardara el título
+      // en un estado propio, el campo se vería bien y el colegio dejaría de
+      // acomodarse solo: un fallo silencioso, en un formulario de ocho pasos.
+      catalogoDeEspecialidades();
+      const titulo = component.formProfesional.controls.professionalTitle;
+      const autoridad = component.formProfesional.controls.regulatoryAuthority;
+
+      component.elegirTituloProfesional({
+        value: 'Odontólogo / Odontóloga',
+        label: 'Odontólogo / Odontóloga',
+      });
+
+      expect(titulo.value).toBe('Odontólogo / Odontóloga');
+      expect(autoridad.value).toBe('Colegio de Odontólogos de Bolivia');
+      expect(opcionesDeLaPagina().map((o) => o.label)).toEqual(['Endodoncia', 'Ortodoncia']);
+      // Y el rótulo vuelve al regresar al paso, que es para lo que existe.
+      expect(component.tituloProfesionalSeleccionado()?.label).toBe('Odontólogo / Odontóloga');
+    });
+
+    it('limpiar la lupa deja el título vacío, no un valor colgado', () => {
+      catalogoDeEspecialidades();
+      const titulo = component.formProfesional.controls.professionalTitle;
+      component.elegirTituloProfesional({ value: 'Médico / Médica', label: 'Médico / Médica' });
+
+      component.elegirTituloProfesional(null);
+
+      expect(titulo.value).toBe('');
+      expect(component.tituloProfesionalSeleccionado()).toBeNull();
+    });
+
     it('el colegio cambia solo al elegir la profesión', () => {
       catalogoDeEspecialidades();
       const autoridad = component.formProfesional.controls.regulatoryAuthority;
