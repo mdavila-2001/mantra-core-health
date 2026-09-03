@@ -472,14 +472,17 @@ const PANTALLAS_HIJAS: Routes = [
     // El detalle de una solicitud de seguro (TAREA-16): se llega desde el
     // listado, nunca desde el menú.
     //
-    // Sin guard de sección, por el mismo motivo escrito en
-    // `ClaimsReadController`: los `@Roles('BILLING', 'FINANCE')` del ciclo del
-    // reclamo nombran dos códigos que el `RoleCode` cerrado de la API no
-    // acepta, así que ningún JWT los puede llevar. La barrera real es el
-    // alcance por tenant, y la pone el servidor: una solicitud de otra
-    // organización responde el mismo 404 que un uuid inexistente.
+    // **Con el guard de sección, igual que su listado.** La sección declara
+    // `SECURITY_ADMIN` porque es el único rol que la plataforma sabe emitir
+    // para esto —los `BILLING`/`FINANCE` que nombran las escrituras del ciclo
+    // del reclamo no existen en el `RoleCode` cerrado de la API—, y dejar el
+    // detalle destapado mientras el listado se pide con rol es una
+    // inconsistencia: la dirección se escribe a mano. La barrera de verdad
+    // sigue siendo el alcance por tenant del servidor, que responde el mismo
+    // 404 para una solicitud ajena que para un uuid inexistente.
     path: 'administration/insurance-claims/:claimId',
     title: `${APP_TITLE} - Solicitud de seguro`,
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/insurance/insurance-claim-detail/insurance-claim-detail')
         .then((m) => m.InsuranceClaimDetail)
