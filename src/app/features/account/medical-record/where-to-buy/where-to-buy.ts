@@ -33,11 +33,23 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { EmptyState } from '../../../../shared/components/molecules/empty-state/empty-state';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
 import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
+
+/** Los estudios que le pidieron a esta persona. Ya existe y ya se lee. */
+const MIS_ESTUDIOS_ROUTE = '/my-account/diagnostic-orders';
+
+/** La guía de laboratorios y centros de diagnóstico, sin cercanía. */
+const LABORATORIOS_ROUTE = '/laboratory-directory';
+
+/** La guía de clínicas y hospitales. */
+const CLINICAS_ROUTE = '/clinics-directory';
 
 /** Mismo tope que la historia: es la misma lectura del resumen clínico. */
 const TOPE = 50;
@@ -171,9 +183,12 @@ interface ResultadoDeSedes {
     Badge,
     Checkbox,
     Alert,
+    EmptyState,
     Link,
     PageHeader,
     RouterLink,
+    Tab,
+    Tabs,
     ViewStateHost,
   ],
   templateUrl: './where-to-buy.html',
@@ -196,6 +211,16 @@ export class WhereToBuy {
 
   protected readonly sinPerfilDePaciente = this.perfil === null;
   protected readonly rutaDeHistoria = MI_HISTORIA_ROUTE;
+
+  /**
+   * Los destinos que ofrecen las dos pestañas que todavía no pueden ordenar por
+   * cercanía. No son un consuelo: son lo que hoy sí resuelve parte de la
+   * pregunta —qué me pidieron, y qué lugares hay— mientras el dato que falta
+   * (la dirección de los centros) no exista.
+   */
+  protected readonly rutaDeEstudios = MIS_ESTUDIOS_ROUTE;
+  protected readonly rutaDeLaboratorios = LABORATORIOS_ROUTE;
+  protected readonly rutaDeClinicas = CLINICAS_ROUTE;
   protected readonly ciudades = CIUDADES;
 
   /**
@@ -321,9 +346,7 @@ export class WhereToBuy {
             new Set(
               items
                 .filter(
-                  (item) =>
-                    item.emitida ||
-                    item.conceptId === carga.recetada.medicationConceptId,
+                  (item) => item.emitida || item.conceptId === carga.recetada.medicationConceptId,
                 )
                 .map((item) => item.conceptId),
             ),
@@ -424,8 +447,7 @@ export class WhereToBuy {
           this.sembrarPromociones(respuesta);
           this.resultados.set(ready(evaluar(respuesta, consultables, sinProducto)));
         },
-        error: (error: unknown) =>
-          this.resultados.set(errorToViewState<ResultadoDeSedes>(error)),
+        error: (error: unknown) => this.resultados.set(errorToViewState<ResultadoDeSedes>(error)),
       });
   }
 
@@ -543,8 +565,7 @@ export class WhereToBuy {
       return;
     }
     const reducirMovimiento =
-      this.documento.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ??
-      false;
+      this.documento.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     tarjeta.scrollIntoView({ behavior: reducirMovimiento ? 'auto' : 'smooth', block: 'center' });
   }
 }
@@ -625,17 +646,15 @@ export function borradorDePedido(
     }),
     // Sin producto publicado nadie puede confirmarlo: viaja igual en el
     // pedido, dicho claro, para que la farmacia sepa qué más pide la receta.
-    ...sinProducto.map(
-      (medicamento): LineaDePedido => ({
-        productId: null,
-        medicamento,
-        presentacion: null,
-        cantidad: CANTIDAD_POR_RENGLON,
-        precio: null,
-        moneda: null,
-        disponible: false,
-      }),
-    ),
+    ...sinProducto.map((medicamento): LineaDePedido => ({
+      productId: null,
+      medicamento,
+      presentacion: null,
+      cantidad: CANTIDAD_POR_RENGLON,
+      precio: null,
+      moneda: null,
+      disponible: false,
+    })),
   ];
   return {
     requestId,
@@ -674,9 +693,7 @@ function evaluar(
   consultables: readonly (ItemDeReceta & { productId: string })[],
   sinProducto: readonly string[],
 ): ResultadoDeSedes {
-  const nombrePorProducto = new Map(
-    consultables.map((item) => [item.productId, item.medicamento]),
-  );
+  const nombrePorProducto = new Map(consultables.map((item) => [item.productId, item.medicamento]));
 
   const sedes = respuesta.items.map((sede, indice): SedeVisible => {
     const faltantes = [
