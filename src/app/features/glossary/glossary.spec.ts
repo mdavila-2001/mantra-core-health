@@ -260,6 +260,41 @@ describe('Glossary', () => {
     expect(html().querySelector('.glosario__grilla')).toBeNull();
   });
 
+  it('un término sin tags ni categoría no revienta el render (regresión del bug de búsqueda)', async () => {
+    // Reproduce el defecto real: antes del arreglo del backend, una búsqueda
+    // por texto sin `valueSetId` devolvía el concepto pelado —sin `category`,
+    // `tags`, `shortDefinition` ni `relationsCount`— y `termino.tags.length`
+    // tiraba `TypeError` al renderizar la primera fila, dejando el spinner
+    // congelado y la tabla sin dibujar. El cinturón del template
+    // (`(termino.tags ?? []).length`) tiene que sobrevivir a esa forma parcial
+    // aunque el backend vuelva a fallar.
+    const terminoPelado = {
+      conceptId: '22222222-2222-4222-8222-222222222222',
+      code: 'N02BE01',
+      display: 'Paracetamol',
+      slug: 'paracetamol',
+      translated: true,
+      valueSets: [],
+      category: undefined,
+      shortDefinition: undefined,
+      tags: undefined,
+      relationsCount: undefined,
+      status: 'active',
+    };
+
+    responderCategorias();
+    interno<(texto: string) => void>('buscar')('paracetamol');
+    await harness.fixture.whenStable();
+    responderTerminos([terminoPelado]);
+    await harness.fixture.whenStable();
+
+    expect(html().querySelector('[data-testid="tabla"]')).not.toBeNull();
+    expect(html().querySelectorAll('[data-testid="tabla-fila"]').length).toBe(1);
+    expect(html().textContent).toContain('Sin etiquetas');
+    expect(html().textContent).toContain('Sin categoría');
+    expect(html().textContent).toContain('Sin relaciones registradas');
+  });
+
   // --- Recorte y traducción, conservado de las rondas anteriores -----------
 
   it('avisa cuando el resultado vino recortado por el tope', async () => {
