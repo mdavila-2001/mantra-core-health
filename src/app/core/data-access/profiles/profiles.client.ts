@@ -31,6 +31,7 @@ import type {
   PractitionerLicense,
   PractitionerProfile,
   PractitionerDirectoryPage,
+  SpecialtyCounts,
   PractitionerListItem,
   PractitionerSpecialty,
   RelatedPerson,
@@ -323,6 +324,21 @@ export class ProfilesClient {
           };
         }),
       );
+  }
+
+  /**
+   * `GET /profiles/practitioners/specialty-counts` — la portada de la guía.
+   *
+   * Es lo que permite dibujar «Cardiología · 88» sin traerse los 88. Antes esta
+   * pantalla contaba paginando la guía entera hasta agotar el cursor, con un
+   * techo que la dejaba recortada sin avisar.
+   *
+   * @returns Una fila por especialidad con gente, más el total sin repetir.
+   */
+  getSpecialtyCounts(): Observable<SpecialtyCounts> {
+    return this.http
+      .get<ConNulos<SpecialtyCounts>>(this.url('/profiles/practitioners/specialty-counts'))
+      .pipe(map((body) => sinNulos<SpecialtyCounts>(body)));
   }
 
   /**
