@@ -50,7 +50,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicResultKind, string>> = {
  * nombre en vez de llevar a una ficha que no existe.
  */
 export function rutaDeFicha(resultado: PublicSearchResult): string {
-  if (resultado.kind === 'MEDICATION') return '/buscar/medicamentos';
+  if (resultado.kind === 'MEDICATION') return '/search/medications';
   return `/${PUBLIC_PROFILE_PREFIX[resultado.kind]}/${resultado.slug}`;
 }
 

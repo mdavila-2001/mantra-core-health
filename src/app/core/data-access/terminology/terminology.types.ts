@@ -210,11 +210,17 @@ export interface GlossaryTermTag {
 
    `CatalogConcepts` es una tabla compartida por **todos** los enums de la
    plataforma; lo que hace que una fila sea «un término del glosario» es
-   pertenecer al value set paraguas `glossary-all-terms` — el backend lo aplica
-   scopeando automáticamente cualquier lectura hecha con `lang=ES`, que es como
-   este cliente llama siempre a `searchGlossary`/`readGlossaryTerm`. Acá no hace
-   falta pedirlo explícitamente: no cambia ni un parámetro, sólo lo que el
-   backend devuelve dentro del mismo contrato.
+   pertenecer al value set paraguas `glossary-all-terms`. El backend resuelve
+   ese paraguas y acota por él en dos casos, ninguno atado a `lang=ES`:
+   (a) la lectura de un término puntual (`readGlossaryTerm`) siempre lo hace;
+   (b) la búsqueda por texto (`searchGlossary`) lo hace porque este cliente
+   siempre manda `includeValueSets=true` sin `valueSetId` explícito — el
+   backend interpreta esa combinación como «acotá al paraguas del glosario»
+   (antes del arreglo del 2026-09-02 no lo hacía: una búsqueda por texto sin
+   categoría devolvía el concepto pelado, sin `category`/`tags`/`status`;
+   ver `ConceptsService.searchConcepts`). Acá no hace falta pedirlo con un
+   parámetro propio: es la combinación `includeValueSets` + ausencia de
+   `valueSetId` la que dispara el acotamiento, no el idioma.
    --------------------------------------------------------------------------- */
 
 /** Los seis tipos de relación clínica tipada entre dos términos del glosario. */
@@ -371,6 +377,24 @@ export interface GlossaryTermDetail extends GlossaryTermBase {
   readonly relations: readonly GlossaryRelation[];
   /** Ausente en todos los términos sembrados hoy — ver {@link GlossaryImage}. */
   readonly image?: GlossaryImage;
+  /**
+   * Lo que el sistema de codificación declara de este concepto, por código
+   * (TAREA-25). El backend YA lo devuelve en `GET /terminology/concepts/:id`
+   * —{@link ConceptDetail.properties} lee del mismo mapa—, pero el tipo del
+   * glosario nunca lo declaró: quien intentaba leerlo recibía un error de
+   * tipos, o peor, un `as` que ocultaba `undefined` en runtime sin avisar.
+   *
+   * Deliberadamente `unknown`, mismo motivo que `ConceptDetail.properties`:
+   * el valor es `value_json` libre y no acota su forma.
+   *
+   * Ningún término del glosario tiene hoy `manufacturer`, `dosage_form`,
+   * `route` ni `active_ingredients` — esas cinco propiedades las siembra
+   * `import-ndc.mjs` sobre el `code_system` `ndc`, que no corrió contra esta
+   * base (10 323 conceptos totales, 0 con ese `code_system`). El bloque de
+   * medicamento de la ficha ({@link drugFactsFrom}) se omite entero mientras
+   * eso siga así: es la forma correcta de «ausencia», no un placeholder.
+   */
+  readonly properties: Readonly<Record<string, unknown>>;
 }
 
 /* ---- administración del catálogo -------------------------------------------
@@ -394,12 +418,7 @@ export interface CodeSystemListItem {
  * importadores externos sin fijar estado, y admiten conceptos igual que un
  * borrador.
  */
-export type CodeSystemVersionState =
-  | 'DRAFT'
-  | 'ACTIVE'
-  | 'RETIRED'
-  | 'DEPRECATED'
-  | 'UNKNOWN';
+export type CodeSystemVersionState = 'DRAFT' | 'ACTIVE' | 'RETIRED' | 'DEPRECATED' | 'UNKNOWN';
 
 /** Una versión de un sistema de codificación. */
 export interface CodeSystemVersionListItem {

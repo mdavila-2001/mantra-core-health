@@ -1,0 +1,228 @@
+/* El cascarón del alta, compartido por las dos que hay: paciente y profesional.
+   La estructura partida (2 columnas) y el selector de tema son del organismo
+   `app-auth-split`. Acá va la jerarquía tipo "documento" (familia expediente) del
+   formulario, en línea con login: membrete y pie con reglas.
+   Solo tokens REDSAT.
+
+   Vive en su propia carpeta y no en una de las dos pantallas porque las dos lo
+   consumen (`styleUrls`): mientras el alta de profesional era una rama del `@if`
+   del alta de paciente, esto era el CSS de un solo componente; desde que son dos
+   componentes, dejarlo en uno y que el otro lo importara por `../` sería atar la
+   pantalla nueva a la carpeta de la vieja. Lo que es propio de cada una —las
+   casillas de nombre y el mapa del paciente— se queda en su hoja. */
+
+/* Pantalla enrutada: el host es un custom element y sin `display` sería EN
+   LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del
+   contenido y hace scrollear la página de más. */
+:host {
+  display: block;
+}
+
+/* ==========================================================================
+    La tarjeta.
+
+    Mismo cristal que el login (`.login` en auth-split), para que las dos
+    pantallas de acceso se lean como una sola familia y no como dos pantallas
+    hechas en momentos distintos.
+
+    Sin `max-height` ni scroll propio, en ninguna medida de pantalla: la
+    tarjeta crece con su contenido y la columna que la sostiene es la que
+    scrollea (`auth-split.css`). En el teléfono eso importa porque el teclado
+    en pantalla reduce el alto útil y un alto fijo dejaría el formulario
+    inalcanzable; en escritorio, porque desde que el alta ocupa la ventana
+    entera un tope sólo lograba dos barras de scroll en la misma pantalla. */
+.registro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+  border-radius: var(--r-2xl);
+  padding: var(--sp-6);
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
+}
+
+@media (min-width: 650px) {
+  .registro {
+    padding: var(--sp-8);
+  }
+}
+
+/* Acá vivía un alto fijo con el cuerpo scrolleando por dentro (`max-height:
+   min(80dvh, 44rem)` desde 1024x900). Ya no hace falta, y sostenerlo era
+   dañino: la tarjeta ocupa la ventana entera desde que el alta usa
+   `contentWidth="full"`, así que ese tope la dejaba flotando en un monitor de
+   1080px con una barra de scroll propia por dentro —dos barras en la misma
+   pantalla— en vez de aprovechar el alto que ahora sí tiene.
+
+   Las dos razones que lo justificaban se vencieron solas:
+
+   - «Cambiar de Paciente a Profesional deformaba la tarjeta»: ya no se cambia
+     acá. El tipo de cuenta se elige antes, en la rejilla de `/auth/register`,
+     y desde la separación cada alta es un componente con su propia ruta.
+   - «Al formulario le quedaban dos campos y medio»: una página del motor tiene
+     CUATRO campos como tope (`MAX_CAMPOS_POR_PAGINA`), no diez. Lo que antes
+     era un formulario largo ahora son cuatro pasos cortos.
+
+   La tarjeta crece con su contenido y quien scrollea, si hace falta, es la
+   columna del formulario (`.auth-split__panel`, que ya trae `overflow-y:
+   auto`) — igual que en el teléfono. */
+
+/* Membrete: título y bajada separados del cuerpo por una regla, como la cabecera
+   de un expediente. Se usa en los dos estados (alta y confirmación). */
+.registro__header {
+  margin-bottom: var(--sp-6);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.registro__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  /* Documento: el título va en tinta, no en color de marca (coherente con login). */
+  color: var(--text-primary);
+}
+
+.registro__subtitle {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.registro__alert {
+  display: block;
+  margin-bottom: var(--sp-4);
+}
+
+/* El formulario entra con una animación corta. Nació cuando paciente y
+   profesional eran dos ramas de un `@if` y cambiar de una a otra reemplazaba el
+   juego de campos de golpe; hoy son dos pantallas y lo que se lee es la entrada
+   del formulario al abrir el alta. */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  animation: registro-entra var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes registro-entra {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sp-2));
+  }
+}
+
+.registro__submit {
+  margin-top: var(--sp-2);
+  width: 100%;
+}
+
+/* Pie: acción secundaria separada del cuerpo por una regla, como el pie de un
+   formulario oficial. */
+.registro__footer {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--border-default);
+}
+
+.registro__pie {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* La barra de avance, el índice de páginas y los botones «Atrás»/«Crear
+   cuenta» los dibuja `app-paginated-form` con sus propios estilos: esta
+   pantalla llegó a tener una copia de todo eso, y dos hojas para el mismo
+   recorrido se separan al primer retoque que sólo se hace en una. */
+
+/* El aviso de catálogo caído, con su botón de reintento al lado. */
+.registro__catalogo-caido {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+    Pantallas bajas.
+
+    Una página de cuatro preguntas mide, con membrete, barra, titular,
+    navegación y pie, algo más de 800px de alto. En un monitor de 768
+    —1024x768, 1280x720, 1366x768, que son los que hay en las salas— eso deja
+    «Crear cuenta» cortado al ras del borde.
+
+    Acá se recorta lo que es del cascarón —el membrete y el pie—; lo de
+    adentro del formulario lo recorta el motor con la misma regla, que salió de
+    medir justamente estos tres monitores.
+   ========================================================================== */
+@media (max-height: 900px) {
+  .registro__header {
+    margin-bottom: var(--sp-4);
+    padding-bottom: var(--sp-3);
+  }
+
+  .registro__footer {
+    margin-top: var(--sp-4);
+    padding-top: var(--sp-3);
+  }
+}
+
+/* ==========================================================================
+    El conjunto: el alta y las tarjetas que la explican.
+
+    **Una sola columna, en las tres medidas de pantalla**: las tarjetas van
+    SIEMPRE debajo del formulario (TAREA 04, AC-04-9).
+
+    Acá había una columna derecha de 20 rem, pegajosa, desde 1024 px, y el
+    teléfono era la excepción que caía debajo. La razón escrita entonces —«la
+    explicación tiene que estar donde está la pregunta»— valía cuando el alta
+    era un formulario largo de trece campos: la pregunta viajaba con el scroll.
+    Desde que el motor sirve CUATRO campos por página, la pregunta no viaja: la
+    página entra completa y no hay scroll del que despegarse, así que la
+    columna lateral dejaba de acompañar nada y pasaba a competir por el ancho
+    con los campos.
+
+    Lo que se conserva del razonamiento viejo es lo que seguía siendo cierto: la
+    ayuda va DESPUÉS del formulario y nunca antes. Quien abre la pantalla viene
+    a registrarse, y cuatro tarjetas antes del primer campo son cuatro pantallas
+    de scroll antes de empezar. Abajo —después del botón— queda justo donde
+    alguien duda si sigue o abandona, que era el motivo original de ponerlas
+    debajo en el teléfono.
+   ========================================================================== */
+.registro-conjunto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+/* La confirmación no explica nada —ya no hay nada que contestar—, así que
+   queda sola y con el ancho de una tarjeta, no con el de la ventana. */
+.registro-conjunto--solo {
+  max-width: 44rem;
+  margin-inline: auto;
+}
+
+/* En pantalla ancha el alta y su ayuda no se estiran a lo ancho de la ventana:
+   una línea de 1400 px no se lee, y un formulario de cuatro campos centrado es
+   lo que la tarjeta ya hacía de sola cuando era la única columna. */
+@media (min-width: 1024px) {
+  .registro-conjunto {
+    max-width: 52rem;
+    margin-inline: auto;
+    gap: var(--sp-6);
+  }
+}

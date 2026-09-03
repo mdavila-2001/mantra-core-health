@@ -49,11 +49,11 @@ import { SymptomCheck } from '../../../symptom-check/symptom-check';
         </p>
       </header>
 
-      <app-symptom-check [sinSesion]="true" rutaDeResultados="/buscar/profesionales" />
+      <app-symptom-check [sinSesion]="true" rutaDeResultados="/search/practitioners" />
 
       <p class="sintomas-publico__pie">
         ¿Ya sabés a quién buscar?
-        <a routerLink="/buscar/profesionales">Ver todos los profesionales</a>
+        <a routerLink="/search/practitioners">Ver todos los profesionales</a>
       </p>
     </div>
   `,

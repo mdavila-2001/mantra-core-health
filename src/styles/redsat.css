@@ -80,11 +80,16 @@
 
   /* Fondo vivo de la página — los cuatro focos de las dos capas reactivas.
      Son tokens porque el modo oscuro los cambia enteros: el fondo sigue
-     respondiendo al puntero, pero con azules profundos en vez de menta. */
-  --fondo-a: rgba(159, 216, 208, .82);
-  --fondo-b: rgba(79, 179, 169, .48);
-  --fondo-c: rgba(122, 191, 232, .62);
-  --fondo-d: rgba(159, 216, 208, .58);
+     respondiendo al puntero, pero con azules profundos en vez de menta.
+     TAREA-08 (v4.3, 2026-09-02): en claro se invirtió el balance —blancos
+     predominan, celeste aparece con el puntero— bajando el alfa de los
+     cuatro focos y multiplicando la capa entera por `--fondo-presencia`
+     (ver `body::before, body::after` más abajo). El modo oscuro no se toca:
+     AC-08-3 pide que siga exactamente como está. */
+  --fondo-a: rgba(159, 216, 208, .40);
+  --fondo-b: rgba(79, 179, 169, .24);
+  --fondo-c: rgba(122, 191, 232, .30);
+  --fondo-d: rgba(159, 216, 208, .26);
 
   /* Fondo del nav: viñeta y halo */
   --nav-vineta-a: rgba(9, 62, 92, .72);
@@ -230,12 +235,25 @@ body {
    Dos capas de menta y aguamarina que siguen al puntero con distinta
    inercia: al mover el mouse el fondo respira, y cuando la mano se detiene
    el fondo se detiene con ella. No hay bucle ni animación automática.
-   redsat.js actualiza --raton-x / --raton-y; el desplazamiento lo hace una
-   transición de transform, que compone la GPU. */
+   `redsat-runtime.service.ts` (método `fondoReactivo()`) actualiza
+   --raton-x / --raton-y; el desplazamiento lo hace una transición de
+   transform, que compone la GPU.
+
+   TAREA-08 (v4.3, 2026-09-02) — «invertí el balance de colores»: en modo
+   claro el fondo descansa casi blanco y el celeste APARECE con el puntero.
+   `--fondo-presencia` es ese interruptor: `.35` es su valor de RESPALDO —lo
+   que se ve antes de que el servicio corra (SSR, primer pintado) y lo que
+   queda tras 650ms sin mover el mouse (AC-08-6)—, y el servicio lo sube a
+   `1` mientras el puntero está activo. Bajo `prefers-reduced-motion` el
+   servicio nunca la toca: el fondo queda fijo en `.35`, sin manchas a medio
+   camino (AC-08-7). El multiplicador es sólo de MODO CLARO: el bloque
+   `:root[data-tema="oscuro"], :root[data-theme="dark"]`, más abajo, lo
+   anula a `1` — el fondo oscuro no se apaga con el reposo (AC-08-3). */
 body::before, body::after {
   content: ""; position: fixed; inset: -45%; z-index: -1; pointer-events: none;
+  opacity: var(--fondo-presencia, .35);
   /* Muy corto: el fondo va CON la mano, no detrás de ella. */
-  transition: transform 170ms cubic-bezier(.22, .85, .3, 1);
+  transition: transform 170ms cubic-bezier(.22, .85, .3, 1), opacity 220ms ease-out;
 }
 /* Capa cercana: menta y aguamarina. Además de desplazarse, los centros de los
    degradados se corren con el puntero, así el movimiento se lee de verdad. */
@@ -251,11 +269,17 @@ body::after {
   background:
     radial-gradient(40% 36% at calc(50% - var(--raton-x, .5) * 26%) calc(80% - var(--raton-y, .5) * 22%), var(--fondo-c), transparent 66%),
     radial-gradient(32% 30% at calc(8% + var(--raton-x, .5) * 24%) calc(64% - var(--raton-y, .5) * 18%), var(--fondo-d), transparent 62%);
-  transition-duration: 340ms;
+  transition-duration: 340ms, 260ms;
   transform: translate3d(calc(var(--raton-x, .5) * -130px + 65px), calc(var(--raton-y, .5) * -100px + 50px), 0);
 }
 @media (prefers-reduced-motion: reduce) {
   body::before, body::after { transform: none; transition: none; }
+}
+/* El interruptor de presencia es sólo de modo claro: en oscuro el fondo
+   siempre estuvo a plena vista, y ese comportamiento no cambia (AC-08-3). */
+:root[data-tema="oscuro"] body::before, :root[data-tema="oscuro"] body::after,
+:root[data-theme="dark"] body::before, :root[data-theme="dark"] body::after {
+  opacity: 1;
 }
 h1, h2, h3 { margin: 0; font-family: var(--f-titulo); color: var(--tinta-marca); }
 h1, .titulo-h1 { font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -.015em; }
@@ -3358,6 +3382,46 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
    ninguna otra forma de moverse. */
 .app-public-header__buscador { flex: 1 1 auto; max-width: 520px; min-width: 160px; }
 .app-public-header__acciones { margin-left: auto; display: flex; align-items: center; gap: var(--e2); flex: none; }
+
+/* Carril 01 · AC-01-2 — El cuerpo del marco público es rail + contenido.
+   Antes el `<main>` colgaba directo del shell (`.app-public-shell > main`), y
+   esa regla queda acá abajo por si alguna pantalla portada todavía lo hace.
+
+   Mobile-first a propósito, contra la costumbre `max-width` del resto de este
+   archivo: por debajo de 900 px el rail es una barra horizontal arriba —un
+   riel vertical de 64 px se come una quinta parte de una pantalla de 390— y
+   recién desde ahí se para. Es el mismo umbral de 900 que ya usa el resto del
+   marco: dos quiebres a 20 px de distancia dejan un rango donde el marco cree
+   una cosa y el rail otra. */
+.app-public-shell__cuerpo {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+}
+.app-public-shell__cuerpo > main { flex: 1; min-width: 0; }
+.app-public-shell__rail { flex: none; }
+
+@media (min-width: 900px) {
+  .app-public-shell__cuerpo { flex-direction: row; align-items: flex-start; }
+  /* El rail acompaña el scroll: en `/buscar/medicamentos` la lista mide varias
+     pantallas y un rail que se va con ella deja de ser navegación. Se pega
+     debajo del header, que es `sticky` y mide `--h-header`. */
+  .app-public-shell__rail {
+    position: sticky; top: var(--h-header);
+    align-self: stretch;
+    max-height: calc(100vh - var(--h-header));
+    overflow-y: auto;
+  }
+}
+
+/* AC-01-6 — El aire de arriba no puede superar al del resto de la pantalla.
+   `.app-main__inner` abre con `--e8` mientras un listado separa sus bloques
+   con `--e6`, así que el título quedaba flotando en más aire que el que hay
+   entre secciones. Se corrige **sólo dentro del marco público**: el mismo
+   selector global toca 116 pantallas con sesión que nadie reportó. */
+.app-public-shell__cuerpo > .app-main__inner { padding-top: var(--e6); }
+
+/* El enlace que quedó donde había pestañas maniquí (AC-01-4). */
+.app-page-nav { display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; }
 
 .app-public-shell > main { flex: 1; }
 

@@ -254,6 +254,15 @@ export interface PractitionerRegistration {
   readonly licenseIssueDate?: string;
   readonly professionalTitle?: string;
   readonly phone?: string;
+  /**
+   * Sexo asignado al nacer. Es dato clínico, distinto del género.
+   *
+   * El DTO del backend lo acepta desde siempre (`RegisterPractitionerDto`); lo
+   * que faltaba era **preguntarlo** en el formulario, y eso es AC-05-7 de la
+   * TAREA 05. Mismos dos códigos que el alta de paciente: son los que el
+   * documento de identidad boliviano registra.
+   */
+  readonly sexAtBirth?: BirthSexCode;
 }
 
 export interface RegisteredPractitioner {

@@ -65,6 +65,27 @@
   margin: 0;
 }
 
+/* El retrato, disparador de la subida — mismo trato que el perfil profesional
+   (`.profesional__foto`), sin la capa de cámara: acá el avatar es más chico y
+   está arriba de la lista de datos, no montado sobre una portada. */
+.mi-perfil__foto {
+  display: inline-block;
+  margin-block-end: var(--sp-3);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.mi-perfil__foto.is-subiendo {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.mi-perfil__foto-error {
+  margin: 0 0 var(--sp-3);
+  color: var(--error-tinta, #8a2f22);
+  font-size: var(--fs-caption);
+}
+
 /* Tablet. El literal es obligado: una media query no admite var(); el token
    --bp-md declara el mismo 780px para el resto del sistema. */
 @media (min-width: 780px) {

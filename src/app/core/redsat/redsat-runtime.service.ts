@@ -35,6 +35,18 @@ const ENTRADA_MS = 1250;
 const ANCHO_CAJON = '(max-width: 900px)';
 const ANCHO_ORG = '(max-width: 640px)';
 
+/**
+ * Opacidad del fondo reactivo mientras el puntero está activo, y a la que
+ * cae tras quedarse quieto. `redsat.css` usa el mismo `.35` como valor de
+ * respaldo de `var(--fondo-presencia, .35)`, para que el primer pintado
+ * (antes de que este servicio corra) y el reposo tras mover el mouse pinten
+ * exactamente lo mismo.
+ */
+const PRESENCIA_ACTIVA = '1';
+const PRESENCIA_REPOSO = '.35';
+/** Cuánto espera sin movimiento antes de volver al reposo. */
+const REPOSO_MS = 650;
+
 @Injectable({ providedIn: 'root' })
 export class RedsatRuntimeService {
   private readonly document = inject(DOCUMENT);
@@ -274,6 +286,17 @@ export class RedsatRuntimeService {
    * Publica la posición del puntero como dos números de 0 a 1. El CSS los usa
    * para desplazar las capas del fondo con distinta inercia: cuando la mano se
    * detiene, el fondo se detiene. No hay bucle ni temporizador.
+   *
+   * También publica `--fondo-presencia` (TAREA-08, v4.3): en modo claro el
+   * fondo descansa en un blanco casi puro —`redsat.css` lo multiplica ahí,
+   * `PRESENCIA_REPOSO` es el mismo número que su valor de respaldo, para que
+   * la primera pintura bajo SSR y el reposo tras mover el mouse se vean
+   * idénticos— y el celeste **aparece** mientras el puntero está activo. Un
+   * único `setTimeout` reprogramado en cada movimiento —no un `setInterval`—
+   * lo hace descansar nada más quedarse quieto: se cancela y se vuelve a
+   * armar, jamás se acumulan dos. En modo oscuro `redsat.css` ignora esta
+   * variable a propósito (AC-08-3): el fondo oscuro no se apaga con el
+   * reposo, sigue exactamente como hoy.
    */
   private fondoReactivo(): void {
     const ventana = this.ventana;
@@ -283,11 +306,21 @@ export class RedsatRuntimeService {
     const raiz = this.document.documentElement;
     let pedido = false;
     let ultimo: MouseEvent | null = null;
+    let reposo: ReturnType<typeof setTimeout> | null = null;
 
     ventana.addEventListener(
       'mousemove',
       (evento) => {
         ultimo = evento;
+
+        if (reposo !== null) {
+          clearTimeout(reposo);
+        }
+        reposo = setTimeout(() => {
+          reposo = null;
+          raiz.style.setProperty('--fondo-presencia', PRESENCIA_REPOSO);
+        }, REPOSO_MS);
+
         if (pedido) {
           return;
         }
@@ -299,6 +332,7 @@ export class RedsatRuntimeService {
           }
           raiz.style.setProperty('--raton-x', (ultimo.clientX / ventana.innerWidth).toFixed(3));
           raiz.style.setProperty('--raton-y', (ultimo.clientY / ventana.innerHeight).toFixed(3));
+          raiz.style.setProperty('--fondo-presencia', PRESENCIA_ACTIVA);
         });
       },
       { passive: true },

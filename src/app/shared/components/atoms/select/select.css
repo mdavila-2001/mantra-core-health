@@ -54,6 +54,35 @@
   color: var(--text-primary);
 }
 
+/* Íconos proyectados: conservan la encapsulación del padre, así que solo los
+   alcanza ::ng-deep. Mismas medidas y mismo comportamiento que en `app-input`:
+   los dos controles comparten marco, y un glifo de 18 px en uno y de 20 en el
+   otro se nota en cuanto quedan en la misma página. */
+:host ::ng-deep [slot='icon-start'] {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-right: var(--sp-2);
+  color: var(--text-secondary);
+}
+
+:host ::ng-deep [slot='icon-start'] svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Al enfocar, el ícono toma el color de marca junto con el borde: si el marco
+   se ilumina y el glifo se queda gris, el ícono parece de otra capa. */
+.select-wrapper:focus-within ::ng-deep [slot='icon-start'] {
+  color: var(--brand-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :host ::ng-deep [slot='icon-start'] {
+    transition: color 0.15s ease;
+  }
+}
+
 /* Flecha personalizada SVG */
 .select-arrow {
   position: absolute;
@@ -99,5 +128,9 @@
 }
 
 .select-wrapper.is-disabled .select-arrow {
+  color: var(--text-muted);
+}
+
+.select-wrapper.is-disabled ::ng-deep [slot='icon-start'] {
   color: var(--text-muted);
 }

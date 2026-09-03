@@ -133,6 +133,46 @@ export interface PublicFeedPost extends PublicPostSummary {
   readonly authorKind: PublicResultKind;
 }
 
+/* ============================================================================
+    Las lecturas sociales de la superficie pública (TAREA 01 §5.1).
+    ========================================================================== */
+
+/**
+ * Una persona, vista desde afuera: los mismos cinco campos con los que el feed
+ * presenta al autor de una publicación, ni uno más.
+ *
+ * No hay `profileId` ni `userId` **a propósito**: esto es una red social
+ * médica, y quién reaccionó a la publicación de un especialista es dato
+ * personal. El servidor no los sirve; el tipo lo refleja para que no se los
+ * espere.
+ */
+export interface PublicSocialActor {
+  readonly slug: string;
+  readonly displayName: string;
+  readonly headline: string | null;
+  readonly avatarUrl: string | null;
+  readonly kind: PublicResultKind;
+}
+
+/** Los códigos de reacción que sirve la API. Nunca el uuid del concepto. */
+export type PublicReactionCode = 'LIKE' | 'LOVE' | 'INSIGHTFUL' | 'CELEBRATE' | 'SUPPORT';
+
+/** Quién reaccionó a una publicación, y con qué. */
+export interface PublicPostReaction extends PublicSocialActor {
+  /** `null` cuando la fila guarda un concepto que el módulo todavía no nombra. */
+  readonly reactionType: PublicReactionCode | null;
+}
+
+/** Un comentario del hilo público, con su autor adentro. */
+export interface PublicComment {
+  readonly id: string;
+  readonly bodyText: string;
+  readonly createdAt: Date;
+  /** Cuántas respuestas cuelgan de él. 0, nunca `null`. */
+  readonly replyCount: number;
+  readonly author: PublicSocialActor;
+}
+
 /** Un punto geográfico del directorio. */
 export interface PublicLocation {
   readonly lat: number;

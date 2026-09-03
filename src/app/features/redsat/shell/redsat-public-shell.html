@@ -4,13 +4,13 @@
      pública, así que va en el marco y no en cada vista. -->
 <div class="app-public-shell">
   <header class="app-public-header">
-    <a class="app-public-header__marca" routerLink="/buscar">
+    <a class="app-public-header__marca" routerLink="/search">
       <img src="/redsat/imagenes/alovida-logo.svg" alt="" width="34" height="25" />
       <span>AloVida</span>
     </a>
 
     <!-- El buscador del marco: está en las 14 pantallas públicas, así que
-         navega a `/buscar?q=` en vez de tener estado propio. La pantalla de
+         navega a `/search?q=` en vez de tener estado propio. La pantalla de
          resultados lee `?q=`; este componente no la conoce ni le habla. -->
     <form class="app-search-field app-public-header__buscador" (submit)="buscar($event)">
       <label class="solo-lectores" for="buscador-publico"
@@ -41,13 +41,20 @@
     </div>
   </header>
 
-  <main class="app-main__inner">
-    <!-- Carril 01: mismo aviso que el marco de sesión, por el mismo motivo. Acá
-         importa incluso más: el buscador es la superficie pública, y sus fichas
-         de profesionales y farmacias son inventadas. -->
-    <app-redsat-design-notice />
-    <router-outlet />
-  </main>
+  <!-- Carril 01 (AC-01-2): el rail de secciones vive acá, en el marco, y no
+       dentro de cada pantalla. Estaba copiado en ocho plantillas de
+       `features/redsat/buscar/`, con una lista distinta en cada una. -->
+  <div class="app-public-shell__cuerpo">
+    <app-public-nav-rail class="app-public-shell__rail" />
+
+    <main class="app-main__inner">
+      <!-- Carril 01: mismo aviso que el marco de sesión, por el mismo motivo.
+           Acá importa incluso más: el buscador es la superficie pública, y sus
+           fichas de profesionales y farmacias son inventadas. -->
+      <app-redsat-design-notice />
+      <router-outlet />
+    </main>
+  </div>
 
   <footer class="app-public-pie">
     <p><strong>Quién paga lo que ves</strong>Los resultados se ordenan por cercanía y por calificación. Cuando una ficha está paga, dice «Espacio pagado» en la propia tarjeta: nunca se disfraza de recomendación clínica.</p>

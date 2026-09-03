@@ -11,34 +11,35 @@
   </div>
 </div>
 
-<div role="tablist" class="app-tabs" app-tabs aria-label="Qué estás buscando">
-  <a class="app-tab" app-tab role="tab" aria-selected="true" aria-disabled="true" data-sin-destino
-    >Publicaciones</a
-  >
-  <a class="app-tab" app-tab role="tab" aria-selected="false" routerLink="/buscar">Buscar</a>
-  <a class="app-tab" app-tab role="tab" aria-selected="false" routerLink="/buscar/profesionales"
-    >Profesionales</a
-  >
-  <a class="app-tab" app-tab role="tab" aria-selected="false" routerLink="/buscar/sintomas"
-    >¿A quién consulto?</a
-  >
-</div>
-
 <section class="app-view-state-host" app-view-state-host>
   @switch (estado()) {
     @case ('datos') {
       <ul class="feed">
         @for (post of publicaciones(); track post.id) {
           <li>
-            <app-publicacion-post
-              [post]="post"
-              [slug]="post.authorSlug"
-              [autorNombre]="post.authorDisplayName"
-              [autorHeadline]="post.authorHeadline"
-              [autorAvatar]="post.authorAvatarUrl"
-              [autorIniciales]="iniciales(post)"
-              [autorEnlazado]="true"
-            />
+            <!-- AC-01-15/17 — La tarjeta resuelve sola copiar, compartir,
+                 navegar y mandar a `/auth` con retorno. Lo que toca a la
+                 comunidad sube acá, que es quien tiene el cliente. -->
+            @if (denunciando() === post.id) {
+              <app-report-post
+                [postId]="post.id"
+                (reportado)="cerrarDenuncia()"
+                (cancelado)="cerrarDenuncia()"
+              />
+            } @else {
+              <app-public-post-card
+                [post]="post"
+                [slug]="post.authorSlug"
+                [autorNombre]="post.authorDisplayName"
+                [autorHeadline]="post.authorHeadline"
+                [autorAvatar]="post.authorAvatarUrl"
+                [autorIniciales]="iniciales(post)"
+                [autorEnlazado]="true"
+                (pedidoDeDenuncia)="abrirDenuncia($event)"
+                (pedidoDeOcultar)="pedirOcultar()"
+                (pedidoDeContacto)="pedirContacto($event)"
+              />
+            }
           </li>
         }
       </ul>
@@ -64,7 +65,7 @@
           Cuando los profesionales empiecen a publicar, lo último va a aparecer acá. Mientras tanto,
           podés buscarlos por nombre o especialidad.
         </p>
-        <a app-button data-variante="secundario" routerLink="/buscar/profesionales"
+        <a app-button data-variante="secundario" routerLink="/search/practitioners"
           >Ver profesionales</a
         >
       </div>

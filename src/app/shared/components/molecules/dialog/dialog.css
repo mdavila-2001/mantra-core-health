@@ -67,3 +67,37 @@
     transform: translateY(var(--sp-2));
   }
 }
+
+/* -- Datos en pares rótulo/valor ------------------------------------------- */
+
+.dialog__details {
+  display: grid;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+}
+
+/* Rótulo y valor en la misma línea cuando entran, apilados cuando no: en
+   teléfono un valor largo partido en dos columnas estrechas se vuelve ilegible. */
+.dialog__detail {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-1);
+}
+
+@media (min-width: 480px) {
+  .dialog__detail {
+    grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+    gap: var(--sp-3);
+    align-items: baseline;
+  }
+}
+
+.dialog__detail-label {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.dialog__detail-value {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

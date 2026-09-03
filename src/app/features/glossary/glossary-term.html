@@ -34,7 +34,9 @@
           @if (termino.tags.length > 0) {
             <ul class="termino__chips" aria-label="Etiquetas clínicas de este término">
               @for (etiqueta of termino.tags; track etiqueta.valueSetId) {
-                <li><app-chip size="sm" [label]="etiqueta.name">{{ etiqueta.name }}</app-chip></li>
+                <li>
+                  <app-chip size="sm" [label]="etiqueta.name">{{ etiqueta.name }}</app-chip>
+                </li>
               }
             </ul>
           }
@@ -86,6 +88,42 @@
               </li>
             }
           </ul>
+        }
+
+        <!-- Ficha de medicamento (TAREA-25, «lo más importante» según el
+             propietario). Se omite entero si no hay ningún dato — hoy es el
+             caso de los 64 términos curados, porque la base no tiene filas
+             del catálogo NDC. Posología, dosis y contraindicaciones NO
+             aparecen acá a propósito: sin fuente importada y con procedencia
+             declarada, un campo ausente es correcto y uno inventado es un
+             daño clínico (regla 00 §7/§8). -->
+        @if (medicamento(); as ficha) {
+          <h2 class="termino__subtitulo">Medicamento</h2>
+          @if (ficha.activeIngredients.length > 0) {
+            <p class="termino__medicamento-campo">
+              <strong>Principios activos:</strong> {{ ficha.activeIngredients.join(', ') }}
+            </p>
+          }
+          @if (ficha.dosageForm) {
+            <p class="termino__medicamento-campo">
+              <strong>Forma farmacéutica:</strong> {{ ficha.dosageForm }}
+            </p>
+          }
+          @if (ficha.route.length > 0) {
+            <p class="termino__medicamento-campo">
+              <strong>Vía:</strong> {{ ficha.route.join(', ') }}
+            </p>
+          }
+          @if (ficha.manufacturer) {
+            <p class="termino__medicamento-campo">
+              <strong>Fabricante:</strong> {{ ficha.manufacturer }}
+              <!-- AC-25-5: texto de la fuente externa, nunca un perfil de la
+                   plataforma — acá no hay dónde enlazarlo a uno. -->
+            </p>
+          }
+          <p class="termino__medicamento-fuente">
+            Fuente: FDA National Drug Code (NDC) Directory, openFDA (dominio público, EE. UU.).
+          </p>
         }
 
         <!-- Relaciones clínicas tipadas, agrupadas por tipo. Cada una enlaza a

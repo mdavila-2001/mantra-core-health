@@ -1,0 +1,96 @@
+<app-page-header
+  title="Bloqueos de agenda"
+  subtitle="Los ratos que cerraste y los que ya pasaron. Acá no hay turnos: sólo lo que no se atiende."
+>
+  <a app-button page-actions variant="primary" [routerLink]="rutaNuevo">Bloquear días u horarios</a>
+</app-page-header>
+
+<!-- El mismo formulario que da de alta, con lo que se corrige precargado.
+     Escribir uno aparte para editar es el camino corto que termina con dos
+     formularios que divergen. -->
+@if (editando(); as enEdicion) {
+  <app-block-form
+    [motivos]="motivos()"
+    [editando]="enEdicion"
+    (bloquear)="guardar($event)"
+    (cancelar)="cancelarEdicion()"
+  />
+}
+
+<app-view-state-host [state]="estado()" (retry)="cargar()">
+  <!-- ── Vigentes ────────────────────────────────────────────────────────── -->
+  @if (vigentes().length > 0) {
+    <section class="bloqueos__seccion">
+      <h2 class="bloqueos__titulo">Vigentes</h2>
+      <ul class="bloqueos__lista">
+        @for (b of vigentes(); track b.id) {
+          <li class="bloqueos__item">
+            <div class="bloqueos__datos">
+              <p class="bloqueos__motivo">
+                {{ b.motivo }}
+                <app-badge variant="warning">Cerrado</app-badge>
+              </p>
+              <p class="bloqueos__cuando">{{ b.cuando }}</p>
+              <!-- La descripción sólo la ve quien administra la agenda: es
+                   texto libre y puede nombrar a un tercero. -->
+              @if (b.descripcion) {
+                <p class="bloqueos__descripcion">{{ b.descripcion }}</p>
+              }
+            </div>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="bloqueo-editar"
+              (clicked)="editar(b)"
+            >
+              Cambiar
+            </button>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="bloqueo-quitar"
+              [isLoading]="borrando() === b.id"
+              (clicked)="quitar(b)"
+            >
+              Quitar
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <!-- ── Históricos ──────────────────────────────────────────────────────── -->
+  <!-- Igual que en horarios: lo que ya no rige se muestra igual, porque
+       explica una agenda de antes. Acá NO se ofrece quitarlos: quitar un
+       bloqueo que ya pasó no abre ningún turno, sólo borra el registro de por
+       qué ese día estuvo cerrado. -->
+  @if (historicos().length > 0) {
+    <section class="bloqueos__seccion">
+      <h2 class="bloqueos__titulo">Ya pasaron</h2>
+      <p class="bloqueos__nota">
+        Se muestran porque explican una agenda de antes. Quitarlos no abriría ningún turno.
+      </p>
+      <ul class="bloqueos__lista">
+        @for (b of historicos(); track b.id) {
+          <li class="bloqueos__item bloqueos__item--pasado">
+            <div class="bloqueos__datos">
+              <p class="bloqueos__motivo">{{ b.motivo }}</p>
+              <p class="bloqueos__cuando">{{ b.cuando }}</p>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (vigentes().length === 0 && historicos().length > 0) {
+    <app-alert tone="info" title="No tenés ningún bloqueo vigente">
+      Tu agenda está abierta en todos los días que publicaste.
+    </app-alert>
+  }
+</app-view-state-host>

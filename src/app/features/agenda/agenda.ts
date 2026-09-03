@@ -1,10 +1,11 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, formatDate } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  LOCALE_ID,
   signal,
   untracked,
   viewChild,
@@ -28,22 +29,29 @@ import type {
   AgendaResource,
   AgendaSlot,
   Booking,
+  NewPaymentState,
+  PaymentStateCode,
+  PaymentStateInfo,
 } from '../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
-import { empty, loading, ready } from '../../core/view-state/view-state';
+import { empty, loading, ready, stale } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
+import { Menu } from '../../shared/components/molecules/menu/menu';
+import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
+import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { Link } from '../../shared/components/atoms/link/link';
 import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { Switch } from '../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../shared/components/molecules/alert/alert';
+import type { DialogDetail } from '../../shared/components/molecules/dialog/dialog.types';
 import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
@@ -147,6 +155,21 @@ const CODIGOS_INICIABLES: ReadonlySet<string> = new Set([
 /** El único estado desde el que se cierra una atención. */
 const CODIGO_EN_CURSO = 'BOOKING_IN_PROGRESS';
 
+/**
+ * Estados que **no** admiten estado de pago (TAREA-13 punto 5).
+ *
+ * Es la mitad excluyente de la regla del propietario: «sí es excluyente con
+ * rechazada y cancelada». Rechazar cancela con el motivo `CANCEL_REJECTED`, así
+ * que las dos palabras caen en el mismo código y la lista tiene uno solo.
+ *
+ * Con el código vacío —estado sin resolver— **no se ofrece**, por lo mismo que
+ * las demás acciones: ofrecer sobre un estado desconocido es adivinar.
+ *
+ * Esto NO es la garantía: el servidor responde 422 igual. Es no ofrecer un
+ * botón que va a fallar.
+ */
+const CODIGOS_SIN_PAGO: ReadonlySet<string> = new Set(['BOOKING_CANCELLED']);
+
 /** Estados en los que el backend acepta mover o cancelar una cita vigente. */
 const CODIGOS_VIGENTES: ReadonlySet<string> = new Set(['BOOKING_CONFIRMED', 'BOOKING_CHECKED_IN']);
 
@@ -221,6 +244,16 @@ export interface CitaVisible {
   readonly motivo: string;
   readonly patientProfileId: string | null;
   readonly rutaPaciente: string | null;
+  /**
+   * Cómo se nombra al paciente en el detalle.
+   *
+   * **Respeta la misma compuerta que la celda de la tabla**: la API manda
+   * `patientName` sólo al titular y al profesional de esa agenda. Sin nombre se
+   * dice «Paciente asignado» —que es información honesta: hay alguien, y no te
+   * corresponde saber quién— y no un espacio en blanco, que se lee como un
+   * error.
+   */
+  readonly paciente: string;
   /** El expediente clínico de la persona citada, si la sesión puede abrirlo. */
   readonly rutaExpediente: string | null;
   /**
@@ -247,6 +280,29 @@ export interface CitaVisible {
    * puede probar por separado.
    */
   readonly paramsDelExpediente: Readonly<Record<string, string>>;
+  /**
+   * Cuándo se pidió la cita — la columna «fecha y hora de solicitud» del punto 1.
+   *
+   * Es `appointment_bookings.created_at`, que la lectura **ya traía** y que
+   * ninguna pantalla mostraba. No hizo falta tocar la API para esta columna.
+   */
+  readonly solicitada: Date;
+  /**
+   * El estado de pago, o `null` si nadie lo marcó (TAREA-13 punto 5).
+   *
+   * `null` **no** es «pendiente de pago»: pendiente es una afirmación que
+   * alguien firmó. La celda los distingue, y por eso muestra un guión y no una
+   * etiqueta.
+   */
+  readonly pago: PaymentStateInfo | null;
+  /**
+   * Si esta cita admite estado de pago.
+   *
+   * Es la regla del propietario —«sí es excluyente con rechazada y
+   * cancelada»— aplicada a la oferta: un botón que va a volver con 422 es un
+   * error con forma de oferta. **La garantía real está en el servidor**, no acá.
+   */
+  readonly admitePago: boolean;
   /** Con la llegada ya registrada, el check-in no se vuelve a ofrecer. */
   readonly llegadaRegistrada: boolean;
 }
@@ -310,6 +366,9 @@ export interface CupoVisible {
     AppButton,
     AppButtonLink,
     Badge,
+    Menu,
+    MenuItem,
+    MenuTrigger,
     StatusSeal,
     DataTable,
     DatePipe,
@@ -335,6 +394,8 @@ export class Agenda {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialogs = inject(DialogService);
+  /** El idioma activo, para formatear las fechas del detalle fuera de la plantilla. */
+  private readonly idioma = inject(LOCALE_ID);
   private readonly toast = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
@@ -346,6 +407,12 @@ export class Agenda {
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaCuando');
   private readonly celdaEstado =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaEstado');
+
+  private readonly celdaSolicitada =
+    viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaSolicitada');
+
+  private readonly celdaPago =
+    viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPago');
   private readonly celdaPaciente =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPaciente');
   private readonly celdaFranja =
@@ -587,8 +654,23 @@ export class Agenda {
       : VENTANA_POR_DEFECTO;
   });
 
-  /** Pestaña visible. En la URL para que un enlace pueda apuntar a los cupos. */
-  protected readonly pestana = computed(() => (this.params()?.get('vista') === 'cupos' ? 1 : 0));
+  /**
+   * Pestaña visible. En la URL para que un enlace pueda apuntar a una en
+   * concreto.
+   *
+   * **«Solicitudes» es la primera y la de arranque**, y es un cambio deliberado:
+   * es lo único de esta pantalla que **espera una acción de una persona**. Las
+   * citas agendadas y los cupos se consultan; una solicitud sin responder le
+   * cambia el día a alguien que está esperando.
+   *
+   * `vista=cupos` sigue significando lo mismo que antes, así que los enlaces
+   * que ya existen no se rompen.
+   */
+  protected readonly pestana = computed(() => {
+    const vista = this.params()?.get('vista');
+    if (vista === 'cupos') return 2;
+    return vista === 'citas' ? 1 : 0;
+  });
 
   protected readonly incluirCanceladas = computed(() => this.params()?.get('canceladas') === 'si');
 
@@ -655,7 +737,30 @@ export class Agenda {
    * cuánto hay del otro lado sin cambiar de panel: el panel inactivo no se
    * renderiza, así que un contador dentro del panel no se lee hasta abrirlo.
    */
-  protected readonly rotuloDeCitas = computed(() => rotulo('Citas', cuenta(this.citas())));
+  /**
+   * Lo que espera respuesta — TAREA-13, punto 1.
+   *
+   * **Y sale de la solapa «Citas», no se duplica.** La ficha lo advierte: separar
+   * las solicitudes mejora la lectura pero *«duplica el lugar donde se responde
+   * una solicitud si la solapa queda como está»*. Dos lugares para aceptar la
+   * misma cita es peor que ninguno — el día que uno de los dos cambie, nadie va
+   * a acordarse del otro.
+   */
+  protected readonly solicitudes = computed(() =>
+    filtrarEstado(this.citas(), (cita) => this.porResponder(cita)),
+  );
+
+  /** Lo que ya está agendado: la solapa «Citas» sin las solicitudes. */
+  protected readonly citasAgendadas = computed(() =>
+    filtrarEstado(this.citas(), (cita) => !this.porResponder(cita)),
+  );
+
+  protected readonly rotuloDeSolicitudes = computed(() =>
+    rotulo('Solicitudes', cuenta(this.solicitudes())),
+  );
+  protected readonly rotuloDeCitas = computed(() =>
+    rotulo('Citas', cuenta(this.citasAgendadas())),
+  );
   protected readonly rotuloDeCupos = computed(() => rotulo('Cupos', cuenta(this.cupos())));
 
   /** Si la sesión puede registrar llegadas y cancelar. Roles de los endpoints. */
@@ -842,8 +947,51 @@ export class Agenda {
     { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
     { key: 'paciente', header: 'Paciente', priority: 2, cell: this.celdaPaciente() },
     { key: 'motivo', header: 'Motivo', priority: 3 },
+    // Prioridad 2: en pantalla chica cede antes que el estado de la cita y la
+    // fecha, pero antes que el motivo. Quien mira la agenda en el teléfono
+    // quiere saber a qué hora y con quién; el pago viene después.
+    { key: 'pago', header: 'Pago', priority: 2, cell: this.celdaPago() },
     // La columna sólo existe para quien puede ejecutar las acciones: ofrecer
     // botones que la API va a rechazar con 403 es ofrecer un error.
+    ...(this.puedeAtender()
+      ? [
+          {
+            key: 'acciones',
+            header: 'Acciones',
+            priority: 1,
+            cell: this.celdaAccionesCita(),
+          } satisfies ColumnDef<CitaVisible>,
+        ]
+      : []),
+  ]);
+
+  /**
+   * Las columnas de la tabla de solicitudes — TAREA-13, punto 1.
+   *
+   * Son **las cinco que pidió el propietario**, en su orden: estado, cuándo se
+   * pidió, cuándo sería la cita, quién la pide y con quién.
+   *
+   * Dos diferencias con la tabla de citas, y las dos son a propósito:
+   *
+   * - **«Solicitada» va antes que «Cita».** En una lista de cosas por responder,
+   *   lo que ordena es hace cuánto que alguien espera, no cuándo sería el turno.
+   * - **No hay columna de pago.** Una solicitud sin aceptar no se cobra, y
+   *   ofrecer el estado de pago ahí sería ofrecer una acción que el servidor
+   *   permite pero que no significa nada todavía.
+   *
+   * `profesional` es constante mientras la agenda muestre **un** recurso, que es
+   * lo que hace hoy. Se muestra igual porque el propietario la pidió y porque
+   * deja de ser constante en cuanto la tabla mezcle recursos — decisión que **no
+   * tomamos acá**: ensanchar quién ve la agenda de quién es privacidad, no
+   * pantalla (P-13-2).
+   */
+  protected readonly columnasDeSolicitudes = computed<readonly ColumnDef<CitaVisible>[]>(() => [
+    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+    { key: 'solicitada', header: 'Solicitada', priority: 1, cell: this.celdaSolicitada() },
+    { key: 'cuando', header: 'Cita', priority: 1, cell: this.celdaCuando() },
+    { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
+    { key: 'recurso', header: 'Profesional', priority: 3 },
+    { key: 'motivo', header: 'Motivo', priority: 3 },
     ...(this.puedeAtender()
       ? [
           {
@@ -933,7 +1081,8 @@ export class Agenda {
   }
 
   protected elegirPestana(indice: number): void {
-    this.publicar({ vista: indice === 1 ? 'cupos' : null });
+    const vista = indice === 2 ? 'cupos' : indice === 1 ? 'citas' : null;
+    this.publicar({ vista });
   }
 
   protected recargar(): void {
@@ -1028,6 +1177,67 @@ export class Agenda {
    * decenas de veces por turno. Lo destructivo —rechazar— sí lo pide, y además
    * con motivo.
    */
+  /**
+   * Marca el estado de pago de la cita — TAREA-13, punto 5.
+   *
+   * **El seguro se conserva** cuando se cambia sólo el estado, y viceversa: son
+   * dos preguntas distintas, y cambiar una no puede responder la otra por su
+   * cuenta. Sin este cuidado, pasar de «pendiente» a «pagada» borraría en
+   * silencio que la cita se había cubierto con seguro.
+   *
+   * No hay confirmación previa a propósito: es reversible en un clic y queda
+   * firmado con quién y cuándo, así que un diálogo de más sólo agregaría
+   * fricción a una acción que se repite muchas veces por día.
+   */
+  protected marcarPago(cita: CitaVisible, state: PaymentStateCode): void {
+    this.aplicarPago(cita, { state, insuranceUsed: cita.pago?.insuranceUsed ?? false });
+  }
+
+  /** Alterna la marca de seguro sin tocar el estado. */
+  protected alternarSeguro(cita: CitaVisible): void {
+    // Sin estado marcado no hay qué alternar: la marca de seguro acompaña a un
+    // estado, no existe suelta. El menú no la ofrece en ese caso.
+    if (cita.pago === null) {
+      return;
+    }
+    this.aplicarPago(cita, {
+      state: cita.pago.state,
+      insuranceUsed: !cita.pago.insuranceUsed,
+    });
+  }
+
+  private aplicarPago(cita: CitaVisible, cambio: NewPaymentState): void {
+    if (this.operando() !== null) {
+      return;
+    }
+    this.operando.set(cita.id);
+
+    this.scheduling.setPaymentState(cita.id, cambio).subscribe({
+      next: (estado) => {
+        this.operando.set(null);
+        this.toast.success(
+          estado.insuranceUsed ? `${estado.label}, con seguro.` : `${estado.label}.`,
+          'Pago actualizado',
+        );
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.avisarFallo(error, 'No se pudo cambiar el estado de pago.');
+      },
+    });
+  }
+
+  /** Los tres estados, para el menú. La etiqueta viene del servidor al leer. */
+  protected readonly estadosDePago: readonly {
+    readonly code: PaymentStateCode;
+    readonly label: string;
+  }[] = [
+    { code: 'PENDING', label: 'Pendiente de pago' },
+    { code: 'PARTIALLY_PAID', label: 'Parcialmente pagada' },
+    { code: 'PAID', label: 'Pagada' },
+  ];
+
   protected aceptarCita(cita: CitaVisible): void {
     if (this.operando() !== null) {
       return;
@@ -1054,6 +1264,141 @@ export class Agenda {
    * de su turno: rechazar sin decir por qué deja a alguien esperando una
    * explicación que nunca llega.
    */
+  /**
+   * «Ver detalle» — TAREA-13, punto 2.
+   *
+   * Abre el modal con **todo lo que la fila no muestra** y ofrece aceptar desde
+   * ahí, que es la mitad del pedido que no se podía hacer sin salir de la
+   * tabla.
+   *
+   * ## Por qué el diálogo compartido y no un modal nuevo
+   *
+   * `showModal()` trae gratis el fondo, la inertización de lo que queda atrás,
+   * la trampa de foco y el cierre con `Escape`. Un modal propio para esta
+   * pantalla haría esas cuatro cosas otra vez y, como pasa siempre, alguna a
+   * medias. Lo que faltaba era mostrar **datos** y no un párrafo: se agregó
+   * `details` al diálogo, que es parametrizar en vez de clonar.
+   *
+   * ## Rechazar NO está acá, y es a propósito
+   *
+   * Rechazar exige motivo, o sea un segundo diálogo. Encadenar
+   * detalle → rechazar → motivo son tres modales, y el tercero aparece encima
+   * de dos que la persona ya no puede leer. El botón de rechazar se queda en la
+   * fila, a un clic de distancia, con su motivo en un solo paso.
+   *
+   * Es la parte de AC-13-4 que este slice deja abierta a propósito, no por
+   * olvido.
+   */
+  protected async verDetalle(cita: CitaVisible): Promise<void> {
+    const aceptar = await this.dialogs.confirm({
+      title: 'Solicitud de consulta',
+      message: 'Todo lo que el paciente mandó con su pedido.',
+      details: this.detalleDeSolicitud(cita),
+      confirmLabel: 'Aceptar solicitud',
+      cancelLabel: 'Cerrar',
+    });
+    if (aceptar) {
+      this.aceptarCita(cita);
+    }
+  }
+
+  /**
+   * Los datos del detalle, ya en texto.
+   *
+   * Se arman acá y no en el diálogo porque acá es donde se conoce el dominio:
+   * una molécula compartida no tiene por qué saber cómo se escribe una fecha de
+   * turno ni qué significa que no haya motivo.
+   *
+   * **Lo ausente se dice, no se omite.** Una fila sin fecha de cita o sin
+   * motivo deja el rótulo con «Sin registrar»: un dato que desaparece parece un
+   * dato que no se pidió, y acá lo que importa es saber qué falta.
+   */
+  private detalleDeSolicitud(cita: CitaVisible): readonly DialogDetail[] {
+    const fecha = (valor: Date | null): string =>
+      valor === null ? SIN_DATO : formatDate(valor, "EEEE d 'de' MMMM, HH:mm", this.idioma);
+
+    return [
+      { label: 'Estado', value: cita.estado.label },
+      { label: 'Paciente', value: cita.paciente },
+      { label: 'Solicitada', value: fecha(cita.solicitada) },
+      { label: 'Cita', value: fecha(cita.cuando) },
+      { label: 'Hasta', value: fecha(cita.hasta) },
+      { label: 'Profesional', value: cita.recurso },
+      { label: 'Motivo', value: cita.motivo },
+    ];
+  }
+
+  /**
+   * «Ver historial de solicitudes» — punto 4 del pedido original.
+   *
+   * Muestra **todas** las solicitudes de esa persona, **incluidas las
+   * rechazadas y canceladas**, de la más reciente a la más vieja. Ese
+   * `includeCancelled` no es un detalle: el historial existe justamente para
+   * ver el patrón —quién pide y no viene, a quién se le rechazó y por qué— y
+   * esconder lo cancelado lo volvería una lista de buenas noticias.
+   *
+   * Se lee al abrir y no al cargar la tabla: es una consulta por paciente, y
+   * pedir el historial de cada fila de la agenda sería el mismo defecto que ya
+   * evitamos en la columna de pago.
+   */
+  protected verHistorialDelPaciente(cita: CitaVisible): void {
+    const paciente = cita.patientProfileId;
+    if (paciente === null || this.operando() !== null) {
+      return;
+    }
+    this.operando.set(cita.id);
+
+    this.scheduling
+      .searchBookings({ patientProfileId: paciente, includeCancelled: true, limit: 50 })
+      .subscribe({
+        next: (pagina) => {
+          this.operando.set(null);
+          void this.mostrarHistorial(cita, pagina.items);
+        },
+        error: (error: unknown) => {
+          this.operando.set(null);
+          this.avisarFallo(error, 'No se pudo leer el historial.');
+        },
+      });
+  }
+
+  private async mostrarHistorial(
+    cita: CitaVisible,
+    solicitudes: readonly Booking[],
+  ): Promise<void> {
+    // De la más reciente a la más vieja: en un historial, lo último es lo que
+    // explica lo de ahora.
+    const ordenadas = [...solicitudes].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
+
+    const detalles: DialogDetail[] = ordenadas.map((s) => {
+      const estado = toBookingStatusPresentation(
+        s.statusConceptId === undefined ? undefined : this.etiquetas().get(s.statusConceptId),
+        SIN_DATO,
+      );
+      const cuando =
+        s.startAt === undefined
+          ? SIN_DATO
+          : formatDate(s.startAt, "d 'de' MMMM, HH:mm", this.idioma);
+      return {
+        label: formatDate(s.createdAt, 'd MMM yyyy', this.idioma),
+        value: `${estado.label} · cita ${cuando}${s.reasonText === undefined ? '' : ` · ${s.reasonText}`}`,
+      };
+    });
+
+    await this.dialogs.confirm({
+      title: `Historial de ${cita.paciente}`,
+      message:
+        ordenadas.length === 0
+          ? 'Esta persona todavía no pidió ningún turno acá.'
+          : `${ordenadas.length} ${ordenadas.length === 1 ? 'solicitud' : 'solicitudes'}, de la más reciente a la más vieja. Incluye las rechazadas y canceladas.`,
+      details: detalles,
+      confirmLabel: 'Cerrar',
+      cancelLabel: 'Volver',
+    });
+  }
+
   protected async rechazarCita(cita: CitaVisible): Promise<void> {
     if (this.operando() !== null) {
       return;
@@ -1357,19 +1702,23 @@ export class Agenda {
 
   private aCitaVisible(cita: Booking): CitaVisible {
     const paciente = cita.patientProfileId ?? null;
+    const estado = toBookingStatusPresentation(
+      cita.statusConceptId === undefined
+        ? undefined
+        : this.etiquetas().get(cita.statusConceptId),
+      SIN_DATO,
+    );
     return {
       id: cita.id,
       cuando: cita.startAt ?? null,
       hasta: cita.endAt ?? null,
       recurso: this.nombreDeRecurso(cita.resourceId),
-      estado: toBookingStatusPresentation(
-        cita.statusConceptId === undefined ? undefined : this.etiquetas().get(cita.statusConceptId),
-        SIN_DATO,
-      ),
+      estado,
       motivo: cita.reasonText ?? SIN_DATO,
       patientProfileId: paciente,
       rutaPaciente:
         paciente !== null && this.puedeVerFichas() ? `/administration/patients/${paciente}` : null,
+      paciente: cita.patientName ?? (paciente === null ? 'Sin paciente' : 'Paciente asignado'),
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,
@@ -1381,6 +1730,9 @@ export class Agenda {
           : { [CITA_QUERY_PARAM]: cita.appointmentId }),
       },
       llegadaRegistrada: cita.checkedInAt !== undefined,
+      solicitada: cita.createdAt,
+      pago: cita.paymentState ?? null,
+      admitePago: estado.code !== '' && !CODIGOS_SIN_PAGO.has(estado.code),
     };
   }
 
@@ -1457,6 +1809,32 @@ export class Agenda {
     hasta.setDate(hasta.getDate() + dias);
     return { desde, hasta };
   }
+}
+
+/**
+ * Parte un estado en dos sin perder ninguno de los nueve del M34.
+ *
+ * Las solicitudes y las citas agendadas salen de **la misma lectura**: pedir la
+ * agenda dos veces para partirla en dos tablas sería duplicar una consulta que
+ * ya trae todo. Lo que hay que cuidar es que `loading`, `forbidden`, `offline` y
+ * los demás **sigan siendo los mismos** en las dos: si una tabla se quedara en
+ * `ready` con cero filas mientras la otra está en `error`, la pantalla estaría
+ * mintiendo sobre una de las dos.
+ *
+ * Por eso sólo se toca `ready` y `stale`, que son los únicos que transportan
+ * datos. El resto viaja tal cual.
+ */
+function filtrarEstado<T>(
+  estado: ViewState<readonly T[]>,
+  predicado: (fila: T) => boolean,
+): ViewState<readonly T[]> {
+  if (estado.status === 'ready') {
+    return ready(estado.data.filter(predicado));
+  }
+  if (estado.status === 'stale') {
+    return stale(estado.data.filter(predicado), estado.asOf);
+  }
+  return estado;
 }
 
 /** Cuántas filas transporta un estado, o `null` si todavía no transporta ninguna. */

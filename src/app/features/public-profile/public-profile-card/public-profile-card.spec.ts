@@ -155,7 +155,7 @@ describe('PublicProfileCard · trayectoria', () => {
   }
 
   it('sin trayectoria no dibuja la sección', () => {
-    expect(crear(BASE).querySelector('.perfil__trayectoria')).toBeNull();
+    expect(crear(BASE).querySelector('.perfil__linea-tiempo')).toBeNull();
   });
 
   it('con un vínculo vigente dice "actualidad" y no una fecha', () => {
@@ -172,14 +172,14 @@ describe('PublicProfileCard · trayectoria', () => {
       ],
     });
 
-    const vinculo = host.querySelector('.perfil__vinculo')!;
-    expect(vinculo.querySelector('.perfil__vinculo-institucion')?.textContent).toContain(
+    const vinculo = host.querySelector('.hito')!;
+    expect(vinculo.querySelector('.hito__institucion')?.textContent).toContain(
       'Hospital Obrero N.º 1',
     );
-    expect(vinculo.querySelector('.perfil__vinculo-cargo')?.textContent).toContain(
+    expect(vinculo.querySelector('.hito__cargo')?.textContent).toContain(
       'Cardióloga de planta',
     );
-    expect(vinculo.querySelector('.perfil__vinculo-periodo')?.textContent).toContain('actualidad');
+    expect(vinculo.querySelector('.hito__periodo')?.textContent).toContain('actualidad');
   });
 
   it('con vínculo cerrado muestra las dos puntas del período', () => {
@@ -196,7 +196,7 @@ describe('PublicProfileCard · trayectoria', () => {
       ],
     });
 
-    const periodo = host.querySelector('.perfil__vinculo-periodo')?.textContent ?? '';
+    const periodo = host.querySelector('.hito__periodo')?.textContent ?? '';
     expect(periodo).not.toContain('actualidad');
     expect(periodo.toLowerCase()).toContain('2014');
     expect(periodo.toLowerCase()).toContain('2017');
@@ -223,6 +223,6 @@ describe('PublicProfileCard · trayectoria', () => {
       ],
     });
 
-    expect(host.querySelectorAll('.perfil__vinculo').length).toBe(2);
+    expect(host.querySelectorAll('.hito').length).toBe(2);
   });
 });

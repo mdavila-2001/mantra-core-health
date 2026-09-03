@@ -5,10 +5,12 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { PUBLIC_PROFILE_PREFIX } from './public-directory.types';
 import type {
+  PublicComment,
   PublicFeedPost,
   PublicNearbyQuery,
   PublicNearbyResult,
   PublicPage,
+  PublicPostReaction,
   PublicPostSummary,
   PublicPractitionerQuery,
   PublicProfileDetail,
@@ -33,6 +35,10 @@ type WireNearbyResult = PublicNearbyResult;
 
 type WirePost = Omit<PublicPostSummary, 'publishedAt'> & {
   readonly publishedAt: string;
+};
+
+type WireComment = Omit<PublicComment, 'createdAt'> & {
+  readonly createdAt: string;
 };
 
 type WireFeedPost = Omit<PublicFeedPost, 'publishedAt'> & {
@@ -231,6 +237,83 @@ export class PublicDirectoryClient {
         this.url(`/public/profiles/${prefijo}/${encodeURIComponent(slug)}`),
       )
       .pipe(map(toProfile));
+  }
+
+  /* ---- las tres lecturas sociales públicas (TAREA 01 §5.1) --------------- */
+
+  /**
+   * `GET /public/posts/:postId/reactions` — **quiénes** reaccionaron (AC-01-9).
+   *
+   * No lo confundas con `CommunityClient.readReactions`, que devuelve recuentos
+   * por tipo y exige sesión. Ésta lista personas, sin sesión, y por eso su
+   * respuesta trae sólo el perfil público de cada una: nunca `profileId`,
+   * `userId` ni el uuid del concepto de reacción.
+   */
+  postReactions(
+    postId: string,
+    opciones: { cursor?: string; limit?: number } = {},
+  ): Observable<PublicPage<PublicPostReaction>> {
+    return this.getPage<PublicPostReaction>(
+      `/public/posts/${encodeURIComponent(postId)}/reactions`,
+      this.paginaParams(opciones),
+    );
+  }
+
+  /** `GET /public/posts/:postId/comments` — el hilo raíz, sin sesión (AC-01-11). */
+  postComments(
+    postId: string,
+    opciones: { cursor?: string; limit?: number } = {},
+  ): Observable<PublicPage<PublicComment>> {
+    return this.getComments(
+      `/public/posts/${encodeURIComponent(postId)}/comments`,
+      opciones,
+    );
+  }
+
+  /**
+   * `GET /public/comments/:commentId/replies` — las respuestas de UN comentario
+   * (AC-01-12, «Ver N respuestas»).
+   *
+   * Ruta propia y no un parámetro de la anterior: así cada hilo abierto tiene su
+   * propio cursor y abrir dos no hace que sus páginas se pisen.
+   */
+  commentReplies(
+    commentId: string,
+    opciones: { cursor?: string; limit?: number } = {},
+  ): Observable<PublicPage<PublicComment>> {
+    return this.getComments(
+      `/public/comments/${encodeURIComponent(commentId)}/replies`,
+      opciones,
+    );
+  }
+
+  private getComments(
+    path: string,
+    opciones: { cursor?: string; limit?: number },
+  ): Observable<PublicPage<PublicComment>> {
+    return this.http
+      .get<WirePage<WireComment>>(this.url(path), { params: this.paginaParams(opciones) })
+      .pipe(
+        map((body) => ({
+          ...toPage(body),
+          items: body.items.map((comentario) => ({
+            ...comentario,
+            createdAt: new Date(comentario.createdAt),
+          })),
+        })),
+      );
+  }
+
+  /** Cursor y tamaño, que es todo lo que aceptan las lecturas paginadas. */
+  private paginaParams(opciones: { cursor?: string; limit?: number }): HttpParams {
+    let params = new HttpParams();
+    if (opciones.cursor !== undefined && opciones.cursor !== '') {
+      params = params.set('cursor', opciones.cursor);
+    }
+    if (opciones.limit !== undefined) {
+      params = params.set('limit', String(opciones.limit));
+    }
+    return params;
   }
 
   /** Los filtros que comparten las siete búsquedas. */

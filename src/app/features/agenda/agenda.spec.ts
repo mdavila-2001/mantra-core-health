@@ -217,8 +217,25 @@ describe('Agenda', () => {
             display: 'Abierto',
             codeSystemVersionId: 'csv-1',
           },
+          // TAREA-13: hace falta para distinguir lo que espera respuesta de lo
+          // que ya está agendado. Sin el concepto, `porResponder` no resuelve
+          // el código y la fila no cae en ninguna de las dos tablas.
+          {
+            conceptId: 'c-pendiente',
+            code: 'BOOKING_PENDING_CONFIRMATION',
+            display: 'Por confirmar',
+            codeSystemVersionId: 'csv-1',
+          },
+          // TAREA-13 punto 5: hace falta para probar que una cita cancelada NO
+          // admite estado de pago.
+          {
+            conceptId: 'c-cancelada',
+            code: 'BOOKING_CANCELLED',
+            display: 'Cancelada',
+            codeSystemVersionId: 'csv-1',
+          },
         ],
-        count: 2,
+        count: 4,
         limit: 200,
       });
   }
@@ -827,6 +844,20 @@ describe('Agenda', () => {
      ======================================================================== */
 
   /** El botón de una acción, por su `data-testid`. */
+  /**
+   * Abre la solapa «Citas» y espera al render.
+   *
+   * Hace falta desde que las solicitudes tienen solapa propia y **es la de
+   * arranque** (TAREA-13, punto 1): una cita ya agendada vive en la segunda, y
+   * el panel inactivo no se renderiza. Sin esto, buscar su botón devuelve
+   * `null` por no estar en pantalla, no por no ofrecerse.
+   */
+  async function verSolapaDeCitas(): Promise<void> {
+    interno<(i: number) => void>('elegirPestana')(1);
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+  }
+
   function boton(testid: string): HTMLButtonElement | null {
     return harness.routeNativeElement?.querySelector(`[data-testid="${testid}"]`) ?? null;
   }
@@ -889,6 +920,7 @@ describe('Agenda', () => {
   it('una cita confirmada ofrece iniciar la consulta, sin esperar el día', async () => {
     await montar();
     await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+    await verSolapaDeCitas();
 
     expect(boton('agenda-iniciar')).not.toBeNull();
     expect(boton('agenda-completar')).toBeNull();
@@ -909,6 +941,7 @@ describe('Agenda', () => {
   it('una cita en curso ofrece completarla, y solo eso', async () => {
     await montar();
     await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+    await verSolapaDeCitas();
 
     expect(boton('agenda-completar')).not.toBeNull();
     expect(boton('agenda-iniciar')).toBeNull();
@@ -1035,5 +1068,252 @@ describe('Agenda', () => {
 
     expect(demora().panelDeDemoraAbierto()).toBe(false);
     // `http.verify()` del `afterEach` comprueba que no salió ninguna petición.
+  });
+
+  /**
+   * LA TABLA DE SOLICITUDES — TAREA-13, punto 1.
+   *
+   * Lo que fijan estas pruebas es la mitad del pedido que no es cosmética:
+   * **separar lo que espera respuesta de lo que ya está agendado**, y que
+   * responder una solicitud tenga **un solo lugar**. La ficha advertía que
+   * separarlas «duplica el lugar donde se responde una solicitud si la solapa
+   * queda como está», y eso es justo lo que no puede pasar.
+   */
+  describe('la tabla de solicitudes', () => {
+    function filas(nombre: 'solicitudes' | 'citasAgendadas') {
+      return interno<() => { status: string; data?: readonly Record<string, unknown>[] }>(
+        nombre,
+      )();
+    }
+
+    it('separa lo que espera respuesta de lo que ya está agendado', async () => {
+      await montar();
+      await responderRecursos();
+      responderResto({
+        citas: [
+          { ...CITA, id: 'b-1', statusConceptId: 'c-confirmada' },
+          { ...CITA, id: 'b-2', statusConceptId: 'c-pendiente' },
+        ],
+      });
+
+      expect(filas('solicitudes').data?.map((f) => f['id'])).toEqual(['b-2']);
+      // Y la contraparte: la solicitud NO aparece también en «Citas». Si
+      // apareciera, habría dos lugares para aceptar la misma cita.
+      expect(filas('citasAgendadas').data?.map((f) => f['id'])).toEqual(['b-1']);
+    });
+
+    it('trae la fecha de solicitud, que ninguna pantalla mostraba', async () => {
+      // Es `created_at`, que la lectura ya devolvía. La columna del punto 1 no
+      // necesitó tocar la API.
+      await montar();
+      await responderRecursos();
+      responderResto({ citas: [{ ...CITA, statusConceptId: 'c-pendiente' }] });
+
+      const fila = filas('solicitudes').data?.[0] as Record<string, unknown>;
+      expect(fila['solicitada']).toBeInstanceOf(Date);
+      expect((fila['solicitada'] as Date).toISOString()).toBe('2026-08-01T10:00:00.000Z');
+    });
+
+    it('las dos tablas comparten el estado: si una falla, la otra no finge', async () => {
+      // Salen de la MISMA lectura. Partirlas no puede hacer que una diga
+      // «no hay nada» mientras la otra dice «no se pudo leer».
+      await montar();
+      await responderRecursos();
+      http.expectOne((r) => r.url === '/scheduling/bookings').flush(
+        { message: 'boom' },
+        { status: 500, statusText: 'Server Error' },
+      );
+      http
+        .expectOne((r) => r.url === '/scheduling/slots')
+        .flush({ items: [], count: 0, limit: 100, truncated: false });
+      // La lectura de terminología no llega a pedirse: sin citas no hay
+      // conceptos que resolver. Esperarla acá sería fijar un detalle de
+      // implementación en vez del comportamiento que importa.
+
+      expect(filas('solicitudes').status).toBe(filas('citasAgendadas').status);
+      expect(filas('solicitudes').status).not.toBe('ready');
+    });
+
+    it('el rótulo cuenta sólo las que esperan respuesta', async () => {
+      await montar();
+      await responderRecursos();
+      responderResto({
+        citas: [
+          { ...CITA, id: 'b-1', statusConceptId: 'c-confirmada' },
+          { ...CITA, id: 'b-2', statusConceptId: 'c-pendiente' },
+        ],
+      });
+
+      expect(interno<() => string>('rotuloDeSolicitudes')()).toBe('Solicitudes (1)');
+      expect(interno<() => string>('rotuloDeCitas')()).toBe('Citas (1)');
+    });
+
+    it('`vista=cupos` sigue significando lo mismo que antes', async () => {
+      // Los enlaces que ya existen no se rompen porque las solapas se
+      // reordenaron: los cupos pasaron del índice 1 al 2 y la URL no cambió.
+      await montar({}, '/schedule?vista=cupos');
+      await responder();
+
+      expect(interno<() => number>('pestana')()).toBe(2);
+    });
+  });
+
+  /**
+   * EL ESTADO DE PAGO EN LA FILA — TAREA-13, punto 5.
+   *
+   * Lo que se fija acá es la regla del propietario llevada a la pantalla, y una
+   * distinción que es fácil de perder al pintar: **«nadie lo marcó» no es
+   * «pendiente de pago»**. Pendiente es una afirmación que alguien firmó.
+   */
+  describe('Agenda · el estado de pago', () => {
+    it('una cita sin marca NO se muestra como pendiente', async () => {
+      await montar();
+      await responderRecursos();
+      responderResto({ citas: [CITA] });
+
+      const fila = citas().data?.[0] as Record<string, unknown>;
+      // `null`, no un estado por defecto: la celda pinta un guión y no una
+      // etiqueta que nadie escribió.
+      expect(fila['pago']).toBeNull();
+      expect(fila['admitePago']).toBe(true);
+    });
+
+    it('el estado marcado llega con su etiqueta del servidor', async () => {
+      await montar();
+      await responderRecursos();
+      responderResto({
+        citas: [
+          {
+            ...CITA,
+            paymentState: {
+              state: 'PARTIALLY_PAID',
+              label: 'Parcialmente pagada',
+              conceptId: 'c-pago-parcial',
+              insuranceUsed: true,
+              markedByUserId: 'u-9',
+              markedAt: '2026-09-01T10:00:00.000Z',
+            },
+          },
+        ],
+      });
+
+      const pago = (citas().data?.[0] as Record<string, unknown>)['pago'] as Record<string, unknown>;
+      // La etiqueta viene del servidor: la pantalla no traduce estados.
+      expect(pago['label']).toBe('Parcialmente pagada');
+      // El seguro es una marca SEPARADA, no un cuarto estado.
+      expect(pago['insuranceUsed']).toBe(true);
+      // Y la fecha llega como Date, no como el string del cable.
+      expect(pago['markedAt']).toBeInstanceOf(Date);
+    });
+
+    it('una cita cancelada no admite estado de pago', async () => {
+      // La mitad excluyente de la regla del propietario. No ofrecer el botón es
+      // una cortesía: la garantía es el 422 del servidor.
+      await montar();
+      await responderRecursos();
+      responderResto({ citas: [{ ...CITA, statusConceptId: 'c-cancelada' }] });
+
+      expect((citas().data?.[0] as Record<string, unknown>)['admitePago']).toBe(false);
+    });
+
+    it('con el estado sin resolver tampoco se ofrece', async () => {
+      // Mismo criterio que las demás acciones de la fila: sobre un estado que
+      // esta versión no sabe leer no se opera.
+      await montar();
+      await responderRecursos();
+      responderResto({ citas: [{ ...CITA, statusConceptId: 'c-desconocido' }] });
+
+      expect((citas().data?.[0] as Record<string, unknown>)['admitePago']).toBe(false);
+    });
+  });
+
+  /**
+   * EL MODAL DE DETALLE — TAREA-13, punto 2.
+   *
+   * Lo que se fija acá no es que el modal abra: es **qué muestra y qué no**. El
+   * nombre del paciente tiene compuerta —la API lo manda sólo al titular y al
+   * profesional de esa agenda— y un modal es justo el lugar donde es fácil
+   * saltearla sin darse cuenta.
+   */
+  describe('el modal de detalle de una solicitud', () => {
+    async function montarSolicitud(extra: Record<string, unknown> = {}): Promise<void> {
+      await montar();
+      await responderRecursos();
+      responderResto({
+        citas: [{ ...CITA, statusConceptId: 'c-pendiente', ...extra }],
+      });
+      // `responderResto` no pinta; los que miran el DOM necesitan el render.
+      harness.detectChanges();
+    }
+
+    function fila(): Record<string, unknown> {
+      return interno<() => { data?: readonly Record<string, unknown>[] }>('solicitudes')()
+        .data?.[0] as Record<string, unknown>;
+    }
+
+    function detalle(): readonly { label: string; value: string }[] {
+      return interno<(c: unknown) => readonly { label: string; value: string }[]>(
+        'detalleDeSolicitud',
+      )(fila());
+    }
+
+    it('una solicitud ofrece «ver detalle»', async () => {
+      await montarSolicitud();
+      expect(boton('agenda-detalle')).not.toBeNull();
+    });
+
+    it('una cita ya agendada NO lo ofrece', async () => {
+      // No tiene nada oculto que justifique un modal: lo que hay de ella ya
+      // está en la fila.
+      await montar();
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await verSolapaDeCitas();
+
+      expect(boton('agenda-detalle')).toBeNull();
+    });
+
+    it('muestra el nombre del paciente cuando la API lo mandó', async () => {
+      await montarSolicitud({ patientName: 'Marisol Quispe' });
+
+      const paciente = detalle().find((d) => d.label === 'Paciente');
+      expect(paciente?.value).toBe('Marisol Quispe');
+    });
+
+    it('sin nombre dice que hay paciente, NO quién es', async () => {
+      // Es la misma compuerta que la celda de la tabla. Un modal que la
+      // saltease filtraría la identidad de alguien a quien esa sesión no
+      // atiende — y es el error fácil de cometer al armar un detalle.
+      await montarSolicitud();
+
+      const paciente = detalle().find((d) => d.label === 'Paciente');
+      expect(paciente?.value).toBe('Paciente asignado');
+      // Y en ninguna parte del detalle se cuela el identificador.
+      expect(JSON.stringify(detalle())).not.toContain('p-1');
+    });
+
+    it('lo que falta se dice, no se omite', async () => {
+      // Un dato que desaparece parece un dato que no se pidió. Acá lo que
+      // importa es saber qué falta.
+      await montarSolicitud({ startAt: null, endAt: null, reasonText: undefined });
+
+      const etiquetas = detalle().map((d) => d.label);
+      expect(etiquetas).toContain('Cita');
+      expect(detalle().find((d) => d.label === 'Cita')?.value).toBe('Sin registrar');
+      expect(detalle().find((d) => d.label === 'Motivo')?.value).toBe('Sin registrar');
+    });
+
+    it('trae los siete datos, incluido cuándo se pidió', async () => {
+      await montarSolicitud();
+
+      expect(detalle().map((d) => d.label)).toEqual([
+        'Estado',
+        'Paciente',
+        'Solicitada',
+        'Cita',
+        'Hasta',
+        'Profesional',
+        'Motivo',
+      ]);
+    });
   });
 });

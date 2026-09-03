@@ -8,12 +8,23 @@
     --_progress-fill: var(--brand-primary);
     --_progress-height: var(--sp-2);
 
+    /* La punta se posiciona contra el riel; sin esto se colgaría del primer
+       ancestro posicionado, que puede ser cualquier tarjeta. */
+    position: relative;
     display: block;
     width: 100%;
     height: var(--_progress-height);
     overflow: hidden;
     background: var(--bg-inset);
     border-radius: var(--r-full);
+}
+
+/* Con punta el riel deja de recortar: el círculo mide más que el alto de la
+   barra a propósito —si cupiera dentro, no sería una punta, sería el final del
+   relleno—. El relleno sigue redondeado por su propio radio, así que no se
+   pierde nada al abrir el recorte. */
+:host(.progress--with-marker) {
+    overflow: visible;
 }
 
 /* ---- tonos --------------------------------------------------------------- */
@@ -68,5 +79,66 @@
     :host(.progress--indeterminate) .progress__fill {
         animation-duration: 3s !important;
         animation-iteration-count: infinite !important;
+    }
+}
+
+/* ---- la punta ------------------------------------------------------------ */
+
+/* Un círculo en la posición del avance, con la misma tinta del relleno y un
+   aro del color de la superficie que lo despega del riel. El halo sale de la
+   propia tinta con `color-mix`: ningún color nuevo, y ni una gota de ámbar
+   —que es el punto de acción único de la pantalla y acá no pinta nada—.
+
+   `translate(-50%, -50%)` lo centra sobre el punto exacto del avance en vez de
+   dejarlo colgando a su derecha, que es lo que hace que a 100% se salga del
+   riel. */
+.progress__marker {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    inline-size: calc(var(--_progress-height) * 2.5);
+    block-size: calc(var(--_progress-height) * 2.5);
+    border-radius: var(--r-full);
+    background: var(--_progress-fill);
+    box-shadow:
+        0 0 0 2px var(--bg-surface),
+        0 0 0 5px color-mix(in srgb, var(--_progress-fill) 28%, transparent);
+    transform: translate(-50%, -50%);
+    transition: left 0.15s ease;
+}
+
+/* El brillo: un halo que respira, no un destello. Lo que se pide es que la
+   punta se note, y aún así el pedido decía «minimalista» — así que el pulso
+   es del aro exterior y nunca del círculo, que si cambiara de tamaño parecería
+   moverse de sitio. */
+@media (prefers-reduced-motion: no-preference) {
+    .progress__marker {
+        animation: progress-marker-pulse 2s ease-in-out infinite;
+    }
+}
+
+@keyframes progress-marker-pulse {
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 2px var(--bg-surface),
+            0 0 0 5px color-mix(in srgb, var(--_progress-fill) 28%, transparent);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 2px var(--bg-surface),
+            0 0 0 8px color-mix(in srgb, var(--_progress-fill) 12%, transparent);
+    }
+}
+
+/* Con «reducir movimiento» el círculo queda QUIETO, y no ralentizado como la
+   banda indeterminada: aquella informa que algo sigue vivo, esta sólo señala
+   una posición que el ancho del relleno ya dice. Un latido perpetuo en el
+   borde del campo que se está llenando es exactamente lo que la preferencia
+   viene a apagar. */
+@media (prefers-reduced-motion: reduce) {
+    .progress__marker {
+        animation: none !important;
     }
 }

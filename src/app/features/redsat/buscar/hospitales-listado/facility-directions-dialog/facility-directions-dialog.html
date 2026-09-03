@@ -1,0 +1,104 @@
+<app-content-dialog
+  [heading]="'Cómo llegar a ' + facilityName()"
+  [description]="facilityAddress()"
+  (opened)="handleOpened()"
+  (closed)="handleClosed()"
+>
+  <!-- Desde dónde salís. Se pide, no se toma: la API de geolocalización del
+       navegador no se toca hasta que alguien aprieta el botón. -->
+  <section class="llegar__origen" aria-labelledby="llegar-origen-titulo">
+    <h3 id="llegar-origen-titulo" class="llegar__titulo">Desde dónde salís</h3>
+
+    @if (origin(); as desde) {
+      <p class="llegar__activo" data-testid="directions-origin">
+        Estás midiendo desde <strong>{{ desde.label }}</strong
+        >.
+        @if (distanceText(); as texto) {
+          <!-- El rótulo dice QUÉ distancia es. No hay cálculo de recorrido en
+               este sistema, así que no se insinúa uno (AC-06-15). -->
+          <span class="llegar__distancia" data-testid="directions-distance">{{ texto }}</span>
+        }
+        <button app-button variant="ghost" size="sm" type="button" (clicked)="clearOrigin()">
+          Cambiar
+        </button>
+      </p>
+    } @else {
+      <p class="llegar__nota">
+        Podés compartir tu ubicación —se usa una sola vez para medir y no se guarda— o marcar en
+        el mapa desde dónde salís. Las dos son opcionales: el establecimiento ya está en el mapa.
+      </p>
+      <div class="llegar__acciones">
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          type="button"
+          data-testid="directions-use-location"
+          [isLoading]="locating()"
+          (clicked)="useMyLocation()"
+        >
+          Usar mi ubicación
+        </button>
+        <button
+          app-button
+          [variant]="pickingOnMap() ? 'secondary' : 'outline'"
+          size="sm"
+          type="button"
+          data-testid="directions-pick-on-map"
+          [attr.aria-pressed]="pickingOnMap()"
+          (clicked)="togglePickOnMap()"
+        >
+          {{ pickingOnMap() ? 'Tocá el mapa para marcar' : 'Marcar un punto en el mapa' }}
+        </button>
+      </div>
+
+      @if (locationDenied()) {
+        <!-- Denegar el permiso NO rompe la pantalla (AC-06-16): el mapa sigue
+             mostrando el establecimiento y queda la otra vía. -->
+        <p class="llegar__nota" role="status" data-testid="directions-location-denied">
+          No pudimos leer tu ubicación. Podés marcar en el mapa desde dónde salís, o seguir sin
+          medir distancia: el establecimiento se sigue viendo.
+        </p>
+      }
+    }
+  </section>
+
+  <!-- El mapa. Se monta recién con el diálogo ya abierto: Leaflet mide el
+       contenedor al montarse y adentro de un `<dialog>` cerrado mide 0×0. -->
+  @if (mapReady()) {
+    <figure class="llegar__mapa">
+      <app-map
+        [pines]="pins()"
+        [etiqueta]="mapLabel()"
+        [centro]="mapCenter()"
+        [zoom]="mapZoom()"
+        [(seleccionado)]="selectedPin"
+        (pointPicked)="handleMapPoint($event)"
+      />
+      <figcaption class="llegar__pie">
+        Mapa de OpenStreetMap. La distancia que se muestra es en línea recta, no de recorrido: no
+        es tiempo de viaje ni kilómetros de calle.
+      </figcaption>
+    </figure>
+  }
+
+  <!-- La alternativa textual del mapa: quien no lo ve tiene el mismo dato. -->
+  <dl class="llegar__datos">
+    <div class="llegar__fila">
+      <dt>Establecimiento</dt>
+      <dd data-testid="directions-facility">{{ facilityName() }}</dd>
+    </div>
+    @if (facilityAddress(); as calle) {
+      <div class="llegar__fila">
+        <dt>Dirección</dt>
+        <dd>{{ calle }}</dd>
+      </div>
+    }
+    @if (distanceText(); as texto) {
+      <div class="llegar__fila">
+        <dt>Distancia</dt>
+        <dd>{{ texto }}</dd>
+      </div>
+    }
+  </dl>
+</app-content-dialog>

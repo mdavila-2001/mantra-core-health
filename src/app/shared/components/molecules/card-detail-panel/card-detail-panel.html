@@ -1,0 +1,69 @@
+<!-- El botón-ícono. El nombre accesible va en el host y no adentro: el ícono
+     es una ayuda visual y anunciarlo diría «imagen» una vez por tarjeta. -->
+<button
+  #trigger
+  app-button
+  type="button"
+  variant="ghost"
+  size="sm"
+  [iconOnly]="true"
+  class="card-detail__trigger"
+  data-testid="card-detail-trigger"
+  [attr.aria-label]="triggerLabel()"
+  [attr.aria-expanded]="isOpen()"
+  [attr.aria-controls]="panelId"
+  (clicked)="toggle()"
+>
+  <app-nav-icon name="note" />
+</button>
+
+<!-- El panel. Mientras está abierto vive colgado del `<body>` con
+     `position: fixed`: así no empuja a las tarjetas vecinas ni lo recorta el
+     `overflow` de la grilla. Ver el JSDoc de la clase. -->
+<section
+  #panel
+  class="card-detail__panel"
+  [class.card-detail__panel--open]="isOpen()"
+  [id]="panelId"
+  [attr.aria-labelledby]="headingId"
+  [attr.aria-hidden]="isOpen() ? null : 'true'"
+  [attr.inert]="isOpen() ? null : ''"
+  tabindex="-1"
+  data-testid="card-detail-panel"
+  [style.top.px]="top()"
+  [style.left.px]="left()"
+  [style.width.px]="width()"
+  [style.max-height.px]="maxHeight()"
+  (keydown)="handleKeydown($event)"
+>
+  <header class="card-detail__encabezado">
+    <h4 class="card-detail__titulo" [id]="headingId">{{ heading() }}</h4>
+    <button
+      app-button
+      type="button"
+      variant="ghost"
+      size="sm"
+      data-testid="card-detail-close"
+      (clicked)="close()"
+    >
+      Cerrar
+    </button>
+  </header>
+
+  @if (rows().length > 0) {
+    <dl class="card-detail__datos">
+      @for (fila of rows(); track fila.label) {
+        <div class="card-detail__fila">
+          <dt class="card-detail__rotulo">{{ fila.label }}</dt>
+          <dd class="card-detail__valor">{{ fila.value }}</dd>
+        </div>
+      }
+    </dl>
+  } @else {
+    <!-- Sin datos publicados se dice eso, y no se inventa el relleno: en un
+         directorio de salud un campo de muestra es un dato falso. -->
+    <p class="card-detail__vacio">
+      Esta ficha no publicó más datos que los que ya se ven en la tarjeta.
+    </p>
+  }
+</section>

@@ -21,6 +21,9 @@ const FICHA = {
   slug: 'hipertension-esencial',
   translated: true,
   codeSystemVersionId: 'csv-1',
+  // Ninguno de estos 64 términos curados tiene properties del catálogo NDC
+  // (TAREA-25): la ficha vacía es el caso real, no un atajo del fixture.
+  properties: {},
   valueSets: [{ id: 'vs-1', internalCode: 'glossary-category-disease', name: 'Enfermedades' }],
   synonyms: [{ value: 'Hypertensive disorder', language: 'EN', preferred: true }],
   category: { valueSetId: 'vs-1', internalCode: 'glossary-category-disease', name: 'Enfermedades' },
@@ -193,9 +196,10 @@ describe('GlossaryTerm', () => {
   it('agrupa las relaciones por tipo, en orden clínico, y omite los grupos vacíos', () => {
     peticion().flush(FICHA);
 
-    const grupos = interno<() => readonly { label: string; relaciones: readonly unknown[] }[]>(
-      'gruposDeRelaciones',
-    )();
+    const grupos =
+      interno<() => readonly { label: string; relaciones: readonly unknown[] }[]>(
+        'gruposDeRelaciones',
+      )();
 
     // FICHA sólo trae DISEASE y RELATED_TERM: PROCEDURE, TREATMENT, ANATOMY y
     // DIAGNOSTIC_TEST no deben aparecer con un encabezado vacío.
@@ -231,7 +235,9 @@ describe('GlossaryTerm', () => {
     peticion().flush(FICHA);
     await harness.fixture.whenStable();
 
-    expect(html().querySelector('.termino__imagen-marcador app-glossary-category-icon')).not.toBeNull();
+    expect(
+      html().querySelector('.termino__imagen-marcador app-glossary-category-icon'),
+    ).not.toBeNull();
     expect(html().querySelector('.termino__imagen img')).toBeNull();
   });
 
@@ -276,5 +282,61 @@ describe('GlossaryTerm', () => {
     for (const chip of chips) {
       expect(chip.closest('a')).toBeNull();
     }
+  });
+
+  // --- Ficha de medicamento (TAREA-25) ----------------------------------------
+
+  /**
+   * La aserción más importante de este archivo. Los 64 términos curados no
+   * tienen `properties` del catálogo NDC: el bloque tiene que desaparecer
+   * ENTERO, no mostrarse vacío ni con «no disponible». Y sobre todo: nunca
+   * las tres palabras que la regla dura prohíbe inferir.
+   */
+  it('sin properties del catálogo, no hay bloque de medicamento — ni vacío, ni con relleno', async () => {
+    peticion().flush(FICHA);
+    await harness.fixture.whenStable();
+
+    expect(html().textContent).not.toContain('Medicamento');
+    expect(html().textContent).not.toContain('posología');
+    expect(html().textContent).not.toContain('dosis');
+    expect(html().textContent).not.toContain('contraindicaciones');
+  });
+
+  it('con properties del catálogo NDC, muestra principios activos, forma, vía y fabricante — con su fuente', async () => {
+    peticion().flush({
+      ...FICHA,
+      properties: {
+        active_ingredients: ['Losartan potassium'],
+        dosage_form: 'TABLET',
+        route: ['ORAL'],
+        manufacturer: 'Acme Pharmaceuticals',
+      },
+    });
+    await harness.fixture.whenStable();
+
+    const texto = html().textContent ?? '';
+    expect(texto).toContain('Medicamento');
+    expect(texto).toContain('Losartan potassium');
+    expect(texto).toContain('TABLET');
+    expect(texto).toContain('ORAL');
+    expect(texto).toContain('Acme Pharmaceuticals');
+    expect(texto).toContain('openFDA');
+    // La misma aserción negativa vale con datos: ninguno de los tres campos
+    // prohibidos aparece aunque el bloque sí se pinte.
+    expect(texto).not.toContain('posología');
+    expect(texto).not.toContain('dosis');
+    expect(texto).not.toContain('contraindicaciones');
+  });
+
+  it('un campo parcial (sólo fabricante) muestra sólo ese campo, no los otros tres vacíos', async () => {
+    peticion().flush({ ...FICHA, properties: { manufacturer: 'Acme Pharmaceuticals' } });
+    await harness.fixture.whenStable();
+
+    const texto = html().textContent ?? '';
+    expect(texto).toContain('Fabricante');
+    expect(texto).toContain('Acme Pharmaceuticals');
+    expect(texto).not.toContain('Principios activos');
+    expect(texto).not.toContain('Forma farmacéutica');
+    expect(texto).not.toContain('Vía:');
   });
 });

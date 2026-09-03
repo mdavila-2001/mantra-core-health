@@ -495,6 +495,32 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // La vista de quien atiende sobre lo facturable de su práctica.
+    //
+    // Los roles son los de quien atiende y no `SECURITY_ADMIN`: la lectura
+    // `GET /billing/service-catalog` **no exige rol** —cualquier profesional que
+    // cotice necesita la lista— mientras que el alta (`POST`) sí lo exige y
+    // sigue viviendo en `administration/services-catalog`. Son la misma tabla
+    // vista desde dos permisos distintos, y por eso son dos pantallas.
+    //
+    // Fuera del menú del médico por §4.H del plan de UX: el cliente dio una
+    // lista **cerrada** de opciones para su panel y `navigation.service.spec`
+    // la fija —«cualquier décima tiene que discutirse»—. La sección se sigue
+    // alcanzando por su ruta y por «Tus accesos», que es lo único que
+    // `fueraDelMenuPara` no toca; darle renglón propio es una decisión de
+    // producto, no de este carril.
+    path: 'my-services',
+    fueraDelMenuPara: ['PRACTITIONER'],
+    label: 'Mis servicios',
+    group: 'Atención',
+    icon: 'tag',
+    roles: ROLES_DE_QUIEN_ATIENDE,
+    availability: 'disponible',
+    summary: 'Consultá el catálogo de servicios de tu práctica y sus precios de referencia.',
+    module: 'M17 billing',
+  },
+
+  {
     // Carril 10. **La ruta NO es `surveys` y eso no es decoración**: `/surveys`
     // es el prefijo del módulo en la API, y el proxy compara por inicio de ruta
     // sin límite de segmento — una sección llamada `surveys` se iría entera al
@@ -1112,6 +1138,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // §4.H · fuera del menú del médico: la administra el mostrador. El médico
     // que además administra su clínica llega desde «Mi perfil».
     fueraDelMenuPara: ['PRACTITIONER'],
+    // Y no existe para el paciente. `requiresTenant` se escribió para eso y no
+    // alcanza: el alta de paciente lo afilia al tenant por defecto, así que
+    // todos cumplen la condición. Medido contra la API viva.
+    hiddenFor: ['PATIENT'],
     // `[ANY_ROLE]` y no la ausencia del campo: F-20 exige que toda sección
     // declare sus roles, justamente para que un olvido no se lea como «la ve
     // cualquiera». Acá la ve cualquiera **a propósito**, y así queda dicho.
@@ -1136,6 +1166,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // farmacia, no del consultorio.
     fueraDelMenuPara: ['PRACTITIONER'],
     roles: [ANY_ROLE],
+    // El mostrador no es del paciente. Ver `hiddenFor` en «Tu organización».
+    hiddenFor: ['PATIENT'],
     label: 'Pedidos de farmacia',
     group: 'Administración',
     icon: 'bag',
@@ -1157,6 +1189,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `roles` —quien sí atiende el mostrador la sigue viendo, y quien llega
     // por la ruta entra igual—: esto habla de renglones, no de permisos.
     fueraDelMenuPara: ['PRACTITIONER'],
+    // Quien las publica, no quien las recibe: el paciente ve las promociones en
+    // la ficha pública de la farmacia, no en el panel que las administra.
+    hiddenFor: ['PATIENT'],
     label: 'Promociones',
     group: 'Administración',
     icon: 'megaphone',

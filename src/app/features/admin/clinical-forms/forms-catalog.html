@@ -4,96 +4,92 @@
     La versión general base de cada formulario por especialidad, ya cargada. Usala tal cual o
     duplicala para adaptarla a tu organización.
   </p>
-</header>
-
-<app-view-state-host [state]="catalogo()" (retry)="recargar()">
-  <div vsh-skeleton>
-    <app-skeleton variant="rect" [lines]="3" />
-  </div>
 
   @if (total() > 0) {
     <p class="catalogo__resumen" data-testid="catalogo-resumen">
       {{ total() }} formularios en {{ grupos().length }} especialidades.
     </p>
   }
+</header>
 
-  @for (grupo of grupos(); track grupo.conceptId) {
-    <section class="catalogo__especialidad" data-testid="grupo-especialidad">
-      <!-- La especialidad es el encabezado del grupo, no una columna de una
-           tabla: el pedido fue «catalogado por especialidad». -->
-      <h3 class="catalogo__especialidad-titulo">{{ grupo.titulo }}</h3>
+<!-- La anatomía —buscador y grilla agrupada— la pone el explorador; el catálogo
+     aporta sus grupos y la tarjeta de cada formulario. -->
+<app-specialty-browser
+  [state]="catalogo()"
+  [groups]="grupos()"
+  searchLabel="Buscar un formulario por nombre, código o especialidad"
+  noMatchesText="Ningún formulario coincide con lo que buscaste. Probá con otra palabra."
+  (retry)="recargar()"
+>
+  <ng-template let-formulario>
+    <app-card variant="outlined" padding="md" class="catalogo__formulario">
+      <div class="catalogo__ficha">
+        <h4 class="catalogo__formulario-titulo">{{ formulario.name }}</h4>
+        <span class="catalogo__version">v{{ formulario.version }}</span>
+      </div>
 
-      <div class="catalogo__formularios">
-        @for (formulario of grupo.formularios; track formulario.id) {
-          <app-card variant="outlined" padding="md" class="catalogo__formulario">
-            <div class="catalogo__ficha">
-              <h4 class="catalogo__formulario-titulo">{{ formulario.name }}</h4>
-              <span class="catalogo__version">v{{ formulario.version }}</span>
-            </div>
-
-            <!-- ─── De dónde salió ────────────────────────────────────────
-                 Va en la tarjeta y no en un tooltip: un formulario clínico sin
-                 su procedencia a la vista es exactamente lo que después hay
-                 que sacar del producto. -->
-            @if (formulario.provenance; as origen) {
-              <dl class="catalogo__origen" data-testid="origen">
-                <dt>Origen</dt>
-                <dd>
-                  <a app-link [href]="origen.url" [external]="true" target="_blank" rel="noopener">
-                    {{ origen.organization }}
-                  </a>
-                  @if (origen.sourceVersion) {
-                    <span class="catalogo__origen-version">· {{ origen.sourceVersion }}</span>
-                  }
-                </dd>
-                <dt>Licencia</dt>
-                <dd>{{ origen.license }}</dd>
-                <dt>Descargado</dt>
-                <dd>{{ origen.retrievedAt }}</dd>
-              </dl>
-              @if (origen.note) {
-                <p class="catalogo__nota">{{ origen.note }}</p>
-              }
-            } @else {
-              <p class="catalogo__sin-origen" data-testid="sin-origen">
-                Plantilla propia de la organización, sin ficha de origen.
-              </p>
+      <!-- ─── De dónde salió ────────────────────────────────────────
+           Va en la tarjeta y no en un tooltip: un formulario clínico sin
+           su procedencia a la vista es exactamente lo que después hay
+           que sacar del producto. -->
+      @if (formulario.provenance; as origen) {
+        <dl class="catalogo__origen" data-testid="origen">
+          <dt>Origen</dt>
+          <dd>
+            <a app-link [href]="origen.url" [external]="true" target="_blank" rel="noopener">
+              {{ origen.organization }}
+            </a>
+            @if (origen.sourceVersion) {
+              <span class="catalogo__origen-version">· {{ origen.sourceVersion }}</span>
             }
+          </dd>
+          <dt>Licencia</dt>
+          <dd>{{ origen.license }}</dd>
+          <dt>Descargado</dt>
+          <dd>{{ origen.retrievedAt }}</dd>
+        </dl>
+        @if (origen.note) {
+          <p class="catalogo__nota">{{ origen.note }}</p>
+        }
+      } @else {
+        <p class="catalogo__sin-origen" data-testid="sin-origen">
+          Plantilla propia de la organización, sin ficha de origen.
+        </p>
+      }
 
-            <!-- ─── Un vistazo del esquema ───────────────────────────────── -->
-            <div class="catalogo__campos">
-              @for (campo of vistazo(formulario); track campo) {
-                <app-chip variant="neutral" size="sm" [label]="campo" />
-              }
-              @if (restantes(formulario); as demas) {
-                <span class="catalogo__mas-campos">y {{ demas }} campos más</span>
-              }
-            </div>
-
-            <div class="catalogo__acciones">
-              <button
-                app-button
-                type="button"
-                variant="primary"
-                size="sm"
-                [disabled]="asignando() === formulario.id"
-                (clicked)="usar(formulario)"
-              >
-                Usar esta plantilla
-              </button>
-              <button
-                app-button
-                type="button"
-                variant="secondary"
-                size="sm"
-                (clicked)="adaptar(formulario)"
-              >
-                Duplicar para adaptar
-              </button>
-            </div>
-          </app-card>
+      <!-- ─── Un vistazo del esquema ───────────────────────────────── -->
+      <div class="catalogo__campos">
+        @for (campo of vistazo(formulario); track campo) {
+          <!-- El texto va proyectado: es lo que el chip muestra. `label` es solo
+               para el lector de pantalla y acá duplicaría lo mismo. -->
+          <app-chip variant="neutral" size="sm">{{ campo }}</app-chip>
+        }
+        @if (restantes(formulario); as demas) {
+          <span class="catalogo__mas-campos">y {{ demas }} campos más</span>
         }
       </div>
-    </section>
-  }
-</app-view-state-host>
+
+      <div class="catalogo__acciones">
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          size="sm"
+          [disabled]="asignando() === formulario.id"
+          (clicked)="usar(formulario)"
+        >
+          Usar esta plantilla
+        </button>
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          size="sm"
+          (clicked)="adaptar(formulario)"
+        >
+          Duplicar para adaptar
+        </button>
+      </div>
+    </app-card>
+  </ng-template>
+</app-specialty-browser>

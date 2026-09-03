@@ -119,7 +119,7 @@ describe('PharmacyCampaigns', () => {
     montar();
 
     const [primera] = await firstValueFrom(client.campanasDeFarmacia(FARMACIA.id));
-    const enlace = elemento(`[data-testid="campanas-lista"] a[href="/promociones/${primera.id}"]`);
+    const enlace = elemento(`[data-testid="campanas-lista"] a[href="/promotions/${primera.id}"]`);
     // Sin esto, quien publica la campaña no tiene de dónde sacar el enlace que
     // la tarjeta le pide compartir.
     expect(enlace).not.toBeNull();

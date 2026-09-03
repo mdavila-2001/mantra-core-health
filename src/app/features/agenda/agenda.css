@@ -165,3 +165,23 @@
     grid-template-columns: minmax(10rem, 14rem) 1fr;
   }
 }
+
+/* -- El estado de pago en la fila (TAREA-13 punto 5) ----------------------- */
+
+.agenda__pago {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+/* «con seguro» acompaña al estado: es un dato secundario y se lee como tal, no
+   como una segunda etiqueta que compita con la primera. */
+.agenda__seguro {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.agenda__sin-pago {
+  color: var(--text-secondary);
+}

@@ -43,9 +43,34 @@ export interface DialogResult {
 }
 
 /** Lo que se le pide a una confirmación. Todo lo demás tiene default. */
+/**
+ * Un dato del cuerpo del diálogo: su rótulo y su valor, ya en texto.
+ *
+ * El diálogo **no formatea nada**: recibe las dos cadenas listas. Fechas,
+ * monedas y nombres se arman donde se conoce el dominio, no en una molécula
+ * compartida que después tendría que saber de todos.
+ */
+export interface DialogDetail {
+  readonly label: string;
+  readonly value: string;
+}
+
 export interface DialogConfig {
   readonly title: string;
   readonly message: string;
+  /**
+   * Datos en pares rótulo/valor, debajo del mensaje.
+   *
+   * Existe para los diálogos que **muestran** algo además de preguntar —el
+   * detalle de una solicitud, la ficha de lo que se va a borrar—. Sin esto, ese
+   * contenido tenía que caber dentro de `message`, que es un párrafo: una lista
+   * de siete datos metida en una frase no se lee, y un segundo componente modal
+   * para lograrlo sería duplicar el foco, el `Escape` y el fondo que
+   * `showModal()` ya resuelve.
+   *
+   * Se omite y el diálogo es exactamente el de siempre.
+   */
+  readonly details?: readonly DialogDetail[];
   readonly confirmLabel?: string;
   readonly cancelLabel?: string;
   /**

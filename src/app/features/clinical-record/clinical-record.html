@@ -5,68 +5,68 @@
 />
 
 <div class="archivo">
-  <!-- ─── El buscador, sólo para quien puede usarlo ────────────────────────
-       Para un rol clínico `GET /profiles/patients` responde 403 **por diseño**:
-       el padrón es de administración. Eso no es un fallo de la sesión, es que
-       ese camino no es el suyo — y pintarlo como error rojo le decía «no tenés
-       acceso a esta sección» cuando la sección sí es suya y funciona.
-       Se ofrece el control sólo a quien puede usarlo; al resto se le da el
-       camino que sí tiene, sin alarma. -->
-  @if (!buscadorProhibido()) {
-    <!-- El campo se nombra solo (publica su propio contexto de control): no va
-         dentro de un app-form-field, o quedarían dos nombres accesibles. -->
-    <app-search-field
-      class="archivo__buscador"
-      label="Buscar pacientes"
-      placeholder="Nombre, código o documento"
-      [value]="busqueda()"
-      [loading]="cargando()"
-      (searched)="buscar($event)"
-    />
+  <!-- El campo se nombra solo (publica su propio contexto de control): no va
+       dentro de un app-form-field, o quedarían dos nombres accesibles. -->
+  <app-search-field
+    class="archivo__buscador"
+    label="Buscar por nombre o código"
+    placeholder="Nombre o código de paciente"
+    [value]="busqueda()"
+    [loading]="cargando()"
+    (searched)="buscar($event)"
+  />
 
-    <app-data-table
-      [state]="resultados()"
-      [columns]="columnas()"
-      [trackBy]="porPaciente"
-      caption="Pacientes de la organización"
-      (retry)="recargar()"
-    />
-  } @else {
-    <app-alert tone="info" title="Entrás por el identificador, no por el padrón">
-      Listar el padrón de pacientes es una función de administración. Tu sesión abre el expediente
-      de quien atendés, que es lo que hace falta para tu consulta: la cita de tu agenda trae el
-      identificador y el enlace te deja acá abajo.
-    </app-alert>
-  }
+  <!-- ─── Buscar por documento ──────────────────────────────────────────────
+       AC-07-1 / AC-07-2: encontrar a alguien por su carnet aunque su nombre
+       o su código no contengan el texto buscado. El departamento es opcional
+       y sólo desempata: dos personas pueden compartir el mismo número
+       expedido en departamentos distintos. -->
+  <form
+    class="archivo__documento"
+    aria-label="Buscar por documento de identidad"
+    (submit)="$event.preventDefault(); buscarPorDocumento()"
+  >
+    <app-form-field label="Documento de identidad" class="archivo__documento-campo">
+      <app-input
+        type="text"
+        testId="clinical-record-national-id"
+        placeholder="Número de carnet"
+        [value]="documentoTecleado()"
+        (valueChange)="fijarDocumento($event)"
+      />
+    </app-form-field>
 
-  <!-- ─── Abrir por identificador ──────────────────────────────────────────
-       No es un atajo para expertos: es el único camino que le queda a quien
-       atiende. `GET /profiles/patients` pide SECURITY_ADMIN, y el rol clínico
-       —el único que puede leer el expediente— llega con el identificador desde
-       su agenda, no con un buscador. -->
-  <app-card variant="outlined" padding="lg" class="archivo__directo">
-    <h2 class="archivo__directo-titulo">Abrir por identificador</h2>
-    <p class="archivo__directo-texto">
-      @if (buscadorProhibido()) {
-        Pegá el identificador de perfil que trae la cita en tu agenda.
-      } @else {
-        Si ya tenés el identificador de perfil del paciente —lo trae cada cita de la agenda— podés
-        ir directo al expediente.
-      }
-    </p>
+    <app-form-field
+      label="Departamento de expedición"
+      hint="Opcional. Desempata cuando el número se repite en otro departamento."
+      class="archivo__documento-campo"
+    >
+      <app-select
+        [(value)]="departamentoElegido"
+        [options]="opcionesDeDepartamento()"
+        placeholder="Cualquier departamento"
+      />
+    </app-form-field>
 
-    <form class="archivo__directo-form" (submit)="$event.preventDefault(); abrirPorIdentificador()">
-      <app-form-field label="Identificador de perfil" class="archivo__directo-campo">
-        <app-input
-          type="text"
-          placeholder="00000000-0000-0000-0000-000000000000"
-          [value]="identificador()"
-          (valueChange)="fijarIdentificador($event)"
-        />
-      </app-form-field>
-      <button app-button type="submit" variant="secondary">Abrir expediente</button>
-    </form>
-  </app-card>
+    <button
+      app-button
+      type="submit"
+      variant="secondary"
+      data-testid="clinical-record-search-by-document"
+    >
+      Buscar por documento
+    </button>
+  </form>
+
+  <!-- Los 9 estados del M34 —incluido «forbidden», para un rol inesperado—
+       los resuelve app-data-table por su cuenta: no se reimplementan acá. -->
+  <app-data-table
+    [state]="resultados()"
+    [columns]="columnas()"
+    [trackBy]="porPaciente"
+    caption="Pacientes"
+    (retry)="recargar()"
+  />
 </div>
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->

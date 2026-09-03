@@ -12,6 +12,17 @@ import type {
   AgendaSlotPage,
   AgendaSlotQuery,
   AvailabilityExceptionCreated,
+  TemplateReactivated,
+  AvailabilityExceptionTypeList,
+  ActivityTypeList,
+  ShiftSlotsRequest,
+  SlotsShifted,
+  CloseSlotsRequest,
+  UpdateAvailabilityException,
+  AvailabilityExceptionUpdated,
+  SlotsClosed,
+  NewPaymentState,
+  PaymentStateInfo,
   Booking,
   BookingCancellation,
   BookingCancelled,
@@ -44,6 +55,7 @@ import type {
   WaitlistPage,
   WaitlistQuery,
   PublishedTemplatePage,
+  RetiredTemplate,
   AvailabilityExceptionPage,
   NewDirectAppointment,
   DirectAppointmentCreated,
@@ -174,6 +186,28 @@ export class SchedulingClient {
       .pipe(map((body) => ({ ...body, items: body.items.map(toBooking) })));
   }
 
+  /**
+   * `PUT /scheduling/bookings/:id/payment-state` — marca el pago.
+   *
+   * `PUT` porque es idempotente: hay un estado por cita y volver a mandar el
+   * mismo deja el mismo resultado.
+   *
+   * **Una cita cancelada o rechazada responde 422**, y es la regla del
+   * propietario aplicada donde corresponde. Que la pantalla no ofrezca el botón
+   * ahí es una cortesía, no la garantía.
+   */
+  setPaymentState(
+    bookingId: string,
+    body: NewPaymentState,
+  ): Observable<PaymentStateInfo> {
+    return this.http
+      .put<WirePaymentState>(
+        this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/payment-state`),
+        body,
+      )
+      .pipe(map((wire) => ({ ...wire, markedAt: new Date(wire.markedAt) })));
+  }
+
   /** `GET /scheduling/bookings/:id` — una cita concreta (UC-41-15). */
   getBooking(bookingId: string): Observable<Booking> {
     return this.http
@@ -251,6 +285,11 @@ export class SchedulingClient {
           endTime: rule.endTime,
           ...(rule.slotMinutes === undefined ? {} : { slotMinutes: rule.slotMinutes }),
           ...(rule.capacityPerSlot === undefined ? {} : { capacityPerSlot: rule.capacityPerSlot }),
+          // Omitido y no `0`: la columna es anulable y el servidor distingue
+          // «no lo declaró» de «declaró cero». Este cuerpo se arma campo por
+          // campo a propósito —para no filtrar nada que el DTO no acepte— y
+          // por eso agregar uno al tipo NO alcanza: hay que nombrarlo acá.
+          ...(rule.gapMinutes === undefined ? {} : { gapMinutes: rule.gapMinutes }),
         })),
         ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
         ...(template.bookingPolicyId === undefined
@@ -273,6 +312,38 @@ export class SchedulingClient {
   listTemplates(resourceId: string): Observable<PublishedTemplatePage> {
     return this.http.get<PublishedTemplatePage>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
+    );
+  }
+
+  /**
+   * `POST /scheduling/templates/:id/reactivate` — vuelve a activar un horario
+   * pausado.
+   *
+   * **No regenera los cupos**, y la respuesta lo dice con `slotsPendientes`:
+   * retirar los borró, y volver a crearlos es `generateSlots` con la ventana
+   * que el profesional elija. Quien llame a esto tiene que ofrecer ese paso, o
+   * el horario queda vigente sin un solo turno.
+   */
+  reactivateTemplate(templateId: string): Observable<TemplateReactivated> {
+    return this.http.post<TemplateReactivated>(
+      this.url(`/scheduling/templates/${encodeURIComponent(templateId)}/reactivate`),
+      {},
+    );
+  }
+
+  /**
+   * `DELETE /scheduling/templates/:id` — retira un horario publicado.
+   *
+   * **Retira, no borra.** La plantilla queda en `TPL_RETIRED` y deja de
+   * publicarse; se sueltan los cupos que nadie reservó y se conservan los que
+   * tienen una cita detrás, viva o histórica.
+   *
+   * Responde **409** cuando el horario tiene citas comprometidas, con la lista
+   * de las que hay que resolver primero en `details.bookingIds`.
+   */
+  retireTemplate(templateId: string): Observable<RetiredTemplate> {
+    return this.http.delete<RetiredTemplate>(
+      this.url(`/scheduling/templates/${encodeURIComponent(templateId)}`),
     );
   }
 
@@ -301,6 +372,66 @@ export class SchedulingClient {
    * los dos aparecen sin cupos, y la diferencia es justamente lo que hay que
    * mostrarle al profesional.
    */
+  /**
+   * El catálogo de motivos de bloqueo (TAREA-11, punto 4).
+   *
+   * Es una lectura de catálogo, no de datos de nadie: no lleva recurso ni
+   * ventana. Se pide una vez al abrir el formulario.
+   *
+   * **La respuesta manda sobre la pantalla.** Trae la etiqueta en castellano,
+   * `requiresText` —hoy sólo `OTHER`— y `blocks`, que distingue el motivo que
+   * abre horario del que lo cierra. Si mañana el propietario agrega un motivo,
+   * aparece solo: acá no hay lista que actualizar.
+   */
+  /**
+   * `GET /scheduling/activity-types` — las tipologías que la agenda pinta.
+   *
+   * Es catálogo: se pide una vez y no lleva recurso ni ventana. La etiqueta y
+   * el tono los manda el servidor, así que agregar una tipología no exige
+   * tocar el front.
+   */
+  /**
+   * `POST /scheduling/resources/:id/shift-slots` — corre la agenda N minutos.
+   *
+   * Distinto de avisar demora, que **sólo avisa**: acá el turno de la persona
+   * pasa a ser otro, y el servidor le manda el aviso.
+   *
+   * Es todo o nada: si un cupo no puede moverse porque su horario nuevo pisa
+   * otra cita, no se mueve ninguno y responde 409.
+   */
+  shiftSlots(resourceId: string, body: ShiftSlotsRequest): Observable<SlotsShifted> {
+    return this.http.post<SlotsShifted>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/shift-slots`),
+      body,
+    );
+  }
+
+  /**
+   * `POST /scheduling/resources/:id/close-slots` — cierra ratos sueltos.
+   *
+   * Deja además la excepción que impide que regenerar los devuelva, que es
+   * justamente lo que el pedido pone entre paréntesis.
+   *
+   * Un cupo con paciente citado responde **409** con los ids: cancelar el turno
+   * de alguien es otro acto, con su motivo y su aviso.
+   */
+  closeSlots(resourceId: string, body: CloseSlotsRequest): Observable<SlotsClosed> {
+    return this.http.post<SlotsClosed>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/close-slots`),
+      body,
+    );
+  }
+
+  listActivityTypes(): Observable<ActivityTypeList> {
+    return this.http.get<ActivityTypeList>(this.url('/scheduling/activity-types'));
+  }
+
+  listExceptionTypes(): Observable<AvailabilityExceptionTypeList> {
+    return this.http.get<AvailabilityExceptionTypeList>(
+      this.url('/scheduling/exception-types'),
+    );
+  }
+
   listExceptions(
     resourceId: string,
     ventana: { from: Date; to: Date },
@@ -330,7 +461,6 @@ export class SchedulingClient {
     );
   }
 
-
   /**
    * `POST /scheduling/appointments/direct` — la cita puntual (AG-2).
    *
@@ -341,23 +471,20 @@ export class SchedulingClient {
    * mostrar tal cual.
    */
   createDirectAppointment(cita: NewDirectAppointment): Observable<DirectAppointmentCreated> {
-    return this.http.post<DirectAppointmentCreated>(
-      this.url('/scheduling/appointments/direct'),
-      {
-        patientProfileId: cita.patientProfileId,
-        resourceId: cita.resourceId,
-        startAt: cita.startAt,
-        durationMinutes: cita.durationMinutes,
-        ...(cita.reasonText === undefined ? {} : { reasonText: cita.reasonText }),
-        // Ausente = presencial: no se manda un valor que nadie eligió.
-        //
-        // Ojo al agregar campos acá: este cuerpo se arma nombre por nombre, así
-        // que lo que el contrato declare y esta lista no repita **se descarta
-        // en silencio** — la petición sale sin él y nada falla. Es el mismo
-        // patrón que dejó la modalidad sin escribir del lado de la API.
-        ...(cita.channel === undefined ? {} : { channel: cita.channel }),
-      },
-    );
+    return this.http.post<DirectAppointmentCreated>(this.url('/scheduling/appointments/direct'), {
+      patientProfileId: cita.patientProfileId,
+      resourceId: cita.resourceId,
+      startAt: cita.startAt,
+      durationMinutes: cita.durationMinutes,
+      ...(cita.reasonText === undefined ? {} : { reasonText: cita.reasonText }),
+      // Ausente = presencial: no se manda un valor que nadie eligió.
+      //
+      // Ojo al agregar campos acá: este cuerpo se arma nombre por nombre, así
+      // que lo que el contrato declare y esta lista no repita **se descarta
+      // en silencio** — la petición sale sin él y nada falla. Es el mismo
+      // patrón que dejó la modalidad sin escribir del lado de la API.
+      ...(cita.channel === undefined ? {} : { channel: cita.channel }),
+    });
   }
 
   /**
@@ -366,6 +493,23 @@ export class SchedulingClient {
    * Borrar NO resucita los cupos que la excepción retiró: se regeneran con la
    * plantilla si corresponde. Está declarado así en el contrato.
    */
+  /**
+   * `PATCH /scheduling/exceptions/:id` — corrige un bloqueo sin borrarlo.
+   *
+   * **Agrandar el rango cierra los cupos nuevos; achicarlo no reabre ninguno.**
+   * En este módulo los cupos sólo los crea publicar el horario, y la pantalla
+   * tiene que decirlo antes de guardar.
+   */
+  updateException(
+    exceptionId: string,
+    body: UpdateAvailabilityException,
+  ): Observable<AvailabilityExceptionUpdated> {
+    return this.http.patch<AvailabilityExceptionUpdated>(
+      this.url(`/scheduling/exceptions/${encodeURIComponent(exceptionId)}`),
+      body,
+    );
+  }
+
   deleteException(exceptionId: string): Observable<void> {
     return this.http.delete<void>(
       this.url(`/scheduling/exceptions/${encodeURIComponent(exceptionId)}`),
@@ -669,6 +813,7 @@ type WireBooking = Omit<
   | 'rescheduledFrom'
   | 'statusReason'
   | 'delayNotice'
+  | 'paymentState'
 > & {
   readonly startAt?: string | null;
   readonly endAt?: string | null;
@@ -678,6 +823,11 @@ type WireBooking = Omit<
   readonly rescheduledFrom?: string | null;
   readonly statusReason?: WireStatusReason | null;
   readonly delayNotice?: WireDelayNotice | null;
+  readonly paymentState?: WirePaymentState | null;
+};
+
+type WirePaymentState = Omit<PaymentStateInfo, 'markedAt'> & {
+  readonly markedAt: string;
 };
 
 type WireStatusReason = Omit<BookingStatusReason, 'changedAt'> & {
@@ -719,6 +869,7 @@ function toSlot({ startAt, endAt, ...resto }: WireSlot): AgendaSlot {
  * cada pantalla, y tarde o temprano alguna comprueba sólo uno.
  */
 function toBooking({
+  paymentState,
   startAt,
   endAt,
   confirmedAt,
@@ -736,6 +887,17 @@ function toBooking({
     ...optionalDate('confirmedAt', confirmedAt),
     ...optionalDate('checkedInAt', checkedInAt),
     ...optionalDate('rescheduledFrom', rescheduledFrom),
+    // Se OMITE cuando la API no lo mandó, en vez de normalizarse a un estado
+    // por defecto: «nadie marcó nada» y «alguien marcó pendiente» son cosas
+    // distintas, y la diferencia tiene que llegar hasta la pantalla.
+    ...(paymentState === null || paymentState === undefined
+      ? {}
+      : {
+          paymentState: {
+            ...paymentState,
+            markedAt: new Date(paymentState.markedAt),
+          },
+        }),
     ...(statusReason === null || statusReason === undefined
       ? {}
       : {

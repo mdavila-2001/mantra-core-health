@@ -106,6 +106,34 @@ describe('APP_SECTIONS', () => {
     expect(APP_SECTIONS[0]?.path).toBe('dashboard');
   });
 
+  it('el paciente no ve las pantallas de administración, aunque tenga organización', () => {
+    // La trampa que esto cierra: `requiresTenant` se escribió creyendo que un
+    // paciente «no pertenece a organización ninguna», y es falso. El alta de
+    // paciente le crea una membresía en el tenant por defecto a propósito —sin
+    // ella el interceptor de tenant le contesta 403 a todo—, así que llega con
+    // el claim `tenants` lleno y cumplía la condición.
+    //
+    // Medido contra la API viva el 03/09/2026: `POST /iam/auth/register-patient`
+    // + login devuelve `roles: ['USER','PATIENT']` y `tenants` de un elemento
+    // («Mantra Core Default Tenant»). Por eso el paciente se pasa acá **con**
+    // organización: es el caso real, no el difícil.
+    const conOrganizacion = ['t-1'];
+    const paraElMostrador = [
+      'administration/my-organization',
+      'administration/pharmacy-orders',
+      'administration/pharmacy-campaigns',
+    ];
+
+    for (const ruta of paraElMostrador) {
+      const seccion = APP_SECTIONS.find((s) => s.path === ruta);
+      expect(seccion, ruta).toBeDefined();
+      expect(isVisibleTo(seccion!, ['USER', 'PATIENT'], conOrganizacion), ruta).toBe(false);
+      // Y sigue siendo de quien es: el mostrador no tiene rol propio en el
+      // token, así que se comprueba con la sesión que sí lo atiende.
+      expect(isVisibleTo(seccion!, ['USER'], conOrganizacion), ruta).toBe(true);
+    }
+  });
+
   it('el panel lo ve cualquier sesión, sin importar los roles', () => {
     const panel = APP_SECTIONS[0];
 

@@ -20,7 +20,8 @@ import type {
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_MINE_ROUTE } from '../agenda.routes';
-import { miRecursoDeAgenda } from '../mi-recurso';
+import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
+import { misRecursosDeAgenda } from '../mi-recurso';
 import { calcularTurnos, type Calculo } from './agenda-turnos';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
@@ -31,6 +32,8 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import type { DialogDetail } from '../../../shared/components/molecules/dialog/dialog.types';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
@@ -66,6 +69,16 @@ const HORIZONTE_MESES = 3;
 
 /** Duraciones ofrecidas como fichas. La séptima opción es escribirla. */
 const DURACIONES = [15, 20, 30, 45, 60, 90] as const;
+
+/**
+ * Respiros ofrecidos como fichas, en minutos.
+ *
+ * Empieza en **cero** y cero viene marcado: la mayoría de las agendas no
+ * declara respiro, y obligar a elegir uno convertiría una comodidad en un
+ * trámite. Cuando queda en cero no se manda nada — la columna es anulable y
+ * «no lo dijo» y «dijo que no hay» no significan lo mismo.
+ */
+const RESPIROS = [0, 5, 10, 15, 20, 30] as const;
 
 /**
  * A cuánto se cae la duración cuando el horario vigente no la declara.
@@ -104,6 +117,7 @@ type DiaGroup = FormGroup<{
   desde: FormControl<string>;
   hasta: FormControl<string>;
   duracion: FormControl<number>;
+  respiro: FormControl<number>;
 }>;
 
 /** Lo que se muestra de un día en la semana visual. */
@@ -167,6 +181,7 @@ interface DiaVisible {
 })
 export class AgendaCreate {
   private readonly scheduling = inject(SchedulingClient);
+  private readonly dialogs = inject(DialogService);
   private readonly organizaciones = inject(MedicalOrganizationClient);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
@@ -175,7 +190,46 @@ export class AgendaCreate {
   protected readonly rutaDeMiAgenda = AGENDA_MINE_ROUTE;
   protected readonly uuidError = UUID_ERROR;
   protected readonly dias = DIAS;
+  /** A dónde vuelve «Cancelar»: la agenda, que es de donde se vino. */
+  protected readonly rutaMiAgenda = '/schedule/mine';
+
   protected readonly duraciones = DURACIONES;
+  protected readonly respiros = RESPIROS;
+
+  /* -- La tabla, que es la forma que pidió el propietario ------------------- */
+
+  /**
+   * Las horas del día, cada media hora.
+   *
+   * El pedido original dice «Desde (horas del día)» y «Hasta (horas del día)»
+   * como **selects**, no como texto. Media hora y no una: publicar de 8:30 a
+   * 12:30 es corriente en un consultorio, y una lista sólo de horas en punto
+   * obligaría a no poder expresarlo.
+   */
+  protected readonly horasDelDia: readonly SelectOption<string>[] = Array.from(
+    { length: 48 },
+    (_, i) => {
+      const hh = String(Math.floor(i / 2)).padStart(2, '0');
+      const mm = i % 2 === 0 ? '00' : '30';
+      return { value: `${hh}:${mm}`, label: `${hh}:${mm}` };
+    },
+  );
+
+  protected readonly opcionesDeDuracion: readonly SelectOption<number>[] = DURACIONES.map(
+    (m) => ({ value: m, label: `${m} min` }),
+  );
+
+  protected readonly opcionesDeRespiro: readonly SelectOption<number>[] = RESPIROS.map((m) => ({
+    value: m,
+    label: m === 0 ? 'Sin respiro' : `${m} min`,
+  }));
+
+  /** Fija un valor de la fila sin que la plantilla tenga que saber de formularios. */
+  protected fijarDeLaFila(indice: number, campo: string, valor: unknown): void {
+    if (valor === null || valor === undefined) return;
+    this.semana.at(indice).get(campo)?.setValue(valor as never);
+    this.versionDeLaSemana.update((v) => v + 1);
+  }
 
   /** Si la sesión puede construir agenda. El backend manda; esto no ofrece 403. */
   protected readonly puedeCrear = computed(() =>
@@ -183,6 +237,89 @@ export class AgendaCreate {
   );
 
   /** Quien administra el catálogo puede publicar la agenda de otro recurso. */
+  /**
+   * Las agendas de quien publica. Más de una = atiende en más de una sede.
+   */
+  protected readonly misAgendas = signal<readonly AgendaResource[]>([]);
+
+  /**
+   * Publicar en una agenda **nueva** en vez de en una que ya existe.
+   *
+   * Sin esto, quien ya tenía una agenda no podía crear una segunda **nunca**:
+   * `crearRecurso` reutiliza el `resourceId` que la pantalla resuelve al
+   * cargar, y ese id siempre estaba puesto. La pantalla decía «Publicar mi
+   * agenda» y en realidad editaba la única que había.
+   *
+   * Es lo que faltaba para que «elegir dónde publicar» signifique algo cuando
+   * todavía no hay dónde: primero hay que poder crear el otro lado.
+   */
+  protected readonly agendaNueva = signal(false);
+
+  /** Cómo se va a llamar la agenda nueva. «Consultorio en la Caja», «Sábados». */
+  protected readonly nombreNuevo = signal('');
+
+  /**
+   * Se pregunta cuándo hay más de una agenda **o** cuando se está creando otra.
+   *
+   * Con una sola y sin crear, elegir entre una no es elegir.
+   */
+  protected readonly eligeSede = computed(
+    () => this.misAgendas().length > 1 || this.misAgendas().length > 0,
+  );
+
+  protected readonly opcionesDeSede = computed<SelectOption<string>[]>(() =>
+    this.misAgendas().map((r) => ({ value: r.id, label: r.name })),
+  );
+
+  /**
+   * Cambia la agenda sobre la que se publica y relee su horario vigente.
+   *
+   * Releer no es opcional: cada sede tiene su propio horario, y dejar en
+   * pantalla el de la anterior haría que alguien publique creyendo que corrige
+   * lo que ya tenía.
+   */
+  /**
+   * Empieza una agenda nueva en vez de editar una existente.
+   *
+   * Suelta el `resourceId` —que es lo único que hacía que `crearRecurso`
+   * reutilizara la de siempre— y limpia el horario vigente en pantalla: el de
+   * la agenda anterior no describe a la que todavía no existe.
+   */
+  protected fijarNombreNuevo(valor: string | number | null): void {
+    this.nombreNuevo.set(valor === null ? '' : String(valor));
+  }
+
+  protected empezarAgendaNueva(): void {
+    this.agendaNueva.set(true);
+    this.resourceId.set(null);
+    this.templateId.set(null);
+    this.policyId.set(null);
+    this.vigente.set(null);
+  }
+
+  /** Vuelve a publicar sobre una agenda que ya existe. */
+  protected volverAAgendaExistente(): void {
+    this.agendaNueva.set(false);
+    const primera = this.misAgendas()[0];
+    if (primera !== undefined) this.elegirSede(primera.id);
+  }
+
+  protected elegirSede(id: string | null): void {
+    if (this.agendaNueva()) this.agendaNueva.set(false);
+    if (id === null || id === this.resourceId()) return;
+    this.resourceId.set(id);
+    this.vigente.set(null);
+    this.scheduling.listTemplates(id).subscribe({
+      next: (pagina) => {
+        const vigente = pagina.items[0];
+        if (vigente === undefined) return;
+        this.vigente.set(vigente);
+        this.cargarSemanaDesde(vigente);
+      },
+      error: () => undefined,
+    });
+  }
+
   protected readonly puedePublicarParaOtro = computed(() =>
     ROLES_DE_CATALOGO.some((rol) => this.auth.roles().includes(rol)),
   );
@@ -236,7 +373,7 @@ export class AgendaCreate {
   protected readonly esCambio = computed(() => this.vigente() !== null);
 
   /** Identificadores ya obtenidos: reintentar no vuelve a crearlos. */
-  private readonly resourceId = signal<string | null>(null);
+  protected readonly resourceId = signal<string | null>(null);
   private readonly policyId = signal<string | null>(null);
   private readonly templateId = signal<string | null>(null);
   protected readonly cuposCreados = signal<number | null>(null);
@@ -343,6 +480,11 @@ export class AgendaCreate {
           desde: v.desde,
           hasta: v.hasta,
           duracion: v.duracion,
+          // `calcularTurnos` ya sabía contar el respiro (AG-4) y nadie se lo
+          // pasaba: la vista previa mostraba los turnos SIN él. Con el campo
+          // en pantalla eso se volvía una contradicción visible — «entran 5»
+          // arriba y «8 turnos» abajo, sobre la misma franja.
+          receso: v.respiro,
         };
       }),
     ),
@@ -356,6 +498,13 @@ export class AgendaCreate {
    */
   protected readonly nombreDelRecurso = computed(() => {
     if (!this.publicaSoloLaPropia()) return this.formTecnico.controls.name.value.trim();
+    // Una agenda nueva se llama como la persona quiera: «Consultorio en la
+    // Caja», «Sábados en el centro». Es lo único que la distingue de la otra en
+    // todas las listas del producto, así que no se deriva.
+    if (this.agendaNueva()) {
+      const propio = this.nombreNuevo().trim();
+      if (propio !== '') return propio;
+    }
     const nombre = this.nombreDelTitular();
     return nombre === '' ? 'Mi agenda' : `Agenda de ${nombre}`;
   });
@@ -396,9 +545,18 @@ export class AgendaCreate {
     // pantalla ya le está diciendo a esa sesión que la sección no es suya.
     if (perfil === null || tenantId === null || !this.puedeCrear()) return;
 
-    miRecursoDeAgenda(this.scheduling, tenantId, perfil).subscribe({
-      next: (recurso) => {
-        if (recurso === null) return;
+    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+      next: (recursos) => {
+        // Todas, no la primera: quien atiende en dos sedes tiene que poder
+        // decir en cuál publica. Antes esta lectura hacía `.find()` y la
+        // segunda agenda no existía para el producto.
+        this.misAgendas.set(recursos);
+        // Si ya se pidió empezar una agenda nueva, la lectura no vuelve a
+        // apuntar a la vieja: pisarla acá haría que publicar edite la de
+        // siempre sin que nadie lo note.
+        if (this.agendaNueva()) return;
+        const recurso = recursos[0];
+        if (recurso === undefined) return;
         this.resourceId.set(recurso.id);
         this.scheduling.listTemplates(recurso.id).subscribe({
           next: (pagina) => {
@@ -430,6 +588,9 @@ export class AgendaCreate {
         desde: sinSegundos(regla.startTime),
         hasta: sinSegundos(regla.endTime),
         duracion: regla.slotMinutes ?? plantilla.slotMinutes ?? DURACION_POR_OMISION,
+        // `?? 0` acá y no en el envío: leyendo, ausente ES cero; escribiendo,
+        // ausente y cero son cosas distintas.
+        respiro: regla.gapMinutes ?? 0,
       });
     }
     if (plantilla.validTo !== undefined) {
@@ -478,6 +639,34 @@ export class AgendaCreate {
     this.semana.at(indice).controls.duracion.setValue(minutos);
   }
 
+  protected elegirRespiro(indice: number, minutos: number): void {
+    this.semana.at(indice).controls.respiro.setValue(minutos);
+  }
+
+  /**
+   * Cuántos turnos entran en la franja de un día, con el respiro contado.
+   *
+   * Delega en {@link calcularTurnos}, que es el mismo cálculo que alimenta la
+   * vista previa de más abajo. **No se reimplementa acá**: dos aritméticas para
+   * el mismo número terminan dando dos números, y en esta pantalla los dos se
+   * ven a la vez.
+   *
+   * @param indice - El día de la semana, por su posición.
+   */
+  protected turnosDelDia(indice: number): number {
+    const v = this.semana.at(indice).getRawValue();
+    const { total } = calcularTurnos([
+      {
+        dia: DIAS[indice].largo,
+        desde: v.desde,
+        hasta: v.hasta,
+        duracion: v.duracion,
+        receso: v.respiro,
+      },
+    ]);
+    return total;
+  }
+
   /**
    * Copia el horario del primer día encendido a todos los demás.
    *
@@ -509,6 +698,75 @@ export class AgendaCreate {
    * propósito —el resto del repo tampoco los usa en componentes— y el guardado
    * parcial hace que un reintento retome donde falló.
    */
+  /**
+   * «Previsualizar horario» — el modal del pedido original.
+   *
+   * La vista previa ya vive en línea más arriba, y se deja donde está: mirarla
+   * mientras se escribe es mejor que abrir algo para verla. Este botón la trae
+   * **al pie**, que es donde uno decide publicar, sin obligar a subir a
+   * buscarla.
+   *
+   * Se arma con el mismo `calcularTurnos` que la de arriba —no con una cuenta
+   * paralela— porque dos cálculos del mismo número terminan discrepando, y ya
+   * pasó una vez en esta pantalla.
+   */
+  protected async abrirVistaPrevia(): Promise<void> {
+    const calculo = this.vistaPrevia();
+    const detalles: DialogDetail[] = calculo.porDia.map((dia) => ({
+      label: dia.dia.charAt(0).toUpperCase() + dia.dia.slice(1),
+      value:
+        dia.turnos.length === 0
+          ? 'Sin turnos'
+          : `${dia.turnos.length} ${dia.turnos.length === 1 ? 'turno' : 'turnos'} · ` +
+            dia.turnos.map((t) => t.desde).join(' · '),
+    }));
+
+    await this.dialogs.confirm({
+      title: 'Así va a quedar tu horario',
+      message: `${calculo.total} ${calculo.total === 1 ? 'turno' : 'turnos'} por semana.`,
+      details: detalles,
+      confirmLabel: 'Está bien',
+      cancelLabel: 'Volver a editar',
+    });
+  }
+
+  /**
+   * «Limpiar campos» — deja el formulario en blanco.
+   *
+   * Pide confirmación porque **no hay deshacer**: quien lo toca sin querer
+   * pierde la semana que acaba de armar, y armarla es el trabajo entero de esta
+   * pantalla.
+   *
+   * No toca la agenda ya publicada: limpia el formulario, no el horario. Se
+   * dice en el mensaje porque «limpiar» a secas asusta justo a quien no debería
+   * asustarse.
+   */
+  protected async limpiarCampos(): Promise<void> {
+    const seguro = await this.dialogs.confirm({
+      title: 'Limpiar el formulario',
+      message:
+        'Se borra lo que escribiste acá y volvés a empezar. Tu horario ya publicado no se toca.',
+      confirmLabel: 'Limpiar',
+      cancelLabel: 'Volver',
+      destructive: true,
+    });
+    if (!seguro) return;
+
+    // Se reconstruye cada día con la fábrica en vez de listar los valores acá:
+    // duplicar los valores por defecto es garantizar que un día se separen.
+    for (let i = 0; i < DIAS.length; i++) {
+      this.semana.at(i).reset(nuevoDia(DIAS[i].numero).getRawValue());
+    }
+    this.formGeneral.reset({
+      practiceId: '',
+      tieneFin: 'no',
+      capacidadPorTurno: '1',
+      timeZone: '',
+    });
+    this.fechaDeFin.set(null);
+    this.versionDeLaSemana.update((v) => v + 1);
+  }
+
   protected publicar(): void {
     if (this.cargando()) return;
 
@@ -598,6 +856,9 @@ export class AgendaCreate {
         startTime: v.desde.trim(),
         endTime: v.hasta.trim(),
         slotMinutes: v.duracion,
+        // Sólo si eligió alguno: mandar `0` escribiría un cero que nadie
+        // declaró, y borraría la diferencia el día que el default cambie.
+        ...(v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
         ...opcEntero('capacityPerSlot', capacidad),
       } as ScheduleRule;
     });
@@ -710,7 +971,16 @@ export class AgendaCreate {
     });
 
     const horario = mismoHorario ? ` de ${enHoras(primero.desde)} a ${enHoras(primero.hasta)}` : '';
-    return `${dias}${horario}, consultas de ${primero.duracion} minutos`;
+    // El respiro sólo se nombra si lo hay: «con 0 minutos de descanso» sería
+    // ruido en la gran mayoría de las agendas, que no declaran ninguno.
+    const mismoRespiro = activos.every(
+      (dia) => this.semana.at(dia.indice).getRawValue().respiro === primero.respiro,
+    );
+    const respiro =
+      primero.respiro > 0 && mismoRespiro
+        ? ` y ${primero.respiro} minutos de descanso entre una y otra`
+        : '';
+    return `${dias}${horario}, consultas de ${primero.duracion} minutos${respiro}`;
   });
 }
 
@@ -727,6 +997,9 @@ function nuevoDia(_dayOfWeek: number): DiaGroup {
       validators: [Validators.required, Validators.pattern(HORA)],
     }),
     duracion: new FormControl(30, { nonNullable: true, validators: [Validators.required] }),
+    // Sin respiro por omisión: es lo que la agenda hacía antes de que el campo
+    // existiera, así que abrir el formulario no cambia nada de lo que ya había.
+    respiro: new FormControl(0, { nonNullable: true, validators: [Validators.required] }),
   });
 }
 

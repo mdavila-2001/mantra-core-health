@@ -55,6 +55,32 @@
           </ng-container>
 
           @if (datos(); as resumen) {
+            <!-- El retrato es el disparador de la subida, mismo patrón que el
+                 perfil profesional (P17): un `<label>` envuelve el avatar y un
+                 input de archivo oculto. -->
+            <label class="mi-perfil__foto" [class.is-subiendo]="subiendoFoto()">
+              <app-avatar
+                size="lg"
+                [src]="fotoUrl()"
+                [name]="resumen.displayName ?? ''"
+                [alt]="'Foto de ' + (resumen.displayName ?? 'tu perfil')"
+              />
+              <span class="solo-lectores">
+                {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
+              </span>
+              <input
+                type="file"
+                class="solo-lectores"
+                accept="image/*"
+                data-testid="mi-perfil-foto"
+                [disabled]="subiendoFoto()"
+                (change)="alElegirFoto($event)"
+              />
+            </label>
+            @if (errorDeFoto(); as fallo) {
+              <p class="mi-perfil__foto-error" role="alert">{{ fallo }}</p>
+            }
+
             <dl class="mi-perfil__datos">
               <div class="mi-perfil__dato">
                 <dt>Nombre</dt>

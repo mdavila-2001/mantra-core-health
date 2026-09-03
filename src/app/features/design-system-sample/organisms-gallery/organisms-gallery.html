@@ -318,3 +318,72 @@
     avanzado.
   </p>
 </section>
+
+<!-- 15 · Explorador por especialidad ------------------------------------------ -->
+<section class="og-block">
+  <h3>15 · Explorador por especialidad — buscador arriba, grilla agrupada abajo</h3>
+
+  <p class="og-note">
+    Es la anatomía de un catálogo que se hojea por especialidad, escrita <strong>una sola
+    vez</strong>. No pide datos, no agrupa y no filtra: recibe los grupos ya armados y ordenados,
+    y avisa hacia afuera cuando cambian los filtros — quién filtra, el servidor o la propia
+    pantalla, lo decide cada consumidor. Los encabezados <strong>se pegan</strong> al desplazar:
+    en un catálogo largo, saber bajo qué especialidad se está mirando es la mitad de la
+    información.
+  </p>
+
+  <p class="og-note">
+    La tarjeta <strong>la pone el consumidor</strong>, con un <code>ng-template</code> que recibe
+    el ítem y su grupo. Por eso el organismo no tiene un evento de «elegí este»: las acciones
+    viven en la tarjeta, donde está el tipo real del ítem.
+  </p>
+
+  <div class="og-surface">
+    <app-specialty-browser
+      [state]="catalogoDemo"
+      [groups]="especialidadesDemo"
+      [filters]="filtrosDelExplorador"
+      searchLabel="Buscar un estudio por nombre o especialidad"
+      (filtersChanged)="registrarFiltrosDelExplorador($event)"
+    >
+      <ng-template let-estudio let-grupo="group">
+        <app-card variant="outlined" padding="md">
+          <strong>{{ estudio.nombre }}</strong>
+          <p class="og-note">{{ grupo.label }} · {{ estudio.detalle }}</p>
+        </app-card>
+      </ng-template>
+    </app-specialty-browser>
+  </div>
+
+  <p class="og-note">
+    Filtros vistos por la pantalla: <strong>{{ filtrosDelExploradorVistos() }}</strong>. Van a la
+    URL, así que un enlace compartido reproduce la búsqueda exacta.
+  </p>
+
+  <p class="og-note">
+    Con <code>hasMore</code> aparece el pie de <strong>«Cargar más»</strong>, y sólo entonces: un
+    botón de traer más que no trae nada hace pensar que la pantalla está rota. Quien decide si
+    hay más es el dueño de los datos.
+  </p>
+
+  <div class="og-surface">
+    <app-specialty-browser
+      [state]="catalogoDemo"
+      [groups]="especialidadParcialDemo"
+      searchLabel="Buscar un estudio de laboratorio"
+      [hasMore]="true"
+      (moreRequested)="pedirMasEstudios()"
+    >
+      <ng-template let-estudio>
+        <app-card variant="outlined" padding="md">
+          <strong>{{ estudio.nombre }}</strong>
+          <p class="og-note">{{ estudio.detalle }}</p>
+        </app-card>
+      </ng-template>
+    </app-specialty-browser>
+  </div>
+
+  <p class="og-note">
+    Pedidos de más: <strong>{{ pedidosDeMasDemo() }}</strong>.
+  </p>
+</section>

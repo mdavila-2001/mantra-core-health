@@ -1,7 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 
-import type { AgendaSlot, Booking } from '../../../../core/data-access/scheduling/scheduling.types';
+import type {
+  ActivityTypeOption,
+  AgendaSlot, Booking } from '../../../../core/data-access/scheduling/scheduling.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BloqueoDelMes } from '../month-view/month-view';
@@ -28,6 +37,25 @@ export interface RatoTocado {
 }
 
 /** Un bloque de la línea de horas. */
+/** Los tonos que el badge del sistema de diseño sabe pintar. */
+export type TonoDeBadge = 'primary' | 'secondary' | 'info' | 'success' | 'warning';
+
+/** Los que la API puede mandar hoy. `error` NO está: es el de los bloqueos. */
+const TONOS: readonly TonoDeBadge[] = ['primary', 'secondary', 'info', 'success', 'warning'];
+
+/**
+ * El tono que manda el servidor, o uno neutro si no lo conocemos.
+ *
+ * La guarda no es defensiva de más: el catálogo es del servidor y puede ganar
+ * una tipología con un tono que este front todavía no compila. Que entonces se
+ * pinte neutra es mejor que que la agenda no cargue — y **jamás cae en `error`**,
+ * que es el de los bloqueos: una actividad pintada de rojo diría que el rato
+ * está cerrado cuando no lo está.
+ */
+function aTono(valor: string): TonoDeBadge {
+  return TONOS.includes(valor as TonoDeBadge) ? (valor as TonoDeBadge) : 'secondary';
+}
+
 export interface BloqueDelDia {
   readonly clave: string;
   readonly desde: Date;
@@ -46,6 +74,14 @@ export interface BloqueDelDia {
   readonly estado: string;
   /** El código del estado, para decidir qué acciones ofrecer. */
   readonly statusCode: string;
+  /**
+   * Qué clase de actividad es: consulta, procedimiento, control…
+   *
+   * El propietario lo pidió así: «con otros colores los otros procedimientos
+   * (TURNOS, OPERACIONES, ETC.) catalogado por tipología raíz». `null` cuando
+   * la reserva no declara tipo, que es lo corriente en una consulta común.
+   */
+  readonly tipologia: { readonly label: string; readonly tone: TonoDeBadge } | null;
   /** El rótulo del tiempo ocupado. */
   readonly motivo: string | null;
   /** El id de la excepción, para poder quitarla. */
@@ -135,6 +171,32 @@ export class DayView {
   readonly bloqueos = input.required<readonly BloqueoDelMes[]>();
 
   /**
+   * Las tipologías, para poder pintar cada actividad.
+   *
+   * Entra por input y no se pide acá: esta vista sólo dibuja, y quien la usa ya
+   * tiene el catálogo cargado. Con la lista vacía todo se ve como hasta ahora
+   * — un catálogo que no cargó no puede dejar la agenda en blanco.
+   */
+  readonly tipologias = input<readonly ActivityTypeOption[]>([]);
+
+  /**
+   * La tipología de una cita, o `null` si no declara ninguna.
+   *
+   * `null` es el caso corriente y no un error: una consulta común no necesita
+   * decir que es una consulta. Lo que el propietario quiere distinguir son las
+   * OTRAS —operaciones, controles, teleconsultas—, y pintar todas obligaría a
+   * mirar el color hasta en lo que no lo necesita.
+   */
+  private tipologiaDe(cita: Booking): { label: string; tone: TonoDeBadge } | null {
+    const concepto = cita.typeConceptId;
+    if (concepto === undefined) return null;
+    const encontrada = this.tipologias().find((t) => t.conceptId === concepto);
+    return encontrada === undefined
+      ? null
+      : { label: encontrada.label, tone: aTono(encontrada.tone) };
+  }
+
+  /**
    * Si quien mira puede registrar la llegada.
    *
    * **`POST /scheduling/bookings/:id/check-in` no admite `PRACTITIONER`**:
@@ -163,6 +225,63 @@ export class DayView {
 
   /** Volver al mes. */
   readonly volver = output<void>();
+
+  /**
+   * Ir al día siguiente o al anterior — «un botón de ver mañana, y así
+   * sucesivamente» del pedido original.
+   *
+   * Emite el desplazamiento en días y no la fecha ya calculada: sumar un día es
+   * cosa del calendario, y hacerlo acá con `+24h` se rompe el día que cambia el
+   * horario de verano. Quien tiene la agenta cargada sabe recorrerla.
+   */
+  readonly diaCambiado = output<number>();
+
+  /**
+   * Alguien tocó una tarjeta y quiere ver todo lo de ese rato.
+   *
+   * El pedido original: «cards al estilo de Google Calendar que son cliqueables
+   * que abren un modal con todo el detalle de la actividad». El modal lo arma
+   * quien tiene los datos completos —esta vista sólo dibuja—, así que acá se
+   * emite el bloque y se decide afuera.
+   */
+  readonly detallePedido = output<BloqueDelDia>();
+
+  /**
+   * Correr la agenda del día N minutos — «mover horario» del pedido.
+   *
+   * Emite los minutos y, si se pidió «de acá en adelante», **desde qué rato**.
+   * Es el «seleccionable a todos o ciertos slots en específico»: o el día
+   * entero, o de un punto hacia adelante, que es como uno lo piensa cuando se
+   * atrasa a media mañana.
+   */
+  readonly movimientoPedido = output<{ minutos: number; desde: Date | null }>();
+
+  /** Cerrar un rato libre, con el bloqueo que impide que vuelva. */
+  readonly cierrePedido = output<BloqueDelDia>();
+
+  /** Si el panel de mover está abierto. */
+  protected readonly moverAbierto = signal(false);
+
+  /**
+   * Cuánto se puede correr, en minutos.
+   *
+   * Una lista corta y no un campo libre: mover el horario se decide entre
+   * pacientes, y en ese momento nadie quiere teclear un número.
+   */
+  protected readonly desplazamientos = [10, 15, 20, 30, 45, 60] as const;
+
+  /** Desde qué rato se mueve, o `null` para el día entero. */
+  protected readonly moverDesde = signal<Date | null>(null);
+
+  protected abrirMover(desde: Date | null): void {
+    this.moverDesde.set(desde);
+    this.moverAbierto.set(true);
+  }
+
+  protected pedirMovimiento(minutos: number): void {
+    this.movimientoPedido.emit({ minutos, desde: this.moverDesde() });
+    this.moverAbierto.set(false);
+  }
 
   protected readonly titulo = computed(() =>
     this.dia().toLocaleDateString('es-BO', {
@@ -200,6 +319,7 @@ export class DayView {
         paciente: '',
         estado: '',
         statusCode: '',
+        tipologia: null,
         motivo: bloqueo.motivo,
         excepcionId: bloqueo.id ?? null,
         alturaPx: this.altura(bloqueo.desde, bloqueo.hasta, true),
@@ -225,6 +345,7 @@ export class DayView {
           paciente: '',
           estado: '',
           statusCode: '',
+          tipologia: null,
           motivo: null,
           excepcionId: null,
           alturaPx: this.altura(cupo.startAt, hasta, true),
@@ -243,6 +364,7 @@ export class DayView {
         paciente: cita.patientName ?? 'Paciente sin nombre registrado',
         estado: this.etiquetas().get(cita.statusConceptId)?.display ?? 'Reservado',
         statusCode: this.etiquetas().get(cita.statusConceptId)?.code ?? '',
+        tipologia: this.tipologiaDe(cita),
         motivo: null,
         excepcionId: null,
         alturaPx: this.altura(cupo.startAt, hasta, true),
@@ -268,6 +390,7 @@ export class DayView {
             paciente: '',
             estado: '',
             statusCode: '',
+            tipologia: null,
             motivo: null,
             excepcionId: null,
             alturaPx: this.altura(anterior.hasta, bloque.desde, false),

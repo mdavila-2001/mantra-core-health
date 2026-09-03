@@ -309,4 +309,171 @@ describe('DayView', () => {
     expect(fixture.nativeElement.textContent).toContain('No atendés este día');
     expect(fixture.nativeElement.textContent).toContain('Agregar');
   });
+
+  /**
+   * RECORRER EL DÍA Y ABRIR LA TARJETA — carril 12 del pedido original.
+   *
+   * «Un botón de ver mañana, y así sucesivamente» y «cards al estilo de Google
+   * Calendar que son cliqueables que abren un modal con todo el detalle».
+   */
+  describe('recorrer y abrir', () => {
+    function porTestid(id: string): HTMLElement | null {
+      return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+    }
+
+    it('ofrece ayer y mañana', () => {
+      montar();
+      expect(porTestid('dia-anterior')).not.toBeNull();
+      expect(porTestid('dia-siguiente')).not.toBeNull();
+    });
+
+    it('emite el DESPLAZAMIENTO, no la fecha ya calculada', () => {
+      // Sumar un día es cosa del calendario: hacerlo acá con `+24h` se rompe el
+      // día que cambia el horario de verano.
+      montar();
+      const vistos: number[] = [];
+      fixture.componentInstance.diaCambiado.subscribe((d: number) => vistos.push(d));
+
+      porTestid('dia-siguiente')?.click();
+      porTestid('dia-anterior')?.click();
+
+      expect(vistos).toEqual([1, -1]);
+    });
+  });
+
+  /**
+   * EL COLOR POR TIPOLOGÍA — carril 12, y estaba bloqueado hasta hoy.
+   *
+   * «Con otros colores los otros procedimientos (TURNOS, OPERACIONES, ETC.)
+   * catalogado por tipología raíz». La columna existía y no había conceptos que
+   * ponerle; ahora el catálogo los publica con su tono.
+   */
+  describe('la tipología de la actividad', () => {
+    const CATALOGO = [
+      { type: 'PROCEDURE', conceptId: 'c-proc', label: 'Operación o procedimiento', tone: 'warning' },
+      { type: 'FOLLOW_UP', conceptId: 'c-ctrl', label: 'Control', tone: 'info' },
+    ];
+
+    function montarConTipologia(typeConceptId: string | undefined, catalogo = CATALOGO): void {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      fixture = TestBed.createComponent(DayView);
+      fixture.componentRef.setInput('dia', DIA);
+      fixture.componentRef.setInput('cupos', [
+        { id: 's-1', startAt: new Date(2026, 8, 10, 9), endAt: new Date(2026, 8, 10, 9, 30) },
+      ]);
+      fixture.componentRef.setInput('citas', [
+        {
+          id: 'b-1',
+          bookableSlotId: 's-1',
+          statusConceptId: 'c-confirmada',
+          patientName: 'Ana',
+          ...(typeConceptId === undefined ? {} : { typeConceptId }),
+        },
+      ]);
+      fixture.componentRef.setInput('bloqueos', []);
+      fixture.componentRef.setInput('etiquetas', ETIQUETAS);
+      fixture.componentRef.setInput('tipologias', catalogo);
+      fixture.componentRef.setInput('puedeRegistrarLlegada', true);
+      fixture.detectChanges();
+    }
+
+    it('pinta la actividad con la etiqueta Y el tono del servidor', () => {
+      // La palabra va CON el color, no en su lugar: el color distingue de un
+      // vistazo, la palabra lo hace legible para quien no lo distingue.
+      montarConTipologia('c-proc');
+      expect(fixture.nativeElement.textContent).toContain('Operación o procedimiento');
+    });
+
+    it('una consulta común NO lleva etiqueta', () => {
+      // Pintar todo obliga a mirar el color hasta donde no informa. Lo que el
+      // propietario quiere distinguir son las OTRAS actividades.
+      montarConTipologia(undefined);
+      expect(fixture.nativeElement.querySelector('[data-testid="dia-tipologia"]')).toBeNull();
+    });
+
+    it('un tipo que el catálogo no conoce no rompe: se pinta sin etiqueta', () => {
+      montarConTipologia('c-que-no-existe');
+      expect(fixture.nativeElement.querySelector('[data-testid="dia-tipologia"]')).toBeNull();
+    });
+
+    it('sin catálogo el día se ve como antes', () => {
+      // Un catálogo que no cargó no puede dejar la agenda en blanco.
+      montarConTipologia('c-proc', []);
+      expect(fixture.nativeElement.textContent).toContain('Ana');
+    });
+
+    it('un tono desconocido cae en neutro y NUNCA en error', () => {
+      // `error` es el de los bloqueos. Una actividad pintada de rojo diría que
+      // el rato está cerrado cuando no lo está.
+      montarConTipologia('c-raro', [
+        { type: 'X', conceptId: 'c-raro', label: 'Rara', tone: 'fucsia' },
+      ]);
+      const badge = fixture.nativeElement.querySelector('[data-testid="dia-tipologia"]');
+      expect(badge).not.toBeNull();
+      expect(badge?.className ?? '').not.toContain('error');
+    });
+  });
+
+  /**
+   * MOVER EL HORARIO Y CERRAR RATOS — los dos últimos del carril 12.
+   *
+   * «Un botón que se llame mover horario, que desplace los slots N minutos
+   * después […] y sea seleccionable a todos o ciertos slots en específico» y
+   * «otro botón para cancelar […] slots específicos».
+   */
+  describe('mover y cerrar', () => {
+    function porTestid(id: string): HTMLElement | null {
+      return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+    }
+
+    it('el panel de mover se abre desde la barra del día', () => {
+      // Va en la barra y no dentro de una tarjeta: lo que se corre es la
+      // agenda, no una cita suelta.
+      montar();
+      expect(porTestid('dia-mover-panel')).toBeNull();
+
+      porTestid('dia-mover')?.click();
+      fixture.detectChanges();
+
+      expect(porTestid('dia-mover-panel')).not.toBeNull();
+    });
+
+    it('emite los minutos elegidos', () => {
+      montar();
+      const vistos: { minutos: number; desde: Date | null }[] = [];
+      fixture.componentInstance.movimientoPedido.subscribe((p) => vistos.push(p));
+
+      porTestid('dia-mover')?.click();
+      fixture.detectChanges();
+      porTestid('dia-mover-20')?.click();
+
+      expect(vistos[0].minutos).toBe(20);
+      // Sin «desde», es el día entero.
+      expect(vistos[0].desde).toBeNull();
+    });
+
+    it('ofrece adelantar, no sólo atrasar', () => {
+      // El profesional que termina antes quiere adelantar a los que esperan.
+      montar();
+      const vistos: { minutos: number; desde: Date | null }[] = [];
+      fixture.componentInstance.movimientoPedido.subscribe((p) => vistos.push(p));
+
+      porTestid('dia-mover')?.click();
+      fixture.detectChanges();
+      porTestid('dia-mover-adelantar')?.click();
+
+      expect(vistos[0].minutos).toBe(-15);
+    });
+
+    it('elegir cierra el panel: no se mueve dos veces sin querer', () => {
+      montar();
+      porTestid('dia-mover')?.click();
+      fixture.detectChanges();
+      porTestid('dia-mover-20')?.click();
+      fixture.detectChanges();
+
+      expect(porTestid('dia-mover-panel')).toBeNull();
+    });
+  });
 });

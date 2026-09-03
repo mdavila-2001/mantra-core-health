@@ -25,6 +25,7 @@ import { Chip } from '../../shared/components/atoms/chip/chip';
 import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { drugFactsFrom, type GlossaryDrugFacts } from './glossary-drug-facts';
 import { GlossaryCategoryIcon } from './glossary-category-icon';
 
 /**
@@ -153,6 +154,18 @@ export class GlossaryTerm {
       label,
       relaciones: relaciones.filter((relacion) => relacion.type === type),
     })).filter((grupo) => grupo.relaciones.length > 0);
+  });
+
+  /**
+   * Ficha de medicamento (TAREA-25), o `null` si no hay ninguno de los cuatro
+   * datos. `null` es el estado normal hoy: la base no tiene ninguna fila del
+   * `code_system` `ndc` (los importadores existen y no corrieron acá), así
+   * que el bloque se omite entero — es el criterio de AC-25-6/AC-25-8, no una
+   * falla de la pantalla.
+   */
+  protected readonly medicamento = computed<GlossaryDrugFacts | null>(() => {
+    const termino = this.ficha();
+    return termino === null ? null : drugFactsFrom(termino);
   });
 
   constructor() {

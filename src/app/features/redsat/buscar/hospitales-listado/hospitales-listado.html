@@ -24,31 +24,6 @@
   </div>
 </div>
 
-<div role="tablist" class="app-tabs" app-tabs="" aria-label="Qué estás buscando">
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar">Todo</a>
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/profesionales"
-    >Profesionales</a
-  >
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/medicamentos"
-    >Medicamentos</a
-  >
-  <a
-    class="app-tab"
-    app-tab=""
-    role="tab"
-    aria-selected="true"
-    aria-disabled="true"
-    data-sin-destino=""
-    >Hospitales y clínicas</a
-  >
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/diagnostico"
-    >Laboratorios e imagen</a
-  >
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras"
-    >Aseguradoras</a
-  >
-</div>
-
 <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
   <label class="app-search-field" app-search-field="">
     <span class="solo-lectores">Buscá por nombre de la clínica, el hospital o la calle</span>
@@ -116,13 +91,37 @@
 
         <ul class="centros__grilla">
           @for (centro of centros(); track centro.id) {
-            <li app-centro-card [centro]="centro">
-              <a app-button data-variante="primario" data-tam="sm" [routerLink]="centro.link"
+            <li app-centro-card [centro]="centro.card">
+              <!-- «Ver ficha» va a `/o/:slug`, la ficha pública real
+                   (`features/public-profile/`), y no a la maqueta portada. -->
+              <a
+                app-button
+                data-variante="primario"
+                data-tam="sm"
+                data-testid="facility-profile"
+                [routerLink]="centro.profileLink"
                 >Ver ficha</a
               >
-              <a app-button data-variante="secundario" data-tam="sm" routerLink="/buscar/mapa"
-                >Cómo llegar</a
-              >
+
+              <!-- «Cómo llegar» sólo cuando hay a dónde llegar. El padrón de
+                   establecimientos trae dirección y municipio pero no
+                   coordenadas (P-06-4): un botón que abriera un mapa sin
+                   destino sería peor que no tenerlo, y el desplegable de la
+                   tarjeta explica por qué falta. -->
+              @if (centro.location !== null) {
+                <button
+                  app-button=""
+                  data-variante="secundario"
+                  data-tam="sm"
+                  type="button"
+                  data-testid="facility-directions"
+                  (click)="abrirComoLlegar(centro)"
+                >
+                  Cómo llegar
+                </button>
+              }
+
+              <app-card-detail-panel [heading]="centro.name" [rows]="centro.details" />
             </li>
           }
         </ul>
@@ -190,7 +189,7 @@
               contactarlo. Los que todavía no la publicaron existen en la plataforma y no son
               visibles sin sesión.
             </p>
-            <a app-button="" data-variante="secundario" routerLink="/buscar"
+            <a app-button="" data-variante="secundario" routerLink="/search"
               >Probá con otra búsqueda</a
             >
           }
@@ -268,3 +267,16 @@
     }
   }
 </section>
+
+<!-- «Cómo llegar», uno a la vez: es modal, y veinticinco mapas apagados
+     descargarían el chunk de Leaflet veinticinco veces para no mostrar nada. -->
+@if (comoLlegar(); as elegido) {
+  @if (elegido.location; as punto) {
+    <app-facility-directions-dialog
+      [facilityName]="elegido.name"
+      [facilityLocation]="punto"
+      [facilityAddress]="elegido.address"
+      (closed)="cerrarComoLlegar()"
+    />
+  }
+}

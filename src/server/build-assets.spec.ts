@@ -21,7 +21,7 @@ describe('build-assets', () => {
 
     it('no toca las rutas del router, que es lo que el SSR tiene que renderizar', () => {
       expect(esArtefactoDeConstruccion('/auth/register')).toBe(false);
-      expect(esArtefactoDeConstruccion('/buscar')).toBe(false);
+      expect(esArtefactoDeConstruccion('/search')).toBe(false);
       expect(esArtefactoDeConstruccion('/')).toBe(false);
     });
 

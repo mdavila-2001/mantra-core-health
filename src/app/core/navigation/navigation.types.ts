@@ -93,6 +93,13 @@ export const NAV_ICON_NAMES = [
   'sliders',
   'history',
   'teach',
+
+  // Dirección: los dos únicos que NO nombran una sección. Los pide el motor de
+  // formularios por partes para sus botones «Atrás» y «Siguiente» sin texto.
+  // El porqué está donde se dibujan: `atoms/nav-icon/nav-icon.types.ts`.
+  'arrow-left',
+  'arrow-right',
+  'remove',
 ] as const;
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];
 
@@ -255,6 +262,36 @@ export interface AppSection {
   readonly requiresTenant?: boolean;
 
   /**
+   * Roles para los que la sección **no existe**: ni menú, ni «Tus accesos», ni
+   * puerta que empujar.
+   *
+   * Es el complemento que a `requiresTenant` le faltaba, y nació de medirlo:
+   * ese campo se escribió para que «Tu organización» no se le ofreciera a un
+   * paciente —«que no tiene organización ninguna»—, y esa premisa resultó
+   * falsa. El alta de paciente crea a propósito una membresía en el tenant por
+   * defecto (`iam-patient-self-registration.service.ts`, paso 5) porque sin
+   * ella el `TenantContextInterceptor` le contesta 403 a toda petición
+   * posterior y la cuenta queda inservible. Medido contra la API viva: un
+   * paciente recién registrado llega con `tenants` de un elemento. Así que
+   * `requiresTenant` no excluye a nadie, y el paciente terminaba viendo «Tu
+   * organización», «Pedidos de farmacia» y «Promociones».
+   *
+   * Por qué no se resolvió con `roles` + `exclusiveRoles`: el token sólo
+   * transporta seis códigos (`USER`, `SECURITY_ADMIN`, `SUPERADMIN`,
+   * `PATIENT`, `PRACTITIONER`, `CLINICIAN`). Quien atiende el mostrador de una
+   * farmacia **no tiene rol propio** —owner/admin/staff son filas de
+   * `tenant_memberships` que el front no decodifica—, así que enumerar los
+   * roles permitidos le habría cerrado la puerta justo a la persona de quien es
+   * la pantalla. Decir a quién NO se le ofrece es lo único que hoy se puede
+   * afirmar con lo que el token trae.
+   *
+   * A diferencia de {@link fueraDelMenuPara}, esto sí quita la sección de todas
+   * las superficies. No reemplaza al guard del servidor, que sigue siendo la
+   * única autoridad.
+   */
+  readonly hiddenFor?: readonly string[];
+
+  /**
    * Roles para los que la sección **sigue existiendo y funcionando, pero no
    * ocupa una entrada de primer nivel** en el menú.
    *
@@ -381,6 +418,12 @@ export function isVisibleTo(
   tenants: readonly string[] = [],
 ): boolean {
   const required = section.roles;
+
+  // Lo primero, porque no admite excepción: una sección oculta para este rol no
+  // existe para esta sesión, comodín incluido. Ver {@link AppSection.hiddenFor}.
+  if (section.hiddenFor?.some((role) => roles.includes(role)) === true) {
+    return false;
+  }
 
   // La membresía se pregunta **antes** que el rol y no la salva el comodín: no
   // es permiso, es que el dato exista. Ver {@link AppSection.requiresTenant}.

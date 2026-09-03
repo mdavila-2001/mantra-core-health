@@ -1,5 +1,7 @@
 <app-card variant="outlined" padding="lg" class="bloqueo">
-  <h3 class="bloqueo__titulo">Bloquear días u horarios</h3>
+  <h3 class="bloqueo__titulo">
+    {{ esEdicion() ? 'Cambiar este bloqueo' : 'Bloquear días u horarios' }}
+  </h3>
   <p class="bloqueo__texto">
     Los turnos libres del período dejan de ofrecerse. Las citas ya reservadas
     <strong>no se tocan</strong>: si querés cancelarlas, hacelo una por una desde el día.
@@ -65,24 +67,61 @@
       </p>
     }
 
+    @if (opcionesDeMotivo().length > 0) {
+      <app-form-field
+        label="¿Por qué?"
+        hint="El motivo se guarda con el bloqueo y es lo que ve tu paciente."
+      >
+        <app-select
+          [options]="opcionesDeMotivo()"
+          [value]="tipo()"
+          (valueChange)="elegirTipo($event)"
+        />
+      </app-form-field>
+    }
+
+    <!-- El texto libre aparece SÓLO cuando el motivo elegido lo exige. Es lo
+         único de este formulario que el paciente no ve, y por eso se dice acá
+         y no en un aviso aparte. -->
+    <!-- La descripción es un campo APARTE del motivo, y el pedido original lo
+         dice así: «quiero un motivo (catalogable) **y** una descripción». Se
+         había hecho excluyente —texto sólo con «Otro»— y eso no era lo pedido.
+         Sigue siendo opcional salvo que el motivo elegido exija explicación. -->
     <app-form-field
-      label="¿Por qué?"
-      hint="Lo ves sólo vos, para acordarte cuando mires el mes."
+      [label]="exigeTexto() ? 'Contá de qué se trata' : 'Descripción'"
+      [hint]="
+        exigeTexto()
+          ? 'Elegiste «Otro»: hace falta para que se entienda.'
+          : 'Opcional. Queda para vos y para quien administre la agenda: tu paciente ve el motivo, no esto.'
+      "
+      [required]="exigeTexto()"
     >
       <app-input
         type="text"
-        placeholder="Congreso, vacaciones, trámite…"
+        data-testid="bloqueo-descripcion"
+        placeholder="Trámite en el banco, mudanza…"
         [value]="motivo()"
         (valueChange)="fijarMotivo($event)"
       />
     </app-form-field>
+
+    <!-- La consecuencia real de editar, dicha antes de guardar: es la P-11-3
+         resuelta, y si no se dijera, achicar un bloqueo dejaría al profesional
+         esperando turnos que no van a volver. -->
+    @if (esEdicion()) {
+      <p class="bloqueo__nota">
+        Si <strong>agrandás</strong> el rango se cierran los turnos nuevos que queden adentro. Si
+        lo <strong>achicás</strong>, los que ya estaban cerrados <strong>no vuelven</strong>: para
+        reabrirlos hay que volver a publicar el horario.
+      </p>
+    }
 
     @if (errorVisible(); as texto) {
       <p class="bloqueo__error" role="alert">{{ texto }}</p>
     }
 
     <div class="bloqueo__acciones">
-      <button app-button type="submit" variant="primary">Bloquear</button>
+      <button app-button type="submit" variant="primary">{{ esEdicion() ? 'Guardar cambios' : 'Bloquear' }}</button>
       <button app-button type="button" variant="ghost" (clicked)="cancelar.emit()">
         Cancelar
       </button>

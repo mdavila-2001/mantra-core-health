@@ -58,7 +58,7 @@ describe('CampaignDetail', () => {
    */
   async function montar(campaignId: string): Promise<void> {
     harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl(`/promociones/${campaignId}`, CampaignDetail);
+    await harness.navigateByUrl(`/promotions/${campaignId}`, CampaignDetail);
     harness.detectChanges();
   }
 
@@ -75,7 +75,7 @@ describe('CampaignDetail', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'promociones/:campaignId', component: CampaignDetail }]),
+        provideRouter([{ path: 'promotions/:campaignId', component: CampaignDetail }]),
       ],
     });
     client = TestBed.inject(PharmacyCampaignsClient);

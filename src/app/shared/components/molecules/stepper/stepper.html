@@ -2,22 +2,39 @@
   @for (step of steps(); track step.label; let i = $index; let last = $last) {
     <li
       class="stepper__step stepper__step--{{ step.status }}"
-      [attr.aria-current]="step.status === 'current' ? 'step' : null"
+      [class.stepper__step--interactivo]="interactive()"
+      [class.stepper__step--cerrado]="interactive() && step.disabled === true"
+      [attr.aria-current]="!interactive() && step.status === 'current' ? 'step' : null"
     >
-      <span class="stepper__marker" aria-hidden="true">
-        @if (step.status === 'complete') {
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        } @else {
-          {{ i + 1 }}
-        }
-      </span>
+      @if (interactive()) {
+        <!-- Un `<button>` de verdad y no un `<li>` con `(click)`: el teclado, el
+             rol y el foco vienen con el elemento. `aria-disabled` en vez del
+             atributo nativo para que el paso cerrado siga siendo alcanzable y
+             pueda decir por qué no se abre.
 
-      <span class="stepper__body">
-        <span class="stepper__label">{{ step.label }}</span>
-        <span class="sr-only">— {{ estadoTexto(step) }}</span>
-      </span>
+             El nombre accesible va completo en el `aria-label` —ordinal, rótulo,
+             estado y motivo—: el botón se anuncia solo, fuera de la lista, y
+             «Identidad» a secas no dice cuál de los cinco es. -->
+        <button
+          type="button"
+          class="stepper__control"
+          [attr.aria-current]="step.status === 'current' ? 'step' : null"
+          [attr.aria-disabled]="step.disabled === true ? 'true' : null"
+          [attr.aria-label]="nombreDelPaso(step, i)"
+          [attr.data-testid]="'stepper-paso-' + i"
+          (click)="pedirPaso(step, i)"
+        >
+          <ng-container
+            [ngTemplateOutlet]="cuerpoDelPaso"
+            [ngTemplateOutletContext]="{ $implicit: step, indice: i }"
+          />
+        </button>
+      } @else {
+        <ng-container
+          [ngTemplateOutlet]="cuerpoDelPaso"
+          [ngTemplateOutletContext]="{ $implicit: step, indice: i }"
+        />
+      }
 
       @if (!last) {
         <span class="stepper__connector" aria-hidden="true"></span>
@@ -25,3 +42,28 @@
     </li>
   }
 </ol>
+
+<!-- El marcador y el rótulo son los mismos se pueda pulsar el paso o no: lo que
+     cambia es quién los envuelve. Copiarlos en las dos ramas sería garantizar
+     que se separen en el primer retoque que sólo se haga en una. -->
+<ng-template #cuerpoDelPaso let-step let-i="indice">
+  <span class="stepper__marker" aria-hidden="true">
+    @if (step.status === 'complete') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    } @else if (step.icon) {
+      <!-- El glifo del paso, cuando lo declara. No reemplaza a la seña de
+           estado: el completado sigue mostrando su ✓ y el pendiente su
+           marcador punteado. -->
+      <app-nav-icon class="stepper__glifo" [name]="step.icon" />
+    } @else {
+      {{ i + 1 }}
+    }
+  </span>
+
+  <span class="stepper__body">
+    <span class="stepper__label">{{ step.label }}</span>
+    <span class="sr-only">— {{ estadoTexto(step) }}</span>
+  </span>
+</ng-template>

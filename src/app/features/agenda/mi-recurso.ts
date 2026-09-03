@@ -24,7 +24,41 @@ export function miRecursoDeAgenda(
   tenantId: string,
   practitionerProfileId: string,
 ): Observable<AgendaResource | null> {
+  return misRecursosDeAgenda(scheduling, tenantId, practitionerProfileId).pipe(
+    map((recursos) => recursos[0] ?? null),
+  );
+}
+
+/**
+ * **Todas** las agendas de quien tiene la sesión, no la primera.
+ *
+ * ## Por qué hizo falta
+ *
+ * `miRecursoDeAgenda` resolvía con `.find(...)`, que devuelve **una** y descarta
+ * el resto. Un profesional que atiende en dos sedes tiene dos recursos, y el
+ * segundo era invisible en todo el producto: no se podía elegir dónde publicar
+ * un horario, y la pregunta «¿en qué consultorio?» no existía en ninguna
+ * pantalla.
+ *
+ * No es hipotético: en la base de desarrollo hay un profesional con **tres**
+ * agendas, y hasta hoy sólo se veía una.
+ *
+ * ## Qué NO cambia
+ *
+ * `miRecursoDeAgenda` sigue devolviendo la primera y sigue siendo lo que usan
+ * «Consulta médica» y «Evoluciones». Esas dos también tendrían que preguntar
+ * cuál, pero cambiarlas acá sería tocar tres pantallas en un arreglo que se
+ * pidió para una. Queda dicho para no perderlo.
+ *
+ * El orden es el que devuelve la API, y es estable: sin un criterio explícito,
+ * «la primera» al menos no cambia entre dos cargas.
+ */
+export function misRecursosDeAgenda(
+  scheduling: SchedulingClient,
+  tenantId: string,
+  practitionerProfileId: string,
+): Observable<readonly AgendaResource[]> {
   return scheduling
     .listResources({ tenantId })
-    .pipe(map((pagina) => pagina.items.find((r) => r.resourceRefId === practitionerProfileId) ?? null));
+    .pipe(map((pagina) => pagina.items.filter((r) => r.resourceRefId === practitionerProfileId)));
 }

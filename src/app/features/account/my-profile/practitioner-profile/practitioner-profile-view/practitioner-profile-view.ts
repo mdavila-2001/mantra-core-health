@@ -8,10 +8,11 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { map, switchMap } from 'rxjs';
+import { catchError, map, of, switchMap, type Observable } from 'rxjs';
 
 import { FilesClient } from '@core/data-access/files/files.client';
 import { ProfilesClient } from '@core/data-access/profiles/profiles.client';
+import { CommunityClient } from '@core/data-access/community/community.client';
 import { AuthService } from '@core/auth/auth.service';
 import { RouterLink } from '@angular/router';
 
@@ -116,6 +117,7 @@ export class PractitionerProfileView {
 
   private readonly archivos = inject(FilesClient);
   private readonly profiles = inject(ProfilesClient);
+  private readonly community = inject(CommunityClient);
   private readonly auth = inject(AuthService);
 
   /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
@@ -145,17 +147,18 @@ export class PractitionerProfileView {
   );
 
   /**
-   * Sube la foto elegida y la cuelga de la vitrina pública.
+   * Sube la foto elegida y la fija como foto del perfil profesional.
    *
    * **Son dos llamadas y no una, a propósito.** `POST /common/files/upload`
-   * recibe los bytes por `multipart`; `PUT /community/profiles/me` es un JSON
-   * idempotente que recibe el **id** del archivo. Mezclarlos obligaría a la
-   * vitrina a hablar dos idiomas y a reenviar la foto entera cada vez que
-   * alguien corrige su biografía.
+   * recibe los bytes por `multipart`; `PUT /profiles/practitioners/:id/photo`
+   * es un JSON idempotente que recibe el **id** del archivo. Mezclarlos
+   * obligaría al perfil a hablar dos idiomas y a reenviar la foto entera cada
+   * vez que alguien corrige otro dato.
    *
-   * La vitrina se relee antes de escribirla porque el `PUT` es completo: sin
-   * `slug`, `displayName` y `tenantId` el backend rechaza, y adivinarlos acá
-   * sería pisar lo que la persona haya escrito en otra pantalla.
+   * **Una subida pinta ambas.** `health_practitioner_profiles.photo_file_id`
+   * (arriba) y `community.public_profiles.avatar_file_id` (la vitrina
+   * pública) son columnas independientes que nada sincroniza del lado del
+   * servidor. Ver {@link propagarAVitrina}.
    */
   protected alElegirFoto(evento: Event): void {
     const entrada = evento.target as HTMLInputElement;
@@ -176,6 +179,9 @@ export class PractitionerProfileView {
       .pipe(
         switchMap((subido) => this.profiles.setPractitionerPhoto(profileId, subido.id)),
         switchMap((guardado) =>
+          this.propagarAVitrina(guardado.photoFileId).pipe(map(() => guardado)),
+        ),
+        switchMap((guardado) =>
           this.archivos
             .downloadUrl(guardado.photoFileId ?? '')
             .pipe(map((descarga) => descarga.url)),
@@ -186,15 +192,54 @@ export class PractitionerProfileView {
           this.subiendoFoto.set(false);
           this.fotoRecien.set(fotoUrl);
         },
-        error: (error: unknown) => {
+        error: () => {
           this.subiendoFoto.set(false);
-          this.errorDeFoto.set(
-            error instanceof Error && error.message === 'sin-vitrina'
-              ? 'Primero creá tu perfil público desde Chats o desde «Configurar mi perfil».'
-              : 'No pudimos subir la foto. Probá con otra imagen.',
-          );
+          this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
         },
       });
+  }
+
+  /**
+   * Repite la foto recién fijada en la vitrina pública, si el titular ya
+   * tiene una.
+   *
+   * **Sin vitrina no se crea una implícita.** El `PUT /community/profiles/me`
+   * exige `tenantId`, `slug` y `displayName`: adivinarlos acá sería
+   * inventarle a alguien una dirección pública que nunca pidió. Quien no
+   * tiene vitrina sigue viendo su foto en «Mi perfil» — sólo no se propaga a
+   * ningún lado más.
+   *
+   * **Se manda el objeto completo leído del servidor.** El `PUT` es completo
+   * (no un `PATCH`): mandar sólo `{ avatarFileId }` borraría `visibility` y
+   * cualquier otro campo que la persona haya declarado en otra pantalla.
+   *
+   * **Best-effort.** Un fallo acá no debe tumbar la foto profesional, que ya
+   * quedó guardada en el paso anterior — se traga el error y se sigue.
+   *
+   * @param fileId - El id del archivo recién fijado como foto profesional.
+   * @returns Un observable que siempre completa, nunca falla.
+   */
+  private propagarAVitrina(fileId: string | undefined): Observable<unknown> {
+    if (!fileId) {
+      return of(undefined);
+    }
+    return this.community.getOwnProfile().pipe(
+      switchMap((vitrina) => {
+        if (!vitrina) {
+          return of(undefined);
+        }
+        return this.community.upsertOwnProfile({
+          tenantId: vitrina.tenantId,
+          slug: vitrina.slug,
+          displayName: vitrina.displayName,
+          headline: vitrina.headline,
+          biography: vitrina.biography,
+          acceptsReviews: vitrina.acceptsReviews,
+          avatarFileId: fileId,
+        });
+      }),
+      catchError(() => of(undefined)),
+    );
   }
 
   /** Alguien agregó un vínculo laboral desde el formulario embebido: el contenedor debe releer el perfil. */

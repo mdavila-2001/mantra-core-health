@@ -43,6 +43,7 @@
       @if (!diaAbierto()) {
         @if (bloqueoAbierto()) {
           <app-block-form
+            [motivos]="motivosDeBloqueo()"
             (bloquear)="bloquearRango($event)"
             (cancelar)="bloqueoAbierto.set(false)"
           />
@@ -52,7 +53,7 @@
               app-button
               variant="secondary"
               type="button"
-              (clicked)="bloqueoAbierto.set(true)"
+              (clicked)="abrirBloqueo()"
             >
               Bloquear días u horarios
             </button>
@@ -67,79 +68,238 @@
           [cupos]="cuposDelDia()"
           [citas]="citasDelDia()"
           [bloqueos]="bloqueosDelMes()"
+          [tipologias]="tipologias()"
           [etiquetas]="estadosResueltos()"
           [puedeRegistrarLlegada]="puedeRegistrarLlegada()"
           (accionPedida)="ejecutar($event)"
+          (diaCambiado)="moverDia($event)"
+          (detallePedido)="verDetalleDelBloque($event)"
+          (movimientoPedido)="moverHorario($event)"
+          (cierrePedido)="cerrarRato($event)"
           (volver)="volverAlMes()"
         />
         <div class="mi-agenda__acciones-dia">
-          <button app-button variant="secondary" size="sm" type="button" (clicked)="bloquearDia(dia)">
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            (clicked)="bloquearDia(dia)"
+          >
             Bloquear este día
           </button>
         </div>
       } @else {
-        <app-month-view
-          [mes]="mesVisible()"
-          [cupos]="cuposDelMes()"
-          [bloqueos]="bloqueosDelMes()"
-          (mesElegido)="cambiarMes($event)"
-          (diaElegido)="abrirDia($event)"
-        />
+        <!-- «Un botón para ver la semana y otro para ver el mes», del pedido
+             original. No se reemplazan: responden preguntas distintas. -->
+        <div class="mi-agenda__vistas" role="group" aria-label="Cómo mirar la agenda">
+          <button
+            app-button
+            [variant]="vista() === 'mes' ? 'secondary' : 'ghost'"
+            size="sm"
+            type="button"
+            data-testid="ver-mes"
+            [attr.aria-pressed]="vista() === 'mes'"
+            (clicked)="verMes()"
+          >
+            Mes
+          </button>
+          <button
+            app-button
+            [variant]="vista() === 'semana' ? 'secondary' : 'ghost'"
+            size="sm"
+            type="button"
+            data-testid="ver-semana"
+            [attr.aria-pressed]="vista() === 'semana'"
+            (clicked)="verSemana()"
+          >
+            Semana
+          </button>
+        </div>
+
+        @if (vista() === 'semana') {
+          <app-week-view
+            [semana]="semanaVisible()"
+            [cupos]="cuposDelMes()"
+            [bloqueos]="bloqueosDelMes()"
+            (semanaElegida)="cambiarSemana($event)"
+            (diaElegido)="abrirDia($event)"
+          />
+        } @else {
+          <app-month-view
+            [mes]="mesVisible()"
+            [cupos]="cuposDelMes()"
+            [bloqueos]="bloqueosDelMes()"
+            (mesElegido)="cambiarMes($event)"
+            (diaElegido)="abrirDia($event)"
+          />
+        }
       }
     } @else {
-    <section class="mi-agenda__tarjeta">
-      <h2 class="mi-agenda__titulo">Atendés estos días</h2>
+      <section class="mi-agenda__tarjeta">
+        <h2 class="mi-agenda__titulo">Atendés estos días</h2>
 
-      <!-- La misma semanita del formulario, en modo lectura: se reconoce de
-           inmediato porque es la que se usó para publicar. -->
-      <ul class="mi-agenda__semana" aria-label="Días que atendés">
-        @for (dia of p.semana; track dia.numero) {
-          <li
-            class="mi-agenda__dia"
-            [class.mi-agenda__dia--activo]="dia.activo"
-            [attr.aria-label]="dia.activo ? dia.largo + ': atendés' : dia.largo + ': no atendés'"
+        <!-- La grilla por horas, que es lo que el pedido original pide en su
+             punto 1: «una vista de los días de la semana por horas, resaltado
+             con otro color los que corresponden atención». La semanita de
+             abajo se queda: reconoce de inmediato el formulario con el que se
+             publicó, y la grilla responde otra pregunta —cuándo, no qué días—. -->
+        <app-schedule-grid [reglas]="reglasVigentes()" />
+
+        <ul class="mi-agenda__semana" aria-label="Días que atendés">
+          @for (dia of p.semana; track dia.numero) {
+            <li
+              class="mi-agenda__dia"
+              [class.mi-agenda__dia--activo]="dia.activo"
+              [attr.aria-label]="dia.activo ? dia.largo + ': atendés' : dia.largo + ': no atendés'"
+            >
+              <span aria-hidden="true">{{ dia.corto }}</span>
+            </li>
+          }
+        </ul>
+
+        <ul class="mi-agenda__franjas">
+          @for (franja of p.franjas; track franja.texto) {
+            <li>{{ franja.texto }}</li>
+          }
+        </ul>
+
+        <p class="mi-agenda__estados">
+          <app-badge variant="success">Vigente</app-badge>
+          @if (p.permanente) {
+            <!-- Las palabras y las mayúsculas son del propietario (punto 5). -->
+            <app-badge variant="secondary">HORARIO PERMANENTE</app-badge>
+          }
+          <!-- «Editar sobre la fila», del pedido original. Va acá y no en un
+               menú: cambiar el horario es lo que uno viene a hacer a esta
+               pantalla después de mirarlo. -->
+          <!-- «Editar y borrar deben ser iconos sobre la fila de horarios»,
+               punto 7 del pedido. Icono con NOMBRE ACCESIBLE y tooltip: un
+               botón que sólo es un dibujo no se puede leer ni con lector de
+               pantalla ni por alguien que no reconoce el símbolo. -->
+          <a
+            app-button
+            variant="ghost"
+            size="sm"
+            [iconOnly]="true"
+            data-testid="horario-editar"
+            [routerLink]="rutaEditarHorario"
+            aria-label="Cambiar mi horario"
+            appTooltip="Cambiar mi horario"
           >
-            <span aria-hidden="true">{{ dia.corto }}</span>
-          </li>
-        }
-      </ul>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </a>
+          <!-- Los bloqueos tienen pantalla propia desde que se les dio el mismo
+               flujo que a los horarios. Desde acá se llega, que es donde uno
+               mira su agenda y se acuerda de que cerró algo. -->
+          <a
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="ver-bloqueos"
+            [routerLink]="rutaBloqueos"
+          >
+            Ver mis bloqueos
+          </a>
+        </p>
 
-      <ul class="mi-agenda__franjas">
-        @for (franja of p.franjas; track franja.texto) {
-          <li>{{ franja.texto }}</li>
+        @if (p.vigencia) {
+          <p class="mi-agenda__vigencia">{{ p.vigencia }}</p>
+        } @else {
+          <p class="mi-agenda__vigencia">Sin fecha de fin: rige hasta que lo cambies.</p>
         }
-      </ul>
 
-      @if (p.vigencia) {
-        <p class="mi-agenda__vigencia">{{ p.vigencia }}</p>
-      } @else {
-        <p class="mi-agenda__vigencia">Sin fecha de fin: rige hasta que lo cambies.</p>
+        <!-- El punto 8, textual del propietario. Es una regla, no una nota al
+           margen: acota qué se puede agendar en estos horarios. -->
+        <app-alert tone="info" title="Estos horarios son para consulta y cita">
+          No son para intervenciones quirúrgicas ni procedimientos prolongados. Sí pueden incluir
+          tratamientos que se hagan en la consulta.
+        </app-alert>
+
+        <div class="mi-agenda__acciones">
+          <a app-button variant="secondary" [routerLink]="[rutaDePublicar]">Cambiar mi horario</a>
+          <button
+            app-button
+            variant="ghost"
+            type="button"
+            [isLoading]="retirando()"
+            (clicked)="retirarHorario()"
+          >
+            Retirar horario
+          </button>
+        </div>
+      </section>
+
+      <!-- Punto 2 · los horarios que ya no rigen. Un médico que cambió su horario
+         tres veces necesita ver cuáles rigieron antes, sobre todo si todavía
+         hay pacientes citados en ellos. -->
+      @if (historicos().length > 0) {
+        <section class="mi-agenda__historicos">
+          <h2 class="mi-agenda__historicos-titulo">Horarios anteriores</h2>
+          <p class="mi-agenda__historicos-nota">
+            Ya no se publican. Los turnos que tenían paciente se conservan.
+          </p>
+          <ul class="mi-agenda__historicos-lista">
+            @for (viejo of historicos(); track viejo.id) {
+              <li class="mi-agenda__historico">
+                <span class="mi-agenda__historico-nombre">{{ viejo.name }}</span>
+                <app-badge variant="warning">Retirado</app-badge>
+                <!-- «Un botón que muestra el preview con un modal de cómo se
+                     veía antes ese horario» — punto 3 del pedido. -->
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="historico-preview"
+                  (clicked)="verHorarioViejo(viejo)"
+                >
+                  Ver cómo era
+                </button>
+                <!-- «Volví del viaje»: retirar era un camino de ida y publicar
+                     uno nuevo dejaba el viejo en la lista para siempre. -->
+                <button
+                  app-button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  data-testid="historico-reactivar"
+                  [isLoading]="operandoHorario() === viejo.id"
+                  (clicked)="reactivarHorario(viejo)"
+                >
+                  Volver a activarlo
+                </button>
+              </li>
+            }
+          </ul>
+        </section>
       }
 
-      <a app-button variant="secondary" [routerLink]="[rutaDePublicar]">Cambiar mi horario</a>
-    </section>
-
-    <!-- El parche manual del horizonte rodante: nadie regenera cupos todavía,
+      <!-- El parche manual del horizonte rodante: nadie regenera cupos todavía,
          así que una agenda se vacía en silencio si no se avisa. -->
-    @if (seAgotan()) {
-      <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
-        Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
-        >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga publicado.
-        <button
-          app-button
-          size="sm"
-          [isLoading]="generando()"
-          (clicked)="generarSiguientePeriodo()"
-        >
-          Abrir tres meses más
-        </button>
-      </app-alert>
-    } @else if (cuposHastaTexto()) {
-      <p class="mi-agenda__cupos" role="status">
-        Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
-        >.
-      </p>
-    }
+      @if (seAgotan()) {
+        <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
+          Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
+          >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga publicado.
+          <button
+            app-button
+            size="sm"
+            [isLoading]="generando()"
+            (clicked)="generarSiguientePeriodo()"
+          >
+            Abrir tres meses más
+          </button>
+        </app-alert>
+      } @else if (cuposHastaTexto()) {
+        <p class="mi-agenda__cupos" role="status">
+          Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
+          >.
+        </p>
+      }
     }
   }
 </app-view-state-host>

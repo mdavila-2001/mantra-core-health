@@ -284,7 +284,7 @@
           <ul class="perfil__publicaciones">
             @for (post of p.posts; track post.id) {
               <li>
-                <app-publicacion-post
+                <app-public-post-card
                   [post]="post"
                   [slug]="p.slug"
                   [autorNombre]="p.displayName"

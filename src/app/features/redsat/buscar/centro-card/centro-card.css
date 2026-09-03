@@ -202,7 +202,10 @@
     margin-block-start: 1px;
 }
 
-.centro__icono--estrella {
+/* La estrella de la calificación va en el acento de la marca. Se elige por el
+   dato y no por una clase aparte: el ícono lo decide `ICONO_DE_ATRIBUTO`, y una
+   clase de color en la plantilla sería una segunda fuente de verdad. */
+.centro__atributo[data-clave='puntuacion'] .centro__icono {
     color: var(--brand-accent);
 }
 

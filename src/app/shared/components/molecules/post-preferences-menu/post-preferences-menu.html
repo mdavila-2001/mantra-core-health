@@ -1,0 +1,39 @@
+<!-- El disparador es sólo-icono, así que el nombre lo da el `aria-label` y el
+     tooltip lo repite para quien ve. `appMenuTrigger` ya sincroniza
+     `aria-expanded`, `aria-haspopup` y la vuelta del foco al cerrar. -->
+<button
+  type="button"
+  class="post-preferences__disparador"
+  data-testid="post-preferences-trigger"
+  aria-label="Preferencias de la publicación"
+  [appMenuTrigger]="panel"
+>
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <circle cx="12" cy="5" r="1" />
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="12" cy="19" r="1" />
+  </svg>
+</button>
+
+<!-- El panel se muda al `<body>` mientras está abierto (lo hace `app-menu`),
+     que es lo que evita que el `overflow` de la tarjeta lo recorte y que
+     empuje a las publicaciones vecinas. AC-01-18. -->
+<app-menu #panel>
+  @for (entry of entries; track entry.action) {
+    <app-menu-item
+      [attr.data-action]="entry.action"
+      [destructive]="entry.action === 'report'"
+      (selected)="activate(entry)"
+    >
+      {{ entry.label }}
+    </app-menu-item>
+  }
+</app-menu>

@@ -1,0 +1,35 @@
+@if (horas().length === 0) {
+  <p class="grilla__vacio">Todavía no publicaste horarios.</p>
+} @else {
+  <div class="grilla__scroll">
+    <table class="grilla">
+      <caption class="grilla__caption">
+        Tus horas de atención. Las resaltadas son las que atendés.
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col" class="grilla__esquina"><span class="grilla__oculto">Hora</span></th>
+          @for (dia of dias(); track dia.numero) {
+            <th scope="col">{{ dia.corto }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (h of horas(); track h) {
+          <tr>
+            <th scope="row" class="grilla__hora">{{ rotulo(h) }}</th>
+            @for (dia of dias(); track dia.numero) {
+              <!-- El color es la mitad: la celda atendida lleva además su
+                   etiqueta en palabras, para quien no lo distingue. -->
+              <td
+                class="grilla__celda"
+                [class.grilla__celda--atiende]="atiende(dia.numero, h)"
+                [attr.aria-label]="atiende(dia.numero, h) ? etiqueta(dia.largo, h) : null"
+              ></td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

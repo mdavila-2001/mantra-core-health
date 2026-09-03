@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  LOCALE_ID,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { formatDate } from '@angular/common';
+import { calcularTurnos } from '../agenda-create/agenda-turnos';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -7,16 +16,23 @@ import { SchedulingClient } from '../../../core/data-access/scheduling/schedulin
 import type {
   AgendaResource,
   AgendaSlot,
+  ActivityTypeOption,
+  AvailabilityExceptionTypeOption,
   Booking,
   PublishedTemplate,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import type { BloqueDelDia } from './day-view/day-view';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import type { DialogDetail } from '../../../shared/components/molecules/dialog/dialog.types';
+import { patientChartRoute } from '../../clinical-record/clinical-record.routes';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -31,6 +47,8 @@ import {
 } from './day-view/day-view';
 import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
+import { WeekView, lunesDe } from './week-view/week-view';
+import { ScheduleGrid } from './schedule-grid/schedule-grid';
 import { AGENDA_CREATE_ROUTE } from '../agenda.routes';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
@@ -96,6 +114,14 @@ interface Patron {
   readonly semana: readonly DiaDelPatron[];
   readonly franjas: readonly FranjaVisible[];
   readonly vigencia: string | null;
+  /**
+   * Si el horario no tiene fecha de fin.
+   *
+   * El propietario lo pidió como etiqueta y con esas palabras —`HORARIO
+   * PERMANENTE`, punto 5—: es un estado del horario, y tiene que leerse de un
+   * vistazo junto al resto, no escondido en una frase.
+   */
+  readonly permanente: boolean;
 }
 
 /**
@@ -116,16 +142,23 @@ interface Patron {
  * leerlo. Es literalmente la primera vez que un médico ve su propio horario
  * después de publicarlo.
  */
+/** Lo que se muestra cuando un dato no está. */
+const SIN_DATO = 'Sin registrar';
+
 @Component({
   selector: 'app-my-agenda',
   imports: [
     Alert,
+    Badge,
     AppButton,
     AppButtonLink,
+    Tooltip,
     BlockForm,
     DayView,
     TarjetaDelDia,
     MonthView,
+    WeekView,
+    ScheduleGrid,
     PageHeader,
     RouterLink,
     ViewStateHost,
@@ -138,6 +171,9 @@ export class MyAgenda {
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
+  private readonly router = inject(Router);
+  /** El idioma activo, para formatear fechas fuera de la plantilla. */
+  private readonly idioma = inject(LOCALE_ID);
   private readonly terminology = inject(TerminologyClient);
   private readonly toast = inject(ToastService);
 
@@ -149,6 +185,17 @@ export class MyAgenda {
   protected readonly estado = signal<ViewState<PublishedTemplate>>(loading());
 
   /** Hasta cuándo llegan los cupos ya materializados. */
+  /**
+   * Los horarios ya retirados (TAREA-10, punto 2).
+   *
+   * No es decoración: un médico que cambió su horario tres veces necesita ver
+   * cuáles rigieron antes, sobre todo si todavía hay pacientes citados en ellos.
+   */
+  protected readonly historicos = signal<readonly PublishedTemplate[]>([]);
+
+  /** El horario que se está retirando, para el `[isLoading]` del botón. */
+  protected readonly retirando = signal(false);
+
   protected readonly cuposHasta = signal<Date | null>(null);
   protected readonly generando = signal(false);
 
@@ -160,12 +207,81 @@ export class MyAgenda {
   /** El mes visible; siempre su día 1. */
   protected readonly mesVisible = signal(primerDiaDelMes(new Date()));
 
+  /**
+   * Si se mira el mes o la semana — «un botón para ver la semana y otro para
+   * ver el mes» del pedido original.
+   *
+   * Son dos preguntas distintas: el mes responde «¿cuándo tengo hueco?», la
+   * semana responde «¿cómo viene esto?». Por eso conviven en vez de que una
+   * reemplace a la otra.
+   */
+  protected readonly vista = signal<'mes' | 'semana'>('mes');
+
+  /** Cualquier día de la semana mirada; el lunes lo calcula la vista. */
+  protected readonly semanaVisible = signal(lunesDe(new Date()));
+
+  protected verMes(): void {
+    this.vista.set('mes');
+  }
+
+  protected verSemana(): void {
+    this.vista.set('semana');
+    // Se abre en la semana del mes que se está mirando, no en la de hoy: venir
+    // de octubre y aterrizar en septiembre se lee como un error.
+    const mes = this.mesVisible();
+    const hoy = new Date();
+    this.semanaVisible.set(
+      mes.getMonth() === hoy.getMonth() && mes.getFullYear() === hoy.getFullYear()
+        ? lunesDe(hoy)
+        : lunesDe(mes),
+    );
+  }
+
+  /**
+   * Cambia de semana, y **recarga el mes si hace falta**.
+   *
+   * Los cupos y los bloqueos que la vista usa son los del mes cargado. Sin
+   * esto, la semana que cruza de mes se vería medio vacía — y esa mitad vacía
+   * no sería una agenda libre, sería un dato que no se pidió.
+   */
+  protected cambiarSemana(nueva: Date): void {
+    this.semanaVisible.set(nueva);
+    const mes = this.mesVisible();
+    const finDeSemana = new Date(nueva.getFullYear(), nueva.getMonth(), nueva.getDate() + 6);
+    const cruza =
+      nueva.getMonth() !== mes.getMonth() ||
+      nueva.getFullYear() !== mes.getFullYear() ||
+      finDeSemana.getMonth() !== mes.getMonth();
+    if (cruza) {
+      this.mesVisible.set(primerDiaDelMes(nueva));
+      this.cargarMes();
+    }
+  }
+
   protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
   protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);
+
+  /**
+   * Las tipologías de actividad, para pintar el día.
+   *
+   * Se piden una vez al cargar la pantalla. Si la lectura falla, la lista queda
+   * vacía y el día se ve como antes: un catálogo que no cargó no puede dejar la
+   * agenda en blanco.
+   */
+  protected readonly tipologias = signal<readonly ActivityTypeOption[]>([]);
   protected readonly cargandoMes = signal(false);
 
   /** Si el panel de bloqueo está abierto (D4/D5 del plan de UX). */
   protected readonly bloqueoAbierto = signal(false);
+
+  /**
+   * El catálogo de motivos, cargado la primera vez que se abre el panel.
+   *
+   * No se pide al entrar a la pantalla porque la mayoría de las visitas es
+   * para mirar el mes, no para bloquear. Y no se recarga después: es un
+   * catálogo, no datos que cambien mientras uno decide sus vacaciones.
+   */
+  protected readonly motivosDeBloqueo = signal<readonly AvailabilityExceptionTypeOption[]>([]);
 
   /** Un bloqueo en curso: evita el doble envío de un rango largo. */
   protected readonly bloqueando = signal(false);
@@ -245,6 +361,10 @@ export class MyAgenda {
         plantilla.validTo === undefined
           ? null
           : `Hasta el ${new Date(plantilla.validTo).toLocaleDateString('es')}`,
+      // El propietario lo pidió con esas palabras y en mayúsculas (punto 5).
+      // Es una etiqueta y no prosa: un horario sin fecha de fin es un estado
+      // del horario, y tiene que leerse de un vistazo junto al resto.
+      permanente: plantilla.validTo === undefined,
     };
   });
 
@@ -272,6 +392,13 @@ export class MyAgenda {
     this.cargar();
   }
 
+  private cargarTipologias(): void {
+    this.scheduling.listActivityTypes().subscribe({
+      next: (catalogo) => this.tipologias.set(catalogo.items),
+      error: () => this.tipologias.set([]),
+    });
+  }
+
   protected cargar(): void {
     const perfil = this.auth.practitionerProfileId();
     const tenantId = this.auth.activeTenantId();
@@ -279,6 +406,12 @@ export class MyAgenda {
       this.estado.set(SIN_AGENDA);
       return;
     }
+
+    // Después de la guarda, no antes: una sesión sin perfil profesional no va a
+    // ver ningún día, así que pedirle el catálogo al servidor es una consulta
+    // para nada. Lo fija una prueba que dice, con esas palabras, que esa cuenta
+    // «no pide nada al servidor».
+    this.cargarTipologias();
 
     this.estado.set(loading());
     // El recurso se busca por el perfil: es el mismo criterio con el que el
@@ -300,7 +433,14 @@ export class MyAgenda {
   private leerPlantilla(resourceId: string): void {
     this.scheduling.listTemplates(resourceId).subscribe({
       next: (pagina) => {
-        const vigente = pagina.items[0];
+        // El listado trae TODAS las plantillas del recurso, retiradas
+        // incluidas, ordenadas por creación. Tomar `items[0]` a secas mostraba
+        // un horario retirado como si fuera el vigente —basta con que sea el
+        // más reciente— y el médico que acababa de retirarlo veía que seguía
+        // atendiendo.
+        const vigente = pagina.items.find((plantilla) => !plantilla.retired);
+        this.historicos.set(pagina.items.filter((p) => p.retired));
+
         // Sin plantillas no es un fallo: el recurso existe y todavía no publicó
         // horario. Es el estado de quien creó la agenda y no la completó.
         if (vigente === undefined) {
@@ -361,6 +501,25 @@ export class MyAgenda {
    * profesional tiene que enterarse de que su bloqueo quedó a medias en vez de
    * ver un mes que parece correcto.
    */
+  /**
+   * Abre el panel y, la primera vez, trae los motivos.
+   *
+   * **Si el catálogo falla, el panel se abre igual.** Un bloqueo con el motivo
+   * por defecto sigue siendo el comportamiento que la pantalla tuvo siempre;
+   * negarle a alguien bloquear su agenda porque no cargó una lista de siete
+   * etiquetas sería cambiar un defecto de datos por uno de disponibilidad.
+   */
+  protected abrirBloqueo(): void {
+    this.bloqueoAbierto.set(true);
+    if (this.motivosDeBloqueo().length > 0) {
+      return;
+    }
+    this.scheduling.listExceptionTypes().subscribe({
+      next: (catalogo) => this.motivosDeBloqueo.set(catalogo.items),
+      error: () => this.motivosDeBloqueo.set([]),
+    });
+  }
+
   protected bloquearRango(pedido: BloqueoPedido): void {
     const recurso = this.recurso();
     if (recurso === null || this.bloqueando()) {
@@ -375,7 +534,7 @@ export class MyAgenda {
     forkJoin(
       intervalos.map((intervalo) =>
         this.scheduling.createException(recurso.id, {
-          exceptionType: 'ABSENCE',
+          exceptionType: pedido.exceptionType,
           startAt: intervalo.startAt.toISOString(),
           endAt: intervalo.endAt.toISOString(),
           reason: pedido.motivo,
@@ -451,7 +610,11 @@ export class MyAgenda {
 
     this.scheduling
       .createException(recurso.id, {
-        exceptionType: 'ABSENCE',
+        // Este atajo pide **texto libre** y nada más, así que su motivo es
+        // literalmente «Otro»: mandarlo como `ABSENCE` etiquetaría de
+        // «Ausencia» algo que la persona escribió a mano, y el paciente vería
+        // una etiqueta que nadie eligió.
+        exceptionType: 'OTHER',
         startAt: desde.toISOString(),
         endAt: hasta.toISOString(),
         reason: motivo,
@@ -586,12 +749,290 @@ export class MyAgenda {
     const dia = this.diaAbierto();
     this.scheduling.deleteException(exceptionId).subscribe({
       next: () => {
-        this.toast.success('Los horarios que retiró no vuelven solos: se regeneran con tu plantilla.', 'Rato ocupado quitado');
+        this.toast.success(
+          'Los horarios que retiró no vuelven solos: se regeneran con tu plantilla.',
+          'Rato ocupado quitado',
+        );
         if (dia !== null) this.cargarDia(dia);
         this.cargarMes();
       },
       error: (error: unknown) => this.avisarFallo(error, 'quitar ese rato ocupado'),
     });
+  }
+
+  /**
+   * Va al día siguiente o al anterior sin volver al mes.
+   *
+   * Si el día nuevo cae en otro mes, **se recarga el mes**: los cupos y los
+   * bloqueos que la vista usa son los del mes cargado, y sin esto el 1 de
+   * febrero se vería vacío viniendo del 31 de enero.
+   */
+  protected moverDia(desplazamiento: number): void {
+    const actual = this.diaAbierto();
+    if (actual === null) return;
+
+    const nuevo = new Date(actual);
+    nuevo.setDate(nuevo.getDate() + desplazamiento);
+    this.diaAbierto.set(nuevo);
+
+    if (nuevo.getMonth() !== actual.getMonth() || nuevo.getFullYear() !== actual.getFullYear()) {
+      this.mesVisible.set(primerDiaDelMes(nuevo));
+      this.cargarMes();
+    }
+    this.cargarDia(nuevo);
+  }
+
+  /**
+   * El modal de detalle de una actividad — corazón del pedido del carril 12.
+   *
+   * «Cards al estilo de Google Calendar que son cliqueables que abren un modal
+   * con todo el detalle de la actividad. Debe tener un botón que lleve a la
+   * vista correspondiente además del botón de cerrar.»
+   *
+   * **El botón que lleva a la vista correspondiente cambia según qué sea.** Una
+   * cita lleva al expediente de quien viene; un rato ocupado no lleva a ningún
+   * lado, y entonces no se ofrece: un botón que no va a ninguna parte es peor
+   * que ninguno.
+   */
+  protected async verDetalleDelBloque(bloque: BloqueDelDia): Promise<void> {
+    const hora = (valor: Date): string => formatDate(valor, 'HH:mm', this.idioma);
+    const detalles: DialogDetail[] = [
+      { label: 'Cuándo', value: `${hora(bloque.desde)} – ${hora(bloque.hasta)}` },
+      { label: 'Qué es', value: bloque.tipo === 'cita' ? 'Cita' : 'Tiempo ocupado' },
+    ];
+
+    if (bloque.tipo === 'cita') {
+      detalles.push({ label: 'Estado', value: bloque.estado });
+      detalles.push({ label: 'Paciente', value: bloque.paciente || SIN_DATO });
+      if (bloque.cita?.reasonText !== undefined) {
+        detalles.push({ label: 'Motivo', value: bloque.cita.reasonText });
+      }
+    } else if (bloque.motivo !== null) {
+      detalles.push({ label: 'Motivo', value: bloque.motivo });
+    }
+
+    const perfil = bloque.cita?.patientProfileId;
+    const puedeAbrirExpediente = bloque.tipo === 'cita' && perfil !== undefined;
+
+    const ir = await this.dialogs.confirm({
+      title: bloque.tipo === 'cita' ? 'Detalle de la cita' : 'Detalle del rato ocupado',
+      message: formatDate(bloque.desde, "EEEE d 'de' MMMM", this.idioma),
+      details: detalles,
+      confirmLabel: puedeAbrirExpediente ? 'Abrir expediente' : 'Cerrar',
+      cancelLabel: puedeAbrirExpediente ? 'Cerrar' : 'Volver',
+    });
+
+    if (ir && puedeAbrirExpediente && perfil !== undefined) {
+      void this.router.navigate([patientChartRoute(perfil)]);
+    }
+  }
+
+  /**
+   * «Cómo se veía antes ese horario» — punto 3 del carril 10.
+   *
+   * El pedido pide un modal con **el mismo organismo que el oficial**. Se
+   * resuelve con el mismo `calcularTurnos` que usa la pantalla de publicar: no
+   * hay dos maneras de contar los turnos de una franja, y tener dos sería
+   * garantizar que un día digan cosas distintas sobre el mismo horario.
+   *
+   * No hace falta pedir nada al servidor: la lectura de plantillas **ya trae
+   * las reglas** de cada una, retiradas incluidas.
+   */
+  protected async verHorarioViejo(plantilla: PublishedTemplate): Promise<void> {
+    const calculo = calcularTurnos(
+      [...plantilla.rules]
+        .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+        .map((regla) => ({
+          dia: NOMBRE_DEL_DIA[regla.dayOfWeek] ?? `Día ${regla.dayOfWeek}`,
+          desde: regla.startTime.slice(0, 5),
+          hasta: regla.endTime.slice(0, 5),
+          duracion: regla.slotMinutes ?? plantilla.slotMinutes ?? 30,
+          receso: regla.gapMinutes ?? 0,
+        })),
+    );
+
+    const detalles: DialogDetail[] = calculo.porDia.map((dia) => ({
+      label: dia.dia.charAt(0).toUpperCase() + dia.dia.slice(1),
+      value:
+        dia.turnos.length === 0
+          ? 'Sin turnos'
+          : `${dia.turnos[0].desde} a ${dia.turnos[dia.turnos.length - 1].hasta} · ` +
+            `${dia.turnos.length} ${dia.turnos.length === 1 ? 'turno' : 'turnos'}`,
+    }));
+
+    // La vigencia, que es lo que uno viene a mirar en un horario viejo.
+    if (plantilla.validFrom !== undefined) {
+      detalles.unshift({
+        label: 'Rigió desde',
+        value: formatDate(plantilla.validFrom, "d 'de' MMMM yyyy", this.idioma),
+      });
+    }
+    if (plantilla.validTo !== undefined) {
+      detalles.unshift({
+        label: 'Hasta',
+        value: formatDate(plantilla.validTo, "d 'de' MMMM yyyy", this.idioma),
+      });
+    }
+
+    await this.dialogs.confirm({
+      title: `Así era «${plantilla.name}»`,
+      message:
+        calculo.total === 0
+          ? 'Este horario no llegó a tener turnos.'
+          : `${calculo.total} ${calculo.total === 1 ? 'turno' : 'turnos'} por semana.`,
+      details: detalles,
+      confirmLabel: 'Cerrar',
+      cancelLabel: 'Volver',
+    });
+  }
+
+  /**
+   * Vuelve a activar un horario pausado — «volví del viaje».
+   *
+   * **Avisa que faltan los cupos**, porque el servidor lo dice y porque sin eso
+   * el horario queda vigente y sin ofrecer un solo turno: quien lo reactivó
+   * vería su agenda «publicada» y vacía, sin ninguna pista de por qué.
+   *
+   * No genera los cupos por su cuenta: la ventana la elige el profesional, y
+   * materializar los del mes pasado abriría turnos en fechas que ya pasaron.
+   */
+  protected reactivarHorario(plantilla: PublishedTemplate): void {
+    if (this.operandoHorario() !== null) return;
+    this.operandoHorario.set(plantilla.id);
+
+    this.scheduling.reactivateTemplate(plantilla.id).subscribe({
+      next: (res) => {
+        this.operandoHorario.set(null);
+        this.toast.success(
+          res.slotsPendientes
+            ? 'Volvé a publicarlo para abrir los turnos: reactivar no los repone.'
+            : 'Ya estaba vigente.',
+          `«${plantilla.name}» volvió a estar vigente`,
+        );
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.operandoHorario.set(null);
+        this.avisarFallo(error, 'No se pudo reactivar el horario.');
+      },
+    });
+  }
+
+  /** A dónde lleva «Cambiar»: la ruta propia que la bitácora pide para editar. */
+  /**
+   * Las reglas del horario vigente, para la grilla por horas.
+   *
+   * Salen de la plantilla que ya se lee; no hay consulta nueva. Vacías cuando
+   * todavía no publicó nada, que es lo que la grilla muestra como «todavía no
+   * publicaste horarios».
+   */
+  protected readonly reglasVigentes = computed(() => {
+    const e = this.estado();
+    return e.status === 'ready' || e.status === 'stale' ? (e.data?.rules ?? []) : [];
+  });
+
+  protected readonly rutaEditarHorario = '/schedule/edit';
+
+  /** Los bloqueos, que desde el carril 11 tienen su propio flujo. */
+  protected readonly rutaBloqueos = '/schedule/blocks';
+
+  /** El horario sobre el que hay una operación en vuelo. */
+  protected readonly operandoHorario = signal<string | null>(null);
+
+  /**
+   * Corre la agenda del día N minutos — «mover horario» del carril 12.
+   *
+   * **La ventana es el día abierto**, no el mes: mover se decide mirando un día
+   * y ensancharlo de más correría turnos que nadie miró. Si se pidió «de acá en
+   * adelante», la ventana arranca en ese rato.
+   *
+   * No pide confirmación con un diálogo porque el panel **ya es** la
+   * confirmación: dice qué va a pasar y hay que elegir cuántos minutos.
+   */
+  protected moverHorario(pedido: { minutos: number; desde: Date | null }): void {
+    const recurso = this.recurso();
+    const dia = this.diaAbierto();
+    if (recurso === null || dia === null || this.operandoHorario() !== null) return;
+
+    const desde = pedido.desde ?? new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+    const hasta = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate() + 1);
+
+    this.operandoHorario.set('mover');
+    this.scheduling
+      .shiftSlots(recurso.id, {
+        shiftMinutes: pedido.minutos,
+        from: desde.toISOString(),
+        to: hasta.toISOString(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.operandoHorario.set(null);
+          this.toast.success(
+            res.notified === 0
+              ? 'No había pacientes a quienes avisar.'
+              : `Se le avisó a ${res.notified} ${res.notified === 1 ? 'persona' : 'personas'}.`,
+            `${res.movedSlots} ${res.movedSlots === 1 ? 'turno movido' : 'turnos movidos'}`,
+          );
+          this.cargarMes();
+          this.cargarDia(dia);
+        },
+        error: (error: unknown) => {
+          this.operandoHorario.set(null);
+          // El 409 del servidor es el choque con otra cita, y es lo único que
+          // esta pantalla no puede resolver sola: se dice tal cual.
+          this.avisarFallo(error, 'mover el horario');
+        },
+      });
+  }
+
+  /**
+   * Cierra un rato libre, con el bloqueo que impide que vuelva.
+   *
+   * Pide el motivo porque el servidor lo exige —es el mismo catálogo que los
+   * bloqueos— y porque **ese motivo lo ve el paciente**: cerrar un rato sin
+   * decir por qué deja a quien mira la agenda sin saber si puede pedir turno
+   * más tarde.
+   */
+  protected async cerrarRato(bloque: BloqueDelDia): Promise<void> {
+    const recurso = this.recurso();
+    const dia = this.diaAbierto();
+    if (recurso === null || dia === null || this.operandoHorario() !== null) return;
+
+    const seguro = await this.dialogs.confirm({
+      title: 'Cerrar este rato',
+      message:
+        'Deja de ofrecerse, y no vuelve aunque republiques el horario. ' +
+        'Podés reabrirlo quitando el bloqueo desde «Ver mis bloqueos».',
+      details: [
+        {
+          label: 'Cuándo',
+          value: `${formatDate(bloque.desde, 'HH:mm', this.idioma)} – ${formatDate(bloque.hasta, 'HH:mm', this.idioma)}`,
+        },
+      ],
+      confirmLabel: 'Cerrar el rato',
+      cancelLabel: 'Volver',
+      destructive: true,
+    });
+    if (!seguro) return;
+
+    this.operandoHorario.set(bloque.clave);
+    this.scheduling
+      .closeSlots(recurso.id, { exceptionType: 'ERRAND', slotIds: [bloque.clave] })
+      .subscribe({
+        next: (res) => {
+          this.operandoHorario.set(null);
+          this.toast.success(
+            'No vuelve aunque republiques el horario.',
+            `${res.closedSlots} ${res.closedSlots === 1 ? 'rato cerrado' : 'ratos cerrados'}`,
+          );
+          this.cargarMes();
+          this.cargarDia(dia);
+        },
+        error: (error: unknown) => {
+          this.operandoHorario.set(null);
+          this.avisarFallo(error, 'cerrar ese rato');
+        },
+      });
   }
 
   protected volverAlMes(): void {
@@ -745,6 +1186,58 @@ export class MyAgenda {
     this.toast.error(mensaje === '' ? `No pudimos ${queSeIntentaba}.` : mensaje, 'No se pudo');
   }
 
+  /**
+   * Retira el horario publicado (TAREA-10, punto 6).
+   *
+   * ## Por qué el botón dice «Retirar» y no «Borrar»
+   *
+   * Porque eso es lo que pasa. `audit.schedule_templates_history` referencia
+   * toda plantilla publicada, así que **ninguna se puede borrar nunca**: el
+   * horario deja de publicarse, se sueltan los cupos que nadie reservó y se
+   * conservan los que tienen una cita detrás. Un botón que dijera «Borrar»
+   * prometería algo que el sistema no hace.
+   *
+   * ## Por qué pregunta antes
+   *
+   * Retirar no se deshace desde la pantalla: para volver atrás hay que publicar
+   * el horario de nuevo. Y aunque no haya citas comprometidas —el servidor lo
+   * rechaza con 409 si las hay—, se sueltan cupos que ya estaban ofrecidos.
+   */
+  protected async retirarHorario(): Promise<void> {
+    const actual = this.estado();
+    if (actual.status !== 'ready' || this.retirando()) return;
+
+    const confirmado = await this.dialogs.confirm({
+      title: 'Retirar este horario',
+      message:
+        'Deja de publicarse y los turnos que nadie reservó se dan de baja. Los que ya tienen paciente se conservan. Para volver atrás hay que publicarlo de nuevo.',
+      confirmLabel: 'Retirar horario',
+      destructive: true,
+    });
+    if (!confirmado) return;
+
+    this.retirando.set(true);
+    this.scheduling.retireTemplate(actual.data.id).subscribe({
+      next: (retiro) => {
+        this.retirando.set(false);
+        // Se dice cuántos se conservaron y no sólo cuántos se soltaron: un
+        // número distinto de cero significa que hay pacientes citados en un
+        // horario que el médico acaba de retirar, y eso tiene que verlo.
+        this.toast.success(
+          retiro.keptSlots > 0
+            ? `Se dieron de baja ${retiro.releasedSlots} turnos libres. Quedan ${retiro.keptSlots} con paciente: seguí atendiéndolos.`
+            : `Se dieron de baja ${retiro.releasedSlots} turnos libres.`,
+          'Horario retirado',
+        );
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.retirando.set(false);
+        this.avisarFallo(error, 'retirar el horario');
+      },
+    });
+  }
+
   protected generarSiguientePeriodo(): void {
     const actual = this.estado();
     const hasta = this.cuposHasta();
@@ -777,9 +1270,7 @@ export class MyAgenda {
  * no sumando 24 horas en milisegundos: en un cambio de horario de verano un día
  * dura 23 o 25, y sumar 86 400 000 correría la franja una hora a partir de ahí.
  */
-export function franjasPorDia(
-  pedido: BloqueoPedido,
-): readonly { startAt: Date; endAt: Date }[] {
+export function franjasPorDia(pedido: BloqueoPedido): readonly { startAt: Date; endAt: Date }[] {
   const horaDesde = `${dosDigitos(pedido.desde.getHours())}:${dosDigitos(pedido.desde.getMinutes())}`;
   const horaHasta = `${dosDigitos(pedido.hasta.getHours())}:${dosDigitos(pedido.hasta.getMinutes())}`;
 

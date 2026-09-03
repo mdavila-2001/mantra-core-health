@@ -78,67 +78,184 @@
     }
 
     <!-- ── Decisión 1 · qué días y en qué horario ────────────────────────── -->
+    <!-- Va PRIMERO y fuera de «avanzadas»: es la pregunta que ordena todo lo
+         que sigue. Publicar el horario correcto en la agenda equivocada no es
+         un detalle de configuración, es haber abierto turnos en otra sede.
+         Sólo aparece con más de una: elegir entre una no es elegir. -->
+    @if (eligeSede()) {
+      <section class="agenda-create__bloque">
+        <h2 class="agenda-create__titulo">¿En qué agenda publicás?</h2>
+
+        @if (!agendaNueva()) {
+          <app-form-field
+            label="Agenda"
+            hint="El horario de abajo se publica sólo en la que elijas."
+          >
+            <app-select
+              data-testid="agenda-create-sede"
+              [options]="opcionesDeSede()"
+              [value]="resourceId()"
+              (valueChange)="elegirSede($event)"
+            />
+          </app-form-field>
+
+          <!-- Sin esto, quien ya tenía una agenda no podía crear una segunda
+               nunca: la pantalla decía «Publicar mi agenda» y en realidad
+               editaba la única que había. -->
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            data-testid="agenda-create-nueva"
+            (clicked)="empezarAgendaNueva()"
+          >
+            Atiendo en otro lado — crear otra agenda
+          </button>
+        } @else {
+          <app-form-field
+            label="¿Cómo se llama esta agenda?"
+            hint="Como la reconocerías vos: «Consultorio en la Caja», «Sábados en el centro»."
+          >
+            <app-input
+              data-testid="agenda-create-nombre"
+              placeholder="Consultorio en la Caja"
+              [value]="nombreNuevo()"
+              (valueChange)="fijarNombreNuevo($event)"
+            />
+          </app-form-field>
+
+          <p class="agenda-create__nota">
+            Se crea una agenda aparte de la que ya tenías. La otra sigue con sus turnos abiertos:
+            publicar acá no la toca.
+          </p>
+
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            data-testid="agenda-create-volver"
+            (clicked)="volverAAgendaExistente()"
+          >
+            Mejor publicar en una que ya tengo
+          </button>
+        }
+      </section>
+    }
+
     <section class="agenda-create__bloque">
       <h2 class="agenda-create__titulo">¿Qué días atendés?</h2>
 
-      <div class="agenda-create__semana" role="group" aria-label="Días que atendés">
-        @for (dia of diasVisibles(); track dia.indice) {
-          <button
-            type="button"
-            class="agenda-create__dia"
-            [class.agenda-create__dia--activo]="dia.activo"
-            [attr.aria-pressed]="dia.activo"
-            [attr.aria-label]="dia.largo"
-            (click)="alternarDia(dia.indice)"
-          >
-            {{ dia.corto }}
-          </button>
-        }
+      <!-- LA TABLA. El pedido original la describe así: «una tabla donde cada
+           día de la semana es una fila, las columnas que son selects son:
+           Desde, Hasta, Tamaño del slot». Antes esto eran fichas por día y un
+           panel desplegable: funcionaba, pero no era la forma pedida, y quien
+           pidió una tabla no reconoce un acordeón.
+
+           Los siete días están SIEMPRE, encendidos o no: en una tabla se lee de
+           un golpe qué días atendés y cuáles no. Con paneles había que abrir
+           uno por uno para saberlo.
+
+           Debajo sigue el mismo `FormArray` de antes; sólo cambió el dibujo. -->
+      <div class="agenda-create__tabla-scroll">
+        <table class="agenda-create__tabla">
+          <caption class="agenda-create__tabla-caption">
+            Un día por fila. Encendé los que atendés y completá su horario.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Día</th>
+              <th scope="col">Desde</th>
+              <th scope="col">Hasta</th>
+              <th scope="col">Dura</th>
+              <th scope="col">Descanso</th>
+              <th scope="col">Turnos</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (dia of diasVisibles(); track dia.indice) {
+              <tr
+                class="agenda-create__fila"
+                [class.agenda-create__fila--activa]="dia.activo"
+                [formGroup]="grupoDe(dia.indice)"
+              >
+                <th scope="row" class="agenda-create__fila-dia">
+                  <label class="agenda-create__fila-check">
+                    <input
+                      type="checkbox"
+                      [attr.data-testid]="'agenda-create-dia-' + dia.indice"
+                      [checked]="dia.activo"
+                      [attr.aria-label]="dia.largo"
+                      (change)="alternarDia(dia.indice)"
+                    />
+                    <span>{{ dia.largo }}</span>
+                  </label>
+                </th>
+
+                @if (dia.activo) {
+                  <td>
+                    <app-select
+                      [options]="horasDelDia"
+                      [value]="grupoDe(dia.indice).controls['desde'].value"
+                      [ariaLabel]="'Desde, ' + dia.largo"
+                      (valueChange)="fijarDeLaFila(dia.indice, 'desde', $event)"
+                    />
+                  </td>
+                  <td>
+                    <app-select
+                      [options]="horasDelDia"
+                      [value]="grupoDe(dia.indice).controls['hasta'].value"
+                      [ariaLabel]="'Hasta, ' + dia.largo"
+                      (valueChange)="fijarDeLaFila(dia.indice, 'hasta', $event)"
+                    />
+                  </td>
+                  <td>
+                    <app-select
+                      [options]="opcionesDeDuracion"
+                      [value]="grupoDe(dia.indice).controls['duracion'].value"
+                      [ariaLabel]="'Cuánto dura una consulta, ' + dia.largo"
+                      (valueChange)="fijarDeLaFila(dia.indice, 'duracion', $event)"
+                    />
+                  </td>
+                  <td>
+                    <app-select
+                      [options]="opcionesDeRespiro"
+                      [value]="grupoDe(dia.indice).controls['respiro'].value"
+                      [ariaLabel]="'Descanso entre consultas, ' + dia.largo"
+                      (valueChange)="fijarDeLaFila(dia.indice, 'respiro', $event)"
+                    />
+                  </td>
+                  <!-- El costo, en la misma fila: elegir descanso sobre una
+                       franja corta quita turnos, y ese número no se deduce. -->
+                  <td class="agenda-create__fila-turnos" aria-live="polite">
+                    <strong>{{ turnosDelDia(dia.indice) }}</strong>
+                  </td>
+                } @else {
+                  <td colspan="5" class="agenda-create__fila-apagada">No atendés</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
 
       @if (sinDias()) {
-        <p class="agenda-create__vacio">Tocá los días en los que atendés para cargar su horario.</p>
-      }
-
-      @for (dia of diasActivos(); track dia.indice) {
-        <fieldset class="agenda-create__franja" [formGroup]="grupoDe(dia.indice)">
-          <legend class="agenda-create__franja-dia">{{ dia.largo }}</legend>
-
-          <div class="agenda-create__horas">
-            <app-form-field label="Desde" hint="HH:MM — a qué hora empezás">
-              <app-input formControlName="desde" />
-            </app-form-field>
-            <app-form-field label="Hasta" hint="HH:MM — a qué hora terminás">
-              <app-input formControlName="hasta" />
-            </app-form-field>
-          </div>
-
-          <!-- Decisión 2 · la duración, como fichas: es una elección entre
-               pocas opciones conocidas, no un número que haya que pensar. -->
-          <fieldset class="agenda-create__duracion">
-            <legend class="agenda-create__duracion-label">¿Cuánto dura una consulta?</legend>
-            <div class="agenda-create__fichas">
-              @for (minutos of duraciones; track minutos) {
-                <button
-                  type="button"
-                  class="agenda-create__ficha"
-                  [class.agenda-create__ficha--activa]="
-                    grupoDe(dia.indice).controls.duracion.value === minutos
-                  "
-                  [attr.aria-pressed]="grupoDe(dia.indice).controls.duracion.value === minutos"
-                  (click)="elegirDuracion(dia.indice, minutos)"
-                >
-                  {{ minutos }} min
-                </button>
-              }
-            </div>
-          </fieldset>
-        </fieldset>
+        <p class="agenda-create__vacio">Encendé los días en los que atendés para cargar su horario.</p>
       }
 
       @if (diasActivos().length > 1) {
-        <button app-button variant="ghost" size="sm" type="button" (clicked)="repetirElPrimero()">
-          ↻ Repetir este horario en todos los días
+        <!-- «Horario masivo» del pedido original: una configuración para
+             varios días. Se llama por lo que hace, no por su nombre técnico. -->
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="agenda-create-masivo"
+          (clicked)="repetirElPrimero()"
+        >
+          Aplicar este horario a todos los días encendidos
         </button>
       }
 
@@ -188,9 +305,13 @@
       <h2 class="agenda-create__titulo">¿Este horario tiene fecha de fin?</h2>
 
       <div class="agenda-create__opciones" role="radiogroup" aria-label="Vigencia del horario">
+        <!-- «NUNCA CAMBIAR» son las palabras del pedido, y se usan tal cual:
+             la lista de horarios ya etiqueta a éste como HORARIO PERMANENTE, y
+             que las dos pantallas lo nombren distinto obliga a deducir que
+             hablan de lo mismo. -->
         <label class="agenda-create__opcion">
           <input type="radio" formControlName="tieneFin" value="no" />
-          <span>No, hasta nuevo aviso</span>
+          <span>Nunca cambia — horario permanente</span>
         </label>
         <label class="agenda-create__opcion">
           <input type="radio" formControlName="tieneFin" value="si" />
@@ -317,6 +438,40 @@
       <button app-button type="submit" [isLoading]="cargando()" [disabled]="sinDias()">
         {{ esCambio() ? 'Guardar mi horario' : 'Publicar mi agenda' }}
       </button>
+
+      <!-- «Previsualizar horario» del pedido original. La vista previa ya está
+           en línea más arriba; esto la trae al pie, que es donde uno decide
+           publicar, sin obligar a subir a buscarla. -->
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        data-testid="agenda-create-previsualizar"
+        [disabled]="sinDias()"
+        (clicked)="abrirVistaPrevia()"
+      >
+        Previsualizar horario
+      </button>
+
+      <!-- «Limpiar campos» del pedido original: deja el formulario en blanco.
+           Pide confirmación porque no hay deshacer, y quien lo toca sin querer
+           pierde la semana que acaba de armar. -->
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        data-testid="agenda-create-limpiar"
+        (clicked)="limpiarCampos()"
+      >
+        Limpiar campos
+      </button>
+
+      <!-- «Cancelar» del pedido original. Vuelve a la agenda sin publicar; no
+           limpia nada, porque cancelar y limpiar son dos cosas distintas y
+           confundirlas hace perder trabajo. -->
+      <a app-button variant="ghost" data-testid="agenda-create-cancelar" [routerLink]="rutaMiAgenda">
+        Cancelar
+      </a>
     </div>
   </form>
 }

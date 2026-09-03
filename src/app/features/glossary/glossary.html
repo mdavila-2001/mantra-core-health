@@ -133,7 +133,7 @@
 </ng-template>
 
 <ng-template #celdaEtiquetas let-termino>
-  @if (termino.tags.length > 0) {
+  @if ((termino.tags ?? []).length > 0) {
     <ul class="glosario__chips glosario__chips--fila">
       @for (etiqueta of termino.tags; track etiqueta) {
         <li><app-chip size="sm" [label]="etiqueta">{{ etiqueta }}</app-chip></li>
@@ -145,7 +145,7 @@
 </ng-template>
 
 <ng-template #celdaRelaciones let-termino>
-  @if (termino.relationsCount > 0) {
+  @if ((termino.relationsCount ?? 0) > 0) {
     {{ termino.relationsCount }} {{ termino.relationsCount === 1 ? 'relación' : 'relaciones' }}
   } @else {
     <span class="glosario__sin-datos">Sin relaciones registradas</span>

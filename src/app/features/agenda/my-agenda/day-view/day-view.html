@@ -6,18 +6,114 @@
     <div class="dia__cabecera">
       <h3 class="dia__titulo">{{ titulo() }}</h3>
       <p class="dia__resumen" role="status">{{ resumen() }}</p>
+
+      <!-- «Un botón de ver mañana, y así sucesivamente» del pedido original.
+           Recorrer día por día es lo que uno hace mirando la agenda: volver al
+           mes para tocar el siguiente son dos gestos donde alcanzaba uno. -->
+      <div class="dia__paginacion">
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="dia-anterior"
+          aria-label="Ver el día anterior"
+          (clicked)="diaCambiado.emit(-1)"
+        >
+          ← Ayer
+        </button>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="dia-siguiente"
+          aria-label="Ver el día siguiente"
+          (clicked)="diaCambiado.emit(1)"
+        >
+          Mañana →
+        </button>
+      </div>
     </div>
-    <button
-      app-button
-      variant="secondary"
-      size="sm"
-      type="button"
-      aria-label="Agregar algo a este día"
-      (clicked)="crear()"
-    >
-      +
-    </button>
+    <div class="dia__acciones-barra">
+      <!-- «Mover horario» del pedido. Va en la barra del día y no dentro de una
+           tarjeta: lo que se corre es la agenda, no una cita suelta. -->
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        data-testid="dia-mover"
+        (clicked)="abrirMover(null)"
+      >
+        Mover horario
+      </button>
+      <button
+        app-button
+        variant="secondary"
+        size="sm"
+        type="button"
+        aria-label="Agregar algo a este día"
+        (clicked)="crear()"
+      >
+        +
+      </button>
+    </div>
   </header>
+
+  <!-- El panel de mover, en la propia página y no en un diálogo: se decide
+       mirando el día, y sacarlo de la pantalla obligaría a recordar de memoria
+       a quién alcanza. Mismo criterio que el aviso de demora. -->
+  @if (moverAbierto()) {
+    <section class="dia__mover" data-testid="dia-mover-panel" aria-labelledby="mover-titulo">
+      <h4 id="mover-titulo" class="dia__mover-titulo">
+        @if (moverDesde()) {
+          Correr desde las {{ moverDesde() | date: 'HH:mm' }} en adelante
+        } @else {
+          Correr todo el día
+        }
+      </h4>
+      <p class="dia__mover-nota">
+        Los turnos cambian de hora y se le avisa a cada paciente. Si alguno choca con otra cita
+        tuya, <strong>no se mueve ninguno</strong>.
+      </p>
+      <div class="dia__mover-opciones">
+        @for (minutos of desplazamientos; track minutos) {
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            [attr.data-testid]="'dia-mover-' + minutos"
+            (clicked)="pedirMovimiento(minutos)"
+          >
+            +{{ minutos }} min
+          </button>
+        }
+        <!-- Adelantar es simétrico de atrasar: el que termina antes quiere
+             adelantar a los que esperan. -->
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="dia-mover-adelantar"
+          (clicked)="pedirMovimiento(-15)"
+        >
+          −15 min
+        </button>
+      </div>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        (clicked)="moverAbierto.set(false)"
+      >
+        Cancelar
+      </button>
+    </section>
+  }
 
   @if (bloques().length === 0) {
     <div class="dia__vacio">
@@ -29,18 +125,46 @@
   } @else {
     <ol class="dia__linea">
       @for (bloque of bloques(); track bloque.clave) {
+        <!-- Cliqueable sólo lo que TIENE detalle: el aire entre bloques no es
+             una actividad, y un clic que no hace nada enseña a no confiar en
+             los clics. -->
         <li
           class="dia__bloque"
+          [class.dia__bloque--cliqueable]="bloque.tipo === 'cita' || bloque.tipo === 'ocupado'"
           [attr.data-tipo]="bloque.tipo"
           [style.min-height.px]="bloque.alturaPx"
         >
+          @if (bloque.tipo === 'cita' || bloque.tipo === 'ocupado') {
+            <button
+              type="button"
+              class="dia__detalle"
+              data-testid="dia-detalle"
+              [attr.aria-label]="'Ver el detalle de ' + (bloque.paciente || bloque.motivo || 'este rato')"
+              (click)="detallePedido.emit(bloque)"
+            >
+              <span aria-hidden="true">Ver detalle</span>
+            </button>
+          }
           @switch (bloque.tipo) {
             @case ('cita') {
               <span class="dia__hora">
                 {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
               </span>
               <div class="dia__cuerpo">
-                <p class="dia__paciente">{{ bloque.paciente }}</p>
+                <p class="dia__paciente">
+                  {{ bloque.paciente }}
+                  <!-- «Con otros colores los otros procedimientos, catalogado
+                       por tipología raíz». La etiqueta va CON el color y no
+                       sola: el color distingue de un vistazo, la palabra lo
+                       hace legible para quien no lo distingue. Una consulta
+                       común no la lleva — pintar todo obliga a mirar el color
+                       hasta donde no informa. -->
+                  @if (bloque.tipologia; as tipo) {
+                    <app-badge [variant]="tipo.tone" data-testid="dia-tipologia">
+                      {{ tipo.label }}
+                    </app-badge>
+                  }
+                </p>
                 <!-- El motivo se muestra acá y NO en la agenda de la
                      organización: para quien va a recibir a esa persona en diez
                      minutos, saber por qué viene es el trabajo. -->
@@ -113,6 +237,19 @@
               <!-- El hueco invita: tocarlo abre la tarjeta con el rango puesto. -->
               <button class="dia__libre" type="button" (click)="tocar(bloque)">
                 — disponible —
+              </button>
+              <!-- «Cerrar» un rato libre: lo bloquea Y deja la excepción, para
+                   que volver a publicar el horario no lo devuelva. Sin esa
+                   segunda parte, cerrar dura hasta la próxima generación. -->
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="dia-cerrar-rato"
+                (clicked)="cierrePedido.emit(bloque)"
+              >
+                Cerrar este rato
               </button>
             }
 

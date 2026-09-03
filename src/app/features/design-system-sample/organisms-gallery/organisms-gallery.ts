@@ -31,11 +31,14 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import type { PageHeaderAction } from '../../../shared/components/organisms/page-header/page-header';
 import { SideNav } from '../../../shared/components/organisms/side-nav/side-nav';
 import type { NavSection } from '../../../shared/components/organisms/side-nav/side-nav.types';
+import { SpecialtyBrowser } from '../../../shared/components/organisms/specialty-browser/specialty-browser';
+import type { SpecialtyGroup } from '../../../shared/components/organisms/specialty-browser/specialty-browser.types';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { TenantSwitcher } from '../../../shared/components/organisms/tenant-switcher/tenant-switcher';
 import type { TenantOption } from '../../../shared/components/organisms/tenant-switcher/tenant-switcher.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { Input } from '../../../shared/components/atoms/input/input';
+import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 
 /** Fila de muestra del listado. */
@@ -71,6 +74,51 @@ const PACIENTES: readonly PacienteDemo[] = [
   },
 ];
 
+/** Ítem de muestra del explorador por especialidad. */
+interface EstudioDemo {
+  readonly id: string;
+  readonly nombre: string;
+  readonly detalle: string;
+}
+
+/** Los grupos llegan ya armados y ordenados: el organismo no agrupa ni ordena. */
+const ESPECIALIDADES: readonly SpecialtyGroup<EstudioDemo>[] = [
+  {
+    conceptId: 'esp-cardio',
+    label: 'Cardiología',
+    items: [
+      { id: 'e-1', nombre: 'Electrocardiograma de reposo', detalle: '12 derivaciones · 15 min' },
+      { id: 'e-2', nombre: 'Ergometría', detalle: 'Con protocolo de Bruce · 45 min' },
+      { id: 'e-3', nombre: 'Holter de 24 horas', detalle: 'Se retira al día siguiente' },
+    ],
+  },
+  {
+    conceptId: 'esp-derma',
+    label: 'Dermatología',
+    items: [
+      { id: 'e-4', nombre: 'Dermatoscopía digital', detalle: 'Control de lunares · 20 min' },
+      { id: 'e-5', nombre: 'Biopsia de piel', detalle: 'Con anestesia local · 30 min' },
+    ],
+  },
+  {
+    conceptId: 'esp-pedia',
+    label: 'Pediatría',
+    items: [{ id: 'e-6', nombre: 'Control de niño sano', detalle: 'Hasta los 5 años · 30 min' }],
+  },
+];
+
+/** Un tramo suelto, para mostrar el pie de «Cargar más» sin repetir la grilla. */
+const ESPECIALIDAD_PARCIAL: readonly SpecialtyGroup<EstudioDemo>[] = [
+  {
+    conceptId: 'esp-lab',
+    label: 'Laboratorio',
+    items: [
+      { id: 'e-7', nombre: 'Hemograma completo', detalle: 'Ayuno de 8 horas' },
+      { id: 'e-8', nombre: 'Perfil lipídico', detalle: 'Ayuno de 12 horas' },
+    ],
+  },
+];
+
 /**
  * Los 12 organismos en un solo lugar. La vitrina es la superficie de
  * observación del sistema: si una pieza no se muestra acá, deja de mirarse.
@@ -81,6 +129,7 @@ const PACIENTES: readonly PacienteDemo[] = [
     AppButton,
     AppMap,
     AuthLayout,
+    Card,
     DataTable,
     FilterBar,
     FormActions,
@@ -91,6 +140,7 @@ const PACIENTES: readonly PacienteDemo[] = [
     PageHeader,
     PaginatedForm,
     SideNav,
+    SpecialtyBrowser,
     StatusSeal,
     TenantSwitcher,
     ViewStateHost,
@@ -331,5 +381,38 @@ export class OrganismsGallery {
     this.ultimosFiltros.set(
       entradas.length === 0 ? '(sin filtros)' : entradas.map(([k, v]) => `${k}=${v}`).join(' · '),
     );
+  }
+
+  /* ---- explorador por especialidad ---------------------------------------- */
+
+  protected readonly especialidadesDemo = ESPECIALIDADES;
+  protected readonly especialidadParcialDemo = ESPECIALIDAD_PARCIAL;
+  protected readonly catalogoDemo = ready(null);
+
+  /** Un value set corto: la lista se ve entera, que es para lo que sirven los chips. */
+  protected readonly filtrosDelExplorador: readonly FilterDef[] = [
+    {
+      key: 'modalidad',
+      label: 'Modalidad',
+      options: [
+        { value: 'presencial', label: 'Presencial' },
+        { value: 'domicilio', label: 'A domicilio' },
+      ],
+      asChips: true,
+    },
+  ];
+
+  protected readonly filtrosDelExploradorVistos = signal('—');
+  protected readonly pedidosDeMasDemo = signal(0);
+
+  protected registrarFiltrosDelExplorador(filtros: Readonly<Record<string, string>>): void {
+    const entradas = Object.entries(filtros);
+    this.filtrosDelExploradorVistos.set(
+      entradas.length === 0 ? '(sin filtros)' : entradas.map(([k, v]) => `${k}=${v}`).join(' · '),
+    );
+  }
+
+  protected pedirMasEstudios(): void {
+    this.pedidosDeMasDemo.update((cuantos) => cuantos + 1);
   }
 }

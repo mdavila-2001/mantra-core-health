@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Subject, of, throwError, type Observable } from 'rxjs';
 
@@ -66,10 +66,10 @@ describe('BusquedaPublica', () => {
     }
 
     TestBed.configureTestingModule({
-      providers: [provideRouter([{ path: 'buscar', component: Anfitrion }])],
+      providers: [provideRouter([{ path: 'search', component: Anfitrion }])],
     });
 
-    const harness = await RouterTestingHarness.create('/buscar');
+    const harness = await RouterTestingHarness.create('/search');
     const anfitrion = harness.routeDebugElement!.componentInstance as Anfitrion;
     return { busqueda: anfitrion.busqueda, llamadas, harness };
   }
@@ -96,10 +96,10 @@ describe('BusquedaPublica', () => {
     }
 
     TestBed.configureTestingModule({
-      providers: [provideRouter([{ path: 'buscar', component: Anfitrion }])],
+      providers: [provideRouter([{ path: 'search', component: Anfitrion }])],
     });
 
-    const harness = await RouterTestingHarness.create('/buscar?q=cardio');
+    const harness = await RouterTestingHarness.create('/search?q=cardio');
     const anfitrion = harness.routeDebugElement!.componentInstance as Anfitrion;
 
     expect(anfitrion.busqueda.texto()).toBe('cardio');
@@ -250,5 +250,123 @@ describe('BusquedaPublica', () => {
 
     expect(busqueda.rotuloDePagina()).not.toContain('aproximadamente');
     expect(busqueda.rotuloDePagina()).toContain('1 en esta página');
+  });
+
+  // ─── Los filtros propios del vertical, en la URL (AC-02-7) ─────────────────
+
+  describe('filtros declarados que viajan en la URL', () => {
+    /** Monta el store con parámetros extra declarados, en la URL que se le pase. */
+    async function montarCon(url: string, nombres: readonly string[]) {
+      const llamadas: Record<string, unknown>[] = [];
+
+      @Component({ template: '' })
+      class Anfitrion {
+        readonly busqueda = new BusquedaPublica((filtros, parametros) => {
+          llamadas.push({ ...filtros, especialidad: parametros['specialty'] ?? '' });
+          return of(pagina([]));
+        }, nombres);
+      }
+
+      TestBed.configureTestingModule({
+        providers: [provideRouter([{ path: 'search', component: Anfitrion }])],
+      });
+
+      const harness = await RouterTestingHarness.create(url);
+      const anfitrion = harness.routeDebugElement!.componentInstance as Anfitrion;
+      return { busqueda: anfitrion.busqueda, llamadas, harness };
+    }
+
+    it('sin parámetros declarados no cambia nada de lo de antes', async () => {
+      const { busqueda } = await montarCon('/search', []);
+
+      expect(busqueda.parametro('specialty')).toBe('');
+    });
+
+    it('lee el filtro de la dirección al montar: un enlace pegado ya llega filtrado', async () => {
+      const { busqueda, llamadas } = await montarCon('/search?specialty=uuid-cardio', [
+        'specialty',
+      ]);
+
+      expect(busqueda.parametro('specialty')).toBe('uuid-cardio');
+      expect(llamadas[0]?.['especialidad']).toBe('uuid-cardio');
+    });
+
+    it('un parámetro que no se declaró se ignora', async () => {
+      const { busqueda } = await montarCon('/search?specialty=uuid-cardio', []);
+
+      expect(busqueda.parametro('specialty')).toBe('');
+    });
+
+    it('elegir un filtro lo escribe en la URL y vuelve a leer', async () => {
+      const { busqueda, llamadas, harness } = await montarCon('/search', ['specialty']);
+      expect(llamadas.length).toBe(1);
+
+      busqueda.filtrarPor('specialty', 'uuid-pediatria');
+      await harness.fixture.whenStable();
+
+      expect(busqueda.parametro('specialty')).toBe('uuid-pediatria');
+      expect(llamadas.length).toBe(2);
+      expect(llamadas[1]?.['especialidad']).toBe('uuid-pediatria');
+    });
+
+    it('quitarlo con «» saca el parámetro de la URL en vez de dejarlo vacío', async () => {
+      const { busqueda, harness } = await montarCon('/search?specialty=uuid-cardio', [
+        'specialty',
+      ]);
+
+      busqueda.filtrarPor('specialty', '');
+      await harness.fixture.whenStable();
+
+      // `?specialty=` colgando es una dirección que dice filtrar y no filtra.
+      expect(TestBed.inject(Router).url).toBe('/search');
+      expect(busqueda.parametro('specialty')).toBe('');
+    });
+
+    it('cambiar el filtro vuelve a la primera página', async () => {
+      const paginas: PublicPage<PublicSearchResult>[] = [];
+      const llamadas: Record<string, unknown>[] = [];
+
+      @Component({ template: '' })
+      class Anfitrion {
+        readonly busqueda = new BusquedaPublica((filtros) => {
+          llamadas.push({ ...filtros });
+          const p = pagina([resultado('uno')], 'cursor-2');
+          paginas.push(p);
+          return of(p);
+        }, ['specialty']);
+      }
+
+      TestBed.configureTestingModule({
+        providers: [provideRouter([{ path: 'search', component: Anfitrion }])],
+      });
+      const harness = await RouterTestingHarness.create('/search');
+      const busqueda = (harness.routeDebugElement!.componentInstance as Anfitrion).busqueda;
+
+      busqueda.siguiente();
+      await harness.fixture.whenStable();
+      expect(busqueda.pagina()).toBe(2);
+
+      busqueda.filtrarPor('specialty', 'uuid-cardio');
+      await harness.fixture.whenStable();
+
+      // Quedarse en la página 2 de otro conjunto de resultados es mostrar una
+      // página que no existe para ese filtro.
+      expect(busqueda.pagina()).toBe(1);
+      expect(llamadas.at(-1)?.['cursor']).toBeUndefined();
+    });
+
+    it('el filtro y el texto en el mismo cambio producen UNA sola lectura', async () => {
+      const { llamadas, harness } = await montarCon('/search?q=lopez', ['specialty']);
+      expect(llamadas.length).toBe(1);
+
+      // Dos suscripciones al mismo `queryParamMap` habrían pedido dos veces, y
+      // `switchMap` habría cancelado la primera a mitad de vuelo.
+      await TestBed.inject(Router).navigate(['/search'], {
+        queryParams: { q: 'gomez', specialty: 'uuid-cardio' },
+      });
+      await harness.fixture.whenStable();
+
+      expect(llamadas.length).toBe(2);
+    });
   });
 });

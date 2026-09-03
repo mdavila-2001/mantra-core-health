@@ -1,0 +1,137 @@
+# =========================================================================
+# Mantra Core Technologies · ALOVIDA — frontend en un VPS con Coolify
+# -------------------------------------------------------------------------
+# Este stack es la CARA PÚBLICA del sistema: el dominio de Coolify apunta al
+# servicio `proxy`, y desde ahí sale todo — las pantallas por el servidor de
+# renderizado y la API por la red interna.
+#
+# LA DECISIÓN QUE EXPLICA EL ARCHIVO ENTERO: la API vive detrás del MISMO
+# dominio que el frontend. De ahí salen tres consecuencias que no son
+# opcionales:
+#
+#   · `PUBLIC_API_BASE_URL` queda VACÍA. Es una variable de **build**: se
+#     compila dentro del paquete que descarga el navegador, así que no se puede
+#     cambiar arrancando el contenedor. Vacía = peticiones relativas = una sola
+#     imagen sirve para todos los entornos.
+#   · La API mantiene CORS denegado por defecto (`main.ts`:
+#     `enableCors({ origin: false })`). Para el navegador esto es un solo
+#     origen, así que no hay nada que negociar. Ponerle un dominio propio a la
+#     API obligaría a abrir CORS, ampliar `connect-src` de la CSP y construir
+#     una imagen por entorno.
+#   · `nginx.coolify.conf` es quien reparte, con la MISMA lista de prefijos que
+#     usa el desarrollo (`api-locations.conf`, verificada en CI por
+#     `scripts/check-api-prefixes.mjs`).
+#
+# ORDEN DE DESPLIEGUE: primero el stack de la API, después éste. Los dos
+# comparten la red `alovida`, y **la crea el stack de la API** — acá se toma
+# como `external`. No hace falta crearla a mano en el servidor.
+#
+# Por eso el orden no es una recomendación: si este stack se despliega primero,
+# la red no existe todavía y nginx ni siquiera arranca, porque resuelve el
+# upstream `api` al leer la configuración («host not found in upstream "api"»).
+#
+# En Coolify:
+#   Nuevo recurso → Docker Compose → este repositorio, rama `dev`
+#   Compose file: deploy/docker-compose.coolify.yml
+#   Dominio: asignarlo al servicio `proxy` (puerto 80)
+# =========================================================================
+
+services:
+  web:
+    build:
+      # El contexto es la RAÍZ del repositorio, no `deploy/`: el Dockerfile
+      # copia `package.json`, `src/` y el resto desde ahí.
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        # VACÍA, y no es un descuido: es la decisión de arquitectura de la
+        # cabecera. Tiene que coincidir con la variable de entorno de abajo —
+        # son las dos mitades de lo mismo, una para el paquete del navegador y
+        # otra para la `connect-src` que emite el servidor.
+        PUBLIC_API_BASE_URL: ''
+    restart: always
+    environment:
+      PORT: '4000'
+      NODE_ENV: production
+      PUBLIC_API_BASE_URL: ''
+      # EL DOMINIO PÚBLICO, Y ES OBLIGATORIO.
+      #
+      # `AngularNodeAppEngine` compara el `Host` de cada petición contra su
+      # lista de hosts permitidos y responde **400 a todo lo que no esté**:
+      # «Header "host" with value "…" is not allowed». La lista horneada en el
+      # artefacto (`angular.json`, `security.allowedHosts`) solo conoce lo que
+      # se sabía al compilar —`localhost`, `127.0.0.1`, `frontend`—, y el
+      # dominio público no es una de esas cosas.
+      #
+      # Sin esta variable el despliegue arranca sano —los contenedores en pie,
+      # el healthcheck en verde, porque pide `localhost`— y devuelve 400 en
+      # CADA página al primer visitante real. Es la comprobación que ningún
+      # health check puede hacer por uno.
+      #
+      # Varios dominios van separados por coma. `*` se rechaza a propósito.
+      SSR_ALLOWED_HOSTS: ${APP_DOMAIN}
+    expose:
+      - '4000'
+    deploy:
+      resources:
+        limits:
+          # El renderizado en servidor de esta aplicación se mide en ~400 MB en
+          # marcha; 768 MB deja aire para picos sin permitir que una fuga se
+          # coma el VPS entero.
+          memory: 768M
+    # El `HEALTHCHECK` viene en la imagen: pide `/auth`, que comprueba que el
+    # proceso responde Y que el artefacto del navegador está donde el servidor
+    # lo busca. El `proxy` lo espera con `service_healthy`, así que Coolify no
+    # da el despliegue por bueno con la aplicación a medio arrancar.
+    networks:
+      - interna
+
+  proxy:
+    image: nginx:1.27-alpine
+    restart: always
+    depends_on:
+      web:
+        condition: service_healthy
+    volumes:
+      - ../deploy/nginx.coolify.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../deploy/api-locations.conf:/etc/nginx/api-locations.conf:ro
+      - ../deploy/api-proxy.conf:/etc/nginx/api-proxy.conf:ro
+    # Sin `ports:`. Publicar el 80 en el host chocaría con el Traefik de
+    # Coolify, que es justamente quien tiene que escuchar ahí. Coolify enruta
+    # al puerto expuesto del contenedor por la red de Docker.
+    expose:
+      - '80'
+    healthcheck:
+      # Se pide una ruta que atraviesa el proxy Y el servidor de renderizado:
+      # un nginx en pie que no alcanza al SSR no está sano para nadie.
+      #
+      # `127.0.0.1` y NO `localhost`: dentro del contenedor `localhost` resuelve
+      # primero a `::1`, y el `listen 80` de nginx solo escucha en IPv4. Con
+      # `localhost` el healthcheck daba «wget: can't connect to remote host:
+      # Connection refused» para siempre — nginx sano, sirviendo tráfico real, y
+      # marcado `unhealthy`. En Coolify eso es un despliegue en rojo que
+      # funciona, que es peor que uno roto.
+      #
+      # `127.0.0.1` está además en los hosts permitidos horneados en el
+      # artefacto, así que el SSR responde 200 y no 400.
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1/auth || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      # Las DOS redes: `interna` para llegar a `web`, `alovida` para llegar a
+      # la API. Sin la segunda, nginx arranca y falla en la primera petición a
+      # un prefijo de la API con «host not found in upstream "api"» — y como
+      # nginx resuelve los upstream al arrancar, en realidad no arranca.
+      - interna
+      - alovida
+
+networks:
+  # Red privada de este stack: solo la comparten `proxy` y `web`.
+  interna:
+
+  # Compartida con el stack de la API, que es quien la crea. Ver la cabecera.
+  alovida:
+    external: true
+    name: ${ALOVIDA_NETWORK:-alovida}

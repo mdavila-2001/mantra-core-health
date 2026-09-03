@@ -1,0 +1,34 @@
+<div class="location-picker">
+  <app-department-map
+    [departamentos]="departamentos()"
+    [value]="departamentoElegido()"
+    (valueChange)="elegirDepartamento($event)"
+    [etiqueta]="mapLabel()"
+    [testId]="testId() + '-mapa'"
+  />
+
+  <!-- El select de ciudad aparece recién con departamento elegido: sin él la
+       lista serían los ~340 municipios del país de corrido, que es justamente
+       lo que el mapa viene a evitar. Mientras tanto se dice qué falta, en vez
+       de dejar un desplegable vacío que parece roto. -->
+  @if (departamentoElegido() === null) {
+    <p class="location-picker__pendiente" [attr.data-testid]="testId() + '-pendiente'">
+      Elegí primero tu departamento en el mapa y acá aparecen sus ciudades.
+    </p>
+  } @else {
+    <app-form-field
+      [label]="municipalityLabel()"
+      [hint]="municipalityHint()"
+      [required]="required()"
+      [errorMessage]="errorMessage()"
+    >
+      <app-select
+        [options]="municipios()"
+        [value]="value()"
+        (valueChange)="elegirMunicipio($event)"
+        placeholder="Elegí tu ciudad o municipio"
+        [attr.data-testid]="testId() + '-municipio'"
+      />
+    </app-form-field>
+  }
+</div>

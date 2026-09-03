@@ -1,0 +1,75 @@
+<app-page-header
+  title="Mis servicios"
+  subtitle="Lo que ofrece tu práctica y su precio de referencia. Al armar el presupuesto podés cotizar otro."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="mis-servicios">
+  @if (hayQueElegirPractica()) {
+    <app-form-field label="Práctica" hint="El catálogo es propio de cada práctica.">
+      <app-select
+        [value]="practicaElegida()"
+        (valueChange)="cambiarPractica($event)"
+        [options]="opcionesDePractica()"
+        placeholder="Elegí una práctica"
+        data-testid="my-services-practice"
+      />
+    </app-form-field>
+  }
+
+  <app-view-state-host [state]="estado()" (retry)="recargar()">
+    <!-- S2 con la forma de lo que viene: bloques de tarjeta, no renglones de
+         texto. Un esqueleto que no se parece al contenido desorienta. -->
+    <div vsh-skeleton class="mis-servicios__esqueleto">
+      @for (hueco of huecosDelEsqueleto; track hueco) {
+        <app-skeleton variant="rect" height="9rem" />
+      }
+    </div>
+
+    <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia cuántos
+         servicios hay antes de leer el primero. -->
+    <ul class="mis-servicios__grilla" data-testid="my-services-grid">
+      @for (servicio of servicios(); track servicio.id) {
+        <li class="mis-servicios__item">
+          <app-card variant="outlined" padding="md" data-testid="my-services-item">
+            <div class="mis-servicios__ficha">
+              <h2 class="mis-servicios__nombre">{{ servicio.name }}</h2>
+
+              <!-- Sólo lo inactivo lleva distintivo: en una grilla, un «Activo»
+                   repetido en cada tarjeta compite con el precio y no informa
+                   nada. Lo excepcional es lo que hay que ver. -->
+              @if (!servicio.isActive) {
+                <app-badge variant="secondary" value="Inactivo" />
+              }
+            </div>
+
+            <p class="mis-servicios__codigo">{{ servicio.code }}</p>
+
+            <dl class="mis-servicios__precio">
+              <dt class="mis-servicios__rotulo">Precio de referencia</dt>
+              <dd class="mis-servicios__monto tabular-nums" data-testid="my-services-price">
+                {{ servicio.defaultPrice }}
+              </dd>
+            </dl>
+          </app-card>
+        </li>
+      }
+    </ul>
+
+    @if (hayMas()) {
+      <div class="mis-servicios__mas">
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          [isLoading]="cargandoMas()"
+          data-testid="my-services-load-more"
+          (clicked)="cargarMas()"
+        >
+          Cargar más
+        </button>
+      </div>
+    }
+  </app-view-state-host>
+</div>

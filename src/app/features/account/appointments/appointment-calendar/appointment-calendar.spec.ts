@@ -178,8 +178,16 @@ describe('AppointmentCalendar', () => {
     anterior.click();
     fixture.detectChanges();
 
+    // Ojo con el aserto fácil —«el mes anterior no tiene ni un día pedible»—:
+    // es falso cuatro días al mes. La grilla completa las semanas con días del
+    // mes vecino, así que mirando agosto un 3 de septiembre la última fila
+    // arrastra el 3, 4, 5 y 6, que son futuro y sí se piden. Esos llevan
+    // `--fuera` porque no son de agosto. Lo que hay que comprobar es que
+    // ningún día **del mes que se está mirando** se ofrezca.
     expect(
-      fixture.nativeElement.querySelectorAll('.calendario__numero--pedible').length,
+      fixture.nativeElement.querySelectorAll(
+        '.calendario__dia:not(.calendario__dia--fuera) .calendario__numero--pedible',
+      ).length,
     ).toBe(0);
   });
 

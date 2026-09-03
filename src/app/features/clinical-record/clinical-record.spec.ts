@@ -11,22 +11,31 @@ import { ClinicalRecord } from './clinical-record';
  * Doble del expediente, que en la aplicación real es un componente diferido.
  *
  * Se usa uno mudo y no el verdadero porque lo que se prueba acá es **a dónde
- * navega** el acceso directo. Montar el expediente real dispararía sus tres
- * lecturas y la prueba pasaría a hablar de otra pantalla.
+ * navega** el acceso desde una fila de la tabla.
  */
 @Component({ selector: 'app-expediente-doble', template: '' })
 class ExpedienteDoble {}
 
+/** La petición del catálogo de departamentos que dispara el constructor. */
+const CATALOGO_DEPARTAMENTOS = '/terminology/value-sets?code=VS_BO_DEPARTMENT';
+
 /**
- * La puerta al expediente. Lo que estas pruebas fijan:
+ * La puerta al expediente. Lo que estas pruebas fijan (TAREA-07, P-07-10,
+ * 2026-09-02):
  *
- * 1. **El buscador prohibido no cierra la pantalla.** `GET /profiles/patients`
- *    pide `SECURITY_ADMIN`, y el rol clínico —el único que puede leer el
- *    expediente— no lo tiene. Si el 403 vaciara la pantalla, el archivo clínico
- *    sería inútil justo para quien lo necesita.
- * 2. **El acceso por identificador no valida el uuid a mano.** El backend
- *    responde 400 al mal formado y 404 al inexistente; repetir la validación
- *    acá sólo agregaría un segundo lugar donde equivocarse.
+ * 1. **La búsqueda ve el padrón entero, sin acotar por tenant.** La primera
+ *    versión de hoy acotaba a `CLINICIAN`/`PRACTITIONER` por actividad;
+ *    Marcelo la revirtió porque la búsqueda también sirve para registrar a
+ *    quien nunca se atendió.
+ * 2. **Sin criterio no se pide nada.** Antes esta pantalla pedía la primera
+ *    página al montar, con `q`/`nationalId` vacíos; ahora, sin acotamiento,
+ *    eso sería enumerar el padrón. Al montar sin filtro no sale ninguna
+ *    petición a `/profiles/patients`: se muestra un vacío que invita a
+ *    escribir.
+ * 3. **Un 403 lo resuelve `app-data-table` por su cuenta**, con el estado
+ *    `forbidden` del M34 — no hay una rama especial en el componente.
+ * 4. **«Abrir por identificador» ya no existe** (AC-07-5): la búsqueda por
+ *    documento es ahora el camino de quien atiende.
  */
 
 const PACIENTE = {
@@ -50,8 +59,6 @@ describe('ClinicalRecord', () => {
         provideHttpClientTesting(),
         provideRouter([
           { path: 'medical-records', component: ClinicalRecord },
-          // El expediente cuelga de acá. Se declara para que la prueba del
-          // acceso directo navegue de verdad y no contra una ruta inexistente.
           { path: 'medical-records/:profileId', component: ExpedienteDoble },
         ]),
       ],
@@ -77,108 +84,150 @@ describe('ClinicalRecord', () => {
     return interno<() => { status: string; message?: string }>('resultados')();
   }
 
-  it('al entrar pide el padrón sin mandar `q` vacío', () => {
-    const req = peticion();
-    expect(req.request.params.has('q')).toBe(false);
-    expect(req.request.params.get('limit')).toBe('25');
+  /**
+   * El catálogo de departamentos se pide en paralelo, en la misma tanda del
+   * constructor, sin importar si hay criterio de búsqueda o no.
+   */
+  function resolverCatalogoDeDepartamentosVacio() {
+    http.expectOne(CATALOGO_DEPARTAMENTOS).flush({ items: [] });
+  }
 
-    req.flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
-    expect(estado().status).toBe('ready');
+  it('al montar sin criterio no pide el padrón: muestra un vacío que invita a buscar', () => {
+    resolverCatalogoDeDepartamentosVacio();
+    http.verify();
+
+    const actual = estado();
+    expect(actual.status).toBe('empty');
+    expect(actual.message).toContain('Buscá por nombre, código o documento');
   });
 
-  it('buscar publica el texto en la URL y vuelve a pedir con `q`', async () => {
-    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+  it('el buscador por nombre y el de documento están siempre disponibles, aun sin criterio', () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    const html = harness.fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('app-search-field')).not.toBeNull();
+    expect(html.querySelector('app-data-table')).not.toBeNull();
+    // AC-07-5: el botón «Abrir expediente» ya no está en la pantalla.
+    expect(html.textContent).not.toContain('Abrir expediente');
+    expect(html.textContent).not.toContain('Abrir por identificador');
+  });
+
+  it('buscar publica el texto en la URL y pide con `q`', async () => {
+    resolverCatalogoDeDepartamentosVacio();
 
     interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();
 
     const req = peticion();
     expect(req.request.params.get('q')).toBe('peña');
+    expect(req.request.params.get('limit')).toBe('25');
+    req.flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+
+    expect(estado().status).toBe('ready');
+  });
+
+  /**
+   * El defecto que esto fija: antes un 403 era la respuesta NORMAL para un rol
+   * clínico —el padrón era de `SECURITY_ADMIN` a secas— y esta pantalla
+   * escondía la tabla para no asustar con «No tenés acceso a esta sección».
+   * Ahora que la búsqueda está abierta a los cuatro roles que llegan acá, un
+   * 403 vuelve a ser lo que ese texto describe: un error genuino. No hay rama
+   * especial: `app-data-table` lo resuelve con el estado `forbidden` del M34,
+   * como cualquier otra lectura de la aplicación.
+   */
+  it('un 403 (ya excepcional) lo pinta `app-data-table` con su estado `forbidden`', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+    peticion().flush(
+      { code: 'FORBIDDEN', message: 'Rol insuficiente', timestamp: '', path: '' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+    await harness.fixture.whenStable();
+
+    expect(estado().status).toBe('forbidden');
+    const html = harness.fixture.nativeElement as HTMLElement;
+    // La tabla sigue montada: es ella quien resuelve el estado, no un `@if` del componente.
+    expect(html.querySelector('app-data-table')).not.toBeNull();
+    expect(html.textContent).toContain('No tenés acceso a esta sección');
+  });
+
+  /** AC-07-1: encuentra por documento exacto, aunque el nombre no coincida. */
+  it('buscar por documento publica `nationalId` en la URL y en la petición', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    const router = TestBed.inject(Router);
+    interno<(valor: string) => void>('fijarDocumento')('  1234567  ');
+    interno<() => void>('buscarPorDocumento')();
+    await harness.fixture.whenStable();
+
+    expect(router.url).toContain('nationalId=1234567');
+    // El documento se recorta: un espacio pegado de más no cambia la búsqueda.
+    const req = peticion();
+    expect(req.request.params.get('nationalId')).toBe('1234567');
+    expect(req.request.params.has('q')).toBe(false);
+    req.flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+  });
+
+  /**
+   * AC-07-2: un mismo número expedido en otro departamento no es la misma
+   * persona. El select del departamento viaja como
+   * `issuerAdministrativeAreaConceptId`.
+   */
+  it('el departamento elegido viaja junto al documento', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(valor: string) => void>('fijarDocumento')('1234567');
+    // `interno()` liga la señal a `componente` para los casos de función; una
+    // señal escribible pierde su `.set` al ligarse, así que este acceso va
+    // directo, sin pasar por ese helper.
+    (
+      componente as unknown as { departamentoElegido: { set(valor: string | null): void } }
+    ).departamentoElegido.set('area-sc');
+    interno<() => void>('buscarPorDocumento')();
+    await harness.fixture.whenStable();
+
+    const req = peticion();
+    expect(req.request.params.get('issuerAdministrativeAreaConceptId')).toBe('area-sc');
     req.flush({ items: [], count: 0, limit: 25, nextCursor: null });
   });
 
   /**
-   * El caso que justifica que el campo de identificador exista: para el rol
-   * clínico esta es la respuesta normal, no una excepción.
+   * Documento y nombre son dos formas de encontrar a la misma persona, no dos
+   * filtros que se combinan: buscar por documento limpia `q` de la URL.
    */
-  it('un 403 del padrón enciende el acceso directo, que es el camino del rol clínico', () => {
-    peticion().flush(
-      { code: 'FORBIDDEN', message: 'Rol insuficiente', timestamp: '', path: '' },
-      { status: 403, statusText: 'Forbidden' },
-    );
+  it('buscar por documento limpia el filtro por nombre', async () => {
+    resolverCatalogoDeDepartamentosVacio();
 
-    expect(estado().status).toBe('forbidden');
-    expect(interno<() => boolean>('buscadorProhibido')()).toBe(true);
-  });
-
-  /**
-   * **El defecto que esto fija.** La tabla delega sus estados en
-   * `ViewStateHost`, y su S5 dice «No tenés acceso a esta sección» — un texto
-   * escrito para una sección entera. El médico entraba al archivo clínico y leía
-   * que no era suyo, cuando **sí lo es y funciona**: sólo el listado del padrón
-   * es de administración, y para su rol ese 403 es la respuesta normal.
-   *
-   * Un rojo en el lugar más visible de la pantalla, para una condición
-   * esperada, no informa: asusta y hace creer que la sección está rota.
-   */
-  it('con el padrón prohibido no se pinta ningún error: ni la tabla ni el buscador', async () => {
-    peticion().flush(
-      { code: 'FORBIDDEN', message: 'Rol insuficiente', timestamp: '', path: '' },
-      { status: 403, statusText: 'Forbidden' },
-    );
+    interno<(texto: string) => void>('buscar')('peña');
     await harness.fixture.whenStable();
-
-    const html = harness.fixture.nativeElement as HTMLElement;
-    expect(html.querySelector('app-data-table')).toBeNull();
-    expect(html.querySelector('app-search-field')).toBeNull();
-    expect(html.textContent).not.toContain('No tenés acceso a esta sección');
-    // Y el camino que sí es suyo sigue ahí, que es lo que no puede perderse.
-    expect(html.textContent).toContain('Abrir por identificador');
-  });
-
-  /** Con permiso, el buscador se ofrece: no se le quita a quien sí puede usarlo. */
-  it('con el padrón permitido, el buscador y la tabla se ofrecen', async () => {
     peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+
+    interno<(valor: string) => void>('fijarDocumento')('1234567');
+    interno<() => void>('buscarPorDocumento')();
     await harness.fixture.whenStable();
-
-    const html = harness.fixture.nativeElement as HTMLElement;
-    expect(html.querySelector('app-search-field')).not.toBeNull();
-    expect(html.querySelector('app-data-table')).not.toBeNull();
-  });
-
-  it('abrir por identificador navega al expediente de esa persona', async () => {
-    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
 
     const router = TestBed.inject(Router);
-    interno<(valor: string) => void>('fijarIdentificador')('  p-001  ');
-    interno<() => void>('abrirPorIdentificador')();
-    await harness.fixture.whenStable();
-
-    // El identificador se recorta antes de navegar: un espacio pegado de más no
-    // debería producir una ruta distinta.
-    expect(router.url).toBe('/medical-records/p-001');
+    expect(router.url).not.toContain('q=');
+    const req = peticion();
+    expect(req.request.params.has('q')).toBe(false);
+    req.flush({ items: [], count: 0, limit: 25, nextCursor: null });
   });
 
-  it('abrir por identificador con el campo vacío no navega', async () => {
-    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+  it('buscar por documento con el campo vacío no navega ni pide nada', async () => {
+    resolverCatalogoDeDepartamentosVacio();
 
     const router = TestBed.inject(Router);
-    interno<() => void>('abrirPorIdentificador')();
+    interno<() => void>('buscarPorDocumento')();
     await harness.fixture.whenStable();
 
     expect(router.url).toBe('/medical-records');
+    expect(estado().status).toBe('empty');
   });
 
-  it('sin filtro, el vacío dice que no hay pacientes registrados', () => {
-    peticion().flush({ items: [], count: 0, limit: 25, nextCursor: null });
-
-    const actual = estado() as { status: string; message?: string };
-    expect(actual.status).toBe('empty');
-    expect(actual.message).toContain('Todavía no hay pacientes');
-  });
-
-  it('con filtro, el vacío nombra el texto que no encontró', async () => {
-    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+  it('con filtro por nombre, el vacío nombra el texto que no encontró', async () => {
+    resolverCatalogoDeDepartamentosVacio();
 
     interno<(texto: string) => void>('buscar')('inexistente');
     await harness.fixture.whenStable();
@@ -187,5 +236,22 @@ describe('ClinicalRecord', () => {
     const actual = estado() as { status: string; message?: string };
     expect(actual.status).toBe('empty');
     expect(actual.message).toContain('inexistente');
+    // P-07-10: el padrón ya no está acotado por actividad — un vacío ya no
+    // le dice a quien pregunta que busque «en tu organización».
+    expect(actual.message).not.toContain('organización');
+  });
+
+  it('con filtro por documento, el vacío nombra el documento buscado', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(valor: string) => void>('fijarDocumento')('0000000');
+    interno<() => void>('buscarPorDocumento')();
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [], count: 0, limit: 25, nextCursor: null });
+
+    const actual = estado() as { status: string; message?: string };
+    expect(actual.status).toBe('empty');
+    expect(actual.message).toContain('0000000');
+    expect(actual.message).not.toContain('organización');
   });
 });

@@ -1,0 +1,53 @@
+@if (perfil(); as perfil) {
+  <div class="app-page-header" app-page-header>
+    <div class="app-page-header__texto">
+      <p style="margin-bottom: var(--e2)">
+        <a app-link [routerLink]="['/p', perfil.slug]">
+          <svg
+            class="icono icono--sm"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          Volver al perfil de {{ perfil.displayName }}
+        </a>
+      </p>
+      <p class="overline">Publicación</p>
+    </div>
+  </div>
+
+  @if (publicacion(); as post) {
+    <div class="publicacion-suelta">
+      <app-public-post-card
+        [post]="post"
+        [slug]="perfil.slug"
+        [autorNombre]="perfil.displayName"
+        [autorHeadline]="perfil.headline"
+        [autorAvatar]="perfil.avatarUrl"
+        [autorIniciales]="iniciales()"
+        [enfocada]="true"
+      />
+    </div>
+  } @else {
+    <section class="app-card">
+      <p>Esta publicación no está disponible. Puede haberse quitado, o el enlace puede estar mal.</p>
+      <p><a app-link [routerLink]="['/p', perfil.slug]">Ver el perfil</a></p>
+    </section>
+  }
+} @else {
+  <div class="app-page-header" app-page-header>
+    <div class="app-page-header__texto">
+      <div class="app-page-header__titulo"><h1>Esa publicación no está disponible</h1></div>
+      <p class="caption">El enlace puede estar mal escrito, o quien lo publicó puede haberlo quitado.</p>
+    </div>
+  </div>
+  <section class="app-card">
+    <p><a app-link routerLink="/search">Volver al buscador</a></p>
+  </section>
+}

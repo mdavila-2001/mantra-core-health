@@ -125,7 +125,7 @@ export class RedsatDesignNotice {
    *
    * El marco público envuelve **dos cosas distintas**: las pantallas portadas de
    * la bóveda, que siguen siendo marcado estático, y la superficie pública de
-   * P4 —`/buscar`, sus verticales y las fichas `/p/:slug`—, que lee la API real
+   * P4 —`/search`, sus verticales y las fichas `/p/:slug`—, que lee la API real
    * sin sesión.
    *
    * Como el aviso se pintaba siempre, la ficha pública de un profesional —con

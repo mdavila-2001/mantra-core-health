@@ -88,6 +88,15 @@ export class ProfilesClient {
     if (query.query !== undefined && query.query !== '') {
       params = params.set('q', query.query);
     }
+    if (query.nationalId !== undefined && query.nationalId !== '') {
+      params = params.set('nationalId', query.nationalId);
+    }
+    if (query.issuerAdministrativeAreaConceptId !== undefined) {
+      params = params.set(
+        'issuerAdministrativeAreaConceptId',
+        query.issuerAdministrativeAreaConceptId,
+      );
+    }
     if (query.cursor !== undefined) {
       params = params.set('cursor', query.cursor);
     }
@@ -204,6 +213,34 @@ export class ProfilesClient {
           birthDate: cambios.birthDate === undefined ? undefined : fechaIso(cambios.birthDate),
         }),
       )
+      .pipe(map((body) => toOwnPatientProfile(body)));
+  }
+
+  /**
+   * `PUT /profiles/patients/me/photo` — fija la foto de perfil propia.
+   *
+   * Espejo de `setPractitionerPhoto`: recibe el **id** de un archivo ya
+   * subido por `POST /common/files/upload`, no los bytes. Escribe
+   * `profiles.persons.photo_file_id` — la foto de la persona, no la del
+   * perfil profesional (otra columna, sin relación con ésta).
+   *
+   * @param fileId - El archivo que devolvió `FilesClient.upload()`.
+   * @returns El perfil releído, ya con su foto.
+   */
+  setOwnPatientPhoto(fileId: string): Observable<OwnPatientProfile> {
+    return this.http
+      .put<ConNulos<WireOwnPatientProfile>>(this.url('/profiles/patients/me/photo'), { fileId })
+      .pipe(map((body) => toOwnPatientProfile(body)));
+  }
+
+  /**
+   * `DELETE /profiles/patients/me/photo` — quita la foto de perfil propia.
+   *
+   * Quita la referencia; el archivo no se toca. Idempotente.
+   */
+  removeOwnPatientPhoto(): Observable<OwnPatientProfile> {
+    return this.http
+      .delete<ConNulos<WireOwnPatientProfile>>(this.url('/profiles/patients/me/photo'))
       .pipe(map((body) => toOwnPatientProfile(body)));
   }
 

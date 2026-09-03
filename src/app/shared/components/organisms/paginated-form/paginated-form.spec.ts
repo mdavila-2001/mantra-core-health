@@ -15,6 +15,9 @@ import type { PaginaDeFormulario } from '../../../forms/paginated/paginated-form
  * No se prueba cómo se ven la barra ni el stepper: eso ya lo cubren sus propios
  * archivos (`progress.spec.ts`, `stepper.spec.ts`). Repetirlo acá sería atar
  * este motor a la maqueta de dos componentes que no le pertenecen.
+ *
+ * Sí se prueba lo que el motor **decide** sobre ellos: a qué paso deja saltar y
+ * a cuál no, y qué pasa con lo escrito al saltar (TAREA 04, AC-04-12 y -13).
  */
 
 const PAGINAS: readonly PaginaDeFormulario[] = [
@@ -68,12 +71,75 @@ class Host {
   enviados = 0;
 }
 
+/** Una página con las piezas nuevas: glifo, descripción y un desplegable. */
+const PAGINAS_CON_ADORNOS: readonly PaginaDeFormulario[] = [
+  {
+    titulo: 'Identidad',
+    icon: 'patients',
+    campos: [
+      {
+        key: 'documento',
+        label: 'Documento',
+        control: 'text',
+        required: true,
+        icono: 'patients',
+        hint: 'Con este número vas a iniciar sesión.',
+        description: 'El número de tu cédula de identidad, sin puntos ni guiones.',
+      },
+      {
+        key: 'genero',
+        label: 'Género',
+        control: 'select',
+        icono: 'people',
+        description: 'Como figura en tu documento.',
+        options: [
+          { value: 'f', label: 'Femenino' },
+          { value: 'm', label: 'Masculino' },
+        ],
+      },
+    ],
+  },
+  {
+    titulo: 'Acceso',
+    icon: 'lock',
+    campos: [{ key: 'correo', label: 'Correo', control: 'email', required: true }],
+  },
+];
+
+/** El mismo motor con los interruptores de la TAREA 04 a la vista. */
+@Component({
+  imports: [PaginatedForm],
+  template: `
+    <app-paginated-form
+      [paginas]="paginas()"
+      [form]="form"
+      label="Crear cuenta"
+      submitLabel="Crear cuenta"
+      [interactiveSteps]="interactiveSteps()"
+      [iconOnlyNav]="iconOnlyNav()"
+    />
+  `,
+})
+class HostConfigurable {
+  readonly paginas = signal<readonly PaginaDeFormulario[]>(PAGINAS_CON_ADORNOS);
+  readonly interactiveSteps = signal(true);
+  readonly iconOnlyNav = signal(false);
+  readonly form = new FormGroup({
+    documento: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    genero: new FormControl<string | null>(null),
+    correo: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+  });
+}
+
 describe('PaginatedForm', () => {
   let fixture: ComponentFixture<Host>;
   let host: Host;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [Host] });
+    TestBed.configureTestingModule({ imports: [Host, HostConfigurable] });
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     fixture.detectChanges();
@@ -260,6 +326,214 @@ describe('PaginatedForm', () => {
       const barra = fixture.debugElement.query(By.css('app-progress')).nativeElement as HTMLElement;
 
       expect(barra.getAttribute('aria-label')).toBe('Crear cuenta: paso 1 de 2, Identidad');
+    });
+  });
+
+  /* ==========================================================================
+      TAREA 04 — lo visual del motor. Todo lo de acá lo comparten las 53
+      plantillas de `features/` que montan `app-paginated-form`, así que se
+      prueba también **qué sigue igual** cuando no se pide nada.
+     ========================================================================= */
+  describe('los pasos como controles', () => {
+    let fixtureC: ComponentFixture<HostConfigurable>;
+    let hostC: HostConfigurable;
+
+    beforeEach(() => {
+      fixtureC = TestBed.createComponent(HostConfigurable);
+      hostC = fixtureC.componentInstance;
+      fixtureC.detectChanges();
+    });
+
+    function pasos(): HTMLButtonElement[] {
+      return fixtureC.debugElement
+        .queryAll(By.css('button.stepper__control'))
+        .map((el) => el.nativeElement as HTMLButtonElement);
+    }
+
+    function tituloC(): string {
+      return (
+        fixtureC.debugElement.query(By.css('.paginated-form__titulo')).nativeElement as HTMLElement
+      ).textContent!.trim();
+    }
+
+    function continuarC(): HTMLButtonElement {
+      return fixtureC.debugElement.query(By.css('[data-testid="paginated-form-continuar"]'))
+        .nativeElement as HTMLButtonElement;
+    }
+
+    it('cada paso es un botón operable, con su glifo', () => {
+      expect(pasos()).toHaveLength(2);
+      expect(
+        fixtureC.debugElement.queryAll(By.css('.stepper__marker app-nav-icon')).length,
+      ).toBeGreaterThan(0);
+    });
+
+    it('un paso al que nunca se llegó no se abre, y lo dice', () => {
+      const siguiente = pasos()[1];
+      expect(siguiente.getAttribute('aria-disabled')).toBe('true');
+      expect(siguiente.getAttribute('aria-label')).toContain('Todavía no llegaste');
+
+      siguiente.click();
+      fixtureC.detectChanges();
+
+      // Sigue en la primera: el candado no depende de que la vista lo respete.
+      expect(tituloC()).toBe('Identidad');
+    });
+
+    it('un paso ya visitado navega, y lo escrito sigue donde estaba', () => {
+      hostC.form.controls.documento.setValue('1234567');
+      continuarC().click();
+      fixtureC.detectChanges();
+      expect(tituloC()).toBe('Acceso');
+
+      pasos()[0].click();
+      fixtureC.detectChanges();
+
+      expect(tituloC()).toBe('Identidad');
+      // El dato vive en el FormGroup de la pantalla: saltar no lo toca.
+      expect(hostC.form.controls.documento.value).toBe('1234567');
+    });
+
+    it('volver adelante revalida lo que quedaba en medio, no lo saltea', () => {
+      hostC.form.controls.documento.setValue('1234567');
+      continuarC().click();
+      fixtureC.detectChanges();
+
+      pasos()[0].click();
+      fixtureC.detectChanges();
+      // Se borra lo obligatorio de la página 1 y se intenta volver a la 2.
+      hostC.form.controls.documento.setValue('');
+      fixtureC.detectChanges();
+
+      pasos()[1].click();
+      fixtureC.detectChanges();
+
+      expect(tituloC()).toBe('Identidad');
+      expect(hostC.form.controls.documento.touched).toBe(true);
+    });
+
+    it('con interactiveSteps en false vuelve a ser un indicador y nada más', () => {
+      hostC.interactiveSteps.set(false);
+      fixtureC.detectChanges();
+
+      expect(pasos()).toHaveLength(0);
+    });
+  });
+
+  describe('los botones de avance', () => {
+    let fixtureC: ComponentFixture<HostConfigurable>;
+    let hostC: HostConfigurable;
+
+    beforeEach(() => {
+      fixtureC = TestBed.createComponent(HostConfigurable);
+      hostC = fixtureC.componentInstance;
+      fixtureC.detectChanges();
+    });
+
+    function continuarC(): HTMLButtonElement {
+      return fixtureC.debugElement.query(By.css('[data-testid="paginated-form-continuar"]'))
+        .nativeElement as HTMLButtonElement;
+    }
+
+    it('por defecto siguen siendo texto: las 53 pantallas no cambian solas', () => {
+      expect(continuarC().textContent!.trim()).toBe('Siguiente');
+      expect(continuarC().hasAttribute('aria-label')).toBe(false);
+    });
+
+    it('con iconOnlyNav son íconos, con su nombre accesible en castellano', () => {
+      hostC.iconOnlyNav.set(true);
+      fixtureC.detectChanges();
+
+      expect(continuarC().getAttribute('aria-label')).toBe('Siguiente');
+      expect(continuarC().querySelector('app-nav-icon')).not.toBeNull();
+      expect(continuarC().className).toContain('btn--icon-only');
+
+      hostC.form.controls.documento.setValue('1234567');
+      continuarC().click();
+      fixtureC.detectChanges();
+
+      const atras = fixtureC.debugElement.query(By.css('[data-testid="paginated-form-atras"]'))
+        .nativeElement as HTMLButtonElement;
+      expect(atras.getAttribute('aria-label')).toBe('Atrás');
+      expect(atras.querySelector('app-nav-icon')).not.toBeNull();
+    });
+
+    it('el botón de la última página conserva su texto aunque se pidan íconos', () => {
+      hostC.iconOnlyNav.set(true);
+      hostC.form.controls.documento.setValue('1234567');
+      fixtureC.detectChanges();
+      continuarC().click();
+      fixtureC.detectChanges();
+
+      // Un ícono que en realidad envía el formulario esconde lo que hace.
+      expect(continuarC().textContent!.trim()).toBe('Crear cuenta');
+      expect(continuarC().className).not.toContain('btn--icon-only');
+    });
+  });
+
+  describe('el ícono y la descripción del campo', () => {
+    let fixtureC: ComponentFixture<HostConfigurable>;
+
+    beforeEach(() => {
+      fixtureC = TestBed.createComponent(HostConfigurable);
+      fixtureC.detectChanges();
+    });
+
+    it('el glifo va DENTRO del control, y también en el desplegable', () => {
+      const enElInput = fixtureC.debugElement.query(
+        By.css('app-input app-nav-icon[slot="icon-start"]'),
+      );
+      const enElSelect = fixtureC.debugElement.query(
+        By.css('app-select app-nav-icon[slot="icon-start"]'),
+      );
+
+      expect(enElInput).not.toBeNull();
+      expect(enElSelect).not.toBeNull();
+    });
+
+    it('el glifo no aporta el nombre accesible: quitarlo no cambia lo que se anuncia', () => {
+      const glifo = fixtureC.debugElement.query(By.css('app-input app-nav-icon svg'))
+        .nativeElement as SVGElement;
+
+      expect(glifo.getAttribute('aria-hidden')).toBe('true');
+    });
+
+    it('la descripción se suma al hint, no lo reemplaza (ADR-0008)', () => {
+      const campo = fixtureC.debugElement.query(By.css('app-form-field'))
+        .nativeElement as HTMLElement;
+      const hint = campo.querySelector('.form-field-hint');
+      const descripcion = campo.querySelector('.form-field-description');
+      const input = campo.querySelector('input')!;
+
+      // El hint sigue abajo del campo, visible y sin puntero de por medio.
+      expect(hint).not.toBeNull();
+      expect(hint!.textContent).toContain('Con este número vas a iniciar sesión');
+      expect(descripcion).not.toBeNull();
+
+      // Y las dos describen al control: el hint no perdió su aria-describedby.
+      const descritoPor = (input.getAttribute('aria-describedby') ?? '').split(' ');
+      expect(descritoPor).toContain(hint!.id);
+      expect(descritoPor).toContain(descripcion!.id);
+    });
+
+    it('sin placeholder propio, la descripción también va al placeholder', () => {
+      const input = fixtureC.debugElement.query(By.css('input[data-testid="campo-documento"]'))
+        .nativeElement as HTMLInputElement;
+
+      expect(input.placeholder).toBe(
+        'El número de tu cédula de identidad, sin puntos ni guiones.',
+      );
+    });
+  });
+
+  describe('la punta de la barra', () => {
+    it('el motor la enciende: acá el avance es en qué paso va quien mira', () => {
+      const barra = fixture.debugElement.query(By.css('app-progress')).nativeElement as HTMLElement;
+
+      expect(barra.classList.contains('progress--with-marker')).toBe(true);
+      expect(barra.querySelector('.progress__marker')).not.toBeNull();
+      // Y sigue anunciando exactamente lo mismo que antes.
+      expect(barra.getAttribute('aria-valuenow')).toBe('0');
     });
   });
 });

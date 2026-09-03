@@ -1,0 +1,37 @@
+<!-- `<nav>` con enlaces, no `role="tablist"`: cada destino es otra URL. -->
+<nav class="public-nav-rail" aria-label="Secciones de AloVida">
+  @for (group of groups; track group.id) {
+    <div class="public-nav-rail__group" [attr.data-group]="group.id">
+      <!-- El rail es de íconos: el rótulo del grupo no se ve, pero el lector de
+           pantalla necesita saber dónde termina uno y empieza el otro. -->
+      <h2 class="sr-only">{{ group.title }}</h2>
+
+      <ul class="public-nav-rail__list">
+        @for (entry of group.entries; track entry.route) {
+          <li>
+            <a
+              class="public-nav-rail__link"
+              data-testid="public-nav-rail-link"
+              [attr.data-route]="entry.route"
+              [routerLink]="entry.route"
+              [class.is-active]="activeRoute() === entry.route"
+              [attr.aria-current]="activeRoute() === entry.route ? 'page' : null"
+              [attr.aria-label]="entry.label"
+              [appTooltip]="entry.label"
+              appTooltipPosition="right"
+            >
+              <span class="public-nav-rail__icon" aria-hidden="true">
+                <app-nav-icon [name]="entry.icon" />
+              </span>
+              <!-- Se ve sólo cuando el rail se acuesta en horizontal (< 900 px),
+                   donde hay ancho para el texto y el hover no existe.
+                   `aria-hidden` porque el nombre ya lo da el `aria-label` del
+                   enlace: sin esto el lector diría el rótulo dos veces. -->
+              <span class="public-nav-rail__label" aria-hidden="true">{{ entry.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</nav>

@@ -1,0 +1,273 @@
+/* Una publicación, con la anatomía y las proporciones de una entrada de feed de
+   red social: tarjeta con su recuadro, imagen a sangre y sin gutter, y la fila
+   de interacción al pie. */
+
+:host {
+  display: block;
+}
+
+.publicacion {
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-card);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+  overflow: hidden;
+}
+
+/* El texto lleva el relleno; la imagen no, para que llegue a los bordes. */
+.publicacion__texto {
+  padding: var(--e3) var(--e4);
+}
+
+.publicacion__cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin-block-end: var(--e3);
+}
+
+.publicacion__avatar {
+  flex: none;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--r-pill);
+  object-fit: cover;
+  background: var(--menta);
+}
+
+.publicacion__avatar--iniciales {
+  display: grid;
+  place-items: center;
+  color: var(--tinta-marca);
+  font-family: var(--f-titulo);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.publicacion__firma {
+  min-inline-size: 0;
+}
+
+.publicacion__autor {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tinta);
+  line-height: 1.25;
+}
+
+.publicacion__retrato-enlace {
+  display: block;
+  flex: none;
+  line-height: 0;
+}
+
+.publicacion__autor-enlace {
+  color: inherit;
+  text-decoration: none;
+}
+
+.publicacion__autor-enlace:hover {
+  text-decoration: underline;
+}
+
+.publicacion__titular {
+  margin: 0;
+  font-size: 12px;
+  color: var(--tinta-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.publicacion__meta {
+  margin: 1px 0 0;
+  font-size: 12px;
+  color: var(--tinta-2);
+  display: flex;
+  align-items: center;
+}
+
+.publicacion__fecha {
+  color: inherit;
+  text-decoration: none;
+}
+
+.publicacion__fecha:hover {
+  text-decoration: underline;
+}
+
+.publicacion__meta time {
+  text-transform: capitalize;
+}
+
+.publicacion__punto {
+  margin-inline: 4px;
+}
+
+.publicacion__globo {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.publicacion__cuerpo {
+  margin: 0;
+  color: var(--tinta);
+  white-space: pre-line;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.publicacion__cuerpo--recortado {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.publicacion__enlace {
+  color: var(--tinta-marca);
+  text-decoration: none;
+}
+
+.publicacion__enlace:hover {
+  text-decoration: underline;
+}
+
+.publicacion__vermas {
+  margin-block-start: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.publicacion__vermas:hover {
+  text-decoration: underline;
+}
+
+/* AC-01-7 — Varias imágenes: una por vez, con pasos. Acá había
+   `overflow-x: auto` + `scroll-snap-type: x mandatory` y ningún control; el
+   único mecanismo era deslizar. Ya no queda scroll libre: si estas tres
+   propiedades vuelven, vuelve el defecto. */
+.publicacion__medios {
+  display: grid;
+  gap: 2px;
+  position: relative;
+}
+
+.publicacion__imagen {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 18rem;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.publicacion__medios[data-cantidad='una'] .publicacion__imagen {
+  aspect-ratio: 16 / 9;
+}
+
+/* El menú va al extremo de la cabecera, empujado por el margen automático: la
+   firma ocupa lo suyo y el botón queda pegado al borde sin ancho fijo. */
+.publicacion__preferencias {
+  margin-inline-start: auto;
+  align-self: flex-start;
+}
+
+.publicacion__resumen {
+  padding: var(--e2) var(--e4);
+  border-block-start: 1px solid var(--filete-2);
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--tinta-2);
+}
+
+.publicacion__reacciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Los contadores son botones y tienen que verse como el texto que eran: lo que
+   cambia al pasar el puntero es el subrayado, no una caja nueva. */
+.publicacion__contador-boton {
+  /* 44 px de área táctil sin engordar la fila. */
+  min-block-size: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.publicacion__contador-boton:hover {
+  text-decoration: underline;
+}
+
+/* ---- los pasos de la galería (AC-01-8) ---------------------------------- */
+
+/* Sobre la imagen y no debajo: debajo empujaría el resumen de la tarjeta y
+   cada publicación con varias fotos mediría 44 px más que sus vecinas. */
+.publicacion__pasos {
+  position: absolute;
+  inset-inline: var(--e3);
+  inset-block-end: var(--e3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  pointer-events: none;
+}
+
+.publicacion__paso {
+  /* 44×44 aunque el chevrón mida 20: es el área táctil mínima. */
+  inline-size: 44px;
+  block-size: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.publicacion__paso svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.publicacion__paso:hover:not(:disabled) {
+  background: rgb(0 0 0 / 0.72);
+}
+
+/* En el extremo el botón sigue ahí —para que la fila no salte— pero se ve y
+   se anuncia como inoperable. */
+.publicacion__paso:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.publicacion__contador {
+  margin: 0;
+  padding: 2px var(--e2);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}

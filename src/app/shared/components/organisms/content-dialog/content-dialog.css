@@ -1,0 +1,99 @@
+/* ============================================================================
+    Content dialog — el `<dialog>` nativo con contenido propio.
+
+    Mobile-first: sólo consultas `min-width`. En el teléfono el modal ocupa
+    casi toda la pantalla, porque lo que muestra —una lista con un mapa— no se
+    lee en una tarjeta de 300 px. El `::backdrop` es del navegador: se lo pinta,
+    no se lo reemplaza por un div.
+    ========================================================================== */
+
+.content-dialog {
+    padding: 0;
+    border: none;
+    background: transparent;
+    /* El nativo trae un ancho raro y un margen automático que no sirven. */
+    inline-size: calc(100vw - var(--sp-4) * 2);
+    max-inline-size: calc(100vw - var(--sp-4) * 2);
+    max-block-size: calc(100dvh - var(--sp-4) * 2);
+}
+
+.content-dialog::backdrop {
+    /* Petróleo del sistema, no un negro cualquiera. */
+    background: rgb(10 28 39 / 55%);
+}
+
+.content-dialog__panel {
+    display: flex;
+    flex-direction: column;
+    /* El panel manda el alto: el cuerpo se recorre adentro y el encabezado
+       —con el botón de cerrar— nunca se va de pantalla. */
+    max-block-size: calc(100dvh - var(--sp-4) * 2);
+    border-radius: var(--r-lg);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-lg);
+    font-family: var(--font-body);
+}
+
+.content-dialog__encabezado {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: var(--sp-5) var(--sp-5) var(--sp-3);
+    border-block-end: 1px solid var(--border-default);
+}
+
+.content-dialog__texto {
+    min-inline-size: 0;
+}
+
+.content-dialog__titulo {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.content-dialog__bajada {
+    margin: var(--sp-2) 0 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.content-dialog__cuerpo {
+    flex: 1;
+    min-block-size: 0;
+    padding: var(--sp-4) var(--sp-5) var(--sp-5);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+@media (min-width: 48rem) {
+    .content-dialog {
+        inline-size: 46rem;
+        max-inline-size: min(92vw, 46rem);
+    }
+}
+
+@media (min-width: 80rem) {
+    .content-dialog {
+        inline-size: 58rem;
+        max-inline-size: min(90vw, 58rem);
+    }
+}
+
+/* Entrada corta; la regla global de `prefers-reduced-motion` la vuelve
+   instantánea, que para un modal es exactamente lo correcto. */
+.content-dialog[open] .content-dialog__panel {
+    animation: content-dialog-in 0.15s ease;
+}
+
+@keyframes content-dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(var(--sp-2));
+    }
+}

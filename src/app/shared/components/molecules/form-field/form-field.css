@@ -32,6 +32,55 @@
 
 .form-field-control {
   width: 100%;
+  /* La explicación se cuelga del control, no de la página. */
+  position: relative;
+}
+
+/* ==========================================================================
+    La explicación del campo.
+
+    Mismo globo que `app-tooltip` —superficie invertida, la misma en claro y en
+    oscuro— para que no se lea como una pieza nueva. Aparece al apuntar el campo
+    y también al enfocarlo con el teclado, que es la mitad que casi siempre
+    falta: sin `:focus-within` la ayuda no existe para quien tabula, y en un
+    teléfono no existe para nadie.
+
+    No reemplaza al hint de abajo, que sigue visible y sigue siendo el
+    `aria-describedby` del control (ADR-0008). Esto se suma.
+   ========================================================================== */
+.form-field-description {
+  position: absolute;
+  inset-block-end: calc(100% + var(--sp-1));
+  inset-inline-start: 0;
+  z-index: 20;
+  max-width: min(280px, 100%);
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--c-petrol-900);
+  color: var(--c-ivory-500);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  box-shadow: var(--shadow-md);
+  overflow-wrap: break-word;
+
+  /* Oculto por opacidad y no por `display`/`visibility`: así el nodo sigue
+     existiendo para el `aria-describedby` que lo apunta. */
+  opacity: 0;
+  /* El globo describe, no recibe: nunca se interpone al puntero. */
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .form-field-description {
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+}
+
+.form-field-container:hover > .form-field-control > .form-field-description,
+.form-field-container:focus-within > .form-field-control > .form-field-description {
+  opacity: 1;
 }
 
 /* Hint */

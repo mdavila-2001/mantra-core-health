@@ -40,25 +40,6 @@
 </section>
 
 <!-- ─── Las pestañas del buscador ───────────────────────────────────────────── -->
-<div role="tablist" class="app-tabs" app-tabs="" aria-label="Qué estás buscando">
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar">Todo</a>
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/profesionales"
-    >Profesionales</a
-  >
-  <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-current="page"
-    >Medicamentos</a
-  >
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/hospitales"
-    >Hospitales y clínicas</a
-  >
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/diagnostico"
-    >Laboratorios e imagen</a
-  >
-  <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/buscar/aseguradoras"
-    >Aseguradoras</a
-  >
-</div>
-
 <!-- ─── Desde dónde medir: se pide, no se toma ──────────────────────────────── -->
 <section class="vitrina-zona" aria-labelledby="vitrina-zona-titulo">
   <h2 id="vitrina-zona-titulo" class="vitrina-zona__titulo">Farmacias cerca tuyo</h2>
@@ -169,156 +150,25 @@
 <section class="app-view-state-host" app-view-state-host="" aria-label="Medicamentos publicados">
   @switch (estado()) {
     @case ('datos') {
-      <ul class="vitrina-grilla" data-estado="datos" data-testid="vitrina-grilla">
-        @for (tarjeta of tarjetas(); track tarjeta.conceptId; let i = $index) {
-          <li
-            class="vitrina-tarjeta"
-            [class.vitrina-tarjeta--abierta]="estaAbierto(tarjeta)"
-            [style.--indice]="i"
-          >
-            <article class="vitrina-tarjeta__cara">
-              <header class="vitrina-tarjeta__encabezado">
-                <span class="vitrina-tarjeta__grupo">{{ tarjeta.therapeuticGroup }}</span>
-                <span class="vitrina-tarjeta__atc col-codigo">{{ tarjeta.atcCode }}</span>
-              </header>
-
-              <h3 class="vitrina-tarjeta__nombre">{{ tarjeta.genericName }}</h3>
-
-              @if (tarjeta.brands.length > 0) {
-                <p class="vitrina-tarjeta__marcas">{{ tarjeta.brands.join(' · ') }}</p>
-              }
-              @if (tarjeta.presentations.length > 0) {
-                <p class="vitrina-tarjeta__presentacion">{{ tarjeta.presentations[0] }}</p>
-              }
-
-              <p class="vitrina-tarjeta__precio">
-                @if (hayRango(tarjeta)) {
-                  <span class="vitrina-tarjeta__precio-rotulo">desde</span>
-                }
-                <span class="vitrina-tarjeta__precio-valor num">{{ precioDe(tarjeta) }}</span>
-                @if (hayRango(tarjeta)) {
-                  <span class="vitrina-tarjeta__precio-tope"
-                    >la más cara, {{ precioMaximoDe(tarjeta) }}</span
-                  >
-                }
-              </p>
-
-              <div class="vitrina-tarjeta__señales">
-                <app-badge variant="info">
-                  {{ tarjeta.pharmacyCount }}
-                  {{ tarjeta.pharmacyCount === 1 ? 'farmacia' : 'farmacias' }}
-                </app-badge>
-                @if (distancia(tarjeta.nearestKm); as km) {
-                  <app-badge variant="success">a {{ km }}</app-badge>
-                }
-                @if (tarjeta.requiresPrescription) {
-                  <app-badge variant="warning">Con receta</app-badge>
-                }
-              </div>
-
-              <button
-                app-button
-                variant="secondary"
-                size="sm"
-                type="button"
-                class="vitrina-tarjeta__cta"
-                data-testid="vitrina-ver-farmacias"
-                [attr.aria-expanded]="estaAbierto(tarjeta)"
-                (clicked)="alternarDetalle(tarjeta)"
-              >
-                {{ estaAbierto(tarjeta) ? 'Cerrar' : 'Ver en qué farmacias' }}
-              </button>
-            </article>
-
-            <!-- ─── La disponibilidad, con su mapa ───────────────────────── -->
-            @if (estaAbierto(tarjeta)) {
-              <div class="vitrina-detalle" data-testid="vitrina-detalle">
-                @if (cargandoDetalle()) {
-                  <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
-                    <span class="solo-lectores">Buscando farmacias…</span>
-                    <span class="app-skeleton"></span>
-                    <span class="app-skeleton"></span>
-                    <span class="app-skeleton"></span>
-                  </div>
-                } @else if (errorDetalle()) {
-                  <div class="app-alert" app-alert="" data-tono="error" role="alert">
-                    <div class="app-alert__cuerpo">
-                      <strong>No pudimos consultar las farmacias.</strong>
-                      <p>Volvé a intentarlo en un momento.</p>
-                    </div>
-                  </div>
-                } @else {
-                  @if (pines().length > 0) {
-                    <figure class="vitrina-detalle__mapa">
-                      <app-map
-                        [pines]="pines()"
-                        [etiqueta]="etiquetaDelMapa()"
-                        [centro]="centroDelMapa()"
-                        [zoom]="zoomDelMapa()"
-                        [(seleccionado)]="farmaciaElegida"
-                        (pinElegido)="enfocarFarmacia($event)"
-                      />
-                      <figcaption class="vitrina-detalle__pie">
-                        Las distancias son en línea recta, no de recorrido: el tiempo real de viaje
-                        depende del tráfico.
-                      </figcaption>
-                    </figure>
-                  }
-
-                  <ul class="vitrina-ofertas" data-testid="vitrina-ofertas">
-                    @for (oferta of ofertas(); track oferta.codigo) {
-                      <li
-                        class="vitrina-oferta"
-                        [id]="'oferta-' + oferta.codigo"
-                        [class.vitrina-oferta--elegida]="farmaciaElegida() === oferta.codigo"
-                        (mouseenter)="farmaciaElegida.set(oferta.codigo)"
-                      >
-                        <span class="vitrina-oferta__codigo" aria-hidden="true">{{
-                          oferta.codigo
-                        }}</span>
-
-                        <div class="vitrina-oferta__datos">
-                          <span class="vitrina-oferta__farmacia">{{ oferta.pharmacyName }}</span>
-                          @if (oferta.addressText !== null) {
-                            <span class="vitrina-oferta__direccion">
-                              {{ oferta.addressText }}@if (oferta.city !== null) {
-                                , {{ oferta.city }}
-                              }
-                            </span>
-                          }
-                          <span class="vitrina-oferta__detalle">
-                            @if (oferta.brandName !== null) {
-                              {{ oferta.brandName }}
-                            }
-                            @if (oferta.presentation !== null) {
-                              · {{ oferta.presentation }}
-                            }
-                          </span>
-                          <span class="vitrina-oferta__entrega">
-                            @if (oferta.pickup) {
-                              Retiro en farmacia
-                            }
-                            @if (oferta.homeDelivery) {
-                              · Envío a domicilio
-                            }
-                          </span>
-                        </div>
-
-                        <div class="vitrina-oferta__cierre">
-                          <span class="vitrina-oferta__precio num">{{ importeDe(oferta) }}</span>
-                          @if (distancia(oferta.distanceKm); as km) {
-                            <span class="vitrina-oferta__km">{{ km }} en línea recta</span>
-                          }
-                          <app-badge [variant]="oferta.inStock ? 'success' : 'warning'">
-                            {{ oferta.inStock ? 'Disponible hoy' : 'Sin stock hoy' }}
-                          </app-badge>
-                        </div>
-                      </li>
-                    }
-                  </ul>
-                }
-              </div>
-            }
+      <!-- La misma grilla y la misma tarjeta que hospitales, laboratorios y
+           aseguradoras: lo que cambia son los datos de abajo y el pie. -->
+      <ul class="centros__grilla" data-estado="datos" data-testid="vitrina-grilla">
+        @for (item of tarjetas(); track item.id) {
+          <li app-centro-card [centro]="item.card">
+            <button
+              app-button
+              variant="secondary"
+              size="sm"
+              type="button"
+              data-testid="vitrina-ver-farmacias"
+              (clicked)="abrirDetalle(item.medication)"
+            >
+              Ver farmacias donde está disponible
+            </button>
+            <app-card-detail-panel
+              [heading]="item.medication.genericName"
+              [rows]="item.details"
+            />
           </li>
         }
       </ul>
@@ -359,17 +209,21 @@
 
     @case ('carga') {
       <div data-estado="carga">
-        <div class="vitrina-grilla" aria-live="polite" aria-busy="true">
+        <!-- Los esqueletos tienen la forma de la tarjeta, no la de una fila:
+             uno que no se parece a lo que va a llegar hace que la página salte
+             cuando llegan los datos. -->
+        <ul class="centros__grilla" aria-live="polite" aria-busy="true">
           <span class="solo-lectores">Buscando medicamentos…</span>
-          @for (hueco of [1, 2, 3, 4, 5, 6]; track hueco) {
-            <div class="vitrina-tarjeta vitrina-tarjeta--esqueleto">
-              <span class="app-skeleton"></span>
-              <span class="app-skeleton"></span>
-              <span class="app-skeleton"></span>
-              <span class="app-skeleton"></span>
-            </div>
+          @for (hueco of huecos; track hueco) {
+            <li class="centros__esqueleto">
+              <span class="centros__esqueleto-portada app-skeleton"></span>
+              <span class="centros__esqueleto-linea app-skeleton"></span>
+              <span
+                class="centros__esqueleto-linea centros__esqueleto-linea--corta app-skeleton"
+              ></span>
+            </li>
           }
-        </div>
+        </ul>
       </div>
     }
 
@@ -404,3 +258,17 @@
     }
   }
 </section>
+
+<!-- ─── Dónde conseguirlo: lista + mapa, en un modal (AC-06-9 a AC-06-12) ──── -->
+@if (abierto(); as medicamento) {
+  <app-pharmacy-availability-dialog
+    [medicationName]="medicamento.genericName"
+    [offers]="ofertas()"
+    [loading]="cargandoDetalle()"
+    [failed]="errorDetalle()"
+    [mapCenter]="centroDelMapa()"
+    [mapZoom]="zoomDelMapa()"
+    [originLabel]="etiquetaDelOrigen()"
+    (closed)="cerrarDetalle()"
+  />
+}

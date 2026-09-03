@@ -98,8 +98,62 @@ export interface CampoDeFormulario {
    * Va dentro del control y no al lado del rótulo a propósito: así comparte el
    * marco, el foco y el estado de error del campo, y se enciende cuando el
    * campo está activo en vez de quedar como una calcomanía junto al texto.
+   *
+   * ## «Un ícono en CADA campo» (TAREA 04, AC-04-1)
+   *
+   * El propietario pidió un ícono en cada campo de texto y en cada select del
+   * alta, y eso choca de frente con el párrafo de arriba. El choque se resolvió
+   * así, y no ignorándolo:
+   *
+   * - **Lo que cambió es lo que se puede hacer, no lo que hay que hacer.** El
+   *   mecanismo dejó de servir sólo a los campos de texto: ahora el `select`
+   *   también dibuja su glifo dentro del marco. Antes, «un ícono en cada
+   *   campo» era literalmente imposible para media página; hoy es una decisión.
+   * - **Sigue siendo por campo y declarado, nunca global.** No hay —ni va a
+   *   haber— un interruptor que le ponga un glifo a los campos de las 53
+   *   pantallas que montan este motor: eso convertiría «un ícono dice algo» en
+   *   «todos los campos tienen una calcomanía», que es el ruido que la regla
+   *   evita. Una pantalla que quiera el ícono en sus cuatro campos lo declara
+   *   cuatro veces, y al escribirlo se topa con la pregunta de qué dibujo va
+   *   ahí —que es exactamente la pregunta que la regla quiere que se haga—.
+   * - **La regla se afina, no se rompe:** en una página de un solo campo el
+   *   ícono sigue sin aportar nada. Donde sí aporta, y por eso el alta es el
+   *   caso de libro, es en páginas de tres o cuatro campos que preguntan cosas
+   *   de distinta naturaleza —documento, correo, teléfono, contraseña—: ahí el
+   *   glifo es lo que deja recorrer la página sin leerla entera.
+   *
+   * Queda abierto quién decide caso por caso (P-04-2 de la ficha, sin resolver
+   * con el propietario): este contrato sólo garantiza que se **pueda** y que
+   * cueste declararlo, no que esté puesto.
+   *
+   * El glifo es siempre `aria-hidden` —lo pone `app-nav-icon`—, así que quitarlo
+   * no cambia una palabra de lo que anuncia un lector de pantalla.
    */
   readonly icono?: NavIconName;
+
+  /**
+   * La explicación del campo, la que aparece al apuntarlo o al enfocarlo.
+   *
+   * Es la respuesta a «¿qué me están preguntando acá?» cuando el rótulo no
+   * alcanza y la ayuda no cabe debajo del campo. Aparece con el puntero y
+   * también con el foco del teclado, y viaja siempre en el `aria-describedby`
+   * del control —ver `app-form-field`—.
+   *
+   * **No reemplaza al `hint`.** Son dos cosas distintas y las dos siguen: el
+   * `hint` se lee sin hacer nada y existe en el teléfono, donde no hay puntero;
+   * la `description` es la explicación larga que estorbaría si estuviera
+   * siempre a la vista. Mudar el `hint` a un globo dejaría al campo sin su
+   * `aria-describedby` —contrato del ADR-0008— y sin ayuda alguna en un
+   * teléfono.
+   *
+   * Cuando el campo no declara `placeholder`, esta descripción también se usa
+   * de placeholder: el pedido era que el mismo texto estuviera en los dos
+   * sitios. Si el campo **sí** declara `placeholder`, gana el declarado: un
+   * ejemplo concreto («1234567») enseña más sobre qué escribir que una
+   * explicación, y además desaparece al primer tecleo. Ver P-04-3 de la ficha:
+   * sigue sin confirmarse con el propietario.
+   */
+  readonly description?: string;
 
   /**
    * El `data-testid` del control, cuando la pantalla ya tenía uno.
@@ -165,6 +219,20 @@ export interface PaginaDeFormulario {
   readonly titulo: string;
 
   /**
+   * El glifo de la página en el indicador de pasos, del set cerrado del nav.
+   *
+   * Misma regla que el ícono de un campo: se declara cuando **dice algo que el
+   * rótulo no dice ya**. Un recorrido de dos pasos no lo necesita; uno de cinco
+   * —identidad, contacto, domicilio, trabajo, seguro— se reconoce de un
+   * vistazo y sin leer.
+   *
+   * No es la seña de estado del paso: el completado sigue mostrando su ✓ y el
+   * pendiente su marcador punteado, porque el estado no puede depender del
+   * dibujo ni del color (ver `stepper.css`).
+   */
+  readonly icon?: NavIconName;
+
+  /**
    * Nombre estable de la página, para quien necesite reconocerla desde fuera.
    *
    * El título no sirve para eso: es texto de cara a la persona —se reescribe
@@ -206,6 +274,14 @@ export interface SeccionDeFormulario {
 
   /** Ver {@link PaginaDeFormulario.clave}: la heredan todas sus páginas. */
   readonly clave?: string;
+
+  /**
+   * Ver {@link PaginaDeFormulario.icon}: lo heredan todas sus páginas.
+   *
+   * Una sección partida en dos lleva el mismo glifo en sus dos mitades, por lo
+   * mismo que lleva el mismo rótulo: siguen siendo la misma pregunta.
+   */
+  readonly icon?: NavIconName;
 
   readonly hint?: string;
   readonly disposicion?: PaginaDeFormulario['disposicion'];

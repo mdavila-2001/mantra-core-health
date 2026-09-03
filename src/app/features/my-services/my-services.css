@@ -1,0 +1,90 @@
+/* ============================================================================
+    Mis servicios. Sólo distribución: la tarjeta, el distintivo y el botón ya
+    traen su pinta del sistema — ni un color ni una tipografía propios.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.mis-servicios {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+.mis-servicios__esqueleto,
+.mis-servicios__grilla {
+  display: grid;
+  /* `auto-fill` con `minmax` y no un número fijo de columnas: la pantalla se
+     abre en un teléfono, en una tablet y en un monitor, y fijar tres columnas
+     obliga a tres reglas de medios que se olvidan de la cuarta pantalla.
+
+     El `min(100%, …)` es lo que impide el desborde lateral: en un contenedor
+     más angosto que la pista mínima, `minmax(18rem, 1fr)` la respeta igual y
+     aparece scroll horizontal. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mis-servicios__item {
+  display: block;
+  /* Las tarjetas de una fila terminan a la misma altura aunque digan distinto. */
+  block-size: 100%;
+}
+
+.mis-servicios__ficha {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.mis-servicios__nombre {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  /* Un nombre largo parte en varias líneas en vez de estirar la tarjeta y
+     empujar la grilla a lo ancho. */
+  overflow-wrap: anywhere;
+}
+
+.mis-servicios__codigo {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.mis-servicios__precio {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  margin: var(--sp-3) 0 0;
+}
+
+.mis-servicios__rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.mis-servicios__monto {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+.mis-servicios__mas {
+  display: flex;
+  justify-content: center;
+  margin-block-start: var(--sp-6);
+}

@@ -133,6 +133,38 @@ export interface AgendaSlotQuery {
  * `startAt` puede ser `undefined` aunque la cita exista: el instante se toma
  * del cupo, y una cita que quedó sin cupo no tiene ninguno que mostrar.
  */
+/**
+ * Estado de pago de una cita (TAREA-13 punto 5).
+ *
+ * Son **tres**, y el del medio es el que existe porque el propietario lo pidió:
+ * un booleano no puede decir «parcialmente pagada». `reembolsada` quedó fuera
+ * a propósito.
+ */
+export type PaymentStateCode = 'PENDING' | 'PARTIALLY_PAID' | 'PAID';
+
+/**
+ * El estado de pago tal como lo publica la API.
+ *
+ * La **etiqueta la manda el servidor**: la pantalla no traduce estados. Y
+ * `markedByUserId`/`markedAt` viajan siempre porque marcar una cita como pagada
+ * es una afirmación sobre el dinero de alguien y no puede quedar sin autor.
+ */
+export interface PaymentStateInfo {
+  readonly state: PaymentStateCode;
+  readonly label: string;
+  readonly conceptId: string;
+  /** Marca **separada** del estado: se puede estar a medio pagar con seguro o sin él. */
+  readonly insuranceUsed: boolean;
+  readonly markedByUserId: string;
+  readonly markedAt: Date;
+}
+
+/** Cuerpo de `PUT /scheduling/bookings/:id/payment-state`. */
+export interface NewPaymentState {
+  readonly state: PaymentStateCode;
+  readonly insuranceUsed?: boolean;
+}
+
 export interface Booking {
   readonly id: string;
   readonly patientProfileId?: string;
@@ -148,6 +180,22 @@ export interface Booking {
    * registro posterior.
    */
   readonly appointmentId?: string | null;
+  /**
+   * El estado de pago, **si alguien lo marcó**.
+   *
+   * Ausente no es «pendiente de pago»: pendiente es algo que alguien firmó, la
+   * ausencia es que del pago todavía no se dijo nada. Comprobalo con
+   * `if (cita.paymentState)`, nunca con un valor por defecto.
+   */
+  readonly paymentState?: PaymentStateInfo;
+  /**
+   * La tipología raíz de la actividad: consulta, procedimiento, control…
+   *
+   * Es `clinical.appointments.type_concept_id`, y llega sólo cuando la reserva
+   * tiene cita clínica detrás. Se resuelve contra el catálogo de
+   * `GET /scheduling/activity-types`, que trae la etiqueta y el tono.
+   */
+  readonly typeConceptId?: string;
   readonly startAt?: Date;
   readonly endAt?: Date;
   readonly statusConceptId: string;
@@ -414,6 +462,18 @@ export interface ScheduleRule {
   readonly endTime: string;
   readonly slotMinutes?: number;
   readonly capacityPerSlot?: number;
+  /**
+   * El respiro entre una consulta y la siguiente, en minutos.
+   *
+   * El generador avanza `slotMinutes + gapMinutes`, pero **cada turno sigue
+   * durando `slotMinutes`**: el respiro separa un turno del siguiente, no
+   * alarga la consulta.
+   *
+   * **Ausente ≡ 0.** La columna es anulable y nadie está obligado a
+   * declararlo, así que el formulario no manda `0` cuando el médico no eligió
+   * respiro: «no lo dijo» y «dijo que no hay» se guardan distinto.
+   */
+  readonly gapMinutes?: number;
 }
 
 /** Cuerpo de `POST /scheduling/resources/:id/templates` (UC-41-02). */
@@ -453,13 +513,126 @@ export interface SlotsGenerated {
   readonly skipped: number;
 }
 
-/** Tipo de excepción de disponibilidad (`ExceptionType`). */
-export type AvailabilityExceptionType = 'ABSENCE' | 'HOLIDAY' | 'EXTRA';
+/**
+ * Tipo de excepción de disponibilidad (`ExceptionType`).
+ *
+ * Son **siete**, no tres. Los cuatro que faltaban —`VACATION`, `CONFERENCE`,
+ * `ERRAND`, `OTHER`— existían en la base desde siempre; lo que no existía era
+ * quien los publicara, así que el front no tenía de dónde sacarlos y mandaba
+ * `ABSENCE` para todo. Ese era el defecto que arregla la TAREA-11 punto 4.
+ *
+ * **No los pongas en un `<select>` a mano.** La lista que se muestra viene de
+ * `GET /scheduling/exception-types`, que además dice cuál exige explicación y
+ * cuál abre horario en vez de cerrarlo. Esta unión existe para tipar el envío,
+ * no para dibujar la pantalla.
+ */
+export type AvailabilityExceptionType =
+  | 'ABSENCE'
+  | 'HOLIDAY'
+  | 'VACATION'
+  | 'CONFERENCE'
+  | 'ERRAND'
+  | 'EXTRA'
+  | 'OTHER';
 export const AVAILABILITY_EXCEPTION_TYPES: readonly AvailabilityExceptionType[] = [
   'ABSENCE',
   'HOLIDAY',
+  'VACATION',
+  'CONFERENCE',
+  'ERRAND',
   'EXTRA',
+  'OTHER',
 ];
+
+/**
+ * Un motivo del catálogo, tal como lo publica la API.
+ *
+ * La pantalla **no decide** ninguna de las tres reglas: el servidor manda la
+ * etiqueta en castellano, si el motivo obliga a escribir texto y si bloquea o
+ * abre horario. Duplicar cualquiera de las tres acá sería tener dos verdades.
+ */
+export interface AvailabilityExceptionTypeOption {
+  readonly type: AvailabilityExceptionType;
+  readonly conceptId: string;
+  readonly label: string;
+  /** Elegirlo obliga a explicar por qué. Hoy es `OTHER`, y sólo él. */
+  readonly requiresText: boolean;
+  /** `false` en `EXTRA`, que **abre** disponibilidad en vez de cerrarla. */
+  readonly blocks: boolean;
+}
+
+/**
+ * Una tipología de actividad, tal como la publica la API.
+ *
+ * Trae `tone` y **no un color**: el color concreto es del sistema de diseño.
+ * Un `#RRGGBB` desde el servidor obligaría a redesplegar la API para cambiar la
+ * paleta y rompería el tema oscuro.
+ */
+export interface ActivityTypeOption {
+  readonly type: string;
+  readonly conceptId: string;
+  readonly label: string;
+  /** Nunca `error`: ése está reservado para los bloqueos. */
+  readonly tone: string;
+}
+
+export interface ActivityTypeList {
+  readonly items: readonly ActivityTypeOption[];
+}
+
+/** Cuerpo de `POST /scheduling/resources/:id/shift-slots`. */
+export interface ShiftSlotsRequest {
+  /** Negativo adelanta. */
+  readonly shiftMinutes: number;
+  readonly from: string;
+  readonly to: string;
+  /** Ausente = todos los de la ventana. Vacío no mueve nada. */
+  readonly slotIds?: readonly string[];
+}
+
+export interface SlotsShifted {
+  readonly movedSlots: number;
+  /** A cuántas personas se les avisó. Menor que `movedSlots` es lo corriente. */
+  readonly notified: number;
+  readonly shiftMinutes: number;
+}
+
+/** Cuerpo de `PATCH /scheduling/exceptions/:id`. Todo opcional. */
+export interface UpdateAvailabilityException {
+  readonly exceptionType?: AvailabilityExceptionType;
+  readonly reason?: string;
+  readonly startAt?: string;
+  readonly endAt?: string;
+}
+
+export interface AvailabilityExceptionUpdated {
+  /** El MISMO id: editar no borra y recrea. */
+  readonly id: string;
+  readonly startAt: string;
+  readonly endAt: string;
+  /** Cupos cerrados porque el rango creció. Achicar no reabre ninguno. */
+  readonly blockedSlots: number;
+}
+
+/** Cuerpo de `POST /scheduling/resources/:id/close-slots`. */
+export interface CloseSlotsRequest {
+  readonly exceptionType: AvailabilityExceptionType;
+  readonly reason?: string;
+  /** Al menos uno: no hay «cerrar todos» a propósito. */
+  readonly slotIds: readonly string[];
+}
+
+export interface SlotsClosed {
+  readonly closedSlots: number;
+  /** La excepción que impide que regenerar los devuelva. */
+  readonly exceptionId: string;
+  readonly from: string;
+  readonly to: string;
+}
+
+export interface AvailabilityExceptionTypeList {
+  readonly items: readonly AvailabilityExceptionTypeOption[];
+}
 
 /** Cuerpo de `POST /scheduling/resources/:id/exceptions` (UC-41-04). */
 export interface NewAvailabilityException {
@@ -566,11 +739,55 @@ export interface PublishedRule {
   readonly endTime: string;
   readonly slotMinutes?: number;
   readonly capacityPerSlot?: number;
+  /**
+   * El respiro entre consultas, si la franja lo declara.
+   *
+   * Ausente ≡ 0. El servidor lo omite cuando la columna está nula, para que
+   * «no declarado» y «cero» sigan siendo distinguibles.
+   */
+  readonly gapMinutes?: number;
+}
+
+/** Lo que deja retirar un horario (`DELETE /scheduling/templates/:id`). */
+export interface RetiredTemplate {
+  readonly id: string;
+  readonly statusConceptId: string;
+  /** Cupos que nadie reservó y dejaron de publicarse. */
+  readonly releasedSlots: number;
+  /**
+   * Cupos conservados por tener una cita detrás.
+   *
+   * Distinto de cero **no es un error**: es el historial que el retiro respeta
+   * a propósito, y la pantalla tiene que decirlo en vez de callarlo.
+   */
+  readonly keptSlots: number;
 }
 
 /** Una plantilla publicada, con sus franjas. */
+/** Lo que responde reactivar un horario pausado. */
+export interface TemplateReactivated {
+  readonly id: string;
+  readonly statusConceptId: string;
+  /**
+   * El horario quedó vigente **sin cupos**: hay que generarlos.
+   *
+   * Retirar borró los libres, y reactivar no los repone a propósito —
+   * materializar los del mes pasado abriría turnos en fechas que ya pasaron.
+   */
+  readonly slotsPendientes: boolean;
+}
+
 export interface PublishedTemplate {
   readonly id: string;
+  /**
+   * Si el horario fue retirado y ya no se publica.
+   *
+   * Viene como booleano desde el servidor —no hay que comparar contra un uuid
+   * de concepto— y es lo que separa el horario vigente del histórico: el
+   * listado devuelve **todas** las plantillas del recurso, retiradas incluidas.
+   */
+  readonly retired: boolean;
+
   readonly name: string;
   readonly rules: readonly PublishedRule[];
   readonly slotMinutes?: number;
@@ -592,7 +809,20 @@ export interface PublishedException {
   readonly exceptionTypeConceptId: string;
   readonly startAt: string;
   readonly endAt: string;
-  /** Por qué. Lo lee el profesional, no el paciente. */
+  /**
+   * El motivo catalogado, en castellano.
+   *
+   * Lo manda el servidor y **lo ve también el paciente** (9c): es una etiqueta
+   * de lista cerrada y no puede contener nada que el profesional no haya
+   * elegido a propósito.
+   */
+  readonly reasonLabel?: string;
+  /**
+   * La descripción libre. **Sólo la ve quien administra la agenda.**
+   *
+   * Es lo que se escribe al elegir un motivo, y ahí puede aparecer cualquier
+   * cosa — incluido el nombre de un tercero.
+   */
   readonly reason?: string;
   /** `true` cuando la excepción ABRE disponibilidad en vez de cerrarla. */
   readonly isAvailable?: boolean;

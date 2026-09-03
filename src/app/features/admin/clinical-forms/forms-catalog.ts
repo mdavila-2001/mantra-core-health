@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 
 import { ChartTemplatesClient } from '../../../core/data-access/chart-templates/chart-templates.client';
 import type { ChartTemplate } from '../../../core/data-access/chart-templates/chart-templates.types';
@@ -10,23 +20,17 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
 import { Link } from '../../../shared/components/atoms/link/link';
-import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { SEARCH_PARAM } from '../../../shared/components/organisms/filter-bar/filter-bar';
+import { SpecialtyBrowser } from '../../../shared/components/organisms/specialty-browser/specialty-browser';
+import type { SpecialtyGroup } from '../../../shared/components/organisms/specialty-browser/specialty-browser.types';
 
 /** Cuántos campos del esquema se muestran antes de resumir el resto. */
 const CAMPOS_EN_EL_VISTAZO = 6;
 
 /** Una especialidad del catálogo, con los formularios que trae. */
-export interface GrupoDeEspecialidad {
-  /** Concept id de la especialidad; agrupa y ordena. */
-  readonly conceptId: string;
-  /** Etiqueta en castellano, o el propio id si terminología no la conoce. */
-  readonly titulo: string;
-  /** Los formularios de esa especialidad, por nombre. */
-  readonly formularios: readonly ChartTemplate[];
-}
+type GrupoDeEspecialidad = SpecialtyGroup<ChartTemplate>;
 
 /**
  * El catálogo navegable de formularios clínicos estándar — carril R2-5, punto 5
@@ -56,10 +60,20 @@ export interface GrupoDeEspecialidad {
  * `ClinicalForms` lista **filtrado** por la especialidad que el admin eligió
  * arriba; el catálogo tiene que mostrarlas todas para poder agrupar. Son dos
  * lecturas con distinto propósito sobre el mismo endpoint, no una duplicada.
+ *
+ * ## Buscar es acotar lo que ya tiene, no volver a pedir
+ *
+ * La anatomía —buscador arriba, grilla agrupada abajo— la pone
+ * `app-specialty-browser`, y el catálogo aporta sus grupos y la tarjeta. El
+ * término se lee de la URL, que es donde la barra de filtros guarda su estado:
+ * así un enlace compartido con `?q=` abre el catálogo ya acotado, y el botón
+ * «atrás» del navegador deshace la búsqueda. El filtrado es **en memoria**
+ * sobre las plantillas que ya llegaron: pedirlas de nuevo por cada letra sería
+ * una lectura por tecla para acotar algo que ya está en la pantalla.
  */
 @Component({
   selector: 'app-forms-catalog',
-  imports: [AppButton, Card, Chip, Link, Skeleton, ViewStateHost],
+  imports: [AppButton, Card, Chip, Link, SpecialtyBrowser],
   templateUrl: './forms-catalog.html',
   styleUrl: './forms-catalog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,6 +82,8 @@ export class FormsCatalog {
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly toasts = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * El admin quiere partir de este formulario y adaptarlo. Lo emite en vez de
@@ -86,6 +102,15 @@ export class FormsCatalog {
 
   protected readonly camposEnElVistazo = CAMPOS_EN_EL_VISTAZO;
 
+  /** Lo que la barra de filtros dejó en la URL. Ella es la fuente de verdad. */
+  private readonly params = toSignal(
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)),
+    { initialValue: {} as Record<string, string> },
+  );
+
+  /** El término tecleado, ya comparable. Vacío ⇒ el catálogo entero. */
+  private readonly busqueda = computed(() => normalizar(this.params()[SEARCH_PARAM] ?? ''));
+
   constructor() {
     this.cargar();
   }
@@ -96,6 +121,10 @@ export class FormsCatalog {
    * Se ordena por la etiqueta y no por el id porque el id es un uuid y no dice
    * nada; mientras las etiquetas no hayan llegado, el orden es el del id, que
    * al menos es estable y no salta cuando resuelven.
+   *
+   * Una especialidad que se queda sin formularios tras la búsqueda **no deja
+   * su encabezado suelto**: se cae entera, porque un rótulo sobre una grilla
+   * vacía se lee como un error de carga.
    */
   protected readonly grupos = computed<readonly GrupoDeEspecialidad[]>(() => {
     const state = this.catalogo();
@@ -112,18 +141,25 @@ export class FormsCatalog {
     }
 
     const etiquetas = this.etiquetas();
+    const busqueda = this.busqueda();
     return [...porEspecialidad.entries()]
-      .map(([conceptId, formularios]) => ({
-        conceptId,
-        titulo: etiquetas.get(conceptId)?.display ?? conceptId,
-        formularios: [...formularios].sort((a, b) => a.name.localeCompare(b.name, 'es')),
-      }))
-      .sort((a, b) => a.titulo.localeCompare(b.titulo, 'es'));
+      .map(([conceptId, formularios]) => {
+        const label = etiquetas.get(conceptId)?.display ?? conceptId;
+        return {
+          conceptId,
+          label,
+          items: formularios
+            .filter((plantilla) => coincide(plantilla, label, busqueda))
+            .sort((a, b) => a.name.localeCompare(b.name, 'es')),
+        };
+      })
+      .filter((grupo) => grupo.items.length > 0)
+      .sort((a, b) => a.label.localeCompare(b.label, 'es'));
   });
 
   /** Cuántos formularios hay en total, para el encabezado. */
   protected readonly total = computed(() =>
-    this.grupos().reduce((suma, grupo) => suma + grupo.formularios.length, 0),
+    this.grupos().reduce((suma, grupo) => suma + grupo.items.length, 0),
   );
 
   protected recargar(): void {
@@ -194,6 +230,38 @@ export class FormsCatalog {
       `«${plantilla.name}» lista para adaptar`,
     );
   }
+}
+
+/**
+ * Texto comparable: sin mayúsculas ni tildes.
+ *
+ * Sin esto, «cardiologia» no encuentra «Cardiología» y media especialidad queda
+ * inalcanzable para quien no pone el acento —que es casi todo el mundo—.
+ */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Si la plantilla casa con lo que se buscó.
+ *
+ * Se mira el nombre, el código y el rótulo de la especialidad: los tres están
+ * **a la vista** en la pantalla. Buscar sobre un dato que no se ve devuelve
+ * resultados que parecen no tener nada que ver con lo que se escribió.
+ */
+function coincide(plantilla: ChartTemplate, especialidad: string, busqueda: string): boolean {
+  if (!busqueda) {
+    return true;
+  }
+  return (
+    normalizar(plantilla.name).includes(busqueda) ||
+    normalizar(plantilla.code).includes(busqueda) ||
+    normalizar(especialidad).includes(busqueda)
+  );
 }
 
 /** Traduce el fallo de la asignación a una frase, sin exponer el objeto crudo. */

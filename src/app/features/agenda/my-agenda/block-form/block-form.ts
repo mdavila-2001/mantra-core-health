@@ -1,15 +1,46 @@
-import { ChangeDetectionStrategy, Component, computed, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
 
+import type {
+  AvailabilityExceptionType,
+  AvailabilityExceptionTypeOption,
+} from '@core/data-access/scheduling/scheduling.types';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Input } from '@shared/components/atoms/input/input';
+import { Select } from '@shared/components/atoms/select/select';
+import type { SelectOption } from '@shared/components/atoms/select/select.types';
 import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { DatePicker } from '@shared/components/organisms/date-picker/date-picker';
 
 /** Lo que el formulario pide bloquear, ya en instantes. */
+/** Un bloqueo que ya existe y se está corrigiendo. */
+export interface BloqueoEnEdicion {
+  readonly id: string;
+  readonly desde: Date;
+  readonly hasta: Date;
+  readonly exceptionType: AvailabilityExceptionType;
+  readonly descripcion: string | null;
+}
+
 export interface BloqueoPedido {
   readonly desde: Date;
   readonly hasta: Date;
+  /**
+   * El motivo del catálogo. Antes no viajaba y quien creaba la excepción
+   * ponía `ABSENCE` fijo para todo — vacaciones, feriados y trámites quedaban
+   * indistinguibles en la base.
+   */
+  readonly exceptionType: AvailabilityExceptionType;
+  /** El texto libre. Vacío salvo que el motivo elegido lo exija. */
   readonly motivo: string;
   /** Para poder contarlo en el aviso de después. */
   readonly dias: number;
@@ -34,6 +65,11 @@ const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
  * 2. **Rango y franja (D4).** Bloquear dos semanas eran catorce viajes de
  *    mes → día → confirmar. Y no había forma de bloquear **una tarde**: el
  *    bloqueo del día iba de medianoche a medianoche.
+ * 3. **El motivo (TAREA-11, punto 4).** El formulario pedía texto libre y
+ *    nada más, así que **todo bloqueo nacía con `ABSENCE`**: vacaciones,
+ *    feriado y trámite quedaban indistinguibles en la base aunque la columna
+ *    `exception_type_concept_id` existiera para distinguirlos. Ahora la lista
+ *    viene del servidor y el texto libre pasa a ser la excepción, no la regla.
  *
  * ## Por qué el backend no hizo falta
  *
@@ -50,12 +86,38 @@ const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
  */
 @Component({
   selector: 'app-block-form',
-  imports: [AppButton, Card, DatePicker, FormField, Input],
+  imports: [AppButton, Card, DatePicker, FormField, Input, Select],
   templateUrl: './block-form.html',
   styleUrl: './block-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BlockForm {
+  /**
+   * Los motivos que se pueden elegir, tal como los publica la API.
+   *
+   * Entran por input y no se piden acá: este componente no habla con la red
+   * —es lo que lo hace probable sin montar un cliente— y quien lo usa ya tiene
+   * el recurso cargado, así que la llamada le sale gratis.
+   *
+   * Con la lista vacía el selector no se dibuja y el formulario sigue
+   * funcionando con `ABSENCE`, que es exactamente lo que hacía antes: un
+   * catálogo que no cargó no puede impedir que alguien se vaya de vacaciones.
+   */
+  readonly motivos = input<readonly AvailabilityExceptionTypeOption[]>([]);
+
+  /**
+   * Lo que se está editando, o `null` para dar de alta.
+   *
+   * El mismo formulario hace las dos cosas **a propósito**. Escribir uno
+   * aparte para editar es el camino corto que termina con dos formularios que
+   * divergen: uno gana un campo, el otro no, y a los seis meses nadie sabe
+   * cuál es el bueno. Es el mismo argumento por el que la creación de citas
+   * reutiliza «la tarjeta».
+   */
+  readonly editando = input<BloqueoEnEdicion | null>(null);
+
+  protected readonly esEdicion = computed(() => this.editando() !== null);
+
   readonly bloquear = output<BloqueoPedido>();
   readonly cancelar = output<void>();
 
@@ -68,6 +130,67 @@ export class BlockForm {
   protected readonly horaHasta = signal('18:00');
 
   protected readonly motivo = signal('');
+
+  /**
+   * El motivo elegido. Arranca en `ABSENCE` porque es el que la pantalla
+   * mandaba fijo antes de que hubiera catálogo: si la lista no llega, el
+   * comportamiento es el de siempre y no el de un campo vacío.
+   */
+  protected readonly tipo = signal<AvailabilityExceptionType>('ABSENCE');
+
+  /**
+   * Sólo los motivos que **cierran** horario.
+   *
+   * `EXTRA` viaja en el mismo catálogo pero abre disponibilidad fuera del
+   * patrón: ofrecerlo en un formulario titulado «Bloquear» sería ofrecer lo
+   * contrario de lo que el botón promete. El servidor marca la diferencia con
+   * `blocks`, y acá se respeta en vez de mantener una segunda lista.
+   */
+  protected readonly opcionesDeMotivo = computed<SelectOption<AvailabilityExceptionType>[]>(() =>
+    this.motivos()
+      .filter((m) => m.blocks)
+      .map((m) => ({ value: m.type, label: m.label })),
+  );
+
+  /** El motivo elegido, con sus reglas, si está en la lista. */
+  protected readonly motivoElegido = computed(() =>
+    this.motivos().find((m) => m.type === this.tipo()),
+  );
+
+  /**
+   * Si hay que explicar por qué.
+   *
+   * La regla la fija el servidor (`requiresText`, hoy sólo «Otro»), no una
+   * comparación contra `'OTHER'` escrita acá: el día que el propietario agregue
+   * un motivo que también la exija, esta pantalla ya lo cumple.
+   */
+  protected readonly exigeTexto = computed(() => this.motivoElegido()?.requiresText ?? false);
+
+  constructor() {
+    // Precarga lo que se está editando. Un `effect` y no un valor inicial
+    // porque el bloqueo llega por input y puede cambiar sin que el componente
+    // se vuelva a crear — la lista de bloqueos es una sola pantalla.
+    effect(() => {
+      const actual = this.editando();
+      if (actual === null) return;
+      untracked(() => {
+        this.desde.set(actual.desde);
+        this.hasta.set(actual.hasta);
+        this.tipo.set(actual.exceptionType);
+        this.motivo.set(actual.descripcion ?? '');
+        // Si no arranca y termina a medianoche, es una franja de horas.
+        const franja =
+          actual.desde.getHours() !== 0 ||
+          actual.desde.getMinutes() !== 0 ||
+          actual.hasta.getHours() !== 0;
+        this.porFranja.set(franja);
+        if (franja) {
+          this.horaDesde.set(comoHora(actual.desde));
+          this.horaHasta.set(comoHora(actual.hasta));
+        }
+      });
+    });
+  }
 
   /** El intento ya se envió una vez: recién ahí se muestran los errores. */
   protected readonly intentado = signal(false);
@@ -105,8 +228,8 @@ export class BlockForm {
         return 'La hora de fin tiene que ser posterior a la de inicio.';
       }
     }
-    if (this.motivo().trim().length < 3) {
-      return 'Escribí un motivo, aunque sea corto: es lo que vas a leer en el mes.';
+    if (this.exigeTexto() && this.motivo().trim().length < 3) {
+      return 'Elegiste «Otro»: contá en una línea de qué se trata.';
     }
     return null;
   });
@@ -120,6 +243,12 @@ export class BlockForm {
 
   protected fijarHoraHasta(valor: string | number | null): void {
     this.horaHasta.set(valor === null ? '' : String(valor));
+  }
+
+  protected elegirTipo(valor: AvailabilityExceptionType | null): void {
+    if (valor !== null) {
+      this.tipo.set(valor);
+    }
   }
 
   protected fijarMotivo(valor: string | number | null): void {
@@ -156,6 +285,7 @@ export class BlockForm {
       this.bloquear.emit({
         desde,
         hasta: fin,
+        exceptionType: this.tipo(),
         motivo: this.motivo().trim(),
         dias: this.dias(),
         franjaHoraria: false,
@@ -166,6 +296,7 @@ export class BlockForm {
     this.bloquear.emit({
       desde: conHora(desde, this.horaDesde()),
       hasta: conHora(hasta, this.horaHasta()),
+      exceptionType: this.tipo(),
       motivo: this.motivo().trim(),
       dias: this.dias(),
       franjaHoraria: true,
@@ -182,4 +313,10 @@ export function aMedianoche(fecha: Date): Date {
 export function conHora(fecha: Date, hora: string): Date {
   const [h, m] = hora.split(':').map(Number);
   return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), h ?? 0, m ?? 0);
+}
+
+
+/** `HH:MM` de una fecha, para precargar la franja al editar. */
+function comoHora(valor: Date): string {
+  return `${String(valor.getHours()).padStart(2, '0')}:${String(valor.getMinutes()).padStart(2, '0')}`;
 }

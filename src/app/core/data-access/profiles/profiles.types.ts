@@ -223,10 +223,22 @@ export interface AccountLink {
     la etiqueta la resuelve `terminology`, nunca esta capa.
     ========================================================================== */
 
-/** Filtro del listado. Sin `cursor` pide la primera página. */
+/**
+ * Filtro del listado. Sin `cursor` pide la primera página.
+ *
+ * `nationalId` y `issuerAdministrativeAreaConceptId` son el camino de la
+ * TAREA-07: encontrar a alguien por su documento aunque su nombre o su código
+ * de paciente no contengan el texto buscado. El departamento sólo tiene
+ * efecto junto al documento — un carnet sin departamento no es único en
+ * Bolivia, y `issuerAdministrativeAreaConceptId` es nullable en el modelo.
+ */
 export interface PatientSearchQuery {
   /** Texto libre sobre el código de paciente y el nombre. */
   readonly query?: string;
+  /** Documento de identidad exacto (`common.identifiers.value`). */
+  readonly nationalId?: string;
+  /** Departamento que lo expidió (`VS_BO_DEPARTMENT`). */
+  readonly issuerAdministrativeAreaConceptId?: string;
   /** Cursor opaco devuelto por la página anterior. */
   readonly cursor?: string;
   readonly limit?: number;
@@ -595,6 +607,14 @@ export interface OwnPatientProfile {
   /** A nombre de quién sale el comprobante — la razón social del NIT. */
   readonly taxHolderName?: string;
   readonly email?: string;
+  /**
+   * Foto de perfil (`profiles.persons.photo_file_id`).
+   *
+   * Es la foto de la **persona**, no del perfil de paciente: la misma que,
+   * de tener perfil profesional, comparte con `health_practitioner_profiles`
+   * sólo si esta cuenta la fija por acá — son columnas independientes.
+   */
+  readonly photoFileId?: string;
   readonly homeAddress?: OwnAddress;
   readonly workAddress?: OwnAddress;
   /** Siempre presentes, vacías si no declaró nada. */
