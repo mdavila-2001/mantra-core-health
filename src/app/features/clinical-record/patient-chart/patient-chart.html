@@ -206,94 +206,109 @@
       </div>
     }
 
-    <!-- ─── La receta ────────────────────────────────────────────────────
-         Pegada al encuentro y no dentro de las pestañas: el recorrido es
-         check-in → ficha → recetar ahí mismo, y la pestaña de medicación es
-         lectura. Lo que necesita para escribir baja hecho —la persona, el
-         encuentro abierto y las recetas ya traducidas—; el bloque no vuelve a
-         derivarlo para que no puedan discrepar.
+    <!-- ─── Qué se va a registrar ────────────────────────────────────────
+         Los siete bloques de escritura, uno a la vez y elegido acá arriba.
 
-         Va a todo el ancho y debajo de las dos columnas: trae su propia tabla y
-         su propio formulario, y metido en la columna angosta del encuentro se
-         partía en un acordeón de campos de dos palabras. -->
-    <app-medication-block
-      class="expediente__ancho"
+         Antes se dibujaban los siete apilados: quien atendía a un paciente de
+         consulta general scrolleaba igual por el odontograma y por la
+         internación para llegar a la receta, y el pedido del odontólogo fue
+         exactamente ése — «elijo el formulario que le voy a llenar, no los
+         tengo todos encima». Se conserva lo que la disposición anterior
+         defendía: la historia sigue arriba en sus pestañas de lectura y la
+         tarjeta del encuentro sigue pegada al costado, así que se escribe sin
+         perder de vista lo que se acaba de leer.
+
+         Es el mismo componente de pestañas de la historia, y por lo mismo: no
+         dibuja el panel inactivo, así que sólo el bloque elegido consulta y se
+         monta. Las internaciones y las recetas llevan su cantidad en el
+         rótulo — una internación abierta no puede quedar escondida detrás de
+         una pestaña sin avisar, que era lo que su lugar al final protegía. -->
+    <section
+      class="expediente__registro-clinico expediente__ancho"
+      aria-label="Registrar en el encuentro"
       appTutorialTarget="expediente-receta"
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-      [recetas]="recetas()"
-      [medicacionActivaConceptIds]="medicacionActivaConceptIds()"
-      [diagnosticos]="diagnosticosParaReceta()"
-      (cambio)="recargar()"
-      (descargar)="descargarReceta($event)"
-    />
+    >
+      <h2 class="expediente__nota-titulo">Qué vas a registrar</h2>
 
-    <!-- ─── El diagnóstico ───────────────────────────────────────────────
-         Mismo criterio y mismo lugar que la receta: se registra desde el
-         encuentro abierto, y la pestaña de diagnósticos es lectura. Sin lista
-         propia — una condición no tiene acciones que ofrecer por fila. -->
-    <app-diagnosis-block
-      class="expediente__ancho"
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-      (cambio)="recargar()"
-    />
+      <app-tabs>
+        <!-- El diagnóstico primero: es lo que abre la consulta, y su selector
+             ofrece el catálogo CIE-10 de terminología. -->
+        <app-tab label="Diagnóstico">
+          <app-diagnosis-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="encuentroParaRecetar()"
+            (cambio)="recargar()"
+          />
+        </app-tab>
 
-    <!-- ─── Los adjuntos ─────────────────────────────────────────────────
-         Cuelgan del PACIENTE y no del encuentro: `file_links.owner_type`
-         admite USER/PATIENT/TENANT y no tiene ENCOUNTER. Es el modelo, no
-         una decisión de esta pantalla. -->
-    <app-attachments-block [patientProfileId]="pacienteDeLaFicha()" />
+        <!-- La receta. Lo que necesita para escribir baja hecho —la persona, el
+             encuentro abierto y las recetas ya traducidas—; el bloque no vuelve
+             a derivarlo para que no puedan discrepar. -->
+        <app-tab [label]="'Receta (' + recetas().length + ')'">
+          <app-medication-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="encuentroParaRecetar()"
+            [recetas]="recetas()"
+            [medicacionActivaConceptIds]="medicacionActivaConceptIds()"
+            [diagnosticos]="diagnosticosParaReceta()"
+            (cambio)="recargar()"
+            (descargar)="descargarReceta($event)"
+          />
+        </app-tab>
 
-    <!-- ─── Laboratorio e imagenología ───────────────────────────────────
-         Mismo lugar y mismo criterio que los dos de arriba: se pide desde el
-         encuentro abierto. Sin `(cambio)`, y no por olvido: el circuito
-         diagnóstico no sale de `GET /clinical/patients/:id/summary`, así que el
-         bloque lee lo suyo y se relee solo. Avisar acá haría que el expediente
-         recargara cinco bloques que no cambiaron. -->
-    <app-diagnostics-block
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-    />
+        <!-- La ficha de la especialidad y la hoja en blanco: las dos salen del
+             mismo selector del bloque, que ya ofrece la plantilla propia
+             —odontología incluida— y «escribir sin campos» como primera
+             opción. Usa el motor de `forms` en vez de una tabla propia: es lo
+             que le da su esquema de campos. -->
+        <app-tab label="Formulario clínico">
+          <app-specialty-form-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="encuentroParaRecetar()"
+            (cambio)="recargar()"
+          />
+        </app-tab>
 
-    <!-- ─── El histórico de procedimientos ───────────────────────────────
-         Cirugías y odontología (punto 7). Sigue SIN `(cambio)`, a diferencia
-         de los tres de arriba: lo que se escribe acá no aparece en
-         `GET /clinical/patients/:id/summary`, el bloque relee lo suyo, y
-         avisar recargaría cinco bloques que no cambiaron.
+        <!-- Cirugías y odontología. Sin `(cambio)`: lo que se escribe acá no
+             sale de `GET /clinical/patients/:id/summary`, el bloque relee lo
+             suyo, y avisar recargaría bloques que no cambiaron.
 
-         `[encounterId]` sí baja, y no contradice lo anterior: el histórico se
-         LEE sin encuentro —es de la persona, no de la consulta de hoy—, pero
-         un tratamiento que se registra durante una consulta pertenece a esa
-         consulta. Si no hay ninguna abierta viaja en `null` y la clave se
-         omite, que es como funcionaba hasta ahora. -->
-    <app-procedures-block
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-    />
+             `[encounterId]` sí baja: el histórico se LEE sin encuentro —es de
+             la persona, no de la consulta de hoy—, pero un tratamiento que se
+             registra durante una consulta pertenece a esa consulta. -->
+        <app-tab label="Procedimientos">
+          <app-procedures-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="encuentroParaRecetar()"
+          />
+        </app-tab>
 
-    <!-- ─── La internación ───────────────────────────────────────────────
-         Punto 8 del reclamo. Va al final de los bloques de escritura y con la
-         lista dentro —no en una pestaña— porque hasta ahora una internación
-         abierta no se veía en ningún lado: quien reabría la ficha no se
-         enteraba de que la persona estaba internada. -->
-    <app-admission-block
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-      [internaciones]="internaciones()"
-      (cambio)="recargar()"
-    />
+        <!-- Laboratorio e imagenología: se pide desde el encuentro abierto.
+             Sin `(cambio)` por el mismo motivo que procedimientos. -->
+        <app-tab label="Laboratorio">
+          <app-diagnostics-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="encuentroParaRecetar()"
+          />
+        </app-tab>
 
-    <!-- ─── El formulario clínico de la especialidad ─────────────
-         Carril 2 · punto 1. Mismo criterio que el diagnóstico y la receta:
-         se completa desde el encuentro abierto, y usa el motor de `forms` en
-         vez de una tabla propia — es lo que le da su esquema de campos. -->
-    <app-specialty-form-block
-      class="expediente__ancho"
-      [patientProfileId]="pacienteDeLaFicha()"
-      [encounterId]="encuentroParaRecetar()"
-      (cambio)="recargar()"
-    />
+        <!-- Los adjuntos cuelgan del PACIENTE y no del encuentro:
+             `file_links.owner_type` admite USER/PATIENT/TENANT y no tiene
+             ENCOUNTER. Es el modelo, no una decisión de esta pantalla. -->
+        <app-tab label="Adjuntos">
+          <app-attachments-block [patientProfileId]="pacienteDeLaFicha()" />
+        </app-tab>
+
+        <app-tab [label]="'Internación (' + internaciones().length + ')'">
+          <app-admission-block
+            [patientProfileId]="pacienteDeLaFicha()"
+            [encounterId]="encuentroParaRecetar()"
+            [internaciones]="internaciones()"
+            (cambio)="recargar()"
+          />
+        </app-tab>
+      </app-tabs>
+    </section>
 
     <!-- ─── De dónde sale esto ───────────────────────────────────────────
          No es relleno: un expediente que no dice de dónde viene cada bloque

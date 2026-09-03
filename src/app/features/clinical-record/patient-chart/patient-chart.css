@@ -153,6 +153,30 @@
   background: transparent;
 }
 
+/* ── La zona de escritura ──────────────────────────────────────────────────
+   Los siete bloques viven acá dentro, uno a la vez. `min-inline-size: 0` por
+   el mismo motivo que la historia: el bloque de procedimientos y la receta
+   traen tablas anchas, y sin esto estiran la celda de la rejilla en vez de
+   desplazarse dentro de ella. */
+.expediente__registro-clinico {
+  min-inline-size: 0;
+}
+
+/* Misma corrección que en la historia: con siete pestañas la barra del
+   navegador aparecía siempre y ocupaba tanto como una pestaña. */
+.expediente__registro-clinico ::-webkit-scrollbar {
+  height: 6px;
+}
+
+.expediente__registro-clinico ::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: var(--r-full);
+}
+
+.expediente__registro-clinico ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* Registro arriba y su contexto debajo, en la misma celda: la dosis es parte
    del medicamento, no una columna aparte. */
 .expediente__principal {
