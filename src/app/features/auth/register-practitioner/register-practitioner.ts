@@ -703,8 +703,38 @@ export class RegisterPractitioner {
    * `paginarCampos`: es la función la que hace cumplir el tope, y declararlo a
    * mano sería confiar en que quien agregue el campo trece se acuerde de contar.
    */
-  readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() =>
-    paginarCampos([
+  readonly paginasProfesional = computed<readonly PaginaDeFormulario[]>(() => {
+    const titulo = this.tituloProfesionalElegido();
+    const esOdontologo = titulo === TITULO_ODONTOLOGO;
+    const esMedico = TITULOS_MEDICOS.has(titulo);
+
+    const rotuloMatricula = esOdontologo
+      ? 'Matrícula de Odontólogo'
+      : esMedico
+        ? 'Matrícula Profesional (Médico)'
+        : 'Matrícula profesional';
+
+    const hintMatricula = esOdontologo
+      ? 'La de tu habilitación profesional como odontólogo.'
+      : 'La que te habilita a ejercer, la del registro del Ministerio.';
+
+    const placeholderMatricula = esOdontologo ? 'ODO-12345' : 'MP-12345';
+
+    const rotuloColegio = esOdontologo
+      ? 'Registro del Colegio de Odontólogos'
+      : esMedico
+        ? 'Registro del Colegio Médico'
+        : 'Número de colegio';
+
+    const hintColegio = esOdontologo
+      ? 'El de tu colegio profesional de odontólogos.'
+      : esMedico
+        ? 'El de tu Colegio Médico departamental o nacional.'
+        : 'El de tu colegio profesional.';
+
+    const placeholderColegio = esOdontologo ? 'COL-ODO-6789' : 'TIT-6789';
+
+    return paginarCampos([
       {
         titulo: '¿Cómo te llamás?',
         clave: 'name',
@@ -873,14 +903,14 @@ export class RegisterPractitioner {
         campos: [
           {
             key: 'licenseNumber',
-            label: 'Matrícula profesional',
-            hint: 'La que te habilita a ejercer, la del registro del Ministerio.',
+            label: rotuloMatricula,
+            hint: hintMatricula,
             description:
               'Es la que comprobamos antes de que aparezcas en el directorio: es lo que le da certeza a quien te elige sin conocerte.',
             control: 'text',
             required: true,
             autocomplete: 'off',
-            placeholder: 'MP-12345',
+            placeholder: placeholderMatricula,
             testId: 'registro-pro-matricula',
             icono: 'shield',
             // Los dos números de la habilitación, en el mismo renglón: se
@@ -890,12 +920,12 @@ export class RegisterPractitioner {
           },
           {
             key: 'credentialNumber',
-            label: 'Número de colegio',
-            hint: 'El de tu colegio profesional.',
+            label: rotuloColegio,
+            hint: hintColegio,
             control: 'text',
             required: true,
             autocomplete: 'off',
-            placeholder: 'TIT-6789',
+            placeholder: placeholderColegio,
             testId: 'registro-pro-credencial',
             icono: 'briefcase',
             ancho: 'mitad',
@@ -980,8 +1010,8 @@ export class RegisterPractitioner {
           },
         ],
       },
-    ]),
-  );
+    ]);
+  });
 
   /**
    * El campo del departamento que emitió el documento.
