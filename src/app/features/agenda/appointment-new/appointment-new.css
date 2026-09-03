@@ -1,0 +1,70 @@
+/* El formulario en una columna acotada: un campo de fecha estirado a 1400 px
+   se lee como un error de maquetado, y la lectura en zigzag de dos columnas
+   anchas es más lenta que la vertical. */
+.cita {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-5);
+    max-inline-size: 40rem;
+}
+
+/* Día y hora van juntos: son una sola decisión partida en dos campos. En
+   móvil se apilan solos por el `minmax`, sin media query. */
+.cita__cuando,
+.cita__duracion {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--sp-4);
+}
+
+.cita__modalidad {
+    margin: 0;
+    padding: var(--sp-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.cita__modalidad-titulo {
+    padding-inline: var(--sp-1);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.cita__modalidad-opciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-4);
+    margin-block-start: var(--sp-2);
+}
+
+.cita__modalidad-opcion {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+/* La frase de «qué va a pasar» se lee como una nota del sistema, no como un
+   error ni como una etiqueta más del formulario. */
+.cita__aviso {
+    margin: 0;
+    padding: var(--sp-3) var(--sp-4);
+    border-inline-start: 3px solid var(--border-strong);
+    background: var(--bg-inset);
+    color: var(--text-secondary);
+    font-size: var(--fs-sm);
+}
+
+.cita__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+    justify-content: flex-end;
+    padding-block-start: var(--sp-2);
+}
+
+.cita__cargando {
+    color: var(--text-secondary);
+}

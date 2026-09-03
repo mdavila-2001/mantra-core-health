@@ -1225,6 +1225,15 @@ export const routes: Routes = [
       pantallaDeOperacion('schedule', 'mine', 'Mi agenda', () =>
         import('./features/agenda/my-agenda/my-agenda').then((m) => m.MyAgenda),
       ),
+      // El alta de cita del profesional (TAREA-14). Dirección propia porque el
+      // pedido es justamente poder agendar **sin pasar por el calendario**:
+      // hasta acá la única forma era tocar un rato del día y abrir la tarjeta,
+      // que exige llegar primero al día correcto.
+      pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
+        import('./features/agenda/appointment-new/appointment-new').then(
+          (m) => m.AppointmentNew,
+        ),
+      ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
         import('./features/delegated-access/practitioner-delegate-form/practitioner-delegate-form').then(
           (m) => m.PractitionerDelegateForm,
