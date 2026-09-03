@@ -160,6 +160,50 @@
               />
             </ng-template>
 
+            <ng-template appCampoPersonalizado="profilePhotoBase64">
+              <div class="registro-foto">
+                <div class="registro-foto__avatar">
+                  <app-avatar
+                    [src]="fotoBase64()"
+                    [name]="nombreCompleto()"
+                    size="xl"
+                    alt="Foto de perfil"
+                  />
+                </div>
+                <div class="registro-foto__acciones">
+                  <label class="registro-foto__boton-subir">
+                    <input
+                      #inputFoto
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      class="sr-only"
+                      data-testid="registro-pro-foto-input"
+                      (change)="alSeleccionarFoto($event)"
+                    />
+                    <span class="registro-foto__label-btn">
+                      {{ fotoBase64() ? 'Cambiar foto' : 'Subir foto de perfil' }}
+                    </span>
+                  </label>
+                  @if (fotoBase64()) {
+                    <button
+                      type="button"
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="registro-pro-foto-quitar"
+                      (clicked)="quitarFoto(inputFoto)"
+                    >
+                      Quitar foto
+                    </button>
+                  }
+                  <p class="registro-foto__ayuda">Formatos JPG, PNG o WebP. Máximo 5 MB.</p>
+                  @if (errorFoto(); as error) {
+                    <p class="registro-foto__error" role="alert">{{ error }}</p>
+                  }
+                </div>
+              </div>
+            </ng-template>
+
             <ng-template appCampoPersonalizado="occupationConceptId">
               @if (catalogoOcupacionesCaido()) {
                 <p class="registro__catalogo-caido">

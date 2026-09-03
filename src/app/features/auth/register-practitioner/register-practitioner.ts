@@ -25,6 +25,7 @@ import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
+import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
@@ -422,6 +423,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     RegistroAyuda,
     FormField,
     AppInput,
+    Avatar,
   ],
   templateUrl: './register-practitioner.html',
   styleUrls: ['../registro-compartido/registro.css', './register-practitioner.css'],
@@ -485,7 +487,64 @@ export class RegisterPractitioner {
     specialtyPrimary: new FormControl('', { nonNullable: true }),
     specialtySecond: new FormControl('', { nonNullable: true }),
     specialtyThird: new FormControl('', { nonNullable: true }),
+    profilePhotoBase64: new FormControl<string | null>(null),
   });
+
+  /**
+   * Foto de perfil en base64 para previsualizar y enviar en el alta.
+   */
+  readonly fotoBase64 = signal<string | null>(null);
+  readonly errorFoto = signal<string | null>(null);
+  readonly nombreCompleto = computed(() => {
+    const raw = this.formProfesional.getRawValue();
+    return [raw.name, raw.lastName].filter((p) => p.trim() !== '').join(' ') || 'Profesional';
+  });
+
+  /**
+   * Procesa la foto elegida por el usuario, valida tamaño y formato, y la convierte a Data URL.
+   */
+  alSeleccionarFoto(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivo = entrada.files?.[0];
+    this.errorFoto.set(null);
+    if (!archivo) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(archivo.type)) {
+      this.errorFoto.set('El formato de la imagen debe ser JPG, PNG o WebP.');
+      entrada.value = '';
+      return;
+    }
+
+    const maxBytes = 5 * 1024 * 1024;
+    if (archivo.size > maxBytes) {
+      this.errorFoto.set('La imagen supera el límite de 5 MB.');
+      entrada.value = '';
+      return;
+    }
+
+    const lector = new FileReader();
+    lector.onload = () => {
+      const resultado = lector.result as string;
+      this.fotoBase64.set(resultado);
+      this.formProfesional.controls.profilePhotoBase64.setValue(resultado);
+      entrada.value = '';
+    };
+    lector.onerror = () => {
+      this.errorFoto.set('No se pudo leer la imagen seleccionada.');
+      entrada.value = '';
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  /** Quita la foto seleccionada y restablece el control. */
+  quitarFoto(inputElement?: HTMLInputElement): void {
+    this.fotoBase64.set(null);
+    this.formProfesional.controls.profilePhotoBase64.setValue(null);
+    this.errorFoto.set(null);
+    if (inputElement) {
+      inputElement.value = '';
+    }
+  }
 
   /**
    * El municipio de residencia.
@@ -1035,7 +1094,7 @@ export class RegisterPractitioner {
         ],
       },
       {
-        titulo: 'Tu título profesional',
+        titulo: 'Tu título profesional y foto',
         clave: 'practice',
         icon: 'teach',
         // Página propia y no pegada a las especialidades: es la que DECIDE qué
@@ -1046,6 +1105,11 @@ export class RegisterPractitioner {
         // (AC-05-13) no están: viven en `credentials`, detrás de la sesión.
         hint: 'Lo que van a ver tus pacientes. Podés cambiarlo cuando quieras.',
         campos: [
+          {
+            key: 'profilePhotoBase64',
+            label: '',
+            control: 'custom',
+          },
           {
             key: 'professionalTitle',
             label: 'Título profesional (opcional)',
@@ -1443,6 +1507,7 @@ export class RegisterPractitioner {
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
     const sexoAlNacer = raw.sexAtBirth;
+    const foto = raw.profilePhotoBase64;
     const ocupacion = raw.occupationConceptId;
     const ocupacionTexto = raw.occupationFreeText.trim();
 
@@ -1455,6 +1520,7 @@ export class RegisterPractitioner {
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
+      ...(foto ? { profilePhotoBase64: foto } : {}),
       ...(ocupacion === null || this.ocupacionEsOtra() ? {} : { occupationConceptId: ocupacion }),
       ...(this.ocupacionEsOtra() && ocupacionTexto !== ''
         ? { occupationFreeText: ocupacionTexto }

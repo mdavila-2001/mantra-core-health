@@ -235,6 +235,9 @@ export class IamClient {
       // ni este renglón — que es exactamente el descarte en silencio contra el
       // que avisa el comentario de arriba.
       ...(registration.sexAtBirth === undefined ? {} : { sexAtBirth: registration.sexAtBirth }),
+      ...(registration.profilePhotoBase64 === undefined
+        ? {}
+        : { profilePhotoBase64: registration.profilePhotoBase64 }),
       ...(registration.occupationConceptId === undefined
         ? {}
         : { occupationConceptId: registration.occupationConceptId }),
