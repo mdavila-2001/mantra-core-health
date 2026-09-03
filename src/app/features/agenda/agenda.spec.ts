@@ -344,6 +344,49 @@ describe('Agenda', () => {
    * Sin `SECURITY_ADMIN`, el enlace a la ficha sería una invitación a un 403.
    * Se dice que hay paciente y no cuál.
    */
+  /**
+   * La prueba que faltaba, y que costó una sesión entera de un médico diciendo
+   * «literalmente no puedo ver la agenda».
+   *
+   * «Turnos» es donde el menú deja a quien entra: es la única sección de agenda
+   * con renglón propio. Las cuatro pantallas del horario —«Mi agenda», los
+   * bloqueos, cambiar el horario, publicar— cuelgan de ella por ruta, y se
+   * enlazaban **entre ellas**: «Mi agenda» ofrecía bloqueos y editar, bloqueos
+   * volvía a «Mi agenda»… y nadie enlazaba a «Mi agenda». Un circuito cerrado
+   * sobre sí mismo, con la puerta de calle tapiada.
+   *
+   * Todo compilaba y todas las pruebas pasaban, porque ninguna miraba si se
+   * podía llegar. Ésta lo mira.
+   */
+  it('ofrece la puerta a «Mi agenda»: sin esto la sección no se puede recorrer', async () => {
+    // Con `hpid`, que es como llega una sesión de médico de verdad: sin el
+    // claim la pantalla no resuelve recurso y no llega a pedir las citas.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos();
+    responderResto();
+    harness.fixture.detectChanges();
+
+    const enlaces = [
+      ...harness.fixture.nativeElement.querySelectorAll('a[href]'),
+    ] as HTMLAnchorElement[];
+
+    expect(enlaces.map((a) => a.getAttribute('href'))).toContain('/schedule/mine');
+  });
+
+  it('a quien no atiende no le ofrece «Mi agenda», que no es suya', async () => {
+    // Mismo criterio que «Visitas de laboratorio»: no se ofrece una puerta que
+    // la pantalla del otro lado no va a reconocer como propia.
+    await montar({ roles: ['SCHEDULING_AGENT'] });
+    await responder();
+    harness.fixture.detectChanges();
+
+    const enlaces = [
+      ...harness.fixture.nativeElement.querySelectorAll('a[href]'),
+    ] as HTMLAnchorElement[];
+
+    expect(enlaces.map((a) => a.getAttribute('href'))).not.toContain('/schedule/mine');
+  });
+
   it('sin rol de padrón no ofrece el enlace a la ficha del paciente', async () => {
     await montar({ roles: ['SCHEDULING_AGENT'] });
     await responder();

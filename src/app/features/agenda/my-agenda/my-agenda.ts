@@ -725,6 +725,11 @@ export class MyAgenda {
     return [...deCitas, ...deOcupados];
   });
 
+  /** Cierra la tarjeta sin crear nada. */
+  protected cerrarTarjeta(): void {
+    this.ratoParaCrear.set(null);
+  }
+
   /** Abre la tarjeta con el rato tocado ya puesto. */
   protected abrirTarjeta(rato: RatoTocado): void {
     this.ratoParaCrear.set(rato);
