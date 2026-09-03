@@ -193,6 +193,41 @@ export class AgendaCreate {
   protected readonly duraciones = DURACIONES;
   protected readonly respiros = RESPIROS;
 
+  /* -- La tabla, que es la forma que pidió el propietario ------------------- */
+
+  /**
+   * Las horas del día, cada media hora.
+   *
+   * El pedido original dice «Desde (horas del día)» y «Hasta (horas del día)»
+   * como **selects**, no como texto. Media hora y no una: publicar de 8:30 a
+   * 12:30 es corriente en un consultorio, y una lista sólo de horas en punto
+   * obligaría a no poder expresarlo.
+   */
+  protected readonly horasDelDia: readonly SelectOption<string>[] = Array.from(
+    { length: 48 },
+    (_, i) => {
+      const hh = String(Math.floor(i / 2)).padStart(2, '0');
+      const mm = i % 2 === 0 ? '00' : '30';
+      return { value: `${hh}:${mm}`, label: `${hh}:${mm}` };
+    },
+  );
+
+  protected readonly opcionesDeDuracion: readonly SelectOption<number>[] = DURACIONES.map(
+    (m) => ({ value: m, label: `${m} min` }),
+  );
+
+  protected readonly opcionesDeRespiro: readonly SelectOption<number>[] = RESPIROS.map((m) => ({
+    value: m,
+    label: m === 0 ? 'Sin respiro' : `${m} min`,
+  }));
+
+  /** Fija un valor de la fila sin que la plantilla tenga que saber de formularios. */
+  protected fijarDeLaFila(indice: number, campo: string, valor: unknown): void {
+    if (valor === null || valor === undefined) return;
+    this.semana.at(indice).get(campo)?.setValue(valor as never);
+    this.versionDeLaSemana.update((v) => v + 1);
+  }
+
   /** Si la sesión puede construir agenda. El backend manda; esto no ofrece 403. */
   protected readonly puedeCrear = computed(() =>
     ROLES_QUE_CREAN.some((rol) => this.auth.roles().includes(rol)),

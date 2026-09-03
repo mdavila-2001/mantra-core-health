@@ -40,6 +40,7 @@ interface Testable {
   readonly nombreNuevo: WritableSignal<string>;
   readonly eligeSede: () => boolean;
   readonly resourceId: WritableSignal<string | null>;
+  fijarDeLaFila(indice: number, campo: string, valor: unknown): void;
   empezarAgendaNueva(): void;
   volverAAgendaExistente(): void;
   /** «Limpiar campos» del pedido original. */
@@ -282,9 +283,12 @@ describe('AgendaCreate', () => {
       // Sin respiro por omisión: es lo que la agenda hacía antes de que el
       // campo existiera, así que abrir el formulario no cambia nada.
       expect(acc.grupoDe(0).getRawValue().respiro).toBe(0);
-      expect(fixture.nativeElement.textContent).toContain(
-        '¿Cuánto descanso entre una consulta y la siguiente?',
-      );
+      // Desde que el formulario es una tabla —la forma que pidió el
+      // propietario— el respiro es una COLUMNA, no una pregunta suelta. Lo que
+      // se comprueba sigue siendo lo mismo: que la opción está a la vista.
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).toContain('Descanso');
+      expect(texto).toContain('Sin respiro');
     });
 
     it('sin respiro NO manda el campo: cero declarado y no declarado son distintos', () => {
@@ -339,11 +343,16 @@ describe('AgendaCreate', () => {
       encenderLunes();
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.textContent).toContain('Entran');
-      // Elegir respiro sobre una franja corta puede quitar turnos, y ese
-      // número no se deduce leyendo la ficha.
+      // La columna «Turnos» de la fila: el costo en el mismo renglón donde se
+      // elige, que es donde se lo mira.
+      expect(fixture.nativeElement.textContent).toContain('Turnos');
+      expect(acc.turnosDelDia(0)).toBe(8);
+
+      // Elegir respiro sobre una franja corta quita turnos, y ese número no se
+      // deduce leyendo la fila.
       acc.elegirRespiro(0, 30);
       fixture.detectChanges();
+      expect(acc.turnosDelDia(0)).toBe(4);
       expect(fixture.nativeElement.textContent).toContain('4');
     });
 
@@ -358,7 +367,9 @@ describe('AgendaCreate', () => {
       fixture.detectChanges();
 
       const texto: string = fixture.nativeElement.textContent;
-      expect(texto).toContain('Entran 5 turnos');
+      // El número de la fila y el de la vista previa son el MISMO cálculo. Lo
+      // que esta prueba impide es que vuelvan a separarse.
+      expect(acc.turnosDelDia(0)).toBe(5);
       expect(texto).toContain('Lunes: 5 turnos');
       // Y los arranques llevan el paso completo: 30 + 15.
       expect(texto).toContain('09:45');
@@ -891,6 +902,80 @@ describe('AgendaCreate', () => {
 
       expect(acc.sinDias()).toBe(false);
       expect(acc.grupoDe(0).controls['activo'].value).toBe(true);
+    });
+  });
+
+  /**
+   * LA FORMA DE TABLA — lo que pedía la bitácora original.
+   *
+   * «Una tabla donde cada día de la semana es una fila, las columnas que son
+   * selects son: Desde, Hasta, Tamaño del slot». Antes eran fichas por día y un
+   * panel desplegable: funcionaba y publicaba bien, pero no era la forma
+   * pedida, y quien pidió una tabla no reconoce un acordeón.
+   */
+  describe('el formulario como tabla', () => {
+    it('los SIETE días están siempre, encendidos o no', () => {
+      // En una tabla se lee de un golpe qué días atendés y cuáles no. Con
+      // paneles había que abrir uno por uno para saberlo.
+      crear();
+      const texto: string = fixture.nativeElement.textContent;
+
+      for (const dia of ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']) {
+        expect(texto).toContain(dia);
+      }
+      // Y los apagados lo dicen, en vez de desaparecer.
+      expect(texto).toContain('No atendés');
+    });
+
+    it('las columnas son las que pidió el original', () => {
+      crear();
+      const texto: string = fixture.nativeElement.textContent;
+
+      expect(texto).toContain('Desde');
+      expect(texto).toContain('Hasta');
+      expect(texto).toContain('Dura');
+      expect(texto).toContain('Descanso');
+    });
+
+    it('las horas son un select, no texto libre', () => {
+      // El original dice «Desde (horas del día)» como select. Media hora y no
+      // una: de 8:30 a 12:30 es corriente en un consultorio.
+      crear();
+      encenderLunes();
+      const texto: string = fixture.nativeElement.textContent;
+
+      expect(texto).toContain('08:30');
+      expect(texto).toContain('23:30');
+    });
+
+    it('elegir en la fila cambia el horario de ese día', () => {
+      crear();
+      encenderLunes();
+
+      acc.fijarDeLaFila(0, 'desde', '07:00');
+      acc.fijarDeLaFila(0, 'hasta', '11:00');
+      fixture.detectChanges();
+
+      expect(acc.grupoDe(0).getRawValue().desde).toBe('07:00');
+      // Y el número de la fila se recalcula solo: 4 horas de 30 minutos.
+      expect(acc.turnosDelDia(0)).toBe(8);
+    });
+
+    it('un día apagado no viaja al servidor', () => {
+      // La casilla de la fila es lo que decide, igual que antes lo decidía la
+      // ficha. Si un día apagado publicara, abriría turnos que nadie pidió.
+      crear();
+      encenderLunes();
+      acc.publicar();
+
+      http.expectOne('/scheduling/resources').flush({ id: 'res-1' });
+      const alta = http.expectOne('/scheduling/resources/res-1/templates');
+      expect(alta.request.body.rules).toHaveLength(1);
+      alta.flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-1/generate-slots')
+        .flush({ templateId: 'tpl-1', created: 8, skipped: 0 });
+      fixture.detectChanges();
     });
   });
 });
