@@ -165,6 +165,15 @@
                     </app-badge>
                   }
                 </p>
+                <!-- El estado va ACÁ, en el flujo normal, y no como hermano
+                     suelto de `.dia__bloque`: ese lugar es exactamente donde
+                     cae el botón «Ver detalle» (`position: absolute` en la
+                     esquina), y los dos se pisaban — se vio en la evidencia
+                     visual del carril 12, con «Ver detalle» encimado sobre el
+                     estado en 768 y 1440 px. -->
+                <p class="dia__estado">
+                  <app-badge variant="primary">{{ bloque.estado }}</app-badge>
+                </p>
                 <!-- El motivo se muestra acá y NO en la agenda de la
                      organización: para quien va a recibir a esa persona en diez
                      minutos, saber por qué viene es el trabajo. -->
@@ -205,7 +214,6 @@
                   }
                 </div>
               </div>
-              <app-badge variant="primary">{{ bloque.estado }}</app-badge>
             }
 
             @case ('ocupado') {

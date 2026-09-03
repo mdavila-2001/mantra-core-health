@@ -12,6 +12,15 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
+<!-- El aviso del punto 8 del pedido original, en las palabras exactas de
+     AC-10-2. Va SIEMPRE visible —fuera de cualquier rama del `@if`— porque es
+     una regla, no una nota al margen: nadie tiene que abrir nada para leerla,
+     ni en el estado de éxito ni en el formulario. -->
+<p class="agenda-create__alcance" role="note">
+  Estos horarios son para consulta y cita, no para intervenciones quirúrgicas ni procedimientos
+  prolongados; sí pueden incluir tratamientos.
+</p>
+
 @if (!puedeCrear()) {
   <app-alert tone="info" title="Esta sección es para quien publica agenda">
     Tu cuenta no tiene permiso para configurar agendas. Si atendés pacientes y creés que es un

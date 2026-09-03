@@ -33,7 +33,7 @@ app-map {
   display: grid;
   place-items: center;
   margin: 0;
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
@@ -97,7 +97,7 @@ app-map {
 
 .mapa__popup-detalle {
   margin: 0;
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
@@ -105,7 +105,7 @@ app-map {
   align-self: flex-start;
   padding: 1px var(--sp-2);
   border-radius: var(--r-full);
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   font-weight: 600;
   background: var(--tono-bg, var(--bg-inset));
   color: var(--tono-fg, var(--text-secondary));
@@ -128,7 +128,7 @@ app-map {
   background: var(--bg-surface);
   color: var(--text-primary);
   font: inherit;
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   font-weight: 600;
   cursor: pointer;
 }

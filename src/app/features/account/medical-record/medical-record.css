@@ -105,6 +105,6 @@
 
 .historia__descarga-nota {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   margin: 0;
 }

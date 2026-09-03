@@ -14,7 +14,7 @@
     block-size: 100%;
     padding: var(--sp-4);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
+    border-radius: var(--r-md);
     background: var(--bg-surface);
 }
 
@@ -35,7 +35,7 @@
        epidural EE \»—, y sin acotarlo ocupa media tarjeta y empuja el precio
        fuera de la vista. No se filtra ni se corrige: el dato es el que es. */
     margin: 0;
-    font-size: var(--fs-sm);
+    font-size: var(--fs-caption);
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
@@ -58,7 +58,7 @@
     align-items: baseline;
     gap: var(--sp-2);
     margin: 0;
-    font-size: var(--fs-sm);
+    font-size: var(--fs-caption);
     color: var(--text-secondary);
 }
 

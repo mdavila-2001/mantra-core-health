@@ -130,6 +130,19 @@ jobs:
       - name: Tokens del sistema de diseño
         run: node scripts/check-tokens.mjs
 
+      # Y ningún `var(--x)` apunta a un token que no existe. Es el fallo
+      # gemelo del anterior y el que más caro sale: un token inexistente no
+      # rompe la compilación —la declaración se descarta y la propiedad hereda—
+      # así que la pantalla se ve mal y las pruebas pasan igual. Se encontraron
+      # 41 así, con 172 usos, todos mirando capturas y ninguno ejecutando
+      # código: esquinas cuadradas por `--radius-md` (el real es `--r-md`),
+      # leyendas del tamaño del cuerpo por `--fs-sm`, y el peor, `--st-*-border`
+      # en vez de `--st-*-bd`, que dejaba las vistas de agenda SIN NINGÚN color
+      # de borde por estado — media regla de accesibilidad, porque «no depender
+      # sólo del color» exige que el estado se distinga de alguna otra forma.
+      - name: Tokens usados pero nunca declarados
+        run: node scripts/check-css-tokens.mjs
+
       # Contraste WCAG de las DOS hojas: `styles.css` (banco de componentes) y
       # `styles/redsat.css` (la hoja de la bóveda, que pinta el armazón de todas
       # las pantallas y las 141 portadas).

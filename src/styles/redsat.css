@@ -682,6 +682,12 @@ app-shell-layout { display: block; }
 
 .app-main { display: flex; flex-direction: column; min-width: 0; width: 100%; }
 .app-main__inner {
+  /* El aire lateral se publica como variable porque hay piezas que necesitan
+     sangrar hasta el borde —`app-form-actions` pegada al fondo del teléfono— y
+     para eso tienen que cancelar exactamente este padding con un margen
+     negativo. Adivinarlo con un token de otra escala deja un desborde de pocos
+     píxeles que se lee como una página rota: medido, 4 px a 390 px. */
+  --app-main-inline-padding: var(--e8);
   padding: var(--e8) var(--e8) var(--e10);
   max-width: 1440px; width: 100%;
   display: flex; flex-direction: column; gap: var(--e7);
@@ -1852,7 +1858,7 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
 /* 21.1 · ≤ 1320 px — ceden los márgenes ---------------------------------- */
 
 @media (max-width: 1320px) {
-  .app-main__inner { padding: var(--e7) var(--e7) var(--e9); }
+  .app-main__inner { --app-main-inline-padding: var(--e7); padding: var(--e7) var(--e7) var(--e9); }
   .app-header { padding: 0 var(--e7); }
   .barra-maqueta { padding: 0 var(--e7); }
 }
@@ -1861,7 +1867,7 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
 
 @media (max-width: 1120px) {
   :root { --w-nav: 232px; }
-  .app-main__inner { padding: var(--e6) var(--e6) var(--e8); }
+  .app-main__inner { --app-main-inline-padding: var(--e6); padding: var(--e6) var(--e6) var(--e8); }
   .app-header { padding: 0 var(--e6); gap: var(--e3); }
   .app-header__buscador { max-width: 260px; }
   .app-tenant-switcher { max-width: 210px; }
@@ -1955,7 +1961,7 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
   .app-tenant-switcher { max-width: 168px; }
 
   /* Contenido */
-  .app-main__inner { padding: var(--e5) var(--e5) var(--e8); }
+  .app-main__inner { --app-main-inline-padding: var(--e5); padding: var(--e5) var(--e5) var(--e8); }
   .app-page-header__acciones { margin-left: 0; padding-top: var(--e3); }
   .app-filter-bar__fila { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
   /* Las pestañas dejan de envolver: envueltas, la fila activa quedaba lejos
@@ -2012,7 +2018,7 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
 @media (max-width: 640px) {
   :root { --h-barra: 104px; }
 
-  .app-main__inner { padding: var(--e4) var(--e4) var(--e8); }
+  .app-main__inner { --app-main-inline-padding: var(--e4); padding: var(--e4) var(--e4) var(--e8); }
   .app-header { padding: 0 var(--e4); }
   .pagina-indice { padding: var(--e7) var(--e4); gap: var(--e6); }
 
@@ -2127,7 +2133,7 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
 /* 21.5 · ≤ 400 px — densidad mínima -------------------------------------- */
 
 @media (max-width: 400px) {
-  .app-main__inner { padding: var(--e4) var(--e3) var(--e7); }
+  .app-main__inner { --app-main-inline-padding: var(--e3); padding: var(--e4) var(--e3) var(--e7); }
   .app-header { padding: 0 var(--e3); gap: var(--e2); }
   .app-card { padding: var(--e4); }
   .pagina-indice { padding: var(--e6) var(--e3); }
@@ -3493,7 +3499,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
   box-shadow: var(--sombra-1);
   transition: border-color var(--mov-rapido) var(--curva), box-shadow var(--mov-medio) var(--curva);
 }
-.app-resultado:hover, .app-resultado:focus-within { border-color: var(--interaccion); box-shadow: var(--sombra-2); }
+.app-resultado:hover, .app-resultado:focus-within { border-color: var(--accent); box-shadow: var(--sombra-2); }
 .app-resultado__figura {
   width: 56px; height: 56px; border-radius: var(--r-menu);
   background: var(--sup-inset); color: var(--petroleo-p);
@@ -3538,7 +3544,7 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
    color: en escala de grises la diferencia se sigue leyendo.               */
 .app-declaracion { display: flex; flex-direction: column; gap: var(--e3); }
 .app-declaracion__item { padding-left: var(--e4); border-left: 3px solid var(--filete); }
-.app-declaracion__item[data-origen="verificado"] { border-left-color: var(--interaccion); }
+.app-declaracion__item[data-origen="verificado"] { border-left-color: var(--accent); }
 .app-declaracion__item dt { font-weight: 600; color: var(--tinta); display: flex; align-items: center; gap: var(--e2); flex-wrap: wrap; }
 .app-declaracion__item dd { margin: var(--e1) 0 0; color: var(--tinta-2); }
 

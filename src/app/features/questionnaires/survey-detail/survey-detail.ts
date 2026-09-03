@@ -192,7 +192,7 @@ export class SurveyDetailScreen {
                   key: 'options',
                   label: 'Opciones',
                   hint: 'Una por línea. Hacen falta al menos dos.',
-                  control: 'text' as const,
+                  control: 'textarea' as const,
                   required: true,
                   testId: 'pregunta-opciones',
                 },

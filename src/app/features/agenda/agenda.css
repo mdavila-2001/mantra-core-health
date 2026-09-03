@@ -72,7 +72,7 @@
 
 .agenda__ubicacion-rotulo {
   font-weight: 600;
-  color: var(--text-default);
+  color: var(--text-primary);
 }
 
 /* Momento arriba y duración debajo, dentro de la misma celda: la hora de fin es
@@ -111,13 +111,30 @@
   overflow-wrap: anywhere;
 }
 
-/* Las acciones de una fila van juntas y sin envolver: dos botones que se
-   separan en dos renglones se leen como dos filas. */
+/*
+ * Las acciones de una fila, agrupadas.
+ *
+ * Antes: `white-space: nowrap` a secas, con el argumento de que «dos botones
+ * que se separan en dos renglones se leen como dos filas». Eso valía cuando
+ * una fila ofrecía a lo sumo dos acciones. Una solicitud por responder ofrece
+ * hasta CINCO a la vez —Ver detalle, Ver historial, Aceptar, Rechazar,
+ * Cancelar (`porResponder(cita)` suma «Cancelar» a las cuatro propias del
+ * detalle, corrección #11 + `estaVigente() || porResponder()`)— y esas cinco
+ * en una sola línea sin envolver empujan la página entera a lo ancho: medido
+ * con Playwright, `document.documentElement.scrollWidth` pasaba el
+ * `clientWidth` en los TRES anchos (390, 768 y 1440), no sólo en móvil.
+ *
+ * `flex-wrap: wrap` deja que se acomoden en dos o tres líneas cuando no
+ * entran, en vez de estirar la tabla —y con ella la página— para que quepan
+ * todas en una. Con dos acciones nomás (el caso que describía el comentario
+ * original) el resultado sigue siendo una sola línea: el wrap no hace nada
+ * cuando ya entran.
+ */
 .agenda__acciones {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
-  white-space: nowrap;
 }
 
 /* ---- avisar demora (P8) --------------------------------------------------

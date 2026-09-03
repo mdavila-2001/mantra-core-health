@@ -9,7 +9,7 @@
 .tarjeta {
   border: 1px solid var(--c-neutral-200, #e5e5e5);
   border-radius: var(--r-lg);
-  background: var(--bg-elevated, #fff);
+  background: var(--bg-surface);
   box-shadow: var(--shadow-md, 0 4px 16px rgb(0 0 0 / 0.08));
   padding: var(--sp-4);
   display: flex;
@@ -27,7 +27,7 @@
 
 .tarjeta__titulo {
   margin: 0;
-  font-size: var(--fs-md);
+  font-size: var(--fs-h3);
   font-weight: 600;
 }
 
@@ -50,8 +50,8 @@
 /* La inferencia: informa sin alarmar. Es lo que va a pasar, no un problema. */
 .tarjeta__inferencia {
   margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--fg-muted);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
 }
 
 .tarjeta__pie {
@@ -63,8 +63,8 @@
 }
 
 .tarjeta__publicar {
-  font-size: var(--fs-sm);
-  color: var(--fg-muted);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
 }
 
 /* La modalidad: tres opciones en línea, envolviendo en pantalla chica. Es un
@@ -79,7 +79,7 @@
 .tarjeta__modalidad-titulo {
   padding: 0;
   margin-bottom: var(--sp-2);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   font-weight: 600;
 }
 
@@ -94,7 +94,7 @@
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
-  border: var(--stroke-1) solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   background: var(--bg-surface);
   cursor: pointer;
@@ -111,6 +111,6 @@
 /* El foco viaja al `label` porque el radio nativo va dentro: sin esto, al
    tabular no se ve dónde está el foco. */
 .tarjeta__modalidad-opcion:has(input:focus-visible) {
-  outline: var(--stroke-2) solid var(--c-aqua-500);
+  outline: 2px solid var(--c-aqua-500);
   outline-offset: 2px;
 }

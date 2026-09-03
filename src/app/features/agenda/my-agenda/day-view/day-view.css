@@ -30,7 +30,7 @@
 
 .dia__titulo {
   margin: 0;
-  font-size: var(--fs-md);
+  font-size: var(--fs-h3);
   font-weight: 600;
 }
 
@@ -42,7 +42,7 @@
 
 .dia__resumen {
   margin: 0;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
 }
 
 .dia__vacio {
@@ -50,7 +50,7 @@
   flex-direction: column;
   gap: var(--sp-2);
   align-items: flex-start;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
 }
 
 .dia__vacio p {
@@ -78,8 +78,8 @@
   flex: 0 0 6.5rem;
   padding-top: var(--sp-2);
   font-variant-numeric: tabular-nums;
-  font-size: var(--fs-sm);
-  color: var(--fg-muted);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
 }
 
 .dia__cuerpo {
@@ -102,13 +102,21 @@
 
 .dia__paciente {
   margin: 0;
+  /* Reserva el ancho de «Ver detalle» (esquina superior derecha, en
+     `position: absolute`): un nombre largo no debe meterse debajo del botón,
+     ilegible y sin poder tocarlo. */
+  padding-inline-end: 6.5rem;
   font-weight: 600;
+}
+
+.dia__estado {
+  margin: 0;
 }
 
 .dia__motivo {
   margin: 0;
-  font-size: var(--fs-sm);
-  color: var(--fg-muted);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
 }
 
 .dia__acciones {
@@ -126,11 +134,13 @@
   border-radius: var(--r-md);
   padding: var(--sp-2) var(--sp-3);
   margin-bottom: 2px;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
 }
 
 .dia__ocupado-rotulo {
   margin: 0;
+  /* Mismo motivo que `.dia__paciente`: no meterse debajo de «Ver detalle». */
+  padding-inline-end: 6.5rem;
   font-weight: 500;
 }
 
@@ -145,9 +155,9 @@
   border: 1px dashed var(--c-neutral-300, #d4d4d4);
   border-radius: var(--r-md);
   background: transparent;
-  color: var(--fg-muted);
+  color: var(--text-secondary);
   font: inherit;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   cursor: pointer;
   text-align: center;
 }
@@ -186,6 +196,19 @@
   .dia__hora {
     flex: none;
     padding-top: 0;
+  }
+
+  /* «Volver al mes», el título y «Mover horario» + «+» compartían una sola
+     fila: el título quedaba en una columna angosta y el texto se partía a la
+     mitad de la palabra («septiem-bre»). Se ve en la evidencia visual del
+     carril 12 en 390px. Apilados, cada uno tiene el ancho completo. */
+  .dia__barra {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dia__acciones-barra {
+    justify-content: flex-end;
   }
 }
 
@@ -240,7 +263,7 @@
 
 .dia__mover-titulo {
   margin: 0;
-  font-size: var(--fs-h4, 1rem);
+  font-size: var(--fs-body-lg);
 }
 
 .dia__mover-nota {

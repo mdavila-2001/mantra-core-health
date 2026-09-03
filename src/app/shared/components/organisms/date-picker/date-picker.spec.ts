@@ -215,8 +215,13 @@ describe('DatePicker', () => {
   });
 
   describe('navegación de años y meses', () => {
-    it('la grilla de años abre en 1980-2009 cuando no hay fecha elegida', async () => {
+    it('un campo cerrado al pasado abre la grilla de años en 1980-2009', async () => {
+      // `maxDate="today"` es cómo se declaran los tres campos de fecha de
+      // nacimiento de la aplicación, y es la señal que hace que el calendario
+      // mire hacia atrás. Sin ella el campo es una fecha operativa y abre en
+      // hoy — ver la prueba siguiente.
       fixture.componentRef.setInput('value', null);
+      fixture.componentRef.setInput('maxDate', 'today');
       await fixture.whenStable();
       await abrirAnios();
 
@@ -228,6 +233,21 @@ describe('DatePicker', () => {
       expect(anuncio()).toBe('Años 1980 a 2009');
       // Los treinta son de la página: ninguno se muestra atenuado.
       expect(celdas().filter((cell) => cell.classList.contains('other-decade')).length).toBe(0);
+    });
+
+    it('sin tope en el pasado el calendario abre en el mes de hoy, no en enero de 2000', async () => {
+      // El defecto: el mes por defecto salía de una constante —enero de
+      // `MAX_DEFAULT_YEAR`—, una heurística de fecha de nacimiento aplicada a
+      // los veintidós campos que NO piden un nacimiento. Bloquear la agenda de
+      // la semana que viene abría el calendario veintiséis años atrás.
+      fixture.componentRef.setInput('value', null);
+      fixture.componentRef.setInput('minDate', 'today');
+      await fixture.whenStable();
+      await abrir();
+
+      const hoy = new Date();
+      expect(encabezado().textContent).toContain(String(hoy.getFullYear()));
+      expect(encabezado().textContent).toContain(nombreDeMes(hoy.getMonth()));
     });
 
     it('elegir un año abre la grilla de meses y elegir el mes vuelve a los días', async () => {
@@ -252,6 +272,7 @@ describe('DatePicker', () => {
 
     it('carga 1985 en 4 toques: encabezado, año, mes y día', async () => {
       fixture.componentRef.setInput('value', null);
+      fixture.componentRef.setInput('maxDate', 'today');
       await fixture.whenStable();
       await abrir();
 

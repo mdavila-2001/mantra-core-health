@@ -21,9 +21,9 @@
 }
 
 .ordenes__item {
-  background: var(--surface-1);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--r-md);
   display: grid;
   gap: var(--sp-3);
   padding: var(--sp-4);
@@ -38,14 +38,14 @@
 }
 
 .ordenes__titulo {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-body-lg);
   font-weight: 600;
   margin: 0;
 }
 
 .ordenes__fecha {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   margin: 0;
 }
 
@@ -67,7 +67,7 @@
    con teclado ni para un lector de pantalla. */
 .ordenes__proximamente {
   color: var(--text-muted);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
 }
 
 /* El encabezado de cada atención. Separa los grupos sin cajas: la jerarquía la
@@ -77,7 +77,7 @@
 }
 
 .ordenes__grupo-titulo {
-  font-size: var(--fs-md);
+  font-size: var(--fs-body);
   font-weight: 600;
   margin: 0 0 var(--sp-3);
 }

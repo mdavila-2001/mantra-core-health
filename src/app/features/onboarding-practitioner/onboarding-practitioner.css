@@ -26,9 +26,9 @@
 }
 
 .alta__etapa {
-  background: var(--surface-1);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--r-md);
   display: grid;
   gap: var(--sp-2);
   justify-items: start;
@@ -51,7 +51,7 @@
 }
 
 .alta__titulo {
-  font-size: var(--fs-lg);
+  font-size: var(--fs-body-lg);
   font-weight: 600;
   margin: 0;
 }

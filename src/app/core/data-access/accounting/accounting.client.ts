@@ -61,11 +61,25 @@ export class AccountingClient {
    *
    * Acota por el tenant de la sesión del lado del servidor; acá no viaja
    * ningún filtro.
+   *
+   * ## Responde un arreglo desnudo, no `{ items, count }`
+   *
+   * El controlador declara `listPractices(): Promise<PracticeSummaryDto[]>` y
+   * eso es literalmente lo que manda. Este cliente leía `body.items`, que en un
+   * arreglo es `undefined`, y el `.map` siguiente reventaba: **el selector de
+   * práctica nunca llegaba a tener una opción, y toda la pantalla de
+   * contabilidad quedaba inservible**, porque las cinco lecturas del módulo
+   * cuelgan de un `practiceId`.
+   *
+   * Los otros dos clientes que leen esta misma ruta —`medical-organization` y
+   * `services-catalog`— siempre la trataron como arreglo. Éste era el único
+   * que no, y el error no se veía como error: la lista salía vacía, que es
+   * indistinguible de una organización sin prácticas.
    */
   listPractices(): Observable<readonly Practice[]> {
     return this.http
-      .get<RespuestaPracticas>(this.url('/practices'))
-      .pipe(map((body) => body.items.map(aPractica)));
+      .get<readonly WirePractica[]>(this.url('/practices'))
+      .pipe(map((body) => body.map(aPractica)));
   }
 
   /** `GET /accounting/accounts` — el plan de cuentas de una práctica. */
@@ -314,11 +328,6 @@ interface WireAsiento {
 interface WireAsientoDetalle extends WireAsiento {
   readonly practiceId: string;
   readonly lines: readonly WireLinea[];
-}
-
-interface RespuestaPracticas {
-  readonly items: readonly WirePractica[];
-  readonly count: number;
 }
 
 interface RespuestaCuentas {

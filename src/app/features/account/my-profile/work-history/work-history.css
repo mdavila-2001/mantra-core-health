@@ -28,9 +28,9 @@
 .historial__intro,
 .historial__vacio {
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--fs-small);
-  line-height: var(--lh-small);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .historial__lista {
@@ -48,7 +48,7 @@
   align-items: baseline;
   justify-content: space-between;
   padding-block-end: var(--sp-3);
-  border-block-end: 1px solid var(--color-border-subtle);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
 .historial__item:last-child {
@@ -67,9 +67,9 @@
 .historial__cargo,
 .historial__area,
 .historial__sede {
-  color: var(--color-text-muted);
-  font-size: var(--fs-small);
-  line-height: var(--lh-small);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .historial__periodo {
@@ -84,16 +84,16 @@
 }
 
 .historial__estado {
-  color: var(--color-text-muted);
-  font-size: var(--fs-small);
-  line-height: var(--lh-small);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .historial__reintento {
   padding: 0;
   border: none;
   background: none;
-  color: var(--color-primary);
+  color: var(--text-link);
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
@@ -115,7 +115,7 @@
   align-items: center;
   gap: var(--sp-2);
   margin: calc(var(--sp-2) * -1) 0 var(--sp-4);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   color: var(--c-neutral-600);
 }
 
@@ -123,7 +123,7 @@
    ocupar su propia línea sin competir con el resto de la ficha. */
 .historial__vinculo {
   margin: var(--sp-2) 0 0;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-caption);
   line-height: 1.4;
 }
 

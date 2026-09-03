@@ -139,3 +139,73 @@
 .libros-abrir {
     margin-block: var(--sp-4);
 }
+
+/* ============================================================================
+    MODO CONTADOR — filas del asiento en curso.
+
+    Sin esto eran `<span>` sueltos, uno pegado al otro: "CajaDebe100.00" en
+    una sola corrida de texto, sin separación entre cuenta, dirección e
+    importe. En una pantalla contable eso es ilegible — hay que poder leer
+    debe/haber y el importe de un vistazo, no deletrearlos.
+    ========================================================================== */
+
+.filas-del-asiento {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    margin: 0 0 var(--sp-4);
+    padding: 0;
+    list-style: none;
+}
+
+.fila-del-asiento {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: var(--sp-1) var(--sp-3);
+    padding: var(--sp-3);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+}
+
+.fila-del-asiento__cuenta {
+    min-inline-size: 0;
+    overflow-wrap: break-word;
+}
+
+/* Debe/haber no se distinguen sólo por el tono del badge: el texto "Debe" /
+   "Haber" ya los nombra: el color es un refuerzo, no la única señal. */
+.fila-del-asiento__direccion {
+    white-space: nowrap;
+}
+
+/* Mismo criterio que las columnas de importe de `data-table`: a la derecha
+   y en cifras tabulares, así se comparan de un vistazo. */
+.fila-del-asiento__importe {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    text-align: end;
+    white-space: nowrap;
+}
+
+.fila-del-asiento__acciones {
+    display: flex;
+    gap: var(--sp-1);
+    flex-wrap: wrap;
+}
+
+/* Base móvil: cuatro columnas en una fila angosta desbordan. Se apila. */
+@media (max-width: 480px) {
+    .fila-del-asiento {
+        grid-template-columns: 1fr auto;
+    }
+
+    .fila-del-asiento__importe {
+        text-align: start;
+    }
+
+    .fila-del-asiento__acciones {
+        grid-column: 1 / -1;
+    }
+}

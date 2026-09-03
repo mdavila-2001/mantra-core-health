@@ -88,7 +88,7 @@
   font-family: var(--font-display);
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
-  color: var(--text-default);
+  color: var(--text-primary);
 }
 
 /* El título recibe el foco al cambiar de página; sin anillo, ese salto es

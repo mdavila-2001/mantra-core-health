@@ -759,18 +759,59 @@ export class DatePicker {
     return false;
   }
 
+  /**
+   * En qué mes se para el calendario cuando el campo viene vacío.
+   *
+   * Lo decide **el rango del campo**, que es la única señal honesta que hay.
+   * Antes lo decidía una constante: se abría siempre en enero de
+   * `MAX_DEFAULT_YEAR` —enero de 2000—, una heurística de fecha de nacimiento
+   * metida dentro de un componente de uso general. De los veinticinco
+   * `app-date-picker` de la aplicación sólo tres piden un nacimiento, y los
+   * tres se declaran con `maxDate="today"`. Los otros veintidós son fechas
+   * operativas cerca de hoy —vigencia de un precio, rango de un bloqueo de
+   * agenda, día de una cita, validez de una receta— y ninguno acota nada:
+   * todos abrían a veintiséis años de distancia del día que se buscaba.
+   *
+   * De ahí las dos ramas: un campo cerrado al pasado conserva el enero de
+   * siempre —es lo que deja la página de años en 1980-2009 y un nacimiento
+   * típico a un toque—; cualquier otro abre en hoy, recortado contra el rango
+   * para no pararse en un mes con todos los días apagados.
+   *
+   * No elige nada: sólo decide qué dibujar. Confirmar sigue exigiendo un clic
+   * en un día, que es lo que cuida `dayChosen`.
+   */
+  private mesPorDefecto(): Date {
+    const hoy = this.withSafeHour(new Date());
+    const min = this.normalizedMinDate();
+    const max = this.normalizedMaxDate();
+
+    // Campo cerrado al pasado: es una fecha de nacimiento. Se conserva el
+    // comportamiento anterior —enero del año por defecto— porque es lo que
+    // deja la página de años en 1980-2009 y pone un año de nacimiento típico
+    // a un toque, sin paginar.
+    if (max && dayTime(max) <= dayTime(hoy)) {
+      const anio = Math.min(max.getFullYear(), MAX_DEFAULT_YEAR);
+      const enero = this.withSafeHour(new Date(anio, 0, 1));
+      return min && dayTime(enero) < dayTime(min) ? min : enero;
+    }
+
+    if (min && dayTime(hoy) < dayTime(min)) {
+      return min;
+    }
+    if (max && dayTime(hoy) > dayTime(max)) {
+      return max;
+    }
+    return hoy;
+  }
+
   protected open(): void {
     if (this.disabled()) {
       return;
     }
-    const defaultYear = Math.min(
-      this.normalizedMaxDate()?.getFullYear() ?? MAX_DEFAULT_YEAR,
-      MAX_DEFAULT_YEAR,
-    );
     const actual = this.value();
     // `start` sólo decide QUÉ MES dibujar; no es una elección. Por eso el
     // borrador se siembra con el valor real —que puede ser `null`— y no con él.
-    const start = actual ?? this.withSafeHour(new Date(defaultYear, 0, 1));
+    const start = actual ?? this.mesPorDefecto();
     this.draft.set(actual);
     this.dayChosen.set(actual !== null);
     this.viewMonth.set(startOfMonth(start));

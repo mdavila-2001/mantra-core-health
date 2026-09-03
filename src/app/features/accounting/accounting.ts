@@ -39,6 +39,7 @@ import type { ViewState } from '../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../shared/a11y/announce-on-appear';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { Badge } from '../../shared/components/atoms/badge/badge';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Select } from '../../shared/components/atoms/select/select';
 import { Alert } from '../../shared/components/molecules/alert/alert';
@@ -92,6 +93,39 @@ export function agruparPorMes(
     }));
 }
 
+/**
+ * Formatea una fecha para una celda de tabla: corta, sin día de semana ni
+ * huso horario.
+ *
+ * `app-data-table` no formatea: una columna sin `cell` pinta
+ * `String(valor)` (`data-table.ts: cellValue`), y `String(unaFecha)` es
+ * `Date.prototype.toString()` — `"Thu Mar 12 2026 00:00:00 GMT-0400 (hora de
+ * Bolivia)"`. A 390 px ese texto no entra en la celda y se parte en varias
+ * líneas, y ni ahí es legible como fecha contable. Se formatea acá, antes de
+ * llegar a la tabla, a `dd/mm/aaaa`.
+ */
+function formatearFechaDeTabla(fecha: Date): string {
+  return fecha.toLocaleDateString('es-BO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+/**
+ * Un asiento del diario, ya listo para la tabla: fechas como texto corto en
+ * vez de `Date` cruda (ver `formatearFechaDeTabla`).
+ */
+export interface FilaDelDiario extends Omit<JournalTransaction, 'transactionDate' | 'postedAt'> {
+  readonly transactionDate: string;
+  readonly postedAt?: string;
+}
+
+/** Un movimiento del libro mayor, ya listo para la tabla: misma razón que `FilaDelDiario`. */
+export interface FilaDelMayor extends Omit<GeneralLedgerEntry, 'transactionDate'> {
+  readonly transactionDate: string;
+}
+
 /** Un mes de facturación, ya resuelto para pintar. */
 export interface MesFacturado {
   readonly clave: string;
@@ -136,6 +170,7 @@ export interface MesFacturado {
     AnnounceOnAppear,
     Alert,
     AppButton,
+    Badge,
     Card,
     DataTable,
     FormField,
@@ -276,6 +311,27 @@ export class Accounting {
     },
   );
 
+  /**
+   * Las filas del diario, con las fechas ya formateadas para la tabla (ver
+   * `formatearFechaDeTabla`). `postedAt` es opcional: un asiento sin postear
+   * no tiene fecha de posteo, y forzar `Date` ahí rompería el `?` del tipo.
+   */
+  protected readonly filasDelDiario = computed<ViewState<readonly FilaDelDiario[]>>(() => {
+    const estado = this.diario();
+    return estado.status === 'ready'
+      ? ready(
+          estado.data.map((t): FilaDelDiario => {
+            const { postedAt, ...resto } = t;
+            return {
+              ...resto,
+              transactionDate: formatearFechaDeTabla(t.transactionDate),
+              ...(postedAt === undefined ? {} : { postedAt: formatearFechaDeTabla(postedAt) }),
+            };
+          }),
+        )
+      : (estado as ViewState<readonly FilaDelDiario[]>);
+  });
+
   /** El sello del cuadre: color, forma y texto, no sólo color. */
   protected readonly selloDelCuadre = computed(() => {
     const estado = this.balance();
@@ -298,7 +354,7 @@ export class Accounting {
     { key: 'balance', header: 'Saldo', priority: 1, align: 'end' },
   ];
 
-  protected readonly columnasDelDiario: readonly ColumnDef<JournalTransaction>[] = [
+  protected readonly columnasDelDiario: readonly ColumnDef<FilaDelDiario>[] = [
     { key: 'transactionNumber', header: 'Número', priority: 1 },
     { key: 'transactionDate', header: 'Fecha', priority: 1 },
     { key: 'totalAmount', header: 'Importe', priority: 1, align: 'end' },
@@ -306,7 +362,7 @@ export class Accounting {
   ];
 
   protected readonly claveDeFila = (fila: TrialBalanceRow): string => fila.accountId;
-  protected readonly claveDeAsiento = (fila: JournalTransaction): string => fila.id;
+  protected readonly claveDeAsiento = (fila: FilaDelDiario): string => fila.id;
 
   protected reintentar(): void {
     this.intento.update((n) => n + 1);
@@ -560,7 +616,19 @@ export class Accounting {
     { initialValue: loading() as ViewState<GeneralLedgerEntry[]> },
   );
 
-  protected readonly columnasDelMayor: readonly ColumnDef<GeneralLedgerEntry>[] = [
+  /** El libro mayor, con la fecha ya formateada para la tabla (ver `formatearFechaDeTabla`). */
+  protected readonly filasDelMayor = computed<ViewState<readonly FilaDelMayor[]>>(() => {
+    const estado = this.libroMayor();
+    return estado.status === 'ready'
+      ? ready(
+          estado.data.map(
+            (m): FilaDelMayor => ({ ...m, transactionDate: formatearFechaDeTabla(m.transactionDate) }),
+          ),
+        )
+      : (estado as ViewState<readonly FilaDelMayor[]>);
+  });
+
+  protected readonly columnasDelMayor: readonly ColumnDef<FilaDelMayor>[] = [
     { key: 'transactionDate', header: 'Fecha', priority: 1 },
     { key: 'transactionNumber', header: 'Asiento', priority: 2 },
     { key: 'debit', header: 'Debe', priority: 1, align: 'end' },
@@ -568,7 +636,7 @@ export class Accounting {
     { key: 'runningBalance', header: 'Saldo', priority: 1, align: 'end' },
   ];
 
-  protected readonly claveDeMovimiento = (fila: GeneralLedgerEntry): string => fila.id;
+  protected readonly claveDeMovimiento = (fila: FilaDelMayor): string => fila.id;
 
   private readonly practicaEIntentoYPestana = computed(() => ({
     practiceId: this.practicaElegida(),

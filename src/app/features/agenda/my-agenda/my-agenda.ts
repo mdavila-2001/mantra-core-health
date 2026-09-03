@@ -648,13 +648,29 @@ export class MyAgenda {
    * Una por mes y no una por día: agrupar en el cliente es barato y pedir
    * treinta veces lo mismo no lo es. La ventana de un mes entra holgada en el
    * tope de 92 días de la API.
+   *
+   * ## Por qué la ventana lleva una semana de margen a cada lado
+   *
+   * Tanto la grilla del mes como la de la semana pintan días que caen FUERA
+   * del mes calendario: el mes muestra los días de relleno del mes anterior y
+   * del siguiente (`fechasDeLaGrilla` arma seis semanas completas), y la
+   * semana puede empezar o terminar cruzando esa frontera sin que nadie la
+   * mueva —`lunesDe(hoy)` cae en agosto la semana en que hoy es 3 de
+   * septiembre—. Pedir sólo `[mesVisible, mesVisible+1mes)` deja esos días sin
+   * cupos cargados, y se ven «No atendés» aunque el profesional sí atienda:
+   * se detectó pidiendo la semana del 31/8 al 6/9 con septiembre cargado —
+   * el 31 de agosto se mostraba vacío con turnos reales adentro. Una semana de
+   * margen de cada lado cubre cualquier semana que la grilla llegue a pintar,
+   * y sigue lejos del tope de 92 días de la API.
    */
   private cargarMes(): void {
     const recurso = this.recurso();
     if (recurso === null) return;
 
-    const desde = this.mesVisible();
-    const hasta = sumarMeses(desde, 1);
+    const base = this.mesVisible();
+    const desde = new Date(base.getFullYear(), base.getMonth(), base.getDate() - 7);
+    const finDeMes = sumarMeses(base, 1);
+    const hasta = new Date(finDeMes.getFullYear(), finDeMes.getMonth(), finDeMes.getDate() + 7);
     this.cargandoMes.set(true);
 
     this.scheduling

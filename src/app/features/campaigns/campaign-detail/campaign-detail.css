@@ -14,7 +14,7 @@
 
 .promo__farmacia {
   margin: 0;
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
@@ -77,7 +77,7 @@
 }
 
 .promo__secundario {
-  font-size: var(--fs-small);
+  font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 

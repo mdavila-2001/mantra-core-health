@@ -2,18 +2,38 @@
   title="Bloqueos de agenda"
   subtitle="Los ratos que cerraste y los que ya pasaron. Acá no hay turnos: sólo lo que no se atiende."
 >
-  <a app-button page-actions variant="primary" [routerLink]="rutaNuevo">Bloquear días u horarios</a>
+  <!-- No es un `routerLink`: no hay ninguna ruta `schedule/blocks/new`
+       declarada (ver el comentario de `creando` en blocks.ts), así que un
+       enlace ahí caía en el 404. El alta se abre en la misma pantalla, con el
+       mismo panel que corrige — mismo diseño, sin dirección rota. -->
+  <button app-button page-actions variant="primary" type="button" (clicked)="abrirNuevo()">
+    Bloquear días u horarios
+  </button>
 </app-page-header>
 
-<!-- El mismo formulario que da de alta, con lo que se corrige precargado.
-     Escribir uno aparte para editar es el camino corto que termina con dos
-     formularios que divergen. -->
+<!-- El aviso de alcance (punto 8 de TAREA-10, heredado acá porque el pedido
+     de TAREA-11 exige «el mismo diseño que todo el flujo de horarios»): un
+     bloqueo también es parte de la agenda de consulta y cita. -->
+<p class="bloqueos__alcance" role="note">
+  Estos horarios son para consulta y cita, no para intervenciones quirúrgicas ni procedimientos
+  prolongados; sí pueden incluir tratamientos.
+</p>
+
+<!-- El mismo formulario que da de alta y que corrige, con lo que se corrige
+     precargado (o en blanco, para el alta). Escribir uno aparte es el camino
+     corto que termina con dos formularios que divergen. -->
 @if (editando(); as enEdicion) {
   <app-block-form
     [motivos]="motivos()"
     [editando]="enEdicion"
     (bloquear)="guardar($event)"
-    (cancelar)="cancelarEdicion()"
+    (cancelar)="cancelarFormulario()"
+  />
+} @else if (creando()) {
+  <app-block-form
+    [motivos]="motivos()"
+    (bloquear)="guardar($event)"
+    (cancelar)="cancelarFormulario()"
   />
 }
 
@@ -28,7 +48,10 @@
             <div class="bloqueos__datos">
               <p class="bloqueos__motivo">
                 {{ b.motivo }}
-                <app-badge variant="warning">Cerrado</app-badge>
+                <!-- Etiqueta de estado (AC-11-2): «Vigente» no depende del
+                     color solo — el texto lo dice, igual que «Finalizado»
+                     abajo, en la tabla de históricos. -->
+                <app-badge variant="success">Vigente</app-badge>
               </p>
               <p class="bloqueos__cuando">{{ b.cuando }}</p>
               <!-- La descripción sólo la ve quien administra la agenda: es
@@ -37,26 +60,42 @@
                 <p class="bloqueos__descripcion">{{ b.descripcion }}</p>
               }
             </div>
+            <!-- Editar y borrar como iconos sobre la fila, con nombre
+                 accesible (AC-11-2): el mismo lápiz que usa «Cambiar mi
+                 horario» en Mi agenda, para que se lea como el mismo botón. -->
             <button
               app-button
               variant="ghost"
               size="sm"
+              [iconOnly]="true"
               type="button"
               data-testid="bloqueo-editar"
+              aria-label="Cambiar este bloqueo"
+              appTooltip="Cambiar este bloqueo"
               (clicked)="editar(b)"
             >
-              Cambiar
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
             </button>
             <button
               app-button
               variant="ghost"
               size="sm"
+              [iconOnly]="true"
               type="button"
               data-testid="bloqueo-quitar"
+              aria-label="Quitar este bloqueo"
+              appTooltip="Quitar este bloqueo"
               [isLoading]="borrando() === b.id"
               (clicked)="quitar(b)"
             >
-              Quitar
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+              </svg>
             </button>
           </li>
         }
@@ -79,8 +118,14 @@
         @for (b of historicos(); track b.id) {
           <li class="bloqueos__item bloqueos__item--pasado">
             <div class="bloqueos__datos">
-              <p class="bloqueos__motivo">{{ b.motivo }}</p>
+              <p class="bloqueos__motivo">
+                {{ b.motivo }}
+                <app-badge variant="secondary">Finalizado</app-badge>
+              </p>
               <p class="bloqueos__cuando">{{ b.cuando }}</p>
+              @if (b.descripcion) {
+                <p class="bloqueos__descripcion">{{ b.descripcion }}</p>
+              }
             </div>
           </li>
         }
