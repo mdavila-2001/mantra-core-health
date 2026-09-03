@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { formatDate } from '@angular/common';
+import { calcularTurnos } from '../agenda-create/agenda-turnos';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -744,6 +745,65 @@ export class MyAgenda {
     if (ir && puedeAbrirExpediente && perfil !== undefined) {
       void this.router.navigate([patientChartRoute(perfil)]);
     }
+  }
+
+  /**
+   * «Cómo se veía antes ese horario» — punto 3 del carril 10.
+   *
+   * El pedido pide un modal con **el mismo organismo que el oficial**. Se
+   * resuelve con el mismo `calcularTurnos` que usa la pantalla de publicar: no
+   * hay dos maneras de contar los turnos de una franja, y tener dos sería
+   * garantizar que un día digan cosas distintas sobre el mismo horario.
+   *
+   * No hace falta pedir nada al servidor: la lectura de plantillas **ya trae
+   * las reglas** de cada una, retiradas incluidas.
+   */
+  protected async verHorarioViejo(plantilla: PublishedTemplate): Promise<void> {
+    const calculo = calcularTurnos(
+      [...plantilla.rules]
+        .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+        .map((regla) => ({
+          dia: NOMBRE_DEL_DIA[regla.dayOfWeek] ?? `Día ${regla.dayOfWeek}`,
+          desde: regla.startTime.slice(0, 5),
+          hasta: regla.endTime.slice(0, 5),
+          duracion: regla.slotMinutes ?? plantilla.slotMinutes ?? 30,
+          receso: regla.gapMinutes ?? 0,
+        })),
+    );
+
+    const detalles: DialogDetail[] = calculo.porDia.map((dia) => ({
+      label: dia.dia.charAt(0).toUpperCase() + dia.dia.slice(1),
+      value:
+        dia.turnos.length === 0
+          ? 'Sin turnos'
+          : `${dia.turnos[0].desde} a ${dia.turnos[dia.turnos.length - 1].hasta} · ` +
+            `${dia.turnos.length} ${dia.turnos.length === 1 ? 'turno' : 'turnos'}`,
+    }));
+
+    // La vigencia, que es lo que uno viene a mirar en un horario viejo.
+    if (plantilla.validFrom !== undefined) {
+      detalles.unshift({
+        label: 'Rigió desde',
+        value: formatDate(plantilla.validFrom, "d 'de' MMMM yyyy", this.idioma),
+      });
+    }
+    if (plantilla.validTo !== undefined) {
+      detalles.unshift({
+        label: 'Hasta',
+        value: formatDate(plantilla.validTo, "d 'de' MMMM yyyy", this.idioma),
+      });
+    }
+
+    await this.dialogs.confirm({
+      title: `Así era «${plantilla.name}»`,
+      message:
+        calculo.total === 0
+          ? 'Este horario no llegó a tener turnos.'
+          : `${calculo.total} ${calculo.total === 1 ? 'turno' : 'turnos'} por semana.`,
+      details: detalles,
+      confirmLabel: 'Cerrar',
+      cancelLabel: 'Volver',
+    });
   }
 
   protected volverAlMes(): void {
