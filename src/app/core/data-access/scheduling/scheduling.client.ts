@@ -12,6 +12,7 @@ import type {
   AgendaSlotPage,
   AgendaSlotQuery,
   AvailabilityExceptionCreated,
+  TemplateReactivated,
   AvailabilityExceptionTypeList,
   NewPaymentState,
   PaymentStateInfo,
@@ -304,6 +305,22 @@ export class SchedulingClient {
   listTemplates(resourceId: string): Observable<PublishedTemplatePage> {
     return this.http.get<PublishedTemplatePage>(
       this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/templates`),
+    );
+  }
+
+  /**
+   * `POST /scheduling/templates/:id/reactivate` — vuelve a activar un horario
+   * pausado.
+   *
+   * **No regenera los cupos**, y la respuesta lo dice con `slotsPendientes`:
+   * retirar los borró, y volver a crearlos es `generateSlots` con la ventana
+   * que el profesional elija. Quien llame a esto tiene que ofrecer ese paso, o
+   * el horario queda vigente sin un solo turno.
+   */
+  reactivateTemplate(templateId: string): Observable<TemplateReactivated> {
+    return this.http.post<TemplateReactivated>(
+      this.url(`/scheduling/templates/${encodeURIComponent(templateId)}/reactivate`),
+      {},
     );
   }
 

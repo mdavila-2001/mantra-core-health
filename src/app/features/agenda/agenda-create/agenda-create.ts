@@ -190,6 +190,9 @@ export class AgendaCreate {
   protected readonly rutaDeMiAgenda = AGENDA_MINE_ROUTE;
   protected readonly uuidError = UUID_ERROR;
   protected readonly dias = DIAS;
+  /** A dónde vuelve «Cancelar»: la agenda, que es de donde se vino. */
+  protected readonly rutaMiAgenda = '/schedule/mine';
+
   protected readonly duraciones = DURACIONES;
   protected readonly respiros = RESPIROS;
 
