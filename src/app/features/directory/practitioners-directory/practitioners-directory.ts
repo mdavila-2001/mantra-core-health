@@ -1,8 +1,21 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { catchError, forkJoin, of, switchMap, type Observable } from 'rxjs';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs';
 
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
-import type { PractitionerListItem } from '../../../core/data-access/profiles/profiles.types';
+import type {
+  PractitionerListItem,
+  SpecialtyCounts,
+} from '../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -15,8 +28,18 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { inicialesDe } from '../../../shared/text/iniciales';
 import { subtituloProfesional } from '../subtitulo-profesional';
+
+/** Una especialidad en la portada: su nombre y cuánta gente hay detrás. */
+interface TarjetaDeEspecialidad {
+  readonly conceptId: string;
+  readonly nombre: string;
+  readonly cantidad: number;
+}
 
 /** Cómo se cuenta lo que este directorio lista. */
 const SUSTANTIVO: SustantivoDelDirectorio = {
@@ -26,16 +49,6 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
 
 /** Clave del chip de especialidad en la URL. */
 const PARAM_ESPECIALIDAD = 'especialidad';
-
-/**
- * Cuántas especialidades se ofrecen como chips.
- *
- * Los chips valen porque **se ven todos**: en cuanto hay que desplazarse para
- * llegar al último, vuelven a esconder opciones, que es el defecto del
- * desplegable que vinieron a corregir. Con más de este tope, las de más abajo
- * siguen alcanzándose por el buscador y por su encabezado.
- */
-const MAXIMO_DE_CHIPS = 12;
 
 /** Tope por página del backend. La guía las junta todas. */
 const POR_PAGINA = 50;
@@ -103,13 +116,51 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
  */
 @Component({
   selector: 'app-practitioners-directory',
-  imports: [DirectoryPage],
+  imports: [AppButton, DirectoryPage, PageHeader, RouterLink, ViewStateHost],
   templateUrl: './practitioners-directory.html',
+  styleUrl: './practitioners-directory.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionersDirectory {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
+  private readonly route = inject(ActivatedRoute);
+
+  /**
+   * La especialidad elegida, leída de la URL.
+   *
+   * Es la que decide qué pantalla se ve —portada o lista—, y por eso se lee acá
+   * y no del organismo de filtros: el organismo vive DENTRO de la lista, así
+   * que preguntarle a él cuál es la especialidad sería preguntarle a la pieza
+   * que sólo existe cuando ya se eligió una.
+   *
+   * Que viva en la URL es lo que hace compartible «la guía, cardiología» y lo
+   * que deja que el chequeo de síntomas mande directo a una especialidad,
+   * salteándose la portada.
+   */
+  private readonly especialidadEnUrl = toSignal(
+    this.route.queryParams.pipe(
+      map((params) => {
+        const valor = params[PARAM_ESPECIALIDAD];
+        return typeof valor === 'string' && valor !== '' ? valor : null;
+      }),
+    ),
+    { initialValue: null },
+  );
+
+  /** Sin especialidad elegida se muestra la portada de especialidades. */
+  protected readonly enPortada = computed(() => this.especialidadEnUrl() === null);
+
+  /** El recuento por especialidad: lo que dibuja la portada. */
+  protected readonly recuento = signal<ViewState<readonly TarjetaDeEspecialidad[]>>(loading());
+
+  /** Cuántos profesionales hay en total, para el subtítulo de la portada. */
+  protected readonly totalDeProfesionales = signal(0);
+
+  /** Las tarjetas ya listas, o vacío mientras el recuento no esté. */
+  protected readonly tarjetas = computed<readonly TarjetaDeEspecialidad[]>(
+    () => dataOf(this.recuento()) ?? [],
+  );
 
   protected readonly sustantivo = SUSTANTIVO;
 
@@ -130,22 +181,16 @@ export class PractitionersDirectory {
    * médicos tienen primero— porque son las que más gente busca, y recién
    * después alfabéticamente para que el orden sea estable entre cargas.
    */
-  protected readonly filtros = computed<readonly FilterDef[]>(() => {
-    const todos = dataOf(this.estado()) ?? [];
-    const opciones = [...todos]
-      .filter((grupo) => grupo.conceptId !== 'sin-especialidad')
-      .sort(
-        (a, b) =>
-          b.profesionales.length - a.profesionales.length ||
-          a.nombre.localeCompare(b.nombre, 'es'),
-      )
-      .slice(0, MAXIMO_DE_CHIPS)
-      .map((grupo) => ({ value: grupo.conceptId, label: grupo.nombre }));
-
-    return opciones.length === 0
-      ? []
-      : [{ key: PARAM_ESPECIALIDAD, label: 'Especialidad', asChips: true, options: opciones }];
-  });
+  /**
+   * Sin chips de especialidad: la portada los reemplaza.
+   *
+   * Eran un atajo a las 12 con más médicos cuando la pantalla mostraba la guía
+   * entera de una vez. Ahora la especialidad se elige ANTES —en la portada, con
+   * las 33 que tienen gente y su cantidad— y dentro de una especialidad un chip
+   * para cambiarla sería un segundo selector diciendo lo mismo. Queda el
+   * buscador, que corta por otra cosa: el nombre.
+   */
+  protected readonly filtros = computed<readonly FilterDef[]>(() => []);
 
   /** Si se cortó por el techo de páginas, para poder decirlo. */
   protected readonly recortada = signal(false);
@@ -227,7 +272,20 @@ export class PractitionersDirectory {
   }
 
   constructor() {
-    this.cargar();
+    // `effect` y no una sola carga en el constructor: tocar una tarjeta cambia
+    // la URL pero NO recrea el componente —es la misma ruta—, así que sin esto
+    // la portada se quedaría dibujada sobre una especialidad ya elegida. Cada
+    // cambio del parámetro es una pantalla distinta y una lectura distinta.
+    effect(() => {
+      const elegida = this.especialidadEnUrl();
+      untracked(() => {
+        if (elegida === null) {
+          this.cargarPortada();
+        } else {
+          this.cargarEspecialidad(elegida);
+        }
+      });
+    });
   }
 
   protected recargar(): void {
@@ -235,10 +293,68 @@ export class PractitionersDirectory {
   }
 
   private cargar(): void {
+    const elegida = this.especialidadEnUrl();
+    if (elegida === null) {
+      this.cargarPortada();
+      return;
+    }
+    this.cargarEspecialidad(elegida);
+  }
+
+  /**
+   * La portada: una tarjeta por especialidad con gente.
+   *
+   * Dos lecturas y ninguna página de la guía. Antes esta pantalla recorría el
+   * cursor hasta agotarlo **sólo para contar**, y con un techo que la dejaba
+   * recortada sin decirlo.
+   */
+  private cargarPortada(): void {
+    this.recuento.set(loading());
+
+    this.profiles
+      .getSpecialtyCounts()
+      .pipe(
+        switchMap((recuento: SpecialtyCounts) =>
+          forkJoin({
+            recuento: of(recuento),
+            // Mismo trato que en la lista: sin catálogo la portada sigue
+            // existiendo, con el concepto por nombre.
+            etiquetas: this.terminology
+              .readConceptLabels(recuento.items.map((fila) => fila.specialtyConceptId))
+              .pipe(catchError(() => of<ConceptLabels>(new Map()))),
+          }),
+        ),
+      )
+      .subscribe({
+        next: ({ recuento, etiquetas }) => {
+          this.totalDeProfesionales.set(recuento.practitionerTotal);
+          this.recuento.set(
+            ready(
+              recuento.items.map((fila) => ({
+                conceptId: fila.specialtyConceptId,
+                nombre: etiquetas.get(fila.specialtyConceptId)?.display ?? SIN_ESPECIALIDAD,
+                cantidad: fila.practitionerCount,
+              })),
+            ),
+          );
+        },
+        error: (error: unknown) =>
+          this.recuento.set(errorToViewState<readonly TarjetaDeEspecialidad[]>(error)),
+      });
+  }
+
+  /**
+   * La lista de UNA especialidad, pedida al servidor.
+   *
+   * El filtro va en la consulta y no en memoria: es la mitad del ahorro de la
+   * portada —traer a los 88 de cardiología en vez de a los 836 para mostrar 88—
+   * y encima el backend ya lo soportaba.
+   */
+  private cargarEspecialidad(specialtyConceptId: string): void {
     this.estado.set(loading());
     this.recortada.set(false);
 
-    this.leerTodo([], undefined, 0)
+    this.leerTodo([], undefined, 0, specialtyConceptId)
       .pipe(
         switchMap((filas) =>
           forkJoin({
@@ -268,8 +384,9 @@ export class PractitionersDirectory {
     acumulado: readonly PractitionerListItem[],
     cursor: string | undefined,
     pagina: number,
+    specialtyConceptId: string,
   ): Observable<readonly PractitionerListItem[]> {
-    return this.profiles.listPractitioners({ cursor, limit: POR_PAGINA }).pipe(
+    return this.profiles.listPractitioners({ specialtyConceptId, cursor, limit: POR_PAGINA }).pipe(
       switchMap((respuesta) => {
         const filas = [...acumulado, ...respuesta.items];
         if (respuesta.nextCursor === null) {
@@ -279,7 +396,7 @@ export class PractitionersDirectory {
           this.recortada.set(true);
           return of(filas);
         }
-        return this.leerTodo(filas, respuesta.nextCursor, pagina + 1);
+        return this.leerTodo(filas, respuesta.nextCursor, pagina + 1, specialtyConceptId);
       }),
     );
   }
@@ -415,4 +532,3 @@ function toResultado(
     seals: sellos,
   };
 }
-

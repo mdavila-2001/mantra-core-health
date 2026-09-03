@@ -714,6 +714,28 @@ export interface PractitionerListItem {
  * Cursor sin total, como todos los listados del sistema: `nextCursor` en
  * `null` significa que no hay más — la ausencia acá SÍ es información.
  */
+/**
+ * Cuántos profesionales visibles ejerce una especialidad.
+ *
+ * Sale de `GET /profiles/practitioners/specialty-counts`, que aplica los mismos
+ * filtros que el listado: el número de una tarjeta es el largo de la lista que
+ * abre.
+ */
+export interface SpecialtyPractitionerCount {
+  readonly specialtyConceptId: string;
+  readonly practitionerCount: number;
+}
+
+/** El recuento de la guía por especialidad, con el total sin repetir. */
+export interface SpecialtyCounts {
+  readonly items: readonly SpecialtyPractitionerCount[];
+  /**
+   * Profesionales visibles sin repetir. **No es la suma de `items`**: quien
+   * ejerce tres especialidades cuenta una vez acá y tres entre las tarjetas.
+   */
+  readonly practitionerTotal: number;
+}
+
 export interface PractitionerDirectoryPage {
   readonly items: readonly PractitionerListItem[];
   readonly count: number;
