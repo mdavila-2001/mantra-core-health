@@ -434,11 +434,10 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
-    // Documento de identidad: opcional para el profesional (se guarda como
-    // identificador oficial, no como login — eso lo sigue siendo el correo).
+    // Documento de identidad boliviano: obligatorio según normativa y registro del cliente (§1.2).
     nationalId: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.pattern(DOCUMENTO_VALIDO)],
+      validators: [Validators.required, Validators.pattern(DOCUMENTO_VALIDO)],
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     credentialNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -681,11 +680,12 @@ export class RegisterPractitioner {
         titulo: 'Tu documento de identidad',
         clave: 'document',
         icon: 'patients',
-        hint: 'Opcional. No es con lo que entrás: identifica a la persona detrás de la matrícula.',
+        hint: 'Obligatorio. Identifica a la persona detrás de la matrícula.',
         campos: [
           {
             key: 'nationalId',
-            label: 'Cédula de identidad (opcional)',
+            label: 'Cédula de identidad',
+            required: true,
             hint: 'Se guarda como tu documento oficial.',
             description:
               'No es con lo que iniciás sesión —eso es tu correo—, pero es lo que ata tu matrícula a una persona.',
@@ -698,7 +698,7 @@ export class RegisterPractitioner {
             // pareja que en el alta de paciente, y por lo mismo — el número y
             // su expedición son un solo documento.
             ancho: 'mitad',
-            mensajeDeError: 'Letras, números, punto y guion.',
+            mensajeDeError: 'Ingresá tu cédula de identidad.',
           },
           this.campoDepartamentoEmisor('registro-pro-departamento-ci'),
         ],
@@ -1239,12 +1239,10 @@ export class RegisterPractitioner {
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
       ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
-      ...(documento === '' ? {} : { nationalId: documento }),
+      nationalId: documento,
       // Sólo tiene sentido con documento: sin CI no hay identificador al que
       // atarle un departamento de emisión.
-      ...(documento === '' || departamento === null
-        ? {}
-        : { issuerAdministrativeAreaConceptId: departamento }),
+      ...(departamento === null ? {} : { issuerAdministrativeAreaConceptId: departamento }),
       ...(municipio === null ? {} : { residenceMunicipalityConceptId: municipio }),
       licenseNumber: raw.licenseNumber.trim(),
       credentialNumber: raw.credentialNumber.trim(),

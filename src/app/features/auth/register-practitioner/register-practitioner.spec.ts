@@ -118,7 +118,7 @@ describe('RegisterPractitioner', () => {
       middleName: extra.middleName ?? '',
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
-      nationalId: extra.nationalId ?? '',
+      nationalId: extra.nationalId ?? '1234567',
       email: 'ana@hospital.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
@@ -586,6 +586,7 @@ describe('RegisterPractitioner', () => {
     expect(req.request.body).toEqual({
       name: 'Ana',
       lastName: 'Paz',
+      nationalId: '1234567',
       email: 'ana@hospital.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
@@ -593,6 +594,12 @@ describe('RegisterPractitioner', () => {
     });
 
     req.flush(RESPUESTA_PRO);
+  });
+
+  it('el documento de identidad es obligatorio para el profesional boliviano', () => {
+    completarProfesional({ nationalId: '' });
+    expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
+    expect(component.formProfesional.controls.nationalId.errors?.['required']).toBe(true);
   });
 
   it('agrega segundo nombre y apellido materno solo si se completaron', () => {
