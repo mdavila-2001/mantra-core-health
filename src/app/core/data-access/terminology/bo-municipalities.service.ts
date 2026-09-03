@@ -64,6 +64,21 @@ const SIGLA_POR_PREFIJO_INE: ReadonlyMap<string, string> = new Map([
 ]);
 
 /**
+ * Resuelve el departamento tanto del código canónico del seeder nuevo
+ * (`geo:bo:municipality:030101`) como del catálogo legado que sigue publicado
+ * en la base reconstruida (`CB-SACABA`). Ese catálogo usa `PA` para Pando,
+ * mientras el de departamentos usa `PD`.
+ */
+function siglaDeMunicipio(code: string): string | undefined {
+  const ine = code.replace(PREFIJO_MUNICIPIO, '');
+  const porIne = SIGLA_POR_PREFIJO_INE.get(ine.slice(0, 2));
+  if (porIne !== undefined) return porIne;
+
+  const siglaLegada = /^([A-Z]{2})-/.exec(code)?.[1];
+  return siglaLegada === 'PA' ? 'PD' : siglaLegada;
+}
+
+/**
  * El árbol de departamentos y municipios de Bolivia, para «dónde vivís».
  *
  * ## Por qué es un árbol y no una lista
@@ -187,7 +202,7 @@ export class BoMunicipalitiesCatalog {
     const ramas = new Map<string, Municipio[]>();
     for (const municipio of municipios) {
       const ine = municipio.code.replace(PREFIJO_MUNICIPIO, '');
-      const sigla = SIGLA_POR_PREFIJO_INE.get(ine.slice(0, 2));
+      const sigla = siglaDeMunicipio(municipio.code);
       if (sigla === undefined || !porSigla.has(sigla)) {
         continue;
       }

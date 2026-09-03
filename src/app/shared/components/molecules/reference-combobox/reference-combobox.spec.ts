@@ -354,6 +354,48 @@ describe('ReferenceCombobox', () => {
   });
 
   describe('elección con el puntero', () => {
+    it('abre todas las opciones al hacer clic con consulta mínima cero', () => {
+      host.options.set(MEDICOS);
+      host.minQueryLength.set(0);
+      fixture.detectChanges();
+
+      input().click();
+      fixture.detectChanges();
+
+      expect(input().getAttribute('aria-expanded')).toBe('true');
+      expect(optionElements()).toHaveLength(MEDICOS.length);
+    });
+
+    it('abre todas las opciones al recibir foco con consulta mínima cero', () => {
+      host.options.set(MEDICOS);
+      host.minQueryLength.set(0);
+      fixture.detectChanges();
+
+      input().dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      fixture.detectChanges();
+
+      expect(input().getAttribute('aria-expanded')).toBe('true');
+      expect(optionElements()).toHaveLength(MEDICOS.length);
+    });
+
+    it('abre sin buscar y permite filtrar después del clic', async () => {
+      host.options.set(MEDICOS);
+      input().click();
+      fixture.detectChanges();
+
+      expect(input().getAttribute('aria-expanded')).toBe('true');
+      expect(host.searches).toEqual([]);
+
+      await type('ana');
+      host.options.set([MEDICOS[0]]);
+      fixture.detectChanges();
+
+      expect(host.searches).toEqual(['ana']);
+      expect(input().getAttribute('aria-expanded')).toBe('true');
+      expect(optionElements()).toHaveLength(1);
+      expect(optionElements()[0].textContent).toContain('Ana Pérez');
+    });
+
     it('elige al pulsar la opción', async () => {
       host.options.set(MEDICOS);
       await type('a');

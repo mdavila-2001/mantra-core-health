@@ -160,7 +160,7 @@ describe('RegisterPatient', () => {
      * cuelga, porque la expansión de un conjunto no devuelve las propiedades
      * del concepto.
      */
-    it('arma el árbol colgando cada municipio del departamento de su código INE', () => {
+    it('arma el árbol con los códigos canónicos y los legados de la base reconstruida', () => {
       http.expectOne(CATALOGO).flush({
         items: [{ id: 'vs-dep', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
       });
@@ -171,21 +171,27 @@ describe('RegisterPatient', () => {
         items: [
           { conceptId: 'd-cb', code: 'geo:bo:department:CB', display: 'Cochabamba' },
           { conceptId: 'd-sc', code: 'geo:bo:department:SC', display: 'Santa Cruz' },
+          { conceptId: 'd-pd', code: 'geo:bo:department:PD', display: 'Pando' },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
         nextCursor: null,
       });
       http.expectOne('/terminology/value-sets/vs-mun/$expand?limit=200').flush({
         items: [
           { conceptId: 'm-1', code: 'geo:bo:municipality:031001', display: 'Sacaba' },
+          // Códigos legados: la base reconstruida los conserva y el resolver
+          // tiene que aceptarlos, o esas filas desaparecen del selector aunque
+          // los 340 municipios estén publicados. Cobija además ejercita la
+          // equivalencia `PA` → `PD` del catálogo viejo para Pando.
           {
             conceptId: 'm-2',
-            code: 'geo:bo:municipality:070101',
+            code: 'SC-SANTA-CRUZ',
             display: 'Santa Cruz de la Sierra',
           },
+          { conceptId: 'm-3', code: 'PA-COBIJA', display: 'Cobija' },
         ],
-        count: 2,
+        count: 3,
         limit: 200,
         nextCursor: null,
       });
@@ -205,6 +211,7 @@ describe('RegisterPatient', () => {
       ).toEqual([
         { sigla: 'CB', nombre: 'Cochabamba', municipios: ['Sacaba'] },
         { sigla: 'SC', nombre: 'Santa Cruz', municipios: ['Santa Cruz de la Sierra'] },
+        { sigla: 'PD', nombre: 'Pando', municipios: ['Cobija'] },
       ]);
     });
 
