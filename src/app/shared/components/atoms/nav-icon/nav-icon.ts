@@ -392,8 +392,24 @@ import type { NavIconName } from './nav-icon.types';
     </svg>
   `,
   styles: `
+    /* El host trae SU PROPIO tamaño, y no depende de que quien lo monte se
+       acuerde de dárselo.
+
+       El glifo se dibuja con \`width/height: 100%\`, así que sin medida en el
+       host ese 100% no tiene contra qué resolver: el navegador cae al tamaño
+       por defecto de un elemento reemplazado —300 px— o al alto del contenedor.
+       Medido en el navegador: 300 px por ícono en el rail público, y una flecha
+       de 40 px llenando un botón de 40 en el motor de formularios, que es
+       justo lo que el botón evita con su \`::ng-deep svg { width: 1.2em }\` —
+       regla que perdía contra ésta por orden de inyección, no por peso.
+
+       En \`em\` y no en píxeles: así acompaña al talle de quien lo monta sin que
+       nadie tenga que declarar nada. Quien necesite otra medida se la pone al
+       host, que es donde se mide, y gana por especificidad. */
     :host {
       display: inline-flex;
+      inline-size: 1.25em;
+      block-size: 1.25em;
     }
 
     svg {
