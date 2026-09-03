@@ -32,6 +32,23 @@
     }
   </div>
 
+  @if (r.action; as accion) {
+    <!-- La acción va en la columna del costado y no bajo el título: el título
+         lleva a la ficha, y dos enlaces pegados al mismo texto se tocan mal en
+         un teléfono. El `fragment` es lo que hace que «revisar disponibilidad»
+         caiga en los horarios y no arriba de todo. -->
+    <a
+      app-button
+      variant="outline"
+      size="sm"
+      class="app-resultado__accion"
+      [routerLink]="accion.link"
+      [fragment]="accion.fragment"
+    >
+      {{ accion.label }}
+    </a>
+  }
+
   <!-- La tercera columna del grid: `.app-resultado__lado`, que la escribe quien
        usa la tarjeta. Ver el porqué en el JSDoc del componente. -->
   <ng-content />

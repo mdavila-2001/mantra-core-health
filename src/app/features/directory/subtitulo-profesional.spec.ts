@@ -6,9 +6,7 @@ import { subtituloProfesional } from './subtitulo-profesional';
  */
 describe('subtituloProfesional', () => {
   it('deja pasar un título profesional de verdad', () => {
-    expect(subtituloProfesional('Medicina Familiar', 'Ana Lucía Flores')).toBe(
-      'Medicina Familiar',
-    );
+    expect(subtituloProfesional('Medicina Familiar', 'Ana Lucía Flores')).toBe('Medicina Familiar');
   });
 
   it('sin título no inventa nada', () => {
@@ -36,15 +34,11 @@ describe('subtituloProfesional', () => {
 
   it('el tratamiento del propio titular no es un cruce', () => {
     // «Dra. Lucía Salas» en la tarjeta de Lucía Salas es redundante, no falso.
-    expect(subtituloProfesional('Dra. Lucía Salas', 'Dra. Lucía Salas')).toBe(
-      'Dra. Lucía Salas',
-    );
+    expect(subtituloProfesional('Dra. Lucía Salas', 'Dra. Lucía Salas')).toBe('Dra. Lucía Salas');
   });
 
   it('compara sin tildes ni mayúsculas: «Lucia» y «Lucía» son la misma persona', () => {
-    expect(subtituloProfesional('Dra. Lucia Salas', 'Dra. Lucía Salas')).toBe(
-      'Dra. Lucia Salas',
-    );
+    expect(subtituloProfesional('Dra. Lucia Salas', 'Dra. Lucía Salas')).toBe('Dra. Lucia Salas');
     expect(
       subtituloProfesional('CAMILA ROCA — Pediatría', 'Ana Flores', ['Camila Roca']),
     ).toBeUndefined();

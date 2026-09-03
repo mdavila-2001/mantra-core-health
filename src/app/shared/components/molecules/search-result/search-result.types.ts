@@ -95,4 +95,22 @@ export interface SearchResultItem {
   readonly meta?: readonly SearchResultMeta[];
   /** Los sellos, bajo las líneas de contexto. */
   readonly seals?: readonly SearchResultSeal[];
+  /**
+   * Una acción propia de la tarjeta, además del título.
+   *
+   * Opcional y una sola: el título ya lleva a la ficha, así que lo que se
+   * agregue acá tiene que ser algo DISTINTO de «ver más» —«revisar
+   * disponibilidad», que salta a los horarios— o es un segundo botón para el
+   * mismo destino. Los directorios que no la declaran no cambian en nada.
+   */
+  readonly action?: SearchResultAction;
+}
+
+/** Un enlace de acción dentro de la tarjeta. */
+export interface SearchResultAction {
+  readonly label: string;
+  /** Ruta de la aplicación, igual que `link`. */
+  readonly link: string;
+  /** Ancla dentro de esa ruta, para caer en la sección que importa. */
+  readonly fragment?: string;
 }

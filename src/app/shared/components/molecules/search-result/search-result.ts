@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { AppButtonLink } from '../../atoms/button/button-link';
+
 import type { SearchResultItem } from './search-result.types';
 
 /**
@@ -50,7 +52,7 @@ import type { SearchResultItem } from './search-result.types';
  */
 @Component({
   selector: 'li[app-search-result]',
-  imports: [RouterLink],
+  imports: [AppButtonLink, RouterLink],
   templateUrl: './search-result.html',
   styleUrl: './search-result.css',
   host: { class: 'app-resultado' },
@@ -59,5 +61,4 @@ import type { SearchResultItem } from './search-result.types';
 export class SearchResult {
   /** El resultado a pintar. */
   readonly resultado = input.required<SearchResultItem>();
-
 }

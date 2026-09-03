@@ -79,9 +79,7 @@ export function subtituloProfesional(
   }
 
   if (TRATAMIENTOS.test(texto)) {
-    const persona = normalizar(
-      texto.replace(TRATAMIENTOS, '').split(SEPARADORES)[0] ?? '',
-    );
+    const persona = normalizar(texto.replace(TRATAMIENTOS, '').split(SEPARADORES)[0] ?? '');
     // Sólo sobrevive si quien está nombrado ahí es el titular de la tarjeta.
     if (persona !== '' && !propio.includes(persona)) {
       return undefined;

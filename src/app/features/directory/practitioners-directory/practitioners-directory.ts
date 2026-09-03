@@ -47,6 +47,14 @@ const SUSTANTIVO: SustantivoDelDirectorio = {
   plural: 'médicos',
 };
 
+/**
+ * El ancla de los horarios en la ficha del profesional.
+ *
+ * Vive acá y en `practitioner-detail.html`: es el contrato entre la tarjeta que
+ * ofrece «revisar disponibilidad» y la sección que responde esa pregunta.
+ */
+const ANCLA_HORARIOS = 'horarios';
+
 /** Clave del chip de especialidad en la URL. */
 const PARAM_ESPECIALIDAD = 'especialidad';
 
@@ -527,6 +535,15 @@ function toResultado(
     id: fila.profileId,
     title: nombre,
     link: `/directory/${fila.profileId}`,
+    // «Revisar disponibilidad» (fila 30 de la bitácora): el título lleva a la
+    // ficha entera y esto salta a los horarios, que es la pregunta con la que
+    // se compara a dos profesionales. Mismo destino, distinta altura — por eso
+    // el ancla y no un segundo enlace al mismo lugar.
+    action: {
+      label: 'Revisar disponibilidad',
+      link: `/directory/${fila.profileId}`,
+      fragment: ANCLA_HORARIOS,
+    },
     figureText: inicialesDe(nombre),
     meta,
     seals: sellos,
