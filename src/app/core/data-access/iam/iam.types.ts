@@ -265,6 +265,8 @@ export interface PractitionerRegistration {
    * documento de identidad boliviano registra.
    */
   readonly sexAtBirth?: BirthSexCode;
+  /** Foto de perfil en formato Base64 (Data URI o base64 plano). */
+  readonly profilePhotoBase64?: string;
 }
 
 export interface RegisteredPractitioner {
@@ -272,6 +274,7 @@ export interface RegisteredPractitioner {
   readonly personId: string;
   readonly practitionerProfileId: string;
   readonly practitionerCode: string;
+  readonly photoFileId?: string;
 }
 
 /**

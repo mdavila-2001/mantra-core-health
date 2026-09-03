@@ -109,8 +109,9 @@ describe('RegisterPractitioner', () => {
         | 'regulatoryAuthority'
         | 'specialtyPrimary'
         | 'specialtySecond'
-        | 'specialtyThird',
-        string
+        | 'specialtyThird'
+        | 'profilePhotoBase64',
+        string | null
       >
     > = {},
   ): void {
@@ -135,6 +136,7 @@ describe('RegisterPractitioner', () => {
       specialtyPrimary: extra.specialtyPrimary ?? '',
       specialtySecond: extra.specialtySecond ?? '',
       specialtyThird: extra.specialtyThird ?? '',
+      profilePhotoBase64: extra.profilePhotoBase64 ?? null,
     });
   }
 
@@ -222,7 +224,7 @@ describe('RegisterPractitioner', () => {
         'regulatoryAuthority',
         'licenseIssueDate',
       ]);
-      expect(camposDe('practice')).toEqual(['professionalTitle']);
+      expect(camposDe('practice')).toEqual(['profilePhotoBase64', 'professionalTitle']);
       expect(camposDe('specialties')).toEqual([
         'specialtyPrimary',
         'specialtySecond',
@@ -821,6 +823,63 @@ describe('RegisterPractitioner', () => {
       expect(component.catalogoMunicipiosCaido()).toBe(true);
       expect(component.ramasMunicipios()).toEqual([]);
       expect(navegaciones).toEqual([]);
+    });
+  });
+
+  describe('foto de perfil del profesional (subida y previsualización)', () => {
+    const FOTO_BASE64_TEST = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBD';
+
+    it('envía profilePhotoBase64 en el cuerpo cuando se carga una foto', () => {
+      completarProfesional();
+      component.formProfesional.controls.profilePhotoBase64.setValue(FOTO_BASE64_TEST);
+      component.fotoBase64.set(FOTO_BASE64_TEST);
+
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.profilePhotoBase64).toBe(FOTO_BASE64_TEST);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('omite profilePhotoBase64 cuando no se sube ninguna foto', () => {
+      completarProfesional();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.profilePhotoBase64).toBeUndefined();
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('quitarFoto limpia la señal y el control', () => {
+      component.fotoBase64.set(FOTO_BASE64_TEST);
+      component.formProfesional.controls.profilePhotoBase64.setValue(FOTO_BASE64_TEST);
+
+      component.quitarFoto();
+
+      expect(component.fotoBase64()).toBeNull();
+      expect(component.formProfesional.controls.profilePhotoBase64.value).toBeNull();
+    });
+
+    it('alSeleccionarFoto rechaza formatos no permitidos', () => {
+      const archivoTxt = new File(['hola'], 'test.txt', { type: 'text/plain' });
+      const fakeInput = { files: [archivoTxt], value: 'test.txt' } as unknown as HTMLInputElement;
+
+      component.alSeleccionarFoto({ target: fakeInput } as unknown as Event);
+
+      expect(component.errorFoto()).toBe('El formato de la imagen debe ser JPG, PNG o WebP.');
+      expect(component.fotoBase64()).toBeNull();
+    });
+
+    it('alSeleccionarFoto rechaza archivos mayores a 5 MB', () => {
+      const archivoGigante = new File([new ArrayBuffer(6 * 1024 * 1024)], 'foto.jpg', {
+        type: 'image/jpeg',
+      });
+      const fakeInput = { files: [archivoGigante], value: 'foto.jpg' } as unknown as HTMLInputElement;
+
+      component.alSeleccionarFoto({ target: fakeInput } as unknown as Event);
+
+      expect(component.errorFoto()).toBe('La imagen supera el límite de 5 MB.');
+      expect(component.fotoBase64()).toBeNull();
     });
   });
 });

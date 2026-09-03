@@ -42,3 +42,74 @@
   }
 }
 
+/* Subida y vista previa de foto de perfil */
+.registro-foto {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+  background-color: var(--color-surface);
+  margin-bottom: var(--sp-4);
+}
+
+.registro-foto__avatar {
+  flex-shrink: 0;
+}
+
+.registro-foto__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+}
+
+.registro-foto__boton-subir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.registro-foto__label-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-sm);
+  font-weight: var(--font-medium);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+  transition: opacity 0.2s ease;
+}
+
+.registro-foto__label-btn:hover {
+  opacity: 0.9;
+}
+
+.registro-foto__ayuda {
+  font-size: var(--font-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.registro-foto__error {
+  font-size: var(--font-xs);
+  color: var(--color-danger, #ef4444);
+  margin: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
