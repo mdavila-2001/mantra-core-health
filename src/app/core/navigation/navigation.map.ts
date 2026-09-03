@@ -935,6 +935,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // no es un rol sino un dato de la cuenta —el claim `pid` del token—, y la
     // pantalla lo dice cuando falta en vez de esconderse del menú.
     path: 'my-account/appointments',
+    // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
+    // «Tu organización» para el paciente (`hiddenFor`, B-14).
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis citas',
     group: 'Mi cuenta',
     icon: 'calendar',
@@ -952,6 +955,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Encendida con el carril 09: `GET /clinical/patients/:id/summary` acepta
     // ahora al titular, con el aislamiento comprobado del lado del servidor.
     path: 'my-account/medical-record',
+    // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
+    // «Tu organización» para el paciente (`hiddenFor`, B-14).
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mi historia clínica',
     group: 'Mi cuenta',
     // `results` y no `patients`: lo que esta sección muestra son resultados de
@@ -969,6 +975,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // mismos estudios desde el otro lado, sólo los propios y sólo los que un
     // profesional ya validó. Sin `roles` por lo mismo que las dos de arriba.
     path: 'my-account/diagnostic-results',
+    // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
+    // «Tu organización» para el paciente (`hiddenFor`, B-14).
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis resultados',
     group: 'Mi cuenta',
     icon: 'results',
@@ -985,6 +994,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Sin `roles` por lo mismo que su hermana: el filtro real es tener perfil
     // de paciente, y la pantalla lo dice cuando falta.
     path: 'my-account/diagnostic-orders',
+    // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
+    // «Tu organización» para el paciente (`hiddenFor`, B-14).
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis órdenes',
     group: 'Mi cuenta',
     icon: 'orders',
@@ -1001,6 +1013,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     //
     // La ruta tampoco puede llamarse `surveys`: ver la nota de «Encuestas».
     path: 'my-account/questionnaires',
+    // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
+    // «Tu organización» para el paciente (`hiddenFor`, B-14).
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis cuestionarios',
     group: 'Mi cuenta',
     icon: 'survey',
