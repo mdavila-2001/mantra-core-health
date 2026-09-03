@@ -80,6 +80,26 @@ export class DataTable<Row> {
   readonly selectionChanged = output<readonly Row[]>();
 
   /**
+   * Si la fila entera responde al clic.
+   *
+   * Apagado por defecto: una fila que navega sin anunciarlo es una trampa para
+   * quien sólo quería seleccionar un texto.
+   *
+   * **No reemplaza a un enlace, lo acompaña.** Un `<tr>` con `(click)` no está
+   * en el orden de tabulación, no anuncia adónde lleva y no se abre en otra
+   * pestaña: es una comodidad de puntero. Quien lo enciende **tiene que**
+   * poner además un `<a>` real en alguna celda —el identificador de la fila es
+   * el lugar natural— para que el teclado y el lector de pantalla tengan el
+   * mismo destino. La tabla no puede verificarlo, así que queda dicho acá.
+   */
+  readonly rowNavigable = input(false, { transform: booleanAttribute });
+
+  /**
+   * Fila activada con el puntero. Sólo se emite con {@link rowNavigable}.
+   */
+  readonly rowActivated = output<Row>();
+
+  /**
    * S8 y S9: la persona pide reintentar. **Se reemiten desde el host de
    * estados**, que es quien dibuja el botón.
    *
@@ -130,6 +150,33 @@ export class DataTable<Row> {
 
   protected rowKey(row: Row): string {
     return this.trackBy()(row);
+  }
+
+  /**
+   * Activa la fila, salvo que el clic haya nacido en algo que ya hace lo suyo.
+   *
+   * Sin este filtro, tocar el botón del nombre del paciente abriría su ficha
+   * **y** navegaría al detalle, y seleccionar un texto dentro de la fila
+   * navegaría al soltar. Se ignoran los controles y los enlaces —que tienen su
+   * propia acción—, y también el arrastre con selección de texto.
+   *
+   * @param row - La fila tocada.
+   * @param event - El clic original.
+   */
+  protected activateRow(row: Row, event: MouseEvent): void {
+    if (!this.rowNavigable()) return;
+
+    const origen = event.target;
+    if (
+      origen instanceof Element &&
+      origen.closest('a, button, input, select, textarea, label, [role="button"]')
+    ) {
+      return;
+    }
+    // Un arrastre que terminó seleccionando texto no es un clic en la fila.
+    if ((globalThis.getSelection?.()?.toString() ?? '') !== '') return;
+
+    this.rowActivated.emit(row);
   }
 
   protected isSelected(row: Row): boolean {

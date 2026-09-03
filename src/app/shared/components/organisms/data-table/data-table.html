@@ -73,7 +73,12 @@
 
       <tbody>
         @for (row of rows(); track rowKey(row)) {
-          <tr class="data-table__row" data-testid="tabla-fila">
+          <tr
+            class="data-table__row"
+            [class.data-table__row--navigable]="rowNavigable()"
+            data-testid="tabla-fila"
+            (click)="activateRow(row, $event)"
+          >
             @if (selectable()) {
               <td class="data-table__select-cell">
                 <app-checkbox
