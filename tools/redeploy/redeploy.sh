@@ -120,8 +120,13 @@ MEM_PROXY="${REDEPLOY_MEM_PROXY:-48m}"
 # Docker le dé al contenedor y sobrevive a los cambios sin recargar nada.
 PUERTO_WEB="${REDEPLOY_PUERTO_WEB:-4000}"
 
-WEB=alovida-web
-PROXY=alovida-proxy
+# `WEB` y `PROXY` son el nombre EN USO y pueden pasar a `…-rescate` (ver
+# `nombre_libre`); `*_BASE` es el nombre de siempre, que es contra el que se
+# busca. Separarlos evita que un rescate se convierta en `…-rescate-rescate`.
+WEB_BASE=alovida-web
+PROXY_BASE=alovida-proxy
+WEB="$WEB_BASE"
+PROXY="$PROXY_BASE"
 IMAGEN=alovida-front
 # El binario del túnel. El instalador oficial lo deja en `~/bin/devtunnel` tanto
 # en Linux como en macOS, y si está en el PATH se usa el del PATH.
@@ -447,7 +452,7 @@ montajes_incluidos() {
 
 lanzar_proxy() {
   generar_nginx
-  docker rm -f "$PROXY" >/dev/null 2>&1
+  PROXY="$(nombre_libre "$PROXY_BASE")"
   # Red del host: es lo que le permite hablar con la API por loopback (ver la
   # nota de API_PUERTO). La configuración generada escucha en
   # `127.0.0.1:$PUERTO`, así que sigue sin quedar expuesto a la red local — el
@@ -477,7 +482,19 @@ recargar_proxy() {
   docker exec "$PROXY" nginx -s reload >/dev/null 2>&1
 }
 
-proxy_vivo() { [ -n "$(docker ps -q --filter "name=^${PROXY}$")" ]; }
+# Vivo con CUALQUIERA de los dos nombres —el de siempre o el de rescate—, y el
+# que se encuentre pasa a ser el nombre en uso. Sin esto, un despliegue que tuvo
+# que caer al nombre alterno se vería «caído» en cada pasada y el ciclo lo
+# reconstruiría cada dos minutos para siempre.
+vivo_con_nombre() {
+  local var="$1" base="$2" hallado
+  hallado="$(docker ps --format '{{.Names}}' | grep -xE "${base}(-rescate)?" | head -1)"
+  [ -n "$hallado" ] || return 1
+  eval "$var=\$hallado"
+  return 0
+}
+
+proxy_vivo() { vivo_con_nombre PROXY "$PROXY_BASE"; }
 
 # Los hosts que el servidor de renderizado acepta atender.
 #
@@ -525,7 +542,7 @@ comprobar_api() {
     log "API: 127.0.0.1:$API_PUERTO responde $codigo"
   fi
 }
-web_vivo()   { [ -n "$(docker ps -q --filter "name=^${WEB}$")" ]; }
+web_vivo()   { vivo_con_nombre WEB "$WEB_BASE"; }
 
 # ─── El despliegue ───────────────────────────────────────────────────────────
 
@@ -555,9 +572,31 @@ esperar_sano() {
   return 1
 }
 
+# Docker puede dejar un contenedor en estado `Dead`: ni corre ni se puede
+# quitar, y el `docker run` siguiente choca con «name already in use». Pasó con
+# los dos contenedores de este despliegue y el sitio se quedó caído, porque el
+# ciclo reintentaba lo mismo cada dos minutos sin decir nunca por qué fallaba.
+#
+# Lo que enruta acá es el PUERTO del host, no el nombre del contenedor, así que
+# un nombre alterno sirve igual de bien y devuelve el servicio en el acto.
+# `docker rm -f` se intenta primero: si funciona —que es lo normal— no se cambia
+# nada y el nombre de siempre se conserva.
+nombre_libre() {
+  local base="$1"
+  docker rm -f "$base" >/dev/null 2>&1
+  if docker ps -a --format '{{.Names}}' | grep -qx "$base"; then
+    log "DOCKER: ⚠ '$base' quedó en estado 'Dead' y no se deja quitar; se usa '${base}-rescate'"
+    log "DOCKER:   se limpia solo con 'docker container prune -f', o reiniciando el demonio"
+    docker rm -f "${base}-rescate" >/dev/null 2>&1
+    printf '%s\n' "${base}-rescate"
+  else
+    printf '%s\n' "$base"
+  fi
+}
+
 lanzar_web() {
   local etiqueta="$1"
-  docker rm -f "$WEB" >/dev/null 2>&1
+  WEB="$(nombre_libre "$WEB_BASE")"
   docker run -d --name "$WEB" --restart unless-stopped \
     --memory "$MEM_WEB" --memory-swap "$MEM_WEB" \
     -p "127.0.0.1:${PUERTO_WEB}:4000" \
@@ -821,7 +860,9 @@ case "${1:-once}" in
       [ -f "$TUNEL_PID" ] && kill -TERM "$(cat "$TUNEL_PID")" 2>/dev/null
       rm -f "$TUNEL_PID"
     fi
-    docker rm -f "$PROXY" "$WEB" >/dev/null 2>&1
+    # También por el nombre de rescate: si no, un `stop` dejaría el sitio
+    # sirviendo desde un contenedor que se creía bajado.
+    docker rm -f "$PROXY_BASE" "$WEB_BASE" "${PROXY_BASE}-rescate" "${WEB_BASE}-rescate" >/dev/null 2>&1
     log "Todo abajo. El enlace $(cat "$URL_FILE" 2>/dev/null) vuelve intacto con 'start'."
     ;;
 
@@ -843,8 +884,9 @@ case "${1:-once}" in
     # avería: el bucle en segundo plano sobra, y decirlo aquí ahorra el susto de leerlo.
     echo "temporizador: $(systemctl --user is-active alovida-redeploy.timer 2>/dev/null || echo 'sin instalar') $([ "$(systemctl --user is-active alovida-redeploy.timer 2>/dev/null)" = active ] && echo '(manda systemd; el vigilante suelto sobra)')"
     echo "vigilante   : $( { [ -f "$VIGILANTE_PID" ] && kill -0 "$(cat "$VIGILANTE_PID")" 2>/dev/null && echo "pid $(cat "$VIGILANTE_PID")"; } || echo 'parado')"
-    docker ps --filter "name=^${WEB}$" --filter "name=^${PROXY}$" \
+    docker ps --filter "name=^${WEB_BASE}(-rescate)?$" --filter "name=^${PROXY_BASE}(-rescate)?$" \
       --format 'contenedor  : {{.Names}} · {{.Image}} · {{.Status}}'
+    web_vivo; proxy_vivo
     docker stats --no-stream --format 'memoria     : {{.Name}} · {{.MemUsage}}' "$WEB" "$PROXY" 2>/dev/null
     exit 0
     ;;
