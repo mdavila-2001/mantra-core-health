@@ -598,10 +598,21 @@ describe('RegisterPractitioner', () => {
     req.flush(RESPUESTA_PRO);
   });
 
-  it('el documento de identidad es obligatorio para el profesional boliviano', () => {
+  it('el documento de identidad es opcional para el profesional y no viaja si está vacío', () => {
     completarProfesional({ nationalId: '' });
+    expect(component.formProfesional.controls.nationalId.valid).toBe(true);
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.nationalId).toBeUndefined();
+    expect(req.request.body.issuerAdministrativeAreaConceptId).toBeUndefined();
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('si se ingresa un documento de identidad con formato inválido, el control se invalida', () => {
+    completarProfesional({ nationalId: 'CI Con Espacios!' });
     expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
-    expect(component.formProfesional.controls.nationalId.errors?.['required']).toBe(true);
   });
 
   it('agrega segundo nombre y apellido materno solo si se completaron', () => {
