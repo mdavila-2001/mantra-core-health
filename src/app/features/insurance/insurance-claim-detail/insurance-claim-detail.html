@@ -1,0 +1,331 @@
+<app-page-header
+  title="Solicitud de seguro"
+  subtitle="Lo presentado, lo dictaminado y lo reclamado."
+>
+  <a page-actions [routerLink]="['/administration/insurance-claims']">
+    Volver al listado
+  </a>
+</app-page-header>
+
+<app-view-state-host [state]="state()" (retry)="retry()">
+  @if (claim(); as detail) {
+    <!-- ---- cabecera de sólo lectura ------------------------------------- -->
+    <!-- Es una lista de definiciones con aire de formulario, no `<input
+         readonly>`: lo que hay que comunicar es que esto se lee, y para eso el
+         elemento correcto es texto. Verificable en el DOM — no hay un solo
+         control de entrada dentro de este bloque. -->
+    <section class="claim__header" aria-labelledby="claim-general">
+      <h2 id="claim-general" class="claim__section-title">Datos generales</h2>
+
+      <dl class="claim__facts" data-testid="claim-header">
+        <div>
+          <dt>Número de solicitud</dt>
+          <dd>{{ detail.header.claimIdentifier }}</dd>
+        </div>
+        <div>
+          <dt>Paciente</dt>
+          <dd>{{ detail.header.patient.displayName ?? 'Sin nombre registrado' }}</dd>
+        </div>
+        <div>
+          <dt>Código de paciente</dt>
+          <dd>{{ detail.header.patient.patientCode ?? 'Sin registrar' }}</dd>
+        </div>
+        <div>
+          <dt>Afiliado</dt>
+          <dd>{{ detail.header.patient.memberIdentifier ?? 'Sin registrar' }}</dd>
+        </div>
+        <div>
+          <dt>Seguro</dt>
+          <dd>{{ detail.header.carrierName }}</dd>
+        </div>
+        <div>
+          <dt>Póliza</dt>
+          <dd>{{ detail.header.policyIdentifier ?? 'Sin registrar' }}</dd>
+        </div>
+        <div>
+          <dt>Corredor de la póliza</dt>
+          <dd>{{ detail.header.policyBrokerName ?? 'Sin corredor asignado' }}</dd>
+        </div>
+        <div>
+          <dt>Fecha de envío</dt>
+          <dd>
+            @if (detail.header.submittedAt) {
+              <time [attr.datetime]="detail.header.submittedAt.toISOString()">
+                {{ detail.header.submittedAt.toLocaleDateString('es-BO') }}
+              </time>
+            } @else {
+              Sin enviar
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>
+            @if (detail.header.status) {
+              <app-badge variant="info" size="sm">{{ detail.header.status.display }}</app-badge>
+            } @else {
+              Sin estado
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Monto solicitado</dt>
+          <dd class="claim__money">{{ money(detail.header.billedTotal) }}</dd>
+        </div>
+        <div>
+          <dt>Total aprobado</dt>
+          <dd class="claim__money" [class.claim__money--absent]="detail.header.approvedTotal === null">
+            {{ money(detail.header.approvedTotal) }}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- ---- el dictamen -------------------------------------------------- -->
+    @if (detail.adjudication; as dictamen) {
+      <section class="claim__adjudication" aria-labelledby="claim-adjudication">
+        <h2 id="claim-adjudication" class="claim__section-title">
+          Dictamen vigente
+          <app-badge variant="secondary" size="sm">versión {{ dictamen.adjudicationVersion }}</app-badge>
+        </h2>
+
+        <dl class="claim__facts">
+          <div>
+            <dt>Resultado</dt>
+            <dd>{{ dictamen.outcome?.display ?? 'Sin registrar' }}</dd>
+          </div>
+          <div>
+            <dt>Aprobado</dt>
+            <dd class="claim__money">{{ money(dictamen.totalApprovedAmount) }}</dd>
+          </div>
+          <div>
+            <dt>A cargo del paciente</dt>
+            <dd class="claim__money">{{ money(dictamen.totalPatientAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Denegado</dt>
+            <dd class="claim__money">{{ money(dictamen.totalDeniedAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Dictaminado</dt>
+            <dd>
+              <time [attr.datetime]="dictamen.adjudicatedAt.toISOString()">
+                {{ dictamen.adjudicatedAt.toLocaleDateString('es-BO') }}
+              </time>
+            </dd>
+          </div>
+        </dl>
+
+        <!-- El texto de la disposición es de la versión entera, y va una sola
+             vez, acá. Repetirlo en cada ítem lo haría pasar por el motivo
+             particular de ese ítem, que es otra cosa. -->
+        @if (dictamen.dispositionText) {
+          <p class="claim__disposition">
+            <strong>Disposición de la aseguradora</strong>
+            {{ dictamen.dispositionText }}
+          </p>
+        }
+      </section>
+    } @else {
+      <app-alert variant="info">
+        La aseguradora todavía no dictaminó esta solicitud.
+      </app-alert>
+    }
+
+    <!-- ---- los ítems ---------------------------------------------------- -->
+    <section class="claim__lines" aria-labelledby="claim-lines">
+      <h2 id="claim-lines" class="claim__section-title">Ítems de la solicitud</h2>
+
+      @if (totalMismatch()) {
+        <!-- Un descuadre entre lo declarado y la suma de los ítems es
+             exactamente lo que alguien tiene que ver. No se redondea para que
+             cierre. -->
+        <app-alert variant="warning" data-testid="claim-total-mismatch">
+          El monto declarado ({{ money(detail.header.billedTotal) }}) no coincide
+          con la suma de los ítems ({{ money(detail.lineBilledTotal) }}).
+        </app-alert>
+      }
+
+      <!-- La moneda, una sola vez para toda la tabla. Repetida en cada celda
+           son seis «Boliviano» por fila; repetida en cada encabezado, tres
+           columnas más anchas y la última cortada a media palabra. Acá se dice
+           una vez y las cifras quedan limpias para compararse entre sí. -->
+      @if (currency(detail.lineBilledTotal)) {
+        <p class="claim__legend">
+          Importes en {{ detail.lineBilledTotal.currency?.display }}.
+        </p>
+      }
+
+      <div class="claim__table-scroll">
+        <table class="claim__table" data-testid="claim-lines-table">
+          <caption class="sr-only">
+            Ítems facturados de la solicitud {{ detail.header.claimIdentifier }}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Prestación</th>
+              <th scope="col">Documento</th>
+              <th scope="col" class="claim__col-money">Monto</th>
+              <th scope="col" class="claim__col-money">Aprobado</th>
+              <th scope="col" class="claim__col-money">Denegado</th>
+              <th scope="col">Decisión</th>
+              <th scope="col">Motivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of detail.lines; track line.id) {
+              <tr>
+                <td>{{ line.lineSequence }}</td>
+                <td>{{ line.service?.display ?? 'Sin prestación registrada' }}</td>
+                <td>
+                  <!-- El id es un botón con globo de resumen. El globo se
+                       cuelga del `<body>` y se abre con el puntero **y** con el
+                       foco del teclado: la directiva ya resuelve las dos
+                       cosas, así que no queda recortado por el scroll de la
+                       tabla ni empuja las filas vecinas. -->
+                  @if (line.reference) {
+                    <button
+                      type="button"
+                      class="claim__reference"
+                      data-testid="claim-line-reference"
+                      [appTooltip]="referenceSummary(line)"
+                      [attr.aria-label]="'Resumen del documento de origen del ítem ' + line.lineSequence"
+                    >
+                      {{ referenceLabel(line) }}
+                    </button>
+                  } @else {
+                    <!-- Sin documento no hay resumen que abrir: un botón que no
+                         hace nada al tocarlo se lee como una aplicación rota. -->
+                    <span class="claim__absent">Sin documento</span>
+                  }
+                </td>
+                <td class="claim__col-money claim__money">{{ amount(line.billedAmount) }}</td>
+                <td
+                  class="claim__col-money claim__money"
+                  [class.claim__money--absent]="line.approvedAmount === null"
+                >
+                  {{ amount(line.approvedAmount) }}
+                </td>
+                <td
+                  class="claim__col-money claim__money"
+                  [class.claim__money--absent]="line.deniedAmount === null"
+                >
+                  {{ amount(line.deniedAmount) }}
+                </td>
+                <td>
+                  @if (line.decision) {
+                    <!-- La decisión lleva su tono: aprobada y denegada no se
+                         pueden leer igual en una tabla de ocho columnas que se
+                         recorre en diagonal. El texto sigue diciéndolo, así que
+                         no depende sólo del color. -->
+                    <app-badge
+                      [variant]="line.deniedAmount ? 'error' : 'success'"
+                      size="sm"
+                    >
+                      {{ line.decision.display }}
+                    </app-badge>
+                  } @else {
+                    <span class="claim__absent">Sin dictaminar</span>
+                  }
+                </td>
+                <td>
+                  @if (line.denialReason) {
+                    {{ line.denialReason.display }}
+                  } @else {
+                    <span class="claim__absent">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colspan="3">Total general</th>
+              <td class="claim__col-money claim__money" data-testid="claim-lines-total">
+                {{ money(detail.lineBilledTotal) }}
+              </td>
+              <td class="claim__col-money claim__money" data-testid="claim-lines-approved-total">
+                {{ money(detail.lineApprovedTotal) }}
+              </td>
+              <td colspan="3"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <p class="claim__note">
+        La descripción en texto plano por ítem no está registrada en el modelo:
+        el único texto de la disposición es el del dictamen completo, y figura
+        arriba.
+      </p>
+    </section>
+
+    <!-- ---- reclamar ----------------------------------------------------- -->
+    <section class="claim__actions" aria-labelledby="claim-dispute">
+      <h2 id="claim-dispute" class="claim__section-title">Reclamo</h2>
+
+      @if (detail.disputes.length > 0) {
+        <ul class="claim__disputes" data-testid="claim-disputes">
+          @for (dispute of detail.disputes; track dispute.id) {
+            <li>
+              <app-badge variant="warning" size="sm">
+                {{ dispute.status?.display ?? 'Sin estado' }}
+              </app-badge>
+              {{ dispute.disputeReason?.display ?? 'Sin motivo registrado' }}
+              @if (dispute.submittedAt) {
+                ·
+                <time [attr.datetime]="dispute.submittedAt.toISOString()">
+                  {{ dispute.submittedAt.toLocaleDateString('es-BO') }}
+                </time>
+              }
+              @if (dispute.filingDeadline) {
+                · vence el {{ dispute.filingDeadline.toLocaleDateString('es-BO') }}
+              }
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="claim__note">Sin reclamos presentados.</p>
+      }
+
+      <button
+        app-button
+        variant="outline"
+        type="button"
+        data-testid="claim-dispute-button"
+        [disabled]="claiming()"
+        (clicked)="claimAgain()"
+      >
+        {{ detail.header.hasOpenDispute ? 'Reclamar otra vez' : 'Reclamar' }}
+      </button>
+
+      <p class="claim__note">
+        El dictamen anterior no se borra ni se modifica: las versiones son
+        inmutables y el reclamo es una fila nueva que las referencia.
+      </p>
+    </section>
+
+    <!-- ---- historial ---------------------------------------------------- -->
+    @if (detail.adjudicationHistory.length > 1) {
+      <section class="claim__history" aria-labelledby="claim-history">
+        <h2 id="claim-history" class="claim__section-title">
+          Dictámenes anteriores
+        </h2>
+        <ul class="claim__disputes">
+          @for (version of detail.adjudicationHistory; track version.id) {
+            <li>
+              <app-badge variant="secondary" size="sm">v{{ version.adjudicationVersion }}</app-badge>
+              {{ version.outcome?.display ?? 'Sin resultado registrado' }}
+              · <span class="claim__money">{{ money(version.totalApprovedAmount) }}</span>
+              ·
+              <time [attr.datetime]="version.adjudicatedAt.toISOString()">
+                {{ version.adjudicatedAt.toLocaleDateString('es-BO') }}
+              </time>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</app-view-state-host>

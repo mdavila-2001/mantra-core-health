@@ -216,3 +216,126 @@ export interface CarrierCatalogEntry {
   readonly isPublic: boolean;
   readonly plans: readonly CarrierCatalogPlan[];
 }
+
+/* ---- solicitudes de seguro presentadas (TAREA-16) -------------------------
+   Los importes se quedan como **cadena decimal** de punta a punta. No se
+   convierten a `number` en la frontera, y no es un descuido: el criterio
+   AC-16-6 exige que el total de la tabla de ítems coincida con el declarado en
+   la fila **carácter por carácter**, y `Number('1250.00')` ya perdió la forma
+   con la que se va a comparar. La pantalla los formatea para mostrarlos; nunca
+   los suma. */
+
+/** Un importe con la moneda en la que se expresó. */
+export interface Money {
+  /** Importe como cadena decimal, tal cual lo devolvió el servidor. */
+  readonly amount: string;
+  /** Moneda del importe. `null` si la solicitud no la declaró. */
+  readonly currency: InsuranceConcept | null;
+}
+
+/** El paciente de una solicitud, con lo mínimo para nombrarlo. */
+export interface ClaimPatient {
+  readonly id: string;
+  /** Nombre visible, o `null` si la persona no tiene uno registrado. */
+  readonly displayName: string | null;
+  readonly patientCode: string | null;
+  readonly memberIdentifier: string | null;
+}
+
+/**
+ * Una fila del listado de solicitudes.
+ *
+ * `policyBrokerName` es el corredor de la **póliza**, no el «broker
+ * responsable de la solicitud» que pide la bitácora: ese dato no tiene columna
+ * en `insurance_claims` todavía (TAREA-16 §5.2). La pantalla lo rotula por lo
+ * que es.
+ */
+export interface ClaimListItem {
+  readonly id: string;
+  readonly claimIdentifier: string;
+  readonly patient: ClaimPatient;
+  readonly carrierName: string;
+  readonly insuranceCarrierId: string;
+  readonly policyIdentifier: string | null;
+  readonly policyBrokerName: string | null;
+  readonly billedTotal: Money;
+  /** `null` mientras no haya dictamen. **No es cero.** */
+  readonly approvedTotal: Money | null;
+  readonly submittedAt: Date | null;
+  readonly status: InsuranceConcept | null;
+  readonly hasOpenDispute: boolean;
+}
+
+/** Página del listado, paginada por cursor opaco. */
+export interface ClaimPage {
+  readonly items: readonly ClaimListItem[];
+  /** Se reenvía tal cual; no se interpreta. */
+  readonly nextCursor: string | null;
+}
+
+/** Filtros y paginación del listado. */
+export interface ClaimQuery {
+  readonly statusConceptId?: string;
+  readonly insuranceCarrierId?: string;
+  readonly submittedFrom?: string;
+  readonly submittedTo?: string;
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Qué documento clínico respalda un ítem, cuando el modelo lo sabe. */
+export type ClaimLineReferenceType =
+  | 'DIAGNOSTIC_STUDY'
+  | 'MEDICATION_DISPENSATION';
+
+/** Un ítem de la solicitud, con su dictamen si lo tiene. */
+export interface ClaimLine {
+  readonly id: string;
+  readonly lineSequence: number;
+  readonly service: InsuranceConcept | null;
+  readonly billedAmount: Money;
+  readonly patientResponsibilityAmount: Money | null;
+  /** `null` si este ítem todavía no fue dictaminado. */
+  readonly approvedAmount: Money | null;
+  readonly deniedAmount: Money | null;
+  readonly decision: InsuranceConcept | null;
+  readonly denialReason: InsuranceConcept | null;
+  /** `null` cuando el origen es una referencia de texto libre. */
+  readonly referenceType: ClaimLineReferenceType | null;
+  readonly reference: string | null;
+}
+
+/** Una versión del dictamen. Las versiones no se editan: se suceden. */
+export interface ClaimAdjudication {
+  readonly id: string;
+  readonly adjudicationVersion: number;
+  readonly outcome: InsuranceConcept | null;
+  readonly dispositionText: string | null;
+  readonly totalApprovedAmount: Money | null;
+  readonly totalPatientAmount: Money | null;
+  readonly totalDeniedAmount: Money | null;
+  readonly adjudicatedAt: Date;
+}
+
+/** Una disputa presentada sobre la solicitud. */
+export interface ClaimDispute {
+  readonly id: string;
+  readonly disputeType: InsuranceConcept | null;
+  readonly disputeReason: InsuranceConcept | null;
+  readonly status: InsuranceConcept | null;
+  readonly submittedAt: Date | null;
+  /** Fecha límite de presentación: es un día, no un instante. */
+  readonly filingDeadline: Date | null;
+}
+
+/** El detalle completo de una solicitud. */
+export interface ClaimDetail {
+  readonly header: ClaimListItem;
+  readonly lines: readonly ClaimLine[];
+  /** Suma de los ítems, calculada **en el servidor**. */
+  readonly lineBilledTotal: Money;
+  readonly lineApprovedTotal: Money | null;
+  readonly adjudication: ClaimAdjudication | null;
+  readonly adjudicationHistory: readonly ClaimAdjudication[];
+  readonly disputes: readonly ClaimDispute[];
+}

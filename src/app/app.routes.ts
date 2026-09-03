@@ -147,6 +147,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/brokers': () =>
     import('./features/insurance/broker-directory/broker-directory').then((m) => m.BrokerDirectory),
+  'administration/insurance-claims': () =>
+    import('./features/insurance/insurance-claims/insurance-claims').then(
+      (m) => m.InsuranceClaims,
+    ),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
   'my-organizations': () =>
@@ -462,6 +466,23 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/laboratory-directory/laboratory-detail/laboratory-detail')
         .then((m) => m.LaboratoryDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El detalle de una solicitud de seguro (TAREA-16): se llega desde el
+    // listado, nunca desde el menú.
+    //
+    // Sin guard de sección, por el mismo motivo escrito en
+    // `ClaimsReadController`: los `@Roles('BILLING', 'FINANCE')` del ciclo del
+    // reclamo nombran dos códigos que el `RoleCode` cerrado de la API no
+    // acepta, así que ningún JWT los puede llevar. La barrera real es el
+    // alcance por tenant, y la pone el servidor: una solicitud de otra
+    // organización responde el mismo 404 que un uuid inexistente.
+    path: 'administration/insurance-claims/:claimId',
+    title: `${APP_TITLE} - Solicitud de seguro`,
+    loadComponent: () =>
+      import('./features/insurance/insurance-claim-detail/insurance-claim-detail')
+        .then((m) => m.InsuranceClaimDetail)
         .catch(() => chunkFallido()),
   },
   {

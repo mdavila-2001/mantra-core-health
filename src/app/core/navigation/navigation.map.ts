@@ -614,6 +614,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
+    // TAREA-16 (M26): las solicitudes presentadas y lo que cada aseguradora
+    // aprobó. Va en el mismo grupo que «Aseguradora» y «Brokers» porque es la
+    // tercera cara del mismo módulo, y con `SECURITY_ADMIN` porque hoy es el
+    // único rol que la plataforma sabe emitir para esto: los `BILLING` y
+    // `FINANCE` que declaran las escrituras del ciclo del reclamo no existen
+    // en el `RoleCode` cerrado de la API.
+    path: 'administration/insurance-claims',
+    label: 'Solicitudes de seguro',
+    group: 'Administración',
+    icon: 'clipboard',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Lo que se presentó a cada aseguradora, con lo que aprobó.',
+    module: 'M26 insurance',
+  },
+  {
     // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
     // que la sección entra como panel de operaciones; los listados llegan
     // con sus endpoints de consulta.

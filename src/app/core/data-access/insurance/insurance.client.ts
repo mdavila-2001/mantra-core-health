@@ -1,11 +1,17 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import { maybeDateOnly } from '../wire';
+import { maybeDate, maybeDateOnly } from '../wire';
 import type {
   BrokerAgreement,
+  ClaimAdjudication,
+  ClaimDetail,
+  ClaimDispute,
+  ClaimListItem,
+  ClaimPage,
+  ClaimQuery,
   CarrierCatalogEntry,
   BrokerClient,
   BrokerDirectory,
@@ -73,6 +79,29 @@ type WireBrokerProfile = WireBrokerSummary & {
 type WireBrokerClient = Omit<BrokerClient, 'effectiveFrom' | 'effectiveTo'> & {
   readonly effectiveFrom: string | null;
   readonly effectiveTo: string | null;
+};
+
+type WireClaimListItem = Omit<ClaimListItem, 'submittedAt'> & {
+  readonly submittedAt: string | null;
+};
+
+type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
+  readonly adjudicatedAt: string;
+};
+
+type WireClaimDispute = Omit<ClaimDispute, 'submittedAt' | 'filingDeadline'> & {
+  readonly submittedAt: string | null;
+  readonly filingDeadline: string | null;
+};
+
+type WireClaimDetail = Omit<
+  ClaimDetail,
+  'header' | 'adjudication' | 'adjudicationHistory' | 'disputes'
+> & {
+  readonly header: WireClaimListItem;
+  readonly adjudication: WireClaimAdjudication | null;
+  readonly adjudicationHistory: readonly WireClaimAdjudication[];
+  readonly disputes: readonly WireClaimDispute[];
 };
 
 /**
@@ -179,9 +208,109 @@ export class InsuranceClient {
       );
   }
 
+  /**
+   * `GET /insurance-claims` — solicitudes presentadas, por cursor.
+   *
+   * Los parámetros vacíos **no se envían**: un `?statusConceptId=` sin valor
+   * llegaría al servidor como cadena vacía y reventaría su `@IsUUID()` con un
+   * 400 que la pantalla no provocó a propósito.
+   *
+   * @param query - Filtros y cursor de continuación.
+   * @returns La página, con el cursor de la siguiente.
+   */
+  listClaims(query: ClaimQuery = {}): Observable<ClaimPage> {
+    let params = new HttpParams();
+    for (const [clave, valor] of Object.entries(query)) {
+      if (valor === undefined || valor === null || valor === '') continue;
+      params = params.set(clave, String(valor));
+    }
+    return this.http
+      .get<{
+        readonly items: readonly WireClaimListItem[];
+        readonly nextCursor: string | null;
+      }>(this.url('/insurance-claims'), { params })
+      .pipe(
+        map((body) => ({
+          items: body.items.map(toClaimListItem),
+          nextCursor: body.nextCursor,
+        })),
+      );
+  }
+
+  /**
+   * `GET /insurance-claims/:id` — cabecera, ítems, dictámenes y disputas.
+   *
+   * @param id - Solicitud consultada.
+   * @returns El detalle completo.
+   */
+  getClaim(id: string): Observable<ClaimDetail> {
+    return this.http
+      .get<WireClaimDetail>(
+        this.url(`/insurance-claims/${encodeURIComponent(id)}`),
+      )
+      .pipe(map(toClaimDetail));
+  }
+
+  /**
+   * `POST /insurance-claims/:id/disputes` — reclamar un dictamen.
+   *
+   * Reabre el caso **sin borrar ni editar** el dictamen anterior: las
+   * adjudicaciones son inmutables y la disputa es una fila nueva que las
+   * referencia. Reclamar dos veces sobre la misma versión devuelve la misma
+   * disputa: el servidor lo resuelve buscando la abierta antes de crear.
+   *
+   * @param claimId - Solicitud que se reclama.
+   * @param body - Versión disputada y parte que inicia.
+   * @returns El identificador de la disputa.
+   */
+  openClaimDispute(
+    claimId: string,
+    body: {
+      readonly claimAdjudicationVersionId?: string;
+      readonly initiatedBy: 'PROVIDER' | 'PATIENT';
+    },
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-claims/${encodeURIComponent(claimId)}/disputes`),
+      body,
+    );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+function toClaimListItem(body: WireClaimListItem): ClaimListItem {
+  return { ...body, submittedAt: maybeDate(body.submittedAt) ?? null };
+}
+
+function toClaimAdjudication(
+  body: WireClaimAdjudication,
+): ClaimAdjudication {
+  return { ...body, adjudicatedAt: new Date(body.adjudicatedAt) };
+}
+
+function toClaimDispute(body: WireClaimDispute): ClaimDispute {
+  return {
+    ...body,
+    submittedAt: maybeDate(body.submittedAt) ?? null,
+    // `filingDeadline` es `format: 'date'`: pasarlo por `new Date()` lo ancla a
+    // medianoche UTC y **retrocede un día** en Bolivia, que es UTC-4.
+    filingDeadline: maybeDateOnly(body.filingDeadline) ?? null,
+  };
+}
+
+function toClaimDetail(body: WireClaimDetail): ClaimDetail {
+  return {
+    ...body,
+    header: toClaimListItem(body.header),
+    adjudication: body.adjudication
+      ? toClaimAdjudication(body.adjudication)
+      : null,
+    adjudicationHistory: body.adjudicationHistory.map(toClaimAdjudication),
+    disputes: body.disputes.map(toClaimDispute),
+  };
 }
 
 function toCarrierSummary(body: WireCarrierSummary): CarrierSummary {
