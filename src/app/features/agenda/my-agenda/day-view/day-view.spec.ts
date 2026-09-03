@@ -414,4 +414,66 @@ describe('DayView', () => {
       expect(badge?.className ?? '').not.toContain('error');
     });
   });
+
+  /**
+   * MOVER EL HORARIO Y CERRAR RATOS — los dos últimos del carril 12.
+   *
+   * «Un botón que se llame mover horario, que desplace los slots N minutos
+   * después […] y sea seleccionable a todos o ciertos slots en específico» y
+   * «otro botón para cancelar […] slots específicos».
+   */
+  describe('mover y cerrar', () => {
+    function porTestid(id: string): HTMLElement | null {
+      return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
+    }
+
+    it('el panel de mover se abre desde la barra del día', () => {
+      // Va en la barra y no dentro de una tarjeta: lo que se corre es la
+      // agenda, no una cita suelta.
+      montar();
+      expect(porTestid('dia-mover-panel')).toBeNull();
+
+      porTestid('dia-mover')?.click();
+      fixture.detectChanges();
+
+      expect(porTestid('dia-mover-panel')).not.toBeNull();
+    });
+
+    it('emite los minutos elegidos', () => {
+      montar();
+      const vistos: { minutos: number; desde: Date | null }[] = [];
+      fixture.componentInstance.movimientoPedido.subscribe((p) => vistos.push(p));
+
+      porTestid('dia-mover')?.click();
+      fixture.detectChanges();
+      porTestid('dia-mover-20')?.click();
+
+      expect(vistos[0].minutos).toBe(20);
+      // Sin «desde», es el día entero.
+      expect(vistos[0].desde).toBeNull();
+    });
+
+    it('ofrece adelantar, no sólo atrasar', () => {
+      // El profesional que termina antes quiere adelantar a los que esperan.
+      montar();
+      const vistos: { minutos: number; desde: Date | null }[] = [];
+      fixture.componentInstance.movimientoPedido.subscribe((p) => vistos.push(p));
+
+      porTestid('dia-mover')?.click();
+      fixture.detectChanges();
+      porTestid('dia-mover-adelantar')?.click();
+
+      expect(vistos[0].minutos).toBe(-15);
+    });
+
+    it('elegir cierra el panel: no se mueve dos veces sin querer', () => {
+      montar();
+      porTestid('dia-mover')?.click();
+      fixture.detectChanges();
+      porTestid('dia-mover-20')?.click();
+      fixture.detectChanges();
+
+      expect(porTestid('dia-mover-panel')).toBeNull();
+    });
+  });
 });

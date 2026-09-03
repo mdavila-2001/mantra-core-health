@@ -15,6 +15,10 @@ import type {
   TemplateReactivated,
   AvailabilityExceptionTypeList,
   ActivityTypeList,
+  ShiftSlotsRequest,
+  SlotsShifted,
+  CloseSlotsRequest,
+  SlotsClosed,
   NewPaymentState,
   PaymentStateInfo,
   Booking,
@@ -384,6 +388,38 @@ export class SchedulingClient {
    * el tono los manda el servidor, así que agregar una tipología no exige
    * tocar el front.
    */
+  /**
+   * `POST /scheduling/resources/:id/shift-slots` — corre la agenda N minutos.
+   *
+   * Distinto de avisar demora, que **sólo avisa**: acá el turno de la persona
+   * pasa a ser otro, y el servidor le manda el aviso.
+   *
+   * Es todo o nada: si un cupo no puede moverse porque su horario nuevo pisa
+   * otra cita, no se mueve ninguno y responde 409.
+   */
+  shiftSlots(resourceId: string, body: ShiftSlotsRequest): Observable<SlotsShifted> {
+    return this.http.post<SlotsShifted>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/shift-slots`),
+      body,
+    );
+  }
+
+  /**
+   * `POST /scheduling/resources/:id/close-slots` — cierra ratos sueltos.
+   *
+   * Deja además la excepción que impide que regenerar los devuelva, que es
+   * justamente lo que el pedido pone entre paréntesis.
+   *
+   * Un cupo con paciente citado responde **409** con los ids: cancelar el turno
+   * de alguien es otro acto, con su motivo y su aviso.
+   */
+  closeSlots(resourceId: string, body: CloseSlotsRequest): Observable<SlotsClosed> {
+    return this.http.post<SlotsClosed>(
+      this.url(`/scheduling/resources/${encodeURIComponent(resourceId)}/close-slots`),
+      body,
+    );
+  }
+
   listActivityTypes(): Observable<ActivityTypeList> {
     return this.http.get<ActivityTypeList>(this.url('/scheduling/activity-types'));
   }

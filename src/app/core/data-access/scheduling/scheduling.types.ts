@@ -580,6 +580,39 @@ export interface ActivityTypeList {
   readonly items: readonly ActivityTypeOption[];
 }
 
+/** Cuerpo de `POST /scheduling/resources/:id/shift-slots`. */
+export interface ShiftSlotsRequest {
+  /** Negativo adelanta. */
+  readonly shiftMinutes: number;
+  readonly from: string;
+  readonly to: string;
+  /** Ausente = todos los de la ventana. Vacío no mueve nada. */
+  readonly slotIds?: readonly string[];
+}
+
+export interface SlotsShifted {
+  readonly movedSlots: number;
+  /** A cuántas personas se les avisó. Menor que `movedSlots` es lo corriente. */
+  readonly notified: number;
+  readonly shiftMinutes: number;
+}
+
+/** Cuerpo de `POST /scheduling/resources/:id/close-slots`. */
+export interface CloseSlotsRequest {
+  readonly exceptionType: AvailabilityExceptionType;
+  readonly reason?: string;
+  /** Al menos uno: no hay «cerrar todos» a propósito. */
+  readonly slotIds: readonly string[];
+}
+
+export interface SlotsClosed {
+  readonly closedSlots: number;
+  /** La excepción que impide que regenerar los devuelva. */
+  readonly exceptionId: string;
+  readonly from: string;
+  readonly to: string;
+}
+
 export interface AvailabilityExceptionTypeList {
   readonly items: readonly AvailabilityExceptionTypeOption[];
 }

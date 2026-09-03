@@ -35,17 +35,85 @@
         </button>
       </div>
     </div>
-    <button
-      app-button
-      variant="secondary"
-      size="sm"
-      type="button"
-      aria-label="Agregar algo a este día"
-      (clicked)="crear()"
-    >
-      +
-    </button>
+    <div class="dia__acciones-barra">
+      <!-- «Mover horario» del pedido. Va en la barra del día y no dentro de una
+           tarjeta: lo que se corre es la agenda, no una cita suelta. -->
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        data-testid="dia-mover"
+        (clicked)="abrirMover(null)"
+      >
+        Mover horario
+      </button>
+      <button
+        app-button
+        variant="secondary"
+        size="sm"
+        type="button"
+        aria-label="Agregar algo a este día"
+        (clicked)="crear()"
+      >
+        +
+      </button>
+    </div>
   </header>
+
+  <!-- El panel de mover, en la propia página y no en un diálogo: se decide
+       mirando el día, y sacarlo de la pantalla obligaría a recordar de memoria
+       a quién alcanza. Mismo criterio que el aviso de demora. -->
+  @if (moverAbierto()) {
+    <section class="dia__mover" data-testid="dia-mover-panel" aria-labelledby="mover-titulo">
+      <h4 id="mover-titulo" class="dia__mover-titulo">
+        @if (moverDesde()) {
+          Correr desde las {{ moverDesde() | date: 'HH:mm' }} en adelante
+        } @else {
+          Correr todo el día
+        }
+      </h4>
+      <p class="dia__mover-nota">
+        Los turnos cambian de hora y se le avisa a cada paciente. Si alguno choca con otra cita
+        tuya, <strong>no se mueve ninguno</strong>.
+      </p>
+      <div class="dia__mover-opciones">
+        @for (minutos of desplazamientos; track minutos) {
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            [attr.data-testid]="'dia-mover-' + minutos"
+            (clicked)="pedirMovimiento(minutos)"
+          >
+            +{{ minutos }} min
+          </button>
+        }
+        <!-- Adelantar es simétrico de atrasar: el que termina antes quiere
+             adelantar a los que esperan. -->
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="dia-mover-adelantar"
+          (clicked)="pedirMovimiento(-15)"
+        >
+          −15 min
+        </button>
+      </div>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        (clicked)="moverAbierto.set(false)"
+      >
+        Cancelar
+      </button>
+    </section>
+  }
 
   @if (bloques().length === 0) {
     <div class="dia__vacio">
@@ -169,6 +237,19 @@
               <!-- El hueco invita: tocarlo abre la tarjeta con el rango puesto. -->
               <button class="dia__libre" type="button" (click)="tocar(bloque)">
                 — disponible —
+              </button>
+              <!-- «Cerrar» un rato libre: lo bloquea Y deja la excepción, para
+                   que volver a publicar el horario no lo devuelva. Sin esa
+                   segunda parte, cerrar dura hasta la próxima generación. -->
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="dia-cerrar-rato"
+                (clicked)="cierrePedido.emit(bloque)"
+              >
+                Cerrar este rato
               </button>
             }
 
