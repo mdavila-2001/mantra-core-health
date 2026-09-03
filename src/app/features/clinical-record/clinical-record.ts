@@ -47,13 +47,23 @@ const TOPE = 25;
  * la lista de todas las historias de una organización es exactamente el dato que
  * no debe existir como pantalla.
  *
- * ## Quién busca, y qué ve (TAREA-07, decisión del 2026-09-02)
+ * ## Quién busca, y qué ve (TAREA-07, P-07-10 — 2026-09-02)
  *
  * `GET /profiles/patients` era exclusivo de `SECURITY_ADMIN`. Ahora también
- * pueden buscar `CLINICIAN` y `PRACTITIONER` — **acotados a su organización**:
- * el backend deriva el alcance de la actividad (agenda, relaciones
- * asistenciales), no de una columna de tenant, porque la identidad no tiene
- * una. `resolvePatientSearchScope()`, del lado de la API, documenta el porqué.
+ * pueden buscar `CLINICIAN` y `PRACTITIONER`, y ven el **padrón entero, sin
+ * acotar** — una primera versión de hoy los acotó a la gente con actividad en
+ * su organización, revertida porque la búsqueda también sirve para
+ * **registrar** a quien nunca se atendió, y acotar por actividad se lo
+ * impedía. `resolvePatientSearchScope()`, del lado de la API, documenta la
+ * marcha atrás.
+ *
+ * Sin acotamiento, listar sin ningún criterio sería enumerar el padrón: por
+ * eso esta pantalla **no dispara la búsqueda al montar** si no hay texto ni
+ * documento en la URL — muestra un vacío inicial que invita a escribir en vez
+ * de pedir la primera página. La API además responde `422` a un rol clínico
+ * sin criterio (`requiereCriterioDeBusqueda()`); esta pantalla evita llegar
+ * a pedirlo.
+ *
  * Antes esta pantalla tenía un segundo camino —«Abrir por identificador»— para
  * cuando el buscador respondía `403` a un rol clínico. Ese camino ya no hace
  * falta: la búsqueda es ahora el camino de todos los roles que llegan acá, y
@@ -208,17 +218,29 @@ export class ClinicalRecord {
   }
 
   private cargar(): void {
-    this.resultados.set(loading());
-
     const documento = this.documento();
     const texto = this.busqueda();
     const area = this.departamento();
+
+    // P-07-10: sin acotamiento por actividad, listar sin criterio sería
+    // enumerar el padrón entero. Un rol clínico ya recibe 422 del backend
+    // (`requiereCriterioDeBusqueda()`); acá se evita llegar a pedirlo.
+    if (documento === '' && texto === '') {
+      this.resultados.set(
+        empty(
+          { label: 'Escribí un nombre, un código o un documento arriba' },
+          'Buscá por nombre, código o documento para ver a una persona.',
+        ),
+      );
+      return;
+    }
+
+    this.resultados.set(loading());
+
     const criterio =
       documento !== ''
         ? { nationalId: documento, ...(area ? { issuerAdministrativeAreaConceptId: area } : {}) }
-        : texto === ''
-          ? {}
-          : { query: texto };
+        : { query: texto };
 
     this.profiles.searchPatients({ limit: TOPE, ...criterio }).subscribe({
       next: (pagina) => {
@@ -227,34 +249,20 @@ export class ClinicalRecord {
           return;
         }
 
-        // El vacío dice el ALCANCE, no un hecho que no comprobamos.
-        //
-        // Antes decía «Ningún paciente tiene el documento X», y era falso: la
-        // persona podía existir con ese documento exacto y no aparecer, porque
-        // esta búsqueda sólo alcanza a los pacientes **con actividad en tu
-        // organización** —una reserva de agenda o una relación asistencial—.
-        //
-        // Se descubrió en un recorrido real: el documento estaba en la base,
-        // con su departamento correcto, y la pantalla afirmaba que no existía.
-        // Un vacío que afirma de más manda a buscar el error donde no está.
+        // P-07-10: el padrón ya no está acotado por actividad, así que un
+        // resultado vacío significa que la persona no existe con ese dato
+        // exacto — no hace falta la aclaración de alcance que llevaba antes.
         this.resultados.set(
           documento !== ''
             ? empty(
-                { label: 'Ver todos', route: CLINICAL_RECORD_ROUTE },
-                `Ningún paciente de tu organización tiene el documento «${documento}»` +
-                  (area ? ' expedido en ese departamento. ' : '. ') +
-                  ALCANCE_DE_LA_BUSQUEDA,
+                { label: 'Volver a buscar', route: CLINICAL_RECORD_ROUTE },
+                `Nadie tiene el documento «${documento}»` +
+                  (area ? ' expedido en ese departamento.' : '.'),
               )
-            : texto === ''
-              ? empty(
-                  { label: 'Ir a Pacientes', route: '/administration/patients' },
-                  'Todavía no hay pacientes registrados en esta organización.',
-                )
-              : empty(
-                  { label: 'Ver todos', route: CLINICAL_RECORD_ROUTE },
-                  `Ningún paciente de tu organización coincide con «${texto}». ` +
-                    ALCANCE_DE_LA_BUSQUEDA,
-                ),
+            : empty(
+                { label: 'Volver a buscar', route: CLINICAL_RECORD_ROUTE },
+                `Nadie coincide con «${texto}».`,
+              ),
         );
       },
       error: (error: unknown) =>
@@ -262,17 +270,6 @@ export class ClinicalRecord {
     });
   }
 }
-
-/**
- * La frase que explica por qué alguien puede existir y no aparecer.
- *
- * Se repite en los dos vacíos de búsqueda a propósito: quien no encuentra a una
- * persona necesita saber **dónde no está buscando**, y esa es la diferencia
- * entre «no existe» y «no lo alcanzo».
- */
-const ALCANCE_DE_LA_BUSQUEDA =
-  'La búsqueda alcanza a quienes ya tuvieron un turno o una relación asistencial acá; ' +
-  'alguien que nunca se atendió en esta organización no aparece aunque exista.';
 
 /** `ValueSetOption` → `SelectOption`, para el desplegable de departamento. */
 function toSelectOption(opcion: ValueSetOption): SelectOption<string> {
