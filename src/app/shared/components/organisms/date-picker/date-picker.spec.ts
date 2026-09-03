@@ -528,5 +528,62 @@ describe('DatePicker', () => {
 
     expect(fixture.nativeElement.querySelector('.time-picker-section')).not.toBeNull();
   });
+
+  describe('no se confirma lo que nadie eligió', () => {
+    function confirmar(): HTMLButtonElement {
+      return fixture.nativeElement.querySelector('[data-testid="date-picker-confirm"]');
+    }
+
+    /**
+     * `app-button` deshabilita con `aria-disabled` y no con el atributo nativo,
+     * a propósito: así el botón sigue siendo enfocable y un lector de pantalla
+     * puede llegar a él y decir por qué no se puede usar. Lo que corta el clic
+     * es el propio componente.
+     */
+    function estaDeshabilitado(): boolean {
+      return confirmar().getAttribute('aria-disabled') === 'true';
+    }
+
+    it('sin valor previo, «Confirmar» nace deshabilitado', async () => {
+      fixture.componentRef.setInput('value', null);
+      await fixture.whenStable();
+      await abrir();
+
+      // `open()` siembra el mes que se dibuja, no una elección: antes de este
+      // caso aceptaba el 1 de enero del año por defecto y lo escribía como si
+      // la persona lo hubiera elegido.
+      expect(estaDeshabilitado()).toBe(true);
+    });
+
+    it('elegir un día lo habilita', async () => {
+      fixture.componentRef.setInput('value', null);
+      await fixture.whenStable();
+      await abrir();
+      expect(estaDeshabilitado()).toBe(true);
+
+      const dia = dias().find((d) => !d.disabled)!;
+      dia.click();
+      await fixture.whenStable();
+
+      expect(estaDeshabilitado()).toBe(false);
+    });
+
+    it('confirmar sin elegir no escribe ninguna fecha', async () => {
+      fixture.componentRef.setInput('value', null);
+      await fixture.whenStable();
+      await abrir();
+
+      confirmar().click();
+      await fixture.whenStable();
+
+      expect(input()?.value ?? '').toBe('');
+    });
+
+    it('con valor previo se puede confirmar sin tocar nada: ya hay día, mes y año', async () => {
+      await abrir();
+
+      expect(estaDeshabilitado()).toBe(false);
+    });
+  });
 });
 

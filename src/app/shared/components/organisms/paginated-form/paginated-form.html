@@ -199,10 +199,15 @@
          puntero y con el foco del teclado. El `data-testid` es el mismo en los
          dos modos: lo que cambia es cómo se ve, no qué botón es. -->
     @if (!esPrimera()) {
+      <!-- En modo ícono los dos botones se ven igual: dos flechas del mismo par
+           con tratamientos distintos —una pelada y la otra en círculo lleno— se
+           leen como dos cosas de distinta jerarquía cuando son la ida y la
+           vuelta del mismo paso. Con texto se mantiene la diferencia: ahí
+           «Siguiente» sí es la acción primaria y «Atrás» la de escape. -->
       <button
         app-button
-        variant="ghost"
         type="button"
+        [variant]="iconOnlyNav() ? 'primary' : 'ghost'"
         [iconOnly]="iconOnlyNav()"
         [attr.aria-label]="iconOnlyNav() ? 'Atrás' : null"
         [appTooltip]="iconOnlyNav() ? 'Atrás' : ''"

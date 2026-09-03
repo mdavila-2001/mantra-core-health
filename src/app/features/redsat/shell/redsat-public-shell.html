@@ -47,19 +47,27 @@
   <div class="app-public-shell__cuerpo">
     <app-public-nav-rail class="app-public-shell__rail" />
 
-    <main class="app-main__inner">
-      <!-- Carril 01: mismo aviso que el marco de sesión, por el mismo motivo.
-           Acá importa incluso más: el buscador es la superficie pública, y sus
-           fichas de profesionales y farmacias son inventadas. -->
-      <app-redsat-design-notice />
-      <router-outlet />
-    </main>
-  </div>
+    <!-- El contenido y el pie van juntos en UNA columna, a la derecha del rail.
+         Antes el pie era hermano del cuerpo, así que el rail no podía pasarlo:
+         su borde blanco se cortaba justo donde empezaba la letra chica y la
+         columna quedaba a media altura. Con el pie acá adentro, el rail se
+         estira de punta a punta. -->
+    <div class="app-public-shell__columna">
+      <main class="app-main__inner">
+        <!-- Carril 01: mismo aviso que el marco de sesión, por el mismo
+             motivo. Acá importa incluso más: el buscador es la superficie
+             pública, y sus fichas de profesionales y farmacias son
+             inventadas. -->
+        <app-redsat-design-notice />
+        <router-outlet />
+      </main>
 
-  <footer class="app-public-pie">
-    <p><strong>Quién paga lo que ves</strong>Los resultados se ordenan por cercanía y por calificación. Cuando una ficha está paga, dice «Espacio pagado» en la propia tarjeta: nunca se disfraza de recomendación clínica.</p>
-    <p><strong>Precio y disponibilidad</strong>Los reporta cada prestador y pueden cambiar sin aviso. Confirmá con la farmacia o el consultorio antes de moverte.</p>
-    <p><strong>Esto orienta, no diagnostica</strong>AloVida te ayuda a encontrar a quién consultar. La decisión clínica es del profesional o del farmacéutico.</p>
-    <p><strong>Datos verificados</strong>El sello de verificación cubre la matrícula y la identidad. Lo que el profesional declara sin verificar aparece rotulado como declarado.</p>
-  </footer>
+      <footer class="app-public-pie">
+        <p><strong>Quién paga lo que ves</strong>Los resultados se ordenan por cercanía y por calificación. Cuando una ficha está paga, dice «Espacio pagado» en la propia tarjeta: nunca se disfraza de recomendación clínica.</p>
+        <p><strong>Precio y disponibilidad</strong>Los reporta cada prestador y pueden cambiar sin aviso. Confirmá con la farmacia o el consultorio antes de moverte.</p>
+        <p><strong>Esto orienta, no diagnostica</strong>AloVida te ayuda a encontrar a quién consultar. La decisión clínica es del profesional o del farmacéutico.</p>
+        <p><strong>Datos verificados</strong>El sello de verificación cubre la matrícula y la identidad. Lo que el profesional declara sin verificar aparece rotulado como declarado.</p>
+      </footer>
+    </div>
+  </div>
 </div>

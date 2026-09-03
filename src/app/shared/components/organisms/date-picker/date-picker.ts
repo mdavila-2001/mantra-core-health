@@ -240,6 +240,32 @@ export class DatePicker {
 
   /** Fecha en edición mientras el modal está abierto; se descarta al cancelar. */
   protected readonly draft = signal<Date | null>(null);
+
+  /**
+   * Si hay una fecha **elegida**, y no sólo un calendario parado en algún mes.
+   *
+   * Son dos cosas distintas y hasta ahora se confundían: al abrir sin valor,
+   * `open()` sembraba el borrador con el 1 de enero del año por defecto —lo
+   * necesita para saber qué mes dibujar— y «Confirmar» aceptaba **esa** fecha,
+   * que nadie eligió. El síntoma es una fecha de nacimiento 01/01/2000 en el
+   * perfil de alguien que sólo tocó el botón.
+   *
+   * Nace en `true` cuando el campo ya traía valor: ahí sí hay día, mes y año, y
+   * confirmar sin tocar nada es legítimo —es aceptar lo que ya estaba—.
+   */
+  private readonly dayChosen = signal(false);
+
+  /**
+   * No se confirma sin día, mes y año.
+   *
+   * El año y el mes vienen implícitos en el día: el calendario sólo ofrece días
+   * del mes que está mostrando, así que elegir uno fija los tres a la vez. Lo
+   * que faltaba era exigir ese clic.
+   */
+  protected readonly canConfirm = computed(() => {
+    const draft = this.draft();
+    return this.dayChosen() && draft !== null && !this.isOutOfRange(draft);
+  });
   protected readonly viewMonth = signal<Date>(startOfMonth(new Date(MAX_DEFAULT_YEAR, 0, 1)));
 
   protected readonly monthNames = buildMonthNames();
@@ -741,8 +767,12 @@ export class DatePicker {
       this.normalizedMaxDate()?.getFullYear() ?? MAX_DEFAULT_YEAR,
       MAX_DEFAULT_YEAR,
     );
-    const start = this.value() ?? this.withSafeHour(new Date(defaultYear, 0, 1));
-    this.draft.set(start);
+    const actual = this.value();
+    // `start` sólo decide QUÉ MES dibujar; no es una elección. Por eso el
+    // borrador se siembra con el valor real —que puede ser `null`— y no con él.
+    const start = actual ?? this.withSafeHour(new Date(defaultYear, 0, 1));
+    this.draft.set(actual);
+    this.dayChosen.set(actual !== null);
     this.viewMonth.set(startOfMonth(start));
     this.panel.set('days');
     this.isOpen.set(true);
@@ -768,6 +798,11 @@ export class DatePicker {
   }
 
   protected confirm(): void {
+    // Guarda además del `[disabled]` del botón: el diálogo también se confirma
+    // con Enter, y un camino que no pasa por el botón no ve su estado.
+    if (!this.canConfirm()) {
+      return;
+    }
     const draft = this.draft();
     if (draft && !this.isOutOfRange(draft)) {
       this.value.set(draft);
@@ -784,6 +819,7 @@ export class DatePicker {
     const next = new Date(day.date);
     next.setHours(draft?.getHours() ?? SAFE_HOUR, draft?.getMinutes() ?? 0, 0, 0);
     this.draft.set(next);
+    this.dayChosen.set(true);
   }
 
   protected shiftMonth(offset: number): void {
