@@ -672,15 +672,19 @@ export class RegisterPatient {
    *   el nombre nuevo. Es un valor del que nadie es dueño.
    * - **Distinto de lo sembrado** → lo escribió la persona y no se toca, ni para
    *   corregir la localidad ni para nada.
-   * - **Al soltar la localidad** → se limpia, pero sólo si lo que hay es lo
-   *   sembrado: el nombre de una localidad que ya no está elegida no describe a
-   *   nadie. Lo escrito a mano sobrevive.
+   * - **Al soltar la localidad** → el texto se conserva. Una navegación no
+   *   puede costar datos: el mapa de departamentos es un grupo de dos estados,
+   *   así que volver a pulsar el que ya estaba elegido lo suelta, y ese gesto
+   *   —el natural para «ahora elijo la ciudad»— borraría lo que la persona
+   *   tiene delante. Dejarlo no descuadra nada: elegir otra localidad lo
+   *   reescribe igual, la de residencia hace falta para enviar, y lo que queda
+   *   entretanto es un texto que se corrige tecleando.
    *
    * ## Dos cuidados que no cambian
    *
-   * - **No se marca `touched` ni `dirty`**, tampoco al re-sembrar ni al
-   *   limpiar: no lo escribió la persona, y marcarlo dispararía la validación y
-   *   los mensajes de un campo que nadie tocó.
+   * - **No se marca `touched` ni `dirty`**, tampoco al re-sembrar: no lo
+   *   escribió la persona, y marcarlo dispararía la validación y los mensajes
+   *   de un campo que nadie tocó.
    * - **Sin nombre, no se escribe nada.** Si el catálogo no cargó todavía, el
    *   municipio no se encuentra en el árbol y el campo queda como estaba. Nunca
    *   se rellena con un identificador ni con un texto inventado.
@@ -692,17 +696,17 @@ export class RegisterPatient {
     control: FormControl<string>,
     conceptId: string | null,
   ): void {
+    // Soltar la localidad no borra: ver el porqué en la nota de arriba.
+    if (conceptId === null) {
+      return;
+    }
+
     const actual = control.value.trim();
     const sembrado = this.direccionSembrada.get(control);
     // De lo que hay ahí no es dueño nadie: o está vacío, o es exactamente lo
     // que puso el formulario la vez anterior.
     const esNuestro = actual === '' || actual === sembrado;
     if (!esNuestro) {
-      return;
-    }
-
-    if (conceptId === null) {
-      this.escribirDireccionSembrada(control, '');
       return;
     }
 

@@ -327,6 +327,17 @@ describe('RegisterPatient', () => {
       >
     > = {},
   ): void {
+    completarDatosPersonales(extra);
+    // La localidad de residencia pasa por su método: escribe el control **y**
+    // el signal que lo espeja, y es el único que escribe los dos.
+    component.elegirMunicipio(MUNICIPIO_SACABA);
+  }
+
+  /**
+   * Todo lo de {@link completar} **menos la localidad**, para las pruebas que
+   * la eligen en pantalla —mapa y select— y no por el método.
+   */
+  function completarDatosPersonales(extra: Parameters<typeof completar>[0] = {}): void {
     component.formPaciente.patchValue({
       nationalId: '1234567',
       name: 'Ana',
@@ -351,9 +362,6 @@ describe('RegisterPatient', () => {
       billingTaxId: extra.billingTaxId ?? '',
       billingLegalName: extra.billingLegalName ?? '',
     });
-    // La localidad de residencia pasa por su método: escribe el control **y**
-    // el signal que lo espeja, y es el único que escribe los dos.
-    component.elegirMunicipio(MUNICIPIO_SACABA);
   }
 
   /**
@@ -1765,13 +1773,29 @@ describe('RegisterPatient', () => {
      * Soltar la localidad se lleva lo que el formulario había sembrado: el
      * nombre de una localidad que ya no está elegida no describe a nadie.
      */
-    it('soltar la localidad limpia lo que se había sembrado', () => {
+    /* El mapa de departamentos es un grupo de dos estados: volver a pulsar el
+       que ya estaba elegido lo suelta, y ése es justo el gesto de quien va a
+       cambiar de ciudad. Si soltar limpiara, ese gesto borraría la dirección
+       que la persona tiene delante. */
+    it('soltar la localidad conserva lo que se había sembrado', () => {
       cargarArbol();
       component.elegirMunicipio(MUNICIPIO_SACABA);
 
       component.elegirMunicipio(null);
 
-      expect(component.formPaciente.controls.homeAddressLines.value).toBe('');
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe('Sacaba');
+    });
+
+    it('tras soltar, elegir otra localidad reescribe el nombre igual', () => {
+      cargarArbol();
+      component.elegirMunicipio(MUNICIPIO_SACABA);
+      component.elegirMunicipio(null);
+
+      component.elegirMunicipio(MUNICIPIO_QUILLACOLLO);
+
+      expect(component.formPaciente.controls.homeAddressLines.value).toBe(
+        'Quillacollo',
+      );
     });
 
     it('soltar la localidad NO borra lo que la persona escribió', () => {
@@ -1793,6 +1817,226 @@ describe('RegisterPatient', () => {
       component.elegirMunicipio(MUNICIPIO_QUILLACOLLO);
 
       expect(component.formPaciente.controls.homeAddressLines.touched).toBe(false);
+    });
+  });
+
+  /**
+   * La localidad elegida **en pantalla**: mapa + select, no el método a mano.
+   *
+   * Las pruebas de arriba llaman a `elegirMunicipio()` directo y no ven el
+   * camino que recorre la persona: pulsar el departamento en
+   * `app-department-map`, que `app-location-picker` traduce, y elegir la ciudad
+   * en su `app-select`, que vuelve a traducir. Cada tramo emite, y un `null` de
+   * más en cualquiera alcanza para borrar lo recién sembrado. Es lo que se vio
+   * en pantalla: «al elegir Warnes, en vez de sembrar la dirección la borra».
+   */
+  describe('la localidad elegida en pantalla: mapa + select (P4)', () => {
+    /** Un municipio de Santa Cruz, código INE 070105. */
+    const MUNICIPIO_EL_TORNO = '7d3f5a1c-2b6e-5c4d-9a8f-1e2d3c4b5a60';
+
+    /** Otro de Santa Cruz, para corregir dentro del mismo departamento. */
+    const MUNICIPIO_WARNES = '8e4a6b2d-3c7f-5d5e-8b9a-2f3e4d5c6b71';
+
+    /** El árbol con dos departamentos: se corrige DENTRO de uno y ENTRE dos. */
+    function cargarArbolDeDosDepartamentos(): void {
+      http.expectOne(CATALOGO).flush({
+        items: [{ id: 'vs-dep', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
+      });
+      http.expectOne(CATALOGO_MUNICIPIOS).flush({
+        items: [{ id: 'vs-mun', internalCode: 'VS_BO_MUNICIPALITY', name: 'Municipios' }],
+      });
+      http.expectOne('/terminology/value-sets/vs-dep/$expand?limit=200').flush({
+        items: [
+          { conceptId: 'd-cb', code: 'geo:bo:department:CB', display: 'Cochabamba' },
+          { conceptId: 'd-sc', code: 'geo:bo:department:SC', display: 'Santa Cruz' },
+        ],
+        count: 2,
+        limit: 200,
+        nextCursor: null,
+      });
+      http.expectOne('/terminology/value-sets/vs-mun/$expand?limit=200').flush({
+        items: [
+          { conceptId: MUNICIPIO_SACABA, code: 'geo:bo:municipality:031001', display: 'Sacaba' },
+          {
+            conceptId: MUNICIPIO_QUILLACOLLO,
+            code: 'geo:bo:municipality:030301',
+            display: 'Quillacollo',
+          },
+          {
+            conceptId: MUNICIPIO_EL_TORNO,
+            code: 'geo:bo:municipality:070105',
+            display: 'El Torno',
+          },
+          { conceptId: MUNICIPIO_WARNES, code: 'geo:bo:municipality:070201', display: 'Warnes' },
+        ],
+        count: 4,
+        limit: 200,
+        nextCursor: null,
+      });
+    }
+
+    function pantalla(): HTMLElement {
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    /** Pulsa un departamento en el mapa de residencia, como con el ratón. */
+    function pulsarDepartamento(sigla: string): void {
+      const forma = pantalla().querySelector(
+        `[data-testid="registration-residence-mapa-${sigla}"]`,
+      );
+      expect(forma, `no está dibujado el departamento «${sigla}»`).not.toBeNull();
+      forma?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    /** Elige una ciudad en el select de residencia, como lo haría la persona. */
+    function elegirCiudad(nombre: string): void {
+      const select = pantalla().querySelector<HTMLSelectElement>(
+        '[data-testid="registration-residence-municipio"] select',
+      );
+      expect(select, 'el select de ciudad no está en pantalla').not.toBeNull();
+      const opcion = [...(select?.options ?? [])].find(
+        (candidata) => candidata.textContent?.trim() === nombre,
+      );
+      expect(opcion, `«${nombre}» no está entre las ciudades ofrecidas`).toBeDefined();
+      if (select === null || opcion === undefined) return;
+      select.value = opcion.value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    function direccion(): string {
+      return component.formPaciente.controls.homeAddressLines.value;
+    }
+
+    beforeEach(() => {
+      cargarArbolDeDosDepartamentos();
+      completarDatosPersonales();
+      avanzarHasta('residence');
+    });
+
+    it('(A) departamento en el mapa y ciudad en el select siembran el nombre', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      expect(component.formPaciente.controls.residenceMunicipalityConceptId.value).toBe(
+        MUNICIPIO_EL_TORNO,
+      );
+      expect(direccion()).toBe('El Torno');
+    });
+
+    it('(B) corregir a otra ciudad del MISMO departamento deja el nombre nuevo', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      elegirCiudad('Warnes');
+
+      expect(component.formPaciente.controls.residenceMunicipalityConceptId.value).toBe(
+        MUNICIPIO_WARNES,
+      );
+      expect(direccion()).toBe('Warnes');
+    });
+
+    it('(C) cambiar de departamento en el mapa y elegir una ciudad deja el nombre nuevo', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      pulsarDepartamento('CB');
+      elegirCiudad('Sacaba');
+
+      expect(component.formPaciente.controls.residenceMunicipalityConceptId.value).toBe(
+        MUNICIPIO_SACABA,
+      );
+      expect(direccion()).toBe('Sacaba');
+    });
+
+    /**
+     * (D) Lo que llega desde el selector, en orden y con la dirección tal como
+     * quedó tras cada llegada. Un `null` DESPUÉS de la ciudad elegida sería una
+     * emisión espuria —del select al redibujar sus opciones, o del mapa— y
+     * borraría lo recién sembrado.
+     */
+    it('(D) ninguna emisión del selector llega después de la ciudad elegida', () => {
+      const llegadas: { conceptId: string | null; direccion: string }[] = [];
+      const original = component.elegirMunicipio.bind(component);
+      vi.spyOn(component, 'elegirMunicipio').mockImplementation((conceptId) => {
+        original(conceptId);
+        llegadas.push({ conceptId, direccion: direccion() });
+      });
+
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+      elegirCiudad('Warnes');
+      pulsarDepartamento('CB');
+      elegirCiudad('Sacaba');
+
+      expect(llegadas).toEqual([
+        { conceptId: MUNICIPIO_EL_TORNO, direccion: 'El Torno' },
+        { conceptId: MUNICIPIO_WARNES, direccion: 'Warnes' },
+        // Cambiar de departamento suelta Warnes: ese `null` es a propósito.
+        // La dirección se conserva hasta que haya una localidad nueva.
+        { conceptId: null, direccion: 'Warnes' },
+        { conceptId: MUNICIPIO_SACABA, direccion: 'Sacaba' },
+      ]);
+    });
+
+    /**
+     * (E) Volver a pulsar el departamento ya elegido lo DES-elige (el mapa es
+     * de dos estados) y suelta la ciudad, pero la dirección **se conserva**:
+     * es el gesto de quien va a cambiar de ciudad, y una navegación no puede
+     * costar lo que la persona tiene delante. Elegir la ciudad nueva tiene que
+     * terminar con su nombre.
+     */
+    it('(E) des-elegir y re-elegir el departamento en el mapa y luego la ciudad', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      pulsarDepartamento('SC');
+      expect(direccion(), 'soltar el departamento no borra lo sembrado').toBe(
+        'El Torno',
+      );
+      pulsarDepartamento('SC');
+      elegirCiudad('Warnes');
+
+      expect(direccion()).toBe('Warnes');
+    });
+
+    /**
+     * (F) Ir a la página siguiente y volver destruye y recrea el selector y el
+     * campo de dirección: lo elegido y lo sembrado tienen que sobrevivir, y
+     * corregir la ciudad después tiene que seguir re-sembrando.
+     */
+    it('(F) corregir la ciudad después de avanzar y volver re-siembra', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-continuar"]')?.click();
+      fixture.detectChanges();
+      expect(component.claveVisible()).toBe('work');
+      pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-atras"]')?.click();
+      fixture.detectChanges();
+      expect(component.claveVisible()).toBe('residence');
+      expect(direccion(), 'lo sembrado sobrevive a ir y volver').toBe('El Torno');
+
+      elegirCiudad('Warnes');
+
+      expect(direccion()).toBe('Warnes');
+    });
+
+    /** (G) Igual que (F), pero cambiando de departamento al volver. */
+    it('(G) cambiar de departamento después de avanzar y volver re-siembra', () => {
+      pulsarDepartamento('SC');
+      elegirCiudad('El Torno');
+
+      pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-continuar"]')?.click();
+      fixture.detectChanges();
+      pantalla().querySelector<HTMLElement>('[data-testid="paginated-form-atras"]')?.click();
+      fixture.detectChanges();
+
+      pulsarDepartamento('CB');
+      elegirCiudad('Quillacollo');
+
+      expect(direccion()).toBe('Quillacollo');
     });
   });
 });
