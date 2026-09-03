@@ -87,13 +87,50 @@
           </button>
         </div>
       } @else {
-        <app-month-view
-          [mes]="mesVisible()"
-          [cupos]="cuposDelMes()"
-          [bloqueos]="bloqueosDelMes()"
-          (mesElegido)="cambiarMes($event)"
-          (diaElegido)="abrirDia($event)"
-        />
+        <!-- «Un botón para ver la semana y otro para ver el mes», del pedido
+             original. No se reemplazan: responden preguntas distintas. -->
+        <div class="mi-agenda__vistas" role="group" aria-label="Cómo mirar la agenda">
+          <button
+            app-button
+            [variant]="vista() === 'mes' ? 'secondary' : 'ghost'"
+            size="sm"
+            type="button"
+            data-testid="ver-mes"
+            [attr.aria-pressed]="vista() === 'mes'"
+            (clicked)="verMes()"
+          >
+            Mes
+          </button>
+          <button
+            app-button
+            [variant]="vista() === 'semana' ? 'secondary' : 'ghost'"
+            size="sm"
+            type="button"
+            data-testid="ver-semana"
+            [attr.aria-pressed]="vista() === 'semana'"
+            (clicked)="verSemana()"
+          >
+            Semana
+          </button>
+        </div>
+
+        @if (vista() === 'semana') {
+          <app-week-view
+            [semana]="semanaVisible()"
+            [cupos]="cuposDelMes()"
+            [bloqueos]="bloqueosDelMes()"
+            (semanaElegida)="cambiarSemana($event)"
+            (diaElegido)="abrirDia($event)"
+          />
+        } @else {
+          <app-month-view
+            [mes]="mesVisible()"
+            [cupos]="cuposDelMes()"
+            [bloqueos]="bloqueosDelMes()"
+            (mesElegido)="cambiarMes($event)"
+            (diaElegido)="abrirDia($event)"
+          />
+        }
       }
     } @else {
       <section class="mi-agenda__tarjeta">

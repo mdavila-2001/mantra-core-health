@@ -45,6 +45,7 @@ import {
 } from './day-view/day-view';
 import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
+import { WeekView, lunesDe } from './week-view/week-view';
 import { AGENDA_CREATE_ROUTE } from '../agenda.routes';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
@@ -152,6 +153,7 @@ const SIN_DATO = 'Sin registrar';
     DayView,
     TarjetaDelDia,
     MonthView,
+    WeekView,
     PageHeader,
     RouterLink,
     ViewStateHost,
@@ -199,6 +201,57 @@ export class MyAgenda {
 
   /** El mes visible; siempre su día 1. */
   protected readonly mesVisible = signal(primerDiaDelMes(new Date()));
+
+  /**
+   * Si se mira el mes o la semana — «un botón para ver la semana y otro para
+   * ver el mes» del pedido original.
+   *
+   * Son dos preguntas distintas: el mes responde «¿cuándo tengo hueco?», la
+   * semana responde «¿cómo viene esto?». Por eso conviven en vez de que una
+   * reemplace a la otra.
+   */
+  protected readonly vista = signal<'mes' | 'semana'>('mes');
+
+  /** Cualquier día de la semana mirada; el lunes lo calcula la vista. */
+  protected readonly semanaVisible = signal(lunesDe(new Date()));
+
+  protected verMes(): void {
+    this.vista.set('mes');
+  }
+
+  protected verSemana(): void {
+    this.vista.set('semana');
+    // Se abre en la semana del mes que se está mirando, no en la de hoy: venir
+    // de octubre y aterrizar en septiembre se lee como un error.
+    const mes = this.mesVisible();
+    const hoy = new Date();
+    this.semanaVisible.set(
+      mes.getMonth() === hoy.getMonth() && mes.getFullYear() === hoy.getFullYear()
+        ? lunesDe(hoy)
+        : lunesDe(mes),
+    );
+  }
+
+  /**
+   * Cambia de semana, y **recarga el mes si hace falta**.
+   *
+   * Los cupos y los bloqueos que la vista usa son los del mes cargado. Sin
+   * esto, la semana que cruza de mes se vería medio vacía — y esa mitad vacía
+   * no sería una agenda libre, sería un dato que no se pidió.
+   */
+  protected cambiarSemana(nueva: Date): void {
+    this.semanaVisible.set(nueva);
+    const mes = this.mesVisible();
+    const finDeSemana = new Date(nueva.getFullYear(), nueva.getMonth(), nueva.getDate() + 6);
+    const cruza =
+      nueva.getMonth() !== mes.getMonth() ||
+      nueva.getFullYear() !== mes.getFullYear() ||
+      finDeSemana.getMonth() !== mes.getMonth();
+    if (cruza) {
+      this.mesVisible.set(primerDiaDelMes(nueva));
+      this.cargarMes();
+    }
+  }
 
   protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
   protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);

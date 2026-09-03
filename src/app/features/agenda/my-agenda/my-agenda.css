@@ -168,3 +168,11 @@
 .mi-agenda__historico-nombre {
   color: var(--text-secondary);
 }
+
+/* -- Alternar mes / semana ------------------------------------------------- */
+
+.mi-agenda__vistas {
+  display: flex;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+}
