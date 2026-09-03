@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 
 import type {
@@ -238,6 +245,43 @@ export class DayView {
    * emite el bloque y se decide afuera.
    */
   readonly detallePedido = output<BloqueDelDia>();
+
+  /**
+   * Correr la agenda del día N minutos — «mover horario» del pedido.
+   *
+   * Emite los minutos y, si se pidió «de acá en adelante», **desde qué rato**.
+   * Es el «seleccionable a todos o ciertos slots en específico»: o el día
+   * entero, o de un punto hacia adelante, que es como uno lo piensa cuando se
+   * atrasa a media mañana.
+   */
+  readonly movimientoPedido = output<{ minutos: number; desde: Date | null }>();
+
+  /** Cerrar un rato libre, con el bloqueo que impide que vuelva. */
+  readonly cierrePedido = output<BloqueDelDia>();
+
+  /** Si el panel de mover está abierto. */
+  protected readonly moverAbierto = signal(false);
+
+  /**
+   * Cuánto se puede correr, en minutos.
+   *
+   * Una lista corta y no un campo libre: mover el horario se decide entre
+   * pacientes, y en ese momento nadie quiere teclear un número.
+   */
+  protected readonly desplazamientos = [10, 15, 20, 30, 45, 60] as const;
+
+  /** Desde qué rato se mueve, o `null` para el día entero. */
+  protected readonly moverDesde = signal<Date | null>(null);
+
+  protected abrirMover(desde: Date | null): void {
+    this.moverDesde.set(desde);
+    this.moverAbierto.set(true);
+  }
+
+  protected pedirMovimiento(minutos: number): void {
+    this.movimientoPedido.emit({ minutos, desde: this.moverDesde() });
+    this.moverAbierto.set(false);
+  }
 
   protected readonly titulo = computed(() =>
     this.dia().toLocaleDateString('es-BO', {

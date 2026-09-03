@@ -923,6 +923,102 @@ export class MyAgenda {
   /** El horario sobre el que hay una operación en vuelo. */
   protected readonly operandoHorario = signal<string | null>(null);
 
+  /**
+   * Corre la agenda del día N minutos — «mover horario» del carril 12.
+   *
+   * **La ventana es el día abierto**, no el mes: mover se decide mirando un día
+   * y ensancharlo de más correría turnos que nadie miró. Si se pidió «de acá en
+   * adelante», la ventana arranca en ese rato.
+   *
+   * No pide confirmación con un diálogo porque el panel **ya es** la
+   * confirmación: dice qué va a pasar y hay que elegir cuántos minutos.
+   */
+  protected moverHorario(pedido: { minutos: number; desde: Date | null }): void {
+    const recurso = this.recurso();
+    const dia = this.diaAbierto();
+    if (recurso === null || dia === null || this.operandoHorario() !== null) return;
+
+    const desde = pedido.desde ?? new Date(dia.getFullYear(), dia.getMonth(), dia.getDate());
+    const hasta = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate() + 1);
+
+    this.operandoHorario.set('mover');
+    this.scheduling
+      .shiftSlots(recurso.id, {
+        shiftMinutes: pedido.minutos,
+        from: desde.toISOString(),
+        to: hasta.toISOString(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.operandoHorario.set(null);
+          this.toast.success(
+            res.notified === 0
+              ? 'No había pacientes a quienes avisar.'
+              : `Se le avisó a ${res.notified} ${res.notified === 1 ? 'persona' : 'personas'}.`,
+            `${res.movedSlots} ${res.movedSlots === 1 ? 'turno movido' : 'turnos movidos'}`,
+          );
+          this.cargarMes();
+          this.cargarDia(dia);
+        },
+        error: (error: unknown) => {
+          this.operandoHorario.set(null);
+          // El 409 del servidor es el choque con otra cita, y es lo único que
+          // esta pantalla no puede resolver sola: se dice tal cual.
+          this.avisarFallo(error, 'mover el horario');
+        },
+      });
+  }
+
+  /**
+   * Cierra un rato libre, con el bloqueo que impide que vuelva.
+   *
+   * Pide el motivo porque el servidor lo exige —es el mismo catálogo que los
+   * bloqueos— y porque **ese motivo lo ve el paciente**: cerrar un rato sin
+   * decir por qué deja a quien mira la agenda sin saber si puede pedir turno
+   * más tarde.
+   */
+  protected async cerrarRato(bloque: BloqueDelDia): Promise<void> {
+    const recurso = this.recurso();
+    const dia = this.diaAbierto();
+    if (recurso === null || dia === null || this.operandoHorario() !== null) return;
+
+    const seguro = await this.dialogs.confirm({
+      title: 'Cerrar este rato',
+      message:
+        'Deja de ofrecerse, y no vuelve aunque republiques el horario. ' +
+        'Podés reabrirlo quitando el bloqueo desde «Ver mis bloqueos».',
+      details: [
+        {
+          label: 'Cuándo',
+          value: `${formatDate(bloque.desde, 'HH:mm', this.idioma)} – ${formatDate(bloque.hasta, 'HH:mm', this.idioma)}`,
+        },
+      ],
+      confirmLabel: 'Cerrar el rato',
+      cancelLabel: 'Volver',
+      destructive: true,
+    });
+    if (!seguro) return;
+
+    this.operandoHorario.set(bloque.clave);
+    this.scheduling
+      .closeSlots(recurso.id, { exceptionType: 'ERRAND', slotIds: [bloque.clave] })
+      .subscribe({
+        next: (res) => {
+          this.operandoHorario.set(null);
+          this.toast.success(
+            'No vuelve aunque republiques el horario.',
+            `${res.closedSlots} ${res.closedSlots === 1 ? 'rato cerrado' : 'ratos cerrados'}`,
+          );
+          this.cargarMes();
+          this.cargarDia(dia);
+        },
+        error: (error: unknown) => {
+          this.operandoHorario.set(null);
+          this.avisarFallo(error, 'cerrar ese rato');
+        },
+      });
+  }
+
   protected volverAlMes(): void {
     this.diaAbierto.set(null);
   }
