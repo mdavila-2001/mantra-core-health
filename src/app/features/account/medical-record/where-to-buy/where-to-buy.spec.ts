@@ -203,6 +203,32 @@ describe('WhereToBuy', () => {
     return harness.routeNativeElement?.textContent ?? '';
   }
 
+  /**
+   * La pantalla dejó de ser sólo de farmacias: la receta manda a la farmacia,
+   * pero también a los estudios y a los procedimientos. Las tres pestañas
+   * existen; dos todavía no pueden ordenar por cercanía y lo dicen en vez de
+   * prometerlo.
+   */
+  it('abre en Farmacias y ofrece las otras dos sin prometer lo que no hay', async () => {
+    await montar();
+    responderHastaProductos();
+    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(
+      DISPONIBILIDAD_FIXTURE,
+    );
+    harness.detectChanges();
+
+    const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
+    expect(Array.from(pestanas).map((p) => p.textContent?.trim())).toEqual([
+      'Farmacias',
+      'Centros de imagenología',
+      'Centros médicos',
+    ]);
+    // La primera es la que se abre: es el único vertical que hoy responde.
+    expect(pestanas[0]?.getAttribute('aria-selected')).toBe('true');
+    // Y el panel activo es el de farmacias, no una promesa.
+    expect(texto()).toContain('Sucursal Centro');
+  });
+
   it('recorre el contrato E2 entero y pinta completas primero, sin coordenadas', async () => {
     await montar();
     responderHastaProductos();

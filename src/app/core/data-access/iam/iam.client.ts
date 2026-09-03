@@ -238,6 +238,12 @@ export class IamClient {
       ...(registration.profilePhotoBase64 === undefined
         ? {}
         : { profilePhotoBase64: registration.profilePhotoBase64 }),
+      ...(registration.occupationConceptId === undefined
+        ? {}
+        : { occupationConceptId: registration.occupationConceptId }),
+      ...(registration.occupationFreeText === undefined
+        ? {}
+        : { occupationFreeText: registration.occupationFreeText }),
     });
   }
 

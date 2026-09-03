@@ -267,6 +267,10 @@ export interface PractitionerRegistration {
   readonly sexAtBirth?: BirthSexCode;
   /** Foto de perfil en formato Base64 (Data URI o base64 plano). */
   readonly profilePhotoBase64?: string;
+  /** Ocupación del catálogo (VS_BO_OCCUPATION). */
+  readonly occupationConceptId?: string;
+  /** Ocupación en texto libre, para cuando no está en el catálogo. */
+  readonly occupationFreeText?: string;
 }
 
 export interface RegisteredPractitioner {
