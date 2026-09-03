@@ -60,7 +60,19 @@ describe('MyAgenda', () => {
   afterEach(() => http?.verify());
 
   /** Responde el recurso propio y devuelve su id. */
+  /**
+   * El catálogo de tipologías, que la pantalla pide al cargar.
+   *
+   * Se responde vacío: lo que estas pruebas miran es el horario, y con la lista
+   * vacía el día se pinta como antes — que es justamente la garantía de que un
+   * catálogo caído no rompe la agenda.
+   */
+  function conTipologias(): void {
+    http.expectOne('/scheduling/activity-types').flush({ items: [] });
+  }
+
   function conRecurso(): string {
+    conTipologias();
     http
       .expectOne(RECURSOS)
       .flush({ items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL }], count: 1 });
@@ -296,6 +308,7 @@ describe('MyAgenda', () => {
 
   it('sin recurso propio tampoco es un error', () => {
     crear();
+    conTipologias();
     http.expectOne(RECURSOS).flush({ items: [], count: 0 });
     fixture.detectChanges();
 

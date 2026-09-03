@@ -188,6 +188,14 @@ export interface Booking {
    * `if (cita.paymentState)`, nunca con un valor por defecto.
    */
   readonly paymentState?: PaymentStateInfo;
+  /**
+   * La tipología raíz de la actividad: consulta, procedimiento, control…
+   *
+   * Es `clinical.appointments.type_concept_id`, y llega sólo cuando la reserva
+   * tiene cita clínica detrás. Se resuelve contra el catálogo de
+   * `GET /scheduling/activity-types`, que trae la etiqueta y el tono.
+   */
+  readonly typeConceptId?: string;
   readonly startAt?: Date;
   readonly endAt?: Date;
   readonly statusConceptId: string;
@@ -551,6 +559,25 @@ export interface AvailabilityExceptionTypeOption {
   readonly requiresText: boolean;
   /** `false` en `EXTRA`, que **abre** disponibilidad en vez de cerrarla. */
   readonly blocks: boolean;
+}
+
+/**
+ * Una tipología de actividad, tal como la publica la API.
+ *
+ * Trae `tone` y **no un color**: el color concreto es del sistema de diseño.
+ * Un `#RRGGBB` desde el servidor obligaría a redesplegar la API para cambiar la
+ * paleta y rompería el tema oscuro.
+ */
+export interface ActivityTypeOption {
+  readonly type: string;
+  readonly conceptId: string;
+  readonly label: string;
+  /** Nunca `error`: ése está reservado para los bloqueos. */
+  readonly tone: string;
+}
+
+export interface ActivityTypeList {
+  readonly items: readonly ActivityTypeOption[];
 }
 
 export interface AvailabilityExceptionTypeList {

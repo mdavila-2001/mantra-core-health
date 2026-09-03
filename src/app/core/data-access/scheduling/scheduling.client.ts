@@ -14,6 +14,7 @@ import type {
   AvailabilityExceptionCreated,
   TemplateReactivated,
   AvailabilityExceptionTypeList,
+  ActivityTypeList,
   NewPaymentState,
   PaymentStateInfo,
   Booking,
@@ -376,6 +377,17 @@ export class SchedulingClient {
    * abre horario del que lo cierra. Si mañana el propietario agrega un motivo,
    * aparece solo: acá no hay lista que actualizar.
    */
+  /**
+   * `GET /scheduling/activity-types` — las tipologías que la agenda pinta.
+   *
+   * Es catálogo: se pide una vez y no lleva recurso ni ventana. La etiqueta y
+   * el tono los manda el servidor, así que agregar una tipología no exige
+   * tocar el front.
+   */
+  listActivityTypes(): Observable<ActivityTypeList> {
+    return this.http.get<ActivityTypeList>(this.url('/scheduling/activity-types'));
+  }
+
   listExceptionTypes(): Observable<AvailabilityExceptionTypeList> {
     return this.http.get<AvailabilityExceptionTypeList>(
       this.url('/scheduling/exception-types'),
