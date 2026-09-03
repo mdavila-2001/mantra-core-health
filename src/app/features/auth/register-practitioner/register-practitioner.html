@@ -59,6 +59,88 @@
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
           >
+            <!-- Los tres nombres entran como campo custom bajo `name` porque
+                 el motor no admite más de cuatro campos por página: con dos
+                 apellidos y tres nombres serían cinco. El motor valida el
+                 obligatorio porque el control sigue existiendo; lo que cambia
+                 es quién lo dibuja. -->
+            <ng-template appCampoPersonalizado="name">
+              <div class="registro__nombres">
+                <app-form-field class="registro__nombre" label="Primer nombre" [required]="true">
+                  <app-input
+                    testId="registro-pro-nombre"
+                    autocomplete="given-name"
+                    placeholder="Ana"
+                    [value]="valorDeNombre('name')"
+                    [hasError]="primerNombreEnRojo()"
+                    (valueChange)="escribirNombre('name', $event)"
+                  />
+                </app-form-field>
+
+                <app-form-field
+                  class="registro__nombre"
+                  label="Segundo nombre"
+                  hint="Si no tenés, dejalo vacío."
+                >
+                  <app-input
+                    testId="registro-pro-segundo-nombre"
+                    autocomplete="additional-name"
+                    placeholder="Lucía"
+                    [value]="valorDeNombre('middleName')"
+                    (valueChange)="escribirNombre('middleName', $event)"
+                  />
+                </app-form-field>
+
+                <app-form-field class="registro__nombre" label="Tercer nombre">
+                  <app-input
+                    testId="registro-pro-tercer-nombre"
+                    placeholder="María"
+                    [value]="valorDeNombre('thirdName')"
+                    (valueChange)="escribirNombre('thirdName', $event)"
+                  />
+                </app-form-field>
+
+                <!-- Hay gente con cuatro y cinco nombres. En vez de casillas
+                     fijas que casi nadie usa, se agregan las que hagan falta. -->
+                @for (extra of nombresExtra(); track $index) {
+                  <app-form-field class="registro__nombre" [label]="'Nombre ' + ($index + 4)">
+                    <div class="registro__nombre-extra">
+                      <app-input
+                        [testId]="'registro-pro-nombre-extra-' + $index"
+                        placeholder="Otro nombre"
+                        [value]="extra"
+                        (valueChange)="escribirNombreExtra($index, $event)"
+                      />
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar el nombre ' + ($index + 4)"
+                        [appTooltip]="'Quitar el nombre ' + ($index + 4)"
+                        [attr.data-testid]="'registro-pro-quitar-nombre-' + $index"
+                        (clicked)="quitarNombre($index)"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </div>
+                  </app-form-field>
+                }
+
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="registro-pro-agregar-nombre"
+                  (clicked)="agregarNombre()"
+                >
+                  + Agregar otro nombre
+                </button>
+              </div>
+            </ng-template>
+
             <!-- El título profesional se busca escribiendo, igual que
                  Ocupación: la lista es cerrada —son doce— pero el filtro es
                  local, sin una sola petición más. Escribe en el mismo
