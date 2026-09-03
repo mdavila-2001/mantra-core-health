@@ -125,6 +125,19 @@
             <!-- Las palabras y las mayúsculas son del propietario (punto 5). -->
             <app-badge variant="secondary">HORARIO PERMANENTE</app-badge>
           }
+          <!-- «Editar sobre la fila», del pedido original. Va acá y no en un
+               menú: cambiar el horario es lo que uno viene a hacer a esta
+               pantalla después de mirarlo. -->
+          <a
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="horario-editar"
+            [routerLink]="rutaEditarHorario"
+            aria-label="Cambiar mi horario"
+          >
+            ✎ Cambiar
+          </a>
         </p>
 
         @if (p.vigencia) {
