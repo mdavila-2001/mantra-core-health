@@ -18,6 +18,8 @@ import type {
   ShiftSlotsRequest,
   SlotsShifted,
   CloseSlotsRequest,
+  UpdateAvailabilityException,
+  AvailabilityExceptionUpdated,
   SlotsClosed,
   NewPaymentState,
   PaymentStateInfo,
@@ -491,6 +493,23 @@ export class SchedulingClient {
    * Borrar NO resucita los cupos que la excepción retiró: se regeneran con la
    * plantilla si corresponde. Está declarado así en el contrato.
    */
+  /**
+   * `PATCH /scheduling/exceptions/:id` — corrige un bloqueo sin borrarlo.
+   *
+   * **Agrandar el rango cierra los cupos nuevos; achicarlo no reabre ninguno.**
+   * En este módulo los cupos sólo los crea publicar el horario, y la pantalla
+   * tiene que decirlo antes de guardar.
+   */
+  updateException(
+    exceptionId: string,
+    body: UpdateAvailabilityException,
+  ): Observable<AvailabilityExceptionUpdated> {
+    return this.http.patch<AvailabilityExceptionUpdated>(
+      this.url(`/scheduling/exceptions/${encodeURIComponent(exceptionId)}`),
+      body,
+    );
+  }
+
   deleteException(exceptionId: string): Observable<void> {
     return this.http.delete<void>(
       this.url(`/scheduling/exceptions/${encodeURIComponent(exceptionId)}`),

@@ -5,6 +5,18 @@
   <a app-button page-actions variant="primary" [routerLink]="rutaNuevo">Bloquear días u horarios</a>
 </app-page-header>
 
+<!-- El mismo formulario que da de alta, con lo que se corrige precargado.
+     Escribir uno aparte para editar es el camino corto que termina con dos
+     formularios que divergen. -->
+@if (editando(); as enEdicion) {
+  <app-block-form
+    [motivos]="motivos()"
+    [editando]="enEdicion"
+    (bloquear)="guardar($event)"
+    (cancelar)="cancelarEdicion()"
+  />
+}
+
 <app-view-state-host [state]="estado()" (retry)="cargar()">
   <!-- ── Vigentes ────────────────────────────────────────────────────────── -->
   @if (vigentes().length > 0) {
@@ -25,6 +37,16 @@
                 <p class="bloqueos__descripcion">{{ b.descripcion }}</p>
               }
             </div>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="bloqueo-editar"
+              (clicked)="editar(b)"
+            >
+              Cambiar
+            </button>
             <button
               app-button
               variant="ghost"

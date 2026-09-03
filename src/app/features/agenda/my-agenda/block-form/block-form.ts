@@ -2,9 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 
 import type {
@@ -20,6 +22,15 @@ import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { DatePicker } from '@shared/components/organisms/date-picker/date-picker';
 
 /** Lo que el formulario pide bloquear, ya en instantes. */
+/** Un bloqueo que ya existe y se está corrigiendo. */
+export interface BloqueoEnEdicion {
+  readonly id: string;
+  readonly desde: Date;
+  readonly hasta: Date;
+  readonly exceptionType: AvailabilityExceptionType;
+  readonly descripcion: string | null;
+}
+
 export interface BloqueoPedido {
   readonly desde: Date;
   readonly hasta: Date;
@@ -94,6 +105,19 @@ export class BlockForm {
    */
   readonly motivos = input<readonly AvailabilityExceptionTypeOption[]>([]);
 
+  /**
+   * Lo que se está editando, o `null` para dar de alta.
+   *
+   * El mismo formulario hace las dos cosas **a propósito**. Escribir uno
+   * aparte para editar es el camino corto que termina con dos formularios que
+   * divergen: uno gana un campo, el otro no, y a los seis meses nadie sabe
+   * cuál es el bueno. Es el mismo argumento por el que la creación de citas
+   * reutiliza «la tarjeta».
+   */
+  readonly editando = input<BloqueoEnEdicion | null>(null);
+
+  protected readonly esEdicion = computed(() => this.editando() !== null);
+
   readonly bloquear = output<BloqueoPedido>();
   readonly cancelar = output<void>();
 
@@ -141,6 +165,32 @@ export class BlockForm {
    * un motivo que también la exija, esta pantalla ya lo cumple.
    */
   protected readonly exigeTexto = computed(() => this.motivoElegido()?.requiresText ?? false);
+
+  constructor() {
+    // Precarga lo que se está editando. Un `effect` y no un valor inicial
+    // porque el bloqueo llega por input y puede cambiar sin que el componente
+    // se vuelva a crear — la lista de bloqueos es una sola pantalla.
+    effect(() => {
+      const actual = this.editando();
+      if (actual === null) return;
+      untracked(() => {
+        this.desde.set(actual.desde);
+        this.hasta.set(actual.hasta);
+        this.tipo.set(actual.exceptionType);
+        this.motivo.set(actual.descripcion ?? '');
+        // Si no arranca y termina a medianoche, es una franja de horas.
+        const franja =
+          actual.desde.getHours() !== 0 ||
+          actual.desde.getMinutes() !== 0 ||
+          actual.hasta.getHours() !== 0;
+        this.porFranja.set(franja);
+        if (franja) {
+          this.horaDesde.set(comoHora(actual.desde));
+          this.horaHasta.set(comoHora(actual.hasta));
+        }
+      });
+    });
+  }
 
   /** El intento ya se envió una vez: recién ahí se muestran los errores. */
   protected readonly intentado = signal(false);
@@ -263,4 +313,10 @@ export function aMedianoche(fecha: Date): Date {
 export function conHora(fecha: Date, hora: string): Date {
   const [h, m] = hora.split(':').map(Number);
   return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate(), h ?? 0, m ?? 0);
+}
+
+
+/** `HH:MM` de una fecha, para precargar la franja al editar. */
+function comoHora(valor: Date): string {
+  return `${String(valor.getHours()).padStart(2, '0')}:${String(valor.getMinutes()).padStart(2, '0')}`;
 }
