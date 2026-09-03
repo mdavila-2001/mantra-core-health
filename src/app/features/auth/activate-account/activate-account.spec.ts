@@ -1,8 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { vi } from 'vitest';
 
 import { ActivateAccount } from './activate-account';
 
@@ -129,6 +130,18 @@ describe('ActivateAccount', () => {
 
     // `expectOne` falla si hubo dos.
     http.expectOne('/iam/auth/activate').flush(RESPUESTA);
+  });
+
+  it('al activar la cuenta, goToLogin redirige a login con returnUrl para completar perfil', async () => {
+    await montar();
+    const router = TestBed.inject(Router);
+    const spy = vi.spyOn(router, 'navigate');
+
+    interno<() => void>('goToLogin')();
+
+    expect(spy).toHaveBeenCalledWith(['/auth'], {
+      queryParams: { returnUrl: '/my-account/profile/edit' },
+    });
   });
 
   /* ---- el token gastado ---------------------------------------------------- */
