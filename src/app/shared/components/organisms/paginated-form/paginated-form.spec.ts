@@ -134,12 +134,54 @@ class HostConfigurable {
   });
 }
 
+/**
+ * Diez páginas: las del alta de paciente, que es el recorrido que pasó el tope
+ * de cinco del indicador. Una cosa por página, para que avanzar no dependa de
+ * llenar nada.
+ */
+const PAGINAS_LARGAS: readonly PaginaDeFormulario[] = Array.from(
+  { length: 10 },
+  (_, i): PaginaDeFormulario => ({
+    titulo: `Sección ${i + 1}`,
+    clave: `seccion-${i + 1}`,
+    campos: [{ key: `campo${i + 1}`, label: `Campo ${i + 1}`, control: 'text' }],
+  }),
+);
+
+/** Los diez controles de {@link PAGINAS_LARGAS}, uno por página. */
+function controlesLargos(): Record<string, FormControl<string>> {
+  const controles: Record<string, FormControl<string>> = {};
+  for (const pagina of PAGINAS_LARGAS) {
+    controles[pagina.campos[0].key] = new FormControl('', { nonNullable: true });
+  }
+  return controles;
+}
+
+/** El motor con más páginas de las que el indicador muestra con rótulos. */
+@Component({
+  imports: [PaginatedForm],
+  template: `
+    <app-paginated-form
+      [paginas]="paginas()"
+      [form]="form"
+      label="Crear cuenta"
+      submitLabel="Crear cuenta"
+      [compactSteps]="compactSteps()"
+    />
+  `,
+})
+class HostLargo {
+  readonly paginas = signal<readonly PaginaDeFormulario[]>(PAGINAS_LARGAS);
+  readonly compactSteps = signal(false);
+  readonly form = new FormGroup(controlesLargos());
+}
+
 describe('PaginatedForm', () => {
   let fixture: ComponentFixture<Host>;
   let host: Host;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [Host, HostConfigurable] });
+    TestBed.configureTestingModule({ imports: [Host, HostConfigurable, HostLargo] });
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     fixture.detectChanges();
@@ -417,6 +459,86 @@ describe('PaginatedForm', () => {
       fixtureC.detectChanges();
 
       expect(pasos()).toHaveLength(0);
+    });
+  });
+
+  describe('el indicador con más páginas de las que entran', () => {
+    let fixtureL: ComponentFixture<HostLargo>;
+
+    beforeEach(() => {
+      fixtureL = TestBed.createComponent(HostLargo);
+      fixtureL.detectChanges();
+    });
+
+    function pasosL(): HTMLButtonElement[] {
+      return fixtureL.debugElement
+        .queryAll(By.css('[data-testid^="stepper-paso-"]'))
+        .map((el) => el.nativeElement as HTMLButtonElement);
+    }
+
+    function tituloL(): string {
+      return (
+        fixtureL.debugElement.query(By.css('.paginated-form__titulo')).nativeElement as HTMLElement
+      ).textContent!.trim();
+    }
+
+    function continuarL(): HTMLButtonElement {
+      return fixtureL.debugElement.query(By.css('[data-testid="paginated-form-continuar"]'))
+        .nativeElement as HTMLButtonElement;
+    }
+
+    it('sin `compactSteps`, diez páginas siguen siendo el contador de siempre', () => {
+      // Es lo que hoy ven las pantallas largas, y no cambia solo: el tope de
+      // cinco las sigue protegiendo mientras nadie pida lo contrario.
+      expect(fixtureL.debugElement.query(By.css('app-stepper'))).toBeNull();
+      expect(
+        (
+          fixtureL.debugElement.query(By.css('.paginated-form__contador'))
+            .nativeElement as HTMLElement
+        ).textContent!.trim(),
+      ).toBe('Paso 1 de 10');
+    });
+
+    it('con `compactSteps` el recorrido vuelve, y vuelve compacto', () => {
+      fixtureL.componentInstance.compactSteps.set(true);
+      fixtureL.detectChanges();
+
+      expect(fixtureL.debugElement.query(By.css('app-stepper .stepper--compact'))).not.toBeNull();
+      expect(pasosL()).toHaveLength(10);
+      expect(fixtureL.debugElement.query(By.css('.paginated-form__contador'))).toBeNull();
+    });
+
+    it('con cinco páginas o menos los rótulos se ven, se pida compacto o no', () => {
+      fixtureL.componentInstance.paginas.set(PAGINAS_LARGAS.slice(0, 4));
+
+      for (const compacto of [false, true]) {
+        fixtureL.componentInstance.compactSteps.set(compacto);
+        fixtureL.detectChanges();
+
+        expect(fixtureL.debugElement.query(By.css('.stepper--compact'))).toBeNull();
+        const rotulos = fixtureL.debugElement
+          .queryAll(By.css('.stepper__label'))
+          .map((el) => el.nativeElement as HTMLElement);
+        expect(rotulos).toHaveLength(4);
+        expect(rotulos.some((el) => el.classList.contains('sr-only'))).toBe(false);
+      }
+    });
+
+    it('compacto no relaja el candado: al paso no visitado no se va, al visitado sí', () => {
+      fixtureL.componentInstance.compactSteps.set(true);
+      fixtureL.detectChanges();
+
+      pasosL()[3].click();
+      fixtureL.detectChanges();
+      expect(tituloL()).toBe('Sección 1');
+
+      continuarL().click();
+      fixtureL.detectChanges();
+      expect(tituloL()).toBe('Sección 2');
+
+      pasosL()[0].click();
+      fixtureL.detectChanges();
+      expect(tituloL()).toBe('Sección 1');
     });
   });
 

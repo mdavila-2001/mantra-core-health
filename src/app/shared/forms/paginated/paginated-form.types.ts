@@ -126,6 +126,21 @@ export interface CampoDeFormulario {
    * con el propietario): este contrato sólo garantiza que se **pueda** y que
    * cueste declararlo, no que esté puesto.
    *
+   * ## Qué ramas lo dibujan
+   *
+   * Lo toman el `select` y los campos de **texto, correo, contraseña y
+   * número**: son los que tienen el hueco libre dentro del marco. En las demás
+   * declararlo no pinta nada, y no por olvido —ese hueco ya está ocupado por
+   * algo que dice más—:
+   *
+   * - **`tel`**: ahí va la bandera del país, que es el glifo de ese campo y
+   *   además se puede cambiar, cosa que un dibujo fijo no hace.
+   * - **`date` y `datetime`**: el almanaque del `app-date-picker`, que encima
+   *   abre el calendario.
+   * - **`custom`**: lo que proyecte la pantalla, que es la dueña del campo.
+   * - **`textarea`, `radio`, `switch` y `checkbox`**: no tienen dónde meterlo
+   *   sin desalinear el control.
+   *
    * El glifo es siempre `aria-hidden` —lo pone `app-nav-icon`—, así que quitarlo
    * no cambia una palabra de lo que anuncia un lector de pantalla.
    */
@@ -146,12 +161,20 @@ export interface CampoDeFormulario {
    * `aria-describedby` —contrato del ADR-0008— y sin ayuda alguna en un
    * teléfono.
    *
+   * El globo lo dibuja `app-form-field`, que envuelve **todas** las ramas: un
+   * campo `custom` la muestra igual que un `text`.
+   *
    * Cuando el campo no declara `placeholder`, esta descripción también se usa
    * de placeholder: el pedido era que el mismo texto estuviera en los dos
    * sitios. Si el campo **sí** declara `placeholder`, gana el declarado: un
    * ejemplo concreto («1234567») enseña más sobre qué escribir que una
    * explicación, y además desaparece al primer tecleo. Ver P-04-3 de la ficha:
    * sigue sin confirmarse con el propietario.
+   *
+   * Ese reemplazo es sólo de los controles que caen en el `@default`, el
+   * `textarea` y el `select`. En `tel`, `date` y `datetime` el placeholder es
+   * **el formato del dato** —«7001 2345», «DD/MM/AAAA»— y se conserva: es lo
+   * que dice cómo escribirlo, que no es lo mismo que explicar para qué se pide.
    */
   readonly description?: string;
 

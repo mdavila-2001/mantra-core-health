@@ -44,10 +44,14 @@ import { DatePicker } from '../date-picker/date-picker';
 import { CampoPersonalizado } from './campo-personalizado';
 
 /**
- * Cuántas páginas admite el stepper antes de estorbar.
+ * Cuántas páginas admite el stepper **con rótulos** antes de estorbar.
  *
  * Con más, sus rótulos no caben en un teléfono y se convierten en una fila
  * ilegible. La barra de avance, que siempre está, no tiene ese problema.
+ *
+ * Pasado el tope hay dos salidas: el contador «Paso 2 de 10», que es la de
+ * siempre, o el recorrido **compacto** —marcadores sin rótulo— que enciende
+ * {@link PaginatedForm.compactSteps} la pantalla que lo verificó.
  */
 const MAX_PASOS_EN_EL_INDICADOR = 5;
 
@@ -219,6 +223,23 @@ export class PaginatedForm {
    */
   readonly iconOnlyNav = input(false, { transform: booleanAttribute });
 
+  /**
+   * El recorrido se dibuja también con más de {@link MAX_PASOS_EN_EL_INDICADOR}
+   * páginas, en su forma compacta: marcadores sin rótulo a la vista.
+   *
+   * Entra apagado, y no es lo mismo que subir el tope. El tope existe porque
+   * este motor lo montan decenas de pantallas y ninguna se enteraría de que su
+   * indicador dejó de caber: mientras esté, una pantalla larga sigue mostrando
+   * su contador «Paso 2 de 10», que es lo que hoy ve. La opción la enciende
+   * quien **recorrió su formulario en compacto** y comprobó que los pasos
+   * entran —diez marcadores caben en dos filas de cinco en un teléfono; veinte
+   * no— y que sus títulos se reconocen sin el rótulo.
+   *
+   * El rótulo no se pierde: sigue en el nombre accesible de cada paso y vuelve
+   * como globo al apuntar o al enfocar. Ver `compact` en `app-stepper`.
+   */
+  readonly compactSteps = input(false, { transform: booleanAttribute });
+
   /** Se emite en la última página, y sólo si todo el formulario es válido. */
   readonly enviado = output<void>();
 
@@ -292,8 +313,19 @@ export class PaginatedForm {
   });
 
   readonly mostrarPasos = computed(
-    () => this.total() > 1 && this.total() <= MAX_PASOS_EN_EL_INDICADOR,
+    () =>
+      this.total() > 1 &&
+      (this.total() <= MAX_PASOS_EN_EL_INDICADOR || this.compactSteps()),
   );
+
+  /**
+   * El recorrido va compacto sólo cuando no entra de otra forma.
+   *
+   * Con cinco páginas o menos los rótulos caben, y esconderlos ahí sería
+   * cambiar palabras por dibujos sin necesidad: `compactSteps` dice que el
+   * indicador se dibuje igual, no que se dibuje chico.
+   */
+  readonly pasosCompactos = computed(() => this.total() > MAX_PASOS_EN_EL_INDICADOR);
 
   readonly pasos = computed<readonly StepperStep[]>(() =>
     this.paginas().map((pagina, posicion) => ({
