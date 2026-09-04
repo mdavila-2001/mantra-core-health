@@ -19,6 +19,7 @@
     <app-form-field
       [label]="municipalityLabel()"
       [hint]="municipalityHint()"
+      [description]="municipalityDescription()"
       [required]="required()"
       [errorMessage]="errorMessage()"
     >
@@ -28,7 +29,13 @@
         (valueChange)="elegirMunicipio($event)"
         placeholder="Elegí tu ciudad o municipio"
         [attr.data-testid]="testId() + '-municipio'"
-      />
+      >
+        <!-- El glifo del campo, cuando quien monta el control lo proyecta. Se
+             vuelve a proyectar hacia el átomo —`ngProjectAs`— para que caiga
+             dentro del marco del desplegable, que es donde comparte borde, foco
+             y estado de error. Sin nada que proyectar no se dibuja nada. -->
+        <ng-content select="[slot=icon-start]" ngProjectAs="[slot=icon-start]" />
+      </app-select>
     </app-form-field>
   }
 </div>

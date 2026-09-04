@@ -64,6 +64,17 @@ export class LocationPicker {
 
   readonly municipalityHint = input('');
 
+  /**
+   * La explicación del municipio, la que el campo muestra al apuntarlo o al
+   * enfocarlo. Vacía —lo normal— no dibuja nada.
+   *
+   * Va aparte del `hint` por la misma razón que en el motor de formularios: el
+   * `hint` se lee sin hacer nada y existe en el teléfono, donde no hay puntero;
+   * la explicación es la que no cabe siempre a la vista. Ver `description` en
+   * `app-form-field`.
+   */
+  readonly municipalityDescription = input('');
+
   /** Si el municipio lleva asterisco. La validación vive en el `FormControl`. */
   readonly required = input(false);
 
