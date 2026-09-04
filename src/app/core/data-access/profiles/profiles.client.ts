@@ -293,6 +293,8 @@ export class ProfilesClient {
   listPractitioners(
     filtros: {
       readonly specialtyConceptId?: string;
+      /** Sólo quienes no declaran ninguna especialidad vigente. */
+      readonly withoutSpecialty?: boolean;
       readonly cursor?: string;
       readonly limit?: number;
     } = {},
@@ -300,6 +302,9 @@ export class ProfilesClient {
     let params = new HttpParams();
     if (filtros.specialtyConceptId !== undefined) {
       params = params.set('specialtyConceptId', filtros.specialtyConceptId);
+    }
+    if (filtros.withoutSpecialty === true) {
+      params = params.set('withoutSpecialty', 'true');
     }
     if (filtros.cursor !== undefined) {
       params = params.set('cursor', filtros.cursor);

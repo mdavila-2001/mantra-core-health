@@ -112,10 +112,11 @@ describe('PractitionersDirectory', () => {
   function responderRecuento(
     items: { specialtyConceptId: string; practitionerCount: number }[],
     practitionerTotal = items.reduce((s, i) => s + i.practitionerCount, 0),
+    withoutSpecialtyCount = 0,
   ): void {
     http
       .expectOne((r) => r.url === '/profiles/practitioners/specialty-counts')
-      .flush({ items, practitionerTotal });
+      .flush({ items, practitionerTotal, withoutSpecialtyCount });
   }
 
   function interno<T>(nombre: string): T {
@@ -201,6 +202,45 @@ describe('PractitionersDirectory', () => {
       responderConceptos();
 
       expect(interno<() => number>('totalDeProfesionales')()).toBe(10);
+    });
+
+    /**
+     * El defecto que introdujo la portada: la guía se recorre por especialidad,
+     * y quien se registra solo nace SIN ninguna. Sin esta tarjeta, los médicos
+     * con cuenta —los que atienden por la app— quedaban inalcanzables.
+     */
+    it('ofrece una tarjeta para los que no declaran especialidad', () => {
+      montar();
+      responderRecuento([{ specialtyConceptId: 'esp-cardio', practitionerCount: 12 }], 20, 8);
+      responderConceptos();
+
+      const tarjetas =
+        interno<() => readonly { conceptId: string; cantidad: number }[]>('tarjetas')();
+      const sinEspecialidad = tarjetas.at(-1);
+      expect(sinEspecialidad).toEqual({
+        conceptId: 'sin-especialidad',
+        nombre: 'Sin especialidad declarada',
+        cantidad: 8,
+      });
+    });
+
+    it('sin nadie sin especialidad, esa tarjeta no aparece', () => {
+      montar();
+      responderRecuento([{ specialtyConceptId: 'esp-cardio', practitionerCount: 12 }], 12, 0);
+      responderConceptos();
+
+      const tarjetas = interno<() => readonly { conceptId: string }[]>('tarjetas')();
+      expect(tarjetas.map((t) => t.conceptId)).toEqual(['esp-cardio']);
+    });
+
+    it('esa tarjeta pide el complemento al servidor, no una especialidad', () => {
+      montarEnEspecialidad('sin-especialidad');
+
+      const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
+      expect(peticion.request.params.get('withoutSpecialty')).toBe('true');
+      expect(peticion.request.params.has('specialtyConceptId')).toBe(false);
+      peticion.flush({ items: [FILA], count: 1, limit: 50, nextCursor: null });
+      responderConceptos();
     });
 
     it('con especialidad en la URL no dibuja la portada: va derecho a la lista', () => {
