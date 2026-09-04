@@ -6,7 +6,10 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthService } from '../../../../../core/auth/auth.service';
 import { PractitionerProfileView } from './practitioner-profile-view';
-import type { AfiliacionVisible, PerfilProfesionalVisible } from './practitioner-profile-view.types';
+import type {
+  AfiliacionVisible,
+  PerfilProfesionalVisible,
+} from './practitioner-profile-view.types';
 
 /**
  * La vista del perfil profesional — presentacional pura (carriles R2-4 y 05).
@@ -112,7 +115,9 @@ const PERFIL: PerfilProfesionalVisible = {
   // Sin datos personales por defecto: es la ficha de un colega, que es lo que
   // miran casi todas estas pruebas. Las que hablan del bloque lo declaran.
   datosPersonales: null,
-  actividadActual: [afiliacion({ id: 'af-2', organizacion: 'Sede Central Sopocachi', hasta: null, actual: true })],
+  actividadActual: [
+    afiliacion({ id: 'af-2', organizacion: 'Sede Central Sopocachi', hasta: null, actual: true }),
+  ],
   experienciaHistorica: [afiliacion()],
   desde: new Date('2014-02-01'),
 };
@@ -129,6 +134,38 @@ describe('PractitionerProfileView', () => {
   function responderWorkHistory(): void {
     http.expectOne('/profiles/practitioners/me/affiliations').flush({ items: [], count: 0 });
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+  }
+
+  /**
+   * La misma pantalla, con una sesión que **no** trae perfil profesional.
+   *
+   * Aparte de `montar` porque el proveedor de sesión se declara al configurar
+   * el módulo y después ya no se puede cambiar.
+   */
+  function montarConSesionSinPerfil(): void {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: AuthService,
+          useValue: { practitionerProfileId: signal(null), userId: signal('u-1') },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(PractitionerProfileView);
+    fixture.componentRef.setInput('perfil', PERFIL);
+    fixture.componentRef.setInput('esPropio', true);
+    fixture.componentRef.setInput('previewMode', false);
+    fixture.detectChanges();
+    // Sin perfil en la sesión, el historial laboral ni se pide: sus dos
+    // lecturas cuelgan del id que no hay.
+    for (const peticion of http.match(() => true)) {
+      peticion.flush({ items: [], count: 0 });
+    }
+    fixture.detectChanges();
   }
 
   function montar(
@@ -357,7 +394,11 @@ describe('PractitionerProfileView', () => {
   it('sin nada verificado, el bloque lo dice', () => {
     const host = montar({
       ...PERFIL,
-      formacion: PERFIL.formacion.map((f) => ({ ...f, fuenteVerificacion: undefined, sello: 'in-review' })),
+      formacion: PERFIL.formacion.map((f) => ({
+        ...f,
+        fuenteVerificacion: undefined,
+        sello: 'in-review',
+      })),
       especialidades: PERFIL.especialidades.map((e) => ({ ...e, sello: 'in-review' })),
       matriculas: PERFIL.matriculas.map((m) => ({ ...m, sello: 'in-review' })),
     });
@@ -604,6 +645,25 @@ describe('PractitionerProfileView', () => {
       };
     }
 
+    /**
+     * El caso que rompía en producción: la cuenta entra, ve su perfil y el
+     * botón de la foto, elige un PNG… y no pasa nada. El handler se iba en
+     * silencio cuando la sesión no traía perfil profesional —pasa de verdad:
+     * una persona duplicada cuya cuenta quedó atada al registro sin perfil no
+     * lleva el claim `hpid`— y desde afuera se lee como «no acepta PNG».
+     */
+    it('sin perfil profesional en la sesión lo DICE, en vez de no hacer nada', () => {
+      TestBed.resetTestingModule();
+      montarConSesionSinPerfil();
+      const host = fixture.nativeElement as HTMLElement;
+
+      eligeFoto(host, archivoFoto());
+
+      // Ni una petición: no hay dónde guardarla. Pero la persona se entera.
+      http.expectNone((r) => r.url === '/common/files/upload');
+      expect(host.textContent).toContain('no está asociada a un perfil profesional');
+    });
+
     /** Simula elegir un archivo en el input de foto y dispara `change`. */
     function eligeFoto(host: HTMLElement, archivo: File): void {
       const input = host.querySelector<HTMLInputElement>('[data-testid="perfil-foto"]');
@@ -621,9 +681,7 @@ describe('PractitionerProfileView', () => {
       eligeFoto(host, archivoFoto());
 
       http.expectOne('/common/files/upload').flush({ id: 'file-1' });
-      http
-        .expectOne('/profiles/practitioners/prac-1/photo')
-        .flush(respuestaFoto('file-1'));
+      http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
       // Sin vitrina: la propagación no dispara ningún pedido más.
       http.expectOne('/community/profiles/me').flush(null);
       http
@@ -641,9 +699,7 @@ describe('PractitionerProfileView', () => {
       eligeFoto(host, archivoFoto());
 
       http.expectOne('/common/files/upload').flush({ id: 'file-1' });
-      http
-        .expectOne('/profiles/practitioners/prac-1/photo')
-        .flush(respuestaFoto('file-1'));
+      http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
 
       http.expectOne('/community/profiles/me').flush({
         id: 'vit-1',
@@ -697,12 +753,8 @@ describe('PractitionerProfileView', () => {
       eligeFoto(host, archivoFoto());
 
       http.expectOne('/common/files/upload').flush({ id: 'file-1' });
-      http
-        .expectOne('/profiles/practitioners/prac-1/photo')
-        .flush(respuestaFoto('file-1'));
-      http
-        .expectOne('/community/profiles/me')
-        .flush('boom', { status: 500, statusText: 'Error' });
+      http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
+      http.expectOne('/community/profiles/me').flush('boom', { status: 500, statusText: 'Error' });
 
       http
         .expectOne('/common/files/file-1/download-url')

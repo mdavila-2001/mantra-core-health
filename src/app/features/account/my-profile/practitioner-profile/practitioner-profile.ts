@@ -198,18 +198,12 @@ export class PractitionerProfile {
         // SUFIJO del documento, así que sin etiqueta el renglón debe leerse
         // «5414404» y no «5414404 Sin registrar», que dice que falta algo
         // cuando el dato está.
-        departamento: etiquetaOpcional(
-          etiquetas,
-          perfil.issuerAdministrativeAreaConceptId,
-        ),
+        departamento: etiquetaOpcional(etiquetas, perfil.issuerAdministrativeAreaConceptId),
         fechaNacimiento: perfil.birthDate ?? null,
         edad: edadDe(perfil.birthDate),
         telefono: perfil.phone ?? '',
         correo: perfil.email ?? '',
-        domicilio: etiquetaOpcional(
-          etiquetas,
-          perfil.residenceMunicipalityConceptId,
-        ),
+        domicilio: etiquetaOpcional(etiquetas, perfil.residenceMunicipalityConceptId),
       },
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
@@ -303,7 +297,6 @@ export class PractitionerProfile {
   }
 }
 
-
 /**
  * La etiqueta de un concepto, o cadena vacía.
  *
@@ -312,10 +305,7 @@ export class PractitionerProfile {
  * — un sufijo, una fila que no se dibuja—, y ahí «Sin registrar» afirmaría que
  * falta un dato que en realidad está, sólo que sin su etiqueta.
  */
-function etiquetaOpcional(
-  etiquetas: ConceptLabels,
-  conceptId: string | undefined,
-): string {
+function etiquetaOpcional(etiquetas: ConceptLabels, conceptId: string | undefined): string {
   if (conceptId === undefined) return '';
   return etiquetas.get(conceptId)?.display ?? '';
 }

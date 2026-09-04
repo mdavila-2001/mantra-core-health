@@ -25,7 +25,19 @@
             [alt]="'Foto de ' + perfil().nombre"
           />
           <span class="profesional__foto-capa" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h2.8l1.4-2h7.6l1.4 2H20a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 20 21.5H4A1.5 1.5 0 0 1 2.5 20v-8A1.5 1.5 0 0 1 4 8.5z" /><circle cx="12" cy="14" r="3.6" /></svg>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M4 8.5h2.8l1.4-2h7.6l1.4 2H20a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 20 21.5H4A1.5 1.5 0 0 1 2.5 20v-8A1.5 1.5 0 0 1 4 8.5z"
+              />
+              <circle cx="12" cy="14" r="3.6" />
+            </svg>
           </span>
           <span class="solo-lectores">
             {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
@@ -96,7 +108,9 @@
          PROYECTADO: el `label` del chip es sólo el nombre accesible. -->
     <div class="profesional__disponibilidad">
       <app-chip [variant]="perfil().aceptaPacientesNuevos ? 'success' : 'neutral'">
-        {{ perfil().aceptaPacientesNuevos ? 'Acepta pacientes nuevos' : 'No toma pacientes nuevos' }}
+        {{
+          perfil().aceptaPacientesNuevos ? 'Acepta pacientes nuevos' : 'No toma pacientes nuevos'
+        }}
       </app-chip>
       @if (perfil().telemedicina) {
         <app-chip variant="info">Atiende por telemedicina</app-chip>
@@ -156,52 +170,54 @@
           datos.domicilio ||
           datos.edad !== null
         ) {
-        <section>
-          <h2 class="profesional__bloque-titulo">Tus datos</h2>
-          <dl class="profesional__datos">
-            @if (datos.documento) {
-              <div class="profesional__dato">
-                <dt>Documento de identidad</dt>
-                <dd class="profesional__cifra">
-                  {{ datos.documento }}
-                  @if (datos.departamento) {
-                    <span class="profesional__sufijo">{{ datos.departamento }}</span>
-                  }
-                </dd>
-              </div>
-            }
-            @if (datos.fechaNacimiento) {
-              <div class="profesional__dato">
-                <dt>Fecha de nacimiento</dt>
-                <dd class="profesional__cifra">{{ datos.fechaNacimiento | date: 'dd/MM/yyyy' }}</dd>
-              </div>
-            }
-            @if (datos.edad !== null) {
-              <div class="profesional__dato">
-                <dt>Edad</dt>
-                <dd class="profesional__cifra">{{ datos.edad }} años</dd>
-              </div>
-            }
-            @if (datos.telefono) {
-              <div class="profesional__dato">
-                <dt>Teléfono</dt>
-                <dd class="profesional__cifra">{{ datos.telefono }}</dd>
-              </div>
-            }
-            @if (datos.correo) {
-              <div class="profesional__dato">
-                <dt>Correo</dt>
-                <dd>{{ datos.correo }}</dd>
-              </div>
-            }
-            @if (datos.domicilio) {
-              <div class="profesional__dato">
-                <dt>Dónde vivís</dt>
-                <dd>{{ datos.domicilio }}</dd>
-              </div>
-            }
-          </dl>
-        </section>
+          <section>
+            <h2 class="profesional__bloque-titulo">Tus datos</h2>
+            <dl class="profesional__datos">
+              @if (datos.documento) {
+                <div class="profesional__dato">
+                  <dt>Documento de identidad</dt>
+                  <dd class="profesional__cifra">
+                    {{ datos.documento }}
+                    @if (datos.departamento) {
+                      <span class="profesional__sufijo">{{ datos.departamento }}</span>
+                    }
+                  </dd>
+                </div>
+              }
+              @if (datos.fechaNacimiento) {
+                <div class="profesional__dato">
+                  <dt>Fecha de nacimiento</dt>
+                  <dd class="profesional__cifra">
+                    {{ datos.fechaNacimiento | date: 'dd/MM/yyyy' }}
+                  </dd>
+                </div>
+              }
+              @if (datos.edad !== null) {
+                <div class="profesional__dato">
+                  <dt>Edad</dt>
+                  <dd class="profesional__cifra">{{ datos.edad }} años</dd>
+                </div>
+              }
+              @if (datos.telefono) {
+                <div class="profesional__dato">
+                  <dt>Teléfono</dt>
+                  <dd class="profesional__cifra">{{ datos.telefono }}</dd>
+                </div>
+              }
+              @if (datos.correo) {
+                <div class="profesional__dato">
+                  <dt>Correo</dt>
+                  <dd>{{ datos.correo }}</dd>
+                </div>
+              }
+              @if (datos.domicilio) {
+                <div class="profesional__dato">
+                  <dt>Dónde vivís</dt>
+                  <dd>{{ datos.domicilio }}</dd>
+                </div>
+              }
+            </dl>
+          </section>
         }
 
         <!-- La habilitación, al lado y no a dos clics: es lo que responde «¿con
@@ -234,8 +250,8 @@
             </ul>
           } @else {
             <p class="profesional__nota">
-              Todavía no registraste ninguna matrícula. Es lo que declara en qué jurisdicción
-              está habilitado tu ejercicio.
+              Todavía no registraste ninguna matrícula. Es lo que declara en qué jurisdicción está
+              habilitado tu ejercicio.
             </p>
           }
         </section>
@@ -280,8 +296,9 @@
         @if (esPropio() && !previewMode()) {
           <app-tab-help-block helpId="perfil-trayectoria-ayuda" tutorialId="perfil-profesional">
             <p>
-              Acá se arma la línea de tiempo profesional: dónde se formó, dónde ejerció antes y dónde
-              ejerce hoy. Es lo que un paciente ve en el Directorio de médicos antes de pedir una cita.
+              Acá se arma la línea de tiempo profesional: dónde se formó, dónde ejerció antes y
+              dónde ejerce hoy. Es lo que un paciente ve en el Directorio de médicos antes de pedir
+              una cita.
             </p>
             <p>
               <strong>Ejemplo:</strong> formación en la Universidad Mayor de San Andrés (2010),
@@ -310,7 +327,9 @@
                         · {{ afiliacion.area }}
                       }
                     </p>
-                    <p class="profesional__item-fechas">Desde {{ afiliacion.desde | date: 'MMM y' }}</p>
+                    <p class="profesional__item-fechas">
+                      Desde {{ afiliacion.desde | date: 'MMM y' }}
+                    </p>
                   </div>
                 </li>
               }
@@ -416,13 +435,12 @@
             <p>
               Acá se separa lo que el profesional <strong>declaró</strong> de lo que ya fue
               <strong>verificado</strong> contra una fuente — el colegio médico, el registro de
-              matrículas. Declarar no exige verificación previa: en desarrollo/pruebas se puede
-              usar todo el perfil sin esperar el trámite.
+              matrículas. Declarar no exige verificación previa: en desarrollo/pruebas se puede usar
+              todo el perfil sin esperar el trámite.
             </p>
             <p>
-              <strong>Ejemplo:</strong> un título de posgrado recién cargado aparece en
-              "Declarado"; una vez que un administrador lo verifica contra una fuente, pasa a
-              "Verificado".
+              <strong>Ejemplo:</strong> un título de posgrado recién cargado aparece en "Declarado";
+              una vez que un administrador lo verifica contra una fuente, pasa a "Verificado".
             </p>
           </app-tab-help-block>
         }
@@ -487,7 +505,10 @@
           @if (perfil().especialidades.length > 0) {
             <ul class="profesional__lista">
               @for (especialidad of perfil().especialidades; track especialidad.id) {
-                <li class="profesional__item" [class.profesional__item--pasado]="especialidad.hasta">
+                <li
+                  class="profesional__item"
+                  [class.profesional__item--pasado]="especialidad.hasta"
+                >
                   <div class="profesional__item-encabezado">
                     <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
                     @if (especialidad.principal) {
@@ -522,85 +543,84 @@
               junto con la credencial que las respalda.
             </p>
           }
-
         } @else {
           <app-tabs orientation="horizontal">
             <app-tab [label]="'Especialidades (' + perfil().especialidades.length + ')'">
-            @if (perfil().especialidades.length > 0) {
-              <ul class="profesional__lista">
-                @for (especialidad of perfil().especialidades; track especialidad.id) {
-                  <li class="profesional__item" [class.profesional__item--pasado]="especialidad.hasta">
-                    <div class="profesional__item-encabezado">
-                      <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
-                      @if (especialidad.principal) {
-                        <app-badge variant="primary" value="Principal" />
-                      }
-                      @if (especialidad.certificada) {
-                        <app-badge variant="success" value="Certificada" />
-                      }
-                    </div>
+              @if (perfil().especialidades.length > 0) {
+                <ul class="profesional__lista">
+                  @for (especialidad of perfil().especialidades; track especialidad.id) {
+                    <li
+                      class="profesional__item"
+                      [class.profesional__item--pasado]="especialidad.hasta"
+                    >
+                      <div class="profesional__item-encabezado">
+                        <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
+                        @if (especialidad.principal) {
+                          <app-badge variant="primary" value="Principal" />
+                        }
+                        @if (especialidad.certificada) {
+                          <app-badge variant="success" value="Certificada" />
+                        }
+                      </div>
 
-                    @if (especialidad.alcance) {
-                      <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
-                    }
-
-                    <p class="profesional__item-fechas">
-                      @if (especialidad.desde) {
-                        Desde {{ especialidad.desde | date: 'MMM y' }}
+                      @if (especialidad.alcance) {
+                        <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
                       }
-                      @if (especialidad.hasta) {
-                        · hasta {{ especialidad.hasta | date: 'MMM y' }}
-                      } @else if (especialidad.desde) {
-                        · en ejercicio
-                      }
-                      · {{ especialidad.estado }}
-                    </p>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="profesional__nota">
-                Todavía no hay especialidades registradas. Las carga quien administra la organización
-                junto con la credencial que las respalda.
-              </p>
-            }
 
+                      <p class="profesional__item-fechas">
+                        @if (especialidad.desde) {
+                          Desde {{ especialidad.desde | date: 'MMM y' }}
+                        }
+                        @if (especialidad.hasta) {
+                          · hasta {{ especialidad.hasta | date: 'MMM y' }}
+                        } @else if (especialidad.desde) {
+                          · en ejercicio
+                        }
+                        · {{ especialidad.estado }}
+                      </p>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="profesional__nota">
+                  Todavía no hay especialidades registradas. Las carga quien administra la
+                  organización junto con la credencial que las respalda.
+                </p>
+              }
             </app-tab>
 
             <app-tab [label]="'Matrículas (' + perfil().matriculas.length + ')'">
-            @if (perfil().matriculas.length > 0) {
-              <ul class="profesional__lista" appTutorialTarget="perfil-matriculas">
-                @for (matricula of perfil().matriculas; track matricula.id) {
-                  <li class="profesional__item">
-                    <div class="profesional__item-encabezado">
-                      <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
-                      <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
-                    </div>
+              @if (perfil().matriculas.length > 0) {
+                <ul class="profesional__lista" appTutorialTarget="perfil-matriculas">
+                  @for (matricula of perfil().matriculas; track matricula.id) {
+                    <li class="profesional__item">
+                      <div class="profesional__item-encabezado">
+                        <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
+                        <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
+                      </div>
 
-                    <p class="profesional__item-fechas">
-                      Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
-                      @if (matricula.autoridad) {
-                        · {{ matricula.autoridad }}
-                      }
-                      @if (matricula.hasta) {
-                        · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
-                      }
-                    </p>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="profesional__nota">
-                No hay matrículas registradas. Es lo que declara en qué jurisdicción está habilitado el
-                ejercicio.
-              </p>
-            }
-
+                      <p class="profesional__item-fechas">
+                        Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
+                        @if (matricula.autoridad) {
+                          · {{ matricula.autoridad }}
+                        }
+                        @if (matricula.hasta) {
+                          · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
+                        }
+                      </p>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="profesional__nota">
+                  No hay matrículas registradas. Es lo que declara en qué jurisdicción está
+                  habilitado el ejercicio.
+                </p>
+              }
             </app-tab>
           </app-tabs>
         }
       </app-tab>
-
     </app-tabs>
   </app-card>
 

@@ -142,9 +142,7 @@ export class PractitionerProfileView {
    */
   protected readonly fotoRecien = signal<string | null>(null);
 
-  protected readonly fotoVisible = computed(
-    () => this.fotoRecien() ?? this.perfil().fotoUrl,
-  );
+  protected readonly fotoVisible = computed(() => this.fotoRecien() ?? this.perfil().fotoUrl);
 
   /**
    * Sube la foto elegida y la fija como foto del perfil profesional.
@@ -166,8 +164,20 @@ export class PractitionerProfileView {
     // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
     // seguidas no dispara `change` y parece que el botón dejó de andar.
     entrada.value = '';
+    if (!archivo || this.subiendoFoto()) {
+      return;
+    }
+
     const profileId = this.auth.practitionerProfileId();
-    if (!archivo || this.subiendoFoto() || profileId === null) {
+    if (profileId === null) {
+      // Antes se salía en silencio: se elegía una foto, no pasaba nada, y no
+      // había forma de saber que el problema no era la imagen. Pasa de verdad
+      // —una cuenta cuya persona no tiene perfil profesional no lleva el claim
+      // `hpid`—, así que se dice, y se dice lo que la persona puede hacer.
+      this.errorDeFoto.set(
+        'Tu cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
+          'dónde guardar la foto. Escribinos para que la vinculemos.',
+      );
       return;
     }
 
