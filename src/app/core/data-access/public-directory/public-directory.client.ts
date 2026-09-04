@@ -299,6 +299,9 @@ export class PublicDirectoryClient {
           items: body.items.map((comentario) => ({
             ...comentario,
             createdAt: new Date(comentario.createdAt),
+            // REQ-01-011: mismo motivo que `community.client.ts#toComment` —
+            // un servidor todavía sin desplegar el campo no lo manda.
+            media: comentario.media ?? [],
           })),
         })),
       );

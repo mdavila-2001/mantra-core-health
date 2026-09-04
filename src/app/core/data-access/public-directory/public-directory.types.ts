@@ -171,6 +171,18 @@ export interface PublicComment {
   /** Cuántas respuestas cuelgan de él. 0, nunca `null`. */
   readonly replyCount: number;
   readonly author: PublicSocialActor;
+  /** Imágenes, stickers y GIFs adjuntos (REQ-01-011). */
+  readonly media: readonly PublicCommentMedia[];
+}
+
+/**
+ * Un adjunto de comentario público. Ya viene resuelto a URL servida por la
+ * API — nunca el `fileId` interno (ver `PublicCommentMediaDto` del backend).
+ */
+export interface PublicCommentMedia {
+  readonly url: string;
+  readonly kind: 'IMAGE' | 'STICKER' | 'GIF';
+  readonly altText: string | null;
 }
 
 /** Un punto geográfico del directorio. */

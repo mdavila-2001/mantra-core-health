@@ -1,0 +1,67 @@
+<div class="media-picker">
+  <div class="media-picker__botones">
+    @for (opcion of opciones; track opcion.kind) {
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [attr.data-testid]="opcion.testid"
+        [disabled]="!puedeAgregar()"
+        (clicked)="archivo.click()"
+      >
+        {{ opcion.label }}
+      </button>
+      <input
+        #archivo
+        type="file"
+        class="media-picker__input-oculto"
+        [attr.accept]="opcion.accept"
+        [attr.aria-label]="'Adjuntar ' + opcion.label.toLowerCase()"
+        [disabled]="!puedeAgregar()"
+        (change)="archivoElegido(opcion.kind, $event)"
+      />
+    }
+
+    @if (subiendo()) {
+      <span class="media-picker__estado" aria-live="polite">Subiendo…</span>
+    } @else if (adjuntos().length >= tope) {
+      <span class="media-picker__estado">Máximo {{ tope }} adjuntos</span>
+    }
+  </div>
+
+  @if (adjuntos().length > 0) {
+    <ul class="media-picker__lista" data-testid="comment-media-list">
+      @for (adjunto of adjuntos(); track adjunto.fileId) {
+        <li class="media-picker__item" data-testid="comment-media-item">
+          <img
+            class="media-picker__miniatura"
+            [src]="adjunto.previewUrl"
+            [alt]="adjunto.nombre"
+            width="48"
+            height="48"
+          />
+          <button
+            type="button"
+            class="media-picker__quitar"
+            data-testid="comment-media-remove"
+            [attr.aria-label]="'Quitar ' + adjunto.nombre"
+            [disabled]="disabled()"
+            (click)="quitar(adjunto.fileId)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (error(); as mensaje) {
+    <app-alert tone="error" [dismissible]="true" (dismissed)="error.set('')">
+      {{ mensaje }}
+    </app-alert>
+  }
+</div>

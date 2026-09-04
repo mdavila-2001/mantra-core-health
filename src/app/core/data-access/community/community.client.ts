@@ -1553,11 +1553,16 @@ function toPostPage(body: WirePostPage): PostPage {
  * poner un tope de recursión del lado del cliente escondería un hilo que el
  * servidor sí devolvió.
  */
-function toComment({ createdAt, replies, ...resto }: WireComment): CommentThreadItem {
+function toComment({ createdAt, replies, media, ...resto }: WireComment): CommentThreadItem {
   return {
     ...sinNulos(resto),
     createdAt: new Date(createdAt),
     replies: replies.map(toComment),
+    // REQ-01-011: `media` es nuevo en el contrato. Un servidor desplegado
+    // antes que este cliente todavía no lo manda, y `undefined.length` en la
+    // plantilla tumbaría la tarjeta — se normaliza acá, en la única frontera
+    // que conoce la forma real del wire.
+    media: media ?? [],
   };
 }
 
