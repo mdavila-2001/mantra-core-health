@@ -223,7 +223,7 @@ export class AgendaCreate {
 
   protected readonly opcionesDeRespiro: readonly SelectOption<number>[] = RESPIROS.map((m) => ({
     value: m,
-    label: m === 0 ? 'Sin respiro' : `${m} min`,
+    label: m === 0 ? 'Continuo' : `${m} min`,
   }));
 
   /** Fija un valor de la fila sin que la plantilla tenga que saber de formularios. */
