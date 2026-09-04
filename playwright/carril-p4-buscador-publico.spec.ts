@@ -31,6 +31,13 @@ import { apiViva, contextoDeApi, urlDeApi } from './support/actores';
  * servidor de desarrollo se salta en vez de mentir.
  */
 
+/** Los tres anchos que fija la ficha, igual que en los carriles 01 y 06. */
+const VIEWPORTS = [
+  { nombre: 'móvil', width: 390, height: 844 },
+  { nombre: 'tablet', width: 768, height: 1024 },
+  { nombre: 'escritorio', width: 1440, height: 900 },
+] as const;
+
 /** Los slugs que siembra `tools/e2e/seed-e2e.mjs`. */
 const PUBLICADO = 'doctor-uno-e2e';
 const PUBLICADO_DOS = 'doctor-dos-e2e';
@@ -204,6 +211,136 @@ test.describe('P4-E2E-002 · lo despublicado no se distingue de lo inexistente',
     expect(slugs).toContain(PUBLICADO);
     expect(slugs).toContain(PUBLICADO_DOS);
     expect(slugs).not.toContain(DESPUBLICADO);
+  });
+});
+
+test.describe('P4-E2E-004 · profesionales repite el marco de FT-01 y filtra por especialidad', () => {
+  /**
+   * R01 de la ficha: mismo layout que FT-01 — el rail lateral del marco
+   * público —, y no uno propio. Entrar **directo** a la URL (no navegando
+   * desde `/posts`, que ya cubre AC-01-3) es lo que probaba el hueco de
+   * evidencia del rechazo AG-50/FND-02.
+   */
+  test('R01 · el rail del marco aparece al entrar directo, con esta sección marcada', async ({
+    page,
+  }) => {
+    await abrirAnonimo(page, '/search/practitioners');
+
+    await expect(page.locator('[data-testid="public-nav-rail-link"]')).toHaveCount(8);
+
+    const marcado = page.locator('[data-testid="public-nav-rail-link"][aria-current="page"]');
+    await expect(marcado).toHaveCount(1);
+    await expect(marcado).toHaveAttribute('data-route', '/search/practitioners');
+  });
+
+  /**
+   * R02: elegir una especialidad viaja a `?specialty=<conceptId>` (AC-02-7) y
+   * dispara una petición nueva a la API con ese mismo `conceptId` — no un
+   * filtro que sólo cambia la URL sin volver a preguntarle al servidor.
+   */
+  test('R02 · elegir una especialidad la lleva a la URL y repite la consulta filtrada', async ({
+    page,
+  }) => {
+    await abrirAnonimo(page, '/search/practitioners');
+
+    // `exact: true`: sin esto, «Especialidad» también matchea el campo de
+    // texto libre, cuyo rótulo es «Buscá por nombre, especialidad u
+    // organización» — infringe el modo estricto con dos elementos.
+    const desplegable = page.getByLabel('Especialidad', { exact: true });
+    const opciones = await desplegable.locator('option').all();
+    test.skip(opciones.length < 2, 'el catálogo de especialidades no trajo ninguna opción');
+
+    const valorElegido = await opciones[1]!.getAttribute('value');
+
+    const peticionFiltrada = page.waitForRequest(
+      (peticion) =>
+        peticion.url().includes('/public/search/practitioners') &&
+        peticion.url().includes(`specialty=${valorElegido}`),
+    );
+    await desplegable.selectOption({ index: 1 });
+    await peticionFiltrada;
+
+    await expect(page).toHaveURL(new RegExp(`specialty=${valorElegido}`));
+  });
+
+  for (const viewport of VIEWPORTS) {
+    test(`R03 · en ${viewport.nombre} no hay scroll horizontal, con captura`, async ({
+      page,
+    }, testInfo) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await abrirAnonimo(page, '/search/practitioners');
+
+      const desborda = await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      );
+      expect(desborda, 'la página scrollea a lo ancho').toBe(false);
+
+      // Sin evidencia visual el rung máximo es VERIFIED_FUNCTIONAL_ONLY.
+      await testInfo.attach(`practitioners-${viewport.width}`, {
+        body: await page.screenshot({ fullPage: true }),
+        contentType: 'image/png',
+      });
+    });
+  }
+
+  /**
+   * R03 pide consola limpia, pero dos ruidos de acá son de fuera del alcance
+   * atómico de este carril y ya están documentados como gap conocido, no
+   * como algo que este rework deba resolver:
+   *
+   * - CSP de scripts inline: bloquea al `ng serve` de desarrollo en TODA la
+   *   superficie pública (se ve igual en `/search/medications` et al., carril
+   *   06), no es un defecto de esta pantalla.
+   * - «Failed to load resource» 422 de `avatarUrl`/`coverUrl`: consecuencia
+   *   directa de `MALWARE_SCAN_ENABLED=false` en este entorno (sin `clamd` en
+   *   el `docker-compose` local) — el navegador reporta el intento de red
+   *   fallido aunque la UI ya no se rompa por eso (ver FND-04 más abajo). No
+   *   es indicativo de un `pageerror` de Angular ni de un error de producto.
+   *
+   * Lo que SÍ tiene que seguir en cero es cualquier otro error — uno nuevo
+   * ahí sería la señal real de una regresión de esta pantalla.
+   */
+  test('R03 · sin errores de página ni de consola fuera de los gaps documentados', async ({
+    page,
+  }) => {
+    const errores: string[] = [];
+    page.on('console', (mensaje) => {
+      if (mensaje.type() === 'error') errores.push(mensaje.text());
+    });
+    page.on('pageerror', (error) => errores.push(String(error)));
+
+    await abrirAnonimo(page, '/search/practitioners');
+    await page.locator('li[app-result-card]').first().waitFor({ state: 'visible' });
+
+    const inesperados = errores.filter(
+      (e) => !/Content Security Policy/i.test(e) && !/Failed to load resource.*422/i.test(e),
+    );
+    expect(inesperados, inesperados.join('\n')).toEqual([]);
+  });
+
+  /**
+   * FND-04 (rechazo AG-50) — kill-test contra el entorno real: acá el escaneo
+   * de malware está apagado (`MALWARE_SCAN_ENABLED=false` en `.env`, sin
+   * `clamd` en el `docker-compose` local), así que el `avatarUrl` sembrado
+   * responde 422 `PRECONDITION_FAILED` de verdad. Antes de este carril, eso
+   * dejaba un ícono de imagen rota en la tarjeta; ahora tiene que caer a las
+   * iniciales (`ResultCard.imagenFallo`). Esto NO habilita ni simula el
+   * escaneo — sólo comprueba que la UI no se rompa mientras siga apagado.
+   */
+  test('FND-04 · ninguna tarjeta queda con el ícono de imagen rota', async ({ page }) => {
+    await abrirAnonimo(page, '/search/practitioners');
+    await page.locator('li[app-result-card]').first().waitFor({ state: 'visible' });
+
+    await expect
+      .poll(() =>
+        page.locator('li[app-result-card] img').evaluateAll(
+          (imagenes) =>
+            (imagenes as HTMLImageElement[]).filter(
+              (img) => img.complete && img.naturalWidth === 0,
+            ).length,
+        ),
+      )
+      .toBe(0);
   });
 });
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import type { SearchResultItem } from '../search-result/search-result.types';
@@ -57,4 +57,28 @@ export class ResultCard {
   protected readonly meta = computed(() =>
     (this.resultado().meta ?? []).slice(0, this.maximoDeMeta()),
   );
+
+  /**
+   * Una foto rota no puede dejar el cuadrado vacío: cae a `figureText`.
+   *
+   * Mismo patrón que `Avatar.imageFailed` — `linkedSignal` sobre la fuente y no
+   * `signal` + `set` — así una tarjeta que el `@for` reutiliza al pasar de
+   * página con una foto nueva tiene su propia oportunidad, en vez de quedar en
+   * el fallback para siempre por el error de la anterior. Reproducido con el
+   * directorio real: un `avatarUrl` sembrado cuya versión todavía no pasó el
+   * escaneo de malware responde 422, y sin esto quedaba un ícono de imagen rota
+   * en la tarjeta en vez del cuadrado con iniciales que ya sabe dibujar.
+   */
+  protected readonly imagenFallo = linkedSignal({
+    source: this.resultado,
+    computation: () => false,
+  });
+
+  protected readonly mostrarImagen = computed(
+    () => Boolean(this.resultado().figureImageUrl) && !this.imagenFallo(),
+  );
+
+  protected manejarErrorDeImagen(): void {
+    this.imagenFallo.set(true);
+  }
 }

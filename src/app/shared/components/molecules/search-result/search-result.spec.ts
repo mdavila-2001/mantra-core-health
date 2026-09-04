@@ -140,6 +140,27 @@ describe('SearchResult', () => {
     expect(elemento('.app-resultado__figura')!.textContent!.trim()).toBe('');
   });
 
+  /**
+   * FND-04 (carril 02): una `figureImageUrl` que responde 422/404 —una foto
+   * sembrada cuya versión no pasó el escaneo de malware, reproducido contra el
+   * directorio real— no puede dejar un ícono de imagen rota. Cae al mismo
+   * `figureText` que ya pinta cuando no hay foto.
+   */
+  it('cuando la imagen falla, cae a las iniciales en vez de quedar rota', () => {
+    anfitrion.dato.update((d) => ({
+      ...d,
+      figureText: 'MQ',
+      figureImageUrl: '/f/rota.jpg',
+    }));
+    fixture.detectChanges();
+
+    elemento('.app-resultado__figura img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(elemento('.app-resultado__figura img')).toBeNull();
+    expect(elemento('.app-resultado__figura')!.textContent!.trim()).toBe('MQ');
+  });
+
   // ─── Insignias: el tono va como en la maqueta ──────────────────────────────
 
   /**

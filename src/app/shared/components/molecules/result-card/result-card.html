@@ -1,7 +1,7 @@
 @if (resultado(); as r) {
   <span class="tarjeta-resultado__figura" aria-hidden="true">
-    @if (r.figureImageUrl) {
-      <img [src]="r.figureImageUrl" alt="" loading="lazy" />
+    @if (mostrarImagen()) {
+      <img [src]="r.figureImageUrl" alt="" loading="lazy" (error)="manejarErrorDeImagen()" />
     } @else {
       {{ r.figureText }}
     }
