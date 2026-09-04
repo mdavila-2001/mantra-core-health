@@ -47,6 +47,16 @@ const PRESENCIA_REPOSO = '.35';
 /** Cuánto espera sin movimiento antes de volver al reposo. */
 const REPOSO_MS = 650;
 
+/**
+ * Cuánto dura la onda de la gota, en milisegundos.
+ *
+ * Es el mismo número que la animación `gota-de-agua` de `redsat.css`: pasado
+ * ese tiempo el atributo se retira, para que el siguiente clic vuelva a
+ * dispararla desde cero. Si los dos se separaran, la onda quedaría cortada
+ * (acá más corto) o el clic siguiente no reiniciaría (acá más largo).
+ */
+const GOTA_MS = 900;
+
 @Injectable({ providedIn: 'root' })
 export class RedsatRuntimeService {
   private readonly document = inject(DOCUMENT);
@@ -100,6 +110,7 @@ export class RedsatRuntimeService {
     this.menusDeDesborde();
     this.dialogoAccesible();
     this.fondoReactivo();
+    this.gotaDeAgua();
   }
 
   // --------------------------------------------------------------- refrescar
@@ -334,6 +345,74 @@ export class RedsatRuntimeService {
           raiz.style.setProperty('--raton-y', (ultimo.clientY / ventana.innerHeight).toFixed(3));
           raiz.style.setProperty('--fondo-presencia', PRESENCIA_ACTIVA);
         });
+      },
+      { passive: true },
+    );
+  }
+
+  /**
+   * La gota de agua: una onda que se abre donde cae el puntero.
+   *
+   * TAREA-08 · FT-08-R03. El fondo ya reaccionaba al movimiento —cuatro focos
+   * que siguen la mano, `fondoReactivo()`—; esto es lo otro que pidió el
+   * registro, «generar efecto gota de agua».
+   *
+   * ## Por qué el clic y no el movimiento
+   *
+   * Una onda por cada `mousemove` sería una estela: ruido permanente sobre un
+   * fondo que ya se mueve, y trabajo de GPU sostenido. Una gota cae cuando
+   * algo toca la superficie, y el clic **es** ese toque — el gesto y la
+   * metáfora coinciden.
+   *
+   * ## Por qué sólo con mouse
+   *
+   * `pointerdown` trae el tipo de puntero. En táctil el dedo tapa justamente
+   * el punto donde nacería la onda, así que no se vería; y en un teléfono cada
+   * toque es una navegación, no un gesto sobre el fondo. Se descarta ahí en
+   * vez de dibujar algo que nadie va a ver (P-08-6).
+   *
+   * ## Cómo se reinicia
+   *
+   * Una animación CSS no vuelve a empezar porque cambie una variable. Se
+   * quita el atributo, se fuerza un reflujo leyendo `offsetWidth` —sin eso el
+   * navegador agrupa el quita-y-pone y no ve cambio alguno— y se vuelve a
+   * poner. El temporizador lo retira al terminar para dejar el DOM como
+   * estaba.
+   *
+   * Quien pidió menos movimiento no engancha nada, igual que el fondo.
+   */
+  private gotaDeAgua(): void {
+    const ventana = this.ventana;
+    if (!ventana || this.prefiereMenosMovimiento()) {
+      return;
+    }
+    const raiz = this.document.documentElement;
+    let fin: ReturnType<typeof setTimeout> | null = null;
+
+    ventana.addEventListener(
+      'pointerdown',
+      (evento) => {
+        if (evento.pointerType !== 'mouse') {
+          return;
+        }
+
+        raiz.style.setProperty('--gota-x', `${evento.clientX}px`);
+        raiz.style.setProperty('--gota-y', `${evento.clientY}px`);
+
+        raiz.removeAttribute('data-gota');
+        // Leer una propiedad de layout obliga al navegador a aplicar la
+        // quita antes del pone; sin esto los dos cambios se agrupan y la
+        // animación no se reinicia.
+        void raiz.offsetWidth;
+        raiz.setAttribute('data-gota', '');
+
+        if (fin !== null) {
+          clearTimeout(fin);
+        }
+        fin = setTimeout(() => {
+          fin = null;
+          raiz.removeAttribute('data-gota');
+        }, GOTA_MS);
       },
       { passive: true },
     );

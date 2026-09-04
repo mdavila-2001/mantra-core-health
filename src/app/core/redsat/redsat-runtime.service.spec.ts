@@ -455,4 +455,78 @@ describe('RedsatRuntimeService', () => {
       vi.useRealTimers();
     });
   });
+
+  /**
+   * TAREA-08 · FT-08-R03, la gota de agua. Mismo montaje que el fondo: el
+   * servicio se instaló una vez en el `beforeAll` con `matchMedia` sin
+   * coincidencias, así que el oyente de `pointerdown` está enganchado.
+   */
+  describe('gotaDeAgua', () => {
+    afterEach(() => {
+      document.documentElement.removeAttribute('data-gota');
+      vi.useRealTimers();
+    });
+
+    function clic(x: number, y: number, pointerType = 'mouse'): void {
+      // `PointerEvent` no existe en jsdom: se despacha un `MouseEvent` con el
+      // tipo de puntero agregado, que es lo único que el servicio lee.
+      const evento = new MouseEvent('pointerdown', { clientX: x, clientY: y });
+      Object.defineProperty(evento, 'pointerType', { value: pointerType });
+      window.dispatchEvent(evento);
+    }
+
+    it('el clic publica el punto de la gota y enciende la animación', () => {
+      clic(120, 80);
+
+      const raiz = document.documentElement;
+      expect(raiz.style.getPropertyValue('--gota-x')).toBe('120px');
+      expect(raiz.style.getPropertyValue('--gota-y')).toBe('80px');
+      expect(raiz.hasAttribute('data-gota')).toBe(true);
+    });
+
+    it('al terminar la onda el atributo se retira, y el clic siguiente la reinicia', () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+      clic(10, 10);
+      expect(document.documentElement.hasAttribute('data-gota')).toBe(true);
+
+      // 900ms es lo que dura `gota-de-agua` en redsat.css: el atributo se
+      // retira recién ahí, para no cortar la onda a la mitad.
+      vi.advanceTimersByTime(900);
+      expect(document.documentElement.hasAttribute('data-gota')).toBe(false);
+
+      clic(200, 150);
+      expect(document.documentElement.hasAttribute('data-gota')).toBe(true);
+      expect(document.documentElement.style.getPropertyValue('--gota-x')).toBe('200px');
+    });
+
+    it('un clic durante la onda anterior la reinicia en el punto nuevo, sin dejar dos temporizadores', () => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+      clic(10, 10);
+      vi.advanceTimersByTime(500);
+      clic(300, 200);
+
+      // Pasaron 900ms desde el primer clic —lo que dura la onda— pero sólo 400
+      // desde el segundo: si el primer temporizador siguiera vivo, borraría el
+      // atributo en medio de la onda nueva.
+      vi.advanceTimersByTime(400);
+      expect(document.documentElement.hasAttribute('data-gota')).toBe(true);
+      expect(document.documentElement.style.getPropertyValue('--gota-x')).toBe('300px');
+
+      vi.advanceTimersByTime(500);
+      expect(document.documentElement.hasAttribute('data-gota')).toBe(false);
+    });
+
+    it('el toque en pantalla táctil no dispara la gota', () => {
+      // P-08-6: el dedo tapa el punto donde nacería la onda, y cada toque es
+      // una navegación. Se descarta en vez de dibujar algo que nadie ve.
+      document.documentElement.style.removeProperty('--gota-x');
+
+      clic(50, 60, 'touch');
+
+      expect(document.documentElement.hasAttribute('data-gota')).toBe(false);
+      expect(document.documentElement.style.getPropertyValue('--gota-x')).toBe('');
+    });
+  });
 });
