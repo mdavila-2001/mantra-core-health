@@ -276,7 +276,15 @@ export interface PractitionerRegistration {
    */
   readonly residenceMunicipalityConceptId?: string;
   readonly licenseNumber: string;
-  readonly credentialNumber: string;
+  /**
+   * Registro del SEDES: la habilitación departamental.
+   *
+   * Reemplaza a `credentialNumber` en el alta. Aquél archivaba este número como
+   * título de grado y el perfil lo mostraba como «Título universitario»; ahora
+   * viaja como lo que es y nace como una segunda autorización, al lado de la
+   * matrícula nacional.
+   */
+  readonly sedesLicenseNumber: string;
   /** Autoridad que emitió la matrícula: Ministerio de Salud y Deportes, Colegio de Odontólogos, etc. */
   readonly regulatoryAuthority?: string;
   /** Fecha de inscripción de la matrícula, ISO `YYYY-MM-DD`. */

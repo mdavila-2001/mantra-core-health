@@ -457,7 +457,10 @@ export class RegisterPractitioner {
       validators: [Validators.pattern(DOCUMENTO_VALIDO)],
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    credentialNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    sedesLicenseNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     // Quién emitió la matrícula y con qué título ejerce: los dos salen de una
     // lista cerrada — ver `OPCIONES_AUTORIDAD_REGULADORA` y
     // `OPCIONES_TITULO_PROFESIONAL`. Siguen siendo controles de texto porque lo
@@ -854,10 +857,13 @@ export class RegisterPractitioner {
    *   set devuelve nombre y código —no la dirección ni el municipio del
    *   establecimiento—, así que el autocompletado de AC-05-9 no es alcanzable
    *   desde una pantalla sin sesión aunque el campo existiera.
-   * - **Las tres matrículas por separado** (AC-05-5). Hay **dos** números
-   *   (`licenseNumber`, `credentialNumber`) y **una** autoridad. Tres números en
-   *   paralelo son un modelo distinto —o tres filas de `common.identifiers`— y
-   *   eso es esquema.
+   * - **Las tres matrículas por separado** (AC-05-5). Siguen siendo **dos**
+   *   números —`licenseNumber` (Ministerio, jurisdicción nacional) y
+   *   `sedesLicenseNumber` (SEDES, jurisdicción departamental)— y **una**
+   *   autoridad. El tercero, el registro del colegio profesional, todavía no
+   *   tiene dónde ir: sería una tercera fila de `common.identifiers`, y eso es
+   *   esquema. Lo que sí se corrigió es que el segundo dejara de archivarse
+   *   como título de grado: es una habilitación y vive con la matrícula.
    * - **Universidad y otros títulos** (AC-05-13). Viven en `credentials`, detrás
    *   de la sesión, con su propio endpoint. El alta pública no los recibe.
    *
@@ -884,19 +890,11 @@ export class RegisterPractitioner {
 
     const placeholderMatricula = esOdontologo ? 'ODO-12345' : 'MP-12345';
 
-    const rotuloColegio = esOdontologo
-      ? 'Registro del Colegio de Odontólogos'
-      : esMedico
-        ? 'Registro del Colegio Médico'
-        : 'Número de colegio';
-
-    const hintColegio = esOdontologo
-      ? 'El de tu colegio profesional de odontólogos.'
-      : esMedico
-        ? 'El de tu Colegio Médico departamental o nacional.'
-        : 'El de tu colegio profesional.';
-
-    const placeholderColegio = esOdontologo ? 'COL-ODO-6789' : 'TIT-6789';
+    // El segundo número es el registro del SEDES, y no cambia con el título:
+    // el Servicio Departamental de Salud habilita a ejercer en su departamento
+    // sea odontólogo o médico. Antes acá se pedía «Registro del Colegio», pero
+    // lo que el padrón real trae en esa casilla —y lo que la gente cargaba— es
+    // el número del SEDES, que además es una habilitación y no un título.
 
     return paginarCampos([
       {
@@ -1123,17 +1121,17 @@ export class RegisterPractitioner {
             mensajeDeError: 'Ingresá tu matrícula profesional.',
           },
           {
-            key: 'credentialNumber',
-            label: rotuloColegio,
-            hint: hintColegio,
+            key: 'sedesLicenseNumber',
+            label: 'Registro del SEDES',
+            hint: 'El de tu habilitación departamental, como figura en tu título del SEDES.',
             control: 'text',
             required: true,
             autocomplete: 'off',
-            placeholder: placeholderColegio,
+            placeholder: 'T.I. 538/14',
             testId: 'registro-pro-credencial',
             icono: 'briefcase',
             ancho: 'mitad',
-            mensajeDeError: 'Ingresá el número de tu colegio.',
+            mensajeDeError: 'Ingresá tu número de registro del SEDES.',
           },
           {
             key: 'regulatoryAuthority',
@@ -1596,7 +1594,7 @@ export class RegisterPractitioner {
         : {}),
       ...(municipio === null ? {} : { residenceMunicipalityConceptId: municipio }),
       licenseNumber: raw.licenseNumber.trim(),
-      credentialNumber: raw.credentialNumber.trim(),
+      sedesLicenseNumber: raw.sedesLicenseNumber.trim(),
       ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),
       ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
