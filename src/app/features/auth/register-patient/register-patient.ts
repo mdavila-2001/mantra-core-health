@@ -992,11 +992,13 @@ export class RegisterPatient {
           {
             key: 'lastName',
             label: 'Apellido paterno',
+            description: 'El apellido de tu papá, como figura en tu documento.',
             control: 'text',
             required: true,
             autocomplete: 'family-name',
             placeholder: 'Mamani',
             testId: 'registro-apellido-paterno',
+            icono: 'people',
             ancho: 'mitad',
             mensajeDeError: 'Ingresá tu apellido paterno.',
           },
@@ -1004,10 +1006,12 @@ export class RegisterPatient {
             key: 'motherLastName',
             label: 'Apellido materno',
             hint: 'Si no llevás, dejalo vacío.',
+            description: 'El apellido de tu mamá, tal como aparece en tu documento.',
             control: 'text',
             autocomplete: 'family-name',
             placeholder: 'Quispe',
             testId: 'registro-apellido-materno',
+            icono: 'people',
             ancho: 'mitad',
           },
         ],
@@ -1101,13 +1105,13 @@ export class RegisterPatient {
             required: true,
             autocomplete: 'tel',
             testId: 'registro-telefono',
-            icono: 'phone',
             mensajeDeError: 'Ingresá un número completo para el país elegido.',
           },
           {
             key: 'guardianName',
             label: 'Contacto de emergencia (opcional)',
             hint: 'A quién llamamos si pasa algo, o quién te acompaña si sos menor.',
+            description: 'A quién llamamos si te pasa algo y no podés responder vos.',
             control: 'text',
             placeholder: 'Rosa Quispe',
             testId: 'registro-tutor-nombre',
@@ -1118,9 +1122,9 @@ export class RegisterPatient {
             key: 'guardianPhone',
             label: 'Su teléfono (opcional)',
             hint: 'Elegí el país si el número no es de Bolivia.',
+            description: 'El número al que llamamos a esa persona. Sin su nombre no se guarda.',
             control: 'tel',
             testId: 'registro-tutor-telefono',
-            icono: 'phone',
             ancho: 'mitad',
             mensajeDeError: 'Para guardar el teléfono, contanos también su nombre.',
           },
@@ -1164,6 +1168,7 @@ export class RegisterPatient {
             key: 'gpsDomicilio',
             label: 'Ubicación GPS (opcional)',
             hint: 'Si la compartís, el delivery llega sin llamarte.',
+            description: 'Marcá el punto exacto de tu casa y confirmalo para que quede guardado.',
             control: 'custom',
           },
         ],
@@ -1190,6 +1195,7 @@ export class RegisterPatient {
             key: 'workAddressLines',
             label: 'Línea de dirección 1 (opcional)',
             hint: 'Calle y número de tu trabajo.',
+            description: 'Sirve para ubicar tu lugar de trabajo cuando la empresa tiene varias sedes.',
             control: 'text',
             placeholder: 'Calle Libertad #120',
             testId: 'registration-work-address',
@@ -1199,6 +1205,7 @@ export class RegisterPatient {
             key: 'gpsTrabajo',
             label: 'Ubicación GPS (opcional)',
             hint: 'El punto exacto de tu lugar de trabajo.',
+            description: 'El punto exacto de tu trabajo en el mapa. Se confirma aparte del de tu casa.',
             control: 'custom',
           },
         ],
@@ -1298,6 +1305,8 @@ export class RegisterPatient {
       key: 'issuerAdministrativeAreaConceptId',
       label: 'Departamento de emisión (opcional)',
       hint: 'El «SC», «LP»... de tu cédula.',
+      description:
+        'El departamento que emitió tu cédula: distingue dos documentos con el mismo número.',
     } as const;
 
     return this.catalogoDepartamentosCaido()
@@ -1312,6 +1321,7 @@ export class RegisterPatient {
           options: this.opcionesDepartamento(),
           placeholder: 'Sin especificar',
           testId,
+          icono: 'pin',
           // La otra mitad del renglón del documento. Ver la página que lo usa.
           ancho: 'mitad',
         };
@@ -1348,6 +1358,7 @@ export class RegisterPatient {
       key: 'guardianRelationshipConceptId',
       label: 'Su relación con vos (opcional)',
       hint: 'Qué es tuyo el contacto de emergencia: madre, pareja, una amistad…',
+      description: 'Sirve para saber cómo presentarnos cuando llamemos a esa persona.',
     } as const;
 
     return this.catalogoParentescosCaido()
@@ -1379,6 +1390,7 @@ export class RegisterPatient {
       key: 'occupationConceptId',
       label: 'Ocupación (opcional)',
       hint: 'En qué trabajás. Ayuda a tu médico con los riesgos propios de cada oficio.',
+      description: 'Tu oficio le dice a tu médico qué riesgos son propios de tu trabajo.',
     } as const;
 
     // Siempre `custom`: son cientos de ocupaciones y el registro del cliente
@@ -1418,9 +1430,11 @@ export class RegisterPatient {
         key: 'occupationFreeText',
         label: '¿Cuál?',
         hint: 'Escribí tu oficio como lo dirías vos.',
+        description: 'El oficio que no encontraste en la lista: se guarda tal cual lo escribas.',
         control: 'text',
         placeholder: 'Apicultor',
         testId: 'registro-ocupacion-otra',
+        icono: 'briefcase',
       },
     ];
   }
@@ -1430,6 +1444,7 @@ export class RegisterPatient {
       key: 'workEmployerConceptId',
       label: 'Empresa donde trabajás (opcional)',
       hint: 'Buscá el nombre. Si no está, elegí «Otra empresa» y la escribís.',
+      description: 'Sirve para los convenios con empresas y los controles de salud laboral.',
       control: 'custom',
     };
   }
@@ -1448,9 +1463,11 @@ export class RegisterPatient {
         key: 'workEmployerFreeText',
         label: '¿En cuál?',
         hint: 'Escribí el nombre como lo conocés.',
+        description: 'El nombre de la empresa que no está en la lista, como figura en su cartel.',
         control: 'text',
         placeholder: 'Ferretería San Martín',
         testId: 'registro-empresa-otra',
+        icono: 'building',
       },
     ];
   }
@@ -1472,11 +1489,14 @@ export class RegisterPatient {
           key: 'privateInsurancePlanId',
           label: 'Seguro privado (opcional)',
           hint: 'La compañía con la que tenés tu póliza de salud.',
+          description: 'Con tu póliza declarada, la cobertura se aplica cuando reservás o comprás.',
         }
       : {
           key: 'publicInsurancePlanId',
           label: 'Seguro público (opcional)',
           hint: 'La caja o el seguro estatal al que estás afiliado.',
+          description:
+            'La caja o el seguro del Estado al que aportás por tu trabajo o el de tu familia.',
         };
 
     return this.catalogoAseguradorasCaido()
@@ -1487,6 +1507,10 @@ export class RegisterPatient {
           options: esPrivado ? this.opcionesSeguroPrivado() : this.opcionesSeguroPublico(),
           placeholder: 'No tengo',
           testId: esPrivado ? 'registro-seguro-privado' : 'registro-seguro-publico',
+          // Dos glifos y no uno: el paraguas es la cobertura que se contrata y
+          // el hospital la del Estado. Con el mismo dibujo, las dos preguntas
+          // de esta página se leerían como la misma repetida.
+          icono: esPrivado ? 'umbrella' : 'hospital',
         };
   }
 

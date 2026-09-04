@@ -39,6 +39,17 @@ class Host {
   readonly selections: (ReferenceOption | null)[] = [];
 }
 
+/** El mismo combobox con un glifo proyectado, como lo monta el alta. */
+@Component({
+  imports: [ReferenceCombobox],
+  template: `
+    <app-reference-combobox label="Ocupación" [options]="[]">
+      <span slot="icon-start" data-testid="glifo">✳</span>
+    </app-reference-combobox>
+  `,
+})
+class HostConGlifo {}
+
 describe('ReferenceCombobox', () => {
   let fixture: ComponentFixture<Host>;
   let host: Host;
@@ -437,6 +448,42 @@ describe('ReferenceCombobox', () => {
       press('ArrowDown');
 
       expect(input().getAttribute('aria-expanded')).toBe('false');
+    });
+  });
+
+  describe('el glifo del campo', () => {
+    /** Los hijos con etiqueta del marco del control, en orden. */
+    function marcoDelControl(elemento: HTMLElement): string[] {
+      const marco = elemento.querySelector('.input-wrapper');
+      return [...(marco?.children ?? [])].map((hijo) =>
+        [hijo.tagName.toLowerCase(), ...hijo.classList].join('.'),
+      );
+    }
+
+    it('el glifo que le proyecten va DENTRO del control, antes del campo', () => {
+      // Sin reconfigurar el módulo —ya hay un componente creado—: el host es
+      // standalone y trae sus propias dependencias.
+      const conGlifo = TestBed.createComponent(HostConGlifo);
+      conGlifo.detectChanges();
+
+      const html = conGlifo.nativeElement as HTMLElement;
+      const glifo = html.querySelector('[data-testid="glifo"]');
+      const campo = html.querySelector('input');
+
+      expect(glifo).not.toBeNull();
+      // Dentro del marco —comparte borde, foco y estado de error— y delante del
+      // campo, que es donde el motor pone el suyo.
+      expect(campo?.parentElement?.contains(glifo!)).toBe(true);
+      expect(campo?.previousElementSibling).toBe(glifo);
+    });
+
+    it('sin glifo proyectado el control queda como estaba', () => {
+      // La ranura es aditiva: sin nada que proyectar, el marco tiene los mismos
+      // hijos que tenía —el campo y su cola— y ni un nodo más.
+      expect(marcoDelControl(fixture.nativeElement as HTMLElement)).toEqual([
+        'input.native-input',
+        'span.reference-combobox__trailing',
+      ]);
     });
   });
 });

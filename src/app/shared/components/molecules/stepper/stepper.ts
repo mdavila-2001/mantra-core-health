@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../atoms/tooltip/tooltip';
 import type { StepperStep } from './stepper.types';
 
 /**
@@ -52,10 +53,22 @@ import type { StepperStep } from './stepper.types';
  * y no con el atributo nativo: sigue siendo alcanzable con el teclado y dice
  * por qué no se puede ir (`disabledReason`), en vez de ser una puerta cerrada
  * sin cartel.
+ *
+ * ## `compact`: por qué también entra apagado
+ *
+ * Un recorrido de diez fases —el alta de paciente— no entra con rótulos en un
+ * teléfono: los diez nombres se apilan y el indicador ocupa media pantalla,
+ * que es justo lo que un indicador no puede hacer. En compacto queda el
+ * marcador y el rótulo sale **de la vista**, no del recorrido: sigue en el
+ * nombre accesible del paso y vuelve como globo al apuntar o al enfocar.
+ *
+ * Apagado por defecto porque un recorrido de tres o cuatro fases sí muestra
+ * sus rótulos, y esconderlos ahí sería cambiar por dibujo lo que hoy son
+ * palabras. Lo enciende quien tiene los pasos de más.
  */
 @Component({
   selector: 'app-stepper',
-  imports: [NavIcon, NgTemplateOutlet],
+  imports: [NavIcon, NgTemplateOutlet, Tooltip],
   templateUrl: './stepper.html',
   styleUrl: './stepper.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +85,15 @@ export class Stepper {
    * la clase.
    */
   readonly interactive = input(false, { transform: booleanAttribute });
+
+  /**
+   * Deja el recorrido en sus marcadores: los rótulos salen de la vista.
+   *
+   * Apagado por defecto: ver la nota de la clase. El rótulo no se pierde —vive
+   * en el `aria-label` del paso y vuelve como globo al apuntar o al enfocar—,
+   * así que lo que cambia es cuánto ocupa el recorrido, no qué dice.
+   */
+  readonly compact = input(false, { transform: booleanAttribute });
 
   /**
    * El índice del paso que se pidió abrir. **Base 0**, como el arreglo.

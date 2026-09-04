@@ -1,3 +1,4 @@
+import { Component } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
@@ -27,6 +28,19 @@ const RAMAS: readonly RamaDepartamento[] = [
     ],
   },
 ];
+
+/** El mismo control con un glifo proyectado, como lo monta el alta. */
+@Component({
+  imports: [LocationPicker],
+  template: `
+    <app-location-picker [ramas]="ramas">
+      <span slot="icon-start" data-testid="glifo">✳</span>
+    </app-location-picker>
+  `,
+})
+class HostConGlifo {
+  readonly ramas = RAMAS;
+}
 
 describe('LocationPicker', () => {
   let fixture: ComponentFixture<LocationPicker>;
@@ -128,5 +142,58 @@ describe('LocationPicker', () => {
     fixture.detectChanges();
 
     expect(html.querySelector('svg')).toBeNull();
+  });
+
+  describe('la explicación y el glifo del municipio', () => {
+    /** Los hijos con etiqueta del marco del desplegable, en orden. */
+    function marcoDelSelect(elemento: HTMLElement): string[] {
+      const marco = elemento.querySelector('.select-wrapper');
+      return [...(marco?.children ?? [])].map((hijo) =>
+        [hijo.tagName.toLowerCase(), ...hijo.classList].join('.'),
+      );
+    }
+
+    it('la explicación llega al campo, que es quien la muestra al apuntarlo', () => {
+      fixture.componentRef.setInput(
+        'municipalityDescription',
+        'La ciudad donde vivís, para asignarte los centros que te quedan cerca.',
+      );
+      pulsarDepartamento('CB');
+
+      expect(html.querySelector('.form-field-description')?.textContent?.trim()).toBe(
+        'La ciudad donde vivís, para asignarte los centros que te quedan cerca.',
+      );
+    });
+
+    it('sin explicación no aparece ningún globo', () => {
+      pulsarDepartamento('CB');
+
+      expect(html.querySelector('.form-field-description')).toBeNull();
+    });
+
+    it('el glifo que le proyecten va DENTRO del desplegable', () => {
+      // Sin reconfigurar el módulo —ya hay un componente creado—: el host es
+      // standalone y trae sus propias dependencias.
+      const conGlifo = TestBed.createComponent(HostConGlifo);
+      conGlifo.detectChanges();
+      const suHtml = conGlifo.nativeElement as HTMLElement;
+      suHtml
+        .querySelector('[data-testid="location-mapa-CB"]')
+        ?.dispatchEvent(new MouseEvent('click'));
+      conGlifo.detectChanges();
+
+      const glifo = suHtml.querySelector('[data-testid="glifo"]');
+      const desplegable = suHtml.querySelector('select');
+
+      expect(glifo).not.toBeNull();
+      expect(desplegable?.parentElement?.contains(glifo!)).toBe(true);
+      expect(desplegable?.previousElementSibling).toBe(glifo);
+    });
+
+    it('sin glifo proyectado el desplegable queda como estaba', () => {
+      pulsarDepartamento('CB');
+
+      expect(marcoDelSelect(html)).toEqual(['select.native-select', 'span.select-arrow']);
+    });
   });
 });

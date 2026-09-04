@@ -441,6 +441,20 @@ describe('RegisterPatient', () => {
     });
 
     /**
+     * Diez páginas pasan el tope de rótulos del indicador, así que hasta ahora
+     * el alta se recorría con un «Paso 1 de 10» y nada más. Con el recorrido
+     * compacto vuelven los diez marcadores: dónde está la persona, cuánto lleva
+     * hecho y a qué paso puede volver, que un contador no dice.
+     */
+    it('el recorrido se ve entero, en su forma compacta', () => {
+      const html = fixture.nativeElement as HTMLElement;
+
+      expect(html.querySelector('app-stepper .stepper--compact')).not.toBeNull();
+      expect(html.querySelectorAll('[data-testid^="stepper-paso-"]')).toHaveLength(10);
+      expect(html.querySelector('.paginated-form__contador')).toBeNull();
+    });
+
+    /**
      * AC-03-1, el orden que pidió el propietario: nombres y apellidos → CI +
      * expedición → fecha de nacimiento → sexo → ocupación → celular → contacto
      * de emergencia → residencia → trabajo → correo → seguros → facturación.
@@ -632,6 +646,171 @@ describe('RegisterPatient', () => {
         .paginasPaciente()[1]
         .campos.find((campo) => campo.key === 'issuerAdministrativeAreaConceptId');
       expect(despues?.control).toBe('custom');
+    });
+  });
+
+  /**
+   * El glifo dentro del campo y la explicación al apuntarlo: las dos cosas que
+   * dejan recorrer una página de cuatro preguntas sin leerla entera.
+   */
+  describe('el glifo y la explicación de cada campo', () => {
+    /**
+     * Las ramas del motor que dibujan el glifo declarado, y las que no.
+     *
+     * Las que no, no es por olvido: en `tel` el hueco lo ocupa la bandera del
+     * país —que además se puede cambiar—, en `date` y `datetime` el almanaque
+     * que abre el calendario, y en `custom` lo que proyecte la pantalla. Ver
+     * `icono` en el contrato del motor.
+     */
+    const CON_GLIFO = ['text', 'email', 'password', 'number', 'select'];
+    const SIN_GLIFO = ['tel', 'date', 'datetime', 'textarea', 'radio', 'switch', 'checkbox'];
+
+    /**
+     * Los campos de todas las páginas, con los dos que sólo existen al elegir
+     * «Otra…» ya presentes: si no, ninguna prueba los miraría nunca.
+     */
+    function todosLosCampos() {
+      component.opcionesOcupacion.set([
+        { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
+      ]);
+      component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
+      responderEmpresas();
+      component.elegirEmpresa({ value: EMPRESA_OTRA, label: 'Otra empresa (la escribo)' });
+      fixture.detectChanges();
+
+      const campos = component.paginasPaciente().flatMap((pagina) => pagina.campos);
+      expect(campos.map((campo) => campo.key)).toContain('occupationFreeText');
+      expect(campos.map((campo) => campo.key)).toContain('workEmployerFreeText');
+      return campos;
+    }
+
+    it('todo campo que pueda dibujar su glifo lo declara', () => {
+      const sinGlifo = todosLosCampos()
+        .filter((campo) => CON_GLIFO.includes(campo.control) && campo.icono === undefined)
+        .map((campo) => campo.key);
+
+      expect(sinGlifo).toEqual([]);
+    });
+
+    it('ninguno lo declara en una rama que no lo dibuja', () => {
+      // Un `icono` ahí no se ve en ningún lado: es contrato muerto que hace
+      // creer que el campo tiene glifo.
+      const glifoMuerto = todosLosCampos()
+        .filter((campo) => SIN_GLIFO.includes(campo.control) && campo.icono !== undefined)
+        .map((campo) => `${campo.key} (${campo.control})`);
+
+      expect(glifoMuerto).toEqual([]);
+    });
+
+    it('todo campo del motor explica qué se le pide', () => {
+      // Los `custom` no: su explicación la pone la pantalla en el campo que
+      // proyecta, y se comprueba abajo, en el DOM.
+      const sinExplicacion = todosLosCampos()
+        .filter(
+          (campo) =>
+            campo.control !== 'custom' &&
+            (campo.description === undefined || campo.description.trim() === ''),
+        )
+        .map((campo) => campo.key);
+
+      expect(sinExplicacion).toEqual([]);
+    });
+
+    it('las tres casillas de nombre y las agregadas traen su glifo y su explicación', () => {
+      component.agregarNombre();
+      fixture.detectChanges();
+      const html = fixture.nativeElement as HTMLElement;
+
+      for (const testId of [
+        'registro-nombre',
+        'registro-segundo-nombre',
+        'registro-tercer-nombre',
+        'registro-nombre-extra-0',
+      ]) {
+        const campo = html.querySelector(`[data-testid="${testId}"]`);
+        expect(campo, `falta el campo ${testId}`).not.toBeNull();
+        expect(
+          campo?.parentElement?.querySelector('app-nav-icon'),
+          `el campo ${testId} no tiene glifo`,
+        ).not.toBeNull();
+      }
+
+      // Y la explicación, que en un campo proyectado la pone la pantalla.
+      const explicaciones = [...html.querySelectorAll('.registro__nombre .form-field-description')]
+        .map((el) => el.textContent!.trim())
+        .filter((texto) => texto !== '');
+      expect(explicaciones).toHaveLength(4);
+    });
+
+    it('la lupa de ocupación trae su glifo', () => {
+      completar();
+      avanzarHasta('profile');
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="registro-ocupacion"] app-nav-icon',
+        ),
+      ).not.toBeNull();
+    });
+
+    it('la lupa de empresa trae el suyo', () => {
+      completar();
+      avanzarHasta('work');
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="registro-empresa"] app-nav-icon',
+        ),
+      ).not.toBeNull();
+    });
+
+    /**
+     * El árbol de municipios, sin el cual el select de ciudad no llega a
+     * dibujarse: mientras no hay departamento resuelto, el control dice qué
+     * falta y no ofrece nada.
+     */
+    function cargarMunicipios(): void {
+      http.expectOne(CATALOGO).flush({
+        items: [{ id: 'vs-dep', internalCode: 'VS_BO_DEPARTMENT', name: 'Departamentos' }],
+      });
+      http.expectOne(CATALOGO_MUNICIPIOS).flush({
+        items: [{ id: 'vs-mun', internalCode: 'VS_BO_MUNICIPALITY', name: 'Municipios' }],
+      });
+      http.expectOne('/terminology/value-sets/vs-dep/$expand?limit=200').flush({
+        items: [{ conceptId: 'd-cb', code: 'geo:bo:department:CB', display: 'Cochabamba' }],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+      http.expectOne('/terminology/value-sets/vs-mun/$expand?limit=200').flush({
+        items: [
+          { conceptId: MUNICIPIO_SACABA, code: 'geo:bo:municipality:031001', display: 'Sacaba' },
+        ],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+    }
+
+    it('el mapa de residencia trae su glifo y su explicación', () => {
+      cargarMunicipios();
+      completar();
+      avanzarHasta('residence');
+
+      const picker = (fixture.nativeElement as HTMLElement).querySelector('app-location-picker');
+      expect(picker?.querySelector('app-nav-icon')).not.toBeNull();
+      expect(picker?.querySelector('.form-field-description')?.textContent?.trim()).toBeTruthy();
+    });
+
+    it('el mapa del lugar de trabajo, también', () => {
+      cargarMunicipios();
+      completar();
+      component.elegirMunicipioDeTrabajo(MUNICIPIO_SACABA);
+      avanzarHasta('work-location');
+
+      const picker = (fixture.nativeElement as HTMLElement).querySelector('app-location-picker');
+      expect(picker?.querySelector('app-nav-icon')).not.toBeNull();
+      expect(picker?.querySelector('.form-field-description')?.textContent?.trim()).toBeTruthy();
     });
   });
 
