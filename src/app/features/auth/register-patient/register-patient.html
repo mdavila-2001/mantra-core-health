@@ -65,6 +65,7 @@
             label="Crear cuenta"
             submitLabel="Crear cuenta"
             [iconOnlyNav]="true"
+            [compactSteps]="true"
             [pending]="isSubmitting()"
             (pasoVisible)="recordarPaso($event)"
             (enviado)="submit()"
@@ -76,7 +77,16 @@
                  `formControlName`. -->
             <ng-template appCampoPersonalizado="name">
               <div class="registro__nombres">
-                <app-form-field class="registro__nombre" label="Primer nombre" [required]="true">
+                <!-- El glifo va dentro de cada casilla, igual que en los campos
+                     que dibuja el motor: es el mismo para las cinco porque las
+                     cinco preguntan lo mismo —cómo te llamás—, y ahí un dibujo
+                     distinto por casilla diría una diferencia que no existe. -->
+                <app-form-field
+                  class="registro__nombre"
+                  label="Primer nombre"
+                  description="Tu primer nombre, tal como figura en tu documento."
+                  [required]="true"
+                >
                   <app-input
                     testId="registro-nombre"
                     autocomplete="given-name"
@@ -84,13 +94,16 @@
                     [value]="valorDeNombre('name')"
                     [hasError]="primerNombreEnRojo()"
                     (valueChange)="escribirNombre('name', $event)"
-                  />
+                  >
+                    <app-nav-icon slot="icon-start" name="people" class="registro__campo-icono" />
+                  </app-input>
                 </app-form-field>
 
                 <app-form-field
                   class="registro__nombre"
                   label="Segundo nombre"
                   hint="Si no tenés, dejalo vacío."
+                  description="Tu segundo nombre, tal como figura en tu documento."
                 >
                   <app-input
                     testId="registro-segundo-nombre"
@@ -98,29 +111,47 @@
                     placeholder="Andrea"
                     [value]="valorDeNombre('middleName')"
                     (valueChange)="escribirNombre('middleName', $event)"
-                  />
+                  >
+                    <app-nav-icon slot="icon-start" name="people" class="registro__campo-icono" />
+                  </app-input>
                 </app-form-field>
 
-                <app-form-field class="registro__nombre" label="Tercer nombre">
+                <app-form-field
+                  class="registro__nombre"
+                  label="Tercer nombre"
+                  description="Tu tercer nombre, tal como figura en tu documento."
+                >
                   <app-input
                     testId="registro-tercer-nombre"
                     placeholder="María"
                     [value]="valorDeNombre('thirdName')"
                     (valueChange)="escribirNombre('thirdName', $event)"
-                  />
+                  >
+                    <app-nav-icon slot="icon-start" name="people" class="registro__campo-icono" />
+                  </app-input>
                 </app-form-field>
 
                 <!-- Hay gente con cuatro y cinco nombres. En vez de casillas
                      fijas que casi nadie usa, se agregan las que hagan falta. -->
                 @for (extra of nombresExtra(); track $index) {
-                  <app-form-field class="registro__nombre" [label]="'Nombre ' + ($index + 4)">
+                  <app-form-field
+                    class="registro__nombre"
+                    [label]="'Nombre ' + ($index + 4)"
+                    description="Otro nombre más, tal como figura en tu documento."
+                  >
                     <div class="registro__nombre-extra">
                       <app-input
                         [testId]="'registro-nombre-extra-' + $index"
                         placeholder="Otro nombre"
                         [value]="extra"
                         (valueChange)="escribirNombreExtra($index, $event)"
-                      />
+                      >
+                        <app-nav-icon
+                          slot="icon-start"
+                          name="people"
+                          class="registro__campo-icono"
+                        />
+                      </app-input>
                       <!-- Botón de ícono, con el nombre accesible diciendo QUÉ
                            quita: «Quitar» a secas, repetido cuatro veces en la
                            misma página, deja a quien usa lector de pantalla con
@@ -206,7 +237,13 @@
                   [minQueryLength]="0"
                   (searched)="busquedaOcupacion.set($event)"
                   (selectionChange)="elegirOcupacion($event)"
-                />
+                >
+                  <app-nav-icon
+                    slot="icon-start"
+                    name="briefcase"
+                    class="registro__campo-icono"
+                  />
+                </app-reference-combobox>
               }
             </ng-template>
 
@@ -232,7 +269,9 @@
                   [minQueryLength]="0"
                   (searched)="busquedaEmpresa.set($event)"
                   (selectionChange)="elegirEmpresa($event)"
-                />
+                >
+                  <app-nav-icon slot="icon-start" name="building" class="registro__campo-icono" />
+                </app-reference-combobox>
               }
             </ng-template>
 
@@ -401,9 +440,12 @@
                   mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
                   municipalityLabel="Localidad de residencia"
                   municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+                  municipalityDescription="La localidad donde vivís. El departamento sale de ella, así que no se pregunta aparte."
                   [required]="true"
                   [errorMessage]="errorDeMunicipio()"
-                />
+                >
+                  <app-nav-icon slot="icon-start" name="pin" class="registro__campo-icono" />
+                </app-location-picker>
               }
             </ng-template>
 
@@ -425,7 +467,10 @@
                   mapLabel="Mapa de Bolivia: elegí el departamento donde trabajás"
                   municipalityLabel="Localidad de trabajo (opcional)"
                   municipalityHint="Sólo se ofrecen las del departamento que elegiste."
-                />
+                  municipalityDescription="La localidad donde trabajás, que puede no ser la misma en la que vivís."
+                >
+                  <app-nav-icon slot="icon-start" name="pin" class="registro__campo-icono" />
+                </app-location-picker>
               }
             </ng-template>
 
