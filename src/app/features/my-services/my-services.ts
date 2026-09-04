@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,6 +16,9 @@ import type {
   ServiceCatalogItem,
   ServiceCatalogPage,
 } from '../../core/data-access/services-catalog/services-catalog.types';
+import { Input } from '../../shared/components/atoms/input/input';
+import { ToastService } from '../../shared/components/molecules/toast/toast.service';
+import { readApiError } from '../../core/http/api-error';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { dataOf, empty, loading, mapData, ready } from '../../core/view-state/view-state';
@@ -42,6 +46,15 @@ const SERVICIOS_POR_PAGINA = 24;
 const TARJETAS_DEL_ESQUELETO = 6;
 
 /**
+ * Un importe positivo con hasta dos decimales.
+ *
+ * Es el mismo patrón que valida el servidor. Se repite acá para avisar mientras
+ * se escribe, **no** para decidir: la autoridad sigue siendo la API, que
+ * responde 422 y cuyo mensaje se muestra tal cual.
+ */
+const IMPORTE = /^\d+(\.\d{1,2})?$/;
+
+/**
  * Qué se ofrece cuando la práctica no tiene servicios.
  *
  * **No es un alta.** `POST /billing/service-catalog` exige `SECURITY_ADMIN` y
@@ -67,20 +80,26 @@ const SIN_PRACTICA_ELEGIDA = empty(
 /**
  * Los servicios de la práctica, vistos por quien atiende — `my-services`.
  *
- * ## Es una lectura, y nada más
+ * ## Se lee, y el precio se edita
  *
- * El catálogo (`billing.service_catalog`) lo mantiene una cuenta administradora
- * desde `administration/services-catalog`. Acá no hay alta, ni edición de
- * precio, ni búsqueda: quien atiende viene a saber **qué ofrece su práctica y a
- * cuánto está la referencia** antes de cotizar. `GET /billing/service-catalog`
- * no exige rol justamente por eso.
+ * El alta la sigue haciendo una cuenta administradora desde
+ * `administration/services-catalog`: la lista de qué se ofrece queda fija. Lo
+ * que es de quien atiende es **a cuánto lo ofrece**, y por eso el precio se
+ * corrige acá con `PATCH /billing/service-catalog/:id` (FT-22-R05). El servidor
+ * comprueba la vinculación con la práctica; un servicio ajeno responde 404.
  *
  * ## Lo que el esquema no tiene, la pantalla no promete
  *
- * `ServiceCatalogItem` son código, nombre, precio de referencia y si está
+ * `ServiceCatalogItem` son código, nombre, precio con su moneda y si está
  * activo. No hay imagen, ni descripción, ni términos y condiciones: la tarjeta
  * muestra lo que existe en vez de dejar huecos que sugieran un dato que nadie
- * cargó.
+ * cargó. Las tres cosas están pedidas y ninguna tiene columna todavía.
+ *
+ * ## Un precio en cero no es gratis
+ *
+ * Toda práctica nace con «Cita médica» en `0.00` porque nadie declaró un
+ * arancel. La tarjeta dice **«Definí el precio»** en vez de mostrar un cero que
+ * un paciente leería como que la consulta no se cobra.
  *
  * ## Todo cuelga de la práctica elegida
  *
@@ -98,7 +117,17 @@ const SIN_PRACTICA_ELEGIDA = empty(
  */
 @Component({
   selector: 'app-my-services',
-  imports: [AppButton, Badge, Card, FormField, PageHeader, Select, Skeleton, ViewStateHost],
+  imports: [
+    AppButton,
+    Badge,
+    Card,
+    FormField,
+    Input,
+    PageHeader,
+    Select,
+    Skeleton,
+    ViewStateHost,
+  ],
   templateUrl: './my-services.html',
   styleUrl: './my-services.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -106,6 +135,7 @@ const SIN_PRACTICA_ELEGIDA = empty(
 export class MyServices {
   private readonly catalog = inject(ServicesCatalogClient);
   private readonly navigation = inject(NavigationService);
+  private readonly toasts = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -181,6 +211,98 @@ export class MyServices {
   protected readonly hayMas = computed(
     () => this.cursorSiguiente() !== null && this.estado().status === 'ready',
   );
+
+  /* ---- edición del precio (FT-22-R05) --------------------------------------*/
+
+  /**
+   * Qué servicio está en edición, y qué se guarda.
+   *
+   * Por id y no un booleano por tarjeta: se edita **uno** por vez. Abrir el
+   * segundo cierra el primero sin guardarlo, que es lo que espera cualquiera
+   * que haya dejado un campo abierto y se haya ido a otro.
+   */
+  protected readonly enEdicion = signal<string | null>(null);
+  protected readonly borrador = signal('');
+  protected readonly guardando = signal<string | null>(null);
+  protected readonly errorDelPrecio = signal<string | null>(null);
+
+  /** Un precio en cero es «sin definir»: la tarjeta lo dice con palabras. */
+  protected sinPrecio(servicio: ServiceCatalogItem): boolean {
+    return Number(servicio.defaultPrice) === 0;
+  }
+
+  /** El importe con su unidad, cuando la API pudo resolverla. */
+  protected precio(servicio: ServiceCatalogItem): string {
+    return servicio.currencyCode === undefined
+      ? servicio.defaultPrice
+      : `${servicio.defaultPrice} ${servicio.currencyCode}`;
+  }
+
+  protected editar(servicio: ServiceCatalogItem): void {
+    this.enEdicion.set(servicio.id);
+    // El cero no se siembra: quien nunca puso precio empieza con el campo
+    // vacío, no borrando un valor que no eligió.
+    this.borrador.set(this.sinPrecio(servicio) ? '' : servicio.defaultPrice);
+    this.errorDelPrecio.set(null);
+  }
+
+  protected cancelar(): void {
+    this.enEdicion.set(null);
+    this.borrador.set('');
+    this.errorDelPrecio.set(null);
+  }
+
+  protected escribirPrecio(valor: string | number | null): void {
+    this.borrador.set(valor === null ? '' : String(valor));
+    if (this.errorDelPrecio() !== null) {
+      this.errorDelPrecio.set(null);
+    }
+  }
+
+  /**
+   * Guarda el precio de una tarjeta.
+   *
+   * El aviso de formato se da acá para no gastar un viaje, pero **la validación
+   * que manda es la del servidor**: si responde 422 se muestra su mensaje, y lo
+   * escrito se conserva para poder corregirlo (AC-22-6).
+   */
+  protected guardarPrecio(servicio: ServiceCatalogItem): void {
+    if (this.guardando() !== null) return;
+
+    const escrito = this.borrador().trim();
+    if (!IMPORTE.test(escrito)) {
+      this.errorDelPrecio.set('Escribí un importe positivo con hasta dos decimales.');
+      return;
+    }
+
+    this.guardando.set(servicio.id);
+    this.errorDelPrecio.set(null);
+    this.catalog.update(servicio.id, { defaultPrice: escrito }).subscribe({
+      next: (actualizado) => {
+        this.guardando.set(null);
+        this.enEdicion.set(null);
+        this.borrador.set('');
+        // Se muestra lo que devolvió la API y no lo que se escribió: es la
+        // única forma de que la tarjeta diga lo que quedó guardado —con su
+        // moneda, que el servidor puede haber fijado en esta misma edición—.
+        this.reemplazar(actualizado);
+        this.toasts.success('Guardamos el precio.', servicio.name);
+      },
+      error: (error: unknown) => {
+        this.guardando.set(null);
+        this.errorDelPrecio.set(mensajeDelServidor(error));
+      },
+    });
+  }
+
+  /** Cambia una tarjeta de la lista sin recargar la página entera. */
+  private reemplazar(servicio: ServiceCatalogItem): void {
+    const visibles = dataOf(this.catalogo());
+    if (visibles === null) return;
+    this.catalogo.set(
+      ready(visibles.map((actual) => (actual.id === servicio.id ? servicio : actual))),
+    );
+  }
 
   constructor() {
     this.cargarPracticas();
@@ -299,4 +421,21 @@ export class MyServices {
     const yaVisibles = dataOf(this.catalogo()) ?? [];
     this.catalogo.set(ready([...yaVisibles, ...pagina.items]));
   }
+}
+
+/**
+ * Qué decir cuando el guardado falla.
+ *
+ * El mensaje del servidor manda cuando lo hay: es el que sabe **qué** rechazó
+ * —el formato del importe, un servicio que no es de esta práctica— y el nuestro
+ * sólo sabría que no se pudo.
+ */
+function mensajeDelServidor(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    const cuerpo = readApiError(error);
+    if (cuerpo !== null && cuerpo.message !== '') {
+      return cuerpo.message;
+    }
+  }
+  return 'No pudimos guardar el precio. Probá de nuevo.';
 }

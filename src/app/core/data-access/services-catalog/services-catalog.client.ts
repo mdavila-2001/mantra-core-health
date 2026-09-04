@@ -9,6 +9,7 @@ import type {
   ProcedureNomenclaturePage,
   ProcedureNomenclatureQuery,
   ProcedureSpecialty,
+  ServiceCatalogChanges,
   ServiceCatalogItem,
   ServiceCatalogPage,
   ServiceCatalogQuery,
@@ -78,6 +79,27 @@ export class ServicesCatalogClient {
   }
 
   /**
+   * `PATCH /billing/service-catalog/:id` — corrige un servicio de la práctica
+   * propia.
+   *
+   * Es la contracara del alta: aquélla la hace una cuenta administradora, ésta
+   * la puede hacer también quien atiende en esa práctica, porque el precio de lo
+   * que ofrece es suyo. El alcance lo comprueba el servidor por la vinculación
+   * con la práctica; un servicio de otra responde **404**, igual que uno
+   * inexistente.
+   *
+   * Sólo viajan las claves presentes: el cuerpo se arma con las que el llamador
+   * puso, sin declarar en `undefined` las que no, porque el backend valida con
+   * `forbidNonWhitelisted`.
+   */
+  update(id: string, cambios: ServiceCatalogChanges): Observable<ServiceCatalogItem> {
+    return this.http.patch<ServiceCatalogItem>(
+      this.url(`/billing/service-catalog/${encodeURIComponent(id)}`),
+      sinIndefinidos(cambios),
+    );
+  }
+
+  /**
    * `GET /billing/service-catalog/procedure-specialties` — las especialidades
    * del arancel, con su recuento.
    *
@@ -128,4 +150,13 @@ export class ServicesCatalogClient {
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/**
+ * Quita las claves sin valor antes de enviar: el backend valida con
+ * `forbidNonWhitelisted` y un opcional presente en `undefined` viaja como clave
+ * declarada.
+ */
+function sinIndefinidos<T extends object>(source: T): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(source).filter(([, valor]) => valor !== undefined));
 }
