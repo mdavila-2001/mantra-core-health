@@ -97,7 +97,9 @@
         }
         <!-- El pedido reserva, no cobra: decirlo evita el susto del «pagué y
              no me llegó nada». El flujo de pago no existe y no se finge. -->
-        <p class="confirmacion__nota">Pagás al retirar, en la farmacia. Enviar el pedido no es un pago.</p>
+        <p class="confirmacion__nota">
+          Pagás al retirar, en la farmacia. Enviar el pedido no es un pago.
+        </p>
       </section>
 
       <!-- ─── La modalidad ───────────────────────────────────────────────── -->
@@ -110,22 +112,21 @@
             (valueChange)="alElegirModalidad($event)"
           >
             <app-radio value="RETIRO" label="Retiro en la farmacia" />
-            <app-radio value="DOMICILIO" label="Envío a domicilio" [disabled]="!demoActiva" />
-            <app-radio value="TRABAJO" label="Envío a mi trabajo" [disabled]="!demoActiva" />
+            <app-radio value="DOMICILIO" label="Envío a domicilio" [disabled]="true" />
+            <app-radio value="TRABAJO" label="Envío a mi trabajo" [disabled]="true" />
           </app-radio-group>
         </app-form-field>
-        @if (direccionDeEntrega(); as direccion) {
-          <p class="confirmacion__nota" data-testid="pedido-direccion">
-            La farmacia coordina la entrega a: {{ direccion }}
-            <app-badge variant="info">Demo</app-badge>
-          </p>
-        } @else if (!demoActiva) {
-          <p class="confirmacion__nota">
-            Envío a domicilio o a tu trabajo: vas a poder elegirlos cuando tus direcciones estén
-            cargadas en tu perfil.
-          </p>
-        }
+        <p class="confirmacion__nota">
+          Envío a domicilio y al trabajo todavía no están disponibles.
+        </p>
       </section>
+
+      @if (hasUnresolvedProducts) {
+        <app-alert tone="warning" title="Este pedido todavía no se puede enviar">
+          No hay un producto publicado para: {{ unresolvedProductNames.join(', ') }}. El pedido
+          completo queda sin enviar; no se quitará ningún medicamento.
+        </app-alert>
+      }
 
       @if (fallo()) {
         <app-alert tone="error" title="No pudimos enviar tu pedido">
@@ -139,6 +140,7 @@
           variant="primary"
           type="button"
           data-testid="pedido-enviar"
+          [disabled]="hasUnresolvedProducts"
           [isLoading]="enviando()"
           (clicked)="enviar()"
         >

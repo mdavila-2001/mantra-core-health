@@ -103,26 +103,9 @@
             }
           </p>
           <p class="pedido__secundario">
-            @if (pagado()) {
-              Es un código de identificación. Tu pedido ya está pagado: solo mostralo.
-            } @else {
-              Es un código de identificación, no un pago: pagás al retirar, en la farmacia.
-            }
+            Es un código de identificación, no un pago: pagás al retirar, en la farmacia.
           </p>
         </section>
-      }
-
-      <!-- ─── El pago (FAR-I5): mostrador real, QR sólo con su gate ──────── -->
-      @if (muestraPago()) {
-        <app-order-payment [pedido]="abierto" [ocupado]="ocupado()" (pagoSimulado)="simularPago()" />
-        @if (pagado()) {
-          <div class="pedido__acciones">
-            <a app-button variant="secondary" size="sm" [routerLink]="rutaDelComprobante(abierto)"
-              data-testid="pedido-comprobante">
-              Ver comprobante
-            </a>
-          </div>
-        }
       }
 
       <!-- ─── Los finales anticipados y sus salidas ──────────────────────── -->
@@ -208,26 +191,6 @@
             Cancelar pedido
           </button>
         </div>
-      }
-
-      <!-- ─── Escenarios de demostración ─────────────────────────────────── -->
-      <!-- La contraparte (FAR-E1) no existe: estos botones hacen lo que haría
-           la farmacia, sólo donde `PUBLIC_DEMO_PRESETS` lo pidió. -->
-      @if (demoActiva && simulaciones().length > 0) {
-        <section class="pedido__demo" aria-labelledby="pedido-demo" data-testid="pedido-demo">
-          <p class="pedido__demo-titulo">
-            <span id="pedido-demo">Escenarios de demostración — lo que haría la farmacia</span>
-            <app-badge variant="info">Demo</app-badge>
-          </p>
-          <div class="pedido__acciones">
-            @for (paso of simulaciones(); track paso) {
-              <button app-button variant="outline" size="sm" type="button"
-                [attr.data-testid]="'pedido-demo-' + paso" (clicked)="simular(paso)">
-                {{ etiquetaDeSimulacion(paso) }}
-              </button>
-            }
-          </div>
-        </section>
       }
 
       <a app-button variant="ghost" [routerLink]="listaRoute">Volver a mis pedidos</a>

@@ -12,6 +12,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { PedidoFarmacia } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import {
   dataOf,
@@ -83,23 +84,21 @@ export class OrderReceipt {
       return;
     }
     this.state.set(loading());
-    this.ordersClient.pedido(orderId).subscribe((pedido) => {
-      if (pedido === null) {
-        this.state.set(notFound({ label: 'Volver a mis pedidos', route: LISTA_ROUTE }));
-        return;
-      }
-      if (comprobanteDesdePedido(pedido) === null) {
-        // Sin pago registrado no hay comprobante: el vacío honesto, con la
-        // salida al pedido — que es donde el pago se sigue.
-        this.state.set(
-          empty(
-            { label: 'Ver el pedido', route: this.rutaDelPedido(pedido.id) },
-            'Este pedido todavía no tiene un pago registrado.',
-          ),
-        );
-        return;
-      }
-      this.state.set(ready(pedido));
+    this.ordersClient.pedido(orderId).subscribe({
+      next: (pedido) => {
+        if (comprobanteDesdePedido(pedido) === null) {
+          // Payment is not part of the pharmacy-orders API. Do not fabricate a receipt.
+          this.state.set(
+            empty(
+              { label: 'Ver el pedido', route: this.rutaDelPedido(pedido.id) },
+              'Este pedido todavía no tiene un pago registrado.',
+            ),
+          );
+          return;
+        }
+        this.state.set(ready(pedido));
+      },
+      error: (error: unknown) => this.state.set(errorToViewState<PedidoFarmacia>(error)),
     });
   }
 

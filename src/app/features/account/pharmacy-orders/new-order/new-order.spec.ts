@@ -1,23 +1,20 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 
 import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
+import { pharmacyOrderDtoFixture } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { NewOrder } from './new-order';
 
 /**
  * «Confirmá tu pedido» (FAR-I2). Lo que se fija: sin borrador hay salida y no
  * error; el resumen dice claro lo que la farmacia no tiene y que enviar no es
- * pagar; el retiro es el default y la demo ejercita los envíos con dirección
- * de ejemplo marcada; y enviar crea el pedido y lleva a su detalle.
- *
- * Las pruebas corren con `environment.development` → `demoPresets` encendido:
- * la rama de producción sin demo (envíos deshabilitados con su porqué) vive en
- * la plantilla pero no se puede ejercitar acá, como en el resto del proyecto.
+ * pagar; retiro es la única modalidad habilitada; y enviar crea el pedido
+ * real y lleva a su detalle. Una línea sin `productId` se conserva y bloquea
+ * el envío de manera explícita.
  */
 
 const BORRADOR: BorradorDePedido = {
@@ -54,6 +51,7 @@ const BORRADOR: BorradorDePedido = {
 describe('NewOrder', () => {
   let fixture: ComponentFixture<NewOrder>;
   let client: PharmacyOrdersClient;
+  let http: HttpTestingController;
 
   function montar(): void {
     fixture = TestBed.createComponent(NewOrder);
@@ -69,6 +67,7 @@ describe('NewOrder', () => {
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     client = TestBed.inject(PharmacyOrdersClient);
+    http = TestBed.inject(HttpTestingController);
   });
 
   it('sin borrador ofrece la salida hacia la historia, no un error', () => {
@@ -78,9 +77,7 @@ describe('NewOrder', () => {
     expect(texto()).toContain('No encontramos lo que buscás');
     expect(texto()).toContain('Ir a mi historia clínica');
     expect(
-      (fixture.nativeElement as HTMLElement).querySelector(
-        '[data-testid="pedido-confirmacion"]',
-      ),
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="pedido-confirmacion"]'),
     ).toBeNull();
   });
 
@@ -98,7 +95,7 @@ describe('NewOrder', () => {
     expect(texto()).toContain('no es un pago');
   });
 
-  it('el retiro es el default; la demo abre los envíos con dirección de ejemplo marcada', () => {
+  it('el retiro es el default y los envíos fuera de alcance quedan deshabilitados', () => {
     client.prepararBorrador(BORRADOR);
     montar();
 
@@ -107,19 +104,9 @@ describe('NewOrder', () => {
     );
     expect(radios).toHaveLength(3);
     expect(radios[0].checked).toBe(true);
-    expect(radios[1].disabled).toBe(false);
-    expect(radios[2].disabled).toBe(false);
-
-    radios[1].click();
-    fixture.detectChanges();
-
-    // La dirección es simulada y se dice: badge de demo al lado, no en secreto.
-    const direccion = (fixture.nativeElement as HTMLElement).querySelector(
-      '[data-testid="pedido-direccion"]',
-    );
-    expect(direccion?.textContent).toContain('La farmacia coordina la entrega a');
-    expect(direccion?.textContent).toContain('Av. Ejemplo 123');
-    expect(direccion?.textContent).toContain('Demo');
+    expect(radios[1].disabled).toBe(true);
+    expect(radios[2].disabled).toBe(true);
+    expect(texto()).toContain('todavía no están disponibles');
   });
 
   it('salir sin enviar descarta el borrador: no reaparece después por URL directa', () => {
@@ -132,7 +119,8 @@ describe('NewOrder', () => {
   });
 
   it('enviar crea el pedido con retiro, consume el borrador y lleva a su detalle', async () => {
-    client.prepararBorrador(BORRADOR);
+    const supported = { ...BORRADOR, lineas: [BORRADOR.lineas[0]!] };
+    client.prepararBorrador(supported);
     montar();
     const router = TestBed.inject(Router);
     const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -141,14 +129,30 @@ describe('NewOrder', () => {
       .querySelector<HTMLButtonElement>('[data-testid="pedido-enviar"]')
       ?.click();
     fixture.detectChanges();
-
-    const pedidos = await firstValueFrom(client.misPedidos());
-    expect(pedidos).toHaveLength(1);
-    expect(pedidos[0].estado).toBe('ENVIADO');
-    expect(pedidos[0].modalidad).toBe('RETIRO');
-    expect(pedidos[0].direccionDeEntrega).toBeNull();
+    const request = http.expectOne('/pharmacy/orders');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body.lines).toEqual([
+      { productId: BORRADOR.lineas[0]?.productId, quantity: 1 },
+    ]);
+    request.flush(pharmacyOrderDtoFixture());
+    await fixture.whenStable();
     expect(client.borradorPreparado()).toBeNull();
-    expect(navegar).toHaveBeenCalledWith(['/my-account/pharmacy-orders', pedidos[0].id]);
+    expect(navegar).toHaveBeenCalledWith([
+      '/my-account/pharmacy-orders',
+      pharmacyOrderDtoFixture().id,
+    ]);
+  });
+
+  it('bloquea de forma visible las líneas sin productId y no llama a la API', () => {
+    client.prepararBorrador(BORRADOR);
+    montar();
+    const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="pedido-enviar"]',
+    );
+    expect(button?.getAttribute('aria-disabled')).toBe('true');
+    expect(texto()).toContain('No hay un producto publicado para: Paracetamol');
+    expect(texto()).toContain('no se quitará ningún medicamento');
+    http.expectNone('/pharmacy/orders');
   });
 
   /* ── Las promociones del pedido (FAR-I7) ───────────────────────────────── */

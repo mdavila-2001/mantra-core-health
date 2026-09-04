@@ -110,21 +110,13 @@
           <!-- ─── Las sucursales ─────────────────────────────────────────────── -->
           <section class="compra__bloque" aria-labelledby="compra-sedes">
             <h2 id="compra-sedes" class="compra__titulo">Sucursales</h2>
-            @if (pedidoDisponible) {
-              <!-- FAR-I2 corre contra un mock hasta que exista el backend de
-               pedidos: donde la demo está pedida, se dice. -->
-              <p class="compra__nota" data-testid="compra-demo-aviso">
-                <app-badge variant="info">Demo</app-badge>
-                Enviar un pedido es por ahora una demostración: la farmacia del otro lado se simula.
-              </p>
-            }
             <app-view-state-host [state]="resultados()" (retry)="consultar()">
               @if (resultado(); as datos) {
                 @if (datos.sinProducto.length > 0) {
                   <app-alert tone="warning" title="No todo se pudo consultar">
                     Sin producto publicado en el directorio: {{ datos.sinProducto.join(', ') }}.
-                    Ninguna sucursal puede confirmar esos medicamentos, así que ninguna figura con
-                    todo.
+                    Ninguna sucursal puede confirmar esos medicamentos. El pedido completo no se
+                    enviará y no se omitirá ningún medicamento.
                   </app-alert>
                 }
 
@@ -203,36 +195,16 @@
                         <app-badge [variant]="sede.completa ? 'success' : 'warning'">
                           {{ sede.completa ? 'Tiene todo' : 'Le falta algo' }}
                         </app-badge>
-                        <!-- FAR-I2: un solo camino — enviar el pedido y decidir
-                         retiro o envío en la confirmación. Sin la demo (y
-                         hasta FAR-E1) queda a la vista y cerrado. -->
-                        @if (pedidoDisponible) {
-                          <button
-                            app-button
-                            variant="primary"
-                            size="sm"
-                            type="button"
-                            data-testid="compra-cta-pedido"
-                            (clicked)="enviarPedido(sede)"
-                          >
-                            Enviar pedido
-                          </button>
-                        } @else {
-                          <!-- `[disabled]` y no el atributo nativo: AppButton
-                           deshabilita con `aria-disabled` y el botón sigue
-                           siendo enfocable y anunciado. -->
-                          <button
-                            app-button
-                            variant="primary"
-                            size="sm"
-                            type="button"
-                            [disabled]="true"
-                            data-testid="compra-cta-pedido"
-                          >
-                            Enviar pedido
-                          </button>
-                          <span class="compra__proximamente">Próximamente</span>
-                        }
+                        <button
+                          app-button
+                          variant="primary"
+                          size="sm"
+                          type="button"
+                          data-testid="compra-cta-pedido"
+                          (clicked)="enviarPedido(sede)"
+                        >
+                          Enviar pedido
+                        </button>
                       </div>
                     </li>
                   }

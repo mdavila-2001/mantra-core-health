@@ -5,14 +5,12 @@ import {
   DestroyRef,
   PLATFORM_ID,
   computed,
-  effect,
   inject,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import { environment } from '../../../../environments/environment';
 import { PharmacyOrdersClient } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type { PedidoFarmacia } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -103,7 +101,6 @@ export class PharmacyInbox {
 
   protected readonly alarma = inject(AlarmaDePedidos);
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly demoActiva = environment.demoPresets;
   protected readonly detalleRoute = DETALLE_ROUTE;
 
   protected readonly state = signal<ViewState<readonly PedidoFarmacia[]>>(loading());
@@ -144,9 +141,6 @@ export class PharmacyInbox {
     this.cargar();
     this.agendar();
     inject(DestroyRef).onDestroy(() => this.detener());
-    // El empujón de la demo de dos ventanas: lo que llega por el canal se
-    // aplica al instante, sin esperar el sondeo. Se va con FAR-E2.
-    effect(() => this.aplicar(this.ordersClient.pedidosEnVivo()));
   }
 
   protected cargar(): void {
@@ -213,16 +207,6 @@ export class PharmacyInbox {
       label: 'Ver tu organización',
       route: '/administration/my-organization',
     };
-    if (!this.demoActiva) {
-      // VISUAL-FIRST: la pantalla existe; la conexión real es de FAR-E2.
-      this.state.set(
-        empty(
-          volverAlPanel,
-          'Los pedidos de los pacientes van a llegar acá, con su alarma, cuando la conexión con el mostrador esté activa. Próximamente.',
-        ),
-      );
-      return;
-    }
     this.detectarNuevos(pedidos);
     if (pedidos.length === 0) {
       this.state.set(

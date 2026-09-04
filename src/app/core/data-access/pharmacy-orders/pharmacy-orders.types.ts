@@ -2,10 +2,9 @@
  * Tipos del pedido de farmacia (carril FAR-I2, sobre el contrato acordado de
  * la tanda de farmacia — README del día 1).
  *
- * El backend de pedidos (FAR-E1) todavía no existe: estos tipos espejan el
- * contrato **acordado**, no un DTO publicado. Cuando E1 publique el suyo, el
- * ajuste vive acá y en el cliente; las pantallas leen estos nombres y no se
- * enteran. Misma convención de montos que `pharmacy.types.ts`: texto exacto,
+ * Estos son los tipos de vista. Los DTO publicados por la API y el adapter
+ * explícito viven junto al cliente; las pantallas no consumen el wire format.
+ * Misma convención de montos que `pharmacy.types.ts`: texto exacto,
  * porque el `numeric` de la base no cabe sin pérdida en un `number`.
  */
 
@@ -50,7 +49,9 @@ export interface LineaDePedido {
    * Es la llave para que la bandeja (FAR-I3) pueda ofrecer productos del
    * mismo concepto cuando FAR-E2 publique el catálogo del tenant.
    */
-  readonly conceptId?: string;
+  readonly conceptId?: string | null;
+  /** Código del medicamento resuelto por la API; no es su UUID. */
+  readonly medicationCode?: string;
   readonly medicamento: string;
   /** «500 mg · caja x 20», o `null` si el directorio no lo publica. */
   readonly presentacion: string | null;
@@ -60,10 +61,16 @@ export interface LineaDePedido {
   readonly moneda: string | null;
   /** `false` = la sede no puede confirmar este renglón; se dice claro. */
   readonly disponible: boolean;
+  /** Cantidad acumulada que la API ya registró como entregada. */
+  readonly fulfilledQuantity?: number;
+  /** Cantidad realmente reservada; el saldo es reservada menos entregada. */
+  readonly reservedQuantity?: number;
 }
 
 /** Una de las dos puntas de una propuesta de sustitución. */
 export interface OpcionDeSustitucion {
+  /** Product UUID when this side is a concrete published substitute. */
+  readonly productId?: string;
   readonly nombre: string;
   readonly precio: string | null;
 }
@@ -143,7 +150,8 @@ export interface PedidoFarmacia {
   readonly farmacia: string;
   readonly sede: string;
   readonly direccion: string | null;
-  readonly modalidad: ModalidadDeEntrega;
+  /** `null` es ausencia real en pedidos históricos. */
+  readonly modalidad: ModalidadDeEntrega | null;
   /** Sólo con modalidad de envío: la dirección elegida, ya en texto. */
   readonly direccionDeEntrega: string | null;
   /**
@@ -177,7 +185,7 @@ export interface PedidoFarmacia {
    */
   readonly pago: PagoDelPedido | null;
   /** La receta de origen: para re-pedir y para volver al mapa de sedes. */
-  readonly requestId: string;
+  readonly requestId: string | null;
   readonly siteId: string;
   /**
    * La farmacia dueña de la sede. La agregó FAR-I7, y no es sólo para las
@@ -215,31 +223,10 @@ export interface EnvioDePedido {
   readonly direccionDeEntrega: string | null;
 }
 
-/**
- * Los pasos que en la vida real ejecuta la farmacia. Sólo los consume la
- * barra de demostración (`environment.demoPresets`): con FAR-E1 estos pasos
- * los dispara la contraparte real y la barra desaparece.
- */
-export const SIMULACIONES_DE_FARMACIA = [
-  'REVISAR',
-  'CONFIRMAR',
-  'PROPONER_SUSTITUCION',
-  'MARCAR_LISTO',
-  'DISPENSAR',
-  'RECHAZAR',
-  'VENCER',
-] as const;
-
-export type SimulacionDeFarmacia = (typeof SIMULACIONES_DE_FARMACIA)[number];
-
 /* ─── El lado del mostrador (carril FAR-I3, contrato de FAR-E2) ─────────── */
 
 /** Qué decide la farmacia sobre un renglón al confirmar el pedido. */
-export const DECISIONES_DE_LINEA = [
-  'TAL_CUAL',
-  'PROPONER_GENERICO',
-  'NO_DISPONIBLE',
-] as const;
+export const DECISIONES_DE_LINEA = ['TAL_CUAL', 'PROPONER_GENERICO', 'NO_DISPONIBLE'] as const;
 
 export type DecisionDeLinea = (typeof DECISIONES_DE_LINEA)[number];
 
@@ -253,6 +240,8 @@ export interface AjusteDeLinea {
   readonly indice: number;
   readonly decision: DecisionDeLinea;
   readonly propuesta?: {
+    /** Producto real elegido del catálogo. */
+    readonly productId?: string;
     readonly nombre: string;
     readonly precio: string | null;
   };

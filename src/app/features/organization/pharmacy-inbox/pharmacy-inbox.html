@@ -17,15 +17,6 @@
     [ngModel]="alarma.sonidoActivo()"
     (ngModelChange)="alarma.alternarSonido()"
   />
-  @if (demoActiva) {
-    <p class="bandeja__demo" data-testid="bandeja-demo">
-      <app-badge variant="info">Demo</app-badge>
-      <span>
-        Bandeja de demostración: los pedidos llegan del recorrido del paciente,
-        sin conexión con un mostrador real todavía.
-      </span>
-    </p>
-  }
 </div>
 
 <app-view-state-host [state]="state()" (retry)="cargar()">

@@ -89,7 +89,10 @@ export function toPedidoStatusPresentation(estado: EstadoDePedido): PedidoStatus
  * del mostrador cambia. Para todo lo demás delega en la tabla por estado.
  */
 export function presentacionDePedido(pedido: PedidoFarmacia): PedidoStatusPresentation {
-  if (pedido.estado === 'RETIRADO' && pedido.modalidad !== 'RETIRO') {
+  if (
+    pedido.estado === 'RETIRADO' &&
+    (pedido.modalidad === 'DOMICILIO' || pedido.modalidad === 'TRABAJO')
+  ) {
     return { tone: 'secondary', label: 'Entregado', descripcion: 'Tu pedido llegó.' };
   }
   if (pedido.estado === 'LISTO_PARA_RETIRO' && pedido.pago?.estado === 'PAGADO') {
@@ -109,8 +112,8 @@ const ETIQUETA_DE_MODALIDAD: Readonly<Record<ModalidadDeEntrega, string>> = Obje
 });
 
 /** La modalidad en palabras de mostrador — el código jamás se pinta. */
-export function etiquetaDeModalidad(modalidad: ModalidadDeEntrega): string {
-  return ETIQUETA_DE_MODALIDAD[modalidad];
+export function etiquetaDeModalidad(modalidad: ModalidadDeEntrega | null): string {
+  return modalidad === null ? 'Modalidad no registrada' : ETIQUETA_DE_MODALIDAD[modalidad];
 }
 
 /**

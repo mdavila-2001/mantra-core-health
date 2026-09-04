@@ -3,18 +3,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
+  DestroyRef,
   inject,
   signal,
-  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import type { Observable } from 'rxjs';
 
+import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
+import type { PharmacyProduct } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import {
-  esEstadoTerminal,
-  estaPagado,
   PharmacyOrdersClient,
   puedeConfirmarse,
   puedePrepararse,
@@ -25,8 +24,9 @@ import type {
   DecisionDeLinea,
   PedidoFarmacia,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
-import { dataOf, loading, notFound, ready } from '../../../../core/view-state/view-state';
+import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -37,6 +37,8 @@ import { DialogService } from '../../../../shared/components/molecules/dialog/di
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Radio } from '../../../../shared/components/molecules/radio/radio';
 import { RadioGroup } from '../../../../shared/components/molecules/radio-group/radio-group';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { toBandejaStatusPresentation } from '../bandeja-status';
@@ -47,11 +49,24 @@ const BANDEJA_ROUTE = '/administration/pharmacy-orders';
 /** Lo que el mostrador edita de un renglón antes de confirmar. */
 interface AjusteEnEdicion {
   readonly decision: DecisionDeLinea;
-  /** El nombre del genérico propuesto; obligatorio para poder confirmar. */
-  readonly nombre: string;
-  /** El precio propuesto, como lo tipeó el mostrador; vacío = sin precio. */
-  readonly precio: string;
+  readonly propuesta?: {
+    readonly productId: string;
+    readonly nombre: string;
+    readonly precio: null;
+  };
 }
+
+interface SubstituteSearch {
+  readonly status: 'idle' | 'loading' | 'ready' | 'error' | 'missing-concept';
+  readonly products: readonly PharmacyProduct[];
+  readonly options: readonly SelectOption<string>[];
+}
+
+const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
+  status: 'idle',
+  products: [],
+  options: [],
+};
 
 /**
  * **El pedido, del lado del mostrador** (carril FAR-I3).
@@ -71,8 +86,9 @@ interface AjusteEnEdicion {
  * más tarde el retiro: el código que trae la persona, con entrega parcial
  * por renglón si no se lleva todo.
  *
- * El selector de productos reales del mismo concepto llega con el catálogo
- * del tenant (FAR-E2); mientras, el genérico se escribe con nombre y precio.
+ * Las sustituciones se eligen del catálogo publicado del tenant usando el
+ * concepto que la API entrega en cada línea. El backend vuelve a validar que
+ * el producto propuesto pertenece a la farmacia y al mismo concepto.
  */
 @Component({
   selector: 'app-inbox-order',
@@ -88,6 +104,7 @@ interface AjusteEnEdicion {
     Radio,
     RadioGroup,
     RouterLink,
+    Select,
     ViewStateHost,
   ],
   templateUrl: './inbox-order.html',
@@ -96,6 +113,8 @@ interface AjusteEnEdicion {
 })
 export class InboxOrder {
   private readonly ordersClient = inject(PharmacyOrdersClient);
+  private readonly pharmacyClient = inject(PharmacyClient);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(DialogService);
   private readonly navigation = inject(NavigationService);
 
@@ -108,6 +127,7 @@ export class InboxOrder {
 
   /** Un ajuste por renglón, en el orden de las líneas del pedido. */
   protected readonly ajustes = signal<readonly AjusteEnEdicion[]>([]);
+  protected readonly substituteSearches = signal<Readonly<Record<number, SubstituteSearch>>>({});
 
   /** El código que la persona trae al mostrador, tal como se tipea. */
   protected readonly codigo = signal('');
@@ -124,27 +144,6 @@ export class InboxOrder {
    * crítico es el «ya pagado» del QR de la demo — sin este badge, la
    * farmacia cobraría dos veces.
    */
-  protected readonly etiquetaDePago = computed(() => {
-    const pedido = this.pedido();
-    if (pedido === null) {
-      return null;
-    }
-    if (estaPagado(pedido)) {
-      return pedido.pago?.origen === 'QR_DEMO'
-        ? { tone: 'info' as const, label: 'Pagado por QR (demo) — no cobrar' }
-        : { tone: 'success' as const, label: 'Pagado en mostrador' };
-    }
-    // El recordatorio de cobrar aparece donde el cobro puede pasar: el
-    // mostrador con el pedido listo, o la entrega con el envío en la calle.
-    if (pedido.estado === 'LISTO_PARA_RETIRO') {
-      return { tone: 'warning' as const, label: 'Pago pendiente — cobrar en mostrador' };
-    }
-    if (pedido.envio === 'EN_CAMINO') {
-      return { tone: 'warning' as const, label: 'Pago pendiente — cobrar al entregar' };
-    }
-    return null;
-  });
-
   protected readonly presentacion = computed(() => {
     const abierto = this.pedido();
     return abierto === null ? null : toBandejaStatusPresentation(abierto.estado);
@@ -166,44 +165,7 @@ export class InboxOrder {
     return abierto !== null && puedePrepararse(abierto.estado) && abierto.modalidad === 'RETIRO';
   });
 
-  protected readonly esEnvio = computed(() => {
-    const abierto = this.pedido();
-    return abierto !== null && abierto.modalidad !== 'RETIRO';
-  });
-
-  protected readonly puedeSalirEnCamino = computed(() => {
-    const abierto = this.pedido();
-    return (
-      abierto !== null &&
-      this.esEnvio() &&
-      puedePrepararse(abierto.estado) &&
-      abierto.envio === null
-    );
-  });
-
-  /**
-   * La entrega sólo cierra un pedido que sigue en preparación: uno cancelado
-   * con el envío en la calle no se resucita desde el mostrador.
-   */
-  protected readonly puedeEntregarse = computed(() => {
-    const abierto = this.pedido();
-    return abierto !== null && abierto.envio === 'EN_CAMINO' && puedePrepararse(abierto.estado);
-  });
-
-  /** El bloque de envío se pinta mientras el pedido vive y no se entregó. */
-  protected readonly muestraEnvio = computed(() => {
-    const abierto = this.pedido();
-    return (
-      abierto !== null &&
-      this.esEnvio() &&
-      abierto.envio !== 'ENTREGADO' &&
-      !esEstadoTerminal(abierto.estado)
-    );
-  });
-
-  protected readonly enRetiro = computed(
-    () => this.pedido()?.estado === 'LISTO_PARA_RETIRO',
-  );
+  protected readonly enRetiro = computed(() => this.pedido()?.estado === 'LISTO_PARA_RETIRO');
 
   /** Renglones en pie que todavía no salieron por el mostrador. */
   protected readonly pendientes = computed<readonly number[]>(() => {
@@ -211,9 +173,11 @@ export class InboxOrder {
     if (abierto === null) {
       return [];
     }
-    const entregados = new Set(abierto.entregas.flatMap((entrega) => entrega.indices));
     return abierto.lineas.flatMap((linea, indice) =>
-      linea.disponible && !entregados.has(indice) ? [indice] : [],
+      linea.disponible &&
+      (linea.fulfilledQuantity ?? 0) < (linea.reservedQuantity ?? linea.cantidad)
+        ? [indice]
+        : [],
     );
   });
 
@@ -235,11 +199,8 @@ export class InboxOrder {
       if (linea === undefined) {
         continue;
       }
-      // El mismo lector que arma la propuesta (`aPrecio`): lo que se
-      // muestra en vivo y lo que viaja al confirmar no pueden divergir.
-      const texto =
-        ajuste.decision === 'PROPONER_GENERICO' ? aPrecio(ajuste.precio) : linea.precio;
-      const precio = Number(texto ?? Number.NaN);
+      // El total usa únicamente los precios congelados que devolvió la API.
+      const precio = Number(linea.precio ?? Number.NaN);
       if (!Number.isFinite(precio)) {
         return null;
       }
@@ -247,11 +208,6 @@ export class InboxOrder {
     }
     return total.toFixed(2);
   });
-
-  /** Hay propuestas en el ajuste actual: el total en vivo es condicional. */
-  protected readonly hayPropuestas = computed(() =>
-    this.ajustes().some((ajuste) => ajuste.decision === 'PROPONER_GENERICO'),
-  );
 
   /**
    * Confirmar exige que cada genérico tenga nombre y que quede al menos un
@@ -263,62 +219,65 @@ export class InboxOrder {
       return false;
     }
     const todoCaido = ajustes.every((ajuste) => ajuste.decision === 'NO_DISPONIBLE');
-    const genericosSinNombre = ajustes.some(
-      (ajuste) => ajuste.decision === 'PROPONER_GENERICO' && ajuste.nombre.trim() === '',
+    const hasUnresolvedSubstitute = ajustes.some(
+      (ajuste) => ajuste.decision === 'PROPONER_GENERICO' && ajuste.propuesta === undefined,
     );
-    return !todoCaido && !genericosSinNombre;
+    return !todoCaido && !hasUnresolvedSubstitute;
   });
 
   constructor() {
     inject(ActivatedRoute)
       .paramMap.pipe(takeUntilDestroyed())
       .subscribe((params) => this.cargar(params.get('orderId') ?? ''));
-    // El reflejo en vivo de la demo: si el pedido cambia en otra pestaña
-    // (el paciente decide), la ficha se actualiza sola — es lo que el aviso
-    // de la espera promete. Con FAR-E2 esto será polling o notificación.
-    effect(() => {
-      const vivos = this.ordersClient.pedidosEnVivo();
-      const actual = untracked(() => this.pedido());
-      const fresco = actual === null ? undefined : vivos.find((p) => p.id === actual.id);
-      if (fresco !== undefined && fresco !== actual) {
-        this.aplicar(fresco);
-      }
-    });
   }
 
   protected cargar(id: string = this.pedido()?.id ?? ''): void {
     this.state.set(loading());
-    this.ordersClient.pedido(id).subscribe((pedido) => {
-      if (pedido === null) {
-        this.state.set(
-          notFound({ label: 'Volver a la bandeja', route: BANDEJA_ROUTE }),
-        );
-        return;
-      }
-      if (pedido.estado === 'ENVIADO') {
-        // Abrirlo es recepcionarlo: el paciente ve «en revisión» desde ya.
-        this.ordersClient
-          .abrirRevision(pedido.id)
-          .subscribe((abierto) => this.aplicar(abierto ?? pedido));
-        return;
-      }
-      this.aplicar(pedido);
+    this.ordersClient.pedidoParaMostrador(id).subscribe({
+      next: (pedido) => {
+        if (pedido.estado === 'ENVIADO') {
+          this.ordersClient.abrirRevision(pedido.id).subscribe({
+            next: (opened) => this.aplicar(opened),
+            error: (error: unknown) => this.state.set(errorToViewState<PedidoFarmacia>(error)),
+          });
+          return;
+        }
+        this.aplicar(pedido);
+      },
+      error: (error: unknown) => this.state.set(errorToViewState<PedidoFarmacia>(error)),
     });
   }
 
   protected cambiarDecision(indice: number, decision: unknown): void {
-    this.actualizarAjuste(indice, (ajuste) => ({
-      ...ajuste,
-      decision: decision as DecisionDeLinea,
-    }));
+    const nextDecision = decision as DecisionDeLinea;
+    this.actualizarAjuste(indice, () => ({ decision: nextDecision }));
+    if (nextDecision === 'PROPONER_GENERICO') {
+      this.loadSubstitutes(indice);
+    }
   }
 
-  protected cambiarNombre(indice: number, nombre: string | number | null): void {
-    this.actualizarAjuste(indice, (ajuste) => ({ ...ajuste, nombre: String(nombre ?? '') }));
+  protected selectSubstitute(indice: number, productId: string | null): void {
+    const product = this.substituteSearchAt(indice).products.find((item) => item.id === productId);
+    this.actualizarAjuste(indice, () =>
+      product === undefined
+        ? { decision: 'PROPONER_GENERICO' }
+        : {
+            decision: 'PROPONER_GENERICO',
+            propuesta: {
+              productId: product.id,
+              nombre: visibleProductName(product),
+              precio: null,
+            },
+          },
+    );
   }
 
-  protected cambiarPrecio(indice: number, precio: string | number | null): void {
-    this.actualizarAjuste(indice, (ajuste) => ({ ...ajuste, precio: String(precio ?? '') }));
+  protected substituteSearchAt(indice: number): SubstituteSearch {
+    return this.substituteSearches()[indice] ?? EMPTY_SUBSTITUTE_SEARCH;
+  }
+
+  protected retrySubstitutes(indice: number): void {
+    this.loadSubstitutes(indice);
   }
 
   protected confirmar(): void {
@@ -329,16 +288,9 @@ export class InboxOrder {
     const ajustes: readonly AjusteDeLinea[] = this.ajustes().map((ajuste, indice) => ({
       indice,
       decision: ajuste.decision,
-      ...(ajuste.decision === 'PROPONER_GENERICO'
-        ? {
-            propuesta: {
-              nombre: ajuste.nombre.trim(),
-              precio: aPrecio(ajuste.precio),
-            },
-          }
-        : {}),
+      ...(ajuste.propuesta === undefined ? {} : { propuesta: ajuste.propuesta }),
     }));
-    this.ejecutar(this.ordersClient.confirmarPedido(abierto.id, ajustes));
+    this.ejecutar(this.ordersClient.confirmarPedido(abierto, ajustes));
   }
 
   protected async rechazar(): Promise<void> {
@@ -370,30 +322,6 @@ export class InboxOrder {
     this.ejecutar(this.ordersClient.marcarListo(abierto.id));
   }
 
-  protected salirEnCamino(): void {
-    const abierto = this.pedido();
-    if (abierto === null) {
-      return;
-    }
-    this.ejecutar(this.ordersClient.marcarEnvio(abierto.id, 'EN_CAMINO'));
-  }
-
-  protected async entregar(): Promise<void> {
-    const abierto = this.pedido();
-    if (abierto === null) {
-      return;
-    }
-    const confirmado = await this.dialog.confirm({
-      title: 'Registrar la entrega',
-      message: 'El pedido queda cerrado como entregado. ¿Lo confirmás?',
-      confirmLabel: 'Sí, se entregó',
-    });
-    if (!confirmado) {
-      return;
-    }
-    this.ejecutar(this.ordersClient.marcarEnvio(abierto.id, 'ENTREGADO'));
-  }
-
   protected alternarRenglon(indice: number, llevado: boolean): void {
     this.llevados.update((actuales) => {
       const proximos = new Set(actuales);
@@ -413,14 +341,20 @@ export class InboxOrder {
     }
     this.ocupado.set(true);
     this.ordersClient
-      .dispensar(abierto.id, { codigo: this.codigo(), indices: [...this.llevados()] })
-      .subscribe(({ codigoValido, pedido }) => {
-        this.ocupado.set(false);
-        this.codigoInvalido.set(!codigoValido);
-        if (codigoValido && pedido !== null) {
-          this.codigo.set('');
-          this.aplicar(pedido);
-        }
+      .dispensar(abierto, { codigo: this.codigo(), indices: [...this.llevados()] })
+      .subscribe({
+        next: ({ codigoValido, pedido }) => {
+          this.ocupado.set(false);
+          this.codigoInvalido.set(!codigoValido);
+          if (codigoValido && pedido !== null) {
+            this.codigo.set('');
+            this.aplicar(pedido);
+          }
+        },
+        error: (error: unknown) => {
+          this.ocupado.set(false);
+          this.state.set(errorToViewState<PedidoFarmacia>(error));
+        },
       });
   }
 
@@ -435,21 +369,22 @@ export class InboxOrder {
   }
 
   private reiniciarAjustes(pedido: PedidoFarmacia): void {
+    this.substituteSearches.set({});
     this.ajustes.set(
       pedido.lineas.map((linea) => ({
         decision: linea.disponible ? 'TAL_CUAL' : 'NO_DISPONIBLE',
-        nombre: `Genérico equivalente de ${linea.medicamento}`,
-        precio: '',
       })),
     );
   }
 
   private reiniciarRetiro(pedido: PedidoFarmacia): void {
-    const entregados = new Set(pedido.entregas.flatMap((entrega) => entrega.indices));
     this.llevados.set(
       new Set(
         pedido.lineas.flatMap((linea, indice) =>
-          linea.disponible && !entregados.has(indice) ? [indice] : [],
+          linea.disponible &&
+          (linea.fulfilledQuantity ?? 0) < (linea.reservedQuantity ?? linea.cantidad)
+            ? [indice]
+            : [],
         ),
       ),
     );
@@ -464,6 +399,46 @@ export class InboxOrder {
     );
   }
 
+  private loadSubstitutes(indice: number): void {
+    const line = this.pedido()?.lineas[indice];
+    if (line === undefined) {
+      return;
+    }
+    if (!line.conceptId) {
+      this.updateSubstituteSearch(indice, {
+        status: 'missing-concept',
+        products: [],
+        options: [],
+      });
+      return;
+    }
+
+    this.updateSubstituteSearch(indice, { status: 'loading', products: [], options: [] });
+    this.pharmacyClient
+      .searchProducts({ conceptId: line.conceptId })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (page) => {
+          const products = page.items.filter((product) => product.id !== line.productId);
+          this.updateSubstituteSearch(indice, {
+            status: 'ready',
+            products,
+            options: products.map((product) => ({
+              value: product.id,
+              label: visibleProductName(product),
+            })),
+          });
+        },
+        error: () => {
+          this.updateSubstituteSearch(indice, { status: 'error', products: [], options: [] });
+        },
+      });
+  }
+
+  private updateSubstituteSearch(indice: number, search: SubstituteSearch): void {
+    this.substituteSearches.update((current) => ({ ...current, [indice]: search }));
+  }
+
   private ejecutar(operacion: Observable<unknown>): void {
     this.ocupado.set(true);
     operacion.subscribe({
@@ -471,20 +446,14 @@ export class InboxOrder {
         this.ocupado.set(false);
         this.cargar();
       },
-      error: () => this.ocupado.set(false),
+      error: (error: unknown) => {
+        this.ocupado.set(false);
+        this.state.set(errorToViewState<PedidoFarmacia>(error));
+      },
     });
   }
 }
 
-/**
- * El precio tipeado, normalizado a texto exacto; vacío, ilegible o negativo
- * = sin precio. La coma decimal vale: «24,50» es como se escribe acá.
- */
-export function aPrecio(texto: string): string | null {
-  const limpio = texto.trim().replace(',', '.');
-  if (limpio === '') {
-    return null;
-  }
-  const valor = Number(limpio);
-  return Number.isFinite(valor) && valor >= 0 ? valor.toFixed(2) : null;
+function visibleProductName(product: PharmacyProduct): string {
+  return product.brandName ?? product.genericName ?? product.productCode;
 }
