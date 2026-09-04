@@ -560,7 +560,7 @@ describe('PractitionersDirectory', () => {
 
   /* -- La traducción a la tarjeta ------------------------------------------ */
 
-  it('la disponibilidad se dice con palabras, no sólo con color', () => {
+  it('la tarjeta no estampa la disponibilidad para pacientes nuevos', () => {
     montarEnEspecialidad();
     responder([FILA, OTRA]);
     responderConceptos();
@@ -571,8 +571,12 @@ describe('PractitionersDirectory', () => {
         .flatMap((p) => p.seals ?? [])
         .some((s) => s.label === etiqueta);
 
-    expect(sellos('Acepta pacientes nuevos')).toBe(true);
-    expect(sellos('No toma pacientes nuevos')).toBe(true);
+    // El sello salía en TODA tarjeta, y en la de quien nunca tocó el ajuste
+    // anunciaba «No toma pacientes nuevos» de gente que sí los toma.
+    expect(sellos('Acepta pacientes nuevos')).toBe(false);
+    expect(sellos('No toma pacientes nuevos')).toBe(false);
+    // Los sellos que sí distinguen siguen en pie.
+    expect(sellos('Matrícula verificada')).toBe(true);
   });
 
   it('el clic lleva a la ficha del profesional', () => {

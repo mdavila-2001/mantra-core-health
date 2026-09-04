@@ -104,14 +104,13 @@
       <p class="profesional__bio">{{ perfil().bio }}</p>
     }
 
-    <!-- Disponibilidad y especialidades consolidadas como tags. El texto va
-         PROYECTADO: el `label` del chip es sólo el nombre accesible. -->
+    <!-- Especialidades e idiomas consolidados como tags. El texto va
+         PROYECTADO: el `label` del chip es sólo el nombre accesible.
+         La disponibilidad para pacientes nuevos ya no se estampa acá: se
+         mostraba en TODA ficha, también en la de quien nunca tocó el ajuste,
+         y el valor por defecto terminaba diciendo «No toma pacientes nuevos»
+         de gente que sí los toma. El dato sigue existiendo en el perfil. -->
     <div class="profesional__disponibilidad">
-      <app-chip [variant]="perfil().aceptaPacientesNuevos ? 'success' : 'neutral'">
-        {{
-          perfil().aceptaPacientesNuevos ? 'Acepta pacientes nuevos' : 'No toma pacientes nuevos'
-        }}
-      </app-chip>
       @if (perfil().telemedicina) {
         <app-chip variant="info">Atiende por telemedicina</app-chip>
       }
