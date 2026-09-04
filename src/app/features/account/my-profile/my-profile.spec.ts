@@ -833,35 +833,29 @@ describe('MyProfile · foto de perfil', () => {
     http.verify();
   });
 
-  it('con foto ya guardada, resuelve la URL y la pinta', () => {
+  it('con foto ya guardada, baja la imagen y la pinta como data: URL', async () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
 
-    http
-      .expectOne('/common/files/f-1/download-url')
-      .flush({ url: '/media/f-1', expiresAt: new Date().toISOString() });
+    // Por `/content` y no por `download-url`: esa firma apunta a
+    // `file://local/<sha>` y ningún `<img>` la carga. Era el defecto por el
+    // que la foto se guardaba bien y el avatar seguía en iniciales.
+    http.expectOne('/common/files/f-1/content').flush(pngFalso());
+    await esperarLaFoto(() => fotoDelPerfil(fixture) !== null);
     fixture.detectChanges();
 
-    const fotoUrl = (
-      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
-    ).fotoUrl();
-    expect(fotoUrl).toBe('/media/f-1');
+    expect(fotoDelPerfil(fixture)).toMatch(/^data:image\/png;base64,/);
   });
 
-  it('si la URL inicial no se puede resolver, degrada a null sin romper la pantalla', () => {
+  it('si la imagen no se puede leer, degrada a null sin romper la pantalla', () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
 
-    http
-      .expectOne('/common/files/f-1/download-url')
-      .error(new ProgressEvent('error'), { status: 500 });
+    http.expectOne('/common/files/f-1/content').error(new ProgressEvent('error'), { status: 500 });
     fixture.detectChanges();
 
-    const fotoUrl = (
-      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
-    ).fotoUrl();
-    expect(fotoUrl).toBeNull();
+    expect(fotoDelPerfil(fixture)).toBeNull();
   });
 
-  it('sube la foto elegida, la fija y pinta la URL resuelta', () => {
+  it('sube la foto elegida, la fija y la pinta', async () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({}));
     fixture.detectChanges();
 
@@ -879,15 +873,11 @@ describe('MyProfile · foto de perfil', () => {
     expect(puesta.request.body).toEqual({ fileId: 'f-2' });
     puesta.flush(perfilCon({ photoFileId: 'f-2' }));
 
-    http
-      .expectOne('/common/files/f-2/download-url')
-      .flush({ url: '/media/f-2', expiresAt: new Date().toISOString() });
+    http.expectOne('/common/files/f-2/content').flush(pngFalso());
+    await esperarLaFoto(() => fotoDelPerfil(fixture) !== null);
     fixture.detectChanges();
 
-    const fotoUrl = (
-      fixture.componentInstance as unknown as { fotoUrl: () => string | null }
-    ).fotoUrl();
-    expect(fotoUrl).toBe('/media/f-2');
+    expect(fotoDelPerfil(fixture)).toMatch(/^data:image\/png;base64,/);
   });
 
   it('un profesional no ve el control: la tarjeta de paciente no se carga para él', () => {
@@ -922,3 +912,30 @@ describe('MyProfile · foto de perfil', () => {
     otroHttp.verify();
   });
 });
+
+/** Lo que la tarjeta tiene hoy como foto. `null` es el avatar de iniciales. */
+function fotoDelPerfil(fixture: ComponentFixture<MyProfile>): string | null {
+  return (fixture.componentInstance as unknown as { fotoUrl: () => string | null }).fotoUrl();
+}
+
+/**
+ * Un PNG mínimo, como Blob.
+ *
+ * La foto se resuelve bajando los bytes por `/content` y codificándolos a
+ * `data:`: importa que el Blob traiga tipo, no qué contiene.
+ */
+function pngFalso(): Blob {
+  return new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' });
+}
+
+/**
+ * Espera a que `FileReader` termine de codificar.
+ *
+ * Es asíncrono y **no** pasa por los temporizadores de `fakeAsync`, así que se
+ * sondea en vez de ceder un turno fijo, que resultaba intermitente.
+ */
+async function esperarLaFoto(hayFoto: () => boolean): Promise<void> {
+  for (let intento = 0; intento < 50 && !hayFoto(); intento++) {
+    await new Promise((sigue) => setTimeout(sigue, 0));
+  }
+}

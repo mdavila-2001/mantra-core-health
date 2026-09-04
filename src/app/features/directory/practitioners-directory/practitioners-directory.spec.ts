@@ -29,6 +29,7 @@ const FILA = {
   acceptsNewPatients: true,
   telehealthAvailable: false,
   specialties: [{ specialtyConceptId: 'esp-cardio', isPrimary: true }],
+  workplaces: ['Clínica Foianini', 'Hospital San Juan de Dios'],
 };
 
 const OTRA = {
@@ -310,6 +311,31 @@ describe('PractitionersDirectory', () => {
     expect(sinSello?.seals?.map((s) => s.label).join(' ') ?? '').not.toContain('verificar');
   });
 
+  it('la tarjeta dice dónde atiende, y resume cuando son muchas', () => {
+    montarEnEspecialidad();
+    responder([
+      FILA,
+      {
+        ...OTRA,
+        workplaces: ['Clínica A', 'Clínica B', 'Clínica C', 'Hospital D'],
+      },
+    ]);
+    responderConceptos();
+
+    const todos = grupos().flatMap((g) => g.profesionales);
+    const conDos = todos.find((p) => p.id === 'per-1');
+    const conCuatro = todos.find((p) => p.id === 'per-2');
+
+    expect(conDos?.meta?.map((m) => m.text).join(' | ')).toContain(
+      'Clínica Foianini · Hospital San Juan de Dios',
+    );
+    // Con más de dos, la tarjeta nombra dos y CUENTA el resto: si las listara
+    // todas dejaría de poder compararse de un vistazo.
+    const texto = conCuatro?.meta?.map((m) => m.text).join(' | ') ?? '';
+    expect(texto).toContain('Clínica A · Clínica B · y 2 sedes más');
+    expect(texto).not.toContain('Hospital D');
+  });
+
   /* -- 1 · Están todos, sin escribir nada ---------------------------------- */
 
   it('carga la guía al abrir, sin que nadie escriba nada', () => {
@@ -367,8 +393,12 @@ describe('PractitionersDirectory', () => {
     const cruzada = tarjetas.find((t) => t.title === 'Ana Lucía Flores');
 
     expect(cruzada, 'la tarjeta cruzada debería estar en la guía').toBeDefined();
-    // Sin subtítulo: más pobre, pero no miente sobre quién es quién.
-    expect(cruzada?.meta ?? []).toEqual([]);
+    // Sin subtítulo: más pobre, pero no miente sobre quién es quién. Se
+    // comprueba que NO esté el nombre ajeno, y no que la tarjeta se quede sin
+    // contexto: desde que la tarjeta dice dónde atiende, «sin meta» y «sin
+    // subtítulo» dejaron de ser lo mismo.
+    const contexto = (cruzada?.meta ?? []).map((m) => m.text).join(' | ');
+    expect(contexto).not.toContain('Andrés Peña');
     // Y el resto conserva el suyo, que es legítimo.
     const sana = tarjetas.find((t) => t.title === 'Dr. Andrés Peña');
     expect(sana?.meta?.[0]?.text).toBe('Pediatra');

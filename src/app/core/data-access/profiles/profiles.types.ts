@@ -723,6 +723,14 @@ export interface PractitionerListItem {
   readonly telehealthAvailable: boolean;
   /** Sólo las vigentes, la principal primero. */
   readonly specialties: readonly PractitionerListSpecialty[];
+  /**
+   * Dónde atiende, en palabras.
+   *
+   * Texto plano porque es lo que el modelo guarda: la afiliación tiene el
+   * nombre de la organización —con la dirección pegada, tal como vino del
+   * padrón— y casi ninguna apunta a una sede registrada. Sólo las publicables.
+   */
+  readonly workplaces: readonly string[];
 }
 
 /**

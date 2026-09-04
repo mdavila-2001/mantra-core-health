@@ -334,17 +334,19 @@ describe('PractitionerProfile', () => {
     expect(visible().fotoUrl).toBeNull();
   });
 
-  it('con foto registrada resuelve su URL de descarga', () => {
+  it('con foto registrada baja la imagen y la pinta como data: URL', async () => {
     montar();
     http
       .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
       .flush({ ...PERFIL, photoFileId: 'foto-1' });
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
-    http
-      .expectOne((r) => r.url === '/common/files/foto-1/download-url')
-      .flush({ url: 'https://cdn.example/foto-1.jpg', expiresAt: MANANA });
+    // Por `/content` y no por `download-url`: esa firma apunta a
+    // `file://local/<sha>`, que ningún `<img>` carga. Era el defecto por el que
+    // la foto se subía bien y el avatar seguía mostrando iniciales.
+    http.expectOne((r) => r.url === '/common/files/foto-1/content').flush(pngFalso());
+    await esperarLaFoto(() => visible().fotoUrl !== null);
 
-    expect(visible().fotoUrl).toBe('https://cdn.example/foto-1.jpg');
+    expect(visible().fotoUrl).toMatch(/^data:image\/png;base64,/);
   });
 
   /** La foto es un adorno: su fallo degrada al avatar, no tumba el perfil. */
@@ -355,7 +357,7 @@ describe('PractitionerProfile', () => {
       .flush({ ...PERFIL, photoFileId: 'foto-1' });
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
     http
-      .expectOne((r) => r.url === '/common/files/foto-1/download-url')
+      .expectOne((r) => r.url === '/common/files/foto-1/content')
       .error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
 
     expect(visible().fotoUrl).toBeNull();
@@ -378,3 +380,35 @@ describe('PractitionerProfile', () => {
     expect(interno<() => { status: string }>('perfil')().status).toBe('not-found');
   });
 });
+
+/**
+ * Un PNG mínimo, como Blob.
+ *
+ * La foto se resuelve bajando los bytes por `/content` y codificándolos a
+ * `data:`: lo que importa no es el contenido sino que el Blob traiga tipo.
+ */
+function pngFalso(): Blob {
+  return new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' });
+}
+
+/**
+ * Espera a que `FileReader` termine de codificar.
+ *
+ * Es asíncrono y **no** pasa por los temporizadores de `fakeAsync`, así que se
+ * sondea en vez de ceder un turno fijo, que resultaba intermitente.
+ */
+async function esperarLaFoto(hayFoto: () => boolean): Promise<void> {
+  // El predicado puede reventar mientras la pantalla todavía no está lista
+  // —la foto forma parte del `forkJoin` de la carga—, y eso es justo lo que se
+  // está esperando, no un fallo.
+  const listo = (): boolean => {
+    try {
+      return hayFoto();
+    } catch {
+      return false;
+    }
+  };
+  for (let intento = 0; intento < 50 && !listo(); intento++) {
+    await new Promise((sigue) => setTimeout(sigue, 0));
+  }
+}

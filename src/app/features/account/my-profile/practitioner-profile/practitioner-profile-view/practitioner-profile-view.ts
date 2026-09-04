@@ -132,19 +132,17 @@ export class PractitionerProfileView {
    * El perfil llega por `input()` desde quien lo leyó, así que este componente
    * no puede refrescarlo por su cuenta y necesita recordar la foto nueva.
    *
-   * **Se guarda la ruta del servidor, no un `blob:`.** Se probó con
-   * `URL.createObjectURL(archivo)` —instantáneo, sin ida y vuelta— y la propia
-   * CSP de la aplicación lo bloquea: `img-src` declara `'self' data:` y una
-   * `blob:` no entra. La imagen quedaba invisible y en consola aparecía una
-   * violación de CSP, que es el peor de los dos mundos: parece que la subida
-   * falló cuando en realidad había funcionado. La ruta de la API es
-   * `same-origin`, se ve, y además prueba que la foto quedó guardada.
+   * **Se guarda una `data:` URL, no un `blob:` ni la firma del backend.** Con
+   * `URL.createObjectURL(archivo)` la CSP la bloquea (`img-src` declara
+   * `'self' data:`, y `blob:` no entra); con `downloadUrl()` es peor, porque
+   * esa firma apunta a `file://local/<sha>` y tampoco carga — ése era el
+   * defecto que hacía que la foto se subiera bien y no se viera nunca. Bajar
+   * los bytes por `/content` y codificarlos prueba, además, que la foto quedó
+   * guardada del otro lado.
    */
   protected readonly fotoRecien = signal<string | null>(null);
 
-  protected readonly fotoVisible = computed(
-    () => this.fotoRecien() ?? this.perfil().fotoUrl,
-  );
+  protected readonly fotoVisible = computed(() => this.fotoRecien() ?? this.perfil().fotoUrl);
 
   /**
    * Sube la foto elegida y la fija como foto del perfil profesional.
@@ -166,8 +164,20 @@ export class PractitionerProfileView {
     // El input se limpia siempre: sin esto, elegir el mismo archivo dos veces
     // seguidas no dispara `change` y parece que el botón dejó de andar.
     entrada.value = '';
+    if (!archivo || this.subiendoFoto()) {
+      return;
+    }
+
     const profileId = this.auth.practitionerProfileId();
-    if (!archivo || this.subiendoFoto() || profileId === null) {
+    if (profileId === null) {
+      // Antes se salía en silencio: se elegía una foto, no pasaba nada, y no
+      // había forma de saber que el problema no era la imagen. Pasa de verdad
+      // —una cuenta cuya persona no tiene perfil profesional no lleva el claim
+      // `hpid`—, así que se dice, y se dice lo que la persona puede hacer.
+      this.errorDeFoto.set(
+        'Tu cuenta todavía no está asociada a un perfil profesional, así que no hay ' +
+          'dónde guardar la foto. Escribinos para que la vinculemos.',
+      );
       return;
     }
 
@@ -181,11 +191,7 @@ export class PractitionerProfileView {
         switchMap((guardado) =>
           this.propagarAVitrina(guardado.photoFileId).pipe(map(() => guardado)),
         ),
-        switchMap((guardado) =>
-          this.archivos
-            .downloadUrl(guardado.photoFileId ?? '')
-            .pipe(map((descarga) => descarga.url)),
-        ),
+        switchMap((guardado) => this.archivos.imageDataUrl(guardado.photoFileId ?? '')),
       )
       .subscribe({
         next: (fotoUrl) => {
