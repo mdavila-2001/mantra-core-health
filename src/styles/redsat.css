@@ -275,6 +275,53 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   body::before, body::after { transform: none; transition: none; }
 }
+
+/* Gota de agua — la onda que se abre donde cae el puntero.
+   TAREA-08 · FT-08-R03 (2026-09-04).
+
+   Es un ANILLO que se expande y se apaga, no una mancha más: el fondo ya
+   tiene cuatro focos que siguen al puntero (arriba), y sumarles un quinto
+   habría sido más de lo mismo. La gota se lee porque hace otra cosa —nace
+   chica, crece y se desvanece— y porque dura poco.
+
+   Por qué cuelga de `html` y no de `body`: los dos pseudo-elementos de `body`
+   son las dos capas de focos, y la onda necesita su propio sistema de
+   coordenadas para centrarse EN EL PUNTO, no en la ventana.
+
+   Por qué se dispara con el clic y no con el movimiento: una onda por cada
+   `mousemove` sería una estela permanente —ruido, y trabajo de GPU sostenido
+   sobre un fondo que ya se mueve—. Una gota cae cuando algo toca la
+   superficie; el clic ES ese toque. `redsat-runtime.service.ts` (método
+   `gotaDeAgua()`) publica --gota-x / --gota-y y reinicia la animación
+   quitando y volviendo a poner `data-gota` sobre `html`.
+
+   `will-change` no se declara: la animación dura 900ms y se dispara de a una,
+   así que mantener una capa de composición permanente costaría más de lo que
+   ahorra. */
+html::after {
+  content: ""; position: fixed; z-index: -1; pointer-events: none;
+  /* Centrada en el punto del clic. Nace en 0 y el keyframe la abre. */
+  left: var(--gota-x, 50%); top: var(--gota-y, 50%);
+  width: 0; height: 0; margin: 0; border-radius: 50%;
+  /* El anillo: transparente adentro, aguamarina en el borde, nada afuera. Es
+     el mismo aguamarina de `--fondo-b`, para que la onda se lea como parte
+     del fondo y no como un elemento pegado encima. */
+  background: radial-gradient(circle, transparent 58%, var(--fondo-b) 72%, transparent 78%);
+  opacity: 0;
+}
+:root[data-gota]::after {
+  animation: gota-de-agua 900ms cubic-bezier(.16, .8, .3, 1) forwards;
+}
+@keyframes gota-de-agua {
+  from { width: 0; height: 0; margin: 0; opacity: .85; }
+  to   { width: 62vmax; height: 62vmax; margin: -31vmax 0 0 -31vmax; opacity: 0; }
+}
+/* Quien pidió menos movimiento no recibe la onda: el servicio ni siquiera
+   engancha el oyente, y esta regla es el cinturón por si el atributo quedara
+   puesto de una sesión anterior. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-gota]::after { animation: none; opacity: 0; }
+}
 /* El interruptor de presencia es sólo de modo claro: en oscuro el fondo
    siempre estuvo a plena vista, y ese comportamiento no cambia (AC-08-3). */
 :root[data-tema="oscuro"] body::before, :root[data-tema="oscuro"] body::after,

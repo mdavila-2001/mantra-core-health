@@ -41,10 +41,14 @@ describe('DesignSystemSample', () => {
     await fixture.whenStable();
   });
 
-  it('expone las 28 secciones del sistema, numeradas y en orden', () => {
+  it('expone las 29 secciones del sistema, numeradas y en orden', () => {
     const titulos = secciones();
 
-    expect(titulos).toHaveLength(28);
+    // La 29 es el fondo reactivo y la gota de agua (TAREA-08 · FT-08-R03). No
+    // tiene componente que mostrar —se ve mirando la página entera—, y entra
+    // igual porque la ficha exige prototiparla acá antes de aplicarla a todas
+    // las rutas.
+    expect(titulos).toHaveLength(29);
     titulos.forEach((titulo, indice) => {
       expect(titulo).toMatch(new RegExp(`^${String(indice + 1).padStart(2, '0')} · `));
     });
