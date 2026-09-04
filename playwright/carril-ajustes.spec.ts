@@ -20,12 +20,12 @@ import { esperarAplicacionLista, entrar, irA } from './support/sesion';
  * autenticación real y prohíbe fabricar tokens. Sin ellas la prueba se salta
  * diciendo qué falta, en vez de fallar por algo que no es del producto.
  */
-const IDENTIFICADOR = process.env['E2E_ADMIN_EMAIL'];
-const CLAVE = process.env['E2E_ADMIN_PASSWORD'];
+const IDENTIFIER = process.env['E2E_ADMIN_EMAIL'];
+const PASSWORD = process.env['E2E_ADMIN_PASSWORD'];
 
 test.describe('Ajustes', () => {
   test.skip(
-    !IDENTIFICADOR || !CLAVE,
+    !IDENTIFIER || !PASSWORD,
     'Faltan E2E_ADMIN_EMAIL / E2E_ADMIN_PASSWORD: la suite no fabrica sesiones.',
   );
 
@@ -39,8 +39,8 @@ test.describe('Ajustes', () => {
     page = await browser.newPage();
     await entrar(page, {
       rol: 'administrador',
-      identificador: IDENTIFICADOR as string,
-      clave: CLAVE as string,
+      identificador: IDENTIFIER as string,
+      clave: PASSWORD as string,
       nombre: 'admin',
     });
   });
@@ -50,10 +50,10 @@ test.describe('Ajustes', () => {
   });
 
   test('el encabezado ofrece Ajustes, y el tema dejó de estar suelto ahí', async () => {
-    const ajustes = page.getByTestId('header-ajustes');
+    const settingsLink = page.getByTestId('header-ajustes');
 
-    await expect(ajustes).toBeVisible();
-    await expect(ajustes).toHaveAttribute('aria-label', 'Ajustes');
+    await expect(settingsLink).toBeVisible();
+    await expect(settingsLink).toHaveAttribute('aria-label', 'Ajustes');
     // El conmutador se mudó adentro: suelto en el encabezado parecía la única
     // preferencia que el producto tiene.
     await expect(page.locator('[app-theme-toggle]')).toHaveCount(0);
@@ -67,7 +67,7 @@ test.describe('Ajustes', () => {
 
     await expect(menu.filter({ hasText: 'Preferencias de avisos' })).toHaveCount(0);
     // Ajustes tampoco ocupa renglón: se entra por el ícono.
-    await expect(page.locator('[data-testid="nav-enlace"][data-route="/ajustes"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="nav-enlace"][data-route="/settings"]')).toHaveCount(0);
     // Pero la bandeja sigue en su lugar: no se movió nada de lo que se lee.
     await expect(
       page.locator('[data-testid="nav-enlace"][data-route="/notification-center"]'),
@@ -76,7 +76,7 @@ test.describe('Ajustes', () => {
 
   test('el ícono lleva a Ajustes, con sus tres secciones', async () => {
     await page.getByTestId('header-ajustes').click();
-    await page.waitForURL(/\/ajustes/, { timeout: 30_000 });
+    await page.waitForURL(/\/settings/, { timeout: 30_000 });
     await esperarAplicacionLista(page);
 
     await expect(page.getByRole('heading', { level: 1, name: 'Ajustes' })).toBeVisible();
@@ -86,7 +86,7 @@ test.describe('Ajustes', () => {
   });
 
   test('el panel de avisos carga las preferencias de verdad, contra la API', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
 
     // Las cuatro categorías en lenguaje llano, que es lo que la pantalla
@@ -95,43 +95,43 @@ test.describe('Ajustes', () => {
     await expect(page.getByTestId('pref-SCHEDULING')).toBeVisible();
     await expect(page.getByTestId('pref-MESSAGES')).toBeVisible();
     await expect(page.getByTestId('pref-SOCIAL')).toBeVisible();
-    await expect(page.getByTestId('pref-guardar')).toBeVisible();
+    await expect(page.getByTestId('pref-save')).toBeVisible();
   });
 
   test('elegir un tema estampa el atributo que lee la hoja de estilos', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
     await page.getByRole('tab', { name: 'Apariencia' }).click();
 
-    await page.getByTestId('tema-dark').click();
+    await page.getByTestId('theme-dark').click();
     await expect(page.locator('html')).toHaveAttribute('data-tema', 'oscuro');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
-    await page.getByTestId('tema-light').click();
+    await page.getByTestId('theme-light').click();
     await expect(page.locator('html')).toHaveAttribute('data-tema', 'claro');
   });
 
   test('los permisos del navegador se muestran con su estado real', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
     await page.getByRole('tab', { name: 'Permisos' }).click();
 
     // Los tres, cada uno con una lectura del navegador. No se afirma cuál:
     // depende del perfil de Chromium con que corra la suite.
-    await expect(page.getByTestId('permiso-avisos')).toBeVisible();
-    await expect(page.getByTestId('permiso-ubicacion')).toBeVisible();
-    await expect(page.getByTestId('permiso-camara')).toBeVisible();
+    await expect(page.getByTestId('permission-avisos')).toBeVisible();
+    await expect(page.getByTestId('permission-ubicacion')).toBeVisible();
+    await expect(page.getByTestId('permission-camara')).toBeVisible();
 
     // Y la explicación de por qué no hay lista de quién ve tus datos.
-    await expect(page.getByTestId('ajustes-accesos-nota')).toBeVisible();
+    await expect(page.getByTestId('settings-access-note')).toBeVisible();
   });
 
   test('a quien administra la seguridad le ofrece dónde administrar los permisos', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
     await page.getByRole('tab', { name: 'Permisos' }).click();
 
-    await expect(page.getByTestId('ajustes-roles')).toBeVisible();
+    await expect(page.getByTestId('settings-roles')).toBeVisible();
     // Acotado al contenido: el menú lateral también ofrece «Acceso delegado» a
     // este rol, y sin acotar el localizador encuentra los dos.
     await expect(
@@ -143,7 +143,16 @@ test.describe('Ajustes', () => {
     // Estuvo en el menú, así que está en los favoritos de alguien: redirige en
     // vez de devolver un 404.
     await irA(page, '/my-account/notification-preferences');
-    await page.waitForURL(/\/ajustes/, { timeout: 30_000 });
+    await page.waitForURL(/\/settings/, { timeout: 30_000 });
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Ajustes' })).toBeVisible();
+  });
+
+  test('la dirección en castellano sigue llevando a Ajustes (TAREA-29)', async () => {
+    // `/ajustes` fue la puerta desde el 28/08 y está en historiales: el
+    // renombre a `/settings` deja el redirect, como exige AC-29-3.
+    await irA(page, '/ajustes');
+    await page.waitForURL(/\/settings/, { timeout: 30_000 });
 
     await expect(page.getByRole('heading', { level: 1, name: 'Ajustes' })).toBeVisible();
   });
@@ -153,16 +162,16 @@ test.describe('Ajustes', () => {
   // ---------------------------------------------------------------------
 
   test('alternar un aviso y recargar lo muestra cambiado — es de la cuenta, no de la sesión', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
 
     const social = page.getByTestId('pref-SOCIAL').locator('input[role="switch"]');
     await expect(social).toBeVisible({ timeout: 30_000 });
-    const antes = await social.isChecked();
+    const before = await social.isChecked();
 
     await social.click();
-    await expect(social).toBeChecked({ checked: !antes });
-    await page.getByTestId('pref-guardar').click();
+    await expect(social).toBeChecked({ checked: !before });
+    await page.getByTestId('pref-save').click();
     await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
 
     // `page.reload()` canjea el refresh token — el mismo cupo de 10/min que el
@@ -170,67 +179,67 @@ test.describe('Ajustes', () => {
     await page.reload();
     await esperarAplicacionLista(page);
     await expect(page.getByTestId('pref-SOCIAL').locator('input[role="switch"]')).toBeChecked({
-      checked: !antes,
+      checked: !before,
       timeout: 30_000,
     });
 
     // Se deja como estaba: esta prueba no puede alterar el estado para las que
     // corren después de ella (mode: 'serial', misma sesión).
     await page.getByTestId('pref-SOCIAL').locator('input[role="switch"]').click();
-    await page.getByTestId('pref-guardar').click();
+    await page.getByTestId('pref-save').click();
     await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
   });
 
   test('un switch se alterna con Espacio desde el teclado, con foco visible', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
 
-    const mensajes = page.getByTestId('pref-MESSAGES').locator('input[role="switch"]');
-    await expect(mensajes).toBeVisible({ timeout: 30_000 });
-    const antes = await mensajes.isChecked();
+    const messages = page.getByTestId('pref-MESSAGES').locator('input[role="switch"]');
+    await expect(messages).toBeVisible({ timeout: 30_000 });
+    const before = await messages.isChecked();
 
-    await mensajes.focus();
-    await expect(mensajes).toBeFocused();
+    await messages.focus();
+    await expect(messages).toBeFocused();
     await page.keyboard.press('Space');
-    await expect(mensajes).toBeChecked({ checked: !antes });
+    await expect(messages).toBeChecked({ checked: !before });
 
     // Vuelve a como estaba, sin persistir: alcanza con probar el gesto de
     // teclado, no hace falta un guardado más.
     await page.keyboard.press('Space');
-    await expect(mensajes).toBeChecked({ checked: antes });
+    await expect(messages).toBeChecked({ checked: before });
   });
 
   test('si el PUT de guardar falla, el switch vuelve atrás y la pantalla lo dice', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
 
     const clinical = page.getByTestId('pref-CLINICAL').locator('input[role="switch"]');
     await expect(clinical).toBeVisible({ timeout: 30_000 });
-    const antes = await clinical.isChecked();
+    const before = await clinical.isChecked();
 
-    await page.route('**/notifications/preferences/me', (ruta) => {
-      if (ruta.request().method() === 'PUT') {
-        return ruta.fulfill({ status: 500, body: '{}' });
+    await page.route('**/notifications/preferences/me', (route) => {
+      if (route.request().method() === 'PUT') {
+        return route.fulfill({ status: 500, body: '{}' });
       }
-      return ruta.continue();
+      return route.continue();
     });
 
     await clinical.click();
-    await expect(clinical).toBeChecked({ checked: !antes });
-    await page.getByTestId('pref-guardar').click();
+    await expect(clinical).toBeChecked({ checked: !before });
+    await page.getByTestId('pref-save').click();
 
     await expect(page.getByText('No pudimos guardar tus preferencias.')).toBeVisible({
       timeout: 30_000,
     });
     // Nada quedó guardado (el PUT es todo-o-nada): vuelve a lo último
     // confirmado, no se queda «encendido de mentira» (AC-17-7).
-    await expect(clinical).toBeChecked({ checked: antes });
+    await expect(clinical).toBeChecked({ checked: before });
 
     await page.unroute('**/notifications/preferences/me');
   });
 
   test('doble clic rápido en «Guardar» produce un solo PUT', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
 
     const scheduling = page.getByTestId('pref-SCHEDULING').locator('input[role="switch"]');
@@ -238,32 +247,32 @@ test.describe('Ajustes', () => {
     await scheduling.click();
 
     let puts = 0;
-    page.on('request', (pedido) => {
-      if (pedido.url().includes('/notifications/preferences/me') && pedido.method() === 'PUT') {
+    page.on('request', (request) => {
+      if (request.url().includes('/notifications/preferences/me') && request.method() === 'PUT') {
         puts += 1;
       }
     });
 
-    const guardar = page.getByTestId('pref-guardar');
-    await guardar.click();
+    const saveButton = page.getByTestId('pref-save');
+    await saveButton.click();
     // El segundo clic, mientras el primer `PUT` sigue en vuelo: `app-button`
     // con `isLoading` lo intercepta (AC-17-8), así que no debería sumar otro.
-    await guardar.click({ force: true });
+    await saveButton.click({ force: true });
 
     await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
     expect(puts).toBe(1);
 
     // Se deja como estaba.
     await scheduling.click();
-    await guardar.click();
+    await saveButton.click();
     await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
   });
 
   test('«el de mi dispositivo» recarga sin parpadeo, en claro y en oscuro', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
     await page.getByRole('tab', { name: 'Apariencia' }).click();
-    await page.getByTestId('tema-system').click();
+    await page.getByTestId('theme-system').click();
     await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.+/);
 
     // `page.reload()` de nuevo: la tercera y última de esta suite (ver la nota
@@ -275,28 +284,28 @@ test.describe('Ajustes', () => {
     // resuelve `@media (prefers-color-scheme)` en la hoja de estilos.
     await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.+/);
 
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
     await page.getByRole('tab', { name: 'Apariencia' }).click();
-    await page.getByTestId('tema-light').click();
+    await page.getByTestId('theme-light').click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
 
   test('un permiso denegado no ofrece un switch que prometa revertirlo', async () => {
-    await irA(page, '/ajustes');
+    await irA(page, '/settings');
     await esperarAplicacionLista(page);
     await page.getByRole('tab', { name: 'Permisos' }).click();
 
-    const filaPermisos = page.locator('[data-testid^="permiso-"]');
-    const total = await filaPermisos.count();
+    const permissionBadges = page.locator('[data-testid^="permission-"]');
+    const total = await permissionBadges.count();
     for (let i = 0; i < total; i += 1) {
-      const pastilla = filaPermisos.nth(i);
-      const testid = await pastilla.getAttribute('data-testid');
-      const clave = testid?.replace('permiso-', '') ?? '';
-      if ((await pastilla.textContent())?.trim() === 'Bloqueado') {
+      const badge = permissionBadges.nth(i);
+      const testid = await badge.getAttribute('data-testid');
+      const key = testid?.replace('permission-', '') ?? '';
+      if ((await badge.textContent())?.trim() === 'Bloqueado') {
         // Ningún renglón de Permisos ofrece `app-switch`: el control aquí es
         // «Permitir», y sólo cuando el navegador todavía puede preguntar.
-        await expect(page.getByTestId(`pedir-${clave}`)).toHaveCount(0);
+        await expect(page.getByTestId(`request-${key}`)).toHaveCount(0);
       }
     }
     await expect(page.locator('[role="switch"]')).toHaveCount(0);

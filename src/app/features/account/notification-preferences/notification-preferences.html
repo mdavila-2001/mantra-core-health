@@ -5,37 +5,37 @@
 <h2 class="prefs__encabezado">Avisos</h2>
 <p class="prefs__intro">Elegí de qué querés que te avisemos y cuándo.</p>
 
-@if (error(); as mensaje) {
-  <app-alert tone="error" class="prefs__alerta">{{ mensaje }}</app-alert>
+@if (error(); as message) {
+  <app-alert tone="error" class="prefs__alerta">{{ message }}</app-alert>
 }
 
-@if (guardado()) {
+@if (saved()) {
   <app-alert tone="success" class="prefs__alerta">Guardamos tus preferencias.</app-alert>
 }
 
-@if (cargando()) {
+@if (loading()) {
   <p class="prefs__cargando" role="status">Cargando tus preferencias…</p>
 } @else {
   <section class="prefs__bloque">
     <h3 class="prefs__titulo">Qué avisos recibís</h3>
 
     <ul class="prefs__lista">
-      @for (fila of filas(); track fila.category) {
+      @for (row of rows(); track row.category) {
         <li class="prefs__fila">
           <span class="prefs__texto">
-            <span class="prefs__nombre">{{ fila.titulo }}</span>
-            <span class="prefs__detalle">{{ fila.detalle }}</span>
+            <span class="prefs__nombre">{{ row.title }}</span>
+            <span class="prefs__detalle">{{ row.detail }}</span>
           </span>
           <span class="prefs__derecha">
             <app-switch
               class="prefs__switch"
-              [attr.data-testid]="'pref-' + fila.category"
-              [label]="fila.titulo"
-              [checked]="fila.optedIn"
-              [disabled]="guardando()"
-              (checkedChange)="alternar(fila.category, $event)"
+              [attr.data-testid]="'pref-' + row.category"
+              [label]="row.title"
+              [checked]="row.optedIn"
+              [disabled]="saving()"
+              (checkedChange)="toggle(row.category, $event)"
             />
-            <app-nav-icon class="prefs__icono" [name]="fila.icono" />
+            <app-nav-icon class="prefs__icono" [name]="row.icon" />
           </span>
         </li>
       }
@@ -57,36 +57,36 @@
       <span class="prefs__derecha">
         <app-switch
           class="prefs__switch"
-          data-testid="pref-silencio"
+          data-testid="pref-quiet-hours"
           label="No mostrarme avisos en este horario"
-          [checked]="silencioActivo()"
-          [disabled]="guardando()"
-          (checkedChange)="alternarSilencio($event)"
+          [checked]="quietHoursEnabled()"
+          [disabled]="saving()"
+          (checkedChange)="toggleQuietHours($event)"
         />
         <app-nav-icon class="prefs__icono" name="bell" />
       </span>
     </div>
 
-    @if (silencioActivo()) {
+    @if (quietHoursEnabled()) {
       <div class="prefs__horas">
         <label class="prefs__hora">
           <span>Desde</span>
           <input
             type="time"
-            data-testid="pref-desde"
-            [ngModel]="desde()"
-            (ngModelChange)="desde.set($event)"
-            name="desde"
+            data-testid="pref-from"
+            [ngModel]="from()"
+            (ngModelChange)="from.set($event)"
+            name="from"
           />
         </label>
         <label class="prefs__hora">
           <span>Hasta</span>
           <input
             type="time"
-            data-testid="pref-hasta"
-            [ngModel]="hasta()"
-            (ngModelChange)="hasta.set($event)"
-            name="hasta"
+            data-testid="pref-to"
+            [ngModel]="to()"
+            (ngModelChange)="to.set($event)"
+            name="to"
           />
         </label>
       </div>
@@ -98,9 +98,9 @@
     <button
       app-button
       variant="primary"
-      data-testid="pref-guardar"
-      [isLoading]="guardando()"
-      (clicked)="guardar()"
+      data-testid="pref-save"
+      [isLoading]="saving()"
+      (clicked)="save()"
     >
       Guardar preferencias
     </button>

@@ -20,32 +20,32 @@
       </p>
 
       <ul class="ajustes__lista" role="radiogroup" aria-label="Tema de la aplicación">
-        @for (tema of temas; track tema.valor) {
+        @for (theme of themes; track theme.value) {
           <li class="ajustes__fila">
             <label class="ajustes__control">
               <input
                 type="radio"
-                name="tema"
-                [attr.data-testid]="'tema-' + tema.valor"
-                [checked]="temaElegido() === tema.valor"
-                (change)="elegirTema(tema.valor)"
+                name="theme"
+                [attr.data-testid]="'theme-' + theme.value"
+                [checked]="selectedTheme() === theme.value"
+                (change)="selectTheme(theme.value)"
               />
               <span class="ajustes__texto">
-                <span class="ajustes__nombre">{{ tema.rotulo }}</span>
-                <span class="ajustes__detalle">{{ tema.detalle }}</span>
+                <span class="ajustes__nombre">{{ theme.label }}</span>
+                <span class="ajustes__detalle">{{ theme.detail }}</span>
               </span>
             </label>
-            <app-nav-icon class="ajustes__icono" [name]="tema.icono" />
+            <app-nav-icon class="ajustes__icono" [name]="theme.icon" />
           </li>
         }
       </ul>
 
       <!-- Con «el de mi dispositivo» elegido, lo elegido y lo que se ve no son
            lo mismo. Decir cuál rige evita la duda de si la opción hizo algo. -->
-      @if (temaElegido() === 'system') {
-        <p class="ajustes__nota" data-testid="tema-resuelto">
+      @if (selectedTheme() === 'system') {
+        <p class="ajustes__nota" data-testid="theme-resolved">
           Ahora mismo tu dispositivo pide el modo
-          {{ temaResuelto() === 'dark' ? 'oscuro' : 'claro' }}.
+          {{ resolvedTheme() === 'dark' ? 'oscuro' : 'claro' }}.
         </p>
       }
     </section>
@@ -60,12 +60,12 @@
       </p>
 
       <ul class="ajustes__lista">
-        @for (permiso of permisosDelNavegador; track permiso.clave) {
+        @for (permission of browserPermissions; track permission.key) {
           <li class="ajustes__fila ajustes__fila--permiso">
             <span class="ajustes__texto">
-              <span class="ajustes__nombre">{{ permiso.rotulo }}</span>
-              <span class="ajustes__detalle">{{ permiso.paraQue }}</span>
-              @if (estaBloqueado(permiso.clave)) {
+              <span class="ajustes__nombre">{{ permission.label }}</span>
+              <span class="ajustes__detalle">{{ permission.purpose }}</span>
+              @if (isBlocked(permission.key)) {
                 <span class="ajustes__detalle">
                   Lo bloqueaste antes. Para volver a permitirlo, cambialo en la configuración de
                   este sitio en tu navegador: desde acá el cartel ya no vuelve a aparecer.
@@ -76,18 +76,18 @@
             <span class="ajustes__estado">
               <span
                 class="ajustes__pastilla"
-                [attr.data-tono]="estadoDe(permiso.clave).tono"
-                [attr.data-testid]="'permiso-' + permiso.clave"
-                >{{ estadoDe(permiso.clave).texto }}</span
+                [attr.data-tono]="stateOf(permission.key).tone"
+                [attr.data-testid]="'permission-' + permission.key"
+                >{{ stateOf(permission.key).text }}</span
               >
-              @if (sePuedePedir(permiso.clave)) {
+              @if (canRequest(permission.key)) {
                 <button
                   app-button
                   variant="outline"
                   size="sm"
-                  [attr.data-testid]="'pedir-' + permiso.clave"
-                  [isLoading]="pidiendo(permiso.clave)"
-                  (clicked)="pedir(permiso.clave)"
+                  [attr.data-testid]="'request-' + permission.key"
+                  [isLoading]="requesting(permission.key)"
+                  (clicked)="request(permission.key)"
                 >
                   Permitir
                 </button>
@@ -107,9 +107,9 @@
       </p>
 
       @if (roles().length > 0) {
-        <ul class="ajustes__roles" data-testid="ajustes-roles">
-          @for (rol of roles(); track rol) {
-            <li class="ajustes__pastilla" data-tono="neutro">{{ rol }}</li>
+        <ul class="ajustes__roles" data-testid="settings-roles">
+          @for (role of roles(); track role) {
+            <li class="ajustes__pastilla" data-tono="neutro">{{ role }}</li>
           }
         </ul>
       } @else {
@@ -122,13 +122,13 @@
       <!-- Se dice lo que hay, no lo que quedaría lindo: la lista no existe
            porque la API no se la responde a la propia persona. Ver la nota del
            componente. Una lista vacía acá se leería como «nadie tiene acceso». -->
-      <p class="ajustes__detalle" data-testid="ajustes-accesos-nota">
+      <p class="ajustes__detalle" data-testid="settings-access-note">
         Todavía no podemos mostrarte quién tiene acceso a tu historia clínica: hoy el servidor sólo
         le responde esa consulta a quien atiende y a quien administra la seguridad. Mientras tanto,
         pedile la baja del acceso a la organización donde te atendiste.
       </p>
 
-      @if (administraPermisos()) {
+      @if (managesPermissions()) {
         <p class="ajustes__nota">
           Como administrás la seguridad, sí podés hacerlo desde
           <a routerLink="/administration/delegated-access">Acceso delegado</a>: ahí se otorgan,
@@ -138,7 +138,7 @@
     </section>
   </app-tab>
 
-  @if (verificacionOfrecida) {
+  @if (verificationOffered) {
     <app-tab label="Identidad">
       <section class="ajustes__bloque">
         <h2 class="ajustes__titulo">Verificación de identidad</h2>
