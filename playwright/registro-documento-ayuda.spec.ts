@@ -53,6 +53,13 @@ test.describe('alta pública — el documento y su expedición', () => {
     await page.goto('/auth/register/patient');
     await expect(page.getByTestId('registro-form-paciente')).toBeVisible();
 
+    // La cédula del paciente está en la segunda página («Tu documento de
+    // identidad»): la primera es el nombre, y hay que contestarla para llegar.
+    await page.getByTestId('registro-nombre').fill('Ana');
+    await page.getByTestId('registro-apellido-paterno').fill('Paz');
+    await page.getByTestId('paginated-form-continuar').click();
+
+    await expect(page.getByTestId('registro-documento')).toBeVisible();
     await documentoYExpedicionEnLaMismaLinea(
       page,
       'registro-documento',
@@ -101,16 +108,17 @@ test.describe('alta pública — por qué te pedimos esto', () => {
     });
     await expect(ayuda).toBeVisible();
 
-    // Paso 1: el documento. La explicación habla del documento.
-    await expect(ayuda.getByText('Con tu documento vas a entrar')).toBeVisible();
+    // Paso 1: el nombre. La explicación habla del nombre.
+    await expect(ayuda.getByText('Tu nombre, como figura en tu documento')).toBeVisible();
     await expect(ayuda.getByText('Tus datos están a salvo')).toBeVisible();
 
-    // Paso 2: el nombre. La explicación cambió con la pregunta.
-    await page.getByTestId('registro-documento').fill('9876543');
+    // Paso 2: el documento. La explicación cambió con la pregunta.
+    await page.getByTestId('registro-nombre').fill('Ana');
+    await page.getByTestId('registro-apellido-paterno').fill('Paz');
     await page.getByTestId('paginated-form-continuar').click();
 
-    await expect(ayuda.getByText('Tu nombre, como figura en tu documento')).toBeVisible();
-    await expect(ayuda.getByText('Con tu documento vas a entrar')).toHaveCount(0);
+    await expect(ayuda.getByText('Con tu documento vas a entrar')).toBeVisible();
+    await expect(ayuda.getByText('Tu nombre, como figura en tu documento')).toHaveCount(0);
     // El sello sigue: la promesa no depende de qué se esté contestando.
     await expect(ayuda.getByText('Tus datos están a salvo')).toBeVisible();
 

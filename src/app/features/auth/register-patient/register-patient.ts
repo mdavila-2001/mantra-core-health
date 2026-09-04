@@ -958,11 +958,12 @@ export class RegisterPatient {
    *
    * - **Relación del contacto de emergencia** (AC-03-11). Ya no falta nada:
    *   la columna `profiles.related_persons.relationship_concept_id` existía, el
-   *   conjunto `related-person-relationship` también —con un solo miembro—, y
-   *   lo que faltaba eran los conceptos, el campo del alta y el desplegable.
-   *   Se lee por campo destino (`?target=`) y **no** con un `enum` de
-   *   TypeScript, que es lo que la regla del proyecto prohíbe. Ver
-   *   {@link campoRelacionDelContacto}.
+   *   conjunto `related-person-relationship` también —con sus 9 miembros reales
+   *   (guardián, madre, padre, cónyuge, hijo/a, hermano/a, otro familiar,
+   *   amistad, otro; ver `dynamic-enum-catalog.ts`)—, y lo que faltaba eran el
+   *   campo del alta y el desplegable. Se lee por campo destino (`?target=`) y
+   *   **no** con un `enum` de TypeScript, que es lo que la regla del proyecto
+   *   prohíbe. Ver {@link campoRelacionDelContacto}.
    * - **Razón social** de facturación: Se captura mediante `billingLegalName`
    *   y viaja asociada al NIT para la emisión de facturas.
    *

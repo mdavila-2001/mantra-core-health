@@ -32,14 +32,40 @@ async function empezarElAlta(page: Page): Promise<void> {
   await page.goto('/auth/register/patient');
   await expect(page.getByTestId('registro-form-paciente')).toBeVisible();
 
-  // Las dos primeras paginas son las unicas obligatorias del alta. El motor
-  // valida de a una, asi que sin completarlas el «Siguiente» no mueve nada y la
-  // prueba fallaria lejos de lo que quiere comprobar.
+  // Orden de la fuente literal de FT-03: nombres y apellidos primero,
+  // documento después. El motor valida de a una página, asi que sin completar
+  // el nombre el «Siguiente» no mueve nada y la prueba fallaria lejos de lo
+  // que quiere comprobar.
+  await page.getByTestId('registro-nombre').fill('Ana');
+  await page.getByTestId('registro-apellido-paterno').fill('Paz');
+  await page.getByTestId('paginated-form-continuar').click();
+
   await page.getByTestId('registro-documento').fill('9876543');
   await page.getByTestId('paginated-form-continuar').click();
 
-  await page.getByTestId('registro-nombre').fill('Ana');
-  await page.getByTestId('registro-apellido-paterno').fill('Paz');
+  // La página «Contanos un poco sobre vos» exige fecha de nacimiento y sexo
+  // (FT-03-R03: son dos de los seis campos obligatorios del alta), así que el
+  // motor no deja avanzar sin llenarlos primero.
+  //
+  // `app-date-picker` es un input enmascarado que arma DD/MM/AAAA dígito por
+  // dígito según la posición del cursor (ver `handleDigitKey`): un `.fill()`
+  // escribe el valor de un tirón sin pasar por esa máscara y deja el campo
+  // inválido («01/01/1990DD/MM/AAAA»). Al enfocarlo la máscara escribe la
+  // plantilla como valor, así que hay que borrarla antes de teclear —mismo
+  // patrón que ya usa playwright/it1-perfil-paciente-libre.spec.ts para este
+  // mismo componente— y sólo entonces `pressSequentially` dígito por dígito,
+  // que es como la máscara espera recibirlos.
+  const fecha = page.getByPlaceholder('DD/MM/AAAA');
+  await fecha.click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.press('Backspace');
+  await fecha.pressSequentially('01011990', { delay: 20 });
+  await page.getByTestId('registro-genero').locator('select').selectOption({ label: 'Masculino' });
+  await page.getByTestId('paginated-form-continuar').click();
+
+  // «¿Cómo te contactamos?» exige el celular (también obligatorio); el
+  // contacto de emergencia es opcional y se deja vacío.
+  await page.getByTestId('registro-telefono').fill('70012345');
   await page.getByTestId('paginated-form-continuar').click();
 }
 
@@ -52,6 +78,19 @@ async function avanzarHasta(page: Page, titulo: string): Promise<void> {
     await page.waitForTimeout(150);
   }
   await expect(encabezado).toBeVisible();
+}
+
+/**
+ * Completa la localidad de residencia —única obligatoria de «¿Dónde
+ * vivís?»— eligiendo Santa Cruz en el mapa y su primera ciudad en el select
+ * acotado (FT-03-R03/R06). Sin esto el motor no deja pasar a «¿Dónde
+ * trabajás?»: `residenceMunicipalityConceptId` es `required`.
+ */
+async function elegirLocalidadDeResidencia(page: Page): Promise<void> {
+  await page.getByTestId('registration-residence-mapa-SC').click();
+  const municipio = page.getByTestId('registration-residence-municipio').locator('select');
+  await expect(municipio).toBeVisible();
+  await municipio.selectOption({ index: 1 });
 }
 
 test.describe('alta pública — la empresa y el mapa', () => {
@@ -94,10 +133,15 @@ test.describe('alta pública — la empresa y el mapa', () => {
     await confirmar.click();
     await expect(page.getByTestId('registro-direccion-confirmada')).toBeVisible();
 
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-paciente-domicilio-confirmado.png',
+      fullPage: true,
+    });
   });
 
   test('la página del trabajo pregunta la empresa, no dónde queda', async ({ page }) => {
     await empezarElAlta(page);
+    await elegirLocalidadDeResidencia(page);
     await avanzarHasta(page, '¿Dónde trabajás?');
 
     // Lo que ya no se pregunta: ni el municipio del trabajo ni su calle.
@@ -115,10 +159,15 @@ test.describe('alta pública — la empresa y el mapa', () => {
       timeout: 10_000,
     });
 
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-paciente-empresa-lupa.png',
+      fullPage: true,
+    });
   });
 
   test('«Otra empresa» abre el campo para escribirla', async ({ page }) => {
     await empezarElAlta(page);
+    await elegirLocalidadDeResidencia(page);
     await avanzarHasta(page, '¿Dónde trabajás?');
 
     // Mientras no se elija la salida, el campo del nombre a mano no existe: no
@@ -133,5 +182,9 @@ test.describe('alta pública — la empresa y el mapa', () => {
     await expect(aMano).toBeVisible();
     await aMano.fill('Ferretería San Martín');
 
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-paciente-empresa-otra.png',
+      fullPage: true,
+    });
   });
 });
