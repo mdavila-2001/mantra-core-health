@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -31,13 +30,8 @@ import { borradorDePedido, WhereToBuy, type ItemDeReceta } from './where-to-buy'
  *    `lat` y `lng`.
  * 3. **Ningún uuid llega a la pantalla**: sedes, faltantes y renglones se
  *    nombran por su etiqueta.
- * 4. **El camino del pedido (FAR-I2)**: las pruebas corren con
- *    `environment.development` → `demoPresets` encendido, así que el CTA está
- *    habilitado, anunciado como demostración, y el clic arma el borrador y
- *    navega a confirmarlo. El armado del borrador se ejercita además como
- *    función pura. La rama sin demo (botón cerrado con «Próximamente») se
- *    prueba apagando el gate: cierra con el patrón de AppButton
- *    (`aria-disabled`, enfocable), no con el atributo nativo.
+ * 4. **El camino real del pedido (FAR-I2)**: el CTA arma el borrador completo
+ *    y navega a confirmarlo, sin depender de `demoPresets`.
  * 5. **El CSS del componente usa solo tokens declarados**: cada `var(--…)`
  *    existe en `src/styles.css` y no hay colores a mano — la misma frontera
  *    de deriva que fija `design-tokens.types.spec.ts`.
@@ -212,9 +206,9 @@ describe('WhereToBuy', () => {
   it('abre en Farmacias y ofrece las otras dos sin prometer lo que no hay', async () => {
     await montar();
     responderHastaProductos();
-    http.expectOne((r) => r.url === '/pharmacy-inventory/availability').flush(
-      DISPONIBILIDAD_FIXTURE,
-    );
+    http
+      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+      .flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
 
     const pestanas = harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [];
@@ -289,7 +283,7 @@ describe('WhereToBuy', () => {
     expect(texto()).not.toMatch(UUID);
   });
 
-  it('con la demo, «Enviar pedido» se anuncia, arma el borrador de la sede y lleva a confirmarlo', async () => {
+  it('«Enviar pedido» arma el borrador real de la sede y lleva a confirmarlo', async () => {
     await montar();
     responderHastaProductos();
     http
@@ -297,10 +291,9 @@ describe('WhereToBuy', () => {
       .flush(DISPONIBILIDAD_FIXTURE);
     harness.detectChanges();
 
-    // Un CTA habilitado por sede, con el aviso de que la farmacia se simula.
     expect(
-      harness.routeNativeElement?.querySelector('[data-testid="compra-demo-aviso"]')?.textContent,
-    ).toContain('demostración');
+      harness.routeNativeElement?.querySelector('[data-testid="compra-demo-aviso"]'),
+    ).toBeNull();
     const botones = harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>(
       '[data-testid="compra-cta-pedido"]',
     );
@@ -318,46 +311,6 @@ describe('WhereToBuy', () => {
     expect(borrador?.farmacia).toBe('Farmacia Andina');
     expect(borrador?.sede).toBe('Sucursal Centro');
     expect(navegar).toHaveBeenCalledWith(['/my-account/pharmacy-orders/new']);
-  });
-
-  it('sin la demo, «Enviar pedido» cierra con el patrón de AppButton y sigue enfocable', async () => {
-    await montar();
-    responderHastaProductos();
-    http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_FIXTURE);
-    harness.detectChanges();
-
-    // Se apaga el gate de la demo para pintar la rama «Próximamente». El
-    // componente es OnPush y el gate es un campo plano: hay que marcarlo
-    // sucio a mano para que el @if se re-evalúe.
-    const componente = harness.routeDebugElement?.componentInstance as unknown as {
-      pedidoDisponible: boolean;
-    };
-    componente.pedidoDisponible = false;
-    harness.routeDebugElement?.injector.get(ChangeDetectorRef).markForCheck();
-    harness.detectChanges();
-
-    const botones =
-      harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>(
-        '[data-testid="compra-cta-pedido"]',
-      ) ?? [];
-    expect(botones.length).toBeGreaterThan(0);
-    for (const boton of botones) {
-      // `aria-disabled`, no el atributo nativo: el botón queda anunciado como
-      // deshabilitado pero sigue en el orden de tabulación.
-      expect(boton.getAttribute('aria-disabled')).toBe('true');
-      expect(boton.hasAttribute('disabled')).toBe(false);
-      expect(boton.disabled).toBe(false);
-    }
-    expect(texto()).toContain('Próximamente');
-
-    // Cerrado quiere decir cerrado: el clic no arma borrador ni navega.
-    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    botones[0]?.click();
-    harness.detectChanges();
-    expect(navegar).not.toHaveBeenCalled();
-    expect(TestBed.inject(PharmacyOrdersClient).borradorPreparado()).toBeNull();
   });
 
   it('no toca la geolocalización al entrar; el botón la pide y reconsulta con lat/lng', async () => {
@@ -444,6 +397,60 @@ describe('WhereToBuy', () => {
     // La «completa» del backend no alcanza: la receta entera no se pudo
     // consultar, así que nadie puede declararse con todo.
     expect(texto()).not.toContain('Tiene todo');
+
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    harness.routeNativeElement
+      ?.querySelector<HTMLButtonElement>('[data-testid="compra-cta-pedido"]')
+      ?.click();
+    harness.detectChanges();
+    const draft = TestBed.inject(PharmacyOrdersClient).borradorPreparado();
+    expect(draft?.lineas).toHaveLength(2);
+    expect(draft?.lineas.find((line) => line.medicamento === 'Ibuprofeno')?.productId).toBeNull();
+    expect(navigate).toHaveBeenCalled();
+  });
+
+  it('un error HTTP de productos queda como error recuperable, no como ausencia', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/pharmacy/products' &&
+          r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
+      )
+      .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/pharmacy/products' &&
+          r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
+      )
+      .flush(
+        {
+          code: 'DEPENDENCY_UNAVAILABLE',
+          message: 'Catalogue unavailable',
+          correlationId: 'catalogue-1',
+        },
+        { status: 503, statusText: 'Service Unavailable' },
+      );
+    harness.detectChanges();
+
+    http.expectNone((request) => request.url === '/pharmacy-inventory/availability');
+    expect(texto()).toContain('Un servicio no está disponible');
+    expect(texto()).toContain('Reintentar');
+    expect(texto()).not.toContain('Sin producto publicado');
+    expect(TestBed.inject(PharmacyOrdersClient).borradorPreparado()).toBeNull();
+
+    const retry = [...(harness.routeNativeElement?.querySelectorAll('button') ?? [])].find(
+      (button) => button.textContent?.includes('Reintentar'),
+    );
+    expect(retry).toBeDefined();
+    retry?.click();
+    http
+      .expectOne((request) => request.url === '/clinical/patients/pp-1/summary')
+      .flush({ ...RESUMEN, medicationRequests: [] });
+    harness.detectChanges();
   });
 
   it('una receta que no está en la historia no dispara ninguna consulta a farmacias', async () => {
@@ -509,12 +516,9 @@ describe('borradorDePedido (FAR-I2)', () => {
   });
 
   it('un medicamento sin producto publicado entra como renglón no disponible', () => {
-    const borrador = borradorDePedido(
-      'm-1',
-      DISPONIBILIDAD_FIXTURE.items[0],
-      CONSULTABLES,
-      ['Paracetamol'],
-    );
+    const borrador = borradorDePedido('m-1', DISPONIBILIDAD_FIXTURE.items[0], CONSULTABLES, [
+      'Paracetamol',
+    ]);
 
     const suelto = borrador.lineas.at(-1);
     expect(suelto).toEqual({

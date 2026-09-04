@@ -7,7 +7,6 @@ import {
   inject,
   PLATFORM_ID,
   signal,
-  untracked,
   viewChild,
   type ElementRef,
 } from '@angular/core';
@@ -15,17 +14,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { Observable } from 'rxjs';
 
-import { environment } from '../../../../../environments/environment';
 import {
-  estaPagado,
   PharmacyOrdersClient,
   puedeCancelarse,
-  puedePagarse,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
-import type {
-  PedidoFarmacia,
-  SimulacionDeFarmacia,
-} from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import type { PedidoFarmacia } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { dataOf, loading, notFound, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -35,11 +29,9 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { Stepper } from '../../../../shared/components/molecules/stepper/stepper';
-import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
-import { OrderPayment } from '../order-payment/order-payment';
 import {
   etiquetaDeModalidad,
   pasosDeLaLineaDeTiempo,
@@ -51,20 +43,6 @@ const LISTA_ROUTE = '/my-account/pharmacy-orders';
 
 /** Lado del QR en píxeles CSS: legible por un lector de mostrador a un brazo. */
 const LADO_DEL_QR = 176;
-
-/**
- * Lo que haría la contraparte, en palabras de la barra de demo. Es la única
- * superficie que consume `simular()` y sólo existe con `demoPresets`.
- */
-const ETIQUETA_DE_SIMULACION: Readonly<Record<SimulacionDeFarmacia, string>> = {
-  REVISAR: 'Tomar en revisión',
-  CONFIRMAR: 'Confirmar el pedido',
-  PROPONER_SUSTITUCION: 'Proponer un genérico',
-  MARCAR_LISTO: 'Marcar listo para retirar',
-  DISPENSAR: 'Entregar en mostrador',
-  RECHAZAR: 'Rechazar el pedido',
-  VENCER: 'Dejar vencer la reserva',
-};
 
 /**
  * **El detalle del pedido** (carril FAR-I2): la línea de tiempo, la decisión
@@ -95,7 +73,6 @@ const ETIQUETA_DE_SIMULACION: Readonly<Record<SimulacionDeFarmacia, string>> = {
     AppButtonLink,
     Badge,
     DatePipe,
-    OrderPayment,
     PageHeader,
     RouterLink,
     Stepper,
@@ -111,13 +88,11 @@ export class OrderDetail {
   private readonly router = inject(Router);
   private readonly navigation = inject(NavigationService);
   private readonly dialogs = inject(DialogService);
-  private readonly toasts = inject(ToastService);
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly documento = inject(DOCUMENT);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly listaRoute = LISTA_ROUTE;
-  protected readonly demoActiva = environment.demoPresets;
   protected readonly ladoDelQr = LADO_DEL_QR;
 
   protected readonly state = signal<ViewState<PedidoFarmacia>>(loading());
@@ -142,7 +117,7 @@ export class OrderDetail {
     if (pedido?.estado !== 'ACEPTACION_PENDIENTE') {
       return null;
     }
-    return pedido.sustituciones.at(-1) ?? null;
+    return pedido.sustituciones.at(0) ?? null;
   });
 
   /** «35.00 BOB» — o `null` si algún precio no está publicado. */
@@ -169,32 +144,10 @@ export class OrderDetail {
     return (
       pedido !== null &&
       puedeCancelarse(pedido.estado) &&
-      pedido.estado !== 'ACEPTACION_PENDIENTE' &&
-      !estaPagado(pedido)
+      pedido.estado !== 'ACEPTACION_PENDIENTE'
     );
   });
 
-  protected readonly simulaciones = computed(() => {
-    const pedido = this.pedido();
-    return pedido === null ? [] : this.ordersClient.simulacionesPara(pedido);
-  });
-
-  /**
-   * La sección de pago existe desde que la farmacia fijó qué se lleva y por
-   * cuánto, y se queda como resumen una vez pagado. Un final sin pago
-   * (rechazado, vencido, cancelado a tiempo) no la pinta: no hay nada que
-   * cobrar ni que mostrar.
-   */
-  protected readonly muestraPago = computed(() => {
-    const pedido = this.pedido();
-    return pedido !== null && (puedePagarse(pedido.estado) || estaPagado(pedido));
-  });
-
-  /** Con el pago registrado, el comprobante existe y se ofrece. */
-  protected readonly pagado = computed(() => {
-    const pedido = this.pedido();
-    return pedido !== null && estaPagado(pedido);
-  });
 
   /** Evita el doble toque mientras una acción está en vuelo. */
   protected readonly ocupado = signal(false);
@@ -225,26 +178,6 @@ export class OrderDetail {
       );
     });
 
-    // El reflejo en vivo de la demo de dos ventanas (FAR-I3): si la farmacia
-    // mueve el pedido en otra pestaña, esta ficha se entera sin recargar.
-    // Con FAR-E1 esto será polling o la campana.
-    effect(() => {
-      const vivos = this.ordersClient.pedidosEnVivo();
-      const actual = untracked(() => this.pedido());
-      const fresco = actual === null ? undefined : vivos.find((p) => p.id === actual.id);
-      if (fresco !== undefined && fresco !== actual) {
-        // El «TOUS» del registro (FAR-I5): el mostrador cobró en la otra
-        // ventana y el aviso llega acá. La campana real lo dirá cuando el
-        // backend emita (FAR-E1/E4); mientras, este toast es el aviso.
-        if (actual !== null && estaPagado(fresco) && !estaPagado(actual)) {
-          this.toasts.success(
-            'Abrí «Ver comprobante» para verlo o descargarlo.',
-            'Tu comprobante está listo',
-          );
-        }
-        this.state.set(ready(fresco));
-      }
-    });
   }
 
   protected cargar(): void {
@@ -254,7 +187,10 @@ export class OrderDetail {
       return;
     }
     this.state.set(loading());
-    this.ordersClient.pedido(orderId).subscribe((pedido) => this.refrescar(pedido));
+    this.ordersClient.pedido(orderId).subscribe({
+      next: (pedido) => this.refrescar(pedido),
+      error: (error: unknown) => this.state.set(errorToViewState<PedidoFarmacia>(error)),
+    });
   }
 
   protected aceptarPropuesta(): void {
@@ -285,39 +221,23 @@ export class OrderDetail {
       return;
     }
     this.ocupado.set(true);
-    this.ordersClient.reintentar(id).subscribe((nuevo) => {
-      this.ocupado.set(false);
-      if (nuevo !== null) {
+    this.ordersClient.reintentar(id).subscribe({
+      next: (nuevo) => {
+        this.ocupado.set(false);
         void this.router.navigate([LISTA_ROUTE, nuevo.id]);
-      }
+      },
+      error: (error: unknown) => {
+        this.ocupado.set(false);
+        this.state.set(errorToViewState<PedidoFarmacia>(error));
+      },
     });
-  }
-
-  protected simular(paso: SimulacionDeFarmacia): void {
-    this.ejecutar((id) => this.ordersClient.simular(id, paso));
-  }
-
-  /**
-   * El botón de la pestaña QR (FAR-I5): dispara el puerto de la demo. Pagar
-   * destruye el botón que tenía el foco (el panel pasa al resumen): el foco
-   * aterriza en el estado, como al decidir o cancelar.
-   */
-  protected simularPago(): void {
-    this.ejecutar((id) => this.ordersClient.confirmarPagoDemo(id), this.enfocarEstado);
-  }
-
-  /** La ruta al comprobante interno del pago de este pedido. */
-  protected rutaDelComprobante(pedido: PedidoFarmacia): string {
-    return `${LISTA_ROUTE}/${pedido.id}/receipt`;
-  }
-
-  protected etiquetaDeSimulacion(paso: SimulacionDeFarmacia): string {
-    return ETIQUETA_DE_SIMULACION[paso];
   }
 
   /** La ruta al mapa de sedes de la receta que originó este pedido. */
   protected rutaDeAlternativas(pedido: PedidoFarmacia): string {
-    return `/my-account/medical-record/where-to-buy/${pedido.requestId}`;
+    return pedido.requestId === null
+      ? LISTA_ROUTE
+      : `/my-account/medical-record/where-to-buy/${pedido.requestId}`;
   }
 
   private ejecutar(
@@ -329,10 +249,16 @@ export class OrderDetail {
       return;
     }
     this.ocupado.set(true);
-    accion(id).subscribe((pedido) => {
-      this.ocupado.set(false);
-      this.refrescar(pedido);
-      alTerminar?.();
+    accion(id).subscribe({
+      next: (pedido) => {
+        this.ocupado.set(false);
+        this.refrescar(pedido);
+        alTerminar?.();
+      },
+      error: (error: unknown) => {
+        this.ocupado.set(false);
+        this.state.set(errorToViewState<PedidoFarmacia>(error));
+      },
     });
   }
 

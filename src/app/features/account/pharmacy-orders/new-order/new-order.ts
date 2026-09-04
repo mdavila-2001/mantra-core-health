@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
-import { environment } from '../../../../../environments/environment';
 import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import {
   normalizado,
@@ -38,11 +37,6 @@ import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
  * «dónde comprar mi receta»): sin el gate de demostración los envíos se
  * ofrecen deshabilitados y con el porqué escrito.
  */
-const DIRECCION_SIMULADA: Readonly<Record<'DOMICILIO' | 'TRABAJO', string>> = {
-  DOMICILIO: 'Av. Ejemplo 123, Santa Cruz de la Sierra',
-  TRABAJO: 'Calle Ejemplo 456, oficina 2B, Santa Cruz de la Sierra',
-};
-
 /**
  * **Confirmá tu pedido** (carril FAR-I2): el paso entre «dónde comprar mi
  * receta» y «Mis pedidos».
@@ -100,7 +94,13 @@ export class NewOrder {
       ? notFound({ label: 'Ir a mi historia clínica', route: MI_HISTORIA_ROUTE })
       : ready(this.borrador);
 
-  protected readonly demoActiva = environment.demoPresets;
+  /** Medications that block the complete order under the approved policy. */
+  protected readonly unresolvedProductNames =
+    this.borrador?.lineas
+      .filter((line) => line.productId === null)
+      .map((line) => line.medicamento) ?? [];
+
+  protected readonly hasUnresolvedProducts = this.unresolvedProductNames.length > 0;
 
   /* ---- las promociones del pedido (FAR-I7) --------------------------------- */
 
@@ -123,8 +123,8 @@ export class NewOrder {
    *
    * El precio congelado es del backend, y el cálculo de FAR-E1 es de Ender (la
    * regla que tiene que agregar está en `COORDINACION-AGENTES.md`). Bakear el
-   * descuento en el mock que E1 va a borrar haría que desapareciera en
-   * silencio el día que llegue el backend real.
+   * descuento en el borrador haría que la cifra enviada difiera de la que la
+   * API vuelve a calcular y congelar.
    */
   private resolverPromociones(): ReadonlyMap<string, string> {
     const borrador = this.borrador;
@@ -200,10 +200,7 @@ export class NewOrder {
   protected readonly fallo = signal(false);
 
   /** La dirección que acompaña un envío; `null` con retiro en mostrador. */
-  protected readonly direccionDeEntrega = computed(() => {
-    const modalidad = this.modalidad();
-    return modalidad === 'RETIRO' ? null : DIRECCION_SIMULADA[modalidad];
-  });
+  protected readonly direccionDeEntrega = computed(() => null);
 
   /** Vuelve a la consulta de sedes de la misma receta. */
   protected readonly rutaDeVuelta =
@@ -220,7 +217,7 @@ export class NewOrder {
 
   protected enviar(): void {
     const borrador = this.borrador;
-    if (borrador === null || this.enviando()) {
+    if (borrador === null || this.enviando() || this.hasUnresolvedProducts) {
       return;
     }
     this.enviando.set(true);
@@ -235,8 +232,7 @@ export class NewOrder {
         next: (pedido) => {
           void this.router.navigate(['/my-account/pharmacy-orders', pedido.id]);
         },
-        // El mock no falla, pero la firma es la del backend real: cuando
-        // FAR-E1 conecte, el fallo ya tiene su aviso y su reintento.
+        // El error real queda visible y permite reintentar sin duplicar la orden.
         error: () => {
           this.enviando.set(false);
           this.fallo.set(true);

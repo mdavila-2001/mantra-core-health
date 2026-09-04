@@ -1,12 +1,10 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
 
 import { SessionStore } from '../../../core/auth/session.store';
-import { PharmacyOrdersClient } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
-import type { BorradorDePedido } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { pharmacyOrderDtoFixture } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import { PharmacyOrders } from './pharmacy-orders';
 
 /**
@@ -29,31 +27,9 @@ function jwt(payload: Record<string, unknown>): string {
 
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
-const BORRADOR: BorradorDePedido = {
-  requestId: 'rx-1',
-  siteId: 'f0e1d2c3-0000-4000-8000-000000000001',
-  pharmacyId: 'a1b2c3d4-0000-4000-8000-000000000001',
-  farmacia: 'Farmacia Andina',
-  sede: 'Sucursal Centro',
-  direccion: 'Calle Libertad 245',
-  lineas: [
-    {
-      productId: 'f0e1d2c3-0000-4000-8000-000000000002',
-      medicamento: 'Amoxicilina',
-      presentacion: '500 mg · Caja x 21 cápsulas',
-      cantidad: 1,
-      precio: '68.00',
-      moneda: 'BOB',
-      disponible: true,
-    },
-  ],
-  totalEstimado: '68.00',
-  moneda: 'BOB',
-};
-
 describe('PharmacyOrders', () => {
   let fixture: ComponentFixture<PharmacyOrders>;
-  let client: PharmacyOrdersClient;
+  let http: HttpTestingController;
 
   function abrirSesion(claims: Record<string, unknown>): void {
     TestBed.inject(SessionStore).start({
@@ -75,8 +51,10 @@ describe('PharmacyOrders', () => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
-    client = TestBed.inject(PharmacyOrdersClient);
+    http = TestBed.inject(HttpTestingController);
   });
+
+  afterEach(() => http.verify());
 
   it('sin perfil de paciente lo dice, sin cargar nada', () => {
     abrirSesion({});
@@ -91,17 +69,18 @@ describe('PharmacyOrders', () => {
   it('sin pedidos ofrece la salida hacia la historia clínica', () => {
     abrirSesion({ pid: 'pp-1' });
     montar();
+    http.expectOne('/pharmacy/orders/me').flush({ items: [], count: 0 });
+    fixture.detectChanges();
 
     expect(texto()).toContain('Todavía no enviaste ningún pedido');
     expect(texto()).toContain('Ir a mi historia clínica');
   });
 
-  it('cada fila dice farmacia, fecha, modalidad y el estado en palabras', async () => {
+  it('cada fila dice farmacia, fecha, modalidad y el estado en palabras', () => {
     abrirSesion({ pid: 'pp-1' });
-    await firstValueFrom(
-      client.enviar({ borrador: BORRADOR, modalidad: 'RETIRO', direccionDeEntrega: null }),
-    );
     montar();
+    http.expectOne('/pharmacy/orders/me').flush({ items: [pharmacyOrderDtoFixture()], count: 1 });
+    fixture.detectChanges();
 
     expect(texto()).toContain('Farmacia Andina · Sucursal Centro');
     expect(texto()).toContain('Retiro en la farmacia');
@@ -109,14 +88,19 @@ describe('PharmacyOrders', () => {
     expect(texto()).toContain('68.00 BOB');
   });
 
-  it('el estado avanza en palabras del sistema, jamás en códigos ni uuid', async () => {
+  it('el estado llega mapeado a palabras del sistema, jamás como código ni uuid', () => {
     abrirSesion({ pid: 'pp-1' });
-    const pedido = await firstValueFrom(
-      client.enviar({ borrador: BORRADOR, modalidad: 'RETIRO', direccionDeEntrega: null }),
-    );
-    await firstValueFrom(client.simular(pedido.id, 'CONFIRMAR'));
-    await firstValueFrom(client.simular(pedido.id, 'MARCAR_LISTO'));
     montar();
+    http.expectOne('/pharmacy/orders/me').flush({
+      items: [
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+          pickupCode: 'ABC234',
+        }),
+      ],
+      count: 1,
+    });
+    fixture.detectChanges();
 
     expect(texto()).toContain('Listo para retirar');
     expect(texto()).not.toContain('LISTO_PARA_RETIRO');

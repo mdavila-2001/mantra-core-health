@@ -17,11 +17,6 @@
             <app-badge [variant]="estado.tone" data-testid="mostrador-estado-badge">
               {{ estado.label }}
             </app-badge>
-            @if (etiquetaDePago(); as pago) {
-              <app-badge [variant]="pago.tone" data-testid="mostrador-pago-badge">
-                {{ pago.label }}
-              </app-badge>
-            }
             <span class="mostrador__secundario">{{ estado.descripcion }}</span>
           </p>
           <p class="mostrador__secundario">
@@ -63,34 +58,53 @@
                       (valueChange)="cambiarDecision(i, $event)"
                     >
                       <app-radio value="TAL_CUAL" label="Tal cual" />
-                      <app-radio value="PROPONER_GENERICO" label="Proponer genérico" />
+                      <app-radio value="PROPONER_GENERICO" label="Proponer sustituto" />
                       <app-radio value="NO_DISPONIBLE" label="No disponible" />
                     </app-radio-group>
                     @if (ajuste.decision === 'PROPONER_GENERICO') {
-                      <!-- El selector de productos del mismo concepto llega con
-                           el catálogo del tenant (FAR-E2); mientras, se escribe. -->
-                      <div class="mostrador__generico">
-                        <app-form-field label="Qué proponés">
-                          <app-input
-                            autocomplete="off"
-                            [testId]="'mostrador-generico-nombre-' + i"
-                            [value]="ajuste.nombre"
-                            (valueChange)="cambiarNombre(i, $event)"
-                          />
-                        </app-form-field>
-                        <app-form-field
-                          label="Precio"
-                          hint="Vacío si no tiene precio publicado."
-                        >
-                          <app-input
-                            autocomplete="off"
-                            placeholder="24.00"
-                            [testId]="'mostrador-generico-precio-' + i"
-                            [value]="ajuste.precio"
-                            (valueChange)="cambiarPrecio(i, $event)"
-                          />
-                        </app-form-field>
-                      </div>
+                      @if (substituteSearchAt(i); as search) {
+                        @switch (search.status) {
+                          @case ('loading') {
+                            <p class="mostrador__secundario">Buscando productos publicados…</p>
+                          }
+                          @case ('error') {
+                            <app-alert tone="error" title="No se pudo consultar el catálogo">
+                              Reintentá la búsqueda antes de confirmar.
+                            </app-alert>
+                            <button
+                              app-button
+                              variant="ghost"
+                              type="button"
+                              [attr.data-testid]="'mostrador-reintentar-sustitutos-' + i"
+                              (clicked)="retrySubstitutes(i)"
+                            >
+                              Reintentar
+                            </button>
+                          }
+                          @case ('missing-concept') {
+                            <app-alert tone="warning" title="Sustitución no disponible">
+                              Este producto no tiene un concepto de medicamento publicado.
+                            </app-alert>
+                          }
+                          @case ('ready') {
+                            @if (search.options.length === 0) {
+                              <app-alert tone="info" title="Sin alternativas publicadas">
+                                No hay otro producto del mismo medicamento en el catálogo.
+                              </app-alert>
+                            } @else {
+                              <app-form-field label="Producto sustituto">
+                                <app-select
+                                  [attr.data-testid]="'mostrador-sustituto-' + i"
+                                  placeholder="Elegí un producto"
+                                  [options]="search.options"
+                                  [value]="ajuste.propuesta?.productId ?? null"
+                                  (valueChange)="selectSubstitute(i, $event)"
+                                />
+                              </app-form-field>
+                            }
+                          }
+                        }
+                      }
                     }
                   </div>
                 }
@@ -99,7 +113,7 @@
           </ul>
           <p class="mostrador__total" data-testid="mostrador-total-vivo">
             @if (totalEnVivo(); as total) {
-              {{ hayPropuestas() ? 'Total si acepta las propuestas:' : 'Total:' }}
+              Total:
               <strong class="cifras-tabulares">{{ total }} {{ abierto.moneda }}</strong>
             } @else {
               Total no disponible: falta algún precio.
@@ -167,8 +181,8 @@
       <!-- ─── Esperando la decisión del paciente ─────────────────────────── -->
       @if (abierto.estado === 'ACEPTACION_PENDIENTE') {
         <app-alert tone="info" title="La decisión es del paciente">
-          Le propusiste una alternativa: puede aceptarla, quedarse con su receta
-          original o cancelar. La pantalla se actualiza cuando decida.
+          Le propusiste una alternativa: puede aceptarla, quedarse con su receta original o
+          cancelar. La pantalla se actualiza cuando decida.
         </app-alert>
       }
 
@@ -187,46 +201,6 @@
           </button>
         </div>
       }
-      @if (muestraEnvio()) {
-        <section class="mostrador__bloque" aria-labelledby="mostrador-envio">
-          <h3 id="mostrador-envio" class="mostrador__subtitulo">Entrega a domicilio</h3>
-          <p class="mostrador__secundario">
-            {{ abierto.direccionDeEntrega ?? 'Sin dirección registrada' }} — la
-            coordina la farmacia, sin seguimiento en tiempo real.
-          </p>
-          @if (abierto.envio === 'EN_CAMINO') {
-            <app-badge variant="info">En camino</app-badge>
-          }
-          <div class="mostrador__acciones">
-            @if (puedeSalirEnCamino()) {
-              <button
-                app-button
-                variant="outline"
-                size="sm"
-                type="button"
-                data-testid="mostrador-encamino"
-                [isLoading]="ocupado()"
-                (clicked)="salirEnCamino()"
-              >
-                Salió en camino
-              </button>
-            }
-            @if (puedeEntregarse()) {
-              <button
-                app-button
-                variant="primary"
-                size="sm"
-                type="button"
-                data-testid="mostrador-entregar"
-                [isLoading]="ocupado()"
-                (clicked)="entregar()"
-              >
-                Registrar la entrega
-              </button>
-            }
-          </div>
-        </section>
-      }
 
       <!-- ─── El retiro en mostrador ─────────────────────────────────────── -->
       @if (enRetiro()) {
@@ -234,14 +208,13 @@
           <h3 id="mostrador-retiro" class="mostrador__subtitulo">Registrar retiro</h3>
           @if (abierto.codigoDeRetiro !== null) {
             <p class="mostrador__secundario">
-              El código que la persona muestra tiene que coincidir con el de la
-              reserva.
+              El código que la persona muestra tiene que coincidir con el de la reserva.
             </p>
           }
           @if (codigoInvalido()) {
             <app-alert tone="error" title="El código no coincide">
-              Pedile a la persona el código de su pedido — está en su pantalla,
-              en letras grandes, con su QR.
+              Pedile a la persona el código de su pedido — está en su pantalla, en letras grandes,
+              con su QR.
             </app-alert>
           }
           <app-form-field label="Código que trae la persona">
@@ -286,22 +259,6 @@
           {{ abierto.motivoDeRechazo }}
         </app-alert>
       }
-      @if (abierto.entregas.length > 0) {
-        <section class="mostrador__bloque" aria-labelledby="mostrador-entregas">
-          <h3 id="mostrador-entregas" class="mostrador__subtitulo">Entregas registradas</h3>
-          <ul class="mostrador__entregas" data-testid="mostrador-entregas">
-            @for (entrega of abierto.entregas; track $index) {
-              <li>
-                {{ entrega.momento | date: 'dd/MM HH:mm' }} —
-                @for (indice of entrega.indices; track indice; let ultimo = $last) {
-                  {{ lineaDe(indice) }}@if (!ultimo) {, }
-                }
-              </li>
-            }
-          </ul>
-        </section>
-      }
-
       <a app-button variant="ghost" [routerLink]="bandejaRoute">Volver a la bandeja</a>
     </div>
   }

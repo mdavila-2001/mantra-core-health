@@ -4,7 +4,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
@@ -223,15 +222,6 @@ export class WhereToBuy {
   protected readonly rutaDeClinicas = CLINICAS_ROUTE;
   protected readonly ciudades = CIUDADES;
 
-  /**
-   * El pedido (FAR-I2) corre hoy contra un mock del cliente de datos, así que
-   * sólo se ofrece donde la demostración está pedida — con su aviso. Sin el
-   * gate, el botón queda a la vista y cerrado, como estaba.
-   * TODO(FAR-E1): al conectar el backend real, el botón queda siempre activo
-   * y este gate desaparece.
-   */
-  protected readonly pedidoDisponible = environment.demoPresets;
-
   /** La última respuesta cruda: el borrador necesita los precios por línea. */
   private ultimaConsulta: {
     readonly respuesta: AvailabilityResult;
@@ -365,12 +355,9 @@ export class WhereToBuy {
   private productosDe(conceptIds: readonly string[]) {
     return forkJoin(
       conceptIds.map((conceptId) =>
-        this.pharmacy.searchProducts({ conceptId, limit: 1 }).pipe(
-          map((pagina) => [conceptId, pagina.items[0]?.id ?? null] as const),
-          // Un medicamento cuya búsqueda falló queda como «sin producto»: la
-          // pantalla lo dice, en vez de tirar la consulta entera.
-          catchError(() => of([conceptId, null] as const)),
-        ),
+        this.pharmacy
+          .searchProducts({ conceptId, limit: 1 })
+          .pipe(map((pagina) => [conceptId, pagina.items[0]?.id ?? null] as const)),
       ),
     ).pipe(map((pares) => new Map<string, string | null>(pares)));
   }
@@ -418,7 +405,7 @@ export class WhereToBuy {
       this.resultados.set(
         empty(
           { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
-          'Ninguno de los medicamentos elegidos tiene todavía un producto publicado en el directorio de farmacias.',
+          `No hay un producto publicado para: ${sinProducto.join(', ')}. El pedido completo no se puede enviar.`,
         ),
       );
       return;
