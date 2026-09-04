@@ -1,9 +1,10 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, switchMap, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, sinNulos } from '../wire';
+import { blobToDataUrl } from '../files/blob-to-data-url';
 import type {
   BlockListItem,
   BlockPage,
@@ -290,6 +291,28 @@ export class CommunityClient {
       ...datos,
       commentableType: 'POST',
     });
+  }
+
+  /**
+   * `GET /community/comments/media/:fileId/content` — el adjunto de un
+   * comentario (imagen, sticker o GIF), con sesión.
+   *
+   * **No es `FilesClient.imageDataUrl()`.** Ese endpoint sólo entrega el
+   * contenido a quien subió el archivo; un adjunto de comentario lo tiene
+   * que poder ver cualquiera que pueda ver el post —el autor del post,
+   * cualquier otro comentarista— no sólo quien lo subió (FND-01). Por eso
+   * pasa por este otro camino, que autoriza por visibilidad del post en vez
+   * de por dueño del archivo.
+   *
+   * @param fileId - El adjunto a leer (`common.files`).
+   * @returns La imagen como `data:` URL.
+   */
+  commentMediaDataUrl(fileId: string): Observable<string> {
+    return this.http
+      .get(this.url(`/community/comments/media/${encodeURIComponent(fileId)}/content`), {
+        responseType: 'blob',
+      })
+      .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
   }
 
   /**

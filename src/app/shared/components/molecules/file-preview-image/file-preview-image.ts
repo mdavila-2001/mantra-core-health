@@ -1,17 +1,19 @@
 /* ============================================================================
-    Resuelve un `fileId` de `common.files` a una imagen — con sesión.
+    Resuelve el `fileId` de un adjunto de comentario a una imagen — con sesión.
 
-    Mismo patrón que ya repetían `my-profile`, `practitioner-profile` y
-    `practitioner-detail` cada uno por su cuenta: `FilesClient.imageDataUrl()`
-    baja los bytes autenticados y los vuelve `data:` URL (la CSP no declara
-    `img-src blob:`, así que un `<img [src]>` directo al endpoint no sirve, y
-    de todos modos la descarga exige `Authorization`, que un atributo `src` no
-    manda). Se factoriza acá para que el cuarto lugar que lo necesite —los
-    adjuntos de comentario de REQ-01-011— no lo copie una vez más.
+    Es el único consumidor de `CommunityClient.commentMediaDataUrl()`, y a
+    propósito: un adjunto de comentario lo tiene que poder ver cualquiera que
+    pueda ver el post, no sólo quien lo subió, y ésa es la regla que autoriza
+    ese endpoint (FND-01). `FilesClient.imageDataUrl()` —lo que usaban
+    `my-profile`, `practitioner-profile` y `practitioner-detail` cada uno por
+    su cuenta— sólo entrega el contenido a quien subió el archivo: correcto
+    para una foto de perfil propia, un 403 permanente para el adjunto de
+    OTRA persona en un hilo que sí se puede leer.
 
-    Si el archivo no es propio ni la publicación es de quien mira, el backend
-    responde 403 (ver el comentario de `FilesClient.imageDataUrl`): se degrada
-    al estado de error en vez de romper la tarjeta que lo contiene.
+    Mismo patrón de conversión que aquellos tres (`GET` autenticado → `data:`
+    URL vía `blobToDataUrl`, ver su porqué ahí): la CSP no declara `img-src
+    blob:` y de todos modos la descarga exige `Authorization`, que un
+    atributo `src` no manda.
     ========================================================================== */
 
 import {
@@ -24,7 +26,7 @@ import {
 } from '@angular/core';
 import { catchError, of } from 'rxjs';
 
-import { FilesClient } from '@core/data-access/files/files.client';
+import { CommunityClient } from '@core/data-access/community/community.client';
 
 type Estado = 'carga' | 'listo' | 'error';
 
@@ -35,7 +37,7 @@ type Estado = 'carga' | 'listo' | 'error';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilePreviewImage {
-  private readonly files = inject(FilesClient);
+  private readonly community = inject(CommunityClient);
 
   readonly fileId = input.required<string>();
   readonly altText = input<string>('');
@@ -50,8 +52,8 @@ export class FilePreviewImage {
       const id = this.fileId();
       this.estado.set('carga');
       this.url.set(null);
-      this.files
-        .imageDataUrl(id)
+      this.community
+        .commentMediaDataUrl(id)
         .pipe(catchError(() => of(null)))
         .subscribe((resuelto) => {
           this.url.set(resuelto);
