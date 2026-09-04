@@ -21,7 +21,7 @@ describe('NotificationPreferences', () => {
   let fixture: ComponentFixture<NotificationPreferences>;
   let http: HttpTestingController;
 
-  const preferencias = (
+  const preferences = (
     quietHours: { start: string; end: string } | null = null,
   ) => ({
     categories: [
@@ -33,8 +33,8 @@ describe('NotificationPreferences', () => {
     quietHours,
   });
 
-  const texto = (): string => fixture.nativeElement.textContent as string;
-  const consultar = (testid: string): HTMLElement | null =>
+  const text = (): string => fixture.nativeElement.textContent as string;
+  const query = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
   /**
    * El `data-testid` de una fila de preferencia vive en el host de
@@ -42,16 +42,16 @@ describe('NotificationPreferences', () => {
    * control nativo que de verdad tiene `.checked` y recibe el click está
    * adentro.
    */
-  const consultarSwitch = (testid: string): HTMLInputElement | null =>
+  const querySwitch = (testid: string): HTMLInputElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"] input[role="switch"]`);
 
   /** El mismo cálculo que hace la pantalla, para no fijar un huso concreto. */
-  const aUtc = (horaLocal: string): string => {
-    const [horas, minutos] = horaLocal.split(':').map(Number);
-    const fecha = new Date();
-    fecha.setHours(horas, minutos, 0, 0);
-    return `${String(fecha.getUTCHours()).padStart(2, '0')}:${String(
-      fecha.getUTCMinutes(),
+  const toUtc = (localTime: string): string => {
+    const [hours, minutes] = localTime.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    return `${String(date.getUTCHours()).padStart(2, '0')}:${String(
+      date.getUTCMinutes(),
     ).padStart(2, '0')}`;
   };
 
@@ -69,132 +69,132 @@ describe('NotificationPreferences', () => {
   });
 
   afterEach(() => {
-    http.match(() => true).forEach((pedido) => pedido.flush(preferencias()));
+    http.match(() => true).forEach((request) => request.flush(preferences()));
     http.verify();
   });
 
   it('muestra las cuatro categorías en lenguaje llano', () => {
-    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    http.expectOne('/notifications/preferences/me').flush(preferences());
     fixture.detectChanges();
 
     // Ni `CLINICAL` ni `SOCIAL`: son vocabulario del sistema, y quien configura
     // sus avisos razona en «recetas y consultas».
-    expect(texto()).toContain('Recetas y consultas');
-    expect(texto()).toContain('Turnos');
+    expect(text()).toContain('Recetas y consultas');
+    expect(text()).toContain('Turnos');
     // «Chats» y no «Mensajes» desde F1/§4.H del plan de UX del 22/08/2026: la
     // sección se llama así en el menú, y las preferencias de aviso tienen que
     // usar el mismo nombre o son dos cosas distintas para quien las lee.
-    expect(texto()).toContain('Chats');
-    expect(texto()).toContain('Actividad social');
-    expect(texto()).not.toContain('CLINICAL');
+    expect(text()).toContain('Chats');
+    expect(text()).toContain('Actividad social');
+    expect(text()).not.toContain('CLINICAL');
   });
 
   it('refleja lo que ya estaba silenciado', () => {
-    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    http.expectOne('/notifications/preferences/me').flush(preferences());
     fixture.detectChanges();
 
-    expect(consultarSwitch('pref-SOCIAL')?.checked).toBe(false);
-    expect(consultarSwitch('pref-CLINICAL')?.checked).toBe(true);
+    expect(querySwitch('pref-SOCIAL')?.checked).toBe(false);
+    expect(querySwitch('pref-CLINICAL')?.checked).toBe(true);
   });
 
   it('guarda la categoría que se cambió', () => {
-    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    http.expectOne('/notifications/preferences/me').flush(preferences());
     fixture.detectChanges();
 
-    consultarSwitch('pref-MESSAGES')?.click();
+    querySwitch('pref-MESSAGES')?.click();
     fixture.detectChanges();
-    consultar('pref-guardar')?.click();
+    query('pref-save')?.click();
 
-    const guardado = http.expectOne('/notifications/preferences/me');
-    expect(guardado.request.method).toBe('PUT');
-    expect(guardado.request.body.categories).toContainEqual({
+    const saveRequest = http.expectOne('/notifications/preferences/me');
+    expect(saveRequest.request.method).toBe('PUT');
+    expect(saveRequest.request.body.categories).toContainEqual({
       category: 'MESSAGES',
       optedIn: false,
     });
-    guardado.flush(preferencias());
+    saveRequest.flush(preferences());
     fixture.detectChanges();
 
-    expect(texto()).toContain('Guardamos tus preferencias.');
+    expect(text()).toContain('Guardamos tus preferencias.');
   });
 
   it('convierte la hora local a UTC al guardar el silencio', () => {
-    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    http.expectOne('/notifications/preferences/me').flush(preferences());
     fixture.detectChanges();
 
-    consultarSwitch('pref-silencio')?.click();
+    querySwitch('pref-quiet-hours')?.click();
     fixture.detectChanges();
-    consultar('pref-guardar')?.click();
+    query('pref-save')?.click();
 
-    const guardado = http.expectOne('/notifications/preferences/me');
+    const saveRequest = http.expectOne('/notifications/preferences/me');
     // El backend compara contra `getUTCHours()`; mandar la hora local sin
     // convertirla haría que el silencio cayera en cualquier momento.
-    expect(guardado.request.body.quietHours).toEqual({
-      start: aUtc('22:00'),
-      end: aUtc('07:00'),
+    expect(saveRequest.request.body.quietHours).toEqual({
+      start: toUtc('22:00'),
+      end: toUtc('07:00'),
     });
-    guardado.flush(preferencias({ start: aUtc('22:00'), end: aUtc('07:00') }));
+    saveRequest.flush(preferences({ start: toUtc('22:00'), end: toUtc('07:00') }));
     fixture.detectChanges();
   });
 
   it('apagar el silencio manda `null`, que es «quitala»', () => {
     http
       .expectOne('/notifications/preferences/me')
-      .flush(preferencias({ start: aUtc('22:00'), end: aUtc('07:00') }));
+      .flush(preferences({ start: toUtc('22:00'), end: toUtc('07:00') }));
     fixture.detectChanges();
 
-    consultarSwitch('pref-silencio')?.click();
+    querySwitch('pref-quiet-hours')?.click();
     fixture.detectChanges();
-    consultar('pref-guardar')?.click();
+    query('pref-save')?.click();
 
-    const guardado = http.expectOne('/notifications/preferences/me');
-    expect(guardado.request.body.quietHours).toBeNull();
-    guardado.flush(preferencias());
+    const saveRequest = http.expectOne('/notifications/preferences/me');
+    expect(saveRequest.request.body.quietHours).toBeNull();
+    saveRequest.flush(preferences());
   });
 
   it('dice que el silencio aplaza y no pierde nada', () => {
-    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    http.expectOne('/notifications/preferences/me').flush(preferences());
     fixture.detectChanges();
 
     // Prometer «no te molesto» y perder un aviso serían dos cosas distintas, y
     // la pantalla dice la que el backend efectivamente hace.
-    expect(texto()).toContain('No se pierde ninguno');
+    expect(text()).toContain('No se pierde ninguno');
   });
 
   it('si el PUT falla, dice el error y el switch vuelve a su valor anterior (AC-17-7)', () => {
-    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    http.expectOne('/notifications/preferences/me').flush(preferences());
     fixture.detectChanges();
 
-    consultarSwitch('pref-CLINICAL')?.click();
+    querySwitch('pref-CLINICAL')?.click();
     fixture.detectChanges();
-    expect(consultarSwitch('pref-CLINICAL')?.checked).toBe(false);
+    expect(querySwitch('pref-CLINICAL')?.checked).toBe(false);
 
-    consultar('pref-guardar')?.click();
+    query('pref-save')?.click();
     http
       .expectOne('/notifications/preferences/me')
       .error(new ProgressEvent('error'));
     fixture.detectChanges();
 
-    expect(texto()).toContain('No pudimos guardar tus preferencias.');
+    expect(text()).toContain('No pudimos guardar tus preferencias.');
     // Nada quedó guardado (el PUT es todo-o-nada): el switch no se queda
     // «encendido de mentira», vuelve a lo último que el servidor confirmó.
-    expect(consultarSwitch('pref-CLINICAL')?.checked).toBe(true);
+    expect(querySwitch('pref-CLINICAL')?.checked).toBe(true);
   });
 
   it('mientras guarda, un segundo clic en «Guardar» no dispara un segundo PUT (AC-17-8)', () => {
-    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    http.expectOne('/notifications/preferences/me').flush(preferences());
     fixture.detectChanges();
 
-    consultarSwitch('pref-CLINICAL')?.click();
+    querySwitch('pref-CLINICAL')?.click();
     fixture.detectChanges();
-    consultar('pref-guardar')?.click();
+    query('pref-save')?.click();
     fixture.detectChanges();
 
     // `app-button` con `isLoading` intercepta el click nativo: un segundo
     // clic mientras el primer PUT sigue en vuelo no emite `clicked`.
-    consultar('pref-guardar')?.click();
+    query('pref-save')?.click();
     fixture.detectChanges();
 
-    const unico = http.expectOne('/notifications/preferences/me');
-    unico.flush(preferencias());
+    const onlyRequest = http.expectOne('/notifications/preferences/me');
+    onlyRequest.flush(preferences());
   });
 });

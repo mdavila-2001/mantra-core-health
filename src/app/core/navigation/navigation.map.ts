@@ -1043,7 +1043,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Sin `roles` restringidos: cualquiera con sesión tiene avisos, tema y
     // permisos del navegador que configurar. Lo que dentro es de un rol —la
     // administración de permisos delegados— lo decide la propia pantalla.
-    path: 'ajustes',
+    path: 'settings',
     label: 'Ajustes',
     group: 'Mi cuenta',
     icon: 'settings',

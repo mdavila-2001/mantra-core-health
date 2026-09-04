@@ -266,7 +266,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // por la barra—: el reparto cubre el registro entero, y una sección que
     // mañana vuelva al menú tiene que aparecer en el bloque que le corresponde
     // y no suelta al final.
-    paths: ['notification-center', 'ajustes'],
+    paths: ['notification-center', 'settings'],
   },
 ];
 
