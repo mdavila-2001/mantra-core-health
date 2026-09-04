@@ -90,6 +90,14 @@
   font-size: var(--fs-caption);
 }
 
+/* El nombre de quien se atiende: es el dato de la columna, así que va con el
+   peso del cuerpo y no en el gris de los apoyos. Los enlaces quedan debajo,
+   subordinados a él. */
+.agenda__paciente {
+  display: block;
+  color: var(--text-primary);
+}
+
 /* Los dos accesos de una cita —expediente y ficha— apilados, no en fila: en la
    columna angosta del móvil, dos enlaces uno al lado del otro se tocan con el
    pulgar a la vez. */
