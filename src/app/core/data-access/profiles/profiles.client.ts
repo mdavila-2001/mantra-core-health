@@ -393,6 +393,13 @@ export class ProfilesClient {
       readonly motherLastName: string;
       readonly birthDate: string;
       readonly phone: string;
+      /* Los cuatro contactos que el alta declara por separado. El correo de
+         trabajo NO está: es la identidad de acceso y se cambia por su propio
+         trámite. */
+      readonly mobilePhone: string;
+      readonly workMobilePhone: string;
+      readonly workLandline: string;
+      readonly personalEmail: string;
       readonly residenceMunicipalityConceptId: string;
     }>,
   ): Observable<OwnPractitionerProfile> {

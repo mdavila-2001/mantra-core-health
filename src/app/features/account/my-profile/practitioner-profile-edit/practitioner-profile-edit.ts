@@ -116,7 +116,13 @@ export class PractitionerProfileEdit {
   protected readonly segundoNombre = signal('');
   protected readonly apellidoPaterno = signal('');
   protected readonly apellidoMaterno = signal('');
-  protected readonly telefono = signal('');
+  /* Los cuatro contactos que el alta pide por separado. El de trabajo y el
+     privado dejaron de ser el mismo dato, así que el perfil también los
+     distingue: cada uno se guarda en su propia fila de puntos de contacto. */
+  protected readonly celularPersonal = signal('');
+  protected readonly celularTrabajo = signal('');
+  protected readonly fijoTrabajo = signal('');
+  protected readonly correoPersonal = signal('');
   protected readonly guardandoPresentacion = signal(false);
 
   protected readonly bioLargoMaximo = 4000;
@@ -267,7 +273,10 @@ export class PractitionerProfileEdit {
     this.segundoNombre.set(perfil.middleName ?? '');
     this.apellidoPaterno.set(perfil.lastName ?? '');
     this.apellidoMaterno.set(perfil.motherLastName ?? '');
-    this.telefono.set(perfil.phone ?? '');
+    this.celularPersonal.set(perfil.mobilePhone ?? '');
+    this.celularTrabajo.set(perfil.workMobilePhone ?? '');
+    this.fijoTrabajo.set(perfil.workLandline ?? '');
+    this.correoPersonal.set(perfil.personalEmail ?? '');
     this.aceptaNuevos.set(perfil.acceptsNewPatients);
     this.telemedicina.set(perfil.telehealthAvailable);
   }
@@ -296,7 +305,10 @@ export class PractitionerProfileEdit {
       middleName: string;
       lastName: string;
       motherLastName: string;
-      phone: string;
+      mobilePhone: string;
+      workMobilePhone: string;
+      workLandline: string;
+      personalEmail: string;
     }> = {};
     if (this.titulo() !== (original.professionalTitle ?? '')) {
       cambios.professionalTitle = this.titulo();
@@ -323,7 +335,18 @@ export class PractitionerProfileEdit {
     if (this.apellidoMaterno() !== (original.motherLastName ?? '')) {
       cambios.motherLastName = this.apellidoMaterno();
     }
-    if (this.telefono() !== (original.phone ?? '')) cambios.phone = this.telefono();
+    if (this.celularPersonal() !== (original.mobilePhone ?? '')) {
+      cambios.mobilePhone = this.celularPersonal();
+    }
+    if (this.celularTrabajo() !== (original.workMobilePhone ?? '')) {
+      cambios.workMobilePhone = this.celularTrabajo();
+    }
+    if (this.fijoTrabajo() !== (original.workLandline ?? '')) {
+      cambios.workLandline = this.fijoTrabajo();
+    }
+    if (this.correoPersonal() !== (original.personalEmail ?? '')) {
+      cambios.personalEmail = this.correoPersonal();
+    }
 
     if (Object.keys(cambios).length === 0) {
       this.toasts.success('No había ningún cambio para guardar.', 'Perfil');

@@ -282,7 +282,23 @@ export interface PractitionerRegistration {
   /** Fecha de inscripción de la matrícula, ISO `YYYY-MM-DD`. */
   readonly licenseIssueDate?: string;
   readonly professionalTitle?: string;
+  /**
+   * Forma anterior de declarar el teléfono, hoy el del trabajo.
+   *
+   * El backend la conserva por compatibilidad y la guarda donde el fijo del
+   * consultorio. El alta ya no la manda: usa los cuatro campos de abajo.
+   *
+   * @deprecated Preferí {@link workLandline} o {@link workMobilePhone}.
+   */
   readonly phone?: string;
+  /** Celular personal; el número por el que se contacta a la persona. */
+  readonly mobilePhone?: string;
+  /** Celular del trabajo; el que ve quien consulta su ficha. */
+  readonly workMobilePhone?: string;
+  /** Fijo del trabajo, la línea del consultorio. */
+  readonly workLandline?: string;
+  /** Correo personal. El de acceso es {@link email}, que es el del trabajo. */
+  readonly personalEmail?: string;
   /**
    * Sexo asignado al nacer. Es dato clínico, distinto del género.
    *

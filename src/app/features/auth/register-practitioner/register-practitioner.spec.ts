@@ -102,6 +102,10 @@ describe('RegisterPractitioner', () => {
       Record<
         | 'professionalTitle'
         | 'phone'
+        | 'mobilePhone'
+        | 'workMobilePhone'
+        | 'workLandline'
+        | 'personalEmail'
         | 'middleName'
         | 'thirdName'
         | 'motherLastName'
@@ -131,6 +135,10 @@ describe('RegisterPractitioner', () => {
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
       professionalTitle: extra.professionalTitle ?? '',
       phone: extra.phone ?? '',
+      mobilePhone: extra.mobilePhone ?? '',
+      workMobilePhone: extra.workMobilePhone ?? '',
+      workLandline: extra.workLandline ?? '',
+      personalEmail: extra.personalEmail ?? '',
       birthDate: null,
       sexAtBirth: null,
       occupationConceptId: extra.occupationConceptId ?? null,
@@ -203,6 +211,7 @@ describe('RegisterPractitioner', () => {
         'name',
         'document',
         'profile',
+        'personal-contact',
         'access',
         'residence',
         'credentials',
@@ -220,7 +229,16 @@ describe('RegisterPractitioner', () => {
       // AC-05-7: el sexo entra al formulario, y va antes de la fecha de
       // nacimiento, como pide el orden.
       expect(camposDe('profile')).toEqual(['sexAtBirth', 'birthDate', 'occupationConceptId']);
-      expect(camposDe('access')).toEqual(['phone', 'email', 'password']);
+      // Los cinco contactos que pide el registro, repartidos en dos páginas: lo
+      // privado por un lado y lo del trabajo junto al acceso, que es el correo
+      // laboral (AC-05-6).
+      expect(camposDe('personal-contact')).toEqual(['mobilePhone', 'personalEmail']);
+      expect(camposDe('access')).toEqual([
+        'workMobilePhone',
+        'workLandline',
+        'email',
+        'password',
+      ]);
       expect(camposDe('residence')).toEqual(['municipio']);
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
@@ -328,13 +346,15 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene ocho páginas, ninguna de más de cuatro preguntas', () => {
-    // Ocho y no menos porque el límite es de **campos por página**, no de
+  it('tiene nueve páginas, ninguna de más de cuatro preguntas', () => {
+    // Nueve y no menos porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
-    // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`).
+    // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). La novena es la de los
+    // contactos privados, que se separó de la del acceso al dejar de mezclar el
+    // número personal con el del consultorio.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(8);
+    expect(paginas.length).toBe(9);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -790,12 +810,45 @@ describe('RegisterPractitioner', () => {
   });
 
   it('agrega título y teléfono solo si se completaron', () => {
-    completarProfesional({ professionalTitle: 'Cardiología', phone: '+591 70012345' });
+    completarProfesional({
+      professionalTitle: 'Cardiología',
+      workMobilePhone: '+591 70012345',
+    });
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-practitioner');
     expect(req.request.body.professionalTitle).toBe('Cardiología');
-    expect(req.request.body.phone).toBe('+591 70012345');
+    expect(req.request.body.workMobilePhone).toBe('+591 70012345');
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('manda los cuatro contactos por separado, cada uno con su nombre', () => {
+    completarProfesional({
+      mobilePhone: '+591 70011111',
+      workMobilePhone: '+591 70022222',
+      workLandline: '+591 33456789',
+      personalEmail: 'ana.paz@gmail.test',
+    });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.mobilePhone).toBe('+591 70011111');
+    expect(req.request.body.workMobilePhone).toBe('+591 70022222');
+    expect(req.request.body.workLandline).toBe('+591 33456789');
+    expect(req.request.body.personalEmail).toBe('ana.paz@gmail.test');
+    // El correo de acceso sigue siendo `email`, que es el del trabajo.
+    expect(req.request.body.email).toBe('ana@hospital.test');
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('no manda el campo viejo de teléfono, que mezclaba lo privado con el trabajo', () => {
+    completarProfesional({ mobilePhone: '+591 70011111' });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.phone).toBeUndefined();
 
     req.flush(RESPUESTA_PRO);
   });

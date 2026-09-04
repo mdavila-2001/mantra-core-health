@@ -257,6 +257,20 @@ export class IamClient {
       ...(registration.occupationFreeText === undefined
         ? {}
         : { occupationFreeText: registration.occupationFreeText }),
+      // Los cuatro contactos que el registro pide separados del de acceso. Van
+      // acá nombre por nombre por lo mismo que avisa el comentario de arriba:
+      // sin este renglón el campo llega al contrato, se descarta en silencio y
+      // el formulario pregunta un dato que nadie guarda.
+      ...(registration.mobilePhone === undefined ? {} : { mobilePhone: registration.mobilePhone }),
+      ...(registration.workMobilePhone === undefined
+        ? {}
+        : { workMobilePhone: registration.workMobilePhone }),
+      ...(registration.workLandline === undefined
+        ? {}
+        : { workLandline: registration.workLandline }),
+      ...(registration.personalEmail === undefined
+        ? {}
+        : { personalEmail: registration.personalEmail }),
     });
   }
 
