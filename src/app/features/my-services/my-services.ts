@@ -50,7 +50,7 @@ const TARJETAS_DEL_ESQUELETO = 6;
  *
  * Es el mismo patrón que valida el servidor. Se repite acá para avisar mientras
  * se escribe, **no** para decidir: la autoridad sigue siendo la API, que
- * responde 422 y cuyo mensaje se muestra tal cual.
+ * responde 400 con `VALIDATION_FAILED` y cuyo mensaje se muestra tal cual.
  */
 const IMPORTE = /^\d+(\.\d{1,2})?$/;
 
@@ -263,7 +263,7 @@ export class MyServices {
    * Guarda el precio de una tarjeta.
    *
    * El aviso de formato se da acá para no gastar un viaje, pero **la validación
-   * que manda es la del servidor**: si responde 422 se muestra su mensaje, y lo
+   * que manda es la del servidor**: si lo rechaza se muestra su mensaje, y lo
    * escrito se conserva para poder corregirlo (AC-22-6).
    */
   protected guardarPrecio(servicio: ServiceCatalogItem): void {

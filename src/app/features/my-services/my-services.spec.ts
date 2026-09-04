@@ -395,7 +395,17 @@ describe('MyServices', () => {
       // No se gastó un viaje: `afterEach` verifica que no queda ninguno pendiente.
     });
 
-    it('el 422 del servidor se muestra en el campo y conserva lo escrito', () => {
+    /**
+     * El rechazo del servidor llega como **400**, no 422.
+     *
+     * Se comprobó contra la API viva: el importe lo rechaza el `ValidationPipe`
+     * por el patrón del DTO, y eso en esta API es `VALIDATION_FAILED` con 400.
+     * El 422 está reservado a las precondiciones de dominio
+     * (`PreconditionFailedException`), que es otra cosa. La pantalla no se
+     * ramifica por el código: muestra el mensaje que venga, así que serviría
+     * igual — pero la prueba dice lo que de verdad pasa.
+     */
+    it('el rechazo del servidor se muestra en el campo y conserva lo escrito', () => {
       abrirEdicionDe(servicio());
       interno<(v: string) => void>('escribirPrecio')('99.00');
 
@@ -409,7 +419,7 @@ describe('MyServices', () => {
           timestamp: '2026-09-04T12:00:00.000Z',
           path: '/billing/service-catalog/s1',
         },
-        { status: 422, statusText: 'Unprocessable Entity' },
+        { status: 400, statusText: 'Bad Request' },
       );
       harness.detectChanges();
 
