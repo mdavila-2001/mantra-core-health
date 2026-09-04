@@ -149,23 +149,54 @@
   color: var(--text-secondary);
 }
 
-.mi-agenda__historicos-lista {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* Cuatro columnas no entran en un teléfono angosto: la tabla scrollea sola
+   dentro de su caja, igual que la de `agenda-create`. */
+.mi-agenda__historicos-scroll {
+  overflow-x: auto;
+  margin-block-start: var(--sp-2);
+}
+
+.mi-agenda__historicos-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 34rem;
+}
+
+.mi-agenda__historicos-caption {
+  text-align: left;
+  /* Visible sólo para lector de pantalla: el título de la sección de arriba
+     ya cumple el rol visual, la caption no debe repetirlo en pantalla. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mi-agenda__historicos-tabla th,
+.mi-agenda__historicos-tabla td {
+  text-align: left;
+  padding: var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+  color: var(--text-secondary);
+}
+
+.mi-agenda__historicos-tabla th {
+  font-size: var(--fs-caption);
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.mi-agenda__historico-acciones {
   display: flex;
-  flex-direction: column;
   gap: var(--sp-2);
+  white-space: nowrap;
 }
 
-.mi-agenda__historico {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-}
-
-.mi-agenda__historico-nombre {
+.mi-agenda__historico-resumen {
+  margin: var(--sp-3) 0 0;
   color: var(--text-secondary);
 }
 

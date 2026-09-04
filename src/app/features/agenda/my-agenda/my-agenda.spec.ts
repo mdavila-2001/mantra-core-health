@@ -279,7 +279,7 @@ describe('MyAgenda', () => {
       expect(texto).toContain('quirúrgicas');
     });
 
-    it('ofrece retirar el horario, y dice retirar y no borrar', () => {
+    it('ofrece retirar el horario, y dice retirar y no borrar (punto 6/7: ícono sobre la fila)', () => {
       crear();
       conRecurso();
       conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }], {
@@ -287,11 +287,16 @@ describe('MyAgenda', () => {
       });
       conCuposHasta(new Date('2030-01-01'));
 
-      const texto: string = fixture.nativeElement.textContent;
+      // Ícono, no botón de texto (punto 7): el nombre accesible va en el
+      // `aria-label`, no en el `textContent`.
+      const boton: HTMLElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="horario-retirar"]',
+      );
+      expect(boton).not.toBeNull();
       // «Borrar» prometería algo que el sistema no hace: la plantilla no se
       // puede borrar nunca, la referencia la auditoría.
-      expect(texto).toContain('Retirar horario');
-      expect(texto).not.toContain('Borrar horario');
+      expect(boton?.getAttribute('aria-label')).toBe('Retirar horario');
+      expect(boton?.getAttribute('aria-label')).not.toContain('Borrar');
     });
   });
 
