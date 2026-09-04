@@ -44,6 +44,10 @@ describe('NotificationPreferences', () => {
    */
   const consultarSwitch = (testid: string): HTMLInputElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"] input[role="switch"]`);
+  const iconosPorRenglon = (): number[] =>
+    [...fixture.nativeElement.querySelectorAll('.prefs__fila')].map(
+      (fila) => fila.querySelectorAll('app-nav-icon').length,
+    );
 
   /** El mismo cálculo que hace la pantalla, para no fijar un huso concreto. */
   const aUtc = (horaLocal: string): string => {
@@ -87,6 +91,13 @@ describe('NotificationPreferences', () => {
     expect(texto()).toContain('Chats');
     expect(texto()).toContain('Actividad social');
     expect(texto()).not.toContain('CLINICAL');
+  });
+
+  it('conserva un icono por categoría y otro en la fila de silencio', () => {
+    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    fixture.detectChanges();
+
+    expect(iconosPorRenglon()).toEqual([1, 1, 1, 1, 1]);
   });
 
   it('refleja lo que ya estaba silenciado', () => {

@@ -64,6 +64,10 @@ describe('Settings', () => {
   const texto = (): string => fixture.nativeElement.textContent as string;
   const consultar = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+  const iconosPorRenglon = (): number[] =>
+    [...fixture.nativeElement.querySelectorAll('.ajustes__fila')].map(
+      (fila) => fila.querySelectorAll('app-nav-icon').length,
+    );
 
   /**
    * Cambia de sección haciendo lo que haría una persona: apretar la pestaña.
@@ -147,6 +151,13 @@ describe('Settings', () => {
     expect((consultar('tema-light') as HTMLInputElement).checked).toBe(false);
   });
 
+  it('conserva un icono en cada opción de apariencia', () => {
+    montar();
+    irA('Apariencia');
+
+    expect(iconosPorRenglon()).toEqual([1, 1, 1]);
+  });
+
   it('elegir un tema lo aplica de verdad, no sólo marca el control', () => {
     montar();
     irA('Apariencia');
@@ -173,6 +184,13 @@ describe('Settings', () => {
     expect(consultar('permiso-avisos')?.textContent).toContain('Sin decidir');
     expect(consultar('permiso-ubicacion')?.textContent).toContain('Permitido');
     expect(consultar('permiso-camara')?.textContent).toContain('Bloqueado');
+  });
+
+  it('muestra exactamente un icono en cada permiso del navegador', () => {
+    montar();
+    irA('Permisos');
+
+    expect(iconosPorRenglon()).toEqual([1, 1, 1]);
   });
 
   it('sólo ofrece «Permitir» donde el cartel todavía puede aparecer', () => {
