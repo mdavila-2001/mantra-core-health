@@ -126,15 +126,19 @@
   margin-top: auto;
 }
 
-/* -- El tiempo ocupado: presente pero apagado ------------------------------ */
+/* -- El tiempo bloqueado: en rojo, punto 3 del carril 12 -------------------
+   El pedido lo dice así, textual: "los bloqueos en rojo". Antes usaba el gris
+   de "apagado", que confundía un bloqueo (una decisión: acá no atiendo) con un
+   simple hueco sin agenda. El motivo sigue escrito al lado — el color no
+   reemplaza la palabra, la refuerza. */
 
 .dia__bloque[data-tipo='ocupado'] {
-  border-left: 3px solid var(--c-neutral-400, #a3a3a3);
-  background: var(--c-neutral-100, #f5f5f5);
+  border-left: 3px solid var(--st-error-bd);
+  background: var(--st-error-bg);
   border-radius: var(--r-md);
   padding: var(--sp-2) var(--sp-3);
   margin-bottom: 2px;
-  color: var(--text-secondary);
+  color: var(--st-error-fg);
 }
 
 .dia__ocupado-rotulo {

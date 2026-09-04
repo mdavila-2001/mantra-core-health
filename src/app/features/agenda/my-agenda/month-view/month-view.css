@@ -141,12 +141,14 @@
   color: var(--st-info-fg);
 }
 
-/* Bloqueado: gris CON su motivo, que es lo que lo distingue de «sin agenda». */
+/* Bloqueado: en rojo, punto 3 del carril 12 ("los bloqueos en rojo", textual).
+   El punteado se conserva — sigue distinguiendo "bloqueado" de "sin agenda" por
+   forma, no sólo por color — pero el tono ya no es el gris de "apagado". */
 [data-estado='bloqueado'] .mes__dia {
-  background: var(--bg-surface-alt);
+  background: var(--st-error-bg);
   border-style: dashed;
-  border-color: var(--border-strong);
-  color: var(--text-secondary);
+  border-color: var(--st-error-bd);
+  color: var(--st-error-fg);
 }
 
 .mes__celda--hoy .mes__dia {
