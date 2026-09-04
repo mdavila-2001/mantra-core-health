@@ -36,6 +36,55 @@
           />
         </app-form-field>
 
+        <app-form-field label="Tercer nombre" hint="Si no llevás, dejalo vacío.">
+          <app-input testId="perfil-tercer-nombre" placeholder="María" [(value)]="tercerNombre" />
+        </app-form-field>
+
+        <!-- Hay gente con cuatro y cinco nombres, y hasta hoy los que pasaban
+             del segundo quedaban apretados en una sola casilla. Se agregan las
+             que hagan falta, igual que en el alta. -->
+        @for (extra of nombresExtra(); track $index) {
+          <app-form-field [label]="'Nombre ' + ($index + 4)">
+            <div class="datos__nombre-extra">
+              <app-input
+                [testId]="'perfil-nombre-extra-' + $index"
+                placeholder="Otro nombre"
+                [value]="extra"
+                (valueChange)="escribirNombreExtra($index, $event)"
+              />
+              <!-- El nombre accesible dice QUÉ quita: «Quitar» a secas,
+                   repetido en la misma página, deja a quien usa lector de
+                   pantalla con botones idénticos y ninguna forma de saber cuál
+                   es cuál. El mismo texto va en el globo, que aparece con el
+                   puntero y con el foco del teclado. -->
+              <button
+                app-button
+                type="button"
+                variant="ghost"
+                size="sm"
+                [iconOnly]="true"
+                [attr.aria-label]="'Quitar el nombre ' + ($index + 4)"
+                [appTooltip]="'Quitar el nombre ' + ($index + 4)"
+                [attr.data-testid]="'perfil-quitar-nombre-' + $index"
+                (clicked)="quitarNombre($index)"
+              >
+                <app-nav-icon name="remove" />
+              </button>
+            </div>
+          </app-form-field>
+        }
+
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          size="sm"
+          data-testid="perfil-agregar-nombre"
+          (clicked)="agregarNombre()"
+        >
+          + Agregar otro nombre
+        </button>
+
         <app-form-field
           label="Apellido paterno"
           [required]="true"

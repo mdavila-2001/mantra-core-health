@@ -278,6 +278,60 @@ describe('PatientProfileEdit', () => {
   });
 
   /**
+   * Quien tiene cuatro o cinco nombres los declaró en casillas separadas al
+   * registrarse, y la base los guarda en una sola columna separados por
+   * espacio. El editor tiene que deshacer esa unión: si no, se abren apretados
+   * dentro de «Segundo nombre» y corregir el cuarto obliga a reescribir todos.
+   */
+  it('reparte en casillas los nombres que están guardados como un solo texto', () => {
+    montarYCargar({ middleName: 'Lucía María Belén Sofía' });
+
+    expect(señal<string>('segundoNombre')()).toBe('Lucía');
+    expect(señal<string>('tercerNombre')()).toBe('María');
+    expect(señal<readonly string[]>('nombresExtra')()).toEqual(['Belén', 'Sofía']);
+  });
+
+  it('un solo nombre adicional deja las demás casillas vacías', () => {
+    montarYCargar();
+
+    expect(señal<string>('segundoNombre')()).toBe('Lucía');
+    expect(señal<string>('tercerNombre')()).toBe('');
+    expect(señal<readonly string[]>('nombresExtra')()).toEqual([]);
+  });
+
+  it('los nombres agregados vuelven a viajar como un solo texto', () => {
+    montarYCargar();
+
+    señal<string>('tercerNombre').set('María');
+    señal<readonly string[]>('nombresExtra').set(['Belén']);
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ middleName: 'Lucía María Belén' });
+    req.flush({ ...PERFIL_BASE, middleName: 'Lucía María Belén' });
+  });
+
+  it('quitar una casilla del medio no deja un espacio doble', () => {
+    montarYCargar({ middleName: 'Lucía María Belén' });
+
+    // Se quita «María», que estaba en la casilla del tercer nombre.
+    señal<string>('tercerNombre').set('');
+    interno<() => void>('guardar')();
+
+    const req = pedidoDeGuardado();
+    expect(req.request.body).toEqual({ middleName: 'Lucía Belén' });
+    req.flush({ ...PERFIL_BASE, middleName: 'Lucía Belén' });
+  });
+
+  it('sin tocar los nombres no se manda ningún cambio, aunque sean varios', () => {
+    montarYCargar({ middleName: 'Lucía María Belén' });
+
+    interno<() => void>('guardar')();
+
+    http.expectNone('/profiles/patients/me');
+  });
+
+  /**
    * La fecha llega como `format: 'date'` y se ancla a medianoche **local**:
    * anclada a UTC, un 14 de marzo se lee como 13 al oeste de Greenwich.
    */
