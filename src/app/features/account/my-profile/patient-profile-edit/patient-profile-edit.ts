@@ -21,6 +21,8 @@ import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { Select } from '../../../../shared/components/atoms/select/select';
@@ -119,10 +121,12 @@ function mismoDia(una: Date, otra: Date): boolean {
     FormActions,
     FormField,
     Input,
+    NavIcon,
     PageHeader,
     PhoneInput,
     ReactiveFormsModule,
     Select,
+    Tooltip,
     TreeSelect,
     ViewStateHost,
   ],
@@ -151,6 +155,17 @@ export class PatientProfileEdit {
 
   protected readonly nombre = signal('');
   protected readonly segundoNombre = signal('');
+  protected readonly tercerNombre = signal('');
+  /**
+   * Los nombres que se agregaron después del tercero.
+   *
+   * Mismo criterio que el alta: hay gente con cuatro y cinco nombres, y una
+   * casilla fija por cada uno sería un formulario largo para todos por lo que
+   * necesitan pocos. Existen **sólo en la pantalla**; al guardar, éstos y el
+   * segundo y el tercero vuelven a una sola cadena, que es lo único que la base
+   * tiene para los nombres que no son el primero — ver {@link nombresAdicionales}.
+   */
+  protected readonly nombresExtra = signal<readonly string[]>([]);
   protected readonly apellidoPaterno = signal('');
   protected readonly apellidoMaterno = signal('');
   protected readonly fechaNacimiento = signal<Date | null>(null);
@@ -354,7 +369,7 @@ export class PatientProfileEdit {
    */
   private sembrarFormulario(perfil: OwnPatientProfile): void {
     this.nombre.set(perfil.name ?? '');
-    this.segundoNombre.set(perfil.middleName ?? '');
+    this.repartirNombresAdicionales(perfil.middleName ?? '');
     this.apellidoPaterno.set(perfil.lastName ?? '');
     this.apellidoMaterno.set(perfil.motherLastName ?? '');
     this.fechaNacimiento.set(perfil.birthDate ?? null);
@@ -502,6 +517,68 @@ export class PatientProfileEdit {
    * otro, no quitar. Mientras siga así, dejarlos en blanco no manda nada en vez
    * de provocar un `400` que la persona leería como un fallo del producto.
    */
+  /* -- Los nombres que no son el primero ----------------------------------
+     Se guardan en UNA columna, separados por espacio (así los escribe el alta).
+     Acá se reparten en casillas para poder corregir uno sin reescribir todos, y
+     se vuelven a unir al guardar. */
+
+  /**
+   * Reparte en casillas lo que hay guardado como un solo texto.
+   *
+   * Es la inversa exacta de {@link nombresAdicionales}: la primera palabra al
+   * segundo nombre, la siguiente al tercero, y las que sobren a una casilla
+   * cada una. Sin esto, alguien con cuatro nombres abría el editor y veía los
+   * tres apretados dentro de «Segundo nombre», que es lo que pasaba hasta hoy.
+   *
+   * @param guardado - El valor de `middleName` tal como vino del backend.
+   */
+  private repartirNombresAdicionales(guardado: string): void {
+    const partes = guardado.split(/\s+/).filter((parte) => parte !== '');
+    this.segundoNombre.set(partes[0] ?? '');
+    this.tercerNombre.set(partes[1] ?? '');
+    this.nombresExtra.set(partes.slice(2));
+  }
+
+  /**
+   * Las casillas de nombre en una sola cadena, como las guarda la base.
+   *
+   * Mismo criterio que el alta: separadas por espacio y sin las vacías, así
+   * quitar una casilla del medio no deja un espacio doble.
+   */
+  private nombresAdicionales(): string {
+    return [this.segundoNombre(), this.tercerNombre(), ...this.nombresExtra()]
+      .map((nombre) => nombre.trim())
+      .filter((nombre) => nombre !== '')
+      .join(' ');
+  }
+
+  /** Suma una casilla vacía de nombre. */
+  protected agregarNombre(): void {
+    this.nombresExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /**
+   * Quita una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   */
+  protected quitarNombre(indice: number): void {
+    this.nombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /**
+   * Escribe en una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   * @param valor - Lo que se escribió.
+   */
+  protected escribirNombreExtra(indice: number, valor: string | number | null): void {
+    const texto = valor === null ? '' : String(valor);
+    this.nombresExtra.update((actuales) =>
+      actuales.map((nombre, i) => (i === indice ? texto : nombre)),
+    );
+  }
+
   private cambiosContra(original: OwnPatientProfile): OwnPatientProfileChanges {
     const cambios: CambiosEnCurso = {};
 
@@ -509,9 +586,13 @@ export class PatientProfileEdit {
     if (nombre !== undefined) {
       cambios.name = nombre;
     }
-    const segundoNombre = textoCambiado(this.segundoNombre(), original.middleName);
-    if (segundoNombre !== undefined) {
-      cambios.middleName = segundoNombre;
+    // Las casillas de nombre vuelven a ser una sola cadena antes de compararse:
+    // la base tiene una columna, no una por nombre. Quitar la última casilla es
+    // un cambio como cualquier otro, y por eso se compara el resultado y no las
+    // casillas una por una.
+    const nombresAdicionales = textoCambiado(this.nombresAdicionales(), original.middleName);
+    if (nombresAdicionales !== undefined) {
+      cambios.middleName = nombresAdicionales;
     }
     const apellidoPaterno = textoCambiado(this.apellidoPaterno(), original.lastName);
     if (apellidoPaterno !== undefined) {

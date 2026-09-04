@@ -43,6 +43,19 @@
   }
 }
 
+/* La casilla de nombre agregada y su botón de quitar, en la misma línea.
+   Mismo tratamiento que en el alta: si el botón cayera debajo, la casilla
+   parecería la última del formulario en vez de una de una serie. */
+.datos__nombre-extra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.datos__nombre-extra app-input {
+  flex: 1 1 auto;
+}
+
 /* El aviso de catálogo caído: dice qué pasó y ofrece la salida en la misma
    línea, para no empujar el resto del formulario hacia abajo. */
 .datos__aviso {
