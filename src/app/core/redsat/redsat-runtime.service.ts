@@ -209,7 +209,19 @@ export class RedsatRuntimeService {
   private menusDeDesborde(): void {
     this.document.addEventListener('click', (evento) => {
       const objetivo = evento.target as HTMLElement | null;
-      const disparador = objetivo?.closest<HTMLElement>("[aria-haspopup='menu']");
+      // Acotado a `.menu-anclaje`: es el envoltorio que sólo trae la maqueta
+      // estática (ver el `beforeEach` de "menús de desborde" en el spec). La
+      // molécula `app-menu`/`appMenuTrigger` (AC-01-15 a AC-01-18) usa el
+      // mismo contrato ARIA —`aria-haspopup="menu"` + `aria-controls`— para
+      // su propio disparador, pero gobierna su apertura con una señal, no con
+      // el atributo `hidden`. Sin este acotamiento, este oyente global
+      // encontraba también ESE disparador, y le imponía `hidden` al panel de
+      // Angular por encima de su clase `menu--open` (`redsat.css` lo fuerza
+      // con `!important`): el menú de preferencias de una publicación
+      // quedaba con `aria-expanded="true"` pero permanentemente invisible.
+      const disparador = objetivo?.closest<HTMLElement>(
+        ".menu-anclaje [aria-haspopup='menu']",
+      );
       if (disparador) {
         evento.preventDefault();
         const id = disparador.getAttribute('aria-controls');
