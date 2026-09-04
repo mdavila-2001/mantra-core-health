@@ -506,20 +506,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // sigue viviendo en `administration/services-catalog`. Son la misma tabla
     // vista desde dos permisos distintos, y por eso son dos pantallas.
     //
-    // Fuera del menú del médico por §4.H del plan de UX: el cliente dio una
-    // lista **cerrada** de opciones para su panel y `navigation.service.spec`
-    // la fija —«cualquier décima tiene que discutirse»—. La sección se sigue
-    // alcanzando por su ruta y por «Tus accesos», que es lo único que
-    // `fueraDelMenuPara` no toca; darle renglón propio es una decisión de
-    // producto, no de este carril.
+    // **Con renglón en el menú del médico desde el 04/09/2026** (FT-22, aval
+    // explícito del propietario). Nació fuera por §4.H del plan de UX —la lista
+    // cerrada de opciones del panel—, cuando la pantalla era sólo lectura y
+    // llegar por «Tus accesos» alcanzaba. Dejó de alcanzar: acá es donde quien
+    // atiende pone el precio de lo que ofrece, y un lugar donde se escribe no
+    // puede depender de que alguien recuerde la ruta. La lista cerrada pasa de
+    // once a doce con esa decisión, no por descuido.
     path: 'my-services',
-    fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Mis servicios',
     group: 'Atención',
     icon: 'tag',
     roles: ROLES_DE_QUIEN_ATIENDE,
     availability: 'disponible',
-    summary: 'Consultá el catálogo de servicios de tu práctica y sus precios de referencia.',
+    summary: 'Mirá los servicios de tu práctica y poné el precio de cada uno.',
     module: 'M17 billing',
   },
 
