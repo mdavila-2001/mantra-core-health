@@ -232,7 +232,7 @@ export class IamClient {
             residenceMunicipalityConceptId: registration.residenceMunicipalityConceptId,
           }),
       licenseNumber: registration.licenseNumber,
-      credentialNumber: registration.credentialNumber,
+      sedesLicenseNumber: registration.sedesLicenseNumber,
       ...(registration.regulatoryAuthority === undefined
         ? {}
         : { regulatoryAuthority: registration.regulatoryAuthority }),

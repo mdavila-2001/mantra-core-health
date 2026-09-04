@@ -131,7 +131,7 @@ describe('RegisterPractitioner', () => {
       email: 'ana@hospital.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
-      credentialNumber: 'TIT-6789',
+      sedesLicenseNumber: 'T.I. 538/14',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
       professionalTitle: extra.professionalTitle ?? '',
       phone: extra.phone ?? '',
@@ -242,7 +242,7 @@ describe('RegisterPractitioner', () => {
       expect(camposDe('residence')).toEqual(['municipio']);
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
-        'credentialNumber',
+        'sedesLicenseNumber',
         'regulatoryAuthority',
         'licenseIssueDate',
       ]);
@@ -278,7 +278,10 @@ describe('RegisterPractitioner', () => {
         'organizationName',
         'healthFacilityConceptId',
         'ministryLicenseNumber',
-        'sedesLicenseNumber',
+        // `sedesLicenseNumber` salió de esta lista: ya tiene destino. Nace como
+        // una segunda fila de `profiles.jurisdiction_authorizations` con
+        // jurisdicción SEDES — Santa Cruz, al lado de la matrícula nacional.
+        // El del colegio profesional sigue sin columna propia.
         'collegeLicenseNumber',
         'issuingInstitutionText',
         'otherCredentials',
@@ -308,7 +311,7 @@ describe('RegisterPractitioner', () => {
       const obligatorios = habilitacion?.campos
         .filter((campo) => campo.required === true)
         .map((campo) => campo.key);
-      expect(obligatorios).toEqual(['licenseNumber', 'credentialNumber']);
+      expect(obligatorios).toEqual(['licenseNumber', 'sedesLicenseNumber']);
       for (const campo of habilitacion?.campos ?? []) {
         if (campo.required !== true) continue;
         expect(campo.mensajeDeError, `«${campo.key}» no dice por qué hace falta`).toBeTruthy();
@@ -676,34 +679,44 @@ describe('RegisterPractitioner', () => {
   });
 
   describe('rótulos dinámicos de matrícula y colegio según profesión (M-1.4.3)', () => {
-    function campoCredencial(key: 'licenseNumber' | 'credentialNumber') {
+    function campoCredencial(key: 'licenseNumber' | 'sedesLicenseNumber') {
       const pagina = component.paginasProfesional().find((p) => p.clave === 'credentials');
       return pagina?.campos.find((c) => c.key === key);
     }
 
-    it('por defecto muestra los rótulos generales de matrícula y colegio', () => {
+    it('por defecto muestra el rótulo general de matrícula, y el del SEDES fijo', () => {
       expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula profesional');
-      expect(campoCredencial('credentialNumber')?.label).toBe('Número de colegio');
+      expect(campoCredencial('sedesLicenseNumber')?.label).toBe('Registro del SEDES');
     });
 
-    it('al seleccionar Odontólogo cambia a Matrícula de Odontólogo y Registro del Colegio de Odontólogos', () => {
+    it('al seleccionar Odontólogo cambia a Matrícula de Odontólogo', () => {
       component.formProfesional.controls.professionalTitle.setValue('Odontólogo / Odontóloga');
       fixture.detectChanges();
 
       expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula de Odontólogo');
       expect(campoCredencial('licenseNumber')?.placeholder).toBe('ODO-12345');
-      expect(campoCredencial('credentialNumber')?.label).toBe('Registro del Colegio de Odontólogos');
-      expect(campoCredencial('credentialNumber')?.placeholder).toBe('COL-ODO-6789');
     });
 
-    it('al seleccionar Médico cambia a Matrícula Profesional (Médico) y Registro del Colegio Médico', () => {
+    it('al seleccionar Médico cambia a Matrícula Profesional (Médico)', () => {
       component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
       fixture.detectChanges();
 
       expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula Profesional (Médico)');
       expect(campoCredencial('licenseNumber')?.placeholder).toBe('MP-12345');
-      expect(campoCredencial('credentialNumber')?.label).toBe('Registro del Colegio Médico');
-      expect(campoCredencial('credentialNumber')?.placeholder).toBe('TIT-6789');
+    });
+
+    /**
+     * El SEDES habilita por departamento, no por profesión: su rótulo es el
+     * mismo para el odontólogo y para el médico. Antes esta casilla decía
+     * «Registro del Colegio» y su contenido terminaba archivado como título de
+     * grado — de ahí el «Título universitario · T.I. 538/14» del padrón real.
+     */
+    it('el rótulo del SEDES no cambia con la profesión', () => {
+      for (const profesion of ['Odontólogo / Odontóloga', 'Médico / Médica']) {
+        component.formProfesional.controls.professionalTitle.setValue(profesion);
+        fixture.detectChanges();
+        expect(campoCredencial('sedesLicenseNumber')?.label).toBe('Registro del SEDES');
+      }
     });
 
     it('al cambiar de profesión los rótulos se actualizan reactivamente', () => {
@@ -718,7 +731,7 @@ describe('RegisterPractitioner', () => {
       component.formProfesional.controls.professionalTitle.setValue('Licenciado / Licenciada en Nutrición');
       fixture.detectChanges();
       expect(campoCredencial('licenseNumber')?.label).toBe('Matrícula profesional');
-      expect(campoCredencial('credentialNumber')?.label).toBe('Número de colegio');
+      expect(campoCredencial('sedesLicenseNumber')?.label).toBe('Registro del SEDES');
     });
   });
 
@@ -737,7 +750,7 @@ describe('RegisterPractitioner', () => {
       email: 'ana@hospital.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
-      credentialNumber: 'TIT-6789',
+      sedesLicenseNumber: 'T.I. 538/14',
     });
 
     req.flush(RESPUESTA_PRO);
@@ -902,7 +915,7 @@ describe('RegisterPractitioner', () => {
 
   it('exige matrícula y credencial: sin habilitación no hay alta', () => {
     completarProfesional();
-    component.formProfesional.patchValue({ licenseNumber: '', credentialNumber: '' });
+    component.formProfesional.patchValue({ licenseNumber: '', sedesLicenseNumber: '' });
     component.submit();
 
     expect(component.formProfesional.controls.licenseNumber.touched).toBe(true);
