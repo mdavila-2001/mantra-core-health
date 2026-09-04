@@ -143,6 +143,57 @@ export function collectInlineScriptHashes(browserDistFolder: string): string[] {
   return [...hashes];
 }
 
+/**
+ * Hashes de los scripts en línea del `index.html` de la fuente, tal cual sale
+ * del repo (AG49-FT01-003).
+ *
+ * `collectInlineScriptHashes` asume un `dist/browser` real para recorrer, y
+ * eso sólo existe tras un `ng build`. Bajo `ng serve --ssr` este mismo
+ * `server.ts` corre igual —lo exporta como `reqHandler` para eso— pero el
+ * bundler de desarrollo no escribe ningún artefacto a disco: `browserDistFolder`
+ * apunta a una carpeta que no existe, el recorrido no encuentra nada y
+ * `script-src` queda sin un solo hash. El script anti-parpadeo del tema —el
+ * único script en línea que no depende de una ruta prerenderizada, ver
+ * `src/index.html`— queda bloqueado por la CSP en cualquier ruta servida así,
+ * que es como corre la suite de Playwright localmente (`E2E_BASE_URL` apunta
+ * a `ng serve`, no al build).
+ *
+ * El contenido de ese script llega **casi** idéntico al HTML que finalmente
+ * sirve el navegador —Angular no lo reescribe— salvo por una cosa: este
+ * repositorio se hace *checkout* en Windows con `\r\n`, y de las dos vías por
+ * las que `ng serve --ssr` puede terminar sirviendo esa etiqueta, una copia el
+ * archivo tal cual (conserva el `\r\n`) y la otra pasa por el serializador DOM
+ * del renderizador SSR en vivo (lo normaliza a `\n`, como cualquier motor de
+ * hidratación de Angular). Se vio pasar las dos por la CSP real: la copia
+ * literal en la carga inicial y la normalizada en una navegación posterior
+ * —mismo script, mismo archivo fuente, dos hashes distintos. Por eso se
+ * hashean **ambos finales de línea** del mismo contenido en vez de uno solo:
+ * cualquiera de los dos que sirva la ruta en cuestión, ya tiene su hash en la
+ * lista. (En Linux/`git config core.autocrlf input` esto es un no-operación:
+ * ambas variantes coinciden y `Set` en `server.ts` deja un solo hash.)
+ *
+ * En un build de producción esto es una entrada redundante —el hash real ya
+ * sale de `collectInlineScriptHashes`, que recorre el artefacto compilado— y
+ * sólo importa de verdad cuando ese recorrido no tuvo nada que mirar.
+ *
+ * Best-effort: una imagen de despliegue que sólo empaqueta `dist/` no trae
+ * `src/`, y entonces esto no encuentra nada — no rompe el arranque, devuelve
+ * una lista vacía y el build ya cubrió el hash por su propio lado.
+ *
+ * @param projectRoot - Raíz del proyecto (`process.cwd()` en `ng serve` y en
+ *   `serve:ssr:mantra-core-health`, que arrancan desde ahí).
+ */
+export function sourceIndexScriptHashes(projectRoot: string): string[] {
+  let html: string;
+  try {
+    html = readFileSync(join(projectRoot, 'src', 'index.html'), 'utf8');
+  } catch {
+    return [];
+  }
+  const conLf = html.replace(/\r\n/g, '\n');
+  return [...new Set([...inlineScriptHashesOf(html), ...inlineScriptHashesOf(conLf)])];
+}
+
 /** El origen de una URL absoluta, o `null` si no lo es. */
 function originOf(url: string | undefined): string | null {
   if (url === undefined || url === '') {
