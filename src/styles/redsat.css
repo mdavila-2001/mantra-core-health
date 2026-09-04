@@ -300,27 +300,32 @@ body::after {
    ahorra. */
 html::after {
   content: ""; position: fixed; z-index: -1; pointer-events: none;
-  /* Centrada en el punto del clic. Nace en 0 y el keyframe la abre. */
+  /* Centrada en el punto del clic: el tamaño es fijo y la onda crece con
+     `scale`. Animar ancho y alto habría provocado LAYOUT en cada cuadro; con
+     transform y opacidad la compone la GPU sola.
+
+     Sin `border-radius`: el degradado ya es transparente pasado el 78%, así
+     que la caja nunca se ve — redondearla sería pagar bytes por nada, y el
+     paquete inicial está a menos de 100 del techo de `angular.json`. */
   left: var(--gota-x, 50%); top: var(--gota-y, 50%);
-  width: 0; height: 0; margin: 0; border-radius: 50%;
+  width: 62vmax; height: 62vmax; margin: -31vmax 0 0 -31vmax;
   /* El anillo: transparente adentro, aguamarina en el borde, nada afuera. Es
      el mismo aguamarina de `--fondo-b`, para que la onda se lea como parte
      del fondo y no como un elemento pegado encima. */
-  background: radial-gradient(circle, transparent 58%, var(--fondo-b) 72%, transparent 78%);
-  opacity: 0;
+  background: radial-gradient(circle, #0000 58%, var(--fondo-b) 72%, #0000 78%);
+  opacity: 0; transform: scale(0);
 }
-:root[data-gota]::after {
-  animation: gota-de-agua 900ms cubic-bezier(.16, .8, .3, 1) forwards;
+:root[data-gota]::after { animation: gota 900ms cubic-bezier(.16, .8, .3, 1) forwards; }
+@keyframes gota {
+  from { transform: scale(0); opacity: .85; }
+  to   { transform: scale(1); opacity: 0; }
 }
-@keyframes gota-de-agua {
-  from { width: 0; height: 0; margin: 0; opacity: .85; }
-  to   { width: 62vmax; height: 62vmax; margin: -31vmax 0 0 -31vmax; opacity: 0; }
-}
-/* Quien pidió menos movimiento no recibe la onda: el servicio ni siquiera
-   engancha el oyente, y esta regla es el cinturón por si el atributo quedara
-   puesto de una sesión anterior. */
+/* Quien pidió menos movimiento no recibe la onda. El servicio ya no engancha
+   el oyente, pero decide UNA vez al instalarse: quien cambia la preferencia
+   con la sesión abierta seguiría viéndola, y esta regla es la que lo apaga en
+   el acto. Por eso no se borra aunque el guard exista. */
 @media (prefers-reduced-motion: reduce) {
-  :root[data-gota]::after { animation: none; opacity: 0; }
+  :root[data-gota]::after { animation: none; }
 }
 /* El interruptor de presencia es sólo de modo claro: en oscuro el fondo
    siempre estuvo a plena vista, y ese comportamiento no cambia (AC-08-3). */
