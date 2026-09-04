@@ -68,6 +68,16 @@ const PARAM_ESPECIALIDAD = 'especialidad';
  */
 const SIN_ESPECIALIDAD_URL = 'sin-especialidad';
 
+/**
+ * Cuántas sedes se nombran en la tarjeta antes de resumir.
+ *
+ * Dos entran en una línea en un teléfono; con más, la tarjeta se convierte en
+ * un párrafo y deja de servir para comparar de un vistazo. El resto se cuenta,
+ * que es lo que hace falta saber: «y 3 sedes más» dice que hay más sin
+ * obligar a leerlas.
+ */
+const MAXIMO_DE_SEDES = 2;
+
 /** Tope por página del backend. La guía las junta todas. */
 const POR_PAGINA = 50;
 
@@ -538,6 +548,21 @@ function toResultado(
   const subtitulo = subtituloProfesional(fila.professionalTitle, nombre, nombresDeOtros);
   if (subtitulo !== undefined) {
     meta.push({ text: subtitulo });
+  }
+
+  // Dónde atiende, debajo del título. Es la pregunta que sigue a «quién es»
+  // cuando se elige un médico, y hasta ahora había que abrir la ficha para
+  // responderla. Con techo: alguien del padrón puede tener nueve sedes y la
+  // tarjeta dejaría de ser una tarjeta.
+  const sedes = fila.workplaces ?? [];
+  if (sedes.length > 0) {
+    const visibles = sedes.slice(0, MAXIMO_DE_SEDES);
+    const resto = sedes.length - visibles.length;
+    meta.push({
+      text:
+        visibles.join(' · ') +
+        (resto > 0 ? ` · y ${resto} ${resto === 1 ? 'sede más' : 'sedes más'}` : ''),
+    });
   }
 
   const sellos = [];

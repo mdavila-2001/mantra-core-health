@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, Observable, switchMap } from 'rxjs';
 
 import { fileAttributes } from '../../observability/business/file-tracing';
 import { TracingService } from '../../observability/tracing/tracing.service';
@@ -144,6 +144,50 @@ export class FilesClient {
   }
 
   /**
+   * La imagen de un archivo, lista para un `src`.
+   *
+   * ## Por qué no sirve `downloadUrl()` para pintar una foto
+   *
+   * Porque lo que devuelve **no es una URL de navegador**. El backend arma
+   * `${storageUri}?fileId=…&signature=…` (`files.service.ts`), y en esta
+   * instalación `storage_uri` vale `file://local/<sha256>`: verificado en la
+   * base, las 5 subidas reales lo tienen así. Un `<img src="file://local/…">`
+   * no carga en ningún navegador, y encima la CSP del proyecto declara
+   * `img-src 'self' data:`. De ahí el síntoma que reportó el equipo: la subida
+   * respondía bien, el perfil quedaba guardado —el alta marcaba «Listo»— y la
+   * foto no aparecía nunca. La firma sigue sirviendo para lo suyo, que es
+   * entregarle un puntero con vencimiento a otro sistema.
+   *
+   * ## Por qué `data:` y no `blob:`
+   *
+   * Un `blob:` sería más barato —no hay base64 de por medio— y la misma CSP lo
+   * bloquea: `img-src` no lo declara. Se probó antes con la foto de perfil y
+   * la imagen quedaba invisible con una violación en consola, que es peor que
+   * no intentarlo.
+   *
+   * ## Por qué pasa por `HttpClient` y no por el atributo
+   *
+   * `GET /common/files/:id/content` exige `Authorization`, y un `<img>` no
+   * manda cabeceras. Bajar los bytes acá deja que el interceptor de sesión
+   * haga su trabajo.
+   *
+   * **Ojo con quién puede.** El backend sólo entrega el contenido a quien
+   * subió el archivo o a un rol de revisión, así que esto resuelve la foto
+   * *propia*. Para la foto de otra persona en un directorio público responde
+   * 403 y hay que degradar a iniciales.
+   *
+   * @param fileId - El archivo a leer.
+   * @returns La imagen como `data:` URL.
+   */
+  imageDataUrl(fileId: string): Observable<string> {
+    return this.http
+      .get(apiUrl(this.baseUrl, `/common/files/${encodeURIComponent(fileId)}/content`), {
+        responseType: 'blob',
+      })
+      .pipe(switchMap((bytes) => aDataUrl(bytes)));
+  }
+
+  /**
    * `DELETE /common/files/:id` — borrado **lógico** del archivo.
    *
    * Ojo con la semántica: borra el archivo, no el vínculo. Un archivo borrado
@@ -201,4 +245,34 @@ function toLinkedFilePage(body: WireLinkedFilePage): LinkedFilePage {
       },
     })),
   };
+}
+
+/**
+ * Los bytes de una imagen convertidos a `data:` URL.
+ *
+ * `FileReader` y no `btoa(String.fromCharCode(...))`: el segundo revienta la
+ * pila con archivos grandes —una foto de cámara son millones de argumentos en
+ * una sola llamada— y además obliga a adivinar el tipo MIME, que el `Blob` ya
+ * trae del `Content-Type` de la respuesta.
+ *
+ * Bajo SSR no existe `FileReader`; la lectura falla ahí y quien llama degrada
+ * a las iniciales, que es el estado vacío correcto en el servidor.
+ */
+function aDataUrl(bytes: Blob): Observable<string> {
+  return new Observable<string>((observer) => {
+    if (typeof FileReader === 'undefined') {
+      observer.error(new Error('FileReader no disponible'));
+      return;
+    }
+    const lector = new FileReader();
+    lector.onload = () => {
+      observer.next(String(lector.result));
+      observer.complete();
+    };
+    lector.onerror = () => observer.error(lector.error);
+    lector.readAsDataURL(bytes);
+    // Cancelar la suscripción aborta la lectura: si la pantalla se cerró, no
+    // tiene sentido seguir decodificando una foto que ya nadie va a ver.
+    return () => lector.abort();
+  });
 }

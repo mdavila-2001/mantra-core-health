@@ -1,7 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { rolesConEtiqueta } from '../../../core/auth/role-labels';
@@ -177,9 +177,10 @@ export class MyProfile {
 
   /* -- La foto de perfil ---------------------------------------------------
      Mismo patrón que `practitioner-profile-view` y `public-profile-preview`:
-     el id viaja en `perfil().photoFileId`, y pintarlo exige resolverlo con
-     `FilesClient.downloadUrl` — no es una URL servida por la API, como sí lo
-     es el avatar de la vitrina pública. */
+     el id viaja en `perfil().photoFileId`, y pintarlo exige bajar los bytes
+     con `FilesClient.imageDataUrl` — la URL firmada de `downloadUrl` apunta a
+     `file://local/<sha>` y ningún `<img>` la carga —, a diferencia del avatar
+     de la vitrina pública, que sí llega servido por la API. */
 
   /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
   protected readonly subiendoFoto = signal(false);
@@ -425,11 +426,8 @@ export class MyProfile {
         this.perfil.set(p);
         if (p.photoFileId !== undefined) {
           this.files
-            .downloadUrl(p.photoFileId)
-            .pipe(
-              map((descarga) => descarga.url),
-              catchError(() => of<string | null>(null)),
-            )
+            .imageDataUrl(p.photoFileId)
+            .pipe(catchError(() => of<string | null>(null)))
             .subscribe((url) => this.fotoUrl.set(url));
         }
         const uuids = [
@@ -559,7 +557,7 @@ export class MyProfile {
         switchMap((guardado) =>
           guardado.photoFileId === undefined
             ? of(null)
-            : this.files.downloadUrl(guardado.photoFileId).pipe(map((descarga) => descarga.url)),
+            : this.files.imageDataUrl(guardado.photoFileId),
         ),
       )
       .subscribe({

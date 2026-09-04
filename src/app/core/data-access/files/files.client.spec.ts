@@ -137,6 +137,32 @@ describe('FilesClient', () => {
   });
 
   /**
+   * El defecto que dejaba las fotos invisibles.
+   *
+   * `downloadUrl()` devuelve `file://local/<sha>?firma=…` en esta instalación
+   * —comprobado en `common.file_versions`—, y eso en un `src` no carga nunca.
+   * La foto se subía bien, el perfil la guardaba, el alta decía «Listo» y el
+   * avatar seguía mostrando iniciales. `imageDataUrl` baja los bytes por la
+   * ruta autenticada y los entrega como `data:`, que es lo único que la CSP
+   * del proyecto (`img-src 'self' data:`) deja pintar.
+   */
+  it('imageDataUrl baja el contenido y lo entrega como data: URL', async () => {
+    const recibido = new Promise<string>((resolve) => {
+      client.imageDataUrl('f-1').subscribe(resolve);
+    });
+
+    const req = http.expectOne((r) => r.url === '/common/files/f-1/content');
+    expect(req.request.method).toBe('GET');
+    // Sin `blob` la respuesta llegaría como texto y el `data:` saldría con el
+    // tipo equivocado: el MIME lo aporta el propio Blob.
+    expect(req.request.responseType).toBe('blob');
+
+    req.flush(new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' }));
+
+    await expect(recibido).resolves.toMatch(/^data:image\/png;base64,/);
+  });
+
+  /**
    * Restaurada del spec original: la escribió quien construyó `upload()` y fija
    * un defecto real de multipart. Si alguien pone el `Content-Type` a mano, la
    * petición viaja **sin boundary** y el servidor la rechaza sin decir por qué.

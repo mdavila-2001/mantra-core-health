@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { FilesClient } from '../../../core/data-access/files/files.client';
@@ -150,10 +150,15 @@ export class PractitionerDetail {
             fotoUrl:
               perfil.photoFileId === undefined
                 ? of<string | null>(null)
-                : this.files.downloadUrl(perfil.photoFileId).pipe(
-                    map((descarga) => descarga.url),
-                    catchError(() => of<string | null>(null)),
-                  ),
+                : // Sólo se ve si quien mira subió esa foto: `/content` la
+                  // entrega a su autor o a un rol de revisión, y a nadie más.
+                  // Para el resto responde 403 y queda el avatar de iniciales,
+                  // que es lo que ya se veía. Sigue siendo mejor que
+                  // `downloadUrl`, cuya URL (`file://local/<sha>`) no cargaba
+                  // NUNCA, ni para el propio dueño.
+                  this.files
+                    .imageDataUrl(perfil.photoFileId)
+                    .pipe(catchError(() => of<string | null>(null))),
           }),
         ),
       )

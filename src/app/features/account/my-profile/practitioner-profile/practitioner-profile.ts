@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
@@ -142,10 +142,12 @@ export class PractitionerProfile {
             fotoUrl:
               perfil.photoFileId === undefined
                 ? of<string | null>(null)
-                : this.files.downloadUrl(perfil.photoFileId).pipe(
-                    map((descarga) => descarga.url),
-                    catchError(() => of<string | null>(null)),
-                  ),
+                : // `imageDataUrl` y no `downloadUrl`: la URL firmada apunta a
+                  // `file://local/<sha>`, que ningún `<img>` puede cargar. Ver
+                  // `FilesClient.imageDataUrl`.
+                  this.files
+                    .imageDataUrl(perfil.photoFileId)
+                    .pipe(catchError(() => of<string | null>(null))),
           }),
         ),
       )

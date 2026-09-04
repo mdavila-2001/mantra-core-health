@@ -675,7 +675,7 @@ describe('PractitionerProfileView', () => {
       fixture.detectChanges();
     }
 
-    it('sube, fija la foto profesional y la pinta', () => {
+    it('sube, fija la foto profesional y la pinta', async () => {
       const host = montar(PERFIL, true);
 
       eligeFoto(host, archivoFoto());
@@ -684,16 +684,16 @@ describe('PractitionerProfileView', () => {
       http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
       // Sin vitrina: la propagación no dispara ningún pedido más.
       http.expectOne('/community/profiles/me').flush(null);
-      http
-        .expectOne('/common/files/file-1/download-url')
-        .flush({ url: '/media/file-1', expiresAt: new Date().toISOString() });
-      fixture.detectChanges();
+      http.expectOne('/common/files/file-1/content').flush(pngFalso());
+      await esperarLaFoto(fixture, host);
 
       const img = host.querySelector('.profesional__foto .avatar__image');
-      expect(img?.getAttribute('src')).toBe('/media/file-1');
+      // `data:` y no una ruta: la URL firmada del backend apunta a
+      // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
+      expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
     });
 
-    it('con vitrina existente, repite la foto como avatar sin perder lo ya declarado', () => {
+    it('con vitrina existente, repite la foto como avatar sin perder lo ya declarado', async () => {
       const host = montar(PERFIL, true);
 
       eligeFoto(host, archivoFoto());
@@ -736,16 +736,16 @@ describe('PractitionerProfileView', () => {
         avatarFileId: 'file-1',
       });
 
-      http
-        .expectOne('/common/files/file-1/download-url')
-        .flush({ url: '/media/file-1', expiresAt: new Date().toISOString() });
-      fixture.detectChanges();
+      http.expectOne('/common/files/file-1/content').flush(pngFalso());
+      await esperarLaFoto(fixture, host);
 
       const img = host.querySelector('.profesional__foto .avatar__image');
-      expect(img?.getAttribute('src')).toBe('/media/file-1');
+      // `data:` y no una ruta: la URL firmada del backend apunta a
+      // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
+      expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
     });
 
-    it('si falla la propagación a la vitrina, la foto profesional igual se pinta', () => {
+    it('si falla la propagación a la vitrina, la foto profesional igual se pinta', async () => {
       // Best-effort: lo que ya se guardó arriba no debe perderse por un error
       // accesorio.
       const host = montar(PERFIL, true);
@@ -756,13 +756,13 @@ describe('PractitionerProfileView', () => {
       http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
       http.expectOne('/community/profiles/me').flush('boom', { status: 500, statusText: 'Error' });
 
-      http
-        .expectOne('/common/files/file-1/download-url')
-        .flush({ url: '/media/file-1', expiresAt: new Date().toISOString() });
-      fixture.detectChanges();
+      http.expectOne('/common/files/file-1/content').flush(pngFalso());
+      await esperarLaFoto(fixture, host);
 
       const img = host.querySelector('.profesional__foto .avatar__image');
-      expect(img?.getAttribute('src')).toBe('/media/file-1');
+      // `data:` y no una ruta: la URL firmada del backend apunta a
+      // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
+      expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
       // El fallo fue accesorio (la propagación a la vitrina): no queda como
       // mensaje de error de la subida, que sí funcionó.
       expect(host.textContent).not.toContain('No pudimos subir la foto');
@@ -775,3 +775,30 @@ describe('PractitionerProfileView', () => {
     });
   });
 });
+
+/**
+ * Un PNG de un pixel, como Blob.
+ *
+ * La foto se resuelve bajando los bytes por `/content` y codificándolos: el
+ * contenido da igual, lo que importa es que sea un Blob con tipo — de ahí sale
+ * el `data:image/png` que termina en el `src`.
+ */
+function pngFalso(): Blob {
+  return new Blob([new Uint8Array([137, 80, 78, 71])], { type: 'image/png' });
+}
+
+/**
+ * Espera a que la foto aterrice en el DOM.
+ *
+ * La codificación a `data:` la hace `FileReader`, que es asíncrono y **no**
+ * pasa por los temporizadores de `fakeAsync`. Ceder un turno fijo alcanzaba a
+ * veces y a veces no —dos de estas pruebas fallaban de forma intermitente—, así
+ * que se sondea hasta que el `src` existe.
+ */
+async function esperarLaFoto(fixture: ComponentFixture<unknown>, host: HTMLElement): Promise<void> {
+  for (let intento = 0; intento < 50; intento++) {
+    await new Promise((listo) => setTimeout(listo, 0));
+    fixture.detectChanges();
+    if (host.querySelector('.profesional__foto .avatar__image') !== null) return;
+  }
+}
