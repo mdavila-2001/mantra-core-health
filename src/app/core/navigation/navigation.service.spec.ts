@@ -153,11 +153,23 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).not.toContain('/administration/medical-laboratory');
     });
 
-    it('el menú del médico son las ocho opciones del cliente, y el generador', () => {
+    it('el menú del médico son las opciones del cliente, el generador y los dos directorios', () => {
       // §4.H del plan de UX del 22/08/2026. El cliente dio una lista **cerrada**
       // —«las opciones únicas que se requiere en el panel del doctor son…»— y el
       // menú tenía dieciséis entradas de primer nivel. Esta prueba es la lista,
       // en el orden en que se dibuja, y falla si alguien agrega la siguiente.
+      //
+      // **Las dos guías entran por la funcionalidad 9 (FT-09-R01, 04/09/2026),
+      // con aval explícito del propietario.** El pedido era «Directorio,
+      // Administración, Chats»; de los cuatro directorios del producto, los dos
+      // que el médico puede ver son el de clínicas y el de farmacias. La lista
+      // cerrada pasa de nueve a once por esa decisión, no por descuido: quien
+      // agregue la doceava sigue teniendo que discutirla.
+      //
+      // Lo que la decisión **no** toca: «Directorio de médicos» (`directory`)
+      // sigue siendo exclusivo del paciente —corrección #2, fijada dos pruebas
+      // más abajo— y «Administración» no entra, porque el médico no tiene
+      // ninguna de sus secciones y mostrar un grupo vacío no es una función.
       //
       // **«Formularios» es la novena, y entra a propósito.** El generador del
       // doctor se pidió el 21/08 y llegó el 22 (PR #212), un día antes de esta
@@ -180,6 +192,8 @@ describe('NavigationService', () => {
       expect(fueraDeMiCuenta).toEqual([
         'Chats',
         'Directorio de laboratorios',
+        'Directorio de clínicas',
+        'Directorio de farmacias',
         'Consulta médica',
         'Turnos',
         'Archivo clínico',
@@ -188,6 +202,18 @@ describe('NavigationService', () => {
         'Formularios',
         'Contabilidad',
       ]);
+    });
+
+    it('las dos guías que el médico recupera son las suyas, no la de médicos', () => {
+      // FT-09-R01. El pedido decía «Directorio» a secas y hay cuatro. Esta
+      // prueba fija cuáles entraron y cuál no: si alguien lee la funcionalidad
+      // 9 como «devolverle la Guía de profesionales», falla acá y no en
+      // producción.
+      abrirSesion(['PRACTITIONER']);
+
+      expect(rutasDelMenu()).toContain('/clinics-directory');
+      expect(rutasDelMenu()).toContain('/pharmacies-directory');
+      expect(rutasDelMenu()).not.toContain('/directory');
     });
 
     it('lo que sale del menú del médico NO le cierra la puerta', () => {
@@ -346,15 +372,35 @@ describe('NavigationService', () => {
     });
 
     it('un bloque sólo trae lo que la sesión puede ver', () => {
-      // De los cuatro directorios, quien ejerce ve uno. El bloque no desaparece
-      // —sigue siendo el lugar de ese destino— pero queda de un solo renglón, y
-      // eso es lo que el armazón dibuja suelto en vez de como desplegable.
+      // De los cuatro directorios, quien ejerce ve tres: la Guía de
+      // profesionales es exclusiva del paciente. Hasta el 04/09 veía uno solo
+      // —clínicas y farmacias salían por `fueraDelMenuPara`— y FT-09-R01 se las
+      // devolvió; lo que esta prueba sigue mostrando es el filtrado, que es su
+      // motivo de existir.
       abrirSesion(['PRACTITIONER']);
 
       const general = service.menu().find((grupo) => grupo.label === 'General');
       const directorios = general?.blocks.find((bloque) => bloque.label === 'Directorios');
 
-      expect(directorios?.items.map((item) => item.route)).toEqual(['/laboratory-directory']);
+      expect(directorios?.items.map((item) => item.route)).toEqual([
+        '/laboratory-directory',
+        '/clinics-directory',
+        '/pharmacies-directory',
+      ]);
+    });
+
+    it('un bloque de un solo renglón sigue existiendo, y el armazón lo dibuja suelto', () => {
+      // Es la otra mitad de lo de arriba, que se demostraba con los directorios
+      // cuando al médico le quedaba uno solo. «Comunidad» ocupó ese lugar: de
+      // sus dos destinos, quien ejerce ve Chats —«Grupos y foros» declara los
+      // roles de quien ejerce o administra desde F-20, pero no entra en la
+      // lista cerrada del panel—.
+      abrirSesion(['PRACTITIONER']);
+
+      const general = service.menu().find((grupo) => grupo.label === 'General');
+      const comunidad = general?.blocks.find((bloque) => bloque.label === 'Comunidad');
+
+      expect(comunidad?.items.map((item) => item.route)).toEqual(['/messaging']);
     });
   });
 

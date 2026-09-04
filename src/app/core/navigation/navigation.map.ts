@@ -254,9 +254,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'General',
     icon: 'hospital',
     roles: [ANY_ROLE],
-    // Fuera del menú del médico por la lista cerrada de ocho (§4.H). Sigue
-    // alcanzable por su ruta y desde el flujo de síntomas.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // **Vuelve al menú del médico (FT-09-R01, 04/09/2026).** Salió por la lista
+    // cerrada de ocho (§4.H, 22/08); el pedido «Directorio» de la funcionalidad
+    // 9 lo devuelve. Es el directorio que el médico SÍ puede ver: «Directorio de
+    // médicos» (`directory`) sigue siendo exclusivo del paciente por la
+    // corrección #2, que esta decisión NO toca.
     availability: 'disponible',
     summary: 'Clínicas, hospitales y centros de salud verificados, con su tipo y su ciudad.',
     module: 'M04 directory',
@@ -270,7 +272,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'General',
     icon: 'pill',
     roles: [ANY_ROLE],
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // Vuelve al menú del médico por lo mismo que el de clínicas (FT-09-R01):
+    // saber dónde se consigue lo que uno receta es parte de atender.
     availability: 'disponible',
     summary: 'Farmacias de la red, con su ciudad y su verificación.',
     module: 'M22 pharmacy',
