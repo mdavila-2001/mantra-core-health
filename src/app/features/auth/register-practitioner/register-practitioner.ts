@@ -472,6 +472,26 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [telefonoCompleto],
     }),
+    // Los cuatro contactos que el registro pide separados del de acceso. Cada
+    // uno viaja a su propia fila de puntos de contacto, distinguida por el par
+    // sistema × uso; mezclarlos en un solo campo era lo que hacía que el número
+    // privado y el del consultorio fueran el mismo dato.
+    mobilePhone: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
+    workMobilePhone: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
+    workLandline: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
+    personalEmail: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.email],
+    }),
     birthDate: new FormControl<Date | null>(null),
     // AC-05-7: el DTO lo aceptaba desde siempre; lo que faltaba era
     // preguntarlo. Opcional, como el resto de los datos personales de esta
@@ -816,9 +836,10 @@ export class RegisterPractitioner {
    * (ADR-0021) y el repositorio del modelo no está en este workspace, así que
    * ninguna de estas columnas se puede promover desde este carril.
    *
-   * - **Segundo celular y segundo correo** (AC-05-6). `RegisterPractitionerDto`
-   *   declara **un** `phone` y **un** `email`; no hay segundo campo ni tabla de
-   *   puntos de contacto que los reciba.
+   * (**AC-05-6 ya no está en esta lista**: el celular y el correo personales,
+   * el celular y el fijo del trabajo y el correo de acceso son cinco campos
+   * distintos desde que la API los recibe por separado y los guarda como cinco
+   * filas de puntos de contacto, cada una con su par sistema × uso.)
    * - **Zona, línea de dirección y GPS** de residencia (AC-05-8). El DTO del
    *   profesional acepta `residenceMunicipalityConceptId` y nada más: no tiene
    *   `homeAddressLines` ni el par de coordenadas que sí tiene el de paciente. Y
@@ -972,29 +993,68 @@ export class RegisterPractitioner {
         ],
       },
       {
-        titulo: 'Tu acceso y tu contacto',
+        titulo: 'Cómo te contactamos en privado',
+        clave: 'personal-contact',
+        icon: 'phone',
+        hint: 'Opcional. Estos datos no se publican en tu ficha.',
+        campos: [
+          {
+            key: 'mobilePhone',
+            label: 'Tu celular personal (opcional)',
+            hint: 'Elegí el país si tu número no es de Bolivia.',
+            description:
+              'Es el número por el que te contactamos a vos. El que ve un paciente es el de tu consultorio, que se pide en la página siguiente.',
+            control: 'tel',
+            autocomplete: 'tel',
+            testId: 'registro-pro-celular-personal',
+            icono: 'phone',
+            mensajeDeError: 'El número está incompleto para el país elegido.',
+          },
+          {
+            key: 'personalEmail',
+            label: 'Tu correo personal (opcional)',
+            hint: 'Distinto del de trabajo, con el que vas a entrar.',
+            control: 'email',
+            autocomplete: 'email',
+            placeholder: 'ana.rojas@gmail.com',
+            testId: 'registro-pro-correo-personal',
+            icono: 'mail',
+            mensajeDeError: 'Ingresá un correo válido.',
+          },
+        ],
+      },
+      {
+        titulo: 'Tu acceso y el contacto del trabajo',
         clave: 'access',
         icon: 'mail',
         hint: 'Con este correo y esta contraseña vas a iniciar sesión.',
         campos: [
           {
-            key: 'phone',
-            label: 'Tu celular (opcional)',
+            key: 'workMobilePhone',
+            label: 'Celular del trabajo (opcional)',
             hint: 'Elegí el país si tu número no es de Bolivia.',
-            description:
-              'Es el número por el que te contactamos a vos, no el que ve un paciente en tu ficha.',
             control: 'tel',
             autocomplete: 'tel',
-            testId: 'registro-pro-telefono',
+            testId: 'registro-pro-celular-trabajo',
             icono: 'phone',
+            ancho: 'mitad',
             mensajeDeError: 'El número está incompleto para el país elegido.',
           },
-          // El segundo celular y el segundo correo que pide AC-05-6 no están:
-          // el DTO declara uno de cada. Ver el JSDoc de arriba.
+          {
+            key: 'workLandline',
+            label: 'Fijo del trabajo (opcional)',
+            hint: 'El de la línea del consultorio.',
+            control: 'tel',
+            autocomplete: 'tel',
+            testId: 'registro-pro-fijo-trabajo',
+            icono: 'phone',
+            ancho: 'mitad',
+            mensajeDeError: 'El número está incompleto para el país elegido.',
+          },
           {
             key: 'email',
-            label: 'Correo profesional',
-            hint: 'Con este correo vas a iniciar sesión.',
+            label: 'Correo de trabajo — con éste entrás',
+            hint: 'Es tu identidad de acceso, no sólo un dato de contacto.',
             description:
               'Usá uno al que tengas acceso: es por donde se recupera la cuenta si perdés la clave.',
             control: 'email',
@@ -1497,7 +1557,10 @@ export class RegisterPractitioner {
   private datosProfesional(): PractitionerRegistration {
     const raw = this.formProfesional.getRawValue();
     const titulo = raw.professionalTitle.trim();
-    const telefono = raw.phone.trim();
+    const celularPersonal = raw.mobilePhone.trim();
+    const celularTrabajo = raw.workMobilePhone.trim();
+    const fijoTrabajo = raw.workLandline.trim();
+    const correoPersonal = raw.personalEmail.trim();
     const segundoNombre = this.nombresAdicionales();
     const apellidoMaterno = raw.motherLastName.trim();
     const documento = raw.nationalId.trim();
@@ -1537,7 +1600,13 @@ export class RegisterPractitioner {
       ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),
       ...(fechaInscripcion === null ? {} : { licenseIssueDate: fechaIso(fechaInscripcion) }),
       ...(titulo === '' ? {} : { professionalTitle: titulo }),
-      ...(telefono === '' ? {} : { phone: telefono }),
+      // Los cuatro contactos por separado. `phone` ya no viaja: era el campo
+      // único que mezclaba el número privado con el del consultorio, y la API
+      // lo mantiene sólo por compatibilidad con clientes anteriores.
+      ...(celularPersonal === '' ? {} : { mobilePhone: celularPersonal }),
+      ...(celularTrabajo === '' ? {} : { workMobilePhone: celularTrabajo }),
+      ...(fijoTrabajo === '' ? {} : { workLandline: fijoTrabajo }),
+      ...(correoPersonal === '' ? {} : { personalEmail: correoPersonal }),
       ...(this.especialidadesElegidas().length === 0
         ? {}
         : { specialtyConceptIds: this.especialidadesElegidas() }),

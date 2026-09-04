@@ -31,10 +31,25 @@
             <app-input [(value)]="apellidoMaterno" />
           </app-form-field>
           <app-form-field
-            label="Teléfono"
+            label="Celular personal"
+            hint="El número por el que te contactamos a vos. No se publica en tu ficha."
+          >
+            <app-input [(value)]="celularPersonal" placeholder="+591 70000000" />
+          </app-form-field>
+          <app-form-field
+            label="Correo personal"
+            hint="Distinto del de trabajo, que es con el que entrás."
+          >
+            <app-input [(value)]="correoPersonal" placeholder="tu.correo@ejemplo.com" />
+          </app-form-field>
+          <app-form-field
+            label="Celular del trabajo"
             hint="El número por el que te pueden contactar de tu consulta."
           >
-            <app-input [(value)]="telefono" placeholder="+591 70000000" />
+            <app-input [(value)]="celularTrabajo" placeholder="+591 70000000" />
+          </app-form-field>
+          <app-form-field label="Fijo del trabajo" hint="La línea del consultorio.">
+            <app-input [(value)]="fijoTrabajo" placeholder="+591 3 3000000" />
           </app-form-field>
 
           <app-form-field label="Título profesional" hint="«Médica cardióloga», «Kinesiólogo».">

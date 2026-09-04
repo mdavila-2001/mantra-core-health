@@ -185,7 +185,28 @@ export interface OwnPractitionerProfile {
   readonly professionalBio?: string;
   readonly photoFileId?: string;
   readonly email?: string;
+  /**
+   * Forma anterior de leer el teléfono: el primero que haya, sin mirar su uso.
+   *
+   * @deprecated Preferí {@link workLandline} o {@link workMobilePhone}, que
+   * dicen cuál es cuál.
+   */
   readonly phone?: string;
+
+  /* --- los cinco contactos, cada uno con su nombre -----------------------
+     Vienen separados desde que el alta los pide así. `email` es el de trabajo
+     y a la vez el de acceso; el personal viaja aparte. */
+
+  /** Correo de trabajo, el mismo con el que se entra. */
+  readonly workEmail?: string;
+  /** Correo personal, el que no sirve para entrar. */
+  readonly personalEmail?: string;
+  /** Celular personal o privado. */
+  readonly mobilePhone?: string;
+  /** Celular del lugar de trabajo. */
+  readonly workMobilePhone?: string;
+  /** Fijo del lugar de trabajo. */
+  readonly workLandline?: string;
 
   /* --- los datos personales, sólo en la lectura propia -------------------- */
 
