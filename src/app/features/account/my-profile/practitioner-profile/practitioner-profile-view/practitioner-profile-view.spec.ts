@@ -443,10 +443,13 @@ describe('PractitionerProfileView', () => {
 
   /* -- Actividad y disponibilidad -------------------------------------------- */
 
-  it('la disponibilidad se dice con palabras', () => {
+  it('los tags se dicen con palabras, sin la disponibilidad para pacientes nuevos', () => {
     const host = montar();
 
-    expect(host.textContent).toContain('Acepta pacientes nuevos');
+    // El chip se pintaba en toda ficha —también en la de quien nunca tocó el
+    // ajuste— y el valor por defecto anunciaba lo contrario de la realidad.
+    expect(host.textContent).not.toContain('Acepta pacientes nuevos');
+    expect(host.textContent).not.toContain('No toma pacientes nuevos');
     expect(host.textContent).toContain('Atiende por telemedicina');
     expect(host.textContent).toContain('Español · interpreta en consulta');
   });

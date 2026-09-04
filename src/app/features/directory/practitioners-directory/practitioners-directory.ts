@@ -573,13 +573,11 @@ function toResultado(
   if (fila.verified) {
     sellos.push({ label: 'Matrícula verificada', tone: 'ok' as const });
   }
-  // Disponibilidad con palabras: es lo que decide si quien busca puede pedir
-  // turno, y decirlo sólo con color lo deja fuera de un lector de pantalla.
-  sellos.push(
-    fila.acceptsNewPatients
-      ? { label: 'Acepta pacientes nuevos', tone: 'ok' as const }
-      : { label: 'No toma pacientes nuevos', tone: 'neutro' as const },
-  );
+  // La disponibilidad para pacientes nuevos ya no se estampa: el sello salía en
+  // TODA tarjeta, también en la de quien nunca tocó el ajuste, y el valor por
+  // defecto anunciaba «No toma pacientes nuevos» de profesionales que sí los
+  // toman. Quien busca lo resuelve en la agenda del profesional, que es el dato
+  // real. `acceptsNewPatients` sigue viajando en la fila.
   if (fila.telehealthAvailable) {
     sellos.push({ label: 'Telemedicina', tone: 'info' as const });
   }
