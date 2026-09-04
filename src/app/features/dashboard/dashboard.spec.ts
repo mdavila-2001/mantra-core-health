@@ -300,6 +300,26 @@ describe('Dashboard', () => {
 
       expect(todasLasRutas()).not.toContain('/directory');
     });
+
+    /* -- ALV-018: la agenda, a un clic ------------------------------------- */
+
+    function atajoDeAgenda(): HTMLAnchorElement | null {
+      return raiz().querySelector<HTMLAnchorElement>('[data-testid="panel-agenda-directa"]');
+    }
+
+    it('quien atiende tiene la agenda directa, sin abrir la zona', () => {
+      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
+
+      const atajo = atajoDeAgenda();
+      expect(atajo).not.toBeNull();
+      expect(atajo?.getAttribute('href')).toBe('/schedule');
+    });
+
+    it('quien no atiende no ve el atajo: no se ofrece una puerta que da 403', () => {
+      abrirPanel(['PATIENT']);
+
+      expect(atajoDeAgenda()).toBeNull();
+    });
   });
 
   /* -- H-07: la tarjeta «Tu cuenta» no filtra vocabulario de sistema --------- */

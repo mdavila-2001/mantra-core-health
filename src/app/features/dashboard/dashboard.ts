@@ -165,6 +165,22 @@ export class Dashboard {
   );
 
   /**
+   * La agenda, a un clic del panel (ALV-018).
+   *
+   * Estaba dentro de la zona «Mi consulta», que hay que abrir para ver lo que
+   * tiene: dos clics para llegar a lo que quien atiende abre todos los días y
+   * varias veces por día. Las zonas siguen ahí —ordenan las treinta y dos
+   * secciones—, pero la agenda además se ofrece directa.
+   *
+   * Sale de las secciones que la sesión YA tiene visibles y sólo si está
+   * `disponible`: no se dibuja un atajo a algo que esta cuenta no puede abrir,
+   * ni a una sección en construcción. Quien no atiende no lo ve.
+   */
+  protected readonly agendaDirecta = computed<AppSection | undefined>(() =>
+    this.seccionesDisponibles().find((seccion) => seccion.path === 'schedule'),
+  );
+
+  /**
    * Sólo quien administra puede listar pacientes; al resto la API le responde 403.
    *
    * Por `rolesAlcanzan` y no por un `includes` propio: `SUPERADMIN` es comodín
