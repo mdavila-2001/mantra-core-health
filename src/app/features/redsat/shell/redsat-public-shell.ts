@@ -8,9 +8,10 @@
     repetirlo por pantalla es garantizar que en alguna falte.
     ========================================================================== */
 
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
+import { AuthService } from '@core/auth/auth.service';
 import { PublicNavRail } from '@shared/components/organisms/public-nav-rail/public-nav-rail';
 import { RedsatThemeToggleDirective } from '@core/redsat/redsat-theme-toggle.directive';
 
@@ -29,6 +30,32 @@ import { RedsatDesignNotice } from './redsat-design-notice';
 })
 export class RedsatPublicShell {
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+
+  /**
+   * Si quien mira tiene sesión abierta.
+   *
+   * El marco nació para «alguien sin sesión» —lo dice su propio encabezado— y
+   * esa suposición dejó de valer cuando el nav de la app empezó a enlazar a las
+   * fichas públicas: las guías de clínicas y de farmacias viven DENTRO del
+   * armazón autenticado, pero la ficha de cada una cuelga de `/o` y `/f`, que
+   * son rutas públicas. El resultado era que abrir una clínica desde el menú
+   * cambiaba de marco, ofrecía «Entrar» a quien ya había entrado, y el logo
+   * llevaba al buscador público. La sesión nunca se perdía; todo lo que se veía
+   * decía que sí.
+   */
+  protected readonly conSesion = this.auth.isAuthenticated;
+
+  /**
+   * A dónde vuelve la marca del encabezado.
+   *
+   * Con sesión, al panel —el mismo destino que `homeGuard` elige para la raíz—;
+   * sin sesión, al buscador público. Antes iba siempre a `/search`, así que el
+   * gesto más natural para volver era justamente el que sacaba de la app.
+   */
+  protected readonly rutaDeLaMarca = computed(() =>
+    this.conSesion() ? '/dashboard' : '/search',
+  );
 
   /**
    * Manda lo escrito en el buscador del marco a la búsqueda unificada.
