@@ -309,6 +309,18 @@
 </ng-template>
 
 <ng-template #celdaPaciente let-cita>
+  <!-- **A quién se atiende, primero.** La columna se llama «Paciente» y sólo
+       ofrecía enlaces —«Abrir expediente», «Ver ficha»—, así que quien miraba
+       su agenda no podía saber a quién iba a atender sin abrir el expediente de
+       cada fila. El nombre ya venía de la API (`patientName`) y ya estaba
+       mapeado en el componente; sólo lo usaba el detalle.
+
+       `cita.paciente` respeta la compuerta del backend: manda el nombre al
+       titular y al profesional de esa agenda, y a nadie más. Sin nombre dice
+       «Paciente asignado» —hay alguien, y no te corresponde saber quién— o «Sin
+       paciente», que es lo que ya decía esta celda cuando no había enlaces. -->
+  <span class="agenda__paciente">{{ cita.paciente }}</span>
+
   <!-- Dos destinos distintos, no dos formas de lo mismo: el expediente es la
        historia de quien llega y lo abre quien atiende; la ficha es la filiación
        y la abre administración. Se ofrecen los que la sesión pueda abrir, y
@@ -327,12 +339,6 @@
         <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
       }
     </span>
-  } @else if (cita.patientProfileId) {
-    <!-- Sin permiso para abrir nada, el enlace sería un 403 con forma de
-         invitación. Se dice que hay paciente y no cuál. -->
-    <span class="agenda__hasta">Paciente asignado</span>
-  } @else {
-    <span class="agenda__hasta">Sin paciente</span>
   }
 </ng-template>
 
