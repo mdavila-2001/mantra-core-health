@@ -6,6 +6,14 @@
 :host {
     display: block;
     font-family: var(--font-body);
+    /* Sin esto, un ancestro `display:grid` o `display:flex` (la pantalla de
+       Turnos, carril 13) le da al host su tamaño de min-content en vez del
+       ancho disponible: una tabla ancha adentro empuja al host entero a
+       657px en un viewport de 390, y la página entera scrollea de costado
+       en vez de que la tabla scrollee sola dentro de su caja. Ya estaba
+       resuelto para la variante vertical (ver abajo); esto lo hace el
+       comportamiento por defecto. */
+    min-width: 0;
 }
 
 .tabs__list {
@@ -67,6 +75,13 @@
 .tabs__tab:disabled {
     color: var(--text-muted);
     cursor: not-allowed;
+}
+
+/* Mismo motivo que el `min-width: 0` del `:host`: sin esto el panel activo
+   toma el ancho de su contenido más ancho (una tabla de columnas) y lo
+   empuja hacia afuera en vez de dejarlo scrollear por su cuenta. */
+.tabs__panels {
+    min-width: 0;
 }
 
 /* ---- orientación vertical ------------------------------------------------ */
