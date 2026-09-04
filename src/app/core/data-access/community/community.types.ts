@@ -274,6 +274,24 @@ export interface CommentThreadItem {
   readonly replyCount?: number;
   readonly createdAt: Date;
   readonly replies: readonly CommentThreadItem[];
+  /** Imágenes, stickers y GIFs adjuntos (REQ-01-011). */
+  readonly media: readonly CommentMediaItem[];
+}
+
+/** Un adjunto de comentario, tal como lo sirve `GET .../comments`. */
+export interface CommentMediaItem {
+  readonly id: string;
+  readonly fileId: string;
+  readonly mediaRoleConceptId: string;
+  readonly altText?: string;
+  readonly ordinal?: number;
+}
+
+/** Un adjunto a subir con un comentario nuevo (`POST /community/comments`). */
+export interface NewCommentMedia {
+  readonly fileId: string;
+  readonly mediaRole: 'IMAGE' | 'STICKER' | 'GIF';
+  readonly altText?: string;
 }
 
 /** Una página de hilos de comentarios. */
@@ -293,6 +311,8 @@ export interface NewComment {
   readonly commentableRefId: string;
   readonly bodyText: string;
   readonly parentCommentId?: string;
+  /** Imágenes, stickers y GIFs a adjuntar (REQ-01-011). Tope de 4, del servidor. */
+  readonly media?: readonly NewCommentMedia[];
 }
 
 // ─── Reacciones ──────────────────────────────────────────────────────────────

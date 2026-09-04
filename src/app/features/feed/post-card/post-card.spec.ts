@@ -292,6 +292,50 @@ describe('PostCard', () => {
     expect(conteo).toBeNull();
   });
 
+  /**
+   * FND-01/FND-02. `app-file-preview-image` es lo que pinta el adjunto de un
+   * comentario en esta tarjeta con sesión, y tiene que pedirlo por la ruta
+   * autorizada por «puedo ver el post» (`CommunityClient.commentMediaDataUrl`)
+   * y no por `/common/files/:id/content` (que sólo deja pasar a quien subió
+   * el archivo, y era exactamente el 403 que dejaba el ícono roto para
+   * cualquiera que no fuera esa persona — el autor del post incluido).
+   */
+  it('un comentario con adjunto lo pide por la ruta de comentarios, no la de archivos propios', () => {
+    montar('pp-1');
+    pulsar('Comentarios');
+    http
+      .expectOne((r) => r.url === '/community/posts/p-1/comments')
+      .flush({
+        items: [
+          {
+            id: 'c-1',
+            authorProfileId: 'ffffffff-0000-0000-0000-000000000000',
+            bodyText: 'Miren esta radiografía.',
+            parentCommentId: null,
+            threadDepth: 0,
+            replyCount: 0,
+            createdAt: '2026-08-14T11:00:00.000Z',
+            replies: [],
+            media: [
+              { id: 'cm-1', fileId: 'f-1', mediaRoleConceptId: 'c-img', altText: 'Radiografía' },
+            ],
+          },
+        ],
+        count: 1,
+        limit: 20,
+        nextCursor: null,
+      });
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="post-comment-media"]'),
+    ).not.toBeNull();
+
+    const peticion = http.expectOne('/community/comments/media/f-1/content');
+    expect(peticion.request.method).toBe('GET');
+    peticion.flush(new Blob(['bytes'], { type: 'image/png' }));
+  });
+
   it('marca cuál reacción es la propia', () => {
     montar('pp-1');
     pulsar('Me hizo pensar');

@@ -6,6 +6,7 @@ import { fileAttributes } from '../../observability/business/file-tracing';
 import { TracingService } from '../../observability/tracing/tracing.service';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sinNulos } from '../wire';
+import { blobToDataUrl } from './blob-to-data-url';
 import type {
   DownloadUrl,
   FileLink,
@@ -174,7 +175,10 @@ export class FilesClient {
    * **Ojo con quién puede.** El backend sólo entrega el contenido a quien
    * subió el archivo o a un rol de revisión, así que esto resuelve la foto
    * *propia*. Para la foto de otra persona en un directorio público responde
-   * 403 y hay que degradar a iniciales.
+   * 403 y hay que degradar a iniciales — y para el adjunto de un comentario
+   * ajeno cuyo post sí se puede ver, la vía correcta es
+   * `CommunityClient.commentMediaDataUrl()` (FND-01), no ésta: acá «quién
+   * puede» es siempre «quien lo subió».
    *
    * @param fileId - El archivo a leer.
    * @returns La imagen como `data:` URL.
@@ -184,7 +188,7 @@ export class FilesClient {
       .get(apiUrl(this.baseUrl, `/common/files/${encodeURIComponent(fileId)}/content`), {
         responseType: 'blob',
       })
-      .pipe(switchMap((bytes) => aDataUrl(bytes)));
+      .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
   }
 
   /**
@@ -247,32 +251,3 @@ function toLinkedFilePage(body: WireLinkedFilePage): LinkedFilePage {
   };
 }
 
-/**
- * Los bytes de una imagen convertidos a `data:` URL.
- *
- * `FileReader` y no `btoa(String.fromCharCode(...))`: el segundo revienta la
- * pila con archivos grandes —una foto de cámara son millones de argumentos en
- * una sola llamada— y además obliga a adivinar el tipo MIME, que el `Blob` ya
- * trae del `Content-Type` de la respuesta.
- *
- * Bajo SSR no existe `FileReader`; la lectura falla ahí y quien llama degrada
- * a las iniciales, que es el estado vacío correcto en el servidor.
- */
-function aDataUrl(bytes: Blob): Observable<string> {
-  return new Observable<string>((observer) => {
-    if (typeof FileReader === 'undefined') {
-      observer.error(new Error('FileReader no disponible'));
-      return;
-    }
-    const lector = new FileReader();
-    lector.onload = () => {
-      observer.next(String(lector.result));
-      observer.complete();
-    };
-    lector.onerror = () => observer.error(lector.error);
-    lector.readAsDataURL(bytes);
-    // Cancelar la suscripción aborta la lectura: si la pantalla se cerró, no
-    // tiene sentido seguir decodificando una foto que ya nadie va a ver.
-    return () => lector.abort();
-  });
-}

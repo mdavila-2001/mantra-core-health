@@ -7,12 +7,14 @@ import {
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
 import type {
   CommentThreadItem,
+  NewCommentMedia,
   PostListItem,
   ReactionType,
 } from '../../../core/data-access/community/community.types';
@@ -20,6 +22,8 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { CommentMediaPicker } from '../../../shared/components/molecules/comment-media-picker/comment-media-picker';
+import { FilePreviewImage } from '../../../shared/components/molecules/file-preview-image/file-preview-image';
 
 /** Cuántos comentarios raíz se piden por página del hilo. */
 const COMMENTS_PAGE_SIZE = 20;
@@ -80,13 +84,15 @@ export const REACCIONES_OFRECIDAS: readonly {
  */
 @Component({
   selector: 'app-post-card',
-  imports: [AppButton, Badge, Card, DatePipe, Textarea],
+  imports: [AppButton, Badge, Card, CommentMediaPicker, DatePipe, FilePreviewImage, Textarea],
   templateUrl: './post-card.html',
   styleUrl: './post-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostCard {
   private readonly community = inject(CommunityClient);
+
+  private readonly mediaPicker = viewChild(CommentMediaPicker);
 
   /** La publicación a pintar. */
   readonly post = input.required<PostListItem>();
@@ -158,6 +164,9 @@ export class PostCard {
   protected readonly nuevoComentario = signal('');
   protected readonly comentando = signal(false);
   private readonly comentariosAgregados = signal(0);
+
+  /** Lo que el picker de adjuntos (REQ-01-011) tiene listo para mandar. */
+  protected readonly mediaAdjunta = signal<readonly NewCommentMedia[]>([]);
 
   protected readonly puedeEscribir = computed(
     () => this.actorProfileId() !== null,
@@ -293,15 +302,20 @@ export class PostCard {
     this.comentando.set(true);
     this.error.set('');
 
+    const media = this.mediaAdjunta();
+
     this.community
       .createComment({
         authorProfileId: actor,
         commentableRefId: this.post().id,
         bodyText: texto,
+        ...(media.length > 0 ? { media } : {}),
       })
       .subscribe({
         next: () => {
           this.nuevoComentario.set('');
+          this.mediaAdjunta.set([]);
+          this.mediaPicker()?.limpiar();
           this.comentando.set(false);
           this.comentariosAgregados.update((cuantos) => cuantos + 1);
           // Se relee el hilo en vez de insertar a mano: el servidor decide la
