@@ -1,4 +1,10 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import {
+  empezarElAlta,
+  avanzarHasta,
+  elegirLocalidadDeResidencia,
+  elegirLocalidadDeTrabajo,
+} from './support/registro-paciente';
 
 /**
  * Los dos cambios del alta pública, comprobados donde se ven.
@@ -21,77 +27,6 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** La Plaza 24 de Septiembre, Santa Cruz: un punto real, y de los que se reconocen. */
 const PUNTO_DE_PRUEBA = { latitude: -17.7833, longitude: -63.1821 };
-
-/**
- * Completa la primera página —lo único obligatorio del alta— y avanza.
- *
- * El motor valida de a una página, así que sin esto el «Siguiente» no mueve
- * nada y la prueba fallaría lejos de lo que quiere comprobar.
- */
-async function empezarElAlta(page: Page): Promise<void> {
-  await page.goto('/auth/register/patient');
-  await expect(page.getByTestId('registro-form-paciente')).toBeVisible();
-
-  // Orden de la fuente literal de FT-03: nombres y apellidos primero,
-  // documento después. El motor valida de a una página, asi que sin completar
-  // el nombre el «Siguiente» no mueve nada y la prueba fallaria lejos de lo
-  // que quiere comprobar.
-  await page.getByTestId('registro-nombre').fill('Ana');
-  await page.getByTestId('registro-apellido-paterno').fill('Paz');
-  await page.getByTestId('paginated-form-continuar').click();
-
-  await page.getByTestId('registro-documento').fill('9876543');
-  await page.getByTestId('paginated-form-continuar').click();
-
-  // La página «Contanos un poco sobre vos» exige fecha de nacimiento y sexo
-  // (FT-03-R03: son dos de los seis campos obligatorios del alta), así que el
-  // motor no deja avanzar sin llenarlos primero.
-  //
-  // `app-date-picker` es un input enmascarado que arma DD/MM/AAAA dígito por
-  // dígito según la posición del cursor (ver `handleDigitKey`): un `.fill()`
-  // escribe el valor de un tirón sin pasar por esa máscara y deja el campo
-  // inválido («01/01/1990DD/MM/AAAA»). Al enfocarlo la máscara escribe la
-  // plantilla como valor, así que hay que borrarla antes de teclear —mismo
-  // patrón que ya usa playwright/it1-perfil-paciente-libre.spec.ts para este
-  // mismo componente— y sólo entonces `pressSequentially` dígito por dígito,
-  // que es como la máscara espera recibirlos.
-  const fecha = page.getByPlaceholder('DD/MM/AAAA');
-  await fecha.click();
-  await page.keyboard.press('Control+A');
-  await page.keyboard.press('Backspace');
-  await fecha.pressSequentially('01011990', { delay: 20 });
-  await page.getByTestId('registro-genero').locator('select').selectOption({ label: 'Masculino' });
-  await page.getByTestId('paginated-form-continuar').click();
-
-  // «¿Cómo te contactamos?» exige el celular (también obligatorio); el
-  // contacto de emergencia es opcional y se deja vacío.
-  await page.getByTestId('registro-telefono').fill('70012345');
-  await page.getByTestId('paginated-form-continuar').click();
-}
-
-/** Avanza hasta la página cuyo titular se pasa, sin pasarse de largo. */
-async function avanzarHasta(page: Page, titulo: string): Promise<void> {
-  const encabezado = page.getByRole('heading', { name: titulo });
-  for (let paso = 0; paso < 8; paso += 1) {
-    if (await encabezado.isVisible().catch(() => false)) return;
-    await page.getByTestId('paginated-form-continuar').click();
-    await page.waitForTimeout(150);
-  }
-  await expect(encabezado).toBeVisible();
-}
-
-/**
- * Completa la localidad de residencia —única obligatoria de «¿Dónde
- * vivís?»— eligiendo Santa Cruz en el mapa y su primera ciudad en el select
- * acotado (FT-03-R03/R06). Sin esto el motor no deja pasar a «¿Dónde
- * trabajás?»: `residenceMunicipalityConceptId` es `required`.
- */
-async function elegirLocalidadDeResidencia(page: Page): Promise<void> {
-  await page.getByTestId('registration-residence-mapa-SC').click();
-  const municipio = page.getByTestId('registration-residence-municipio').locator('select');
-  await expect(municipio).toBeVisible();
-  await municipio.selectOption({ index: 1 });
-}
 
 test.describe('alta pública — la empresa y el mapa', () => {
   test.describe.configure({ mode: 'serial' });
@@ -184,6 +119,32 @@ test.describe('alta pública — la empresa y el mapa', () => {
 
     await page.screenshot({
       path: 'artifacts/playwright/registro-paciente-empresa-otra.png',
+      fullPage: true,
+    });
+  });
+
+  /**
+   * FT-03-R07 / AG49-FT03-007: la localidad de TRABAJO se elige con el mismo
+   * mapa de Bolivia que la de residencia (departamento + ciudad acotada),
+   * simétrico a `elegirLocalidadDeResidencia()`. Es su propia página («El
+   * lugar donde trabajás»), separada de la empresa.
+   */
+  test('el lugar de trabajo se elige con el mismo mapa que la residencia', async ({ page }) => {
+    await empezarElAlta(page);
+    await elegirLocalidadDeResidencia(page);
+    await avanzarHasta(page, 'El lugar donde trabajás');
+
+    // Antes de elegir el departamento no hay select de ciudad: igual que en
+    // residencia, es un mismo dato con dos formas de llegar a él.
+    await expect(page.getByTestId('registration-work-municipio')).toHaveCount(0);
+
+    await elegirLocalidadDeTrabajo(page);
+
+    const municipio = page.getByTestId('registration-work-municipio').locator('select');
+    await expect(municipio).not.toHaveValue('');
+
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-paciente-lugar-de-trabajo.png',
       fullPage: true,
     });
   });

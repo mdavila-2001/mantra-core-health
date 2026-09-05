@@ -949,10 +949,13 @@ export class RegisterPatient {
    * - **Zona / barrio**, en residencia y en trabajo (AC-03-10). `common.addresses`
    *   no tiene columna de zona y el DTO no tiene el campo. Acá no hay
    *   migraciones (ADR-0021): el cambio va por el pipeline del modelo
-   *   (`.puml` → generadores), que **sí está disponible** —vive en el repo
-   *   `mantra-core-health-model`— y se coordina con quien lo lleva. Es el único
-   *   pendiente del alta con dependencia de un tercero, y por eso va como
-   *   entrega aparte y no atado a ésta.
+   *   (`.puml` → generadores), que vive en el repo `mantra-core-health-model`
+   *   — **ese repo no está clonado en este checkout** (verificado: `find`
+   *   por `*.puml` y `gen_ddl.py` desde la raíz del workspace no encuentra
+   *   ninguno de los dos), así que el pipeline no es utilizable desde acá
+   *   aunque exista en algún otro lado. Es el único pendiente del alta con
+   *   dependencia de un tercero (quien lleve `mantra-core-health-model`), y
+   *   por eso va como entrega aparte y no atado a ésta.
    *
    * ## Lo que sí pregunta desde esta entrega
    *
