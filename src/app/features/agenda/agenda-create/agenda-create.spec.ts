@@ -85,7 +85,7 @@ describe('AgendaCreate', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'schedule/mine', children: [] }]),
+        provideRouter([{ path: 'schedule', children: [] }]),
         {
           provide: AuthService,
           useValue: {
@@ -141,7 +141,7 @@ describe('AgendaCreate', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'schedule/mine', children: [] }]),
+        provideRouter([{ path: 'schedule', children: [] }]),
         {
           provide: AuthService,
           useValue: {

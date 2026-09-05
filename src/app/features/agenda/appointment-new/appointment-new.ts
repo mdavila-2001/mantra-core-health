@@ -29,7 +29,7 @@ import type { ReferenceOption } from '../../../shared/components/molecules/refer
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { AGENDA_MINE_ROUTE } from '../agenda.routes';
+import { AGENDA_ROUTE } from '../agenda.routes';
 import { misRecursosDeAgenda } from '../mi-recurso';
 
 /**
@@ -101,7 +101,7 @@ export class AppointmentNew {
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
 
-  protected readonly rutaDeMiAgenda = AGENDA_MINE_ROUTE;
+  protected readonly rutaDeMiAgenda = AGENDA_ROUTE;
 
   /* -- Las agendas de quien tiene la sesión -------------------------------- */
 
@@ -305,7 +305,7 @@ export class AppointmentNew {
               : 'Le avisamos al paciente. No tiene que confirmar nada.',
             'Cita agendada',
           );
-          void this.router.navigate([AGENDA_MINE_ROUTE]);
+          void this.router.navigate([AGENDA_ROUTE]);
         },
         error: (error: unknown) => {
           this.guardando.set(false);
