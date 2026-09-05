@@ -75,14 +75,24 @@ export const PLANTILLA_HOJA_LIBRE = 'hoja-libre';
  * El prefijo las hace imposibles de confundir con el uuid de una plantilla.
  */
 export const BLOQUE_DIAGNOSTICO = 'bloque-diagnostico';
-export const BLOQUE_PROCEDIMIENTOS = 'bloque-procedimientos';
+export const BLOQUE_CIRUGIA = 'bloque-cirugia';
+export const BLOQUE_ODONTOLOGIA = 'bloque-odontologia';
 export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 
-/** Las cuatro entradas fijas, en el orden en que se ofrecen. */
+/**
+ * Las cinco entradas fijas, en el orden en que se ofrecen.
+ *
+ * Cirugía y odontología van separadas —antes eran una sola opción,
+ * «Procedimiento»— porque no comparten ni permiso de servidor ni datos:
+ * elegir odontología igual disparaba la lectura quirúrgica, y quien no tenía
+ * rol de cirugía se topaba con un aviso de permiso denegado en medio de un
+ * formulario que no le pedía nada de eso.
+ */
 const ENTRADAS_FIJAS: readonly { readonly value: string; readonly label: string }[] = [
   { value: BLOQUE_DIAGNOSTICO, label: 'Diagnóstico — del catálogo CIE-10' },
   { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
-  { value: BLOQUE_PROCEDIMIENTOS, label: 'Procedimiento — cirugías y odontología' },
+  { value: BLOQUE_CIRUGIA, label: 'Cirugía' },
+  { value: BLOQUE_ODONTOLOGIA, label: 'Odontología' },
   { value: BLOQUE_LABORATORIO, label: 'Laboratorio e imagenología' },
 ];
 
@@ -323,8 +333,16 @@ export class SpecialtyFormBlock {
     () => this.catalogo().length > this.plantillasSugeridas().length,
   );
 
-  /** El interruptor «Ver todas las especialidades». Apagado, manda el filtro. */
-  protected readonly verTodas = signal(false);
+  /**
+   * El interruptor «Ver todas las especialidades». Apagado, manda el filtro.
+   *
+   * Arranca PRENDIDO a pedido explícito: el filtro por especialidad hacía que
+   * la misma cuenta viera listas de tamaño distinto según qué perfil
+   * profesional resolviera el backend, y eso se leía como un bug («en la Mac
+   * salen más formularios»). Mientras no haya una forma de fijar esto como
+   * preferencia real, mostrar todo por defecto es lo predecible.
+   */
+  protected readonly verTodas = signal(true);
 
   protected alternarVerTodas(activado: boolean): void {
     this.verTodas.set(activado);
@@ -365,8 +383,10 @@ export class SpecialtyFormBlock {
 
   protected readonly esDiagnostico = computed(() => this.plantillaId() === BLOQUE_DIAGNOSTICO);
 
-  protected readonly esProcedimientos = computed(
-    () => this.plantillaId() === BLOQUE_PROCEDIMIENTOS,
+  protected readonly esCirugia = computed(() => this.plantillaId() === BLOQUE_CIRUGIA);
+
+  protected readonly esOdontologia = computed(
+    () => this.plantillaId() === BLOQUE_ODONTOLOGIA,
   );
 
   protected readonly esLaboratorio = computed(() => this.plantillaId() === BLOQUE_LABORATORIO);
@@ -381,7 +401,11 @@ export class SpecialtyFormBlock {
    * completar una ficha, que es cuando el modo lectura tapa el selector.
    */
   protected readonly bloquePropio = computed(
-    () => this.esDiagnostico() || this.esProcedimientos() || this.esLaboratorio(),
+    () =>
+      this.esDiagnostico() ||
+      this.esCirugia() ||
+      this.esOdontologia() ||
+      this.esLaboratorio(),
   );
 
   /**

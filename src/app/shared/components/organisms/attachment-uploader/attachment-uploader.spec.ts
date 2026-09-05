@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { of } from 'rxjs';
 
 import { AttachmentUploader } from './attachment-uploader';
 
@@ -73,6 +74,27 @@ describe('AttachmentUploader', () => {
       createdAt: '2026-08-14T10:00:00.000Z',
     });
 
+    expect(avisos.length).toBe(1);
+  });
+
+  /**
+   * `linkVia` es la vía de escape para un dominio con su propia regla de quién
+   * puede adjuntar qué (ALV-033: `clinical` liga por su propio endpoint, no
+   * por el genérico de `common`, que no verifica rol ni que el dueño exista).
+   */
+  it('con `linkVia`, el vínculo pasa por ahí y no por el genérico', () => {
+    const enlazar = vi.fn((_fileId: string, _ownerId: string) => of(undefined));
+    fixture.componentRef.setInput('linkVia', enlazar);
+    const avisos: number[] = [];
+    fixture.componentInstance.attached.subscribe(() => avisos.push(1));
+
+    elegirArchivo();
+    subir();
+
+    http.expectOne((r) => r.url === '/common/files/upload').flush({ id: 'f-1' });
+
+    expect(enlazar).toHaveBeenCalledWith('f-1', 'p-1');
+    http.expectNone((r) => r.url === '/common/files/f-1/links');
     expect(avisos.length).toBe(1);
   });
 

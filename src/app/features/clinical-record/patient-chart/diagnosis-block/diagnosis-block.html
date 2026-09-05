@@ -14,6 +14,34 @@
     <app-alert tone="error" data-testid="diagnostico-error">{{ mensaje }}</app-alert>
   }
 
+  <!-- ALV-033 (reemplazo del «Adjuntos» genérico de ALV-032): el archivo se
+       liga a ESTE diagnóstico, no al paciente en general. Sólo puede
+       ofrecerse después de guardar —adjuntar exige que la condición ya
+       exista— y no desaparece solo: el archivo puede tardar en elegirse. -->
+  @if (diagnosticoRecienRegistrado(); as conditionId) {
+    <app-card variant="outlined" padding="lg" class="diagnostico__adjuntos">
+      <div class="diagnostico__adjuntos-encabezado">
+        <h3 class="diagnostico__adjuntos-titulo">Adjuntar un archivo a este diagnóstico</h3>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="diagnostico-adjuntos-cerrar"
+          (clicked)="cerrarAdjuntos()"
+        >
+          Listo, sin adjuntar
+        </button>
+      </div>
+      <app-attachment-uploader
+        ownerType="CONDITION"
+        [ownerId]="conditionId"
+        [linkVia]="enlazarAdjuntoAlDiagnostico"
+        (attached)="cerrarAdjuntos()"
+      />
+    </app-card>
+  }
+
   <!-- ─── Registrar ────────────────────────────────────────────────────
        Tres condiciones antes del formulario, y cada una se dice con su propia
        explicación: «no se puede» sin decir qué falta obliga a adivinar. -->
