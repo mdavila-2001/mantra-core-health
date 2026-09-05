@@ -486,9 +486,30 @@ export class RegisterPatient {
       // el documento de identidad y como se comparan dos personas al buscar
       // duplicados. Partir después una cadena es una conjetura que falla con los
       // nombres compuestos y con los apellidos de más de una palabra.
+      //
+      // **`name` y `lastName` son obligatorios pese a que la lista de la TAREA
+      // 03 §1.2 no los nombra** (sólo lista documento, correo, sexo, teléfono,
+      // fecha de nacimiento y localidad). Es una restricción YA EXISTENTE
+      // —anterior a esta tarea (`9dd07ca`, «el nombre se pide en sus cuatro
+      // partes»)— y AC-03-4 la contempla explícitamente: «más lo que el
+      // servidor exija por contrato» (ver P-03-2). El contrato es real, no una
+      // costumbre de este formulario: `RegisterPatientDto.name`/`lastName`
+      // (wt-pablo-api) sólo se vuelven opcionales si se manda `displayName` —el
+      // formulario nunca lo hace—, y `composeAccountDisplayName()` escribe
+      // `iam.users.display_name`, una columna `NOT NULL` que es lo que muestran
+      // el saludo, el directorio y la búsqueda de toda la plataforma: un alta
+      // sin nombre no crea una cuenta usable, crea una fila con el nombre en
+      // blanco en todas partes. Por eso se mantiene como una restricción ya
+      // existente y justificada bajo FT-03-R04, no como un vacío de esta
+      // corrección. Ver `register-patient.spec.ts` →
+      // `describe('obligatoriedad (AC-03-3, AC-03-4)')`, que fija por prueba el
+      // conjunto exacto de obligatorios y falla si alguien agrega un décimo sin
+      // el mismo tipo de justificación (AG49-FT03-R04-001).
       name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       middleName: new FormControl('', { nonNullable: true }),
       thirdName: new FormControl('', { nonNullable: true }),
+      // Mismo criterio y misma justificación que `name`. Ver el comentario de
+      // arriba.
       lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       motherLastName: new FormControl('', { nonNullable: true }),
       password: new FormControl('', {
@@ -949,20 +970,24 @@ export class RegisterPatient {
    * - **Zona / barrio**, en residencia y en trabajo (AC-03-10). `common.addresses`
    *   no tiene columna de zona y el DTO no tiene el campo. Acá no hay
    *   migraciones (ADR-0021): el cambio va por el pipeline del modelo
-   *   (`.puml` → generadores), que **sí está disponible** —vive en el repo
-   *   `mantra-core-health-model`— y se coordina con quien lo lleva. Es el único
-   *   pendiente del alta con dependencia de un tercero, y por eso va como
-   *   entrega aparte y no atado a ésta.
+   *   (`.puml` → generadores), que vive en el repo `mantra-core-health-model`
+   *   — **ese repo no está clonado en este checkout** (verificado: `find`
+   *   por `*.puml` y `gen_ddl.py` desde la raíz del workspace no encuentra
+   *   ninguno de los dos), así que el pipeline no es utilizable desde acá
+   *   aunque exista en algún otro lado. Es el único pendiente del alta con
+   *   dependencia de un tercero (quien lleve `mantra-core-health-model`), y
+   *   por eso va como entrega aparte y no atado a ésta.
    *
    * ## Lo que sí pregunta desde esta entrega
    *
    * - **Relación del contacto de emergencia** (AC-03-11). Ya no falta nada:
    *   la columna `profiles.related_persons.relationship_concept_id` existía, el
-   *   conjunto `related-person-relationship` también —con un solo miembro—, y
-   *   lo que faltaba eran los conceptos, el campo del alta y el desplegable.
-   *   Se lee por campo destino (`?target=`) y **no** con un `enum` de
-   *   TypeScript, que es lo que la regla del proyecto prohíbe. Ver
-   *   {@link campoRelacionDelContacto}.
+   *   conjunto `related-person-relationship` también —con sus 9 miembros reales
+   *   (guardián, madre, padre, cónyuge, hijo/a, hermano/a, otro familiar,
+   *   amistad, otro; ver `dynamic-enum-catalog.ts`)—, y lo que faltaba eran el
+   *   campo del alta y el desplegable. Se lee por campo destino (`?target=`) y
+   *   **no** con un `enum` de TypeScript, que es lo que la regla del proyecto
+   *   prohíbe. Ver {@link campoRelacionDelContacto}.
    * - **Razón social** de facturación: Se captura mediante `billingLegalName`
    *   y viaja asociada al NIT para la emisión de facturas.
    *

@@ -190,6 +190,18 @@ async function firstMunicipalityConceptId(api: APIRequestContext): Promise<strin
 }
 
 /**
+ * Municipio de Santa Cruz de la Sierra (`geo:bo:municipality:070101`) en el
+ * catálogo `terminology.catalog_concepts` sembrado por `bo-geography.catalog.ts`.
+ *
+ * `register-patient.dto.ts` exige `residenceMunicipalityConceptId` y
+ * `birthDate` desde el commit `5b07a702` ("El alta de paciente exige correo,
+ * sexo, teléfono, nacimiento y localidad" — FT-03-R03). El UUID es
+ * determinístico (derivado del código del concepto, no autogenerado), así
+ * que es el mismo en cualquier base sembrada con ese seeder.
+ */
+const MUNICIPIO_SANTA_CRUZ_DE_LA_SIERRA = '97d3017f-3df3-540d-9f5c-da9a4f259611';
+
+/**
  * **Paciente** — se da de alta solo, sin admin ni token.
  *
  * Se crea uno por corrida en vez de reutilizar una cuenta fija porque las

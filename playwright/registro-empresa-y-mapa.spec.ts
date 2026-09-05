@@ -1,4 +1,10 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import {
+  empezarElAlta,
+  avanzarHasta,
+  elegirLocalidadDeResidencia,
+  elegirLocalidadDeTrabajo,
+} from './support/registro-paciente';
 
 /**
  * Los dos cambios del alta pública, comprobados donde se ven.
@@ -21,38 +27,6 @@ import { expect, test, type Page } from '@playwright/test';
 
 /** La Plaza 24 de Septiembre, Santa Cruz: un punto real, y de los que se reconocen. */
 const PUNTO_DE_PRUEBA = { latitude: -17.7833, longitude: -63.1821 };
-
-/**
- * Completa la primera página —lo único obligatorio del alta— y avanza.
- *
- * El motor valida de a una página, así que sin esto el «Siguiente» no mueve
- * nada y la prueba fallaría lejos de lo que quiere comprobar.
- */
-async function empezarElAlta(page: Page): Promise<void> {
-  await page.goto('/auth/register/patient');
-  await expect(page.getByTestId('registro-form-paciente')).toBeVisible();
-
-  // Las dos primeras paginas son las unicas obligatorias del alta. El motor
-  // valida de a una, asi que sin completarlas el «Siguiente» no mueve nada y la
-  // prueba fallaria lejos de lo que quiere comprobar.
-  await page.getByTestId('registro-documento').fill('9876543');
-  await page.getByTestId('paginated-form-continuar').click();
-
-  await page.getByTestId('registro-nombre').fill('Ana');
-  await page.getByTestId('registro-apellido-paterno').fill('Paz');
-  await page.getByTestId('paginated-form-continuar').click();
-}
-
-/** Avanza hasta la página cuyo titular se pasa, sin pasarse de largo. */
-async function avanzarHasta(page: Page, titulo: string): Promise<void> {
-  const encabezado = page.getByRole('heading', { name: titulo });
-  for (let paso = 0; paso < 8; paso += 1) {
-    if (await encabezado.isVisible().catch(() => false)) return;
-    await page.getByTestId('paginated-form-continuar').click();
-    await page.waitForTimeout(150);
-  }
-  await expect(encabezado).toBeVisible();
-}
 
 test.describe('alta pública — la empresa y el mapa', () => {
   test.describe.configure({ mode: 'serial' });
@@ -94,10 +68,15 @@ test.describe('alta pública — la empresa y el mapa', () => {
     await confirmar.click();
     await expect(page.getByTestId('registro-direccion-confirmada')).toBeVisible();
 
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-paciente-domicilio-confirmado.png',
+      fullPage: true,
+    });
   });
 
   test('la página del trabajo pregunta la empresa, no dónde queda', async ({ page }) => {
     await empezarElAlta(page);
+    await elegirLocalidadDeResidencia(page);
     await avanzarHasta(page, '¿Dónde trabajás?');
 
     // Lo que ya no se pregunta: ni el municipio del trabajo ni su calle.
@@ -115,10 +94,15 @@ test.describe('alta pública — la empresa y el mapa', () => {
       timeout: 10_000,
     });
 
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-paciente-empresa-lupa.png',
+      fullPage: true,
+    });
   });
 
   test('«Otra empresa» abre el campo para escribirla', async ({ page }) => {
     await empezarElAlta(page);
+    await elegirLocalidadDeResidencia(page);
     await avanzarHasta(page, '¿Dónde trabajás?');
 
     // Mientras no se elija la salida, el campo del nombre a mano no existe: no
@@ -133,5 +117,35 @@ test.describe('alta pública — la empresa y el mapa', () => {
     await expect(aMano).toBeVisible();
     await aMano.fill('Ferretería San Martín');
 
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-paciente-empresa-otra.png',
+      fullPage: true,
+    });
+  });
+
+  /**
+   * FT-03-R07 / AG49-FT03-007: la localidad de TRABAJO se elige con el mismo
+   * mapa de Bolivia que la de residencia (departamento + ciudad acotada),
+   * simétrico a `elegirLocalidadDeResidencia()`. Es su propia página («El
+   * lugar donde trabajás»), separada de la empresa.
+   */
+  test('el lugar de trabajo se elige con el mismo mapa que la residencia', async ({ page }) => {
+    await empezarElAlta(page);
+    await elegirLocalidadDeResidencia(page);
+    await avanzarHasta(page, 'El lugar donde trabajás');
+
+    // Antes de elegir el departamento no hay select de ciudad: igual que en
+    // residencia, es un mismo dato con dos formas de llegar a él.
+    await expect(page.getByTestId('registration-work-municipio')).toHaveCount(0);
+
+    await elegirLocalidadDeTrabajo(page);
+
+    const municipio = page.getByTestId('registration-work-municipio').locator('select');
+    await expect(municipio).not.toHaveValue('');
+
+    await page.screenshot({
+      path: 'artifacts/playwright/registro-paciente-lugar-de-trabajo.png',
+      fullPage: true,
+    });
   });
 });
