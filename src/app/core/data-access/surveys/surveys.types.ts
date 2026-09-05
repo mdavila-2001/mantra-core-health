@@ -135,11 +135,15 @@ export interface SurveyAnswer {
   readonly valueChoices?: readonly string[];
 }
 
-/** Una respuesta completa recibida por la encuesta. */
+/**
+ * Una respuesta completa recibida por la encuesta.
+ *
+ * **Sin identificador de paciente a propósito** (FT-29): para el profesional
+ * la encuesta es anónima. El servidor tampoco lo manda en este contrato.
+ */
 export interface SurveyResponse {
   readonly id: string;
   readonly invitationId: string;
-  readonly patientProfileId: string;
   readonly appointmentBookingId: string;
   readonly submittedAt: Date | null;
   readonly answers: readonly SurveyAnswer[];
