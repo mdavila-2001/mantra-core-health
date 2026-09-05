@@ -77,4 +77,7 @@
 
 <ng-template #celdaAccion let-paciente>
   <a app-link [routerLink]="rutaDe(paciente.profileId)">Ver expediente</a>
+  <!-- FT-07-R05: sin turno confirmado hoy, "Ver expediente" da 403 — este es
+       el camino para pedirle el vínculo al paciente. -->
+  <a app-link [routerLink]="rutaSolicitarAcceso(paciente.profileId)">Solicitar vinculación</a>
 </ng-template>

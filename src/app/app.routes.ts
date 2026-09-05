@@ -392,6 +392,30 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // FT-07-R05: pedir el vínculo, previo a poder leer el expediente sin un
+    // turno confirmado el mismo día. Cuelga de la misma sección que el
+    // expediente — no es una pantalla nueva del menú, es un paso de este flujo.
+    path: 'medical-records/:profileId/request-access',
+    title: `${APP_TITLE} - Solicitar vinculación`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/clinical-record/request-access/request-access')
+        .then((m) => m.RequestAccess)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-07-R06: a dónde lleva el aviso "un médico pidió acceder a tu
+    // historia clínica". Sin entrada de menú, como `my-account/identity/cases`
+    // — se llega por el enlace de la notificación.
+    path: 'my-account/access-requests',
+    title: `${APP_TITLE} - Solicitudes de vínculo`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/access-requests/access-requests')
+        .then((m) => m.AccessRequests)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'administration/patients/new',
     title: `${APP_TITLE} - Nuevo paciente`,
     canActivate: [seccionRolesGuard],

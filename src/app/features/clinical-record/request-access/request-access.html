@@ -1,0 +1,40 @@
+<app-page-header
+  title="Solicitar vinculación"
+  [subtitle]="
+    nombrePaciente()
+      ? 'Vas a pedirle a ' + nombrePaciente() + ' que te autorice a ver su expediente.'
+      : 'Vas a pedir acceso al expediente de esta persona.'
+  "
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="solicitar-acceso">
+  @if (error()) {
+    <app-alert tone="error" title="No se pudo enviar">{{ error() }}</app-alert>
+  }
+
+  @if (sinOrganizacion()) {
+    <app-alert tone="warning" title="Elegí una organización">
+      El pedido se hace a nombre de la organización con la que estás trabajando.
+      Elegí una desde tu cuenta y volvé a intentar.
+    </app-alert>
+  }
+
+  <app-alert tone="info">
+    Pedir NO te da acceso todavía: el paciente recibe un aviso y elige qué
+    especialidades autorizarte. Podés seguir buscando mientras esperás su
+    decisión.
+  </app-alert>
+
+  <app-form-field label="Motivo (opcional)" hint="El paciente va a ver este texto en el aviso.">
+    <app-textarea
+      placeholder="Ej: seguimiento de una derivación"
+      [value]="motivo()"
+      (valueChange)="motivo.set($event === null ? '' : String($event))"
+    />
+  </app-form-field>
+
+  <button app-button type="button" [disabled]="!puedeEnviar()" (click)="enviar()">
+    Pedir vinculación
+  </button>
+</div>

@@ -31,7 +31,11 @@ import { SearchField } from '../../shared/components/molecules/search-field/sear
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { CLINICAL_RECORD_ROUTE, patientChartRoute } from './clinical-record.routes';
+import {
+  CLINICAL_RECORD_ROUTE,
+  patientChartRoute,
+  requestAccessRoute,
+} from './clinical-record.routes';
 
 /** Tope de filas del buscador. La API pagina por cursor; acá alcanza una página. */
 const TOPE = 25;
@@ -215,6 +219,11 @@ export class ClinicalRecord {
   /** La ruta del expediente de un paciente. */
   protected rutaDe(profileId: string): string {
     return patientChartRoute(profileId);
+  }
+
+  /** FT-07-R05: la ruta para pedirle el vínculo a esta persona. */
+  protected rutaSolicitarAcceso(profileId: string): string {
+    return requestAccessRoute(profileId);
   }
 
   private cargar(): void {
