@@ -94,7 +94,7 @@ describe('NotificationPreferences', () => {
   });
 
   it('conserva un icono por categoría y otro en la fila de silencio', () => {
-    http.expectOne('/notifications/preferences/me').flush(preferencias());
+    http.expectOne('/notifications/preferences/me').flush(preferences());
     fixture.detectChanges();
 
     expect(iconosPorRenglon()).toEqual([1, 1, 1, 1, 1]);

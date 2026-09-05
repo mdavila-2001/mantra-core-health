@@ -152,8 +152,8 @@ describe('Settings', () => {
   });
 
   it('conserva un icono en cada opción de apariencia', () => {
-    montar();
-    irA('Apariencia');
+    mount();
+    goTo('Apariencia');
 
     expect(iconosPorRenglon()).toEqual([1, 1, 1]);
   });
@@ -187,8 +187,8 @@ describe('Settings', () => {
   });
 
   it('muestra exactamente un icono en cada permiso del navegador', () => {
-    montar();
-    irA('Permisos');
+    mount();
+    goTo('Permisos');
 
     expect(iconosPorRenglon()).toEqual([1, 1, 1]);
   });

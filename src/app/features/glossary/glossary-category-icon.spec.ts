@@ -11,7 +11,7 @@ import {
  * El ícono de categoría, y las dos funciones puras que lo acompañan.
  *
  * Lo único que se afirma del componente es que **siempre** dibuja un único
- * `<svg>`, sea la categoría que sea: las 11 formas concretas no se listan acá
+ * `<svg>`, sea la categoría que sea: las 12 formas concretas no se listan acá
  * adentro una por una (eso lo prueba la vista), lo que importa es que ninguna
  * categoría deje el ícono vacío ni rompa con dos svg a la vez.
  */
@@ -27,7 +27,7 @@ describe('GlossaryCategoryIcon', () => {
     fixture = TestBed.createComponent(GlossaryCategoryIcon);
   });
 
-  it('cada una de las 11 categorías dibuja exactamente un svg', async () => {
+  it('cada una de las 12 categorías dibuja exactamente un svg', async () => {
     for (const categoria of GLOSSARY_CATEGORY_ORDER) {
       fixture.componentRef.setInput('category', categoria);
       await fixture.whenStable();
@@ -48,7 +48,7 @@ describe('GlossaryCategoryIcon', () => {
 });
 
 describe('isGlossaryCategoryCode', () => {
-  it('reconoce las 11 categorías del glosario', () => {
+  it('reconoce las 12 categorías del glosario', () => {
     for (const categoria of GLOSSARY_CATEGORY_ORDER) {
       expect(isGlossaryCategoryCode(categoria)).toBe(true);
     }
@@ -66,7 +66,7 @@ describe('isGlossaryCategoryCode', () => {
 describe('glossaryCategoryOrder', () => {
   it('respeta el orden declarado de la grilla', () => {
     expect(glossaryCategoryOrder('glossary-category-anatomy')).toBe(0);
-    expect(glossaryCategoryOrder('glossary-category-care')).toBe(
+    expect(glossaryCategoryOrder('glossary-category-other')).toBe(
       GLOSSARY_CATEGORY_ORDER.length - 1,
     );
   });
