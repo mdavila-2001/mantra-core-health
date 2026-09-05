@@ -105,10 +105,10 @@ describe('PractitionerProfileEdit', () => {
    * armado porque la pantalla las pide al construirse, y sin respuesta el
    * `http.verify()` del cierre falla en todas las pruebas.
    *
-   * El conjunto se busca **por su código**: desde que la pantalla también pide
-   * el de departamentos bolivianos (`VS_BO_DEPARTMENT`) hay dos lecturas contra
-   * `/terminology/value-sets`, y un `expectOne` sin filtro las encuentra a las
-   * dos y falla. El de departamentos lo drena {@link responderDepartamentos}.
+   * El conjunto se busca **por su código**: la pantalla también pide, más
+   * tarde —al sembrar el formulario, ALV-003—, el árbol de municipios
+   * (`VS_BO_DEPARTMENT` + `VS_BO_MUNICIPALITY`) contra la misma ruta; ninguna
+   * de estas pruebas lo mira y el `afterEach` genérico lo drena.
    */
   function responderCatalogo(opciones: readonly object[] = CATALOGO): void {
     pedidoDeConjunto(CODIGO_ESPECIALIDADES).flush({
@@ -135,25 +135,10 @@ describe('PractitionerProfileEdit', () => {
       });
   }
 
-  /**
-   * Drena el catálogo de departamentos bolivianos, que la pantalla pide al
-   * construirse para «departamento que expidió el documento». Ninguna de estas
-   * pruebas lo mira; sin drenarlo, el `http.verify()` del cierre falla.
-   */
-  function responderDepartamentos(): void {
-    for (const pedido of http.match(
-      (r) =>
-        r.url === '/terminology/value-sets' && r.params.get('code') === 'VS_BO_DEPARTMENT',
-    )) {
-      pedido.flush({ items: [], count: 0, limit: 50, nextCursor: null });
-    }
-  }
-
   function montarYCargar(perfil: object = {}): void {
     componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
     http.expectOne('/profiles/practitioners/me/summary').flush({ ...PERFIL_BASE, ...perfil });
     responderCatalogo();
-    responderDepartamentos();
   }
 
   function interno<T>(nombre: string): T {
@@ -290,10 +275,10 @@ describe('PractitionerProfileEdit', () => {
   it('si el catálogo se cae, el resto del perfil sigue siendo editable', () => {
     componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
-    // Se cae SÓLO el de especialidades: el de departamentos es otra lectura y
-    // se drena aparte, si no `expectOne` encuentra las dos.
+    // Se cae SÓLO el de especialidades: el árbol de municipios es otra
+    // lectura y el `afterEach` genérico la drena, si no `expectOne`
+    // encontraría las dos.
     pedidoDeConjunto(CODIGO_ESPECIALIDADES).error(new ProgressEvent('error'), { status: 500 });
-    responderDepartamentos();
 
     // Perder el catálogo no es perder el perfil: se avisa en su bloque y el
     // formulario de presentación queda intacto.
@@ -306,12 +291,64 @@ describe('PractitionerProfileEdit', () => {
     componente = TestBed.createComponent(PractitionerProfileEdit).componentInstance;
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
     pedidoDeConjunto(CODIGO_ESPECIALIDADES).error(new ProgressEvent('error'), { status: 500 });
-    responderDepartamentos();
 
     interno<() => void>('reintentarEspecialidades')();
     responderCatalogo();
 
     expect(interno<() => boolean>('catalogoCaido')()).toBe(false);
     expect(interno<() => readonly unknown[]>('especialidades')()).toHaveLength(2);
+  });
+
+  /* ---- dirección (ALV-009): va con presentación, no es un formulario aparte -- */
+
+  it('siembra la dirección con lo ya guardado', () => {
+    montarYCargar({ homeAddress: { lines: 'Av. Brasil 1234' } });
+
+    expect(interno<() => string>('direccion')()).toBe('Av. Brasil 1234');
+  });
+
+  it('guardarPresentacion manda homeAddressLines si la dirección cambió', () => {
+    montarYCargar();
+
+    señal<string>('direccion').set('Av. Brasil 1234');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ homeAddressLines: 'Av. Brasil 1234' });
+    req.flush({ ...PERFIL_BASE, homeAddress: { lines: 'Av. Brasil 1234' } });
+  });
+
+  /* ---- formación: sólo se agrega ------------------------------------------- */
+
+  it('el botón de agregar formación exige tipo y número', () => {
+    montarYCargar();
+
+    expect(interno<() => boolean>('puedeAgregarCredencial')()).toBe(false);
+
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    expect(interno<() => boolean>('puedeAgregarCredencial')()).toBe(false);
+
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+    expect(interno<() => boolean>('puedeAgregarCredencial')()).toBe(true);
+  });
+
+  it('agregarCredencial hace un POST y recarga el perfil', () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+    señal<string>('nuevaInstitucionCredencial').set('UMSA');
+
+    interno<() => void>('agregarCredencial')();
+
+    const req = http.expectOne('/profiles/practitioners/me/credentials');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      credentialTypeConceptId: 'cred-titulo',
+      number: 'Médico cirujano',
+      issuingInstitutionText: 'UMSA',
+    });
+    req.flush({ id: 'cred-1' });
+
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
   });
 });

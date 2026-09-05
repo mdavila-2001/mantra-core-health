@@ -1,10 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { AuthService } from '../../../../core/auth/auth.service';
-import { AddressesClient } from '../../../../core/data-access/common/addresses.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
@@ -32,6 +29,9 @@ import { PublicProfileSettings } from '../public-profile-settings/public-profile
 
 /** El campo de la jurisdicción, del catálogo dinámico. */
 const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
+
+/** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
+const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -101,16 +101,13 @@ function soloFecha(fecha: Date): string {
 })
 export class PractitionerProfileEdit {
   private readonly profiles = inject(ProfilesClient);
-  private readonly addresses = inject(AddressesClient);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
   private readonly catalogo = inject(MedicalSpecialtiesCatalog);
-  private readonly departamentos = inject(BoDepartmentsCatalog);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
   private readonly municipios = inject(BoMunicipalitiesCatalog);
-  private readonly auth = inject(AuthService);
 
   /* -- ALV-003: los dos datos del contrato que no tenían control ---------- */
 
@@ -154,6 +151,17 @@ export class PractitionerProfileEdit {
   protected readonly celularTrabajo = signal('');
   protected readonly fijoTrabajo = signal('');
   protected readonly correoPersonal = signal('');
+  /**
+   * La calle, ALV-009.
+   *
+   * Va con el resto de «Presentación» y no en un formulario aparte: es el
+   * mismo criterio que el municipio de arriba, un dato que se corrige, no
+   * que se agrega de nuevo cada vez. Antes pegaba un `POST /common/addresses`
+   * suelto con dueño `USER` que ninguna lectura buscaba —«guardar y
+   * recargar» seguía sin mostrarla—; ahora es `homeAddressLines` del mismo
+   * `PATCH`, y el backend la lee de vuelta en el resumen.
+   */
+  protected readonly direccion = signal('');
   protected readonly guardandoPresentacion = signal(false);
 
   protected readonly bioLargoMaximo = 4000;
@@ -192,26 +200,27 @@ export class PractitionerProfileEdit {
     () => this.nuevoNumeroDeMatricula().trim() !== '',
   );
 
-  /* -- Nueva dirección --------------------------------------------------------
-     Mismo criterio que arriba: se agrega, no se edita. `POST /common/addresses`
-     no tiene, hoy, un `PUT`/`PATCH` — corregir una dirección es cargar una
-     nueva, igual que declarar otra especialidad o otra matrícula. */
+  /* -- Nueva formación ----------------------------------------------------
+     Mismo criterio que especialidad y matrícula: se agrega, no se edita —
+     declarar un título no es haberlo acreditado, y quien lo verifica es
+     `SECURITY_ADMIN` sobre uno existente. El tipo sale del catálogo dinámico
+     (los cinco `CREDENTIAL_TYPE_*`), igual que la jurisdicción de la
+     matrícula de acá arriba. */
 
-  protected readonly nuevaLineaDireccion = signal('');
-  protected readonly nuevaCiudad = signal('');
-  protected readonly nuevoDepartamentoDireccion = signal<string | null>(null);
-  protected readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
-  protected readonly catalogoDepartamentosCaido = signal(false);
-  protected readonly guardandoDireccion = signal(false);
+  protected readonly targetCredencial = TARGET_CREDENCIAL;
+  protected readonly nuevoTipoCredencial = signal<string | null>(null);
+  protected readonly nuevoNumeroCredencial = signal('');
+  protected readonly nuevaInstitucionCredencial = signal('');
+  protected readonly nuevaFechaEmisionCredencial = signal<Date | null>(null);
+  protected readonly guardandoCredencial = signal(false);
 
-  protected readonly puedeAgregarDireccion = computed(
-    () => this.nuevaLineaDireccion().trim() !== '',
+  protected readonly puedeAgregarCredencial = computed(
+    () => this.nuevoTipoCredencial() !== null && this.nuevoNumeroCredencial().trim() !== '',
   );
 
   constructor() {
     this.cargar();
     this.cargarEspecialidades();
-    this.cargarDepartamentos();
   }
 
   /**
@@ -248,32 +257,6 @@ export class PractitionerProfileEdit {
     this.cargarEspecialidades();
   }
 
-  /**
-   * Trae el catálogo de departamentos bolivianos, para el domicilio.
-   *
-   * Un fallo no rompe la pantalla, mismo criterio que las especialidades: el
-   * resto del formulario de dirección sigue usable, con departamento sin
-   * catálogo hasta que se reintente.
-   */
-  protected cargarDepartamentos(): void {
-    this.departamentos.listar().subscribe({
-      next: (opciones) => {
-        this.catalogoDepartamentosCaido.set(false);
-        this.opcionesDepartamento.set(
-          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
-        );
-      },
-      error: () => {
-        this.opcionesDepartamento.set([]);
-        this.catalogoDepartamentosCaido.set(true);
-      },
-    });
-  }
-
-  protected reintentarDepartamentos(): void {
-    this.departamentos.olvidar();
-    this.cargarDepartamentos();
-  }
 
   protected recargar(): void {
     this.cargar();
@@ -314,6 +297,8 @@ export class PractitionerProfileEdit {
     // ofrecía. Se siembran desde el perfil, igual que el resto.
     this.fechaNacimiento.set(perfil.birthDate ?? null);
     this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
+    // ALV-009: la calle, si la declaró.
+    this.direccion.set(perfil.homeAddress?.lines ?? '');
     if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
       this.cargarMunicipios();
     }
@@ -371,6 +356,7 @@ export class PractitionerProfileEdit {
       personalEmail: string;
       birthDate: string;
       residenceMunicipalityConceptId: string;
+      homeAddressLines: string;
     }> = {};
     // ALV-003/009: los dos campos nuevos viajan sólo si cambiaron, como el
     // resto. La fecha se compara por día local (`toISOString` la pasaría por
@@ -384,6 +370,9 @@ export class PractitionerProfileEdit {
     const municipio = this.municipioResidencia();
     if (municipio !== null && municipio !== (original.residenceMunicipalityConceptId ?? null)) {
       cambios.residenceMunicipalityConceptId = municipio;
+    }
+    if (this.direccion() !== (original.homeAddress?.lines ?? '')) {
+      cambios.homeAddressLines = this.direccion();
     }
     if (this.titulo() !== (original.professionalTitle ?? '')) {
       cambios.professionalTitle = this.titulo();
@@ -515,43 +504,43 @@ export class PractitionerProfileEdit {
       });
   }
 
-  protected agregarDireccion(): void {
-    const profileId = this.profileId();
-    const linea = this.nuevaLineaDireccion().trim();
-    if (profileId === null || linea === '' || this.guardandoDireccion()) {
+  /**
+   * Agrega un título propio. Nace pendiente de verificación, como la
+   * especialidad y la matrícula — declarar un título no es haberlo
+   * acreditado.
+   */
+  protected agregarCredencial(): void {
+    const tipo = this.nuevoTipoCredencial();
+    const numero = this.nuevoNumeroCredencial().trim();
+    if (tipo === null || numero === '' || this.guardandoCredencial()) {
       return;
     }
 
-    const ciudad = this.nuevaCiudad().trim();
-    // ALV-009: la dirección es de la CUENTA del profesional (`OWNER_USER`
-    // existe en el catálogo desde siempre); el `PATIENT` de antes era un hack
-    // que la dejaba colgada de un id de perfil que ninguna lectura buscaba.
-    const userId = this.auth.userId();
-    if (userId === null) {
-      return;
-    }
-    this.guardandoDireccion.set(true);
-    this.addresses
-      .create({
-        ownerType: 'USER',
-        ownerId: userId,
-        lines: [linea],
-        ...(ciudad === '' ? {} : { city: ciudad }),
-        ...(this.nuevoDepartamentoDireccion() === null
-          ? {}
-          : { administrativeAreaConceptId: this.nuevoDepartamentoDireccion()! }),
+    this.guardandoCredencial.set(true);
+    const fecha = this.nuevaFechaEmisionCredencial();
+    this.profiles
+      .addOwnCredential({
+        credentialTypeConceptId: tipo,
+        number: numero,
+        issuingInstitutionText: this.nuevaInstitucionCredencial().trim() || undefined,
+        issueDate: fecha === null ? undefined : fechaIso(fecha),
       })
       .subscribe({
         next: () => {
-          this.guardandoDireccion.set(false);
-          this.nuevaLineaDireccion.set('');
-          this.nuevaCiudad.set('');
-          this.nuevoDepartamentoDireccion.set(null);
-          this.toasts.success('Se guardó tu dirección.', 'Dirección');
+          this.guardandoCredencial.set(false);
+          this.nuevoTipoCredencial.set(null);
+          this.nuevoNumeroCredencial.set('');
+          this.nuevaInstitucionCredencial.set('');
+          this.nuevaFechaEmisionCredencial.set(null);
+          this.toasts.success(
+            'Se agregó el título. Queda pendiente de verificación.',
+            'Formación',
+          );
+          this.cargar();
         },
         error: () => {
-          this.guardandoDireccion.set(false);
-          this.toasts.error('No se pudo guardar la dirección. Probá de nuevo.', 'Dirección');
+          this.guardandoCredencial.set(false);
+          this.toasts.error('No se pudo agregar el título. Probá de nuevo.', 'Formación');
         },
       });
   }

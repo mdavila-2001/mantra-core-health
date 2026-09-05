@@ -7,6 +7,7 @@ import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   AccountLink,
   NewJurisdictionAuthorization,
+  NewOwnCredential,
   NewPatientProfile,
   NewPractitionerProfile,
   NewRelatedPerson,
@@ -401,6 +402,13 @@ export class ProfilesClient {
       readonly workLandline: string;
       readonly personalEmail: string;
       readonly residenceMunicipalityConceptId: string;
+      /* El domicilio (ALV-009): mismo contrato que
+         `OwnPatientProfileChanges.homeAddressLines`. Sólo el texto y, si se
+         marcó un punto, las dos coordenadas juntas — el municipio ya viaja
+         arriba y el backend conserva lo que no llega. */
+      readonly homeAddressLines: string;
+      readonly homeLatitude: number;
+      readonly homeLongitude: number;
     }>,
   ): Observable<OwnPractitionerProfile> {
     return this.http
@@ -623,6 +631,31 @@ export class ProfilesClient {
     return this.http.post<{ readonly id: string }>(
       this.url(`/profiles/practitioners/${profileId}/jurisdiction-authorizations`),
       stripUndefined(matricula),
+    );
+  }
+
+  /**
+   * `POST /profiles/practitioners/me/credentials`. Un título propio, uno por
+   * llamada: el registro de procesos pide poder cargar varios de cada clase.
+   * Nace siempre PENDIENTE de verificación.
+   */
+  addOwnCredential(
+    credencial: NewOwnCredential,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url('/profiles/practitioners/me/credentials'),
+      stripUndefined(credencial),
+    );
+  }
+
+  /**
+   * `DELETE /profiles/practitioners/me/credentials/:id`. Retira un título
+   * propio cargado por error — sólo funciona mientras sigue PENDIENTE; uno ya
+   * verificado o rechazado responde `422`.
+   */
+  removeOwnCredential(credentialId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(`/profiles/practitioners/me/credentials/${encodeURIComponent(credentialId)}`),
     );
   }
 
