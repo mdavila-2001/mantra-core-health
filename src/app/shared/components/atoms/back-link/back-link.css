@@ -1,0 +1,15 @@
+/* ============================================================================
+    El aspecto entero lo pone `a[app-button]`: acá no hay ni un color, ni una
+    medida, ni un radio propios — sería un segundo «Volver» distinto del que ya
+    existe en las pantallas que lo tenían escrito a mano.
+
+    Lo único que se declara es que el envoltorio no exista para la maquetación:
+    con `contents`, el `<a>` queda como hijo directo del contenedor que lo
+    recibe —la fila de acciones del encabezado, que es flex— y se alinea y
+    espacia exactamente igual que los `<a app-button page-actions>` vecinos. Sin
+    esto, el que se alinearía es esta caja, y el enlace quedaría suelto adentro.
+    ========================================================================== */
+
+:host {
+  display: contents;
+}

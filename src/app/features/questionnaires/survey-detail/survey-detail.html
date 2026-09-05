@@ -2,7 +2,9 @@
   title="Encuesta"
   subtitle="Componé el cuestionario, publicalo, asociálo a un servicio y leé lo que respondieron."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaDeLasEncuestas" label="Volver a las encuestas" />
+</app-page-header>
 
 <app-view-state-host [state]="vista()" (retry)="cargar()">
   @if (encuesta(); as encuesta) {

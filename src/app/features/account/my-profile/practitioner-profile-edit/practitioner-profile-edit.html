@@ -62,6 +62,20 @@
               municipalityHint="Sólo se ofrecen las del departamento que elegiste."
             />
           }
+          <!-- ALV-009: la calle va acá, con el resto de lo que se corrige —no
+               en un formulario aparte que sólo agregaba direcciones sueltas
+               que nadie volvía a leer. -->
+          <app-form-field
+            label="Dirección"
+            hint="Dónde atendés o dónde te ubican tus pacientes."
+          >
+            <app-input
+              data-testid="edicion-direccion"
+              [(value)]="direccion"
+              placeholder="Av. Siempre Viva 742, entre calles..."
+            />
+          </app-form-field>
+
           <app-form-field
             label="Celular personal"
             hint="El número por el que te contactamos a vos. No se publica en tu ficha."
@@ -224,49 +238,58 @@
         <app-public-profile-settings />
       </app-card>
 
-      <!-- ─── Dirección ───────────────────────────────────────────────────
-           Mismo criterio: se agrega, no se edita. `POST /common/addresses`
-           todavía no tiene edición. -->
+      <!-- ─── Formación ───────────────────────────────────────────────────
+           Mismo criterio que especialidad y matrícula: se agrega, no se
+           edita. Nace pendiente de verificación; el tipo sale del catálogo
+           dinámico (los cinco CREDENTIAL_TYPE_*). -->
       <app-card variant="outlined" padding="lg" class="edicion__bloque">
-        <h2 class="edicion__titulo">Dirección</h2>
-        <p class="edicion__nota">Dónde atendés o dónde te ubican tus pacientes.</p>
+        <h2 class="edicion__titulo">Agregar formación</h2>
+        <p class="edicion__nota">
+          Títulos, diplomados, maestrías y doctorados. Queda pendiente de verificación; podés
+          cargar varios de cada clase.
+        </p>
 
         <form class="edicion__formulario" (submit)="$event.preventDefault()">
-          <app-form-field label="Dirección" [required]="true">
-            <app-input
-              [(value)]="nuevaLineaDireccion"
-              placeholder="Av. Siempre Viva 742, entre calles..."
+          <app-form-field label="Tipo de título" [required]="true">
+            <app-concept-select
+              data-testid="credencial-tipo"
+              [target]="targetCredencial"
+              [(value)]="nuevoTipoCredencial"
+              placeholder="Elegí un tipo"
             />
           </app-form-field>
 
-          <app-form-field label="Ciudad (opcional)">
-            <app-input [(value)]="nuevaCiudad" placeholder="Santa Cruz de la Sierra" />
+          <app-form-field
+            label="Número / título obtenido"
+            [required]="true"
+            hint="El número de tu diploma, o el nombre del título si no tiene número."
+          >
+            <app-input
+              data-testid="credencial-numero"
+              [(value)]="nuevoNumeroCredencial"
+              placeholder="Médico cirujano"
+            />
           </app-form-field>
 
-          @if (catalogoDepartamentosCaido()) {
-            <app-form-field label="Departamento">
-              <p class="edicion__aviso">
-                No pudimos traer el catálogo de departamentos.
-                <button app-button variant="ghost" size="sm" (clicked)="reintentarDepartamentos()">
-                  Reintentar
-                </button>
-              </p>
-            </app-form-field>
-          } @else {
-            <app-form-field label="Departamento (opcional)">
-              <app-select
-                [options]="opcionesDepartamento()"
-                [(value)]="nuevoDepartamentoDireccion"
-                placeholder="Sin especificar"
-              />
-            </app-form-field>
-          }
+          <app-form-field label="Institución (opcional)">
+            <app-input
+              [(value)]="nuevaInstitucionCredencial"
+              placeholder="Universidad Mayor de San Andrés"
+            />
+          </app-form-field>
+
+          <app-form-field label="Fecha de emisión (opcional)">
+            <app-date-picker
+              [(value)]="nuevaFechaEmisionCredencial"
+              placeholder="Seleccionar fecha"
+            />
+          </app-form-field>
 
           <app-form-actions
-            submitLabel="Guardar dirección"
-            [pending]="guardandoDireccion()"
-            [disabled]="!puedeAgregarDireccion()"
-            (submitted)="agregarDireccion()"
+            submitLabel="Agregar título"
+            [pending]="guardandoCredencial()"
+            [disabled]="!puedeAgregarCredencial()"
+            (submitted)="agregarCredencial()"
           />
         </form>
       </app-card>

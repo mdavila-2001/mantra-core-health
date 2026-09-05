@@ -8,6 +8,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
@@ -30,7 +31,15 @@ import {
  */
 @Component({
   selector: 'app-public-profile-preview',
-  imports: [Alert, AppButtonLink, PageHeader, PublicProfileCard, RouterLink, ViewStateHost],
+  imports: [
+    Alert,
+    AppButtonLink,
+    BackLink,
+    PageHeader,
+    PublicProfileCard,
+    RouterLink,
+    ViewStateHost,
+  ],
   templateUrl: './public-profile-preview.html',
   styleUrl: './public-profile-preview.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
