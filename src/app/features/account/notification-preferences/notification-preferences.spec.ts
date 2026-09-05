@@ -44,9 +44,9 @@ describe('NotificationPreferences', () => {
    */
   const querySwitch = (testid: string): HTMLInputElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"] input[role="switch"]`);
-  const iconosPorRenglon = (): number[] =>
+  const iconsPerRow = (): number[] =>
     [...fixture.nativeElement.querySelectorAll('.prefs__fila')].map(
-      (fila) => fila.querySelectorAll('app-nav-icon').length,
+      (row) => row.querySelectorAll('app-nav-icon').length,
     );
 
   /** El mismo cálculo que hace la pantalla, para no fijar un huso concreto. */
@@ -97,7 +97,7 @@ describe('NotificationPreferences', () => {
     http.expectOne('/notifications/preferences/me').flush(preferences());
     fixture.detectChanges();
 
-    expect(iconosPorRenglon()).toEqual([1, 1, 1, 1, 1]);
+    expect(iconsPerRow()).toEqual([1, 1, 1, 1, 1]);
   });
 
   it('refleja lo que ya estaba silenciado', () => {
