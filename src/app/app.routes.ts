@@ -1252,12 +1252,6 @@ export const routes: Routes = [
       pantallaDeOperacion('schedule', 'blocks', 'Bloqueos de agenda', () =>
         import('./features/agenda/blocks/blocks').then((m) => m.Blocks),
       ),
-      // «Mi agenda» (MAC-4): el horario publicado, en palabras. Es la primera
-      // pantalla donde un médico ve lo que publicó — hasta que existió el GET
-      // de plantillas, no había forma de volver a leerlo.
-      pantallaDeOperacion('schedule', 'mine', 'Mi agenda', () =>
-        import('./features/agenda/my-agenda/my-agenda').then((m) => m.MyAgenda),
-      ),
       // El alta de cita del profesional (TAREA-14). Dirección propia porque el
       // pedido es justamente poder agendar **sin pasar por el calendario**:
       // hasta acá la única forma era tocar un rato del día y abrir la tarjeta,

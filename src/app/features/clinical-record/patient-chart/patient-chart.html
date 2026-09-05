@@ -247,13 +247,6 @@
           />
         </app-tab>
 
-        <!-- Los adjuntos cuelgan del PACIENTE y no del encuentro:
-             `file_links.owner_type` admite USER/PATIENT/TENANT y no tiene
-             ENCOUNTER. Es el modelo, no una decisión de esta pantalla. -->
-        <app-tab label="Adjuntos">
-          <app-attachments-block [patientProfileId]="pacienteDeLaFicha()" />
-        </app-tab>
-
         <!-- Con su cantidad en el rótulo: una internación abierta no puede
              quedar escondida detrás de una pestaña sin avisar, que era
              justamente lo que protegía su lugar al final de la pantalla. -->

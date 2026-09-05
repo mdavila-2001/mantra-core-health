@@ -94,6 +94,24 @@ export class SurveysClient {
   }
 
   /**
+   * `POST /surveys/templates/:id/versions` — abre una versión nueva en
+   * borrador para corregir una plantilla ya publicada (FT-31).
+   *
+   * La versión vieja no se toca ni se desasocia: sigue siendo la que
+   * interpretan sus respuestas ya guardadas, y la que reciben los pacientes
+   * hasta que ésta se publique y alguien la vuelva a asociar.
+   *
+   * @param surveyId - Identificador de la encuesta.
+   * @returns La versión nueva, en borrador.
+   */
+  createNextVersion(surveyId: string): Observable<SurveyCreated> {
+    return this.http.post<SurveyCreated>(
+      this.url(`/surveys/templates/${surveyId}/versions`),
+      {},
+    );
+  }
+
+  /**
    * `POST /surveys/templates/:id/questions` — agrega una pregunta.
    *
    * Solo funciona mientras la versión sigue en borrador: publicar congela el

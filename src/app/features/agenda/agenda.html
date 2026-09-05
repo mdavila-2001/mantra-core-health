@@ -197,6 +197,48 @@
         />
       </app-form-field>
 
+      <!-- ALV-024: navegar la ventana, no sólo elegir su tamaño. Antes
+           «Próximos 7 días» era SIEMPRE desde hoy — no había forma de ver la
+           semana anterior ni adelantarse a la que viene sin cambiar la fecha
+           del sistema. Un tramo es el tamaño de la ventana elegida: con
+           «Próximos 7 días», Siguiente salta 7 días. -->
+      <div class="agenda__navegacion-temporal" role="group" aria-label="Navegar la ventana">
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="agenda-ventana-anterior"
+          aria-label="Ventana anterior"
+          (clicked)="moverVentana(-1)"
+        >
+          ← Anterior
+        </button>
+        @if (!enVentanaDeHoy()) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="agenda-ventana-hoy"
+            (clicked)="irAHoy()"
+          >
+            Hoy
+          </button>
+        }
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="agenda-ventana-siguiente"
+          aria-label="Ventana siguiente"
+          (clicked)="moverVentana(1)"
+        >
+          Siguiente →
+        </button>
+      </div>
+
       <app-switch
         class="agenda__filtro agenda__filtro--interruptor"
         label="Incluir canceladas"
@@ -273,14 +315,11 @@
            padre igual: sin esta condición, «Mi agenda» se construía en cada
            visita a la lista y disparaba su propia lectura de recursos aunque
            nadie abriera la solapa. Con la condición en la plantilla del padre,
-           el componente no existe hasta que se lo pide.
-
-           Su ruta propia (`/schedule/mine`) sigue viva para los enlaces que ya
-           apuntan ahí. -->
+           el componente no existe hasta que se lo pide. -->
       @if (esQuienAtiende()) {
         <app-tab label="Mi agenda">
           @if (pestana() === 1) {
-            <app-my-agenda embebida />
+            <app-my-agenda />
           }
         </app-tab>
       }

@@ -64,9 +64,9 @@ describe('Settings', () => {
   const text = (): string => fixture.nativeElement.textContent as string;
   const query = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
-  const iconosPorRenglon = (): number[] =>
+  const iconsPerRow = (): number[] =>
     [...fixture.nativeElement.querySelectorAll('.ajustes__fila')].map(
-      (fila) => fila.querySelectorAll('app-nav-icon').length,
+      (row) => row.querySelectorAll('app-nav-icon').length,
     );
 
   /**
@@ -152,10 +152,10 @@ describe('Settings', () => {
   });
 
   it('conserva un icono en cada opción de apariencia', () => {
-    montar();
-    irA('Apariencia');
+    mount();
+    goTo('Apariencia');
 
-    expect(iconosPorRenglon()).toEqual([1, 1, 1]);
+    expect(iconsPerRow()).toEqual([1, 1, 1]);
   });
 
   it('elegir un tema lo aplica de verdad, no sólo marca el control', () => {
@@ -187,10 +187,10 @@ describe('Settings', () => {
   });
 
   it('muestra exactamente un icono en cada permiso del navegador', () => {
-    montar();
-    irA('Permisos');
+    mount();
+    goTo('Permisos');
 
-    expect(iconosPorRenglon()).toEqual([1, 1, 1]);
+    expect(iconsPerRow()).toEqual([1, 1, 1]);
   });
 
   it('sólo ofrece «Permitir» donde el cartel todavía puede aparecer', () => {

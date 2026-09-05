@@ -45,6 +45,12 @@
   color: var(--text-secondary);
 }
 
+.encuesta__nota-csv {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
 .encuesta__preguntas {
   display: grid;
   gap: var(--sp-3);
@@ -88,6 +94,104 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
   margin-block-start: var(--sp-4);
+}
+
+.encuesta__respuestas-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  inline-size: 100%;
+}
+
+.encuesta__resumen {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.encuesta__resumen-pregunta {
+  display: grid;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.encuesta__resumen-pregunta:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.encuesta__resumen-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.encuesta__resumen-texto {
+  font-weight: 600;
+}
+
+.encuesta__resumen-total {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  white-space: nowrap;
+}
+
+.encuesta__resumen-nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.encuesta__barras {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.encuesta__barra-fila {
+  display: grid;
+  grid-template-columns: minmax(5rem, 12ch) 1fr auto;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.encuesta__barra-etiqueta {
+  overflow: hidden;
+  font-size: var(--fs-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.encuesta__barra-pista {
+  display: block;
+  inline-size: 100%;
+  block-size: 0.6rem;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface-muted, var(--border-default));
+  overflow: hidden;
+}
+
+.encuesta__barra-relleno {
+  display: block;
+  block-size: 100%;
+  background: var(--brand-primary);
+  border-radius: inherit;
+  transition: inline-size 0.2s ease;
+}
+
+.encuesta__barra-cifra {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  white-space: nowrap;
 }
 
 .encuesta__respuestas {

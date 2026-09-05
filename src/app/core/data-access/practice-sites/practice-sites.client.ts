@@ -111,6 +111,7 @@ interface WireRoleAssignment {
   readonly validFrom: string | null;
   readonly validTo: string | null;
   readonly createdAt: string;
+  readonly avatarUrl: string | null;
 }
 
 interface WireRoleAssignmentResult {
@@ -122,12 +123,16 @@ interface WireRoleAssignmentResult {
 }
 
 function aVinculacion(body: ConNulos<WireRoleAssignment>): MyRoleAssignment {
-  const { validFrom, validTo, createdAt, ...resto } = body;
+  const { validFrom, validTo, createdAt, avatarUrl, ...resto } = body;
   return {
     ...sinNulos(resto),
     ...(maybeDateOnly(validFrom) === undefined ? {} : { validFrom: maybeDateOnly(validFrom) }),
     ...(maybeDateOnly(validTo) === undefined ? {} : { validTo: maybeDateOnly(validTo) }),
     createdAt: maybeDate(createdAt) ?? new Date(createdAt as string),
+    // A diferencia del resto: `avatarUrl` es `string | null` en la vista, no
+    // opcional, así que un `null` del servidor se conserva en vez de
+    // eliminarse la clave (lo que hace `sinNulos` con cualquier otro campo).
+    avatarUrl,
   };
 }
 

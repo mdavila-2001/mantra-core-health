@@ -350,6 +350,28 @@ export class ClinicalClient {
   }
 
   /**
+   * `POST /clinical/conditions/:id/attachments` — liga un archivo ya subido
+   * a ESTE diagnóstico puntual (ALV-033, reemplazo del «Adjuntos» genérico
+   * eliminado en ALV-032).
+   *
+   * A propósito no pasa por `POST /common/files/:id/links` directo: ese
+   * endpoint es genérico y no exige rol clínico ni que la condición exista.
+   * Esta ruta sí —hereda el guard de `ClinicalRecordsController`— y es la
+   * única forma correcta de adjuntar algo a un diagnóstico desde la pantalla.
+   *
+   * @param conditionId - La condición a la que se liga el archivo.
+   * @param fileId - El archivo, ya subido con `FilesClient.upload`.
+   */
+  attachFileToCondition(conditionId: string, fileId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(`/clinical/conditions/${encodeURIComponent(conditionId)}/attachments`),
+        { fileId },
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /**
    * `POST /clinical/allergy-intolerances` — registra una alergia con sus
    * reacciones (UC-08-09).
    *
