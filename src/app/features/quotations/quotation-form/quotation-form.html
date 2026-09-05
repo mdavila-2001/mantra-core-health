@@ -1,0 +1,234 @@
+<app-page-header
+  title="Nueva cotización"
+  subtitle="Elegí paciente y servicio, ajustá el plan de pagos y guardá la oferta."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="cotizacion">
+  @if (hayQueElegirPractica()) {
+    <app-form-field label="Práctica" hint="El catálogo de servicios es propio de cada práctica.">
+      <app-select
+        [value]="practicaElegida()"
+        (valueChange)="cambiarPractica($event)"
+        [options]="opcionesDePractica()"
+        placeholder="Elegí una práctica"
+      />
+    </app-form-field>
+  }
+
+  <!-- ─── Paciente ──────────────────────────────────────────────────────────
+       El mismo par buscador + tabla que usa `clinical-record.ts`, sobre el
+       mismo cliente real de pacientes. -->
+  <section class="cotizacion__bloque" aria-labelledby="cotizacion-paciente-titulo">
+    <h2 id="cotizacion-paciente-titulo">Paciente</h2>
+
+    @if (pacienteElegido(); as paciente) {
+      <div class="cotizacion__elegido" data-testid="quotation-form-paciente-elegido">
+        <span>{{ paciente.displayName ?? paciente.patientCode }}</span>
+        <button app-button type="button" variant="secondary" (clicked)="quitarPaciente()">
+          Cambiar paciente
+        </button>
+      </div>
+    } @else {
+      <app-search-field
+        label="Buscar paciente por nombre o código"
+        placeholder="Nombre o código de paciente"
+        [value]="busquedaDePaciente()"
+        (searched)="buscarPaciente($event)"
+      />
+
+      <app-data-table
+        [state]="resultadosDePacientes()"
+        [columns]="columnasDePacientes()"
+        [trackBy]="porPaciente"
+        caption="Pacientes"
+        (retry)="buscarPaciente(busquedaDePaciente())"
+      />
+    }
+  </section>
+
+  <!-- ─── Fecha de atención y cita asociada ──────────────────────────────── -->
+  <section class="cotizacion__bloque cotizacion__grilla" aria-labelledby="cotizacion-atencion-titulo">
+    <h2 id="cotizacion-atencion-titulo" class="cotizacion__titulo-ancho">Atención</h2>
+
+    <app-form-field label="Fecha de atención" [required]="true">
+      <app-date-picker
+        [value]="fechaDeAtencion()"
+        (valueChange)="fechaDeAtencion.set($event)"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Cita asociada"
+      hint="Opcional. Se ofrecen las reservas recientes del paciente elegido."
+    >
+      <app-select
+        [value]="citaElegida()"
+        (valueChange)="citaElegida.set($event)"
+        [options]="opcionesDeCita()"
+        [disabled]="pacienteElegido() === null"
+        placeholder="Sin cita asociada"
+      />
+    </app-form-field>
+  </section>
+
+  <!-- ─── Servicio médico (FT-22) ────────────────────────────────────────── -->
+  <section class="cotizacion__bloque" aria-labelledby="cotizacion-servicio-titulo">
+    <h2 id="cotizacion-servicio-titulo">Servicio</h2>
+
+    @if (servicioElegido(); as servicio) {
+      <div class="cotizacion__elegido" data-testid="quotation-form-servicio-elegido">
+        <span>{{ servicio.name }} ({{ servicio.code }})</span>
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          (clicked)="servicioElegido.set(null)"
+        >
+          Cambiar servicio
+        </button>
+      </div>
+    } @else {
+      <app-search-field
+        label="Buscar servicio por código o nombre"
+        placeholder="Código o nombre del servicio"
+        [value]="busquedaDeServicio()"
+        (searched)="buscarServicio($event)"
+      />
+
+      <app-data-table
+        [state]="resultadosDeServicios()"
+        [columns]="columnasDeServicios()"
+        [trackBy]="porServicio"
+        caption="Catálogo de servicios"
+        (retry)="buscarServicio(busquedaDeServicio())"
+      />
+    }
+
+    <app-form-field
+      label="Precio ofrecido"
+      hint="Prellenado con el precio de referencia del servicio elegido; se puede cambiar."
+      [required]="true"
+    >
+      <app-input
+        type="number"
+        testId="quotation-form-offered-price"
+        [value]="precioOfrecido()"
+        (valueChange)="fijarPrecio($event)"
+      />
+    </app-form-field>
+  </section>
+
+  <!-- ─── Simulador de financiamiento ───────────────────────────────────────
+       Cada cambio dispara `QuotationsClient.simulatePaymentPlan` con espera
+       (ver el constructor de `quotation-form.ts`). -->
+  <section class="cotizacion__bloque cotizacion__grilla" aria-labelledby="cotizacion-simulador-titulo">
+    <h2 id="cotizacion-simulador-titulo" class="cotizacion__titulo-ancho">Simulador de financiamiento</h2>
+
+    <app-form-field label="Tasa de interés (%)">
+      <app-input
+        type="number"
+        testId="quotation-form-interest-rate"
+        [value]="tasaDeInteres()"
+        (valueChange)="fijarTasa($event)"
+      />
+    </app-form-field>
+
+    <app-form-field label="Plazo (cuotas)">
+      <app-input
+        type="number"
+        testId="quotation-form-installment-count"
+        [value]="plazoEnCuotas()"
+        (valueChange)="fijarPlazo($event)"
+      />
+    </app-form-field>
+
+    <app-form-field label="Método de cálculo">
+      <app-select
+        [value]="metodo()"
+        (valueChange)="metodo.set($event ?? 'FLAT')"
+        [options]="opcionesDeMetodo"
+      />
+    </app-form-field>
+
+    <div class="cotizacion__titulo-ancho" data-testid="quotation-form-simulacion">
+      @if (simulando()) {
+        <p>Simulando…</p>
+      } @else if (simulacionVacia(); as vacia) {
+        <p>{{ vacia.message }}</p>
+      } @else if (simulacionConError()) {
+        <app-alert tone="error">No pudimos simular el plan de pagos. Probá de nuevo.</app-alert>
+      } @else if (cuotas().length > 0) {
+        <table class="cotizacion__cuotas">
+          <thead>
+            <tr>
+              <th scope="col">Cuota</th>
+              <th scope="col">Vencimiento</th>
+              <th scope="col">Capital</th>
+              <th scope="col">Interés</th>
+              <th scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cuota of cuotas(); track cuota.installmentNumber) {
+              <tr>
+                <td>{{ cuota.installmentNumber }}</td>
+                <td>{{ cuota.dueDate }}</td>
+                <td>{{ cuota.principalAmount }}</td>
+                <td>{{ cuota.interestAmount }}</td>
+                <td>{{ cuota.totalAmount }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </section>
+
+  <!-- ─── Validez de la oferta ──────────────────────────────────────────── -->
+  <app-form-field label="Válida hasta" [required]="true">
+    <app-date-picker
+      [value]="validaHasta()"
+      (valueChange)="validaHasta.set($event)"
+    />
+  </app-form-field>
+
+  @if (errorAlGuardar(); as mensaje) {
+    <app-alert tone="error" data-testid="quotation-form-error">{{ mensaje }}</app-alert>
+  }
+
+  <div class="cotizacion__acciones">
+    <button
+      app-button
+      type="button"
+      variant="secondary"
+      data-testid="quotation-form-export"
+      (clicked)="exportar()"
+    >
+      Exportar
+    </button>
+    <button
+      app-button
+      type="button"
+      variant="primary"
+      data-testid="quotation-form-save"
+      [disabled]="!puedeGuardar()"
+      (clicked)="guardar()"
+    >
+      Guardar
+    </button>
+  </div>
+</div>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaAccionPaciente let-paciente>
+  <button app-button type="button" variant="secondary" (clicked)="elegirPaciente(paciente)">
+    Elegir
+  </button>
+</ng-template>
+
+<ng-template #celdaAccionServicio let-servicio>
+  <button app-button type="button" variant="secondary" (clicked)="elegirServicio(servicio)">
+    Elegir
+  </button>
+</ng-template>

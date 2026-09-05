@@ -1,0 +1,73 @@
+<app-page-header
+  title="Cotizaciones"
+  subtitle="Buscá a un paciente para ver sus cotizaciones, o armá una nueva."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <a
+    app-button
+    page-actions
+    variant="primary"
+    data-testid="quotation-list-new"
+    [routerLink]="nuevaCotizacionRoute"
+  >
+    Nueva cotización
+  </a>
+</app-page-header>
+
+<div class="cotizaciones">
+  @if (pacienteElegido(); as paciente) {
+    <div class="cotizaciones__paciente" data-testid="quotation-list-paciente-elegido">
+      <span>
+        Cotizaciones de <strong>{{ paciente.displayName ?? paciente.patientCode }}</strong>
+      </span>
+      <button app-button type="button" variant="secondary" (clicked)="quitarPaciente()">
+        Buscar otro paciente
+      </button>
+    </div>
+
+    <app-data-table
+      [state]="cotizaciones()"
+      [columns]="columnasDeCotizaciones()"
+      [trackBy]="porCotizacion"
+      caption="Cotizaciones del paciente"
+      (retry)="recargarCotizaciones()"
+    />
+  } @else {
+    <app-search-field
+      class="cotizaciones__buscador"
+      label="Buscar paciente por nombre o código"
+      placeholder="Nombre o código de paciente"
+      [value]="busquedaDePaciente()"
+      [loading]="cargandoPacientes()"
+      (searched)="buscarPaciente($event)"
+    />
+
+    <app-data-table
+      [state]="resultadosDePacientes()"
+      [columns]="columnasDePacientes()"
+      [trackBy]="porPaciente"
+      rowNavigable
+      caption="Pacientes"
+      (rowActivated)="elegirPaciente($event)"
+      (retry)="buscarPaciente(busquedaDePaciente())"
+    />
+  }
+</div>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<ng-template #celdaPrecio let-cotizacion>
+  {{ cotizacion.offeredPrice }}
+</ng-template>
+
+<ng-template #celdaEstado let-cotizacion>
+  <app-badge variant="secondary" [value]="cotizacion.status" />
+</ng-template>
+
+<!-- El camino accesible: `rowNavigable` es sólo comodidad de puntero (ver
+     `insurance-claims.html`), y este botón es el que también funciona con
+     teclado y lector de pantalla. -->
+<ng-template #celdaAccionPaciente let-paciente>
+  <button app-button type="button" variant="secondary" (clicked)="elegirPaciente(paciente)">
+    Elegir
+  </button>
+</ng-template>

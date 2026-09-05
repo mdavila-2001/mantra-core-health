@@ -170,7 +170,18 @@ describe('NavigationService', () => {
       // cuando la pantalla era sólo lectura: llegar por «Tus accesos»
       // alcanzaba. Dejó de alcanzar el día que el precio se edita ahí — un
       // lugar donde se escribe no puede depender de que alguien recuerde la
-      // ruta. Quien agregue la treceava sigue teniendo que discutirla.
+      // ruta.
+      //
+      // **«Cotizaciones» es la treceava, por la funcionalidad 24 (FT-24).**
+      // Cambio deliberado de esta misma tanda: cotizar es el paso que sigue a
+      // «Mis servicios» —se arma la oferta concreta con su plan de pagos sobre
+      // el precio que esa pantalla ya deja puesto— y, a diferencia de una
+      // ficha (que cuelga sin entrada propia del listado del que depende), acá
+      // el listado de cotizaciones sí es un destino al que se vuelve por su
+      // cuenta para revisar lo ya ofrecido. Mismo razonamiento que le dio
+      // renglón a «Mis servicios»: un lugar donde se arma una oferta con
+      // dinero de por medio no puede depender de que alguien recuerde la
+      // ruta. Quien agregue la catorceava sigue teniendo que discutirla.
       //
       // Lo que la decisión **no** toca: «Directorio de médicos» (`directory`)
       // sigue siendo exclusivo del paciente —corrección #2, fijada dos pruebas
@@ -206,6 +217,7 @@ describe('NavigationService', () => {
         'Glosario',
         'Formularios',
         'Mis servicios',
+        'Cotizaciones',
         'Contabilidad',
       ]);
     });
