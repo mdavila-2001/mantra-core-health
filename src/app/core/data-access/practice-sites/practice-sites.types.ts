@@ -62,6 +62,8 @@ export interface MyRoleAssignment {
   readonly validFrom?: Date;
   readonly validTo?: Date;
   readonly createdAt: Date;
+  /** Logo de la organización (su ficha pública), o `null` si no tiene uno. */
+  readonly avatarUrl: string | null;
 }
 
 /** Cuerpo de "pedir vincularme a esta organización". */
