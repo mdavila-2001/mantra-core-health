@@ -1,9 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { AuthService } from '../../../../core/auth/auth.service';
 import { AddressesClient } from '../../../../core/data-access/common/addresses.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
+import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
+import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
+import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import type { OwnPractitionerProfile } from '../../../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -61,6 +65,17 @@ function fechaIso(fecha: Date): string {
  * envíos separados y no un único `guardar()`: cada uno tiene su propio
  * significado y su propio momento.
  */
+/**
+ * La fecha como `YYYY-MM-DD` con componentes **locales** — el mismo espejo de
+ * `maybeDateOnly` que usa el historial laboral. `toISOString()` pasaría por
+ * UTC y en Bolivia devolvería el día anterior.
+ */
+function soloFecha(fecha: Date): string {
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
+}
+
 @Component({
   selector: 'app-practitioner-profile-edit',
   imports: [
@@ -71,6 +86,7 @@ function fechaIso(fecha: Date): string {
     FormActions,
     FormField,
     Input,
+    LocationPicker,
     PageHeader,
     PublicProfileSettings,
     RouterLink,
@@ -92,6 +108,19 @@ export class PractitionerProfileEdit {
   private readonly departamentos = inject(BoDepartmentsCatalog);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  private readonly municipios = inject(BoMunicipalitiesCatalog);
+  private readonly auth = inject(AuthService);
+
+  /* -- ALV-003: los dos datos del contrato que no tenían control ---------- */
+
+  /** Fecha de nacimiento: se ve en la ficha, ahora también se edita. */
+  protected readonly fechaNacimiento = signal<Date | null>(null);
+  /** Localidad de residencia (concept id de `VS_BO_MUNICIPALITY`). */
+  protected readonly municipioResidencia = signal<string | null>(null);
+  /** El árbol de departamentos y municipios, para el picker de residencia. */
+  protected readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
+  protected readonly catalogoMunicipiosCaido = signal(false);
 
   protected readonly perfil = signal<ViewState<OwnPractitionerProfile>>(loading());
 
@@ -281,6 +310,35 @@ export class PractitionerProfileEdit {
     this.correoPersonal.set(perfil.personalEmail ?? '');
     this.aceptaNuevos.set(perfil.acceptsNewPatients);
     this.telemedicina.set(perfil.telehealthAvailable);
+    // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
+    // ofrecía. Se siembran desde el perfil, igual que el resto.
+    this.fechaNacimiento.set(perfil.birthDate ?? null);
+    this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
+    if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
+      this.cargarMunicipios();
+    }
+  }
+
+  /**
+   * Trae el árbol de municipios para «dónde vivís». Mismo criterio que el
+   * alta ante un fallo: el campo es opcional y el resto del formulario sigue.
+   */
+  protected cargarMunicipios(): void {
+    this.municipios.listar().subscribe({
+      next: (ramas) => {
+        this.catalogoMunicipiosCaido.set(false);
+        this.ramasMunicipios.set(ramas);
+      },
+      error: () => {
+        this.ramasMunicipios.set([]);
+        this.catalogoMunicipiosCaido.set(true);
+      },
+    });
+  }
+
+  protected reintentarMunicipios(): void {
+    this.municipios.olvidar();
+    this.cargarMunicipios();
   }
 
   /**
@@ -311,7 +369,22 @@ export class PractitionerProfileEdit {
       workMobilePhone: string;
       workLandline: string;
       personalEmail: string;
+      birthDate: string;
+      residenceMunicipalityConceptId: string;
     }> = {};
+    // ALV-003/009: los dos campos nuevos viajan sólo si cambiaron, como el
+    // resto. La fecha se compara por día local (`toISOString` la pasaría por
+    // UTC y correría un día al oeste de Greenwich).
+    const fechaOriginal = original.birthDate ? soloFecha(original.birthDate) : '';
+    const fechaEditada = this.fechaNacimiento();
+    const fechaNueva = fechaEditada === null ? '' : soloFecha(fechaEditada);
+    if (fechaNueva !== '' && fechaNueva !== fechaOriginal) {
+      cambios.birthDate = fechaNueva;
+    }
+    const municipio = this.municipioResidencia();
+    if (municipio !== null && municipio !== (original.residenceMunicipalityConceptId ?? null)) {
+      cambios.residenceMunicipalityConceptId = municipio;
+    }
     if (this.titulo() !== (original.professionalTitle ?? '')) {
       cambios.professionalTitle = this.titulo();
     }
@@ -450,14 +523,18 @@ export class PractitionerProfileEdit {
     }
 
     const ciudad = this.nuevaCiudad().trim();
+    // ALV-009: la dirección es de la CUENTA del profesional (`OWNER_USER`
+    // existe en el catálogo desde siempre); el `PATIENT` de antes era un hack
+    // que la dejaba colgada de un id de perfil que ninguna lectura buscaba.
+    const userId = this.auth.userId();
+    if (userId === null) {
+      return;
+    }
     this.guardandoDireccion.set(true);
     this.addresses
       .create({
-        // El backend no distingue todavía un `PRACTITIONER`: guarda el
-        // documento y el contacto del profesional bajo `PATIENT`, el mismo
-        // owner type genérico de «persona», y la dirección sigue ese criterio.
-        ownerType: 'PATIENT',
-        ownerId: profileId,
+        ownerType: 'USER',
+        ownerId: userId,
         lines: [linea],
         ...(ciudad === '' ? {} : { city: ciudad }),
         ...(this.nuevoDepartamentoDireccion() === null
