@@ -44,6 +44,10 @@ const RUTAS: Readonly<Record<string, ((id: string) => string) | null>> = {
   // abre con el foco puesto en el textarea: llegar desde «te escribieron» y
   // tener que buscar dónde escribir rompe el gesto que la notificación empezó.
   CONVERSATION: (id) => `/messaging/${id}?responder=1`,
+  // FT-07-R06: «un profesional pide ver tu historia clínica». La bandeja
+  // lista todo lo pendiente, así que no hace falta el id para llegar a la
+  // decisión — y la solicitud puede haber sido respondida ya desde otro aviso.
+  CARE_RELATIONSHIP_REQUEST: () => '/my-account/access-requests',
   // El muro no tiene todavía pantalla de publicación suelta.
   POST: null,
 };

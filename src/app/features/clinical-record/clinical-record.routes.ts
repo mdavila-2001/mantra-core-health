@@ -20,6 +20,11 @@ export function patientChartRoute(profileId: string): string {
   return `${CLINICAL_RECORD_ROUTE}/${profileId}`;
 }
 
+/** Pedir el vínculo con esta persona, sin turno confirmado (FT-07-R05). */
+export function requestAccessRoute(profileId: string): string {
+  return `${CLINICAL_RECORD_ROUTE}/${profileId}/request-access`;
+}
+
 /** El parámetro con el que la agenda precarga el motivo de consulta. */
 export const MOTIVO_QUERY_PARAM = 'motivo';
 

@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.solicitudes {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+  max-inline-size: 48rem;
+}
+
+.solicitud {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.solicitud__quien {
+  margin: 0;
+}
+
+.solicitud__cuando {
+  color: var(--text-secondary);
+}
+
+.solicitud__especialidades {
+  display: grid;
+  gap: var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-2);
+  padding: var(--sp-4);
+}
+
+.solicitud__especialidades legend {
+  font-weight: 500;
+  padding-inline: var(--sp-1);
+}
+
+.solicitud__acciones {
+  display: flex;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}
