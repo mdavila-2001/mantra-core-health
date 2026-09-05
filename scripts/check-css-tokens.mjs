@@ -138,7 +138,7 @@ console.error(`
 
   Dos salidas, y las dos son válidas:
     · usar el token real  — mirá los declarados en 'src/styles.css' y
-      'src/styles/redsat.css', que son espacios de nombres distintos;
+      'src/styles/alovida.css', que son espacios de nombres distintos;
     · dar valor de reserva — 'var(--x, 12px)', para lo que se fija en tiempo
       de ejecución o pertenece a un tema opcional.
 `);

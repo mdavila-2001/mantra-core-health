@@ -1,0 +1,14 @@
+/* V03-03·F · Traducción entre catálogos
+   Portada de V03-terminology/sesion-autenticada/V03-03-traduccion-entre-catalogos-formulario.html en la bóveda. El marcado lo
+   genera scripts/port-vistas-alovida.mjs; la lógica va acá, no en el generador. */
+
+import { Component } from '@angular/core';
+
+import { RouterLink } from '@angular/router';
+
+@Component({
+  selector: 'app-alovida-terminologia-traduccion-entre-catalogos-formulario',
+  imports: [RouterLink],
+  templateUrl: './traduccion-entre-catalogos-formulario.html',
+})
+export class TerminologiaTraduccionEntreCatalogosFormulario {}

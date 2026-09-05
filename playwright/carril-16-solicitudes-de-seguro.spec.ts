@@ -18,7 +18,7 @@ import { entrar, esperarAplicacionLista, estable, irA } from './support/sesion';
  * probar el único rol que un usuario real va a tener, y no distinguiría una
  * pantalla que funciona de una a la que nadie puede entrar.
  *
- * Precondición: `node tools/redesa/seed-solicitudes-seguro.mjs` en el
+ * Precondición: `node tools/alovida/seed-solicitudes-seguro.mjs` en el
  * repositorio de la API. Esa corrida deja la práctica que presenta los
  * reclamos, las cuatro solicitudes y la cuenta `BILLING_OPERATOR` con la que
  * entra esta suite. Sin ella la pantalla muestra su estado vacío —que es
@@ -49,7 +49,7 @@ test.beforeAll(async () => {
   expect(
     await apiViva(api),
     `La API no responde en ${urlDeApi()}. Levantala y sembrá con ` +
-      '`node tools/redesa/seed-solicitudes-seguro.mjs`.',
+      '`node tools/alovida/seed-solicitudes-seguro.mjs`.',
   ).toBe(true);
 });
 
@@ -418,7 +418,7 @@ test.describe('el alcance del prestador', () => {
     expect(
       acceso.status(),
       `No se pudo entrar como ${actor.identificador}: sembrá con ` +
-        '`node tools/redesa/seed-solicitudes-seguro.mjs`.',
+        '`node tools/alovida/seed-solicitudes-seguro.mjs`.',
     ).toBe(200);
     const { accessToken } = (await acceso.json()) as { accessToken: string };
     return { Authorization: `Bearer ${accessToken}` };

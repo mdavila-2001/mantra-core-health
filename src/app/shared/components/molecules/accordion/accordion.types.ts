@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Accordion — sistema REDSAT v1.0.
+    Contratos del Accordion — sistema ALOVIDA v1.0.
 
     Extensión propia: el spec no lo declara. Se arma con el borde decorativo y
     la tipografía del sistema. Pendiente de validación del diseñador.

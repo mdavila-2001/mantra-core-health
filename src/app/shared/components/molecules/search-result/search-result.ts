@@ -15,9 +15,9 @@ import type { SearchResultItem } from './search-result.types';
  * ## De dónde sale el diseño
  *
  * De la maqueta: `SALUD/Vistas/HTML/V65-buscador/publico/` y
- * `_assets/redsat.css` §25. El marcado y las clases son **los de la maqueta**,
+ * `_assets/alovida.css` §25. El marcado y las clases son **los de la maqueta**,
  * no una reinterpretación — por eso el componente no trae CSS propio: lo estila
- * `src/styles/redsat.css`, que ya está en `angular.json` y es el mismo archivo
+ * `src/styles/alovida.css`, que ya está en `angular.json` y es el mismo archivo
  * que usan las 141 pantallas portadas.
  *
  * Escribirle estilos acá lo separaría de la maqueta en la primera corrección

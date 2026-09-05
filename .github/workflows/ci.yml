@@ -144,7 +144,7 @@ jobs:
         run: node scripts/check-css-tokens.mjs
 
       # Contraste WCAG de las DOS hojas: `styles.css` (banco de componentes) y
-      # `styles/redsat.css` (la hoja de la bóveda, que pinta el armazón de todas
+      # `styles/alovida.css` (la hoja de la bóveda, que pinta el armazón de todas
       # las pantallas y las 141 portadas).
       #
       # El script existía y se documentaba como si corriera acá —`styles.css`

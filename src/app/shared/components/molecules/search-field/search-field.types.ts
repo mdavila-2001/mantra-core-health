@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Search field — sistema REDSAT v1.0.
+    Contratos del Search field — sistema ALOVIDA v1.0.
 
     Extensión propia: el spec declara el input `type="search"` (con su lupa y
     su botón de limpiar, ya implementados en `atoms/input`), pero no el campo

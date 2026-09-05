@@ -30,7 +30,7 @@ graph LR
   end
   subgraph C["Servidor · confiable"]
     SSR[Servidor SSR]
-    API[API REDESA]
+    API[API ALOVIDA]
     DB[(Base de datos)]
   end
   JS -->|Bearer + X-Tenant-Id| API

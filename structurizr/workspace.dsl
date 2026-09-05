@@ -14,7 +14,7 @@
  * todavía —la imagen de producción, el CDN— NO se modela: un diagrama que
  * dibuja lo que no hay es peor que uno incompleto.
  */
-workspace "Mantra Core Health — Frontend" "Ecosistema REDESA · aplicación web de salud" {
+workspace "Mantra Core Health — Frontend" "Ecosistema ALOVIDA · aplicación web de salud" {
 
     model {
         paciente = person "Paciente" "Entra con su documento de identidad. El correo es opcional."
@@ -25,7 +25,7 @@ workspace "Mantra Core Health — Frontend" "Ecosistema REDESA · aplicación we
             tags "Externo"
         }
 
-        api = softwareSystem "API REDESA" "NestJS. Autoridad de autenticación, autorización y datos. Repositorio mantra-core-health-redesa-api." {
+        api = softwareSystem "API ALOVIDA" "NestJS. Autoridad de autenticación, autorización y datos. Repositorio mantra-core-health-redesa-api." {
             tags "Externo"
         }
 

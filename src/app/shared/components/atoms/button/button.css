@@ -1,5 +1,5 @@
 /* ============================================================================
-    AppButton — traducción BEM del bloque Buttons de REDSAT_Sistema_de_Diseno.html
+    AppButton — traducción BEM del bloque Buttons de ALOVIDA_Sistema_de_Diseno.html
     (el diseñador escribe `btn-primary`; acá `btn--primary` — mismos valores).
     Cero valores propios: todo alias de tokens de src/styles.css, salvo el
     blanco literal del danger/spinner que fija el propio spec (ver nota).
@@ -81,7 +81,7 @@
 }
 
 /* extensión propia (no está en el spec): outline neutro para acciones sin
-   peso de marca. Solo tokens REDSAT.
+   peso de marca. Solo tokens ALOVIDA.
    TODO(diseñador): validar — identidad-visual.md, pendientes. */
 :host(.btn--outline) {
   --_btn-fg: var(--text-primary);

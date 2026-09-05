@@ -16,14 +16,14 @@ esa es la causa de la mitad de la confusión sobre "qué está hecho":
 
 | | Aplicación real | Vistas portadas de la bóveda |
 |---|---|---|
-| Dónde vive | `src/app/features/*` (menos `redsat/`) | `src/app/features/redsat/` |
-| Cómo se declara | `app.routes.ts` + `core/navigation/navigation.map.ts` | `redsat.routes.ts` (**generado**) |
+| Dónde vive | `src/app/features/*` (menos `alovida/`) | `src/app/features/alovida/` |
+| Cómo se declara | `app.routes.ts` + `core/navigation/navigation.map.ts` | `alovida.routes.ts` (**generado**) |
 | Rutas | 25 secciones + 30 pantallas hijas/de operación | **138 rutas, 126 pantallas** |
 | Guard | `authGuard` en el padre | **ninguno** |
 | Datos | clientes de `core/data-access` | marcado estático escrito a mano |
-| Quién la escribe | el equipo | `scripts/port-vistas-redsat.mjs`, desde la bóveda |
+| Quién la escribe | el equipo | `scripts/port-vistas-alovida.mjs`, desde la bóveda |
 
-Las de `redsat/` **son las vistas del diseñador** a las que se refiere la
+Las de `alovida/` **son las vistas del diseñador** a las que se refiere la
 corrección #8 («usar las vistas del diseñador ya existentes»). No son pantallas a
 medio hacer: son el entregable de diseño, portado a Angular para que se pueda
 mirar en el navegador y para que las pantallas reales se rehidraten contra él.
@@ -36,7 +36,7 @@ mirar en el navegador y para que las pantallas reales se rehidraten contra él.
 
 ### H-1 · Las 126 maquetas eran indistinguibles del producto — **corregido**
 
-`redsat/` renderiza perfectamente y no persiste nada:
+`alovida/` renderiza perfectamente y no persiste nada:
 
 - filas y tarjetas escritas a mano en el `.html`;
 - enlaces marcados `data-sin-destino` que no navegan;
@@ -48,8 +48,8 @@ mirar en el navegador y para que las pantallas reales se rehidraten contra él.
 Eso es exactamente lo que prohíbe la corrección #7 («pantallas que aparentan
 funcionar sin persistencia real»), y lo que el carril 01 manda **marcar**.
 
-**Qué se hizo** — `features/redsat/shell/redsat-design-notice.ts`, montado en los
-dos marcos (`redsat-shell`, `redsat-public-shell`):
+**Qué se hizo** — `features/alovida/shell/alovida-design-notice.ts`, montado en los
+dos marcos (`alovida-shell`, `alovida-public-shell`):
 
 - un aviso permanente y no descartable, arriba del contenido, que dice que la
   pantalla es una referencia de diseño y que nada de lo que se ve se guarda;
@@ -62,18 +62,18 @@ dos marcos (`redsat-shell`, `redsat-public-shell`):
 Una sola pieza cubre las 126, y el generador no la pisa porque vive en el marco,
 no en las pantallas.
 
-### H-2 · `features/redsat/organizaciones/` es código muerto duplicado
+### H-2 · `features/alovida/organizaciones/` es código muerto duplicado
 
 26 archivos, 324 KB, 13 componentes que son copia exacta de
-`features/redsat/directorio/`. Sobra de cuando el segmento se renombró
+`features/alovida/directorio/`. Sobra de cuando el segmento se renombró
 `organizaciones` → `directorio`.
 
 Evidencia de no uso, no impresión:
 
-- `redsat.routes.ts` importa **siempre** de `@features/redsat/directorio/…`
+- `alovida.routes.ts` importa **siempre** de `@features/alovida/directorio/…`
   (11 coincidencias, ninguna de `organizaciones/`);
 - `vistas.manifest.json` no declara ni una vista con esa importación;
-- `grep -rn "redsat/organizaciones" src/` en `.ts`, `.html` y `.json`: cero.
+- `grep -rn "alovida/organizaciones" src/` en `.ts`, `.html` y `.json`: cero.
 
 → Se elimina en el **carril 19**, que es el que barre basura. Acá queda el
 registro y la evidencia.
@@ -102,7 +102,7 @@ La corrección #2 dice que la Guía es **solo para pacientes**.
 | Dónde | Qué | Por qué no se toca acá |
 |---|---|---|
 | `admin/organizations/organization-new.html:67` | `TODO(IT3)`: los tipos de organización salen del DTO, no de dynamic-enums | Es un dato real del contrato, no un mock. Dominio de organizaciones, no de este carril. |
-| `redsat/` (126 pantallas) | marcado estático | Es el entregable del diseñador. Cablearlas es el trabajo de los carriles de dominio (03, 05, 06…), no de una auditoría. |
+| `alovida/` (126 pantallas) | marcado estático | Es el entregable del diseñador. Cablearlas es el trabajo de los carriles de dominio (03, 05, 06…), no de una auditoría. |
 
 ---
 
@@ -116,7 +116,7 @@ Vale decirlo porque el carril pregunta por ello explícitamente:
   que un ítem de menú que apunte a una ruta inexistente no se puede escribir.
 - **No hay componentes marcados `v2`, `final`, `premium`, `figma`** ni ninguna de
   las variantes que el carril manda buscar: la convención del repo es una
-  carpeta por pantalla y el port vive todo bajo `redsat/`.
+  carpeta por pantalla y el port vive todo bajo `alovida/`.
 - **No hay `faker` ni lorem ipsum en runtime.**
 
 ---
@@ -146,5 +146,5 @@ El único `placeholder` es `/billing`, declarada `planificada` a propósito.
   `artifacts/playwright/baseline/{paciente,doctora,administrador,maquetas}/`.
   Se regenera con `yarn pw:baseline`.
 - Tabla completa: `docs/reports/generated/design-view-inventory.md`.
-- Pruebas del marcador: `features/redsat/shell/redsat-shell.spec.ts` (17 casos,
+- Pruebas del marcador: `features/alovida/shell/alovida-shell.spec.ts` (17 casos,
   6 nuevos) y `playwright/carril-01-baseline.spec.ts`.

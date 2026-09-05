@@ -125,7 +125,7 @@ test.describe('Carril 01 · baseline de las rutas P0', () => {
       // El carril 01 pide **marcar** las pantallas que sólo muestran datos de
       // ejemplo. Si este aviso desaparece, la maqueta vuelve a ser
       // indistinguible del producto.
-      const aviso = page.locator('app-redsat-design-notice');
+      const aviso = page.locator('app-alovida-design-notice');
       await expect(aviso, `${ruta} declara que es una maqueta`).toContainText(
         'Referencia de diseño',
       );

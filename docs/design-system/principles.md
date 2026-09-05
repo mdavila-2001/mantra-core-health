@@ -1,6 +1,6 @@
 # Principios del sistema de diseño
 
-**REDSAT v1.0.** Fuente normativa:
+**ALOVIDA v1.0.** Fuente normativa:
 `Mantra Core Health Vault/SALUD/Arquitectura/identidad-visual.md`.
 Fuente física de los valores: `src/styles.css`.
 

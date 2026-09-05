@@ -12,7 +12,7 @@ import { entrar, esperarAplicacionLista, estable, irA } from './support/sesion';
  * ## Qué afirma y qué no
  *
  * Estas capturas se toman **sobre datos que ya existen**, creados por
- * `tools/redesa/p8-avisos-agenda.mjs` (repositorio de la API) contra la API
+ * `tools/alovida/p8-avisos-agenda.mjs` (repositorio de la API) contra la API
  * viva: una reserva real, una demora informada de verdad y una lista de espera
  * con su fila. No se simula ninguna respuesta ni se escribe estado a mano para
  * que una pantalla se vea bien.

@@ -37,7 +37,7 @@
 | **Modelo de datos** | **38 entidades** en `community` — `public_profiles`, `social_posts`, `post_media`, `hashtags`, `content_hashtags`, `mentions`, `comments`, `reactions`, `bookmarks`, `social_follows`, `user_blocks`, `conversations`, `conversation_participants`, `direct_messages`, `message_receipts`, `content_reports`, `moderation_queue`, `moderation_decisions`, `moderation_strikes`, `moderation_appeals`, `service_reviews`, `review_dimension_scores`, `review_responses`, `polls`, `poll_options`, `poll_votes`, `groups`, `group_members`, `topics`, `feed_items`, `social_notifications`, `prestige_scores`, `prestige_awards`, `verified_badges`, `post_shares`, `feedback_tickets` (+2) |
 | **Escrituras** | **17 endpoints** en 7 controladores, con `em.transactional`, unicidad, 409 de duplicado, 422 de auto-follow/auto-bloqueo, dedup de reportes y strike en la decisión |
 | **Especificación de vistas** | [[V19 community — Vistas]] 18 fichas (la red por dentro) · [[V65 buscador — Vistas]] 14 fichas (la superficie pública) · 14 maquetas HTML ya construidas en `SALUD/Vistas/HTML/V65-buscador/` |
-| **Reglas de negocio** | 34 reglas REDESA verificadas contra el modelo: `PAC-SOC-001..010`, `DOC-SOC-001..015`, `ORG-PUB-001..003`, `INS-BRK-015`, `PAC-CITA-001/003`, `PAC-DIAG-001..004/013`, `PAC-MED-003..012` |
+| **Reglas de negocio** | 34 reglas ALOVIDA verificadas contra el modelo: `PAC-SOC-001..010`, `DOC-SOC-001..015`, `ORG-PUB-001..003`, `INS-BRK-015`, `PAC-CITA-001/003`, `PAC-DIAG-001..004/013`, `PAC-MED-003..012` |
 
 ### Infraestructura levantada — y sin usar por `community`
 
@@ -259,7 +259,7 @@ El banco tiene 51 piezas + las 6 públicas que se agregaron con V65. La red soci
 
 | # | Tarea |
 |---|---|
-| 66 | Portar `app-public-shell`, `app-resultado`, `app-perfil-cabecera`, `app-perfil-cifras`, `app-declaracion`, `app-mapa` y `app-revelacion` de `redsat.css` §25 a componentes Angular del banco |
+| 66 | Portar `app-public-shell`, `app-resultado`, `app-perfil-cabecera`, `app-perfil-cifras`, `app-declaracion`, `app-mapa` y `app-revelacion` de `alovida.css` §25 a componentes Angular del banco |
 | 67 | Rutas públicas fuera de `/app`: `/buscar`, `/buscar/{profesionales,medicamentos,organizaciones,diagnostico,aseguradoras,mapa}`, `/p/:slug`, `/o/:slug`, `/f/:slug`, `/l/:slug`, `/s/:slug` |
 | 68 | **SSR para los perfiles públicos.** `app.config.server.ts` y `app.routes.server.ts` ya existen. Sin SSR los perfiles no se indexan y el buscador público pierde su razón de ser |
 | 69 | Metadatos Open Graph y JSON-LD (`Physician`, `MedicalOrganization`, `Pharmacy`) por perfil |
@@ -348,7 +348,7 @@ Ninguna de estas es una tarea: son bifurcaciones que cambian el trabajo de varia
 | **D1** | **¿El paciente estrena el rol `PATIENT` o entra como «sesión autenticada»?** | Hoy `PATIENT` casi no se usa en la API. Afecta a los 15 endpoints de F1.1 y a las guardas del frontend |
 | **D2** | **Transporte de tiempo real: WebSocket, SSE o polling** | No hay ninguno hoy. Cambia el despliegue, no sólo el código (F8) |
 | **D3** | **Umbral del fan-out híbrido** | El número exacto de seguidores donde se pasa de *push* a *pull* (F2.30) |
-| **D4** | **Foros médicos** | `DOC-SOC-010/011/015` están `PARCIAL` a la espera del dictamen de `redesa-gap-map#7`: ¿son `community.groups` + `topics` o un dominio nuevo? No se maqueta hasta resolverlo |
+| **D4** | **Foros médicos** | `DOC-SOC-010/011/015` están `PARCIAL` a la espera del dictamen de `alovida-gap-map#7`: ¿son `community.groups` + `topics` o un dominio nuevo? No se maqueta hasta resolverlo |
 | **D5** | **Agregado de receta** | `PAC-MED-001/002` («la farmacia con **todos** los medicamentos de una receta») exige que la receta sea un objeto con N ítems. Hoy el modelo no lo tiene. Sin él, V65-03 resuelve un medicamento por vez |
 | **D6** | **Moderación previa o reactiva** | Si una publicación se revisa antes de aparecer, cambia el flujo de F2 y F9 por completo |
 | **D7** | **Qué se indexa de un perfil no verificado** | Un directorio que mezcla verificados y declarados sin jerarquía pierde su valor; excluirlos del todo lo deja vacío |
@@ -393,7 +393,7 @@ Ninguna de estas es una tarea: son bifurcaciones que cambian el trabajo de varia
 | Especificación de la red por dentro | `SALUD/Vistas/V19 community — Vistas.md` |
 | Especificación de la superficie pública | `SALUD/Vistas/V65 buscador — Vistas.md` |
 | Maquetas HTML del buscador | `SALUD/Vistas/HTML/V65-buscador/` |
-| Reglas de conformidad | `SALUD/Arquitectura/redesa/redesa-actor-{paciente,doctor,organizacion-medica,aseguradora}.md` |
+| Reglas de conformidad | `SALUD/Arquitectura/alovida/alovida-actor-{paciente,doctor,organizacion-medica,aseguradora}.md` |
 | Actores y navegación | `SALUD/Vistas/👥 Actores y navegación.md` |
 | Banco de componentes | `SALUD/Vistas/🎨 Banco de componentes.md` |
 | Módulo backend | `mantra-core-health-redesa-api/src/modules/community/README.md` |

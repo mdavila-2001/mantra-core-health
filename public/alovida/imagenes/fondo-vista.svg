@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1024" preserveAspectRatio="xMidYMid slice" role="presentation">
+  <!-- Fondo general: neutro cálido con apenas una insinuación de azul. La vida
+       la ponen las capas animadas de alovida.css; esto es sólo la base quieta. -->
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#F7F8F9"/>
+      <stop offset="42%"  stop-color="#EDF1F4"/>
+      <stop offset="100%" stop-color="#E1E8EE"/>
+    </linearGradient>
+    <radialGradient id="luz-sup" cx="20%" cy="6%" r="58%">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="frio-der" cx="92%" cy="24%" r="52%">
+      <stop offset="0%"   stop-color="#D6E2EC" stop-opacity=".70"/>
+      <stop offset="100%" stop-color="#D6E2EC" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="calido-inf" cx="16%" cy="92%" r="52%">
+      <stop offset="0%"   stop-color="#F4F1EA" stop-opacity=".80"/>
+      <stop offset="100%" stop-color="#F4F1EA" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="menta-media" cx="62%" cy="70%" r="40%">
+      <stop offset="0%"   stop-color="#E6EFEC" stop-opacity=".60"/>
+      <stop offset="100%" stop-color="#E6EFEC" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1440" height="1024" fill="url(#base)"/>
+  <rect width="1440" height="1024" fill="url(#frio-der)"/>
+  <rect width="1440" height="1024" fill="url(#calido-inf)"/>
+  <rect width="1440" height="1024" fill="url(#menta-media)"/>
+  <rect width="1440" height="1024" fill="url(#luz-sup)"/>
+</svg>

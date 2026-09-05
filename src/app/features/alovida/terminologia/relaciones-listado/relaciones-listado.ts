@@ -1,0 +1,14 @@
+/* V03-11·L · Relaciones
+   Portada de V03-terminology/security-admin/V03-11-relaciones-listado.html en la bóveda. El marcado lo
+   genera scripts/port-vistas-alovida.mjs; la lógica va acá, no en el generador. */
+
+import { Component } from '@angular/core';
+
+import { RouterLink } from '@angular/router';
+
+@Component({
+  selector: 'app-alovida-terminologia-relaciones-listado',
+  imports: [RouterLink],
+  templateUrl: './relaciones-listado.html',
+})
+export class TerminologiaRelacionesListado {}

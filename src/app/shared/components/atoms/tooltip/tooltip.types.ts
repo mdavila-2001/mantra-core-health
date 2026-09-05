@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Tooltip — sistema REDSAT v1.0.
+    Contratos del Tooltip — sistema ALOVIDA v1.0.
 
     El spec del diseñador no declara globo de ayuda; es extensión propia,
     armada solo con tokens (superficie invertida = petróleo 900, la misma que

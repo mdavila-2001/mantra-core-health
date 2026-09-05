@@ -17,9 +17,9 @@
  *
  * Mide **las dos hojas**, no una:
  *
- *   · `src/styles.css`        — REDSAT v1.0, el banco de componentes Angular.
- *   · `src/styles/redsat.css` — REDSAT v1.1, la hoja de la bóveda. Pinta el
- *     armazón de TODAS las pantallas y las 141 portadas de `features/redsat/`.
+ *   · `src/styles.css`        — ALOVIDA v1.0, el banco de componentes Angular.
+ *   · `src/styles/alovida.css` — ALOVIDA v1.1, la hoja de la bóveda. Pinta el
+ *     armazón de TODAS las pantallas y las 141 portadas de `features/alovida/`.
  *
  * La segunda no se medía, y ahí reapareció un defecto que la primera ya había
  * corregido: ámbar-700 sobre ámbar-50 da 4,46:1 y no llega a AA. En v1.0 lo
@@ -35,7 +35,7 @@ import { join } from 'node:path';
 import { read, REPO_ROOT } from './lib/scan.mjs';
 
 const CSS = read(join(REPO_ROOT, 'src/styles.css'));
-const CSS_REDSAT = read(join(REPO_ROOT, 'src/styles/redsat.css'));
+const CSS_ALOVIDA = read(join(REPO_ROOT, 'src/styles/alovida.css'));
 
 // --- lectura de los tokens --------------------------------------------------
 
@@ -180,15 +180,15 @@ const TEMAS = [
   { nombre: 'oscuro · manual', tokens: OSCURO_MANUAL },
 ];
 
-// --- la hoja de la bóveda (REDSAT v1.1) -------------------------------------
+// --- la hoja de la bóveda (ALOVIDA v1.1) -------------------------------------
 
 /* El bloque claro es el `:root` de la sección «1 · Tokens»; el oscuro es el
-   gemelo [data-theme="dark"] que sync-redsat.mjs genera. El oscuro se apila
+   gemelo [data-theme="dark"] que sync-alovida.mjs genera. El oscuro se apila
    sobre el claro porque redeclara los colores pero no las medidas. */
-const REDSAT_CLARO = bloque(':root {', '/* --- 2 · Base', CSS_REDSAT);
-const REDSAT_OSCURO = new Map([
-  ...REDSAT_CLARO,
-  ...bloque(':root[data-theme="dark"] {', '/* La imagen de fondo', CSS_REDSAT),
+const ALOVIDA_CLARO = bloque(':root {', '/* --- 2 · Base', CSS_ALOVIDA);
+const ALOVIDA_OSCURO = new Map([
+  ...ALOVIDA_CLARO,
+  ...bloque(':root[data-theme="dark"] {', '/* La imagen de fondo', CSS_ALOVIDA),
 ]);
 
 /**
@@ -225,7 +225,7 @@ const REDSAT_OSCURO = new Map([
 
    A diferencia de R1 y R2, ésta se espera que DESAPAREZCA: no es un límite
    aceptado del sistema, es una tarea abierta. */
-const PARES_REDSAT = [
+const PARES_ALOVIDA = [
   { tinta: '--tinta', fondo: '--sup-tarjeta', nivel: 4.5 },
   { tinta: '--tinta', fondo: '--sup-pagina', nivel: 4.5 },
   { tinta: '--tinta', fondo: '--sup-inset', nivel: 4.5 },
@@ -245,14 +245,14 @@ const PARES_REDSAT = [
   { tinta: '--neutro-tinta', fondo: '--neutro-bg', nivel: 4.5 },
 ];
 
-const TEMAS_REDSAT = [
-  { nombre: 'claro', tokens: REDSAT_CLARO },
-  { nombre: 'oscuro', tokens: REDSAT_OSCURO },
+const TEMAS_ALOVIDA = [
+  { nombre: 'claro', tokens: ALOVIDA_CLARO },
+  { nombre: 'oscuro', tokens: ALOVIDA_OSCURO },
 ];
 
 const HOJAS = [
-  { nombre: 'src/styles.css · REDSAT v1.0', temas: TEMAS, pares: PARES },
-  { nombre: 'src/styles/redsat.css · REDSAT v1.1 (bóveda)', temas: TEMAS_REDSAT, pares: PARES_REDSAT },
+  { nombre: 'src/styles.css · ALOVIDA v1.0', temas: TEMAS, pares: PARES },
+  { nombre: 'src/styles/alovida.css · ALOVIDA v1.1 (bóveda)', temas: TEMAS_ALOVIDA, pares: PARES_ALOVIDA },
 ];
 
 // --- comprobación -----------------------------------------------------------

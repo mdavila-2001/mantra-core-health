@@ -5,7 +5,7 @@
     ## Por qué acá y no en cada pantalla
 
     Estaban escritas **ocho veces**, dentro de ocho plantillas de
-    `features/redsat/buscar/`, y las ocho listas eran distintas: el feed
+    `features/alovida/buscar/`, y las ocho listas eran distintas: el feed
     ofrecía cuatro pestañas y los verticales otras seis, con rótulos que ni
     siquiera coincidían entre sí. Quien entraba por `/posts` no podía
     llegar a `/search/medications` sin pasar por `/search`, y quien entraba

@@ -48,7 +48,7 @@ export type { EstadoDePin, PinMapa, PuntoGeo } from './map/pin-mapa.types';
 
 /**
  * El rail de la superficie pública. Reemplaza las ocho copias de `app-tabs`
- * que vivían dentro de las plantillas de `features/redsat/buscar/`.
+ * que vivían dentro de las plantillas de `features/alovida/buscar/`.
  */
 export { PublicNavRail } from './public-nav-rail/public-nav-rail';
 export { PUBLIC_NAV_RAIL_SECTIONS } from './public-nav-rail/public-nav-rail.types';

@@ -376,7 +376,7 @@ describe('rutas del armazón', () => {
  * Lo que esta prueba fija.
  *
  * La superficie pública del buscador declara `buscar` en `app.routes.ts` y el
- * archivo **generado** `redsat.routes.ts` declara otro `buscar` con los
+ * archivo **generado** `alovida.routes.ts` declara otro `buscar` con los
  * segmentos derivados del nombre de archivo de cada maqueta. Los dos conviven
  * porque el router prueba el primero y **retrocede** al siguiente cuando ningún
  * hijo coincide.

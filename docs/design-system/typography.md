@@ -35,7 +35,7 @@ para la interfaz.
 se empaqueta— pero sí ocupan lugar en el lockfile y en la instalación. Anotado
 como brecha `LOW`: o se usan, o se quitan.
 
-## La escala REDSAT
+## La escala ALOVIDA
 
 | Rol | Token | Tamaño | Interlínea | Peso |
 |---|---|---:|---:|---|
@@ -100,7 +100,7 @@ el del contenedor. Es una omisión menor, anotada como `LOW`.
 cifras tabulares, una columna de dosis no alinea y comparar dos valores exige
 leerlos en vez de mirarlos.
 
-Los dos nombres son válidos: `.tabular-nums` es el del spec REDSAT y
+Los dos nombres son válidos: `.tabular-nums` es el del spec ALOVIDA y
 `.cifras-tabulares` el del vault. Misma regla, dos puertas.
 
 Se usa en `view-state-host` para el código de soporte y está disponible para

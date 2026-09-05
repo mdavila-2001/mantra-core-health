@@ -62,34 +62,34 @@ describe('Input', () => {
   describe('normalización al perder el foco', () => {
     it('el correo NO se pasa a minúsculas: la parte local distingue mayúsculas', async () => {
       await setInputs({ type: 'email' });
-      await escribir('Juan.Perez@Redsat.BO');
+      await escribir('Juan.Perez@Alovida.BO');
       await desenfocar();
 
-      expect(fixture.componentInstance.value()).toBe('Juan.Perez@Redsat.BO');
+      expect(fixture.componentInstance.value()).toBe('Juan.Perez@Alovida.BO');
     });
 
     it('al correo sí le quita espacios, que nunca son válidos', async () => {
       await setInputs({ type: 'email' });
-      await escribir(' juan @redsat.bo ');
+      await escribir(' juan @alovida.bo ');
       await desenfocar();
 
-      expect(fixture.componentInstance.value()).toBe('juan@redsat.bo');
+      expect(fixture.componentInstance.value()).toBe('juan@alovida.bo');
     });
 
     it('a una URL sin esquema le antepone https', async () => {
       await setInputs({ type: 'url' });
-      await escribir('redsat.salud.bo');
+      await escribir('alovida.salud.bo');
       await desenfocar();
 
-      expect(fixture.componentInstance.value()).toBe('https://redsat.salud.bo');
+      expect(fixture.componentInstance.value()).toBe('https://alovida.salud.bo');
     });
 
     it('respeta un esquema ya escrito', async () => {
       await setInputs({ type: 'url' });
-      await escribir('http://redsat.salud.bo');
+      await escribir('http://alovida.salud.bo');
       await desenfocar();
 
-      expect(fixture.componentInstance.value()).toBe('http://redsat.salud.bo');
+      expect(fixture.componentInstance.value()).toBe('http://alovida.salud.bo');
     });
   });
 

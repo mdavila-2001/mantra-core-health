@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos de los Tabs — sistema REDSAT v1.0.
+    Contratos de los Tabs — sistema ALOVIDA v1.0.
 
     Extensión propia: el spec del diseñador no declara pestañas. El indicador
     es la línea de marca bajo la pestaña activa. Pendiente de validación.

@@ -13,7 +13,7 @@ graph TB
   end
 
   FE["<b>Frontend Mantra Core Health</b><br/>Angular 21 · SSR<br/>este repositorio"]
-  API["<b>API REDESA</b><br/>NestJS<br/>mantra-core-health-redesa-api"]
+  API["<b>API ALOVIDA</b><br/>NestJS<br/>mantra-core-health-redesa-api"]
   MAIL[Correo electrónico<br/>lo envía la API]
 
   PAC --> FE
@@ -42,7 +42,7 @@ los interpreta hoy**: los muestra en el panel y arma el menú con ítems fijos. 
 
 ## Sistemas externos
 
-### API REDESA — la única integración
+### API ALOVIDA — la única integración
 
 Es el **único** sistema con el que el frontend habla. 20 operaciones sobre seis
 módulos:
@@ -99,7 +99,7 @@ graph LR
   end
   subgraph SRV["Servidor · confiable"]
     SSR[Servidor SSR Express]
-    APIB[API REDESA]
+    APIB[API ALOVIDA]
     DB[(Base de datos)]
   end
 

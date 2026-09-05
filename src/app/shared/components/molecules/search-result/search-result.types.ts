@@ -2,7 +2,7 @@
     La forma de un resultado del buscador público.
 
     Sale de la maqueta `SALUD/Vistas/HTML/V65-buscador/publico/` y de
-    `_assets/redsat.css` §25: cada campo de acá corresponde a una parte que la
+    `_assets/alovida.css` §25: cada campo de acá corresponde a una parte que la
     maqueta dibuja, y no hay ninguno que ella no muestre.
 
     ## Por qué el resultado no conoce al dominio
@@ -22,7 +22,7 @@
  * Los cinco tonos de la insignia **de la superficie pública**.
  *
  * No son los del `app-badge` del banco (`primary`, `success`, `warning`…): son
- * los que `redsat.css` declara para `.app-badge[data-tono]`, y las 14 maquetas
+ * los que `alovida.css` declara para `.app-badge[data-tono]`, y las 14 maquetas
  * de V65 usan sólo estos cinco. Mezclar las dos escalas pondría dos insignias
  * de distinto tamaño y color en la misma tarjeta.
  */
@@ -54,7 +54,7 @@ export interface SearchResultMeta {
 /**
  * Un sello del resultado: «Matrícula verificada», «Espacio pagado»…
  *
- * `tone` no es un color suelto: es uno de los cinco que `redsat.css` declara.
+ * `tone` no es un color suelto: es uno de los cinco que `alovida.css` declara.
  */
 export interface SearchResultSeal {
   readonly label: string;
@@ -82,7 +82,7 @@ export interface SearchResultItem {
    * A dónde lleva el título.
    *
    * Va como `routerLink`, así que es una ruta de la aplicación y no una URL
-   * externa. La superficie pública vive fuera de `/app` — ver `redsat.routes`.
+   * externa. La superficie pública vive fuera de `/app` — ver `alovida.routes`.
    */
   readonly link: string;
   /** Iniciales o símbolo del cuadrado, cuando no hay imagen. */

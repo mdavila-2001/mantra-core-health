@@ -6,7 +6,7 @@
 
 ## Contexto
 
-El frontend del ecosistema REDESA necesita sostener 81 secciones con estados de
+El frontend del ecosistema ALOVIDA necesita sostener 81 secciones con estados de
 interfaz contractuales (el M34), renderizado en servidor y un sistema de diseño
 propio.
 

@@ -16,7 +16,7 @@ import type { SearchResultItem } from '../search-result/search-result.types';
  * ## Por qué es un componente hermano y no una variante de `search-result`
  *
  * Porque `search-result` **no tiene CSS propio a propósito**: su diseño vive en
- * `src/styles/redsat.css` §25, que es una copia del CSS de la bóveda y se
+ * `src/styles/alovida.css` §25, que es una copia del CSS de la bóveda y se
  * vuelve a copiar entera cuando diseño corrige algo. Una variante de grilla
  * escrita ahí desaparecería en silencio en la primera recopia — y una que
  * viviera en el componente rompería la regla que ese archivo declara.

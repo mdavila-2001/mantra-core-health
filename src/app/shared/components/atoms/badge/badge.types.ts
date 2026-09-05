@@ -1,6 +1,6 @@
 /* ============================================================================
-    Contratos del Badge — sistema REDSAT v1.0.
-    Fuente: bloque `Badges / status` de REDSAT_Sistema_de_Diseno.html (líneas
+    Contratos del Badge — sistema ALOVIDA v1.0.
+    Fuente: bloque `Badges / status` de ALOVIDA_Sistema_de_Diseno.html (líneas
     359–364). El spec declara `success · warning · error · info`; `primary` y
     `secondary` son extensión propia armada con rampas de marca siguiendo el
     MISMO patrón que los `--st-*` — pendientes de validación del diseñador

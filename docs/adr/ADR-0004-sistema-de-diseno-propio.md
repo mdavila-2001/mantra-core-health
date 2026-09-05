@@ -6,7 +6,7 @@
 
 ## Contexto
 
-El proyecto tiene una identidad visual definida —**REDSAT v1.0**— con paleta,
+El proyecto tiene una identidad visual definida —**ALOVIDA v1.0**— con paleta,
 escala tipográfica, espaciado y reglas de uso propias, documentadas en el vault
 del proyecto.
 
@@ -24,7 +24,7 @@ del proyecto.
 
 | Opción | Descartada porque |
 |---|---|
-| Angular Material | Su sistema de temas pelea con REDSAT. Peso considerable |
+| Angular Material | Su sistema de temas pelea con ALOVIDA. Peso considerable |
 | PrimeNG | Ídem, y más superficie externa |
 | Tailwind | Resuelve utilidades, no componentes accesibles |
 | Solo Angular CDK | Habría dado la trampa de foco y el overlay… ver §Riesgos |

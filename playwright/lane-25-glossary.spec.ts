@@ -10,7 +10,7 @@ import { entrar, estable } from './support/sesion';
  * `ROLES_QUE_EJERCEN_O_ADMINISTRAN` (`PRACTITIONER`, `CLINICIAN`…, fuera del
  * paciente por F-03). Este entorno no tiene una cuenta `PRACTITIONER`
  * sembrada (mismo hallazgo que TAREA-08: `doctora()` responde «Las
- * credenciales no son válidas», `tools/redesa/` no existe), así que esta
+ * credenciales no son válidas», `tools/alovida/` no existe), así que esta
  * suite entra con `administrador()` — la cuenta de arranque
  * (`BOOTSTRAP_ADMIN_*`), con `SUPERADMIN` entre sus roles, que es el
  * **comodín** que pasa cualquier guard de sección (`WILDCARD_ROLE`,

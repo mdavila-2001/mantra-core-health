@@ -5,7 +5,7 @@
     <title>AloVida</title>
     <base href="/">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="redsat_logo.svg">
+    <link rel="icon" type="image/x-icon" href="alovida_logo.svg">
     <script>
       /* Anti-parpadeo: bajo SSR el HTML llega sin data-theme, así que una
          preferencia manual guardada se vería con el tema contrario hasta que
@@ -25,11 +25,11 @@
         if (preferencia === 'light' || preferencia === 'dark') {
           raiz.dataset.theme = preferencia;
         }
-        /* Espejo para la hoja de REDSAT (src/styles/redsat.css), que resuelve el
+        /* Espejo para la hoja de ALOVIDA (src/styles/alovida.css), que resuelve el
            tema oscuro SOLO contra un atributo explícito. Acá se resuelve
            'system' contra el sistema operativo, así que este atributo lleva
            siempre un valor —claro u oscuro— y nunca falta. Espejo de
-           REDSAT_THEME_ATTRIBUTE en core/tokens/theme.service.ts. */
+           ALOVIDA_THEME_ATTRIBUTE en core/tokens/theme.service.ts. */
         var oscuro =
           preferencia === 'dark' ||
           (preferencia !== 'light' &&

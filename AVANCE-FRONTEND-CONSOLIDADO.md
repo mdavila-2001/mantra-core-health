@@ -253,7 +253,7 @@ agranda el conflicto. El criterio propuesto:
    PnP**. El repo de la API sí lo fija, con `nodeLinker: node-modules`: hoy los dos repositorios
    instalan distinto. Conviene que sea una decisión y no un accidente.
 5. **Las fuentes normativas de diseño citadas en el código no están en el repositorio**
-   (`REDSAT_Sistema_de_Diseno.html`, `identidad-visual.md`). Son la fuente de los valores de color,
+   (`ALOVIDA_Sistema_de_Diseno.html`, `identidad-visual.md`). Son la fuente de los valores de color,
    las variantes y las excepciones WCAG E1–E4. Sin ellas no se altera ningún token.
 6. **El registro no inicia sesión solo** (lleva al login) y **los avisos de error quedan fijos** hasta
    cerrarse: ambas documentadas, ambas a validar con el diseñador.

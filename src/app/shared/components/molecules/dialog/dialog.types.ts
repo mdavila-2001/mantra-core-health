@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Dialog — sistema REDSAT v1.0.
+    Contratos del Dialog — sistema ALOVIDA v1.0.
 
     Se apoya en el `<dialog>` **nativo**: el fondo, la inertización de lo que
     queda atrás y la trampa de foco los da el navegador, y ninguna

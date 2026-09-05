@@ -177,11 +177,11 @@ export class DesignSystemSample {
 
   /* Señales para pruebas de controles de formulario */
   protected readonly textVal = signal('Juan Pérez');
-  protected readonly emailVal = signal('usuario@redsat.salud.bo');
+  protected readonly emailVal = signal('usuario@alovida.salud.bo');
   protected readonly numVal = signal<number | null>(120.5);
   protected readonly passVal = signal('SecretPass123!');
   protected readonly searchVal = signal('Cardiología');
-  protected readonly urlVal = signal('https://redsat.salud.bo');
+  protected readonly urlVal = signal('https://alovida.salud.bo');
 
   protected readonly checkboxVal = signal(true);
   protected readonly radioVal = signal('paciente');
@@ -288,7 +288,7 @@ export class DesignSystemSample {
   protected rellenarDemoForm(): void {
     this.demoForm.setValue({
       nombre: 'Ana Paz',
-      correo: 'ana.paz@redsat.salud.bo',
+      correo: 'ana.paz@alovida.salud.bo',
       acepta: true,
       tipo: 'consulta',
     });

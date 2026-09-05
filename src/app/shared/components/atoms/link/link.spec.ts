@@ -81,7 +81,7 @@ describe('Link', () => {
     });
 
     it('mailto y tel no son destinos externos: no abren pestaña', async () => {
-      for (const href of ['mailto:mesa@redsat.salud.bo', 'tel:+59122000000']) {
+      for (const href of ['mailto:mesa@alovida.salud.bo', 'tel:+59122000000']) {
         await conHref(href);
         expect(ancla().hasAttribute('target')).toBe(false);
       }

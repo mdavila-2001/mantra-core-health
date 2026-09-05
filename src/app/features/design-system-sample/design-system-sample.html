@@ -4,7 +4,7 @@
             <div>
                 <span class="eyebrow">Mantra Core Technologies</span>
                 <h1>Vitrina de Diseño</h1>
-                <p>Sistema de Diseño REDSAT v1.0 — paleta, estados y tipografía.</p>
+                <p>Sistema de Diseño ALOVIDA v1.0 — paleta, estados y tipografía.</p>
             </div>
             <div class="theme-switcher" role="group" aria-label="Tema de la interfaz">
                 @for (option of themeOptions; track option.mode) {
@@ -27,7 +27,7 @@
 
             <h3>Botón — variantes</h3>
             <p class="sandbox-note">
-                <code>outline</code> es extensión propia sobre el spec REDSAT, pendiente de
+                <code>outline</code> es extensión propia sobre el spec ALOVIDA, pendiente de
                 validación del diseñador.
             </p>
             <div class="sandbox-grid">
@@ -128,7 +128,7 @@
         <section class="showroom-section">
             <h2>02 · Átomos y Moléculas de Entrada (Forms)</h2>
             <p class="sandbox-note">
-                Catálogo completo de controles de entrada standalone con estado OnPush, tokens REDSAT y 12 variantes con sus estados (idle, focused, error, disabled).
+                Catálogo completo de controles de entrada standalone con estado OnPush, tokens ALOVIDA y 12 variantes con sus estados (idle, focused, error, disabled).
             </p>
 
             <!-- 1. Text Input -->
@@ -152,7 +152,7 @@
             <h3>2. Input de Correo (`email` con sanitización)</h3>
             <div class="inputs-demo-grid">
                 <app-form-field label="Correo institucional" hint="Limpia espacios al perder el foco">
-                    <app-input type="email" [(value)]="emailVal" placeholder="correo@redsat.salud.bo"></app-input>
+                    <app-input type="email" [(value)]="emailVal" placeholder="correo@alovida.salud.bo"></app-input>
                 </app-form-field>
                 <app-form-field label="Correo institucional" errorMessage="Formato de correo no válido">
                     <app-input type="email" [(value)]="emailVal"></app-input>
@@ -726,7 +726,7 @@
             <div class="sandbox-grid">
                 <a app-link href="https://www.who.int/es">Guía OMS</a>
                 <a app-link href="https://www.paho.org/es" variant="subtle">OPS Bolivia</a>
-                <a app-link href="mailto:mesa@redsat.salud.bo" variant="subtle">Escribir a mesa de ayuda</a>
+                <a app-link href="mailto:mesa@alovida.salud.bo" variant="subtle">Escribir a mesa de ayuda</a>
             </div>
             <p class="sandbox-note">
                 El primero sale con <code>target="_blank"</code> y
@@ -1240,9 +1240,9 @@
                 Con <code>prefers-reduced-motion: reduce</code> no se engancha nada: ni el
                 desplazamiento de los focos ni la onda. En pantalla táctil la gota tampoco se
                 dispara —el dedo tapa justo el punto donde nacería—. Los dos comportamientos viven
-                en <code>redsat-runtime.service.ts</code>
+                en <code>alovida-runtime.service.ts</code>
                 (<code>fondoReactivo()</code> y <code>gotaDeAgua()</code>) y su presentación en
-                <code>styles/redsat.css</code>; acá no hay componente que mostrar, se ve mirando
+                <code>styles/alovida.css</code>; acá no hay componente que mostrar, se ve mirando
                 <strong>la página entera</strong>.
             </p>
         </section>

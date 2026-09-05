@@ -1,8 +1,8 @@
 /* ============================================================================
-    Contratos del Spinner — sistema REDSAT v1.0.
+    Contratos del Spinner — sistema ALOVIDA v1.0.
 
     El spec del diseñador no declara un indicador de carga suelto: lo define
-    DENTRO del botón (`REDSAT_Sistema_de_Diseno.html`, bloque Buttons). Este
+    DENTRO del botón (`ALOVIDA_Sistema_de_Diseno.html`, bloque Buttons). Este
     átomo extrae esa geometría para poder usarla en tablas y páginas.
     Extensión propia — pendiente de validación del diseñador.
     ========================================================================== */

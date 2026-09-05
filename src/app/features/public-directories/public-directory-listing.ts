@@ -12,7 +12,7 @@ import type { ViewState } from '@core/view-state/view-state.types';
 import type { GrupoDeDirectorio } from '@shared/components/organisms/directory-page/directory-page.types';
 import { SEARCH_PARAM, type FilterDef } from '@shared/components/organisms/filter-bar/filter-bar';
 
-import { aTarjeta } from '../redsat/buscar/public-result.mapper';
+import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 
 /** Tope por página que acepta el contrato público (`limit` se recorta a 50). */
 const POR_PAGINA = 50;
@@ -48,7 +48,7 @@ const MAXIMO_DE_CHIPS = 10;
  * El plan los daba por bloqueados —«casi seguro necesitan endpoints públicos
  * que hoy no están»— y no lo estaban: `GET /public/search/organizations` y
  * `GET /public/search/pharmacies` existen desde el contrato público del
- * 17/08/2026 y ya los consumía la búsqueda sin sesión de REDSAT. Lo que
+ * 17/08/2026 y ya los consumía la búsqueda sin sesión de ALOVIDA. Lo que
  * faltaba era la **sección dentro del armazón**, que es lo que un paciente con
  * sesión puede recorrer desde su menú.
  *

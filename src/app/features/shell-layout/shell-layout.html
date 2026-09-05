@@ -1,7 +1,7 @@
-<!-- El armazón de todo lo autenticado, con el marco REDSAT de la bóveda.
+<!-- El armazón de todo lo autenticado, con el marco ALOVIDA de la bóveda.
 
      Antes esto delegaba en el organismo `app-shell`, que tenía su propia
-     geometría: header a lo ancho arriba, y debajo nav y contenido. REDSAT
+     geometría: header a lo ancho arriba, y debajo nav y contenido. ALOVIDA
      compone al revés —el nav es una columna de altura completa y el header
      vive DENTRO de la columna de contenido— y esa diferencia no se arregla con
      CSS: hay que cambiar el orden del marcado. Por eso el marco se escribe
@@ -50,7 +50,7 @@
          pantalla en la que uno esté. Un logotipo que lleva al inicio es además
          lo que cualquiera prueba primero. -->
     <a class="app-side-nav__marca" routerLink="/dashboard" aria-label="AloVida — ir al panel">
-      <img src="/redsat/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
+      <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
       <span>AloVida</span>
     </a>
 
@@ -164,7 +164,7 @@
 
            Carril 19: se retira el control y su paso de tutorial. El buscador
            global es una funcionalidad que no existe todavía —vive maquetada en
-           `features/redsat/`, que es donde vive el diseño— y dejar su caja en
+           `features/alovida/`, que es donde vive el diseño— y dejar su caja en
            el producto es exactamente la «pantalla que aparenta funcionar» que
            la corrección #7 prohíbe. Cuando el buscador se construya, vuelve
            acá con su manejador y con su paso. -->

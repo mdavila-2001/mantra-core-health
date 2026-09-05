@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos de la Pagination — sistema REDSAT v1.0.
+    Contratos de la Pagination — sistema ALOVIDA v1.0.
 
     Extensión propia: el spec del diseñador no declara paginador. Se arma con
     el AppButton y el app-select del sistema, sin color propio.

@@ -48,7 +48,7 @@ inventan capacidades inexistentes.
 | `security-review` | **Sí** | Fase 6: revisión de la carga de archivos (`file-input`) y del manejo de `localStorage`. |
 | `run` | **Sí** | Fase 6: levantar la app y verificar visualmente la vitrina de diseño. |
 | `init` | **Sí** | Fase 7: generar/actualizar `CLAUDE.md` con las reglas de arquitectura. |
-| `figma` | **Condicional** | Solo si existe el archivo Figma de REDSAT. Hoy la fuente normativa citada no está en el repo (ver *Información faltante*). |
+| `figma` | **Condicional** | Solo si existe el archivo Figma de ALOVIDA. Hoy la fuente normativa citada no está en el repo (ver *Información faltante*). |
 | `graphify` | **Opcional** | Grafo de dependencias. Con 96 archivos el mapeo directo fue suficiente; se reserva para cuando crezcan las features. |
 | `database-design`, `dataviz`, `artifact-*`, `claude-api`, `swiftui-*`, `swift-concurrency-pro`, `keybindings-help`, `update-config`, `schedule`, `loop`, `fewer-permission-prompts`, `statusline-setup` | **No** | Fuera de dominio para esta tarea. |
 
@@ -419,7 +419,7 @@ grep -rn "\.\./\.\./\.\./" src/app                 # imports profundos restantes
 
 No obtenible del repositorio; se requiere del equipo:
 
-1. **`REDSAT_Sistema_de_Diseno.html`** — citado como "raíz del repo" en
+1. **`ALOVIDA_Sistema_de_Diseno.html`** — citado como "raíz del repo" en
    `styles.css:4` y `button.types.ts:3`. **No existe en el repositorio.** Es la
    fuente de los valores de color y de las variantes.
 2. **`Mantra Core Health Vault/SALUD/Arquitectura/identidad-visual.md`** — fuente

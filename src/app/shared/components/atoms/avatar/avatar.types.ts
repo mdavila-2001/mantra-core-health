@@ -1,6 +1,6 @@
 /* ============================================================================
-    Contratos del Avatar — sistema REDSAT v1.0.
-    Fuente: bloque `Avatars` de REDSAT_Sistema_de_Diseno.html (líneas 409–422)
+    Contratos del Avatar — sistema ALOVIDA v1.0.
+    Fuente: bloque `Avatars` de ALOVIDA_Sistema_de_Diseno.html (líneas 409–422)
     y su media query móvil (704–705).
     ========================================================================== */
 

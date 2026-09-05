@@ -106,7 +106,7 @@ escritorio, *«que es el modo en el que la aplicación es usable de todas formas
 El propio `styles.css` cierra con la referencia:
 
 ```css
-/* breakpoints REDSAT (referencia; se usan al construir pantallas):
+/* breakpoints ALOVIDA (referencia; se usan al construir pantallas):
    móvil < 780 px · tablet 780–1024 px · escritorio > 1024 px — mobile-first */
 ```
 

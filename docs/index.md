@@ -1,6 +1,6 @@
 # Mantra Core Health — documentación del frontend
 
-Aplicación web del **ecosistema REDESA**. Angular 21 con renderizado en servidor,
+Aplicación web del **ecosistema ALOVIDA**. Angular 21 con renderizado en servidor,
 sistema de diseño propio y nueve estados de interfaz contractuales.
 
 - **Versión documentada:** commit `ba2efd9` + trabajo concurrente del 2026-08-01
@@ -102,7 +102,7 @@ acuse**. → [reglas de negocio](business/business-rules.md#reglas-de-privacidad
 | [Catálogo de componentes](components/catalog.md) | 48 en tres niveles |
 | [Reglas de composición](components/composition-rules.md) · [Entradas y salidas](components/props-and-events.md) | |
 | [Formularios](components/forms.md) · [Tablas](components/tables.md) · [Diálogos](components/modals-and-overlays.md) · [Avisos](components/notifications.md) | |
-| [Sistema de diseño](design-system/principles.md) | REDSAT v1.0 |
+| [Sistema de diseño](design-system/principles.md) | ALOVIDA v1.0 |
 | [Tokens](design-system/tokens.md) · [Colores](design-system/colors.md) · [Tipografía](design-system/typography.md) · [Temas](design-system/themes.md) | |
 
 ## Datos e integraciones
