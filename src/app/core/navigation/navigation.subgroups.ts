@@ -96,7 +96,16 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // Buscar a quién o a dónde ir. Ya venía agrupado a mano en el armazón: era
     // el primer bloque del producto, y este archivo lo generaliza en vez de
     // dejarlo como caso especial.
-    paths: ['directory', 'laboratory-directory', 'clinics-directory', 'pharmacies-directory'],
+    //
+    // `nearby-places` (FT-19) entra acá por lo mismo: es "a dónde ir", sólo
+    // que la lista sale de tu receta y de tu ubicación en vez de un catálogo.
+    paths: [
+      'directory',
+      'laboratory-directory',
+      'clinics-directory',
+      'pharmacies-directory',
+      'nearby-places',
+    ],
   },
 
   /* -- Atención -----------------------------------------------------------
