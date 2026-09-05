@@ -65,7 +65,7 @@ export interface AccessArea {
    * Las secciones que caen acá **sí o sí**, en el orden en que se muestran.
    *
    * Gana sobre {@link catchAllGroups} de cualquier zona: «Chats» es del grupo
-   * `General` y su lugar es «Mi gente», no el cajón de lo general. Que ninguna
+   * `General` y su lugar es «Pacientes y equipo», no el cajón de lo general. Que ninguna
    * ruta esté declarada en dos zonas lo comprueba la prueba del registro.
    */
   readonly paths: readonly string[];
@@ -101,7 +101,7 @@ export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = ['dashboard'];
 export const ACCESS_AREAS: readonly AccessArea[] = [
   {
     id: 'consulta',
-    label: 'Mi consulta',
+    label: 'Consultas',
     tagline: 'Tu agenda, tus evoluciones, tus estudios y los formularios de cada atención.',
     icon: 'stethoscope',
     tone: 'info',
@@ -119,18 +119,18 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
   },
   {
     id: 'gente',
-    label: 'Mi gente',
+    label: 'Pacientes y equipo',
     tagline: 'A quién atendés y con quién trabajás: pacientes, equipo y conversaciones.',
     icon: 'people',
     tone: 'secondary',
     paths: ['messaging', 'groups', 'administration/patients', 'administration/users'],
-    // Sin cajón propio a propósito: «Mi gente» reúne secciones de tres grupos
+    // Sin cajón propio a propósito: «Pacientes y equipo» reúne secciones de tres grupos
     // distintos, así que no puede ser el destino por omisión de ninguno.
     catchAllGroups: [],
   },
   {
     id: 'red',
-    label: 'La red',
+    label: 'Directorios',
     tagline: 'A dónde derivar y a quién: clínicas, laboratorios y farmacias de la plataforma.',
     icon: 'globe',
     tone: 'primary',
@@ -139,7 +139,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
   },
   {
     id: 'organizacion',
-    label: 'Mi organización',
+    label: 'Administración',
     tagline: 'Lo que sostiene tu práctica: sedes, cobros, catálogos y permisos.',
     icon: 'building',
     tone: 'success',
