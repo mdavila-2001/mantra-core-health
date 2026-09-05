@@ -153,6 +153,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
+  // FT-26 · activos y pasivos, en auto-servicio del doctor.
+  'assets-liabilities': () =>
+    import('./features/assets-liabilities/assets-liabilities').then(
+      (m) => m.AssetsLiabilities,
+    ),
   'my-organizations': () =>
     import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
