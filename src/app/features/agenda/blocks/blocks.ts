@@ -17,6 +17,7 @@ import type {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
@@ -75,7 +76,7 @@ const MESES_ADELANTE = 12;
  */
 @Component({
   selector: 'app-blocks',
-  imports: [Alert, AppButton, Badge, BlockForm, PageHeader, Tooltip, ViewStateHost],
+  imports: [Alert, AppButton, BackLink, Badge, BlockForm, PageHeader, Tooltip, ViewStateHost],
   templateUrl: './blocks.html',
   styleUrl: './blocks.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

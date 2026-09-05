@@ -9,6 +9,7 @@
   <button app-button page-actions variant="primary" type="button" (clicked)="abrirNuevo()">
     Bloquear días u horarios
   </button>
+  <app-back-link page-actions [fallback]="rutaAgenda" label="Volver a mi agenda" />
 </app-page-header>
 
 <!-- El aviso de alcance (punto 8 de TAREA-10, heredado acá porque el pedido

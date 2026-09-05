@@ -2,7 +2,9 @@
   title="Editar tus datos"
   subtitle="Lo que nos contaste al registrarte. Corregilo cuando quieras."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaDeMiPerfil" label="Volver a tu perfil" />
+</app-page-header>
 
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
   <form class="datos" (submit)="$event.preventDefault()">
