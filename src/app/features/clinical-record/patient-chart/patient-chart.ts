@@ -54,6 +54,7 @@ import {
   recetaDesdeResumen,
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
+import { AttachmentUploader } from '../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
@@ -196,6 +197,7 @@ interface Expediente {
     AdmissionBlock,
     Alert,
     AppButton,
+    AttachmentUploader,
     Badge,
     Card,
     ConceptSelect,
@@ -598,6 +600,27 @@ export class PatientChart {
 
   protected elegirDestinoEstado(conditionId: string, destino: string | null): void {
     this.destinosDeEstado.update((actual) => ({ ...actual, [conditionId]: destino }));
+  }
+
+  /* -- ALV-033: adjuntar un archivo a un diagnóstico ya registrado --------
+     El alta ofrece adjuntar apenas se registra (`app-diagnosis-block`), pero
+     eso sólo alcanza al diagnóstico recién creado. Esta fila cubre el resto
+     de la historia: cualquier diagnóstico ya listado puede recibir un
+     adjunto, no sólo el último. */
+
+  /** La condición a la que se le está ofreciendo adjuntar un archivo, o `null`. */
+  protected readonly adjuntandoArchivoA = signal<string | null>(null);
+
+  /** El vínculo pasa por `clinical`, no por el genérico de `common` — mismo criterio que `diagnosis-block`. */
+  protected readonly enlazarAdjuntoAlDiagnostico = (fileId: string, conditionId: string) =>
+    this.clinical.attachFileToCondition(conditionId, fileId);
+
+  protected alternarAdjuntos(conditionId: string): void {
+    this.adjuntandoArchivoA.update((actual) => (actual === conditionId ? null : conditionId));
+  }
+
+  protected cerrarAdjuntos(): void {
+    this.adjuntandoArchivoA.set(null);
   }
 
   /**

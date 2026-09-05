@@ -344,5 +344,23 @@
         Aplicar
       </button>
     }
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      data-testid="expediente-adjuntar-archivo"
+      (clicked)="alternarAdjuntos(fila.id)"
+    >
+      {{ adjuntandoArchivoA() === fila.id ? 'Cerrar adjuntos' : 'Adjuntar archivo' }}
+    </button>
   </div>
+  @if (adjuntandoArchivoA() === fila.id) {
+    <app-attachment-uploader
+      ownerType="CONDITION"
+      [ownerId]="fila.id"
+      [linkVia]="enlazarAdjuntoAlDiagnostico"
+      (attached)="cerrarAdjuntos()"
+    />
+  }
 </ng-template>

@@ -183,6 +183,26 @@
               @if (tratamiento.nota) {
                 <p class="procedimientos__nota">{{ tratamiento.nota }}</p>
               }
+              <div class="procedimientos__acciones">
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="odontologia-adjuntar-archivo"
+                  (clicked)="alternarAdjuntos(tratamiento.id)"
+                >
+                  {{ adjuntandoArchivoA() === tratamiento.id ? 'Cerrar adjuntos' : 'Adjuntar archivo' }}
+                </button>
+              </div>
+              @if (adjuntandoArchivoA() === tratamiento.id) {
+                <app-attachment-uploader
+                  ownerType="PROCEDURE"
+                  [ownerId]="tratamiento.id"
+                  [linkVia]="enlazarAdjuntoAlTratamiento"
+                  (attached)="cerrarAdjuntos()"
+                />
+              }
             </li>
           }
         </ol>
