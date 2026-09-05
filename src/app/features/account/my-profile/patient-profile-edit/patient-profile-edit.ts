@@ -19,6 +19,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
@@ -116,6 +117,7 @@ function mismoDia(una: Date, otra: Date): boolean {
   imports: [
     ReferenceCombobox,
     AppButton,
+    BackLink,
     Card,
     DatePicker,
     FormActions,
@@ -143,6 +145,8 @@ export class PatientProfileEdit {
   private readonly router = inject(Router);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+  /** El mismo destino que al cancelar: se vuelve al perfil del que se vino. */
+  protected readonly rutaDeMiPerfil = MI_PERFIL;
 
   protected readonly perfil = signal<ViewState<OwnPatientProfile>>(loading());
 

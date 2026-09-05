@@ -3,7 +3,13 @@
     [title]="estado.status === 'ready' ? estado.data.title : 'Cuestionario'"
     subtitle="Tus respuestas son privadas: solo las ve el profesional que te atendió."
     [breadcrumbs]="breadcrumbs()"
-  />
+  >
+    <app-back-link
+      page-actions
+      [fallback]="rutaDeMisCuestionarios"
+      label="Volver a mis cuestionarios"
+    />
+  </app-page-header>
 }
 
 <app-view-state-host [state]="vista()" (retry)="cargar()">

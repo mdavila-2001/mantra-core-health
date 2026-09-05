@@ -2,7 +2,9 @@
   title="Artículos médicos"
   subtitle="Publicá, revisá lo que ya publicaste y respondé los comentarios."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions fallback="/my-account" label="Volver a tu perfil" />
+</app-page-header>
 
 <div class="articulos">
   @if (sinVitrinaTodavia()) {

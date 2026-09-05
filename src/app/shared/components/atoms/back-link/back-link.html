@@ -1,0 +1,10 @@
+<a
+  app-button
+  variant="secondary"
+  data-testid="volver"
+  [href]="href()"
+  (click)="handleClick($event)"
+>
+  <app-nav-icon name="arrow-left" />
+  {{ label() }}
+</a>

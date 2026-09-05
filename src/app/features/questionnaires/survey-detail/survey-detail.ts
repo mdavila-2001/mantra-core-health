@@ -14,6 +14,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../shared/components/atoms/checkbox/checkbox';
@@ -29,6 +30,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { ENCUESTAS_ROUTE } from '../questionnaires.routes';
 
 /** Los tipos de respuesta, en el orden en que se ofrecen. */
 const TIPOS: readonly SelectOption<string>[] = [
@@ -115,6 +117,7 @@ const ETIQUETA_TIPO: Readonly<Record<AnswerType, string>> = {
     Alert,
     AppButton,
     AppInput,
+    BackLink,
     Badge,
     Card,
     Checkbox,
@@ -139,6 +142,8 @@ export class SurveyDetailScreen {
   private readonly navigation = inject(NavigationService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+  /** A dónde vuelve quien entró a una encuesta: al listado del que salió. */
+  protected readonly rutaDeLasEncuestas = ENCUESTAS_ROUTE;
   protected readonly tipos = TIPOS;
   protected readonly etiquetaTipo = ETIQUETA_TIPO;
 

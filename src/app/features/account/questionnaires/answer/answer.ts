@@ -11,6 +11,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
@@ -57,6 +58,7 @@ type Valor = string | number | boolean | readonly string[] | null;
   imports: [
     Alert,
     AppButton,
+    BackLink,
     Card,
     Checkbox,
     FormField,
@@ -79,6 +81,8 @@ export class QuestionnaireAnswer {
   private readonly navigation = inject(NavigationService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+  /** A dónde vuelve quien entró a responder: al listado del que salió. */
+  protected readonly rutaDeMisCuestionarios = MIS_CUESTIONARIOS_ROUTE;
 
   private readonly invitationId = this.route.snapshot.paramMap.get('invitationId') ?? '';
 
