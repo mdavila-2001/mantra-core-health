@@ -1,3 +1,4 @@
+import { InjectionToken } from '@angular/core';
 import type { jsPDF } from 'jspdf';
 
 import type { Installment, InterestCalculationMethod } from '../../../core/data-access/quotations/quotations.types';
@@ -133,3 +134,17 @@ function nombreDeArchivo(nombrePaciente: string): string {
     .replace(/[^a-z0-9]/g, '');
   return `cotizacion-${apellido === '' ? 'paciente' : apellido}-${dia}.pdf`;
 }
+
+/**
+ * La descarga como dependencia inyectable.
+ *
+ * El formulario no llama a `downloadQuotationPdf` directo sino a lo que provea
+ * este token, que por defecto es esa función. Es una costura para las pruebas:
+ * el sistema de pruebas de Angular no admite `vi.mock` de un import relativo,
+ * y probar que el formulario exporta los datos correctos no debería abrir un
+ * PDF real ni depender del orden de carga de `jspdf`.
+ */
+export const QUOTATION_PDF_DOWNLOADER = new InjectionToken<(data: QuotationPdfData) => void>(
+  'QUOTATION_PDF_DOWNLOADER',
+  { providedIn: 'root', factory: () => downloadQuotationPdf },
+);

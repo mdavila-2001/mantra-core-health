@@ -3,23 +3,20 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-
 /**
- * Se mockea el módulo del PDF **entero**, no `jspdf`: lo que esta prueba
- * necesita comprobar es que el formulario llama a `downloadQuotationPdf` con
- * los datos correctos, no cómo `buildBlocksPdf` maqueta un documento —eso ya
- * lo prueba `pdf-export.spec.ts` y `quotation-pdf.ts` en su propia prueba, si
- * la hubiera—. Mockear acá y no `jspdf` evita además el problema de orden de
- * módulos que documenta `clinical-pdf.spec.ts`.
+ * La descarga del PDF entra por `QUOTATION_PDF_DOWNLOADER`, no por `vi.mock`
+ * (el sistema de pruebas de Angular no lo admite para imports relativos). Lo
+ * que esta prueba comprueba es que el formulario exporta los datos correctos,
+ * no cómo `buildBlocksPdf` maqueta el documento —eso lo prueba
+ * `pdf-export.spec.ts`— y así tampoco depende del orden de carga de `jspdf`.
  */
-vi.mock('../../../shared/utils/quotation-pdf/quotation-pdf', () => ({
-  downloadQuotationPdf: vi.fn(),
-}));
-
-import { downloadQuotationPdf } from '../../../shared/utils/quotation-pdf/quotation-pdf';
+import { QUOTATION_PDF_DOWNLOADER } from '../../../shared/utils/quotation-pdf/quotation-pdf';
 import { QuotationForm } from './quotation-form';
 
 const RUTA = '/my-quotations/new';
+
+/** Lo que el formulario invoca al exportar: se provee por el token, sin PDF real. */
+const descargarPdf = vi.fn();
 
 const PRACTICA = { id: 'pr1', code: 'P1', name: 'Práctica 1' };
 
@@ -40,10 +37,6 @@ const PACIENTE = {
   deceased: false,
 };
 
-function paginaDePacientes(items: unknown[] = []) {
-  return { items, count: items.length, limit: 25, nextCursor: null };
-}
-
 function paginaDeServicios(items: unknown[] = []) {
   return { items, count: items.length, limit: 25, nextCursor: null };
 }
@@ -58,11 +51,18 @@ describe('QuotationForm', () => {
   let http: HttpTestingController;
 
   beforeEach(async () => {
+    descargarPdf.mockReset();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'my-quotations/new', component: QuotationForm }]),
+        provideRouter([
+          { path: 'my-quotations/new', component: QuotationForm },
+          // A dónde vuelve el formulario después de guardar: sin esta ruta el
+          // router lanza NG04002 fuera de la prueba que lo provocó.
+          { path: 'my-quotations', children: [] },
+        ]),
+        { provide: QUOTATION_PDF_DOWNLOADER, useValue: descargarPdf },
       ],
     });
 
@@ -229,14 +229,14 @@ describe('QuotationForm', () => {
   });
 
   describe('exportar', () => {
-    it('llama a downloadQuotationPdf con los datos de la cotización en pantalla', () => {
+    it('llama a la descarga del PDF con los datos de la cotización en pantalla', () => {
       elegirPacienteYServicio();
       completarDatosDelPlan();
 
       metodo<() => void>('exportar')();
 
-      expect(downloadQuotationPdf).toHaveBeenCalledTimes(1);
-      expect(downloadQuotationPdf).toHaveBeenCalledWith(
+      expect(descargarPdf).toHaveBeenCalledTimes(1);
+      expect(descargarPdf).toHaveBeenCalledWith(
         expect.objectContaining({
           patientName: 'Ana Pérez',
           serviceName: 'Consulta general',
@@ -251,9 +251,13 @@ describe('QuotationForm', () => {
     });
 
     it('sin paciente o sin servicio no exporta nada', () => {
+      // La práctica y el catálogo se piden al abrir, elija o no el usuario.
+      responderPractica();
+      peticionDeServicios().flush(paginaDeServicios([]));
+
       metodo<() => void>('exportar')();
 
-      expect(downloadQuotationPdf).not.toHaveBeenCalled();
+      expect(descargarPdf).not.toHaveBeenCalled();
     });
   });
 });

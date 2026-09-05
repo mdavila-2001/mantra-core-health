@@ -48,7 +48,7 @@ import { DataTable } from '../../../shared/components/organisms/data-table/data-
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { downloadQuotationPdf } from '../../../shared/utils/quotation-pdf/quotation-pdf';
+import { QUOTATION_PDF_DOWNLOADER } from '../../../shared/utils/quotation-pdf/quotation-pdf';
 import { QUOTATIONS_ROUTE } from '../quotations.routes';
 
 /** Tope del buscador de pacientes. La API pagina por cursor; acá alcanza una página. */
@@ -151,6 +151,7 @@ export class QuotationForm {
   private readonly scheduling = inject(SchedulingClient);
   private readonly navigation = inject(NavigationService);
   private readonly toasts = inject(ToastService);
+  private readonly descargarPdf = inject(QUOTATION_PDF_DOWNLOADER);
   private readonly router = inject(Router);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
@@ -477,7 +478,7 @@ export class QuotationForm {
     const fecha = this.fechaDeAtencion();
     const validez = this.validaHasta();
 
-    downloadQuotationPdf({
+    this.descargarPdf({
       patientName: paciente.displayName ?? paciente.patientCode,
       serviceName: servicio.name,
       offeredPrice: Number(this.precioOfrecido()) || 0,
