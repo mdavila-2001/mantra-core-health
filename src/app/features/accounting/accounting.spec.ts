@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 
 import { Accounting, agruparPorMes } from './accounting';
 import type { PaidConsultation } from '../../core/data-access/accounting/accounting.types';
-import * as csvExport from '../../shared/utils/csv-export/csv-export';
+import { CsvExportService } from '../../shared/utils/csv-export/csv-export';
 
 const PRACTICE = 'practice-1';
 
@@ -77,10 +77,27 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
     flushDependientesDeLaPractica();
   }
 
+  /**
+   * El servicio de exportación de CSV, sustituido por un doble.
+   *
+   * Vía DI y no `vi.spyOn`: el runner de tests de este repo
+   * (`@angular/build:unit-test`) no deja espiar una función exportada de un
+   * módulo relativo ("Cannot redefine property") ni usar `vi.mock` sobre
+   * imports relativos — el mensaje de su propio error dice "Please use
+   * Angular TestBed for mocking dependencies". `CsvExportService` (FT-20)
+   * existe justamente para dar esa costura.
+   */
+  let csvExportEspiado: { download: ReturnType<typeof vi.fn> };
+
   beforeEach(async () => {
+    csvExportEspiado = { download: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [Accounting],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: CsvExportService, useValue: csvExportEspiado },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Accounting);
@@ -275,7 +292,6 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
   });
 
   it('exportarDiarioCsv no descarga nada mientras el diario está vacío', () => {
-    const espia = vi.spyOn(csvExport, 'downloadCsv').mockImplementation(() => undefined);
     fixture.detectChanges();
     // El fixture fijo de `flushCarga` responde `/journal-transactions` sin
     // filas, que es el estado `empty` (ver `filasDelDiario`) — CSV de un
@@ -285,12 +301,10 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
 
     (fixture.componentInstance as unknown as { exportarDiarioCsv: () => void }).exportarDiarioCsv();
 
-    expect(espia).not.toHaveBeenCalled();
-    espia.mockRestore();
+    expect(csvExportEspiado.download).not.toHaveBeenCalled();
   });
 
   it('exportarDiarioCsv descarga el diario cuando tiene asientos', () => {
-    const espia = vi.spyOn(csvExport, 'downloadCsv').mockImplementation(() => undefined);
     fixture.detectChanges();
 
     http.expectOne((r) => r.url === '/practices').flush({
@@ -350,12 +364,11 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
 
     (fixture.componentInstance as unknown as { exportarDiarioCsv: () => void }).exportarDiarioCsv();
 
-    expect(espia).toHaveBeenCalledTimes(1);
-    expect(espia.mock.calls[0]?.[0]).toEqual([
+    expect(csvExportEspiado.download).toHaveBeenCalledTimes(1);
+    expect(csvExportEspiado.download.mock.calls[0]?.[0]).toEqual([
       expect.objectContaining({ transactionNumber: 'JT-1', totalAmount: '80.00' }),
     ]);
-    expect(espia.mock.calls[0]?.[2]).toBe('libro-diario');
-    espia.mockRestore();
+    expect(csvExportEspiado.download.mock.calls[0]?.[2]).toBe('libro-diario');
   });
 });
 

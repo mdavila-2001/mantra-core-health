@@ -1,3 +1,5 @@
+import { Injectable } from '@angular/core';
+
 /**
  * Exporta filas a un CSV descargable.
  *
@@ -39,28 +41,33 @@ export function toCsv<T>(rows: readonly T[], columns: readonly CsvColumn<T>[]): 
 /**
  * Descarga filas como un archivo `.csv`.
  *
- * Función de módulo y no un servicio inyectable: a diferencia de `jspdf`
- * —pesado, y por eso `PdfExportService` lo importa de forma dinámica—, esto no
- * arrastra ninguna dependencia externa, así que no hay bundle que ahorrarle a
- * quien no exporta.
+ * ## Por qué es un servicio inyectable, y no una función suelta
+ *
+ * El primer intento fue una función de módulo — sin `jspdf` de por medio no
+ * hay nada pesado que diferir. Pero el runner de tests de este repo
+ * (`@angular/build:unit-test`) prohíbe `vi.mock` sobre imports relativos
+ * ("Please use Angular TestBed for mocking dependencies") y además no deja
+ * espiar con `vi.spyOn` una función exportada de un módulo así compilado
+ * ("Cannot redefine property") — verificado al escribir el spec de esta
+ * misma clase. La costura que hace falta para poder sustituirla en un test
+ * es la inyección de dependencias, no un `import *`.
  */
-export function downloadCsv<T>(
-  rows: readonly T[],
-  columns: readonly CsvColumn<T>[],
-  filename: string,
-): void {
-  // El BOM (U+FEFF) es lo que hace que Excel abra el archivo como UTF-8 en
-  // vez de adivinar la codificación local y desfigurar cualquier tilde.
-  const contenido = String.fromCharCode(0xfeff) + toCsv(rows, columns);
-  const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  try {
-    const enlace = document.createElement('a');
-    enlace.href = url;
-    enlace.download = filename.endsWith('.csv') ? filename : `${filename}.csv`;
-    enlace.click();
-  } finally {
-    URL.revokeObjectURL(url);
+@Injectable({ providedIn: 'root' })
+export class CsvExportService {
+  download<T>(rows: readonly T[], columns: readonly CsvColumn<T>[], filename: string): void {
+    // El BOM (U+FEFF) es lo que hace que Excel abra el archivo como UTF-8 en
+    // vez de adivinar la codificación local y desfigurar cualquier tilde.
+    const contenido = String.fromCharCode(0xfeff) + toCsv(rows, columns);
+    const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    try {
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = filename.endsWith('.csv') ? filename : `${filename}.csv`;
+      enlace.click();
+    } finally {
+      URL.revokeObjectURL(url);
+    }
   }
 }
 

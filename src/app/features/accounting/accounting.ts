@@ -53,7 +53,7 @@ import type { ColumnDef } from '../../shared/components/organisms/data-table/dat
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
 import { errorMessageOf } from '../../shared/forms/form-support';
-import { downloadCsv, type CsvColumn } from '../../shared/utils/csv-export/csv-export';
+import { CsvExportService, type CsvColumn } from '../../shared/utils/csv-export/csv-export';
 
 /**
  * Agrupa las consultas cobradas por mes de emisión, la más reciente arriba.
@@ -191,6 +191,7 @@ export interface MesFacturado {
 export class Accounting {
   private readonly libros = inject(AccountingClient);
   private readonly auth = inject(AuthService);
+  private readonly csv = inject(CsvExportService);
 
   /* ---- Quién está mirando (H4 del plan de UX del 22/08/2026) --------------- */
 
@@ -391,7 +392,7 @@ export class Accounting {
   protected exportarDiarioCsv(): void {
     const estado = this.filasDelDiario();
     if (estado.status !== 'ready') return;
-    downloadCsv(estado.data, this.columnasCsvDelDiario, 'libro-diario');
+    this.csv.download(estado.data, this.columnasCsvDelDiario, 'libro-diario');
   }
 
   /* ============================================================================
