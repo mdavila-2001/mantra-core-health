@@ -64,9 +64,9 @@ describe('Settings', () => {
   const text = (): string => fixture.nativeElement.textContent as string;
   const query = (testid: string): HTMLElement | null =>
     fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
-  const iconosPorRenglon = (): number[] =>
+  const iconsPerRow = (): number[] =>
     [...fixture.nativeElement.querySelectorAll('.ajustes__fila')].map(
-      (fila) => fila.querySelectorAll('app-nav-icon').length,
+      (row) => row.querySelectorAll('app-nav-icon').length,
     );
 
   /**
@@ -155,7 +155,7 @@ describe('Settings', () => {
     mount();
     goTo('Apariencia');
 
-    expect(iconosPorRenglon()).toEqual([1, 1, 1]);
+    expect(iconsPerRow()).toEqual([1, 1, 1]);
   });
 
   it('elegir un tema lo aplica de verdad, no sólo marca el control', () => {
@@ -190,7 +190,7 @@ describe('Settings', () => {
     mount();
     goTo('Permisos');
 
-    expect(iconosPorRenglon()).toEqual([1, 1, 1]);
+    expect(iconsPerRow()).toEqual([1, 1, 1]);
   });
 
   it('sólo ofrece «Permitir» donde el cartel todavía puede aparecer', () => {

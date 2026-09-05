@@ -161,20 +161,6 @@ describe('PatientChart', () => {
         { status: 404, statusText: 'Not Found' },
       );
     }
-    responderAdjuntos();
-  }
-
-  /**
-   * El bloque de adjuntos pide su lista apenas se crea, igual que los otros dos.
-   *
-   * Se responde vacío: qué hace con la lista lo fijan sus propias pruebas
-   * (`attachments-block.spec.ts`). Acá sólo importa que no quede como petición
-   * huérfana del expediente.
-   */
-  function responderAdjuntos(): void {
-    for (const req of http.match((r) => r.url === '/common/files/links')) {
-      req.flush({ items: [], count: 0 });
-    }
   }
 
   /**
