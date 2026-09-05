@@ -23,12 +23,14 @@ import { AppButton } from '../../../../../shared/components/atoms/button/button'
 import { AppButtonLink } from '../../../../../shared/components/atoms/button/button-link';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-help-block/tab-help-block';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
+import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
 import { StatusSeal } from '../../../../../shared/components/organisms/status-seal/status-seal';
 import { TutorialTarget } from '../../../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
-import type { PerfilProfesionalVisible } from './practitioner-profile-view.types';
+import type { FormacionVisible, PerfilProfesionalVisible } from './practitioner-profile-view.types';
 
 /** Índice de cada pestaña superior — nombrado para no repetir números mágicos. */
 const TAB = { TRAYECTORIA: 0, CREDENCIALES: 1, PREVIEW: 2 } as const;
@@ -119,6 +121,8 @@ export class PractitionerProfileView {
   private readonly profiles = inject(ProfilesClient);
   private readonly community = inject(CommunityClient);
   private readonly auth = inject(AuthService);
+  private readonly dialogs = inject(DialogService);
+  private readonly toasts = inject(ToastService);
 
   /** Mientras la foto viaja. Bloquea el control para no subir dos veces. */
   protected readonly subiendoFoto = signal(false);
@@ -301,5 +305,35 @@ export class PractitionerProfileView {
 
   protected verPreview(): void {
     this.pestanaSeleccionada.set(TAB.PREVIEW);
+  }
+
+  /**
+   * Retira un título propio cargado por error (ALV-009/formación).
+   *
+   * Con confirmación, mismo criterio que retirar una sede: no es un clic sin
+   * vuelta atrás. Sólo aparece mientras sigue PENDIENTE —`estudio.sello ===
+   * 'in-review'`, que ya distingue verificado/rechazado de pendiente—, así
+   * que el `422` del backend por un estado que cambió justo antes es el único
+   * camino de error real y se avisa igual.
+   */
+  protected async retirarCredencial(estudio: FormacionVisible): Promise<void> {
+    const confirmado = await this.dialogs.confirm({
+      title: 'Retirar este título',
+      message: `¿Retirar «${estudio.tipo}» de tu formación? Todavía está pendiente de verificación.`,
+      confirmLabel: 'Retirar',
+      cancelLabel: 'Cancelar',
+    });
+    if (!confirmado) {
+      return;
+    }
+    this.profiles.removeOwnCredential(estudio.id).subscribe({
+      next: () => {
+        this.toasts.success('Se retiró el título.', 'Formación');
+        this.trayectoriaCambio.emit();
+      },
+      error: () => {
+        this.toasts.error('No se pudo retirar el título. Probá de nuevo.', 'Formación');
+      },
+    });
   }
 }

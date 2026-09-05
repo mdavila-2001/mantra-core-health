@@ -425,6 +425,22 @@
                         {{ estudio.hasta | date: 'MMM y' }}
                       }
                     </p>
+
+                    <!-- ALV-009/formación: sólo mientras sigue PENDIENTE —una
+                         vez verificado o rechazado es un hecho de la
+                         autoridad, no algo que el titular deshaga. -->
+                    @if (esPropio() && estudio.sello === 'in-review') {
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [attr.data-testid]="'formacion-retirar-' + estudio.id"
+                        (clicked)="retirarCredencial(estudio)"
+                      >
+                        Retirar
+                      </button>
+                    }
                   </div>
                 </li>
               }

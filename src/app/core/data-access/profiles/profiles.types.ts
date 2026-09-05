@@ -138,6 +138,23 @@ export interface PractitionerCredential {
   readonly verificationSourceUri?: string;
 }
 
+/**
+ * Un título nuevo (`POST /profiles/practitioners/me/credentials`).
+ *
+ * Nace **pendiente de verificación**, siempre: no hay forma de declararlo ya
+ * verificado desde acá — eso lo hace `SECURITY_ADMIN` sobre uno existente.
+ */
+export interface NewOwnCredential {
+  /** Uno de los cinco `CREDENTIAL_TYPE_*` del catálogo. */
+  readonly credentialTypeConceptId: string;
+  readonly number: string;
+  readonly issuingInstitutionText?: string;
+  /** ISO `YYYY-MM-DD`, mismo criterio que {@link NewJurisdictionAuthorization.validFrom}. */
+  readonly issueDate?: string;
+  /** El diploma, ya subido con `FilesClient.upload`. */
+  readonly fileId?: string;
+}
+
 /** Una matrícula: dónde está habilitado a ejercer y con qué número. */
 export interface PractitionerLicense {
   readonly id: string;
@@ -220,6 +237,11 @@ export interface OwnPractitionerProfile {
   readonly nationalId?: string;
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly residenceMunicipalityConceptId?: string;
+  /**
+   * Su domicilio, si lo declaró (ALV-009). Ausente y no un objeto vacío
+   * cuando no hay fila vigente — mismo contrato que {@link OwnPatientProfile}.
+   */
+  readonly homeAddress?: OwnAddress;
 
   readonly practitionerCategoryConceptId: string;
   readonly verificationStatusConceptId: string;

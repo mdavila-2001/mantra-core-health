@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthService } from '../../../../../core/auth/auth.service';
+import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { PractitionerProfileView } from './practitioner-profile-view';
 import type {
   AfiliacionVisible,
@@ -124,6 +125,9 @@ const PERFIL: PerfilProfesionalVisible = {
 describe('PractitionerProfileView', () => {
   let fixture: ComponentFixture<PractitionerProfileView>;
   let http: HttpTestingController;
+  /** `confirm()` resuelve a `true` salvo que una prueba lo cambie. */
+  let confirmar = true;
+  const dialogs = { confirm: vi.fn(async () => confirmar) };
 
   /**
    * Con `esPropio=true` se embebe `<app-work-history layout="timeline">`, que
@@ -181,6 +185,7 @@ describe('PractitionerProfileView', () => {
           provide: AuthService,
           useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') },
         },
+        { provide: DialogService, useValue: dialogs },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -320,6 +325,63 @@ describe('PractitionerProfileView', () => {
     const host = montar({ ...PERFIL, formacion: [] });
 
     expect(host.textContent).toContain('Todavía no hay credenciales cargadas');
+  });
+
+  /* ---- ALV-009/formación: retirar un título pendiente ---------------------- */
+
+  const FORMACION_PENDIENTE: PerfilProfesionalVisible['formacion'][number] = {
+    id: 'cr-2',
+    tipo: 'Diplomado',
+    numero: 'DIP-1',
+    institucion: '',
+    desde: null,
+    hasta: null,
+    estado: 'Pendiente',
+    sello: 'in-review',
+    vencida: false,
+  };
+
+  it('el dueño ve «Retirar» sólo en un título pendiente, no en uno verificado', () => {
+    const host = montar({ ...PERFIL, formacion: [...PERFIL.formacion, FORMACION_PENDIENTE] }, true);
+
+    expect(host.querySelector('[data-testid="formacion-retirar-cr-1"]')).toBeNull();
+    expect(host.querySelector('[data-testid="formacion-retirar-cr-2"]')).not.toBeNull();
+  });
+
+  it('un visitante no ve «Retirar» aunque el título esté pendiente', () => {
+    const host = montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, false);
+
+    expect(host.querySelector('[data-testid="formacion-retirar-cr-2"]')).toBeNull();
+  });
+
+  it('retirar confirma y hace un DELETE del título', async () => {
+    confirmar = true;
+    montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, true);
+
+    await (
+      fixture.componentInstance as unknown as {
+        retirarCredencial: (e: unknown) => Promise<void>;
+      }
+    ).retirarCredencial(FORMACION_PENDIENTE);
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    const req = http.expectOne('/profiles/practitioners/me/credentials/cr-2');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+  });
+
+  it('sin confirmar, no se manda ningún DELETE', async () => {
+    confirmar = false;
+    montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, true);
+
+    await (
+      fixture.componentInstance as unknown as {
+        retirarCredencial: (e: unknown) => Promise<void>;
+      }
+    ).retirarCredencial(FORMACION_PENDIENTE);
+
+    expect(dialogs.confirm).toHaveBeenCalled();
+    http.expectNone('/profiles/practitioners/me/credentials/cr-2');
   });
 
   it('el dueño ve el formulario de alta de trayectoria embebido', () => {
