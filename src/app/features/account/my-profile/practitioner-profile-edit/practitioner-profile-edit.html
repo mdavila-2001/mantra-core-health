@@ -179,6 +179,19 @@
         </form>
       </app-card>
 
+      <!-- ─── Lo que ven los demás ────────────────────────────────────────
+           ALV-004: la vitrina pública se configura ACÁ, y sólo acá. Antes era
+           una pantalla aparte (`/my-account/preview`), que el cliente leyó
+           como un segundo perfil; esa ruta quedó de sólo lectura. -->
+      <app-card variant="outlined" padding="lg" class="edicion__bloque" data-testid="edicion-vitrina">
+        <h2 class="edicion__titulo">Lo que ven los demás</h2>
+        <p class="edicion__nota">
+          Tu ficha pública: el enlace, cómo te presentás y tu foto. Se arma desde acá y se ve en
+          «Cómo me ven».
+        </p>
+        <app-public-profile-settings />
+      </app-card>
+
       <!-- ─── Dirección ───────────────────────────────────────────────────
            Mismo criterio: se agrega, no se edita. `POST /common/addresses`
            todavía no tiene edición. -->

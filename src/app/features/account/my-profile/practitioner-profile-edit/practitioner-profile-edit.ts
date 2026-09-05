@@ -24,6 +24,7 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { PublicProfileSettings } from '../public-profile-settings/public-profile-settings';
 
 /** El campo de la jurisdicción, del catálogo dinámico. */
 const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
@@ -71,6 +72,7 @@ function fechaIso(fecha: Date): string {
     FormField,
     Input,
     PageHeader,
+    PublicProfileSettings,
     RouterLink,
     Select,
     Switch,
