@@ -108,3 +108,81 @@ test('el alta persiste contra la API: un login nuevo devuelve la misma localidad
     await api.dispose();
   }
 });
+
+/** La Plaza 24 de Septiembre, Santa Cruz: el mismo punto reconocible que usa registro-empresa-y-mapa.spec.ts. */
+const PUNTO_GPS_DOMICILIO = { latitude: -17.7833, longitude: -63.1821 };
+
+/**
+ * FT-03-R09 (AG49-FT03-R09-002): `registro-empresa-y-mapa.spec.ts` prueba que
+ * el domicilio "se confirma sobre un mapa" —el pin, el botón, el texto— pero
+ * nunca envía el formulario ni mira qué guardó el backend. Eso alcanzaba para
+ * la UI, no para declarar VERIFIED que el GPS **persiste**. Esta prueba sí
+ * completa el alta real con el punto confirmado y, con un login nuevo (mismo
+ * patrón que la prueba de arriba: nada del `page` de la corrida), lee
+ * `homeAddress.latitude/longitude` de vuelta desde `GET /profiles/patients/me`.
+ */
+test('el GPS del domicilio, confirmado sobre el mapa, persiste contra la API', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['geolocation']);
+  await context.setGeolocation(PUNTO_GPS_DOMICILIO);
+
+  const sufijo = `${Date.now()}`;
+  const documento = `CI-GPS-${sufijo}`;
+  const email = `gps-pw-${sufijo}@example.test`;
+  const password = 'Persist-Pw0rd!';
+
+  await empezarElAlta(page, documento);
+
+  await avanzarHasta(page, '¿Dónde vivís?');
+  await elegirLocalidadDeResidencia(page);
+
+  await page.getByTestId('registro-usar-ubicacion').click();
+  const mapa = page.getByTestId('registro-mapa-domicilio');
+  await expect(mapa.locator('.leaflet-marker-icon').first()).toBeVisible({ timeout: 15_000 });
+  await page.getByTestId('registro-confirmar-direccion').click();
+  await expect(page.getByTestId('registro-direccion-confirmada')).toBeVisible();
+
+  await avanzarUnPaso(page, '¿Dónde trabajás?');
+  await avanzarUnPaso(page, 'El lugar donde trabajás');
+  await avanzarUnPaso(page, 'Tu acceso');
+
+  await page.getByTestId('registro-correo').fill(email);
+  await page.getByTestId('registro-password').fill(password);
+  await avanzarUnPaso(page, 'Tu seguro de salud');
+  await avanzarUnPaso(page, 'Datos de facturación');
+
+  const enviar = page.getByTestId('paginated-form-continuar');
+  await expect(enviar).toHaveText(/Crear cuenta/);
+  await expect(enviar).toBeEnabled({ timeout: 20_000 });
+  await enviar.click();
+
+  await expect(page.getByTestId('registro-exito')).toBeVisible({ timeout: 20_000 });
+
+  // Desde acá, nada del `page` de arriba: contexto de API nuevo, login propio.
+  const api = await request.newContext({ baseURL: urlDeApi() });
+  try {
+    const login = await api.post('/iam/auth/login', {
+      data: { nationalId: documento, password },
+    });
+    expect(login.ok(), await login.text()).toBeTruthy();
+    const { accessToken } = (await login.json()) as { accessToken: string };
+
+    const perfil = await api.get('/profiles/patients/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(perfil.ok(), await perfil.text()).toBeTruthy();
+    const cuerpo = (await perfil.json()) as {
+      homeAddress?: { latitude?: number; longitude?: number };
+    };
+
+    // El backend guardó el punto que se confirmó sobre el mapa —no lo
+    // truncó a nada ni lo dejó vacío— y lo devuelve en un viaje
+    // completamente nuevo, sin nada del estado del navegador de la corrida.
+    expect(cuerpo.homeAddress?.latitude).toBeCloseTo(PUNTO_GPS_DOMICILIO.latitude, 4);
+    expect(cuerpo.homeAddress?.longitude).toBeCloseTo(PUNTO_GPS_DOMICILIO.longitude, 4);
+  } finally {
+    await api.dispose();
+  }
+});

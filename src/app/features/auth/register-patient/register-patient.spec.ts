@@ -917,6 +917,32 @@ describe('RegisterPatient', () => {
       component.submit();
       http.expectNone('/iam/auth/register-patient');
     });
+
+    /**
+     * AG49-FT03-R04-001: el `BLOCKER` no era que `name`/`lastName` sean
+     * obligatorios —eso ya lo fija la prueba de arriba, a propósito—, sino que
+     * ningún artefacto decía POR QUÉ, dejando la lista de la fuente literal
+     * (seis campos) contradicha en silencio. Esta prueba fija el excedente
+     * exacto y documentado: si mañana alguien agrega un décimo obligatorio sin
+     * la misma justificación explícita (ver el comentario en
+     * `register-patient.ts` junto a `name`/`lastName`), esta prueba falla acá,
+     * antes de que vuelva a ser un finding.
+     */
+    it('el excedente sobre los seis obligatorios de la fuente literal (TAREA 03 §1.2) es exactamente name/lastName/password, documentado por contrato (AC-03-4/P-03-2)', () => {
+      const SEIS_DE_LA_FUENTE_LITERAL = [
+        'nationalId',
+        'email',
+        'sexAtBirth',
+        'phone',
+        'birthDate',
+        'residenceMunicipalityConceptId',
+      ] as const;
+      const EXCEDENTE_JUSTIFICADO_POR_CONTRATO = ['name', 'lastName', 'password'] as const;
+
+      expect(new Set(OBLIGATORIOS)).toEqual(
+        new Set([...SEIS_DE_LA_FUENTE_LITERAL, ...EXCEDENTE_JUSTIFICADO_POR_CONTRATO]),
+      );
+    });
   });
 
   /**

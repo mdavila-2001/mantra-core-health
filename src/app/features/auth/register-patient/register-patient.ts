@@ -486,9 +486,30 @@ export class RegisterPatient {
       // el documento de identidad y como se comparan dos personas al buscar
       // duplicados. Partir después una cadena es una conjetura que falla con los
       // nombres compuestos y con los apellidos de más de una palabra.
+      //
+      // **`name` y `lastName` son obligatorios pese a que la lista de la TAREA
+      // 03 §1.2 no los nombra** (sólo lista documento, correo, sexo, teléfono,
+      // fecha de nacimiento y localidad). Es una restricción YA EXISTENTE
+      // —anterior a esta tarea (`9dd07ca`, «el nombre se pide en sus cuatro
+      // partes»)— y AC-03-4 la contempla explícitamente: «más lo que el
+      // servidor exija por contrato» (ver P-03-2). El contrato es real, no una
+      // costumbre de este formulario: `RegisterPatientDto.name`/`lastName`
+      // (wt-pablo-api) sólo se vuelven opcionales si se manda `displayName` —el
+      // formulario nunca lo hace—, y `composeAccountDisplayName()` escribe
+      // `iam.users.display_name`, una columna `NOT NULL` que es lo que muestran
+      // el saludo, el directorio y la búsqueda de toda la plataforma: un alta
+      // sin nombre no crea una cuenta usable, crea una fila con el nombre en
+      // blanco en todas partes. Por eso se mantiene como una restricción ya
+      // existente y justificada bajo FT-03-R04, no como un vacío de esta
+      // corrección. Ver `register-patient.spec.ts` →
+      // `describe('obligatoriedad (AC-03-3, AC-03-4)')`, que fija por prueba el
+      // conjunto exacto de obligatorios y falla si alguien agrega un décimo sin
+      // el mismo tipo de justificación (AG49-FT03-R04-001).
       name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       middleName: new FormControl('', { nonNullable: true }),
       thirdName: new FormControl('', { nonNullable: true }),
+      // Mismo criterio y misma justificación que `name`. Ver el comentario de
+      // arriba.
       lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
       motherLastName: new FormControl('', { nonNullable: true }),
       password: new FormControl('', {
