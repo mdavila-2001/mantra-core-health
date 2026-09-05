@@ -17,12 +17,11 @@
       Avisar demora
     </button>
   }
-  @if (esQuienAtiende()) {
-    <!-- La puerta a las pantallas del horario. Sin esto se entra por «Turnos» y
-         no hay por dónde seguir: «Mi agenda» enlaza a los bloqueos y a cambiar
-         el horario, pero nadie enlazaba a «Mi agenda». -->
-    <a app-button page-actions variant="primary" [routerLink]="rutaMiAgenda">Mi agenda</a>
-  }
+  <!-- El botón «Mi agenda» ya no está acá: la pantalla vive ahora como una
+       solapa, al lado de Consultas y Cupos. Era la única puerta al horario
+       publicado —y por eso existía—, pero llevaba a otra pantalla para
+       responder una pregunta que se hace mirando la misma. Desde adentro de la
+       solapa se sigue llegando a los bloqueos y a cambiar el horario. -->
   @if (puedeCrearAgenda()) {
     <!-- Secundario a propósito: publicar el horario se hace una vez; mirar la
          agenda es a lo que se entra todos los días. -->
@@ -261,6 +260,30 @@
           (retry)="recargar()"
         />
       </app-tab>
+
+      <!-- ─── Mi agenda ─────────────────────────────────────────────────────
+           El horario publicado, acá adentro y no a un viaje de distancia. Era
+           un botón del encabezado que llevaba a otra pantalla: para ver «a qué
+           hora atiendo» había que salir de la lista y volver. Ahora conviven,
+           que es como se usan — se mira el día y se mira el horario en la misma
+           vuelta.
+
+           **El `@if` va acá y no alcanza con el de `app-tab`.** El panel
+           inactivo no se dibuja, pero el contenido PROYECTADO lo instancia el
+           padre igual: sin esta condición, «Mi agenda» se construía en cada
+           visita a la lista y disparaba su propia lectura de recursos aunque
+           nadie abriera la solapa. Con la condición en la plantilla del padre,
+           el componente no existe hasta que se lo pide.
+
+           Su ruta propia (`/schedule/mine`) sigue viva para los enlaces que ya
+           apuntan ahí. -->
+      @if (esQuienAtiende()) {
+        <app-tab label="Mi agenda">
+          @if (pestana() === 1) {
+            <app-my-agenda embebida />
+          }
+        </app-tab>
+      }
 
       <!-- ─── Cupos ─────────────────────────────────────────────────────── -->
       <app-tab [label]="rotuloDeCupos()">

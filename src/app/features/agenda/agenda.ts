@@ -61,6 +61,7 @@ import { DataTable } from '../../shared/components/organisms/data-table/data-tab
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { AGENDA_CREATE_ROUTE, AGENDA_MINE_ROUTE, bookingNewRoute } from './agenda.routes';
+import { MyAgenda } from './my-agenda/my-agenda';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
@@ -381,6 +382,7 @@ export interface CupoVisible {
     Tab,
     Tabs,
     Textarea,
+    MyAgenda,
   ],
   templateUrl: './agenda.html',
   styleUrl: './agenda.css',
@@ -673,16 +675,23 @@ export class Agenda {
    * Pestaña visible. En la URL para que un enlace pueda apuntar a una en
    * concreto.
    *
-   * Quedan **dos**: «Consultas» —el ciclo completo, ALV-019— y «Cupos», que es
-   * disponibilidad y sigue aparte (ALV-020).
+   * Son **tres**: «Consultas» —el ciclo completo, ALV-019—, «Mi agenda» —el
+   * horario publicado, que era una pantalla aparte— y «Cupos», que es
+   * disponibilidad y sigue siendo lo suyo (ALV-020).
    *
    * `vista=cupos` sigue significando lo mismo. `vista=citas` y
-   * `vista=solicitudes` ahora llevan a la misma lista, que es donde vive lo que
+   * `vista=solicitudes` llevan a la lista unificada, que es donde vive lo que
    * antes estaba partido: un enlace viejo sigue llegando a donde quería llegar.
    */
-  protected readonly pestana = computed(() =>
-    this.params()?.get('vista') === 'cupos' ? 1 : 0,
-  );
+  protected readonly pestana = computed(() => {
+    const vista = this.params()?.get('vista');
+    // «Mi agenda» sólo existe para quien atiende: quien reparte turnos no tiene
+    // agenda propia y no se le ofrece una puerta que la otra pantalla no va a
+    // reconocer como suya. Sin ella, «Cupos» corre un lugar.
+    const indiceDeCupos = this.esQuienAtiende() ? 2 : 1;
+    if (vista === 'cupos') return indiceDeCupos;
+    return vista === 'agenda' && this.esQuienAtiende() ? 1 : 0;
+  });
 
   protected readonly incluirCanceladas = computed(() => this.params()?.get('canceladas') === 'si');
 
@@ -1109,7 +1118,17 @@ export class Agenda {
   }
 
   protected elegirPestana(indice: number): void {
-    this.publicar({ vista: indice === 1 ? 'cupos' : null });
+    // El espejo de `pestana()`: sin «Mi agenda» los índices corren, y publicar
+    // `vista=agenda` desde la solapa de cupos dejaría la URL diciendo una cosa
+    // y la pantalla mostrando otra.
+    const conAgendaPropia = this.esQuienAtiende();
+    const vista =
+      indice === (conAgendaPropia ? 2 : 1)
+        ? 'cupos'
+        : conAgendaPropia && indice === 1
+          ? 'agenda'
+          : null;
+    this.publicar({ vista });
   }
 
   protected recargar(): void {
