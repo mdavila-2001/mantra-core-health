@@ -304,13 +304,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M08 clinical',
   },
   {
-    // **«Turnos» y no «Agenda»** (§4.H del plan de UX): es el nombre exacto de
-    // la lista cerrada del cliente, y además el más honesto — la sección son
-    // los turnos (los que pediste, los que te pidieron, el horario que
-    // publicás), y «Agenda» no decía si era para pedir uno o para publicarlo.
+    // **«Consultas»** (ALV-016). Antes decía «Turnos», que era el nombre exacto
+    // de la lista cerrada del cliente (§4.H del plan de UX); el mismo cliente
+    // pidió la nomenclatura clínica, que además es la que usa el resto del
+    // producto —la receta, el expediente y el ciclo hablan de consultas, no de
+    // turnos—. «Cupos» NO se renombra: es disponibilidad, no consulta.
     // La ruta sigue siendo `schedule`.
     path: 'schedule',
-    label: 'Turnos',
+    label: 'Consultas',
     group: 'Atención',
     icon: 'calendar',
     // El documento de actores ubica estos tres roles en M41; `SCHEDULER` queda

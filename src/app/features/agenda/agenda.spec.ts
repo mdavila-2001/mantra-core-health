@@ -747,7 +747,9 @@ describe('Agenda', () => {
     await montar();
     await responder();
 
-    expect(interno<() => string>('rotuloDeCitas')()).toBe('Citas (1)');
+    // ALV-019: una sola lista para el ciclo. El conteo es del total, no de
+    // la mitad que ya estaba confirmada.
+    expect(interno<() => string>('rotuloDeConsultas')()).toBe('Consultas (1)');
     expect(interno<() => string>('rotuloDeCupos')()).toBe('Cupos (1)');
   });
 
@@ -842,7 +844,7 @@ describe('Agenda', () => {
     // pantalla de reservas es `my-account/appointments`, que sí lista agendas.
     await responderRecursos();
 
-    const columnasDeCitas = interno<() => readonly { key: string }[]>('columnasDeCitas')();
+    const columnasDeCitas = interno<() => readonly { key: string }[]>('columnasDeConsultas')();
     const columnasDeCupos = interno<() => readonly { key: string }[]>('columnasDeCupos')();
 
     expect(columnasDeCitas.some((columna) => columna.key === 'acciones')).toBe(false);
@@ -895,8 +897,13 @@ describe('Agenda', () => {
    * el panel inactivo no se renderiza. Sin esto, buscar su botón devuelve
    * `null` por no estar en pantalla, no por no ofrecerse.
    */
+  /**
+   * La lista de consultas es la solapa 0 desde ALV-019 (antes «Citas» era la 1
+   * y «Solicitudes» la 0). Se sigue seleccionando explícitamente aunque hoy sea
+   * la de arranque: la prueba dice sobre qué lista afirma.
+   */
   async function verSolapaDeCitas(): Promise<void> {
-    interno<(i: number) => void>('elegirPestana')(1);
+    interno<(i: number) => void>('elegirPestana')(0);
     await harness.fixture.whenStable();
     harness.detectChanges();
   }
@@ -1187,17 +1194,19 @@ describe('Agenda', () => {
         ],
       });
 
-      expect(interno<() => string>('rotuloDeSolicitudes')()).toBe('Solicitudes (1)');
-      expect(interno<() => string>('rotuloDeCitas')()).toBe('Citas (1)');
+      // Las dos van a la MISMA lista (ALV-019): el rótulo cuenta las dos.
+      expect(interno<() => string>('rotuloDeConsultas')()).toBe('Consultas (2)');
+      // Lo que espera respuesta sigue contándose: es el aviso de arriba.
+      expect(interno<() => number>('cuantasEsperanRespuesta')()).toBe(1);
     });
 
     it('`vista=cupos` sigue significando lo mismo que antes', async () => {
       // Los enlaces que ya existen no se rompen porque las solapas se
-      // reordenaron: los cupos pasaron del índice 1 al 2 y la URL no cambió.
+      // unificaron: los cupos volvieron al índice 1 y la URL no cambió.
       await montar({}, '/schedule?vista=cupos');
       await responder();
 
-      expect(interno<() => number>('pestana')()).toBe(2);
+      expect(interno<() => number>('pestana')()).toBe(1);
     });
   });
 

@@ -182,6 +182,15 @@ app-access-tree {
   margin-block: var(--sp-3) 0;
 }
 
+/* El atajo a la agenda (ALV-018): separado de la nota y antes de las zonas, que
+   es el orden en que se lee — primero lo que se abre todos los días, después el
+   reparto de todo lo demás. `inline-flex` para que no ocupe el ancho completo
+   de la tarjeta: es un acceso, no una acción de página. */
+.panel__acceso-directo {
+  display: inline-flex;
+  margin-block: var(--sp-4) var(--sp-2);
+}
+
 .panel__conteo {
   margin: 0;
   font-weight: 600;
