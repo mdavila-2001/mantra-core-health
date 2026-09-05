@@ -653,6 +653,179 @@ describe('Agenda', () => {
     expect(fila['motivo']).toBe('Sin registrar');
   });
 
+  /* -- ALV-024: navegación temporal ----------------------------------------
+     Antes «Próximos 7 días» era SIEMPRE desde hoy: no había forma de mirar la
+     ventana anterior ni adelantarse a la que viene sin cambiar la fecha del
+     sistema. `fechaBase` corre en la URL (`?desde=`) para que se pueda
+     compartir por enlace y, al volver, traiga la misma consulta. */
+  describe('navegación temporal', () => {
+    /** Medianoche de hoy, igual que la calcula el propio componente. */
+    function hoy(): Date {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
+
+    function diasEntre(a: Date, b: Date): number {
+      return Math.round((b.getTime() - a.getTime()) / 86_400_000);
+    }
+
+    it('por defecto la ventana arranca hoy, y lo dice `enVentanaDeHoy`', async () => {
+      await montar();
+      await responder();
+
+      expect(interno<() => Date>('fechaBase')().getTime()).toBe(hoy().getTime());
+      expect(interno<() => boolean>('enVentanaDeHoy')()).toBe(true);
+    });
+
+    it('«Siguiente» adelanta la ventana un tramo completo, no un día', async () => {
+      // Con «Próximos 7 días», un tramo son 7 días: es la página siguiente,
+      // no un desplazamiento de un día.
+      await montar();
+      await responder();
+
+      interno<(d: -1 | 1) => void>('moverVentana')(1);
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      const nueva = interno<() => Date>('fechaBase')();
+      expect(diasEntre(hoy(), nueva)).toBe(7);
+      expect(interno<() => boolean>('enVentanaDeHoy')()).toBe(false);
+
+      // La navegación disparó una lectura real (efecto de ALV-024): se
+      // responde, si no queda un pedido abierto que `afterEach` rechaza.
+      http.expectOne((r) => r.url === '/scheduling/bookings').flush({
+        items: [],
+        count: 0,
+        limit: 100,
+        truncated: false,
+      });
+      http
+        .expectOne((r) => r.url === '/scheduling/slots')
+        .flush({ items: [], count: 0, limit: 100, truncated: false });
+    });
+
+    it('«Anterior» la atrasa, y la lectura siguiente pide ESA ventana', async () => {
+      await montar();
+      await responder();
+
+      interno<(d: -1 | 1) => void>('moverVentana')(-1);
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      // Los recursos NO se vuelven a pedir: son el catálogo de la agenda, no
+      // su contenido — el propio constructor lo dice. Lo que cambia es la
+      // ventana de citas y cupos.
+      http.expectNone((r) => r.url === '/scheduling/resources');
+      const bookings = http.expectOne((r) => r.url === '/scheduling/bookings');
+      const desde = new Date(bookings.request.params.get('from') ?? '');
+      // Una semana ANTES de hoy, no siete días desde hoy hacia atrás mal
+      // contados: el punto de fuga es el mismo `hoy()` que usa la pantalla.
+      expect(diasEntre(desde, hoy())).toBe(7);
+      bookings.flush({ items: [], count: 0, limit: 100, truncated: false });
+      http
+        .expectOne((r) => r.url === '/scheduling/slots')
+        .flush({ items: [], count: 0, limit: 100, truncated: false });
+    });
+
+    it('volver exactamente a hoy limpia la URL — no se queda un `?desde=hoy` colgado', async () => {
+      await montar();
+      await responder();
+
+      interno<(d: -1 | 1) => void>('moverVentana')(-1);
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      responderResto();
+
+      interno<(d: -1 | 1) => void>('moverVentana')(1);
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      responderResto();
+
+      expect(interno<() => boolean>('enVentanaDeHoy')()).toBe(true);
+      expect(interno<() => Date>('fechaBase')().getTime()).toBe(hoy().getTime());
+    });
+
+    it('«Hoy» vuelve de un clic, sin contar los tramos de regreso', async () => {
+      await montar();
+      await responder();
+
+      interno<(d: -1 | 1) => void>('moverVentana')(1);
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      responderResto();
+      interno<(d: -1 | 1) => void>('moverVentana')(1);
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      responderResto();
+      expect(interno<() => boolean>('enVentanaDeHoy')()).toBe(false);
+
+      interno<() => void>('irAHoy')();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      responderResto();
+
+      expect(interno<() => boolean>('enVentanaDeHoy')()).toBe(true);
+    });
+
+    it('cambiar el tamaño de la ventana vuelve a hoy: un desplazamiento no sobrevive al cambio de escala', async () => {
+      await montar();
+      await responder();
+
+      interno<(d: -1 | 1) => void>('moverVentana')(1);
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      responderResto();
+
+      interno<(c: string | null) => void>('elegirVentana')('mes');
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      responderResto();
+
+      expect(interno<() => boolean>('enVentanaDeHoy')()).toBe(true);
+    });
+
+    it('una fecha inválida en la URL no rompe la pantalla: cae a hoy', async () => {
+      await montar({}, '/schedule?desde=no-es-una-fecha');
+      await responder();
+
+      expect(interno<() => Date>('fechaBase')().getTime()).toBe(hoy().getTime());
+    });
+  });
+
+  /* -- ALV-021: seguro del paciente en la consulta ------------------------- */
+
+  it('con aseguradora declarada, la fila dice su nombre', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder({ citas: [{ ...CITA, insuranceCarrierName: 'Seguros Illimani' }] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['cobertura']).toBe('Seguros Illimani');
+  });
+
+  it('sin aseguradora (`null` desde la API), la fila dice Particular', async () => {
+    // `null` es la respuesta comprobada, no la ausencia del campo: se buscó
+    // y el paciente no tiene. Es distinto del caso de abajo.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder({ citas: [{ ...CITA, insuranceCarrierName: null }] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['cobertura']).toBe('Particular');
+  });
+
+  it('cuando la API no manda el campo, la celda no inventa Particular', async () => {
+    // Mismo criterio que el nombre del paciente: si la API omite el campo por
+    // privacidad, la pantalla no puede rellenarlo con un valor que también es
+    // una afirmación —«no tiene seguro»— que nadie comprobó para esta sesión.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    const { ...sinCampo } = CITA;
+    await responder({ citas: [sinCampo] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['cobertura']).toBe('—');
+    expect(fila['cobertura']).not.toBe('Particular');
+  });
+
   it('una cita sin paciente no enlaza a ningún expediente', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     const { patientProfileId: _omitido, ...sinPaciente } = CITA;
