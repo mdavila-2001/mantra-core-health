@@ -159,8 +159,8 @@ describe('AccessTree', () => {
 
     const rotulos = accesos().map((a) => a.querySelector('.arbol__acceso-nombre')?.textContent);
     expect(rotulos).toContain('Evoluciones');
-    // «Consultas» desde ALV-016; era «Turnos».
-    expect(rotulos).toContain('Consultas');
+    // «Consultas médicas» desde ALV-016; era «Turnos».
+    expect(rotulos).toContain('Consultas médicas');
   });
 
   it('cada acceso lleva su ícono: la zona se recorre con la vista, no leyendo', () => {

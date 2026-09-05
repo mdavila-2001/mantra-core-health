@@ -194,8 +194,7 @@ describe('NavigationService', () => {
         'Directorio de laboratorios',
         'Directorio de clínicas',
         'Directorio de farmacias',
-        'Consulta médica',
-        'Consultas',
+        'Consultas médicas',
         'Archivo clínico',
         'Evoluciones',
         'Glosario',
@@ -451,7 +450,7 @@ describe('NavigationService', () => {
 
       // «Consultas» desde ALV-016 (antes «Turnos», §4.H del plan de UX):
       // la ruta sigue siendo `schedule`.
-      expect(service.currentSection()?.label).toBe('Consultas');
+      expect(service.currentSection()?.label).toBe('Consultas médicas');
     });
   });
 });
