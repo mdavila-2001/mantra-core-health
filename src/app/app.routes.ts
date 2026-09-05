@@ -84,6 +84,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // olvida, que es exactamente lo que una pantalla de preferencias debería
   // conseguir.
   settings: () => import('./features/settings/settings').then((m) => m.Settings),
+  // FT-18-R01/R02 · la portada de los cuatro directorios.
+  directories: () =>
+    import('./features/directories-overview/directories-overview').then(
+      (m) => m.DirectoriesOverview,
+    ),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
