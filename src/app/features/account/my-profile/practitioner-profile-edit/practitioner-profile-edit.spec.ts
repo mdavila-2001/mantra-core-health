@@ -58,7 +58,11 @@ describe('PractitionerProfileEdit', () => {
     // siga vigilando lo que cada prueba sí afirma, en vez de fallar en todas
     // por una lectura que es de otra pantalla.
     for (const pendiente of http.match((r) => r.url.startsWith('/terminology/'))) {
-      pendiente.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      // El catálogo de municipios (ALV-003) se pide al sembrar el formulario y
+      // se cancela al desmontar: una petición cancelada no se puede flushear.
+      if (!pendiente.cancelled) {
+        pendiente.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      }
     }
     http.verify();
   });

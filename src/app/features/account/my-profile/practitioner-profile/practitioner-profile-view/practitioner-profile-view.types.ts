@@ -49,11 +49,24 @@ export interface EspecialidadVisible {
 export interface AfiliacionVisible {
   readonly id: string;
   readonly organizacion: string;
+  /** Vacío cuando el vínculo no declara cargo (ALV-007). */
   readonly cargo: string;
-  readonly area: string;
   readonly desde: Date;
   readonly hasta: Date | null;
   readonly actual: boolean;
+}
+
+/**
+ * Una sede donde atiende hoy (ALV-005) — la mitad que a la ficha le faltaba:
+ * la trayectoria decía dónde trabajó, no dónde encontrarlo.
+ */
+export interface SedeVisible {
+  readonly id: string;
+  readonly nombre: string;
+  /** Dirección en una línea, ya normalizada para mostrar (ALV-010). Vacía si no tiene. */
+  readonly direccion: string;
+  /** Punto en el mapa, si la dirección lo trae (ALV-006). */
+  readonly punto: { readonly lat: number; readonly lng: number } | null;
 }
 
 /** Una matrícula, ya traducida. */
@@ -116,6 +129,12 @@ export interface PerfilProfesionalVisible {
   readonly actividadActual: readonly AfiliacionVisible[];
   /** Hospitales/centros anteriores (UC-05-16, `endDate` presente). */
   readonly experienciaHistorica: readonly AfiliacionVisible[];
+  /**
+   * Dónde atiende hoy (ALV-005). Opcional: la ficha del directorio y los
+   * fixtures viejos no lo traen, y ausente se lee como «sin sedes», no como
+   * dato roto.
+   */
+  readonly sedes?: readonly SedeVisible[];
   /**
    * Los datos personales, **sólo en la ficha propia**.
    *

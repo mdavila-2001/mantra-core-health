@@ -24,7 +24,43 @@ export interface PracticeSite {
   readonly timeZone: string | null;
   /** Dirección en una línea, o `null` si la sede no tiene ninguna. */
   readonly addressText: string | null;
+  /** Punto de la sede, si la dirección lo tiene cargado (ALV-006). `null` si no. */
+  readonly latitude: number | null;
+  readonly longitude: number | null;
   readonly status: string;
+}
+
+/**
+ * La dirección de un consultorio propio, tal como la manda el alta.
+ *
+ * Es un subconjunto de `NewAddress` (`common`): el dueño lo pone el backend
+ * desde la sesión, y el país no se ofrece porque el único sembrado es Bolivia.
+ */
+export interface NewOwnSiteAddress {
+  /** Líneas de la dirección (calle, número, referencia). Al menos una. */
+  readonly lines: readonly string[];
+  readonly city?: string;
+  /** Municipio, miembro de `VS_BO_MUNICIPALITY`. */
+  readonly municipalityConceptId?: string;
+  /** Departamento, miembro de `VS_BO_DEPARTMENT`. */
+  readonly administrativeAreaConceptId?: string;
+  /** Punto marcado en el mapa. Van siempre los dos o ninguno. */
+  readonly latitude?: number;
+  readonly longitude?: number;
+}
+
+/**
+ * Alta de un consultorio propio (ALV-005/006).
+ *
+ * **No lleva práctica ni organización**: el backend crea —o reutiliza— la
+ * práctica personal del profesional. Es justo el caso que el alta dejaba sin
+ * resolver: «atiendo en mi propio consultorio, sin estar afiliado a nadie».
+ */
+export interface NewOwnSite {
+  readonly name: string;
+  /** Zona horaria IANA. Por defecto la de La Paz. */
+  readonly timeZone?: string;
+  readonly address?: NewOwnSiteAddress;
 }
 
 /**
