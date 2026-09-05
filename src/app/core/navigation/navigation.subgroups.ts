@@ -237,7 +237,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Facturación',
     icon: 'billing',
     // Lo que se cobra y cómo se asienta.
-    paths: ['billing', 'administration/accounting'],
+    paths: ['billing', 'administration/accounting', 'assets-liabilities'],
   },
 
   /* -- Mi cuenta ---------------------------------------------------------- */

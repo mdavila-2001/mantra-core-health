@@ -974,6 +974,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // FT-26 (05/09/2026) — activos fijos y pasivos de la práctica, en
+    // auto-servicio del doctor. Va junto a Contabilidad por el mismo motivo
+    // que ese registro: los dos leen y escriben el mismo `practiceId`, y son
+    // la misma persona —quien ejerce— la que entra a los dos.
+    //
+    // Sólo `PRACTITIONER`: a diferencia de Contabilidad, no hay todavía un
+    // motor admin equivalente para dar de alta activos/pasivos (el que existe,
+    // `AccountingAssetController`/`AccountingLiabilityController`, es
+    // `SECURITY_ADMIN` puro y no comparte pantalla con éste — ver el reporte
+    // del carril). Cuando eso cambie, se suma el rol acá.
+    path: 'assets-liabilities',
+    label: 'Activos y pasivos',
+    group: 'Facturación',
+    icon: 'chart',
+    roles: ['PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Tus activos fijos y tus deudas: alta, avance y automatización.',
+    module: 'M16 accounting',
+  },
+
+  {
     // Carril 18. Autoservicio: el profesional pide vincularse a una
     // organización y ve el estado de sus vinculaciones. No cuelga de
     // `/organizaciones` porque el proxy desvía todo lo que empieza con `/org`
