@@ -45,6 +45,7 @@ import { Select } from '../../shared/components/atoms/select/select';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
+import { PdfExportButton } from '../../shared/components/molecules/pdf-export-button/pdf-export-button';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
@@ -52,6 +53,7 @@ import type { ColumnDef } from '../../shared/components/organisms/data-table/dat
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
 import { errorMessageOf } from '../../shared/forms/form-support';
+import { CsvExportService, type CsvColumn } from '../../shared/utils/csv-export/csv-export';
 
 /**
  * Agrupa las consultas cobradas por mes de emisión, la más reciente arriba.
@@ -176,6 +178,7 @@ export interface MesFacturado {
     FormField,
     Input,
     PageHeader,
+    PdfExportButton,
     ReactiveFormsModule,
     Select,
     StatusSeal,
@@ -188,6 +191,7 @@ export interface MesFacturado {
 export class Accounting {
   private readonly libros = inject(AccountingClient);
   private readonly auth = inject(AuthService);
+  private readonly csv = inject(CsvExportService);
 
   /* ---- Quién está mirando (H4 del plan de UX del 22/08/2026) --------------- */
 
@@ -366,6 +370,29 @@ export class Accounting {
 
   protected reintentar(): void {
     this.intento.update((n) => n + 1);
+  }
+
+  /** Columnas del CSV del libro diario: mismos campos que la tabla en pantalla. */
+  private readonly columnasCsvDelDiario: readonly CsvColumn<FilaDelDiario>[] = [
+    { header: 'Número', value: (f) => f.transactionNumber ?? '' },
+    { header: 'Fecha', value: (f) => f.transactionDate },
+    { header: 'Importe', value: (f) => f.totalAmount ?? '' },
+    { header: 'Posteado', value: (f) => f.postedAt ?? '' },
+  ];
+
+  /**
+   * Descarga el libro diario en CSV (punto 4 de FT-20: "en el caso del libro
+   * diario existirá adicionalmente una opción adicional de descargar csv").
+   *
+   * Sólo el diario lo pide el ticket textualmente; el resto de los informes
+   * ya tiene su botón de PDF (`app-pdf-export-button`), que es el formato que
+   * el ticket pide "para descargar los informes financieros, libros y
+   * dashboards" en general.
+   */
+  protected exportarDiarioCsv(): void {
+    const estado = this.filasDelDiario();
+    if (estado.status !== 'ready') return;
+    this.csv.download(estado.data, this.columnasCsvDelDiario, 'libro-diario');
   }
 
   /* ============================================================================
@@ -647,7 +674,9 @@ export class Accounting {
   protected readonly estadoDeResultados = toSignal(
     toObservable(this.practicaEIntentoYPestana).pipe(
       switchMap(({ practiceId, pestana }): Observable<ViewState<IncomeStatement>> => {
-        if (pestana !== 1 || practiceId === null) {
+        // También se pide para el Cuadro de mando (pestaña 3): el resultado
+        // neto del período es uno de sus indicadores.
+        if ((pestana !== 1 && pestana !== 3) || practiceId === null) {
           return of(empty({ label: 'Elegir una práctica' }));
         }
         return this.libros.incomeStatement(practiceId).pipe(
@@ -680,7 +709,9 @@ export class Accounting {
   protected readonly balanceGeneral = toSignal(
     toObservable(this.practicaEIntentoYPestana).pipe(
       switchMap(({ practiceId, pestana }): Observable<ViewState<BalanceSheet>> => {
-        if (pestana !== 2 || practiceId === null) {
+        // También se pide para el Cuadro de mando (pestaña 3): activos y
+        // pasivos totales son otro de sus indicadores.
+        if ((pestana !== 2 && pestana !== 3) || practiceId === null) {
           return of(empty({ label: 'Elegir una práctica' }));
         }
         return this.libros.balanceSheet(practiceId).pipe(
@@ -710,6 +741,131 @@ export class Accounting {
       ? { variant: 'approved' as const, label: 'Activo = Pasivo + Patrimonio' }
       : { variant: 'rejected' as const, label: 'El balance general NO cuadra' };
   });
+
+  /* ============================================================================
+      FT-20 · Cuadro de mando integral (pestaña 3).
+
+      No es una quinta lectura: junta lo que las otras tres ya trajeron —el
+      cuadre del balance de sumas y saldos (siempre pedido, fuera de las
+      pestañas), el resultado del estado de resultados y los totales del
+      balance general (los dos, pedidos también en esta pestaña, ver arriba)—.
+      Ningún número se inventa acá; los cuatro salen tal cual los calculó el
+      servidor.
+      ========================================================================== */
+
+  /**
+   * Los cuatro indicadores del cuadro de mando, o `null` mientras falte
+   * alguno. Parcial no se muestra: un cuadro de mando con un hueco en medio
+   * es más confuso que esperar a que cierren las tres lecturas.
+   */
+  protected readonly indicadores = computed(() => {
+    const balance = this.resumen();
+    const resultados = this.estadoDeResultados();
+    const general = this.balanceGeneral();
+    if (balance === null || resultados.status !== 'ready' || general.status !== 'ready') {
+      return null;
+    }
+    return {
+      cuadre: balance.balanced,
+      netIncome: resultados.data.netIncome,
+      totalAssets: general.data.totalAssets,
+      totalLiabilities: general.data.totalLiabilities,
+      totalEquity: general.data.totalEquity,
+      balanceado: general.data.balanced,
+    };
+  });
+
+  /* ============================================================================
+      FT-20 · Flujo de caja (pestaña 4).
+
+      "Flujo de caja" en el pedido del cliente no es el estado de flujos de
+      efectivo NIIF (directo/indirecto, por actividad operativa/inversión/
+      financiamiento) — nada en el backend clasifica una cuenta como "de
+      efectivo" ni un movimiento por actividad, y no hay dato para eso. Lo que
+      SÍ hay es el libro mayor de una cuenta puntual, que es lo que el propio
+      usuario elige que sea su caja o su banco — el mismo gesto que ya hace la
+      pestaña de Libro mayor, y el mismo que ya le pide "elegí la cuenta a
+      debitar (caja/banco)" a los formularios de arriba.
+      ========================================================================== */
+
+  protected readonly cuentaDeCaja = linkedSignal<
+    readonly SelectOption<string>[],
+    string | null
+  >({
+    source: this.opcionesDeCuenta,
+    computation: (opciones, previo) =>
+      opciones.some((o) => o.value === previo?.value)
+        ? (previo?.value ?? null)
+        : (opciones[0]?.value ?? null),
+  });
+
+  private readonly parametrosDeCaja = computed(() => ({
+    practiceId: this.practicaElegida(),
+    accountId: this.cuentaDeCaja(),
+    pestana: this.pestanaActiva(),
+    intento: this.intento(),
+  }));
+
+  protected readonly flujoDeCaja = toSignal(
+    toObservable(this.parametrosDeCaja).pipe(
+      switchMap(
+        ({ practiceId, accountId, pestana }): Observable<ViewState<GeneralLedgerEntry[]>> => {
+          if (pestana !== 4 || practiceId === null || accountId === null) {
+            return of(empty({ label: 'Elegir una cuenta' }));
+          }
+          return this.libros.generalLedger(practiceId, { accountId }).pipe(
+            map((pagina): ViewState<GeneralLedgerEntry[]> =>
+              pagina.items.length === 0
+                ? empty({ label: 'Sin movimientos' }, 'Esta cuenta no tiene movimientos posteados.')
+                : ready([...pagina.items]),
+            ),
+            startWith(loading()),
+            catchError((error: unknown) => of(errorToViewState<GeneralLedgerEntry[]>(error))),
+          );
+        },
+      ),
+    ),
+    { initialValue: loading() as ViewState<GeneralLedgerEntry[]> },
+  );
+
+  protected readonly filasDelFlujoDeCaja = computed<ViewState<readonly FilaDelMayor[]>>(() => {
+    const estado = this.flujoDeCaja();
+    return estado.status === 'ready'
+      ? ready(
+          estado.data.map(
+            (m): FilaDelMayor => ({ ...m, transactionDate: formatearFechaDeTabla(m.transactionDate) }),
+          ),
+        )
+      : (estado as ViewState<readonly FilaDelMayor[]>);
+  });
+
+  /**
+   * Entradas, salidas y neto del período mostrado.
+   *
+   * Suma en el navegador con `Number()`, igual que `totalPendiente` más
+   * arriba: es un total **para leer**, no un importe que se vaya a mandar de
+   * vuelta al servidor — la cabecera de `accounting.types.ts` prohíbe lo
+   * segundo, no lo primero.
+   */
+  protected readonly resumenDeCaja = computed(() => {
+    const estado = this.flujoDeCaja();
+    if (estado.status !== 'ready') return null;
+    const entradas = estado.data.reduce((suma, fila) => suma + Number(fila.debit), 0);
+    const salidas = estado.data.reduce((suma, fila) => suma + Number(fila.credit), 0);
+    return {
+      entradas: entradas.toFixed(2),
+      salidas: salidas.toFixed(2),
+      neto: (entradas - salidas).toFixed(2),
+    };
+  });
+
+  protected readonly columnasDeCaja: readonly ColumnDef<FilaDelMayor>[] = [
+    { key: 'transactionDate', header: 'Fecha', priority: 1 },
+    { key: 'transactionNumber', header: 'Asiento', priority: 2 },
+    { key: 'debit', header: 'Entrada', priority: 1, align: 'end' },
+    { key: 'credit', header: 'Salida', priority: 1, align: 'end' },
+    { key: 'runningBalance', header: 'Saldo', priority: 1, align: 'end' },
+  ];
 
   /* ============================================================================
       TAREA-20 S2 — MODO CONTADOR: asiento de N filas.
