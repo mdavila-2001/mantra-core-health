@@ -30,7 +30,7 @@
     <app-textarea
       placeholder="Ej: seguimiento de una derivación"
       [value]="motivo()"
-      (valueChange)="motivo.set($event === null ? '' : String($event))"
+      (valueChange)="motivo.set($event)"
     />
   </app-form-field>
 
