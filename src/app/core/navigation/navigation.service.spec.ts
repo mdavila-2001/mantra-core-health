@@ -200,8 +200,7 @@ describe('NavigationService', () => {
         'Directorio de laboratorios',
         'Directorio de clínicas',
         'Directorio de farmacias',
-        'Consulta médica',
-        'Turnos',
+        'Consultas médicas',
         'Archivo clínico',
         'Evoluciones',
         'Glosario',
@@ -456,8 +455,9 @@ describe('NavigationService', () => {
     it('los parámetros de consulta no confunden a la sección', async () => {
       await router.navigateByUrl('/schedule?fecha=2026-08-04');
 
-      // «Turnos» desde §4.H del plan de UX: la ruta sigue siendo `schedule`.
-      expect(service.currentSection()?.label).toBe('Turnos');
+      // «Consultas» desde ALV-016 (antes «Turnos», §4.H del plan de UX):
+      // la ruta sigue siendo `schedule`.
+      expect(service.currentSection()?.label).toBe('Consultas médicas');
     });
   });
 });

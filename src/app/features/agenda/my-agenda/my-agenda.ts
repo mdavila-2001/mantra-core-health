@@ -1,8 +1,10 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  input,
   LOCALE_ID,
   signal,
 } from '@angular/core';
@@ -170,6 +172,20 @@ const SIN_DATO = 'Sin registrar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyAgenda {
+  /**
+   * Si va **dentro** de otra pantalla en vez de ser la pantalla.
+   *
+   * Vive en dos lugares: su propia ruta (`/schedule/mine`, que sigue existiendo
+   * para los enlaces que ya apuntan ahí) y como una solapa más de Consultas,
+   * al lado de Cupos — que es donde el médico la busca, sin viajar a otra
+   * pantalla para ver su horario.
+   *
+   * Lo único que cambia es el encabezado: incrustada no lo dibuja, porque la
+   * pantalla que la contiene ya tiene el suyo y dos títulos en la misma vista
+   * se leen como dos pantallas superpuestas.
+   */
+  readonly embebida = input(false, { transform: booleanAttribute });
+
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);

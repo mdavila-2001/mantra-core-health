@@ -61,6 +61,7 @@ import { DataTable } from '../../shared/components/organisms/data-table/data-tab
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { AGENDA_CREATE_ROUTE, AGENDA_MINE_ROUTE, bookingNewRoute } from './agenda.routes';
+import { MyAgenda } from './my-agenda/my-agenda';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
@@ -381,6 +382,7 @@ export interface CupoVisible {
     Tab,
     Tabs,
     Textarea,
+    MyAgenda,
   ],
   templateUrl: './agenda.html',
   styleUrl: './agenda.css',
@@ -673,18 +675,22 @@ export class Agenda {
    * Pestaña visible. En la URL para que un enlace pueda apuntar a una en
    * concreto.
    *
-   * **«Solicitudes» es la primera y la de arranque**, y es un cambio deliberado:
-   * es lo único de esta pantalla que **espera una acción de una persona**. Las
-   * citas agendadas y los cupos se consultan; una solicitud sin responder le
-   * cambia el día a alguien que está esperando.
+   * Son **tres**: «Consultas» —el ciclo completo, ALV-019—, «Mi agenda» —el
+   * horario publicado, que era una pantalla aparte— y «Cupos», que es
+   * disponibilidad y sigue siendo lo suyo (ALV-020).
    *
-   * `vista=cupos` sigue significando lo mismo que antes, así que los enlaces
-   * que ya existen no se rompen.
+   * `vista=cupos` sigue significando lo mismo. `vista=citas` y
+   * `vista=solicitudes` llevan a la lista unificada, que es donde vive lo que
+   * antes estaba partido: un enlace viejo sigue llegando a donde quería llegar.
    */
   protected readonly pestana = computed(() => {
     const vista = this.params()?.get('vista');
-    if (vista === 'cupos') return 2;
-    return vista === 'citas' ? 1 : 0;
+    // «Mi agenda» sólo existe para quien atiende: quien reparte turnos no tiene
+    // agenda propia y no se le ofrece una puerta que la otra pantalla no va a
+    // reconocer como suya. Sin ella, «Cupos» corre un lugar.
+    const indiceDeCupos = this.esQuienAtiende() ? 2 : 1;
+    if (vista === 'cupos') return indiceDeCupos;
+    return vista === 'agenda' && this.esQuienAtiende() ? 1 : 0;
   });
 
   protected readonly incluirCanceladas = computed(() => this.params()?.get('canceladas') === 'si');
@@ -765,16 +771,34 @@ export class Agenda {
     filtrarEstado(this.citas(), (cita) => this.porResponder(cita)),
   );
 
-  /** Lo que ya está agendado: la solapa «Citas» sin las solicitudes. */
+  /**
+   * **Una sola lista para todo el ciclo** (ALV-019).
+   *
+   * Solicitudes y citas se mostraban en dos solapas, y era una separación de
+   * presentación: las dos salían de `citas()` filtrando por `porResponder`, con
+   * las MISMAS acciones y la misma celda. Quien atendía tenía que mirar en dos
+   * lugares para saber cómo venía el día, y una solicitud aceptada
+   * «desaparecía» de una solapa para aparecer en la otra.
+   *
+   * Ahora es una lista con el estado adelante, que es lo que ordena el ciclo
+   * `SOLICITADA → CONFIRMADA → EN CURSO → COMPLETADA`. Los cupos siguen aparte
+   * (ALV-020): son disponibilidad, no consultas.
+   *
+   * `solicitudes()` sobrevive porque el conteo de lo que espera respuesta sigue
+   * siendo la única cifra que urge: se muestra como aviso arriba de la tabla.
+   */
+  protected readonly consultas = this.citas;
+
+  /** Lo que ya está agendado: lo que no espera respuesta. */
   protected readonly citasAgendadas = computed(() =>
     filtrarEstado(this.citas(), (cita) => !this.porResponder(cita)),
   );
 
-  protected readonly rotuloDeSolicitudes = computed(() =>
-    rotulo('Solicitudes', cuenta(this.solicitudes())),
-  );
-  protected readonly rotuloDeCitas = computed(() =>
-    rotulo('Citas', cuenta(this.citasAgendadas())),
+  /** Cuántas esperan respuesta, para el aviso de arriba de la tabla. */
+  protected readonly cuantasEsperanRespuesta = computed(() => cuenta(this.solicitudes()) ?? 0);
+
+  protected readonly rotuloDeConsultas = computed(() =>
+    rotulo('Consultas', cuenta(this.consultas())),
   );
   protected readonly rotuloDeCupos = computed(() => rotulo('Cupos', cuenta(this.cupos())));
 
@@ -956,11 +980,28 @@ export class Agenda {
     });
   }
 
-  protected readonly columnasDeCitas = computed<readonly ColumnDef<CitaVisible>[]>(() => [
-    { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },
-    { key: 'recurso', header: 'Recurso', priority: 1 },
+  /**
+   * Las columnas del ciclo completo (ALV-019), en el orden que ordena una lista
+   * mixta: **el estado primero**. En una lista donde conviven lo que espera
+   * respuesta y lo que ya está confirmado, lo que decide si la fila pide algo
+   * es el estado, no la hora.
+   *
+   * `solicitada` sólo dice algo en las que esperan respuesta —en una confirmada
+   * es ruido—, así que la celda la deja vacía y la columna cede primero en
+   * pantalla chica.
+   */
+  protected readonly columnasDeConsultas = computed<readonly ColumnDef<CitaVisible>[]>(() => [
     { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'paciente', header: 'Paciente', priority: 2, cell: this.celdaPaciente() },
+    { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },
+    { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
+    { key: 'solicitada', header: 'Solicitada', priority: 3, cell: this.celdaSolicitada() },
+    // ALV-017: en la agenda propia el recurso es el MISMO en todas las filas —
+    // el nombre del profesional repetido tantas veces como citas tenga, sin
+    // distinguir nada. Sólo aparece cuando se mira la agenda de otro o cuando
+    // la tabla puede mezclar recursos, que es cuando el dato separa filas.
+    ...(this.mirandoAgendaPropia()
+      ? []
+      : [{ key: 'recurso', header: 'Recurso', priority: 2 } satisfies ColumnDef<CitaVisible>]),
     { key: 'motivo', header: 'Motivo', priority: 3 },
     // Prioridad 2: en pantalla chica cede antes que el estado de la cita y la
     // fecha, pero antes que el motivo. Quien mira la agenda en el teléfono
@@ -1000,25 +1041,6 @@ export class Agenda {
    * tomamos acá**: ensanchar quién ve la agenda de quién es privacidad, no
    * pantalla (P-13-2).
    */
-  protected readonly columnasDeSolicitudes = computed<readonly ColumnDef<CitaVisible>[]>(() => [
-    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'solicitada', header: 'Solicitada', priority: 1, cell: this.celdaSolicitada() },
-    { key: 'cuando', header: 'Cita', priority: 1, cell: this.celdaCuando() },
-    { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
-    { key: 'recurso', header: 'Profesional', priority: 3 },
-    { key: 'motivo', header: 'Motivo', priority: 3 },
-    ...(this.puedeAtender()
-      ? [
-          {
-            key: 'acciones',
-            header: 'Acciones',
-            priority: 1,
-            cell: this.celdaAccionesCita(),
-          } satisfies ColumnDef<CitaVisible>,
-        ]
-      : []),
-  ]);
-
   protected readonly columnasDeCupos = computed<readonly ColumnDef<CupoVisible>[]>(() => [
     { key: 'franja', header: 'Franja', priority: 1, cell: this.celdaFranja() },
     { key: 'recurso', header: 'Recurso', priority: 1 },
@@ -1096,7 +1118,16 @@ export class Agenda {
   }
 
   protected elegirPestana(indice: number): void {
-    const vista = indice === 2 ? 'cupos' : indice === 1 ? 'citas' : null;
+    // El espejo de `pestana()`: sin «Mi agenda» los índices corren, y publicar
+    // `vista=agenda` desde la solapa de cupos dejaría la URL diciendo una cosa
+    // y la pantalla mostrando otra.
+    const conAgendaPropia = this.esQuienAtiende();
+    const vista =
+      indice === (conAgendaPropia ? 2 : 1)
+        ? 'cupos'
+        : conAgendaPropia && indice === 1
+          ? 'agenda'
+          : null;
     this.publicar({ vista });
   }
 

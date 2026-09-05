@@ -1,7 +1,9 @@
-<app-page-header
-  title="Mi agenda"
-  subtitle="El horario que tenés publicado y hasta cuándo hay turnos abiertos."
-/>
+@if (!embebida()) {
+  <app-page-header
+    title="Mi agenda"
+    subtitle="El horario que tenés publicado y hasta cuándo hay turnos abiertos."
+  />
+}
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
   @if (patron(); as p) {

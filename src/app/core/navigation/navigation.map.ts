@@ -299,18 +299,30 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Atención',
     icon: 'stethoscope',
     roles: ['CLINICIAN', 'PRACTITIONER'],
+    // **Fuera del menú del médico** (pedido del propietario, 04/09/2026):
+    // «nadie sabe qué hace». Nació como la PUERTA para empezar a atender, y esa
+    // puerta hoy está en otro lado y es mejor: cada fila de Consultas ofrece
+    // «Iniciar consulta» sobre la cita concreta, en vez de una pantalla que
+    // vuelve a preguntar a quién se atiende.
+    //
+    // `fueraDelMenuPara` y no borrarla: la pantalla sigue existiendo y
+    // alcanzable por su ruta y desde «Tus accesos». Si en unas semanas nadie
+    // la extrañó, se borra en su propio cambio — sacarla de la vista es
+    // reversible en un renglón, borrarla no.
+    fueraDelMenuPara: ['CLINICIAN', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Empezá la atención de hoy: elegí al paciente y entrá a su consulta.',
     module: 'M08 clinical',
   },
   {
-    // **«Turnos» y no «Agenda»** (§4.H del plan de UX): es el nombre exacto de
-    // la lista cerrada del cliente, y además el más honesto — la sección son
-    // los turnos (los que pediste, los que te pidieron, el horario que
-    // publicás), y «Agenda» no decía si era para pedir uno o para publicarlo.
+    // **«Consultas»** (ALV-016). Antes decía «Turnos», que era el nombre exacto
+    // de la lista cerrada del cliente (§4.H del plan de UX); el mismo cliente
+    // pidió la nomenclatura clínica, que además es la que usa el resto del
+    // producto —la receta, el expediente y el ciclo hablan de consultas, no de
+    // turnos—. «Cupos» NO se renombra: es disponibilidad, no consulta.
     // La ruta sigue siendo `schedule`.
     path: 'schedule',
-    label: 'Turnos',
+    label: 'Consultas médicas',
     group: 'Atención',
     icon: 'calendar',
     // El documento de actores ubica estos tres roles en M41; `SCHEDULER` queda
