@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 
 import { of } from 'rxjs';
@@ -551,6 +551,11 @@ async function montarConSedes(confirmar = true) {
   const dialogs = { confirm: vi.fn(async () => confirmar) };
   const municipios = { listar: () => of(RAMAS), olvidar: vi.fn() };
   await TestBed.configureTestingModule({
+    // El picker y el mapa van en un `@defer (when …)`: en el runner de CI un
+    // bloque diferido que se dispara solo es una carrera (ver la nota del
+    // repo sobre @defer en specs). Estas pruebas hablan con las señales del
+    // componente, no con el DOM del bloque, así que se deja en manual.
+    deferBlockBehavior: DeferBlockBehavior.Manual,
     imports: [WorkHistory],
     providers: [
       provideHttpClient(),

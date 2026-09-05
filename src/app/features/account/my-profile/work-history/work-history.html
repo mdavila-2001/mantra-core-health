@@ -88,59 +88,68 @@
             <app-input [(value)]="ciudadDeSede" placeholder="Santa Cruz de la Sierra" />
           </app-form-field>
 
-          <!-- El municipio se elige con el mapa de Bolivia del alta; el
-               departamento se deduce de él, sin preguntarlo dos veces. -->
-          @if (catalogoMunicipiosCaido()) {
-            <p class="historial__escape">
-              No pudimos traer el catálogo de municipios. Podés seguir sin esto.
-              <button app-button variant="ghost" size="sm" type="button" (clicked)="reintentarMunicipios()">
-                Reintentar
-              </button>
-            </p>
-          } @else if (ramasMunicipios().length > 0) {
-            <app-location-picker
-              testId="sede-municipio"
-              [ramas]="ramasMunicipios()"
-              [value]="municipioDeSede()"
-              (valueChange)="municipioDeSede.set($event)"
-              mapLabel="Mapa de Bolivia: elegí el departamento del consultorio"
-              municipalityLabel="Municipio (opcional)"
-              municipalityHint="Sólo se ofrecen los del departamento que elegiste."
-            />
-          }
-
-          <!-- El punto es opcional y el mapa se despliega a pedido: Leaflet no
-               se paga en cada visita al perfil. Sin Google —la CSP lo bloquea—. -->
-          <div class="historial__mapa-bloque">
-            <button
-              app-button
-              variant="ghost"
-              size="sm"
-              type="button"
-              data-testid="sede-marcar-mapa"
-              (clicked)="alternarMapa()"
-            >
-              {{ mapaAbierto() ? 'Ocultar el mapa' : 'Marcar el punto en el mapa (opcional)' }}
-            </button>
-            @if (mapaAbierto()) {
-              <app-map
-                class="historial__mapa"
-                data-testid="sede-mapa"
-                [pines]="pinesDeSede()"
-                [centro]="puntoDeSede()"
-                etiqueta="Mapa para marcar dónde queda el consultorio"
-                (pointPicked)="marcarPunto($event)"
+          <!-- Diferido a propósito: el mapa de Bolivia y Leaflet son lo más
+               pesado de esta tarjeta y sólo hacen falta con el formulario
+               abierto. Sin el @defer, entraban al paquete inicial y lo
+               pasaban del presupuesto (1,10 MB) — el mismo remedio que la
+               vitrina de diseño, que pasó a loadComponent por lo mismo. -->
+          @defer (when altaDeSedeAbierta()) {
+            <!-- El municipio se elige con el mapa de Bolivia del alta; el
+                 departamento se deduce de él, sin preguntarlo dos veces. -->
+            @if (catalogoMunicipiosCaido()) {
+              <p class="historial__escape">
+                No pudimos traer el catálogo de municipios. Podés seguir sin esto.
+                <button app-button variant="ghost" size="sm" type="button" (clicked)="reintentarMunicipios()">
+                  Reintentar
+                </button>
+              </p>
+            } @else if (ramasMunicipios().length > 0) {
+              <app-location-picker
+                testId="sede-municipio"
+                [ramas]="ramasMunicipios()"
+                [value]="municipioDeSede()"
+                (valueChange)="municipioDeSede.set($event)"
+                mapLabel="Mapa de Bolivia: elegí el departamento del consultorio"
+                municipalityLabel="Municipio (opcional)"
+                municipalityHint="Sólo se ofrecen los del departamento que elegiste."
               />
-              @if (puntoDeSede(); as punto) {
-                <p class="historial__punto" data-testid="sede-punto">
-                  Punto marcado: {{ punto.lat | number: '1.4-4' }}, {{ punto.lng | number: '1.4-4' }}
-                  <button app-button variant="ghost" size="sm" type="button" (clicked)="quitarPunto()">
-                    Quitar
-                  </button>
-                </p>
-              }
             }
-          </div>
+
+            <!-- El punto es opcional y el mapa se despliega a pedido: Leaflet no
+                 se paga en cada visita al perfil. Sin Google —la CSP lo bloquea—. -->
+            <div class="historial__mapa-bloque">
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="sede-marcar-mapa"
+                (clicked)="alternarMapa()"
+              >
+                {{ mapaAbierto() ? 'Ocultar el mapa' : 'Marcar el punto en el mapa (opcional)' }}
+              </button>
+              @if (mapaAbierto()) {
+                <app-map
+                  class="historial__mapa"
+                  data-testid="sede-mapa"
+                  [pines]="pinesDeSede()"
+                  [centro]="puntoDeSede()"
+                  etiqueta="Mapa para marcar dónde queda el consultorio"
+                  (pointPicked)="marcarPunto($event)"
+                />
+                @if (puntoDeSede(); as punto) {
+                  <p class="historial__punto" data-testid="sede-punto">
+                    Punto marcado: {{ punto.lat | number: '1.4-4' }}, {{ punto.lng | number: '1.4-4' }}
+                    <button app-button variant="ghost" size="sm" type="button" (clicked)="quitarPunto()">
+                      Quitar
+                    </button>
+                  </p>
+                }
+              }
+            </div>
+          } @placeholder {
+            <p class="historial__vacio">Cargando el mapa…</p>
+          }
 
           <app-form-actions
             submitLabel="Guardar consultorio"
