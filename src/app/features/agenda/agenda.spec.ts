@@ -653,6 +653,39 @@ describe('Agenda', () => {
     expect(fila['motivo']).toBe('Sin registrar');
   });
 
+  /* -- ALV-021: seguro del paciente en la consulta ------------------------- */
+
+  it('con aseguradora declarada, la fila dice su nombre', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder({ citas: [{ ...CITA, insuranceCarrierName: 'Seguros Illimani' }] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['cobertura']).toBe('Seguros Illimani');
+  });
+
+  it('sin aseguradora (`null` desde la API), la fila dice Particular', async () => {
+    // `null` es la respuesta comprobada, no la ausencia del campo: se buscó
+    // y el paciente no tiene. Es distinto del caso de abajo.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder({ citas: [{ ...CITA, insuranceCarrierName: null }] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['cobertura']).toBe('Particular');
+  });
+
+  it('cuando la API no manda el campo, la celda no inventa Particular', async () => {
+    // Mismo criterio que el nombre del paciente: si la API omite el campo por
+    // privacidad, la pantalla no puede rellenarlo con un valor que también es
+    // una afirmación —«no tiene seguro»— que nadie comprobó para esta sesión.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    const { ...sinCampo } = CITA;
+    await responder({ citas: [sinCampo] });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['cobertura']).toBe('—');
+    expect(fila['cobertura']).not.toBe('Particular');
+  });
+
   it('una cita sin paciente no enlaza a ningún expediente', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     const { patientProfileId: _omitido, ...sinPaciente } = CITA;

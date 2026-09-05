@@ -213,6 +213,15 @@ export interface Booking {
    */
   readonly patientName?: string;
   /**
+   * La aseguradora del paciente titular, o `null` si no declara ninguna
+   * (ALV-021).
+   *
+   * Misma regla de privacidad que `patientName`: `null` es la respuesta
+   * comprobada —«se buscó y no tiene», Particular—; **ausente** es que no
+   * corresponde verla, que es una pregunta distinta.
+   */
+  readonly insuranceCarrierName?: string | null;
+  /**
    * Por qué la cita está como está, cuando el último cambio lo explicó.
    *
    * Es lo que hace que una cancelación deje de ser un cartel mudo: el paciente
