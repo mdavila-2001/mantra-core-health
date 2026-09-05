@@ -13,8 +13,12 @@ import { request, type APIRequestContext } from '@playwright/test';
 /** La contraseña que usan todas las suites por actor del backend. */
 export const CLAVE = 'S3cret-passw0rd';
 
-/** Los tres roles que el barrido recorre. */
-export type Rol = 'administrador' | 'doctora' | 'paciente';
+/** Los roles que el barrido recorre. */
+export type Rol =
+  | 'administrador'
+  | 'doctora'
+  | 'paciente'
+  | 'operadora de facturación';
 
 export interface Actor {
   readonly rol: Rol;
@@ -65,6 +69,28 @@ export async function apiViva(api: APIRequestContext): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * La operadora de facturación del prestador (`BILLING_OPERATOR`).
+ *
+ * La siembra `tools/redesa/seed-solicitudes-seguro.mjs` en el repositorio de la
+ * API, con membresía en la organización y el rol acotado a ese tenant.
+ *
+ * **Existe para no certificar T16 con el administrador.** El admin entra a
+ * cualquier lado por el comodín `SUPERADMIN`, así que probar con él no dice
+ * nada del único rol que un usuario real va a tener — y la pantalla de
+ * solicitudes es justamente la del operador de facturación (TAREA-16 · D1.b).
+ */
+export function operadoraDeFacturacion(): Actor {
+  return {
+    rol: 'operadora de facturación',
+    identificador:
+      process.env['E2E_BILLING_OPERATOR_EMAIL'] ??
+      'facturacion.demo@alovida.test',
+    clave: process.env['E2E_BILLING_OPERATOR_PASSWORD'] ?? 'D3mo-passw0rd!',
+    nombre: 'Operadora de facturación',
+  };
 }
 
 /** Credenciales de la cuenta sembrada por `BOOTSTRAP_ADMIN_*` al arrancar la API. */
