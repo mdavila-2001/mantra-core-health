@@ -92,7 +92,10 @@ describe('NavigationService', () => {
         // Grupos y foros ya NO entra: desde el 18/08/2026 (recorrida de QA,
         // F-20) declara los roles de quien ejerce o administra — son foros
         // profesionales, y una sesión sin roles no es de nadie que ejerza.
-        // El directorio de laboratorios tampoco: es oferta publicada, no PHI.
+        // La portada de directorios (FT-18, `roles: [ANY_ROLE]`) sí entra:
+        // no exige rol, a diferencia de sus cuatro hijos específicos.
+        '/directories',
+        // El directorio de laboratorios tampoco exige rol: es oferta publicada, no PHI.
         '/laboratory-directory',
         // A5 y A6 del plan de UX (22/08/2026): los directorios de clínicas y de
         // farmacias entran por lo mismo que el de laboratorios — es oferta
@@ -208,6 +211,7 @@ describe('NavigationService', () => {
 
       expect(fueraDeMiCuenta).toEqual([
         'Chats',
+        'Directorios',
         'Directorio de laboratorios',
         'Directorio de clínicas',
         'Directorio de farmacias',
@@ -219,6 +223,7 @@ describe('NavigationService', () => {
         'Mis servicios',
         'Cotizaciones',
         'Contabilidad',
+        'Activos y pasivos',
       ]);
     });
 
@@ -372,6 +377,7 @@ describe('NavigationService', () => {
       const directorios = general?.blocks.find((bloque) => bloque.label === 'Directorios');
 
       expect(directorios?.items.map((item) => item.route)).toEqual([
+        '/directories',
         '/directory',
         '/laboratory-directory',
         '/clinics-directory',
@@ -390,7 +396,7 @@ describe('NavigationService', () => {
     });
 
     it('un bloque sólo trae lo que la sesión puede ver', () => {
-      // De los cuatro directorios, quien ejerce ve tres: la Guía de
+      // De los cinco directorios, quien ejerce ve cuatro: la Guía de
       // profesionales es exclusiva del paciente. Hasta el 04/09 veía uno solo
       // —clínicas y farmacias salían por `fueraDelMenuPara`— y FT-09-R01 se las
       // devolvió; lo que esta prueba sigue mostrando es el filtrado, que es su
@@ -401,6 +407,7 @@ describe('NavigationService', () => {
       const directorios = general?.blocks.find((bloque) => bloque.label === 'Directorios');
 
       expect(directorios?.items.map((item) => item.route)).toEqual([
+        '/directories',
         '/laboratory-directory',
         '/clinics-directory',
         '/pharmacies-directory',

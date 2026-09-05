@@ -99,18 +99,31 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     //
     // `directories` (FT-18) va primero: es la portada del bloque, y el orden
     // de dibujo lo decide `navigation.map.ts`, no este array — acá sólo se
-    // declara que las seis rutas son del mismo bloque.
+    // declara que las cinco rutas son del mismo bloque.
     //
-    // `nearby-places` (FT-19) entra por lo mismo: es "a dónde ir", sólo que
-    // la lista sale de tu receta y de tu ubicación en vez de un catálogo.
+    // `nearby-places` (FT-19) NO entra acá aunque sea "a dónde ir": esta
+    // lista la lee tal cual `DirectoriesOverview` para dibujar los nodos de
+    // «los cuatro directorios» (ver el comentario de esa pantalla), y
+    // `nearby-places` no es un directorio —sale de tu receta y tu ubicación,
+    // no de un catálogo—. Metida acá rompía esa pantalla: mostraba 5 nodos
+    // en vez de 4 (`directories-overview.spec.ts`). Tiene su propio bloque,
+    // más abajo.
     paths: [
       'directories',
       'directory',
       'laboratory-directory',
       'clinics-directory',
       'pharmacies-directory',
-      'nearby-places',
     ],
+  },
+  {
+    label: 'Lugares cercanos',
+    group: 'General',
+    icon: 'pin',
+    // Un solo destino: el armazón lo dibuja suelto (ver la nota de arriba,
+    // «un bloque de uno no es un desplegable»). Va en su propio bloque y no
+    // en «Directorios» para no ensuciar la lista que lee `DirectoriesOverview`.
+    paths: ['nearby-places'],
   },
 
   /* -- Atención -----------------------------------------------------------

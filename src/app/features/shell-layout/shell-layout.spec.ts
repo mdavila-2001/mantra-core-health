@@ -136,6 +136,9 @@ describe('ShellLayout', () => {
       // Carril P2: la mensajería tampoco exige rol. El filtro real es tener
       // perfil público de `community`, que es un dato de la cuenta.
       '/messaging',
+      // La portada de directorios (FT-18, `roles: [ANY_ROLE]`) tampoco exige
+      // rol: no es un directorio en sí, es su índice.
+      '/directories',
       '/laboratory-directory',
       // A5 y A6 del plan de UX: los directorios de clínicas y de farmacias,
       // por lo mismo que el de laboratorios — oferta publicada, sin rol que la
