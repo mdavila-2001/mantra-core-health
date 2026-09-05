@@ -255,6 +255,15 @@ export interface CitaVisible {
    * error.
    */
   readonly paciente: string;
+  /**
+   * `Particular` o el nombre de la aseguradora (ALV-021).
+   *
+   * Misma compuerta que `paciente`: sin permiso para verlo, la celda no se
+   * arriesga a decir «Particular» de alguien que sí tiene seguro y cuya
+   * cobertura no le corresponde consultar — dice «—», que es lo mismo que ya
+   * usa la columna de pago para «no corresponde».
+   */
+  readonly cobertura: string;
   /** El expediente clínico de la persona citada, si la sesión puede abrirlo. */
   readonly rutaExpediente: string | null;
   /**
@@ -1027,6 +1036,10 @@ export class Agenda {
       ? []
       : [{ key: 'recurso', header: 'Recurso', priority: 2 } satisfies ColumnDef<CitaVisible>]),
     { key: 'motivo', header: 'Motivo', priority: 3 },
+    // ALV-021. Prioridad 3, junto al motivo: es información de contexto, no
+    // algo que se opere como el pago. Texto plano — «Particular» o el nombre
+    // de la aseguradora no necesitan sello ni color.
+    { key: 'cobertura', header: 'Seguro', priority: 3 },
     // Prioridad 2: en pantalla chica cede antes que el estado de la cita y la
     // fecha, pero antes que el motivo. Quien mira la agenda en el teléfono
     // quiere saber a qué hora y con quién; el pago viene después.
@@ -1817,6 +1830,14 @@ export class Agenda {
       rutaPaciente:
         paciente !== null && this.puedeVerFichas() ? `/administration/patients/${paciente}` : null,
       paciente: cita.patientName ?? (paciente === null ? 'Sin paciente' : 'Paciente asignado'),
+      // ALV-021. `undefined` es «no corresponde verlo» —misma compuerta que el
+      // nombre—, y se dice con el mismo guión que ya usa la columna de pago
+      // para «no hay nada que decir todavía». `null` SÍ es una respuesta:
+      // se comprobó y no tiene, que es «Particular».
+      cobertura:
+        cita.insuranceCarrierName === undefined
+          ? '—'
+          : (cita.insuranceCarrierName ?? 'Particular'),
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,

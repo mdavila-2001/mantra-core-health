@@ -67,7 +67,6 @@ import {
 } from '../clinical-record.routes';
 import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
-import { AttachmentsBlock } from './attachments-block/attachments-block';
 import {
   MedicationBlock,
   type DiagnosticoEnFicha,
@@ -202,7 +201,6 @@ interface Expediente {
     ConceptSelect,
     DataTable,
     DatePipe,
-    AttachmentsBlock,
     PdfExportButton,
     FormActions,
     FormField,
