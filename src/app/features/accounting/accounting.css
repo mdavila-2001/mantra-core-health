@@ -49,6 +49,33 @@
   font-weight: 600;
 }
 
+/*
+  El encabezado de un informe exportable: su título (o su selector de cuenta,
+  en Libro mayor y Flujo de caja) a la izquierda, el botón de exportar a la
+  derecha. `.titulo-de-seccion` de adentro pierde su margen propio para no
+  duplicar el que ya pone este contenedor.
+*/
+.informe-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin: var(--e6) 0 var(--e3);
+}
+
+.informe-encabezado .titulo-de-seccion,
+.informe-encabezado app-form-field {
+  margin: 0;
+}
+
+.informe-encabezado__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+}
+
 .explicacion {
   margin-bottom: var(--e5);
 }
