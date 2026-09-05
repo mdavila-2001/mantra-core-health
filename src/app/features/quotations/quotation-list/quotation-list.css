@@ -1,0 +1,26 @@
+/* ============================================================================
+    Cotizaciones. Sólo distribución: los átomos y organismos ya traen su pinta
+    del sistema.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.cotizaciones {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+.cotizaciones__paciente {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.cotizaciones__buscador {
+  max-inline-size: 28rem;
+}

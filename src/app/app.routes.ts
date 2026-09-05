@@ -217,6 +217,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // La lectura del mismo catálogo, para quien atiende. Diferida: se consulta
   // antes de cotizar, no al entrar, así que no es la primera pantalla de nadie.
   'my-services': () => import('./features/my-services/my-services').then((m) => m.MyServices),
+  // FT-24. El listado de cotizaciones armadas sobre ese mismo catálogo.
+  // Diferida como el resto: no es la primera pantalla de nadie.
+  'my-quotations': () =>
+    import('./features/quotations/quotation-list/quotation-list').then((m) => m.QuotationList),
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
   questionnaires: () =>
@@ -398,6 +402,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/patients/patient-new/patient-new')
         .then((m) => m.PatientNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-24. El alta de una cotización. Cuelga de «Cotizaciones», que es el
+    // listado que la sección declara; con `seccionRolesGuard` explícito como
+    // el resto de las hijas de una sección que declara roles.
+    path: 'my-quotations/new',
+    title: `${APP_TITLE} - Nueva cotización`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/quotations/quotation-form/quotation-form')
+        .then((m) => m.QuotationForm)
         .catch(() => chunkFallido()),
   },
   {

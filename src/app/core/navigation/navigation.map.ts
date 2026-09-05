@@ -536,6 +536,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // FT-24. La cotización que sigue a «Mis servicios»: ahí se fija el precio
+    // de referencia, acá se arma la oferta concreta para una persona —con su
+    // plan de pagos— antes de la atención.
+    //
+    // **Sí corresponde agregarla al menú del médico** (a diferencia de
+    // «Encuestas» o «Consulta médica», que la nota de más abajo saca por
+    // `fueraDelMenuPara`): cotizar es un paso del flujo de atención que se iba
+    // a repetir —no una tarea que se hace una vez y se olvida—, y a diferencia
+    // de la ficha de un paciente (que cuelga como hija sin entrada propia,
+    // ver `PANTALLAS_HIJAS` en `app.routes.ts`) el listado de cotizaciones sí
+    // es un destino al que se vuelve por su cuenta: revisar lo ya ofrecido a
+    // alguien, no sólo el momento de crearlo. Mismo criterio que le dio
+    // renglón a «Mis servicios» (FT-22): un lugar donde se arma una oferta con
+    // dinero de por medio no puede depender de que alguien recuerde la ruta.
+    //
+    // Los roles son los de quien atiende, igual que «Mis servicios»: cotizar
+    // es tarea de quien ofrece el servicio, no de quien administra el
+    // catálogo fijo.
+    //
+    // La lista cerrada pasa de doce a trece con esta decisión, no por
+    // descuido — ver el comentario de `navigation.service.spec.ts` que fija
+    // la lista completa.
+    path: 'my-quotations',
+    label: 'Cotizaciones',
+    group: 'Atención',
+    icon: 'billing',
+    roles: ROLES_DE_QUIEN_ATIENDE,
+    availability: 'disponible',
+    summary: 'Armá el presupuesto de un servicio con su plan de pagos y compartilo.',
+    module: 'M17 billing',
+  },
+
+  {
     // Carril 10. **La ruta NO es `surveys` y eso no es decoración**: `/surveys`
     // es el prefijo del módulo en la API, y el proxy compara por inicio de ruta
     // sin límite de segmento — una sección llamada `surveys` se iría entera al

@@ -135,8 +135,10 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'clipboard',
     // Las herramientas de quien atiende que no son un paciente: lo que se
     // consulta —el vocabulario y el catálogo de servicios de la práctica—, lo
-    // que se diseña y lo que se manda a responder.
-    paths: ['glossary', 'form-builder', 'my-services', 'questionnaires'],
+    // que se diseña, lo que se manda a responder y lo que se cotiza sobre ese
+    // mismo catálogo (FT-24, junto a «Mis servicios» por ser la misma tabla
+    // vista desde el paso siguiente).
+    paths: ['glossary', 'form-builder', 'my-services', 'my-quotations', 'questionnaires'],
   },
 
   /* -- Administración ----------------------------------------------------- */
