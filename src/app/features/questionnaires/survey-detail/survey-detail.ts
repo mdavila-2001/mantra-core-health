@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -7,6 +7,7 @@ import { SurveysClient } from '../../../core/data-access/surveys/surveys.client'
 import type {
   AnswerType,
   SurveyDetail,
+  SurveyQuestion,
   SurveyResponse,
 } from '../../../core/data-access/surveys/surveys.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -40,6 +41,46 @@ const TIPOS: readonly SelectOption<string>[] = [
 
 /** Los tipos que exigen un catálogo de opciones. */
 const CON_OPCIONES: ReadonlySet<string> = new Set(['SINGLE_CHOICE', 'MULTIPLE_CHOICE']);
+
+/**
+ * Piso de respuestas para mostrar un agregado o habilitar el CSV.
+ *
+ * El README de `surveys` (backend) documenta la decisión **D-13** —cuál es el
+ * umbral mínimo de participantes para publicar un agregado— como abierta, y
+ * dice literalmente que congela "indicadores agregados y exportación
+ * anonimizada" hasta que se resuelva. Con menos respuestas que este número, un
+ * gráfico de barras o un CSV equivalen a señalar la respuesta de una persona
+ * puntual, que es justo lo que la encuesta promete no hacer.
+ *
+ * 5 es el piso convencional de control de divulgación estadística (la misma
+ * cifra que usa, por ejemplo, el criterio de tamaño de celda mínimo de HIPAA
+ * Safe Harbor para reportes públicos de salud) — un valor conservador para no
+ * bloquear la función mientras D-13 se resuelve formalmente, no la resolución
+ * de D-13 en sí. Cuando el equipo fije el número real, este es el único lugar
+ * que hay que tocar.
+ */
+const UMBRAL_MINIMO_RESPUESTAS = 5;
+
+/** Una barra del gráfico de una pregunta: cuántos eligieron esta opción, y qué porcentaje del total es. */
+interface BarraDeResumen {
+  readonly etiqueta: string;
+  readonly cantidad: number;
+  /** 0 a 100, sobre quienes respondieron *esta* pregunta (no sobre toda la encuesta). */
+  readonly porcentaje: number;
+}
+
+/**
+ * El resumen de una pregunta: sus barras (vacío en texto libre, donde un
+ * gráfico no dice nada) y, para escala, el promedio.
+ */
+interface ResumenDePregunta {
+  readonly questionId: string;
+  readonly questionText: string;
+  readonly answerType: AnswerType;
+  readonly totalRespondida: number;
+  readonly promedio: number | null;
+  readonly barras: readonly BarraDeResumen[];
+}
 
 /** Etiqueta legible de cada tipo, para la lista de preguntas ya cargadas. */
 const ETIQUETA_TIPO: Readonly<Record<AnswerType, string>> = {
@@ -78,6 +119,7 @@ const ETIQUETA_TIPO: Readonly<Record<AnswerType, string>> = {
     Card,
     Checkbox,
     DatePipe,
+    DecimalPipe,
     FormField,
     PageHeader,
     PaginatedForm,
@@ -116,9 +158,28 @@ export class SurveyDetailScreen {
   protected readonly respuestas = signal<readonly SurveyResponse[]>([]);
   protected readonly cargandoRespuestas = signal(false);
 
+  /** Si ya hay respuestas suficientes para un agregado o un CSV sin poner en riesgo el anonimato (D-13). */
+  protected readonly suficientesRespuestas = computed(
+    () => this.respuestas().length >= UMBRAL_MINIMO_RESPUESTAS,
+  );
+
+  /**
+   * El dashboard que pide FT-29: un gráfico de barras por pregunta.
+   *
+   * Se arma en el cliente a partir de `respuestas()`, ya cargadas para la
+   * lista de abajo — no hace falta un endpoint de agregación nuevo. Vacío
+   * mientras no haya respuestas suficientes: ver {@link UMBRAL_MINIMO_RESPUESTAS}.
+   */
+  protected readonly resumenPorPregunta = computed<readonly ResumenDePregunta[]>(() => {
+    const encuesta = this.encuesta();
+    if (!encuesta || !this.suficientesRespuestas()) return [];
+    return encuesta.questions.map((pregunta) => resumirPregunta(pregunta, this.respuestas()));
+  });
+
   protected readonly guardandoPregunta = signal(false);
   protected readonly publicando = signal(false);
   protected readonly asignando = signal(false);
+  protected readonly creandoVersion = signal(false);
 
   /** Si la versión vigente todavía admite preguntas. */
   protected readonly editable = computed(() => {
@@ -348,6 +409,27 @@ export class SurveyDetailScreen {
       });
   }
 
+  /**
+   * Abre una versión nueva en borrador, para corregir el cuestionario de una
+   * encuesta ya publicada (FT-31). La versión vieja sigue vigente para lo ya
+   * asociado hasta que ésta se publique y alguien la reasocie.
+   */
+  protected crearNuevaVersion(): void {
+    if (this.creandoVersion()) return;
+    this.creandoVersion.set(true);
+    this.surveys.createNextVersion(this.surveyId).subscribe({
+      next: () => {
+        this.creandoVersion.set(false);
+        this.toast.success('Versión nueva creada. Agregale preguntas y publicala.');
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.creandoVersion.set(false);
+        this.estado.set(errorToViewState(error));
+      },
+    });
+  }
+
   /** Desactiva la encuesta: corta las emisiones nuevas. */
   protected desactivar(): void {
     this.surveys.deactivateSurvey(this.surveyId).subscribe({
@@ -367,4 +449,123 @@ export class SurveyDetailScreen {
     if (answer.valueChoices !== undefined) return answer.valueChoices.join(', ');
     return '—';
   }
+
+  /**
+   * Descarga las respuestas en CSV: una fila por respuesta, una columna por
+   * pregunta. Se arma en el cliente porque los mismos datos ya están acá
+   * (`respuestas()`) — no hace falta ida y vuelta al servidor.
+   *
+   * **Anónimo a propósito** (FT-29): ninguna columna identifica al paciente,
+   * porque el contrato del servidor tampoco lo manda.
+   */
+  protected descargarCsv(): void {
+    const encuesta = this.encuesta();
+    // Defensa en profundidad: el botón ya está oculto por debajo del umbral,
+    // pero esta función no debería exportar un CSV identificable ni aunque
+    // alguien la invoque de otra forma.
+    if (!encuesta || !this.suficientesRespuestas()) return;
+
+    const encabezado = ['Fecha de envío', ...encuesta.questions.map((p) => p.questionText)];
+    const filas = this.respuestas().map((respuesta) => {
+      const porPregunta = new Map(respuesta.answers.map((a) => [a.questionId, this.valorDe(a)]));
+      return [
+        respuesta.submittedAt ? respuesta.submittedAt.toISOString() : '',
+        ...encuesta.questions.map((p) => porPregunta.get(p.id) ?? ''),
+      ];
+    });
+
+    const csv = [encabezado, ...filas]
+      .map((fila) => fila.map(celdaCsv).join(','))
+      .join('\r\n');
+    // BOM al frente: sin él, Excel en Windows adivina Latin-1 y descompone
+    // toda tilde y «ñ» de las preguntas y respuestas.
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = `${slugify(encuesta.title)}-respuestas.csv`;
+    enlace.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** Arma el resumen (barras + promedio) de una pregunta a partir de las respuestas recibidas. */
+export function resumirPregunta(
+  pregunta: SurveyQuestion,
+  respuestas: readonly SurveyResponse[],
+): ResumenDePregunta {
+  const respondidas = respuestas
+    .map((r) => r.answers.find((a) => a.questionId === pregunta.id))
+    .filter((a): a is SurveyResponse['answers'][number] => a !== undefined);
+  const total = respondidas.length;
+
+  const conBarras = (etiquetas: readonly string[], cantidadDe: (etiqueta: string) => number) =>
+    etiquetas.map((etiqueta) => {
+      const cantidad = cantidadDe(etiqueta);
+      return { etiqueta, cantidad, porcentaje: total === 0 ? 0 : Math.round((cantidad / total) * 100) };
+    });
+
+  let barras: readonly BarraDeResumen[] = [];
+  let promedio: number | null = null;
+
+  switch (pregunta.answerType) {
+    case 'BOOLEAN':
+      barras = conBarras(
+        ['Sí', 'No'],
+        (etiqueta) => respondidas.filter((a) => a.valueBoolean === (etiqueta === 'Sí')).length,
+      );
+      break;
+    case 'SINGLE_CHOICE':
+    case 'MULTIPLE_CHOICE':
+      barras = conBarras(
+        pregunta.options ?? [],
+        (opcion) => respondidas.filter((a) => a.valueChoices?.includes(opcion)).length,
+      );
+      break;
+    case 'SCALE': {
+      const min = pregunta.scaleMin ?? 1;
+      const max = pregunta.scaleMax ?? 5;
+      const valores = Array.from({ length: Math.max(0, max - min + 1) }, (_, i) => min + i);
+      barras = conBarras(
+        valores.map(String),
+        (etiqueta) => respondidas.filter((a) => a.valueNumber === Number(etiqueta)).length,
+      );
+      const numeros = respondidas
+        .map((a) => a.valueNumber)
+        .filter((n): n is number => n !== undefined);
+      promedio = numeros.length === 0 ? null : numeros.reduce((a, b) => a + b, 0) / numeros.length;
+      break;
+    }
+    case 'TEXT':
+      // Texto libre no se resume en barras: cada respuesta es distinta y
+      // agruparlas no diría nada. La lista de respuestas de abajo ya las
+      // muestra completas.
+      break;
+  }
+
+  return {
+    questionId: pregunta.id,
+    questionText: pregunta.questionText,
+    answerType: pregunta.answerType,
+    totalRespondida: total,
+    promedio,
+    barras,
+  };
+}
+
+/** Encierra en comillas sólo si hace falta, duplicando las internas (RFC 4180). */
+export function celdaCsv(valor: string): string {
+  return /[",\r\n]/.test(valor) ? `"${valor.replace(/"/g, '""')}"` : valor;
+}
+
+/** Nombre de archivo seguro a partir del título de la encuesta. */
+export function slugify(texto: string): string {
+  return (
+    texto
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') || 'encuesta'
+  );
 }
