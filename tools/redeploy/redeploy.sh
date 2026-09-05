@@ -723,12 +723,61 @@ desplegar() {
 
 # ─── El disparador: un commit nuevo en dev ───────────────────────────────────
 
+# Un `fetch` falla por dos motivos que piden respuestas opuestas: se cayó la red —se cura sola y
+# no hay nada que hacer— o la credencial dejó de valer —no se cura nunca y hace falta una persona—.
+# Meter las dos en el mismo saco («sin red o sin remoto») dejó el front congelado 32 h el
+# 04/09/2026: el token de `gh` se invalidó, 1043 ciclos anotaron la misma línea tranquila, y el
+# enlace siguió sirviendo el build de anteayer con un 200 impecable.
+fallo_de_fetch() {
+  local motivo="$1" detalle="$2" n
+  n=$(( $(cat "$ESTADO/FALLOS_FETCH" 2>/dev/null || echo 0) + 1 ))
+  echo "$n" > "$ESTADO/FALLOS_FETCH"
+
+  # Ruidoso el primer ciclo y luego uno por hora: es la única señal de que el redespliegue está
+  # parado, porque el nginx y el contenedor viejos siguen en pie devolviendo 200.
+  local grita=0
+  { [ "$n" -eq 1 ] || [ $((n % 30)) -eq 0 ]; } && grita=1
+
+  if [ "$motivo" = credencial ]; then
+    if [ "$grita" = 1 ]; then
+      log "FETCH: ✗✗ CREDENCIAL INVÁLIDA — EL REDESPLIEGUE ESTÁ PARADO Y NO SE CURA SOLO (ciclo $n)"
+      log "FETCH:    sigue sirviendo $(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null || echo '—')"
+      log "FETCH:    se arregla con: gh auth login -h github.com"
+    else
+      log "FETCH: ✗ credencial inválida; el redespliegue sigue parado (ciclo $n)"
+    fi
+  elif [ "$grita" = 1 ]; then
+    log "FETCH: ✗ sin acceso a origin/$RAMA desde hace ~$((n * 2)) min: ${detalle%%$'\n'*}"
+  fi
+}
+
+# El token de `gh` se comprueba aparte y con límite porque quien se cuelga cuando no vale es el
+# propio helper (`gh auth git-credential`), no git: `GIT_TERMINAL_PROMPT=0` sólo apaga el prompt
+# de git y no llega a tiempo. Sólo aplica cuando la credencial ES la de `gh` sobre HTTPS.
+credencial_rota() {
+  command -v gh >/dev/null 2>&1 || return 1
+  git -C "$RAIZ" remote get-url origin 2>/dev/null | grep -q '^https://github.com/' || return 1
+  ! timeout 20 gh auth status -h github.com >/dev/null 2>&1
+}
+
 revisar_repo() {
-  local remoto corto fallido
-  git -C "$RAIZ" fetch --quiet origin "$RAMA" 2>/dev/null || {
-    log "FETCH: sin red o sin remoto; se reintenta en el próximo ciclo"
+  local remoto corto fallido salida_fetch
+
+  if credencial_rota; then
+    fallo_de_fetch credencial ""
     return 0
-  }
+  fi
+
+  if ! salida_fetch="$(GIT_TERMINAL_PROMPT=0 timeout 120 git -C "$RAIZ" fetch --quiet origin "$RAMA" 2>&1)"; then
+    case "$salida_fetch" in
+      *"could not read Username"*|*"Authentication failed"*|*"terminal prompts disabled"*)
+        fallo_de_fetch credencial "$salida_fetch" ;;
+      *)
+        fallo_de_fetch red "$salida_fetch" ;;
+    esac
+    return 0
+  fi
+  rm -f "$ESTADO/FALLOS_FETCH"
   remoto="$(git -C "$RAIZ" rev-parse "origin/$RAMA" 2>/dev/null)" || return 0
   corto="$(git -C "$RAIZ" rev-parse --short "$remoto")"
   [ "$corto" = "$(cat "$ESTADO/COMMIT_DESPLEGADO" 2>/dev/null)" ] && return 0
