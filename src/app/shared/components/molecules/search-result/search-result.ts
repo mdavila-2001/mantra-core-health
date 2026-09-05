@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { AppButtonLink } from '../../atoms/button/button-link';
@@ -61,4 +61,25 @@ import type { SearchResultItem } from './search-result.types';
 export class SearchResult {
   /** El resultado a pintar. */
   readonly resultado = input.required<SearchResultItem>();
+
+  /**
+   * Igual que `ResultCard.imagenFallo` — el hermano vertical de esta tarjeta—:
+   * `linkedSignal` sobre la fuente, no `signal` + `set`, así una fila que el
+   * `@for` reutiliza al pasar de página con una foto nueva tiene su propia
+   * oportunidad. Sin esto, una `figureImageUrl` cuya versión no pasó el escaneo
+   * de malware (422 real, reproducido contra el directorio) dejaba un ícono de
+   * imagen rota en vez de caer a `figureText`.
+   */
+  protected readonly imagenFallo = linkedSignal({
+    source: this.resultado,
+    computation: () => false,
+  });
+
+  protected readonly mostrarImagen = computed(
+    () => Boolean(this.resultado().figureImageUrl) && !this.imagenFallo(),
+  );
+
+  protected manejarErrorDeImagen(): void {
+    this.imagenFallo.set(true);
+  }
 }

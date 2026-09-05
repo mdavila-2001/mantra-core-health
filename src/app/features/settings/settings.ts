@@ -21,69 +21,69 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 import { NotificationPreferences } from '../account/notification-preferences/notification-preferences';
 
 /** Quién administra los permisos delegados del M29. Mismo rol que su sección. */
-const ROLES_QUE_ADMINISTRAN_PERMISOS: readonly string[] = ['SECURITY_ADMIN'];
+const PERMISSION_ADMIN_ROLES: readonly string[] = ['SECURITY_ADMIN'];
 
 /** Las tres opciones de tema, en el orden en que se ofrecen. */
-const TEMAS: readonly {
-  valor: ThemeMode;
-  rotulo: string;
-  detalle: string;
-  icono: NavIconName;
+const THEMES: readonly {
+  value: ThemeMode;
+  label: string;
+  detail: string;
+  icon: NavIconName;
 }[] = [
   {
-    valor: 'system',
-    rotulo: 'El de mi dispositivo',
-    detalle: 'Sigue la preferencia del sistema y cambia con ella.',
-    icono: 'monitor',
+    value: 'system',
+    label: 'El de mi dispositivo',
+    detail: 'Sigue la preferencia del sistema y cambia con ella.',
+    icon: 'monitor',
   },
   {
-    valor: 'light',
-    rotulo: 'Claro',
-    detalle: 'Siempre claro, sin importar el sistema.',
-    icono: 'sun',
+    value: 'light',
+    label: 'Claro',
+    detail: 'Siempre claro, sin importar el sistema.',
+    icon: 'sun',
   },
   {
-    valor: 'dark',
-    rotulo: 'Oscuro',
-    detalle: 'Siempre oscuro, sin importar el sistema.',
-    icono: 'moon',
+    value: 'dark',
+    label: 'Oscuro',
+    detail: 'Siempre oscuro, sin importar el sistema.',
+    icon: 'moon',
   },
 ];
 
 /** Cómo se llama cada permiso del navegador y para qué lo usa el producto. */
-const PERMISOS: readonly {
-  clave: PermisoDelNavegador;
-  rotulo: string;
-  paraQue: string;
-  icono: NavIconName;
+const BROWSER_PERMISSIONS: readonly {
+  key: PermisoDelNavegador;
+  label: string;
+  purpose: string;
+  icon: NavIconName;
 }[] = [
   {
-    clave: 'avisos',
-    rotulo: 'Avisos del navegador',
-    paraQue: 'Para verlos aunque tengas AloVida en otra pestaña. Tu bandeja funciona igual sin esto.',
-    icono: 'bell',
+    key: 'avisos',
+    label: 'Avisos del navegador',
+    purpose: 'Para verlos aunque tengas AloVida en otra pestaña. Tu bandeja funciona igual sin esto.',
+    icon: 'bell',
   },
   {
-    clave: 'ubicacion',
-    rotulo: 'Ubicación',
-    paraQue: 'Para buscar farmacias y consultorios cerca tuyo sin escribir la dirección.',
-    icono: 'pin',
+    key: 'ubicacion',
+    label: 'Ubicación',
+    purpose: 'Para buscar farmacias y consultorios cerca tuyo sin escribir la dirección.',
+    icon: 'pin',
   },
   {
-    clave: 'camara',
-    rotulo: 'Cámara',
-    paraQue: 'Para adjuntar una foto de un estudio o un documento sin salir del navegador.',
-    icono: 'camera',
+    key: 'camara',
+    label: 'Cámara',
+    purpose: 'Para adjuntar una foto de un estudio o un documento sin salir del navegador.',
+    icon: 'camera',
   },
 ];
 
 /** Cómo se dice cada estado, y con qué tono se pinta. */
-const ESTADOS: Readonly<Record<EstadoPermiso, { texto: string; tono: string }>> = {
-  concedido: { texto: 'Permitido', tono: 'exito' },
-  denegado: { texto: 'Bloqueado', tono: 'alerta' },
-  'sin-decidir': { texto: 'Sin decidir', tono: 'neutro' },
-  desconocido: { texto: 'Tu navegador no lo informa', tono: 'neutro' },
-  'no-disponible': { texto: 'Este navegador no lo ofrece', tono: 'neutro' },
+const PERMISSION_STATES: Readonly<Record<EstadoPermiso, { text: string; tone: string }>> = {
+  concedido: { text: 'Permitido', tone: 'exito' },
+  denegado: { text: 'Bloqueado', tone: 'alerta' },
+  'sin-decidir': { text: 'Sin decidir', tone: 'neutro' },
+  desconocido: { text: 'Tu navegador no lo informa', tone: 'neutro' },
+  'no-disponible': { text: 'Este navegador no lo ofrece', tone: 'neutro' },
 };
 
 /**
@@ -104,7 +104,7 @@ const ESTADOS: Readonly<Record<EstadoPermiso, { texto: string; tono: string }>> 
  * Por lo mismo que no lo ocupan el tema ni la campana: los ajustes no son un
  * destino de trabajo. La sección declara `fueraDelMenuPara: [ANY_ROLE]` en el
  * registro, así que sigue teniendo ruta, título y breadcrumb —y se alcanza por
- * `/ajustes`, por el ícono y por un enlace de cualquier otra pantalla—; lo
+ * `/settings`, por el ícono y por un enlace de cualquier otra pantalla—; lo
  * único que no tiene es renglón.
  *
  * ## Lo que esta pantalla NO promete
@@ -127,16 +127,16 @@ const ESTADOS: Readonly<Record<EstadoPermiso, { texto: string; tono: string }>> 
 export class Settings {
   private readonly theme = inject(ThemeService);
   private readonly session = inject(SessionStore);
-  protected readonly permisos = inject(BrowserPermissionsService);
+  protected readonly permissions = inject(BrowserPermissionsService);
 
-  protected readonly temas = TEMAS;
-  protected readonly permisosDelNavegador = PERMISOS;
+  protected readonly themes = THEMES;
+  protected readonly browserPermissions = BROWSER_PERMISSIONS;
 
   /** Lo elegido, que puede ser «el del sistema» y no coincidir con lo pintado. */
-  protected readonly temaElegido = this.theme.currentTheme;
+  protected readonly selectedTheme = this.theme.currentTheme;
 
   /** Lo que efectivamente se ve: es lo que hace legible la opción «el de mi dispositivo». */
-  protected readonly temaResuelto = this.theme.resolvedTheme;
+  protected readonly resolvedTheme = this.theme.resolvedTheme;
 
   protected readonly roles = computed(() => etiquetasDeRoles(this.session.roles()));
 
@@ -145,35 +145,35 @@ export class Settings {
    * M29. Con `rolesAlcanzan` y no con una comparación propia, para que el
    * comodín `SUPERADMIN` valga acá lo mismo que en el menú y en el guard.
    */
-  protected readonly administraPermisos = computed(() =>
-    rolesAlcanzan(ROLES_QUE_ADMINISTRAN_PERMISOS, this.session.roles()),
+  protected readonly managesPermissions = computed(() =>
+    rolesAlcanzan(PERMISSION_ADMIN_ROLES, this.session.roles()),
   );
 
   /** La verificación de identidad sólo se ofrece si el producto la ofrece. */
-  protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
+  protected readonly verificationOffered = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
 
-  protected elegirTema(modo: ThemeMode): void {
-    this.theme.setTheme(modo);
+  protected selectTheme(mode: ThemeMode): void {
+    this.theme.setTheme(mode);
   }
 
-  protected estadoDe(permiso: PermisoDelNavegador): { texto: string; tono: string } {
-    return ESTADOS[this.permisos.estado()[permiso]];
+  protected stateOf(permission: PermisoDelNavegador): { text: string; tone: string } {
+    return PERMISSION_STATES[this.permissions.estado()[permission]];
   }
 
-  protected sePuedePedir(permiso: PermisoDelNavegador): boolean {
-    return this.permisos.sePuedePedir(permiso);
+  protected canRequest(permission: PermisoDelNavegador): boolean {
+    return this.permissions.sePuedePedir(permission);
   }
 
-  protected pidiendo(permiso: PermisoDelNavegador): boolean {
-    return this.permisos.enCurso(permiso);
+  protected requesting(permission: PermisoDelNavegador): boolean {
+    return this.permissions.enCurso(permission);
   }
 
   /** Un permiso bloqueado sólo se recupera desde el navegador, no desde acá. */
-  protected estaBloqueado(permiso: PermisoDelNavegador): boolean {
-    return this.permisos.estado()[permiso] === 'denegado';
+  protected isBlocked(permission: PermisoDelNavegador): boolean {
+    return this.permissions.estado()[permission] === 'denegado';
   }
 
-  protected pedir(permiso: PermisoDelNavegador): void {
-    void this.permisos.pedir(permiso);
+  protected request(permission: PermisoDelNavegador): void {
+    void this.permissions.pedir(permission);
   }
 }

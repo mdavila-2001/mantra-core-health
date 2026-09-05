@@ -102,6 +102,25 @@ a.comentario__autor:hover {
   white-space: pre-wrap;
 }
 
+/* REQ-01-011 — adjuntos del comentario. */
+.comentario__media {
+  list-style: none;
+  margin: var(--e2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.comentario__adjunto {
+  display: block;
+  inline-size: 96px;
+  block-size: 96px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--filete-2);
+}
+
 .comentario__acciones {
   margin: var(--e2) 0 0;
   display: flex;

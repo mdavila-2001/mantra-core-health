@@ -55,13 +55,41 @@
     <ul class="lista-de-vinculaciones">
       @for (fila of filas(); track fila.id) {
         <li class="vinculacion" [class.es-final]="fila.isFinal">
-          <div class="vinculacion__cabecera">
-            <span class="vinculacion__nombre">{{ fila.practiceName }}</span>
-            <span class="vinculacion__estado">{{ fila.statusLabel }}</span>
+          <app-avatar
+            [src]="fila.avatarUrl"
+            [name]="fila.practiceName"
+            [alt]="'Logo de ' + fila.practiceName"
+            size="md"
+          />
+          <div class="vinculacion__cuerpo">
+            <div class="vinculacion__cabecera">
+              <span class="vinculacion__nombre">
+                {{ fila.practiceName }}
+                @if (fila.verified) {
+                  <span class="vinculacion__sello" title="Vinculación aceptada por la organización">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" />
+                      <path d="m9 12 2 2 4-4" />
+                    </svg>
+                    <span class="solo-lectores">Vinculación aceptada por la organización</span>
+                  </span>
+                }
+              </span>
+              <span class="vinculacion__estado">{{ fila.statusLabel }}</span>
+            </div>
+            @if (fila.isPrimary) {
+              <span class="vinculacion__principal">Organización principal</span>
+            }
           </div>
-          @if (fila.isPrimary) {
-            <span class="vinculacion__principal">Organización principal</span>
-          }
         </li>
       }
     </ul>

@@ -203,6 +203,36 @@ describe('RedsatRuntimeService', () => {
 
       expect(menu('m1').hidden).toBe(true);
     });
+
+    /**
+     * AG49-FT01-001/002. `app-menu`/`appMenuTrigger` (el menú de preferencias
+     * de una publicación) usa el mismo contrato ARIA que este menú de
+     * desborde legado —`aria-haspopup="menu"` + `aria-controls`— pero
+     * gobierna su apertura con una señal propia, no con el atributo
+     * `hidden`. Sin acotar este oyente a `.menu-anclaje`, un clic en ESE
+     * disparador también caía acá, y el `menu.hidden = true` que sigue
+     * dejaba el panel de Angular invisible para siempre (`redsat.css` fuerza
+     * `display:none` en `[hidden]` con `!important`, por encima de la clase
+     * `menu--open`).
+     */
+    it('un disparador con el mismo contrato ARIA pero fuera de .menu-anclaje no lo toca', () => {
+      document.body.insertAdjacentHTML(
+        'beforeend',
+        `<button aria-haspopup="menu" aria-expanded="false" aria-controls="m-angular">⋮</button>
+         <div id="m-angular" role="menu"><button>Ir al perfil del doctor</button></div>`,
+      );
+      const disparadorAngular = document.querySelector<HTMLElement>(
+        '[aria-controls="m-angular"]',
+      ) as HTMLElement;
+      const menuAngular = document.getElementById('m-angular') as HTMLElement;
+
+      disparadorAngular.click();
+
+      // Ni lo abre a su manera (no le toca `hidden`) ni le cambia el
+      // `aria-expanded`: ese contrato es enteramente de Angular acá.
+      expect(menuAngular.hidden).toBe(false);
+      expect(disparadorAngular.getAttribute('aria-expanded')).toBe('false');
+    });
   });
 
   describe('diálogo', () => {

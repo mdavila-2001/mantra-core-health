@@ -183,8 +183,11 @@ export class PublicPostComments implements OnInit {
    * que puede responder.
    *
    * Con sesión, el redactor vive en el muro con sesión: se lo manda ahí en vez
-   * de duplicar acá un compositor que además tendría que resolver el adjunto de
-   * AC-01-14, que hoy no tiene dónde guardarse (no existe `comment_media`).
+   * de duplicar acá un compositor. Ya no es sólo un desvío cómodo — desde
+   * REQ-01-011 el compositor con sesión (`app-post-card`) es el único lugar
+   * que sabe subir el adjunto (`app-comment-media-picker` + `community.comment_media`)
+   * antes de mandarlo con el comentario, así que duplicar el formulario acá
+   * significaría reimplementar esa subida una segunda vez.
    */
   protected responder(): void {
     if (!this.haySesion()) {

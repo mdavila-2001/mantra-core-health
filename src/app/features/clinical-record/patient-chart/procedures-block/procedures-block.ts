@@ -168,6 +168,15 @@ export class ProceduresBlock {
    */
   readonly encounterId = input<string | null>(null);
 
+  /**
+   * Qué mitad mostrar. Cirugía y odontología tienen permisos de servidor
+   * independientes y ningún dato en común; agruparlas bajo «Procedimiento»
+   * hacía que elegir odontología igual disparara —y a veces bloqueara— la
+   * lectura quirúrgica de alguien sin ese rol. `'ambos'` es el default y
+   * sigue existiendo por si algún consumidor futuro quiere las dos juntas.
+   */
+  readonly modo = input<'ambos' | 'cirugia' | 'odontologia'>('ambos');
+
   /* -- Lo quirúrgico ------------------------------------------------------- */
 
   protected readonly quirurgico = signal<ViewState<readonly SurgicalCaseDetail[]>>(
@@ -486,9 +495,13 @@ export class ProceduresBlock {
   /* -- Lectura ------------------------------------------------------------- */
 
   private cargar(): void {
-    this.cargarQuirurgico();
-    this.cargarOdontologico();
-    this.cargarCatalogo();
+    if (this.modo() !== 'odontologia') {
+      this.cargarQuirurgico();
+    }
+    if (this.modo() !== 'cirugia') {
+      this.cargarOdontologico();
+      this.cargarCatalogo();
+    }
   }
 
   /**

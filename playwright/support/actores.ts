@@ -13,8 +13,12 @@ import { request, type APIRequestContext } from '@playwright/test';
 /** La contraseña que usan todas las suites por actor del backend. */
 export const CLAVE = 'S3cret-passw0rd';
 
-/** Los tres roles que el barrido recorre. */
-export type Rol = 'administrador' | 'doctora' | 'paciente';
+/** Los roles que el barrido recorre. */
+export type Rol =
+  | 'administrador'
+  | 'doctora'
+  | 'paciente'
+  | 'operadora de facturación';
 
 export interface Actor {
   readonly rol: Rol;
@@ -65,6 +69,28 @@ export async function apiViva(api: APIRequestContext): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * La operadora de facturación del prestador (`BILLING_OPERATOR`).
+ *
+ * La siembra `tools/redesa/seed-solicitudes-seguro.mjs` en el repositorio de la
+ * API, con membresía en la organización y el rol acotado a ese tenant.
+ *
+ * **Existe para no certificar T16 con el administrador.** El admin entra a
+ * cualquier lado por el comodín `SUPERADMIN`, así que probar con él no dice
+ * nada del único rol que un usuario real va a tener — y la pantalla de
+ * solicitudes es justamente la del operador de facturación (TAREA-16 · D1.b).
+ */
+export function operadoraDeFacturacion(): Actor {
+  return {
+    rol: 'operadora de facturación',
+    identificador:
+      process.env['E2E_BILLING_OPERATOR_EMAIL'] ??
+      'facturacion.demo@alovida.test',
+    clave: process.env['E2E_BILLING_OPERATOR_PASSWORD'] ?? 'D3mo-passw0rd!',
+    nombre: 'Operadora de facturación',
+  };
 }
 
 /** Credenciales de la cuenta sembrada por `BOOTSTRAP_ADMIN_*` al arrancar la API. */
@@ -124,6 +150,45 @@ function sufijoDeAlta(): string {
   return `${String(Date.now()).slice(-9)}${secuenciaDeAltas}`;
 }
 
+/** El catálogo de municipios que el alta del paciente exige como residencia. */
+const MUNICIPALITY_VALUE_SET = 'VS_BO_MUNICIPALITY';
+
+/**
+ * Fecha de nacimiento del paciente de prueba: una adulta, fija, para que la
+ * corrida sea reproducible.
+ */
+const PATIENT_BIRTH_DATE = '1995-05-20';
+
+/**
+ * El primer municipio publicado de `VS_BO_MUNICIPALITY`, por la misma ruta que
+ * usa la pantalla de alta (`GET /terminology/value-sets/:id/$expand`).
+ *
+ * El alta del paciente exige un municipio de residencia real —un UUID del
+ * catálogo— y escribirlo acá sería atarse a los ids de una siembra concreta.
+ */
+async function firstMunicipalityConceptId(api: APIRequestContext): Promise<string> {
+  const valueSets = await api.get('/terminology/value-sets', {
+    params: { code: MUNICIPALITY_VALUE_SET },
+  });
+  const catalog = (await valueSets.json()) as {
+    items?: { id: string; internalCode: string }[];
+  };
+  const valueSet = (catalog.items ?? []).find(
+    (item) => item.internalCode === MUNICIPALITY_VALUE_SET,
+  );
+  if (valueSet === undefined) {
+    throw new Error(`el catálogo ${MUNICIPALITY_VALUE_SET} no está publicado en la API`);
+  }
+
+  const expansion = await api.get(`/terminology/value-sets/${valueSet.id}/$expand`);
+  const firstPage = (await expansion.json()) as { items?: { conceptId: string }[] };
+  const municipality = firstPage.items?.[0];
+  if (municipality === undefined) {
+    throw new Error(`el catálogo ${MUNICIPALITY_VALUE_SET} no tiene municipios publicados`);
+  }
+  return municipality.conceptId;
+}
+
 /**
  * Municipio de Santa Cruz de la Sierra (`geo:bo:municipality:070101`) en el
  * catálogo `terminology.catalog_concepts` sembrado por `bo-geography.catalog.ts`.
@@ -151,6 +216,9 @@ export async function crearPaciente(api: APIRequestContext): Promise<Actor> {
   const sufijo = sufijoDeAlta();
   const nationalId = `CI-PW-${sufijo}`;
 
+  // El alta exige fecha de nacimiento y municipio de residencia (UUID del
+  // catálogo): sin ellos la API responde 400 y ninguna prueba de paciente corre.
+  const residenceMunicipalityConceptId = await firstMunicipalityConceptId(api);
   const respuesta = await api.post('/iam/auth/register-patient', {
     data: {
       nationalId,
@@ -160,8 +228,8 @@ export async function crearPaciente(api: APIRequestContext): Promise<Actor> {
       phone: '+591 70055555',
       gender: 'FEMALE',
       sexAtBirth: 'FEMALE',
-      birthDate: '1990-01-01',
-      residenceMunicipalityConceptId: MUNICIPIO_SANTA_CRUZ_DE_LA_SIERRA,
+      birthDate: PATIENT_BIRTH_DATE,
+      residenceMunicipalityConceptId,
     },
   });
 

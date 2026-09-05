@@ -21,9 +21,32 @@ export interface ServiceCatalogItem {
   readonly serviceConceptId?: string;
   readonly defaultPrice: string;
   readonly currencyConceptId?: string;
+  /**
+   * Sigla de la moneda (`BOB`, `USD`), cuando la API pudo resolverla.
+   *
+   * Viene del servidor y no se deduce acá: el `currencyConceptId` es un uuid y
+   * el front no tiene catálogo de monedas. Queda `undefined` en las filas que
+   * apuntan a uno de los juegos de conceptos de moneda que el producto todavía
+   * no unificó; en ese caso el importe se muestra sin unidad, que es lo que
+   * hacía antes, en vez de inventarle una.
+   */
+  readonly currencyCode?: string;
   readonly taxCodeId?: string;
   readonly incomeAccountId?: string;
   readonly isActive: boolean;
+}
+
+/**
+ * Lo que se puede corregir de un servicio ya dado de alta.
+ *
+ * El código y la práctica identifican al servicio dentro de su catálogo: no
+ * están acá porque moverlos sería otra operación, no una corrección.
+ */
+export interface ServiceCatalogChanges {
+  readonly name?: string;
+  readonly defaultPrice?: string;
+  readonly currencyConceptId?: string;
+  readonly isActive?: boolean;
 }
 
 /**

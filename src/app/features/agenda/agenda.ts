@@ -60,7 +60,8 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { AGENDA_CREATE_ROUTE, AGENDA_MINE_ROUTE, bookingNewRoute } from './agenda.routes';
+import { AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
+import { MyAgenda } from './my-agenda/my-agenda';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
@@ -254,6 +255,15 @@ export interface CitaVisible {
    * error.
    */
   readonly paciente: string;
+  /**
+   * `Particular` o el nombre de la aseguradora (ALV-021).
+   *
+   * Misma compuerta que `paciente`: sin permiso para verlo, la celda no se
+   * arriesga a decir «Particular» de alguien que sí tiene seguro y cuya
+   * cobertura no le corresponde consultar — dice «—», que es lo mismo que ya
+   * usa la columna de pago para «no corresponde».
+   */
+  readonly cobertura: string;
   /** El expediente clínico de la persona citada, si la sesión puede abrirlo. */
   readonly rutaExpediente: string | null;
   /**
@@ -381,6 +391,7 @@ export interface CupoVisible {
     Tab,
     Tabs,
     Textarea,
+    MyAgenda,
   ],
   templateUrl: './agenda.html',
   styleUrl: './agenda.css',
@@ -402,21 +413,6 @@ export class Agenda {
 
   /** Destino del enlace «Crear agenda» del encabezado. */
   protected readonly rutaCrearAgenda = AGENDA_CREATE_ROUTE;
-
-  /**
-   * La puerta a «Mi agenda», y la razón por la que existe este campo.
-   *
-   * `AGENDA_MINE_ROUTE` estaba declarada desde el principio y **nadie la
-   * importaba**: las pantallas del horario —«Mi agenda», los bloqueos, cambiar
-   * el horario— se enlazan entre ellas y ninguna se enlazaba desde acá, que es
-   * donde el menú deja a quien entra por «Turnos». El resultado, dicho por el
-   * médico que lo sufrió: «literalmente no puedo ver la agenda o horarios».
-   *
-   * Va primero y en primario, y «Crear agenda» pasa a secundario: publicar es
-   * algo que se hace una vez, mirar la agenda es a lo que se entra todos los
-   * días.
-   */
-  protected readonly rutaMiAgenda = AGENDA_MINE_ROUTE;
 
   private readonly celdaCuando =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaCuando');
@@ -670,21 +666,49 @@ export class Agenda {
   });
 
   /**
+   * Desde dónde arranca la ventana consultada (ALV-024).
+   *
+   * `?desde=YYYY-MM-DD`, en la URL para que «la semana que viene» se pueda
+   * compartir por enlace y volver a ella siga trayendo la misma consulta. Sin
+   * parámetro, o con uno que no parsea, es HOY — el comportamiento de
+   * siempre, así que ningún enlace viejo cambia de significado.
+   */
+  protected readonly fechaBase = computed<Date>(() => {
+    const pedida = this.params()?.get('desde');
+    const fecha = pedida === null ? null : new Date(`${pedida}T00:00:00`);
+    const valida = fecha !== null && !Number.isNaN(fecha.getTime());
+    const base = valida ? fecha : new Date();
+    base.setHours(0, 0, 0, 0);
+    return base;
+  });
+
+  /** Si la ventana es la de hoy, o si se navegó a otra (ALV-024). */
+  protected readonly enVentanaDeHoy = computed(() => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return this.fechaBase().getTime() === hoy.getTime();
+  });
+
+  /**
    * Pestaña visible. En la URL para que un enlace pueda apuntar a una en
    * concreto.
    *
-   * **«Solicitudes» es la primera y la de arranque**, y es un cambio deliberado:
-   * es lo único de esta pantalla que **espera una acción de una persona**. Las
-   * citas agendadas y los cupos se consultan; una solicitud sin responder le
-   * cambia el día a alguien que está esperando.
+   * Son **tres**: «Consultas» —el ciclo completo, ALV-019—, «Mi agenda» —el
+   * horario publicado, que era una pantalla aparte— y «Cupos», que es
+   * disponibilidad y sigue siendo lo suyo (ALV-020).
    *
-   * `vista=cupos` sigue significando lo mismo que antes, así que los enlaces
-   * que ya existen no se rompen.
+   * `vista=cupos` sigue significando lo mismo. `vista=citas` y
+   * `vista=solicitudes` llevan a la lista unificada, que es donde vive lo que
+   * antes estaba partido: un enlace viejo sigue llegando a donde quería llegar.
    */
   protected readonly pestana = computed(() => {
     const vista = this.params()?.get('vista');
-    if (vista === 'cupos') return 2;
-    return vista === 'citas' ? 1 : 0;
+    // «Mi agenda» sólo existe para quien atiende: quien reparte turnos no tiene
+    // agenda propia y no se le ofrece una puerta que la otra pantalla no va a
+    // reconocer como suya. Sin ella, «Cupos» corre un lugar.
+    const indiceDeCupos = this.esQuienAtiende() ? 2 : 1;
+    if (vista === 'cupos') return indiceDeCupos;
+    return vista === 'agenda' && this.esQuienAtiende() ? 1 : 0;
   });
 
   protected readonly incluirCanceladas = computed(() => this.params()?.get('canceladas') === 'si');
@@ -765,16 +789,34 @@ export class Agenda {
     filtrarEstado(this.citas(), (cita) => this.porResponder(cita)),
   );
 
-  /** Lo que ya está agendado: la solapa «Citas» sin las solicitudes. */
+  /**
+   * **Una sola lista para todo el ciclo** (ALV-019).
+   *
+   * Solicitudes y citas se mostraban en dos solapas, y era una separación de
+   * presentación: las dos salían de `citas()` filtrando por `porResponder`, con
+   * las MISMAS acciones y la misma celda. Quien atendía tenía que mirar en dos
+   * lugares para saber cómo venía el día, y una solicitud aceptada
+   * «desaparecía» de una solapa para aparecer en la otra.
+   *
+   * Ahora es una lista con el estado adelante, que es lo que ordena el ciclo
+   * `SOLICITADA → CONFIRMADA → EN CURSO → COMPLETADA`. Los cupos siguen aparte
+   * (ALV-020): son disponibilidad, no consultas.
+   *
+   * `solicitudes()` sobrevive porque el conteo de lo que espera respuesta sigue
+   * siendo la única cifra que urge: se muestra como aviso arriba de la tabla.
+   */
+  protected readonly consultas = this.citas;
+
+  /** Lo que ya está agendado: lo que no espera respuesta. */
   protected readonly citasAgendadas = computed(() =>
     filtrarEstado(this.citas(), (cita) => !this.porResponder(cita)),
   );
 
-  protected readonly rotuloDeSolicitudes = computed(() =>
-    rotulo('Solicitudes', cuenta(this.solicitudes())),
-  );
-  protected readonly rotuloDeCitas = computed(() =>
-    rotulo('Citas', cuenta(this.citasAgendadas())),
+  /** Cuántas esperan respuesta, para el aviso de arriba de la tabla. */
+  protected readonly cuantasEsperanRespuesta = computed(() => cuenta(this.solicitudes()) ?? 0);
+
+  protected readonly rotuloDeConsultas = computed(() =>
+    rotulo('Consultas', cuenta(this.consultas())),
   );
   protected readonly rotuloDeCupos = computed(() => rotulo('Cupos', cuenta(this.cupos())));
 
@@ -956,12 +998,33 @@ export class Agenda {
     });
   }
 
-  protected readonly columnasDeCitas = computed<readonly ColumnDef<CitaVisible>[]>(() => [
-    { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },
-    { key: 'recurso', header: 'Recurso', priority: 1 },
+  /**
+   * Las columnas del ciclo completo (ALV-019), en el orden que ordena una lista
+   * mixta: **el estado primero**. En una lista donde conviven lo que espera
+   * respuesta y lo que ya está confirmado, lo que decide si la fila pide algo
+   * es el estado, no la hora.
+   *
+   * `solicitada` sólo dice algo en las que esperan respuesta —en una confirmada
+   * es ruido—, así que la celda la deja vacía y la columna cede primero en
+   * pantalla chica.
+   */
+  protected readonly columnasDeConsultas = computed<readonly ColumnDef<CitaVisible>[]>(() => [
     { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'paciente', header: 'Paciente', priority: 2, cell: this.celdaPaciente() },
+    { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },
+    { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
+    { key: 'solicitada', header: 'Solicitada', priority: 3, cell: this.celdaSolicitada() },
+    // ALV-017: en la agenda propia el recurso es el MISMO en todas las filas —
+    // el nombre del profesional repetido tantas veces como citas tenga, sin
+    // distinguir nada. Sólo aparece cuando se mira la agenda de otro o cuando
+    // la tabla puede mezclar recursos, que es cuando el dato separa filas.
+    ...(this.mirandoAgendaPropia()
+      ? []
+      : [{ key: 'recurso', header: 'Recurso', priority: 2 } satisfies ColumnDef<CitaVisible>]),
     { key: 'motivo', header: 'Motivo', priority: 3 },
+    // ALV-021. Prioridad 3, junto al motivo: es información de contexto, no
+    // algo que se opere como el pago. Texto plano — «Particular» o el nombre
+    // de la aseguradora no necesitan sello ni color.
+    { key: 'cobertura', header: 'Seguro', priority: 3 },
     // Prioridad 2: en pantalla chica cede antes que el estado de la cita y la
     // fecha, pero antes que el motivo. Quien mira la agenda en el teléfono
     // quiere saber a qué hora y con quién; el pago viene después.
@@ -1000,25 +1063,6 @@ export class Agenda {
    * tomamos acá**: ensanchar quién ve la agenda de quién es privacidad, no
    * pantalla (P-13-2).
    */
-  protected readonly columnasDeSolicitudes = computed<readonly ColumnDef<CitaVisible>[]>(() => [
-    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'solicitada', header: 'Solicitada', priority: 1, cell: this.celdaSolicitada() },
-    { key: 'cuando', header: 'Cita', priority: 1, cell: this.celdaCuando() },
-    { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
-    { key: 'recurso', header: 'Profesional', priority: 3 },
-    { key: 'motivo', header: 'Motivo', priority: 3 },
-    ...(this.puedeAtender()
-      ? [
-          {
-            key: 'acciones',
-            header: 'Acciones',
-            priority: 1,
-            cell: this.celdaAccionesCita(),
-          } satisfies ColumnDef<CitaVisible>,
-        ]
-      : []),
-  ]);
-
   protected readonly columnasDeCupos = computed<readonly ColumnDef<CupoVisible>[]>(() => [
     { key: 'franja', header: 'Franja', priority: 1, cell: this.celdaFranja() },
     { key: 'recurso', header: 'Recurso', priority: 1 },
@@ -1063,6 +1107,10 @@ export class Agenda {
       this.recursoElegido();
       this.ventanaElegida();
       this.incluirCanceladas();
+      // ALV-024: sin esto, mover la ventana cambia la URL y no recarga nada.
+      // `ventanaElegida()` sólo dice el TAMAÑO (7/30 días); `fechaBase()` es
+      // DESDE cuándo, y es lo que `moverVentana`/`irAHoy` cambian.
+      this.fechaBase();
       // Se depende también de que los recursos ya se hayan leído: con una
       // organización sin ninguno, `recursoElegido()` se queda en `null` de
       // punta a punta y sin esta dependencia la pantalla no saldría nunca del
@@ -1088,7 +1136,31 @@ export class Agenda {
   }
 
   protected elegirVentana(clave: string | null): void {
-    this.publicar({ rango: clave === VENTANA_POR_DEFECTO ? null : clave });
+    // Cambiar el tamaño de la ventana vuelve a hoy (ALV-024): quedarse en un
+    // desplazamiento de «7 días» al pasar a «30 días» sería una fecha que ya
+    // no significa lo mismo para nadie que la mire.
+    this.publicar({ rango: clave === VENTANA_POR_DEFECTO ? null : clave, desde: null });
+  }
+
+  /**
+   * Mueve la ventana un tramo completo, hacia atrás o hacia adelante
+   * (ALV-024). Un tramo es el tamaño de la ventana elegida: si se mira de a
+   * 7 días, «Siguiente» salta 7 días — la próxima página, no un día suelto.
+   */
+  protected moverVentana(direccion: -1 | 1): void {
+    const dias = VENTANAS.find((v) => v.clave === this.ventanaElegida())?.dias ?? 7;
+    const siguiente = new Date(this.fechaBase());
+    siguiente.setDate(siguiente.getDate() + dias * direccion);
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const iso = siguiente.toISOString().slice(0, 10);
+    this.publicar({ desde: siguiente.getTime() === hoy.getTime() ? null : iso });
+  }
+
+  /** Vuelve a la ventana de hoy en un clic, sin contar los tramos de vuelta. */
+  protected irAHoy(): void {
+    this.publicar({ desde: null });
   }
 
   protected alternarCanceladas(incluir: boolean): void {
@@ -1096,7 +1168,16 @@ export class Agenda {
   }
 
   protected elegirPestana(indice: number): void {
-    const vista = indice === 2 ? 'cupos' : indice === 1 ? 'citas' : null;
+    // El espejo de `pestana()`: sin «Mi agenda» los índices corren, y publicar
+    // `vista=agenda` desde la solapa de cupos dejaría la URL diciendo una cosa
+    // y la pantalla mostrando otra.
+    const conAgendaPropia = this.esQuienAtiende();
+    const vista =
+      indice === (conAgendaPropia ? 2 : 1)
+        ? 'cupos'
+        : conAgendaPropia && indice === 1
+          ? 'agenda'
+          : null;
     this.publicar({ vista });
   }
 
@@ -1734,6 +1815,14 @@ export class Agenda {
       rutaPaciente:
         paciente !== null && this.puedeVerFichas() ? `/administration/patients/${paciente}` : null,
       paciente: cita.patientName ?? (paciente === null ? 'Sin paciente' : 'Paciente asignado'),
+      // ALV-021. `undefined` es «no corresponde verlo» —misma compuerta que el
+      // nombre—, y se dice con el mismo guión que ya usa la columna de pago
+      // para «no hay nada que decir todavía». `null` SÍ es una respuesta:
+      // se comprobó y no tiene, que es «Particular».
+      cobertura:
+        cita.insuranceCarrierName === undefined
+          ? '—'
+          : (cita.insuranceCarrierName ?? 'Particular'),
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,
@@ -1811,15 +1900,16 @@ export class Agenda {
   }
 
   /**
-   * La ventana consultada, desde el arranque del día de hoy.
+   * La ventana consultada, desde el arranque de `fechaBase` (ALV-024).
    *
-   * Arranca hoy y no «ahora» a propósito: una cita de las nueve de la mañana no
-   * debería desaparecer de la agenda a las nueve y cinco.
+   * Arranca al principio del día y no «ahora» a propósito: una cita de las
+   * nueve de la mañana no debería desaparecer de la agenda a las nueve y
+   * cinco. Antes arrancaba siempre en hoy; ahora es la fecha que la sesión
+   * eligió navegar, y hoy sigue siendo el valor por omisión.
    */
   private ventana(): { desde: Date; hasta: Date } {
     const dias = VENTANAS.find((v) => v.clave === this.ventanaElegida())?.dias ?? 7;
-    const desde = new Date();
-    desde.setHours(0, 0, 0, 0);
+    const desde = new Date(this.fechaBase());
     const hasta = new Date(desde);
     hasta.setDate(hasta.getDate() + dias);
     return { desde, hasta };

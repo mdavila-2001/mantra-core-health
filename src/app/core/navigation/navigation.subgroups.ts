@@ -99,14 +99,14 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: ['directory', 'laboratory-directory', 'clinics-directory', 'pharmacies-directory'],
   },
 
-  /* -- Atención ----------------------------------------------------------- */
-  {
-    label: 'Consultorio',
-    group: 'Atención',
-    icon: 'stethoscope',
-    // A quién atiendo y cuándo: la agenda y la consulta en curso.
-    paths: ['consultation', 'schedule'],
-  },
+  /* -- Atención -----------------------------------------------------------
+     «Consultorio» ya no existe (pedido del propietario, 04/09/2026). Agrupaba
+     `consultation` y `schedule`; la primera salió del menú y la segunda es
+     **Consultas médicas**, así que el subgrupo quedaba con un solo hijo: un
+     escalón que había que abrir para encontrar una única cosa.
+
+     Ahora «Consultas médicas» cuelga directo de Atención. Un subgrupo se
+     justifica cuando ordena varias secciones, no cuando envuelve una. */
   {
     label: 'Historia clínica',
     group: 'Atención',
@@ -266,7 +266,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // por la barra—: el reparto cubre el registro entero, y una sección que
     // mañana vuelva al menú tiene que aparecer en el bloque que le corresponde
     // y no suelta al final.
-    paths: ['notification-center', 'ajustes'],
+    paths: ['notification-center', 'settings'],
   },
 ];
 

@@ -322,4 +322,124 @@ describe('MyServices', () => {
     expect(boton('my-services-practice')).not.toBeNull();
     expect(interno<() => string | null>('practicaElegida')()).toBe('pr1');
   });
+
+  /**
+   * FT-22-R05. El precio de lo que ofrece quien atiende es suyo, y hasta acá no
+   * había forma de ponerlo desde ninguna pantalla que él pudiera abrir.
+   */
+  describe('editar el precio', () => {
+    function abrirEdicionDe(item: ServiceCatalogItem) {
+      responderPracticas();
+      peticionDelCatalogo().flush(pagina([item]));
+      harness.detectChanges();
+
+      interno<(s: ServiceCatalogItem) => void>('editar')(item);
+      harness.detectChanges();
+    }
+
+    function peticionDeGuardado() {
+      return http.expectOne((r) => r.url === '/billing/service-catalog/s1');
+    }
+
+    it('un precio en cero se dice con palabras, no con un «0.00» que parece gratis', () => {
+      responderPracticas();
+      peticionDelCatalogo().flush(pagina([servicio({ defaultPrice: '0.00' })]));
+      harness.detectChanges();
+
+      expect(texto()).toContain('Definí el precio');
+      expect(texto()).not.toContain('0.00');
+    });
+
+    it('el importe se muestra con su moneda cuando la API la resolvió', () => {
+      responderPracticas();
+      peticionDelCatalogo().flush(pagina([servicio({ currencyCode: 'BOB' })]));
+      harness.detectChanges();
+
+      expect(texto()).toContain('150.00 BOB');
+    });
+
+    it('guardar manda un PATCH con el importe y actualiza la tarjeta con lo que devolvió la API', () => {
+      abrirEdicionDe(servicio());
+      interno<(v: string) => void>('escribirPrecio')('200.50');
+
+      interno<(s: ServiceCatalogItem) => void>('guardarPrecio')(servicio());
+      const req = peticionDeGuardado();
+      expect(req.request.method).toBe('PATCH');
+      // Sólo la clave que cambió: el backend valida con `forbidNonWhitelisted`.
+      expect(req.request.body).toEqual({ defaultPrice: '200.50' });
+
+      req.flush(servicio({ defaultPrice: '200.50', currencyCode: 'BOB' }));
+      harness.detectChanges();
+
+      expect(texto()).toContain('200.50 BOB');
+      expect(boton('my-services-price-input')).toBeNull();
+    });
+
+    it('el campo arranca vacío cuando nunca hubo precio, y con el valor cuando lo hubo', () => {
+      abrirEdicionDe(servicio({ defaultPrice: '0.00' }));
+      expect(interno<() => string>('borrador')()).toBe('');
+
+      interno<() => void>('cancelar')();
+      interno<(s: ServiceCatalogItem) => void>('editar')(servicio());
+      expect(interno<() => string>('borrador')()).toBe('150.00');
+    });
+
+    it('un importe con tres decimales no llega a viajar y lo dice en el campo', () => {
+      abrirEdicionDe(servicio());
+      interno<(v: string) => void>('escribirPrecio')('10.123');
+
+      interno<(s: ServiceCatalogItem) => void>('guardarPrecio')(servicio());
+      harness.detectChanges();
+
+      expect(interno<() => string | null>('errorDelPrecio')()).toContain('dos decimales');
+      // No se gastó un viaje: `afterEach` verifica que no queda ninguno pendiente.
+    });
+
+    /**
+     * El rechazo del servidor llega como **400**, no 422.
+     *
+     * Se comprobó contra la API viva: el importe lo rechaza el `ValidationPipe`
+     * por el patrón del DTO, y eso en esta API es `VALIDATION_FAILED` con 400.
+     * El 422 está reservado a las precondiciones de dominio
+     * (`PreconditionFailedException`), que es otra cosa. La pantalla no se
+     * ramifica por el código: muestra el mensaje que venga, así que serviría
+     * igual — pero la prueba dice lo que de verdad pasa.
+     */
+    it('el rechazo del servidor se muestra en el campo y conserva lo escrito', () => {
+      abrirEdicionDe(servicio());
+      interno<(v: string) => void>('escribirPrecio')('99.00');
+
+      interno<(s: ServiceCatalogItem) => void>('guardarPrecio')(servicio());
+      // El envoltorio real: se ramifica por `code` —de la lista cerrada del
+      // contrato— y el `message` es el que se muestra.
+      peticionDeGuardado().flush(
+        {
+          code: 'VALIDATION_FAILED',
+          message: 'El precio debe ser un número positivo con hasta dos decimales',
+          timestamp: '2026-09-04T12:00:00.000Z',
+          path: '/billing/service-catalog/s1',
+        },
+        { status: 400, statusText: 'Bad Request' },
+      );
+      harness.detectChanges();
+
+      expect(interno<() => string | null>('errorDelPrecio')()).toBe(
+        'El precio debe ser un número positivo con hasta dos decimales',
+      );
+      // Lo escrito no se pierde: corregirlo es escribir dos teclas, no todo de nuevo.
+      expect(interno<() => string>('borrador')()).toBe('99.00');
+      expect(interno<() => string | null>('enEdicion')()).toBe('s1');
+    });
+
+    it('cancelar no manda nada y deja el precio como estaba', () => {
+      abrirEdicionDe(servicio());
+      interno<(v: string) => void>('escribirPrecio')('1.00');
+
+      interno<() => void>('cancelar')();
+      harness.detectChanges();
+
+      expect(interno<() => string | null>('enEdicion')()).toBeNull();
+      expect(texto()).toContain('150.00');
+    });
+  });
 });

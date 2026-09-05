@@ -83,6 +83,29 @@
   font-weight: 600;
 }
 
+/* «Definí el precio» ocupa el renglón del importe, con el peso de un dato que
+   falta y no el de una cifra: si se viera igual que un monto, se leería como
+   uno. */
+.mis-servicios__pendiente {
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 500;
+}
+
+.mis-servicios__edicion {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-3);
+}
+
+.mis-servicios__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-3);
+}
+
 .mis-servicios__mas {
   display: flex;
   justify-content: center;

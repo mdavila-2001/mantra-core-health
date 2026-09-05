@@ -290,6 +290,44 @@ describe('ProceduresBlock', () => {
     });
   });
 
+  /**
+   * Cirugía y odontología ya no viven pegadas bajo «Procedimiento»: cada una
+   * es su propia opción del selector, con su propio permiso de servidor. Sin
+   * `modo`, alguien eligiendo odontología igual disparaba —y a veces
+   * bloqueaba— la lectura quirúrgica, con el aviso de permiso denegado en
+   * medio de un formulario que no pedía nada de eso.
+   */
+  describe('el modo acota qué mitad se pide y se dibuja', () => {
+    it('con modo="odontologia" no pide ni dibuja lo quirúrgico', () => {
+      fixture.componentRef.setInput('modo', 'odontologia');
+      fixture.detectChanges();
+
+      http.expectNone((r) => r.url === '/procedure-cases');
+      expect(texto()).not.toContain('Cirugías');
+      expect(texto()).not.toContain('No podés ver el histórico quirúrgico');
+
+      http.expectOne((r) => r.url === '/dental-procedures').flush({ items: [], total: 0 });
+      http.expectOne((r) => r.url === '/dental-procedures/catalog').flush(CATALOGO);
+      fixture.detectChanges();
+
+      expect(texto()).toContain('Odontología');
+    });
+
+    it('con modo="cirugia" no pide ni dibuja lo odontológico', () => {
+      fixture.componentRef.setInput('modo', 'cirugia');
+      fixture.detectChanges();
+
+      http.expectNone((r) => r.url === '/dental-procedures');
+      http.expectNone((r) => r.url === '/dental-procedures/catalog');
+      expect(texto()).not.toContain('Odontología');
+
+      http.expectOne((r) => r.url === '/procedure-cases').flush({ items: [], total: 0 });
+      fixture.detectChanges();
+
+      expect(texto()).toContain('Cirugías');
+    });
+  });
+
   describe('el alta odontológica', () => {
     /**
      * Sin catálogo los selectores estarían vacíos y el formulario mandaría un

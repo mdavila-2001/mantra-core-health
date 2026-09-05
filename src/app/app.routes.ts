@@ -83,7 +83,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Carril P9 · las preferencias de aviso. Diferida: se abre una vez y se
   // olvida, que es exactamente lo que una pantalla de preferencias debería
   // conseguir.
-  ajustes: () => import('./features/settings/settings').then((m) => m.Settings),
+  settings: () => import('./features/settings/settings').then((m) => m.Settings),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
@@ -845,7 +845,13 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // «Preferencias de avisos» dejó de ser una sección y pasó a ser un panel de
   // Ajustes. Estuvo en el menú, así que la dirección está en favoritos y en el
   // historial de quien ya la usó: se redirige en vez de devolver un 404.
-  'my-account/notification-preferences': '/ajustes',
+  // Apunta directo a la dirección vigente, no a `/ajustes`: encadenar dos
+  // redirecciones es una navegación más por nada.
+  'my-account/notification-preferences': '/settings',
+  // TAREA-29, por arrastre de TAREA-17: Ajustes pasó a `/settings`. La
+  // dirección en castellano se alcanzaba por el ícono del encabezado desde el
+  // 28/08, así que está en historiales y favoritos.
+  ajustes: '/settings',
   panel: '/dashboard',
   agenda: '/schedule',
   clinico: '/medical-records',
@@ -1221,12 +1227,6 @@ export const routes: Routes = [
       // «Mi agenda», sin lista, sin históricos y sin dirección propia.
       pantallaDeOperacion('schedule', 'blocks', 'Bloqueos de agenda', () =>
         import('./features/agenda/blocks/blocks').then((m) => m.Blocks),
-      ),
-      // «Mi agenda» (MAC-4): el horario publicado, en palabras. Es la primera
-      // pantalla donde un médico ve lo que publicó — hasta que existió el GET
-      // de plantillas, no había forma de volver a leerlo.
-      pantallaDeOperacion('schedule', 'mine', 'Mi agenda', () =>
-        import('./features/agenda/my-agenda/my-agenda').then((m) => m.MyAgenda),
       ),
       // El alta de cita del profesional (TAREA-14). Dirección propia porque el
       // pedido es justamente poder agendar **sin pasar por el calendario**:

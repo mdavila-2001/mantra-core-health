@@ -49,7 +49,7 @@ describe('AppointmentNew', () => {
     fixture = TestBed.createComponent(AppointmentNew);
     http = TestBed.inject(HttpTestingController);
     // Sin rutas registradas (`provideRouter([])`), un `navigate` real no
-    // encuentra `/schedule/mine` y revienta con un rechazo sin manejar. Se
+    // encuentra `/schedule` y revienta con un rechazo sin manejar. Se
     // espía siempre, no sólo en la prueba que lo verifica: cualquier alta
     // exitosa navega, y esa promesa no puede quedar suelta.
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -244,7 +244,7 @@ describe('AppointmentNew', () => {
       });
 
       expect(exito).toHaveBeenCalled();
-      expect(navegar).toHaveBeenCalledWith(['/schedule/mine']);
+      expect(navegar).toHaveBeenCalledWith(['/schedule']);
     });
 
     /**

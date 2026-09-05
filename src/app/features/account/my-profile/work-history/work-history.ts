@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -10,18 +10,25 @@ import {
 } from '@angular/core';
 
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
-import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
+import type {
+  NewOwnSite,
+  PracticeSite,
+} from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import type {
   LinkableOrganization,
   PractitionerAffiliation,
 } from '../../../../core/data-access/profiles/profiles.types';
+import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
+import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
@@ -32,9 +39,12 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { AppMap } from '../../../../shared/components/organisms/map/map';
+import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/map/pin-mapa.types';
 
 /**
- * **Historial laboral** del profesional — punto 9 del reclamo del cliente.
+ * **Historial laboral** del profesional — punto 9 del reclamo del cliente —
+ * y, desde ALV-005, **dónde atiende hoy**.
  *
  * ## Lo que el perfil no sabía decir
  *
@@ -61,6 +71,22 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
  * quien trabajó en La Paz no va a encontrarse ahí. Pero es la salida declarada,
  * no el camino por defecto: hay que pedirla.
  *
+ * ## El cargo es opcional (ALV-007) y «Servicio o área» ya no existe (ALV-008)
+ *
+ * Un vínculo de «atiendo en mi propio consultorio» no tiene un cargo dentro de
+ * una jerarquía, y exigirlo bloqueaba el guardado. Si viene, se muestra; si
+ * no, no dibuja hueco. El área se retiró del formulario y del contrato: la
+ * columna sigue en la base hasta que se decida su migración, pero ninguna
+ * pantalla la ofrece.
+ *
+ * ## Dónde atiendo (ALV-005/006)
+ *
+ * El alta de profesional dejaba un hueco concreto: «atiendo en mi propio
+ * consultorio, sin estar afiliado a nadie» no tenía dónde registrarse. Acá el
+ * profesional carga sus consultorios propios —nombre, dirección, municipio y,
+ * si quiere, el punto en el mapa— y los retira cuando deja de atender ahí.
+ * Es la mitad que le faltaba a la agenda: sabía *cuándo* atiende, no *dónde*.
+ *
  * ## «Sigue ahí» se dice dejando la fecha vacía
  *
  * Sin fin, el vínculo es vigente. No hay casilla de «actual» porque sería un
@@ -79,14 +105,18 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
   imports: [
     Alert,
     AppButton,
+    AppMap,
     Card,
     DatePicker,
     DatePipe,
+    DecimalPipe,
     FormActions,
     FormField,
     Input,
+    LocationPicker,
     ReferenceCombobox,
     Select,
+    UpperCasePipe,
   ],
   templateUrl: './work-history.html',
   styleUrl: './work-history.css',
@@ -95,8 +125,10 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 export class WorkHistory {
   private readonly profiles = inject(ProfilesClient);
   private readonly sites = inject(PracticeSitesClient);
+  private readonly municipios = inject(BoMunicipalitiesCatalog);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
+  private readonly dialogs = inject(DialogService);
 
   /**
    * `'flat'` (por defecto): la lista propia, tal como vive hoy al pie de «Mi
@@ -131,23 +163,32 @@ export class WorkHistory {
   });
 
   /**
-   * Los consultorios de la plataforma donde ya atiende.
+   * Los consultorios donde atiende hoy.
    *
-   * Sirven para atar la afiliación a una sede real cuando corresponde. Si la
-   * lectura falla, la lista queda vacía y el campo simplemente no se ofrece: es
-   * opcional en el contrato y nada del alta depende de él.
+   * Sirven para dos cosas: la lista «Dónde atiendo» (ALV-005) y atar una
+   * afiliación a una sede real cuando corresponde. Si la lectura falla, la
+   * lista queda vacía y el campo simplemente no se ofrece.
    */
   protected readonly sedes = signal<readonly PracticeSite[]>([]);
 
-  /** Las mismas sedes como opciones del desplegable. */
+  /**
+   * Las mismas sedes como opciones del desplegable.
+   *
+   * La dirección va en MAYÚSCULAS también acá (ALV-010): es la misma regla de
+   * render que la lista de arriba, y un mismo dato con dos formas en la misma
+   * tarjeta se leería como dos direcciones.
+   */
   protected readonly opcionesDeSede = computed<readonly SelectOption<string>[]>(() =>
     this.sedes().map((sede) => ({
       value: sede.id,
-      label: sede.addressText === null ? sede.name : `${sede.name} · ${sede.addressText}`,
+      label:
+        sede.addressText === null
+          ? sede.name
+          : `${sede.name} · ${sede.addressText.toLocaleUpperCase('es-BO')}`,
     })),
   );
 
-  /* -- El formulario ------------------------------------------------------- */
+  /* -- El formulario de vínculos ------------------------------------------ */
 
   /**
    * Cómo se está nombrando la institución.
@@ -170,7 +211,6 @@ export class WorkHistory {
 
   protected readonly institucion = signal('');
   protected readonly cargo = signal('');
-  protected readonly area = signal('');
   protected readonly desde = signal<Date | null>(null);
   protected readonly hasta = signal<Date | null>(null);
   protected readonly sede = signal<string | null>(null);
@@ -206,10 +246,10 @@ export class WorkHistory {
       : this.institucion().trim(),
   );
 
+  // ALV-007: el cargo dejó de ser condición para poder registrar.
   protected readonly puedeRegistrar = computed(
     () =>
       this.nombreDeLaInstitucion() !== '' &&
-      this.cargo().trim() !== '' &&
       this.desde() !== null &&
       !this.periodoInvertido() &&
       !this.registrando(),
@@ -239,22 +279,68 @@ export class WorkHistory {
     if (this.avisoDeDuplicado() !== null) {
       return null;
     }
-
-    const state = this.registro();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu cuenta no tiene un perfil profesional asociado.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDe(this.registro());
   });
+
+  /* -- El formulario de sedes (ALV-005/006) -------------------------------- */
+
+  /** Si el formulario de consultorio propio está desplegado. */
+  protected readonly altaDeSedeAbierta = signal(false);
+
+  protected readonly nombreDeSedeNueva = signal('');
+  protected readonly direccionDeSede = signal('');
+  protected readonly ciudadDeSede = signal('');
+  /** Municipio elegido en el mapa de Bolivia (concept id), o `null`. */
+  protected readonly municipioDeSede = signal<string | null>(null);
+  /** El punto marcado en el mapa, si se marcó. */
+  protected readonly puntoDeSede = signal<PuntoGeo | null>(null);
+  /** Si el mapa para marcar el punto está desplegado. Cerrado por defecto: es opcional. */
+  protected readonly mapaAbierto = signal(false);
+
+  /** El árbol de departamentos y municipios, cuando el formulario lo pidió. */
+  protected readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
+  protected readonly catalogoMunicipiosCaido = signal(false);
+
+  protected readonly registrandoSede = signal(false);
+  protected readonly registroDeSede = signal<ViewState<null>>(ready(null));
+  protected readonly errorDeSede = computed<string | null>(() => mensajeDe(this.registroDeSede()));
+
+  /** El punto marcado, como el único pin del mapa. */
+  protected readonly pinesDeSede = computed<readonly PinMapa[]>(() => {
+    const punto = this.puntoDeSede();
+    if (punto === null) {
+      return [];
+    }
+    return [
+      {
+        id: 'sede-nueva',
+        lat: punto.lat,
+        lng: punto.lng,
+        titulo: this.nombreDeSedeNueva().trim() || 'Consultorio',
+      },
+    ];
+  });
+
+  /**
+   * El departamento del municipio elegido, para que la dirección lo lleve.
+   *
+   * El picker devuelve sólo el municipio; el departamento se deduce del árbol
+   * que ya está cargado, sin otra petición.
+   */
+  protected readonly departamentoDeSede = computed<string | null>(() => {
+    const municipio = this.municipioDeSede();
+    if (municipio === null) {
+      return null;
+    }
+    const rama = this.ramasMunicipios().find((r) =>
+      r.municipios.some((m) => m.conceptId === municipio),
+    );
+    return rama?.conceptId ?? null;
+  });
+
+  protected readonly puedeRegistrarSede = computed(
+    () => this.nombreDeSedeNueva().trim() !== '' && !this.registrandoSede(),
+  );
 
   constructor() {
     if (this.esProfesional()) {
@@ -285,7 +371,7 @@ export class WorkHistory {
     }
 
     const hasta = this.hasta();
-    const area = this.area().trim();
+    const cargo = this.cargo().trim();
     const sede = this.sede();
 
     this.registrando.set(true);
@@ -294,11 +380,10 @@ export class WorkHistory {
     this.profiles
       .addAffiliation({
         organizationName: this.nombreDeLaInstitucion(),
-        roleTitle: this.cargo().trim(),
         startDate: soloFecha(desde),
         // Los opcionales sin valor se **omiten**: el backend valida con
         // `forbidNonWhitelisted`, y una clave vacía no es «sin especificar».
-        ...(area === '' ? {} : { departmentText: area }),
+        ...(cargo === '' ? {} : { roleTitle: cargo }),
         ...(hasta === null ? {} : { endDate: soloFecha(hasta) }),
         ...(sede === null || sede === '' ? {} : { practiceSiteId: sede }),
       })
@@ -363,6 +448,123 @@ export class WorkHistory {
   protected buscarEnElPadron(): void {
     this.institucion.set('');
     this.modoDeInstitucion.set('padron');
+  }
+
+  /* -- Sedes propias (ALV-005/006) ---------------------------------------- */
+
+  /**
+   * Despliega el alta de consultorio propio y, recién ahí, pide el árbol de
+   * municipios: es un catálogo grande y la mayoría de las visitas a esta
+   * pantalla no lo necesitan.
+   */
+  protected abrirAltaDeSede(): void {
+    this.altaDeSedeAbierta.set(true);
+    if (this.ramasMunicipios().length === 0) {
+      this.cargarMunicipios();
+    }
+  }
+
+  protected cerrarAltaDeSede(): void {
+    this.altaDeSedeAbierta.set(false);
+    this.limpiarSede();
+  }
+
+  protected reintentarMunicipios(): void {
+    this.municipios.olvidar();
+    this.cargarMunicipios();
+  }
+
+  /** Despliega o guarda el mapa para marcar el punto. */
+  protected alternarMapa(): void {
+    this.mapaAbierto.update((abierto) => !abierto);
+  }
+
+  /** El punto donde se hizo clic en el mapa. */
+  protected marcarPunto(punto: PuntoGeo): void {
+    this.puntoDeSede.set(punto);
+  }
+
+  protected quitarPunto(): void {
+    this.puntoDeSede.set(null);
+  }
+
+  /**
+   * Registra un consultorio propio (ALV-005/006).
+   *
+   * La dirección sólo viaja si tiene al menos una línea: una sede sin
+   * dirección es válida —se puede cargar después— y mandar una dirección
+   * vacía no es «sin dirección», es una fila vacía en `common.addresses`.
+   */
+  protected registrarSede(): void {
+    if (!this.puedeRegistrarSede()) {
+      return;
+    }
+    const direccion = this.direccionDeSede().trim();
+    const ciudad = this.ciudadDeSede().trim();
+    const municipio = this.municipioDeSede();
+    const departamento = this.departamentoDeSede();
+    const punto = this.puntoDeSede();
+
+    const address: NewOwnSite['address'] =
+      direccion === ''
+        ? undefined
+        : {
+            lines: [direccion],
+            ...(ciudad === '' ? {} : { city: ciudad }),
+            ...(municipio === null ? {} : { municipalityConceptId: municipio }),
+            ...(departamento === null ? {} : { administrativeAreaConceptId: departamento }),
+            ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
+          };
+
+    this.registrandoSede.set(true);
+    this.registroDeSede.set(loading());
+    this.sites
+      .createOwnSite({
+        name: this.nombreDeSedeNueva().trim(),
+        ...(address === undefined ? {} : { address }),
+      })
+      .subscribe({
+        next: () => {
+          this.registrandoSede.set(false);
+          this.registroDeSede.set(ready(null));
+          this.cerrarAltaDeSede();
+          this.toasts.success('Ya figura entre tus consultorios.', 'Consultorio registrado');
+          this.cargarSedes();
+          this.added.emit();
+        },
+        error: (error: unknown) => {
+          this.registrandoSede.set(false);
+          this.registroDeSede.set(errorToViewState<null>(error));
+        },
+      });
+  }
+
+  /**
+   * Deja de atender en una sede (ALV-005).
+   *
+   * Con confirmación: no se borra nada, pero la agenda deja de ofrecer ese
+   * lugar y un clic de más no debería sacar un consultorio de la ficha.
+   */
+  protected async quitarSede(sede: PracticeSite): Promise<void> {
+    const confirmado = await this.dialogs.confirm({
+      title: 'Dejar de atender acá',
+      message: `¿Retirar «${sede.name}» de tus consultorios? La sede no se borra; deja de figurar como un lugar donde atendés.`,
+      confirmLabel: 'Retirar',
+      cancelLabel: 'Cancelar',
+    });
+    if (!confirmado) {
+      return;
+    }
+    this.sites.removeOwnSite(sede.id).subscribe({
+      next: () => {
+        this.toasts.success('Ya no figura entre tus consultorios.', 'Consultorio retirado');
+        this.cargarSedes();
+        this.added.emit();
+      },
+      error: (error: unknown) => {
+        this.registroDeSede.set(errorToViewState<null>(error));
+      },
+    });
   }
 
   /**
@@ -455,6 +657,25 @@ export class WorkHistory {
     });
   }
 
+  /**
+   * Trae el árbol de municipios, para «en qué municipio queda».
+   *
+   * Mismo criterio que el alta de profesional ante un fallo: el campo es
+   * opcional y el alta de la sede sigue.
+   */
+  private cargarMunicipios(): void {
+    this.municipios.listar().subscribe({
+      next: (ramas) => {
+        this.catalogoMunicipiosCaido.set(false);
+        this.ramasMunicipios.set(ramas);
+      },
+      error: () => {
+        this.ramasMunicipios.set([]);
+        this.catalogoMunicipiosCaido.set(true);
+      },
+    });
+  }
+
   /** Vacía el formulario tras un alta. El siguiente vínculo arranca limpio. */
   private limpiar(): void {
     this.institucion.set('');
@@ -462,11 +683,37 @@ export class WorkHistory {
     this.resultados.set([]);
     this.modoDeInstitucion.set('padron');
     this.cargo.set('');
-    this.area.set('');
     this.desde.set(null);
     this.hasta.set(null);
     this.sede.set(null);
   }
+
+  private limpiarSede(): void {
+    this.nombreDeSedeNueva.set('');
+    this.direccionDeSede.set('');
+    this.ciudadDeSede.set('');
+    this.municipioDeSede.set(null);
+    this.puntoDeSede.set(null);
+    this.mapaAbierto.set(false);
+    this.registroDeSede.set(ready(null));
+  }
+}
+
+/** El fallo de una escritura, en palabras, o `null` si no hubo. */
+function mensajeDe(state: ViewState<null>): string | null {
+  if (state.status === 'validation') {
+    return state.issues.map((issue) => issue.message).join(' ') || null;
+  }
+  if (state.status === 'forbidden') {
+    return state.message ?? 'Tu cuenta no tiene un perfil profesional asociado.';
+  }
+  if (state.status === 'offline') {
+    return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+  }
+  if (state.status === 'error') {
+    return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+  }
+  return null;
 }
 
 /**

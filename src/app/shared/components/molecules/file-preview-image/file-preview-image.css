@@ -1,0 +1,25 @@
+:host {
+  display: inline-block;
+}
+
+.file-preview-image {
+  display: block;
+  inline-size: 120px;
+  block-size: 120px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--filete-2);
+}
+
+.file-preview-image--error {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tinta-3);
+  background: var(--sup-inset);
+}
+
+.file-preview-image--error svg {
+  inline-size: 28px;
+  block-size: 28px;
+}

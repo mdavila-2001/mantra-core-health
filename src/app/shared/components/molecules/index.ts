@@ -25,6 +25,17 @@ export { Card } from './card/card';
 export { CARD_PADDINGS, CARD_VARIANTS } from './card/card.types';
 export type { CardPadding, CardVariant } from './card/card.types';
 
+export { CommentMediaPicker } from './comment-media-picker/comment-media-picker';
+export {
+  COMMENT_MEDIA_MAX,
+  COMMENT_MEDIA_MAX_BYTES,
+  COMMENT_MEDIA_OPTIONS,
+} from './comment-media-picker/comment-media-picker.types';
+export type {
+  CommentMediaAttachment,
+  CommentMediaKind,
+} from './comment-media-picker/comment-media-picker.types';
+
 /**
  * El diálogo se abre por el servicio, no declarándolo en una plantilla: así hay
  * una sola instancia y el foco no queda repartido entre varias.
@@ -39,6 +50,8 @@ export { EMPTY_STATE_VARIANTS } from './empty-state/empty-state.types';
 export type { EmptyStateVariant } from './empty-state/empty-state.types';
 
 export { FileInput } from './file-input/file-input';
+
+export { FilePreviewImage } from './file-preview-image/file-preview-image';
 export type { RejectedFile } from './file-input/file-input';
 
 export { FormField } from './form-field/form-field';

@@ -35,7 +35,6 @@ import type { DialogDetail } from '../../../shared/components/molecules/dialog/d
 import { patientChartRoute } from '../../clinical-record/clinical-record.routes';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
-import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -161,7 +160,6 @@ const SIN_DATO = 'Sin registrar';
     WeekView,
     ScheduleGrid,
     ContentDialog,
-    PageHeader,
     RouterLink,
     ViewStateHost,
   ],

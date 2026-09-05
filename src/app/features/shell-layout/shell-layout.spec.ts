@@ -56,7 +56,7 @@ describe('ShellLayout', () => {
           { path: 'my-account', children: [] },
           { path: 'my-account/questionnaires', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
-          { path: 'ajustes', children: [] },
+          { path: 'settings', children: [] },
         ]),
       ],
     }).compileComponents();
@@ -414,7 +414,7 @@ describe('ShellLayout', () => {
         // ícono: Ajustes no cuelga de ninguna entrada del menú, así que no hay
         // renglón que decir «acá estás». Marcar «Mi perfil» —su prefijo más
         // cercano no es ninguno— mentiría sobre dónde está uno.
-        await ir('/ajustes');
+        await ir('/settings');
 
         expect(marcadas()).toEqual([]);
       });
@@ -435,7 +435,7 @@ describe('ShellLayout', () => {
       const ajustes = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-ajustes"]');
 
       expect(ajustes?.tagName).toBe('A');
-      expect(ajustes?.getAttribute('href')).toBe('/ajustes');
+      expect(ajustes?.getAttribute('href')).toBe('/settings');
       expect(ajustes?.getAttribute('aria-label')).toBe('Ajustes');
     });
 

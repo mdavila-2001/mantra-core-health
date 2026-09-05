@@ -1,6 +1,6 @@
 <app-page-header
-  title="Turnos"
-  subtitle="Las citas comprometidas y los cupos que quedan por ofrecer."
+  title="Consultas"
+  subtitle="Las consultas comprometidas y los cupos que quedan por ofrecer."
   [breadcrumbs]="breadcrumbs()"
 >
   @if (puedeAvisarDemora()) {
@@ -17,12 +17,11 @@
       Avisar demora
     </button>
   }
-  @if (esQuienAtiende()) {
-    <!-- La puerta a las pantallas del horario. Sin esto se entra por «Turnos» y
-         no hay por dónde seguir: «Mi agenda» enlaza a los bloqueos y a cambiar
-         el horario, pero nadie enlazaba a «Mi agenda». -->
-    <a app-button page-actions variant="primary" [routerLink]="rutaMiAgenda">Mi agenda</a>
-  }
+  <!-- El botón «Mi agenda» ya no está acá: la pantalla vive ahora como una
+       solapa, al lado de Consultas y Cupos. Era la única puerta al horario
+       publicado —y por eso existía—, pero llevaba a otra pantalla para
+       responder una pregunta que se hace mirando la misma. Desde adentro de la
+       solapa se sigue llegando a los bloqueos y a cambiar el horario. -->
   @if (puedeCrearAgenda()) {
     <!-- Secundario a propósito: publicar el horario se hace una vez; mirar la
          agenda es a lo que se entra todos los días. -->
@@ -178,9 +177,12 @@
             (valueChange)="elegirRecurso($event)"
           />
         </app-form-field>
-      } @else if (hayAgendaQueMirar()) {
-        <!-- El nombre igual se dice: sin él, la pantalla no declara de quién es
-             lo que está mostrando, y ese dato no es decorativo en una agenda. -->
+      } @else if (hayAgendaQueMirar() && !mirandoAgendaPropia()) {
+        <!-- ALV-017: el nombre se dice sólo cuando lo que se mira es de OTRO.
+             En la agenda propia, «Agenda de [tu nombre]» le informa a alguien
+             de quién es la agenda que abrió a propósito — y el mismo nombre se
+             repetía después en cada fila de la tabla. Cuando el recurso es
+             ajeno el dato sí separa: dice de quién es lo que se está viendo. -->
         <p class="agenda__ambito" appTutorialTarget="agenda-ambito">
           <span class="agenda__ambito-rotulo">Agenda</span>
           <span class="agenda__ambito-valor">{{ nombreDelRecurso() }}</span>
@@ -194,6 +196,48 @@
           (valueChange)="elegirVentana($event)"
         />
       </app-form-field>
+
+      <!-- ALV-024: navegar la ventana, no sólo elegir su tamaño. Antes
+           «Próximos 7 días» era SIEMPRE desde hoy — no había forma de ver la
+           semana anterior ni adelantarse a la que viene sin cambiar la fecha
+           del sistema. Un tramo es el tamaño de la ventana elegida: con
+           «Próximos 7 días», Siguiente salta 7 días. -->
+      <div class="agenda__navegacion-temporal" role="group" aria-label="Navegar la ventana">
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="agenda-ventana-anterior"
+          aria-label="Ventana anterior"
+          (clicked)="moverVentana(-1)"
+        >
+          ← Anterior
+        </button>
+        @if (!enVentanaDeHoy()) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="agenda-ventana-hoy"
+            (clicked)="irAHoy()"
+          >
+            Hoy
+          </button>
+        }
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="agenda-ventana-siguiente"
+          aria-label="Ventana siguiente"
+          (clicked)="moverVentana(1)"
+        >
+          Siguiente →
+        </button>
+      </div>
 
       <app-switch
         class="agenda__filtro agenda__filtro--interruptor"
@@ -224,44 +268,61 @@
       (selectedIndexChange)="elegirPestana($event)"
       appTutorialTarget="agenda-pestanas"
     >
-      <!-- ─── Solicitudes ───────────────────────────────────────────────── -->
-      <!-- Va primera porque es lo único de esta pantalla que espera una acción
-           de una persona: una solicitud sin responder le cambia el día a
-           alguien que está esperando. Las otras dos se consultan. -->
-      <app-tab [label]="rotuloDeSolicitudes()">
-        <p class="agenda__aviso" role="status">
-          Sólo lo que espera respuesta. Cuando aceptás o rechazás, la solicitud sale de acá:
-          si la aceptaste, pasa a <strong>Citas</strong>.
-        </p>
+      <!-- ─── Consultas ─────────────────────────────────────────────────────
+           El ciclo completo en una sola lista (ALV-019): lo que espera
+           respuesta y lo que ya está agendado eran dos solapas de la MISMA
+           lectura, filtrada por estado. Mirar el día obligaba a mirar dos
+           veces, y una solicitud aceptada parecía perderse. Los cupos siguen
+           aparte: son disponibilidad, no consultas. -->
+      <app-tab [label]="rotuloDeConsultas()">
+        @if (cuantasEsperanRespuesta() > 0) {
+          <p class="agenda__aviso" role="status">
+            Hay
+            <strong
+              >{{ cuantasEsperanRespuesta() }}
+              {{ cuantasEsperanRespuesta() === 1 ? 'consulta' : 'consultas' }}</strong
+            >
+            que esperan respuesta. Se reconocen por su estado y encabezan la lista.
+          </p>
+        }
 
-        <app-data-table
-          appTutorialTarget="agenda-tabla-solicitudes"
-          [state]="solicitudes()"
-          [columns]="columnasDeSolicitudes()"
-          [trackBy]="porCita"
-          caption="Solicitudes de consulta que esperan respuesta"
-          (retry)="recargar()"
-        />
-      </app-tab>
-
-      <!-- ─── Citas ─────────────────────────────────────────────────────── -->
-      <app-tab [label]="rotuloDeCitas()">
         @if (citasRecortadas()) {
           <p class="agenda__aviso" role="status">
-            Se muestran las primeras {{ tope }} citas de la ventana. Acotá la ventana o elegí un
-            recurso para verlas todas.
+            Se muestran las primeras {{ tope }} consultas de la ventana. Acote la ventana o
+            seleccione un recurso para verlas todas.
           </p>
         }
 
         <app-data-table
           appTutorialTarget="agenda-tabla-citas"
-          [state]="citasAgendadas()"
-          [columns]="columnasDeCitas()"
+          [state]="consultas()"
+          [columns]="columnasDeConsultas()"
           [trackBy]="porCita"
-          caption="Citas de la ventana consultada"
+          caption="Consultas de la ventana consultada"
           (retry)="recargar()"
         />
       </app-tab>
+
+      <!-- ─── Mi agenda ─────────────────────────────────────────────────────
+           El horario publicado, acá adentro y no a un viaje de distancia. Era
+           un botón del encabezado que llevaba a otra pantalla: para ver «a qué
+           hora atiendo» había que salir de la lista y volver. Ahora conviven,
+           que es como se usan — se mira el día y se mira el horario en la misma
+           vuelta.
+
+           **El `@if` va acá y no alcanza con el de `app-tab`.** El panel
+           inactivo no se dibuja, pero el contenido PROYECTADO lo instancia el
+           padre igual: sin esta condición, «Mi agenda» se construía en cada
+           visita a la lista y disparaba su propia lectura de recursos aunque
+           nadie abriera la solapa. Con la condición en la plantilla del padre,
+           el componente no existe hasta que se lo pide. -->
+      @if (esQuienAtiende()) {
+        <app-tab label="Mi agenda">
+          @if (pestana() === 1) {
+            <app-my-agenda />
+          }
+        </app-tab>
+      }
 
       <!-- ─── Cupos ─────────────────────────────────────────────────────── -->
       <app-tab [label]="rotuloDeCupos()">
@@ -309,6 +370,18 @@
 </ng-template>
 
 <ng-template #celdaPaciente let-cita>
+  <!-- **A quién se atiende, primero.** La columna se llama «Paciente» y sólo
+       ofrecía enlaces —«Abrir expediente», «Ver ficha»—, así que quien miraba
+       su agenda no podía saber a quién iba a atender sin abrir el expediente de
+       cada fila. El nombre ya venía de la API (`patientName`) y ya estaba
+       mapeado en el componente; sólo lo usaba el detalle.
+
+       `cita.paciente` respeta la compuerta del backend: manda el nombre al
+       titular y al profesional de esa agenda, y a nadie más. Sin nombre dice
+       «Paciente asignado» —hay alguien, y no te corresponde saber quién— o «Sin
+       paciente», que es lo que ya decía esta celda cuando no había enlaces. -->
+  <span class="agenda__paciente">{{ cita.paciente }}</span>
+
   <!-- Dos destinos distintos, no dos formas de lo mismo: el expediente es la
        historia de quien llega y lo abre quien atiende; la ficha es la filiación
        y la abre administración. Se ofrecen los que la sesión pueda abrir, y
@@ -327,12 +400,6 @@
         <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
       }
     </span>
-  } @else if (cita.patientProfileId) {
-    <!-- Sin permiso para abrir nada, el enlace sería un 403 con forma de
-         invitación. Se dice que hay paciente y no cuál. -->
-    <span class="agenda__hasta">Paciente asignado</span>
-  } @else {
-    <span class="agenda__hasta">Sin paciente</span>
   }
 </ng-template>
 

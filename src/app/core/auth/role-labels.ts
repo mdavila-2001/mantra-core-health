@@ -30,6 +30,7 @@ export const ROLE_LABELS: Readonly<Record<string, string>> = {
   PHARMA_LAB_ADMIN: 'Administración de farmacia y laboratorio',
   ACCOUNTING_APPROVER: 'Aprobación contable',
   BILLING: 'Facturación',
+  BILLING_OPERATOR: 'Operación de facturación',
   FINANCE: 'Finanzas',
   CASHIER: 'Caja',
 };

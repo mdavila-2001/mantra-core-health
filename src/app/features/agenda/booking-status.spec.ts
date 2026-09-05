@@ -41,18 +41,36 @@ describe('toBookingStatusPresentation', () => {
     );
   });
 
-  it('la palabra sale del catálogo, no del código', () => {
+  /**
+   * La palabra la decide la interfaz, no el catálogo.
+   *
+   * Era al revés, y por eso la agenda del médico mostraba «Booking in progress»
+   * sobre una cita en curso: `GET /terminology/concepts` devuelve el `display`
+   * en inglés porque es terminología técnica, no copy de producto.
+   */
+  it('la palabra es la del castellano, aunque el catálogo diga otra cosa', () => {
     expect(
-      toBookingStatusPresentation(concepto('BOOKING_CONFIRMED', 'Confirmada'), '—').label,
-    ).toBe('Confirmada');
+      toBookingStatusPresentation(concepto('BOOKING_IN_PROGRESS', 'Booking in progress'), '—')
+        .label,
+    ).toBe('En curso');
+    expect(
+      toBookingStatusPresentation(concepto('BOOKING_NO_SHOW', 'Booking no-show'), '—').label,
+    ).toBe('No asistió');
   });
 
-  /** Un quinto estado futuro no puede tumbar la agenda del día. */
-  it('un estado que esta versión no conoce sale neutro, con su palabra', () => {
-    const sello = toBookingStatusPresentation(concepto('BOOKING_INVENTADO', 'Inventado'), '—');
+  /**
+   * Un quinto estado futuro no puede tumbar la agenda del día — ni colar una
+   * etiqueta de API en inglés. Cae al texto de reserva, que es castellano.
+   */
+  it('un estado que esta versión no conoce sale neutro y NO muestra el inglés', () => {
+    const sello = toBookingStatusPresentation(
+      concepto('BOOKING_INVENTADO', 'Some english label'),
+      'Sin registrar',
+    );
 
     expect(sello.variant).toBe('unknown');
-    expect(sello.label).toBe('Inventado');
+    expect(sello.label).toBe('Sin registrar');
+    expect(sello.label).not.toBe('Some english label');
   });
 
   /** Sin concepto resuelto —el catálogo falló— queda el texto de ausencia. */
@@ -91,10 +109,14 @@ describe('toBookingStatusPresentation', () => {
     );
   });
 
-  /** Un `display` vacío no puede dejar el sello mudo. */
-  it('un display vacío cae al texto de reserva', () => {
+  /**
+   * Un `display` vacío no puede dejar el sello mudo — y ya no importa que lo
+   * esté: la palabra sale del código, así que el catálogo puede venir vacío,
+   * en inglés o en swahili y la agenda sigue diciendo «Confirmada».
+   */
+  it('un display vacío no afecta: la palabra sale del código', () => {
     expect(
       toBookingStatusPresentation(concepto('BOOKING_CONFIRMED', ''), 'Sin registrar').label,
-    ).toBe('Sin registrar');
+    ).toBe('Confirmada');
   });
 });

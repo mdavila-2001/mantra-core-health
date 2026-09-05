@@ -299,18 +299,30 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Atención',
     icon: 'stethoscope',
     roles: ['CLINICIAN', 'PRACTITIONER'],
+    // **Fuera del menú del médico** (pedido del propietario, 04/09/2026):
+    // «nadie sabe qué hace». Nació como la PUERTA para empezar a atender, y esa
+    // puerta hoy está en otro lado y es mejor: cada fila de Consultas ofrece
+    // «Iniciar consulta» sobre la cita concreta, en vez de una pantalla que
+    // vuelve a preguntar a quién se atiende.
+    //
+    // `fueraDelMenuPara` y no borrarla: la pantalla sigue existiendo y
+    // alcanzable por su ruta y desde «Tus accesos». Si en unas semanas nadie
+    // la extrañó, se borra en su propio cambio — sacarla de la vista es
+    // reversible en un renglón, borrarla no.
+    fueraDelMenuPara: ['CLINICIAN', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Empezá la atención de hoy: elegí al paciente y entrá a su consulta.',
     module: 'M08 clinical',
   },
   {
-    // **«Turnos» y no «Agenda»** (§4.H del plan de UX): es el nombre exacto de
-    // la lista cerrada del cliente, y además el más honesto — la sección son
-    // los turnos (los que pediste, los que te pidieron, el horario que
-    // publicás), y «Agenda» no decía si era para pedir uno o para publicarlo.
+    // **«Consultas»** (ALV-016). Antes decía «Turnos», que era el nombre exacto
+    // de la lista cerrada del cliente (§4.H del plan de UX); el mismo cliente
+    // pidió la nomenclatura clínica, que además es la que usa el resto del
+    // producto —la receta, el expediente y el ciclo hablan de consultas, no de
+    // turnos—. «Cupos» NO se renombra: es disponibilidad, no consulta.
     // La ruta sigue siendo `schedule`.
     path: 'schedule',
-    label: 'Turnos',
+    label: 'Consultas médicas',
     group: 'Atención',
     icon: 'calendar',
     // El documento de actores ubica estos tres roles en M41; `SCHEDULER` queda
@@ -506,20 +518,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // sigue viviendo en `administration/services-catalog`. Son la misma tabla
     // vista desde dos permisos distintos, y por eso son dos pantallas.
     //
-    // Fuera del menú del médico por §4.H del plan de UX: el cliente dio una
-    // lista **cerrada** de opciones para su panel y `navigation.service.spec`
-    // la fija —«cualquier décima tiene que discutirse»—. La sección se sigue
-    // alcanzando por su ruta y por «Tus accesos», que es lo único que
-    // `fueraDelMenuPara` no toca; darle renglón propio es una decisión de
-    // producto, no de este carril.
+    // **Con renglón en el menú del médico desde el 04/09/2026** (FT-22, aval
+    // explícito del propietario). Nació fuera por §4.H del plan de UX —la lista
+    // cerrada de opciones del panel—, cuando la pantalla era sólo lectura y
+    // llegar por «Tus accesos» alcanzaba. Dejó de alcanzar: acá es donde quien
+    // atiende pone el precio de lo que ofrece, y un lugar donde se escribe no
+    // puede depender de que alguien recuerde la ruta. La lista cerrada pasa de
+    // once a doce con esa decisión, no por descuido.
     path: 'my-services',
-    fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Mis servicios',
     group: 'Atención',
     icon: 'tag',
     roles: ROLES_DE_QUIEN_ATIENDE,
     availability: 'disponible',
-    summary: 'Consultá el catálogo de servicios de tu práctica y sus precios de referencia.',
+    summary: 'Mirá los servicios de tu práctica y poné el precio de cada uno.',
     module: 'M17 billing',
   },
 
@@ -617,19 +629,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
-    // TAREA-16 (M26): las solicitudes presentadas y lo que cada aseguradora
-    // aprobó. Va en el mismo grupo que «Aseguradora» y «Brokers» porque es la
-    // tercera cara del mismo módulo, y con `SECURITY_ADMIN` porque hoy es el
-    // único rol que la plataforma sabe emitir para esto: los `BILLING` y
-    // `FINANCE` que declaran las escrituras del ciclo del reclamo no existen
-    // en el `RoleCode` cerrado de la API.
+    // TAREA-16 (M26): las solicitudes que **esta organización presentó** y lo
+    // que cada aseguradora aprobó. Va en el mismo grupo que «Aseguradora» y
+    // «Brokers» porque es la tercera cara del mismo módulo.
+    //
+    // `BILLING_OPERATOR` es quien factura y cobra del lado del prestador, y es
+    // el rol que decidió el propietario (TAREA-16 · D1.b, 2026-09-04) para ver
+    // el listado y para reclamar; `SECURITY_ADMIN` conserva el acceso
+    // administrativo de siempre y `SUPERADMIN` entra por el comodín del
+    // registro. Los `BILLING`/`FINANCE` que declaran las **escrituras** del
+    // ciclo del reclamo no se ofrecen acá: adjudicar o revertir son actos de
+    // quien paga, y ésta es la pantalla de quien reclama.
     path: 'administration/insurance-claims',
     label: 'Solicitudes de seguro',
     group: 'Administración',
     icon: 'clipboard',
-    roles: ['SECURITY_ADMIN'],
+    roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Lo que se presentó a cada aseguradora, con lo que aprobó.',
+    summary: 'Lo que presentaste a cada aseguradora, con lo que aprobó.',
     module: 'M26 insurance',
   },
   {
@@ -1043,7 +1060,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Sin `roles` restringidos: cualquiera con sesión tiene avisos, tema y
     // permisos del navegador que configurar. Lo que dentro es de un rol —la
     // administración de permisos delegados— lo decide la propia pantalla.
-    path: 'ajustes',
+    path: 'settings',
     label: 'Ajustes',
     group: 'Mi cuenta',
     icon: 'settings',

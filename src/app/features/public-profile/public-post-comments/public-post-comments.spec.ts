@@ -33,6 +33,7 @@ function comentario(
       avatarUrl: null,
       kind: 'PRACTITIONER',
     },
+    media: [],
   };
 }
 

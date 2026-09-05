@@ -163,8 +163,14 @@ describe('NavigationService', () => {
       // con aval explícito del propietario.** El pedido era «Directorio,
       // Administración, Chats»; de los cuatro directorios del producto, los dos
       // que el médico puede ver son el de clínicas y el de farmacias. La lista
-      // cerrada pasa de nueve a once por esa decisión, no por descuido: quien
-      // agregue la doceava sigue teniendo que discutirla.
+      // cerrada pasa de nueve a once por esa decisión, no por descuido.
+      //
+      // **«Mis servicios» es la doceava, y entra por la funcionalidad 22
+      // (FT-22, 04/09/2026), también con aval explícito.** Nació fuera del menú
+      // cuando la pantalla era sólo lectura: llegar por «Tus accesos»
+      // alcanzaba. Dejó de alcanzar el día que el precio se edita ahí — un
+      // lugar donde se escribe no puede depender de que alguien recuerde la
+      // ruta. Quien agregue la treceava sigue teniendo que discutirla.
       //
       // Lo que la decisión **no** toca: «Directorio de médicos» (`directory`)
       // sigue siendo exclusivo del paciente —corrección #2, fijada dos pruebas
@@ -194,12 +200,12 @@ describe('NavigationService', () => {
         'Directorio de laboratorios',
         'Directorio de clínicas',
         'Directorio de farmacias',
-        'Consulta médica',
-        'Turnos',
+        'Consultas médicas',
         'Archivo clínico',
         'Evoluciones',
         'Glosario',
         'Formularios',
+        'Mis servicios',
         'Contabilidad',
       ]);
     });
@@ -449,8 +455,9 @@ describe('NavigationService', () => {
     it('los parámetros de consulta no confunden a la sección', async () => {
       await router.navigateByUrl('/schedule?fecha=2026-08-04');
 
-      // «Turnos» desde §4.H del plan de UX: la ruta sigue siendo `schedule`.
-      expect(service.currentSection()?.label).toBe('Turnos');
+      // «Consultas» desde ALV-016 (antes «Turnos», §4.H del plan de UX):
+      // la ruta sigue siendo `schedule`.
+      expect(service.currentSection()?.label).toBe('Consultas médicas');
     });
   });
 });

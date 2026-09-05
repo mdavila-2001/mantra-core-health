@@ -106,6 +106,26 @@
 
       <p class="comentario__texto">{{ comentario.bodyText }}</p>
 
+      @if (comentario.media.length > 0) {
+        <!-- REQ-01-011 — la lectura pública ya sirve una URL servida por la
+             API (`/public/media/:fileId`): sin sesión no hay `Authorization`
+             que mandar, así que acá no hace falta `app-file-preview-image`. -->
+        <ul class="comentario__media" data-testid="comment-media">
+          @for (adjunto of comentario.media; track adjunto.url) {
+            <li>
+              <img
+                class="comentario__adjunto"
+                [src]="adjunto.url"
+                [alt]="adjunto.altText ?? ''"
+                width="96"
+                height="96"
+                loading="lazy"
+              />
+            </li>
+          }
+        </ul>
+      }
+
       <p class="comentario__acciones">
         <button
           type="button"

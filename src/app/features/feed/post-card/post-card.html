@@ -93,6 +93,18 @@
             <li class="hilo__item">
               <p class="hilo__autor">Perfil {{ comentario.authorProfileId.slice(0, 8) }}</p>
               <p class="hilo__cuerpo">{{ comentario.bodyText }}</p>
+              @if (comentario.media.length > 0) {
+                <!-- REQ-01-011/FND-01 — sólo el `fileId`: `app-file-preview-image`
+                     lo resuelve con sesión por `CommunityClient.commentMediaDataUrl`,
+                     que autoriza por «puedo ver este post», no por «lo subí yo». -->
+                <ul class="hilo__media" data-testid="post-comment-media">
+                  @for (adjunto of comentario.media; track adjunto.id) {
+                    <li>
+                      <app-file-preview-image [fileId]="adjunto.fileId" [altText]="adjunto.altText ?? ''" />
+                    </li>
+                  }
+                </ul>
+              }
               @if (comentario.replies.length > 0) {
                 <ul class="hilo hilo--anidado">
                   @for (respuesta of comentario.replies; track respuesta.id) {
@@ -101,6 +113,15 @@
                         Perfil {{ respuesta.authorProfileId.slice(0, 8) }}
                       </p>
                       <p class="hilo__cuerpo">{{ respuesta.bodyText }}</p>
+                      @if (respuesta.media.length > 0) {
+                        <ul class="hilo__media" data-testid="post-comment-media">
+                          @for (adjunto of respuesta.media; track adjunto.id) {
+                            <li>
+                              <app-file-preview-image [fileId]="adjunto.fileId" [altText]="adjunto.altText ?? ''" />
+                            </li>
+                          }
+                        </ul>
+                      }
                     </li>
                   }
                 </ul>
@@ -127,6 +148,11 @@
             [autoResize]="true"
             [disabled]="comentando()"
             placeholder="Escribí un comentario"
+          />
+          <!-- REQ-01-011 — imágenes, stickers y GIFs adjuntos al comentario. -->
+          <app-comment-media-picker
+            [disabled]="comentando()"
+            (cambio)="mediaAdjunta.set($event)"
           />
           <button
             app-button
