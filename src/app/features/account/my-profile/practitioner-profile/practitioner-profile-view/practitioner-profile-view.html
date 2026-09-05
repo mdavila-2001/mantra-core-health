@@ -258,6 +258,34 @@
     </app-card>
   }
 
+  <!-- ─── Dónde atiende ─────────────────────────────────────────────────
+       ALV-005/006/010. Es la pregunta que la ficha no sabía contestar: la
+       trayectoria dice dónde TRABAJÓ, no dónde encontrarlo hoy. Sin sedes la
+       sección no se dibuja —no un texto vacío—: las sedes se cargan desde
+       Trayectoria, y anunciar acá que faltan sería duplicar ese aviso. -->
+  @if (perfil().sedes?.length) {
+    <app-card
+      class="profesional__bloque"
+      variant="outlined"
+      padding="lg"
+      data-testid="perfil-sedes"
+    >
+      <h2 class="profesional__bloque-titulo">Dónde atiendo</h2>
+      <ul class="profesional__lista">
+        @for (sede of perfil().sedes; track sede.id) {
+          <li class="profesional__item" data-testid="perfil-sede">
+            <div class="profesional__item-encabezado">
+              <span class="profesional__item-titulo">{{ sede.nombre }}</span>
+            </div>
+            @if (sede.direccion) {
+              <p class="profesional__item-texto">{{ sede.direccion }}</p>
+            }
+          </li>
+        }
+      </ul>
+    </app-card>
+  }
+
   <!-- ─── Qué lleva hecho acá ───────────────────────────────────────────
        Cuentas de actividad. No es trayectoria —no es "dónde ejerció" sino
        "qué registró con esta cuenta"— así que se queda fuera de las pestañas
@@ -322,9 +350,6 @@
                     </div>
                     <p class="profesional__item-texto">
                       {{ afiliacion.cargo }}
-                      @if (afiliacion.area) {
-                        · {{ afiliacion.area }}
-                      }
                     </p>
                     <p class="profesional__item-fechas">
                       Desde {{ afiliacion.desde | date: 'MMM y' }}
@@ -355,9 +380,6 @@
                     </div>
                     <p class="profesional__item-texto">
                       {{ afiliacion.cargo }}
-                      @if (afiliacion.area) {
-                        · {{ afiliacion.area }}
-                      }
                     </p>
                     <p class="profesional__item-fechas">
                       {{ afiliacion.desde | date: 'MMM y' }} —

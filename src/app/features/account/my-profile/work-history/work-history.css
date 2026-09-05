@@ -144,3 +144,39 @@
 .historial__vinculo--revocado {
   color: var(--st-error-ink, var(--c-error-700));
 }
+
+/* ─── Dónde atiendo (ALV-005/006) ─────────────────────────────────────────
+   Un bloque propio dentro de la misma tarjeta, separado del historial por un
+   filete: es «hoy» contra «antes», y el reparto visual lo tiene que decir. */
+.historial__sedes {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.historial__mapa-bloque {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* Alto fijo: sin él Leaflet no tiene lienzo y el mapa nace de 0 px. Mismo
+   criterio que el mapa del alta de paciente. */
+.historial__mapa {
+  display: block;
+  block-size: 18rem;
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.historial__punto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+}

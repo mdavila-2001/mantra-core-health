@@ -20,6 +20,16 @@ export interface NewAddress {
   readonly city?: string;
   /** Departamento boliviano, miembro de `VS_BO_DEPARTMENT`. */
   readonly administrativeAreaConceptId?: string;
+  /** Municipio boliviano, miembro de `VS_BO_MUNICIPALITY`. */
+  readonly municipalityConceptId?: string;
+  /**
+   * Punto de la dirección, si se marcó en el mapa (ALV-006).
+   *
+   * El backend ya los aceptaba (`CreateAddressDto`); este tipo los omitía y
+   * por eso ninguna pantalla podía mandarlos. Van siempre los dos o ninguno.
+   */
+  readonly latitude?: number;
+  readonly longitude?: number;
 }
 
 /** La dirección ya registrada. */

@@ -3,6 +3,157 @@
      peor, con el 403 en rojo— sería contarle un problema que no tiene. -->
 @if (esProfesional()) {
   <app-card class="historial" variant="outlined" padding="lg">
+    <!-- ─── Dónde atiendo (ALV-005/006/010) ────────────────────────────────
+         Va primero porque es el dato que la agenda y la ficha pública usan
+         HOY; el historial de abajo es dónde trabajó ANTES. Las direcciones se
+         muestran en MAYÚSCULAS al renderizar (ALV-010), nunca se guardan así. -->
+    <section class="historial__sedes" data-testid="sedes-propias">
+      <h2 class="historial__titulo">Dónde atiendo</h2>
+      <p class="historial__intro">
+        Los consultorios, clínicas u hospitales donde atendés hoy. Es lo que ve un paciente
+        al reservar y lo que la agenda usa para decir dónde es la consulta.
+      </p>
+
+      @if (sedes().length > 0) {
+        <ul class="historial__lista">
+          @for (sede of sedes(); track sede.id) {
+            <li class="historial__item" data-testid="sede-propia">
+              <div class="historial__institucion">
+                <strong>{{ sede.name }}</strong>
+                @if (sede.addressText) {
+                  <span class="historial__sede">{{ sede.addressText | uppercase }}</span>
+                }
+              </div>
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="sede-quitar"
+                (clicked)="quitarSede(sede)"
+              >
+                Retirar
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="historial__vacio" data-testid="sedes-vacio">
+          Todavía no cargaste ningún consultorio. Sin uno, tu ficha no dice dónde encontrarte.
+        </p>
+      }
+
+      @if (errorDeSede(); as mensaje) {
+        <app-alert tone="error" data-testid="sede-error">{{ mensaje }}</app-alert>
+      }
+
+      @if (!altaDeSedeAbierta()) {
+        <p class="historial__escape">
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="sede-agregar"
+            (clicked)="abrirAltaDeSede()"
+          >
+            Agregar un consultorio propio
+          </button>
+        </p>
+      } @else {
+        <form
+          class="historial__formulario"
+          data-testid="sede-formulario"
+          (submit)="$event.preventDefault()"
+        >
+          <h3 class="historial__subtitulo">Nuevo consultorio</h3>
+
+          <app-form-field label="Nombre" hint="Como lo va a ver el paciente." [required]="true">
+            <app-input
+              [(value)]="nombreDeSedeNueva"
+              placeholder="Consultorio Dra. Pérez"
+              data-testid="sede-nombre"
+            />
+          </app-form-field>
+
+          <app-form-field label="Dirección" hint="Calle, número y una referencia si hace falta.">
+            <app-input
+              [(value)]="direccionDeSede"
+              placeholder="Av. Busch 500, 2.º piso"
+              data-testid="sede-direccion"
+            />
+          </app-form-field>
+
+          <app-form-field label="Ciudad" hint="Opcional.">
+            <app-input [(value)]="ciudadDeSede" placeholder="Santa Cruz de la Sierra" />
+          </app-form-field>
+
+          <!-- El municipio se elige con el mapa de Bolivia del alta; el
+               departamento se deduce de él, sin preguntarlo dos veces. -->
+          @if (catalogoMunicipiosCaido()) {
+            <p class="historial__escape">
+              No pudimos traer el catálogo de municipios. Podés seguir sin esto.
+              <button app-button variant="ghost" size="sm" type="button" (clicked)="reintentarMunicipios()">
+                Reintentar
+              </button>
+            </p>
+          } @else if (ramasMunicipios().length > 0) {
+            <app-location-picker
+              testId="sede-municipio"
+              [ramas]="ramasMunicipios()"
+              [value]="municipioDeSede()"
+              (valueChange)="municipioDeSede.set($event)"
+              mapLabel="Mapa de Bolivia: elegí el departamento del consultorio"
+              municipalityLabel="Municipio (opcional)"
+              municipalityHint="Sólo se ofrecen los del departamento que elegiste."
+            />
+          }
+
+          <!-- El punto es opcional y el mapa se despliega a pedido: Leaflet no
+               se paga en cada visita al perfil. Sin Google —la CSP lo bloquea—. -->
+          <div class="historial__mapa-bloque">
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="sede-marcar-mapa"
+              (clicked)="alternarMapa()"
+            >
+              {{ mapaAbierto() ? 'Ocultar el mapa' : 'Marcar el punto en el mapa (opcional)' }}
+            </button>
+            @if (mapaAbierto()) {
+              <app-map
+                class="historial__mapa"
+                data-testid="sede-mapa"
+                [pines]="pinesDeSede()"
+                [centro]="puntoDeSede()"
+                etiqueta="Mapa para marcar dónde queda el consultorio"
+                (pointPicked)="marcarPunto($event)"
+              />
+              @if (puntoDeSede(); as punto) {
+                <p class="historial__punto" data-testid="sede-punto">
+                  Punto marcado: {{ punto.lat | number: '1.4-4' }}, {{ punto.lng | number: '1.4-4' }}
+                  <button app-button variant="ghost" size="sm" type="button" (clicked)="quitarPunto()">
+                    Quitar
+                  </button>
+                </p>
+              }
+            }
+          </div>
+
+          <app-form-actions
+            submitLabel="Guardar consultorio"
+            cancelLabel="Cancelar"
+            [pending]="registrandoSede()"
+            [disabled]="!puedeRegistrarSede()"
+            (submitted)="registrarSede()"
+            (cancelled)="cerrarAltaDeSede()"
+          />
+        </form>
+      }
+    </section>
+
     @if (layout() === 'flat') {
       <h2 class="historial__titulo">Historial laboral</h2>
       <p class="historial__intro">
@@ -35,9 +186,9 @@
             <li class="historial__item">
               <div class="historial__institucion">
                 <strong>{{ afiliacion.organizationName }}</strong>
-                <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
-                @if (afiliacion.departmentText) {
-                  <span class="historial__area">{{ afiliacion.departmentText }}</span>
+                <!-- ALV-007: sin cargo no se dibuja el renglón, no un guion. -->
+                @if (afiliacion.roleTitle) {
+                  <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
                 }
                 @if (nombreDeSede(afiliacion); as sede) {
                   <span class="historial__sede">Consultorio: {{ sede }}</span>
@@ -133,12 +284,9 @@
         </p>
       }
 
-      <app-form-field label="Cargo" hint="El puesto que ejerciste ahí." [required]="true">
+      <!-- ALV-007: opcional. Un vínculo con tu propio consultorio no tiene cargo. -->
+      <app-form-field label="Cargo" hint="Opcional. El puesto que ejerciste ahí, si aplica.">
         <app-input [(value)]="cargo" placeholder="Médico de planta" />
-      </app-form-field>
-
-      <app-form-field label="Servicio o área" hint="Opcional. Si el cargo no lo dice solo.">
-        <app-input [(value)]="area" placeholder="Cardiología" />
       </app-form-field>
 
       <!-- El desplegable sólo aparece si hay consultorios que ofrecer: un

@@ -3,7 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 
+import { of } from 'rxjs';
+
 import { AuthService } from '../../../../core/auth/auth.service';
+import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
+import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { WorkHistory } from './work-history';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 
@@ -508,5 +513,211 @@ describe('WorkHistory', () => {
       expect(fixture.nativeElement.textContent).toContain('siguen en pie');
       http.verify();
     });
+  });
+});
+
+/* ============================================================================
+   ALV-005/006/007/010 — dónde atiendo, cargo opcional, direcciones en mayúsculas.
+   ========================================================================== */
+
+const SITIOS = '/practitioners/prac-1/sites';
+const SITIO_PROPIO = '/practitioners/me/sites';
+
+/** Una sede tal como llega por el cable. */
+const sedeEnCable = (over: Record<string, unknown> = {}) => ({
+  id: 'site-1',
+  practiceId: 'pr-1',
+  code: 'CONSULTORIO-1',
+  name: 'Consultorio Dra. Pérez',
+  timeZone: 'America/La_Paz',
+  addressText: 'Av. Brasil 1234, La Paz',
+  latitude: null,
+  longitude: null,
+  status: 'c-activo',
+  ...over,
+});
+
+/** El árbol de municipios, con un solo departamento y un solo municipio. */
+const RAMAS: readonly RamaDepartamento[] = [
+  {
+    conceptId: 'dep-sc',
+    sigla: 'SC',
+    nombre: 'Santa Cruz',
+    municipios: [{ conceptId: 'mun-scz', nombre: 'Santa Cruz de la Sierra', ine: '070101' }],
+  },
+];
+
+async function montarConSedes(confirmar = true) {
+  const dialogs = { confirm: vi.fn(async () => confirmar) };
+  const municipios = { listar: () => of(RAMAS), olvidar: vi.fn() };
+  await TestBed.configureTestingModule({
+    imports: [WorkHistory],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1') } },
+      { provide: DialogService, useValue: dialogs },
+      { provide: BoMunicipalitiesCatalog, useValue: municipios },
+    ],
+  }).compileComponents();
+
+  const fixture: ComponentFixture<WorkHistory> = TestBed.createComponent(WorkHistory);
+  fixture.detectChanges();
+  const http = TestBed.inject(HttpTestingController);
+  http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+  return { fixture, http, dialogs };
+}
+
+describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV-007)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('lista las sedes con la dirección en MAYÚSCULAS, sin persistirla así', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('Consultorio Dra. Pérez');
+    // ALV-010: se normaliza al MOSTRAR. El dato del cable sigue en minúsculas.
+    expect(texto).toContain('AV. BRASIL 1234, LA PAZ');
+    expect(texto).not.toContain('Av. Brasil 1234, La Paz');
+    http.verify();
+  });
+
+  it('sin sedes lo dice, y no dibuja una lista vacía', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="sedes-vacio"]'),
+    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]').length).toBe(0);
+    http.verify();
+  });
+
+  it('registra un consultorio propio con dirección, municipio y departamento deducido', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    const componente = api(fixture);
+
+    componente['abrirAltaDeSede']();
+    componente['nombreDeSedeNueva'].set('  Consultorio Dra. Pérez ');
+    componente['direccionDeSede'].set('Av. Brasil 1234');
+    componente['ciudadDeSede'].set('La Paz');
+    componente['municipioDeSede'].set('mun-scz');
+    fixture.detectChanges();
+
+    expect(leer(componente, 'departamentoDeSede')).toBe('dep-sc');
+    componente['registrarSede']();
+
+    const req = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
+    expect(req.request.body).toEqual({
+      name: 'Consultorio Dra. Pérez',
+      address: {
+        lines: ['Av. Brasil 1234'],
+        city: 'La Paz',
+        municipalityConceptId: 'mun-scz',
+        administrativeAreaConceptId: 'dep-sc',
+      },
+    });
+    req.flush(sedeEnCable());
+
+    // Tras el alta se relee la lista: sale del servidor, no de lo escrito.
+    http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
+    fixture.detectChanges();
+    expect(leer<boolean>(componente, 'altaDeSedeAbierta')).toBe(false);
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]').length).toBe(1);
+    http.verify();
+  });
+
+  it('manda el punto del mapa como latitud y longitud, y omite la dirección si está vacía', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    const componente = api(fixture);
+
+    componente['abrirAltaDeSede']();
+    componente['nombreDeSedeNueva'].set('Consultorio');
+    fixture.detectChanges();
+    componente['registrarSede']();
+
+    // Sin dirección no viaja `address`: una fila vacía en common.addresses no
+    // es «sin dirección».
+    const sinDireccion = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
+    expect(sinDireccion.request.body).toEqual({ name: 'Consultorio' });
+    sinDireccion.flush(sedeEnCable());
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+
+    componente['abrirAltaDeSede']();
+    componente['nombreDeSedeNueva'].set('Consultorio');
+    componente['direccionDeSede'].set('Calle 1');
+    (componente['marcarPunto'] as unknown as (p: { lat: number; lng: number }) => void)({
+      lat: -16.5,
+      lng: -68.15,
+    });
+    fixture.detectChanges();
+    componente['registrarSede']();
+
+    const conPunto = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
+    expect(conPunto.request.body.address).toEqual({
+      lines: ['Calle 1'],
+      latitude: -16.5,
+      longitude: -68.15,
+    });
+    conPunto.flush(sedeEnCable());
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    http.verify();
+  });
+
+  it('retira una sede sólo si se confirma, y relee la lista', async () => {
+    const { fixture, http, dialogs } = await montarConSedes(true);
+    http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
+    fixture.detectChanges();
+
+    await (api(fixture)['quitarSede'] as unknown as (s: unknown) => Promise<void>)(
+      sedeEnCable(),
+    );
+    expect(dialogs.confirm).toHaveBeenCalled();
+    http.expectOne((r) => r.url === `${SITIO_PROPIO}/site-1` && r.method === 'DELETE').flush(null);
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    http.verify();
+  });
+
+  it('si no se confirma, no toca nada', async () => {
+    const { fixture, http } = await montarConSedes(false);
+    http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
+
+    await (api(fixture)['quitarSede'] as unknown as (s: unknown) => Promise<void>)(
+      sedeEnCable(),
+    );
+    http.expectNone((r) => r.method === 'DELETE');
+    http.verify();
+  });
+
+  it('ALV-007: registra un vínculo sin cargo y no manda roleTitle', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [], count: 0 });
+    const componente = api(fixture);
+
+    componente['escribirAMano']();
+    componente['institucion'].set('Mi consultorio');
+    componente['desde'].set(new Date(2021, 2, 1));
+    fixture.detectChanges();
+
+    expect(leer<boolean>(componente, 'puedeRegistrar')).toBe(true);
+    componente['registrar']();
+
+    const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
+    expect(req.request.body).toEqual({
+      organizationName: 'Mi consultorio',
+      startDate: '2021-03-01',
+    });
+    req.flush(enCable({ id: 'af-3', roleTitle: null }));
+    http.expectOne(AFILIACIONES).flush({ items: [enCable({ roleTitle: null })], count: 1 });
+    fixture.detectChanges();
+
+    // Sin cargo no se dibuja el renglón del cargo, tampoco un guion.
+    expect(fixture.nativeElement.querySelector('.historial__cargo')).toBeNull();
+    http.verify();
   });
 });

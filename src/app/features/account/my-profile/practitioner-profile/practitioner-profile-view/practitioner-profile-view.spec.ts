@@ -39,7 +39,6 @@ function afiliacion(over: Partial<AfiliacionVisible> = {}): AfiliacionVisible {
     id: 'af-1',
     organizacion: 'Hospital Obrero N.º 1',
     cargo: 'Médica de planta',
-    area: '',
     desde: new Date('2012-01-01'),
     hasta: new Date('2016-01-01'),
     actual: false,
