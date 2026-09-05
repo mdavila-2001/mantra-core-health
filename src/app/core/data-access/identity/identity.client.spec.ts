@@ -148,4 +148,74 @@ describe('IdentityClient', () => {
 
     expect(caso?.openedAt?.toISOString()).toBe('2026-08-01T10:30:00.000Z');
   });
+
+  it('getVerificationCase trae el tipo, el archivo, el motivo y el trace de checks (FT-32-R02/R03/R05)', () => {
+    let caso:
+      | {
+          type: string;
+          evidenceFileId?: string;
+          reasonText?: string;
+          checks?: readonly { checkTypeConceptId: string; checkedAt?: Date }[];
+        }
+      | undefined;
+    client.getVerificationCase('c-1').subscribe((r) => (caso = r));
+
+    http.expectOne('/identity/me/verification-cases/c-1').flush({
+      id: 'c-1',
+      status: 'CASE_REJECTED',
+      type: 'PRACTITIONER_LICENSE',
+      evidenceFileId: 'file-9',
+      reasonText: 'No coincide con el registro',
+      checks: [
+        {
+          checkTypeConceptId: 'check-tipo-1',
+          status: 'CHECK_FAILED',
+          resultConceptId: 'result-no-match',
+          checkedAt: '2026-08-01T00:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(caso?.type).toBe('PRACTITIONER_LICENSE');
+    expect(caso?.evidenceFileId).toBe('file-9');
+    expect(caso?.reasonText).toBe('No coincide con el registro');
+    expect(caso?.checks?.[0]?.checkedAt).toBeInstanceOf(Date);
+  });
+
+  it('un cuerpo sin tipo no rompe la conversión: cae a UNKNOWN', () => {
+    let caso: { type: string } | undefined;
+    client.getVerificationCase('c-1').subscribe((r) => (caso = r));
+
+    http.expectOne('/identity/me/verification-cases/c-1').flush({
+      id: 'c-1',
+      status: 'OPEN',
+    });
+
+    expect(caso?.type).toBe('UNKNOWN');
+  });
+
+  it('listVerificationTypes lista el catálogo con quién ya tiene solicitud viva (FT-32-R09/R11)', () => {
+    let tipos: readonly { code: string; hasPendingRequest: boolean }[] | undefined;
+    client.listVerificationTypes().subscribe((value) => (tipos = value));
+
+    const req = http.expectOne('/identity/me/verification-types');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      types: [
+        { code: 'PRACTITIONER_IDENTITY', label: 'Identidad', hasPendingRequest: false },
+        {
+          code: 'PRACTITIONER_LICENSE',
+          label: 'Matrícula',
+          jurisdictionAuthorizationId: 'auth-1',
+          hasPendingRequest: true,
+        },
+      ],
+    });
+
+    expect(tipos?.length).toBe(2);
+    expect(tipos?.[1]).toMatchObject({
+      code: 'PRACTITIONER_LICENSE',
+      hasPendingRequest: true,
+    });
+  });
 });
