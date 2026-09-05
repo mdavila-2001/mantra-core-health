@@ -427,7 +427,12 @@ export class PractitionersDirectory {
         : { specialtyConceptId };
     return this.profiles.listPractitioners({ ...filtro, cursor, limit: POR_PAGINA }).pipe(
       switchMap((respuesta) => {
-        const filas = [...acumulado, ...respuesta.items];
+        // ALV-013: una misma persona, una sola tarjeta. El keyset del servidor
+        // no repite filas, pero un cursor que se reutilice —o una fila que
+        // cambie de orden entre dos páginas— la traería dos veces, y acumular a
+        // ciegas la pintaba dos veces. Se deduplica por `profileId`, que es lo
+        // que abre la ficha: dos tarjetas con el mismo id SON la misma persona.
+        const filas = sinRepetidos([...acumulado, ...respuesta.items]);
         if (respuesta.nextCursor === null) {
           return of(filas);
         }
@@ -439,6 +444,23 @@ export class PractitionersDirectory {
       }),
     );
   }
+}
+
+/**
+ * Las mismas filas, una por `profileId`, conservando la primera aparición y el
+ * orden (ALV-013).
+ */
+function sinRepetidos(
+  filas: readonly PractitionerListItem[],
+): readonly PractitionerListItem[] {
+  const vistos = new Set<string>();
+  return filas.filter((fila) => {
+    if (vistos.has(fila.profileId)) {
+      return false;
+    }
+    vistos.add(fila.profileId);
+    return true;
+  });
 }
 
 /**
