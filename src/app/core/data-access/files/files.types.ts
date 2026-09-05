@@ -9,17 +9,23 @@
     ========================================================================== */
 
 /** A qué recurso pertenece un adjunto. */
-export const OWNER_TYPES = ['USER', 'PATIENT', 'TENANT', 'CONDITION'] as const;
+export const OWNER_TYPES = [
+  'USER',
+  'PATIENT',
+  'TENANT',
+  'CONDITION',
+  'PROCEDURE',
+] as const;
 
 /**
  * El tipo de propietario de un adjunto.
  *
  * `file_links.owner_type_concept_id` es un concepto de terminología, no un
- * enum fijo de la base — cada valor nuevo (como `CONDITION`, ALV-033) se
- * agrega en código (`CONCEPTS.OWNER_*` del backend) y se siembra solo al
- * arrancar la API. **No hace falta tocar el `.puml` ni el repo de modelo**
- * para sumar un tipo de propietario nuevo; sólo para agregar una columna o
- * tabla, que es un caso distinto.
+ * enum fijo de la base — cada valor nuevo (como `CONDITION`/`PROCEDURE`,
+ * ALV-033) se agrega en código (`CONCEPTS.OWNER_*` del backend) y se siembra
+ * solo al arrancar la API. **No hace falta tocar el `.puml` ni el repo de
+ * modelo** para sumar un tipo de propietario nuevo; sólo para agregar una
+ * columna o tabla, que es un caso distinto.
  */
 export type OwnerType = (typeof OWNER_TYPES)[number];
 

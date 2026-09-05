@@ -13,6 +13,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { ProceduresClient } from '../../../../core/data-access/procedures/procedures.client';
 import type {
   DentalCatalog,
@@ -35,6 +36,7 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { Odontogram } from '../odontogram/odontogram';
 
@@ -135,6 +137,7 @@ export interface TratamientoEnPantalla {
     Alert,
     AppButton,
     AppInput,
+    AttachmentUploader,
     Badge,
     Card,
     DatePipe,
@@ -150,6 +153,7 @@ export interface TratamientoEnPantalla {
 })
 export class ProceduresBlock {
   private readonly procedures = inject(ProceduresClient);
+  private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
@@ -273,6 +277,30 @@ export class ProceduresBlock {
       ? this.totalOdontologico() - TOPE_ODONTOLOGICO
       : 0,
   );
+
+  /* -- ALV-033: adjuntar un archivo a un tratamiento odontológico ---------
+     Mismo criterio que el diagnóstico: el tratamiento ya es un
+     `clinical.procedures` (`PeriopDentalService`), así que el vínculo pasa
+     por `ClinicalClient.attachFileToProcedure`, no por el genérico de
+     `common`. A diferencia del diagnóstico, este histórico ya se relee
+     completo en cada carga, así que la acción se ofrece por fila y no sólo
+     tras el alta: cualquier tratamiento —viejo o recién registrado— puede
+     recibir un adjunto. */
+
+  /** El tratamiento al que se le está ofreciendo adjuntar un archivo, o `null`. */
+  protected readonly adjuntandoArchivoA = signal<string | null>(null);
+
+  /** El vínculo pasa por `clinical`, no por el genérico de `common`. */
+  protected readonly enlazarAdjuntoAlTratamiento = (fileId: string, procedureId: string) =>
+    this.clinical.attachFileToProcedure(procedureId, fileId);
+
+  protected alternarAdjuntos(procedureId: string): void {
+    this.adjuntandoArchivoA.update((actual) => (actual === procedureId ? null : procedureId));
+  }
+
+  protected cerrarAdjuntos(): void {
+    this.adjuntandoArchivoA.set(null);
+  }
 
   /* -- El odontograma ------------------------------------------------------ */
 

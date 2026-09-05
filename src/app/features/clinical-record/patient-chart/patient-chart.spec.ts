@@ -354,6 +354,41 @@ describe('PatientChart', () => {
   });
 
   /**
+   * ALV-033: adjuntar un archivo a un diagnóstico YA registrado, no sólo al
+   * recién creado por `app-diagnosis-block`. Es fila por fila —no una señal
+   * compartida— porque el expediente puede listar varios diagnósticos a la vez.
+   */
+  describe('adjuntar un archivo a un diagnóstico ya registrado (ALV-033)', () => {
+    it('alternarAdjuntos abre y cierra el subidor de ESA fila', () => {
+      responderNombre();
+      responderExpediente();
+
+      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBeNull();
+
+      interno<(id: string) => void>('alternarAdjuntos')('c-1');
+      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBe('c-1');
+
+      interno<(id: string) => void>('alternarAdjuntos')('c-1');
+      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBeNull();
+    });
+
+    it('el vínculo del adjunto pasa por `clinical`, no por el genérico de `common`', () => {
+      responderNombre();
+      responderExpediente();
+
+      const enlazar =
+        interno<(fileId: string, conditionId: string) => { subscribe: (o: unknown) => void }>(
+          'enlazarAdjuntoAlDiagnostico',
+        );
+      enlazar('file-1', 'c-1').subscribe({ next: () => undefined });
+
+      http
+        .expectOne('/clinical/conditions/c-1/attachments')
+        .flush({ id: 'link-1', fileId: 'file-1', ownerId: 'c-1', createdAt: '2026-01-01' });
+    });
+  });
+
+  /**
    * Cinco caminos excluyentes para el valor de una observación. Con cantidad y
    * unidad, la unidad acompaña al número — mostrarlos separados obligaría a
    * leer dos columnas para saber si son 78 kilos o 78 libras.

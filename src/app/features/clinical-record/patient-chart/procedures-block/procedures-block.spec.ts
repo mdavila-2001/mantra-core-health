@@ -480,4 +480,58 @@ describe('ProceduresBlock', () => {
       expect(componente['puedeRegistrar']()).toBe(false);
     });
   });
+
+  describe('adjuntar un archivo a un tratamiento (ALV-033, odontología)', () => {
+    /**
+     * A diferencia del diagnóstico, este histórico ya llega completo en cada
+     * carga: la acción se ofrece por fila y no sólo tras el alta, así que un
+     * tratamiento viejo —no sólo el recién registrado— puede recibir un adjunto.
+     */
+    it('«Adjuntar archivo» muestra el subidor para ESE tratamiento y no para otro', () => {
+      arrancar({
+        dental: {
+          items: [TRATAMIENTO, { ...TRATAMIENTO, id: 'd-2' }],
+          total: 2,
+        },
+      });
+
+      componente['alternarAdjuntos']('d-1');
+      fixture.detectChanges();
+
+      const html = fixture.nativeElement as HTMLElement;
+      const uploaders = html.querySelectorAll('app-attachment-uploader');
+      expect(uploaders).toHaveLength(1);
+      expect(uploaders[0].getAttribute('ownerType')).toBe('PROCEDURE');
+    });
+
+    it('volver a tocar «Adjuntar archivo» en la misma fila lo cierra', () => {
+      arrancar({ dental: { items: [TRATAMIENTO], total: 1 } });
+
+      componente['alternarAdjuntos']('d-1');
+      fixture.detectChanges();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('app-attachment-uploader'),
+      ).not.toBeNull();
+
+      componente['alternarAdjuntos']('d-1');
+      fixture.detectChanges();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('app-attachment-uploader'),
+      ).toBeNull();
+    });
+
+    it('el vínculo del adjunto pasa por `clinical`, no por el genérico de `common`', () => {
+      arrancar({ dental: { items: [TRATAMIENTO], total: 1 } });
+
+      const enlazar = componente['enlazarAdjuntoAlTratamiento'] as (
+        fileId: string,
+        procedureId: string,
+      ) => { subscribe: (o: unknown) => void };
+      enlazar('file-1', 'd-1').subscribe({ next: () => undefined });
+
+      http
+        .expectOne('/clinical/procedures/d-1/attachments')
+        .flush({ id: 'link-1', fileId: 'file-1', ownerId: 'd-1', createdAt: '2026-01-01' });
+    });
+  });
 });

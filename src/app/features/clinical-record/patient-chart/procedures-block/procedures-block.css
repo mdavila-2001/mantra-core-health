@@ -83,6 +83,11 @@
   max-inline-size: 68ch;
 }
 
+.procedimientos__acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .procedimientos__fecha {
   font-variant-numeric: tabular-nums;
   /* Los meses abreviados llegan en minúscula del pipe de fecha. */

@@ -471,6 +471,32 @@ describe('ClinicalClient', () => {
     expect(condicion?.clinicalStatus).toBe('st-inactiva');
   });
 
+  it('attachFileToCondition pega contra el segmento `attachments` de la condición', () => {
+    let listo = false;
+    client.attachFileToCondition('c-1', 'file-1').subscribe(() => (listo = true));
+
+    const req = http.expectOne('/clinical/conditions/c-1/attachments');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ fileId: 'file-1' });
+
+    req.flush({});
+
+    expect(listo).toBe(true);
+  });
+
+  it('attachFileToProcedure pega contra el segmento `attachments` del procedimiento (ALV-033, odontología)', () => {
+    let listo = false;
+    client.attachFileToProcedure('proc-1', 'file-1').subscribe(() => (listo = true));
+
+    const req = http.expectOne('/clinical/procedures/proc-1/attachments');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ fileId: 'file-1' });
+
+    req.flush({});
+
+    expect(listo).toBe(true);
+  });
+
   /**
    * Las reacciones son objetos anidados y el `forbidNonWhitelisted` del backend
    * también valida adentro: limpiar sólo el primer nivel dejaba pasar un

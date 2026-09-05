@@ -372,6 +372,27 @@ export class ClinicalClient {
   }
 
   /**
+   * `POST /clinical/procedures/:id/attachments` — liga un archivo ya subido
+   * a ESTE procedimiento puntual (ALV-033, odontología).
+   *
+   * Un tratamiento odontológico registrado con `ProceduresClient.recordDentalProcedure`
+   * es, del lado del servidor, un `clinical.procedures` con categoría dental —
+   * por eso el adjunto pasa por acá y no por `procedures_perioperative`, mismo
+   * criterio que `attachFileToCondition`.
+   *
+   * @param procedureId - El procedimiento al que se liga el archivo.
+   * @param fileId - El archivo, ya subido con `FilesClient.upload`.
+   */
+  attachFileToProcedure(procedureId: string, fileId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(`/clinical/procedures/${encodeURIComponent(procedureId)}/attachments`),
+        { fileId },
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /**
    * `POST /clinical/allergy-intolerances` — registra una alergia con sus
    * reacciones (UC-08-09).
    *
