@@ -247,11 +247,11 @@ describe('ShellLayout', () => {
 
   /**
    * El armazón dejó de delegar en el organismo `app-shell` y pinta el marco
-   * REDSAT directamente. Estas pruebas fijan lo que ese cambio podría romper
+   * ALOVIDA directamente. Estas pruebas fijan lo que ese cambio podría romper
    * en silencio: la geometría del marco —que es lo que la hoja de la bóveda
    * espera encontrar— y que el menú siga saliendo del registro de secciones.
    */
-  describe('marco REDSAT', () => {
+  describe('marco ALOVIDA', () => {
     function raiz(): HTMLElement {
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
@@ -261,7 +261,7 @@ describe('ShellLayout', () => {
       const marco = raiz().querySelector('.app-shell');
 
       expect(marco).not.toBeNull();
-      // El orden importa: en REDSAT el nav es columna de altura completa y el
+      // El orden importa: en ALOVIDA el nav es columna de altura completa y el
       // header vive DENTRO de la columna de contenido, no encima de las dos.
       expect(marco?.children[0]?.classList.contains('app-side-nav')).toBe(true);
       expect(marco?.children[1]?.classList.contains('app-main')).toBe(true);

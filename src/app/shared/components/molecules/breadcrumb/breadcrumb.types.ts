@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Breadcrumb — sistema REDSAT v1.0.
+    Contratos del Breadcrumb — sistema ALOVIDA v1.0.
 
     Extensión propia: el spec no lo declara. La jerarquía que representa es la
     del dominio — organización → sede → paciente → episodio— y por eso el

@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Textarea — sistema REDSAT v1.0.
+    Contratos del Textarea — sistema ALOVIDA v1.0.
 
     El spec del diseñador declara el campo de texto de una línea; el de varias
     líneas es extensión propia con los MISMOS estados y bordes del input

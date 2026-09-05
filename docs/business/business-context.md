@@ -10,7 +10,7 @@
 
 ## Qué es
 
-**Mantra Core Health** es el frontend web del **ecosistema REDESA**, una
+**Mantra Core Health** es el frontend web del **ecosistema ALOVIDA**, una
 plataforma de salud. Consume una única API (`mantra-core-health-redesa-api`,
 NestJS) y sirve a tres tipos de usuario.
 
@@ -41,7 +41,7 @@ El proyecto se rige por un **modelo canónico** (`M34`), que declara:
 en `ViewState<T>` de forma que las reglas no se puedan incumplir por olvido. Ver
 [ADR-0005](../adr/ADR-0005-view-state-m34.md).
 
-Y el sistema de diseño **REDSAT v1.0** rige la identidad, con sus excepciones
+Y el sistema de diseño **ALOVIDA v1.0** rige la identidad, con sus excepciones
 WCAG declaradas y medidas.
 
 ## Estado de la construcción

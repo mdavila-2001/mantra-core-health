@@ -4,7 +4,7 @@
     ## Qué reemplaza
 
     Ocho bloques `role="tablist"` copiados dentro de ocho plantillas de
-    `features/redsat/buscar/`, con listas distintas en cada uno. Ese marcado
+    `features/alovida/buscar/`, con listas distintas en cada uno. Ese marcado
     decía ser pestañas —`role="tab"`, `aria-selected`— y no lo era: cada
     «pestaña» navegaba a otra URL y destruía el panel anterior. Un lector de
     pantalla anunciaba «pestaña 3 de 6, seleccionada» sobre algo que en realidad
@@ -17,7 +17,7 @@
     ## Por qué el rail vive en el marco y no en la pantalla
 
     Porque estaba en la pantalla y por eso había ocho copias. Montado en
-    `redsat-public-shell.html`, navegar entre secciones no lo re-renderiza: el
+    `alovida-public-shell.html`, navegar entre secciones no lo re-renderiza: el
     `<router-outlet>` cambia debajo y el rail permanece, con el foco donde
     estaba.
 

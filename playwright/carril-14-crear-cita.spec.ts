@@ -7,7 +7,7 @@ import { entrar, estable, irA } from './support/sesion';
  * TAREA-14 — agendar una cita sin pasar por el calendario.
  *
  * Precondición: un profesional con **agenda publicada** y pacientes con los
- * que agendar. Los deja `node tools/redesa/seed-dev-data.mjs` en el
+ * que agendar. Los deja `node tools/alovida/seed-dev-data.mjs` en el
  * repositorio de la API.
  *
  * Lo que esta suite **no** puede afirmar, y hay que decirlo: AC-14-10 (la
@@ -40,7 +40,7 @@ test.beforeAll(async () => {
   expect(
     await apiViva(api),
     `La API no responde en ${urlDeApi()}. Levantala y sembrá con ` +
-      '`node tools/redesa/seed-dev-data.mjs`.',
+      '`node tools/alovida/seed-dev-data.mjs`.',
   ).toBe(true);
 });
 
@@ -196,7 +196,7 @@ function decodificarToken(token: string): { tenantId: string; practitionerProfil
  * cupos, así que sin esto la prueba tendría que apostar a una hora de
  * oficina y podría chocar con un turno ya reservado por el sembrado.
  *
- * La ventana **no** se abre a semanas: `node tools/redesa/seed-dev-data.mjs`
+ * La ventana **no** se abre a semanas: `node tools/alovida/seed-dev-data.mjs`
  * generó los cupos de esta agenda sólo para los próximos ~13 días (medido
  * contra la API viva el 2026-09-03: el último cupo cae el 16/09). Empezar en
  * `+14 días` —como parecía prudente para alejarse de la regla de
@@ -227,7 +227,7 @@ async function cupoLibreFuturo(
   if (cupo === undefined) {
     throw new Error(
       'La doctora no tiene cupos libres publicados entre mañana y los próximos doce días: ' +
-        'no se puede medir AC-14-9. Sembrá con node tools/redesa/seed-dev-data.mjs.',
+        'no se puede medir AC-14-9. Sembrá con node tools/alovida/seed-dev-data.mjs.',
     );
   }
   const durationMinutes = Math.round(

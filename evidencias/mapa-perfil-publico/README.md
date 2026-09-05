@@ -10,7 +10,7 @@ Qué prueba cada archivo de esta carpeta.
 Corrido contra la API arrancada desde el fuente en `:3013` (no el contenedor, que
 todavía sirve una imagen sin este cambio — ver
 [[api-desde-el-fuente-en-3010]]) y el front en `ng serve :4210`, con
-`tools/redesa/seed-vitrina-publica.mjs` sembrando la organización con dirección y
+`tools/alovida/seed-vitrina-publica.mjs` sembrando la organización con dirección y
 coordenadas.
 
 ## El primer intento no era este: iba por un `<iframe>` de Google Maps

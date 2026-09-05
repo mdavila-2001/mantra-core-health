@@ -1,5 +1,5 @@
 /* ============================================================================
-    Gestión del tema REDSAT. Tres responsabilidades, ninguna más:
+    Gestión del tema ALOVIDA. Tres responsabilidades, ninguna más:
     leer la preferencia, resolverla contra el sistema, y estamparla en
     `document.documentElement`.
 
@@ -36,14 +36,14 @@ const THEME_ATTRIBUTE = 'data-theme';
 const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
 
 /**
- * Segundo atributo, para la hoja normativa de la bóveda (src/styles/redsat.css).
- * REDSAT resuelve el tema oscuro SOLO contra un atributo explícito: no tiene
+ * Segundo atributo, para la hoja normativa de la bóveda (src/styles/alovida.css).
+ * ALOVIDA resuelve el tema oscuro SOLO contra un atributo explícito: no tiene
  * respaldo en `@media (prefers-color-scheme)`. Por eso este atributo se estampa
  * siempre —incluso en 'system'— con el tema YA RESUELTO, mientras `data-theme`
  * conserva intacto su contrato de tres estados. Espejo en index.html.
  */
-const REDSAT_THEME_ATTRIBUTE = 'data-tema';
-const REDSAT_THEME_VALUE: Record<ResolvedTheme, string> = { light: 'claro', dark: 'oscuro' };
+const ALOVIDA_THEME_ATTRIBUTE = 'data-tema';
+const ALOVIDA_THEME_VALUE: Record<ResolvedTheme, string> = { light: 'claro', dark: 'oscuro' };
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -75,7 +75,7 @@ export class ThemeService {
     }
 
     effect(() => this.applyPreference(this.preference()));
-    effect(() => this.applyRedsatTheme(this.resolvedTheme()));
+    effect(() => this.applyAlovidaTheme(this.resolvedTheme()));
   }
 
   setTheme(mode: ThemeMode): void {
@@ -111,16 +111,16 @@ export class ThemeService {
 
   /**
    * A diferencia de `data-theme`, este atributo no tiene estado 'system': se
-   * estampa el tema resuelto, porque la hoja de REDSAT no sabe leer la
+   * estampa el tema resuelto, porque la hoja de ALOVIDA no sabe leer la
    * preferencia del sistema por su cuenta.
    */
-  private applyRedsatTheme(resolved: ResolvedTheme): void {
+  private applyAlovidaTheme(resolved: ResolvedTheme): void {
     if (!this.isBrowser) {
       return;
     }
     this.document.documentElement.setAttribute(
-      REDSAT_THEME_ATTRIBUTE,
-      REDSAT_THEME_VALUE[resolved],
+      ALOVIDA_THEME_ATTRIBUTE,
+      ALOVIDA_THEME_VALUE[resolved],
     );
   }
 

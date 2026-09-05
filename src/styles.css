@@ -1,7 +1,7 @@
 /* ============================================================================
-    Mantra Core Health — Sistema de Diseño REDSAT v1.0
+    Mantra Core Health — Sistema de Diseño ALOVIDA v1.0
     Fuente normativa: Mantra Core Health Vault/SALUD/Arquitectura/identidad-visual.md
-    Referencia viva: REDSAT_Sistema_de_Diseno.html (raíz del repo) — los VALORES se
+    Referencia viva: ALOVIDA_Sistema_de_Diseno.html (raíz del repo) — los VALORES se
     copian literales de ahí. Los nombres de familia van en inglés (decisión
     2026-07-29, identificadores en inglés): azul→petrol · menta→mint · ámbar→amber
     · salvia→sage · marfil→ivory (aqua y neutral no cambian). El resto de los
@@ -28,7 +28,7 @@
 }
 
 :root {
-    /* ================= rampas REDSAT 50–900 (no cambian por tema) ========= */
+    /* ================= rampas ALOVIDA 50–900 (no cambian por tema) ========= */
     --c-petrol-50: #D9E5EB;  --c-petrol-100: #C2D5DF; --c-petrol-200: #95B5C7;
     --c-petrol-300: #6795AF; --c-petrol-400: #397596; --c-petrol-500: #0B557E;
     --c-petrol-600: #0B4768; --c-petrol-700: #0B3953; --c-petrol-800: #0A2B3D;
@@ -164,7 +164,7 @@
        (esas van con `.tabular-nums`, que conserva la Inter). */
     --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
 
-    /* escala REDSAT — tamaño / interlínea */
+    /* escala ALOVIDA — tamaño / interlínea */
     --fs-display: 44px; --lh-display: 50px;   /* Poppins 700 */
     --fs-h1: 32px;      --lh-h1: 40px;        /* Poppins 600 */
     --fs-h2: 26px;      --lh-h2: 34px;        /* Poppins 600 */
@@ -344,7 +344,7 @@ body {
     color: var(--text-primary);
 }
 
-/* encabezados: Poppins con la escala REDSAT; el color es texto, no marca */
+/* encabezados: Poppins con la escala ALOVIDA; el color es texto, no marca */
 h1,
 h2,
 h3,
@@ -374,7 +374,7 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 }
 
 /* datos clínicos: columnas de resultados, dosis y rangos alinean por cifra.
-   `.tabular-nums` es el nombre del spec REDSAT; `.cifras-tabulares` es el
+   `.tabular-nums` es el nombre del spec ALOVIDA; `.cifras-tabulares` es el
    nombre del vault — ambos válidos, misma regla. */
 .cifras-tabulares,
 .tabular-nums {
@@ -395,7 +395,7 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
    De paso vuelve a funcionar el modo de contraste forzado, donde el sistema
    descarta los `box-shadow` y repinta los `outline` con su propio color.
 
-   Su espejo para el marco REDSAT está en styles/redsat.css §2. */
+   Su espejo para el marco ALOVIDA está en styles/alovida.css §2. */
 :focus-visible {
     outline: 4px solid var(--focus-ring);
     outline-offset: 0;
@@ -411,5 +411,5 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
     }
 }
 
-/* breakpoints REDSAT (referencia; se usan al construir pantallas):
+/* breakpoints ALOVIDA (referencia; se usan al construir pantallas):
    móvil < 780 px · tablet 780–1024 px · escritorio > 1024 px — mobile-first */

@@ -10,7 +10,7 @@ import {
 import type { BadgeSize, BadgeValue, BadgeVariant } from './badge.types';
 
 /**
- * Badge de estado o de conteo. Respeta la regla del spec REDSAT: **fondo claro
+ * Badge de estado o de conteo. Respeta la regla del spec ALOVIDA: **fondo claro
  * + texto oscuro del mismo tono**, nunca color sólido con texto blanco.
  *
  * ```html

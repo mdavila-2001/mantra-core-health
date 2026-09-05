@@ -405,7 +405,7 @@ persona sí hizo. Vuelven cuando exista el dato.
 
 ### Rutas públicas con las URL de la ficha
 
-`redsat.routes.ts` es un archivo **generado** y deriva el segmento del nombre de
+`alovida.routes.ts` es un archivo **generado** y deriva el segmento del nombre de
 archivo de cada maqueta: la portada quedaba en `/buscar/buscador-listado`. Sirve
 para recorrer la bóveda; no sirve como superficie pública.
 

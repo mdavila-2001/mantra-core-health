@@ -63,7 +63,7 @@ test.describe('REQ-01-011 · adjuntos de comentario, vista pública @critical', 
     const auth = { Authorization: `Bearer ${token}` };
 
     // Vitrina pública propia. El `tenantId` sale de un tenant ya sembrado por
-    // el stack de desarrollo (`tools/redesa/seed-dev-data.mjs`): no se
+    // el stack de desarrollo (`tools/alovida/seed-dev-data.mjs`): no se
     // inventa un uuid, y `E2E_TENANT_ID` lo sobreescribe si el entorno usa otro.
     const tenantId =
       process.env['E2E_TENANT_ID'] ?? '1befcfea-44c0-563a-81cd-337ec6acc840';

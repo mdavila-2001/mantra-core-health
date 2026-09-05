@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del `app-input` — sistema REDSAT v1.0.
+    Contratos del `app-input` — sistema ALOVIDA v1.0.
 
     Acá viven SOLO los tipos del input. `SelectOption` y `DatePickerMode` estaban
     en este archivo y se mudaron con su componente: un atom no debe ser la casa

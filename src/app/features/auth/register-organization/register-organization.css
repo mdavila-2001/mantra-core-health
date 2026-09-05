@@ -1,6 +1,6 @@
 /* Misma jerarquía tipo "documento" que `register-patient`: membrete y pie con
    reglas, cuerpo con scroll propio desde 1024px. Un solo formulario, sin
-   pestañas — acá no hay variante de tipo de cuenta. Sólo tokens REDSAT. */
+   pestañas — acá no hay variante de tipo de cuenta. Sólo tokens ALOVIDA. */
 
 /* Pantalla enrutada: el host es un custom element y sin `display` sería EN
    LÍNEA, lo que arma una caja de línea (una franja del fondo) alrededor del

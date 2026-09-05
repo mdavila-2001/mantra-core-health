@@ -1,6 +1,6 @@
 /* El hilo: carril de conversaciones a la izquierda, cabecera con quién es
    arriba, mensajes en el medio —lo único que scrollea— y el composer clavado
-   abajo. Colores del sistema (`redsat.css`); ver la nota de
+   abajo. Colores del sistema (`alovida.css`); ver la nota de
    `conversation-list.css` sobre por qué dejaron de ser inventados. */
 
 .hilo__alerta {

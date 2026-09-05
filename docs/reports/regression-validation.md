@@ -101,7 +101,7 @@ cerrar, con el trabajo concurrente ya incorporado.
 
 Provienen del **trabajo concurrente**: `environment.ts` y
 `environment.development.ts` pasaron de un literal a importar
-`env.generated.ts`, y `redsat_logo.svg` sustituyó al favicon en `index.html`.
+`env.generated.ts`, y `alovida_logo.svg` sustituyó al favicon en `index.html`.
 
 **Ningún archivo de `docs/`, `scripts/`, `structurizr/` ni `mkdocs.yml` entra al
 paquete.** Es verificable: el build no los referencia.

@@ -3,7 +3,7 @@
    contenido —la que scrollea es la lista, no la página—. Debajo de 60rem se
    apila y queda la lista sola: en un teléfono la conversación es otra pantalla.
 
-   Todo el color sale de `redsat.css`. Ver la nota de `conversation-list.css`. */
+   Todo el color sale de `alovida.css`. Ver la nota de `conversation-list.css`. */
 
 .mensajeria__alerta {
   display: block;

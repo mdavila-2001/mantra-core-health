@@ -16,7 +16,7 @@ graph TB
     ST[("Estáticos<br/>dist/…/browser<br/>Cache-Control: 1 año")]
   end
 
-  API["<b>API REDESA</b><br/>NestJS · puerto 3000"]
+  API["<b>API ALOVIDA</b><br/>NestJS · puerto 3000"]
 
   U --> SPA
   SPA <--> LS

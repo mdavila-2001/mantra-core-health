@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Skeleton — sistema REDSAT v1.0.
+    Contratos del Skeleton — sistema ALOVIDA v1.0.
 
     El spec no lo declara: extensión propia armada con las superficies del tema
     (`--bg-inset` / `--bg-surface-alt`), así que el modo oscuro sale solo.

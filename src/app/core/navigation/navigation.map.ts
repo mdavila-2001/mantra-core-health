@@ -290,7 +290,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     //
     // **No hizo falta backend**: `GET /public/search/organizations` ya sirve
     // hospitales, clínicas y centros, y ya lo consumía la búsqueda pública de
-    // REDSAT. Lo que faltaba era la sección dentro del armazón, que es lo que
+    // ALOVIDA. Lo que faltaba era la sección dentro del armazón, que es lo que
     // un paciente con sesión puede recorrer.
     //
     // Absorbe el «Grilla de ORGANIZACIÓN + tipos de organización» que el plan
@@ -1021,7 +1021,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Carril 18. Autoservicio: el profesional pide vincularse a una
     // organización y ve el estado de sus vinculaciones. No cuelga de
     // `/organizaciones` porque el proxy desvía todo lo que empieza con `/org`
-    // a la API (ver `docs/design-system/port-redsat.md`); tampoco de
+    // a la API (ver `docs/design-system/port-alovida.md`); tampoco de
     // `/practices` ni `/practitioners`, reservados igual en `proxy.conf.json`.
     path: 'my-organizations',
     // §4.H · fuera del menú del médico: es un trámite, no trabajo diario. Se

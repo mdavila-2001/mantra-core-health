@@ -96,7 +96,7 @@ export type { ReferenceOption } from './reference-combobox/reference-combobox.ty
 export { SearchField } from './search-field/search-field';
 export { SEARCH_DEBOUNCE_MS } from './search-field/search-field.types';
 
-/* La tarjeta de la superficie pública (V65). Su diseño vive en `redsat.css`
+/* La tarjeta de la superficie pública (V65). Su diseño vive en `alovida.css`
    §25, no en el componente — ver su `.css`, que está vacío a propósito. */
 export { SearchResult } from './search-result/search-result';
 export { SEARCH_RESULT_TONES } from './search-result/search-result.types';

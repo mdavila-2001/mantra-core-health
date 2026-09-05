@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Alert — sistema REDSAT v1.0.
+    Contratos del Alert — sistema ALOVIDA v1.0.
 
     Los tonos son los CUATRO estados del spec, tomados del mapa compartido
     (`shared/components/tone/`) que ya usan Badge y Chip. Los tonos de marca

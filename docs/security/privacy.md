@@ -146,7 +146,7 @@ habrá que sostener.
 
 **No está declarado en ningún documento del proyecto** qué normativa aplica
 (HIPAA, GDPR, la ley boliviana de protección de datos, o el marco contractual de
-REDESA).
+ALOVIDA).
 
 Sin eso, esta página describe buenas prácticas pero **no puede afirmar
 cumplimiento**. Es una limitación real y está registrada como brecha `MEDIUM` en

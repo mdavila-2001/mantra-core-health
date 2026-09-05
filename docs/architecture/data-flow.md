@@ -14,7 +14,7 @@ sequenceDiagram
   participant P as Pantalla (feature)
   participant C as Cliente (data-access)
   participant I as authInterceptor
-  participant A as API REDESA
+  participant A as API ALOVIDA
   participant E as errorToViewState
 
   U->>P: acción (enviar formulario, entrar a la pantalla)

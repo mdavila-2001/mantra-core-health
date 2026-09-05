@@ -118,7 +118,7 @@ un `code` nuevo, que se degrada a S9 genérico sin romper nada.
 | S5 ≠ S6 | M34 | Dos códigos para el mismo 403 | ✅ |
 | S7 expone antigüedad | M34 | `asOf` obligatorio en el tipo | ✅ |
 | WCAG 2.2 AA | Contractual | **Solo revisión de código** | ⚠️ **no verificado** |
-| Identidad REDSAT | `identidad-visual.md` | Pruebas de tokens | ⚠️ nombres sí, contrastes no |
+| Identidad ALOVIDA | `identidad-visual.md` | Pruebas de tokens | ⚠️ nombres sí, contrastes no |
 | Presupuesto de bundle | `angular.json` | `check-bundle-budget.mjs` | ⚠️ **18,95 kB sobre el aviso** |
 | Cero regresiones | Plan | [Validación](../reports/regression-validation.md) | ✅ |
 

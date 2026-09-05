@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Chip — sistema REDSAT v1.0.
+    Contratos del Chip — sistema ALOVIDA v1.0.
 
     El tono sale del mapa compartido (`shared/components/tone/`), el mismo que
     usa el Badge: un chip de faceta y una etiqueta de estado no pueden pintar

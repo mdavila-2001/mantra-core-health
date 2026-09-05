@@ -256,8 +256,8 @@
   width: 30px;
   height: 22px;
   background: var(--brand-primary);
-  -webkit-mask: url('/redsat/imagenes/alovida-logo.svg') no-repeat center / contain;
-  mask: url('/redsat/imagenes/alovida-logo.svg') no-repeat center / contain;
+  -webkit-mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
+  mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
 }
 
 /* El ícono del modo activo crece apenas: con tres botones chicos y sin texto,
@@ -389,7 +389,7 @@
        (abajo-izquierda), que en un degradado a 150° es el stop 100%. Ahí ponemos
        el petróleo MÁS oscuro (petrol-800) para que el texto blanco quede a ~12:1,
        y el aqua —acento de marca— sube a la esquina opuesta (arriba-derecha), sin
-       texto. Así se cumple la regla REDSAT «nada de blanco sobre aqua»
+       texto. Así se cumple la regla ALOVIDA «nada de blanco sobre aqua»
        (identidad-visual.md 8.1) en toda la superficie del texto. */
     background: linear-gradient(
       150deg,

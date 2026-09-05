@@ -1,6 +1,6 @@
 /* ============================================================================
-    Contratos del AppButton — sistema REDSAT v1.0.
-    Fuente de las variantes: REDSAT_Sistema_de_Diseno.html (bloque Buttons).
+    Contratos del AppButton — sistema ALOVIDA v1.0.
+    Fuente de las variantes: ALOVIDA_Sistema_de_Diseno.html (bloque Buttons).
     `outline` es una extensión propia pendiente de validación del diseñador
     (identidad-visual.md, pendientes) — el spec solo declara una variante con
     borde (`secondary`).

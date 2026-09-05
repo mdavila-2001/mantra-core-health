@@ -74,7 +74,7 @@ export async function apiViva(api: APIRequestContext): Promise<boolean> {
 /**
  * La operadora de facturación del prestador (`BILLING_OPERATOR`).
  *
- * La siembra `tools/redesa/seed-solicitudes-seguro.mjs` en el repositorio de la
+ * La siembra `tools/alovida/seed-solicitudes-seguro.mjs` en el repositorio de la
  * API, con membresía en la organización y el rol acotado a ese tenant.
  *
  * **Existe para no certificar T16 con el administrador.** El admin entra a
@@ -106,7 +106,7 @@ export function administrador(): Actor {
 
 /**
  * La profesional de demostración que siembra
- * `tools/redesa/cuenta-doctor-demo.mjs`.
+ * `tools/alovida/cuenta-doctor-demo.mjs`.
  *
  * No se registra una nueva en cada corrida —como sí se hace con el paciente—
  * porque un profesional recién registrado nace **sin perfil completo ni

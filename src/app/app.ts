@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 
-import { RedsatRuntimeService } from '@core/redsat/redsat-runtime.service';
+import { AlovidaRuntimeService } from '@core/alovida/alovida-runtime.service';
 import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
 
 @Component({
@@ -13,16 +13,16 @@ import { ToastContainer } from '@shared/components/organisms/toast-container/toa
   styleUrl: './app.css',
 })
 export class App {
-  private readonly redsat = inject(RedsatRuntimeService);
+  private readonly alovida = inject(AlovidaRuntimeService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   constructor() {
-    /* Los comportamientos del marco REDSAT (menús, diálogo, cajón de
+    /* Los comportamientos del marco ALOVIDA (menús, diálogo, cajón de
        navegación, etiquetas de tabla) se instalan una vez y se refrescan en
        cada navegación: en la maqueta estática bastaba con DOMContentLoaded,
        pero acá el documento no se recarga entre pantallas. */
-    this.redsat.instalar();
+    this.alovida.instalar();
     this.aplicarPantalla();
     this.router.events
       .pipe(
@@ -43,7 +43,7 @@ export class App {
       hoja = hoja.firstChild;
     }
     const arquetipo = hoja.snapshot.data['arquetipo'];
-    this.redsat.fijarArquetipo(typeof arquetipo === 'string' ? arquetipo : null);
-    this.redsat.refrescar(hoja.snapshot.queryParamMap.get('estado'));
+    this.alovida.fijarArquetipo(typeof arquetipo === 'string' ? arquetipo : null);
+    this.alovida.refrescar(hoja.snapshot.queryParamMap.get('estado'));
   }
 }

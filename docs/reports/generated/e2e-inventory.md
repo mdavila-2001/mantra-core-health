@@ -37,7 +37,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `recorrido` | Recorrido · administración | 10 | `cypress/e2e/recorrido/03-administracion.cy.ts` |
 | `recorrido` | Recorrido · vitrina de diseño | 3 | `cypress/e2e/recorrido/04-vitrina.cy.ts` |
 | `recorrido` | Recorrido · atención | 5 | `cypress/e2e/recorrido/05-atencion.cy.ts` |
-| `e2e` | Pantallas portadas de la bóveda | 5 | `cypress/e2e/redsat-port.cy.ts` |
+| `e2e` | Pantallas portadas de la bóveda | 5 | `cypress/e2e/alovida-port.cy.ts` |
 | `regression` | Regresión · accesibilidad | 6 | `cypress/e2e/regression/accesibilidad.cy.ts` |
 | `regression` | Regresión · glosario médico | 2 | `cypress/e2e/regression/glosario.cy.ts` |
 | `regression` | Regresión · modales | 6 | `cypress/e2e/regression/modales.cy.ts` |

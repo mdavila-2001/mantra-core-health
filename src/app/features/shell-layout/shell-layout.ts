@@ -88,7 +88,7 @@ export class ShellLayout {
    * El shell no mide la ventana: la recibe. Sin esto el nav se queda como columna fija de 260 px
    * también en un teléfono, empujando el contenido fuera de la pantalla.
    *
-   * Con el marco REDSAT el cajón lo resuelve la hoja por `@media`, así que esto
+   * Con el marco ALOVIDA el cajón lo resuelve la hoja por `@media`, así que esto
    * ya no gobierna el marcado; se conserva porque sigue siendo la respuesta a
    * «¿estamos en ancho de cajón?» para quien la necesite.
    */

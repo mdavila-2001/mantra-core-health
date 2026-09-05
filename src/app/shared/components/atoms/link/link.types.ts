@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Link — sistema REDSAT v1.0.
+    Contratos del Link — sistema ALOVIDA v1.0.
 
     El spec no declara enlaces de texto: es extensión propia con el color de
     marca y el anillo de foco del sistema. Pendiente de validación del

@@ -9,7 +9,7 @@ import type { SearchResultItem } from './search-result.types';
  * Lo que estas pruebas fijan.
  *
  * El diseño de esta tarjeta **no vive acá**: vive en la maqueta
- * `V65-buscador/publico/` y en `redsat.css` §25. Así que no se comprueba que se
+ * `V65-buscador/publico/` y en `alovida.css` §25. Así que no se comprueba que se
  * vea bien —eso lo decide el CSS— sino que el **marcado sea el de la maqueta**:
  * las clases exactas, la semántica de lista y qué partes desaparecen cuando el
  * dato no viene.
@@ -165,7 +165,7 @@ describe('SearchResult', () => {
 
   /**
    * `data-tono` y no una clase de color: es el atributo con el que
-   * `redsat.css` selecciona (`.app-badge[data-tono="ok"]`). Con una clase
+   * `alovida.css` selecciona (`.app-badge[data-tono="ok"]`). Con una clase
    * inventada la insignia se vería sin color y nadie sabría por qué.
    */
   it('el tipo y los sellos usan .app-badge con data-tono', () => {

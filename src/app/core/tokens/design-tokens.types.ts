@@ -1,5 +1,5 @@
 /* ============================================================================
-    Referencias tipadas al Sistema de Diseño REDSAT v1.0.
+    Referencias tipadas al Sistema de Diseño ALOVIDA v1.0.
 
     Fuente normativa: Mantra Core Health Vault/SALUD/Arquitectura/identidad-visual.md
     Fuente física:    src/styles.css — ahí viven los VALORES; acá viven solo los
@@ -188,7 +188,7 @@ export const FONT_FAMILY = {
 } as const;
 export type FontFamilyToken = (typeof FONT_FAMILY)[keyof typeof FONT_FAMILY];
 
-/** Los 9 roles de la escala REDSAT. */
+/** Los 9 roles de la escala ALOVIDA. */
 export const TYPE_ROLES = [
   'display',
   'h1',

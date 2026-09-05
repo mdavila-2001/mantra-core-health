@@ -1,6 +1,6 @@
 /* Sin estilos a propósito.
  *
- * El diseño de esta tarjeta vive en `src/styles/redsat.css` §25 —las clases
+ * El diseño de esta tarjeta vive en `src/styles/alovida.css` §25 —las clases
  * `.app-resultado*`—, que es la copia del CSS de la bóveda y ya está declarado
  * en `angular.json`. Es el mismo archivo que estila las 141 pantallas portadas
  * desde las maquetas.
@@ -8,5 +8,5 @@
  * Escribir estilos acá separaría el componente de la maqueta en la primera
  * corrección que haga el diseñador: habría dos fuentes para lo mismo y sólo una
  * se actualizaría. Si algo de esta tarjeta se ve mal, se arregla en la bóveda y
- * se vuelve a copiar `redsat.css`, no acá.
+ * se vuelve a copiar `alovida.css`, no acá.
  */

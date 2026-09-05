@@ -10,8 +10,8 @@ cuál va en cada sitio.**
 
 | Término | Qué es | En la interfaz se dice |
 |---|---|---|
-| **REDESA** | El ecosistema de salud al que pertenece la aplicación | — |
-| **REDSAT** | El sistema de diseño, v1.0 | — |
+| **ALOVIDA** | El ecosistema de salud al que pertenece la aplicación | — |
+| **ALOVIDA** | El sistema de diseño, v1.0 | — |
 | **M34** | El modelo canónico. Declara 81 secciones, 9 estados de interfaz y 14 proyecciones materializadas | — |
 | **PHI** | *Protected Health Information*. Información de salud protegida | «datos clínicos» |
 | **Tenant** | Organización a la que pertenece un usuario | **«organización»** |

@@ -76,6 +76,6 @@ test('F-15 · el directorio de laboratorios tiene qué mostrar', async ({ page }
   await estable(page);
 
   const texto = (await page.locator('app-root').textContent()) ?? '';
-  // Los nombres los siembra `tools/redesa/seed-diagnostic-units.mjs`.
+  // Los nombres los siembra `tools/alovida/seed-diagnostic-units.mjs`.
   expect(texto).toContain('Laboratorio');
 });

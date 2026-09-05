@@ -40,7 +40,7 @@ const RUTAS_PUBLICAS = [
 /**
  * Rutas con sesión (`/dashboard`, `/medical-records`, `/glossary`) — FUERA de
  * esta corrida. Este entorno no tiene una cuenta `PRACTITIONER` sembrada
- * (`tools/redesa/` no existe; `doctora()` depende de una cuenta demo que acá
+ * (`tools/alovida/` no existe; `doctora()` depende de una cuenta demo que acá
  * no está creada, y `entrar()` responde «Las credenciales no son válidas»).
  * Registrar una practicante nueva por autoservicio no sirve de reemplazo: sin
  * matrícula aprobada, el onboarding la interceptaría antes de llegar a
@@ -107,7 +107,7 @@ test.describe('Carril 08 · fondo reactivo', () => {
 
     // Bajo reduce, `fondoReactivo()` nunca instala el oyente de `mousemove`:
     // la variable sigue sin definir y el fondo queda en el `.35` de respaldo
-    // de `redsat.css`, nunca en el `1` de «puntero activo» (AC-08-7).
+    // de `alovida.css`, nunca en el `1` de «puntero activo» (AC-08-7).
     const despues = await page.evaluate(() =>
       document.documentElement.style.getPropertyValue('--fondo-presencia'),
     );

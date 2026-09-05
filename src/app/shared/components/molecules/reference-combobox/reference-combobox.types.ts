@@ -1,5 +1,5 @@
 /* ============================================================================
-    Contratos del Reference combobox — sistema REDSAT v1.0.
+    Contratos del Reference combobox — sistema ALOVIDA v1.0.
 
     Extensión propia. El spec no declara un buscador de referencia; las fichas
     de vistas del vault sí lo piden ocho veces sólo en V05 («autocompletar sobre

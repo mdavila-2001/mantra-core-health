@@ -12,7 +12,7 @@ Carril 01. 28 secciones del registro, 78 pantallas hijas o de operación y 126 v
 | `conectada con deuda` | Lee la API, pero además arrastra un marcador (`TODO`, dato de muestra). |
 | `presentacional` | Pinta sin pedir nada. Correcto si es un panel de acciones; sospechoso si debía listar. |
 | `maqueta portada` | Vista de la bóveda con marcado estático. Es el entregable del diseñador, no una pantalla a medio hacer. |
-| `maqueta` | Pinta con constantes `_DE_MUESTRA` fuera de `redsat/`. |
+| `maqueta` | Pinta con constantes `_DE_MUESTRA` fuera de `alovida/`. |
 | `con deuda` | Tiene `TODO`, promesa sin pantalla u otro marcador. |
 | `placeholder` | Sección declarada `planificada`: cae en `SectionPlaceholder` a propósito. |
 
@@ -134,7 +134,7 @@ Carril 01. 28 secciones del registro, 78 pantallas hijas o de operación y 126 v
 
 ## Vistas del diseñador portadas desde la bóveda
 
-Las 126 pantallas de `features/redsat/`, generadas por `scripts/port-vistas-redsat.mjs` desde la bóveda. Son **la vista del diseñador** a la que se refiere la corrección #8: antes de crear una pantalla nueva hay que buscar acá. 0 todavía pintan con datos de muestra.
+Las 126 pantallas de `features/alovida/`, generadas por `scripts/port-vistas-alovida.mjs` desde la bóveda. Son **la vista del diseñador** a la que se refiere la corrección #8: antes de crear una pantalla nueva hay que buscar acá. 0 todavía pintan con datos de muestra.
 
 | Código | Actor | Ruta | Componente | API que usa | Estado |
 |---|---|---|---|---|---|

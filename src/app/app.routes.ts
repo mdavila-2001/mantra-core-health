@@ -14,7 +14,7 @@ import { ResendVerification } from './features/auth/resend-verification/resend-v
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
-import { REDSAT_ROUTES } from './features/redsat/redsat.routes';
+import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
 import {
@@ -938,7 +938,7 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
  * Un `{ path: 'buscar', redirectTo: 'search' }` con coincidencia por prefijo
  * habría cubierto las siete de una línea — y se habría llevado puestas las
  * **doce** pantallas portadas que el archivo GENERADO
- * `features/redsat/redsat.routes.ts` declara bajo el mismo `buscar`
+ * `features/alovida/alovida.routes.ts` declara bajo el mismo `buscar`
  * (`buscador-listado`, `seguidos-y-guardados-listado`,
  * `calificar-la-atencion-formulario`, las cinco fichas `perfil-*-detalle`…).
  * Ésas no son de esta tarea y la regla de arrastre dice que no se tocan, así
@@ -1003,7 +1003,7 @@ function rutasDeFichasPublicas(): Routes {
   return TIPOS.map(([prefijo, kind]) => ({
     path: prefijo,
     loadComponent: () =>
-      import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+      import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
     children: [
       // La vista de una publicación suelta cuelga sólo de `p/` —quien publica
       // es un profesional—, y va antes que `:slug` porque tiene más segmentos.
@@ -1036,7 +1036,7 @@ function rutasDeFichasPublicas(): Routes {
  *
  * ## Por qué existen además de las que genera el portador de vistas
  *
- * `scripts/port-vistas-redsat.mjs` deriva el segmento del **nombre del archivo
+ * `scripts/port-vistas-alovida.mjs` deriva el segmento del **nombre del archivo
  * de la maqueta**, así que la portada quedó en `/buscar/buscador-listado` y los
  * verticales en `/buscar/…-listado`. Sirve para recorrer la bóveda; no sirve
  * como superficie pública. Estas URL son las que la ficha declara —`/search`,
@@ -1044,9 +1044,9 @@ function rutasDeFichasPublicas(): Routes {
  * las que un buscador indexa, y son cortas y estables porque un directorio
  * público las cambia una sola vez.
  *
- * ## Por qué van antes de `REDSAT_ROUTES` y no dentro
+ * ## Por qué van antes de `ALOVIDA_ROUTES` y no dentro
  *
- * Porque `redsat.routes.ts` es un **archivo generado**: escribirlas ahí las
+ * Porque `alovida.routes.ts` es un **archivo generado**: escribirlas ahí las
  * borra la próxima vez que alguien porte una vista. Declaradas acá conviven
  * con el bloque generado —el router prueba estas primero y retrocede al
  * siguiente `buscar` cuando el segmento no coincide—, así que los enlaces de
@@ -1063,7 +1063,7 @@ function rutasDeBusquedaPublica(): Routes {
       // alguien concreto.
       path: 'posts',
       loadComponent: () =>
-        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+        import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
       children: [
         {
           path: '',
@@ -1071,7 +1071,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Lo último de los profesionales — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/feed-publicaciones/feed-publicaciones').then(
+            import('./features/alovida/buscar/feed-publicaciones/feed-publicaciones').then(
               (m) => m.FeedPublicaciones,
             ),
         },
@@ -1080,7 +1080,7 @@ function rutasDeBusquedaPublica(): Routes {
     {
       /* TAREA-29 · `/buscar` a secas tiene que seguir abriendo el buscador.
          No alcanza con un `redirectTo` en la tabla del final: el archivo
-         GENERADO `features/redsat/redsat.routes.ts` declara su propio `buscar`
+         GENERADO `features/alovida/alovida.routes.ts` declara su propio `buscar`
          —con `{ path: '', redirectTo: 'buscador-listado' }` adentro— y lo
          captura antes de que el router llegue ahí. Se declara acá, en el
          bloque que va primero, y con el redirect en el hijo vacío para que
@@ -1092,7 +1092,7 @@ function rutasDeBusquedaPublica(): Routes {
     {
       path: 'search',
       loadComponent: () =>
-        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+        import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
       children: [
         {
           path: '',
@@ -1100,7 +1100,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Buscar en AloVida — profesionales, medicamentos y centros de salud',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/buscador-listado/buscador-listado').then(
+            import('./features/alovida/buscar/buscador-listado/buscador-listado').then(
               (m) => m.BuscarBuscadorListado,
             ),
         },
@@ -1113,7 +1113,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: '¿A qué especialista consultar? — AloVida',
           data: { arquetipo: 'formulario', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/sintomas-publico/sintomas-publico').then(
+            import('./features/alovida/buscar/sintomas-publico/sintomas-publico').then(
               (m) => m.SintomasPublico,
             ),
         },
@@ -1122,7 +1122,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Profesionales de salud — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/profesionales-listado/profesionales-listado').then(
+            import('./features/alovida/buscar/profesionales-listado/profesionales-listado').then(
               (m) => m.BuscarProfesionalesListado,
             ),
         },
@@ -1131,7 +1131,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Medicamentos y farmacias — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/medicamentos-listado/medicamentos-listado').then(
+            import('./features/alovida/buscar/medicamentos-listado/medicamentos-listado').then(
               (m) => m.BuscarMedicamentosListado,
             ),
         },
@@ -1140,7 +1140,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Hospitales y clínicas — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/hospitales-listado/hospitales-listado').then(
+            import('./features/alovida/buscar/hospitales-listado/hospitales-listado').then(
               (m) => m.BuscarHospitalesListado,
             ),
         },
@@ -1149,7 +1149,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Laboratorios e imagen — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/laboratorios-listado/laboratorios-listado').then(
+            import('./features/alovida/buscar/laboratorios-listado/laboratorios-listado').then(
               (m) => m.BuscarLaboratoriosListado,
             ),
         },
@@ -1158,7 +1158,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Aseguradoras y convenios — AloVida',
           data: { arquetipo: 'listado', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/aseguradoras-listado/aseguradoras-listado').then(
+            import('./features/alovida/buscar/aseguradoras-listado/aseguradoras-listado').then(
               (m) => m.BuscarAseguradorasListado,
             ),
         },
@@ -1169,7 +1169,7 @@ function rutasDeBusquedaPublica(): Routes {
           title: 'Cerca mío — AloVida',
           data: { arquetipo: 'detalle', pantallaReal: true },
           loadComponent: () =>
-            import('./features/redsat/buscar/cercania-detalle/cercania-detalle').then(
+            import('./features/alovida/buscar/cercania-detalle/cercania-detalle').then(
               (m) => m.BuscarCercaniaDetalle,
             ),
         },
@@ -1184,7 +1184,7 @@ function rutasDeBusquedaPublica(): Routes {
       // `/promotions/:id`: una promoción no es un resultado de búsqueda.
       path: 'promotions/:campaignId',
       loadComponent: () =>
-        import('./features/redsat/shell/redsat-public-shell').then((m) => m.RedsatPublicShell),
+        import('./features/alovida/shell/alovida-public-shell').then((m) => m.AlovidaPublicShell),
       children: [
         {
           path: '',
@@ -1205,11 +1205,11 @@ export const routes: Routes = [
   // La superficie pública del buscador con sus URL limpias. Va **antes** del
   // bloque generado: las dos declaran `buscar`, y la primera que coincide gana.
   ...rutasDeBusquedaPublica(),
-  // Las pantallas portadas desde la bóveda, con su propio marco REDSAT. Van
+  // Las pantallas portadas desde la bóveda, con su propio marco ALOVIDA. Van
   // primero y con segmento propio: no compiten con el armazón de abajo, que
   // vive en `path: ''`, así que ninguna de las dos depende de que el router
   // retroceda para encontrar a la otra.
-  ...REDSAT_ROUTES,
+  ...ALOVIDA_ROUTES,
   // Las fichas públicas por slug. Van con el marco público y **sin guard**:
   // son la superficie anónima, y el enlace que alguien pega en un mensaje.
   //
@@ -1720,7 +1720,7 @@ export const routes: Routes = [
   // que el router llegue a `auth/verify-email`, que es la que pinta algo.
   ...rutasHeredadas(RUTAS_HEREDADAS_PUBLICAS),
   // TAREA-29 · Las del buscador, por el mismo motivo y con el mismo orden.
-  // Además tienen que ir después del bloque generado de REDSAT: `buscar` a
+  // Además tienen que ir después del bloque generado de ALOVIDA: `buscar` a
   // secas existe en las dos partes, y acá gana la que redirige sólo cuando
   // ninguna pantalla real coincidió.
   ...rutasHeredadas(RUTAS_HEREDADAS_DEL_BUSCADOR),

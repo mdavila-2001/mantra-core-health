@@ -26,7 +26,7 @@ interfaz que gobierna cómo se pinta cada pantalla.
 src/
 ├── main.ts · main.server.ts · server.ts     arranque (navegador · SSR · Express)
 ├── index.html                               script anti-parpadeo del tema
-├── styles.css                               tokens del sistema REDSAT
+├── styles.css                               tokens del sistema ALOVIDA
 └── app/
     ├── app.ts · app.config.ts               raíz y proveedores
     ├── app.routes.ts                        11 entradas de ruta

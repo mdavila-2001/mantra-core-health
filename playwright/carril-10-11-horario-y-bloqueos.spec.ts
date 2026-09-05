@@ -47,7 +47,7 @@ test.beforeAll(async () => {
   expect(
     await apiViva(api),
     `La API no responde en ${urlDeApi()}. Levantala y sembrá con ` +
-      '`node tools/redesa/seed-dev-data.mjs`.',
+      '`node tools/alovida/seed-dev-data.mjs`.',
   ).toBe(true);
 });
 
