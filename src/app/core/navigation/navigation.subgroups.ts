@@ -96,7 +96,17 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // Buscar a quién o a dónde ir. Ya venía agrupado a mano en el armazón: era
     // el primer bloque del producto, y este archivo lo generaliza en vez de
     // dejarlo como caso especial.
-    paths: ['directory', 'laboratory-directory', 'clinics-directory', 'pharmacies-directory'],
+    //
+    // `directories` (FT-18) va primero: es la portada del bloque, y el orden
+    // de dibujo lo decide `navigation.map.ts`, no este array — acá sólo se
+    // declara que las cinco rutas son del mismo bloque.
+    paths: [
+      'directories',
+      'directory',
+      'laboratory-directory',
+      'clinics-directory',
+      'pharmacies-directory',
+    ],
   },
 
   /* -- Atención -----------------------------------------------------------

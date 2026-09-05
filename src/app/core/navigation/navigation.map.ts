@@ -145,6 +145,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M19 community',
   },
   {
+    // FT-18-R01/R02 (05/09/2026) · la portada de los cuatro directorios.
+    //
+    // El pedido es concreto: «Directorios debe tener una vista de nodos que
+    // muestre cada directorio con el detalle de que se encuentra en cada
+    // directorio». Los cuatro ya existían como hermanos sueltos —el
+    // desplegable «Directorios» de `navigation.subgroups.ts` los agrupa desde
+    // ese archivo—, pero ninguno abría antes en una portada común: quien
+    // quería «buscar algo» tenía que adivinar cuál de los cuatro abrir.
+    //
+    // Esta sección es esa portada, no un quinto directorio: no reemplaza a
+    // ninguno de los cuatro —siguen con su propia ruta, su propio rol y su
+    // propia pantalla— y no inventa descripciones nuevas: cada nodo muestra
+    // el `summary` que la sección correspondiente ya declara más abajo, así
+    // que un texto no puede desincronizarse del otro.
+    //
+    // `roles: [ANY_ROLE]` porque la portada en sí no oculta nada: quien entra
+    // ve los nodos que sus propios roles ya le abren — p. ej. quien ejerce no
+    // ve el nodo de la guía de médicos, que sigue siendo exclusiva del
+    // paciente (corrección #2). El filtro real vive en cada sección, no acá.
+    //
+    // Va **antes** que los cuatro en este registro a propósito: el orden de
+    // dibujo del menú sale de acá (`navigation.subgroups.ts` sólo agrupa), y
+    // la portada tiene que aparecer primero dentro de su propio desplegable.
+    path: 'directories',
+    label: 'Directorios',
+    group: 'General',
+    icon: 'directory',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Un mapa de a quién o a dónde buscar: médicos, laboratorios, clínicas y farmacias.',
+    module: 'M04 directory',
+  },
+  {
     // Carril R2-1 · punto 1 del reclamo. Acá estaba el **muro profesional**, y
     // el cliente pidió sacarlo del menú del paciente: «o cambiarle su enfoque:
     // debe mostrar una especie de guía telefónica de todos los doctores
