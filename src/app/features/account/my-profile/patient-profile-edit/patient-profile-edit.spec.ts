@@ -746,20 +746,20 @@ describe('PatientProfileEdit', () => {
     expect(recuperadas.map((o) => o.label)).toEqual(['Docente', 'Albañil']);
   });
 
-  /* ---- el género, con las mismas opciones que el alta -------------------- */
+  /* ---- el sexo, con las mismas opciones que el alta ----------------------- */
 
   /**
    * Dos opciones, las del alta. Ofrecer más acá dejaría corregir los datos con
    * un valor que el alta no admite, y esa diferencia no la explica nada.
    */
-  it('el género se ofrece con las dos opciones del alta', () => {
+  it('el sexo se ofrece con las dos opciones del alta', () => {
     montarPintadoYCargado();
 
-    expect(opcionesDe('perfil-genero')).toEqual(['Sin especificar', 'Masculino', 'Femenino']);
+    expect(opcionesDe('perfil-genero')).toEqual(['Elegí una opción', 'Masculino', 'Femenino']);
   });
 
   /** Un valor heredado que ya no está en la lista se conserva: no se manda nada. */
-  it('un género heredado fuera de la lista no se pisa al guardar otra cosa', () => {
+  it('un sexo heredado fuera de la lista no se pisa al guardar otra cosa', () => {
     montarYCargar({ sexAtBirth: 'INTERSEX' });
 
     señal<string>('nombre').set('Ana María');
@@ -768,5 +768,19 @@ describe('PatientProfileEdit', () => {
     const req = pedidoDeGuardado();
     expect(req.request.body).toEqual({ name: 'Ana María' });
     req.flush({ ...PERFIL_BASE, name: 'Ana María', sexAtBirth: 'INTERSEX' });
+  });
+
+  /**
+   * Ahora es obligatorio: sin ninguno de los dos valores vigentes elegido,
+   * `guardar()` no manda nada — mismo criterio que el nombre y el apellido.
+   */
+  it('sin sexo elegido, no se guarda', () => {
+    montarYCargar({ sexAtBirth: undefined });
+
+    señal<string>('nombre').set('Ana María');
+    interno<() => void>('guardar')();
+
+    expect(interno<() => boolean>('puedeGuardar')()).toBe(false);
+    http.expectNone('/profiles/patients/me');
   });
 });

@@ -317,8 +317,21 @@ export class PatientProfileEdit {
    */
   protected readonly telefonoMalEscrito = signal(false);
 
+  /**
+   * El sexo pasó a obligatorio (antes «Género (opcional)»): es un dato
+   * clínico —dosis, valores de referencia, tamizajes—, no una cortesía.
+   * Un valor heredado fuera de la lista vigente (`Intersexual`, `Prefiero no
+   * decirlo`) también cuenta como vacío: hay que elegir una de las dos
+   * opciones actuales para poder guardar.
+   */
+  protected readonly sexoVacio = computed(() => this.sexoAlNacer() === null);
+
   protected readonly puedeGuardar = computed(
-    () => !this.nombreVacio() && !this.apellidoVacio() && !this.telefonoMalEscrito(),
+    () =>
+      !this.nombreVacio() &&
+      !this.apellidoVacio() &&
+      !this.telefonoMalEscrito() &&
+      !this.sexoVacio(),
   );
 
   /* -- Constantes de la plantilla ------------------------------------------ */

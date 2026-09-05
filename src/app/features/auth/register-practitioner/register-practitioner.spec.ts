@@ -6,6 +6,7 @@ import { provideRouter, Router } from '@angular/router';
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { RegisterPractitioner } from './register-practitioner';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
+import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
 
 const RESPUESTA_PRO = {
   userId: 'u',
@@ -116,7 +117,8 @@ describe('RegisterPractitioner', () => {
         | 'specialtyThird'
         | 'profilePhotoBase64'
         | 'occupationConceptId'
-        | 'occupationFreeText',
+        | 'occupationFreeText'
+        | 'sexAtBirth',
         string | null
       >
     > = {},
@@ -140,7 +142,14 @@ describe('RegisterPractitioner', () => {
       workLandline: extra.workLandline ?? '',
       personalEmail: extra.personalEmail ?? '',
       birthDate: null,
-      sexAtBirth: null,
+      // Ahora obligatorio (AC-05-7): por defecto 'FEMALE' para que las
+      // pruebas que no le importa este campo sigan completando y mandando el
+      // formulario; las que sí lo prueban lo pasan por `extra` o lo pisan
+      // directo en `formProfesional.controls.sexAtBirth`.
+      sexAtBirth:
+        extra.sexAtBirth === undefined
+          ? 'FEMALE'
+          : (extra.sexAtBirth as BirthSexCode | null),
       occupationConceptId: extra.occupationConceptId ?? null,
       occupationFreeText: extra.occupationFreeText ?? '',
       licenseIssueDate: null,
@@ -735,14 +744,15 @@ describe('RegisterPractitioner', () => {
     });
   });
 
-  it('va a otro endpoint que el alta de paciente y manda los cinco campos obligatorios', () => {
+  it('va a otro endpoint que el alta de paciente y manda los seis campos obligatorios', () => {
     completarProfesional();
     component.submit();
 
     const req = http.expectOne('/iam/auth/register-practitioner');
     expect(req.request.method).toBe('POST');
     // El identificador de acceso es el correo, no el documento. El nombre va
-    // en partes, igual que en el alta de paciente.
+    // en partes, igual que en el alta de paciente. El sexo es obligatorio
+    // (AC-05-7): dato clínico, no una cortesía.
     expect(req.request.body).toEqual({
       name: 'Ana',
       lastName: 'Paz',
@@ -751,6 +761,7 @@ describe('RegisterPractitioner', () => {
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
+      sexAtBirth: 'FEMALE',
     });
 
     req.flush(RESPUESTA_PRO);
@@ -882,11 +893,11 @@ describe('RegisterPractitioner', () => {
 
   /**
    * AC-05-7. El DTO aceptaba `sexAtBirth` desde siempre —lo declara
-   * `RegisterPractitionerDto`—; lo que faltaba era **preguntarlo**. Sigue
-   * siendo opcional, así que vacío no viaja: `forbidNonWhitelisted` rechaza lo
-   * que sobra, y una cadena vacía no es lo mismo que la ausencia del campo.
+   * `RegisterPractitionerDto`—; lo que faltaba era **preguntarlo**. Es
+   * obligatorio: dato clínico —dosis, valores de referencia, tamizajes—, no
+   * una cortesía demográfica.
    */
-  it('manda el sexo cuando se eligió', () => {
+  it('manda el sexo elegido', () => {
     completarProfesional();
     component.formProfesional.controls.sexAtBirth.setValue('FEMALE');
     component.submit();
@@ -901,16 +912,13 @@ describe('RegisterPractitioner', () => {
    * Vacío no viaja: `forbidNonWhitelisted` rechaza lo que sobra, y una cadena
    * vacía no es lo mismo que la ausencia del campo.
    */
-  it('no manda el sexo si no se eligió: sigue siendo opcional', () => {
-    completarProfesional();
+  /** Obligatorio: sin elegirlo, el `submit` no viaja — mismo criterio que matrícula/credencial. */
+  it('sin sexo elegido, no se manda el alta', () => {
+    completarProfesional({ sexAtBirth: null });
     component.submit();
 
-    const req = http.expectOne('/iam/auth/register-practitioner');
-    expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
-      'sexAtBirth',
-    );
-
-    req.flush(RESPUESTA_PRO);
+    expect(component.formProfesional.controls.sexAtBirth.touched).toBe(true);
+    // No se gastó un viaje a la API: lo confirma el `verify()` del `afterEach`.
   });
 
   it('exige matrícula y credencial: sin habilitación no hay alta', () => {

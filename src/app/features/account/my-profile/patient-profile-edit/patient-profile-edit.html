@@ -128,20 +128,23 @@
           />
         </app-form-field>
 
-        <!-- Rótulo, ayuda y marcador son los del alta, palabra por palabra: es
-             el mismo dato, y dos redacciones distintas hacen dudar de si se
-             trata del mismo campo. Un valor heredado que ya no está en la lista
-             —«Intersexual», «Prefiero no decirlo»— se ve como «Sin especificar»
-             y no se manda mientras la persona no elija otra cosa. -->
+        <!-- Rótulo, ayuda y obligatoriedad son los del alta, palabra por
+             palabra: es el mismo dato, y dos redacciones distintas hacen dudar
+             de si se trata del mismo campo. Un valor heredado que ya no está
+             en la lista —«Intersexual», «Prefiero no decirlo»— se ve como
+             «Elegí una opción», igual que si nunca se hubiera cargado: hay que
+             corregirlo a una de las dos vigentes para poder guardar. -->
         <app-form-field
-          label="Género (opcional)"
+          label="Sexo"
+          [required]="true"
           hint="Dato clínico: cambia las dosis, los valores de referencia y los tamizajes."
+          [errorMessage]="sexoVacio() ? 'Elegí una opción.' : ''"
         >
           <app-select
             data-testid="perfil-genero"
             [options]="opcionesSexoAlNacer"
             [(value)]="sexoAlNacer"
-            placeholder="Sin especificar"
+            placeholder="Elegí una opción"
           />
         </app-form-field>
 
