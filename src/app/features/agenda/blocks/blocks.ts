@@ -25,6 +25,7 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { AGENDA_ROUTE } from '../agenda.routes';
 import { misRecursosDeAgenda } from '../mi-recurso';
 import {
   BlockForm,
@@ -228,7 +229,7 @@ export class Blocks {
   /** Los que ya pasaron. Se muestran porque explican una agenda de antes. */
   protected readonly historicos = computed(() => this.filtrar((b) => b.pasado));
 
-  protected readonly rutaAgenda = '/schedule/mine';
+  protected readonly rutaAgenda = AGENDA_ROUTE;
 
   constructor() {
     this.cargar();

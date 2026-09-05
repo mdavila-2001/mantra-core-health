@@ -4,9 +4,10 @@ import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
 import {
+  BLOQUE_CIRUGIA,
   BLOQUE_DIAGNOSTICO,
   BLOQUE_LABORATORIO,
-  BLOQUE_PROCEDIMIENTOS,
+  BLOQUE_ODONTOLOGIA,
   PLANTILLA_HOJA_LIBRE,
   SpecialtyFormBlock,
 } from './specialty-form-block';
@@ -124,17 +125,18 @@ describe('SpecialtyFormBlock', () => {
   /**
    * Las **plantillas** que ofrece el desplegable.
    *
-   * Deja fuera las cuatro entradas fijas a propósito —diagnóstico, hoja en
-   * blanco, procedimiento y laboratorio—: no son plantillas del catálogo sino
-   * lo que se puede completar sin ninguna, y están siempre. Si contaran, cada
-   * prueba sobre qué fichas se ofrecen tendría que sumarles cuatro, y el número
-   * dejaría de decir lo que la prueba quiere decir. Que estén, y en qué orden,
-   * lo fija su propia prueba.
+   * Deja fuera las cinco entradas fijas a propósito —diagnóstico, hoja en
+   * blanco, cirugía, odontología y laboratorio—: no son plantillas del
+   * catálogo sino lo que se puede completar sin ninguna, y están siempre. Si
+   * contaran, cada prueba sobre qué fichas se ofrecen tendría que sumarles
+   * cinco, y el número dejaría de decir lo que la prueba quiere decir. Que
+   * estén, y en qué orden, lo fija su propia prueba.
    */
   const ENTRADAS_FIJAS: readonly string[] = [
     BLOQUE_DIAGNOSTICO,
     PLANTILLA_HOJA_LIBRE,
-    BLOQUE_PROCEDIMIENTOS,
+    BLOQUE_CIRUGIA,
+    BLOQUE_ODONTOLOGIA,
     BLOQUE_LABORATORIO,
   ];
 
@@ -418,6 +420,9 @@ describe('SpecialtyFormBlock', () => {
     };
     peticionDePlantillas().flush([PLANTILLA, odonto]);
     responderEspecialidad('sp-odo');
+    // El filtro por especialidad sigue existiendo; sólo dejó de ser el
+    // default. Se lo activa a mano para probarlo.
+    interno<(v: boolean) => void>('alternarVerTodas')(false);
 
     // La de cardiología no le sirve a quien atiende en odontología.
     expect(etiquetasOfrecidas()).toEqual(['Ficha odontológica']);
@@ -589,6 +594,9 @@ describe('SpecialtyFormBlock', () => {
   it('ofrece la ficha de su especialidad y las transversales, en ese orden', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-1');
+    // El orden es de `plantillasSugeridas`, que sólo se ve sin el catálogo
+    // entero encima: se filtra a mano porque «Ver todas» ya no es el default.
+    interno<(v: boolean) => void>('alternarVerTodas')(false);
 
     expect(etiquetasOfrecidas()).toEqual([
       'Ficha de cardiología',
@@ -609,6 +617,9 @@ describe('SpecialtyFormBlock', () => {
     };
     peticionDePlantillas().flush([...CATALOGO, aMano]);
     responderEspecialidad('sp-1');
+    // El reconocimiento por concepto es del filtro por especialidad; se activa
+    // a mano porque ya no es el default.
+    interno<(v: boolean) => void>('alternarVerTodas')(false);
 
     expect(etiquetasOfrecidas()).toContain('Hoja de egreso');
     expect(etiquetasOfrecidas()).not.toContain('Examen dermatológico');
@@ -627,26 +638,31 @@ describe('SpecialtyFormBlock', () => {
 
   /* ---- el interruptor «Ver todas las especialidades» ------------------------ */
 
-  it('el interruptor devuelve el catálogo entero y volver a apagarlo lo filtra', () => {
+  it('arranca prendido —muestra el catálogo entero— y apagarlo filtra por especialidad', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-1');
 
+    // Arranca en «Ver todas»: dos cuentas con perfiles profesionales distintos
+    // no pueden ver listas de tamaño distinto por default, eso se leía como
+    // un bug («en la Mac salen más formularios»).
     expect(interno<() => boolean>('puedeVerTodas')()).toBe(true);
-    expect(etiquetasOfrecidas()).toHaveLength(3);
-
-    interno<(v: boolean) => void>('alternarVerTodas')(true);
     expect(etiquetasOfrecidas()).toHaveLength(4);
     expect(etiquetasOfrecidas()).toContain('Examen dermatológico');
 
     interno<(v: boolean) => void>('alternarVerTodas')(false);
     expect(etiquetasOfrecidas()).toHaveLength(3);
     expect(etiquetasOfrecidas()).not.toContain('Examen dermatológico');
+
+    interno<(v: boolean) => void>('alternarVerTodas')(true);
+    expect(etiquetasOfrecidas()).toHaveLength(4);
+    expect(etiquetasOfrecidas()).toContain('Examen dermatológico');
   });
 
   it('el interruptor no pide plantillas de nuevo: filtra sobre lo ya traído', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-1');
 
+    interno<(v: boolean) => void>('alternarVerTodas')(false);
     interno<(v: boolean) => void>('alternarVerTodas')(true);
 
     // `http.verify()` del afterEach reventaría ante un GET de más; esto lo
@@ -686,6 +702,7 @@ describe('SpecialtyFormBlock', () => {
   it('sin ficha de su especialidad, preselecciona la anamnesis general', () => {
     peticionDePlantillas().flush(CATALOGO);
     responderEspecialidad('sp-sin-ficha');
+    interno<(v: boolean) => void>('alternarVerTodas')(false);
 
     expect(interno<() => string | null>('plantillaId')()).toBe('tpl-anamnesis');
     // Sólo le quedan las transversales.
@@ -778,10 +795,11 @@ describe('SpecialtyFormBlock', () => {
     fixture.detectChanges();
 
     const opciones = opcionesCrudas();
-    expect(opciones.slice(0, 4).map((opcion) => opcion.value)).toEqual([
+    expect(opciones.slice(0, 5).map((opcion) => opcion.value)).toEqual([
       BLOQUE_DIAGNOSTICO,
       PLANTILLA_HOJA_LIBRE,
-      BLOQUE_PROCEDIMIENTOS,
+      BLOQUE_CIRUGIA,
+      BLOQUE_ODONTOLOGIA,
       BLOQUE_LABORATORIO,
     ]);
     expect(opciones[1].label).toContain('Hoja en blanco');
@@ -810,7 +828,7 @@ describe('SpecialtyFormBlock', () => {
     drenarLecturasDelBloque();
   });
 
-  it('el procedimiento y el laboratorio traen cada uno su bloque', () => {
+  it('cirugía, odontología y laboratorio traen cada uno su bloque', () => {
     peticionDePlantillas().flush([PLANTILLA_ODONTO]);
     responderEspecialidad('sp-odonto');
     fixture.detectChanges();
@@ -820,10 +838,17 @@ describe('SpecialtyFormBlock', () => {
     const html = fixture.nativeElement as HTMLElement;
     const elegir = interno<(id: string | null) => void>('elegirPlantilla');
 
-    elegir(BLOQUE_PROCEDIMIENTOS);
+    elegir(BLOQUE_CIRUGIA);
     fixture.detectChanges();
     expect(html.querySelector('app-procedures-block')).not.toBeNull();
     expect(html.querySelector('app-diagnostics-block')).toBeNull();
+    drenarLecturasDelBloque();
+
+    elegir(BLOQUE_ODONTOLOGIA);
+    fixture.detectChanges();
+    expect(html.querySelector('app-procedures-block')).not.toBeNull();
+    expect(html.querySelector('app-diagnostics-block')).toBeNull();
+    drenarLecturasDelBloque();
 
     elegir(BLOQUE_LABORATORIO);
     fixture.detectChanges();

@@ -115,24 +115,29 @@ test.describe('Carril 05 · perfil del doctor', () => {
   });
 
   /**
-   * El botón llevaba a `/my-account/preview`, que es la vitrina comunitaria del
-   * carril 16 — otra funcionalidad, con otro contrato. Ahora abre la pestaña de
-   * acá mismo, y la aplicación **no navega**.
+   * ALV-004 (2026-09-05): `/my-account/preview` dejó de ser una segunda
+   * pantalla de configuración. «Ver cómo me ven» navega ahí y muestra la
+   * MISMA tarjeta que el directorio, de sólo lectura: sin formulario. Lo que se
+   * configura de la ficha pública vive en «Configurar mi perfil».
+   *
+   * Esta prueba afirmaba lo contrario (que el botón NO navegaba) y ya estaba
+   * desalineada con el HTML antes de este carril; se corrige a propósito.
    */
-  test('«Ver mi perfil público» abre la pestaña y no sale a la vitrina', async ({
-    page,
-  }) => {
+  test('«Ver cómo me ven» navega a la vista previa de sólo lectura', async ({ page }) => {
     await entrar(page, doctora());
     await irA(page, RUTA_PERFIL);
     await estable(page);
 
     const perfil = page.locator('app-practitioner-profile-view').first();
-    await perfil.getByRole('button', { name: /Ver mi perfil público/i }).click();
+    await perfil.getByRole('link', { name: /Ver cómo me ven/i }).click();
     await estable(page);
 
-    expect(page.url()).not.toContain('/my-account/preview');
-    await expect(
-      perfil.locator('app-practitioner-profile-view').first(),
-    ).toBeVisible();
+    expect(page.url()).toContain('/my-account/preview');
+    const previa = page.locator('app-public-profile-preview').first();
+    await expect(previa).toBeVisible();
+    // Sólo lectura: ni un formulario ni un input en la vista previa.
+    await expect(previa.locator('form')).toHaveCount(0);
+    await expect(previa.locator('input')).toHaveCount(0);
+    await expect(previa.getByTestId('previa-configurar')).toHaveAttribute('href', '/my-account/edit');
   });
 });

@@ -360,6 +360,17 @@ describe('PractitionersDirectory', () => {
     expect(total()).toBe(2);
   });
 
+  // ALV-013: una misma persona, una sola tarjeta — aunque el servidor la
+  // devuelva en dos páginas (cursor reutilizado, fila que cambió de orden).
+  it('si la misma persona viene en dos páginas, la pinta una sola vez', () => {
+    montarEnEspecialidad();
+    responder([FILA], 'cursor-2');
+    responder([FILA], null);
+    responderConceptos();
+
+    expect(total()).toBe(1);
+  });
+
   /* -- 2 · La especialidad es el encabezado -------------------------------- */
 
   it('agrupa por especialidad con su nombre traducido', () => {

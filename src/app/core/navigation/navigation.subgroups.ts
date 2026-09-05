@@ -96,17 +96,27 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // Buscar a quién o a dónde ir. Ya venía agrupado a mano en el armazón: era
     // el primer bloque del producto, y este archivo lo generaliza en vez de
     // dejarlo como caso especial.
-    paths: ['directory', 'laboratory-directory', 'clinics-directory', 'pharmacies-directory'],
+    //
+    // `directories` (FT-18) va primero: es la portada del bloque, y el orden
+    // de dibujo lo decide `navigation.map.ts`, no este array — acá sólo se
+    // declara que las cinco rutas son del mismo bloque.
+    paths: [
+      'directories',
+      'directory',
+      'laboratory-directory',
+      'clinics-directory',
+      'pharmacies-directory',
+    ],
   },
 
-  /* -- Atención ----------------------------------------------------------- */
-  {
-    label: 'Consultorio',
-    group: 'Atención',
-    icon: 'stethoscope',
-    // A quién atiendo y cuándo: la agenda y la consulta en curso.
-    paths: ['consultation', 'schedule'],
-  },
+  /* -- Atención -----------------------------------------------------------
+     «Consultorio» ya no existe (pedido del propietario, 04/09/2026). Agrupaba
+     `consultation` y `schedule`; la primera salió del menú y la segunda es
+     **Consultas médicas**, así que el subgrupo quedaba con un solo hijo: un
+     escalón que había que abrir para encontrar una única cosa.
+
+     Ahora «Consultas médicas» cuelga directo de Atención. Un subgrupo se
+     justifica cuando ordena varias secciones, no cuando envuelve una. */
   {
     label: 'Historia clínica',
     group: 'Atención',
@@ -135,8 +145,10 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'clipboard',
     // Las herramientas de quien atiende que no son un paciente: lo que se
     // consulta —el vocabulario y el catálogo de servicios de la práctica—, lo
-    // que se diseña y lo que se manda a responder.
-    paths: ['glossary', 'form-builder', 'my-services', 'questionnaires'],
+    // que se diseña, lo que se manda a responder y lo que se cotiza sobre ese
+    // mismo catálogo (FT-24, junto a «Mis servicios» por ser la misma tabla
+    // vista desde el paso siguiente).
+    paths: ['glossary', 'form-builder', 'my-services', 'my-quotations', 'questionnaires'],
   },
 
   /* -- Administración ----------------------------------------------------- */
@@ -225,7 +237,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Facturación',
     icon: 'billing',
     // Lo que se cobra y cómo se asienta.
-    paths: ['billing', 'administration/accounting'],
+    paths: ['billing', 'administration/accounting', 'assets-liabilities'],
   },
 
   /* -- Mi cuenta ---------------------------------------------------------- */

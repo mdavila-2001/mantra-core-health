@@ -271,6 +271,58 @@ describe('DiagnosisBlock', () => {
     expect(interno<() => string>('notasClinicas')()).toBe('');
   });
 
+  /* ---- adjuntar un archivo (ALV-033) --------------------------------------- */
+
+  describe('el panel de adjuntos tras registrar', () => {
+    it('aparece con el id de la condición recién creada', () => {
+      responderCatalogo();
+      señal<string>('diagnostico').set('dx-hta');
+      interno<() => void>('registrar')();
+      http.expectOne('/clinical/conditions').flush(RESPUESTA);
+      fixture.detectChanges();
+
+      expect(interno<() => string | null>('diagnosticoRecienRegistrado')()).toBe('c-1');
+      const html = fixture.nativeElement as HTMLElement;
+      const uploader = html.querySelector('app-attachment-uploader');
+      expect(uploader).not.toBeNull();
+      expect(uploader?.getAttribute('ownerType')).toBe('CONDITION');
+    });
+
+    it('«Listo, sin adjuntar» lo cierra sin subir nada', () => {
+      responderCatalogo();
+      señal<string>('diagnostico').set('dx-hta');
+      interno<() => void>('registrar')();
+      http.expectOne('/clinical/conditions').flush(RESPUESTA);
+      fixture.detectChanges();
+
+      interno<() => void>('cerrarAdjuntos')();
+      fixture.detectChanges();
+
+      expect(interno<() => string | null>('diagnosticoRecienRegistrado')()).toBeNull();
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('app-attachment-uploader'),
+      ).toBeNull();
+    });
+
+    it('el vínculo del adjunto pasa por `clinical`, no por el genérico de `common`', () => {
+      responderCatalogo();
+      señal<string>('diagnostico').set('dx-hta');
+      interno<() => void>('registrar')();
+      http.expectOne('/clinical/conditions').flush(RESPUESTA);
+      fixture.detectChanges();
+
+      const enlazar =
+        interno<(fileId: string, conditionId: string) => { subscribe: (o: unknown) => void }>(
+          'enlazarAdjuntoAlDiagnostico',
+        );
+      enlazar('file-1', 'c-1').subscribe({ next: () => undefined });
+
+      http
+        .expectOne('/clinical/conditions/c-1/attachments')
+        .flush({ id: 'link-1', fileId: 'file-1', ownerId: 'c-1', createdAt: '2026-01-01' });
+    });
+  });
+
   it('las notas clínicas viajan como noteText, recortadas', () => {
     responderCatalogo();
 

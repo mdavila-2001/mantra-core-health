@@ -145,6 +145,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M19 community',
   },
   {
+    // FT-18-R01/R02 (05/09/2026) · la portada de los cuatro directorios.
+    //
+    // El pedido es concreto: «Directorios debe tener una vista de nodos que
+    // muestre cada directorio con el detalle de que se encuentra en cada
+    // directorio». Los cuatro ya existían como hermanos sueltos —el
+    // desplegable «Directorios» de `navigation.subgroups.ts` los agrupa desde
+    // ese archivo—, pero ninguno abría antes en una portada común: quien
+    // quería «buscar algo» tenía que adivinar cuál de los cuatro abrir.
+    //
+    // Esta sección es esa portada, no un quinto directorio: no reemplaza a
+    // ninguno de los cuatro —siguen con su propia ruta, su propio rol y su
+    // propia pantalla— y no inventa descripciones nuevas: cada nodo muestra
+    // el `summary` que la sección correspondiente ya declara más abajo, así
+    // que un texto no puede desincronizarse del otro.
+    //
+    // `roles: [ANY_ROLE]` porque la portada en sí no oculta nada: quien entra
+    // ve los nodos que sus propios roles ya le abren — p. ej. quien ejerce no
+    // ve el nodo de la guía de médicos, que sigue siendo exclusiva del
+    // paciente (corrección #2). El filtro real vive en cada sección, no acá.
+    //
+    // Va **antes** que los cuatro en este registro a propósito: el orden de
+    // dibujo del menú sale de acá (`navigation.subgroups.ts` sólo agrupa), y
+    // la portada tiene que aparecer primero dentro de su propio desplegable.
+    path: 'directories',
+    label: 'Directorios',
+    group: 'General',
+    icon: 'directory',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Un mapa de a quién o a dónde buscar: médicos, laboratorios, clínicas y farmacias.',
+    module: 'M04 directory',
+  },
+  {
     // Carril R2-1 · punto 1 del reclamo. Acá estaba el **muro profesional**, y
     // el cliente pidió sacarlo del menú del paciente: «o cambiarle su enfoque:
     // debe mostrar una especie de guía telefónica de todos los doctores
@@ -299,18 +332,30 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Atención',
     icon: 'stethoscope',
     roles: ['CLINICIAN', 'PRACTITIONER'],
+    // **Fuera del menú del médico** (pedido del propietario, 04/09/2026):
+    // «nadie sabe qué hace». Nació como la PUERTA para empezar a atender, y esa
+    // puerta hoy está en otro lado y es mejor: cada fila de Consultas ofrece
+    // «Iniciar consulta» sobre la cita concreta, en vez de una pantalla que
+    // vuelve a preguntar a quién se atiende.
+    //
+    // `fueraDelMenuPara` y no borrarla: la pantalla sigue existiendo y
+    // alcanzable por su ruta y desde «Tus accesos». Si en unas semanas nadie
+    // la extrañó, se borra en su propio cambio — sacarla de la vista es
+    // reversible en un renglón, borrarla no.
+    fueraDelMenuPara: ['CLINICIAN', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Empezá la atención de hoy: elegí al paciente y entrá a su consulta.',
     module: 'M08 clinical',
   },
   {
-    // **«Turnos» y no «Agenda»** (§4.H del plan de UX): es el nombre exacto de
-    // la lista cerrada del cliente, y además el más honesto — la sección son
-    // los turnos (los que pediste, los que te pidieron, el horario que
-    // publicás), y «Agenda» no decía si era para pedir uno o para publicarlo.
+    // **«Consultas»** (ALV-016). Antes decía «Turnos», que era el nombre exacto
+    // de la lista cerrada del cliente (§4.H del plan de UX); el mismo cliente
+    // pidió la nomenclatura clínica, que además es la que usa el resto del
+    // producto —la receta, el expediente y el ciclo hablan de consultas, no de
+    // turnos—. «Cupos» NO se renombra: es disponibilidad, no consulta.
     // La ruta sigue siendo `schedule`.
     path: 'schedule',
-    label: 'Turnos',
+    label: 'Consultas médicas',
     group: 'Atención',
     icon: 'calendar',
     // El documento de actores ubica estos tres roles en M41; `SCHEDULER` queda
@@ -524,6 +569,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // FT-24. La cotización que sigue a «Mis servicios»: ahí se fija el precio
+    // de referencia, acá se arma la oferta concreta para una persona —con su
+    // plan de pagos— antes de la atención.
+    //
+    // **Sí corresponde agregarla al menú del médico** (a diferencia de
+    // «Encuestas» o «Consulta médica», que la nota de más abajo saca por
+    // `fueraDelMenuPara`): cotizar es un paso del flujo de atención que se iba
+    // a repetir —no una tarea que se hace una vez y se olvida—, y a diferencia
+    // de la ficha de un paciente (que cuelga como hija sin entrada propia,
+    // ver `PANTALLAS_HIJAS` en `app.routes.ts`) el listado de cotizaciones sí
+    // es un destino al que se vuelve por su cuenta: revisar lo ya ofrecido a
+    // alguien, no sólo el momento de crearlo. Mismo criterio que le dio
+    // renglón a «Mis servicios» (FT-22): un lugar donde se arma una oferta con
+    // dinero de por medio no puede depender de que alguien recuerde la ruta.
+    //
+    // Los roles son los de quien atiende, igual que «Mis servicios»: cotizar
+    // es tarea de quien ofrece el servicio, no de quien administra el
+    // catálogo fijo.
+    //
+    // La lista cerrada pasa de doce a trece con esta decisión, no por
+    // descuido — ver el comentario de `navigation.service.spec.ts` que fija
+    // la lista completa.
+    path: 'my-quotations',
+    label: 'Cotizaciones',
+    group: 'Atención',
+    icon: 'billing',
+    roles: ROLES_DE_QUIEN_ATIENDE,
+    availability: 'disponible',
+    summary: 'Armá el presupuesto de un servicio con su plan de pagos y compartilo.',
+    module: 'M17 billing',
+  },
+
+  {
     // Carril 10. **La ruta NO es `surveys` y eso no es decoración**: `/surveys`
     // es el prefijo del módulo en la API, y el proxy compara por inicio de ruta
     // sin límite de segmento — una sección llamada `surveys` se iría entera al
@@ -617,19 +695,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
-    // TAREA-16 (M26): las solicitudes presentadas y lo que cada aseguradora
-    // aprobó. Va en el mismo grupo que «Aseguradora» y «Brokers» porque es la
-    // tercera cara del mismo módulo, y con `SECURITY_ADMIN` porque hoy es el
-    // único rol que la plataforma sabe emitir para esto: los `BILLING` y
-    // `FINANCE` que declaran las escrituras del ciclo del reclamo no existen
-    // en el `RoleCode` cerrado de la API.
+    // TAREA-16 (M26): las solicitudes que **esta organización presentó** y lo
+    // que cada aseguradora aprobó. Va en el mismo grupo que «Aseguradora» y
+    // «Brokers» porque es la tercera cara del mismo módulo.
+    //
+    // `BILLING_OPERATOR` es quien factura y cobra del lado del prestador, y es
+    // el rol que decidió el propietario (TAREA-16 · D1.b, 2026-09-04) para ver
+    // el listado y para reclamar; `SECURITY_ADMIN` conserva el acceso
+    // administrativo de siempre y `SUPERADMIN` entra por el comodín del
+    // registro. Los `BILLING`/`FINANCE` que declaran las **escrituras** del
+    // ciclo del reclamo no se ofrecen acá: adjudicar o revertir son actos de
+    // quien paga, y ésta es la pantalla de quien reclama.
     path: 'administration/insurance-claims',
     label: 'Solicitudes de seguro',
     group: 'Administración',
     icon: 'clipboard',
-    roles: ['SECURITY_ADMIN'],
+    roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Lo que se presentó a cada aseguradora, con lo que aprobó.',
+    summary: 'Lo que presentaste a cada aseguradora, con lo que aprobó.',
     module: 'M26 insurance',
   },
   {
@@ -887,6 +970,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
+    module: 'M16 accounting',
+  },
+
+  {
+    // FT-26 (05/09/2026) — activos fijos y pasivos de la práctica, en
+    // auto-servicio del doctor. Va junto a Contabilidad por el mismo motivo
+    // que ese registro: los dos leen y escriben el mismo `practiceId`, y son
+    // la misma persona —quien ejerce— la que entra a los dos.
+    //
+    // Sólo `PRACTITIONER`: a diferencia de Contabilidad, no hay todavía un
+    // motor admin equivalente para dar de alta activos/pasivos (el que existe,
+    // `AccountingAssetController`/`AccountingLiabilityController`, es
+    // `SECURITY_ADMIN` puro y no comparte pantalla con éste — ver el reporte
+    // del carril). Cuando eso cambie, se suma el rol acá.
+    path: 'assets-liabilities',
+    label: 'Activos y pasivos',
+    group: 'Facturación',
+    icon: 'chart',
+    roles: ['PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Tus activos fijos y tus deudas: alta, avance y automatización.',
     module: 'M16 accounting',
   },
 

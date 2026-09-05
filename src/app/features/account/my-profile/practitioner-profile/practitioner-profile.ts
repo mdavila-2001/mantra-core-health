@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
+import { AuthService } from '../../../../core/auth/auth.service';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
+import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
+import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import type {
   OwnPractitionerProfile,
@@ -26,6 +29,7 @@ import type {
   IdiomaVisible,
   MatriculaVisible,
   PerfilProfesionalVisible,
+  SedeVisible,
 } from './practitioner-profile-view/practitioner-profile-view.types';
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
@@ -49,6 +53,8 @@ interface PerfilResuelto {
   readonly perfil: OwnPractitionerProfile;
   readonly etiquetas: ConceptLabels;
   readonly fotoUrl: string | null;
+  /** Dónde atiende hoy (ALV-005). Vacío si no tiene sedes o si la lectura falló. */
+  readonly sedes: readonly PracticeSite[];
 }
 
 /**
@@ -106,6 +112,8 @@ export class PractitionerProfile {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly files = inject(FilesClient);
+  private readonly sites = inject(PracticeSitesClient);
+  private readonly auth = inject(AuthService);
 
   protected readonly perfil = signal<ViewState<PerfilResuelto>>(loading());
 
@@ -148,6 +156,10 @@ export class PractitionerProfile {
                   this.files
                     .imageDataUrl(perfil.photoFileId)
                     .pipe(catchError(() => of<string | null>(null))),
+            // ALV-005: dónde atiende. Mismo criterio que la foto: es una
+            // sección más de la ficha, no la ficha; si no se puede leer, la
+            // sección no se dibuja y el resto sigue.
+            sedes: this.sedesPropias(),
           }),
         ),
       )
@@ -159,11 +171,27 @@ export class PractitionerProfile {
 
   /* -- Del perfil crudo al contrato de la vista --------------------------- */
 
+  /**
+   * Las sedes donde atiende hoy, o vacío si la sesión no tiene perfil
+   * profesional o la lectura falló.
+   */
+  private sedesPropias() {
+    const profileId = this.auth.practitionerProfileId();
+    if (profileId === null) {
+      return of<readonly PracticeSite[]>([]);
+    }
+    return this.sites.listSitesOfPractitioner(profileId).pipe(
+      map((pagina) => pagina.items),
+      catchError(() => of<readonly PracticeSite[]>([])),
+    );
+  }
+
   private convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
-    const { perfil, etiquetas, fotoUrl } = resuelto;
+    const { perfil, etiquetas, fotoUrl, sedes } = resuelto;
     const especialidades = this.especialidades(perfil, etiquetas);
     const afiliaciones = afiliacionesDe(perfil);
     return {
+      sedes: sedes.map(sedeVisible),
       nombre: perfil.displayName || SIN_DATO,
       titulo: perfil.professionalTitle ?? '',
       especialidadPrincipal: especialidadPrincipal(especialidades),
@@ -379,8 +407,8 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
     .map((afiliacion: PractitionerAffiliation) => ({
       id: afiliacion.id,
       organizacion: afiliacion.organizationName,
-      cargo: afiliacion.roleTitle,
-      area: afiliacion.departmentText ?? '',
+      // ALV-007: el cargo es opcional; vacío no dibuja «· undefined».
+      cargo: afiliacion.roleTitle ?? '',
       desde: afiliacion.startDate,
       hasta: afiliacion.endDate,
       actual: afiliacion.current,
@@ -388,6 +416,24 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
   return {
     actual: visibles.filter((afiliacion) => afiliacion.actual),
     historica: visibles.filter((afiliacion) => !afiliacion.actual),
+  };
+}
+
+/**
+ * Una sede, lista para la ficha (ALV-005/006/010).
+ *
+ * La dirección se normaliza a MAYÚSCULAS **al mostrar**, no al guardar
+ * (ALV-010): persistirla así destruiría el dato original sin vuelta atrás.
+ */
+function sedeVisible(sede: PracticeSite): SedeVisible {
+  return {
+    id: sede.id,
+    nombre: sede.name,
+    direccion: (sede.addressText ?? '').toLocaleUpperCase('es-BO'),
+    punto:
+      sede.latitude === null || sede.longitude === null
+        ? null
+        : { lat: sede.latitude, lng: sede.longitude },
   };
 }
 

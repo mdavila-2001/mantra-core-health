@@ -6,6 +6,8 @@ import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   MyRoleAssignment,
+  NewOwnSite,
+  PracticeSite,
   PracticeSitePage,
   RoleAssignmentResult,
   SelfRequestAffiliationInput,
@@ -91,6 +93,28 @@ export class PracticeSitesClient {
       .pipe(map(aResultadoDeVinculacion));
   }
 
+  /**
+   * `POST /practitioners/me/sites` — ALV-005/006: registro un consultorio
+   * propio. El backend crea (o reutiliza) mi práctica personal, la dirección
+   * si la mando y la vinculación que conecta la sede con mi agenda.
+   *
+   * @param input - Nombre, huso horario y dirección opcional.
+   * @returns La sede recién creada, en el mismo formato que la lista.
+   */
+  createOwnSite(input: NewOwnSite): Observable<PracticeSite> {
+    return this.http.post<PracticeSite>(this.url('/practitioners/me/sites'), input);
+  }
+
+  /**
+   * `DELETE /practitioners/me/sites/:siteId` — ALV-005: dejo de atender en
+   * esa sede. No se borra: se cierra mi vinculación vigente con ella.
+   */
+  removeOwnSite(siteId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}`),
+    );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -111,6 +135,7 @@ interface WireRoleAssignment {
   readonly validFrom: string | null;
   readonly validTo: string | null;
   readonly createdAt: string;
+  readonly avatarUrl: string | null;
 }
 
 interface WireRoleAssignmentResult {
@@ -122,12 +147,16 @@ interface WireRoleAssignmentResult {
 }
 
 function aVinculacion(body: ConNulos<WireRoleAssignment>): MyRoleAssignment {
-  const { validFrom, validTo, createdAt, ...resto } = body;
+  const { validFrom, validTo, createdAt, avatarUrl, ...resto } = body;
   return {
     ...sinNulos(resto),
     ...(maybeDateOnly(validFrom) === undefined ? {} : { validFrom: maybeDateOnly(validFrom) }),
     ...(maybeDateOnly(validTo) === undefined ? {} : { validTo: maybeDateOnly(validTo) }),
     createdAt: maybeDate(createdAt) ?? new Date(createdAt as string),
+    // A diferencia del resto: `avatarUrl` es `string | null` en la vista, no
+    // opcional, así que un `null` del servidor se conserva en vez de
+    // eliminarse la clave (lo que hace `sinNulos` con cualquier otro campo).
+    avatarUrl,
   };
 }
 

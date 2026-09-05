@@ -17,6 +17,7 @@ import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
+import { AGENDA_ROUTE } from '../agenda/agenda.routes';
 import { miRecursoDeAgenda } from '../agenda/mi-recurso';
 import {
   CITA_QUERY_PARAM,
@@ -213,7 +214,7 @@ export class Consultation {
           if (pagina.items.length === 0) {
             this.estado.set(
               empty(
-                { label: 'Ver mi agenda', route: '/schedule/mine' },
+                { label: 'Ver mi agenda', route: AGENDA_ROUTE },
                 'No tenés turnos para hoy. Si vas a atender a alguien sin turno, abrí su consulta por identificador acá abajo.',
               ),
             );

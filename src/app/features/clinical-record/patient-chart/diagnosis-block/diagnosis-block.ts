@@ -23,6 +23,7 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
@@ -145,7 +146,18 @@ function enDias(dias: number): Date {
  */
 @Component({
   selector: 'app-diagnosis-block',
-  imports: [Alert, AppButton, Badge, Card, ConceptSelect, DatePicker, FormActions, FormField, Textarea],
+  imports: [
+    Alert,
+    AppButton,
+    AttachmentUploader,
+    Badge,
+    Card,
+    ConceptSelect,
+    DatePicker,
+    FormActions,
+    FormField,
+    Textarea,
+  ],
   templateUrl: './diagnosis-block.html',
   styleUrl: './diagnosis-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -220,6 +232,26 @@ export class DiagnosisBlock {
    */
   protected readonly opcionesDiagnostico = signal<readonly DynamicEnumOption[]>([]);
   private readonly opcionesCategoria = signal<readonly DynamicEnumOption[]>([]);
+
+  /**
+   * El diagnóstico que se acaba de registrar, mientras se ofrece adjuntarle
+   * un archivo (ALV-033).
+   *
+   * Sólo tiene sentido con un id real: adjuntar exige que la condición ya
+   * exista, así que no se puede ofrecer antes de guardar. Se limpia al
+   * registrar el siguiente diagnóstico o al cerrar el panel a mano — no
+   * desaparece solo, porque el archivo puede tardar en elegirse.
+   */
+  protected readonly diagnosticoRecienRegistrado = signal<string | null>(null);
+
+  /** El vínculo del adjunto pasa por `clinical`, no por el genérico de `common`. */
+  protected readonly enlazarAdjuntoAlDiagnostico = (fileId: string, conditionId: string) =>
+    this.clinical.attachFileToCondition(conditionId, fileId);
+
+  protected cerrarAdjuntos(): void {
+    this.diagnosticoRecienRegistrado.set(null);
+  }
+
   private readonly opcionesSeveridad = signal<readonly DynamicEnumOption[]>([]);
   private readonly opcionesLateralidad = signal<readonly DynamicEnumOption[]>([]);
   private readonly opcionesCurso = signal<readonly DynamicEnumOption[]>([]);
@@ -438,9 +470,10 @@ export class DiagnosisBlock {
         ...(notas === '' ? {} : { noteText: notas }),
       })
       .subscribe({
-        next: () => {
+        next: (registrado) => {
           this.registrando.set(false);
           this.registro.set(ready(null));
+          this.diagnosticoRecienRegistrado.set(registrado.id);
           this.limpiar();
           this.toasts.success(
             'Quedó en la historia como condición activa.',

@@ -39,7 +39,6 @@ function afiliacion(over: Partial<AfiliacionVisible> = {}): AfiliacionVisible {
     id: 'af-1',
     organizacion: 'Hospital Obrero N.º 1',
     cargo: 'Médica de planta',
-    area: '',
     desde: new Date('2012-01-01'),
     hasta: new Date('2016-01-01'),
     actual: false,
@@ -420,11 +419,11 @@ describe('PractitionerProfileView', () => {
 
   /* -- Vista previa del perfil público (carril 05) --------------------------- */
 
-  it('"Ver mi perfil público" lleva a la vitrina, que es una pantalla propia', () => {
+  it('"Ver cómo me ven" lleva a la vista previa de sólo lectura (ALV-004)', () => {
     const host = montar(PERFIL, true);
 
     const enlace = Array.from(host.querySelectorAll('a[app-button]')).find((a) =>
-      a.textContent?.includes('Ver mi perfil público'),
+      a.textContent?.includes('Ver cómo me ven'),
     ) as HTMLAnchorElement;
 
     expect(enlace).toBeTruthy();

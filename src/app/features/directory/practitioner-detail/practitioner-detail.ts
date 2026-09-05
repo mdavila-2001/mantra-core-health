@@ -337,8 +337,8 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
     .map((afiliacion: PractitionerAffiliation) => ({
       id: afiliacion.id,
       organizacion: afiliacion.organizationName,
-      cargo: afiliacion.roleTitle,
-      area: afiliacion.departmentText ?? '',
+      // ALV-007: el cargo es opcional; vacío no dibuja «· undefined».
+      cargo: afiliacion.roleTitle ?? '',
       desde: afiliacion.startDate,
       hasta: afiliacion.endDate,
       actual: afiliacion.current,

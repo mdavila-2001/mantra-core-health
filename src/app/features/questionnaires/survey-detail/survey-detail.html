@@ -142,12 +142,89 @@
               <button app-button type="button" variant="outline" (click)="desactivar()">
                 Desactivar encuesta
               </button>
+              <button
+                app-button
+                type="button"
+                variant="outline"
+                [disabled]="creandoVersion()"
+                (click)="crearNuevaVersion()"
+              >
+                {{ creandoVersion() ? 'Creando…' : 'Corregir el cuestionario (nueva versión)' }}
+              </button>
             </div>
           </form>
         </app-card>
 
         <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
-          <h2 card-header>Respuestas recibidas</h2>
+          <h2 card-header>Resumen</h2>
+          @if (cargandoRespuestas()) {
+            <app-skeleton />
+          } @else if (respuestas().length === 0) {
+            <p class="encuesta__vacio">Todavía no respondió nadie.</p>
+          } @else if (!suficientesRespuestas()) {
+            <p class="encuesta__vacio">
+              {{ respuestas().length }} de un mínimo de 5 respuestas necesarias para mostrar un
+              resumen sin arriesgar identificar a quien respondió.
+            </p>
+          } @else {
+            <ul class="encuesta__resumen">
+              @for (resumen of resumenPorPregunta(); track resumen.questionId) {
+                <li class="encuesta__resumen-pregunta">
+                  <div class="encuesta__resumen-cabecera">
+                    <span class="encuesta__resumen-texto">{{ resumen.questionText }}</span>
+                    <span class="encuesta__resumen-total">
+                      {{ resumen.totalRespondida }}
+                      {{ resumen.totalRespondida === 1 ? 'respuesta' : 'respuestas' }}
+                      @if (resumen.promedio !== null) {
+                        · promedio {{ resumen.promedio | number: '1.1-1' }}
+                      }
+                    </span>
+                  </div>
+                  @if (resumen.answerType === 'TEXT') {
+                    <p class="encuesta__resumen-nota">
+                      Texto libre: se lee completo en la lista de respuestas, más abajo.
+                    </p>
+                  } @else if (resumen.totalRespondida === 0) {
+                    <p class="encuesta__resumen-nota">Nadie respondió esta pregunta todavía.</p>
+                  } @else {
+                    <ul class="encuesta__barras">
+                      @for (barra of resumen.barras; track barra.etiqueta) {
+                        <li class="encuesta__barra-fila">
+                          <span class="encuesta__barra-etiqueta">{{ barra.etiqueta }}</span>
+                          <span class="encuesta__barra-pista">
+                            <span
+                              class="encuesta__barra-relleno"
+                              [style.inline-size.%]="barra.porcentaje"
+                            ></span>
+                          </span>
+                          <span class="encuesta__barra-cifra">
+                            {{ barra.cantidad }} · {{ barra.porcentaje }}%
+                          </span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+
+        <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
+          <div card-header class="encuesta__respuestas-cabecera">
+            <h2>Respuestas recibidas</h2>
+            @if (suficientesRespuestas()) {
+              <button app-button type="button" variant="outline" (click)="descargarCsv()">
+                Descargar CSV
+              </button>
+            }
+          </div>
+          @if (respuestas().length > 0 && !suficientesRespuestas()) {
+            <p class="encuesta__nota-csv">
+              El CSV se habilita con un mínimo de 5 respuestas, para no exponer una respuesta
+              puntual como si fuera identificable.
+            </p>
+          }
           @if (cargandoRespuestas()) {
             <app-skeleton />
           } @else if (respuestas().length === 0) {

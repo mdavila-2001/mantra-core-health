@@ -1,0 +1,58 @@
+/* ============================================================================
+    Nueva cotización. Sólo distribución: los átomos y organismos ya traen su
+    pinta del sistema.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.cotizacion {
+  display: grid;
+  gap: var(--sp-6);
+  margin-block-start: var(--sp-6);
+}
+
+.cotizacion__bloque {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.cotizacion__grilla {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  align-items: start;
+}
+
+.cotizacion__titulo-ancho {
+  grid-column: 1 / -1;
+}
+
+.cotizacion__elegido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.cotizacion__cuotas {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+
+.cotizacion__cuotas th,
+.cotizacion__cuotas td {
+  text-align: end;
+  padding: var(--sp-2);
+}
+
+.cotizacion__cuotas th:first-child,
+.cotizacion__cuotas td:first-child {
+  text-align: start;
+}
+
+.cotizacion__acciones {
+  display: flex;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+}

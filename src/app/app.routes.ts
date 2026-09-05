@@ -84,6 +84,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // olvida, que es exactamente lo que una pantalla de preferencias debería
   // conseguir.
   settings: () => import('./features/settings/settings').then((m) => m.Settings),
+  // FT-18-R01/R02 · la portada de los cuatro directorios.
+  directories: () =>
+    import('./features/directories-overview/directories-overview').then(
+      (m) => m.DirectoriesOverview,
+    ),
   // La guía que ocupó su lugar en el menú.
   directory: () =>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
@@ -153,6 +158,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/accounting': () =>
     import('./features/accounting/accounting').then((m) => m.Accounting),
+  // FT-26 · activos y pasivos, en auto-servicio del doctor.
+  'assets-liabilities': () =>
+    import('./features/assets-liabilities/assets-liabilities').then(
+      (m) => m.AssetsLiabilities,
+    ),
   'my-organizations': () =>
     import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
@@ -217,6 +227,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // La lectura del mismo catálogo, para quien atiende. Diferida: se consulta
   // antes de cotizar, no al entrar, así que no es la primera pantalla de nadie.
   'my-services': () => import('./features/my-services/my-services').then((m) => m.MyServices),
+  // FT-24. El listado de cotizaciones armadas sobre ese mismo catálogo.
+  // Diferida como el resto: no es la primera pantalla de nadie.
+  'my-quotations': () =>
+    import('./features/quotations/quotation-list/quotation-list').then((m) => m.QuotationList),
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
   questionnaires: () =>
@@ -398,6 +412,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/patients/patient-new/patient-new')
         .then((m) => m.PatientNew)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-24. El alta de una cotización. Cuelga de «Cotizaciones», que es el
+    // listado que la sección declara; con `seccionRolesGuard` explícito como
+    // el resto de las hijas de una sección que declara roles.
+    path: 'my-quotations/new',
+    title: `${APP_TITLE} - Nueva cotización`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/quotations/quotation-form/quotation-form')
+        .then((m) => m.QuotationForm)
         .catch(() => chunkFallido()),
   },
   {
@@ -1227,12 +1253,6 @@ export const routes: Routes = [
       // «Mi agenda», sin lista, sin históricos y sin dirección propia.
       pantallaDeOperacion('schedule', 'blocks', 'Bloqueos de agenda', () =>
         import('./features/agenda/blocks/blocks').then((m) => m.Blocks),
-      ),
-      // «Mi agenda» (MAC-4): el horario publicado, en palabras. Es la primera
-      // pantalla donde un médico ve lo que publicó — hasta que existió el GET
-      // de plantillas, no había forma de volver a leerlo.
-      pantallaDeOperacion('schedule', 'mine', 'Mi agenda', () =>
-        import('./features/agenda/my-agenda/my-agenda').then((m) => m.MyAgenda),
       ),
       // El alta de cita del profesional (TAREA-14). Dirección propia porque el
       // pedido es justamente poder agendar **sin pasar por el calendario**:

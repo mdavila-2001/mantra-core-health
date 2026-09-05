@@ -374,8 +374,8 @@ export interface PractitionerAffiliation {
   readonly practitionerProfileId: string;
   /** Hospital o entidad médica, tal como la declaró el profesional. */
   readonly organizationName: string;
-  readonly roleTitle: string;
-  readonly departmentText: string | null;
+  /** Cargo, o `null` si el vínculo no lo declara (ALV-007: opcional). */
+  readonly roleTitle: string | null;
   /** Sede de la plataforma, cuando la institución está dentro. */
   readonly practiceSiteId: string | null;
   /** Tipo de vínculo; se resuelve contra `terminology`. */
@@ -423,8 +423,8 @@ export interface PractitionerAffiliationPage {
  */
 export interface NewPractitionerAffiliation {
   readonly organizationName: string;
-  readonly roleTitle: string;
-  readonly departmentText?: string;
+  /** Opcional desde ALV-007: un consultorio propio no tiene cargo. */
+  readonly roleTitle?: string;
   readonly practiceSiteId?: string;
   readonly affiliationTypeConceptId?: string;
   /** ISO `YYYY-MM-DD`. */
