@@ -11,6 +11,16 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 const BLOQUE = 'Directorios';
 
 /**
+ * La ruta de esta misma portada.
+ *
+ * `NAV_SUBGROUPS` la incluye a propósito —para que quede en el mismo bloque
+ * que agrupa (ver el comentario ahí)—, así que hay que descartarla acá: un
+ * nodo que apunta a la pantalla en la que ya se está no es un directorio más,
+ * es un enlace a ningún lado.
+ */
+const PROPIA_RUTA = 'directories';
+
+/**
  * **Portada de los cuatro directorios** (FT-18-R01/R02, 05/09/2026).
  *
  * ## Qué pidió el carril
@@ -62,8 +72,9 @@ export class DirectoriesOverview {
    * Las rutas de los cuatro directorios, en el orden en que se declaran en
    * {@link APP_SECTIONS} — el mismo orden en el que ya se dibujan en el menú.
    */
-  private readonly rutasDelBloque: readonly string[] =
-    NAV_SUBGROUPS.find((bloque) => bloque.label === BLOQUE)?.paths ?? [];
+  private readonly rutasDelBloque: readonly string[] = (
+    NAV_SUBGROUPS.find((bloque) => bloque.label === BLOQUE)?.paths ?? []
+  ).filter((ruta) => ruta !== PROPIA_RUTA);
 
   /**
    * Los directorios que esta sesión puede abrir.
