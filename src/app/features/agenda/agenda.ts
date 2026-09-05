@@ -60,7 +60,7 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { DataTable } from '../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { AGENDA_CREATE_ROUTE, AGENDA_MINE_ROUTE, bookingNewRoute } from './agenda.routes';
+import { AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
 import { MyAgenda } from './my-agenda/my-agenda';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
@@ -413,21 +413,6 @@ export class Agenda {
 
   /** Destino del enlace «Crear agenda» del encabezado. */
   protected readonly rutaCrearAgenda = AGENDA_CREATE_ROUTE;
-
-  /**
-   * La puerta a «Mi agenda», y la razón por la que existe este campo.
-   *
-   * `AGENDA_MINE_ROUTE` estaba declarada desde el principio y **nadie la
-   * importaba**: las pantallas del horario —«Mi agenda», los bloqueos, cambiar
-   * el horario— se enlazan entre ellas y ninguna se enlazaba desde acá, que es
-   * donde el menú deja a quien entra por «Turnos». El resultado, dicho por el
-   * médico que lo sufrió: «literalmente no puedo ver la agenda o horarios».
-   *
-   * Va primero y en primario, y «Crear agenda» pasa a secundario: publicar es
-   * algo que se hace una vez, mirar la agenda es a lo que se entra todos los
-   * días.
-   */
-  protected readonly rutaMiAgenda = AGENDA_MINE_ROUTE;
 
   private readonly celdaCuando =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaCuando');

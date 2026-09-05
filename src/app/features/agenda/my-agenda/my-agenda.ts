@@ -1,10 +1,8 @@
 import {
-  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
-  input,
   LOCALE_ID,
   signal,
 } from '@angular/core';
@@ -37,7 +35,6 @@ import type { DialogDetail } from '../../../shared/components/molecules/dialog/d
 import { patientChartRoute } from '../../clinical-record/clinical-record.routes';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
-import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -163,7 +160,6 @@ const SIN_DATO = 'Sin registrar';
     WeekView,
     ScheduleGrid,
     ContentDialog,
-    PageHeader,
     RouterLink,
     ViewStateHost,
   ],
@@ -172,20 +168,6 @@ const SIN_DATO = 'Sin registrar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyAgenda {
-  /**
-   * Si va **dentro** de otra pantalla en vez de ser la pantalla.
-   *
-   * Vive en dos lugares: su propia ruta (`/schedule/mine`, que sigue existiendo
-   * para los enlaces que ya apuntan ahí) y como una solapa más de Consultas,
-   * al lado de Cupos — que es donde el médico la busca, sin viajar a otra
-   * pantalla para ver su horario.
-   *
-   * Lo único que cambia es el encabezado: incrustada no lo dibuja, porque la
-   * pantalla que la contiene ya tiene el suyo y dos títulos en la misma vista
-   * se leen como dos pantallas superpuestas.
-   */
-  readonly embebida = input(false, { transform: booleanAttribute });
-
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
