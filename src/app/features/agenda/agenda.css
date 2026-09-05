@@ -33,6 +33,16 @@
   padding-block-end: var(--sp-2);
 }
 
+/* ALV-024. Alineado con el borde inferior de los campos, como el interruptor:
+   ninguno de los tres botones lleva etiqueta arriba. */
+.agenda__navegacion-temporal {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  flex: 0 0 auto;
+  padding-block-end: var(--sp-2);
+}
+
 /* De quién es la agenda, cuando no hay selector que lo diga. Se lee como un
    dato con su rótulo —no como un campo— porque no hay nada que elegir acá. */
 .agenda__ambito {

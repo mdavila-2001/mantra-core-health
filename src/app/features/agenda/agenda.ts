@@ -255,6 +255,15 @@ export interface CitaVisible {
    * error.
    */
   readonly paciente: string;
+  /**
+   * `Particular` o el nombre de la aseguradora (ALV-021).
+   *
+   * Misma compuerta que `paciente`: sin permiso para verlo, la celda no se
+   * arriesga a decir «Particular» de alguien que sí tiene seguro y cuya
+   * cobertura no le corresponde consultar — dice «—», que es lo mismo que ya
+   * usa la columna de pago para «no corresponde».
+   */
+  readonly cobertura: string;
   /** El expediente clínico de la persona citada, si la sesión puede abrirlo. */
   readonly rutaExpediente: string | null;
   /**
@@ -672,6 +681,30 @@ export class Agenda {
   });
 
   /**
+   * Desde dónde arranca la ventana consultada (ALV-024).
+   *
+   * `?desde=YYYY-MM-DD`, en la URL para que «la semana que viene» se pueda
+   * compartir por enlace y volver a ella siga trayendo la misma consulta. Sin
+   * parámetro, o con uno que no parsea, es HOY — el comportamiento de
+   * siempre, así que ningún enlace viejo cambia de significado.
+   */
+  protected readonly fechaBase = computed<Date>(() => {
+    const pedida = this.params()?.get('desde');
+    const fecha = pedida === null ? null : new Date(`${pedida}T00:00:00`);
+    const valida = fecha !== null && !Number.isNaN(fecha.getTime());
+    const base = valida ? fecha : new Date();
+    base.setHours(0, 0, 0, 0);
+    return base;
+  });
+
+  /** Si la ventana es la de hoy, o si se navegó a otra (ALV-024). */
+  protected readonly enVentanaDeHoy = computed(() => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return this.fechaBase().getTime() === hoy.getTime();
+  });
+
+  /**
    * Pestaña visible. En la URL para que un enlace pueda apuntar a una en
    * concreto.
    *
@@ -1003,6 +1036,10 @@ export class Agenda {
       ? []
       : [{ key: 'recurso', header: 'Recurso', priority: 2 } satisfies ColumnDef<CitaVisible>]),
     { key: 'motivo', header: 'Motivo', priority: 3 },
+    // ALV-021. Prioridad 3, junto al motivo: es información de contexto, no
+    // algo que se opere como el pago. Texto plano — «Particular» o el nombre
+    // de la aseguradora no necesitan sello ni color.
+    { key: 'cobertura', header: 'Seguro', priority: 3 },
     // Prioridad 2: en pantalla chica cede antes que el estado de la cita y la
     // fecha, pero antes que el motivo. Quien mira la agenda en el teléfono
     // quiere saber a qué hora y con quién; el pago viene después.
@@ -1085,6 +1122,10 @@ export class Agenda {
       this.recursoElegido();
       this.ventanaElegida();
       this.incluirCanceladas();
+      // ALV-024: sin esto, mover la ventana cambia la URL y no recarga nada.
+      // `ventanaElegida()` sólo dice el TAMAÑO (7/30 días); `fechaBase()` es
+      // DESDE cuándo, y es lo que `moverVentana`/`irAHoy` cambian.
+      this.fechaBase();
       // Se depende también de que los recursos ya se hayan leído: con una
       // organización sin ninguno, `recursoElegido()` se queda en `null` de
       // punta a punta y sin esta dependencia la pantalla no saldría nunca del
@@ -1110,7 +1151,31 @@ export class Agenda {
   }
 
   protected elegirVentana(clave: string | null): void {
-    this.publicar({ rango: clave === VENTANA_POR_DEFECTO ? null : clave });
+    // Cambiar el tamaño de la ventana vuelve a hoy (ALV-024): quedarse en un
+    // desplazamiento de «7 días» al pasar a «30 días» sería una fecha que ya
+    // no significa lo mismo para nadie que la mire.
+    this.publicar({ rango: clave === VENTANA_POR_DEFECTO ? null : clave, desde: null });
+  }
+
+  /**
+   * Mueve la ventana un tramo completo, hacia atrás o hacia adelante
+   * (ALV-024). Un tramo es el tamaño de la ventana elegida: si se mira de a
+   * 7 días, «Siguiente» salta 7 días — la próxima página, no un día suelto.
+   */
+  protected moverVentana(direccion: -1 | 1): void {
+    const dias = VENTANAS.find((v) => v.clave === this.ventanaElegida())?.dias ?? 7;
+    const siguiente = new Date(this.fechaBase());
+    siguiente.setDate(siguiente.getDate() + dias * direccion);
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const iso = siguiente.toISOString().slice(0, 10);
+    this.publicar({ desde: siguiente.getTime() === hoy.getTime() ? null : iso });
+  }
+
+  /** Vuelve a la ventana de hoy en un clic, sin contar los tramos de vuelta. */
+  protected irAHoy(): void {
+    this.publicar({ desde: null });
   }
 
   protected alternarCanceladas(incluir: boolean): void {
@@ -1765,6 +1830,14 @@ export class Agenda {
       rutaPaciente:
         paciente !== null && this.puedeVerFichas() ? `/administration/patients/${paciente}` : null,
       paciente: cita.patientName ?? (paciente === null ? 'Sin paciente' : 'Paciente asignado'),
+      // ALV-021. `undefined` es «no corresponde verlo» —misma compuerta que el
+      // nombre—, y se dice con el mismo guión que ya usa la columna de pago
+      // para «no hay nada que decir todavía». `null` SÍ es una respuesta:
+      // se comprobó y no tiene, que es «Particular».
+      cobertura:
+        cita.insuranceCarrierName === undefined
+          ? '—'
+          : (cita.insuranceCarrierName ?? 'Particular'),
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,
@@ -1842,15 +1915,16 @@ export class Agenda {
   }
 
   /**
-   * La ventana consultada, desde el arranque del día de hoy.
+   * La ventana consultada, desde el arranque de `fechaBase` (ALV-024).
    *
-   * Arranca hoy y no «ahora» a propósito: una cita de las nueve de la mañana no
-   * debería desaparecer de la agenda a las nueve y cinco.
+   * Arranca al principio del día y no «ahora» a propósito: una cita de las
+   * nueve de la mañana no debería desaparecer de la agenda a las nueve y
+   * cinco. Antes arrancaba siempre en hoy; ahora es la fecha que la sesión
+   * eligió navegar, y hoy sigue siendo el valor por omisión.
    */
   private ventana(): { desde: Date; hasta: Date } {
     const dias = VENTANAS.find((v) => v.clave === this.ventanaElegida())?.dias ?? 7;
-    const desde = new Date();
-    desde.setHours(0, 0, 0, 0);
+    const desde = new Date(this.fechaBase());
     const hasta = new Date(desde);
     hasta.setDate(hasta.getDate() + dias);
     return { desde, hasta };
