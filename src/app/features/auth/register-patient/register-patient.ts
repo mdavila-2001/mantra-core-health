@@ -224,7 +224,7 @@ function tutorConNombre(grupo: AbstractControl): null {
  */
 
 /**
- * Género, con sus dos categorías.
+ * Sexo, con sus dos categorías.
  *
  * Va como lista fija y no como lectura de terminología —a diferencia de los
  * departamentos o de la ocupación— porque la API lo recibe **por código
@@ -237,21 +237,17 @@ function tutorConNombre(grupo: AbstractControl): null {
  *
  * El campo ofrecía además «Intersexual» y «Prefiero no decirlo», y el equipo
  * pidió dejar sólo masculino y femenino: es lo que el documento de identidad
- * boliviano registra y lo que la ficha del paciente contrasta contra él. Sigue
- * siendo opcional —«Sin especificar» es el marcador del desplegable y deja el
- * control vacío—, así que quien no quiera contestar no tiene que elegir una
- * casilla que no lo describe: simplemente no elige.
+ * boliviano registra y lo que la ficha del paciente contrasta contra él.
  *
- * ## Por qué el rótulo dice «Género» y el dato viaja como `sexAtBirth`
+ * ## Por qué es «Sexo» y no «Género», y por qué es obligatorio
  *
- * Porque son las dos mitades de la misma decisión. El rótulo es el que el
- * equipo pidió y el que la gente reconoce; el campo que se manda es el que
- * tiene consecuencia clínica —dosis, valores de referencia, tamizajes— y el
- * único que el backend traduce a concepto en el alta. El `gender`
+ * Es dato clínico —dosis, valores de referencia, tamizajes—, no una cortesía
+ * demográfica: llamarlo «Género» sugería lo segundo, y dejarlo opcional
+ * dejaba fichas sin el dato que las decisiones clínicas necesitan. El `gender`
  * administrativo del DTO sigue existiendo para otros clientes; este formulario
- * no lo manda, y ausente no es lo mismo que vacío.
+ * no lo manda.
  */
-const OPCIONES_GENERO: readonly SelectOption<BirthSexCode>[] = [
+const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
   { value: 'MALE', label: 'Masculino' },
   { value: 'FEMALE', label: 'Femenino' },
 ];
@@ -878,7 +874,7 @@ export class RegisterPatient {
   });
 
   /** Las listas fijas, expuestas a la plantilla. */
-  protected readonly opcionesGenero = OPCIONES_GENERO;
+  protected readonly opcionesSexo = OPCIONES_SEXO;
 
   /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
@@ -1103,7 +1099,7 @@ export class RegisterPatient {
               'Es el sexo que registra tu documento de identidad. Lo usamos como dato clínico, no para dirigirnos a vos.',
             control: 'select',
             required: true,
-            options: OPCIONES_GENERO,
+            options: OPCIONES_SEXO,
             placeholder: 'Elegí una opción',
             testId: 'registro-genero',
             icono: 'heart',

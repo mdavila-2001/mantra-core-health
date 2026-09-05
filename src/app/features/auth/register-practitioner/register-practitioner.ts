@@ -497,9 +497,12 @@ export class RegisterPractitioner {
     }),
     birthDate: new FormControl<Date | null>(null),
     // AC-05-7: el DTO lo aceptaba desde siempre; lo que faltaba era
-    // preguntarlo. Opcional, como el resto de los datos personales de esta
-    // alta: lo que acá no se puede dejar en blanco es la habilitación.
-    sexAtBirth: new FormControl<BirthSexCode | null>(null),
+    // preguntarlo. Igual que en el alta de paciente, es dato clínico —dosis,
+    // valores de referencia, tamizajes— y no una cortesía: obligatorio, aunque
+    // el resto de esta sección sí sea opcional.
+    sexAtBirth: new FormControl<BirthSexCode | null>(null, {
+      validators: [Validators.required],
+    }),
     occupationConceptId: new FormControl<string | null>(null),
     occupationFreeText: new FormControl('', { nonNullable: true }),
     licenseIssueDate: new FormControl<Date | null>(null),
@@ -967,17 +970,19 @@ export class RegisterPractitioner {
         titulo: 'Contanos un poco sobre vos',
         clave: 'profile',
         icon: 'stethoscope',
-        hint: 'Opcional. Se guarda en tu perfil profesional.',
+        hint: 'El sexo hace falta; el resto es opcional. Se guarda en tu perfil profesional.',
         campos: [
           {
             key: 'sexAtBirth',
-            label: 'Sexo (opcional)',
+            label: 'Sexo',
             hint: 'Es el que registra tu documento de identidad.',
             control: 'select',
+            required: true,
             options: OPCIONES_SEXO,
-            placeholder: 'Sin especificar',
+            placeholder: 'Elegí una opción',
             testId: 'registration-practitioner-sex',
             icono: 'heart',
+            mensajeDeError: 'Elegí una opción.',
           },
           {
             key: 'birthDate',
