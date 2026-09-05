@@ -315,14 +315,11 @@
            padre igual: sin esta condición, «Mi agenda» se construía en cada
            visita a la lista y disparaba su propia lectura de recursos aunque
            nadie abriera la solapa. Con la condición en la plantilla del padre,
-           el componente no existe hasta que se lo pide.
-
-           Su ruta propia (`/schedule/mine`) sigue viva para los enlaces que ya
-           apuntan ahí. -->
+           el componente no existe hasta que se lo pide. -->
       @if (esQuienAtiende()) {
         <app-tab label="Mi agenda">
           @if (pestana() === 1) {
-            <app-my-agenda embebida />
+            <app-my-agenda />
           }
         </app-tab>
       }

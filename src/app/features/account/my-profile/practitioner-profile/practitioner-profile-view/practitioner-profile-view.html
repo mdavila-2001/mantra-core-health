@@ -130,19 +130,18 @@
       <!-- Las pantallas del perfil, navegables DESDE el perfil. -->
       <div class="profesional__acciones">
         <a app-button variant="primary" routerLink="/my-account/edit"> Configurar mi perfil </a>
-        <!-- Va a la vitrina, que es una PANTALLA propia (`/my-account/preview`)
-             y monta la MISMA `PublicProfileCard` que el Directorio de médicos,
-             más el formulario que la configura. Antes había además una pestaña
-             acá dentro con esa misma tarjeta en sólo lectura: dos lugares para
-             lo mismo, y el de acá no dejaba tocar nada. Es el ancla del paso
-             `preview` del tour, que antes colgaba de esa pestaña. -->
+        <!-- Va a «Cómo me ven» (`/my-account/preview`): la MISMA
+             `PublicProfileCard` que el Directorio de médicos, de SÓLO lectura.
+             ALV-004: lo que se configura de la ficha pública vive en
+             «Configurar mi perfil», no en una segunda pantalla. Es el ancla del
+             paso `preview` del tour. -->
         <a
           app-button
           variant="outline"
           routerLink="/my-account/preview"
           appTutorialTarget="perfil-preview"
         >
-          Ver mi perfil público
+          Ver cómo me ven
         </a>
         <a app-button variant="outline" routerLink="/my-account/articles"> Mis artículos </a>
       </div>
@@ -258,6 +257,34 @@
     </app-card>
   }
 
+  <!-- ─── Dónde atiende ─────────────────────────────────────────────────
+       ALV-005/006/010. Es la pregunta que la ficha no sabía contestar: la
+       trayectoria dice dónde TRABAJÓ, no dónde encontrarlo hoy. Sin sedes la
+       sección no se dibuja —no un texto vacío—: las sedes se cargan desde
+       Trayectoria, y anunciar acá que faltan sería duplicar ese aviso. -->
+  @if (perfil().sedes?.length) {
+    <app-card
+      class="profesional__bloque"
+      variant="outlined"
+      padding="lg"
+      data-testid="perfil-sedes"
+    >
+      <h2 class="profesional__bloque-titulo">Dónde atiendo</h2>
+      <ul class="profesional__lista">
+        @for (sede of perfil().sedes; track sede.id) {
+          <li class="profesional__item" data-testid="perfil-sede">
+            <div class="profesional__item-encabezado">
+              <span class="profesional__item-titulo">{{ sede.nombre }}</span>
+            </div>
+            @if (sede.direccion) {
+              <p class="profesional__item-texto">{{ sede.direccion }}</p>
+            }
+          </li>
+        }
+      </ul>
+    </app-card>
+  }
+
   <!-- ─── Qué lleva hecho acá ───────────────────────────────────────────
        Cuentas de actividad. No es trayectoria —no es "dónde ejerció" sino
        "qué registró con esta cuenta"— así que se queda fuera de las pestañas
@@ -322,9 +349,6 @@
                     </div>
                     <p class="profesional__item-texto">
                       {{ afiliacion.cargo }}
-                      @if (afiliacion.area) {
-                        · {{ afiliacion.area }}
-                      }
                     </p>
                     <p class="profesional__item-fechas">
                       Desde {{ afiliacion.desde | date: 'MMM y' }}
@@ -355,9 +379,6 @@
                     </div>
                     <p class="profesional__item-texto">
                       {{ afiliacion.cargo }}
-                      @if (afiliacion.area) {
-                        · {{ afiliacion.area }}
-                      }
                     </p>
                     <p class="profesional__item-fechas">
                       {{ afiliacion.desde | date: 'MMM y' }} —

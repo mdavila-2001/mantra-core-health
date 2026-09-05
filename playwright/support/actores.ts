@@ -150,6 +150,45 @@ function sufijoDeAlta(): string {
   return `${String(Date.now()).slice(-9)}${secuenciaDeAltas}`;
 }
 
+/** El catálogo de municipios que el alta del paciente exige como residencia. */
+const MUNICIPALITY_VALUE_SET = 'VS_BO_MUNICIPALITY';
+
+/**
+ * Fecha de nacimiento del paciente de prueba: una adulta, fija, para que la
+ * corrida sea reproducible.
+ */
+const PATIENT_BIRTH_DATE = '1995-05-20';
+
+/**
+ * El primer municipio publicado de `VS_BO_MUNICIPALITY`, por la misma ruta que
+ * usa la pantalla de alta (`GET /terminology/value-sets/:id/$expand`).
+ *
+ * El alta del paciente exige un municipio de residencia real —un UUID del
+ * catálogo— y escribirlo acá sería atarse a los ids de una siembra concreta.
+ */
+async function firstMunicipalityConceptId(api: APIRequestContext): Promise<string> {
+  const valueSets = await api.get('/terminology/value-sets', {
+    params: { code: MUNICIPALITY_VALUE_SET },
+  });
+  const catalog = (await valueSets.json()) as {
+    items?: { id: string; internalCode: string }[];
+  };
+  const valueSet = (catalog.items ?? []).find(
+    (item) => item.internalCode === MUNICIPALITY_VALUE_SET,
+  );
+  if (valueSet === undefined) {
+    throw new Error(`el catálogo ${MUNICIPALITY_VALUE_SET} no está publicado en la API`);
+  }
+
+  const expansion = await api.get(`/terminology/value-sets/${valueSet.id}/$expand`);
+  const firstPage = (await expansion.json()) as { items?: { conceptId: string }[] };
+  const municipality = firstPage.items?.[0];
+  if (municipality === undefined) {
+    throw new Error(`el catálogo ${MUNICIPALITY_VALUE_SET} no tiene municipios publicados`);
+  }
+  return municipality.conceptId;
+}
+
 /**
  * **Paciente** — se da de alta solo, sin admin ni token.
  *
@@ -165,6 +204,9 @@ export async function crearPaciente(api: APIRequestContext): Promise<Actor> {
   const sufijo = sufijoDeAlta();
   const nationalId = `CI-PW-${sufijo}`;
 
+  // El alta exige fecha de nacimiento y municipio de residencia (UUID del
+  // catálogo): sin ellos la API responde 400 y ninguna prueba de paciente corre.
+  const residenceMunicipalityConceptId = await firstMunicipalityConceptId(api);
   const respuesta = await api.post('/iam/auth/register-patient', {
     data: {
       nationalId,
@@ -174,6 +216,8 @@ export async function crearPaciente(api: APIRequestContext): Promise<Actor> {
       phone: '+591 70055555',
       gender: 'FEMALE',
       sexAtBirth: 'FEMALE',
+      birthDate: PATIENT_BIRTH_DATE,
+      residenceMunicipalityConceptId,
     },
   });
 

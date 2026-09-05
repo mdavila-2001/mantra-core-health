@@ -19,7 +19,7 @@ import type {
   ScheduleRule,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { AGENDA_MINE_ROUTE } from '../agenda.routes';
+import { AGENDA_ROUTE } from '../agenda.routes';
 import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
 import { misRecursosDeAgenda } from '../mi-recurso';
 import { calcularTurnos, type Calculo } from './agenda-turnos';
@@ -189,11 +189,10 @@ export class AgendaCreate {
   private readonly navigation = inject(NavigationService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly rutaDeMiAgenda = AGENDA_MINE_ROUTE;
+  /** A dónde vuelven «Ver mi agenda» y «Cancelar»: la agenda, que es de donde se vino. */
+  protected readonly rutaDeMiAgenda = AGENDA_ROUTE;
   protected readonly uuidError = UUID_ERROR;
   protected readonly dias = DIAS;
-  /** A dónde vuelve «Cancelar»: la agenda, que es de donde se vino. */
-  protected readonly rutaMiAgenda = '/schedule/mine';
 
   protected readonly duraciones = DURACIONES;
   protected readonly respiros = RESPIROS;

@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import type { Observable } from 'rxjs';
 
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import type {
@@ -65,6 +66,20 @@ export class AttachmentUploader {
   /** El recurso concreto. */
   readonly ownerId = input.required<string>();
 
+  /**
+   * Reemplaza el vínculo genérico (`POST /common/files/:id/links`) por uno
+   * propio del dominio.
+   *
+   * `POST /common/files/:id/links` es infraestructura compartida y no exige
+   * rol ni verifica que el propietario exista — es a propósito, sirve a
+   * cualquier contexto. Un consumidor cuyo dominio SÍ tiene su propia regla de
+   * quién puede adjuntar qué (p. ej. `clinical` con sus diagnósticos) manda
+   * acá su propio endpoint en vez de confiar en que el genérico alcance.
+   */
+  readonly linkVia = input<((fileId: string, ownerId: string) => Observable<unknown>) | null>(
+    null,
+  );
+
   /** Se emite cuando el archivo quedó subido **y** vinculado. */
   readonly attached = output<void>();
 
@@ -111,9 +126,12 @@ export class AttachmentUploader {
   }
 
   private vincular(fileId: string): void {
-    this.files
-      .link(fileId, { ownerType: this.ownerType(), ownerId: this.ownerId() })
-      .subscribe({
+    const enlazar = this.linkVia();
+    const vinculo$ = enlazar
+      ? enlazar(fileId, this.ownerId())
+      : this.files.link(fileId, { ownerType: this.ownerType(), ownerId: this.ownerId() });
+
+    vinculo$.subscribe({
         next: () => {
           this.enviando.set(false);
           this.seleccionados.set([]);

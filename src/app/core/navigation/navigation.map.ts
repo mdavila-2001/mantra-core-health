@@ -145,6 +145,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M19 community',
   },
   {
+    // FT-18-R01/R02 (05/09/2026) · la portada de los cuatro directorios.
+    //
+    // El pedido es concreto: «Directorios debe tener una vista de nodos que
+    // muestre cada directorio con el detalle de que se encuentra en cada
+    // directorio». Los cuatro ya existían como hermanos sueltos —el
+    // desplegable «Directorios» de `navigation.subgroups.ts` los agrupa desde
+    // ese archivo—, pero ninguno abría antes en una portada común: quien
+    // quería «buscar algo» tenía que adivinar cuál de los cuatro abrir.
+    //
+    // Esta sección es esa portada, no un quinto directorio: no reemplaza a
+    // ninguno de los cuatro —siguen con su propia ruta, su propio rol y su
+    // propia pantalla— y no inventa descripciones nuevas: cada nodo muestra
+    // el `summary` que la sección correspondiente ya declara más abajo, así
+    // que un texto no puede desincronizarse del otro.
+    //
+    // `roles: [ANY_ROLE]` porque la portada en sí no oculta nada: quien entra
+    // ve los nodos que sus propios roles ya le abren — p. ej. quien ejerce no
+    // ve el nodo de la guía de médicos, que sigue siendo exclusiva del
+    // paciente (corrección #2). El filtro real vive en cada sección, no acá.
+    //
+    // Va **antes** que los cuatro en este registro a propósito: el orden de
+    // dibujo del menú sale de acá (`navigation.subgroups.ts` sólo agrupa), y
+    // la portada tiene que aparecer primero dentro de su propio desplegable.
+    path: 'directories',
+    label: 'Directorios',
+    group: 'General',
+    icon: 'directory',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Un mapa de a quién o a dónde buscar: médicos, laboratorios, clínicas y farmacias.',
+    module: 'M04 directory',
+  },
+  {
     // Carril R2-1 · punto 1 del reclamo. Acá estaba el **muro profesional**, y
     // el cliente pidió sacarlo del menú del paciente: «o cambiarle su enfoque:
     // debe mostrar una especie de guía telefónica de todos los doctores
@@ -197,12 +230,17 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // propio resumen clínico y enlaza a `WhereToBuy`
     // (`/my-account/medical-record/where-to-buy/:id`), que ya es sólo del
     // paciente. Un profesional no tiene "mi receta" que buscar acá.
+    //
+    // Sin `exclusiveRoles`, a diferencia de la Guía de médicos: ahí lo exigió
+    // un pedido explícito del cliente ("no debe aparecer ni ser accesible
+    // para doctor u otros roles"); acá no hay un pedido equivalente, así que
+    // alcanza con `roles` — el comodín de `SUPERADMIN` sigue entrando, como
+    // en el resto del registro.
     path: 'nearby-places',
     label: 'Lugares cercanos',
     group: 'General',
     icon: 'pin',
     roles: ['PATIENT'],
-    exclusiveRoles: true,
     availability: 'disponible',
     summary: 'Farmacias, centros de imagenología y centros médicos cerca tuyo, según tu receta.',
     module: 'M22 pharmacy',
@@ -550,6 +588,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ROLES_DE_QUIEN_ATIENDE,
     availability: 'disponible',
     summary: 'Mirá los servicios de tu práctica y poné el precio de cada uno.',
+    module: 'M17 billing',
+  },
+
+  {
+    // FT-24. La cotización que sigue a «Mis servicios»: ahí se fija el precio
+    // de referencia, acá se arma la oferta concreta para una persona —con su
+    // plan de pagos— antes de la atención.
+    //
+    // **Sí corresponde agregarla al menú del médico** (a diferencia de
+    // «Encuestas» o «Consulta médica», que la nota de más abajo saca por
+    // `fueraDelMenuPara`): cotizar es un paso del flujo de atención que se iba
+    // a repetir —no una tarea que se hace una vez y se olvida—, y a diferencia
+    // de la ficha de un paciente (que cuelga como hija sin entrada propia,
+    // ver `PANTALLAS_HIJAS` en `app.routes.ts`) el listado de cotizaciones sí
+    // es un destino al que se vuelve por su cuenta: revisar lo ya ofrecido a
+    // alguien, no sólo el momento de crearlo. Mismo criterio que le dio
+    // renglón a «Mis servicios» (FT-22): un lugar donde se arma una oferta con
+    // dinero de por medio no puede depender de que alguien recuerde la ruta.
+    //
+    // Los roles son los de quien atiende, igual que «Mis servicios»: cotizar
+    // es tarea de quien ofrece el servicio, no de quien administra el
+    // catálogo fijo.
+    //
+    // La lista cerrada pasa de doce a trece con esta decisión, no por
+    // descuido — ver el comentario de `navigation.service.spec.ts` que fija
+    // la lista completa.
+    path: 'my-quotations',
+    label: 'Cotizaciones',
+    group: 'Atención',
+    icon: 'billing',
+    roles: ROLES_DE_QUIEN_ATIENDE,
+    availability: 'disponible',
+    summary: 'Armá el presupuesto de un servicio con su plan de pagos y compartilo.',
     module: 'M17 billing',
   },
 
@@ -922,6 +993,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
+    module: 'M16 accounting',
+  },
+
+  {
+    // FT-26 (05/09/2026) — activos fijos y pasivos de la práctica, en
+    // auto-servicio del doctor. Va junto a Contabilidad por el mismo motivo
+    // que ese registro: los dos leen y escriben el mismo `practiceId`, y son
+    // la misma persona —quien ejerce— la que entra a los dos.
+    //
+    // Sólo `PRACTITIONER`: a diferencia de Contabilidad, no hay todavía un
+    // motor admin equivalente para dar de alta activos/pasivos (el que existe,
+    // `AccountingAssetController`/`AccountingLiabilityController`, es
+    // `SECURITY_ADMIN` puro y no comparte pantalla con éste — ver el reporte
+    // del carril). Cuando eso cambie, se suma el rol acá.
+    path: 'assets-liabilities',
+    label: 'Activos y pasivos',
+    group: 'Facturación',
+    icon: 'chart',
+    roles: ['PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Tus activos fijos y tus deudas: alta, avance y automatización.',
     module: 'M16 accounting',
   },
 

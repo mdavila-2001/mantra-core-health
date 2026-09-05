@@ -30,6 +30,38 @@
           <app-form-field label="Apellido materno (opcional)">
             <app-input [(value)]="apellidoMaterno" />
           </app-form-field>
+
+          <!-- ALV-003: el contrato ya aceptaba estos dos y el formulario no los
+               ofrecía; la ficha los mostraba sin forma de corregirlos. -->
+          <app-form-field
+            label="Fecha de nacimiento"
+            hint="Se usa para calcular tu edad en la ficha. No se publica."
+          >
+            <app-date-picker [(value)]="fechaNacimiento" data-testid="edicion-nacimiento" />
+          </app-form-field>
+
+          @if (catalogoMunicipiosCaido()) {
+            <p class="edicion__aviso">
+              No pudimos traer el catálogo de municipios.
+              <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                Reintentar
+              </button>
+            </p>
+          } @else if (ramasMunicipios().length > 0) {
+            <!-- Sin @defer a propósito: esta pantalla ya es un chunk perezoso
+                 (`/my-account/edit`), y un bloque diferido obliga a compilar
+                 el componente de forma asíncrona en los specs (ver la nota del
+                 repo sobre @defer en CI). -->
+            <app-location-picker
+              testId="edicion-residencia"
+              [ramas]="ramasMunicipios()"
+              [value]="municipioResidencia()"
+              (valueChange)="municipioResidencia.set($event)"
+              mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
+              municipalityLabel="Localidad de residencia (opcional)"
+              municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+            />
+          }
           <app-form-field
             label="Celular personal"
             hint="El número por el que te contactamos a vos. No se publica en tu ficha."
@@ -177,6 +209,19 @@
             (submitted)="agregarMatricula()"
           />
         </form>
+      </app-card>
+
+      <!-- ─── Lo que ven los demás ────────────────────────────────────────
+           ALV-004: la vitrina pública se configura ACÁ, y sólo acá. Antes era
+           una pantalla aparte (`/my-account/preview`), que el cliente leyó
+           como un segundo perfil; esa ruta quedó de sólo lectura. -->
+      <app-card variant="outlined" padding="lg" class="edicion__bloque" data-testid="edicion-vitrina">
+        <h2 class="edicion__titulo">Lo que ven los demás</h2>
+        <p class="edicion__nota">
+          Tu ficha pública: el enlace, cómo te presentás y tu foto. Se arma desde acá y se ve en
+          «Cómo me ven».
+        </p>
+        <app-public-profile-settings />
       </app-card>
 
       <!-- ─── Dirección ───────────────────────────────────────────────────

@@ -1,0 +1,26 @@
+<app-page-header
+  title="Directorios"
+  subtitle="Elegí a quién o a dónde buscar. Cada directorio se abre completo, agrupado como una guía."
+/>
+
+<div class="directories-overview__mapa">
+  <div class="directories-overview__centro" aria-hidden="true">
+    <app-nav-icon name="directory" />
+  </div>
+
+  <ul class="directories-overview__nodos">
+    @for (nodo of nodos(); track nodo.path) {
+      <li class="directories-overview__item">
+        <a class="directories-overview__nodo" [routerLink]="routeOf(nodo)">
+          <span class="directories-overview__icono" aria-hidden="true">
+            <app-nav-icon [name]="nodo.icon" />
+          </span>
+          <span class="directories-overview__texto">
+            <span class="directories-overview__etiqueta">{{ nodo.label }}</span>
+            <span class="directories-overview__resumen">{{ nodo.summary }}</span>
+          </span>
+        </a>
+      </li>
+    }
+  </ul>
+</div>

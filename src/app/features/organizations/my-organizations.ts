@@ -16,6 +16,7 @@ import type { ViewState } from '../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../shared/a11y/announce-on-appear';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { Avatar } from '../../shared/components/atoms/avatar/avatar';
 import { Select } from '../../shared/components/atoms/select/select';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
@@ -27,6 +28,12 @@ import { errorMessageOf } from '../../shared/forms/form-support';
 interface AssignmentRow extends MyRoleAssignment {
   readonly statusLabel: string;
   readonly isFinal: boolean;
+  /**
+   * El sello de verificado se gana, no se declara: sólo aparece cuando la
+   * propia organización aceptó la vinculación (`ACTIVE`). Pendiente,
+   * suspendida, rechazada o finalizada cuentan como no verificado.
+   */
+  readonly verified: boolean;
 }
 
 /**
@@ -55,7 +62,7 @@ interface AssignmentRow extends MyRoleAssignment {
 @Component({
   selector: 'app-my-organizations',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AnnounceOnAppear, Alert, AppButton, Card, EmptyState, PageHeader, Select],
+  imports: [AnnounceOnAppear, Alert, AppButton, Avatar, Card, EmptyState, PageHeader, Select],
   templateUrl: './my-organizations.html',
   styleUrl: './my-organizations.css',
 })
@@ -79,6 +86,7 @@ export class MyOrganizations {
       isFinal:
         v.status === ROLE_ASSIGNMENT_STATUS.REJECTED ||
         v.status === ROLE_ASSIGNMENT_STATUS.ENDED,
+      verified: v.status === ROLE_ASSIGNMENT_STATUS.ACTIVE,
     })),
   );
 

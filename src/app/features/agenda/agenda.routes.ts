@@ -17,15 +17,6 @@ export const AGENDA_ROUTE = '/schedule';
 export const AGENDA_CREATE_ROUTE = `${AGENDA_ROUTE}/new`;
 
 /**
- * «Mi agenda» (MAC-4): el horario publicado del profesional, en palabras.
- *
- * Cuelga de la sección igual que el alta. Es donde el médico vuelve a leer lo
- * que publicó —posible recién desde que existe el `GET` de plantillas— y desde
- * donde va a colgar el mes (MAC-5) y el día (MAC-6).
- */
-export const AGENDA_MINE_ROUTE = `${AGENDA_ROUTE}/mine`;
-
-/**
  * El alta de cita del profesional (TAREA-14).
  *
  * Dirección propia y no un panel dentro del calendario: el pedido es agendar
