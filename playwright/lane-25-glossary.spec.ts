@@ -17,27 +17,27 @@ import { entrar, estable } from './support/sesion';
  * `navigation.types.ts:353`). No es la sesión real de un médico, pero
  * ejercita el mismo guard y el mismo backend.
  *
-> ## Cuatro casos en `fixme`, y por qué NO se borran
+> ## Los cuatro `fixme` de buscar (`?q=`), reactivados el 2026-09-02
  *
- * Los cuatro que dependen de **buscar** (`?q=`) están en `test.fixme`: la
- * tabla de resultados nunca aparece. **No es de este carril** — se verificó
- * con `git stash`, corriendo este mismo spec contra el árbol de `dev` sin
- * ninguno de los cambios de TAREA-25: falla idéntico. La API responde bien
- * (`GET /terminology/concepts?q=paracetamol` devuelve los 3 conceptos,
- * comprobado con `curl` contra `localhost:3000`), y la pantalla se queda con
- * el spinner «Buscando» y la región de resultados sin tabla. Queda anotado
- * como defecto preexistente en la ficha (TAREA-25 §6) para que alguien lo
- * tome con su propio carril: apagarlos con `fixme` los deja visibles y
- * ejecutables el día que se arregle, que es mejor que borrarlos o que
- * dejarlos en rojo permanente escondiendo regresiones nuevas.
+ * Estaban en `test.fixme` porque la tabla de resultados nunca aparecía: una
+ * búsqueda de texto sin categoría (`includeValueSets=true` sin `valueSetId`)
+ * devolvía el concepto pelado —sin `category`/`tags`/`relationsCount`— y
+ * `glosario.html:136` (`termino.tags.length` sobre `undefined`) reventaba al
+ * pintar la primera fila, dejando el spinner «Buscando» congelado. Corregido
+ * en `ConceptsService.searchConcepts`
+ * (`mantra-core-health-api#297`) + cinturón en el template
+ * (`mantra-core-health#284`): reactivados acá una vez verificado contra la
+ * API de esa rama.
  *
  * ## La aserción más importante del archivo
  *
- * Con la base de este entorno (10 323 conceptos, 0 filas del `code_system`
- * `ndc`), NINGÚN término del glosario tiene ficha de medicamento. La
- * aserción negativa — que la palabra «posología», «dosis» o
- * «contraindicaciones» no aparezca en ninguna ficha — es la red que protege
- * la regla dura del proyecto (`.claude/rules/00-non-negotiables.md` §7/§8):
+ * Desde FND-25-02, los 6 términos de `pharmacology` traen `drugFacts` reales
+ * copiados de un producto del FDA NDC Directory ya importado (135 002 filas,
+ * `code_system=ndc`), así que Paracetamol SÍ muestra ficha de medicamento —lo
+ * que se prueba abajo positivamente. La aserción negativa que sigue
+ * protegiendo la regla dura del proyecto (`.claude/rules/00-non-negotiables.md`
+ * §7/§8) es más angosta y más importante: que la palabra «posología», «dosis»
+ * o «contraindicaciones» no aparezca en ninguna ficha, con datos o sin ellos —
  * un campo ausente es correcto, uno inventado es un daño clínico.
  */
 /**
@@ -73,16 +73,21 @@ test.describe('Carril 25 · glosario', () => {
     const tarjetas = page.locator('.glosario__categoria');
     await expect(tarjetas.first()).toBeVisible({ timeout: 60_000 });
     const cantidad = await tarjetas.count();
-    // Hoy son 11 (AC-25-1): cada categoría con contenido queda alcanzable,
+    // Hoy son 12 (AC-25-1): cada categoría con contenido queda alcanzable,
     // ninguna se esconde por «destacar» las cinco que nombró el pedido.
     expect(cantidad).toBeGreaterThanOrEqual(5);
+
+    // FND-25-01: «OTROS TÉRMINOS» es una de las cinco categorías que nombra
+    // la fuente literal del requisito — no basta con `cantidad >= 5`, tiene
+    // que estar ELLA, con ese nombre, navegable como las demás.
+    await expect(page.getByText('Otros términos', { exact: true })).toBeVisible();
 
     for (const tarjeta of await tarjetas.all()) {
       await expect(tarjeta).toHaveAttribute('href', /\/glossary\?category=/);
     }
   });
 
-  test.fixme('buscar por nombre lleva a la tabla, y ?q= restaura la misma vista', async ({
+  test('buscar por nombre lleva a la tabla, y ?q= restaura la misma vista', async ({
     page,
   }) => {
     await entrar(page, administrador());
@@ -100,8 +105,15 @@ test.describe('Carril 25 · glosario', () => {
     await expect(page.locator('.glosario__grilla-seccion')).toHaveCount(0);
   });
 
-  /** La aserción negativa: la más importante del archivo. */
-  test.fixme('la ficha de un medicamento NO contiene posología, dosis ni contraindicaciones', async ({
+  /**
+   * FND-25-02: desde que los 6 términos de `pharmacology` traen `drugFacts`
+   * reales (FDA NDC), Paracetamol SÍ muestra el bloque «Medicamento» —esta
+   * prueba lo exige positivamente, no sólo tolera que aparezca—, y sigue
+   * exigiendo, con la misma fuerza que antes, que posología/dosis/
+   * contraindicaciones nunca aparezcan: son datos que ninguna fuente
+   * importada respalda todavía (P-25-1).
+   */
+  test('la ficha de Paracetamol muestra principios activos y fabricante reales, nunca posología/dosis/contraindicaciones', async ({
     page,
   }) => {
     await entrar(page, administrador());
@@ -119,13 +131,17 @@ test.describe('Carril 25 · glosario', () => {
     expect(minuscula).not.toContain('dosis');
     expect(minuscula).not.toContain('contraindicaci');
 
-    // No es sólo la aserción negativa: en esta base tampoco hay ficha de
-    // medicamento que mostrar (0 filas de `ndc`), así que el bloque entero
-    // está ausente — es AC-25-6/-8, no una omisión de la prueba.
-    expect(texto).not.toContain('Medicamento');
+    // Positiva: el bloque real, con datos reales del NDC (FND-25-02) — no
+    // basta con que la aserción negativa pase, hace falta que la ficha
+    // efectivamente muestre lo que el spec pide como «lo más importante».
+    expect(texto).toContain('Medicamento');
+    expect(texto).toContain('Principios activos');
+    expect(texto).toContain('ACETAMINOPHEN');
+    expect(texto).toContain('Fabricante');
+    expect(texto).toContain('FDA National Drug Code');
   });
 
-  test.fixme('un término sin traducción lo dice y no aparece traducido a máquina', async ({
+  test('un término sin traducción lo dice y no aparece traducido a máquina', async ({
     page,
   }) => {
     await entrar(page, administrador());
@@ -160,6 +176,12 @@ test.describe('Carril 25 · glosario', () => {
     }
   });
 
+  // Separado de los otros tres `fixme` reactivados: no depende del bug de
+  // búsqueda (corregido), sino de un CSP roto ajeno en este mismo repo
+  // (`src/server/security-headers.ts`) — B-15 en el `REGISTRO-DEFECTOS.md`
+  // del repo `mantra-core-health-api` (índice único del proyecto).
+  // Verificado el 2026-09-02: los otros 5 casos del archivo pasan 5/5; sólo
+  // este falla.
   test.fixme('cero errores de consola y cero respuestas 4xx/5xx inesperadas', async ({ page }) => {
     const problemas: string[] = [];
     page.on('console', (mensaje) => {

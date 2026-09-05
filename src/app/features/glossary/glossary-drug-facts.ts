@@ -46,10 +46,12 @@ function textoDe(propiedades: Readonly<Record<string, unknown>>, codigo: string)
  * necesita preguntar «¿tiene ficha de medicamento?» antes de usarla, sólo
  * comprobar que no sea `null`.
  *
- * Con la base de hoy (0 filas del `code_system` `ndc`, ver
- * {@link GlossaryTermDetail.properties}) esto devuelve `null` para los 64
- * términos curados, y el bloque de medicamento se omite entero en la
- * plantilla — eso ES el criterio de AC-25-6/AC-25-8, no una falla.
+ * Desde FND-25-02 los 6 términos de `pharmacology` traen estos 4 datos
+ * —copiados verbatim de un producto real del FDA NDC Directory, ver
+ * `glossary-terms.catalog.ts` en el backend—, así que esta función devuelve
+ * una ficha real para ellos. Para los demás términos curados sigue
+ * devolviendo `null` y el bloque de medicamento se omite entero en la
+ * plantilla — eso sigue siendo el criterio de AC-25-6/AC-25-8, no una falla.
  *
  * @param termino - La ficha ya leída del glosario.
  * @returns Los datos disponibles, o `null` si no hay ninguno.
