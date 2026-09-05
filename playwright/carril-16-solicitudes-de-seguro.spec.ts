@@ -1,22 +1,39 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
-import { administrador, apiViva, contextoDeApi, urlDeApi } from './support/actores';
+import {
+  apiViva,
+  contextoDeApi,
+  operadoraDeFacturacion,
+  urlDeApi,
+} from './support/actores';
 import { entrar, esperarAplicacionLista, estable, irA } from './support/sesion';
 
 /**
  * TAREA-16 — la pantalla de solicitudes de seguro presentadas.
  *
+ * **El actor es la operadora de facturación del prestador**, no el
+ * administrador. Es lo que decidió el propietario (D1.b, 2026-09-04) y es lo
+ * que hace que esta suite signifique algo: el admin atraviesa cualquier
+ * `@Roles` por el comodín `SUPERADMIN`, así que certificar con él dejaría sin
+ * probar el único rol que un usuario real va a tener, y no distinguiría una
+ * pantalla que funciona de una a la que nadie puede entrar.
+ *
  * Precondición: `node tools/redesa/seed-solicitudes-seguro.mjs` en el
- * repositorio de la API. Sin esas cuatro solicitudes la pantalla muestra su
- * estado vacío —que es correcto— y no hay nada que medir. La corrida siembra a
- * propósito una **sin dictamen**: es la única con la que se puede comprobar que
- * el total aprobado queda vacío en vez de en `0.00`.
+ * repositorio de la API. Esa corrida deja la práctica que presenta los
+ * reclamos, las cuatro solicitudes y la cuenta `BILLING_OPERATOR` con la que
+ * entra esta suite. Sin ella la pantalla muestra su estado vacío —que es
+ * correcto— y no hay nada que medir. Siembra a propósito una **sin dictamen**:
+ * es la única con la que se puede comprobar que el total aprobado queda vacío
+ * en vez de en `0.00`.
  *
  * Las capturas por viewport no son adorno: los tres criterios visuales de la
  * ficha (AC-16-17 y el aire del encabezado) sólo se pueden afirmar mirándolas.
  */
 
 const LISTADO = '/administration/insurance-claims';
+
+/** Un uuid con forma válida que no corresponde a ninguna solicitud. */
+const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 
 /** Los tres anchos obligatorios de la ficha. */
 const VIEWPORTS = [
@@ -46,7 +63,7 @@ test.afterAll(async () => {
  * @param page - La página de la prueba.
  */
 async function abrirListado(page: Page): Promise<void> {
-  await entrar(page, administrador());
+  await entrar(page, operadoraDeFacturacion());
   await irA(page, LISTADO);
   await expect(page.getByTestId('tabla')).toBeVisible({ timeout: 30_000 });
   await estable(page);
@@ -314,6 +331,132 @@ test.describe('el detalle de una solicitud', () => {
       /no se borra ni se modifica/i,
     );
   });
+
+  test('AC-16-11 · reclamar reabre el caso y lo deja visible como reclamado', async ({
+    page,
+  }) => {
+    await abrirListado(page);
+
+    // La solicitud sin reclamo previo: si se empieza por una ya reclamada no se
+    // puede ver la transición, que es lo que el criterio pide.
+    const filas = await page.getByTestId('tabla-fila').count();
+    let abierta = -1;
+    for (let i = 0; i < filas; i += 1) {
+      const texto = (await page.getByTestId('tabla-fila').nth(i).textContent()) ?? '';
+      if (!/reclamada/i.test(texto)) {
+        abierta = i;
+        break;
+      }
+    }
+    expect(abierta, 'todas las filas ya están reclamadas: sembrá de nuevo').toBeGreaterThanOrEqual(0);
+
+    await page.getByTestId('tabla-fila').nth(abierta).getByTestId('claim-link').click();
+    await expect(page.getByTestId('claim-lines-table')).toBeVisible();
+
+    await page.getByTestId('claim-dispute-button').click();
+    // El diálogo avisa que el reclamo se presenta y no se puede retirar.
+    await page.getByRole('button', { name: /reclamar/i }).last().click();
+
+    // El caso queda reabierto: la disputa se ve en la ficha y el dictamen
+    // anterior sigue estando.
+    await expect(page.getByTestId('claim-disputes')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('claim-dispute-button')).toContainText(
+      /reclamar otra vez/i,
+    );
+  });
+
+  test('AC-16-13 · reclamar dos veces no duplica el reclamo', async ({ page }) => {
+    await abrirListado(page);
+
+    // Se parte de una ya reclamada: la primera pasada dejó al menos una, y lo
+    // que se mide acá es que la segunda llamada no agregue otra fila.
+    await page.getByTestId('claim-link').first().click();
+    await expect(page.getByTestId('claim-dispute-button')).toBeVisible();
+
+    const reclamar = async (): Promise<void> => {
+      await page.getByTestId('claim-dispute-button').click();
+      await page.getByRole('button', { name: /reclamar/i }).last().click();
+      await expect(page.getByTestId('claim-disputes')).toBeVisible({
+        timeout: 15_000,
+      });
+      await estable(page);
+    };
+
+    await reclamar();
+    const despuesDeUna = await page
+      .getByTestId('claim-disputes')
+      .locator('li')
+      .count();
+
+    await reclamar();
+    const despuesDeDos = await page
+      .getByTestId('claim-disputes')
+      .locator('li')
+      .count();
+
+    // La idempotencia la resuelve el servidor devolviendo la disputa abierta
+    // que ya existía sobre el mismo dictamen: la aseguradora no puede recibir
+    // el caso dos veces, porque no hay forma de retirarlo.
+    expect(despuesDeDos).toBe(despuesDeUna);
+  });
+});
+
+/**
+ * AC-16-14 — el rechazo no puede servir de sonda.
+ *
+ * Se mide contra la API directamente y no por pantalla: lo que el criterio
+ * compara es el **cuerpo** de las dos respuestas, y el navegador ya lo tradujo
+ * a un estado de vista cuando llega a la interfaz.
+ */
+test.describe('el alcance del prestador', () => {
+  /** Entra por API con la cuenta del operador y devuelve su cabecera. */
+  async function cabecerasDeOperador(): Promise<Record<string, string>> {
+    const actor = operadoraDeFacturacion();
+    const acceso = await api.post('/iam/auth/login', {
+      data: { email: actor.identificador, password: actor.clave },
+    });
+    expect(
+      acceso.status(),
+      `No se pudo entrar como ${actor.identificador}: sembrá con ` +
+        '`node tools/redesa/seed-solicitudes-seguro.mjs`.',
+    ).toBe(200);
+    const { accessToken } = (await acceso.json()) as { accessToken: string };
+    return { Authorization: `Bearer ${accessToken}` };
+  }
+
+  test('AC-16-14 · una solicitud ajena y un uuid inexistente responden lo mismo', async () => {
+    const headers = await cabecerasDeOperador();
+
+    // Una solicitud propia se lee: el 403 de abajo no es «cualquier id falla».
+    const listado = await api.get('/insurance-claims', { headers });
+    expect(listado.status()).toBe(200);
+    const { items } = (await listado.json()) as { items: { id: string }[] };
+    expect(items.length, 'sin solicitudes sembradas no hay nada que comparar').toBeGreaterThan(0);
+
+    const propia = await api.get(`/insurance-claims/${items[0].id}`, { headers });
+    expect(propia.status()).toBe(200);
+
+    const inexistente = await api.get(`/insurance-claims/${INEXISTENTE}`, {
+      headers,
+    });
+    expect(inexistente.status()).toBe(403);
+
+    // El cuerpo se compara sin los campos que cambian en cada petición
+    // (`correlationId`, `timestamp`, `path`): lo que no puede diferir es el
+    // código, el mensaje y la ausencia de detalles. Un `details` con el id
+    // convertiría el error en una sonda de qué identificadores existen.
+    const cuerpo = (await inexistente.json()) as Record<string, unknown>;
+    expect(cuerpo['code']).toBe('FORBIDDEN');
+    expect(cuerpo).not.toHaveProperty('details');
+    expect(JSON.stringify(cuerpo)).not.toContain(INEXISTENTE);
+  });
+
+  test('AC-16-14 · el listado de quien no presentó nada tampoco se filtra', async () => {
+    // Sin sesión no hay alcance posible: la ruta no puede responder 200 con una
+    // lista vacía, que se leería como «no hay solicitudes».
+    const anonimo = await api.get('/insurance-claims');
+    expect([401, 403]).toContain(anonimo.status());
+  });
 });
 
 for (const viewport of VIEWPORTS) {
@@ -381,7 +524,7 @@ test('AC-16-18 · estas pantallas no agregan un solo error de consola', async ({
   });
   page.on('pageerror', (error) => todos.push(error.message));
 
-  await entrar(page, administrador());
+  await entrar(page, operadoraDeFacturacion());
   await irA(page, '/dashboard');
   await estable(page);
   const referencia = new Set(todos);

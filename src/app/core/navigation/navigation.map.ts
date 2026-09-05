@@ -617,19 +617,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
-    // TAREA-16 (M26): las solicitudes presentadas y lo que cada aseguradora
-    // aprobó. Va en el mismo grupo que «Aseguradora» y «Brokers» porque es la
-    // tercera cara del mismo módulo, y con `SECURITY_ADMIN` porque hoy es el
-    // único rol que la plataforma sabe emitir para esto: los `BILLING` y
-    // `FINANCE` que declaran las escrituras del ciclo del reclamo no existen
-    // en el `RoleCode` cerrado de la API.
+    // TAREA-16 (M26): las solicitudes que **esta organización presentó** y lo
+    // que cada aseguradora aprobó. Va en el mismo grupo que «Aseguradora» y
+    // «Brokers» porque es la tercera cara del mismo módulo.
+    //
+    // `BILLING_OPERATOR` es quien factura y cobra del lado del prestador, y es
+    // el rol que decidió el propietario (TAREA-16 · D1.b, 2026-09-04) para ver
+    // el listado y para reclamar; `SECURITY_ADMIN` conserva el acceso
+    // administrativo de siempre y `SUPERADMIN` entra por el comodín del
+    // registro. Los `BILLING`/`FINANCE` que declaran las **escrituras** del
+    // ciclo del reclamo no se ofrecen acá: adjudicar o revertir son actos de
+    // quien paga, y ésta es la pantalla de quien reclama.
     path: 'administration/insurance-claims',
     label: 'Solicitudes de seguro',
     group: 'Administración',
     icon: 'clipboard',
-    roles: ['SECURITY_ADMIN'],
+    roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
     availability: 'disponible',
-    summary: 'Lo que se presentó a cada aseguradora, con lo que aprobó.',
+    summary: 'Lo que presentaste a cada aseguradora, con lo que aprobó.',
     module: 'M26 insurance',
   },
   {
