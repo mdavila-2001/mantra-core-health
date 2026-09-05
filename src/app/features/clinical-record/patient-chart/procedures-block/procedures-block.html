@@ -3,6 +3,7 @@
      sobre una lectura que ocupa la pantalla entera, y esto es un bloque de la
      ficha. Un `403` acá no puede vaciar el expediente, así que cada mitad dice
      lo suyo en su tarjeta y la otra sigue en pie. -->
+@if (modo() !== 'odontologia') {
 <app-card variant="outlined" padding="lg" class="procedimientos">
   <h2 class="procedimientos__titulo">Cirugías</h2>
 
@@ -106,8 +107,10 @@
     }
   }
 </app-card>
+}
 
 <!-- ─── Odontología ─────────────────────────────────────────────────────── -->
+@if (modo() !== 'cirugia') {
 <app-card variant="outlined" padding="lg" class="procedimientos">
   <h2 class="procedimientos__titulo">Odontología</h2>
 
@@ -268,3 +271,4 @@
     }
   </div>
 </app-card>
+}

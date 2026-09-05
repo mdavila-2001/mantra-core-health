@@ -8,17 +8,18 @@
     valores cerrados del propio subsistema y no catálogo de terminología.
     ========================================================================== */
 
-/** A qué recurso pertenece un adjunto. Son los tres que el modelo admite. */
-export const OWNER_TYPES = ['USER', 'PATIENT', 'TENANT'] as const;
+/** A qué recurso pertenece un adjunto. */
+export const OWNER_TYPES = ['USER', 'PATIENT', 'TENANT', 'CONDITION'] as const;
 
 /**
  * El tipo de propietario de un adjunto.
  *
- * **No existe `ENCOUNTER`.** `file_links.owner_type` admite estos tres y nada
- * más, así que los adjuntos de la ficha cuelgan del **paciente**, no del
- * encuentro concreto. Es una restricción del modelo, no una decisión de la
- * pantalla: quien quiera adjuntos por episodio tiene que promoverlo al `.puml`
- * primero.
+ * `file_links.owner_type_concept_id` es un concepto de terminología, no un
+ * enum fijo de la base — cada valor nuevo (como `CONDITION`, ALV-033) se
+ * agrega en código (`CONCEPTS.OWNER_*` del backend) y se siembra solo al
+ * arrancar la API. **No hace falta tocar el `.puml` ni el repo de modelo**
+ * para sumar un tipo de propietario nuevo; sólo para agregar una columna o
+ * tabla, que es un caso distinto.
  */
 export type OwnerType = (typeof OWNER_TYPES)[number];
 

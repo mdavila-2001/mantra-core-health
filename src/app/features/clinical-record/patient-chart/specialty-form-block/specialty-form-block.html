@@ -40,8 +40,18 @@
         [encounterId]="encounterId()"
         (cambio)="cambio.emit()"
       />
-    } @else if (esProcedimientos()) {
-      <app-procedures-block [patientProfileId]="patientProfileId()" [encounterId]="encounterId()" />
+    } @else if (esCirugia()) {
+      <app-procedures-block
+        [patientProfileId]="patientProfileId()"
+        [encounterId]="encounterId()"
+        modo="cirugia"
+      />
+    } @else if (esOdontologia()) {
+      <app-procedures-block
+        [patientProfileId]="patientProfileId()"
+        [encounterId]="encounterId()"
+        modo="odontologia"
+      />
     } @else if (esLaboratorio()) {
       <app-diagnostics-block
         [patientProfileId]="patientProfileId()"
