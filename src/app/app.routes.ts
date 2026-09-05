@@ -94,6 +94,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/directory/practitioners-directory/practitioners-directory').then(
       (m) => m.PractitionersDirectory,
     ),
+  // FT-19 · farmacias, imagenología y centros médicos cerca del paciente.
+  'nearby-places': () =>
+    import('./features/nearby-places/nearby-places').then((m) => m.NearbyPlaces),
   'laboratory-directory': () =>
     import('./features/laboratory-directory/laboratory-directory').then(
       (m) => m.LaboratoryDirectory,

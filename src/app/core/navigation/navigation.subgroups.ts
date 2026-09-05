@@ -99,13 +99,17 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     //
     // `directories` (FT-18) va primero: es la portada del bloque, y el orden
     // de dibujo lo decide `navigation.map.ts`, no este array — acá sólo se
-    // declara que las cinco rutas son del mismo bloque.
+    // declara que las seis rutas son del mismo bloque.
+    //
+    // `nearby-places` (FT-19) entra por lo mismo: es "a dónde ir", sólo que
+    // la lista sale de tu receta y de tu ubicación en vez de un catálogo.
     paths: [
       'directories',
       'directory',
       'laboratory-directory',
       'clinics-directory',
       'pharmacies-directory',
+      'nearby-places',
     ],
   },
 
