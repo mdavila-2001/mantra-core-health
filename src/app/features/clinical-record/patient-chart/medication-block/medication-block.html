@@ -126,7 +126,7 @@
       </div>
     }
 
-    <form class="receta__formulario" (submit)="$event.preventDefault()">
+    <form class="receta__formulario app-form-grid" (submit)="$event.preventDefault()">
       <!-- Los favoritos van ARRIBA porque su lugar en el flujo es antes de
            escribir: elegir uno rellena el resto. Sólo aparece si hay alguno —
            la lista arranca vacía y un desplegable sin opciones es un control
@@ -134,7 +134,7 @@
            profesional (403) `favoritosAplican` queda en falso y no se dibuja
            nada: no es un error, es que no aplica. -->
       @if (hayFavoritos()) {
-        <app-form-field
+        <app-form-field icon="star"
           label="Usar un favorito"
           hint="Rellena el formulario con una de tus indicaciones guardadas. Podés ajustarla antes de prescribir."
         >
@@ -151,7 +151,7 @@
            corta para desplegar entera, y buscar por nombre o por código ATC es
            como se elige un medicamento. Sigue sin haber texto libre: lo que se
            guarda es el `conceptId` de lo elegido. -->
-      <app-form-field
+      <app-form-field icon="pill"
         label="Medicamento"
         hint="Buscá por nombre o código. Es lo único obligatorio."
         [required]="true"
@@ -173,7 +173,7 @@
              se eligen en vez de escribirse, y viajan compuestas en `doseText`
              —el modelo no tiene una columna para cada una—. -->
         @if (concentraciones().length > 0) {
-          <app-form-field label="Concentración" hint="Opcional. Las que declara el catálogo.">
+          <app-form-field icon="pill" label="Concentración" hint="Opcional. Las que declara el catálogo.">
             <app-select
               [options]="concentraciones()"
               [(value)]="concentracion"
@@ -183,7 +183,7 @@
         }
 
         @if (presentaciones().length > 0) {
-          <app-form-field label="Presentación" hint="Opcional. La forma farmacéutica.">
+          <app-form-field icon="package" label="Presentación" hint="Opcional. La forma farmacéutica.">
             <app-select
               [options]="presentaciones()"
               [(value)]="presentacion"
@@ -194,7 +194,7 @@
       } @else {
         <!-- Sin listas en el catálogo, la dosis sigue siendo texto libre del
              contrato: es como funcionaba esta pantalla entera hasta ahora. -->
-        <app-form-field label="Dosis" hint="Opcional. En tus palabras: «500 mg».">
+        <app-form-field icon="pill" label="Dosis" hint="Opcional. En tus palabras: «500 mg».">
           <app-input
             type="text"
             autocomplete="off"
@@ -205,7 +205,7 @@
         </app-form-field>
       }
 
-      <app-form-field label="Frecuencia" hint="Opcional. En tus palabras: «cada 8 horas».">
+      <app-form-field icon="history" label="Frecuencia" hint="Opcional. En tus palabras: «cada 8 horas».">
         <app-input
           type="text"
           autocomplete="off"
@@ -233,7 +233,7 @@
       <!-- Vía y unidad son opcionales en el contrato, así que se ofrecen sin
            condicionar el alta: si su binding no estuviera, el selector queda
            deshabilitado, el valor sigue en `null` y la clave se omite. -->
-      <app-form-field label="Vía de administración" hint="Opcional. Por dónde se administra.">
+      <app-form-field icon="route" label="Vía de administración" hint="Opcional. Por dónde se administra.">
         <app-concept-select
           [target]="targetVia"
           [(value)]="via"
@@ -242,7 +242,7 @@
         />
       </app-form-field>
 
-      <app-form-field label="Cantidad" hint="Opcional. Cuántas unidades se prescriben.">
+      <app-form-field icon="package" label="Cantidad" hint="Opcional. Cuántas unidades se prescriben.">
         <app-input
           type="number"
           autocomplete="off"
@@ -252,7 +252,7 @@
         />
       </app-form-field>
 
-      <app-form-field label="Unidad" hint="Opcional. La unidad de la cantidad de arriba.">
+      <app-form-field icon="package" label="Unidad" hint="Opcional. La unidad de la cantidad de arriba.">
         <app-concept-select
           [target]="targetUnidad"
           [(value)]="unidad"
@@ -261,7 +261,7 @@
         />
       </app-form-field>
 
-      <app-form-field
+      <app-form-field icon="history"
         label="Duración del tratamiento"
         hint="Opcional. Días previstos de toma, o tratamiento continuo. Deriva el fin de vigencia y sugiere la cantidad."
       >
@@ -283,19 +283,19 @@
         </div>
       </app-form-field>
 
-      <div class="receta__fechas-grid">
-        <app-form-field label="Inicio de vigencia" hint="Desde cuándo es válida la receta.">
+      <div class="receta__fechas-grid app-form-grid">
+        <app-form-field icon="calendar" label="Inicio de vigencia" hint="Desde cuándo es válida la receta.">
           <app-date-picker [(value)]="validFrom" />
         </app-form-field>
 
-        <app-form-field label="Fin de vigencia" hint="Hasta cuándo es válida la dispensación.">
+        <app-form-field icon="calendar" label="Fin de vigencia" hint="Hasta cuándo es válida la dispensación.">
           <app-date-picker [(value)]="validTo" />
         </app-form-field>
       </div>
 
       <!-- Separadas de la dosis a propósito: la posología la lee farmacia para
            dispensar, y esto es lo que el paciente se lleva impreso (v4.1.3). -->
-      <app-form-field
+      <app-form-field icon="note"
         label="Indicaciones para el paciente"
         hint="Opcional. Consejos de toma, advertencias o cuidados. Se imprimen en la receta."
       >
@@ -309,7 +309,7 @@
       <!-- Para qué es la receta (v4.1.6). Opcional de verdad: una prescripción
            sintomática o profiláctica no tiene diagnóstico detrás, y por eso la
            opción vacía es la primera y la de por omisión. -->
-      <app-form-field
+      <app-form-field icon="heart"
         label="¿Para qué es esta receta?"
         hint="Opcional. El diagnóstico que la motiva, de los registrados en esta historia."
       >

@@ -3712,3 +3712,53 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 body {
   background-image: url("/alovida/imagenes/fondo-vista.svg");
 }
+
+
+/* ===========================================================================
+    Rejilla de formulario — regla de UI de ALOVIDA
+    ===========================================================================
+
+    Los formularios van a dos columnas. La clase la pone el contenedor que tiene
+    dos campos o más; con uno solo la rejilla no reparte nada y sólo dejaría el
+    campo a media página.
+
+    Lo que NO es un campo ocupa el ancho entero por defecto —botones, avisos,
+    títulos, `fieldset`—, en vez de caer en la segunda columna. Es lo que permite
+    aplicar esto a un formulario existente sin rehacerlo: el reparto vale para
+    los campos y todo lo demás sigue siendo una banda de lado a lado.
+
+    Un campo que necesite el ancho entero lleva `app-form-grid__ancho`.
+
+    ## Por qué `auto-fit` y no `repeat(2, 1fr)`
+
+    Porque el reparto tiene que mirar el ancho del CONTENEDOR, no el de la
+    ventana. Con dos columnas fijas y una media query de viewport, una tarjeta de
+    340 px dentro de una ventana de 1440 parte sus campos en 162 px y el texto se
+    corta: la media query mide la ventana, que es ancha, y no la caja, que no lo
+    es. Así se ponen tantas columnas de 15rem como quepan —dos en cuanto hay
+    sitio, una sola cuando no dan dos legibles—.
+
+    ## Por qué el selector va repetido tres veces
+
+    Angular compila el CSS de componente añadiendo un atributo de encapsulación,
+    así que `.mi-clase { grid-template-columns: 1fr }` acaba siendo
+    `.mi-clase[_ngcontent-x]` —especificidad (0,2,0)— y se inyecta después de
+    esta hoja. Una clase global suelta (0,1,0) perdería, y la regla quedaría
+    escrita y sin efecto, que es peor que no tenerla. Repetida sube a (0,3,0) y
+    gana sin `!important`, que dejaría la regla imposible de excepcionar.
+   ========================================================================= */
+
+.app-form-grid.app-form-grid.app-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  gap: var(--sp-4, 1rem) var(--sp-4, 1rem);
+  align-items: start;
+}
+
+.app-form-grid.app-form-grid.app-form-grid > :not(app-form-field) {
+  grid-column: 1 / -1;
+}
+
+.app-form-grid.app-form-grid.app-form-grid > .app-form-grid__ancho {
+  grid-column: 1 / -1;
+}
