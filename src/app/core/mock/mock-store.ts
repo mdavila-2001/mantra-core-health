@@ -99,15 +99,71 @@ export function paginar<T>(
 /* ---- colecciones en memoria ------------------------------------------------ */
 
 /**
- * Una tabla en memoria con clave `id`. Los cambios duran mientras dure la
- * pestaña: alcanza para probar un flujo de punta a punta sin persistir nada.
+ * Una tabla en memoria con clave `id`.
+ *
+ * ## Por qué algunas sobreviven a un `F5` y otras no
+ *
+ * Por defecto los cambios duran mientras dure la **página**: alcanza para
+ * recorrer un flujo de punta a punta. Pero eso deja fuera la única comprobación
+ * que hace que «guardado» signifique algo —guardar, recargar, seguir ahí—, y
+ * sin ella un formulario que traga el dato y otro que lo guarda se ven igual.
+ *
+ * Pasando una `clave` la tabla se guarda en `sessionStorage` y se recupera al
+ * arrancar, así que la persistencia se puede comprobar de verdad. Es opcional y
+ * no automático a propósito: los catálogos y los fixtures de lectura no ganan
+ * nada con sobrevivir, y guardarlos todos llenaría el almacenamiento de la
+ * pestaña con datos que nadie modifica.
+ *
+ * `sessionStorage` y no `localStorage`: la maqueta se cierra y se vuelve a
+ * abrir limpia, que es lo que espera quien la usa para mostrar el producto.
  */
 export class Coleccion<T extends { readonly id: string }> {
   private readonly filas = new Map<string, T>();
 
-  constructor(iniciales: readonly T[] = []) {
-    for (const fila of iniciales) {
+  /** Dónde se guarda, o `null` si esta tabla no sobrevive a la recarga. */
+  private readonly clave: string | null;
+
+  constructor(iniciales: readonly T[] = [], clave?: string) {
+    this.clave = clave ?? null;
+    const guardadas = this.leerGuardadas();
+    // Lo guardado gana sobre los valores iniciales: si no, recargar volvería a
+    // pisar con el fixture justo lo que la persona acaba de escribir.
+    for (const fila of guardadas ?? iniciales) {
       this.filas.set(fila.id, fila);
+    }
+  }
+
+  /**
+   * Lo que quedó de una visita anterior, o `null` si no hay o no se puede leer.
+   *
+   * Tolerante a propósito: el almacenamiento puede estar bloqueado —modo
+   * privado, política del navegador— o traer basura de una versión anterior de
+   * la maqueta. En cualquiera de los dos casos se arranca de los fixtures, que
+   * es peor que persistir pero mucho mejor que una pantalla rota.
+   */
+  private leerGuardadas(): readonly T[] | null {
+    if (this.clave === null || typeof sessionStorage === 'undefined') {
+      return null;
+    }
+    try {
+      const crudo = sessionStorage.getItem(this.clave);
+      if (crudo === null) return null;
+      const filas: unknown = JSON.parse(crudo);
+      return Array.isArray(filas) ? (filas as T[]) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Vuelca la tabla. Silencioso ante fallo: el simulador nunca rompe la app. */
+  private guardar(): void {
+    if (this.clave === null || typeof sessionStorage === 'undefined') {
+      return;
+    }
+    try {
+      sessionStorage.setItem(this.clave, JSON.stringify(this.todos()));
+    } catch {
+      // Cuota llena o almacenamiento bloqueado: se sigue en memoria.
     }
   }
 
@@ -125,6 +181,7 @@ export class Coleccion<T extends { readonly id: string }> {
 
   agregar(fila: T): T {
     this.filas.set(fila.id, fila);
+    this.guardar();
     return fila;
   }
 
@@ -133,11 +190,16 @@ export class Coleccion<T extends { readonly id: string }> {
     if (actual === undefined) return undefined;
     const siguiente = { ...actual, ...cambios };
     this.filas.set(id, siguiente);
+    this.guardar();
     return siguiente;
   }
 
   borrar(id: string): boolean {
-    return this.filas.delete(id);
+    const borrada = this.filas.delete(id);
+    if (borrada) {
+      this.guardar();
+    }
+    return borrada;
   }
 
   filtrar(predicado: (fila: T) => boolean): T[] {

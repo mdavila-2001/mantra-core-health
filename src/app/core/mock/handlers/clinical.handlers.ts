@@ -85,18 +85,23 @@ const CAMPOS_DE_ASPECTOS = [
   'habitsText',
 ] as const;
 
-const aspectos = new Coleccion<AspectosSimulados>([
-  {
-    id: PACIENTE.id,
-    bloodType: 'O+',
-    allergiesText: 'Penicilina (erupción a los 12 años).',
-    chronicConditionsText: 'Hipotiroidismo desde 2019.',
-    currentMedicationsText: 'Levotiroxina 50 mcg por la mañana.',
-    familyHistoryText: 'Madre con hipertensión. Abuelo materno, diabetes tipo 2.',
-    habitsText: 'No fumo. Camino 30 minutos casi todos los días.',
-    updatedAt: ahora(),
-  },
-]);
+const aspectos = new Coleccion<AspectosSimulados>(
+  [
+    {
+      id: PACIENTE.id,
+      bloodType: 'O+',
+      allergiesText: 'Penicilina (erupción a los 12 años).',
+      chronicConditionsText: 'Hipotiroidismo desde 2019.',
+      currentMedicationsText: 'Levotiroxina 50 mcg por la mañana.',
+      familyHistoryText: 'Madre con hipertensión. Abuelo materno, diabetes tipo 2.',
+      habitsText: 'No fumo. Camino 30 minutos casi todos los días.',
+      updatedAt: ahora(),
+    },
+  ],
+  // Sobrevive a la recarga: es la única forma de comprobar de verdad que
+  // «Guardar» guardó, que es lo que el formulario promete.
+  'alovida.mock.medical-aspects',
+);
 
 export function registrarClinica(router: MockRouter): void {
   /* ---- FT-22 · aspectos médicos ------------------------------------------ */
