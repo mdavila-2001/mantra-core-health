@@ -13,6 +13,8 @@
         [placeholder]="placeholder()"
         [value]="inputText()"
         (focus)="handleFocus()"
+        (click)="handleInputClick($event)"
+        (mouseup)="handleInputMouseUp($event)"
         (input)="handleTextInput($event)"
         (blur)="handleTextBlur()"
         (keydown)="handleInputKeydown($event)"

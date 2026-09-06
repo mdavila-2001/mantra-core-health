@@ -212,6 +212,182 @@ describe('DatePicker', () => {
       expect(fixture.componentInstance.value()).toBeNull();
       expect(inputEl.value).toBe('');
     });
+
+    it('al clickear el input selecciona los dos dígitos del día si se clickea al inicio', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(1, 1);
+      inputEl.dispatchEvent(new MouseEvent('click'));
+
+      expect(inputEl.selectionStart).toBe(0);
+      expect(inputEl.selectionEnd).toBe(2);
+    });
+
+    it('al clickear en la sección de mes selecciona los dos dígitos del mes', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(4, 4);
+      inputEl.dispatchEvent(new MouseEvent('click'));
+
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+    });
+
+    it('al clickear en la sección de año selecciona los cuatro dígitos del año', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(8, 8);
+      inputEl.dispatchEvent(new MouseEvent('click'));
+
+      expect(inputEl.selectionStart).toBe(6);
+      expect(inputEl.selectionEnd).toBe(10);
+    });
+
+    it('Tab navega de Día a Mes y de Mes a Año', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(0, 2);
+
+      // Tab desde Día -> Mes [3, 5]
+      const tab1 = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(tab1);
+      expect(tab1.defaultPrevented).toBe(true);
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+
+      // Tab desde Mes -> Año [6, 10]
+      const tab2 = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(tab2);
+      expect(tab2.defaultPrevented).toBe(true);
+      expect(inputEl.selectionStart).toBe(6);
+      expect(inputEl.selectionEnd).toBe(10);
+
+      // Tab desde Año no previene default para salir al botón del calendario
+      const tab3 = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(tab3);
+      expect(tab3.defaultPrevented).toBe(false);
+    });
+
+    it('Shift+Tab navega de Año a Mes y de Mes a Día', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(6, 10);
+
+      // Shift+Tab desde Año -> Mes [3, 5]
+      const sTab1 = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(sTab1);
+      expect(sTab1.defaultPrevented).toBe(true);
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+
+      // Shift+Tab desde Mes -> Día [0, 2]
+      const sTab2 = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+      inputEl.dispatchEvent(sTab2);
+      expect(sTab2.defaultPrevented).toBe(true);
+      expect(inputEl.selectionStart).toBe(0);
+      expect(inputEl.selectionEnd).toBe(2);
+    });
+
+    it('Flechas arriba y abajo incrementan o decrementan el segmento seleccionado', () => {
+      fixture.componentRef.setInput('value', new Date(2026, 6, 15));
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.setSelectionRange(0, 2);
+
+      // Flecha arriba en Día: 15 -> 16
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+      expect(inputEl.value.startsWith('16/')).toBe(true);
+      expect(inputEl.selectionStart).toBe(0);
+      expect(inputEl.selectionEnd).toBe(2);
+
+      // Flecha abajo en Día: 16 -> 15
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+      expect(inputEl.value.startsWith('15/')).toBe(true);
+    });
+
+    it('al teclear un dígito >= 4 en el día completa con 0X y avanza a mes', () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.dispatchEvent(new Event('focus'));
+      inputEl.setSelectionRange(0, 2);
+
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '5' }));
+      expect(inputEl.value).toBe('05/MM/AAAA');
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+    });
+
+    it('al escribir solo 1 en día, mes y año normaliza a 01 y 0001', () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.dispatchEvent(new Event('focus'));
+      inputEl.setSelectionRange(0, 2);
+
+      // Tipear 1 en Día -> '1D/MM/AAAA'
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+      expect(inputEl.value).toBe('1D/MM/AAAA');
+
+      // Presionar Tab -> Día se normaliza a 01 y salta a Mes
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+      expect(inputEl.value.startsWith('01/')).toBe(true);
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+
+      // Tipear 1 en Mes -> '01/1M/AAAA'
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+      expect(inputEl.value).toBe('01/1M/AAAA');
+
+      // Presionar Tab -> Mes se normaliza a 01 y salta a Año
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+      expect(inputEl.value.startsWith('01/01/')).toBe(true);
+      expect(inputEl.selectionStart).toBe(6);
+      expect(inputEl.selectionEnd).toBe(10);
+
+      // Tipear 1 en Año -> '01/01/1AAA'
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+      expect(inputEl.value).toBe('01/01/1AAA');
+
+      // Al salir / blur, Año se normaliza a 0001 y se obtiene fecha completa 01/01/0001
+      inputEl.dispatchEvent(new Event('blur'));
+      expect(inputEl.value).toBe('01/01/0001');
+
+      const val = fixture.componentInstance.value();
+      expect(val).toBeInstanceOf(Date);
+      expect(val?.getFullYear()).toBe(1);
+      expect(val?.getMonth()).toBe(0);
+      expect(val?.getDate()).toBe(1);
+    });
+
+    it('al tipear 1 en día y presionar / normaliza a 01 y avanza a mes', () => {
+      fixture.componentRef.setInput('value', null);
+      fixture.detectChanges();
+
+      const inputEl = input()!;
+      inputEl.dispatchEvent(new Event('focus'));
+      inputEl.setSelectionRange(0, 2);
+
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+      inputEl.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }));
+
+      expect(inputEl.value.startsWith('01/')).toBe(true);
+      expect(inputEl.selectionStart).toBe(3);
+      expect(inputEl.selectionEnd).toBe(5);
+    });
   });
 
   describe('navegación de años y meses', () => {
