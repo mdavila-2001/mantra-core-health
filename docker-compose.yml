@@ -1,5 +1,105 @@
+# =========================================================================
+# Mantra Core Technologies · ALOVIDA — rama `mockup`
+# -------------------------------------------------------------------------
+# DOS servicios y sólo uno por defecto:
+#
+#   web   Producción. Un contenedor, construido desde `Dockerfile`, que sirve
+#         el artefacto ya compilado. Es lo que se despliega. NO monta fuentes.
+#
+#   dev   Desarrollo con recarga en caliente (`Dockerfile.dev` + `ng serve`).
+#         Vive bajo el perfil `dev`, así que no se crea salvo que se pida:
+#           docker compose --profile dev up dev
+#
+# ─── Por qué `web` es el de producción y no el de desarrollo ──────────────
+#
+# Porque este archivo es el que un desplegador toma por defecto. Coolify busca
+# `/docker-compose.yml` salvo que se le diga otra cosa, y hasta el 06/09/2026
+# lo que encontraba era el servicio de desarrollo: bind mounts de `./src` y
+# `./angular.json` para la recarga en caliente. Coolify reescribe esas rutas
+# relativas contra `/data/coolify/applications/<uuid>/`, donde el repositorio
+# no está, así que Docker creaba `angular.json` como directorio vacío y el
+# arranque moría con:
+#
+#   error mounting ".../angular.json" to rootfs at "/app/angular.json":
+#   not a directory: Are you trying to mount a directory onto a file?
+#
+# Un servicio que monta el árbol de fuentes no es desplegable por definición.
+# Bajo perfil no se crea, y con él no se crean sus montajes.
+#
+# ─── En un VPS a mano ─────────────────────────────────────────────────────
+#
+#   git clone -b mockup https://github.com/mdavila-2001/mantra-core-health.git
+#   cd mantra-core-health
+#   cp deploy/mockup.env.example .env      # y poner el dominio en APP_DOMAIN
+#   docker compose --env-file .env up -d --build
+#
+#   → http://<ip-o-dominio>:8080   (HTTP_PORT lo cambia)
+#
+# ─── En Coolify ───────────────────────────────────────────────────────────
+#
+#   Nuevo recurso → Docker Compose → este repositorio, rama `mockup`
+#   Compose file: se deja el de por defecto (`/docker-compose.yml`)
+#   Dominio: asignarlo al servicio `web`, puerto 4000
+#   Variable: APP_DOMAIN = el dominio asignado, SIN `https://`
+#
+#   APP_DOMAIN no es opcional. `AngularNodeAppEngine` responde 400 a cualquier
+#   `Host` que no conozca, y la lista horneada en el artefacto sólo trae
+#   `localhost`, `127.0.0.1` y `frontend`: sin esa variable el despliegue queda
+#   verde y el dominio devuelve 400.
+#
+# ─── Qué levanta ──────────────────────────────────────────────────────────
+#
+# La aplicación ENTERA sin API, sin base de datos y sin buscador: la rama
+# `mockup` trae un backend simulado dentro del propio frontend
+# (`src/app/core/mock`), así que esto es UN SOLO CONTENEDOR y ninguna petición
+# sale del navegador — las contesta el interceptor.
+#
+#   medica@alovida.mock · paciente@alovida.mock · admin@alovida.mock
+#   superadmin@alovida.mock · visitador@alovida.mock — cualquier contraseña.
+#
+# Los datos viven en memoria del navegador: lo que se crea dura lo que dura la
+# pestaña, y cada visitante ve el mismo punto de partida.
+# =========================================================================
+
 services:
   web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Vacía. Con el backend simulado da igual a dónde apunte —nada llega a
+        # la red—, y vacía deja la CSP en `connect-src 'self'`, que es lo mismo
+        # que en producción.
+        PUBLIC_API_BASE_URL: ''
+    image: mantra-core-health-mockup
+    restart: unless-stopped
+    environment:
+      PORT: '4000'
+      NODE_ENV: production
+      PUBLIC_API_BASE_URL: ''
+      # Ver la nota de APP_DOMAIN arriba: sin esto el dominio devuelve 400.
+      SSR_ALLOWED_HOSTS: ${APP_DOMAIN:-localhost}
+    ports:
+      # Con Traefik/Coolify delante esto no hace falta —enruta al puerto
+      # expuesto por la red de Docker— pero publicado tampoco molesta.
+      - '${HTTP_PORT:-8080}:4000'
+    expose:
+      - '4000'
+    deploy:
+      resources:
+        limits:
+          # El renderizado en servidor mide ~400 MB en marcha; 768 MB deja aire
+          # para picos sin dejar que una fuga se coma el VPS.
+          memory: 768M
+    # El `HEALTHCHECK` viene en la imagen: pide `/auth`, que comprueba que el
+    # proceso responde Y que el artefacto del navegador está donde se lo busca.
+
+  # --- Desarrollo (perfil `dev`) ---------------------------------------
+  dev:
+    # Bajo perfil a propósito: `docker compose up` NO lo crea, y por tanto no
+    # crea sus bind mounts. Para levantarlo:
+    #   docker compose --profile dev up dev
+    profiles: ['dev']
     build:
       context: .
       dockerfile: Dockerfile.dev
