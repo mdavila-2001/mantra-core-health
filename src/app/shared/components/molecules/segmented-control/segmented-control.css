@@ -1,0 +1,121 @@
+/* ============================================================================
+    Control segmentado — FT-04.
+
+    La pieza que hace que se lea como selector y no como dos palabras sueltas es
+    el MARCO: el recuadro dice «acá adentro hay opciones», y la pastilla llena
+    dice cuál está puesta. Sin marco, la opción inactiva no tiene con qué
+    contrastar y vuelve a parecer texto, que es el defecto que originó FT-04.
+    ========================================================================== */
+
+:host {
+  display: inline-block;
+  max-inline-size: 100%;
+}
+
+.segmentado {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-inline-size: 100%;
+  padding: 3px;
+  border: 1px solid var(--border-default, var(--filete));
+  border-radius: var(--r-pill, 999px);
+  background: var(--bg-inset, var(--sup-inset));
+}
+
+.segmentado__opcion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2, 8px);
+  min-block-size: 32px;
+  min-inline-size: 0;
+  padding: 0 var(--sp-4, 16px);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill, 999px);
+  background: transparent;
+  color: var(--text-secondary, var(--tinta-2));
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--mov-rapido, 120ms) var(--curva, ease),
+    color var(--mov-rapido, 120ms) var(--curva, ease),
+    border-color var(--mov-rapido, 120ms) var(--curva, ease);
+}
+
+.segmentado--md .segmentado__opcion {
+  min-block-size: 40px;
+  font-size: 15px;
+}
+
+/* FT-04-R04 · el realce del puntero es un velo, no un color opaco: se compone
+   con el fondo del marco y funciona igual en claro y en oscuro. */
+.segmentado__opcion:hover:not(.is-activa):not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary, var(--tinta));
+}
+
+/* El anillo va POR FUERA del marco para que no lo tape el borde del contenedor:
+   con `outline-offset` negativo se comía dentro de los 3 px de padding y
+   quedaba invisible justo en la opción activa. */
+.segmentado__opcion:focus-visible {
+  outline: 2px solid var(--foco, var(--petroleo));
+  outline-offset: 2px;
+}
+
+/* FT-04-R03 · la opción puesta. Tres señales y no una sola: fondo, tinta y
+   `aria-checked` en el marcado. El color por sí solo no alcanza —ni para quien
+   no lo distingue ni para quien no lo ve. */
+.segmentado__opcion.is-activa {
+  border-color: var(--border-strong, transparent);
+  background: var(--bg-surface, var(--sup-tarjeta));
+  color: var(--text-primary, var(--tinta));
+  font-weight: 600;
+  box-shadow: var(--sombra-1, 0 1px 2px rgb(0 0 0 / 8%));
+}
+
+.segmentado__opcion:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.segmentado__icono {
+  display: inline-flex;
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.segmentado__rotulo {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmentado__opcion {
+    transition: none;
+  }
+}
+
+/* En pantallas angostas el control ocupa la fila entera y reparte el ancho:
+   dos pastillas apretadas en 320 px se cortan antes que compartir. */
+@media (max-width: 30rem) {
+  :host {
+    display: block;
+  }
+
+  .segmentado {
+    display: flex;
+    inline-size: 100%;
+  }
+
+  .segmentado__opcion {
+    flex: 1 1 0;
+    padding: 0 var(--sp-2, 8px);
+  }
+}

@@ -1,0 +1,31 @@
+<div
+  class="segmentado"
+  [class.segmentado--md]="size() === 'md'"
+  role="radiogroup"
+  [attr.aria-label]="ariaLabel()"
+>
+  @for (opcion of options(); track opcion.value; let i = $index) {
+    <button
+      #opcion
+      type="button"
+      class="segmentado__opcion"
+      role="radio"
+      [class.is-activa]="i === activo()"
+      [attr.data-testid]="'segmentado-' + opcion.value"
+      [attr.data-value]="opcion.value"
+      [attr.aria-checked]="i === activo()"
+      [attr.aria-label]="opcion.description ?? null"
+      [attr.tabindex]="i === activo() ? 0 : -1"
+      [disabled]="opcion.disabled === true"
+      (click)="elegir(opcion)"
+      (keydown)="alTeclado($event, i)"
+    >
+      @if (opcion.icon; as icono) {
+        <span class="segmentado__icono" aria-hidden="true">
+          <app-nav-icon [name]="icono" />
+        </span>
+      }
+      <span class="segmentado__rotulo">{{ opcion.label }}</span>
+    </button>
+  }
+</div>
