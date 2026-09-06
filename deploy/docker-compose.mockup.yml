@@ -1,0 +1,80 @@
+# =========================================================================
+# Mantra Core Technologies · ALOVIDA — rama `mockup` en un VPS
+# -------------------------------------------------------------------------
+# Levanta la aplicación ENTERA sin API, sin base de datos y sin buscador: la
+# rama `mockup` trae un backend simulado dentro del propio frontend
+# (`src/app/core/mock`), así que este stack es UN SOLO CONTENEDOR.
+#
+# No hay nginx ni red `alovida`: los dos existen en `docker-compose.coolify.yml`
+# para enrutar los prefijos de la API hacia el stack de `mantra-core-health-api`,
+# y acá ninguna petición sale del navegador — las contesta el interceptor.
+#
+# ─── En un VPS a mano ─────────────────────────────────────────────────────
+#
+#   git clone -b mockup https://github.com/mdavila-2001/mantra-core-health.git
+#   cd mantra-core-health
+#   cp deploy/mockup.env.example .env      # y poner el dominio en APP_DOMAIN
+#   docker compose --env-file .env -f deploy/docker-compose.mockup.yml up -d --build
+#
+#   → http://<ip-o-dominio>:8080   (HTTP_PORT lo cambia)
+#
+# ─── En Coolify ───────────────────────────────────────────────────────────
+#
+#   Nuevo recurso → Docker Compose → este repositorio, rama `mockup`
+#   Compose file: deploy/docker-compose.mockup.yml
+#   Dominio: asignarlo al servicio `web`, puerto 4000
+#   Variable: APP_DOMAIN = el dominio asignado (sin https://)
+#   Y borrar o dejar en blanco HTTP_PORT: el 8080 publicado no molesta a
+#   Traefik, pero tampoco hace falta.
+#
+# ─── Cuentas ──────────────────────────────────────────────────────────────
+#
+#   medica@alovida.mock · paciente@alovida.mock · admin@alovida.mock
+#   superadmin@alovida.mock · visitador@alovida.mock — cualquier contraseña.
+#   El cartel flotante de la esquina inferior también las lista.
+#
+# Los datos viven en memoria del navegador: lo que se crea dura lo que dura la
+# pestaña, y cada visitante ve el mismo punto de partida. Es lo que hace que
+# nunca haya nada que limpiar ni que migrar.
+# =========================================================================
+
+services:
+  web:
+    build:
+      # El contexto es la RAÍZ del repositorio, no `deploy/`: el Dockerfile
+      # copia `package.json`, `src/` y el resto desde ahí.
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        # Vacía. Con el backend simulado da igual a dónde apunte —nada llega
+        # a la red—, y vacía deja la CSP en `connect-src 'self'`, que es lo
+        # mismo que en producción.
+        PUBLIC_API_BASE_URL: ''
+    image: mantra-core-health-mockup
+    container_name: mantra-core-health-mockup
+    restart: unless-stopped
+    environment:
+      PORT: '4000'
+      NODE_ENV: production
+      PUBLIC_API_BASE_URL: ''
+      # El dominio público. `AngularNodeAppEngine` responde 400 a cualquier
+      # `Host` que no conozca, y la lista horneada en el artefacto solo trae
+      # `localhost`, `127.0.0.1` y `frontend`. Varios dominios van separados
+      # por coma; `*` se rechaza a propósito. Ver `mockup.env.example`.
+      SSR_ALLOWED_HOSTS: ${APP_DOMAIN:-localhost}
+    ports:
+      # Publicado directo: no hay proxy delante. Con Traefik/Coolify delante
+      # se puede quitar esta sección y usar el puerto expuesto (4000).
+      - '${HTTP_PORT:-8080}:4000'
+    expose:
+      - '4000'
+    deploy:
+      resources:
+        limits:
+          # El renderizado en servidor de esta aplicación mide ~400 MB en
+          # marcha; 768 MB deja aire para picos sin dejar que una fuga se
+          # coma el VPS.
+          memory: 768M
+    # El `HEALTHCHECK` viene en la imagen: pide `/auth`, que comprueba que el
+    # proceso responde Y que el artefacto del navegador está donde el servidor
+    # lo busca.

@@ -6,11 +6,10 @@ import {
   type HttpInterceptorFn,
   type HttpRequest,
 } from '@angular/common/http';
-import { Observable, of, throwError, timer } from 'rxjs';
+import { from, Observable, of, throwError, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
-import { crearRouterSimulado } from './handlers';
 import { isMockReply, type MockMethod, type MockReply, type MockRequest, type MockRouter } from './mock-router';
 import { usuarioDeAccessToken } from './mock-session';
 
@@ -27,7 +26,18 @@ import { usuarioDeAccessToken } from './mock-session';
     se vea qué falta cubrir.
     ========================================================================== */
 
-let router: MockRouter | null = null;
+/**
+ * Los manejadores y sus fixtures pesan cerca de medio megabyte, así que se
+ * cargan en un trozo aparte la primera vez que hace falta y no en el paquete
+ * inicial: la aplicación arranca igual de rápido que contra la API real y el
+ * presupuesto de tamaño del build sigue cumpliéndose.
+ */
+let router: Promise<MockRouter> | null = null;
+
+function routerSimulado(): Promise<MockRouter> {
+  router ??= import('./handlers').then((m) => m.crearRouterSimulado());
+  return router;
+}
 
 export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
   if (!environment.mockBackend) {
@@ -39,8 +49,10 @@ export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  router ??= crearRouterSimulado();
+  return from(routerSimulado()).pipe(mergeMap((tabla) => atender(tabla, request, path)));
+};
 
+function atender(router: MockRouter, request: HttpRequest<unknown>, path: string): Observable<HttpEvent<unknown>> {
   const method = request.method.toUpperCase() as MockMethod;
   const coincidencia = router.match(method, path);
   const query = new URLSearchParams(request.params.toString());
@@ -69,7 +81,7 @@ export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
   }
 
   return timer(latencia(path)).pipe(mergeMap(() => emitir(request, respuesta)));
-};
+}
 
 function emitir(request: HttpRequest<unknown>, respuesta: MockReply): Observable<HttpEvent<unknown>> {
   const headers = new HttpHeaders({ 'x-mock-backend': '1', ...(respuesta.headers ?? {}) });

@@ -63,3 +63,21 @@ yarn start &
 E2E_BASE_URL=http://localhost:4200 npx playwright test playwright/mockup-barrido.spec.ts
 # → artifacts/playwright/mockup/MOCKUP_MATRIX.md
 ```
+
+## En un VPS (Docker)
+
+Un solo contenedor: la imagen de producción (`Dockerfile`, SSR con Express)
+con el backend simulado adentro. Sin API, sin base, sin nginx.
+
+```bash
+git clone -b mockup https://github.com/mdavila-2001/mantra-core-health.git
+cd mantra-core-health
+cp deploy/mockup.env.example .env        # APP_DOMAIN = tu dominio o IP
+docker compose --env-file .env -f deploy/docker-compose.mockup.yml up -d --build
+# → http://<dominio>:8080
+```
+
+En Coolify: recurso Docker Compose sobre la rama `mockup`, archivo
+`deploy/docker-compose.mockup.yml`, dominio al servicio `web` (puerto 4000) y
+la variable `APP_DOMAIN` con ese dominio. Los detalles están en la cabecera
+del propio compose.
