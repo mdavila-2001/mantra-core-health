@@ -31,6 +31,13 @@ function encabezados(raiz: HTMLElement | null | undefined): readonly string[] {
   );
 }
 
+/** Los rótulos de las pestañas de la historia (FT-20). */
+function pestanas(raiz: HTMLElement | null | undefined): readonly string[] {
+  return [...(raiz?.querySelectorAll('[role="tab"]') ?? [])].map((tab) =>
+    (tab.textContent ?? '').replace(/\s+/g, ' ').trim(),
+  );
+}
+
 /** base64url **sobre UTF-8**, como el token real. */
 function jwt(payload: Record<string, unknown>): string {
   const b64 = (o: unknown) => {
@@ -180,6 +187,19 @@ describe('MedicalRecord', () => {
     harness.detectChanges();
   }
 
+  /**
+   * Abre una de las pestañas de la historia (FT-20).
+   *
+   * `await` de la navegación y no sólo `detectChanges`: la pestaña abierta vive
+   * en la URL, así que el cambio pasa por el router y no está aplicado cuando
+   * el clic vuelve.
+   */
+  async function abrirPestana(indice: number): Promise<void> {
+    harness.routeNativeElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[indice].click();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+  }
+
   /** Resuelve la lectura de formularios propios: listado y detalle de cada uno. */
   function responderFormularios(listado: object = FORMULARIOS): void {
     http.expectOne((r) => r.url === '/forms/me/instances').flush(listado);
@@ -232,6 +252,10 @@ describe('MedicalRecord', () => {
   it('muestra la receta traducida y su indicación', async () => {
     await montar();
     responder();
+    // Desde FT-20 las recetas viven en su pestaña: sólo el panel abierto se
+    // dibuja, que es lo que hace que una historia larga no cargue las cuatro
+    // listas para mostrar una.
+    await abrirPestana(1);
 
     const texto = harness.routeNativeElement?.textContent ?? '';
     expect(texto).toContain('Amoxicilina');
@@ -244,6 +268,8 @@ describe('MedicalRecord', () => {
 
     const raiz = harness.routeNativeElement;
     expect(raiz?.querySelector('[data-testid="historia-descargar-atencion"]')).not.toBeNull();
+
+    await abrirPestana(1);
     expect(raiz?.querySelector('[data-testid="historia-descargar-receta"]')).not.toBeNull();
   });
 
@@ -347,6 +373,77 @@ describe('MedicalRecord', () => {
     expect(harness.routeNativeElement?.textContent).not.toContain('No pudimos armar');
   });
 
+  /* ---- FT-20 · la historia por pestañas ----------------------------------- */
+
+  /** FT-20-R01/R02/R03 · cuatro pestañas, con la primera abierta. */
+  it('organiza la historia en pestañas clickeables con estado activo', async () => {
+    await montar();
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    const tabs = [...(raiz?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
+    expect(tabs.length).toBe(4);
+    expect(pestanas(raiz).map((t) => t.split(' (')[0])).toEqual([
+      'Atenciones',
+      'Recetas',
+      'Alergias',
+      'Resultados',
+    ]);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    expect(tabs[1].getAttribute('aria-selected')).toBe('false');
+  });
+
+  /** FT-20-R04 · cada pestaña muestra lo suyo y sólo lo suyo. */
+  it('cambiar de pestaña cambia el contenido', async () => {
+    await montar();
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    expect(raiz?.querySelector('[data-testid="historia-atenciones"]')).not.toBeNull();
+    expect(raiz?.querySelector('[data-testid="historia-recetas"]')).toBeNull();
+
+    await abrirPestana(1);
+
+    expect(raiz?.querySelector('[data-testid="historia-recetas"]')).not.toBeNull();
+    expect(raiz?.querySelector('[data-testid="historia-atenciones"]')).toBeNull();
+  });
+
+  /**
+   * FT-20-R05 · el enlace apunta a la sección que se estaba leyendo. Es lo que
+   * permite mandar «mirá mis resultados» como enlace y no como instrucción.
+   */
+  it('la pestaña abierta se puede enlazar', async () => {
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'], pid: 'pp-1' }),
+      refreshToken: 'r-1',
+    });
+    harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/my-account/medical-record?seccion=recetas', MedicalRecord);
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    expect(
+      raiz?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[1].getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(raiz?.querySelector('[data-testid="historia-recetas"]')).not.toBeNull();
+  });
+
+  /**
+   * FT-20-R06/R07 · «Descargar todo» no vive dentro de ninguna pestaña: se
+   * alcanza desde cualquiera de las cuatro.
+   */
+  it('la descarga completa se ve desde cualquier pestaña', async () => {
+    await montar();
+    responder();
+
+    const raiz = harness.routeNativeElement;
+    expect(raiz?.querySelector('[data-testid="historia-descargar-todo"]')).not.toBeNull();
+
+    await abrirPestana(3);
+
+    expect(raiz?.querySelector('[data-testid="historia-descargar-todo"]')).not.toBeNull();
+  });
+
   /* ---- las dos listas que dejaron de mostrarse (F-42) --------------------- */
 
   it('con diagnósticos y formularios cargados, ninguna de las dos listas se dibuja', async () => {
@@ -356,7 +453,9 @@ describe('MedicalRecord', () => {
     responder();
 
     const raiz = harness.routeNativeElement;
-    const titulos = encabezados(raiz);
+    // Desde FT-20 las secciones son pestañas: el nombre de cada una vive en su
+    // pestaña, y sólo el panel abierto tiene su encabezado en el DOM.
+    const titulos = [...encabezados(raiz), ...pestanas(raiz)];
     // Lo que el paciente viene a buscar sigue en pie…
     expect(titulos.some((titulo) => titulo.startsWith('Atenciones'))).toBe(true);
     expect(titulos.some((titulo) => titulo.startsWith('Recetas'))).toBe(true);
