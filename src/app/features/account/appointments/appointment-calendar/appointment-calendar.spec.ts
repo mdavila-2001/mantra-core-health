@@ -59,14 +59,48 @@ describe('AppointmentCalendar', () => {
     expect(encabezados[6]).toBe('Dom');
   });
 
-  it('pone el turno en su día, con hora y estado en palabras', () => {
+  /**
+   * FT-07-R03 · la tarjeta del día muestra el **resumen**: la hora y con quién.
+   * El estado bajó al detalle, que es lo que hace que la tarjeta tenga un alto
+   * previsible sin importar cuánto texto traiga la cita.
+   */
+  it('pone el turno en su día, con hora y con quién', () => {
     const { fixture } = montar([turno()]);
 
     const [evento] = eventos(fixture);
     expect(evento.textContent).toContain('10:30');
     expect(evento.textContent).toContain('Dra. Paz');
-    // El estado también en texto: el color del filo no se lee en voz alta.
-    expect(evento.textContent).toContain('Confirmado');
+  });
+
+  /**
+   * FT-07-R04 · el detalle acompaña a cada tarjeta y trae lo que no entra en
+   * ella. El estado también en texto: el color del filo no se lee en voz alta.
+   */
+  it('cada turno lleva su detalle con el estado y las líneas extra', () => {
+    const { fixture } = montar([
+      turno({ detalles: ['Consultorio: Sala 2', 'Motivo: control anual'] }),
+    ]);
+
+    const detalle = fixture.nativeElement.querySelector('.calendario__detalle') as HTMLElement;
+    expect(detalle).not.toBeNull();
+    expect(detalle.getAttribute('role')).toBe('tooltip');
+    expect(detalle.textContent).toContain('Confirmado');
+    expect(detalle.textContent).toContain('Consultorio: Sala 2');
+    expect(detalle.textContent).toContain('Motivo: control anual');
+  });
+
+  /**
+   * FT-07-R07 · el detalle se anuncia como descripción del botón, así que quien
+   * navega con teclado o con lector de pantalla lo recibe sin apuntar con el
+   * puntero — que era justo lo que el `title` nativo no permitía.
+   */
+  it('el botón del turno apunta a su detalle con aria-describedby', () => {
+    const { fixture } = montar([turno({ id: 'cita-1' })]);
+
+    const boton = fixture.nativeElement.querySelector('.calendario__turno') as HTMLElement;
+    const detalle = fixture.nativeElement.querySelector('.calendario__detalle') as HTMLElement;
+    expect(boton.getAttribute('aria-describedby')).toBe(detalle.id);
+    expect(detalle.id).toBe('detalle-cita-1');
   });
 
   it('elegir un turno emite su identificador y no opera nada', () => {
@@ -226,15 +260,21 @@ describe('AppointmentCalendar', () => {
     expect(cajas[0].querySelectorAll('.calendario__turno').length).toBe(2);
   });
 
-  /** El texto largo se trunca en pantalla, pero sigue disponible al apuntarlo. */
-  it('un turno con nombre largo ofrece su texto completo en el título', () => {
+  /**
+   * El texto largo se trunca en la tarjeta —si no, empujaría la columna del día
+   * siguiente— pero sigue entero en el detalle.
+   *
+   * FT-07 cambió dónde vive: era el `[title]` nativo del botón, que no se puede
+   * leer con teclado, tarda un segundo largo y no admite más de una línea.
+   */
+  it('un turno con nombre largo conserva su texto completo en el detalle', () => {
     const { fixture } = montar([
       turno({ titulo: 'Dra. María Fernanda Villarroel Antezana', estado: 'Confirmado' }),
     ]);
 
-    const boton = fixture.nativeElement.querySelector('.calendario__turno');
-    expect(boton.getAttribute('title')).toContain('Dra. María Fernanda Villarroel Antezana');
-    expect(boton.getAttribute('title')).toContain('Confirmado');
+    const detalle = fixture.nativeElement.querySelector('.calendario__detalle') as HTMLElement;
+    expect(detalle.textContent).toContain('Dra. María Fernanda Villarroel Antezana');
+    expect(detalle.textContent).toContain('Confirmado');
   });
 
   /**

@@ -1,6 +1,7 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -23,6 +24,8 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -43,6 +46,20 @@ import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
 
 /** Tope por bloque. El backend admite hasta 200; nadie lee doscientas filas. */
 const TOPE = 50;
+
+/* ---- FT-20 · las pestañas de la historia --------------------------------- */
+
+/** El parámetro que dice qué pestaña se está mirando. */
+const PARAM_DE_SECCION = 'seccion';
+
+/**
+ * Las pestañas, en el orden en que se dibujan.
+ *
+ * El nombre —y no el índice— es lo que viaja en la URL: si mañana se agrega una
+ * pestaña en el medio, `?seccion=resultados` sigue apuntando a los resultados y
+ * `?seccion=3` habría pasado a apuntar a otra cosa.
+ */
+const SECCIONES = ['atenciones', 'recetas', 'alergias', 'resultados'] as const;
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
 const SIN_DATO = 'Sin registrar';
@@ -125,7 +142,19 @@ interface FormularioVisible {
  */
 @Component({
   selector: 'app-medical-record',
-  imports: [Alert, AppButton, AppButtonLink, Badge, DatePipe, PageHeader, RouterLink, ViewStateHost],
+  imports: [
+    Alert,
+    AppButton,
+    AppButtonLink,
+    Badge,
+    DatePipe,
+    NgTemplateOutlet,
+    PageHeader,
+    RouterLink,
+    Tab,
+    Tabs,
+    ViewStateHost,
+  ],
   templateUrl: './medical-record.html',
   styleUrl: './medical-record.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -137,6 +166,8 @@ export class MedicalRecord {
   private readonly forms = inject(FormsClient);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   /** Quién es el titular. Sin esto no hay historia propia que pedir. */
   private readonly perfil = this.auth.patientProfileId();
@@ -152,6 +183,39 @@ export class MedicalRecord {
 
   /** La salida cuando la cuenta no es de un paciente. */
   protected readonly rutaDeTurnos = MIS_TURNOS_ROUTE;
+
+  /* ---- FT-20 · qué pestaña se está mirando -------------------------------- */
+
+  private readonly params = toSignal(this.route.queryParamMap, { initialValue: null });
+
+  /**
+   * La pestaña abierta, como índice.
+   *
+   * Vive en la URL y no en un signal suelto (FT-20-R05): así el enlace se
+   * comparte apuntando a la sección que se estaba leyendo —«mirá mis
+   * resultados» es un enlace, no una instrucción— y «atrás» deshace el cambio
+   * de pestaña. Es el mismo criterio que ya usan la vista y los filtros de
+   * Mis citas.
+   *
+   * Un nombre y no un número en el parámetro: `?seccion=recetas` sobrevive a que
+   * mañana se agregue una pestaña en el medio, `?seccion=1` no.
+   */
+  protected readonly seccion = computed(() => {
+    const nombre = this.params()?.get(PARAM_DE_SECCION) ?? '';
+    const indice = (SECCIONES as readonly string[]).indexOf(nombre);
+    return indice < 0 ? 0 : indice;
+  });
+
+  protected elegirSeccion(indice: number): void {
+    const nombre = SECCIONES[indice] ?? SECCIONES[0];
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      // La primera no ensucia el enlace: es la que se ve al entrar sin nada.
+      queryParams: { [PARAM_DE_SECCION]: indice === 0 ? null : nombre },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
 
   protected readonly historia = signal<ViewState<ClinicalSummary>>(loading());
 

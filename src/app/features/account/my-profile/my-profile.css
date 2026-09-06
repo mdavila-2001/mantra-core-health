@@ -242,3 +242,23 @@
   color: var(--brand-primary);
   text-decoration: underline;
 }
+
+/* ─── FT-11 · la cabecera del bloque de datos ───────────────────────────────
+   El título y «Editar» en la misma línea: la acción pertenece a este bloque y
+   no a la página, y ponerla al pie de la lista —donde estaba el enlace— obliga
+   a recorrer doce renglones para encontrarla. */
+.mi-perfil__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+/* El título ya no lleva su propio margen inferior cuando va en la cabecera:
+   lo pone el contenedor, y sumarlos separaba el título del contenido más que
+   del botón que tiene al lado. */
+.mi-perfil__cabecera .mi-perfil__titulo {
+  margin-block-end: 0;
+}

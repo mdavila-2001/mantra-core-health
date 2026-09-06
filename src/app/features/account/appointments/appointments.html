@@ -20,37 +20,100 @@
 
       <!-- Lista y calendario son la MISMA colección vista de dos formas
            (corrección #10). La elegida vive en la URL, así que el enlace se
-           comparte con la vista puesta y «atrás» la deshace. -->
-      <div class="turnos__vistas" role="group" aria-label="Cómo ver tus citas">
-        <button
-          app-button
-          size="sm"
-          data-testid="turnos-vista-lista"
-          [variant]="enCalendario() ? 'ghost' : 'primary'"
-          [attr.aria-pressed]="!enCalendario()"
-          (clicked)="elegirVista('lista')"
-        >
-          Lista
-        </button>
-        <button
-          app-button
-          size="sm"
-          data-testid="turnos-vista-calendario"
-          [variant]="enCalendario() ? 'primary' : 'ghost'"
-          [attr.aria-pressed]="enCalendario()"
-          (clicked)="elegirVista('calendario')"
-        >
-          Calendario
-        </button>
-      </div>
+           comparte con la vista puesta y «atrás» la deshace.
+
+           FT-04 · el control es uno solo del sistema de diseño y no dos botones
+           sueltos: con el inactivo en `ghost` la otra vista no se veía como
+           botón y no se descubría que existiera. -->
+      <app-segmented-control
+        class="turnos__vistas"
+        data-testid="turnos-vistas"
+        [options]="vistasDisponibles"
+        [value]="vista()"
+        ariaLabel="Cómo ver tus citas"
+        (valueChange)="elegirVista($event)"
+      />
     </div>
+
+    <!-- ─── FT-05 · Buscar y filtrar tus citas ────────────────────────────
+         Va debajo de la cabecera y encima de las dos vistas porque acota a las
+         dos por igual: es la misma colección, y un filtro que sólo valiera en
+         una haría que cambiar de vista pareciera perder citas. -->
+    @if (hayTurnosParaFiltrar()) {
+      <div class="turnos__filtros" data-testid="turnos-filtros">
+        <app-search-field
+          class="turnos__buscador"
+          data-testid="turnos-buscar"
+          label="Buscar en tus citas"
+          placeholder="Buscá por doctor o consultorio"
+          [value]="busqueda()"
+          (searched)="cambiarBusqueda($event)"
+        />
+
+        <app-form-field label="Estado" class="turnos__filtro-campo">
+          <app-select
+            data-testid="turnos-filtro-estado"
+            [options]="opcionesDeEstado()"
+            [value]="filtroDeEstado()"
+            (valueChange)="cambiarEstado($event)"
+          />
+        </app-form-field>
+
+        <app-form-field label="Desde" class="turnos__filtro-campo">
+          <app-date-picker
+            data-testid="turnos-filtro-desde"
+            [value]="filtroDesde()"
+            (valueChange)="cambiarDesde($event)"
+          />
+        </app-form-field>
+
+        <app-form-field label="Hasta" class="turnos__filtro-campo">
+          <app-date-picker
+            data-testid="turnos-filtro-hasta"
+            [value]="filtroHasta()"
+            (valueChange)="cambiarHasta($event)"
+          />
+        </app-form-field>
+
+        <!-- FT-05-R06 · sólo aparece cuando hay algo que limpiar: un botón que
+             no hace nada enseña a ignorarlo. -->
+        @if (hayFiltros()) {
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            class="turnos__limpiar"
+            data-testid="turnos-limpiar-filtros"
+            (clicked)="limpiarFiltros()"
+          >
+            Limpiar filtros
+          </button>
+        }
+      </div>
+    }
 
     @switch (turnos().status) {
       @case ('loading') {
         <p class="turnos__estado" role="status">Buscando tus citas…</p>
       }
       @case ('ready') {
-        @if (enCalendario()) {
+        <!-- FT-05-R07 · el vacío de un filtro no es el vacío de «no tenés
+             citas»: uno se resuelve pidiendo una cita y el otro borrando un
+             filtro. Decir el equivocado manda a la persona al lugar que no es. -->
+        @if (sinResultados()) {
+          <app-alert tone="info" title="Ninguna cita coincide" data-testid="turnos-sin-resultados">
+            Probá con otro texto o quitá alguno de los filtros.
+          </app-alert>
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            data-testid="turnos-limpiar-vacio"
+            (clicked)="limpiarFiltros()"
+          >
+            Limpiar filtros
+          </button>
+        } @else if (enCalendario()) {
           <app-appointment-calendar
             [turnos]="turnosDeCalendario()"
             [seleccionado]="seleccionado()"
