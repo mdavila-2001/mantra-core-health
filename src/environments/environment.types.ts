@@ -163,6 +163,13 @@ export interface Environment {
    * exactamente la pantalla que finge que algo real ocurrió.
    */
   readonly campaignsDemo: boolean;
+
+  /**
+   * Rama `mockup`: la aplicación no habla con ninguna API. Un interceptor
+   * responde cada petición desde datos de prueba en memoria, con todas las
+   * pantallas pobladas. Ver `src/app/core/mock/`.
+   */
+  readonly mockBackend: boolean;
 }
 
 /**
@@ -180,4 +187,5 @@ export interface EnvironmentOverrides {
   readonly paymentDemo?: boolean;
   readonly loyaltyDemo?: boolean;
   readonly campaignsDemo?: boolean;
+  readonly mockBackend?: boolean;
 }

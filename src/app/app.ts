@@ -5,10 +5,11 @@ import { filter } from 'rxjs';
 
 import { AlovidaRuntimeService } from '@core/alovida/alovida-runtime.service';
 import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
+import { MockBanner } from './core/mock/mock-banner';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastContainer],
+  imports: [RouterOutlet, ToastContainer, MockBanner],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })

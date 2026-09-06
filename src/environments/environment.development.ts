@@ -51,6 +51,13 @@ export const environment: Environment = {
   campaignsDemo: envFromProcess.campaignsDemo ?? true,
 
   /**
+   * Siempre encendido en la rama `mockup`: es lo que la define. No lee el
+   * entorno del proceso a propósito, para que no haya forma de apuntar esta
+   * rama a una API real por accidente.
+   */
+  mockBackend: true,
+
+  /**
    * También apagada por defecto en desarrollo, y por un motivo práctico: sin un
    * Collector escuchando, cada lote de spans sería una petición fallida cada
    * cinco segundos en la consola de quien esté trabajando en otra cosa.

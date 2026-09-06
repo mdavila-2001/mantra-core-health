@@ -22,6 +22,7 @@ import { IdleLogout } from './core/auth/idle-logout';
 import { AppErrorHandler } from './core/errors/app-error-handler';
 import { tracingInterceptor } from './core/observability/http/tracing.interceptor';
 import { provideObservability } from './core/observability/observability.providers';
+import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
 
 /**
  * Datos de formato del idioma de la aplicación.
@@ -82,7 +83,9 @@ export const appConfig: ApplicationConfig = {
     // *dentro* del span de la petición, que es donde hay que buscarlo.
     provideHttpClient(
       withFetch(),
-      withInterceptors([tracingInterceptor, timeoutInterceptor, authInterceptor]),
+      // El simulado va último: la petición ya lleva trazas, tiempo de espera y
+      // credenciales cuando llega a él, igual que si fuera la red.
+      withInterceptors([tracingInterceptor, timeoutInterceptor, authInterceptor, mockBackendInterceptor]),
     ),
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
     // arranque y, con la telemetría apagada, no engancha nada.
