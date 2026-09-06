@@ -73,11 +73,15 @@ con el backend simulado adentro. Sin API, sin base, sin nginx.
 git clone -b mockup https://github.com/mdavila-2001/mantra-core-health.git
 cd mantra-core-health
 cp deploy/mockup.env.example .env        # APP_DOMAIN = tu dominio o IP
-docker compose --env-file .env -f deploy/docker-compose.mockup.yml up -d --build
+docker compose --env-file .env up -d --build
 # → http://<dominio>:8080
 ```
 
-En Coolify: recurso Docker Compose sobre la rama `mockup`, archivo
-`deploy/docker-compose.mockup.yml`, dominio al servicio `web` (puerto 4000) y
-la variable `APP_DOMAIN` con ese dominio. Los detalles están en la cabecera
-del propio compose.
+En Coolify: recurso Docker Compose sobre la rama `mockup`, dejando el archivo
+por defecto (`/docker-compose.yml`), dominio al servicio `web` (puerto 4000) y
+la variable `APP_DOMAIN` con ese dominio. Los detalles están en la cabecera del
+propio compose.
+
+`APP_DOMAIN` no es opcional: sin ella el despliegue queda verde y el dominio
+devuelve 400, porque el servidor de renderizado sólo reconoce los hosts que
+lleva horneados.

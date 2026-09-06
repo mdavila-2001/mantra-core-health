@@ -97,8 +97,11 @@ lo bloquea. Ver [almacenamiento del navegador](../security/browser-storage.md).
 
 ### 4 · Contenedor de desarrollo
 
-No es de producción. `Dockerfile.dev` + `docker-compose.yml` levantan el
-servidor de desarrollo con recargado en caliente:
+No es de producción. `Dockerfile.dev` + el servicio `dev` del
+`docker-compose.yml` levantan el servidor de desarrollo con recargado en
+caliente. Va bajo el perfil `dev`, así que hay que pedirlo —
+`docker compose --profile dev up dev`—: sin perfil, `docker compose up` levanta
+el servicio `web` de producción, que es lo que despliega Coolify.
 
 ```text
 node:24-bookworm-slim          (Debian, no Alpine: esbuild/rolldown/lightningcss
