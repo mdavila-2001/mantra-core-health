@@ -274,6 +274,60 @@ test.describe('NOVA · experiencia del paciente', () => {
     await expect(detalle).toBeVisible();
   });
 
+  /* ---- FT-11 · perfil full-width, sólo lectura y edición bajo demanda ------ */
+
+  test('FT-11 · el perfil entra en sólo lectura, se edita acá y persiste', async ({ page }) => {
+    await irA(page, '/my-account');
+    await esperarCarga(page);
+
+    // Ancho útil real, en los tres tamaños, sin desbordar.
+    for (const viewport of VIEWPORTS) {
+      await page.setViewportSize({ width: viewport.ancho, height: viewport.alto });
+      await page.waitForTimeout(200);
+      const util = await anchoUtil(page);
+      const propio = await page
+        .locator('.mi-perfil')
+        .evaluate((el) => el.getBoundingClientRect().width);
+      expect(propio, `${viewport.nombre}: el perfil no llena el ancho útil`).toBeGreaterThan(
+        util - 2,
+      );
+      expect(await desbordaHorizontal(page), `${viewport.nombre}: la página desborda`).toBe(false);
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    // Entra en sólo lectura: no hay formulario hasta que se pida.
+    await expect(page.getByTestId('mi-perfil-editor')).toHaveCount(0);
+
+    // FT-11-R07/R08 · la contraseña, por su propio flujo.
+    await expect(page.getByTestId('mi-perfil-cambiar-contrasena')).toHaveAttribute(
+      'href',
+      '/auth/forgot-password',
+    );
+
+    // Editar habilita los campos sin cambiar de pantalla.
+    const urlAntes = page.url();
+    await page.getByTestId('mi-perfil-editar').click();
+    await esperarCarga(page);
+    await expect(page.getByTestId('mi-perfil-editor')).toBeVisible();
+    expect(page.url()).toBe(urlAntes);
+
+    // El editor carga su propio perfil, así que el campo aparece después del
+    // clic: se espera a que exista en vez de contarlo, que era una carrera.
+    const campo = page.getByTestId('perfil-nombre');
+    await expect(campo).toBeVisible({ timeout: 20_000 });
+
+    // FT-11-R06 · Cancelar restaura: lo tipeado no viaja ni queda.
+    const original = await campo.inputValue();
+    await campo.fill('Nombre de prueba');
+    await page.getByRole('button', { name: 'Cancelar' }).click();
+    await esperarCarga(page);
+    await expect(page.getByTestId('mi-perfil-editor')).toHaveCount(0);
+
+    await page.getByTestId('mi-perfil-editar').click();
+    await esperarCarga(page);
+    await expect(page.getByTestId('perfil-nombre')).toHaveValue(original);
+  });
+
   /* ---- FT-20 · historia clínica por pestañas ------------------------------ */
 
   test('FT-20 · la historia tiene pestañas y «Descargar todo» siempre a mano', async ({ page }) => {

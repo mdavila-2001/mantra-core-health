@@ -24,7 +24,38 @@
          verificar la identidad, las otras dos siguen en pie. Justamente ahí es
          cuando el historial de verificación tiene algo que decir. -->
       <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
-        <h2 class="mi-perfil__titulo">Tus datos</h2>
+        <div class="mi-perfil__cabecera">
+          <h2 class="mi-perfil__titulo">Tus datos</h2>
+
+          <!-- FT-11-R04 · «Editar» habilita los campos ACÁ, no manda a otra
+               pantalla. El botón desaparece mientras se edita: sus acciones son
+               las del formulario, y dos «Editar» simultáneos no significan
+               nada. -->
+          @if (!editando() && datos() !== null) {
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              data-testid="mi-perfil-editar"
+              (clicked)="editar()"
+            >
+              Editar
+            </button>
+          }
+        </div>
+
+        <!-- FT-11-R03/R04 · sólo lectura al entrar; el mismo formulario del
+             editor cuando se pulsa «Editar». Es el MISMO componente que sirve
+             la ruta `/my-account/profile/edit`, embebido: dos copias del
+             formulario serían dos validaciones que se separan en el primer
+             retoque que sólo se haga en una. -->
+        @if (editando()) {
+          <app-patient-profile-edit
+            data-testid="mi-perfil-editor"
+            [embebido]="true"
+            (cerrado)="terminarEdicion()"
+          />
+        } @else {
 
         <app-view-state-host [state]="resumen()" (retry)="recargar()">
           <!-- El 403 por identidad ya no debería llegar: desde F-34 el resumen
@@ -322,14 +353,20 @@
               }
             }
 
-            <!-- Corregir lo propio. Sólo acá: el editor pide `GET
-               /profiles/patients/me`, que a un profesional le responde 404
-               porque no tiene perfil de paciente. Y sólo con el resumen ya
-               leído, para no ofrecer editar lo que todavía no se sabe si
-               existe. -->
+            <!-- FT-11-R07/R08 · la contraseña NO es un campo más del
+                 formulario: cambiarla revoca sesiones y exige la actual, así
+                 que va por su propio flujo y con su propio botón. Ponerla entre
+                 el teléfono y la ocupación haría que un «Guardar» de datos de
+                 contacto tocara la credencial de acceso. -->
             <p class="mi-perfil__accion">
-              <a app-link data-testid="mi-perfil-editar" routerLink="/my-account/profile/edit">
-                Editar tus datos
+              <a
+                app-button-link
+                variant="outline"
+                size="sm"
+                data-testid="mi-perfil-cambiar-contrasena"
+                [routerLink]="rutaDeCambioDeContrasena"
+              >
+                Cambiar contraseña
               </a>
             </p>
 
@@ -347,6 +384,7 @@
             }
           }
         </app-view-state-host>
+        }
       </app-card>
     }
   </div>
