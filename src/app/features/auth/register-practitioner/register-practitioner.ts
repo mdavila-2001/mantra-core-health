@@ -361,17 +361,20 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
         'Un paciente busca por especialidad. Las que elijas son las búsquedas en las que vas a aparecer.',
     },
   ],
-  access: [
+  'personal-contact': [
     {
       icono: 'mail',
-      titulo: 'Con tu correo vas a entrar',
-      texto: 'Usá uno al que tengas acceso: es por donde se recupera la cuenta si perdés la clave.',
+      titulo: 'Con tu correo personal vas a entrar',
+      texto:
+        'Usá uno que sigas teniendo si cambiás de trabajo: es tu identidad de acceso y por donde se recupera la cuenta si perdés la clave.',
     },
+  ],
+  access: [
     {
       icono: 'phone',
-      titulo: 'Los teléfonos son del consultorio',
+      titulo: 'Todo esto es del consultorio',
       texto:
-        'Son los que ve quien necesita ubicarte en el trabajo. Podés dejarlos vacíos y cargarlos después desde tu perfil.',
+        'Son los datos por los que te ubican en el trabajo, no los de tu acceso. Podés dejarlos vacíos y cargarlos después desde tu perfil.',
     },
   ],
   password: [
@@ -449,9 +452,12 @@ export class RegisterPractitioner {
     thirdName: new FormControl('', { nonNullable: true }),
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     motherLastName: new FormControl('', { nonNullable: true }),
+    // El correo de TRABAJO. Dejó de ser la identidad de acceso —eso ahora es
+    // `personalEmail`— y con eso dejó de ser obligatorio: un médico puede no
+    // tener correo institucional, y el del consultorio lo pone la organización.
     email: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email],
+      validators: [Validators.email],
     }),
     password: new FormControl('', {
       nonNullable: true,
@@ -499,9 +505,13 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [telefonoCompleto],
     }),
+    // El correo PERSONAL, y desde ahora la identidad de acceso: es el que el
+    // profesional conserva aunque cambie de hospital, así que es el único que
+    // sirve para entrar y para recuperar la cuenta. Viaja en el `email` del
+    // DTO, que es el campo de login de la API (ver `cuerpoDelRegistro`).
     personalEmail: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.email],
+      validators: [Validators.required, Validators.email],
     }),
     // Obligatoria por la misma razón que `sexAtBirth`, y con más motivo: la
     // edad manda en dosis, valores de referencia y tamizajes. Un profesional
@@ -1035,7 +1045,7 @@ export class RegisterPractitioner {
         titulo: 'Cómo te contactamos en privado',
         clave: 'personal-contact',
         icon: 'phone',
-        hint: 'Opcional. Estos datos no se publican en tu ficha.',
+        hint: 'Tu correo es con el que entrás. Nada de esto se publica en tu ficha.',
         campos: [
           {
             key: 'mobilePhone',
@@ -1051,10 +1061,15 @@ export class RegisterPractitioner {
           },
           {
             key: 'personalEmail',
-            label: 'Tu correo personal (opcional)',
-            hint: 'Distinto del de trabajo, con el que vas a entrar.',
+            label: 'Tu correo personal — con éste entrás',
+            hint: 'Es tu identidad de acceso, no sólo un dato de contacto.',
+            description:
+              'Usá uno que sigas teniendo si cambiás de trabajo: es por donde se recupera la cuenta si perdés la clave.',
             control: 'email',
-            autocomplete: 'email',
+            required: true,
+            // `username`: acá el correo SÍ es el identificador de acceso. Sin
+            // esto el navegador guarda otra cosa como usuario.
+            autocomplete: 'username',
             placeholder: 'ana.rojas@gmail.com',
             testId: 'registro-pro-correo-personal',
             icono: 'mail',
@@ -1063,10 +1078,10 @@ export class RegisterPractitioner {
         ],
       },
       {
-        titulo: 'Tu acceso y el contacto del trabajo',
+        titulo: 'El contacto de tu trabajo',
         clave: 'access',
-        icon: 'mail',
-        hint: 'Con este correo vas a iniciar sesión. Los teléfonos son los del consultorio.',
+        icon: 'phone',
+        hint: 'Los datos del consultorio. Todo opcional: tu acceso ya quedó definido.',
         campos: [
           {
             key: 'workMobilePhone',
@@ -1092,15 +1107,15 @@ export class RegisterPractitioner {
           },
           {
             key: 'email',
-            label: 'Correo de trabajo — con éste entrás',
-            hint: 'Es tu identidad de acceso, no sólo un dato de contacto.',
+            label: 'Correo de trabajo (opcional)',
+            hint: 'El institucional, si tenés. No es con el que entrás.',
             description:
-              'Usá uno al que tengas acceso: es por donde se recupera la cuenta si perdés la clave.',
+              'Es un dato de contacto del consultorio: lo ve quien necesita escribirte por trabajo.',
             control: 'email',
-            required: true,
-            // `username`: acá el correo SÍ es el identificador de acceso. Sin
-            // esto el navegador guardaba el número de credencial como usuario.
-            autocomplete: 'username',
+            // `email` y no `username`: el identificador de acceso es el correo
+            // personal del paso anterior. Marcar los dos como `username` haría
+            // que el navegador guardara el equivocado.
+            autocomplete: 'email',
             placeholder: 'matricula@hospital.bo',
             testId: 'registro-pro-correo',
             icono: 'mail',
@@ -1253,7 +1268,7 @@ export class RegisterPractitioner {
         titulo: 'Tu contraseña',
         clave: 'password',
         icon: 'lock',
-        hint: 'Lo último. Con ella y tu correo de trabajo vas a iniciar sesión.',
+        hint: 'Lo último. Con ella y tu correo personal vas a iniciar sesión.',
         campos: [
           {
             key: 'password',
@@ -1613,6 +1628,7 @@ export class RegisterPractitioner {
     const celularTrabajo = raw.workMobilePhone.trim();
     const fijoTrabajo = raw.workLandline.trim();
     const correoPersonal = raw.personalEmail.trim();
+    const correoTrabajo = raw.email.trim();
     const segundoNombre = this.nombresAdicionales();
     const apellidoMaterno = raw.motherLastName.trim();
     const documento = raw.nationalId.trim();
@@ -1627,7 +1643,17 @@ export class RegisterPractitioner {
     const ocupacionTexto = raw.occupationFreeText.trim();
 
     return {
-      email: raw.email.trim(),
+      // `email` del DTO es el campo de LOGIN de la API, y desde este cambio el
+      // login es el correo personal: es el que el profesional conserva aunque
+      // cambie de hospital. El institucional viaja aparte, en `workEmail`.
+      //
+      // OJO AL PASE A `dev`: hoy el DTO de la API documenta lo contrario
+      // —«Correo de trabajo; es la identidad de login del profesional»— y NO
+      // declara `workEmail`, así que con `forbidNonWhitelisted` rechazaría el
+      // alta entera. La API tiene que aceptar `workEmail` (opcional, se guarda
+      // como contacto de uso `CONTACT_USE_WORK`, que ya existe) ANTES de que
+      // esta rama llegue a `dev`.
+      email: correoPersonal,
       password: raw.password,
       name: raw.name.trim(),
       lastName: raw.lastName.trim(),
@@ -1658,7 +1684,7 @@ export class RegisterPractitioner {
       ...(celularPersonal === '' ? {} : { mobilePhone: celularPersonal }),
       ...(celularTrabajo === '' ? {} : { workMobilePhone: celularTrabajo }),
       ...(fijoTrabajo === '' ? {} : { workLandline: fijoTrabajo }),
-      ...(correoPersonal === '' ? {} : { personalEmail: correoPersonal }),
+      ...(correoTrabajo === '' ? {} : { workEmail: correoTrabajo }),
       ...(this.especialidadesElegidas().length === 0
         ? {}
         : { specialtyConceptIds: this.especialidadesElegidas() }),

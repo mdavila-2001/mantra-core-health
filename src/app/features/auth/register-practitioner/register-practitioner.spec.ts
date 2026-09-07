@@ -107,6 +107,7 @@ describe('RegisterPractitioner', () => {
         | 'workMobilePhone'
         | 'workLandline'
         | 'personalEmail'
+        | 'email'
         | 'middleName'
         | 'thirdName'
         | 'motherLastName'
@@ -130,7 +131,9 @@ describe('RegisterPractitioner', () => {
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
       nationalId: extra.nationalId ?? '1234567',
-      email: 'ana@hospital.test',
+      // `email` es el de TRABAJO, que dejó de ser el de acceso y es opcional;
+      // el de acceso es `personalEmail`, obligatorio, de acá abajo.
+      email: extra.email ?? '',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
@@ -140,7 +143,8 @@ describe('RegisterPractitioner', () => {
       mobilePhone: extra.mobilePhone ?? '',
       workMobilePhone: extra.workMobilePhone ?? '',
       workLandline: extra.workLandline ?? '',
-      personalEmail: extra.personalEmail ?? '',
+      // La identidad de acceso: obligatorio, así que tiene valor por defecto.
+      personalEmail: extra.personalEmail ?? 'ana.paz@gmail.test',
       // Obligatoria desde que la fecha de nacimiento dejó de ser opcional:
       // mismo criterio que `sexAtBirth` de acá abajo — un valor por defecto
       // para que las pruebas a las que no les importa sigan mandando el
@@ -789,15 +793,16 @@ describe('RegisterPractitioner', () => {
 
     const req = http.expectOne('/iam/auth/register-practitioner');
     expect(req.request.method).toBe('POST');
-    // El identificador de acceso es el correo, no el documento. El nombre va
-    // en partes, igual que en el alta de paciente. Sexo, fecha de nacimiento y
-    // ocupación son obligatorios: los tres son dato clínico o de filiación, no
-    // una cortesía, así que forman parte del alta mínima.
+    // El identificador de acceso es el correo PERSONAL, no el documento ni el
+    // de trabajo: viaja en el `email` del DTO, que es el campo de login. El
+    // nombre va en partes, igual que en el alta de paciente. Sexo, fecha de
+    // nacimiento y ocupación son obligatorios: los tres son dato clínico o de
+    // filiación, no una cortesía, así que forman parte del alta mínima.
     expect(req.request.body).toEqual({
       name: 'Ana',
       lastName: 'Paz',
       nationalId: '1234567',
-      email: 'ana@hospital.test',
+      email: 'ana.paz@gmail.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
@@ -895,6 +900,7 @@ describe('RegisterPractitioner', () => {
       workMobilePhone: '+591 70022222',
       workLandline: '+591 33456789',
       personalEmail: 'ana.paz@gmail.test',
+      email: 'ana@hospital.test',
     });
     component.submit();
 
@@ -902,9 +908,31 @@ describe('RegisterPractitioner', () => {
     expect(req.request.body.mobilePhone).toBe('+591 70011111');
     expect(req.request.body.workMobilePhone).toBe('+591 70022222');
     expect(req.request.body.workLandline).toBe('+591 33456789');
-    expect(req.request.body.personalEmail).toBe('ana.paz@gmail.test');
-    // El correo de acceso sigue siendo `email`, que es el del trabajo.
-    expect(req.request.body.email).toBe('ana@hospital.test');
+    // El de acceso es el PERSONAL, y por eso ocupa el `email` del DTO, que es
+    // el campo de login. El institucional viaja aparte, en `workEmail`.
+    expect(req.request.body.email).toBe('ana.paz@gmail.test');
+    expect(req.request.body.workEmail).toBe('ana@hospital.test');
+    expect(req.request.body.personalEmail).toBeUndefined();
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  it('sin correo personal no manda el alta: es la identidad de acceso', () => {
+    completarProfesional({ personalEmail: '' });
+    component.submit();
+
+    http.expectNone('/iam/auth/register-practitioner');
+    expect(component.formProfesional.controls.personalEmail.invalid).toBe(true);
+  });
+
+  it('el correo de trabajo es opcional y no viaja si está vacío', () => {
+    completarProfesional({ email: '' });
+    expect(component.formProfesional.controls.email.valid).toBe(true);
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.workEmail).toBeUndefined();
+    expect(req.request.body.email).toBe('ana.paz@gmail.test');
 
     req.flush(RESPUESTA_PRO);
   });

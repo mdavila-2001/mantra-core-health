@@ -271,6 +271,9 @@ export class IamClient {
       ...(registration.personalEmail === undefined
         ? {}
         : { personalEmail: registration.personalEmail }),
+      // El institucional. El de acceso es `email`, que desde el cambio de
+      // identidad de acceso lleva el correo PERSONAL del profesional.
+      ...(registration.workEmail === undefined ? {} : { workEmail: registration.workEmail }),
     });
   }
 

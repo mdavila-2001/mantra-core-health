@@ -305,8 +305,25 @@ export interface PractitionerRegistration {
   readonly workMobilePhone?: string;
   /** Fijo del trabajo, la línea del consultorio. */
   readonly workLandline?: string;
-  /** Correo personal. El de acceso es {@link email}, que es el del trabajo. */
+  /**
+   * Correo personal, en su rol de dato de contacto suelto.
+   *
+   * Ojo: el alta de profesional **ya no lo usa** — desde el cambio de identidad
+   * de acceso, el correo personal ES el de acceso y por eso viaja en
+   * {@link email}. Queda declarado para los llamadores que separen ambos.
+   */
   readonly personalEmail?: string;
+  /**
+   * Correo del trabajo, el institucional. Es un dato de contacto: **no** sirve
+   * para entrar.
+   *
+   * Pendiente en la API: `RegisterPractitionerDto` todavía no lo declara —y
+   * documenta lo contrario, que el de trabajo es el login—, así que con
+   * `forbidNonWhitelisted` rechazaría el alta. Tiene que aceptarlo antes de que
+   * esto llegue a `dev`. El backend ya sabe guardarlo por uso
+   * (`CONTACT_USE_WORK`) y lo devuelve como `workEmail` al leer el perfil.
+   */
+  readonly workEmail?: string;
   /**
    * Sexo asignado al nacer. Es dato clínico, distinto del género.
    *
