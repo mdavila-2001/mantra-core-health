@@ -1,0 +1,26 @@
+# Una pasada del redespliegue de la rama `mockup` detrás del Funnel (:8443).
+#
+# `oneshot` por el mismo motivo que su hermano de `dev`: un vigilante en segundo
+# plano tiene dos formas de morir en silencio —un apagón y una construcción
+# colgada— y con un `oneshot` lo peor que pasa es que una pasada falle; la del
+# minuto siguiente sale limpia. El `flock` del script impide que dos se solapen.
+#
+# Corre como `pablo` y no como root: las credenciales de GitHub que usa el
+# `git fetch` son las suyas, y el clon vive con su dueño.
+[Unit]
+Description=Redespliegue del mockup de ALOVIDA ante commits nuevos en mockup
+Documentation=file:///opt/alovida-mockup/repo/tools/redeploy/mockup.sh
+After=docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=pablo
+Group=pablo
+WorkingDirectory=/opt/alovida-mockup
+ExecStart=/opt/alovida-mockup/repo/tools/redeploy/mockup.sh una-vez
+# Una construcción en frío pasa de los diez minutos; con caché de capas, menos
+# de uno.
+TimeoutStartSec=45min
+StandardOutput=journal
+StandardError=journal
