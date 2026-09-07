@@ -86,14 +86,29 @@ describe('PatientHome', () => {
     fixture.detectChanges();
   }
 
-  /** Responde las dos lecturas del panel. */
-  function responder(citas: unknown[], historia: Record<string, unknown> | null): void {
+  /**
+   * Responde las lecturas del panel.
+   *
+   * Las dos primeras son fijas. La tercera —el catálogo de recursos, que FT-03
+   * usa para decir con quién y dónde es la próxima cita— sólo se pide cuando
+   * hay una cita por delante, así que se drena con `match` en vez de
+   * `expectOne`: exigirla siempre rompería los casos sin citas.
+   */
+  function responder(
+    citas: unknown[],
+    historia: Record<string, unknown> | null,
+    recursos: unknown[] = [],
+  ): void {
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush({ items: citas, count: citas.length, limit: 20, truncated: false });
     http
       .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
       .flush(historia ?? historiaVacia());
+    fixture.detectChanges();
+    for (const pedido of http.match((r) => r.url === '/scheduling/resources')) {
+      pedido.flush({ items: recursos, count: recursos.length });
+    }
     fixture.detectChanges();
   }
 
@@ -148,9 +163,85 @@ describe('PatientHome', () => {
 
     // Se comprueba cuál es, no cómo se formatea la fecha.
     const tarjeta = (fixture.nativeElement as HTMLElement).querySelector(
-      '[data-testid="mi-salud-proximo-turno"]',
+      '[data-testid="mi-salud-proxima-cita"]',
     );
     expect(tarjeta?.getAttribute('data-turno')).toBe('proximo');
+  });
+
+  /* ---- FT-03 · el bloque de la próxima cita ------------------------------ */
+
+  /**
+   * FT-03-R01. El texto es el pedido literal del cliente: «Tu próximo turno»
+   * no puede quedar en ninguna parte de la pantalla.
+   */
+  it('llama al bloque «Tu próxima cita» y no «Tu próximo turno»', async () => {
+    await montar();
+    responder([{ id: 'b-1', statusConceptId: 'c-1', startAt: '2099-01-01T13:00:00.000Z' }], null);
+
+    expect(texto()).toContain('Tu próxima cita');
+    expect(texto()).not.toContain('Tu próximo turno');
+  });
+
+  /**
+   * FT-03-R03. La cita dice con quién y dónde, no sólo cuándo. Sin esto el
+   * bloque tenía un único dato y por eso no había jerarquía que mostrar.
+   */
+  it('dice con quién y en qué consultorio es la próxima cita', async () => {
+    await montar();
+    responder(
+      [
+        {
+          id: 'b-1',
+          statusConceptId: 'c-1',
+          resourceId: 'rec-1',
+          startAt: '2099-01-01T13:00:00.000Z',
+        },
+      ],
+      null,
+      [
+        {
+          id: 'rec-1',
+          name: 'Agenda cardiología',
+          resourceTypeConceptId: 'c-t',
+          resourceRefType: 'health_practitioner_profiles',
+          resourceRefId: 'pr-1',
+          practitionerName: 'Dra. Valeria Rojas',
+          practiceId: null,
+          timeZone: null,
+          capacity: 1,
+          stateConceptId: 'c-s',
+          site: { id: 's-1', name: 'Consultorio 3', code: 'C3', addressText: null, timeZone: null },
+        },
+      ],
+    );
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(
+      raiz.querySelector('[data-testid="mi-salud-cita-profesional"]')?.textContent,
+    ).toContain('Dra. Valeria Rojas');
+    expect(raiz.querySelector('[data-testid="mi-salud-cita-lugar"]')?.textContent).toContain(
+      'Consultorio 3',
+    );
+  });
+
+  /**
+   * FT-03-R06. Sin citas por delante el bloque dice que no hay y ofrece la
+   * salida, en vez de quedar en blanco —que se lee como «no cargó».
+   */
+  it('sin citas por delante, el bloque lo dice y ofrece pedir una', async () => {
+    await montar();
+    // Una cita que ya pasó: hay historia, así que no es la pantalla de bienvenida.
+    responder([{ id: 'viejo', statusConceptId: 'c-1', startAt: '2020-01-01T13:00:00.000Z' }], {
+      ...historiaVacia(),
+      encounters: [{ id: 'e-1', startAt: '2020-01-01T13:00:00.000Z' }],
+    });
+
+    const bloque = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="mi-salud-proxima-cita"]',
+    );
+    expect(bloque?.getAttribute('data-estado')).toBe('empty');
+    expect(bloque?.textContent).toContain('No tenés citas pedidas');
+    expect(bloque?.textContent).toContain('Pedir una cita');
   });
 
   it('quien recién llega recibe una invitación, no tres tarjetas vacías', async () => {

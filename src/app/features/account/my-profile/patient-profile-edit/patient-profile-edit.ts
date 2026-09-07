@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -147,6 +156,36 @@ export class PatientProfileEdit {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   /** El mismo destino que al cancelar: se vuelve al perfil del que se vino. */
   protected readonly rutaDeMiPerfil = MI_PERFIL;
+
+  /* ---- FT-11 · el mismo editor, dentro del perfil ------------------------- */
+
+  /**
+   * El editor vive **dentro** de «Mi perfil» en vez de en su propia pantalla.
+   *
+   * ## Por qué existe este interruptor
+   *
+   * El pedido del cliente es que el perfil entre en sólo lectura y que «Editar»
+   * habilite los campos ahí mismo, sin cambiar de pantalla. Eso podría haberse
+   * resuelto copiando el formulario dentro del perfil, y sería el mismo
+   * formulario en dos lugares: dos validaciones que se separan en el primer
+   * retoque que sólo se haga en uno.
+   *
+   * Así que el formulario sigue siendo **uno solo** y lo que cambia es su marco.
+   * Embebido no dibuja su propio encabezado de página —ya hay uno arriba— y no
+   * navega al terminar: avisa a quien lo contiene, que vuelve a sólo lectura.
+   *
+   * La ruta `/my-account/profile/edit` sigue existiendo y funcionando: es un
+   * enlace que puede estar en un correo o en un favorito, y romperlo para
+   * estrenar el modo embebido sería cambiar un problema por otro.
+   */
+  readonly embebido = input(false, { transform: booleanAttribute });
+
+  /**
+   * El editor terminó: se guardó o se canceló.
+   *
+   * Sólo tiene sentido embebido; en su propia pantalla el componente navega.
+   */
+  readonly cerrado = output<void>();
 
   protected readonly perfil = signal<ViewState<OwnPatientProfile>>(loading());
 
@@ -507,6 +546,12 @@ export class PatientProfileEdit {
         this.sembrarFormulario(perfil);
         this.perfil.set(ready(perfil));
         this.toasts.success('Tus datos quedaron actualizados.', AMBITO);
+        // FT-11-R05 · embebido, guardar devuelve el perfil a sólo lectura: es
+        // la señal de que terminó. En su propia pantalla se queda, que es lo
+        // que hacía y lo que espera quien llegó por la ruta directa.
+        if (this.embebido()) {
+          this.cerrado.emit();
+        }
       },
       error: () => {
         this.guardando.set(false);
@@ -515,7 +560,19 @@ export class PatientProfileEdit {
     });
   }
 
+  /**
+   * FT-11-R06 · Cancelar **restaura**: nada de lo tipeado se manda.
+   *
+   * Embebido no navega —no hay a dónde ir, el perfil está debajo— y el
+   * formulario se destruye con sus signals, así que la próxima vez que se
+   * abra vuelve a sembrarse desde el servidor. Eso es lo que hace que cancelar
+   * restaure de verdad y no sólo esconda lo escrito.
+   */
   protected cancelar(): void {
+    if (this.embebido()) {
+      this.cerrado.emit();
+      return;
+    }
     void this.router.navigate([MI_PERFIL]);
   }
 

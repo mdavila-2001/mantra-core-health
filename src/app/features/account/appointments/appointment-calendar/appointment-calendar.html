@@ -48,13 +48,23 @@
       </tr>
     </thead>
     <tbody>
-      @for (semana of semanas(); track $index) {
+      @for (semana of semanas(); track $index; let fila = $index, ultimaFila = $last) {
         <tr>
-          @for (dia of semana; track dia.fecha.getTime()) {
+          @for (dia of semana; track dia.fecha.getTime(); let columna = $index) {
+            <!-- FT-07-R06 · de qué lado abre el detalle.
+                 El globo se ancla a la tarjeta y se sale de la pantalla si
+                 siempre abriera hacia la derecha: en la columna del domingo
+                 quedaría medio globo fuera del calendario. Las tres últimas
+                 columnas lo abren hacia la izquierda, y la última fila hacia
+                 arriba. Se decide por posición y no midiendo en JavaScript
+                 porque la posición ya la sabemos y medir obliga a leer el
+                 layout en cada `hover`. -->
             <td
               class="calendario__dia"
               [class.calendario__dia--fuera]="!dia.delMes"
               [class.calendario__dia--hoy]="dia.esHoy"
+              [attr.data-columna]="columna >= 4 ? 'fin' : 'inicio'"
+              [attr.data-fila]="ultimaFila || fila >= 4 ? 'baja' : 'alta'"
               [attr.aria-label]="dia.etiqueta"
             >
               <!-- El número del día es el botón para pedir turno ese día: es
@@ -80,21 +90,54 @@
               @if (dia.turnos.length > 0) {
                 <div class="calendario__turnos">
                   @for (turno of dia.turnos; track turno.id) {
-                    <button
-                      type="button"
-                      class="calendario__turno"
-                      [class.calendario__turno--activo]="seleccionado() === turno.id"
-                      [attr.data-tono]="turno.tono"
-                      [attr.aria-current]="seleccionado() === turno.id ? 'true' : null"
-                      [title]="turno.titulo + ' · ' + turno.estado"
-                      (click)="elegir(turno)"
-                    >
-                      <span class="calendario__hora">{{ turno.cuando | date: 'HH:mm' }}</span>
-                      <span class="calendario__titulo">{{ turno.titulo }}</span>
-                      <!-- El estado también en palabras: el color del borde no se lee
-                           en voz alta ni lo distingue todo el mundo. -->
-                      <span class="calendario__estado">{{ turno.estado }}</span>
-                    </button>
+                    <!-- FT-07-R05 · el envoltorio es el ancla del globo y tiene
+                         `position: relative`. El globo sale del flujo, así que
+                         abrirlo no mueve ni la tarjeta de al lado ni la fila. -->
+                    <span class="calendario__ancla">
+                      <button
+                        type="button"
+                        class="calendario__turno"
+                        [class.calendario__turno--activo]="seleccionado() === turno.id"
+                        [attr.data-tono]="turno.tono"
+                        [attr.data-testid]="'calendario-turno-' + turno.id"
+                        [attr.aria-current]="seleccionado() === turno.id ? 'true' : null"
+                        [attr.aria-describedby]="'detalle-' + turno.id"
+                        (click)="elegir(turno)"
+                      >
+                        <!-- FT-07-R03 · el resumen: la hora y con quién. Dos
+                             renglones son los que entran sin que la tarjeta
+                             cambie de alto según el contenido. -->
+                        <span class="calendario__hora">{{ turno.cuando | date: 'HH:mm' }}</span>
+                        <span class="calendario__titulo">{{ turno.titulo }}</span>
+                      </button>
+
+                      <!-- FT-07-R04/R07 · el detalle completo.
+                           Se muestra al apuntar Y al enfocar la tarjeta (regla
+                           `:focus-within` de abajo), así que quien navega con
+                           teclado recibe exactamente lo mismo que quien usa el
+                           puntero. No es `[title]`: el globo nativo no se puede
+                           leer con teclado, tarda un segundo y no admite más de
+                           una línea. -->
+                      <span
+                        class="calendario__detalle"
+                        role="tooltip"
+                        [id]="'detalle-' + turno.id"
+                        [attr.data-testid]="'calendario-detalle-' + turno.id"
+                      >
+                        <span class="calendario__detalle-hora">
+                          {{ turno.cuando | date: 'HH:mm' }}@if (turno.hasta !== null) {
+                            <span>–{{ turno.hasta | date: 'HH:mm' }}</span>
+                          }
+                        </span>
+                        <span class="calendario__detalle-titulo">{{ turno.titulo }}</span>
+                        <!-- El estado también en palabras: el color del filo no
+                             se lee en voz alta ni lo distingue todo el mundo. -->
+                        <span class="calendario__detalle-estado">{{ turno.estado }}</span>
+                        @for (linea of turno.detalles ?? []; track linea) {
+                          <span class="calendario__detalle-linea">{{ linea }}</span>
+                        }
+                      </span>
+                    </span>
                   }
                 </div>
               }

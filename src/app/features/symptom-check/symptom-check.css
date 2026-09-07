@@ -1,16 +1,33 @@
 /* ============================================================================
-    «¿Qué te pasa?» — el punto de entrada del paciente (Frente C del plan de UX).
+    «¿Cómo te sentís?» — el punto de entrada del paciente (Frente C del plan de UX).
 
-    Una sola columna angosta a propósito: es una conversación, no un tablero.
-    Lo que se lee de corrido no compite con nada al costado.
+    FT-02 · El módulo ocupa el ancho útil real del contenedor principal.
+
+    Antes el bloque entero se cortaba en 46rem, así que en un escritorio de
+    1440 px la grilla de zonas terminaba a un tercio de la pantalla y el resto
+    quedaba en blanco: la queja era exactamente ésa. El ancho ya lo acota el
+    contenedor de la página (`.app-main__inner`, 1440 px); volver a acotarlo acá
+    es acotarlo dos veces.
+
+    Lo que SÍ sigue acotado es la MEDIDA DE LECTURA de los párrafos (60ch/68ch).
+    Eso no es una restricción de layout, es tipografía: una línea de 200
+    caracteres no se lee. La grilla, los chips y los controles usan todo el ancho.
     ========================================================================== */
 
 :host {
   display: block;
+  /* El componente se estira con su contenedor en vez de encogerse a su
+     contenido: sin esto, un `:host` en un flex/grid padre toma el ancho
+     intrínseco y la regla de abajo no tiene sobre qué aplicarse. */
+  inline-size: 100%;
 }
 
 .sintomas {
-  max-inline-size: 46rem;
+  /* FT-02-R01/R02 · 100% del ancho útil, sin tope propio. */
+  inline-size: 100%;
+  /* FT-02-R03 · un hijo con contenido largo no puede empujar el ancho del
+     bloque y sacar la barra horizontal. */
+  min-inline-size: 0;
 }
 
 .sintomas__titulo {
@@ -113,13 +130,41 @@
    La grilla de zonas es la primera decisión de la pantalla: señalar dónde,
    que es lo que hace cualquiera cuando le duele algo. */
 
+/* FT-02-R04 · Columnas declaradas por punto de quiebre, no `auto-fill`.
+
+   Con `auto-fill` + `minmax(8.5rem, 1fr)` y el bloque ya sin tope, un monitor
+   de 1440 px pedía trece columnas para once zonas: dos huecos vacíos al final y
+   pastillas tan angostas que el rótulo se partía en tres renglones. El número
+   de columnas ahora es una decisión por ancho, y en cada uno las once zonas
+   llenan las filas sin dejar un hueco suelto (2·6, 3·4, 4·3, 6·2). */
 .sintomas__zonas {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--e2);
   margin: var(--e4) 0 0;
   padding: 0;
   list-style: none;
+}
+
+/* 480 px — teléfono apaisado. */
+@media (min-width: 30rem) {
+  .sintomas__zonas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 768 px — tablet. */
+@media (min-width: 48rem) {
+  .sintomas__zonas {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* 1024 px — escritorio: acá es donde se veía el hueco que motivó FT-02. */
+@media (min-width: 64rem) {
+  .sintomas__zonas {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
 }
 
 .sintomas__zona {
@@ -166,8 +211,14 @@
   block-size: 30px;
 }
 
+/* FT-02-R03/R05 · el rótulo más largo («Piel y uñas», «Boca y dientes») no
+   puede ensanchar su columna: con `minmax(0, 1fr)` arriba y el corte de palabra
+   acá, la pastilla se queda dentro de su celda en 320 px en vez de desbordar. */
 .sintomas__zona-nombre {
   line-height: 1.25;
+  min-inline-size: 0;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Las opciones de la zona abierta. Entran con una transición corta: el

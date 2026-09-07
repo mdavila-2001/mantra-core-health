@@ -120,6 +120,16 @@
   overscroll-behavior: contain;
 }
 
+/* FT-07-R05 · el ancla del detalle.
+   El globo se posiciona contra ESTE elemento y no contra la celda: si se
+   anclara a la celda, dos citas del mismo día abrirían su detalle en el mismo
+   punto. Sale del flujo, así que abrirlo no empuja a nadie. */
+.calendario__ancla {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+}
+
 .calendario__turno {
   display: flex;
   flex-direction: column;
@@ -182,6 +192,101 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ─── FT-07 · el detalle en globo ───────────────────────────────────────────
+
+   Antes el detalle completo era el `[title]` nativo del botón: no se puede leer
+   con teclado, tarda un segundo largo en aparecer y no admite más de una línea,
+   así que el consultorio y el motivo simplemente no se veían en la vista de
+   calendario. Ahora la tarjeta muestra el resumen y el resto vive acá.
+
+   Oculto con `visibility` y no con `display: none` para que la transición
+   funcione y para que siga estando en el árbol de accesibilidad como el
+   `aria-describedby` del botón promete. */
+.calendario__detalle {
+  position: absolute;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  inline-size: max-content;
+  max-inline-size: 16rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-strong, var(--filete));
+  border-radius: var(--r-sm);
+  background: var(--bg-surface, var(--sup-tarjeta));
+  box-shadow: var(--sombra-2, 0 6px 16px rgb(0 0 0 / 14%));
+  color: var(--text-primary, var(--tinta));
+  text-align: start;
+  white-space: normal;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity var(--mov-rapido, 120ms) var(--curva, ease),
+    visibility var(--mov-rapido, 120ms) var(--curva, ease);
+  pointer-events: none;
+}
+
+/* FT-07-R04/R07 · el puntero y el foco abren lo mismo. `:focus-within` cubre el
+   teclado sin una sola línea de JavaScript, y es lo que hace que la prueba de
+   «hover con teclado» tenga algo que comprobar. */
+.calendario__ancla:hover .calendario__detalle,
+.calendario__ancla:focus-within .calendario__detalle {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* FT-07-R06 · de qué lado abre, según en qué columna y fila cae el día.
+   Alineado con el borde de la tarjeta del lado que tiene sitio: en las tres
+   últimas columnas hacia la izquierda, en las últimas filas hacia arriba. */
+.calendario__dia[data-columna='inicio'] .calendario__detalle {
+  inset-inline-start: 0;
+}
+
+.calendario__dia[data-columna='fin'] .calendario__detalle {
+  inset-inline-end: 0;
+}
+
+.calendario__dia[data-fila='alta'] .calendario__detalle {
+  inset-block-start: calc(100% + 4px);
+}
+
+.calendario__dia[data-fila='baja'] .calendario__detalle {
+  inset-block-end: calc(100% + 4px);
+}
+
+.calendario__detalle-hora {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendario__detalle-titulo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.calendario__detalle-estado,
+.calendario__detalle-linea {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendario__detalle {
+    transition: none;
+  }
+}
+
+/* En pantalla táctil no hay puntero que apoyar y el globo sólo aparecería al
+   enfocar, que en un móvil ocurre justo cuando se toca para abrir el detalle de
+   abajo: dos cosas a la vez. Se apaga, y el detalle completo sigue estando —el
+   toque abre el panel de detalle de la pantalla, que dice lo mismo y más. */
+@media (hover: none) {
+  .calendario__detalle {
+    display: none;
+  }
 }
 
 .calendario__aviso {

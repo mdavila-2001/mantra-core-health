@@ -67,78 +67,172 @@
         <a app-button variant="primary" [routerLink]="misTurnos">Pedir mi primer turno</a>
       </app-card>
     } @else {
-      <div class="mi-salud__tarjetas">
-        <!-- Lo primero que quiere saber quien entra: cuándo tengo que ir. -->
-        <app-card
-          variant="outlined"
-          padding="md"
-          data-testid="mi-salud-proximo-turno"
-          [attr.data-turno]="resumen().proximoTurno?.id ?? null"
-        >
-          <h2 class="mi-salud__titulo">Tu próximo turno</h2>
-          @if (resumen().proximoTurno; as turno) {
-            @if (turno.startAt) {
-              <p class="mi-salud__dato">
-                {{ turno.startAt | date: "EEEE d 'de' MMMM" }}
-                <!-- Inicio **y fin** (D1 del plan de UX): «a las 09:30» no dice
-                     cuánto dura, que es lo que decide si hay que pedir permiso
-                     media mañana o la mañana entera. `endAt` puede faltar en una
-                     reserva sin cupo, y entonces se dice sólo la hora de inicio
-                     en vez de inventar una duración. -->
-                <span class="mi-salud__hora">
-                  @if (turno.endAt) {
-                    de {{ turno.startAt | date: 'HH:mm' }} a {{ turno.endAt | date: 'HH:mm' }}
+      <!-- ─── FT-03 · Tu próxima cita ───────────────────────────────────────
+           Un bloque **ancho y solo**, no una tarjeta más de una matriz.
+
+           Antes las cuatro cosas del panel —turno, receta, atención y un aviso
+           de «muy pronto»— eran cuatro tarjetas del mismo tamaño en una rejilla
+           de 2×2. Con todas iguales nada pesaba más que nada, y lo que se
+           entra a mirar —cuándo tengo que ir— competía en igualdad con un
+           cartel de una función que todavía no existe. Eso es lo que el pedido
+           llamaba «no depender de una matriz de paneles».
+
+           Ahora la cita ocupa su propia banda a ancho completo y con la fecha
+           en tamaño de titular; lo demás baja a una tira de resumen que se lee
+           en una pasada. -->
+      <section
+        class="proxima-cita"
+        data-testid="mi-salud-proxima-cita"
+        [attr.data-estado]="estadoDeLaCita()"
+        [attr.data-turno]="resumen().proximoTurno?.id ?? null"
+        aria-labelledby="proxima-cita-titulo"
+      >
+        <h2 class="proxima-cita__titulo" id="proxima-cita-titulo">
+          <!-- FT-03-R02 · el calendario es el ícono de la sección de citas en
+               el menú y en «Tus accesos». Repetirlo acá es lo que hace que se
+               reconozca sin leer; un ícono distinto para la misma idea sería
+               un producto distinto en cada pantalla. -->
+          <span class="proxima-cita__titulo-icono" aria-hidden="true">
+            <app-nav-icon name="calendar" />
+          </span>
+          Tu próxima cita
+        </h2>
+
+        @switch (estadoDeLaCita()) {
+          @case ('loading') {
+            <!-- FT-03-R06 · el hueco se dice. Una banda vacía mientras carga se
+                 lee como «no tenés citas», que es la respuesta contraria. -->
+            <p class="proxima-cita__estado" role="status">Buscando tu próxima cita…</p>
+          }
+          @case ('error') {
+            <p class="proxima-cita__estado proxima-cita__estado--error" role="alert">
+              No pudimos traer tu próxima cita. Podés verla igual en Mis citas.
+            </p>
+            <a app-button variant="outline" size="sm" [routerLink]="misTurnos">Ir a Mis citas</a>
+          }
+          @case ('empty') {
+            <p class="proxima-cita__estado">No tenés citas pedidas.</p>
+            <a app-button variant="primary" [routerLink]="misTurnos">Pedir una cita</a>
+          }
+          @default {
+            @if (resumen().proximoTurno; as turno) {
+              <!-- FT-03-R03 · la jerarquía es cuándo → con quién → dónde → por
+                   qué. El día en tamaño de titular porque es el dato por el que
+                   se entra; el resto en cuerpo, y el motivo al final atenuado. -->
+              <div class="proxima-cita__cuerpo">
+                <p class="proxima-cita__cuando">
+                  @if (turno.startAt) {
+                    <span class="proxima-cita__dia">
+                      {{ turno.startAt | date: "EEEE d 'de' MMMM" }}
+                    </span>
+                    <!-- Inicio **y fin** (D1 del plan de UX): «a las 09:30» no
+                         dice cuánto dura, que es lo que decide si hay que pedir
+                         permiso media mañana o la mañana entera. `endAt` puede
+                         faltar en una reserva sin cupo, y entonces se dice sólo
+                         la hora de inicio en vez de inventar una duración. -->
+                    <span class="proxima-cita__hora">
+                      @if (turno.endAt) {
+                        de {{ turno.startAt | date: 'HH:mm' }} a
+                        {{ turno.endAt | date: 'HH:mm' }}
+                      } @else {
+                        a las {{ turno.startAt | date: 'HH:mm' }}
+                      }
+                    </span>
                   } @else {
-                    a las {{ turno.startAt | date: 'HH:mm' }}
+                    <span class="proxima-cita__dia">Cita sin horario asignado</span>
                   }
-                </span>
-              </p>
+                </p>
+
+                <!-- Con quién y dónde. Cada línea se omite mientras no se sepa:
+                     un rótulo sin dato es peor que la línea ausente. -->
+                <ul class="proxima-cita__datos">
+                  @if (dondeYConQuien().profesional !== '') {
+                    <li class="proxima-cita__dato" data-testid="mi-salud-cita-profesional">
+                      <span class="proxima-cita__dato-icono" aria-hidden="true">
+                        <app-nav-icon name="stethoscope" />
+                      </span>
+                      <span>{{ dondeYConQuien().profesional }}</span>
+                    </li>
+                  }
+                  @if (dondeYConQuien().lugar !== '') {
+                    <li class="proxima-cita__dato" data-testid="mi-salud-cita-lugar">
+                      <span class="proxima-cita__dato-icono" aria-hidden="true">
+                        <app-nav-icon name="pin" />
+                      </span>
+                      <span>{{ dondeYConQuien().lugar }}</span>
+                    </li>
+                  }
+                  @if (turno.reasonText) {
+                    <li class="proxima-cita__dato" data-testid="mi-salud-cita-motivo">
+                      <span class="proxima-cita__dato-icono" aria-hidden="true">
+                        <app-nav-icon name="note" />
+                      </span>
+                      <span>{{ turno.reasonText }}</span>
+                    </li>
+                  }
+                </ul>
+
+                <!-- La demora informada viaja con la cita y no sólo como aviso
+                     (P8): el aviso in-app puede no haber llegado y la cita tiene
+                     que poder explicarse sola. -->
+                @if (turno.delayNotice; as demora) {
+                  <p class="proxima-cita__demora" data-testid="mi-salud-cita-demora">
+                    Tu profesional avisó una demora de {{ demora.delayMinutes }} minutos.
+                  </p>
+                }
+              </div>
+
+              <div class="proxima-cita__acciones">
+                <a app-button variant="primary" [routerLink]="misTurnos">Ver o reprogramar</a>
+              </div>
             }
-            <a app-button variant="outline" size="sm" [routerLink]="misTurnos">
-              Ver o reprogramar
-            </a>
-          } @else {
-            <p class="mi-salud__texto">No tenés turnos pedidos.</p>
-            <a app-button variant="primary" size="sm" [routerLink]="misTurnos">
-              Pedir un turno
-            </a>
           }
-        </app-card>
+        }
+      </section>
 
-        <app-card variant="outlined" padding="md" data-testid="mi-salud-receta">
-          <h2 class="mi-salud__titulo">Tu última receta</h2>
-          @if (resumen().ultimaReceta; as cuando) {
-            <p class="mi-salud__dato">{{ cuando | date: "d 'de' MMMM, y" }}</p>
-            <a app-button variant="outline" size="sm" [routerLink]="miHistoria">
-              Ver y descargar
-            </a>
-          } @else {
-            <p class="mi-salud__texto">Todavía no te recetaron nada.</p>
+      <!-- ─── La tira de resumen ────────────────────────────────────────────
+           Lo de atrás —la última receta y la última atención— en una fila que
+           se lee de un vistazo, no en dos tarjetas del tamaño de la cita. Son
+           referencias, no la pantalla. -->
+      <ul class="mi-salud__resumen">
+        <li class="mi-salud__resumen-item" data-testid="mi-salud-receta">
+          <span class="mi-salud__resumen-icono" aria-hidden="true">
+            <app-nav-icon name="pill" />
+          </span>
+          <span class="mi-salud__resumen-texto">
+            <span class="mi-salud__resumen-rotulo">Tu última receta</span>
+            @if (resumen().ultimaReceta; as cuando) {
+              <span class="mi-salud__resumen-dato">{{ cuando | date: "d 'de' MMMM, y" }}</span>
+            } @else {
+              <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
+                Todavía no te recetaron nada
+              </span>
+            }
+          </span>
+          @if (resumen().ultimaReceta) {
+            <a app-button variant="ghost" size="sm" [routerLink]="miHistoria">Ver y descargar</a>
           }
-        </app-card>
+        </li>
 
-        <app-card variant="outlined" padding="md" data-testid="mi-salud-atencion">
-          <h2 class="mi-salud__titulo">Tu última atención</h2>
-          @if (resumen().ultimaAtencion; as cuando) {
-            <p class="mi-salud__dato">{{ cuando | date: "d 'de' MMMM, y" }}</p>
-            <a app-button variant="outline" size="sm" [routerLink]="miHistoria">
-              Ver mi historia
-            </a>
-          } @else {
-            <p class="mi-salud__texto">Todavía no tenés atenciones registradas.</p>
+        <li class="mi-salud__resumen-item" data-testid="mi-salud-atencion">
+          <span class="mi-salud__resumen-icono" aria-hidden="true">
+            <app-nav-icon name="history" />
+          </span>
+          <span class="mi-salud__resumen-texto">
+            <span class="mi-salud__resumen-rotulo">Tu última atención</span>
+            @if (resumen().ultimaAtencion; as cuando) {
+              <span class="mi-salud__resumen-dato">{{ cuando | date: "d 'de' MMMM, y" }}</span>
+            } @else {
+              <span class="mi-salud__resumen-dato mi-salud__resumen-dato--vacio">
+                Todavía no tenés atenciones registradas
+              </span>
+            }
+          </span>
+          @if (resumen().ultimaAtencion) {
+            <a app-button variant="ghost" size="sm" [routerLink]="miHistoria">Ver mi historia</a>
           }
-        </app-card>
-
-        <!-- Lo que todavía no existe se dice, en vez de dejar el hueco: una
-             tarjeta ausente no se distingue de una función que no hay. -->
-        <app-card variant="outlined" padding="md" data-testid="mi-salud-proximamente">
-          <h2 class="mi-salud__titulo">Avisos y órdenes</h2>
-          <p class="mi-salud__texto">
-            Muy pronto vas a ver acá cuando tu receta esté lista y las órdenes de laboratorio que
-            te pida tu profesional.
-          </p>
-        </app-card>
-      </div>
+        </li>
+      </ul>
     }
 
     <!-- Los lugares del paciente, como grilla de tarjetas con ícono: es la

@@ -96,6 +96,11 @@ export type { ReferenceOption } from './reference-combobox/reference-combobox.ty
 export { SearchField } from './search-field/search-field';
 export { SEARCH_DEBOUNCE_MS } from './search-field/search-field.types';
 
+/* El selector de vista (FT-04): dos o más representaciones de la MISMA
+   colección. No confundir con `Tabs`, que separa contenidos distintos. */
+export { SegmentedControl } from './segmented-control/segmented-control';
+export type { SegmentedOption } from './segmented-control/segmented-control.types';
+
 /* La tarjeta de la superficie pública (V65). Su diseño vive en `alovida.css`
    §25, no en el componente — ver su `.css`, que está vacío a propósito. */
 export { SearchResult } from './search-result/search-result';

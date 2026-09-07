@@ -30,6 +30,7 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -55,6 +56,32 @@ interface ResultadoVisible {
   /** El uuid del catálogo, para reetiquetar cuando llegue. */
   readonly codeConceptId: string;
   readonly categoryConceptId: string;
+  /* ---- FT-21-R03/R04 · los metadatos que faltaban ------------------------ */
+  /**
+   * En qué estado clínico está el informe, en palabras.
+   *
+   * Un resultado liberado puede después corregirse o anularse, y la lista no lo
+   * decía: dos versiones del mismo estudio se leían igual. Vacío mientras el
+   * catálogo no lo resuelva, nunca el uuid.
+   */
+  readonly estado: string;
+  /** El uuid del estado, para reetiquetar cuando el catálogo llegue. */
+  readonly clinicalStatusConceptId: string;
+  /**
+   * Qué número de versión es.
+   *
+   * Se muestra sólo a partir de la segunda: decir «versión 1» en todos los
+   * resultados es ruido, decir «versión 2» explica por qué el informe cambió
+   * desde la última vez que se lo miró.
+   */
+  readonly version: number;
+  /**
+   * Cuándo lo firmó el profesional, si la respuesta lo trae.
+   *
+   * No es lo mismo que `liberado`: uno es cuándo se emitió el informe y el otro
+   * cuándo se habilitó para el paciente, y entre los dos puede haber días.
+   */
+  readonly emitido: Date | null;
 }
 
 /** Un archivo descargable del resultado. */
@@ -62,6 +89,18 @@ interface ArchivoVisible {
   readonly id: string;
   readonly fileId: string;
   readonly rotulo: string;
+  /**
+   * El formato, en palabras («PDF», «Imagen»), cuando el catálogo lo resuelve.
+   *
+   * FT-21-R04 · «Archivo 1» no dice si lo que va a bajar es un informe de una
+   * página o un estudio de imagen de veinte megas.
+   */
+  readonly formato: string;
+  /** Los uuid del catálogo, para reetiquetar cuando llegue. */
+  readonly contentRoleConceptId: string;
+  readonly presentationFormatConceptId: string;
+  /** El ordinal, que es el rótulo de respaldo si el catálogo no resuelve nada. */
+  readonly ordinal: number;
 }
 
 /**
@@ -92,7 +131,17 @@ interface ArchivoVisible {
  */
 @Component({
   selector: 'app-diagnostic-results',
-  imports: [Alert, AppButton, Badge, DatePicker, DatePipe, FormField, Input, PageHeader],
+  imports: [
+    Alert,
+    AppButton,
+    Badge,
+    DatePicker,
+    DatePipe,
+    FormField,
+    Input,
+    NavIcon,
+    PageHeader,
+  ],
   templateUrl: './diagnostic-results.html',
   styleUrl: './diagnostic-results.css',
   providers: [DatePipe],
@@ -365,13 +414,23 @@ export class DiagnosticResults {
    * desactualizado en silencio el día que cambie.
    */
   private traducirConceptos(items: readonly PatientDiagnosticResult[]): void {
+    // FT-21-R03/R04 · además del código y la categoría van el estado clínico y
+    // los conceptos de cada archivo (rol y formato). Todos en la MISMA lectura:
+    // son etiquetas de la misma lista, y pedirlas por separado sería una
+    // petición más por pantalla para la misma respuesta.
     const ids = [
       ...new Set(
-        items.flatMap((item) =>
-          item.categoryConceptId === undefined
-            ? [item.codeConceptId]
-            : [item.codeConceptId, item.categoryConceptId],
-        ),
+        items
+          .flatMap((item) => [
+            item.codeConceptId,
+            item.categoryConceptId ?? '',
+            item.clinicalStatusConceptId,
+            ...item.files.flatMap((archivo) => [
+              archivo.contentRoleConceptId,
+              archivo.presentationFormatConceptId ?? '',
+            ]),
+          ])
+          .filter((id) => id !== ''),
       ),
     ];
     if (ids.length === 0) {
@@ -412,10 +471,20 @@ export class DiagnosticResults {
       conclusion: item.conclusionText ?? '',
       codeConceptId: item.codeConceptId,
       categoryConceptId: item.categoryConceptId ?? '',
+      estado: this.etiqueta(item.clinicalStatusConceptId, ''),
+      clinicalStatusConceptId: item.clinicalStatusConceptId,
+      version: item.versionNumber,
+      emitido: item.issuedAt ?? null,
       archivos: item.files.map((archivo, indice) => ({
         id: archivo.id,
         fileId: archivo.fileId,
-        rotulo: `Archivo ${indice + 1}`,
+        // El rol del contenido es lo que la persona reconoce —«Informe»,
+        // «Imagen»—; el ordinal es el respaldo cuando el catálogo no lo trae.
+        rotulo: this.etiqueta(archivo.contentRoleConceptId, `Archivo ${indice + 1}`),
+        formato: this.etiqueta(archivo.presentationFormatConceptId ?? '', ''),
+        contentRoleConceptId: archivo.contentRoleConceptId,
+        presentationFormatConceptId: archivo.presentationFormatConceptId ?? '',
+        ordinal: indice + 1,
       })),
     };
   }
@@ -426,6 +495,12 @@ export class DiagnosticResults {
       ...item,
       titulo: this.etiqueta(item.codeConceptId, 'Estudio'),
       categoria: this.etiqueta(item.categoryConceptId, 'Sin clasificar'),
+      estado: this.etiqueta(item.clinicalStatusConceptId, ''),
+      archivos: item.archivos.map((archivo) => ({
+        ...archivo,
+        rotulo: this.etiqueta(archivo.contentRoleConceptId, `Archivo ${archivo.ordinal}`),
+        formato: this.etiqueta(archivo.presentationFormatConceptId, ''),
+      })),
     };
   }
 

@@ -1,0 +1,85 @@
+@if (sinPerfilDePaciente) {
+  <app-alert tone="info" title="Esta sección es para pacientes">
+    Tu cuenta no tiene un perfil de paciente, así que no hay aspectos médicos propios que declarar.
+  </app-alert>
+} @else if (cargando()) {
+  <p class="aspectos__estado" role="status">Buscando lo que declaraste…</p>
+} @else if (falloLaLectura()) {
+  <app-alert tone="error" title="No pudimos traer tus aspectos médicos">
+    Reintentá en un momento.
+  </app-alert>
+  <button app-button variant="outline" (clicked)="cargar()">Reintentar</button>
+} @else {
+  <form class="aspectos" data-testid="aspectos-form" (submit)="$event.preventDefault(); guardar()">
+    <div class="aspectos__intro">
+      <p class="aspectos__texto">
+        Esto es lo que <strong>vos</strong> contás de tu salud, no lo que registró un profesional.
+        Tu historia clínica está aparte y no se edita desde acá. Lo que declares lo va a ver quien
+        te atienda.
+      </p>
+      @if (actualizado(); as cuando) {
+        <p class="aspectos__actualizado" data-testid="aspectos-actualizado">
+          Guardado por última vez el {{ cuando | date: "d 'de' MMMM 'de' y, HH:mm" }}.
+        </p>
+      } @else if (vacio()) {
+        <p class="aspectos__actualizado" data-testid="aspectos-vacio">
+          Todavía no declaraste nada. Completá lo que sepas: podés dejar en blanco lo que no.
+        </p>
+      }
+    </div>
+
+    @for (campo of campos; track campo.clave) {
+      <app-form-field
+        class="aspectos__campo"
+        [label]="campo.rotulo"
+        [hint]="campo.ayuda"
+      >
+        @if (campo.largo) {
+          <app-textarea
+            [attr.data-testid]="'aspecto-' + campo.clave"
+            [rows]="3"
+            [autoResize]="true"
+            [disabled]="guardando()"
+            [value]="valor(campo.clave)"
+            (valueChange)="escribir(campo.clave, $event)"
+          />
+        } @else {
+          <app-input
+            [attr.data-testid]="'aspecto-' + campo.clave"
+            [disabled]="guardando()"
+            [value]="valor(campo.clave)"
+            (valueChange)="escribir(campo.clave, $any($event))"
+          />
+        }
+      </app-form-field>
+    }
+
+    <!-- Las acciones sólo aparecen cuando hay algo que hacer con ellas: un
+         «Guardar» siempre habilitado sin nada que guardar enseña a ignorarlo, y
+         un «Cancelar» sin cambios no cancela nada. -->
+    <div class="aspectos__acciones">
+      <button
+        app-button
+        type="submit"
+        variant="primary"
+        data-testid="aspectos-guardar"
+        [disabled]="!hayCambios()"
+        [isLoading]="guardando()"
+      >
+        Guardar
+      </button>
+      @if (hayCambios()) {
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          data-testid="aspectos-cancelar"
+          [disabled]="guardando()"
+          (clicked)="cancelar()"
+        >
+          Descartar cambios
+        </button>
+      }
+    </div>
+  </form>
+}

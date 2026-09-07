@@ -1,0 +1,56 @@
+/* ============================================================================
+    «Aspectos médicos» — lo que el paciente declara de su salud (FT-22).
+
+    Una columna de campos anchos, no una rejilla de dos: son respuestas de texto
+    libre de largo muy distinto, y en dos columnas el par corto/largo deja un
+    hueco que se lee como un campo que falta.
+    ========================================================================== */
+
+:host {
+  display: block;
+  inline-size: 100%;
+}
+
+.aspectos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+}
+
+.aspectos__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+/* Medida de lectura acotada: es el párrafo que explica de qué va la pantalla y
+   una línea de 200 caracteres no se lee. Los campos NO llevan este tope. */
+.aspectos__texto {
+  margin: 0;
+  max-inline-size: 72ch;
+  color: var(--text-secondary);
+}
+
+.aspectos__actualizado {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.aspectos__estado {
+  color: var(--text-muted);
+}
+
+.aspectos__campo {
+  display: block;
+  inline-size: 100%;
+}
+
+.aspectos__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--border-subtle, var(--border-default));
+}

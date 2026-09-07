@@ -724,7 +724,15 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     );
   }
 
-  it('la paciente ve la salida a corregir sus datos, con su destino real', () => {
+  /**
+   * FT-11-R03/R04. El perfil entra en sólo lectura y «Editar» habilita los
+   * campos **acá mismo**, sin cambiar de pantalla: era un enlace a
+   * `/my-account/profile/edit`, que es lo que el pedido del cliente corrige.
+   *
+   * La ruta propia del editor sigue existiendo —puede estar en un favorito— y
+   * su prueba vive en `patient-profile-edit.spec.ts`.
+   */
+  it('la paciente entra en sólo lectura y «Editar» abre el formulario acá mismo', () => {
     montar({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
     http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
     http
@@ -736,9 +744,35 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
       });
     fixture.detectChanges();
 
-    const enlace = enlaceDeEdicion();
-    expect(enlace?.textContent?.trim()).toBe('Editar tus datos');
-    expect(enlace?.getAttribute('href')).toBe('/my-account/profile/edit');
+    const raiz = fixture.nativeElement as HTMLElement;
+    // Sólo lectura: la lista de datos está, el formulario no.
+    expect(raiz.querySelector('[data-testid="mi-perfil-editor"]')).toBeNull();
+
+    const boton = enlaceDeEdicion();
+    expect(boton?.textContent?.trim()).toBe('Editar');
+    // Un botón, no un enlace: no lleva a ninguna parte.
+    expect(boton?.tagName).toBe('BUTTON');
+    expect(boton?.getAttribute('href')).toBeNull();
+  });
+
+  /**
+   * FT-11-R07/R08. La contraseña no es un campo del formulario: cambiarla exige
+   * verificar quién es la persona, y un campo suelto en el perfil dejaría la
+   * credencial a merced de cualquiera que encuentre la sesión abierta.
+   */
+  it('ofrece cambiar la contraseña por su propio flujo, fuera del formulario', () => {
+    montar({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({ items: [], count: 0, limit: 50 });
+    fixture.detectChanges();
+
+    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '[data-testid="mi-perfil-cambiar-contrasena"]',
+    );
+    expect(boton?.textContent?.trim()).toBe('Cambiar contraseña');
+    expect(boton?.getAttribute('href')).toBe('/auth/forgot-password');
   });
 
   /**

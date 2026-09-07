@@ -19,9 +19,9 @@ import {
   type RecetaSimulada,
 } from '../fixtures/clinica';
 import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
-import { MEDICA, pacientePorId } from '../fixtures/personas';
+import { MEDICA, PACIENTE, pacientePorId } from '../fixtures/personas';
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
-import { ahora, cuerpo, nuevoId, uuid } from '../mock-store';
+import { ahora, Coleccion, cuerpo, nuevoId, uuid } from '../mock-store';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -41,7 +41,105 @@ function sinPaciente<T extends { patientProfileId: string }>(fila: T): Omit<T, '
   return resto;
 }
 
+/**
+ * La fila sin su clave interna.
+ *
+ * Los aspectos médicos se guardan por `id` de paciente, pero ese identificador
+ * no es parte del contrato: la lectura es del titular y no hay a quién más
+ * pedirle. Devolverlo sería filtrar una clave que la pantalla no necesita.
+ */
+function sinId<T extends { id: string }>(fila: T): Omit<T, 'id'> {
+  const { id: _i, ...resto } = fila;
+  return resto;
+}
+
+/* ---- FT-22 · aspectos médicos declarados por el titular -------------------
+   Un registro por paciente, en memoria como el resto del simulador: lo que se
+   guarda sobrevive a la navegación y a un `F5` de la aplicación mientras dure
+   la pestaña, que es lo que hace comprobable la persistencia del formulario.
+
+   Es el contrato que la API todavía no publica. Se declara acá —y en
+   `ClinicalClient`— porque la rama `mockup` **es** el backend de la maqueta:
+   sin esto, «Aspectos médicos» sería un formulario que traga el dato, que es
+   exactamente lo que el mandato prohíbe. */
+interface AspectosSimulados {
+  readonly id: string;
+  bloodType?: string;
+  allergiesText?: string;
+  chronicConditionsText?: string;
+  currentMedicationsText?: string;
+  surgeriesText?: string;
+  familyHistoryText?: string;
+  habitsText?: string;
+  updatedAt?: string;
+}
+
+/** Los campos que el titular puede escribir. `updatedAt` lo pone el servidor. */
+const CAMPOS_DE_ASPECTOS = [
+  'bloodType',
+  'allergiesText',
+  'chronicConditionsText',
+  'currentMedicationsText',
+  'surgeriesText',
+  'familyHistoryText',
+  'habitsText',
+] as const;
+
+const aspectos = new Coleccion<AspectosSimulados>(
+  [
+    {
+      id: PACIENTE.id,
+      bloodType: 'O+',
+      allergiesText: 'Penicilina (erupción a los 12 años).',
+      chronicConditionsText: 'Hipotiroidismo desde 2019.',
+      currentMedicationsText: 'Levotiroxina 50 mcg por la mañana.',
+      familyHistoryText: 'Madre con hipertensión. Abuelo materno, diabetes tipo 2.',
+      habitsText: 'No fumo. Camino 30 minutos casi todos los días.',
+      updatedAt: ahora(),
+    },
+  ],
+  // Sobrevive a la recarga: es la única forma de comprobar de verdad que
+  // «Guardar» guardó, que es lo que el formulario promete.
+  'alovida.mock.medical-aspects',
+);
+
 export function registrarClinica(router: MockRouter): void {
+  /* ---- FT-22 · aspectos médicos ------------------------------------------ */
+
+  router.get('/clinical/me/medical-aspects', (request) => {
+    const id = request.user?.patientProfileId;
+    if (id === undefined) return forbidden('Esta lectura es del titular de una ficha de paciente');
+    // Objeto vacío y no 404: «todavía no llenaste esto» es un estado corriente
+    // del formulario, no un error que la pantalla tenga que manejar aparte.
+    return aspectos.get(id) === undefined ? {} : sinId(aspectos.get(id)!);
+  });
+
+  router.put('/clinical/me/medical-aspects', (request) => {
+    const id = request.user?.patientProfileId;
+    if (id === undefined) return forbidden('Esta escritura es del titular de una ficha de paciente');
+    const cambios = cuerpo<Record<string, unknown>>(request);
+    const previo = aspectos.get(id) ?? { id };
+    const actualizado: AspectosSimulados = { ...previo, updatedAt: ahora() };
+    for (const campo of CAMPOS_DE_ASPECTOS) {
+      // Ausente no se toca; `''` borra. Es lo que permite guardar una sección
+      // sin pisar las demás.
+      if (campo in cambios) {
+        const valor = cambios[campo];
+        if (typeof valor === 'string' && valor !== '') {
+          actualizado[campo] = valor;
+        } else {
+          delete actualizado[campo];
+        }
+      }
+    }
+    if (aspectos.get(id) === undefined) {
+      aspectos.agregar(actualizado);
+    } else {
+      aspectos.actualizar(id, actualizado);
+    }
+    return sinId(actualizado);
+  });
+
   router.get('/clinical/patients/:id/summary', (request) => {
     const id = request.params['id']!;
     if (pacientePorId(id) === undefined) return notFound('Paciente no encontrado');
