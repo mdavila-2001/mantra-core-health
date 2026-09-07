@@ -60,9 +60,51 @@ describe('NavigationService', () => {
     session.start({ accessToken: jwt({ sub: 'u-1', roles, tenants }), refreshToken: 'r' });
   }
 
+  /**
+   * Todo lo que la barra ofrece, en el orden en que se dibuja: primero los dos
+   * destinos fijos de arriba —«Mi perfil» y «Notificaciones», que desde el
+   * 07/09/2026 salen sueltos y no cuelgan de «Mi cuenta»— y después los grupos.
+   *
+   * Los fijos entran acá y no en una prueba aparte porque lo que estas pruebas
+   * fijan es **qué se le ofrece a cada sesión**, y eso no cambió al cambiar
+   * dónde se dibuja cada cosa.
+   */
   function rutasDelMenu(): readonly string[] {
-    return service.menu().flatMap((grupo) => grupo.items.map((item) => item.route));
+    return [
+      ...service.pinnedItems().map((item) => item.route),
+      ...service.menu().flatMap((grupo) => grupo.items.map((item) => item.route)),
+    ];
   }
+
+  describe('los destinos fijos salen del grupo', () => {
+    it('«Mi perfil» y «Notificaciones» van sueltos, y no dentro de «Mi cuenta»', () => {
+      abrirSesion(['PRACTITIONER'], ['t-1']);
+
+      expect(service.pinnedItems().map((i) => i.route)).toEqual([
+        '/my-account',
+        '/notification-center',
+      ]);
+      // Y no se cuentan dos veces: ningún grupo los vuelve a ofrecer.
+      const enGrupos = service.menu().flatMap((g) => g.items.map((i) => i.route));
+      expect(enGrupos).not.toContain('/my-account');
+      expect(enGrupos).not.toContain('/notification-center');
+    });
+
+    it('al médico le desaparece «Mi cuenta», porque se queda sin secciones', () => {
+      abrirSesion(['PRACTITIONER'], ['t-1']);
+
+      expect(service.menu().map((g) => g.label)).not.toContain('Mi cuenta');
+    });
+
+    it('un destino fijo no nombra su grupo en la ruta de navegación', async () => {
+      abrirSesion(['PRACTITIONER'], ['t-1']);
+      await router.navigateByUrl('/my-account');
+
+      // Dos escalones y no tres: el del medio sería «Mi cuenta», que en la
+      // barra de esta sesión ni se dibuja.
+      expect(service.breadcrumbs().map((b) => b.label)).toEqual(['Panel', 'Mi perfil']);
+    });
+  });
 
   describe('el menú se arma con los roles del token', () => {
     it('una sesión sin roles solo ve lo que no exige ninguno', () => {
@@ -82,6 +124,9 @@ describe('NavigationService', () => {
       // 15/08/2026 declara `roles: ['PATIENT']`, y una sesión sin roles no es
       // una sesión de paciente.
       expect(rutasDelMenu()).toEqual([
+        // Los dos fijos, arriba de todo y fuera de su grupo.
+        '/my-account',
+        '/notification-center',
         '/dashboard',
         // Los tutoriales tampoco exigen rol: son la guía de cómo usar lo que
         // cada cuenta ya puede ver.
@@ -106,7 +151,10 @@ describe('NavigationService', () => {
         // El glosario ya NO entra: desde el 18/08/2026 (feedback de la analista,
         // F-03) declara los roles de quien atiende, y una sesión sin roles no
         // es de nadie que atienda.
-        '/my-account',
+        //
+        // «Mi perfil» tampoco aparece acá: desde el 07/09/2026 es un destino
+        // fijo y se dibuja arriba de todo, fuera de «Mi cuenta». Sigue estando
+        // —encabeza la lista—, sólo que ya no cuelga del grupo.
         '/my-account/appointments',
         // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
         // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.
@@ -121,9 +169,10 @@ describe('NavigationService', () => {
         // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
         // perfil de paciente, que es un dato de la cuenta y no un rol.
         '/my-account/questionnaires',
-        // Carril P1: la bandeja es de la persona y el backend sólo devuelve la
-        // propia, así que no hay rol que filtrar.
-        '/notification-center',
+        // «Notificaciones» tampoco: es el otro destino fijo, y encabeza la
+        // lista junto a «Mi perfil». La bandeja sigue sin exigir rol —es de la
+        // persona y el backend sólo devuelve la propia—; lo que cambió es
+        // dónde se dibuja.
         // «Preferencias de avisos» **no** entra: dejó de ser una sección y pasó
         // a ser un panel de Ajustes. Y Ajustes tampoco, aunque la ve cualquier
         // sesión: declara `fueraDelMenuPara: [ANY_ROLE]` porque se entra por el

@@ -67,6 +67,19 @@
          Un bloque con **un solo** destino visible no se dibuja como
          desplegable: sería un clic de más para llegar a lo mismo. Sale suelto,
          con su ícono, en el lugar que le toca del orden. -->
+    <!-- Arriba de los dominios, y sueltos: «Mi perfil» y «Notificaciones». No
+         cuelgan de un desplegable porque nadie se pregunta a qué dominio
+         pertenecen, y para el médico eran un plegable de dos renglones que
+         costaba más abrir que leer. Quién va acá lo dice el registro de
+         secciones con `pinnedTop`, no esta plantilla. -->
+    @if (destinosFijos().length > 0) {
+      <div class="app-side-nav__fijos" data-testid="nav-fijos">
+        @for (item of destinosFijos(); track item.route) {
+          <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
+        }
+      </div>
+    }
+
     @for (grupo of sections(); track grupo.label) {
       @let claveGrupo = clavePlegable(grupo.label);
       <details

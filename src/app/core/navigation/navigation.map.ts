@@ -1048,6 +1048,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mi perfil',
     group: 'Mi cuenta',
     icon: 'patients',
+    // Suelta y arriba, fuera del desplegable. Ver `AppSection.pinnedTop`.
+    pinnedTop: true,
     roles: [ANY_ROLE],
     // Encendida con V05-03: `GET /profiles/patients/me/summary` existe y no
     // pide rol, sólo identidad verificada — y ese 403 ya tiene su puerta.
@@ -1198,6 +1200,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'notification-center',
     label: 'Notificaciones',
     group: 'Mi cuenta',
+    // Suelta y arriba, fuera del desplegable: es de las dos que se abren sin
+    // pensar a qué dominio pertenecen. Ver `AppSection.pinnedTop`.
+    pinnedTop: true,
     icon: 'bell',
     roles: [ANY_ROLE],
     availability: 'disponible',
