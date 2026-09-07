@@ -246,6 +246,49 @@
                  el mismo select acotado que el alta de paciente
                  (`app-location-picker`). Acá es opcional, así que un catálogo
                  caído no frena el alta: se avisa y se sigue (AC-05-15). -->
+            <!-- Las especialidades que se agregan además de la principal. Antes
+                 eran dos casillas fijas que casi nadie llenaba, y un techo de
+                 tres que dejaba afuera a quien tiene más. -->
+            <ng-template appCampoPersonalizado="especialidadesExtra">
+              @for (extra of especialidadesExtra(); track $index) {
+                <app-form-field [label]="'Especialidad ' + ($index + 2)">
+                  <div class="registro__especialidad-extra">
+                    <app-select
+                      [attr.data-testid]="'registro-pro-especialidad-extra-' + $index"
+                      [options]="opcionesEspecialidadFiltradas()"
+                      placeholder="Sin especificar"
+                      [value]="extra === '' ? null : extra"
+                      (valueChange)="elegirEspecialidadExtra($index, $event)"
+                    />
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [iconOnly]="true"
+                      [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
+                      [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
+                      [attr.data-testid]="'registro-pro-quitar-especialidad-' + $index"
+                      (clicked)="quitarEspecialidad($index)"
+                    >
+                      <app-nav-icon name="remove" />
+                    </button>
+                  </div>
+                </app-form-field>
+              }
+
+              <button
+                app-button
+                type="button"
+                variant="ghost"
+                size="sm"
+                data-testid="registro-pro-agregar-especialidad"
+                (clicked)="agregarEspecialidad()"
+              >
+                + Agregar otra especialidad
+              </button>
+            </ng-template>
+
             <ng-template appCampoPersonalizado="municipio">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">

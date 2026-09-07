@@ -28,6 +28,7 @@ import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
+import { Select } from '../../../shared/components/atoms/select/select';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -423,6 +424,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     RegistroAyuda,
     FormField,
     AppInput,
+    Select,
     Avatar,
   ],
   templateUrl: './register-practitioner.html',
@@ -519,12 +521,11 @@ export class RegisterPractitioner {
     occupationFreeText: new FormControl('', { nonNullable: true }),
     licenseIssueDate: new FormControl<Date | null>(null),
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
-    // Las «3 espacios adicionales a la profesión» del registro del cliente
-    // (módulo Médico §1.4.2), literales: tres desplegables, no un multiselect.
-    // La primera es la principal; las otras dos, opcionales.
+    // La principal es un control porque tiene semántica propia: es la que
+    // responde «¿de qué sos?» y la que el backend guarda como principal. Las
+    // demás no se distinguen entre sí, así que viven en `especialidadesExtra` y
+    // se agregan las que hagan falta: hay profesionales con más de tres.
     specialtyPrimary: new FormControl('', { nonNullable: true }),
-    specialtySecond: new FormControl('', { nonNullable: true }),
-    specialtyThird: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
   });
 
@@ -597,6 +598,42 @@ export class RegisterPractitioner {
    * Casillas de nombres adicionales (cuarto, quinto, …) agregadas por el usuario.
    */
   readonly nombresExtra = signal<readonly string[]>([]);
+
+  /**
+   * Especialidades agregadas además de la principal.
+   *
+   * Mismo criterio que `nombresExtra`: casillas fijas que casi nadie llena son
+   * ruido, y un techo arbitrario deja afuera al que sí las tiene. La cadena
+   * vacía es «esta casilla todavía no eligió nada».
+   */
+  readonly especialidadesExtra = signal<readonly string[]>([]);
+
+  /** Suma una casilla vacía de especialidad. */
+  agregarEspecialidad(): void {
+    this.especialidadesExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /**
+   * Quita una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   */
+  quitarEspecialidad(indice: number): void {
+    this.especialidadesExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /**
+   * Elige la especialidad de una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   * @param valor - El uuid elegido, o `null` si se volvió al vacío.
+   */
+  elegirEspecialidadExtra(indice: number, valor: string | null): void {
+    const elegida = valor ?? '';
+    this.especialidadesExtra.update((actuales) =>
+      actuales.map((especialidad, i) => (i === indice ? elegida : especialidad)),
+    );
+  }
 
   /** Suma una casilla vacía de nombre. */
   agregarNombre(): void {
@@ -1220,7 +1257,7 @@ export class RegisterPractitioner {
         titulo: 'Tus especialidades',
         clave: 'specialties',
         icon: 'directory',
-        hint: 'Hasta tres. Son lo que un paciente busca cuando necesita a alguien como vos.',
+        hint: 'Las que hagan falta. Son lo que un paciente busca cuando necesita a alguien como vos.',
         campos: [
           {
             key: 'specialtyPrimary',
@@ -1232,21 +1269,12 @@ export class RegisterPractitioner {
             testId: 'registro-pro-especialidad-1',
             icono: 'stethoscope',
           },
+          // Sin control propio: es una ranura que la plantilla llena con las
+          // casillas agregadas y su botón. Mismo mecanismo que `municipio`.
           {
-            key: 'specialtySecond',
-            label: 'Segunda especialidad (opcional)',
-            control: 'select',
-            options: this.opcionesEspecialidadFiltradas(),
-            placeholder: 'Sin especificar',
-            testId: 'registro-pro-especialidad-2',
-          },
-          {
-            key: 'specialtyThird',
-            label: 'Tercera especialidad (opcional)',
-            control: 'select',
-            options: this.opcionesEspecialidadFiltradas(),
-            placeholder: 'Sin especificar',
-            testId: 'registro-pro-especialidad-3',
+            key: 'especialidadesExtra',
+            label: '',
+            control: 'custom',
           },
         ],
       },
@@ -1388,18 +1416,26 @@ export class RegisterPractitioner {
         autoridad.setValue(COLEGIO_MEDICO);
       }
 
+      // Cambiar de profesión cambia la lista que se ofrece, así que lo ya
+      // elegido que dejó de estar en ella se vacía. Alcanza también a las
+      // casillas agregadas: si no, quedarían mostrando una especialidad que el
+      // desplegable ya no ofrece.
       const validas = new Set(this.opcionesEspecialidadFiltradas().map((o) => o.value));
       for (const control of this.controlesDeEspecialidad()) {
         if (control.value !== '' && !validas.has(control.value)) {
           control.setValue('');
         }
       }
+      this.especialidadesExtra.update((actuales) =>
+        actuales.map((especialidad) =>
+          especialidad !== '' && !validas.has(especialidad) ? '' : especialidad,
+        ),
+      );
     });
   }
 
   private controlesDeEspecialidad() {
-    const c = this.formProfesional.controls;
-    return [c.specialtyPrimary, c.specialtySecond, c.specialtyThird] as const;
+    return [this.formProfesional.controls.specialtyPrimary] as const;
   }
 
   /**
@@ -1649,9 +1685,12 @@ export class RegisterPractitioner {
    * formulario es la principal, y elegir la misma dos veces declara una.
    */
   private especialidadesElegidas(): readonly string[] {
-    const elegidas = this.controlesDeEspecialidad()
-      .map((control) => control.value)
-      .filter((valor) => valor !== '');
+    // El orden importa: la primera del arreglo es la que el backend guarda
+    // como principal, así que la del control va siempre adelante.
+    const elegidas = [
+      ...this.controlesDeEspecialidad().map((control) => control.value),
+      ...this.especialidadesExtra(),
+    ].filter((valor) => valor !== '');
     return [...new Set(elegidas)];
   }
 }

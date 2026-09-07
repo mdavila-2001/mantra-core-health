@@ -113,15 +113,13 @@ describe('RegisterPractitioner', () => {
         | 'nationalId'
         | 'regulatoryAuthority'
         | 'specialtyPrimary'
-        | 'specialtySecond'
-        | 'specialtyThird'
         | 'profilePhotoBase64'
         | 'occupationConceptId'
         | 'occupationFreeText'
         | 'sexAtBirth',
         string | null
       >
-    > & { birthDate?: Date | null } = {},
+    > & { birthDate?: Date | null; especialidadesExtra?: readonly string[] } = {},
   ): void {
     component.formProfesional.setValue({
       name: 'Ana',
@@ -163,10 +161,11 @@ describe('RegisterPractitioner', () => {
       licenseIssueDate: null,
       issuerAdministrativeAreaConceptId: null,
       specialtyPrimary: extra.specialtyPrimary ?? '',
-      specialtySecond: extra.specialtySecond ?? '',
-      specialtyThird: extra.specialtyThird ?? '',
       profilePhotoBase64: extra.profilePhotoBase64 ?? null,
     });
+    // Las especialidades agregadas no son controles: viven en una señal, igual
+    // que los nombres extra.
+    component.especialidadesExtra.set(extra.especialidadesExtra ?? []);
   }
 
   /**
@@ -264,11 +263,7 @@ describe('RegisterPractitioner', () => {
         'licenseIssueDate',
       ]);
       expect(camposDe('practice')).toEqual(['profilePhotoBase64', 'professionalTitle']);
-      expect(camposDe('specialties')).toEqual([
-        'specialtyPrimary',
-        'specialtySecond',
-        'specialtyThird',
-      ]);
+      expect(camposDe('specialties')).toEqual(['specialtyPrimary', 'especialidadesExtra']);
     });
 
     /**
@@ -590,7 +585,7 @@ describe('RegisterPractitioner', () => {
       completarProfesional({
         professionalTitle: 'Médico / Médica',
         specialtyPrimary: 'e-cardio',
-        specialtySecond: 'e-pedia',
+        especialidadesExtra: ['e-pedia'],
       });
       component.submit();
 
@@ -609,12 +604,69 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
+    it('se pueden declarar más de tres especialidades', () => {
+      catalogoDeEspecialidades();
+      completarProfesional({
+        professionalTitle: 'Médico / Médica',
+        specialtyPrimary: 'e-cardio',
+        especialidadesExtra: ['e-pedia', 'e-endo', 'e-orto'],
+      });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.specialtyConceptIds).toEqual([
+        'e-cardio',
+        'e-pedia',
+        'e-endo',
+        'e-orto',
+      ]);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('agregar suma una casilla vacía, y quitar saca la que se señala', () => {
+      catalogoDeEspecialidades();
+      completarProfesional({ especialidadesExtra: [] });
+
+      component.agregarEspecialidad();
+      component.agregarEspecialidad();
+      expect(component.especialidadesExtra()).toEqual(['', '']);
+
+      component.elegirEspecialidadExtra(0, 'e-pedia');
+      component.elegirEspecialidadExtra(1, 'e-endo');
+      component.quitarEspecialidad(0);
+
+      expect(component.especialidadesExtra()).toEqual(['e-endo']);
+    });
+
+    it('una casilla agregada y vacía no viaja en el cuerpo', () => {
+      catalogoDeEspecialidades();
+      completarProfesional({
+        professionalTitle: 'Médico / Médica',
+        specialtyPrimary: 'e-cardio',
+        especialidadesExtra: [''],
+      });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio']);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('cambiar de profesión limpia también una especialidad agregada', () => {
+      catalogoDeEspecialidades();
+      completarProfesional({ especialidadesExtra: ['e-endo'] });
+
+      component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+
+      expect(component.especialidadesExtra()).toEqual(['']);
+    });
+
     it('elegir la misma dos veces declara una', () => {
       catalogoDeEspecialidades();
       completarProfesional({
         professionalTitle: 'Médico / Médica',
         specialtyPrimary: 'e-cardio',
-        specialtySecond: 'e-cardio',
+        especialidadesExtra: ['e-cardio'],
       });
       component.submit();
 
