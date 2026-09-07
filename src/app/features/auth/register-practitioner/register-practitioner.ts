@@ -449,12 +449,12 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(MIN_PASSWORD)],
     }),
-    // Documento de identidad boliviano: opcional para el profesional. El médico
-    // se identifica por su matrícula profesional (licenseNumber), no por su CI.
-    // Si se ingresa, debe cumplir con el formato de documento válido.
+    // Documento de identidad boliviano. Obligatorio en el alta de profesional:
+    // la matrícula habilita a ejercer, pero es la cédula la que ata esa matrícula
+    // a una persona verificable. Además del formato válido, ahora tiene que estar.
     nationalId: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.pattern(DOCUMENTO_VALIDO)],
+      validators: [Validators.required, Validators.pattern(DOCUMENTO_VALIDO)],
     }),
     licenseNumber: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     sedesLicenseNumber: new FormControl('', {
@@ -481,7 +481,7 @@ export class RegisterPractitioner {
     // privado y el del consultorio fueran el mismo dato.
     mobilePhone: new FormControl('', {
       nonNullable: true,
-      validators: [telefonoCompleto],
+      validators: [Validators.required, telefonoCompleto],
     }),
     workMobilePhone: new FormControl('', {
       nonNullable: true,
@@ -493,7 +493,7 @@ export class RegisterPractitioner {
     }),
     personalEmail: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.email],
+      validators: [Validators.required, Validators.email],
     }),
     // Obligatoria por la misma razón que `sexAtBirth`, y con más motivo: la
     // edad manda en dosis, valores de referencia y tamizajes. Un profesional
@@ -518,7 +518,11 @@ export class RegisterPractitioner {
     // (ver `cuerpoDelRegistro`)—, que es justo lo que la obligatoriedad evita.
     occupationFreeText: new FormControl('', { nonNullable: true }),
     licenseIssueDate: new FormControl<Date | null>(null),
-    issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
+    // El departamento de expedición es parte del mismo carnet que el número:
+    // si uno es obligatorio, el otro también, o el documento queda a medias.
+    issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
+      validators: [Validators.required],
+    }),
     // Las «3 espacios adicionales a la profesión» del registro del cliente
     // (módulo Médico §1.4.2), literales: tres desplegables, no un multiselect.
     // La primera es la principal; las otras dos, opcionales.
@@ -970,11 +974,12 @@ export class RegisterPractitioner {
         titulo: 'Tu documento de identidad',
         clave: 'document',
         icon: 'patients',
-        hint: 'Opcional. Identifica a la persona detrás de la matrícula.',
+        hint: 'Los dos hacen falta. Identifican a la persona detrás de la matrícula.',
         campos: [
           {
             key: 'nationalId',
-            label: 'Cédula de identidad (opcional)',
+            label: 'Cédula de identidad',
+            required: true,
             hint: 'Se guarda como tu documento oficial.',
             description:
               'No es con lo que iniciás sesión —eso es tu correo—, pero es lo que ata tu matrícula a una persona.',
@@ -1027,11 +1032,12 @@ export class RegisterPractitioner {
         titulo: 'Cómo te contactamos en privado',
         clave: 'personal-contact',
         icon: 'phone',
-        hint: 'Opcional. Estos datos no se publican en tu ficha.',
+        hint: 'Los dos hacen falta. Estos datos no se publican en tu ficha.',
         campos: [
           {
             key: 'mobilePhone',
-            label: 'Tu celular personal (opcional)',
+            label: 'Tu celular personal',
+            required: true,
             hint: 'Elegí el país si tu número no es de Bolivia.',
             description:
               'Es el número por el que te contactamos a vos. El que ve un paciente es el de tu consultorio, que se pide en la página siguiente.',
@@ -1043,7 +1049,8 @@ export class RegisterPractitioner {
           },
           {
             key: 'personalEmail',
-            label: 'Tu correo personal (opcional)',
+            label: 'Tu correo personal',
+            required: true,
             hint: 'Distinto del de trabajo, con el que vas a entrar.',
             control: 'email',
             autocomplete: 'email',
@@ -1268,8 +1275,10 @@ export class RegisterPractitioner {
   private campoDepartamentoEmisor(testId: string): CampoDeFormulario {
     const base = {
       key: 'issuerAdministrativeAreaConceptId',
-      label: 'Departamento de emisión (opcional)',
+      label: 'Departamento de emisión',
+      required: true,
       hint: 'El «SC», «LP»... de tu cédula.',
+      mensajeDeError: 'Elegí el departamento que expidió tu cédula.',
     } as const;
 
     return this.catalogoDepartamentosCaido()
@@ -1282,7 +1291,7 @@ export class RegisterPractitioner {
           ...base,
           control: 'select',
           options: this.opcionesDepartamento(),
-          placeholder: 'Sin especificar',
+          placeholder: 'Elegí el departamento',
           testId,
           // La otra mitad del renglón del documento. Ver la página que lo usa.
           ancho: 'mitad',
