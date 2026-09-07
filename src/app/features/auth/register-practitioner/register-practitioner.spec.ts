@@ -121,7 +121,7 @@ describe('RegisterPractitioner', () => {
         | 'sexAtBirth',
         string | null
       >
-    > = {},
+    > & { birthDate?: Date | null } = {},
   ): void {
     component.formProfesional.setValue({
       name: 'Ana',
@@ -141,7 +141,11 @@ describe('RegisterPractitioner', () => {
       workMobilePhone: extra.workMobilePhone ?? '',
       workLandline: extra.workLandline ?? '',
       personalEmail: extra.personalEmail ?? '',
-      birthDate: null,
+      // Obligatoria desde que la fecha de nacimiento dejó de ser opcional:
+      // mismo criterio que `sexAtBirth` de acá abajo — un valor por defecto
+      // para que las pruebas a las que no les importa sigan mandando el
+      // formulario, y `extra` para las que sí lo prueban.
+      birthDate: extra.birthDate === undefined ? new Date(1985, 4, 12) : extra.birthDate,
       // Ahora obligatorio (AC-05-7): por defecto 'FEMALE' para que las
       // pruebas que no le importa este campo sigan completando y mandando el
       // formulario; las que sí lo prueban lo pasan por `extra` o lo pisan
@@ -150,7 +154,11 @@ describe('RegisterPractitioner', () => {
         extra.sexAtBirth === undefined
           ? 'FEMALE'
           : (extra.sexAtBirth as BirthSexCode | null),
-      occupationConceptId: extra.occupationConceptId ?? null,
+      // Obligatoria por el mismo motivo. `o-1` es el mismo id que usan las
+      // pruebas de ocupación de más abajo; las que prueban el campo lo pisan
+      // por `extra`.
+      occupationConceptId:
+        extra.occupationConceptId === undefined ? 'o-1' : extra.occupationConceptId,
       occupationFreeText: extra.occupationFreeText ?? '',
       licenseIssueDate: null,
       issuerAdministrativeAreaConceptId: null,
@@ -676,13 +684,42 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('sin ocupación seleccionada no envía ni conceptId ni freeText', () => {
-      completarProfesional();
+    it('sin ocupación no manda el alta: la ocupación es obligatoria', () => {
+      completarProfesional({ occupationConceptId: null });
       component.submit();
 
+      http.expectNone('/iam/auth/register-practitioner');
+      expect(component.formProfesional.controls.occupationConceptId.touched).toBe(true);
+      expect(component.formProfesional.controls.occupationConceptId.invalid).toBe(true);
+    });
+
+    it('«Otra ocupación» sin escribir cuál tampoco manda el alta', () => {
+      component.opcionesOcupacion.set([
+        { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
+      ]);
+      completarProfesional();
+      component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
+      component.submit();
+
+      http.expectNone('/iam/auth/register-practitioner');
+      expect(component.formProfesional.controls.occupationFreeText.invalid).toBe(true);
+    });
+
+    it('volver de «Otra» a una ocupación normada libera el texto libre', () => {
+      component.opcionesOcupacion.set([
+        { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
+        { value: 'o-1', label: 'Médico General', code: 'MED_GEN' },
+      ]);
+      completarProfesional();
+      component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
+      expect(component.formProfesional.controls.occupationFreeText.invalid).toBe(true);
+
+      component.elegirOcupacion({ value: 'o-1', label: 'Médico General' });
+
+      expect(component.formProfesional.controls.occupationFreeText.valid).toBe(true);
+      component.submit();
       const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.occupationConceptId).toBeUndefined();
-      expect(req.request.body.occupationFreeText).toBeUndefined();
+      expect(req.request.body.occupationConceptId).toBe('o-1');
       req.flush(RESPUESTA_PRO);
     });
   });
@@ -751,8 +788,9 @@ describe('RegisterPractitioner', () => {
     const req = http.expectOne('/iam/auth/register-practitioner');
     expect(req.request.method).toBe('POST');
     // El identificador de acceso es el correo, no el documento. El nombre va
-    // en partes, igual que en el alta de paciente. El sexo es obligatorio
-    // (AC-05-7): dato clínico, no una cortesía.
+    // en partes, igual que en el alta de paciente. Sexo, fecha de nacimiento y
+    // ocupación son obligatorios: los tres son dato clínico o de filiación, no
+    // una cortesía, así que forman parte del alta mínima.
     expect(req.request.body).toEqual({
       name: 'Ana',
       lastName: 'Paz',
@@ -762,6 +800,8 @@ describe('RegisterPractitioner', () => {
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       sexAtBirth: 'FEMALE',
+      birthDate: '1985-05-12',
+      occupationConceptId: 'o-1',
     });
 
     req.flush(RESPUESTA_PRO);
@@ -919,6 +959,27 @@ describe('RegisterPractitioner', () => {
 
     expect(component.formProfesional.controls.sexAtBirth.touched).toBe(true);
     // No se gastó un viaje a la API: lo confirma el `verify()` del `afterEach`.
+  });
+
+  /**
+   * La edad manda en dosis, valores de referencia y tamizajes: dejarla opcional
+   * era una ficha incompleta que después hay que perseguir.
+   */
+  it('sin fecha de nacimiento, no se manda el alta', () => {
+    completarProfesional({ birthDate: null });
+    component.submit();
+
+    expect(component.formProfesional.controls.birthDate.touched).toBe(true);
+    expect(component.formProfesional.controls.birthDate.invalid).toBe(true);
+  });
+
+  it('con fecha de nacimiento, viaja en el alta', () => {
+    completarProfesional({ birthDate: new Date(1985, 4, 12) });
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.birthDate).toBe('1985-05-12');
+    req.flush(RESPUESTA_PRO);
   });
 
   it('exige matrícula y credencial: sin habilitación no hay alta', () => {
