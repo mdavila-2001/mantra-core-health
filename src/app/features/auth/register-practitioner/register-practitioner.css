@@ -30,6 +30,19 @@
   flex: 1 1 auto;
 }
 
+/* La casilla de especialidad agregada comparte renglón con su botón de
+   quitar, igual que la de nombre. */
+.registro__especialidad-extra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.registro__especialidad-extra app-select {
+  flex: 1 1 auto;
+}
+
 @media (min-width: 40rem) {
   .registro__nombres {
     flex-direction: row;
