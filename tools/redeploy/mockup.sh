@@ -17,11 +17,20 @@
 #       VPS, así que si compila aquí compila allá. Con techo de memoria, que en
 #       esta máquina no es opcional: el swap ya está caliente y una construcción
 #       sin límite se lleva por delante a Postgres —ya pasó una vez—.
-#    3. Extrae `dist/.../browser` de la imagen y lo cambia por el que se sirve
-#       **de un tirón** (`mv` de un directorio hermano, no `rsync` encima): a
-#       mitad de un `rsync` la página queda con el `index.html` nuevo pidiendo
-#       fragmentos que todavía no están, y quien la tenga abierta ve una pantalla
-#       en blanco.
+#    3. Extrae `dist/.../browser` de la imagen a `publico/entregas/<sha>/` y
+#       mueve el enlace `publico/actual` a la entrega nueva. El cambio es de un
+#       tirón —`mv -T` de un enlace simbólico es atómico— y sin `rsync` encima
+#       de lo que se está sirviendo: a mitad de un `rsync` la página queda con
+#       el `index` nuevo pidiendo fragmentos que aún no existen, y quien la
+#       tenga abierta ve una pantalla en blanco.
+#
+#       Por qué un enlace y no mover el directorio servido: **el contenedor de
+#       nginx monta ese directorio**, y un `mv` le cambia el inodo debajo. El
+#       montaje se queda apuntando al directorio viejo —que este script acababa
+#       de borrar— y todo devuelve 404 hasta que alguien recrea el contenedor.
+#       Pasó, y por eso está escrito aquí. Lo que se monta es `publico/`
+#       entero; nginx resuelve `root .../actual` en cada petición, así que ve el
+#       enlace nuevo sin enterarse de nada.
 #    4. Anota el commit servido. Es lo que hace que la pasada siguiente no
 #       vuelva a construir lo mismo.
 #
@@ -38,7 +47,7 @@ set -euo pipefail
 
 RAMA="${MOCKUP_RAMA:-mockup}"
 RAIZ="${MOCKUP_RAIZ:-/opt/alovida-mockup/repo}"
-PUBLICO="${MOCKUP_PUBLICO:-/opt/alovida-mockup/browser}"
+PUBLICO="${MOCKUP_PUBLICO:-/opt/alovida-mockup/publico}"
 ESTADO="${MOCKUP_ESTADO:-/opt/alovida-mockup/estado}"
 CONTENEDOR="${MOCKUP_CONTENEDOR:-alovida-mockup}"
 # 6 GB y no 4: con 4 la construcción de Angular moría en esbuild con un
@@ -63,7 +72,6 @@ commit_servido() {
 construir_y_publicar() {
   local sha="$1" corto="${1:0:7}"
   local imagen="alovida-mockup-build:$corto"
-  local nuevo="$PUBLICO.nuevo" viejo="$PUBLICO.viejo"
 
   log "BUILD: construyendo $corto"
   # `--target build` se queda en la etapa que compila: no hace falta la imagen
@@ -77,23 +85,24 @@ construir_y_publicar() {
     return 1
   fi
 
-  local contenedor
+  local contenedor entrega="$PUBLICO/entregas/$corto"
   contenedor="$(docker create "$imagen")"
-  rm -rf "$nuevo"
-  mkdir -p "$nuevo"
-  docker cp "$contenedor:/app/dist/mantra-core-health/browser/." "$nuevo/" >>"$BITACORA" 2>&1
+  rm -rf "$entrega"
+  mkdir -p "$entrega"
+  docker cp "$contenedor:/app/dist/mantra-core-health/browser/." "$entrega/" >>"$BITACORA" 2>&1
   docker rm -f "$contenedor" >/dev/null
 
-  if [[ ! -f "$nuevo/index.csr.html" ]]; then
+  if [[ ! -f "$entrega/index.csr.html" ]]; then
     log "BUILD: el artefacto no trae index.csr.html — no se publica"
-    rm -rf "$nuevo"
+    rm -rf "$entrega"
     return 1
   fi
 
-  rm -rf "$viejo"
-  [[ -d "$PUBLICO" ]] && mv "$PUBLICO" "$viejo"
-  mv "$nuevo" "$PUBLICO"
-  rm -rf "$viejo"
+  # El cambio, de un tirón: `ln -sfn` sobre un enlace que ya existe no es
+  # atómico —lo borra y lo crea—, así que se crea al lado y se mueve con
+  # `mv -T`, que sí lo es.
+  ln -sfn "entregas/$corto" "$PUBLICO/.actual.nuevo"
+  mv -T "$PUBLICO/.actual.nuevo" "$PUBLICO/actual"
 
   echo "$sha" >"$ESTADO/COMMIT_DESPLEGADO"
   rm -f "$ESTADO/COMMIT_FALLIDO"
@@ -103,6 +112,9 @@ construir_y_publicar() {
   docker image prune -f --filter 'label=stage=build' >/dev/null 2>&1 || true
   docker images 'alovida-mockup-build' --format '{{.Repository}}:{{.Tag}}' | tail -n +4 |
     xargs -r docker rmi >/dev/null 2>&1 || true
+
+  # Se guardan las tres últimas entregas: volver atrás es mover el enlace.
+  ls -1dt "$PUBLICO/entregas"/*/ 2>/dev/null | tail -n +4 | xargs -r rm -rf
 
   log "OK: sirviendo $corto en $URL"
 }
