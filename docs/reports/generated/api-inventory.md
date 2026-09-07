@@ -2,7 +2,7 @@
 
 # Inventario de operaciones HTTP
 
-400 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
+402 operaciones declaradas en `src/app/core/data-access/**/*.client.ts`.
 Ningún componente arma URLs por su cuenta: si esta lista está completa, la
 superficie de red de la aplicación está completa.
 
@@ -139,6 +139,8 @@ Archivo: `src/app/core/data-access/clinical/clinical.client.ts`
 | `POST` | `/clinical/diagnostic-reports/:diagnosticReportId/release` |
 | `POST` | `/clinical/encounters/:encounterId/close` |
 | `POST` | `/clinical/encounters/check-in` |
+| `GET` | `/clinical/me/medical-aspects` |
+| `PUT` | `/clinical/me/medical-aspects` |
 | `POST` | `/clinical/medication-requests` |
 | `POST` | `/clinical/medication-requests/:medicationRequestId/issue` |
 | `POST` | `/clinical/medication-requests/:medicationRequestId/sign` |

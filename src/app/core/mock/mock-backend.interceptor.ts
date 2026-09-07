@@ -10,6 +10,7 @@ import { from, Observable, of, throwError, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
+import { apiRealForzada } from './modo-api';
 import { isMockReply, type MockMethod, type MockReply, type MockRequest, type MockRouter } from './mock-router';
 import { usuarioDeAccessToken } from './mock-session';
 
@@ -40,7 +41,10 @@ function routerSimulado(): Promise<MockRouter> {
 }
 
 export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
-  if (!environment.mockBackend) {
+  // `apiRealForzada` es el interruptor del stock de componentes: deja pasar la
+  // petición a la red para poder comparar una pantalla con datos simulados y
+  // con datos de verdad. Apagado por omisión y sin persistir. Ver `modo-api.ts`.
+  if (!environment.mockBackend || apiRealForzada()) {
     return next(request);
   }
 

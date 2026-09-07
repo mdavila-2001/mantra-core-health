@@ -1,221 +1,410 @@
 @let ficha = elegido();
-@let cuenta = recuento();
+@let numeros = recuento();
+@let pos = posicion();
 
-<div class="stock" (keydown)="teclado($event)" tabindex="-1">
-  <header class="stock__cabecera">
-    <div>
-      <h1>Stock de componentes</h1>
-      <p class="stock__resumen">
-        {{ cuenta.total }} componentes del proyecto, sacados del código.
-        <strong>{{ cuenta.conProblemas }}</strong> tienen algo que mirar.
-      </p>
-    </div>
+<div class="banco" (keydown)="teclado($event)" tabindex="-1">
+  <!-- ─────────────────────────────────────────────────── barra superior -->
+  <header class="barra">
+    <a class="barra__marca" routerLink="/design-system/stock">
+      <span class="barra__punto"></span>
+      Stock de componentes
+    </a>
+
+    <span class="barra__cifra">
+      {{ numeros.total }} componentes · <strong>{{ numeros.conProblemas }}</strong> con algo que mirar
+    </span>
+
     @if (ficha !== null) {
-      <a class="stock__volver" routerLink="/design-system/stock">← Volver al listado</a>
+      <div class="barra__grupo" role="group" aria-label="Tamaño de pantalla">
+        @for (d of dispositivos; track d.clave) {
+          <button
+            type="button"
+            class="barra__opcion"
+            [class.barra__opcion--activa]="dispositivo().clave === d.clave"
+            [title]="d.ancho + '×' + d.alto"
+            (click)="elegirDispositivo(d.clave)"
+          >
+            {{ d.nombre }}
+          </button>
+        }
+        <button
+          type="button"
+          class="barra__opcion"
+          [class.barra__opcion--activa]="apaisado()"
+          title="Girar"
+          (click)="apaisado.set(!apaisado())"
+        >
+          ⟳
+        </button>
+      </div>
+
+      <label class="barra__zoom">
+        Zoom
+        <input
+          type="range"
+          min="0.4"
+          max="1"
+          step="0.1"
+          [value]="zoom()"
+          (input)="zoom.set(+$any($event.target).value)"
+        />
+        <span>{{ (zoom() * 100).toFixed(0) }}%</span>
+      </label>
+
+      <label class="barra__interruptor" title="Entrar como una de las cuentas de prueba">
+        Cuenta
+        <select [value]="cuenta() ?? ''" (change)="cuenta.set($any($event.target).value || null)">
+          <option value="">Sin sesión</option>
+          @for (u of cuentas; track u.key) {
+            <option [value]="u.key">{{ u.key }}</option>
+          }
+        </select>
+      </label>
+
+      <label
+        class="barra__interruptor barra__interruptor--peligro"
+        title="Deja pasar las peticiones a la API de verdad en vez del backend simulado"
+      >
+        <input type="checkbox" [checked]="apiReal()" (change)="apiReal.set($any($event.target).checked)" />
+        API real
+      </label>
     }
   </header>
 
-  @if (ficha === null) {
-    <!-- ------------------------------------------------------ el listado -->
-    <section class="stock__filtros" aria-label="Filtros del listado">
-      <label class="stock__campo">
-        <span>Buscar</span>
+  <div class="banco__cuerpo">
+    <!-- ───────────────────────────────────────────────────────── barra lateral -->
+    <aside class="lista" aria-label="Componentes">
+      <div class="lista__filtros">
         <input
           type="search"
-          placeholder="Clase, selector o ruta…"
+          class="lista__buscar"
+          placeholder="Buscar componente…"
           [value]="texto()"
           (input)="texto.set($any($event.target).value)"
         />
-      </label>
-
-      <label class="stock__campo">
-        <span>Nivel</span>
-        <select [value]="nivel()" (change)="nivel.set($any($event.target).value)">
+        <select
+          class="lista__nivel"
+          [value]="nivel()"
+          (change)="nivel.set($any($event.target).value)"
+        >
           <option value="todos">Todos los niveles</option>
           @for (n of niveles; track n) {
             <option [value]="n">{{ etiquetaDeNivel[n] }}</option>
           }
         </select>
-      </label>
-
-      <label class="stock__casilla">
-        <input
-          type="checkbox"
-          [checked]="soloConProblemas()"
-          (change)="soloConProblemas.set($any($event.target).checked)"
-        />
-        <span>Sólo los que tienen problemas</span>
-      </label>
-    </section>
-
-    <p class="stock__conteo">
-      {{ filtrados().length }} de {{ cuenta.total }}
-      @for (grupo of cuenta.porNivel; track grupo.nivel) {
-        <span class="stock__pastilla">{{ etiquetaDeNivel[grupo.nivel] }}: {{ grupo.cuantos }}</span>
-      }
-    </p>
-
-    <table class="stock__tabla">
-      <caption class="stock__oculto">Todos los componentes del proyecto</caption>
-      <thead>
-        <tr>
-          <th scope="col">Componente</th>
-          <th scope="col">Nivel</th>
-          <th scope="col">Usa</th>
-          <th scope="col">Entradas</th>
-          <th scope="col">Prueba</th>
-          <th scope="col">Problemas</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (c of filtrados(); track c.clave) {
-          <tr>
-            <th scope="row">
-              <a [routerLink]="['/design-system/stock', c.clave]">{{ c.clase }}</a>
-              <code>{{ c.selector }}</code>
-            </th>
-            <td>{{ etiquetaDeNivel[c.nivel] }}</td>
-            <td class="stock__composicion">
-              @if (c.usa.atomos.length > 0) { <span title="Átomos">á{{ c.usa.atomos.length }}</span> }
-              @if (c.usa.moleculas.length > 0) { <span title="Moléculas">m{{ c.usa.moleculas.length }}</span> }
-              @if (c.usa.organismos.length > 0) { <span title="Organismos">o{{ c.usa.organismos.length }}</span> }
-            </td>
-            <td>{{ c.entradas.length }}</td>
-            <td>{{ c.tieneSpec ? 'sí' : '—' }}</td>
-            <td>
-              @if (c.problemas.length > 0) {
-                <span class="stock__aviso">{{ c.problemas.length }}</span>
-              } @else {
-                <span class="stock__ok">✓</span>
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="6">Ningún componente coincide con el filtro.</td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  } @else {
-    <!-- --------------------------------------------------------- la ficha -->
-    @let pos = posicion();
-
-    <nav class="stock__paso" aria-label="Recorrido por los componentes">
-      <button type="button" [disabled]="pos?.anterior === null" (click)="irA(pos?.anterior ?? null)">
-        ← Anterior
-      </button>
-      <span>{{ pos?.indice }} de {{ pos?.total }}</span>
-      <button type="button" [disabled]="pos?.siguiente === null" (click)="irA(pos?.siguiente ?? null)">
-        Siguiente →
-      </button>
-      <span class="stock__pista">También con las flechas ← →</span>
-    </nav>
-
-    <article class="stock__ficha">
-      <header class="stock__ficha-cabecera">
-        <div>
-          <h2>{{ ficha.clase }} <code>&lt;{{ ficha.selector }}&gt;</code></h2>
-          <p class="stock__ruta">{{ ficha.path }}</p>
-          @if (ficha.resumen !== '') {
-            <p class="stock__descripcion">{{ ficha.resumen }}</p>
-          }
-        </div>
-        <div class="stock__acciones">
-          <button type="button" class="stock__primario" (click)="otrosDatos()">Otros datos</button>
-          <button type="button" (click)="copiarInforme()">Copiar informe</button>
-        </div>
-      </header>
-
-      <section class="stock__bloque">
-        <h3>Cómo se ve, con datos</h3>
-        @switch (estadoDelMontaje()) {
-          @case ('montando') { <p class="stock__estado">Montando…</p> }
-          @case ('falló') {
-            <p class="stock__fallo">
-              <strong>No se pudo montar aislado.</strong> {{ errorDelMontaje() }}
-            </p>
-          }
-        }
-        <div class="stock__lienzo" #lienzo></div>
-      </section>
-
-      <div class="stock__columnas">
-        <section class="stock__bloque">
-          <h3>Qué usa</h3>
-          @if (ficha.usa.organismos.length > 0) {
-            <p class="stock__lista"><strong>Organismos</strong>
-              @for (x of ficha.usa.organismos; track x) { <span class="stock__pastilla">{{ x }}</span> }
-            </p>
-          }
-          @if (ficha.usa.moleculas.length > 0) {
-            <p class="stock__lista"><strong>Moléculas</strong>
-              @for (x of ficha.usa.moleculas; track x) { <span class="stock__pastilla">{{ x }}</span> }
-            </p>
-          }
-          @if (ficha.usa.atomos.length > 0) {
-            <p class="stock__lista"><strong>Átomos</strong>
-              @for (x of ficha.usa.atomos; track x) { <span class="stock__pastilla">{{ x }}</span> }
-            </p>
-          }
-          @if (ficha.usa.atomos.length === 0 && ficha.usa.moleculas.length === 0 && ficha.usa.organismos.length === 0) {
-            <p class="stock__estado">No compone con nada del sistema de diseño.</p>
-          }
-          @if (ficha.usadoPor.length > 0) {
-            <p class="stock__lista"><strong>Lo usan</strong>
-              @for (x of ficha.usadoPor; track x) { <span class="stock__pastilla">{{ x }}</span> }
-            </p>
-          }
-          @if (ficha.clientes.length > 0) {
-            <p class="stock__lista"><strong>Pide a la API</strong>
-              @for (x of ficha.clientes; track x) { <span class="stock__pastilla">{{ x }}</span> }
-            </p>
-          }
-        </section>
-
-        <section class="stock__bloque">
-          <h3>Entradas ({{ ficha.entradas.length }})</h3>
-          @if (ficha.entradas.length === 0) {
-            <p class="stock__estado">No recibe nada: lo que pinta lo saca de dentro.</p>
-          } @else {
-            <table class="stock__tabla stock__tabla--compacta">
-              <thead>
-                <tr><th scope="col">Nombre</th><th scope="col">Tipo</th><th scope="col">Valor de prueba</th></tr>
-              </thead>
-              <tbody>
-                @for (e of ficha.entradas; track e.nombre) {
-                  <tr>
-                    <th scope="row">{{ e.nombre }}@if (e.requerido) { <span class="stock__req" title="Obligatoria">*</span> }</th>
-                    <td><code>{{ e.tipo }}</code></td>
-                    <td><code>{{ valoresUsados()[e.nombre] ?? '—' }}</code></td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          }
-          @if (ficha.salidas.length > 0) {
-            <p class="stock__lista"><strong>Salidas</strong>
-              @for (s of ficha.salidas; track s) { <span class="stock__pastilla">{{ s }}</span> }
-            </p>
-          }
-        </section>
+        <label class="lista__casilla">
+          <input
+            type="checkbox"
+            [checked]="soloConProblemas()"
+            (change)="soloConProblemas.set($any($event.target).checked)"
+          />
+          Sólo con problemas
+        </label>
+        <p class="lista__conteo">{{ numeros.filtrados }} de {{ numeros.total }}</p>
       </div>
 
-      <section class="stock__bloque">
-        <h3>Problemas ({{ ficha.problemas.length + avisosDeConsola().length }})</h3>
-        @if (ficha.problemas.length === 0 && avisosDeConsola().length === 0) {
-          <p class="stock__ok">Nada que reprocharle.</p>
-        } @else {
-          <ul class="stock__problemas">
-            @for (p of ficha.problemas; track p.detalle) {
-              <li><span class="stock__tipo">{{ p.tipo }}</span> {{ p.detalle }}</li>
-            }
-            @for (a of avisosDeConsola(); track a) {
-              <li><span class="stock__tipo">consola</span> {{ a }}</li>
-            }
-          </ul>
+      <nav class="lista__arbol">
+        @for (grupo of grupos(); track grupo.nivel) {
+          <details open>
+            <summary>{{ grupo.etiqueta }} <span>{{ grupo.componentes.length }}</span></summary>
+            <ul>
+              @for (c of grupo.componentes; track c.clave) {
+                <li>
+                  <a
+                    [routerLink]="['/design-system/stock', c.clave]"
+                    [class.lista__activo]="ficha?.clave === c.clave"
+                  >
+                    <span class="lista__clase">{{ c.clase }}</span>
+                    @if (c.problemas.length > 0) {
+                      <span class="lista__marca">{{ c.problemas.length }}</span>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          </details>
+        } @empty {
+          <p class="lista__vacio">Nada coincide con el filtro.</p>
         }
-      </section>
-    </article>
-  }
+      </nav>
+    </aside>
+
+    <!-- ────────────────────────────────────────────────────────── el banco -->
+    <main class="lienzo">
+      @if (ficha === null) {
+        <section class="bienvenida">
+          <h1>Banco de pruebas de componentes</h1>
+          <p>
+            Elegí un componente en la lista de la izquierda. Se monta de verdad dentro de un marco
+            del tamaño que elijas —móvil, tableta o escritorio— con datos generados, y podés verlo
+            como cualquiera de las cuentas de prueba.
+          </p>
+          <ul>
+            <li><strong>{{ numeros.total }}</strong> componentes, sacados del código</li>
+            <li><strong>{{ numeros.conProblemas }}</strong> con algo que mirar antes de tocarlos</li>
+            <li>Las flechas ← → recorren la lista filtrada, uno por uno</li>
+          </ul>
+        </section>
+      } @else {
+        <header class="lienzo__cabecera">
+          <div>
+            <h1>{{ ficha.clase }}</h1>
+            <p class="lienzo__meta">
+              <code>&lt;{{ ficha.selector }}&gt;</code>
+              <span>{{ etiquetaDeNivel[ficha.nivel] }}</span>
+              <span>{{ ficha.path }}</span>
+            </p>
+          </div>
+
+          <div class="lienzo__acciones">
+            <button type="button" [disabled]="pos?.anterior === null" (click)="irA(pos?.anterior ?? null)">←</button>
+            <span class="lienzo__posicion">{{ pos?.indice }} / {{ pos?.total }}</span>
+            <button type="button" [disabled]="pos?.siguiente === null" (click)="irA(pos?.siguiente ?? null)">→</button>
+            <button type="button" class="lienzo__principal" (click)="otrosDatos()">Otros datos</button>
+            @if (variantes() !== null) {
+              <button
+                type="button"
+                [class.lienzo__principal]="matriz()"
+                (click)="matriz.set(!matriz())"
+              >
+                Matriz de variantes
+              </button>
+            }
+            <button type="button" (click)="copiarInforme()">Copiar informe</button>
+          </div>
+        </header>
+
+        @if (ficha.resumen !== '') {
+          <p class="lienzo__resumen">{{ ficha.resumen }}</p>
+        }
+
+        <div class="marco-zona">
+          <div class="marco-zona__regla">
+            {{ ancho() }} × {{ alto() }} px · {{ dispositivo().nombre }}
+            @if (estado() === 'montando') { <span class="marco-zona__estado">montando…</span> }
+            @if (estado() === 'montado') {
+              <span class="marco-zona__estado marco-zona__estado--ok">montado en {{ milisegundos() }} ms</span>
+            }
+            @if (estado() === 'falló') { <span class="marco-zona__estado marco-zona__estado--mal">no monta</span> }
+          </div>
+
+          @if (error() !== null) {
+            <p class="marco-zona__error"><strong>No se pudo montar aislado.</strong> {{ error() }}</p>
+          }
+
+          <div
+            class="marco-zona__caja"
+            [style.width.px]="ancho() * zoom()"
+            [style.height.px]="alto() * zoom()"
+          >
+            <iframe
+              #marco
+              title="Vista del componente"
+              class="marco-zona__marco"
+              [style.width.px]="ancho()"
+              [style.height.px]="alto()"
+              [style.transform]="'scale(' + zoom() + ')'"
+            ></iframe>
+          </div>
+        </div>
+
+        <!-- ─────────────────────────────────────────────── panel de inspección -->
+        <section class="panel">
+          <nav class="panel__pestanas" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'props'"
+              [class.panel__activa]="pestana() === 'props'"
+              (click)="pestana.set('props')"
+            >
+              Entradas <span>{{ ficha.entradas.length }}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'composicion'"
+              [class.panel__activa]="pestana() === 'composicion'"
+              (click)="pestana.set('composicion')"
+            >
+              Composición
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'problemas'"
+              [class.panel__activa]="pestana() === 'problemas'"
+              (click)="pestana.set('problemas')"
+            >
+              Problemas <span class="panel__marca">{{ totalDeProblemas() }}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'red'"
+              [class.panel__activa]="pestana() === 'red'"
+              (click)="pestana.set('red')"
+            >
+              Red <span>{{ peticiones().length }}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              [attr.aria-selected]="pestana() === 'accesibilidad'"
+              [class.panel__activa]="pestana() === 'accesibilidad'"
+              (click)="pestana.set('accesibilidad')"
+            >
+              Accesibilidad
+            </button>
+          </nav>
+
+          <div class="panel__contenido">
+            @switch (pestana()) {
+              @case ('props') {
+                @if (ficha.entradas.length === 0) {
+                  <p class="panel__vacio">No recibe nada: lo que pinta lo saca de dentro.</p>
+                } @else {
+                  <table class="tabla">
+                    <thead>
+                      <tr>
+                        <th scope="col">Entrada</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Valor (editable)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (e of ficha.entradas; track e.nombre) {
+                        <tr>
+                          <th scope="row">
+                            {{ e.nombre }}
+                            @if (e.requerido) { <abbr title="Obligatoria">*</abbr> }
+                          </th>
+                          <td><code>{{ e.tipo }}</code></td>
+                          <td>
+                            <input
+                              type="text"
+                              class="tabla__editor"
+                              [value]="valorDe()(e.nombre)"
+                              (change)="editar(e.nombre, $any($event.target).value)"
+                            />
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+                @if (ficha.salidas.length > 0) {
+                  <p class="panel__linea">
+                    <strong>Salidas</strong>
+                    @for (s of ficha.salidas; track s) { <span class="pastilla">{{ s }}</span> }
+                  </p>
+                }
+              }
+
+              @case ('composicion') {
+                @if (ficha.usa.organismos.length > 0) {
+                  <p class="panel__linea"><strong>Organismos</strong>
+                    @for (x of ficha.usa.organismos; track x) {
+                      <button type="button" class="pastilla pastilla--enlace" (click)="irAClase(x)">{{ x }}</button>
+                    }
+                  </p>
+                }
+                @if (ficha.usa.moleculas.length > 0) {
+                  <p class="panel__linea"><strong>Moléculas</strong>
+                    @for (x of ficha.usa.moleculas; track x) {
+                      <button type="button" class="pastilla pastilla--enlace" (click)="irAClase(x)">{{ x }}</button>
+                    }
+                  </p>
+                }
+                @if (ficha.usa.atomos.length > 0) {
+                  <p class="panel__linea"><strong>Átomos</strong>
+                    @for (x of ficha.usa.atomos; track x) {
+                      <button type="button" class="pastilla pastilla--enlace" (click)="irAClase(x)">{{ x }}</button>
+                    }
+                  </p>
+                }
+                @if (ficha.usa.atomos.length === 0 && ficha.usa.moleculas.length === 0 && ficha.usa.organismos.length === 0) {
+                  <p class="panel__vacio">No compone con nada del sistema de diseño.</p>
+                }
+                @if (ficha.clientes.length > 0) {
+                  <p class="panel__linea"><strong>Pide a la API</strong>
+                    @for (x of ficha.clientes; track x) { <span class="pastilla">{{ x }}</span> }
+                  </p>
+                }
+                @if (ficha.usadoPor.length > 0) {
+                  <p class="panel__linea"><strong>Lo usan ({{ ficha.usadoPor.length }})</strong>
+                    @for (x of ficha.usadoPor; track x) {
+                      <button type="button" class="pastilla pastilla--enlace" (click)="irAClase(x)">{{ x }}</button>
+                    }
+                  </p>
+                }
+              }
+
+              @case ('problemas') {
+                @if (totalDeProblemas() === 0) {
+                  <p class="panel__ok">Nada que reprocharle: monta limpio y sin avisos.</p>
+                } @else {
+                  <ul class="problemas">
+                    @if (estado() === 'falló') {
+                      <li><span class="problemas__tipo problemas__tipo--mal">no monta</span> {{ error() }}</li>
+                    }
+                    @for (p of ficha.problemas; track p.detalle) {
+                      <li><span class="problemas__tipo">{{ p.tipo }}</span> {{ p.detalle }}</li>
+                    }
+                    @for (a of consola(); track a) {
+                      <li><span class="problemas__tipo">consola</span> {{ a }}</li>
+                    }
+                    @for (a of accesibilidad() ?? []; track a.descripcion) {
+                      <li><span class="problemas__tipo">a11y · {{ a.impacto }}</span> {{ a.descripcion }}</li>
+                    }
+                  </ul>
+                }
+              }
+
+              @case ('red') {
+                @if (peticiones().length === 0) {
+                  <p class="panel__vacio">
+                    No pidió nada a la red al montarse.
+                    @if (ficha.clientes.length > 0) {
+                      Inyecta {{ ficha.clientes.join(', ') }}, así que probablemente pida al interactuar.
+                    }
+                  </p>
+                } @else {
+                  <ul class="peticiones">
+                    @for (p of peticiones(); track p) { <li><code>{{ p }}</code></li> }
+                  </ul>
+                }
+                @if (apiReal()) {
+                  <p class="panel__aviso">
+                    <strong>API real encendida.</strong> Estas peticiones salieron a la red de verdad,
+                    no al backend simulado.
+                  </p>
+                }
+              }
+
+              @case ('accesibilidad') {
+                <button type="button" class="lienzo__principal" [disabled]="auditando()" (click)="auditar()">
+                  {{ auditando() ? 'Auditando…' : 'Auditar con axe' }}
+                </button>
+                @if (accesibilidad() === null) {
+                  <p class="panel__vacio">Sin auditar todavía.</p>
+                } @else if (accesibilidad()!.length === 0) {
+                  <p class="panel__ok">Sin fallos de accesibilidad detectados por axe.</p>
+                } @else {
+                  <ul class="problemas">
+                    @for (a of accesibilidad()!; track a.descripcion) {
+                      <li>
+                        <span class="problemas__tipo problemas__tipo--mal">{{ a.impacto }}</span>
+                        {{ a.descripcion }} · {{ a.nodos }} nodo(s)
+                      </li>
+                    }
+                  </ul>
+                }
+              }
+            }
+          </div>
+        </section>
+      }
+    </main>
+  </div>
 </div>

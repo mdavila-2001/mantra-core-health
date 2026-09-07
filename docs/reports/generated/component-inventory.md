@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-445 componentes y 84 servicios inyectables, leídos de `src/`.
+447 componentes y 84 servicios inyectables, leídos de `src/`.
 
 ## Átomo (19)
 
@@ -28,7 +28,7 @@
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (33)
+## Molécula (34)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -60,6 +60,7 @@
 | `app-rich-text-editor` | `RichTextEditor` | `label`, `placeholder`, `readOnly` | `edited` | `html` | OnPush | sí |
 | `app-search-field` | `SearchField` | `placeholder`, `debounceMs`, `loading`, `disabled`, `label` | `searched` | `value` | OnPush | sí |
 | `li[app-search-result]` | `SearchResult` | `resultado` | — | — | OnPush | sí |
+| `app-segmented-control` | `SegmentedControl` | `options`, `value`, `ariaLabel`, `size` | `valueChange` | — | OnPush | sí |
 | `app-stepper` | `Stepper` | `steps`, `label`, `interactive`, `compact` | `stepSelected` | — | OnPush | sí |
 | `app-tab-help-block` | `TabHelpBlock` | `helpId`, `title`, `tutorialId` | — | — | OnPush | sí |
 | `app-tab` | `Tab` | `label`, `disabled` | — | — | OnPush | **no** |
@@ -97,7 +98,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (364)
+## Feature (365)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -112,7 +113,7 @@
 | `app-where-to-buy` | `WhereToBuy` | — | — | — | OnPush | sí |
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
-| `app-patient-profile-edit` | `PatientProfileEdit` | — | — | — | OnPush | sí |
+| `app-patient-profile-edit` | `PatientProfileEdit` | `embebido` | `cerrado` | — | OnPush | sí |
 | `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | — | OnPush | sí |
 | `app-practitioner-profile-view` | `PractitionerProfileView` | `perfil`, `esPropio`, `previewMode` | `trayectoriaCambio` | — | OnPush | sí |
 | `app-practitioner-profile` | `PractitionerProfile` | — | — | — | OnPush | sí |
@@ -126,6 +127,7 @@
 | `app-order-receipt` | `OrderReceipt` | — | — | — | OnPush | sí |
 | `app-pharmacy-orders` | `PharmacyOrders` | — | — | — | OnPush | sí |
 | `app-questionnaire-answer` | `QuestionnaireAnswer` | — | — | — | OnPush | sí |
+| `app-medical-aspects` | `MedicalAspects` | — | — | — | OnPush | sí |
 | `app-questionnaires` | `Questionnaires` | — | — | — | OnPush | **no** |
 | `app-accounting` | `Accounting` | — | — | — | OnPush | sí |
 | `app-assisted-registration` | `AssistedRegistration` | — | — | — | OnPush | sí |
