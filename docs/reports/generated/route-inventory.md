@@ -6,15 +6,15 @@ Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 17 entradas 
 
 | URL | Destino | Acceso | Render en servidor | Título |
 |---|---|---|---|---|
+| `/` | — | Protegida (`homeGuard`) | Client | — |
 | `/` | `ShellLayout` | Protegida (`authGuard`) | Client | — |
-| `/` | redirige a `dashboard` | Protegida (`authGuard`) | Client | — |
 | `/feed` | `Feed` (diferida) | Protegida (`authGuard`) | Client | Muro profesional |
 | `/design-system` | `DesignSystemSample` (diferida) | Pública | Prerender | AloVida - Vitrina de Diseño |
 | `/auth` | `Login` | Pública | Prerender | AloVida - Iniciar sesión |
 | `/auth/organization` | `TenantSelection` | Pública | Client | AloVida - Elegí tu organización |
 | `/auth/register` | `RegisterAccountType` | Pública | Prerender | AloVida - Crear cuenta |
-| `/auth/register/patient` | `RegisterPatient` | Pública | Prerender | AloVida - Crear cuenta de paciente |
-| `/auth/register/practitioner` | `RegisterPatient` | Pública | Prerender | AloVida - Crear cuenta de profesional |
+| `/auth/register/patient` | `RegisterPatient` (diferida) | Pública | Prerender | AloVida - Crear cuenta de paciente |
+| `/auth/register/practitioner` | `RegisterPractitioner` (diferida) | Pública | Prerender | AloVida - Crear cuenta de profesional |
 | `/auth/register/organization` | `RegisterOrganization` | Pública | Prerender | AloVida - Registrar aseguradora |
 | `/auth/verify-email` | `VerifyEmail` | Pública | Client | AloVida - Verificar correo |
 | `/auth/forgot-password` | `ForgotPassword` | Pública | Prerender | AloVida - Recuperar contraseña |

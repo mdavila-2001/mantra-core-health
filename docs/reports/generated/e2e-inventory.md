@@ -2,7 +2,7 @@
 
 # Inventario de la suite de extremo a extremo (Cypress)
 
-Leído de `cypress/`. 36 archivos de prueba, 176 pruebas, 11 Page Objects y 12 escenarios de API.
+Leído de `cypress/`. 37 archivos de prueba, 177 pruebas, 11 Page Objects y 12 escenarios de API.
 
 La guía de uso —cómo correrla, cómo agregar una prueba, qué variables acepta—
 está en [`cypress/README.md`](../../../cypress/README.md).
@@ -11,6 +11,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 
 | Suite | Bloque | Pruebas | Archivo |
 | --- | --- | --- | --- |
+| `e2e` | Pantallas portadas de la bóveda | 5 | `cypress/e2e/alovida-port.cy.ts` |
 | `authentication` | Autenticación · inicio de sesión | 7 | `cypress/e2e/authentication/login.cy.ts` |
 | `authentication` | Autenticación · sesión | 6 | `cypress/e2e/authentication/sesion.cy.ts` |
 | `carriles` | P3 · muro social (segundo motor) · P6 · moderación (segundo motor) · catálogo compartido | 4 | `cypress/e2e/carriles/p3-p6-smoke.cy.ts` |
@@ -37,7 +38,7 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 | `recorrido` | Recorrido · administración | 10 | `cypress/e2e/recorrido/03-administracion.cy.ts` |
 | `recorrido` | Recorrido · vitrina de diseño | 3 | `cypress/e2e/recorrido/04-vitrina.cy.ts` |
 | `recorrido` | Recorrido · atención | 5 | `cypress/e2e/recorrido/05-atencion.cy.ts` |
-| `e2e` | Pantallas portadas de la bóveda | 5 | `cypress/e2e/alovida-port.cy.ts` |
+| `recorrido` | Recorrido · mi historia clínica | 1 | `cypress/e2e/recorrido/06-historia.cy.ts` |
 | `regression` | Regresión · accesibilidad | 6 | `cypress/e2e/regression/accesibilidad.cy.ts` |
 | `regression` | Regresión · glosario médico | 2 | `cypress/e2e/regression/glosario.cy.ts` |
 | `regression` | Regresión · modales | 6 | `cypress/e2e/regression/modales.cy.ts` |
@@ -83,4 +84,4 @@ está en [`cypress/README.md`](../../../cypress/README.md).
 
 ## Coherencia de los selectores
 
-**9 identificador(es) que la suite usa ya no existen en ninguna plantilla:** `registro-apellido-materno`, `registro-apellido-paterno`, `registro-correo`, `registro-documento`, `registro-nombre`, `registro-password`, `registro-segundo-nombre`, `tipo-paciente`, `tipo-profesional`. Las pruebas que los usan van a fallar.
+**8 identificador(es) que la suite usa ya no existen en ninguna plantilla:** `login-mfa`, `registro-apellido-materno`, `registro-apellido-paterno`, `registro-correo`, `registro-documento`, `registro-password`, `tipo-paciente`, `tipo-profesional`. Las pruebas que los usan van a fallar.

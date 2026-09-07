@@ -46,6 +46,22 @@ const LAYER_EXCEPTIONS = ['src/app/core/dev/'];
 /** Dónde puede vivir una llamada HTTP. */
 const NETWORK_ALLOWED = ['src/app/core/data-access/', 'src/app/app.config.ts'];
 
+/**
+ * Dónde puede vivir el generador de datos falsos.
+ *
+ * `@faker-js/faker` es una dependencia de ejecución, no de desarrollo: viaja
+ * dentro del trozo que el interceptor carga con `import('./handlers')` la
+ * primera vez que alguien pide algo. Ahí no molesta —ese trozo no tiene
+ * presupuesto— pero un solo `import` desde un componente lo arrastraría al
+ * paquete inicial, que sí lo tiene (620 kB de aviso, 1,3 MB de error en
+ * `angular.json`), y el aviso llegaría en el `pre-push` de otra persona.
+ *
+ * La otra razón es de fondo: los datos falsos son del backend simulado. Una
+ * pantalla que los genere por su cuenta es una pantalla que miente también
+ * contra la API de verdad.
+ */
+const FAKER_ALLOWED = ['src/app/core/mock/'];
+
 const problems = [];
 
 // --- 1 · ciclos -------------------------------------------------------------
@@ -121,6 +137,26 @@ if (network.length > 0) {
   );
 }
 
+// --- 4 · el generador de datos falsos --------------------------------------
+
+const faker = [];
+
+for (const file of walk(SRC_ROOT, ['.ts'])) {
+  const path = repoPath(file);
+  if (FAKER_ALLOWED.some((prefix) => path.startsWith(prefix))) continue;
+
+  if (/from\s+'@faker-js\/faker'|require\('@faker-js\/faker'\)/.test(read(file))) {
+    faker.push(path);
+  }
+}
+
+if (faker.length > 0) {
+  problems.push(
+    `${faker.length} archivo(s) importan @faker-js/faker fuera de core/mock/:`,
+    ...faker.map((path) => `    ${path}`),
+  );
+}
+
 // --- informe ----------------------------------------------------------------
 
 void join;
@@ -135,7 +171,9 @@ if (problems.length > 0) {
 
 console.log('✓ check-architecture');
 console.log(`  ${graph.files.length} archivos · ${graph.edges.length} importaciones internas`);
-console.log('  sin ciclos · capas en una sola dirección · red confinada a core/data-access/');
+console.log(
+  '  sin ciclos · capas en una sola dirección · red confinada a core/data-access/ · faker confinado a core/mock/',
+);
 console.log(
   `  excepción declarada: ${LAYER_EXCEPTIONS.join(', ')} (herramienta de desarrollo, diferida)`,
 );

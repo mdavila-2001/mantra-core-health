@@ -1261,6 +1261,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@faker-js/faker@npm:^10.6.0":
+  version: 10.6.0
+  resolution: "@faker-js/faker@npm:10.6.0"
+  checksum: 10c0/ee285d597249a019f3a11b6705d1908616ea9e880207ca4f89e6205dbf7e98abd1129f025f5da19484f5e88f556b0629a4363745ff0bbaf1984ebf54cffde6e3
+  languageName: node
+  linkType: hard
+
 "@fontsource-variable/inter@npm:^5.3.0":
   version: 5.3.0
   resolution: "@fontsource-variable/inter@npm:5.3.0"
@@ -6272,6 +6279,7 @@ __metadata:
     "@angular/router": "npm:^21.2.0"
     "@angular/ssr": "npm:^21.2.11"
     "@eslint/js": "npm:^10.0.1"
+    "@faker-js/faker": "npm:^10.6.0"
     "@fontsource-variable/inter": "npm:^5.3.0"
     "@fontsource/poppins": "npm:^5.3.0"
     "@opentelemetry/api": "npm:1.9.1"

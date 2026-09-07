@@ -13,6 +13,7 @@ import {
   TIPO_CREDENCIAL,
   TIPO_VINCULO,
 } from './conceptos';
+import * as fk from '../faker';
 import { IDS, TENANT_CLINICA, TENANT_HOSPITAL } from '../mock-session';
 import { Coleccion, iso, isoDia, uuid } from '../mock-store';
 
@@ -153,7 +154,15 @@ function profesional(
   };
 }
 
-export const PROFESIONALES: readonly ProfesionalSimulado[] = [
+/* ---- los profesionales escritos a mano ------------------------------------
+   Éstos no se generan y no se van a generar nunca: son los que la aplicación
+   nombra por su identificador o por su slug —la médica con la que se entra,
+   los autores de las publicaciones de la portada, los dueños de las agendas
+   que las pruebas abren por URL—. El generador añade volumen **detrás** de
+   ellos, sin tocar sus índices: `PROFESIONALES[6]` y `.slice(1, 5)` siguen
+   siendo la misma gente en `agenda.ts` y en `clinica.ts`. */
+
+const PROFESIONALES_ESCRITOS: readonly ProfesionalSimulado[] = [
   profesional(
     'medica',
     {
@@ -183,6 +192,98 @@ export const PROFESIONALES: readonly ProfesionalSimulado[] = [
   profesional('nutricionista', { nombre: 'Gabriela', apellidos: ['Rivera', 'Ortiz'], titulo: 'Nutricionista', especialidades: [ESPECIALIDAD['SP-NUTRI']!], bio: 'Planes de alimentación para diabetes, hipertensión y deporte.', rating: 4.9, tele: true }, 12),
   profesional('neumologo', { nombre: 'Hugo', apellidos: ['Flores', 'Zambrana'], titulo: 'Neumólogo', especialidades: [ESPECIALIDAD['SP-NEUMO']!], bio: 'Asma, EPOC y apnea del sueño.', ciudad: 1, org: 'hospital', rating: 4.2 }, 13),
   profesional('sinespecialidad', { nombre: 'Ramiro', apellidos: ['Céspedes', 'Villca'], titulo: 'Médico', especialidades: [], bio: 'Médico recién titulado, en proceso de registro de especialidad.', rating: 0, verified: false, nuevos: false }, 14),
+];
+
+/* ---- y los generados ------------------------------------------------------
+   El resto del padrón. Sin ellos la guía de profesionales tenía quince fichas
+   —menos que una página— y ni la paginación, ni el buscador, ni los filtros
+   por especialidad o por ciudad se podían probar con nada: todo entraba en la
+   primera pantalla. Cada uno se siembra con su propio índice (ver
+   `faker/semilla.ts`), así que el profesional 37 es el mismo en cada recarga y
+   su ficha pública se puede enlazar. */
+
+/** Cómo se llama cada especialidad, en femenino y en masculino. */
+const TITULOS: Readonly<Record<string, readonly [string, string]>> = {
+  'SP-CARDIO': ['Cardióloga', 'Cardiólogo'],
+  'SP-PEDIA': ['Pediatra', 'Pediatra'],
+  'SP-GINE': ['Ginecóloga obstetra', 'Ginecólogo obstetra'],
+  'SP-DERMA': ['Dermatóloga', 'Dermatólogo'],
+  'SP-TRAUMA': ['Traumatóloga', 'Traumatólogo'],
+  'SP-MEDINT': ['Internista', 'Internista'],
+  'SP-NEURO': ['Neuróloga', 'Neurólogo'],
+  'SP-PSIQ': ['Psiquiatra', 'Psiquiatra'],
+  'SP-OFTAL': ['Oftalmóloga', 'Oftalmólogo'],
+  'SP-ODONTO': ['Odontóloga', 'Odontólogo'],
+  'SP-ENDO': ['Endocrinóloga', 'Endocrinólogo'],
+  'SP-GASTRO': ['Gastroenteróloga', 'Gastroenterólogo'],
+  'SP-NEUMO': ['Neumóloga', 'Neumólogo'],
+  'SP-UROL': ['Uróloga', 'Urólogo'],
+  'SP-MEDGEN': ['Médica general', 'Médico general'],
+  'SP-NUTRI': ['Nutricionista', 'Nutricionista'],
+  'SP-FISIO': ['Fisioterapeuta', 'Fisioterapeuta'],
+  'SP-ANEST': ['Anestesióloga', 'Anestesiólogo'],
+};
+
+const CODIGOS_ESPECIALIDAD = Object.keys(TITULOS);
+
+function profesionalGenerado(indice: number): ProfesionalSimulado {
+  const f = fk.conSemilla(`profesional-${indice}`);
+  const mujer = f.datatype.boolean(0.55);
+  const nombre = f.person.firstName(mujer ? 'female' : 'male');
+  const apellidos: [string, string] = [fk.apellido(f), fk.apellido(f)];
+  const codigo = f.helpers.arrayElement(CODIGOS_ESPECIALIDAD);
+  const segunda = f.datatype.boolean(0.35) ? f.helpers.arrayElement(CODIGOS_ESPECIALIDAD) : null;
+  const titulo = TITULOS[codigo]![mujer ? 0 : 1];
+  const lugarDeTrabajo = fk.lugar(f);
+  const punto = fk.coordenada(f, lugarDeTrabajo);
+  const anios = f.number.int({ min: 3, max: 32 });
+  const slug = fk.slugDeNombre(nombre, apellidos[0]);
+  const clave = `gen-med-${indice}`;
+  const hospital = f.datatype.boolean(0.4);
+
+  return {
+    id: uuid(`hpid-${clave}`),
+    personId: uuid(`person-${clave}`),
+    userId: uuid(`user-${clave}`),
+    practitionerCode: `MED-${1000 + indice}`,
+    displayName: `${nombre} ${apellidos[0]} ${apellidos[1]}`,
+    name: nombre,
+    lastName: apellidos[0],
+    motherLastName: apellidos[1],
+    professionalTitle: titulo,
+    professionalBio: fk.biografia(f, titulo, anios),
+    // El índice desempata: dos «Ana Rojas» generadas tendrían el mismo slug y
+    // la segunda ficha pública taparía a la primera.
+    slug: `${slug}-${indice}`,
+    email: `${slug}${indice}@alovida.mock`,
+    phone: fk.celular(f),
+    especialidades: [
+      ESPECIALIDAD[codigo]!,
+      ...(segunda === null || segunda === codigo ? [] : [ESPECIALIDAD[segunda]!]),
+    ],
+    ciudad: lugarDeTrabajo.ciudad,
+    municipioId: lugarDeTrabajo.municipioId,
+    departamentoId: lugarDeTrabajo.departamentoId,
+    tenantId: hospital ? TENANT_HOSPITAL : TENANT_CLINICA,
+    organizacion: hospital ? 'Hospital San Lucas' : 'Clínica Los Olivos',
+    verified: f.datatype.boolean(0.85),
+    acceptsNewPatients: f.datatype.boolean(0.75),
+    telehealthAvailable: f.datatype.boolean(0.5),
+    ratingAverage: f.number.float({ min: 3.6, max: 5, fractionDigits: 1 }),
+    ratingCount: f.number.int({ min: 3, max: 240 }),
+    photoFileId: uuid(`photo-${clave}`),
+    matricula: fk.matricula(f),
+    birthDate: f.date.birthdate({ min: 28 + anios - 3, max: 30 + anios + 8, mode: 'age' }).toISOString().slice(0, 10),
+    nationalId: fk.cedulaSimple(f),
+    lat: punto.lat,
+    lng: punto.lng,
+    direccion: fk.direccion(f, lugarDeTrabajo),
+  };
+}
+
+export const PROFESIONALES: readonly ProfesionalSimulado[] = [
+  ...PROFESIONALES_ESCRITOS,
+  ...Array.from({ length: 45 }, (_, i) => profesionalGenerado(PROFESIONALES_ESCRITOS.length + i)),
 ];
 
 export const MEDICA = PROFESIONALES[0]!;
@@ -250,7 +351,7 @@ function paciente(
   };
 }
 
-export const PACIENTES: readonly PacienteSimulado[] = [
+const PACIENTES_ESCRITOS: readonly PacienteSimulado[] = [
   paciente('paciente', { nombre: 'Ana', segundo: 'Lucía', apellidos: ['Pérez', 'Quiroga'], nacimiento: '1990-06-21', sexo: 'FEMALE', ocupacion: 'OCC-CONTADOR', aseguradora: 'Seguros Andina', plan: 'Plan Integral', ids: IDS.paciente }, 0),
   paciente('p-mamani', { nombre: 'Jorge', segundo: 'Luis', apellidos: ['Mamani', 'Choque'], nacimiento: '1958-11-03', sexo: 'MALE', ocupacion: 'OCC-JUBILADO', ciudad: 1 }, 1),
   paciente('p-flores', { nombre: 'Daniela', apellidos: ['Flores', 'Cuéllar'], nacimiento: '1985-02-14', sexo: 'FEMALE', ocupacion: 'OCC-DOCENTE', aseguradora: 'La Vitalicia' }, 2),
@@ -264,6 +365,96 @@ export const PACIENTES: readonly PacienteSimulado[] = [
   paciente('p-quispe', { nombre: 'Marta', apellidos: ['Quispe', 'Huanca'], nacimiento: '1966-10-15', sexo: 'FEMALE', ocupacion: 'OCC-HOGAR', ciudad: 2 }, 10),
   paciente('p-rivero', { nombre: 'Sebastián', apellidos: ['Rivero', 'Melgar'], nacimiento: '2010-04-04', sexo: 'MALE', ocupacion: 'OCC-ESTUDIANTE' }, 11),
   paciente('p-paredes', { nombre: 'Carmen', apellidos: ['Paredes', 'Ibáñez'], nacimiento: '1938-02-28', sexo: 'FEMALE', ocupacion: 'OCC-JUBILADO', fallecido: true }, 12),
+];
+
+/* ---- y los generados ------------------------------------------------------
+   Con trece pacientes no hay padrón que buscar: cabían enteros en la primera
+   página y el buscador por nombre o por documento devolvía siempre lo mismo.
+   Ciento veinte sí obligan a paginar, filtrar y ordenar, que es donde
+   aparecen los fallos. Las edades se reparten a propósito —lactantes, niños,
+   adultos y mayores— porque las pantallas clínicas pintan rangos por edad y
+   con una sola franja no se ve si están bien. */
+
+const OCUPACIONES_POR_EDAD: Readonly<Record<string, readonly string[]>> = {
+  nino: ['OCC-ESTUDIANTE'],
+  joven: ['OCC-ESTUDIANTE', 'OCC-COMERCIANTE', 'OCC-CHOFER', 'OCC-ENFERMERIA', 'OCC-OTRA'],
+  adulto: [
+    'OCC-DOCENTE',
+    'OCC-COMERCIANTE',
+    'OCC-INGENIERO',
+    'OCC-ABOGADO',
+    'OCC-CONTADOR',
+    'OCC-AGRICULTOR',
+    'OCC-CHOFER',
+    'OCC-ENFERMERIA',
+    'OCC-ADMINISTRATIVO',
+    'OCC-HOGAR',
+  ],
+  mayor: ['OCC-JUBILADO', 'OCC-HOGAR', 'OCC-AGRICULTOR', 'OCC-COMERCIANTE'],
+};
+
+function pacienteGenerado(indice: number): PacienteSimulado {
+  const f = fk.conSemilla(`paciente-${indice}`);
+  const mujer = f.datatype.boolean(0.52);
+  const nombre = f.person.firstName(mujer ? 'female' : 'male');
+  const segundo = f.datatype.boolean(0.4) ? f.person.firstName(mujer ? 'female' : 'male') : undefined;
+  const apellidos: [string, string] = [fk.apellido(f), fk.apellido(f)];
+  // Reparto de edades: 12 % lactantes y niños, 22 % jóvenes, 46 % adultos,
+  // 20 % mayores. Aproxima una sala de espera de verdad.
+  const dado = f.number.int({ min: 1, max: 100 });
+  const edad =
+    dado <= 12
+      ? f.number.int({ min: 0, max: 11 })
+      : dado <= 34
+        ? f.number.int({ min: 12, max: 29 })
+        : dado <= 80
+          ? f.number.int({ min: 30, max: 64 })
+          : f.number.int({ min: 65, max: 93 });
+  const tramo = edad < 12 ? 'nino' : edad < 30 ? 'joven' : edad < 65 ? 'adulto' : 'mayor';
+  const lugarDeVida = fk.lugar(f);
+  const slug = fk.slugDeNombre(nombre, apellidos[0]);
+  const clave = `gen-pac-${indice}`;
+  const conSeguro = f.datatype.boolean(0.45);
+
+  return {
+    id: uuid(`pid-${clave}`),
+    personId: uuid(`person-${clave}`),
+    userId: uuid(`user-${clave}`),
+    patientCode: `PAC-${20000 + indice}`,
+    displayName: `${nombre}${segundo === undefined ? '' : ` ${segundo}`} ${apellidos[0]} ${apellidos[1]}`,
+    name: nombre,
+    ...(segundo === undefined ? {} : { middleName: segundo }),
+    lastName: apellidos[0],
+    motherLastName: apellidos[1],
+    birthDate: f.date.birthdate({ min: edad, max: edad, mode: 'age' }).toISOString().slice(0, 10),
+    sexAtBirth: mujer ? 'FEMALE' : 'MALE',
+    generoId: mujer ? GENERO['GEN-F']! : GENERO['GEN-M']!,
+    sexoId: mujer ? SEXO['SEX-F']! : SEXO['SEX-M']!,
+    nationalId: fk.cedulaSimple(f),
+    email: `${slug}${indice}@correo.mock`,
+    phone: fk.celular(f),
+    municipioId: lugarDeVida.municipioId,
+    departamentoId: lugarDeVida.departamentoId,
+    ocupacionId: OCUPACION[f.helpers.arrayElement(OCUPACIONES_POR_EDAD[tramo]!)] ?? OCUPACION['OCC-OTRA']!,
+    direccion: `${fk.direccion(f, lugarDeVida)}, ${lugarDeVida.ciudad}`,
+    // Un padrón sin ningún fallecido no deja probar la marca de fallecimiento,
+    // que cambia media pantalla de expediente. Uno de cada cincuenta, y sólo
+    // entre los mayores.
+    deceased: tramo === 'mayor' && f.datatype.boolean(0.1),
+    identityVerified: f.datatype.boolean(0.8),
+    ...(f.datatype.boolean(0.35) ? { photoFileId: uuid(`photo-${clave}`) } : {}),
+    ...(conSeguro
+      ? {
+          aseguradora: f.helpers.arrayElement(fk.ASEGURADORAS),
+          plan: f.helpers.arrayElement(fk.PLANES),
+        }
+      : {}),
+  };
+}
+
+export const PACIENTES: readonly PacienteSimulado[] = [
+  ...PACIENTES_ESCRITOS,
+  ...Array.from({ length: 107 }, (_, i) => pacienteGenerado(PACIENTES_ESCRITOS.length + i)),
 ];
 
 export const PACIENTE = PACIENTES[0]!;

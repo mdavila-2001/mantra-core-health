@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-1014 archivos TypeScript bajo `src/` y 4012 importaciones internas.
+1238 archivos TypeScript bajo `src/` y 5149 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -13,13 +13,12 @@ Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.jso
 
 Se excluyen los puntos de entrada del framework y las pruebas.
 
+- `src/app/core/data-access/common/addresses.client.ts`
 - `src/app/core/observability/browser/telemetry-browser.bootstrap.ts`
+- `src/app/features/account/access-requests/access-requests.ts`
 - `src/app/features/account/questionnaires/questionnaires.ts`
 - `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
-- `src/app/features/interventions/interventions.routes.ts`
-- `src/app/features/interventions/interventions.ts`
-- `src/app/features/questionnaires/questionnaires.ts`
-- `src/app/features/questionnaires/survey-detail/survey-detail.ts`
+- `src/app/features/admin/services-catalog/procedure-import/procedure-import.ts`
 - `src/app/features/alovida/accesos/acceso-de-emergencia-formulario/acceso-de-emergencia-formulario.ts`
 - `src/app/features/alovida/accesos/accesos-clinicos-del-paciente-formulario/accesos-clinicos-del-paciente-formulario.ts`
 - `src/app/features/alovida/accesos/accesos-clinicos-del-paciente-listado/accesos-clinicos-del-paciente-listado.ts`
@@ -55,6 +54,7 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/alovida/buscar/buscador-listado/buscador-listado.ts`
 - `src/app/features/alovida/buscar/calificar-la-atencion-formulario/calificar-la-atencion-formulario.ts`
 - `src/app/features/alovida/buscar/cercania-detalle/cercania-detalle.ts`
+- `src/app/features/alovida/buscar/feed-publicaciones/feed-publicaciones.ts`
 - `src/app/features/alovida/buscar/hospitales-listado/hospitales-listado.ts`
 - `src/app/features/alovida/buscar/laboratorios-listado/laboratorios-listado.ts`
 - `src/app/features/alovida/buscar/medicamentos-listado/medicamentos-listado.ts`
@@ -63,9 +63,9 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/alovida/buscar/perfil-laboratorio-detalle/perfil-laboratorio-detalle.ts`
 - `src/app/features/alovida/buscar/perfil-organizacion-detalle/perfil-organizacion-detalle.ts`
 - `src/app/features/alovida/buscar/perfil-profesional-detalle/perfil-profesional-detalle.ts`
-- `src/app/features/alovida/buscar/profesionales-listado/profesionales-listado.ts`
 - `src/app/features/alovida/buscar/profesionales-listado/profesionales-listado.types.ts`
 - `src/app/features/alovida/buscar/seguidos-y-guardados-listado/seguidos-y-guardados-listado.ts`
+- `src/app/features/alovida/buscar/sintomas-publico/sintomas-publico.ts`
 - `src/app/features/alovida/datos-compartidos/archivos-eliminar/archivos-eliminar.ts`
 - `src/app/features/alovida/datos-compartidos/archivos-formulario/archivos-formulario.ts`
 - `src/app/features/alovida/datos-compartidos/archivos-listado/archivos-listado.ts`
@@ -147,6 +147,15 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/alovida/terminologia/versiones-importar/versiones-importar.ts`
 - `src/app/features/alovida/terminologia/versiones-listado/versiones-listado.ts`
 - `src/app/features/alovida/terminologia/versiones-publicar/versiones-publicar.ts`
+- `src/app/features/clinical-record/request-access/request-access.ts`
+- `src/app/features/consultation/consultation.ts`
+- `src/app/features/interventions/interventions.routes.ts`
+- `src/app/features/interventions/interventions.ts`
+- `src/app/features/public-directories/clinics-directory.ts`
+- `src/app/features/public-directories/pharmacies-directory.ts`
+- `src/app/features/public-profile/public-post-detail/public-post-detail.ts`
+- `src/app/features/questionnaires/questionnaires.ts`
+- `src/app/features/quotations/quotation-list/quotation-list.ts`
 - `src/app/shared/index.ts`
 - `src/environments/environment.development.ts`
 - `src/testing/acceptance/core/contracts/ui.contract.ts`
@@ -158,46 +167,48 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/core/view-state/view-state.types.ts` | 167 |
-| `src/app/shared/components/atoms/button/button.ts` | 162 |
-| `src/app/core/view-state/view-state.ts` | 153 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 146 |
-| `src/app/core/http/error-to-view-state.ts` | 143 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 136 |
-| `src/app/core/navigation/navigation.service.ts` | 114 |
-| `src/app/shared/a11y/announce-on-appear.ts` | 80 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 79 |
-| `src/app/shared/components/molecules/card/card.ts` | 64 |
-| `src/app/shared/forms/form-support.ts` | 64 |
-| `src/app/shared/components/atoms/input/input.ts` | 60 |
-| `src/app/shared/components/atoms/badge/badge.ts` | 55 |
-| `src/app/core/auth/auth.service.ts` | 53 |
-| `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 49 |
-| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 49 |
-| `src/app/shared/forms/paginated/paginar-campos.ts` | 49 |
-| `src/app/core/auth/session.store.ts` | 48 |
-| `src/app/core/data-access/api.ts` | 40 |
-| `src/app/shared/components/organisms/form-actions/form-actions.ts` | 39 |
+| `src/app/core/view-state/view-state.types.ts` | 193 |
+| `src/app/shared/components/atoms/button/button.ts` | 192 |
+| `src/app/core/view-state/view-state.ts` | 176 |
+| `src/app/core/http/error-to-view-state.ts` | 169 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 166 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 157 |
+| `src/app/core/navigation/navigation.service.ts` | 123 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 100 |
+| `src/app/shared/a11y/announce-on-appear.ts` | 86 |
+| `src/app/shared/components/atoms/input/input.ts` | 75 |
+| `src/app/shared/components/molecules/card/card.ts` | 72 |
+| `src/app/core/auth/auth.service.ts` | 67 |
+| `src/app/shared/forms/form-support.ts` | 65 |
+| `src/app/shared/components/atoms/badge/badge.ts` | 64 |
+| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 59 |
+| `src/app/shared/components/molecules/toast/toast.service.ts` | 57 |
+| `src/app/core/auth/session.store.ts` | 56 |
+| `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 50 |
+| `src/app/shared/forms/paginated/paginar-campos.ts` | 50 |
+| `src/app/shared/components/atoms/select/select.types.ts` | 49 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 921 |
-| `@angular/common` | 547 |
-| `@angular/router` | 426 |
-| `rxjs` | 143 |
-| `@angular/forms` | 106 |
-| `node:fs` | 15 |
+| `@angular/core` | 1098 |
+| `@angular/common` | 651 |
+| `@angular/router` | 505 |
+| `rxjs` | 186 |
+| `@angular/forms` | 114 |
+| `node:fs` | 21 |
 | `@opentelemetry/api` | 12 |
 | `@angular/platform-browser` | 11 |
 | `@opentelemetry/sdk-trace-web` | 9 |
 | `@opentelemetry/semantic-conventions` | 7 |
+| `express` | 4 |
+| `jspdf` | 4 |
+| `node:path` | 4 |
+| `vitest` | 4 |
 | `@angular/ssr` | 3 |
+| `@faker-js/faker` | 3 |
 | `@opentelemetry/core` | 3 |
-| `express` | 3 |
-| `jspdf` | 3 |
-| `node:path` | 3 |
 | `@opentelemetry/exporter-trace-otlp-http` | 2 |
 | `@opentelemetry/resources` | 2 |
 | `@opentelemetry/sdk-trace-node` | 1 |
@@ -206,4 +217,5 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | `node:crypto` | 1 |
 | `node:http` | 1 |
 | `node:https` | 1 |
+| `node:os` | 1 |
 | `socket.io-client` | 1 |
