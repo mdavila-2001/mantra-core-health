@@ -153,36 +153,16 @@
 
     <!-- ─── Filtros ─────────────────────────────────────────────────────── -->
     <form class="agenda__filtros" (submit)="$event.preventDefault()">
-      <!-- El selector de recurso existe SÓLO para quien reparte turnos entre
-           consultorios. Para quien atiende, su agenda es la suya y la lista de
-           las ajenas no es una comodidad: es la agenda clínica de pacientes que
-           no atiende, con nombre y motivo de consulta, a un clic de distancia.
+      <!-- Ya no se elige el recurso acá. El lugar donde se publica la agenda
+           se elige en el conmutador de organización de la barra superior, así
+           que un segundo campo en este renglón era pedir dos veces lo mismo y
+           se comía el ancho de los filtros que sí se usan.
 
-           Sin opción «todos»: la agenda de la organización entera no se puede
-           pedir, y ofrecerla sería ofrecer un botón que devuelve un error. -->
-      @if (puedeElegirRecurso()) {
-        <app-form-field
-          label="Recurso"
-          class="agenda__filtro"
-          [hint]="
-            mirandoAgendaPropia()
-              ? 'Estás viendo tu agenda. Podés cambiar a la de otro recurso.'
-              : 'Las citas se listan por recurso; el backend no admite pedirlas todas juntas.'
-          "
-        >
-          <app-select
-            [options]="opcionesDeRecurso()"
-            [value]="recursoElegido() ?? ''"
-            [disabled]="sinRecursos()"
-            (valueChange)="elegirRecurso($event)"
-          />
-        </app-form-field>
-      } @else if (hayAgendaQueMirar() && !mirandoAgendaPropia()) {
-        <!-- ALV-017: el nombre se dice sólo cuando lo que se mira es de OTRO.
-             En la agenda propia, «Agenda de [tu nombre]» le informa a alguien
-             de quién es la agenda que abrió a propósito — y el mismo nombre se
-             repetía después en cada fila de la tabla. Cuando el recurso es
-             ajeno el dato sí separa: dice de quién es lo que se está viendo. -->
+           ALV-017: de quién es la agenda se dice sólo cuando lo que se mira es
+           de OTRO. En la propia, «Agenda de [tu nombre]» le informa a alguien
+           de quién es la agenda que abrió a propósito — y el mismo nombre se
+           repite después en cada fila de la tabla. -->
+      @if (hayAgendaQueMirar() && !mirandoAgendaPropia()) {
         <p class="agenda__ambito" appTutorialTarget="agenda-ambito">
           <span class="agenda__ambito-rotulo">Agenda</span>
           <span class="agenda__ambito-valor">{{ nombreDelRecurso() }}</span>

@@ -22,7 +22,7 @@
 
 .agenda__filtro {
   flex: 1 1 14rem;
-  /* Un selector de recursos de mil píxeles no ayuda a elegir uno. */
+  /* Un desplegable de mil píxeles no ayuda a elegir en una lista corta. */
   max-inline-size: 22rem;
 }
 
@@ -43,8 +43,8 @@
   padding-block-end: var(--sp-2);
 }
 
-/* De quién es la agenda, cuando no hay selector que lo diga. Se lee como un
-   dato con su rótulo —no como un campo— porque no hay nada que elegir acá. */
+/* De quién es la agenda. Se lee como un dato con su rótulo —no como un campo—
+   porque no hay nada que elegir acá: el lugar se elige en la barra superior. */
 .agenda__ambito {
   flex: 1 1 14rem;
   margin: 0;

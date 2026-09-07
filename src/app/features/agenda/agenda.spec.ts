@@ -503,28 +503,6 @@ describe('Agenda', () => {
     expect(interno<() => boolean>('puedeElegirRecurso')()).toBe(true);
   });
 
-  /**
-   * Dos recursos con el mismo nombre son dos agendas distintas y hay que poder
-   * elegir una: se los desempata con el final del identificador, y **sólo** a
-   * ellos — el que no repite queda con su nombre limpio.
-   */
-  it('desempata los recursos que se llaman igual, y sólo esos', async () => {
-    await montar({ roles: ['SCHEDULING_ADMIN'] });
-    await responderRecursos([
-      { ...RECURSO, id: 'aaaaaaaa-0000-4000-8000-00000000abc123', name: 'Consultorio A' },
-      { ...RECURSO, id: 'bbbbbbbb-0000-4000-8000-00000000def456', name: 'Consultorio A' },
-      { ...RECURSO, id: 'cccccccc-0000-4000-8000-00000000000999', name: 'Consultorio B' },
-    ]);
-    await responderResto();
-
-    const opciones = interno<() => readonly { label: string }[]>('opcionesDeRecurso')();
-    expect(opciones.map((o) => o.label)).toEqual([
-      'Consultorio A · ABC123',
-      'Consultorio A · DEF456',
-      'Consultorio B',
-    ]);
-  });
-
   it('con `hpid` se abre en la agenda propia aunque no sea la primera', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     await responderRecursos([RECURSO_AJENO, RECURSO]);

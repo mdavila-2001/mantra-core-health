@@ -720,46 +720,6 @@ export class Agenda {
   /** Sin organización no hay agenda que pedir: `tenantId` es obligatorio. */
   protected readonly sinOrganizacion = computed(() => this.organizacion() === null);
 
-  /**
-   * Las agendas que esta sesión puede elegir, en orden y sin dos que se lean
-   * igual.
-   *
-   * ## Por qué hay que desambiguar
-   *
-   * El nombre de un recurso no es único: lo escribe quien lo da de alta, y la
-   * siembra de desarrollo lo arma con el título y el apellido del profesional,
-   * así que dos altas del mismo médico producen dos recursos DISTINTOS con el
-   * mismo texto. En pantalla eso es una lista con la misma línea repetida cinco
-   * veces, donde elegir es adivinar — y el que quedaba marcado parecía un error.
-   *
-   * La solución no es esconder los repetidos: son agendas distintas, con citas
-   * distintas, y ocultar una la vuelve inalcanzable. Se los desempata con el
-   * final de su identificador, que es corto, estable y el único dato que con
-   * seguridad los distingue. El desempate se agrega **sólo a los que repiten**,
-   * para no ensuciar la lista entera por dos filas.
-   *
-   * Se ordena por nombre para que la lista no dependa del orden de inserción,
-   * que es el que traía el backend y no significa nada para quien mira.
-   */
-  protected readonly opcionesDeRecurso = computed<readonly SelectOption<string>[]>(() => {
-    const recursos = [...this.recursos()].sort((a, b) =>
-      a.name.localeCompare(b.name, 'es', { numeric: true }),
-    );
-
-    const repetidos = new Set(
-      recursos
-        .map((recurso) => recurso.name)
-        .filter((nombre, indice, todos) => todos.indexOf(nombre) !== indice),
-    );
-
-    return recursos.map((recurso) => ({
-      value: recurso.id,
-      label: repetidos.has(recurso.name)
-        ? `${recurso.name} · ${discriminante(recurso.id)}`
-        : recurso.name,
-    }));
-  });
-
   protected readonly opcionesDeVentana = computed<readonly SelectOption<string>[]>(() =>
     VENTANAS.map((ventana) => ({ value: ventana.clave, label: ventana.etiqueta })),
   );
@@ -1121,19 +1081,6 @@ export class Agenda {
   }
 
   /* -- Acciones ------------------------------------------------------------ */
-
-  protected elegirRecurso(recursoId: string | null): void {
-    if (recursoId === null || recursoId === '') {
-      return;
-    }
-    // El selector ya no se dibuja sin permiso, pero la guarda va igual: es la
-    // que hace que la regla viva en el componente y no en la plantilla, donde un
-    // `@if` que alguien borre la desactivaría en silencio.
-    if (!this.puedeElegirRecurso()) {
-      return;
-    }
-    this.publicar({ recurso: recursoId });
-  }
 
   protected elegirVentana(clave: string | null): void {
     // Cambiar el tamaño de la ventana vuelve a hoy (ALV-024): quedarse en un
@@ -1960,15 +1907,3 @@ function rotulo(nombre: string, total: number | null): string {
   return total === null ? nombre : `${nombre} (${total})`;
 }
 
-/**
- * El desempate visible de dos recursos que se llaman igual.
- *
- * Los últimos seis caracteres del uuid, en mayúscula. Seis y no el uuid entero
- * porque lo que hace falta es distinguir dos filas de una lista corta, no
- * identificar el registro: pegar 36 caracteres en cada opción rompe el
- * desplegable y no ayuda a leer. En mayúscula porque un uuid en minúscula, al
- * final de un nombre propio, se lee como parte del nombre.
- */
-function discriminante(id: string): string {
-  return id.replace(/-/g, '').slice(-6).toUpperCase();
-}
