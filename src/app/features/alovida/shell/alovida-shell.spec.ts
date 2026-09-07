@@ -166,6 +166,75 @@ describe('AlovidaShell', () => {
       '(ejemplo)',
     );
   });
+
+  /* Los dos botones del header que la maqueta dibujaba sin nada detrás. Se
+     repiten en las 111 pantallas de sesión, así que eran los controles muertos
+     más vistos de la rama. */
+  describe('los desplegables del header', () => {
+    const disparador = (sel: string) => raiz().querySelector<HTMLElement>(sel) as HTMLElement;
+    const panel = (id: string) => raiz().querySelector<HTMLElement>(`#${id}`) as HTMLElement;
+
+    it('el selector de organización abre su menú y lo anuncia', () => {
+      expect(panel('menu-organizacion').hidden).toBe(true);
+
+      disparador('.app-tenant-switcher').click();
+      fixture.detectChanges();
+
+      expect(panel('menu-organizacion').hidden).toBe(false);
+      expect(disparador('.app-tenant-switcher').getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('elegir una organización la escribe en el header y cierra el menú', () => {
+      disparador('.app-tenant-switcher').click();
+      fixture.detectChanges();
+
+      const opciones = raiz().querySelectorAll<HTMLElement>('#menu-organizacion .app-menu-item');
+      const elegida = (opciones[1].textContent ?? '').trim();
+      opciones[1].click();
+      fixture.detectChanges();
+
+      expect(disparador('.app-tenant-switcher').textContent).toContain(elegida);
+      expect(panel('menu-organizacion').hidden).toBe(true);
+    });
+
+    it('la campana muestra los avisos que el header dice tener sin leer', () => {
+      disparador('.app-header__campana').click();
+      fixture.detectChanges();
+
+      expect(panel('menu-avisos').hidden).toBe(false);
+      expect(raiz().querySelectorAll('#menu-avisos .app-menu-item')).toHaveLength(3);
+    });
+
+    it('abrir uno cierra el otro: no quedan dos abiertos a la vez', () => {
+      disparador('.app-tenant-switcher').click();
+      fixture.detectChanges();
+      disparador('.app-header__campana').click();
+      fixture.detectChanges();
+
+      expect(panel('menu-organizacion').hidden).toBe(true);
+      expect(panel('menu-avisos').hidden).toBe(false);
+    });
+
+    it('un clic fuera del header los cierra', () => {
+      disparador('.app-header__campana').click();
+      fixture.detectChanges();
+
+      document.body.click();
+      fixture.detectChanges();
+
+      expect(panel('menu-avisos').hidden).toBe(true);
+    });
+
+    it('lo que muestran sigue declarándose de ejemplo', () => {
+      // No hay sesión detrás de estas rutas: un desplegable con organizaciones
+      // que parecieran reales sería lo que prohíbe la corrección #7.
+      disparador('.app-tenant-switcher').click();
+      fixture.detectChanges();
+
+      const opciones = raiz().querySelectorAll('#menu-organizacion .app-menu-item');
+      opciones.forEach((opcion) => expect(opcion.textContent).toContain('(ejemplo)'));
+    });
+  });
 });
 
 describe('AlovidaPublicShell', () => {
