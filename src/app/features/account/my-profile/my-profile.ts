@@ -25,6 +25,8 @@ import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
@@ -36,6 +38,7 @@ import {
   CaseStatusCatalog,
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
+import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
 
 /**
@@ -114,12 +117,15 @@ const ROLES_DE_TRABAJO: readonly string[] = [
   selector: 'app-my-profile',
   imports: [
     Alert,
+    AppButton,
+    AppButtonLink,
     Avatar,
     Badge,
     Card,
     DatePipe,
     Link,
     PageHeader,
+    PatientProfileEdit,
     PractitionerProfile,
     RouterLink,
     StatusSeal,
@@ -196,6 +202,44 @@ export class MyProfile {
   protected readonly fotoUrl = signal<string | null>(null);
 
   protected readonly datos = computed(() => dataOf(this.resumen()));
+
+  /* ---- FT-11 · sólo lectura, y edición bajo demanda ----------------------- */
+
+  /**
+   * El perfil está en modo edición.
+   *
+   * Empieza en `false` siempre: el pedido del cliente es que el perfil «entre
+   * como formulario ya llenado en sólo lectura». Un signal y no la URL porque
+   * editar no es un lugar al que se llega —la ruta propia del editor sigue
+   * existiendo para eso—, es un estado momentáneo de esta pantalla.
+   */
+  protected readonly editando = signal(false);
+
+  /**
+   * Adónde va «Cambiar contraseña» (FT-11-R08).
+   *
+   * Al flujo de recuperación por correo, que es el único que hoy existe y el
+   * único que puede verificar que quien cambia la clave es la persona: un campo
+   * «contraseña nueva» dentro del perfil dejaría la cuenta a merced de
+   * cualquiera que encuentre la sesión abierta.
+   */
+  protected readonly rutaDeCambioDeContrasena = '/auth/forgot-password';
+
+  protected editar(): void {
+    this.editando.set(true);
+  }
+
+  /**
+   * El editor terminó —guardó o canceló—: se vuelve a sólo lectura.
+   *
+   * Se recarga el resumen porque el editor escribe contra otro endpoint que el
+   * que esta pantalla lee: sin esto, guardar el nombre dejaría la ficha de
+   * arriba mostrando el anterior hasta la próxima visita.
+   */
+  protected terminarEdicion(): void {
+    this.editando.set(false);
+    this.recargar();
+  }
 
   /**
    * Si «Tus datos» está cerrado **sólo** porque falta verificar la identidad.

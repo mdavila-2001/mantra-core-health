@@ -32,7 +32,11 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
@@ -114,6 +118,16 @@ const PARAM_DE_VISTA = 'vista';
  */
 const PARAM_DE_TURNO = 'turno';
 
+/* ---- FT-05 · los cuatro filtros, también en la URL ------------------------ */
+
+/** Texto libre: se busca contra el profesional y el consultorio. */
+const PARAM_DE_BUSQUEDA = 'q';
+/** Código de estado del catálogo, no su etiqueta: la etiqueta cambia de idioma. */
+const PARAM_DE_ESTADO = 'estado';
+/** Fechas en `AAAA-MM-DD`: la hora no aporta y ensucia el enlace. */
+const PARAM_DESDE = 'desde';
+const PARAM_HASTA = 'hasta';
+
 /** Un turno propio, ya listo para mostrarse. */
 interface TurnoVisible {
   readonly id: string;
@@ -130,6 +144,15 @@ interface TurnoVisible {
   readonly resourceId: string;
   /** Con quién es el turno, en palabras. Vacío mientras no se sepa. */
   readonly agenda: string;
+  /**
+   * En qué consultorio es, en palabras. Vacío cuando el recurso no tiene sede
+   * registrada o el catálogo todavía no llegó.
+   *
+   * FT-05-R02 pide poder buscar por consultorio, y para eso el dato tiene que
+   * viajar con el turno: buscar contra el catálogo en cada tecla obligaría a
+   * cruzar dos listas por carácter escrito.
+   */
+  readonly sede: string;
   readonly motivo: string;
   /**
    * Por qué te cambiaron el turno, ya redactado (corrección #14).
@@ -244,8 +267,11 @@ const SEDE_CUALQUIERA = 'cualquiera';
     DatePipe,
     FormField,
     PageHeader,
+    DatePicker,
     ReferenceCombobox,
     RouterLink,
+    SearchField,
+    SegmentedControl,
     Select,
   ],
   templateUrl: './appointments.html',
@@ -318,10 +344,129 @@ export class Appointments {
     this.route.snapshot.queryParamMap.get(PARAM_DE_TURNO),
   );
 
+  /** Las dos formas de mirar la misma colección (FT-04). */
+  protected readonly vistasDisponibles: readonly SegmentedOption<VistaDeTurnos>[] = [
+    { value: 'lista', label: 'Lista', icon: 'orders', description: 'Ver tus citas como lista' },
+    {
+      value: 'calendario',
+      label: 'Calendario',
+      icon: 'calendar',
+      description: 'Ver tus citas en un calendario',
+    },
+  ];
+
   protected elegirVista(vista: VistaDeTurnos): void {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { [PARAM_DE_VISTA]: vista === VISTA_POR_DEFECTO ? null : vista },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /* ---- FT-05 · buscar y filtrar tus citas --------------------------------- */
+
+  /**
+   * Los cuatro filtros viven en la URL, igual que la vista.
+   *
+   * Es el mismo criterio que ya tenía la pantalla y no una decisión nueva: el
+   * enlace se comparte con el filtro puesto, «atrás» lo deshace, y recargar no
+   * pierde lo que se estaba mirando. Un signal suelto habría hecho que cambiar
+   * de lista a calendario —que sí navega— borrara la búsqueda.
+   */
+  protected readonly busqueda = computed(() => this.params()?.get(PARAM_DE_BUSQUEDA) ?? '');
+
+  /** El código de estado por el que se filtra, o `''` para todos. */
+  protected readonly filtroDeEstado = computed(() => this.params()?.get(PARAM_DE_ESTADO) ?? '');
+
+  protected readonly filtroDesde = computed(() => fechaDeParam(this.params()?.get(PARAM_DESDE)));
+  protected readonly filtroHasta = computed(() => fechaDeParam(this.params()?.get(PARAM_HASTA)));
+
+  /** Hay al menos un filtro puesto: recién entonces se ofrece limpiarlos. */
+  protected readonly hayFiltros = computed(
+    () =>
+      this.busqueda() !== '' ||
+      this.filtroDeEstado() !== '' ||
+      this.filtroDesde() !== null ||
+      this.filtroHasta() !== null,
+  );
+
+  /**
+   * Si tiene sentido ofrecer los filtros.
+   *
+   * Con la lista vacía —o con un solo turno— la barra de filtros es ruido: se
+   * muestra desde que hay algo que acotar, o cuando ya hay un filtro puesto
+   * (si no, filtrar hasta cero escondería el control para des-filtrar).
+   */
+  protected readonly hayTurnosParaFiltrar = computed(
+    () => this.todosLosTurnos().length > 1 || this.hayFiltros(),
+  );
+
+  /**
+   * Los estados por los que se puede filtrar.
+   *
+   * Salen de los turnos que la persona tiene, no de un catálogo fijo: ofrecer
+   * «No se presentó» a quien nunca faltó es ofrecer un filtro que sólo puede
+   * dar cero. Se omiten los que todavía no tienen etiqueta resuelta —terminología
+   * llega después que los turnos— en vez de mostrar un uuid.
+   */
+  protected readonly opcionesDeEstado = computed<readonly SelectOption<string>[]>(() => {
+    const vistos = new Map<string, string>();
+    for (const turno of this.todosLosTurnos()) {
+      if (turno.codigo !== '' && turno.estado !== '') {
+        vistos.set(turno.codigo, turno.estado);
+      }
+    }
+    return [
+      { value: '', label: 'Todos los estados' },
+      ...[...vistos.entries()]
+        .sort((a, b) => a[1].localeCompare(b[1], 'es'))
+        .map(([codigo, etiqueta]) => ({ value: codigo, label: etiqueta })),
+    ];
+  });
+
+  protected cambiarBusqueda(texto: string): void {
+    this.ponerFiltro(PARAM_DE_BUSQUEDA, texto.trim() === '' ? null : texto);
+  }
+
+  protected cambiarEstado(codigo: string | null): void {
+    this.ponerFiltro(PARAM_DE_ESTADO, codigo === null || codigo === '' ? null : codigo);
+  }
+
+  protected cambiarDesde(fecha: Date | null): void {
+    this.ponerFiltro(PARAM_DESDE, fecha === null ? null : soloFecha(fecha));
+  }
+
+  protected cambiarHasta(fecha: Date | null): void {
+    this.ponerFiltro(PARAM_HASTA, fecha === null ? null : soloFecha(fecha));
+  }
+
+  /** FT-05-R06 · los cuatro de una vez, en una sola navegación. */
+  protected limpiarFiltros(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        [PARAM_DE_BUSQUEDA]: null,
+        [PARAM_DE_ESTADO]: null,
+        [PARAM_DESDE]: null,
+        [PARAM_HASTA]: null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /**
+   * Escribe un filtro en la URL sin tocar los demás.
+   *
+   * `replaceUrl` a propósito: escribir en el buscador no puede dejar una
+   * entrada de historial por letra, o volver atrás obligaría a deshacer el
+   * texto carácter por carácter.
+   */
+  private ponerFiltro(param: string, valor: string | null): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [param]: valor },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
@@ -606,10 +751,52 @@ export class Appointments {
     return estado.status === 'empty' ? (estado.message ?? '') : '';
   });
 
-  protected readonly turnosListos = computed<readonly TurnoVisible[]>(() => {
+  /** Todos los turnos del titular, **sin** filtrar. */
+  protected readonly todosLosTurnos = computed<readonly TurnoVisible[]>(() => {
     const estado = this.turnos();
     return estado.status === 'ready' ? estado.data : [];
   });
+
+  /**
+   * Los turnos que se muestran: los del titular pasados por los filtros.
+   *
+   * FT-05-R09 · el filtrado ocurre acá y no en el servidor porque la pantalla
+   * ya trae **todos** los turnos del titular en una sola lectura acotada a
+   * cincuenta; volver a pedirlos por cada tecla sería una petición por letra
+   * para reordenar como mucho cincuenta filas. Que sea local no lo hace
+   * cosmético: filtra sobre los mismos datos que se muestran, no sobre el DOM.
+   */
+  protected readonly turnosListos = computed<readonly TurnoVisible[]>(() => {
+    if (!this.hayFiltros()) {
+      return this.todosLosTurnos();
+    }
+    const texto = normalizar(this.busqueda());
+    const codigo = this.filtroDeEstado();
+    const desde = this.filtroDesde();
+    const hasta = this.filtroHasta();
+    return this.todosLosTurnos().filter((turno) => {
+      // FT-05-R05 · los cuatro se combinan con Y: cada uno acota lo que dejó el
+      // anterior. Con O, agregar un filtro ampliaría el resultado.
+      if (texto !== '' && !coincideConElTexto(turno, texto)) return false;
+      if (codigo !== '' && turno.codigo !== codigo) return false;
+      if (desde !== null && (turno.cuando === null || turno.cuando < desde)) return false;
+      if (hasta !== null && (turno.cuando === null || turno.cuando > finDelDia(hasta))) {
+        return false;
+      }
+      return true;
+    });
+  });
+
+  /**
+   * Los filtros dejaron la lista en cero, pero turnos hay.
+   *
+   * Es un vacío distinto del de «todavía no tenés citas» y la pantalla tiene
+   * que decir cuál de los dos es: uno se resuelve pidiendo una cita y el otro
+   * borrando un filtro (FT-05-R07).
+   */
+  protected readonly sinResultados = computed(
+    () => this.hayFiltros() && this.todosLosTurnos().length > 0 && this.turnosListos().length === 0,
+  );
 
   /**
    * Los mismos turnos, en la forma que el calendario entiende.
@@ -625,6 +812,15 @@ export class Appointments {
       titulo: turno.agenda === '' ? 'Turno' : turno.agenda,
       estado: turno.estado,
       tono: turno.tono,
+      // FT-07-R04 · lo que la tarjeta del día no puede mostrar sin cambiar de
+      // alto. Se redacta acá porque el calendario no sabe de motivos ni de
+      // demoras: sabe de cosas que pasan un día a una hora.
+      detalles: [
+        turno.sede === '' ? '' : `Consultorio: ${turno.sede}`,
+        turno.motivo === '' ? '' : `Motivo: ${turno.motivo}`,
+        turno.avisoDelCambio,
+        turno.avisoDeDemora,
+      ].filter((linea) => linea !== ''),
     })),
   );
 
@@ -1288,6 +1484,7 @@ export class Appointments {
       tono: estado.tone,
       resourceId,
       agenda: this.nombreDeLaAgenda(resourceId),
+      sede: this.nombreDeLaSede(resourceId),
       motivo: cita.reasonText ?? '',
       reprogramadoDesde: cita.rescheduledFrom ?? null,
       avisoDelCambio: avisoDelCambio(cita),
@@ -1319,6 +1516,7 @@ export class Appointments {
       estado: estado.label,
       tono: estado.tone,
       agenda: this.nombreDeLaAgenda(turno.resourceId),
+      sede: this.nombreDeLaSede(turno.resourceId),
     };
   }
 
@@ -1344,6 +1542,19 @@ export class Appointments {
     // conserva el nombre de su agenda aunque ahora se estén mirando
     // laboratorios.
     return this.catalogoDeRecursos().get(resourceId)?.name ?? '';
+  }
+
+  /**
+   * En qué consultorio se atiende ese turno (FT-05-R02).
+   *
+   * Del mismo catálogo acumulado que el nombre de la agenda y con la misma
+   * regla: vacío mientras no se sepa, nunca el identificador de la sede.
+   */
+  private nombreDeLaSede(resourceId: string): string {
+    if (resourceId === '') {
+      return '';
+    }
+    return this.catalogoDeRecursos().get(resourceId)?.site?.name ?? '';
   }
 
   /**
@@ -1426,6 +1637,62 @@ function mismoDia(a: Date, b: Date): boolean {
  */
 function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+/* ---- FT-05 · ayudas de los filtros --------------------------------------- */
+
+/**
+ * Si el turno coincide con lo escrito en el buscador.
+ *
+ * Busca contra el profesional **y** el consultorio (FT-05-R01 y R02), que son
+ * los dos datos con los que alguien recuerda una cita. El motivo no entra: es
+ * texto libre del paciente y meterlo haría que «control» devolviera media
+ * lista.
+ *
+ * `texto` llega ya normalizado por quien llama, para no repetir el trabajo por
+ * cada fila en cada tecla.
+ */
+function coincideConElTexto(turno: TurnoVisible, texto: string): boolean {
+  return normalizar(turno.agenda).includes(texto) || normalizar(turno.sede).includes(texto);
+}
+
+/**
+ * La fecha de un parámetro `AAAA-MM-DD`, o `null` si no hay o no es una fecha.
+ *
+ * Se arma con el constructor de tres números y no con `new Date('2026-09-06')`:
+ * la cadena con guiones se interpreta como UTC, así que en cualquier huso al
+ * oeste el filtro «desde el 6» empezaba el 5 a las 20:00.
+ */
+function fechaDeParam(valor: string | null | undefined): Date | null {
+  if (valor === null || valor === undefined) {
+    return null;
+  }
+  const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+  if (partes === null) {
+    return null;
+  }
+  const fecha = new Date(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]));
+  return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
+/** La fecha en `AAAA-MM-DD` **local**, que es la que el usuario eligió. */
+function soloFecha(fecha: Date): string {
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
+}
+
+/**
+ * El último instante del día.
+ *
+ * «Hasta el 20» tiene que incluir el turno del 20 a las 15:00. Sin esto el
+ * filtro cortaba en la medianoche del 20 y dejaba fuera el día entero, que es
+ * el error clásico de un rango de fechas por igualdad.
+ */
+function finDelDia(fecha: Date): Date {
+  const fin = new Date(fecha);
+  fin.setHours(23, 59, 59, 999);
+  return fin;
 }
 
 /**

@@ -30,13 +30,41 @@
         @for (resultado of resultadosListos(); track resultado.reportId) {
           <li class="resultados__item" [id]="resultado.reportId">
             <header class="resultados__encabezado">
-              <div>
+              <div class="resultados__identidad">
                 <h2 class="resultados__titulo">{{ resultado.titulo }}</h2>
-                <p class="resultados__fecha">
-                  Liberado el {{ resultado.liberado | date: "d 'de' MMMM 'de' y" }}
-                </p>
+                <!-- FT-21-R03/R04 · los metadatos que el resultado no decía.
+                     Cada uno se omite mientras no se sepa: un rótulo sin dato
+                     es peor que la línea ausente. -->
+                <ul class="resultados__meta" data-testid="resultado-meta">
+                  <li class="resultados__meta-dato">
+                    Liberado el {{ resultado.liberado | date: "d 'de' MMMM 'de' y" }}
+                  </li>
+                  @if (resultado.emitido !== null) {
+                    <li class="resultados__meta-dato">
+                      Firmado el {{ resultado.emitido | date: "d 'de' MMMM 'de' y" }}
+                    </li>
+                  }
+                  <!-- Desde la segunda: decir «versión 1» en todos es ruido,
+                       decir «versión 2» explica por qué el informe cambió. -->
+                  @if (resultado.version > 1) {
+                    <li class="resultados__meta-dato" data-testid="resultado-version">
+                      Versión {{ resultado.version }}
+                    </li>
+                  }
+                  <li class="resultados__meta-dato">
+                    {{ resultado.archivos.length }}
+                    {{ resultado.archivos.length === 1 ? 'archivo' : 'archivos' }}
+                  </li>
+                </ul>
               </div>
-              <app-badge variant="info">{{ resultado.categoria }}</app-badge>
+              <div class="resultados__sellos">
+                <app-badge variant="info">{{ resultado.categoria }}</app-badge>
+                @if (resultado.estado !== '') {
+                  <app-badge variant="secondary" data-testid="resultado-estado">
+                    {{ resultado.estado }}
+                  </app-badge>
+                }
+              </div>
             </header>
 
             @if (resultado.conclusion !== '') {
@@ -47,21 +75,39 @@
               <ul class="resultados__archivos">
                 @for (archivo of resultado.archivos; track archivo.id) {
                   <li>
+                    <!-- FT-21-R01 · la descarga con su ícono y en variante con
+                         borde. Era un botón fantasma con texto: en una lista de
+                         resultados no se distinguía de un rótulo, y descargar es
+                         la acción por la que se entra a esta pantalla. -->
                     <button
                       app-button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
+                      class="resultados__descargar"
+                      [attr.data-testid]="'resultado-descargar-' + archivo.id"
                       [isLoading]="operando() === archivo.id"
                       (clicked)="descargar(archivo)"
                     >
-                      Descargar {{ archivo.rotulo }}
+                      <span class="resultados__descargar-icono" aria-hidden="true">
+                        <app-nav-icon name="results" />
+                      </span>
+                      <span>
+                        Descargar {{ archivo.rotulo
+                        }}@if (archivo.formato !== '') {
+                          <span class="resultados__formato"> · {{ archivo.formato }}</span>
+                        }
+                      </span>
                     </button>
                   </li>
                 }
               </ul>
             } @else {
-              <p class="resultados__sin-archivos">
-                Este resultado no tiene archivos para descargar.
+              <!-- FT-21-R06 · un resultado sin archivo no es un error ni una
+                   descarga rota: es un informe cuyo texto es todo lo que hay.
+                   Se dice, y se dice qué hacer con eso. -->
+              <p class="resultados__sin-archivos" data-testid="resultado-sin-archivos">
+                Este resultado no tiene archivos para descargar: lo que informó el profesional es
+                el texto de arriba. Si esperabas un adjunto, consultá con el centro que lo emitió.
               </p>
             }
 

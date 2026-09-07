@@ -19,6 +19,19 @@ export interface CalendarAppointment {
   /** El estado en palabras, ya traducido por quien lo pinta. */
   readonly estado: string;
   readonly tono: BadgeVariant;
+  /**
+   * Lo que la tarjeta NO muestra y el detalle sí (FT-07-R03/R04).
+   *
+   * La tarjeta del día tiene alto fijo —es lo que impide que un día con tres
+   * citas deforme la fila entera—, así que sólo entra un resumen: la hora y con
+   * quién. Todo lo demás —el consultorio, el motivo, el aviso de una demora—
+   * viaja acá y se revela al apuntar o al enfocar, sin ocupar lugar en la
+   * grilla.
+   *
+   * Ya redactadas por quien pinta el calendario: éste no sabe de motivos ni de
+   * demoras, y armarlas acá lo ataría al modelo de una pantalla.
+   */
+  readonly detalles?: readonly string[];
 }
 
 /** Un día del mes dibujado, con lo que cae en él. */

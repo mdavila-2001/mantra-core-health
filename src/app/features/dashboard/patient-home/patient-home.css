@@ -5,11 +5,180 @@
   display: block;
 }
 
-.mi-salud__tarjetas {
+/* ─── FT-03 · Tu próxima cita ───────────────────────────────────────────────
+   Una banda a ancho completo y no una celda de una rejilla de cuatro. El peso
+   visual es la jerarquía: esto es lo que se viene a mirar, y tiene que verse
+   distinto de lo que está al lado. */
+
+.proxima-cita {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  margin-block-start: var(--sp-4);
+  padding: var(--sp-5);
+  border: 1px solid var(--border-default);
+  /* El filo del lado del inicio es lo que la separa de la tira de resumen sin
+     necesidad de un segundo color de fondo. */
+  border-inline-start: 4px solid var(--petroleo, var(--border-strong));
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.proxima-cita__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-basis: 100%;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h4, var(--fs-h3));
+  line-height: var(--lh-h4, var(--lh-h3));
+  color: var(--text-secondary);
+}
+
+.proxima-cita__titulo-icono {
+  display: inline-flex;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--petroleo, var(--text-secondary));
+}
+
+.proxima-cita__cuerpo {
+  display: grid;
+  gap: var(--sp-2);
+  /* Crece con el espacio libre pero puede encogerse hasta cero, que es lo que
+     evita que las acciones se caigan fuera de la banda en 375 px. */
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+/* El dato por el que se entra. Es lo único en tamaño de titular de todo el
+   bloque: si dos cosas gritan, ninguna se oye. */
+.proxima-cita__dia {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-primary);
+  /* El día llega en minúscula del locale y acá encabeza. */
+  text-transform: capitalize;
+}
+
+.proxima-cita__cuando {
+  margin: 0;
+}
+
+.proxima-cita__hora {
+  display: block;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.proxima-cita__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proxima-cita__dato {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+}
+
+.proxima-cita__dato-icono {
+  display: inline-flex;
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.proxima-cita__demora {
+  margin: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 3px solid var(--st-warning-bd, var(--border-strong));
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption, var(--lh-body));
+}
+
+.proxima-cita__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  flex: none;
+}
+
+.proxima-cita__estado {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.proxima-cita__estado--error {
+  color: var(--text-primary);
+}
+
+/* ─── La tira de resumen ────────────────────────────────────────────────────
+   Lo de atrás, en dos filas que se leen de un vistazo. Deliberadamente más
+   liviano que la banda de arriba: son referencias, no la pantalla. */
+
+.mi-salud__resumen {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--sp-4);
-  margin-block-start: var(--sp-4);
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mi-salud__resumen-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle, var(--border-default));
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+}
+
+.mi-salud__resumen-icono {
+  display: inline-flex;
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.mi-salud__resumen-texto {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+}
+
+.mi-salud__resumen-rotulo {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.mi-salud__resumen-dato {
+  color: var(--text-primary);
+}
+
+.mi-salud__resumen-dato--vacio {
+  color: var(--text-muted);
 }
 
 .mi-salud__titulo {
@@ -18,20 +187,6 @@
   font-size: var(--fs-h4, var(--fs-h3));
   line-height: var(--lh-h4, var(--lh-h3));
   color: var(--text-primary);
-}
-
-.mi-salud__dato {
-  margin: 0 0 var(--sp-3);
-  font-size: var(--fs-body);
-  color: var(--text-primary);
-  /* La fecha llega en minúscula del pipe; acá encabeza la tarjeta. */
-  text-transform: capitalize;
-}
-
-.mi-salud__hora {
-  display: block;
-  color: var(--text-secondary);
-  text-transform: none;
 }
 
 .mi-salud__texto,
@@ -96,9 +251,11 @@
   background: var(--bg-active);
 }
 
+/* FT-03-R07 · con ancho, las dos referencias van lado a lado. Siguen sin
+   competir con la banda de la cita: son la mitad de alto y no tienen titular. */
 @media (min-width: 48rem) {
-  .mi-salud__tarjetas {
-    grid-template-columns: repeat(2, 1fr);
+  .mi-salud__resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

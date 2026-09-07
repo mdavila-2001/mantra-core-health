@@ -59,6 +59,28 @@ interface Resumen {
 }
 
 /**
+ * FT-03-R03 · Con quién y dónde es la próxima cita.
+ *
+ * La reserva sólo trae `resourceId`; el nombre del profesional y el consultorio
+ * viven en el catálogo de recursos. Se resuelven en una lectura aparte porque
+ * la jerarquía que pide FT-03 empieza por el «cuándo» —que ya está— y sigue por
+ * el «con quién»: sin esto la tarjeta decía la hora y nada más, que es
+ * exactamente lo que el pedido llamaba «falta de jerarquía».
+ *
+ * Los dos campos pueden quedar vacíos y la plantilla omite la línea en vez de
+ * mostrar un hueco o el identificador del recurso.
+ */
+interface DondeYConQuien {
+  /** El profesional, o el nombre de la sala/equipo si no hay persona detrás. */
+  readonly profesional: string;
+  /** El consultorio o sede, en palabras. Vacío si el recurso no tiene sede. */
+  readonly lugar: string;
+}
+
+/** El vacío de `DondeYConQuien`, para no repetir el literal. */
+const SIN_AGENDA: DondeYConQuien = { profesional: '', lugar: '' };
+
+/**
  * El panel de quien viene a atenderse — «Mi salud».
  *
  * ## Por qué existe
@@ -178,6 +200,29 @@ export class PatientHome {
       : { proximoTurno: null, ultimaReceta: null, ultimaAtencion: null };
   });
 
+  /**
+   * FT-03-R03 · Con quién y dónde es la próxima cita.
+   *
+   * Se llena después de saber cuál es la cita: la lectura de recursos exige
+   * organización, y pedirla antes de tener un turno sería una petición que casi
+   * siempre se descarta. Vacío mientras no se sepa.
+   */
+  protected readonly dondeYConQuien = signal<DondeYConQuien>(SIN_AGENDA);
+
+  /**
+   * FT-03-R06 · Los tres estados del bloque de la próxima cita, en una palabra.
+   *
+   * La plantilla los necesita separados del `ViewState` general porque el
+   * bloque de la cita tiene un vacío propio —«no tenés citas pedidas»— que no
+   * es el vacío del panel entero —«tu cuenta no tiene ficha de paciente»—.
+   */
+  protected readonly estadoDeLaCita = computed<'loading' | 'error' | 'empty' | 'ready'>(() => {
+    const actual = this.estado();
+    if (actual.status === 'loading') return 'loading';
+    if (actual.status === 'error') return 'error';
+    return this.resumen().proximoTurno === null ? 'empty' : 'ready';
+  });
+
   /** Quien no tiene nada todavía ve una invitación, no una pantalla vacía. */
   protected readonly primeraVez = computed(() => {
     const datos = this.resumen();
@@ -221,15 +266,46 @@ export class PatientHome {
           this.estado.set(errorToViewState(new Error('sin datos')));
           return;
         }
+        const proximoTurno = proximo(turnos?.items ?? []);
         this.estado.set(
           ready({
-            proximoTurno: proximo(turnos?.items ?? []),
+            proximoTurno,
             ultimaReceta: ultimaFecha(historia, 'receta'),
             ultimaAtencion: ultimaFecha(historia, 'atencion'),
           }),
         );
+        this.resolverAgenda(proximoTurno);
       },
     });
+  }
+
+  /**
+   * FT-03-R03 · Quién atiende y dónde, para la tarjeta de la próxima cita.
+   *
+   * Tolerante a propósito: si el catálogo de recursos no se puede leer, la
+   * tarjeta muestra igual el cuándo, que es el dato por el que se entra. Un
+   * error acá no puede vaciar el bloque entero.
+   */
+  private resolverAgenda(turno: Booking | null): void {
+    this.dondeYConQuien.set(SIN_AGENDA);
+    const tenantId = this.auth.activeTenantId();
+    const resourceId = turno?.resourceId;
+    if (tenantId === null || resourceId === undefined || resourceId === '') {
+      return;
+    }
+    this.scheduling
+      .listResources({ tenantId })
+      .pipe(catchError(() => of(null)))
+      .subscribe((pagina) => {
+        const recurso = pagina?.items.find((candidato) => candidato.id === resourceId);
+        if (recurso === undefined) {
+          return;
+        }
+        this.dondeYConQuien.set({
+          profesional: recurso.practitionerName ?? recurso.name,
+          lugar: recurso.site?.name ?? '',
+        });
+      });
   }
 }
 

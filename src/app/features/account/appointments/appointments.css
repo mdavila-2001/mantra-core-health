@@ -20,9 +20,55 @@
   gap: var(--sp-3);
 }
 
+/* El selector de vista es un componente del sistema (FT-04): acá sólo se dice
+   que no se estire más allá de su contenido en la cabecera. */
 .turnos__vistas {
+  flex: none;
+}
+
+/* ─── FT-05 · la barra de búsqueda y filtros ────────────────────────────────
+   Una fila que envuelve, no una rejilla fija: los campos tienen anchos
+   naturales muy distintos —un buscador no mide lo que un selector de estado— y
+   una rejilla de columnas iguales los deja a todos del ancho del más largo. */
+.turnos__filtros {
   display: flex;
-  gap: var(--sp-1);
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  margin-block: var(--sp-4);
+}
+
+/* El buscador es el control principal de la barra y por eso es el único que
+   crece: los filtros de estado y fecha tienen ancho suficiente con su contenido. */
+.turnos__buscador {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+.turnos__filtro-campo {
+  display: block;
+  flex: 0 1 11rem;
+  min-inline-size: 0;
+  /* Cancela el margen inferior que `.turnos__filtro` da a los campos del
+     formulario de abajo: acá los campos están en una fila y ese aire los
+     desalinearía respecto del botón de limpiar. */
+  margin-block-end: 0;
+}
+
+/* Alineado con la base de los campos y no con su rótulo: es una acción sobre
+   la fila, no un campo más. */
+.turnos__limpiar {
+  flex: none;
+  margin-block-end: var(--sp-1);
+}
+
+@media (max-width: 40rem) {
+  /* En teléfono cada control ocupa la fila: cuatro campos de 11rem en 375 px
+     entran de a dos y quedan pares desalineados. */
+  .turnos__buscador,
+  .turnos__filtro-campo {
+    flex-basis: 100%;
+  }
 }
 
 /* El detalle que comparten las dos vistas. */

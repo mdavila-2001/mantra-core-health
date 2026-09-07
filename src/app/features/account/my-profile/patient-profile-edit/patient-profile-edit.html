@@ -1,10 +1,15 @@
-<app-page-header
-  title="Editar tus datos"
-  subtitle="Lo que nos contaste al registrarte. Corregilo cuando quieras."
-  [breadcrumbs]="breadcrumbs()"
->
-  <app-back-link page-actions [fallback]="rutaDeMiPerfil" label="Volver a tu perfil" />
-</app-page-header>
+<!-- FT-11 · embebido en «Mi perfil» no dibuja su propio encabezado: la
+     pantalla ya tiene uno arriba, y dos encabezados seguidos se leen como dos
+     páginas pegadas. Por su ruta propia sigue teniéndolo. -->
+@if (!embebido()) {
+  <app-page-header
+    title="Editar tus datos"
+    subtitle="Lo que nos contaste al registrarte. Corregilo cuando quieras."
+    [breadcrumbs]="breadcrumbs()"
+  >
+    <app-back-link page-actions [fallback]="rutaDeMiPerfil" label="Volver a tu perfil" />
+  </app-page-header>
+}
 
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
   <form class="datos" (submit)="$event.preventDefault()">

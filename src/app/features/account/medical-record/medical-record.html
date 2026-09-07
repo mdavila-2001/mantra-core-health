@@ -13,39 +13,82 @@
   <a app-button variant="primary" [routerLink]="rutaDeTurnos">Ir a mis turnos</a>
 } @else {
   <app-view-state-host [state]="historia()" (retry)="cargar()">
+    <!-- ─── FT-20 · la historia por pestañas ──────────────────────────────
+         Antes las cuatro secciones se apilaban en una sola columna: para llegar
+         a los resultados había que pasar por todas las atenciones y todas las
+         recetas. Ahora cada una es una pestaña y la descarga completa vive al
+         costado, visible desde cualquiera de ellas (FT-20-R06/R07). -->
     <div class="historia">
-      <!-- La descarga de TODO, arriba y no al final: es lo que el registro del
-           cliente pide («el paciente puede descargar su historia») y quien viene
-           a buscarla no debería tener que recorrer la pantalla entera primero.
+      <div class="historia__cuerpo">
+        <!-- Un recorte silencioso se lee como «no hay nada más», y eso es afirmar
+             algo que nadie comprobó. Va fuera de las pestañas: vale para todas. -->
+        @if (recorte() !== '') {
+          <app-alert tone="warning" title="Historia recortada">
+            Se muestran los últimos registros de cada bloque. Quedaron recortados: {{ recorte() }}.
+          </app-alert>
+        }
+
+        <app-tabs
+          class="historia__tabs"
+          data-testid="historia-tabs"
+          [selectedIndex]="seccion()"
+          (selectedIndexChange)="elegirSeccion($event)"
+        >
+          <app-tab [label]="'Atenciones (' + atenciones().length + ')'">
+            @if (seccion() === 0) {
+              <ng-container [ngTemplateOutlet]="panelAtenciones" />
+            }
+          </app-tab>
+          <app-tab [label]="'Recetas (' + recetas().length + ')'">
+            @if (seccion() === 1) {
+              <ng-container [ngTemplateOutlet]="panelRecetas" />
+            }
+          </app-tab>
+          <app-tab [label]="'Alergias (' + alergias().length + ')'">
+            @if (seccion() === 2) {
+              <ng-container [ngTemplateOutlet]="panelAlergias" />
+            }
+          </app-tab>
+          <app-tab [label]="'Resultados (' + resultados().length + ')'">
+            @if (seccion() === 3) {
+              <ng-container [ngTemplateOutlet]="panelResultados" />
+            }
+          </app-tab>
+        </app-tabs>
+      </div>
+
+      <!-- FT-20-R06/R07 · «Descargar todo» al costado y pegajoso en escritorio:
+           es lo que el registro del cliente pide («el paciente puede descargar
+           su historia») y tiene que poder alcanzarse desde cualquier pestaña,
+           sin recorrer la pantalla entera primero.
 
            Trae órdenes y resultados al tocarse, no al abrir la pantalla: son dos
            lecturas más que la mayoría de las visitas no necesita. -->
-      <div class="historia__descarga-total">
-        <button
-          app-button
-          variant="primary"
-          [isLoading]="armandoHistoria()"
-          (clicked)="descargarHistoriaCompleta()"
-        >
-          Descargar mi historia completa
-        </button>
-        <p class="historia__descarga-nota">
-          Un solo PDF con tus atenciones, recetas, órdenes y resultados.
-        </p>
-      </div>
+      <aside class="historia__lateral" aria-label="Descargar tu historia">
+        <div class="historia__descarga-total">
+          <button
+            app-button
+            variant="primary"
+            data-testid="historia-descargar-todo"
+            [isLoading]="armandoHistoria()"
+            (clicked)="descargarHistoriaCompleta()"
+          >
+            Descargar mi historia completa
+          </button>
+          <p class="historia__descarga-nota">
+            Un solo PDF con tus atenciones, recetas, órdenes y resultados.
+          </p>
+        </div>
+      </aside>
+    </div>
 
-      <!-- Un recorte silencioso se lee como «no hay nada más», y eso es afirmar
-           algo que nadie comprobó. -->
-      @if (recorte() !== '') {
-        <app-alert tone="warning" title="Historia recortada">
-          Se muestran los últimos registros de cada bloque. Quedaron recortados: {{ recorte() }}.
-        </app-alert>
-      }
-
-      <!-- ─── Atenciones ────────────────────────────────────────────────────
-           Primero y con la descarga al lado: es lo que se viene a buscar. -->
+    <!-- ─── Los paneles ───────────────────────────────────────────────────
+         En plantillas y no en línea dentro de cada `app-tab`: el contenido del
+         panel cerrado se instancia igual aunque el panel esté oculto, y las
+         cuatro listas juntas eran cuatro recorridos por cada dibujo. -->
+    <ng-template #panelAtenciones>
       <section class="historia__bloque" aria-labelledby="historia-atenciones">
-        <h2 id="historia-atenciones" class="historia__titulo">
+        <h2 id="historia-atenciones" class="historia__titulo sr-only">
           Atenciones ({{ atenciones().length }})
         </h2>
 
@@ -94,10 +137,13 @@
           </ul>
         }
       </section>
+    </ng-template>
 
-      <!-- ─── Recetas ──────────────────────────────────────────────────────── -->
+    <ng-template #panelRecetas>
       <section class="historia__bloque" aria-labelledby="historia-recetas">
-        <h2 id="historia-recetas" class="historia__titulo">Recetas ({{ recetas().length }})</h2>
+        <h2 id="historia-recetas" class="historia__titulo sr-only">
+          Recetas ({{ recetas().length }})
+        </h2>
 
         @if (recetas().length === 0) {
           <p class="historia__vacio">Todavía no tenés recetas registradas.</p>
@@ -143,15 +189,24 @@
         }
       </section>
 
-      <!-- ─── Lo demás, en sólo lectura ─────────────────────────────────────
-           Sin descarga propia: no son documentos que nadie pida en papel por
-           separado, y ofrecerlo sería inventar un trámite. -->
-      @if (alergias().length > 0) {
-        <section class="historia__bloque" aria-labelledby="historia-alergias">
-          <h2 id="historia-alergias" class="historia__titulo">
-            Alergias ({{ alergias().length }})
-          </h2>
-          <ul class="historia__lista historia__lista--simple">
+    </ng-template>
+
+    <!-- ─── Lo demás, en sólo lectura ───────────────────────────────────────
+         Sin descarga propia: no son documentos que nadie pida en papel por
+         separado, y ofrecerlo sería inventar un trámite.
+
+         La pestaña existe aunque esté vacía, a diferencia de antes, que
+         escondía la sección entera: una pestaña ausente no se distingue de una
+         función que no hay, y «Alergias (0)» es una respuesta. -->
+    <ng-template #panelAlergias>
+      <section class="historia__bloque" aria-labelledby="historia-alergias">
+        <h2 id="historia-alergias" class="historia__titulo sr-only">
+          Alergias ({{ alergias().length }})
+        </h2>
+        @if (alergias().length === 0) {
+          <p class="historia__vacio">No tenés alergias registradas.</p>
+        } @else {
+          <ul class="historia__lista historia__lista--simple" data-testid="historia-alergias">
             @for (fila of alergias(); track fila.id) {
               <li class="historia__item">
                 <span class="historia__principal">{{ fila.principal }}</span>
@@ -159,15 +214,19 @@
               </li>
             }
           </ul>
-        </section>
-      }
+        }
+      </section>
+    </ng-template>
 
-      @if (resultados().length > 0) {
-        <section class="historia__bloque" aria-labelledby="historia-resultados">
-          <h2 id="historia-resultados" class="historia__titulo">
-            Resultados ({{ resultados().length }})
-          </h2>
-          <ul class="historia__lista historia__lista--simple">
+    <ng-template #panelResultados>
+      <section class="historia__bloque" aria-labelledby="historia-resultados">
+        <h2 id="historia-resultados" class="historia__titulo sr-only">
+          Resultados ({{ resultados().length }})
+        </h2>
+        @if (resultados().length === 0) {
+          <p class="historia__vacio">Todavía no tenés resultados registrados.</p>
+        } @else {
+          <ul class="historia__lista historia__lista--simple" data-testid="historia-resultados">
             @for (fila of resultados(); track fila.id) {
               <li class="historia__item">
                 <span class="historia__principal">{{ fila.principal }}</span>
@@ -180,8 +239,8 @@
               </li>
             }
           </ul>
-        </section>
-      }
-    </div>
+        }
+      </section>
+    </ng-template>
   </app-view-state-host>
 }
