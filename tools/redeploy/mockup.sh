@@ -41,7 +41,10 @@ RAIZ="${MOCKUP_RAIZ:-/opt/alovida-mockup/repo}"
 PUBLICO="${MOCKUP_PUBLICO:-/opt/alovida-mockup/browser}"
 ESTADO="${MOCKUP_ESTADO:-/opt/alovida-mockup/estado}"
 CONTENEDOR="${MOCKUP_CONTENEDOR:-alovida-mockup}"
-MEMORIA="${MOCKUP_MEMORIA:-4g}"
+# 6 GB y no 4: con 4 la construcción de Angular moría en esbuild con un
+# `deadlock` que no menciona la memoria por ninguna parte (salida 129). El pico
+# medido con 447 componentes y sus fragmentos diferidos ronda los 4,5 GB.
+MEMORIA="${MOCKUP_MEMORIA:-6g}"
 URL="${MOCKUP_URL:-https://pablo-h310.taila8f993.ts.net:8443}"
 
 BITACORA="$ESTADO/redeploy.log"

@@ -43,7 +43,13 @@ COPY package.json yarn.lock .yarnrc.yml ./
 # construcción no llegaba nunca a Angular.
 ENV CYPRESS_INSTALL_BINARY=0 \
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
-    HUSKY=0
+    HUSKY=0 \
+    # El heap de Node, por debajo del techo del contenedor: así el recolector
+    # empieza a trabajar **antes** de que el kernel mate el proceso. Sin esto,
+    # una construcción con techo de 4 GB moría con
+    # `esbuild: all goroutines are asleep - deadlock` y salida 129 —que no dice
+    # «me quedé sin memoria», pero es lo que era—.
+    NODE_OPTIONS=--max-old-space-size=4096
 
 # `--immutable` falla si el lockfile no cuadra: es lo que garantiza que lo
 # instalado sea exactamente lo declarado.
