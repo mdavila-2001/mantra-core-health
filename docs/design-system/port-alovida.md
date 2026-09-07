@@ -43,8 +43,8 @@ son espejo uno del otro.
 Aquel archivo es un IIFE que corre una vez sobre un documento estático; acá el
 trabajo se parte en dos, porque en una SPA el documento no se recarga:
 
-- `instalar()` — una vez por sesión: menús de desborde, diálogo con Esc y foco
-  atrapado, fondo que responde al puntero.
+- `instalar()` — una vez por sesión: menús de desborde, los controles de la
+  maqueta, diálogo con Esc y foco atrapado, fondo que responde al puntero.
 - `refrescar(estado)` — en cada `NavigationEnd`: secuencia de entrada, aparición
   por scroll, etiquetas de columna de las tablas, cajón de navegación, buscador
   compacto, y el estado de la pantalla.
@@ -52,6 +52,15 @@ trabajo se parte en dos, porque en una SPA el documento no se recarga:
 Lo llama `App`, que además lee de la ruta activa el **arquetipo** (`listado`,
 `formulario`, `detalle`, `modal`) y lo estampa en el `<body>`: la hoja tiene
 reglas de composición que cuelgan de ahí.
+
+`refrescar()` espera a que la pantalla esté en el DOM, y **se repite sola si la
+vista se rehace**. Las dos cosas hacen falta: las 126 pantallas se cargan por
+demanda, así que al entrar por URL directa el cuadro siguiente a
+`NavigationEnd` todavía no tiene pantalla; y entre esa navegación y el dibujo
+definitivo la vista del marco se rehace, llevándose lo que `refrescar()` ya
+había escrito. Sin esto, entrando por URL directa la pantalla quedaba a medio
+armar —tablas sin rótulo de columna, paginación sin ajustar, cajón sin botón—
+y navegando por dentro no, que es por qué el síntoma parecía caprichoso.
 
 Lo que **no** se portó, y por qué:
 
@@ -63,6 +72,41 @@ Lo que **no** se portó, y por qué:
 De la barra sí sobrevive una cosa útil: los formularios por etapas navegan con
 `?estado=paso2`, y `fijarEstado()` conmuta los bloques de
 `.app-view-state-host`.
+
+#### Los botones de las pantallas portadas
+
+`cablear()` reescribe cada `<a href>` de la maqueta a `routerLink`, pero a los
+`<button>` no los toca: allá los movía `alovida.js`. Sin ese archivo quedaban
+pintados y mudos —cientos de controles en 126 plantillas—, así que los mueve
+`controlesDeMaqueta()`, un único oyente delegado en `document`:
+
+| Control | Qué hace ahora |
+| --- | --- |
+| `[role="option"]` del combo de referencia | escribe el rótulo en el campo, mueve la marca y recoge la lista |
+| botón del `.app-chip` | quita el filtro, y retira la lista si queda vacía |
+| `.app-pagination` | pagina las filas que la tabla trae de verdad; si entran todas en una página, los dos botones quedan `aria-disabled` |
+| `Quitar` / `Agregar otra…` de `[app-form-section]` | saca y clona filas del repetidor, renumerando y re-identificando |
+| `Reintentar` del bloque de error | saca el `?estado=error` de la URL |
+| `Ver el JSON` | baja a la página lo que el `title` sólo enseña al pasar el mouse |
+| acción final de `.app-form-actions` | valida el formulario y vuelve al destino que declara su propio «Cancelar» |
+
+Dos decisiones a la vista:
+
+- **Va acotado a `[data-alovida-maqueta]`**, la marca de los dos marcos de
+  `features/alovida/shell`. Las clases de las que cuelga (`.app-chip`,
+  `.app-form-actions`, `.app-pagination`) también las usa el resto de la
+  aplicación, pero allá las gobierna un componente con su propia señal: sin el
+  acotamiento el oyente le pisaría el clic. Es la misma trampa que ya
+  documenta `menusDeDesborde`.
+- **No se inventan datos.** La paginación de la maqueta dibuja «Siguientes»
+  habilitado en toda pantalla; acá se la hace decir la verdad contra las filas
+  que hay, en vez de fabricar una segunda página. Y la acción final del
+  formulario no anuncia «guardado»: valida y navega, que es lo único que sin
+  API pasó de verdad.
+
+La regresión está en dos lugares: `alovida-runtime.service.spec.ts` contra
+marcado de laboratorio, y `playwright/mockup-botones-portados.spec.ts` contra
+el marcado real de las pantallas.
 
 ### 3 · Las pantallas
 

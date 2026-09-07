@@ -6,8 +6,10 @@
     se parte en dos, porque en una SPA el documento no se recarga:
 
       · `instalar()`  — una sola vez por sesión. Delegación en `document` y
-        listeners de ventana: menús de desborde, diálogo con Esc y foco
-        atrapado, fondo que responde al puntero.
+        listeners de ventana: menús de desborde, controles de la maqueta
+        —combo de referencia, chips, paginación, repetidores, acción final del
+        formulario—, diálogo con Esc y foco atrapado, fondo que responde al
+        puntero.
       · `refrescar()` — en cada navegación. Todo lo que mira el DOM de la
         pantalla actual: secuencia de entrada, aparición por scroll, etiquetas
         de columna de las tablas, cajón de navegación y buscador compacto.
@@ -26,6 +28,7 @@
 
 import { DOCUMENT, inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
 
 const FOCALIZABLES =
   "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
@@ -57,9 +60,17 @@ const REPOSO_MS = 650;
  */
 const GOTA_MS = 900;
 
+/**
+ * Cuántos cuadros espera `refrescar()` a que la pantalla aparezca en el DOM
+ * antes de correr igual. A 60 Hz son unos 800 ms: de sobra para que llegue un
+ * componente cargado por demanda, y poco para que se note si nunca llega.
+ */
+const CUADROS_DE_ESPERA = 48;
+
 @Injectable({ providedIn: 'root' })
 export class AlovidaRuntimeService {
   private readonly document = inject(DOCUMENT);
+  private readonly router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private instalado = false;
@@ -68,6 +79,12 @@ export class AlovidaRuntimeService {
   /** Cancela la espera de la secuencia de entrada si llega otra navegación. */
   private entradaPendiente: ReturnType<typeof setTimeout> | null = null;
   private soltarScroll: (() => void) | null = null;
+  /** Número del último `refrescar()` pedido: los anteriores se descartan. */
+  private refrescoEnCurso = 0;
+  /** Estado de pantalla del último `refrescar()`, para poder repetirlo. */
+  private ultimoEstado: string | null = null;
+  /** La pantalla sobre la que ya se corrió el trabajo del marco. */
+  private pantallaAtendida: Element | null = null;
 
   private get ventana(): (Window & typeof globalThis) | null {
     return this.document.defaultView;
@@ -108,6 +125,8 @@ export class AlovidaRuntimeService {
     this.document.documentElement.style.setProperty('--h-barra', '0px');
 
     this.menusDeDesborde();
+    this.controlesDeMaqueta();
+    this.vigilarLaPantalla();
     this.dialogoAccesible();
     this.fondoReactivo();
     this.gotaDeAgua();
@@ -122,10 +141,13 @@ export class AlovidaRuntimeService {
     }
     /* NavigationEnd llega con la ruta ya activada pero antes de que la vista
        del componente esté pintada: medir el pliegue o leer los `<th>` de una
-       tabla ahora daría cero filas. Se espera al cuadro siguiente, que es
-       cuando el DOM de la pantalla nueva ya existe. */
-    ventana.requestAnimationFrame(() => {
+       tabla ahora daría cero filas. Se espera al cuadro en el que el DOM de la
+       pantalla nueva ya existe. */
+    this.ultimoEstado = estado;
+    const miTurno = ++this.refrescoEnCurso;
+    this.cuandoLaPantallaExista(miTurno, 0, () => {
       this.fijarEstado(estado);
+      this.ajustarPaginacion();
       this.entradaUnaVez();
       this.aparicionPorScroll();
       this.etiquetarTablas();
@@ -133,6 +155,82 @@ export class AlovidaRuntimeService {
       this.cajonDeNavegacion();
       this.buscadorCompacto();
     });
+  }
+
+  /**
+   * Espera al primer cuadro en el que la pantalla está en el DOM.
+   *
+   * Un solo `requestAnimationFrame` alcanzaba mientras la pantalla llegaba
+   * junto con la navegación. Las 126 vistas de la bóveda se cargan **por
+   * demanda**, y al entrar por URL directa —una recarga, un enlace pegado— el
+   * cuadro siguiente a `NavigationEnd` llega con el `<router-outlet>` todavía
+   * vacío: el trabajo corría contra un documento sin pantalla y se perdía
+   * entero, sin error. Se veía como que la mitad de las cosas no cargaban —
+   * tablas sin rótulo de columna, paginación sin ajustar, cajón sin botón—
+   * pero sólo al entrar de una manera, no al navegar por dentro.
+   *
+   * El techo existe para no girar en una pantalla que de verdad no pinta nada;
+   * pasado ese punto se corre igual, que es lo que se hacía antes.
+   */
+  private cuandoLaPantallaExista(turno: number, intento: number, trabajo: () => void): void {
+    const ventana = this.ventana;
+    if (!ventana) {
+      return;
+    }
+    ventana.requestAnimationFrame(() => {
+      /* Otra navegación ya pidió su propio refresco: este quedó viejo y
+         aplicarlo pisaría el estado de la pantalla que sí se está mirando. */
+      if (turno !== this.refrescoEnCurso) {
+        return;
+      }
+      /* Se miran TODOS los outlets, no el primero: el de la raíz monta el
+         marco y el del marco monta la pantalla. Con sólo el primero, el marco
+         recién puesto ya contaba como «pintada» y se volvía a medir en vacío,
+         que es el error que esto vino a arreglar. */
+      const salidas = [...this.document.querySelectorAll('router-outlet')];
+      const pintada = salidas.length === 0 || salidas.every((s) => !!s.nextElementSibling);
+      if (!pintada && intento < CUADROS_DE_ESPERA) {
+        this.cuandoLaPantallaExista(turno, intento + 1, trabajo);
+        return;
+      }
+      this.pantallaAtendida = this.pantallaActual();
+      trabajo();
+    });
+  }
+
+  /** El elemento que el router puso en la salida más profunda: la pantalla. */
+  private pantallaActual(): Element | null {
+    const salidas = this.document.querySelectorAll('router-outlet');
+    return salidas.length ? (salidas[salidas.length - 1].nextElementSibling ?? null) : null;
+  }
+
+  /**
+   * Vuelve a correr el trabajo del marco cuando la pantalla del router cambia
+   * sin que haya habido navegación.
+   *
+   * Pasa: entre `NavigationEnd` y el dibujo definitivo, la vista del marco se
+   * rehace, y todo lo que `refrescar()` había escrito sobre el DOM anterior se
+   * va con él — rótulos de columna, ajuste de la paginación, botón del cajón.
+   * Como no hay otra navegación, nada lo volvía a poner: entrando por URL
+   * directa la pantalla quedaba a medio armar, y navegando por dentro no,
+   * que es por qué el síntoma parecía caprichoso.
+   *
+   * Se dispara por identidad del nodo, no por cantidad de mutaciones: las que
+   * escribe el propio `refrescar()` no cambian qué elemento es la pantalla, así
+   * que no puede realimentarse.
+   */
+  private vigilarLaPantalla(): void {
+    if (typeof MutationObserver === 'undefined') {
+      return;
+    }
+    const observador = new MutationObserver(() => {
+      const pantalla = this.pantallaActual();
+      if (!pantalla || pantalla === this.pantallaAtendida) {
+        return;
+      }
+      this.refrescar(this.ultimoEstado);
+    });
+    observador.observe(this.document.body, { childList: true, subtree: true });
   }
 
   // ------------------------------------------------- arquetipo y estado
@@ -242,6 +340,408 @@ export class AlovidaRuntimeService {
         this.cerrarMenus(null);
       }
     });
+  }
+
+  // ------------------------------------- controles de las pantallas portadas
+
+  /**
+   * Los `<button>` de las 126 vistas portadas desde la bóveda.
+   *
+   * `cablear()` del generador reescribe cada `<a href>` a `routerLink`, pero a
+   * los botones no los toca: en la maqueta su comportamiento lo ponía
+   * `_assets/alovida.js`, y de ese archivo acá sólo se portaron los menús de
+   * desborde, el diálogo y el cajón. El resto quedó pintado y mudo — el combo
+   * de referencia no elige, el chip de filtro no se quita, el repetidor no
+   * agrega ni saca filas, la paginación no pagina y el botón de guardar no
+   * lleva a ningún lado. Son cientos de controles en 126 plantillas, así que
+   * no se arregla plantilla por plantilla: se arregla acá, una vez.
+   *
+   * Un solo oyente delegado, como los menús: las pantallas se cargan por
+   * demanda y enganchar control por control en cada navegación sería recorrer
+   * el DOM entero cada vez.
+   *
+   * **Acotado a `[data-alovida-maqueta]`** —la marca que llevan los dos marcos
+   * de `features/alovida/shell`— a propósito. Las clases de las que cuelga
+   * (`.app-chip`, `.app-form-actions`, `.app-pagination`, `[role="listbox"]`)
+   * también las usa el resto de la aplicación, pero allá las gobierna un
+   * componente de Angular con su propia señal. Sin el acotamiento este oyente
+   * le pisaría el clic, que es exactamente la trampa que documenta
+   * `menusDeDesborde`.
+   */
+  private controlesDeMaqueta(): void {
+    this.document.addEventListener('click', (evento) => {
+      const objetivo = evento.target as HTMLElement | null;
+      if (!objetivo?.closest('[data-alovida-maqueta]')) {
+        return;
+      }
+
+      /* Un control anunciado como deshabilitado no actúa. El markup de la
+         bóveda deshabilita por `aria-disabled` y no por el atributo nativo
+         —igual que el botón del sistema— así que el clic llega igual y hay
+         que pararlo acá. */
+      const inerte = objetivo.closest<HTMLElement>("[aria-disabled='true']");
+      if (inerte) {
+        evento.preventDefault();
+        return;
+      }
+
+      const opcion = objetivo.closest<HTMLElement>("[role='listbox'] [role='option']");
+      if (opcion) {
+        evento.preventDefault();
+        this.elegirOpcion(opcion);
+        return;
+      }
+
+      const quitarChip = objetivo.closest<HTMLElement>('.app-chip button');
+      if (quitarChip) {
+        evento.preventDefault();
+        this.quitarChip(quitarChip);
+        return;
+      }
+
+      const boton = objetivo.closest<HTMLButtonElement>('button');
+      if (!boton) {
+        return;
+      }
+      /* Las 126 vistas portadas escriben `type="button"` en todos sus botones
+         —la maqueta no envía formularios—, así que un `submit` bajo este marco
+         sólo puede venir de un componente de Angular que alguien montó acá
+         adentro. Ese lo maneja su dueño: interceptarlo sería impedir el envío
+         del formulario, que es el peor final posible de este oyente. */
+      if (boton.type === 'submit') {
+        return;
+      }
+      const texto = (boton.textContent ?? '').trim();
+
+      if (boton.closest('.app-pagination')) {
+        evento.preventDefault();
+        this.paginar(boton);
+        return;
+      }
+      if (texto === 'Quitar' && boton.closest('.app-card--inset')) {
+        evento.preventDefault();
+        this.quitarBloqueRepetido(boton);
+        return;
+      }
+      if (/^Agregar (otra|otro|un|una)\b/.test(texto)) {
+        evento.preventDefault();
+        this.agregarBloqueRepetido(boton);
+        return;
+      }
+      if (texto === 'Reintentar') {
+        evento.preventDefault();
+        this.irAEstado(null);
+        return;
+      }
+      if (boton.closest('.app-tooltip-panel[title]')) {
+        evento.preventDefault();
+        this.revelarElTitulo(boton);
+        return;
+      }
+      if (boton.closest('.app-form-actions')) {
+        evento.preventDefault();
+        this.confirmarFormulario(boton);
+      }
+    });
+  }
+
+  /**
+   * Combo de referencia: el markup deja la lista abierta y una opción marcada,
+   * porque una maqueta estática no puede mostrar el desplegable de otra forma.
+   * Elegir escribe el rótulo en el campo, mueve la marca y recoge la lista,
+   * que es lo que un `combobox` promete con su `aria-expanded`.
+   */
+  private elegirOpcion(opcion: HTMLElement): void {
+    const listbox = opcion.closest<HTMLElement>("[role='listbox']");
+    if (!listbox) {
+      return;
+    }
+    listbox
+      .querySelectorAll<HTMLElement>("[role='option']")
+      .forEach((otra) => otra.setAttribute('aria-selected', String(otra === opcion)));
+
+    const campo = listbox.id
+      ? this.document.querySelector<HTMLInputElement>(`input[aria-controls='${listbox.id}']`)
+      : null;
+    if (!campo) {
+      return;
+    }
+    campo.value = this.rotuloDeOpcion(opcion);
+    campo.setAttribute('aria-expanded', 'false');
+    listbox.hidden = true;
+    campo.focus();
+  }
+
+  /**
+   * El rótulo de la opción es su primera línea; lo que sigue al `<br>` es la
+   * aclaración (especialidad, matrícula, sede) y no es lo que se escribe en el
+   * campo.
+   */
+  private rotuloDeOpcion(opcion: HTMLElement): string {
+    const envoltorio = opcion.querySelector('span') ?? opcion;
+    const primeraLinea = Array.from(envoltorio.childNodes).find(
+      (nodo) => nodo.nodeType === 3 && (nodo.textContent ?? '').trim(),
+    );
+    return ((primeraLinea?.textContent ?? envoltorio.textContent) ?? '').trim();
+  }
+
+  /** El chip de un filtro aplicado: su botón lo saca de la lista. */
+  private quitarChip(boton: HTMLElement): void {
+    const chip = boton.closest<HTMLElement>('.app-chip');
+    const lista = chip?.parentElement;
+    chip?.remove();
+    if (lista?.classList.contains('app-chip-lista') && !lista.querySelector('.app-chip')) {
+      lista.hidden = true;
+    }
+  }
+
+  // ------------------------------------------------------------- paginación
+
+  /** Las filas que la nota de la paginación declara por página. */
+  private filasPorPagina(nav: HTMLElement, total: number): number {
+    const nota = nav.querySelector('.app-pagination__nota')?.textContent ?? '';
+    const declaradas = Number(/(\d+)\s+filas/.exec(nota)?.[1] ?? 0);
+    return declaradas > 0 ? declaradas : total;
+  }
+
+  private tablaDeLaPaginacion(nav: HTMLElement): HTMLTableSectionElement | null {
+    return (
+      nav.parentElement?.querySelector<HTMLTableSectionElement>('table.app-data-table tbody') ?? null
+    );
+  }
+
+  private botonDePaginacion(nav: HTMLElement, atras: boolean): HTMLElement | null {
+    return (
+      Array.from(nav.querySelectorAll<HTMLElement>('button')).find(
+        (b) => /Anteriores/.test(b.textContent ?? '') === atras,
+      ) ?? null
+    );
+  }
+
+  /**
+   * La paginación de la maqueta viene con «Siguientes» habilitado en toda
+   * pantalla, tenga las filas que tenga: es un dibujo, no una medición. Acá se
+   * la hace decir la verdad contra las filas que la tabla realmente trae — si
+   * entran todas en una página, los dos botones quedan anunciados como
+   * deshabilitados en vez de prometer una página que no existe.
+   *
+   * Fabricar una segunda página de filas inventadas sería peor que el dibujo:
+   * la rama `mockup` está para probar la aplicación, no para mentirle.
+   */
+  private ajustarPaginacion(): void {
+    this.document
+      .querySelectorAll<HTMLElement>('[data-alovida-maqueta] .app-pagination')
+      .forEach((nav) => {
+        const cuerpo = this.tablaDeLaPaginacion(nav);
+        if (!cuerpo) {
+          return;
+        }
+        const filas = Array.from(cuerpo.rows);
+        const tam = this.filasPorPagina(nav, filas.length);
+        this.mostrarPagina(nav, 1, tam, Math.max(1, Math.ceil(filas.length / tam)));
+      });
+  }
+
+  private paginar(boton: HTMLElement): void {
+    const nav = boton.closest<HTMLElement>('.app-pagination');
+    const cuerpo = nav ? this.tablaDeLaPaginacion(nav) : null;
+    if (!nav || !cuerpo) {
+      return;
+    }
+    const tam = this.filasPorPagina(nav, cuerpo.rows.length);
+    const paginas = Math.max(1, Math.ceil(cuerpo.rows.length / tam));
+    const actual = Number(nav.dataset['pagina'] ?? '1');
+    const atras = /Anteriores/.test(boton.textContent ?? '');
+    const destino = Math.min(paginas, Math.max(1, actual + (atras ? -1 : 1)));
+    if (destino !== actual) {
+      this.mostrarPagina(nav, destino, tam, paginas);
+    }
+  }
+
+  private mostrarPagina(nav: HTMLElement, pagina: number, tam: number, paginas: number): void {
+    const cuerpo = this.tablaDeLaPaginacion(nav);
+    if (!cuerpo) {
+      return;
+    }
+    nav.dataset['pagina'] = String(pagina);
+    Array.from(cuerpo.rows).forEach((fila, indice) => {
+      fila.hidden = Math.floor(indice / tam) + 1 !== pagina;
+    });
+    this.botonDePaginacion(nav, true)?.setAttribute('aria-disabled', String(pagina === 1));
+    this.botonDePaginacion(nav, false)?.setAttribute('aria-disabled', String(pagina === paginas));
+  }
+
+  // -------------------------------------------------------- filas repetidas
+
+  /**
+   * Las secciones de reglas del formulario son un repetidor: N tarjetas
+   * `.app-card--inset` con su «Quitar», y un «Agregar otra…» al final. La
+   * maqueta las dibuja; acá se las hace crecer y encoger.
+   */
+  private quitarBloqueRepetido(boton: HTMLElement): void {
+    const bloque = boton.closest<HTMLElement>('.app-card--inset');
+    const seccion = bloque?.closest<HTMLElement>('[app-form-section]');
+    if (!bloque || !seccion) {
+      return;
+    }
+    /* La última no se saca: una sección de reglas vacía no deja por dónde
+       volver a empezar, y el «Agregar otra…» clona a partir de la última. */
+    if (seccion.querySelectorAll('.app-card--inset').length <= 1) {
+      return;
+    }
+    bloque.remove();
+    this.renumerarBloques(seccion);
+  }
+
+  private agregarBloqueRepetido(boton: HTMLElement): void {
+    const seccion = boton.closest<HTMLElement>('[app-form-section]');
+    const bloques = seccion
+      ? Array.from(seccion.querySelectorAll<HTMLElement>('.app-card--inset'))
+      : [];
+    const ultimo = bloques[bloques.length - 1];
+    if (!seccion || !ultimo) {
+      return;
+    }
+    const copia = ultimo.cloneNode(true) as HTMLElement;
+    copia.querySelectorAll<HTMLInputElement>('input').forEach((campo) => {
+      if (campo.type === 'checkbox' || campo.type === 'radio') {
+        campo.checked = false;
+      } else {
+        campo.value = '';
+      }
+    });
+    copia.querySelectorAll<HTMLTextAreaElement>('textarea').forEach((campo) => {
+      campo.value = '';
+    });
+    copia.querySelectorAll<HTMLSelectElement>('select').forEach((campo) => {
+      campo.selectedIndex = 0;
+    });
+    this.reidentificar(copia, bloques.length + 1);
+    ultimo.after(copia);
+    this.renumerarBloques(seccion);
+    copia.querySelector<HTMLElement>(FOCALIZABLES)?.focus();
+  }
+
+  /**
+   * Un clon trae los `id` del original, y dos `id` iguales rompen la relación
+   * `label[for]`: el rótulo de la fila nueva enfocaría el campo de la vieja.
+   * Se les agrega el número de fila y se reescriben las referencias que
+   * apuntan adentro del propio bloque.
+   */
+  private reidentificar(bloque: HTMLElement, indice: number): void {
+    const nuevos = new Map<string, string>();
+    bloque.querySelectorAll<HTMLElement>('[id]').forEach((el) => {
+      const nuevo = `${el.id}-r${indice}`;
+      nuevos.set(el.id, nuevo);
+      el.id = nuevo;
+    });
+    const REFERENCIAS = ['for', 'aria-describedby', 'aria-controls', 'aria-labelledby'] as const;
+    bloque
+      .querySelectorAll<HTMLElement>(REFERENCIAS.map((attr) => `[${attr}]`).join(', '))
+      .forEach((el) => {
+        REFERENCIAS.forEach((attr) => {
+          const valor = el.getAttribute(attr);
+          if (!valor) {
+            return;
+          }
+          const reescrito = valor
+            .split(/\s+/)
+            .map((ref) => nuevos.get(ref) ?? ref)
+            .join(' ');
+          if (reescrito !== valor) {
+            el.setAttribute(attr, reescrito);
+          }
+        });
+      });
+  }
+
+  /** «Regla 1», «Regla 2»… El número lo da la posición, no el markup. */
+  private renumerarBloques(seccion: HTMLElement): void {
+    seccion.querySelectorAll<HTMLElement>('.app-card--inset').forEach((bloque, indice) => {
+      const rotulo = bloque.querySelector<HTMLElement>('.app-card__cabecera .overline');
+      if (rotulo) {
+        rotulo.textContent = (rotulo.textContent ?? '').replace(/\d+\s*$/, String(indice + 1));
+      }
+    });
+  }
+
+  // ------------------------------------------------ el resto de los botones
+
+  /**
+   * «Ver el JSON»: el valor está en el `title` del panel que envuelve al
+   * botón, que sólo se ve al pasar el mouse. El botón lo baja a la página,
+   * donde el teclado y el táctil también llegan.
+   */
+  private revelarElTitulo(boton: HTMLElement): void {
+    const panel = boton.closest<HTMLElement>('.app-tooltip-panel[title]');
+    const contenido = panel?.getAttribute('title');
+    if (!panel || !contenido) {
+      return;
+    }
+    const abierto = panel.querySelector('.app-titulo-revelado');
+    if (abierto) {
+      abierto.remove();
+      boton.setAttribute('aria-expanded', 'false');
+      return;
+    }
+    const caja = this.document.createElement('pre');
+    caja.className = 'app-titulo-revelado app-textarea--mono';
+    caja.textContent = contenido;
+    panel.append(caja);
+    boton.setAttribute('aria-expanded', 'true');
+  }
+
+  /**
+   * La acción final de un formulario. Los pasos intermedios ya navegan solos
+   * —el generador los porta como `routerLink="." [queryParams]="{estado:…}"`—;
+   * el que quedaba mudo es el último, el que en el producto guarda.
+   *
+   * Sin API que llamar, lo honesto es hacer las dos cosas que sí dependen del
+   * front: validar lo que el markup declara obligatorio, y volver a donde el
+   * propio formulario dice que se vuelve —el destino de su «Cancelar», que es
+   * el listado del que se salió—. Inventar un mensaje de «guardado» sería
+   * afirmar algo que no pasó.
+   */
+  private confirmarFormulario(boton: HTMLElement): void {
+    const formulario = boton.closest('form');
+    if (formulario && !formulario.checkValidity()) {
+      formulario.reportValidity();
+      formulario.querySelector<HTMLElement>(':invalid')?.focus();
+      return;
+    }
+    /* Se busca en toda la pantalla y no sólo en esta barra: en un formulario
+       por etapas el «Cancelar» con destino vive en el primer paso, y la barra
+       del último sólo trae «Atrás», que apunta a la etapa anterior. */
+    const pantalla =
+      boton.closest<HTMLElement>('.app-view-state-host') ??
+      boton.closest<HTMLElement>('[data-alovida-maqueta]');
+    const enlaces = Array.from(pantalla?.querySelectorAll<HTMLElement>('.app-form-actions a') ?? []);
+    /* El atributo se lee a mano y no por selector: el DOM lo guarda en
+       minúsculas —`routerlink`— y así da igual con qué caja lo escribió el
+       generador. `.` es la etapa anterior del mismo formulario, no la salida. */
+    const destino = enlaces
+      .map((a) => a.getAttribute('routerLink') ?? a.getAttribute('routerlink'))
+      .find((ruta) => !!ruta && ruta !== '.');
+    if (destino) {
+      void this.router.navigateByUrl(destino);
+    }
+  }
+
+  /**
+   * Mueve el estado de la pantalla por la URL, que es quien lo manda: así el
+   * botón «Reintentar» del bloque de error deshace exactamente lo que puso
+   * `?estado=error`, y la vuelta atrás del navegador sigue funcionando.
+   */
+  private irAEstado(estado: string | null): void {
+    const [ruta, consulta] = this.router.url.split('?');
+    const parametros = new URLSearchParams(consulta ?? '');
+    if (estado) {
+      parametros.set('estado', estado);
+    } else {
+      parametros.delete('estado');
+    }
+    const cadena = parametros.toString();
+    void this.router.navigateByUrl(cadena ? `${ruta}?${cadena}` : ruta, { replaceUrl: true });
   }
 
   // ---------------------------------------------- diálogo: Esc y foco atrapado
@@ -688,7 +1188,11 @@ export class AlovidaRuntimeService {
    */
   private mudarSelectorDeOrganizacion(nav: HTMLElement): void {
     const ventana = this.ventana;
-    const selector = this.document.querySelector<HTMLElement>('.app-header .app-tenant-switcher');
+    const boton = this.document.querySelector<HTMLElement>('.app-header .app-tenant-switcher');
+    /* Se muda el anclaje, no el botón: el desplegable de organizaciones cuelga
+       de él, y bajando sólo el botón el panel quedaría huérfano en el header,
+       abriéndose a un costado de la pantalla en vez de debajo del control. */
+    const selector = boton?.closest<HTMLElement>('.app-header__anclaje') ?? boton;
     if (!ventana || !selector) {
       return;
     }
