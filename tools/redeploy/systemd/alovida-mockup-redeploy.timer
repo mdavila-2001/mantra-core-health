@@ -1,0 +1,18 @@
+# Cada dos minutos mira si `origin/mockup` avanzó.
+#
+# `Persistent=false` a propósito: si la máquina estuvo apagada no interesa
+# recuperar las pasadas perdidas —sólo importa el último commit de la rama, y la
+# primera pasada tras el arranque ya lo despliega—. `OnBootSec` le da margen a
+# Docker para tener los contenedores en pie antes de que nadie mire nada.
+[Unit]
+Description=Vigila la rama mockup y redespliega lo que hay detrás del Funnel
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=2min
+AccuracySec=15s
+Persistent=false
+Unit=alovida-mockup-redeploy.service
+
+[Install]
+WantedBy=timers.target
