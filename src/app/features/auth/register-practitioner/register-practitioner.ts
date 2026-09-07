@@ -368,6 +368,14 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       texto: 'Usá uno al que tengas acceso: es por donde se recupera la cuenta si perdés la clave.',
     },
     {
+      icono: 'phone',
+      titulo: 'Los teléfonos son del consultorio',
+      texto:
+        'Son los que ve quien necesita ubicarte en el trabajo. Podés dejarlos vacíos y cargarlos después desde tu perfil.',
+    },
+  ],
+  password: [
+    {
       icono: 'lock',
       titulo: 'Tu contraseña, sólo tuya',
       texto:
@@ -1058,7 +1066,7 @@ export class RegisterPractitioner {
         titulo: 'Tu acceso y el contacto del trabajo',
         clave: 'access',
         icon: 'mail',
-        hint: 'Con este correo y esta contraseña vas a iniciar sesión.',
+        hint: 'Con este correo vas a iniciar sesión. Los teléfonos son los del consultorio.',
         campos: [
           {
             key: 'workMobilePhone',
@@ -1097,20 +1105,6 @@ export class RegisterPractitioner {
             testId: 'registro-pro-correo',
             icono: 'mail',
             mensajeDeError: 'Ingresá un correo válido.',
-          },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            description:
-              'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca te la vamos a pedir por teléfono ni por correo.',
-            control: 'password',
-            required: true,
-            autocomplete: 'new-password',
-            placeholder: 'Tu contraseña',
-            testId: 'registro-pro-password',
-            icono: 'lock',
-            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
           },
         ],
       },
@@ -1247,6 +1241,33 @@ export class RegisterPractitioner {
             options: this.opcionesEspecialidadFiltradas(),
             placeholder: 'Sin especificar',
             testId: 'registro-pro-especialidad-3',
+          },
+        ],
+      },
+      // La contraseña cierra el alta, sola. Estaba en el paso del correo de
+      // trabajo, mezclada con los teléfonos del consultorio: el mismo paso
+      // pedía datos de contacto —que son del trabajo y opcionales— y la clave
+      // de la cuenta, que no es ninguna de las dos cosas. Separarla también
+      // deja el gesto de «elegir contraseña» pegado al de terminar.
+      {
+        titulo: 'Tu contraseña',
+        clave: 'password',
+        icon: 'lock',
+        hint: 'Lo último. Con ella y tu correo de trabajo vas a iniciar sesión.',
+        campos: [
+          {
+            key: 'password',
+            label: 'Contraseña',
+            hint: 'Al menos 8 caracteres.',
+            description:
+              'Se guarda cifrada: ni el equipo de AloVida puede verla, y nunca te la vamos a pedir por teléfono ni por correo.',
+            control: 'password',
+            required: true,
+            autocomplete: 'new-password',
+            placeholder: 'Tu contraseña',
+            testId: 'registro-pro-password',
+            icono: 'lock',
+            mensajeDeError: 'La contraseña necesita al menos 8 caracteres.',
           },
         ],
       },
