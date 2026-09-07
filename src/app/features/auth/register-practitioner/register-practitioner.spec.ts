@@ -141,7 +141,7 @@ describe('RegisterPractitioner', () => {
       // especialidades. Las pruebas que lo ejercen lo pisan por `extra`.
       professionalTitle: extra.professionalTitle ?? 'Médico / Médica',
       phone: extra.phone ?? '',
-      mobilePhone: extra.mobilePhone ?? '',
+      mobilePhone: extra.mobilePhone ?? '+591 70011111',
       workMobilePhone: extra.workMobilePhone ?? '',
       workLandline: extra.workLandline ?? '',
       // La identidad de acceso: obligatorio, así que tiene valor por defecto.
@@ -160,7 +160,7 @@ describe('RegisterPractitioner', () => {
           ? 'FEMALE'
           : (extra.sexAtBirth as BirthSexCode | null),
       licenseIssueDate: null,
-      issuerAdministrativeAreaConceptId: null,
+      issuerAdministrativeAreaConceptId: 'dep-1',
       specialtyPrimary: extra.specialtyPrimary ?? '',
       specialtySecond: extra.specialtySecond ?? '',
       specialtyThird: extra.specialtyThird ?? '',
@@ -726,21 +726,53 @@ describe('RegisterPractitioner', () => {
       // lo que promete su ayuda («el colegio se acomoda solo»). Que aparezca
       // acá es la prueba de que ese automatismo sigue vivo.
       regulatoryAuthority: 'Colegio Médico de Bolivia',
+      // Los dos que pasaron a obligatorios con el documento y el contacto
+      // privado. `personalEmail` NO está: desde que es la identidad de acceso
+      // viaja en `email`, que es el campo de login del DTO.
+      issuerAdministrativeAreaConceptId: 'dep-1',
+      mobilePhone: '+591 70011111',
     });
 
     req.flush(RESPUESTA_PRO);
   });
 
-  it('el documento de identidad es opcional para el profesional y no viaja si está vacío', () => {
+  it('sin cédula el formulario no se puede enviar', () => {
     completarProfesional({ nationalId: '' });
-    expect(component.formProfesional.controls.nationalId.valid).toBe(true);
+
+    expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
+
     component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
+  });
 
-    const req = http.expectOne('/iam/auth/register-practitioner');
-    expect(req.request.body.nationalId).toBeUndefined();
-    expect(req.request.body.issuerAdministrativeAreaConceptId).toBeUndefined();
+  it('sin departamento de emisión el formulario no se puede enviar', () => {
+    completarProfesional();
+    component.formProfesional.controls.issuerAdministrativeAreaConceptId.setValue(null);
 
-    req.flush(RESPUESTA_PRO);
+    expect(component.formProfesional.controls.issuerAdministrativeAreaConceptId.invalid).toBe(
+      true,
+    );
+
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
+  });
+
+  it('sin celular personal el formulario no se puede enviar', () => {
+    completarProfesional({ mobilePhone: '' });
+
+    expect(component.formProfesional.controls.mobilePhone.invalid).toBe(true);
+
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
+  });
+
+  it('sin correo personal el formulario no se puede enviar', () => {
+    completarProfesional({ personalEmail: '' });
+
+    expect(component.formProfesional.controls.personalEmail.invalid).toBe(true);
+
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
   });
 
   it('si se ingresa un documento de identidad con formato inválido, el control se invalida', () => {
