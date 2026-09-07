@@ -45,6 +45,13 @@ export {
 } from './bolivia';
 
 export {
+  muestras,
+  valorParaEntrada,
+  valoresParaEntradas,
+  type EntradaAGenerar,
+} from './props';
+
+export {
   CODIGOS_DX,
   CODIGOS_MED,
   biografia,

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { MOCK_USERS } from './mock-session';
 
@@ -8,15 +9,28 @@ import { MOCK_USERS } from './mock-session';
  */
 @Component({
   selector: 'app-mock-banner',
+  imports: [RouterLink],
   template: `
     <aside class="mock" [class.mock--plegado]="plegado()" aria-label="Modo de demostración">
-      <button type="button" class="mock__boton" (click)="plegado.set(!plegado())">
-        {{ plegado() ? 'Datos de prueba' : 'Ocultar' }}
-      </button>
+      <div class="mock__botones">
+        <button type="button" class="mock__boton" (click)="plegado.set(!plegado())">
+          {{ plegado() ? 'Datos de prueba' : 'Ocultar' }}
+        </button>
+        <!-- El acceso al stock de componentes. Vive acá y no en el menú porque
+             el panel ya está en todas las pantallas y no pide sesión: se llega
+             desde donde uno esté, que es como se usa una herramienta. -->
+        <a class="mock__boton mock__boton--stock" routerLink="/design-system/stock">
+          Ver componentes
+        </a>
+      </div>
       @if (!plegado()) {
         <p class="mock__texto">
           <strong>Rama mockup:</strong> sin backend. Todo lo que ves sale de datos de prueba en memoria y
           los cambios duran mientras dure la pestaña. Cualquier contraseña sirve.
+        </p>
+        <p class="mock__texto">
+          <strong>Ver componentes</strong> abre el stock: los 444 componentes del proyecto, uno por
+          uno, montados con datos generados y con lo que cada uno tiene mal.
         </p>
         <ul class="mock__cuentas">
           @for (cuenta of cuentas; track cuenta.email) {
@@ -45,14 +59,25 @@ import { MOCK_USERS } from './mock-session';
       background: transparent;
       box-shadow: none;
     }
+    .mock__botones {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
     .mock__boton {
       border: 0;
       border-radius: 999px;
       padding: 6px 12px;
       background: #f59e0b;
       color: #111827;
+      font: inherit;
       font-weight: 600;
       cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .mock__boton--stock {
+      background: #38bdf8;
     }
     .mock__texto {
       margin: 10px 0 6px;

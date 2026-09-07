@@ -16,6 +16,7 @@ import { IdentityVerification } from './features/identity-verification/identity-
 import { NotFound } from './features/not-found/not-found';
 import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
+import { environment } from '../environments/environment';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
 import {
   APP_SECTIONS,
@@ -1622,6 +1623,40 @@ export const routes: Routes = [
         .then((m) => m.DesignSystemSample)
         .catch(() => chunkFallido()),
     title: 'AloVida - Vitrina de Diseño',
+  },
+  {
+    /* El stock de componentes: la lista de todo lo que existe, sacada del
+       código, con cada pieza montada con datos de prueba.
+
+       `canMatch` y no `canActivate`: con `canMatch` la ruta **no existe** allí
+       donde no hay backend simulado —o sea, en cualquier rama que no sea
+       `mockup`—, así que cae en el comodín y da 404 como cualquier dirección
+       inventada. Con `canActivate` existiría y sólo estaría prohibida, que es
+       otra cosa: anuncia que hay algo detrás.
+
+       Va fuera del armazón, como la vitrina: no pide sesión, porque montar un
+       componente suelto no la necesita y pedirla obligaría a entrar sólo para
+       mirar un botón. */
+    path: 'design-system/stock',
+    canMatch: [() => environment.mockBackend],
+    loadComponent: () =>
+      import('./features/component-stock/component-stock')
+        .then((m) => m.ComponentStock)
+        .catch(() => chunkFallido()),
+    title: 'AloVida - Stock de componentes',
+  },
+  {
+    /* Comodín y no `:clave`: la clave de un componente es su ruta de archivo
+       —`shared/components/atoms/badge/badge`— y lleva barras, que un parámetro
+       de un solo segmento no captura. Con `**` la URL sigue siendo legible y
+       se puede copiar y pegar. */
+    path: 'design-system/stock/**',
+    canMatch: [() => environment.mockBackend],
+    loadComponent: () =>
+      import('./features/component-stock/component-stock')
+        .then((m) => m.ComponentStock)
+        .catch(() => chunkFallido()),
+    title: 'AloVida - Stock de componentes',
   },
   {
     path: 'auth',

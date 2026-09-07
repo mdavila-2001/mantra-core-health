@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-444 componentes y 84 servicios inyectables, leídos de `src/`.
+445 componentes y 84 servicios inyectables, leídos de `src/`.
 
 ## Átomo (19)
 
@@ -97,7 +97,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (363)
+## Feature (364)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -341,6 +341,7 @@
 | `app-procedures-block` | `ProceduresBlock` | `patientProfileId`, `encounterId`, `modo` | — | — | OnPush | sí |
 | `app-specialty-form-block` | `SpecialtyFormBlock` | `encounterId`, `patientProfileId` | `cambio` | — | OnPush | sí |
 | `app-request-access` | `RequestAccess` | — | — | — | OnPush | **no** |
+| `app-component-stock` | `ComponentStock` | — | — | — | OnPush | **no** |
 | `app-consultation` | `Consultation` | — | — | — | OnPush | **no** |
 | `app-access-tree` | `AccessTree` | `sections` | — | — | OnPush | sí |
 | `app-dashboard` | `Dashboard` | — | — | — | OnPush | sí |
@@ -705,6 +706,7 @@
 - `TerminologiaVersionesListado` — `src/app/features/alovida/terminologia/versiones-listado/versiones-listado.ts`
 - `TerminologiaVersionesPublicar` — `src/app/features/alovida/terminologia/versiones-publicar/versiones-publicar.ts`
 - `RequestAccess` — `src/app/features/clinical-record/request-access/request-access.ts`
+- `ComponentStock` — `src/app/features/component-stock/component-stock.ts`
 - `Consultation` — `src/app/features/consultation/consultation.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`

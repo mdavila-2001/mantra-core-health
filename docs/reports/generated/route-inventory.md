@@ -2,7 +2,7 @@
 
 # Inventario de rutas
 
-Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 17 entradas declaradas.
+Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 19 entradas declaradas.
 
 | URL | Destino | Acceso | Render en servidor | Título |
 |---|---|---|---|---|
@@ -10,6 +10,8 @@ Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 17 entradas 
 | `/` | `ShellLayout` | Protegida (`authGuard`) | Client | — |
 | `/feed` | `Feed` (diferida) | Protegida (`authGuard`) | Client | Muro profesional |
 | `/design-system` | `DesignSystemSample` (diferida) | Pública | Prerender | AloVida - Vitrina de Diseño |
+| `/design-system/stock` | `ComponentStock` (diferida) | Pública | Client | AloVida - Stock de componentes |
+| `/design-system/stock/**` | `ComponentStock` (diferida) | Pública | Client | AloVida - Stock de componentes |
 | `/auth` | `Login` | Pública | Prerender | AloVida - Iniciar sesión |
 | `/auth/organization` | `TenantSelection` | Pública | Client | AloVida - Elegí tu organización |
 | `/auth/register` | `RegisterAccountType` | Pública | Prerender | AloVida - Crear cuenta |

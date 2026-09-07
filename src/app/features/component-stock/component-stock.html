@@ -1,0 +1,221 @@
+@let ficha = elegido();
+@let cuenta = recuento();
+
+<div class="stock" (keydown)="teclado($event)" tabindex="-1">
+  <header class="stock__cabecera">
+    <div>
+      <h1>Stock de componentes</h1>
+      <p class="stock__resumen">
+        {{ cuenta.total }} componentes del proyecto, sacados del código.
+        <strong>{{ cuenta.conProblemas }}</strong> tienen algo que mirar.
+      </p>
+    </div>
+    @if (ficha !== null) {
+      <a class="stock__volver" routerLink="/design-system/stock">← Volver al listado</a>
+    }
+  </header>
+
+  @if (ficha === null) {
+    <!-- ------------------------------------------------------ el listado -->
+    <section class="stock__filtros" aria-label="Filtros del listado">
+      <label class="stock__campo">
+        <span>Buscar</span>
+        <input
+          type="search"
+          placeholder="Clase, selector o ruta…"
+          [value]="texto()"
+          (input)="texto.set($any($event.target).value)"
+        />
+      </label>
+
+      <label class="stock__campo">
+        <span>Nivel</span>
+        <select [value]="nivel()" (change)="nivel.set($any($event.target).value)">
+          <option value="todos">Todos los niveles</option>
+          @for (n of niveles; track n) {
+            <option [value]="n">{{ etiquetaDeNivel[n] }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="stock__casilla">
+        <input
+          type="checkbox"
+          [checked]="soloConProblemas()"
+          (change)="soloConProblemas.set($any($event.target).checked)"
+        />
+        <span>Sólo los que tienen problemas</span>
+      </label>
+    </section>
+
+    <p class="stock__conteo">
+      {{ filtrados().length }} de {{ cuenta.total }}
+      @for (grupo of cuenta.porNivel; track grupo.nivel) {
+        <span class="stock__pastilla">{{ etiquetaDeNivel[grupo.nivel] }}: {{ grupo.cuantos }}</span>
+      }
+    </p>
+
+    <table class="stock__tabla">
+      <caption class="stock__oculto">Todos los componentes del proyecto</caption>
+      <thead>
+        <tr>
+          <th scope="col">Componente</th>
+          <th scope="col">Nivel</th>
+          <th scope="col">Usa</th>
+          <th scope="col">Entradas</th>
+          <th scope="col">Prueba</th>
+          <th scope="col">Problemas</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of filtrados(); track c.clave) {
+          <tr>
+            <th scope="row">
+              <a [routerLink]="['/design-system/stock', c.clave]">{{ c.clase }}</a>
+              <code>{{ c.selector }}</code>
+            </th>
+            <td>{{ etiquetaDeNivel[c.nivel] }}</td>
+            <td class="stock__composicion">
+              @if (c.usa.atomos.length > 0) { <span title="Átomos">á{{ c.usa.atomos.length }}</span> }
+              @if (c.usa.moleculas.length > 0) { <span title="Moléculas">m{{ c.usa.moleculas.length }}</span> }
+              @if (c.usa.organismos.length > 0) { <span title="Organismos">o{{ c.usa.organismos.length }}</span> }
+            </td>
+            <td>{{ c.entradas.length }}</td>
+            <td>{{ c.tieneSpec ? 'sí' : '—' }}</td>
+            <td>
+              @if (c.problemas.length > 0) {
+                <span class="stock__aviso">{{ c.problemas.length }}</span>
+              } @else {
+                <span class="stock__ok">✓</span>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6">Ningún componente coincide con el filtro.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  } @else {
+    <!-- --------------------------------------------------------- la ficha -->
+    @let pos = posicion();
+
+    <nav class="stock__paso" aria-label="Recorrido por los componentes">
+      <button type="button" [disabled]="pos?.anterior === null" (click)="irA(pos?.anterior ?? null)">
+        ← Anterior
+      </button>
+      <span>{{ pos?.indice }} de {{ pos?.total }}</span>
+      <button type="button" [disabled]="pos?.siguiente === null" (click)="irA(pos?.siguiente ?? null)">
+        Siguiente →
+      </button>
+      <span class="stock__pista">También con las flechas ← →</span>
+    </nav>
+
+    <article class="stock__ficha">
+      <header class="stock__ficha-cabecera">
+        <div>
+          <h2>{{ ficha.clase }} <code>&lt;{{ ficha.selector }}&gt;</code></h2>
+          <p class="stock__ruta">{{ ficha.path }}</p>
+          @if (ficha.resumen !== '') {
+            <p class="stock__descripcion">{{ ficha.resumen }}</p>
+          }
+        </div>
+        <div class="stock__acciones">
+          <button type="button" class="stock__primario" (click)="otrosDatos()">Otros datos</button>
+          <button type="button" (click)="copiarInforme()">Copiar informe</button>
+        </div>
+      </header>
+
+      <section class="stock__bloque">
+        <h3>Cómo se ve, con datos</h3>
+        @switch (estadoDelMontaje()) {
+          @case ('montando') { <p class="stock__estado">Montando…</p> }
+          @case ('falló') {
+            <p class="stock__fallo">
+              <strong>No se pudo montar aislado.</strong> {{ errorDelMontaje() }}
+            </p>
+          }
+        }
+        <div class="stock__lienzo" #lienzo></div>
+      </section>
+
+      <div class="stock__columnas">
+        <section class="stock__bloque">
+          <h3>Qué usa</h3>
+          @if (ficha.usa.organismos.length > 0) {
+            <p class="stock__lista"><strong>Organismos</strong>
+              @for (x of ficha.usa.organismos; track x) { <span class="stock__pastilla">{{ x }}</span> }
+            </p>
+          }
+          @if (ficha.usa.moleculas.length > 0) {
+            <p class="stock__lista"><strong>Moléculas</strong>
+              @for (x of ficha.usa.moleculas; track x) { <span class="stock__pastilla">{{ x }}</span> }
+            </p>
+          }
+          @if (ficha.usa.atomos.length > 0) {
+            <p class="stock__lista"><strong>Átomos</strong>
+              @for (x of ficha.usa.atomos; track x) { <span class="stock__pastilla">{{ x }}</span> }
+            </p>
+          }
+          @if (ficha.usa.atomos.length === 0 && ficha.usa.moleculas.length === 0 && ficha.usa.organismos.length === 0) {
+            <p class="stock__estado">No compone con nada del sistema de diseño.</p>
+          }
+          @if (ficha.usadoPor.length > 0) {
+            <p class="stock__lista"><strong>Lo usan</strong>
+              @for (x of ficha.usadoPor; track x) { <span class="stock__pastilla">{{ x }}</span> }
+            </p>
+          }
+          @if (ficha.clientes.length > 0) {
+            <p class="stock__lista"><strong>Pide a la API</strong>
+              @for (x of ficha.clientes; track x) { <span class="stock__pastilla">{{ x }}</span> }
+            </p>
+          }
+        </section>
+
+        <section class="stock__bloque">
+          <h3>Entradas ({{ ficha.entradas.length }})</h3>
+          @if (ficha.entradas.length === 0) {
+            <p class="stock__estado">No recibe nada: lo que pinta lo saca de dentro.</p>
+          } @else {
+            <table class="stock__tabla stock__tabla--compacta">
+              <thead>
+                <tr><th scope="col">Nombre</th><th scope="col">Tipo</th><th scope="col">Valor de prueba</th></tr>
+              </thead>
+              <tbody>
+                @for (e of ficha.entradas; track e.nombre) {
+                  <tr>
+                    <th scope="row">{{ e.nombre }}@if (e.requerido) { <span class="stock__req" title="Obligatoria">*</span> }</th>
+                    <td><code>{{ e.tipo }}</code></td>
+                    <td><code>{{ valoresUsados()[e.nombre] ?? '—' }}</code></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @if (ficha.salidas.length > 0) {
+            <p class="stock__lista"><strong>Salidas</strong>
+              @for (s of ficha.salidas; track s) { <span class="stock__pastilla">{{ s }}</span> }
+            </p>
+          }
+        </section>
+      </div>
+
+      <section class="stock__bloque">
+        <h3>Problemas ({{ ficha.problemas.length + avisosDeConsola().length }})</h3>
+        @if (ficha.problemas.length === 0 && avisosDeConsola().length === 0) {
+          <p class="stock__ok">Nada que reprocharle.</p>
+        } @else {
+          <ul class="stock__problemas">
+            @for (p of ficha.problemas; track p.detalle) {
+              <li><span class="stock__tipo">{{ p.tipo }}</span> {{ p.detalle }}</li>
+            }
+            @for (a of avisosDeConsola(); track a) {
+              <li><span class="stock__tipo">consola</span> {{ a }}</li>
+            }
+          </ul>
+        }
+      </section>
+    </article>
+  }
+</div>

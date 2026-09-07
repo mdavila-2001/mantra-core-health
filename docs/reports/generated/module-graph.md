@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-1238 archivos TypeScript bajo `src/` y 5149 importaciones internas.
+1242 archivos TypeScript bajo `src/` y 5159 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -148,6 +148,7 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/alovida/terminologia/versiones-listado/versiones-listado.ts`
 - `src/app/features/alovida/terminologia/versiones-publicar/versiones-publicar.ts`
 - `src/app/features/clinical-record/request-access/request-access.ts`
+- `src/app/features/component-stock/component-stock.ts`
 - `src/app/features/consultation/consultation.ts`
 - `src/app/features/interventions/interventions.routes.ts`
 - `src/app/features/interventions/interventions.ts`
@@ -192,10 +193,10 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 1098 |
+| `@angular/core` | 1102 |
 | `@angular/common` | 651 |
-| `@angular/router` | 505 |
-| `rxjs` | 186 |
+| `@angular/router` | 507 |
+| `rxjs` | 187 |
 | `@angular/forms` | 114 |
 | `node:fs` | 21 |
 | `@opentelemetry/api` | 12 |
