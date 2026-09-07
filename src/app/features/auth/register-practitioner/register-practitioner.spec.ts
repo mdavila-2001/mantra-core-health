@@ -234,6 +234,9 @@ describe('RegisterPractitioner', () => {
         'credentials',
         'practice',
         'specialties',
+        // La contraseña cierra el alta, sola: dejó de compartir página con los
+        // teléfonos del consultorio y el correo de trabajo.
+        'password',
       ]);
     });
 
@@ -248,14 +251,11 @@ describe('RegisterPractitioner', () => {
       expect(camposDe('profile')).toEqual(['sexAtBirth', 'birthDate', 'occupationConceptId']);
       // Los cinco contactos que pide el registro, repartidos en dos páginas: lo
       // privado por un lado y lo del trabajo junto al acceso, que es el correo
-      // laboral (AC-05-6).
+      // laboral (AC-05-6). La contraseña ya no vive acá: tiene página propia al
+      // final, porque no es un dato de contacto ni es opcional como los dos
+      // teléfonos con los que compartía pantalla.
       expect(camposDe('personal-contact')).toEqual(['mobilePhone', 'personalEmail']);
-      expect(camposDe('access')).toEqual([
-        'workMobilePhone',
-        'workLandline',
-        'email',
-        'password',
-      ]);
+      expect(camposDe('access')).toEqual(['workMobilePhone', 'workLandline', 'email']);
       expect(camposDe('residence')).toEqual(['municipio']);
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
@@ -269,6 +269,7 @@ describe('RegisterPractitioner', () => {
         'specialtySecond',
         'specialtyThird',
       ]);
+      expect(camposDe('password')).toEqual(['password']);
     });
 
     /**
@@ -366,15 +367,16 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene nueve páginas, ninguna de más de cuatro preguntas', () => {
-    // Nueve y no menos porque el límite es de **campos por página**, no de
+  it('tiene diez páginas, ninguna de más de cuatro preguntas', () => {
+    // Diez y no menos porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
     // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). La novena es la de los
     // contactos privados, que se separó de la del acceso al dejar de mezclar el
-    // número personal con el del consultorio.
+    // número personal con el del consultorio; la décima es la contraseña, que
+    // cierra el alta sola en vez de compartir pantalla con esos teléfonos.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(9);
+    expect(paginas.length).toBe(10);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
