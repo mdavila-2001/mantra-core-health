@@ -221,9 +221,9 @@
                 <!-- Lupa de búsqueda con catálogo normado SEGIP y opción libre al final -->
                 <app-reference-combobox
                   data-testid="registro-pro-ocupacion"
-                  label="Ocupación (opcional)"
+                  label="Ocupación"
                   placeholder="Buscá tu profesión u oficio…"
-                  emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                  emptyMessage="Ninguna ocupación coincide. Elegí «Otra ocupación» al final de la lista."
                   [options]="ocupacionesFiltradas()"
                   [selected]="ocupacionElegida()"
                   [minQueryLength]="0"

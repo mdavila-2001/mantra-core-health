@@ -340,9 +340,9 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   profile: [
     {
       icono: 'stethoscope',
-      titulo: 'Todo esto es opcional',
+      titulo: 'Por qué te pedimos estos tres',
       texto:
-        'El sexo y la fecha de nacimiento se guardan en tu perfil profesional. Lo único que no podés dejar en blanco es tu habilitación.',
+        'Sexo y fecha de nacimiento son dato clínico: mandan en dosis, valores de referencia y tamizajes. La ocupación ordena tu ficha profesional. Los tres se guardan en tu perfil.',
     },
   ],
   residence: [
@@ -495,7 +495,12 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    birthDate: new FormControl<Date | null>(null),
+    // Obligatoria por la misma razón que `sexAtBirth`, y con más motivo: la
+    // edad manda en dosis, valores de referencia y tamizajes. Un profesional
+    // sin fecha de nacimiento es una ficha que después hay que perseguir.
+    birthDate: new FormControl<Date | null>(null, {
+      validators: [Validators.required],
+    }),
     // AC-05-7: el DTO lo aceptaba desde siempre; lo que faltaba era
     // preguntarlo. Igual que en el alta de paciente, es dato clínico —dosis,
     // valores de referencia, tamizajes— y no una cortesía: obligatorio, aunque
@@ -503,7 +508,14 @@ export class RegisterPractitioner {
     sexAtBirth: new FormControl<BirthSexCode | null>(null, {
       validators: [Validators.required],
     }),
-    occupationConceptId: new FormControl<string | null>(null),
+    occupationConceptId: new FormControl<string | null>(null, {
+      validators: [Validators.required],
+    }),
+    // El validador de este campo es CONDICIONAL y lo pone `elegirOcupacion()`:
+    // sólo es obligatorio cuando la ocupación elegida es «Otra». Sin eso, elegir
+    // «Otra» y no escribir nada dejaba el alta sin ocupación de ninguna de las
+    // dos formas —el envío descarta `occupationConceptId` cuando es «Otra»
+    // (ver `cuerpoDelRegistro`)—, que es justo lo que la obligatoriedad evita.
     occupationFreeText: new FormControl('', { nonNullable: true }),
     licenseIssueDate: new FormControl<Date | null>(null),
     issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
@@ -718,6 +730,13 @@ export class RegisterPractitioner {
   elegirOcupacion(opcion: ReferenceOption | null): void {
     this.formProfesional.controls.occupationConceptId.setValue(opcion?.value ?? null);
     this.ocupacionSeleccionada.set(opcion?.value ?? null);
+    const otraOcupacion = this.formProfesional.controls.occupationFreeText;
+    if (this.ocupacionEsOtra()) {
+      otraOcupacion.addValidators(Validators.required);
+    } else {
+      otraOcupacion.removeValidators(Validators.required);
+    }
+    otraOcupacion.updateValueAndValidity();
     if (!this.ocupacionEsOtra()) {
       this.formProfesional.controls.occupationFreeText.setValue('');
     }
@@ -726,9 +745,11 @@ export class RegisterPractitioner {
   private campoOcupacion(): CampoDeFormulario {
     return {
       key: 'occupationConceptId',
-      label: 'Ocupación (opcional)',
+      label: 'Ocupación',
       hint: 'Tu profesión u oficio principal según catálogo normado.',
       control: 'custom',
+      required: true,
+      mensajeDeError: 'Elegí tu ocupación en la lista.',
     };
   }
 
@@ -740,8 +761,13 @@ export class RegisterPractitioner {
         label: '¿Cuál?',
         hint: 'Escribí tu ocupación.',
         control: 'text',
+        // Sólo se dibuja cuando la elegida es «Otra», y en ese caso es la ÚNICA
+        // forma en que la ocupación llega al alta: acá obligatorio siempre que
+        // se vea. El validador lo pone `elegirOcupacion()`.
+        required: true,
         placeholder: 'Tu ocupación o cargo',
         testId: 'registro-pro-ocupacion-otra',
+        mensajeDeError: 'Escribí cuál es tu ocupación.',
       },
     ];
   }
@@ -970,7 +996,7 @@ export class RegisterPractitioner {
         titulo: 'Contanos un poco sobre vos',
         clave: 'profile',
         icon: 'stethoscope',
-        hint: 'El sexo hace falta; el resto es opcional. Se guarda en tu perfil profesional.',
+        hint: 'Los tres datos hacen falta. Se guardan en tu perfil profesional.',
         campos: [
           {
             key: 'sexAtBirth',
@@ -986,10 +1012,12 @@ export class RegisterPractitioner {
           },
           {
             key: 'birthDate',
-            label: 'Fecha de nacimiento (opcional)',
+            label: 'Fecha de nacimiento',
             control: 'date',
+            required: true,
             maxDate: 'today',
             minDate: new Date(1900, 0, 1),
+            mensajeDeError: 'Indicá tu fecha de nacimiento.',
           },
           this.campoOcupacion(),
           ...this.campoOtraOcupacion(),
