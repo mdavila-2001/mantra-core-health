@@ -446,26 +446,33 @@ export function registrarFinanzas(router: MockRouter): void {
 
   router.get('/quotations/:id', ({ params }) => cotizaciones.get(params['id']!) ?? notFound('Cotización no encontrada'));
 
-  /* ---- activos y pasivos --------------------------------------------------- */
+  /* ---- activos y pasivos ---------------------------------------------------
+     Con el prefijo `/accounting/practitioner`, que es el que arma
+     `AssetsLiabilitiesClient.url()`. Registradas como `/assets` y
+     `/liabilities` a secas no las encontraba nadie: la petición caía en
+     `respuestaGenerica`, que para una lectura sin `limit` devuelve `{}`, y la
+     pantalla —que espera un arreglo— moría con `t[Symbol.iterator] is not a
+     function`. El manejador existía y los datos también; sólo colgaban de la
+     ruta equivocada. */
 
-  router.get('/assets', ({ query }) => {
+  router.get('/accounting/practitioner/assets', ({ query }) => {
     const practiceId = texto(query, 'practiceId');
     return activos.filtrar((a) => practiceId === null || a.practiceId === practiceId).map(({ practiceId: _p, ...a }) => a);
   });
 
-  router.post('/assets', (request) => {
+  router.post('/accounting/practitioner/assets', (request) => {
     const datos = cuerpo<{ practiceId: string; code: string; name: string; acquisitionCost: string }>(request);
     const nuevo = activos.agregar({ id: nuevoId('asset'), practiceId: datos.practiceId ?? PRACTICAS[0]!.id, code: datos.code ?? 'EQ-NUEVO', name: datos.name ?? 'Activo nuevo', statusConceptId: ESTADO['ST-ACTIVE']!, bookValue: datos.acquisitionCost ?? '0.00', acquisitionCost: datos.acquisitionCost ?? '0.00', automated: true });
     return { status: 201, body: { id: nuevo.id } };
   });
 
-  router.patch('/assets/:id/automation', (request) => {
+  router.patch('/accounting/practitioner/assets/:id/automation', (request) => {
     const datos = cuerpo<{ automated: boolean }>(request);
     activos.actualizar(request.params['id']!, { automated: datos.automated ?? true });
     return { ok: true };
   });
 
-  router.post('/assets/:id/progress', ({ params }) => {
+  router.post('/accounting/practitioner/assets/:id/progress', ({ params }) => {
     const a = activos.get(params['id']!);
     if (a === undefined) return notFound('Activo no encontrado');
     const cuotaMensual = Number(a.acquisitionCost) / 60;
@@ -473,24 +480,24 @@ export function registrarFinanzas(router: MockRouter): void {
     return { status: 201, body: { transactionId: nuevoId('journal'), amount: d(cuotaMensual) } };
   });
 
-  router.get('/liabilities', ({ query }) => {
+  router.get('/accounting/practitioner/liabilities', ({ query }) => {
     const practiceId = texto(query, 'practiceId');
     return pasivos.filtrar((p) => practiceId === null || p.practiceId === practiceId).map(({ practiceId: _p, cuotas: _c, pagadas: _q, startDate: _s, interestRate: _i, ...p }) => p);
   });
 
-  router.post('/liabilities', (request) => {
+  router.post('/accounting/practitioner/liabilities', (request) => {
     const datos = cuerpo<{ practiceId: string; code: string; name: string; creditorName?: string; principalAmount: string; interestRate?: string; installments: number; startDate: string; automated?: boolean }>(request);
     const nuevo = pasivos.agregar({ id: nuevoId('liability'), practiceId: datos.practiceId ?? PRACTICAS[0]!.id, code: datos.code ?? 'PR-NUEVO', name: datos.name ?? 'Pasivo nuevo', creditorName: datos.creditorName ?? 'Acreedor', principalAmount: datos.principalAmount ?? '0.00', outstandingAmount: datos.principalAmount ?? '0.00', statusConceptId: ESTADO['ST-ACTIVE']!, automated: datos.automated ?? true, cuotas: datos.installments ?? 12, pagadas: 0, startDate: datos.startDate ?? isoDia(0), interestRate: datos.interestRate ?? '0' });
     return { status: 201, body: { id: nuevo.id, code: nuevo.code, schedule: cronograma(Number(nuevo.principalAmount), nuevo.cuotas, 0, nuevo.startDate, Number(nuevo.interestRate)) } };
   });
 
-  router.patch('/liabilities/:id/automation', (request) => {
+  router.patch('/accounting/practitioner/liabilities/:id/automation', (request) => {
     const datos = cuerpo<{ automated: boolean }>(request);
     pasivos.actualizar(request.params['id']!, { automated: datos.automated ?? true });
     return { ok: true };
   });
 
-  router.post('/liabilities/:id/progress', ({ params }) => {
+  router.post('/accounting/practitioner/liabilities/:id/progress', ({ params }) => {
     const p = pasivos.get(params['id']!);
     if (p === undefined) return notFound('Pasivo no encontrado');
     if (p.pagadas >= p.cuotas) return preconditionFailed('El pasivo ya está saldado');
