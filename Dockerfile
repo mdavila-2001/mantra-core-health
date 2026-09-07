@@ -36,6 +36,15 @@ WORKDIR /app
 # se reutiliza mientras esos tres archivos no cambien.
 COPY package.json yarn.lock .yarnrc.yml ./
 
+# Ni Cypress ni los navegadores de Playwright pintan nada en una imagen que sólo
+# compila: son doscientos y pico megas de binarios que se descargan en cada
+# construcción sin caché y que el artefacto no toca. Sin esto, el redespliegue
+# del servidor se quedaba colgado en el `postinstall` de Cypress —medido— y la
+# construcción no llegaba nunca a Angular.
+ENV CYPRESS_INSTALL_BINARY=0 \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    HUSKY=0
+
 # `--immutable` falla si el lockfile no cuadra: es lo que garantiza que lo
 # instalado sea exactamente lo declarado.
 RUN yarn install --immutable
