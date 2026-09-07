@@ -49,7 +49,13 @@ ENV CYPRESS_INSTALL_BINARY=0 \
     # una construcción con techo de 4 GB moría con
     # `esbuild: all goroutines are asleep - deadlock` y salida 129 —que no dice
     # «me quedé sin memoria», pero es lo que era—.
-    NODE_OPTIONS=--max-old-space-size=4096
+    NODE_OPTIONS=--max-old-space-size=3072 \
+    # Cuántos procesos de esbuild corren a la vez. Por omisión, uno por núcleo:
+    # con doce núcleos y 447 fragmentos diferidos el pico se va por encima de los
+    # 6 GB y el cgroup mata la construcción (`ng build` a 4,7 GB de RSS, medido).
+    # Con dos trabajadores tarda algo más y cabe. En un portátil con memoria de
+    # sobra no hace falta tocar nada: esto sólo aplica a la imagen.
+    NG_BUILD_MAX_WORKERS=2
 
 # `--immutable` falla si el lockfile no cuadra: es lo que garantiza que lo
 # instalado sea exactamente lo declarado.
