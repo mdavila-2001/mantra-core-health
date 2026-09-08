@@ -37,7 +37,8 @@
             ],
             "styles": [
               "src/styles.css",
-              "src/styles/alovida.css"
+              "src/styles/alovida.css",
+              "src/styles/perfil-publico.css"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",
