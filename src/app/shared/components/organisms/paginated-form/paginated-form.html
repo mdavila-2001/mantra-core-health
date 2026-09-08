@@ -102,6 +102,10 @@
                     @for (opcion of campo.options ?? []; track opcion.value) {
                       <app-radio [value]="opcion.value" [label]="opcion.label" />
                     }
+                    <!-- «Otro», con su renglón: ver `otro` en el contrato. -->
+                    @if (campo.otro) {
+                      <app-radio-otro [valores]="valoresDe(campo)" />
+                    }
                   </app-radio-group>
                 }
                 @case ('switch') {
@@ -125,6 +129,7 @@
                     [attr.data-testid]="campo.testId ?? null"
                     [formControlName]="campo.key"
                     [options]="campo.options ?? []"
+                    [allowOther]="campo.otro ?? false"
                     [hasError]="errorDe(campo) !== ''"
                   />
                 }

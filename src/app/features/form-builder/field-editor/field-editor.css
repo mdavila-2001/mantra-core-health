@@ -3,15 +3,22 @@
 
     Sólo tokens del sistema. La caja la pone este componente y no una `app-card`
     anidada: son las filas de una lista dentro de una sección que ya tiene marco.
+
+    La forma es la de una pregunta de Google Forms: tarjeta blanca con esquinas
+    redondeadas, una franja de color a la izquierda en la que se está editando,
+    la pregunta grande arriba con el tipo a su derecha, las opciones debajo con
+    su marca, y un pie con las acciones separadas de «Obligatorio».
     ========================================================================== */
 
 :host {
     display: grid;
-    gap: var(--sp-3);
-    padding: var(--sp-4);
+    gap: var(--sp-4);
+    padding: var(--sp-5) var(--sp-6);
     border: 1px solid var(--border-subtle, var(--border-default));
-    border-radius: var(--r-md);
+    border-radius: var(--r-lg);
     background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 /* ---- el agarre para arrastrar ------------------------------------------- */
@@ -24,7 +31,7 @@
     display: block;
     inline-size: 1.5rem;
     block-size: 1rem;
-    margin-block-start: calc(-1 * var(--sp-2));
+    margin-block: calc(-1 * var(--sp-3)) calc(-1 * var(--sp-2));
     color: var(--text-muted);
     cursor: grab;
     touch-action: none;
@@ -53,13 +60,20 @@
 }
 
 /* La franja de color a la izquierda es lo que separa de un vistazo lo que se
-   puede tocar de lo que no. Los propios la llevan; los del estándar, no. */
-:host:not(.editor-campo--estandar) {
-    border-inline-start: 3px solid var(--brand-primary);
+   puede tocar de lo que no. Los propios la llevan —y se enciende más al
+   enfocarlos, como la tarjeta activa de Google Forms—; los del estándar, no. */
+:host(:not(.editor-campo--estandar)) {
+    border-inline-start: 4px solid var(--brand-primary);
+}
+
+:host(:not(.editor-campo--estandar):focus-within) {
+    box-shadow: var(--shadow-md);
+    border-color: var(--brand-primary);
 }
 
 :host(.editor-campo--estandar) {
     background: var(--bg-surface-alt);
+    box-shadow: none;
 }
 
 /* ---- cabecera: qué se pregunta y de qué tipo ---------------------------- */
@@ -70,12 +84,15 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--sp-3);
+    gap: var(--sp-4);
 }
 
+/* La pregunta es lo más grande de la tarjeta: es lo que se lee primero y lo
+   que se corrige más. */
 .editor-campo__nombre-campo {
-    flex: 1 1 14rem;
+    flex: 1 1 18rem;
     min-inline-size: 0;
+    font-size: var(--fs-h3);
 }
 
 .editor-campo__nombre-fijo {
@@ -98,7 +115,7 @@
     display: flex;
     align-items: center;
     gap: var(--sp-2);
-    flex: 0 1 14rem;
+    flex: 0 1 16rem;
     min-inline-size: 0;
 }
 
@@ -130,6 +147,33 @@
     white-space: nowrap;
 }
 
+/* ---- la descripción ------------------------------------------------------ */
+
+.editor-campo__descripcion {
+    display: grid;
+    gap: var(--sp-1);
+    justify-items: start;
+}
+
+.editor-campo__descripcion app-textarea {
+    inline-size: 100%;
+}
+
+.editor-campo__descripcion-fija {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    overflow-wrap: anywhere;
+}
+
+/* «Agregar descripción» va al pie, chico y sin marco: es una acción
+   secundaria que no tiene que competir con las opciones. */
+.editor-campo__agregar-descripcion {
+    justify-self: start;
+    margin-block-start: calc(-1 * var(--sp-2));
+}
+
 /* ---- la muestra del control -------------------------------------------- */
 
 /* Sangrada y con la opacidad bajada: se lee como una muestra y no como un
@@ -140,7 +184,7 @@
     border-inline-start: 2px solid var(--border-subtle, var(--border-default));
     opacity: 0.75;
     pointer-events: none;
-    max-inline-size: 22rem;
+    max-inline-size: 28rem;
 }
 
 /* ---- las respuestas ofrecidas ------------------------------------------- */
@@ -155,15 +199,13 @@
     margin: 0;
     padding: 0;
     border: 0;
-    padding-inline-start: var(--sp-3);
-    border-inline-start: 2px solid var(--border-subtle, var(--border-default));
-    max-inline-size: 26rem;
+    max-inline-size: 32rem;
 }
 
 .editor-campo__opcion {
     display: flex;
     align-items: center;
-    gap: var(--sp-2);
+    gap: var(--sp-3);
     inline-size: 100%;
 }
 
@@ -172,14 +214,26 @@
     min-inline-size: 0;
 }
 
+/* El botón de quitar sólo se ve al pasar por la fila o al enfocarla, como en
+   Google Forms: diez cruces a la vista hacen ruido. Con `visibility` y no con
+   `display`: la fila no cambia de ancho al aparecer. */
+.editor-campo__quitar-opcion {
+    visibility: hidden;
+}
+
+.editor-campo__opcion:hover .editor-campo__quitar-opcion,
+.editor-campo__opcion:focus-within .editor-campo__quitar-opcion {
+    visibility: visible;
+}
+
 /* La marca de la opción: redonda si se elige una, cuadrada si se pueden
    marcar varias. Es la convención de cualquier formulario, y es lo único que
    distingue los dos tipos de un vistazo. Dibujada y no un glifo `○`/`☐`: los
    glifos cambian de tamaño y de línea base según la tipografía instalada. */
 .editor-campo__marca {
     flex: none;
-    inline-size: 1rem;
-    block-size: 1rem;
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
     border: 2px solid var(--border-strong, var(--border-default));
     border-radius: var(--r-full);
     background: var(--bg-surface);
@@ -187,6 +241,79 @@
 
 .editor-campo__marca--casilla {
     border-radius: var(--r-xs);
+}
+
+/* «Otro» en el editor: el rótulo y un renglón subrayado y vacío, que es como
+   se va a ver al responder. No es un campo donde escribir. */
+.editor-campo__opcion--otro {
+    min-block-size: 44px;
+}
+
+.editor-campo__otro-rotulo {
+    color: var(--text-secondary);
+}
+
+.editor-campo__otro-renglon {
+    flex: 1 1 8rem;
+    min-inline-size: 4rem;
+    max-inline-size: 16rem;
+    block-size: 1.5rem;
+    border-block-end: 1px dashed var(--border-strong, var(--border-default));
+}
+
+.editor-campo__agregar-opcion {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    flex-wrap: wrap;
+}
+
+.editor-campo__o {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+.editor-campo__agregar-otro {
+    color: var(--brand-primary);
+}
+
+/* ---- la validación de respuesta ------------------------------------------ */
+
+.editor-campo__validacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2) var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border-radius: var(--r-md);
+    background: var(--bg-surface-alt);
+}
+
+.editor-campo__validacion-rotulo {
+    flex: 0 0 100%;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.editor-campo__regla {
+    flex: 1 1 14rem;
+    min-inline-size: 0;
+    max-inline-size: 18rem;
+}
+
+.editor-campo__cantidad {
+    flex: 0 1 6rem;
+}
+
+.editor-campo__validacion-texto {
+    flex: 1 1 100%;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
 }
 
 /* ---- la muestra de un campo de elección --------------------------------- */
@@ -208,7 +335,7 @@
     line-height: var(--lh-body);
 }
 
-/* ---- pie: mover, quitar, obligatorio ------------------------------------ */
+/* ---- pie: mover, duplicar, quitar, obligatorio -------------------------- */
 
 .editor-campo__pie {
     display: flex;
@@ -216,7 +343,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--sp-2);
-    padding-block-start: var(--sp-2);
+    padding-block-start: var(--sp-3);
     border-block-start: 1px solid var(--border-subtle, var(--border-default));
 }
 
@@ -224,13 +351,28 @@
 .editor-campo__pie-derecha {
     display: flex;
     align-items: center;
-    gap: var(--sp-2);
+    gap: var(--sp-1);
 }
 
-/* Quitar se separa de las flechas: es la única que no se deshace, y pegada a
-   «bajar» se pulsa por error. */
+.editor-campo__pie-derecha {
+    gap: var(--sp-3);
+}
+
+/* La rayita vertical que separa mover de duplicar/quitar: son dos familias de
+   acciones, y pegadas se pulsa «quitar» queriendo «bajar». */
+.editor-campo__separador {
+    inline-size: 1px;
+    block-size: 1.5rem;
+    margin-inline: var(--sp-2);
+    background: var(--border-subtle, var(--border-default));
+}
+
+.editor-campo__glifo {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+}
+
 .editor-campo__borrar {
-    margin-inline-start: var(--sp-3);
     color: var(--st-error-fg, var(--text-primary));
 }
 
@@ -242,11 +384,16 @@
 }
 
 @media (max-width: 40rem) {
+    :host {
+        padding: var(--sp-4);
+    }
+
     .editor-campo__muestra {
         max-inline-size: none;
     }
 
-    .editor-campo__borrar {
-        margin-inline-start: 0;
+    /* En el teléfono no hay puntero que pase por encima: la cruz se ve siempre. */
+    .editor-campo__quitar-opcion {
+        visibility: visible;
     }
 }

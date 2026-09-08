@@ -428,11 +428,32 @@ export function registrarEncuestas(router: MockRouter): void {
      Se cuelgan buscando la plantilla por `targetResourceConceptId`, que es lo
      unico que el contrato manda; por eso cada plantilla tiene el suyo. */
 
+  /** Lo que una definicion declara ademas del tipo: es lo que Google Forms llama
+      «la pregunta» —descripcion, opciones, «Otro», topes de respuestas—. */
+  interface DefinicionSimulada {
+    name: string;
+    dataType: string;
+    code: string;
+    options?: string[];
+    multiple?: boolean;
+    description?: string;
+    allowOther?: boolean;
+    cardinalityMin?: number;
+    cardinalityMax?: number;
+  }
+
   /** Las definiciones declaradas, por id. Son globales, como en el backend. */
-  const definiciones = new Map<
-    string,
-    { name: string; dataType: string; code: string; options?: string[]; multiple?: boolean }
-  >();
+  const definiciones = new Map<string, DefinicionSimulada>();
+
+  /** Copia a la asignacion lo que la definicion declara y la pantalla dibuja. */
+  const deLaDefinicion = (d: DefinicionSimulada) => ({
+    ...(d.options === undefined ? {} : { options: d.options }),
+    ...(d.multiple === undefined ? {} : { multiple: d.multiple }),
+    ...(d.description === undefined ? {} : { description: d.description }),
+    ...(d.allowOther === undefined ? {} : { allowOther: d.allowOther }),
+    ...(d.cardinalityMin === undefined ? {} : { cardinalityMin: d.cardinalityMin }),
+    ...(d.cardinalityMax === undefined ? {} : { cardinalityMax: d.cardinalityMax }),
+  });
 
   /** La plantilla cuyo target coincide, o `undefined`. */
   const plantillaPorTarget = (target: string) =>
@@ -443,20 +464,13 @@ export function registrarEncuestas(router: MockRouter): void {
     PLANTILLAS_DE_EXPEDIENTE.find((t) => t.fields.some((f) => f.assignmentId === assignmentId));
 
   router.post('/forms/field-definitions', (request) => {
-    const datos = cuerpo<{
-      code: string;
-      name: string;
-      dataType: string;
-      options?: string[];
-      multiple?: boolean;
-    }>(request);
+    const datos = cuerpo<Partial<DefinicionSimulada>>(request);
     const id = nuevoId('field');
     definiciones.set(id, {
       code: datos.code ?? id,
       name: datos.name ?? 'Campo',
       dataType: datos.dataType ?? 'string',
-      ...(datos.options === undefined ? {} : { options: datos.options }),
-      ...(datos.multiple === undefined ? {} : { multiple: datos.multiple }),
+      ...deLaDefinicion(datos as DefinicionSimulada),
     });
     return { status: 201, body: { id } };
   });
@@ -475,8 +489,7 @@ export function registrarEncuestas(router: MockRouter): void {
       code: definicion.code,
       name: definicion.name,
       dataType: definicion.dataType,
-      ...(definicion.options === undefined ? {} : { options: definicion.options }),
-      ...(definicion.multiple === undefined ? {} : { multiple: definicion.multiple }),
+      ...deLaDefinicion(definicion),
       required: datos.required ?? false,
       ordinal: plantilla.fields.length + 1,
       // `true`: lo agrego esta organizacion. Es lo que lo separa del estandar
@@ -494,6 +507,10 @@ export function registrarEncuestas(router: MockRouter): void {
       dataType?: string;
       options?: string[];
       multiple?: boolean;
+      description?: string | null;
+      allowOther?: boolean;
+      cardinalityMin?: number | null;
+      cardinalityMax?: number | null;
     }>(request);
     // Las opciones se reemplazan **enteras** y no por índice: el orden importa
     // y un parche por posición se rompe al insertar una en el medio.
@@ -502,15 +519,28 @@ export function registrarEncuestas(router: MockRouter): void {
       ...(datos.dataType === undefined ? {} : { dataType: datos.dataType }),
       ...(datos.options === undefined ? {} : { options: datos.options }),
       ...(datos.multiple === undefined ? {} : { multiple: datos.multiple }),
+      ...(datos.allowOther === undefined ? {} : { allowOther: datos.allowOther }),
+    };
+    // Con `null` se QUITA: es la única forma de sacar una descripción o un tope
+    // que ya estaba, porque «no viene» significa «no cambió».
+    const anulables = ['description', 'cardinalityMin', 'cardinalityMax'] as const;
+    const aplicar = <T extends object>(objeto: T): T => {
+      const resultado: Record<string, unknown> = { ...objeto, ...cambios };
+      for (const clave of anulables) {
+        const valor = datos[clave];
+        if (valor === null) delete resultado[clave];
+        else if (valor !== undefined) resultado[clave] = valor;
+      }
+      return resultado as T;
     };
     const definicion = definiciones.get(fieldId);
     if (definicion !== undefined) {
-      definiciones.set(fieldId, { ...definicion, ...cambios });
+      definiciones.set(fieldId, aplicar(definicion));
     }
     // Y en la plantilla, que es de donde lee la pantalla.
     for (const plantilla of PLANTILLAS_DE_EXPEDIENTE) {
       plantilla.fields = plantilla.fields.map((f) =>
-        f.fieldId !== fieldId || !f.own ? f : { ...f, ...cambios },
+        f.fieldId !== fieldId || !f.own ? f : aplicar(f),
       );
     }
     return { ok: true };

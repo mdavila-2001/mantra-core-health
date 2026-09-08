@@ -34,6 +34,19 @@ class Host {
   });
 }
 
+/** El mismo grupo, con «Otro» y su renglón. */
+@Component({
+  imports: [CheckboxGroup, FormField, ReactiveFormsModule],
+  template: `
+    <form [formGroup]="form">
+      <app-form-field label="Factores de riesgo">
+        <app-checkbox-group formControlName="factores" [options]="opciones()" allowOther />
+      </app-form-field>
+    </form>
+  `,
+})
+class HostConOtro extends Host {}
+
 describe('CheckboxGroup', () => {
   let fixture: ComponentFixture<Host>;
 
@@ -142,5 +155,75 @@ describe('CheckboxGroup', () => {
     expect(grupo.getAttribute('role')).toBe('group');
     expect(grupo.getAttribute('aria-labelledby')).toBe(label.id);
     expect(label.getAttribute('for')).toBeNull();
+  });
+});
+
+describe('CheckboxGroup con «Otro»', () => {
+  let fixture: ComponentFixture<HostConOtro>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [HostConOtro] }).compileComponents();
+    fixture = TestBed.createComponent(HostConOtro);
+    fixture.detectChanges();
+  });
+
+  function guardado(): readonly string[] {
+    return fixture.componentInstance.form.controls.factores.value;
+  }
+
+  function casillaOtro(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('[data-testid="checkbox-group-otro"] input');
+  }
+
+  function renglon(): HTMLInputElement {
+    return fixture.nativeElement.querySelector('[data-testid="checkbox-group-otro-texto"]');
+  }
+
+  function escribir(texto: string): void {
+    renglon().value = texto;
+    renglon().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
+
+  it('ofrece una casilla más, con su renglón', () => {
+    expect(casillaOtro()).not.toBeNull();
+    expect(renglon()).not.toBeNull();
+  });
+
+  it('lo escrito va al array como texto, después de las de la lista', () => {
+    // El texto y no un código «otro»: es lo que después se lee en la ficha.
+    // Al final, por la misma regla del orden: primero lo que se ofreció.
+    escribir('Sedentarismo');
+    fixture.nativeElement.querySelectorAll('app-checkbox label')[0]!.click();
+    fixture.detectChanges();
+
+    expect(guardado()).toEqual(['Tabaquismo', 'Sedentarismo']);
+    expect(casillaOtro().checked).toBe(true);
+  });
+
+  it('«Otro» marcado sin texto no mete una cadena vacía', () => {
+    fixture.nativeElement.querySelector('[data-testid="checkbox-group-otro"] label')!.click();
+    fixture.detectChanges();
+
+    expect(casillaOtro().checked).toBe(true);
+    expect(guardado()).toEqual([]);
+  });
+
+  it('desmarcar «Otro» saca el texto del array y lo conserva en el renglón', () => {
+    escribir('Sedentarismo');
+    fixture.nativeElement.querySelector('[data-testid="checkbox-group-otro"] label')!.click();
+    fixture.detectChanges();
+
+    expect(guardado()).toEqual([]);
+    expect(renglon().value).toBe('Sedentarismo');
+  });
+
+  it('un valor guardado con texto libre vuelve con «Otro» marcado y el renglón escrito', () => {
+    // Es lo que hace que releer una ficha muestre lo que se respondió.
+    fixture.componentInstance.form.controls.factores.setValue(['Diabetes', 'Estrés']);
+    fixture.detectChanges();
+
+    expect(casillaOtro().checked).toBe(true);
+    expect(renglon().value).toBe('Estrés');
   });
 });

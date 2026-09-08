@@ -1,0 +1,34 @@
+/* El radio y su renglón en la misma línea: el renglón es parte de la opción,
+   no un campo aparte. Lo demás —círculo, punto, foco— viene de `radio.css`. */
+.radio-otro {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+/* Un renglón subrayado y no una caja: es lo que hace cualquier formulario de
+   encuesta con su «Otro», y una caja entera al lado de un radio se lee como
+   otra pregunta. */
+.radio-otro__texto {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  padding: var(--sp-1) 0;
+  border: 0;
+  border-block-end: 1px solid var(--border-strong, var(--border-default));
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+}
+
+.radio-otro__texto:focus-visible {
+  outline: none;
+  border-block-end-color: var(--brand-primary);
+  box-shadow: 0 1px 0 0 var(--brand-primary);
+}
+
+.radio-otro__texto:disabled {
+  color: var(--text-muted);
+  border-block-end-style: dashed;
+}

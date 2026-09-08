@@ -5,7 +5,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators, type ValidatorFn } from '@angular/forms';
 import { concatMap, of } from 'rxjs';
 
 import { ChartTemplatesClient } from '../../core/data-access/chart-templates/chart-templates.client';
@@ -18,6 +18,7 @@ import { FormsClient } from '../../core/data-access/forms/forms.client';
 import type {
   ExtensionBudget,
   TechnicalDataType,
+  UpdateFieldDefinitionInput,
 } from '../../core/data-access/forms/forms.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
@@ -45,6 +46,7 @@ import type {
   PaginaDeFormulario,
   TipoDeControl,
 } from '../../shared/forms/paginated/paginated-form.types';
+import { validadorDeSeleccion } from '../../shared/forms/paginated/validadores-de-seleccion';
 
 /**
  * Cómo se dibuja cada tipo de dato cuando el formulario se sirve.
@@ -112,6 +114,19 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
  * (`POST /forms/assignments`) son dos permisos distintos del backend. Se hacen
  * en ese orden y se informan por separado: si la segunda falla, el campo quedó
  * declarado y sin colgar, y decir «no se pudo crear el campo» sería mentir.
+ *
+ * ## Guardar no relee, y nada se pierde por escribir rápido
+ *
+ * Cada cambio de una tarjeta se aplica **primero en la pantalla** y después se
+ * manda. Antes se releía la plantilla entera tras cada guardado, y como el
+ * editor se reseteaba con lo que volvía, escribir una opción de tres letras
+ * con la pausa de guardado en el medio borraba las dos primeras. Y si había un
+ * guardado en vuelo, el cambio siguiente se descartaba en silencio: elegir
+ * «Opción múltiple» y escribir sus opciones era, literalmente, imposible.
+ *
+ * Ahora la tarjeta manda, la pantalla aplica y encola: un cambio que llega
+ * mientras el anterior viaja espera su turno y sale cuando aquél vuelve. Sólo
+ * un error relee del servidor, porque ahí la pantalla ya no sabe qué quedó.
  */
 @Component({
   selector: 'app-form-builder',
@@ -190,9 +205,10 @@ export class FormBuilder {
     this.chartTemplates.getTemplate(plantilla.id).subscribe({
       next: (detalle) => {
         this.abierta.set(detalle);
+        this.enviados.clear();
         this.cargandoPlantilla.set(false);
         this.enPrevia.set(false);
-          this.cargarPresupuesto(detalle);
+        this.cargarPresupuesto(detalle);
       },
       error: (error: unknown) => {
         this.cargandoPlantilla.set(false);
@@ -204,6 +220,8 @@ export class FormBuilder {
   protected cerrar(): void {
     this.abierta.set(null);
     this.presupuesto.set(null);
+    this.enviados.clear();
+    this.pendientes.clear();
   }
 
   private cargarPresupuesto(plantilla: ChartTemplate): void {
@@ -287,8 +305,27 @@ export class FormBuilder {
    */
   protected readonly enPrevia = signal(false);
 
-  /** El campo con una petición en vuelo, para su botón. */
-  protected readonly guardandoCampo = signal<string | null>(null);
+  /** Los campos con una petición en vuelo, para su acuse de «Guardando…». */
+  protected readonly guardandoCampos = signal<ReadonlySet<string>>(new Set());
+
+  /**
+   * El cambio que llegó mientras el anterior viajaba, por campo.
+   *
+   * Uno solo y no una lista: si mientras viaja el primero llegan tres más, lo
+   * que hay que mandar es el último, que ya incluye a los otros dos —cada
+   * emisión trae el campo entero—.
+   */
+  private readonly pendientes = new Map<string, CambiosDelCampo>();
+
+  /**
+   * Lo último que se le mandó al servidor de cada campo.
+   *
+   * Es contra lo que se compara el cambio siguiente: el campo abierto ya tiene
+   * aplicado lo que está viajando, así que compararlo con él diría «nada
+   * cambió» y el pendiente no saldría nunca. Se vacía al releer: ahí la verdad
+   * vuelve a ser la del servidor.
+   */
+  private readonly enviados = new Map<string, ChartTemplateField>();
 
   protected readonly puedeCrear = computed(
     () =>
@@ -336,15 +373,60 @@ export class FormBuilder {
     if (plantilla === null || this.creando()) {
       return;
     }
+    this.declararYColgar(plantilla, {
+      code: codigoDeCampo(plantilla.code, 'Pregunta'),
+      name: 'Pregunta sin título',
+      dataType: 'string',
+    });
+  }
 
-    const name = 'Campo nuevo';
-    const code = codigoDeCampo(plantilla.code, name);
+  /**
+   * Duplica un campo propio: la misma pregunta, con todo lo que trae, debajo.
+   *
+   * Es el botón de copiar de cualquier editor de formularios, y lo que evita
+   * escribir cinco veces las mismas cuatro opciones para cinco preguntas
+   * parecidas. Se declara una definición **nueva** y no se cuelga dos veces
+   * la misma: son dos preguntas que van a divergir, y una definición
+   * compartida haría que corregir una corrigiera la otra.
+   */
+  protected duplicarCampo(campo: ChartTemplateField): void {
+    const plantilla = this.abierta();
+    if (plantilla === null || this.creando()) {
+      return;
+    }
+    const esEleccion = familiaDeCampo(campo) !== null;
+    this.declararYColgar(
+      plantilla,
+      {
+        code: codigoDeCampo(plantilla.code, campo.name),
+        name: `${campo.name} (copia)`,
+        dataType: campo.dataType.toLowerCase() as TechnicalDataType,
+        ...(campo.description === undefined ? {} : { description: campo.description }),
+        ...(esEleccion
+          ? {
+              options: campo.options ?? [],
+              multiple: campo.multiple ?? false,
+              allowOther: campo.allowOther ?? false,
+              ...(campo.cardinalityMin === undefined ? {} : { cardinalityMin: campo.cardinalityMin }),
+              ...(campo.cardinalityMax === undefined ? {} : { cardinalityMax: campo.cardinalityMax }),
+            }
+          : {}),
+      },
+      campo.required,
+    );
+  }
 
+  /** La mitad común del alta y del duplicado: declarar, y después colgar. */
+  private declararYColgar(
+    plantilla: ChartTemplate,
+    definicion: Parameters<FormsClient['createFieldDefinition']>[0],
+    required = false,
+  ): void {
     this.creando.set(true);
     this.alta.set(loading());
 
-    this.forms.createFieldDefinition({ code, name, dataType: 'string' }).subscribe({
-      next: (fieldId) => this.colgar(plantilla, fieldId),
+    this.forms.createFieldDefinition(definicion).subscribe({
+      next: (fieldId) => this.colgar(plantilla, fieldId, required),
       error: (error: unknown) => {
         this.creando.set(false);
         this.alta.set(errorToViewState<null>(error));
@@ -360,7 +442,7 @@ export class FormBuilder {
    * el campo», es «se creó y no se pudo colgar», y son dos cosas distintas para
    * quien tiene que volver a intentarlo.
    */
-  private colgar(plantilla: ChartTemplate, fieldId: string): void {
+  private colgar(plantilla: ChartTemplate, fieldId: string, required: boolean): void {
     this.forms
       .createAssignment({
         fieldId,
@@ -368,7 +450,7 @@ export class FormBuilder {
         ...(plantilla.sectionId === undefined
           ? {}
           : { sectionId: plantilla.sectionId }),
-        required: false,
+        required,
         ordinal: plantilla.fields.length,
       })
       .subscribe({
@@ -387,51 +469,49 @@ export class FormBuilder {
   /**
    * Guarda lo editado en un campo propio.
    *
+   * **Primero la pantalla, después el servidor.** Los cambios se aplican al
+   * campo abierto en el acto —la vista previa y la cabecera los muestran sin
+   * esperar— y se mandan. Si ya hay uno de este campo en vuelo, el nuevo
+   * queda pendiente y sale cuando aquél vuelva; el anterior en espera se
+   * descarta porque el nuevo lo contiene.
+   *
    * **Dos llamadas y no una**, por lo mismo que el alta: el nombre y el tipo
    * viven en la definición —que es global— y lo obligatorio en la asignación,
    * que es de este formulario. El mismo campo puede ser obligatorio acá y
-   * opcional en otro.
-   *
-   * Se saltea la que no cambió: pedir dos veces por un solo cambio duplica el
-   * trabajo y la ventana en la que algo puede fallar a medias.
+   * opcional en otro. Se saltea la que no cambió.
    */
   protected guardarCampo(campo: ChartTemplateField, cambios: CambiosDelCampo): void {
     const plantilla = this.abierta();
-    if (plantilla === null || this.guardandoCampo() !== null) {
+    if (plantilla === null) {
       return;
     }
 
-    const opcionesGuardadas = campo.options ?? [];
-    const opcionesNuevas = cambios.options ?? [];
-    const cambiaronOpciones =
-      opcionesNuevas.length !== opcionesGuardadas.length ||
-      opcionesNuevas.some((opcion, i) => opcion !== opcionesGuardadas[i]);
+    // Contra qué se compara: lo último mandado si hay, y si no el campo tal
+    // como lo tiene el editor, que es lo último que el servidor confirmó.
+    const base = this.enviados.get(campo.assignmentId) ?? campo;
+    this.aplicarLocalmente(campo.assignmentId, cambios);
 
-    const cambioDefinicion =
-      cambios.name !== campo.name ||
-      cambios.dataType !== campo.dataType.toLowerCase() ||
-      (cambios.multiple ?? false) !== (campo.multiple ?? false) ||
-      cambiaronOpciones;
+    if (this.guardandoCampos().has(campo.assignmentId)) {
+      this.pendientes.set(campo.assignmentId, cambios);
+      return;
+    }
+    this.mandar(base, cambios);
+  }
+
+  private mandar(campo: ChartTemplateField, cambios: CambiosDelCampo): void {
+    const cambioDefinicion = definicionCambio(campo, cambios);
     const cambioAsignacion = cambios.required !== campo.required;
 
-    // Nada que mandar: el editor se guarda solo y emite también cuando lo
-    // tecleado terminó igual que lo que ya estaba.
     if (!cambioDefinicion && !cambioAsignacion) {
+      this.mandarPendiente(campo.assignmentId);
       return;
     }
 
-    this.guardandoCampo.set(campo.assignmentId);
+    this.enviados.set(campo.assignmentId, conCambios(campo, cambios));
+    this.guardandoCampos.update((en) => new Set(en).add(campo.assignmentId));
 
     const definicion = cambioDefinicion
-      ? this.forms.updateFieldDefinition(campo.fieldId, {
-          name: cambios.name,
-          dataType: cambios.dataType as TechnicalDataType,
-          // Las opciones sólo viajan en los de elección: mandar una lista vacía
-          // al pasar a «Texto corto» sería pedirle al servidor que la guarde.
-          ...(cambios.options === undefined
-            ? {}
-            : { options: cambios.options, multiple: cambios.multiple ?? false }),
-        })
+      ? this.forms.updateFieldDefinition(campo.fieldId, aCuerpoDeDefinicion(cambios))
       : of(undefined);
 
     const asignacion = cambioAsignacion
@@ -443,14 +523,52 @@ export class FormBuilder {
     // todavía no confirmó.
     definicion.pipe(concatMap(() => asignacion)).subscribe({
       next: () => {
-        this.guardandoCampo.set(null);
-        this.toasts.success(`«${cambios.name}» quedó guardado.`, 'Campo actualizado');
-        this.abrir(plantilla);
+        this.terminarGuardado(campo.assignmentId);
+        this.mandarPendiente(campo.assignmentId);
       },
       error: (error: unknown) => {
-        this.guardandoCampo.set(null);
+        this.terminarGuardado(campo.assignmentId);
+        this.pendientes.delete(campo.assignmentId);
+        this.enviados.delete(campo.assignmentId);
         this.alta.set(errorToViewState<null>(error));
+        // Sólo acá se relee: la pantalla ya no sabe qué quedó guardado.
+        const plantilla = this.abierta();
+        if (plantilla !== null) this.recargarYAbrir(plantilla);
       },
+    });
+  }
+
+  private terminarGuardado(assignmentId: string): void {
+    this.guardandoCampos.update((en) => {
+      const copia = new Set(en);
+      copia.delete(assignmentId);
+      return copia;
+    });
+  }
+
+  /** Si quedó un cambio esperando, sale ahora, contra lo último que se aplicó. */
+  private mandarPendiente(assignmentId: string): void {
+    const pendiente = this.pendientes.get(assignmentId);
+    if (pendiente === undefined) {
+      return;
+    }
+    this.pendientes.delete(assignmentId);
+    const base = this.enviados.get(assignmentId);
+    if (base !== undefined) {
+      this.mandar(base, pendiente);
+    }
+  }
+
+  /** Escribe los cambios en el campo abierto, sin esperar al servidor. */
+  private aplicarLocalmente(assignmentId: string, cambios: CambiosDelCampo): void {
+    this.abierta.update((plantilla) => {
+      if (plantilla === null) return plantilla;
+      return {
+        ...plantilla,
+        fields: plantilla.fields.map((f) =>
+          f.assignmentId !== assignmentId ? f : conCambios(f, cambios),
+        ),
+      };
     });
   }
 
@@ -469,7 +587,7 @@ export class FormBuilder {
     this.forms.deleteAssignment(campo.assignmentId).subscribe({
       next: () => {
         this.toasts.success(`«${campo.name}» ya no está en ${plantilla.name}.`, 'Campo quitado');
-        this.abrir(plantilla);
+        this.recargarYAbrir(plantilla);
       },
       error: (error: unknown) => this.alta.set(errorToViewState<null>(error)),
     });
@@ -515,12 +633,12 @@ export class FormBuilder {
         propios.map((c) => c.assignmentId),
       )
       .subscribe({
-        // Se recarga igual: el servidor fija el orden, y si se rechazó la
+        // Se relee igual: el servidor fija el orden, y si se rechazó la
         // pantalla tiene que volver a la verdad.
-        next: () => this.abrir(plantilla),
+        next: () => this.recargarYAbrir(plantilla),
         error: (error: unknown) => {
           this.alta.set(errorToViewState<null>(error));
-          this.abrir(plantilla);
+          this.recargarYAbrir(plantilla);
         },
       });
   }
@@ -600,11 +718,18 @@ export class FormBuilder {
     this.agarrado.set(null);
   }
 
-  /** Relee la plantilla y deja abierto el campo indicado. */
+  /**
+   * Relee la plantilla sin salir de la vista en la que se está.
+   *
+   * No pasa por `abrir`: aquél apaga la vista previa y borra el error, que son
+   * cosas de **entrar** a un formulario, no de refrescarlo. Releer tras quitar
+   * un campo desde la previa tiene que dejar la previa puesta.
+   */
   private recargarYAbrir(plantilla: ChartTemplate): void {
     this.chartTemplates.getTemplate(plantilla.id).subscribe({
       next: (detalle) => {
         this.abierta.set(detalle);
+        this.enviados.clear();
         this.cargarPresupuesto(detalle);
       },
       error: (error: unknown) => this.alta.set(errorToViewState<null>(error)),
@@ -632,17 +757,39 @@ export class FormBuilder {
     return paginarCampos(campos, { tituloPorDefecto: plantilla.name });
   });
 
-  /** El grupo que la vista previa necesita: se mira, no se envía a ningún lado. */
+  /**
+   * El grupo que la vista previa necesita: se mira, no se envía a ningún lado.
+   *
+   * Lleva los validadores de verdad —obligatorio, y los topes de un campo de
+   * varias— porque es lo que hace que la previa **responda** igual que el
+   * formulario servido: marcar tres donde se pedían dos tiene que decirlo acá,
+   * no cuando el paciente lo vea.
+   */
   protected readonly formularioDeMuestra = computed<FormGroup>(() => {
+    const plantilla = this.abierta();
+    const topes = new Map(
+      (plantilla?.fields ?? []).map((campo) => [
+        campo.fieldId,
+        { min: campo.cardinalityMin, max: campo.cardinalityMax, multiple: campo.multiple ?? false },
+      ]),
+    );
+
     const grupo = new FormGroup({});
     for (const pagina of this.paginas()) {
       for (const campo of pagina.campos) {
+        const validadores: ValidatorFn[] = [];
+        if (campo.required === true) validadores.push(Validators.required);
+        const tope = topes.get(campo.key);
+        if (
+          campo.control === 'checkboxes' &&
+          tope !== undefined &&
+          (tope.min !== undefined || tope.max !== undefined)
+        ) {
+          validadores.push(validadorDeSeleccion(tope.min, tope.max));
+        }
         grupo.addControl(
           campo.key,
-          new FormControl<unknown>(
-            valorInicial(campo.control),
-            campo.required === true ? [Validators.required] : [],
-          ),
+          new FormControl<unknown>(valorInicial(campo.control), validadores),
         );
       }
     }
@@ -654,6 +801,11 @@ export class FormBuilder {
 
   protected readonly porPlantilla = (plantilla: ChartTemplate): string =>
     plantilla.id;
+
+  /** Si este campo tiene una petición en vuelo. */
+  protected estaGuardando(campo: ChartTemplateField): boolean {
+    return this.guardandoCampos().has(campo.assignmentId);
+  }
 
   /** El código pelado de un campo, sin el prefijo de su plantilla. */
   protected codigoVisible(campo: ChartTemplateField, plantilla: ChartTemplate): string {
@@ -671,21 +823,28 @@ export class FormBuilder {
  * pintan a la vista —marcar es un clic— y con muchas se despliegan, porque
  * quince opciones a la vista empujan el resto de la página fuera de la
  * pantalla. Los de varias respuestas van siempre a la vista: un desplegable no
- * deja marcar más de una.
+ * deja marcar más de una. Y los que ofrecen «Otro» también, por lo mismo: un
+ * desplegable no tiene dónde escribir.
  */
 function aCampoDelMotor(campo: ChartTemplateField): CampoDeFormulario {
   const opciones = campo.options ?? [];
   const esEleccion = familiaDeCampo(campo) !== null;
+  const ayuda = campo.description === undefined || campo.description === ''
+    ? {}
+    : { hint: campo.description };
 
   if (esEleccion && opciones.length > 0) {
-    const comoLista =
-      (campo.multiple ?? false) || opciones.length <= OPCIONES_QUE_ENTRAN_A_LA_VISTA;
+    const multiple = campo.multiple ?? false;
+    const otro = campo.allowOther ?? false;
+    const comoLista = multiple || otro || opciones.length <= OPCIONES_QUE_ENTRAN_A_LA_VISTA;
     return {
       key: campo.fieldId,
       label: campo.name,
-      control: (campo.multiple ?? false) ? 'checkboxes' : comoLista ? 'radio' : 'select',
+      control: multiple ? 'checkboxes' : comoLista ? 'radio' : 'select',
       required: campo.required,
       options: opciones.map((opcion) => ({ value: opcion, label: opcion })),
+      ...(otro ? { otro: true } : {}),
+      ...ayuda,
     };
   }
 
@@ -694,6 +853,7 @@ function aCampoDelMotor(campo: ChartTemplateField): CampoDeFormulario {
     label: campo.name,
     control: CONTROL_POR_TIPO[aTipoDeCampo(campo.dataType, campo.multiple ?? false)],
     required: campo.required,
+    ...ayuda,
   };
 }
 
@@ -716,6 +876,75 @@ function familiaDeCampo(campo: ChartTemplateField): 'eleccion' | 'casillas' | nu
   return familia === 'eleccion' || familia === 'casillas' ? familia : null;
 }
 
+/** Si algo de la **definición** —lo global— cambió respecto del campo. */
+function definicionCambio(campo: ChartTemplateField, cambios: CambiosDelCampo): boolean {
+  const opcionesGuardadas = campo.options ?? [];
+  const opcionesNuevas = cambios.options ?? [];
+  const cambiaronOpciones =
+    opcionesNuevas.length !== opcionesGuardadas.length ||
+    opcionesNuevas.some((opcion, i) => opcion !== opcionesGuardadas[i]);
+
+  return (
+    cambios.name !== campo.name ||
+    cambios.dataType !== campo.dataType.toLowerCase() ||
+    (cambios.description ?? null) !== (campo.description ?? null) ||
+    (cambios.multiple ?? false) !== (campo.multiple ?? false) ||
+    (cambios.allowOther ?? false) !== (campo.allowOther ?? false) ||
+    (cambios.cardinalityMin ?? null) !== (campo.cardinalityMin ?? null) ||
+    (cambios.cardinalityMax ?? null) !== (campo.cardinalityMax ?? null) ||
+    cambiaronOpciones
+  );
+}
+
+/** Lo que viaja en el `PATCH` de la definición. */
+function aCuerpoDeDefinicion(cambios: CambiosDelCampo): UpdateFieldDefinitionInput {
+  return {
+    name: cambios.name,
+    dataType: cambios.dataType as TechnicalDataType,
+    description: cambios.description,
+    // Las opciones sólo viajan en los de elección: mandar una lista vacía al
+    // pasar a «Respuesta corta» sería pedirle al servidor que la guarde.
+    ...(cambios.options === undefined
+      ? {}
+      : {
+          options: cambios.options,
+          multiple: cambios.multiple ?? false,
+          allowOther: cambios.allowOther ?? false,
+          cardinalityMin: cambios.cardinalityMin ?? null,
+          cardinalityMax: cambios.cardinalityMax ?? null,
+        }),
+  };
+}
+
+/** El campo con los cambios puestos, tal como va a quedar en el servidor. */
+function conCambios(campo: ChartTemplateField, cambios: CambiosDelCampo): ChartTemplateField {
+  const {
+    description: _d,
+    options: _o,
+    multiple: _m,
+    allowOther: _a,
+    cardinalityMin: _min,
+    cardinalityMax: _max,
+    ...base
+  } = campo;
+  return {
+    ...base,
+    name: cambios.name,
+    dataType: cambios.dataType,
+    required: cambios.required,
+    ...(cambios.description === null ? {} : { description: cambios.description }),
+    ...(cambios.options === undefined
+      ? {}
+      : {
+          options: cambios.options,
+          multiple: cambios.multiple ?? false,
+          allowOther: cambios.allowOther ?? false,
+          ...(cambios.cardinalityMin == null ? {} : { cardinalityMin: cambios.cardinalityMin }),
+          ...(cambios.cardinalityMax == null ? {} : { cardinalityMax: cambios.cardinalityMax }),
+        }),
+  };
+}
+
 /**
  * El código único del campo, derivado de su nombre.
  *
@@ -729,7 +958,7 @@ function familiaDeCampo(campo: ChartTemplateField): 'eleccion' | 'casillas' | nu
 function codigoDeCampo(codigoDePlantilla: string, nombre: string): string {
   const raiz = nombre
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
