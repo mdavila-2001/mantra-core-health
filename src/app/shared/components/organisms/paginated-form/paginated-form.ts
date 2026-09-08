@@ -33,6 +33,7 @@ import { Tooltip } from '../../atoms/tooltip/tooltip';
 import { Switch } from '../../atoms/switch/switch';
 import { Select } from '../../atoms/select/select';
 import { Textarea } from '../../atoms/textarea/textarea';
+import { CheckboxGroup } from '../../molecules/checkbox-group/checkbox-group';
 import { DialogService } from '../../molecules/dialog/dialog-service';
 import { FormField } from '../../molecules/form-field/form-field';
 import { PhoneInput } from '../../molecules/phone-input/phone-input';
@@ -139,6 +140,7 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     ReactiveFormsModule,
     AppButton,
     Checkbox,
+    CheckboxGroup,
     DatePicker,
     FormField,
     Input,

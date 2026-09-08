@@ -12,6 +12,7 @@ import { ChartTemplatesClient } from '../../core/data-access/chart-templates/cha
 import type {
   ChartTemplate,
   ChartTemplateField,
+  ChartTemplateProvenance,
 } from '../../core/data-access/chart-templates/chart-templates.types';
 import { FormsClient } from '../../core/data-access/forms/forms.client';
 import type {
@@ -23,12 +24,19 @@ import { NavigationService } from '../../core/navigation/navigation.service';
 import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { familiaDe } from '../../shared/components/atoms/data-type-icon/data-type-icon';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Progress } from '../../shared/components/atoms/progress/progress';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
-import { FieldEditor, type CambiosDelCampo } from './field-editor/field-editor';
+import {
+  aTipoDeCampo,
+  FieldEditor,
+  type CambiosDelCampo,
+  type TipoDeCampo,
+} from './field-editor/field-editor';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
 import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
@@ -38,15 +46,34 @@ import type {
   TipoDeControl,
 } from '../../shared/forms/paginated/paginated-form.types';
 
-/** Cómo se dibuja cada tipo de dato cuando el formulario se sirve. */
-const CONTROL_POR_TIPO: Readonly<Record<string, TipoDeControl>> = {
+/**
+ * Cómo se dibuja cada tipo de dato cuando el formulario se sirve.
+ *
+ * La clave es el tipo **ya normalizado** por `aTipoDeCampo`, no el `dataType`
+ * crudo: los campos del estándar vienen en el vocabulario del seed clínico
+ * (`NUMBER`, `TEXT`) y buscarlos así no acertaba ninguno, con lo que la presión
+ * sistólica se servía como caja de texto libre y aceptaba letras.
+ */
+const CONTROL_POR_TIPO: Readonly<Record<TipoDeCampo, TipoDeControl>> = {
   string: 'text',
   text: 'textarea',
   integer: 'number',
   decimal: 'number',
   boolean: 'checkbox',
   date: 'date',
+  // Los de elección no llegan acá: `aCampoDelMotor` los resuelve antes, porque
+  // su control depende de cuántas opciones tienen y de si admiten varias.
+  choice: 'radio',
+  checkboxes: 'checkboxes',
 };
+
+/**
+ * A partir de cuántas opciones un campo de una sola respuesta se despliega.
+ *
+ * Es la regla de siempre de las pantallas migradas —hasta cuatro se ven, más
+ * de cuatro se despliegan—, la misma que documenta `CampoDeFormulario.options`.
+ */
+const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
 
 /**
  * **Formularios** — el generador con el que un doctor extiende un formulario
@@ -94,6 +121,7 @@ const CONTROL_POR_TIPO: Readonly<Record<string, TipoDeControl>> = {
     Card,
     EmptyState,
     FieldEditor,
+    NavIcon,
     PageHeader,
     PaginatedForm,
     Progress,
@@ -195,6 +223,18 @@ export class FormBuilder {
 
   protected readonly camposPropios = computed<readonly ChartTemplateField[]>(
     () => (this.abierta()?.fields ?? []).filter((campo) => campo.own),
+  );
+
+  /**
+   * De dónde salió el formulario abierto, si vino del catálogo sembrado.
+   *
+   * Se muestra junto al aviso de que no se puede modificar porque es la mitad
+   * que lo explica: no es una regla del producto, es que el documento es de un
+   * organismo y se usa bajo una licencia. Ausente en las plantillas que un
+   * administrador armó a mano — ahí el aviso va solo.
+   */
+  protected readonly procedencia = computed<ChartTemplateProvenance | null>(
+    () => this.abierta()?.provenance ?? null,
   );
 
   /* -- El presupuesto, en palabras ------------------------------------------ */
@@ -361,8 +401,17 @@ export class FormBuilder {
       return;
     }
 
+    const opcionesGuardadas = campo.options ?? [];
+    const opcionesNuevas = cambios.options ?? [];
+    const cambiaronOpciones =
+      opcionesNuevas.length !== opcionesGuardadas.length ||
+      opcionesNuevas.some((opcion, i) => opcion !== opcionesGuardadas[i]);
+
     const cambioDefinicion =
-      cambios.name !== campo.name || cambios.dataType !== campo.dataType.toLowerCase();
+      cambios.name !== campo.name ||
+      cambios.dataType !== campo.dataType.toLowerCase() ||
+      (cambios.multiple ?? false) !== (campo.multiple ?? false) ||
+      cambiaronOpciones;
     const cambioAsignacion = cambios.required !== campo.required;
 
     // Nada que mandar: el editor se guarda solo y emite también cuando lo
@@ -377,6 +426,11 @@ export class FormBuilder {
       ? this.forms.updateFieldDefinition(campo.fieldId, {
           name: cambios.name,
           dataType: cambios.dataType as TechnicalDataType,
+          // Las opciones sólo viajan en los de elección: mandar una lista vacía
+          // al pasar a «Texto corto» sería pedirle al servidor que la guarde.
+          ...(cambios.options === undefined
+            ? {}
+            : { options: cambios.options, multiple: cambios.multiple ?? false }),
         })
       : of(undefined);
 
@@ -429,18 +483,27 @@ export class FormBuilder {
    * —esperar la ida y vuelta para ver el cambio hace que se pulse dos veces—.
    */
   protected moverCampo(indice: number, direccion: -1 | 1): void {
+    this.reordenar(indice, indice + direccion);
+  }
+
+  /**
+   * Lleva el campo de una posición a otra, venga de las flechas o del arrastre.
+   *
+   * Es el único camino: dos —uno por gesto— se separan en el primer arreglo, y
+   * lo que hay que hacer es idéntico en los dos casos.
+   */
+  private reordenar(desde: number, hasta: number): void {
     const plantilla = this.abierta();
     if (plantilla === null) {
       return;
     }
     const propios = [...this.camposPropios()];
-    const destino = indice + direccion;
-    if (destino < 0 || destino >= propios.length) {
+    if (hasta < 0 || hasta >= propios.length || desde < 0 || desde >= propios.length) {
       return;
     }
 
-    const [movido] = propios.splice(indice, 1);
-    propios.splice(destino, 0, movido!);
+    const [movido] = propios.splice(desde, 1);
+    propios.splice(hasta, 0, movido!);
     this.abierta.set({
       ...plantilla,
       fields: [...this.camposEstandar(), ...propios],
@@ -460,6 +523,81 @@ export class FormBuilder {
           this.abrir(plantilla);
         },
       });
+  }
+
+  /* -- Arrastrar para reordenar --------------------------------------------- */
+
+  /**
+   * El campo cuyo agarre está apretado, y por lo tanto el único `<li>` que es
+   * `draggable`.
+   *
+   * Toda la lista arrastrable de entrada convertía cualquier intento de
+   * seleccionar el texto del nombre en el comienzo de un arrastre. Con esto, el
+   * arrastre empieza sólo desde los seis puntos.
+   */
+  protected readonly agarrado = signal<string | null>(null);
+
+  /** El que se está arrastrando, para despegarlo del resto. */
+  protected readonly arrastrando = signal<string | null>(null);
+
+  /** Sobre cuál está el puntero: es donde va a caer. */
+  protected readonly destino = signal<string | null>(null);
+
+  protected agarrar(campo: ChartTemplateField, apretado: boolean): void {
+    this.agarrado.set(apretado ? campo.assignmentId : null);
+  }
+
+  protected empezarArrastre(campo: ChartTemplateField, evento: DragEvent): void {
+    this.arrastrando.set(campo.assignmentId);
+    // Firefox no empieza el arrastre si no se escribe algo en el portapapeles.
+    evento.dataTransfer?.setData('text/plain', campo.assignmentId);
+    if (evento.dataTransfer !== null) {
+      evento.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  /**
+   * El puntero pasa por encima de otra tarjeta.
+   *
+   * `preventDefault` es lo que declara la zona como válida para soltar: sin él
+   * el navegador rechaza el `drop` y el arrastre termina sin hacer nada.
+   */
+  protected arrastrarSobre(campo: ChartTemplateField, evento: DragEvent): void {
+    if (this.arrastrando() === null) {
+      return;
+    }
+    evento.preventDefault();
+    if (evento.dataTransfer !== null) {
+      evento.dataTransfer.dropEffect = 'move';
+    }
+    this.destino.set(campo.assignmentId);
+  }
+
+  /** Suelta el campo arrastrado en la posición de otro. */
+  protected soltar(campo: ChartTemplateField, evento: DragEvent): void {
+    evento.preventDefault();
+    const arrastrado = this.arrastrando();
+    this.terminarArrastre();
+    if (arrastrado === null || arrastrado === campo.assignmentId) {
+      return;
+    }
+
+    const propios = this.camposPropios();
+    const desde = propios.findIndex((c) => c.assignmentId === arrastrado);
+    const hasta = propios.findIndex((c) => c.assignmentId === campo.assignmentId);
+    if (desde < 0 || hasta < 0) {
+      return;
+    }
+    // Se reusa el mismo camino que las flechas: mismo adelanto local, misma
+    // llamada, mismo recargado. Un segundo camino para el mismo movimiento se
+    // separaría del primero en el primer arreglo.
+    this.reordenar(desde, hasta);
+  }
+
+  protected terminarArrastre(): void {
+    this.arrastrando.set(null);
+    this.destino.set(null);
+    this.agarrado.set(null);
   }
 
   /** Relee la plantilla y deja abierto el campo indicado. */
@@ -489,9 +627,7 @@ export class FormBuilder {
       return [];
     }
 
-    const campos: CampoDeFormulario[] = plantilla.fields.map((campo) =>
-      aCampoDelMotor(campo.fieldId, campo.name, campo.dataType, campo.required),
-    );
+    const campos: CampoDeFormulario[] = plantilla.fields.map(aCampoDelMotor);
 
     return paginarCampos(campos, { tituloPorDefecto: plantilla.name });
   });
@@ -504,7 +640,7 @@ export class FormBuilder {
         grupo.addControl(
           campo.key,
           new FormControl<unknown>(
-            campo.control === 'checkbox' ? false : '',
+            valorInicial(campo.control),
             campo.required === true ? [Validators.required] : [],
           ),
         );
@@ -528,19 +664,56 @@ export class FormBuilder {
   }
 }
 
-/** De un campo de la plantilla a lo que el motor de formularios sabe pintar. */
-function aCampoDelMotor(
-  key: string,
-  label: string,
-  dataType: string,
-  required: boolean,
-): CampoDeFormulario {
+/**
+ * De un campo de la plantilla a lo que el motor de formularios sabe pintar.
+ *
+ * Los de elección son el único caso con dos formas: con pocas opciones se
+ * pintan a la vista —marcar es un clic— y con muchas se despliegan, porque
+ * quince opciones a la vista empujan el resto de la página fuera de la
+ * pantalla. Los de varias respuestas van siempre a la vista: un desplegable no
+ * deja marcar más de una.
+ */
+function aCampoDelMotor(campo: ChartTemplateField): CampoDeFormulario {
+  const opciones = campo.options ?? [];
+  const esEleccion = familiaDeCampo(campo) !== null;
+
+  if (esEleccion && opciones.length > 0) {
+    const comoLista =
+      (campo.multiple ?? false) || opciones.length <= OPCIONES_QUE_ENTRAN_A_LA_VISTA;
+    return {
+      key: campo.fieldId,
+      label: campo.name,
+      control: (campo.multiple ?? false) ? 'checkboxes' : comoLista ? 'radio' : 'select',
+      required: campo.required,
+      options: opciones.map((opcion) => ({ value: opcion, label: opcion })),
+    };
+  }
+
   return {
-    key,
-    label,
-    control: CONTROL_POR_TIPO[dataType] ?? 'text',
-    required,
+    key: campo.fieldId,
+    label: campo.name,
+    control: CONTROL_POR_TIPO[aTipoDeCampo(campo.dataType, campo.multiple ?? false)],
+    required: campo.required,
   };
+}
+
+/**
+ * Con qué nace el control de la vista previa, según lo que va a pintar.
+ *
+ * `checkboxes` guarda un array y no una cadena: arrancarlo en `''` deja al
+ * motor leyendo `''.includes(...)`, que responde a cualquier subcadena y
+ * dibujaría opciones marcadas que nadie marcó.
+ */
+function valorInicial(control: TipoDeControl): unknown {
+  if (control === 'checkbox') return false;
+  if (control === 'checkboxes') return [];
+  return '';
+}
+
+/** `'eleccion'`, `'casillas'` o `null` si el campo no es de elección. */
+function familiaDeCampo(campo: ChartTemplateField): 'eleccion' | 'casillas' | null {
+  const familia = familiaDe(campo.dataType, campo.multiple ?? false);
+  return familia === 'eleccion' || familia === 'casillas' ? familia : null;
 }
 
 /**

@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+} from '@angular/core';
 
 /**
  * El ícono del tipo de dato de un campo de formulario.
@@ -78,6 +84,25 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
           <path d="M8.2 3v4M15.8 3v4" />
           <path d="M8.4 14h.01M12 14h.01M15.6 14h.01M8.4 17.4h.01M12 17.4h.01" />
         }
+        @case ('eleccion') {
+          <!-- Tres círculos en columna con el del medio marcado: se elige una
+               de varias. Redondos y no cuadrados, que es la convención que
+               separa «una sola» de «varias» en cualquier formulario. -->
+          <circle cx="5.4" cy="6.4" r="2.2" />
+          <circle cx="5.4" cy="12" r="2.2" />
+          <circle cx="5.4" cy="17.6" r="2.2" />
+          <circle cx="5.4" cy="12" r=".9" fill="currentColor" stroke="none" />
+          <path d="M10.6 6.4h9.6M10.6 12h9.6M10.6 17.6h9.6" />
+        }
+        @case ('casillas') {
+          <!-- Los mismos tres renglones pero con cuadrados, y dos marcados:
+               se puede elegir más de una. -->
+          <rect x="3.2" y="4.2" width="4.4" height="4.4" rx="1.2" />
+          <rect x="3.2" y="9.8" width="4.4" height="4.4" rx="1.2" />
+          <rect x="3.2" y="15.4" width="4.4" height="4.4" rx="1.2" />
+          <path d="m4.2 6.4 1 1 1.4-1.6M4.2 17.6l1 1 1.4-1.6" />
+          <path d="M10.6 6.4h9.6M10.6 12h9.6M10.6 17.6h9.6" />
+        }
         @default {
           <!-- Una línea de escritura sobre su renglón: un texto corto. Es el
                tipo por omisión de todo campo, así que es también el genérico. -->
@@ -91,14 +116,31 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
   `,
 })
 export class DataTypeIcon {
-  /** El tipo tal como viene: `string`, `NUMBER`, `boolean`, `date`… */
+  /** El tipo tal como viene: `string`, `NUMBER`, `boolean`, `date`, `code`… */
   readonly tipo = input.required<string>();
 
-  protected readonly familia = computed(() => familiaDe(this.tipo()));
+  /**
+   * Sólo para `code`: si admite varias respuestas.
+   *
+   * Va aparte del tipo porque en el contrato son dos cosas distintas —el tipo
+   * es `code` en los dos casos y lo que cambia es la cardinalidad—, y porque
+   * los círculos y los cuadrados son justamente lo que le dice a quien mira
+   * cuántas puede marcar.
+   */
+  readonly multiple = input(false, { transform: booleanAttribute });
+
+  protected readonly familia = computed(() => familiaDe(this.tipo(), this.multiple()));
 }
 
-/** Las cuatro familias que el set dibuja. El resto cae en texto corto. */
-type FamiliaDeDato = 'texto' | 'parrafo' | 'numero' | 'booleano' | 'fecha';
+/** Las familias que el set dibuja. El resto cae en texto corto. */
+export type FamiliaDeDato =
+  | 'texto'
+  | 'parrafo'
+  | 'numero'
+  | 'booleano'
+  | 'fecha'
+  | 'eleccion'
+  | 'casillas';
 
 /**
  * De un tipo técnico a su familia visual.
@@ -108,11 +150,17 @@ type FamiliaDeDato = 'texto' | 'parrafo' | 'numero' | 'booleano' | 'fecha';
  * Son el mismo dato escrito distinto, y un ícono que dependiera de la caja
  * dejaría sin dibujo a la mitad de los campos.
  */
-export function familiaDe(tipo: string): FamiliaDeDato {
+export function familiaDe(tipo: string, multiple = false): FamiliaDeDato {
   const t = tipo.toLowerCase();
   if (t === 'text' || t === 'textarea') return 'parrafo';
   if (t === 'integer' || t === 'decimal' || t === 'number' || t === 'numeric') return 'numero';
   if (t === 'boolean' || t === 'bool') return 'booleano';
   if (t === 'date' || t === 'datetime' || t === 'timestamp') return 'fecha';
+  // `code` es el tipo técnico de un campo de elección: el dato guardado es uno
+  // de los códigos ofrecidos. Cuántos se pueden elegir no está en el tipo —es
+  // la cardinalidad— y por eso viaja aparte.
+  if (t === 'code' || t === 'select' || t === 'radio') {
+    return multiple ? 'casillas' : 'eleccion';
+  }
   return 'texto';
 }

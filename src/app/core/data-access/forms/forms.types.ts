@@ -143,6 +143,16 @@ export interface CreateFieldDefinitionInput {
   readonly cardinalityMin?: number;
   readonly cardinalityMax?: number;
   readonly regex?: string;
+  /**
+   * Las respuestas ofrecidas, para un campo `code`.
+   *
+   * Texto libre y no un `valueSetId`: ver {@link ChartTemplateField.options}.
+   * **El backend real todavía no acepta esta clave** — ver
+   * `docs/pendientes-backend-formularios.md`.
+   */
+  readonly options?: readonly string[];
+  /** Si el campo de elección admite varias respuestas. */
+  readonly multiple?: boolean;
 }
 
 /** Cuerpo de `POST /forms/assignments` (UC-09-06). */
@@ -181,6 +191,16 @@ export interface ExtensionBudget {
 export interface UpdateFieldDefinitionInput {
   readonly name?: string;
   readonly dataType?: TechnicalDataType;
+  /**
+   * Las opciones, **enteras**.
+   *
+   * No hay edición parcial de una opción suelta, por lo mismo que en
+   * `surveys`: el orden importa y un parche por índice se rompe en cuanto
+   * alguien inserta una en el medio.
+   */
+  readonly options?: readonly string[];
+  /** Si el campo de elección admite varias respuestas. */
+  readonly multiple?: boolean;
 }
 
 /**

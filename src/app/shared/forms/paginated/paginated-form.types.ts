@@ -50,6 +50,12 @@ export type TipoDeControl =
   | 'radio'
   | 'switch'
   | 'checkbox'
+  /**
+   * Varias respuestas de una lista. El control guarda un **array** de los
+   * valores marcados, no un booleano: `checkbox` es «sí o no» sobre una sola
+   * cosa, y esto es «cuáles de éstas», que es otra pregunta.
+   */
+  | 'checkboxes'
   | 'textarea'
   | 'custom';
 

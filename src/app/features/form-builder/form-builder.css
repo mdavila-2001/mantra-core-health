@@ -52,59 +52,13 @@
   font-weight: 500;
 }
 
-/* Dos columnas: qué tiene el formulario, y cómo se ve servido. En pantalla
-   angosta la vista previa cae debajo — apilarla al lado la dejaría ilegible,
-   y es justamente lo que hay que poder leer. */
-.constructor__columnas-YA-NO-SE-USA {
-  display: grid;
-  gap: var(--sp-6);
-  grid-template-columns: minmax(0, 1fr);
-}
-
-@media (min-width: 60rem) {
-  .constructor__columnas {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
-  }
-}
-
-.constructor__campos,
-.constructor__previa {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
-
-.constructor__lista {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.constructor__campo {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-  flex-wrap: wrap;
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-}
-
-.constructor__campo-nombre {
-  font-weight: 500;
-}
-
-.constructor__alta,
-.constructor__formulario {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
+/* Acá vivían las dos columnas de cuando la vista previa estaba fija al lado
+   del editor, ya renombradas a `…-YA-NO-SE-USA` por el cambio que las quitó
+   —con su `@media` huérfano apuntando al nombre viejo— y una segunda
+   definición de `__campos`, `__previa` y `__lista` que las de más abajo
+   pisaban. Ese par duplicado es lo que dejó al editor en 48rem bajo un
+   comentario que decía lo contrario. Se borraron: la definición que vale es
+   una sola, y está en «el ancho del formulario abierto». */
 
 .constructor__previa-marco {
   border: 1px dashed var(--border-default);
@@ -159,13 +113,29 @@
   gap: var(--sp-2);
 }
 
-/* El editor ocupa el ancho: antes vivía en media columna porque la previa
-   estaba fija al lado, y una lista de campos en 50 % de la pantalla es una
-   lista que se lee en zigzag. */
+/* ---- el ancho del formulario abierto ------------------------------------
+
+   Una sola columna, del mismo ancho para todo lo que cuelga del formulario
+   —encabezado, presupuesto, campos y vista previa— y **centrada**.
+
+   Antes cada bloque decidía el suyo: el encabezado y el presupuesto ocupaban
+   todo el contenedor y los campos se cortaban a 48rem, con lo que la pantalla
+   tenía dos ejes distintos y las tarjetas quedaban arrinconadas a la izquierda
+   con media pantalla vacía al lado. El comentario que había acá decía «el
+   editor ocupa el ancho» justo encima de la regla que se lo quitaba.
+
+   62rem y no el ancho entero: un campo de texto de mil píxeles para escribir
+   «¿Fuma?» no es más cómodo, es más difícil de recorrer. Centrado y no pegado
+   a un borde, que es lo que hace cualquier editor de formularios. */
+.constructor--abierto > * {
+  inline-size: 100%;
+  max-inline-size: 62rem;
+  margin-inline: auto;
+}
+
 .constructor__campos {
   display: grid;
   gap: var(--sp-3);
-  max-inline-size: 48rem;
 }
 
 .constructor__lista {
@@ -183,7 +153,6 @@
 .constructor__previa {
   display: grid;
   gap: var(--sp-3);
-  max-inline-size: 48rem;
 }
 
 /* La nota dice que lo que se toca no se guarda: es lo que evita que alguien
@@ -196,4 +165,54 @@
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
+}
+
+/* ---- por qué el estándar no se toca ------------------------------------- */
+
+/* Una banda arriba del bloque y no un cartel de alerta: no pasó nada malo, es
+   cómo es. El tono es el informativo del sistema, que ya está medido contra
+   WCAG y tiene su versión de tema oscuro. */
+.constructor__bloqueado {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--st-info-bd);
+    border-radius: var(--r-md);
+    background: var(--st-info-bg);
+    color: var(--st-info-fg);
+}
+
+/* El candado es lo que se lee antes que el texto: en una pantalla con dos
+   listas de tarjetas casi iguales, es lo que dice de un vistazo cuál de las dos
+   se puede tocar. */
+.constructor__bloqueado-icono {
+    display: inline-flex;
+    flex: none;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+}
+
+.constructor__bloqueado-icono app-nav-icon {
+    inline-size: 100%;
+    block-size: 100%;
+}
+
+.constructor__bloqueado-texto {
+    display: grid;
+    gap: var(--sp-1);
+    min-inline-size: 0;
+}
+
+.constructor__bloqueado-titulo {
+    margin: 0;
+    font-weight: 600;
+}
+
+.constructor__bloqueado-fuente {
+    margin: 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    opacity: 0.85;
+    overflow-wrap: anywhere;
 }

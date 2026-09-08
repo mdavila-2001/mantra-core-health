@@ -429,7 +429,10 @@ export function registrarEncuestas(router: MockRouter): void {
      unico que el contrato manda; por eso cada plantilla tiene el suyo. */
 
   /** Las definiciones declaradas, por id. Son globales, como en el backend. */
-  const definiciones = new Map<string, { name: string; dataType: string; code: string }>();
+  const definiciones = new Map<
+    string,
+    { name: string; dataType: string; code: string; options?: string[]; multiple?: boolean }
+  >();
 
   /** La plantilla cuyo target coincide, o `undefined`. */
   const plantillaPorTarget = (target: string) =>
@@ -440,12 +443,20 @@ export function registrarEncuestas(router: MockRouter): void {
     PLANTILLAS_DE_EXPEDIENTE.find((t) => t.fields.some((f) => f.assignmentId === assignmentId));
 
   router.post('/forms/field-definitions', (request) => {
-    const datos = cuerpo<{ code: string; name: string; dataType: string }>(request);
+    const datos = cuerpo<{
+      code: string;
+      name: string;
+      dataType: string;
+      options?: string[];
+      multiple?: boolean;
+    }>(request);
     const id = nuevoId('field');
     definiciones.set(id, {
       code: datos.code ?? id,
       name: datos.name ?? 'Campo',
       dataType: datos.dataType ?? 'string',
+      ...(datos.options === undefined ? {} : { options: datos.options }),
+      ...(datos.multiple === undefined ? {} : { multiple: datos.multiple }),
     });
     return { status: 201, body: { id } };
   });
@@ -464,6 +475,8 @@ export function registrarEncuestas(router: MockRouter): void {
       code: definicion.code,
       name: definicion.name,
       dataType: definicion.dataType,
+      ...(definicion.options === undefined ? {} : { options: definicion.options }),
+      ...(definicion.multiple === undefined ? {} : { multiple: definicion.multiple }),
       required: datos.required ?? false,
       ordinal: plantilla.fields.length + 1,
       // `true`: lo agrego esta organizacion. Es lo que lo separa del estandar
@@ -476,25 +489,28 @@ export function registrarEncuestas(router: MockRouter): void {
   /** Corrige el nombre o el tipo de un campo propio. */
   router.patch('/forms/field-definitions/:id', (request) => {
     const fieldId = request.params['id']!;
-    const datos = cuerpo<{ name?: string; dataType?: string }>(request);
+    const datos = cuerpo<{
+      name?: string;
+      dataType?: string;
+      options?: string[];
+      multiple?: boolean;
+    }>(request);
+    // Las opciones se reemplazan **enteras** y no por índice: el orden importa
+    // y un parche por posición se rompe al insertar una en el medio.
+    const cambios = {
+      ...(datos.name === undefined ? {} : { name: datos.name }),
+      ...(datos.dataType === undefined ? {} : { dataType: datos.dataType }),
+      ...(datos.options === undefined ? {} : { options: datos.options }),
+      ...(datos.multiple === undefined ? {} : { multiple: datos.multiple }),
+    };
     const definicion = definiciones.get(fieldId);
     if (definicion !== undefined) {
-      definiciones.set(fieldId, {
-        ...definicion,
-        ...(datos.name === undefined ? {} : { name: datos.name }),
-        ...(datos.dataType === undefined ? {} : { dataType: datos.dataType }),
-      });
+      definiciones.set(fieldId, { ...definicion, ...cambios });
     }
     // Y en la plantilla, que es de donde lee la pantalla.
     for (const plantilla of PLANTILLAS_DE_EXPEDIENTE) {
       plantilla.fields = plantilla.fields.map((f) =>
-        f.fieldId !== fieldId || !f.own
-          ? f
-          : {
-              ...f,
-              ...(datos.name === undefined ? {} : { name: datos.name }),
-              ...(datos.dataType === undefined ? {} : { dataType: datos.dataType }),
-            },
+        f.fieldId !== fieldId || !f.own ? f : { ...f, ...cambios },
       );
     }
     return { ok: true };

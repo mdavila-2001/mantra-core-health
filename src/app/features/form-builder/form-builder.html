@@ -8,7 +8,7 @@
   <!-- ─── Un formulario abierto ─────────────────────────────────────────────
        Tres cosas a la vez y en este orden: qué trae el estándar (no se toca),
        qué agregó esta organización, y cómo se va a ver servido. -->
-  <div class="constructor">
+  <div class="constructor constructor--abierto">
     <div class="constructor__encabezado">
       <div>
         <h2 class="constructor__titulo">{{ plantilla.name }}</h2>
@@ -83,6 +83,36 @@
     } @else {
     <section class="constructor__campos">
       <h3 class="constructor__subtitulo">Campos del formulario estándar</h3>
+
+      <!-- ─── Por qué estos no se tocan ───────────────────────────────────
+           Arriba de los campos y no dentro de cada tarjeta: es una sola razón
+           para todo el bloque, y repetirla veinte veces la vuelve ruido. Los
+           campos **se siguen mostrando enteros** —con su tipo y sus opciones—
+           porque esconderlos dejaría al doctor sin saber qué pregunta ya está
+           cubierta antes de agregar la suya. -->
+      <div class="constructor__bloqueado" data-testid="aviso-estandar">
+        <span class="constructor__bloqueado-icono" aria-hidden="true">
+          <app-nav-icon name="lock" />
+        </span>
+        <div class="constructor__bloqueado-texto">
+          <p class="constructor__bloqueado-titulo">
+            No podés modificar esto: es un formulario estándar internacional.
+          </p>
+          @if (procedencia(); as origen) {
+            <!-- La procedencia no es un adorno legal: muchos de estos
+                 formularios tienen derechos de autor, y de quién es y bajo qué
+                 licencia se usa tiene que estar en pantalla, no en un chat. -->
+            <p class="constructor__bloqueado-fuente">
+              {{ origen.sourceTitle }} · {{ origen.organization }} · {{ origen.license }}
+            </p>
+          }
+          <p class="constructor__bloqueado-fuente">
+            Sus campos son la parte que hace comparable una ficha entre
+            consultorios. Lo tuyo se agrega más abajo.
+          </p>
+        </div>
+      </div>
+
       @if (camposEstandar().length === 0) {
         <p class="constructor__vacio">Este formulario todavía no tiene campos estándar.</p>
       } @else {
@@ -104,14 +134,29 @@
           Todavía no agregaste ninguno. Los que agregues acá los ve tu organización y nadie más.
         </p>
       } @else {
+        <!-- Arrastrable sólo mientras el agarre está apretado: ver `agarrado`.
+             El `dragover` de cada renglón es lo que declara dónde se puede
+             soltar, y sin su `preventDefault` el navegador cancela el gesto. -->
         <ul class="constructor__lista">
           @for (campo of camposPropios(); track porCampo(campo); let i = $index) {
-            <li data-testid="campo-propio">
+            <li
+              data-testid="campo-propio"
+              [draggable]="agarrado() === campo.assignmentId"
+              (dragstart)="empezarArrastre(campo, $event)"
+              (dragover)="arrastrarSobre(campo, $event)"
+              (drop)="soltar(campo, $event)"
+              (dragend)="terminarArrastre()"
+            >
               <app-field-editor
                 [campo]="campo"
                 [esPrimero]="i === 0"
                 [esUltimo]="i === camposPropios().length - 1"
                 [guardando]="guardandoCampo() === campo.assignmentId"
+                [class.editor-campo--arrastrando]="arrastrando() === campo.assignmentId"
+                [class.editor-campo--destino]="
+                  destino() === campo.assignmentId && arrastrando() !== campo.assignmentId
+                "
+                (agarrar)="agarrar(campo, $event)"
                 (guardar)="guardarCampo(campo, $event)"
                 (borrar)="quitarCampo(campo)"
                 (mover)="moverCampo(i, $event)"

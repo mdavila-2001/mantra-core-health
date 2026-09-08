@@ -14,6 +14,44 @@
     background: var(--bg-surface);
 }
 
+/* ---- el agarre para arrastrar ------------------------------------------- */
+
+/* Arriba del todo y centrado, que es donde lo pone cualquier editor de
+   bloques. Se ve siempre y no sólo al pasar por encima: un control que aparece
+   con el puntero no existe para quien mira la pantalla en una tablet. */
+.editor-campo__agarre {
+    justify-self: center;
+    display: block;
+    inline-size: 1.5rem;
+    block-size: 1rem;
+    margin-block-start: calc(-1 * var(--sp-2));
+    color: var(--text-muted);
+    cursor: grab;
+    touch-action: none;
+}
+
+.editor-campo__agarre:active {
+    cursor: grabbing;
+}
+
+.editor-campo__agarre svg {
+    inline-size: 100%;
+    block-size: 100%;
+}
+
+/* La tarjeta que se está arrastrando: se despega, para que se vea cuál es la
+   que va a caer. La clase la pone la lista, que es la que sabe cuál se agarró. */
+:host(.editor-campo--arrastrando) {
+    opacity: 0.55;
+    box-shadow: var(--shadow-md);
+}
+
+/* Dónde va a caer. Una línea gruesa arriba y no un hueco que se abre: el hueco
+   mueve todo lo de abajo y la lista salta mientras se arrastra. */
+:host(.editor-campo--destino) {
+    box-shadow: inset 0 3px 0 0 var(--brand-primary);
+}
+
 /* La franja de color a la izquierda es lo que separa de un vistazo lo que se
    puede tocar de lo que no. Los propios la llevan; los del estándar, no. */
 :host:not(.editor-campo--estandar) {
@@ -103,6 +141,71 @@
     opacity: 0.75;
     pointer-events: none;
     max-inline-size: 22rem;
+}
+
+/* ---- las respuestas ofrecidas ------------------------------------------- */
+
+/* `fieldset` sin su marco: el borde del navegador encajonaba las opciones
+   dentro de la tarjeta y se leían como otra tarjeta adentro. Lo que aporta es
+   el `legend`, que le da nombre al grupo para el lector de pantalla. */
+.editor-campo__opciones {
+    display: grid;
+    gap: var(--sp-2);
+    justify-items: start;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    padding-inline-start: var(--sp-3);
+    border-inline-start: 2px solid var(--border-subtle, var(--border-default));
+    max-inline-size: 26rem;
+}
+
+.editor-campo__opcion {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    inline-size: 100%;
+}
+
+.editor-campo__opcion-texto {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
+/* La marca de la opción: redonda si se elige una, cuadrada si se pueden
+   marcar varias. Es la convención de cualquier formulario, y es lo único que
+   distingue los dos tipos de un vistazo. Dibujada y no un glifo `○`/`☐`: los
+   glifos cambian de tamaño y de línea base según la tipografía instalada. */
+.editor-campo__marca {
+    flex: none;
+    inline-size: 1rem;
+    block-size: 1rem;
+    border: 2px solid var(--border-strong, var(--border-default));
+    border-radius: var(--r-full);
+    background: var(--bg-surface);
+}
+
+.editor-campo__marca--casilla {
+    border-radius: var(--r-xs);
+}
+
+/* ---- la muestra de un campo de elección --------------------------------- */
+
+.editor-campo__muestra-opciones {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.editor-campo__muestra-opciones li {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
 }
 
 /* ---- pie: mover, quitar, obligatorio ------------------------------------ */

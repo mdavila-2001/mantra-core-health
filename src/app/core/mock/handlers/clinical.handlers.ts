@@ -421,13 +421,26 @@ export const PLANTILLAS_DE_EXPEDIENTE = [
     ['pa_diastolica', 'Presión diastólica', 'NUMBER', true],
     ['fc', 'Frecuencia cardíaca', 'NUMBER', true],
     ['soplo', 'Soplo cardíaco', 'BOOLEAN', false],
-    ['nyha', 'Clase funcional NYHA', 'TEXT', false],
+    // La NYHA es una escala cerrada de cuatro clases: es texto libre sólo
+    // porque el seed no sabía declarar opciones, y como texto libre cada
+    // consultorio la escribe distinto y deja de ser comparable.
+    ['nyha', 'Clase funcional NYHA', 'code', false, ['I', 'II', 'III', 'IV']],
+    [
+      'factores',
+      'Factores de riesgo',
+      'code',
+      false,
+      ['Tabaquismo', 'Hipertensión', 'Diabetes', 'Dislipidemia', 'Antecedente familiar'],
+      // De varias: nadie tiene un solo factor de riesgo.
+      true,
+    ],
   ]),
   plantilla('PEDIA-CONTROL', 'Control de niño sano', ESPECIALIDAD['SP-PEDIA']!, [
     ['peso', 'Peso (kg)', 'NUMBER', true],
     ['talla', 'Talla (cm)', 'NUMBER', true],
     ['perimetro', 'Perímetro cefálico', 'NUMBER', false],
     ['vacunas_al_dia', 'Vacunas al día', 'BOOLEAN', true],
+    ['lactancia', 'Tipo de lactancia', 'code', false, ['Materna exclusiva', 'Mixta', 'Fórmula']],
   ]),
   plantilla('GINE-PRENATAL', 'Control prenatal', ESPECIALIDAD['SP-GINE']!, [
     ['semanas', 'Semanas de gestación', 'NUMBER', true],
@@ -444,7 +457,20 @@ function registroReceta(r: RecetaSimulada) {
   return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === ESTADO_RECETA['RX-DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };
 }
 
-export function plantilla(code: string, name: string, specialtyConceptId: string, campos: readonly (readonly [string, string, string, boolean])[]) {
+/**
+ * Una plantilla de expediente sembrada.
+ *
+ * Cada campo es `[code, name, dataType, required]` y, si es de eleccion,
+ * `[..., opciones, multiple?]`: `code` es el tipo tecnico de los que se
+ * responden eligiendo, y lo que separa «una sola» de «varias» es la
+ * cardinalidad, no el tipo.
+ */
+export function plantilla(
+  code: string,
+  name: string,
+  specialtyConceptId: string,
+  campos: readonly (readonly [string, string, string, boolean, (readonly string[])?, boolean?])[],
+) {
   return {
     id: uuid(`chart-template-${code}`),
     specialtyConceptId,
@@ -456,13 +482,14 @@ export function plantilla(code: string, name: string, specialtyConceptId: string
     // sólo recibe el `targetResourceConceptId`, así que con un target común no
     // había forma de saber a qué formulario colgarle el campo.
     fieldTargetConceptId: uuid(`concept-field-target-${code}`),
-    fields: campos.map(([c, n, dataType, required], i) => ({
+    fields: campos.map(([c, n, dataType, required, options, multiple], i) => ({
       assignmentId: uuid(`tpl-assign-${code}-${c}`),
       fieldId: uuid(`tpl-field-${code}-${c}`),
       code: c,
       name: n,
       dataType,
       required,
+      ...(options === undefined ? {} : { options, multiple: multiple ?? false }),
       ordinal: i + 1,
       // `false`: son los campos del formulario **estándar**, los que hacen
       // comparable una ficha entre consultorios. Marcarlos como propios ponía
