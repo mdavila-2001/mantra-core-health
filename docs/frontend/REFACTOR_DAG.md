@@ -35,6 +35,24 @@ viewports, evidencia, revisión independiente, regresión), son 232 ciclos.
 | 6 | Cola larga (126 portadas) | pendiente |
 | 7 | Regresión global | pendiente |
 
+## Wave 1 — DS-001 hecha
+
+De los 7 literales que el escaneo marca en `atoms/button/button.css`, sólo
+**uno** era deuda real: `font-size: 13px`, que coincide exacto con
+`--fs-caption`. Se reemplazó y se demostró que no mueve un píxel.
+
+Los otros seis no se tocaron, y esa es la parte importante:
+
+- `#fff` está justificado por el comentario de arriba.
+- `14px`, `11px` y `28px` están fuera de escala: cambiarlos altera el diseño.
+
+**Cómo se verificó.** La primera comparación de capturas dio «difieren» y esa
+lectura era falsa: la captura del estado previo se tomó mientras HMR
+reconstruía. El control lo destapó — dos capturas del mismo código dan el mismo
+hash, así que la herramienta es determinista y la diferencia tenía que venir de
+otro lado. Repetida con el rebuild ya terminado: `antes == después`, byte a
+byte, y el estilo computado (`13px / 8px 14px / 32px`) idéntico en ambos.
+
 ## Wave 0 — hecha
 
 - Arnés de baseline: `playwright/fable-baseline.spec.ts`.
@@ -47,6 +65,32 @@ viewports, evidencia, revisión independiente, regresión), son 232 ciclos.
 
 **76 colores y 82 medidas literales = 158 valores en 56 archivos**, donde el
 sistema ya tiene token. Medido con `tools/fable-literales.py`.
+
+### El desglose que decide cómo se ataca
+
+No son 158 reemplazos mecánicos. Comparando cada literal contra el valor de los
+34 tokens de medida y los 130 de color:
+
+| | Cantidad | Qué significa |
+|---|---:|---|
+| **Coinciden exacto con un token** | **102** (34 colores, 68 medidas) | Swap mecánico. El píxel no se mueve, y se puede demostrar. |
+| **Fuera de escala** | **56** (42 colores, 14 medidas) | Reemplazarlos **mueve el píxel**: es una decisión de diseño, no un refactor. Necesitan a quien defina el diseño, no a un agente. |
+
+El caso más repetido fuera de escala es `14px` (11 veces): la escala de
+espaciado va 4/8/12/16/20/24/32/40/48/64/80 y la tipográfica
+11/13/15/17/21/26/32/44. No hay token de 14.
+
+Parte de los 42 colores «fuera de escala» son además **legítimos y ya
+justificados en el código**. Ejemplo real, en `atoms/button/button.css`:
+
+```css
+/* blanco literal del spec (btn-danger): en oscuro --text-inverse es
+   petrol-900 y el diseñador fija #fff en ambos temas */
+--_btn-fg: #fff;
+```
+
+Ese `#fff` no es deuda: es una decisión documentada. **Antes de tocar un literal
+hay que leer el comentario de al lado.**
 
 Excluidos por legítimos, tras revisarlos uno por uno: `src/styles.css` (es el
 archivo que **define** los 172 tokens), `src/styles/alovida.css`,
@@ -80,7 +124,7 @@ Un primer escaneo sin estas exclusiones daba 521 y era una cifra inflada.
 Por dependencia, no por tamaño: primero los átomos, porque cada literal que se
 corrige ahí desaparece de todas las pantallas que los usan.
 
-1. `DS-001` — `atoms/button/button.css` (7). Es el componente más consumido.
+1. `DS-001` — `atoms/button/button.css` (7). Es el componente más consumido. **HECHA.**
 2. `DS-002` — `molecules/segmented-control` (5), `organisms/tree-select` (8),
    `atoms/checkbox` y `atoms/switch`.
 3. `LAY-001` — `shell-layout.html` (7) y `alovida-shell.html` (7).
@@ -111,7 +155,8 @@ Cada microtarea declara, antes de tocar código:
 |---|---|---|---|---|
 | W0 | Baseline de las 28 secciones | - | `VERIFIED` | `evidence/baseline/mediciones.json` |
 | W0.1 | `/directory` redirige | W0 | `DISCOVERED` | `evidence/baseline/directory/` |
-| DS-001 | `atoms/button` sin literales | W0 | `DISCOVERED` | - |
+| DS-001 | `atoms/button`: `font-size: 13px` -> `var(--fs-caption)` | W0 | `VERIFIED` | `evidence/DS-001/` |
+| DS-001.b | `atoms/button`: los 5 literales restantes (14px, 11px, 28px, #fff) | decisión de diseño | `BLOCKED` | fuera de escala o justificados |
 | DS-002 | Moléculas y organismos con literales | DS-001 | `DISCOVERED` | - |
 | LAY-001 | Shells sin literales | DS-002 | `DISCOVERED` | - |
 | UI-001 | `public-profile/` sin literales | DS-002 | `DISCOVERED` | - |

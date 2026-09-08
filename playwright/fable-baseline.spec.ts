@@ -77,7 +77,7 @@ test.describe('FABLE · baseline visual', () => {
         await page.setViewportSize({ width: vp.width, height: vp.height });
         ojo.limpiar();
 
-        let pinta = false;
+        let pinta: boolean;
         try {
           await irA(page, seccion.ruta);
           await estable(page);
