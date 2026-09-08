@@ -1,0 +1,30 @@
+/* ============================================================================
+    El cuestionario renderizado.
+
+    Una pregunta por tarjeta y una sola columna: el formulario lo arma quien
+    autora la encuesta y puede tener cualquier largo, así que se optimiza para
+    no perder el hilo entre pregunta y respuesta antes que para ocupar el ancho.
+    ========================================================================== */
+
+:host {
+    display: grid;
+    gap: var(--sp-4);
+}
+
+.cuestionario__pregunta {
+    display: block;
+}
+
+.cuestionario__opciones {
+    display: grid;
+    gap: var(--sp-2);
+}
+
+/* El aviso de la escala impracticable: es una nota sobre el control, no un
+   error del formulario, así que va en gris y debajo. */
+.cuestionario__aviso {
+    margin: var(--sp-2) 0 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}

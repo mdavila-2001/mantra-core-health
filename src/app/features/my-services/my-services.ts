@@ -30,8 +30,8 @@ import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
+import { ServiceIcon } from '../../shared/components/atoms/service-icon/service-icon';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
-import { Card } from '../../shared/components/molecules/card/card';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
@@ -120,16 +120,20 @@ const SIN_PRACTICA_ELEGIDA = empty(
   imports: [
     AppButton,
     Badge,
-    Card,
     FormField,
     Input,
     PageHeader,
     Select,
+    ServiceIcon,
     Skeleton,
     ViewStateHost,
   ],
   templateUrl: './my-services.html',
-  styleUrl: './my-services.css',
+  // La hoja compartida va **primera**: Angular concatena los estilos en este
+  // orden, y lo de abajo son los ajustes de esta pantalla sobre esa base.
+  // Al revés, `.rejilla` pisaría a `.mis-servicios__rejilla` —misma
+  // especificidad, gana la última— y el ancho de columna de acá no se aplicaría.
+  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './my-services.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyServices {

@@ -41,7 +41,17 @@ export class BuscarBuscadorListado {
     this.directorio.search(filtros),
   );
 
-  protected readonly tarjetas = computed(() => this.busqueda.resultados().map(aTarjeta));
+  /**
+   * Con insignia de vertical, al revés que los directorios.
+   *
+   * Ésta es la única lista que **mezcla** los seis: sin la insignia, una
+   * farmacia, una aseguradora y un laboratorio serían tres nombres seguidos sin
+   * nada que diga cuál es cuál. La lambda explícita, además, evita que `map` le
+   * pase el índice como opciones.
+   */
+  protected readonly tarjetas = computed(() =>
+    this.busqueda.resultados().map((resultado) => aTarjeta(resultado)),
+  );
 
   /** Escribir lleva el texto a `?q=`; el cambio de la URL dispara la lectura. */
   protected alEscribir(valor: string): void {

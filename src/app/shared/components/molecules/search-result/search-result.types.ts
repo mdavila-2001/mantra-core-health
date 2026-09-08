@@ -89,7 +89,32 @@ export interface SearchResultItem {
   readonly figureText?: string;
   /** Imagen del cuadrado. Gana sobre `figureText` si viene. */
   readonly figureImageUrl?: string;
-  /** El tipo, como insignia al lado del título: «Profesional», «Farmacia»… */
+  /**
+   * Qué es esto, en una línea: «Hospital público de segundo nivel», «Farmacia ·
+   * entrega a domicilio», «Cardióloga · Clínica Los Olivos».
+   *
+   * ## Por qué es un campo propio y no la primera línea de `meta`
+   *
+   * Porque no es contexto, es **la respuesta a qué es esto**. Iba en `meta`, o
+   * sea en el mismo gris de 12 px que la ciudad y la puntuación, debajo de una
+   * insignia que decía «Organización» — y el resultado era que la tarjeta de un
+   * hospital público de tercer nivel y la de una clínica privada de 24 horas se
+   * leían iguales de un vistazo: dos nombres y la misma palabra genérica.
+   *
+   * Es lo que un directorio de lugares tiene que dejar comparar, así que va
+   * donde se lee primero, en el tamaño del cuerpo y no en el de una nota al
+   * pie.
+   */
+  readonly subtitle?: string;
+  /**
+   * El tipo, como insignia al lado del título: «Profesional», «Farmacia»…
+   *
+   * **Sólo cuando varía dentro de la lista.** En un directorio de un solo
+   * vertical —clínicas, farmacias— la insignia dice la misma palabra en las
+   * quince tarjetas: no distingue nada, repite el título de la pantalla y le
+   * roba el primer renglón al subtítulo, que es el que sí distingue. Ver
+   * `aTarjeta`, que la omite en esos casos.
+   */
   readonly kind?: SearchResultSeal;
   /** Las líneas de contexto, en el orden en que se muestran. */
   readonly meta?: readonly SearchResultMeta[];

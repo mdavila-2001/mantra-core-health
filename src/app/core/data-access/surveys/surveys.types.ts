@@ -79,6 +79,34 @@ export interface NewSurveyQuestion {
   readonly scaleMax?: number;
 }
 
+/**
+ * Cambios sobre una encuesta en borrador.
+ *
+ * Todo opcional: se manda sólo lo que cambió. Una clave ausente **no** es «poné
+ * esto en vacío» — para vaciar la consigna se manda `description: ''`.
+ */
+export interface SurveyEdit {
+  readonly title?: string;
+  readonly description?: string;
+  readonly responseWindowDays?: number;
+}
+
+/**
+ * Cambios sobre una pregunta de una versión en borrador.
+ *
+ * Las opciones y los extremos de escala se reemplazan **enteros** cuando
+ * viajan: no hay edición parcial de una opción suelta, porque el orden importa
+ * y un parche por índice se rompe en cuanto alguien inserta una en el medio.
+ */
+export interface SurveyQuestionEdit {
+  readonly questionText?: string;
+  readonly answerType?: AnswerType;
+  readonly required?: boolean;
+  readonly options?: readonly string[];
+  readonly scaleMin?: number;
+  readonly scaleMax?: number;
+}
+
 /** Publicación de una versión, con su vigencia. */
 export interface PublishSurvey {
   readonly effectiveFrom?: string;

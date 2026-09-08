@@ -4,7 +4,7 @@ import type { RamaDepartamento } from '../../../../core/data-access/terminology/
 import { Select as AppSelect } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
-import { DepartmentMap, type DepartamentoElegible } from '../department-map/department-map';
+import { DepartmentMap, type DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 
 /**
  * «¿En qué localidad?»: el mapa de departamentos y el select de municipio.

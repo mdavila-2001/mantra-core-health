@@ -1,5 +1,7 @@
-import { computed, Directive, signal } from '@angular/core';
-import { of, switchMap, type Observable } from 'rxjs';
+import { computed, DestroyRef, Directive, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, type Params } from '@angular/router';
+import { map, of, switchMap, type Observable } from 'rxjs';
 
 import type {
   PublicPage,
@@ -11,6 +13,11 @@ import { dataOf, empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import type { GrupoDeDirectorio } from '@shared/components/organisms/directory-page/directory-page.types';
 import { SEARCH_PARAM, type FilterDef } from '@shared/components/organisms/filter-bar/filter-bar';
+import {
+  BoMunicipalitiesCatalog,
+  type RamaDepartamento,
+} from '@core/data-access/terminology/bo-municipalities.service';
+import type { DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 
 import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 
@@ -32,6 +39,26 @@ const PARAM_CIUDAD = 'ciudad';
 
 /** Clave del chip de verificación en la URL. */
 const PARAM_VERIFICADO = 'verificado';
+
+/** Clave del departamento elegido en el mapa, en la URL. */
+const PARAM_DEPARTAMENTO = 'departamento';
+
+/**
+ * Quita tildes y baja a minúsculas, para casar el nombre de ciudad que trae el
+ * directorio con el del municipio del catálogo.
+ *
+ * Los dos vienen escritos por gente distinta —uno lo cargó la organización en
+ * su ficha, el otro lo siembra terminología— y «Potosí» y «potosi» tienen que
+ * ser la misma ciudad. Sin esto el mapa dejaría fuera justo a los
+ * departamentos cuyo nombre lleva tilde, que son la mitad.
+ */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/gu, '')
+    .toLowerCase()
+    .trim();
+}
 
 /**
  * Cuántas ciudades se ofrecen como chips. Ver el porqué del tope en el
@@ -86,9 +113,153 @@ export abstract class PublicDirectoryListing {
   /** El texto libre, que sí viaja al servidor bajo `q`. */
   private readonly termino = signal('');
 
-  /** Los dos cortes que se aplican en memoria. */
+  /** Los tres cortes que se aplican en memoria. */
   protected readonly ciudad = signal<string | null>(null);
   protected readonly soloVerificados = signal(false);
+
+  /* ---- el mapa de Bolivia como filtro ------------------------------------ */
+
+  private readonly municipios = inject(BoMunicipalitiesCatalog);
+  private readonly router = inject(Router);
+  private readonly ruta = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** El árbol de departamentos y municipios. Vacío mientras no llegue. */
+  private readonly ramas = signal<readonly RamaDepartamento[]>([]);
+
+  /** El catálogo no llegó: el mapa no se dibuja y se ofrece reintentar. */
+  protected readonly catalogoGeoCaido = signal(false);
+
+  /**
+   * Los nueve departamentos, para el mapa.
+   *
+   * **Todos**, no sólo los que tienen algo publicado, al revés que los chips de
+   * ciudad. No es una inconsistencia: un chip que siempre devuelve cero es un
+   * botón inútil, pero un mapa de Bolivia al que le faltan seis departamentos
+   * no es un filtro honesto, es un dibujo roto — y quien lo mira no sabría si
+   * Pando no está porque no hay farmacias o porque el mapa está mal. Se dibuja
+   * el país entero y cada departamento dice **cuántos** tiene, que es la
+   * información que el chip escondía.
+   */
+  protected readonly departamentos = computed<readonly DepartamentoElegible[]>(() =>
+    this.ramas().map((rama) => ({
+      conceptId: rama.conceptId,
+      sigla: rama.sigla,
+      nombre: rama.nombre,
+    })),
+  );
+
+  /**
+   * De cada ciudad publicada al `conceptId` de su departamento.
+   *
+   * Se arma con los municipios del catálogo, que es el dueño del dato: una
+   * tabla de ciudades escrita acá se separaría del catálogo en cuanto alguien
+   * sembrara un municipio nuevo, y el directorio empezaría a esconder centros
+   * sin que nadie lo notara.
+   */
+  private readonly departamentoPorCiudad = computed<ReadonlyMap<string, string>>(() => {
+    const mapa = new Map<string, string>();
+    for (const rama of this.ramas()) {
+      for (const municipio of rama.municipios) {
+        mapa.set(normalizar(municipio.nombre), rama.conceptId);
+      }
+    }
+    return mapa;
+  });
+
+  /** El departamento elegido en el mapa, leído de la URL. */
+  private readonly departamentoEnUrl = toSignal(
+    this.ruta.queryParams.pipe(
+      map((params: Params) => {
+        const valor: unknown = params[PARAM_DEPARTAMENTO];
+        return typeof valor === 'string' && valor !== '' ? valor : null;
+      }),
+    ),
+    { initialValue: null },
+  );
+
+  protected readonly departamentoElegido = computed(() => this.departamentoEnUrl());
+
+  /**
+   * Cuántos resultados tiene cada departamento, con los **otros** filtros
+   * puestos pero no con el del propio mapa.
+   *
+   * Contar con el mapa aplicado dejaría a los ocho departamentos no elegidos en
+   * cero, o sea el mapa diciendo que sólo hay centros donde uno acaba de
+   * pulsar. La cuenta que sirve es la de «cuánto hay ahí si voy».
+   */
+  protected readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(() => {
+    const porCiudad = this.departamentoPorCiudad();
+    const cuenta = new Map<string, number>();
+    for (const fila of this.filtradasSinDepartamento()) {
+      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizar(fila.city));
+      if (conceptId === undefined) continue;
+      cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
+    }
+    return cuenta;
+  });
+
+  /**
+   * El resumen que acompaña al mapa: cuántos hay y cómo se vuelve.
+   *
+   * `null` cuando no hay departamento elegido, y no un «tocá un departamento»:
+   * el propio mapa ya escribe «Todavía no elegiste departamento» en su línea
+   * viva —es la tercera señal de su estado, la que no depende del color— y dos
+   * renglones seguidos diciendo lo mismo se leen como un error de la pantalla.
+   */
+  protected readonly resumenDelMapa = computed<string | null>(() => {
+    const elegido = this.departamentoElegido();
+    if (elegido === null) {
+      return null;
+    }
+    const nombre = this.ramas().find((rama) => rama.conceptId === elegido)?.nombre ?? '';
+    const cuantos = this.cuentaPorDepartamento().get(elegido) ?? 0;
+    if (cuantos === 0) {
+      return `Todavía no hay nada publicado en ${nombre}.`;
+    }
+    return `${cuantos} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+  });
+
+  /**
+   * Elegir en el mapa va a la URL, como los chips.
+   *
+   * `null` **quita** el parámetro; dejar `?departamento=` colgando ensuciaría
+   * el enlace de quien volvió a ver todo el país.
+   */
+  protected elegirDepartamento(conceptId: string | null): void {
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      queryParams: { [PARAM_DEPARTAMENTO]: conceptId },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  constructor() {
+    // El catálogo geográfico se pide una vez, acá y no en cada subclase: los
+    // dos directorios dibujan el mismo mapa y `BoMunicipalitiesService` ya
+    // cachea la lectura, así que abrir uno y después el otro no vuelve a pedir.
+    this.leerGeografia();
+  }
+
+  /** Reintenta la lectura del catálogo geográfico tras un fallo. */
+  protected reintentarGeo(): void {
+    this.municipios.olvidar();
+    this.leerGeografia();
+  }
+
+  protected leerGeografia(): void {
+    this.catalogoGeoCaido.set(false);
+    this.municipios
+      .listar()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (ramas: readonly RamaDepartamento[]) => this.ramas.set(ramas),
+        error: () => {
+          this.ramas.set([]);
+          this.catalogoGeoCaido.set(true);
+        },
+      });
+  }
 
   protected readonly aviso = computed(() =>
     this.recortada()
@@ -96,13 +267,30 @@ export abstract class PublicDirectoryListing {
       : null,
   );
 
-  /** Las filas que quedan después de los cortes en memoria. */
-  private readonly filtradas = computed(() => {
+  /**
+   * Las filas que quedan tras los cortes de chip, **sin** el del mapa.
+   *
+   * Existe aparte porque es la base con la que el mapa cuenta: ver
+   * `cuentaPorDepartamento`.
+   */
+  private readonly filtradasSinDepartamento = computed(() => {
     const ciudad = this.ciudad();
     const soloVerificados = this.soloVerificados();
     return (dataOf(this.estado()) ?? []).filter(
       (fila) =>
         (ciudad === null || fila.city === ciudad) && (!soloVerificados || fila.verified),
+    );
+  });
+
+  /** Las filas que quedan después de los tres cortes en memoria. */
+  private readonly filtradas = computed(() => {
+    const departamento = this.departamentoElegido();
+    if (departamento === null) {
+      return this.filtradasSinDepartamento();
+    }
+    const porCiudad = this.departamentoPorCiudad();
+    return this.filtradasSinDepartamento().filter(
+      (fila) => fila.city !== null && porCiudad.get(normalizar(fila.city)) === departamento,
     );
   });
 
@@ -130,7 +318,12 @@ export abstract class PublicDirectoryListing {
       .map(([ciudad, filas]) => ({
         id: ciudad,
         nombre: ciudad,
-        resultados: filas.map(aTarjeta).sort((a, b) => a.title.localeCompare(b.title, 'es')),
+        // Sin insignia de vertical: este directorio es de una sola clase, y
+        // repetirla en cada tarjeta le roba el renglón al subtítulo. Ver
+        // `OpcionesDeTarjeta`.
+        resultados: filas
+          .map((fila) => aTarjeta(fila, { mostrarTipo: false }))
+          .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 
@@ -138,7 +331,9 @@ export abstract class PublicDirectoryListing {
       tramos.push({
         id: 'sin-ciudad',
         nombre: 'Sin ciudad declarada',
-        resultados: sinCiudad.map(aTarjeta).sort((a, b) => a.title.localeCompare(b.title, 'es')),
+        resultados: sinCiudad
+          .map((fila) => aTarjeta(fila, { mostrarTipo: false }))
+          .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       });
     }
     return tramos;
@@ -178,7 +373,9 @@ export abstract class PublicDirectoryListing {
     if (this.tramos().length > 0 || this.estado().status !== 'ready') {
       return null;
     }
-    return 'Ninguno de los resultados coincide con los filtros que pusiste. Probá quitando alguno.';
+    return this.departamentoElegido() === null
+      ? 'Ninguno de los resultados coincide con los filtros que pusiste. Probá quitando alguno.'
+      : 'No hay nada publicado en ese departamento con los filtros que pusiste. Tocalo otra vez en el mapa para ver todo el país.';
   });
 
   /**

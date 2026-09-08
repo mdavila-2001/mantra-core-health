@@ -46,6 +46,8 @@ export { NavIcon } from './nav-icon/nav-icon';
 export { NAV_ICON_NAMES } from './nav-icon/nav-icon.types';
 export type { NavIconName } from './nav-icon/nav-icon.types';
 
+export { QuestionTypeIcon } from './question-type-icon/question-type-icon';
+
 export { Progress } from './progress/progress';
 export {
   PROGRESS_MAX,

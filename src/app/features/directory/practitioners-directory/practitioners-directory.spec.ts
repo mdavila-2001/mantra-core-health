@@ -405,14 +405,19 @@ describe('PractitionersDirectory', () => {
 
     expect(cruzada, 'la tarjeta cruzada debería estar en la guía').toBeDefined();
     // Sin subtítulo: más pobre, pero no miente sobre quién es quién. Se
-    // comprueba que NO esté el nombre ajeno, y no que la tarjeta se quede sin
-    // contexto: desde que la tarjeta dice dónde atiende, «sin meta» y «sin
+    // comprueba que NO esté el nombre ajeno en ninguna parte visible de la
+    // tarjeta —ni en el subtítulo ni en las líneas de contexto—, y no que la
+    // tarjeta se quede vacía: desde que dice dónde atiende, «sin meta» y «sin
     // subtítulo» dejaron de ser lo mismo.
-    const contexto = (cruzada?.meta ?? []).map((m) => m.text).join(' | ');
-    expect(contexto).not.toContain('Andrés Peña');
-    // Y el resto conserva el suyo, que es legítimo.
+    const visible = [cruzada?.subtitle ?? '', ...(cruzada?.meta ?? []).map((m) => m.text)].join(
+      ' | ',
+    );
+    expect(visible).not.toContain('Andrés Peña');
+    // Y el resto conserva el suyo, que es legítimo. Va en `subtitle` y ya no en
+    // la primera línea de `meta`: es qué es esta persona, no un dato de
+    // contexto, y la tarjeta lo pinta pegado al nombre.
     const sana = tarjetas.find((t) => t.title === 'Dr. Andrés Peña');
-    expect(sana?.meta?.[0]?.text).toBe('Pediatra');
+    expect(sana?.subtitle).toBe('Pediatra');
   });
 
   /** Quien ejerce dos especialidades figura bajo las dos. */

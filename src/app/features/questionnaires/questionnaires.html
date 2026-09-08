@@ -70,6 +70,14 @@
           <li>
             <app-card variant="outlined" padding="lg">
               <div class="encuestas__fila">
+                <!-- El ícono de la sección, no uno por encuesta: en este
+                     listado todas son encuestas, así que lo que aporta es
+                     reconocer la fila como tal de un vistazo, igual que en las
+                     tarjetas de los directorios. -->
+                <span class="encuestas__marca" aria-hidden="true">
+                  <app-nav-icon name="survey" />
+                </span>
+
                 <div class="encuestas__datos">
                   <h2 class="encuestas__titulo">{{ encuesta.title }}</h2>
 

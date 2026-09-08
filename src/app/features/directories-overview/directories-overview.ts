@@ -62,7 +62,9 @@ const PROPIA_RUTA = 'directories';
   selector: 'app-directories-overview',
   imports: [NavIcon, PageHeader, RouterLink],
   templateUrl: './directories-overview.html',
-  styleUrl: './directories-overview.css',
+  // La hoja compartida va **primera**: lo de abajo son los ajustes de esta
+  // pantalla sobre esa base, y Angular concatena en este orden.
+  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './directories-overview.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DirectoriesOverview {

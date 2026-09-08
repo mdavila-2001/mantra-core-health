@@ -74,38 +74,45 @@ function definir(
 
 /* ---- Bolivia: departamentos, municipios, ocupaciones, empleadores --------- */
 
+/* Los codigos no son decorativos: `BoMunicipalitiesService` saca la sigla del
+   departamento quitandole el prefijo `geo:bo:department:` al codigo, y la del
+   municipio por el prefijo INE o, si no, por las dos letras iniciales. Con los
+   `BO-SC` de antes la sigla quedaba en `BO-SC`, no casaba con ninguna silueta
+   y el mapa de departamentos del alta se dibujaba vacio —y sin departamento no
+   habia ciudades, que es un campo obligatorio: el registro no se podia
+   terminar. */
 conjunto('VS_BO_DEPARTMENT', 'Departamentos de Bolivia', 'Los nueve departamentos.');
 export const DEPARTAMENTO = definir('VS_BO_DEPARTMENT', [
-  ['BO-SC', 'Santa Cruz'],
-  ['BO-LP', 'La Paz'],
-  ['BO-CB', 'Cochabamba'],
-  ['BO-OR', 'Oruro'],
-  ['BO-PT', 'Potosí'],
-  ['BO-CH', 'Chuquisaca'],
-  ['BO-TJ', 'Tarija'],
-  ['BO-BE', 'Beni'],
-  ['BO-PD', 'Pando'],
+  ['geo:bo:department:SC', 'Santa Cruz'],
+  ['geo:bo:department:LP', 'La Paz'],
+  ['geo:bo:department:CB', 'Cochabamba'],
+  ['geo:bo:department:OR', 'Oruro'],
+  ['geo:bo:department:PT', 'Potosí'],
+  ['geo:bo:department:CH', 'Chuquisaca'],
+  ['geo:bo:department:TJ', 'Tarija'],
+  ['geo:bo:department:BE', 'Beni'],
+  ['geo:bo:department:PD', 'Pando'],
 ]);
 
 conjunto('VS_BO_MUNICIPALITY', 'Municipios de Bolivia', 'Municipios, agrupados por departamento.');
 export const MUNICIPIO = definir('VS_BO_MUNICIPALITY', [
-  ['BO-SC-SCZ', 'Santa Cruz de la Sierra'],
-  ['BO-SC-MON', 'Montero'],
-  ['BO-SC-WAR', 'Warnes'],
-  ['BO-SC-COT', 'Cotoca'],
-  ['BO-SC-LGD', 'La Guardia'],
-  ['BO-LP-LPZ', 'La Paz'],
-  ['BO-LP-ELA', 'El Alto'],
-  ['BO-LP-VIA', 'Viacha'],
-  ['BO-CB-CBB', 'Cochabamba'],
-  ['BO-CB-QUI', 'Quillacollo'],
-  ['BO-CB-SAC', 'Sacaba'],
-  ['BO-OR-ORU', 'Oruro'],
-  ['BO-PT-PTS', 'Potosí'],
-  ['BO-CH-SRE', 'Sucre'],
-  ['BO-TJ-TJA', 'Tarija'],
-  ['BO-BE-TRI', 'Trinidad'],
-  ['BO-PD-COB', 'Cobija'],
+  ['SC-SCZ', 'Santa Cruz de la Sierra'],
+  ['SC-MON', 'Montero'],
+  ['SC-WAR', 'Warnes'],
+  ['SC-COT', 'Cotoca'],
+  ['SC-LGD', 'La Guardia'],
+  ['LP-LPZ', 'La Paz'],
+  ['LP-ELA', 'El Alto'],
+  ['LP-VIA', 'Viacha'],
+  ['CB-CBB', 'Cochabamba'],
+  ['CB-QUI', 'Quillacollo'],
+  ['CB-SAC', 'Sacaba'],
+  ['OR-ORU', 'Oruro'],
+  ['PT-PTS', 'Potosí'],
+  ['CH-SRE', 'Sucre'],
+  ['TJ-TJA', 'Tarija'],
+  ['BE-TRI', 'Trinidad'],
+  ['PD-COB', 'Cobija'],
 ]);
 
 conjunto('VS_BO_OCCUPATION', 'Ocupaciones', 'Catálogo normado de ocupaciones.');
@@ -462,6 +469,24 @@ export const ESTUDIO = definir('VS_DIAGNOSTIC_STUDY', [
   ['STUDY-ECG', 'Electrocardiograma'],
   ['STUDY-RMN-RODILLA', 'Resonancia de rodilla'],
   ['STUDY-TAC-CRANEO', 'Tomografía de cráneo'],
+  /* Un catálogo de diez estudios dejaba a cada centro con cinco, o sea siempre
+     por debajo del umbral con el que la ficha muestra su buscador y su
+     paginador: la sección se veía entera y sus controles no aparecían nunca.
+     Un laboratorio real ofrece decenas. */
+  ['STUDY-CREATININA', 'Creatinina en sangre'],
+  ['STUDY-UREA', 'Urea en sangre'],
+  ['STUDY-HBA1C', 'Hemoglobina glicosilada'],
+  ['STUDY-COAGULACION', 'Tiempo de coagulación'],
+  ['STUDY-HEPATICO', 'Perfil hepático'],
+  ['STUDY-COPROLOGICO', 'Coproparasitológico'],
+  ['STUDY-CULTIVO', 'Urocultivo con antibiograma'],
+  ['STUDY-VITAMINA-D', 'Vitamina D'],
+  ['STUDY-MAMOGRAFIA', 'Mamografía bilateral'],
+  ['STUDY-ECO-OBSTETRICA', 'Ecografía obstétrica'],
+  ['STUDY-RX-COLUMNA', 'Radiografía de columna'],
+  ['STUDY-TAC-ABDOMEN', 'Tomografía de abdomen'],
+  ['STUDY-RMN-CEREBRO', 'Resonancia de cerebro'],
+  ['STUDY-DENSITOMETRIA', 'Densitometría ósea'],
 ]);
 
 conjunto('VS_IMMUNIZATION', 'Vacunas', 'Vacunas del esquema.');

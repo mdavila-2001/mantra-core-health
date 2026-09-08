@@ -14,6 +14,13 @@
     <a [routerLink]="r.link">{{ r.title }}</a>
   </p>
 
+  <!-- El subtítulo va pegado al título y en el tamaño del cuerpo: es qué es
+       esto —«Hospital público de segundo nivel»—, no un dato de contexto. Ver
+       el JSDoc de `subtitle`. -->
+  @if (r.subtitle) {
+    <p class="tarjeta-resultado__subtitulo">{{ r.subtitle }}</p>
+  }
+
   @if (r.kind; as tipo) {
     <p class="tarjeta-resultado__tipo">
       <span class="app-badge" [attr.data-tono]="tipo.tone">{{ tipo.label }}</span>

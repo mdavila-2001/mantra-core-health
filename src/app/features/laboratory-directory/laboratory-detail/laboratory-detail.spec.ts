@@ -108,7 +108,10 @@ describe('LaboratoryDetail', () => {
     expect(text).toContain('Sede Centro');
     expect(text).toContain('Analyzer 500');
     expect(text).toContain('Hemograma completo');
-    expect(text).toContain('85.00 Boliviano');
+    // Con coma decimal: la API sirve `85.00` porque es un decimal exacto en
+    // cadena, y la ficha lo escribe como se lee en es-BO — la misma coma que la
+    // puntuación de al lado.
+    expect(text).toContain('85,00 Boliviano');
     expect(text).toContain('ISO-DEMO');
   });
 

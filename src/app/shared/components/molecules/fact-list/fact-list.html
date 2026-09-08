@@ -1,0 +1,23 @@
+<!-- El `<dl>` es la lista; cada par va envuelto en su `<div>` porque `dt` y `dd`
+     son hermanos sueltos y sin envoltorio no hay forma de darles una fila
+     propia con CSS. Es la estructura que el HTML permite desde HTML5. -->
+@if (visibles().length > 0) {
+  <dl [attr.aria-label]="etiqueta() || null">
+    @for (hecho of visibles(); track hecho.etiqueta) {
+      <div class="lista-hechos__par">
+        <dt class="lista-hechos__campo">
+          <!-- El ícono es del campo, no del valor, y va `aria-hidden` porque el
+               nombre del campo está escrito al lado: anunciarlo diría «imagen»
+               una vez por fila. -->
+          @if (hecho.icono; as icono) {
+            <app-nav-icon class="lista-hechos__icono" [name]="icono" />
+          }
+          <span>{{ hecho.etiqueta }}</span>
+        </dt>
+        <dd class="lista-hechos__valor" [attr.data-tono]="hecho.tono ?? null">
+          {{ hecho.valor }}
+        </dd>
+      </div>
+    }
+  </dl>
+}

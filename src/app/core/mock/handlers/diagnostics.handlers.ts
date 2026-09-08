@@ -118,8 +118,8 @@ const UNIDADES: readonly UnidadSimulada[] = [
 ];
 
 const ESTUDIOS_POR_TIPO: Readonly<Record<'LABORATORY' | 'IMAGING', readonly (keyof typeof ESTUDIO)[]>> = {
-  LABORATORY: ['STUDY-HEMOGRAMA', 'STUDY-GLUCOSA', 'STUDY-PERFIL-LIPIDICO', 'STUDY-TSH', 'STUDY-ORINA'],
-  IMAGING: ['STUDY-RX-TORAX', 'STUDY-ECO-ABD', 'STUDY-ECG', 'STUDY-RMN-RODILLA', 'STUDY-TAC-CRANEO'],
+  LABORATORY: ['STUDY-HEMOGRAMA', 'STUDY-GLUCOSA', 'STUDY-PERFIL-LIPIDICO', 'STUDY-TSH', 'STUDY-ORINA', 'STUDY-CREATININA', 'STUDY-UREA', 'STUDY-HBA1C', 'STUDY-COAGULACION', 'STUDY-HEPATICO', 'STUDY-COPROLOGICO', 'STUDY-CULTIVO', 'STUDY-VITAMINA-D'],
+  IMAGING: ['STUDY-RX-TORAX', 'STUDY-ECO-ABD', 'STUDY-ECG', 'STUDY-RMN-RODILLA', 'STUDY-TAC-CRANEO', 'STUDY-MAMOGRAFIA', 'STUDY-ECO-OBSTETRICA', 'STUDY-RX-COLUMNA', 'STUDY-TAC-ABDOMEN', 'STUDY-RMN-CEREBRO', 'STUDY-DENSITOMETRIA'],
 };
 
 function sitioDe(u: UnidadSimulada) {
@@ -152,9 +152,17 @@ function itemDeDirectorio(u: UnidadSimulada) {
     id: u.id,
     code: u.code,
     name: u.name,
-    type: c(u.kind, u.kind === 'LABORATORY' ? 'Laboratorio clínico' : 'Centro de imagenología'),
+    // El código del **concepto** (`DU_TYPE_*`), que no es el mismo vocabulario
+    // que el del filtro `kind` (`LABORATORY`/`IMAGING`). Emitir el del filtro
+    // acá dejaba a `categoryName` sin reconocer ninguno de los dos tipos, así
+    // que el directorio rotulaba los grupos con el `display` crudo y la portada
+    // no encontraba su ícono.
+    type: c(
+      u.kind === 'LABORATORY' ? 'DU_TYPE_LAB' : 'DU_TYPE_IMAGING',
+      u.kind === 'LABORATORY' ? 'Laboratorio clínico' : 'Centro de imagenología',
+    ),
     siteCount: 1,
-    equipmentCount: u.kind === 'IMAGING' ? 4 : 6,
+    equipmentCount: u.kind === 'IMAGING' ? 8 : 9,
     studyCount: ESTUDIOS_POR_TIPO[u.kind].length,
     acceptsExternalOrders: u.external,
     walkInAvailable: u.walkIn,
@@ -163,7 +171,10 @@ function itemDeDirectorio(u: UnidadSimulada) {
 }
 
 function equipoDe(u: UnidadSimulada) {
-  const base = u.kind === 'IMAGING' ? [['XR', 'Radiografía digital', 'Siemens', 'Ysio Max'], ['US', 'Ecógrafo', 'GE', 'Logiq E10'], ['MR', 'Resonador 1.5T', 'Philips', 'Ingenia'], ['CT', 'Tomógrafo 64 cortes', 'Siemens', 'Somatom go.Up']] : [['ANALYZER', 'Analizador hematológico', 'Sysmex', 'XN-550'], ['ANALYZER', 'Analizador bioquímico', 'Roche', 'cobas c311'], ['CENTRIFUGE', 'Centrífuga', 'Hettich', 'Rotina 380'], ['MICROSCOPE', 'Microscopio', 'Olympus', 'CX23']];
+  // Nueve y ocho, no cuatro: con cuatro equipos la sección nunca cruzaba el
+  // umbral del buscador ni el de la paginación, así que esos controles no se
+  // podían ver funcionando. Un laboratorio de segundo nivel tiene esta cantidad.
+  const base = u.kind === 'IMAGING' ? [['XR', 'Radiografía digital', 'Siemens', 'Ysio Max'], ['US', 'Ecógrafo', 'GE', 'Logiq E10'], ['MR', 'Resonador 1.5T', 'Philips', 'Ingenia'], ['CT', 'Tomógrafo 64 cortes', 'Siemens', 'Somatom go.Up'], ['XR', 'Arco en C', 'Ziehm', 'Vision RFD'], ['US', 'Ecógrafo portátil', 'Mindray', 'DP-10'], ['MG', 'Mamógrafo digital', 'Hologic', 'Selenia'], ['DX', 'Densitómetro óseo', 'GE', 'Lunar iDXA']] : [['ANALYZER', 'Analizador hematológico', 'Sysmex', 'XN-550'], ['ANALYZER', 'Analizador bioquímico', 'Roche', 'cobas c311'], ['CENTRIFUGE', 'Centrífuga', 'Hettich', 'Rotina 380'], ['MICROSCOPE', 'Microscopio', 'Olympus', 'CX23'], ['ANALYZER', 'Analizador de coagulación', 'Stago', 'STart 4'], ['ANALYZER', 'Analizador de inmunoensayo', 'Abbott', 'Architect i1000'], ['INCUBATOR', 'Incubadora de cultivos', 'Memmert', 'IN55'], ['CENTRIFUGE', 'Centrífuga refrigerada', 'Eppendorf', '5810 R'], ['MICROSCOPE', 'Microscopio de fluorescencia', 'Leica', 'DM2000']];
   return base.map(([code, display, manufacturer, model], i) => ({
     id: uuid(`equipment-${u.id}-${i}`),
     siteId: sitioDe(u).id,
@@ -172,7 +183,15 @@ function equipoDe(u: UnidadSimulada) {
     model: model!,
     serialNumber: `SN-${1000 + i}`,
     modality: u.kind === 'IMAGING' ? c(code!, display!) : null,
-    operationalStatus: c(i === 2 ? 'MAINTENANCE' : 'OPERATIONAL', i === 2 ? 'En mantenimiento' : 'Operativo'),
+    // Tres estados y no dos: con «en mantenimiento» como única excepción, el
+    // filtro por estado de la ficha tenía dos chips y uno de ellos con un solo
+    // equipo detrás. Un parque de nueve equipos tiene alguno fuera de servicio.
+    operationalStatus:
+      i === 2 || i === 7
+        ? c('MAINTENANCE', 'En mantenimiento')
+        : i === 5
+          ? c('OUT_OF_SERVICE', 'Fuera de servicio')
+          : c('OPERATIONAL', 'Operativo'),
     lastCalibrationAt: isoDia(-90 - i * 20),
     nextCalibrationDueAt: isoDia(275 - i * 20),
     daysToCalibration: 275 - i * 20,

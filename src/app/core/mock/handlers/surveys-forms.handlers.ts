@@ -140,6 +140,31 @@ function respuestasDe(e: EncuestaSimulada) {
   }));
 }
 
+/** Devuelve las preguntas con `position` correlativa desde 1. */
+function renumerar(questions: readonly PreguntaSimulada[]): readonly PreguntaSimulada[] {
+  return questions.map((q, i) => ({ ...q, position: i + 1 }));
+}
+
+/**
+ * Quita los datos que el tipo de la pregunta ya no usa.
+ *
+ * Cambiar una elección a texto libre tiene que borrar sus opciones: si quedan
+ * guardadas, el `GET` las devuelve, la vista previa las ignora —el tipo manda—
+ * y quien edita ve un cuestionario que no coincide con lo que guardó.
+ */
+function limpiarSegunTipo(questions: readonly PreguntaSimulada[]): readonly PreguntaSimulada[] {
+  const conOpciones = (t: TipoRespuesta) => t === 'SINGLE_CHOICE' || t === 'MULTIPLE_CHOICE';
+  return questions.map((q) => {
+    const { options, scaleMin, scaleMax, ...resto } = q;
+    return {
+      ...resto,
+      ...(conOpciones(q.answerType) && options !== undefined ? { options } : {}),
+      ...(q.answerType === 'SCALE' && scaleMin !== undefined ? { scaleMin } : {}),
+      ...(q.answerType === 'SCALE' && scaleMax !== undefined ? { scaleMax } : {}),
+    };
+  });
+}
+
 export function registrarEncuestas(router: MockRouter): void {
   router.get('/surveys/templates', () => encuestas.todos().map(resumen));
 
@@ -171,6 +196,96 @@ export function registrarEncuestas(router: MockRouter): void {
     const nueva: PreguntaSimulada = { id: nuevoId('question'), position: e.questions.length + 1, questionText: datos.questionText ?? '', answerType: datos.answerType ?? 'TEXT', required: datos.required ?? false, ...(datos.options === undefined ? {} : { options: datos.options }), ...(datos.scaleMin === undefined ? {} : { scaleMin: datos.scaleMin }), ...(datos.scaleMax === undefined ? {} : { scaleMax: datos.scaleMax }) };
     encuestas.actualizar(e.id, { questions: [...e.questions, nueva] });
     return { status: 201, body: nueva };
+  });
+
+  /* -- Edición del borrador (4 rutas que el backend todavía no tiene) -------
+
+     Ver `docs/pendientes-backend-surveys.md`. Son las que hacen falta para que
+     componer un cuestionario se parezca a un editor y no a un formulario de
+     una sola dirección: hoy una pregunta mal escrita sólo se puede arreglar
+     tirando la encuesta.
+
+     Las cuatro **sólo tocan el borrador**: sobre una versión publicada
+     devuelven 422, igual que `POST /questions`. Eso no es una limitación del
+     simulador —es lo que hace que una respuesta dada hace meses se pueda
+     seguir interpretando— y el backend real tendrá que hacer lo mismo. */
+
+  /** Rechaza tocar una versión publicada, con el mismo código que el backend. */
+  const soloBorrador = (e: EncuestaSimulada) =>
+    e.published
+      ? { status: 422, body: { message: 'La versión ya está publicada: creá una versión nueva para corregir el cuestionario.' } }
+      : null;
+
+  router.patch('/surveys/templates/:id', (request) => {
+    const e = encuestas.get(request.params['id']!);
+    if (e === undefined) return notFound();
+    const bloqueado = soloBorrador(e);
+    if (bloqueado !== null) return bloqueado;
+    const datos = cuerpo<{ title?: string; description?: string; responseWindowDays?: number }>(request);
+    encuestas.actualizar(e.id, {
+      ...(datos.title === undefined ? {} : { title: datos.title }),
+      ...(datos.description === undefined ? {} : { description: datos.description }),
+      ...(datos.responseWindowDays === undefined ? {} : { responseWindowDays: datos.responseWindowDays }),
+    });
+    return { ok: true };
+  });
+
+  router.patch('/surveys/templates/:id/questions/:questionId', (request) => {
+    const e = encuestas.get(request.params['id']!);
+    if (e === undefined) return notFound();
+    const bloqueado = soloBorrador(e);
+    if (bloqueado !== null) return bloqueado;
+    const questionId = request.params['questionId']!;
+    if (!e.questions.some((q) => q.id === questionId)) return notFound('Pregunta no encontrada');
+    const datos = cuerpo<Partial<PreguntaSimulada>>(request);
+    const questions = e.questions.map((q) =>
+      q.id !== questionId
+        ? q
+        : {
+            ...q,
+            ...(datos.questionText === undefined ? {} : { questionText: datos.questionText }),
+            ...(datos.answerType === undefined ? {} : { answerType: datos.answerType }),
+            ...(datos.required === undefined ? {} : { required: datos.required }),
+            // Las opciones y la escala se reemplazan enteras cuando vienen, y
+            // se BORRAN al cambiar a un tipo que no las usa: dejarlas colgando
+            // haría que volver al tipo anterior resucitara opciones viejas.
+            ...(datos.options === undefined ? {} : { options: datos.options }),
+            ...(datos.scaleMin === undefined ? {} : { scaleMin: datos.scaleMin }),
+            ...(datos.scaleMax === undefined ? {} : { scaleMax: datos.scaleMax }),
+          },
+    );
+    encuestas.actualizar(e.id, { questions: limpiarSegunTipo(questions) });
+    return { ok: true };
+  });
+
+  router.delete('/surveys/templates/:id/questions/:questionId', ({ params }) => {
+    const e = encuestas.get(params['id']!);
+    if (e === undefined) return notFound();
+    const bloqueado = soloBorrador(e);
+    if (bloqueado !== null) return bloqueado;
+    const questions = e.questions.filter((q) => q.id !== params['questionId']);
+    if (questions.length === e.questions.length) return notFound('Pregunta no encontrada');
+    // Renumerar: `position` es lo que la pantalla dibuja delante de cada
+    // pregunta, y borrar la 2 de 4 dejaría un cuestionario que va 1, 3, 4.
+    encuestas.actualizar(e.id, { questions: renumerar(questions) });
+    return { ok: true };
+  });
+
+  router.put('/surveys/templates/:id/questions/order', (request) => {
+    const e = encuestas.get(request.params['id']!);
+    if (e === undefined) return notFound();
+    const bloqueado = soloBorrador(e);
+    if (bloqueado !== null) return bloqueado;
+    const { questionIds } = cuerpo<{ questionIds: string[] }>(request);
+    const porId = new Map(e.questions.map((q) => [q.id, q]));
+    const ordenadas = (questionIds ?? [])
+      .map((id) => porId.get(id))
+      .filter((q): q is PreguntaSimulada => q !== undefined);
+    // Las que el cliente no nombró van al final en su orden previo: un orden
+    // incompleto no debe hacer desaparecer preguntas.
+    const faltantes = e.questions.filter((q) => !questionIds?.includes(q.id));
+    encuestas.actualizar(e.id, { questions: renumerar([...ordenadas, ...faltantes]) });
+    return { ok: true };
   });
 
   router.post('/surveys/templates/:id/publish', (request) => {

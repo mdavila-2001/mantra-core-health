@@ -20,22 +20,34 @@
   <app-view-state-host [state]="estado()" (retry)="recargar()">
     <!-- S2 con la forma de lo que viene: bloques de tarjeta, no renglones de
          texto. Un esqueleto que no se parece al contenido desorienta. -->
-    <div vsh-skeleton class="mis-servicios__esqueleto">
+    <div vsh-skeleton class="rejilla mis-servicios__rejilla">
       @for (hueco of huecosDelEsqueleto; track hueco) {
-        <app-skeleton variant="rect" height="9rem" />
+        <app-skeleton variant="rect" height="11rem" />
       }
     </div>
 
     <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia cuántos
-         servicios hay antes de leer el primero. -->
-    <ul class="mis-servicios__grilla" data-testid="my-services-grid">
-      @for (servicio of servicios(); track servicio.id) {
-        <li class="mis-servicios__item">
-          <app-card variant="outlined" padding="md" data-testid="my-services-item">
-            <div class="mis-servicios__ficha">
-              <h2 class="mis-servicios__nombre">{{ servicio.name }}</h2>
+         servicios hay antes de leer el primero.
 
-              <!-- Sólo lo inactivo lleva distintivo: en una grilla, un «Activo»
+         La rejilla y la tarjeta salen de `rejilla-de-tarjetas.css`, la misma
+         hoja que pinta las portadas de los directorios: el ícono que encabeza,
+         el nombre y el renglón de dato son la anatomía compartida, y lo único
+         propio de esta pantalla es lo que va debajo —el precio y su edición—. -->
+    <ul class="rejilla mis-servicios__rejilla" data-testid="my-services-grid">
+      @for (servicio of servicios(); track servicio.id) {
+        <li>
+          <article class="rejilla__tarjeta" data-testid="my-services-item">
+            <!-- El ícono encabeza la tarjeta y va `aria-hidden` (lo pone el
+                 propio átomo): la tarjeta ya se llama por su servicio, y
+                 anunciarlo lo repetiría una vez por tarjeta. Lo que aporta es
+                 distinguir de un vistazo una consulta de una ecografía, que es
+                 justo lo que una rejilla de tarjetas iguales no dejaba hacer. -->
+            <app-service-icon class="rejilla__icono" [servicio]="servicio.name" />
+
+            <div class="mis-servicios__ficha">
+              <h2 class="rejilla__nombre">{{ servicio.name }}</h2>
+
+              <!-- Sólo lo inactivo lleva distintivo: en una rejilla, un «Activo»
                    repetido en cada tarjeta compite con el precio y no informa
                    nada. Lo excepcional es lo que hay que ver. -->
               @if (!servicio.isActive) {
@@ -43,11 +55,11 @@
               }
             </div>
 
-            <p class="mis-servicios__codigo">{{ servicio.code }}</p>
+            <p class="rejilla__dato">{{ servicio.code }}</p>
 
             @if (enEdicion() === servicio.id) {
               <!-- El campo reemplaza al importe en su mismo lugar: la tarjeta no
-                   cambia de alto al abrirse y la grilla no salta. -->
+                   cambia de alto al abrirse y la rejilla no salta. -->
               <div class="mis-servicios__edicion">
                 <app-form-field
                   label="Precio"
@@ -118,7 +130,7 @@
                 </button>
               </div>
             }
-          </app-card>
+          </article>
         </li>
       }
     </ul>

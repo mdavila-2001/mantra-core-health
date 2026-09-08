@@ -57,13 +57,17 @@ interface DepartamentoDibujable extends DepartamentoElegible {
  * las dos altas que lo montan ya tienen su lectura del catálogo con su
  * «Reintentar».
  *
- * ## Por qué vive en `registro-compartido/` y no en `shared/components/`
+ * ## Por qué vive acá y ya no en `registro-compartido/`
  *
- * Porque sus dos únicos consumidores son las dos altas —paciente y
- * profesional—, que es exactamente lo que esta carpeta ya comparte (el CSS del
- * cascarón). Subirlo a `shared/components/organisms/` lo publicaría a las 53
- * pantallas del producto sin que ninguna lo pida. El día que una tercera
- * pantalla lo necesite, sube; hasta entonces, el sitio correcto es éste.
+ * Vivía allá mientras sus dos únicos consumidores eran las dos altas —paciente
+ * y profesional—, con la condición escrita de que subiera «el día que una
+ * tercera pantalla lo necesite». Ese día llegó: los directorios de clínicas y
+ * de farmacias lo usan como selector de departamento, y son cuatro
+ * consumidores en dos áreas distintas del producto. Un organismo de `shared/`
+ * es exactamente eso.
+ *
+ * Sigue sin saber de terminología: recibe los departamentos ya resueltos, y
+ * quien lo monta se ocupa de leer el catálogo y de su «Reintentar».
  */
 @Component({
   selector: 'app-department-map',

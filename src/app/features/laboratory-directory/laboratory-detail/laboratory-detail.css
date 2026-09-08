@@ -1,42 +1,42 @@
+/* ============================================================================
+    La ficha de un centro de diagnóstico.
+
+    Sólo distribución: los datos los pinta `app-fact-list` y los encabezados
+    `app-section-heading`. Acá vive cómo se reparten las cards y nada más.
+    ========================================================================== */
+
 :host {
   display: block;
 }
 
-.profile {
+/* Las secciones se apilan a lo ancho, una debajo de otra, y quien reparte en
+   columnas es la rejilla de bloques **dentro** de cada una.
+
+   Antes iban de a dos por fila y no funcionaba: «Sedes» con una sede al lado de
+   «Equipos» con nueve deja una columna corta y otra larga, y ninguna
+   alineación arregla eso —con `stretch` la card corta se estira y queda medio
+   metro de blanco; con `start` no se estira pero la fila igual queda coja—.
+   El problema no era la alineación, era ponerlas a compartir fila.
+
+   Apiladas, todas las secciones tienen el mismo ancho y la misma rejilla
+   interna de dos columnas, así que sus bloques miden lo mismo de una sección a
+   otra. Eso es lo que hace la página comparable. */
+.ficha {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-4);
   margin-block-start: var(--sp-4);
 }
 
-.profile__card--wide {
+/* Se conserva el modificador porque las plantillas lo declaran y porque el día
+   que vuelva una fila de dos, dice cuál las ocupa enteras. Hoy no hace nada:
+   la rejilla es de una sola columna. */
+.ficha__card--ancha {
   grid-column: 1 / -1;
 }
 
-.profile__facts {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--sp-4);
-  margin: 0;
-}
+/* ---- las modalidades del resumen ---------------------------------------- */
 
-.profile__facts div {
-  display: grid;
-  gap: var(--sp-1);
-}
-
-.profile__facts dt,
-.profile__items span {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
-.profile__facts dd {
-  margin: 0;
-  font-weight: 600;
-}
-
-.profile__capabilities {
+.ficha__modalidades {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
@@ -45,55 +45,76 @@
   list-style: none;
 }
 
-.profile__capabilities li {
-  padding: var(--sp-1) var(--sp-2);
+.ficha__modalidades li {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-subtle, var(--border-default));
   border-radius: 999px;
-  background: var(--bg-surface-alt);
   color: var(--text-secondary);
   font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
-.profile__items {
+/* ---- los bloques de cada card ------------------------------------------- */
+
+/* Un bloque por sede, equipo, estudio o acreditación: su nombre como título y
+   debajo su tabla campo → valor. */
+.ficha__bloques {
   display: grid;
-  gap: var(--sp-3);
+  gap: var(--sp-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.profile__items > li {
-  display: grid;
-  gap: var(--sp-1);
-  padding-block-end: var(--sp-3);
-  border-block-end: 1px solid var(--border-default);
+/* La separación entre bloques es una línea, no un borde por bloque: el último
+   no cuelga una raya y todos quedan igual de separados entre sí. */
+.ficha__bloques > li + li {
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-subtle, var(--border-default));
 }
 
-.profile__items > li:last-child {
-  padding-block-end: 0;
-  border-block-end: 0;
+/* Dos columnas donde los bloques son muchos y cortos —estudios,
+   acreditaciones—; los divisores se apagan porque entre columnas una raya
+   horizontal separa cosas que no están una debajo de la otra. */
+@media (min-width: 60rem) {
+  .ficha__bloques--dos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--sp-5);
+  }
+
+  .ficha__bloques--dos > li + li {
+    padding-block-start: 0;
+    border-block-start: 0;
+  }
 }
 
-.profile__items p {
-  margin: 0;
-}
-
-.profile__items--studies {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.profile__prices {
-  margin-block-start: var(--sp-2);
+/* El nombre del bloque: el escalón que falta entre el título de la card y los
+   campos de la tabla. En `body` y no en un tamaño de encabezado — es el tercer
+   nivel de una ficha, no una sección nueva. */
+.ficha__bloque-titulo {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
   color: var(--text-primary);
 }
 
+/* La descripción libre de un estudio: prosa, así que va antes de la tabla y no
+   como una fila —un párrafo dentro de una celda rompe la columna de valores. */
+.ficha__bloque-nota {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 @media (max-width: 48rem) {
-  .profile,
-  .profile__facts,
-  .profile__items--studies {
+  .ficha {
     grid-template-columns: 1fr;
   }
 
-  .profile__card--wide {
+  .ficha__card--ancha {
     grid-column: auto;
   }
 }

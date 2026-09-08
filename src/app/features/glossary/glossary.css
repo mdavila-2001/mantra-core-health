@@ -27,56 +27,25 @@
   max-inline-size: 32rem;
 }
 
-/* --- Grilla de categorías ------------------------------------------------ */
+/* --- Grilla de categorías ------------------------------------------------
+   La rejilla y la tarjeta salen de `shared/styles/rejilla-de-tarjetas.css`:
+   esta grilla era una copia a mano de la de las portadas de los directorios
+   —mismo borde, mismo radio, mismo ícono encabezando— que se había separado en
+   tres detalles que nadie decidió: el ícono a 2rem en gris en vez de a 1,75 en
+   el color de marca, otro aire entre renglones y sin la altura completa que
+   empareja las tarjetas de una fila.
 
+   Lo único que queda propio es el margen: acá la grilla cuelga de un `<h2>` que
+   ya puso su aire, no de la cabecera de la página. */
 .glosario__grilla {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  margin-block-start: 0;
 }
 
-.glosario__categoria {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-2);
-  padding: var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.15s ease;
-}
-
-.glosario__categoria:hover,
-.glosario__categoria:focus-visible {
-  border-color: var(--border-strong);
-}
-
-.glosario__categoria-icono {
-  color: var(--text-secondary);
-  inline-size: 2rem;
-  block-size: 2rem;
-}
-
-.glosario__categoria-icono svg {
+/* El ícono del glosario dibuja su `<svg>` a pelo, sin la regla de `:host` que
+   traen `nav-icon` y los otros átomos del sistema. */
+.rejilla__icono svg {
   inline-size: 100%;
   block-size: 100%;
-}
-
-.glosario__categoria-nombre {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.glosario__categoria-conteo {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-  font-variant-numeric: tabular-nums;
 }
 
 /* --- Tabla de resultados -------------------------------------------------- */

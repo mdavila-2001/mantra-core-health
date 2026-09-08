@@ -1,0 +1,175 @@
+/* ============================================================================
+    La rejilla de tarjetas: **una sola** disciplina de tarjeta para toda la
+    aplicación.
+
+    La escribieron las portadas de los directorios —médicos y laboratorios— y
+    de ahí sale la anatomía: un ícono que encabeza, un nombre, y debajo el dato
+    que distingue a esa tarjeta de la de al lado. Vive acá y no junto a una de
+    las pantallas que la usan porque ya había cuatro rejillas parecidas —la
+    portada de cada directorio, el mapa de «Directorios», la grilla de
+    categorías del glosario y «Mis servicios»— y las cuatro se veían distinto
+    sin que nadie lo hubiera decidido: una traía sus propias sombras y su
+    propio radio del otro juego de tokens, otra pintaba el ícono en gris y a
+    otro tamaño, y otra no tenía ícono. Copiada, la rejilla se separa en el
+    primer retoque; compartida, se retoca en un archivo.
+
+    Angular sigue encapsulando por componente, así que compartir el archivo no
+    cambia lo que se descarga: sólo deja de haber cuatro sitios donde tocar un
+    margen.
+
+    Sólo distribución: ni un color ni una tipografía que el sistema no tenga
+    ya, y ni un token del juego ALOVIDA —`--tinta`, `--e4`, `--r-card`— que es
+    disjunto de éste y por eso se veía como otra aplicación.
+
+    ## Cómo se monta
+
+    Va **primera** en el `styleUrls` de quien la use, y la hoja propia de la
+    pantalla después:
+
+    ```ts
+    styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './pantalla.css'],
+    ```
+
+    Angular concatena en ese orden y acá todo son clases sueltas, así que al
+    revés `.rejilla` le ganaría por posición a `.lo-que-sea__rejilla` —misma
+    especificidad— y el ajuste de la pantalla no se aplicaría.
+    ========================================================================== */
+
+/* El mínimo de pista es de la pantalla y no de la hoja: los nombres del
+   catálogo de especialidades entran en 14rem, pero una tarjeta con precio y
+   dos botones necesita más. Se cambia con `--rejilla-min` en el `.rejilla` de
+   quien la monta, y así el resto de la disciplina no se toca para ensanchar
+   una columna.
+
+   `auto-fill` con `minmax` y no un número fijo de columnas: la pantalla se
+   abre en un teléfono, en una tablet y en un monitor, y fijar tres columnas
+   obliga a tres reglas de medios que se olvidan de la cuarta.
+
+   El `min(100%, …)` es lo que impide el desborde lateral: en un contenedor más
+   angosto que la pista mínima, `minmax(14rem, 1fr)` la respeta igual y aparece
+   scroll horizontal. */
+.rejilla {
+  --rejilla-min: 14rem;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--rejilla-min)), 1fr));
+  gap: var(--sp-3);
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* La tarjeta sirve de `<a>`, de `<button>` y de bloque quieto. Cuando lleva a
+   algún lado, la tarjeta **entera** es el control y no un botón adentro: el
+   área táctil es toda la superficie que se ve, que es lo que la persona
+   intenta tocar. */
+.rejilla__tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  block-size: 100%;
+  inline-size: 100%;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+
+/* El realce sólo donde hay adónde ir: una tarjeta quieta que se ilumina al
+   pasar por encima promete un clic que no existe. */
+a.rejilla__tarjeta,
+button.rejilla__tarjeta {
+  cursor: pointer;
+}
+
+a.rejilla__tarjeta:hover,
+button.rejilla__tarjeta:hover {
+  border-color: var(--border-strong);
+}
+
+/* El anillo de foco lo pone la regla global de `:focus-visible`, que ya sigue
+   el radio real del elemento y sobrevive al modo de contraste forzado. Acá
+   sólo se lo despega del borde para que se lean como dos cosas.
+
+   Antes había un `outline` propio contra `--st-primary-border`, un token que
+   **no existe** —el del sistema es `--st-primary-bd`—: la declaración era
+   inválida, pisaba la global y dejaba a las tarjetas del directorio sin
+   ningún anillo visible al tabular. */
+.rejilla__tarjeta:focus-visible {
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rejilla__tarjeta {
+    transition: none;
+  }
+}
+
+/* El ícono encabeza la tarjeta y ocupa su propio renglón: al lado del nombre
+   competiría con él por la primera lectura, y lo que se busca en una rejilla
+   es qué es cada tarjeta, no el dibujo. En el color de marca porque es lo
+   único coloreado de la tarjeta — con el gris del texto se leería como
+   decoración. */
+.rejilla__icono {
+  flex: none;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  color: var(--brand-primary);
+}
+
+a.rejilla__tarjeta:hover .rejilla__icono,
+button.rejilla__tarjeta:hover .rejilla__icono {
+  color: var(--brand-primary-hover, var(--brand-primary));
+}
+
+/* El nombre es un `<span>` en unas pantallas y un `<h2>` en otras —donde la
+   tarjeta encabeza contenido propio y saltarse el nivel rompería el esquema del
+   lector de pantalla—. La regla global de `h1..h4` les da a los segundos la
+   escala de titular y la tipografía de display, así que sin declararlo acá la
+   misma tarjeta se vería de dos tamaños y en dos tipografías según el elemento
+   que le tocara. `font: inherit` borra eso primero; lo de abajo es lo que la
+   tarjeta sí decide. */
+.rejilla__nombre {
+  margin: 0;
+  font: inherit;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  /* `letter-spacing` no viaja en el atajo `font`, y los titulares lo aprietan. */
+  letter-spacing: normal;
+  /* Un nombre de tres palabras no debe empujar el ancho de la columna. */
+  overflow-wrap: anywhere;
+}
+
+/* El renglón que distingue una tarjeta de la de al lado: cuántos médicos, qué
+   código, de qué categoría. Tabular porque la rejilla se lee comparando ese
+   dato entre tarjetas, y con dígitos de ancho distinto la comparación se hace
+   a ojo mal. */
+.rejilla__dato {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Una línea de contexto, cuando la tarjeta necesita explicarse. Más oscura que
+   `__dato` porque es prosa que se lee, no una cifra que se compara. */
+.rejilla__resumen {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  text-wrap: pretty;
+}
+
+/* Arriba de la lista y alineado a la izquierda: es una vuelta atrás, y las
+   vueltas atrás viven donde empieza la lectura, no donde termina. */
+.rejilla__volver {
+  margin-block-end: var(--sp-3);
+}

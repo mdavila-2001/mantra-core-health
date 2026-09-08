@@ -153,7 +153,7 @@ describe('Glossary', () => {
     responderCategorias();
     await harness.fixture.whenStable();
 
-    const tiles = html().querySelectorAll('.glosario__categoria');
+    const tiles = html().querySelectorAll('.rejilla__tarjeta');
     expect(tiles.length).toBe(1);
     expect(tiles[0].querySelector('app-glossary-category-icon')).not.toBeNull();
     expect(tiles[0].textContent).toContain('Enfermedades');
@@ -166,7 +166,7 @@ describe('Glossary', () => {
     responderCategorias([{ ...CATEGORIA, memberCount: 0 }]);
     await harness.fixture.whenStable();
 
-    expect(html().querySelectorAll('.glosario__categoria').length).toBe(0);
+    expect(html().querySelectorAll('.rejilla__tarjeta').length).toBe(0);
     expect(html().textContent).toContain('todavía no tiene términos cargados');
   });
 

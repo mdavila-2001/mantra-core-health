@@ -27,21 +27,21 @@
             El glosario todavía no tiene términos cargados en esta organización.
           </p>
         } @else {
-          <ul class="glosario__grilla">
+          <ul class="rejilla glosario__grilla">
             @for (categoria of categoriasConTerminos(); track categoria.id) {
               <li>
                 <a
-                  class="glosario__categoria"
+                  class="rejilla__tarjeta"
                   [routerLink]="['/glossary']"
                   [queryParams]="{ category: categoria.internalCode }"
                   [attr.title]="categoria.description ?? null"
                 >
                   <app-glossary-category-icon
-                    class="glosario__categoria-icono"
+                    class="rejilla__icono"
                     [category]="categoria.internalCode"
                   />
-                  <span class="glosario__categoria-nombre">{{ categoria.name }}</span>
-                  <span class="glosario__categoria-conteo">
+                  <span class="rejilla__nombre">{{ categoria.name }}</span>
+                  <span class="rejilla__dato">
                     {{ categoria.memberCount }}
                     {{ categoria.memberCount === 1 ? 'término' : 'términos' }}
                   </span>

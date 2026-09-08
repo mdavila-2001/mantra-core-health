@@ -2,7 +2,7 @@
      `app-directory-page` (A7 del plan de UX). -->
 <app-directory-page
   titulo="Directorio de farmacias"
-  subtitulo="Farmacias de la red con ficha pública, agrupadas por ciudad."
+  subtitulo="Farmacias de la red con ficha pública. Tocá un departamento en el mapa para acotar."
   etiquetaBusqueda="Buscar por nombre de la farmacia"
   [filtros]="filtros()"
   [estado]="estado()"
@@ -12,4 +12,37 @@
   [textoSinCoincidencias]="sinCoincidencias()"
   (filtrosCambiaron)="filtrar($event)"
   (reintentar)="cargar()"
-/>
+>
+  <div slot="antes-de-filtros">
+  <!-- ─── El mapa de Bolivia como filtro ─────────────────────────────────────
+       El departamento es lo primero que acota una búsqueda de lugares: a nadie
+       le sirve una farmacia excelente al otro lado del país. Los chips de ciudad
+       siguen estando —acotan más fino— y el mapa es el corte de arriba.
+
+       Se dibuja el país entero, con los nueve departamentos, y no sólo los que
+       tienen algo: ver el porqué en `departamentos` del listado compartido.
+       Cada departamento dice cuántos tiene en la línea de abajo. -->
+  @if (catalogoGeoCaido()) {
+    <p class="mapa-directorio__caido" role="status">
+      No pudimos leer el catálogo de departamentos, así que el mapa no está.
+      El resto del directorio funciona igual.
+      <button app-button variant="ghost" size="sm" type="button" (click)="reintentarGeo()">
+        Reintentar
+      </button>
+    </p>
+  } @else if (departamentos().length > 0) {
+    <section class="mapa-directorio" aria-label="Filtrar por departamento">
+      <app-department-map
+        testId="farmacias-mapa"
+        [departamentos]="departamentos()"
+        [value]="departamentoElegido()"
+        (valueChange)="elegirDepartamento($event)"
+        etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+      />
+      @if (resumenDelMapa(); as resumen) {
+        <p class="mapa-directorio__resumen" data-testid="farmacias-mapa-resumen">{{ resumen }}</p>
+      }
+    </section>
+  }
+  </div>
+</app-directory-page>

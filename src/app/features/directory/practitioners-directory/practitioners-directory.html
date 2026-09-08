@@ -18,20 +18,27 @@
   />
 
   <app-view-state-host [state]="recuento()" (retry)="recargar()">
-    <ul class="portada" data-testid="portada-especialidades">
+    <ul class="rejilla" data-testid="portada-especialidades">
       @for (tarjeta of tarjetas(); track tarjeta.conceptId) {
         <li>
           <!-- La especialidad viaja en la URL y no en un estado interno: es lo
                que hace compartible «la guía, cardiología» y lo que deja que el
                chequeo de síntomas mande directo a una, salteándose la portada. -->
           <a
-            class="portada__tarjeta"
+            class="rejilla__tarjeta"
             [routerLink]="[]"
             [queryParams]="{ especialidad: tarjeta.conceptId }"
             queryParamsHandling="merge"
           >
-            <span class="portada__nombre">{{ tarjeta.nombre }}</span>
-            <span class="portada__cantidad">
+            <!-- El ícono va **dentro** del enlace y `aria-hidden`: la
+                 tarjeta ya se llama por su especialidad, y anunciarlo lo
+                 repetiría dieciocho veces en la misma pantalla. Lo que aporta
+                 es reconocer la especialidad propia sin leer la rejilla
+                 entera, que es justo lo que una portada de dieciocho tarjetas
+                 iguales no dejaba hacer. -->
+            <app-specialty-icon class="rejilla__icono" [especialidad]="tarjeta.nombre" />
+            <span class="rejilla__nombre">{{ tarjeta.nombre }}</span>
+            <span class="rejilla__dato">
               {{ tarjeta.cantidad }}
               {{ tarjeta.cantidad === 1 ? 'médico' : 'médicos' }}
             </span>
@@ -45,7 +52,7 @@
        (A7 del plan de UX), con el mapeo y el buscador propios. La vuelta a la
        portada es un enlace y no un botón: limpia el parámetro de la URL, que es
        exactamente lo que significa «ver todas». -->
-  <a app-button variant="ghost" class="portada__volver" [routerLink]="[]" [queryParams]="{}">
+  <a app-button variant="ghost" class="rejilla__volver" [routerLink]="[]" [queryParams]="{}">
     ← Todas las especialidades
   </a>
 

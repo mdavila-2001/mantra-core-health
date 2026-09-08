@@ -150,9 +150,13 @@ function itemDeSolicitud(s: SolicitudSimulada) {
 }
 
 export function registrarSeguros(router: MockRouter): void {
-  router.get('/insurance-carrier-catalog', () =>
-    ASEGURADORAS.map((a) => ({ id: a.id, code: a.carrierCode, name: a.name, legalName: a.legalName, isPublic: a.isPublic, plans: a.planes.map(([code, name]) => ({ id: uuid(`plan-${code}`), code, name })) })),
-  );
+  // El sobre `{ carriers }` no es decorativo: `InsuranceClient.listCarrierCatalog`
+  // mapea `body.carriers`, y devolver el array pelado le dejaba `undefined`.
+  // El `for...of` de `RegisterPatient.opcionesDeSeguro` lo recorría igual y
+  // tiraba la pantalla entera de alta de paciente.
+  router.get('/insurance-carrier-catalog', () => ({
+    carriers: ASEGURADORAS.map((a) => ({ id: a.id, code: a.carrierCode, name: a.name, legalName: a.legalName, isPublic: a.isPublic, plans: a.planes.map(([code, name]) => ({ id: uuid(`plan-${code}`), code, name })) })),
+  }));
 
   router.get('/insurance-carriers', () => ({ items: ASEGURADORAS.map(resumenDeAseguradora), count: ASEGURADORAS.length }));
 

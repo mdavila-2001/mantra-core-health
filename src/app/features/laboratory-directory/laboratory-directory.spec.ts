@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 
 import {
   aConsulta,
@@ -50,10 +51,24 @@ describe('LaboratoryDirectory', () => {
   let fixture: ComponentFixture<LaboratoryDirectory>;
   let component: LaboratoryDirectory;
   let http: HttpTestingController;
+  /**
+   * Los parámetros de la URL, empujables desde la prueba.
+   *
+   * La pantalla decide portada o lista mirando `?kind=`, así que el parámetro
+   * es una entrada del componente tanto como sus inputs. Mismo arreglo que el
+   * directorio de médicos, que tiene la misma portada.
+   */
+  let parametros: BehaviorSubject<Record<string, string>>;
 
   beforeEach(() => {
+    parametros = new BehaviorSubject<Record<string, string>>({});
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { queryParams: parametros } },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -64,6 +79,15 @@ describe('LaboratoryDirectory', () => {
     fixture = TestBed.createComponent(LaboratoryDirectory);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  }
+
+  /**
+   * Monta la pantalla **dentro de una categoría**, que es donde vive la lista.
+   * Sin `?kind=` lo que se dibuja es la portada, no las tarjetas.
+   */
+  function mountEnCategoria(kind = 'LABORATORY'): void {
+    parametros.next({ kind });
+    mount();
   }
 
   function internal<T>(name: string): T {
@@ -147,7 +171,7 @@ describe('LaboratoryDirectory', () => {
   });
 
   it('shows the entry price as "desde" when the centre publishes one', () => {
-    mount();
+    mountEnCategoria();
     responder([LAB]);
     fixture.detectChanges();
 
@@ -187,7 +211,7 @@ describe('LaboratoryDirectory', () => {
   });
 
   it('does not print technical UUIDs in the directory', () => {
-    mount();
+    mountEnCategoria();
     responder([LAB]);
     fixture.detectChanges();
 

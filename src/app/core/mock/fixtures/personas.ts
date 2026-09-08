@@ -88,9 +88,9 @@ export interface PacienteSimulado {
 }
 
 const CIUDADES = [
-  { ciudad: 'Santa Cruz de la Sierra', municipio: MUNICIPIO['BO-SC-SCZ']!, departamento: DEPARTAMENTO['BO-SC']!, lat: -17.7833, lng: -63.1821 },
-  { ciudad: 'La Paz', municipio: MUNICIPIO['BO-LP-LPZ']!, departamento: DEPARTAMENTO['BO-LP']!, lat: -16.4897, lng: -68.1193 },
-  { ciudad: 'Cochabamba', municipio: MUNICIPIO['BO-CB-CBB']!, departamento: DEPARTAMENTO['BO-CB']!, lat: -17.3895, lng: -66.1568 },
+  { ciudad: 'Santa Cruz de la Sierra', municipio: MUNICIPIO['SC-SCZ']!, departamento: DEPARTAMENTO['geo:bo:department:SC']!, lat: -17.7833, lng: -63.1821 },
+  { ciudad: 'La Paz', municipio: MUNICIPIO['LP-LPZ']!, departamento: DEPARTAMENTO['geo:bo:department:LP']!, lat: -16.4897, lng: -68.1193 },
+  { ciudad: 'Cochabamba', municipio: MUNICIPIO['CB-CBB']!, departamento: DEPARTAMENTO['geo:bo:department:CB']!, lat: -17.3895, lng: -66.1568 },
 ];
 
 function profesional(

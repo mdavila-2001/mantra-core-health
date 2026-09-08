@@ -1,15 +1,65 @@
-<!-- Toda la anatomía —encabezado, chips, contador y grilla— la pone
-     `app-directory-page`, que es el patrón común de los cuatro directorios
-     (A7 del plan de UX). Acá sólo queda lo que de verdad es propio de los
-     laboratorios: sus filtros y su mapeo. -->
-<app-directory-page
-  titulo="Directorio de laboratorios"
-  subtitulo="Centros verificados de laboratorio clínico e imagenología, de toda la red. Tocá un chip para acotar."
-  etiquetaBusqueda="Buscar por nombre o código del centro"
-  [filtros]="filtros"
-  [estado]="state()"
-  [grupos]="groups()"
-  [sustantivo]="sustantivo"
-  (filtrosCambiaron)="filtrar($event)"
-  (reintentar)="retry()"
-/>
+@if (enPortada()) {
+  <!-- ─── La portada: elegir categoría antes que centro ──────────────────────
+       El mismo patrón que la portada de especialidades del directorio de
+       médicos, y por el mismo motivo: nadie busca «un centro», se busca dónde
+       hacerse un análisis o dónde hacerse una placa. Son dos recorridos que no
+       se mezclan, y elegir primero evita leer una lista donde la mitad de las
+       filas no responde la pregunta que se traía.
+
+       Las categorías salen de los centros ya cargados, con su cuenta: una que
+       no tenga ninguno no se dibuja. -->
+  <app-page-header
+    title="Directorio de laboratorios"
+    [subtitle]="
+      'Elegí qué necesitás hacerte. ' +
+      totalDeCentros() +
+      ' centros verificados en la red.'
+    "
+  />
+
+  <app-view-state-host [state]="state()" (retry)="retry()">
+    <ul class="rejilla" data-testid="portada-categorias">
+      @for (tarjeta of categorias(); track tarjeta.codigo) {
+        <li>
+          <!-- La categoría viaja en la URL, como la especialidad en el
+               directorio de médicos: hace compartible «los laboratorios
+               clínicos» y deja que el «atrás» del navegador vuelva acá. -->
+          <a
+            class="rejilla__tarjeta"
+            [routerLink]="[]"
+            [queryParams]="{ kind: filtroDe(tarjeta.codigo) }"
+            queryParamsHandling="merge"
+            [attr.data-testid]="'portada-categoria-' + tarjeta.codigo"
+          >
+            <!-- `aria-hidden` lo pone el propio átomo: la tarjeta ya se llama
+                 por su categoría, y anunciarlo lo diría dos veces. -->
+            <app-nav-icon class="rejilla__icono" [name]="tarjeta.icono" />
+            <span class="rejilla__nombre">{{ tarjeta.nombre }}</span>
+            <span class="rejilla__dato">
+              {{ tarjeta.cantidad }}
+              {{ tarjeta.cantidad === 1 ? 'centro' : 'centros' }}
+            </span>
+          </a>
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+} @else {
+  <!-- Dentro de una categoría: la anatomía común de los cuatro directorios
+       (A7 del plan de UX). La vuelta a la portada limpia el parámetro de la
+       URL, que es exactamente lo que significa «ver todas». -->
+  <a app-button variant="ghost" class="rejilla__volver" [routerLink]="[]" [queryParams]="{}">
+    ← Todas las categorías
+  </a>
+
+  <app-directory-page
+    titulo="Directorio de laboratorios"
+    subtitulo="Centros verificados de esta categoría, de toda la red. Tocá un chip para acotar."
+    etiquetaBusqueda="Buscar por nombre o código del centro"
+    [filtros]="filtros"
+    [estado]="state()"
+    [grupos]="groups()"
+    [sustantivo]="sustantivo"
+    (reintentar)="retry()"
+  />
+}
