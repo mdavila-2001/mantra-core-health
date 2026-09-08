@@ -133,6 +133,7 @@ describe('RegisterPractitioner', () => {
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
+      homeAddressLines: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
       // Obligatorio desde que dejó de ser «(opcional)»: es lo que dice qué
       // clase de profesional es, y de él dependen el colegio y las
@@ -264,7 +265,10 @@ describe('RegisterPractitioner', () => {
       // teléfonos con los que compartía pantalla.
       expect(camposDe('personal-contact')).toEqual(['mobilePhone', 'personalEmail']);
       expect(camposDe('access')).toEqual(['workMobilePhone', 'workLandline', 'email']);
-      expect(camposDe('residence')).toEqual(['municipio']);
+      // Las mismas tres piezas que el alta de paciente: la localidad, la calle
+      // y el punto del mapa. Era sólo la localidad mientras el DTO del
+      // profesional no tuvo dónde poner las otras dos.
+      expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
         'sedesLicenseNumber',
@@ -284,10 +288,9 @@ describe('RegisterPractitioner', () => {
 
     /**
      * Lo que el orden pide y esta pantalla **no** pregunta, porque no tiene
-     * dónde guardarse: segundo teléfono y segundo correo (AC-05-6), zona,
-     * dirección y GPS (AC-05-8), la organización (AC-05-9/-10/-11), las tres
-     * matrículas por separado (AC-05-5), universidad y otros títulos
-     * (AC-05-13).
+     * dónde guardarse: segundo teléfono y segundo correo (AC-05-6), la **zona**
+     * (AC-05-8), la organización (AC-05-9/-10/-11), las tres matrículas por
+     * separado (AC-05-5), universidad y otros títulos (AC-05-13).
      *
      * La prueba está para que aparezcan **con su destino**, no de contrabando:
      * el día que alguien agregue el campo sin la columna, esto se pone rojo y
@@ -302,7 +305,14 @@ describe('RegisterPractitioner', () => {
         'workPhone',
         'workEmail',
         'homeZone',
-        'homeAddressLines',
+        // `homeAddressLines` **salió de esta lista el 08/09/2026**, y con el
+        // GPS. No porque la columna haya aparecido: `common.addresses` ya la
+        // tenía, y el alta de paciente escribe ahí desde siempre. Lo que
+        // faltaba era que el DTO del profesional la recibiera, y eso es una
+        // línea de `RegisterPractitionerDto` copiada del de paciente —anotada
+        // en `PENDIENTES-BACKEND.md` como condición para el pase a `dev`—.
+        //
+        // La zona sigue acá porque de ella sí no hay columna para nadie.
         'organizationName',
         'healthFacilityConceptId',
         'ministryLicenseNumber',

@@ -1,0 +1,48 @@
+/* Las clases conservan el prefijo `registro__` de donde salieron: son las mismas
+   reglas que vivían en `register-patient.css`, movidas acá con el bloque. El
+   nombre no se cambió a propósito — un renombre cosmético en la misma pasada
+   que una extracción vuelve ilegible el diff de la extracción. */
+
+.registro__ubicacion {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* El mapa ocupa el ancho del campo y se apila con su texto y sus botones. */
+.registro__ubicacion:has(.registro__mapa) {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* El alto lo fija el organismo (`.mapa`, 320px) y acá no se pelea: su regla es
+   global —encapsulación None— y una de este componente, que es emulada, no la
+   alcanzaría. Se declara el ancho, que es lo que sí es de acá. */
+.registro__mapa {
+  inline-size: 100%;
+}
+
+.registro__ubicacion-estado {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.registro__ubicacion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Nació como un `<span>` dentro del párrafo del botón; desde AC-03-9 también es
+   un `<p>` propio —el aviso de que la calle no se resuelve sola—, así que se le
+   quita el margen que trae por ser párrafo. */
+.registro__ubicacion-aviso {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

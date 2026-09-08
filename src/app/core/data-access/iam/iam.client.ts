@@ -231,6 +231,16 @@ export class IamClient {
         : {
             residenceMunicipalityConceptId: registration.residenceMunicipalityConceptId,
           }),
+      // La calle y el punto del domicilio. Van acá por lo que dice el aviso de
+      // arriba: lo que el contrato declara y esta lista no repita se descarta
+      // en silencio, y el alta del profesional acaba de ganar los tres.
+      ...(registration.homeAddressLines === undefined
+        ? {}
+        : { homeAddressLines: registration.homeAddressLines }),
+      // El par entero o nada: media coordenada no ubica nada.
+      ...(registration.homeLatitude === undefined || registration.homeLongitude === undefined
+        ? {}
+        : { homeLatitude: registration.homeLatitude, homeLongitude: registration.homeLongitude }),
       licenseNumber: registration.licenseNumber,
       sedesLicenseNumber: registration.sedesLicenseNumber,
       ...(registration.regulatoryAuthority === undefined

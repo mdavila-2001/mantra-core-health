@@ -23,6 +23,49 @@ que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
+## Abierto · P19 · El alta de profesional no recibe el domicilio
+
+**Levantado el 2026-09-08**, en la rama `mockup`. **Bloquea el pase a `dev`**: no
+es un dato que se pierda, es un alta que no ocurre.
+
+### Qué pasa
+
+`RegisterPractitionerDto` acepta `residenceMunicipalityConceptId` y nada más. La
+pantalla del alta ahora pregunta también la calle y el punto del mapa —el mismo
+bloque que el alta de paciente— y los manda como `homeAddressLines`,
+`homeLatitude` y `homeLongitude`.
+
+`main.ts` monta el `ValidationPipe` con `forbidNonWhitelisted: true`. Una clave
+que el DTO no declara **no se descarta: rechaza la petición entera con 400**. Así
+que contra la API de hoy, un profesional que escriba su dirección no puede
+registrarse.
+
+En la rama `mockup` esto no se nota —el simulador contesta todo y no valida—, y
+por eso queda escrito acá y no sólo en el código.
+
+### Qué hace falta
+
+Los tres campos **ya existen en `RegisterPatientDto`**, con sus validadores y su
+regla de par (latitud y longitud viajan juntas o no viajan). Son copiables tal
+cual:
+
+```
+homeAddressLines?: string
+homeLatitude?:  number   // exige homeLongitude
+homeLongitude?: number   // exige homeLatitude
+```
+
+Y del lado del servicio, `IamPractitionerSelfRegistrationService` tiene que
+escribirlos donde ya los escribe el del paciente: `common.addresses`, que tiene
+las columnas —no hace falta tocar el modelo, ni `.puml`, ni DDL—.
+
+### Lo que NO entra acá
+
+La **zona** de residencia (AC-05-8) sigue sin preguntarse en ninguno de los dos
+registros, y esa sí es esquema: `common.addresses` no tiene columna de zona.
+
+---
+
 ## Abierto · P15 a P18 · Los cuatro huecos que dejó el plan de UX del 22/08/2026
 
 **Levantados el 2026-08-23**, construyendo los frentes B, D y H del plan
