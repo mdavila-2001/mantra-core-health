@@ -57,7 +57,7 @@
   block-size: 20px;
   padding: 0;
   border: 1px solid var(--filete-2);
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: var(--sup-1, #fff);
   color: var(--tinta-2);
   cursor: pointer;

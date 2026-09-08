@@ -17,7 +17,7 @@
 
 .titulo-de-seccion {
   margin: var(--e6) 0 var(--e3);
-  font-size: 21px;
+  font-size: var(--fs-h3);
   font-weight: 600;
 }
 
@@ -98,7 +98,7 @@
 
 .vinculacion__estado {
   color: var(--tinta-3);
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
 .vinculacion__principal {

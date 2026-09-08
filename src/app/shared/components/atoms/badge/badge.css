@@ -47,7 +47,7 @@
 }
 
 :host(.badge--lg) {
-    font-size: 13px;
+    font-size: var(--fs-caption);
     padding: 6px var(--sp-3);
 }
 

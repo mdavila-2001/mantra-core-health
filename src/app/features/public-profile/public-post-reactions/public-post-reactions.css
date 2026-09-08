@@ -32,7 +32,7 @@ a.reacciones__enlace:hover {
   flex: none;
   inline-size: 40px;
   block-size: 40px;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   object-fit: cover;
 }
 
@@ -61,8 +61,8 @@ a.reacciones__enlace:hover {
 
 .reacciones__titular {
   color: var(--tinta-2);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

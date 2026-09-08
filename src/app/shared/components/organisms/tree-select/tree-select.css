@@ -286,7 +286,7 @@
   font-weight: 500;
   color: var(--text-secondary);
   background-color: var(--bg-inset);
-  border-radius: var(--r-pill, 999px);
+  border-radius: var(--r-pill, var(--r-full));
   padding: 2px var(--sp-2);
 }
 

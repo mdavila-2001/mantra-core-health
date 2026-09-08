@@ -179,7 +179,7 @@
   background: var(--sup-tarjeta);
   color: var(--tinta);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   text-align: center;
   cursor: pointer;
   transition:

@@ -48,7 +48,7 @@
 .ficha__modalidades li {
   padding: var(--sp-1) var(--sp-3);
   border: 1px solid var(--border-subtle, var(--border-default));
-  border-radius: 999px;
+  border-radius: var(--r-full);
   color: var(--text-secondary);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);

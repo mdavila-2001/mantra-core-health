@@ -64,7 +64,7 @@
 .perfil__retrato--iniciales {
   color: var(--tinta-marca);
   font-family: var(--f-titulo);
-  font-size: 44px;
+  font-size: var(--fs-display);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -104,7 +104,7 @@
 .perfil__titular {
   grid-column: 1;
   margin: var(--e2) 0 0;
-  font-size: 17px;
+  font-size: var(--fs-body-lg);
   color: var(--tinta);
 }
 
@@ -202,7 +202,7 @@
 .perfil__dato dt {
   margin: 0 0 2px;
   color: var(--tinta-3);
-  font-size: 11px;
+  font-size: var(--fs-overline);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;

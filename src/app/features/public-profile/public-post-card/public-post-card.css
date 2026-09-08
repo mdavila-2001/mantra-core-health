@@ -40,7 +40,7 @@
   place-items: center;
   color: var(--tinta-marca);
   font-family: var(--f-titulo);
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 700;
 }
 
@@ -50,7 +50,7 @@
 
 .publicacion__autor {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 700;
   color: var(--tinta);
   line-height: 1.25;
@@ -114,7 +114,7 @@
   margin: 0;
   color: var(--tinta);
   white-space: pre-line;
-  font-size: 15px;
+  font-size: var(--fs-body);
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
@@ -186,7 +186,7 @@
   border-block-start: 1px solid var(--filete-2);
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: var(--tinta-2);
 }
 
@@ -237,7 +237,7 @@
   justify-content: center;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: rgb(0 0 0 / 0.55);
   color: #fff;
   cursor: pointer;
@@ -263,11 +263,11 @@
 .publicacion__contador {
   margin: 0;
   padding: 2px var(--e2);
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: rgb(0 0 0 / 0.55);
   color: #fff;
   font-size: 12px;
-  line-height: 18px;
+  line-height: var(--lh-caption);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
