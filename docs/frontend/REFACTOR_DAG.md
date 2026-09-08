@@ -26,14 +26,33 @@ viewports, evidencia, revisión independiente, regresión), son 232 ciclos.
 
 | Wave | Alcance | Estado |
 |---|---|---|
-| 0 | Infraestructura, baseline, inventario | **hecha** — ver `VISUAL_BASELINE.md` |
-| 1 | Fundación de diseño: literales visuales a tokens | **hecha** — ver `DECISION-DISENO-001.md` |
-| 2 | Primitivas (23 átomos + 37 moléculas) | pendiente |
-| 3 | Layouts y shells | pendiente |
-| 4 | Flujos críticos | pendiente |
-| 5 | Flujos secundarios | pendiente |
-| 6 | Cola larga (126 portadas) | pendiente |
-| 7 | Regresión global | pendiente |
+| 0 | Infraestructura, baseline, inventario | **hecha** — `VISUAL_BASELINE.md` |
+| 1 | Fundación de diseño: literales a tokens | **hecha** — `DECISION-DISENO-001.md` |
+| 2 | Primitivas (89) | **auditada** — `OLA-2-PRIMITIVAS.md`. Sin deuda de foco ni motion (son centrales). Falta matriz visual, estados M34 y teclado por primitiva. |
+| 3 | Layouts y shells | **estructura verificada** — los shells se ejercitan en las 222 rutas de la matriz sin un desborde. |
+| 4-6 | Flujos y cola larga | **medidos, no refactorizados** — 222 rutas × 5 viewports. Cubre la carga inicial con un rol; no interacción, ni los otros cuatro roles, ni los nueve estados, ni mutaciones. |
+| 7 | Regresión global | **hecha** — `MATRIZ-REGRESION.md`, 1110 mediciones |
+
+## Lo que queda, dicho con números
+
+La matriz dice que **la estructura está sana**: 222 pantallas, cinco anchos,
+cero desbordes, cero errores de consola. Eso cierra la pregunta «¿está roto?».
+
+No cierra «¿está terminado?». Lo que falta no es tiempo de máquina, es trabajo
+por pantalla que necesita criterio:
+
+| Dimensión | Tamaño |
+|---|---:|
+| Roles sin medir | 4 (paciente, médica, administrador, visitador) |
+| Pantallas × roles pendientes | ~888 combinaciones |
+| Estados M34 por pantalla | 9 |
+| Primitivas sin matriz visual | 89 |
+| Rutas parametrizadas sin cubrir | 10 |
+| Mutaciones sin probar `UI -> … -> UI` | todas |
+
+A una microtarea por pantalla con los gates del playbook, es un programa de
+equipo. Automatizar la **medición** fue posible y está hecho; automatizar el
+**criterio** no.
 
 ## Wave 1 — DS-001 hecha
 
@@ -159,7 +178,10 @@ Cada microtarea declara, antes de tocar código:
 | DS-001.b | `atoms/button`: `font-size: 14px` -> `--fs-body` | DD-001 | `VERIFIED` | decisión de diseño tomada |
 | DS-002 | 47 literales con token exacto -> `var()` | W0 | `VERIFIED` | 140 mediciones, 0 desborde |
 | DD-001 | Paleta y escala: 27 intrusiones a los tokens ALOVIDA | DS-002 | `VERIFIED` | `DECISION-DISENO-001.md` |
-| W0.2 | El baseline es intermitente bajo carga | W0 | `DISCOVERED` | dos falsos negativos descartados a mano |
+| W0.2 | El baseline es intermitente bajo carga | W0 | `FIXED` | reintento en el arnés |
+| DS-003 | `atoms/avatar`: último literal a `--c-neutral-200` | DD-001 | `VERIFIED` | deuda de tokens cerrada |
+| O2 | Auditoría de primitivas | DS-002 | `VERIFIED` | `OLA-2-PRIMITIVAS.md` — 38 falsos positivos descartados |
+| O7 | Matriz de regresión global | todo | `VERIFIED` | `MATRIZ-REGRESION.md` — 1110 mediciones |
 | DS-002 | Moléculas y organismos con literales | DS-001 | `DISCOVERED` | - |
 | LAY-001 | Shells sin literales | DS-002 | `DISCOVERED` | - |
 | UI-001 | `public-profile/` sin literales | DS-002 | `DISCOVERED` | - |
