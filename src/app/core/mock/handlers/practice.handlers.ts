@@ -111,10 +111,10 @@ interface VinculacionSimulada {
 }
 
 const vinculaciones = new Coleccion<VinculacionSimulada>([
-  { id: uuid('ra-olivos'), practiceId: PRACTICE_OLIVOS, practiceName: 'Clínica Los Olivos', practiceType: 'Clínica', practiceSiteId: SITIO_OLIVOS.id, roleConceptId: CARGO['ROLE-JEFE']!, specialtyConceptId: ESPECIALIDAD['SP-CARDIO']!, status: 'ACTIVE', isPrimary: true, validFrom: isoDia(-900), validTo: null, createdAt: iso(-900), avatarUrl: avatarSvg('Clínica Los Olivos', '#0f766e'), practitionerProfileId: MEDICA.id },
-  { id: uuid('ra-sanlucas'), practiceId: PRACTICE_SANLUCAS, practiceName: 'Hospital San Lucas', practiceType: 'Hospital', practiceSiteId: SITIO_SANLUCAS.id, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['SP-CARDIO']!, status: 'PENDING', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-4), avatarUrl: avatarSvg('Hospital San Lucas', '#7c3aed'), practitionerProfileId: MEDICA.id },
+  { id: uuid('ra-olivos'), practiceId: PRACTICE_OLIVOS, practiceName: 'Clínica Los Olivos', practiceType: 'Clínica', practiceSiteId: SITIO_OLIVOS.id, roleConceptId: CARGO['ROLE-JEFE']!, specialtyConceptId: ESPECIALIDAD['CARDIOLOGIA']!, status: 'ACTIVE', isPrimary: true, validFrom: isoDia(-900), validTo: null, createdAt: iso(-900), avatarUrl: avatarSvg('Clínica Los Olivos', '#0f766e'), practitionerProfileId: MEDICA.id },
+  { id: uuid('ra-sanlucas'), practiceId: PRACTICE_SANLUCAS, practiceName: 'Hospital San Lucas', practiceType: 'Hospital', practiceSiteId: SITIO_SANLUCAS.id, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['CARDIOLOGIA']!, status: 'PENDING', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-4), avatarUrl: avatarSvg('Hospital San Lucas', '#7c3aed'), practitionerProfileId: MEDICA.id },
   { id: uuid('ra-japones'), practiceId: uuid('practice-japones'), practiceName: 'Hospital Japonés', practiceType: 'Hospital', practiceSiteId: null, roleConceptId: CARGO['ROLE-RESIDENTE']!, specialtyConceptId: null, status: 'ENDED', isPrimary: false, validFrom: isoDia(-3000), validTo: isoDia(-1500), createdAt: iso(-3000), avatarUrl: null, practitionerProfileId: MEDICA.id },
-  { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['SP-MEDINT']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICA.id },
+  { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['MEDICINA_INTERNA']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICA.id },
 ]);
 
 const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string }>([
@@ -256,10 +256,10 @@ export function registrarPracticas(router: MockRouter): void {
       ...(esHospital ? [{ id: uuid('site-sanlucas-norte'), code: 'SANLUCAS-N', name: 'Hospital San Lucas · Anexo Norte', type: concepto('BRANCH', 'Sucursal'), physicalType: concepto('BUILDING', 'Edificio'), operationalStatus: concepto('OPERATIONAL', 'Operativa'), status: concepto('ACTIVE', 'Activa'), timeZone: 'America/La_Paz', branchId: null, clinicalUnitCount: 2, careSpaceCount: 6 }] : []),
     ];
     const unidades = [
-      { code: 'CARDIO', name: 'Cardiología', esp: ESPECIALIDAD['SP-CARDIO']! },
-      { code: 'MEDINT', name: 'Medicina interna', esp: ESPECIALIDAD['SP-MEDINT']! },
-      { code: 'PEDIA', name: 'Pediatría', esp: ESPECIALIDAD['SP-PEDIA']! },
-      ...(esHospital ? [{ code: 'URG', name: 'Urgencias', esp: ESPECIALIDAD['SP-MEDGEN']! }, { code: 'QX', name: 'Quirófanos', esp: ESPECIALIDAD['SP-ANEST']! }, { code: 'GINE', name: 'Maternidad', esp: ESPECIALIDAD['SP-GINE']! }] : []),
+      { code: 'CARDIO', name: 'Cardiología', esp: ESPECIALIDAD['CARDIOLOGIA']! },
+      { code: 'MEDINT', name: 'Medicina interna', esp: ESPECIALIDAD['MEDICINA_INTERNA']! },
+      { code: 'PEDIA', name: 'Pediatría', esp: ESPECIALIDAD['PEDIATRIA']! },
+      ...(esHospital ? [{ code: 'URG', name: 'Urgencias', esp: ESPECIALIDAD['MEDICINA_GENERAL']! }, { code: 'QX', name: 'Quirófanos', esp: ESPECIALIDAD['ANESTESIOLOGIA']! }, { code: 'GINE', name: 'Maternidad', esp: ESPECIALIDAD['GINECOLOGIA_OBSTETRICIA']! }] : []),
     ].map((u, i) => ({
       id: uuid(`unit-${practica.code}-${u.code}`),
       siteId: sitio.id,
