@@ -42,7 +42,7 @@ a.reacciones__enlace:hover {
   justify-content: center;
   background: var(--sup-inset);
   color: var(--tinta-2);
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 

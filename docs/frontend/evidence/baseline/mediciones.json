@@ -1,5 +1,5 @@
 {
-  "capturadoEl": "2026-09-08T21:54:03.209Z",
+  "capturadoEl": "2026-09-08T22:00:20.161Z",
   "cuenta": "superadmin@alovida.mock",
   "viewports": [
     "390x844",
@@ -533,14 +533,12 @@
       "componente": "Glossary",
       "estado": "conectada",
       "viewport": "1920x1080",
-      "pinta": false,
+      "pinta": true,
       "desbordeX": 0,
       "erroresDeConsola": [],
       "peticionesFallidas": [],
-      "defectos": [
-        "NO-PINTA"
-      ],
-      "captura": "docs\\frontend\\evidence\\baseline\\glossary\\1920x1080.png"
+      "defectos": [],
+      "captura": null
     },
     {
       "ruta": "/administration/patients",

@@ -255,7 +255,7 @@
   background: var(--sup-tarjeta);
   color: var(--tinta);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-body);
   cursor: pointer;
   transition:
     border-color var(--mov-rapido) var(--curva),
@@ -283,7 +283,7 @@
 .sintomas__escribir summary {
   color: var(--tinta-2);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--fs-body);
 }
 
 .sintomas__escribir .sintomas__campo {

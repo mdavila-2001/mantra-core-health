@@ -93,8 +93,8 @@
 /* -- La cita: el bloque protagonista ------------------------------------- */
 
 .dia__bloque[data-tipo='cita'] {
-  border-left: 3px solid var(--c-petrol-600, #16697a);
-  background: var(--c-petrol-50, #eef6f8);
+  border-left: 3px solid var(--c-petrol-600, var(--c-petrol-500));
+  background: var(--c-petrol-50, var(--c-mint-50));
   border-radius: var(--r-md);
   padding: var(--sp-2) var(--sp-3);
   margin-bottom: 2px;
@@ -156,7 +156,7 @@
 
 .dia__libre {
   flex: 1;
-  border: 1px dashed var(--c-neutral-300, #d4d4d4);
+  border: 1px dashed var(--c-neutral-300, var(--c-sage-500));
   border-radius: var(--r-md);
   background: transparent;
   color: var(--text-secondary);
@@ -168,8 +168,8 @@
 
 .dia__libre:hover,
 .dia__libre:focus-visible {
-  border-color: var(--c-petrol-400, #4d9aab);
-  color: var(--c-petrol-700, #105263);
+  border-color: var(--c-petrol-400, var(--c-petrol-300));
+  color: var(--c-petrol-700, var(--c-petrol-600));
 }
 
 /* -- El aire: el respiro no invita ---------------------------------------- */

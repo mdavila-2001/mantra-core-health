@@ -82,7 +82,7 @@
 
 .mi-perfil__foto-error {
   margin: 0 0 var(--sp-3);
-  color: var(--error-tinta, #8a2f22);
+  color: var(--error-tinta, var(--c-error-700));
   font-size: var(--fs-caption);
 }
 

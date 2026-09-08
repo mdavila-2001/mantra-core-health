@@ -36,7 +36,7 @@
   background: transparent;
   color: var(--text-secondary, var(--tinta-2));
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;

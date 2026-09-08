@@ -27,7 +27,7 @@ viewports, evidencia, revisión independiente, regresión), son 232 ciclos.
 | Wave | Alcance | Estado |
 |---|---|---|
 | 0 | Infraestructura, baseline, inventario | **hecha** — ver `VISUAL_BASELINE.md` |
-| 1 | Fundación de diseño: literales visuales a tokens | **backlog medido**, ver abajo |
+| 1 | Fundación de diseño: literales visuales a tokens | **hecha** — ver `DECISION-DISENO-001.md` |
 | 2 | Primitivas (23 átomos + 37 moléculas) | pendiente |
 | 3 | Layouts y shells | pendiente |
 | 4 | Flujos críticos | pendiente |
@@ -156,7 +156,10 @@ Cada microtarea declara, antes de tocar código:
 | W0 | Baseline de las 28 secciones | - | `VERIFIED` | `evidence/baseline/mediciones.json` |
 | W0.1 | `/directory` redirige | W0 | `DISCOVERED` | `evidence/baseline/directory/` |
 | DS-001 | `atoms/button`: `font-size: 13px` -> `var(--fs-caption)` | W0 | `VERIFIED` | `evidence/DS-001/` |
-| DS-001.b | `atoms/button`: los 5 literales restantes (14px, 11px, 28px, #fff) | decisión de diseño | `BLOCKED` | fuera de escala o justificados |
+| DS-001.b | `atoms/button`: `font-size: 14px` -> `--fs-body` | DD-001 | `VERIFIED` | decisión de diseño tomada |
+| DS-002 | 47 literales con token exacto -> `var()` | W0 | `VERIFIED` | 140 mediciones, 0 desborde |
+| DD-001 | Paleta y escala: 27 intrusiones a los tokens ALOVIDA | DS-002 | `VERIFIED` | `DECISION-DISENO-001.md` |
+| W0.2 | El baseline es intermitente bajo carga | W0 | `DISCOVERED` | dos falsos negativos descartados a mano |
 | DS-002 | Moléculas y organismos con literales | DS-001 | `DISCOVERED` | - |
 | LAY-001 | Shells sin literales | DS-002 | `DISCOVERED` | - |
 | UI-001 | `public-profile/` sin literales | DS-002 | `DISCOVERED` | - |

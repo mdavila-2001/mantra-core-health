@@ -58,7 +58,7 @@
 }
 
 .has-error .tree-select-trigger {
-  border-color: var(--status-error, #c0392b);
+  border-color: var(--status-error, var(--c-error-500));
 }
 
 .trigger-icon,
