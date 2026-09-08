@@ -107,21 +107,18 @@ describe('RegisterPractitioner', () => {
         | 'workMobilePhone'
         | 'workLandline'
         | 'personalEmail'
+        | 'email'
         | 'middleName'
         | 'thirdName'
         | 'motherLastName'
         | 'nationalId'
         | 'regulatoryAuthority'
         | 'specialtyPrimary'
-        | 'specialtySecond'
-        | 'specialtyThird'
         | 'profilePhotoBase64'
-        | 'occupationConceptId'
-        | 'occupationFreeText'
         | 'sexAtBirth',
         string | null
       >
-    > & { birthDate?: Date | null } = {},
+    > & { birthDate?: Date | null; especialidadesExtra?: readonly string[] } = {},
   ): void {
     component.formProfesional.setValue({
       name: 'Ana',
@@ -130,17 +127,23 @@ describe('RegisterPractitioner', () => {
       lastName: 'Paz',
       motherLastName: extra.motherLastName ?? '',
       nationalId: extra.nationalId ?? '1234567',
-      email: 'ana@hospital.test',
+      // `email` es el de TRABAJO, que dejó de ser el de acceso y es opcional;
+      // el de acceso es `personalEmail`, obligatorio, de acá abajo.
+      email: extra.email ?? '',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
-      professionalTitle: extra.professionalTitle ?? '',
+      // Obligatorio desde que dejó de ser «(opcional)»: es lo que dice qué
+      // clase de profesional es, y de él dependen el colegio y las
+      // especialidades. Las pruebas que lo ejercen lo pisan por `extra`.
+      professionalTitle: extra.professionalTitle ?? 'Médico / Médica',
       phone: extra.phone ?? '',
-      mobilePhone: extra.mobilePhone ?? '',
+      mobilePhone: extra.mobilePhone ?? '+591 70011111',
       workMobilePhone: extra.workMobilePhone ?? '',
       workLandline: extra.workLandline ?? '',
-      personalEmail: extra.personalEmail ?? '',
+      // La identidad de acceso: obligatorio, así que tiene valor por defecto.
+      personalEmail: extra.personalEmail ?? 'ana.paz@gmail.test',
       // Obligatoria desde que la fecha de nacimiento dejó de ser opcional:
       // mismo criterio que `sexAtBirth` de acá abajo — un valor por defecto
       // para que las pruebas a las que no les importa sigan mandando el
@@ -154,19 +157,14 @@ describe('RegisterPractitioner', () => {
         extra.sexAtBirth === undefined
           ? 'FEMALE'
           : (extra.sexAtBirth as BirthSexCode | null),
-      // Obligatoria por el mismo motivo. `o-1` es el mismo id que usan las
-      // pruebas de ocupación de más abajo; las que prueban el campo lo pisan
-      // por `extra`.
-      occupationConceptId:
-        extra.occupationConceptId === undefined ? 'o-1' : extra.occupationConceptId,
-      occupationFreeText: extra.occupationFreeText ?? '',
       licenseIssueDate: null,
-      issuerAdministrativeAreaConceptId: null,
+      issuerAdministrativeAreaConceptId: 'dep-1',
       specialtyPrimary: extra.specialtyPrimary ?? '',
-      specialtySecond: extra.specialtySecond ?? '',
-      specialtyThird: extra.specialtyThird ?? '',
       profilePhotoBase64: extra.profilePhotoBase64 ?? null,
     });
+    // Las especialidades agregadas no son controles: viven en una señal, igual
+    // que los nombres extra.
+    component.especialidadesExtra.set(extra.especialidadesExtra ?? []);
   }
 
   /**
@@ -231,9 +229,19 @@ describe('RegisterPractitioner', () => {
         'personal-contact',
         'access',
         'residence',
-        'credentials',
+        // El título profesional va ANTES de la habilitación: de él dependen el
+        // colegio que se ofrece ahí y la lista de especialidades. Preguntarlo
+        // después dejaba las dos cosas eligiéndose a ciegas.
         'practice',
+        'credentials',
+        // Los respaldos van pegados a la habilitación que respaldan, y los
+        // demás títulos justo después: es el orden del registro de procesos.
+        'credential-files',
+        'academic-titles',
         'specialties',
+        // La contraseña cierra el alta, sola: dejó de compartir página con los
+        // teléfonos del consultorio y el correo de trabajo.
+        'password',
       ]);
     });
 
@@ -245,17 +253,17 @@ describe('RegisterPractitioner', () => {
       ]);
       // AC-05-7: el sexo entra al formulario, y va antes de la fecha de
       // nacimiento, como pide el orden.
-      expect(camposDe('profile')).toEqual(['sexAtBirth', 'birthDate', 'occupationConceptId']);
+      // La ocupación se quitó del alta de profesional: lo que dice qué clase de
+      // profesional es, es el TÍTULO, y se pregunta en su propia página. En el
+      // alta de paciente la ocupación sigue, que es donde tiene sentido.
+      expect(camposDe('profile')).toEqual(['sexAtBirth', 'birthDate']);
       // Los cinco contactos que pide el registro, repartidos en dos páginas: lo
       // privado por un lado y lo del trabajo junto al acceso, que es el correo
-      // laboral (AC-05-6).
+      // laboral (AC-05-6). La contraseña ya no vive acá: tiene página propia al
+      // final, porque no es un dato de contacto ni es opcional como los dos
+      // teléfonos con los que compartía pantalla.
       expect(camposDe('personal-contact')).toEqual(['mobilePhone', 'personalEmail']);
-      expect(camposDe('access')).toEqual([
-        'workMobilePhone',
-        'workLandline',
-        'email',
-        'password',
-      ]);
+      expect(camposDe('access')).toEqual(['workMobilePhone', 'workLandline', 'email']);
       expect(camposDe('residence')).toEqual(['municipio']);
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
@@ -263,12 +271,15 @@ describe('RegisterPractitioner', () => {
         'regulatoryAuthority',
         'licenseIssueDate',
       ]);
-      expect(camposDe('practice')).toEqual(['profilePhotoBase64', 'professionalTitle']);
-      expect(camposDe('specialties')).toEqual([
-        'specialtyPrimary',
-        'specialtySecond',
-        'specialtyThird',
+      expect(camposDe('practice')).toEqual([
+        'profilePhotoBase64',
+        'professionalTitle',
+        'professionalTitleFile',
       ]);
+      expect(camposDe('specialties')).toEqual(['specialtyPrimary', 'especialidadesExtra']);
+      expect(camposDe('password')).toEqual(['password']);
+      expect(camposDe('credential-files')).toEqual(['credentialAttachments']);
+      expect(camposDe('academic-titles')).toEqual(['academicTitles']);
     });
 
     /**
@@ -366,15 +377,17 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene nueve páginas, ninguna de más de cuatro preguntas', () => {
-    // Nueve y no menos porque el límite es de **campos por página**, no de
+  it('tiene doce páginas, ninguna de más de cuatro preguntas', () => {
+    // Doce y no menos porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
-    // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). La novena es la de los
-    // contactos privados, que se separó de la del acceso al dejar de mezclar el
-    // número personal con el del consultorio.
+    // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
+    // de contactos privados —separada de la del acceso al dejar de mezclar el
+    // número personal con el del consultorio—, las dos de respaldos y títulos
+    // —que no caben en la de habilitación, ya llena— y la contraseña, que
+    // cierra el alta sola.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(9);
+    expect(paginas.length).toBe(12);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -502,13 +515,12 @@ describe('RegisterPractitioner', () => {
 
       expect(filtradas.length).toBeGreaterThan(0);
       expect(filtradas.every((o) => o.label.toLowerCase().includes('odont'))).toBe(true);
-      // Ninguna petición NUEVA: quedan las cuatro lecturas de catálogo que el
-      // componente hace al nacer —departamentos, municipios, especialidades y
-      // ocupaciones— y nada más. La lista de títulos es cerrada y ya está en
-      // memoria; si esto empezara a consultar, el número subiría acá antes que en
-      // producción.
+      // Ninguna petición NUEVA: quedan las tres lecturas de catálogo que el
+      // componente hace al nacer —departamentos, municipios y especialidades— y
+      // nada más. Eran cuatro hasta que se quitó la ocupación del alta de
+      // profesional. La lista de títulos es cerrada y ya está en memoria; si
+      // esto empezara a consultar, el número subiría acá antes que en producción.
       expect(http.match(() => true).map((p) => p.request.url)).toEqual([
-        '/terminology/value-sets',
         '/terminology/value-sets',
         '/terminology/value-sets',
         '/terminology/value-sets',
@@ -590,7 +602,7 @@ describe('RegisterPractitioner', () => {
       completarProfesional({
         professionalTitle: 'Médico / Médica',
         specialtyPrimary: 'e-cardio',
-        specialtySecond: 'e-pedia',
+        especialidadesExtra: ['e-pedia'],
       });
       component.submit();
 
@@ -609,12 +621,69 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
+    it('se pueden declarar más de tres especialidades', () => {
+      catalogoDeEspecialidades();
+      completarProfesional({
+        professionalTitle: 'Médico / Médica',
+        specialtyPrimary: 'e-cardio',
+        especialidadesExtra: ['e-pedia', 'e-endo', 'e-orto'],
+      });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.specialtyConceptIds).toEqual([
+        'e-cardio',
+        'e-pedia',
+        'e-endo',
+        'e-orto',
+      ]);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('agregar suma una casilla vacía, y quitar saca la que se señala', () => {
+      catalogoDeEspecialidades();
+      completarProfesional({ especialidadesExtra: [] });
+
+      component.agregarEspecialidad();
+      component.agregarEspecialidad();
+      expect(component.especialidadesExtra()).toEqual(['', '']);
+
+      component.elegirEspecialidadExtra(0, 'e-pedia');
+      component.elegirEspecialidadExtra(1, 'e-endo');
+      component.quitarEspecialidad(0);
+
+      expect(component.especialidadesExtra()).toEqual(['e-endo']);
+    });
+
+    it('una casilla agregada y vacía no viaja en el cuerpo', () => {
+      catalogoDeEspecialidades();
+      completarProfesional({
+        professionalTitle: 'Médico / Médica',
+        specialtyPrimary: 'e-cardio',
+        especialidadesExtra: [''],
+      });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.specialtyConceptIds).toEqual(['e-cardio']);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('cambiar de profesión limpia también una especialidad agregada', () => {
+      catalogoDeEspecialidades();
+      completarProfesional({ especialidadesExtra: ['e-endo'] });
+
+      component.formProfesional.controls.professionalTitle.setValue('Médico / Médica');
+
+      expect(component.especialidadesExtra()).toEqual(['']);
+    });
+
     it('elegir la misma dos veces declara una', () => {
       catalogoDeEspecialidades();
       completarProfesional({
         professionalTitle: 'Médico / Médica',
         specialtyPrimary: 'e-cardio',
-        specialtySecond: 'e-cardio',
+        especialidadesExtra: ['e-cardio'],
       });
       component.submit();
 
@@ -624,105 +693,6 @@ describe('RegisterPractitioner', () => {
     });
   });
 
-  describe('ocupación normada y buscador (M-1.4.1 / M-1.4.2)', () => {
-    it('el bloque de perfil incluye el campo de ocupación', () => {
-      const profile = component.paginasProfesional().find((p) => p.clave === 'profile');
-      expect(profile?.campos.map((c) => c.key)).toEqual([
-        'sexAtBirth',
-        'birthDate',
-        'occupationConceptId',
-      ]);
-    });
-
-    it('la lupa filtra las ocupaciones en local', () => {
-      component.opcionesOcupacion.set([
-        { value: 'o-1', label: 'Médico General', code: 'MED_GEN' },
-        { value: 'o-2', label: 'Odontólogo', code: 'ODONT' },
-        { value: 'o-3', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
-      ]);
-
-      component.busquedaOcupacion.set('médico');
-      expect(component.ocupacionesFiltradas()).toEqual([
-        { value: 'o-1', label: 'Médico General' },
-      ]);
-
-      component.busquedaOcupacion.set('');
-      expect(component.ocupacionesFiltradas()).toHaveLength(3);
-    });
-
-    it('elegir una ocupación normada la envía en occupationConceptId', () => {
-      component.opcionesOcupacion.set([
-        { value: 'o-1', label: 'Médico General', code: 'MED_GEN' },
-      ]);
-      completarProfesional();
-      component.elegirOcupacion({ value: 'o-1', label: 'Médico General' });
-      component.submit();
-
-      const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.occupationConceptId).toBe('o-1');
-      expect(req.request.body.occupationFreeText).toBeUndefined();
-      req.flush(RESPUESTA_PRO);
-    });
-
-    it('elegir «Otra ocupación» abre el campo de texto libre y lo envía en occupationFreeText', () => {
-      component.opcionesOcupacion.set([
-        { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
-      ]);
-      completarProfesional();
-      component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
-      fixture.detectChanges();
-
-      const profile = component.paginasProfesional().find((p) => p.clave === 'profile');
-      expect(profile?.campos.map((c) => c.key)).toContain('occupationFreeText');
-
-      component.formProfesional.controls.occupationFreeText.setValue('Médico Cirujano Investigador');
-      component.submit();
-
-      const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.occupationConceptId).toBeUndefined();
-      expect(req.request.body.occupationFreeText).toBe('Médico Cirujano Investigador');
-      req.flush(RESPUESTA_PRO);
-    });
-
-    it('sin ocupación no manda el alta: la ocupación es obligatoria', () => {
-      completarProfesional({ occupationConceptId: null });
-      component.submit();
-
-      http.expectNone('/iam/auth/register-practitioner');
-      expect(component.formProfesional.controls.occupationConceptId.touched).toBe(true);
-      expect(component.formProfesional.controls.occupationConceptId.invalid).toBe(true);
-    });
-
-    it('«Otra ocupación» sin escribir cuál tampoco manda el alta', () => {
-      component.opcionesOcupacion.set([
-        { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
-      ]);
-      completarProfesional();
-      component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
-      component.submit();
-
-      http.expectNone('/iam/auth/register-practitioner');
-      expect(component.formProfesional.controls.occupationFreeText.invalid).toBe(true);
-    });
-
-    it('volver de «Otra» a una ocupación normada libera el texto libre', () => {
-      component.opcionesOcupacion.set([
-        { value: 'o-otra', label: 'Otra ocupación', code: 'occupation:bo:OTRA' },
-        { value: 'o-1', label: 'Médico General', code: 'MED_GEN' },
-      ]);
-      completarProfesional();
-      component.elegirOcupacion({ value: 'o-otra', label: 'Otra ocupación' });
-      expect(component.formProfesional.controls.occupationFreeText.invalid).toBe(true);
-
-      component.elegirOcupacion({ value: 'o-1', label: 'Médico General' });
-
-      expect(component.formProfesional.controls.occupationFreeText.valid).toBe(true);
-      component.submit();
-      const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.occupationConceptId).toBe('o-1');
-      req.flush(RESPUESTA_PRO);
-    });
-  });
 
   describe('rótulos dinámicos de matrícula y colegio según profesión (M-1.4.3)', () => {
     function campoCredencial(key: 'licenseNumber' | 'sedesLicenseNumber') {
@@ -787,36 +757,74 @@ describe('RegisterPractitioner', () => {
 
     const req = http.expectOne('/iam/auth/register-practitioner');
     expect(req.request.method).toBe('POST');
-    // El identificador de acceso es el correo, no el documento. El nombre va
-    // en partes, igual que en el alta de paciente. Sexo, fecha de nacimiento y
-    // ocupación son obligatorios: los tres son dato clínico o de filiación, no
-    // una cortesía, así que forman parte del alta mínima.
+    // El identificador de acceso es el correo PERSONAL, no el documento ni el
+    // de trabajo: viaja en el `email` del DTO, que es el campo de login. El
+    // nombre va en partes, igual que en el alta de paciente. Sexo, fecha de
+    // nacimiento y título profesional son obligatorios: los dos primeros son
+    // dato clínico y el tercero dice qué clase de profesional es, así que los
+    // tres forman parte del alta mínima.
     expect(req.request.body).toEqual({
       name: 'Ana',
       lastName: 'Paz',
       nationalId: '1234567',
-      email: 'ana@hospital.test',
+      email: 'ana.paz@gmail.test',
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       sexAtBirth: 'FEMALE',
       birthDate: '1985-05-12',
-      occupationConceptId: 'o-1',
+      professionalTitle: 'Médico / Médica',
+      // No lo escribió nadie: lo pone la pantalla al elegir el título, que es
+      // lo que promete su ayuda («el colegio se acomoda solo»). Que aparezca
+      // acá es la prueba de que ese automatismo sigue vivo.
+      regulatoryAuthority: 'Colegio Médico de Bolivia',
+      // Los dos que pasaron a obligatorios con el documento y el contacto
+      // privado. `personalEmail` NO está: desde que es la identidad de acceso
+      // viaja en `email`, que es el campo de login del DTO.
+      issuerAdministrativeAreaConceptId: 'dep-1',
+      mobilePhone: '+591 70011111',
     });
 
     req.flush(RESPUESTA_PRO);
   });
 
-  it('el documento de identidad es opcional para el profesional y no viaja si está vacío', () => {
+  it('sin cédula el formulario no se puede enviar', () => {
     completarProfesional({ nationalId: '' });
-    expect(component.formProfesional.controls.nationalId.valid).toBe(true);
+
+    expect(component.formProfesional.controls.nationalId.invalid).toBe(true);
+
     component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
+  });
 
-    const req = http.expectOne('/iam/auth/register-practitioner');
-    expect(req.request.body.nationalId).toBeUndefined();
-    expect(req.request.body.issuerAdministrativeAreaConceptId).toBeUndefined();
+  it('sin departamento de emisión el formulario no se puede enviar', () => {
+    completarProfesional();
+    component.formProfesional.controls.issuerAdministrativeAreaConceptId.setValue(null);
 
-    req.flush(RESPUESTA_PRO);
+    expect(component.formProfesional.controls.issuerAdministrativeAreaConceptId.invalid).toBe(
+      true,
+    );
+
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
+  });
+
+  it('sin celular personal el formulario no se puede enviar', () => {
+    completarProfesional({ mobilePhone: '' });
+
+    expect(component.formProfesional.controls.mobilePhone.invalid).toBe(true);
+
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
+  });
+
+  it('sin correo personal el formulario no se puede enviar', () => {
+    completarProfesional({ personalEmail: '' });
+
+    expect(component.formProfesional.controls.personalEmail.invalid).toBe(true);
+
+    component.submit();
+    http.expectNone('/iam/auth/register-practitioner');
   });
 
   it('si se ingresa un documento de identidad con formato inválido, el control se invalida', () => {
@@ -893,6 +901,7 @@ describe('RegisterPractitioner', () => {
       workMobilePhone: '+591 70022222',
       workLandline: '+591 33456789',
       personalEmail: 'ana.paz@gmail.test',
+      email: 'ana@hospital.test',
     });
     component.submit();
 
@@ -900,9 +909,167 @@ describe('RegisterPractitioner', () => {
     expect(req.request.body.mobilePhone).toBe('+591 70011111');
     expect(req.request.body.workMobilePhone).toBe('+591 70022222');
     expect(req.request.body.workLandline).toBe('+591 33456789');
-    expect(req.request.body.personalEmail).toBe('ana.paz@gmail.test');
-    // El correo de acceso sigue siendo `email`, que es el del trabajo.
-    expect(req.request.body.email).toBe('ana@hospital.test');
+    // El de acceso es el PERSONAL, y por eso ocupa el `email` del DTO, que es
+    // el campo de login. El institucional viaja aparte, en `workEmail`.
+    expect(req.request.body.email).toBe('ana.paz@gmail.test');
+    expect(req.request.body.workEmail).toBe('ana@hospital.test');
+    expect(req.request.body.personalEmail).toBeUndefined();
+
+    req.flush(RESPUESTA_PRO);
+  });
+
+  /**
+   * Títulos y respaldos. **Sólo estado de pantalla**: en esta rama el archivo
+   * no se sube a ningún lado y nada de esto viaja en el alta. Lo que se fija
+   * acá es el comportamiento visible —agregar varios del mismo tipo, que el
+   * adjunto quede pegado a SU título, y que un archivo inválido se rechace—,
+   * que es lo que hay que conservar cuando esto se conecte de verdad.
+   */
+  describe('títulos y respaldos (sólo pantalla)', () => {
+    /** Un evento `change` de un `<input type="file">` con el archivo dado. */
+    function eventoDeArchivo(nombre: string, tipo: string, bytes: number): Event {
+      const archivo = new File(['x'], nombre, { type: tipo });
+      Object.defineProperty(archivo, 'size', { value: bytes });
+      const entrada = document.createElement('input');
+      entrada.type = 'file';
+      Object.defineProperty(entrada, 'files', { value: [archivo] });
+      return { target: entrada } as unknown as Event;
+    }
+
+    it('permite cargar más de un título del mismo tipo', () => {
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('MAESTRIA');
+
+      expect(component.titulosDe('UNIVERSITARIO')).toHaveLength(2);
+      expect(component.titulosDe('MAESTRIA')).toHaveLength(1);
+      expect(component.titulosDe('DOCTORADO')).toHaveLength(0);
+    });
+
+    it('el adjunto queda pegado al título al que se le cargó, no a otro', () => {
+      component.agregarTitulo('DIPLOMADO');
+      component.agregarTitulo('DIPLOMADO');
+      const [primero, segundo] = component.titulosDe('DIPLOMADO');
+
+      component.adjuntarArchivoATitulo(
+        segundo.id,
+        eventoDeArchivo('gestion.pdf', 'application/pdf', 1024),
+      );
+
+      const despues = component.titulosDe('DIPLOMADO');
+      expect(despues.find((t) => t.id === primero.id)?.archivo).toBeNull();
+      expect(despues.find((t) => t.id === segundo.id)?.archivo).toBe('gestion.pdf');
+    });
+
+    it('quitar un título se lleva su adjunto y deja los otros', () => {
+      component.agregarTitulo('DOCTORADO');
+      component.agregarTitulo('DOCTORADO');
+      const [primero, segundo] = component.titulosDe('DOCTORADO');
+      component.adjuntarArchivoATitulo(
+        primero.id,
+        eventoDeArchivo('tesis.pdf', 'application/pdf', 2048),
+      );
+
+      component.quitarTitulo(primero.id);
+
+      expect(component.titulosDe('DOCTORADO').map((t) => t.id)).toEqual([segundo.id]);
+    });
+
+    it('rechaza un formato que no es PDF ni imagen, y no lo adjunta', () => {
+      component.agregarTitulo('MAESTRIA');
+      const [titulo] = component.titulosDe('MAESTRIA');
+
+      component.adjuntarArchivoATitulo(
+        titulo.id,
+        eventoDeArchivo('titulo.docx', 'application/msword', 1024),
+      );
+
+      expect(component.errorAdjunto()).toBe('El respaldo tiene que ser un PDF, un JPG o un PNG.');
+      expect(component.titulosDe('MAESTRIA')[0].archivo).toBeNull();
+    });
+
+    it('rechaza un archivo de más de 5 MB', () => {
+      component.adjuntarRespaldo(
+        'license',
+        eventoDeArchivo('matricula.pdf', 'application/pdf', 6 * 1024 * 1024),
+      );
+
+      expect(component.errorAdjunto()).toBe('El archivo supera el límite de 5 MB.');
+      expect(component.respaldoMatricula()).toBeNull();
+    });
+
+    it('los dos respaldos de la habilitación son independientes', () => {
+      component.adjuntarRespaldo(
+        'license',
+        eventoDeArchivo('matricula.pdf', 'application/pdf', 1024),
+      );
+      component.adjuntarRespaldo('sedes', eventoDeArchivo('sedes.jpg', 'image/jpeg', 2048));
+
+      expect(component.respaldoMatricula()?.archivo).toBe('matricula.pdf');
+      expect(component.respaldoSedes()?.archivo).toBe('sedes.jpg');
+
+      component.quitarRespaldo('license');
+
+      expect(component.respaldoMatricula()).toBeNull();
+      expect(component.respaldoSedes()?.archivo).toBe('sedes.jpg');
+    });
+
+    it('nada de esto viaja en el alta todavía: es sólo pantalla', () => {
+      component.agregarTitulo('UNIVERSITARIO');
+      const [titulo] = component.titulosDe('UNIVERSITARIO');
+      component.escribirNombreDeTitulo(titulo.id, 'Medicina');
+      component.adjuntarArchivoATitulo(
+        titulo.id,
+        eventoDeArchivo('medicina.pdf', 'application/pdf', 1024),
+      );
+      component.adjuntarRespaldo(
+        'license',
+        eventoDeArchivo('matricula.pdf', 'application/pdf', 1024),
+      );
+      completarProfesional();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.academicTitles).toBeUndefined();
+      expect(req.request.body.credentialAttachments).toBeUndefined();
+      req.flush(RESPUESTA_PRO);
+    });
+  });
+
+  it('sin título profesional no manda el alta: dice qué clase de profesional es', () => {
+    completarProfesional({ professionalTitle: '' });
+    component.submit();
+
+    http.expectNone('/iam/auth/register-practitioner');
+    expect(component.formProfesional.controls.professionalTitle.invalid).toBe(true);
+  });
+
+  it('el diploma del título es opcional y vive en el mismo paso que el título', () => {
+    const practice = component.paginasProfesional().find((p) => p.clave === 'practice');
+    const campo = practice?.campos.find((c) => c.key === 'professionalTitleFile');
+
+    expect(campo).toBeDefined();
+    expect(campo?.required ?? false).toBe(false);
+    // Y el título de al lado sí es obligatorio: son dos cosas distintas.
+    expect(practice?.campos.find((c) => c.key === 'professionalTitle')?.required).toBe(true);
+  });
+
+  it('sin correo personal no manda el alta: es la identidad de acceso', () => {
+    completarProfesional({ personalEmail: '' });
+    component.submit();
+
+    http.expectNone('/iam/auth/register-practitioner');
+    expect(component.formProfesional.controls.personalEmail.invalid).toBe(true);
+  });
+
+  it('el correo de trabajo es opcional y no viaja si está vacío', () => {
+    completarProfesional({ email: '' });
+    expect(component.formProfesional.controls.email.valid).toBe(true);
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-practitioner');
+    expect(req.request.body.workEmail).toBeUndefined();
+    expect(req.request.body.email).toBe('ana.paz@gmail.test');
 
     req.flush(RESPUESTA_PRO);
   });

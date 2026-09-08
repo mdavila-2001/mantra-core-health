@@ -141,15 +141,15 @@
               </div>
             </ng-template>
 
-            <!-- El título profesional se busca escribiendo, igual que
-                 Ocupación: la lista es cerrada —son doce— pero el filtro es
-                 local, sin una sola petición más. Escribe en el mismo
+            <!-- El título profesional se busca escribiendo: la lista es
+                 cerrada —son doce— pero el filtro es local, sin una sola
+                 petición más. Escribe en el mismo
                  `FormControl`, que es de donde cuelgan el colegio automático y
                  la limpieza de especialidades. -->
             <ng-template appCampoPersonalizado="professionalTitle">
               <app-reference-combobox
                 data-testid="registro-pro-titulo"
-                label="Título profesional (opcional)"
+                label="Título profesional"
                 placeholder="Buscá tu título profesional…"
                 emptyMessage="Ningún título profesional coincide."
                 [options]="titulosProfesionalesFiltrados()"
@@ -158,6 +158,45 @@
                 (searched)="busquedaTituloProfesional.set($event)"
                 (selectionChange)="elegirTituloProfesional($event)"
               />
+            </ng-template>
+
+            <!-- El diploma del título profesional. Va acá, con su título, y no
+                 con los respaldos de la matrícula: el título es obligatorio y
+                 su archivo no, y mezclarlos haría dudar de cuál frena el paso. -->
+            <ng-template appCampoPersonalizado="professionalTitleFile">
+              <div class="registro-respaldo">
+                @if (respaldoTituloProfesional(); as adjunto) {
+                  <p class="registro-respaldo__archivo">
+                    <span class="registro-respaldo__nombre">{{ adjunto.archivo }}</span>
+                    <span class="registro-respaldo__peso">{{ pesoLegible(adjunto.pesoBytes) }}</span>
+                  </p>
+                  <button
+                    type="button"
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    data-testid="registro-pro-respaldo-quitar-titulo"
+                    (clicked)="quitarRespaldo('professional-title')"
+                  >
+                    Quitar archivo
+                  </button>
+                } @else {
+                  <label class="registro-respaldo__subir">
+                    <input
+                      type="file"
+                      class="sr-only"
+                      [accept]="formatosDeRespaldo"
+                      data-testid="registro-pro-respaldo-titulo"
+                      (change)="adjuntarRespaldo('professional-title', $event)"
+                    />
+                    <span class="registro-respaldo__label-btn">Adjuntar diploma</span>
+                  </label>
+                }
+                <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB.</p>
+                @if (errorAdjunto(); as error) {
+                  <p class="registro-respaldos__error" role="alert">{{ error }}</p>
+                }
+              </div>
             </ng-template>
 
             <ng-template appCampoPersonalizado="profilePhotoBase64">
@@ -204,33 +243,138 @@
               </div>
             </ng-template>
 
-            <ng-template appCampoPersonalizado="occupationConceptId">
-              @if (catalogoOcupacionesCaido()) {
-                <p class="registro__catalogo-caido">
-                  No pudimos traer el catálogo de ocupaciones.
-                  <button
-                    app-button
-                    variant="ghost"
-                    size="sm"
-                    (clicked)="reintentarOcupaciones()"
-                  >
-                    Reintentar
-                  </button>
-                </p>
-              } @else {
-                <!-- Lupa de búsqueda con catálogo normado SEGIP y opción libre al final -->
-                <app-reference-combobox
-                  data-testid="registro-pro-ocupacion"
-                  label="Ocupación"
-                  placeholder="Buscá tu profesión u oficio…"
-                  emptyMessage="Ninguna ocupación coincide. Elegí «Otra ocupación» al final de la lista."
-                  [options]="ocupacionesFiltradas()"
-                  [selected]="ocupacionElegida()"
-                  [minQueryLength]="0"
-                  (searched)="busquedaOcupacion.set($event)"
-                  (selectionChange)="elegirOcupacion($event)"
-                />
-              }
+            <!--
+              Respaldos de la habilitación. Cada archivo va pegado al número
+              que respalda, no en una bolsa común de adjuntos: quien verifica
+              tiene que saber cuál corresponde a cuál sin abrirlos.
+            -->
+            <ng-template appCampoPersonalizado="credentialAttachments">
+              <div class="registro-respaldos">
+                @for (respaldo of respaldosDeHabilitacion(); track respaldo.clave) {
+                  <div class="registro-respaldo">
+                    <p class="registro-respaldo__titulo">{{ respaldo.etiqueta }}</p>
+                    <p class="registro-respaldo__dato">{{ respaldo.valor || 'Sin cargar' }}</p>
+                    @if (respaldo.adjunto(); as adjunto) {
+                      <p class="registro-respaldo__archivo">
+                        <span class="registro-respaldo__nombre">{{ adjunto.archivo }}</span>
+                        <span class="registro-respaldo__peso">
+                          {{ pesoLegible(adjunto.pesoBytes) }}
+                        </span>
+                      </p>
+                      <button
+                        type="button"
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        [attr.data-testid]="'registro-pro-respaldo-quitar-' + respaldo.clave"
+                        (clicked)="quitarRespaldo(respaldo.clave)"
+                      >
+                        Quitar archivo
+                      </button>
+                    } @else {
+                      <label class="registro-respaldo__subir">
+                        <input
+                          type="file"
+                          class="sr-only"
+                          [accept]="formatosDeRespaldo"
+                          [attr.data-testid]="'registro-pro-respaldo-' + respaldo.clave"
+                          (change)="adjuntarRespaldo(respaldo.clave, $event)"
+                        />
+                        <span class="registro-respaldo__label-btn">Adjuntar archivo</span>
+                      </label>
+                    }
+                  </div>
+                }
+                <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB por archivo.</p>
+                @if (errorAdjunto(); as error) {
+                  <p class="registro-respaldos__error" role="alert">{{ error }}</p>
+                }
+              </div>
+            </ng-template>
+
+            <!--
+              Los cuatro tipos de título, cada uno con su lista propia. La fila
+              es «nombre + archivo» porque un adjunto suelto no dice de qué
+              título es, y quien verifica necesita las dos cosas juntas.
+            -->
+            <ng-template appCampoPersonalizado="academicTitles">
+              <div class="registro-titulos">
+                @for (tipo of tiposDeTitulo; track tipo.codigo) {
+                  <section class="registro-titulo-tipo">
+                    <h3 class="registro-titulo-tipo__nombre">{{ tipo.etiqueta }}</h3>
+                    <p class="registro-titulo-tipo__ayuda">{{ tipo.ayuda }}</p>
+
+                    @for (titulo of titulosDe(tipo.codigo); track titulo.id) {
+                      <div class="registro-titulo">
+                        <label class="registro-titulo__campo">
+                          <span class="sr-only">Nombre del {{ tipo.etiqueta.toLowerCase() }}</span>
+                          <input
+                            type="text"
+                            class="registro-titulo__nombre"
+                            placeholder="Cómo se llama el título"
+                            [value]="titulo.nombre"
+                            [attr.data-testid]="'registro-pro-titulo-nombre-' + titulo.id"
+                            (input)="escribirNombreDeTitulo(titulo.id, $any($event.target).value)"
+                          />
+                        </label>
+                        @if (titulo.archivo; as archivo) {
+                          <p class="registro-titulo__archivo">
+                            <span class="registro-titulo__nombre-archivo">{{ archivo }}</span>
+                            <span class="registro-titulo__peso">
+                              {{ pesoLegible(titulo.pesoBytes) }}
+                            </span>
+                            <button
+                              type="button"
+                              app-button
+                              variant="ghost"
+                              size="sm"
+                              (clicked)="quitarArchivoDeTitulo(titulo.id)"
+                            >
+                              Quitar archivo
+                            </button>
+                          </p>
+                        } @else {
+                          <label class="registro-titulo__subir">
+                            <input
+                              type="file"
+                              class="sr-only"
+                              [accept]="formatosDeRespaldo"
+                              [attr.data-testid]="'registro-pro-titulo-archivo-' + titulo.id"
+                              (change)="adjuntarArchivoATitulo(titulo.id, $event)"
+                            />
+                            <span class="registro-titulo__label-btn">Adjuntar archivo</span>
+                          </label>
+                        }
+                        <button
+                          type="button"
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          [attr.aria-label]="'Quitar ' + tipo.etiqueta"
+                          (clicked)="quitarTitulo(titulo.id)"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    }
+
+                    <button
+                      type="button"
+                      app-button
+                      variant="secondary"
+                      size="sm"
+                      [attr.data-testid]="'registro-pro-agregar-' + tipo.codigo"
+                      (clicked)="agregarTitulo(tipo.codigo)"
+                    >
+                      + Agregar {{ tipo.etiqueta.toLowerCase() }}
+                    </button>
+                  </section>
+                }
+                <p class="registro-titulos__ayuda">PDF, JPG o PNG. Máximo 5 MB por archivo.</p>
+                @if (errorAdjunto(); as error) {
+                  <p class="registro-titulos__error" role="alert">{{ error }}</p>
+                }
+              </div>
             </ng-template>
 
             <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
@@ -246,6 +390,49 @@
                  el mismo select acotado que el alta de paciente
                  (`app-location-picker`). Acá es opcional, así que un catálogo
                  caído no frena el alta: se avisa y se sigue (AC-05-15). -->
+            <!-- Las especialidades que se agregan además de la principal. Antes
+                 eran dos casillas fijas que casi nadie llenaba, y un techo de
+                 tres que dejaba afuera a quien tiene más. -->
+            <ng-template appCampoPersonalizado="especialidadesExtra">
+              @for (extra of especialidadesExtra(); track $index) {
+                <app-form-field [label]="'Especialidad ' + ($index + 2)">
+                  <div class="registro__especialidad-extra">
+                    <app-select
+                      [attr.data-testid]="'registro-pro-especialidad-extra-' + $index"
+                      [options]="opcionesEspecialidadFiltradas()"
+                      placeholder="Sin especificar"
+                      [value]="extra === '' ? null : extra"
+                      (valueChange)="elegirEspecialidadExtra($index, $event)"
+                    />
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [iconOnly]="true"
+                      [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
+                      [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
+                      [attr.data-testid]="'registro-pro-quitar-especialidad-' + $index"
+                      (clicked)="quitarEspecialidad($index)"
+                    >
+                      <app-nav-icon name="remove" />
+                    </button>
+                  </div>
+                </app-form-field>
+              }
+
+              <button
+                app-button
+                type="button"
+                variant="ghost"
+                size="sm"
+                data-testid="registro-pro-agregar-especialidad"
+                (clicked)="agregarEspecialidad()"
+              >
+                + Agregar otra especialidad
+              </button>
+            </ng-template>
+
             <ng-template appCampoPersonalizado="municipio">
               @if (catalogoMunicipiosCaido()) {
                 <p class="registro__catalogo-caido">

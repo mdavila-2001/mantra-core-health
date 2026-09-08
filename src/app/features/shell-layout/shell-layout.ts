@@ -154,8 +154,10 @@ export class ShellLayout {
       return null;
     }
 
-    return this.sections()
-      .flatMap((seccion) => seccion.items)
+    // Los fijos entran en la cuenta: se dibujan fuera de los grupos, pero son
+    // destinos del menú igual que el resto, y sin esto «Mi perfil» era la única
+    // entrada de la barra que nunca se marcaba al estar parado en ella.
+    return [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
       .map((item) => item.route)
       .filter((ruta) => contiene(ruta, url))
       .reduce<string | null>(
@@ -281,6 +283,17 @@ export class ShellLayout {
       },
     ];
   });
+
+  /**
+   * Los dos destinos que van sueltos arriba de la barra: «Mi perfil» y
+   * «Notificaciones».
+   *
+   * Se dibujan con la MISMA plantilla que un ítem dentro de un grupo, así que
+   * heredan la marca de «acá estás», el `data-route` de las pruebas y el estado
+   * deshabilitado sin que haya que repetirlos. Quién los declara es el registro
+   * de secciones (`pinnedTop`), no esta pantalla.
+   */
+  protected readonly destinosFijos = computed(() => this.navigation.pinnedItems());
 
   /** Nombre de la organización activa, para el rótulo del selector. */
   protected readonly organizacionActiva = computed(() => {
