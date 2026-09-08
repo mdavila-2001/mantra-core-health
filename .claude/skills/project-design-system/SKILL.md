@@ -15,14 +15,15 @@ reinventes: consúltalo.
 | Color, espaciado, tipografía | `docs/design-system/{colors,spacing,typography}.md` |
 | Responsive, temas, motion, iconos | `docs/design-system/{responsive-design,themes,motion,icons}.md` |
 | Principios | `docs/design-system/principles.md` |
-| 60 componentes clasificados | `docs/components/catalog.md` |
+| Componentes, dato vigente | salida de `component-index.generated.ts` en cada build |
+| Componentes, lectura en prosa (desactualizada) | `docs/components/catalog.md` |
 | Inventario generado desde el código | `docs/reports/generated/component-inventory.md` |
 | Reglas de composición | `docs/components/composition-rules.md` |
 
 ## Regla 1 — Reutilizar antes de crear
 
-Hay 49 componentes en `shared/` organizados en átomos (16), moléculas (20) y
-organismos (16). Antes de crear cualquier primitiva visual:
+Hay **458 componentes** — 23 átomos, 37 moléculas, 29 organismos y 134 maquetas,
+sobre 232 pantallas. Antes de crear cualquier primitiva visual:
 
 1. buscar en `docs/components/catalog.md`;
 2. buscar en `src/app/shared/`;

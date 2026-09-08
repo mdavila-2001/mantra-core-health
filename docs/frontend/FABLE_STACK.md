@@ -31,8 +31,8 @@ prohíbe (sección 16 Regla 1, sección 53).
 |---|---|
 | `INVENTORY.md` | `docs/index.md` + `docs/reports/generated/` |
 | `DESIGN_SYSTEM.md` | `docs/design-system/` (tokens, colors, spacing, typography, responsive-design, themes, motion, icons, principles) |
-| `ROUTE_MATRIX.md` | `docs/routes/route-catalog.md` + `docs/reports/generated/route-inventory.md` |
-| `COMPONENT_MATRIX.md` | `docs/components/catalog.md` + `docs/reports/generated/component-inventory.md` |
+| `ROUTE_MATRIX.md` | `docs/reports/generated/rutas.json` (**232 rutas**, vigente) |
+| `COMPONENT_MATRIX.md` | inventario generado en cada build (**458 componentes**) |
 | Gate de accesibilidad | `docs/accessibility/` + `audit-report.md` |
 | Estrategia de pruebas | `docs/testing/` (incluye `visual-regression.md`, `recorrido-visual.md`) |
 
