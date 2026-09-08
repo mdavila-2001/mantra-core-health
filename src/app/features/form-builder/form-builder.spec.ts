@@ -73,17 +73,6 @@ describe('FormBuilder', () => {
     return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
   }
 
-  /**
-   * Una señal escribible, **sin `bind`**: `bind` devuelve una función nueva que
-   * no conserva `.set`/`.update`, que son propiedades de la señal original y no
-   * del prototipo de función.
-   */
-  function señal<T>(nombre: string): { set: (v: T) => void } {
-    return (componente as unknown as Record<string, { set: (v: T) => void }>)[
-      nombre
-    ];
-  }
-
   /** Deja la pantalla con la plantilla abierta y su presupuesto leído. */
   function abrirPlantilla(
     plantilla: ChartTemplate = PLANTILLA,
@@ -161,30 +150,29 @@ describe('FormBuilder', () => {
     }
   });
 
-  it('el campo que se está escribiendo ya aparece en la vista previa', () => {
-    // Es lo que convierte la vista previa en una respuesta y no en un resumen:
-    // el quinto campo abre una página nueva **mientras** se decide agregarlo.
-    abrirPlantilla({ ...PLANTILLA, fields: [1, 2, 3, 4].map(estandar) });
-    expect(interno<() => readonly unknown[]>('paginas')()).toHaveLength(1);
+  it('la vista previa se muestra sólo cuando se la pide', () => {
+    // Antes estaba fija en una columna al lado del editor, que dejaba el
+    // trabajo en media pantalla. Ahora es una cosa o la otra.
+    abrirPlantilla();
+    expect(interno<() => boolean>('enPrevia')()).toBe(false);
 
-    señal<string>('nombreDelCampo').set('¿Fuma?');
-    harness.detectChanges();
+    interno<() => void>('alternarPrevia')();
+    expect(interno<() => boolean>('enPrevia')()).toBe(true);
 
-    expect(interno<() => readonly unknown[]>('paginas')()).toHaveLength(2);
+    interno<() => void>('alternarPrevia')();
+    expect(interno<() => boolean>('enPrevia')()).toBe(false);
   });
 
   it('agregar un campo declara la definición y después la cuelga de la sección', () => {
     abrirPlantilla();
 
-    señal<string>('nombreDelCampo').set('¿Fuma?');
-    señal<string>('tipoDelCampo').set('boolean');
-    harness.detectChanges();
-
     interno<() => void>('agregarCampo')();
 
+    // El campo nace vacío y se escribe encima, como en un editor: el nombre
+    // provisional existe porque el backend no acepta uno en blanco.
     const definicion = http.expectOne('/forms/field-definitions');
     expect(definicion.request.body).toEqual(
-      expect.objectContaining({ name: '¿Fuma?', dataType: 'boolean' }),
+      expect.objectContaining({ name: 'Campo nuevo', dataType: 'string' }),
     );
     // El código lleva el prefijo de la plantilla: `dynamic_field_definitions`
     // es una tabla global y dos consultorios chocarían por «Fuma».
@@ -219,7 +207,6 @@ describe('FormBuilder', () => {
       remaining: 0,
     });
 
-    señal<string>('nombreDelCampo').set('¿Fuma?');
     harness.detectChanges();
 
     expect(interno<() => boolean>('admiteCamposPropios')()).toBe(false);
@@ -229,7 +216,6 @@ describe('FormBuilder', () => {
   it('con el presupuesto agotado tampoco', () => {
     abrirPlantilla(PLANTILLA, { ...PRESUPUESTO, used: 12, remaining: 0 });
 
-    señal<string>('nombreDelCampo').set('Otro');
     harness.detectChanges();
 
     expect(interno<() => boolean>('quedanCampos')()).toBe(false);
@@ -249,7 +235,6 @@ describe('FormBuilder', () => {
       .flush('nope', { status: 500, statusText: 'Server Error' });
     harness.detectChanges();
 
-    señal<string>('nombreDelCampo').set('¿Fuma?');
     harness.detectChanges();
 
     expect(interno<() => boolean>('puedeCrear')()).toBe(true);

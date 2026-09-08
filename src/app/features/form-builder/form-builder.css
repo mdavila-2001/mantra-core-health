@@ -55,7 +55,7 @@
 /* Dos columnas: qué tiene el formulario, y cómo se ve servido. En pantalla
    angosta la vista previa cae debajo — apilarla al lado la dejaría ilegible,
    y es justamente lo que hay que poder leer. */
-.constructor__columnas {
+.constructor__columnas-YA-NO-SE-USA {
   display: grid;
   gap: var(--sp-6);
   grid-template-columns: minmax(0, 1fr);
@@ -149,4 +149,51 @@
 
 .constructor__plantilla-nombre {
   font-weight: 600;
+}
+
+/* ---- una cosa a la vez: editor o previa ---------------------------------- */
+
+.constructor__encabezado-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* El editor ocupa el ancho: antes vivía en media columna porque la previa
+   estaba fija al lado, y una lista de campos en 50 % de la pantalla es una
+   lista que se lee en zigzag. */
+.constructor__campos {
+  display: grid;
+  gap: var(--sp-3);
+  max-inline-size: 48rem;
+}
+
+.constructor__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.constructor__agregar {
+  margin-block-start: var(--sp-2);
+}
+
+.constructor__previa {
+  display: grid;
+  gap: var(--sp-3);
+  max-inline-size: 48rem;
+}
+
+/* La nota dice que lo que se toca no se guarda: es lo que evita que alguien
+   crea que está completando el formulario de verdad. */
+.constructor__previa-nota {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }

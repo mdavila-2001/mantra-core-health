@@ -1,0 +1,123 @@
+<!-- ─── La tarjeta de un campo ───────────────────────────────────────────────
+     Siempre abierta, como en Google Forms: arriba qué se pregunta y de qué
+     tipo, debajo el control con el que se va a responder, y al pie lo que se
+     le puede hacer. No hay estado plegado — plegarla escondía justo lo que hay
+     que ver para decidir si el campo está bien. -->
+<div class="editor-campo__cabecera">
+  @if (editable()) {
+    <app-input
+      class="editor-campo__nombre-campo"
+      [value]="nombre()"
+      (valueChange)="cambiarNombre($event)"
+      (blurred)="guardarNombre()"
+      placeholder="Nombre del campo"
+      [attr.aria-label]="'Nombre del campo ' + (campo().name || '')"
+      data-testid="editor-campo-nombre"
+    />
+
+    <span class="editor-campo__tipo">
+      <app-data-type-icon class="editor-campo__icono" [tipo]="tipo()" />
+      <app-select
+        [options]="tipos"
+        [value]="tipo()"
+        (valueChange)="cambiarTipo($event)"
+        [attr.aria-label]="'Tipo de dato de ' + (campo().name || 'el campo')"
+        data-testid="editor-campo-tipo"
+      />
+    </span>
+  } @else {
+    <!-- Del estándar: se lee, no se edita. Son la parte que hace comparable una
+         ficha entre consultorios, y el backend los rechaza igual. -->
+    <span class="editor-campo__nombre-fijo">
+      {{ campo().name }}
+      @if (campo().required) {
+        <span class="editor-campo__obligatorio" aria-label="obligatorio">*</span>
+      }
+    </span>
+
+    <span class="editor-campo__tipo editor-campo__tipo--fijo">
+      <app-data-type-icon class="editor-campo__icono" [tipo]="campo().dataType" />
+      <span class="editor-campo__tipo-nombre">{{ etiquetaDelTipo() }}</span>
+    </span>
+  }
+</div>
+
+<!-- El control con el que se responde. Deshabilitado a propósito: es una
+     muestra de cómo se va a ver, no un lugar donde escribir. -->
+<div class="editor-campo__muestra" aria-hidden="true">
+  @switch (familia()) {
+    @case ('parrafo') {
+      <app-textarea [value]="''" [disabled]="true" [rows]="2" placeholder="Texto largo" />
+    }
+    @case ('numero') {
+      <app-input type="number" [value]="''" [disabled]="true" placeholder="0" />
+    }
+    @case ('booleano') {
+      <app-checkbox [checked]="false" [disabled]="true" label="Sí" />
+    }
+    @case ('fecha') {
+      <!-- Texto con el formato dentro y no `type="date"`: el input del sistema
+           no acepta ese tipo —las fechas de verdad las pide `app-date-picker`—
+           y acá alcanza con mostrar la forma del dato. -->
+      <app-input [value]="''" [disabled]="true" placeholder="dd/mm/aaaa" />
+    }
+    @default {
+      <app-input [value]="''" [disabled]="true" placeholder="Texto corto" />
+    }
+  }
+</div>
+
+@if (editable()) {
+  <!-- El pie: mover, quitar y obligatorio. Sólo en los campos propios — sobre
+       uno del estándar serían controles que el servidor va a negar. -->
+  <div class="editor-campo__pie">
+    <span class="editor-campo__controles">
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [disabled]="esPrimero()"
+        aria-label="Subir el campo"
+        (click)="mover.emit(-1)"
+      >↑</button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [disabled]="esUltimo()"
+        aria-label="Bajar el campo"
+        (click)="mover.emit(1)"
+      >↓</button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        class="editor-campo__borrar"
+        [attr.aria-label]="'Quitar ' + (campo().name || 'el campo') + ' del formulario'"
+        (click)="borrar.emit()"
+        data-testid="editor-campo-borrar"
+      >Quitar</button>
+    </span>
+
+    <span class="editor-campo__pie-derecha">
+      @if (guardando()) {
+        <span class="editor-campo__estado" role="status">Guardando…</span>
+      } @else if (guardado()) {
+        <span class="editor-campo__estado" role="status">Guardado</span>
+      }
+      <app-checkbox
+        [checked]="obligatorio()"
+        (checkedChange)="cambiarObligatorio($event)"
+        label="Obligatorio"
+        data-testid="editor-campo-obligatorio"
+      />
+    </span>
+  </div>
+} @else {
+  <div class="editor-campo__pie">
+    <span class="editor-campo__estado">Del estándar · no se edita</span>
+  </div>
+}

@@ -107,9 +107,50 @@ function emitir(request: HttpRequest<unknown>, respuesta: MockReply): Observable
       statusText: 'OK',
       url: request.url,
       headers,
-      body: adaptarCuerpo(request, respuesta.body),
+      body: adaptarCuerpo(request, desconectar(respuesta.body)),
     }),
   );
+}
+
+/**
+ * Corta la referencia entre lo que el simulador guarda y lo que la pantalla
+ * recibe: una copia, como la que haría un `JSON.parse` del otro lado del cable.
+ *
+ * ## Por qué hace falta, y qué se rompía sin esto
+ *
+ * Los manejadores devuelven sus objetos **en vivo** —`plantillas.find(...)`
+ * devuelve el objeto del array, no una copia—. Con un backend de verdad eso es
+ * imposible: la respuesta viaja como texto y se vuelve a parsear, así que cada
+ * lectura entrega un objeto nuevo.
+ *
+ * La diferencia no es teórica. Una señal de Angular compara con `Object.is`:
+ * si una pantalla relee algo que no cambió de identidad, `signal.set()` no
+ * detecta cambio y **nada se recalcula**. Eso es exactamente lo que pasaba en
+ * «Formularios»: se agregaba un campo, el simulador lo guardaba, la pantalla
+ * releía la plantilla... y recibía el mismo objeto, así que la lista seguía
+ * mostrando lo de antes. El campo aparecía recién al salir y volver a entrar.
+ *
+ * Peor todavía: como la pantalla se quedaba con el objeto vivo, mutarlo desde
+ * un manejador le cambiaba los datos por debajo sin pasar por ninguna señal.
+ *
+ * Se usa `structuredClone` cuando está y `JSON` como respaldo; lo que no se
+ * puede clonar —un `Blob`, un `FormData`— se deja pasar tal cual, porque son
+ * justo los cuerpos que no son datos.
+ */
+function desconectar(body: unknown): unknown {
+  if (body === null || typeof body !== 'object') return body;
+  if (body instanceof Blob || body instanceof ArrayBuffer || body instanceof FormData) return body;
+  try {
+    return structuredClone(body);
+  } catch {
+    try {
+      return JSON.parse(JSON.stringify(body)) as unknown;
+    } catch {
+      // Un cuerpo que no se puede serializar se entrega como está: romper la
+      // respuesta sería peor que compartir la referencia.
+      return body;
+    }
+  }
 }
 
 /** Un `responseType: 'blob'` espera bytes, no un objeto. */

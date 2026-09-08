@@ -14,9 +14,20 @@
         <h2 class="constructor__titulo">{{ plantilla.name }}</h2>
         <p class="constructor__codigo">{{ plantilla.code }} · versión {{ plantilla.version }}</p>
       </div>
-      <button app-button type="button" variant="ghost" (clicked)="cerrar()">
-        Volver a la lista
-      </button>
+      <div class="constructor__encabezado-acciones">
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          (clicked)="alternarPrevia()"
+          data-testid="ver-previa"
+        >
+          {{ enPrevia() ? 'Volver a editar' : 'Vista previa' }}
+        </button>
+        <button app-button type="button" variant="ghost" (clicked)="cerrar()">
+          Volver a la lista
+        </button>
+      </div>
     </div>
 
     @if (presupuestoEnPalabras(); as texto) {
@@ -41,106 +52,17 @@
       </app-card>
     }
 
-    <div class="constructor__columnas">
-      <section class="constructor__campos">
-        <h3 class="constructor__subtitulo">Campos del formulario estándar</h3>
-        @if (camposEstandar().length === 0) {
-          <p class="constructor__vacio">Este formulario todavía no tiene campos estándar.</p>
-        } @else {
-          <ul class="constructor__lista">
-            @for (campo of camposEstandar(); track porCampo(campo)) {
-              <li class="constructor__campo" data-testid="campo-estandar">
-                <span class="constructor__campo-nombre">{{ campo.name }}</span>
-                <span class="constructor__campo-meta">{{ codigoVisible(campo, plantilla) }}</span>
-                @if (campo.required) {
-                  <app-badge variant="secondary">Obligatorio</app-badge>
-                }
-              </li>
-            }
-          </ul>
-        }
-
-        <h3 class="constructor__subtitulo">Campos de tu organización</h3>
-        @if (camposPropios().length === 0) {
-          <p class="constructor__vacio" data-testid="sin-campos-propios">
-            Todavía no agregaste ninguno. Los que agregues acá los ve tu organización y nadie más.
-          </p>
-        } @else {
-          <ul class="constructor__lista">
-            @for (campo of camposPropios(); track porCampo(campo)) {
-              <li class="constructor__campo" data-testid="campo-propio">
-                <span class="constructor__campo-nombre">{{ campo.name }}</span>
-                <span class="constructor__campo-meta">{{ codigoVisible(campo, plantilla) }}</span>
-                <app-badge variant="success">Tuyo</app-badge>
-                @if (campo.required) {
-                  <app-badge variant="secondary">Obligatorio</app-badge>
-                }
-              </li>
-            }
-          </ul>
-        }
-
-        <!-- ─── Alta de un campo propio ───────────────────────────────────── -->
-        <app-card variant="outlined" padding="lg" class="constructor__alta">
-          <h3 class="constructor__subtitulo">Agregar un campo</h3>
-
-          @if (errorDelAlta(); as mensaje) {
-            <app-alert tone="error" data-testid="alta-error">{{ mensaje }}</app-alert>
-          }
-
-          <form class="constructor__formulario" (submit)="$event.preventDefault()">
-            <app-form-field
-              label="Nombre del campo"
-              hint="Como lo va a leer quien complete el formulario."
-              [required]="true"
-            >
-              <app-input
-                [value]="nombreDelCampo()"
-                (valueChange)="nombreDelCampo.set(comoTexto($event))"
-                placeholder="¿Fuma?"
-                data-testid="campo-nombre"
-              />
-            </app-form-field>
-
-            <app-form-field label="Tipo de dato">
-              <app-select
-                [options]="tiposDeDato"
-                [value]="tipoDelCampo()"
-                (valueChange)="tipoDelCampo.set($event ?? 'string')"
-                data-testid="campo-tipo"
-              />
-            </app-form-field>
-
-            <app-checkbox
-              [checked]="obligatorio()"
-              (checkedChange)="obligatorio.set($event)"
-              label="Obligatorio"
-            />
-
-            <button
-              app-button
-              type="button"
-              variant="primary"
-              [disabled]="!puedeCrear()"
-              [isLoading]="creando()"
-              (clicked)="agregarCampo()"
-              data-testid="agregar-campo"
-            >
-              Agregar al formulario
-            </button>
-          </form>
-        </app-card>
-      </section>
-
+    @if (enPrevia()) {
       <!-- ─── Vista previa ────────────────────────────────────────────────────
-           El mismo motor que sirve el formulario de verdad, con los campos
-           reales: el número de páginas que muestra es el que se va a ver. -->
+           Sólo cuando se pide. Es el mismo motor que sirve el formulario de
+           verdad, con los campos reales: el número de páginas que muestra es el
+           que se va a ver. Tenerla siempre al lado partía la pantalla en dos y
+           dejaba el editor en media columna. -->
       <section class="constructor__previa">
-        <h3 class="constructor__subtitulo">Así se va a ver</h3>
-        <p class="constructor__nota">
-          De a una página, con un tope de cuatro campos y una barra que dice cuánto falta. Si
-          agregás un campo que no entra, se abre una página nueva y lo vas a ver acá antes de
-          guardarlo.
+        <p class="constructor__previa-nota">
+          Así lo va a ver quien complete el formulario: de a una página, con un tope de cuatro
+          campos y una barra que dice cuánto falta. Podés tocar los controles: nada de lo que
+          escribas acá se guarda.
         </p>
         @if (paginas().length === 0) {
           <app-empty-state
@@ -158,7 +80,70 @@
           </div>
         }
       </section>
-    </div>
+    } @else {
+    <section class="constructor__campos">
+      <h3 class="constructor__subtitulo">Campos del formulario estándar</h3>
+      @if (camposEstandar().length === 0) {
+        <p class="constructor__vacio">Este formulario todavía no tiene campos estándar.</p>
+      } @else {
+        <ul class="constructor__lista">
+          @for (campo of camposEstandar(); track porCampo(campo)) {
+            <li data-testid="campo-estandar">
+              <!-- `editable` en falso: se ven y no se tocan. Son la parte que
+                   hace comparable una ficha entre consultorios, y el backend
+                   los rechaza igual. -->
+              <app-field-editor [campo]="campo" [editable]="false" />
+            </li>
+          }
+        </ul>
+      }
+
+      <h3 class="constructor__subtitulo">Campos de tu organización</h3>
+      @if (camposPropios().length === 0) {
+        <p class="constructor__vacio" data-testid="sin-campos-propios">
+          Todavía no agregaste ninguno. Los que agregues acá los ve tu organización y nadie más.
+        </p>
+      } @else {
+        <ul class="constructor__lista">
+          @for (campo of camposPropios(); track porCampo(campo); let i = $index) {
+            <li data-testid="campo-propio">
+              <app-field-editor
+                [campo]="campo"
+                [esPrimero]="i === 0"
+                [esUltimo]="i === camposPropios().length - 1"
+                [guardando]="guardandoCampo() === campo.assignmentId"
+                (guardar)="guardarCampo(campo, $event)"
+                (borrar)="quitarCampo(campo)"
+                (mover)="moverCampo(i, $event)"
+              />
+            </li>
+          }
+        </ul>
+      }
+
+      @if (errorDelAlta(); as mensaje) {
+        <app-alert tone="error" data-testid="alta-error">{{ mensaje }}</app-alert>
+      }
+
+      <!-- ─── Agregar ─────────────────────────────────────────────────────
+           Un botón y no un formulario al pie: el campo nace vacío, se abre en
+           edición y se escribe encima. Es lo que hace un editor. -->
+      <div class="constructor__agregar">
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          [disabled]="!puedeCrear()"
+          [isLoading]="creando()"
+          (clicked)="agregarCampo()"
+          data-testid="agregar-campo"
+        >
+          + Agregar campo
+        </button>
+      </div>
+    </section>
+    }
+
   </div>
 } @else {
   <!-- ─── La lista de formularios estándar ─────────────────────────────────── -->

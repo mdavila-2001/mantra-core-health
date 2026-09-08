@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { concatMap, of } from 'rxjs';
 
 import { ChartTemplatesClient } from '../../core/data-access/chart-templates/chart-templates.client';
 import type {
@@ -22,17 +23,12 @@ import { NavigationService } from '../../core/navigation/navigation.service';
 import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
-import { Badge } from '../../shared/components/atoms/badge/badge';
-import { Checkbox } from '../../shared/components/atoms/checkbox/checkbox';
-import { Input } from '../../shared/components/atoms/input/input';
 import { Progress } from '../../shared/components/atoms/progress/progress';
-import { Select } from '../../shared/components/atoms/select/select';
-import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
-import { FormField } from '../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
+import { FieldEditor, type CambiosDelCampo } from './field-editor/field-editor';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
 import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
@@ -41,24 +37,6 @@ import type {
   PaginaDeFormulario,
   TipoDeControl,
 } from '../../shared/forms/paginated/paginated-form.types';
-
-/**
- * Los tipos de dato que este generador ofrece.
- *
- * Mismo subconjunto que el editor de plantillas del administrador, y por el
- * mismo motivo: `uuid`, `json`, `binary`, `reference` y `code` piden un dato
- * que esta pantalla no pide —un target de referencia, un archivo, un concepto
- * del catálogo—, así que ofrecerlos dejaría campos que el backend rechaza al
- * completarse. Estos seis son los que un campo propio usa en la práctica.
- */
-const TIPOS_DE_DATO: readonly SelectOption<string>[] = [
-  { value: 'string', label: 'Texto corto' },
-  { value: 'text', label: 'Texto largo' },
-  { value: 'integer', label: 'Número entero' },
-  { value: 'decimal', label: 'Número decimal' },
-  { value: 'boolean', label: 'Sí / No' },
-  { value: 'date', label: 'Fecha' },
-];
 
 /** Cómo se dibuja cada tipo de dato cuando el formulario se sirve. */
 const CONTROL_POR_TIPO: Readonly<Record<string, TipoDeControl>> = {
@@ -113,16 +91,12 @@ const CONTROL_POR_TIPO: Readonly<Record<string, TipoDeControl>> = {
   imports: [
     Alert,
     AppButton,
-    Badge,
     Card,
-    Checkbox,
     EmptyState,
-    FormField,
-    Input,
+    FieldEditor,
     PageHeader,
     PaginatedForm,
     Progress,
-    Select,
   ],
   templateUrl: './form-builder.html',
   styleUrl: './form-builder.css',
@@ -135,7 +109,6 @@ export class FormBuilder {
   private readonly toasts = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
-  protected readonly tiposDeDato = TIPOS_DE_DATO;
 
   /* -- Los formularios estándar que se pueden extender ---------------------- */
 
@@ -190,8 +163,8 @@ export class FormBuilder {
       next: (detalle) => {
         this.abierta.set(detalle);
         this.cargandoPlantilla.set(false);
-        this.limpiarCampoNuevo();
-        this.cargarPresupuesto(detalle);
+        this.enPrevia.set(false);
+          this.cargarPresupuesto(detalle);
       },
       error: (error: unknown) => {
         this.cargandoPlantilla.set(false);
@@ -261,21 +234,25 @@ export class FormBuilder {
     return Math.min(100, Math.round((budget.used / budget.maximumFields) * 100));
   });
 
-  /* -- Alta de un campo propio ---------------------------------------------- */
+  /* -- Los campos propios: agregar, editar, quitar y reordenar --------------- */
 
-  protected readonly nombreDelCampo = signal('');
-  protected readonly tipoDelCampo = signal<string>('string');
-  protected readonly obligatorio = signal(false);
   protected readonly creando = signal(false);
   protected readonly alta = signal<ViewState<null>>(ready(null));
 
-  protected readonly comoTexto = (valor: string | number | null): string =>
-    valor === null ? '' : String(valor);
+  /**
+   * Si la pantalla está mostrando la vista previa en vez del editor.
+   *
+   * Una a la vez y no las dos en paralelo: la previa al lado partía la pantalla
+   * en dos columnas y dejaba el editor en media, que es donde se trabaja.
+   */
+  protected readonly enPrevia = signal(false);
+
+  /** El campo con una petición en vuelo, para su botón. */
+  protected readonly guardandoCampo = signal<string | null>(null);
 
   protected readonly puedeCrear = computed(
     () =>
       this.abierta() !== null &&
-      this.nombreDelCampo().trim() !== '' &&
       this.admiteCamposPropios() &&
       this.quedanCampos() &&
       !this.creando(),
@@ -301,22 +278,33 @@ export class FormBuilder {
     return null;
   });
 
+  /** Alterna entre el editor y la previa, plegando lo que estuviera abierto. */
+  protected alternarPrevia(): void {
+    this.enPrevia.update((activa) => !activa);
+  }
+
+  /**
+   * Agrega un campo vacío **y lo abre**.
+   *
+   * Vacío y no con un formulario aparte que lo componga: es lo que hace un
+   * editor —aparece la fila y se escribe encima— y lo que deja agregarlo sin
+   * decidir de antemano su tipo. El nombre provisional lo pide el backend, que
+   * no acepta uno vacío; se reemplaza en cuanto se escribe el de verdad.
+   */
   protected agregarCampo(): void {
     const plantilla = this.abierta();
-    const name = this.nombreDelCampo().trim();
-    if (plantilla === null || name === '' || this.creando()) {
+    if (plantilla === null || this.creando()) {
       return;
     }
 
-    const dataType = this.tipoDelCampo() as TechnicalDataType;
-    const required = this.obligatorio();
+    const name = 'Campo nuevo';
     const code = codigoDeCampo(plantilla.code, name);
 
     this.creando.set(true);
     this.alta.set(loading());
 
-    this.forms.createFieldDefinition({ code, name, dataType }).subscribe({
-      next: (fieldId) => this.colgar(plantilla, fieldId, required, name),
+    this.forms.createFieldDefinition({ code, name, dataType: 'string' }).subscribe({
+      next: (fieldId) => this.colgar(plantilla, fieldId),
       error: (error: unknown) => {
         this.creando.set(false);
         this.alta.set(errorToViewState<null>(error));
@@ -332,12 +320,7 @@ export class FormBuilder {
    * el campo», es «se creó y no se pudo colgar», y son dos cosas distintas para
    * quien tiene que volver a intentarlo.
    */
-  private colgar(
-    plantilla: ChartTemplate,
-    fieldId: string,
-    required: boolean,
-    name: string,
-  ): void {
+  private colgar(plantilla: ChartTemplate, fieldId: string): void {
     this.forms
       .createAssignment({
         fieldId,
@@ -345,19 +328,14 @@ export class FormBuilder {
         ...(plantilla.sectionId === undefined
           ? {}
           : { sectionId: plantilla.sectionId }),
-        required,
+        required: false,
         ordinal: plantilla.fields.length,
       })
       .subscribe({
         next: () => {
           this.creando.set(false);
           this.alta.set(ready(null));
-          this.toasts.success(
-            `«${name}» ya forma parte de ${plantilla.name}.`,
-            'Campo agregado',
-          );
-          this.limpiarCampoNuevo();
-          this.abrir(plantilla);
+          this.recargarYAbrir(plantilla);
         },
         error: (error: unknown) => {
           this.creando.set(false);
@@ -366,10 +344,133 @@ export class FormBuilder {
       });
   }
 
-  private limpiarCampoNuevo(): void {
-    this.nombreDelCampo.set('');
-    this.tipoDelCampo.set('string');
-    this.obligatorio.set(false);
+  /**
+   * Guarda lo editado en un campo propio.
+   *
+   * **Dos llamadas y no una**, por lo mismo que el alta: el nombre y el tipo
+   * viven en la definición —que es global— y lo obligatorio en la asignación,
+   * que es de este formulario. El mismo campo puede ser obligatorio acá y
+   * opcional en otro.
+   *
+   * Se saltea la que no cambió: pedir dos veces por un solo cambio duplica el
+   * trabajo y la ventana en la que algo puede fallar a medias.
+   */
+  protected guardarCampo(campo: ChartTemplateField, cambios: CambiosDelCampo): void {
+    const plantilla = this.abierta();
+    if (plantilla === null || this.guardandoCampo() !== null) {
+      return;
+    }
+
+    const cambioDefinicion =
+      cambios.name !== campo.name || cambios.dataType !== campo.dataType.toLowerCase();
+    const cambioAsignacion = cambios.required !== campo.required;
+
+    // Nada que mandar: el editor se guarda solo y emite también cuando lo
+    // tecleado terminó igual que lo que ya estaba.
+    if (!cambioDefinicion && !cambioAsignacion) {
+      return;
+    }
+
+    this.guardandoCampo.set(campo.assignmentId);
+
+    const definicion = cambioDefinicion
+      ? this.forms.updateFieldDefinition(campo.fieldId, {
+          name: cambios.name,
+          dataType: cambios.dataType as TechnicalDataType,
+        })
+      : of(undefined);
+
+    const asignacion = cambioAsignacion
+      ? this.forms.updateAssignment(campo.assignmentId, { required: cambios.required })
+      : of(undefined);
+
+    // En serie y no en paralelo: son dos escrituras sobre el mismo campo, y
+    // lanzarlas juntas deja la segunda pidiendo sobre un estado que la primera
+    // todavía no confirmó.
+    definicion.pipe(concatMap(() => asignacion)).subscribe({
+      next: () => {
+        this.guardandoCampo.set(null);
+        this.toasts.success(`«${cambios.name}» quedó guardado.`, 'Campo actualizado');
+        this.abrir(plantilla);
+      },
+      error: (error: unknown) => {
+        this.guardandoCampo.set(null);
+        this.alta.set(errorToViewState<null>(error));
+      },
+    });
+  }
+
+  /**
+   * Quita un campo propio del formulario.
+   *
+   * Sin diálogo de confirmación: no borra nada del catálogo global —la
+   * definición sigue existiendo— y volver a agregarlo cuesta menos que el
+   * diálogo. Sobre un campo del estándar este botón no existe.
+   */
+  protected quitarCampo(campo: ChartTemplateField): void {
+    const plantilla = this.abierta();
+    if (plantilla === null) {
+      return;
+    }
+    this.forms.deleteAssignment(campo.assignmentId).subscribe({
+      next: () => {
+        this.toasts.success(`«${campo.name}» ya no está en ${plantilla.name}.`, 'Campo quitado');
+        this.abrir(plantilla);
+      },
+      error: (error: unknown) => this.alta.set(errorToViewState<null>(error)),
+    });
+  }
+
+  /**
+   * Mueve un campo propio un lugar arriba o abajo.
+   *
+   * Se manda el orden entero y no «subí éste»: ver `reorderAssignments`. El
+   * estado local se adelanta al servidor para que la fila se mueva en el acto
+   * —esperar la ida y vuelta para ver el cambio hace que se pulse dos veces—.
+   */
+  protected moverCampo(indice: number, direccion: -1 | 1): void {
+    const plantilla = this.abierta();
+    if (plantilla === null) {
+      return;
+    }
+    const propios = [...this.camposPropios()];
+    const destino = indice + direccion;
+    if (destino < 0 || destino >= propios.length) {
+      return;
+    }
+
+    const [movido] = propios.splice(indice, 1);
+    propios.splice(destino, 0, movido!);
+    this.abierta.set({
+      ...plantilla,
+      fields: [...this.camposEstandar(), ...propios],
+    });
+
+    this.forms
+      .reorderAssignments(
+        plantilla.fieldTargetConceptId,
+        propios.map((c) => c.assignmentId),
+      )
+      .subscribe({
+        // Se recarga igual: el servidor fija el orden, y si se rechazó la
+        // pantalla tiene que volver a la verdad.
+        next: () => this.abrir(plantilla),
+        error: (error: unknown) => {
+          this.alta.set(errorToViewState<null>(error));
+          this.abrir(plantilla);
+        },
+      });
+  }
+
+  /** Relee la plantilla y deja abierto el campo indicado. */
+  private recargarYAbrir(plantilla: ChartTemplate): void {
+    this.chartTemplates.getTemplate(plantilla.id).subscribe({
+      next: (detalle) => {
+        this.abierta.set(detalle);
+        this.cargarPresupuesto(detalle);
+      },
+      error: (error: unknown) => this.alta.set(errorToViewState<null>(error)),
+    });
   }
 
   /* -- La vista previa, con el motor de verdad ------------------------------ */
@@ -391,18 +492,6 @@ export class FormBuilder {
     const campos: CampoDeFormulario[] = plantilla.fields.map((campo) =>
       aCampoDelMotor(campo.fieldId, campo.name, campo.dataType, campo.required),
     );
-
-    const enCurso = this.nombreDelCampo().trim();
-    if (enCurso !== '') {
-      campos.push(
-        aCampoDelMotor(
-          BORRADOR,
-          enCurso,
-          this.tipoDelCampo(),
-          this.obligatorio(),
-        ),
-      );
-    }
 
     return paginarCampos(campos, { tituloPorDefecto: plantilla.name });
   });
@@ -438,9 +527,6 @@ export class FormBuilder {
       : campo.code;
   }
 }
-
-/** La `key` del campo que todavía no existe, en la vista previa. */
-const BORRADOR = '__borrador__';
 
 /** De un campo de la plantilla a lo que el motor de formularios sabe pintar. */
 function aCampoDelMotor(

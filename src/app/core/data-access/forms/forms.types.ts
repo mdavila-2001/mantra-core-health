@@ -171,3 +171,24 @@ export interface ExtensionBudget {
   readonly used: number;
   readonly remaining?: number;
 }
+
+/**
+ * Cambios sobre la definición de un campo propio.
+ *
+ * Todo opcional: se manda sólo lo que cambió. La definición es global, así que
+ * esto afecta al campo en todos los formularios donde esté colgado.
+ */
+export interface UpdateFieldDefinitionInput {
+  readonly name?: string;
+  readonly dataType?: TechnicalDataType;
+}
+
+/**
+ * Cambios sobre la asignación de un campo a un formulario.
+ *
+ * Lo obligatorio vive acá y no en la definición: el mismo campo puede ser
+ * obligatorio en un formulario y opcional en otro.
+ */
+export interface UpdateAssignmentInput {
+  readonly required?: boolean;
+}

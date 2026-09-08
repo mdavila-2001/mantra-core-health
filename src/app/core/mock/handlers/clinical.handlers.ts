@@ -391,40 +391,15 @@ export function registrarClinica(router: MockRouter): void {
 
   /* ---- plantillas de expediente ------------------------------------------- */
 
-  const plantillas = [
-    plantilla('CARDIO-BASE', 'Evaluación cardiológica', ESPECIALIDAD['SP-CARDIO']!, [
-      ['pa_sistolica', 'Presión sistólica', 'NUMBER', true],
-      ['pa_diastolica', 'Presión diastólica', 'NUMBER', true],
-      ['fc', 'Frecuencia cardíaca', 'NUMBER', true],
-      ['soplo', 'Soplo cardíaco', 'BOOLEAN', false],
-      ['nyha', 'Clase funcional NYHA', 'TEXT', false],
-    ]),
-    plantilla('PEDIA-CONTROL', 'Control de niño sano', ESPECIALIDAD['SP-PEDIA']!, [
-      ['peso', 'Peso (kg)', 'NUMBER', true],
-      ['talla', 'Talla (cm)', 'NUMBER', true],
-      ['perimetro', 'Perímetro cefálico', 'NUMBER', false],
-      ['vacunas_al_dia', 'Vacunas al día', 'BOOLEAN', true],
-    ]),
-    plantilla('GINE-PRENATAL', 'Control prenatal', ESPECIALIDAD['SP-GINE']!, [
-      ['semanas', 'Semanas de gestación', 'NUMBER', true],
-      ['altura_uterina', 'Altura uterina', 'NUMBER', false],
-      ['fcf', 'Frecuencia cardíaca fetal', 'NUMBER', true],
-    ]),
-    plantilla('MEDINT-GENERAL', 'Consulta de medicina interna', ESPECIALIDAD['SP-MEDINT']!, [
-      ['motivo', 'Motivo de consulta', 'TEXT', true],
-      ['examen', 'Examen físico', 'TEXT', true],
-    ]),
-  ];
-
   router.get('/charts/templates', ({ query }) => {
     const esp = query.get('specialtyConceptId');
-    return plantillas.filter((t) => esp === null || esp === '' || t.specialtyConceptId === esp);
+    return PLANTILLAS_DE_EXPEDIENTE.filter((t) => esp === null || esp === '' || t.specialtyConceptId === esp);
   });
-  router.get('/charts/templates/:id', ({ params }) => plantillas.find((t) => t.id === params['id']) ?? notFound('Plantilla no encontrada'));
+  router.get('/charts/templates/:id', ({ params }) => PLANTILLAS_DE_EXPEDIENTE.find((t) => t.id === params['id']) ?? notFound('Plantilla no encontrada'));
   router.post('/charts/templates', (request) => {
     const datos = cuerpo<{ specialtyConceptId: string; code: string; name: string; fields: { code: string; name: string; dataType: string; required?: boolean }[] }>(request);
     const nueva = plantilla(datos.code ?? 'NUEVA', datos.name ?? 'Plantilla nueva', datos.specialtyConceptId ?? '', (datos.fields ?? []).map((f) => [f.code, f.name, f.dataType, f.required ?? false] as const));
-    plantillas.push(nueva);
+    PLANTILLAS_DE_EXPEDIENTE.push(nueva);
     return { status: 201, body: nueva };
   });
   router.post('/charts/templates/:id/assignments', (request) => {
@@ -433,11 +408,43 @@ export function registrarClinica(router: MockRouter): void {
   });
 }
 
+/* ---- plantillas de expediente, a nivel de módulo ------------------------
+
+   Fuera de `registrarClinico` porque el motor de formularios —que vive en
+   `surveys-forms.handlers.ts`— cuelga campos propios de estas mismas
+   plantillas. Con el array dentro de la función, `POST /forms/assignments`
+   devolvía un id y el campo no aparecía en ninguna parte.
+   ---------------------------------------------------------------------- */
+export const PLANTILLAS_DE_EXPEDIENTE = [
+  plantilla('CARDIO-BASE', 'Evaluación cardiológica', ESPECIALIDAD['SP-CARDIO']!, [
+    ['pa_sistolica', 'Presión sistólica', 'NUMBER', true],
+    ['pa_diastolica', 'Presión diastólica', 'NUMBER', true],
+    ['fc', 'Frecuencia cardíaca', 'NUMBER', true],
+    ['soplo', 'Soplo cardíaco', 'BOOLEAN', false],
+    ['nyha', 'Clase funcional NYHA', 'TEXT', false],
+  ]),
+  plantilla('PEDIA-CONTROL', 'Control de niño sano', ESPECIALIDAD['SP-PEDIA']!, [
+    ['peso', 'Peso (kg)', 'NUMBER', true],
+    ['talla', 'Talla (cm)', 'NUMBER', true],
+    ['perimetro', 'Perímetro cefálico', 'NUMBER', false],
+    ['vacunas_al_dia', 'Vacunas al día', 'BOOLEAN', true],
+  ]),
+  plantilla('GINE-PRENATAL', 'Control prenatal', ESPECIALIDAD['SP-GINE']!, [
+    ['semanas', 'Semanas de gestación', 'NUMBER', true],
+    ['altura_uterina', 'Altura uterina', 'NUMBER', false],
+    ['fcf', 'Frecuencia cardíaca fetal', 'NUMBER', true],
+  ]),
+  plantilla('MEDINT-GENERAL', 'Consulta de medicina interna', ESPECIALIDAD['SP-MEDINT']!, [
+    ['motivo', 'Motivo de consulta', 'TEXT', true],
+    ['examen', 'Examen físico', 'TEXT', true],
+  ]),
+];;
+
 function registroReceta(r: RecetaSimulada) {
   return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === ESTADO_RECETA['RX-DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };
 }
 
-function plantilla(code: string, name: string, specialtyConceptId: string, campos: readonly (readonly [string, string, string, boolean])[]) {
+export function plantilla(code: string, name: string, specialtyConceptId: string, campos: readonly (readonly [string, string, string, boolean])[]) {
   return {
     id: uuid(`chart-template-${code}`),
     specialtyConceptId,
@@ -445,7 +452,10 @@ function plantilla(code: string, name: string, specialtyConceptId: string, campo
     name,
     version: 1,
     statusConceptId: ESTADO['ST-PUBLISHED']!,
-    fieldTargetConceptId: uuid('concept-field-target-encounter'),
+    // Un target por formulario y no uno compartido: `POST /forms/assignments`
+    // sólo recibe el `targetResourceConceptId`, así que con un target común no
+    // había forma de saber a qué formulario colgarle el campo.
+    fieldTargetConceptId: uuid(`concept-field-target-${code}`),
     fields: campos.map(([c, n, dataType, required], i) => ({
       assignmentId: uuid(`tpl-assign-${code}-${c}`),
       fieldId: uuid(`tpl-field-${code}-${c}`),
@@ -454,7 +464,11 @@ function plantilla(code: string, name: string, specialtyConceptId: string, campo
       dataType,
       required,
       ordinal: i + 1,
-      own: true,
+      // `false`: son los campos del formulario **estándar**, los que hacen
+      // comparable una ficha entre consultorios. Marcarlos como propios ponía
+      // los cinco bajo «Campos de tu organización» con el sello «Tuyo», dejaba
+      // vacía la sección del estándar, y ofrecía editar lo que no se toca.
+      own: false,
     })),
     provenance: { sourceTitle: 'Guía de práctica clínica', organization: 'Ministerio de Salud', url: 'https://www.minsalud.gob.bo', license: 'CC BY 4.0', retrievedAt: '2026-01-15' },
   };

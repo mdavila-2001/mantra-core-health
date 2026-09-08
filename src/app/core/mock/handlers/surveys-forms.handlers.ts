@@ -2,6 +2,7 @@ import { reservas } from '../fixtures/agenda';
 import { ESTADO } from '../fixtures/conceptos';
 import { PACIENTE } from '../fixtures/personas';
 import { notFound, type MockRouter } from '../mock-router';
+import { PLANTILLAS_DE_EXPEDIENTE } from './clinical.handlers';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -417,7 +418,151 @@ export function registrarEncuestas(router: MockRouter): void {
     return i === undefined ? notFound('Instancia no encontrada') : { ...item(i), values: i.values };
   });
 
-  router.post('/forms/field-definitions', () => ({ status: 201, body: { id: nuevoId('field') } }));
-  router.post('/forms/assignments', () => ({ status: 201, body: { id: nuevoId('field-assignment') } }));
-  router.get('/forms/assignments/budget', ({ query }) => ({ targetResourceConceptId: query.get('targetResourceConceptId') ?? '', allowTenantFields: true, maximumFields: 20, used: 4, remaining: 16 }));
+  /* -- Campos propios de un formulario --------------------------------------
+
+     Antes eran dos stubs que devolvian un id y **no guardaban nada**: agregar
+     un campo desde «Formularios» parecia funcionar —salia el aviso de exito— y
+     al releer la plantilla el campo no estaba. Ahora las definiciones se
+     guardan y las asignaciones cuelgan de la plantilla de verdad.
+
+     Se cuelgan buscando la plantilla por `targetResourceConceptId`, que es lo
+     unico que el contrato manda; por eso cada plantilla tiene el suyo. */
+
+  /** Las definiciones declaradas, por id. Son globales, como en el backend. */
+  const definiciones = new Map<string, { name: string; dataType: string; code: string }>();
+
+  /** La plantilla cuyo target coincide, o `undefined`. */
+  const plantillaPorTarget = (target: string) =>
+    PLANTILLAS_DE_EXPEDIENTE.find((t) => t.fieldTargetConceptId === target);
+
+  /** La plantilla que tiene colgada esta asignacion, o `undefined`. */
+  const plantillaPorAsignacion = (assignmentId: string) =>
+    PLANTILLAS_DE_EXPEDIENTE.find((t) => t.fields.some((f) => f.assignmentId === assignmentId));
+
+  router.post('/forms/field-definitions', (request) => {
+    const datos = cuerpo<{ code: string; name: string; dataType: string }>(request);
+    const id = nuevoId('field');
+    definiciones.set(id, {
+      code: datos.code ?? id,
+      name: datos.name ?? 'Campo',
+      dataType: datos.dataType ?? 'string',
+    });
+    return { status: 201, body: { id } };
+  });
+
+  router.post('/forms/assignments', (request) => {
+    const datos = cuerpo<{ fieldId: string; targetResourceConceptId: string; required?: boolean; ordinal?: number }>(request);
+    const plantilla = plantillaPorTarget(datos.targetResourceConceptId ?? '');
+    if (plantilla === undefined) return notFound('Formulario no encontrado');
+    const definicion = definiciones.get(datos.fieldId ?? '');
+    if (definicion === undefined) return notFound('El campo no esta declarado');
+
+    const assignmentId = nuevoId('field-assignment');
+    plantilla.fields.push({
+      assignmentId,
+      fieldId: datos.fieldId ?? '',
+      code: definicion.code,
+      name: definicion.name,
+      dataType: definicion.dataType,
+      required: datos.required ?? false,
+      ordinal: plantilla.fields.length + 1,
+      // `true`: lo agrego esta organizacion. Es lo que lo separa del estandar
+      // y lo que lo hace editable en la pantalla.
+      own: true,
+    });
+    return { status: 201, body: { id: assignmentId } };
+  });
+
+  /** Corrige el nombre o el tipo de un campo propio. */
+  router.patch('/forms/field-definitions/:id', (request) => {
+    const fieldId = request.params['id']!;
+    const datos = cuerpo<{ name?: string; dataType?: string }>(request);
+    const definicion = definiciones.get(fieldId);
+    if (definicion !== undefined) {
+      definiciones.set(fieldId, {
+        ...definicion,
+        ...(datos.name === undefined ? {} : { name: datos.name }),
+        ...(datos.dataType === undefined ? {} : { dataType: datos.dataType }),
+      });
+    }
+    // Y en la plantilla, que es de donde lee la pantalla.
+    for (const plantilla of PLANTILLAS_DE_EXPEDIENTE) {
+      plantilla.fields = plantilla.fields.map((f) =>
+        f.fieldId !== fieldId || !f.own
+          ? f
+          : {
+              ...f,
+              ...(datos.name === undefined ? {} : { name: datos.name }),
+              ...(datos.dataType === undefined ? {} : { dataType: datos.dataType }),
+            },
+      );
+    }
+    return { ok: true };
+  });
+
+  /** Cambia si el campo es obligatorio. */
+  router.patch('/forms/assignments/:id', (request) => {
+    const assignmentId = request.params['id']!;
+    const plantilla = plantillaPorAsignacion(assignmentId);
+    if (plantilla === undefined) return notFound('Campo no encontrado');
+    const campo = plantilla.fields.find((f) => f.assignmentId === assignmentId)!;
+    // Los del estandar no se tocan: son la parte que hace comparable una ficha
+    // entre consultorios.
+    if (!campo.own) {
+      return { status: 403, body: { message: 'Un campo del formulario estandar no se puede modificar.' } };
+    }
+    const datos = cuerpo<{ required?: boolean }>(request);
+    plantilla.fields = plantilla.fields.map((f) =>
+      f.assignmentId !== assignmentId
+        ? f
+        : { ...f, ...(datos.required === undefined ? {} : { required: datos.required }) },
+    );
+    return { ok: true };
+  });
+
+  /** Descuelga un campo propio del formulario. */
+  router.delete('/forms/assignments/:id', ({ params }) => {
+    const assignmentId = params['id']!;
+    const plantilla = plantillaPorAsignacion(assignmentId);
+    if (plantilla === undefined) return notFound('Campo no encontrado');
+    const campo = plantilla.fields.find((f) => f.assignmentId === assignmentId)!;
+    if (!campo.own) {
+      return { status: 403, body: { message: 'Un campo del formulario estandar no se puede quitar.' } };
+    }
+    plantilla.fields = plantilla.fields
+      .filter((f) => f.assignmentId !== assignmentId)
+      .map((f, i) => ({ ...f, ordinal: i + 1 }));
+    return { ok: true };
+  });
+
+  /**
+   * Reordena los campos propios.
+   *
+   * Se manda la lista entera y no «subi este»: dos reordenamientos seguidos
+   * sobre una posicion relativa se pisan. Los del estandar conservan su lugar
+   * arriba — el orden que se manda es solo el de los propios.
+   */
+  router.put('/forms/assignments/order', (request) => {
+    const { targetResourceConceptId, assignmentIds } = cuerpo<{ targetResourceConceptId: string; assignmentIds: string[] }>(request);
+    const plantilla = plantillaPorTarget(targetResourceConceptId ?? '');
+    if (plantilla === undefined) return notFound('Formulario no encontrado');
+    const estandar = plantilla.fields.filter((f) => !f.own);
+    const propios = plantilla.fields.filter((f) => f.own);
+    const porId = new Map(propios.map((f) => [f.assignmentId, f]));
+    const ordenados = (assignmentIds ?? [])
+      .map((id) => porId.get(id))
+      .filter((f): f is (typeof propios)[number] => f !== undefined);
+    const faltantes = propios.filter((f) => !assignmentIds?.includes(f.assignmentId));
+    plantilla.fields = [...estandar, ...ordenados, ...faltantes].map((f, i) => ({ ...f, ordinal: i + 1 }));
+    return { ok: true };
+  });
+
+  /** El presupuesto se calcula sobre los campos propios de verdad, no fijo. */
+  router.get('/forms/assignments/budget', ({ query }) => {
+    const target = query.get('targetResourceConceptId') ?? '';
+    const plantilla = plantillaPorTarget(target);
+    const used = plantilla?.fields.filter((f) => f.own).length ?? 0;
+    const maximumFields = 20;
+    return { targetResourceConceptId: target, allowTenantFields: true, maximumFields, used, remaining: maximumFields - used };
+  });
 }
