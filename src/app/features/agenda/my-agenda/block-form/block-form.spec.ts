@@ -1,4 +1,4 @@
-import { aMedianoche, conHora } from './block-form';
+import { aMedianoche, conHora, type BloqueoPedido } from './block-form';
 import { franjasPorDia } from '../my-agenda';
 
 /**
@@ -9,8 +9,8 @@ import { franjasPorDia } from '../my-agenda';
  * pantalla puede verse bien y dejar la agenda abierta un día de más.
  */
 describe('franjasPorDia', () => {
-  function pedido(desde: Date, hasta: Date) {
-    return { desde, hasta, motivo: 'Congreso', dias: 0, franjaHoraria: true };
+  function pedido(desde: Date, hasta: Date): BloqueoPedido {
+    return { desde, hasta, clase: 'especialidad', motivo: 'Quirófano', dias: 0, franjaHoraria: true };
   }
 
   it('manda una excepción por cada día del rango, no una sola de punta a punta', () => {

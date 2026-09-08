@@ -1,0 +1,27 @@
+@if (esProfesional()) {
+  <section class="historial" data-testid="historial-laboral">
+    <h2 class="historial__titulo">Tu historial laboral</h2>
+    <p class="historial__nota">
+      Las instituciones donde ejerciste o ejercés. Lo que agregues, corrijas o
+      elimines queda guardado en tu perfil.
+    </p>
+
+    @if (error(); as mensaje) {
+      <app-alert tone="error" class="historial__alerta">
+        {{ mensaje }}
+        <button type="button" class="historial__reintentar" (click)="recargar()">Reintentar</button>
+      </app-alert>
+    } @else if (cargando()) {
+      <p class="historial__cargando" role="status">Cargando tu historial laboral…</p>
+    } @else {
+      <app-historical-records-table
+        entityLabel="vínculo"
+        toastTitle="Historial laboral"
+        [columns]="columnas"
+        [rows]="filas()"
+        (rowsChange)="filas.set($event)"
+        [persistence]="persistencia"
+      />
+    }
+  </section>
+}

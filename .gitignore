@@ -85,7 +85,9 @@ __screenshots__/
 
 # Worktrees de Git creados por herramientas de asistencia. Son copias completas
 # del repositorio: versionarlas metería el árbol dentro de sí mismo.
-.claude/
+# Excepción: settings.json sí se versiona — declara los plugins/skills del equipo.
+.claude/*
+!.claude/settings.json
 
 # El PDF que la suite unitaria deja en la raíz al correr.
 #

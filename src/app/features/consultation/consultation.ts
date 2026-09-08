@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '@core/auth/auth.service';
 import { SchedulingClient } from '@core/data-access/scheduling/scheduling.client';
@@ -9,21 +9,19 @@ import { TerminologyClient } from '@core/data-access/terminology/terminology.cli
 import { errorToViewState } from '@core/http/error-to-view-state';
 import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
-import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '@shared/components/atoms/button/button-link';
-import { Input } from '@shared/components/atoms/input/input';
 import { Card } from '@shared/components/molecules/card/card';
-import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
+import { AGENDA_CREATE_ROUTE, AGENDA_MINE_ROUTE } from '../agenda/agenda.routes';
 import { miRecursoDeAgenda } from '../agenda/mi-recurso';
 import {
   CITA_QUERY_PARAM,
-  CLINICAL_RECORD_ROUTE,
   MOTIVO_QUERY_PARAM,
   patientChartRoute,
 } from '../clinical-record/clinical-record.routes';
+import { CONSULTATION_WALK_IN_ROUTE } from './consultation.routes';
 
 /** Una cita de hoy, ya resuelta para pintar. */
 export interface CitaDeHoy {
@@ -66,25 +64,16 @@ export interface CitaDeHoy {
  * encuentro atado a su turno. **No es una segunda implementación**: es la misma
  * ruta y los mismos parámetros.
  *
- * ## Y por qué conserva «abrir por identificador»
+ * ## Y por qué conserva «atender sin turno»
  *
  * Porque no todo lo que se atiende tiene turno: una urgencia, alguien que
  * llegó sin cita, una interconsulta. Sin esa salida, la pantalla sería más
- * ordenada y menos útil.
+ * ordenada y menos útil. Vive en su propia vista (`walk-in`), por fases:
+ * paciente, consultorio si hay más de uno, horario.
  */
 @Component({
   selector: 'app-consultation',
-  imports: [
-    AppButton,
-    AppButtonLink,
-    Card,
-    DatePipe,
-    FormField,
-    Input,
-    PageHeader,
-    RouterLink,
-    ViewStateHost,
-  ],
+  imports: [AppButtonLink, Card, DatePipe, PageHeader, RouterLink, ViewStateHost],
   templateUrl: './consultation.html',
   styleUrl: './consultation.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,9 +82,19 @@ export class Consultation {
   private readonly scheduling = inject(SchedulingClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
-  protected readonly rutaDelArchivo = CLINICAL_RECORD_ROUTE;
+  protected readonly rutaSinTurno = CONSULTATION_WALK_IN_ROUTE;
+  protected readonly rutaDePublicar = AGENDA_CREATE_ROUTE;
+  protected readonly rutaDeMiAgenda = AGENDA_MINE_ROUTE;
+
+  /**
+   * Si hay un horario publicado. `null` mientras no se sabe.
+   *
+   * Decide una sola cosa: si la tarjeta de horarios dice «Publicar mi
+   * horario» (no hay ninguno) o «Editar horarios de atención» (ya hay). Las
+   * dos a la vez serían mentira en uno de los dos casos.
+   */
+  protected readonly tieneAgenda = signal<boolean | null>(null);
 
   /**
    * El estado de la lectura, con las citas **crudas**.
@@ -121,9 +120,6 @@ export class Consultation {
     return actual.data.map((cita) => aCitaDeHoy(cita, etiquetas));
   });
 
-  /** Lo tecleado en «abrir por identificador». No viaja a la URL: es de un uso. */
-  protected readonly identificador = signal('');
-
   protected readonly hoy = new Date();
 
   /**
@@ -148,45 +144,35 @@ export class Consultation {
     }.`;
   });
 
+  /** El vacío que se pinta dentro de una tarjeta, y no como texto suelto. */
+  protected readonly vacio = computed(() => {
+    const actual = this.estado();
+    return actual.status === 'empty' ? actual : null;
+  });
+
   constructor() {
     this.cargar();
-  }
-
-  protected fijarIdentificador(valor: string | number | null): void {
-    this.identificador.set(valor === null ? '' : String(valor));
-  }
-
-  /**
-   * Abre la consulta de alguien por su identificador.
-   *
-   * Sin validar la forma del uuid a mano, por lo mismo que el Archivo clínico:
-   * el backend responde 400 a uno mal formado y 404 a uno que no existe, y el
-   * expediente muestra los dos como corresponde. Repetir la validación acá sólo
-   * agregaría un segundo lugar donde equivocarse.
-   */
-  protected abrirPorIdentificador(): void {
-    const id = this.identificador().trim();
-    if (id === '') {
-      return;
-    }
-    void this.router.navigateByUrl(patientChartRoute(encodeURIComponent(id)));
   }
 
   protected cargar(): void {
     const perfil = this.auth.practitionerProfileId();
     const tenantId = this.auth.activeTenantId();
     if (perfil === null || tenantId === null) {
+      this.tieneAgenda.set(false);
       this.estado.set(SIN_AGENDA);
       return;
     }
 
+    this.tieneAgenda.set(null);
     this.estado.set(loading());
     miRecursoDeAgenda(this.scheduling, tenantId, perfil).subscribe({
       next: (propio) => {
         if (propio === null) {
+          this.tieneAgenda.set(false);
           this.estado.set(SIN_AGENDA);
           return;
         }
+        this.tieneAgenda.set(true);
         this.leerCitasDeHoy(propio);
       },
       error: (error: unknown) => this.estado.set(errorToViewState<readonly Booking[]>(error)),
@@ -213,8 +199,8 @@ export class Consultation {
           if (pagina.items.length === 0) {
             this.estado.set(
               empty(
-                { label: 'Ver mi agenda', route: '/schedule/mine' },
-                'No tenés turnos para hoy. Si vas a atender a alguien sin turno, abrí su consulta por identificador acá abajo.',
+                { label: 'Ver mi agenda', route: AGENDA_MINE_ROUTE },
+                'No tenés turnos para hoy. Si vas a atender a alguien sin turno, usá el botón de acá abajo.',
               ),
             );
             return;
@@ -273,6 +259,6 @@ function aCitaDeHoy(cita: Booking, etiquetas: ReadonlyMap<string, string>): Cita
  * turnos sin decirle que primero hay que publicar la agenda.
  */
 const SIN_AGENDA = empty(
-  { label: 'Publicar mi horario', route: '/schedule/new' },
-  'Todavía no tenés agenda publicada, así que nadie puede pedirte turno. Igual podés abrir la consulta de alguien por su identificador.',
+  { label: 'Publicar mi horario', route: AGENDA_CREATE_ROUTE },
+  'Todavía no tenés agenda publicada, así que nadie puede pedirte turno. Igual podés atender a alguien sin turno con el botón de acá abajo.',
 );

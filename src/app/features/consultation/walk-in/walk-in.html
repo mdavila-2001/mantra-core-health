@@ -1,0 +1,223 @@
+<app-page-header
+  title="Atender a alguien sin turno"
+  subtitle="Tres pasos: a quién, dónde y cuándo. Al confirmar, entrás directo a su consulta."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- El indicador de fases: dice en cuál estás y cuántas faltan. Las fases que
+     no se recorren (el consultorio, cuando hay uno solo) no figuran: numerar
+     «1 de 3» y saltar a la 3 confunde más que ayuda. -->
+<ol class="walk-in__fases" aria-label="Pasos">
+  @for (paso of fases(); track paso.id; let i = $index) {
+    <li
+      class="walk-in__fase"
+      [class.walk-in__fase--activa]="paso.id === fase()"
+      [class.walk-in__fase--hecha]="i + 1 < numeroDeFase()"
+      [attr.aria-current]="paso.id === fase() ? 'step' : null"
+    >
+      <span class="walk-in__fase-numero">{{ i + 1 }}</span>
+      <span class="walk-in__fase-label">{{ paso.label }}</span>
+    </li>
+  }
+</ol>
+
+@if (errorDeEnvio(); as mensaje) {
+  <app-alert appAnuncio tone="error" class="walk-in__alert">{{ mensaje }}</app-alert>
+}
+
+@switch (fase()) {
+  <!-- ─── 1 · el paciente ───────────────────────────────────────────────── -->
+  @case ('paciente') {
+    <app-card variant="outlined" padding="lg" class="walk-in__tarjeta">
+      <h2 class="walk-in__titulo">¿A quién vas a atender?</h2>
+
+      @if (!buscadorVedado()) {
+        <app-form-field
+          label="Paciente"
+          hint="Buscá por nombre o por código de paciente."
+          [errorMessage]="pacienteFaltante() ? 'Elegí a quién vas a atender.' : ''"
+        >
+          <app-reference-combobox
+            [selected]="paciente()"
+            [options]="candidatos()"
+            [loading]="buscando()"
+            placeholder="Nombre o código"
+            emptyMessage="Ningún paciente coincide"
+            (searched)="buscarPaciente($event)"
+            (selectionChange)="paciente.set($event)"
+          />
+        </app-form-field>
+
+        <p class="walk-in__o">o, si lo tenés a mano,</p>
+      } @else {
+        <!-- Al médico el padrón le responde 403: no se le deja un buscador
+             que no busca. Su camino es el identificador, que trae cada cita
+             de la agenda y el expediente del paciente. -->
+        <app-alert tone="info" class="walk-in__alert">
+          Tu rol no puede buscar en el padrón de pacientes. Pegá el identificador de perfil: lo trae
+          cada cita de tu agenda, y también el expediente del paciente.
+        </app-alert>
+      }
+
+      <app-form-field
+        label="Identificador de perfil"
+        hint="Lo trae cada cita de tu agenda, y también el expediente del paciente."
+        [errorMessage]="pacienteFaltante() && buscadorVedado() ? 'Pegá el identificador.' : ''"
+      >
+        <app-input
+          type="text"
+          placeholder="00000000-0000-0000-0000-000000000000"
+          [value]="identificador()"
+          (valueChange)="fijarIdentificador($event)"
+        />
+      </app-form-field>
+
+      <div class="walk-in__acciones">
+        <button app-button type="button" variant="ghost" (clicked)="volver()">Cancelar</button>
+        <button app-button type="button" variant="primary" (clicked)="confirmarPaciente()">
+          Siguiente
+        </button>
+      </div>
+    </app-card>
+  }
+
+  <!-- ─── 2 · el consultorio (sólo si hay más de uno) ───────────────────── -->
+  @case ('consultorio') {
+    <app-card variant="outlined" padding="lg" class="walk-in__tarjeta">
+      <h2 class="walk-in__titulo">¿En qué consultorio?</h2>
+      <p class="walk-in__texto">Tenés más de una agenda publicada. Elegí dónde vas a atender.</p>
+
+      <div class="walk-in__fichas" role="radiogroup" aria-label="Consultorio">
+        @for (recurso of listaDeConsultorios(); track recurso.id) {
+          <button
+            type="button"
+            class="walk-in__ficha"
+            role="radio"
+            [class.walk-in__ficha--activa]="consultorio()?.id === recurso.id"
+            [attr.aria-checked]="consultorio()?.id === recurso.id"
+            (click)="elegirConsultorio(recurso)"
+          >
+            <span class="walk-in__ficha-nombre">{{ nombreDe(recurso) }}</span>
+            @if (recurso.site?.addressText; as direccion) {
+              <span class="walk-in__ficha-detalle">{{ direccion }}</span>
+            } @else if (recurso.site === null) {
+              <span class="walk-in__ficha-detalle">Sin consultorio registrado</span>
+            }
+          </button>
+        }
+      </div>
+
+      <div class="walk-in__acciones">
+        <button app-button type="button" variant="ghost" (clicked)="volver()">Atrás</button>
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          [disabled]="consultorio() === null"
+          (clicked)="confirmarConsultorio()"
+        >
+          Siguiente
+        </button>
+      </div>
+    </app-card>
+  }
+
+  <!-- ─── 3 · el horario ────────────────────────────────────────────────── -->
+  @case ('horario') {
+    <app-card variant="outlined" padding="lg" class="walk-in__tarjeta">
+      <h2 class="walk-in__titulo">¿Cuándo?</h2>
+      <p class="walk-in__texto">
+        Los horarios libres de tu agenda para los próximos días
+        @if (consultorio(); as recurso) {
+          en <strong>{{ nombreDe(recurso) }}</strong>
+        }
+        . El de ahora mismo va primero.
+      </p>
+
+      @switch (cupos().status) {
+        @case ('loading') {
+          <p class="walk-in__cargando" role="status">Buscando horarios libres…</p>
+        }
+        @case ('ready') {
+          @if (sinAgenda()) {
+            <app-alert tone="warning" title="Todavía no publicaste tu horario">
+              Sin horarios publicados no hay cupos para reservar.
+              <a app-button alert-actions variant="primary" size="sm" [routerLink]="rutaDePublicar">
+                Publicar mi horario
+              </a>
+            </app-alert>
+          } @else if (dias().length === 0) {
+            <app-alert tone="info" title="No quedan horarios libres en los próximos días">
+              Podés ampliar tus horarios de atención o volver más tarde.
+              <a
+                app-button
+                alert-actions
+                variant="secondary"
+                size="sm"
+                [routerLink]="rutaDePublicar"
+              >
+                Editar horarios de atención
+              </a>
+            </app-alert>
+          } @else {
+            @for (dia of dias(); track dia.clave) {
+              <section class="walk-in__dia" [attr.aria-label]="dia.fecha | date: 'EEEE d MMMM'">
+                <h3 class="walk-in__dia-titulo">{{ dia.fecha | date: 'EEEE d MMM' }}</h3>
+                <div class="walk-in__fichas" role="radiogroup" aria-label="Horario">
+                  @for (c of dia.cupos; track c.id) {
+                    <button
+                      type="button"
+                      class="walk-in__ficha walk-in__ficha--hora"
+                      role="radio"
+                      [class.walk-in__ficha--activa]="cupo()?.id === c.id"
+                      [attr.aria-checked]="cupo()?.id === c.id"
+                      (click)="elegirCupo(c)"
+                    >
+                      {{ c.startAt | date: 'HH:mm' }}–{{ c.endAt | date: 'HH:mm' }}
+                    </button>
+                  }
+                </div>
+              </section>
+            }
+          }
+        }
+        @default {
+          <app-alert tone="error" title="No se pudieron leer los horarios">
+            La agenda no respondió.
+            <button app-button alert-actions size="sm" variant="outline" (clicked)="cargarCupos()">
+              Reintentar
+            </button>
+          </app-alert>
+        }
+      }
+
+      @if (cupo(); as elegido) {
+        <p class="walk-in__resumen" role="status">
+          <strong>{{ nombreDelPaciente() }}</strong> ·
+          {{ elegido.startAt | date: 'EEEE d MMM, HH:mm' }}–{{ elegido.endAt | date: 'HH:mm' }}
+        </p>
+      }
+
+      <div class="walk-in__acciones">
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          [disabled]="enviando()"
+          (clicked)="volver()"
+        >
+          Atrás
+        </button>
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          [disabled]="cupo() === null || enviando()"
+          (clicked)="atender()"
+        >
+          {{ enviando() ? 'Reservando…' : 'Reservar y abrir consulta' }}
+        </button>
+      </div>
+    </app-card>
+  }
+}

@@ -7,121 +7,146 @@
     ========================================================================== */
 
 :host {
-    display: block;
+  display: block;
 }
 
 .consulta__resumen {
-    margin: 0 0 var(--sp-4);
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .consulta__turnos {
-    display: grid;
-    gap: var(--sp-3);
-    margin: 0;
-    padding: 0;
-    list-style: none;
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .consulta__turno {
-    display: grid;
-    gap: var(--sp-3);
-    align-items: start;
+  display: grid;
+  gap: var(--sp-3);
+  align-items: start;
 }
 
 .consulta__hora {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: var(--fs-data);
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .consulta__sin-hora {
-    color: var(--text-secondary);
-    font-family: var(--font-body);
-    font-weight: 400;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-weight: 400;
 }
 
 .consulta__datos {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-1);
-    min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
 }
 
 .consulta__paciente {
-    margin: 0;
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
-    font-weight: 600;
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
 }
 
 .consulta__motivo {
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .consulta__estado {
-    display: flex;
-    gap: var(--sp-2);
-    margin: 0;
+  display: flex;
+  gap: var(--sp-2);
+  margin: 0;
 }
 
 .consulta__accion {
-    display: flex;
+  display: flex;
 }
 
 .consulta__sin-expediente {
-    margin: 0;
-    max-inline-size: 32ch;
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  margin: 0;
+  max-inline-size: 32ch;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 /* Desde tablet, las tres partes en fila: hora, datos y acción. En teléfono se
    apilan — meter tres columnas en 360 px deja el nombre en dos letras por
    renglón. */
 @media (min-width: 700px) {
-    .consulta__turno {
-        grid-template-columns: auto 1fr auto;
-        align-items: center;
-    }
+  .consulta__turno {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+  }
 }
 
-/* ---- el camino sin turno ------------------------------------------------ */
+/* ---- el vacío, dentro de una tarjeta ------------------------------------- */
 
-.consulta__directo {
-    display: block;
-    margin-block-start: var(--sp-6);
+.consulta__vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
 }
 
-.consulta__directo-titulo {
-    margin: 0 0 var(--sp-2);
-    font-size: var(--fs-h3);
-    line-height: var(--lh-h3);
+.consulta__vacio-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
 }
 
-.consulta__directo-texto {
-    margin: 0 0 var(--sp-4);
-    max-inline-size: 68ch;
-    color: var(--text-secondary);
+.consulta__vacio-texto {
+  margin: 0;
+  max-inline-size: 60ch;
+  color: var(--text-secondary);
 }
 
-.consulta__directo-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: var(--sp-3);
+/* ---- las dos salidas ------------------------------------------------------ */
+
+.consulta__salidas {
+  display: grid;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-6);
 }
 
-.consulta__directo-campo {
-    flex: 1 1 22rem;
+.consulta__salida {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.consulta__salida-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.consulta__salida-texto {
+  margin: 0;
+  flex: 1;
+  max-inline-size: 60ch;
+  color: var(--text-secondary);
+}
+
+@media (min-width: 700px) {
+  .consulta__salidas {
+    grid-template-columns: 1fr 1fr;
+  }
 }

@@ -500,9 +500,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // backend. Mismo caso que M13 en `administration/geolocation`. Lo hace
     // cumplir `scripts/check-route-prefixes.mjs`.
     path: 'questionnaires',
-    // §4.H · fuera del menú del médico: se arma una encuesta desde la consulta
-    // del paciente al que se le va a asignar, no como tarea suelta.
-    fueraDelMenuPara: ['PRACTITIONER'],
+    // §4.H la sacaba del menú del médico (`fueraDelMenuPara: ['PRACTITIONER']`):
+    // la encuesta se armaba desde la consulta del paciente, no como tarea
+    // suelta. **Vuelve al menú por decisión del operador del 28/08/2026**: es
+    // el motor de formularios que el médico personaliza para su atención y sin
+    // renglón propio nadie lo encontraba. Con esto el panel del médico pasa el
+    // techo blando de ocho entradas a propósito; lo fija
+    // `navigation.service.spec.ts`.
     label: 'Encuestas',
     group: 'Atención',
     icon: 'survey',
@@ -888,23 +892,25 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // los de una persona y no exige ninguno, porque el backend ya acota la
     // lectura al perfil que se le pide.
     //
-    // Sin `roles` a propósito: el filtro real es tener perfil de paciente, que
-    // no es un rol sino un dato de la cuenta —el claim `pid` del token—, y la
-    // pantalla lo dice cuando falta en vez de esconderse del menú.
+    // Además del rol, la pantalla pide perfil de paciente —el claim `pid` del
+    // token, que es un dato de la cuenta— y lo dice cuando falta.
     path: 'my-account/appointments',
     label: 'Mis turnos',
     group: 'Mi cuenta',
     icon: 'calendar',
-    roles: [ANY_ROLE],
+    // Sólo del paciente (pedido del cliente, 29/08/2026): al médico no se le
+    // ofrece ni se le deja entrar por la dirección —`seccionRolesGuard` rebota
+    // a `/dashboard`—. No es `exclusiveRoles`: el comodín de quien administra
+    // sigue entrando, igual que en «Mis pedidos».
+    roles: ['PATIENT'],
     availability: 'disponible',
     summary: 'Mirá tus turnos y pedí uno nuevo con los horarios disponibles.',
     module: 'M41 scheduling',
   },
   {
     // El archivo clínico del paciente (carril 09): cierra el recorrido que
-    // empieza pidiendo un turno. Sin `roles` por lo mismo que «Mis turnos»: el
-    // filtro real es tener perfil de paciente, que es un dato de la cuenta y no
-    // un rol, y la pantalla lo dice cuando falta en vez de esconderse del menú.
+    // empieza pidiendo un turno. Como «Mis turnos», además del rol pide perfil
+    // de paciente y lo dice cuando falta.
     //
     // Encendida con el carril 09: `GET /clinical/patients/:id/summary` acepta
     // ahora al titular, con el aislamiento comprobado del lado del servidor.
@@ -915,7 +921,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // atenciones, y el ícono de pacientes es el de «gente», que acá sería la
     // persona mirándose a sí misma.
     icon: 'heart',
-    roles: [ANY_ROLE],
+    // Sólo del paciente (pedido del cliente, 29/08/2026): al médico no se le
+    // ofrece ni se le deja entrar por la dirección —`seccionRolesGuard` rebota
+    // a `/dashboard`—. No es `exclusiveRoles`: el comodín de quien administra
+    // sigue entrando, igual que en «Mis pedidos».
+    roles: ['PATIENT'],
     availability: 'disponible',
     summary: 'Tus atenciones y tus recetas, con la descarga en PDF de cada una.',
     module: 'M08 clinical',
@@ -939,13 +949,16 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // mitades del mismo circuito, pero es una entrada aparte y no una pestaña
     // adentro: contestan preguntas de momentos distintos —«qué me pidieron» y
     // «qué me volvió»— y la primera es la que tiene algo pendiente que hacer.
-    // Sin `roles` por lo mismo que su hermana: el filtro real es tener perfil
-    // de paciente, y la pantalla lo dice cuando falta.
+    // A diferencia de su hermana, es sólo del paciente (ver `roles`).
     path: 'my-account/diagnostic-orders',
     label: 'Mis órdenes',
     group: 'Mi cuenta',
     icon: 'orders',
-    roles: [ANY_ROLE],
+    // Sólo del paciente (pedido del cliente, 29/08/2026): al médico no se le
+    // ofrece ni se le deja entrar por la dirección —`seccionRolesGuard` rebota
+    // a `/dashboard`—. No es `exclusiveRoles`: el comodín de quien administra
+    // sigue entrando, igual que en «Mis pedidos».
+    roles: ['PATIENT'],
     availability: 'disponible',
     summary: 'Los estudios que te pidió un médico, con las indicaciones para hacértelos.',
     module: 'M20 diagnostics',
@@ -1002,6 +1015,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'Mi cuenta',
     icon: 'bell',
     roles: [ANY_ROLE],
+    // Fuera del menú lateral, para todos: la campana de la barra superior ya
+    // está siempre a la vista y lleva acá. Dos puertas al mismo cuarto, una de
+    // ellas a tres clics de distancia, no es descubribilidad sino ruido. La
+    // sección sigue entera —ruta, breadcrumb, «Tus accesos» y el enlace de la
+    // campana salen de este registro—: lo único que pierde es el renglón.
+    fueraDelMenu: true,
     availability: 'disponible',
     summary: 'Revisá todos tus avisos: recetas, consultas, turnos y mensajes.',
     module: 'M35 messaging',

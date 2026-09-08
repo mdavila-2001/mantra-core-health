@@ -1,0 +1,233 @@
+<!-- Ficha propia (outlined/lg): el slot de /my-account la enchufa suelta, sin otra card alrededor. -->
+<app-card variant="outlined" padding="lg" class="hist__card">
+<div class="hist__toolbar">
+  @if (hasActiveFilters()) {
+    <button app-button variant="ghost" size="sm" data-testid="hist-limpiar" (clicked)="clearFilters()">
+      Limpiar filtros
+    </button>
+  }
+  <button app-button variant="primary" size="sm" data-testid="hist-agregar" (clicked)="openCreate()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+    Agregar {{ entityLabel() }}
+  </button>
+</div>
+
+<div class="hist__scroll">
+  <table class="hist__table" data-testid="hist-tabla">
+    @if (caption()) {
+      <caption class="hist__caption">{{ caption() }}</caption>
+    }
+    <thead>
+      <tr>
+        @for (column of columns(); track column.key) {
+          <th scope="col" class="hist__cell hist__head">{{ column.header }}</th>
+        }
+        <th scope="col" class="hist__cell hist__head hist__cell--acciones">
+          <span class="sr-only">Acciones</span>
+        </th>
+      </tr>
+      <tr class="hist__filtros">
+        @for (column of columns(); track column.key) {
+          <td class="hist__cell hist__cell--filtro">
+            @if (column.filterable !== false) {
+              @if (column.type === 'select') {
+                <app-select
+                  [ariaLabel]="'Filtrar por ' + column.header"
+                  [options]="column.options ?? []"
+                  placeholder="Todos"
+                  [value]="filterValue(column.key) || null"
+                  (valueChange)="setFilter(column.key, $event)"
+                />
+              } @else {
+                <app-input
+                  type="search"
+                  [testId]="'hist-filtro-' + column.key"
+                  [placeholder]="'Filtrar ' + column.header.toLocaleLowerCase()"
+                  [value]="filterValue(column.key)"
+                  (valueChange)="setFilter(column.key, $event)"
+                />
+              }
+            }
+          </td>
+        }
+        <td class="hist__cell hist__cell--filtro"></td>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of pageRows(); track row.id) {
+        <tr class="hist__row" [attr.data-testid]="'hist-fila-' + row.id">
+          @for (column of columns(); track column.key) {
+            <td class="hist__cell" [class.hist__cell--num]="column.type === 'number'">
+              {{ displayValue(row, column.key) }}
+            </td>
+          }
+          <td class="hist__cell hist__cell--acciones">
+            <div class="hist__acciones">
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                [iconOnly]="true"
+                appTooltip="EDITAR"
+                aria-label="EDITAR"
+                [attr.data-testid]="'hist-editar-' + row.id"
+                (clicked)="openEdit(row)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                [iconOnly]="true"
+                class="hist__borrar"
+                appTooltip="ELIMINAR"
+                aria-label="ELIMINAR"
+                [attr.data-testid]="'hist-borrar-' + row.id"
+                (clicked)="remove(row)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td class="hist__cell hist__cell--vacio" [attr.colspan]="totalColumns()">
+            @if (hasActiveFilters()) {
+              <app-empty-state
+                title="Sin coincidencias"
+                description="Ningún registro coincide con los filtros."
+              />
+            } @else {
+              <app-empty-state
+                title="Todavía no hay registros"
+                [description]="'Agregá tu primer ' + entityLabel() + ' con el botón de arriba.'"
+              />
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (filteredRows().length > 0) {
+  <app-pagination
+    class="hist__paginacion"
+    [totalItems]="filteredRows().length"
+    [page]="page()"
+    (pageChange)="page.set($event)"
+    [pageSize]="currentPageSize()"
+    (pageSizeChange)="currentPageSize.set($event); page.set(1)"
+  />
+}
+</app-card>
+
+<!-- El modal de alta/edición: los mismos campos que la tabla. `Escape` llega
+     por `(cancel)`; el fondo no cierra para no perder lo escrito. -->
+<dialog
+  #modal
+  class="hist__modal"
+  data-testid="hist-modal"
+  [attr.aria-labelledby]="'hist-modal-titulo'"
+  (cancel)="handleNativeCancel($event)"
+>
+  <form class="hist__panel" (submit)="$event.preventDefault(); submit()">
+    <h2 class="hist__titulo" id="hist-modal-titulo" data-testid="hist-modal-titulo">
+      {{ modalTitle() }}
+    </h2>
+
+    <div class="hist__campos">
+      @for (column of columns(); track column.key) {
+        @if (column.type === 'date') {
+          <div class="hist__fecha" [class.has-error]="fieldError(column.key) !== ''">
+            <label [attr.for]="'hist-campo-' + column.key">
+              {{ column.header }}
+              @if (column.required) {
+                <span aria-hidden="true">*</span>
+                <span class="sr-only">(obligatorio)</span>
+              }
+            </label>
+            <input
+              type="date"
+              [id]="'hist-campo-' + column.key"
+              [attr.data-testid]="'hist-campo-' + column.key"
+              [value]="fieldValue(column.key)"
+              [attr.aria-invalid]="fieldError(column.key) !== '' ? true : null"
+              (input)="setField(column.key, $any($event.target).value)"
+            />
+            @if (fieldError(column.key); as error) {
+              <p class="hist__error" role="alert">{{ error }}</p>
+            }
+          </div>
+        } @else {
+          <app-form-field
+            [label]="column.header"
+            [required]="column.required === true"
+            [errorMessage]="fieldError(column.key)"
+          >
+            @switch (column.type) {
+              @case ('select') {
+                <app-select
+                  [options]="column.options ?? []"
+                  [placeholder]="column.placeholder ?? 'Seleccionar'"
+                  [value]="fieldValue(column.key) || null"
+                  [hasError]="fieldError(column.key) !== ''"
+                  (valueChange)="setField(column.key, $event)"
+                />
+              }
+              @case ('textarea') {
+                <app-textarea
+                  [placeholder]="column.placeholder ?? ''"
+                  [value]="fieldValue(column.key)"
+                  [hasError]="fieldError(column.key) !== ''"
+                  (valueChange)="setField(column.key, $event)"
+                />
+              }
+              @default {
+                <app-input
+                  [type]="column.type === 'number' ? 'number' : 'text'"
+                  [testId]="'hist-campo-' + column.key"
+                  [placeholder]="column.placeholder ?? ''"
+                  [value]="fieldValue(column.key)"
+                  [hasError]="fieldError(column.key) !== ''"
+                  (valueChange)="setField(column.key, $event)"
+                />
+              }
+            }
+          </app-form-field>
+        }
+      }
+    </div>
+
+    <div class="hist__modal-acciones">
+      <button
+        app-button
+        variant="ghost"
+        type="button"
+        data-testid="hist-modal-cancelar"
+        [disabled]="saving()"
+        (clicked)="closeModal()"
+      >
+        Cancelar
+      </button>
+      <button
+        app-button
+        variant="primary"
+        type="submit"
+        data-testid="hist-modal-guardar"
+        [isLoading]="saving()"
+      >
+        {{ mode() === 'create' ? 'Agregar' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </form>
+</dialog>

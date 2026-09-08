@@ -26,6 +26,7 @@ import { BlockForm, aMedianoche, conHora, type BloqueoPedido } from './block-for
 import { DayView, type EstadoResuelto, type PedidoDeAccion } from './day-view/day-view';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { AGENDA_CREATE_ROUTE } from '../agenda.routes';
+import { componerMotivo, leerMotivo, tipoDeApi } from '../agenda-blocks';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
 const NOMBRE_DEL_DIA = [
@@ -368,10 +369,13 @@ export class MyAgenda {
     forkJoin(
       intervalos.map((intervalo) =>
         this.scheduling.createException(recurso.id, {
-          exceptionType: 'ABSENCE',
+          // El tipo y la marca del motivo salen del vocabulario de bloqueos:
+          // es lo que después deja leer «trabajo de especialidad» y no un
+          // «ABSENCE» que no distingue el quirófano de las vacaciones.
+          exceptionType: tipoDeApi(pedido.clase),
           startAt: intervalo.startAt.toISOString(),
           endAt: intervalo.endAt.toISOString(),
-          reason: pedido.motivo,
+          reason: componerMotivo(pedido.clase, pedido.motivo),
         }),
       ),
     ).subscribe({
@@ -507,11 +511,24 @@ export class MyAgenda {
             // Las excepciones que ABREN disponibilidad no son bloqueos: pintarlas
             // grises diría lo contrario de lo que pasa.
             .filter((e) => e.isAvailable !== true)
-            .map((e) => ({
-              desde: new Date(e.startAt),
-              hasta: new Date(e.endAt),
-              motivo: e.reason ?? null,
-            })),
+            .map((e) => {
+              // La marca de clase es metadato del front: en el mes se muestra
+              // la clase en palabras y el detalle, nunca el `[especialidad]`
+              // crudo, que no significa nada para quien lo lee.
+              const { clase, detalle } = leerMotivo(e.reason, false);
+              const etiqueta = clase === 'especialidad' ? 'Trabajo de especialidad' : null;
+              const motivo =
+                detalle === ''
+                  ? etiqueta
+                  : etiqueta === null
+                    ? detalle
+                    : `${etiqueta} — ${detalle}`;
+              return {
+                desde: new Date(e.startAt),
+                hasta: new Date(e.endAt),
+                motivo,
+              };
+            }),
         ),
       // Sin los bloqueos el mes sigue sirviendo: muestra la ocupación y los
       // bloqueados se ven como sin agenda. Peor sería no mostrar nada.

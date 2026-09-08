@@ -118,11 +118,10 @@ describe('NavigationService', () => {
         // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
         // perfil de paciente, que es un dato de la cuenta y no un rol.
         '/my-account/questionnaires',
-        // Carril P1: la bandeja es de la persona y el backend sólo devuelve la
-        // propia, así que no hay rol que filtrar.
-        // Carril P9: las preferencias de aviso, pegadas a la bandeja.
+        // Carril P9: las preferencias de aviso. La bandeja en sí
+        // —`/notification-center`— **no** entra al menú: está marcada
+        // `fueraDelMenu` porque la campana de la barra superior ya lleva ahí.
         '/my-account/notification-preferences',
-        '/notification-center',
         '/my-account/identity/verify',
         '/my-account/identity/cases',
       ]);
@@ -165,6 +164,11 @@ describe('NavigationService', () => {
       // NO entra: cumplía `requiresTenant` porque el médico pertenece a su
       // clínica, no porque atienda un mostrador. Sale por `fueraDelMenuPara`,
       // y se sigue llegando por la ruta —lo fija la prueba de abajo—.
+      //
+      // **«Encuestas» es la décima, y se discutió.** §4.H la había sacado del
+      // menú; el operador la devolvió el 28/08/2026 porque es el motor de
+      // formularios que el médico personaliza para su consulta y sin renglón
+      // propio no se encontraba. Cualquier undécima vuelve a discutirse.
       abrirSesion(['PRACTITIONER']);
 
       const fueraDeMiCuenta = service
@@ -181,14 +185,15 @@ describe('NavigationService', () => {
         'Evoluciones',
         'Glosario',
         'Formularios',
+        'Encuestas',
         'Contabilidad',
       ]);
     });
 
     it('lo que sale del menú del médico NO le cierra la puerta', () => {
-      // La distinción entera de `fueraDelMenuPara`: la organización médica, sus
-      // encuestas y su bandeja de visitas dejaron de ocupar un renglón y siguen
-      // siendo suyas — se llega por su ruta y por el enlace de otra pantalla.
+      // La distinción entera de `fueraDelMenuPara`: la organización médica y
+      // su bandeja de visitas dejaron de ocupar un renglón y siguen siendo
+      // suyas («Encuestas» volvió al menú el 28/08/2026, ver arriba) — se llega por su ruta y por el enlace de otra pantalla.
       // Si esto se rompiera, una limpieza de menú habría sido una pérdida
       // silenciosa de acceso, que es justo lo que no puede pasar.
       abrirSesion(['PRACTITIONER']);
@@ -203,7 +208,7 @@ describe('NavigationService', () => {
 
       expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
       expect(rutasDelMenu()).not.toContain('/administration/pharmacy-campaigns');
-      expect(rutasDelMenu()).not.toContain('/questionnaires');
+      expect(rutasDelMenu()).toContain('/questionnaires');
       expect(rutasDelMenu()).not.toContain('/lab-visits');
     });
 

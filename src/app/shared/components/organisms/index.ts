@@ -46,6 +46,24 @@ export type { CargadorDeLeaflet } from './map/map';
 export { distanciaEnLineaRectaKm, ordenarPorCercania } from './map/geo';
 export type { EstadoDePin, PinMapa, PuntoGeo } from './map/pin-mapa.types';
 
+/* Tabla de registros historicos (mi cuenta): paginada, con filtros por
+   columna y alta/edicion/baja con confirmacion y toast. */
+export { HistoricalRecordsTable } from './historical-records-table/historical-records-table';
+export {
+  HISTORICAL_CONFIRM_MESSAGE,
+  HISTORICAL_DEFAULT_PAGE_SIZE,
+  HISTORICAL_FIELD_TYPES,
+  HISTORICAL_RECORD_MODES,
+} from './historical-records-table/historical-records-table.types';
+export type {
+  HistoricalColumn,
+  HistoricalFieldOption,
+  HistoricalFieldType,
+  HistoricalRecord,
+  HistoricalRecordMode,
+  HistoricalRecordPersistence,
+} from './historical-records-table/historical-records-table.types';
+
 export { PageHeader } from './page-header/page-header';
 export type { PageHeaderAction } from './page-header/page-header';
 

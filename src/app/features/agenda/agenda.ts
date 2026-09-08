@@ -28,6 +28,7 @@ import type {
   AgendaResource,
   AgendaSlot,
   Booking,
+  PublishedException,
 } from '../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../core/data-access/terminology/terminology.types';
@@ -53,6 +54,14 @@ import { DataTable } from '../../shared/components/organisms/data-table/data-tab
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { AGENDA_CREATE_ROUTE, bookingNewRoute } from './agenda.routes';
+import {
+  aBloqueoVisible,
+  componerMotivo,
+  tipoDeApi,
+  type BloqueoVisible,
+} from './agenda-blocks';
+import { BlockForm, type BloqueoPedido } from './my-agenda/block-form/block-form';
+import { franjasPorDia } from './my-agenda/my-agenda';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 
 /**
@@ -310,6 +319,7 @@ export interface CupoVisible {
     AppButton,
     AppButtonLink,
     Badge,
+    BlockForm,
     StatusSeal,
     DataTable,
     DatePipe,
@@ -342,6 +352,10 @@ export class Agenda {
   /** Destino del enlace «Crear agenda» del encabezado. */
   protected readonly rutaCrearAgenda = AGENDA_CREATE_ROUTE;
 
+  private readonly celdaPeriodo =
+    viewChild.required<TemplateRef<{ $implicit: BloqueoVisible }>>('celdaPeriodo');
+  private readonly celdaClase =
+    viewChild.required<TemplateRef<{ $implicit: BloqueoVisible }>>('celdaClase');
   private readonly celdaCuando =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaCuando');
   private readonly celdaEstado =
@@ -364,6 +378,11 @@ export class Agenda {
   private readonly recursos = signal<readonly AgendaResource[]>([]);
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
+  /**
+   * Los bloqueos de la agenda: el tiempo que el profesional se reserva y que la
+   * app no ofrece para turnos. Es el contenido principal de la pantalla.
+   */
+  protected readonly bloqueos = signal<ViewState<readonly BloqueoVisible[]>>(loading());
   protected readonly citas = signal<ViewState<readonly CitaVisible[]>>(loading());
   protected readonly cupos = signal<ViewState<readonly CupoVisible[]>>(loading());
 
@@ -587,8 +606,22 @@ export class Agenda {
       : VENTANA_POR_DEFECTO;
   });
 
-  /** Pestaña visible. En la URL para que un enlace pueda apuntar a los cupos. */
-  protected readonly pestana = computed(() => (this.params()?.get('vista') === 'cupos' ? 1 : 0));
+  /**
+   * Pestaña visible, en la URL para que un enlace pueda apuntar a una concreta.
+   *
+   * **Los bloqueos son la pestaña 0 y la que sale sin parámetro.** La ruta
+   * `/schedule` representa la agenda que el profesional se reserva; las citas y
+   * los cupos son la consulta operativa de lo que ya está publicado, y viven un
+   * parámetro más allá. `?vista=cupos` sigue significando lo mismo que antes:
+   * los enlaces que ya existían no cambiaron de destino.
+   */
+  protected readonly pestana = computed(() => {
+    const vista = this.params()?.get('vista');
+    if (vista === 'cupos') {
+      return 2;
+    }
+    return vista === 'citas' ? 1 : 0;
+  });
 
   protected readonly incluirCanceladas = computed(() => this.params()?.get('canceladas') === 'si');
 
@@ -655,6 +688,9 @@ export class Agenda {
    * cuánto hay del otro lado sin cambiar de panel: el panel inactivo no se
    * renderiza, así que un contador dentro del panel no se lee hasta abrirlo.
    */
+  protected readonly rotuloDeBloqueos = computed(() =>
+    rotulo('Bloqueos', cuenta(this.bloqueos())),
+  );
   protected readonly rotuloDeCitas = computed(() => rotulo('Citas', cuenta(this.citas())));
   protected readonly rotuloDeCupos = computed(() => rotulo('Cupos', cuenta(this.cupos())));
 
@@ -756,6 +792,25 @@ export class Agenda {
    * Exige recurso elegido porque la demora es **de una agenda**: sin saber cuál,
    * el aviso no tiene destinatarios.
    */
+  /* -- Bloqueos de agenda -------------------------------------------------- */
+
+  /** Si el panel de bloqueo está abierto. */
+  protected readonly panelDeBloqueoAbierto = signal(false);
+
+  /** Un bloqueo en vuelo: frena el doble envío de un rango largo. */
+  protected readonly bloqueando = signal(false);
+
+  /**
+   * Quién puede reservarse tiempo.
+   *
+   * El mismo permiso que publicar la agenda: bloquear es decidir cuándo la
+   * agenda **no** se ofrece, y es la otra mitad de decidir cuándo sí. Además
+   * hace falta un recurso concreto: la excepción cuelga de él.
+   */
+  protected readonly puedeBloquear = computed(
+    () => this.puedeCrearAgenda() && this.recursoElegido() !== null,
+  );
+
   protected readonly puedeAvisarDemora = computed(
     () => this.puedeAtender() && this.recursoElegido() !== null,
   );
@@ -836,6 +891,12 @@ export class Agenda {
     });
   }
 
+  protected readonly columnasDeBloqueos = computed<readonly ColumnDef<BloqueoVisible>[]>(() => [
+    { key: 'periodo', header: 'Cuándo', priority: 1, cell: this.celdaPeriodo() },
+    { key: 'etiquetaDeClase', header: 'Qué es', priority: 1, cell: this.celdaClase() },
+    { key: 'detalle', header: 'Anotación', priority: 2 },
+  ]);
+
   protected readonly columnasDeCitas = computed<readonly ColumnDef<CitaVisible>[]>(() => [
     { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },
     { key: 'recurso', header: 'Recurso', priority: 1 },
@@ -884,6 +945,7 @@ export class Agenda {
   /** Para el rótulo del bloque cuando no hay selector: cuál agenda se mira. */
   protected readonly hayAgendaQueMirar = computed(() => this.recursoElegido() !== null);
 
+  protected readonly porBloqueo = (fila: BloqueoVisible): string => fila.id;
   protected readonly porCita = (fila: CitaVisible): string => fila.id;
   protected readonly porCupo = (fila: CupoVisible): string => fila.id;
 
@@ -933,7 +995,7 @@ export class Agenda {
   }
 
   protected elegirPestana(indice: number): void {
-    this.publicar({ vista: indice === 1 ? 'cupos' : null });
+    this.publicar({ vista: indice === 2 ? 'cupos' : indice === 1 ? 'citas' : null });
   }
 
   protected recargar(): void {
@@ -1237,6 +1299,7 @@ export class Agenda {
       // No es un error ni un vacío: es un paso previo. Que la pantalla lo diga
       // con su propio aviso y no con un estado de fallo es la diferencia entre
       // «elegí una organización» y «la agenda no anda».
+      this.bloqueos.set(ready([]));
       this.citas.set(ready([]));
       this.cupos.set(ready([]));
       return;
@@ -1264,11 +1327,13 @@ export class Agenda {
                   : 'Esta organización todavía no tiene recursos agendables cargados.',
               )
             : loading();
+      this.bloqueos.set(espera);
       this.citas.set(espera);
       this.cupos.set(espera);
       return;
     }
 
+    this.bloqueos.set(loading());
     this.citas.set(loading());
     this.cupos.set(loading());
     this.citasRecortadas.set(false);
@@ -1278,6 +1343,12 @@ export class Agenda {
     const recurso = { resourceId: recursoId };
 
     forkJoin({
+      // Los bloqueos van en la misma lectura y no en una aparte: son el
+      // contenido principal de la pantalla, y pedirlos después dejaría la
+      // pestaña que se abre primero cargando cuando las otras dos ya están.
+      bloqueos: this.scheduling
+        .listExceptions(recursoId, { from: desde, to: hasta })
+        .pipe(catchError((error: unknown) => of({ error }))),
       citas: this.scheduling
         .searchBookings({
           ...recurso,
@@ -1290,8 +1361,13 @@ export class Agenda {
       cupos: this.scheduling
         .listSlots({ ...recurso, from: desde, to: hasta, limit: TOPE })
         .pipe(catchError((error: unknown) => of({ error }))),
-    }).subscribe(({ citas, cupos }) => {
+    }).subscribe(({ bloqueos, citas, cupos }) => {
       const conceptos = [
+        // El tipo de la excepción llega como uuid; sin traducirlo no hay forma
+        // de saber si un bloqueo sin marca es un feriado o una ausencia.
+        ...('error' in bloqueos
+          ? []
+          : bloqueos.items.map((e) => e.exceptionTypeConceptId)),
         ...('error' in citas ? [] : citas.items.map((cita) => cita.statusConceptId)),
         ...('error' in cupos ? [] : cupos.items.map((cupo) => cupo.statusConceptId)),
       ];
@@ -1301,10 +1377,118 @@ export class Agenda {
         .pipe(catchError(() => of<ConceptLabels>(new Map())))
         .subscribe((etiquetas) => {
           this.etiquetas.set(etiquetas);
+          this.aplicarBloqueos(bloqueos);
           this.aplicarCitas(citas);
           this.aplicarCupos(cupos);
         });
     });
+  }
+
+  /**
+   * Traduce las excepciones leídas a los bloqueos que muestra la tabla.
+   *
+   * Las excepciones con `isAvailable: true` quedan afuera: **abren**
+   * disponibilidad extraordinaria en vez de cerrarla, así que listarlas entre
+   * los bloqueos diría lo contrario de lo que hacen.
+   */
+  private aplicarBloqueos(
+    resultado: { error: unknown } | { items: readonly PublishedException[] },
+  ): void {
+    if ('error' in resultado) {
+      this.bloqueos.set(errorToViewState<readonly BloqueoVisible[]>(resultado.error));
+      return;
+    }
+
+    const ahora = new Date();
+    const filas = resultado.items
+      .filter((e) => e.isAvailable !== true)
+      .map((e) => aBloqueoVisible(e, this.esFeriado(e.exceptionTypeConceptId), ahora))
+      // Del más próximo al más lejano: lo que importa de un bloqueo es cuándo
+      // llega, y el orden del backend no lo garantiza.
+      .sort((a, b) => a.desde.getTime() - b.desde.getTime());
+
+    if (filas.length === 0) {
+      this.bloqueos.set(
+        // Sin `route` a propósito: la salida de este vacío es el botón
+        // «Bloquear tiempo» del encabezado, que abre un panel y no navega. El
+        // organismo lo dibuja como texto, que es lo honesto — un enlace que no
+        // lleva a ninguna parte sería peor que una indicación.
+        empty(
+          { label: 'Usá «Bloquear tiempo», arriba.' },
+          `No tenés tiempo bloqueado ${this.resumenDeVentana()}: toda tu agenda publicada se está ofreciendo para turnos por la app.`,
+        ),
+      );
+      return;
+    }
+
+    this.bloqueos.set(ready(filas));
+  }
+
+  /** Si ese concepto de tipo de excepción es un feriado, según el catálogo. */
+  private esFeriado(conceptId: string): boolean {
+    return /feriado|holiday/i.test(this.label(conceptId));
+  }
+
+  /**
+   * **Bloquear tiempo** — el alta desde esta pantalla.
+   *
+   * Los días enteros son un intervalo continuo y van en una sola llamada. Una
+   * franja va en **una excepción por día**: `POST /exceptions` cierra el
+   * intervalo continuo entre sus dos instantes, y «las tardes del 10 al 24»
+   * mandado de una vez se llevaría puestas también las noches y las mañanas del
+   * medio. Es la misma regla que aplica «Mi agenda», y por eso comparten
+   * `franjasPorDia`.
+   */
+  protected bloquearTiempo(pedido: BloqueoPedido): void {
+    const recursoId = this.recursoElegido();
+    if (recursoId === null || this.bloqueando()) {
+      return;
+    }
+
+    const intervalos = pedido.franjaHoraria
+      ? franjasPorDia(pedido)
+      : [{ startAt: pedido.desde, endAt: pedido.hasta }];
+
+    this.bloqueando.set(true);
+    forkJoin(
+      intervalos.map((intervalo) =>
+        this.scheduling.createException(recursoId, {
+          exceptionType: tipoDeApi(pedido.clase),
+          startAt: intervalo.startAt.toISOString(),
+          endAt: intervalo.endAt.toISOString(),
+          reason: componerMotivo(pedido.clase, pedido.motivo),
+        }),
+      ),
+    ).subscribe({
+      next: (resultados) => {
+        this.bloqueando.set(false);
+        this.panelDeBloqueoAbierto.set(false);
+        const cerrados = resultados.reduce((suma, r) => suma + r.blockedSlots, 0);
+        this.toast.success(
+          cerrados === 0
+            ? 'No había turnos libres que cerrar en ese período.'
+            : `Se cerraron ${cerrados} ${cerrados === 1 ? 'turno libre' : 'turnos libres'}: ya no se ofrecen por la app.`,
+          `Bloqueaste ${pedido.dias} ${pedido.dias === 1 ? 'día' : 'días'}`,
+        );
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.bloqueando.set(false);
+        this.avisarFallo(error, 'No se pudo bloquear ese período.');
+        // Se recarga igual: si alguna llamada entró antes del fallo, la lista
+        // tiene que mostrarlo. Un bloqueo a medias que no se ve es peor que uno
+        // que se ve y se corrige.
+        this.cargarAgenda();
+      },
+    });
+  }
+
+  protected abrirPanelDeBloqueo(): void {
+    this.panelDeBloqueoAbierto.set(true);
+  }
+
+  protected cerrarPanelDeBloqueo(): void {
+    this.panelDeBloqueoAbierto.set(false);
   }
 
   private aplicarCitas(
@@ -1320,7 +1504,11 @@ export class Agenda {
     if (resultado.items.length === 0) {
       this.citas.set(
         empty(
-          { label: 'Ver los cupos libres', route: '/schedule' },
+          // Sin `route` desde que `/schedule` pelado lleva a los bloqueos y no
+          // a los cupos. Un enlace con `?vista=cupos` tampoco serviría:
+          // `routerLink` con una cadena la trata como un segmento de ruta y
+          // escaparía el `?`. La salida es la solapa, que está ahí al lado.
+          { label: 'Cambiá a la solapa «Cupos» para ver los huecos libres.' },
           `No hay citas ${this.resumenDeVentana()} con los filtros puestos.`,
         ),
       );
@@ -1343,7 +1531,7 @@ export class Agenda {
     if (resultado.items.length === 0) {
       this.cupos.set(
         empty(
-          { label: 'Ampliar a 30 días', route: '/schedule' },
+          { label: 'Ampliá la ventana desde el filtro «Ventana», arriba.' },
           `No hay cupos generados ${this.resumenDeVentana()} para lo que estás mirando.`,
         ),
       );

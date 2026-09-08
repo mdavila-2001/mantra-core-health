@@ -15,6 +15,7 @@ import type {
 } from '../../../core/data-access/notifications/notifications.types';
 import { NotificationsStore } from '../../../core/notifications/notifications.store';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 
@@ -79,7 +80,7 @@ const ORDEN: readonly NotificationCategory[] = [
  */
 @Component({
   selector: 'app-notification-preferences',
-  imports: [Alert, AppButton, FormsModule, PageHeader],
+  imports: [Alert, AppButton, FormsModule, PageHeader, Switch],
   templateUrl: './notification-preferences.html',
   styleUrl: './notification-preferences.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

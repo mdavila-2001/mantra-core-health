@@ -161,6 +161,12 @@ describe('Agenda', () => {
     return interno<() => { status: string; data?: readonly Record<string, unknown>[] }>('cupos')();
   }
 
+  function bloqueos() {
+    return interno<() => { status: string; data?: readonly Record<string, unknown>[] }>(
+      'bloqueos',
+    )();
+  }
+
   /**
    * Responde las lecturas del arranque en el orden en que salen.
    *
@@ -169,7 +175,12 @@ describe('Agenda', () => {
    * hay que dejar que el efecto corra antes de esperar el resto.
    */
   async function responder(
-    opciones: { citas?: unknown[]; cupos?: unknown[]; recortadas?: boolean } = {},
+    opciones: {
+      citas?: unknown[];
+      cupos?: unknown[];
+      bloqueos?: unknown[];
+      recortadas?: boolean;
+    } = {},
   ): Promise<void> {
     await responderRecursos();
     responderResto(opciones);
@@ -183,8 +194,19 @@ describe('Agenda', () => {
    * salgan las lecturas que dependen de ella.
    */
   function responderResto(
-    opciones: { citas?: unknown[]; cupos?: unknown[]; recortadas?: boolean } = {},
+    opciones: {
+      citas?: unknown[];
+      cupos?: unknown[];
+      bloqueos?: unknown[];
+      recortadas?: boolean;
+    } = {},
   ): void {
+    // Los bloqueos salen en el mismo `forkJoin` que las citas y los cupos: son
+    // el contenido principal de la pantalla desde que `/schedule` representa la
+    // agenda que el profesional se reserva.
+    http
+      .expectOne((r) => /\/exceptions$/.test(r.url))
+      .flush({ items: opciones.bloqueos ?? [], count: opciones.bloqueos?.length ?? 0 });
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush({
@@ -233,6 +255,9 @@ describe('Agenda', () => {
   async function responderConEstado(code: string, display: string): Promise<void> {
     await responderRecursos();
     http
+      .expectOne((r) => /\/exceptions$/.test(r.url))
+      .flush({ items: [], count: 0 });
+    http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush({
         items: [{ ...CITA, statusConceptId: 'c-estado' }],
@@ -250,6 +275,11 @@ describe('Agenda', () => {
         count: 1,
         limit: 200,
       });
+    // La pestaña de citas no es la que sale por defecto desde que `/schedule`
+    // representa los bloqueos de agenda, y el panel inactivo NO se renderiza:
+    // sin este paso, los botones de la cita no existen en el DOM y la prueba
+    // fallaría por dónde está mirando, no por lo que quiere fijar.
+    await harness.navigateByUrl('/schedule?vista=citas', Agenda);
     harness.detectChanges();
   }
 
@@ -267,6 +297,9 @@ describe('Agenda', () => {
     recursos.flush({ items: [RECURSO], count: 1 });
     await harness.fixture.whenStable();
 
+    http
+      .expectOne((r) => /\/exceptions$/.test(r.url))
+      .flush({ items: [], count: 0 });
     const bookings = http.expectOne((r) => r.url === '/scheduling/bookings');
     // Siete días: la ventana por defecto responde «qué viene», no «qué hay hoy».
     const desde = new Date(bookings.request.params.get('from') ?? '');
@@ -583,6 +616,9 @@ describe('Agenda', () => {
 
     await responderRecursos();
     http
+      .expectOne((r) => /\/exceptions$/.test(r.url))
+      .flush({ items: [], count: 0 });
+    http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
     http
@@ -691,10 +727,160 @@ describe('Agenda', () => {
     expect(interno<() => string>('rotuloDeCupos')()).toBe('Cupos (1)');
   });
 
-  /* ---- acciones sobre una cita (UC-41-09 / UC-41-10) ---------------------- */
+
+  /* ---- bloqueos de agenda ------------------------------------------------
+     `/schedule` representa el tiempo que el profesional se reserva y que la app
+     NO ofrece para turnos —quirófano, guardia, ateneo—. Las citas y los cupos
+     son la lectura de lo que sí quedó publicado. */
+
+  it('la pestaña que sale sin parámetro es la de bloqueos', async () => {
+    await montar();
+    await responder();
+
+    expect(interno<() => number>('pestana')()).toBe(0);
+  });
+
+  it('`?vista=cupos` sigue llevando a los cupos: los enlaces viejos no cambiaron de destino', async () => {
+    await montar({}, '/schedule?vista=cupos');
+    await responder();
+
+    expect(interno<() => number>('pestana')()).toBe(2);
+  });
+
+  it('pide los bloqueos de la misma ventana y los ordena por proximidad', async () => {
+    await montar();
+    await responderRecursos();
+
+    const excepciones = http.expectOne((r) => /\/exceptions$/.test(r.url));
+    expect(excepciones.request.url).toContain('/scheduling/resources/r-1/exceptions');
+    excepciones.flush({
+      items: [
+        {
+          id: 'e-lejos',
+          exceptionTypeConceptId: 'c-absence',
+          startAt: new Date(2026, 8, 20).toISOString(),
+          endAt: new Date(2026, 8, 21).toISOString(),
+          reason: '[ausencia] Trámite',
+        },
+        {
+          id: 'e-cerca',
+          exceptionTypeConceptId: 'c-absence',
+          startAt: new Date(2026, 8, 10, 14, 0).toISOString(),
+          endAt: new Date(2026, 8, 10, 18, 0).toISOString(),
+          reason: '[especialidad] Quirófano',
+        },
+      ],
+      count: 2,
+    });
+    http
+      .expectOne((r) => r.url === '/scheduling/bookings')
+      .flush({ items: [], count: 0, limit: 100, truncated: false });
+    http
+      .expectOne((r) => r.url === '/scheduling/slots')
+      .flush({ items: [], count: 0, limit: 100, truncated: false });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
+
+    const filas = bloqueos().data ?? [];
+    expect(filas.map((f) => f['id'])).toEqual(['e-cerca', 'e-lejos']);
+    expect(filas[0]['etiquetaDeClase']).toBe('Trabajo de especialidad');
+    expect(filas[0]['detalle']).toBe('Quirófano');
+  });
+
+  /**
+   * Una excepción con `isAvailable: true` **abre** disponibilidad
+   * extraordinaria. Listarla entre los bloqueos diría lo contrario de lo que
+   * hace: que ese rato no se ofrece, cuando es justamente el único que sí.
+   */
+  it('las excepciones que abren disponibilidad no se listan como bloqueos', async () => {
+    await montar();
+    await responderRecursos();
+
+    http.expectOne((r) => /\/exceptions$/.test(r.url)).flush({
+      items: [
+        {
+          id: 'e-extra',
+          exceptionTypeConceptId: 'c-extra',
+          startAt: new Date(2026, 8, 10).toISOString(),
+          endAt: new Date(2026, 8, 11).toISOString(),
+          isAvailable: true,
+        },
+      ],
+      count: 1,
+    });
+    http
+      .expectOne((r) => r.url === '/scheduling/bookings')
+      .flush({ items: [], count: 0, limit: 100, truncated: false });
+    http
+      .expectOne((r) => r.url === '/scheduling/slots')
+      .flush({ items: [], count: 0, limit: 100, truncated: false });
+    http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
+
+    expect(bloqueos().status).toBe('empty');
+  });
+
+  /**
+   * El alta manda el tipo del enum de la API y la marca de clase en `reason`.
+   * Sin la marca, el bloqueo vuelve a leerse como una ausencia cualquiera y se
+   * pierde lo único que distingue el quirófano de las vacaciones.
+   */
+  it('bloquear días enteros manda UNA excepción con el tipo y la marca de la clase', async () => {
+    await montar();
+    await responder();
+
+    interno<(pedido: unknown) => void>('bloquearTiempo')({
+      desde: new Date(2026, 8, 10),
+      hasta: new Date(2026, 8, 12),
+      clase: 'especialidad',
+      motivo: 'Quirófano',
+      dias: 2,
+      franjaHoraria: false,
+    });
+
+    const alta = http.expectOne((r) => r.method === 'POST' && /\/exceptions$/.test(r.url));
+    expect(alta.request.body.exceptionType).toBe('ABSENCE');
+    expect(alta.request.body.reason).toBe('[especialidad] Quirófano');
+    alta.flush({ id: 'e-nuevo', blockedSlots: 4 });
+
+    // La lista se recarga: la API además cerró cupos, así que cambió más que
+    // la fila que se acaba de agregar.
+    responderRecarga();
+    expect(bloqueos().status).toBe('empty');
+  });
+
+  /**
+   * Una franja va en UNA excepción POR DÍA. `POST /exceptions` cierra el
+   * intervalo continuo entre sus dos instantes: «las tardes del 10 al 12»
+   * mandado de una sola vez se llevaría puestas las noches y las mañanas.
+   */
+  it('bloquear una franja manda una excepción por cada día del rango', async () => {
+    await montar();
+    await responder();
+
+    interno<(pedido: unknown) => void>('bloquearTiempo')({
+      desde: new Date(2026, 8, 10, 14, 0),
+      hasta: new Date(2026, 8, 12, 18, 0),
+      clase: 'ausencia',
+      motivo: 'Congreso',
+      dias: 3,
+      franjaHoraria: true,
+    });
+
+    const altas = http.match((r) => r.method === 'POST' && /\/exceptions$/.test(r.url));
+    expect(altas).toHaveLength(3);
+    for (const alta of altas) {
+      alta.flush({ id: 'e-x', blockedSlots: 0 });
+    }
+
+    responderRecarga();
+  });
+
+  /* ---- acciones sobre una cita (UC-41-09 / UC-41-10) ----------------------- */
 
   /** La recarga que sigue a una acción: citas, cupos y etiquetas de nuevo. */
   function responderRecarga(): void {
+    http
+      .expectOne((r) => /\/exceptions$/.test(r.url))
+      .flush({ items: [], count: 0 });
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush({ items: [CITA], count: 1, limit: 100, truncated: false });

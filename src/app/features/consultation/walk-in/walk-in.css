@@ -1,0 +1,177 @@
+/* ============================================================================
+    Atender sin turno — el asistente por fases.
+
+    Una tarjeta por fase y nada más en pantalla: la pregunta de turno, sus
+    opciones y dos botones. Las fichas (consultorio, horario) son las mismas
+    de «Publicá tu agenda», para que elegir un horario acá se vea igual que
+    publicarlo allá.
+    ========================================================================== */
+
+:host {
+  display: block;
+  max-width: 46rem;
+}
+
+/* ---- el indicador de fases ---------------------------------------------- */
+
+.walk-in__fases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+.walk-in__fase {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.walk-in__fase-numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--sp-6);
+  block-size: var(--sp-6);
+  border: var(--stroke-1) solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.walk-in__fase--activa {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.walk-in__fase--activa .walk-in__fase-numero,
+.walk-in__fase--hecha .walk-in__fase-numero {
+  background: var(--st-primary-bg);
+  border-color: var(--st-primary-border);
+  color: var(--st-primary-fg);
+}
+
+/* ---- la tarjeta de la fase ---------------------------------------------- */
+
+.walk-in__tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.walk-in__alert {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
+
+.walk-in__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.walk-in__texto {
+  margin: 0;
+  max-inline-size: 68ch;
+  color: var(--text-secondary);
+}
+
+.walk-in__o {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.walk-in__cargando {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* ---- fichas: consultorios y horarios ------------------------------------ */
+
+.walk-in__fichas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.walk-in__ficha {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border: var(--stroke-1) solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.walk-in__ficha--hora {
+  border-radius: var(--r-full);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.walk-in__ficha:focus-visible {
+  outline: var(--stroke-2) solid var(--st-primary-border);
+  outline-offset: 2px;
+}
+
+.walk-in__ficha--activa {
+  background: var(--st-primary-bg);
+  border-color: var(--st-primary-border);
+  color: var(--st-primary-fg);
+  font-weight: 600;
+}
+
+.walk-in__ficha-nombre {
+  font-weight: 600;
+}
+
+.walk-in__ficha-detalle {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 400;
+}
+
+.walk-in__dia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.walk-in__dia-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.walk-in__resumen {
+  margin: 0;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+/* ---- acciones ------------------------------------------------------------ */
+
+.walk-in__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-2);
+}

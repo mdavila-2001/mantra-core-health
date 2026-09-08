@@ -162,12 +162,10 @@ describe('ShellLayout', () => {
       // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
       // perfil de paciente, que es un dato de la cuenta y no un rol.
       '/my-account/questionnaires',
-      // Carril P1: el centro de notificaciones. Tampoco exige rol —cualquiera
-      // con sesión tiene bandeja, y el backend sólo devuelve la propia—, así
-      // que aparece también en una sesión sin roles.
-      // Carril P9: las preferencias de aviso, pegadas a la bandeja.
+      // Carril P9: las preferencias de aviso. El centro de notificaciones no
+      // ocupa renglón lateral —está `fueraDelMenu`—: se llega por la campana
+      // de la barra superior, que está siempre a la vista.
       '/my-account/notification-preferences',
-      '/notification-center',
       '/my-account/identity/verify',
       '/my-account/identity/cases',
       '/design-system',

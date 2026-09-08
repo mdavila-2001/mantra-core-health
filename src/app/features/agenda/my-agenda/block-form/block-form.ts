@@ -6,10 +6,23 @@ import { Card } from '@shared/components/molecules/card/card';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { DatePicker } from '@shared/components/organisms/date-picker/date-picker';
 
+import {
+  CLASES_DE_BLOQUEO,
+  CLASE_POR_DEFECTO,
+  definicionDe,
+  type ClaseDeBloqueo,
+} from '../../agenda-blocks';
+
 /** Lo que el formulario pide bloquear, ya en instantes. */
 export interface BloqueoPedido {
   readonly desde: Date;
   readonly hasta: Date;
+  /**
+   * Qué clase de bloqueo es. Lo que decide si el tiempo se lee como trabajo de
+   * especialidad —el caso que le da sentido a la pantalla— o como una ausencia.
+   */
+  readonly clase: ClaseDeBloqueo;
+  /** Lo que escribió el profesional, sin la marca de la clase. */
   readonly motivo: string;
   /** Para poder contarlo en el aviso de después. */
   readonly dias: number;
@@ -58,6 +71,20 @@ const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 export class BlockForm {
   readonly bloquear = output<BloqueoPedido>();
   readonly cancelar = output<void>();
+
+  protected readonly clases = CLASES_DE_BLOQUEO;
+
+  /**
+   * Qué se está bloqueando.
+   *
+   * Arranca en «trabajo de especialidad» porque es el caso por el que existe
+   * la pantalla: el tiempo que el profesional dedica a su especialidad y que la
+   * app no debe ofrecer para turnos. Vacaciones y feriados usan el mismo
+   * mecanismo, pero son la excepción, no la regla.
+   */
+  protected readonly clase = signal<ClaseDeBloqueo>(CLASE_POR_DEFECTO);
+
+  protected readonly ayudaDeClase = computed(() => definicionDe(this.clase()).ayuda);
 
   protected readonly desde = signal<Date | null>(null);
   protected readonly hasta = signal<Date | null>(null);
@@ -122,6 +149,10 @@ export class BlockForm {
     this.horaHasta.set(valor === null ? '' : String(valor));
   }
 
+  protected elegirClase(clase: ClaseDeBloqueo): void {
+    this.clase.set(clase);
+  }
+
   protected fijarMotivo(valor: string | number | null): void {
     this.motivo.set(valor === null ? '' : String(valor));
   }
@@ -156,6 +187,7 @@ export class BlockForm {
       this.bloquear.emit({
         desde,
         hasta: fin,
+        clase: this.clase(),
         motivo: this.motivo().trim(),
         dias: this.dias(),
         franjaHoraria: false,
@@ -166,6 +198,7 @@ export class BlockForm {
     this.bloquear.emit({
       desde: conHora(desde, this.horaDesde()),
       hasta: conHora(hasta, this.horaHasta()),
+      clase: this.clase(),
       motivo: this.motivo().trim(),
       dias: this.dias(),
       franjaHoraria: true,

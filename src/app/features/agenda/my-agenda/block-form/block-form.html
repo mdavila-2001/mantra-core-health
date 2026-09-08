@@ -1,11 +1,31 @@
 <app-card variant="outlined" padding="lg" class="bloqueo">
-  <h3 class="bloqueo__titulo">Bloquear días u horarios</h3>
+  <h3 class="bloqueo__titulo">Bloquear tiempo en la agenda</h3>
   <p class="bloqueo__texto">
-    Los turnos libres del período dejan de ofrecerse. Las citas ya reservadas
+    El período deja de ofrecerse para turnos por la app. Las citas ya reservadas
     <strong>no se tocan</strong>: si querés cancelarlas, hacelo una por una desde el día.
   </p>
 
   <form class="bloqueo__form" (submit)="$event.preventDefault(); enviar()">
+    <!-- La clase va PRIMERO y no al final con el motivo: es la pregunta que
+         cambia el sentido del bloqueo —tiempo de especialidad que sí se
+         trabaja, contra una ausencia—, y decidirla después de elegir las fechas
+         obliga a releerlas. -->
+    <fieldset class="bloqueo__clase">
+      <legend class="bloqueo__leyenda">¿Qué estás bloqueando?</legend>
+      @for (opcion of clases; track opcion.clave) {
+        <label class="bloqueo__opcion">
+          <input
+            type="radio"
+            name="clase"
+            [attr.data-testid]="'bloqueo-clase-' + opcion.clave"
+            [checked]="clase() === opcion.clave"
+            (change)="elegirClase(opcion.clave)"
+          />
+          <span>{{ opcion.etiqueta }}</span>
+        </label>
+      }
+      <p class="bloqueo__nota" role="status">{{ ayudaDeClase() }}</p>
+    </fieldset>
     <div class="bloqueo__fechas">
       <app-date-picker
         label="Primer día"
@@ -67,11 +87,11 @@
 
     <app-form-field
       label="¿Por qué?"
-      hint="Lo ves sólo vos, para acordarte cuando mires el mes."
+      hint="Lo ves sólo vos, para acordarte cuando mires la agenda. El paciente no lo lee."
     >
       <app-input
         type="text"
-        placeholder="Congreso, vacaciones, trámite…"
+        placeholder="Quirófano, guardia, ateneo, congreso…"
         [value]="motivo()"
         (valueChange)="fijarMotivo($event)"
       />

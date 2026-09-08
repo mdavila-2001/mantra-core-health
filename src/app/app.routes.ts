@@ -321,6 +321,9 @@ const PANTALLAS_HIJAS: Routes = [
     // clínico propio — sin receta no hay nada que comprar.
     path: 'my-account/medical-record/where-to-buy/:requestId',
     title: `${APP_TITLE} - Dónde comprar mi receta`,
+    // Su sección es sólo del paciente desde el 29/08/2026: la hija lleva el
+    // guard como exige `app.routes.spec.ts`.
+    canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/account/medical-record/where-to-buy/where-to-buy')
         .then((m) => m.WhereToBuy)
@@ -640,6 +643,9 @@ const PANTALLAS_HIJAS: Routes = [
     // sección cuelga el breadcrumb.
     path: 'my-account/appointments/book/:slotId',
     title: `${APP_TITLE} - Pedir un turno`,
+    // «Mis turnos» es sólo del paciente desde el 29/08/2026: la hija lleva el
+    // guard como exige `app.routes.spec.ts`.
+    canActivate: [seccionRolesGuard],
     data: { entrada: 'PORTAL' },
     loadComponent: () =>
       import('./features/agenda/booking-new/booking-new')
@@ -1091,6 +1097,13 @@ export const routes: Routes = [
       // de plantillas, no había forma de volver a leerlo.
       pantallaDeOperacion('schedule', 'mine', 'Mi agenda', () =>
         import('./features/agenda/my-agenda/my-agenda').then((m) => m.MyAgenda),
+      ),
+      // Atender a alguien sin turno: el asistente por fases (paciente,
+      // consultorio si hay más de uno, horario) de «Consulta médica». Cuelga
+      // de `consultation` y hereda sus roles: se llega desde la propia
+      // consulta, no desde el menú.
+      pantallaDeOperacion('consultation', 'walk-in', 'Atender sin turno', () =>
+        import('./features/consultation/walk-in/walk-in').then((m) => m.ConsultationWalkIn),
       ),
       pantallaDeAccesoDelegado('delegations/new', 'Nueva delegación', () =>
         import('./features/delegated-access/practitioner-delegate-form/practitioner-delegate-form').then(

@@ -5,7 +5,6 @@ import {
   computed,
   inject,
   input,
-  output,
   signal,
 } from '@angular/core';
 import { switchMap } from 'rxjs';
@@ -14,7 +13,6 @@ import { FilesClient } from '@core/data-access/files/files.client';
 import { CommunityClient } from '@core/data-access/community/community.client';
 import { RouterLink } from '@angular/router';
 
-import { WorkHistory } from '../../work-history/work-history';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
@@ -87,7 +85,6 @@ interface FilaCredencial {
     Tab,
     TabHelpBlock,
     TutorialTarget,
-    WorkHistory,
     // Auto-referencia deliberada (carril 05): la pestaña Preview se pinta
     // reinstanciando este mismo componente en modo ajeno — ver `previewMode`.
     PractitionerProfileView,
@@ -208,9 +205,6 @@ export class PractitionerProfileView {
         },
       });
   }
-
-  /** Alguien agregó un vínculo laboral desde el formulario embebido: el contenedor debe releer el perfil. */
-  readonly trayectoriaCambio = output<void>();
 
   protected readonly pestanaSeleccionada = signal<number>(TAB.TRAYECTORIA);
   protected readonly TAB = TAB;

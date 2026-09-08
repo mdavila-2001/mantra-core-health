@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
-import { resolverEstadosDeCaso } from '../../../../testing/case-status';
 import { MyProfile } from './my-profile';
 
 /** base64url **sobre UTF-8**, como el token real. */
@@ -20,21 +19,22 @@ function jwt(payload: Record<string, unknown>): string {
 }
 
 /**
- * El resumen propio es la única pantalla de este lote que **no** pide rol: pide
- * identidad verificada. Por eso lo que más importa acá es el 403 — que tiene
- * que llegar como una puerta con salida, no como un muro.
+ * **Mi cuenta** (`/my-account`) — la cáscara de dos pestañas.
+ *
+ * Este componente ya no pide nada: las lecturas del perfil se fueron a
+ * `app-profile-settings` y las de los artículos siempre estuvieron en
+ * `app-medical-articles`. Lo que queda por fijar acá es lo que el componente sí
+ * decide:
+ *
+ * 1. **Las dos pestañas**, con esos nombres y en ese orden.
+ * 2. **Que sólo se monte la pestaña activa** — el panel inactivo no existe en el
+ *    DOM, y de eso depende que entrar a la cuenta no dispare las consultas de
+ *    las dos a la vez.
+ * 3. **La franja «Tu acceso»**: a quién se le muestra y cómo nombra los roles.
+ *
+ * La vitrina (`/community/profiles/me`) se responde en cada prueba porque la
+ * pestaña que arranca abierta es la de artículos y ésa sí lee.
  */
-const ESTADO = '22222222-2222-4222-8222-222222222222';
-
-const RESUMEN = {
-  personId: 'p-1',
-  patientProfileId: 'pp-1',
-  patientCode: 'PAC-1',
-  displayName: 'Ana Salas',
-  birthDate: '1985-03-14',
-  personStatus: ESTADO,
-};
-
 describe('MyProfile', () => {
   let fixture: ComponentFixture<MyProfile>;
   let http: HttpTestingController;
@@ -44,151 +44,75 @@ describe('MyProfile', () => {
       imports: [MyProfile],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
-
-    fixture = TestBed.createComponent(MyProfile);
-    http = TestBed.inject(HttpTestingController);
-    // Los sellos de verificación salen de terminología: sin responder esa
-    // búsqueda quedan en neutro y `verify()` protesta.
-    resolverEstadosDeCaso(http);
-    fixture.detectChanges();
-
-    // El historial de verificación se pide **en paralelo** al resumen, no
-    // encadenado: el resumen falla con 403 cuando falta verificar la identidad,
-    // que es justo cuando el historial tiene algo que decir. Se responde acá
-    // para que cada prueba hable de lo suyo.
-    http.expectOne('/identity/me/verification-cases').flush([]);
   });
 
   afterEach(() => http.verify());
 
-  function interno<T>(nombre: string): T {
-    const valor = (fixture.componentInstance as unknown as Record<string, unknown>)[nombre];
-    return (typeof valor === 'function' ? valor.bind(fixture.componentInstance) : valor) as T;
-  }
-
-  function estado() {
-    return interno<() => { status: string; nextAction?: { route?: string; label: string } }>(
-      'resumen',
-    )();
-  }
-
-  it('no manda ningún identificador: el sujeto lo resuelve la sesión', () => {
-    const req = http.expectOne('/profiles/patients/me/summary');
-
-    expect(req.request.method).toBe('GET');
-    expect(req.request.params.keys()).toEqual([]);
-
-    req.flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-    });
-  });
-
   /**
-   * La ficha del vault lo pide con estas palabras: «la vista debe ofrecer el
-   * camino para verificarse, no un error seco». La pantalla no escribe una sola
-   * línea sobre este caso — lo resuelve la traducción de errores, y esta prueba
-   * es la que verifica que de verdad llega.
-   */
-  it('sin identidad verificada, el 403 llega con la puerta a verificarse', () => {
-    http.expectOne('/profiles/patients/me/summary').flush(
-      {
-        code: 'IDENTITY_VERIFICATION_REQUIRED',
-        message: 'Necesitás verificar tu identidad para continuar.',
-      },
-      { status: 403, statusText: 'Forbidden' },
-    );
-    fixture.detectChanges();
-
-    const actual = estado();
-    expect(actual.status).toBe('forbidden');
-    expect(actual.nextAction?.route).toBe('/my-account/identity/verify');
-  });
-
-  it('un 403 corriente NO ofrece salida: no hay nada que la persona pueda hacer', () => {
-    http
-      .expectOne('/profiles/patients/me/summary')
-      .flush(
-        { code: 'FORBIDDEN', message: 'No tenés acceso a este recurso.' },
-        { status: 403, statusText: 'Forbidden' },
-      );
-    fixture.detectChanges();
-
-    const actual = estado();
-    expect(actual.status).toBe('forbidden');
-    // Inventar una acción sería mandarla a un lugar donde tampoco va a poder.
-    expect(actual.nextAction).toBeUndefined();
-  });
-
-  it('traduce el estado de la persona a palabras', () => {
-    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [{ conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' }],
-      count: 1,
-      limit: 50,
-    });
-    fixture.detectChanges();
-
-    expect(interno<() => string>('estado')()).toBe('Activa');
-  });
-
-  it('si el catálogo falla, el resumen se muestra igual y sin uuid a la vista', () => {
-    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-    http
-      .expectOne((r) => r.url === '/terminology/concepts')
-      .error(new ProgressEvent('error'), { status: 500 });
-    fixture.detectChanges();
-
-    expect(estado().status).toBe('ready');
-    expect(interno<() => string>('estado')()).toBe('Sin determinar');
-  });
-
-  /**
-   * El historial de verificación es una petición aparte **a propósito**.
+   * Monta la pantalla con la sesión ya abierta.
    *
-   * Encadenarlo al resumen lo dejaría fuera justo en el caso en que más importa:
-   * el 403 que pide verificar la identidad. Quien cae ahí necesita ver si su
-   * trámite ya está en curso, y con las peticiones encadenadas no vería nada.
+   * El orden importa: `esProfesional()` y los roles salen de señales del token,
+   * y la franja de acceso se dibuja en el primer `detectChanges`.
    */
-  it('el historial sobrevive al 403 del resumen', () => {
-    http.expectOne('/profiles/patients/me/summary').flush(
-      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
-      { status: 403, statusText: 'Forbidden' },
-    );
-    fixture.detectChanges();
-
-    expect(estado().status).toBe('forbidden');
-    // El historial se respondió en el beforeEach: llegó y no lo tumbó el 403.
-    expect(interno<() => readonly unknown[]>('casosOrdenados')()).toEqual([]);
-  });
-
-  /* -- H-07: la pantalla no filtra vocabulario de sistema ni ids internos ---- */
-
-  function responderResumen(): void {
-    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
-    http.expectOne((r) => r.url === '/terminology/concepts').flush({
-      items: [],
-      count: 0,
-      limit: 50,
-    });
-    fixture.detectChanges();
-  }
-
-  it('«Tu acceso» nombra el rol en palabras, con el código sólo en data-role', () => {
-    // La sesión se abre después de crear la pantalla: las insignias derivan de
-    // una señal, así que reaccionan igual. Con un rol de trabajo, porque desde
-    // F-22 la tarjeta no se le muestra a un paciente.
+  function montar(payload: Record<string, unknown>): void {
     TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] }),
+      accessToken: jwt({ sub: 'u-1', tenants: ['t-1'], ...payload }),
       refreshToken: 'r-1',
     });
-    responderResumen();
 
-    const insignias = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.mi-perfil__roles app-badge'),
-    ];
+    fixture = TestBed.createComponent(MyProfile);
+    http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    // La pestaña abierta es «Mis Artículos»: sin vitrina no pide nada más.
+    http.expectOne('/community/profiles/me').flush(null as never);
+    fixture.detectChanges();
+  }
+
+  function raiz(): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  function pestanas(): string[] {
+    return [...raiz().querySelectorAll('[role="tab"]')].map((t) => t.textContent?.trim() ?? '');
+  }
+
+  it('la cuenta es una sola página con dos pestañas', () => {
+    montar({ roles: ['USER', 'PRACTITIONER'], hpid: 'hp-1' });
+
+    expect(pestanas()).toEqual(['Mis Artículos', 'Configurar mi Perfil']);
+  });
+
+  /**
+   * El panel inactivo **no se renderiza** (`app-tab` lo resuelve con un `@if`).
+   * Sin eso, abrir la cuenta dispararía a la vez las consultas de los artículos
+   * y las del perfil, y la mitad se tiraría a la basura.
+   */
+  it('sólo monta la pestaña abierta: la otra no pide nada', () => {
+    montar({ roles: ['USER', 'PRACTITIONER'], hpid: 'hp-1' });
+
+    expect(raiz().querySelector('app-medical-articles')).not.toBeNull();
+    expect(raiz().querySelector('app-profile-settings')).toBeNull();
+    // El perfil no se pidió: es de la otra pestaña.
+    http.expectNone('/profiles/practitioners/me/summary');
+  });
+
+  /**
+   * Los artículos van embebidos: la cabecera es la de la página, y repetirla
+   * dentro de la pestaña dibujaría dos títulos y dos migas de pan seguidos.
+   */
+  it('la pestaña de artículos no repite la cabecera de la página', () => {
+    montar({ roles: ['USER', 'PRACTITIONER'], hpid: 'hp-1' });
+
+    expect(raiz().querySelectorAll('app-page-header').length).toBe(1);
+  });
+
+  it('«Tu acceso» nombra el rol en palabras, con el código sólo en data-role', () => {
+    // Con un rol de trabajo, porque desde F-22 la franja no se le muestra a un
+    // paciente.
+    montar({ roles: ['USER', 'PRACTITIONER'] });
+
+    const insignias = [...raiz().querySelectorAll('.cuenta__acceso-roles app-badge')];
     expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Profesional sanitario']);
     expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PRACTITIONER']);
   });
@@ -199,140 +123,55 @@ describe('MyProfile', () => {
    * no tiene secciones que le falten: tiene lo suyo.
    */
   it('a un paciente no se le muestra «Tu acceso» ni su organización', () => {
-    TestBed.inject(SessionStore).start({
-      accessToken: jwt({
-        sub: 'u-1',
-        roles: ['USER', 'PATIENT'],
-        tenants: ['t-1'],
-        tenantNames: { 't-1': 'Care Default Tenant' },
-      }),
-      refreshToken: 'r-1',
-    });
-    responderResumen();
+    montar({ roles: ['USER', 'PATIENT'], tenantNames: { 't-1': 'Care Default Tenant' } });
 
-    const raiz = fixture.nativeElement as HTMLElement;
-    expect(raiz.querySelector('[data-testid="mi-perfil-acceso"]')).toBeNull();
-    expect(raiz.textContent).not.toContain('Tu acceso');
-    expect(raiz.textContent).not.toContain('Care Default Tenant');
-    expect(raiz.textContent).not.toContain('Organización');
+    expect(raiz().querySelector('[data-testid="mi-perfil-acceso"]')).toBeNull();
+    expect(raiz().textContent).not.toContain('Tu acceso');
+    expect(raiz().textContent).not.toContain('Care Default Tenant');
+    expect(raiz().textContent).not.toContain('Organización');
   });
 
-  /** Quien atiende y además es paciente entra a trabajar: la tarjeta le sirve. */
+  /** Quien atiende y además es paciente entra a trabajar: la franja le sirve. */
   it('a quien atiende sí se le muestra, aunque además sea paciente', () => {
-    TestBed.inject(SessionStore).start({
-      accessToken: jwt({
-        sub: 'u-1',
-        roles: ['PATIENT', 'PRACTITIONER'],
-        tenants: ['t-1'],
-      }),
-      refreshToken: 'r-1',
-    });
-    responderResumen();
+    montar({ roles: ['PATIENT', 'PRACTITIONER'] });
 
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-acceso"]'),
-    ).not.toBeNull();
+    expect(raiz().querySelector('[data-testid="mi-perfil-acceso"]')).not.toBeNull();
   });
 
-  it('los identificadores del perfil y la persona ya no se muestran', () => {
-    responderResumen();
+  /**
+   * El perfil profesional completo vive dentro de la segunda pestaña, no como
+   * un bloque suelto de la página: era el reclamo del cliente —tarjetas sueltas
+   * en una página que se sentía vacía— y es lo que este carril vino a corregir.
+   */
+  it('el perfil profesional aparece recién al abrir «Configurar mi Perfil»', () => {
+    montar({ roles: ['USER', 'PRACTITIONER'], hpid: 'hp-1' });
+    expect(raiz().querySelector('app-practitioner-profile')).toBeNull();
 
-    const raiz = fixture.nativeElement as HTMLElement;
-    expect(raiz.querySelector('.mi-perfil__ids')).toBeNull();
-    expect(raiz.textContent).not.toContain(RESUMEN.patientProfileId);
-    // El código de paciente sí: es la referencia que la persona puede dar.
-    expect(raiz.textContent).toContain(RESUMEN.patientCode);
-  });
-
-  /* -- I-D (F-18): el 403 por identidad es el estado normal, no un error ---- */
-
-  function alertaDeDatos(): HTMLElement | null {
-    return (fixture.nativeElement as HTMLElement).querySelector(
-      '.mi-perfil__bloque app-view-state-host app-alert',
-    );
-  }
-
-  it('sin identidad verificada, «Tus datos» lo dice en neutro y con la salida a mano', () => {
-    // Todo paciente recién registrado pasa por acá: pintarlo como «No tenés
-    // acceso» en rojo lee como que algo se rompió, y el mensaje crudo del
-    // backend habla de usted (feedback de la analista, barrido del 18/08/2026).
-    http.expectOne('/profiles/patients/me/summary').flush(
-      { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
-      { status: 403, statusText: 'Forbidden' },
+    (fixture.componentInstance as unknown as { pestana: { set: (i: number) => void } }).pestana.set(
+      1,
     );
     fixture.detectChanges();
 
-    const alerta = alertaDeDatos();
-    expect(alerta?.classList.contains('alert--info')).toBe(true);
-    expect(alerta?.textContent).toContain('cuando tu identidad esté verificada');
-    expect(alerta?.textContent).not.toContain('No tenés acceso');
-    expect(alerta?.textContent).not.toContain('Verifique su identidad');
-    expect(alerta?.querySelector('a[href="/my-account/identity/verify"]')).not.toBeNull();
-  });
+    expect(raiz().querySelector('app-profile-settings')).not.toBeNull();
+    expect(raiz().querySelector('app-practitioner-profile')).not.toBeNull();
 
-  it('un 403 corriente sigue siendo un muro, y se pinta como tal', () => {
+    // Las lecturas de la pestaña recién abierta. Se responden para que el
+    // `verify()` del cierre no las cuente como pendientes.
+    //
+    // Van con `match` y no con `expectOne` porque el resumen profesional lo
+    // piden DOS componentes de esta pestaña —`app-profile-settings`, para el
+    // formulario, y `app-practitioner-profile`, para la trayectoria— y esta
+    // prueba no es sobre eso: es sobre qué se monta y cuándo.
+    http.match('/identity/me/verification-cases').forEach((r) => r.flush([]));
     http
-      .expectOne('/profiles/patients/me/summary')
-      .flush(
-        { code: 'FORBIDDEN', message: 'No tenés acceso a este recurso.' },
-        { status: 403, statusText: 'Forbidden' },
-      );
-    fixture.detectChanges();
-
-    const alerta = alertaDeDatos();
-    expect(alerta?.classList.contains('alert--error')).toBe(true);
-    expect(alerta?.textContent).toContain('No tenés acceso a esta sección');
-    // El motivo que dio el backend se conserva, como lo haría el host de estados.
-    expect(alerta?.textContent).toContain('No tenés acceso a este recurso.');
-    expect(alerta?.querySelector('a')).toBeNull();
-  });
-});
-
-/**
- * El orden del historial es lo que decide cuál se muestra como vigente, y el
- * backend no lo garantiza. Va en su propio `describe` porque necesita responder
- * el historial con datos, y el `beforeEach` de arriba ya lo respondió vacío.
- */
-describe('MyProfile · orden del historial', () => {
-  let fixture: ComponentFixture<MyProfile>;
-  let http: HttpTestingController;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(MyProfile);
-    http = TestBed.inject(HttpTestingController);
-    // Los sellos de verificación salen de terminología: sin responder esa
-    // búsqueda quedan en neutro y `verify()` protesta.
-    resolverEstadosDeCaso(http);
-    fixture.detectChanges();
-  });
-
-  afterEach(() => http.verify());
-
-  it('el caso vigente es el más reciente, y el cierre manda sobre la apertura', () => {
-    http.expectOne('/identity/me/verification-cases').flush([
-      // Abierto después, pero sin resolver.
-      { id: 'c-viejo', status: 'PENDING', openedAt: '2026-01-10T10:00:00.000Z' },
-      // Abierto antes y resuelto **después**: es el más reciente de los dos.
-      {
-        id: 'c-nuevo',
-        status: 'APPROVED',
-        openedAt: '2026-01-05T10:00:00.000Z',
-        completedAt: '2026-02-01T10:00:00.000Z',
-      },
-    ]);
+      .match('/profiles/practitioners/me/summary')
+      .forEach((r) => r.error(new ProgressEvent('error'), { status: 500 }));
+    // La tabla del historial laboral del SLOT también lee al montarse.
+    http.match('/profiles/practitioners/me/affiliations').forEach((r) =>
+      r.flush({ items: [], count: 0 }),
+    );
     http
-      .expectOne('/profiles/patients/me/summary')
-      .error(new ProgressEvent('error'), { status: 500 });
-    fixture.detectChanges();
-
-    const vigente = (
-      fixture.componentInstance as unknown as { casoVigente: () => { id: string } | null }
-    ).casoVigente();
-    expect(vigente?.id).toBe('c-nuevo');
+      .match((r) => r.url === '/terminology/concepts')
+      .forEach((r) => r.flush({ items: [], count: 0, limit: 50 }));
   });
 });

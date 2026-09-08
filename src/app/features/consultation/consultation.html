@@ -4,6 +4,21 @@
 />
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
+  <!-- El vacío va dentro de una tarjeta, como todo lo demás en esta pantalla:
+       un texto suelto sobre el fondo se lee como una interfaz a medio cargar,
+       no como «hoy no hay turnos». -->
+  @if (vacio(); as vacio) {
+    <app-card vsh-empty variant="outlined" padding="lg" class="consulta__vacio">
+      <h2 class="consulta__vacio-titulo">
+        {{ tieneAgenda() === false ? 'Todavía no publicaste tu horario' : 'Hoy no tenés turnos' }}
+      </h2>
+      <p class="consulta__vacio-texto">{{ vacio.message }}</p>
+      @if (vacio.nextAction.route; as ruta) {
+        <a app-button variant="secondary" [routerLink]="ruta">{{ vacio.nextAction.label }}</a>
+      }
+    </app-card>
+  }
+
   @if (resumen(); as texto) {
     <p class="consulta__resumen" role="status">{{ texto }}</p>
   }
@@ -18,7 +33,8 @@
                    dice cuánto dura la consulta, que es lo que decide si entra
                    una más antes del mediodía. -->
               <time [attr.datetime]="cita.desde.toISOString()">
-                {{ cita.desde | date: 'HH:mm' }}@if (cita.hasta) {
+                {{ cita.desde | date: 'HH:mm' }}
+                @if (cita.hasta) {
                   <span>–{{ cita.hasta | date: 'HH:mm' }}</span>
                 }
               </time>
@@ -58,33 +74,56 @@
   </ul>
 </app-view-state-host>
 
-<!-- ─── El camino sin turno ─────────────────────────────────────────────────
-     No todo lo que se atiende tiene turno: una urgencia, alguien que llegó sin
-     cita, una interconsulta. Va **debajo** de los turnos y no arriba porque es
-     la excepción, no el camino de todos los días. -->
-<app-card variant="outlined" padding="lg" class="consulta__directo">
-  <h2 class="consulta__directo-titulo">Atender a alguien sin turno</h2>
-  <p class="consulta__directo-texto">
-    Pegá el identificador de perfil del paciente y entrás directo a su consulta. Si no lo tenés a
-    mano, buscalo en
-    <a [routerLink]="rutaDelArchivo">Archivo clínico</a>.
-  </p>
+<!-- ─── Las dos salidas ─────────────────────────────────────────────────────
+     Debajo de los turnos y no arriba porque son la excepción, no el camino de
+     todos los días. Dos tarjetas iguales: atender a alguien que no tiene turno
+     (abre el asistente por fases) y el horario que publicás. -->
+<div class="consulta__salidas">
+  <app-card variant="outlined" padding="lg" class="consulta__salida">
+    <h2 class="consulta__salida-titulo">Atender a alguien sin turno</h2>
+    <p class="consulta__salida-texto">
+      Una urgencia, alguien que llegó sin cita, una interconsulta. Elegís al paciente, el horario
+      libre de tu agenda y entrás a su consulta.
+    </p>
+    <a app-button variant="secondary" [routerLink]="rutaSinTurno" data-testid="consulta-sin-turno">
+      Atender sin turno
+    </a>
+  </app-card>
 
-  <form class="consulta__directo-form" (submit)="$event.preventDefault(); abrirPorIdentificador()">
-    <app-form-field
-      label="Identificador de perfil"
-      hint="Lo trae cada cita de tu agenda, y también el expediente del paciente."
-      class="consulta__directo-campo"
-    >
-      <app-input
-        type="text"
-        placeholder="00000000-0000-0000-0000-000000000000"
-        [value]="identificador()"
-        (valueChange)="fijarIdentificador($event)"
-      />
-    </app-form-field>
-    <button app-button type="submit" variant="secondary" [disabled]="identificador().trim() === ''">
-      Abrir consulta
-    </button>
-  </form>
-</app-card>
+  <app-card variant="outlined" padding="lg" class="consulta__salida">
+    <h2 class="consulta__salida-titulo">Mis horarios de atención</h2>
+    <!-- «Publicar» sólo mientras no haya ninguno; con horario cargado, el
+         verbo honesto es «editar». Mientras no se sabe, no se promete nada. -->
+    @switch (tieneAgenda()) {
+      @case (false) {
+        <p class="consulta__salida-texto">
+          Todavía no tenés horarios publicados: los pacientes no pueden pedirte turno.
+        </p>
+        <a
+          app-button
+          variant="primary"
+          [routerLink]="rutaDePublicar"
+          data-testid="consulta-publicar"
+        >
+          Publicar mi horario
+        </a>
+      }
+      @case (true) {
+        <p class="consulta__salida-texto">
+          Los días y franjas en que atendés. Cambialos cuando haga falta.
+        </p>
+        <a
+          app-button
+          variant="secondary"
+          [routerLink]="rutaDePublicar"
+          data-testid="consulta-editar"
+        >
+          Editar horarios de atención
+        </a>
+      }
+      @default {
+        <p class="consulta__salida-texto">Comprobando tu horario…</p>
+      }
+    }
+  </app-card>
+</div>

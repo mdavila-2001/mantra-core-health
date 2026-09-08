@@ -1,8 +1,10 @@
-<app-page-header
-  title="Artículos médicos"
-  subtitle="Publicá, revisá lo que ya publicaste y respondé los comentarios."
-  [breadcrumbs]="breadcrumbs()"
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Artículos médicos"
+    subtitle="Publicá, revisá lo que ya publicaste y respondé los comentarios."
+    [breadcrumbs]="breadcrumbs()"
+  />
+}
 
 <div class="articulos">
   @if (sinVitrinaTodavia()) {

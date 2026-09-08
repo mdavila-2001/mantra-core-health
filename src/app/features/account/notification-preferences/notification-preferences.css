@@ -32,27 +32,34 @@
   background: var(--surface-raised, #fff);
 }
 
+/* Interruptor arriba, detalle debajo alineado con el rótulo del interruptor
+   (pista 44px + hueco var(--sp-3); en escritorio la pista mide 38px). */
 .prefs__control {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--e2);
-  padding: var(--e3);
-  cursor: pointer;
-}
-
-.prefs__texto {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  padding: var(--e2) var(--e3);
 }
 
-.prefs__nombre {
+.prefs__control--suelto {
+  padding-inline: 0;
+}
+
+.prefs__switch {
+  display: block;
   font-weight: 600;
 }
 
 .prefs__detalle {
   color: var(--text-secondary);
   font-size: 0.9rem;
+  padding-inline-start: calc(44px + var(--sp-3));
+}
+
+@media (min-width: 780px) {
+  .prefs__detalle {
+    padding-inline-start: calc(38px + var(--sp-3));
+  }
 }
 
 .prefs__horas {

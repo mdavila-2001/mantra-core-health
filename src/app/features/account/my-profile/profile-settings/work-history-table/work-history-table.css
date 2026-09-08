@@ -1,0 +1,39 @@
+:host {
+  display: block;
+}
+
+.historial {
+  margin-block-start: var(--sp-6);
+}
+
+.historial__titulo {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.historial__nota {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.historial__alerta {
+  display: block;
+  margin-block-end: var(--sp-3);
+}
+
+.historial__reintentar {
+  margin-inline-start: var(--sp-2);
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.historial__cargando {
+  color: var(--text-secondary);
+}

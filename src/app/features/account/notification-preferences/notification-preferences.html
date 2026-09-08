@@ -20,18 +20,16 @@
     <ul class="prefs__lista">
       @for (fila of filas(); track fila.category) {
         <li class="prefs__fila">
-          <label class="prefs__control">
-            <input
-              type="checkbox"
+          <div class="prefs__control">
+            <app-switch
+              class="prefs__switch"
               [attr.data-testid]="'pref-' + fila.category"
+              [label]="fila.titulo"
               [checked]="fila.optedIn"
-              (change)="alternar(fila.category)"
+              (checkedChange)="alternar(fila.category)"
             />
-            <span class="prefs__texto">
-              <span class="prefs__nombre">{{ fila.titulo }}</span>
-              <span class="prefs__detalle">{{ fila.detalle }}</span>
-            </span>
-          </label>
+            <span class="prefs__detalle">{{ fila.detalle }}</span>
+          </div>
         </li>
       }
     </ul>
@@ -40,22 +38,20 @@
   <section class="prefs__bloque">
     <h2 class="prefs__titulo">Silencio nocturno</h2>
 
-    <label class="prefs__control">
-      <input
-        type="checkbox"
+    <div class="prefs__control prefs__control--suelto">
+      <app-switch
+        class="prefs__switch"
         data-testid="pref-silencio"
+        label="No mostrarme avisos en este horario"
         [checked]="silencioActivo()"
-        (change)="alternarSilencio()"
+        (checkedChange)="alternarSilencio()"
       />
-      <span class="prefs__texto">
-        <span class="prefs__nombre">No mostrarme avisos en este horario</span>
-        <!-- Se dice lo que hace, no lo que suena mejor: aplaza. Prometer «no te
-             molesto» y perder un aviso serían dos cosas distintas. -->
-        <span class="prefs__detalle">
-          Los avisos que lleguen en esa franja no aparecen hasta que termina. No se pierde ninguno.
-        </span>
+      <!-- Se dice lo que hace, no lo que suena mejor: aplaza. Prometer «no te
+           molesto» y perder un aviso serían dos cosas distintas. -->
+      <span class="prefs__detalle">
+        Los avisos que lleguen en esa franja no aparecen hasta que termina. No se pierde ninguno.
       </span>
-    </label>
+    </div>
 
     @if (silencioActivo()) {
       <div class="prefs__horas">

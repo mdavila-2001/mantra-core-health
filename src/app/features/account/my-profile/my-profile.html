@@ -1,205 +1,114 @@
 <app-page-header
-  title="Mi perfil"
+  title="Mi cuenta"
   [subtitle]="
     esProfesional()
-      ? 'Tu trayectoria profesional, tu actividad y con qué credenciales estás entrando.'
-      : 'Tus datos, tu verificación de identidad y con qué credenciales estás entrando.'
+      ? 'Tus artículos y la configuración de tu perfil profesional, en un solo lugar.'
+      : 'Tus artículos y la configuración de tu perfil, en un solo lugar.'
   "
   [breadcrumbs]="breadcrumbs()"
 />
 
-<div class="mi-perfil">
-  <div class="mi-perfil__principal">
-    <!-- ─── El perfil, según quién entró ──────────────────────────────────────
-       Con perfil profesional se muestra la trayectoria; si no, el resumen de
-       paciente. No es una preferencia de presentación: son dos endpoints
-       distintos, y pedirle el de pacientes a un profesional devuelve 404 —o 403
-       si además no verificó su identidad—, que es exactamente lo que dejaba
-       esta pantalla sin nada que mostrar para un médico. -->
-    @if (esProfesional()) {
-      <app-practitioner-profile />
-    } @else {
-      <!-- El host de estados envuelve **sólo** esta tarjeta: es la única que
-         depende del resumen, y cuando ese resumen falla con el 403 que pide
-         verificar la identidad, las otras dos siguen en pie. Justamente ahí es
-         cuando el historial de verificación tiene algo que decir. -->
-      <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
-        <h2 class="mi-perfil__titulo">Tus datos</h2>
+<!-- ─── Tu acceso ────────────────────────────────────────────────────────────
+     Era una tarjeta suelta en el lateral, del mismo peso visual que el perfil,
+     y chocaba: «Organización: Care Default Tenant / Roles: Médico» no es una
+     sección de la cuenta, es el **contexto** con el que se está mirando todo lo
+     demás. Una ficha del tamaño de un bloque de contenido le prometía una
+     importancia que no tiene, y encima dejaba un hueco del alto de la pantalla
+     debajo.
 
-        <app-view-state-host [state]="resumen()" (retry)="recargar()">
-          <!-- El 403 por identidad es el estado normal de un paciente nuevo, no un
-             error: se dice en neutro y con la salida a mano. Cualquier otro 403
-             sigue siendo un muro y se pinta como tal. -->
-          <ng-container vsh-forbidden>
-            @if (verificacionPendiente()) {
-              <app-alert
-                tone="info"
-                title="Tus datos aparecen acá cuando tu identidad esté verificada"
-              >
-                Es un trámite único: subís tu documento, lo revisamos y a partir de ahí ves acá tu
-                código de paciente y tus datos.
-                <div alert-actions>
-                  <a app-link [routerLink]="rutaDeVerificacion">Verificar identidad</a>
-                </div>
-              </app-alert>
-            } @else {
-              <app-alert tone="error" title="No tenés acceso a esta sección">
-                {{
-                  motivoDelMuro() ??
-                    'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.'
-                }}
-              </app-alert>
-            }
-          </ng-container>
+     Su lugar es éste: una franja fina, plana, entre la cabecera y las
+     pestañas — el mismo renglón donde cualquier aplicación pone «estás
+     entrando como…». Ocupa el ancho completo, no compite con nada y responde
+     su pregunta («¿por qué veo esto y no aquello?») antes de que se abra
+     ninguna pestaña.
 
-          @if (datos(); as resumen) {
-            <dl class="mi-perfil__datos">
-              <div class="mi-perfil__dato">
-                <dt>Nombre</dt>
-                <dd>{{ resumen.displayName ?? 'Sin registrar' }}</dd>
-              </div>
+     A un paciente sigue sin mostrársele (F-22): no tiene secciones que le
+     falten, y «Organización» y «Roles» son vocabulario de sistema en su vista. -->
+@if (muestraElAcceso()) {
+  <app-card
+    class="cuenta__acceso"
+    variant="flat"
+    padding="sm"
+    data-testid="mi-perfil-acceso"
+  >
+    <div class="cuenta__acceso-fila">
+      <span class="cuenta__acceso-dato">
+        <span class="cuenta__acceso-rotulo">Organización</span>
+        <span class="cuenta__acceso-valor">{{ tenantName() ?? 'Sin organización activa' }}</span>
+      </span>
 
-              <div class="mi-perfil__dato">
-                <dt>Código de paciente</dt>
-                <dd class="mi-perfil__cifra">{{ resumen.patientCode }}</dd>
-              </div>
+      <span class="cuenta__acceso-separador" aria-hidden="true"></span>
 
-              <div class="mi-perfil__dato">
-                <dt>Fecha de nacimiento</dt>
-                <dd class="mi-perfil__cifra">
-                  @if (resumen.birthDate) {
-                    {{ resumen.birthDate | date: 'dd/MM/yyyy' }}
-                  } @else {
-                    Sin registrar
-                  }
-                </dd>
-              </div>
-
-              <div class="mi-perfil__dato">
-                <dt>Estado</dt>
-                <dd>{{ estado() }}</dd>
-              </div>
-            </dl>
+      <span class="cuenta__acceso-dato">
+        <span class="cuenta__acceso-rotulo">Tu acceso</span>
+        <span class="cuenta__acceso-roles">
+          @for (rol of rolesLegibles(); track rol.codigo) {
+            <app-badge variant="info" [value]="rol.etiqueta" [attr.data-role]="rol.codigo" />
+          } @empty {
+            <span class="cuenta__acceso-valor">Sin roles declarados.</span>
           }
-        </app-view-state-host>
-      </app-card>
-    }
-  </div>
+        </span>
+      </span>
 
-  <!-- ─── Columna lateral ──────────────────────────────────────────────────
-       Verificación y acceso son dos fichas cortas: al lado del perfil, en una
-       rejilla de columnas iguales, dejaban dos huecos del alto de la pantalla y
-       espachurraban el perfil en un tercio. Son satélites de la identidad, no
-       hermanos suyos, y por eso van en un lateral angosto. -->
-  <aside class="mi-perfil__lateral" aria-label="Tu cuenta">
-    <!-- ─── Verificación de identidad ─────────────────────────────────────────
-         `GET /identity/me/verification-cases`. El backend lo publica desde
-         siempre; la pantalla mostraba un solo caso y sólo si estaba abierto, así
-         que quien ya se había verificado no tenía dónde comprobarlo. -->
-    <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
-      <h2 class="mi-perfil__titulo">Verificación de identidad</h2>
-
-      @if (casoVigente(); as vigente) {
-        <div class="mi-perfil__sello">
-          @if (selloVigente(); as sello) {
-            <app-status-seal [variant]="sello.variant" [label]="sello.label" />
-          }
-        </div>
-
-        <ul class="mi-perfil__casos">
-          @for (caso of casosOrdenados(); track caso.id) {
-            <li class="mi-perfil__caso">
-              <span class="mi-perfil__caso-estado">
-                <app-badge variant="secondary" [value]="sello(caso).label" />
-              </span>
-              <span class="mi-perfil__caso-fecha">
-                @if (caso.completedAt) {
-                  Resuelto el {{ caso.completedAt | date: 'dd/MM/yyyy' }}
-                } @else if (caso.openedAt) {
-                  Abierto el {{ caso.openedAt | date: 'dd/MM/yyyy' }}
-                } @else {
-                  Sin fecha registrada
-                }
-              </span>
-            </li>
-          }
-        </ul>
-
-        <p class="mi-perfil__nota">
-          <a routerLink="/my-account/identity/verify">Ver el trámite completo</a>
-        </p>
-      } @else {
-        <!-- Sin casos no hay historial que mostrar, y lo que hace falta no es un
-             cartel de vacío sino la salida: el trámite todavía no empezó. -->
-        <p class="mi-perfil__nota">
-          Todavía no iniciaste ninguna verificación. Es lo que habilita el acceso a tus datos
-          clínicos.
-        </p>
-        <p class="mi-perfil__nota">
-          <a routerLink="/my-account/identity/verify">Verificar mi identidad</a>
-        </p>
+      <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta a lo que
+           salió del menú del médico. Son trámites, no trabajo diario, y su casa
+           natural es la cuenta. Van en la misma franja porque son navegación de
+           contexto, igual que la organización. -->
+      @if (esProfesional()) {
+        <nav class="cuenta__acceso-enlaces" aria-label="Tus organizaciones">
+          <a app-link routerLink="/my-organizations">Mis organizaciones</a>
+          <a app-link routerLink="/administration/my-organization">Tu organización</a>
+          <a app-link routerLink="/administration/medical-organization">Organización médica</a>
+        </nav>
       }
-    </app-card>
+    </div>
+  </app-card>
+}
 
-    <!-- ─── Acceso ────────────────────────────────────────────────────────────
-         Organización y roles. Son la respuesta a «¿por qué no veo tal cosa?»,
-         una pregunta que se hace quien trabaja acá. **A un paciente no se le
-         muestra** (F-22): no tiene secciones que le falten, y «Organización» y
-         «Roles» son vocabulario de sistema en su vista. Los roles van en
-         palabras: el código (`PATIENT`) sólo viaja en `data-role`. -->
-    @if (muestraElAcceso()) {
-      <app-card
-        class="mi-perfil__bloque"
-        variant="outlined"
-        padding="lg"
-        data-testid="mi-perfil-acceso"
-      >
-        <h2 class="mi-perfil__titulo">Tu acceso</h2>
+<!-- ─── La página, en dos pestañas ───────────────────────────────────────────
+     Antes esto eran tres tarjetas sueltas acá, más dos pantallas aparte
+     (`/my-account/articles` y `/my-account/edit`) a las que se llegaba por
+     botones enterrados dentro del perfil. Eran cinco lugares para dos
+     intenciones — «mostrar lo que escribo» y «configurar quién soy»— y por eso
+     la página se sentía a la vez vacía y desordenada.
 
-        <dl class="mi-perfil__datos mi-perfil__datos--una">
-          <div class="mi-perfil__dato">
-            <dt>Organización</dt>
-            <dd>{{ tenantName() ?? 'Sin organización activa' }}</dd>
-          </div>
+     Las dos rutas siguen existiendo y siguen funcionando: acá se montan los
+     MISMOS componentes, no copias. `[embedded]` sólo le apaga la cabecera a los
+     artículos, que si no dibujaría un segundo título debajo del de la página. -->
+<app-card class="cuenta__pestanas" variant="outlined" padding="lg">
+  <app-tabs [(selectedIndex)]="pestana">
+    <!-- ─── Por qué cada panel repite su propio `@if` ──────────────────────
+         `app-tab` ya envuelve su `<ng-content>` en un `@if (isActive())`, y eso
+         alcanza para que el panel inactivo **no se dibuje**. Pero no alcanza
+         para que no se CONSTRUYA: el contenido proyectado se instancia en la
+         vista que lo declara —ésta— sin importar si el `ng-content` de destino
+         llegó a renderizarse. O sea que sin esta guardia, entrar a la cuenta
+         monta también el otro panel y dispara sus consultas: el resumen
+         profesional, los casos de identidad y el historial laboral se piden en
+         una pestaña que nadie abrió, y su respuesta se tira.
 
-          <div class="mi-perfil__dato">
-            <dt>Roles</dt>
-            <dd class="mi-perfil__roles">
-              @for (rol of rolesLegibles(); track rol.codigo) {
-                <app-badge variant="info" [value]="rol.etiqueta" [attr.data-role]="rol.codigo" />
-              } @empty {
-                <span class="mi-perfil__vacio">Sin roles declarados.</span>
-              }
-            </dd>
-          </div>
-        </dl>
+         Lo detectaron las pruebas (`my-profile.spec.ts`), no la vista: en
+         pantalla no se nota, porque el panel de más nunca llega al DOM. -->
+    <app-tab label="Mis Artículos">
+      @if (pestana() === 0) {
+        <app-medical-articles [embedded]="true" />
+      }
+    </app-tab>
 
-        <p class="mi-perfil__nota">
-          Tu acceso decide qué secciones ves. Para cambiarlo, pedíselo a quien administra la
-          organización.
-        </p>
+    <app-tab label="Configurar mi Perfil">
+      @if (pestana() === 1) {
+        <app-profile-settings />
 
-        <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta.
-
-           El menú del médico quedó en las ocho opciones que pidió el cliente, y
-           estas tres salieron de ahí. **No se les cerró la puerta**: son
-           trámites, no trabajo diario, y su casa natural es «Mi perfil», que es
-           donde alguien va a buscar «¿dónde trabajo?». Esconderlas sin dejar
-           camino habría convertido una limpieza de menú en una pérdida de
-           acceso, que es lo único que no puede pasar. -->
+      <!-- El perfil profesional completo —trayectoria, credenciales y la vista
+           previa de lo que ve un paciente— es lo que se está configurando: va
+           debajo del formulario, en la misma pestaña, y no en una tercera.
+           Quien se atiende no lo tiene, y ahí la pestaña es sólo su ficha. -->
         @if (esProfesional()) {
-          <nav class="mi-perfil__enlaces" aria-label="Tus organizaciones">
-            <a app-link routerLink="/my-organizations">Mis organizaciones</a>
-            <a app-link routerLink="/administration/my-organization">Tu organización</a>
-            <a app-link routerLink="/administration/medical-organization">Organización médica</a>
-          </nav>
+          <section class="cuenta__perfil" aria-label="Tu perfil profesional">
+            <app-practitioner-profile />
+          </section>
         }
-      </app-card>
-    }
-  </aside>
-
-  <!-- El historial laboral (punto 9 del reclamo) ya no va acá: vive dentro de
-       la pestaña Trayectoria de `app-practitioner-profile` (carril 05), con el
-       mismo formulario en modo "timeline". Montarlo también acá sería el mismo
-       dato dos veces con dos formas distintas. -->
-</div>
+      }
+    </app-tab>
+  </app-tabs>
+</app-card>

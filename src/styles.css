@@ -404,3 +404,121 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 
 /* breakpoints REDSAT (referencia; se usan al construir pantallas):
    móvil < 780 px · tablet 780–1024 px · escritorio > 1024 px — mobile-first */
+
+/* ============================================================================
+   VISTAS DE CUENTA — tarjetas centradas, anchas y con acabado de mini-tabla
+   ============================================================================
+
+   El reclamo era que «/my-account se ve vacío»: las tarjetas nacían con el
+   ancho del contenedor —que en un monitor de escritorio son 1900 px— y una
+   ficha de cuatro campos estirada a 1900 px es un renglón de texto flotando en
+   un océano blanco. La respuesta NO es acotar a un ancho fijo cómodo de lectura
+   (`min(100%, 72rem)`), porque eso deja dos franjas muertas a los costados y en
+   una pantalla ancha se ve peor todavía: se ve como si a la página le faltara
+   contenido.
+
+   La regla que pidió el cliente es un piso, no un techo: la vista se centra y
+   ocupa **al menos el 85 %** del ancho disponible, con un ancho cómodo de
+   96rem cuando ese 85 % daría menos. De ahí la fórmula:
+
+     min(100%, max(85%, 96rem))
+
+   - contenedor angosto (< 96rem): gana el `100%`, no hay márgenes que regalar;
+   - contenedor medio: gana `96rem`, que sigue por encima del 85 %;
+   - contenedor muy ancho: gana `85%`, que es el piso pedido y evita que la
+     línea de texto se vuelva ilegible.
+
+   Va acá y no en cada componente a propósito: son diecinueve vistas de cuenta y
+   el pedido es para TODAS. Se enumeran por selector —que en Angular es el
+   nombre real del elemento en el DOM— en vez de por una clase que habría que
+   acordarse de poner en cada plantilla nueva. Sólo se listan las vistas
+   **ruteadas**: los componentes anidados (`app-practitioner-profile-view`,
+   `app-work-history-table`, `app-appointment-calendar`) heredan el ancho de su
+   anfitrión, y centrarlos otra vez encogería el bloque dos veces. */
+:is(
+    app-my-profile,
+    app-medical-articles,
+    app-practitioner-profile-edit,
+    app-public-profile-preview,
+    app-appointments,
+    app-medical-record,
+    app-where-to-buy,
+    app-diagnostic-results,
+    app-diagnostic-orders,
+    app-pharmacy-orders,
+    app-new-order,
+    app-order-detail,
+    app-order-payment,
+    app-order-receipt,
+    app-loyalty,
+    app-redeem-code,
+    app-notification-preferences,
+    app-questionnaires,
+    app-questionnaire-answer
+) {
+    display: block;
+    inline-size: min(100%, max(85%, 96rem));
+    margin-inline: auto;
+}
+
+/* ---- acabado «mini-tabla» de una ficha ------------------------------------
+
+   Lo que el cliente llama «mini-tabla de tarjetas» es esto: dentro de la ficha,
+   los datos se leen como filas de una tabla —rótulo a la izquierda, valor a la
+   derecha, un filete que las separa— en vez de como párrafos sueltos. Es la
+   forma que ya tiene cualquier pantalla de «tus datos» que se lea rápido.
+
+   Se declara global porque la usan la vista de perfil, la de artículos y la
+   tabla de registros históricos, y las tres tienen que verse iguales.
+
+   El filete es `border-block-end` en cada fila y no `border-block-start`: así la
+   última fila no queda con una raya colgando contra el borde de la ficha. */
+.u-mini-tabla {
+    display: grid;
+    margin: 0;
+}
+
+.u-mini-tabla > * {
+    display: grid;
+    gap: var(--sp-1) var(--sp-4);
+    align-items: baseline;
+    padding-block: var(--sp-3);
+    border-block-end: 1px solid var(--border-default);
+}
+
+.u-mini-tabla > *:last-child {
+    border-block-end: 0;
+    padding-block-end: 0;
+}
+
+.u-mini-tabla > *:first-child {
+    padding-block-start: 0;
+}
+
+/* Desde tablet, rótulo y valor comparten renglón: es lo que la vuelve tabla.
+   El literal 780px es obligado — una media query no admite var(); es el mismo
+   --bp-md que usa el resto del sistema. */
+@media (min-width: 780px) {
+    .u-mini-tabla > * {
+        grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr);
+    }
+}
+
+.u-mini-tabla dt,
+.u-mini-tabla .u-mini-tabla__rotulo {
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
+}
+
+.u-mini-tabla dd,
+.u-mini-tabla .u-mini-tabla__valor {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* Franja alterna: en una lista larga es lo que evita saltar de renglón. Se
+   pinta con el velo de la superficie, no con un opaco, así vale en los dos
+   temas. */
+.u-mini-tabla--rayada > *:nth-child(even) {
+    background: var(--bg-hover);
+}

@@ -1,143 +1,98 @@
-/* Resumen propio. Tres bloques que se acomodan solos: uno debajo del otro en
-   móvil, y en fila desde tablet. Sólo distribución — ni un color ni una
-   tipografía que el sistema no tenga ya. */
+/* ============================================================================
+    Mi cuenta — cabecera, franja de acceso y la ficha de pestañas.
+
+    Sólo distribución. El ancho y el centrado (>= 85 % del contenedor, centrado)
+    los pone la regla de vistas de cuenta de `styles.css`, que vale para las
+    diecinueve pantallas de `/my-account/*` y no sólo para ésta.
+    ========================================================================== */
 
 :host {
-  display: block;
+    display: block;
 }
 
-/* Perfil a la izquierda, satélites a la derecha.
- *
- * Antes eran tres columnas iguales (`auto-fit minmax(19rem, 1fr)`). En una
- * pantalla ancha eso daba tres tercios: el perfil —que trae portada, identidad,
- * disponibilidad y tres pestañas— quedaba espachurrado en 19rem partiendo el
- * código profesional en dos renglones, y al lado quedaban dos fichas de cuatro
- * líneas con el resto de la columna en blanco hasta el pie. Se veía roto porque
- * lo estaba: tres bloques de peso muy distinto tratados como hermanos.
- *
- * Verificación y acceso son **satélites** de la identidad, no hermanos suyos:
- * van en un lateral angosto, que es la forma que tiene cualquier perfil
- * profesional. Debajo de 60rem se apilan y el lateral queda al final, que es
- * donde importa menos.
- */
-.mi-perfil {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--sp-4);
-  margin-block-start: var(--sp-6);
-  align-items: start;
+/* ---- la franja de acceso -------------------------------------------------
+
+   Plana y de padding corto: es una banda de contexto, no un bloque de
+   contenido. Si llevara borde y sombra volvería a competir con las pestañas,
+   que es exactamente el choque que se vino a arreglar. */
+.cuenta__acceso {
+    display: block;
+    margin-block-start: var(--sp-5);
 }
 
-@media (min-width: 62rem) {
-  .mi-perfil {
-    grid-template-columns: minmax(0, 2.4fr) minmax(17rem, 1fr);
-  }
+.cuenta__acceso-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2) var(--sp-4);
 }
 
-.mi-perfil__principal {
-  display: grid;
-  gap: var(--sp-4);
-  min-inline-size: 0;
+.cuenta__acceso-dato {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    min-inline-size: 0;
 }
 
-.mi-perfil__lateral {
-  display: grid;
-  gap: var(--sp-4);
-  align-content: start;
-  min-inline-size: 0;
+.cuenta__acceso-rotulo {
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-muted);
 }
 
-.mi-perfil__bloque {
-  display: block;
-  height: 100%;
+.cuenta__acceso-valor {
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
-.mi-perfil__titulo {
-  margin: 0 0 var(--sp-4);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  font-weight: 600;
+.cuenta__acceso-roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
 }
 
-.mi-perfil__datos {
-  display: grid;
-  gap: var(--sp-4);
-  margin: 0;
+/* El filete vertical separa organización de roles sin meter un carácter que un
+   lector de pantalla tenga que leer. Desaparece cuando la franja se envuelve:
+   una raya vertical al principio de un renglón no separa nada. */
+.cuenta__acceso-separador {
+    inline-size: 1px;
+    block-size: 1.25rem;
+    background: var(--border-default);
 }
 
-/* Tablet. El literal es obligado: una media query no admite var(); el token
-   --bp-md declara el mismo 780px para el resto del sistema. */
-@media (min-width: 780px) {
-  .mi-perfil__datos {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* El bloque de acceso tiene dos datos y uno de ellos es una fila de insignias:
-     en dos columnas quedan apretadas contra el borde. */
-  .mi-perfil__datos--una {
-    grid-template-columns: minmax(0, 1fr);
-  }
+@media (max-width: 779px) {
+    .cuenta__acceso-separador {
+        display: none;
+    }
 }
 
-.mi-perfil__dato dt {
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
+/* Los enlaces se van al extremo opuesto en pantallas anchas: son salidas, no
+   parte del dato. */
+.cuenta__acceso-enlaces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-4);
+    margin-inline-start: auto;
+    font-size: var(--fs-caption);
 }
 
-.mi-perfil__dato dd {
-  margin: 0;
-  color: var(--text-primary);
+/* ---- la ficha de pestañas ------------------------------------------------ */
+
+.cuenta__pestanas {
+    display: block;
+    margin-block-start: var(--sp-4);
 }
 
-.mi-perfil__cifra {
-  font-variant-numeric: tabular-nums;
-}
-
-.mi-perfil__roles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
-.mi-perfil__sello {
-  margin-block-end: var(--sp-4);
-}
-
-.mi-perfil__casos {
-  display: grid;
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.mi-perfil__caso {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-}
-
-.mi-perfil__caso-fecha {
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.mi-perfil__nota,
-.mi-perfil__vacio {
-  margin-block: var(--sp-4) 0;
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
-}
-
-/* §4.H del plan de UX · los enlaces a lo que salió del menú del médico. En
-   fila y con separación clara: son tres destinos hermanos, no una lista. */
-.mi-perfil__enlaces {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-4);
-  margin-block-start: var(--sp-4);
-  padding-block-start: var(--sp-3);
-  border-block-start: 1px solid var(--border-default);
+/* El perfil profesional completo va debajo del formulario, separado por un
+   filete: son dos cosas distintas dentro de la misma pestaña —lo que se edita y
+   lo que queda publicado— y sin la línea se leen como un solo formulario
+   larguísimo. */
+.cuenta__perfil {
+    display: block;
+    margin-block-start: var(--sp-6);
+    padding-block-start: var(--sp-6);
+    border-block-start: 1px solid var(--border-default);
 }

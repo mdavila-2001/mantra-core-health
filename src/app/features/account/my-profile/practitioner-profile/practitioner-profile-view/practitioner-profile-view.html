@@ -119,11 +119,18 @@
            a la vitrina comunitaria (`/my-account/preview`), que es una
            funcionalidad distinta y no relacionada (carril 16). -->
       <div class="profesional__acciones">
-        <a app-button variant="primary" routerLink="/my-account/edit"> Configurar mi perfil </a>
+        <!-- «Configurar mi perfil» ya no manda a otra pantalla: es la pestaña
+             que contiene esta ficha, y el formulario está unos píxeles más
+             arriba. Lo que `/my-account/edit` sigue siendo lo único en dar de
+             alta es una especialidad o una matrícula —que se AGREGAN, no se
+             editan— y eso es lo que dice ahora el botón. «Mis artículos» salió
+             por el mismo motivo: es la otra pestaña de esta misma página. -->
+        <a app-button variant="outline" routerLink="/my-account/edit">
+          Agregar especialidad o matrícula
+        </a>
         <button app-button variant="outline" type="button" (clicked)="verPreview()">
           Ver mi perfil público
         </button>
-        <a app-button variant="outline" routerLink="/my-account/articles"> Mis artículos </a>
       </div>
     }
   </app-card>
@@ -283,15 +290,20 @@
           }
         </section>
 
-        <!-- Agregar: sólo quien es dueño de este perfil puede escribir su propia
-             trayectoria. Reutiliza el formulario ya existente de historial
-             laboral — no uno nuevo — en modo "timeline" para no repetir el
-             listado que ya se ve arriba. -->
-        @if (esPropio() && !previewMode()) {
-          <section class="profesional__fase">
-            <app-work-history layout="timeline" (added)="trayectoriaCambio.emit()" />
-          </section>
-        }
+        <!-- Acá vivía el formulario de alta de trayectoria
+             (`app-work-history layout="timeline"`). Salió el 29/08/2026.
+
+             No se perdió: el alta de un vínculo laboral ahora está en la tabla
+             de historial laboral de «Configurar mi perfil»
+             (`app-work-history-table`), que además lista, filtra y —cuando el
+             backend tenga los verbos— corrige y da de baja. Las dos conviven en
+             la MISMA pestaña de `/my-account`, así que dejar también este
+             formulario significaba dos altas del mismo vínculo, con dos formas
+             distintas, a un scroll de distancia. Se elige la tabla porque hace
+             todo lo que hacía el formulario y algo más.
+
+             La lista de arriba se queda: leer la trayectoria dos veces no
+             molesta a nadie; escribirla en dos lugares sí. -->
       </app-tab>
 
       <!-- 2. Credenciales y verificaciones --------------------------------- -->

@@ -34,8 +34,14 @@ describe('NotificationPreferences', () => {
   });
 
   const texto = (): string => fixture.nativeElement.textContent as string;
-  const consultar = (testid: string): HTMLElement | null =>
-    fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+  // Los interruptores son `<app-switch>`: lo que se marca y se cliquea es su
+  // `<input role="switch">` interno, no el host.
+  const consultar = (testid: string): HTMLElement | null => {
+    const host: HTMLElement | null = fixture.nativeElement.querySelector(
+      `[data-testid="${testid}"]`,
+    );
+    return host?.querySelector<HTMLElement>('input[role="switch"]') ?? host;
+  };
 
   /** El mismo cálculo que hace la pantalla, para no fijar un huso concreto. */
   const aUtc = (horaLocal: string): string => {

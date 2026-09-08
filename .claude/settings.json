@@ -1,0 +1,32 @@
+{
+  "extraKnownMarketplaces": {
+    "anthropic-agent-skills": {
+      "source": { "source": "github", "repo": "anthropics/skills" }
+    },
+    "claude-plugins-official": {
+      "source": { "source": "github", "repo": "anthropics/claude-plugins-official" }
+    },
+    "claude-design-skillstack": {
+      "source": { "source": "github", "repo": "freshtechbro/claudedesignskills" }
+    },
+    "fullstack-dev-skills": {
+      "source": { "source": "github", "repo": "jeffallan/claude-skills" }
+    },
+    "jezweb-skills": {
+      "source": { "source": "github", "repo": "jezweb/claude-skills" }
+    }
+  },
+  "enabledPlugins": {
+    "claude-api@anthropic-agent-skills": true,
+    "document-skills@anthropic-agent-skills": true,
+    "example-skills@anthropic-agent-skills": true,
+    "frontend-design@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "aframe-webxr@claude-design-skillstack": true,
+    "animated-component-libraries@claude-design-skillstack": true,
+    "meta-skills@claude-design-skillstack": true,
+    "motion-framer@claude-design-skillstack": true,
+    "fullstack-dev-skills@fullstack-dev-skills": true,
+    "frontend@jezweb-skills": true
+  }
+}

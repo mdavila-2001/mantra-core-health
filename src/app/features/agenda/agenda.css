@@ -165,3 +165,22 @@
     grid-template-columns: minmax(10rem, 14rem) 1fr;
   }
 }
+
+/* ─── Bloqueos de agenda ────────────────────────────────────────────────── */
+
+/* El panel de alta. Sin borde propio: la tarjeta del formulario ya lo trae, y
+   dos bordes concéntricos se leen como dos secciones anidadas. */
+.agenda__bloqueo {
+  margin-block-end: var(--sp-4);
+}
+
+/* Qué es un bloqueo, dicho una vez arriba de la tabla. Va en la pestaña y no en
+   el subtítulo de la página porque el subtítulo lo lee quien entra a cualquiera
+   de las tres solapas, y esto sólo aplica a ésta. */
+.agenda__explicacion {
+  color: var(--text-secondary);
+  font-size: var(--fs-body-sm, var(--fs-caption));
+  line-height: var(--lh-body);
+  margin: 0 0 var(--sp-3);
+  max-inline-size: 68ch;
+}

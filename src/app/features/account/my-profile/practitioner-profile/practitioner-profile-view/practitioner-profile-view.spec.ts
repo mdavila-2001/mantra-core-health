@@ -11,10 +11,11 @@ import type { AfiliacionVisible, PerfilProfesionalVisible } from './practitioner
 /**
  * La vista del perfil profesional — presentacional pura (carriles R2-4 y 05).
  *
- * Se prueba con **datos fijos, sin `HttpTestingController` propio**: la vista
- * no inyecta ningún cliente. La única excepción es cuando `esPropio=true`,
- * porque ahí se embebe `<app-work-history>` (formulario de alta de
- * trayectoria) — que sí llama a la API — y hay que darle por dónde responder.
+ * Se prueba con **datos fijos**: la vista no inyecta ningún cliente y, desde
+ * que el formulario de alta de trayectoria se fue al historial laboral de
+ * «Configurar mi perfil» (29/08/2026), tampoco embebe nada que llame a la API.
+ * El `HttpTestingController` se sigue proveyendo para que un pedido inesperado
+ * falle en vez de escaparse en silencio.
  *
  * Lo que se fija:
  *
@@ -118,16 +119,6 @@ describe('PractitionerProfileView', () => {
   let fixture: ComponentFixture<PractitionerProfileView>;
   let http: HttpTestingController;
 
-  /**
-   * Con `esPropio=true` se embebe `<app-work-history layout="timeline">`, que
-   * llama a la API propia apenas se construye. Sin responderle, `http.verify()`
-   * fallaría en cualquier prueba que monte la vista como dueño.
-   */
-  function responderWorkHistory(): void {
-    http.expectOne('/profiles/practitioners/me/affiliations').flush({ items: [], count: 0 });
-    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
-  }
-
   function montar(
     perfil: PerfilProfesionalVisible = PERFIL,
     esPropio = false,
@@ -150,10 +141,6 @@ describe('PractitionerProfileView', () => {
     fixture.componentRef.setInput('esPropio', esPropio);
     fixture.componentRef.setInput('previewMode', previewMode);
     fixture.detectChanges();
-    if (esPropio && !previewMode) {
-      responderWorkHistory();
-      fixture.detectChanges();
-    }
     return fixture.nativeElement as HTMLElement;
   }
 
@@ -280,17 +267,30 @@ describe('PractitionerProfileView', () => {
     expect(host.textContent).toContain('Todavía no hay credenciales cargadas');
   });
 
-  it('el dueño ve el formulario de alta de trayectoria embebido', () => {
+  /**
+   * Esta vista es de LECTURA, también para el dueño (29/08/2026).
+   *
+   * Antes embebía acá el formulario de alta de trayectoria. El alta se mudó a
+   * la tabla de historial laboral de «Configurar mi perfil», que vive en la
+   * MISMA pestaña de `/my-account`: dejar también el formulario dejaba dos
+   * altas del mismo vínculo, con dos formas distintas, a un scroll de
+   * distancia. La prueba se da vuelta —de «tiene que estar» a «no tiene que
+   * estar»— porque es exactamente lo que hay que impedir que vuelva.
+   */
+  it('el dueño ya NO ve un formulario de alta acá: el alta vive en el historial laboral', () => {
     const host = montar(PERFIL, true);
 
-    expect(host.textContent).toContain('Agregar un vínculo');
-    // No debe repetir su propio listado plano: ya está la línea de tiempo arriba.
-    expect(host.querySelectorAll('.historial__lista')).toHaveLength(0);
+    expect(host.querySelector('app-work-history')).toBeNull();
+    expect(host.textContent).not.toContain('Agregar un vínculo');
+    // Y la lectura se queda: sacar el alta no puede llevarse la trayectoria.
+    expect(host.textContent).toContain('Actividad actual');
+    expect(host.textContent).toContain('Experiencia histórica');
   });
 
-  it('un visitante no ve el formulario de alta', () => {
+  it('un visitante tampoco ve ningún formulario de alta', () => {
     const host = montar(PERFIL, false);
 
+    expect(host.querySelector('app-work-history')).toBeNull();
     expect(host.textContent).not.toContain('Agregar un vínculo');
   });
 

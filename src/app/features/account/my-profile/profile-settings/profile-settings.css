@@ -1,0 +1,130 @@
+/* ============================================================================
+    Configurar mi Perfil — la ficha del perfil en modo lectura/edición.
+
+    Sólo distribución y el acabado de la ficha: ni un color ni una tipografía
+    que el sistema no tenga ya. El ancho y el centrado los pone la regla de
+    vistas de cuenta de `styles.css`, que vale para las diecinueve.
+    ========================================================================== */
+
+:host {
+    display: block;
+}
+
+.ajuste {
+    display: grid;
+    gap: var(--sp-4);
+}
+
+.ajuste__bloque {
+    display: block;
+}
+
+/* Título a la izquierda, acciones a la derecha, en el hueco `card-header` de la
+   ficha. Se envuelve en móvil en vez de comprimir el título: un lápiz de 32 px
+   apretado contra un título cortado no se acierta con el pulgar. */
+.ajuste__encabezado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    justify-content: space-between;
+    gap: var(--sp-3);
+}
+
+.ajuste__encabezado-texto {
+    min-inline-size: 0;
+}
+
+.ajuste__titulo {
+    margin: 0;
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    font-weight: 600;
+}
+
+.ajuste__nota {
+    margin-block: var(--sp-2) 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-muted);
+}
+
+/* Las acciones no se envuelven entre ellas: guardar y descartar son un par y
+   separarlos en dos renglones hace dudar de a cuál pertenece cada uno. */
+.ajuste__acciones {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.ajuste__formulario {
+    display: grid;
+    gap: var(--sp-4);
+}
+
+/* ---- el modo lectura -----------------------------------------------------
+
+   El formulario en lectura NO se pinta como un formulario deshabilitado. Un
+   campo gris con borde punteado dice «esto está roto» o «no podés»; acá el
+   dato está perfectamente disponible, sólo que no se está editando. Así que en
+   lectura los controles pierden su marco y quedan como el texto que son, y al
+   entrar en edición reaparece el marco: la diferencia entre los dos modos se
+   ve de un vistazo sin leer un solo rótulo.
+
+   Va con `::ng-deep` acotado a `.ajuste__formulario--lectura` porque el marco
+   no lo dibuja el `<input>` sino el `.input-wrapper` de adentro del átomo, y el
+   objetivo es exactamente ese: no cambiar el átomo —que se usa en cincuenta
+   formularios— sino cómo se ve en ESTA ficha. No hace falta preguntar por
+   `:read-only`: en este modo TODOS los controles del formulario lo son. */
+.ajuste__formulario--lectura ::ng-deep .input-wrapper,
+.ajuste__formulario--lectura ::ng-deep .textarea-wrapper {
+    border-color: transparent;
+    background: transparent;
+    padding-inline: 0;
+}
+
+.ajuste__formulario--lectura ::ng-deep .native-input,
+.ajuste__formulario--lectura ::ng-deep .native-textarea {
+    cursor: default;
+}
+
+/* El interruptor no tiene `readonly`: sólo `disabled`, y el estado
+   deshabilitado del átomo pinta la pista con `--bg-inset` y la perilla en
+   neutro. Eso está bien cuando de verdad NO se puede usar el control, pero acá
+   borra el único dato que el interruptor tiene para dar: si «Acepto pacientes
+   nuevos» está en sí o en no. Un switch encendido y otro apagado se verían
+   idénticos.
+
+   Así que en lectura se le devuelve el color de encendido y el cursor normal.
+   Sigue sin poder tocarse —lo impide el propio `disabled`, no el CSS— pero se
+   LEE, que es para lo que está ahí. */
+.ajuste__formulario--lectura ::ng-deep .switch-container.is-disabled {
+    cursor: default;
+    color: var(--text-primary);
+}
+
+.ajuste__formulario--lectura ::ng-deep .switch-container.is-disabled .switch-track {
+    border: 0;
+}
+
+.ajuste__formulario--lectura ::ng-deep .switch-container.is-disabled.is-checked .switch-track {
+    background-color: var(--brand-primary);
+}
+
+.ajuste__formulario--lectura ::ng-deep .switch-container.is-disabled .switch-thumb {
+    background-color: #ffffff;
+}
+
+.ajuste__interruptores {
+    display: grid;
+    gap: var(--sp-3);
+}
+
+/* La mini-tabla de lo que no se edita va separada del formulario por un filete:
+   son dos cosas distintas —lo que se corrige y lo que se comprueba— y sin la
+   línea se leen como un solo bloque de campos a medio editar. */
+.ajuste__resumen {
+    margin-block-start: var(--sp-5);
+    padding-block-start: var(--sp-4);
+    border-block-start: 1px solid var(--border-default);
+}

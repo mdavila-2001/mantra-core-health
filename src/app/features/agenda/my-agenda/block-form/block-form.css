@@ -49,6 +49,18 @@
     font-variant-numeric: tabular-nums;
 }
 
+.bloqueo__clase {
+    /* En columna y no en fila como el alcance: son tres opciones con nombres
+       largos, y en fila la tercera cae sola a un segundo renglón, que se lee
+       como si fuera de otro grupo. */
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
 .bloqueo__alcance {
     display: flex;
     flex-wrap: wrap;

@@ -1,0 +1,333 @@
+<div class="ajuste">
+  <!-- ─── El formulario del perfil ────────────────────────────────────────
+       Sólo lectura por defecto. El lápiz lo abre; guardar y la X lo cierran,
+       los dos pasando por el modal de confirmación. -->
+  <app-card class="ajuste__bloque" variant="outlined" padding="lg">
+    <div card-header class="ajuste__encabezado">
+      <div class="ajuste__encabezado-texto">
+        <h2 class="ajuste__titulo">
+          {{ esProfesional() ? 'Tu presentación' : 'Tus datos' }}
+        </h2>
+        <p class="ajuste__nota">
+          {{
+            esProfesional()
+              ? 'Cómo te ven las personas que consultan tu perfil.'
+              : 'Lo que figura en tu ficha. Para corregirlo, hablá con quien administra la organización.'
+          }}
+        </p>
+      </div>
+
+      <!-- Las acciones de la ficha. En lectura sólo está el lápiz; guardar y
+           descartar aparecen recién al entrar en edición, que es cuando
+           existen: un «Guardar» permanente sobre un formulario que no se puede
+           tocar es un botón que no hace nada. -->
+      @if (puedeEditar()) {
+        <div class="ajuste__acciones">
+          @if (editando()) {
+            <button
+              app-button
+              variant="primary"
+              size="sm"
+              type="button"
+              data-testid="perfil-guardar"
+              appTooltip="Guardar los cambios"
+              aria-label="Guardar los cambios"
+              [isLoading]="guardando()"
+              (clicked)="guardar()"
+            >
+              Guardar
+            </button>
+
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              iconOnly
+              data-testid="perfil-cancelar"
+              appTooltip="Descartar los cambios"
+              aria-label="Descartar los cambios"
+              [disabled]="guardando()"
+              (clicked)="cancelar()"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          } @else {
+            <!-- El tooltip no es nombre accesible: el `aria-label` lleva el
+                 mismo rótulo para que un lector de pantalla lo anuncie igual. -->
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              iconOnly
+              data-testid="perfil-editar"
+              appTooltip="EDITAR"
+              aria-label="EDITAR"
+              (clicked)="empezarAEditar()"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 20h4l10.5-10.5a2.12 2.12 0 0 0-3-3L5 17v3z" />
+                <path d="M13.5 6.5l4 4" />
+              </svg>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <app-view-state-host [state]="estadoVisible()" (retry)="recargar()">
+      <!-- El 403 por identidad es el estado normal de un paciente nuevo, no un
+           error: se dice en neutro y con la salida a mano. Cualquier otro 403
+           sigue siendo un muro y se pinta como tal. -->
+      <ng-container vsh-forbidden>
+        @if (verificacionPendiente()) {
+          <app-alert tone="info" title="Tus datos aparecen acá cuando tu identidad esté verificada">
+            Es un trámite único: subís tu documento, lo revisamos y a partir de ahí ves acá tu
+            código de paciente y tus datos.
+            <div alert-actions>
+              <a [routerLink]="rutaDeVerificacion">Verificar identidad</a>
+            </div>
+          </app-alert>
+        } @else {
+          <app-alert tone="error" title="No tenés acceso a esta sección">
+            {{
+              motivoDelMuro() ??
+                'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.'
+            }}
+          </app-alert>
+        }
+      </ng-container>
+
+      @if (esProfesional()) {
+        @if (datosProfesional(); as perfil) {
+          <!-- Un `<form>` de verdad, en los dos modos: en lectura los controles
+               van `readonly` en vez de desaparecer, para que abrir la edición no
+               reacomode la página bajo el puntero. -->
+          <form
+            class="ajuste__formulario"
+            [class.ajuste__formulario--lectura]="!editando()"
+            (submit)="$event.preventDefault(); guardar()"
+          >
+            <app-form-field
+              label="Título profesional"
+              [hint]="editando() ? '«Médica cardióloga», «Kinesiólogo».' : ''"
+            >
+              <app-input
+                [(value)]="titulo"
+                [readonly]="!editando()"
+                [placeholder]="editando() ? 'Tu título' : 'Sin registrar'"
+              />
+            </app-form-field>
+
+            <app-form-field
+              label="Biografía"
+              [hint]="
+                editando()
+                  ? 'Tu presentación en pocas palabras. Es lo que hace que tu perfil se lea como vos.'
+                  : ''
+              "
+            >
+              <app-textarea
+                [(value)]="bio"
+                [rows]="5"
+                [maxLength]="bioLargoMaximo"
+                [autoResize]="true"
+                [readonly]="!editando()"
+                [placeholder]="
+                  editando()
+                    ? 'Contá tu trayectoria, tu enfoque, lo que te interesa de tu especialidad.'
+                    : 'Sin registrar'
+                "
+              />
+            </app-form-field>
+
+            <div class="ajuste__interruptores">
+              <app-switch
+                [(checked)]="aceptaNuevos"
+                [disabled]="!editando()"
+                label="Acepto pacientes nuevos"
+              />
+              <app-switch
+                [(checked)]="telemedicina"
+                [disabled]="!editando()"
+                label="Atiendo por telemedicina"
+              />
+            </div>
+
+            @if (editando()) {
+              <p class="ajuste__nota" role="status">
+                {{
+                  hayCambios()
+                    ? 'Hay cambios sin aplicar. Se te va a pedir confirmación.'
+                    : 'Todavía no cambiaste nada.'
+                }}
+              </p>
+            }
+          </form>
+
+          <!-- Lo que NO se edita desde acá: especialidades y matrículas son
+               hechos verificados contra una credencial, no texto que se
+               corrige. Se listan en lectura para que la ficha esté completa, y
+               el alta sigue viviendo en su pantalla. -->
+          <dl class="u-mini-tabla ajuste__resumen">
+            <div>
+              <dt>Código profesional</dt>
+              <dd class="cifras-tabulares">{{ perfil.practitionerCode }}</dd>
+            </div>
+            <div>
+              <dt>Especialidades y matrículas</dt>
+              <dd>
+                <a routerLink="/my-account/edit">Agregar una especialidad o una matrícula</a>
+              </dd>
+            </div>
+          </dl>
+        }
+      } @else if (datosPaciente(); as resumen) {
+        <!-- El paciente no tiene campos propios que el backend deje escribir
+             desde acá: su ficha se lee, no se edita, y por eso no hay lápiz. -->
+        <dl class="u-mini-tabla">
+          <div>
+            <dt>Nombre</dt>
+            <dd>{{ resumen.displayName ?? 'Sin registrar' }}</dd>
+          </div>
+          <div>
+            <dt>Código de paciente</dt>
+            <dd class="cifras-tabulares">{{ resumen.patientCode }}</dd>
+          </div>
+          <div>
+            <dt>Fecha de nacimiento</dt>
+            <dd class="cifras-tabulares">
+              @if (resumen.birthDate) {
+                {{ resumen.birthDate | date: 'dd/MM/yyyy' }}
+              } @else {
+                Sin registrar
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{{ estadoPersona() }}</dd>
+          </div>
+        </dl>
+      }
+    </app-view-state-host>
+  </app-card>
+
+  <!-- ─── Verificación de identidad ───────────────────────────────────────
+       Vivía suelta en el lateral de la página. Es parte de configurar el
+       perfil —es lo que habilita el acceso a los datos clínicos— así que su
+       lugar es esta pestaña, debajo del formulario. -->
+  <app-card class="ajuste__bloque" variant="outlined" padding="lg">
+    <div card-header class="ajuste__encabezado">
+      <div class="ajuste__encabezado-texto">
+        <h2 class="ajuste__titulo">Verificación de identidad</h2>
+        <p class="ajuste__nota">Es lo que habilita el acceso a tus datos clínicos.</p>
+      </div>
+
+      @if (selloVigente(); as sello) {
+        <app-status-seal [variant]="sello.variant" [label]="sello.label" />
+      }
+    </div>
+
+    @if (casoVigente()) {
+      <dl class="u-mini-tabla u-mini-tabla--rayada">
+        @for (caso of casosOrdenados(); track caso.id) {
+          <div>
+            <dt>
+              <app-badge variant="secondary" [value]="sello(caso).label" />
+            </dt>
+            <dd class="cifras-tabulares">
+              @if (caso.completedAt) {
+                Resuelto el {{ caso.completedAt | date: 'dd/MM/yyyy' }}
+              } @else if (caso.openedAt) {
+                Abierto el {{ caso.openedAt | date: 'dd/MM/yyyy' }}
+              } @else {
+                Sin fecha registrada
+              }
+            </dd>
+          </div>
+        }
+      </dl>
+
+      <p class="ajuste__nota">
+        <a routerLink="/my-account/identity/verify">Ver el trámite completo</a>
+      </p>
+    } @else {
+      <!-- Sin casos no hay historial que mostrar, y lo que hace falta no es un
+           cartel de vacío sino la salida: el trámite todavía no empezó. -->
+      <p class="ajuste__nota">
+        Todavía no iniciaste ninguna verificación.
+        <a routerLink="/my-account/identity/verify">Verificar mi identidad</a>
+      </p>
+    }
+  </app-card>
+
+  <!-- SLOT: tabla de registros históricos — `app-historical-records-table`
+       (`shared/components/organisms/historical-records-table`).
+
+       El componente ya existe y su hueco es éste, al final de la pestaña. Se
+       monta con:
+
+         app-historical-records-table
+           [columns]  → HistoricalColumn[] (key / header / type)
+           [(rows)]   → las filas, con id
+           entityLabel, caption, toastTitle
+           [persistence] → { create?, update?, remove? }, opcional
+
+       QUÉ VA ADENTRO (decidido por god el 29/08/2026): el **historial laboral**
+       del profesional —las afiliaciones—, que es el único registro histórico
+       que vive en el perfil.
+
+         lectura   `ProfilesClient.listAffiliations()`
+                   → `/profiles/practitioners/me/affiliations`
+         alta      `ProfilesClient.addAffiliation(NewPractitionerAffiliation)`
+                   → POST al mismo camino. `409` = el mismo vínculo ya cargado
+                     (misma institución, mismo cargo, mismo día de inicio) y
+                     `422` = período que termina antes de empezar: las dos son
+                     algo que corregir en el formulario, no un fallo del sistema.
+         edición   y baja: **locales por ahora**. El backend todavía no tiene
+                   `PATCH` ni `DELETE` de afiliaciones; god abrió el pedido.
+                   Cuando lleguen, se completan `update`/`remove` de
+                   `[persistence]` y no hay que tocar nada más de esta pantalla.
+
+       Dos cuidados al enchufarla:
+
+       1. `HistoricalRecord` sólo admite `string | number | null` por celda, y
+          `PractitionerAffiliation.startDate`/`endDate` llegan como `Date`. La
+          conversión va en el adaptador —a ISO `YYYY-MM-DD`, que es lo que
+          espera `NewPractitionerAffiliation`— y no en la plantilla, donde una
+          fecha en texto se pinta cruda sin avisar.
+       2. RESUELTO el 29/08/2026. El mismo historial se agregaba también desde
+          la pestaña Trayectoria del perfil, unos bloques más abajo en esta
+          misma pestaña: eran dos formularios de alta del mismo vínculo, con dos
+          formas distintas, a un scroll de distancia. Se quitó aquel formulario
+          —y su componente, que quedó sin uso, se dio de baja— y esta tabla es
+          el único lugar donde se escribe un vínculo laboral. La Trayectoria
+          conserva el listado de sólo lectura. -->
+  <!-- Enchufada (dwight, 29/08/2026): `app-work-history-table` adapta las
+       afiliaciones a filas y trae su propia card. Sólo se pinta si hay perfil
+       profesional. -->
+  <app-work-history-table />
+</div>

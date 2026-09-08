@@ -1,5 +1,13 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -83,6 +91,17 @@ export interface ArticuloVisible {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MedicalArticles {
+  /**
+   * Montado dentro de otra pantalla —la pestaña «Mis Artículos» de
+   * `/my-account`— en vez de como ruta propia.
+   *
+   * Lo único que cambia es la cabecera: una pestaña que repite el
+   * `app-page-header` de la página que la contiene dibuja dos títulos y dos
+   * migas de pan, una debajo de la otra. El resto —publicar, listar, comentar—
+   * es idéntico, y por eso es un input y no un componente aparte.
+   */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   private readonly community = inject(CommunityClient);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);

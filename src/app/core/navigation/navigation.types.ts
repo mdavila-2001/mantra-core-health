@@ -239,6 +239,24 @@ export interface AppSection {
    */
   readonly fueraDelMenuPara?: readonly string[];
 
+  /**
+   * Fuera del menú lateral para **todas** las sesiones.
+   *
+   * Es {@link AppSection.fueraDelMenuPara} sin la pregunta por el rol, para la
+   * sección que no le corresponde a nadie en el renglón lateral porque ya
+   * tiene su acceso permanente en otro lado. El caso que lo trajo son las
+   * «Notificaciones»: la campana de la barra superior está siempre a la vista
+   * y lleva a la misma bandeja, así que el renglón lateral era una segunda
+   * puerta al mismo cuarto.
+   *
+   * No se resuelve con `fueraDelMenuPara` porque esa lista se compara contra
+   * los roles de la sesión —no hay comodín ahí—, y esconderlo para todos
+   * exigiría enumerar cada rol y volver a tocarla cada vez que nazca uno
+   * nuevo. Tampoco se resuelve borrando la sección del registro: la ruta, el
+   * breadcrumb, «Tus accesos» y el enlace de la campana salen de acá.
+   */
+  readonly fueraDelMenu?: boolean;
+
   readonly availability: SectionAvailability;
 
   /**
@@ -381,6 +399,9 @@ export function apareceEnElMenu(
   tenants: readonly string[] = [],
 ): boolean {
   if (!isVisibleTo(section, roles, tenants)) {
+    return false;
+  }
+  if (section.fueraDelMenu === true) {
     return false;
   }
   return section.fueraDelMenuPara?.some((rol) => roles.includes(rol)) !== true;

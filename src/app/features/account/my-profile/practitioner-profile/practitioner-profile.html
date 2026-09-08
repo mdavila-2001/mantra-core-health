@@ -4,10 +4,10 @@
      vista que usa la guía de profesionales para el perfil de otro doctor. -->
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
   @if (visible(); as perfil) {
-    <app-practitioner-profile-view
-      [perfil]="perfil"
-      [esPropio]="true"
-      (trayectoriaCambio)="recargar()"
-    />
+    <!-- Ya no se escucha `trayectoriaCambio`: el alta de un vínculo laboral se
+         fue al historial de «Configurar mi perfil» (29/08/2026) y esta vista
+         quedó de sólo lectura, así que no tiene nada que avisar. `recargar()`
+         sigue existiendo para el reintento del host de estados. -->
+    <app-practitioner-profile-view [perfil]="perfil" [esPropio]="true" />
   }
 </app-view-state-host>

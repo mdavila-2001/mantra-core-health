@@ -1,8 +1,23 @@
 <app-page-header
   title="Turnos"
-  subtitle="Las citas comprometidas y los cupos que quedan por ofrecer."
+  subtitle="El tiempo que te reservás y no se ofrece por la app, y lo que sí quedó publicado."
   [breadcrumbs]="breadcrumbs()"
 >
+  @if (puedeBloquear()) {
+    <!-- La acción principal de la pantalla: reservarse tiempo. Va primera y en
+         `primary` porque es lo que la ruta representa — el resto de la página
+         es consulta de lo ya publicado. -->
+    <button
+      app-button
+      page-actions
+      variant="primary"
+      data-testid="agenda-bloquear"
+      [disabled]="bloqueando()"
+      (clicked)="abrirPanelDeBloqueo()"
+    >
+      Bloquear tiempo
+    </button>
+  }
   @if (puedeAvisarDemora()) {
     <!-- P8 · registro del cliente 4.2: «el médico informa a los pacientes que
          se va a demorar». Va en las acciones de la página porque la demora es
@@ -18,7 +33,7 @@
     </button>
   }
   @if (puedeCrearAgenda()) {
-    <a app-button page-actions variant="primary" [routerLink]="rutaCrearAgenda">Crear agenda</a>
+    <a app-button page-actions variant="outline" [routerLink]="rutaCrearAgenda">Crear agenda</a>
   }
   @if (esQuienAtiende()) {
     <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta a las visitas.
@@ -142,6 +157,16 @@
       </section>
     }
 
+    <!-- ─── Bloquear tiempo ────────────────────────────────────────────────
+         Un panel en la propia página y no un diálogo: se decide mirando lo que
+         ya está bloqueado, y un modal tapa justamente la lista que hay que
+         consultar para no pisar un bloqueo existente. -->
+    @if (panelDeBloqueoAbierto()) {
+      <section class="agenda__bloqueo" data-testid="agenda-bloqueo-panel">
+        <app-block-form (bloquear)="bloquearTiempo($event)" (cancelar)="cerrarPanelDeBloqueo()" />
+      </section>
+    }
+
     <!-- ─── Filtros ─────────────────────────────────────────────────────── -->
     <form class="agenda__filtros" (submit)="$event.preventDefault()">
       <!-- El selector de recurso existe SÓLO para quien reparte turnos entre
@@ -214,6 +239,26 @@
       (selectedIndexChange)="elegirPestana($event)"
       appTutorialTarget="agenda-pestanas"
     >
+      <!-- ─── Bloqueos ──────────────────────────────────────────────────────
+           Primera y por defecto: `/schedule` es la agenda que el profesional se
+           reserva. Las citas y los cupos son la lectura de lo ya publicado. -->
+      <app-tab [label]="rotuloDeBloqueos()">
+        <p class="agenda__explicacion">
+          Acá va el tiempo que <strong>no</strong> se ofrece para turnos por la app: quirófano,
+          guardia, ateneo, docencia, y también vacaciones o feriados. Los cupos libres del período
+          se cierran; las citas ya reservadas no se tocan.
+        </p>
+
+        <app-data-table
+          data-testid="agenda-tabla-bloqueos"
+          [state]="bloqueos()"
+          [columns]="columnasDeBloqueos()"
+          [trackBy]="porBloqueo"
+          caption="Bloqueos de agenda de la ventana consultada"
+          (retry)="recargar()"
+        />
+      </app-tab>
+
       <!-- ─── Citas ─────────────────────────────────────────────────────── -->
       <app-tab [label]="rotuloDeCitas()">
         @if (citasRecortadas()) {
@@ -256,6 +301,38 @@
 
 <!-- ─── Plantillas de celda ───────────────────────────────────────────────
      El organismo las recibe por `ColumnDef.cell`. -->
+
+<ng-template #celdaPeriodo let-bloqueo>
+  <!-- Un bloqueo de días enteros y uno de franja se leen distinto a propósito:
+       «del 10 al 24» y «14:00 a 18:00» responden preguntas distintas, y una
+       sola forma que sirva para los dos no sirve bien para ninguno. -->
+  @if (bloqueo.diasEnteros) {
+    <span class="agenda__cuando">{{ bloqueo.desde | date: 'EEEE d MMM' }}</span>
+    @if (bloqueo.dias > 1) {
+      <span class="agenda__hasta">{{ bloqueo.dias }} días, hasta el {{ bloqueo.hasta | date: 'd MMM' }}</span>
+    } @else {
+      <span class="agenda__hasta">Todo el día</span>
+    }
+  } @else {
+    <span class="agenda__cuando">{{ bloqueo.desde | date: 'EEEE d MMM, HH:mm' }}</span>
+    <span class="agenda__hasta">hasta {{ bloqueo.hasta | date: 'HH:mm' }}</span>
+  }
+  @if (bloqueo.pasado) {
+    <!-- Un bloqueo terminado sigue en la lista porque la ventana lo incluye;
+         callar que ya pasó lo haría leer como tiempo todavía reservado. -->
+    <span class="agenda__hasta">Ya pasó</span>
+  }
+</ng-template>
+
+<ng-template #celdaClase let-bloqueo>
+  <!-- El trabajo de especialidad se distingue del resto: es la razón por la
+       que la pantalla existe, y un bloqueo por quirófano no significa lo mismo
+       que unas vacaciones aunque los dos cierren la agenda. -->
+  <app-badge
+    [variant]="bloqueo.clase === 'especialidad' ? 'info' : 'secondary'"
+    [value]="bloqueo.etiquetaDeClase"
+  />
+</ng-template>
 
 <ng-template #celdaCuando let-cita>
   @if (cita.cuando) {
