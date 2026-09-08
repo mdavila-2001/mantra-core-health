@@ -31,6 +31,16 @@ export type { CalendarDay } from './date-picker/date-picker';
 export { DATE_PICKER_MODES } from './date-picker/date-picker.types';
 export type { DatePickerMode } from './date-picker/date-picker.types';
 
+export { FactSection } from './fact-section/fact-section';
+export { BLOQUES_POR_PAGINA, MINIMO_PARA_BUSCAR } from './fact-section/fact-section.types';
+export type { BloqueDeFicha } from './fact-section/fact-section.types';
+
+export { SurveyForm } from './survey-form/survey-form';
+export type {
+  RespuestasDelCuestionario,
+  ValorDeRespuesta,
+} from './survey-form/survey-form';
+
 export { FilterBar, SEARCH_PARAM } from './filter-bar/filter-bar';
 export type { ActiveFilter, FilterDef } from './filter-bar/filter-bar';
 

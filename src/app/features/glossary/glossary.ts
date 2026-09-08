@@ -102,7 +102,9 @@ const TOPE_CATEGORIAS = 200;
   selector: 'app-glossary',
   imports: [Chip, DataTable, GlossaryCategoryIcon, PageHeader, RouterLink, SearchField, ViewStateHost],
   templateUrl: './glossary.html',
-  styleUrl: './glossary.css',
+  // La hoja compartida va **primera**: lo de abajo son los ajustes de esta
+  // pantalla sobre esa base, y Angular concatena en este orden.
+  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './glossary.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Glossary {

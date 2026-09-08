@@ -11,11 +11,19 @@
     ========================================================================== */
 
 import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 
 import { AlovidaRuntimeService } from './alovida-runtime.service';
 
 describe('AlovidaRuntimeService', () => {
   let servicio: AlovidaRuntimeService;
+  /**
+   * El mismo Router que se inyectó el servicio. TestBed rearma su inyector
+   * entre pruebas, así que un `TestBed.inject(Router)` de adentro de un `it`
+   * devuelve OTRA instancia: espiarla no vería las navegaciones del servicio,
+   * que sigue aferrado a la de `beforeAll`.
+   */
+  let router: Router;
 
   /**
    * jsdom no implementa `matchMedia`. El servicio ya tolera su ausencia, pero
@@ -53,8 +61,12 @@ describe('AlovidaRuntimeService', () => {
    * pasa de verdad: uno solo, instalado una vez.
    */
   beforeAll(() => {
-    TestBed.configureTestingModule({});
+    /* El servicio mueve el estado de la pantalla por la URL (`?estado=…`), así
+       que necesita un Router de verdad; sin rutas declaradas alcanza, porque
+       lo que se mide acá es el DOM, no a dónde se llegó. */
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
     servicio = TestBed.inject(AlovidaRuntimeService);
+    router = TestBed.inject(Router);
     declararMatchMedia(false);
     servicio.instalar();
   });
@@ -557,6 +569,275 @@ describe('AlovidaRuntimeService', () => {
 
       expect(document.documentElement.hasAttribute('data-gota')).toBe(false);
       expect(document.documentElement.style.getPropertyValue('--gota-x')).toBe('');
+    });
+  });
+
+  /* ==========================================================================
+     Los botones de las vistas portadas. En la bóveda los movía
+     `_assets/alovida.js`; acá los mueve `controlesDeMaqueta`, y lo que se fija
+     es que sigan acotados al marco de la maqueta: las clases de las que
+     cuelgan las usa también el resto de la aplicación, con sus propios
+     componentes de Angular.
+     ======================================================================== */
+  describe('controles de la maqueta', () => {
+    /** Todo va envuelto en la marca del marco: sin ella el oyente no mira. */
+    const marco = (interior: string) => {
+      document.body.innerHTML = `<div data-alovida-maqueta>${interior}</div>`;
+    };
+    const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel) as T;
+
+    describe('combo de referencia', () => {
+      beforeEach(() => {
+        marco(`
+          <input id="c-1" role="combobox" aria-expanded="true" aria-controls="c-1-m" value="terceros">
+          <div class="app-menu" id="c-1-m" role="listbox">
+            <button type="button" role="option" aria-selected="true"><span>Andrea Terceros<br><span class="caption">Pediatría</span></span></button>
+            <button type="button" role="option" aria-selected="false"><span>Gabriel Terceros<br><span class="caption">Administración</span></span></button>
+          </div>
+        `);
+      });
+
+      it('elegir una opción la escribe en el campo y recoge la lista', () => {
+        $<HTMLElement>("[role='option'][aria-selected='false']").click();
+
+        expect($<HTMLInputElement>('#c-1').value).toBe('Gabriel Terceros');
+        expect($('#c-1').getAttribute('aria-expanded')).toBe('false');
+        expect($('#c-1-m').hidden).toBe(true);
+      });
+
+      it('la marca se mueve: no quedan dos opciones elegidas', () => {
+        $<HTMLElement>("[role='option'][aria-selected='false']").click();
+
+        const marcadas = document.querySelectorAll("[role='option'][aria-selected='true']");
+        expect(marcadas).toHaveLength(1);
+      });
+
+      it('sólo escribe la primera línea: lo de abajo del <br> es la aclaración', () => {
+        $<HTMLElement>("[role='option'][aria-selected='true']").click();
+
+        expect($<HTMLInputElement>('#c-1').value).toBe('Andrea Terceros');
+      });
+    });
+
+    it('el chip de un filtro se quita, y la lista vacía se retira', () => {
+      marco(`
+        <div class="app-chip-lista">
+          <span class="app-chip">Activo<button type="button" aria-label="Quitar el filtro Activo">×</button></span>
+        </div>
+      `);
+
+      $<HTMLElement>('.app-chip button').click();
+
+      expect(document.querySelector('.app-chip')).toBeNull();
+      expect($('.app-chip-lista').hidden).toBe(true);
+    });
+
+    describe('paginación', () => {
+      const tabla = (filas: number, porPagina: number) =>
+        marco(`
+          <section>
+            <table class="app-data-table"><tbody>${'<tr><td>x</td></tr>'.repeat(filas)}</tbody></table>
+            <nav class="app-pagination">
+              <p class="app-pagination__nota">${porPagina} filas por página</p>
+              <button type="button">Anteriores</button>
+              <button type="button">Siguientes</button>
+            </nav>
+          </section>
+        `);
+      const siguientes = () => $<HTMLElement>('.app-pagination button:last-of-type');
+      const anteriores = () => $<HTMLElement>('.app-pagination button');
+
+      it('con todo en una página los dos botones quedan anunciados sin destino', () => {
+        // Es la situación de casi todas las vistas portadas: seis filas y una
+        // nota que promete veinticinco por página.
+        tabla(6, 25);
+
+        servicio.refrescar(null);
+
+        expect(anteriores().getAttribute('aria-disabled')).toBe('true');
+        expect(siguientes().getAttribute('aria-disabled')).toBe('true');
+      });
+
+      it('cuando sobran filas, avanzar muestra las que faltaban', () => {
+        tabla(5, 2);
+        servicio.refrescar(null);
+        const filas = () => Array.from(document.querySelectorAll<HTMLTableRowElement>('tbody tr'));
+        expect(filas().filter((f) => !f.hidden)).toHaveLength(2);
+
+        siguientes().click();
+
+        expect(filas().findIndex((f) => !f.hidden)).toBe(2);
+        expect(anteriores().getAttribute('aria-disabled')).toBe('false');
+      });
+
+      it('en la última página «Siguientes» se anuncia sin destino', () => {
+        tabla(5, 2);
+        servicio.refrescar(null);
+
+        siguientes().click();
+        siguientes().click();
+
+        expect(siguientes().getAttribute('aria-disabled')).toBe('true');
+        expect($('.app-pagination').dataset['pagina']).toBe('3');
+      });
+    });
+
+    describe('filas repetidas del formulario', () => {
+      beforeEach(() => {
+        marco(`
+          <fieldset app-form-section>
+            <div class="app-card app-card--inset">
+              <div class="app-card__cabecera"><p class="overline">Regla 1</p><button type="button">Quitar</button></div>
+              <label for="c-1">Entidad</label><input id="c-1" value="patient_profiles">
+            </div>
+            <div class="app-card app-card--inset">
+              <div class="app-card__cabecera"><p class="overline">Regla 2</p><button type="button">Quitar</button></div>
+              <label for="c-2">Entidad</label><input id="c-2" value="encounters">
+            </div>
+            <div><button type="button">Agregar otra regla</button></div>
+          </fieldset>
+        `);
+      });
+
+      const bloques = () => document.querySelectorAll('.app-card--inset');
+      const rotulos = () =>
+        Array.from(document.querySelectorAll('.overline')).map((el) => el.textContent);
+
+      it('«Quitar» saca la fila y renumera las que quedan', () => {
+        $<HTMLElement>('.app-card--inset .app-card__cabecera button').click();
+
+        expect(bloques()).toHaveLength(1);
+        expect(rotulos()).toEqual(['Regla 1']);
+      });
+
+      it('la última fila no se saca: sin ninguna no hay de dónde clonar', () => {
+        $<HTMLElement>('.app-card--inset .app-card__cabecera button').click();
+        $<HTMLElement>('.app-card--inset .app-card__cabecera button').click();
+
+        expect(bloques()).toHaveLength(1);
+      });
+
+      it('«Agregar otra» clona la última en blanco y la numera', () => {
+        $<HTMLElement>('fieldset > div > button').click();
+
+        expect(bloques()).toHaveLength(3);
+        expect(rotulos()).toEqual(['Regla 1', 'Regla 2', 'Regla 3']);
+        const nuevo = document.querySelectorAll<HTMLInputElement>('.app-card--inset input')[2];
+        expect(nuevo.value).toBe('');
+      });
+
+      it('el clon no repite los `id`: el rótulo tiene que enfocar SU campo', () => {
+        $<HTMLElement>('fieldset > div > button').click();
+
+        const ids = Array.from(document.querySelectorAll('[id]')).map((el) => el.id);
+        expect(new Set(ids).size).toBe(ids.length);
+        const etiqueta = document.querySelectorAll<HTMLLabelElement>('label')[2];
+        expect(etiqueta.getAttribute('for')).toBe('c-2-r3');
+      });
+    });
+
+    it('«Ver el JSON» baja el título a la página, y otro clic lo recoge', () => {
+      marco(`<span class="app-tooltip-panel" title='{ "valor": "lpm" }'><button type="button">Ver el JSON</button></span>`);
+      const boton = $<HTMLElement>('button');
+
+      boton.click();
+      expect($('.app-titulo-revelado').textContent).toBe('{ "valor": "lpm" }');
+      expect(boton.getAttribute('aria-expanded')).toBe('true');
+
+      boton.click();
+      expect(document.querySelector('.app-titulo-revelado')).toBeNull();
+    });
+
+    describe('acción final del formulario', () => {
+      it('con un campo obligatorio vacío no navega: primero avisa', () => {
+        marco(`
+          <form>
+            <input required value="">
+            <div class="app-form-actions">
+              <a routerLink="/accesos/roles-listado">Cancelar</a>
+              <button type="button" app-button data-variante="primario">Guardar</button>
+            </div>
+          </form>
+        `);
+        const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+        // jsdom implementa checkValidity pero no reportValidity.
+        HTMLFormElement.prototype.reportValidity ??= () => false;
+
+        $<HTMLElement>('.app-form-actions button').click();
+
+        expect(navegar).not.toHaveBeenCalled();
+      });
+
+      it('válido, vuelve a donde apunta el «Cancelar» del propio formulario', () => {
+        marco(`
+          <div class="app-view-state-host">
+            <div data-estado="paso1">
+              <div class="app-form-actions">
+                <a routerLink="/accesos/roles-listado">Cancelar</a>
+                <a routerLink=".">Continuar</a>
+              </div>
+            </div>
+            <div data-estado="paso2">
+              <form>
+                <div class="app-form-actions">
+                  <a routerLink=".">Atrás</a>
+                  <button type="button" app-button data-variante="primario">Guardar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        `);
+        const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+        $<HTMLElement>("[data-estado='paso2'] .app-form-actions button").click();
+
+        expect(navegar).toHaveBeenCalledWith('/accesos/roles-listado');
+      });
+    });
+
+    it('un control anunciado como deshabilitado no actúa', () => {
+      marco(`
+        <div class="app-chip-lista">
+          <span class="app-chip">Activo<button type="button" aria-disabled="true" aria-label="Quitar el filtro Activo">×</button></span>
+        </div>
+      `);
+
+      $<HTMLElement>('.app-chip button').click();
+
+      expect(document.querySelector('.app-chip')).not.toBeNull();
+    });
+
+    it('un `submit` no se intercepta: ese lo maneja el componente que lo montó', () => {
+      // Una vista portada no envía formularios; un `type="submit"` bajo este
+      // marco sólo puede ser de un componente de Angular, y frenarlo sería
+      // impedirle enviar.
+      marco(`
+        <form>
+          <div class="app-form-actions">
+            <a routerLink="/accesos/roles-listado">Cancelar</a>
+            <button type="submit">Guardar</button>
+          </div>
+        </form>
+      `);
+      const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+      $<HTMLElement>('.app-form-actions button').click();
+
+      expect(navegar).not.toHaveBeenCalled();
+    });
+
+    it('fuera del marco de la maqueta no toca nada: ahí manda el componente', () => {
+      // La trampa que ya documenta `menusDeDesborde`: `.app-chip` existe también
+      // en las pantallas del producto, y allá la gobierna su propio componente.
+      document.body.innerHTML = `
+        <div class="app-chip-lista">
+          <span class="app-chip">Activo<button type="button" aria-label="Quitar el filtro Activo">×</button></span>
+        </div>
+      `;
+
+      $<HTMLElement>('.app-chip button').click();
+
+      expect(document.querySelector('.app-chip')).not.toBeNull();
     });
   });
 });

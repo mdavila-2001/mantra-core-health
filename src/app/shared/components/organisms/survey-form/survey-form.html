@@ -1,0 +1,85 @@
+@for (pregunta of preguntas(); track pregunta.id) {
+  <app-card variant="outlined" padding="lg" class="cuestionario__pregunta">
+    <app-form-field
+      [label]="pregunta.position + '. ' + pregunta.questionText"
+      [required]="!soloLectura() && pregunta.required"
+      [errorMessage]="falta(pregunta.id) ? 'Esta pregunta es obligatoria.' : ''"
+    >
+      @switch (pregunta.answerType) {
+        @case ('TEXT') {
+          <app-textarea
+            [value]="textoDe(pregunta.id)"
+            (valueChange)="responder(pregunta.id, $event)"
+            [hasError]="falta(pregunta.id)"
+            autoResize
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          />
+        }
+
+        @case ('SCALE') {
+          <app-radio-group
+            [value]="seleccionDe(pregunta.id)"
+            (valueChange)="responder(pregunta.id, $event)"
+            [hasError]="falta(pregunta.id)"
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          >
+            @for (punto of escalaDe(pregunta); track punto) {
+              <app-radio [value]="punto" [label]="'' + punto" />
+            }
+          </app-radio-group>
+          @if (escalaRecortada(pregunta)) {
+            <!-- La previa tiene que avisar de esto: una escala así no se puede
+                 responder con el dedo, y quien la armó no lo ve hasta mirarla. -->
+            <p class="cuestionario__aviso">
+              La escala va de {{ pregunta.scaleMin }} a {{ pregunta.scaleMax }}: son demasiados
+              puntos para elegir uno. Se muestran sólo los extremos.
+            </p>
+          }
+        }
+
+        @case ('BOOLEAN') {
+          <app-radio-group
+            [value]="seleccionDe(pregunta.id)"
+            (valueChange)="responder(pregunta.id, $event)"
+            [hasError]="falta(pregunta.id)"
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          >
+            <app-radio [value]="true" label="Sí" />
+            <app-radio [value]="false" label="No" />
+          </app-radio-group>
+        }
+
+        @case ('SINGLE_CHOICE') {
+          <app-radio-group
+            [value]="seleccionDe(pregunta.id)"
+            (valueChange)="responder(pregunta.id, $event)"
+            [hasError]="falta(pregunta.id)"
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          >
+            @for (opcion of pregunta.options ?? []; track opcion) {
+              <app-radio [value]="opcion" [label]="opcion" />
+            }
+          </app-radio-group>
+        }
+
+        @case ('MULTIPLE_CHOICE') {
+          <!-- Las casillas se apilan: en fila, con opciones de largo desigual,
+               las etiquetas dejan de alinearse con su control y se vuelve
+               ambiguo cuál pertenece a cuál. -->
+          <div
+            class="cuestionario__opciones"
+            [attr.data-testid]="testIdPrefijo() + '-' + pregunta.id"
+          >
+            @for (opcion of pregunta.options ?? []; track opcion) {
+              <app-checkbox
+                [checked]="marcada(pregunta.id, opcion)"
+                (checkedChange)="alternar(pregunta.id, opcion, $event)"
+                [label]="opcion"
+              />
+            }
+          </div>
+        }
+      }
+    </app-form-field>
+  </app-card>
+}

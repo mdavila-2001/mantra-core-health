@@ -11,10 +11,15 @@ describe('AssetsLiabilities — FT-26', () => {
   let http: HttpTestingController;
 
   function flushCarga(): void {
-    http.expectOne((r) => r.url === '/practices').flush({
-      items: [{ id: PRACTICE, code: 'P1', name: 'Práctica Uno', typeConceptId: 't', statusConceptId: 's' }],
-      count: 1,
-    });
+    // Arreglo desnudo, que es lo que manda el controlador: `listPractices()`
+    // hace `body.map(...)` sobre la respuesta. Con `{ items, count }` el `map`
+    // no existe, el observable muere, el `catchError` del componente lo traga y
+    // la práctica queda en null — con lo que ninguna de las lecturas que cuelgan
+    // de ella se llega a pedir. Ver la cabecera de `listPractices` en
+    // `accounting.client.ts`.
+    http
+      .expectOne((r) => r.url === '/practices')
+      .flush([{ id: PRACTICE, code: 'P1', name: 'Práctica Uno', typeConceptId: 't', statusConceptId: 's' }]);
     fixture.detectChanges();
 
     http.expectOne((r) => r.url === '/accounting/accounts').flush({
@@ -34,6 +39,24 @@ describe('AssetsLiabilities — FT-26', () => {
         (r) => r.url === '/accounting/practitioner/liabilities' && r.params.get('practiceId') === PRACTICE,
       )
       .flush([]);
+  }
+
+  /**
+   * Lo que vuelve a pedirse tras una acción con éxito.
+   *
+   * `reintentar()` incrementa la señal `intento`, que viaja por el mismo
+   * `toObservable(practicaYIntento)` que la carga inicial: es un efecto, corre
+   * en la cola de tareas, y por eso hace falta esperar antes de buscar las
+   * peticiones. Y son **tres**, no dos: de esa señal cuelga también el plan de
+   * cuentas, así que el reintento lo recarga igual que los activos y los
+   * pasivos. Sin flujearlo, el `http.verify()` del final encuentra una petición
+   * suelta y falla.
+   */
+  async function flushRecarga(): Promise<void> {
+    await fixture.whenStable();
+    http.expectOne((r) => r.url === '/accounting/accounts').flush({ items: [], count: 0, limit: 50 });
+    http.expectOne((r) => r.url === '/accounting/practitioner/assets').flush([]);
+    http.expectOne((r) => r.url === '/accounting/practitioner/liabilities').flush([]);
   }
 
   beforeEach(async () => {
@@ -68,7 +91,7 @@ describe('AssetsLiabilities — FT-26', () => {
     // Sin POST: http.verify() lo confirma.
   });
 
-  it('registra el avance de un activo una vez elegidas las cuentas', () => {
+  it('registra el avance de un activo una vez elegidas las cuentas', async () => {
     fixture.detectChanges();
     flushCarga();
     fixture.detectChanges();
@@ -90,12 +113,11 @@ describe('AssetsLiabilities — FT-26', () => {
     });
     req.flush({ transactionId: 'tx1', amount: '16.67' });
 
-    // El éxito reintenta la carga de activos/pasivos de la práctica.
-    http.expectOne((r) => r.url === '/accounting/practitioner/assets').flush([]);
-    http.expectOne((r) => r.url === '/accounting/practitioner/liabilities').flush([]);
+    // El éxito reintenta la carga de lo que cuelga de la práctica.
+    await flushRecarga();
   });
 
-  it('da de alta un pasivo y refresca el listado', () => {
+  it('da de alta un pasivo y refresca el listado', async () => {
     fixture.detectChanges();
     flushCarga();
     fixture.detectChanges();
@@ -132,7 +154,6 @@ describe('AssetsLiabilities — FT-26', () => {
     expect(req.request.body).toMatchObject({ practiceId: PRACTICE, code: 'LIAB-1', installments: 3 });
     req.flush({ id: 'liab1', code: 'LIAB-1', schedule: [] });
 
-    http.expectOne((r) => r.url === '/accounting/practitioner/assets').flush([]);
-    http.expectOne((r) => r.url === '/accounting/practitioner/liabilities').flush([]);
+    await flushRecarga();
   });
 });

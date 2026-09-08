@@ -143,6 +143,16 @@ export interface CreateFieldDefinitionInput {
   readonly cardinalityMin?: number;
   readonly cardinalityMax?: number;
   readonly regex?: string;
+  /**
+   * Las respuestas ofrecidas, para un campo `code`.
+   *
+   * Texto libre y no un `valueSetId`: ver {@link ChartTemplateField.options}.
+   * **El backend real todavía no acepta esta clave** — ver
+   * `docs/pendientes-backend-formularios.md`.
+   */
+  readonly options?: readonly string[];
+  /** Si el campo de elección admite varias respuestas. */
+  readonly multiple?: boolean;
 }
 
 /** Cuerpo de `POST /forms/assignments` (UC-09-06). */
@@ -170,4 +180,35 @@ export interface ExtensionBudget {
   readonly maximumFields?: number;
   readonly used: number;
   readonly remaining?: number;
+}
+
+/**
+ * Cambios sobre la definición de un campo propio.
+ *
+ * Todo opcional: se manda sólo lo que cambió. La definición es global, así que
+ * esto afecta al campo en todos los formularios donde esté colgado.
+ */
+export interface UpdateFieldDefinitionInput {
+  readonly name?: string;
+  readonly dataType?: TechnicalDataType;
+  /**
+   * Las opciones, **enteras**.
+   *
+   * No hay edición parcial de una opción suelta, por lo mismo que en
+   * `surveys`: el orden importa y un parche por índice se rompe en cuanto
+   * alguien inserta una en el medio.
+   */
+  readonly options?: readonly string[];
+  /** Si el campo de elección admite varias respuestas. */
+  readonly multiple?: boolean;
+}
+
+/**
+ * Cambios sobre la asignación de un campo a un formulario.
+ *
+ * Lo obligatorio vive acá y no en la definición: el mismo campo puede ser
+ * obligatorio en un formulario y opcional en otro.
+ */
+export interface UpdateAssignmentInput {
+  readonly required?: boolean;
 }

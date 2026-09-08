@@ -1,0 +1,139 @@
+/* ============================================================================
+    La tabla campo → valor de una ficha.
+
+    ## Por qué los selectores del modo son `:host(...)` y no la clase suelta
+
+    Porque la clase del modo vive en el **host** (`lista-hechos--filas`), y con
+    la encapsulación emulada Angular le pega `[_ngcontent-x]` a cada compuesto
+    del selector. El host lleva `_nghost-x`, no `_ngcontent-x`, así que una
+    regla escrita `.lista-hechos--filas .lista-hechos__par` no casa nunca y la
+    lista se dibuja sin su distribución: los pares salen apilados, que es
+    exactamente lo que esta molécula viene a arreglar.
+
+    Sólo tokens del sistema. La regla de fondo: **el campo es la guía y el valor
+    es el dato**, así que el campo va en gris y pequeño y el valor en el color
+    del texto. Al revés —que es como estaban estas fichas— el nombre del campo
+    compite con su propio contenido.
+    ========================================================================== */
+
+:host {
+    display: block;
+}
+
+dl {
+    margin: 0;
+}
+
+/* ---- filas: la tabla de toda la vida ------------------------------------ */
+
+/* Campo a la izquierda en ancho fijo y valor a la derecha ocupando el resto:
+   con `auto` los nombres no quedarían alineados entre filas —cada uno tan
+   ancho como su texto— y se pierde la columna que hace que esto se recorra con
+   la vista en vez de leerse entero.
+
+   `minmax(0, …)` en el valor para que un texto largo sin espacios no empuje la
+   columna del campo fuera de la card. */
+:host(.lista-hechos--filas) .lista-hechos__par {
+    display: grid;
+    grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+    gap: var(--sp-3);
+    align-items: baseline;
+    padding-block: var(--sp-2);
+}
+
+/* Una línea entre filas y no un borde por fila: la última no lleva raya
+   colgando y las dos primeras no se ven más juntas que el resto. */
+:host(.lista-hechos--filas) .lista-hechos__par + .lista-hechos__par {
+    border-block-start: 1px solid var(--border-subtle, var(--border-default));
+}
+
+:host(.lista-hechos--filas) .lista-hechos__par:first-child {
+    padding-block-start: 0;
+}
+
+:host(.lista-hechos--filas) .lista-hechos__par:last-child {
+    padding-block-end: 0;
+}
+
+/* ---- columnas: el resumen de cabecera ----------------------------------- */
+
+/* `auto-fit` y no un número de columnas: la misma lista sirve para tres campos
+   o para seis, y fijar cuatro dejaba una columna vacía en la ficha que tiene
+   tres. El mínimo de 9rem es lo que necesita «Estudios disponibles» para no
+   partirse en dos renglones. */
+:host(.lista-hechos--columnas) dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: var(--sp-4);
+}
+
+:host(.lista-hechos--columnas) .lista-hechos__par {
+    display: grid;
+    gap: var(--sp-1);
+    align-content: start;
+}
+
+/* ---- campo y valor ------------------------------------------------------ */
+
+.lista-hechos__campo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* El ícono no se encoge: en una fila estrecha, `flex` le robaría ancho al
+   dibujo antes que al texto y quedaría un glifo aplastado. */
+.lista-hechos__icono {
+    flex: none;
+    inline-size: 1rem;
+    block-size: 1rem;
+    color: var(--text-muted);
+}
+
+.lista-hechos__valor {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    /* Un código o un modelo sin espacios no debe desbordar la card. */
+    overflow-wrap: anywhere;
+}
+
+/* En columnas el valor es lo que se compara entre tarjetas, así que pesa más;
+   en filas la alineación ya lo destaca y el negrita sobraba. */
+:host(.lista-hechos--columnas) .lista-hechos__valor {
+    font-weight: 600;
+}
+
+/* ---- valores que son un estado ------------------------------------------ */
+
+/* Color **y** nada más que color no alcanzaría, pero acá el color no es la
+   única señal: el valor se lee («Operativo», «En mantenimiento»). El tono
+   acompaña, no informa solo. */
+.lista-hechos__valor[data-tono='ok'] {
+    color: var(--st-success-fg, var(--text-primary));
+}
+
+.lista-hechos__valor[data-tono='aviso'] {
+    color: var(--st-warning-fg, var(--text-primary));
+}
+
+.lista-hechos__valor[data-tono='error'] {
+    color: var(--st-error-fg, var(--text-primary));
+}
+
+.lista-hechos__valor[data-tono='neutro'] {
+    color: var(--text-secondary);
+}
+
+/* En un teléfono no hay dos columnas: el campo pasa arriba de su valor. Es la
+   misma lista, apilada — no una vista distinta. */
+@media (max-width: 40rem) {
+    :host(.lista-hechos--filas) .lista-hechos__par {
+        grid-template-columns: 1fr;
+        gap: var(--sp-1);
+    }
+}

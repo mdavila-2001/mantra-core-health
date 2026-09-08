@@ -11,6 +11,14 @@
       · el contenido de `<main class="app-main__inner">` sale a un componente
         por pantalla, que el shell pinta en su <router-outlet>
 
+    De los enlaces se ocupa `cablear()`: cada `<a href>` de la maqueta sale
+    como `routerLink`. De los `<button>` NO se ocupa nadie acá, y es a
+    propósito: en la bóveda los movía `_assets/alovida.js`, y ese trabajo lo
+    hace ahora `AlovidaRuntimeService.controlesDeMaqueta()` con un oyente
+    delegado, acotado a la marca `data-alovida-maqueta` de los dos marcos.
+    Escribir un `(click)` por botón acá serían cientos de expresiones
+    generadas, y cada pantalla nueva volvería a nacer muda.
+
     ARCHIVO GENERADOR. Lo que produce se puede editar a mano; si se vuelve a
     correr, lo pisa. Ver PORT-ALOVIDA.md.
     ========================================================================== */

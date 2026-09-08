@@ -73,6 +73,24 @@ export function puntuacionDe(resultado: PublicSearchResult): string | null {
   return resultado.ratingAverage.toFixed(1).replace('.', ',');
 }
 
+/** Cómo se dibuja la tarjeta en la pantalla que la pide. */
+export interface OpcionesDeTarjeta {
+  /**
+   * Si se pinta la insignia del vertical («Farmacia», «Organización»).
+   *
+   * Por omisión sí, que es lo que necesita la portada del buscador: ahí la
+   * lista mezcla los seis verticales y la insignia es lo único que separa una
+   * farmacia de una aseguradora.
+   *
+   * Los directorios de un solo vertical la apagan. En «Directorio de clínicas»
+   * las quince tarjetas decían «Organización» —la misma palabra, repetida,
+   * encima del subtítulo que sí las distingue— y encima decían mal: un hospital
+   * público de tercer nivel no es «una Organización», es un hospital, y eso ya
+   * lo dice su titular.
+   */
+  readonly mostrarTipo?: boolean;
+}
+
 /**
  * Traduce una fila del directorio a la tarjeta de la maqueta.
  *
@@ -86,20 +104,37 @@ export function puntuacionDe(resultado: PublicSearchResult): string | null {
  * es un pendiente de diseño: es alguien que llega con Bs 200 a una consulta de
  * Bs 350.
  *
+ * ## Qué va arriba y qué va abajo
+ *
+ * El **titular** es el subtítulo, en el tamaño del cuerpo y pegado al nombre:
+ * es la respuesta a «qué es esto». Debajo, en gris y más chico, lo que ubica y
+ * lo que califica —dónde queda y su puntuación—, que es contexto y se lee
+ * después. Antes las tres cosas iban en el mismo gris de 12 px bajo una
+ * insignia genérica, y la tarjeta de un hospital de tercer nivel se leía igual
+ * que la de una clínica de barrio.
+ *
  * ## El sello dice «Declarado» cuando no está verificado, y no se calla
  *
  * La ficha de V65 lo pide explícitamente: lo declarado se muestra **rotulado**
  * como declarado, nunca mezclado con lo verificado ni escondido. Una tarjeta
  * sin sello se leería como verificada por omisión.
  */
-export function aTarjeta(resultado: PublicSearchResult): SearchResultItem {
+export function aTarjeta(
+  resultado: PublicSearchResult,
+  opciones: OpcionesDeTarjeta = {},
+): SearchResultItem {
   const meta: { text: string; iconKey?: string }[] = [];
-  if (resultado.headline !== null && resultado.headline !== '') {
-    meta.push({ text: resultado.headline, iconKey: 'especialidad' });
+
+  // La calle **con** la ciudad, y no la ciudad sola: en un directorio de
+  // lugares, «Cobija» a secas no distingue dos hospitales de Cobija, y a quien
+  // ya eligió el departamento en el mapa la ciudad sola no le dice nada nuevo.
+  // Cuando el tramo ya se titula con la ciudad, `dondeQueda` sigue siendo la
+  // línea útil porque empieza por la calle.
+  const donde = dondeQueda(resultado);
+  if (donde !== null) {
+    meta.push({ text: donde, iconKey: 'lugar' });
   }
-  if (resultado.city !== null && resultado.city !== '') {
-    meta.push({ text: resultado.city, iconKey: 'lugar' });
-  }
+
   const puntuacion = puntuacionDe(resultado);
   if (puntuacion !== null) {
     meta.push({
@@ -116,7 +151,14 @@ export function aTarjeta(resultado: PublicSearchResult): SearchResultItem {
     link: rutaDeFicha(resultado),
     figureText: inicialesDe(resultado.displayName),
     ...(resultado.avatarUrl === null ? {} : { figureImageUrl: resultado.avatarUrl }),
-    kind: { label: ROTULO_POR_TIPO[resultado.kind], tone: 'info' },
+    // El titular es el subtítulo, no la primera línea de contexto: es qué es
+    // esto. Ver el JSDoc de `subtitle`.
+    ...(resultado.headline === null || resultado.headline === ''
+      ? {}
+      : { subtitle: resultado.headline }),
+    ...(opciones.mostrarTipo === false
+      ? {}
+      : { kind: { label: ROTULO_POR_TIPO[resultado.kind], tone: 'info' as const } }),
     meta,
     seals: [
       resultado.verified

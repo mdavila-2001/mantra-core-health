@@ -1,75 +1,12 @@
 /* ============================================================================
-    La portada de especialidades del directorio de médicos.
+    El directorio de médicos.
 
-    Sólo distribución: ni un color ni una tipografía que el sistema no tenga ya.
+    La rejilla de la portada vive en `shared/styles/rejilla-de-tarjetas.css`,
+    la disciplina de tarjeta que esta pantalla comparte con el directorio de
+    laboratorios, la portada de «Directorios» y «Mis servicios»; acá queda sólo
+    lo propio.
     ========================================================================== */
 
 :host {
   display: block;
-}
-
-/* Mínimo de 14rem y no más: los nombres largos del catálogo —«Medicina Física
-   y Rehabilitación», «Cirugía Oral y Maxilofacial»— necesitan ancho para no
-   partirse en cuatro líneas, pero con un mínimo mayor entran de a dos por fila
-   en una pantalla mediana y la portada se vuelve una lista larga otra vez. */
-.portada {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-  gap: var(--sp-3);
-  margin: var(--sp-5) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* La tarjeta entera es el enlace, no un botón adentro: el área táctil es toda
-   la superficie que se ve, que es lo que la persona intenta tocar. */
-.portada__tarjeta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  block-size: 100%;
-  padding: var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color var(--dur-fast) var(--ease-standard);
-}
-
-.portada__tarjeta:hover {
-  border-color: var(--border-strong);
-}
-
-/* El foco se ve donde se ve el borde, no por dentro: la tarjeta es el destino
-   y el anillo tiene que rodearla entera. */
-.portada__tarjeta:focus-visible {
-  outline: 2px solid var(--st-primary-border);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .portada__tarjeta {
-    transition: none;
-  }
-}
-
-.portada__nombre {
-  font-weight: 600;
-  /* Un nombre de tres palabras no debe empujar el ancho de la columna. */
-  overflow-wrap: anywhere;
-}
-
-/* Tabular: la portada se lee comparando cantidades entre tarjetas, y con
-   dígitos de ancho distinto la comparación se hace a ojo mal. */
-.portada__cantidad {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Arriba de la lista y alineado a la izquierda: es una vuelta atrás, y las
-   vueltas atrás viven donde empieza la lectura, no donde termina. */
-.portada__volver {
-  margin-block-end: var(--sp-3);
 }

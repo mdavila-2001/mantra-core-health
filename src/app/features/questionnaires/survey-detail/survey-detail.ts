@@ -8,6 +8,7 @@ import type {
   AnswerType,
   SurveyDetail,
   SurveyQuestion,
+  SurveyQuestionEdit,
   SurveyResponse,
 } from '../../../core/data-access/surveys/surveys.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -17,32 +18,17 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Checkbox } from '../../../shared/components/atoms/checkbox/checkbox';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
-import { Select } from '../../../shared/components/atoms/select/select';
-import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { SurveyForm } from '../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { QuestionEditor, ETIQUETA_TIPO as ETIQUETAS } from './question-editor/question-editor';
 import { ENCUESTAS_ROUTE } from '../questionnaires.routes';
-
-/** Los tipos de respuesta, en el orden en que se ofrecen. */
-const TIPOS: readonly SelectOption<string>[] = [
-  { value: 'TEXT', label: 'Texto libre' },
-  { value: 'SCALE', label: 'Escala numérica' },
-  { value: 'BOOLEAN', label: 'Sí / No' },
-  { value: 'SINGLE_CHOICE', label: 'Elección simple' },
-  { value: 'MULTIPLE_CHOICE', label: 'Elección múltiple' },
-];
-
-/** Los tipos que exigen un catálogo de opciones. */
-const CON_OPCIONES: ReadonlySet<string> = new Set(['SINGLE_CHOICE', 'MULTIPLE_CHOICE']);
 
 /**
  * Piso de respuestas para mostrar un agregado o habilitar el CSV.
@@ -84,15 +70,6 @@ interface ResumenDePregunta {
   readonly barras: readonly BarraDeResumen[];
 }
 
-/** Etiqueta legible de cada tipo, para la lista de preguntas ya cargadas. */
-const ETIQUETA_TIPO: Readonly<Record<AnswerType, string>> = {
-  TEXT: 'Texto libre',
-  SCALE: 'Escala',
-  BOOLEAN: 'Sí / No',
-  SINGLE_CHOICE: 'Elección simple',
-  MULTIPLE_CHOICE: 'Elección múltiple',
-};
-
 /**
  * La ficha de una encuesta: componer el cuestionario, publicarlo, asociarlo y
  * leer lo que respondieron.
@@ -120,15 +97,14 @@ const ETIQUETA_TIPO: Readonly<Record<AnswerType, string>> = {
     BackLink,
     Badge,
     Card,
-    Checkbox,
     DatePipe,
     DecimalPipe,
     FormField,
     PageHeader,
-    PaginatedForm,
+    QuestionEditor,
     ReactiveFormsModule,
-    Select,
     Skeleton,
+    SurveyForm,
     ViewStateHost,
   ],
   templateUrl: './survey-detail.html',
@@ -144,12 +120,9 @@ export class SurveyDetailScreen {
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   /** A dónde vuelve quien entró a una encuesta: al listado del que salió. */
   protected readonly rutaDeLasEncuestas = ENCUESTAS_ROUTE;
-  protected readonly tipos = TIPOS;
-  protected readonly etiquetaTipo = ETIQUETA_TIPO;
-
-  /** Etiqueta legible de un tipo de respuesta. */
+  /** Etiqueta legible de un tipo de respuesta. La usa el resumen de abajo. */
   protected etiquetaDe(tipo: AnswerType): string {
-    return ETIQUETA_TIPO[tipo];
+    return ETIQUETAS[tipo];
   }
 
   private readonly surveyId = this.route.snapshot.paramMap.get('surveyId') ?? '';
@@ -181,7 +154,20 @@ export class SurveyDetailScreen {
     return encuesta.questions.map((pregunta) => resumirPregunta(pregunta, this.respuestas()));
   });
 
-  protected readonly guardandoPregunta = signal(false);
+  /* -- el editor del cuestionario ------------------------------------------ */
+
+  /** La pregunta abierta para editar, o `null` si están todas plegadas. */
+  protected readonly preguntaAbierta = signal<string | null>(null);
+
+  /** El id de la pregunta con una petición en vuelo, para su botón. */
+  protected readonly guardandoPregunta = signal<string | null>(null);
+
+  /** Si se está agregando una pregunta nueva. */
+  protected readonly agregando = signal(false);
+
+  /** Si la pantalla está mostrando la vista previa en vez del editor. */
+  protected readonly enPrevia = signal(false);
+
   protected readonly publicando = signal(false);
   protected readonly asignando = signal(false);
   protected readonly creandoVersion = signal(false);
@@ -198,19 +184,6 @@ export class SurveyDetailScreen {
     return actual.status === 'ready' && actual.data.published;
   });
 
-  protected readonly formularioPregunta = new FormGroup({
-    questionText: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(500)],
-    }),
-    answerType: new FormControl<AnswerType>('TEXT', { nonNullable: true }),
-    required: new FormControl(false, { nonNullable: true }),
-    /** Una opción por línea. Se parte al enviar. */
-    options: new FormControl('', { nonNullable: true }),
-    scaleMin: new FormControl(1, { nonNullable: true }),
-    scaleMax: new FormControl(5, { nonNullable: true }),
-  });
-
   protected readonly formularioAsignacion = new FormGroup({
     targetId: new FormControl('', {
       nonNullable: true,
@@ -218,70 +191,8 @@ export class SurveyDetailScreen {
     }),
   });
 
-  /** Si el tipo elegido pide opciones, para mostrar el campo. */
-  protected readonly pideOpciones = signal(false);
-
-  /** Si el tipo elegido es una escala, para mostrar mínimo y máximo. */
-  protected readonly pideEscala = signal(false);
-
-  /**
-   * Las páginas del alta de pregunta, **según el tipo elegido**.
-   *
-   * Las opciones sólo las pide una elección; el mínimo y el máximo, sólo una
-   * escala. Mostrarlos siempre sería pedir datos que no se van a guardar, y
-   * mostrarlos deshabilitados sería lo mismo con más ruido.
-   */
-  protected readonly paginasDePregunta = computed(() =>
-    paginarCampos([
-      {
-        titulo: 'La pregunta',
-        campos: [
-          {
-            key: 'questionText',
-            label: 'Pregunta',
-            hint: 'Cómo la va a leer el paciente.',
-            control: 'text' as const,
-            required: true,
-            testId: 'pregunta-texto',
-            mensajeDeError: 'Escribí la pregunta (hasta 500 caracteres).',
-          },
-          {
-            key: 'answerType',
-            label: 'Tipo de respuesta',
-            control: 'select' as const,
-            required: true,
-            options: TIPOS,
-          },
-          ...(this.pideOpciones()
-            ? [
-                {
-                  key: 'options',
-                  label: 'Opciones',
-                  hint: 'Una por línea. Hacen falta al menos dos.',
-                  control: 'textarea' as const,
-                  required: true,
-                  testId: 'pregunta-opciones',
-                },
-              ]
-            : []),
-          ...(this.pideEscala()
-            ? [
-                { key: 'scaleMin', label: 'Mínimo', control: 'number' as const, required: true },
-                { key: 'scaleMax', label: 'Máximo', control: 'number' as const, required: true },
-              ]
-            : []),
-          { key: 'required', label: 'Obligatoria', control: 'checkbox' as const },
-        ],
-      },
-    ]),
-  );
-
   constructor() {
     this.cargar();
-    this.formularioPregunta.controls.answerType.valueChanges.subscribe((tipo) => {
-      this.pideOpciones.set(CON_OPCIONES.has(tipo));
-      this.pideEscala.set(tipo === 'SCALE');
-    });
   }
 
   /** Trae la encuesta con su cuestionario. */
@@ -312,57 +223,122 @@ export class SurveyDetailScreen {
     });
   }
 
-  /** Agrega la pregunta a la versión en borrador. */
+  /* -- el editor del cuestionario ------------------------------------------ */
+
+  /** Abre una pregunta para editarla. Sólo una a la vez. */
+  protected abrirPregunta(questionId: string): void {
+    this.preguntaAbierta.set(questionId);
+  }
+
+  protected cerrarPregunta(): void {
+    this.preguntaAbierta.set(null);
+  }
+
+  /** Alterna entre el editor y la vista previa, plegando lo que estuviera abierto. */
+  protected alternarPrevia(): void {
+    this.preguntaAbierta.set(null);
+    this.enPrevia.update((activa) => !activa);
+  }
+
+  /**
+   * Agrega una pregunta vacía **y la abre**.
+   *
+   * Vacía y no con un formulario aparte que la componga: es lo que hace un
+   * editor —aparece la fila y se escribe encima— y lo que deja insertarla sin
+   * decidir de antemano su tipo. El enunciado provisional lo pide el backend,
+   * que no acepta texto vacío; se reemplaza en cuanto se escribe el de verdad.
+   */
   protected agregarPregunta(): void {
-    if (this.formularioPregunta.invalid || this.guardandoPregunta()) {
-      this.formularioPregunta.markAllAsTouched();
-      return;
-    }
-
-    const valores = this.formularioPregunta.getRawValue();
-    const opciones = valores.options
-      .split('\n')
-      .map((linea) => linea.trim())
-      .filter((linea) => linea !== '');
-
-    if (CON_OPCIONES.has(valores.answerType) && opciones.length < 2) {
-      this.toast.error('Una pregunta de elección necesita al menos dos opciones.');
-      return;
-    }
-
-    this.guardandoPregunta.set(true);
+    if (this.agregando()) return;
+    this.agregando.set(true);
     this.surveys
-      .addQuestion(this.surveyId, {
-        questionText: valores.questionText.trim(),
-        answerType: valores.answerType,
-        required: valores.required,
-        // Cada clave se omite si no corresponde al tipo: el backend valida con
-        // `forbidNonWhitelisted` y una clave declarada en `undefined` vuelve 400.
-        ...(CON_OPCIONES.has(valores.answerType) ? { options: opciones } : {}),
-        ...(valores.answerType === 'SCALE'
-          ? { scaleMin: valores.scaleMin, scaleMax: valores.scaleMax }
-          : {}),
-      })
+      .addQuestion(this.surveyId, { questionText: 'Pregunta nueva', answerType: 'TEXT' })
       .subscribe({
-        next: () => {
-          this.guardandoPregunta.set(false);
-          this.formularioPregunta.reset({
-            answerType: 'TEXT',
-            required: false,
-            options: '',
-            scaleMin: 1,
-            scaleMax: 5,
-          });
-          this.pideOpciones.set(false);
-          this.pideEscala.set(false);
-          this.toast.success('Pregunta agregada.');
-          this.cargar();
+        next: (creada) => {
+          this.agregando.set(false);
+          this.recargarYAbrir(creada.id);
         },
         error: (error: unknown) => {
-          this.guardandoPregunta.set(false);
+          this.agregando.set(false);
           this.estado.set(errorToViewState(error));
         },
       });
+  }
+
+  /** Guarda lo editado en una pregunta. */
+  protected guardarPregunta(questionId: string, cambios: SurveyQuestionEdit): void {
+    if (this.guardandoPregunta() !== null) return;
+    this.guardandoPregunta.set(questionId);
+    this.surveys.updateQuestion(this.surveyId, questionId, cambios).subscribe({
+      next: () => {
+        this.guardandoPregunta.set(null);
+        this.preguntaAbierta.set(null);
+        this.toast.success('Pregunta guardada.');
+        this.cargar();
+      },
+      error: (error: unknown) => {
+        this.guardandoPregunta.set(null);
+        this.estado.set(errorToViewState(error));
+      },
+    });
+  }
+
+  /**
+   * Borra una pregunta.
+   *
+   * Sin diálogo de confirmación: la encuesta está en borrador —nadie la
+   * respondió— y volver a escribirla cuesta menos que el diálogo. Sobre una
+   * versión publicada este botón no existe, que es donde borrar sí importaría.
+   */
+  protected borrarPregunta(questionId: string): void {
+    this.surveys.deleteQuestion(this.surveyId, questionId).subscribe({
+      next: () => {
+        this.preguntaAbierta.set(null);
+        this.toast.success('Pregunta borrada.');
+        this.cargar();
+      },
+      error: (error: unknown) => this.estado.set(errorToViewState(error)),
+    });
+  }
+
+  /**
+   * Mueve una pregunta un lugar arriba o abajo.
+   *
+   * Se manda **el orden entero** y no «subí ésta»: ver `reorderQuestions`. El
+   * estado local se adelanta al servidor para que la fila se mueva en el acto —
+   * esperar la ida y vuelta para ver el cambio hace que se pulse dos veces.
+   */
+  protected moverPregunta(indice: number, direccion: -1 | 1): void {
+    const encuesta = this.encuesta();
+    if (!encuesta) return;
+    const destino = indice + direccion;
+    if (destino < 0 || destino >= encuesta.questions.length) return;
+
+    const orden = [...encuesta.questions];
+    const [movida] = orden.splice(indice, 1);
+    orden.splice(destino, 0, movida!);
+    this.estado.set(
+      ready({ ...encuesta, questions: orden.map((q, i) => ({ ...q, position: i + 1 })) }),
+    );
+
+    this.surveys.reorderQuestions(this.surveyId, orden.map((q) => q.id)).subscribe({
+      // Se recarga igual: el servidor es quien fija las posiciones, y si el
+      // reordenamiento se rechazó la pantalla tiene que volver a la verdad.
+      next: () => this.cargar(),
+      error: (error: unknown) => this.estado.set(errorToViewState(error)),
+    });
+  }
+
+  /** Recarga la encuesta y deja abierta la pregunta indicada. */
+  private recargarYAbrir(questionId: string): void {
+    this.surveys.getSurvey(this.surveyId).subscribe({
+      next: (encuesta) => {
+        this.estado.set(ready(encuesta));
+        this.enPrevia.set(false);
+        this.preguntaAbierta.set(questionId);
+      },
+      error: (error: unknown) => this.estado.set(errorToViewState(error)),
+    });
   }
 
   /** Publica la versión vigente y le da vigencia abierta. */

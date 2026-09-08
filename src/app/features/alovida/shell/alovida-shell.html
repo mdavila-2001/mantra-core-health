@@ -2,7 +2,12 @@
      allá se repetía en 111 archivos acá va una sola vez, y el submenú del
      módulo activo sale de alovida-nav.data.ts en lugar de estar escrito a mano
      en cada pantalla. -->
-<div class="app-shell" app-shell>
+<!-- `data-alovida-maqueta` acota los comportamientos portados de la maqueta
+     (AlovidaRuntimeService.controlesDeMaqueta) a lo que se pinta bajo este
+     marco. Sin la marca habría que colgarlos de clases como `.app-chip` o
+     `.app-form-actions`, que el resto de la aplicación también usa con sus
+     propios componentes: el oyente delegado les pisaría el clic. -->
+<div class="app-shell" app-shell data-alovida-maqueta>
   <nav class="app-side-nav" aria-label="Secciones de AloVida">
     <div class="app-side-nav__fondo" aria-hidden="true">
       <svg class="app-side-nav__textura" viewBox="0 0 264 1024" preserveAspectRatio="xMidYMid slice" fill="none">
@@ -78,9 +83,33 @@
         <input class="app-input" type="search" placeholder="Buscá en toda la organización" />
       </label>
       <div class="app-header__derecha">
-        <button class="app-tenant-switcher" type="button" app-tenant-switcher [attr.aria-label]="'Organización activa: ' + organizacion()">
+        <div class="app-header__anclaje">
+        <button
+          class="app-tenant-switcher"
+          type="button"
+          app-tenant-switcher
+          aria-haspopup="menu"
+          aria-controls="menu-organizacion"
+          [attr.aria-expanded]="desplegable() === 'organizacion'"
+          (click)="alternarDesplegable('organizacion')"
+          [attr.aria-label]="'Organización activa: ' + organizacion()"
+        >
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path><path d="M14 10h4a2 2 0 0 1 2 2v8"></path><path d="M3 20h18"></path><path d="M8 8h2M8 12h2M8 16h2"></path></svg><span>{{ organizacion() }}</span><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
         </button>
+        <div class="app-menu" id="menu-organizacion" role="menu" [hidden]="desplegable() !== 'organizacion'">
+          @for (nombre of organizaciones; track nombre) {
+            <button
+              class="app-menu-item"
+              type="button"
+              role="menuitemradio"
+              [attr.aria-checked]="nombre === organizacion()"
+              (click)="elegirOrganizacion(nombre)"
+            >
+              {{ nombre }}
+            </button>
+          }
+        </div>
+        </div>
 
         <button class="app-theme-toggle" app-theme-toggle>
           <span class="app-theme-toggle__pista">
@@ -90,12 +119,27 @@
           </span>
         </button>
 
-        <button class="app-header__campana" type="button" [attr.aria-label]="'Avisos: ' + sinLeer() + ' sin leer'">
+        <div class="app-header__anclaje">
+        <button
+          class="app-header__campana"
+          type="button"
+          aria-haspopup="menu"
+          aria-controls="menu-avisos"
+          [attr.aria-expanded]="desplegable() === 'avisos'"
+          (click)="alternarDesplegable('avisos')"
+          [attr.aria-label]="'Avisos: ' + sinLeer() + ' sin leer'"
+        >
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
           @if (sinLeer() > 0) {
             <span class="app-header__sin-leer" aria-hidden="true"></span>
           }
         </button>
+        <div class="app-menu" id="menu-avisos" role="menu" [hidden]="desplegable() !== 'avisos'">
+          @for (aviso of avisos; track aviso) {
+            <span class="app-menu-item" role="menuitem">{{ aviso }}</span>
+          }
+        </div>
+        </div>
 
         <span class="app-avatar" app-avatar [title]="sesion()" aria-hidden="true">{{ iniciales() }}</span>
         <span class="solo-lectores">Sesión de {{ sesion() }}</span>

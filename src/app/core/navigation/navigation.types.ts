@@ -319,6 +319,22 @@ export interface AppSection {
    */
   readonly fueraDelMenuPara?: readonly string[];
 
+  /**
+   * Si la sección se dibuja **suelta y arriba de todo**, fuera de su grupo.
+   *
+   * Nace con «Mi perfil» y «Notificaciones» (07/09/2026). Las dos siguen
+   * declarando su `group` —el registro no pierde el reparto, y el breadcrumb lo
+   * sigue usando—, pero en la barra no cuelgan de él: son las dos cosas que
+   * cualquiera abre sin pensar a qué dominio pertenecen, y para el médico
+   * dejaban un desplegable de dos renglones que costaba más abrir que leer.
+   *
+   * Lo que NO es: una forma de sacar la sección de su grupo. El paciente sigue
+   * teniendo «Mi cuenta» con las seis que quedan —sus citas, su historia, sus
+   * resultados—, que sí son un dominio. Si esto vaciara el grupo, el grupo
+   * desaparece solo: el menú ya descarta los que se quedan sin ítems.
+   */
+  readonly pinnedTop?: boolean;
+
   readonly availability: SectionAvailability;
 
   /**

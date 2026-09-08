@@ -1,0 +1,701 @@
+import { uuid } from '../mock-store';
+
+/* ============================================================================
+    El catálogo de terminología del backend simulado.
+
+    Todo `*ConceptId` que aparece en cualquier fixture sale de acá, así que
+    `GET /terminology/concepts?ids=` siempre puede etiquetarlo. Cada concepto
+    pertenece a uno o más conjuntos de valores (`valueSets`, por código
+    interno), que es lo que expanden los selectores.
+    ========================================================================== */
+
+export interface ConceptoSimulado {
+  readonly id: string;
+  readonly code: string;
+  readonly display: string;
+  readonly definition?: string;
+  readonly valueSets: readonly string[];
+  readonly selectable: boolean;
+  readonly ordinal: number;
+}
+
+export interface ConjuntoSimulado {
+  readonly id: string;
+  readonly internalCode: string;
+  readonly name: string;
+  readonly description: string;
+  readonly defaultVersionId: string;
+}
+
+const registro = new Map<string, ConceptoSimulado>();
+const conjuntos = new Map<string, ConjuntoSimulado>();
+
+export const CODE_SYSTEM_VERSION_ID = uuid('code-system-version-alovida-1');
+export const CODE_SYSTEM_ID = uuid('code-system-alovida');
+
+function conjunto(internalCode: string, name: string, description: string): ConjuntoSimulado {
+  const c: ConjuntoSimulado = {
+    id: uuid(`value-set-${internalCode}`),
+    internalCode,
+    name,
+    description,
+    defaultVersionId: uuid(`value-set-version-${internalCode}`),
+  };
+  conjuntos.set(internalCode, c);
+  return c;
+}
+
+function definir(
+  valueSet: string,
+  entradas: readonly (readonly [code: string, display: string, definition?: string])[],
+): Readonly<Record<string, string>> {
+  const ids: Record<string, string> = {};
+  entradas.forEach(([code, display, definition], indice) => {
+    const existente = registro.get(code);
+    if (existente !== undefined) {
+      registro.set(code, { ...existente, valueSets: [...existente.valueSets, valueSet] });
+      ids[code] = existente.id;
+      return;
+    }
+    const id = uuid(`concept-${code}`);
+    registro.set(code, {
+      id,
+      code,
+      display,
+      ...(definition === undefined ? {} : { definition }),
+      valueSets: [valueSet],
+      selectable: true,
+      ordinal: indice + 1,
+    });
+    ids[code] = id;
+  });
+  return ids;
+}
+
+/* ---- Bolivia: departamentos, municipios, ocupaciones, empleadores --------- */
+
+/* Los codigos no son decorativos: `BoMunicipalitiesService` saca la sigla del
+   departamento quitandole el prefijo `geo:bo:department:` al codigo, y la del
+   municipio por el prefijo INE o, si no, por las dos letras iniciales. Con los
+   `BO-SC` de antes la sigla quedaba en `BO-SC`, no casaba con ninguna silueta
+   y el mapa de departamentos del alta se dibujaba vacio —y sin departamento no
+   habia ciudades, que es un campo obligatorio: el registro no se podia
+   terminar. */
+conjunto('VS_BO_DEPARTMENT', 'Departamentos de Bolivia', 'Los nueve departamentos.');
+export const DEPARTAMENTO = definir('VS_BO_DEPARTMENT', [
+  ['geo:bo:department:SC', 'Santa Cruz'],
+  ['geo:bo:department:LP', 'La Paz'],
+  ['geo:bo:department:CB', 'Cochabamba'],
+  ['geo:bo:department:OR', 'Oruro'],
+  ['geo:bo:department:PT', 'Potosí'],
+  ['geo:bo:department:CH', 'Chuquisaca'],
+  ['geo:bo:department:TJ', 'Tarija'],
+  ['geo:bo:department:BE', 'Beni'],
+  ['geo:bo:department:PD', 'Pando'],
+]);
+
+conjunto('VS_BO_MUNICIPALITY', 'Municipios de Bolivia', 'Municipios, agrupados por departamento.');
+export const MUNICIPIO = definir('VS_BO_MUNICIPALITY', [
+  ['SC-SCZ', 'Santa Cruz de la Sierra'],
+  ['SC-MON', 'Montero'],
+  ['SC-WAR', 'Warnes'],
+  ['SC-COT', 'Cotoca'],
+  ['SC-LGD', 'La Guardia'],
+  ['LP-LPZ', 'La Paz'],
+  ['LP-ELA', 'El Alto'],
+  ['LP-VIA', 'Viacha'],
+  ['CB-CBB', 'Cochabamba'],
+  ['CB-QUI', 'Quillacollo'],
+  ['CB-SAC', 'Sacaba'],
+  ['OR-ORU', 'Oruro'],
+  ['PT-PTS', 'Potosí'],
+  ['CH-SRE', 'Sucre'],
+  ['TJ-TJA', 'Tarija'],
+  ['BE-TRI', 'Trinidad'],
+  ['PD-COB', 'Cobija'],
+]);
+
+conjunto('VS_BO_OCCUPATION', 'Ocupaciones', 'Catálogo normado de ocupaciones.');
+export const OCUPACION = definir('VS_BO_OCCUPATION', [
+  ['OCC-DOCENTE', 'Docente'],
+  ['OCC-COMERCIANTE', 'Comerciante'],
+  ['OCC-INGENIERO', 'Ingeniero/a'],
+  ['OCC-ABOGADO', 'Abogado/a'],
+  ['OCC-CONTADOR', 'Contador/a'],
+  ['OCC-ESTUDIANTE', 'Estudiante'],
+  ['OCC-AGRICULTOR', 'Agricultor/a'],
+  ['OCC-CHOFER', 'Chofer'],
+  ['OCC-ENFERMERIA', 'Enfermero/a'],
+  ['OCC-ADMINISTRATIVO', 'Administrativo/a'],
+  ['OCC-HOGAR', 'Trabajo del hogar'],
+  ['OCC-JUBILADO', 'Jubilado/a'],
+  ['OCC-OTRA', 'Otra ocupación'],
+]);
+
+conjunto('VS_BO_EMPLOYER', 'Empleadores', 'Empresas e instituciones registradas.');
+export const EMPLEADOR = definir('VS_BO_EMPLOYER', [
+  ['EMP-YPFB', 'YPFB'],
+  ['EMP-UAGRM', 'Universidad Autónoma Gabriel René Moreno'],
+  ['EMP-CRE', 'Cooperativa Rural de Electrificación'],
+  ['EMP-BNB', 'Banco Nacional de Bolivia'],
+  ['EMP-ENTEL', 'ENTEL'],
+  ['EMP-SEDES', 'SEDES Santa Cruz'],
+  ['EMP-INDEP', 'Independiente'],
+]);
+
+/* ---- especialidades médicas ---------------------------------------------- */
+
+conjunto('VS_MEDICAL_SPECIALTY', 'Especialidades médicas', 'Especialidades reconocidas.');
+export const ESPECIALIDAD = definir('VS_MEDICAL_SPECIALTY', [
+  ['SP-CARDIO', 'Cardiología', 'Diagnóstico y tratamiento de las enfermedades del corazón.'],
+  ['SP-PEDIA', 'Pediatría', 'Salud de niñas, niños y adolescentes.'],
+  ['SP-GINE', 'Ginecología y obstetricia', 'Salud de la mujer, embarazo y parto.'],
+  ['SP-DERMA', 'Dermatología', 'Enfermedades de la piel, cabello y uñas.'],
+  ['SP-TRAUMA', 'Traumatología y ortopedia', 'Lesiones y enfermedades del aparato locomotor.'],
+  ['SP-MEDINT', 'Medicina interna', 'Atención integral del adulto.'],
+  ['SP-NEURO', 'Neurología', 'Enfermedades del sistema nervioso.'],
+  ['SP-PSIQ', 'Psiquiatría', 'Salud mental.'],
+  ['SP-OFTAL', 'Oftalmología', 'Salud visual.'],
+  ['SP-ODONTO', 'Odontología', 'Salud bucal.'],
+  ['SP-ENDO', 'Endocrinología', 'Diabetes, tiroides y hormonas.'],
+  ['SP-GASTRO', 'Gastroenterología', 'Aparato digestivo.'],
+  ['SP-NEUMO', 'Neumología', 'Aparato respiratorio.'],
+  ['SP-UROL', 'Urología', 'Aparato urinario y reproductor masculino.'],
+  ['SP-MEDGEN', 'Medicina general', 'Primer contacto y seguimiento.'],
+  ['SP-NUTRI', 'Nutrición', 'Alimentación y metabolismo.'],
+  ['SP-FISIO', 'Fisioterapia', 'Rehabilitación física.'],
+  ['SP-ANEST', 'Anestesiología', 'Anestesia y manejo del dolor.'],
+]);
+
+/* ---- demografía y contactos ---------------------------------------------- */
+
+conjunto('VS_ADMINISTRATIVE_GENDER', 'Género administrativo', 'Género con el que se registra la persona.');
+export const GENERO = definir('VS_ADMINISTRATIVE_GENDER', [
+  ['GEN-F', 'Femenino'],
+  ['GEN-M', 'Masculino'],
+  ['GEN-X', 'No binario'],
+  ['GEN-U', 'No declarado'],
+]);
+
+conjunto('VS_BIRTH_SEX', 'Sexo al nacer', 'Sexo asignado al nacer.');
+export const SEXO = definir('VS_BIRTH_SEX', [
+  ['SEX-F', 'Femenino'],
+  ['SEX-M', 'Masculino'],
+  ['SEX-I', 'Intersexual'],
+  ['SEX-U', 'Desconocido'],
+]);
+
+conjunto('VS_RELATED_PERSON_RELATIONSHIP', 'Parentesco', 'Relación de una persona con el paciente.');
+export const PARENTESCO = definir('VS_RELATED_PERSON_RELATIONSHIP', [
+  ['REL-MADRE', 'Madre'],
+  ['REL-PADRE', 'Padre'],
+  ['REL-CONYUGE', 'Cónyuge'],
+  ['REL-HIJO', 'Hijo/a'],
+  ['REL-HERMANO', 'Hermano/a'],
+  ['REL-TUTOR', 'Tutor/a legal'],
+  ['REL-AMIGO', 'Amigo/a'],
+  ['REL-OTRO', 'Otro'],
+]);
+
+conjunto('VS_LANGUAGE', 'Idiomas', 'Idiomas de atención.');
+export const IDIOMA = definir('VS_LANGUAGE', [
+  ['LANG-ES', 'Español'],
+  ['LANG-QU', 'Quechua'],
+  ['LANG-AY', 'Aymara'],
+  ['LANG-EN', 'Inglés'],
+  ['LANG-PT', 'Portugués'],
+]);
+
+conjunto('VS_LANGUAGE_PROFICIENCY', 'Dominio del idioma', 'Nivel de dominio.');
+export const DOMINIO_IDIOMA = definir('VS_LANGUAGE_PROFICIENCY', [
+  ['PROF-NATIVO', 'Nativo'],
+  ['PROF-AVANZADO', 'Avanzado'],
+  ['PROF-BASICO', 'Básico'],
+]);
+
+conjunto('VS_NATIONALITY', 'Nacionalidad', 'País de nacionalidad.');
+export const NACIONALIDAD = definir('VS_NATIONALITY', [
+  ['NAT-BO', 'Boliviana'],
+  ['NAT-AR', 'Argentina'],
+  ['NAT-BR', 'Brasileña'],
+  ['NAT-PE', 'Peruana'],
+]);
+
+conjunto('VS_BLOOD_GROUP', 'Grupo sanguíneo', 'Grupo ABO.');
+export const GRUPO_ABO = definir('VS_BLOOD_GROUP', [
+  ['ABO-O', 'O'],
+  ['ABO-A', 'A'],
+  ['ABO-B', 'B'],
+  ['ABO-AB', 'AB'],
+]);
+
+conjunto('VS_RH_FACTOR', 'Factor Rh', 'Factor Rh.');
+export const RH = definir('VS_RH_FACTOR', [
+  ['RH-POS', 'Positivo'],
+  ['RH-NEG', 'Negativo'],
+]);
+
+/* ---- estados genéricos --------------------------------------------------- */
+
+conjunto('VS_RECORD_STATUS', 'Estados de registro', 'Estados administrativos de personas y perfiles.');
+export const ESTADO = definir('VS_RECORD_STATUS', [
+  ['ST-ACTIVE', 'Activo'],
+  ['ST-INACTIVE', 'Inactivo'],
+  ['ST-PENDING', 'Pendiente'],
+  ['ST-VERIFIED', 'Verificado'],
+  ['ST-UNVERIFIED', 'Sin verificar'],
+  ['ST-REJECTED', 'Rechazado'],
+  ['ST-REVOKED', 'Revocado'],
+  ['ST-SUSPENDED', 'Suspendido'],
+  ['ST-ARCHIVED', 'Archivado'],
+  ['ST-DRAFT', 'Borrador'],
+  ['ST-PUBLISHED', 'Publicado'],
+  ['ST-CLOSED', 'Cerrado'],
+  ['ST-COMPLETED', 'Completado'],
+  ['ST-IN-PROGRESS', 'En curso'],
+  ['ST-LINKED', 'Vinculado'],
+  ['ST-UNLINKED', 'Sin vincular'],
+  ['ST-ALIVE', 'Con vida'],
+  ['ST-DECEASED', 'Fallecido/a'],
+]);
+
+/* ---- profesionales ------------------------------------------------------- */
+
+conjunto('VS_PRACTITIONER_CATEGORY', 'Categoría profesional', 'Tipo de profesional sanitario.');
+export const CATEGORIA_PROFESIONAL = definir('VS_PRACTITIONER_CATEGORY', [
+  ['PC-MEDICO', 'Médico/a'],
+  ['PC-ODONTOLOGO', 'Odontólogo/a'],
+  ['PC-ENFERMERO', 'Enfermero/a'],
+  ['PC-PSICOLOGO', 'Psicólogo/a'],
+  ['PC-NUTRICIONISTA', 'Nutricionista'],
+  ['PC-FISIOTERAPEUTA', 'Fisioterapeuta'],
+]);
+
+conjunto('VS_CREDENTIAL_TYPE', 'Tipos de credencial', 'Títulos y certificaciones.');
+export const TIPO_CREDENCIAL = definir('VS_CREDENTIAL_TYPE', [
+  ['CRED-TITULO', 'Título profesional'],
+  ['CRED-ESPECIALIDAD', 'Título de especialidad'],
+  ['CRED-MAESTRIA', 'Maestría'],
+  ['CRED-DOCTORADO', 'Doctorado'],
+  ['CRED-DIPLOMADO', 'Diplomado'],
+  ['CRED-SEDES', 'Registro SEDES'],
+]);
+
+conjunto('VS_JURISDICTION', 'Jurisdicciones', 'Ámbito de la matrícula.');
+export const JURISDICCION = definir('VS_JURISDICTION', [
+  ['JUR-BO', 'Nacional (Bolivia)'],
+  ['JUR-SC', 'Departamental Santa Cruz'],
+  ['JUR-LP', 'Departamental La Paz'],
+]);
+
+conjunto('VS_AFFILIATION_TYPE', 'Tipos de vínculo laboral', 'Cómo se vincula el profesional con una organización.');
+export const TIPO_VINCULO = definir('VS_AFFILIATION_TYPE', [
+  ['AFF-PLANTA', 'Personal de planta'],
+  ['AFF-CONSULTOR', 'Consultor/a'],
+  ['AFF-CONSULTORIO', 'Consultorio propio'],
+  ['AFF-HONORARIO', 'Honorario'],
+]);
+
+conjunto('VS_PRACTICE_SCOPE', 'Alcance de práctica', 'Qué habilita la matrícula.');
+export const ALCANCE = definir('VS_PRACTICE_SCOPE', [
+  ['SCOPE-GENERAL', 'Práctica general'],
+  ['SCOPE-ESPECIALISTA', 'Práctica especializada'],
+]);
+
+/* ---- agenda ------------------------------------------------------------- */
+
+conjunto('VS_APPOINTMENT_CHANNEL', 'Medio de atención', 'Por qué medio ocurre la consulta.');
+export const CANAL = definir('VS_APPOINTMENT_CHANNEL', [
+  ['CH-PRESENCIAL', 'Presencial'],
+  ['CH-TELECONSULTA', 'Teleconsulta'],
+  ['CH-DOMICILIO', 'A domicilio'],
+]);
+
+conjunto('VS_ACTIVITY_TYPE', 'Tipos de actividad', 'Qué se agenda en un cupo.');
+export const ACTIVIDAD = definir('VS_ACTIVITY_TYPE', [
+  ['ACT-CONSULTA', 'Consulta médica'],
+  ['ACT-CONTROL', 'Control'],
+  ['ACT-PROCEDIMIENTO', 'Procedimiento'],
+  ['ACT-TELECONSULTA', 'Teleconsulta'],
+  ['ACT-EXAMEN', 'Examen'],
+]);
+
+conjunto('VS_EXCEPTION_TYPE', 'Tipos de bloqueo', 'Por qué no se atiende.');
+export const TIPO_BLOQUEO = definir('VS_EXCEPTION_TYPE', [
+  ['EXC-VACACIONES', 'Vacaciones'],
+  ['EXC-CONGRESO', 'Congreso'],
+  ['EXC-FERIADO', 'Feriado'],
+  ['EXC-PERSONAL', 'Motivo personal'],
+  ['EXC-CIRUGIA', 'Cirugía programada'],
+]);
+
+conjunto('VS_APPOINTMENT_TYPE', 'Tipos de cita', 'Cómo se clasifica la cita.');
+export const TIPO_CITA = definir('VS_APPOINTMENT_TYPE', [
+  ['APT-PRIMERA', 'Primera consulta'],
+  ['APT-CONTROL', 'Control'],
+  ['APT-URGENCIA', 'Urgencia'],
+]);
+
+conjunto('VS_BOOKING_STATUS', 'Estados de reserva', 'Ciclo de vida de una reserva.');
+export const ESTADO_RESERVA = definir('VS_BOOKING_STATUS', [
+  ['BK-REQUESTED', 'Solicitada'],
+  ['BK-CONFIRMED', 'Confirmada'],
+  ['BK-CHECKED-IN', 'Paciente llegó'],
+  ['BK-IN-PROGRESS', 'En consulta'],
+  ['BK-COMPLETED', 'Atendida'],
+  ['BK-CANCELLED', 'Cancelada'],
+  ['BK-REJECTED', 'Rechazada'],
+  ['BK-NO-SHOW', 'No se presentó'],
+]);
+
+/* ---- clínica ------------------------------------------------------------- */
+
+conjunto('VS_CONDITION_CLINICAL_STATUS', 'Estado clínico', 'Estado clínico de una condición.');
+export const ESTADO_CONDICION = definir('VS_CONDITION_CLINICAL_STATUS', [
+  ['COND-ACTIVE', 'Activa'],
+  ['COND-REMISSION', 'En remisión'],
+  ['COND-RESOLVED', 'Resuelta'],
+  ['COND-RECURRENCE', 'Recurrente'],
+]);
+
+conjunto('VS_CONDITION_VERIFICATION', 'Verificación diagnóstica', 'Certeza del diagnóstico.');
+export const VERIFICACION_DX = definir('VS_CONDITION_VERIFICATION', [
+  ['DXV-CONFIRMED', 'Confirmado'],
+  ['DXV-PROVISIONAL', 'Provisional'],
+  ['DXV-DIFFERENTIAL', 'Diferencial'],
+  ['DXV-REFUTED', 'Descartado'],
+]);
+
+conjunto('VS_SEVERITY', 'Severidad', 'Gravedad de una condición o reacción.');
+export const SEVERIDAD = definir('VS_SEVERITY', [
+  ['SEV-MILD', 'Leve'],
+  ['SEV-MODERATE', 'Moderada'],
+  ['SEV-SEVERE', 'Grave'],
+]);
+
+conjunto('VS_ALLERGY_CATEGORY', 'Categoría de alergia', 'Qué clase de alérgeno.');
+export const CATEGORIA_ALERGIA = definir('VS_ALLERGY_CATEGORY', [
+  ['ALG-MEDICATION', 'Medicamento'],
+  ['ALG-FOOD', 'Alimento'],
+  ['ALG-ENVIRONMENT', 'Ambiental'],
+]);
+
+conjunto('VS_ALLERGY_CRITICALITY', 'Criticidad', 'Riesgo de la alergia.');
+export const CRITICIDAD = definir('VS_ALLERGY_CRITICALITY', [
+  ['CRIT-LOW', 'Baja'],
+  ['CRIT-HIGH', 'Alta'],
+]);
+
+conjunto('VS_ENCOUNTER_CLASS', 'Clase de encuentro', 'Ambulatorio, urgencia, internación.');
+export const CLASE_ENCUENTRO = definir('VS_ENCOUNTER_CLASS', [
+  ['ENC-AMB', 'Ambulatorio'],
+  ['ENC-EMER', 'Urgencia'],
+  ['ENC-IMP', 'Internación'],
+  ['ENC-VIRTUAL', 'Teleconsulta'],
+]);
+
+conjunto('VS_ENCOUNTER_STATUS', 'Estado del encuentro', 'Ciclo de vida del encuentro.');
+export const ESTADO_ENCUENTRO = definir('VS_ENCOUNTER_STATUS', [
+  ['ENCST-PLANNED', 'Planificado'],
+  ['ENCST-IN-PROGRESS', 'En curso'],
+  ['ENCST-FINISHED', 'Finalizado'],
+  ['ENCST-CANCELLED', 'Cancelado'],
+]);
+
+conjunto('VS_MEDICATION_REQUEST_STATUS', 'Estado de la receta', 'Estado de una prescripción.');
+export const ESTADO_RECETA = definir('VS_MEDICATION_REQUEST_STATUS', [
+  ['RX-ACTIVE', 'Vigente'],
+  ['RX-COMPLETED', 'Completada'],
+  ['RX-CANCELLED', 'Cancelada'],
+  ['RX-DRAFT', 'Borrador'],
+]);
+
+conjunto('VS_OBSERVATION_CODE', 'Signos vitales y mediciones', 'Códigos de observación.');
+export const OBSERVACION = definir('VS_OBSERVATION_CODE', [
+  ['OBS-BP-SYS', 'Presión arterial sistólica'],
+  ['OBS-BP-DIA', 'Presión arterial diastólica'],
+  ['OBS-HR', 'Frecuencia cardíaca'],
+  ['OBS-TEMP', 'Temperatura corporal'],
+  ['OBS-WEIGHT', 'Peso'],
+  ['OBS-HEIGHT', 'Talla'],
+  ['OBS-BMI', 'Índice de masa corporal'],
+  ['OBS-GLUCOSE', 'Glucemia en ayunas'],
+  ['OBS-SPO2', 'Saturación de oxígeno'],
+  ['OBS-HBA1C', 'Hemoglobina glicosilada'],
+]);
+
+conjunto('VS_ROUTE', 'Vía de administración', 'Vía por la que se administra.');
+export const VIA = definir('VS_ROUTE', [
+  ['ROUTE-ORAL', 'Vía oral'],
+  ['ROUTE-IM', 'Intramuscular'],
+  ['ROUTE-IV', 'Intravenosa'],
+  ['ROUTE-TOPICAL', 'Tópica'],
+  ['ROUTE-INH', 'Inhalatoria'],
+]);
+
+conjunto('VS_DOSE_UNIT', 'Unidad de dosis', 'Unidades de dosis.');
+export const UNIDAD = definir('VS_DOSE_UNIT', [
+  ['UNIT-MG', 'mg'],
+  ['UNIT-ML', 'ml'],
+  ['UNIT-TAB', 'comprimido'],
+  ['UNIT-UI', 'UI'],
+  ['UNIT-GOTAS', 'gotas'],
+]);
+
+conjunto('VS_SERVICE_REQUEST_CATEGORY', 'Categoría de orden', 'Laboratorio, imagen, interconsulta.');
+export const CATEGORIA_ORDEN = definir('VS_SERVICE_REQUEST_CATEGORY', [
+  ['SRQ-LAB', 'Laboratorio'],
+  ['SRQ-IMAGING', 'Imagenología'],
+  ['SRQ-REFERRAL', 'Interconsulta'],
+  ['SRQ-PROCEDURE', 'Procedimiento'],
+]);
+
+conjunto('VS_PRIORITY', 'Prioridad', 'Prioridad de una orden.');
+export const PRIORIDAD = definir('VS_PRIORITY', [
+  ['PRI-ROUTINE', 'Rutina'],
+  ['PRI-URGENT', 'Urgente'],
+  ['PRI-STAT', 'Inmediata'],
+]);
+
+conjunto('VS_DIAGNOSTIC_STUDY', 'Estudios diagnósticos', 'Estudios de laboratorio e imagen.');
+export const ESTUDIO = definir('VS_DIAGNOSTIC_STUDY', [
+  ['STUDY-HEMOGRAMA', 'Hemograma completo'],
+  ['STUDY-GLUCOSA', 'Glucosa en ayunas'],
+  ['STUDY-PERFIL-LIPIDICO', 'Perfil lipídico'],
+  ['STUDY-TSH', 'TSH'],
+  ['STUDY-ORINA', 'Examen general de orina'],
+  ['STUDY-RX-TORAX', 'Radiografía de tórax'],
+  ['STUDY-ECO-ABD', 'Ecografía abdominal'],
+  ['STUDY-ECG', 'Electrocardiograma'],
+  ['STUDY-RMN-RODILLA', 'Resonancia de rodilla'],
+  ['STUDY-TAC-CRANEO', 'Tomografía de cráneo'],
+  /* Un catálogo de diez estudios dejaba a cada centro con cinco, o sea siempre
+     por debajo del umbral con el que la ficha muestra su buscador y su
+     paginador: la sección se veía entera y sus controles no aparecían nunca.
+     Un laboratorio real ofrece decenas. */
+  ['STUDY-CREATININA', 'Creatinina en sangre'],
+  ['STUDY-UREA', 'Urea en sangre'],
+  ['STUDY-HBA1C', 'Hemoglobina glicosilada'],
+  ['STUDY-COAGULACION', 'Tiempo de coagulación'],
+  ['STUDY-HEPATICO', 'Perfil hepático'],
+  ['STUDY-COPROLOGICO', 'Coproparasitológico'],
+  ['STUDY-CULTIVO', 'Urocultivo con antibiograma'],
+  ['STUDY-VITAMINA-D', 'Vitamina D'],
+  ['STUDY-MAMOGRAFIA', 'Mamografía bilateral'],
+  ['STUDY-ECO-OBSTETRICA', 'Ecografía obstétrica'],
+  ['STUDY-RX-COLUMNA', 'Radiografía de columna'],
+  ['STUDY-TAC-ABDOMEN', 'Tomografía de abdomen'],
+  ['STUDY-RMN-CEREBRO', 'Resonancia de cerebro'],
+  ['STUDY-DENSITOMETRIA', 'Densitometría ósea'],
+]);
+
+conjunto('VS_IMMUNIZATION', 'Vacunas', 'Vacunas del esquema.');
+export const VACUNA = definir('VS_IMMUNIZATION', [
+  ['VAC-INFLUENZA', 'Influenza estacional'],
+  ['VAC-COVID', 'COVID-19'],
+  ['VAC-TETANOS', 'Antitetánica'],
+  ['VAC-HEPB', 'Hepatitis B'],
+]);
+
+conjunto('VS_PROCEDURE', 'Procedimientos', 'Procedimientos clínicos y quirúrgicos.');
+export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
+  ['PROC-APENDICECTOMIA', 'Apendicectomía laparoscópica'],
+  ['PROC-COLECISTECTOMIA', 'Colecistectomía laparoscópica'],
+  ['PROC-ARTROSCOPIA', 'Artroscopia de rodilla'],
+  ['PROC-CESAREA', 'Cesárea'],
+  ['PROC-ENDOSCOPIA', 'Endoscopia digestiva alta'],
+  ['PROC-SUTURA', 'Sutura de herida'],
+  ['PROC-INFILTRACION', 'Infiltración articular'],
+]);
+
+/* ---- diagnósticos (CIE-10 abreviado, también en el glosario) ------------- */
+
+conjunto('VS_CONDITION_CODE', 'Diagnósticos (CIE-10)', 'Códigos de diagnóstico.');
+export const DIAGNOSTICO = definir('VS_CONDITION_CODE', [
+  ['I10', 'Hipertensión arterial esencial', 'Presión arterial persistentemente elevada sin causa secundaria identificada.'],
+  ['E11', 'Diabetes mellitus tipo 2', 'Trastorno metabólico crónico con hiperglucemia por resistencia a la insulina.'],
+  ['E78.5', 'Dislipidemia', 'Alteración de los niveles de lípidos en sangre.'],
+  ['J45', 'Asma bronquial', 'Enfermedad inflamatoria crónica de las vías respiratorias.'],
+  ['M54.5', 'Lumbalgia', 'Dolor en la región lumbar.'],
+  ['K21.0', 'Enfermedad por reflujo gastroesofágico', 'Retorno del contenido gástrico al esófago.'],
+  ['F41.1', 'Trastorno de ansiedad generalizada', 'Ansiedad y preocupación excesivas y persistentes.'],
+  ['E03.9', 'Hipotiroidismo', 'Producción insuficiente de hormona tiroidea.'],
+  ['N39.0', 'Infección urinaria', 'Infección del tracto urinario.'],
+  ['J06.9', 'Infección respiratoria aguda', 'Infección aguda de las vías respiratorias superiores.'],
+  ['M17', 'Gonartrosis', 'Artrosis de la rodilla.'],
+  ['G43', 'Migraña', 'Cefalea primaria recurrente.'],
+  ['E66', 'Obesidad', 'Exceso de grasa corporal.'],
+  ['D50', 'Anemia ferropénica', 'Anemia por déficit de hierro.'],
+  ['L20', 'Dermatitis atópica', 'Enfermedad inflamatoria crónica de la piel.'],
+]);
+
+/* ---- medicamentos (vademécum abreviado) ---------------------------------- */
+
+conjunto('VS_MEDICATION', 'Medicamentos', 'Vademécum.');
+export const MEDICAMENTO = definir('VS_MEDICATION', [
+  ['MED-ENALAPRIL', 'Enalapril 10 mg comprimidos', 'Inhibidor de la ECA. Antihipertensivo.'],
+  ['MED-LOSARTAN', 'Losartán 50 mg comprimidos', 'Antagonista del receptor de angiotensina II.'],
+  ['MED-METFORMINA', 'Metformina 850 mg comprimidos', 'Antidiabético oral.'],
+  ['MED-ATORVASTATINA', 'Atorvastatina 20 mg comprimidos', 'Hipolipemiante.'],
+  ['MED-AMOXICILINA', 'Amoxicilina 500 mg cápsulas', 'Antibiótico betalactámico.'],
+  ['MED-IBUPROFENO', 'Ibuprofeno 400 mg comprimidos', 'Antiinflamatorio no esteroideo.'],
+  ['MED-PARACETAMOL', 'Paracetamol 500 mg comprimidos', 'Analgésico y antipirético.'],
+  ['MED-OMEPRAZOL', 'Omeprazol 20 mg cápsulas', 'Inhibidor de la bomba de protones.'],
+  ['MED-SALBUTAMOL', 'Salbutamol 100 mcg inhalador', 'Broncodilatador.'],
+  ['MED-LEVOTIROXINA', 'Levotiroxina 50 mcg comprimidos', 'Hormona tiroidea.'],
+  ['MED-SERTRALINA', 'Sertralina 50 mg comprimidos', 'Antidepresivo ISRS.'],
+  ['MED-LORATADINA', 'Loratadina 10 mg comprimidos', 'Antihistamínico.'],
+  ['MED-SULFATO-FERROSO', 'Sulfato ferroso 300 mg comprimidos', 'Suplemento de hierro.'],
+  ['MED-CIPROFLOXACINO', 'Ciprofloxacino 500 mg comprimidos', 'Antibiótico quinolona.'],
+  ['MED-INSULINA-NPH', 'Insulina NPH 100 UI/ml', 'Insulina de acción intermedia.'],
+]);
+
+/* ---- organizaciones ------------------------------------------------------ */
+
+conjunto('VS_ORGANIZATION_TYPE', 'Tipos de organización', 'Clínica, hospital, laboratorio…');
+export const TIPO_ORGANIZACION = definir('VS_ORGANIZATION_TYPE', [
+  ['ORG-CLINICA', 'Clínica'],
+  ['ORG-HOSPITAL', 'Hospital'],
+  ['ORG-LABORATORIO', 'Laboratorio'],
+  ['ORG-FARMACIA', 'Farmacia'],
+  ['ORG-ASEGURADORA', 'Aseguradora'],
+  ['ORG-CENTRO-IMAGEN', 'Centro de imagenología'],
+  ['ORG-CONSULTORIO', 'Consultorio'],
+]);
+
+conjunto('VS_FACILITY', 'Establecimientos de salud', 'Padrón de establecimientos.');
+export const ESTABLECIMIENTO = definir('VS_FACILITY', [
+  ['FAC-OLIVOS', 'Clínica Los Olivos'],
+  ['FAC-SANLUCAS', 'Hospital San Lucas'],
+  ['FAC-JAPONES', 'Hospital Japonés'],
+  ['FAC-FOIANINI', 'Clínica Foianini'],
+  ['FAC-LAB-CENTRAL', 'Laboratorio Central'],
+  ['FAC-IMAGEN-SUR', 'Centro de Imagen Sur'],
+]);
+
+conjunto('VS_ROLE', 'Cargos', 'Cargos dentro de una organización.');
+export const CARGO = definir('VS_ROLE', [
+  ['ROLE-MEDICO', 'Médico/a de planta'],
+  ['ROLE-JEFE', 'Jefe/a de servicio'],
+  ['ROLE-RESIDENTE', 'Residente'],
+  ['ROLE-ADMIN', 'Administrativo/a'],
+  ['ROLE-ENFERMERIA', 'Enfermería'],
+]);
+
+/* ---- seguros ------------------------------------------------------------- */
+
+conjunto('VS_CLAIM_STATUS', 'Estado de solicitud de seguro', 'Ciclo de una solicitud.');
+export const ESTADO_SOLICITUD = definir('VS_CLAIM_STATUS', [
+  ['CLM-SUBMITTED', 'Enviada'],
+  ['CLM-IN-REVIEW', 'En revisión'],
+  ['CLM-APPROVED', 'Aprobada'],
+  ['CLM-PARTIAL', 'Aprobada parcialmente'],
+  ['CLM-REJECTED', 'Rechazada'],
+  ['CLM-PAID', 'Pagada'],
+]);
+
+/* ---- glosario: categorías --------------------------------------------- */
+
+conjunto('glossary-all-terms', 'Glosario de terminología médica', 'Todos los términos del glosario.');
+conjunto('glossary-diseases', 'Enfermedades', 'Diagnósticos y enfermedades.');
+conjunto('glossary-symptoms', 'Síntomas', 'Síntomas y signos.');
+conjunto('glossary-procedures', 'Procedimientos', 'Procedimientos y cirugías.');
+conjunto('glossary-medications', 'Medicamentos', 'Fármacos del vademécum.');
+conjunto('glossary-anatomy', 'Anatomía', 'Partes del cuerpo.');
+conjunto('glossary-tests', 'Estudios diagnósticos', 'Laboratorio e imagen.');
+conjunto('glossary-other', 'Otros términos', 'Términos que no caen en otra categoría.');
+
+export const SINTOMA = definir('glossary-symptoms', [
+  ['SX-FIEBRE', 'Fiebre', 'Elevación de la temperatura corporal por encima de 38 °C.'],
+  ['SX-CEFALEA', 'Cefalea', 'Dolor de cabeza.'],
+  ['SX-DISNEA', 'Disnea', 'Sensación de falta de aire.'],
+  ['SX-TOS', 'Tos', 'Expulsión brusca de aire de los pulmones.'],
+  ['SX-NAUSEA', 'Náusea', 'Sensación de malestar con ganas de vomitar.'],
+  ['SX-MAREO', 'Mareo', 'Sensación de inestabilidad o vértigo.'],
+  ['SX-DOLOR-TORACICO', 'Dolor torácico', 'Dolor en el pecho.'],
+  ['SX-FATIGA', 'Fatiga', 'Cansancio persistente.'],
+]);
+
+export const ANATOMIA = definir('glossary-anatomy', [
+  ['AN-CORAZON', 'Corazón', 'Órgano muscular que bombea la sangre.'],
+  ['AN-HIGADO', 'Hígado', 'Órgano que metaboliza nutrientes y depura toxinas.'],
+  ['AN-RINON', 'Riñón', 'Órgano que filtra la sangre y produce la orina.'],
+  ['AN-TIROIDES', 'Tiroides', 'Glándula que regula el metabolismo.'],
+  ['AN-RODILLA', 'Rodilla', 'Articulación entre el fémur y la tibia.'],
+]);
+
+export const OTRO_TERMINO = definir('glossary-other', [
+  ['OT-TRIAJE', 'Triaje', 'Clasificación de pacientes según la urgencia de su atención.'],
+  ['OT-INTERCONSULTA', 'Interconsulta', 'Consulta a otro especialista sobre un paciente.'],
+  ['OT-ALTA', 'Alta médica', 'Fin de la atención por recuperación o derivación.'],
+  ['OT-CONSENTIMIENTO', 'Consentimiento informado', 'Autorización del paciente tras conocer riesgos y beneficios.'],
+]);
+
+// Los diagnósticos, medicamentos, procedimientos y estudios también son
+// términos del glosario, bajo su categoría.
+for (const [code, vs] of [
+  ...Object.keys(DIAGNOSTICO).map((c) => [c, 'glossary-diseases'] as const),
+  ...Object.keys(MEDICAMENTO).map((c) => [c, 'glossary-medications'] as const),
+  ...Object.keys(PROCEDIMIENTO).map((c) => [c, 'glossary-procedures'] as const),
+  ...Object.keys(ESTUDIO).map((c) => [c, 'glossary-tests'] as const),
+]) {
+  const existente = registro.get(code);
+  if (existente !== undefined) {
+    registro.set(code, { ...existente, valueSets: [...existente.valueSets, vs] });
+  }
+}
+for (const [code, c] of registro) {
+  if (c.valueSets.some((vs) => vs.startsWith('glossary-'))) {
+    registro.set(code, { ...c, valueSets: [...c.valueSets, 'glossary-all-terms'] });
+  }
+}
+
+/* ---- consultas ----------------------------------------------------------- */
+
+export function conceptos(): readonly ConceptoSimulado[] {
+  return [...registro.values()];
+}
+
+export function conceptoPorId(id: string): ConceptoSimulado | undefined {
+  for (const c of registro.values()) {
+    if (c.id === id) return c;
+  }
+  return undefined;
+}
+
+export function conceptoPorCodigo(code: string): ConceptoSimulado | undefined {
+  return registro.get(code);
+}
+
+export function displayDe(id: string): string {
+  return conceptoPorId(id)?.display ?? id;
+}
+
+export function conjuntoPorCodigo(internalCode: string): ConjuntoSimulado | undefined {
+  return conjuntos.get(internalCode);
+}
+
+export function conjuntoPorId(id: string): ConjuntoSimulado | undefined {
+  for (const c of conjuntos.values()) {
+    if (c.id === id || c.defaultVersionId === id) return c;
+  }
+  return conjuntos.get(id);
+}
+
+export function todosLosConjuntos(): readonly ConjuntoSimulado[] {
+  return [...conjuntos.values()];
+}
+
+export function miembrosDe(internalCode: string): readonly ConceptoSimulado[] {
+  return conceptos().filter((c) => c.valueSets.includes(internalCode));
+}
+
+/** Slug legible para el glosario. */
+export function slugDe(display: string): string {
+  return display
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}

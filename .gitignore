@@ -149,3 +149,8 @@ salud-db/
 /SQL/
 /NoSQL/
 Mantra Core Health Context/
+
+# Índice del stock de componentes: lo regenera `scripts/generate-component-index.mjs`
+# en cada `yarn start` y `yarn build`, igual que `env.generated.ts`. Versionarlo
+# sería versionar una foto del código que se queda vieja al primer commit.
+src/app/features/component-stock/component-index.generated.ts

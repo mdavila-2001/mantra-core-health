@@ -584,6 +584,15 @@ app-shell-layout { display: block; }
    y el bloque es un renglón como los demás, porque a la vista tiene que
    parecerse a lo que contiene. Si los dos se pintaran igual, con la barra
    cerrada no se distinguiría un dominio de un destino. */
+/* Los destinos fijos de arriba —«Mi perfil» y «Notificaciones»—. Mismo ítem
+   que dentro de un grupo; lo único propio es que no tienen rótulo encima y que
+   una línea los separa de los dominios que siguen. */
+.app-side-nav__fijos {
+  display: flex; flex-direction: column; gap: 2px;
+  padding-bottom: var(--e3); margin-bottom: var(--e2);
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
 .app-side-nav__group { display: flex; flex-direction: column; gap: 2px; }
 .app-side-nav__group-summary {
   display: flex; align-items: center; gap: var(--e3);
@@ -1102,7 +1111,28 @@ a[app-link]:hover { border-bottom-color: currentColor; }
 .menu-anclaje { position: relative; display: inline-block; }
 .menu-anclaje .app-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; }
 
+/* Los dos desplegables del header —organización y avisos— anclan igual pero
+   con OTRA clase a propósito: `.menu-anclaje` es el envoltorio que busca el
+   oyente global de AlovidaRuntimeService, que abre y cierra con el atributo
+   `hidden`. Estos dos los gobierna una señal de AlovidaShell, y con los dos
+   dueños encima del mismo panel el menú quedaría anunciado abierto y pintado
+   invisible. */
+.app-header__anclaje { position: relative; display: inline-block; }
+.app-header__anclaje .app-menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 30;
+  max-width: min(320px, 80vw);
+}
+
 .app-tooltip-panel { border-bottom: 1px dotted var(--tinta-3); cursor: help; }
+/* Lo que el `title` sólo enseña al pasar el mouse, bajado a la página por el
+   botón que lo revela (AlovidaRuntimeService.revelarElTitulo): el teclado y el
+   táctil no tienen «pasar por encima». */
+.app-titulo-revelado {
+  display: block; margin: var(--e3) 0 0;
+  padding: var(--e3); border-radius: var(--r-bloque);
+  background: var(--sup-inset); color: var(--tinta-2);
+  white-space: pre-wrap;
+}
 
 .app-dialog-capa {
   position: fixed; inset: 0 0 56px 0; z-index: 60;

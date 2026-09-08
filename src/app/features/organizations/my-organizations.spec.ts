@@ -10,7 +10,7 @@ describe('MyOrganizations — Carril 18', () => {
 
   function flushInicial(): void {
     http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
-    http.expectOne((r) => r.url === '/practices').flush({ items: [], count: 0 });
+    http.expectOne((r) => r.url === '/practices').flush([]);
   }
 
   beforeEach(async () => {
@@ -123,7 +123,7 @@ describe('MyOrganizations — Carril 18', () => {
         avatarUrl: null,
       },
     ]);
-    http.expectOne((r) => r.url === '/practices').flush({ items: [], count: 0 });
+    http.expectOne((r) => r.url === '/practices').flush([]);
     fixture.detectChanges();
 
     const filas = (
@@ -154,7 +154,7 @@ describe('MyOrganizations — Carril 18', () => {
         createdAt: '2026-01-01T00:00:00.000Z',
       },
     ]);
-    http.expectOne((r) => r.url === '/practices').flush({ items: [], count: 0 });
+    http.expectOne((r) => r.url === '/practices').flush([]);
     fixture.detectChanges();
 
     const filas = (

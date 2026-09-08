@@ -28,7 +28,8 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../../shared/components/organisms/filter-bar/filter-bar';
-import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { SpecialtyIcon } from '../../../shared/components/atoms/specialty-icon/specialty-icon';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { inicialesDe } from '../../../shared/text/iniciales';
@@ -144,9 +145,12 @@ const SIN_ESPECIALIDAD = 'Sin especialidad registrada';
  */
 @Component({
   selector: 'app-practitioners-directory',
-  imports: [AppButton, DirectoryPage, PageHeader, RouterLink, ViewStateHost],
+  imports: [AppButtonLink, DirectoryPage, PageHeader, RouterLink, SpecialtyIcon, ViewStateHost],
   templateUrl: './practitioners-directory.html',
-  styleUrl: './practitioners-directory.css',
+  styleUrls: [
+    '../../../shared/styles/rejilla-de-tarjetas.css',
+    './practitioners-directory.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PractitionersDirectory {
@@ -473,9 +477,21 @@ function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
-/** Si el profesional casa con el texto del filtro. */
+/**
+ * Si el profesional casa con el texto del filtro.
+ *
+ * Mira el nombre, el **subtítulo** y las líneas de contexto. El subtítulo se
+ * nombra aparte desde que dejó de ser la primera línea de `meta`: es donde vive
+ * el título profesional —«Pediatra»—, y el buscador que promete encontrar «por
+ * nombre o especialidad» dejaría de encontrarlo si sólo mirara `meta`. Es
+ * exactamente lo que pasó al mover el campo, y lo que la prueba de «el buscador
+ * también encuentra por el título profesional» cazó.
+ */
 function coincide(profesional: SearchResultItem, busqueda: string): boolean {
   if (normalizar(profesional.title).includes(busqueda)) {
+    return true;
+  }
+  if (profesional.subtitle !== undefined && normalizar(profesional.subtitle).includes(busqueda)) {
     return true;
   }
   return (profesional.meta ?? []).some((linea) => normalizar(linea.text).includes(busqueda));
@@ -568,9 +584,10 @@ function toResultado(
   // El subtítulo pasa por el guardia de F-25: una tarjeta sin subtítulo es más
   // pobre, una con el nombre de otro es una guía que miente.
   const subtitulo = subtituloProfesional(fila.professionalTitle, nombre, nombresDeOtros);
-  if (subtitulo !== undefined) {
-    meta.push({ text: subtitulo });
-  }
+  // El subtítulo del profesional —«Cardióloga · Clínica Los Olivos»— NO va en
+  // `meta`: es qué es esta persona, no un dato de contexto, y en el gris de
+  // 13 px se leía igual que la lista de sedes de abajo. Va en `subtitle`, que
+  // la tarjeta pinta pegado al nombre. Ver el JSDoc de `SearchResultItem`.
 
   // Dónde atiende, debajo del título. Es la pregunta que sigue a «quién es»
   // cuando se elige un médico, y hasta ahora había que abrir la ficha para
@@ -618,6 +635,7 @@ function toResultado(
       fragment: ANCLA_HORARIOS,
     },
     figureText: inicialesDe(nombre),
+    ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
     meta,
     seals: sellos,
   };

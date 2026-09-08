@@ -117,6 +117,17 @@
                     [formControlName]="campo.key"
                   />
                 }
+                @case ('checkboxes') {
+                  <!-- Varias respuestas de una lista. El grupo es el control
+                       —igual que `app-radio-group`—: el formulario ve uno solo
+                       con una respuesta, que es lo que la persona percibe. -->
+                  <app-checkbox-group
+                    [attr.data-testid]="campo.testId ?? null"
+                    [formControlName]="campo.key"
+                    [options]="campo.options ?? []"
+                    [hasError]="errorDe(campo) !== ''"
+                  />
+                }
                 @case ('textarea') {
                   <app-textarea
                     [attr.data-testid]="campo.testId ?? null"

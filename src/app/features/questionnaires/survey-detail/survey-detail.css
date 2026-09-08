@@ -51,33 +51,48 @@
   font-size: var(--fs-caption);
 }
 
+/* La lista de preguntas: sin viñeta ni sangría. Cada `app-question-editor`
+   trae su propia caja y el número de pregunta va dentro de ella, así que el
+   marcador del `<ol>` sería un segundo número al lado del primero. */
 .encuesta__preguntas {
   display: grid;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   margin: 0;
-  padding-inline-start: var(--sp-4);
+  padding: 0;
+  list-style: none;
 }
 
-.encuesta__pregunta {
+.encuesta__cabecera {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--sp-2);
-  padding-block-end: var(--sp-3);
-  border-block-end: 1px solid var(--border-default);
+  inline-size: 100%;
 }
 
-.encuesta__pregunta:last-child {
-  padding-block-end: 0;
-  border-block-end: 0;
+.encuesta__cabecera-acciones {
+  display: flex;
+  gap: var(--sp-2);
 }
 
-.encuesta__pregunta-texto {
-  font-weight: 600;
+.encuesta__agregar {
+  margin-block-start: var(--sp-4);
 }
 
-.encuesta__pregunta-tipo,
-.encuesta__pregunta-opciones,
+/* La nota de la previa: dice que lo que se toca no se guarda. Va arriba del
+   cuestionario porque es la advertencia que evita que alguien crea que está
+   respondiendo. */
+.encuesta__previa-nota {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 .encuesta__respuesta-fecha {
   color: var(--text-secondary);
   font-size: var(--fs-caption);

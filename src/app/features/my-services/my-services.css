@@ -1,6 +1,15 @@
 /* ============================================================================
-    Mis servicios. Sólo distribución: la tarjeta, el distintivo y el botón ya
-    traen su pinta del sistema — ni un color ni una tipografía propios.
+    Mis servicios.
+
+    La rejilla y la tarjeta **no se pintan acá**: salen de
+    `shared/styles/rejilla-de-tarjetas.css`, la misma hoja que pinta las
+    portadas de los directorios. Antes esta pantalla tenía su propia rejilla,
+    su propio nombre y su propio pie de tarjeta —parecidos pero no iguales— y
+    por eso se veía como otra aplicación al lado del directorio.
+
+    Lo que queda acá es lo único que esta pantalla tiene y las portadas no: el
+    bloque del precio y su edición en el sitio. Sólo distribución: la tarjeta,
+    el distintivo y el botón ya traen su pinta del sistema.
     ========================================================================== */
 
 :host {
@@ -13,29 +22,15 @@
   margin-block-start: var(--sp-6);
 }
 
-.mis-servicios__esqueleto,
-.mis-servicios__grilla {
-  display: grid;
-  /* `auto-fill` con `minmax` y no un número fijo de columnas: la pantalla se
-     abre en un teléfono, en una tablet y en un monitor, y fijar tres columnas
-     obliga a tres reglas de medios que se olvidan de la cuarta pantalla.
-
-     El `min(100%, …)` es lo que impide el desborde lateral: en un contenedor
-     más angosto que la pista mínima, `minmax(18rem, 1fr)` la respeta igual y
-     aparece scroll horizontal. */
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
-  gap: var(--sp-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* 18rem y no las 14 de la portada de un directorio: acá la tarjeta no es un
+   rótulo con su cuenta sino un servicio con su importe y dos botones, y en
+   14rem «Editar precio» y «Cancelar» se parten en dos renglones. El resto de
+   la disciplina —borde, radio, superficie, ícono, nombre— no se toca. */
+.mis-servicios__rejilla {
+  --rejilla-min: 18rem;
 }
 
-.mis-servicios__item {
-  display: block;
-  /* Las tarjetas de una fila terminan a la misma altura aunque digan distinto. */
-  block-size: 100%;
-}
-
+/* El nombre y el distintivo comparten renglón; el distintivo no lo estira. */
 .mis-servicios__ficha {
   display: flex;
   align-items: flex-start;
@@ -43,22 +38,13 @@
   gap: var(--sp-2);
 }
 
-.mis-servicios__nombre {
-  margin: 0;
-  font-size: var(--fs-body-lg);
-  line-height: var(--lh-body-lg);
-  font-weight: 600;
-  /* Un nombre largo parte en varias líneas en vez de estirar la tarjeta y
-     empujar la grilla a lo ancho. */
-  overflow-wrap: anywhere;
-}
-
-.mis-servicios__codigo {
-  margin: var(--sp-1) 0 0;
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-variant-numeric: tabular-nums;
+/* Empuja el precio y los botones al pie: las tarjetas de una fila terminan a
+   la misma altura, y con esto sus importes quedan alineados aunque los nombres
+   ocupen una o tres líneas. */
+.mis-servicios__precio,
+.mis-servicios__edicion {
+  margin-block-start: auto;
+  padding-block-start: var(--sp-3);
 }
 
 .mis-servicios__precio {
@@ -66,7 +52,8 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: var(--sp-1) var(--sp-2);
-  margin: var(--sp-3) 0 0;
+  margin-block-end: 0;
+  margin-inline: 0;
 }
 
 .mis-servicios__rotulo {
@@ -96,7 +83,6 @@
 .mis-servicios__edicion {
   display: grid;
   gap: var(--sp-2);
-  margin-block-start: var(--sp-3);
 }
 
 .mis-servicios__acciones {

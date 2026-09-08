@@ -1,0 +1,141 @@
+/* ============================================================================
+    Una sección de ficha: encabezado con controles, rejilla de bloques y
+    paginador.
+
+    Sólo distribución. Los datos los pinta `app-fact-list`, la etiqueta
+    `app-section-heading` y las páginas `app-pagination`.
+    ========================================================================== */
+
+:host {
+    display: block;
+}
+
+/* ---- encabezado --------------------------------------------------------- */
+
+/* Etiqueta y controles en el mismo renglón mientras entren; el buscador se
+   descuelga solo cuando no cabe. `wrap` y no un `@media`: lo que decide es el
+   ancho de la card —media ficha o entera—, no el de la ventana. */
+.seccion-ficha__encabezado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2) var(--sp-3);
+}
+
+/* El título empuja al resto a la derecha sin necesitar un `margin-left: auto`
+   en cada control. */
+.seccion-ficha__titulo {
+    margin-inline-end: auto;
+}
+
+/* El recuento se pega al título, no al buscador: es parte de la etiqueta.
+   Tabular porque «3 de 12» cambia al filtrar y no debe mover lo de al lado. */
+.seccion-ficha__leyenda {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Angosto a propósito: es el buscador **de esta sección**, y con el ancho de
+   una barra de búsqueda de pantalla se leería como el de la ficha entera. */
+.seccion-ficha__buscador {
+    flex: 1 1 12rem;
+    max-inline-size: 18rem;
+}
+
+.seccion-ficha__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-block-end: var(--sp-4);
+}
+
+/* ---- la rejilla de bloques ---------------------------------------------- */
+
+.seccion-ficha__rejilla {
+    display: grid;
+    gap: var(--sp-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* **La regla del tamaño igual.** `1fr` en las filas lleva todas las celdas de
+   una fila a la altura de la más alta, y `stretch` hace que el bloque ocupe la
+   celda entera. Sin esto, el equipo que declara su calibración queda más alto
+   que el que no y la fila se lee como un serrucho: la vista no encuentra dónde
+   empieza el bloque de al lado.
+
+   Es lo que convierte una lista en una rejilla comparable, que es para lo que
+   se pusieron los datos en tabla. */
+@media (min-width: 60rem) {
+    .seccion-ficha__rejilla--dos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-auto-rows: 1fr;
+        column-gap: var(--sp-5);
+    }
+}
+
+.seccion-ficha__bloque {
+    display: flex;
+    flex-direction: column;
+    block-size: 100%;
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--border-subtle, var(--border-default));
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+}
+
+/* El bloque tiene borde propio, así que la rejilla ya no necesita divisores:
+   una raya entre dos cajas con borde son tres líneas donde alcanza una. */
+
+.seccion-ficha__bloque-titulo {
+    margin: 0 0 var(--sp-2);
+    font-family: var(--font-body);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.seccion-ficha__bloque-nota {
+    margin: 0 0 var(--sp-3);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* ---- vacío y paginador --------------------------------------------------- */
+
+.seccion-ficha__vacio {
+    margin: 0;
+    padding-block: var(--sp-4);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* Un enlace de texto y no un botón con fondo: la salida de un estado vacío no
+   compite con las acciones de la ficha. */
+.seccion-ficha__limpiar {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--brand-primary);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.seccion-ficha__limpiar:focus-visible {
+    outline: 2px solid var(--st-primary-border, var(--brand-primary));
+    outline-offset: 2px;
+    border-radius: var(--r-xs);
+}
+
+/* El paginador centrado y sin adornos: es el pie de una card, no una barra de
+   herramientas. */
+.seccion-ficha__paginador {
+    display: flex;
+    justify-content: center;
+}

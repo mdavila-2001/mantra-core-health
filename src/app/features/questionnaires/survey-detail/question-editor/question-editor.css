@@ -1,0 +1,170 @@
+/* ============================================================================
+    Una pregunta del cuestionario: plegada se lee, desplegada se edita.
+
+    Sólo tokens del sistema. La caja la pone este componente y no una `app-card`
+    anidada: son filas de una lista, y una card por fila dentro de la card de la
+    sección son dos bordes donde alcanza uno.
+    ========================================================================== */
+
+:host {
+    display: block;
+    border: 1px solid var(--border-subtle, var(--border-default));
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+}
+
+/* La abierta se despega del resto: es donde está el trabajo. */
+:host(.editor-pregunta--abierta) {
+    border-color: var(--brand-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ---- plegada ------------------------------------------------------------ */
+
+.editor-pregunta__fila {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+}
+
+.editor-pregunta__fila--pulsable {
+    cursor: pointer;
+}
+
+.editor-pregunta__fila--pulsable:hover {
+    background: var(--bg-surface-alt);
+    border-radius: inherit;
+}
+
+.editor-pregunta__fila--pulsable:focus-visible {
+    outline: 2px solid var(--st-primary-border, var(--brand-primary));
+    outline-offset: -2px;
+    border-radius: inherit;
+}
+
+/* Tabular y de ancho fijo: el número de pregunta es una columna, y con dígitos
+   de ancho distinto los enunciados quedarían escalonados. */
+.editor-pregunta__posicion {
+    flex: none;
+    inline-size: 1.5rem;
+    color: var(--text-muted);
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+    line-height: var(--lh-body);
+}
+
+.editor-pregunta__icono {
+    flex: none;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    margin-block-start: 0.15rem;
+    color: var(--brand-primary);
+}
+
+.editor-pregunta__cuerpo {
+    display: grid;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
+.editor-pregunta__texto {
+    color: var(--text-primary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    overflow-wrap: anywhere;
+}
+
+/* El asterisco de obligatoria en el color de aviso: es la única marca que
+   distingue una pregunta que bloquea el envío. */
+.editor-pregunta__obligatoria {
+    color: var(--st-error-fg, var(--text-primary));
+}
+
+.editor-pregunta__meta {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    overflow-wrap: anywhere;
+}
+
+.editor-pregunta__controles {
+    display: flex;
+    flex: none;
+    gap: var(--sp-1);
+}
+
+/* ---- desplegada --------------------------------------------------------- */
+
+.editor-pregunta__edicion {
+    display: grid;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+}
+
+.editor-pregunta__opciones {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.editor-pregunta__opciones legend {
+    padding: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+/* La marca imita el control con el que se va a responder —círculo o casilla—,
+   así se ve de qué tipo es la lista sin leer el selector de arriba. */
+.editor-pregunta__opcion {
+    display: grid;
+    grid-template-columns: 1.25rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.editor-pregunta__opcion-marca {
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.editor-pregunta__escala {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3);
+}
+
+.editor-pregunta__problema {
+    margin: 0;
+    color: var(--st-error-fg, var(--text-primary));
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+.editor-pregunta__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+/* Borrar se separa de guardar y cancelar: es la única de las tres que no se
+   deshace, y pegada a «Listo» se pulsa por error. */
+.editor-pregunta__borrar {
+    margin-inline-start: auto;
+    color: var(--st-error-fg, var(--text-primary));
+}
+
+@media (max-width: 40rem) {
+    .editor-pregunta__escala {
+        grid-template-columns: 1fr;
+    }
+
+    .editor-pregunta__borrar {
+        margin-inline-start: 0;
+    }
+}

@@ -63,7 +63,10 @@ export function agruparPorEspecialidad(
       tarjetas: profesionales
         .slice()
         .sort((izquierda, derecha) => ordenar.compare(izquierda.displayName, derecha.displayName))
-        .map(aTarjeta),
+        // Sin insignia: la lista es toda de profesionales y ya va agrupada
+        // por especialidad, así que «Profesional» en cada tarjeta no separa
+        // ninguna de otra.
+        .map((profesional) => aTarjeta(profesional, { mostrarTipo: false })),
     }));
 }
 

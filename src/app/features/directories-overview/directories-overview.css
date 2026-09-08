@@ -1,132 +1,88 @@
-/*
-  El grafo es puramente visual: el nodo central y las líneas de conexión son
-  decorativos (`aria-hidden`). Lo único que importa para navegar es la lista
-  de enlaces — por eso el layout se apoya en un <ul> normal, y el "mapa" es
-  una capa de fondo que se dibuja encima con `grid` y pseudo-elementos, no un
-  canvas ni una librería de grafos.
-*/
-.directories-overview__mapa {
+/* ============================================================================
+    La portada de los cuatro directorios.
+
+    El grafo es puramente visual: el nodo central y las líneas de conexión son
+    decorativos (`aria-hidden`). Lo único que importa para navegar es la lista
+    de enlaces — por eso el layout se apoya en un `<ul>` normal, y el «mapa» es
+    una capa de fondo que se dibuja con `grid` y pseudo-elementos, no un canvas
+    ni una librería de grafos.
+
+    La rejilla y la tarjeta salen de `shared/styles/rejilla-de-tarjetas.css`,
+    la misma hoja que pinta la portada de cada uno de los directorios que esta
+    pantalla presenta.
+
+    Antes esta pantalla se pintaba con el juego de tokens ALOVIDA —`--tinta`,
+    `--sup-tarjeta`, `--e5`, `--r-card`, `--sombra-1`—, que es **disjunto** del
+    de `styles.css` (lo dice el encabezado de `styles/alovida.css`): otra
+    tipografía, otro radio y una sombra que las portadas de los directorios no
+    tienen. El resultado era que la puerta de los cuatro directorios se veía
+    como otra aplicación que los cuatro directorios. Acá ya no hay ni un token
+    de aquel juego.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.mapa {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--e6);
-  padding-block: var(--e6);
+  gap: var(--sp-6);
+  padding-block: var(--sp-6);
 }
 
-.directories-overview__centro {
+/* La baldosa del nodo central, con la misma pareja `--st-*` con la que el
+   árbol de accesos pinta las suyas: ya está medida contra WCAG por
+   `scripts/check-contrast.mjs` y ya tiene su versión de tema oscuro. El aro
+   interior la despega del fondo sin gastar un borde propio. */
+.mapa__centro {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--e9);
-  height: var(--e9);
-  border-radius: var(--r-pill);
-  background: radial-gradient(circle, var(--nav-halo-a) 0%, var(--nav-halo-c) 70%, var(--nav-halo-0) 100%);
-  color: var(--petroleo);
-  box-shadow: var(--sombra-1);
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  box-shadow: inset 0 0 0 1px var(--st-primary-bd);
 }
 
-.directories-overview__centro app-nav-icon {
-  width: var(--e6);
-  height: var(--e6);
+.mapa__centro app-nav-icon {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
 }
 
-/*
-  Las "líneas" hacia cada nodo: un filete vertical arriba de cada tarjeta que
-  sube hasta encontrarse visualmente con el nodo central. Es deliberadamente
-  discreto — un filo, no un cable — y desaparece en el layout angosto, donde
-  la lista pasa a ser una columna sin pretender ser un grafo.
-*/
-.directories-overview__nodos {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--e5);
-  width: 100%;
-  max-width: 960px;
+/* La rejilla compartida, con el ancho que esta pantalla necesita: acá la
+   tarjeta lleva una línea de resumen y no una cifra, así que 16rem en vez de
+   las 14 del catálogo de especialidades. El máximo la mantiene centrada bajo
+   el nodo en un monitor ancho. */
+.mapa__nodos {
+  --rejilla-min: 16rem;
+
+  gap: var(--sp-5);
+  inline-size: 100%;
+  max-inline-size: 60rem;
   margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
-.directories-overview__item {
+/* Las «líneas» hacia cada nodo: un filete vertical arriba de cada tarjeta que
+   sube hasta encontrarse visualmente con el nodo central. Es deliberadamente
+   discreto —un filo, no un cable— y desaparece en el layout angosto, donde la
+   lista pasa a ser una columna sin pretender ser un grafo. */
+.mapa__item {
   position: relative;
 }
 
-@media (min-width: 640px) {
-  .directories-overview__item::before {
+@media (min-width: 40rem) {
+  .mapa__item::before {
     content: '';
     position: absolute;
-    top: calc(-1 * var(--e5));
-    left: 50%;
-    width: 1px;
-    height: var(--e5);
-    background: var(--filete);
-  }
-}
-
-.directories-overview__nodo {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--e3);
-  height: 100%;
-  padding: var(--e4);
-  border: 1px solid var(--filete-2);
-  border-radius: var(--r-card);
-  background: var(--sup-tarjeta);
-  box-shadow: var(--sombra-1);
-  color: inherit;
-  text-decoration: none;
-  transition: box-shadow var(--mov-rapido) var(--curva), transform var(--mov-rapido) var(--curva);
-}
-
-.directories-overview__nodo:hover,
-.directories-overview__nodo:focus-visible {
-  box-shadow: var(--sombra-2);
-  transform: translateY(-2px);
-}
-
-.directories-overview__nodo:focus-visible {
-  outline: 2px solid var(--anillo-foco);
-  outline-offset: 2px;
-}
-
-.directories-overview__icono {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: var(--e7);
-  height: var(--e7);
-  border-radius: var(--r-pill);
-  background: var(--sup-inset);
-  color: var(--petroleo);
-}
-
-.directories-overview__texto {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e1);
-  min-width: 0;
-}
-
-.directories-overview__etiqueta {
-  font-family: var(--f-titulo);
-  font-weight: 600;
-  color: var(--tinta);
-}
-
-.directories-overview__resumen {
-  font-size: 0.875rem;
-  color: var(--tinta-2);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .directories-overview__nodo {
-    transition: none;
-  }
-
-  .directories-overview__nodo:hover,
-  .directories-overview__nodo:focus-visible {
-    transform: none;
+    inset-block-start: calc(-1 * var(--sp-5));
+    inset-inline-start: 50%;
+    inline-size: 1px;
+    block-size: var(--sp-5);
+    background: var(--border-default);
   }
 }

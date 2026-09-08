@@ -25,6 +25,10 @@ export { Card } from './card/card';
 export { CARD_PADDINGS, CARD_VARIANTS } from './card/card.types';
 export type { CardPadding, CardVariant } from './card/card.types';
 
+export { FactList } from './fact-list/fact-list';
+export { FACT_LIST_DISPOSICIONES, HECHO_TONOS } from './fact-list/fact-list.types';
+export type { FactListDisposicion, Hecho, HechoTono } from './fact-list/fact-list.types';
+
 export { CommentMediaPicker } from './comment-media-picker/comment-media-picker';
 export {
   COMMENT_MEDIA_MAX,
@@ -92,6 +96,8 @@ export {
   REFERENCE_COMBOBOX_MIN_QUERY_LENGTH,
 } from './reference-combobox/reference-combobox.types';
 export type { ReferenceOption } from './reference-combobox/reference-combobox.types';
+
+export { SectionHeading } from './section-heading/section-heading';
 
 export { SearchField } from './search-field/search-field';
 export { SEARCH_DEBOUNCE_MS } from './search-field/search-field.types';

@@ -1,0 +1,43 @@
+/* ============================================================================
+    El mapa de departamentos como filtro de un directorio.
+
+    Lo comparten el directorio de clínicas y el de farmacias, que son las dos
+    pantallas donde «dónde» es la primera pregunta. Sólo distribución: el mapa
+    trae su propio dibujo y sus propios estados.
+    ========================================================================== */
+
+.mapa-directorio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-5);
+}
+
+/* El mapa no se come la pantalla: a 1440 px un mapa de país a ancho completo
+   empuja la lista entera abajo del pliegue, y la lista es a lo que se vino. */
+.mapa-directorio app-department-map {
+  inline-size: 100%;
+  max-inline-size: 17rem;
+  margin-inline: auto;
+}
+
+.mapa-directorio__resumen {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* El aviso de catálogo caído ocupa el lugar del mapa, no el de la lista: lo
+   que falló es el filtro, y el directorio sigue sirviendo sin él. */
+.mapa-directorio__caido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-5);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

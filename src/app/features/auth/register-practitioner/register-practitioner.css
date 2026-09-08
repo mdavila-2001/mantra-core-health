@@ -30,6 +30,19 @@
   flex: 1 1 auto;
 }
 
+/* La casilla de especialidad agregada comparte renglón con su botón de
+   quitar, igual que la de nombre. */
+.registro__especialidad-extra {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.registro__especialidad-extra app-select {
+  flex: 1 1 auto;
+}
+
 @media (min-width: 40rem) {
   .registro__nombres {
     flex-direction: row;
@@ -48,9 +61,9 @@
   align-items: center;
   gap: var(--sp-4);
   padding: var(--sp-4);
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--color-border);
-  background-color: var(--color-surface);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-default);
+  background-color: var(--bg-surface);
   margin-bottom: var(--sp-4);
 }
 
@@ -76,12 +89,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-sm);
-  font-weight: var(--font-medium);
+  font-size: var(--fs-body);
+  font-weight: 600;
   padding: var(--sp-2) var(--sp-4);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-primary);
-  color: var(--color-primary-contrast);
+  border-radius: var(--r-sm);
+  background-color: var(--brand-primary);
+  color: var(--text-inverse);
   transition: opacity 0.2s ease;
 }
 
@@ -90,14 +103,14 @@
 }
 
 .registro-foto__ayuda {
-  font-size: var(--font-xs);
-  color: var(--color-text-muted);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
   margin: 0;
 }
 
 .registro-foto__error {
-  font-size: var(--font-xs);
-  color: var(--color-danger, #ef4444);
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
   margin: 0;
 }
 
@@ -113,3 +126,159 @@
   border-width: 0;
 }
 
+
+/* ---------------------------------------------------------------- respaldos
+   Los adjuntos de la habilitación y de los títulos. Mismo lenguaje visual que
+   `.registro-foto`: caja punteada, porque es una zona de carga y no un campo. */
+
+.registro-respaldos,
+.registro-titulos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.registro-respaldo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.registro-respaldo__titulo {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  margin: 0;
+}
+
+.registro-respaldo__dato,
+.registro-titulo__peso,
+.registro-respaldo__peso {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.registro-respaldo__archivo,
+.registro-titulo__archivo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+}
+
+.registro-respaldo__nombre,
+.registro-titulo__nombre-archivo {
+  overflow-wrap: anywhere;
+}
+
+.registro-respaldo__subir,
+.registro-titulo__subir {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.registro-respaldo__label-btn,
+.registro-titulo__label-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* El rótulo es de dos palabras y en la fila del título comparte renglón con
+     el nombre y el botón de quitar: sin esto se parte en dos líneas y la fila
+     crece de alto sólo en las que tienen archivo. */
+  white-space: nowrap;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  background-color: var(--brand-primary);
+  color: var(--text-inverse);
+  transition: opacity 0.2s ease;
+}
+
+.registro-respaldo__label-btn:hover,
+.registro-titulo__label-btn:hover {
+  opacity: 0.9;
+}
+
+.registro-respaldos__ayuda,
+.registro-titulos__ayuda,
+.registro-titulo-tipo__ayuda {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.registro-respaldos__error,
+.registro-titulos__error {
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ títulos */
+
+.registro-titulo-tipo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.registro-titulo-tipo__nombre {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Una fila por título: en pantalla chica se apila, en grande el nombre manda
+   el ancho y los botones quedan a su derecha. */
+.registro-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid var(--border-default);
+}
+
+.registro-titulo__campo {
+  display: block;
+  width: 100%;
+}
+
+.registro-titulo__nombre {
+  width: 100%;
+  font: inherit;
+  color: var(--text-primary);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-default);
+  background-color: var(--surface-raised);
+}
+
+.registro-titulo__nombre:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
+
+@media (min-width: 640px) {
+  .registro-titulo {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .registro-titulo__campo {
+    flex: 1 1 auto;
+  }
+}

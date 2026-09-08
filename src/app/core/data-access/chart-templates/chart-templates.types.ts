@@ -34,6 +34,28 @@ export interface ChartTemplateField {
   readonly required: boolean;
   readonly ordinal?: number;
   /**
+   * Las respuestas ofrecidas, cuando el campo es de elección (`dataType`
+   * `code`).
+   *
+   * Texto libre y no un `valueSetId`: un value set es del catálogo de
+   * terminología y lo arma un administrador, y lo que se pidió acá es que el
+   * doctor escriba sus propias opciones —«Nunca / Ex fumador / Fumador»— sin
+   * pedirle nada a nadie. Los campos del estándar sí pueden traer `valueSetId`;
+   * los propios traen esto.
+   *
+   * **El backend real todavía no lo persiste.** Ver
+   * `docs/pendientes-backend-formularios.md`.
+   */
+  readonly options?: readonly string[];
+  /**
+   * Si un campo de elección admite varias respuestas.
+   *
+   * Es lo que separa «Opción múltiple» —una sola, círculos— de «Casillas de
+   * verificación» —varias, cuadrados—, que en Google Forms son dos tipos
+   * distintos y acá son el mismo `dataType` con distinta cardinalidad.
+   */
+  readonly multiple?: boolean;
+  /**
    * Si el campo lo agregó esta organización, o viene del formulario estándar.
    *
    * El generador lo necesita para dos cosas que no puede adivinar: qué campos

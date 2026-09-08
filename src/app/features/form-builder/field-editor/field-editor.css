@@ -1,0 +1,252 @@
+/* ============================================================================
+    La tarjeta de un campo del formulario.
+
+    Sólo tokens del sistema. La caja la pone este componente y no una `app-card`
+    anidada: son las filas de una lista dentro de una sección que ya tiene marco.
+    ========================================================================== */
+
+:host {
+    display: grid;
+    gap: var(--sp-3);
+    padding: var(--sp-4);
+    border: 1px solid var(--border-subtle, var(--border-default));
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+}
+
+/* ---- el agarre para arrastrar ------------------------------------------- */
+
+/* Arriba del todo y centrado, que es donde lo pone cualquier editor de
+   bloques. Se ve siempre y no sólo al pasar por encima: un control que aparece
+   con el puntero no existe para quien mira la pantalla en una tablet. */
+.editor-campo__agarre {
+    justify-self: center;
+    display: block;
+    inline-size: 1.5rem;
+    block-size: 1rem;
+    margin-block-start: calc(-1 * var(--sp-2));
+    color: var(--text-muted);
+    cursor: grab;
+    touch-action: none;
+}
+
+.editor-campo__agarre:active {
+    cursor: grabbing;
+}
+
+.editor-campo__agarre svg {
+    inline-size: 100%;
+    block-size: 100%;
+}
+
+/* La tarjeta que se está arrastrando: se despega, para que se vea cuál es la
+   que va a caer. La clase la pone la lista, que es la que sabe cuál se agarró. */
+:host(.editor-campo--arrastrando) {
+    opacity: 0.55;
+    box-shadow: var(--shadow-md);
+}
+
+/* Dónde va a caer. Una línea gruesa arriba y no un hueco que se abre: el hueco
+   mueve todo lo de abajo y la lista salta mientras se arrastra. */
+:host(.editor-campo--destino) {
+    box-shadow: inset 0 3px 0 0 var(--brand-primary);
+}
+
+/* La franja de color a la izquierda es lo que separa de un vistazo lo que se
+   puede tocar de lo que no. Los propios la llevan; los del estándar, no. */
+:host:not(.editor-campo--estandar) {
+    border-inline-start: 3px solid var(--brand-primary);
+}
+
+:host(.editor-campo--estandar) {
+    background: var(--bg-surface-alt);
+}
+
+/* ---- cabecera: qué se pregunta y de qué tipo ---------------------------- */
+
+/* El nombre ocupa lo que sobra y el tipo lo que necesita: es la proporción de
+   Google Forms y la que corresponde —el nombre es el dato, el tipo la etiqueta. */
+.editor-campo__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-3);
+}
+
+.editor-campo__nombre-campo {
+    flex: 1 1 14rem;
+    min-inline-size: 0;
+}
+
+.editor-campo__nombre-fijo {
+    flex: 1 1 14rem;
+    min-inline-size: 0;
+    color: var(--text-primary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+/* El asterisco en el color de aviso: es la única marca que distingue un campo
+   que bloquea el guardado del formulario. */
+.editor-campo__obligatorio {
+    color: var(--st-error-fg, var(--text-primary));
+}
+
+.editor-campo__tipo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex: 0 1 14rem;
+    min-inline-size: 0;
+}
+
+.editor-campo__tipo--fijo {
+    flex: none;
+}
+
+.editor-campo__tipo app-select {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
+.editor-campo__icono {
+    flex: none;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    color: var(--brand-primary);
+}
+
+/* El del estándar en gris: el color de marca es para lo que se puede tocar. */
+:host(.editor-campo--estandar) .editor-campo__icono {
+    color: var(--text-muted);
+}
+
+.editor-campo__tipo-nombre {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    white-space: nowrap;
+}
+
+/* ---- la muestra del control -------------------------------------------- */
+
+/* Sangrada y con la opacidad bajada: se lee como una muestra y no como un
+   campo que hay que completar. El `pointer-events` lo confirma —los controles
+   ya van deshabilitados, pero esto evita hasta el cursor de texto. */
+.editor-campo__muestra {
+    padding-inline-start: var(--sp-3);
+    border-inline-start: 2px solid var(--border-subtle, var(--border-default));
+    opacity: 0.75;
+    pointer-events: none;
+    max-inline-size: 22rem;
+}
+
+/* ---- las respuestas ofrecidas ------------------------------------------- */
+
+/* `fieldset` sin su marco: el borde del navegador encajonaba las opciones
+   dentro de la tarjeta y se leían como otra tarjeta adentro. Lo que aporta es
+   el `legend`, que le da nombre al grupo para el lector de pantalla. */
+.editor-campo__opciones {
+    display: grid;
+    gap: var(--sp-2);
+    justify-items: start;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    padding-inline-start: var(--sp-3);
+    border-inline-start: 2px solid var(--border-subtle, var(--border-default));
+    max-inline-size: 26rem;
+}
+
+.editor-campo__opcion {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    inline-size: 100%;
+}
+
+.editor-campo__opcion-texto {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+}
+
+/* La marca de la opción: redonda si se elige una, cuadrada si se pueden
+   marcar varias. Es la convención de cualquier formulario, y es lo único que
+   distingue los dos tipos de un vistazo. Dibujada y no un glifo `○`/`☐`: los
+   glifos cambian de tamaño y de línea base según la tipografía instalada. */
+.editor-campo__marca {
+    flex: none;
+    inline-size: 1rem;
+    block-size: 1rem;
+    border: 2px solid var(--border-strong, var(--border-default));
+    border-radius: var(--r-full);
+    background: var(--bg-surface);
+}
+
+.editor-campo__marca--casilla {
+    border-radius: var(--r-xs);
+}
+
+/* ---- la muestra de un campo de elección --------------------------------- */
+
+.editor-campo__muestra-opciones {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.editor-campo__muestra-opciones li {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+}
+
+/* ---- pie: mover, quitar, obligatorio ------------------------------------ */
+
+.editor-campo__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    padding-block-start: var(--sp-2);
+    border-block-start: 1px solid var(--border-subtle, var(--border-default));
+}
+
+.editor-campo__controles,
+.editor-campo__pie-derecha {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+/* Quitar se separa de las flechas: es la única que no se deshace, y pegada a
+   «bajar» se pulsa por error. */
+.editor-campo__borrar {
+    margin-inline-start: var(--sp-3);
+    color: var(--st-error-fg, var(--text-primary));
+}
+
+/* «Guardando…» / «Guardado» en gris y pequeño: es un acuse, no un aviso. */
+.editor-campo__estado {
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+}
+
+@media (max-width: 40rem) {
+    .editor-campo__muestra {
+        max-inline-size: none;
+    }
+
+    .editor-campo__borrar {
+        margin-inline-start: 0;
+    }
+}

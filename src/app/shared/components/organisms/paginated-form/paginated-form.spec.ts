@@ -659,3 +659,118 @@ describe('PaginatedForm', () => {
     });
   });
 });
+
+/* ═══ `checkboxes`: varias respuestas sobre un solo control ═══════════════════
+   Es el control que sirve un campo de elección múltiple del generador de
+   formularios. Guarda un **array**, no un booleano: `checkbox` es «sí o no»
+   sobre una cosa y esto es «cuáles de éstas». */
+
+const PAGINA_DE_CASILLAS: readonly PaginaDeFormulario[] = [
+  {
+    titulo: 'Antecedentes',
+    campos: [
+      {
+        key: 'factores',
+        label: 'Factores de riesgo',
+        control: 'checkboxes',
+        options: [
+          { value: 'Tabaquismo', label: 'Tabaquismo' },
+          { value: 'Hipertensión', label: 'Hipertensión' },
+          { value: 'Diabetes', label: 'Diabetes' },
+        ],
+      },
+    ],
+  },
+];
+
+@Component({
+  imports: [PaginatedForm],
+  template: `
+    <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
+  `,
+})
+class HostDeCasillas {
+  readonly paginas = PAGINA_DE_CASILLAS;
+  // Vacío y no `''`: con una cadena el motor evaluaría `''.includes(opcion)` y
+  // marcaría opciones que nadie marcó.
+  readonly form = new FormGroup({
+    factores: new FormControl<readonly string[]>([], { nonNullable: true }),
+  });
+}
+
+describe('PaginatedForm · casillas de varias respuestas', () => {
+  let fixture: ComponentFixture<HostDeCasillas>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [HostDeCasillas] }).compileComponents();
+    fixture = TestBed.createComponent(HostDeCasillas);
+    fixture.detectChanges();
+  });
+
+  /** Las casillas del grupo, en el orden en que se dibujan. */
+  function casillas(): HTMLInputElement[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('app-checkbox-group input[type="checkbox"]'),
+    );
+  }
+
+  /** Pulsa una casilla como lo haría una persona. */
+  function pulsar(indice: number): void {
+    const input = casillas()[indice]!;
+    input.checked = !input.checked;
+    input.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  }
+
+  function guardado(): readonly string[] {
+    return fixture.componentInstance.form.controls.factores.value;
+  }
+
+  it('dibuja una casilla por opción y ninguna marcada', () => {
+    expect(casillas()).toHaveLength(3);
+    expect(casillas().every((c) => !c.checked)).toBe(true);
+    expect(guardado()).toEqual([]);
+  });
+
+  it('marcar varias las conserva todas', () => {
+    // La regresión que esto ataja: al marcar la segunda, la primera se
+    // desmarcaba y el control quedaba vacío. Un campo de varias respuestas que
+    // sólo admite una no es un campo de varias respuestas.
+    pulsar(0);
+    expect(guardado()).toEqual(['Tabaquismo']);
+
+    pulsar(2);
+    expect(guardado()).toEqual(['Tabaquismo', 'Diabetes']);
+    expect(casillas()[0]!.checked).toBe(true);
+    expect(casillas()[2]!.checked).toBe(true);
+  });
+
+  it('guarda en el orden de la lista y no en el de los clics', () => {
+    // La respuesta se lee después en una ficha clínica: tiene que leerse en el
+    // mismo orden en que se ofreció, no en el que se fue marcando.
+    pulsar(2);
+    pulsar(0);
+    expect(guardado()).toEqual(['Tabaquismo', 'Diabetes']);
+  });
+
+  it('desmarcar quita sólo esa y deja las demás', () => {
+    pulsar(0);
+    pulsar(1);
+    pulsar(0);
+    expect(guardado()).toEqual(['Hipertensión']);
+    expect(casillas()[0]!.checked).toBe(false);
+    expect(casillas()[1]!.checked).toBe(true);
+  });
+
+  it('tolera que el control traiga algo que no sea un array', () => {
+    // `''` es lo que deja un `FormControl` recién creado sin valor inicial: el
+    // motor tiene que pintar «nada marcado», no reventar.
+    fixture.componentInstance.form.controls.factores.setValue('' as unknown as string[]);
+    fixture.detectChanges();
+
+    expect(casillas().every((c) => !c.checked)).toBe(true);
+
+    pulsar(1);
+    expect(guardado()).toEqual(['Hipertensión']);
+  });
+});

@@ -1,5 +1,13 @@
 <app-page-header [title]="titulo()" [subtitle]="subtitulo()" />
 
+<!-- Lo que un vertical necesita entre el título y los filtros. Hoy lo usan el
+     directorio de clínicas y el de farmacias para su mapa de Bolivia: el mapa
+     ES un filtro, así que va con los filtros y no encima del título —donde
+     quedaba antes de existir esta ranura, empujando el nombre de la pantalla
+     abajo del pliegue—. Vacío no ocupa nada, así que los otros dos directorios
+     no cambian. -->
+<ng-content select="[slot=antes-de-filtros]" />
+
 <app-filter-bar
   [filters]="filtros()"
   [searchLabel]="etiquetaBusqueda()"

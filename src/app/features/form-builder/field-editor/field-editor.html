@@ -1,0 +1,231 @@
+<!-- ─── La tarjeta de un campo ───────────────────────────────────────────────
+     Siempre abierta, como en Google Forms: arriba qué se pregunta y de qué
+     tipo, debajo el control con el que se va a responder, y al pie lo que se
+     le puede hacer. No hay estado plegado — plegarla escondía justo lo que hay
+     que ver para decidir si el campo está bien. -->
+@if (editable()) {
+  <!-- El agarre: seis puntos arriba del todo, centrados, que es donde los pone
+       cualquier editor de bloques. `draggable` lo pone la lista —ver el output
+       `agarrar`—, así que apretar acá es lo único que empieza un arrastre;
+       seleccionar el texto del nombre sigue seleccionando. -->
+  <span
+    class="editor-campo__agarre"
+    aria-hidden="true"
+    data-testid="editor-campo-agarre"
+    (mousedown)="agarrar.emit(true)"
+    (mouseup)="agarrar.emit(false)"
+    (touchstart)="agarrar.emit(true)"
+    (touchend)="agarrar.emit(false)"
+  >
+    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">
+      <circle cx="9" cy="6" r="1.4" />
+      <circle cx="15" cy="6" r="1.4" />
+      <circle cx="9" cy="12" r="1.4" />
+      <circle cx="15" cy="12" r="1.4" />
+      <circle cx="9" cy="18" r="1.4" />
+      <circle cx="15" cy="18" r="1.4" />
+    </svg>
+  </span>
+}
+
+<div class="editor-campo__cabecera">
+  @if (editable()) {
+    <app-input
+      class="editor-campo__nombre-campo"
+      [value]="nombre()"
+      (valueChange)="cambiarNombre($event)"
+      (blurred)="guardarNombre()"
+      placeholder="Nombre del campo"
+      [attr.aria-label]="'Nombre del campo ' + (campo().name || '')"
+      data-testid="editor-campo-nombre"
+    />
+
+    <span class="editor-campo__tipo">
+      <app-data-type-icon
+        class="editor-campo__icono"
+        [tipo]="tipoTecnico()"
+        [multiple]="tipo() === 'checkboxes'"
+      />
+      <app-select
+        [options]="tipos"
+        [value]="tipo()"
+        (valueChange)="cambiarTipo($event)"
+        [attr.aria-label]="'Tipo de dato de ' + (campo().name || 'el campo')"
+        data-testid="editor-campo-tipo"
+      />
+    </span>
+  } @else {
+    <!-- Del estándar: se lee, no se edita. Son la parte que hace comparable una
+         ficha entre consultorios, y el backend los rechaza igual. -->
+    <span class="editor-campo__nombre-fijo">
+      {{ campo().name }}
+      @if (campo().required) {
+        <span class="editor-campo__obligatorio" aria-label="obligatorio">*</span>
+      }
+    </span>
+
+    <span class="editor-campo__tipo editor-campo__tipo--fijo">
+      <app-data-type-icon
+        class="editor-campo__icono"
+        [tipo]="campo().dataType"
+        [multiple]="campo().multiple ?? false"
+      />
+      <span class="editor-campo__tipo-nombre">{{ etiquetaDelTipo() }}</span>
+    </span>
+  }
+</div>
+
+@if (editable() && pideOpciones()) {
+  <!-- ─── Las respuestas ofrecidas ─────────────────────────────────────────
+       Una fila por opción con su marca y su botón de quitar, no un `textarea`
+       de «una por línea»: así se ve cuántas son, se corrige la del medio y se
+       quita la que sobra. Es la lista que se va a ver al responder. -->
+  <fieldset class="editor-campo__opciones">
+    <legend class="solo-lectores">Respuestas de {{ campo().name || 'el campo' }}</legend>
+
+    @for (opcion of opciones(); track $index) {
+      <div class="editor-campo__opcion">
+        <span
+          class="editor-campo__marca"
+          [class.editor-campo__marca--casilla]="tipo() === 'checkboxes'"
+          aria-hidden="true"
+        ></span>
+
+        <app-input
+          class="editor-campo__opcion-texto"
+          [value]="opcion"
+          (valueChange)="cambiarOpcion($index, $event)"
+          [placeholder]="'Opción ' + ($index + 1)"
+          [attr.aria-label]="'Opción ' + ($index + 1)"
+          [attr.data-testid]="'editor-campo-opcion-' + $index"
+        />
+
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          [disabled]="!puedeQuitarOpcion()"
+          [attr.aria-label]="'Quitar la opción ' + ($index + 1)"
+          (clicked)="quitarOpcion($index)"
+        >
+          ✕
+        </button>
+      </div>
+    }
+
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      type="button"
+      (clicked)="agregarOpcion()"
+      data-testid="editor-campo-agregar-opcion"
+    >
+      + Agregar opción
+    </button>
+  </fieldset>
+} @else {
+  <!-- El control con el que se responde. Deshabilitado a propósito: es una
+       muestra de cómo se va a ver, no un lugar donde escribir. -->
+  <div class="editor-campo__muestra" aria-hidden="true">
+    @switch (familia()) {
+      @case ('parrafo') {
+        <app-textarea [value]="''" [disabled]="true" [rows]="2" placeholder="Texto largo" />
+      }
+      @case ('numero') {
+        <app-input type="number" [value]="''" [disabled]="true" placeholder="0" />
+      }
+      @case ('booleano') {
+        <app-checkbox [checked]="false" [disabled]="true" label="Sí" />
+      }
+      @case ('fecha') {
+        <!-- Texto con el formato dentro y no `type="date"`: el input del sistema
+             no acepta ese tipo —las fechas de verdad las pide `app-date-picker`—
+             y acá alcanza con mostrar la forma del dato. -->
+        <app-input [value]="''" [disabled]="true" placeholder="dd/mm/aaaa" />
+      }
+      @case ('eleccion') {
+        <!-- Las opciones del estándar, tal como se van a ver. Un campo de
+             elección cuya muestra fuera una caja de texto mentiría sobre lo
+             que se responde. -->
+        <ul class="editor-campo__muestra-opciones">
+          @for (opcion of opcionesDelEstandar(); track $index) {
+            <li><span class="editor-campo__marca"></span>{{ opcion }}</li>
+          }
+        </ul>
+      }
+      @case ('casillas') {
+        <ul class="editor-campo__muestra-opciones">
+          @for (opcion of opcionesDelEstandar(); track $index) {
+            <li>
+              <span class="editor-campo__marca editor-campo__marca--casilla"></span>{{ opcion }}
+            </li>
+          }
+        </ul>
+      }
+      @default {
+        <app-input [value]="''" [disabled]="true" placeholder="Texto corto" />
+      }
+    }
+  </div>
+}
+
+@if (editable()) {
+  <!-- El pie: mover, quitar y obligatorio. Sólo en los campos propios — sobre
+       uno del estándar serían controles que el servidor va a negar.
+
+       Las flechas se quedan aunque ahora se pueda arrastrar: un arrastre no se
+       hace con el teclado, y sin ellas mover un campo dejaría de ser posible
+       para quien no usa ratón. -->
+  <div class="editor-campo__pie">
+    <span class="editor-campo__controles">
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [disabled]="esPrimero()"
+        aria-label="Subir el campo"
+        (clicked)="mover.emit(-1)"
+      >↑</button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        [disabled]="esUltimo()"
+        aria-label="Bajar el campo"
+        (clicked)="mover.emit(1)"
+      >↓</button>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        type="button"
+        class="editor-campo__borrar"
+        [attr.aria-label]="'Quitar ' + (campo().name || 'el campo') + ' del formulario'"
+        (clicked)="borrar.emit()"
+        data-testid="editor-campo-borrar"
+      >Quitar</button>
+    </span>
+
+    <span class="editor-campo__pie-derecha">
+      @if (guardando()) {
+        <span class="editor-campo__estado" role="status">Guardando…</span>
+      } @else if (guardado()) {
+        <span class="editor-campo__estado" role="status">Guardado</span>
+      }
+      <app-checkbox
+        [checked]="obligatorio()"
+        (checkedChange)="cambiarObligatorio($event)"
+        label="Obligatorio"
+        data-testid="editor-campo-obligatorio"
+      />
+    </span>
+  </div>
+} @else {
+  <div class="editor-campo__pie">
+    <span class="editor-campo__estado">Del estándar · no se edita</span>
+  </div>
+}

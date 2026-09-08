@@ -3,22 +3,23 @@
   subtitle="Elegí a quién o a dónde buscar. Cada directorio se abre completo, agrupado como una guía."
 />
 
-<div class="directories-overview__mapa">
-  <div class="directories-overview__centro" aria-hidden="true">
+<div class="mapa">
+  <div class="mapa__centro" aria-hidden="true">
     <app-nav-icon name="directory" />
   </div>
 
-  <ul class="directories-overview__nodos">
+  <!-- La misma rejilla y la misma tarjeta que la portada de cada directorio
+       —`shared/styles/rejilla-de-tarjetas.css`—: esta pantalla es la puerta de
+       las cuatro, y llegar a ella para encontrar otra clase de tarjeta se lee
+       como haber salido de la aplicación. Lo único propio de acá es el nodo
+       central y el filete que baja hasta cada tarjeta. -->
+  <ul class="rejilla mapa__nodos">
     @for (nodo of nodos(); track nodo.path) {
-      <li class="directories-overview__item">
-        <a class="directories-overview__nodo" [routerLink]="routeOf(nodo)">
-          <span class="directories-overview__icono" aria-hidden="true">
-            <app-nav-icon [name]="nodo.icon" />
-          </span>
-          <span class="directories-overview__texto">
-            <span class="directories-overview__etiqueta">{{ nodo.label }}</span>
-            <span class="directories-overview__resumen">{{ nodo.summary }}</span>
-          </span>
+      <li class="mapa__item">
+        <a class="rejilla__tarjeta" [routerLink]="routeOf(nodo)">
+          <app-nav-icon class="rejilla__icono" [name]="nodo.icon" />
+          <span class="rejilla__nombre">{{ nodo.label }}</span>
+          <span class="rejilla__resumen">{{ nodo.summary }}</span>
         </a>
       </li>
     }

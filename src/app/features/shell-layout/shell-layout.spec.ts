@@ -117,10 +117,16 @@ describe('ShellLayout', () => {
     ]);
   });
 
+  /**
+   * Todo lo que la barra ofrece, en el orden en que se dibuja: primero los dos
+   * destinos fijos —«Mi perfil» y «Notificaciones», sueltos arriba desde el
+   * 07/09/2026— y después los grupos.
+   */
   function rutasDelMenu(): readonly string[] {
+    const fijos = interno<() => readonly { route: string }[]>('destinosFijos')();
     const secciones =
       interno<() => readonly { items: readonly { route: string }[] }[]>('sections')();
-    return secciones.flatMap((s) => [...s.items].map((i) => i.route));
+    return [...fijos.map((i) => i.route), ...secciones.flatMap((s) => [...s.items].map((i) => i.route))];
   }
 
   it('el menú solo ofrece rutas que existen', () => {
@@ -130,6 +136,9 @@ describe('ShellLayout', () => {
     // exigen ninguno: el panel y el autoservicio. La vitrina la agrega el
     // armazón porque no es una sección del producto.
     expect(rutasDelMenu()).toEqual([
+      // Los dos destinos fijos, sueltos y arriba de todo.
+      '/my-account',
+      '/notification-center',
       '/dashboard',
       // Los tutoriales tampoco exigen rol.
       '/tutorials',
@@ -151,7 +160,9 @@ describe('ShellLayout', () => {
       //
       // «Tu organización» tampoco: no pide rol, pero sí membresía
       // (`requiresTenant`, F-31), y esta sesión no pertenece a ninguna.
-      '/my-account',
+      //
+      // «Mi perfil» ya no aparece en este tramo: encabeza la lista como destino
+      // fijo, fuera del grupo.
       '/my-account/appointments',
       // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
       // «Mis turnos»: el filtro real es tener perfil de paciente, que es un
@@ -166,10 +177,9 @@ describe('ShellLayout', () => {
       // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
       // perfil de paciente, que es un dato de la cuenta y no un rol.
       '/my-account/questionnaires',
-      // Carril P1: el centro de notificaciones. Tampoco exige rol —cualquiera
-      // con sesión tiene bandeja, y el backend sólo devuelve la propia—, así
-      // que aparece también en una sesión sin roles.
-      '/notification-center',
+      // El centro de notificaciones tampoco aparece acá: es el otro destino
+      // fijo. Sigue sin exigir rol —cualquiera con sesión tiene bandeja—; lo
+      // que cambió es dónde se dibuja.
       // «Preferencias de avisos» ya NO está: dejó de ser una sección y pasó a
       // ser un panel de Ajustes. Y Ajustes tampoco ocupa renglón —declara
       // `fueraDelMenuPara: [ANY_ROLE]`—, porque se entra por el ícono del

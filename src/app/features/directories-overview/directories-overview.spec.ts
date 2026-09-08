@@ -57,7 +57,7 @@ describe('DirectoriesOverview', () => {
     abrirSesion(['PATIENT']);
     crear();
 
-    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories-overview__nodo')];
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
     expect(enlaces.length).toBe(4);
 
     const medicos = enlaces.find((enlace) => enlace.getAttribute('href') === '/directory');
@@ -70,7 +70,7 @@ describe('DirectoriesOverview', () => {
     abrirSesion(['PRACTITIONER']);
     crear();
 
-    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories-overview__nodo')];
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
     expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(false);
     expect(enlaces.length).toBe(3);
   });
@@ -79,7 +79,7 @@ describe('DirectoriesOverview', () => {
     abrirSesion(['PATIENT']);
     crear();
 
-    const centro = root().querySelector('.directories-overview__centro');
+    const centro = root().querySelector('.mapa__centro');
     expect(centro?.getAttribute('aria-hidden')).toBe('true');
     expect(centro?.querySelector('a')).toBeNull();
   });

@@ -10,8 +10,14 @@ navegador**. Esa distinción es lo importante de esta página.
 | `PUBLIC_API_BASE_URL` | `scripts/generate-env.mjs` → el paquete | `''` (rutas relativas) | **Sí** |
 | `PORT` | `src/server.ts` (SSR en producción) | `4000` | No |
 | `SSR_ALLOWED_HOSTS` | `src/server.ts` (**decide si hay SSR**) | vacío | No |
-| `FRONTEND_PORT` | `docker-compose.yml` | `4200` | No |
-| `BACKEND_ORIGIN` | `docker-compose.yml` y `Dockerfile.dev` | `http://host.docker.internal:3000` | No |
+| `FRONTEND_PORT` | `docker-compose.yml`, servicio `dev` | `4200` | No |
+| `BACKEND_ORIGIN` | `docker-compose.yml` (servicio `dev`) y `Dockerfile.dev` | `http://host.docker.internal:3000` | No |
+| `APP_DOMAIN` | `docker-compose.yml`, servicio `web` | `localhost` | **Sí al desplegar** |
+| `HTTP_PORT` | `docker-compose.yml`, servicio `web` | `8080` | No |
+
+`APP_DOMAIN` es obligatoria al desplegar y silenciosa si falta: alimenta
+`SSR_ALLOWED_HOSTS`, y sin ella el despliegue queda verde y el dominio
+devuelve 400.
 
 `.env.example` es la plantilla oficial y explica cada una. `.env` está ignorado
 por Git.

@@ -66,10 +66,15 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
   }
 
   function flushCarga(): void {
-    http.expectOne((r) => r.url === '/practices').flush({
-      items: [{ id: PRACTICE, code: 'P1', name: 'Práctica Uno', typeConceptId: 't', statusConceptId: 's' }],
-      count: 1,
-    });
+    // Arreglo desnudo, que es lo que manda el controlador: `listPractices()`
+    // hace `body.map(...)` sobre la respuesta. Con `{ items, count }` el `map`
+    // no existe, el observable muere, el `catchError` del componente lo traga y
+    // la práctica queda en null — con lo que ninguna de las lecturas que cuelgan
+    // de ella se llega a pedir. Ver la cabecera de `listPractices` en
+    // `accounting.client.ts`.
+    http
+      .expectOne((r) => r.url === '/practices')
+      .flush([{ id: PRACTICE, code: 'P1', name: 'Práctica Uno', typeConceptId: 't', statusConceptId: 's' }]);
     // `practicaElegida` es un `linkedSignal` que reacciona a la respuesta de
     // arriba; los cuatro pedidos que cuelgan de la práctica elegida no salen
     // hasta que un tick de detección de cambios propaga esa señal.
@@ -307,10 +312,15 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
   it('exportarDiarioCsv descarga el diario cuando tiene asientos', () => {
     fixture.detectChanges();
 
-    http.expectOne((r) => r.url === '/practices').flush({
-      items: [{ id: PRACTICE, code: 'P1', name: 'Práctica Uno', typeConceptId: 't', statusConceptId: 's' }],
-      count: 1,
-    });
+    // Arreglo desnudo, que es lo que manda el controlador: `listPractices()`
+    // hace `body.map(...)` sobre la respuesta. Con `{ items, count }` el `map`
+    // no existe, el observable muere, el `catchError` del componente lo traga y
+    // la práctica queda en null — con lo que ninguna de las lecturas que cuelgan
+    // de ella se llega a pedir. Ver la cabecera de `listPractices` en
+    // `accounting.client.ts`.
+    http
+      .expectOne((r) => r.url === '/practices')
+      .flush([{ id: PRACTICE, code: 'P1', name: 'Práctica Uno', typeConceptId: 't', statusConceptId: 's' }]);
     fixture.detectChanges();
 
     http.expectOne((r) => r.url === '/accounting/trial-balance').flush({

@@ -1,12 +1,26 @@
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { DatePipe, DOCUMENT } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  type ElementRef,
+  inject,
+  input,
+  output,
+  signal,
+  viewChildren,
+} from '@angular/core';
 
 import { AppButton } from '@shared/components/atoms/button/button';
 import { AppMap } from '@shared/components/organisms/map/map';
 import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
 import { PublicPostCard } from '../public-post-card/public-post-card';
 
-import type { PublicProfileDetail } from '@core/data-access/public-directory/public-directory.types';
+import {
+  PUBLIC_PROFILE_PREFIX,
+  type PublicProfileDetail,
+} from '@core/data-access/public-directory/public-directory.types';
 import { inicialesDe } from '@shared/text/iniciales';
 
 /** Cómo se rotula cada clase de sujeto en la insignia junto al nombre. */
@@ -185,4 +199,119 @@ export class PublicProfileCard {
   protected readonly etiquetaDelMapa = computed(
     () => `Dónde atiende ${this.perfil().displayName}, en el mapa.`,
   );
+
+  /* ==========================================================================
+      La tira de pestañas.
+
+      Es lo que hace que una ficha se lea como una PÁGINA de una organización y
+      no como una nota larga: de un vistazo se sabe qué hay más abajo sin tener
+      que desplazar hasta el final para descubrirlo.
+
+      Las pestañas navegan DENTRO de la misma página —son anclas, no rutas—.
+      Partir la ficha en cinco pantallas rompería el SEO que este carril existe
+      para servir: el HTML del servidor tiene que traer la ficha entera.
+      ====================================================================== */
+
+  /** Las secciones que de verdad se van a pintar, en el orden en que caen. */
+  protected readonly secciones = computed<readonly { id: string; rotulo: string }[]>(() => {
+    const p = this.perfil();
+    const previa = this.preview();
+
+    // «Inicio» es el encabezado: existe siempre, así que la tira nunca queda
+    // con una sola pestaña muerta.
+    const tira = [{ id: 'resumen', rotulo: 'Inicio' }];
+
+    if (p.biography || previa) tira.push({ id: 'acerca-de', rotulo: 'Acerca de' });
+    if (p.specialties.length > 0) tira.push({ id: 'especialidades', rotulo: 'Especialidades' });
+    if (p.trajectory.length > 0) tira.push({ id: 'trayectoria', rotulo: 'Trayectoria' });
+    if (this.donde() || previa) {
+      tira.push({ id: 'donde-queda', rotulo: this.esLugar() ? 'Dónde queda' : 'Dónde atiende' });
+    }
+    if (p.posts.length > 0 || previa) tira.push({ id: 'publicaciones', rotulo: 'Publicaciones' });
+
+    // Con una sola sección la tira sobra: sería un rótulo disfrazado de
+    // navegación, que es peor que no tener navegación.
+    return tira.length > 1 ? tira : [];
+  });
+
+  private readonly anclas = viewChildren<ElementRef<HTMLElement>>('ancla');
+
+  /** Qué pestaña está marcada. La decide dónde está la lectura, no el clic. */
+  protected readonly seccionActiva = signal('resumen');
+
+  /* ==========================================================================
+      Compartir la ficha.
+      ====================================================================== */
+
+  private readonly documento = inject(DOCUMENT);
+
+  /**
+   * La URL pública de esta ficha, armada del slug y no de la barra de
+   * direcciones.
+   *
+   * Importa en la vista previa: ahí la barra dice `/my-account/public-preview`,
+   * y copiar eso le daría a quien lo pega la pantalla de configuración de otra
+   * persona —un enlace roto— en vez de la ficha. El prefijo sale de
+   * `PUBLIC_PROFILE_PREFIX`, que es el mismo que arma las rutas.
+   */
+  protected readonly urlPublica = computed(() => {
+    const p = this.perfil();
+    const origen = this.documento.defaultView?.location.origin ?? '';
+    return `${origen}/${PUBLIC_PROFILE_PREFIX[p.kind]}/${p.slug}`;
+  });
+
+  /** Si el enlace se acaba de copiar, para confirmarlo en el propio botón. */
+  protected readonly copiado = signal(false);
+
+  protected async compartir(): Promise<void> {
+    try {
+      await this.documento.defaultView?.navigator.clipboard.writeText(this.urlPublica());
+      this.copiado.set(true);
+      this.documento.defaultView?.setTimeout(() => this.copiado.set(false), 2400);
+    } catch {
+      // Sin permiso de portapapeles no hay nada que avisar: el enlace sigue
+      // siendo la barra de direcciones. Un error acá sería ruido.
+    }
+  }
+
+  constructor() {
+    /* El marcador de la pestaña.
+
+       `IntersectionObserver` y no un escucha de `scroll`: el escucha corre en
+       cada píxel del hilo principal y esto es una página que se desplaza
+       largo. El margen inferior del `rootMargin` recorta la zona útil al
+       tercio superior de la ventana, que es donde uno mira mientras baja; sin
+       él, la última sección quedaría marcada desde que asoma.
+
+       El efecto se rearma solo cuando cambian las anclas —o sea, cuando el
+       perfil cambia y aparecen o desaparecen secciones—. */
+    effect((alLimpiar) => {
+      const elementos = this.anclas().map((ref) => ref.nativeElement);
+      const ventana = this.documento.defaultView;
+
+      // En el servidor no hay observador, y sin secciones no hay nada que
+      // observar. La pestaña se queda en «Inicio», que es lo correcto.
+      if (!ventana || typeof ventana.IntersectionObserver === 'undefined') return;
+      if (elementos.length === 0) return;
+
+      const visibles = new Set<string>();
+      const observador = new ventana.IntersectionObserver(
+        (entradas) => {
+          for (const entrada of entradas) {
+            if (entrada.isIntersecting) visibles.add(entrada.target.id);
+            else visibles.delete(entrada.target.id);
+          }
+          // La primera del orden del documento que esté a la vista, no la
+          // última que disparó: si no, dos secciones cortas juntas hacen
+          // parpadear la marca.
+          const orden = this.secciones().map((seccion) => seccion.id);
+          this.seccionActiva.set(orden.find((id) => visibles.has(id)) ?? orden[0] ?? 'resumen');
+        },
+        { rootMargin: '-88px 0px -62% 0px', threshold: 0 },
+      );
+
+      for (const elemento of elementos) observador.observe(elemento);
+      alLimpiar(() => observador.disconnect());
+    });
+  }
 }

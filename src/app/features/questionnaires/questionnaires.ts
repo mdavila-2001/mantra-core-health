@@ -12,6 +12,7 @@ import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Badge } from '../../shared/components/atoms/badge/badge';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
@@ -73,6 +74,7 @@ interface EncuestaVisible extends SurveySummary {
     Badge,
     Card,
     FormField,
+    NavIcon,
     PageHeader,
     ReactiveFormsModule,
     RouterLink,

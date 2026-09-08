@@ -32,6 +32,8 @@ import type {
   NewObservation,
   Observation,
   ObservationRegistration,
+  OwnMedicalAspects,
+  OwnMedicalAspectsChanges,
   PatientChart,
 } from './clinical.types';
 
@@ -122,6 +124,39 @@ export class ClinicalClient {
           careEpisodes: (body.careEpisodes ?? []).map(toCareEpisode),
         })),
       );
+  }
+
+  /* ---- FT-22 · aspectos médicos declarados por el titular ----------------- */
+
+  /**
+   * `GET /clinical/me/medical-aspects` — lo que la persona declara de su salud.
+   *
+   * **Sin identificador de paciente**, como el resto de las lecturas del
+   * portal: el servidor resuelve al titular por el vínculo de la cuenta, así
+   * que no hay forma de pedir los de otra persona desde acá.
+   *
+   * Un titular que nunca declaró nada responde el objeto vacío, no un 404:
+   * «todavía no llenaste esto» es un estado corriente del formulario, no un
+   * error que haya que manejar.
+   */
+  getOwnMedicalAspects(): Observable<OwnMedicalAspects> {
+    return this.http
+      .get<WireMedicalAspects>(this.url('/clinical/me/medical-aspects'))
+      .pipe(map(toMedicalAspects));
+  }
+
+  /**
+   * `PUT /clinical/me/medical-aspects` — guarda lo declarado.
+   *
+   * Los campos ausentes no se tocan y un `''` borra: es lo que permite guardar
+   * una sección sin pisar las demás. `PUT` y no `PATCH` porque el recurso es
+   * uno solo por titular y el servidor devuelve el estado completo resultante,
+   * que es lo que la pantalla vuelve a pintar tras guardar.
+   */
+  saveOwnMedicalAspects(cambios: OwnMedicalAspectsChanges): Observable<OwnMedicalAspects> {
+    return this.http
+      .put<WireMedicalAspects>(this.url('/clinical/me/medical-aspects'), cambios)
+      .pipe(map(toMedicalAspects));
   }
 
   /**
@@ -846,4 +881,15 @@ function fecha<K extends string>(
   return value === null || value === undefined
     ? {}
     : ({ [key]: new Date(value) } as Record<K, Date>);
+}
+
+/* ---- FT-22 · aspectos médicos --------------------------------------------- */
+
+/** Lo que viaja por el cable: la fecha llega como texto ISO. */
+type WireMedicalAspects = Omit<OwnMedicalAspects, 'updatedAt'> & {
+  readonly updatedAt?: string | null;
+};
+
+function toMedicalAspects({ updatedAt, ...resto }: WireMedicalAspects): OwnMedicalAspects {
+  return { ...resto, ...fecha('updatedAt', updatedAt) };
 }

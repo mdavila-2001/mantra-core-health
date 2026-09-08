@@ -36,6 +36,27 @@ WORKDIR /app
 # se reutiliza mientras esos tres archivos no cambien.
 COPY package.json yarn.lock .yarnrc.yml ./
 
+# Ni Cypress ni los navegadores de Playwright pintan nada en una imagen que sólo
+# compila: son doscientos y pico megas de binarios que se descargan en cada
+# construcción sin caché y que el artefacto no toca. Sin esto, el redespliegue
+# del servidor se quedaba colgado en el `postinstall` de Cypress —medido— y la
+# construcción no llegaba nunca a Angular.
+ENV CYPRESS_INSTALL_BINARY=0 \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    HUSKY=0 \
+    # El heap de Node, por debajo del techo del contenedor: así el recolector
+    # empieza a trabajar **antes** de que el kernel mate el proceso. Sin esto,
+    # una construcción con techo de 4 GB moría con
+    # `esbuild: all goroutines are asleep - deadlock` y salida 129 —que no dice
+    # «me quedé sin memoria», pero es lo que era—.
+    NODE_OPTIONS=--max-old-space-size=3072 \
+    # Cuántos procesos de esbuild corren a la vez. Por omisión, uno por núcleo:
+    # con doce núcleos y 447 fragmentos diferidos el pico se va por encima de los
+    # 6 GB y el cgroup mata la construcción (`ng build` a 4,7 GB de RSS, medido).
+    # Con dos trabajadores tarda algo más y cabe. En un portátil con memoria de
+    # sobra no hace falta tocar nada: esto sólo aplica a la imagen.
+    NG_BUILD_MAX_WORKERS=2
+
 # `--immutable` falla si el lockfile no cuadra: es lo que garantiza que lo
 # instalado sea exactamente lo declarado.
 RUN yarn install --immutable
