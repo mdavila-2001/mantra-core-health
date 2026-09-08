@@ -14,7 +14,7 @@ No inventes scripts. Los que existen:
 yarn lint          # eslint .
 yarn typecheck     # tsc app + cypress + playwright, --noEmit
 yarn build         # ng build (pasa por env:generate)
-yarn test          # ng test  (Vitest 4, 860 pruebas en 77 archivos)
+yarn test          # ng test  (Vitest 4, 4985 pruebas en 428 archivos, ~140 s)
 ```
 
 `yarn test` completo es caro. Acótalo con rutas explícitas mientras iteras y

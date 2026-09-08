@@ -16,7 +16,7 @@ Nunca al revés, y nunca todo a la vez.
 | Pantallas | **232** (28 secciones, 78 hijas, 126 portadas) |
 | Componentes | **458** (23 átomos, 37 moléculas, 29 organismos, 134 maquetas) |
 | Rutas en `app.routes.ts` | 73 paths, 39 estáticas |
-| Pruebas | 860 en 77 archivos (Vitest) |
+| Pruebas | **4985 en 428 archivos** (Vitest), todas en verde |
 
 Esto es lo que hace que el refactor completo **no sea una tarea**, sino un
 programa: a una microtarea por pantalla, con los gates del playbook (cinco
@@ -30,7 +30,7 @@ viewports, evidencia, revisión independiente, regresión), son 232 ciclos.
 | 1 | Fundación de diseño: literales a tokens | **hecha** — `DECISION-DISENO-001.md` |
 | 2 | Primitivas (89) | **auditada** — `OLA-2-PRIMITIVAS.md`. Sin deuda de foco ni motion (son centrales). Falta matriz visual, estados M34 y teclado por primitiva. |
 | 3 | Layouts y shells | **estructura verificada** — los shells se ejercitan en las 222 rutas de la matriz sin un desborde. |
-| 4-6 | Flujos y cola larga | **medidos, no refactorizados** — 222 rutas × 5 viewports. Cubre la carga inicial con un rol; no interacción, ni los otros cuatro roles, ni los nueve estados, ni mutaciones. |
+| 4-6 | Flujos y cola larga | **medidos con los 5 roles** — `MATRIZ-ROLES.md`, 2220 mediciones. Falta interacción, los nueve estados y mutaciones. |
 | 7 | Regresión global | **hecha** — `MATRIZ-REGRESION.md`, 1110 mediciones |
 
 ## Lo que queda, dicho con números
@@ -43,8 +43,8 @@ por pantalla que necesita criterio:
 
 | Dimensión | Tamaño |
 |---|---:|
-| Roles sin medir | 4 (paciente, médica, administrador, visitador) |
-| Pantallas × roles pendientes | ~888 combinaciones |
+| Roles sin medir | **0** — los 5 medidos |
+| Pruebas unitarias | **4985 en verde** |
 | Estados M34 por pantalla | 9 |
 | Primitivas sin matriz visual | 89 |
 | Rutas parametrizadas sin cubrir | 10 |
@@ -182,6 +182,12 @@ Cada microtarea declara, antes de tocar código:
 | DS-003 | `atoms/avatar`: último literal a `--c-neutral-200` | DD-001 | `VERIFIED` | deuda de tokens cerrada |
 | O2 | Auditoría de primitivas | DS-002 | `VERIFIED` | `OLA-2-PRIMITIVAS.md` — 38 falsos positivos descartados |
 | O7 | Matriz de regresión global | todo | `VERIFIED` | `MATRIZ-REGRESION.md` — 1110 mediciones |
+| O7.b | Matriz por rol, 5 cuentas | O7 | `VERIFIED` | `MATRIZ-ROLES.md` — 2220 mediciones |
+| W0.1 | `/directory` redirige | O7.b | `CERRADO` | era el guardia: ruta exclusiva de PATIENT |
+| G-001 | Desborde 51px en `/administration/medical-laboratory` con `admin@` a 390px | O7.b | `REPRODUCED` | 5/5; culpable sin aislar |
+| G-002 | 12 pares rol-ruta redirigen estando habilitados | O7.b | `DISCOVERED` | puede ser guardia legítimo no declarado |
+| G-003 | 3 roles entran a `/administration/patients/assisted-registration` | O7.b | `DISCOVERED` | la autoridad es la API; revisar discoverability |
+| T-001 | Gate de pruebas, antes bloqueado | - | `VERIFIED` | 4985 pruebas, 428 archivos, 140 s |
 | DS-002 | Moléculas y organismos con literales | DS-001 | `DISCOVERED` | - |
 | LAY-001 | Shells sin literales | DS-002 | `DISCOVERED` | - |
 | UI-001 | `public-profile/` sin literales | DS-002 | `DISCOVERED` | - |

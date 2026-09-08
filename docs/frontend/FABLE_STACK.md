@@ -14,7 +14,7 @@ Verificado contra el repo el 2026-09-08.
 | React | **Angular 21.2** standalone + señales | `frameworks-react` y el `component-refactoring` de React **no aplican**. Dueño canónico de ingeniería de framework: skill `angular-architect`. |
 | Tailwind + CVA | **CSS plano, 188 custom properties** | `tailwind-design-system` **no aplica**. Los tokens son `--c-*`, `--sp-*`, `--r-*`, `--fs-*`… (`docs/design-system/tokens.md`). |
 | npm | **Yarn 4.18 PnP** | Nunca `npm install`, nunca `package-lock.json`. |
-| `npm run lint/typecheck/build` | `yarn lint` · `yarn typecheck` · `yarn build` · `yarn test` | `typecheck` corre tres proyectos `tsc`. `test` es Vitest 4 (860 pruebas en 77 archivos). |
+| `npm run lint/typecheck/build` | `yarn lint` · `yarn typecheck` · `yarn build` · `yarn test` | `typecheck` corre tres proyectos `tsc`. `test` es Vitest 4 (**4985 pruebas en 428 archivos**). |
 | Instalar Playwright | **Ya está**: `@playwright/test` + 18 specs en `playwright/` | Reusar el arnés (`yarn pw`, `yarn pw:baseline`, `yarn pw:rutas`, `yarn pw:accesos`). El MCP es para exploración interactiva, no para reemplazarlo. |
 | Estados idle/loading/error | **Nueve estados M34 contractuales** (`ViewState<T>`) | Ver `docs/adr/ADR-0005-view-state-m34.md`. Son contrato, no sugerencia visual. |
 | Push a `dev` | **Bloqueado** | `gh pr merge` y auto-merge están cerrados; el merge exige revisión humana. El flujo FABLE termina en **abrir el PR**. |
