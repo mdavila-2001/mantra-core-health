@@ -146,7 +146,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
   selector: 'app-thread',
   imports: [Avatar, Composer, EmptyState, RouterLink],
   templateUrl: './thread.html',
-  styleUrl: './thread.css',
+  styleUrls: ['./thread.css', './thread-capas.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Thread {
@@ -470,6 +470,21 @@ export class Thread {
 
   protected cancelarReenvio(): void {
     this.reenviando.set(null);
+  }
+
+  /**
+   * Cierra el reenvío sólo si el clic cayó en el fondo, no en el recuadro.
+   *
+   * Antes el recuadro paraba la propagación con un `(click)` propio, y un
+   * `(click)` sin equivalente de teclado no pasa la regla de accesibilidad
+   * —con razón: un recuadro no es un control—. Ponerle un `(keydown)` para
+   * callar al linter habría sido peor, porque también habría frenado el
+   * `Escape` que cierra desde el fondo. Se decide acá, mirando dónde cayó.
+   */
+  protected cerrarReenvioSiEsElFondo(evento: Event): void {
+    if (evento.target === evento.currentTarget) {
+      this.cancelarReenvio();
+    }
   }
 
   protected reenviarA(conversationId: string): void {
