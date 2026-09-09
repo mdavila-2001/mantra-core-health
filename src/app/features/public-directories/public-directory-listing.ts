@@ -1,7 +1,7 @@
 import { computed, DestroyRef, Directive, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, type Params } from '@angular/router';
-import { map, of, switchMap, type Observable } from 'rxjs';
+import { of, switchMap, type Observable } from 'rxjs';
 
 import type {
   PublicPage,
@@ -61,12 +61,6 @@ function normalizar(texto: string): string {
 }
 
 /**
- * Cuántas ciudades se ofrecen como chips. Ver el porqué del tope en el
- * directorio de médicos: los chips valen porque se ven todos.
- */
-const MAXIMO_DE_CHIPS = 10;
-
-/**
  * Lo común a los dos directorios públicos nuevos: clínicas y farmacias
  * (A5 y A6 del plan de UX del 22/08/2026).
  *
@@ -112,10 +106,6 @@ export abstract class PublicDirectoryListing {
 
   /** El texto libre, que sí viaja al servidor bajo `q`. */
   private readonly termino = signal('');
-
-  /** Los tres cortes que se aplican en memoria. */
-  protected readonly ciudad = signal<string | null>(null);
-  protected readonly soloVerificados = signal(false);
 
   /* ---- el mapa de Bolivia como filtro ------------------------------------ */
 
@@ -167,18 +157,34 @@ export abstract class PublicDirectoryListing {
     return mapa;
   });
 
-  /** El departamento elegido en el mapa, leído de la URL. */
-  private readonly departamentoEnUrl = toSignal(
-    this.ruta.queryParams.pipe(
-      map((params: Params) => {
-        const valor: unknown = params[PARAM_DEPARTAMENTO];
-        return typeof valor === 'string' && valor !== '' ? valor : null;
-      }),
-    ),
-    { initialValue: null },
-  );
+  /**
+   * Los parámetros de la URL, que son **la** fuente de los tres cortes en
+   * memoria: el departamento del mapa, la ciudad y la verificación.
+   *
+   * Antes sólo el departamento se leía de acá y los otros dos vivían en
+   * señales que escribía `filtrar()` cuando la barra emitía. Eso se rompía de
+   * dos maneras que se ven en pantalla: al abrir un enlace con `?ciudad=…` la
+   * barra dibujaba el chip puesto y la lista no estaba filtrada, y al tocar el
+   * mapa —que navega sin pasar por la barra— la ciudad anterior seguía
+   * acotando. Con una sola fuente las dos desaparecen.
+   */
+  private readonly parametros = toSignal(this.ruta.queryParams, {
+    initialValue: {} as Params,
+  });
 
-  protected readonly departamentoElegido = computed(() => this.departamentoEnUrl());
+  /** El valor de un parámetro, o `null` si no está o viene vacío. */
+  private parametro(clave: string): string | null {
+    const valor: unknown = this.parametros()[clave];
+    return typeof valor === 'string' && valor !== '' ? valor : null;
+  }
+
+  /** El departamento elegido en el mapa. */
+  protected readonly departamentoElegido = computed(() => this.parametro(PARAM_DEPARTAMENTO));
+
+  /** La ciudad elegida por chip, dentro del departamento. */
+  protected readonly ciudad = computed(() => this.parametro(PARAM_CIUDAD));
+
+  protected readonly soloVerificados = computed(() => this.parametro(PARAM_VERIFICADO) === 'true');
 
   /**
    * Cuántos resultados tiene cada departamento, con los **otros** filtros
@@ -191,7 +197,7 @@ export abstract class PublicDirectoryListing {
   protected readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(() => {
     const porCiudad = this.departamentoPorCiudad();
     const cuenta = new Map<string, number>();
-    for (const fila of this.filtradasSinDepartamento()) {
+    for (const fila of this.paraElMapa()) {
       const conceptId = fila.city === null ? undefined : porCiudad.get(normalizar(fila.city));
       if (conceptId === undefined) continue;
       cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
@@ -225,11 +231,17 @@ export abstract class PublicDirectoryListing {
    *
    * `null` **quita** el parámetro; dejar `?departamento=` colgando ensuciaría
    * el enlace de quien volvió a ver todo el país.
+   *
+   * Y **suelta la ciudad**: los chips de ciudad son los del departamento que
+   * está elegido, así que al cambiar de departamento el chip anterior deja de
+   * existir en la barra. Conservarlo dejaría un filtro invisible acotando la
+   * lista a cero —Cochabamba dentro de La Paz no devuelve nada— sin nada en
+   * pantalla que explique por qué.
    */
   protected elegirDepartamento(conceptId: string | null): void {
     void this.router.navigate([], {
       relativeTo: this.ruta,
-      queryParams: { [PARAM_DEPARTAMENTO]: conceptId },
+      queryParams: { [PARAM_DEPARTAMENTO]: conceptId, [PARAM_CIUDAD]: null },
       queryParamsHandling: 'merge',
     });
   }
@@ -268,29 +280,48 @@ export abstract class PublicDirectoryListing {
   );
 
   /**
-   * Las filas que quedan tras los cortes de chip, **sin** el del mapa.
+   * La base con la que el mapa cuenta: todo lo traído, con el único corte que
+   * es independiente de dónde queda cada ficha.
    *
-   * Existe aparte porque es la base con la que el mapa cuenta: ver
-   * `cuentaPorDepartamento`.
+   * Ni el departamento ni la ciudad entran acá. El del mapa, porque contar con
+   * él aplicado dejaría a los otros ocho departamentos en cero —el mapa
+   * diciendo que sólo hay centros donde uno acaba de pulsar—. El de ciudad,
+   * porque ahora es un corte **dentro** del departamento elegido: contarlo
+   * haría exactamente lo mismo un nivel más abajo. La cuenta que sirve sigue
+   * siendo la de «cuánto hay ahí si voy».
    */
-  private readonly filtradasSinDepartamento = computed(() => {
-    const ciudad = this.ciudad();
+  private readonly paraElMapa = computed(() => {
     const soloVerificados = this.soloVerificados();
-    return (dataOf(this.estado()) ?? []).filter(
-      (fila) =>
-        (ciudad === null || fila.city === ciudad) && (!soloVerificados || fila.verified),
+    return (dataOf(this.estado()) ?? []).filter((fila) => !soloVerificados || fila.verified);
+  });
+
+  /**
+   * Las filas del departamento elegido, **sin** el corte de ciudad.
+   *
+   * Es la base con la que se arman los chips de ciudad, y por eso no puede
+   * llevar el corte que esos chips aplican: calculados sobre lo ya filtrado,
+   * tocar «Sucre» dejaría un solo chip en la barra y no habría cómo pasar a
+   * otra ciudad sin quitar el filtro primero.
+   */
+  private readonly delDepartamento = computed<readonly PublicSearchResult[]>(() => {
+    const departamento = this.departamentoElegido();
+    const todas = dataOf(this.estado()) ?? [];
+    if (departamento === null) {
+      return todas;
+    }
+    const porCiudad = this.departamentoPorCiudad();
+    return todas.filter(
+      (fila) => fila.city !== null && porCiudad.get(normalizar(fila.city)) === departamento,
     );
   });
 
   /** Las filas que quedan después de los tres cortes en memoria. */
   private readonly filtradas = computed(() => {
-    const departamento = this.departamentoElegido();
-    if (departamento === null) {
-      return this.filtradasSinDepartamento();
-    }
-    const porCiudad = this.departamentoPorCiudad();
-    return this.filtradasSinDepartamento().filter(
-      (fila) => fila.city !== null && porCiudad.get(normalizar(fila.city)) === departamento,
+    const ciudad = this.ciudad();
+    const soloVerificados = this.soloVerificados();
+    return this.delDepartamento().filter(
+      (fila) =>
+        (ciudad === null || fila.city === ciudad) && (!soloVerificados || fila.verified),
     );
   });
 
@@ -339,20 +370,29 @@ export abstract class PublicDirectoryListing {
     return tramos;
   });
 
-  /** Los chips: las ciudades que de verdad tienen algo, y la verificación. */
+  /**
+   * Los chips: las ciudades **del departamento elegido**, y la verificación.
+   *
+   * ## Primero el departamento, y recién ahí las ciudades
+   *
+   * Es la corrección que pidió el cliente, y arregla algo que se veía: antes
+   * los chips eran las diez ciudades con más fichas **del país**, y seguían
+   * enteros después de elegir en el mapa. Quien tocaba Cochabamba se quedaba
+   * mirando chips de Trinidad y de Sucre que no acotaban nada de lo que tenía
+   * en pantalla —los tramos ya eran sólo de Cochabamba— y que al tocarlos
+   * vaciaban la lista. Y las ciudades chicas del departamento que sí tenía
+   * delante no estaban, porque el tope de diez se lo había comido el país.
+   *
+   * Así que sin departamento no se dibuja ninguno —el mapa es el corte de
+   * arriba, y ofrecer las dos escalas a la vez es ofrecer dos preguntas para
+   * una— y con departamento elegido están **todas** sus ciudades publicadas,
+   * sin tope: son pocas y entran, que es lo que hace rápido el filtro.
+   *
+   * Siguen saliendo de los resultados y no del catálogo de municipios: de los
+   * ochenta y siete de La Paz, la mayoría no tiene nada publicado, y un chip
+   * que siempre devuelve cero es peor que no tenerlo.
+   */
   protected readonly filtros = computed<readonly FilterDef[]>(() => {
-    const cuentaPorCiudad = new Map<string, number>();
-    for (const fila of dataOf(this.estado()) ?? []) {
-      if (fila.city !== null && fila.city !== '') {
-        cuentaPorCiudad.set(fila.city, (cuentaPorCiudad.get(fila.city) ?? 0) + 1);
-      }
-    }
-
-    const ciudades = [...cuentaPorCiudad.entries()]
-      .sort(([a, cuentaA], [b, cuentaB]) => cuentaB - cuentaA || a.localeCompare(b, 'es'))
-      .slice(0, MAXIMO_DE_CHIPS)
-      .map(([ciudad]) => ({ value: ciudad, label: ciudad }));
-
     const filtros: FilterDef[] = [
       {
         key: PARAM_VERIFICADO,
@@ -361,6 +401,21 @@ export abstract class PublicDirectoryListing {
         options: [{ value: 'true', label: 'Sólo verificadas' }],
       },
     ];
+    if (this.departamentoElegido() === null) {
+      return filtros;
+    }
+
+    const cuentaPorCiudad = new Map<string, number>();
+    for (const fila of this.delDepartamento()) {
+      if (fila.city !== null && fila.city !== '') {
+        cuentaPorCiudad.set(fila.city, (cuentaPorCiudad.get(fila.city) ?? 0) + 1);
+      }
+    }
+
+    const ciudades = [...cuentaPorCiudad.entries()]
+      .sort(([a, cuentaA], [b, cuentaB]) => cuentaB - cuentaA || a.localeCompare(b, 'es'))
+      .map(([ciudad]) => ({ value: ciudad, label: ciudad }));
+
     if (ciudades.length > 1) {
       // Con una sola ciudad el chip no acota nada: sería un botón que no hace
       // nada, dibujado con la misma pinta que los que sí.
@@ -382,13 +437,12 @@ export abstract class PublicDirectoryListing {
    * La barra cambió.
    *
    * El texto **vuelve a pedirle al servidor** —es el único filtro que el
-   * controlador público aplica de verdad— y los chips se resuelven en memoria.
+   * controlador público aplica de verdad—. Los chips no se copian acá: la
+   * barra ya los escribió en la URL antes de emitir, y de la URL los leen
+   * `ciudad` y `soloVerificados`.
    */
   protected filtrar(activos: Readonly<Record<string, string>>): void {
     const termino = activos[SEARCH_PARAM] ?? '';
-    this.ciudad.set(activos[PARAM_CIUDAD] ?? null);
-    this.soloVerificados.set(activos[PARAM_VERIFICADO] === 'true');
-
     if (termino !== this.termino()) {
       this.termino.set(termino);
       this.cargar();
