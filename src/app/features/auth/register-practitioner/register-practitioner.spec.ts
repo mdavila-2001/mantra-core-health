@@ -114,6 +114,9 @@ describe('RegisterPractitioner', () => {
         | 'motherLastName'
         | 'nationalId'
         | 'regulatoryAuthority'
+        | 'professionalTitleUniversity'
+        | 'professionalTitleCountry'
+        | 'professionalTitleCity'
         | 'specialtyPrimary'
         | 'profilePhotoBase64'
         | 'sexAtBirth',
@@ -142,6 +145,11 @@ describe('RegisterPractitioner', () => {
       // clase de profesional es, y de él dependen el colegio y las
       // especialidades. Las pruebas que lo ejercen lo pisan por `extra`.
       professionalTitle: extra.professionalTitle ?? 'Médico / Médica',
+      // Dónde estudió la profesión con la que ejerce. Los tres son opcionales,
+      // así que por defecto van vacíos; las pruebas que los ejercen los pisan.
+      professionalTitleUniversity: extra.professionalTitleUniversity ?? '',
+      professionalTitleCountry: extra.professionalTitleCountry ?? '',
+      professionalTitleCity: extra.professionalTitleCity ?? '',
       phone: extra.phone ?? '',
       mobilePhone: extra.mobilePhone ?? '+591 70011111',
       workMobilePhone: extra.workMobilePhone ?? '',
@@ -296,6 +304,10 @@ describe('RegisterPractitioner', () => {
       expect(camposDe('practice')).toEqual([
         'profilePhotoBase64',
         'professionalTitle',
+        // Universidad, país y ciudad entran como UN campo proyectado, igual
+        // que los tres nombres: son tres casillas y la página ya está en el
+        // tope de cuatro.
+        'professionalTitleEducation',
         'professionalTitleFile',
       ]);
       expect(camposDe('specialties')).toEqual(['specialtyPrimary', 'especialidadesExtra']);
@@ -1046,10 +1058,105 @@ describe('RegisterPractitioner', () => {
       expect(component.respaldoSedes()?.archivo).toBe('sedes.jpg');
     });
 
+    it('una segunda profesión guarda su universidad, su país y su ciudad', () => {
+      component.agregarTitulo('UNIVERSITARIO');
+      const [profesion] = component.titulosDe('UNIVERSITARIO');
+
+      component.escribirDatoDeTitulo(profesion.id, 'nombre', 'Derecho');
+      component.escribirDatoDeTitulo(profesion.id, 'universidad', 'Universidad Gabriel René Moreno');
+      component.escribirDatoDeTitulo(profesion.id, 'pais', 'Bolivia');
+      component.escribirDatoDeTitulo(profesion.id, 'ciudad', 'Santa Cruz de la Sierra');
+
+      const [despues] = component.titulosDe('UNIVERSITARIO');
+      expect(despues.nombre).toBe('Derecho');
+      expect(despues.universidad).toBe('Universidad Gabriel René Moreno');
+      expect(despues.pais).toBe('Bolivia');
+      expect(despues.ciudad).toBe('Santa Cruz de la Sierra');
+    });
+
+    /**
+     * El pedido del propietario, entero: «hay doctores que aparte de ser
+     * doctores han estudiado otra profesión … cada uno con su respectiva
+     * universidad, lugar de estudio y pdf de su diploma».
+     */
+    it('dos profesiones distintas no se pisan: cada una con su universidad y su diploma', () => {
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('UNIVERSITARIO');
+      const [primera, segunda] = component.titulosDe('UNIVERSITARIO');
+
+      component.escribirDatoDeTitulo(primera.id, 'nombre', 'Medicina');
+      component.escribirDatoDeTitulo(primera.id, 'universidad', 'Universidad Mayor de San Andrés');
+      component.escribirDatoDeTitulo(primera.id, 'ciudad', 'La Paz');
+      component.adjuntarArchivoATitulo(
+        primera.id,
+        eventoDeArchivo('medicina.pdf', 'application/pdf', 1024),
+      );
+
+      component.escribirDatoDeTitulo(segunda.id, 'nombre', 'Ingeniería de Sistemas');
+      component.escribirDatoDeTitulo(segunda.id, 'universidad', 'Universidad Privada Boliviana');
+      component.escribirDatoDeTitulo(segunda.id, 'ciudad', 'Cochabamba');
+      component.adjuntarArchivoATitulo(
+        segunda.id,
+        eventoDeArchivo('sistemas.pdf', 'application/pdf', 2048),
+      );
+
+      const [a, b] = component.titulosDe('UNIVERSITARIO');
+      expect([a.nombre, a.universidad, a.ciudad, a.archivo]).toEqual([
+        'Medicina',
+        'Universidad Mayor de San Andrés',
+        'La Paz',
+        'medicina.pdf',
+      ]);
+      expect([b.nombre, b.universidad, b.ciudad, b.archivo]).toEqual([
+        'Ingeniería de Sistemas',
+        'Universidad Privada Boliviana',
+        'Cochabamba',
+        'sistemas.pdf',
+      ]);
+    });
+
+    it('ninguna profesión extra es obligatoria: el alta se manda sin cargar ninguna', () => {
+      expect(component.titulosDe('UNIVERSITARIO')).toHaveLength(0);
+
+      completarProfesional();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      req.flush(RESPUESTA_PRO);
+      expect(component.registered()).toBe(true);
+    });
+
+    it('quitar una profesión se lleva su universidad y deja intacta la otra', () => {
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('UNIVERSITARIO');
+      const [primera, segunda] = component.titulosDe('UNIVERSITARIO');
+      component.escribirDatoDeTitulo(primera.id, 'universidad', 'La que se va');
+      component.escribirDatoDeTitulo(segunda.id, 'universidad', 'La que queda');
+
+      component.quitarTitulo(primera.id);
+
+      const quedan = component.titulosDe('UNIVERSITARIO');
+      expect(quedan).toHaveLength(1);
+      expect(quedan[0].universidad).toBe('La que queda');
+    });
+
+    it('el título con el que ejerce lleva su universidad y su lugar de estudio', () => {
+      component.escribirEstudio('professionalTitleUniversity', 'Universidad Mayor de San Simón');
+      component.escribirEstudio('professionalTitleCountry', 'Bolivia');
+      component.escribirEstudio('professionalTitleCity', 'Cochabamba');
+
+      expect(component.valorDeEstudio('professionalTitleUniversity')).toBe(
+        'Universidad Mayor de San Simón',
+      );
+      expect(component.valorDeEstudio('professionalTitleCountry')).toBe('Bolivia');
+      expect(component.valorDeEstudio('professionalTitleCity')).toBe('Cochabamba');
+    });
+
     it('nada de esto viaja en el alta todavía: es sólo pantalla', () => {
       component.agregarTitulo('UNIVERSITARIO');
       const [titulo] = component.titulosDe('UNIVERSITARIO');
       component.escribirNombreDeTitulo(titulo.id, 'Medicina');
+      component.escribirDatoDeTitulo(titulo.id, 'universidad', 'Universidad Mayor de San Andrés');
       component.adjuntarArchivoATitulo(
         titulo.id,
         eventoDeArchivo('medicina.pdf', 'application/pdf', 1024),
@@ -1064,6 +1171,12 @@ describe('RegisterPractitioner', () => {
       const req = http.expectOne('/iam/auth/register-practitioner');
       expect(req.request.body.academicTitles).toBeUndefined();
       expect(req.request.body.credentialAttachments).toBeUndefined();
+      // La universidad y el lugar de estudio tampoco: no hay campo en el DTO
+      // del alta pública, y la API valida con `forbidNonWhitelisted` —mandarlos
+      // no los guardaría, rechazaría el alta entera con 422—.
+      expect(req.request.body.professionalTitleUniversity).toBeUndefined();
+      expect(req.request.body.professionalTitleCountry).toBeUndefined();
+      expect(req.request.body.professionalTitleCity).toBeUndefined();
       req.flush(RESPUESTA_PRO);
     });
   });

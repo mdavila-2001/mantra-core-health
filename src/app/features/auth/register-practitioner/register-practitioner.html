@@ -160,6 +160,29 @@
               />
             </ng-template>
 
+            <!-- Dónde estudiaste la profesión con la que ejercés. Los tres
+                 son opcionales y de texto libre: no hay padrón de universidades
+                 en ninguna capa y sólo existen dos conceptos de país en toda la
+                 aplicación (ver `CampoDeEstudio`). -->
+            <ng-template appCampoPersonalizado="professionalTitleEducation">
+              <div class="registro__estudio">
+                @for (campo of camposDeEstudioDelTitulo; track campo.key) {
+                  <app-form-field
+                    class="registro__estudio-campo"
+                    [label]="campo.label"
+                    hint="Opcional."
+                  >
+                    <app-input
+                      [testId]="campo.testId"
+                      [placeholder]="campo.placeholder"
+                      [value]="valorDeEstudio(campo.key)"
+                      (valueChange)="escribirEstudio(campo.key, $event)"
+                    />
+                  </app-form-field>
+                }
+              </div>
+            </ng-template>
+
             <!-- El diploma del título profesional. Va acá, con su título, y no
                  con los respaldos de la matrícula: el título es obligatorio y
                  su archivo no, y mezclarlos haría dudar de cuál frena el paso. -->
@@ -294,8 +317,10 @@
 
             <!--
               Los cuatro tipos de título, cada uno con su lista propia. La fila
-              es «nombre + archivo» porque un adjunto suelto no dice de qué
-              título es, y quien verifica necesita las dos cosas juntas.
+              lleva nombre, universidad, país, ciudad y archivo: un adjunto
+              suelto no dice de qué título es, y quien verifica necesita saber
+              además dónde se cursó. El primer tipo es «Otra profesión», que es
+              donde entra la segunda carrera del que estudió dos.
             -->
             <ng-template appCampoPersonalizado="academicTitles">
               <div class="registro-titulos">
@@ -305,18 +330,50 @@
                     <p class="registro-titulo-tipo__ayuda">{{ tipo.ayuda }}</p>
 
                     @for (titulo of titulosDe(tipo.codigo); track titulo.id) {
-                      <div class="registro-titulo">
+                      <!-- La fila lleva marca propia además de las de sus
+                           campos: el id de una fila es un uuid del navegador,
+                           así que una prueba no puede nombrarlo. Con esto se
+                           las cuenta y se las recorre por tipo y por orden. -->
+                      <div class="registro-titulo" [attr.data-testid]="'registro-pro-fila-' + tipo.codigo">
                         <label class="registro-titulo__campo">
-                          <span class="sr-only">Nombre del {{ tipo.etiqueta.toLowerCase() }}</span>
+                          <span class="sr-only">Nombre de {{ tipo.singular }}</span>
                           <input
                             type="text"
                             class="registro-titulo__nombre"
-                            placeholder="Cómo se llama el título"
+                            [placeholder]="tipo.placeholderNombre"
                             [value]="titulo.nombre"
                             [attr.data-testid]="'registro-pro-titulo-nombre-' + titulo.id"
-                            (input)="escribirNombreDeTitulo(titulo.id, $any($event.target).value)"
+                            (input)="escribirDatoDeTitulo(titulo.id, 'nombre', $any($event.target).value)"
                           />
                         </label>
+
+                        <!-- Dónde se cursó. Los tres son opcionales y de texto
+                             libre, por lo mismo que en el título principal. -->
+                        <div class="registro-titulo__estudio">
+                          @for (campo of camposDeEstudioDeFila; track campo.campo) {
+                            <label class="registro-titulo__campo">
+                              <span class="sr-only">
+                                {{ campo.label }} de {{ tipo.singular }}
+                              </span>
+                              <input
+                                type="text"
+                                class="registro-titulo__dato"
+                                [placeholder]="campo.placeholder"
+                                [value]="titulo[campo.campo]"
+                                [attr.data-testid]="
+                                  'registro-pro-titulo-' + campo.campo + '-' + titulo.id
+                                "
+                                (input)="
+                                  escribirDatoDeTitulo(
+                                    titulo.id,
+                                    campo.campo,
+                                    $any($event.target).value
+                                  )
+                                "
+                              />
+                            </label>
+                          }
+                        </div>
                         @if (titulo.archivo; as archivo) {
                           <p class="registro-titulo__archivo">
                             <span class="registro-titulo__nombre-archivo">{{ archivo }}</span>
@@ -350,7 +407,7 @@
                           app-button
                           variant="ghost"
                           size="sm"
-                          [attr.aria-label]="'Quitar ' + tipo.etiqueta"
+                          [attr.aria-label]="'Quitar ' + tipo.singular"
                           (clicked)="quitarTitulo(titulo.id)"
                         >
                           Quitar
@@ -366,7 +423,7 @@
                       [attr.data-testid]="'registro-pro-agregar-' + tipo.codigo"
                       (clicked)="agregarTitulo(tipo.codigo)"
                     >
-                      + Agregar {{ tipo.etiqueta.toLowerCase() }}
+                      + Agregar {{ tipo.singular }}
                     </button>
                   </section>
                 }
