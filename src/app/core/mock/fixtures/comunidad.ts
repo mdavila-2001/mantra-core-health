@@ -1,7 +1,7 @@
 import { ESPECIALIDAD, ESTADO } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
-import { avatarSvg, Coleccion, imagenSvg, iso, uuid } from '../mock-store';
+import { avatarSvg, Coleccion, imagenSvg, iso, portadaSvg, uuid } from '../mock-store';
 
 /* ============================================================================
     La red social: vitrinas públicas (personas y organizaciones), publicaciones,
@@ -129,7 +129,7 @@ function vitrinaDeProfesional(p: ProfesionalSimulado): VitrinaSimulada {
     headline: p.especialidades.length === 0 ? p.professionalTitle : `${p.professionalTitle} · ${p.organizacion}`,
     biography: p.professionalBio,
     avatarUrl: avatarSvg(p.displayName, ['#1f6f8b', '#0f766e', '#7c3aed', '#b45309', '#be123c'][PROFESIONALES.indexOf(p) % 5]),
-    coverUrl: imagenSvg(p.professionalTitle),
+    coverUrl: portadaSvg(),
     avatarFileId: p.photoFileId,
     coverFileId: uuid(`cover-${p.id}`),
     verified: p.verified,
@@ -158,7 +158,7 @@ function organizacion(clave: string, datos: { kind: Exclude<ClaseDeVitrina, 'PRA
     headline: datos.headline,
     biography: datos.bio,
     avatarUrl: avatarSvg(datos.name, datos.color),
-    coverUrl: imagenSvg(datos.name, '#f1f5f9', datos.color),
+    coverUrl: portadaSvg(datos.color),
     avatarFileId: uuid(`avatar-${clave}`),
     coverFileId: uuid(`cover-${clave}`),
     verified: true,
