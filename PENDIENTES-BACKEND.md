@@ -23,6 +23,56 @@ que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
+## Abierto · P21 · Nadie avisa que se liberó un horario
+
+**Levantado el 2026-09-09**, en la rama `mockup`. No bloquea nada: la maqueta lo
+simula entero y la API puede seguir sin esto. Lo que no puede es fingir que ya
+existe.
+
+### Qué pide el registro
+
+Punto 3.4 del módulo Paciente, textual:
+
+> «Si no encuentras cita en el día que necesitas y confirmas para otra fecha
+> PUEDES RECIBIR UNA NOTIFICACION DE LA APP DONDE TE INFORME QUE UN PACIENTE
+> DESCONFIRMO Y EXISTE UN HORARIO DISPONIBLE (ayudando con esto al paciente a
+> poder tener una opción rápida y directa)»
+
+### Qué hace falta, y son tres cosas
+
+1. **Detectar que el cupo quedó libre.** Dos caminos llevan al mismo estado: un
+   `desconfirmar` explícito, y una reserva que sigue confirmada pasados N
+   minutos de su hora sin que la consulta se iniciara. El segundo es el que la
+   maqueta simula, porque es el que se puede observar sin que nadie apriete
+   nada. Los diez minutos son de `horario-liberado.ts`; el número es del
+   propietario, no del modelo.
+2. **Saber a quién le interesa.** El registro lo dice: a quien no consiguió el
+   día que quería y reservó para otra fecha. Hoy no hay dónde guardar «quería el
+   martes»: `scheduling.waiting_list` existe pero nadie la escribe desde el alta
+   de una reserva. La maqueta lo aproxima con «tiene una cita futura con esa
+   profesional», que es lo más cercano con el dato que hay — y es una
+   aproximación, no la regla.
+3. **Empujarlo.** El módulo 35 ya declara `notification_requests` y el canal
+   `IN_APP`, así que la notificación en sí no es trabajo nuevo: es un productor
+   que la emita cuando (1) ocurra y para quien (2) diga.
+
+### Lo que el front ya tiene, y no hay que volver a hacer
+
+La campana lee `GET /notifications/me` y sabe abrir un destino
+(`notification-routes.ts`). Un aviso con `category: 'SCHEDULING'`, su
+`destination` al cupo y `payloadJson.kind = 'SLOT_RELEASED'` entra por ahí sin
+tocar una línea de pantalla.
+
+### Y lo que hay que apagar cuando esto exista
+
+`features/notifications/aviso-de-hueco-libre.ts` **sondea cada veinte
+segundos**, y eso es de maqueta: arranca sólo con `mockBackend`. Contra la API
+real el empujón es del servidor, y sondear sería multiplicar una consulta por
+pestaña abierta para enterarse tarde igual. El día que el canal empuje, ese
+archivo se borra.
+
+---
+
 ## Abierto · P20 · El alta de profesional no recibe el consultorio propio
 
 **Levantado el 2026-09-09**, en la rama `mockup`. Misma forma que P19 y **el
