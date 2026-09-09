@@ -299,10 +299,10 @@
     aria-modal="true"
     aria-label="Reenviar mensaje"
     tabindex="-1"
-    (click)="cancelarReenvio()"
+    (click)="cerrarReenvioSiEsElFondo($event)"
     (keydown.escape)="cancelarReenvio()"
   >
-    <div class="hilo__reenvio-caja" role="document" (click)="$event.stopPropagation()">
+    <div class="hilo__reenvio-caja" role="document">
       <h2 class="hilo__reenvio-titulo">Reenviar a…</h2>
       <ul class="hilo__reenvio-lista">
         @for (destino of destinosDeReenvio(); track destino.id) {
