@@ -453,6 +453,22 @@
                 />
               }
             </ng-template>
+
+            <!-- El punto del domicilio sobre el mapa. Es el MISMO componente
+                 que usa el alta de paciente para su casa y su trabajo: pedir
+                 permiso al navegador, dibujar el pin, dejar que alguien mire el
+                 plano y diga que sí, y avisar en voz alta si no lo dice. -->
+            <ng-template appCampoPersonalizado="gpsDomicilio">
+              <app-ubicacion-picker
+                pinId="domicilio"
+                etiquetaConfirmada="Tu dirección"
+                pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de tu domicilio"
+                etiquetaMapa="Tu ubicación actual en el mapa"
+                [ids]="idsUbicacionDomicilio"
+                (confirmado)="gpsDomicilio.set($event)"
+              />
+            </ng-template>
           </app-paginated-form>
         </div>
 
