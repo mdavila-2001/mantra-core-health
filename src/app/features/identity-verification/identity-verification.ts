@@ -115,6 +115,14 @@ const TEXTOS_POR_TRAMITE: Record<Tramite, TextosDelTramite> = {
  * y no es un olvido. La única elección es **cuál de las organizaciones propias**
  * — las del token de sesión — se quiere verificar.
  */
+/** El código de tipo con el que el backend registra cada trámite. */
+const TIPO_DEL_TRAMITE: Readonly<Record<Tramite, string>> = {
+  patient: 'PATIENT_IDENTITY',
+  practitioner: 'PRACTITIONER_IDENTITY',
+  license: 'PRACTITIONER_LICENSE',
+  tenant: 'TENANT_VERIFICATION',
+};
+
 @Component({
   selector: 'app-identity-verification',
   imports: [
@@ -311,7 +319,13 @@ export class IdentityVerification {
     this.solicitar({ evidenceFileId }).subscribe({
       next: (resultado) => {
         this.state.set(ready(null));
-        this.caso.set({ id: resultado.caseId, status: resultado.status });
+        // La respuesta del alta no trae el tipo; se deriva del trámite que se
+        // acaba de pedir, que es el mismo que el backend le asigna al caso.
+        this.caso.set({
+          id: resultado.caseId,
+          status: resultado.status,
+          type: TIPO_DEL_TRAMITE[this.tramite()],
+        });
         // El historial es la columna de al lado y no se oculta al enviar: sin
         // esto, la pantalla dice «tu solicitud quedó registrada» mientras «tus
         // trámites anteriores» no la incluye. Se relee en vez de agregarla a
