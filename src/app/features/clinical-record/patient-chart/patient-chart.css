@@ -2,23 +2,18 @@
     Expediente clínico. Sólo distribución — ni un color ni una tipografía que el
     sistema no tenga ya.
 
-    ## Por qué dos columnas y no una
+    ## Una sola columna, otra vez
 
-    Era una sola columna con todo apilado: alergias escondidas en la segunda
-    pestaña, tablas de cuatro columnas ocupando la mitad izquierda de una
-    pantalla de mil cuatrocientos píxeles, y el formulario del encuentro al
-    fondo. Quien atiende leía la historia arriba y para dejar constancia tenía
-    que bajar hasta perderla de vista.
+    Tuvo dos: la historia a la izquierda y, pegada al costado, la tarjeta del
+    encuentro. Resolvía un problema real —dejar constancia sin perder de vista
+    lo que se acababa de leer— y creaba otro: la tabla de cuatro columnas se
+    quedaba con dos tercios del ancho, la tarjeta pegajosa se montaba encima de
+    los bloques de escritura al scrollear, y debajo colgaban siete formularios
+    que nada tenían que ver con leer una historia.
 
-    Ahora: la historia se lleva el ancho —es lo que se lee— y lo que se escribe
-    vive al costado, pegado, a la vista mientras se recorre. Debajo, a todo lo
-    ancho, los bloques que traen tabla propia.
-
-    Mobile-first: hasta 1100 px todo va en una columna, en el orden en que se
-    usa. La segunda columna aparece recién cuando sobra ancho de verdad; el
-    corte no es uno de los tres del sistema porque no lo decide el dispositivo
-    sino el ancho al que una tabla de cuatro columnas y un formulario de 32ch
-    dejan de pisarse.
+    Ahora escribir tiene su propia pantalla (`EncounterWorkspace`) y ésta hace
+    una sola cosa. La historia se lleva el ancho entero, que es lo que una tabla
+    de ocho secciones necesitaba desde el principio.
     ========================================================================== */
 
 :host {
@@ -29,33 +24,6 @@
   display: grid;
   gap: var(--sp-4);
   margin-block-start: var(--sp-6);
-}
-
-/* El par que se lee junto: la historia y, al lado, el encuentro.
-
-   Las dos columnas viven acá y no en `.expediente` entera, y es lo que impide
-   que la tarjeta pegajosa se monte encima de la zona de escritura. Suelta en la
-   rejilla de la pantalla, al scrollear se salía de su fila y pisaba las
-   pestañas y el odontograma; encerrada, no puede: `sticky` se mueve dentro de
-   su bloque contenedor y nunca fuera de él. */
-.expediente__lectura {
-  display: grid;
-  gap: var(--sp-4);
-}
-
-@media (min-width: 1100px) {
-  .expediente__lectura {
-    grid-template-columns: minmax(0, 1fr) 24rem;
-    align-items: start;
-    gap: var(--sp-5);
-  }
-
-  /* Pegado: la historia se recorre entera sin perder de vista dónde se escribe.
-     El tope deja respirar bajo el encabezado de la aplicación. */
-  .expediente__encuentro {
-    position: sticky;
-    top: var(--sp-4);
-  }
 }
 
 /* ── Banda de contexto ─────────────────────────────────────────────────────
@@ -122,51 +90,11 @@
 }
 
 /* ── La historia ───────────────────────────────────────────────────────────
-   `min-inline-size: 0` es obligatorio: sin él, una tabla ancha estira la
-   columna de la rejilla en vez de desplazarse dentro de ella, y se lleva puesta
-   la columna del encuentro. */
+   `min-inline-size: 0` es obligatorio: sin él, una tabla ancha estira la celda
+   de la rejilla en vez de desplazarse dentro de ella, y se lleva puesta la
+   página entera. */
 .expediente__historia {
   min-inline-size: 0;
-}
-
-/* La barra de pestañas se desplaza (lo resuelve el organismo). Acá sólo se le
-   quita el grosor a la barra del navegador, que con ocho pestañas aparecía
-   siempre y ocupaba tanto como una pestaña. */
-.expediente__historia ::-webkit-scrollbar {
-  height: 6px;
-}
-
-.expediente__historia ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: var(--r-full);
-}
-
-.expediente__historia ::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* ── La zona de escritura ──────────────────────────────────────────────────
-   Los siete bloques viven acá dentro, uno a la vez. `min-inline-size: 0` por
-   el mismo motivo que la historia: el bloque de procedimientos y la receta
-   traen tablas anchas, y sin esto estiran la celda de la rejilla en vez de
-   desplazarse dentro de ella. */
-.expediente__registro-clinico {
-  min-inline-size: 0;
-}
-
-/* Misma corrección que en la historia: con siete pestañas la barra del
-   navegador aparecía siempre y ocupaba tanto como una pestaña. */
-.expediente__registro-clinico ::-webkit-scrollbar {
-  height: 6px;
-}
-
-.expediente__registro-clinico ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: var(--r-full);
-}
-
-.expediente__registro-clinico ::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 /* Registro arriba y su contexto debajo, en la misma celda: la dosis es parte
@@ -186,53 +114,6 @@
   font-variant-numeric: tabular-nums;
   /* Los meses abreviados llegan en minúscula del pipe de fecha. */
   text-transform: capitalize;
-}
-
-/* ── Encuentro ─────────────────────────────────────────────────────────────*/
-
-.expediente__encuentro {
-  display: grid;
-  gap: var(--sp-4);
-  /* Es un formulario de una sola pregunta: a lo ancho de la tabla, el campo de
-     motivo quedaría del largo de una pantalla y la línea sería ilegible. En dos
-     columnas el tope no hace falta —la columna ya lo pone— pero se deja para el
-     caso apilado, que es el mismo formulario en una pantalla angosta. */
-  max-inline-size: 68ch;
-  min-inline-size: 0;
-}
-
-.expediente__en-curso {
-  display: grid;
-  gap: var(--sp-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* Datos y acción en fila cuando entran, apilados cuando no: el botón de cerrar
-   al lado de un motivo largo empuja el texto a una columna de dos palabras. */
-.expediente__en-curso-item {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-3);
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-}
-
-.expediente__en-curso-datos {
-  display: grid;
-  gap: var(--sp-1);
-  /* Sin esto, un motivo largo estira la fila en vez de partirse. */
-  min-inline-size: 0;
-  flex: 1 1 20ch;
-}
-
-.expediente__registro {
-  display: grid;
-  gap: var(--sp-4);
 }
 
 /* ── Nota de alcance ───────────────────────────────────────────────────────*/

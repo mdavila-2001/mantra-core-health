@@ -11,6 +11,24 @@ export const TABS_ORIENTATIONS = ['horizontal', 'vertical'] as const;
 export type TabsOrientation = (typeof TABS_ORIENTATIONS)[number];
 
 /**
+ * Cómo se dibujan las pestañas.
+ *
+ * - `underline` — la línea de marca bajo la pestaña activa. Es la del sistema
+ *   y sigue siendo la de siempre: dos o tres secciones dentro de una tarjeta
+ *   que ya trae su propio marco.
+ * - `browser` — marco de ventana: la tira sobre un fondo hundido y el panel
+ *   como superficie continuada debajo, con la pestaña activa empalmando con
+ *   él. Nace del expediente clínico, que tiene ocho: una fila de rótulos
+ *   sueltos sobre el fondo de la página no dejaba ver dónde empieza ni dónde
+ *   termina lo que se está mirando, y el desborde lo resolvía la barra de
+ *   scroll cruda del navegador —que dejaba la primera pestaña cortada por la
+ *   mitad, y eso se lee como un error de dibujo, no como «hay más a la
+ *   izquierda»—.
+ */
+export const TABS_APPEARANCES = ['underline', 'browser'] as const;
+export type TabsAppearance = (typeof TABS_APPEARANCES)[number];
+
+/**
  * Teclas que mueven el foco entre pestañas. La **selección no las sigue**:
  * WAI-ARIA lo llama activación manual y es lo correcto acá, porque cada panel
  * de una ficha clínica puede disparar una consulta al servidor — recorrer las

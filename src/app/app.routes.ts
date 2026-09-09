@@ -410,6 +410,20 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // La atención: todo lo que se ESCRIBE durante una consulta. Cuelga del
+    // expediente y comparte su compuerta de roles porque es la misma persona y
+    // el mismo permiso; lo que cambia es el modo de trabajo. Vivía dentro del
+    // expediente y se separó: leer una historia y registrar una consulta son
+    // dos cosas distintas, y compartiendo pantalla se estorbaban.
+    path: 'medical-records/:profileId/encounter',
+    title: `${APP_TITLE} - Atención clínica`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/clinical-record/encounter-workspace/encounter-workspace')
+        .then((m) => m.EncounterWorkspace)
+        .catch(() => chunkFallido()),
+  },
+  {
     // FT-07-R05: pedir el vínculo, previo a poder leer el expediente sin un
     // turno confirmado el mismo día. Cuelga de la misma sección que el
     // expediente — no es una pantalla nueva del menú, es un paso de este flujo.
