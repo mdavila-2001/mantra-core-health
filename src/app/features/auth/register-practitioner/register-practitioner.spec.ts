@@ -134,6 +134,8 @@ describe('RegisterPractitioner', () => {
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       homeAddressLines: '',
+      officeName: '',
+      officeAddressLines: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
       // Obligatorio desde que dejó de ser «(opcional)»: es lo que dice qué
       // clase de profesional es, y de él dependen el colegio y las
@@ -230,6 +232,11 @@ describe('RegisterPractitioner', () => {
         'personal-contact',
         'access',
         'residence',
+        // El consultorio propio va pegado al domicilio: son las dos preguntas
+        // de «dónde», y separarlas dejaba la del trabajo perdida entre los
+        // títulos. Es opcional, y aun así el lugar desde el que se publica la
+        // agenda mientras ninguna organización lo haya aceptado.
+        'own-office',
         // El título profesional va ANTES de la habilitación: de él dependen el
         // colegio que se ofrece ahí y la lista de especialidades. Preguntarlo
         // después dejaba las dos cosas eligiéndose a ciegas.
@@ -269,6 +276,16 @@ describe('RegisterPractitioner', () => {
       // y el punto del mapa. Era sólo la localidad mientras el DTO del
       // profesional no tuvo dónde poner las otras dos.
       expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
+      // El consultorio propio: cuatro campos, todos opcionales. Es un calco del
+      // lugar de trabajo del alta de paciente, con el nombre que le da el
+      // dominio — quien ejerce puede atender en varios lugares, y éste es el
+      // único que no depende de que otro lo acepte.
+      expect(camposDe('own-office')).toEqual([
+        'officeName',
+        'municipioConsultorio',
+        'officeAddressLines',
+        'gpsConsultorio',
+      ]);
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
         'sedesLicenseNumber',
@@ -387,17 +404,21 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene doce páginas, ninguna de más de cuatro preguntas', () => {
-    // Doce y no menos porque el límite es de **campos por página**, no de
+  it('tiene trece páginas, ninguna de más de cuatro preguntas', () => {
+    // Trece y no menos porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
     // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
     // de contactos privados —separada de la del acceso al dejar de mezclar el
     // número personal con el del consultorio—, las dos de respaldos y títulos
     // —que no caben en la de habilitación, ya llena— y la contraseña, que
     // cierra el alta sola.
+    //
+    // La treceava es el **consultorio propio** (08/09/2026): sus cuatro campos
+    // no caben en la de residencia, que ya tiene tres, y meterlos ahí además
+    // mezclaría dos lugares distintos en una pregunta.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(12);
+    expect(paginas.length).toBe(13);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -1268,6 +1289,104 @@ describe('RegisterPractitioner', () => {
 
       expect(component.errorFoto()).toBe('La imagen supera el límite de 5 MB.');
       expect(component.fotoBase64()).toBeNull();
+    });
+  });
+
+  /* ==========================================================================
+     El consultorio propio.
+
+     La regla que lo gobierna: la página entera es opcional, así que lo que
+     decide si viaja no es un campo obligatorio sino que haya **algo que
+     guardar**. Exigir el nombre haría que quien completa la dirección y se
+     olvida del rótulo pierda lo escrito sin que nadie se lo diga.
+     ========================================================================== */
+  describe('el consultorio propio', () => {
+    function cuerpoDelAlta(): Record<string, unknown> {
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      const cuerpo = req.request.body as Record<string, unknown>;
+      req.flush(RESPUESTA_PRO);
+      return cuerpo;
+    }
+
+    it('sin nada declarado, no viaja', () => {
+      completarProfesional();
+
+      expect(cuerpoDelAlta()['ownSite']).toBeUndefined();
+    });
+
+    it('con sólo el nombre, viaja sin dirección', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({ officeName: 'Consultorio Suárez' });
+
+      // Sin dirección y no con una vacía: una dirección vacía no es «sin
+      // dirección», es una fila vacía en `common.addresses`. Misma regla que
+      // `work-history.ts` al registrar una sede desde el perfil.
+      expect(cuerpoDelAlta()['ownSite']).toEqual({ name: 'Consultorio Suárez' });
+    });
+
+    it('con sólo la calle, viaja igual y con nombre por omisión', () => {
+      // El caso que motiva la regla: quien escribe la dirección y no el rótulo
+      // no pierde lo que escribió. `NewOwnSite.name` es obligatorio del lado
+      // del backend, así que se manda uno genérico y se renombra después.
+      completarProfesional();
+      component.formProfesional.patchValue({ officeAddressLines: 'Calle Libertad #120' });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        address: { lines: ['Calle Libertad #120'] },
+      });
+    });
+
+    it('con sólo el punto del mapa, viaja con la dirección que tiene', () => {
+      completarProfesional();
+      component.gpsConsultorio.set({ lat: -17.78, lng: -63.18 });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        // `lines` vacío y no ausente: el contrato lo declara obligatorio, y una
+        // sede ubicada en el mapa sin calle escrita es un caso corriente.
+        address: { lines: [], latitude: -17.78, longitude: -63.18 },
+      });
+    });
+
+    it('con todo, arma el cuerpo de `NewOwnSite`', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({
+        officeName: 'Consultorio Suárez',
+        officeAddressLines: 'Calle Libertad #120',
+      });
+      component.municipioConsultorio.set('mun-1');
+      component.gpsConsultorio.set({ lat: -17.78, lng: -63.18 });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Consultorio Suárez',
+        address: {
+          lines: ['Calle Libertad #120'],
+          municipalityConceptId: 'mun-1',
+          latitude: -17.78,
+          longitude: -63.18,
+        },
+      });
+    });
+
+    it('es un lugar distinto del domicilio, y no se pisan', () => {
+      // Hay quien vive en una ciudad y atiende en otra. Las dos localidades y
+      // los dos puntos son señales separadas: confirmar uno no confirma el otro.
+      completarProfesional();
+      component.municipioProfesional.set('mun-casa');
+      component.gpsDomicilio.set({ lat: -16.5, lng: -68.11 });
+      component.municipioConsultorio.set('mun-trabajo');
+      component.gpsConsultorio.set({ lat: -17.78, lng: -63.18 });
+
+      const cuerpo = cuerpoDelAlta();
+
+      expect(cuerpo['residenceMunicipalityConceptId']).toBe('mun-casa');
+      expect(cuerpo['homeLatitude']).toBe(-16.5);
+      expect(cuerpo['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        address: { lines: [], municipalityConceptId: 'mun-trabajo', latitude: -17.78, longitude: -63.18 },
+      });
     });
   });
 });

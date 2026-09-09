@@ -39,6 +39,7 @@ import {
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
+import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
 import {
   UbicacionPicker,
   type Coordenadas,
@@ -97,6 +98,15 @@ const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
   'IMPLANTOLOGIA_ORAL',
   'ARMONIZACION_OROFACIAL',
 ]);
+
+/**
+ * Cómo se llama un consultorio al que nadie le puso nombre.
+ *
+ * `NewOwnSite.name` es obligatorio del lado del backend, y el alta no lo exige:
+ * quien deja el rótulo vacío igual tiene un consultorio. Se renombra desde el
+ * perfil cuando quiera.
+ */
+const NOMBRE_CONSULTORIO_POR_OMISION = 'Mi consultorio';
 
 const TITULO_ODONTOLOGO = 'Odontólogo / Odontóloga';
 const COLEGIO_MEDICO = 'Colegio Médico de Bolivia';
@@ -623,6 +633,10 @@ export class RegisterPractitioner {
     // localidad es la que ubica, y esto es lo que hace falta para llegar a la
     // puerta.
     homeAddressLines: new FormControl('', { nonNullable: true }),
+    // El consultorio propio: su nombre y su calle. Ver la página
+    // «Tu consultorio propio» y el JSDoc de `datosProfesional`.
+    officeName: new FormControl('', { nonNullable: true }),
+    officeAddressLines: new FormControl('', { nonNullable: true }),
     specialtyPrimary: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
   });
@@ -858,6 +872,29 @@ export class RegisterPractitioner {
    * en pantalla que ese no se guarda. Acá no hace falta volver a preguntarlo.
    */
   readonly gpsDomicilio = signal<Coordenadas | null>(null);
+
+  /**
+   * La localidad del consultorio propio.
+   *
+   * Separada de la del domicilio a propósito: son dos lugares distintos, y hay
+   * quien vive en una ciudad y atiende en otra. Es el mismo par de señales que
+   * el alta de paciente tiene para su casa y su trabajo.
+   */
+  readonly municipioConsultorio = signal<string | null>(null);
+
+  /** El punto del consultorio, ya confirmado sobre el mapa. */
+  readonly gpsConsultorio = signal<Coordenadas | null>(null);
+
+  /** Los identificadores de prueba del bloque de ubicación del consultorio. */
+  protected readonly idsUbicacionConsultorio: IdsDePrueba = {
+    mapa: 'registration-practitioner-office-map',
+    confirmada: 'registration-practitioner-office-location-confirmed',
+    avisoGeocodificacion: 'registration-practitioner-office-geocoding-notice',
+    quitar: 'registration-practitioner-office-location-remove',
+    sinConfirmar: 'registration-practitioner-office-location-unconfirmed',
+    confirmar: 'registration-practitioner-office-location-confirm',
+    usarUbicacion: 'registration-practitioner-office-location-use',
+  };
 
   /** Los identificadores de prueba del bloque de ubicación del domicilio. */
   protected readonly idsUbicacionDomicilio: IdsDePrueba = {
@@ -1371,6 +1408,58 @@ export class RegisterPractitioner {
         ],
       },
       {
+        titulo: 'Tu consultorio propio',
+        clave: 'own-office',
+        icon: 'building',
+        // **Opcional, y aun así el que más importa** (punto 12/13/22 del módulo
+        // médico del registro de procesos). Quien ejerce puede atender en
+        // varios lugares, pero los demás son de otro: para figurar en una
+        // clínica hace falta que esa clínica acepte la vinculación, y hasta que
+        // eso pase su agenda no tiene dónde publicarse. El consultorio propio
+        // es el único lugar que no depende de que nadie confirme nada.
+        //
+        // Por eso se pregunta acá y no sólo en el perfil: quien se registra
+        // para empezar a atender lo necesita el primer día.
+        hint: 'Opcional. Es el lugar que no depende de que otro te acepte, y desde donde vas a poder publicar tu agenda.',
+        campos: [
+          {
+            key: 'officeName',
+            label: 'Cómo se llama (opcional)',
+            hint: 'El nombre con el que tus pacientes lo van a ver.',
+            description:
+              'Si no le ponés uno, no pasa nada: se puede completar después desde tu perfil.',
+            control: 'text',
+            placeholder: 'Consultorio Dr. Suárez',
+            testId: 'registration-practitioner-office-name',
+            icono: 'building',
+          },
+          {
+            key: 'municipioConsultorio',
+            label: '',
+            control: 'custom',
+          },
+          {
+            key: 'officeAddressLines',
+            label: 'Línea de dirección 1 (opcional)',
+            hint: 'Calle y número del consultorio.',
+            description:
+              'Es la dirección que ve un paciente antes de ir. El punto del mapa no la escribe solo.',
+            control: 'text',
+            placeholder: 'Calle Libertad #120, piso 2',
+            testId: 'registration-practitioner-office-address',
+            icono: 'route',
+          },
+          {
+            key: 'gpsConsultorio',
+            label: 'Ubicación GPS (opcional)',
+            hint: 'Con el punto, un paciente llega sin preguntar.',
+            description:
+              'Marcá el punto exacto del consultorio y confirmalo. Se confirma aparte del de tu casa.',
+            control: 'custom',
+          },
+        ],
+      },
+      {
         titulo: 'Tu título profesional y foto',
         clave: 'practice',
         icon: 'teach',
@@ -1722,6 +1811,60 @@ export class RegisterPractitioner {
     return filtradas.map(({ value, label }) => ({ value, label }));
   }
 
+  /**
+   * El consultorio propio tal como viaja en el alta, o `null` si no declaró
+   * ninguno.
+   *
+   * ## Qué cuenta como «declaró uno»
+   *
+   * **Cualquiera de las cuatro piezas.** La página entera es opcional, así que
+   * lo que decide no es un campo obligatorio sino que haya algo que guardar: un
+   * nombre, una localidad, una calle o un punto. Exigir el nombre habría hecho
+   * que quien completa la dirección y se olvida del rótulo pierda lo escrito
+   * sin que nadie se lo diga, que es la clase de silencio que este alta ya
+   * corrigió en otros dos sitios.
+   *
+   * Sin nombre se manda el genérico: el backend lo exige (`NewOwnSite.name`) y
+   * un consultorio sin rótulo se sigue pudiendo renombrar desde el perfil.
+   *
+   * ## La forma es la de `NewOwnSite`, no una nueva
+   *
+   * Es exactamente el cuerpo que ya recibe `POST /practitioners/me/sites`
+   * (ALV-005/006) y que arma «Mi perfil → dónde trabajo». No se inventa un
+   * contrato: el alta pública no puede llamar a esa ruta —no hay sesión
+   * todavía, el registro termina en el login— así que el dato viaja adentro del
+   * alta y el backend reutiliza el mismo servicio.
+   */
+  private consultorioPropio(): NewOwnSite | null {
+    const raw = this.formProfesional.getRawValue();
+    const nombre = raw.officeName.trim();
+    const calle = raw.officeAddressLines.trim();
+    const municipio = this.municipioConsultorio();
+    const punto = this.gpsConsultorio();
+
+    if (nombre === '' && calle === '' && municipio === null && punto === null) {
+      return null;
+    }
+
+    // La dirección sólo viaja si tiene algo adentro: una dirección vacía no es
+    // «sin dirección», es una fila vacía en `common.addresses`. Es la misma
+    // regla que ya aplica `work-history.ts` al registrar una sede.
+    const conDireccion = calle !== '' || municipio !== null || punto !== null;
+
+    return {
+      name: nombre === '' ? NOMBRE_CONSULTORIO_POR_OMISION : nombre,
+      ...(conDireccion
+        ? {
+            address: {
+              lines: calle === '' ? [] : [calle],
+              ...(municipio === null ? {} : { municipalityConceptId: municipio }),
+              ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
+            },
+          }
+        : {}),
+    };
+  }
+
   /** Ver el constructor. Se llama desde ahí: `takeUntilDestroyed` pide contexto de inyección. */
   private limpiarElErrorAlCorregir(): void {
     this.formProfesional.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
@@ -1879,6 +2022,7 @@ export class RegisterPractitioner {
     const municipio = this.municipioProfesional();
     const calleDomicilio = raw.homeAddressLines.trim();
     const gpsDomicilio = this.gpsDomicilio();
+    const consultorio = this.consultorioPropio();
     const sexoAlNacer = raw.sexAtBirth;
     const foto = raw.profilePhotoBase64;
 
@@ -1926,6 +2070,8 @@ export class RegisterPractitioner {
       ...(gpsDomicilio === null
         ? {}
         : { homeLatitude: gpsDomicilio.lat, homeLongitude: gpsDomicilio.lng }),
+      // El consultorio propio, si declaró alguno. Ver `consultorioPropio()`.
+      ...(consultorio === null ? {} : { ownSite: consultorio }),
       licenseNumber: raw.licenseNumber.trim(),
       sedesLicenseNumber: raw.sedesLicenseNumber.trim(),
       ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),

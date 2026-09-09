@@ -241,6 +241,9 @@ export class IamClient {
       ...(registration.homeLatitude === undefined || registration.homeLongitude === undefined
         ? {}
         : { homeLatitude: registration.homeLatitude, homeLongitude: registration.homeLongitude }),
+      // El consultorio propio. Va acá por lo mismo que los tres de arriba: lo
+      // que el contrato declara y esta lista no repita se descarta en silencio.
+      ...(registration.ownSite === undefined ? {} : { ownSite: registration.ownSite }),
       licenseNumber: registration.licenseNumber,
       sedesLicenseNumber: registration.sedesLicenseNumber,
       ...(registration.regulatoryAuthority === undefined
