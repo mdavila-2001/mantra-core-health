@@ -265,21 +265,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  */
 const PANTALLAS_HIJAS: Routes = [
   {
-    // Carril P2 · el hilo de una conversación. Cuelga de `messaging` y se llega
-    // desde la bandeja o desde una notificación de la campana, no desde el
-    // menú: es la ficha de una conversación concreta.
-    //
-    // Sin `seccionRolesGuard` explícito porque su sección no declara roles; el
-    // backend comprueba que quien lee participe del hilo, que es la única
-    // barrera que importa acá.
-    path: 'messaging/:conversationId',
-    title: `${APP_TITLE} - Conversación`,
-    loadComponent: () =>
-      import('./features/messaging/thread/thread')
-        .then((m) => m.Thread)
-        .catch(() => chunkFallido()),
-  },
-  {
     // El grupo por dentro (P7). El directorio es la sección `groups`, que el
     // registro declara; esto es la ficha a la que se llega desde una tarjeta,
     // y por eso vive acá y no en el menú.
@@ -747,10 +732,56 @@ function pantallaDeGeolocalizacion(
  * nadie declaró. Menú y rutas salen del mismo array, así que o existen las dos
  * cosas o no existe ninguna.
  */
+/**
+ * Las secciones que además son un marco: la pantalla queda montada y lo que
+ * cambia es lo que se pinta en su `router-outlet`.
+ *
+ * Hoy es una sola, la mensajería. El hilo de una conversación **no** es otra
+ * pantalla: es el panel derecho del chat, y declararlo como hermana hacía que
+ * abrir una conversación destruyera la bandeja y la volviera a pedir —la lista
+ * parpadeaba, el scroll se perdía y durante un instante no había nada—. Es lo
+ * primero que separa esto de cualquier chat que la gente ya usa.
+ *
+ * La sección sigue siendo una sola entrada del registro, así que el menú, el
+ * título y `seccionRolesGuard` no cambian: el guard del padre cubre a las
+ * hijas, que es justo lo que se quiere.
+ */
+const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
+  messaging: [
+    {
+      // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
+      // —«elegí una conversación»— lo dibuja el propio marco, y un componente
+      // aparte para eso sería un fragmento más que descargar para no mostrar
+      // nada. Tiene que existir igual: una ruta con hijas sólo casa si alguna
+      // consume lo que queda de la dirección, y sin ésta `/messaging` a secas
+      // caía en el comodín de «no encontrada».
+      //
+      // `children: []` y no una ruta pelada: el router exige que toda ruta
+      // declare con qué se resuelve (NG04014), y una lista de hijas vacía es
+      // la forma de decir «con nada».
+      path: '',
+      children: [],
+    },
+    {
+      // Carril P2 · el hilo de una conversación, dentro del marco del chat. Se
+      // llega desde la bandeja o desde una notificación de la campana.
+      path: ':conversationId',
+      title: `${APP_TITLE} - Conversación`,
+      loadComponent: () =>
+        import('./features/messaging/thread/thread')
+          .then((m) => m.Thread)
+          .catch(() => chunkFallido()),
+    },
+  ],
+};
+
 function rutasDeSecciones(): Routes {
   return APP_SECTIONS.map((section) => ({
     path: section.path,
     title: titleOf(section),
+    ...(RUTAS_ANIDADAS[section.path] === undefined
+      ? {}
+      : { children: RUTAS_ANIDADAS[section.path] }),
     // Los roles que el registro declara se hacen cumplir **también por ruta**
     // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
     // mano llega igual, y la corrección #2 pide que la Guía de profesionales no

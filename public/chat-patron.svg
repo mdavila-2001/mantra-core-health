@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420">
+  <!-- El papel del chat: garabatos sueltos, como el fondo de cualquier
+       mensajería. Se usa como máscara CSS, no como imagen: la máscara sólo
+       mira el alfa, así que el trazo va opaco y el color y la intensidad los
+       pone la hoja del hilo con su token de patrón. Pintado acá con un color
+       fijo se veía igual en tema claro y en oscuro, y de noche quedaba como
+       una reja encima de las burbujas.
+
+       Ojo con los guiones: dos seguidos dentro de un comentario XML dejan el
+       archivo sin parsear y el navegador no dibuja nada, sin decir por qué. -->
+  <g fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- corazón -->
+    <path d="M40 52c-9-9-1-21 8-16 9-5 17 7 8 16l-8 8z"/>
+    <!-- globo de chat -->
+    <path d="M120 40h44a6 6 0 0 1 6 6v22a6 6 0 0 1-6 6h-30l-12 10V74h-2a6 6 0 0 1-6-6V46a6 6 0 0 1 6-6z"/>
+    <!-- pastilla -->
+    <rect x="240" y="36" width="42" height="22" rx="11"/>
+    <path d="M261 36v22"/>
+    <!-- estetoscopio -->
+    <path d="M340 34v14a14 14 0 0 0 28 0V34M354 62v10a12 12 0 0 0 24 0v-6"/>
+    <circle cx="378" cy="58" r="6"/>
+    <!-- reloj -->
+    <circle cx="58" cy="150" r="18"/>
+    <path d="M58 140v10l7 4"/>
+    <!-- hoja / receta -->
+    <path d="M140 132h34l10 10v40h-44z"/>
+    <path d="M148 152h24M148 164h16"/>
+    <!-- gota -->
+    <path d="M262 130c8 10 14 17 14 24a14 14 0 0 1-28 0c0-7 6-14 14-24z"/>
+    <!-- cruz médica -->
+    <path d="M352 132h16v14h14v16h-14v14h-16v-14h-14v-16h14z"/>
+    <!-- termómetro -->
+    <path d="M48 234v34a10 10 0 1 0 14 0v-34a7 7 0 0 0-14 0z"/>
+    <!-- calendario -->
+    <rect x="130" y="232" width="46" height="42" rx="5"/>
+    <path d="M130 246h46M142 226v12M164 226v12"/>
+    <!-- teléfono -->
+    <path d="M248 240c0 24 18 42 42 42l6-12-14-8-8 6c-6-4-10-8-14-14l6-8-8-14z"/>
+    <!-- estrella -->
+    <path d="M362 232l6 13 14 2-10 10 2 14-12-7-12 7 2-14-10-10 14-2z"/>
+    <!-- taza -->
+    <path d="M42 332h34v18a12 12 0 0 1-12 12H54a12 12 0 0 1-12-12z"/>
+    <path d="M76 338h8a7 7 0 0 1 0 14h-8"/>
+    <!-- microscopio simplificado -->
+    <path d="M144 366v-8h28v8M150 358l-6-24 14-6 8 22"/>
+    <circle cx="168" cy="330" r="7"/>
+    <!-- doble tilde -->
+    <path d="M244 344l8 8 16-18M260 352l8 8 16-18"/>
+    <!-- casa -->
+    <path d="M344 348l18-16 18 16v22h-36z"/>
+    <path d="M356 370v-12h12v12"/>
+  </g>
+</svg>

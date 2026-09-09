@@ -1,0 +1,319 @@
+/* La barra de escribir. Clavada abajo del hilo, con los paneles —emojis,
+   adjuntar, plantillas— abriéndose SOBRE ella: es donde se usan, y arriba del
+   campo se leían como el rótulo del propio campo. */
+
+:host {
+  position: relative;
+  flex: none;
+  display: block;
+  background: var(--sup-tarjeta);
+  border-block-start: 1px solid var(--filete);
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--e2);
+  padding: var(--e2) var(--e4);
+}
+
+.composer__icono,
+.composer__enviar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva);
+}
+
+.composer__icono:hover,
+.composer__icono:focus-visible {
+  background: var(--sup-inset);
+  color: var(--tinta-marca);
+}
+
+.composer__icono svg,
+.composer__enviar svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+/* El botón de enviar sí es de marca: es la acción de la barra. */
+.composer__enviar {
+  background: var(--petroleo);
+  color: #fff;
+}
+
+.composer__enviar:hover {
+  background: var(--petroleo-x, var(--petroleo));
+  filter: brightness(1.08);
+}
+
+.composer__campo {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.composer__campo textarea {
+  inline-size: 100%;
+  min-block-size: 40px;
+  max-block-size: 8.5rem;
+  padding: 10px var(--e4);
+  border: 1px solid transparent;
+  border-radius: var(--r-menu);
+  background: var(--sup-inset);
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 20px;
+  color: var(--tinta);
+  resize: none;
+  /* Crece con el texto hasta el tope y ahí scrollea. */
+  field-sizing: content;
+}
+
+.composer__campo textarea:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+  border-color: var(--petroleo);
+  background: var(--sup-tarjeta);
+}
+
+/* --- La tira de respuesta ------------------------------------------------ */
+
+.composer__respuesta,
+.composer__adjunto {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e2) var(--e4);
+  border-block-start: 1px solid var(--filete-2);
+  background: var(--sup-inset);
+}
+
+.composer__respuesta-texto {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-inline-start: var(--e2);
+  border-inline-start: 3px solid var(--petroleo);
+}
+
+.composer__respuesta-autor {
+  color: var(--tinta-marca);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.composer__respuesta-cuerpo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tinta-2);
+  font-size: 13px;
+}
+
+.composer__respuesta button,
+.composer__adjunto button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.composer__respuesta button svg,
+.composer__adjunto button svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+/* --- El archivo elegido -------------------------------------------------- */
+
+.composer__adjunto-imagen {
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: var(--r-ctrl);
+  object-fit: cover;
+}
+
+.composer__adjunto-icono {
+  display: inline-flex;
+  color: var(--tinta-2);
+}
+
+.composer__adjunto-icono svg {
+  inline-size: 28px;
+  block-size: 28px;
+}
+
+.composer__adjunto-nombre {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+/* --- Los paneles --------------------------------------------------------- */
+
+.composer__panel {
+  max-block-size: 17rem;
+  overflow-y: auto;
+  border-block-start: 1px solid var(--filete-2);
+  background: var(--sup-tarjeta);
+}
+
+.composer__adjuntar {
+  margin: 0;
+  padding: var(--e2);
+  list-style: none;
+}
+
+.composer__adjuntar button {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  inline-size: 100%;
+  padding: var(--e2) var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  text-align: start;
+  cursor: pointer;
+}
+
+.composer__adjuntar button:hover,
+.composer__adjuntar button:focus-visible {
+  background: var(--sup-inset);
+}
+
+/* --- Plantillas (carril P9) ---------------------------------------------- */
+
+.composer__plantillas {
+  padding: var(--e3) var(--e4);
+}
+
+.composer__plantillas-lista {
+  margin: 0 0 var(--e2);
+  padding: 0;
+  list-style: none;
+}
+
+.composer__plantilla {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.composer__plantilla-texto {
+  flex: 1 1 auto;
+  padding: var(--e2);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  text-align: start;
+  cursor: pointer;
+}
+
+.composer__plantilla-texto:hover,
+.composer__plantilla-texto:focus-visible {
+  background: var(--sup-inset);
+}
+
+.composer__plantilla-quitar {
+  flex: none;
+  border: 0;
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.composer__plantilla-nueva {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.composer__plantilla-nueva label {
+  flex: 1 1 auto;
+}
+
+.composer__plantilla-nueva input {
+  inline-size: 100%;
+  block-size: var(--h-ctrl);
+  padding-inline: var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-ctrl);
+  background: var(--sup-inset);
+  font: inherit;
+  font-size: 14px;
+  color: var(--tinta);
+}
+
+.composer__plantilla-nueva > button {
+  flex: none;
+  block-size: var(--h-ctrl);
+  padding-inline: var(--e3);
+  border: 1px solid var(--borde-ctrl, var(--filete));
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-marca);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --- Errores ------------------------------------------------------------- */
+
+.composer__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  margin: 0;
+  padding: var(--e2) var(--e4);
+  background: var(--error-bg);
+  color: var(--error-tinta);
+  font-size: 13px;
+}
+
+.composer__error button {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 60rem) {
+  .composer {
+    padding-inline: var(--e3);
+  }
+}
