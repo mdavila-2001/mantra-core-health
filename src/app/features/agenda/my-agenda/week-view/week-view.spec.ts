@@ -20,13 +20,20 @@ const MIERCOLES = new Date(2026, 8, 9);
 describe('WeekView', () => {
   let fixture: ComponentFixture<WeekView>;
 
-  function montar(cupos: unknown[] = [], bloqueos: readonly BloqueoDelMes[] = []): void {
+  function montar(
+    cupos: unknown[] = [],
+    bloqueos: readonly BloqueoDelMes[] = [],
+    citas: unknown[] = [],
+    etiquetas: ReadonlyMap<string, { code: string; display: string }> = new Map(),
+  ): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({});
     fixture = TestBed.createComponent(WeekView);
     fixture.componentRef.setInput('semana', MIERCOLES);
     fixture.componentRef.setInput('cupos', cupos);
     fixture.componentRef.setInput('bloqueos', bloqueos);
+    fixture.componentRef.setInput('citas', citas);
+    fixture.componentRef.setInput('etiquetas', etiquetas);
     fixture.detectChanges();
   }
 
@@ -36,9 +43,32 @@ describe('WeekView', () => {
     libres: number;
     tomados: number;
     motivo: string | null;
+    citas: readonly { id: string; desde: Date; paciente: string }[];
+    masCitas: number;
   }[] {
     return (fixture.componentInstance as never as { dias: () => never[] }).dias();
   }
+
+  /** Una cita del día `dia` a la hora `hora`, con el estado que se le pase. */
+  function cita(
+    dia: number,
+    hora: number,
+    paciente: string | undefined,
+    estado = 'st-confirmada',
+  ): unknown {
+    return {
+      id: `b-${dia}-${hora}`,
+      startAt: new Date(2026, 8, dia, hora),
+      statusConceptId: estado,
+      ...(paciente === undefined ? {} : { patientName: paciente }),
+    };
+  }
+
+  /** El mapa de etiquetas con los dos estados que las pruebas usan. */
+  const ETIQUETAS = new Map([
+    ['st-confirmada', { code: 'BOOKING_CONFIRMED', display: 'Confirmada' }],
+    ['st-cancelada', { code: 'BOOKING_CANCELLED', display: 'Cancelada' }],
+  ]);
 
   function cupo(dia: number, hora: number, restante: number): unknown {
     return {
@@ -99,6 +129,110 @@ describe('WeekView', () => {
     ]);
 
     expect(dias().every((d) => d.estado === 'bloqueado')).toBe(true);
+  });
+
+  /**
+   * Con quién viene el día — el pedido del propietario: «revisar su calendario
+   * de citas con horarios y nombre completo del paciente de forma diaria,
+   * semanal y mensual».
+   *
+   * La semana ya existía y sabía contar; lo que no sabía era **a quién espera
+   * el médico**, que es la mitad que se pidió.
+   */
+  describe('con quién viene cada día', () => {
+    it('pone el nombre y la hora en el día que corresponde, ordenados', () => {
+      montar(
+        [cupo(7, 9, 0), cupo(7, 11, 0)],
+        [],
+        [cita(7, 11, 'Rosa Vargas'), cita(7, 9, 'Ana Paz'), cita(9, 8, 'Luis Rojas')],
+        ETIQUETAS,
+      );
+
+      const lunes = dias()[0];
+      expect(lunes.citas.map((c) => c.paciente)).toEqual(['Ana Paz', 'Rosa Vargas']);
+      expect(dias()[2].citas.map((c) => c.paciente)).toEqual(['Luis Rojas']);
+      expect(dias()[1].citas).toEqual([]);
+    });
+
+    it('sin nombre lo dice, no muestra el uuid ni un blanco', () => {
+      // La API manda `patientName` sólo al titular y al profesional de esa
+      // agenda: que falte es una condición del servidor, no un error.
+      montar([cupo(7, 9, 0)], [], [cita(7, 9, undefined)], ETIQUETAS);
+      expect(dias()[0].citas[0].paciente).toBe('Paciente sin nombre registrado');
+    });
+
+    it('una cancelada no se nombra: ese paciente no viene', () => {
+      montar(
+        [cupo(7, 9, 0), cupo(7, 10, 0)],
+        [],
+        [cita(7, 9, 'Ana Paz', 'st-cancelada'), cita(7, 10, 'Rosa Vargas')],
+        ETIQUETAS,
+      );
+
+      expect(dias()[0].citas.map((c) => c.paciente)).toEqual(['Rosa Vargas']);
+    });
+
+    it('sin el catálogo de estados no esconde a nadie', () => {
+      // Preferible nombrar de más que esconder a un paciente que sí viene
+      // porque la terminología no respondió.
+      montar([cupo(7, 9, 0)], [], [cita(7, 9, 'Ana Paz', 'st-cancelada')], new Map());
+      expect(dias()[0].citas.map((c) => c.paciente)).toEqual(['Ana Paz']);
+    });
+
+    it('muestra tres y cuenta el resto', () => {
+      // Una jornada de doce turnos convertiría la semana en ochenta líneas y
+      // dejaría de responder «¿cómo viene esto?».
+      montar(
+        [],
+        [],
+        [8, 9, 10, 11, 12].map((h) => cita(7, h, `Paciente ${h}`)),
+        ETIQUETAS,
+      );
+
+      const lunes = dias()[0];
+      expect(lunes.citas).toHaveLength(3);
+      expect(lunes.masCitas).toBe(2);
+      expect(fixture.nativeElement.textContent).toContain('+2 turnos más');
+    });
+
+    it('un día sin cupos publicados igual muestra a quien viene', () => {
+      // El alta directa del profesional (AG-2) crea la cita con su cupo
+      // puntual: el día no figura como jornada publicada. Decir «No atendés» y
+      // esconder al paciente sería el peor error de esta vista.
+      montar([], [], [cita(7, 9, 'Ana Paz')], ETIQUETAS);
+
+      expect(dias()[0].estado).toBe('sin-agenda');
+      expect(dias()[0].citas.map((c) => c.paciente)).toEqual(['Ana Paz']);
+    });
+
+    it('un bloqueo no se traga la cita: la persona viene igual', () => {
+      montar(
+        [cupo(7, 9, 0)],
+        [{ desde: new Date(2026, 8, 7), hasta: new Date(2026, 8, 8), motivo: 'Vacaciones' }],
+        [cita(7, 9, 'Ana Paz')],
+        ETIQUETAS,
+      );
+
+      expect(dias()[0].estado).toBe('bloqueado');
+      expect(dias()[0].citas.map((c) => c.paciente)).toEqual(['Ana Paz']);
+    });
+
+    it('una cita sin hora no se coloca en ningún día', () => {
+      montar([], [], [{ id: 'b-sin-hora', statusConceptId: 'st-confirmada' }], ETIQUETAS);
+      expect(dias().every((d) => d.citas.length === 0)).toBe(true);
+    });
+
+    it('los nombres van FUERA del botón del día', () => {
+      // Un `<ul>` dentro de un `<button>` es HTML inválido y el lector de
+      // pantalla lo aplana contra el nombre del botón. Se fija acá porque es
+      // invisible a ojo y se rompe con un solo movimiento de etiqueta.
+      montar([], [], [cita(7, 9, 'Ana Paz')], ETIQUETAS);
+
+      const lista = fixture.nativeElement.querySelector('[data-testid="semana-citas"]');
+      expect(lista).not.toBeNull();
+      expect(lista.closest('button')).toBeNull();
+      expect(lista.textContent).toContain('Ana Paz');
+    });
   });
 
   it('la paginación va de siete en siete', () => {
