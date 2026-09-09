@@ -16,6 +16,16 @@
     <button
       class="hilo__mas"
       type="button"
+      data-testid="hilo-buscar-abrir"
+      aria-label="Buscar en la conversación"
+      [attr.aria-expanded]="buscando()"
+      (click)="abrirBusqueda()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+    </button>
+    <button
+      class="hilo__mas"
+      type="button"
       data-testid="hilo-menu"
       aria-label="Opciones de la conversación"
       [attr.aria-expanded]="menuCabecera()"
@@ -47,6 +57,28 @@
     }
   </div>
 </header>
+
+<!-- Buscar dentro de la conversación: deja sólo las burbujas que coinciden y
+     las resalta. Debajo de la cabecera y no en un panel al costado: el panel
+     derecho ya es la conversación, y un tercer panel no entra en el ancho. -->
+@if (buscando()) {
+  <div class="hilo__buscar" data-testid="hilo-buscar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+    <input
+      #buscador
+      type="search"
+      data-testid="hilo-buscar-texto"
+      placeholder="Buscar en la conversación"
+      [value]="termino()"
+      (input)="alBuscar($any($event.target).value)"
+      (keydown.escape)="cerrarBusqueda()"
+    />
+    <span class="hilo__buscar-cuenta" data-testid="hilo-buscar-cuenta" aria-live="polite">{{ rotuloDeBusqueda() }}</span>
+    <button type="button" class="hilo__buscar-cerrar" aria-label="Cerrar la búsqueda" (click)="cerrarBusqueda()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" /></svg>
+    </button>
+  </div>
+}
 
 <!-- ── Mensajes ───────────────────────────────────────────────────────── -->
 <div class="hilo__mensajes-marco" #marco (scroll)="alScrollear($event)">
@@ -123,20 +155,27 @@
                   } @else if (esAudio(linea.mensaje)) {
                     <audio class="hilo__audio" controls [src]="url"></audio>
                   } @else {
-                    <a class="hilo__documento" [href]="url" target="_blank" rel="noopener">
+                    <!-- `download` y no `target="_blank"`: es una `data:` URL, y
+                         el navegador no abre esas en una pestaña nueva. -->
+                    <a class="hilo__documento" [href]="url" [download]="nombreParaDescargar(linea.mensaje)">
                       <span class="hilo__documento-icono" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3v5h5" /><path d="M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7z" /></svg>
                       </span>
                       <span class="hilo__documento-nombre">{{ nombreDelAdjunto(linea.mensaje) }}</span>
                     </a>
                   }
+                } @else if (adjuntoNoDisponible(linea.mensaje)) {
+                  <p class="hilo__subiendo" role="status">Archivo no disponible</p>
                 } @else {
                   <p class="hilo__subiendo" role="status">Subiendo el archivo…</p>
                 }
               }
 
-              @if (linea.mensaje.bodyText) {
-                <p class="hilo__texto">{{ linea.mensaje.bodyText }}</p>
+              @if (linea.mensaje.bodyText; as texto) {
+                <!-- En trozos: los enlaces se pueden tocar y, buscando, las
+                     coincidencias se marcan. Todo en una línea de plantilla
+                     para no meterle espacios a un `pre-wrap`. -->
+                <p class="hilo__texto">@for (trozo of segmentos(texto); track $index) {@switch (trozo.tipo) {@case ('enlace') {<a class="hilo__enlace" [href]="trozo.valor" target="_blank" rel="noopener noreferrer">{{ trozo.valor }}</a>}@case ('marca') {<mark class="hilo__marca">{{ trozo.valor }}</mark>}@default {<ng-container>{{ trozo.valor }}</ng-container>}}}</p>
               }
 
               <!-- La hora flota a la derecha de la última línea: es lo que hace
@@ -214,6 +253,13 @@
                         <button role="menuitem" type="button" (click)="copiar(linea.mensaje)">Copiar</button>
                       </li>
                     }
+                    @if (destinosDeReenvio().length > 0) {
+                      <li role="none">
+                        <button role="menuitem" type="button" data-testid="hilo-reenviar" (click)="reenviar(linea.mensaje)">
+                          Reenviar
+                        </button>
+                      </li>
+                    }
                   </ul>
                 }
               }
@@ -239,7 +285,39 @@
   </button>
 }
 
+@if (avisoReenvio(); as aviso) {
+  <p class="hilo__aviso" role="status" data-testid="hilo-aviso">{{ aviso }}</p>
+}
+
 <app-composer (enviado)="alEnviar()" />
+
+<!-- Elegir a quién reenviar: la misma lista de la bandeja, sin ésta. -->
+@if (reenviando()) {
+  <div
+    class="hilo__visor hilo__reenvio"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Reenviar mensaje"
+    tabindex="-1"
+    (click)="cancelarReenvio()"
+    (keydown.escape)="cancelarReenvio()"
+  >
+    <div class="hilo__reenvio-caja" role="document" (click)="$event.stopPropagation()">
+      <h2 class="hilo__reenvio-titulo">Reenviar a…</h2>
+      <ul class="hilo__reenvio-lista">
+        @for (destino of destinosDeReenvio(); track destino.id) {
+          <li>
+            <button type="button" data-testid="hilo-reenviar-destino" (click)="reenviarA(destino.id)">
+              <app-avatar [src]="avatarDeConversacion(destino)" [name]="nombreDeConversacion(destino)" size="md" />
+              <span>{{ nombreDeConversacion(destino) }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+      <button type="button" class="hilo__reenvio-cancelar" (click)="cancelarReenvio()">Cancelar</button>
+    </div>
+  </div>
+}
 
 <!-- La imagen a tamaño completo. Un diálogo propio y no `app-dialog`: acá no
      hay formulario ni acciones, sólo la foto y una cruz. -->
