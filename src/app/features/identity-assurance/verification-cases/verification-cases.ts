@@ -8,8 +8,10 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
+import { FileDownloader } from '../../../core/data-access/files/file-downloader';
+import { FilesClient } from '../../../core/data-access/files/files.client';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import {
@@ -21,7 +23,9 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -32,11 +36,37 @@ import {
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
 
+/**
+ * Etiqueta legible por código de tipo de solicitud (FT-32-R03). Espeja el
+ * catálogo que expone `GET /identity/me/verification-types`: un código sin
+ * entrada acá (uno nuevo, o `UNKNOWN`) se muestra tal cual en vez de romper.
+ */
+const TYPE_LABELS: Readonly<Record<string, string>> = {
+  PRACTITIONER_IDENTITY: 'Identidad profesional',
+  PRACTITIONER_LICENSE: 'Matrícula profesional',
+  PATIENT_IDENTITY: 'Identidad (paciente)',
+  TENANT_VERIFICATION: 'Institución',
+};
+
+function typeLabel(type: string): string {
+  return TYPE_LABELS[type] ?? type;
+}
+
+/**
+ * Estados que todavía no tienen un veredicto que mostrar. FT-32-R06/R07: el
+ * detalle resolutivo no se abre en ninguno de estos — se abre el modal que
+ * invita a esperar.
+ */
+const SIN_VEREDICTO: ReadonlySet<StatusSealVariant> = new Set(['pending', 'in-review']);
+
 /** Fila de la tabla: presentación ya resuelta, no el DTO del backend. */
 interface CaseRow {
   readonly id: string;
+  readonly sealVariant: StatusSealVariant;
   readonly statusVariant: BadgeVariant;
   readonly statusLabel: string;
+  readonly typeLabel: string;
+  readonly evidenceFileId: string | null;
   readonly openedAt: Date | null;
   readonly completedAt: Date | null;
 }
@@ -59,8 +89,11 @@ function toCaseRow(verificationCase: VerificationCase): CaseRow {
   const status = toCaseStatusPresentation(verificationCase.status);
   return {
     id: verificationCase.id,
+    sealVariant: status.variant,
     statusVariant: BADGE_BY_SEAL_VARIANT[status.variant],
     statusLabel: status.label,
+    typeLabel: typeLabel(verificationCase.type),
+    evidenceFileId: verificationCase.evidenceFileId ?? null,
     openedAt: verificationCase.openedAt ?? null,
     completedAt: verificationCase.completedAt ?? null,
   };
