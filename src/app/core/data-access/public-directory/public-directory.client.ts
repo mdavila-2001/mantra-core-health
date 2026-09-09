@@ -13,6 +13,7 @@ import type {
   PublicPostReaction,
   PublicPostSummary,
   PublicPractitionerQuery,
+  PublicPracticeSite,
   PublicProfileDetail,
   PublicSearchQuery,
   PublicSearchResult,
@@ -45,9 +46,16 @@ type WireFeedPost = Omit<PublicFeedPost, 'publishedAt'> & {
   readonly publishedAt: string;
 };
 
-type WireProfile = Omit<PublicProfileDetail, 'posts' | 'updatedAt'> & {
+type WireProfile = Omit<PublicProfileDetail, 'posts' | 'updatedAt' | 'practiceSites'> & {
   readonly posts: readonly WirePost[];
   readonly updatedAt: string;
+  /**
+   * **Opcional en el cable y obligatorio en la vista.** La API todavía no lo
+   * manda (P16 de `PENDIENTES-BACKEND.md`); el simulador sí. Que el contrato de
+   * la pantalla prometa siempre un arreglo es lo que evita que cada consumidor
+   * tenga que acordarse de que puede faltar — {@link toProfile} lo garantiza.
+   */
+  readonly practiceSites?: readonly PublicPracticeSite[];
 };
 
 /**
@@ -364,6 +372,9 @@ function toPage<T>(body: WirePage<T>): PublicPage<T> {
 function toProfile(body: WireProfile): PublicProfileDetail {
   return {
     ...body,
+    // Sin sedes en la respuesta, la ficha cae a `city`/`address`, que es el
+    // comportamiento que ya tenía. Ver la nota de `WireProfile`.
+    practiceSites: body.practiceSites ?? [],
     posts: body.posts.map((post) => ({
       ...post,
       publishedAt: new Date(post.publishedAt),

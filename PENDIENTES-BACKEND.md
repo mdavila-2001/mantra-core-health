@@ -206,14 +206,42 @@ retroactivo— y que eso cierre sus cupos libres futuros.
 
 El cliente lo pidió textual: «en el perfil público del profesional falta los
 lugares donde atiende». El dato **existe** —`GET /scheduling/slots` agrupa los
-cupos por sede— pero ese endpoint exige sesión, y `/p/:slug` es anónima.
-`PublicProfileDetailDto` sirve `city` y `address`: una sola dirección, no las
-sedes.
+cupos por sede, y `GET /practitioners/:id/sites` devuelve las sedes— pero los
+dos exigen sesión, y `/p/:slug` es anónima. `PublicProfileDetailDto` sirve
+`city` y `address`: una sola dirección, no las sedes.
 
 **Lo que haría falta:** que la respuesta pública traiga los lugares de
 atención —nombre, dirección y, si se puede, los días que atiende en cada uno—.
 Sin horarios en vivo: alcanza con «Atiende en: Clínica X (lun/mié), Consultorio
 Y (vie)».
+
+#### Estado (09/09/2026): la pantalla ya está, el contrato falta
+
+La rama `mockup` lo construyó entero de este lado. `PublicProfileDetail` declara
+`practiceSites` y la ficha las lista —el consultorio propio primero y con su
+distintivo, un pin por sede en el mapa—, así que el día que la API lo mande no
+hay que tocar una línea de pantalla.
+
+La forma que se espera, dentro de `GET /public/profiles/:prefix/:slug`:
+
+```
+practiceSites: {
+  id: string
+  name: string
+  addressText: string | null
+  location: { lat: number, lng: number } | null
+  isOwn: boolean      // consultorio propio, no sede de una organización
+}[]
+```
+
+`isOwn` no es cosmético: el consultorio propio es el único lugar que existe sin
+que una organización haya aceptado nada (ver P20), y para quien elige a quién
+consultar no es lo mismo que una clínica con recepción y cobro de por medio.
+
+**Sigue siendo compatible hacia atrás.** El cliente rellena `practiceSites: []`
+cuando la respuesta no lo trae (`toProfile` en `public-directory.client.ts`), y
+sin sedes la ficha cae al respaldo de `city`/`address` que ya tenía. O sea: esto
+se puede mergear a `dev` antes que el backend, y no rompe nada.
 
 ### P17 · La foto del perfil no se puede subir desde la aplicación
 

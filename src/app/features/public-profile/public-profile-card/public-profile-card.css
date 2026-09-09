@@ -427,6 +427,55 @@
   color: var(--aguamarina);
 }
 
+/* --- Las sedes: una lista, porque son lugares distintos --------------------
+   Hereda el glifo y el aguamarina de `.perfil__donde` —es la misma pregunta
+   contestada con más de una respuesta—, y agrega el renglón de la dirección
+   debajo del nombre. */
+
+.perfil__sedes {
+  display: grid;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.perfil__sede {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e2);
+}
+
+.perfil__sede svg {
+  flex: none;
+  inline-size: 18px;
+  block-size: 18px;
+  /* Alineado con la primera línea del nombre, no con el centro del bloque. */
+  margin-block-start: 2px;
+  color: var(--aguamarina);
+}
+
+.perfil__sede-texto {
+  display: grid;
+  gap: 2px;
+}
+
+.perfil__sede-nombre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  color: var(--tinta);
+}
+
+.perfil__sede-direccion {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
 .perfil__mapa {
   margin-top: var(--e3);
 }

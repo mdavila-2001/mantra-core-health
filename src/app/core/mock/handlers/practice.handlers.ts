@@ -122,6 +122,61 @@ const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: stri
   { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
 ]);
 
+/**
+ * Los lugares donde atiende alguien, con el propio primero.
+ *
+ * Vive acá —al lado de la colección— y se exporta porque **dos superficies
+ * preguntan lo mismo**: `GET /practitioners/:id/sites`, que exige sesión, y la
+ * ficha pública, que es anónima. Antes sólo existía la primera, y por eso la
+ * ficha no sabía decir dónde atiende nadie (P16 de `PENDIENTES-BACKEND.md`).
+ *
+ * El propio va primero a propósito: es el único que no depende de que una
+ * organización lo haya aceptado, así que es el que un profesional recién
+ * registrado tiene para ofrecer.
+ */
+export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesional[] {
+  const propias = sitiosPropios
+    .filtrar((s) => s.practitionerProfileId === practitionerProfileId)
+    .map(({ practitionerProfileId: _p, ...s }) => ({
+      ...s,
+      esPropio: s.practiceId === PRACTICE_CONSULTORIO,
+    }));
+  if (propias.length > 0) {
+    return [...propias].sort((a, b) => Number(b.esPropio) - Number(a.esPropio));
+  }
+
+  // Quien no cargó ninguna atiende donde su organización: es lo que el padrón
+  // sabe de él, y decir «no atiende en ningún lado» sería falso.
+  const p = profesionalPorId(practitionerProfileId);
+  if (p === undefined) return [];
+  const deLaOrganizacion = p.organizacion === 'Hospital San Lucas' ? SITIO_SANLUCAS : SITIO_OLIVOS;
+  return [
+    {
+      ...deLaOrganizacion,
+      practiceId: p.organizacion === 'Hospital San Lucas' ? PRACTICE_SANLUCAS : PRACTICE_OLIVOS,
+      latitude: p.lat,
+      longitude: p.lng,
+      status: 'ACTIVE',
+      esPropio: false,
+    },
+  ];
+}
+
+/** Una sede tal como la devuelve {@link sedesDe}. */
+export interface SedeDeProfesional {
+  readonly id: string;
+  readonly practiceId: string;
+  readonly code: string;
+  readonly name: string;
+  readonly timeZone: string | null;
+  readonly addressText: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+  readonly status: string;
+  /** Si es el consultorio propio y no una sede de una organización. */
+  readonly esPropio: boolean;
+}
+
 function concepto(code: string, display: string) {
   return { code, display };
 }
@@ -213,11 +268,8 @@ export function registrarPracticas(router: MockRouter): void {
   });
 
   router.get('/practitioners/:id/sites', ({ params }) => {
-    const p = profesionalPorId(params['id']!);
-    if (p === undefined) return { items: [], count: 0 };
-    const items = p.id === MEDICA.id
-      ? sitiosPropios.todos().map(({ practitionerProfileId: _p, ...s }) => s)
-      : [{ ...(p.organizacion === 'Hospital San Lucas' ? SITIO_SANLUCAS : SITIO_OLIVOS), practiceId: p.organizacion === 'Hospital San Lucas' ? PRACTICE_SANLUCAS : PRACTICE_OLIVOS, latitude: p.lat, longitude: p.lng, status: 'ACTIVE' }];
+    // La misma regla que usa la ficha pública: una sola, y acá con sesión.
+    const items = sedesDe(params['id']!).map(({ esPropio: _e, ...s }) => s);
     return { items, count: items.length };
   });
 
