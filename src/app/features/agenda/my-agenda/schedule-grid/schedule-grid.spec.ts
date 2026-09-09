@@ -13,20 +13,39 @@ import type { PublishedRule } from '../../../../core/data-access/scheduling/sche
  * **no se compara**: con una grilla se ve de un golpe que los miércoles
  * empezás cuatro horas más tarde, y eso es lo que uno mira cuando decide si
  * cambiar el horario.
+ *
+ * Después se pidió que se viera **como Google Calendar**: la semana en curso
+ * con sus fechas y hoy marcado, las franjas como bloques continuos de alto
+ * proporcional, y el detalle completo en un globo al pasar el mouse.
  */
 describe('ScheduleGrid', () => {
   let fixture: ComponentFixture<ScheduleGrid>;
 
-  function montar(reglas: readonly PublishedRule[]): void {
+  /** Miércoles 9 de septiembre de 2026. La semana va del lunes 7 al domingo 13. */
+  const MIERCOLES = new Date(2026, 8, 9);
+
+  function montar(
+    reglas: readonly PublishedRule[],
+    entradas: Partial<{ semana: Date; conFechas: boolean; nombre: string; vigencia: string }> = {},
+  ): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({});
     fixture = TestBed.createComponent(ScheduleGrid);
     fixture.componentRef.setInput('reglas', reglas);
+    fixture.componentRef.setInput('semana', entradas.semana ?? MIERCOLES);
+    for (const clave of ['conFechas', 'nombre', 'vigencia'] as const) {
+      if (entradas[clave] !== undefined) fixture.componentRef.setInput(clave, entradas[clave]);
+    }
     fixture.detectChanges();
   }
 
-  function regla(dayOfWeek: number, startTime: string, endTime: string): PublishedRule {
-    return { dayOfWeek, startTime, endTime } as PublishedRule;
+  function regla(
+    dayOfWeek: number,
+    startTime: string,
+    endTime: string,
+    extra: Partial<PublishedRule> = {},
+  ): PublishedRule {
+    return { dayOfWeek, startTime, endTime, ...extra } as PublishedRule;
   }
 
   function horas(): readonly number[] {
@@ -37,6 +56,14 @@ describe('ScheduleGrid', () => {
     return (
       fixture.componentInstance as never as { atiende: (d: number, h: number) => boolean }
     ).atiende(dia, hora);
+  }
+
+  function bloques(): HTMLElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('[data-testid="horario-bloque"]'));
+  }
+
+  function cabeceras(): HTMLElement[] {
+    return Array.from(fixture.nativeElement.querySelectorAll('.grilla__dia'));
   }
 
   it('sólo dibuja las horas que se usan', () => {
@@ -82,12 +109,127 @@ describe('ScheduleGrid', () => {
     // lunes, que no es como nadie lee una semana.
     montar([regla(0, '09:00:00', '11:00:00'), regla(1, '09:00:00', '11:00:00')]);
 
-    const cabeceras: string = fixture.nativeElement.querySelector('thead')?.textContent ?? '';
-    expect(cabeceras.indexOf('Lun')).toBeLessThan(cabeceras.indexOf('Dom'));
+    const nombres = cabeceras().map((c) => c.textContent ?? '');
+    expect(nombres.findIndex((n) => n.includes('Lun'))).toBeLessThan(
+      nombres.findIndex((n) => n.includes('Dom')),
+    );
   });
 
   it('sin horarios lo dice, en vez de dibujar un rectángulo vacío', () => {
     montar([]);
     expect(fixture.nativeElement.textContent).toContain('Todavía no publicaste horarios');
+  });
+
+  /* -- Como Google Calendar ------------------------------------------------- */
+
+  it('muestra la semana en curso con sus fechas y marca el día de hoy', () => {
+    // El horario es un patrón, pero se mira desde un día concreto: «atendés
+    // los martes de 9 a 13» tiene que leerse como «mañana a las 9».
+    montar([regla(1, '09:00:00', '13:00:00')]);
+
+    expect(fixture.nativeElement.textContent).toContain('Semana del 7 al 11 de septiembre');
+    const numeros = cabeceras().map((c) => c.querySelector('.grilla__dia-numero')?.textContent?.trim());
+    expect(numeros).toEqual(['7', '8', '9', '10', '11']);
+
+    const hoy = cabeceras().filter((c) => c.getAttribute('aria-current') === 'date');
+    expect(hoy).toHaveLength(1);
+    expect(hoy[0].textContent).toContain('9');
+  });
+
+  it('va de lunes al último día atendido, con viernes como mínimo', () => {
+    // Un fin de semana vacío no dice nada que la ausencia no diga; pero el
+    // sábado, si se atiende, entra.
+    montar([regla(2, '09:00:00', '13:00:00')]);
+    expect(cabeceras()).toHaveLength(5);
+
+    montar([regla(6, '09:00:00', '13:00:00')]);
+    expect(cabeceras()).toHaveLength(6);
+    expect(cabeceras().at(-1)?.textContent).toContain('Sáb');
+  });
+
+  it('la franja es UN bloque continuo, con alto proporcional a lo que dura', () => {
+    // De 8:30 a 12:30 sobre una grilla de 8 a 12 (cinco horas, 300 min): el
+    // bloque arranca a los 30 min (10 %) y dura 240 (80 %). Pintar la fila
+    // de las 8 entera diría que atendés desde las 8.
+    montar([regla(1, '08:30:00', '12:30:00')]);
+
+    const [bloque] = bloques();
+    expect(bloque.style.top).toBe('10%');
+    expect(bloque.style.height).toBe('80%');
+    expect(bloque.textContent).toContain('08:30 – 12:30');
+    expect(bloque.getAttribute('aria-label')).toBe('lunes de 08:30 a 12:30: atendés');
+  });
+
+  it('cada franja va en la columna de su día', () => {
+    montar([regla(1, '09:00:00', '13:00:00'), regla(3, '14:00:00', '18:00:00')]);
+
+    const columnas: HTMLElement[] = Array.from(
+      fixture.nativeElement.querySelectorAll('.grilla__columna'),
+    );
+    const conBloque = columnas.map((c) => c.querySelectorAll('[data-testid="horario-bloque"]').length);
+    // lunes, martes, miércoles, jueves, viernes
+    expect(conBloque).toEqual([1, 0, 1, 0, 0]);
+  });
+
+  it('sin fechas —el horario retirado del diálogo— sólo lleva los nombres de los días', () => {
+    montar([regla(1, '09:00:00', '13:00:00')], { conFechas: false });
+
+    expect(fixture.nativeElement.querySelector('.grilla__dia-numero')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-current="date"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('Semana del');
+  });
+
+  /* -- El globo de detalle -------------------------------------------------- */
+
+  it('al pasar el mouse por una franja abre el globo con todos sus datos', () => {
+    // De 15 a 19 con consultas de 20 min y 10 de respiro: 240 min entre 30
+    // por turno son 8 turnos. Es lo que uno quiere saber y no cabe en el
+    // bloque.
+    montar(
+      [regla(3, '15:00:00', '19:00:00', { slotMinutes: 20, gapMinutes: 10, capacityPerSlot: 2 })],
+      { nombre: 'Tarde', vigencia: 'Hasta el 30/6/2027' },
+    );
+    expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).toBeNull();
+
+    bloques()[0].dispatchEvent(new Event('mouseenter'));
+    fixture.detectChanges();
+
+    const globo: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[data-testid="horario-globo"]',
+    );
+    expect(globo).not.toBeNull();
+    const texto = globo?.textContent ?? '';
+    expect(texto).toContain('Miércoles 9 de septiembre');
+    expect(texto).toContain('Tarde');
+    expect(texto).toContain('15:00 – 19:00');
+    expect(texto).toContain('4 h');
+    expect(texto).toContain('20 min');
+    expect(texto).toContain('10 min');
+    expect(texto).toContain('8');
+    expect(texto).toContain('Pacientes por turno');
+    expect(texto).toContain('Hasta el 30/6/2027');
+    // El bloque queda descrito por el globo, para el lector de pantalla.
+    expect(bloques()[0].getAttribute('aria-describedby')).toBe('grilla-globo');
+  });
+
+  it('el globo se va con el mouse y también con Escape', () => {
+    montar([regla(1, '09:00:00', '13:00:00')]);
+
+    bloques()[0].dispatchEvent(new Event('mouseenter'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).not.toBeNull();
+
+    bloques()[0].dispatchEvent(new Event('mouseleave'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).toBeNull();
+
+    // Con teclado: el foco abre, Escape cierra.
+    bloques()[0].dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).not.toBeNull();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).toBeNull();
   });
 });

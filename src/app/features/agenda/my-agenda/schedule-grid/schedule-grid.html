@@ -1,35 +1,113 @@
 @if (horas().length === 0) {
   <p class="grilla__vacio">Todavía no publicaste horarios.</p>
 } @else {
-  <div class="grilla__scroll">
-    <table class="grilla">
-      <caption class="grilla__caption">
-        Tus horas de atención. Las resaltadas son las que atendés.
-      </caption>
-      <thead>
-        <tr>
-          <th scope="col" class="grilla__esquina"><span class="grilla__oculto">Hora</span></th>
-          @for (dia of dias(); track dia.numero) {
-            <th scope="col">{{ dia.corto }}</th>
+  <div
+    class="grilla"
+    role="group"
+    [attr.aria-label]="conFechas() ? rotuloDeSemana() : 'Tu horario semanal'"
+  >
+    @if (conFechas()) {
+      <p class="grilla__semana">{{ rotuloDeSemana() }}</p>
+    }
+    <p class="grilla__caption">
+      Tus horas de atención. Las resaltadas son las que atendés; pasá el mouse por una franja
+      para ver su detalle.
+    </p>
+
+    <!-- Una grilla de varias columnas no entra en un teléfono: scrollea dentro
+         de su caja y la página nunca se va de lado. -->
+    <div class="grilla__scroll">
+      <!-- La misma cuadrícula CSS para la cabecera y el cuerpo: la primera
+           columna es el carril de las horas, y las demás, un día cada una. -->
+      <div class="grilla__tabla" [style.--dias]="dias().length">
+        <!-- ─── Cabecera: el día y, en la semana en curso, su fecha ────── -->
+        <div class="grilla__esquina" aria-hidden="true"></div>
+        @for (dia of dias(); track dia.numero) {
+          <div
+            class="grilla__dia"
+            [class.grilla__dia--hoy]="dia.esHoy"
+            [attr.aria-current]="dia.esHoy ? 'date' : null"
+          >
+            <span class="grilla__dia-nombre">{{ dia.corto }}</span>
+            @if (conFechas()) {
+              <span class="grilla__dia-numero">{{ dia.fecha.getDate() }}</span>
+            }
+          </div>
+        }
+
+        <!-- ─── Cuerpo: filas de hora de fondo, bloques por encima ───────── -->
+        <div class="grilla__horas" aria-hidden="true">
+          @for (h of horas(); track h) {
+            <div class="grilla__hora">{{ rotulo(h) }}</div>
           }
-        </tr>
-      </thead>
-      <tbody>
-        @for (h of horas(); track h) {
-          <tr>
-            <th scope="row" class="grilla__hora">{{ rotulo(h) }}</th>
-            @for (dia of dias(); track dia.numero) {
-              <!-- El color es la mitad: la celda atendida lleva además su
-                   etiqueta en palabras, para quien no lo distingue. -->
-              <td
+        </div>
+        @for (dia of dias(); track dia.numero) {
+          <div class="grilla__columna" [class.grilla__columna--hoy]="dia.esHoy">
+            @for (h of horas(); track h) {
+              <div
                 class="grilla__celda"
                 [class.grilla__celda--atiende]="atiende(dia.numero, h)"
-                [attr.aria-label]="atiende(dia.numero, h) ? etiqueta(dia.largo, h) : null"
-              ></td>
+                aria-hidden="true"
+              ></div>
             }
-          </tr>
+            <!-- El color es la mitad: el bloque escribe sus horas y lleva el
+                 día en palabras para quien no distingue el tono. Es enfocable
+                 para que el globo de detalle también se abra con teclado. -->
+            @for (bloque of bloquesDe(dia.numero); track bloque.id) {
+              <div
+                class="grilla__bloque"
+                data-testid="horario-bloque"
+                tabindex="0"
+                [style.top.%]="bloque.top"
+                [style.height.%]="bloque.alto"
+                [attr.aria-label]="bloque.etiqueta"
+                [attr.aria-describedby]="globo()?.bloque === bloque ? 'grilla-globo' : null"
+                (mouseenter)="abrirGlobo($event, bloque, dia)"
+                (mouseleave)="cerrarGlobo()"
+                (focus)="abrirGlobo($event, bloque, dia)"
+                (blur)="cerrarGlobo()"
+              >
+                <span class="grilla__bloque-horas">{{ bloque.desde }} – {{ bloque.hasta }}</span>
+                @if (bloque.detalle) {
+                  <span class="grilla__bloque-detalle">{{ bloque.detalle }}</span>
+                }
+              </div>
+            }
+            @if (dia.esHoy && ahora() !== null) {
+              <div class="grilla__ahora" [style.top.%]="ahora()" aria-hidden="true"></div>
+            }
+          </div>
         }
-      </tbody>
-    </table>
+      </div>
+    </div>
   </div>
+
+  <!-- ─── El globo de detalle ────────────────────────────────────────────
+       Fijo a la ventana, no a la grilla: así no lo recorta el scroll. -->
+  @if (globo(); as g) {
+    <div
+      id="grilla-globo"
+      class="grilla__globo"
+      role="tooltip"
+      data-testid="horario-globo"
+      [style.left.px]="g.left"
+      [style.top.px]="g.top"
+    >
+      <p class="grilla__globo-titulo">{{ tituloDelGlobo(g) }}</p>
+      @if (nombre()) {
+        <p class="grilla__globo-nombre">{{ nombre() }}</p>
+      }
+      <dl class="grilla__globo-datos">
+        @for (dato of g.bloque.datos; track dato.rotulo) {
+          <div class="grilla__globo-fila">
+            <dt>{{ dato.rotulo }}</dt>
+            <dd>{{ dato.valor }}</dd>
+          </div>
+        }
+      </dl>
+      @if (vigencia()) {
+        <p class="grilla__globo-vigencia">{{ vigencia() }}</p>
+      }
+    </div>
+  }
 }
