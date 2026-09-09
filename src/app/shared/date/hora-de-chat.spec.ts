@@ -1,4 +1,4 @@
-import { etiquetaDeDia, horaDeChat, horaDelReloj } from './hora-de-chat';
+import { etiquetaDeDia, horaDeChat, horaDelReloj, ultimaVez } from './hora-de-chat';
 
 /**
  * Lo que estas pruebas fijan: que la bandeja diga la **hora del reloj** y no
@@ -73,5 +73,21 @@ describe('etiquetaDeDia', () => {
 
   it('sin fecha devuelve vacío, no «Invalid Date»', () => {
     expect(etiquetaDeDia(undefined, ahora)).toBe('');
+  });
+});
+
+describe('ultimaVez', () => {
+  const ahora = new Date('2026-09-08T20:30:00');
+
+  it('hoy y ayer llevan la hora; antes, la fecha', () => {
+    expect(ultimaVez(new Date('2026-09-08T19:50:00'), ahora)).toBe(
+      `últ. vez hoy a las ${horaDelReloj(new Date('2026-09-08T19:50:00'))}`,
+    );
+    expect(ultimaVez(new Date('2026-09-07T08:05:00'), ahora)).toContain('últ. vez ayer a las');
+    expect(ultimaVez(new Date('2026-08-01T08:05:00'), ahora)).toBe('últ. vez el 01/08/2026');
+  });
+
+  it('sin fecha devuelve vacío: nunca se lo vio', () => {
+    expect(ultimaVez(undefined, ahora)).toBe('');
   });
 });

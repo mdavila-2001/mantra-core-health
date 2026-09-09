@@ -18,8 +18,15 @@ import type {
   ConversationMessagesQuery,
   ConversationPage,
   ConversationPeer,
+  ConversationPresence,
   ConversationRead,
   ConversationsQuery,
+  DeletedMessage,
+  EditedDirectMessage,
+  ParticipantPreferences,
+  ParticipantPreferencesUpdate,
+  PinnedMessageResult,
+  ProfilePresence,
   DirectMessage,
   DirectMessagePage,
   FeedListItem,
@@ -946,15 +953,22 @@ export class CommunityClient {
   /**
    * `GET /community/conversations` — la bandeja de conversaciones.
    *
-   * **Sin cursor**: el contrato de esta lectura sólo acepta `limit`.
+   * Desde F4.3 pagina con `cursor` y recorta con `q`.
    *
-   * @param query - De quién es la bandeja (obligatorio) y el tope.
+   * @param query - De quién es la bandeja (obligatorio), el tope, el cursor y
+   *   el texto a buscar.
    * @returns Una página de conversaciones con su último mensaje y sus no leídos.
    */
   listConversations(query: ConversationsQuery): Observable<ConversationPage> {
     let params = new HttpParams().set('profileId', query.profileId);
     if (query.limit !== undefined) {
       params = params.set('limit', String(query.limit));
+    }
+    if (query.cursor !== undefined) {
+      params = params.set('cursor', query.cursor);
+    }
+    if (query.q !== undefined && query.q.trim() !== '') {
+      params = params.set('q', query.q.trim());
     }
 
     return this.http
@@ -1110,6 +1124,155 @@ export class CommunityClient {
         ? { recipientProfileId }
         : { recipientProfileId, upToMessageId },
     );
+  }
+
+  /**
+   * `PATCH /community/conversations/:id/participant` — favorita, fijada o
+   * archivada, de mi lado (F4.4).
+   *
+   * @param conversationId - El hilo.
+   * @param datos - Quién marca y qué cambia; lo que no viene no se toca.
+   * @returns Cómo quedó la conversación para ese participante.
+   */
+  updateParticipant(
+    conversationId: string,
+    datos: ParticipantPreferencesUpdate,
+  ): Observable<ParticipantPreferences> {
+    return this.http
+      .patch<ConNulos<Omit<ParticipantPreferences, 'archivedAt'>> & { archivedAt: string | null }>(
+        this.url(`/community/conversations/${encodeURIComponent(conversationId)}/participant`),
+        datos,
+      )
+      .pipe(
+        map((body) => ({
+          conversationId: body.conversationId ?? conversationId,
+          isFavorite: body.isFavorite ?? false,
+          isPinned: body.isPinned ?? false,
+          ...fecha('archivedAt', body.archivedAt),
+        })),
+      );
+  }
+
+  /**
+   * `PATCH /community/conversations/:id/messages/:messageId` — corrige el
+   * texto de un mensaje propio (F4.5).
+   *
+   * @param conversationId - El hilo.
+   * @param messageId - El mensaje.
+   * @param datos - Quién lo escribió y el texto nuevo.
+   * @returns El mensaje ya editado.
+   */
+  editMessage(
+    conversationId: string,
+    messageId: string,
+    datos: EditedDirectMessage,
+  ): Observable<DirectMessage> {
+    return this.http
+      .patch<WireMessage>(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}`,
+        ),
+        datos,
+      )
+      .pipe(map(toMessage));
+  }
+
+  /**
+   * `DELETE /community/conversations/:id/messages/:messageId` — elimina un
+   * mensaje propio; queda «Se eliminó este mensaje» en su lugar (F4.5).
+   *
+   * @param conversationId - El hilo.
+   * @param messageId - El mensaje.
+   * @param profileId - Quién lo elimina (tiene que ser el autor).
+   * @returns Cuándo quedó eliminado.
+   */
+  deleteMessage(
+    conversationId: string,
+    messageId: string,
+    profileId: string,
+  ): Observable<DeletedMessage> {
+    return this.http
+      .delete<ConNulos<{ conversationId: string; messageId: string; deletedAt: string }>>(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}`,
+        ),
+        { params: new HttpParams().set('profileId', profileId) },
+      )
+      .pipe(
+        map((body) => ({
+          conversationId: body.conversationId ?? conversationId,
+          messageId: body.messageId ?? messageId,
+          ...fecha('deletedAt', body.deletedAt),
+        })),
+      );
+  }
+
+  /**
+   * `POST /community/conversations/:id/pin` — fija un mensaje en la barra
+   * superior del hilo (F4.6). Uno a la vez: fijar otro reemplaza al anterior.
+   *
+   * @param conversationId - El hilo.
+   * @param profileId - Quién fija.
+   * @param messageId - El mensaje.
+   * @returns El fijado que quedó.
+   */
+  pinMessage(
+    conversationId: string,
+    profileId: string,
+    messageId: string,
+  ): Observable<PinnedMessageResult> {
+    return this.http.post<PinnedMessageResult>(
+      this.url(`/community/conversations/${encodeURIComponent(conversationId)}/pin`),
+      { profileId, messageId },
+    );
+  }
+
+  /**
+   * `DELETE /community/conversations/:id/pin` — suelta el mensaje fijado.
+   *
+   * @param conversationId - El hilo.
+   * @param profileId - Quién suelta.
+   * @returns `pinnedMessageId` en `null`.
+   */
+  unpinMessage(conversationId: string, profileId: string): Observable<PinnedMessageResult> {
+    return this.http.delete<PinnedMessageResult>(
+      this.url(`/community/conversations/${encodeURIComponent(conversationId)}/pin`),
+      { params: new HttpParams().set('profileId', profileId) },
+    );
+  }
+
+  /**
+   * `GET /community/conversations/:id/presence` — quién de los otros está en
+   * línea y, si no, cuándo se lo vio (F4.2).
+   *
+   * @param conversationId - El hilo abierto.
+   * @param profileId - Quién mira.
+   * @returns Una entrada por cada otro participante.
+   */
+  conversationPresence(
+    conversationId: string,
+    profileId: string,
+  ): Observable<ConversationPresence> {
+    return this.http
+      .get<{
+        conversationId: string;
+        peers: readonly (Omit<ConNulos<ProfilePresence>, 'lastSeenAt'> & {
+          lastSeenAt: string | null;
+        })[];
+      }>(
+        this.url(`/community/conversations/${encodeURIComponent(conversationId)}/presence`),
+        { params: new HttpParams().set('profileId', profileId) },
+      )
+      .pipe(
+        map((body) => ({
+          conversationId: body.conversationId ?? conversationId,
+          peers: (body.peers ?? []).map((peer) => ({
+            profileId: peer.profileId ?? '',
+            online: peer.online === true,
+            ...fecha('lastSeenAt', peer.lastSeenAt),
+          })),
+        })),
+      );
   }
 
   // ─── Encuestas ─────────────────────────────────────────────────────────────
@@ -1339,15 +1502,28 @@ interface WireGroupWallPage extends Omit<GroupWallPage, 'items'> {
 
 type WireConversation = Omit<
   ConNulos<ConversationListItem>,
-  'lastMessageAt' | 'lastMessage' | 'unreadCount' | 'peers'
+  | 'lastMessageAt'
+  | 'lastMessage'
+  | 'unreadCount'
+  | 'peers'
+  | 'isFavorite'
+  | 'isPinned'
+  | 'archivedAt'
 > & {
   readonly lastMessageAt: string | null;
   readonly unreadCount: number;
   readonly lastMessage:
-    | (Omit<ConNulos<PreviewLike>, 'sentAt'> & { readonly sentAt: string | null })
+    | (Omit<ConNulos<PreviewLike>, 'sentAt' | 'deletedAt'> & {
+        readonly sentAt: string | null;
+        readonly deletedAt?: string | null;
+      })
     | null;
   /** Opcional en el transporte: un backend anterior a P2 no lo manda. */
   readonly peers?: readonly ConNulos<ConversationPeer>[];
+  /** Opcionales: un backend anterior a F4.4 no los manda. */
+  readonly isFavorite?: boolean | null;
+  readonly isPinned?: boolean | null;
+  readonly archivedAt?: string | null;
 };
 
 type PreviewLike = NonNullable<ConversationListItem['lastMessage']>;
@@ -1356,13 +1532,16 @@ interface WireConversationPage extends Omit<ConversationPage, 'items'> {
   readonly items: readonly WireConversation[];
 }
 
-type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt'> & {
+type WireMessage = Omit<ConNulos<DirectMessage>, 'sentAt' | 'deletedAt'> & {
   readonly sentAt: string | null;
+  readonly deletedAt?: string | null;
 };
 
-interface WireMessagePage extends Omit<DirectMessagePage, 'items' | 'peerReadUpTo'> {
+interface WireMessagePage
+  extends Omit<DirectMessagePage, 'items' | 'peerReadUpTo' | 'pinnedMessage'> {
   readonly items: readonly WireMessage[];
   readonly peerReadUpTo?: string | null;
+  readonly pinnedMessage?: WireMessage | null;
 }
 
 type WirePoll = Omit<ConNulos<PollDetail>, 'closesAt' | 'options'> & {
@@ -1697,6 +1876,9 @@ function toConversation({
   lastMessage,
   unreadCount,
   peers,
+  isFavorite,
+  isPinned,
+  archivedAt,
   ...resto
 }: WireConversation): ConversationListItem {
   return {
@@ -1706,13 +1888,19 @@ function toConversation({
     // backend anterior devolvería la fila sin la clave, y una bandeja que
     // explota al iterar `undefined` es peor que una sin nombres.
     peers: (peers ?? []).map((peer) => sinNulos(peer)),
+    // F4.4: lo marcado de mi lado. Un backend anterior no lo manda, y «nada
+    // marcado» es lo correcto en ese caso.
+    isFavorite: isFavorite === true,
+    isPinned: isPinned === true,
+    ...fecha('archivedAt', archivedAt ?? null),
     ...fecha('lastMessageAt', lastMessageAt),
     ...(lastMessage === null
       ? {}
       : {
           lastMessage: {
-            ...sinNulos(omitir(lastMessage, 'sentAt')),
+            ...sinNulos(omitir(omitir(lastMessage, 'sentAt'), 'deletedAt')),
             ...fecha('sentAt', lastMessage.sentAt),
+            ...fecha('deletedAt', lastMessage.deletedAt ?? null),
           },
         }),
   };
@@ -1722,19 +1910,27 @@ function toConversationPage(body: WireConversationPage): ConversationPage {
   return { ...body, items: body.items.map(toConversation) };
 }
 
-function toMessage({ sentAt, ...resto }: WireMessage): DirectMessage {
-  return { ...sinNulos(resto), ...fecha('sentAt', sentAt) };
+function toMessage({ sentAt, deletedAt, ...resto }: WireMessage): DirectMessage {
+  return {
+    ...sinNulos(resto),
+    ...fecha('sentAt', sentAt),
+    ...fecha('deletedAt', deletedAt ?? null),
+  };
 }
 
 function toMessagePage({
   items,
   peerReadUpTo,
+  pinnedMessage,
   ...resto
 }: WireMessagePage): DirectMessagePage {
   return {
     ...resto,
     items: items.map(toMessage),
     ...fecha('peerReadUpTo', peerReadUpTo ?? null),
+    ...(pinnedMessage === null || pinnedMessage === undefined
+      ? {}
+      : { pinnedMessage: toMessage(pinnedMessage) }),
   };
 }
 

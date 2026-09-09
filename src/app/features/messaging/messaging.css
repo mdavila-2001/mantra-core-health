@@ -348,3 +348,26 @@
     display: none;
   }
 }
+
+/* «Cargar más», al pie de la lista, con el mismo tono que la fila de archivados. */
+.mensajeria__mas {
+  display: block;
+  inline-size: 100%;
+  padding: var(--e3) var(--e4);
+  border: 0;
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-body-sm);
+  text-align: center;
+  cursor: pointer;
+}
+
+.mensajeria__mas:hover:not(:disabled) {
+  background: var(--sup-inset);
+}
+
+.mensajeria__mas:disabled {
+  cursor: default;
+  opacity: 0.6;
+}

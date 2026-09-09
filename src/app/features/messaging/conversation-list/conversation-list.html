@@ -35,14 +35,24 @@
           <span class="conversaciones__pie">
             <span class="conversaciones__vista-previa">
               @if (esPropio(conversacion)) {
-                <!-- Un tilde: salió. El contrato de la bandeja todavía no dice
-                     si el otro lado lo leyó —está pedido al backend—, y pintar
-                     dos sin saberlo sería mentir sobre lo único que la gente
-                     mira antes de volver a escribir. -->
-                <span class="conversaciones__tick" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m3 12.6 4.6 4.6L18.5 6.4" /></svg>
+                <!-- Un tilde si salió, dos si el otro lado lo leyó. El doble
+                     sólo cuando el backend lo dice (F4.3): pintarlo sin saberlo
+                     sería mentir sobre lo único que la gente mira antes de
+                     volver a escribir. -->
+                <span
+                  class="conversaciones__tick"
+                  [class.is-leido]="leidoPorElOtro(conversacion)"
+                  data-testid="conversacion-tick"
+                  aria-hidden="true"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <path d="m2 12.5 4.2 4.2L14 8.5" />
+                    @if (leidoPorElOtro(conversacion)) {
+                      <path d="m10.5 16.7 7.8-8.2" />
+                    }
+                  </svg>
                 </span>
-                <span class="solo-lectores">Enviado por vos: </span>
+                <span class="solo-lectores">{{ leidoPorElOtro(conversacion) ? 'Leído' : 'Enviado por vos' }}: </span>
               } @else if (prefijo(conversacion); as autor) {
                 <span class="conversaciones__autor">{{ autor }}</span>
               }
@@ -53,10 +63,15 @@
                 </span>
               }
 
-              <span class="conversaciones__texto-previa">{{ vistaPrevia(conversacion) }}</span>
+              <span class="conversaciones__texto-previa" [class.is-eliminado]="esEliminado(conversacion)">{{ vistaPrevia(conversacion) }}</span>
             </span>
 
             <span class="conversaciones__marcas">
+              @if (estaFijado(conversacion.id)) {
+                <span class="conversaciones__fijada" aria-label="Fijada arriba" title="Fijada arriba" data-testid="conversacion-fijada">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 17v5M9 3h6l-1 6 3 3H7l3-3z" /></svg>
+                </span>
+              }
               @if (esFavorito(conversacion.id)) {
                 <span class="conversaciones__estrella" aria-label="Favorito" title="Favorito">
                   <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="m12 3.6 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z" /></svg>
@@ -94,6 +109,11 @@
           <li role="none">
             <button role="menuitem" type="button" (click)="ejecutar('favorito', conversacion.id, $event)">
               {{ esFavorito(conversacion.id) ? 'Quitar de favoritos' : 'Marcar como favorito' }}
+            </button>
+          </li>
+          <li role="none">
+            <button role="menuitem" type="button" data-testid="conversacion-fijar" (click)="ejecutar('fijar', conversacion.id, $event)">
+              {{ estaFijado(conversacion.id) ? 'Soltar de arriba' : 'Fijar arriba' }}
             </button>
           </li>
           <li role="none">

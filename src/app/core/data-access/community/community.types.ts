@@ -663,6 +663,12 @@ export interface ConversationPreviewMessage {
   readonly id: string;
   readonly senderProfileId: string;
   readonly bodyText?: string;
+  /** Concept id del tipo de contenido (texto o media). F4.3. */
+  readonly contentTypeConceptId?: string;
+  /** El adjunto, si el último mensaje era uno. */
+  readonly attachmentFileId?: string;
+  /** Cuándo se eliminó, si el último mensaje está eliminado (F4.5). */
+  readonly deletedAt?: Date;
   readonly sentAt?: Date;
 }
 
@@ -683,6 +689,20 @@ export interface ConversationListItem {
    * bandeja.
    */
   readonly peers: readonly ConversationPeer[];
+  /**
+   * Si el otro lado ya leyó el último mensaje, cuando es propio y la
+   * conversación es directa; ausente si no se sabe (F4.3). Es lo que permite
+   * pintar el doble tilde en la fila sin mentir.
+   */
+  readonly lastMessageReadByPeer?: boolean;
+  /** Favorita para quien mira (F4.4). */
+  readonly isFavorite: boolean;
+  /** Fijada arriba de la bandeja de quien mira (F4.4). */
+  readonly isPinned: boolean;
+  /** Desde cuándo la archivó quien mira; ausente si no está archivada. */
+  readonly archivedAt?: Date;
+  /** El mensaje fijado en la barra superior del hilo, si hay (F4.6). */
+  readonly pinnedMessageId?: string;
 }
 
 /**
@@ -727,6 +747,11 @@ export interface DirectMessage {
   readonly bodyText?: string;
   readonly attachmentFileId?: string;
   readonly isEdited?: boolean;
+  /**
+   * Cuándo se eliminó (F4.5). Un mensaje eliminado sigue viajando —sin cuerpo
+   * ni adjunto— para que el hilo diga «Se eliminó este mensaje» en su lugar.
+   */
+  readonly deletedAt?: Date;
   readonly sentAt?: Date;
 }
 
@@ -744,6 +769,53 @@ export interface DirectMessagePage {
    * anterior o igual a esta marca.
    */
   readonly peerReadUpTo?: Date;
+  /**
+   * El mensaje fijado, completo, en la primera página (F4.6). Ausente en las
+   * páginas de historia y `undefined` también cuando no hay ninguno.
+   */
+  readonly pinnedMessage?: DirectMessage;
+}
+
+/** Lo que se cambia con `PATCH /community/conversations/:id/participant` (F4.4). */
+export interface ParticipantPreferencesUpdate {
+  readonly profileId: string;
+  readonly isFavorite?: boolean;
+  readonly isPinned?: boolean;
+  readonly archived?: boolean;
+}
+
+/** Cómo quedó la conversación de este lado. */
+export interface ParticipantPreferences {
+  readonly conversationId: string;
+  readonly isFavorite: boolean;
+  readonly isPinned: boolean;
+  readonly archivedAt?: Date;
+}
+
+/** Lo que devuelve fijar o soltar un mensaje (F4.6). */
+export interface PinnedMessageResult {
+  readonly conversationId: string;
+  readonly pinnedMessageId: string | null;
+}
+
+/** Lo que devuelve eliminar un mensaje (F4.5). */
+export interface DeletedMessage {
+  readonly conversationId: string;
+  readonly messageId: string;
+  readonly deletedAt?: Date;
+}
+
+/** Si alguien está en línea y, si no, cuándo se lo vio (F4.2). */
+export interface ProfilePresence {
+  readonly profileId: string;
+  readonly online: boolean;
+  readonly lastSeenAt?: Date;
+}
+
+/** La presencia de los demás participantes de una conversación. */
+export interface ConversationPresence {
+  readonly conversationId: string;
+  readonly peers: readonly ProfilePresence[];
 }
 
 /**
@@ -765,6 +837,15 @@ export interface NewDirectMessage {
   readonly senderProfileId: string;
   readonly bodyText: string;
   readonly replyToMessageId?: string;
+  /** `MEDIA` cuando lleva adjunto; el backend asume `TEXT` si no viene. */
+  readonly contentType?: 'TEXT' | 'MEDIA';
+  readonly attachmentFileId?: string;
+}
+
+/** El texto nuevo de un mensaje propio (F4.5). */
+export interface EditedDirectMessage {
+  readonly senderProfileId: string;
+  readonly bodyText: string;
 }
 
 /** El acuse de un mensaje enviado. */
@@ -894,13 +975,14 @@ export interface GroupWallQuery extends CursorQuery, ActorQuery {}
 /**
  * Filtros de `GET /community/conversations`. `profileId` es obligatorio.
  *
- * **No lleva `cursor`**: el contrato de esta lectura sólo acepta `limit`. La
- * respuesta trae `nextCursor` igual, pero hoy no hay forma de pedir la página
- * siguiente — anotado, no inventado.
+ * Desde F4.3 acepta `cursor` (el `nextCursor` de la página anterior) y `q`
+ * (nombre del otro lado o texto del último mensaje).
  */
 export interface ConversationsQuery {
   readonly profileId: string;
   readonly limit?: number;
+  readonly cursor?: string;
+  readonly q?: string;
 }
 
 /**

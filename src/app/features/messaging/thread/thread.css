@@ -641,3 +641,119 @@
     inset-inline-end: var(--e3);
   }
 }
+
+/* ── F4 · escribiendo, fijado, eliminado, editado ──────────────────────── */
+
+/* «escribiendo…» se pinta en el verde del chat: es la única línea de la
+   cabecera que cambia sola, y tiene que verse cambiar. */
+.hilo__estado.is-escribiendo {
+  color: var(--chat-no-leido);
+  font-style: italic;
+}
+
+/* La barra del mensaje fijado, pegada bajo la cabecera y por encima del
+   papel: como en WhatsApp, se lee sin abrir nada. */
+.hilo__fijado {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding-inline: var(--e3) var(--e2);
+  border-block-end: 1px solid var(--filete-2);
+  background: var(--sup-1);
+}
+
+.hilo__fijado-texto {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  flex: 1;
+  min-inline-size: 0;
+  padding-block: var(--e2);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.hilo__fijado-icono {
+  flex: none;
+  display: inline-flex;
+  color: var(--chat-no-leido);
+}
+
+.hilo__fijado-icono svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.hilo__fijado-cuerpo {
+  display: grid;
+  min-inline-size: 0;
+  border-inline-start: 3px solid var(--chat-no-leido);
+  padding-inline-start: var(--e2);
+}
+
+.hilo__fijado-rotulo {
+  color: var(--chat-no-leido);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+}
+
+.hilo__fijado-detalle {
+  overflow: hidden;
+  color: var(--tinta-2);
+  font-size: var(--fs-body-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hilo__fijado-soltar {
+  flex: none;
+  display: inline-flex;
+  padding: var(--e2);
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--tinta-3);
+  cursor: pointer;
+}
+
+.hilo__fijado-soltar svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.hilo__fijado-soltar:hover {
+  background: var(--sup-inset);
+  color: var(--tinta-1);
+}
+
+/* «Se eliminó este mensaje»: gris e itálica, con el círculo tachado. */
+.hilo__eliminado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e1);
+  margin: 0;
+  color: var(--tinta-3);
+  font-style: italic;
+}
+
+.hilo__eliminado svg {
+  inline-size: 15px;
+  block-size: 15px;
+}
+
+.hilo__editado {
+  margin-inline-end: var(--e1);
+  color: var(--tinta-3);
+  font-size: var(--fs-overline);
+}
+
+.hilo__menu .is-peligro {
+  color: var(--peligro, #c62828);
+}

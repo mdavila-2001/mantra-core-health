@@ -19,7 +19,11 @@ import {
   avatarDeConQuien as avatarDeConQuienDe,
   conQuien as conQuienDe,
 } from '../../../core/messaging/con-quien';
-import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/hora-de-chat';
+import {
+  etiquetaDeDia,
+  horaDelReloj,
+  ultimaVez,
+} from '../../../shared/date/hora-de-chat';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { Composer } from './composer/composer';
@@ -133,19 +137,63 @@ export class Thread {
     return activa === undefined ? null : avatarDeConQuienDe(activa);
   });
 
-  /** Los participantes, como subtítulo de un grupo. */
+  /**
+   * Lo que va bajo el nombre, en este orden: «escribiendo…» si alguien lo
+   * está haciendo (F4.1), «en línea» / «últ. vez…» en una directa (F4.2), y
+   * si no, los participantes de un grupo o «Conversación directa».
+   */
   protected readonly subtitulo = computed(() => {
     const activa = this.store.conversacionActiva();
     if (activa === undefined) {
       return '';
     }
+    const escribiendo = this.store.escribiendoEnActiva();
+    if (escribiendo.length > 0) {
+      if (activa.peers.length <= 1) {
+        return 'escribiendo…';
+      }
+      const nombres = escribiendo
+        .map((id) => activa.peers.find((peer) => peer.profileId === id)?.displayName)
+        .filter((nombre): nombre is string => typeof nombre === 'string');
+      return nombres.length === 0
+        ? 'escribiendo…'
+        : `${nombres.join(', ')} ${nombres.length === 1 ? 'está' : 'están'} escribiendo…`;
+    }
     if (activa.peers.length <= 1) {
-      return 'Conversación directa';
+      const presencia = this.store.presenciaDelOtro();
+      if (presencia?.online) {
+        return 'en línea';
+      }
+      const ultima = ultimaVez(presencia?.lastSeenAt);
+      return ultima === '' ? 'Conversación directa' : ultima;
     }
     const nombres = activa.peers
       .map((peer) => peer.displayName)
       .filter((nombre): nombre is string => nombre !== undefined && nombre !== null);
     return [...nombres, 'Tú'].join(', ');
+  });
+
+  /** `true` mientras alguien escribe: el subtítulo se pinta distinto. */
+  protected readonly alguienEscribe = computed(
+    () => this.store.escribiendoEnActiva().length > 0,
+  );
+
+  /** Fijada arriba de la bandeja (F4.4), para el menú de la cabecera. */
+  protected readonly estaFijada = computed(() => {
+    const id = this.store.activaId();
+    return id !== null && this.preferencias.fijados().has(id);
+  });
+
+  /** El texto de la barra del mensaje fijado (F4.6). */
+  protected readonly textoFijado = computed(() => {
+    const fijado = this.store.fijado();
+    if (fijado === null) {
+      return '';
+    }
+    if (fijado.bodyText) {
+      return fijado.bodyText;
+    }
+    return fijado.attachmentFileId ? 'Archivo adjunto' : 'Mensaje';
   });
 
   protected readonly esGrupo = computed(() => {
@@ -279,6 +327,32 @@ export class Thread {
     return citado === null ? 'Mensaje anterior' : this.nombreDe(citado.senderProfileId);
   }
 
+  /** Lo que se muestra de la cita: el texto, el adjunto, o que se eliminó. */
+  protected textoDeLaCita(mensaje: MensajeDelHilo): string {
+    const citado = this.citado(mensaje);
+    if (citado === null) {
+      return 'Mensaje anterior';
+    }
+    if (citado.deletedAt !== undefined) {
+      return 'Se eliminó este mensaje';
+    }
+    return citado.bodyText || 'Archivo adjunto';
+  }
+
+  /** `true` si el mensaje es propio, de texto y sigue vivo: se puede corregir. */
+  protected puedeEditar(linea: { propio: boolean; mensaje: MensajeDelHilo }): boolean {
+    return (
+      linea.propio &&
+      linea.mensaje.estado === 'enviado' &&
+      linea.mensaje.deletedAt === undefined &&
+      !!linea.mensaje.bodyText
+    );
+  }
+
+  protected estaFijado(mensaje: MensajeDelHilo): boolean {
+    return mensaje.id !== null && this.store.fijado()?.id === mensaje.id;
+  }
+
   /** La URL de un adjunto ya resuelta, o la vista previa local si sube ahora. */
   protected urlDelAdjunto(mensaje: MensajeDelHilo): string | null {
     const local = mensaje.pendiente?.adjunto?.vistaPrevia;
@@ -366,6 +440,55 @@ export class Thread {
     this.menuAbierto.set(null);
     if (this.isBrowser && mensaje.bodyText) {
       void navigator.clipboard?.writeText(mensaje.bodyText);
+    }
+  }
+
+  /* --- Editar, eliminar y fijar (F4.5 / F4.6) ----------------------------- */
+
+  protected editar(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.store.empezarAEditar(mensaje);
+  }
+
+  protected eliminar(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.store.eliminar(mensaje);
+  }
+
+  protected fijar(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    if (this.estaFijado(mensaje)) {
+      this.store.soltarFijado();
+    } else {
+      this.store.fijar(mensaje);
+    }
+  }
+
+  protected soltarFijado(): void {
+    this.store.soltarFijado();
+  }
+
+  /** Tocar la barra del fijado salta al mensaje, si está cargado. */
+  protected irAlFijado(): void {
+    const fijado = this.store.fijado();
+    if (fijado === null || !this.isBrowser) {
+      return;
+    }
+    const nodo = this.marco()?.nativeElement.querySelector<HTMLElement>(
+      `[data-clave="${fijado.id}"]`,
+    );
+    if (nodo) {
+      nodo.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      this.destellando.set(fijado.id);
+      setTimeout(() => this.destellando.set(null), 1600);
+    }
+  }
+
+  protected alternarFijada(): void {
+    this.menuCabecera.set(false);
+    const id = this.store.activaId();
+    if (id !== null) {
+      this.preferencias.alternarFijado(id);
     }
   }
 

@@ -108,3 +108,34 @@ function mismoDia(a: Date, b: Date): boolean {
     a.getDate() === b.getDate()
   );
 }
+
+/**
+ * La última vez que se vio a alguien, como lo dice la cabecera de un chat:
+ * «últ. vez hoy a las 19:50», «últ. vez ayer a las 8:05», «últ. vez el
+ * 07/09/2026». Vacío si nunca se lo vio.
+ *
+ * @param fecha - Cuándo se lo vio por última vez.
+ * @param ahora - Con qué momento comparar (fijable en los tests).
+ */
+export function ultimaVez(fecha: Date | undefined, ahora = new Date()): string {
+  if (fecha === undefined) {
+    return '';
+  }
+  const dia = new Date(fecha);
+  if (Number.isNaN(dia.getTime())) {
+    return '';
+  }
+  if (mismoDia(dia, ahora)) {
+    return `últ. vez hoy a las ${horaDelReloj(dia)}`;
+  }
+  const ayer = new Date(ahora);
+  ayer.setDate(ahora.getDate() - 1);
+  if (mismoDia(dia, ayer)) {
+    return `últ. vez ayer a las ${horaDelReloj(dia)}`;
+  }
+  return `últ. vez el ${dia.toLocaleDateString('es', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })}`;
+}

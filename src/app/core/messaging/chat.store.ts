@@ -16,6 +16,8 @@ import { ChatSocketService } from './chat-socket.service';
 import type {
   ConversationListItem,
   DirectMessage,
+  ParticipantPreferencesUpdate,
+  ProfilePresence,
   PublicDirectoryResult,
 } from '../data-access/community/community.types';
 
@@ -28,8 +30,17 @@ const SONDEO_HILO_MS = 30_000;
 /** Cuántos mensajes trae cada página del hilo. */
 export const PAGINA_DE_MENSAJES = 30;
 
-/** Cuántas conversaciones trae la bandeja. */
+/** Cuántas conversaciones trae la bandeja de una vez. */
 const LIMITE_DE_BANDEJA = 50;
+
+/** Tope de conversaciones que se conservan al releer con «cargar más» abierto. */
+const TOPE_DE_BANDEJA = 100;
+
+/** Cuánto dura «escribiendo…» sin que llegue otro aviso (F4.1). */
+const ESCRIBIENDO_CADUCA_MS = 6_000;
+
+/** Cada cuánto se repite el aviso de «escribiendo» mientras se teclea. */
+const ESCRIBIENDO_REPITE_MS = 3_000;
 
 /**
  * Un mensaje que ya se ve en el hilo pero que el servidor todavía no acusó.
@@ -72,6 +83,10 @@ export interface MensajeDelHilo {
   readonly attachmentFileId?: string;
   readonly sentAt?: Date;
   readonly estado: 'enviando' | 'fallado' | 'enviado';
+  /** Si el autor lo corrigió después de mandarlo (F4.5). */
+  readonly isEdited?: boolean;
+  /** Si el autor lo eliminó: se pinta «Se eliminó este mensaje» (F4.5). */
+  readonly deletedAt?: Date;
   /** Sólo en los pendientes: con qué reintentar. */
   readonly pendiente?: MensajePendiente;
 }
@@ -106,6 +121,13 @@ export interface MensajeDelHilo {
  * un no-leído más— y además dispara una relectura: la fila local alcanza para
  * que la pantalla reaccione ya, y el servidor sigue siendo quien decide el
  * orden y los contadores definitivos.
+ *
+ * ## Todo lo que se marca se pinta antes de que conteste el servidor
+ *
+ * Favorito, archivar, fijar, editar, eliminar (F4): la pantalla cambia en el
+ * mismo gesto y la llamada sale detrás. Si falla, se vuelve a lo que había y
+ * se dice. Esperar la respuesta para mover una estrella es lo que hace que un
+ * chat se sienta lento aunque la red sea rápida.
  */
 @Injectable({ providedIn: 'root' })
 export class ChatStore {
@@ -130,6 +152,9 @@ export class ChatStore {
   readonly conversaciones = signal<readonly ConversationListItem[]>([]);
   readonly cargandoBandeja = signal(false);
   readonly bandejaCargada = signal(false);
+  /** El cursor para «cargar más» conversaciones, o `null` si ya están todas (F4.3). */
+  readonly cursorBandeja = signal<string | null>(null);
+  readonly cargandoMasBandeja = signal(false);
 
   /* --- Hilo abierto ------------------------------------------------------- */
 
@@ -141,6 +166,9 @@ export class ChatStore {
   readonly cargandoHilo = signal(false);
   readonly hiloCargado = signal(false);
   readonly enviando = signal(false);
+
+  /** El mensaje fijado en la barra superior del hilo abierto (F4.6). */
+  readonly fijado = signal<DirectMessage | null>(null);
 
   /** Los que todavía no acusó el servidor, de todas las conversaciones. */
   readonly pendientes = signal<readonly MensajePendiente[]>([]);
@@ -157,6 +185,9 @@ export class ChatStore {
   /** A qué mensaje se está respondiendo, si a alguno. */
   readonly respondiendoA = signal<MensajeDelHilo | null>(null);
 
+  /** Qué mensaje propio se está corrigiendo, si alguno (F4.5). */
+  readonly editando = signal<MensajeDelHilo | null>(null);
+
   /**
    * Cuántos sin leer tenía la conversación al abrirla.
    *
@@ -166,6 +197,18 @@ export class ChatStore {
    * apagarlo.
    */
   readonly noLeidosAlAbrir = signal(0);
+
+  /* --- Escribiendo y presencia (F4.1 / F4.2) ------------------------------ */
+
+  /** Quién está escribiendo, por conversación. */
+  readonly escribiendo = signal<ReadonlyMap<string, ReadonlySet<string>>>(new Map());
+
+  /** En línea o última vez, por perfil. Sólo de los hilos que se abrieron. */
+  readonly presencia = signal<ReadonlyMap<string, ProfilePresence>>(new Map());
+
+  private readonly caducidadesDeEscribiendo = new Map<string, ReturnType<typeof setTimeout>>();
+  private ultimoAvisoDeEscribiendo = 0;
+  private avisandoQueEscribo = false;
 
   /* --- Buscador de gente nueva -------------------------------------------- */
 
@@ -198,6 +241,8 @@ export class ChatStore {
         attachmentFileId: mensaje.attachmentFileId,
         sentAt: mensaje.sentAt,
         estado: 'enviado',
+        isEdited: mensaje.isEdited,
+        deletedAt: mensaje.deletedAt,
       }));
 
     const enVuelo = this.pendientes()
@@ -227,6 +272,25 @@ export class ChatStore {
     this.conversaciones().reduce((total, c) => total + c.unreadCount, 0),
   );
 
+  /** Quiénes están escribiendo en el hilo abierto, sin uno mismo. */
+  readonly escribiendoEnActiva = computed<readonly string[]>(() => {
+    const activa = this.activaId();
+    if (activa === null) {
+      return [];
+    }
+    const propio = this.perfil();
+    return [...(this.escribiendo().get(activa) ?? [])].filter((id) => id !== propio);
+  });
+
+  /** La presencia del otro lado, en una conversación directa. */
+  readonly presenciaDelOtro = computed<ProfilePresence | null>(() => {
+    const activa = this.conversacionActiva();
+    if (activa === undefined || activa.peers.length !== 1) {
+      return null;
+    }
+    return this.presencia().get(activa.peers[0].profileId) ?? null;
+  });
+
   constructor() {
     // Mensaje nuevo: se aplica sobre lo que ya hay —el hilo abierto y la fila
     // de la bandeja— y se confirma releyendo. Aplicar y releer no es
@@ -238,6 +302,8 @@ export class ChatStore {
         this.absorber([mensaje]);
         this.marcarLeido();
       }
+      // Quien mandó algo dejó de escribir, aunque el aviso no haya llegado.
+      this.aplicarEscribiendo(mensaje.conversationId, mensaje.senderProfileId, false);
       this.aplicarEnLaFila(mensaje);
       this.recargarBandeja();
     });
@@ -255,6 +321,32 @@ export class ChatStore {
     this.socket.onNewConversation
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.recargarBandeja());
+
+    // F4.1 · escribiendo… Caduca solo a los seis segundos: si el otro cerró
+    // la pestaña a mitad de frase, el «escribiendo» no puede quedar para siempre.
+    this.socket.onTyping.pipe(takeUntilDestroyed()).subscribe((evento) => {
+      this.aplicarEscribiendo(evento.conversationId, evento.profileId, evento.typing);
+    });
+
+    // F4.2 · en línea / última vez.
+    this.socket.onPresence.pipe(takeUntilDestroyed()).subscribe((presencia) => {
+      this.presencia.update((mapa) => new Map(mapa).set(presencia.profileId, presencia));
+    });
+
+    // F4.5 · alguien corrigió o eliminó: se refleja donde esté ese mensaje.
+    this.socket.onMessageUpdated.pipe(takeUntilDestroyed()).subscribe((mensaje) => {
+      this.reemplazar(mensaje);
+      this.actualizarVistaPrevia(mensaje);
+    });
+    this.socket.onMessageDeleted.pipe(takeUntilDestroyed()).subscribe((evento) => {
+      const cuando = evento.deletedAt ?? new Date();
+      this.marcarEliminado(evento.conversationId, evento.messageId, cuando);
+    });
+
+    // F4.6 · cambió el fijado.
+    this.socket.onPinned.pipe(takeUntilDestroyed()).subscribe((evento) => {
+      this.aplicarFijado(evento.conversationId, evento.pinnedMessageId);
+    });
 
     // Las fotos y documentos que aparecen en el hilo necesitan una URL
     // firmada, y pedirla desde el template sería pedirla en cada ciclo de
@@ -319,6 +411,7 @@ export class ChatStore {
     if (activa !== null) {
       this.socket.joinConversation(activa, propio);
       this.cargarHilo(true);
+      this.pedirPresencia(activa);
     }
   }
 
@@ -365,11 +458,18 @@ export class ChatStore {
       return;
     }
     this.cargandoBandeja.set(true);
+    // Si ya se habían pedido más páginas, releer conserva lo que se veía: no
+    // vale que un tic del sondeo te devuelva a las primeras cincuenta.
+    const limite = Math.min(
+      Math.max(LIMITE_DE_BANDEJA, this.conversaciones().length),
+      TOPE_DE_BANDEJA,
+    );
     this.community
-      .listConversations({ profileId: propio, limit: LIMITE_DE_BANDEJA })
+      .listConversations({ profileId: propio, limit: limite })
       .subscribe({
         next: (pagina) => {
           this.conversaciones.set(pagina.items);
+          this.cursorBandeja.set(pagina.nextCursor);
           this.bandejaCargada.set(true);
           this.cargandoBandeja.set(false);
           this.error.set('');
@@ -384,11 +484,38 @@ export class ChatStore {
       });
   }
 
+  /** Trae la página siguiente de la bandeja (F4.3). */
+  cargarMasBandeja(): void {
+    const propio = this.perfil();
+    const cursor = this.cursorBandeja();
+    if (propio === null || cursor === null || this.cargandoMasBandeja()) {
+      return;
+    }
+    this.cargandoMasBandeja.set(true);
+    this.community
+      .listConversations({ profileId: propio, limit: LIMITE_DE_BANDEJA, cursor })
+      .subscribe({
+        next: (pagina) => {
+          const conocidas = new Set(this.conversaciones().map((c) => c.id));
+          this.conversaciones.update((lista) => [
+            ...lista,
+            ...pagina.items.filter((c) => !conocidas.has(c.id)),
+          ]);
+          this.cursorBandeja.set(pagina.nextCursor);
+          this.cargandoMasBandeja.set(false);
+        },
+        error: () => {
+          this.cargandoMasBandeja.set(false);
+          this.error.set('No pudimos cargar más conversaciones.');
+        },
+      });
+  }
+
   /**
    * Aplica un mensaje recién llegado sobre su fila de la bandeja, sin esperar
    * la relectura: la vista previa cambia, la hora sube y el no-leído aumenta
-   * si el hilo no está abierto. La fila también salta al tope, que es donde la
-   * pone el servidor.
+   * si el hilo no está abierto. La fila también sube, pero **debajo de las
+   * fijadas**: fijar es justamente pedir que nada pase por encima.
    */
   private aplicarEnLaFila(mensaje: DirectMessage): void {
     const propio = this.perfil();
@@ -407,13 +534,37 @@ export class ChatStore {
           id: mensaje.id,
           senderProfileId: mensaje.senderProfileId,
           bodyText: mensaje.bodyText,
+          contentTypeConceptId: mensaje.contentTypeConceptId,
+          attachmentFileId: mensaje.attachmentFileId,
           sentAt: mensaje.sentAt,
         },
+        // Lo recién mandado nadie lo leyó todavía.
+        ...(esMio ? { lastMessageReadByPeer: false } : {}),
         unreadCount:
           esMio || abierta ? fila.unreadCount : fila.unreadCount + 1,
       };
-      return [actualizada, ...lista.filter((_, i) => i !== indice)];
+      const resto = lista.filter((_, i) => i !== indice);
+      const desde = actualizada.isPinned ? 0 : resto.filter((c) => c.isPinned).length;
+      return [...resto.slice(0, desde), actualizada, ...resto.slice(desde)];
     });
+  }
+
+  /** Cambia la vista previa de una fila si el mensaje editado era el último. */
+  private actualizarVistaPrevia(mensaje: DirectMessage): void {
+    this.conversaciones.update((lista) =>
+      lista.map((c) =>
+        c.id === mensaje.conversationId && c.lastMessage?.id === mensaje.id
+          ? {
+              ...c,
+              lastMessage: {
+                ...c.lastMessage,
+                bodyText: mensaje.bodyText,
+                ...(mensaje.deletedAt === undefined ? {} : { deletedAt: mensaje.deletedAt }),
+              },
+            }
+          : c,
+      ),
+    );
   }
 
   /** Pone en cero el contador de una fila, al abrirla. */
@@ -436,6 +587,71 @@ export class ChatStore {
     });
   }
 
+  /**
+   * Favorita, fijada o archivada, de mi lado (F4.4). Se pinta en el acto y se
+   * manda detrás; si falla, se vuelve a lo que había.
+   *
+   * Archivar quita el favorito acá también, y no sólo en el servidor: la
+   * regla es la misma y la pantalla no puede mostrar durante medio segundo
+   * una fila que está en las dos listas.
+   */
+  actualizarPreferencias(conversationId: string, cambios: Omit<ParticipantPreferencesUpdate, 'profileId'>): void {
+    const propio = this.perfil();
+    const antes = this.conversaciones().find((c) => c.id === conversationId);
+    if (propio === null || antes === undefined) {
+      return;
+    }
+
+    const optimista: ConversationListItem = {
+      ...antes,
+      ...(cambios.isFavorite === undefined ? {} : { isFavorite: cambios.isFavorite }),
+      ...(cambios.isPinned === undefined ? {} : { isPinned: cambios.isPinned }),
+    };
+    const conArchivo: ConversationListItem =
+      cambios.archived === undefined
+        ? optimista
+        : cambios.archived
+          ? { ...optimista, isFavorite: false, archivedAt: antes.archivedAt ?? new Date() }
+          : (({ archivedAt: _fuera, ...sinArchivo }) => sinArchivo)(optimista);
+    this.reemplazarFila(conArchivo);
+
+    this.community
+      .updateParticipant(conversationId, { profileId: propio, ...cambios })
+      .subscribe({
+        next: (quedo) => {
+          if (!quedo) {
+            return;
+          }
+          const actual = this.conversaciones().find((c) => c.id === conversationId);
+          if (actual === undefined) {
+            return;
+          }
+          const { archivedAt: _fuera, ...sinArchivo } = actual;
+          this.reemplazarFila({
+            ...sinArchivo,
+            isFavorite: quedo.isFavorite,
+            isPinned: quedo.isPinned,
+            ...(quedo.archivedAt === undefined ? {} : { archivedAt: quedo.archivedAt }),
+          });
+        },
+        error: () => {
+          this.reemplazarFila(antes);
+          this.error.set('No pudimos guardar el cambio en la conversación.');
+        },
+      });
+  }
+
+  /** Reemplaza una fila y reordena: fijadas primero, el resto como estaba. */
+  private reemplazarFila(fila: ConversationListItem): void {
+    this.conversaciones.update((lista) => {
+      const reemplazada = lista.map((c) => (c.id === fila.id ? fila : c));
+      return [
+        ...reemplazada.filter((c) => c.isPinned),
+        ...reemplazada.filter((c) => !c.isPinned),
+      ];
+    });
+  }
+
   /* --- Hilo --------------------------------------------------------------- */
 
   /**
@@ -449,15 +665,18 @@ export class ChatStore {
     }
     const anterior = this.activaId();
     if (anterior !== null) {
-      this.socket.leaveConversation(anterior);
+      this.dejarDeEscribir();
+      this.socket.leaveConversation(anterior, this.perfil() ?? undefined);
     }
 
     this.activaId.set(conversationId);
     this.mensajes.set([]);
     this.cursor.set(null);
     this.peerReadUpTo.set(null);
+    this.fijado.set(null);
     this.hiloCargado.set(false);
     this.respondiendoA.set(null);
+    this.editando.set(null);
     this.noLeidosAlAbrir.set(
       this.conversaciones().find((c) => c.id === conversationId)?.unreadCount ?? 0,
     );
@@ -467,6 +686,7 @@ export class ChatStore {
     if (propio !== null) {
       this.socket.joinConversation(conversationId, propio);
       this.cargarHilo(true);
+      this.pedirPresencia(conversationId);
     }
   }
 
@@ -474,13 +694,16 @@ export class ChatStore {
   cerrar(): void {
     const activa = this.activaId();
     if (activa !== null) {
-      this.socket.leaveConversation(activa);
+      this.dejarDeEscribir();
+      this.socket.leaveConversation(activa, this.perfil() ?? undefined);
     }
     this.activaId.set(null);
     this.mensajes.set([]);
     this.cursor.set(null);
+    this.fijado.set(null);
     this.hiloCargado.set(false);
     this.respondiendoA.set(null);
+    this.editando.set(null);
     if (this.temporizadorHilo !== null) {
       clearTimeout(this.temporizadorHilo);
       this.temporizadorHilo = null;
@@ -519,6 +742,7 @@ export class ChatStore {
           }
           if (primera) {
             this.mensajes.set(pagina.items);
+            this.fijado.set(pagina.pinnedMessage ?? null);
           } else {
             this.mensajes.update((lista) => [...lista, ...pagina.items]);
           }
@@ -563,6 +787,48 @@ export class ChatStore {
     }
   }
 
+  /** Reemplaza un mensaje del hilo abierto por su versión nueva, si está. */
+  private reemplazar(mensaje: DirectMessage): void {
+    if (mensaje.conversationId !== this.activaId()) {
+      return;
+    }
+    this.mensajes.update((lista) => lista.map((m) => (m.id === mensaje.id ? mensaje : m)));
+    if (this.fijado()?.id === mensaje.id) {
+      this.fijado.set(mensaje);
+    }
+  }
+
+  /** Deja un mensaje como eliminado: sin cuerpo ni adjunto, con la fecha. */
+  private marcarEliminado(conversationId: string, messageId: string, cuando: Date): void {
+    if (conversationId === this.activaId()) {
+      this.mensajes.update((lista) =>
+        lista.map((m) =>
+          m.id === messageId
+            ? { ...m, bodyText: undefined, attachmentFileId: undefined, deletedAt: cuando }
+            : m,
+        ),
+      );
+      if (this.fijado()?.id === messageId) {
+        this.fijado.set(null);
+      }
+    }
+    this.conversaciones.update((lista) =>
+      lista.map((c) =>
+        c.id === conversationId && c.lastMessage?.id === messageId
+          ? {
+              ...c,
+              lastMessage: {
+                ...c.lastMessage,
+                bodyText: undefined,
+                attachmentFileId: undefined,
+                deletedAt: cuando,
+              },
+            }
+          : c,
+      ),
+    );
+  }
+
   /** Una vez por apertura del hilo, no una por tic de sondeo. */
   private marcarLeido(): void {
     const propio = this.perfil();
@@ -579,6 +845,100 @@ export class ChatStore {
     this.community.markConversationRead(conversationId, propio).subscribe({
       next: () => this.recargarBandeja(),
       // Que el acuse falle no vale un cartel: no cambia lo que se lee.
+      error: () => undefined,
+    });
+  }
+
+  /* --- Escribiendo y presencia (F4.1 / F4.2) ------------------------------ */
+
+  private aplicarEscribiendo(conversationId: string, profileId: string, activo: boolean): void {
+    const clave = `${conversationId}:${profileId}`;
+    const caducidad = this.caducidadesDeEscribiendo.get(clave);
+    if (caducidad !== undefined) {
+      clearTimeout(caducidad);
+      this.caducidadesDeEscribiendo.delete(clave);
+    }
+    this.escribiendo.update((mapa) => {
+      const copia = new Map(mapa);
+      const quienes = new Set(copia.get(conversationId) ?? []);
+      if (activo) {
+        quienes.add(profileId);
+      } else {
+        quienes.delete(profileId);
+      }
+      if (quienes.size === 0) {
+        copia.delete(conversationId);
+      } else {
+        copia.set(conversationId, quienes);
+      }
+      return copia;
+    });
+    if (activo && this.isBrowser) {
+      this.caducidadesDeEscribiendo.set(
+        clave,
+        setTimeout(() => this.aplicarEscribiendo(conversationId, profileId, false), ESCRIBIENDO_CADUCA_MS),
+      );
+    }
+  }
+
+  /**
+   * Avisa a los demás que se está escribiendo en el hilo abierto (F4.1).
+   *
+   * Un aviso cada tres segundos mientras haya teclas, no uno por tecla: el
+   * otro lado lo deja caducar a los seis, así que con eso alcanza para que
+   * «escribiendo…» no parpadee ni inunde el socket.
+   *
+   * @param hayTexto - `false` cuando el campo quedó vacío: se avisa que se dejó.
+   */
+  avisarEscribiendo(hayTexto: boolean): void {
+    const propio = this.perfil();
+    const activa = this.activaId();
+    if (propio === null || activa === null) {
+      return;
+    }
+    if (!hayTexto) {
+      this.dejarDeEscribir();
+      return;
+    }
+    const ahora = Date.now();
+    if (this.avisandoQueEscribo && ahora - this.ultimoAvisoDeEscribiendo < ESCRIBIENDO_REPITE_MS) {
+      return;
+    }
+    this.avisandoQueEscribo = true;
+    this.ultimoAvisoDeEscribiendo = ahora;
+    this.socket.typing(activa, propio, true);
+  }
+
+  private dejarDeEscribir(): void {
+    const propio = this.perfil();
+    const activa = this.activaId();
+    if (!this.avisandoQueEscribo || propio === null || activa === null) {
+      return;
+    }
+    this.avisandoQueEscribo = false;
+    this.socket.typing(activa, propio, false);
+  }
+
+  /** Pide de una vez quién está en línea al abrir el hilo (F4.2). */
+  private pedirPresencia(conversationId: string): void {
+    const propio = this.perfil();
+    if (propio === null) {
+      return;
+    }
+    this.community.conversationPresence(conversationId, propio).subscribe({
+      next: (presencia) => {
+        if (!presencia) {
+          return;
+        }
+        this.presencia.update((mapa) => {
+          const copia = new Map(mapa);
+          for (const peer of presencia.peers) {
+            copia.set(peer.profileId, peer);
+          }
+          return copia;
+        });
+      },
+      // Sin presencia no hay «en línea», y ya está: la cabecera muestra lo de siempre.
       error: () => undefined,
     });
   }
@@ -604,6 +964,9 @@ export class ChatStore {
 
   responder(mensaje: MensajeDelHilo | null): void {
     this.respondiendoA.set(mensaje);
+    if (mensaje !== null) {
+      this.editando.set(null);
+    }
   }
 
   /**
@@ -634,6 +997,7 @@ export class ChatStore {
     this.pendientes.update((lista) => [...lista, pendiente]);
     this.guardarBorrador('');
     this.respondiendoA.set(null);
+    this.dejarDeEscribir();
     this.despachar(pendiente);
   }
 
@@ -747,6 +1111,7 @@ export class ChatStore {
       },
     };
     this.pendientes.update((lista) => [...lista, pendiente]);
+    this.dejarDeEscribir();
 
     // `PHI` y no `NORMAL`: lo que se adjunta en un chat entre paciente y
     // profesional es, con toda probabilidad, la foto de un análisis o de una
@@ -778,6 +1143,179 @@ export class ChatStore {
         this.error.set('No pudimos subir el archivo.');
       },
     });
+  }
+
+  /* --- Editar, eliminar y fijar (F4.5 / F4.6) ----------------------------- */
+
+  /** Empieza a corregir un mensaje propio: el composer toma su texto. */
+  empezarAEditar(mensaje: MensajeDelHilo | null): void {
+    this.editando.set(mensaje);
+    if (mensaje !== null) {
+      this.respondiendoA.set(null);
+    }
+  }
+
+  /**
+   * Manda el texto corregido del mensaje en edición. Se pinta ya, con la marca
+   * «editado»; si el servidor lo rechaza, vuelve el texto anterior.
+   */
+  confirmarEdicion(texto: string): void {
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    const mensaje = this.editando();
+    const cuerpo = texto.trim();
+    if (propio === null || conversationId === null || mensaje?.id == null || cuerpo === '') {
+      return;
+    }
+    const messageId = mensaje.id;
+    const anterior = this.mensajes().find((m) => m.id === messageId);
+    this.editando.set(null);
+    if (anterior === undefined || cuerpo === anterior.bodyText) {
+      return;
+    }
+
+    this.reemplazar({ ...anterior, bodyText: cuerpo, isEdited: true });
+    this.actualizarVistaPrevia({ ...anterior, bodyText: cuerpo, isEdited: true });
+    this.community
+      .editMessage(conversationId, messageId, { senderProfileId: propio, bodyText: cuerpo })
+      .subscribe({
+        next: (editado) => {
+          if (editado) {
+            this.reemplazar(editado);
+            this.actualizarVistaPrevia(editado);
+          }
+        },
+        error: () => {
+          this.reemplazar(anterior);
+          this.actualizarVistaPrevia(anterior);
+          this.error.set('No pudimos guardar la corrección.');
+        },
+      });
+  }
+
+  /** Elimina un mensaje propio. Queda «Se eliminó este mensaje» en su lugar. */
+  eliminar(mensaje: MensajeDelHilo): void {
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    if (propio === null || conversationId === null || mensaje.id === null) {
+      return;
+    }
+    const messageId = mensaje.id;
+    const anterior = this.mensajes().find((m) => m.id === messageId);
+    const filaAnterior = this.conversaciones().find((c) => c.id === conversationId);
+    const fijadoAnterior = this.fijado();
+    if (anterior === undefined) {
+      return;
+    }
+
+    this.marcarEliminado(conversationId, messageId, new Date());
+    this.community.deleteMessage(conversationId, messageId, propio).subscribe({
+      next: (borrado) => {
+        if (borrado?.deletedAt) {
+          this.marcarEliminado(conversationId, messageId, borrado.deletedAt);
+        }
+      },
+      error: () => {
+        this.reemplazar(anterior);
+        if (filaAnterior !== undefined) {
+          this.reemplazarFila(filaAnterior);
+        }
+        if (fijadoAnterior?.id === messageId) {
+          this.fijado.set(fijadoAnterior);
+        }
+        this.error.set('No pudimos eliminar el mensaje.');
+      },
+    });
+  }
+
+  /** Fija un mensaje en la barra superior. Uno a la vez: el nuevo reemplaza al anterior. */
+  fijar(mensaje: MensajeDelHilo): void {
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    if (propio === null || conversationId === null || mensaje.id === null) {
+      return;
+    }
+    const messageId = mensaje.id;
+    const anterior = this.fijado();
+    const enHilo = this.mensajes().find((m) => m.id === messageId);
+    if (enHilo !== undefined) {
+      this.fijado.set(enHilo);
+    }
+    this.marcarFijadoEnLaFila(conversationId, messageId);
+
+    this.community.pinMessage(conversationId, propio, messageId).subscribe({
+      next: () => undefined,
+      error: () => {
+        this.fijado.set(anterior);
+        this.marcarFijadoEnLaFila(conversationId, anterior?.id ?? null);
+        this.error.set('No pudimos fijar el mensaje.');
+      },
+    });
+  }
+
+  /** Suelta el mensaje fijado del hilo abierto. */
+  soltarFijado(): void {
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    const anterior = this.fijado();
+    if (propio === null || conversationId === null) {
+      return;
+    }
+    this.fijado.set(null);
+    this.marcarFijadoEnLaFila(conversationId, null);
+
+    this.community.unpinMessage(conversationId, propio).subscribe({
+      next: () => undefined,
+      error: () => {
+        this.fijado.set(anterior);
+        this.marcarFijadoEnLaFila(conversationId, anterior?.id ?? null);
+        this.error.set('No pudimos soltar el mensaje fijado.');
+      },
+    });
+  }
+
+  /** Lo que llega por el socket cuando otro fija o suelta. */
+  private aplicarFijado(conversationId: string, pinnedMessageId: string | null): void {
+    this.marcarFijadoEnLaFila(conversationId, pinnedMessageId);
+    if (conversationId !== this.activaId()) {
+      return;
+    }
+    if (pinnedMessageId === null) {
+      this.fijado.set(null);
+      return;
+    }
+    const enHilo = this.mensajes().find((m) => m.id === pinnedMessageId);
+    if (enHilo !== undefined) {
+      this.fijado.set(enHilo);
+      return;
+    }
+    // No está en lo cargado: la primera página lo trae completo.
+    const propio = this.perfil();
+    if (propio === null) {
+      return;
+    }
+    this.community
+      .listMessages(conversationId, { profileId: propio, limit: 1 })
+      .subscribe({
+        next: (pagina) => {
+          if (this.activaId() === conversationId) {
+            this.fijado.set(pagina.pinnedMessage ?? null);
+          }
+        },
+        error: () => undefined,
+      });
+  }
+
+  private marcarFijadoEnLaFila(conversationId: string, pinnedMessageId: string | null): void {
+    this.conversaciones.update((lista) =>
+      lista.map((c) => {
+        if (c.id !== conversationId) {
+          return c;
+        }
+        const { pinnedMessageId: _fuera, ...sinFijado } = c;
+        return pinnedMessageId === null ? sinFijado : { ...sinFijado, pinnedMessageId };
+      }),
+    );
   }
 
   /* --- Adjuntos ----------------------------------------------------------- */
@@ -931,7 +1469,13 @@ export class ChatStore {
           next: (pagina) => {
             if (this.activaId() === conversationId) {
               this.absorber(pagina.items);
+              // Lo que cambió en los que ya estaban —editados, eliminados—
+              // también llega por acá si el socket se perdió el aviso.
+              for (const mensaje of pagina.items) {
+                this.reemplazar(mensaje);
+              }
               this.peerReadUpTo.set(pagina.peerReadUpTo ?? null);
+              this.fijado.set(pagina.pinnedMessage ?? null);
             }
           },
           error: () => undefined,

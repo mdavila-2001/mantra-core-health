@@ -6,7 +6,9 @@
   <app-avatar [src]="avatar()" [name]="conQuien()" size="md" />
   <div class="hilo__cabecera-texto">
     <h1 class="hilo__nombre">{{ conQuien() }}</h1>
-    <p class="hilo__estado">{{ subtitulo() }}</p>
+    <p class="hilo__estado" data-testid="hilo-estado" [class.is-escribiendo]="alguienEscribe()" aria-live="polite">
+      {{ subtitulo() }}
+    </p>
   </div>
 
   <!-- El menú de la conversación, como el de la cabecera de WhatsApp: lo
@@ -39,6 +41,11 @@
           </button>
         </li>
         <li role="none">
+          <button role="menuitem" type="button" data-testid="hilo-fijar-chat" (click)="alternarFijada()">
+            {{ estaFijada() ? 'Soltar de arriba' : 'Fijar arriba' }}
+          </button>
+        </li>
+        <li role="none">
           <button role="menuitem" type="button" data-testid="hilo-archivar" (click)="alternarArchivado()">
             {{ estaArchivado() ? 'Desarchivar' : 'Archivar' }}
           </button>
@@ -47,6 +54,30 @@
     }
   </div>
 </header>
+
+<!-- ── El mensaje fijado (F4.6) ───────────────────────────────────────── -->
+@if (store.fijado(); as fijado) {
+  <div class="hilo__fijado" data-testid="hilo-fijado">
+    <button class="hilo__fijado-texto" type="button" (click)="irAlFijado()">
+      <span class="hilo__fijado-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 17v5M9 3h6l-1 6 3 3H7l3-3z" /></svg>
+      </span>
+      <span class="hilo__fijado-cuerpo">
+        <span class="hilo__fijado-rotulo">Mensaje fijado</span>
+        <span class="hilo__fijado-detalle">{{ textoFijado() }}</span>
+      </span>
+    </button>
+    <button
+      class="hilo__fijado-soltar"
+      type="button"
+      data-testid="hilo-soltar-fijado"
+      aria-label="Soltar el mensaje fijado"
+      (click)="soltarFijado()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+  </div>
+}
 
 <!-- ── Mensajes ───────────────────────────────────────────────────────── -->
 <div class="hilo__mensajes-marco" #marco (scroll)="alScrollear($event)">
@@ -87,6 +118,7 @@
               [class.is-abre]="linea.abreBloque"
               [class.is-destello]="destellando() === linea.clave"
               [class.is-fallado]="linea.mensaje.estado === 'fallado'"
+              [class.is-eliminado]="linea.mensaje.deletedAt !== undefined"
               [attr.data-propio]="linea.propio"
             >
               @if (esGrupo() && linea.abreBloque && !linea.propio) {
@@ -102,14 +134,20 @@
                   (click)="irACitado(linea.mensaje)"
                 >
                   <span class="hilo__cita-autor">{{ autorDeLaCita(linea.mensaje) }}</span>
-                  <span class="hilo__cita-texto">
-                    {{ citado(linea.mensaje)?.bodyText || 'Archivo adjunto' }}
-                  </span>
+                  <span class="hilo__cita-texto">{{ textoDeLaCita(linea.mensaje) }}</span>
                 </button>
               }
 
+              <!-- Un mensaje eliminado deja su lugar, no un hueco (F4.5). -->
+              @if (linea.mensaje.deletedAt !== undefined) {
+                <p class="hilo__eliminado" data-testid="hilo-eliminado">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></svg>
+                  Se eliminó este mensaje
+                </p>
+              }
+
               <!-- El adjunto, según lo que sea. -->
-              @if (linea.mensaje.attachmentFileId || linea.mensaje.pendiente?.adjunto) {
+              @if (linea.mensaje.deletedAt === undefined && (linea.mensaje.attachmentFileId || linea.mensaje.pendiente?.adjunto)) {
                 @if (urlDelAdjunto(linea.mensaje); as url) {
                   @if (esImagen(linea.mensaje)) {
                     <button
@@ -143,6 +181,9 @@
                    que un mensaje corto ocupe una línea y no dos. -->
               <span class="hilo__meta">
                 <span class="solo-lectores">{{ linea.propio ? 'Vos' : linea.autor }}, </span>
+                @if (linea.mensaje.isEdited && linea.mensaje.deletedAt === undefined) {
+                  <span class="hilo__editado" data-testid="hilo-editado">editado</span>
+                }
                 @if (linea.mensaje.sentAt) {
                   <span class="hilo__hora">{{ hora(linea.mensaje.sentAt) }}</span>
                 }
@@ -190,7 +231,7 @@
               }
 
               <!-- El menú del mensaje, como la flecha de WhatsApp. -->
-              @if (linea.mensaje.estado === 'enviado') {
+              @if (linea.mensaje.estado === 'enviado' && linea.mensaje.deletedAt === undefined) {
                 <button
                   class="hilo__mas-mensaje"
                   type="button"
@@ -212,6 +253,25 @@
                     @if (linea.mensaje.bodyText) {
                       <li role="none">
                         <button role="menuitem" type="button" (click)="copiar(linea.mensaje)">Copiar</button>
+                      </li>
+                    }
+                    <li role="none">
+                      <button role="menuitem" type="button" data-testid="hilo-fijar" (click)="fijar(linea.mensaje)">
+                        {{ estaFijado(linea.mensaje) ? 'Soltar' : 'Fijar' }}
+                      </button>
+                    </li>
+                    @if (puedeEditar(linea)) {
+                      <li role="none">
+                        <button role="menuitem" type="button" data-testid="hilo-editar" (click)="editar(linea.mensaje)">
+                          Editar
+                        </button>
+                      </li>
+                    }
+                    @if (linea.propio) {
+                      <li role="none">
+                        <button role="menuitem" type="button" class="is-peligro" data-testid="hilo-eliminar" (click)="eliminar(linea.mensaje)">
+                          Eliminar
+                        </button>
                       </li>
                     }
                   </ul>

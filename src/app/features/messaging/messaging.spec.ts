@@ -106,8 +106,9 @@ describe('Messaging', () => {
     // pasan cuando la prueba lo dice, no cuando quiera la máquina.
     vi.useFakeTimers();
 
-    // El favorito y el archivado viven en `localStorage`: sin limpiarlo, lo que
-    // marca una prueba se lo encuentra la siguiente.
+    // Los emojis recientes viven en `localStorage` (y antes de F4.4 también
+    // favoritos y archivados): sin limpiarlo, lo que deja una prueba se lo
+    // encuentra la siguiente.
     localStorage.removeItem('alovida.chat-preferencias');
 
     TestBed.configureTestingModule({
@@ -243,6 +244,14 @@ describe('Messaging', () => {
     TestBed.inject(ChatPreferencias).alternarArchivado('c-1');
     fixture.detectChanges();
 
+    // F4.4: se pinta en el acto y viaja a la API.
+    http
+      .expectOne(
+        (r) => r.method === 'PATCH' && r.url === '/community/conversations/c-1/participant',
+      )
+      .flush({ conversationId: 'c-1', isFavorite: false, isPinned: false, archivedAt: '2026-09-09T10:00:00.000Z' });
+    fixture.detectChanges();
+
     expect(todas('conversacion').length).toBe(1);
     expect(texto()).not.toContain('Dra. Quispe');
     expect(consultar('mensajeria-archivados')).not.toBeNull();
@@ -253,6 +262,126 @@ describe('Messaging', () => {
     // En el cajón está la archivada, y sólo ella.
     expect(todas('conversacion').length).toBe(1);
     expect(texto()).toContain('Dra. Quispe');
+  });
+
+  /* --- F4.3 / F4.4 -------------------------------------------------------- */
+
+  it('lo que la API dice fijado y favorito se ve así, y lo fijado va primero', () => {
+    conBandeja([
+      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
+      { ...conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Rojas' }]), isPinned: true, isFavorite: true },
+    ]);
+
+    const filas = todas('conversacion');
+    expect(filas.length).toBe(2);
+    expect(todas('conversacion-fijada').length).toBe(1);
+    expect(TestBed.inject(ChatPreferencias).esFavorito('c-2')).toBe(true);
+
+    // Al cambiar el orden localmente (favorito de una no fijada) la fijada sigue arriba.
+    TestBed.inject(ChatPreferencias).alternarFavorito('c-1');
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.method === 'PATCH' && r.url === '/community/conversations/c-1/participant')
+      .flush({ conversationId: 'c-1', isFavorite: true, isPinned: false, archivedAt: null });
+    fixture.detectChanges();
+    const nombres = todas('conversacion').map((f) => f.textContent ?? '');
+    expect(nombres[0]).toContain('Lic. Rojas');
+  });
+
+  it('si la API rechaza el cambio, la fila vuelve a como estaba y se avisa', () => {
+    conBandeja([
+      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
+    ]);
+
+    TestBed.inject(ChatPreferencias).alternarFavorito('c-1');
+    fixture.detectChanges();
+    expect(TestBed.inject(ChatPreferencias).esFavorito('c-1')).toBe(true);
+
+    http
+      .expectOne((r) => r.method === 'PATCH' && r.url === '/community/conversations/c-1/participant')
+      .error(new ProgressEvent('error'));
+    fixture.detectChanges();
+
+    expect(TestBed.inject(ChatPreferencias).esFavorito('c-1')).toBe(false);
+    expect(texto()).toContain('No pudimos guardar el cambio');
+  });
+
+  it('el doble tilde de la fila sólo cuando la API dice que el otro leyó', () => {
+    const propio = (id: string, leido: boolean | null) => ({
+      ...conversacion(id, [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
+      lastMessage: { id: 'm-1', senderProfileId: 'pp-1', bodyText: 'Gracias', sentAt: '2026-08-18T10:00:00.000Z' },
+      lastMessageReadByPeer: leido,
+    });
+    conBandeja([propio('c-1', true), propio('c-2', false), propio('c-3', null)]);
+
+    const ticks = todas('conversacion-tick');
+    expect(ticks.length).toBe(3);
+    expect(ticks[0].classList.contains('is-leido')).toBe(true);
+    expect(ticks[1].classList.contains('is-leido')).toBe(false);
+    expect(ticks[2].classList.contains('is-leido')).toBe(false);
+  });
+
+  it('con más páginas ofrece «cargar más» y las suma sin repetir', () => {
+    montar();
+    http.expectOne('/community/profiles/me').flush(perfilPropio);
+    fixture.detectChanges();
+    http.expectOne((r) => r.url === '/community/conversations').flush({
+      items: [conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])],
+      count: 1,
+      limit: 50,
+      nextCursor: 'cur-1',
+    });
+    fixture.detectChanges();
+
+    expect(consultar('mensajeria-cargar-mas')).not.toBeNull();
+    consultar('mensajeria-cargar-mas')?.click();
+    fixture.detectChanges();
+
+    const siguiente = http.expectOne(
+      (r) => r.url === '/community/conversations' && r.params.get('cursor') === 'cur-1',
+    );
+    siguiente.flush({
+      items: [
+        conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
+        conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Rojas' }]),
+      ],
+      count: 2,
+      limit: 50,
+      nextCursor: null,
+    });
+    fixture.detectChanges();
+
+    expect(todas('conversacion').length).toBe(2);
+    expect(consultar('mensajeria-cargar-mas')).toBeNull();
+  });
+
+  it('lo marcado en el navegador antes de F4.4 sube a la API una sola vez', () => {
+    localStorage.setItem(
+      'alovida.chat-preferencias',
+      JSON.stringify({ favoritos: ['c-1'], archivados: ['c-2'], emojis: ['😀'] }),
+    );
+    conBandeja([
+      conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
+      conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Rojas' }]),
+    ]);
+    // El efecto de migración corre después de la carga.
+    TestBed.inject(ChatPreferencias);
+    fixture.detectChanges();
+
+    const pedidos = http.match(
+      (r) => r.method === 'PATCH' && r.url.endsWith('/participant'),
+    );
+    expect(pedidos.map((p) => [p.request.url, p.request.body])).toEqual([
+      ['/community/conversations/c-1/participant', { profileId: 'pp-1', isFavorite: true }],
+      ['/community/conversations/c-2/participant', { profileId: 'pp-1', archived: true }],
+    ]);
+    pedidos.forEach((p) => p.flush(null));
+
+    // Y el navegador se olvida de favoritos y archivados; los emojis quedan.
+    const guardado = JSON.parse(localStorage.getItem('alovida.chat-preferencias') ?? '{}');
+    expect(guardado.favoritos).toBeUndefined();
+    expect(guardado.archivados).toBeUndefined();
+    expect(guardado.emojis).toEqual(['😀']);
   });
 
   it('no borra la bandeja cuando un tic falla', () => {

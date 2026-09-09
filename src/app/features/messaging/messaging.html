@@ -150,6 +150,18 @@
             [resaltar]="consulta()"
             (accion)="atender($event)"
           />
+          <!-- Las que no entraron en la primera página (F4.3). -->
+          @if (store.cursorBandeja() !== null && !verArchivados() && consulta().trim() === '') {
+            <button
+              class="mensajeria__mas"
+              type="button"
+              data-testid="mensajeria-cargar-mas"
+              [disabled]="store.cargandoMasBandeja()"
+              (click)="store.cargarMasBandeja()"
+            >
+              {{ store.cargandoMasBandeja() ? 'Cargando…' : 'Cargar más conversaciones' }}
+            </button>
+          }
         }
       </div>
     </section>

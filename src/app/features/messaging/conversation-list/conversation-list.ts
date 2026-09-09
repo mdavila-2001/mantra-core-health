@@ -17,7 +17,7 @@ import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 
 /** Lo que la fila le pide a la pantalla que haga. */
 export interface AccionDeFila {
-  readonly tipo: 'favorito' | 'archivar' | 'leer' | 'perfil';
+  readonly tipo: 'favorito' | 'fijar' | 'archivar' | 'leer' | 'perfil';
   readonly conversationId: string;
 }
 
@@ -74,6 +74,19 @@ export class ConversationList {
     return this.preferencias.estaArchivado(id);
   }
 
+  protected estaFijado(id: string): boolean {
+    return this.preferencias.estaFijado(id);
+  }
+
+  /**
+   * `true` si el último mensaje es propio y el otro lado ya lo leyó: el doble
+   * tilde de la fila (F4.3). Sólo cuando el backend lo dice; si no se sabe, se
+   * pinta uno solo, que es lo único cierto.
+   */
+  protected leidoPorElOtro(conversacion: ConversationListItem): boolean {
+    return this.esPropio(conversacion) && conversacion.lastMessageReadByPeer === true;
+  }
+
   /** `8:00 p.m.`, `Ayer`, `lunes` o `07/09/2026`. */
   protected hora(conversacion: ConversationListItem): string {
     const cuando = conversacion.lastMessageAt;
@@ -113,25 +126,37 @@ export class ConversationList {
    * La vista previa del último mensaje.
    *
    * Un adjunto no tiene texto, así que sin esto la fila queda muda justo
-   * cuando lo que pasó fue que te mandaron una foto. El contrato de la lista
-   * todavía no dice de qué tipo era —está pedido al backend—, así que un
-   * mensaje sin cuerpo se anuncia como archivo, que es lo único que puede ser.
+   * cuando lo que pasó fue que te mandaron una foto. Desde F4.3 la lista dice
+   * si el último era un adjunto (`attachmentFileId`) y si se eliminó.
    */
   protected vistaPrevia(conversacion: ConversationListItem): string {
-    const cuerpo = conversacion.lastMessage?.bodyText;
+    const ultimo = conversacion.lastMessage;
+    if (ultimo === undefined) {
+      return '';
+    }
+    if (ultimo.deletedAt !== undefined) {
+      return 'Se eliminó este mensaje';
+    }
+    const cuerpo = ultimo.bodyText;
     if (cuerpo !== undefined && cuerpo.trim() !== '') {
       return cuerpo;
     }
-    return conversacion.lastMessage === undefined ? '' : 'Archivo adjunto';
+    return 'Archivo adjunto';
   }
 
   /** `true` si el último mensaje es un adjunto sin texto. */
   protected esAdjunto(conversacion: ConversationListItem): boolean {
-    const cuerpo = conversacion.lastMessage?.bodyText;
-    return (
-      conversacion.lastMessage !== undefined &&
-      (cuerpo === undefined || cuerpo.trim() === '')
-    );
+    const ultimo = conversacion.lastMessage;
+    if (ultimo === undefined || ultimo.deletedAt !== undefined) {
+      return false;
+    }
+    const cuerpo = ultimo.bodyText;
+    return ultimo.attachmentFileId !== undefined || cuerpo === undefined || cuerpo.trim() === '';
+  }
+
+  /** `true` si el último mensaje se eliminó: la fila lo dice en itálica. */
+  protected esEliminado(conversacion: ConversationListItem): boolean {
+    return conversacion.lastMessage?.deletedAt !== undefined;
   }
 
   /** `true` si es una conversación de grupo. */

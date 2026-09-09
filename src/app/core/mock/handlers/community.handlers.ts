@@ -17,6 +17,7 @@ import {
   vitrinaPorSlug,
   vitrinas,
   type ComentarioSimulado,
+  type ConversacionSimulada,
   type MensajeSimulado,
   type PublicacionSimulada,
   type VitrinaSimulada,
@@ -149,17 +150,42 @@ function hiloDeComentarios(postId: string) {
   return todos.filter((c) => c.parentCommentId === null).map(armar);
 }
 
-function conversacion(c: { id: string; conversationTypeConceptId: string; groupId: string | null; participantes: readonly string[]; noLeidosPor: Record<string, number> }, yo: string) {
+/** Un mensaje como viaja: eliminado va sin cuerpo ni adjunto (F4.5). */
+function mensajeAlCable(m: MensajeSimulado) {
+  const eliminado = m.deletedAt !== undefined && m.deletedAt !== null;
+  return {
+    ...m,
+    bodyText: eliminado ? null : m.bodyText,
+    attachmentFileId: eliminado ? null : m.attachmentFileId,
+    deletedAt: m.deletedAt ?? null,
+  };
+}
+
+/** Quién está en línea en la maqueta: soporte siempre; el resto, «última vez» fija. */
+function presenciaDe(profileId: string) {
+  if (profileId === SOPORTE_ID) return { profileId, online: true, lastSeenAt: ahora() };
+  return { profileId, online: false, lastSeenAt: iso(0, 9) };
+}
+
+function conversacion(c: ConversacionSimulada, yo: string) {
   const delHilo = mensajes.filtrar((m) => m.conversationId === c.id).sort((a, b) => a.sentAt.localeCompare(b.sentAt));
   const ultimo = delHilo.at(-1);
+  const prefs = c.preferenciasPor?.[yo];
+  const otro = c.participantes.find((p) => p !== yo);
   return {
     id: c.id,
     conversationTypeConceptId: c.conversationTypeConceptId,
     groupId: c.groupId,
     lastMessageAt: ultimo?.sentAt ?? null,
     messageCount: delHilo.length,
-    lastMessage: ultimo === undefined ? null : { id: ultimo.id, senderProfileId: ultimo.senderProfileId, bodyText: ultimo.bodyText, sentAt: ultimo.sentAt },
+    lastMessage: ultimo === undefined ? null : { id: ultimo.id, senderProfileId: ultimo.senderProfileId, bodyText: ultimo.deletedAt ? null : ultimo.bodyText, contentTypeConceptId: ultimo.contentTypeConceptId, attachmentFileId: ultimo.deletedAt ? null : ultimo.attachmentFileId, deletedAt: ultimo.deletedAt ?? null, sentAt: ultimo.sentAt },
     unreadCount: c.noLeidosPor[yo] ?? 0,
+    // F4.3: en la maqueta el otro lado «leyó» cuando no le quedan pendientes.
+    lastMessageReadByPeer: ultimo !== undefined && ultimo.senderProfileId === yo && otro !== undefined ? (c.noLeidosPor[otro] ?? 0) === 0 : null,
+    isFavorite: prefs?.isFavorite ?? false,
+    isPinned: prefs?.isPinned ?? false,
+    archivedAt: prefs?.archivedAt ?? null,
+    pinnedMessageId: c.pinnedMessageId ?? null,
     peers: c.participantes
       .filter((p) => p !== yo)
       .map((p) => {
@@ -558,11 +584,81 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.get('/community/conversations', ({ query }) => {
     const yo = texto(query, 'profileId') ?? '';
-    const items = conversaciones
+    const q = (texto(query, 'q') ?? '').trim().toLowerCase();
+    const todas = conversaciones
       .filtrar((c) => c.participantes.includes(yo))
       .map((c) => conversacion(c, yo))
       .sort((a, b) => (b.lastMessageAt ?? '').localeCompare(a.lastMessageAt ?? ''));
-    return { items, count: items.length, limit: Number(query.get('limit') ?? 20) || 20, nextCursor: null };
+    // Fijadas primero (F4.4), y el recorte por texto (F4.3).
+    const ordenadas = [...todas.filter((c) => c.isPinned), ...todas.filter((c) => !c.isPinned)].filter(
+      (c) => q === '' || c.peers.some((p) => p.displayName.toLowerCase().includes(q)) || (c.lastMessage?.bodyText ?? '').toLowerCase().includes(q),
+    );
+    const limite = Number(query.get('limit') ?? 20) || 20;
+    const cursor = texto(query, 'cursor');
+    const desde = cursor === null ? 0 : ordenadas.findIndex((c) => c.id === cursor) + 1;
+    const items = ordenadas.slice(desde, desde + limite);
+    const ultimo = items.at(-1);
+    return { items, count: items.length, limit: limite, nextCursor: desde + limite < ordenadas.length && ultimo !== undefined ? ultimo.id : null };
+  });
+
+  router.patch('/community/conversations/:id/participant', (request) => {
+    const c = conversaciones.get(request.params['id']!);
+    if (c === undefined) return notFound('Conversación no encontrada');
+    const datos = cuerpo<{ profileId: string; isFavorite?: boolean; isPinned?: boolean; archived?: boolean }>(request);
+    const yo = datos.profileId ?? vitrinaDeSesion(request)?.id ?? '';
+    const antes = c.preferenciasPor?.[yo] ?? { isFavorite: false, isPinned: false, archivedAt: null };
+    const despues = {
+      isFavorite: datos.archived === true ? false : (datos.isFavorite ?? antes.isFavorite),
+      isPinned: datos.isPinned ?? antes.isPinned,
+      archivedAt: datos.archived === undefined ? antes.archivedAt : datos.archived ? (antes.archivedAt ?? ahora()) : null,
+    };
+    conversaciones.actualizar(c.id, { preferenciasPor: { ...c.preferenciasPor, [yo]: despues } });
+    return { conversationId: c.id, ...despues };
+  });
+
+  router.get('/community/conversations/:id/presence', ({ params, query }) => {
+    const c = conversaciones.get(params['id']!);
+    if (c === undefined) return notFound('Conversación no encontrada');
+    const yo = texto(query, 'profileId') ?? '';
+    return { conversationId: c.id, peers: c.participantes.filter((p) => p !== yo).map(presenciaDe) };
+  });
+
+  router.post('/community/conversations/:id/pin', (request) => {
+    const c = conversaciones.get(request.params['id']!);
+    if (c === undefined) return notFound('Conversación no encontrada');
+    const datos = cuerpo<{ profileId: string; messageId: string }>(request);
+    const m = mensajes.get(datos.messageId ?? '');
+    if (m === undefined || m.conversationId !== c.id || m.deletedAt) return notFound('Mensaje no encontrado');
+    conversaciones.actualizar(c.id, { pinnedMessageId: m.id });
+    return { conversationId: c.id, pinnedMessageId: m.id };
+  });
+
+  router.delete('/community/conversations/:id/pin', ({ params }) => {
+    const c = conversaciones.get(params['id']!);
+    if (c === undefined) return notFound('Conversación no encontrada');
+    conversaciones.actualizar(c.id, { pinnedMessageId: null });
+    return { conversationId: c.id, pinnedMessageId: null };
+  });
+
+  router.patch('/community/conversations/:id/messages/:messageId', (request) => {
+    const m = mensajes.get(request.params['messageId']!);
+    if (m === undefined || m.conversationId !== request.params['id']) return notFound('Mensaje no encontrado');
+    const datos = cuerpo<{ senderProfileId: string; bodyText: string }>(request);
+    if (m.senderProfileId !== datos.senderProfileId || m.deletedAt) return { status: 412, body: { message: 'Sólo el autor puede editar su mensaje' } };
+    const editado = mensajes.actualizar(m.id, { bodyText: datos.bodyText ?? m.bodyText, isEdited: true })!;
+    return mensajeAlCable(editado);
+  });
+
+  router.delete('/community/conversations/:id/messages/:messageId', ({ params, query }) => {
+    const m = mensajes.get(params['messageId']!);
+    if (m === undefined || m.conversationId !== params['id']) return notFound('Mensaje no encontrado');
+    const yo = texto(query, 'profileId') ?? '';
+    if (m.senderProfileId !== yo || m.deletedAt) return { status: 412, body: { message: 'Sólo el autor puede eliminar su mensaje' } };
+    const cuando = ahora();
+    mensajes.actualizar(m.id, { deletedAt: cuando });
+    const c = conversaciones.get(m.conversationId);
+    if (c?.pinnedMessageId === m.id) conversaciones.actualizar(c.id, { pinnedMessageId: null });
+    return { conversationId: m.conversationId, messageId: m.id, deletedAt: cuando };
   });
 
   router.post('/community/conversations', (request) => {
@@ -577,9 +673,17 @@ export function registrarComunidad(router: MockRouter): void {
   router.get('/community/conversations/:id/messages', ({ params, query }) => {
     const items = mensajes
       .filtrar((m) => m.conversationId === params['id'])
-      .sort((a, b) => b.sentAt.localeCompare(a.sentAt));
+      .sort((a, b) => b.sentAt.localeCompare(a.sentAt))
+      .map(mensajeAlCable);
     const pagina = paginar(items, query, 30);
-    return { ...pagina, peerReadUpTo: items.length > 1 ? items[1]!.sentAt : null };
+    const c = conversaciones.get(params['id']!);
+    const fijado = c?.pinnedMessageId ? mensajes.get(c.pinnedMessageId) : undefined;
+    return {
+      ...pagina,
+      peerReadUpTo: items.length > 1 ? items[1]!.sentAt : null,
+      // El fijado viaja completo sólo en la primera página (F4.6).
+      ...(texto(query, 'cursor') === null ? { pinnedMessage: fijado === undefined || fijado.deletedAt ? null : mensajeAlCable(fijado) } : {}),
+    };
   });
 
   router.post('/community/conversations/:id/messages', (request) => {

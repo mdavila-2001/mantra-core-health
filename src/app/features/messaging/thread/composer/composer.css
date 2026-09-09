@@ -317,3 +317,13 @@
     padding-inline: var(--e3);
   }
 }
+
+/* La tira de edición se distingue de la de respuesta por el color del borde:
+   son el mismo lugar con otra intención. */
+.composer__respuesta--edicion {
+  border-inline-start-color: var(--chat-no-leido);
+}
+
+.composer__respuesta--edicion .composer__respuesta-autor {
+  color: var(--chat-no-leido);
+}

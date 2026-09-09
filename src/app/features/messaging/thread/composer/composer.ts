@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   output,
@@ -89,6 +90,17 @@ export class Composer {
       this.limpiarAdjunto();
     });
 
+    // «Editar» llega desde el hilo (F4.5): el campo toma el texto del
+    // mensaje y el foco, que es lo único que se quiere hacer después de
+    // elegir corregir.
+    effect(() => {
+      const editando = this.store.editando();
+      if (editando !== null) {
+        this.texto.set(editando.bodyText ?? '');
+        this.enfocar();
+      }
+    });
+
     // El «responder» llega desde el hilo: cuando aparece, el foco va al campo,
     // que es lo único que se quiere hacer después de elegir responder.
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
@@ -102,21 +114,46 @@ export class Composer {
 
   protected alEscribir(valor: string): void {
     this.texto.set(valor);
-    this.store.guardarBorrador(valor);
+    if (this.store.editando() === null) {
+      this.store.guardarBorrador(valor);
+      // F4.1: que el otro lado vea «escribiendo…». Corregir no cuenta.
+      this.store.avisarEscribiendo(valor.trim() !== '');
+    }
   }
 
-  /** Enter envía; Shift+Enter hace salto de línea. */
+  /** Enter envía; Shift+Enter hace salto de línea; Esc cancela responder o editar. */
   protected alTeclear(evento: KeyboardEvent): void {
     if (evento.key === 'Enter' && !evento.shiftKey) {
       evento.preventDefault();
       this.enviar();
     }
-    if (evento.key === 'Escape' && this.store.respondiendoA() !== null) {
-      this.store.responder(null);
+    if (evento.key === 'Escape') {
+      if (this.store.editando() !== null) {
+        this.cancelarEdicion();
+      } else if (this.store.respondiendoA() !== null) {
+        this.store.responder(null);
+      }
     }
   }
 
+  /** Deja la corrección y vuelve a lo que se estaba escribiendo. */
+  protected cancelarEdicion(): void {
+    this.store.empezarAEditar(null);
+    this.texto.set(this.store.borrador());
+  }
+
   protected enviar(): void {
+    // Corregir un mensaje (F4.5) usa el mismo campo y el mismo botón: el
+    // gesto es «escribí y mandé», sea un mensaje nuevo o la corrección de uno.
+    if (this.store.editando() !== null) {
+      if (this.texto().trim() === '') {
+        return;
+      }
+      this.store.confirmarEdicion(this.texto());
+      this.texto.set(this.store.borrador());
+      this.enfocar();
+      return;
+    }
     const archivo = this.adjunto();
     if (archivo !== null) {
       this.store.enviarAdjunto(archivo, this.texto());

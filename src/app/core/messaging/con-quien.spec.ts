@@ -5,6 +5,8 @@ function conversacion(peers: ConversationListItem['peers']): ConversationListIte
   return {
     id: 'c-1',
     conversationTypeConceptId: 'ct',
+    isFavorite: false,
+    isPinned: false,
     unreadCount: 0,
     peers,
   };

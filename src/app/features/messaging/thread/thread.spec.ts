@@ -266,6 +266,8 @@ describe('Thread', () => {
         conversationTypeConceptId: 'c-direct',
         unreadCount: 2,
         peers: [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }],
+        isFavorite: false,
+        isPinned: false,
       },
     ]);
     store.noLeidosAlAbrir.set(2);
@@ -302,8 +304,165 @@ describe('Thread', () => {
     // Archivar quita el favorito: la misma regla que en la bandeja.
     expect(preferencias.esFavorito('c-1')).toBe(false);
 
-    // Se deja el navegador como estaba: las preferencias viven en localStorage.
-    preferencias.alternarArchivado('c-1');
+    // F4.4: lo marcado viaja a la API, no al navegador.
+    const pedidos = http.match(
+      (r) => r.method === 'PATCH' && r.url === '/community/conversations/c-1/participant',
+    );
+    expect(pedidos.map((p) => p.request.body)).toEqual([
+      { profileId: 'pp-1', isFavorite: true },
+      { profileId: 'pp-1', archived: true },
+    ]);
+    pedidos.forEach((p) => p.flush(null));
+  });
+
+  /* --- F4.1 / F4.2 · escribiendo y presencia ------------------------------ */
+
+  it('«escribiendo…» y «en línea» se leen bajo el nombre', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+    http
+      .match((r) => r.url === '/community/conversations/c-1/presence')
+      .forEach((p) =>
+        p.flush({
+          conversationId: 'c-1',
+          peers: [{ profileId: 'pp-2', online: true, lastSeenAt: null }],
+        }),
+      );
+    fixture.detectChanges();
+    expect(consultar('hilo-estado')?.textContent?.trim()).toBe('en línea');
+
+    // Llega «escribiendo» por el socket: gana sobre la presencia.
+    store.escribiendo.set(new Map([['c-1', new Set(['pp-2'])]]));
+    fixture.detectChanges();
+    expect(consultar('hilo-estado')?.textContent?.trim()).toBe('escribiendo…');
+
+    store.escribiendo.set(new Map());
+    store.presencia.set(
+      new Map([
+        [
+          'pp-2',
+          { profileId: 'pp-2', online: false, lastSeenAt: new Date('2026-08-18T09:05:00') },
+        ],
+      ]),
+    );
+    fixture.detectChanges();
+    expect(consultar('hilo-estado')?.textContent).toContain('últ. vez');
+  });
+
+  /* --- F4.5 · editar y eliminar ------------------------------------------- */
+
+  it('editar un mensaje propio manda el PATCH y deja la marca «editado»', async () => {
+    abrir([mensaje('m-1', 'pp-1', 'Traé los estudos')]);
+
+    consultar('hilo-menu-mensaje')?.click();
+    fixture.detectChanges();
+    consultar('hilo-editar')?.click();
+    fixture.detectChanges();
+
+    // El campo toma el texto y avisa que se está corrigiendo. `ngModel`
+    // escribe el valor en el DOM en una microtarea: hay que esperarla.
+    expect(consultar('composer-edicion')).not.toBeNull();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect((consultar('hilo-texto') as HTMLTextAreaElement).value).toBe('Traé los estudos');
+
+    escribir('Traé los estudios');
+    (consultar('hilo-enviar') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const pedido = http.expectOne(
+      (r) => r.method === 'PATCH' && r.url === '/community/conversations/c-1/messages/m-1',
+    );
+    expect(pedido.request.body).toEqual({ senderProfileId: 'pp-1', bodyText: 'Traé los estudios' });
+    // Ya se ve corregido antes de que conteste el servidor.
+    expect(burbujas()[0].textContent).toContain('Traé los estudios');
+    expect(consultar('hilo-editado')).not.toBeNull();
+    pedido.flush({ ...mensaje('m-1', 'pp-1', 'Traé los estudios'), isEdited: true });
+    fixture.detectChanges();
+    expect(consultar('composer-edicion')).toBeNull();
+  });
+
+  it('eliminar deja «Se eliminó este mensaje» en su lugar, sin hueco', () => {
+    abrir([mensaje('m-2', 'pp-2', 'Ok'), mensaje('m-1', 'pp-1', 'Esto no')]);
+
+    // El menú del propio (m-1, el primero en orden de lectura).
+    const menus = fixture.nativeElement.querySelectorAll('[data-testid="hilo-menu-mensaje"]');
+    (menus[0] as HTMLElement).click();
+    fixture.detectChanges();
+    consultar('hilo-eliminar')?.click();
+    fixture.detectChanges();
+
+    const pedido = http.expectOne(
+      (r) => r.method === 'DELETE' && r.url === '/community/conversations/c-1/messages/m-1',
+    );
+    expect(pedido.request.params.get('profileId')).toBe('pp-1');
+    expect(burbujas().length).toBe(2);
+    expect(consultar('hilo-eliminado')?.textContent).toContain('Se eliminó este mensaje');
+    expect(burbujas()[0].textContent).not.toContain('Esto no');
+    pedido.flush({ conversationId: 'c-1', messageId: 'm-1', deletedAt: '2026-08-18T12:00:00.000Z' });
+  });
+
+  it('un mensaje ajeno no ofrece editar ni eliminar', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+    consultar('hilo-menu-mensaje')?.click();
+    fixture.detectChanges();
+    expect(consultar('hilo-editar')).toBeNull();
+    expect(consultar('hilo-eliminar')).toBeNull();
+    expect(consultar('hilo-fijar')).not.toBeNull();
+  });
+
+  /* --- F4.6 · fijar ---------------------------------------------------------- */
+
+  it('fijar pone la barra arriba y soltar la saca', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Turno: martes 10:00')]);
+    expect(consultar('hilo-fijado')).toBeNull();
+
+    consultar('hilo-menu-mensaje')?.click();
+    fixture.detectChanges();
+    consultar('hilo-fijar')?.click();
+    fixture.detectChanges();
+
+    const fijar = http.expectOne(
+      (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/pin',
+    );
+    expect(fijar.request.body).toEqual({ profileId: 'pp-1', messageId: 'm-1' });
+    expect(consultar('hilo-fijado')?.textContent).toContain('Turno: martes 10:00');
+    fijar.flush({ conversationId: 'c-1', pinnedMessageId: 'm-1' });
+
+    consultar('hilo-soltar-fijado')?.click();
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.method === 'DELETE' && r.url === '/community/conversations/c-1/pin')
+      .flush({ conversationId: 'c-1', pinnedMessageId: null });
+    expect(consultar('hilo-fijado')).toBeNull();
+  });
+
+  it('la primera página trae el fijado aunque no esté en lo cargado', () => {
+    http.expectOne('/community/profiles/me').flush(perfilPropio);
+    fixture.detectChanges();
+    http
+      .match((r) => r.url === '/community/conversations')
+      .forEach((p) => p.flush({ items: [], count: 0, limit: 50, nextCursor: null }));
+    http
+      .match((r) => r.url === '/community/conversations/c-1/messages')
+      .forEach((p) =>
+        p.flush({
+          items: [mensaje('m-9', 'pp-2', 'Lo último')],
+          count: 1,
+          limit: 30,
+          nextCursor: null,
+          pinnedMessage: mensaje('m-1', 'pp-2', 'De hace meses'),
+        }),
+      );
+    // El acuse de lectura, y la relectura de la bandeja que dispara.
+    http
+      .match((r) => r.url === '/community/conversations/c-1/read')
+      .forEach((p) => p.flush({ receiptsRecorded: 1, lastReadMessageId: 'm-9' }));
+    http
+      .match((r) => r.url === '/community/conversations')
+      .forEach((p) => p.flush({ items: [], count: 0, limit: 50, nextCursor: null }));
+    fixture.detectChanges();
+
+    expect(consultar('hilo-fijado')?.textContent).toContain('De hace meses');
   });
 
   function escribir(valor: string): void {

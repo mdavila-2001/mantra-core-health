@@ -11,7 +11,9 @@
 
 ## Estado · 09/09/2026
 
-**F0, F1, F2, F3 y F5 están hechas.** F4 (backend) sigue abierta y no bloquea nada.
+**Las seis fases están hechas.** F4 entró en un solo PR de la API
+(`mantra-core-health-api` #370, rama `pablo/chat-f4-backend`) y el front que la
+consume en `pablo/chat-f4-front` (desde `mockup`).
 
 | Fase | Estado | Dónde |
 |---|---|---|
@@ -19,8 +21,42 @@
 | F1 · bandeja | ✅ | `messaging.*`, `conversation-list/*`, `chat-preferencias.ts`, `shared/date/hora-de-chat.ts` |
 | F2 · hilo | ✅ | `thread.*`, `public/chat-patron.svg`, tokens `--chat-*` |
 | F3 · composer | ✅ | `thread/composer/{composer,selector-emojis,grabador}.*` |
-| F4 · backend | ⏳ abierta | seis PR chicos en `mantra-core-health-api` |
-| F5 · pruebas y evidencia | ✅ | 63 pruebas verdes · 4 casos nuevos de Playwright · capturas en `evidencias/chat-whatsapp/` |
+| F4 · backend | ✅ | API: `community-messaging.{controller,service,read.service}`, `community-presence.service`, gateway; SQL `19_community` + patch `v427`. Front: `chat-socket.service`, `chat.store`, `chat-preferencias`, `community.{client,types}`, `thread.*`, `composer.*`, `conversation-list.*`, maqueta |
+| F5 · pruebas y evidencia | ✅ | API: 65 pruebas verdes. Front: specs de store, bandeja, hilo y fechas · `playwright/verificacion-chat-f4.mjs` · capturas en `evidencias/chat-whatsapp/f4/` |
+
+### Lo que la F4 dejó en el front
+
+- **«escribiendo…» y «en línea / últ. vez»** bajo el nombre de la cabecera. El
+  composer avisa `typing` una vez cada 3 s mientras hay texto y «dejé» al
+  vaciar; el otro lado lo deja caducar a los 6 s. La presencia se pide al abrir
+  el hilo (`GET …/presence`) y después llega por `profile:presence`.
+- **Favorito, fijado y archivado viven en la API** (`PATCH …/participant`).
+  `ChatPreferencias` conserva la misma puerta —las pantallas no cambiaron— pero
+  lee de la fila de la bandeja y escribe optimista con vuelta atrás si falla.
+  Lo que había en `localStorage` se migra una vez al cargar la bandeja y se
+  olvida; los emojis recientes siguen en el navegador.
+- **Editar y eliminar** un mensaje propio desde el menú de la burbuja. Editar
+  usa el mismo campo y el mismo botón del composer, con la tira «Editando el
+  mensaje»; eliminar deja «Se eliminó este mensaje» en su lugar (nunca un
+  hueco, así las citas no quedan apuntando a nada).
+- **Fijar un mensaje**: barra bajo la cabecera, tocarla salta al mensaje; el
+  fijado viaja completo en la primera página aunque sea de hace meses.
+- **Bandeja**: el doble tilde de la fila se pinta sólo cuando la API dice que
+  el otro leyó (`lastMessageReadByPeer`); las fijadas van primero; «Cargar más
+  conversaciones» al pie cuando hay `nextCursor`; la vista previa distingue
+  adjunto y eliminado.
+
+### Lo que queda anotado
+
+- La bandeja pagina **dentro** de las 100 conversaciones activas más recientes
+  del perfil (límite de la lectura, no del cursor). Más allá de eso las más
+  quietas no aparecen; nadie llegó a esa cantidad.
+- El recorte por `q` del backend existe pero el front sigue filtrando en local
+  sobre lo cargado: con menos de 100 conversaciones es lo mismo y no espera a
+  la red. Cuando alguien pase el tope, `buscarGente` puede sumar `q`.
+- «Escribiendo…» y la presencia no tienen sondeo de respaldo: si el socket se
+  cae, simplemente no se muestran. Es lo correcto — mejor callar que decir «en
+  línea» de alguien que se fue.
 
 ### Lo verificado
 

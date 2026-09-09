@@ -224,6 +224,9 @@ export class Messaging {
       case 'favorito':
         this.preferencias.alternarFavorito(accion.conversationId);
         break;
+      case 'fijar':
+        this.preferencias.alternarFijado(accion.conversationId);
+        break;
       case 'archivar':
         this.preferencias.alternarArchivado(accion.conversationId);
         break;

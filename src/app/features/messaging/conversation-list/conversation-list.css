@@ -248,3 +248,23 @@
     block-size: 32px;
   }
 }
+
+/* El doble tilde se pinta en el azul de «leído», como en la burbuja. */
+.conversaciones__tick.is-leido {
+  color: var(--chat-tick-leido);
+}
+
+.conversaciones__fijada {
+  display: inline-flex;
+  color: var(--tinta-3);
+}
+
+.conversaciones__fijada svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.conversaciones__texto-previa.is-eliminado {
+  color: var(--tinta-3);
+  font-style: italic;
+}

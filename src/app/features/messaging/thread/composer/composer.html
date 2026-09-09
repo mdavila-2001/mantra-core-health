@@ -5,6 +5,20 @@
   </p>
 }
 
+<!-- La tira de «editando» (F4.5): el mismo lugar que la de responder, porque
+     es la misma pregunta —«¿sobre qué estoy escribiendo?»—. -->
+@if (store.editando(); as editando) {
+  <div class="composer__respuesta composer__respuesta--edicion" data-testid="composer-edicion">
+    <div class="composer__respuesta-texto">
+      <span class="composer__respuesta-autor">Editando el mensaje</span>
+      <span class="composer__respuesta-cuerpo">{{ editando.bodyText }}</span>
+    </div>
+    <button type="button" aria-label="Cancelar la edición" data-testid="composer-cancelar-edicion" (click)="cancelarEdicion()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+  </div>
+}
+
 <!-- La tira de «respondiendo a». Va pegada arriba del campo, que es donde se
      está mirando cuando se elige responder. -->
 @if (store.respondiendoA(); as citado) {
@@ -153,7 +167,7 @@
       class="composer__enviar"
       type="submit"
       data-testid="hilo-enviar"
-      aria-label="Enviar mensaje"
+      [attr.aria-label]="store.editando() !== null ? 'Guardar la corrección' : 'Enviar mensaje'"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.4 20.4 17.3-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
     </button>

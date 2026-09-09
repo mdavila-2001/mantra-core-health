@@ -5,7 +5,10 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { Subject } from 'rxjs';
+
 import { ChatStore } from './chat.store';
+import { ChatSocketService } from './chat-socket.service';
 
 /**
  * Lo que estas pruebas fijan.
@@ -91,9 +94,30 @@ describe('ChatStore', () => {
       );
   };
 
+  /** El socket doblado: lo que el servidor empuja se dispara desde acá. */
+  const socket = {
+    onMessage: new Subject(),
+    onMessageUpdated: new Subject(),
+    onMessageDeleted: new Subject(),
+    onRead: new Subject(),
+    onNewConversation: new Subject(),
+    onTyping: new Subject(),
+    onPresence: new Subject(),
+    onPinned: new Subject(),
+    joinInbox: () => undefined,
+    joinConversation: () => undefined,
+    leaveConversation: () => undefined,
+    typing: vi.fn(),
+  };
+
   beforeEach(() => {
+    socket.typing.mockClear();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ChatSocketService, useValue: socket },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     store = TestBed.inject(ChatStore);
@@ -266,4 +290,94 @@ describe('ChatStore', () => {
     expect(store.conversaciones().length).toBe(1);
     expect(store.error()).toBe('No pudimos cargar tus conversaciones.');
   });
+
+  /* --- F4 · lo que llega por el socket ------------------------------------ */
+
+  it('«escribiendo» se aplica al hilo y caduca solo', () => {
+    vi.useFakeTimers();
+    try {
+      encender();
+      store.abrir('c-1');
+      contestarHilo([mensaje('m-1')]);
+
+      socket.onTyping.next({ conversationId: 'c-1', profileId: 'pp-2', typing: true });
+      expect(store.escribiendoEnActiva()).toEqual(['pp-2']);
+
+      // Sin otro aviso, a los seis segundos se apaga: nadie escribe para siempre.
+      vi.advanceTimersByTime(6_100);
+      expect(store.escribiendoEnActiva()).toEqual([]);
+
+      // Y un mensaje de quien escribía lo apaga en el acto.
+      socket.onTyping.next({ conversationId: 'c-1', profileId: 'pp-2', typing: true });
+      socket.onMessage.next({ ...mensaje('m-2'), sentAt: new Date('2026-09-08T10:01:00Z') });
+      expect(store.escribiendoEnActiva()).toEqual([]);
+      http.match(() => true).forEach((p) => p.flush(null));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('avisar que escribo manda «typing» una vez cada tres segundos, y «dejé» al vaciar', () => {
+    vi.useFakeTimers();
+    try {
+      encender();
+      store.abrir('c-1');
+      contestarHilo([mensaje('m-1')]);
+
+      store.avisarEscribiendo(true);
+      store.avisarEscribiendo(true);
+      store.avisarEscribiendo(true);
+      expect(socket.typing).toHaveBeenCalledTimes(1);
+      expect(socket.typing).toHaveBeenLastCalledWith('c-1', 'pp-1', true);
+
+      vi.advanceTimersByTime(3_100);
+      store.avisarEscribiendo(true);
+      expect(socket.typing).toHaveBeenCalledTimes(2);
+
+      store.avisarEscribiendo(false);
+      expect(socket.typing).toHaveBeenLastCalledWith('c-1', 'pp-1', false);
+      http.match(() => true).forEach((p) => p.flush(null));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('un mensaje eliminado por el otro lado pierde el cuerpo en el hilo y en la fila', () => {
+    encender();
+    store.abrir('c-1');
+    contestarHilo([mensaje('m-1')]);
+    // La fila cuya vista previa es justamente el mensaje que se va a eliminar.
+    store.conversaciones.update((lista) =>
+      lista.map((c) => ({
+        ...c,
+        lastMessage: { id: 'm-1', senderProfileId: 'pp-2', bodyText: 'Hola' },
+      })),
+    );
+
+    socket.onMessageDeleted.next({ conversationId: 'c-1', messageId: 'm-1', deletedAt: new Date() });
+
+    const enHilo = store.enOrden().find((m) => m.id === 'm-1');
+    expect(enHilo?.deletedAt).toBeInstanceOf(Date);
+    expect(enHilo?.bodyText).toBeUndefined();
+    expect(store.conversaciones()[0].lastMessage?.deletedAt).toBeInstanceOf(Date);
+  });
+
+  it('el fijado que llega por el socket se busca en el hilo; si no está, se pide', () => {
+    encender();
+    store.abrir('c-1');
+    contestarHilo([mensaje('m-1')]);
+
+    socket.onPinned.next({ conversationId: 'c-1', pinnedMessageId: 'm-1' });
+    expect(store.fijado()?.id).toBe('m-1');
+
+    socket.onPinned.next({ conversationId: 'c-1', pinnedMessageId: 'm-viejo' });
+    http
+      .expectOne((r) => r.url === '/community/conversations/c-1/messages' && r.params.get('limit') === '1')
+      .flush({ items: [], count: 0, limit: 1, nextCursor: null, pinnedMessage: mensaje('m-viejo', 'pp-2', 'De antes') });
+    expect(store.fijado()?.bodyText).toBe('De antes');
+
+    socket.onPinned.next({ conversationId: 'c-1', pinnedMessageId: null });
+    expect(store.fijado()).toBeNull();
+  });
 });
+

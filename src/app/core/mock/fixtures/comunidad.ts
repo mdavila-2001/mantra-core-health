@@ -481,12 +481,23 @@ export const muroDeGrupo = new Coleccion<{ id: string; groupId: string; authorPr
 
 /* ---- mensajería directa ---------------------------------------------------- */
 
+/** Lo que cada participante marcó de su lado (F4.4). */
+export interface PreferenciasSimuladas {
+  readonly isFavorite: boolean;
+  readonly isPinned: boolean;
+  readonly archivedAt: string | null;
+}
+
 export interface ConversacionSimulada {
   readonly id: string;
   readonly conversationTypeConceptId: string;
   readonly groupId: string | null;
   readonly participantes: readonly string[];
   readonly noLeidosPor: Record<string, number>;
+  /** Por perfil; ausente es «nada marcado». */
+  readonly preferenciasPor?: Record<string, PreferenciasSimuladas>;
+  /** El mensaje fijado en la barra superior (F4.6). */
+  readonly pinnedMessageId?: string | null;
 }
 
 export interface MensajeSimulado {
@@ -498,6 +509,8 @@ export interface MensajeSimulado {
   readonly bodyText: string;
   readonly attachmentFileId: string | null;
   readonly isEdited: boolean;
+  /** Eliminado de forma lógica (F4.5): viaja sin cuerpo. */
+  readonly deletedAt?: string | null;
   readonly sentAt: string;
 }
 
