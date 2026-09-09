@@ -1350,6 +1350,88 @@ describe('RegisterPatient', () => {
     expect(pines[0].lng).toBe(-63.1821);
   });
 
+  /* ---- El pin también se pone a mano sobre el mapa ---------------------------
+     La casa casi nunca se declara desde la casa, y quien negó el permiso del
+     navegador también tiene que poder poner su pin. Así que el mapa se abre
+     vacío y se toca; y con un pin puesto, tocarlo lo corre. */
+
+  it('«Marcar en el mapa» abre el mapa vacío sin pedir nada al navegador', () => {
+    expect(component.mapaDomicilioAbierto()).toBe(false);
+
+    component.marcarDomicilioEnMapa();
+
+    expect(component.marcandoDomicilio()).toBe(true);
+    expect(component.mapaDomicilioAbierto()).toBe(true);
+    expect(component.gpsDomicilio()).toBeNull();
+    expect(component.pinesDomicilio()).toEqual([]);
+  });
+
+  it('tocar el mapa pone el pin del domicilio sin confirmarlo, y no viaja hasta que se confirme', () => {
+    completar();
+    component.marcarDomicilioEnMapa();
+
+    component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+
+    expect(component.gpsDomicilio()).toEqual({ lat: -16.5, lng: -68.15 });
+    expect(component.marcandoDomicilio()).toBe(false);
+    expect(component.direccionConfirmada()).toBe(false);
+    // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
+    expect(component.pinesDomicilio()[0].titulo).toBe('El punto que marcaste');
+
+    component.submit();
+    const sinConfirmar = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(sinConfirmar.request.body as Record<string, unknown>)).not.toContain(
+      'homeLatitude',
+    );
+    sinConfirmar.flush(RESPUESTA);
+  });
+
+  it('el punto marcado a mano viaja igual que el del navegador una vez confirmado', () => {
+    completar();
+    component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+    component.confirmarDireccionActual();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.homeLatitude).toBe(-16.5);
+    expect(req.request.body.homeLongitude).toBe(-68.15);
+    req.flush(RESPUESTA);
+  });
+
+  it('tocar el mapa con un punto ya confirmado lo corre y suelta la confirmación', () => {
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.confirmarDireccionActual();
+    expect(component.direccionConfirmada()).toBe(true);
+
+    component.fijarPuntoDomicilio({ lat: -17.79, lng: -63.19 });
+
+    expect(component.gpsDomicilio()).toEqual({ lat: -17.79, lng: -63.19 });
+    expect(component.direccionConfirmada()).toBe(false);
+  });
+
+  it('quitar la ubicación con el mapa vacío abierto lo cierra', () => {
+    component.marcarDomicilioEnMapa();
+    component.quitarUbicacion();
+
+    expect(component.marcandoDomicilio()).toBe(false);
+    expect(component.mapaDomicilioAbierto()).toBe(false);
+  });
+
+  it('el trabajo tiene su propio mapa a mano, independiente del domicilio', () => {
+    component.marcarTrabajoEnMapa();
+    expect(component.mapaTrabajoAbierto()).toBe(true);
+    expect(component.mapaDomicilioAbierto()).toBe(false);
+
+    component.fijarPuntoDeTrabajo({ lat: -17.4, lng: -66.1 });
+    expect(component.gpsTrabajo()).toEqual({ lat: -17.4, lng: -66.1 });
+    expect(component.direccionTrabajoConfirmada()).toBe(false);
+    expect(component.pinesTrabajo()[0].titulo).toBe('El punto que marcaste');
+    expect(component.gpsDomicilio()).toBeNull();
+
+    component.quitarUbicacionDeTrabajo();
+    expect(component.mapaTrabajoAbierto()).toBe(false);
+  });
+
   /* ---- La empresa, que reemplazó a la ubicación del trabajo ---- */
 
   /**

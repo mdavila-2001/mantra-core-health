@@ -912,6 +912,7 @@ export class RegisterPractitioner {
     sinConfirmar: 'registration-practitioner-home-location-unconfirmed',
     confirmar: 'registration-practitioner-home-location-confirm',
     usarUbicacion: 'registration-practitioner-home-location-use',
+    marcarEnMapa: 'registration-practitioner-home-location-pick',
   };
 
   /**
