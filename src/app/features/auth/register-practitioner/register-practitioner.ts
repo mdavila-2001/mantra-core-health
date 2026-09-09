@@ -283,18 +283,47 @@ const OPCIONES_TITULO_PROFESIONAL: readonly SelectOption<string>[] = [
  * (MODULO MEDICO, ítems 15, 17, 18 y 19), cada uno con «espacio para poder
  * subir varios».
  *
- * El código va en inglés porque es el que va a viajar al backend el día que
- * esto se conecte; la etiqueta es la que ve el profesional.
+ * El código es el que va a viajar al backend el día que esto se conecte; la
+ * etiqueta y el singular son lo que ve el profesional —el singular porque
+ * «Quitar Otra profesión» y «+ Agregar otra profesión» no se escriben igual, y
+ * derivarlos de la etiqueta con `toLowerCase()` daba lo primero—.
+ *
+ * `UNIVERSITARIO` dejó de rotularse «Título profesional universitario»: es el
+ * lugar de la **segunda profesión**. El propietario lo pidió con todas las
+ * letras —«hay doctores que aparte de ser doctores han estudiado otra
+ * profesión»—, y llamarlo por su tipo de diploma escondía para qué está: la
+ * profesión con la que ejerce ya se eligió, obligatoria, en el paso del título.
  */
 const TIPOS_DE_TITULO = [
   {
     codigo: 'UNIVERSITARIO',
-    etiqueta: 'Título profesional universitario',
-    ayuda: 'La carrera con la que ejercés. Si tenés dos, cargá las dos.',
+    etiqueta: 'Otra profesión',
+    singular: 'otra profesión',
+    ayuda:
+      'Si además de tu profesión de salud estudiaste otra carrera, cargala acá. Podés cargar las que tengas, y ninguna es obligatoria.',
+    placeholderNombre: 'Qué carrera: Derecho, Ingeniería de Sistemas…',
   },
-  { codigo: 'DIPLOMADO', etiqueta: 'Diplomado', ayuda: 'Cuantos tengas.' },
-  { codigo: 'MAESTRIA', etiqueta: 'Maestría', ayuda: 'Cuantas tengas.' },
-  { codigo: 'DOCTORADO', etiqueta: 'Doctorado', ayuda: 'Cuantos tengas.' },
+  {
+    codigo: 'DIPLOMADO',
+    etiqueta: 'Diplomado',
+    singular: 'diplomado',
+    ayuda: 'Cuantos tengas.',
+    placeholderNombre: 'Cómo se llama el diplomado',
+  },
+  {
+    codigo: 'MAESTRIA',
+    etiqueta: 'Maestría',
+    singular: 'maestría',
+    ayuda: 'Cuantas tengas.',
+    placeholderNombre: 'Cómo se llama la maestría',
+  },
+  {
+    codigo: 'DOCTORADO',
+    etiqueta: 'Doctorado',
+    singular: 'doctorado',
+    ayuda: 'Cuantos tengas.',
+    placeholderNombre: 'Cómo se llama el doctorado',
+  },
 ] as const;
 
 /** El código de uno de los cuatro tipos de título. */
@@ -315,10 +344,48 @@ interface TituloDeclarado {
   readonly tipo: CodigoDeTitulo;
   /** Cómo se llama el título: «Medicina», «Salud Pública»… */
   readonly nombre: string;
+  /** Dónde lo cursó: «Universidad Mayor de San Andrés». */
+  readonly universidad: string;
+  /** El país donde lo cursó. Ver {@link CampoDeEstudio} por qué es texto. */
+  readonly pais: string;
+  /** La ciudad donde lo cursó. */
+  readonly ciudad: string;
   /** El nombre del archivo elegido, o `null` si todavía no adjuntó ninguno. */
   readonly archivo: string | null;
   readonly pesoBytes: number | null;
 }
+
+/**
+ * Los tres datos de dónde se estudió un título, y por qué los tres son texto
+ * libre y no listas cerradas.
+ *
+ * Es la pregunta que más veces vuelve, así que va escrita una sola vez acá:
+ *
+ * - **Universidad.** El modelo ya la guarda como texto a propósito: el JSDoc de
+ *   `AddOwnCredentialDto.issuingInstitutionText` lo dice —«las universidades del
+ *   exterior no están en ningún catálogo nuestro, y exigir que lo estén dejaría
+ *   fuera a cualquiera que se formó afuera»—. No hay padrón de universidades en
+ *   ninguna de las cuatro capas, y la regla de datos del proyecto pide
+ *   justamente **no** hardcodear uno sin dataset ni estrategia de importación.
+ * - **País.** La columna del modelo (`issuing_country_concept_id`) sí es un
+ *   concepto, pero hoy existen **dos** en toda la aplicación —`COUNTRY_BO` y
+ *   `COUNTRY_PE`— y `VS_COUNTRY` no tiene miembros sembrados. Un desplegable
+ *   cerrado ofrecería dos opciones y dejaría afuera a quien estudió en Cuba,
+ *   Argentina o España, que es exactamente el caso que este campo abre.
+ * - **Ciudad.** `profiles.professional_credentials` **no tiene columna de
+ *   ciudad**. Se pregunta igual porque el propietario la pidió, y el hueco
+ *   queda declarado en `docs/handoff/` en vez de inventado acá: abrir una
+ *   columna es cambio de modelo (`.puml` → `gen_ddl.py` → `SQL/` → base → ORM),
+ *   y esta pantalla no es el lugar donde eso se decide.
+ *
+ * Cuando el país tenga value set y la universidad tenga padrón, esto pasa a ser
+ * dos comboboxes sin tocar nada más: lo que cambia es de dónde salen las
+ * opciones, no dónde se guarda la respuesta.
+ */
+type CampoDeEstudio = 'universidad' | 'pais' | 'ciudad';
+
+/** Uno de los campos de una fila de título que se escriben a mano. */
+type CampoEditableDeTitulo = 'nombre' | CampoDeEstudio;
 
 /** Un respaldo suelto: el de la matrícula y el del registro del SEDES. */
 interface RespaldoDeclarado {
@@ -582,6 +649,13 @@ export class RegisterPractitioner {
       nonNullable: true,
       validators: [Validators.required],
     }),
+    // Dónde estudió la profesión con la que ejerce. Los tres son opcionales:
+    // el alta se completa sin ninguno, y quien no se acuerde del año o del
+    // nombre exacto de su casa de estudios los carga después desde el perfil.
+    // Por qué son texto y no listas cerradas: ver `CampoDeEstudio`.
+    professionalTitleUniversity: new FormControl('', { nonNullable: true }),
+    professionalTitleCountry: new FormControl('', { nonNullable: true }),
+    professionalTitleCity: new FormControl('', { nonNullable: true }),
     // El control guarda lo que `app-phone-input` compone —el prefijo del país
     // elegido y su número—, así que el validador comprueba justamente eso, y
     // viene del propio campo: es él quien sabe qué largo tiene cada país.
@@ -650,6 +724,20 @@ export class RegisterPractitioner {
 
   /** Los cuatro tipos de título, para que la plantilla los recorra. */
   protected readonly tiposDeTitulo = TIPOS_DE_TITULO;
+
+  /**
+   * Las tres casillas de «dónde lo estudiaste» de cada fila de título.
+   *
+   * Misma lista que la del título principal, con la diferencia de que acá la
+   * clave es la del objeto de la fila y no la de un `FormControl`: las filas no
+   * viven en el formulario, viven en un signal.
+   */
+  protected readonly camposDeEstudioDeFila = [
+    { campo: 'universidad', label: 'Universidad', placeholder: 'Universidad' },
+    { campo: 'pais', label: 'País', placeholder: 'País' },
+    { campo: 'ciudad', label: 'Ciudad', placeholder: 'Ciudad' },
+  ] as const satisfies readonly { campo: CampoDeEstudio; label: string; placeholder: string }[];
+
   protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
 
   /**
@@ -715,6 +803,9 @@ export class RegisterPractitioner {
         id: crypto.randomUUID(),
         tipo,
         nombre: '',
+        universidad: '',
+        pais: '',
+        ciudad: '',
         archivo: null,
         pesoBytes: null,
       },
@@ -726,11 +817,30 @@ export class RegisterPractitioner {
     this.titulos.update((titulos) => titulos.filter((titulo) => titulo.id !== id));
   }
 
-  /** Escribe el nombre de un título. */
-  escribirNombreDeTitulo(id: string, nombre: string): void {
+  /**
+   * Escribe uno de los cuatro datos escritos a mano de un título.
+   *
+   * Uno solo y no cuatro métodos casi iguales: la única diferencia entre
+   * escribir el nombre y escribir la ciudad es en qué clave cae el valor, y
+   * `CampoEditableDeTitulo` la acota a las cuatro que existen —una clave
+   * inventada no compila—. Sigue sin ser una bandera que cambia el
+   * comportamiento: el comportamiento es el mismo para las cuatro.
+   */
+  escribirDatoDeTitulo(id: string, campo: CampoEditableDeTitulo, valor: string): void {
     this.titulos.update((titulos) =>
-      titulos.map((titulo) => (titulo.id === id ? { ...titulo, nombre } : titulo)),
+      titulos.map((titulo) => (titulo.id === id ? { ...titulo, [campo]: valor } : titulo)),
     );
+  }
+
+  /**
+   * Escribe el nombre de un título.
+   *
+   * Se conserva porque es el que llaman las pruebas y el que existía antes de
+   * que la fila tuviera cuatro campos; delega para que haya una sola forma de
+   * escribir en la lista.
+   */
+  escribirNombreDeTitulo(id: string, nombre: string): void {
+    this.escribirDatoDeTitulo(id, 'nombre', nombre);
   }
 
   /** Adjunta el archivo elegido a un título, o avisa por qué no se pudo. */
@@ -1003,6 +1113,47 @@ export class RegisterPractitioner {
     this.formProfesional.controls[key].setValue(valor === null ? '' : String(valor));
   }
 
+  /**
+   * Los tres controles de dónde se estudió el título con el que ejerce.
+   *
+   * Se listan acá y no en la plantilla para que agregar el cuarto —el año, si
+   * alguna vez se pide— sea una entrada más y no una casilla suelta que alguien
+   * se olvida de limpiar al reiniciar el formulario.
+   */
+  protected readonly camposDeEstudioDelTitulo = [
+    {
+      key: 'professionalTitleUniversity',
+      label: 'Universidad',
+      placeholder: 'Universidad Mayor de San Andrés',
+      testId: 'registro-pro-titulo-universidad',
+    },
+    {
+      key: 'professionalTitleCountry',
+      label: 'País de estudio',
+      placeholder: 'Bolivia',
+      testId: 'registro-pro-titulo-pais',
+    },
+    {
+      key: 'professionalTitleCity',
+      label: 'Ciudad de estudio',
+      placeholder: 'La Paz',
+      testId: 'registro-pro-titulo-ciudad',
+    },
+  ] as const;
+
+  /** Lo escrito en uno de los tres campos de estudio del título principal. */
+  valorDeEstudio(key: (typeof this.camposDeEstudioDelTitulo)[number]['key']): string {
+    return this.formProfesional.controls[key].value;
+  }
+
+  /** Escribe uno de los tres campos de estudio del título principal. */
+  escribirEstudio(
+    key: (typeof this.camposDeEstudioDelTitulo)[number]['key'],
+    valor: string | number | null,
+  ): void {
+    this.formProfesional.controls[key].setValue(valor === null ? '' : String(valor));
+  }
+
   /** Si hay que pintar en rojo el primer nombre. */
   readonly primerNombreEnRojo = computed(() => {
     const control = this.formProfesional.controls.name;
@@ -1164,8 +1315,13 @@ export class RegisterPractitioner {
    *   tiene dónde ir: sería una tercera fila de `common.identifiers`, y eso es
    *   esquema. Lo que sí se corrigió es que el segundo dejara de archivarse
    *   como título de grado: es una habilitación y vive con la matrícula.
-   * - **Universidad y otros títulos** (AC-05-13). Viven en `credentials`, detrás
-   *   de la sesión, con su propio endpoint. El alta pública no los recibe.
+   * - **Universidad, lugar de estudio y otros títulos** (AC-05-13). La pantalla
+   *   los pregunta desde el 09/09 —para el título con el que ejerce y para cada
+   *   otra profesión, diplomado, maestría y doctorado que cargue— pero **no
+   *   viajan**: viven en `credentials`, detrás de la sesión, con su propio
+   *   endpoint, y el alta pública no los recibe. Dos de los tres tienen columna
+   *   (`issuing_institution_text`, `issuing_country_concept_id`); la **ciudad no
+   *   tiene ninguna**. Ver `docs/handoff/alta-profesional-titulos-y-adjuntos.md`.
    *
    * ## El tope de cuatro campos por página no se relaja (AC-05-2)
    *
@@ -1476,8 +1632,10 @@ export class RegisterPractitioner {
         // especialidades se ofrecen, y verlas cambiar en la misma pantalla en
         // la que se elige el título hace pensar que algo se perdió.
         //
-        // La universidad y los otros títulos que el orden pide junto a esto
-        // (AC-05-13) no están: viven en `credentials`, detrás de la sesión.
+        // La universidad y el lugar de estudio SÍ se preguntan acá desde el
+        // 09/09: el propietario los pidió en el alta, no en el perfil. Siguen
+        // sin viajar —viven en `credentials`, detrás de la sesión— y el mapeo
+        // campo por campo está en `docs/handoff/`.
         hint: 'Lo que van a ver tus pacientes. Podés cambiarlo cuando quieras.',
         campos: [
           {
@@ -1497,6 +1655,17 @@ export class RegisterPractitioner {
             // lista sigue siendo cerrada —son doce— pero se busca escribiendo.
             control: 'custom',
             icono: 'teach',
+          },
+          {
+            // Universidad, país y ciudad en UN campo proyectado, como los
+            // nombres: son tres casillas y la página ya llegó al tope de
+            // cuatro con la foto, el título y su diploma. Van pegadas al
+            // título y no en una página propia porque las cuatro contestan la
+            // misma pregunta —qué estudiaste y dónde—, y partirlas obligaría a
+            // volver atrás para recordar de qué título se está hablando.
+            key: 'professionalTitleEducation',
+            label: 'Dónde lo estudiaste',
+            control: 'custom',
           },
           {
             key: 'professionalTitleFile',

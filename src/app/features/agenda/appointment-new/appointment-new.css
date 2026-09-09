@@ -77,3 +77,64 @@
 .cita__cargando {
     color: var(--text-secondary);
 }
+
+/* El puente entre las dos formas de decir con quién es la cita. Se lee como una
+   nota al pie del buscador, no como un campo más: la acción rara no puede
+   competir con la corriente.
+
+   **Sin margen negativo**, aunque pegarla al campo se vea más prolijo: la lista
+   de resultados del combobox se despliega encima de lo que sigue, y tucada
+   contra el campo quedaba tapada justo cuando hace falta —cuando la búsqueda no
+   encontró a nadie—. */
+.cita__sin-registrar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+/* El alta del paciente del mostrador. Misma caja que la modalidad —borde,
+   radio y leyenda— porque son lo mismo: un grupo de campos con nombre. */
+.cita__alta {
+    margin: 0;
+    padding: var(--sp-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.cita__alta-titulo {
+    padding-inline: var(--sp-1);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.cita__alta-nota {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
+
+/* Las casillas del nombre y las del documento se apilan solas en móvil por el
+   `minmax`, sin media query — igual que día y hora. */
+.cita__alta-grilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--sp-4);
+}
+
+.cita__alta-catalogo-caido {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+}
