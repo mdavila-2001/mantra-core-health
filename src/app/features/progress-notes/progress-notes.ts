@@ -14,6 +14,7 @@ import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
+import { PROGRESS_NOTES_PDF_DOWNLOADER } from '@shared/utils/progress-notes-pdf/progress-notes-pdf';
 
 import { miRecursoDeAgenda } from '../agenda/mi-recurso';
 import { patientChartRoute } from '../clinical-record/clinical-record.routes';
@@ -98,6 +99,17 @@ export class ProgressNotes {
     return actual.status === 'ready' ? actual.data : [];
   });
 
+  private readonly descargarPdf = inject(PROGRESS_NOTES_PDF_DOWNLOADER);
+
+  /**
+   * Hay algo que imprimir sólo cuando la lectura terminó bien.
+   *
+   * Un botón de exportar sobre un estado de carga o de error produce un papel
+   * en blanco con membrete, que se lee como «el sistema perdió tus
+   * atenciones» — exactamente lo que esta pantalla existe para no decir.
+   */
+  protected readonly sePuedeExportar = computed(() => this.estado().status === 'ready');
+
   protected readonly resumen = computed(() => {
     const actual = this.estado();
     if (actual.status !== 'ready') {
@@ -109,6 +121,24 @@ export class ProgressNotes {
 
   constructor() {
     this.cargar();
+  }
+
+  /** Baja el período en PDF, con los mismos datos que están en pantalla. */
+  protected exportar(): void {
+    const actual = this.estado();
+    if (actual.status !== 'ready') {
+      return;
+    }
+    this.descargarPdf({
+      profesional: this.auth.displayName() ?? '',
+      dias: DIAS_HACIA_ATRAS,
+      personas: actual.data.map((persona) => ({
+        nombre: persona.nombre,
+        motivo: persona.motivo,
+        ultima: persona.ultima,
+        cuantas: persona.cuantas,
+      })),
+    });
   }
 
   protected cargar(): void {

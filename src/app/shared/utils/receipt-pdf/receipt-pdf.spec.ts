@@ -187,14 +187,19 @@ describe('bloquesDeComprobante', () => {
     expect(textos[0]).toBe('Comprobante interno de AloVida. No es una factura.');
     expect(textos).toContain('Farmacia: Farmacia Andina — Sucursal Centro');
     expect(textos).toContain('Paciente: Ana Pérez');
-    expect(textos).toContain('Medio: Pagado en mostrador');
+    expect(textos).toContain('Medio de pago: Pagado en mostrador');
     expect(textos).toContain('Total: 111.00 BOB');
     // La fecha del pago, en palabras locales — no la de generación.
     expect(textos.some((texto) => texto.startsWith('Pagado el: '))).toBe(true);
   });
 
   it('cada línea cobrada es una fila, y el precio ausente se dice', () => {
-    const filas = bloquesDeComprobante(papel).filter((bloque) => bloque.kind === 'row');
+    // La fila de encabezado también es `row` —la dibuja el mismo maquetador de
+    // tablas—, así que se descarta: lo que se cuenta acá son los renglones
+    // cobrados, y una cabecera de más no es un cobro de más.
+    const filas = bloquesDeComprobante(papel).filter(
+      (bloque) => bloque.kind === 'row' && bloque.header !== true,
+    );
     expect(filas).toHaveLength(2);
     expect(filas[0]?.text).toBe('Amoxicilina · 500 mg\tx1\t60.00');
     expect(filas[1]?.text).toBe('Ibuprofeno\tx2\tPrecio no publicado');
