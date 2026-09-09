@@ -416,7 +416,7 @@ export function registrarClinica(router: MockRouter): void {
    devolvía un id y el campo no aparecía en ninguna parte.
    ---------------------------------------------------------------------- */
 export const PLANTILLAS_DE_EXPEDIENTE = [
-  plantilla('CARDIO-BASE', 'Evaluación cardiológica', ESPECIALIDAD['SP-CARDIO']!, [
+  plantilla('CARDIO-BASE', 'Evaluación cardiológica', ESPECIALIDAD['CARDIOLOGIA']!, [
     ['pa_sistolica', 'Presión sistólica', 'NUMBER', true],
     ['pa_diastolica', 'Presión diastólica', 'NUMBER', true],
     ['fc', 'Frecuencia cardíaca', 'NUMBER', true],
@@ -435,19 +435,19 @@ export const PLANTILLAS_DE_EXPEDIENTE = [
       true,
     ],
   ]),
-  plantilla('PEDIA-CONTROL', 'Control de niño sano', ESPECIALIDAD['SP-PEDIA']!, [
+  plantilla('PEDIA-CONTROL', 'Control de niño sano', ESPECIALIDAD['PEDIATRIA']!, [
     ['peso', 'Peso (kg)', 'NUMBER', true],
     ['talla', 'Talla (cm)', 'NUMBER', true],
     ['perimetro', 'Perímetro cefálico', 'NUMBER', false],
     ['vacunas_al_dia', 'Vacunas al día', 'BOOLEAN', true],
     ['lactancia', 'Tipo de lactancia', 'code', false, ['Materna exclusiva', 'Mixta', 'Fórmula']],
   ]),
-  plantilla('GINE-PRENATAL', 'Control prenatal', ESPECIALIDAD['SP-GINE']!, [
+  plantilla('GINE-PRENATAL', 'Control prenatal', ESPECIALIDAD['GINECOLOGIA_OBSTETRICIA']!, [
     ['semanas', 'Semanas de gestación', 'NUMBER', true],
     ['altura_uterina', 'Altura uterina', 'NUMBER', false],
     ['fcf', 'Frecuencia cardíaca fetal', 'NUMBER', true],
   ]),
-  plantilla('MEDINT-GENERAL', 'Consulta de medicina interna', ESPECIALIDAD['SP-MEDINT']!, [
+  plantilla('MEDINT-GENERAL', 'Consulta de medicina interna', ESPECIALIDAD['MEDICINA_INTERNA']!, [
     ['motivo', 'Motivo de consulta', 'TEXT', true],
     ['examen', 'Examen físico', 'TEXT', true],
   ]),

@@ -16,7 +16,9 @@ import { DataTypeIcon, familiaDe } from '@shared/components/atoms/data-type-icon
 import { Input } from '@shared/components/atoms/input/input';
 import { Select } from '@shared/components/atoms/select/select';
 import type { SelectOption } from '@shared/components/atoms/select/select.types';
+import { Switch } from '@shared/components/atoms/switch/switch';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
+import { Tooltip } from '@shared/components/atoms/tooltip/tooltip';
 
 /** Lo que el editor emite al guardar. */
 export interface CambiosDelCampo {
@@ -24,10 +26,17 @@ export interface CambiosDelCampo {
   /** El tipo **técnico**, el que viaja: `code` para los dos de elección. */
   readonly dataType: string;
   readonly required: boolean;
+  /** La ayuda bajo la pregunta. Vacía se manda como `null`, que la quita. */
+  readonly description: string | null;
   /** Sólo en los de elección; las opciones enteras, nunca una suelta. */
   readonly options?: readonly string[];
   /** Sólo en los de elección: si admite marcar más de una. */
   readonly multiple?: boolean;
+  /** Sólo en los de elección: si ofrece «Otro» con texto libre. */
+  readonly allowOther?: boolean;
+  /** Sólo en los de varias: los topes de respuestas. `null` quita el tope. */
+  readonly cardinalityMin?: number | null;
+  readonly cardinalityMax?: number | null;
 }
 
 /**
@@ -60,14 +69,31 @@ export type TipoDeCampo =
  * opciones un campo codificado no tiene nada entre qué elegir.
  */
 export const TIPOS_DE_DATO: readonly SelectOption<TipoDeCampo>[] = [
-  { value: 'string', label: 'Texto corto' },
-  { value: 'text', label: 'Texto largo' },
+  { value: 'string', label: 'Respuesta corta' },
+  { value: 'text', label: 'Párrafo' },
   { value: 'choice', label: 'Opción múltiple' },
   { value: 'checkboxes', label: 'Casillas de verificación' },
   { value: 'integer', label: 'Número entero' },
   { value: 'decimal', label: 'Número decimal' },
   { value: 'boolean', label: 'Sí / No' },
   { value: 'date', label: 'Fecha' },
+];
+
+/**
+ * Las reglas de «validación de respuesta» de un campo de varias.
+ *
+ * Son las tres de las casillas de Google Forms, con la misma redacción: al
+ * menos, como máximo, exactamente. Se traducen a `cardinalityMin` /
+ * `cardinalityMax`, que es lo que el contrato ya declara: «exactamente» es
+ * los dos iguales.
+ */
+export type ReglaDeSeleccion = 'ninguna' | 'minimo' | 'maximo' | 'exacto';
+
+export const REGLAS_DE_SELECCION: readonly SelectOption<ReglaDeSeleccion>[] = [
+  { value: 'ninguna', label: 'Sin límite' },
+  { value: 'minimo', label: 'Seleccionar como mínimo' },
+  { value: 'maximo', label: 'Seleccionar como máximo' },
+  { value: 'exacto', label: 'Seleccionar exactamente' },
 ];
 
 /** Los dos que piden una lista de respuestas. */
@@ -115,6 +141,42 @@ export function etiquetaDeTipo(tipo: string, multiple = false): string {
   return 'Texto';
 }
 
+/**
+ * De los topes del contrato a la regla que se elige en pantalla.
+ *
+ * Es la vuelta de {@link topesDe}: un campo guardado con `cardinalityMin` 2 y
+ * `cardinalityMax` 2 tiene que abrirse diciendo «exactamente 2», no «al menos
+ * 2» con un máximo escondido.
+ */
+export function reglaDe(
+  minimo: number | undefined,
+  maximo: number | undefined,
+): { readonly regla: ReglaDeSeleccion; readonly cantidad: number } {
+  if (minimo !== undefined && maximo !== undefined && minimo === maximo) {
+    return { regla: 'exacto', cantidad: minimo };
+  }
+  if (minimo !== undefined) return { regla: 'minimo', cantidad: minimo };
+  if (maximo !== undefined) return { regla: 'maximo', cantidad: maximo };
+  return { regla: 'ninguna', cantidad: 1 };
+}
+
+/** De la regla de pantalla a los dos topes del contrato. `null` quita el tope. */
+export function topesDe(
+  regla: ReglaDeSeleccion,
+  cantidad: number,
+): { readonly cardinalityMin: number | null; readonly cardinalityMax: number | null } {
+  switch (regla) {
+    case 'minimo':
+      return { cardinalityMin: cantidad, cardinalityMax: null };
+    case 'maximo':
+      return { cardinalityMin: null, cardinalityMax: cantidad };
+    case 'exacto':
+      return { cardinalityMin: cantidad, cardinalityMax: cantidad };
+    default:
+      return { cardinalityMin: null, cardinalityMax: null };
+  }
+}
+
 /** Con cuántas opciones nace un campo de elección. */
 const OPCIONES_INICIALES = ['Opción 1', 'Opción 2'] as const;
 
@@ -138,17 +200,20 @@ const AVISO_GUARDADO_MS = 2000;
  *
  * No hay estado plegado. La tarjeta muestra a la vez **qué se pregunta**, **de
  * qué tipo es** y **el control con el que se va a responder**, porque esas tres
- * cosas juntas son lo que deja decidir si el campo está bien.
+ * cosas juntas son lo que deja decidir si el campo está bien. Debajo del
+ * nombre puede ir una **descripción** —la ayuda que se lee bajo la pregunta—,
+ * y al pie lo que se le puede hacer: duplicar, quitar, y el interruptor de
+ * obligatorio.
  *
- * ## Los dos tipos de elección
+ * ## Los dos tipos de elección, con lo que traen
  *
  * «Opción múltiple» (una sola respuesta, círculos) y «Casillas de
- * verificación» (varias, cuadrados) son las dos entradas que faltaban: sin
- * ellas el generador sólo sabía pedir texto y números, que es justo lo que un
- * formulario clínico menos usa —«¿Fuma?: nunca / ex fumador / fumador» no es
- * un texto libre—. Las opciones se escriben acá mismo, una por renglón, y se
- * reemplazan **enteras** al guardar: el orden importa y un parche por índice se
- * rompe en cuanto alguien inserta una en el medio.
+ * verificación» (varias, cuadrados). Las opciones se escriben acá mismo, una
+ * por renglón, y se reemplazan **enteras** al guardar: el orden importa y un
+ * parche por índice se rompe en cuanto alguien inserta una en el medio.
+ * Las dos pueden ofrecer **«Otro»** con un texto libre; las casillas además
+ * aceptan una **validación de respuesta** —al menos, como máximo, exactamente
+ * N—, que es lo que separa «marcá tus síntomas» de «marcá los dos principales».
  *
  * ## El control de muestra va deshabilitado
  *
@@ -157,10 +222,17 @@ const AVISO_GUARDADO_MS = 2000;
  * ninguna parte. En los de elección la muestra son las opciones de verdad, con
  * su marca redonda o cuadrada: es lo que deja ver que quedaron bien escritas.
  *
- * ## Se guarda solo
+ * ## Se guarda solo, y lo tecleado no se pisa
  *
- * El nombre y las opciones con una pausa tras la última tecla; el tipo y lo
- * obligatorio en el acto, porque son un solo gesto y no hay nada que esperar.
+ * El nombre, la descripción y las opciones con una pausa tras la última tecla;
+ * el tipo, lo obligatorio y los interruptores en el acto, porque son un solo
+ * gesto y no hay nada que esperar.
+ *
+ * El borrador sigue al campo **sólo cuando el campo trae algo distinto de lo
+ * que el editor mandó**. Antes se reseteaba con cada relectura de la
+ * plantilla, y como cada guardado releía, la tercera letra de una opción
+ * borraba las dos primeras: cambiar «Texto corto» por «Opción múltiple» y
+ * escribir las opciones era imposible. Ver `ultimoEmitido`.
  *
  * ## Los campos del estándar se ven y no se tocan
  *
@@ -177,7 +249,7 @@ const AVISO_GUARDADO_MS = 2000;
  */
 @Component({
   selector: 'app-field-editor',
-  imports: [AppButton, Checkbox, DataTypeIcon, Input, Select, Textarea],
+  imports: [AppButton, Checkbox, DataTypeIcon, Input, Select, Switch, Textarea, Tooltip],
   templateUrl: './field-editor.html',
   styleUrl: './field-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -198,6 +270,7 @@ export class FieldEditor {
 
   readonly guardar = output<CambiosDelCampo>();
   readonly borrar = output<void>();
+  readonly duplicar = output<void>();
   readonly mover = output<-1 | 1>();
 
   /**
@@ -211,13 +284,27 @@ export class FieldEditor {
   readonly agarrar = output<boolean>();
 
   protected readonly tipos = TIPOS_DE_DATO;
+  protected readonly reglas = REGLAS_DE_SELECCION;
 
   /* -- el borrador local ---------------------------------------------------- */
 
   protected readonly nombre = signal('');
+  protected readonly descripcion = signal('');
   protected readonly tipo = signal<TipoDeCampo>('string');
   protected readonly obligatorio = signal(false);
   protected readonly opciones = signal<readonly string[]>([]);
+  protected readonly conOtro = signal(false);
+  protected readonly regla = signal<ReglaDeSeleccion>('ninguna');
+  protected readonly cantidad = signal(1);
+
+  /**
+   * Si se está escribiendo la descripción, aunque esté vacía.
+   *
+   * La descripción es opcional y no ocupa lugar hasta que se la pide —como en
+   * Google Forms, donde sale del menú—: una caja vacía bajo cada pregunta
+   * sería una pregunta más que no se hizo.
+   */
+  protected readonly editandoDescripcion = signal(false);
 
   /** Si se acaba de guardar, para el aviso del pie. */
   protected readonly guardado = signal(false);
@@ -244,6 +331,9 @@ export class FieldEditor {
   /** Si el tipo elegido pide una lista de respuestas. */
   protected readonly pideOpciones = computed(() => esDeEleccion(this.tipo()));
 
+  /** Sólo las casillas aceptan topes: en «una sola» el tope es siempre uno. */
+  protected readonly pideValidacion = computed(() => this.tipo() === 'checkboxes');
+
   /**
    * El tipo técnico del **borrador**, para el ícono de la cabecera.
    *
@@ -263,18 +353,57 @@ export class FieldEditor {
     () => this.opciones().length > MINIMO_DE_OPCIONES,
   );
 
+  /** La cantidad no puede pasar de las opciones que hay: «exactamente 5 de 3» no se cumple nunca. */
+  protected readonly topeDeCantidad = computed(
+    () => this.opciones().length + (this.conOtro() ? 1 : 0),
+  );
+
+  /** Lo que la regla elegida dice, en palabras, bajo la muestra. */
+  protected readonly reglaEnPalabras = computed<string | null>(() => {
+    const n = this.cantidad();
+    const plural = n === 1 ? 'opción' : 'opciones';
+    switch (this.regla()) {
+      case 'minimo':
+        return `Hay que marcar al menos ${n} ${plural}.`;
+      case 'maximo':
+        return `Se pueden marcar como máximo ${n} ${plural}.`;
+      case 'exacto':
+        return `Hay que marcar exactamente ${n} ${plural}.`;
+      default:
+        return null;
+    }
+  });
+
   private pausa: ReturnType<typeof setTimeout> | null = null;
   private aviso: ReturnType<typeof setTimeout> | null = null;
 
+  /**
+   * Lo último que se emitió, para reconocerlo cuando vuelva.
+   *
+   * La plantilla se relee tras cada guardado y el campo llega como un objeto
+   * nuevo. Si lo que llega es lo que este editor mandó, el borrador ya lo tiene
+   * —y puede tener además lo tecleado después—, así que no se toca. Sólo se
+   * copia al borrador cuando trae algo distinto: la primera carga, o un cambio
+   * que vino de otro lado.
+   */
+  private ultimoEmitido: string | null = null;
+
   constructor() {
-    // El borrador sigue al campo: al recargar la plantilla tras guardar, la
-    // tarjeta tiene que mostrar lo que quedó guardado y no lo que se tecleó.
     effect(() => {
       const campo = this.campo();
+      if (this.ultimoEmitido !== null && firmaDe(campo) === this.ultimoEmitido) {
+        return;
+      }
       this.nombre.set(campo.name);
+      this.descripcion.set(campo.description ?? '');
+      this.editandoDescripcion.set((campo.description ?? '') !== '');
       this.tipo.set(aTipoDeCampo(campo.dataType, campo.multiple ?? false));
       this.obligatorio.set(campo.required);
       this.opciones.set(campo.options ?? []);
+      this.conOtro.set(campo.allowOther ?? false);
+      const { regla, cantidad } = reglaDe(campo.cardinalityMin, campo.cardinalityMax);
+      this.regla.set(regla);
+      this.cantidad.set(cantidad);
     });
   }
 
@@ -286,7 +415,24 @@ export class FieldEditor {
   }
 
   /** Al salir del campo se guarda ya: no hay razón para esperar la pausa. */
-  protected guardarNombre(): void {
+  protected guardarAhora(): void {
+    this.cancelarPausa();
+    this.emitir();
+  }
+
+  protected mostrarDescripcion(): void {
+    this.editandoDescripcion.set(true);
+  }
+
+  protected cambiarDescripcion(valor: string): void {
+    this.descripcion.set(valor);
+    this.conPausa();
+  }
+
+  /** Quita la descripción entera: la caja desaparece y se guarda sin ella. */
+  protected quitarDescripcion(): void {
+    this.descripcion.set('');
+    this.editandoDescripcion.set(false);
     this.cancelarPausa();
     this.emitir();
   }
@@ -335,8 +481,38 @@ export class FieldEditor {
       return;
     }
     this.opciones.update((actuales) => actuales.filter((_, i) => i !== indice));
+    this.acotarCantidad();
     this.cancelarPausa();
     this.emitir();
+  }
+
+  protected alternarOtro(valor: boolean): void {
+    this.conOtro.set(valor);
+    this.acotarCantidad();
+    this.cancelarPausa();
+    this.emitir();
+  }
+
+  /* -- la validación de respuesta ------------------------------------------- */
+
+  protected cambiarRegla(valor: ReglaDeSeleccion | null): void {
+    this.regla.set(valor ?? 'ninguna');
+    this.cancelarPausa();
+    this.emitir();
+  }
+
+  protected cambiarCantidad(valor: string | number | null): void {
+    const n = Math.floor(Number(valor));
+    if (!Number.isFinite(n) || n < 1) {
+      return;
+    }
+    this.cantidad.set(Math.min(n, this.topeDeCantidad()));
+    this.conPausa();
+  }
+
+  /** Si quitaron opciones, la cantidad no puede seguir pidiendo más de las que hay. */
+  private acotarCantidad(): void {
+    this.cantidad.update((n) => Math.max(1, Math.min(n, this.topeDeCantidad())));
   }
 
   /* -- el guardado ----------------------------------------------------------- */
@@ -373,28 +549,71 @@ export class FieldEditor {
       return;
     }
 
-    const dataType = aDataType(tipo);
+    const descripcion = this.descripcion().trim();
     const multiple = tipo === 'checkboxes';
-    const opcionesGuardadas = campo.options ?? [];
+    const topes = multiple
+      ? topesDe(this.regla(), this.cantidad())
+      : { cardinalityMin: null, cardinalityMax: null };
 
-    const sinCambios =
-      nombre === campo.name &&
-      dataType === campo.dataType.toLowerCase() &&
-      this.obligatorio() === campo.required &&
-      multiple === (campo.multiple ?? false) &&
-      opciones.length === opcionesGuardadas.length &&
-      opciones.every((opcion, i) => opcion === opcionesGuardadas[i]);
-    if (sinCambios) return;
-
-    this.guardar.emit({
+    const cambios: CambiosDelCampo = {
       name: nombre,
-      dataType,
+      dataType: aDataType(tipo),
       required: this.obligatorio(),
-      ...(eleccion ? { options: opciones, multiple } : {}),
-    });
+      description: descripcion === '' ? null : descripcion,
+      ...(eleccion
+        ? { options: opciones, multiple, allowOther: this.conOtro(), ...topes }
+        : {}),
+    };
+
+    const firma = firmaDeCambios(cambios);
+    if (firma === firmaDe(campo)) return;
+
+    this.ultimoEmitido = firma;
+    this.guardar.emit(cambios);
 
     this.guardado.set(true);
     if (this.aviso !== null) clearTimeout(this.aviso);
     this.aviso = setTimeout(() => this.guardado.set(false), AVISO_GUARDADO_MS);
   }
+}
+
+/**
+ * Lo que identifica el estado guardable de un campo, en una sola cadena.
+ *
+ * Sirve para dos comparaciones que tienen que coincidir: «¿cambió algo que
+ * valga la pena mandar?» y «¿lo que volvió del servidor es lo que mandé?». Con
+ * una función para cada una se separan en el primer arreglo.
+ */
+function firmaDe(campo: ChartTemplateField): string {
+  const eleccion = familiaDe(campo.dataType, campo.multiple ?? false);
+  const deEleccion = eleccion === 'eleccion' || eleccion === 'casillas';
+  return firmaDeCambios({
+    name: campo.name,
+    dataType: campo.dataType.toLowerCase(),
+    required: campo.required,
+    description: campo.description === undefined || campo.description === '' ? null : campo.description,
+    ...(deEleccion
+      ? {
+          options: campo.options ?? [],
+          multiple: campo.multiple ?? false,
+          allowOther: campo.allowOther ?? false,
+          cardinalityMin: campo.multiple ? (campo.cardinalityMin ?? null) : null,
+          cardinalityMax: campo.multiple ? (campo.cardinalityMax ?? null) : null,
+        }
+      : {}),
+  });
+}
+
+function firmaDeCambios(cambios: CambiosDelCampo): string {
+  return JSON.stringify([
+    cambios.name,
+    cambios.dataType,
+    cambios.required,
+    cambios.description,
+    cambios.options ?? null,
+    cambios.multiple ?? null,
+    cambios.allowOther ?? null,
+    cambios.cardinalityMin ?? null,
+    cambios.cardinalityMax ?? null,
+  ]);
 }

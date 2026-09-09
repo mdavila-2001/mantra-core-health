@@ -425,12 +425,12 @@ export const resenas = new Coleccion<ResenaSimulada>(
 /* ---- grupos y temas ------------------------------------------------------- */
 
 export const TEMAS = [
-  { id: uuid('topic-cardio'), code: 'CARDIO', name: 'Cardiología', specialtyConceptId: ESPECIALIDAD['SP-CARDIO']! },
-  { id: uuid('topic-pedia'), code: 'PEDIA', name: 'Pediatría', specialtyConceptId: ESPECIALIDAD['SP-PEDIA']! },
+  { id: uuid('topic-cardio'), code: 'CARDIO', name: 'Cardiología', specialtyConceptId: ESPECIALIDAD['CARDIOLOGIA']! },
+  { id: uuid('topic-pedia'), code: 'PEDIA', name: 'Pediatría', specialtyConceptId: ESPECIALIDAD['PEDIATRIA']! },
   { id: uuid('topic-diabetes'), code: 'DIABETES', name: 'Diabetes' },
-  { id: uuid('topic-saludmental'), code: 'MENTAL', name: 'Salud mental', specialtyConceptId: ESPECIALIDAD['SP-PSIQ']! },
-  { id: uuid('topic-nutricion'), code: 'NUTRI', name: 'Nutrición', specialtyConceptId: ESPECIALIDAD['SP-NUTRI']! },
-  { id: uuid('topic-embarazo'), code: 'EMBARAZO', name: 'Embarazo y maternidad', specialtyConceptId: ESPECIALIDAD['SP-GINE']! },
+  { id: uuid('topic-saludmental'), code: 'MENTAL', name: 'Salud mental', specialtyConceptId: ESPECIALIDAD['PSIQUIATRIA']! },
+  { id: uuid('topic-nutricion'), code: 'NUTRI', name: 'Nutrición', specialtyConceptId: ESPECIALIDAD['NUTRICION']! },
+  { id: uuid('topic-embarazo'), code: 'EMBARAZO', name: 'Embarazo y maternidad', specialtyConceptId: ESPECIALIDAD['GINECOLOGIA_OBSTETRICIA']! },
 ];
 
 export interface GrupoSimulado {

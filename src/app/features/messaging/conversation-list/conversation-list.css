@@ -89,7 +89,7 @@
 
 .conversaciones__vista-previa {
   color: var(--tinta-2);
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
 .conversaciones__sin-leer {

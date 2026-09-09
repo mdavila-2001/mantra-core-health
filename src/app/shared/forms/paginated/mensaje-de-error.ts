@@ -62,6 +62,20 @@ export function mensajeDeError(
   if ('pattern' in errores) {
     return 'Revisá el formato.';
   }
+  // Los topes de un campo de varias respuestas: ver `validadoresDeSeleccion`.
+  // «Exactamente» va primero porque es el caso en que los otros dos coinciden.
+  if ('exactSelections' in errores) {
+    const { required } = errores['exactSelections'] as { required: number };
+    return `Marcá exactamente ${required} ${required === 1 ? 'opción' : 'opciones'}.`;
+  }
+  if ('minSelections' in errores) {
+    const { min } = errores['minSelections'] as { min: number };
+    return `Marcá al menos ${min} ${min === 1 ? 'opción' : 'opciones'}.`;
+  }
+  if ('maxSelections' in errores) {
+    const { max } = errores['maxSelections'] as { max: number };
+    return `Marcá como máximo ${max} ${max === 1 ? 'opción' : 'opciones'}.`;
+  }
 
   // Un validador propio sin mensaje declarado. No se calla: un campo en rojo sin
   // explicación deja a la persona probando a ciegas.

@@ -190,7 +190,7 @@
   display: block;
   inline-size: 100%;
   block-size: 0.6rem;
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--radius-pill, var(--r-full));
   background: var(--surface-muted, var(--border-default));
   overflow: hidden;
 }

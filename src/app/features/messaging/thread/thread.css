@@ -98,7 +98,7 @@
 .hilo__nombre {
   margin: 0;
   font-family: var(--f-titulo);
-  font-size: 17px;
+  font-size: var(--fs-body-lg);
   font-weight: 700;
   color: var(--tinta-marca);
   overflow: hidden;
@@ -230,7 +230,7 @@
   gap: 4px;
   margin: 2px 0 0;
   color: var(--tinta-3);
-  font-size: 11px;
+  font-size: var(--fs-overline);
 }
 
 /* ✓ enviado, ✓✓ leído — el color solo no distingue nada para quien no lo
@@ -288,7 +288,7 @@
   margin: 0;
   padding: 0 var(--e4) var(--e3);
   color: var(--tinta-3);
-  font-size: 11px;
+  font-size: var(--fs-overline);
   background: var(--sup-tarjeta);
 }
 
@@ -337,7 +337,7 @@
   background: none;
   color: var(--tinta-2);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   cursor: pointer;
   text-decoration: underline;
 }

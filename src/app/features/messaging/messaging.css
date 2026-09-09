@@ -142,7 +142,7 @@
 
 .mensajeria__resultado-detalle {
   color: var(--tinta-2);
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
 /* --- El panel derecho sin hilo abierto ----------------------------------- */

@@ -3,7 +3,9 @@ import {
   aTipoDeCampo,
   esDeEleccion,
   etiquetaDeTipo,
+  reglaDe,
   TIPOS_DE_DATO,
+  topesDe,
 } from './field-editor';
 
 /**
@@ -77,7 +79,7 @@ describe('los tipos del generador de formularios', () => {
     expect(etiquetaDeTipo('code', false)).toBe('Opción múltiple');
     expect(etiquetaDeTipo('code', true)).toBe('Casillas de verificación');
     expect(etiquetaDeTipo('NUMBER')).toBe('Número');
-    expect(etiquetaDeTipo('string')).toBe('Texto corto');
+    expect(etiquetaDeTipo('string')).toBe('Respuesta corta');
     expect(etiquetaDeTipo('lo-que-sea')).toBe('Texto');
   });
 
@@ -87,5 +89,42 @@ describe('los tipos del generador de formularios', () => {
     const etiquetas = TIPOS_DE_DATO.map((o) => o.label);
     expect(etiquetas).toContain('Opción múltiple');
     expect(etiquetas).toContain('Casillas de verificación');
+  });
+});
+
+/**
+ * La «validación de respuesta» de las casillas: al menos, como máximo,
+ * exactamente. En pantalla es una regla y un número; en el contrato son dos
+ * topes. La ida y la vuelta tienen que cerrar, o un campo guardado con
+ * «exactamente 2» se abriría diciendo «al menos 2» con un máximo escondido.
+ */
+describe('los topes de respuestas de un campo de varias', () => {
+  it('«exactamente» son los dos topes iguales', () => {
+    expect(topesDe('exacto', 2)).toEqual({ cardinalityMin: 2, cardinalityMax: 2 });
+    expect(reglaDe(2, 2)).toEqual({ regla: 'exacto', cantidad: 2 });
+  });
+
+  it('«al menos» y «como máximo» ponen uno y QUITAN el otro', () => {
+    // `null` y no `undefined`: «no viene» es «no cambió», y cambiar de
+    // «exactamente 2» a «al menos 2» tiene que sacar el máximo que había.
+    expect(topesDe('minimo', 3)).toEqual({ cardinalityMin: 3, cardinalityMax: null });
+    expect(topesDe('maximo', 3)).toEqual({ cardinalityMin: null, cardinalityMax: 3 });
+    expect(reglaDe(3, undefined)).toEqual({ regla: 'minimo', cantidad: 3 });
+    expect(reglaDe(undefined, 3)).toEqual({ regla: 'maximo', cantidad: 3 });
+  });
+
+  it('sin regla se quitan los dos, y un campo sin topes abre sin regla', () => {
+    expect(topesDe('ninguna', 5)).toEqual({ cardinalityMin: null, cardinalityMax: null });
+    expect(reglaDe(undefined, undefined)).toEqual({ regla: 'ninguna', cantidad: 1 });
+  });
+
+  it('la vuelta conserva la regla elegida', () => {
+    for (const regla of ['minimo', 'maximo', 'exacto'] as const) {
+      const { cardinalityMin, cardinalityMax } = topesDe(regla, 4);
+      expect(reglaDe(cardinalityMin ?? undefined, cardinalityMax ?? undefined)).toEqual({
+        regla,
+        cantidad: 4,
+      });
+    }
   });
 });

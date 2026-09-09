@@ -6,7 +6,7 @@
 .nota {
   margin: var(--e4) 0;
   color: var(--tinta-3);
-  font-size: 13px;
+  font-size: var(--fs-caption);
 }
 
 .alerta-de-alcance {
@@ -47,7 +47,7 @@
 }
 
 .item__detalle {
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: var(--tinta-3);
 }
 

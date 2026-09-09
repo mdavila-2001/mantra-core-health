@@ -275,6 +275,33 @@ export interface PractitionerRegistration {
    * no habría criterio para decidir cuál gana.
    */
   readonly residenceMunicipalityConceptId?: string;
+
+  /**
+   * Calle, número y referencia del domicilio.
+   *
+   * Los mismos tres campos que {@link PatientRegistration} ya declara, con el
+   * mismo significado — la localidad ubica, esto es lo que hace falta para
+   * llegar a la puerta.
+   *
+   * **La API todavía no los acepta.** `RegisterPractitionerDto` declara sólo
+   * `residenceMunicipalityConceptId`, y con `forbidNonWhitelisted: true` una
+   * clave que no declara rechaza el alta entera con 400. Van acá porque el
+   * simulador de la rama `mockup` sí los guarda y la pantalla ya los pregunta;
+   * lo que falta está anotado en `PENDIENTES-BACKEND.md`.
+   */
+  readonly homeAddressLines?: string;
+
+  /**
+   * Latitud del domicilio, confirmada sobre el mapa.
+   *
+   * Viaja **con** {@link homeLongitude} o no viaja: media coordenada no ubica
+   * nada. Sólo se manda lo confirmado — ver `app-ubicacion-picker`.
+   */
+  readonly homeLatitude?: number;
+
+  /** Longitud del domicilio. Ver {@link homeLatitude}. */
+  readonly homeLongitude?: number;
+
   readonly licenseNumber: string;
   /**
    * Registro del SEDES: la habilitación departamental.

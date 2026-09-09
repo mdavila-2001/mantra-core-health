@@ -153,6 +153,10 @@ export interface CreateFieldDefinitionInput {
   readonly options?: readonly string[];
   /** Si el campo de elección admite varias respuestas. */
   readonly multiple?: boolean;
+  /** La ayuda bajo la pregunta. Ver {@link ChartTemplateField.description}. */
+  readonly description?: string;
+  /** Si ofrece «Otro» con texto libre. Ver {@link ChartTemplateField.allowOther}. */
+  readonly allowOther?: boolean;
 }
 
 /** Cuerpo de `POST /forms/assignments` (UC-09-06). */
@@ -201,6 +205,16 @@ export interface UpdateFieldDefinitionInput {
   readonly options?: readonly string[];
   /** Si el campo de elección admite varias respuestas. */
   readonly multiple?: boolean;
+  /** La ayuda bajo la pregunta; `null` la quita. */
+  readonly description?: string | null;
+  /** Si ofrece «Otro» con texto libre. */
+  readonly allowOther?: boolean;
+  /**
+   * Cuántas respuestas hay que marcar como mínimo / máximo, en un campo de
+   * varias. `null` quita el tope. Ver {@link ChartTemplateField.cardinalityMin}.
+   */
+  readonly cardinalityMin?: number | null;
+  readonly cardinalityMax?: number | null;
 }
 
 /**

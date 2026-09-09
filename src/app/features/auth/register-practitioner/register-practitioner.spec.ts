@@ -4,7 +4,8 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
-import { RegisterPractitioner } from './register-practitioner';
+import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
+import { ESPECIALIDAD } from '../../../core/mock/fixtures/conceptos';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
 
@@ -133,6 +134,7 @@ describe('RegisterPractitioner', () => {
       password: 'secreto12',
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
+      homeAddressLines: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
       // Obligatorio desde que dejó de ser «(opcional)»: es lo que dice qué
       // clase de profesional es, y de él dependen el colegio y las
@@ -264,7 +266,10 @@ describe('RegisterPractitioner', () => {
       // teléfonos con los que compartía pantalla.
       expect(camposDe('personal-contact')).toEqual(['mobilePhone', 'personalEmail']);
       expect(camposDe('access')).toEqual(['workMobilePhone', 'workLandline', 'email']);
-      expect(camposDe('residence')).toEqual(['municipio']);
+      // Las mismas tres piezas que el alta de paciente: la localidad, la calle
+      // y el punto del mapa. Era sólo la localidad mientras el DTO del
+      // profesional no tuvo dónde poner las otras dos.
+      expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
         'sedesLicenseNumber',
@@ -284,10 +289,9 @@ describe('RegisterPractitioner', () => {
 
     /**
      * Lo que el orden pide y esta pantalla **no** pregunta, porque no tiene
-     * dónde guardarse: segundo teléfono y segundo correo (AC-05-6), zona,
-     * dirección y GPS (AC-05-8), la organización (AC-05-9/-10/-11), las tres
-     * matrículas por separado (AC-05-5), universidad y otros títulos
-     * (AC-05-13).
+     * dónde guardarse: segundo teléfono y segundo correo (AC-05-6), la **zona**
+     * (AC-05-8), la organización (AC-05-9/-10/-11), las tres matrículas por
+     * separado (AC-05-5), universidad y otros títulos (AC-05-13).
      *
      * La prueba está para que aparezcan **con su destino**, no de contrabando:
      * el día que alguien agregue el campo sin la columna, esto se pone rojo y
@@ -302,7 +306,14 @@ describe('RegisterPractitioner', () => {
         'workPhone',
         'workEmail',
         'homeZone',
-        'homeAddressLines',
+        // `homeAddressLines` **salió de esta lista el 08/09/2026**, y con el
+        // GPS. No porque la columna haya aparecido: `common.addresses` ya la
+        // tenía, y el alta de paciente escribe ahí desde siempre. Lo que
+        // faltaba era que el DTO del profesional la recibiera, y eso es una
+        // línea de `RegisterPractitionerDto` copiada del de paciente —anotada
+        // en `PENDIENTES-BACKEND.md` como condición para el pase a `dev`—.
+        //
+        // La zona sigue acá porque de ella sí no hay columna para nadie.
         'organizationName',
         'healthFacilityConceptId',
         'ministryLicenseNumber',
@@ -1258,6 +1269,40 @@ describe('RegisterPractitioner', () => {
 
       expect(component.errorFoto()).toBe('La imagen supera el límite de 5 MB.');
       expect(component.fotoBase64()).toBeNull();
+    });
+  });
+
+  /* ==========================================================================
+     El catálogo que el filtro necesita.
+
+     Las dos listas de especialidad —la del odontólogo y la del resto— salen de
+     partir `VS_MEDICAL_SPECIALTY` por código. Un filtro por código es mudo si
+     el catálogo habla otro vocabulario: no falla, no avisa, sencillamente
+     devuelve nada. Fue lo que pasó en la rama `mockup` el 08/09/2026 — el
+     backend simulado tenía sus dieciocho especialidades con códigos propios
+     (`SP-ODONTO`…), ninguno de estos once acertaba, y quien elegía «Odontólogo»
+     llegaba al paso de especialidades y no tenía ninguna que elegir.
+
+     Se comprueba contra el catálogo del simulador porque es el único de los
+     dos que este repositorio puede leer. Es también el que sirve la maqueta que
+     el stakeholder recorre, así que es exactamente donde el hueco apareció.
+     ========================================================================== */
+  describe('el filtro de especialidades odontológicas', () => {
+    it('cada código que nombra existe en el catálogo', () => {
+      for (const codigo of ESPECIALIDADES_ODONTOLOGICAS) {
+        expect(ESPECIALIDAD[codigo], codigo).toBeDefined();
+      }
+    });
+
+    it('deja médicas de sobra del otro lado', () => {
+      // La otra mitad del corte: si el complemento quedara vacío, el filtro
+      // estaría bien escrito y aun así ninguna profesión médica tendría qué
+      // ofrecer. Son las 52 restantes de las 63.
+      const medicas = Object.keys(ESPECIALIDAD).filter(
+        (codigo) => !ESPECIALIDADES_ODONTOLOGICAS.has(codigo),
+      );
+
+      expect(medicas.length).toBeGreaterThan(40);
     });
   });
 });

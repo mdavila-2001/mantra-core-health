@@ -7,7 +7,7 @@
    traían valor de reserva, no fallaba ruidosamente: se pintaba SIEMPRE con la
    reserva, que estaba escrita para un tema claro. De ahí el defecto que se veía
    en oscuro —la tarjeta de acceso se volvía blanca al pasar el cursor y se
-   comía el texto—: `--color-surface-hover` no existía y quedaba `#f8fafc`.
+   comía el texto—: `--color-surface-hover` no existía y quedaba `var(--c-sage-50)`.
    El vocabulario real es `--sp-*`, `--fs-*`/`--lh-*`, `--r-*`, `--text-*`,
    `--bg-*` y `--border-*`. */
 

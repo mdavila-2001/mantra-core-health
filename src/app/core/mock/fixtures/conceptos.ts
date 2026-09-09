@@ -143,28 +143,93 @@ export const EMPLEADOR = definir('VS_BO_EMPLOYER', [
   ['EMP-INDEP', 'Independiente'],
 ]);
 
-/* ---- especialidades médicas ---------------------------------------------- */
+/* ---- especialidades médicas ----------------------------------------------
+
+   Las 63 de `VS_MEDICAL_SPECIALTY`, **con el código del catálogo real**
+   (`seedsGenerales/modules/45_system_context.seeds.json`, patch v4.0.11) y en
+   su mismo orden.
+
+   El código no es decorativo, y por eso no se inventa acá. El alta profesional
+   parte el catálogo en dos por código —`ESPECIALIDADES_ODONTOLOGICAS` en
+   `register-practitioner.ts`— para que quien elige «Odontólogo» vea las suyas
+   y no las 52 médicas. Con los `SP-*` inventados que había antes ese conjunto
+   no acertaba ninguno, así que la rama odontológica del alta ofrecía una lista
+   **vacía**: el simulador tenía especialidades y aun así no había ninguna que
+   elegir. Es el mismo síntoma que el stakeholder ya había reportado contra la
+   API real por otro motivo, y la lección es la de `faker/clinico.ts`: los
+   códigos se eligen del catálogo, nunca se inventan.
+
+   Las once odontológicas salen del listado del stakeholder
+   (`markdown_convertidos/LISTA_DE_ESPECIALIDADES_ODONTOLOGICAS.md`), que trae
+   diez; la que suma es `CIRUGIA_BUCOMAXILOFACIAL`, la única especialidad de
+   residencia médica cuyo requisito es Odontología.
+   -------------------------------------------------------------------------- */
 
 conjunto('VS_MEDICAL_SPECIALTY', 'Especialidades médicas', 'Especialidades reconocidas.');
 export const ESPECIALIDAD = definir('VS_MEDICAL_SPECIALTY', [
-  ['SP-CARDIO', 'Cardiología', 'Diagnóstico y tratamiento de las enfermedades del corazón.'],
-  ['SP-PEDIA', 'Pediatría', 'Salud de niñas, niños y adolescentes.'],
-  ['SP-GINE', 'Ginecología y obstetricia', 'Salud de la mujer, embarazo y parto.'],
-  ['SP-DERMA', 'Dermatología', 'Enfermedades de la piel, cabello y uñas.'],
-  ['SP-TRAUMA', 'Traumatología y ortopedia', 'Lesiones y enfermedades del aparato locomotor.'],
-  ['SP-MEDINT', 'Medicina interna', 'Atención integral del adulto.'],
-  ['SP-NEURO', 'Neurología', 'Enfermedades del sistema nervioso.'],
-  ['SP-PSIQ', 'Psiquiatría', 'Salud mental.'],
-  ['SP-OFTAL', 'Oftalmología', 'Salud visual.'],
-  ['SP-ODONTO', 'Odontología', 'Salud bucal.'],
-  ['SP-ENDO', 'Endocrinología', 'Diabetes, tiroides y hormonas.'],
-  ['SP-GASTRO', 'Gastroenterología', 'Aparato digestivo.'],
-  ['SP-NEUMO', 'Neumología', 'Aparato respiratorio.'],
-  ['SP-UROL', 'Urología', 'Aparato urinario y reproductor masculino.'],
-  ['SP-MEDGEN', 'Medicina general', 'Primer contacto y seguimiento.'],
-  ['SP-NUTRI', 'Nutrición', 'Alimentación y metabolismo.'],
-  ['SP-FISIO', 'Fisioterapia', 'Rehabilitación física.'],
-  ['SP-ANEST', 'Anestesiología', 'Anestesia y manejo del dolor.'],
+  ['MEDICINA_GENERAL', 'Medicina General', 'Primer contacto y seguimiento.'],
+  ['MEDICINA_FAMILIAR', 'Medicina Familiar'],
+  ['MEDICINA_INTERNA', 'Medicina Interna', 'Atención integral del adulto.'],
+  ['PEDIATRIA', 'Pediatría', 'Salud de niñas, niños y adolescentes.'],
+  ['GINECOLOGIA_OBSTETRICIA', 'Ginecología y Obstetricia', 'Salud de la mujer, embarazo y parto.'],
+  ['CARDIOLOGIA', 'Cardiología', 'Diagnóstico y tratamiento de las enfermedades del corazón.'],
+  ['NEUROLOGIA', 'Neurología', 'Enfermedades del sistema nervioso.'],
+  ['DERMATOLOGIA', 'Dermatología', 'Enfermedades de la piel, cabello y uñas.'],
+  ['ENDOCRINOLOGIA', 'Endocrinología', 'Diabetes, tiroides y hormonas.'],
+  ['GASTROENTEROLOGIA', 'Gastroenterología', 'Aparato digestivo.'],
+  ['NEUMOLOGIA', 'Neumología', 'Aparato respiratorio.'],
+  ['NEFROLOGIA', 'Nefrología'],
+  ['UROLOGIA', 'Urología', 'Aparato urinario y reproductor masculino.'],
+  ['TRAUMATOLOGIA', 'Traumatología y Ortopedia', 'Lesiones y enfermedades del aparato locomotor.'],
+  ['CIRUGIA_GENERAL', 'Cirugía General'],
+  ['OFTALMOLOGIA', 'Oftalmología', 'Salud visual.'],
+  ['OTORRINOLARINGOLOGIA', 'Otorrinolaringología'],
+  ['PSIQUIATRIA', 'Psiquiatría', 'Salud mental.'],
+  ['PSICOLOGIA_CLINICA', 'Psicología Clínica'],
+  ['ONCOLOGIA', 'Oncología'],
+  ['HEMATOLOGIA', 'Hematología'],
+  ['REUMATOLOGIA', 'Reumatología'],
+  ['INFECTOLOGIA', 'Infectología'],
+  ['GERIATRIA', 'Geriatría'],
+  ['ANESTESIOLOGIA', 'Anestesiología', 'Anestesia y manejo del dolor.'],
+  ['RADIOLOGIA', 'Radiología e Imagenología'],
+  ['PATOLOGIA_CLINICA', 'Patología Clínica'],
+  ['MEDICINA_EMERGENCIA', 'Medicina de Emergencia'],
+  ['MEDICINA_INTENSIVA', 'Medicina Intensiva'],
+  ['NUTRICION', 'Nutrición y Dietética', 'Alimentación y metabolismo.'],
+  ['ODONTOLOGIA', 'Odontología', 'Salud bucal.'],  // odontológica
+  ['FISIOTERAPIA', 'Fisioterapia y Rehabilitación', 'Rehabilitación física.'],
+  ['ENFERMERIA', 'Enfermería'],
+  ['BIOQUIMICA_CLINICA', 'Bioquímica Clínica'],
+  ['OBSTETRICIA', 'Obstetricia'],
+  ['MEDICINA_DEPORTIVA', 'Medicina Deportiva'],
+  ['ANATOMIA_PATOLOGICA', 'Anatomía Patológica'],
+  ['CIRUGIA_BUCOMAXILOFACIAL', 'Cirugía Bucomaxilofacial'],  // odontológica
+  ['CIRUGIA_PEDIATRICA', 'Cirugía Pediátrica'],
+  ['MEDICINA_DEL_TRABAJO', 'Medicina del Trabajo'],
+  ['MEDICINA_FISICA_REHABILITACION', 'Medicina Física y Rehabilitación'],
+  ['SALUD_FAMILIAR_COMUNITARIA_INTERCULTURAL', 'Salud Familiar Comunitaria Intercultural'],
+  ['CIRUGIA_ONCOLOGICA', 'Cirugía Oncológica'],
+  ['COLOPROCTOLOGIA', 'Coloproctología'],
+  ['CARDIOLOGIA_PEDIATRICA', 'Cardiología Pediátrica'],
+  ['INFECTOLOGIA_PEDIATRICA', 'Infectología Pediátrica'],
+  ['MEDICINA_DEL_DOLOR', 'Medicina del Dolor'],
+  ['MEDICINA_MATERNO_FETAL', 'Medicina Materno Fetal'],
+  ['NEONATOLOGIA', 'Neonatología'],
+  ['NEUROLOGIA_PEDIATRICA', 'Neurología Pediátrica'],
+  ['ONCOLOGIA_GINECOLOGICA', 'Oncología Ginecológica'],
+  ['ONCOLOGIA_PEDIATRICA', 'Oncología Pediátrica'],
+  ['ORTOPEDIA_PEDIATRICA', 'Ortopedia Pediátrica'],
+  ['TERAPIA_INTENSIVA_PEDIATRICA', 'Terapia Intensiva Pediátrica'],
+  ['ENDODONCIA', 'Endodoncia'],  // odontológica
+  ['ORTODONCIA', 'Ortodoncia'],  // odontológica
+  ['PERIODONCIA', 'Periodoncia'],  // odontológica
+  ['ESTETICA_DENTAL', 'Estética Dental'],  // odontológica
+  ['REHABILITACION_ORAL', 'Rehabilitación Oral'],  // odontológica
+  ['CIRUGIA_ORAL_MAXILOFACIAL', 'Cirugía Oral y Maxilofacial'],  // odontológica
+  ['ODONTOPEDIATRIA', 'Odontopediatría'],  // odontológica
+  ['IMPLANTOLOGIA_ORAL', 'Implantología Oral'],  // odontológica
+  ['ARMONIZACION_OROFACIAL', 'Armonización Orofacial'],  // odontológica
 ]);
 
 /* ---- demografía y contactos ---------------------------------------------- */

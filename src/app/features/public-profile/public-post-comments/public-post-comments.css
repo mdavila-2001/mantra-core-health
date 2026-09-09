@@ -54,7 +54,7 @@
   flex: none;
   inline-size: 32px;
   block-size: 32px;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   object-fit: cover;
 }
 
@@ -137,7 +137,7 @@ a.comentario__autor:hover {
   background: none;
   color: var(--tinta-2);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   font-weight: 600;
   cursor: pointer;
 }
@@ -160,8 +160,8 @@ a.comentario__autor:hover {
 .comentarios__vacio {
   margin: 0;
   color: var(--tinta-2);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .comentarios__esqueleto {

@@ -172,7 +172,7 @@ describe('FormBuilder', () => {
     // provisional existe porque el backend no acepta uno en blanco.
     const definicion = http.expectOne('/forms/field-definitions');
     expect(definicion.request.body).toEqual(
-      expect.objectContaining({ name: 'Campo nuevo', dataType: 'string' }),
+      expect.objectContaining({ name: 'Pregunta sin título', dataType: 'string' }),
     );
     // El código lleva el prefijo de la plantilla: `dynamic_field_definitions`
     // es una tabla global y dos consultorios chocarían por «Fuma».
@@ -313,18 +313,36 @@ describe('FormBuilder', () => {
     expect(grupo.get('f-9')?.value).toEqual([]);
   });
 
+  /** Lo que el editor emite: el campo entero, con lo que cambió puesto. */
+  function cambios(extra: Record<string, unknown> = {}) {
+    return {
+      name: '¿Fuma?',
+      dataType: 'code',
+      required: false,
+      description: null,
+      options: ['Nunca', 'Fumador'],
+      multiple: false,
+      allowOther: false,
+      cardinalityMin: null,
+      cardinalityMax: null,
+      ...extra,
+    };
+  }
+
+  function guardar(campo: unknown, extra: Record<string, unknown> = {}): void {
+    interno<(c: unknown, cambios: unknown) => void>('guardarCampo')(campo, cambios(extra));
+  }
+
+  function campoPropio(): Record<string, unknown> {
+    return interno<() => readonly Record<string, unknown>[]>('camposPropios')()[0]!;
+  }
+
   it('cambiar las opciones de un campo propio guarda la lista entera', () => {
     // Enteras y no una suelta: el orden importa y un parche por índice se
     // rompe en cuanto alguien inserta una en el medio.
     abrirPlantilla({ ...PLANTILLA, fields: [ELECCION] });
 
-    interno<(c: unknown, cambios: unknown) => void>('guardarCampo')(ELECCION, {
-      name: '¿Fuma?',
-      dataType: 'code',
-      required: false,
-      options: ['Nunca', 'Fumador'],
-      multiple: false,
-    });
+    guardar(ELECCION);
 
     const definicion = http.expectOne(
       (r) => r.url === '/forms/field-definitions/f-9' && r.method === 'PATCH',
@@ -335,9 +353,143 @@ describe('FormBuilder', () => {
     });
     definicion.flush({ ok: true });
 
-    // Y relee la plantilla, que es de donde la pantalla dibuja.
+    // Y NO relee la plantilla: la pantalla ya aplicó el cambio. Releer era lo
+    // que reseteaba el editor mientras se escribía. El `afterEach` verifica
+    // que no quedó ninguna petición colgando.
+    expect(campoPropio()['options']).toEqual(['Nunca', 'Fumador']);
+  });
+
+  it('el cambio se ve en la pantalla antes de que el servidor conteste', () => {
+    // Es lo que hace que la vista previa y la cabecera respondan al teclear,
+    // y lo que evita que una relectura pise lo que se está escribiendo.
+    abrirPlantilla({ ...PLANTILLA, fields: [ELECCION] });
+
+    guardar(ELECCION, { name: '¿Fumás?' });
+
+    expect(campoPropio()['name']).toBe('¿Fumás?');
+    http.expectOne((r) => r.method === 'PATCH').flush({ ok: true });
+  });
+
+  it('un cambio que llega mientras el anterior viaja espera y sale después, no se pierde', () => {
+    // Antes se descartaba en silencio: elegir «Opción múltiple» y escribir la
+    // primera opción antes de que volviera el guardado dejaba la opción sin
+    // guardar y el editor reseteado.
+    abrirPlantilla({ ...PLANTILLA, fields: [ELECCION] });
+
+    guardar(ELECCION, { options: ['Nunca', 'Fu'] });
+    guardar(ELECCION, { options: ['Nunca', 'Fum'] });
+    guardar(ELECCION, { options: ['Nunca', 'Fumador'] });
+
+    // Una sola en vuelo: la primera.
+    const primera = http.expectOne((r) => r.method === 'PATCH');
+    expect(primera.request.body).toMatchObject({ options: ['Nunca', 'Fu'] });
+    primera.flush({ ok: true });
+
+    // Al volver sale la ÚLTIMA, no la del medio: cada emisión trae el campo
+    // entero y la última ya contiene a la anterior.
+    const segunda = http.expectOne((r) => r.method === 'PATCH');
+    expect(segunda.request.body).toMatchObject({ options: ['Nunca', 'Fumador'] });
+    segunda.flush({ ok: true });
+
+    expect(campoPropio()['options']).toEqual(['Nunca', 'Fumador']);
+  });
+
+  it('si el guardado falla se relee del servidor, porque la pantalla ya no sabe qué quedó', () => {
+    abrirPlantilla({ ...PLANTILLA, fields: [ELECCION] });
+
+    guardar(ELECCION, { name: 'Roto' });
+    http
+      .expectOne((r) => r.method === 'PATCH')
+      .flush('nope', { status: 500, statusText: 'Server Error' });
+
+    http.expectOne((r) => r.url === '/charts/templates/tpl-1').flush({
+      ...PLANTILLA,
+      fields: [ELECCION],
+    });
+    http.expectOne((r) => r.url.startsWith('/forms/assignments/budget')).flush(PRESUPUESTO);
+
+    expect(campoPropio()['name']).toBe('¿Fuma?');
+    expect(interno<() => string | null>('errorDelAlta')()).not.toBeNull();
+  });
+
+  it('duplicar declara una definición NUEVA con lo mismo y la cuelga debajo', () => {
+    // Nueva y no la misma colgada dos veces: son dos preguntas que van a
+    // divergir, y una definición compartida haría que corregir una corrigiera
+    // la otra.
+    const original = {
+      ...ELECCION,
+      required: true,
+      allowOther: true,
+      description: 'Desde el último',
+    };
+    abrirPlantilla({ ...PLANTILLA, fields: [original] });
+
+    interno<(c: unknown) => void>('duplicarCampo')(original);
+
+    const definicion = http.expectOne('/forms/field-definitions');
+    expect(definicion.request.body).toEqual(
+      expect.objectContaining({
+        name: '¿Fuma? (copia)',
+        dataType: 'code',
+        options: ['Nunca', 'Ex fumador', 'Fumador'],
+        multiple: false,
+        allowOther: true,
+        description: 'Desde el último',
+      }),
+    );
+    expect(definicion.request.body.code).not.toBe(ELECCION.code);
+    definicion.flush({ id: 'f-copia' });
+
+    const asignacion = http.expectOne('/forms/assignments');
+    expect(asignacion.request.body).toEqual(
+      expect.objectContaining({ fieldId: 'f-copia', required: true }),
+    );
+    asignacion.flush({ id: 'as-copia' });
+
     http.expectOne((r) => r.url === '/charts/templates/tpl-1').flush(PLANTILLA);
     http.expectOne((r) => r.url.startsWith('/forms/assignments/budget')).flush(PRESUPUESTO);
+  });
+
+  /* -- Lo que la vista previa sirve de lo nuevo ------------------------------ */
+
+  it('la descripción se sirve como la ayuda bajo el campo', () => {
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [{ ...ELECCION, description: 'Contá desde el último cigarrillo.' }],
+    });
+
+    expect(camposDeLaPrevia()[0]!['hint']).toBe('Contá desde el último cigarrillo.');
+  });
+
+  it('con «Otro» se sirve a la vista aunque tenga muchas opciones: un desplegable no tiene dónde escribir', () => {
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [{ ...ELECCION, allowOther: true, options: ['a', 'b', 'c', 'd', 'e'] }],
+    });
+
+    const campo = camposDeLaPrevia()[0]!;
+    expect(campo['control']).toBe('radio');
+    expect(campo['otro']).toBe(true);
+  });
+
+  it('los topes de un campo de varias validan en la vista previa', () => {
+    // Marcar tres donde se pedían dos tiene que decirlo acá, no cuando el
+    // paciente lo vea.
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [{ ...ELECCION, multiple: true, cardinalityMin: 2, cardinalityMax: 2 }],
+    });
+
+    const grupo = interno<
+      () => { get(k: string): { setValue(v: unknown): void; errors: unknown } | null }
+    >('formularioDeMuestra')();
+    const control = grupo.get('f-9')!;
+
+    control.setValue(['Nunca']);
+    expect(control.errors).toEqual({ exactSelections: { required: 2, actual: 1 } });
+
+    control.setValue(['Nunca', 'Fumador']);
+    expect(control.errors).toBeNull();
   });
 
   /* -- El formulario estándar está bloqueado, y se dice por qué -------------- */

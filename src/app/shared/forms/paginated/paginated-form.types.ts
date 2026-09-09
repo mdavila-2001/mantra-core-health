@@ -89,6 +89,21 @@ export interface CampoDeFormulario {
    */
   readonly options?: readonly SelectOption<string>[];
 
+  /**
+   * Sólo para `radio` y `checkboxes`: ofrece además «Otro», con un texto libre.
+   *
+   * Es la salida para la respuesta que la lista no previó, la misma que ofrece
+   * cualquier formulario de encuesta. Lo que queda en el control es **el texto
+   * escrito** —en `radio` como valor, en `checkboxes` como un elemento más del
+   * array—, no un código «otro»: es lo que después se lee en la ficha, y un
+   * código habría que traducirlo en cada pantalla que lo muestre.
+   *
+   * Cómo se distingue de una opción de la lista: no está en `options`. Es la
+   * única regla, y vale en los dos sentidos —al escribir y al releer un valor
+   * guardado—.
+   */
+  readonly otro?: boolean;
+
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
 

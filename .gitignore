@@ -91,7 +91,11 @@ __screenshots__/
 
 # Worktrees de Git creados por herramientas de asistencia. Son copias completas
 # del repositorio: versionarlas metería el árbol dentro de sí mismo.
-.claude/
+# Excepción: settings.json, skills/ y agents/ si se versionan (protocolo FABLE).
+.claude/*
+!.claude/settings.json
+!.claude/skills/
+!.claude/agents/
 
 # El PDF que la suite unitaria deja en la raíz al correr.
 #

@@ -56,6 +56,32 @@ export interface ChartTemplateField {
    */
   readonly multiple?: boolean;
   /**
+   * La ayuda que se lee debajo de la pregunta cuando el rótulo no alcanza.
+   *
+   * Es la «Descripción» de una pregunta de Google Forms: «Contá desde el último
+   * cigarrillo», «En ayunas». Se sirve como `hint` del campo, así que además de
+   * verse viaja en el `aria-describedby` del control.
+   */
+  readonly description?: string;
+  /**
+   * Si un campo de elección ofrece además «Otro», con un texto libre.
+   *
+   * Es la salida para la respuesta que la lista no previó. Lo que se guarda es
+   * el texto escrito, no un código «otro»: es lo que después se lee en la ficha.
+   */
+  readonly allowOther?: boolean;
+  /**
+   * Cuántas respuestas hay que marcar, como mínimo, en un campo de varias.
+   *
+   * Sólo tiene sentido con `multiple`. Con `cardinalityMin === cardinalityMax`
+   * se pide una cantidad exacta. Son las tres reglas de «validación de
+   * respuesta» de las casillas de Google Forms: al menos, como máximo,
+   * exactamente.
+   */
+  readonly cardinalityMin?: number;
+  /** Cuántas respuestas se pueden marcar, como máximo. Ver {@link cardinalityMin}. */
+  readonly cardinalityMax?: number;
+  /**
    * Si el campo lo agregó esta organización, o viene del formulario estándar.
    *
    * El generador lo necesita para dos cosas que no puede adivinar: qué campos

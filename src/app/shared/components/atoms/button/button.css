@@ -117,7 +117,7 @@
 
 :host(.btn--sm) {
   --_btn-side: 32px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   padding: var(--sp-2) 14px;
   min-height: var(--_btn-side);
 }
@@ -137,7 +137,7 @@
 @media (min-width: 780px) {
   :host(.btn--md) {
     --_btn-side: 40px;
-    font-size: 14px;
+    font-size: var(--fs-body);
     padding: 11px var(--sp-5);
   }
 

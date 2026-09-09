@@ -39,7 +39,7 @@
 }
 
 .grilla__celda--atiende {
-  background: var(--st-success-bg, var(--c-mint-100, #d9f2e6));
+  background: var(--st-success-bg, var(--c-mint-100, var(--c-mint-200)));
 }
 
 .grilla__oculto {

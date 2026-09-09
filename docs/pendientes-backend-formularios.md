@@ -57,6 +57,39 @@ el que manda:
 - menos de **dos** opciones se rechaza: elegir entre una no es elegir.
 - una opción vacía o repetida se rechaza.
 
+### 1b. Lo demás que una pregunta declara (lo de Google Forms)
+
+El generador ofrece, además de las opciones, lo que cualquier editor de
+formularios ofrece por pregunta. Todo viaja en la **definición** —es de la
+pregunta, no del formulario donde está colgada— y el simulador ya lo persiste:
+
+```
+POST  /forms/field-definitions
+PATCH /forms/field-definitions/:id
+{
+  "description"?:    string | null,   // la ayuda que se lee bajo la pregunta
+  "allowOther"?:     boolean,         // ofrece «Otro» con texto libre
+  "cardinalityMin"?: number | null,   // casillas: marcar al menos N
+  "cardinalityMax"?: number | null    // casillas: marcar como máximo N
+}
+```
+
+- `description` se sirve como `hint` del campo (y por lo tanto en el
+  `aria-describedby` del control). En el `PATCH`, `null` la **quita**: «no
+  viene» significa «no cambió».
+- `allowOther` sólo tiene sentido con `dataType: "code"`. Lo que se captura
+  cuando el paciente elige «Otro» es **el texto escrito**, no un código
+  «otro»: en un campo de una sola respuesta es el valor; en uno de varias es
+  un elemento más del array, después de los de la lista. Se reconoce por no
+  estar entre las opciones. El backend tiene que aceptar ese valor fuera del
+  set aunque el campo sea `code` — hoy `field_values` lo rechazaría.
+- `cardinalityMin` / `cardinalityMax` ya existen en el contrato de creación y
+  son los topes de «validación de respuesta» de las casillas: al menos, como
+  máximo, y **exactamente** cuando los dos coinciden. Sólo aplican con
+  `multiple: true`; el front no los manda en «una sola». `null` en el `PATCH`
+  quita el tope. La cantidad nunca supera las opciones ofrecidas (más «Otro»
+  si lo hay): el front lo acota, el servidor debería rechazarlo.
+
 ### 2. Corregirlas
 
 ```

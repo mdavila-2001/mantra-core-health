@@ -9,8 +9,12 @@
        Tres cosas a la vez y en este orden: qué trae el estándar (no se toca),
        qué agregó esta organización, y cómo se va a ver servido. -->
   <div class="constructor constructor--abierto">
-    <div class="constructor__encabezado">
-      <div>
+    <!-- La cabecera del formulario, como la tarjeta de título de Google
+         Forms: una banda de color arriba, el nombre grande, y las acciones a
+         la derecha. Es lo primero que se ve y lo que dice en qué formulario
+         se está. -->
+    <header class="constructor__encabezado">
+      <div class="constructor__encabezado-texto">
         <h2 class="constructor__titulo">{{ plantilla.name }}</h2>
         <p class="constructor__codigo">{{ plantilla.code }} · versión {{ plantilla.version }}</p>
       </div>
@@ -28,7 +32,7 @@
           Volver a la lista
         </button>
       </div>
-    </div>
+    </header>
 
     @if (presupuestoEnPalabras(); as texto) {
       <app-card variant="outlined" padding="md" class="constructor__presupuesto">
@@ -151,13 +155,14 @@
                 [campo]="campo"
                 [esPrimero]="i === 0"
                 [esUltimo]="i === camposPropios().length - 1"
-                [guardando]="guardandoCampo() === campo.assignmentId"
+                [guardando]="estaGuardando(campo)"
                 [class.editor-campo--arrastrando]="arrastrando() === campo.assignmentId"
                 [class.editor-campo--destino]="
                   destino() === campo.assignmentId && arrastrando() !== campo.assignmentId
                 "
                 (agarrar)="agarrar(campo, $event)"
                 (guardar)="guardarCampo(campo, $event)"
+                (duplicar)="duplicarCampo(campo)"
                 (borrar)="quitarCampo(campo)"
                 (mover)="moverCampo(i, $event)"
               />
@@ -183,7 +188,7 @@
           (clicked)="agregarCampo()"
           data-testid="agregar-campo"
         >
-          + Agregar campo
+          + Agregar pregunta
         </button>
       </div>
     </section>

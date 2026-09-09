@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -6,11 +7,12 @@ import {
   inject,
   input,
   model,
+  signal,
 } from '@angular/core';
 import { NG_VALUE_ACCESSOR, type ControlValueAccessor } from '@angular/forms';
 
 import { Checkbox } from '@shared/components/atoms/checkbox/checkbox';
-import { FORM_CONTROL_CONTEXT } from '@shared/forms/form-control.context';
+import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
 import { createValueAccessorBridge } from '@shared/forms/value-accessor';
 
 /** Una respuesta ofrecida. */
@@ -47,6 +49,19 @@ export interface OpcionDeCasilla {
  * Lo marcado se guarda en el orden en que se ofreció. La respuesta se lee
  * después en una ficha clínica, y leerla en el orden en que alguien fue
  * pulsando no dice nada.
+ *
+ * ## «Otro», con texto libre
+ *
+ * Con `allowOther` el grupo ofrece una casilla más, «Otro», con un renglón para
+ * escribir. Lo que va al array es **el texto escrito** y no un código «otro»:
+ * es lo que después se lee en la ficha. Se reconoce por no estar entre las
+ * opciones, en los dos sentidos —al escribir y al releer un valor guardado—.
+ * Va al final del array, después de las de la lista, por la misma regla del
+ * orden: primero lo que se ofreció, después lo que se agregó.
+ *
+ * «Otro» marcado sin texto no aporta nada al array: no hay qué guardar. Si el
+ * campo es obligatorio, `required` lo dice; es el mismo criterio que sigue
+ * cualquier formulario de encuesta con su «Otro».
  */
 @Component({
   selector: 'app-checkbox-group',
@@ -92,6 +107,42 @@ export interface OpcionDeCasilla {
          que es lo que hace marcar la de al lado. */
       gap: var(--sp-2);
     }
+
+    /* La casilla «Otro» y su renglón, en la misma línea: el renglón es parte de
+       la opción, no un campo aparte. */
+    .app-checkbox-group__otro {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      flex-wrap: wrap;
+    }
+
+    /* Un renglón subrayado y no una caja: es lo que hace cualquier formulario
+       de encuesta con su «Otro», y una caja entera al lado de una casilla se
+       lee como otra pregunta. Va habilitado siempre, no sólo con la casilla
+       marcada: escribir ya es marcar. */
+    .app-checkbox-group__otro-texto {
+      flex: 1 1 12rem;
+      min-inline-size: 0;
+      padding: var(--sp-1) 0;
+      border: 0;
+      border-block-end: 1px solid var(--border-strong, var(--border-default));
+      background: transparent;
+      color: var(--text-primary);
+      font: inherit;
+      font-size: var(--fs-body);
+    }
+
+    .app-checkbox-group__otro-texto:focus-visible {
+      outline: none;
+      border-block-end-color: var(--brand-primary);
+      box-shadow: 0 1px 0 0 var(--brand-primary);
+    }
+
+    .app-checkbox-group__otro-texto:disabled {
+      color: var(--text-muted);
+      border-block-end-style: dashed;
+    }
   `,
   template: `
     @for (opcion of options(); track opcion.value) {
@@ -101,6 +152,30 @@ export interface OpcionDeCasilla {
         [disabled]="isDisabled()"
         (checkedChange)="alternar(opcion.value, $event)"
       />
+    }
+    @if (allowOther()) {
+      <div class="app-checkbox-group__otro">
+        <app-checkbox
+          [label]="otherLabel()"
+          [checked]="otroMarcado()"
+          [disabled]="isDisabled()"
+          (checkedChange)="alternarOtro($event)"
+          data-testid="checkbox-group-otro"
+        />
+        <input
+          class="app-checkbox-group__otro-texto"
+          type="text"
+          [id]="idDelOtro"
+          [value]="otroTexto()"
+          [disabled]="isDisabled()"
+          [attr.aria-label]="otherLabel() + ': escribí tu respuesta'"
+          placeholder="Escribí tu respuesta"
+          autocomplete="off"
+          (input)="escribirOtro($event)"
+          (blur)="formBridge.emitTouched()"
+          data-testid="checkbox-group-otro-texto"
+        />
+      </div>
     }
   `,
 })
@@ -116,12 +191,16 @@ export class CheckboxGroup implements ControlValueAccessor {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true, skipSelf: true });
 
   /** Puente con el formulario. Vacío e inofensivo si el grupo va suelto. */
-  private readonly formBridge = createValueAccessorBridge<readonly string[]>();
+  protected readonly formBridge = createValueAccessorBridge<readonly string[]>();
 
   readonly options = input<readonly OpcionDeCasilla[]>([]);
   readonly value = model<readonly string[]>([]);
   readonly disabled = input<boolean>(false);
   readonly hasError = input<boolean>(false);
+
+  /** Si ofrece además «Otro», con un renglón para escribir. */
+  readonly allowOther = input(false, { transform: booleanAttribute });
+  readonly otherLabel = input<string>('Otro:');
 
   readonly isDisabled = computed(() => this.disabled() || this.formBridge.disabledByForm());
 
@@ -133,6 +212,32 @@ export class CheckboxGroup implements ControlValueAccessor {
   );
 
   protected readonly required = computed(() => this.field?.required() === true);
+
+  protected readonly idDelOtro = nextControlId('checkbox-otro');
+
+  /* -- «Otro» ---------------------------------------------------------------- */
+
+  /**
+   * La casilla «Otro» apretada, aunque todavía no se haya escrito nada.
+   *
+   * Es estado local a propósito: el array no puede representar «Otro marcado
+   * y vacío» sin meter una cadena vacía, y una cadena vacía guardada es una
+   * respuesta que no dice nada.
+   */
+  private readonly otroActivo = signal(false);
+
+  /** Lo escrito en el renglón, se haya marcado la casilla o no. */
+  protected readonly otroTexto = signal('');
+
+  /** El texto libre que hay en el valor, si lo hay: lo que no es de la lista. */
+  private readonly textoLibreDelValor = computed<string | undefined>(() => {
+    const conocidos = new Set(this.options().map((o) => o.value));
+    return this.value().find((v) => !conocidos.has(v));
+  });
+
+  protected readonly otroMarcado = computed(
+    () => this.otroActivo() || this.textoLibreDelValor() !== undefined,
+  );
 
   constructor() {
     this.field?.controlLabelable.set(false);
@@ -148,6 +253,14 @@ export class CheckboxGroup implements ControlValueAccessor {
    */
   writeValue(value: readonly string[] | null): void {
     this.value.set(Array.isArray(value) ? value : []);
+    // Un valor guardado con texto libre vuelve con su «Otro» marcado y el
+    // renglón escrito: es lo que hace que releer una ficha muestre lo que se
+    // respondió y no una casilla vacía.
+    const libre = this.textoLibreDelValor();
+    if (libre !== undefined) {
+      this.otroTexto.set(libre);
+      this.otroActivo.set(true);
+    }
   }
 
   registerOnChange(fn: (value: readonly string[]) => void): void {
@@ -184,13 +297,38 @@ export class CheckboxGroup implements ControlValueAccessor {
     } else {
       marcadas.delete(opcion);
     }
+    this.publicar(marcadas);
+  }
 
+  protected alternarOtro(marcada: boolean): void {
+    if (this.isDisabled()) {
+      return;
+    }
+    this.otroActivo.set(marcada);
+    this.publicar(new Set(this.value()));
+  }
+
+  protected escribirOtro(evento: Event): void {
+    if (this.isDisabled()) {
+      return;
+    }
+    this.otroTexto.set((evento.target as HTMLInputElement).value);
+    // Escribir ya es marcar: nadie escribe en el renglón de «Otro» para
+    // después dejarlo sin marcar.
+    this.otroActivo.set(true);
+    this.publicar(new Set(this.value()));
+  }
+
+  /** Arma el array final —la lista en su orden, y «Otro» al final— y lo emite. */
+  private publicar(marcadas: Set<string>): void {
     const enOrden = this.options()
       .map((o) => o.value)
       .filter((v) => marcadas.has(v));
+    const libre = this.otroTexto().trim();
+    const final = this.otroActivo() && libre !== '' ? [...enOrden, libre] : enOrden;
 
-    this.value.set(enOrden);
-    this.formBridge.emitChange(enOrden);
+    this.value.set(final);
+    this.formBridge.emitChange(final);
     this.formBridge.emitTouched();
   }
 }

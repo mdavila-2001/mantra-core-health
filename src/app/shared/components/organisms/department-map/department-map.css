@@ -72,7 +72,7 @@
 
 .department-map__sigla {
   font-family: var(--font-body);
-  font-size: 42px;
+  font-size: var(--fs-display);
   font-weight: 600;
   fill: var(--text-secondary);
   /* El rótulo está encima de su propio control: sin esto, pulsar justo sobre

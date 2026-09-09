@@ -39,6 +39,11 @@ import {
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
+import {
+  UbicacionPicker,
+  type Coordenadas,
+  type IdsDePrueba,
+} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
   CampoDeFormulario,
@@ -78,8 +83,15 @@ const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
  * `CIRUGIA_BUCOMAXILOFACIAL` está acá aunque venga del listado del SNRM: es la
  * única especialidad de residencia médica cuyo requisito es Odontología (así lo
  * exige el SNRM y así quedó en la nota del value set).
+ *
+ * **Se exporta para que una prueba pueda comprobar que estos códigos existen**
+ * en el catálogo que la aplicación va a recibir. No es un detalle académico:
+ * el backend simulado los tenía inventados (`SP-ODONTO` y compañía), así que
+ * este conjunto no acertaba ninguno y la rama odontológica del alta ofrecía
+ * una lista vacía. Un conjunto que filtra por código sólo sirve si los dos
+ * lados dicen el mismo código, y eso hay que poder comprobarlo.
  */
-const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
+export const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
   'ODONTOLOGIA',
   'ENDODONCIA',
   'ORTODONCIA',
@@ -494,6 +506,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     NavIcon,
     Tooltip,
     LocationPicker,
+    UbicacionPicker,
     Link,
     Alert,
     AuthSplit,
@@ -613,6 +626,10 @@ export class RegisterPractitioner {
     // responde «¿de qué sos?» y la que el backend guarda como principal. Las
     // demás no se distinguen entre sí, así que viven en `especialidadesExtra` y
     // se agregan las que hagan falta: hay profesionales con más de tres.
+    // La calle del domicilio. Opcional, como en el alta de paciente: la
+    // localidad es la que ubica, y esto es lo que hace falta para llegar a la
+    // puerta.
+    homeAddressLines: new FormControl('', { nonNullable: true }),
     specialtyPrimary: new FormControl('', { nonNullable: true }),
     profilePhotoBase64: new FormControl<string | null>(null),
   });
@@ -841,6 +858,26 @@ export class RegisterPractitioner {
   readonly municipioProfesional = signal<string | null>(null);
 
   /**
+   * El punto del domicilio, ya confirmado sobre el mapa.
+   *
+   * Lo emite `app-ubicacion-picker` y llega **sólo confirmado**: el componente
+   * se guarda para sí el estado intermedio —capturado y sin confirmar— y avisa
+   * en pantalla que ese no se guarda. Acá no hace falta volver a preguntarlo.
+   */
+  readonly gpsDomicilio = signal<Coordenadas | null>(null);
+
+  /** Los identificadores de prueba del bloque de ubicación del domicilio. */
+  protected readonly idsUbicacionDomicilio: IdsDePrueba = {
+    mapa: 'registration-practitioner-home-map',
+    confirmada: 'registration-practitioner-home-location-confirmed',
+    avisoGeocodificacion: 'registration-practitioner-home-geocoding-notice',
+    quitar: 'registration-practitioner-home-location-remove',
+    sinConfirmar: 'registration-practitioner-home-location-unconfirmed',
+    confirmar: 'registration-practitioner-home-location-confirm',
+    usarUbicacion: 'registration-practitioner-home-location-use',
+  };
+
+  /**
    * Casillas de nombres adicionales (cuarto, quinto, …) agregadas por el usuario.
    */
   readonly nombresExtra = signal<readonly string[]>([]);
@@ -1065,10 +1102,12 @@ export class RegisterPractitioner {
    * el celular y el fijo del trabajo y el correo de acceso son cinco campos
    * distintos desde que la API los recibe por separado y los guarda como cinco
    * filas de puntos de contacto, cada una con su par sistema × uso.)
-   * - **Zona, línea de dirección y GPS** de residencia (AC-05-8). El DTO del
-   *   profesional acepta `residenceMunicipalityConceptId` y nada más: no tiene
-   *   `homeAddressLines` ni el par de coordenadas que sí tiene el de paciente. Y
-   *   `common.addresses` no tiene columna de zona para ninguno de los dos.
+   * - **La zona** de residencia (AC-05-8). `common.addresses` no tiene columna
+   *   de zona para ninguno de los dos registros, así que sigue sin preguntarse.
+   *   La **línea de dirección y el GPS** salieron de esta lista el 08/09/2026:
+   *   la pantalla ya los pregunta, con el mismo bloque que el alta de paciente.
+   *   Lo que falta para que lleguen a destino es del lado de la API — ver el
+   *   aviso de `datosProfesional`.
    * - **La organización y su ubicación** (AC-05-9, -10, -11). El padrón existe
    *   (`VS_BO_HEALTH_FACILITY`, 642 establecimientos de Santa Cruz) y el vínculo
    *   también (`profiles.practitioner_affiliations`, con su estado
@@ -1302,14 +1341,38 @@ export class RegisterPractitioner {
         titulo: '¿Dónde vivís?',
         clave: 'residence',
         icon: 'home',
-        // Una sola pregunta: la localidad. La zona, la línea de dirección y el
-        // GPS que el orden también pide no tienen campo en el DTO del
-        // profesional — ver el JSDoc de arriba.
-        hint: 'Opcional. Nos deja mostrarte lo que tenés cerca.',
+        // Las mismas tres piezas que el alta de paciente: la localidad, la
+        // calle y el punto del mapa. Eran una sola —la localidad— mientras el
+        // DTO del profesional no tuvo dónde poner las otras dos; ver el aviso
+        // de `datosProfesional` sobre lo que la API tiene que aceptar antes de
+        // que esto llegue a `dev`.
+        //
+        // La **zona** sigue sin preguntarse, y eso no cambió: `common.addresses`
+        // no tiene columna de zona para ninguno de los dos registros.
+        hint: 'Tu localidad hace falta; la calle y el punto del mapa son opcionales.',
         campos: [
           {
             key: 'municipio',
             label: '',
+            control: 'custom',
+          },
+          {
+            key: 'homeAddressLines',
+            label: 'Línea de dirección 1 (opcional)',
+            hint: 'Como se lo dirías a quien te trae algo a casa.',
+            description:
+              'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
+            control: 'text',
+            autocomplete: 'street-address',
+            placeholder: 'Av. Banzer, 3er anillo #42',
+            testId: 'registration-practitioner-home-address',
+            icono: 'route',
+          },
+          {
+            key: 'gpsDomicilio',
+            label: 'Ubicación GPS (opcional)',
+            hint: 'Si la compartís, quien te busca llega sin llamarte.',
+            description: 'Marcá el punto exacto de tu casa y confirmalo para que quede guardado.',
             control: 'custom',
           },
         ],
@@ -1821,6 +1884,8 @@ export class RegisterPractitioner {
     const fechaInscripcion = raw.licenseIssueDate;
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const municipio = this.municipioProfesional();
+    const calleDomicilio = raw.homeAddressLines.trim();
+    const gpsDomicilio = this.gpsDomicilio();
     const sexoAlNacer = raw.sexAtBirth;
     const foto = raw.profilePhotoBase64;
 
@@ -1851,6 +1916,23 @@ export class RegisterPractitioner {
         ? { issuerAdministrativeAreaConceptId: departamento }
         : {}),
       ...(municipio === null ? {} : { residenceMunicipalityConceptId: municipio }),
+      // La calle y el punto del domicilio (AC-05-8).
+      //
+      // OJO AL PASE A `dev`, igual que `workEmail`: `RegisterPractitionerDto`
+      // hoy acepta `residenceMunicipalityConceptId` y nada más, y con
+      // `forbidNonWhitelisted: true` (ver `main.ts`) tres claves que no
+      // declara **rechazan el alta entera con 400**. No es que el dato se
+      // pierda: no se registra nadie. La API tiene que aceptar
+      // `homeAddressLines`, `homeLatitude` y `homeLongitude` —los tres ya
+      // existen en `RegisterPatientDto`, son copiables tal cual— ANTES de que
+      // esta rama llegue a `dev`. Está anotado en `PENDIENTES-BACKEND.md`.
+      //
+      // El punto viaja sólo si se confirmó sobre el mapa: `gpsDomicilio` es lo
+      // que emite `app-ubicacion-picker`, y ese sólo emite lo confirmado.
+      ...(calleDomicilio === '' ? {} : { homeAddressLines: calleDomicilio }),
+      ...(gpsDomicilio === null
+        ? {}
+        : { homeLatitude: gpsDomicilio.lat, homeLongitude: gpsDomicilio.lng }),
       licenseNumber: raw.licenseNumber.trim(),
       sedesLicenseNumber: raw.sedesLicenseNumber.trim(),
       ...(autoridad === '' ? {} : { regulatoryAuthority: autoridad }),

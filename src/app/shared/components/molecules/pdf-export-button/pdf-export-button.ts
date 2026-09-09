@@ -30,12 +30,17 @@ import { PdfExportService } from './pdf-export.service';
  *
  * Quien necesite exportar otra cosa le pasa el elemento con `target`.
  *
- * ## Lo que el PDF NO trae
+ * ## Lo que el PDF trae y lo que no
  *
- * La utilidad recorre encabezados, párrafos, ítems de lista y filas de tabla.
- * **No dibuja el diseño**: no hay colores, ni imágenes, ni gráficos. Un PDF que
- * intentara ser una captura de pantalla saldría ilegible en papel; éste sale
- * como un documento. Vale saberlo antes de esperar que se vea igual.
+ * Sale con el membrete de AloVida —el isotipo arriba, la filigrana de fondo y
+ * la numeración de páginas al pie— porque eso lo pone el maquetador en todos
+ * los documentos del sistema.
+ *
+ * Lo que **no** hace es copiar la pantalla: recorre encabezados, párrafos,
+ * ítems de lista, listas de definiciones y filas de tabla, y los maqueta como
+ * documento. No replica el CSS de la vista. Un PDF que intentara ser una
+ * captura saldría ilegible en papel; vale saberlo antes de esperar que se vea
+ * igual que en el navegador.
  */
 @Component({
   selector: 'app-pdf-export-button',
@@ -58,6 +63,21 @@ export class PdfExportButton {
 
   /** Título impreso arriba del documento y guardado en sus metadatos. */
   readonly title = input<string>('');
+
+  /**
+   * La bajada bajo el título: de quién es el papel, o de qué fecha.
+   *
+   * Es lo que deja identificar la copia impresa sin abrirla del todo — «Ana
+   * Quispe · 8 de septiembre de 2026» dice mucho más que el título solo.
+   */
+  readonly subtitle = input<string>('');
+
+  /**
+   * La clase de documento, en versalitas arriba a la derecha: «FICHA DE
+   * PACIENTE», «PRESUPUESTO». Si no viene, ese lugar queda vacío en vez de
+   * repetir el título.
+   */
+  readonly kind = input<string>('');
 
   /**
    * Qué exportar. Si no viene, se exporta el contenedor del botón.
@@ -91,7 +111,14 @@ export class PdfExportButton {
     // porqué en `PdfExportService`. Un fallo se dice: un botón que no hace nada
     // se lee como «la aplicación está rota».
     void this.pdf
-      .export(elemento, this.filename(), { title: this.title() })
+      .export(elemento, this.filename(), {
+        title: this.title(),
+        // Se mandan sólo si dicen algo: el maquetador distingue «no hay
+        // bajada» de «hay una bajada vacía», y una cadena vacía le dejaría el
+        // hueco reservado en la hoja.
+        ...(this.subtitle() === '' ? {} : { subtitle: this.subtitle() }),
+        ...(this.kind() === '' ? {} : { kind: this.kind() }),
+      })
       .catch(() => this.error.set('No pudimos generar el PDF. Reintentá.'));
   }
 

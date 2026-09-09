@@ -118,7 +118,7 @@
 
 .vitrina__foto-error {
   margin: var(--sp-2) 0 0;
-  color: var(--error-tinta, #8a2f22);
+  color: var(--error-tinta, var(--c-error-700));
   font-size: var(--fs-caption);
 }
 

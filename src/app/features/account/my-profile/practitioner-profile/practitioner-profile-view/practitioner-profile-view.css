@@ -413,7 +413,7 @@
 
 .profesional__foto-error {
   margin: var(--sp-3) var(--sp-5) 0;
-  color: var(--error-tinta, #8a2f22);
+  color: var(--error-tinta, var(--c-error-700));
   font-size: var(--fs-caption);
 }
 

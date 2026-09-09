@@ -166,9 +166,32 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // paciente (corrección #2). El filtro real vive en cada sección, no acá.
     //
     // Va **antes** que los cuatro en este registro a propósito: el orden de
-    // dibujo del menú sale de acá (`navigation.subgroups.ts` sólo agrupa), y
-    // la portada tiene que aparecer primero dentro de su propio desplegable.
+    // dibujo del menú sale de acá (`navigation.subgroups.ts` sólo agrupa).
+    //
+    // **Y es la única del bloque que ocupa un renglón** (08/09/2026). Hasta
+    // hoy la barra dibujaba un desplegable «Directorios» y, adentro, esta
+    // portada más los cuatro directorios: dos formas de lo mismo, una encima
+    // de la otra. Quien abría el desplegable ya tenía los cuatro destinos a la
+    // vista, así que la portada era un rodeo — un clic para llegar a una
+    // pantalla que ofrece lo que el menú acababa de ofrecer.
+    //
+    // De las dos, la que se queda es la pantalla: dice qué hay en cada
+    // directorio antes de entrar, que es lo que el renglón del menú no puede
+    // hacer. Los cuatro salen del menú con `fueraDelMenuPara: [ANY_ROLE]` —no
+    // se borran, no pierden su ruta ni su lugar en el bloque—, el bloque se
+    // queda con esta sola sección y el armazón lo dibuja **suelto**, porque un
+    // bloque de uno no es un desplegable (`shell-layout.html`). Resultado: se
+    // aprieta «Directorios» y se llega derecho a la pantalla que deja elegir.
     path: 'directories',
+    // Los cuatro se entran por acá y ya no tienen renglón, así que este
+    // renglón se marca también mientras se los recorre: sin esto, abrir un
+    // directorio dejaba la barra entera apagada y sin decir dónde estabas.
+    representaEnElMenu: [
+      'directory',
+      'laboratory-directory',
+      'clinics-directory',
+      'pharmacies-directory',
+    ],
     label: 'Directorios',
     group: 'General',
     icon: 'directory',
@@ -213,6 +236,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // «Médicos» y no «doctores» por el mismo pedido (F2): en la superficie que
     // ve un paciente o un profesional se dice «médico».
     path: 'directory',
+    // Fuera del menú para todos (08/09/2026): se entra por la portada
+    // «Directorios», que es la que ahora ocupa el renglón. Ver el motivo
+    // entero en la sección `directories`. Esto **no** toca la corrección #2:
+    // `roles` + `exclusiveRoles` siguen siendo quienes cierran la puerta, y
+    // esta línea sólo decide dónde se ofrece — al médico se le sigue negando
+    // la pantalla, no se le esconde un renglón que igual podría abrir.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de médicos',
     group: 'General',
     icon: 'directory',
@@ -275,6 +305,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // de `/diagnostics`, que sigue siendo la cola clínica de órdenes/resultados.
     // La ruta tampoco coincide con `/diagnostic-units`, prefijo exclusivo de API.
     path: 'laboratory-directory',
+    // Fuera del menú para todos (08/09/2026): se entra por la portada
+    // «Directorios». El motivo entero está en la sección `directories`.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de laboratorios',
     group: 'General',
     icon: 'flask',
@@ -306,15 +339,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `scripts/check-route-prefixes.mjs`, que existe justamente por esto.
     // Además se lee mejor: el rótulo dice «clínicas».
     path: 'clinics-directory',
+    // Fuera del menú para todos (08/09/2026): se entra por la portada
+    // «Directorios». El motivo entero está en la sección `directories`.
+    //
+    // **No deshace FT-09-R01 (04/09/2026).** Aquel pedido devolvió al médico
+    // el acceso a este directorio después de que la lista cerrada de ocho
+    // (§4.H, 22/08) se lo quitara, y lo sigue teniendo: la sección es suya
+    // —`roles: [ANY_ROLE]`, sin `hiddenFor`—, aparece en su portada de
+    // directorios y en «Tus accesos». Lo único que cambia es por dónde entra.
+    // «Directorio de médicos» (`directory`) sigue siendo exclusivo del
+    // paciente por la corrección #2, que esta decisión tampoco toca.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de clínicas',
     group: 'General',
     icon: 'hospital',
     roles: [ANY_ROLE],
-    // **Vuelve al menú del médico (FT-09-R01, 04/09/2026).** Salió por la lista
-    // cerrada de ocho (§4.H, 22/08); el pedido «Directorio» de la funcionalidad
-    // 9 lo devuelve. Es el directorio que el médico SÍ puede ver: «Directorio de
-    // médicos» (`directory`) sigue siendo exclusivo del paciente por la
-    // corrección #2, que esta decisión NO toca.
     availability: 'disponible',
     summary: 'Clínicas, hospitales y centros de salud verificados, con su tipo y su ciudad.',
     module: 'M04 directory',
@@ -324,12 +363,15 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `GET /public/search/pharmacies`. Mismo razonamiento que el de clínicas:
     // la fuente de datos ya estaba y lo que faltaba era la puerta.
     path: 'pharmacies-directory',
+    // Fuera del menú para todos (08/09/2026), por lo mismo que el de clínicas:
+    // se entra por la portada «Directorios». Sigue siendo del médico —saber
+    // dónde se consigue lo que uno receta es parte de atender, que es lo que
+    // pedía FT-09-R01—; lo que cambia es por dónde entra, no si entra.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'Directorio de farmacias',
     group: 'General',
     icon: 'pill',
     roles: [ANY_ROLE],
-    // Vuelve al menú del médico por lo mismo que el de clínicas (FT-09-R01):
-    // saber dónde se consigue lo que uno receta es parte de atender.
     availability: 'disponible',
     summary: 'Farmacias de la red, con su ciudad y su verificación.',
     module: 'M22 pharmacy',

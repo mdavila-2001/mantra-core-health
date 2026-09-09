@@ -19,7 +19,7 @@
   max-inline-size: 100%;
   padding: 3px;
   border: 1px solid var(--border-default, var(--filete));
-  border-radius: var(--r-pill, 999px);
+  border-radius: var(--r-pill, var(--r-full));
   background: var(--bg-inset, var(--sup-inset));
 }
 
@@ -30,13 +30,13 @@
   gap: var(--sp-2, 8px);
   min-block-size: 32px;
   min-inline-size: 0;
-  padding: 0 var(--sp-4, 16px);
+  padding: 0 var(--sp-4, var(--sp-4));
   border: 1px solid transparent;
-  border-radius: var(--r-pill, 999px);
+  border-radius: var(--r-pill, var(--r-full));
   background: transparent;
   color: var(--text-secondary, var(--tinta-2));
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
@@ -49,7 +49,7 @@
 
 .segmentado--md .segmentado__opcion {
   min-block-size: 40px;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 
 /* FT-04-R04 · el realce del puntero es un velo, no un color opaco: se compone

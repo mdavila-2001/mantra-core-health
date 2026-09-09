@@ -39,6 +39,7 @@ import { FormField } from '../../molecules/form-field/form-field';
 import { PhoneInput } from '../../molecules/phone-input/phone-input';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
+import { RadioOtro } from '../../molecules/radio-otro/radio-otro';
 import { Stepper } from '../../molecules/stepper/stepper';
 import type { StepperStep } from '../../molecules/stepper/stepper.types';
 import { DatePicker } from '../date-picker/date-picker';
@@ -149,6 +150,7 @@ const MAX_PASOS_EN_EL_INDICADOR = 5;
     Progress,
     Radio,
     RadioGroup,
+    RadioOtro,
     Select,
     Stepper,
     Switch,
@@ -433,6 +435,11 @@ export class PaginatedForm {
    */
   protected tipoDeInput(campo: CampoDeFormulario): InputType {
     return campo.control as InputType;
+  }
+
+  /** Los valores de la lista de un campo de elección, para que «Otro» sepa cuál no es. */
+  protected valoresDe(campo: CampoDeFormulario): readonly string[] {
+    return (campo.options ?? []).map((opcion) => opcion.value);
   }
 
   protected errorDe(campo: CampoDeFormulario): string {

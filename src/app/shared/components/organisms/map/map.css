@@ -55,7 +55,7 @@ app-map {
   justify-content: center;
   border-radius: var(--r-full);
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--fs-body);
   background: var(--tono-bg, var(--bg-inset));
   color: var(--tono-fg, var(--text-secondary));
   border: 1.5px solid var(--tono-bd, var(--border-default));
