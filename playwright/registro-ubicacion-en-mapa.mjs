@@ -13,6 +13,9 @@
  * - Confirmar guarda; tocar de nuevo desconfirma (el punto anterior ya no vale).
  * - El lugar de trabajo tiene el mismo selector, independiente.
  *
+ * Y en el alta de profesional, que monta el componente compartido
+ * `app-ubicacion-picker`: el mismo recorrido sobre su domicilio.
+ *
  * Uso: `yarn node playwright/registro-ubicacion-en-mapa.mjs [urlBase]`
  */
 import { mkdirSync } from 'node:fs';
@@ -168,6 +171,35 @@ async function recorrerSelector(pagina, capturar, prefijo, ids) {
   await pagina.getByTestId(ids.confirmada).waitFor();
 }
 
+/** Llega a «¿Dónde vivís?» del alta de profesional: cinco páginas con obligatorios. */
+async function empezarElAltaDeProfesional(pagina) {
+  await pagina.goto(`${BASE}/auth/register/practitioner`, { waitUntil: "commit", timeout: 120_000 });
+  await pagina.getByTestId("registro-form-profesional").waitFor({ timeout: 90_000 });
+  await pagina.waitForTimeout(1_500);
+  await siguiente(pagina, "registro-pro-documento", async () => {
+    await pagina.getByTestId("registro-pro-nombre").fill("Ana");
+    await pagina.getByTestId("registro-pro-apellido-paterno").fill("Rojas");
+  });
+  await siguiente(pagina, "registration-practitioner-sex", async () => {
+    await pagina.getByTestId("registro-pro-documento").fill("7654321");
+    await pagina.getByTestId("registro-pro-departamento-ci").locator("select").selectOption({ index: 1 });
+  });
+  await siguiente(pagina, "registro-pro-celular-personal", async () => {
+    await pagina.getByTestId("registration-practitioner-sex").locator("select").selectOption({ index: 1 });
+    const fecha = pagina.getByPlaceholder("DD/MM/AAAA");
+    await fecha.click();
+    await pagina.keyboard.press("Control+A");
+    await pagina.keyboard.press("Backspace");
+    await fecha.pressSequentially("02021985", { delay: 20 });
+  });
+  await siguiente(pagina, "registro-pro-celular-trabajo", async () => {
+    await pagina.getByTestId("registro-pro-celular-personal").fill("70011223");
+    await pagina.getByTestId("registro-pro-correo-personal").fill("ana.rojas@example.com");
+  });
+  // «El contacto de tu trabajo» es todo opcional.
+  await siguiente(pagina, "registration-practitioner-home-location-use");
+}
+
 async function main() {
   mkdirSync(SALIDA, { recursive: true });
   const navegador = await chromium.launch();
@@ -218,6 +250,17 @@ async function main() {
     confirmar: 'registration-work-location-confirm',
     sinConfirmar: 'registration-work-location-unconfirmed',
     confirmada: 'registration-work-location-confirmed',
+  });
+
+  await empezarElAltaDeProfesional(pagina);
+  await recorrerSelector(pagina, capturar, "profesional", {
+    mapa: "registration-practitioner-home-map",
+    usar: "registration-practitioner-home-location-use",
+    marcar: "registration-practitioner-home-location-pick",
+    indicacion: "registration-practitioner-home-location-pick-indicacion",
+    confirmar: "registration-practitioner-home-location-confirm",
+    sinConfirmar: "registration-practitioner-home-location-unconfirmed",
+    confirmada: "registration-practitioner-home-location-confirmed",
   });
 
   ok('sin errores de página', errores.length === 0, errores.join(' | '));
