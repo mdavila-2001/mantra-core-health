@@ -28,6 +28,7 @@ describe('jsonLdDePerfil · dónde atiende', () => {
     trajectory: [],
     ratingAverage: null,
     ratingCount: 0,
+    practiceSites: [],
     acceptsReviews: false,
     posts: [],
     updatedAt: new Date('2026-08-01T00:00:00Z'),
@@ -93,6 +94,7 @@ describe('PublicProfileCard · pines', () => {
     trajectory: [],
     ratingAverage: null,
     ratingCount: 0,
+    practiceSites: [],
     acceptsReviews: false,
     posts: [],
     updatedAt: new Date('2026-08-01T00:00:00Z'),
@@ -142,6 +144,7 @@ describe('PublicProfileCard · trayectoria', () => {
     trajectory: [],
     ratingAverage: null,
     ratingCount: 0,
+    practiceSites: [],
     acceptsReviews: false,
     posts: [],
     updatedAt: new Date('2026-08-01T00:00:00Z'),
@@ -224,5 +227,123 @@ describe('PublicProfileCard · trayectoria', () => {
     });
 
     expect(host.querySelectorAll('.hito').length).toBe(2);
+  });
+});
+
+/* ============================================================================
+    Los lugares donde atiende (P16).
+
+    El cliente lo pidió textual —«en el perfil público del profesional falta los
+    lugares donde atiende»— y son **varios**: el consultorio propio y las sedes
+    de las organizaciones donde está vinculado. Antes la ficha mostraba una sola
+    dirección, que es la respuesta a otra pregunta.
+    ========================================================================== */
+describe('PublicProfileCard · dónde atiende', () => {
+  const BASE: PublicProfileDetail = {
+    kind: 'PRACTITIONER',
+    slug: 'dra-lucia-salas',
+    displayName: 'Dra. Lucía Salas',
+    headline: null,
+    biography: null,
+    avatarUrl: null,
+    coverUrl: null,
+    verified: true,
+    city: null,
+    address: null,
+    location: null,
+    specialties: [],
+    trajectory: [],
+    practiceSites: [],
+    ratingAverage: null,
+    ratingCount: 0,
+    acceptsReviews: false,
+    posts: [],
+    updatedAt: new Date('2026-08-01T00:00:00Z'),
+  };
+
+  const PROPIO = {
+    id: 's-propio',
+    name: 'Consultorio Dra. Salas',
+    addressText: 'Calle Libertad N.º 240',
+    location: { lat: -17.78, lng: -63.18 },
+    isOwn: true,
+  };
+
+  const DE_LA_CLINICA = {
+    id: 's-olivos',
+    name: 'Clínica Los Olivos',
+    addressText: 'Av. Banzer, 3.º anillo',
+    location: { lat: -17.77, lng: -63.19 },
+    isOwn: false,
+  };
+
+  function crear(perfil: PublicProfileDetail) {
+    const fixture = TestBed.createComponent(PublicProfileCard);
+    fixture.componentRef.setInput('perfil', perfil);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function sedes(host: HTMLElement): readonly string[] {
+    return [...host.querySelectorAll('.perfil__sede-nombre')].map((n) =>
+      (n.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    );
+  }
+
+  it('lista las sedes, no una dirección sola', () => {
+    const fixture = crear({ ...BASE, practiceSites: [PROPIO, DE_LA_CLINICA] });
+
+    expect(sedes(fixture.nativeElement as HTMLElement)).toEqual([
+      'Consultorio Dra. Salas Consultorio propio',
+      'Clínica Los Olivos',
+    ]);
+  });
+
+  it('el consultorio propio lleva su distintivo, y las sedes ajenas no', () => {
+    // No es lo mismo para quien elige: en el propio atiende él, sin una
+    // organización de por medio.
+    const host = crear({ ...BASE, practiceSites: [PROPIO, DE_LA_CLINICA] })
+      .nativeElement as HTMLElement;
+
+    expect(host.querySelectorAll('app-badge').length).toBe(1);
+  });
+
+  it('un pin por sede, no uno por profesional', () => {
+    // Son lugares distintos, y quien elige a quién consultar los compara entre
+    // sí. Con una sola coordenada el mapa contestaba «dónde está» cuando la
+    // pregunta es «dónde puedo verlo».
+    const componente = crear({ ...BASE, practiceSites: [PROPIO, DE_LA_CLINICA] })
+      .componentInstance;
+
+    expect(componente['pines']().map((p: { id: string }) => p.id)).toEqual([
+      's-propio',
+      's-olivos',
+    ]);
+  });
+
+  it('una sede sin coordenadas se lista igual, y no inventa un pin', () => {
+    const sinPunto = { ...DE_LA_CLINICA, location: null };
+    const fixture = crear({ ...BASE, practiceSites: [sinPunto] });
+
+    expect(sedes(fixture.nativeElement as HTMLElement)).toEqual(['Clínica Los Olivos']);
+    expect(fixture.componentInstance['pines']()).toEqual([]);
+  });
+
+  it('sin sedes cae al respaldo de siempre: una dirección y su punto', () => {
+    // Es la ficha de un lugar, o la de quien todavía no cargó ninguna. El
+    // comportamiento anterior no se pierde.
+    const fixture = crear({
+      ...BASE,
+      address: 'Av. Arce 2345',
+      city: 'La Paz',
+      location: { lat: -16.5, lng: -68.1 },
+    });
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('[data-testid="perfil-sedes"]')).toBeNull();
+    expect(host.querySelector('.perfil__donde')?.textContent).toContain('Av. Arce 2345');
+    expect(fixture.componentInstance['pines']().map((p: { id: string }) => p.id)).toEqual([
+      'ubicacion',
+    ]);
   });
 });

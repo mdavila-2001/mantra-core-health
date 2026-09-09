@@ -88,6 +88,11 @@ export function fichaPublicaDe(
     city: null,
     address: null,
     location: null,
+    // Vacía, como el resto de lo que no decide este formulario: los lugares
+    // donde atiende salen de sus sedes, no de la vitrina. La vista previa
+    // muestra el estado vacío honesto, que es lo que ve una ficha recién
+    // creada — y lo que hace que quien la configura vea el hueco.
+    practiceSites: [],
     specialties: [],
     trajectory: [],
     ratingAverage: null,

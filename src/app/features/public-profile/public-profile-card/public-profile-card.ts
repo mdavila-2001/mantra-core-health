@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 
 import { AppButton } from '@shared/components/atoms/button/button';
+import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppMap } from '@shared/components/organisms/map/map';
 import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
 import { PublicPostCard } from '../public-post-card/public-post-card';
@@ -79,7 +80,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  */
 @Component({
   selector: 'app-public-profile-card',
-  imports: [AppButton, DatePipe, AppMap, PublicPostCard],
+  imports: [AppButton, Badge, DatePipe, AppMap, PublicPostCard],
   templateUrl: './public-profile-card.html',
   styleUrl: './public-profile-card.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -191,10 +192,34 @@ export class PublicProfileCard {
    * diferencia de un *embed* de Google, Leaflet no busca por texto.
    */
   protected readonly pines = computed<readonly PinMapa[]>(() => {
-    const { location, displayName } = this.perfil();
+    const { location, displayName, practiceSites } = this.perfil();
+    // Un pin por sede: son lugares distintos, y quien elige a quién consultar
+    // los compara entre sí. Con una sola coordenada el mapa contestaba «dónde
+    // está» cuando la pregunta es «dónde puedo verlo».
+    const deSedes = practiceSites
+      .filter((sede) => sede.location !== null)
+      .map((sede) => ({
+        id: sede.id,
+        lat: sede.location!.lat,
+        lng: sede.location!.lng,
+        titulo: sede.name,
+      }));
+    if (deSedes.length > 0) return deSedes;
+
+    // El respaldo de siempre: la ficha que no tiene sedes cargadas —o la de un
+    // lugar, que no las tiene por definición— sigue mostrando su punto.
     if (location === null) return [];
     return [{ id: 'ubicacion', lat: location.lat, lng: location.lng, titulo: displayName }];
   });
+
+  /**
+   * Los lugares donde atiende, con el propio primero.
+   *
+   * Lo ordena el servidor (ver `sedesDe` en el simulador); acá no se reordena
+   * para que las dos superficies digan lo mismo. Vacío en una ficha de lugar y
+   * en la que todavía no cargó ninguna: ahí manda {@link donde}.
+   */
+  protected readonly sedes = computed(() => this.perfil().practiceSites);
 
   protected readonly etiquetaDelMapa = computed(
     () => `Dónde atiende ${this.perfil().displayName}, en el mapa.`,
