@@ -109,6 +109,23 @@ etiquetas correctas · objetivos táctiles razonables · contraste · comportami
 de foco en diálogos · jerarquía de encabezados · `prefers-reduced-motion` donde
 aplique.
 
+## Regla 8 — Centrado, a lo ancho y en una tarjeta con pestañas
+
+Regla del cliente (09/09/2026), a raíz de «Mi perfil» del paciente. Una ficha
+o un formulario que es lo único de su pantalla:
+
+- va **centrado** (`inline-size: 100%` + `margin-inline: auto`) y sin una
+  columna lateral vacía reservada por la rejilla;
+- ocupa **todo el ancho del área de contenido**, sin `max-inline-size` propio:
+  los campos se reparten en columnas por ancho (1 / 2 desde 780 px / 3 desde
+  1120 px), que es lo que evita las casillas kilométricas;
+- es **UNA `app-card` con `app-tabs`**, no varias tarjetas apiladas; lectura y
+  edición comparten pestañas e índice.
+
+Se mide con navegador: holgura izquierda ≈ derecha (≤ 2 px) respecto de
+`.app-main__inner`, y ancho ≥ 85 % del área. Receta completa en
+`docs/components/composition-rules.md` §5.
+
 ## Regla 7 — Angular 21, standalone y señales
 
 - Todo standalone; sin NgModules nuevos.

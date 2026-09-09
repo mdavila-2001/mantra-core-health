@@ -5,9 +5,11 @@ import {
   computed,
   inject,
   input,
+  model,
   output,
   signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -38,6 +40,9 @@ import type { ReferenceOption } from '../../../../shared/components/molecules/re
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Card } from '../../../../shared/components/molecules/card/card';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
+import { PESTANA, PESTANAS_DEL_PERFIL } from '../pestanas-del-perfil';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import {
   PhoneInput,
@@ -133,10 +138,13 @@ function mismoDia(una: Date, otra: Date): boolean {
     FormField,
     Input,
     NavIcon,
+    NgTemplateOutlet,
     PageHeader,
     PhoneInput,
     ReactiveFormsModule,
     Select,
+    Tab,
+    Tabs,
     Tooltip,
     TreeSelect,
     ViewStateHost,
@@ -187,9 +195,20 @@ export class PatientProfileEdit {
    */
   readonly cerrado = output<void>();
 
+  /**
+   * Las pestañas del formulario y cuál está abierta.
+   *
+   * Son las de la ficha de lectura, en el mismo orden (`PESTANAS_DEL_PERFIL`).
+   * Es un `model` y no una señal propia para que «Mi perfil» la comparta:
+   * el lápiz abre el formulario en la pestaña que se estaba mirando, y al
+   * guardar o cancelar la ficha vuelve a esa misma.
+   */
+  readonly pestana = model<number>(PESTANA.personales);
+  protected readonly pestanas = PESTANAS_DEL_PERFIL;
+
   protected readonly perfil = signal<ViewState<OwnPatientProfile>>(loading());
 
-  private readonly datos = computed(() => {
+  protected readonly datos = computed(() => {
     const estado = this.perfil();
     return estado.status === 'ready' ? estado.data : null;
   });
@@ -591,6 +610,28 @@ export class PatientProfileEdit {
    * otro, no quitar. Mientras siga así, dejarlos en blanco no manda nada en vez
    * de provocar un `400` que la persona leería como un fallo del producto.
    */
+  /**
+   * Qué pestaña tiene un campo que impide guardar, cuando no es la abierta.
+   *
+   * Con el formulario repartido en pestañas, «Guardar» apagado por un nombre
+   * vacío en «Datos personales» mientras se mira «Contacto» es un botón que
+   * parece roto. La nota dice adónde ir. Es `null` cuando lo que falta está a
+   * la vista: ahí el campo ya lo dice con su propio error.
+   */
+  protected readonly pendienteEnOtraPestana = computed<string | null>(() => {
+    const abierta = this.pestana();
+    if (
+      abierta !== PESTANA.personales &&
+      (this.nombreVacio() || this.apellidoVacio() || this.sexoVacio())
+    ) {
+      return `Falta completar «${PESTANAS_DEL_PERFIL[PESTANA.personales]}».`;
+    }
+    if (abierta !== PESTANA.contacto && this.telefonoMalEscrito()) {
+      return `Revisá el teléfono en «${PESTANAS_DEL_PERFIL[PESTANA.contacto]}».`;
+    }
+    return null;
+  });
+
   /* -- Los nombres que no son el primero ----------------------------------
      Se guardan en UNA columna, separados por espacio (así los escribe el alta).
      Acá se reparten en casillas para poder corregir uno sin reescribir todos, y
