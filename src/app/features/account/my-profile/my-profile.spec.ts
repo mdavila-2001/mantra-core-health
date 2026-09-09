@@ -143,7 +143,33 @@ describe('MyProfile', () => {
         ...perfil,
       });
       fixture.detectChanges();
-      return fixture.nativeElement.textContent as string;
+      return textoDeTodasLasPestanas();
+    }
+
+    /**
+     * El texto de la tarjeta con cada pestaña abierta, una tras otra.
+     *
+     * La ficha es UNA tarjeta con pestañas (pedido del 09/09/2026) y
+     * `app-tab` no dibuja el panel que no está abierto: el NIT vive en
+     * «Facturación» y los seguros en «Seguros y tutores», así que el texto de
+     * la pantalla sin recorrerlas sólo tendría «Datos personales». Se recorren
+     * pulsando la tira, que es como lo hace la persona.
+     */
+    function textoDeTodasLasPestanas(): string {
+      const raiz = fixture.nativeElement as HTMLElement;
+      const pestanas = [...raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+      if (pestanas.length === 0) {
+        return raiz.textContent ?? '';
+      }
+      const textos: string[] = [];
+      for (const pestana of pestanas) {
+        pestana.click();
+        fixture.detectChanges();
+        textos.push(raiz.textContent ?? '');
+      }
+      pestanas[0].click();
+      fixture.detectChanges();
+      return textos.join('\n');
     }
 
     it('muestra documento, correo, NIT y las dos direcciones', () => {
@@ -749,7 +775,10 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     expect(raiz.querySelector('[data-testid="mi-perfil-editor"]')).toBeNull();
 
     const boton = enlaceDeEdicion();
-    expect(boton?.textContent?.trim()).toBe('Editar');
+    // Es un botón de lápiz (pedido del 09/09/2026): el nombre va en
+    // `aria-label`, no en el texto, y el dibujo es el glifo `edit` del set.
+    expect(boton?.getAttribute('aria-label')).toBe('Editar');
+    expect(boton?.querySelector('svg')).not.toBeNull();
     // Un botón, no un enlace: no lleva a ninguna parte.
     expect(boton?.tagName).toBe('BUTTON');
     expect(boton?.getAttribute('href')).toBeNull();
@@ -973,3 +1002,83 @@ async function esperarLaFoto(hayFoto: () => boolean): Promise<void> {
     await new Promise((sigue) => setTimeout(sigue, 0));
   }
 }
+
+/**
+ * Las etiquetas del catálogo llegan por dos caminos que corren en paralelo: el
+ * resumen pide la del estado, el perfil completo pide las suyas —ocupación,
+ * municipio, departamento—. El resumen las guardaba con `set`, y cuando el
+ * perfil respondía primero (la maqueta responde en el acto), lo pisaba: la
+ * ficha mostraba «Ocupación» en blanco y el municipio «Sin registrar» con los
+ * dos datos cargados. Se vio en la captura del 09/09/2026.
+ */
+describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', () => {
+  const OCUPACION = '33333333-3333-4333-8333-333333333333';
+  const MUNICIPIO = '44444444-4444-4444-8444-444444444444';
+
+  let fixture: ComponentFixture<MyProfile>;
+  let http: HttpTestingController;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(MyProfile);
+    http = TestBed.inject(HttpTestingController);
+    resolverEstadosDeCaso(http);
+    fixture.detectChanges();
+    http.expectNone('/identity/me/verification-cases');
+  });
+
+  afterEach(() => http.verify());
+
+  /** La petición de etiquetas que pide exactamente estos ids. */
+  function etiquetasPara(ids: readonly string[]) {
+    return http.expectOne(
+      (r) => r.url === '/terminology/concepts' && r.params.get('ids') === ids.join(','),
+    );
+  }
+
+  it('la ocupación y el municipio se ven aunque sus etiquetas lleguen antes que la del estado', () => {
+    // 1 · El perfil completo responde primero, y con él sus etiquetas.
+    resolverPerfilCompleto(http, {
+      occupationConceptId: OCUPACION,
+      residenceMunicipalityConceptId: MUNICIPIO,
+    });
+    etiquetasPara([MUNICIPIO, OCUPACION]).flush({
+      items: [
+        { conceptId: OCUPACION, code: 'ACC', display: 'Contador/a', codeSystemVersionId: 'c-1' },
+        {
+          conceptId: MUNICIPIO,
+          code: 'SCZ',
+          display: 'Santa Cruz de la Sierra',
+          codeSystemVersionId: 'c-1',
+        },
+      ],
+      count: 2,
+      limit: 50,
+    });
+
+    // 2 · Después llega el resumen, con la sola etiqueta del estado.
+    http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+    etiquetasPara([ESTADO]).flush({
+      items: [{ conceptId: ESTADO, code: 'ACTIVE', display: 'Activa', codeSystemVersionId: 'c-1' }],
+      count: 1,
+      limit: 50,
+    });
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.textContent).toContain('Activa');
+    expect(raiz.textContent).toContain('Contador/a');
+
+    // El municipio vive en «Contacto».
+    const pestanas = raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    pestanas[1].click();
+    fixture.detectChanges();
+    expect(
+      raiz.querySelector('[data-testid="mi-perfil-municipio"]')?.textContent?.trim(),
+    ).toBe('Santa Cruz de la Sierra');
+  });
+});

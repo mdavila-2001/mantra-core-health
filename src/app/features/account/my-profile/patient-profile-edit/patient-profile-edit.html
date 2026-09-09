@@ -12,295 +12,380 @@
 }
 
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
-  <form class="datos" (submit)="$event.preventDefault()">
-    <!-- ─── Tu nombre ──────────────────────────────────────────────────────
-         Las cuatro partes por separado, como las guarda el modelo: el nombre
-         que se muestra lo compone el backend con ellas. -->
-    <app-card variant="outlined" padding="lg" class="datos__bloque">
-      <h2 class="datos__titulo">Tu nombre</h2>
-      <p class="datos__nota">Como figura en tu documento de identidad.</p>
+  <form class="datos" [class.datos--embebido]="embebido()" (submit)="$event.preventDefault()">
+    <!-- ─── Las pestañas ──────────────────────────────────────────────────────
+         Las mismas de la ficha de lectura, en el mismo orden
+         (`PESTANAS_DEL_PERFIL`): pulsar el lápiz estando en «Contacto» abre el
+         formulario en «Contacto». Van en un `ng-template` porque el marco
+         cambia y el contenido no: embebido, la tarjeta la pone «Mi perfil»; por
+         su propia ruta, la pone este componente. Escribir las pestañas dos
+         veces serían dos formularios que se separan en el primer retoque.
 
-      <div class="datos__campos">
-        <app-form-field
-          label="Nombre"
-          [required]="true"
-          [errorMessage]="nombreVacio() ? 'Ingresá tu nombre.' : ''"
-        >
-          <app-input
-            testId="perfil-nombre"
-            autocomplete="given-name"
-            placeholder="Ana"
-            [(value)]="nombre"
-          />
-        </app-form-field>
+         Los valores viven en señales del componente, no en los controles: al
+         cambiar de pestaña el panel inactivo se desmonta —así lo hace
+         `app-tab`— y lo tecleado sigue en pie. -->
+    <ng-template #secciones>
+      <app-tabs [(selectedIndex)]="pestana" data-testid="perfil-pestanas">
+        <!-- ─── Datos personales ────────────────────────────────────────── -->
+        <app-tab [label]="pestanas[0]">
+          <!-- Las cuatro partes del nombre por separado, como las guarda el
+               modelo: el nombre que se muestra lo compone el backend con ellas. -->
+          <section class="datos__seccion">
+            <h3 class="datos__titulo">Tu nombre</h3>
+            <p class="datos__nota">Como figura en tu documento de identidad.</p>
 
-        <app-form-field label="Segundo nombre" hint="Si no llevás, dejalo vacío.">
-          <app-input
-            testId="perfil-segundo-nombre"
-            autocomplete="additional-name"
-            placeholder="Lucía"
-            [(value)]="segundoNombre"
-          />
-        </app-form-field>
+            <div class="datos__campos">
+              <app-form-field
+                label="Nombre"
+                [required]="true"
+                [errorMessage]="nombreVacio() ? 'Ingresá tu nombre.' : ''"
+              >
+                <app-input
+                  testId="perfil-nombre"
+                  autocomplete="given-name"
+                  placeholder="Ana"
+                  [(value)]="nombre"
+                />
+              </app-form-field>
 
-        <app-form-field label="Tercer nombre" hint="Si no llevás, dejalo vacío.">
-          <app-input testId="perfil-tercer-nombre" placeholder="María" [(value)]="tercerNombre" />
-        </app-form-field>
+              <app-form-field label="Segundo nombre" hint="Si no llevás, dejalo vacío.">
+                <app-input
+                  testId="perfil-segundo-nombre"
+                  autocomplete="additional-name"
+                  placeholder="Lucía"
+                  [(value)]="segundoNombre"
+                />
+              </app-form-field>
 
-        <!-- Hay gente con cuatro y cinco nombres, y hasta hoy los que pasaban
-             del segundo quedaban apretados en una sola casilla. Se agregan las
-             que hagan falta, igual que en el alta. -->
-        @for (extra of nombresExtra(); track $index) {
-          <app-form-field [label]="'Nombre ' + ($index + 4)">
-            <div class="datos__nombre-extra">
-              <app-input
-                [testId]="'perfil-nombre-extra-' + $index"
-                placeholder="Otro nombre"
-                [value]="extra"
-                (valueChange)="escribirNombreExtra($index, $event)"
-              />
-              <!-- El nombre accesible dice QUÉ quita: «Quitar» a secas,
-                   repetido en la misma página, deja a quien usa lector de
-                   pantalla con botones idénticos y ninguna forma de saber cuál
-                   es cuál. El mismo texto va en el globo, que aparece con el
-                   puntero y con el foco del teclado. -->
+              <app-form-field label="Tercer nombre" hint="Si no llevás, dejalo vacío.">
+                <app-input testId="perfil-tercer-nombre" placeholder="María" [(value)]="tercerNombre" />
+              </app-form-field>
+
+              <!-- Hay gente con cuatro y cinco nombres, y hasta hoy los que pasaban
+                   del segundo quedaban apretados en una sola casilla. Se agregan las
+                   que hagan falta, igual que en el alta. -->
+              @for (extra of nombresExtra(); track $index) {
+                <app-form-field [label]="'Nombre ' + ($index + 4)">
+                  <div class="datos__nombre-extra">
+                    <app-input
+                      [testId]="'perfil-nombre-extra-' + $index"
+                      placeholder="Otro nombre"
+                      [value]="extra"
+                      (valueChange)="escribirNombreExtra($index, $event)"
+                    />
+                    <!-- El nombre accesible dice QUÉ quita: «Quitar» a secas,
+                         repetido en la misma página, deja a quien usa lector de
+                         pantalla con botones idénticos y ninguna forma de saber cuál
+                         es cuál. El mismo texto va en el globo, que aparece con el
+                         puntero y con el foco del teclado. -->
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [iconOnly]="true"
+                      [attr.aria-label]="'Quitar el nombre ' + ($index + 4)"
+                      [appTooltip]="'Quitar el nombre ' + ($index + 4)"
+                      [attr.data-testid]="'perfil-quitar-nombre-' + $index"
+                      (clicked)="quitarNombre($index)"
+                    >
+                      <app-nav-icon name="remove" />
+                    </button>
+                  </div>
+                </app-form-field>
+              }
+
               <button
                 app-button
                 type="button"
                 variant="ghost"
                 size="sm"
-                [iconOnly]="true"
-                [attr.aria-label]="'Quitar el nombre ' + ($index + 4)"
-                [appTooltip]="'Quitar el nombre ' + ($index + 4)"
-                [attr.data-testid]="'perfil-quitar-nombre-' + $index"
-                (clicked)="quitarNombre($index)"
+                data-testid="perfil-agregar-nombre"
+                (clicked)="agregarNombre()"
               >
-                <app-nav-icon name="remove" />
+                + Agregar otro nombre
               </button>
+
+              <app-form-field
+                label="Apellido paterno"
+                [required]="true"
+                [errorMessage]="apellidoVacio() ? 'Ingresá tu apellido paterno.' : ''"
+              >
+                <app-input
+                  testId="perfil-apellido-paterno"
+                  autocomplete="family-name"
+                  placeholder="Mamani"
+                  [(value)]="apellidoPaterno"
+                />
+              </app-form-field>
+
+              <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
+                <app-input
+                  testId="perfil-apellido-materno"
+                  autocomplete="family-name"
+                  placeholder="Quispe"
+                  [(value)]="apellidoMaterno"
+                />
+              </app-form-field>
             </div>
-          </app-form-field>
-        }
+          </section>
 
-        <button
-          app-button
-          type="button"
-          variant="ghost"
-          size="sm"
-          data-testid="perfil-agregar-nombre"
-          (clicked)="agregarNombre()"
-        >
-          + Agregar otro nombre
-        </button>
+          <!-- Datos con consecuencia clínica: cambian dosis, valores de
+               referencia y tamizajes. -->
+          <section class="datos__seccion">
+            <h3 class="datos__titulo">Sobre vos</h3>
+            <p class="datos__nota">Sirve para atenderte mejor. Todo esto es opcional.</p>
 
-        <app-form-field
-          label="Apellido paterno"
-          [required]="true"
-          [errorMessage]="apellidoVacio() ? 'Ingresá tu apellido paterno.' : ''"
-        >
-          <app-input
-            testId="perfil-apellido-paterno"
-            autocomplete="family-name"
-            placeholder="Mamani"
-            [(value)]="apellidoPaterno"
-          />
-        </app-form-field>
+            <div class="datos__campos">
+              <app-form-field
+                label="Fecha de nacimiento"
+                hint="Sirve para calcular dosis y valores de referencia."
+              >
+                <app-date-picker
+                  [(value)]="fechaNacimiento"
+                  [minDate]="nacimientoMasAntiguo"
+                  maxDate="today"
+                />
+              </app-form-field>
 
-        <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
-          <app-input
-            testId="perfil-apellido-materno"
-            autocomplete="family-name"
-            placeholder="Quispe"
-            [(value)]="apellidoMaterno"
-          />
-        </app-form-field>
-      </div>
-    </app-card>
+              <!-- Rótulo, ayuda y obligatoriedad son los del alta, palabra por
+                   palabra: es el mismo dato, y dos redacciones distintas hacen dudar
+                   de si se trata del mismo campo. Un valor heredado que ya no está
+                   en la lista —«Intersexual», «Prefiero no decirlo»— se ve como
+                   «Elegí una opción», igual que si nunca se hubiera cargado: hay que
+                   corregirlo a una de las dos vigentes para poder guardar. -->
+              <app-form-field
+                label="Sexo"
+                [required]="true"
+                hint="Dato clínico: cambia las dosis, los valores de referencia y los tamizajes."
+                [errorMessage]="sexoVacio() ? 'Elegí una opción.' : ''"
+              >
+                <app-select
+                  data-testid="perfil-genero"
+                  [options]="opcionesSexoAlNacer"
+                  [(value)]="sexoAlNacer"
+                  placeholder="Elegí una opción"
+                />
+              </app-form-field>
 
-    <!-- ─── Sobre vos ──────────────────────────────────────────────────────
-         Datos con consecuencia clínica: cambian dosis, valores de referencia
-         y tamizajes. -->
-    <app-card variant="outlined" padding="lg" class="datos__bloque">
-      <h2 class="datos__titulo">Sobre vos</h2>
-      <p class="datos__nota">Sirve para atenderte mejor. Todo esto es opcional.</p>
+              @if (catalogoOcupacionesCaido()) {
+                <app-form-field label="Ocupación (opcional)">
+                  <p class="datos__aviso" data-testid="perfil-ocupaciones-caido">
+                    No pudimos traer el catálogo de ocupaciones.
+                    <button app-button variant="ghost" size="sm" (clicked)="reintentarOcupaciones()">
+                      Reintentar
+                    </button>
+                  </p>
+                </app-form-field>
+              } @else {
+                <!-- La lupa que pide el registro del cliente (PACIENTE §1.4.2): son
+                     cientos de oficios y un desplegable sin filtro no se recorre. El
+                     alta ya la tenía; este editor había quedado con un `<select>`. -->
+                <app-form-field label="Ocupación (opcional)" [hint]="hintOcupacion()">
+                  <app-reference-combobox
+                    data-testid="perfil-ocupacion"
+                    label="Ocupación"
+                    placeholder="Buscá tu profesión u oficio…"
+                    emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                    [options]="ocupacionesFiltradas()"
+                    [selected]="ocupacionElegida()"
+                    [minQueryLength]="0"
+                    (searched)="busquedaOcupacion.set($event)"
+                    (selectionChange)="elegirOcupacion($event)"
+                  />
+                </app-form-field>
+              }
+            </div>
+          </section>
+        </app-tab>
 
-      <div class="datos__campos">
-        <app-form-field
-          label="Fecha de nacimiento"
-          hint="Sirve para calcular dosis y valores de referencia."
-        >
-          <app-date-picker
-            [(value)]="fechaNacimiento"
-            [minDate]="nacimientoMasAntiguo"
-            maxDate="today"
-          />
-        </app-form-field>
+        <!-- ─── Contacto ────────────────────────────────────────────────── -->
+        <app-tab [label]="pestanas[1]">
+          <!-- El municipio viaja SOLO: el departamento lo deriva el backend del
+               código del INE, así que el par no puede llegar incoherente. -->
+          <section class="datos__seccion">
+            <h3 class="datos__titulo">Contacto</h3>
+            <p class="datos__nota">Cómo ubicarte y dónde vivís.</p>
 
-        <!-- Rótulo, ayuda y obligatoriedad son los del alta, palabra por
-             palabra: es el mismo dato, y dos redacciones distintas hacen dudar
-             de si se trata del mismo campo. Un valor heredado que ya no está
-             en la lista —«Intersexual», «Prefiero no decirlo»— se ve como
-             «Elegí una opción», igual que si nunca se hubiera cargado: hay que
-             corregirlo a una de las dos vigentes para poder guardar. -->
-        <app-form-field
-          label="Sexo"
-          [required]="true"
-          hint="Dato clínico: cambia las dosis, los valores de referencia y los tamizajes."
-          [errorMessage]="sexoVacio() ? 'Elegí una opción.' : ''"
-        >
-          <app-select
-            data-testid="perfil-genero"
-            [options]="opcionesSexoAlNacer"
-            [(value)]="sexoAlNacer"
-            placeholder="Elegí una opción"
-          />
-        </app-form-field>
+            <div class="datos__campos">
+              <app-form-field
+                label="Teléfono"
+                hint="Con el que podamos llamarte. Vaciarlo te deja sin teléfono."
+                [errorMessage]="
+                  telefonoMalEscrito() ? 'El número está incompleto para el país elegido.' : ''
+                "
+              >
+                <!-- El mismo campo del alta: el prefijo se elige y la persona teclea
+                   sólo su número nacional. Escribirlo a mano producía `+591 70012345`,
+                   `70012345` y `591 7001-2345` como tres formas del mismo teléfono. -->
+                <app-phone-input
+                  [formControl]="telefonoControl"
+                  [placeholder]="'7001 2345'"
+                  [hasError]="telefonoMalEscrito()"
+                  [testId]="'perfil-telefono'"
+                />
+              </app-form-field>
 
-        @if (catalogoOcupacionesCaido()) {
-          <app-form-field label="Ocupación (opcional)">
-            <p class="datos__aviso" data-testid="perfil-ocupaciones-caido">
-              No pudimos traer el catálogo de ocupaciones.
-              <button app-button variant="ghost" size="sm" (clicked)="reintentarOcupaciones()">
-                Reintentar
-              </button>
-            </p>
-          </app-form-field>
-        } @else {
-          <!-- La lupa que pide el registro del cliente (PACIENTE §1.4.2): son
-               cientos de oficios y un desplegable sin filtro no se recorre. El
-               alta ya la tenía; este editor había quedado con un `<select>`. -->
-          <app-form-field label="Ocupación (opcional)" [hint]="hintOcupacion()">
-            <app-reference-combobox
-              data-testid="perfil-ocupacion"
-              label="Ocupación"
-              placeholder="Buscá tu profesión u oficio…"
-              emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
-              [options]="ocupacionesFiltradas()"
-              [selected]="ocupacionElegida()"
-              [minQueryLength]="0"
-              (searched)="busquedaOcupacion.set($event)"
-              (selectionChange)="elegirOcupacion($event)"
-            />
-          </app-form-field>
-        }
-      </div>
-    </app-card>
+              @if (catalogoMunicipiosCaido()) {
+                <app-form-field label="¿Dónde vivís?">
+                  <p class="datos__aviso" data-testid="perfil-municipios-caidos">
+                    No pudimos traer el catálogo de municipios.
+                    <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                      Reintentar
+                    </button>
+                  </p>
+                </app-form-field>
+              } @else {
+                <!-- El selector de ubicación es el árbol del alta: primero el
+                     departamento y dentro sus municipios, con buscador. No es
+                     una casilla de texto: el valor es un concepto del catálogo,
+                     y así lo que se elija se lee igual en la ficha. -->
+                <app-form-field label="¿Dónde vivís?" hint="Buscá tu municipio, o abrí tu departamento.">
+                  <app-tree-select
+                    data-testid="perfil-municipio"
+                    [groups]="arbolMunicipios()"
+                    [(value)]="municipio"
+                    placeholder="Sin especificar"
+                    dialogTitle="¿Dónde vivís?"
+                    searchPlaceholder="Buscar municipio o departamento…"
+                    emptyMessage="Ningún municipio coincide con esa búsqueda."
+                  />
+                </app-form-field>
+              }
 
-    <!-- ─── Contacto ───────────────────────────────────────────────────────
-         El municipio viaja SOLO: el departamento lo deriva el backend del
-         código del INE, así que el par no puede llegar incoherente. -->
-    <app-card variant="outlined" padding="lg" class="datos__bloque">
-      <h2 class="datos__titulo">Contacto</h2>
-      <p class="datos__nota">Cómo ubicarte y dónde vivís.</p>
+              <!-- Las dos direcciones. Van acá porque responden a «cómo ubicarte»,
+                   que es de lo que trata esta pestaña. El municipio de arriba sigue
+                   viajando aparte: sale del catálogo, y estas son texto libre porque
+                   una dirección boliviana real —«Av. Prolongación Beni #5100, esq.
+                   6to anillo»— no entra en una lista. -->
+              <app-form-field
+                label="Domicilio"
+                hint="Calle, número y zona. Vaciarlo lo quita de tu ficha."
+              >
+                <app-input
+                  data-testid="perfil-domicilio"
+                  [(value)]="domicilio"
+                  placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
+                />
+              </app-form-field>
 
-      <div class="datos__campos">
-        <app-form-field
-          label="Teléfono"
-          hint="Con el que podamos llamarte. Vaciarlo te deja sin teléfono."
-          [errorMessage]="
-            telefonoMalEscrito() ? 'El número está incompleto para el país elegido.' : ''
-          "
-        >
-          <!-- El mismo campo del alta: el prefijo se elige y la persona teclea
-             sólo su número nacional. Escribirlo a mano producía `+591 70012345`,
-             `70012345` y `591 7001-2345` como tres formas del mismo teléfono. -->
-          <app-phone-input
-            [formControl]="telefonoControl"
-            [placeholder]="'7001 2345'"
-            [hasError]="telefonoMalEscrito()"
-            [testId]="'perfil-telefono'"
-          />
-        </app-form-field>
+              <app-form-field
+                label="Dirección de trabajo"
+                hint="Dónde trabajás, si querés que figure."
+              >
+                <app-input
+                  data-testid="perfil-trabajo"
+                  [(value)]="direccionTrabajo"
+                  placeholder="Calle Ayacucho #241, Casco Viejo"
+                />
+              </app-form-field>
 
-        @if (catalogoMunicipiosCaido()) {
-          <app-form-field label="¿Dónde vivís?">
-            <p class="datos__aviso" data-testid="perfil-municipios-caidos">
-              No pudimos traer el catálogo de municipios.
-              <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
-                Reintentar
-              </button>
-            </p>
-          </app-form-field>
-        } @else {
-          <app-form-field label="¿Dónde vivís?" hint="Buscá tu municipio, o abrí tu departamento.">
-            <app-tree-select
-              data-testid="perfil-municipio"
-              [groups]="arbolMunicipios()"
-              [(value)]="municipio"
-              placeholder="Sin especificar"
-              dialogTitle="¿Dónde vivís?"
-              searchPlaceholder="Buscar municipio o departamento…"
-              emptyMessage="Ningún municipio coincide con esa búsqueda."
-            />
-          </app-form-field>
-        }
+              <!-- El correo se MUESTRA y no se edita, y eso hay que decirlo: antes no
+                   aparecía, y no verlo se lee como que la app lo perdió.
 
-        <!-- Las dos direcciones y el NIT. Van acá y no en «Sobre vos» porque
-             responden a «cómo ubicarte», que es de lo que trata esta tarjeta.
-             El municipio de arriba sigue viajando aparte: sale del catálogo, y
-             estas son texto libre porque una dirección boliviana real —«Av.
-             Prolongación Beni #5100, esq. 6to anillo»— no entra en una lista. -->
-        <app-form-field
-          label="Domicilio"
-          hint="Calle, número y zona. Vaciarlo lo quita de tu ficha."
-        >
-          <app-input
-            data-testid="perfil-domicilio"
-            [(value)]="domicilio"
-            placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
-          />
-        </app-form-field>
+                   No es una limitación de la pantalla. Para 59 de las cuentas de hoy
+                   el correo ES su usuario, así que cambiarlo acá las dejaría entrando
+                   con el anterior —o fuera de su cuenta por un tipeo—. El cambio real
+                   necesita verificar la dirección nueva ANTES de soltar la vieja; el
+                   modelo ya tiene `iam.email_verifications` para eso, y ese flujo
+                   está pendiente. -->
+              <app-form-field
+                label="Correo"
+                hint="Con este correo entrás. Cambiarlo pide verificar el nuevo antes de soltar el viejo, así que todavía no se hace desde acá."
+              >
+                <app-input
+                  data-testid="perfil-correo"
+                  [value]="correo()"
+                  [disabled]="true"
+                  placeholder="Sin registrar"
+                />
+              </app-form-field>
+            </div>
+          </section>
+        </app-tab>
 
-        <app-form-field
-          label="Dirección de trabajo"
-          hint="Dónde trabajás, si querés que figure."
-        >
-          <app-input
-            data-testid="perfil-trabajo"
-            [(value)]="direccionTrabajo"
-            placeholder="Calle Ayacucho #241, Casco Viejo"
-          />
-        </app-form-field>
+        <!-- ─── Facturación ─────────────────────────────────────────────── -->
+        <app-tab [label]="pestanas[2]">
+          <section class="datos__seccion">
+            <h3 class="datos__titulo">Facturación</h3>
+            <p class="datos__nota">A nombre de quién salen tus comprobantes.</p>
 
-        <app-form-field
-          label="NIT"
-          hint="Para que las facturas salgan a tu nombre. Vaciarlo lo quita."
-        >
-          <app-input data-testid="perfil-nit" [(value)]="nit" placeholder="1234567" />
-        </app-form-field>
+            <div class="datos__campos">
+              <app-form-field
+                label="NIT"
+                hint="Para que las facturas salgan a tu nombre. Vaciarlo lo quita."
+              >
+                <app-input data-testid="perfil-nit" [(value)]="nit" placeholder="1234567" />
+              </app-form-field>
 
-        <!-- El correo se MUESTRA y no se edita, y eso hay que decirlo: antes no
-             aparecía, y no verlo se lee como que la app lo perdió.
+              <app-form-field
+                label="Razón social"
+                hint="A nombre de quién sale el comprobante. Sin NIT no se guarda."
+              >
+                <app-input
+                  data-testid="perfil-razon-social"
+                  [(value)]="razonSocial"
+                  placeholder="Comercial Rojas S.R.L."
+                />
+              </app-form-field>
+            </div>
+          </section>
+        </app-tab>
 
-             No es una limitación de la pantalla. Para 59 de las cuentas de hoy
-             el correo ES su usuario, así que cambiarlo acá las dejaría entrando
-             con el anterior —o fuera de su cuenta por un tipeo—. El cambio real
-             necesita verificar la dirección nueva ANTES de soltar la vieja; el
-             modelo ya tiene `iam.email_verifications` para eso, y ese flujo
-             está pendiente. -->
-        <app-form-field
-          label="Correo"
-          hint="Con este correo entrás. Cambiarlo pide verificar el nuevo antes de soltar el viejo, así que todavía no se hace desde acá."
-        >
-          <app-input
-            data-testid="perfil-correo"
-            [value]="correo()"
-            [disabled]="true"
-            placeholder="Sin registrar"
-          />
-        </app-form-field>
+        <!-- ─── Seguros y tutores ───────────────────────────────────────── -->
+        <app-tab [label]="pestanas[3]">
+          <!-- Se leen, no se escriben: el `PATCH` de datos propios no los acepta
+               —cada seguro y cada tutor tiene su propio circuito—. La pestaña
+               está igual para que el formulario tenga las mismas cuatro que la
+               ficha, y para que quien las busque no crea que se perdieron. -->
+          <section class="datos__seccion">
+            <h3 class="datos__titulo">Seguros y tutores</h3>
+            <p class="datos__nota">Lo que declaraste al registrarte. Todavía no se corrige desde acá.</p>
 
-        <app-form-field
-          label="Razón social"
-          hint="A nombre de quién sale el comprobante. Sin NIT no se guarda."
-        >
-          <app-input
-            data-testid="perfil-razon-social"
-            [(value)]="razonSocial"
-            placeholder="Comercial Rojas S.R.L."
-          />
-        </app-form-field>
-      </div>
-    </app-card>
+            @if (datos(); as p) {
+              @if (p.coverages.length > 0) {
+                <ul class="datos__lista" data-testid="perfil-seguros">
+                  @for (seguro of p.coverages; track seguro.carrierName + (seguro.planName ?? '')) {
+                    <li class="datos__item">
+                      <span class="datos__item-nombre">{{ seguro.carrierName }}</span>
+                      @if (seguro.planName) {
+                        <span class="datos__item-detalle">{{ seguro.planName }}</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="datos__nota">No declaraste ningún seguro.</p>
+              }
+              @if (p.guardians.length > 0) {
+                <ul class="datos__lista" data-testid="perfil-tutores">
+                  @for (tutor of p.guardians; track tutor.displayName ?? '') {
+                    <li class="datos__item">
+                      <span class="datos__item-nombre">{{ tutor.displayName ?? 'Sin nombre registrado' }}</span>
+                      @if (tutor.phone) {
+                        <span class="datos__item-detalle">{{ tutor.phone }}</span>
+                      }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="datos__nota">No declaraste ningún contacto de emergencia ni tutor.</p>
+              }
+            }
+          </section>
+        </app-tab>
+      </app-tabs>
+    </ng-template>
+
+    <!-- Embebido, la tarjeta ya la puso «Mi perfil»; por su ruta propia, este
+         componente es la tarjeta. UNA tarjeta con pestañas en los dos casos. -->
+    @if (embebido()) {
+      <ng-container [ngTemplateOutlet]="secciones" />
+    } @else {
+      <app-card variant="outlined" padding="lg" class="datos__bloque">
+        <ng-container [ngTemplateOutlet]="secciones" />
+      </app-card>
+    }
 
     <app-form-actions
       submitLabel="Guardar cambios"
@@ -309,6 +394,15 @@
       [disabled]="!puedeGuardar()"
       (submitted)="guardar()"
       (cancelled)="cancelar()"
-    />
+    >
+      <!-- Con las pestañas, un campo obligatorio vacío puede estar en la que
+           no se ve: «Guardar» apagado sin decir por qué es un formulario que
+           parece roto. La nota nombra la pestaña donde falta algo. -->
+      @if (pendienteEnOtraPestana(); as aviso) {
+        <span form-actions-extra class="datos__pendiente" data-testid="perfil-pendiente" role="status">
+          {{ aviso }}
+        </span>
+      }
+    </app-form-actions>
   </form>
 </app-view-state-host>

@@ -80,6 +80,17 @@ secciones comparten ícono sólo cuando son la misma idea vista dos veces
 —«Turnos» y «Mis turnos», la agenda de quien atiende y la de quien consulta—,
 nunca por falta de dibujo. Hoy ninguno carga más de tres.
 
+### Los glifos de acción (09/09/2026)
+
+Cuatro nombres del set **no** nombran una sección: `arrow-left`,
+`arrow-right`, `remove` y `edit`. Responden «¿hacia dónde va este botón?» o
+«¿qué le hace a lo que tiene al lado?». `edit` es el lápiz que habilita los
+campos de un formulario que entró en sólo lectura («Mi perfil», FT-11-R04): un
+botón `iconOnly` con `aria-label="Editar"` y el mismo texto en el globo.
+No se usa `note` para eso, aunque tenga un lápiz dibujado: `note` es la
+sección «Evoluciones», y el mismo glifo para «esta sección» y para «editar
+esto» rompe el reconocimiento.
+
 ### Cómo se dibuja uno (28/08/2026)
 
 Tener cuarenta y cuatro nombres distintos no alcanzaba si los dibujos no se
