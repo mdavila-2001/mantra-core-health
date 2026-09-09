@@ -1,94 +1,59 @@
-/* El hilo: carril de conversaciones a la izquierda, cabecera con quién es
-   arriba, mensajes en el medio —lo único que scrollea— y el composer clavado
-   abajo. Colores del sistema (`alovida.css`); ver la nota de
-   `conversation-list.css` sobre por qué dejaron de ser inventados. */
+/* El hilo: cabecera arriba, mensajes en el medio —lo único que scrollea— y el
+   composer clavado abajo. El papel lleva el patrón de fondo tintado con
+   `--chat-patron`, que es lo que hace que las burbujas se apoyen en algo en
+   vez de flotar sobre un color plano.
 
-.hilo__alerta {
-  display: block;
-  margin-bottom: var(--e4);
-}
+   El componente es el panel derecho del marco (`messaging.css`), no una
+   pantalla: por eso no hay borde, ni radio, ni alto propio. */
 
-.hilo__cargando {
-  color: var(--tinta-2);
-}
-
-.hilo {
-  display: grid;
-  grid-template-columns: minmax(15rem, 20rem) 1fr;
-  block-size: min(calc(100dvh - 9rem), 46rem);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-card);
-  overflow: hidden;
-  background: var(--sup-tarjeta);
-  box-shadow: var(--sombra-1);
-}
-
-/* --- Carril izquierdo ---------------------------------------------------- */
-
-.hilo__carril {
+:host {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-block-size: 0;
-  border-inline-end: 1px solid var(--filete);
-}
-
-.hilo__carril-cabecera {
-  display: flex;
-  align-items: center;
-  min-block-size: var(--h-header);
-  padding: 0 var(--e3);
-  border-block-end: 1px solid var(--filete);
-  background: var(--sup-inset);
-}
-
-.hilo__carril-lista {
   flex: 1 1 auto;
-  min-block-size: 0;
-  overflow-y: auto;
+  background: var(--chat-papel);
 }
 
-.hilo__volver {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--e2);
-  color: var(--tinta-marca);
-  font-family: var(--f-titulo);
-  font-weight: 600;
-  text-decoration: none;
+/* El papel del hilo.
+
+   El dibujo entra como **máscara** y el color lo pone `--chat-patron`: así el
+   mismo archivo sirve en claro y en oscuro. Como imagen con color propio se
+   veía igual en los dos temas, y de noche quedaba una reja clara encima de las
+   burbujas.
+
+   Va en el host y no en el marco que scrollea, para que el fondo se quede
+   quieto mientras la conversación se mueve —si se desplazara con los mensajes
+   parecería una textura pegada al papel, no el papel—. */
+:host::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--chat-patron);
+  opacity: var(--chat-patron-op, .05);
+  mask-image: url('/chat-patron.svg');
+  mask-size: 340px 340px;
+  mask-repeat: repeat;
+  -webkit-mask-image: url('/chat-patron.svg');
+  -webkit-mask-size: 340px 340px;
+  -webkit-mask-repeat: repeat;
 }
 
-.hilo__volver svg {
-  inline-size: 18px;
-  block-size: 18px;
-}
-
-.hilo__volver:hover,
-.hilo__volver:focus-visible {
-  text-decoration: underline;
-}
-
-/* El «volver» de la cabecera es sólo para angosto, donde no hay carril. */
-.hilo__volver--movil {
-  display: none;
-  flex: none;
-}
-
-/* --- Panel derecho ------------------------------------------------------- */
-
-.hilo__panel {
-  display: flex;
-  flex-direction: column;
-  min-block-size: 0;
-}
+/* --- Cabecera ------------------------------------------------------------ */
 
 .hilo__cabecera {
+  position: relative;
+  z-index: 1;
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--e3);
   min-block-size: var(--h-header);
   padding: var(--e2) var(--e4);
   border-block-end: 1px solid var(--filete);
-  background: var(--sup-inset);
+  background: var(--sup-tarjeta);
 }
 
 .hilo__cabecera-texto {
@@ -109,75 +74,122 @@
 .hilo__estado {
   margin: 0;
   color: var(--tinta-2);
-  font-size: 12px;
+  font-size: var(--fs-overline);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* El papel del hilo: el inset del sistema con un halo de marca muy tenue, para
-   que los mensajes se apoyen sobre algo y no floten sobre blanco. */
+/* El «volver» sólo aparece en angosto: en escritorio la lista está al lado. */
+.hilo__volver {
+  display: none;
+  flex: none;
+  align-items: center;
+  color: var(--tinta-2);
+}
+
+.hilo__volver svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+/* --- El papel ------------------------------------------------------------ */
+
 .hilo__mensajes-marco {
   flex: 1 1 auto;
   min-block-size: 0;
   overflow-y: auto;
-  padding: var(--e4);
-  background:
-    radial-gradient(80% 40% at 50% 0%, var(--info-bg) 0%, transparent 60%), var(--sup-inset);
+  overflow-x: hidden;
+  padding: var(--e4) var(--e6);
+  /* Transparente: el papel y su dibujo los pinta el host, por debajo. Con un
+     fondo propio acá, el patrón quedaría tapado. */
+  position: relative;
+  z-index: 1;
 }
 
+.hilo__cargando,
 .hilo__mas {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--e3);
+  margin: 0 0 var(--e3);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  text-align: center;
 }
 
 .hilo__mensajes {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin: 0;
+  margin: 0 auto;
   padding: 0;
+  max-inline-size: 62rem;
   list-style: none;
 }
 
-/* --- Separador de día ---------------------------------------------------- */
+/* --- Separadores --------------------------------------------------------- */
 
-/* En el flujo, no pegada arriba. Se probó `sticky` y quedaba flotando **encima**
-   de las burbujas mientras se scrollea: tapaba la hora del mensaje de arriba y
-   se leía como un globo suelto en mitad de la conversación. Un separador marca
-   dónde empieza un día; si se despega de ahí, deja de marcar nada. */
-.hilo__dia {
+/* En el flujo, no pegado arriba: un separador marca dónde empieza un día, y si
+   se despega de ahí deja de marcar nada. */
+.hilo__dia,
+.hilo__no-leidos {
   align-self: center;
-  margin-block: var(--e3);
+  margin-block: var(--e4);
 }
 
-.hilo__dia span {
+.hilo__dia span,
+.hilo__no-leidos span {
   display: inline-block;
-  padding: 3px var(--e3);
+  padding: 4px var(--e3);
   border-radius: var(--r-pill);
   background: var(--sup-tarjeta);
-  border: 1px solid var(--filete-2);
   box-shadow: var(--sombra-1);
   color: var(--tinta-2);
-  font-size: 12px;
+  font-size: var(--fs-overline);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+/* El de no leídos ocupa el ancho: es una línea de corte, no una etiqueta. */
+.hilo__no-leidos {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.hilo__no-leidos::before,
+.hilo__no-leidos::after {
+  content: '';
+  flex: 1 1 auto;
+  block-size: 1px;
+  background: var(--chat-no-leido);
+  opacity: .35;
+}
+
+.hilo__no-leidos span {
+  background: var(--chat-no-leido);
+  color: #fff;
+  text-transform: none;
 }
 
 /* --- Burbujas ------------------------------------------------------------ */
 
 .hilo__burbuja {
   position: relative;
-  max-inline-size: min(46ch, 76%);
-  padding: var(--e2) var(--e3);
-  border-radius: var(--r-menu);
-  background: var(--sup-tarjeta);
+  max-inline-size: min(65%, 38rem);
+  padding: 6px 9px 8px;
+  border-radius: 8px;
+  background: var(--chat-ajena);
   box-shadow: var(--sombra-1);
   align-self: flex-start;
+  /* Sin esto, una palabra larguísima —una URL— estira la burbuja hasta romper
+     la columna. */
+  overflow-wrap: anywhere;
 }
 
-/* El propio va a la derecha **y** con el tinte de marca: sólo con el lado,
-   quien amplía mucho la pantalla pierde la referencia del margen. */
 .hilo__burbuja.is-propio {
   align-self: flex-end;
-  background: var(--info-bg);
+  background: var(--chat-propia);
 }
 
 /* Separación entre bloques de distinto autor, no entre cada par de mensajes:
@@ -198,44 +210,90 @@
 }
 
 .hilo__burbuja.is-abre:not(.is-propio) {
-  border-start-start-radius: 3px;
+  border-start-start-radius: 0;
 }
 
 .hilo__burbuja.is-abre:not(.is-propio)::after {
-  inset-inline-start: -6px;
+  inset-inline-start: -8px;
   clip-path: polygon(100% 0, 100% 100%, 0 0);
 }
 
 .hilo__burbuja.is-abre.is-propio {
-  border-start-end-radius: 3px;
+  border-start-end-radius: 0;
 }
 
 .hilo__burbuja.is-abre.is-propio::after {
-  inset-inline-end: -6px;
+  inset-inline-end: -8px;
   clip-path: polygon(0 0, 0 100%, 100% 0);
 }
+
+/* El destello de una cita a la que se saltó: dice «es éste» sin mover nada. */
+.hilo__burbuja.is-destello {
+  animation: hilo-destello 1.4s var(--curva);
+}
+
+@keyframes hilo-destello {
+  0%, 100% { box-shadow: var(--sombra-1); }
+  25%      { box-shadow: 0 0 0 3px var(--anillo-foco); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hilo__burbuja.is-destello { animation: none; box-shadow: 0 0 0 3px var(--anillo-foco); }
+}
+
+.hilo__burbuja.is-fallado {
+  box-shadow: 0 0 0 1px var(--error-tinta);
+}
+
+/* El nombre del autor en un grupo, con un tono estable por persona: es lo que
+   hace que en una ráfaga de tres se sepa quién habló sin leer el nombre. */
+.hilo__autor {
+  margin: 0 0 2px;
+  font-family: var(--f-titulo);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+}
+
+.hilo__autor[data-tono='0'] { color: #C2557A; }
+.hilo__autor[data-tono='1'] { color: #2E7D6E; }
+.hilo__autor[data-tono='2'] { color: #8A5FB8; }
+.hilo__autor[data-tono='3'] { color: #B26A2C; }
+.hilo__autor[data-tono='4'] { color: #2A6FA8; }
+.hilo__autor[data-tono='5'] { color: #7A8B22; }
+.hilo__autor[data-tono='6'] { color: #A8492F; }
+.hilo__autor[data-tono='7'] { color: #4A6BAF; }
 
 .hilo__texto {
   margin: 0;
   color: var(--tinta);
+  font-size: var(--fs-body);
+  line-height: 20px;
   /* Respeta los saltos que la persona escribió con Shift+Enter. */
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
+/* --- La hora, flotando --------------------------------------------------- */
+
+/* `float` y no una fila aparte: es lo que hace que «Dale» ocupe una línea con
+   la hora al lado, en vez de dos. El texto de arriba envuelve alrededor y, si
+   la última línea llega hasta el borde, la hora baja sola. */
 .hilo__meta {
-  display: flex;
+  float: inline-end;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  margin: 2px 0 0;
+  gap: 3px;
+  margin-block-start: 4px;
+  margin-inline-start: var(--e2);
   color: var(--tinta-3);
   font-size: var(--fs-overline);
+  line-height: 1;
+  user-select: none;
 }
 
-/* ✓ enviado, ✓✓ leído — el color solo no distingue nada para quien no lo
-   percibe, así que el texto de lector de pantalla al lado (`solo-lectores`)
-   dice lo mismo con palabras. */
+.hilo__hora {
+  font-variant-numeric: tabular-nums;
+}
+
 .hilo__ticks {
   display: inline-flex;
 }
@@ -246,137 +304,293 @@
 }
 
 .hilo__ticks.is-leido {
-  color: var(--petroleo);
+  color: var(--chat-tick-leido);
 }
 
-/* --- Composer ------------------------------------------------------------ */
-
-.hilo__composer {
-  display: flex;
-  align-items: flex-end;
-  gap: var(--e2);
-  padding: var(--e3) var(--e4) var(--e2);
-  border-block-start: 1px solid var(--filete);
-  background: var(--sup-tarjeta);
+.hilo__ticks.is-fallado {
+  color: var(--error-tinta);
 }
 
-.hilo__campo {
-  flex: 1 1 auto;
-}
-
-.hilo__campo--texto textarea {
-  inline-size: 100%;
-  min-block-size: var(--h-ctrl);
-  padding: 9px var(--e4);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-pill);
-  background: var(--sup-inset);
-  font: inherit;
-  color: var(--tinta);
-  resize: none;
-  max-block-size: 8rem;
-}
-
-.hilo__campo--texto textarea:focus-visible {
-  outline: 2px solid var(--anillo-foco);
-  outline-offset: 1px;
-  border-color: var(--petroleo);
-  background: var(--sup-tarjeta);
-}
-
-.hilo__ayuda {
-  margin: 0;
-  padding: 0 var(--e4) var(--e3);
-  color: var(--tinta-3);
+.hilo__reintento {
+  clear: both;
+  margin: var(--e2) 0 0;
+  color: var(--error-tinta);
   font-size: var(--fs-overline);
-  background: var(--sup-tarjeta);
 }
 
-/* --- Plantillas ---------------------------------------------------------- */
-
-.hilo__plantillas-panel {
-  max-block-size: 14rem;
-  overflow-y: auto;
-  padding: var(--e3) var(--e4);
-  border-block-start: 1px solid var(--filete);
-  background: var(--sup-inset);
-}
-
-.hilo__plantillas-lista {
-  margin: 0 0 var(--e2);
-  padding: 0;
-  list-style: none;
-}
-
-.hilo__plantilla {
-  display: flex;
-  align-items: center;
-  gap: var(--e2);
-}
-
-.hilo__plantilla-texto {
-  flex: 1 1 auto;
-  padding: var(--e2);
+.hilo__reintento button {
+  margin-inline-start: var(--e2);
   border: 0;
-  border-radius: var(--r-ctrl);
   background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* --- La cita ------------------------------------------------------------- */
+
+.hilo__cita {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  inline-size: 100%;
+  margin-block-end: 4px;
+  padding: 4px var(--e2);
+  border: 0;
+  border-inline-start: 3px solid var(--petroleo);
+  border-radius: 4px;
+  background: var(--chat-cita);
   color: inherit;
   font: inherit;
   text-align: start;
   cursor: pointer;
 }
 
-.hilo__plantilla-texto:hover,
-.hilo__plantilla-texto:focus-visible {
-  background: var(--neutro-bg);
+.hilo__cita:disabled {
+  cursor: default;
 }
 
-.hilo__plantilla-quitar {
-  flex: none;
-  border: 0;
-  background: none;
-  color: var(--tinta-2);
-  font: inherit;
+.hilo__cita-autor {
+  color: var(--tinta-marca);
   font-size: var(--fs-caption);
-  cursor: pointer;
-  text-decoration: underline;
+  font-weight: 700;
 }
 
-.hilo__plantilla-nueva {
+.hilo__cita-texto {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+}
+
+/* --- Adjuntos ------------------------------------------------------------ */
+
+.hilo__imagen {
+  display: block;
+  padding: 0;
+  margin-block-end: 3px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  cursor: zoom-in;
+  overflow: hidden;
+}
+
+.hilo__imagen img {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 22rem;
+  border-radius: 6px;
+}
+
+.hilo__audio {
+  display: block;
+  inline-size: 15rem;
+  max-inline-size: 100%;
+  margin-block-end: 3px;
+}
+
+.hilo__documento {
   display: flex;
   align-items: center;
   gap: var(--e2);
+  margin-block-end: 3px;
+  padding: var(--e2);
+  border-radius: 6px;
+  background: var(--chat-cita);
+  color: inherit;
+  text-decoration: none;
 }
 
-.hilo__plantilla-nueva input {
-  inline-size: 100%;
-  block-size: var(--h-ctrl);
-  padding-inline: var(--e3);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-ctrl);
-  background: var(--sup-tarjeta);
-  font: inherit;
+.hilo__documento-icono svg {
+  inline-size: 22px;
+  block-size: 22px;
+  color: var(--tinta-2);
 }
+
+.hilo__documento-nombre {
+  font-size: var(--fs-caption);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hilo__subiendo {
+  margin: 0 0 3px;
+  color: var(--tinta-3);
+  font-size: var(--fs-overline);
+}
+
+/* --- El menú del mensaje ------------------------------------------------- */
+
+.hilo__mas-mensaje {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 20px;
+  block-size: 20px;
+  border: 0;
+  border-radius: 4px;
+  background: linear-gradient(to left, var(--chat-ajena) 60%, transparent);
+  color: var(--tinta-3);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--mov-rapido) var(--curva);
+}
+
+.hilo__burbuja.is-propio .hilo__mas-mensaje {
+  background: linear-gradient(to left, var(--chat-propia) 60%, transparent);
+}
+
+.hilo__burbuja:hover .hilo__mas-mensaje,
+.hilo__burbuja:focus-within .hilo__mas-mensaje,
+.hilo__mas-mensaje[aria-expanded='true'] {
+  opacity: 1;
+}
+
+.hilo__mas-mensaje svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.hilo__menu {
+  position: absolute;
+  inset-block-start: 20px;
+  inset-inline-end: 0;
+  z-index: 3;
+  margin: 0;
+  padding: var(--e1);
+  min-inline-size: 9rem;
+  list-style: none;
+  border: 1px solid var(--filete);
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra);
+}
+
+.hilo__menu button {
+  inline-size: 100%;
+  padding: var(--e2) var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-caption);
+  text-align: start;
+  cursor: pointer;
+}
+
+.hilo__menu button:hover,
+.hilo__menu button:focus-visible {
+  background: var(--sup-inset);
+}
+
+@media (hover: none) {
+  .hilo__mas-mensaje {
+    opacity: 1;
+  }
+}
+
+/* --- Bajar del todo ------------------------------------------------------ */
+
+.hilo__bajar {
+  position: absolute;
+  inset-block-end: 5.5rem;
+  inset-inline-end: var(--e6);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--e2) var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-2);
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.hilo__bajar svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.hilo__bajar-cuenta {
+  min-inline-size: 18px;
+  padding-inline: 5px;
+  border-radius: var(--r-pill);
+  background: var(--chat-no-leido);
+  color: #fff;
+  font-size: var(--fs-overline);
+  font-weight: 700;
+}
+
+/* --- El visor de imágenes ------------------------------------------------ */
+
+.hilo__visor {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--e6);
+  background: var(--velo);
+  cursor: zoom-out;
+}
+
+.hilo__visor img {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  border-radius: var(--r-menu);
+  box-shadow: var(--sombra);
+}
+
+.hilo__visor-cerrar {
+  position: absolute;
+  inset-block-start: var(--e4);
+  inset-inline-end: var(--e4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, .16);
+  color: #fff;
+  cursor: pointer;
+}
+
+.hilo__visor-cerrar svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+/* --- Angosto ------------------------------------------------------------- */
 
 @media (max-width: 60rem) {
-  .hilo {
-    grid-template-columns: 1fr;
-    block-size: min(calc(100dvh - 7rem), 44rem);
-  }
-
-  /* En angosto la conversación ocupa la pantalla: el carril se va y el
-     «volver» de la cabecera ocupa su lugar. */
-  .hilo__carril {
-    display: none;
-  }
-
-  .hilo__volver--movil {
+  .hilo__volver {
     display: inline-flex;
   }
 
-  .hilo__mensajes-marco,
-  .hilo__composer,
-  .hilo__ayuda {
+  .hilo__mensajes-marco {
     padding-inline: var(--e3);
+  }
+
+  .hilo__burbuja {
+    max-inline-size: 85%;
+  }
+
+  .hilo__bajar {
+    inset-inline-end: var(--e3);
   }
 }

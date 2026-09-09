@@ -585,15 +585,25 @@ export function registrarComunidad(router: MockRouter): void {
   router.post('/community/conversations/:id/messages', (request) => {
     const c = conversaciones.get(request.params['id']!);
     if (c === undefined) return notFound('Conversación no encontrada');
-    const datos = cuerpo<{ senderProfileId: string; bodyText: string; replyToMessageId?: string }>(request);
+    const datos = cuerpo<{
+      senderProfileId: string;
+      bodyText: string;
+      replyToMessageId?: string;
+      contentType?: 'TEXT' | 'MEDIA';
+      attachmentFileId?: string;
+    }>(request);
     const nuevo: MensajeSimulado = {
       id: nuevoId('msg'),
       conversationId: c.id,
       senderProfileId: datos.senderProfileId ?? '',
       replyToMessageId: datos.replyToMessageId ?? null,
-      contentTypeConceptId: CONCEPTO.messageText,
+      // El adjunto se conserva: la maqueta descartaba `contentType` y
+      // `attachmentFileId`, así que mandar una foto se veía como un mensaje de
+      // texto vacío. El contrato real los acepta desde siempre.
+      contentTypeConceptId:
+        datos.contentType === 'MEDIA' ? CONCEPTO.messageMedia : CONCEPTO.messageText,
       bodyText: datos.bodyText ?? '',
-      attachmentFileId: null,
+      attachmentFileId: datos.attachmentFileId ?? null,
       isEdited: false,
       sentAt: ahora(),
     };

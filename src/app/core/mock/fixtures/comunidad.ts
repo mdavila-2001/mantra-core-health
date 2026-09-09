@@ -90,6 +90,8 @@ export const CONCEPTO = {
   conversationDirect: uuid('concept-conversation-direct'),
   conversationGroup: uuid('concept-conversation-group'),
   messageText: uuid('concept-message-content-text'),
+  /** Un mensaje que lleva adjunto: foto, documento o nota de voz. */
+  messageMedia: uuid('concept-message-content-media'),
   badgeVerified: uuid('concept-badge-verified-practitioner'),
   badgeMethod: uuid('concept-badge-method-registry'),
   prestigeLevel: uuid('concept-prestige-level-gold'),

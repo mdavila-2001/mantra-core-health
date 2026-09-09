@@ -356,15 +356,177 @@ test.describe.serial('Chat en tiempo real (WebSocket)', () => {
     }
   });
 
-  /* --- Negativos ----------------------------------------------------------- */
+  /* --- La forma de WhatsApp ------------------------------------------------ */
 
-  test('el textarea vacío no habilita enviar', async ({ browser }) => {
+  test('el mensaje propio aparece antes de que conteste el servidor', async ({
+    browser,
+  }) => {
     const pageDoctor = await abrirSesion(browser, doctor);
     try {
       await irA(pageDoctor, `/messaging/${conversationId}`);
       await esperarAplicacionLista(pageDoctor);
 
-      await expect(pageDoctor.getByTestId('hilo-enviar')).toBeDisabled();
+      // Se frena el POST a propósito: es la única forma de ver la burbuja
+      // optimista: contra un servidor local sano el acuse vuelve tan rápido
+      // que el reloj no se llega a ver, y entonces la prueba pasaría aunque el
+      // envío hubiera vuelto a esperar la respuesta.
+      await pageDoctor.route('**/community/conversations/*/messages', async (ruta) => {
+        if (ruta.request().method() !== 'POST') {
+          await ruta.fallback();
+          return;
+        }
+        await new Promise((listo) => setTimeout(listo, 2_500));
+        await ruta.fallback();
+      });
+
+      const texto = `Salgo para allá ${Date.now()}`;
+      await pageDoctor.getByTestId('hilo-texto').fill(texto);
+      await pageDoctor.getByTestId('hilo-enviar').click();
+
+      // Antes de que el servidor conteste: la burbuja ya está y lleva reloj.
+      await expect(pageDoctor.getByTestId('mensaje').last()).toContainText(texto, {
+        timeout: 1_000,
+      });
+      await expect(pageDoctor.getByTestId('hilo-reloj')).toBeVisible();
+      await capturar(pageDoctor, 'w1-envio-optimista');
+
+      // Y cuando contesta, el reloj se convierte en tilde sin duplicar nada.
+      await expect(pageDoctor.getByTestId('hilo-reloj')).toHaveCount(0, {
+        timeout: 10_000,
+      });
+      await expect(
+        pageDoctor.getByTestId('mensaje').filter({ hasText: texto }),
+      ).toHaveCount(1);
+    } finally {
+      await pageDoctor.context().close();
+    }
+  });
+
+  test('la respuesta con cita llega citada del otro lado', async ({ browser }) => {
+    const pageDoctor = await abrirSesion(browser, doctor);
+    const pagePaciente = await abrirSesion(browser, paciente);
+    try {
+      await irA(pageDoctor, `/messaging/${conversationId}`);
+      await esperarAplicacionLista(pageDoctor);
+      await irA(pagePaciente, `/messaging/${conversationId}`);
+      await esperarAplicacionLista(pagePaciente);
+
+      const pregunta = `¿Traigo los estudios? ${Date.now()}`;
+      await pagePaciente.getByTestId('hilo-texto').fill(pregunta);
+      await pagePaciente.getByTestId('hilo-enviar').click();
+
+      const burbuja = pageDoctor.getByTestId('mensaje').filter({ hasText: pregunta });
+      await expect(burbuja).toBeVisible({ timeout: 5_000 });
+
+      // El doctor responde citándola.
+      await burbuja.getByTestId('hilo-menu-mensaje').click();
+      await pageDoctor.getByTestId('hilo-responder').click();
+      await expect(pageDoctor.getByTestId('composer-respuesta')).toContainText(
+        pregunta,
+      );
+
+      const respuesta = `Sí, traelos ${Date.now()}`;
+      await pageDoctor.getByTestId('hilo-texto').fill(respuesta);
+      await pageDoctor.getByTestId('hilo-enviar').click();
+      await capturar(pageDoctor, 'w2-respuesta-con-cita');
+
+      // Del otro lado la burbuja llega con la cita adentro: sin eso, responder
+      // en un hilo largo es mandar una frase suelta que nadie ubica.
+      const recibida = pagePaciente
+        .getByTestId('mensaje')
+        .filter({ hasText: respuesta });
+      await expect(recibida).toBeVisible({ timeout: 5_000 });
+      await expect(recibida).toContainText(pregunta);
+      await capturar(pagePaciente, 'w2-cita-recibida');
+    } finally {
+      await pageDoctor.context().close();
+      await pagePaciente.context().close();
+    }
+  });
+
+  test('el filtro «No leídos» deja sólo las conversaciones pendientes', async ({
+    browser,
+  }) => {
+    const pageDoctor = await abrirSesion(browser, doctor);
+    const pagePaciente = await abrirSesion(browser, paciente);
+    try {
+      await irA(pagePaciente, '/messaging');
+      await esperarAplicacionLista(pagePaciente);
+
+      await irA(pageDoctor, `/messaging/${conversationId}`);
+      await esperarAplicacionLista(pageDoctor);
+      await pageDoctor.getByTestId('hilo-texto').fill(`Pendiente ${Date.now()}`);
+      await pageDoctor.getByTestId('hilo-enviar').click();
+
+      await expect(pagePaciente.getByTestId('conversacion-sin-leer')).toBeVisible({
+        timeout: 5_000,
+      });
+
+      const total = await pagePaciente.getByTestId('conversacion').count();
+      await pagePaciente.getByTestId('mensajeria-filtro-no-leidos').click();
+
+      // Queda al menos una y nunca más de las que había: el filtro recorta la
+      // misma lista, no pide otra.
+      const filtradas = await pagePaciente.getByTestId('conversacion').count();
+      expect(filtradas).toBeGreaterThan(0);
+      expect(filtradas).toBeLessThanOrEqual(total);
+      await expect(
+        pagePaciente.getByTestId('conversacion').first().getByTestId('conversacion-sin-leer'),
+      ).toBeVisible();
+      await capturar(pagePaciente, 'w3-filtro-no-leidos');
+    } finally {
+      await pageDoctor.context().close();
+      await pagePaciente.context().close();
+    }
+  });
+
+  test('cambiar de chat no vuelve a pedir la bandeja', async ({ browser }) => {
+    const pageDoctor = await abrirSesion(browser, doctor);
+    try {
+      await irA(pageDoctor, '/messaging');
+      await esperarAplicacionLista(pageDoctor);
+
+      // Se cuentan las lecturas de la bandeja a partir de acá: la carga
+      // inicial ya pasó.
+      let bandejas = 0;
+      pageDoctor.on('request', (peticion) => {
+        const url = new URL(peticion.url());
+        if (
+          peticion.method() === 'GET' &&
+          url.pathname === '/community/conversations'
+        ) {
+          bandejas += 1;
+        }
+      });
+
+      await pageDoctor.getByTestId('conversacion').first().click();
+      await expect(pageDoctor.getByTestId('hilo-texto')).toBeVisible();
+
+      // Abrir un hilo relee la bandeja UNA vez —el acuse de lectura apaga el
+      // contador— y nunca más. Antes eran dos pantallas y cada cambio de chat
+      // pedía la lista entera de nuevo, con la columna izquierda parpadeando.
+      expect(bandejas).toBeLessThanOrEqual(1);
+
+      // Y la lista sigue en pantalla al lado del hilo, como en WhatsApp Web.
+      await expect(pageDoctor.getByTestId('conversacion').first()).toBeVisible();
+      await capturar(pageDoctor, 'w4-lista-y-hilo-juntos');
+    } finally {
+      await pageDoctor.context().close();
+    }
+  });
+
+  /* --- Negativos ----------------------------------------------------------- */
+
+  test('el textarea vacío no ofrece enviar', async ({ browser }) => {
+    const pageDoctor = await abrirSesion(browser, doctor);
+    try {
+      await irA(pageDoctor, `/messaging/${conversationId}`);
+      await esperarAplicacionLista(pageDoctor);
+
+      // El botón no está **deshabilitado**: no existe. Con el campo vacío su
+      // lugar lo ocupa el micrófono, como en cualquier chat —un avión gris que
+      // no hace nada es un botón que igual invita a apretarlo—.
+      await expect(pageDoctor.getByTestId('hilo-enviar')).toHaveCount(0);
       await capturar(pageDoctor, 'n1-enviar-deshabilitado');
 
       // Y el servidor tampoco lo acepta si alguien se salta la pantalla.

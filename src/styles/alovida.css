@@ -155,6 +155,22 @@
   --info-bg:      #E4F3F2;  --info-tinta:   #33706C;
   --neutro-bg:    #F3F6F5;  --neutro-tinta: #4E5151;
 
+  /* La mensajería — el único lugar del producto con material propio.
+
+     Un chat no se lee como el resto de la aplicación: las burbujas necesitan
+     apoyarse en un papel con textura, la propia tiene que distinguirse de la
+     ajena de un vistazo y el no-leído tiene que cantar desde el borde de la
+     pantalla. Son seis tokens y no valores sueltos en la hoja del componente
+     para que el tema oscuro los cambie en un solo lugar. */
+  --chat-papel:      #EDE6DE;  /* el papel del hilo */
+  --chat-patron:     #4A6B66;  /* el dibujo de fondo, teñido por máscara */
+  --chat-patron-op:  .05;      /* cuánto se nota: papel, no empapelado */
+  --chat-propia:     #D6F2CB;  /* la burbuja de quien escribe */
+  --chat-ajena:      #FFFFFF;  /* la burbuja del otro */
+  --chat-tick-leido: #3B9EDB;  /* el doble tilde cuando lo leyeron */
+  --chat-no-leido:   #23A455;  /* el globo del contador y la hora en verde */
+  --chat-cita:       rgba(11, 85, 126, .07);  /* el bloque de la respuesta */
+
   /* Movimiento — un solo lenguaje para todo el producto. Corto, suave y
      predecible: la animación dice «el sistema respondió», no «mirá esto». */
   --mov-rapido: 110ms;
@@ -754,6 +770,35 @@ app-shell-layout { display: block; }
   display: flex; flex-direction: column; gap: var(--e7);
 }
 .app-main__inner > * { min-width: 0; }
+
+/* Pantallas a sangre: ocupan el hueco entero, sin relleno ni ancho máximo.
+
+   La única hoy es el chat, y no es un capricho estético: un chat necesita que
+   la lista y el hilo scrolleen por dentro y que el composer quede clavado al
+   borde inferior de la ventana. Con el relleno de `--e8` y el tope de 1440 px
+   quedaba una tarjeta flotando en el medio de la página, con el campo de
+   escribir a cuarenta píxeles del fondo y la lista arrastrando el scroll de
+   todo el documento.
+
+   Se hace con `:has()` y no con una clase en el `<main>` para que la pantalla
+   lo declare por sí sola: el armazón no tiene por qué saber cuáles de sus
+   hijas son a sangre, y una lista de rutas especiales en el marco se
+   desactualiza sola. */
+.app-main__inner:has(> .pantalla-a-sangre) {
+  padding: 0;
+  max-width: none;
+  gap: 0;
+  block-size: calc(100dvh - var(--h-header));
+  min-block-size: 0;
+  overflow: hidden;
+}
+
+.pantalla-a-sangre {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
 
 /* Tras navegar, el foco vuelve al contenido por script —para que quien usa
    teclado no siga parado en el enlace del menú anterior—. Eso llega por
@@ -1756,6 +1801,20 @@ body[data-arquetipo="listado"] .app-main__inner { gap: var(--e6); }
   --error-bg:     #33201A;  --error-tinta:  #EFA08C;
   --info-bg:      #0D2C2B;  --info-tinta:   #7FCEC8;
   --neutro-bg:    #16232A;  --neutro-tinta: #A3C4D4;
+
+  /* La mensajería de noche. El papel se hunde por debajo de la tarjeta —el
+     hilo tiene que leerse como una superficie aparte, no como una tarjeta
+     más— y la burbuja propia conserva el verde, ya apagado: es la señal que
+     todo el mundo reconoce y cambiarla por petróleo dejaría las dos burbujas
+     distinguiéndose sólo por el lado. */
+  --chat-papel:      #071319;
+  --chat-patron:     #9FD8D0;
+  --chat-patron-op:  .07;
+  --chat-propia:     #124D3A;
+  --chat-ajena:      #14262E;
+  --chat-tick-leido: #58C7F3;
+  --chat-no-leido:   #23A455;
+  --chat-cita:       rgba(255, 255, 255, .08);
 
   /* Misma escalera que en claro —contacto + difusión—, pero de noche la
      difusión es lo único que separa dos superficies casi del mismo valor. */

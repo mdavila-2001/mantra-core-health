@@ -1,127 +1,175 @@
-@if (error(); as mensaje) {
+@if (store.error(); as mensaje) {
   <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
 }
 
-@if (!perfilResuelto()) {
+@if (!store.perfilResuelto()) {
   <p class="mensajeria__cargando" role="status">Cargando tus conversaciones…</p>
-} @else if (perfil() === null) {
+} @else if (store.perfil() === null) {
   <!-- Una puerta, no un error: la mensajería necesita el perfil público de
-       `community`, que es una entidad aparte del perfil de paciente del token.
-       Antes esto mandaba a «Mi perfil» a buscarlo; ahora se crea acá mismo, que
-       es donde la persona está parada. -->
+       `community`, que es una entidad aparte del perfil de paciente del token. -->
   <app-empty-state
     title="Te falta tu perfil público"
     description="Los chats usan tu perfil de la red social: es lo que ve la otra persona cuando le escribís. Se crea en un paso y después podés completarlo."
     variant="empty"
   >
-    <!-- `empty-actions` es el hueco que `app-empty-state` proyecta; sin ese
-         atributo el botón se cae y el estado vacío vuelve a ser un cartel. -->
     <button
       empty-actions
       app-button
       variant="primary"
       data-testid="mensajeria-crear-perfil"
-      [isLoading]="creandoPerfil()"
-      (clicked)="crearPerfil()"
+      [isLoading]="store.creandoPerfil()"
+      (clicked)="store.crearPerfil()"
     >
       Crear mi perfil y empezar a chatear
     </button>
   </app-empty-state>
 } @else {
-  <div class="mensajeria">
-    <!-- Panel izquierdo: la bandeja. -->
+  <div class="mensajeria" [class.is-hilo-abierto]="hayHiloAbierto()">
+    <!-- ── Columna izquierda: la bandeja ──────────────────────────────── -->
     <section class="mensajeria__panel" aria-label="Tus conversaciones">
-      <header class="mensajeria__panel-cabecera">
+      <header class="mensajeria__cabecera">
         <h1 class="mensajeria__titulo">Chats</h1>
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          iconOnly
-          aria-label="Escribirle a un profesional"
-          data-testid="mensajeria-nueva"
-          (clicked)="alternarBusqueda()"
-        >
-          @if (buscando()) {
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
-          } @else {
-            <!-- Lápiz sobre un globo: escribirle a alguien nuevo. -->
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 11.2c0 4.3-3.8 7.8-8.5 7.8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9A7.7 7.7 0 0 1 3.5 11c0-4.3 3.8-7.8 8.5-7.8 1 0 2 .2 2.9.5" /><path d="m21.2 3.1 1.2 1.2-4.3 4.3h-1.2V7.4z" /></svg>
-          }
-        </button>
       </header>
 
-      @if (buscando()) {
-        <div class="mensajeria__buscador">
-          <label class="mensajeria__campo">
-            <span class="solo-lectores">Buscar profesional</span>
-            <span class="mensajeria__campo-icono" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-            </span>
-            <input
-              type="search"
-              data-testid="mensajeria-consulta"
-              placeholder="Nombre o especialidad"
-              [ngModel]="consulta()"
-              (ngModelChange)="consulta.set($event)"
-              (keydown.enter)="buscar()"
-            />
-          </label>
-          <button
-            app-button
-            variant="outline"
-            size="sm"
-            data-testid="mensajeria-buscar"
-            [isLoading]="buscandoAhora()"
-            (clicked)="buscar()"
-          >
-            Buscar
-          </button>
-
-          @if (resultados().length > 0) {
-            <ul class="mensajeria__resultados">
-              @for (resultado of resultados(); track resultado.slug) {
-                <li>
-                  <button
-                    class="mensajeria__resultado"
-                    type="button"
-                    data-testid="mensajeria-resultado"
-                    [disabled]="abriendo()"
-                    (click)="escribirA(resultado)"
-                  >
-                    <span class="mensajeria__resultado-nombre">{{ resultado.displayName }}</span>
-                    @if (resultado.headline) {
-                      <span class="mensajeria__resultado-detalle">{{ resultado.headline }}</span>
-                    }
-                  </button>
-                </li>
-              }
-            </ul>
+      <div class="mensajeria__buscador">
+        <label class="mensajeria__campo">
+          <span class="solo-lectores">Buscar un chat o iniciar uno nuevo</span>
+          <span class="mensajeria__campo-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          </span>
+          <input
+            type="search"
+            data-testid="mensajeria-consulta"
+            placeholder="Buscar un chat o iniciar uno nuevo"
+            [ngModel]="consulta()"
+            (ngModelChange)="alEscribir($event)"
+          />
+          @if (consulta() !== '') {
+            <button
+              class="mensajeria__campo-limpiar"
+              type="button"
+              aria-label="Limpiar la búsqueda"
+              (click)="limpiarBusqueda()"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
           }
-        </div>
-      }
+        </label>
+      </div>
+
+      <!-- Los filtros. `aria-pressed` y no `role="tab"`: no cambian de panel,
+           recortan la misma lista. -->
+      <div class="mensajeria__chips" role="group" aria-label="Filtrar conversaciones">
+        @for (opcion of filtros; track opcion) {
+          <button
+            class="mensajeria__chip"
+            type="button"
+            [attr.data-testid]="'mensajeria-filtro-' + opcion"
+            [class.is-activo]="filtro() === opcion && !verArchivados()"
+            [attr.aria-pressed]="filtro() === opcion && !verArchivados()"
+            (click)="elegirFiltro(opcion)"
+          >
+            {{ rotulo(opcion) }}
+            @if (opcion === 'no-leidos' && noLeidas() > 0) {
+              <span class="mensajeria__chip-cuenta">{{ noLeidas() }}</span>
+            }
+          </button>
+        }
+      </div>
 
       <div class="mensajeria__lista">
+        @if (archivadas().length > 0 || verArchivados()) {
+          <button
+            class="mensajeria__archivados"
+            type="button"
+            data-testid="mensajeria-archivados"
+            [class.is-activo]="verArchivados()"
+            (click)="alternarArchivados()"
+          >
+            <span class="mensajeria__archivados-icono" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3" y="4" width="18" height="4" rx="1" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M10 12h4" /></svg>
+            </span>
+            <span class="mensajeria__archivados-texto">
+              {{ verArchivados() ? 'Volver a los chats' : 'Archivados' }}
+            </span>
+            @if (!verArchivados()) {
+              <span class="mensajeria__archivados-cuenta">{{ archivadas().length }}</span>
+            }
+          </button>
+        }
+
+        <!-- Gente a la que todavía no le escribiste. Va arriba de las propias
+             sólo cuando hay algo escrito: si no, la bandeja arrancaría con una
+             lista de desconocidos. -->
+        @if (consulta().trim() !== '' && store.resultados().length > 0) {
+          <p class="mensajeria__rotulo">Contactos</p>
+          <ul class="mensajeria__contactos">
+            @for (resultado of store.resultados(); track resultado.slug) {
+              <li>
+                <button
+                  class="mensajeria__contacto"
+                  type="button"
+                  data-testid="mensajeria-resultado"
+                  [disabled]="store.abriendo()"
+                  (click)="escribirA(resultado.slug)"
+                >
+                  <span class="mensajeria__contacto-nombre">{{ resultado.displayName }}</span>
+                  @if (resultado.headline) {
+                    <span class="mensajeria__contacto-detalle">{{ resultado.headline }}</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+          <p class="mensajeria__rotulo">Chats</p>
+        }
+
         @if (vacio()) {
-          <app-empty-state
-            title="No tenés conversaciones"
-            description="Cuando le escribas a un profesional —o alguien te escriba— la conversación va a aparecer acá."
-            variant="empty"
-          />
+          @if (sinCoincidencias()) {
+            <p class="mensajeria__sin-nada" role="status">
+              @if (store.buscandoAhora()) {
+                Buscando…
+              } @else {
+                No encontramos ningún chat ni contacto con «{{ consulta() }}».
+              }
+            </p>
+          } @else if (verArchivados()) {
+            <p class="mensajeria__sin-nada">No tenés conversaciones archivadas.</p>
+          } @else {
+            <app-empty-state
+              title="No tenés conversaciones"
+              description="Buscá a un profesional acá arriba y escribile: la conversación va a aparecer en esta lista."
+              variant="empty"
+            />
+          }
         } @else {
-          <app-conversation-list [conversaciones]="conversaciones()" />
+          <app-conversation-list
+            [conversaciones]="visibles()"
+            [activaId]="store.activaId()"
+            [perfilPropio]="store.perfil()"
+            [resaltar]="consulta()"
+            (accion)="atender($event)"
+          />
         }
       </div>
     </section>
 
-    <!-- Panel derecho: sin hilo abierto, el lugar donde va a estar. Es el
-         mismo hueco que deja cualquier chat de escritorio, y decirlo es mejor
-         que dejar la mitad de la pantalla en blanco sin explicación. -->
-    <section class="mensajeria__vacio" aria-label="Conversación">
-      <p class="mensajeria__vacio-icono" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" /></svg>
-      </p>
-      <p class="mensajeria__vacio-texto">Elegí una conversación para leerla acá.</p>
+    <!-- ── Columna derecha: la conversación, o el hueco donde va ──────── -->
+    <section class="mensajeria__conversacion" aria-label="Conversación">
+      <router-outlet />
+
+      @if (!hayHiloAbierto()) {
+        <div class="mensajeria__vacio">
+          <p class="mensajeria__vacio-icono" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" /></svg>
+          </p>
+          <p class="mensajeria__vacio-titulo">Alovida · Chats</p>
+          <p class="mensajeria__vacio-texto">
+            Elegí una conversación de la izquierda para leerla acá, o buscá a un profesional
+            para empezar una nueva.
+          </p>
+        </div>
+      }
     </section>
   </div>
 }
