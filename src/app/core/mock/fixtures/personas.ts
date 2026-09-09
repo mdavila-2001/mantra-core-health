@@ -70,9 +70,15 @@ export interface PacienteSimulado {
   readonly lastName: string;
   readonly motherLastName: string;
   readonly birthDate: string;
-  readonly sexAtBirth: 'MALE' | 'FEMALE';
-  readonly generoId: string;
-  readonly sexoId: string;
+  /**
+   * Sexo y género son opcionales desde que existe el alta de mostrador: al
+   * paciente que llega sin estar registrado se le piden nombre, cédula y
+   * celular, no su sexo. Inventarlo para completar la fila sería peor que no
+   * tenerlo — la ficha sabe mostrarse sin ellos.
+   */
+  readonly sexAtBirth?: 'MALE' | 'FEMALE';
+  readonly generoId?: string;
+  readonly sexoId?: string;
   readonly nationalId: string;
   readonly email: string;
   readonly phone: string;

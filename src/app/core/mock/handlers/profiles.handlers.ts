@@ -58,8 +58,8 @@ function fichaDe(p: PacienteSimulado) {
     masterPatientIndexCode: `MPI-${p.patientCode.slice(4)}`,
     displayName: p.displayName,
     birthDate: p.birthDate,
-    administrativeGenderConceptId: p.generoId,
-    sexAtBirthConceptId: p.sexoId,
+    ...(p.generoId === undefined ? {} : { administrativeGenderConceptId: p.generoId }),
+    ...(p.sexoId === undefined ? {} : { sexAtBirthConceptId: p.sexoId }),
     genderIdentityConceptId: null,
     nationalityConceptId: null,
     preferredLanguageConceptId: null,
@@ -87,7 +87,7 @@ function perfilPropioDe(p: PacienteSimulado) {
     motherLastName: p.motherLastName,
     displayName: p.displayName,
     birthDate: p.birthDate,
-    sexAtBirth: p.sexAtBirth,
+    ...(p.sexAtBirth === undefined ? {} : { sexAtBirth: p.sexAtBirth }),
     occupationConceptId: p.ocupacionId,
     phone: p.phone,
     residenceMunicipalityConceptId: p.municipioId,
@@ -174,7 +174,11 @@ export function registrarPerfiles(router: MockRouter): void {
   /* ---- pacientes ---------------------------------------------------------- */
 
   router.get('/profiles/patients', ({ query }) => {
-    const q = texto(query, 'query');
+    // `q`, no `query`: es como lo manda `ProfilesClient.searchPatients`. Leyendo
+    // la clave equivocada el filtro nunca se aplicaba —`contiene(x, null)` es
+    // `true`— y el buscador de pacientes devolvía la lista entera escribiera lo
+    // que escribiera quien buscaba.
+    const q = texto(query, 'q');
     const nationalId = texto(query, 'nationalId');
     const todos = pacientes
       .todos()
@@ -296,12 +300,62 @@ export function registrarPerfiles(router: MockRouter): void {
     body: { id: nuevoId('related'), patientProfileId: params['id'], personId: nuevoId('person'), status: 'ACTIVE', createdAt: ahora() },
   }));
 
+  /**
+   * Alta de un paciente hecha por personal.
+   *
+   * **La fila se guarda de verdad.** Antes se devolvía un `profileId` inventado
+   * que no quedaba en ninguna parte: el `GET /profiles/patients/:id` siguiente
+   * respondía 404, el paciente recién creado no aparecía al buscarlo y una cita
+   * agendada con él salía sin nombre en la agenda. Ahora entra en la colección,
+   * que es lo que hace utilizable el alta desde el mostrador.
+   *
+   * Lo que el mostrador no pregunta —sexo, domicilio, correo— **no se
+   * inventa**: queda vacío, y la ficha ya sabe mostrarse sin eso.
+   */
   router.post('/profiles/patients', (request) => {
-    const datos = cuerpo<{ patientCode: string; displayName?: string }>(request);
+    const datos = cuerpo<{
+      patientCode?: string;
+      displayName?: string;
+      name?: string;
+      middleName?: string;
+      lastName?: string;
+      motherLastName?: string;
+      birthDate?: string;
+      nationalId?: string;
+      phone?: string;
+      occupationConceptId?: string;
+      issuerAdministrativeAreaConceptId?: string;
+    }>(request);
     const id = nuevoId('paciente');
+    const nombre = datos.name ?? '';
+    const apellido = datos.lastName ?? '';
+    const materno = datos.motherLastName ?? '';
+    const nuevo: PacienteSimulado = {
+      id,
+      personId: uuid(`person-${id}`),
+      userId: uuid(`user-${id}`),
+      patientCode: datos.patientCode ?? `PAC-${Date.now() % 100000}`,
+      displayName: datos.displayName ?? [nombre, apellido, materno].filter((p) => p !== '').join(' '),
+      name: nombre,
+      ...(datos.middleName === undefined ? {} : { middleName: datos.middleName }),
+      lastName: apellido,
+      motherLastName: materno,
+      birthDate: datos.birthDate ?? '',
+      nationalId: datos.nationalId ?? '',
+      email: '',
+      phone: datos.phone ?? '',
+      municipioId: '',
+      departamentoId: datos.issuerAdministrativeAreaConceptId ?? '',
+      ocupacionId: datos.occupationConceptId ?? '',
+      direccion: '',
+      deceased: false,
+      // Nace sin identidad probada: nadie verificó nada en el mostrador.
+      identityVerified: false,
+    };
+    pacientes.agregar(nuevo);
     return {
       status: 201,
-      body: { profileId: id, personId: uuid(`person-${id}`), patientCode: datos.patientCode ?? `PAC-${Date.now() % 100000}`, recordLinkageStatus: 'UNLINKED', createdAt: ahora() },
+      body: { profileId: nuevo.id, personId: nuevo.personId, patientCode: nuevo.patientCode, recordLinkageStatus: 'UNLINKED', createdAt: ahora() },
     };
   });
 

@@ -23,6 +23,68 @@ que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
+## Abierto · P22 · No hay forma de dar de alta al paciente que llega al mostrador
+
+**Levantado el 2026-09-09**, en la rama `mockup`, construyendo «paciente nuevo» dentro de
+`/schedule/appointment/new`. Es el punto **1.1 del registro de procesos del cliente** —la recepción
+del paciente que no tiene usuario— y hoy no tiene endpoint que lo reciba entero.
+
+### Lo que ya existe, y por qué no alcanza
+
+`POST /iam/users/assisted-registration` es exactamente esta vía: la admite `CLINICIAN`, no fija
+contraseña y devuelve un token de activación de un solo uso. Pero **crea la cuenta y nada más** — lo
+dice su propio DTO: «no hay fila en `profiles.persons`, así que las partes del nombre sólo sobreviven
+compuestas en `iam.users.display_name`». Sin persona no hay dónde poner la cédula
+(`common.identifiers`), ni el celular, ni la ocupación, ni el tutor.
+
+`POST /profiles/patients` tampoco: su `CreatePatientDto` acepta código de paciente, nombre visible,
+fecha de nacimiento y dos conceptos de género. **Ni cédula, ni celular, ni ocupación.** Y exige el
+`patientCode`, que es único en toda la instalación y que el navegador no puede garantizar — el
+servidor ya lo acuña él mismo en el alta que la propia persona hace de sí misma (`PAT-<uuid>`).
+
+### Lo que hay que hacer, y por qué es barato
+
+**Extender `AssistedRegistrationDto` con el bloque de filiación que `RegisterPatientDto` ya declara**
+y que su servicio cree persona + perfil + identificador + teléfono + tutor en la misma transacción.
+No es un endpoint nuevo ni un contrato inventado: los campos existen palabra por palabra en el alta
+que la persona hace de sí misma, y los ayudantes que los persisten **ya están extraídos**
+(`createGuardianRelatedPerson`, `createResidenceAddress`, `composeAccountDisplayName`). Hoy hay dos
+altas de paciente que declaran la misma persona de dos maneras distintas, y una está vacía.
+
+| Campo | §1.1 | Dónde ya está declarado |
+| --- | --- | --- |
+| `name` · `middleName` · `lastName` · `motherLastName` | 1.1.1–2 | `RegisterPatientDto` |
+| `nationalId` | 1.1.3 | ídem |
+| `issuerAdministrativeAreaConceptId` | 1.1.4 | ídem (`VS_BO_DEPARTMENT`) |
+| `birthDate` | 1.1.5 | ídem |
+| `occupationConceptId` · `occupationFreeText` | 1.1.6–7 | ídem (`VS_BO_OCCUPATION`) |
+| `phone` | 1.1.10 | ídem |
+| `guardianName` · `guardianPhone` · `guardianRelationshipConceptId` | 1.1.11 | ídem |
+
+### Lo que la maqueta hace mientras tanto
+
+La pantalla manda ese bloque a `POST /profiles/patients` y, con el perfil devuelto, agenda. **Contra
+la API de hoy da 400**: `forbidNonWhitelisted` rechaza la petición entera por las claves que el DTO
+no declara. Son además **dos transacciones**, así que si la cita falla queda una persona sin cita.
+Las dos cosas se arreglan solas el día que el registro asistido reciba el bloque: una llamada, una
+transacción.
+
+### Tres decisiones que no son técnicas
+
+1. **El correo es obligatorio y el paciente de mostrador puede no tener.** Hoy el correo *es* la
+   identidad de login y lo que evita duplicados. Que el celular ocupe ese lugar exige cambio de
+   modelo **y un canal de entrega que no existe**: la API sólo tiene `IN_APP` y `EMAIL`, no hay SMS
+   ni WhatsApp por donde mandar el enlace de activación.
+2. **El tutor se puede vincular pero no formalizar.** `POST /authz/care-relationships` admite
+   `CLINICIAN`; `POST /authz/legal-representations` es **sólo `SECURITY_ADMIN`**. Con el nombre y el
+   celular del tutor como persona relacionada alcanza para §1.1.11; para la representación legal, no.
+3. **Las 896 ocupaciones del SEGIP no existen.** Está investigado en `bo-occupations.catalog.ts`: el
+   manual responde 404 y el reglamento del RUIP dice que «Ocupación» es declarativa y no requiere
+   respaldo. Hoy hay 64 provisionales; la lista buena es la COB-2023 del INE (606), cuyo patch no
+   está aplicado. Sustituirlas arrastra migración: los identificadores se derivan del código.
+
+---
+
 ## Abierto · P20 · El alta de profesional no recibe el consultorio propio
 
 **Levantado el 2026-09-09**, en la rama `mockup`. Misma forma que P19 y **el

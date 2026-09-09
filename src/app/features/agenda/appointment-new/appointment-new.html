@@ -42,18 +42,177 @@
       </app-form-field>
     }
 
-    <app-form-field label="¿Con quién?" [required]="true">
-      <app-reference-combobox
-        data-testid="cita-paciente"
-        [selected]="paciente()"
-        [options]="candidatos()"
-        [loading]="buscando()"
-        placeholder="Nombre o código del paciente"
-        emptyMessage="Ningún paciente coincide"
-        (searched)="buscarPaciente($event)"
-        (selectionChange)="paciente.set($event)"
-      />
-    </app-form-field>
+    <!-- «¿Con quién?» tiene dos formas: el de siempre, que está en la lista, y
+         el que acaba de llegar al mostrador y no está en el sistema. El bloque
+         del alta entra y sale del DOM en vez de esconderse con CSS: un campo
+         escondido igual se tabula, y once de ellos vacíos debajo del buscador
+         convertirían el alta de cita en un alta de persona. -->
+    @if (modo() === 'registrado') {
+      <app-form-field
+        label="¿Con quién?"
+        hint="Buscá por nombre, código o cédula."
+        [required]="true"
+      >
+        <app-reference-combobox
+          data-testid="cita-paciente"
+          [selected]="paciente()"
+          [options]="candidatos()"
+          [loading]="buscando()"
+          placeholder="Nombre, cédula o código del paciente"
+          emptyMessage="Ningún paciente coincide. Podés darlo de alta abajo."
+          (searched)="buscarPaciente($event)"
+          (selectionChange)="paciente.set($event)"
+        />
+      </app-form-field>
+
+      <p class="cita__sin-registrar">
+        ¿No aparece?
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          size="sm"
+          data-testid="cita-paciente-nuevo"
+          (clicked)="registrarPacienteNuevo()"
+        >
+          Es un paciente nuevo
+        </button>
+      </p>
+    } @else {
+      <fieldset class="cita__alta" data-testid="cita-alta-paciente">
+        <legend class="cita__alta-titulo">Paciente nuevo</legend>
+        <p class="cita__alta-nota">
+          Lo damos de alta con lo que sepas ahora. El resto de su ficha se completa después.
+        </p>
+
+        <div class="cita__alta-grilla">
+          <app-form-field label="Nombre" [required]="true">
+            <app-input data-testid="cita-alta-nombre" [(value)]="nuevoNombre" />
+          </app-form-field>
+          <app-form-field label="Segundo nombre" hint="Si no tiene, dejalo vacío.">
+            <app-input data-testid="cita-alta-segundo-nombre" [(value)]="nuevoSegundoNombre" />
+          </app-form-field>
+          <app-form-field label="Tercer nombre" hint="Si no tiene, dejalo vacío.">
+            <app-input data-testid="cita-alta-tercer-nombre" [(value)]="nuevoTercerNombre" />
+          </app-form-field>
+          <app-form-field label="Apellido paterno" [required]="true">
+            <app-input data-testid="cita-alta-apellido-paterno" [(value)]="nuevoApellidoPaterno" />
+          </app-form-field>
+          <app-form-field label="Apellido materno" hint="Si no lleva, dejalo vacío.">
+            <app-input data-testid="cita-alta-apellido-materno" [(value)]="nuevoApellidoMaterno" />
+          </app-form-field>
+        </div>
+
+        <div class="cita__alta-grilla">
+          <!-- La cédula y el departamento que la expidió van juntos: el número
+               solo se repite entre departamentos, y es lo que el cliente pide
+               para no duplicar personas. -->
+          <app-form-field label="Cédula de identidad" [required]="true">
+            <app-input
+              data-testid="cita-alta-ci"
+              inputMode="numeric"
+              placeholder="1234567"
+              [(value)]="nuevoDocumento"
+            />
+          </app-form-field>
+          <app-form-field label="Expedida en">
+            <app-select
+              data-testid="cita-alta-ci-departamento"
+              placeholder="Departamento"
+              [options]="opcionesDeDepartamento()"
+              [value]="nuevoDepartamentoDelDocumento()"
+              (valueChange)="nuevoDepartamentoDelDocumento.set($event)"
+            />
+          </app-form-field>
+          <!-- La edad no se pregunta: sale de la fecha. Preguntar las dos cosas
+               es invitar a que no coincidan. -->
+          <app-form-field label="Fecha de nacimiento" [hint]="pieDeNacimiento()">
+            <app-date-picker
+              data-testid="cita-alta-nacimiento"
+              [maxDate]="hoy"
+              [value]="nuevoNacimiento()"
+              (valueChange)="nuevoNacimiento.set($event)"
+            />
+          </app-form-field>
+          <app-form-field label="Celular" [required]="true">
+            <app-input
+              data-testid="cita-alta-celular"
+              inputMode="tel"
+              placeholder="+591 7XXXXXXX"
+              [(value)]="nuevoCelular"
+            />
+          </app-form-field>
+        </div>
+
+        <!-- La lupa que pide el registro del cliente: son cientos de oficios y
+             un desplegable sin filtro no se recorre. -->
+        @if (catalogoDeOcupacionesCaido()) {
+          <p class="cita__alta-catalogo-caido">
+            No pudimos traer el catálogo de ocupaciones.
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              (clicked)="reintentarOcupaciones()"
+            >
+              Reintentar
+            </button>
+          </p>
+        } @else {
+          <app-form-field label="Ocupación" hint="Ayuda a ver los riesgos propios de cada oficio.">
+            <app-reference-combobox
+              data-testid="cita-alta-ocupacion"
+              placeholder="Buscá su profesión u oficio…"
+              emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+              [options]="ocupacionesFiltradas()"
+              [selected]="ocupacionElegida()"
+              [minQueryLength]="0"
+              (searched)="busquedaDeOcupacion.set($event)"
+              (selectionChange)="elegirOcupacion($event)"
+            />
+          </app-form-field>
+        }
+
+        @if (ocupacionEsOtra()) {
+          <app-form-field label="¿Cuál?" hint="El oficio que no estaba en la lista.">
+            <app-input
+              data-testid="cita-alta-ocupacion-otra"
+              placeholder="Apicultor"
+              [(value)]="otraOcupacion"
+            />
+          </app-form-field>
+        }
+
+        <div class="cita__alta-grilla">
+          <app-form-field label="Tutor o persona autorizada" hint="Si no responde por sí mismo.">
+            <app-input data-testid="cita-alta-tutor" [(value)]="nuevoTutorNombre" />
+          </app-form-field>
+          <app-form-field label="Celular del tutor">
+            <app-input
+              data-testid="cita-alta-tutor-celular"
+              inputMode="tel"
+              placeholder="+591 7XXXXXXX"
+              [(value)]="nuevoTutorCelular"
+            />
+          </app-form-field>
+        </div>
+
+        <p class="cita__sin-registrar">
+          ¿Era uno que ya estaba?
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            data-testid="cita-paciente-buscar"
+            (clicked)="buscarRegistrado()"
+          >
+            Buscarlo en la lista
+          </button>
+        </p>
+      </fieldset>
+    }
 
     <div class="cita__cuando">
       <!-- El día va con el organismo del sistema y no con un `<input
