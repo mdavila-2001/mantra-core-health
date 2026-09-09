@@ -115,33 +115,113 @@ export const MUNICIPIO = definir('VS_BO_MUNICIPALITY', [
   ['PD-COB', 'Cobija'],
 ]);
 
+/* Las ocupaciones y los empleadores llevan el código del catálogo real por lo
+   mismo que los departamentos de acá arriba, y es la tercera vez que muerde: la
+   pantalla decide por código, no por nombre.
+
+   El alta de paciente ofrece «Otra ocupación» al final de la lista —el registro
+   de procesos lo pide así (módulo Paciente §1.4.1: «dejar uno al final libre
+   para que él pueda detallar la ocupación que no encontró»)— y, elegida ésa y
+   sólo ésa, destraba un «¿Cuál?» escrito a mano que viaja en
+   `occupationFreeText`. Quién decide si es «Otra» compara contra
+   `CODIGO_OCUPACION_OTRA` (`bo-occupations.service.ts`), que vale
+   **`occupation:bo:OTRA`**. Con los `OCC-*` inventados que había antes esa
+   comparación nunca daba verdadera, así que el campo escrito a mano **no
+   aparecía nunca**: la ocupación personalizada estaba construida y era
+   inalcanzable. Lo mismo le pasaba a «Otra empresa» con `employer:bo:OTRA`.
+
+   El prefijo no es adorno, y el backend explica por qué: `catalog_concepts.code`
+   es único por versión del sistema de códigos y todo el catálogo interno
+   comparte una sola, así que un `MEDICO` a secas chocaría con el de otro
+   catálogo.
+
+   Las ocupaciones son las 64 del catálogo real (`bo-occupations.catalog.ts`,
+   COB-2023 del INE — el SEGIP no publica su lista; el porqué está en el
+   encabezado de ese archivo). Los empleadores siguen siendo un puñado: son 155
+   allá y esto es una maqueta, no el paquete de seeds. Lo que no se recorta son
+   las cuatro salidas del final, que son las que la pantalla necesita para
+   ofrecerle una respuesta a quien no se encuentra en la lista. */
 conjunto('VS_BO_OCCUPATION', 'Ocupaciones', 'Catálogo normado de ocupaciones.');
 export const OCUPACION = definir('VS_BO_OCCUPATION', [
-  ['OCC-DOCENTE', 'Docente'],
-  ['OCC-COMERCIANTE', 'Comerciante'],
-  ['OCC-INGENIERO', 'Ingeniero/a'],
-  ['OCC-ABOGADO', 'Abogado/a'],
-  ['OCC-CONTADOR', 'Contador/a'],
-  ['OCC-ESTUDIANTE', 'Estudiante'],
-  ['OCC-AGRICULTOR', 'Agricultor/a'],
-  ['OCC-CHOFER', 'Chofer'],
-  ['OCC-ENFERMERIA', 'Enfermero/a'],
-  ['OCC-ADMINISTRATIVO', 'Administrativo/a'],
-  ['OCC-HOGAR', 'Trabajo del hogar'],
-  ['OCC-JUBILADO', 'Jubilado/a'],
-  ['OCC-OTRA', 'Otra ocupación'],
+  ['occupation:bo:ABOGADO', 'Abogado / Abogada'],
+  ['occupation:bo:ADMINISTRADOR', 'Administrador / Administradora'],
+  ['occupation:bo:AGRICULTOR', 'Agricultor / Agricultora'],
+  ['occupation:bo:ALBANIL', 'Albañil'],
+  ['occupation:bo:ARQUITECTO', 'Arquitecto / Arquitecta'],
+  ['occupation:bo:ARTESANO', 'Artesano / Artesana'],
+  ['occupation:bo:ARTISTA', 'Artista'],
+  ['occupation:bo:AUXILIAR_ENFERMERIA', 'Auxiliar de enfermería'],
+  ['occupation:bo:BIOQUIMICO', 'Bioquímico / Bioquímica'],
+  ['occupation:bo:CARNICERO', 'Carnicero / Carnicera'],
+  ['occupation:bo:CARPINTERO', 'Carpintero / Carpintera'],
+  ['occupation:bo:CHOFER', 'Chofer'],
+  ['occupation:bo:COCINERO', 'Cocinero / Cocinera'],
+  ['occupation:bo:COMERCIANTE', 'Comerciante'],
+  ['occupation:bo:CONTADOR', 'Contador / Contadora'],
+  ['occupation:bo:COSTURERO', 'Costurero / Costurera'],
+  ['occupation:bo:DEPORTISTA', 'Deportista'],
+  ['occupation:bo:DOCENTE', 'Docente'],
+  ['occupation:bo:ECONOMISTA', 'Economista'],
+  ['occupation:bo:ELECTRICISTA', 'Electricista'],
+  ['occupation:bo:EMPLEADA_HOGAR', 'Empleada / Empleado del hogar'],
+  ['occupation:bo:EMPLEADO', 'Empleado / Empleada'],
+  ['occupation:bo:EMPRESARIO', 'Empresario / Empresaria'],
+  ['occupation:bo:ENFERMERO', 'Enfermero / Enfermera'],
+  ['occupation:bo:ESTUDIANTE', 'Estudiante'],
+  ['occupation:bo:FARMACEUTICO', 'Farmacéutico / Farmacéutica'],
+  ['occupation:bo:FOTOGRAFO', 'Fotógrafo / Fotógrafa'],
+  ['occupation:bo:FUNCIONARIO_PUBLICO', 'Funcionario público / Funcionaria pública'],
+  ['occupation:bo:GANADERO', 'Ganadero / Ganadera'],
+  ['occupation:bo:GASTRONOMO', 'Gastrónomo / Gastrónoma'],
+  ['occupation:bo:INGENIERO', 'Ingeniero / Ingeniera'],
+  ['occupation:bo:JOYERO', 'Joyero / Joyera'],
+  ['occupation:bo:JUBILADO', 'Jubilado / Jubilada'],
+  ['occupation:bo:LABORES_CASA', 'Labores de casa'],
+  ['occupation:bo:MECANICO', 'Mecánico / Mecánica'],
+  ['occupation:bo:MEDICO', 'Médico / Médica'],
+  ['occupation:bo:MILITAR', 'Militar'],
+  ['occupation:bo:MINERO', 'Minero / Minera'],
+  ['occupation:bo:MUSICO', 'Músico / Música'],
+  ['occupation:bo:NUTRICIONISTA', 'Nutricionista'],
+  ['occupation:bo:OBRERO', 'Obrero / Obrera'],
+  ['occupation:bo:ODONTOLOGO', 'Odontólogo / Odontóloga'],
+  ['occupation:bo:PANADERO', 'Panadero / Panadera'],
+  ['occupation:bo:PELUQUERO', 'Peluquero / Peluquera'],
+  ['occupation:bo:PERIODISTA', 'Periodista'],
+  ['occupation:bo:PESCADOR', 'Pescador / Pescadora'],
+  ['occupation:bo:PILOTO', 'Piloto'],
+  ['occupation:bo:PINTOR', 'Pintor / Pintora'],
+  ['occupation:bo:PLOMERO', 'Plomero / Plomera'],
+  ['occupation:bo:POLICIA', 'Policía'],
+  ['occupation:bo:PSICOLOGO', 'Psicólogo / Psicóloga'],
+  ['occupation:bo:RELIGIOSO', 'Religioso / Religiosa'],
+  ['occupation:bo:SASTRE', 'Sastre'],
+  ['occupation:bo:SECRETARIO', 'Secretario / Secretaria'],
+  ['occupation:bo:SEGURIDAD', 'Personal de seguridad'],
+  ['occupation:bo:SIN_OCUPACION', 'Sin ocupación'],
+  ['occupation:bo:SOLDADOR', 'Soldador / Soldadora'],
+  ['occupation:bo:TECNICO', 'Técnico / Técnica'],
+  ['occupation:bo:TRABAJADOR_SOCIAL', 'Trabajador social / Trabajadora social'],
+  ['occupation:bo:TRANSPORTISTA', 'Transportista'],
+  ['occupation:bo:VENDEDOR', 'Vendedor / Vendedora'],
+  ['occupation:bo:VETERINARIO', 'Veterinario / Veterinaria'],
+  ['occupation:bo:ZAPATERO', 'Zapatero / Zapatera'],
+  ['occupation:bo:OTRA', 'Otra ocupación'],  // la salida escrita a mano
 ]);
 
 conjunto('VS_BO_EMPLOYER', 'Empleadores', 'Empresas e instituciones registradas.');
 export const EMPLEADOR = definir('VS_BO_EMPLOYER', [
-  ['EMP-YPFB', 'YPFB'],
-  ['EMP-UAGRM', 'Universidad Autónoma Gabriel René Moreno'],
-  ['EMP-CRE', 'Cooperativa Rural de Electrificación'],
-  ['EMP-BNB', 'Banco Nacional de Bolivia'],
-  ['EMP-ENTEL', 'ENTEL'],
-  ['EMP-SEDES', 'SEDES Santa Cruz'],
-  ['EMP-INDEP', 'Independiente'],
+  ['employer:bo:YPFB_ANDINA', 'YPFB Andina'],
+  ['employer:bo:UAGRM', 'UAGRM (Universidad Autónoma Gabriel René Moreno)'],
+  ['employer:bo:CRE', 'CRE (Cooperativa Rural de Electrificación)'],
+  ['employer:bo:BANCO_UNION', 'Banco Unión'],
+  ['employer:bo:ENTEL', 'Entel (Empresa Nacional de Telecomunicaciones)'],
+  ['employer:bo:INDEPENDIENTE', 'Trabajo por mi cuenta (independiente)'],
+  ['employer:bo:NEGOCIO_PROPIO', 'Tengo mi propio negocio'],
+  ['employer:bo:SIN_EMPLEADOR', 'No estoy trabajando'],
+  ['employer:bo:OTRA', 'Otra empresa (la escribo)'],  // la salida escrita a mano
 ]);
+
 
 /* ---- especialidades médicas ----------------------------------------------
 
