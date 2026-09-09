@@ -158,7 +158,14 @@ export class NavigationService {
 
 /** Una sección del registro, vista como el destino que el menú dibuja. */
 function menuItemOf(section: AppSection): NavMenuItem {
-  return { label: section.label, route: routeOf(section), icon: section.icon };
+  const item: NavMenuItem = { label: section.label, route: routeOf(section), icon: section.icon };
+  const representa = section.representaEnElMenu;
+  if (representa === undefined) {
+    return item;
+  }
+  // Las rutas viajan ya normalizadas —con su barra inicial— porque quien las
+  // consume compara contra una URL, no contra un `path` del registro.
+  return { ...item, representa: representa.map((path) => `/${path}`) };
 }
 
 /**

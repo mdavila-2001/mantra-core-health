@@ -57,6 +57,12 @@ describe('ShellLayout', () => {
           { path: 'my-account/questionnaires', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
           { path: 'settings', children: [] },
+          // Dos de los cuatro directorios y una ficha: no ocupan renglón desde
+          // el 08/09/2026, y son con lo que se comprueba que la portada se
+          // marca por ellos.
+          { path: 'laboratory-directory', children: [] },
+          { path: 'laboratory-directory/:id', children: [] },
+          { path: 'clinics-directory', children: [] },
         ]),
       ],
     }).compileComponents();
@@ -147,13 +153,13 @@ describe('ShellLayout', () => {
       '/messaging',
       // La portada de directorios (FT-18, `roles: [ANY_ROLE]`) tampoco exige
       // rol: no es un directorio en sí, es su índice.
+      //
+      // **Y desde el 08/09/2026 es la única del bloque que ocupa renglón.**
+      // Los cuatro directorios —laboratorios, clínicas, farmacias, médicos—
+      // siguen sin exigir rol y se siguen alcanzando; se entra a ellos por
+      // esta portada, que es la pantalla que dice qué hay en cada uno. Ver
+      // `navigation.map.ts`, sección `directories`.
       '/directories',
-      '/laboratory-directory',
-      // A5 y A6 del plan de UX: los directorios de clínicas y de farmacias,
-      // por lo mismo que el de laboratorios — oferta publicada, sin rol que la
-      // exprese.
-      '/clinics-directory',
-      '/pharmacies-directory',
       // El glosario ya NO está: desde el 18/08/2026 (feedback de la analista,
       // F-03) declara los roles de quien atiende, y una sesión sin roles no es
       // de nadie que atienda.
@@ -325,23 +331,32 @@ describe('ShellLayout', () => {
       });
 
       it('un bloque de varios destinos es un desplegable; uno de un solo destino, no', () => {
-        // El paciente ve los cuatro directorios —bloque— y un solo chat, que es
-        // todo lo que le queda de «Comunidad». Un desplegable con un renglón
-        // adentro es un clic de más para llegar a lo mismo.
+        // El paciente ve sus cuatro pantallas clínicas —bloque «Mi salud»— y
+        // un solo chat, que es todo lo que le queda de «Comunidad». Un
+        // desplegable con un renglón adentro es un clic de más para llegar a
+        // lo mismo.
+        //
+        // **«Directorios» cambió de lado el 08/09/2026**, y por eso está acá
+        // como ejemplo de lo segundo y no de lo primero: sus cuatro
+        // directorios salieron del menú para que se entre por la portada, así
+        // que el bloque quedó con un solo renglón y esta misma regla lo dibuja
+        // suelto. Es exactamente el efecto que se buscaba — se aprieta
+        // «Directorios» y se llega a la pantalla que deja elegir.
         conSesion(['PATIENT']);
 
         const bloques = [...raiz().querySelectorAll('[data-testid="nav-bloque"]')].map((b) =>
           b.getAttribute('data-bloque'),
         );
 
-        expect(bloques).toContain('Directorios');
+        expect(bloques).toContain('Mi salud');
         expect(bloques).not.toContain('Comunidad');
-        // Y el destino del bloque de uno sigue estando, suelto.
-        expect(
-          [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
-            a.getAttribute('data-route'),
-          ),
-        ).toContain('/messaging');
+        expect(bloques).not.toContain('Directorios');
+        // Y los destinos de los bloques de uno siguen estando, sueltos.
+        const enlaces = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+        expect(enlaces).toContain('/messaging');
+        expect(enlaces).toContain('/directories');
       });
 
       it('el grupo y el bloque de la pantalla actual se dibujan abiertos', async () => {
@@ -438,6 +453,29 @@ describe('ShellLayout', () => {
         await ir('/my-account/appointments/book/turno-1');
 
         expect(marcadas()).toEqual(['/my-account/appointments']);
+      });
+
+      it('dentro de un directorio se marca «Directorios», que es por donde se entró', async () => {
+        // La otra mitad del cambio del 08/09/2026. Los cuatro directorios
+        // dejaron de ocupar renglón y se abren desde su portada; sin
+        // `representaEnElMenu` la barra quedaba **entera apagada** mientras se
+        // los recorría, que es la única pregunta que la barra contesta
+        // siempre. No es un ancestro —`/directories` no es prefijo de
+        // `/laboratory-directory`—, es una relación declarada en el registro.
+        await ir('/laboratory-directory');
+        expect(marcadas()).toEqual(['/directories']);
+
+        // Y sigue siendo una sola marca, que es la regla de todo este bloque.
+        await ir('/clinics-directory');
+        expect(marcadas()).toEqual(['/directories']);
+      });
+
+      it('una hija de lo representado también marca la portada', async () => {
+        // El detalle de un laboratorio tampoco tiene renglón. Se compara por
+        // prefijo de ruta, igual que con cualquier otro ancestro.
+        await ir('/laboratory-directory/lab-1');
+
+        expect(marcadas()).toEqual(['/directories']);
       });
     });
 

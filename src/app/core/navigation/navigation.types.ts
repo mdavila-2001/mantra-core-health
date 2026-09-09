@@ -123,6 +123,17 @@ export interface NavMenuItem {
   readonly label: string;
   readonly route: string;
   readonly icon: NavIconName;
+
+  /**
+   * Las rutas que este renglón **representa** además de la suya.
+   *
+   * Sale de {@link AppSection.representaEnElMenu}, y sólo el armazón la usa:
+   * para decidir cuál de los renglones se marca como «acá estás». Sin esto,
+   * estar dentro de una pantalla sin renglón propio deja la barra entera
+   * apagada, y la barra deja de contestar la única pregunta que contesta
+   * siempre. Ver el porqué en el registro.
+   */
+  readonly representa?: readonly string[];
 }
 
 /**
@@ -334,6 +345,26 @@ export interface AppSection {
    * desaparece solo: el menú ya descarta los que se quedan sin ítems.
    */
   readonly pinnedTop?: boolean;
+
+  /**
+   * Las pantallas que **se entran por acá** y no tienen renglón propio.
+   *
+   * Es la contracara de {@link fueraDelMenuPara}: cuando un puñado de
+   * secciones deja de ocupar renglón porque se llega a ellas desde una
+   * portada, la barra se queda sin nada que marcar mientras se las recorre —y
+   * decir dónde estás es lo único que la barra hace siempre—. Declarando acá
+   * esas rutas, el renglón de la portada se marca por ellas.
+   *
+   * **Se declara, no se deduce.** La tentación es sacarlo solo del reparto en
+   * bloques —«marcá la primera del bloque cuando las otras no están»—, y da
+   * respuestas equivocadas en cuanto un bloque no es una portada y sus partes:
+   * «Ajustes» sale del menú y vive en el bloque «Avisos», y con esa regla
+   * estar en Ajustes encendería «Notificaciones», que es otra pantalla. Una
+   * portada sabe que lo es; un bloque no.
+   *
+   * Nace con «Directorios» (08/09/2026), que es hoy la única que lo declara.
+   */
+  readonly representaEnElMenu?: readonly string[];
 
   readonly availability: SectionAvailability;
 
