@@ -901,6 +901,7 @@ export class RegisterPractitioner {
     sinConfirmar: 'registration-practitioner-office-location-unconfirmed',
     confirmar: 'registration-practitioner-office-location-confirm',
     usarUbicacion: 'registration-practitioner-office-location-use',
+    marcarEnMapa: 'registration-practitioner-office-location-pick',
   };
 
   /** Los identificadores de prueba del bloque de ubicación del domicilio. */
