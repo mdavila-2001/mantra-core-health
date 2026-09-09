@@ -8,10 +8,8 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
-import { FileDownloader } from '../../../core/data-access/files/file-downloader';
-import { FilesClient } from '../../../core/data-access/files/files.client';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import {
@@ -23,9 +21,7 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
-import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
-import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -53,11 +49,22 @@ function typeLabel(type: string): string {
 }
 
 /**
- * Estados que todavía no tienen un veredicto que mostrar. FT-32-R06/R07: el
- * detalle resolutivo no se abre en ninguno de estos — se abre el modal que
- * invita a esperar.
+ * Lo que FT-32 todavía debe.
+ *
+ * La pantalla se mergeó como `wip` (11417960) con el andamiaje de tres cosas
+ * sin terminar, y el andamiaje —imports y constantes que nadie usaba— rompía
+ * `yarn lint`. Se quitó, porque código muerto no es documentación; queda acá
+ * anotado lo que falta, que sí lo es:
+ *
+ * 1. **R06/R07**: un caso en `pending` o `in-review` no debería abrir el
+ *    detalle resolutivo —no hay veredicto que mostrar— sino un modal que
+ *    invite a esperar. Hoy la celda del identificador enlaza al detalle sin
+ *    condición, en todos los estados.
+ * 2. **La evidencia no se descarga**: `CaseRow.evidenceFileId` se resuelve y
+ *    no lo consume nadie; falta la columna con el botón de descarga.
+ * 3. **R03 a medias**: `typeLabel` se calcula por fila pero no hay columna de
+ *    tipo que lo muestre.
  */
-const SIN_VEREDICTO: ReadonlySet<StatusSealVariant> = new Set(['pending', 'in-review']);
 
 /** Fila de la tabla: presentación ya resuelta, no el DTO del backend. */
 interface CaseRow {
