@@ -33,6 +33,8 @@ export interface IdsDePrueba {
   readonly sinConfirmar: string;
   readonly confirmar: string;
   readonly usarUbicacion: string;
+  /** El botón que abre el mapa vacío para poner el pin a mano. */
+  readonly marcarEnMapa: string;
 }
 
 /**
@@ -75,8 +77,29 @@ export const AVISO_UBICACION_SIN_CONFIRMAR =
   'Todavía no confirmaste este punto, así que no se va a guardar. Pulsá el botón de confirmar si es el lugar correcto.';
 
 /**
- * El punto de un lugar sobre el mapa, capturado del navegador y confirmado a
- * mano.
+ * Lo que se le dice a quien ya tiene un pin y quiere correrlo.
+ *
+ * Es la otra mitad del selector: el GPS acierta la manzana, no la puerta, y
+ * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
+ * manzana. Tocar el plano corre el pin al punto exacto.
+ */
+export const AVISO_MOVER_PIN =
+  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
+
+/**
+ * El punto de un lugar sobre el mapa, capturado del navegador **o marcado a
+ * mano sobre el plano**, y confirmado por la persona.
+ *
+ * ## Dos maneras de poner el pin, y ninguna es obligatoria
+ *
+ * Nació con una sola: pedir la ubicación al navegador. Eso deja afuera a quien
+ * se registra desde otro lugar —la casa se declara desde el trabajo, o desde
+ * el teléfono de un familiar—, a quien negó el permiso, y a quien el GPS le
+ * acertó la cuadra pero no la puerta. Así que el mapa también se abre vacío
+ * («Marcar en el mapa») y el pin se pone tocando el plano; y una vez que hay
+ * pin, venga de donde venga, tocar el plano lo corre. Es el mismo `pointPicked`
+ * que «Cómo llegar» usa para marcar el origen, con la misma pista visual: el
+ * cursor en cruz mientras el mapa espera un toque.
  *
  * ## Por qué es un componente y no tres copias de la misma plantilla
  *
@@ -134,6 +157,12 @@ export class UbicacionPicker {
   /** Rótulo del mapa, para quien no lo ve. */
   readonly etiquetaMapa = input('Tu ubicación actual en el mapa');
 
+  /** Rótulo del botón que abre el mapa vacío para marcar el punto a mano. */
+  readonly etiquetaMarcar = input('Marcar en el mapa');
+
+  /** Lo que se le dice sobre el mapa vacío («Tocá el mapa donde queda tu casa»). */
+  readonly indicacionMarcar = input('Tocá el mapa en el lugar exacto para poner el pin.');
+
   readonly ids = input.required<IdsDePrueba>();
 
   /**
@@ -163,8 +192,29 @@ export class UbicacionPicker {
   /** Si el navegador negó la ubicación, para poder decirlo sin frenar el alta. */
   readonly rechazado = signal(false);
 
+  /**
+   * Si la persona pidió el mapa vacío para poner el pin a mano.
+   *
+   * Sólo importa mientras no hay punto: con un pin ya puesto el mapa está
+   * abierto de todos modos y tocarlo lo corre. Se apaga al quitar la ubicación,
+   * que es volver al principio.
+   */
+  readonly marcando = signal(false);
+
+  /** Si el mapa tiene que estar en pantalla: porque hay pin, o porque se está por poner. */
+  protected readonly mapaAbierto = computed(() => this.punto() !== null || this.marcando());
+
+  /**
+   * Si el punto actual lo dio el navegador (y no un toque sobre el plano).
+   *
+   * Sólo cambia cómo se llama el pin sin confirmar: «Acá te encontramos» es
+   * mentira para un punto que la persona puso a mano.
+   */
+  private readonly vieneDelNavegador = signal(false);
+
   protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
   protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
+  protected readonly avisoMoverPin = AVISO_MOVER_PIN;
 
   /**
    * El pin, tal como lo espera `app-map`.
@@ -180,7 +230,11 @@ export class UbicacionPicker {
         id: this.pinId(),
         lat: punto.lat,
         lng: punto.lng,
-        titulo: this.confirmada() ? this.etiquetaConfirmada() : 'Acá te encontramos',
+        titulo: this.confirmada()
+          ? this.etiquetaConfirmada()
+          : this.vieneDelNavegador()
+            ? 'Acá te encontramos'
+            : 'El punto que marcaste',
       },
     ];
   });
@@ -207,6 +261,8 @@ export class UbicacionPicker {
     geo.getCurrentPosition(
       (posicion) => {
         this.punto.set({ lat: posicion.coords.latitude, lng: posicion.coords.longitude });
+        this.vieneDelNavegador.set(true);
+        this.marcando.set(false);
         this.rechazado.set(false);
         this.pidiendo.set(false);
       },
@@ -216,6 +272,34 @@ export class UbicacionPicker {
       },
       { enableHighAccuracy: false, timeout: GPS_TIMEOUT_MS, maximumAge: GPS_MAX_AGE_MS },
     );
+  }
+
+  /**
+   * Abre el mapa vacío para que la persona ponga el pin a mano.
+   *
+   * No pide nada al navegador ni toca lo que hubiera: es la puerta para quien
+   * no quiere —o no puede— compartir dónde está ahora, que casi nunca es donde
+   * vive.
+   */
+  marcarEnMapa(): void {
+    this.marcando.set(true);
+    this.rechazado.set(false);
+  }
+
+  /**
+   * Un toque sobre el mapa: el pin va ahí.
+   *
+   * Sirve para las dos cosas —poner el primer pin sobre el mapa vacío y correr
+   * uno que ya estaba, viniera del GPS o de otro toque—, y en las dos el punto
+   * queda **sin confirmar**: la persona que lo movió es la misma que tiene que
+   * mirarlo y decir que sí, y el dato anterior ya no vale para el punto nuevo.
+   */
+  fijarPunto(punto: Coordenadas): void {
+    this.desconfirmar();
+    this.punto.set({ lat: punto.lat, lng: punto.lng });
+    this.vieneDelNavegador.set(false);
+    this.marcando.set(false);
+    this.rechazado.set(false);
   }
 
   /**
@@ -231,9 +315,10 @@ export class UbicacionPicker {
     this.confirmado.emit(punto);
   }
 
-  /** Olvida la ubicación capturada, y con ella su confirmación. */
+  /** Olvida la ubicación capturada, y con ella su confirmación; cierra el mapa. */
   quitarUbicacion(): void {
     this.punto.set(null);
+    this.marcando.set(false);
     this.desconfirmar();
   }
 
