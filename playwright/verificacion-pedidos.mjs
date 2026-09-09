@@ -194,8 +194,11 @@ async function main() {
 
   /* ── 8 · Ficha pública de una organización (PR #383 + portada) ────────── */
   await pagina.goto(`${BASE}/clinics-directory`);
-  await esperar(1500);
   const ficha = pagina.locator('app-directory-page a[href]:not([href="#"])').first();
+  // Esperar al enlace y no un rato fijo: el directorio recorre el cursor entero
+  // antes de pintar, y con la máquina cargada un segundo y medio no alcanza —
+  // daba un rojo que no era del producto.
+  await ficha.waitFor({ timeout: 30_000 }).catch(() => undefined);
   if ((await ficha.count()) > 0) {
     await ficha.click();
     await esperar(2000);
