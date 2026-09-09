@@ -214,7 +214,7 @@
             </app-alert>
           }
 
-          <app-form-field
+          <app-form-field icon="flask"
             label="Estudio"
             [required]="true"
             hint="Sale del catálogo clínico: es el mismo con el que un médico pide el estudio."
@@ -228,7 +228,7 @@
             />
           </app-form-field>
 
-          <app-form-field
+          <app-form-field icon="labels"
             label="Código en la unidad"
             [required]="true"
             hint="Con el que el laboratorio lo nombra puertas adentro. Hasta 60 caracteres."
@@ -236,7 +236,7 @@
             <app-input [(value)]="codigoDelEstudio" placeholder="HEM" />
           </app-form-field>
 
-          <app-form-field
+          <app-form-field icon="tag"
             label="Nombre visible"
             [required]="true"
             hint="El que lee el paciente en el directorio. Se propone el del catálogo y se puede cambiar."
@@ -245,7 +245,7 @@
           </app-form-field>
 
           @if (opcionesDeSede().length > 0) {
-            <app-form-field
+            <app-form-field icon="hospital"
               label="Sucursal"
               hint="Dejalo sin elegir si el estudio se hace en todas."
             >
@@ -263,7 +263,7 @@
             <app-checkbox [(checked)]="tomaADomicilio" label="Se puede tomar a domicilio" />
           </div>
 
-          <app-form-field
+          <app-form-field icon="note"
             label="Instrucciones de preparación"
             hint="Lo que el paciente tiene que hacer antes: ayuno, suspender un medicamento, traer algo."
           >
@@ -311,7 +311,7 @@
             </app-alert>
           }
 
-          <app-form-field
+          <app-form-field icon="billing"
             label="Tarifario"
             [required]="true"
             hint="El público lo ve cualquier paciente; los internos son para convenios."
@@ -325,7 +325,7 @@
             />
           </app-form-field>
 
-          <app-form-field
+          <app-form-field icon="chart"
             label="Importe base"
             [required]="true"
             hint="El precio de lista del estudio en este tarifario."
@@ -333,28 +333,28 @@
             <app-input type="number" [(value)]="importeBase" placeholder="120" />
           </app-form-field>
 
-          <app-form-field
+          <app-form-field icon="chart"
             label="Importe al paciente"
             hint="Lo que paga la persona cuando difiere del base. Dejalo vacío si es el mismo."
           >
             <app-input type="number" [(value)]="importeAlPaciente" placeholder="120" />
           </app-form-field>
 
-          <app-form-field
+          <app-form-field icon="chart"
             label="Importe a la aseguradora"
             hint="Lo que cubre el convenio. Sólo tiene sentido en un tarifario interno."
           >
             <app-input type="number" [(value)]="importeALaAseguradora" placeholder="80" />
           </app-form-field>
 
-          <app-form-field
+          <app-form-field icon="sliders"
             label="Factor de descuento"
             hint="Entre 0 y 1. Por ejemplo, 0,1 es un diez por ciento."
           >
             <app-input type="number" [(value)]="factorDeDescuento" placeholder="0.1" />
           </app-form-field>
 
-          <app-form-field
+          <app-form-field icon="calendar"
             label="Vigente desde"
             hint="Sin fecha, rige desde que se guarda."
           >
@@ -408,7 +408,7 @@
         <form class="laboratorio__formulario" (submit)="$event.preventDefault()">
           <h3 class="laboratorio__formulario-titulo">Nuevo tarifario</h3>
 
-          <app-form-field
+          <app-form-field icon="labels"
             label="Código"
             [required]="true"
             hint="Con el que se lo nombra: PUBLICO, CONVENIO-A. Hasta 60 caracteres."
@@ -417,7 +417,7 @@
           </app-form-field>
 
           @if (opcionesDeSede().length > 0) {
-            <app-form-field
+            <app-form-field icon="hospital"
               label="Sucursal"
               hint="Dejalo sin elegir si rige en todas."
             >
@@ -430,11 +430,11 @@
             </app-form-field>
           }
 
-          <app-form-field label="Vigente desde" hint="Sin fecha, rige desde que se crea.">
+          <app-form-field icon="calendar" label="Vigente desde" hint="Sin fecha, rige desde que se crea.">
             <app-date-picker [(value)]="vigenteDesdeTarifario" />
           </app-form-field>
 
-          <app-form-field label="Vigente hasta" hint="Sin fecha, no vence.">
+          <app-form-field icon="calendar" label="Vigente hasta" hint="Sin fecha, no vence.">
             <app-date-picker [(value)]="vigenteHastaTarifario" />
           </app-form-field>
 

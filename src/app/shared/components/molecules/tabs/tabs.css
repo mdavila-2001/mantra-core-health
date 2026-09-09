@@ -54,6 +54,16 @@
        una barra que aparece y desaparece movía la tira entera. La rueda y el
        gesto táctil siguen funcionando igual. */
     scrollbar-width: none;
+
+    /* Regla de UI de ALOVIDA: las pestañas ocupan el ancho máximo posible y van
+       centradas, nunca apelotonadas contra el borde izquierdo.
+
+       `safe` no es decorativo. Con `center` a secas, una fila que desborda
+       reparte el sobrante a los dos lados y el primer elemento queda a la
+       izquierda del origen del scroll: inalcanzable, ni con la rueda ni con el
+       teclado. `safe center` centra mientras entra y se comporta como
+       `flex-start` en cuanto no entra. */
+    justify-content: safe center;
 }
 
 .tabs__list::-webkit-scrollbar {
@@ -96,7 +106,11 @@
 
 .tabs__tab {
     position: relative;
-    flex-shrink: 0;
+    /* Crecen para repartirse el ancho entero. `min-width: max-content` hace lo
+       que antes hacía `flex-shrink: 0` —no encogen por debajo de su texto— sin
+       impedirles crecer. */
+    flex: 1 1 auto;
+    min-width: max-content;
     border: none;
     background: transparent;
     padding: var(--sp-3) var(--sp-4);
@@ -240,7 +254,15 @@
     flex-direction: column;
 }
 
+/* En vertical el reparto del ancho no aplica: la columna ya es del ancho de la
+   lista, y `flex: 1 1 auto` con la dirección cambiada estiraría cada pestaña a
+   lo alto para llenar la columna. */
+:host(.tabs--vertical) .tabs__tab {
+    flex: 0 0 auto;
+}
+
 :host(.tabs--vertical) .tabs__list {
+    justify-content: flex-start;
     flex-direction: column;
     align-items: stretch;
     border-bottom: none;

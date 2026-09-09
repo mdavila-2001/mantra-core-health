@@ -5,11 +5,21 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate } from '../wire';
 import type {
+  CaseCheck,
   LicenseVerificationRequest,
   VerificationCase,
   VerificationRequest,
   VerificationRequestResult,
+  VerificationType,
 } from './identity.types';
+
+/** El check tal como lo devuelve el backend, dentro del detalle de un caso. */
+interface CaseCheckBody {
+  readonly checkTypeConceptId: string;
+  readonly status: string;
+  readonly resultConceptId?: string;
+  readonly checkedAt?: string;
+}
 
 /**
  * El caso tal como llega.
@@ -20,8 +30,23 @@ import type {
 interface VerificationCaseBody {
   readonly id: string;
   readonly status: string;
+  /** Opcional en el tipo de la frontera: un backend viejo o un fixture de
+   * prueba puede no mandarlo todavía, y `toVerificationCase` cae a
+   * `'UNKNOWN'` en vez de fabricar un campo requerido que no llegó. */
+  readonly type?: string;
+  readonly evidenceFileId?: string;
+  readonly reasonText?: string;
+  readonly checks?: readonly CaseCheckBody[];
   readonly openedAt?: string | null;
   readonly completedAt?: string | null;
+}
+
+/** El tipo de solicitud tal como lo devuelve el catálogo de autoservicio. */
+interface VerificationTypeBody {
+  readonly code: string;
+  readonly label: string;
+  readonly jurisdictionAuthorizationId?: string;
+  readonly hasPendingRequest: boolean;
 }
 
 /**
@@ -110,6 +135,19 @@ export class IdentityClient {
       .pipe(map(toVerificationCase));
   }
 
+  /**
+   * `GET /identity/me/verification-types` — catálogo de "nueva solicitud"
+   * (FT-32-R09): qué tipos puede iniciar el titular y cuáles ya tienen una
+   * solicitud viva (FT-32-R11).
+   */
+  listVerificationTypes(): Observable<readonly VerificationType[]> {
+    return this.http
+      .get<{ types: readonly VerificationTypeBody[] }>(
+        this.url('/identity/me/verification-types'),
+      )
+      .pipe(map((cuerpo) => cuerpo.types.map(toVerificationType)));
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
@@ -144,7 +182,32 @@ function toVerificationCase(body: VerificationCaseBody): VerificationCase {
   return {
     id: body.id,
     status: body.status,
+    type: body.type ?? 'UNKNOWN',
+    ...(body.evidenceFileId ? { evidenceFileId: body.evidenceFileId } : {}),
+    ...(body.reasonText ? { reasonText: body.reasonText } : {}),
+    ...(body.checks ? { checks: body.checks.map(toCaseCheck) } : {}),
     ...(openedAt ? { openedAt } : {}),
     ...(completedAt ? { completedAt } : {}),
+  };
+}
+
+function toCaseCheck(body: CaseCheckBody): CaseCheck {
+  const checkedAt = maybeDate(body.checkedAt);
+  return {
+    checkTypeConceptId: body.checkTypeConceptId,
+    status: body.status,
+    ...(body.resultConceptId ? { resultConceptId: body.resultConceptId } : {}),
+    ...(checkedAt ? { checkedAt } : {}),
+  };
+}
+
+function toVerificationType(body: VerificationTypeBody): VerificationType {
+  return {
+    code: body.code,
+    label: body.label,
+    ...(body.jurisdictionAuthorizationId
+      ? { jurisdictionAuthorizationId: body.jurisdictionAuthorizationId }
+      : {}),
+    hasPendingRequest: body.hasPendingRequest,
   };
 }

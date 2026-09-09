@@ -1,43 +1,80 @@
-/* La ficha pública. Portada ancha, retrato montado sobre ella y la identidad
-   debajo: la anatomía que cualquiera reconoce de un perfil profesional, y
-   reconocerla es la mitad de entender la pantalla sin leerla.
+/* La ficha pública. Portada ancha, logo montado sobre ella, identidad y
+   acciones debajo, una tira de pestañas que dice qué más hay, y el cuerpo en
+   dos columnas: la anatomía que cualquiera reconoce de una página de
+   organización, y reconocerla es la mitad de entender la pantalla sin leerla.
 
    Colores del sistema (`alovida.css`): la portada es el degradado de marca
    —petróleo a aguamarina, con el mismo halo que usa el nav— y no un azul
-   cualquiera. */
+   cualquiera. Ni un valor de color se escribe suelto salvo los blancos y
+   negros translúcidos de la trama y de los realces, que son luz y sombra sobre
+   lo que haya debajo y no colores de la paleta.
+
+   Por qué consultas de CONTENEDOR y no de ventana: esta misma ficha se dibuja
+   en `/o/:slug` —ancho de pantalla completo— y dentro de «Cómo me ven», que es
+   una columna angosta de una pantalla de cuenta. Con `@media` la vista previa
+   habría intentado meter dos columnas en el ancho de una, porque la ventana es
+   grande aunque el hueco no lo sea. */
 
 .perfil {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: var(--e4);
-  /* Una ficha social no se lee a lo ancho de un monitor: la columna se acota a
-     una medida de lectura cómoda y se centra, como la de cualquier perfil de
-     red social. */
-  max-inline-size: 45rem;
+  /* Una ficha social no se lee a lo ancho de un monitor. La medida es la de la
+     columna de lectura MÁS el riel: el cuerpo sigue siendo angosto, y lo que
+     se ensancha es lo que antes era margen vacío. */
+  max-inline-size: 64rem;
   margin-inline: auto;
+  /* Las pestañas llevan a secciones de esta misma página. Sin esto el salto es
+     un corte seco y se pierde de dónde a dónde se fue. */
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .perfil {
+    scroll-behavior: auto;
+  }
 }
 
 /* --- Encabezado ---------------------------------------------------------- */
 
 .perfil__encabezado {
-  border: 1px solid var(--filete);
+  border: 1px solid var(--filete-2);
   border-radius: var(--r-card);
   overflow: hidden;
   background: var(--sup-tarjeta);
   box-shadow: var(--sombra-1);
+  /* El ancla de la primera pestaña. Sin esto, «Inicio» deja el nombre pegado
+     al borde superior de la ventana. */
+  scroll-margin-block-start: var(--e5);
 }
 
 .perfil__portada {
-  block-size: 12rem;
+  block-size: 12.5rem;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
+  /* La portada apoya al logo: sin este filo, un logo claro sobre el degradado
+     se ve flotando sobre nada. */
+  box-shadow: inset 0 -1px 0 rgb(0 0 0 / 12%);
 }
 
-/* Sin imagen, el degradado de marca: un fondo, no un hueco. Una franja gris se
-   lee como una imagen que no cargó. */
+/* Sin imagen, el degradado de marca con una trama fina encima —la misma idea
+   que la textura del nav—: un fondo TRABAJADO, no un hueco. Una franja de
+   color plano se lee como una imagen que no cargó; una con trama se lee como
+   una portada que se eligió así. */
 .perfil__portada--lisa {
   background-image:
+    repeating-linear-gradient(
+      118deg,
+      rgb(255 255 255 / 5.5%) 0 1px,
+      transparent 1px 15px
+    ),
+    repeating-linear-gradient(
+      28deg,
+      rgb(255 255 255 / 3.5%) 0 1px,
+      transparent 1px 22px
+    ),
     radial-gradient(70% 120% at 15% 0%, var(--nav-halo-a) 0%, var(--nav-halo-0) 70%),
     radial-gradient(60% 100% at 85% 10%, var(--nav-halo-c) 0%, var(--nav-halo-0) 70%),
     linear-gradient(115deg, var(--petroleo-x) 0%, var(--petroleo) 55%, var(--aguamarina) 130%);
@@ -45,7 +82,7 @@
 
 .perfil__identidad {
   position: relative;
-  padding: 0 var(--e5) var(--e5);
+  padding: 0 var(--e6) var(--e5);
 }
 
 .perfil__retrato {
@@ -55,9 +92,14 @@
   block-size: 9.5rem;
   margin-block-start: -4.75rem;
   border-radius: var(--r-pill);
+  /* El anillo del papel recorta el logo contra la portada; el filo interior lo
+     apoya cuando el logo también es claro —el caso de casi cualquier marca de
+     salud, que suelen ser azules sobre blanco—. */
   border: 5px solid var(--sup-tarjeta);
   background: var(--menta);
-  box-shadow: var(--sombra-1);
+  box-shadow:
+    var(--sombra-1),
+    inset 0 0 0 1px var(--filete-2);
   object-fit: cover;
 }
 
@@ -69,13 +111,9 @@
   letter-spacing: 0.02em;
 }
 
-/* La identidad y las acciones conviven en una fila en pantalla ancha: dejar el
-   botón debajo del nombre desperdiciaba media tarjeta en blanco. */
 .perfil__datos {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: end;
-  gap: var(--e3) var(--e4);
+  display: flex;
+  flex-direction: column;
   margin-block-start: var(--e4);
 }
 
@@ -102,14 +140,12 @@
 }
 
 .perfil__titular {
-  grid-column: 1;
   margin: var(--e2) 0 0;
   font-size: var(--fs-body-lg);
   color: var(--tinta);
 }
 
 .perfil__linea {
-  grid-column: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -148,14 +184,13 @@
   color: var(--ambar);
 }
 
-/* Las acciones van a la derecha del nombre, alineadas con su base. */
+/* Las acciones, en su propio renglón debajo de la identidad. */
 .perfil__acciones {
-  grid-column: 2;
-  grid-row: 1 / span 3;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--e2);
-  margin: 0;
+  margin: var(--e4) 0 0;
 }
 
 .perfil__acciones svg {
@@ -163,12 +198,21 @@
   block-size: 17px;
 }
 
-/* La acción secundaria de un lugar («Cómo llegar»): un enlace de ancla, no un
-   botón, porque lleva a una sección de esta misma página. Se le da la forma del
-   botón secundario a mano en vez de usar el átomo, que espera un `<button>`. */
+/* Cápsula y no rectángulo redondeado, sólo acá: es el único lugar de la
+   aplicación donde los botones son la IDENTIDAD de alguien y no un control de
+   formulario, y la cápsula es lo que hace que se lean como tal. */
+.perfil__acciones :is(button, a) {
+  border-radius: var(--r-pill);
+  padding-inline: var(--e5);
+}
+
+/* La acción secundaria: un enlace de ancla o un botón sin envío, no el átomo,
+   que espera un `<button>` con su propio contrato. Se le da a mano la forma del
+   botón secundario. */
 .perfil__accion-secundaria {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--e2);
   min-block-size: var(--h-ctrl);
   padding-inline: var(--e4);
@@ -176,27 +220,125 @@
   border-radius: var(--r-ctrl);
   background: var(--sup-tarjeta);
   color: var(--tinta-marca);
+  font: inherit;
   font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
+  transition:
+    background var(--mov-rapido) var(--curva),
+    border-color var(--mov-rapido) var(--curva);
 }
 
 .perfil__accion-secundaria:hover {
   background: var(--sup-inset);
+  border-color: var(--borde-ctrl);
+}
+
+.perfil__accion-secundaria:focus-visible {
+  outline: 3px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+/* --- Pestañas ------------------------------------------------------------ *
+   La tira usa el mismo lenguaje que `.app-tabs` del sistema —filete abajo,
+   subrayado de aguamarina en la activa— pero no esa clase: acá va a sangre de
+   la tarjeta y con el relleno del encabezado, y estirar la del sistema para
+   este caso le habría agregado una variante a un componente que se usa en
+   media aplicación.                                                         */
+
+.perfil__tabs {
+  display: flex;
+  gap: var(--e5);
+  padding-inline: var(--e6);
+  border-block-start: 1px solid var(--filete-2);
+  background: var(--sup-tarjeta);
+  /* En una columna angosta las pestañas se arrastran en vez de partirse en dos
+     renglones: partidas dejan de leerse como una tira. */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.perfil__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.perfil__tab {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  min-block-size: var(--h-ctrl-lg);
+  padding-inline: 2px;
+  border-block-end: 2px solid transparent;
+  color: var(--tinta-2);
+  font-size: 15px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--mov-rapido) var(--curva);
+}
+
+.perfil__tab:hover {
+  color: var(--tinta-marca);
+}
+
+.perfil__tab[aria-current='true'] {
+  color: var(--tinta-marca);
+  font-weight: 600;
+  border-block-end-color: var(--aguamarina);
+}
+
+.perfil__tab:focus-visible {
+  outline: 3px solid var(--anillo-foco);
+  outline-offset: -3px;
+  border-radius: var(--r-ctrl);
+}
+
+/* --- Cuerpo en dos columnas ---------------------------------------------- */
+
+.perfil__cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--e4);
+  align-items: start;
+}
+
+.perfil__columna {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  min-inline-size: 0;
+}
+
+/* Dos columnas sólo cuando hay ancho REAL para las dos. El umbral es el ancho
+   del contenedor, no el de la ventana: ver la nota de arriba. */
+@container (min-width: 60rem) {
+  .perfil__cuerpo {
+    grid-template-columns: minmax(0, 1fr) 19rem;
+  }
+
+  .perfil__riel {
+    position: sticky;
+    inset-block-start: var(--e4);
+  }
+}
+
+.perfil__riel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  min-inline-size: 0;
+}
+
+.perfil__ficha .app-card__cabecera {
+  margin-block-end: var(--e4);
 }
 
 /* --- Datos clave --------------------------------------------------------- */
 
-/* Auto-fit y no un número de columnas: la tira lleva entre dos y cuatro datos
-   según lo que la organización haya publicado, y una grilla de cuatro fijas
-   dejaría dos huecos cuando publicó dos. */
 .perfil__datos-clave {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--e4);
   margin: 0;
-  padding: var(--e4) var(--e5);
-  border-block-start: 1px solid var(--filete);
-  background: var(--sup-inset);
 }
 
 .perfil__dato dt {
@@ -215,12 +357,36 @@
   overflow-wrap: anywhere;
 }
 
+/* La letra chica de quién responde por el contenido. Va al pie del riel y no
+   en el cuerpo: es una advertencia permanente, no un párrafo que se lee una
+   vez y se pasa. */
+.perfil__pie {
+  margin: var(--e5) 0 0;
+  padding-block-start: var(--e4);
+  border-block-start: 1px solid var(--filete-2);
+  color: var(--tinta-3);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.perfil__actualizado {
+  display: block;
+  margin-block-start: var(--e2);
+}
+
 /* --- Retrato de un lugar -------------------------------------------------- */
 
 /* Cuadrado de esquinas blandas y no un círculo: el círculo dice «persona», y
    una clínica recortada en redondo se lee como el avatar de alguien. */
 .perfil__retrato--lugar {
   border-radius: var(--r-card);
+  /* El logo de una institución viene con su propio fondo —casi siempre
+     blanco—; el verde de las iniciales debajo lo teñiría por los bordes. */
+  background: var(--sup-tarjeta);
+}
+
+.perfil__retrato--lugar.perfil__retrato--iniciales {
+  background: var(--menta);
 }
 
 /* --- Secciones ----------------------------------------------------------- */
@@ -228,9 +394,11 @@
 /* Las secciones siguen siendo `app-card` del sistema —papel, filete, sombra y
    relleno son suyos—: replicarlos acá habría dado dos definiciones de tarjeta
    que se separan en la primera revisión del sistema de diseño. Lo único propio
-   es que no traigan margen. */
+   es que no traigan margen y que dejen aire arriba para que la pestaña no las
+   deje pegadas al borde de la ventana. */
 .perfil__seccion {
   margin: 0;
+  scroll-margin-block-start: var(--e5);
 }
 
 .perfil__parrafo {
@@ -405,18 +573,7 @@
    `app-public-post-card`, que se comparte con la vista de una publicación
    suelta. */
 
-@media (max-width: 48rem) {
-  .perfil__datos {
-    grid-template-columns: 1fr;
-  }
-
-  .perfil__acciones {
-    grid-column: 1;
-    grid-row: auto;
-  }
-}
-
-@media (max-width: 40rem) {
+@container (max-width: 40rem) {
   .perfil__portada {
     block-size: 7.5rem;
   }
@@ -424,6 +581,11 @@
   .perfil__identidad {
     padding-inline: var(--e4);
     padding-block-end: var(--e4);
+  }
+
+  .perfil__tabs {
+    padding-inline: var(--e4);
+    gap: var(--e4);
   }
 
   .perfil__retrato {
@@ -434,5 +596,11 @@
 
   .perfil__nombre {
     font-size: 24px;
+  }
+
+  /* En el ancho de un teléfono los tres botones a lo ancho quedan cada uno de
+     un tamaño distinto; apilados se tocan igual de fácil y se leen mejor. */
+  .perfil__acciones > * {
+    flex: 1 1 100%;
   }
 }

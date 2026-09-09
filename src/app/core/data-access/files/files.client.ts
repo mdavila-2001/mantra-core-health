@@ -184,6 +184,24 @@ export class FilesClient {
    * @returns La imagen como `data:` URL.
    */
   imageDataUrl(fileId: string): Observable<string> {
+    return this.contentDataUrl(fileId);
+  }
+
+  /**
+   * El contenido de un archivo propio, como `data:` URL — para ofrecerlo con
+   * `<a download>` sin depender de una URL de navegador que la CSP bloquee
+   * (mismo motivo que documenta `imageDataUrl`, que delega acá: es
+   * exactamente el mismo `GET` autenticado, la única diferencia es la
+   * intención de quien llama —pintar una miniatura o descargar un documento—).
+   *
+   * Sirve para "el archivo descargable" de una fila (FT-32-R02): el backend
+   * ya exige ser quien lo subió o tener un rol revisor, así que no hace falta
+   * un endpoint de descarga propio del dominio que lo referencia.
+   *
+   * @param fileId - El archivo a descargar.
+   * @returns El contenido como `data:` URL, con su tipo MIME real.
+   */
+  contentDataUrl(fileId: string): Observable<string> {
     return this.http
       .get(apiUrl(this.baseUrl, `/common/files/${encodeURIComponent(fileId)}/content`), {
         responseType: 'blob',
