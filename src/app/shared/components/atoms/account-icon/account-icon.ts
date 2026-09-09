@@ -75,6 +75,26 @@ import type { AccountIconName } from './account-icon.types';
           />
         </svg>
       }
+      @case ('laboratory') {
+        <!-- Un tubo de ensayo con su muestra: es la sangre lo que se analiza,
+             y se reconoce sin leer. No un microscopio —eso es investigación—
+             ni un edificio, que sería cualquier empresa. -->
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M9 3.25h6" />
+          <path d="M10.25 3.25v13.5a1.75 1.75 0 0 0 3.5 0V3.25" />
+          <path d="M10.25 12.5h3.5" />
+          <path d="M6.5 20.75h11" />
+        </svg>
+      }
     }
   `,
   styles: `

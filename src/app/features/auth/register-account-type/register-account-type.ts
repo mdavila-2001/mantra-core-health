@@ -16,16 +16,22 @@ interface TipoDeCuenta {
 }
 
 /**
- * Los tres tipos de cuenta que se dan de alta solos.
+ * Los cuatro tipos de cuenta que se dan de alta solos.
  *
- * **No hay «Otro».** La API tiene tres altas públicas —paciente, profesional y
- * organización aseguradora— y ninguna cuarta. Una tarjeta que no lleva a
- * ningún lado es peor que no ofrecerla: quien la pulsa ya decidió que ésa era
- * su opción, y descubrir que no existe lo deja sin ninguna.
+ * **No hay «Otro».** Cada tarjeta lleva a una pantalla de alta que existe. Una
+ * que no llevara a ningún lado sería peor que no ofrecerla: quien la pulsa ya
+ * decidió que ésa era su opción, y descubrir que no existe lo deja sin ninguna.
  *
  * **Dice «Aseguradora» y no «Organización»** porque `register-organization`
  * crea un tenant `PAYER` y sólo ése. El día que el alta pública acepte clínicas
  * o farmacias, la etiqueta se amplía con el backend, no antes.
+ *
+ * **«Laboratorio» es la primera cuyo formulario todavía no tiene endpoint.** Es
+ * el alta del proceso 4.1 del registro del stakeholder: se recorre entera y
+ * cierra dejando una solicitud, no una cuenta —ver el JSDoc de
+ * `RegisterLaboratory`—. Se ofrece igual porque la pantalla es de verdad y es
+ * lo que hay que poder mirar y corregir; la tarjeta no promete nada que la
+ * pantalla no cumpla.
  */
 const TIPOS: readonly TipoDeCuenta[] = [
   {
@@ -48,6 +54,13 @@ const TIPOS: readonly TipoDeCuenta[] = [
     detalle: 'Registrá tu organización y administrá el padrón de tus afiliados.',
     ruta: '/auth/register/organization',
     testId: 'tipo-aseguradora',
+  },
+  {
+    icono: 'laboratory',
+    titulo: 'Laboratorio',
+    detalle: 'Recibí las órdenes médicas de la red y entregá los resultados por la app.',
+    ruta: '/auth/register/laboratory',
+    testId: 'tipo-laboratorio',
   },
 ];
 

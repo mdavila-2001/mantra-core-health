@@ -1756,6 +1756,19 @@ export const routes: Routes = [
     title: 'AloVida - Registrar aseguradora',
   },
   {
+    // El alta del laboratorio de sangre: los dieciocho puntos de datos legales
+    // del proceso 4.1 del stakeholder. Todavía sin endpoint —cierra con una
+    // solicitud, no con una cuenta—; ver el JSDoc de `RegisterLaboratory`.
+    path: 'auth/register/laboratory',
+    // Diferida por lo mismo que las otras dos altas largas: arrastra el mapa,
+    // que no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-laboratory/register-laboratory').then(
+        (m) => m.RegisterLaboratory,
+      ),
+    title: 'AloVida - Registrar laboratorio',
+  },
+  {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…
     path: 'auth/verify-email',
     component: VerifyEmail,
