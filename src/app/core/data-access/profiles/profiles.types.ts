@@ -596,6 +596,13 @@ export interface OwnAddress {
  * para pintar una línea de texto.
  */
 export interface OwnCoverage {
+  /**
+   * Identificador de la aseguradora en el catálogo público
+   * (`GET /insurance-carrier-catalog`). Con él «Mi seguro» abre el catálogo
+   * de la compañía sin adivinarla por nombre. Lo publica el simulador; la
+   * API real todavía manda sólo el nombre, y por eso es opcional.
+   */
+  readonly carrierId?: string;
   readonly carrierName: string;
   readonly planName?: string;
   readonly isPublic: boolean;

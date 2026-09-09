@@ -180,6 +180,15 @@ export class IamClient {
       ...(registration.publicInsurancePlanId === undefined
         ? {}
         : { publicInsurancePlanId: registration.publicInsurancePlanId }),
+      // **El número de asegurado NO viaja, y es a propósito.** La pantalla lo
+      // captura y con él consulta a la aseguradora para precargar los datos,
+      // que es lo que se pidió; pero el DTO del backend todavía no lo declara,
+      // y `forbidNonWhitelisted` convierte una propiedad de más en un 400 que
+      // **rompería el alta entera**. Mandar un campo que la API rechaza es
+      // peor que no mandarlo: se pierde el registro, no un dato.
+      //
+      // El día que el backend lo publique, esto es una línea —el tipo ya lo
+      // declara y el formulario ya lo tiene—. Ver `core/mock/README.md`.
       ...(registration.billingTaxId === undefined
         ? {}
         : { billingTaxId: registration.billingTaxId }),

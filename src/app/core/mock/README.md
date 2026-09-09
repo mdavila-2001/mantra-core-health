@@ -66,6 +66,18 @@ Lo que ninguna ruta cubre cae en una respuesta genérica y queda anotado en la
 consola como `[mock] sin manejador para …`: ese es el inventario de lo que
 falta.
 
+## Contratos que el simulador declara y la API real todavía no publica
+
+Son deuda declarada, no funciones existentes del backend. La pantalla los
+consume; el backend tiene que darlos de alta con esta misma forma.
+
+| Ruta | Quién la usa | Qué devuelve |
+|---|---|---|
+| `GET /insurance-carrier-catalog/members/:memberIdentifier` | Alta de paciente, campo «Número de asegurado» | La afiliación (`carrierId`, `planId`, `planName`, `isPublic`) y la persona tal como la aseguradora la tiene (nombres, documento, nacimiento, sexo, teléfono, correo). 404 si ninguna aseguradora reconoce el número. Los números válidos son `AF-` + los dígitos del código del paciente (`AF-20000` es Ana Pérez, Seguros Andina · Plan Integral). |
+| `GET /insurance-carrier-catalog/:id` | «Mi seguro» del paciente | La ficha pública de una aseguradora del catálogo (productos, planes, coberturas y red), con la misma forma que `GET /insurance-carriers/:id`, que sólo sirve desde el tenant de la propia aseguradora. |
+| `POST /iam/auth/register-patient` · `insuranceMemberIdentifier` | Alta de paciente | **Todavía no se envía.** El DTO del backend no lo declara y `forbidNonWhitelisted` lo convertiría en un 400 que rompe el alta entera, así que `IamClient.registerPatient` lo deja fuera del cuerpo a propósito (hay una prueba que lo fija). La pantalla ya lo captura y lo compone; cuando el backend lo publique, alcanza con listarlo en ese método. |
+| `GET /profiles/patients/me` · `coverages[].carrierId` | «Mi seguro» | El identificador de la aseguradora en el catálogo público; la API real manda sólo `carrierName`, y la pantalla cae a buscarla por nombre. |
+
 ## Cómo se verifica
 
 ```bash

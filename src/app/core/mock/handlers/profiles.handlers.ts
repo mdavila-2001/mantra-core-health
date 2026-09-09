@@ -19,6 +19,7 @@ import {
   type ProfesionalSimulado,
 } from '../fixtures/personas';
 import { conflict, forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { aseguradoraPorNombre, numeroDeAsegurado } from './insurance.handlers';
 import { ahora, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -101,10 +102,14 @@ function perfilPropioDe(p: PacienteSimulado) {
     ...(p.photoFileId === undefined ? {} : { photoFileId: p.photoFileId }),
     homeAddress: { lines: p.direccion, city: displayDe(p.municipioId), municipalityConceptId: p.municipioId, latitude: -17.78, longitude: -63.18 },
     workAddress: { lines: 'Av. Cañoto esq. Landívar, piso 3', city: displayDe(p.municipioId), municipalityConceptId: p.municipioId },
+    // `carrierId` apunta al catálogo público de aseguradoras: es lo que le
+    // permite a «Mi seguro» abrir el catálogo de la compañía sin buscarla por
+    // nombre. Se resuelve acá y no en el fixture para que el paciente siga
+    // guardando sólo el nombre, como la API real.
     coverages:
       p.aseguradora === undefined
         ? []
-        : [{ carrierName: p.aseguradora, planName: p.plan, isPublic: false, memberIdentifier: `AF-${p.patientCode.slice(4)}`, verified: true }],
+        : [{ ...(aseguradoraPorNombre(p.aseguradora) === undefined ? {} : { carrierId: aseguradoraPorNombre(p.aseguradora)!.id }), carrierName: p.aseguradora, planName: p.plan, isPublic: aseguradoraPorNombre(p.aseguradora)?.isPublic ?? false, memberIdentifier: numeroDeAsegurado(p), verified: true }],
     guardians: personasRelacionadasDe(p).map((r) => ({
       displayName: r.displayName,
       relationshipConceptId: r.relationshipConceptId,

@@ -18,9 +18,36 @@ const ASEGURADORAS = [
   { id: uuid('carrier-andina'), carrierCode: 'ANDINA', legalName: 'Seguros Andina S.A.', name: 'Seguros Andina', regulatorIdentifier: 'APS-0042', isPublic: false, planes: [['ANDINA-INT', 'Plan Integral'], ['ANDINA-FAM', 'Plan Familiar'], ['ANDINA-ORO', 'Plan Oro']] },
   { id: uuid('carrier-vitalicia'), carrierCode: 'VITALICIA', legalName: 'La Vitalicia Seguros y Reaseguros de Vida S.A.', name: 'La Vitalicia', regulatorIdentifier: 'APS-0007', isPublic: false, planes: [['VIT-SALUD', 'Salud Total'], ['VIT-BASICO', 'Salud Básica']] },
   { id: uuid('carrier-alianza'), carrierCode: 'ALIANZA', legalName: 'Alianza Seguros y Reaseguros S.A.', name: 'Alianza Seguros', regulatorIdentifier: 'APS-0015', isPublic: false, planes: [['ALZ-ORO', 'Plan Oro'], ['ALZ-PLATA', 'Plan Plata']] },
+  // Las cuatro que siguen son las que `faker/bolivia.ts` reparte entre los
+  // pacientes generados: sin ficha propia, «Mi seguro» de esos pacientes no
+  // tendría catálogo que mostrar.
+  { id: uuid('carrier-bisa'), carrierCode: 'BISA', legalName: 'BISA Seguros y Reaseguros S.A.', name: 'BISA Seguros', regulatorIdentifier: 'APS-0021', isPublic: false, planes: [['BISA-VIDA', 'Salud Vida'], ['BISA-FAM', 'Plan Familiar']] },
+  { id: uuid('carrier-nacional'), carrierCode: 'NACIONAL', legalName: 'Nacional Seguros Vida y Salud S.A.', name: 'Nacional Seguros', regulatorIdentifier: 'APS-0033', isPublic: false, planes: [['NAC-PLUS', 'Salud Plus'], ['NAC-FAM', 'Plan Familiar']] },
+  { id: uuid('carrier-credinform'), carrierCode: 'CREDINFORM', legalName: 'Credinform International S.A. de Seguros', name: 'Credinform', regulatorIdentifier: 'APS-0009', isPublic: false, planes: [['CRD-INT', 'Plan Integral'], ['CRD-FAM', 'Plan Familiar']] },
+  { id: uuid('carrier-univida'), carrierCode: 'UNIVIDA', legalName: 'Univida S.A.', name: 'Univida', regulatorIdentifier: 'APS-0051', isPublic: false, planes: [['UNI-SALUD', 'Salud Total'], ['UNI-FAM', 'Plan Familiar']] },
   { id: uuid('carrier-cns'), carrierCode: 'CNS', legalName: 'Caja Nacional de Salud', name: 'Caja Nacional de Salud', regulatorIdentifier: 'ASUSS-001', isPublic: true, planes: [['CNS-GEN', 'Seguro social obligatorio']] },
   { id: uuid('carrier-cps'), carrierCode: 'CPS', legalName: 'Caja Petrolera de Salud', name: 'Caja Petrolera de Salud', regulatorIdentifier: 'ASUSS-002', isPublic: true, planes: [['CPS-GEN', 'Seguro social obligatorio']] },
 ];
+
+/** La aseguradora del catálogo a la que apunta el nombre que guarda un paciente. */
+export function aseguradoraPorNombre(nombre: string | undefined) {
+  return nombre === undefined ? undefined : ASEGURADORAS.find((a) => a.name === nombre);
+}
+
+/**
+ * El número de asegurado de un paciente simulado: `AF-` más los dígitos de su
+ * código. Es el mismo que publica su perfil (`coverages[].memberIdentifier`)
+ * y el que figura en las solicitudes, así que lo que se ve en una pantalla se
+ * puede escribir en la otra.
+ */
+export function numeroDeAsegurado(p: { readonly patientCode: string }): string {
+  return `AF-${p.patientCode.slice(4)}`;
+}
+
+/** El plan de la aseguradora que el paciente declara, con el comodín como salida. */
+function planDeclarado(a: (typeof ASEGURADORAS)[number], nombre: string | undefined) {
+  return a.planes.find(([, n]) => n === nombre) ?? a.planes[0]!;
+}
 
 function resumenDeAseguradora(a: (typeof ASEGURADORAS)[number], i: number) {
   return {
@@ -157,6 +184,46 @@ export function registrarSeguros(router: MockRouter): void {
   router.get('/insurance-carrier-catalog', () => ({
     carriers: ASEGURADORAS.map((a) => ({ id: a.id, code: a.carrierCode, name: a.name, legalName: a.legalName, isPublic: a.isPublic, plans: a.planes.map(([code, name]) => ({ id: uuid(`plan-${code}`), code, name })) })),
   }));
+
+  // Búsqueda por número de asegurado (alta de paciente). Va antes que `/:id`
+  // por tener más segmentos literales; el router ya la prefiere igual.
+  //
+  // Contrato declarado acá y **no publicado por la API real**: la pantalla de
+  // registro lo consume y el backend tiene que darlo de alta.
+  router.get('/insurance-carrier-catalog/members/:memberIdentifier', ({ params }) => {
+    const numero = decodeURIComponent(params['memberIdentifier'] ?? '').trim().toUpperCase();
+    const p = PACIENTES.find((x) => x.aseguradora !== undefined && numeroDeAsegurado(x) === numero);
+    const a = aseguradoraPorNombre(p?.aseguradora);
+    if (p === undefined || a === undefined) return notFound('Ninguna aseguradora reconoce ese número de asegurado');
+    const [planCode, planName] = planDeclarado(a, p.plan);
+    return {
+      memberIdentifier: numero,
+      carrierId: a.id,
+      carrierName: a.name,
+      isPublic: a.isPublic,
+      planId: uuid(`plan-${planCode}`),
+      planName,
+      person: {
+        name: p.name,
+        ...(p.middleName === undefined ? {} : { middleName: p.middleName }),
+        lastName: p.lastName,
+        motherLastName: p.motherLastName,
+        nationalId: p.nationalId,
+        birthDate: p.birthDate,
+        sexAtBirth: p.sexAtBirth,
+        phone: p.phone,
+        email: p.email,
+      },
+    };
+  });
+
+  // La ficha pública de una aseguradora del catálogo, para «Mi seguro» del
+  // paciente. `/insurance-carriers/:id` no sirve: acota al tenant activo.
+  // Contrato declarado por el simulador, pendiente en la API real.
+  router.get('/insurance-carrier-catalog/:id', ({ params }) => {
+    const i = ASEGURADORAS.findIndex((a) => a.id === params['id']);
+    return i < 0 ? notFound('Aseguradora no encontrada') : detalleDeAseguradora(ASEGURADORAS[i]!, i);
+  });
 
   router.get('/insurance-carriers', () => ({ items: ASEGURADORAS.map(resumenDeAseguradora), count: ASEGURADORAS.length }));
 

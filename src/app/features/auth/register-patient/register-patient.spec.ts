@@ -2307,4 +2307,167 @@ describe('RegisterPatient', () => {
       expect(Object.keys(EMPLEADOR).length).toBeGreaterThan(3);
     });
   });
+
+  /**
+   * El número de asegurado (opcional): se consulta a la aseguradora y con lo
+   * que responde se precarga el formulario. La regla es la de las direcciones
+   * sembradas —sólo se rellena lo vacío— salvo el plan, que se fija siempre.
+   */
+  describe('número de asegurado', () => {
+    const AFILIADO = {
+      memberIdentifier: 'AF-20000',
+      carrierId: 'carrier-1',
+      carrierName: 'Seguros Andina',
+      isPublic: false,
+      planId: 'plan-integral',
+      planName: 'Plan Integral',
+      person: {
+        name: 'Ana',
+        middleName: 'Lucía',
+        lastName: 'Pérez',
+        motherLastName: 'Quiroga',
+        nationalId: '5000000',
+        birthDate: '1990-06-21',
+        sexAtBirth: 'FEMALE',
+        phone: '+591 62000000',
+        email: 'ana-perez@correo.mock',
+      },
+    };
+
+    it('sin número no consulta: lo dice y no pide nada', () => {
+      component.consultarAsegurado();
+
+      expect(component.consultaDeAsegurado().estado).toBe('vacio');
+      http.expectNone((r) => r.url.includes('/members/'));
+    });
+
+    it('con el número consulta a la aseguradora y precarga lo vacío, plan incluido', () => {
+      component.escribirNumeroDeAsegurado(' af-20000 ');
+      component.consultarAsegurado();
+
+      // Recortado y tal cual se escribió: el servidor decide cómo lo normaliza.
+      http.expectOne('/insurance-carrier-catalog/members/af-20000').flush(AFILIADO);
+
+      const controles = component.formPaciente.controls;
+      expect(controles.name.value).toBe('Ana');
+      expect(controles.middleName.value).toBe('Lucía');
+      expect(controles.lastName.value).toBe('Pérez');
+      expect(controles.motherLastName.value).toBe('Quiroga');
+      expect(controles.nationalId.value).toBe('5000000');
+      expect(controles.email.value).toBe('ana-perez@correo.mock');
+      expect(controles.phone.value).toBe('+591 62000000');
+      expect(controles.sexAtBirth.value).toBe('FEMALE');
+      // Fecha local: `new Date('1990-06-21')` habría caído al 20 en Bolivia.
+      expect(controles.birthDate.value?.getFullYear()).toBe(1990);
+      expect(controles.birthDate.value?.getMonth()).toBe(5);
+      expect(controles.birthDate.value?.getDate()).toBe(21);
+      // El plan va al desplegable del sector que corresponde: privado acá.
+      expect(controles.privateInsurancePlanId.value).toBe('plan-integral');
+      expect(controles.publicInsurancePlanId.value).toBeNull();
+
+      const consulta = component.consultaDeAsegurado();
+      expect(consulta.estado).toBe('encontrado');
+      expect(consulta.estado === 'encontrado' && consulta.cargados).toBe(10);
+    });
+
+    it('no pisa lo que la persona ya escribió, pero el plan sí lo fija', () => {
+      component.formPaciente.patchValue({ name: 'Anita', nationalId: '7777777' });
+      component.escribirNumeroDeAsegurado('AF-20000');
+      component.consultarAsegurado();
+      http.expectOne('/insurance-carrier-catalog/members/AF-20000').flush(AFILIADO);
+
+      const controles = component.formPaciente.controls;
+      expect(controles.name.value).toBe('Anita');
+      expect(controles.nationalId.value).toBe('7777777');
+      expect(controles.lastName.value).toBe('Pérez');
+      expect(controles.privateInsurancePlanId.value).toBe('plan-integral');
+    });
+
+    it('un seguro público va al desplegable público', () => {
+      component.escribirNumeroDeAsegurado('AF-20001');
+      component.consultarAsegurado();
+      http
+        .expectOne('/insurance-carrier-catalog/members/AF-20001')
+        .flush({ ...AFILIADO, isPublic: true, planId: 'plan-cns', planName: 'Seguro social' });
+
+      expect(component.formPaciente.controls.publicInsurancePlanId.value).toBe('plan-cns');
+      expect(component.formPaciente.controls.privateInsurancePlanId.value).toBeNull();
+    });
+
+    it('un 404 es «nadie reconoce ese número», no un error, y el registro sigue', () => {
+      component.escribirNumeroDeAsegurado('AF-99999');
+      component.consultarAsegurado();
+      http
+        .expectOne('/insurance-carrier-catalog/members/AF-99999')
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      expect(component.consultaDeAsegurado().estado).toBe('no-encontrado');
+      expect(component.formPaciente.controls.name.value).toBe('');
+      expect(navegaciones).toEqual([]);
+    });
+
+    it('cualquier otro fallo se distingue: se puede reintentar', () => {
+      component.escribirNumeroDeAsegurado('AF-20000');
+      component.consultarAsegurado();
+      http
+        .expectOne('/insurance-carrier-catalog/members/AF-20000')
+        .flush(null, { status: 503, statusText: 'Service Unavailable' });
+
+      expect(component.consultaDeAsegurado().estado).toBe('fallo');
+    });
+
+    it('cambiar el número borra el resultado anterior: hablaba de otro número', () => {
+      component.escribirNumeroDeAsegurado('AF-20000');
+      component.consultarAsegurado();
+      http.expectOne('/insurance-carrier-catalog/members/AF-20000').flush(AFILIADO);
+      expect(component.consultaDeAsegurado().estado).toBe('encontrado');
+
+      component.escribirNumeroDeAsegurado('AF-2000');
+
+      expect(component.consultaDeAsegurado().estado).toBe('inicial');
+      // Lo precargado se queda: ya es de la persona.
+      expect(component.formPaciente.controls.name.value).toBe('Ana');
+    });
+
+    /**
+     * **El número no viaja con el alta, y es a propósito.**
+     *
+     * Sirve para consultar y precargar, que es lo que se pidió. Mandarlo al
+     * registro sería mandar una propiedad que el DTO del backend no declara, y
+     * `forbidNonWhitelisted` la convierte en un 400 que se lleva puesta el alta
+     * entera: se perdería el registro, no un dato. `IamClient.registerPatient`
+     * lo deja afuera al re-proyectar el cuerpo, y esta prueba lo fija para que
+     * nadie lo agregue sin que el backend lo publique antes.
+     */
+    it('el número NO viaja con el alta: el DTO del backend todavía no lo declara', () => {
+      completar();
+      component.escribirNumeroDeAsegurado(' AF-20000 ');
+      component.formPaciente.controls.privateInsurancePlanId.setValue('plan-integral');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-patient');
+      expect(Object.keys(req.request.body as Record<string, unknown>)).not.toContain(
+        'insuranceMemberIdentifier',
+      );
+      // El plan sí, que es lo que el DTO sí acepta: la cobertura no se pierde.
+      expect(req.request.body.privateInsurancePlanId).toBe('plan-integral');
+      req.flush(RESPUESTA);
+    });
+
+    /**
+     * Lo que la pantalla sí compone, para el día que el backend lo publique:
+     * el número recortado y sólo cuando hay un plan al que atarlo. Se mide
+     * sobre el objeto de dominio, no sobre la red — ver la prueba de arriba.
+     */
+    it('lo compone recortado y sólo con un plan al que atarlo', () => {
+      completar();
+      component.escribirNumeroDeAsegurado(' AF-20000 ');
+
+      const datos = (component as unknown as { datosPaciente(): Record<string, unknown> });
+      expect(datos.datosPaciente()['insuranceMemberIdentifier']).toBeUndefined();
+
+      component.formPaciente.controls.privateInsurancePlanId.setValue('plan-integral');
+      expect(datos.datosPaciente()['insuranceMemberIdentifier']).toBe('AF-20000');
+    });
+  });
 });

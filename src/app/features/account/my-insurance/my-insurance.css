@@ -1,0 +1,229 @@
+/* ============================================================================
+    «Mi seguro»: una tarjeta centrada, a todo el ancho, con pestañas.
+
+    Es la disciplina de toda ficha (composition-rules §5): `inline-size: 100%`
+    y `margin-inline: auto`, sin tope propio —el tope lo pone `.app-main__inner`—.
+    La rejilla de aseguradoras y su tarjeta salen de
+    `shared/styles/rejilla-de-tarjetas.css`; acá sólo se ajusta el mínimo de
+    pista, porque los nombres de las aseguradoras son más largos que los de
+    una especialidad.
+    ========================================================================== */
+:host {
+  display: block;
+}
+
+.seguro {
+  inline-size: 100%;
+  margin-inline: auto;
+  margin-block-start: var(--sp-4);
+}
+
+.seguro__tarjeta {
+  display: block;
+  inline-size: 100%;
+}
+
+/* ---- cabecera de la tarjeta ------------------------------------------------ */
+.seguro__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.seguro__identidad {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.seguro__glifo {
+  flex: none;
+  inline-size: 2rem;
+  block-size: 2rem;
+  color: var(--brand-primary);
+}
+
+.seguro__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.seguro__cobertura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-2);
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+}
+
+.seguro__volver {
+  flex: none;
+  color: var(--brand-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.seguro__volver:hover {
+  text-decoration: underline;
+}
+
+.seguro__tabs {
+  display: block;
+  margin-block-start: var(--sp-4);
+}
+
+.seguro__intro,
+.seguro__hueco {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+}
+
+/* ---- paquetes y planes ------------------------------------------------------ */
+.seguro__paquete {
+  padding-block: var(--sp-4);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.seguro__paquete:last-child {
+  border-block-end: 0;
+}
+
+.seguro__paquete-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.seguro__paquete-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-3);
+}
+
+/* Cada plan es una caja propia dentro del paquete: es lo que se contrata, y
+   el contratado se distingue por el borde y un fondo apenas teñido, además
+   del chip «Tu plan» — el color solo no alcanza para quien no lo ve. */
+.seguro__plan {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.seguro__plan + .seguro__plan {
+  margin-block-start: var(--sp-3);
+}
+
+.seguro__plan--contratado {
+  border-color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 6%, var(--bg-surface));
+}
+
+.seguro__plan-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.seguro__plan-codigo,
+.seguro__red-codigo {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+}
+
+.seguro__plan-vigencia {
+  margin: var(--sp-1) 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* La tabla desborda dentro de su propio marco, nunca la página. */
+.seguro__tabla-marco {
+  inline-size: 100%;
+  overflow-x: auto;
+}
+
+.seguro__coberturas {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+
+.seguro__coberturas th,
+.seguro__coberturas td {
+  padding: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.seguro__coberturas thead th {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.seguro__coberturas tbody th {
+  font-weight: 500;
+  white-space: normal;
+}
+
+.seguro__oculto {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- red de prestadores ----------------------------------------------------- */
+.seguro__redes {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seguro__red {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.seguro__red:last-child {
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.seguro__red-nombre {
+  font-weight: 600;
+}
+
+.seguro__red-miembros {
+  margin-inline-start: auto;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* ---- rejilla de aseguradoras ------------------------------------------------ */
+.seguro__rejilla {
+  --rejilla-min: 16rem;
+
+  margin-block-start: var(--sp-4);
+}

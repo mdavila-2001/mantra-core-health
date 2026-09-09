@@ -217,6 +217,41 @@ export interface CarrierCatalogEntry {
   readonly plans: readonly CarrierCatalogPlan[];
 }
 
+/**
+ * Lo que la aseguradora sabe de un afiliado, buscado por su número de
+ * asegurado (`GET /insurance-carrier-catalog/members/:memberIdentifier`).
+ *
+ * Es lo que el alta de paciente precarga cuando la persona escribe el número
+ * de su carnet: la compañía y el plan, y los datos de la persona tal como la
+ * aseguradora los tiene. Todo lo de la persona es opcional porque cada
+ * aseguradora guarda lo que guarda; el alta rellena lo que llega y deja el
+ * resto para que se escriba.
+ *
+ * **Es un contrato declarado por el simulador, no publicado por la API.** Se
+ * consulta sin sesión, igual que el catálogo, porque ocurre antes de que
+ * exista la cuenta.
+ */
+export interface InsuredMemberLookup {
+  readonly memberIdentifier: string;
+  readonly carrierId: string;
+  readonly carrierName: string;
+  readonly isPublic: boolean;
+  readonly planId: string;
+  readonly planName: string;
+  readonly person: {
+    readonly name?: string;
+    readonly middleName?: string;
+    readonly lastName?: string;
+    readonly motherLastName?: string;
+    readonly nationalId?: string;
+    /** `YYYY-MM-DD`. */
+    readonly birthDate?: string;
+    readonly sexAtBirth?: 'MALE' | 'FEMALE';
+    readonly phone?: string;
+    readonly email?: string;
+  };
+}
+
 /* ---- solicitudes de seguro presentadas (TAREA-16) -------------------------
    Los importes se quedan como **cadena decimal** de punta a punta. No se
    convierten a `number` en la frontera, y no es un descuido: el criterio

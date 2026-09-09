@@ -13,6 +13,7 @@ import type {
   ClaimPage,
   ClaimQuery,
   CarrierCatalogEntry,
+  InsuredMemberLookup,
   BrokerClient,
   BrokerDirectory,
   BrokerPortfolio,
@@ -139,6 +140,46 @@ export class InsuranceClient {
         this.url('/insurance-carrier-catalog'),
       )
       .pipe(map((body) => body.carriers));
+  }
+
+  /**
+   * `GET /insurance-carrier-catalog/:id`. El catálogo comercial de una
+   * aseguradora del catálogo público: productos, planes, coberturas y red.
+   *
+   * Es la lectura de «Mi seguro» del paciente. No sirve
+   * {@link InsuranceClient.getCarrier}: esa ruta acota al tenant activo y desde
+   * el tenant de un paciente responde 404. **Contrato declarado por el
+   * simulador**, pendiente en la API real.
+   *
+   * @param id - La aseguradora del catálogo.
+   * @returns Su ficha completa.
+   */
+  getCarrierCatalogEntry(id: string): Observable<CarrierDetail> {
+    return this.http
+      .get<WireCarrierDetail>(
+        this.url(`/insurance-carrier-catalog/${encodeURIComponent(id)}`),
+      )
+      .pipe(map(toCarrierDetail));
+  }
+
+  /**
+   * `GET /insurance-carrier-catalog/members/:memberIdentifier`. Busca a un
+   * afiliado por su número de asegurado, antes de que tenga cuenta.
+   *
+   * Lo usa el alta de paciente para precargar los datos. Un número que ninguna
+   * aseguradora reconoce responde 404, y el alta lo dice sin frenar el
+   * registro: el campo es opcional. **Contrato declarado por el simulador**,
+   * pendiente en la API real.
+   *
+   * @param memberIdentifier - El número del carnet del asegurado.
+   * @returns La cobertura y los datos de la persona.
+   */
+  lookupInsuredMember(memberIdentifier: string): Observable<InsuredMemberLookup> {
+    return this.http.get<InsuredMemberLookup>(
+      this.url(
+        `/insurance-carrier-catalog/members/${encodeURIComponent(memberIdentifier.trim())}`,
+      ),
+    );
   }
 
   listCarriers(): Observable<CarrierDirectory> {

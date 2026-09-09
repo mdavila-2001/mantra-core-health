@@ -1,0 +1,270 @@
+<app-page-header
+  title="Mi seguro"
+  [subtitle]="
+    vista()?.contratada
+      ? 'Tu aseguradora, con todos sus paquetes de servicio y lo que cubre cada uno.'
+      : 'Elegí una aseguradora para ver su catálogo de servicios.'
+  "
+/>
+
+<app-view-state-host [state]="state()" (retry)="recargar()">
+  @if (vista(); as vista) {
+    <!-- Una sola tarjeta, centrada y a todo el ancho del área de contenido,
+         con pestañas: es la disciplina de toda ficha (composition-rules §5).
+         Dentro cambia el contenido —catálogo o rejilla—, no la tarjeta. -->
+    <div class="seguro" data-testid="mi-seguro">
+      @if (vista.abierta; as aseguradora) {
+        <app-card variant="outlined" padding="lg" class="seguro__tarjeta">
+          <div card-header class="seguro__cabecera">
+            <div class="seguro__identidad">
+              <app-nav-icon
+                class="seguro__glifo"
+                [name]="vista.contratada?.isPublic ? 'hospital' : 'umbrella'"
+              />
+              <div>
+                <h2 class="seguro__titulo" data-testid="mi-seguro-aseguradora">
+                  {{ aseguradora.legalName }}
+                </h2>
+                @if (vista.contratada; as cobertura) {
+                  <p class="seguro__cobertura" data-testid="mi-seguro-cobertura">
+                    Tu plan:
+                    <strong>{{ cobertura.planName ?? 'sin plan declarado' }}</strong>
+                    @if (cobertura.memberIdentifier) {
+                      · N.º de asegurado <strong>{{ cobertura.memberIdentifier }}</strong>
+                    }
+                    <!-- Declarado y verificado se dicen aparte: que la persona
+                         diga tener un seguro no es que la aseguradora lo haya
+                         confirmado. -->
+                    <app-chip [variant]="cobertura.verified ? 'success' : 'warning'" size="sm">
+                      {{ cobertura.verified ? 'Verificado' : 'Sin verificar' }}
+                    </app-chip>
+                  </p>
+                } @else {
+                  <p class="seguro__cobertura" data-testid="mi-seguro-sin-contrato">
+                    No tenés esta aseguradora contratada. Este es su catálogo de servicios.
+                  </p>
+                }
+              </div>
+            </div>
+            @if (abiertaPorRuta()) {
+              <a
+                class="seguro__volver"
+                routerLink="/my-account/insurance"
+                data-testid="mi-seguro-volver"
+              >
+                ← Volver a las aseguradoras
+              </a>
+            }
+          </div>
+
+          <app-tabs
+            class="seguro__tabs"
+            data-testid="mi-seguro-tabs"
+            [selectedIndex]="pestana()"
+            (selectedIndexChange)="pestana.set($event)"
+          >
+            <app-tab
+              [label]="'Paquetes de servicio (' + paquetes() + ')'"
+            >
+              @if (pestana() === 0) {
+                @if (aseguradora.products.length === 0) {
+                  <p class="seguro__hueco">
+                    Esta aseguradora todavía no publicó sus paquetes de servicio.
+                  </p>
+                } @else {
+                  @for (producto of aseguradora.products; track producto.id) {
+                    <section
+                      class="seguro__paquete"
+                      data-testid="mi-seguro-paquete"
+                      [attr.aria-labelledby]="'paquete-' + producto.id"
+                    >
+                      <h3 class="seguro__paquete-titulo" [id]="'paquete-' + producto.id">
+                        {{ producto.name }}
+                      </h3>
+                      <p class="seguro__paquete-meta">
+                        <app-chip variant="neutral" size="sm">{{ producto.productCode }}</app-chip>
+                        <app-chip variant="info" size="sm">{{ producto.productType.display }}</app-chip>
+                        @if (producto.marketSegment) {
+                          <app-chip variant="neutral" size="sm">{{
+                            producto.marketSegment.display
+                          }}</app-chip>
+                        }
+                      </p>
+
+                      @if (producto.plans.length === 0) {
+                        <p class="seguro__hueco">Este paquete todavía no tiene planes vigentes.</p>
+                      } @else {
+                        @for (plan of producto.plans; track plan.id) {
+                          <article
+                            class="seguro__plan"
+                            [class.seguro__plan--contratado]="esPlanContratado(plan)"
+                            data-testid="mi-seguro-plan"
+                            [attr.data-contratado]="esPlanContratado(plan) ? 'si' : null"
+                          >
+                            <h4 class="seguro__plan-titulo">
+                              {{ plan.name }}
+                              <span class="seguro__plan-codigo">{{ plan.planCode }}</span>
+                              @if (esPlanContratado(plan)) {
+                                <app-chip variant="success" size="sm">Tu plan</app-chip>
+                              }
+                              @if (plan.planType) {
+                                <app-chip variant="neutral" size="sm">{{ plan.planType.display }}</app-chip>
+                              }
+                            </h4>
+                            <p class="seguro__plan-vigencia">
+                              @if (plan.effectiveFrom) {
+                                Vigente desde {{ plan.effectiveFrom | date: 'longDate' }}
+                              } @else {
+                                Sin fecha de inicio registrada
+                              }
+                              @if (plan.effectiveTo) {
+                                · hasta {{ plan.effectiveTo | date: 'longDate' }}
+                              }
+                            </p>
+
+                            @if (plan.benefits.length === 0) {
+                              <p class="seguro__hueco">Sin coberturas cargadas.</p>
+                            } @else {
+                              <div class="seguro__tabla-marco">
+                                <table class="seguro__coberturas">
+                                  <caption class="seguro__oculto">Coberturas de {{ plan.name }}</caption>
+                                  <thead>
+                                    <tr>
+                                      <th scope="col">Servicio</th>
+                                      <th scope="col">Cobertura</th>
+                                      <th scope="col">Copago</th>
+                                      <th scope="col">Deducible</th>
+                                      <th scope="col">Tope anual</th>
+                                      <th scope="col">Autorización previa</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    @for (beneficio of plan.benefits; track beneficio.id) {
+                                      <tr>
+                                        <th scope="row">
+                                          {{ beneficio.service?.display ?? beneficio.category.display }}
+                                        </th>
+                                        <!-- Importes tal como llegan: son `numeric`
+                                             en la base y redondearlos cambiaría lo
+                                             que la póliza dice. -->
+                                        <td>
+                                          {{
+                                            beneficio.coveragePercent
+                                              ? beneficio.coveragePercent + '%'
+                                              : '—'
+                                          }}
+                                        </td>
+                                        <td>{{ beneficio.copayAmount ?? '—' }}</td>
+                                        <td>{{ beneficio.deductibleAmount ?? '—' }}</td>
+                                        <td>{{ beneficio.annualLimitAmount ?? '—' }}</td>
+                                        <td>
+                                          @switch (beneficio.requiresPriorAuthorization) {
+                                            @case (true) {
+                                              Sí
+                                            }
+                                            @case (false) {
+                                              No
+                                            }
+                                            @default {
+                                              Sin definir
+                                            }
+                                          }
+                                        </td>
+                                      </tr>
+                                    }
+                                  </tbody>
+                                </table>
+                              </div>
+                            }
+                          </article>
+                        }
+                      }
+                    </section>
+                  }
+                }
+              }
+            </app-tab>
+
+            <app-tab [label]="'Red de prestadores (' + aseguradora.networks.length + ')'">
+              @if (pestana() === 1) {
+                @if (aseguradora.networks.length === 0) {
+                  <p class="seguro__hueco">Todavía no hay redes de prestadores publicadas.</p>
+                } @else {
+                  <ul class="seguro__redes">
+                    @for (red of aseguradora.networks; track red.id) {
+                      <li class="seguro__red">
+                        <span class="seguro__red-nombre">{{ red.name }}</span>
+                        <span class="seguro__red-codigo">{{ red.networkCode }}</span>
+                        @if (red.networkType) {
+                          <app-chip variant="neutral" size="sm">{{ red.networkType.display }}</app-chip>
+                        }
+                        <span class="seguro__red-miembros">
+                          {{ red.memberCount }}
+                          {{ red.memberCount === 1 ? 'prestador' : 'prestadores' }}
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                }
+              }
+            </app-tab>
+
+            <app-tab [label]="'Otras aseguradoras (' + otras().length + ')'">
+              @if (pestana() === 2) {
+                <p class="seguro__intro">
+                  Las demás aseguradoras del catálogo. Cada tarjeta abre su lista de servicios.
+                </p>
+                <ul class="rejilla seguro__rejilla" data-testid="mi-seguro-rejilla">
+                  @for (entrada of otras(); track entrada.id) {
+                    <li>
+                      <a
+                        class="rejilla__tarjeta"
+                        [routerLink]="['/my-account/insurance', entrada.id]"
+                        data-testid="mi-seguro-aseguradora-tarjeta"
+                      >
+                        <app-nav-icon
+                          class="rejilla__icono"
+                          [name]="entrada.isPublic ? 'hospital' : 'umbrella'"
+                        />
+                        <span class="rejilla__nombre">{{ entrada.name }}</span>
+                        <span class="rejilla__resumen">{{ resumenDe(entrada) }}</span>
+                      </a>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-tab>
+          </app-tabs>
+        </app-card>
+      } @else {
+        <!-- Sin seguro declarado: la rejilla de aseguradoras, misma disciplina
+             que la portada de los directorios. La tarjeta entera es el enlace. -->
+        <app-card variant="outlined" padding="lg" class="seguro__tarjeta">
+          <h2 card-header class="seguro__titulo">Todavía no declaraste un seguro</h2>
+          <p class="seguro__intro" data-testid="mi-seguro-sin-seguro">
+            Estas son las aseguradoras del catálogo. Elegí una para ver sus paquetes de servicio,
+            sus planes y lo que cubre cada uno.
+          </p>
+          <ul class="rejilla seguro__rejilla" data-testid="mi-seguro-rejilla">
+            @for (entrada of vista.catalogo; track entrada.id) {
+              <li>
+                <a
+                  class="rejilla__tarjeta"
+                  [routerLink]="['/my-account/insurance', entrada.id]"
+                  data-testid="mi-seguro-aseguradora-tarjeta"
+                >
+                  <app-nav-icon
+                    class="rejilla__icono"
+                    [name]="entrada.isPublic ? 'hospital' : 'umbrella'"
+                  />
+                  <span class="rejilla__nombre">{{ entrada.name }}</span>
+                  <span class="rejilla__resumen">{{ resumenDe(entrada) }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </app-card>
+      }
+    </div>
+  }
+</app-view-state-host>

@@ -72,8 +72,41 @@
 
 .registro__nombre:focus-within .registro__campo-icono,
 app-reference-combobox:focus-within .registro__campo-icono,
-app-location-picker:focus-within .registro__campo-icono {
+app-location-picker:focus-within .registro__campo-icono,
+.registro__asegurado:focus-within .registro__campo-icono {
   color: var(--brand-primary);
+}
+
+/* ==========================================================================
+    El número de asegurado: la casilla y «Consultar» en una misma fila.
+
+    El botón va al lado y no debajo porque es la acción de ESA casilla —le
+    pregunta a la aseguradora por lo que se acaba de escribir— y separarlos
+    lo convierte en un botón más de la página. En pantallas angostas la fila
+    se parte y el botón ocupa su propio renglón, ancho completo.
+    ========================================================================== */
+.registro__asegurado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: flex-start;
+}
+
+.registro__asegurado-numero {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+}
+
+.registro__asegurado-estado {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption, 1.4);
+}
+
+.registro__asegurado-estado--ok {
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 /* ==========================================================================

@@ -166,6 +166,14 @@ describe('NavigationService', () => {
         // dos mitades del mismo circuito y ninguna exige rol — el filtro real
         // es tener perfil de paciente, que la pantalla resuelve.
         '/my-account/diagnostic-orders',
+        // «Mi seguro» (09/09/2026, pedido del cliente): la aseguradora que la
+        // persona contrató, con todos sus paquetes de servicio, y la rejilla de
+        // aseguradoras cuando no contrató ninguna. No exige rol por lo mismo
+        // que sus hermanas —el filtro real es tener perfil de paciente— y lee
+        // el catálogo **público**, no el del tenant: la sección de
+        // administración `administration/insurance` es la otra cara, la de la
+        // aseguradora mirándose a sí misma, y ésa sí exige `SECURITY_ADMIN`.
+        '/my-account/insurance',
         // Los cuestionarios propios tampoco exigen rol: el filtro real es tener
         // perfil de paciente, que es un dato de la cuenta y no un rol.
         '/my-account/questionnaires',

@@ -399,6 +399,82 @@
               </p>
             </ng-template>
 
+            <!-- El número de asegurado (opcional): un texto con «Consultar» al
+                 lado. Con él la aseguradora devuelve la afiliación y la
+                 pantalla precarga nombre, documento, fecha de nacimiento y el
+                 plan; sin él, los dos desplegables de abajo siguen como
+                 siempre. Enter consulta en vez de enviar el formulario: acá
+                 la pregunta es a la aseguradora, no al registro. -->
+            <ng-template appCampoPersonalizado="insuranceMemberIdentifier">
+              <div
+                class="registro__asegurado"
+                (keydown.enter)="$event.preventDefault(); consultarAsegurado()"
+              >
+                <app-input
+                  class="registro__asegurado-numero"
+                  testId="registro-numero-asegurado"
+                  placeholder="AF-20000"
+                  autocomplete="off"
+                  [value]="valorNumeroDeAsegurado()"
+                  [hasError]="consultaDeAsegurado().estado === 'vacio'"
+                  (valueChange)="escribirNumeroDeAsegurado($event)"
+                >
+                  <app-nav-icon slot="icon-start" name="umbrella" class="registro__campo-icono" />
+                </app-input>
+                <button
+                  app-button
+                  variant="outline"
+                  data-testid="registro-consultar-asegurado"
+                  [isLoading]="consultaDeAsegurado().estado === 'buscando'"
+                  (clicked)="consultarAsegurado()"
+                >
+                  Consultar
+                </button>
+              </div>
+              @switch (consultaDeAsegurado().estado) {
+                @case ('vacio') {
+                  <p class="registro__asegurado-estado" role="status" data-testid="registro-asegurado-estado">
+                    Escribí el número de tu carnet antes de consultar.
+                  </p>
+                }
+                @case ('buscando') {
+                  <p class="registro__asegurado-estado" role="status" data-testid="registro-asegurado-estado">
+                    Consultando a tu aseguradora…
+                  </p>
+                }
+                @case ('encontrado') {
+                  @if (afiliadoEncontrado(); as hallazgo) {
+                    <p
+                      class="registro__asegurado-estado registro__asegurado-estado--ok"
+                      role="status"
+                      data-testid="registro-asegurado-estado"
+                    >
+                      Te encontramos en {{ hallazgo.afiliado.carrierName }} ·
+                      {{ hallazgo.afiliado.planName }}.
+                      @if (hallazgo.cargados === 0) {
+                        Tus datos ya estaban completos.
+                      } @else {
+                        Cargamos {{ hallazgo.cargados }}
+                        {{ hallazgo.cargados === 1 ? 'dato' : 'datos' }}; revisalos en las páginas
+                        anteriores.
+                      }
+                    </p>
+                  }
+                }
+                @case ('no-encontrado') {
+                  <p class="registro__asegurado-estado" role="status" data-testid="registro-asegurado-estado">
+                    Ninguna aseguradora reconoce ese número. Podés seguir igual y elegir tu seguro
+                    abajo.
+                  </p>
+                }
+                @case ('fallo') {
+                  <p class="registro__asegurado-estado" role="status" data-testid="registro-asegurado-estado">
+                    No pudimos consultar a la aseguradora. Probá de nuevo o elegí tu seguro abajo.
+                  </p>
+                }
+              }
+            </ng-template>
+
             <ng-template appCampoPersonalizado="privateInsurancePlanId">
               <p class="registro__catalogo-caido">
                 No pudimos traer el catálogo de aseguradoras.

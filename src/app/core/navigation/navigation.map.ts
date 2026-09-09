@@ -1180,6 +1180,29 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
+    // El seguro del paciente (09/09/2026, pedido del cliente): con un seguro
+    // declarado, la pantalla abre **todo el catálogo de esa aseguradora** —sus
+    // paquetes de servicio, planes y coberturas—; sin seguro, la rejilla de
+    // aseguradoras, y cada tarjeta abre el catálogo de la compañía.
+    //
+    // Es la contracara de «Aseguradora» (`administration/insurance`): aquélla
+    // es la aseguradora mirándose a sí misma y exige `SECURITY_ADMIN`; ésta es
+    // el paciente mirando lo que contrató, y lee el catálogo **público**
+    // (`/insurance-carrier-catalog`), que no exige rol. Sin `roles` por lo
+    // mismo que sus hermanas: el filtro real es tener perfil de paciente.
+    path: 'my-account/insurance',
+    // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
+    // «Tu organización» para el paciente (`hiddenFor`, B-14).
+    hiddenFor: ['PRACTITIONER'],
+    label: 'Mi seguro',
+    group: 'Mi cuenta',
+    icon: 'umbrella',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Tu aseguradora y sus paquetes de servicio, o el catálogo de cada una si no tenés seguro.',
+    module: 'M26 insurance',
+  },
+  {
     // Carril 10, lado paciente. Sin `roles` a propósito, por el mismo motivo
     // que «Mis turnos»: el filtro real es tener perfil de paciente, que no es
     // un rol sino un dato de la cuenta —el claim `pid` del token—, y la

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -57,7 +58,10 @@ import type {
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
-import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
+import type {
+  CarrierCatalogEntry,
+  InsuredMemberLookup,
+} from '../../../core/data-access/insurance/insurance.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import {
   RegistroAyuda,
@@ -102,6 +106,25 @@ export interface Coordenadas {
  * estado compartido: son dos juegos de señales distintos, y esto es sólo cómo
  * se los nombra al pasarlos.
  */
+/**
+ * Cómo va la consulta del número de asegurado.
+ *
+ * `encontrado` trae cuántos campos se rellenaron: es lo que se le dice a la
+ * persona, y es distinto de «cero» cuando ya había escrito todo a mano —la
+ * consulta sirvió igual, porque fijó el plan—.
+ */
+type ConsultaDeAsegurado =
+  | { readonly estado: 'inicial' }
+  | { readonly estado: 'vacio' }
+  | { readonly estado: 'buscando' }
+  | {
+      readonly estado: 'encontrado';
+      readonly afiliado: InsuredMemberLookup;
+      readonly cargados: number;
+    }
+  | { readonly estado: 'no-encontrado' }
+  | { readonly estado: 'fallo' };
+
 interface DestinoDeUbicacion {
   readonly punto: WritableSignal<Coordenadas | null>;
   readonly pidiendo: WritableSignal<boolean>;
@@ -595,6 +618,10 @@ export class RegisterPatient {
       // Los seguros declarados: el valor es el **plan**, no la compañía.
       privateInsurancePlanId: new FormControl<string | null>(null),
       publicInsurancePlanId: new FormControl<string | null>(null),
+      // El número de asegurado. Opcional y sin validador: es la llave con la
+      // que se le pregunta a la aseguradora, y quien no lo tiene a mano elige
+      // su plan en los desplegables de abajo como siempre.
+      insuranceMemberIdentifier: new FormControl('', { nonNullable: true }),
       billingTaxId: new FormControl('', {
         nonNullable: true,
         validators: [nitValido],
@@ -1279,8 +1306,12 @@ export class RegisterPatient {
         titulo: 'Tu seguro de salud',
         clave: 'insurance',
         icon: 'umbrella',
-        hint: 'Opcional. Si tenés los dos, podés declararlos.',
-        campos: [this.campoSeguro('privado'), this.campoSeguro('publico')],
+        hint: 'Opcional. Con tu número de asegurado cargamos tus datos; si no, elegí tu plan.',
+        campos: [
+          this.campoNumeroDeAsegurado(),
+          this.campoSeguro('privado'),
+          this.campoSeguro('publico'),
+        ],
       },
       {
         titulo: 'Datos de facturación',
@@ -1833,6 +1864,148 @@ export class RegisterPatient {
     return opciones.sort((a, b) => a.label.localeCompare(b.label, 'es'));
   }
 
+  /* ---- Número de asegurado ---------------------------------------------- */
+
+  /**
+   * El campo del número de asegurado.
+   *
+   * Siempre `custom`: no es un texto que se guarda y ya, es un texto con un
+   * botón al lado —«Consultar»— que le pregunta a la aseguradora y trae los
+   * datos de la persona. El motor no dibuja campos con acción, y por eso el
+   * widget lo proyecta la pantalla.
+   *
+   * @returns El campo, listo para el motor de páginas.
+   */
+  private campoNumeroDeAsegurado(): CampoDeFormulario {
+    return {
+      key: 'insuranceMemberIdentifier',
+      label: 'Número de asegurado (opcional)',
+      hint: 'El número de tu carnet de asegurado. Consultalo y completamos tus datos.',
+      description:
+        'Con el número que te dio tu aseguradora buscamos tu afiliación y cargamos tu nombre, tu documento y tu plan. Si no lo tenés a mano, elegí tu seguro abajo.',
+      control: 'custom',
+    };
+  }
+
+  /** Cómo va la consulta a la aseguradora. Ver {@link ConsultaDeAsegurado}. */
+  readonly consultaDeAsegurado = signal<ConsultaDeAsegurado>({ estado: 'inicial' });
+
+  /**
+   * El hallazgo, sólo cuando lo hay. Es lo que la plantilla lee para nombrar
+   * la aseguradora y el plan: un `@switch` sobre `estado` no le estrecha el
+   * tipo a la unión, y esto sí.
+   */
+  readonly afiliadoEncontrado = computed(() => {
+    const consulta = this.consultaDeAsegurado();
+    return consulta.estado === 'encontrado' ? consulta : null;
+  });
+
+  /** El número escrito, para el campo proyectado. */
+  valorNumeroDeAsegurado(): string {
+    return this.formPaciente.controls.insuranceMemberIdentifier.value;
+  }
+
+  /**
+   * Escribe el número de asegurado desde el campo proyectado.
+   *
+   * Cambiar el número invalida lo consultado: el mensaje «encontramos tu
+   * afiliación» hablaba del número anterior, y dejarlo sería mentir sobre
+   * éste. Lo precargado en los otros campos se queda —es de la persona, ya
+   * puede corregirlo—.
+   *
+   * @param valor - Lo que se escribió.
+   */
+  escribirNumeroDeAsegurado(valor: string | number | null): void {
+    this.formPaciente.controls.insuranceMemberIdentifier.setValue(
+      valor === null ? '' : String(valor),
+    );
+    if (this.consultaDeAsegurado().estado !== 'inicial') {
+      this.consultaDeAsegurado.set({ estado: 'inicial' });
+    }
+  }
+
+  /**
+   * Le pregunta a la aseguradora por el número escrito y precarga lo que sepa.
+   *
+   * Un 404 no es un error de la pantalla: es «ninguna aseguradora reconoce
+   * ese número», y se dice así, sin frenar el registro —el campo es
+   * opcional—. Cualquier otro fallo se distingue para que la persona sepa que
+   * puede reintentar en vez de creer que su número está mal.
+   */
+  consultarAsegurado(): void {
+    const numero = this.valorNumeroDeAsegurado().trim();
+    if (numero === '') {
+      this.consultaDeAsegurado.set({ estado: 'vacio' });
+      return;
+    }
+    this.consultaDeAsegurado.set({ estado: 'buscando' });
+    this.insurance.lookupInsuredMember(numero).subscribe({
+      next: (afiliado) => {
+        const cargados = this.precargarDesdeAseguradora(afiliado);
+        this.consultaDeAsegurado.set({ estado: 'encontrado', afiliado, cargados });
+      },
+      error: (error: unknown) => {
+        const noExiste = error instanceof HttpErrorResponse && error.status === 404;
+        this.consultaDeAsegurado.set({ estado: noExiste ? 'no-encontrado' : 'fallo' });
+      },
+    });
+  }
+
+  /**
+   * Copia al formulario lo que la aseguradora sabe de la persona.
+   *
+   * La regla es la misma que la de las direcciones sembradas: **sólo se
+   * rellena lo vacío**. Lo que la persona ya escribió es suyo y no se pisa,
+   * aunque la aseguradora lo tenga distinto — el documento manda sobre el
+   * carnet, y quien escribió su nombre lo escribió a propósito. El plan es la
+   * excepción: es el único dato que la aseguradora sabe mejor que nadie, y se
+   * fija siempre, en el desplegable del sector que corresponda.
+   *
+   * @param afiliado - Lo que respondió la aseguradora.
+   * @returns Cuántos campos cambiaron, para decírselo a la persona.
+   */
+  private precargarDesdeAseguradora(afiliado: InsuredMemberLookup): number {
+    const controles = this.formPaciente.controls;
+    const persona = afiliado.person;
+    let cargados = 0;
+
+    const texto = (control: FormControl<string>, valor: string | undefined): void => {
+      if (valor === undefined || valor.trim() === '' || control.value.trim() !== '') return;
+      control.setValue(valor.trim());
+      cargados += 1;
+    };
+    texto(controles.name, persona.name);
+    texto(controles.middleName, persona.middleName);
+    texto(controles.lastName, persona.lastName);
+    texto(controles.motherLastName, persona.motherLastName);
+    texto(controles.nationalId, persona.nationalId);
+    texto(controles.email, persona.email);
+    texto(controles.phone, persona.phone);
+
+    if (controles.birthDate.value === null && persona.birthDate !== undefined) {
+      const [anio, mes, dia] = persona.birthDate.split('-').map(Number);
+      if (anio !== undefined && mes !== undefined && dia !== undefined) {
+        // Fecha local y no `new Date('YYYY-MM-DD')`: esa forma se ancla a
+        // medianoche UTC y en Bolivia (UTC-4) retrocede un día.
+        controles.birthDate.setValue(new Date(anio, mes - 1, dia));
+        cargados += 1;
+      }
+    }
+    if (controles.sexAtBirth.value === null && persona.sexAtBirth !== undefined) {
+      controles.sexAtBirth.setValue(persona.sexAtBirth);
+      cargados += 1;
+    }
+
+    const controlPlan = afiliado.isPublic
+      ? controles.publicInsurancePlanId
+      : controles.privateInsurancePlanId;
+    if (controlPlan.value !== afiliado.planId) {
+      controlPlan.setValue(afiliado.planId);
+      cargados += 1;
+    }
+    return cargados;
+  }
+
   /* ---- Ubicación --------------------------------------------------------- */
 
   private readonly documento = inject(DOCUMENT);
@@ -2292,6 +2465,7 @@ export class RegisterPatient {
     const relacionTutor = raw.guardianRelationshipConceptId;
     const seguroPrivado = raw.privateInsurancePlanId;
     const seguroPublico = raw.publicInsurancePlanId;
+    const numeroDeAsegurado = raw.insuranceMemberIdentifier.trim();
     const nit = raw.billingTaxId.trim();
     const razonSocial = raw.billingLegalName.trim();
     const otraOcupacion = this.ocupacionEsOtra() ? raw.occupationFreeText.trim() : '';
@@ -2363,6 +2537,18 @@ export class RegisterPatient {
         : { guardianRelationshipConceptId: relacionTutor }),
       ...(seguroPrivado === null ? {} : { privateInsurancePlanId: seguroPrivado }),
       ...(seguroPublico === null ? {} : { publicInsurancePlanId: seguroPublico }),
+      // El número de asegurado sólo viaja si hay un plan al que atarlo: suelto
+      // no describe ninguna cobertura.
+      //
+      // Hoy no llega a la red igual: `IamClient.registerPatient` re-proyecta el
+      // cuerpo campo por campo y **deja este afuera a propósito**, porque el DTO
+      // del backend todavía no lo declara y `forbidNonWhitelisted` lo
+      // convertiría en un 400 que rompe el alta entera. Se compone acá de todos
+      // modos para que el día que el backend lo publique alcance con listarlo
+      // allá. Ver el comentario de ese método y `core/mock/README.md`.
+      ...(numeroDeAsegurado === '' || (seguroPrivado === null && seguroPublico === null)
+        ? {}
+        : { insuranceMemberIdentifier: numeroDeAsegurado }),
       ...(nit === '' ? {} : { billingTaxId: nit }),
       ...(razonSocial === '' ? {} : { billingLegalName: razonSocial }),
     };

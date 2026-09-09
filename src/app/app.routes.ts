@@ -193,6 +193,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   'my-account/loyalty': () =>
     import('./features/account/loyalty/loyalty').then((m) => m.Loyalty),
+  'my-account/insurance': () =>
+    import('./features/account/my-insurance/my-insurance').then((m) => m.MyInsurance),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
@@ -310,6 +312,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/questionnaires/survey-detail/survey-detail')
         .then((m) => m.SurveyDetailScreen)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El catálogo de una aseguradora que el paciente **no** tiene contratada.
+    // Cuelga de «Mi seguro»: se llega desde la rejilla de aseguradoras, y la
+    // misma pantalla la pinta con «Volver». Sin guard, como su sección: el
+    // catálogo es público y la lectura no exige rol.
+    path: 'my-account/insurance/:carrierId',
+    title: `${APP_TITLE} - Catálogo de la aseguradora`,
+    loadComponent: () =>
+      import('./features/account/my-insurance/my-insurance')
+        .then((m) => m.MyInsurance)
         .catch(() => chunkFallido()),
   },
   {

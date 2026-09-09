@@ -187,6 +187,19 @@ export interface PatientRegistration {
   /** Plan del seguro público declarado (CNS, CPS, SUS…). */
   readonly publicInsurancePlanId?: string;
   /**
+   * Número de asegurado en la aseguradora declarada. Opcional.
+   *
+   * Es el número que la aseguradora le dio a la persona —el que figura en su
+   * carnet— y con él el alta consulta a la aseguradora para precargar los
+   * datos (`GET /insurance-carrier-catalog/members/:memberIdentifier`).
+   * **Hoy no llega a la red.** El DTO del backend no lo declara todavía y
+   * `forbidNonWhitelisted` rechazaría el alta entera, así que
+   * `IamClient.registerPatient` lo deja fuera del cuerpo a propósito. Se
+   * declara acá —y el formulario lo compone— para que el día que el backend lo
+   * publique alcance con listarlo en ese método. Ver `core/mock/README.md`.
+   */
+  readonly insuranceMemberIdentifier?: string;
+  /**
    * NIT para facturación, sólo el número.
    */
   readonly billingTaxId?: string;
