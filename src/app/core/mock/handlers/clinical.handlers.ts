@@ -19,9 +19,10 @@ import {
   type RecetaSimulada,
 } from '../fixtures/clinica';
 import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, pacientePorId } from '../fixtures/personas';
+import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, nuevoId, uuid } from '../mock-store';
+import { emitirNotificacion } from './notifications.handlers';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -34,6 +35,71 @@ function puedeLeer(request: MockRequest, patientProfileId: string): boolean {
   if (user.roles.includes('SUPERADMIN')) return true;
   if (user.patientProfileId === patientProfileId) return true;
   return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN');
+}
+
+/* ---- el aviso de la ficha (proceso 2.6) ---------------------------------- */
+
+/**
+ * Los encuentros cuyo paciente ya recibió el aviso de su ficha.
+ *
+ * **Un aviso por consulta, no uno por campo.** El proceso promete «el aviso de
+ * la recepción de su ficha medica», en singular, y una ficha se escribe de a
+ * pedazos: el diagnóstico, la nota de evolución, un segundo diagnóstico. Sin
+ * esta memoria, media hora de consulta le llegaría al paciente como cuatro
+ * pitidos que dicen lo mismo — que es exactamente lo que un TOUS no debe ser.
+ *
+ * Vive en memoria y muere con la pestaña, como todo el simulador.
+ */
+const fichasAvisadas = new Set<string>();
+
+/**
+ * Deja en la campana del paciente el aviso de que su ficha ya está escrita.
+ *
+ * Es el punto **2.6.1.1** del registro de procesos: «El medico realiza su
+ * Diagnóstico y crea su ficha medica del paciente en la APP quedando guardada y
+ * el paciente recibirá un TOUS donde recibirá el aviso de la recepción de su
+ * ficha medica creada por el médico». El TOUS del glosario es «el push
+ * silencioso que informa sin invadir la pantalla», y eso en la aplicación es la
+ * campana: aparece sin robar el foco y espera a que la persona la mire.
+ *
+ * **Nace al GUARDAR, no al cerrar la consulta.** Es la diferencia que el
+ * informe marcó como incompleta: la ficha y el diagnóstico ya existían, pero al
+ * paciente no le llegaba nada hasta que el médico cerraba el encuentro —que
+ * puede ser horas después, o al día siguiente, o nunca si la consulta queda
+ * abierta esperando estudios (2.6.1.3)—.
+ *
+ * **Sin encuentro no hay aviso.** Un diagnóstico cargado fuera de una consulta
+ * es una corrección del expediente, no «la ficha de tu consulta»: avisarlo con
+ * ese texto sería contar algo que no pasó.
+ */
+function avisarFichaAlPaciente(datos: {
+  readonly patientProfileId: string;
+  readonly encounterId: string | undefined;
+  readonly autorProfileId: string;
+}): void {
+  const encuentro = datos.encounterId ?? '';
+  if (encuentro === '' || fichasAvisadas.has(encuentro)) return;
+
+  const paciente = pacientePorId(datos.patientProfileId);
+  if (paciente === undefined) return;
+
+  fichasAvisadas.add(encuentro);
+
+  // Sin «Dr.» ni «Dra.»: los fixtures no declaran el tratamiento de nadie, y
+  // deducirlo del nombre es equivocarse con la mitad de la gente.
+  const autor = profesionalPorId(datos.autorProfileId)?.displayName ?? 'Tu profesional';
+
+  emitirNotificacion({
+    userId: paciente.userId,
+    category: 'CLINICAL',
+    // El asunto dice qué pasó; el cuerpo, quién y dónde leerlo. Ninguno de los
+    // dos adelanta el diagnóstico: un renglón de la campana es lo que se ve
+    // desde la pantalla bloqueada del teléfono, y ahí no va un dato clínico.
+    subject: 'Tu ficha de la consulta ya está lista',
+    bodyText: `${autor} guardó la ficha de tu consulta con su diagnóstico. Ya podés leerla en tu historia clínica.`,
+    destination: { type: 'ENCOUNTER', id: encuentro },
+    payloadJson: { encounterId: encuentro },
+  });
 }
 
 function sinPaciente<T extends { patientProfileId: string }>(fila: T): Omit<T, 'patientProfileId'> {
@@ -266,6 +332,11 @@ export function registrarClinica(router: MockRouter): void {
       createdAt: ahora(),
     };
     condiciones.agregar(nueva);
+    avisarFichaAlPaciente({
+      patientProfileId: nueva.patientProfileId,
+      encounterId: nueva.encounterId,
+      autorProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
+    });
     return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', verificationStatus: 'PROVISIONAL', clinicalCourse: null, createdAt: nueva.createdAt } };
   });
 
@@ -373,6 +444,14 @@ export function registrarClinica(router: MockRouter): void {
       createdAt: ahora(),
     };
     notas.agregar(nueva);
+    // La nota de evolución es la otra mitad de la ficha: si el médico empezó
+    // por acá y no por el diagnóstico, el aviso sale igual. Y si ya salió por
+    // el diagnóstico, no sale dos veces.
+    avisarFichaAlPaciente({
+      patientProfileId: nueva.patientProfileId,
+      encounterId: nueva.encounterId,
+      autorProfileId: nueva.authorProfileId,
+    });
     return { status: 201, body: { noteId, versionId: nueva.currentVersionId, versionNumber: 1, lifecycleStatusConceptId: nueva.lifecycleStatusConceptId, versionStatusConceptId: ESTADO['ST-DRAFT']! } };
   });
 

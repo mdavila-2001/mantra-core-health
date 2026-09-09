@@ -475,8 +475,15 @@ export class DiagnosisBlock {
           this.registro.set(ready(null));
           this.diagnosticoRecienRegistrado.set(registrado.id);
           this.limpiar();
+          // Se dice que el paciente ya tiene el aviso —y no que «se le acaba de
+          // enviar»— porque el aviso es uno por consulta: si el médico ya
+          // guardó antes la nota de evolución, salió entonces. Como estado es
+          // cierto en los dos casos; como evento, sería mentira en uno.
+          // El proceso 2.6 promete ese aviso, y quien lo dispara tiene que
+          // poder verlo: una promesa que no deja rastro se convierte en el
+          // médico avisando por WhatsApp «por las dudas».
           this.toasts.success(
-            'Quedó en la historia como condición activa.',
+            'Quedó en la historia como condición activa y el paciente ya tiene el aviso.',
             'Diagnóstico registrado',
           );
           this.cambio.emit();
