@@ -662,7 +662,7 @@
   gap: var(--e2);
   padding-inline: var(--e3) var(--e2);
   border-block-end: 1px solid var(--filete-2);
-  background: var(--sup-1);
+  background: var(--sup-tarjeta);
 }
 
 .hilo__fijado-texto {
@@ -707,7 +707,7 @@
 .hilo__fijado-detalle {
   overflow: hidden;
   color: var(--tinta-2);
-  font-size: var(--fs-body-sm);
+  font-size: var(--fs-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -730,7 +730,7 @@
 
 .hilo__fijado-soltar:hover {
   background: var(--sup-inset);
-  color: var(--tinta-1);
+  color: var(--tinta-2);
 }
 
 /* «Se eliminó este mensaje»: gris e itálica, con el círculo tachado. */
@@ -755,5 +755,5 @@
 }
 
 .hilo__menu .is-peligro {
-  color: var(--peligro, #c62828);
+  color: var(--error-tinta);
 }

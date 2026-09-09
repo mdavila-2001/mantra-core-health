@@ -358,7 +358,7 @@
   background: none;
   color: var(--tinta-2);
   font: inherit;
-  font-size: var(--fs-body-sm);
+  font-size: var(--fs-caption);
   text-align: center;
   cursor: pointer;
 }
