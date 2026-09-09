@@ -91,10 +91,12 @@ consume en `pablo/chat-f4-front` (desde `mockup`).
 - **El botón «+» de chat nuevo no existe**: lo reemplaza el buscador de arriba, que ya
   ofrece contactos nuevos mientras escribís. Un botón que abre otra caja de búsqueda al
   lado de una caja de búsqueda es una puerta de más.
-- **Los ✓✓ de la bandeja no se pintan**: el contrato de `GET /conversations` no dice si
-  el otro lado leyó el último mensaje. Se pinta un solo tilde —que sí se sabe— y el
-  doble queda pedido en F4.3. Pintar dos sin saberlo sería mentir sobre lo único que la
-  gente mira antes de volver a escribir.
+- **Los ✓✓ de la bandeja tardaron en llegar, y con razón**: hasta F4.3 el contrato de
+  `GET /conversations` no decía si el otro lado había leído el último mensaje, así que
+  se pintaba un solo tilde —lo único que se sabía—. Pintar dos sin saberlo sería mentir
+  sobre justo lo que la gente mira antes de volver a escribir. Desde F4.3 la fila trae
+  `lastMessageReadByPeer` y el doble tilde se pinta **sólo** cuando ese campo lo afirma;
+  cuando viene en `null` (un grupo, o un último mensaje ajeno) se sigue pintando uno.
 - **El fondo del hilo entra como máscara CSS**, no como imagen: un color fijo en el SVG
   se veía igual en los dos temas. Cuidado al editar ese archivo — dos guiones seguidos
   dentro de un comentario XML lo dejan sin parsear y el navegador no dibuja nada sin
