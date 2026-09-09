@@ -44,11 +44,20 @@ describe('Navegación', () => {
     // y nadie la actualizó (la suite E2E no corre en el CI caído). Y la vitrina
     // (`/design-system`) no está: desde H-07 (#131) el grupo «Herramientas» no
     // se arma para el paciente.
+    //
+    // **Esta lista ya venía desactualizada, y este cambio no la pone al día.**
+    // Le faltan destinos de agosto y septiembre —`/messaging`,
+    // `/directories`, `/nearby-places`, `/my-account/pharmacy-orders`,
+    // `/notification-center`— y le sobran las dos de identidad, que salieron
+    // del menú con `fueraDelMenuPara`. Lo único que se toca acá es lo que el
+    // cambio del 08/09/2026 vuelve falso: los cuatro directorios dejaron de
+    // ocupar renglón y se entran por `/directories`, así que nombrarlos como
+    // entradas del menú sería escribir una mentira nueva sobre una vieja. La
+    // puesta al día completa pide correr la suite contra la API viva, que es
+    // otro trabajo.
     SideNav.rutas().should('deep.equal', [
       '/dashboard',
       '/tutorials',
-      '/directory',
-      '/laboratory-directory',
       '/my-account',
       '/my-account/appointments',
       '/my-account/medical-record',

@@ -17,18 +17,11 @@
       Avisar demora
     </button>
   }
-  <!-- El botón «Mi agenda» ya no está acá: la pantalla vive ahora como una
-       solapa, al lado de Consultas y Cupos. Era la única puerta al horario
-       publicado —y por eso existía—, pero llevaba a otra pantalla para
-       responder una pregunta que se hace mirando la misma. Desde adentro de la
-       solapa se sigue llegando a los bloqueos y a cambiar el horario. -->
-  @if (puedeCrearAgenda()) {
-    <!-- Secundario a propósito: publicar el horario se hace una vez; mirar la
-         agenda es a lo que se entra todos los días. -->
-    <a app-button page-actions variant="secondary" [routerLink]="rutaCrearAgenda">
-      Crear agenda
-    </a>
-  }
+  <!-- Ni «Mi agenda» ni «Crear agenda» viven ya en el encabezado. El primero se
+       volvió solapa, al lado de Consultas y Cupos. El segundo repetía dos
+       puertas que ya existen: quien no publicó horario ve «Publicar mi agenda»
+       en el aviso de abajo, y quien sí lo publicó lo cambia desde el lápiz de
+       la solapa «Mi agenda». Un tercer botón para lo mismo era ruido. -->
   @if (esQuienAtiende()) {
     <!-- §4.H del plan de UX del 22/08/2026 · el camino de vuelta a las visitas.
 

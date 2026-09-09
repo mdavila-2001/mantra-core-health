@@ -546,7 +546,14 @@ export class RegisterPatient {
       }),
       // El departamento emisor es un `select` del motor cuando su catálogo llegó,
       // así que su valor vive donde viven los demás: en el formulario.
-      issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
+      //
+      // Obligatorio, igual que en el alta de profesional: el número y su
+      // expedición son UN documento escrito en dos casillas, y con el número
+      // obligatorio y la expedición no, la cédula queda a medias. Además es lo
+      // que distingue dos documentos con el mismo número.
+      issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
+        validators: [Validators.required],
+      }),
       // Calle y número del domicilio. Las coordenadas van aparte: no se
       // escriben, se confirman sobre el mapa.
       homeAddressLines: new FormControl('', { nonNullable: true }),
@@ -1324,10 +1331,12 @@ export class RegisterPatient {
   private campoDepartamentoEmisor(testId: string): CampoDeFormulario {
     const base = {
       key: 'issuerAdministrativeAreaConceptId',
-      label: 'Departamento de emisión (opcional)',
+      label: 'Departamento de emisión',
+      required: true,
       hint: 'El «SC», «LP»... de tu cédula.',
       description:
         'El departamento que emitió tu cédula: distingue dos documentos con el mismo número.',
+      mensajeDeError: 'Elegí el departamento que expidió tu cédula.',
     } as const;
 
     return this.catalogoDepartamentosCaido()
@@ -1340,7 +1349,7 @@ export class RegisterPatient {
           ...base,
           control: 'select',
           options: this.opcionesDepartamento(),
-          placeholder: 'Sin especificar',
+          placeholder: 'Elegí el departamento',
           testId,
           icono: 'pin',
           // La otra mitad del renglón del documento. Ver la página que lo usa.

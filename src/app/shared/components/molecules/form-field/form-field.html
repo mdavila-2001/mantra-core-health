@@ -13,16 +13,26 @@
     </label>
   }
 
-  <div class="form-field-control">
-    <ng-content />
+  <div class="form-field-body" [class.form-field-body--con-icono]="icon()">
+    <!-- `aria-hidden` desde el átomo: el ícono no es el nombre accesible del
+         control —eso es el label— sino una ayuda de reconocimiento. -->
+    @if (iconoNombre(); as nombre) {
+      <span class="form-field-icon">
+        <app-nav-icon [name]="nombre" />
+      </span>
+    }
+
+    <div class="form-field-control">
+      <ng-content />
 
     <!-- La explicación al apuntar o al enfocar. Sale del flujo —posición
          absoluta— para que aparecer no empuje el formulario hacia abajo, y no
          se saca del DOM al ocultarse: el `aria-describedby` del control apunta
          acá, y un nodo que no existe no describe nada. -->
-    @if (description()) {
-      <p [id]="descriptionId()" class="form-field-description">{{ description() }}</p>
-    }
+      @if (description()) {
+        <p [id]="descriptionId()" class="form-field-description">{{ description() }}</p>
+      }
+    </div>
   </div>
 
   @if (errorMessage()) {

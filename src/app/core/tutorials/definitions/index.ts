@@ -160,18 +160,27 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
   ],
 };
 
-/** Leer una historia clínica y dejar constancia de la atención. */
+/**
+ * Leer una historia clínica.
+ *
+ * Versión 2.0: sube la **mayor** porque el recorrido cambió de verdad —lo que
+ * se escribe se mudó a su propia pantalla y este tutorial perdió sus dos
+ * últimos pasos, que ahora son `atencion-clinica`—. Quien completó la versión
+ * anterior lo vuelve a ver, y corresponde: lo que aprendió ya no es lo que la
+ * pantalla hace.
+ */
 const EXPEDIENTE: TutorialDefinition = {
   id: 'expediente-clinico',
-  version: '1.0',
-  title: 'Leer y registrar en el expediente',
+  version: '2.0',
+  title: 'Leer el expediente',
   description:
-    'Cómo está organizada la historia clínica, dónde miran las alergias y cómo dejar constancia de una atención.',
+    'Cómo está organizada la historia clínica y dónde miran las alergias antes de recetar.',
   category: 'Atención',
   roles: ['PRACTITIONER', 'CLINICIAN'],
-  estimatedMinutes: 5,
+  estimatedMinutes: 3,
   level: 'intermedio',
   prerequisites: ['agenda-del-dia'],
+  next: 'atencion-clinica',
   steps: [
     {
       id: 'alergias',
@@ -194,18 +203,40 @@ const EXPEDIENTE: TutorialDefinition = {
       target: 'expediente-pestanas',
       placement: 'bottom',
     },
+  ],
+};
+
+/**
+ * Dejar constancia de una atención — la pantalla hermana del expediente.
+ *
+ * Sin `route`, y no por olvido: la atención es siempre la de **alguien**, y la
+ * ruta lleva su identificador. Se empieza desde la pantalla, a la que se llega
+ * con el botón «Atender» del expediente o abriendo una consulta de la agenda.
+ */
+const ATENCION_CLINICA: TutorialDefinition = {
+  id: 'atencion-clinica',
+  version: '1.0',
+  title: 'Registrar una atención',
+  description:
+    'Abrir el encuentro, elegir qué le vas a llenar a la persona y cerrar cuando terminás.',
+  category: 'Atención',
+  roles: ['PRACTITIONER', 'CLINICIAN'],
+  estimatedMinutes: 3,
+  level: 'intermedio',
+  prerequisites: ['expediente-clinico'],
+  steps: [
     {
       id: 'encuentro',
       title: 'Dejar constancia',
-      body: 'El encuentro es el registro de que atendiste a esta persona. Se abre al empezar y se cierra al terminar.',
-      target: 'expediente-encuentro',
-      placement: 'left',
+      body: 'El encuentro es el registro de que atendiste a esta persona. Se abre al empezar y se cierra al terminar; todo lo demás cuelga de él.',
+      target: 'atencion-encuentro',
+      placement: 'bottom',
     },
     {
       id: 'receta',
-      title: 'Recetar desde acá',
-      body: 'Con un encuentro abierto podés prescribir, firmar y emitir sin salir del expediente.',
-      target: 'expediente-receta',
+      title: 'Qué le vas a llenar',
+      body: 'Con un encuentro abierto elegís la pestaña: el formulario clínico de tu especialidad, la receta —prescribir, firmar y emitir— o la internación.',
+      target: 'atencion-registro',
       placement: 'top',
     },
   ],
@@ -416,6 +447,7 @@ export const TUTORIALS: readonly TutorialDefinition[] = [
   NAVEGACION,
   AGENDA_DEL_DIA,
   EXPEDIENTE,
+  ATENCION_CLINICA,
   PERFIL_PROFESIONAL,
   CENTRO_DE_AYUDA,
   CONTABILIDAD,

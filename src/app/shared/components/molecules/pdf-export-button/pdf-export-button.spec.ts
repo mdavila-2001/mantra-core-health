@@ -23,6 +23,8 @@ import { PdfExportService } from './pdf-export.service';
       <app-pdf-export-button
         [filename]="nombre()"
         title="Ficha"
+        [subtitle]="bajada()"
+        [kind]="clase()"
         [target]="objetivo()"
       />
     </section>
@@ -31,6 +33,8 @@ import { PdfExportService } from './pdf-export.service';
 class Anfitrion {
   readonly nombre = signal('ficha-quiroz');
   readonly objetivo = signal<HTMLElement | null>(null);
+  readonly bajada = signal('Ana Quiroz · 8 de septiembre de 2026');
+  readonly clase = signal('Ficha de paciente');
 }
 
 /** Doble del servicio: registra qué se le pidió exportar, sin tocar jsPDF. */
@@ -38,12 +42,13 @@ class PdfFalso {
   element: HTMLElement | null = null;
   filename = '';
   title = '';
+  opciones: { title?: string; subtitle?: string; kind?: string } = {};
   fallar = false;
 
   export(
     element: HTMLElement,
     filename: string,
-    options: { title?: string } = {},
+    options: { title?: string; subtitle?: string; kind?: string } = {},
   ): Promise<void> {
     if (this.fallar) {
       return Promise.reject(new Error('sin memoria'));
@@ -51,6 +56,7 @@ class PdfFalso {
     this.element = element;
     this.filename = filename;
     this.title = options.title ?? '';
+    this.opciones = options;
     return Promise.resolve();
   }
 }
@@ -105,6 +111,28 @@ describe('PdfExportButton', () => {
 
     expect(pdf.filename).toBe('ficha-quiroz');
     expect(pdf.title).toBe('Ficha');
+  });
+
+  it('pasa la bajada y la clase de documento al membrete', () => {
+    pulsar();
+
+    expect(pdf.opciones.subtitle).toBe('Ana Quiroz · 8 de septiembre de 2026');
+    expect(pdf.opciones.kind).toBe('Ficha de paciente');
+  });
+
+  /**
+   * Una bajada vacía no es una bajada: el maquetador reserva el lugar en la
+   * hoja para lo que le manden, y una cadena vacía le dejaría un hueco.
+   */
+  it('no manda bajada ni clase cuando la pantalla no las declaró', () => {
+    fixture.componentInstance.bajada.set('');
+    fixture.componentInstance.clase.set('');
+    fixture.detectChanges();
+
+    pulsar();
+
+    expect(pdf.opciones).not.toHaveProperty('subtitle');
+    expect(pdf.opciones).not.toHaveProperty('kind');
   });
 
   /**

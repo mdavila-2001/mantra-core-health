@@ -22,7 +22,12 @@ import { entrar, estable, irA } from './support/sesion';
  * engorda el repositorio sin agregar información.
  */
 
-const SALIDA = join('docs', 'frontend', 'evidence', 'baseline');
+const SALIDA = join(
+  'docs',
+  'frontend',
+  'evidence',
+  process.env['FABLE_ALCANCE'] === 'todo' ? 'matriz' : 'baseline',
+);
 
 const VIEWPORTS = [
   { nombre: '390x844', width: 390, height: 844 },
@@ -66,8 +71,10 @@ test.describe('FABLE · baseline visual', () => {
     test.setTimeout(30 * 60_000);
 
     const mediciones: Medicion[] = [];
-    const { secciones } = catalogoDeRutas();
-    const objetivo = secciones.filter((s) => !s.parametrizada);
+    const cat = catalogoDeRutas();
+    const todas = [...cat.secciones, ...cat.hijas, ...cat.portadas];
+    const soloSecciones = process.env['FABLE_ALCANCE'] !== 'todo';
+    const objetivo = (soloSecciones ? cat.secciones : todas).filter((s) => !s.parametrizada);
 
     const ojo = vigilar(page);
     await entrar(page, CUENTA);
@@ -77,13 +84,18 @@ test.describe('FABLE · baseline visual', () => {
         await page.setViewportSize({ width: vp.width, height: vp.height });
         ojo.limpiar();
 
-        let pinta: boolean;
-        try {
-          await irA(page, seccion.ruta);
-          await estable(page);
-          pinta = await tieneContenido(page);
-        } catch {
-          pinta = false;
+        // Un reintento antes de declarar NO-PINTA: la corrida del 2026-09-08
+        // marco /glossary caido en uno de cinco viewports y pintaba 3 de 3 en
+        // una sonda dirigida. Sin esto la matriz miente hacia el rojo.
+        let pinta = false;
+        for (let intento = 0; intento < 2 && !pinta; intento++) {
+          try {
+            await irA(page, seccion.ruta);
+            await estable(page);
+            pinta = await tieneContenido(page);
+          } catch {
+            pinta = false;
+          }
         }
 
         const urlFinal = new URL(page.url()).pathname;

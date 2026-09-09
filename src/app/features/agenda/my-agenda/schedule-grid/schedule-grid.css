@@ -1,51 +1,279 @@
-/* Una grilla de siete columnas no entra en un teléfono: scrollea dentro de su
-   caja y la página nunca se va de lado. */
-.grilla__scroll {
-  overflow-x: auto;
+/* ============================================================================
+    El horario por horas, dibujado como un calendario semanal.
+
+    Un carril de horas a la izquierda, una columna por día, líneas finas cada
+    hora y las franjas de atención como bloques continuos de alto proporcional
+    a lo que duran — lo que uno reconoce de Google Calendar. Todo el color sale
+    de los tokens semánticos del sistema, que ya saben de modo oscuro.
+    ========================================================================== */
+
+:host {
+  display: block;
+  inline-size: 100%;
 }
 
 .grilla {
-  border-collapse: collapse;
-  min-width: 22rem;
-  width: 100%;
+  inline-size: 100%;
+}
+
+.grilla__semana {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .grilla__caption {
-  text-align: left;
+  margin: var(--sp-1) 0 var(--sp-3);
   font-size: var(--fs-caption);
   color: var(--text-secondary);
-  padding-block-end: var(--sp-2);
 }
 
-.grilla th,
-.grilla td {
+.grilla__vacio {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* Varias columnas no entran en un teléfono: scrollea dentro de su caja y la
+   página nunca se va de lado. */
+.grilla__scroll {
+  overflow-x: auto;
   border: 1px solid var(--border-subtle);
-  padding: 0;
-  height: 1.5rem;
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
 }
 
-.grilla thead th,
+/* Un solo `grid` para cabecera y cuerpo: así las columnas de los días quedan
+   alineadas milimétricamente con sus fechas, sin sincronizar dos tablas. */
+.grilla__tabla {
+  --alto-hora: 3.25rem;
+  --carril: 3.75rem;
+
+  display: grid;
+  grid-template-columns: var(--carril) repeat(var(--dias), minmax(6.5rem, 1fr));
+  min-inline-size: 100%;
+  inline-size: max-content;
+}
+
+/* ---- la cabecera ------------------------------------------------------------ */
+
+.grilla__esquina,
+.grilla__dia {
+  background: var(--bg-surface);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.grilla__dia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-1);
+  border-inline-start: 1px solid var(--border-subtle);
+}
+
+.grilla__dia-nombre {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.grilla__dia-numero {
+  display: grid;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--r-full);
+  font-size: 1.5rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* Hoy: el número en el círculo lleno de la marca, como en cualquier
+   calendario. El `aria-current` de la plantilla lo dice en palabras. */
+.grilla__dia--hoy .grilla__dia-nombre {
+  color: var(--st-primary-fg);
+}
+
+.grilla__dia--hoy .grilla__dia-numero {
+  background: var(--c-petrol-500);
+  color: var(--c-ivory-500);
+}
+
+/* ---- el cuerpo -------------------------------------------------------------- */
+
+/* El carril de las horas. El rótulo va montado sobre la línea, no dentro de la
+   fila: es la convención del calendario y la que evita leer «09:00» como el
+   nombre de la fila de 9 a 10. */
 .grilla__hora {
+  block-size: var(--alto-hora);
+  padding-inline-end: var(--sp-2);
+  text-align: end;
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  transform: translateY(-0.55em);
+}
+
+.grilla__hora:first-child {
+  /* La primera no sube: se comería el borde de la cabecera. */
+  transform: none;
+  padding-block-start: var(--sp-1);
+}
+
+.grilla__columna {
+  position: relative;
+  border-inline-start: 1px solid var(--border-subtle);
+}
+
+.grilla__celda {
+  block-size: var(--alto-hora);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.grilla__columna .grilla__celda:last-of-type {
+  border-block-end: 0;
+}
+
+/* Bajo el bloque, la hora se tiñe apenas: sostiene el «resaltado» del pedido
+   cuando la franja arranca a mitad de fila y deja media celda descubierta. */
+.grilla__celda--atiende {
+  background: var(--st-success-bg);
+}
+
+/* Hoy, una columna un tono más clara que el resto — se ve, no grita. */
+.grilla__columna--hoy {
+  background: color-mix(in srgb, var(--st-primary-bg) 45%, transparent);
+}
+
+/* ---- la franja de atención ----------------------------------------------- */
+
+.grilla__bloque {
+  position: absolute;
+  inset-inline: 3px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-1) var(--sp-2);
+  overflow: hidden;
+  border-radius: var(--r-md);
+  border-inline-start: 3px solid var(--st-primary-bd);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  z-index: 1;
+  cursor: default;
+  transition: box-shadow 120ms ease;
+}
+
+.grilla__bloque:hover,
+.grilla__bloque:focus-visible {
+  box-shadow: var(--shadow-md);
+  z-index: 3;
+}
+
+.grilla__bloque:focus-visible {
+  outline: 2px solid var(--st-primary-bd);
+  outline-offset: 1px;
+}
+
+.grilla__bloque-horas {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.grilla__bloque-detalle {
+  font-size: 12px;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+/* La línea de «ahora», la raya roja que recorre el día en Google Calendar. Se
+   calcula al dibujar, sin reloj. */
+.grilla__ahora {
+  position: absolute;
+  inset-inline: 0;
+  block-size: 2px;
+  background: var(--st-error-fg);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.grilla__ahora::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: -5px;
+  top: -4px;
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: var(--r-full);
+  background: var(--st-error-fg);
+}
+
+/* ---- el globo de detalle -------------------------------------------------- */
+
+/* Fijo a la ventana desde el rectángulo del bloque, como el tooltip del
+   sistema: la grilla scrollea de costado y un globo absoluto adentro quedaría
+   recortado. `pointer-events: none` para que el mouse no lo «entre» y cierre
+   el bloque de abajo. */
+.grilla__globo {
+  position: fixed;
+  z-index: 50;
+  inline-size: 17.5rem;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  /* La tarjeta que lo contiene centra todo; una ficha de datos se lee alineada. */
+  text-align: start;
+}
+
+.grilla__globo-titulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.grilla__globo-nombre {
+  margin: 0;
   font-size: var(--fs-caption);
   color: var(--text-secondary);
+}
+
+.grilla__globo-datos {
+  display: grid;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 0;
+}
+
+.grilla__globo-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--fs-caption);
+}
+
+.grilla__globo-fila dt {
+  color: var(--text-secondary);
+}
+
+.grilla__globo-fila dd {
+  margin: 0;
   font-weight: 600;
-  padding: 2px var(--sp-2);
-  white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  text-align: end;
 }
 
-.grilla__hora {
-  text-align: right;
-}
-
-.grilla__celda--atiende {
-  background: var(--st-success-bg, var(--c-mint-100, var(--c-mint-200)));
-}
-
-.grilla__oculto {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
+.grilla__globo-vigencia {
+  margin: var(--sp-2) 0 0;
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--border-subtle);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
 }

@@ -147,6 +147,20 @@ export class ShellLayout {
    * prefijo de la URL. La hija gana a su padre cuando existe, y el padre sigue
    * ganando cuando la página no está en el menú. Es la misma regla que traía el
    * organismo `app-side-nav`, y se porta con ella.
+   *
+   * ## Las rutas que un renglón representa
+   *
+   * Un renglón se marca además por las rutas que declara `representa`
+   * (`representaEnElMenu` en el registro): pantallas que se entran por él y no
+   * tienen renglón propio. Nació con «Directorios» (08/09/2026), cuando los
+   * cuatro directorios pasaron a abrirse desde su portada — sin esto, estar
+   * dentro de uno dejaba la barra entera apagada.
+   *
+   * **Compiten con la ruta propia, no la pisan**: se mide el largo de la ruta
+   * que emparejó, así que una entrada con renglón propio le sigue ganando a la
+   * portada que la representa. Hoy no puede pasar —lo representado es
+   * justamente lo que no está en el menú— y así sigue siendo cierto si mañana
+   * una de las cuatro recupera su renglón.
    */
   protected readonly rutaActiva = computed<string | null>(() => {
     const url = this.urlActual();
@@ -154,16 +168,32 @@ export class ShellLayout {
       return null;
     }
 
+    // Lo que cada renglón representa se lee del menú del registro y no de
+    // `sections()`: ese devuelve el contrato del organismo (`NavItem`), que a
+    // propósito no sabe de rutas representadas — dibuja lo que recibe. La
+    // vitrina del sistema de diseño, que `sections()` agrega por su cuenta, no
+    // representa nada y entra igual por su ruta.
+    const representadas = new Map<string, readonly string[]>(
+      [...this.destinosFijos(), ...this.navigation.menu().flatMap((seccion) => seccion.items)]
+        .filter((item) => item.representa !== undefined)
+        .map((item) => [item.route, item.representa ?? []] as const),
+    );
+
     // Los fijos entran en la cuenta: se dibujan fuera de los grupos, pero son
     // destinos del menú igual que el resto, y sin esto «Mi perfil» era la única
     // entrada de la barra que nunca se marcaba al estar parado en ella.
-    return [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
-      .map((item) => item.route)
-      .filter((ruta) => contiene(ruta, url))
-      .reduce<string | null>(
-        (mejor, ruta) => (mejor === null || ruta.length > mejor.length ? ruta : mejor),
-        null,
-      );
+    return (
+      [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
+        .flatMap((item) =>
+          [item.route, ...(representadas.get(item.route) ?? [])]
+            .filter((ruta) => contiene(ruta, url))
+            .map((ruta) => ({ renglon: item.route, largo: ruta.length })),
+        )
+        .reduce<{ renglon: string; largo: number } | null>(
+          (mejor, actual) => (mejor === null || actual.largo > mejor.largo ? actual : mejor),
+          null,
+        )?.renglon ?? null
+    );
   });
 
   private rutaLimpia(): string {

@@ -1,7 +1,13 @@
 <app-page-header
   title="Evoluciones"
   subtitle="A quién atendiste últimamente y dónde seguir escribiendo su evolución."
-/>
+>
+  @if (sePuedeExportar()) {
+    <button page-actions app-button variant="outline" size="sm" (clicked)="exportar()">
+      Exportar a PDF
+    </button>
+  }
+</app-page-header>
 
 <!-- Se dice de frente lo que esta pantalla todavía no puede hacer, en vez de
      dejar que alguien deduzca que sus notas «se perdieron». Ver el JSDoc del

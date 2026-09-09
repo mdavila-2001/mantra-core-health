@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { forkJoin, map, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -23,10 +23,7 @@ import type {
   PatientChart as ExpedienteDePaciente,
 } from '../../../core/data-access/clinical/clinical.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
-import type {
-  OwnPractitionerProfile,
-  PractitionerLicense,
-} from '../../../core/data-access/profiles/profiles.types';
+import type { OwnPractitionerProfile } from '../../../core/data-access/profiles/profiles.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -35,45 +32,29 @@ import { dataOf, empty, loading, notFound, ready } from '../../../core/view-stat
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../shared/components/molecules/concept-select/concept-select';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
-import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import {
-  downloadPrescriptionPdf,
-  downloadVisitPdf,
-} from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import { downloadVisitPdf } from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/firma-de-la-sesion';
 import {
   atencionDesdeResumen,
-  recetaDesdeResumen,
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import { AttachmentUploader } from '../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
-import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
+import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import {
-  CITA_QUERY_PARAM,
-  CLINICAL_RECORD_ROUTE,
-  MOTIVO_QUERY_PARAM,
-} from '../clinical-record.routes';
-import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
+import { CLINICAL_RECORD_ROUTE, encounterWorkspaceRoute } from '../clinical-record.routes';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
-import {
-  MedicationBlock,
-  type DiagnosticoEnFicha,
-  type RecetaEnFicha,
-} from './medication-block/medication-block';
-import { SpecialtyFormBlock } from './specialty-form-block/specialty-form-block';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -112,17 +93,6 @@ const ETIQUETAS_DE_ESTADO_CLINICO: Readonly<Record<string, string>> = {
   COND_REMISSION: 'En remisión',
   COND_RESOLVED: 'Resuelta',
 };
-
-/** Largo máximo del motivo de consulta. El backend no lo acota; la legibilidad sí. */
-const TOPE_DEL_MOTIVO = 500;
-
-/** Un encuentro abierto, listo para ofrecer su cierre. */
-export interface EncuentroEnCurso {
-  readonly id: string;
-  readonly clase: string;
-  readonly motivo: string;
-  readonly desde: Date | null;
-}
 
 /** Una fila de cualquiera de las tablas del expediente, ya sin uuid. */
 export interface FilaClinica {
@@ -168,35 +138,33 @@ interface Expediente {
  * faltan notas sin avisar es un expediente que miente, y en clínica esa mentira
  * se lee como «no hay antecedentes».
  *
- * ## Lo que se escribe acá: el encuentro, la receta y el diagnóstico
+ * ## Es de lectura: lo que se escribe vive en «Atención»
  *
- * La pantalla era de consulta pura. Abre y cierra **encuentros**
- * (`POST /clinical/encounters/check-in` y `.../{id}/close`) y, desde el
- * encuentro abierto, **receta** (`app-medication-block`) y **registra el
- * diagnóstico** (`app-diagnosis-block`). El criterio para admitir una
- * escritura no cambió y no es de alcance sino de honestidad: se ofrece la que
- * esta misma pantalla **vuelve a leer**. Encuentros, medicación y condiciones
- * salen los tres de `GET /clinical/patients/:id/summary`, así que lo que se
- * registra aparece; firmar una nota tiene endpoint pero no lectura, y sería un
- * formulario que traga el dato.
+ * Hasta acá la pantalla hacía las dos cosas —la tarjeta del encuentro pegada al
+ * costado de las tablas y, debajo, los bloques de registro—, y se estorbaban:
+ * la historia cedía una columna de 24rem a un formulario de una sola pregunta,
+ * y quien venía a consultar un antecedente se llevaba encima un odontograma que
+ * no iba a tocar. Todo eso se mudó a `EncounterWorkspace`, a un botón de
+ * distancia en la cabecera.
  *
- * Juntas cierran el recorrido de quien atiende: llega desde su agenda con el
- * turno, abre el expediente, deja constancia de que la persona fue atendida y
- * le indica el tratamiento sin salir de la ficha.
+ * Queda una sola escritura, y no por olvido: **el estado clínico de un
+ * diagnóstico** (patch v4.0.8) se cambia desde su propia fila, porque es una
+ * corrección de lo que la tabla está mostrando y no un registro de la consulta
+ * de hoy. Y con ella el adjunto de esa condición (ALV-033), por lo mismo.
  *
- * ## Por qué no hay un `appointmentId` en el encuentro
+ * ## Las dos descargas
  *
- * El contrato del check-in lo admite, pero apunta a `clinical.appointments` y
- * `GET /scheduling/bookings` no expone ninguna. Lo que sí viaja desde la agenda
- * es el **motivo** de la cita, como parámetro, para precargar el del encuentro.
- * El vínculo por identificador queda anotado como P11 en `PENDIENTES-BACKEND.md`.
+ * El expediente entero en PDF —el botón de la cabecera— y la historia clínica
+ * **de una atención**, desde la fila de su encuentro. Las dos se arman de
+ * `datos()`, que es lo mismo que se está mostrando: no se vuelve a pedir nada
+ * ni se lee la pantalla.
  */
 @Component({
   selector: 'app-patient-chart',
   imports: [
-    AdmissionBlock,
     Alert,
     AppButton,
+    AppButtonLink,
     AttachmentUploader,
     Badge,
     Card,
@@ -204,15 +172,11 @@ interface Expediente {
     DataTable,
     DatePipe,
     PdfExportButton,
-    FormActions,
-    FormField,
-    MedicationBlock,
     PageHeader,
-    SpecialtyFormBlock,
-    StatusSeal,
+    RouterLink,
     Tab,
     Tabs,
-    Textarea,
+    TutorialTarget,
     ViewStateHost,
   ],
   templateUrl: './patient-chart.html',
@@ -270,33 +234,6 @@ export class PatientChart {
   /** El mismo perfil, para los bloques hijos que escriben contra él. */
   protected readonly pacienteDeLaFicha = this.profileId;
 
-  /**
-   * El motivo de la cita desde la que se llegó, si se llegó desde una.
-   *
-   * Lo pone la agenda en `?motivo=`. Es una **semilla**, no un enlace: una vez
-   * sembrado, el campo es de quien escribe, y volver a leer el parámetro en cada
-   * cambio pisaría lo que acaba de teclear.
-   */
-  private readonly motivoDeLaCita = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get(MOTIVO_QUERY_PARAM) ?? '')),
-    { initialValue: '' },
-  );
-
-  /**
-   * La cita clínica del turno desde el que se llegó, si lo trae.
-   *
-   * A diferencia del motivo **no es una semilla editable**: es un identificador
-   * que ata el encuentro a su turno, y no hay nada que quien atiende pueda
-   * corregir a mano. Se lee de la URL en el momento de registrar.
-   *
-   * Su ausencia es corriente —una reserva sin cita clínica detrás, o una entrada
-   * al expediente que no vino de la agenda— y el encuentro se abre igual.
-   */
-  protected readonly citaDeOrigen = toSignal(
-    this.route.queryParamMap.pipe(map((params) => params.get(CITA_QUERY_PARAM))),
-    { initialValue: null },
-  );
-
   protected readonly expediente = signal<ViewState<Expediente>>(loading());
 
   /** Nombre del paciente si se pudo leer; vacío si el padrón está prohibido. */
@@ -324,6 +261,15 @@ export class PatientChart {
       ? 'Historia clínica y expediente de la persona atendida.'
       : 'Historia clínica y expediente.',
   );
+
+  /**
+   * Donde se registra la consulta de esta misma persona.
+   *
+   * El expediente no escribe, pero es de donde se sale a escribir: quien llega
+   * a leer un antecedente y decide atender no debería tener que volver al menú
+   * y elegir a la persona de nuevo.
+   */
+  protected readonly rutaDeLaAtencion = computed(() => encounterWorkspaceRoute(this.profileId()));
 
   /**
    * La ruta de navegación, con el paciente como último escalón.
@@ -354,21 +300,6 @@ export class PatientChart {
       estado: this.label(fila.clinicalStatusConceptId),
       cuando: fila.onsetAt ?? fila.createdAt,
       detalle: fila.resolvedAt === undefined ? '' : 'Resuelto',
-    })),
-  );
-
-  /**
-   * Los diagnósticos como opciones para «¿para qué es esta receta?» (v4.1.6).
-   *
-   * Se ofrecen **todos**, no sólo los activos: renovar el tratamiento de una
-   * condición ya resuelta es un acto clínico legítimo, y esconderla obligaría a
-   * dejar la receta sin indicación. Lo que sí lleva la etiqueta es el estado,
-   * para que elegir una resuelta sea una decisión y no un descuido.
-   */
-  protected readonly diagnosticosParaReceta = computed<readonly DiagnosticoEnFicha[]>(() =>
-    this.diagnosticos().map((dx) => ({
-      id: dx.id,
-      etiqueta: dx.detalle === '' ? dx.principal : `${dx.principal} · ${dx.detalle}`,
     })),
   );
 
@@ -537,45 +468,6 @@ export class PatientChart {
 
   protected readonly tope = TOPE;
 
-  /* -- El encuentro: la única escritura de la pantalla --------------------- */
-
-  protected readonly topeDelMotivo = TOPE_DEL_MOTIVO;
-
-  /**
-   * La organización bajo la que se registra el encuentro.
-   *
-   * `tenantId` es obligatorio en el check-in, y no hay forma de deducirlo del
-   * paciente: una persona puede estar atendida en más de una. Es el custodio del
-   * registro, así que sale de la sesión activa, que es donde el usuario ya lo
-   * eligió.
-   */
-  protected readonly organizacion = this.auth.activeTenantId;
-
-  protected readonly sinOrganizacion = computed(() => this.organizacion() === null);
-
-  /**
-   * El motivo de consulta del encuentro a abrir.
-   *
-   * Se precarga con el `?motivo=` que trae la agenda —el de la cita— y desde ahí
-   * es de quien escribe: el efecto que lo siembra corre al entrar y al cambiar
-   * de persona, no en cada tecleo.
-   */
-  protected readonly motivo = signal('');
-
-  /**
-   * El resultado de la última escritura, para el aviso de la pantalla.
-   *
-   * Uno solo para las dos operaciones y no uno por cada una: sólo puede haber
-   * una en vuelo, y dos avisos simultáneos pidiendo atención sobre el mismo
-   * bloque compiten entre sí.
-   */
-  protected readonly registro = signal<ViewState<null>>(ready(null));
-
-  protected readonly registrando = signal(false);
-
-  /** El encuentro en curso que se está cerrando, o `null`. */
-  protected readonly cerrando = signal<string | null>(null);
-
   /* -- Patch v4.0.8: cambiar el estado clínico de un diagnóstico ----------- */
 
   protected readonly targetEstadoClinico = TARGET_ESTADO_CLINICO;
@@ -622,136 +514,6 @@ export class PatientChart {
   protected cerrarAdjuntos(): void {
     this.adjuntandoArchivoA.set(null);
   }
-
-  /**
-   * El fallo de la escritura, en palabras.
-   *
-   * El `PRECONDITION_FAILED` se distingue dentro de S4 porque acá tiene un
-   * significado concreto: el encuentro dejó de estar en curso —lo cerró otra
-   * sesión, o esta pantalla está mirando datos viejos— y la salida es recargar,
-   * no reintentar. `errorToViewState` lo trae como una validación con su código,
-   * que es lo que permite reconocerlo sin mirar el mensaje.
-   */
-  protected readonly errorDelRegistro = computed<string | null>(() => {
-    const state = this.registro();
-    if (state.status === 'validation') {
-      if (state.issues.some((issue) => issue.code === 'PRECONDITION_FAILED')) {
-        return 'Ese encuentro ya no está en curso: alguien lo cerró antes. Recargá el expediente.';
-      }
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite registrar encuentros.';
-    }
-    if (state.status === 'not-found') {
-      return 'El encuentro ya no existe. Recargá el expediente.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
-
-  /**
-   * Los encuentros abiertos de esta persona.
-   *
-   * «Abierto» se deriva de `endAt` y no del estado: el estado es un uuid de
-   * concepto, y ramificar por su valor ataría la pantalla a un identificador de
-   * catálogo. El contrato ya declara `endAt` como el dato que dice si el
-   * encuentro terminó, y es el mismo que la tabla usa para escribir «En curso».
-   */
-  protected readonly encuentrosEnCurso = computed<readonly EncuentroEnCurso[]>(() =>
-    (this.datos()?.resumen.encounters ?? [])
-      .filter((encuentro) => encuentro.endAt === undefined)
-      .map((encuentro) => ({
-        id: encuentro.id,
-        clase: this.label(encuentro.classConceptId),
-        motivo: encuentro.reasonText ?? 'Sin motivo registrado',
-        desde: encuentro.startAt ?? null,
-      })),
-  );
-
-  /**
-   * Si la pantalla puede ofrecer el registro.
-   *
-   * Con el expediente todavía cargando —o caído— no: abrir un encuentro contra
-   * una persona cuyo expediente no se pudo leer es escribir a ciegas.
-   */
-  protected readonly puedeRegistrar = computed(
-    () => this.datos() !== null && !this.sinOrganizacion(),
-  );
-
-  /* -- La receta, que se escribe desde el encuentro ------------------------ */
-
-  /**
-   * El encuentro sobre el que se receta, o `null`.
-   *
-   * El primero de los abiertos, y no una elección: tener dos encuentros en
-   * curso para la misma persona ya es una anomalía que el bloque de arriba
-   * muestra. Pedir que se elija uno convertiría ese caso raro en una pregunta
-   * para todos.
-   */
-  protected readonly encuentroParaRecetar = computed<string | null>(
-    () => this.encuentrosEnCurso()[0]?.id ?? null,
-  );
-
-  /**
-   * Las recetas del expediente, con su ciclo resuelto.
-   *
-   * «Firmada» y «emitida» salen de `signedAt` e `issuedAt`, no del estado: el
-   * estado es un uuid de concepto, y ramificar por su valor ataría la pantalla
-   * a un identificador de catálogo. Es el mismo criterio con el que el bloque
-   * de encuentros deriva «en curso» de `endAt`.
-   */
-  /* -- La internación, que se abre desde el encuentro --------------------- */
-
-  /**
-   * Las internaciones de esta persona, con su «sigue abierta» ya resuelto.
-   *
-   * «Abierta» se deriva de `endAt` y no del estado, por lo mismo que en los
-   * encuentros: el estado es un uuid de concepto y ramificar por su valor ataría
-   * la pantalla a un identificador de catálogo.
-   *
-   * Salen de `GET /clinical/patients/:id/summary`, que empezó a devolverlas con
-   * este carril: antes el expediente sólo veía el `episodeId` colgado de un
-   * encuentro, y un uuid sin fila detrás no dice ni cuándo empezó ni si sigue.
-   */
-  protected readonly internaciones = computed<readonly InternacionEnFicha[]>(() =>
-    (this.datos()?.resumen.careEpisodes ?? []).map((episodio) => ({
-      id: episodio.id,
-      abierta: episodio.endAt === undefined,
-      desde: episodio.startAt ?? null,
-      hasta: episodio.endAt ?? null,
-    })),
-  );
-
-  protected readonly recetas = computed<readonly RecetaEnFicha[]>(() =>
-    (this.datos()?.resumen.medicationRequests ?? []).map((receta) => ({
-      id: receta.id,
-      medicamento: this.label(receta.medicationConceptId),
-      indicacion: [receta.doseText, receta.frequencyText].filter(Boolean).join(' · '),
-      estado: this.label(receta.statusConceptId),
-      firmada: receta.signedAt !== undefined,
-      emitida: receta.issuedAt !== undefined,
-    })),
-  );
-
-  /**
-   * Los `medicationConceptId` de la medicación ya registrada, sin traducir —
-   * lo que {@link MedicationBlock} necesita para chequear interacciones antes
-   * de prescribir una más. Se incluye toda la registrada y no sólo la
-   * vigente: el contrato de `getSummary` no distingue «activa» de «pasada»
-   * por un campo propio, y advertir de más sobre algo que ya no se toma es un
-   * error mucho más chico que no advertir sobre algo que sí.
-   */
-  protected readonly medicacionActivaConceptIds = computed<readonly string[]>(() =>
-    Array.from(
-      new Set((this.datos()?.resumen.medicationRequests ?? []).map((r) => r.medicationConceptId)),
-    ),
-  );
 
   /**
    * Las columnas de un bloque concreto.
@@ -828,15 +590,6 @@ export class PatientChart {
       untracked(() => this.cargar());
     });
 
-    // El motivo que trae la agenda se siembra al entrar y al cambiar de
-    // persona. Depende del perfil a propósito: el motivo de la cita de alguien
-    // no debe sobrevivir a la navegación hacia el expediente de otro.
-    effect(() => {
-      this.profileId();
-      const dePar = this.motivoDeLaCita();
-      untracked(() => this.motivo.set(dePar));
-    });
-
     // Quién firma se resuelve una sola vez, cuando la sesión dice que hay
     // perfil profesional. Depende de la sesión y **no** del expediente: la
     // matrícula de quien atiende no cambia porque se abra la ficha de otra
@@ -871,100 +624,6 @@ export class PatientChart {
 
   protected recargar(): void {
     this.cargar();
-  }
-
-  /* -- Escritura ----------------------------------------------------------- */
-
-  /**
-   * Abre el encuentro (UC-08-02).
-   *
-   * Sin confirmación previa: abrir un encuentro no es destructivo ni
-   * irreversible —queda en curso y se cierra desde acá mismo—, y el M34 reserva
-   * el diálogo para lo que no se puede deshacer. Lo que sí hace falta es
-   * releer: el encuentro recién abierto tiene que aparecer en su bloque, o la
-   * pantalla estaría afirmando un registro que no muestra.
-   */
-  protected registrarEncuentro(): void {
-    const patientProfileId = this.profileId();
-    const tenantId = this.organizacion();
-    if (patientProfileId === '' || tenantId === null || this.registrando()) {
-      return;
-    }
-
-    const motivo = this.motivo().trim();
-    const cita = this.citaDeOrigen();
-    const profesional = this.auth.practitionerProfileId();
-    this.registrando.set(true);
-    this.registro.set(loading());
-
-    this.clinical
-      .checkInEncounter({
-        patientProfileId,
-        tenantId,
-        // El motivo es opcional en el contrato: una cadena vacía sería un motivo
-        // registrado que no dice nada, y se lee peor que su ausencia.
-        ...(motivo === '' ? {} : { reasonText: motivo }),
-        // El turno que originó la atención, cuando se llegó desde la agenda y la
-        // reserva tenía cita clínica detrás. Es una clave foránea real: si no
-        // viene, se omite en vez de mandar algo parecido.
-        ...(cita === null || cita === '' ? {} : { appointmentId: cita }),
-        // Quién atiende, del claim de la sesión. Un encuentro sin profesional es
-        // una marca de tiempo sin autor: mientras el dato no existía había que
-        // omitirlo, ahora no.
-        ...(profesional === null ? {} : { primaryPractitionerId: profesional }),
-      })
-      .subscribe({
-        next: () => {
-          this.registrando.set(false);
-          this.registro.set(ready(null));
-          this.motivo.set('');
-          this.toasts.success('Queda en curso hasta que lo cierres.', 'Encuentro abierto');
-          this.cargar();
-        },
-        error: (error: unknown) => {
-          this.registrando.set(false);
-          this.registro.set(errorToViewState<null>(error));
-        },
-      });
-  }
-
-  /**
-   * Cierra un encuentro en curso (UC-08-14).
-   *
-   * Con confirmación, y no por prudencia genérica: el backend responde `422` a
-   * un encuentro que ya no está en curso, así que cerrar es un paso sin vuelta
-   * desde la interfaz. Además dispara la facturación del lado del servidor.
-   */
-  protected async cerrarEncuentro(encuentro: EncuentroEnCurso): Promise<void> {
-    if (this.cerrando() !== null) {
-      return;
-    }
-
-    const confirmado = await this.dialogs.confirm({
-      title: '¿Cerrar el encuentro?',
-      message: `Se cierra «${encuentro.motivo}» y sus participantes y ubicaciones activos. Un encuentro cerrado no se puede volver a abrir.`,
-      confirmLabel: 'Cerrar encuentro',
-      destructive: true,
-    });
-    if (!confirmado) {
-      return;
-    }
-
-    this.cerrando.set(encuentro.id);
-    this.registro.set(loading());
-
-    this.clinical.closeEncounter(encuentro.id).subscribe({
-      next: () => {
-        this.cerrando.set(null);
-        this.registro.set(ready(null));
-        this.toasts.success('Queda registrado con su hora de fin.', 'Encuentro cerrado');
-        this.cargar();
-      },
-      error: (error: unknown) => {
-        this.cerrando.set(null);
-        this.registro.set(errorToViewState<null>(error));
-      },
-    });
   }
 
   /**
@@ -1053,28 +712,6 @@ export class PatientChart {
      de `datos()`, que es lo mismo que se está mostrando. */
 
   /**
-   * Descarga la receta de esa indicación.
-   *
-   * Se ofrece **también sobre una receta sin emitir**: quien atiende a veces
-   * quiere revisarla en papel antes de firmar. El documento lo declara con
-   * todas las letras («copia de trabajo») en vez de aparentar validez, que es
-   * lo que haría un PDF idéntico al de una receta emitida.
-   */
-  protected descargarReceta(receta: RecetaEnFicha): void {
-    const guardada = (this.datos()?.resumen.medicationRequests ?? []).find(
-      (fila) => fila.id === receta.id,
-    );
-    if (guardada === undefined) {
-      return;
-    }
-
-    downloadPrescriptionPdf(
-      recetaDesdeResumen(guardada, this.contextoDelDocumento(), (id) => this.label(id)),
-    );
-    this.toasts.success('La receta se descargó como PDF.', 'Receta');
-  }
-
-  /**
    * Descarga la historia clínica **de esa atención**.
    *
    * No es el expediente completo: es lo que pasó en esa consulta —motivo,
@@ -1099,89 +736,19 @@ export class PatientChart {
   }
 
   /**
-   * Quién es quién en el papel: paciente, profesional, matrícula y organización.
-   *
-   * Los cuatro datos van juntos porque el papel se lee como una sola cosa: una
-   * receta sin matrícula ni origen no es rastreable, y la farmacia no tiene
-   * contra qué contrastarla. Los dos opcionales se omiten cuando no se saben —el
-   * motor no imprime la línea— en vez de viajar vacíos: un renglón «Matrícula:»
-   * sin número afirma que no tiene, que es distinto de no haberla podido leer.
+   * Quién es quién en el papel. La regla vive en `firma-de-la-sesion`, una sola
+   * vez: la atención firma la receta y el expediente la historia de la visita,
+   * y el mismo acto clínico no puede salir firmado distinto en cada papel.
    */
   private contextoDelDocumento(): ContextoDelDocumento {
-    const matricula = this.matriculaDeLaSesion();
-    const organizacion = this.organizacionDeLaSesion();
-    return {
+    return contextoDeLaSesion({
       paciente: this.nombre(),
-      profesional: this.profesionalDeLaSesion(),
-      ...(matricula === undefined ? {} : { matricula }),
-      ...(organizacion === undefined ? {} : { organizacion }),
-    };
-  }
-
-  /**
-   * Quién firma el documento.
-   *
-   * Hoy es el perfil profesional de la sesión, que es quien está mirando el
-   * expediente y quien registró la atención. Devuelve vacío cuando la cuenta no
-   * tiene perfil profesional —administración, por ejemplo—: el documento lo
-   * imprime como «No registrado» en vez de atribuirle la atención a alguien.
-   *
-   * El nombre sale del token y, si éste no lo trae, del perfil profesional ya
-   * leído: son la misma persona, y el papel no puede quedarse sin firma porque
-   * el emisor del token haya omitido un claim cosmético.
-   */
-  private profesionalDeLaSesion(): string {
-    if (this.auth.practitionerProfileId() === null) {
-      return '';
-    }
-    return this.auth.displayName() ?? this.perfilPropio()?.displayName ?? '';
-  }
-
-  /**
-   * La matrícula con la que quien atiende está habilitado a ejercer.
-   *
-   * **Vigente es una ventana, no una bandera** —el mismo criterio con el que la
-   * ficha de filiación lee sus vínculos—: sin `validTo` no caduca, y con
-   * `validTo` en el futuro sigue habilitando. Descartar toda matrícula que
-   * declare vencimiento dejaría sin firma a quien tiene la suya en regla, que
-   * es el caso normal: una matrícula real se renueva y por eso trae fecha.
-   * Vencida sí se descarta: firmar con ella es peor que no imprimir el renglón.
-   *
-   * Y la ventana tiene **dos** extremos: una matrícula cuyo `validFrom` todavía
-   * no llegó —la que ya se cargó porque el trámite salió, pero habilita recién
-   * el mes que viene— no habilita hoy, y firmar con ella afirma una habilitación
-   * que aún no existe.
-   *
-   * Si hay varias vigentes —quien ejerce en más de una jurisdicción— se toma la
-   * primera que declara el perfil, que es el orden en que el backend las
-   * devuelve; elegir por jurisdicción exigiría saber dónde se está atendiendo, y
-   * eso el expediente no lo sabe.
-   */
-  private matriculaDeLaSesion(): string | undefined {
-    const licencias = this.perfilPropio()?.licenses ?? [];
-    const ahora = Date.now();
-    const vigente = licencias.find((licencia: PractitionerLicense) =>
-      vigenciaCubre(licencia.validFrom, licencia.validTo, ahora),
-    );
-    const numero = (vigente?.licenseNumber ?? '').trim();
-    return numero === '' ? undefined : numero;
-  }
-
-  /**
-   * La organización que emite el papel: la del tenant activo de la sesión, que
-   * es el mismo custodio bajo el que se registra el encuentro.
-   *
-   * Se imprime **el nombre o nada**. `tenantName` cae al identificador cuando el
-   * token no trae el nombre: en pantalla es feo, pero en un documento clínico es
-   * un uuid impreso donde debería decir de dónde salió la receta.
-   */
-  private organizacionDeLaSesion(): string | undefined {
-    const tenantId = this.auth.activeTenantId();
-    if (tenantId === null) {
-      return undefined;
-    }
-    const nombre = this.auth.tenantName(tenantId);
-    return nombre === tenantId || nombre.trim() === '' ? undefined : nombre;
+      practitionerProfileId: this.auth.practitionerProfileId(),
+      displayName: this.auth.displayName(),
+      perfilPropio: this.perfilPropio(),
+      tenantId: this.auth.activeTenantId(),
+      tenantName: (id) => this.auth.tenantName(id),
+    });
   }
 
   /* -- Lectura ------------------------------------------------------------- */
@@ -1191,9 +758,6 @@ export class PatientChart {
     this.expediente.set(loading());
     this.etiquetas.set(new Map());
     this.nombre.set('');
-    // El aviso de la escritura anterior no sobrevive a la relectura: tras un
-    // cierre exitoso seguiría en pantalla un error que ya no describe nada.
-    this.registro.set(ready(null));
 
     if (profileId === '') {
       // S6 y no un error: sin identificador no hay recurso que buscar, y decir
@@ -1282,24 +846,6 @@ export class PatientChart {
   }
 }
 
-/**
- * Si una vigencia declarada cubre el instante dado.
- *
- * Los dos extremos son opcionales y la ausencia de cada uno significa «no
- * empieza» y «no termina», que es cómo el contrato de `profiles` declara sus
- * ventanas. Mirar sólo el final trataría como habilitada a una credencial que
- * todavía no entró en vigencia.
- */
-function vigenciaCubre(
-  desde: Date | undefined,
-  hasta: Date | undefined,
-  instante: number,
-): boolean {
-  if (desde !== undefined && desde.getTime() > instante) {
-    return false;
-  }
-  return hasta === undefined || hasta.getTime() > instante;
-}
 
 /**
  * Los identificadores de concepto del expediente, sin los ausentes.

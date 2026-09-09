@@ -169,7 +169,7 @@ const PROFESIONALES_ESCRITOS: readonly ProfesionalSimulado[] = [
       nombre: 'Valeria',
       apellidos: ['Rojas', 'Mendoza'],
       titulo: 'Cardióloga',
-      especialidades: [ESPECIALIDAD['SP-CARDIO']!, ESPECIALIDAD['SP-MEDINT']!],
+      especialidades: [ESPECIALIDAD['CARDIOLOGIA']!, ESPECIALIDAD['MEDICINA_INTERNA']!],
       bio: 'Cardióloga clínica con 14 años de experiencia. Formada en la UMSA y el Instituto Nacional de Cardiología de México. Atiendo hipertensión, insuficiencia cardíaca y prevención cardiovascular, con especial interés en la salud cardíaca de la mujer.',
       rating: 4.9,
       tele: true,
@@ -178,19 +178,19 @@ const PROFESIONALES_ESCRITOS: readonly ProfesionalSimulado[] = [
     },
     0,
   ),
-  profesional('pediatra', { nombre: 'Jorge Andrés', apellidos: ['Salazar', 'Vaca'], titulo: 'Pediatra', especialidades: [ESPECIALIDAD['SP-PEDIA']!], bio: 'Pediatra y neonatólogo. Control del niño sano, vacunación y seguimiento del desarrollo.', rating: 4.8 }, 1),
-  profesional('ginecologa', { nombre: 'María Fernanda', apellidos: ['Quiroga', 'Añez'], titulo: 'Ginecóloga obstetra', especialidades: [ESPECIALIDAD['SP-GINE']!], bio: 'Control prenatal, planificación familiar y salud de la mujer en todas las etapas.', org: 'hospital', rating: 4.7 }, 2),
-  profesional('dermatologo', { nombre: 'Rodrigo', apellidos: ['Paz', 'Soruco'], titulo: 'Dermatólogo', especialidades: [ESPECIALIDAD['SP-DERMA']!], bio: 'Dermatología clínica y estética. Acné, dermatitis, lunares y cáncer de piel.', ciudad: 1, rating: 4.5 }, 3),
-  profesional('traumatologo', { nombre: 'Luis Alberto', apellidos: ['Camacho', 'Justiniano'], titulo: 'Traumatólogo', especialidades: [ESPECIALIDAD['SP-TRAUMA']!], bio: 'Cirugía de rodilla y hombro, artroscopia y lesiones deportivas.', org: 'hospital', rating: 4.6 }, 4),
-  profesional('neurologa', { nombre: 'Carla', apellidos: ['Montero', 'Ribera'], titulo: 'Neuróloga', especialidades: [ESPECIALIDAD['SP-NEURO']!], bio: 'Cefaleas, epilepsia y enfermedades neurodegenerativas.', ciudad: 2, rating: 4.4, tele: true }, 5),
-  profesional('psiquiatra', { nombre: 'Daniel', apellidos: ['Aguilar', 'Roca'], titulo: 'Psiquiatra', especialidades: [ESPECIALIDAD['SP-PSIQ']!], bio: 'Ansiedad, depresión y salud mental del adulto. Atención presencial y por videollamada.', rating: 4.9, tele: true }, 6),
-  profesional('oftalmologa', { nombre: 'Patricia', apellidos: ['Vargas', 'Salinas'], titulo: 'Oftalmóloga', especialidades: [ESPECIALIDAD['SP-OFTAL']!], bio: 'Cirugía de cataratas, glaucoma y control de la vista.', ciudad: 1, rating: 4.3 }, 7),
-  profesional('odontologo', { nombre: 'Marco Antonio', apellidos: ['Suárez', 'Landívar'], titulo: 'Odontólogo', especialidades: [ESPECIALIDAD['SP-ODONTO']!], bio: 'Odontología general, ortodoncia y estética dental.', rating: 4.6, nuevos: true }, 8),
-  profesional('endocrinologa', { nombre: 'Ana Belén', apellidos: ['Terrazas', 'Moreno'], titulo: 'Endocrinóloga', especialidades: [ESPECIALIDAD['SP-ENDO']!, ESPECIALIDAD['SP-MEDINT']!], bio: 'Diabetes, tiroides y obesidad. Enfoque integral con nutrición.', ciudad: 2, rating: 4.7, tele: true }, 9),
-  profesional('gastro', { nombre: 'Fernando', apellidos: ['Gutiérrez', 'Peña'], titulo: 'Gastroenterólogo', especialidades: [ESPECIALIDAD['SP-GASTRO']!], bio: 'Endoscopia digestiva, reflujo y enfermedad inflamatoria intestinal.', org: 'hospital', rating: 4.5 }, 10),
-  profesional('medgeneral', { nombre: 'Sofía', apellidos: ['Arce', 'Chávez'], titulo: 'Médica general', especialidades: [ESPECIALIDAD['SP-MEDGEN']!], bio: 'Medicina familiar. Primer contacto para toda la familia.', rating: 4.8, tele: true, nuevos: true }, 11),
-  profesional('nutricionista', { nombre: 'Gabriela', apellidos: ['Rivera', 'Ortiz'], titulo: 'Nutricionista', especialidades: [ESPECIALIDAD['SP-NUTRI']!], bio: 'Planes de alimentación para diabetes, hipertensión y deporte.', rating: 4.9, tele: true }, 12),
-  profesional('neumologo', { nombre: 'Hugo', apellidos: ['Flores', 'Zambrana'], titulo: 'Neumólogo', especialidades: [ESPECIALIDAD['SP-NEUMO']!], bio: 'Asma, EPOC y apnea del sueño.', ciudad: 1, org: 'hospital', rating: 4.2 }, 13),
+  profesional('pediatra', { nombre: 'Jorge Andrés', apellidos: ['Salazar', 'Vaca'], titulo: 'Pediatra', especialidades: [ESPECIALIDAD['PEDIATRIA']!], bio: 'Pediatra y neonatólogo. Control del niño sano, vacunación y seguimiento del desarrollo.', rating: 4.8 }, 1),
+  profesional('ginecologa', { nombre: 'María Fernanda', apellidos: ['Quiroga', 'Añez'], titulo: 'Ginecóloga obstetra', especialidades: [ESPECIALIDAD['GINECOLOGIA_OBSTETRICIA']!], bio: 'Control prenatal, planificación familiar y salud de la mujer en todas las etapas.', org: 'hospital', rating: 4.7 }, 2),
+  profesional('dermatologo', { nombre: 'Rodrigo', apellidos: ['Paz', 'Soruco'], titulo: 'Dermatólogo', especialidades: [ESPECIALIDAD['DERMATOLOGIA']!], bio: 'Dermatología clínica y estética. Acné, dermatitis, lunares y cáncer de piel.', ciudad: 1, rating: 4.5 }, 3),
+  profesional('traumatologo', { nombre: 'Luis Alberto', apellidos: ['Camacho', 'Justiniano'], titulo: 'Traumatólogo', especialidades: [ESPECIALIDAD['TRAUMATOLOGIA']!], bio: 'Cirugía de rodilla y hombro, artroscopia y lesiones deportivas.', org: 'hospital', rating: 4.6 }, 4),
+  profesional('neurologa', { nombre: 'Carla', apellidos: ['Montero', 'Ribera'], titulo: 'Neuróloga', especialidades: [ESPECIALIDAD['NEUROLOGIA']!], bio: 'Cefaleas, epilepsia y enfermedades neurodegenerativas.', ciudad: 2, rating: 4.4, tele: true }, 5),
+  profesional('psiquiatra', { nombre: 'Daniel', apellidos: ['Aguilar', 'Roca'], titulo: 'Psiquiatra', especialidades: [ESPECIALIDAD['PSIQUIATRIA']!], bio: 'Ansiedad, depresión y salud mental del adulto. Atención presencial y por videollamada.', rating: 4.9, tele: true }, 6),
+  profesional('oftalmologa', { nombre: 'Patricia', apellidos: ['Vargas', 'Salinas'], titulo: 'Oftalmóloga', especialidades: [ESPECIALIDAD['OFTALMOLOGIA']!], bio: 'Cirugía de cataratas, glaucoma y control de la vista.', ciudad: 1, rating: 4.3 }, 7),
+  profesional('odontologo', { nombre: 'Marco Antonio', apellidos: ['Suárez', 'Landívar'], titulo: 'Odontólogo', especialidades: [ESPECIALIDAD['ODONTOLOGIA']!], bio: 'Odontología general, ortodoncia y estética dental.', rating: 4.6, nuevos: true }, 8),
+  profesional('endocrinologa', { nombre: 'Ana Belén', apellidos: ['Terrazas', 'Moreno'], titulo: 'Endocrinóloga', especialidades: [ESPECIALIDAD['ENDOCRINOLOGIA']!, ESPECIALIDAD['MEDICINA_INTERNA']!], bio: 'Diabetes, tiroides y obesidad. Enfoque integral con nutrición.', ciudad: 2, rating: 4.7, tele: true }, 9),
+  profesional('gastro', { nombre: 'Fernando', apellidos: ['Gutiérrez', 'Peña'], titulo: 'Gastroenterólogo', especialidades: [ESPECIALIDAD['GASTROENTEROLOGIA']!], bio: 'Endoscopia digestiva, reflujo y enfermedad inflamatoria intestinal.', org: 'hospital', rating: 4.5 }, 10),
+  profesional('medgeneral', { nombre: 'Sofía', apellidos: ['Arce', 'Chávez'], titulo: 'Médica general', especialidades: [ESPECIALIDAD['MEDICINA_GENERAL']!], bio: 'Medicina familiar. Primer contacto para toda la familia.', rating: 4.8, tele: true, nuevos: true }, 11),
+  profesional('nutricionista', { nombre: 'Gabriela', apellidos: ['Rivera', 'Ortiz'], titulo: 'Nutricionista', especialidades: [ESPECIALIDAD['NUTRICION']!], bio: 'Planes de alimentación para diabetes, hipertensión y deporte.', rating: 4.9, tele: true }, 12),
+  profesional('neumologo', { nombre: 'Hugo', apellidos: ['Flores', 'Zambrana'], titulo: 'Neumólogo', especialidades: [ESPECIALIDAD['NEUMOLOGIA']!], bio: 'Asma, EPOC y apnea del sueño.', ciudad: 1, org: 'hospital', rating: 4.2 }, 13),
   profesional('sinespecialidad', { nombre: 'Ramiro', apellidos: ['Céspedes', 'Villca'], titulo: 'Médico', especialidades: [], bio: 'Médico recién titulado, en proceso de registro de especialidad.', rating: 0, verified: false, nuevos: false }, 14),
 ];
 
@@ -202,26 +202,42 @@ const PROFESIONALES_ESCRITOS: readonly ProfesionalSimulado[] = [
    `faker/semilla.ts`), así que el profesional 37 es el mismo en cada recarga y
    su ficha pública se puede enlazar. */
 
-/** Cómo se llama cada especialidad, en femenino y en masculino. */
+/**
+ * Cómo se llama cada especialidad, en femenino y en masculino.
+ *
+ * Es un subconjunto del catálogo, no su copia: de las 63 de
+ * `VS_MEDICAL_SPECIALTY` acá están las que el padrón generado reparte entre
+ * sus profesionales. Una especialidad que no figure acá sigue existiendo y se
+ * sigue pudiendo elegir en el alta — lo único que no tiene es gente sembrada
+ * que la ejerza, y la portada del directorio se arma con quien la ejerce.
+ *
+ * Las cuatro odontológicas del final están por eso mismo: sin ellas, el
+ * catálogo tenía las once y el directorio no mostraba ni una, que para quien
+ * recorre la maqueta es lo mismo que no tenerlas.
+ */
 const TITULOS: Readonly<Record<string, readonly [string, string]>> = {
-  'SP-CARDIO': ['Cardióloga', 'Cardiólogo'],
-  'SP-PEDIA': ['Pediatra', 'Pediatra'],
-  'SP-GINE': ['Ginecóloga obstetra', 'Ginecólogo obstetra'],
-  'SP-DERMA': ['Dermatóloga', 'Dermatólogo'],
-  'SP-TRAUMA': ['Traumatóloga', 'Traumatólogo'],
-  'SP-MEDINT': ['Internista', 'Internista'],
-  'SP-NEURO': ['Neuróloga', 'Neurólogo'],
-  'SP-PSIQ': ['Psiquiatra', 'Psiquiatra'],
-  'SP-OFTAL': ['Oftalmóloga', 'Oftalmólogo'],
-  'SP-ODONTO': ['Odontóloga', 'Odontólogo'],
-  'SP-ENDO': ['Endocrinóloga', 'Endocrinólogo'],
-  'SP-GASTRO': ['Gastroenteróloga', 'Gastroenterólogo'],
-  'SP-NEUMO': ['Neumóloga', 'Neumólogo'],
-  'SP-UROL': ['Uróloga', 'Urólogo'],
-  'SP-MEDGEN': ['Médica general', 'Médico general'],
-  'SP-NUTRI': ['Nutricionista', 'Nutricionista'],
-  'SP-FISIO': ['Fisioterapeuta', 'Fisioterapeuta'],
-  'SP-ANEST': ['Anestesióloga', 'Anestesiólogo'],
+  'CARDIOLOGIA': ['Cardióloga', 'Cardiólogo'],
+  'PEDIATRIA': ['Pediatra', 'Pediatra'],
+  'GINECOLOGIA_OBSTETRICIA': ['Ginecóloga obstetra', 'Ginecólogo obstetra'],
+  'DERMATOLOGIA': ['Dermatóloga', 'Dermatólogo'],
+  'TRAUMATOLOGIA': ['Traumatóloga', 'Traumatólogo'],
+  'MEDICINA_INTERNA': ['Internista', 'Internista'],
+  'NEUROLOGIA': ['Neuróloga', 'Neurólogo'],
+  'PSIQUIATRIA': ['Psiquiatra', 'Psiquiatra'],
+  'OFTALMOLOGIA': ['Oftalmóloga', 'Oftalmólogo'],
+  'ODONTOLOGIA': ['Odontóloga', 'Odontólogo'],
+  'ENDOCRINOLOGIA': ['Endocrinóloga', 'Endocrinólogo'],
+  'GASTROENTEROLOGIA': ['Gastroenteróloga', 'Gastroenterólogo'],
+  'NEUMOLOGIA': ['Neumóloga', 'Neumólogo'],
+  'UROLOGIA': ['Uróloga', 'Urólogo'],
+  'MEDICINA_GENERAL': ['Médica general', 'Médico general'],
+  'NUTRICION': ['Nutricionista', 'Nutricionista'],
+  'FISIOTERAPIA': ['Fisioterapeuta', 'Fisioterapeuta'],
+  'ANESTESIOLOGIA': ['Anestesióloga', 'Anestesiólogo'],
+  'ORTODONCIA': ['Ortodoncista', 'Ortodoncista'],
+  'ENDODONCIA': ['Endodoncista', 'Endodoncista'],
+  'ODONTOPEDIATRIA': ['Odontopediatra', 'Odontopediatra'],
+  'PERIODONCIA': ['Periodoncista', 'Periodoncista'],
 };
 
 const CODIGOS_ESPECIALIDAD = Object.keys(TITULOS);

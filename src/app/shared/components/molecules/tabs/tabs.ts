@@ -1,17 +1,29 @@
 import {
+  afterNextRender,
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
   contentChildren,
+  DestroyRef,
   ElementRef,
   forwardRef,
+  inject,
   input,
   model,
+  signal,
+  untracked,
+  viewChild,
   viewChildren,
 } from '@angular/core';
 
 import { Tab } from './tab/tab';
-import { TABS_PARENT, type TabsHost, type TabsOrientation } from './tabs.types';
+import {
+  TABS_PARENT,
+  type TabsAppearance,
+  type TabsHost,
+  type TabsOrientation,
+} from './tabs.types';
 
 /**
  * Pestañas de una ficha. Descubre sus secciones con `contentChildren`, así que
@@ -37,6 +49,8 @@ import { TABS_PARENT, type TabsHost, type TabsOrientation } from './tabs.types';
   host: {
     class: 'tabs',
     '[class.tabs--vertical]': 'orientation() === "vertical"',
+    '[class.tabs--browser]': 'appearance() === "browser" && orientation() === "horizontal"',
+    '(window:resize)': 'medirDesborde()',
   },
 })
 export class Tabs implements TabsHost {
@@ -45,8 +59,14 @@ export class Tabs implements TabsHost {
   /** Los botones, para mover el foco sin selección (activación manual). */
   private readonly tabButtons = viewChildren<ElementRef<HTMLButtonElement>>('tabButton');
 
+  /** La tira, para medir su desborde y desplazarla cuando no entra. */
+  private readonly tablist = viewChild<ElementRef<HTMLElement>>('tablist');
+
   readonly selectedIndex = model<number>(0);
   readonly orientation = input<TabsOrientation>('horizontal');
+
+  /** Ver {@link TabsAppearance}. La de siempre es `underline`. */
+  readonly appearance = input<TabsAppearance>('underline');
 
   /** Índice realmente pintado: recortado al rango y saltando deshabilitadas. */
   readonly activeIndex = computed(() => {
@@ -71,6 +91,7 @@ export class Tabs implements TabsHost {
       return;
     }
     this.selectedIndex.set(index);
+    this.traerALaVista(index);
   }
 
   /**
@@ -132,5 +153,98 @@ export class Tabs implements TabsHost {
 
   private focusTab(index: number): void {
     this.tabButtons()[index]?.nativeElement.focus();
+    this.traerALaVista(index);
+  }
+
+  /* -- El desborde de la tira ----------------------------------------------
+
+     Ocho pestañas no entran en la columna de una ficha, y hasta ahora eso lo
+     resolvía la barra de scroll del navegador: gruesa, siempre visible, y muda
+     —la primera pestaña aparecía cortada por la mitad sin nada que dijera que
+     a la izquierda había más—. Se mide el desborde y se ofrecen dos flechas.
+
+     Son un atajo de puntero y no entran en el orden de tabulación: el teclado
+     ya recorre las pestañas con las flechas del teclado, que además traen la
+     enfocada a la vista. Duplicarlo serían dos paradas que no llevan a ningún
+     lado nuevo. */
+
+  /** Hay más tira de la que entra: se muestran las flechas. */
+  protected readonly desborda = signal(false);
+
+  /** Queda tira hacia atrás / hacia adelante desde donde está el scroll. */
+  protected readonly puedeRetroceder = signal(false);
+  protected readonly puedeAvanzar = signal(false);
+
+  /**
+   * Los rótulos, concatenados.
+   *
+   * **No** alcanza con mirar `tabs()`: los de una ficha llevan la cantidad de
+   * registros —«Observaciones (24)»— y esa cuenta llega con los datos, así que
+   * el ancho de la tira cambia sin que la lista de pestañas cambie. Medir sólo
+   * cuando aparece o desaparece una pestaña dejaba la tira desbordada y sin
+   * flechas, que se lee peor que no tenerlas: la última queda cortada y nada
+   * dice que haya más.
+   */
+  private readonly rotulos = computed(() =>
+    this.tabs()
+      .map((tab) => tab.label())
+      .join('\u0001'),
+  );
+
+  /** Vuelve a medir cuando cambia lo que ocupa la tira. */
+  private readonly remedicion = afterRenderEffect(() => {
+    // Se rastrea lo que cambia el ancho; la medición lee el DOM y escribe
+    // señales, y eso no debe rastrearse.
+    this.rotulos();
+    this.appearance();
+    untracked(() => this.medirDesborde());
+  });
+
+  constructor() {
+    // Y cuando cambia el ancho DISPONIBLE, que no depende de ninguna señal: el
+    // menú lateral que se pliega, una columna que se reparte de otra manera.
+    // `afterNextRender` sólo corre en el navegador, así que en el servidor —sin
+    // `ResizeObserver`— no hay nada que guardar.
+    const destruccion = inject(DestroyRef);
+    afterNextRender(() => {
+      const tira = this.tablist()?.nativeElement;
+      if (tira === undefined) {
+        return;
+      }
+      const observador = new ResizeObserver(() => this.medirDesborde());
+      observador.observe(tira);
+      destruccion.onDestroy(() => observador.disconnect());
+    });
+  }
+
+  protected medirDesborde(): void {
+    const tira = this.tablist()?.nativeElement;
+    if (tira === undefined) {
+      return;
+    }
+    // Un píxel de margen: con anchos fraccionarios `scrollWidth` supera a
+    // `clientWidth` por redondeo en tiras que sí entran enteras.
+    const sobrante = tira.scrollWidth - tira.clientWidth;
+    this.desborda.set(sobrante > 1);
+    this.puedeRetroceder.set(tira.scrollLeft > 1);
+    this.puedeAvanzar.set(tira.scrollLeft < sobrante - 1);
+  }
+
+  /** Desplaza poco menos de un ancho, para dejar una pestaña de ancla. */
+  protected desplazar(direccion: 1 | -1): void {
+    const tira = this.tablist()?.nativeElement;
+    if (tira === undefined) {
+      return;
+    }
+    // Con `?.` porque el entorno de pruebas no implementa el desplazamiento
+    // programático: sin la guarda, un click en la flecha revienta el spec en
+    // vez de no hacer nada, que es lo correcto cuando no hay nada que mover.
+    tira.scrollBy?.({ left: direccion * tira.clientWidth * 0.8, behavior: 'smooth' });
+  }
+
+  /** Trae una pestaña a la vista sin mover el resto de la página. */
+  private traerALaVista(index: number): void {
+    const boton = this.tabButtons()[index]?.nativeElement;
+    boton?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
   }
 }

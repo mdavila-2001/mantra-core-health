@@ -84,8 +84,15 @@ const DOCUMENTO_VALIDO = /^[A-Za-z0-9.-]+$/;
  * `CIRUGIA_BUCOMAXILOFACIAL` está acá aunque venga del listado del SNRM: es la
  * única especialidad de residencia médica cuyo requisito es Odontología (así lo
  * exige el SNRM y así quedó en la nota del value set).
+ *
+ * **Se exporta para que una prueba pueda comprobar que estos códigos existen**
+ * en el catálogo que la aplicación va a recibir. No es un detalle académico:
+ * el backend simulado los tenía inventados (`SP-ODONTO` y compañía), así que
+ * este conjunto no acertaba ninguno y la rama odontológica del alta ofrecía
+ * una lista vacía. Un conjunto que filtra por código sólo sirve si los dos
+ * lados dicen el mismo código, y eso hay que poder comprobarlo.
  */
-const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
+export const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
   'ODONTOLOGIA',
   'ENDODONCIA',
   'ORTODONCIA',

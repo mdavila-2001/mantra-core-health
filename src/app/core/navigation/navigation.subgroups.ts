@@ -101,6 +101,16 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // de dibujo lo decide `navigation.map.ts`, no este array — acá sólo se
     // declara que las cinco rutas son del mismo bloque.
     //
+    // **Desde el 08/09/2026 este bloque ya no se dibuja como desplegable**, y
+    // el reparto sigue igual de necesario. Los cuatro directorios salieron del
+    // menú (`fueraDelMenuPara: [ANY_ROLE]` en su fila del registro) para que se
+    // entre por la portada, así que en la barra el bloque queda con una sola
+    // sección y el armazón la dibuja suelta. Pero la lista de las cinco no era
+    // sólo para agrupar renglones: es lo que lee `DirectoriesOverview` para
+    // saber cuáles son los directorios que tiene que ofrecer. Vaciar el bloque
+    // «porque ya no hay desplegable» dejaría esa pantalla sin nodos, que es
+    // justo la que ahora hace todo el trabajo.
+    //
     // `nearby-places` (FT-19) NO entra acá aunque sea "a dónde ir": esta
     // lista la lee tal cual `DirectoriesOverview` para dibujar los nodos de
     // «los cuatro directorios» (ver el comentario de esa pantalla), y

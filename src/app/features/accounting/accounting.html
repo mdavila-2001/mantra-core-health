@@ -55,7 +55,7 @@
 }
 
 <!-- La práctica manda: ninguna lectura del mayor responde sin ella. -->
-<app-form-field label="Práctica" hint="Los libros que se muestran son los de esta práctica">
+<app-form-field icon="building" label="Práctica" hint="Los libros que se muestran son los de esta práctica">
   <app-select
     [options]="opcionesDePractica()"
     [(value)]="practicaElegida"
@@ -174,6 +174,7 @@
       [target]="trialBalancePdf"
       filename="balance-de-sumas-y-saldos"
       title="Balance de sumas y saldos"
+      kind="Reporte contable"
     />
   </div>
   <app-data-table
@@ -186,7 +187,12 @@
   <div #journalPdf class="informe-encabezado">
     <h2 class="titulo-de-seccion">Libro diario</h2>
     <div class="informe-encabezado__acciones">
-      <app-pdf-export-button [target]="journalPdf" filename="libro-diario" title="Libro diario" />
+      <app-pdf-export-button
+        [target]="journalPdf"
+        filename="libro-diario"
+        title="Libro diario"
+        kind="Reporte contable"
+      />
       <button app-button variant="outline" type="button" (clicked)="exportarDiarioCsv()">
         Exportar a CSV
       </button>
@@ -220,22 +226,22 @@
           Ingreso registrado en borrador y anclado a la factura.
         </app-alert>
       }
-      <form [formGroup]="formularioDeIngreso" (ngSubmit)="registrarIngreso()" novalidate>
-        <app-form-field label="Factura pagada" [required]="true">
+      <form [formGroup]="formularioDeIngreso" (ngSubmit)="registrarIngreso()" novalidate class="app-form-grid">
+        <app-form-field icon="billing" label="Factura pagada" [required]="true">
           <app-select
             formControlName="invoiceId"
             [options]="opcionesDeConsulta()"
             placeholder="Elegí una factura"
           />
         </app-form-field>
-        <app-form-field label="Cuenta a debitar (caja/banco)" [required]="true">
+        <app-form-field icon="billing" label="Cuenta a debitar (caja/banco)" [required]="true">
           <app-select
             formControlName="debitAccountId"
             [options]="opcionesDeCuenta()"
             placeholder="Elegí una cuenta"
           />
         </app-form-field>
-        <app-form-field label="Cuenta a acreditar (ingresos por consultas)" [required]="true">
+        <app-form-field icon="billing" label="Cuenta a acreditar (ingresos por consultas)" [required]="true">
           <app-select
             formControlName="creditAccountId"
             [options]="opcionesDeCuenta()"
@@ -261,25 +267,25 @@
         Gasto registrado en borrador.
       </app-alert>
     }
-    <form [formGroup]="formularioDeGasto" (ngSubmit)="registrarGasto()" novalidate>
-      <app-form-field label="Cuenta a debitar (gasto)" [required]="true">
+    <form [formGroup]="formularioDeGasto" (ngSubmit)="registrarGasto()" novalidate class="app-form-grid">
+      <app-form-field icon="billing" label="Cuenta a debitar (gasto)" [required]="true">
         <app-select
           formControlName="debitAccountId"
           [options]="opcionesDeCuenta()"
           placeholder="Elegí una cuenta"
         />
       </app-form-field>
-      <app-form-field label="Cuenta a acreditar (caja/banco)" [required]="true">
+      <app-form-field icon="billing" label="Cuenta a acreditar (caja/banco)" [required]="true">
         <app-select
           formControlName="creditAccountId"
           [options]="opcionesDeCuenta()"
           placeholder="Elegí una cuenta"
         />
       </app-form-field>
-      <app-form-field label="Importe" [required]="true" hint="Decimal, hasta dos posiciones.">
+      <app-form-field icon="chart" label="Importe" [required]="true" hint="Decimal, hasta dos posiciones.">
         <app-input formControlName="amount" type="text" inputmode="decimal" />
       </app-form-field>
-      <app-form-field label="Descripción" [required]="true">
+      <app-form-field icon="note" label="Descripción" [required]="true">
         <app-input formControlName="description" type="text" />
       </app-form-field>
       <button app-button variant="primary" type="submit" [disabled]="enviandoGasto()">
@@ -353,7 +359,7 @@
     <app-tab label="Libro mayor">
       @if (pestanaActiva() === 0) {
         <div #ledgerPdf class="informe-encabezado">
-          <app-form-field label="Cuenta" hint="El libro mayor es por cuenta: elegí cuál mirar">
+          <app-form-field icon="billing" label="Cuenta" hint="El libro mayor es por cuenta: elegí cuál mirar">
             <app-select
               [options]="opcionesDeCuentaParaMayor()"
               [(value)]="cuentaDelMayor"
@@ -482,7 +488,7 @@
              `flujoDeCaja` sobre por qué es el libro mayor de la cuenta que la
              propia persona elige como su caja o su banco. -->
         <div #cashFlowPdf class="informe-encabezado">
-          <app-form-field label="Cuenta" hint="Elegí la cuenta que usás como caja o banco">
+          <app-form-field icon="billing" label="Cuenta" hint="Elegí la cuenta que usás como caja o banco">
             <app-select
               [options]="opcionesDeCuentaParaMayor()"
               [(value)]="cuentaDeCaja"
@@ -546,11 +552,11 @@
         </app-alert>
       }
 
-      <form [formGroup]="cabeceraDelAsiento" novalidate>
-        <app-form-field label="Fecha" [required]="true" hint="AAAA-MM-DD">
+      <form [formGroup]="cabeceraDelAsiento" novalidate class="app-form-grid">
+        <app-form-field icon="calendar" label="Fecha" [required]="true" hint="AAAA-MM-DD">
           <app-input formControlName="transactionDate" type="text" inputmode="numeric" />
         </app-form-field>
-        <app-form-field label="Glosa" hint="Descripción del asiento, opcional">
+        <app-form-field icon="note" label="Glosa" hint="Descripción del asiento, opcional">
           <app-input formControlName="description" type="text" />
         </app-form-field>
       </form>
@@ -598,21 +604,21 @@
         </div>
       }
 
-      <form [formGroup]="filaEnCurso" (ngSubmit)="agregarOModificarFila()" novalidate>
-        <app-form-field label="Cuenta" [required]="true">
+      <form [formGroup]="filaEnCurso" (ngSubmit)="agregarOModificarFila()" novalidate class="app-form-grid">
+        <app-form-field icon="billing" label="Cuenta" [required]="true">
           <app-select
             formControlName="accountId"
             [options]="opcionesDeCuenta()"
             placeholder="Elegí una cuenta"
           />
         </app-form-field>
-        <app-form-field label="Dirección" [required]="true">
+        <app-form-field icon="pin" label="Dirección" [required]="true">
           <app-select formControlName="direction" [options]="opcionesDeDireccion" />
         </app-form-field>
-        <app-form-field label="Importe" [required]="true" hint="Decimal, hasta dos posiciones.">
+        <app-form-field icon="chart" label="Importe" [required]="true" hint="Decimal, hasta dos posiciones.">
           <app-input formControlName="amount" type="text" inputmode="decimal" />
         </app-form-field>
-        <app-form-field label="Memo" hint="Opcional">
+        <app-form-field icon="note" label="Memo" hint="Opcional">
           <app-input formControlName="memo" type="text" />
         </app-form-field>
         <button app-button variant="secondary" type="submit">

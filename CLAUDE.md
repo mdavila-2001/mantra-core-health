@@ -9,7 +9,7 @@ Vitest 4, Yarn 4.18 PnP. Panorama completo: `docs/index.md`.
 yarn lint          # eslint .
 yarn typecheck     # tsc app + cypress + playwright, --noEmit
 yarn build         # ng build
-yarn test          # ng test (Vitest, 860 pruebas) — acotalo con rutas al iterar
+yarn test          # ng test (Vitest, 4985 pruebas, ~140 s)
 yarn pw            # Playwright (18 specs en playwright/)
 ```
 

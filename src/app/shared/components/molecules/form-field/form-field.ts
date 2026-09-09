@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 
+import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
+import type { NavIconName } from '@shared/components/atoms/nav-icon/nav-icon.types';
 import {
   FORM_CONTROL_CONTEXT,
   nextControlId,
@@ -15,7 +17,7 @@ import {
  * adentro los toma solo: no hay que pasar `for` ni `id` a mano.
  *
  * ```html
- * <app-form-field label="Nombre" hint="Como figura en el CI" [required]="true">
+ * <app-form-field icon="patients" label="Nombre" hint="Como figura en el CI" [required]="true">
  *   <app-input type="text" [(value)]="nombre" />
  * </app-form-field>
  * ```
@@ -34,6 +36,7 @@ import {
 @Component({
   selector: 'app-form-field',
   standalone: true,
+  imports: [NavIcon],
   templateUrl: './form-field.html',
   styleUrl: './form-field.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +46,28 @@ import {
   },
 })
 export class FormField implements FormControlContext {
+  /**
+   * El ícono del campo, a su izquierda. Del set cerrado de `app-nav-icon`.
+   *
+   * La regla de UI de ALOVIDA pide ícono en todos los campos de un formulario, y
+   * la tentación es declararlo `input.required` para que no se pueda olvidar.
+   * **No lo es, y a propósito**: requerido obliga a completar los 406 usos del
+   * repositorio en una sola pasada, y ese barrido es justo el que rompió los
+   * formularios el 05/09/2026 y hubo que revertir entero.
+   *
+   * Vacío no dibuja nada y no reserva sitio, así que una pantalla todavía sin
+   * revisar se ve exactamente como antes. La regla se aplica pantalla por
+   * pantalla, verificándola en cada una.
+   */
+  readonly icon = input<NavIconName | ''>('');
+
+  /**
+   * El nombre del ícono ya estrechado, o `null`.
+   *
+   * `@if (icon())` no estrecha el tipo de una señal en la plantilla —sigue
+   * siendo `NavIconName | ''`—, así que sin esto `[name]` no compila. */
+  protected readonly iconoNombre = computed<NavIconName | null>(() => this.icon() || null);
+
   readonly label = input<string>('');
   readonly hint = input<string>('');
   readonly errorMessage = input<string>('');

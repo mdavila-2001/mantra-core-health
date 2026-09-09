@@ -23,7 +23,7 @@ import {
   CITA_QUERY_PARAM,
   CLINICAL_RECORD_ROUTE,
   MOTIVO_QUERY_PARAM,
-  patientChartRoute,
+  encounterWorkspaceRoute,
 } from '../clinical-record/clinical-record.routes';
 
 /** Una cita de hoy, ya resuelta para pintar. */
@@ -170,7 +170,7 @@ export class Consultation {
     if (id === '') {
       return;
     }
-    void this.router.navigateByUrl(patientChartRoute(encodeURIComponent(id)));
+    void this.router.navigateByUrl(encounterWorkspaceRoute(encodeURIComponent(id)));
   }
 
   protected cargar(): void {
@@ -257,7 +257,7 @@ function aCitaDeHoy(cita: Booking, etiquetas: ReadonlyMap<string, string>): Cita
     motivo: cita.reasonText ?? null,
     estado: etiquetas.get(cita.statusConceptId) ?? 'Reservado',
     llego: cita.checkedInAt !== undefined,
-    ruta: paciente === null ? null : patientChartRoute(paciente),
+    ruta: paciente === null ? null : encounterWorkspaceRoute(paciente),
     params: {
       ...(cita.reasonText === undefined ? {} : { [MOTIVO_QUERY_PARAM]: cita.reasonText }),
       ...(cita.appointmentId === undefined || cita.appointmentId === null

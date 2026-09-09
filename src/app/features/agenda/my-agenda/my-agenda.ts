@@ -949,6 +949,12 @@ export class MyAgenda {
     return e.status === 'ready' || e.status === 'stale' ? (e.data?.rules ?? []) : [];
   });
 
+  /** Cómo se llama el horario vigente, para el globo de detalle de la grilla. */
+  protected readonly nombreDelHorario = computed(() => {
+    const e = this.estado();
+    return e.status === 'ready' || e.status === 'stale' ? (e.data?.name ?? null) : null;
+  });
+
   protected readonly rutaEditarHorario = '/schedule/edit';
 
   /** Los bloqueos, que desde el carril 11 tienen su propio flujo. */

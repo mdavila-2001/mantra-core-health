@@ -354,6 +354,9 @@ describe('RegisterPatient', () => {
       phone: extra.phone ?? '+591 70012345',
       birthDate: new Date(1990, 4, 17),
       sexAtBirth: 'FEMALE',
+      // El departamento que expidió la cédula es la otra mitad del documento
+      // y también es obligatorio: sin él el formulario no pasa de su página.
+      issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
       homeAddressLines: extra.homeAddressLines ?? '',
       workAddressLines: extra.workAddressLines ?? '',
       workEmployerFreeText: extra.workEmployerFreeText ?? '',
@@ -408,6 +411,9 @@ describe('RegisterPatient', () => {
     // cualquier huso al oeste de Greenwich, que es donde está Bolivia.
     birthDate: '1990-05-17',
     sexAtBirth: 'FEMALE',
+    // La otra mitad del documento, obligatoria desde que la cédula y su
+    // expedición dejaron de poder llegar separadas.
+    issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
     residenceMunicipalityConceptId: MUNICIPIO_SACABA,
   };
 
@@ -1160,7 +1166,6 @@ describe('RegisterPatient', () => {
 
     const req = http.expectOne('/iam/auth/register-patient');
     const enviado = Object.keys(req.request.body as Record<string, unknown>);
-    expect(enviado).not.toContain('issuerAdministrativeAreaConceptId');
     expect(enviado).not.toContain('gender');
     expect(enviado).not.toContain('occupationConceptId');
     expect(enviado).not.toContain('occupationFreeText');
@@ -1501,6 +1506,24 @@ describe('RegisterPatient', () => {
     completar();
     component.submit();
     http.expectOne('/iam/auth/register-patient').flush(RESPUESTA);
+  });
+
+  /**
+   * El número de la cédula y el departamento que la expidió son UN documento
+   * escrito en dos casillas. Con el número obligatorio y la expedición no, la
+   * cédula quedaba a medias — y es lo único que distingue dos documentos con
+   * el mismo número. Mismo criterio que el alta de profesional.
+   */
+  it('sin departamento de emisión el formulario no se puede enviar', () => {
+    completar();
+    component.formPaciente.controls.issuerAdministrativeAreaConceptId.setValue(null);
+
+    expect(component.formPaciente.controls.issuerAdministrativeAreaConceptId.invalid).toBe(
+      true,
+    );
+
+    component.submit();
+    http.expectNone('/iam/auth/register-patient');
   });
 
   it('no deja enviar un teléfono de tutor sin su nombre', () => {

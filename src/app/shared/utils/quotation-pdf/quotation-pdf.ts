@@ -2,7 +2,7 @@ import { InjectionToken } from '@angular/core';
 import type { jsPDF } from 'jspdf';
 
 import type { Installment, InterestCalculationMethod } from '../../../core/data-access/quotations/quotations.types';
-import { buildBlocksPdf, type PdfBlock } from '../pdf-export/pdf-export';
+import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../pdf-export/pdf-export';
 
 /* ============================================================================
     El PDF de una cotización (FT-24).
@@ -43,16 +43,31 @@ export interface QuotationPdfData {
 
 const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
 
+/** Cuándo salió el papel. El mismo pie que llevan los documentos clínicos. */
+const FORMATO_EMISION = new Intl.DateTimeFormat('es-BO', {
+  dateStyle: 'long',
+  timeStyle: 'short',
+});
+
 function parrafo(text: string): PdfBlock {
   return { kind: 'paragraph', text };
 }
 
-function encabezado(text: string, level: number): PdfBlock {
-  return { kind: 'heading', text, level };
+/** Una sección: versalitas espaciadas sobre un filete, como el resto del repo. */
+function seccion(text: string): PdfBlock {
+  return { kind: 'heading', text, level: 2 };
 }
 
-function fila(text: string): PdfBlock {
-  return { kind: 'row', text };
+/**
+ * Una fila de la tabla de cuotas.
+ *
+ * `text` mantiene la línea corrida —es lo que se lee si el documento se
+ * recorre como texto— y `cells` son las columnas que el maquetador alinea. Los
+ * importes caen en la última columna y se alinean a la derecha solos: una
+ * columna de plata sin alinear obliga a comparar cifra por cifra.
+ */
+function fila(celdas: readonly string[], header = false): PdfBlock {
+  return { kind: 'row', text: celdas.join('   '), cells: celdas, header };
 }
 
 /** «Cuota fija (FLAT)» o «Francés», para que el papel no repita el código. */
@@ -71,40 +86,52 @@ function formatoFecha(iso: string): string {
 
 /** Arma el PDF de la cotización actual. No lo guarda: devuelve el documento. */
 export function buildQuotationPdf(data: QuotationPdfData): jsPDF {
-  const bloques: PdfBlock[] = [encabezado('Cotización', 1)];
+  const bloques: PdfBlock[] = [seccion('Datos de la cotización')];
 
-  bloques.push(parrafo(`Paciente: ${data.patientName}`));
-  bloques.push(parrafo(`Servicio: ${data.serviceName}`));
-  bloques.push(parrafo(`Precio ofrecido: ${data.offeredPrice.toFixed(2)}`));
-  bloques.push(parrafo(`Fecha de atención: ${formatoFecha(data.attentionDate)}`));
-  bloques.push(parrafo(`Válida hasta: ${formatoFecha(data.validUntil)}`));
-  bloques.push(
-    parrafo(
-      `Plan de pagos: ${data.installmentCount} cuota(s) al ${data.interestRatePercent}% — ${nombreDelMetodo(data.interestCalculationMethod)}`,
-    ),
-  );
+  bloques.push(campoDeBloque('Paciente', data.patientName));
+  bloques.push(campoDeBloque('Servicio', data.serviceName));
+  bloques.push(campoDeBloque('Precio ofrecido', data.offeredPrice.toFixed(2)));
+  bloques.push(campoDeBloque('Fecha de atención', formatoFecha(data.attentionDate)));
+  bloques.push(campoDeBloque('Válida hasta', formatoFecha(data.validUntil)));
 
-  bloques.push(encabezado('Cuotas', 2));
+  bloques.push(seccion('Plan de pagos'));
+  bloques.push(campoDeBloque('Cuotas', `${data.installmentCount}`));
+  bloques.push(campoDeBloque('Tasa de interés', `${data.interestRatePercent}%`));
+  bloques.push(campoDeBloque('Método de cálculo', nombreDelMetodo(data.interestCalculationMethod)));
+
+  bloques.push(seccion('Cuotas'));
   if (data.installments.length === 0) {
     bloques.push(parrafo('Sin plan de pagos simulado todavía.'));
   } else {
-    bloques.push(fila('Cuota   Vencimiento   Capital   Interés   Total'));
+    bloques.push(fila(['Cuota', 'Vencimiento', 'Capital', 'Interés', 'Total'], true));
     for (const cuota of data.installments) {
       bloques.push(
-        fila(
-          [
-            cuota.installmentNumber,
-            cuota.dueDate,
-            cuota.principalAmount.toFixed(2),
-            cuota.interestAmount.toFixed(2),
-            cuota.totalAmount.toFixed(2),
-          ].join('   '),
-        ),
+        fila([
+          String(cuota.installmentNumber),
+          formatoFecha(cuota.dueDate),
+          cuota.principalAmount.toFixed(2),
+          cuota.interestAmount.toFixed(2),
+          cuota.totalAmount.toFixed(2),
+        ]),
       );
     }
+    // La suma de las cuotas, que es lo que la persona termina pagando. Se
+    // calcula de las mismas filas que están impresas arriba: un total que
+    // saliera de otra cuenta podría no coincidir con lo que se ve.
+    const total = data.installments.reduce((suma, cuota) => suma + cuota.totalAmount, 0);
+    bloques.push({ kind: 'total', text: `Total del plan: ${total.toFixed(2)}` });
   }
 
-  return buildBlocksPdf(bloques, { title: `Cotización — ${data.serviceName}` });
+  bloques.push({
+    kind: 'caption',
+    text: `Documento generado el ${FORMATO_EMISION.format(new Date())} desde el sistema.`,
+  });
+
+  return buildBlocksPdf(bloques, {
+    title: 'Cotización de servicios',
+    kind: 'Cotización',
+    subtitle: `${data.patientName} · ${data.serviceName}`,
+  });
 }
 
 /**

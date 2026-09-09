@@ -243,6 +243,49 @@ export function avatarSvg(nombre: string, fondo = '#1f6f8b'): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
+/**
+ * La portada de una ficha pública: una banda de marca, sin texto.
+ *
+ * Aparte de `imagenSvg` a propósito. Aquélla dibuja un rótulo en el centro, que
+ * está bien para una publicación o un adjunto —hay que saber qué se está
+ * mirando— y está mal para la portada de una organización: el nombre ya va
+ * debajo, en el `<h1>`, así que la ficha terminaba diciéndolo dos veces. Una
+ * portada institucional no dice quién es; el logo y el título lo dicen.
+ *
+ * Proporción 4:1 como cualquier banner de red profesional: la ficha la recorta
+ * a una banda, y una imagen cuadrada recortada así se queda sin sus dos tercios
+ * interesantes.
+ */
+export function portadaSvg(color = '#0B557E'): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1584" height="396" viewBox="0 0 1584 396">` +
+    `<defs>` +
+    // La trama fina es lo que separa una portada de una franja de color.
+    `<pattern id="t" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(28)">` +
+    `<line x1="0" y1="0" x2="0" y2="24" stroke="#fff" stroke-opacity="0.08" stroke-width="1"/>` +
+    `</pattern>` +
+    // La profundidad se hace con negro y blanco translúcidos SOBRE el color de
+    // la organización, no con tonos calculados: así cualquier color entra sin
+    // que haya que darle una paleta propia.
+    `<linearGradient id="s" x1="0" y1="0" x2="1" y2="1">` +
+    `<stop offset="0" stop-color="#000" stop-opacity="0.45"/>` +
+    `<stop offset="0.6" stop-color="#000" stop-opacity="0.05"/>` +
+    `<stop offset="1" stop-color="#fff" stop-opacity="0.12"/>` +
+    `</linearGradient>` +
+    `</defs>` +
+    `<rect width="1584" height="396" fill="${color}"/>` +
+    `<rect width="1584" height="396" fill="url(#s)"/>` +
+    `<rect width="1584" height="396" fill="url(#t)"/>` +
+    `<circle cx="1290" cy="70" r="230" fill="#fff" opacity="0.06"/>` +
+    `<circle cx="230" cy="380" r="270" fill="#fff" opacity="0.05"/>` +
+    `</svg>`;
+  // Los paréntesis van codificados a mano: `encodeURIComponent` los deja pasar,
+  // y esta imagen se consume desde `background-image: url(…)`, donde el primer
+  // `)` del `url(#s)` de adentro CIERRA la función y deja la portada en blanco.
+  // Las demás imágenes de la maqueta no llevan paréntesis: por eso el problema
+  // aparece con ésta y con ninguna anterior.
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg).replace(/\(/g, '%28').replace(/\)/g, '%29')}`;
+}
 /** Una imagen de portada/publicación como SVG con un rótulo. */
 export function imagenSvg(rotulo: string, fondo = '#e8f1f5', tinta = '#1f6f8b'): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540"><rect width="960" height="540" fill="${fondo}"/><circle cx="820" cy="120" r="70" fill="${tinta}" opacity="0.15"/><circle cx="140" cy="440" r="110" fill="${tinta}" opacity="0.12"/><text x="480" y="285" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="600" fill="${tinta}" text-anchor="middle">${rotulo}</text></svg>`;

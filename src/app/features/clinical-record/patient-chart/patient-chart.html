@@ -1,10 +1,25 @@
 <app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
+  <!-- Donde se escribe. El expediente es lectura; abrir el encuentro y
+       registrar sobre él vive en su propia pantalla, y este botón es el paso
+       de una a la otra sin volver a elegir a la persona. -->
+  <a
+    app-button
+    page-actions
+    variant="primary"
+    [routerLink]="rutaDeLaAtencion()"
+    data-testid="expediente-abrir-atencion"
+  >
+    Atender
+  </a>
+
   <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
        entera: sin eso el documento se llevaría el menú lateral. -->
   <app-pdf-export-button
     page-actions
     [filename]="'expediente-' + (pacienteDeLaFicha() || 'paciente')"
     [title]="titulo()"
+    [subtitle]="subtitulo()"
+    kind="Expediente clínico"
     [target]="raizExportable()"
   />
 </app-page-header>
@@ -62,202 +77,34 @@
       </ul>
     </div>
 
-    <!-- ─── Lectura y encuentro, en su propia fila ────────────────────────
-         El par va encerrado a propósito. La tarjeta del encuentro es pegajosa y
-         antes vivía suelta en la rejilla de la pantalla: al scrollear se salía
-         de su fila y se montaba encima de los bloques de escritura, que cruzan
-         las dos columnas —se veía la tarjeta pisando las pestañas y el
-         odontograma—. Un elemento `sticky` no puede escapar de su bloque
-         contenedor, así que encerrarlo con la historia es lo que lo ata a la
-         única altura donde tiene sentido: la de lo que acompaña. -->
-    <div class="expediente__lectura">
-      <!-- ─── La historia, en su columna ──────────────────────────────────
-           Es lo que se lee, y por eso se lleva el ancho: en pantallas grandes la
-           tabla ocupaba media pantalla y la otra media quedaba en blanco. -->
-      <section
-        class="expediente__historia"
-        aria-label="Historia clínica"
-        appTutorialTarget="expediente-pestanas"
-      >
-        <app-tabs>
-          @for (bloque of bloques(); track bloque.clave) {
-            <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
-              <app-data-table
-                [state]="estadoDe(bloque.filas, bloque.titulo)"
-                [columns]="bloque.columnas"
-                [trackBy]="porFila"
-                [caption]="bloque.titulo + ' del expediente'"
-                (retry)="recargar()"
-              />
-            </app-tab>
-          }
-        </app-tabs>
-      </section>
+    <!-- ─── La historia ───────────────────────────────────────────────────
+         Se lleva el ancho entero: es lo único que hace esta pantalla. Antes
+         cedía una columna de 24rem a la tarjeta del encuentro, y una tabla de
+         cuatro columnas en el resto quedaba apretada contra media pantalla en
+         blanco. Lo que se escribe se mudó a «Atención», que se abre desde el
+         botón de la cabecera.
 
-      <!-- ─── El encuentro ─────────────────────────────────────────────────
-         Va en la columna de al lado y no debajo de las tablas: quien atiende
-         abre y cierra el encuentro MIENTRAS lee la historia, y mandarlo a hacer
-         scroll hasta el fondo para dejar constancia era pedirle que perdiera de
-         vista lo que acaba de consultar. Queda pegada al hacer scroll, así que
-         la historia se recorre entera sin perderla — y sólo la historia: la
-         envoltura de arriba le pone el piso. -->
-      <app-card
-        variant="outlined"
-        padding="lg"
-        class="expediente__encuentro"
-        appTutorialTarget="expediente-encuentro"
-      >
-        <h2 class="expediente__nota-titulo">Encuentro</h2>
-
-        @if (errorDelRegistro(); as mensaje) {
-          <app-alert tone="error" data-testid="encuentro-error">{{ mensaje }}</app-alert>
-        }
-
-        <!-- Los encuentros abiertos primero: si ya hay uno en curso, abrir otro
-           casi nunca es lo que se quiso hacer, y verlo antes lo evita. -->
-        @if (encuentrosEnCurso().length > 0) {
-          <ul class="expediente__en-curso" data-testid="encuentros-en-curso">
-            @for (encuentro of encuentrosEnCurso(); track encuentro.id) {
-              <li class="expediente__en-curso-item">
-                <div class="expediente__en-curso-datos">
-                  <!-- El encuentro abierto es un estado, y va con sus tres
-                     canales. Aquí la variante es fija y no sale del catálogo:
-                     «en curso» es un derivado del contrato —el encuentro no
-                     tiene `endAt`—, no un concepto que terminología resuelva. -->
-                  <app-status-seal variant="in-review" label="En curso" />
-                  <span class="expediente__principal">{{ encuentro.motivo }}</span>
-                  <span class="expediente__secundario">
-                    {{ encuentro.clase }}
-                    @if (encuentro.desde) {
-                      · desde {{ encuentro.desde | date: 'd MMM, HH:mm' }}
-                    }
-                  </span>
-                </div>
-                <button
-                  app-button
-                  variant="outline"
-                  type="button"
-                  [isLoading]="cerrando() === encuentro.id"
-                  [disabled]="cerrando() !== null"
-                  (clicked)="cerrarEncuentro(encuentro)"
-                >
-                  Cerrar
-                </button>
-              </li>
-            }
-          </ul>
-        }
-
-        <!-- Sin organización activa no se puede registrar: `tenantId` es el
-           custodio del encuentro y es obligatorio en el check-in. Decirlo así
-           —y no con un error tras el envío— es la diferencia entre «falta un
-           paso» y «esto falló». -->
-        @if (sinOrganizacion()) {
-          <app-alert tone="info" title="Elegí una organización">
-            Un encuentro queda bajo la custodia de una organización. Elegí una en el selector del
-            encabezado para poder registrarlo.
-          </app-alert>
-        } @else {
-          <form class="expediente__registro" (submit)="$event.preventDefault()">
-            <!-- Que el encuentro vaya a quedar atado a un turno no puede ser
-               invisible: es lo que distingue un registro trazable de una marca
-               de tiempo suelta, y quien firma tiene derecho a saber qué firma. -->
-            @if (citaDeOrigen()) {
-              <app-alert tone="info" title="Se registra sobre el turno de la agenda">
-                Este encuentro va a quedar vinculado a la cita desde la que llegaste.
-              </app-alert>
-            }
-
-            <app-form-field
-              label="Motivo de consulta"
-              hint="Opcional. Si llegaste desde la agenda, viene el motivo de la cita."
-            >
-              <app-textarea
-                [(value)]="motivo"
-                [rows]="3"
-                [maxLength]="topeDelMotivo"
-                [autoResize]="true"
-                placeholder="Por qué consulta la persona"
-              />
-            </app-form-field>
-
-            <app-form-actions
-              submitLabel="Registrar encuentro"
-              [pending]="registrando()"
-              [disabled]="!puedeRegistrar()"
-              (submitted)="registrarEncuentro()"
-            />
-          </form>
-        }
-      </app-card>
-    </div>
-
-    <!-- ─── Qué se va a registrar ────────────────────────────────────────
-         Los siete bloques de escritura, uno a la vez y elegido acá arriba.
-
-         Antes se dibujaban los siete apilados: quien atendía a un paciente de
-         consulta general scrolleaba igual por el odontograma y por la
-         internación para llegar a la receta, y el pedido del odontólogo fue
-         exactamente ése — «elijo el formulario que le voy a llenar, no los
-         tengo todos encima». Se conserva lo que la disposición anterior
-         defendía: la historia sigue arriba en sus pestañas de lectura y la
-         tarjeta del encuentro sigue pegada al costado, así que se escribe sin
-         perder de vista lo que se acaba de leer.
-
-         Es el mismo componente de pestañas de la historia, y por lo mismo: no
-         dibuja el panel inactivo, así que sólo el bloque elegido consulta y se
-         monta. Las internaciones y las recetas llevan su cantidad en el
-         rótulo — una internación abierta no puede quedar escondida detrás de
-         una pestaña sin avisar, que era lo que su lugar al final protegía. -->
+         Las pestañas van con el marco de ventana (`appearance="browser"`):
+         son ocho, no entran de una en la línea, y sueltas sobre el fondo de la
+         página se leían como una fila de rótulos cortados en vez de como las
+         secciones de un mismo documento. -->
     <section
-      class="expediente__registro-clinico"
-      aria-label="Registrar en el encuentro"
-      appTutorialTarget="expediente-receta"
+      class="expediente__historia"
+      aria-label="Historia clínica"
+      appTutorialTarget="expediente-pestanas"
     >
-      <h2 class="expediente__nota-titulo">Qué vas a registrar</h2>
-
-      <app-tabs>
-        <!-- Todo lo que se completa sobre el encuentro entra por acá: el bloque
-             abre con un selector —diagnóstico, hoja en blanco, procedimiento,
-             laboratorio y las fichas de especialidad, odontología incluida— y
-             dibuja sólo lo elegido. Son cinco cosas que el backend guarda en
-             cinco lugares distintos, pero para quien atiende es una sola
-             pregunta: qué le voy a llenar a esta persona. -->
-        <app-tab label="Formulario clínico">
-          <app-specialty-form-block
-            [patientProfileId]="pacienteDeLaFicha()"
-            [encounterId]="encuentroParaRecetar()"
-            (cambio)="recargar()"
-          />
-        </app-tab>
-
-        <!-- La receta va aparte y no como una opción más del selector: no es
-             una ficha que se completa una vez por encuentro sino un documento
-             que se prescribe, se firma y se emite, y trae su propia lista de lo
-             ya recetado. -->
-        <app-tab [label]="'Receta (' + recetas().length + ')'">
-          <app-medication-block
-            [patientProfileId]="pacienteDeLaFicha()"
-            [encounterId]="encuentroParaRecetar()"
-            [recetas]="recetas()"
-            [medicacionActivaConceptIds]="medicacionActivaConceptIds()"
-            [diagnosticos]="diagnosticosParaReceta()"
-            (cambio)="recargar()"
-            (descargar)="descargarReceta($event)"
-          />
-        </app-tab>
-
-        <!-- Con su cantidad en el rótulo: una internación abierta no puede
-             quedar escondida detrás de una pestaña sin avisar, que era
-             justamente lo que protegía su lugar al final de la pantalla. -->
-        <app-tab [label]="'Internación (' + internaciones().length + ')'">
-          <app-admission-block
-            [patientProfileId]="pacienteDeLaFicha()"
-            [encounterId]="encuentroParaRecetar()"
-            [internaciones]="internaciones()"
-            (cambio)="recargar()"
-          />
-        </app-tab>
+      <app-tabs appearance="browser">
+        @for (bloque of bloques(); track bloque.clave) {
+          <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
+            <app-data-table
+              [state]="estadoDe(bloque.filas, bloque.titulo)"
+              [columns]="bloque.columnas"
+              [trackBy]="porFila"
+              [caption]="bloque.titulo + ' del expediente'"
+              (retry)="recargar()"
+            />
+          </app-tab>
+        }
       </app-tabs>
     </section>
 
@@ -272,10 +119,12 @@
         la separación es de quién la escribe, no de quién la lee.
       </p>
       <p class="expediente__nota-texto">
-        De todo lo que se puede escribir en una historia clínica, acá se registran el
-        <strong>encuentro</strong> —abrirlo y cerrarlo— y la <strong>receta</strong> —prescribirla,
-        firmarla y emitirla—, porque son lo único cuyo resultado esta misma pantalla vuelve a
-        mostrar. Diagnosticar o firmar una nota tienen su flujo propio y no cuelgan de acá.
+        Esta pantalla <strong>lee</strong>. Lo que se registra durante una consulta —abrir y cerrar
+        el encuentro, recetar, la internación y las fichas de especialidad— vive en
+        <strong>Atención</strong>, que se abre con el botón de arriba y trae a la misma persona. La
+        única escritura que quedó acá es el <strong>estado clínico</strong> de un diagnóstico, y con
+        su adjunto: es una corrección de lo que esta tabla muestra, no un registro de la consulta de
+        hoy.
       </p>
     </app-card>
   </div>

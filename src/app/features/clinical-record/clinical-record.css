@@ -18,6 +18,44 @@
   max-inline-size: 32rem;
 }
 
+/* ── Buscar por documento ──────────────────────────────────────────────────
+   El número, el departamento y el botón son UNA pregunta, no tres. Apilados a
+   lo ancho de la pantalla se leían como tres pasos de un formulario largo,
+   cuando en realidad se completan de corrido y el departamento casi siempre se
+   deja como está.
+
+   En el teléfono siguen apilados: tres controles repartidos en 360 px dejan al
+   número de carnet demasiado angosto para leer lo que se está tecleando. */
+
+.archivo__documento {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  /* Ni el número ni el departamento se leen mejor por medir mil píxeles. */
+  max-inline-size: 60rem;
+}
+
+.archivo__documento-campo {
+  flex: 1 1 100%;
+}
+
+@media (min-width: 780px) {
+  .archivo__documento-campo {
+    flex: 1 1 14rem;
+  }
+
+  /* El botón se alinea con los CONTROLES y no con el borde inferior de la
+     fila: la explicación del departamento cuelga por debajo del suyo, y
+     alinear al final lo habría dejado un renglón más abajo que los dos campos.
+     La medida es exactamente lo que ocupa una etiqueta — su interlínea más el
+     hueco que `form-field-container` deja entre etiqueta y control—, así que
+     sigue cuadrando si la tipografía del sistema cambia. */
+  .archivo__documento > [app-button] {
+    margin-block-start: calc(var(--lh-body) + var(--sp-1));
+  }
+}
+
 .archivo__nombre {
   display: block;
   font-weight: 500;

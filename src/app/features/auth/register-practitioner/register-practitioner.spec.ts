@@ -4,7 +4,8 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
-import { RegisterPractitioner } from './register-practitioner';
+import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
+import { ESPECIALIDAD } from '../../../core/mock/fixtures/conceptos';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
 
@@ -1289,6 +1290,40 @@ describe('RegisterPractitioner', () => {
 
       expect(component.errorFoto()).toBe('La imagen supera el límite de 5 MB.');
       expect(component.fotoBase64()).toBeNull();
+    });
+  });
+
+  /* ==========================================================================
+     El catálogo que el filtro necesita.
+
+     Las dos listas de especialidad —la del odontólogo y la del resto— salen de
+     partir `VS_MEDICAL_SPECIALTY` por código. Un filtro por código es mudo si
+     el catálogo habla otro vocabulario: no falla, no avisa, sencillamente
+     devuelve nada. Fue lo que pasó en la rama `mockup` el 08/09/2026 — el
+     backend simulado tenía sus dieciocho especialidades con códigos propios
+     (`SP-ODONTO`…), ninguno de estos once acertaba, y quien elegía «Odontólogo»
+     llegaba al paso de especialidades y no tenía ninguna que elegir.
+
+     Se comprueba contra el catálogo del simulador porque es el único de los
+     dos que este repositorio puede leer. Es también el que sirve la maqueta que
+     el stakeholder recorre, así que es exactamente donde el hueco apareció.
+     ========================================================================== */
+  describe('el filtro de especialidades odontológicas', () => {
+    it('cada código que nombra existe en el catálogo', () => {
+      for (const codigo of ESPECIALIDADES_ODONTOLOGICAS) {
+        expect(ESPECIALIDAD[codigo], codigo).toBeDefined();
+      }
+    });
+
+    it('deja médicas de sobra del otro lado', () => {
+      // La otra mitad del corte: si el complemento quedara vacío, el filtro
+      // estaría bien escrito y aun así ninguna profesión médica tendría qué
+      // ofrecer. Son las 52 restantes de las 63.
+      const medicas = Object.keys(ESPECIALIDAD).filter(
+        (codigo) => !ESPECIALIDADES_ODONTOLOGICAS.has(codigo),
+      );
+
+      expect(medicas.length).toBeGreaterThan(40);
     });
   });
 

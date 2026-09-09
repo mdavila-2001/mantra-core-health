@@ -139,15 +139,15 @@ describe('NavigationService', () => {
         // profesionales, y una sesión sin roles no es de nadie que ejerza.
         // La portada de directorios (FT-18, `roles: [ANY_ROLE]`) sí entra:
         // no exige rol, a diferencia de sus cuatro hijos específicos.
+        //
+        // **Y es la única del bloque que entra** (08/09/2026). Los cuatro
+        // directorios —laboratorios, clínicas, farmacias y el de médicos—
+        // siguen sin exigir rol y se siguen alcanzando; lo que dejaron de
+        // hacer es ocupar un renglón, porque se entra por esta portada. Ojo
+        // con leer esta lista como una pérdida de acceso: es la lista del
+        // **menú**, y lo que se alcanza lo fija `visibleSections` — hay una
+        // prueba dedicada más abajo.
         '/directories',
-        // El directorio de laboratorios tampoco exige rol: es oferta publicada, no PHI.
-        '/laboratory-directory',
-        // A5 y A6 del plan de UX (22/08/2026): los directorios de clínicas y de
-        // farmacias entran por lo mismo que el de laboratorios — es oferta
-        // publicada, no PHI, y quien busca dónde atenderse no tiene un rol que
-        // lo exprese. Salen de `GET /public/search/*`, que es anónimo.
-        '/clinics-directory',
-        '/pharmacies-directory',
         // El glosario ya NO entra: desde el 18/08/2026 (feedback de la analista,
         // F-03) declara los roles de quien atiende, y una sesión sin roles no
         // es de nadie que atienda.
@@ -205,17 +205,22 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).not.toContain('/administration/medical-laboratory');
     });
 
-    it('el menú del médico son las opciones del cliente, el generador y los dos directorios', () => {
+    it('el menú del médico son las opciones del cliente, el generador y la portada de directorios', () => {
       // §4.H del plan de UX del 22/08/2026. El cliente dio una lista **cerrada**
       // —«las opciones únicas que se requiere en el panel del doctor son…»— y el
       // menú tenía dieciséis entradas de primer nivel. Esta prueba es la lista,
       // en el orden en que se dibuja, y falla si alguien agrega la siguiente.
       //
-      // **Las dos guías entran por la funcionalidad 9 (FT-09-R01, 04/09/2026),
-      // con aval explícito del propietario.** El pedido era «Directorio,
-      // Administración, Chats»; de los cuatro directorios del producto, los dos
-      // que el médico puede ver son el de clínicas y el de farmacias. La lista
-      // cerrada pasa de nueve a once por esa decisión, no por descuido.
+      // **Los directorios ocupan UN renglón, no tres** (08/09/2026). Entraron
+      // por la funcionalidad 9 (FT-09-R01, 04/09/2026) con aval explícito del
+      // propietario —el pedido era «Directorio, Administración, Chats»— y
+      // siguen siendo del médico: el de clínicas y el de farmacias se abren
+      // desde la portada, y la prueba de abajo lo fija. Lo que cambió es que
+      // la portada dejó de ser un desplegable con los tres adentro: era el
+      // mismo destino ofrecido dos veces, una encima de la otra.
+      //
+      // Para la lista cerrada esto **descuenta** dos renglones de los trece,
+      // que es la dirección correcta: §4.H existe para que el panel no crezca.
       //
       // **«Mis servicios» es la doceava, y entra por la funcionalidad 22
       // (FT-22, 04/09/2026), también con aval explícito.** Nació fuera del menú
@@ -261,9 +266,6 @@ describe('NavigationService', () => {
       expect(fueraDeMiCuenta).toEqual([
         'Chats',
         'Directorios',
-        'Directorio de laboratorios',
-        'Directorio de clínicas',
-        'Directorio de farmacias',
         'Consultas médicas',
         'Archivo clínico',
         'Evoluciones',
@@ -281,11 +283,18 @@ describe('NavigationService', () => {
       // prueba fija cuáles entraron y cuál no: si alguien lee la funcionalidad
       // 9 como «devolverle la Guía de profesionales», falla acá y no en
       // producción.
+      //
+      // **Se mide sobre `visibleSections` y no sobre el menú** desde el
+      // 08/09/2026, y no es una rebaja: los cuatro directorios salieron del
+      // menú para que se entre por la portada, así que preguntarle al menú
+      // cuáles son del médico dejó de tener respuesta. Lo que FT-09-R01
+      // decidió nunca fue un renglón —fue el acceso—, y acá es donde vive.
       abrirSesion(['PRACTITIONER']);
 
-      expect(rutasDelMenu()).toContain('/clinics-directory');
-      expect(rutasDelMenu()).toContain('/pharmacies-directory');
-      expect(rutasDelMenu()).not.toContain('/directory');
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(alcanzables).toContain('/clinics-directory');
+      expect(alcanzables).toContain('/pharmacies-directory');
+      expect(alcanzables).not.toContain('/directory');
     });
 
     it('lo que sale del menú del médico NO le cierra la puerta', () => {
@@ -310,17 +319,46 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).not.toContain('/lab-visits');
     });
 
-    it('la Guía de profesionales solo aparece en el menú del paciente', () => {
+    it('la Guía de profesionales solo la alcanza el paciente', () => {
       // Corrección #2. La medición del carril 01 la encontró en el menú de la
       // doctora, que es exactamente lo que el cliente pidió sacar.
+      //
+      // **También se mudó a `visibleSections`** (08/09/2026): desde que los
+      // cuatro directorios se abren por la portada, `/directory` no está en el
+      // menú de NADIE, y una prueba que sólo mirara ahí pasaría en verde
+      // aunque alguien le devolviera la pantalla al médico por descuido. Lo
+      // que el cliente pidió —«no debe aparecer ni ser accesible para doctor u
+      // otros roles»— es esto, y `exclusiveRoles` es quien lo cumple.
       abrirSesion(['PATIENT']);
-      expect(rutasDelMenu()).toContain('/directory');
+      const delPaciente = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(delPaciente).toContain('/directory');
 
       abrirSesion(['PRACTITIONER', 'CLINICIAN']);
-      expect(rutasDelMenu()).not.toContain('/directory');
+      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).not.toContain('/directory');
 
       abrirSesion(['SECURITY_ADMIN']);
-      expect(rutasDelMenu()).not.toContain('/directory');
+      expect(service.visibleSections().map((seccion) => `/${seccion.path}`)).not.toContain('/directory');
+    });
+
+    it('los cuatro directorios no ocupan renglón, y ninguno perdió la puerta', () => {
+      // La otra mitad del cambio del 08/09/2026, y la que importa: sacar algo
+      // del menú no puede ser sacárselo a nadie. El paciente es quien más
+      // tiene que perder —es el único que ve los cuatro—, así que se mide con
+      // él. La portada los ofrece a los cuatro; el menú, sólo a la portada.
+      abrirSesion(['PATIENT']);
+
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      for (const ruta of [
+        '/directory',
+        '/laboratory-directory',
+        '/clinics-directory',
+        '/pharmacies-directory',
+      ]) {
+        expect(alcanzables, ruta).toContain(ruta);
+        expect(rutasDelMenu(), ruta).not.toContain(ruta);
+      }
+
+      expect(rutasDelMenu()).toContain('/directories');
     });
 
     it('«Mis pedidos» sólo aparece en el menú del paciente', () => {
@@ -419,19 +457,20 @@ describe('NavigationService', () => {
       }
     });
 
-    it('los directorios quedan juntos, que es el bloque que el armazón tenía a mano', () => {
+    it('el bloque de directorios se queda con la portada, y el armazón la dibuja suelta', () => {
+      // Hasta el 08/09/2026 este bloque traía los cinco y se dibujaba como
+      // desplegable. Ahora los cuatro directorios declaran
+      // `fueraDelMenuPara: [ANY_ROLE]` y queda sólo la portada: un bloque de
+      // uno, que `shell-layout.html` dibuja como renglón suelto. Es el cambio
+      // entero, visto desde donde se decide — apretar «Directorios» lleva a la
+      // pantalla que deja elegir, en vez de abrir una lista que ofrecía lo
+      // mismo un clic antes.
       abrirSesion(['PATIENT']);
 
       const general = service.menu().find((grupo) => grupo.label === 'General');
       const directorios = general?.blocks.find((bloque) => bloque.label === 'Directorios');
 
-      expect(directorios?.items.map((item) => item.route)).toEqual([
-        '/directories',
-        '/directory',
-        '/laboratory-directory',
-        '/clinics-directory',
-        '/pharmacies-directory',
-      ]);
+      expect(directorios?.items.map((item) => item.route)).toEqual(['/directories']);
     });
 
     it('el bloque se dibuja donde está su primera sección visible, no donde se declaró', () => {
@@ -445,21 +484,22 @@ describe('NavigationService', () => {
     });
 
     it('un bloque sólo trae lo que la sesión puede ver', () => {
-      // De los cinco directorios, quien ejerce ve cuatro: la Guía de
-      // profesionales es exclusiva del paciente. Hasta el 04/09 veía uno solo
-      // —clínicas y farmacias salían por `fueraDelMenuPara`— y FT-09-R01 se las
-      // devolvió; lo que esta prueba sigue mostrando es el filtrado, que es su
-      // motivo de existir.
+      // El filtrado dentro de un bloque, que es el motivo de existir de esta
+      // prueba. Se demostraba con los directorios hasta el 08/09/2026; desde
+      // que los cuatro se abren por la portada, ese bloque tiene un solo
+      // renglón para todo el mundo y dejó de poder mostrar nada. «Formularios
+      // y referencia» ocupa su lugar: declara cinco secciones y quien ejerce
+      // ve cuatro — «Mis cuestionarios» sale por la lista cerrada de §4.H.
       abrirSesion(['PRACTITIONER']);
 
-      const general = service.menu().find((grupo) => grupo.label === 'General');
-      const directorios = general?.blocks.find((bloque) => bloque.label === 'Directorios');
+      const atencion = service.menu().find((grupo) => grupo.label === 'Atención');
+      const formularios = atencion?.blocks.find((bloque) => bloque.label === 'Formularios y referencia');
 
-      expect(directorios?.items.map((item) => item.route)).toEqual([
-        '/directories',
-        '/laboratory-directory',
-        '/clinics-directory',
-        '/pharmacies-directory',
+      expect(formularios?.items.map((item) => item.route)).toEqual([
+        '/glossary',
+        '/form-builder',
+        '/my-services',
+        '/my-quotations',
       ]);
     });
 

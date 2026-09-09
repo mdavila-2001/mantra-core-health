@@ -1,14 +1,11 @@
-﻿import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+﻿import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import type { WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import type { ClinicalSummary } from '../../../core/data-access/clinical/clinical.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
-import type { ViewState } from '../../../core/view-state/view-state.types';
 import {
   bloquesDeAtencion,
   bloquesDeReceta,
@@ -80,19 +77,6 @@ function jwt(payload: Record<string, unknown>): string {
   };
   return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
 }
-
-/** Un encuentro recién abierto: `endAt` llega `null`, no ausente. */
-const ENCUENTRO_ABIERTO = {
-  id: 'e-1',
-  patientProfileId: 'p-1',
-  episodeId: null,
-  status: 'st-activa',
-  participantIds: [],
-  locationIds: [],
-  startAt: '2026-03-01T10:00:00.000Z',
-  endAt: null,
-  createdAt: '2026-03-01T10:00:00.000Z',
-};
 
 const HACE_UNA_HORA = '2026-03-01T10:00:00.000Z';
 
@@ -261,21 +245,6 @@ describe('PatientChart', () => {
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
     return (typeof valor === 'function' ? valor.bind(componente) : valor) as T;
-  }
-
-  /**
-   * Una señal escribible, **sin `bind`**.
-   *
-   * `interno` liga las funciones al componente, y `bind` devuelve una función
-   * nueva que no conserva las propiedades de la original: la señal ligada se
-   * puede leer pero pierde su `.set`. Para escribir hace falta la señal tal cual.
-   */
-  function señal<T>(nombre: string): WritableSignal<T> {
-    return (componente as unknown as Record<string, WritableSignal<T>>)[nombre];
-  }
-
-  function motivo(): WritableSignal<string> {
-    return señal<string>('motivo');
   }
 
   /** Abre sesión con organización activa: sin ella no hay encuentro que registrar. */
@@ -603,253 +572,11 @@ describe('PatientChart', () => {
     expect(vacio.nextAction?.label).toBe('Elegir otra persona');
   });
 
-  /* ---- el encuentro: la única escritura de la pantalla -------------------- */
-
-  it('sin organización activa no ofrece registrar: `tenantId` es obligatorio', () => {
-    responderNombre();
-    responderExpediente();
-
-    expect(interno<() => boolean>('sinOrganizacion')()).toBe(true);
-    expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
-  });
-
-  it('con el expediente todavía sin leer no se puede registrar a ciegas', () => {
-    abrirSesion();
-    responderNombre();
-
-    expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
-
-    responderExpediente();
-    expect(interno<() => boolean>('puedeRegistrar')()).toBe(true);
-  });
-
-  it('registrar abre el encuentro con el paciente de la ruta y la organización activa', () => {
-    abrirSesion();
-    responderNombre();
-    responderExpediente();
-
-    motivo().set('Dolor abdominal');
-    interno<() => void>('registrarEncuentro')();
-
-    const req = http.expectOne('/clinical/encounters/check-in');
-    expect(req.request.body).toEqual({
-      patientProfileId: 'p-1',
-      tenantId: 't-1',
-      reasonText: 'Dolor abdominal',
-    });
-    req.flush(ENCUENTRO_ABIERTO);
-
-    // Releer no es opcional: el encuentro recién abierto tiene que aparecer en
-    // su bloque, o la pantalla afirmaría un registro que no muestra.
-    responderNombre();
-    responderExpediente();
-    expect(estado().status).toBe('ready');
-  });
-
-  /**
-   * El vínculo con el turno. `?cita=` trae el `appointmentId` de la reserva, que
-   * es una clave foránea real hacia `clinical.appointments`.
-   */
-  it('manda la cita de origen cuando se llegó desde la agenda', async () => {
-    abrirSesion();
-    responderNombre();
-    responderExpediente();
-
-    // Se llega con el turno puesto, como hace el enlace de la agenda. Mismo
-    // paciente, así que el expediente no se relee: sólo cambian los parámetros.
-    await harness.navigateByUrl('/medical-records/p-1?cita=ap-1&motivo=Control');
-
-    interno<() => void>('registrarEncuentro')();
-
-    const req = http.expectOne('/clinical/encounters/check-in');
-    expect(req.request.body).toEqual({
-      patientProfileId: 'p-1',
-      tenantId: 't-1',
-      reasonText: 'Control',
-      appointmentId: 'ap-1',
-    });
-    req.flush(ENCUENTRO_ABIERTO);
-
-    responderNombre();
-    responderExpediente();
-  });
-
-  /**
-   * Un encuentro sin profesional es una marca de tiempo sin autor. El dato sale
-   * del claim `hpid`, que existe justamente porque no hay lectura que lo dé.
-   */
-  it('manda al profesional de la sesión como responsable', () => {
-    abrirSesion({ hpid: 'hp-1' });
-    responderNombre();
-    responderExpediente();
-
-    interno<() => void>('registrarEncuentro')();
-
-    const req = http.expectOne('/clinical/encounters/check-in');
-    expect((req.request.body as Record<string, unknown>)['primaryPractitionerId']).toBe('hp-1');
-    req.flush(ENCUENTRO_ABIERTO);
-
-    responderNombre();
-    responderExpediente();
-  });
-
-  it('una cuenta sin perfil profesional no manda responsable', () => {
-    abrirSesion();
-    responderNombre();
-    responderExpediente();
-
-    interno<() => void>('registrarEncuentro')();
-
-    const req = http.expectOne('/clinical/encounters/check-in');
-    expect(req.request.body).not.toHaveProperty('primaryPractitionerId');
-    req.flush(ENCUENTRO_ABIERTO);
-
-    responderNombre();
-    responderExpediente();
-  });
-
-  /**
-   * Una cadena vacía sería un motivo registrado que no dice nada, y se lee peor
-   * que su ausencia — el contrato lo declara opcional.
-   */
-  it('un motivo en blanco no viaja', () => {
-    abrirSesion();
-    responderNombre();
-    responderExpediente();
-
-    motivo().set('   ');
-    interno<() => void>('registrarEncuentro')();
-
-    const req = http.expectOne('/clinical/encounters/check-in');
-    expect(Object.keys(req.request.body as object).sort()).toEqual([
-      'patientProfileId',
-      'tenantId',
-    ]);
-    req.flush(ENCUENTRO_ABIERTO);
-
-    responderNombre();
-    responderExpediente();
-  });
-
-  it('sólo los encuentros sin fin están en curso', () => {
-    abrirSesion();
-    responderNombre();
-    responderExpediente({
-      resumen: {
-        encounters: [
-          {
-            id: 'e-1',
-            statusConceptId: 'st-activa',
-            reasonText: 'Control',
-            startAt: HACE_UNA_HORA,
-          },
-          {
-            id: 'e-2',
-            statusConceptId: 'st-activa',
-            reasonText: 'Anterior',
-            startAt: HACE_UNA_HORA,
-            endAt: HACE_UNA_HORA,
-          },
-        ],
-      },
-    });
-
-    const enCurso = interno<() => readonly Record<string, unknown>[]>('encuentrosEnCurso')();
-    expect(enCurso.map((e) => e['id'])).toEqual(['e-1']);
-    expect(enCurso[0]['motivo']).toBe('Control');
-  });
-
-  /**
-   * El `422` de «el encuentro no está en curso» llega como validación con su
-   * código. Se reconoce por el código y no por el mensaje —que es texto humano
-   * y puede cambiar de redacción— y la salida que se ofrece es recargar, que es
-   * la única que sirve.
-   */
-  it('traduce el 422 de un encuentro que ya no está en curso', () => {
-    abrirSesion();
-    responderNombre();
-    responderExpediente();
-
-    señal<ViewState<null>>('registro').set(
-      errorToViewState<null>(
-        new HttpErrorResponse({
-          status: 422,
-          statusText: 'Unprocessable Entity',
-          error: {
-            code: 'PRECONDITION_FAILED',
-            message: 'El encuentro no está en curso',
-            timestamp: '',
-            path: '',
-          },
-        }),
-      ),
-    );
-
-    expect(interno<() => string | null>('errorDelRegistro')()).toContain('Recargá el expediente');
-  });
-
-  /* ---- lo que baja al bloque de medicación -------------------------------- */
-
-  /**
-   * «Firmada» y «emitida» salen de `signedAt` e `issuedAt`, no del estado: el
-   * estado es un uuid de concepto, y ramificar por su valor ataría la pantalla
-   * a un identificador de catálogo.
-   */
-  it('resuelve el ciclo de cada receta por sus instantes, no por su estado', () => {
-    abrirSesion();
-    responderNombre();
-    responderExpediente({
-      resumen: {
-        medicationRequests: [
-          {
-            id: 'rx-1',
-            medicationConceptId: 'con-diabetes',
-            statusConceptId: 'st-activa',
-            doseText: '500 mg',
-            frequencyText: 'cada 8 horas',
-            createdAt: HACE_UNA_HORA,
-          },
-          {
-            id: 'rx-2',
-            medicationConceptId: 'con-diabetes',
-            statusConceptId: 'st-activa',
-            signedAt: HACE_UNA_HORA,
-            issuedAt: HACE_UNA_HORA,
-            createdAt: HACE_UNA_HORA,
-          },
-        ],
-      },
-    });
-
-    const recetas = interno<() => readonly Record<string, unknown>[]>('recetas')();
-    expect(recetas[0]['firmada']).toBe(false);
-    expect(recetas[0]['emitida']).toBe(false);
-    // Y traducida: ningún uuid baja al bloque.
-    expect(recetas[0]['medicamento']).toBe('Diabetes tipo 2');
-    expect(recetas[0]['indicacion']).toBe('500 mg · cada 8 horas');
-    expect(recetas[1]['firmada']).toBe(true);
-    expect(recetas[1]['emitida']).toBe(true);
-  });
-
-  it('sin encuentro abierto no baja ninguno: la receta vive dentro de la consulta', () => {
-    abrirSesion();
-    responderNombre();
-    responderExpediente();
-
-    expect(interno<() => string | null>('encuentroParaRecetar')()).toBeNull();
-  });
-
-  it('con un encuentro en curso, es ese el que recibe la receta', () => {
-    abrirSesion();
-    responderNombre();
-    responderExpediente({
-      resumen: {
-        encounters: [{ id: 'e-1', statusConceptId: 'st-activa', startAt: HACE_UNA_HORA }],
-      },
-    });
-
-    expect(interno<() => string | null>('encuentroParaRecetar')()).toBe('e-1');
-  });
+  /* ---- lo que se mudó a «Atención» -----------------------------------
+     Abrir y cerrar el encuentro, la receta y la internación ya no viven acá:
+     sus pruebas están en `encounter-workspace.spec.ts`. Lo que queda es lo
+     único que el expediente sigue escribiendo —el estado clínico de un
+     diagnóstico y su adjunto— y los papeles que genera. */
 
   /* ---- quién firma el papel ----------------------------------------------
      El motor del PDF sabe imprimir «Matrícula:» y «Organización:» desde el
