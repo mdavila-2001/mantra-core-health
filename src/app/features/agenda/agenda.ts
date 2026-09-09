@@ -198,17 +198,6 @@ const ROLES_QUE_ELIGEN_RECURSO = ROLES_QUE_OPERAN_CITAS;
 const ROLES_QUE_RESERVAN = [...ROLES_QUE_OPERAN_CITAS, 'PATIENT'];
 
 /**
- * Roles que pueden construir agenda (UC-41-01 → UC-41-04).
- *
- * El agente de mostrador no arma la grilla; el profesional **sí**, desde el
- * autoservicio: las cinco escrituras del catálogo declaran
- * `@Roles('SCHEDULING_ADMIN', 'PRACTITIONER')`, y el backend le acota el
- * recurso al suyo. Dejarlo afuera escondía «Crear agenda» justo a quien la
- * pantalla le está pidiendo que la publique.
- */
-const ROLES_QUE_CREAN_AGENDA = ['SCHEDULING_ADMIN', 'SUPERADMIN', 'PRACTITIONER'];
-
-/**
  * Las demoras que se ofrecen (P8 · registro del cliente 4.2).
  *
  * Una lista corta y no un campo libre: la demora se avisa **mientras** la
@@ -411,7 +400,7 @@ export class Agenda {
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
-  /** Destino del enlace «Crear agenda» del encabezado. */
+  /** Destino de «Publicar mi agenda», el aviso de quien todavía no tiene horario. */
   protected readonly rutaCrearAgenda = AGENDA_CREATE_ROUTE;
 
   private readonly celdaCuando =
@@ -819,18 +808,6 @@ export class Agenda {
   protected readonly puedeReservar = computed(() => {
     const roles = this.auth.roles();
     return ROLES_QUE_RESERVAN.some((rol) => roles.includes(rol));
-  });
-
-  /**
-   * Si la sesión puede construir agenda (recurso, política, plantilla, cupos,
-   * excepciones). Es el enlace al alta por fases, y sólo lo ve quien la API deja
-   * usarla: las cuatro fases de configuración exigen `SCHEDULING_ADMIN`, y
-   * `SUPERADMIN` es su comodín en el `RolesGuard`. Ofrecerlo a otro rol sería
-   * ofrecer un 403.
-   */
-  protected readonly puedeCrearAgenda = computed(() => {
-    const roles = this.auth.roles();
-    return ROLES_QUE_CREAN_AGENDA.some((rol) => roles.includes(rol));
   });
 
   /* ---- «me demoro» (P8 · registro del cliente 4.2) ------------------------ */

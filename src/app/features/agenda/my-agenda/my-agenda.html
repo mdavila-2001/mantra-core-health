@@ -164,7 +164,11 @@
              con otro color los que corresponden atención». La semanita de
              abajo se queda: reconoce de inmediato el formulario con el que se
              publicó, y la grilla responde otra pregunta —cuándo, no qué días—. -->
-        <app-schedule-grid [reglas]="reglasVigentes()" />
+        <app-schedule-grid
+          [reglas]="reglasVigentes()"
+          [nombre]="nombreDelHorario()"
+          [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambies.'"
+        />
 
         <ul class="mi-agenda__semana" aria-label="Días que atendés">
           @for (dia of p.semana; track dia.numero) {
@@ -361,7 +365,14 @@
            horario oficial (`ScheduleGrid`), no una imitación en texto. -->
       @if (historicoAVer(); as viejo) {
         <app-content-dialog [heading]="'Así era «' + viejo.name + '»'" (closed)="cerrarHistorico()">
-          <app-schedule-grid [reglas]="viejo.rules" />
+          <!-- Sin fechas: un horario retirado no es de esta semana ni de
+               ninguna, así que la cabecera lleva sólo los nombres de los días. -->
+          <app-schedule-grid
+            [reglas]="viejo.rules"
+            [conFechas]="false"
+            [nombre]="viejo.name"
+            [vigencia]="vigenciaDe(viejo)"
+          />
           <p class="mi-agenda__historico-resumen">
             @if (totalTurnosDe(viejo) === 0) {
               Este horario no llegó a tener turnos.
