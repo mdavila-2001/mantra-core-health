@@ -716,6 +716,7 @@ export class RegisterLaboratory {
     sinConfirmar: 'registro-lab-central-location-unconfirmed',
     confirmar: 'registro-lab-central-location-confirm',
     usarUbicacion: 'registro-lab-central-location-use',
+    marcarEnMapa: 'registro-lab-central-location-pick',
   };
 
   /* --- sucursales -------------------------------------------------------- */
@@ -778,6 +779,7 @@ export class RegisterLaboratory {
       sinConfirmar: `registro-lab-${id}-location-unconfirmed`,
       confirmar: `registro-lab-${id}-location-confirm`,
       usarUbicacion: `registro-lab-${id}-location-use`,
+      marcarEnMapa: `registro-lab-${id}-location-pick`,
     };
   }
 
