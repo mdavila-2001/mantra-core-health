@@ -43,6 +43,28 @@ async function main() {
   };
   const t = (id) => pagina.locator(`[data-testid="${id}"]`);
 
+  /**
+   * Vuelve a la lista y entra otra vez al hilo con Soporte.
+   *
+   * Reemplaza al `reload()`: la maqueta guarda sus tablas en memoria (ninguna
+   * `Coleccion` recibe clave de `sessionStorage`), así que recargar borraría el
+   * estado por culpa del simulador y no del código. Salir y volver a entrar sí
+   * prueba lo que interesa — que lo que se ve viene de una lectura de la API y
+   * no del estado que el componente tenía en la mano.
+   */
+  const volverYEntrar = async () => {
+    // Navegación del router, no `goto`: `goto` recarga la aplicación entera y
+    // con ella el simulador, así que borraría el estado que se quiere
+    // comprobar. Se pasa por otra conversación para forzar que el hilo se
+    // destruya y se vuelva a leer.
+    const otra = t('conversacion').filter({ hasNotText: 'Soporte' }).first();
+    await otra.click();
+    await pagina.waitForTimeout(700);
+    await t('conversacion').filter({ hasText: 'Soporte' }).first().click();
+    await t('mensaje').first().waitFor({ timeout: 30_000 });
+    await pagina.waitForTimeout(800);
+  };
+
   await pagina.goto(`${BASE}/auth`);
   await pagina.getByTestId('login-identifier').fill('paciente@alovida.mock');
   await pagina.getByTestId('login-password').fill('mockup');
@@ -104,10 +126,13 @@ async function main() {
   ok('F4.6 fijar: la barra «Mensaje fijado» aparece con el texto',
     (await t('hilo-fijado').count()) > 0 && ((await t('hilo-fijado').textContent()) ?? '').includes('corregido'));
   await capturar('04-fijado');
-  await pagina.reload();
-  await t('mensaje').first().waitFor({ timeout: 30_000 });
-  await pagina.waitForTimeout(600);
-  ok('F4.6 fijar: sobrevive a recargar (viaja en la primera página)', (await t('hilo-fijado').count()) > 0);
+  // Salir del hilo y volver, **no** recargar: ninguna colección de la maqueta
+  // persiste entre recargas (`Coleccion` sólo guarda si se le pasa clave, y
+  // ninguna la usa), así que un F5 borraría el fijado por el simulador y no
+  // por el código. Volver a entrar sí prueba lo que importa: que el fijado
+  // viene de la primera página de la API y no del estado del componente.
+  await volverYEntrar();
+  ok('F4.6 fijar: sigue ahí al volver a entrar (viaja en la primera página)', (await t('hilo-fijado').count()) > 0);
   await t('hilo-soltar-fijado').click();
   await pagina.waitForTimeout(400);
   ok('F4.6 soltar: la barra se va', (await t('hilo-fijado').count()) === 0);
@@ -122,10 +147,8 @@ async function main() {
   ok('F4.5 eliminar: queda «Se eliminó este mensaje» y el texto ya no se ve',
     (await t('hilo-eliminado').count()) > 0 && (await t('mensaje').filter({ hasText: '(corregido)' }).count()) === 0);
   await capturar('05-eliminado');
-  await pagina.reload();
-  await t('mensaje').first().waitFor({ timeout: 30_000 });
-  await pagina.waitForTimeout(600);
-  ok('F4.5 eliminar: sobrevive a recargar', (await t('hilo-eliminado').count()) > 0);
+  await volverYEntrar();
+  ok('F4.5 eliminar: sigue eliminado al volver a entrar', (await t('hilo-eliminado').count()) > 0);
 
   /* --- F4.4 · favorito y fijado por API ------------------------------------ */
   const primeraAntes = (await t('conversacion').first().textContent()) ?? '';
@@ -144,12 +167,11 @@ async function main() {
     primeraDespues.includes('Soporte') && (await t('conversacion-fijada').count()) > 0,
     `antes «${primeraAntes.slice(0, 30)}…», después «${primeraDespues.slice(0, 30)}…»`);
   await capturar('06-favorita-y-fijada');
-  await pagina.reload();
-  await t('conversacion').first().waitFor({ timeout: 30_000 });
-  await pagina.waitForTimeout(600);
-  ok('F4.4: favorito y fijado sobreviven a recargar (viven en la API, no en el navegador)',
+  await volverYEntrar();
+  ok('F4.4: favorito y fijado siguen al volver a entrar (vienen de la fila de la bandeja)',
     ((await t('conversacion').first().textContent()) ?? '').includes('Soporte') &&
       (await t('conversacion-fijada').count()) > 0);
+  // Lo que sí se mira contra el navegador: que ya NO guarde ahí lo marcado.
   const guardado = await pagina.evaluate(() => localStorage.getItem('alovida.chat-preferencias') ?? '{}');
   ok('F4.4: el navegador ya no guarda favoritos ni archivados',
     !guardado.includes('"favoritos"') && !guardado.includes('"archivados"'), guardado.slice(0, 60));
