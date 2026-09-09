@@ -61,6 +61,41 @@ function paraMedica(): NotificacionSimulada[] {
 
 const notificaciones = new Coleccion<NotificacionSimulada>([...paraPaciente(), ...paraMedica()]);
 
+/**
+ * Deja una notificación nueva en la campana de alguien.
+ *
+ * Es la única forma de que un aviso nazca DURANTE la sesión y no del juego
+ * de fixtures: hasta ahora la campana sólo mostraba lo sembrado al arrancar,
+ * así que una acción del médico no tenía cómo llegarle al paciente.
+ *
+ * Nace sin leer y con la hora actual, que es lo que la hace aparecer arriba
+ * de todo y sumar al contador de la campana.
+ *
+ * No sabe de agendas ni de recetas a propósito: el texto lo redacta quien
+ * conoce el dominio y lo entrega armado.
+ */
+export function emitirNotificacion(datos: {
+  readonly userId: string;
+  readonly category: Categoria;
+  readonly subject: string;
+  readonly bodyText: string;
+  readonly destination?: { type: string; id: string } | null;
+  readonly payloadJson?: unknown;
+}): void {
+  notificaciones.agregar({
+    id: uuid(`notif-${datos.userId}-${Date.now()}-${Math.random()}`),
+    userId: datos.userId,
+    category: datos.category,
+    subject: datos.subject,
+    bodyText: datos.bodyText,
+    destination: datos.destination ?? null,
+    payloadJson: datos.payloadJson ?? null,
+    unread: true,
+    availableAt: ahora(),
+    readAt: null,
+  });
+}
+
 const preferencias = new Map<string, { categories: { category: Categoria; optedIn: boolean }[]; quietHours: { start: string; end: string } | null }>();
 
 function preferenciasDe(userId: string) {
