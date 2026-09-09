@@ -57,7 +57,34 @@ const archivos = new Coleccion<ArchivoSimulado>([
   ]),
   { id: uuid('file-lunar'), currentVersionId: uuid('v-file-lunar'), originalName: 'lunar.jpg', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-12), dataUrl: imagenSvg('Foto del lunar', '#fdf2f8', '#9d174d') },
   { id: uuid('file-licencia'), currentVersionId: uuid('v-file-licencia'), originalName: 'licencia-funcionamiento.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-400), dataUrl: imagenSvg('Licencia de funcionamiento (PDF)') },
+  // Los adjuntos del chat de grupo de la médica.
+  { id: uuid('file-guia-anticoagulacion'), currentVersionId: uuid('v-file-guia-anticoagulacion'), originalName: 'guia-anticoagulacion-2026.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('Guía de anticoagulación 2026 (PDF)') },
+  { id: uuid('file-holter'), currentVersionId: uuid('v-file-holter'), originalName: 'holter-24h.png', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(0), dataUrl: imagenSvg('Holter 24 h', '#f0fdf4', '#166534') },
 ]);
+
+/** Un PDF de una página con una línea de texto. Lo justo para que un visor lo abra. */
+function pdfMinimo(texto: string): string {
+  const limpio = texto.replace(/[^\x20-\x7e]/g, '?').replace(/[()\\]/g, '');
+  const contenido = `BT /F1 18 Tf 60 740 Td (${limpio}) Tj ET`;
+  const objetos = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Length ${contenido.length} >>\nstream\n${contenido}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let salida = '%PDF-1.4\n';
+  const offsets: number[] = [];
+  objetos.forEach((objeto, i) => {
+    offsets.push(salida.length);
+    salida += `${i + 1} 0 obj\n${objeto}\nendobj\n`;
+  });
+  const xref = salida.length;
+  salida += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
+  for (const o of offsets) salida += `${String(o).padStart(10, '0')} 00000 n \n`;
+  salida += `trailer\n<< /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return salida;
+}
 
 function metadatos(a: ArchivoSimulado) {
   return {
@@ -124,7 +151,14 @@ export function registrarArchivos(router: MockRouter): void {
 
   router.get('/common/files/:id/content', ({ params }) => {
     const a = archivos.get(params['id']!);
-    return a?.dataUrl ?? avatarSvg('?', '#94a3b8');
+    if (a === undefined) return avatarSvg('?', '#94a3b8');
+    // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
+    // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
+    // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
+    // `image/…`— y al abrirlo se veía un cartel, no un documento.
+    return a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
+      ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
+      : a.dataUrl;
   });
 
   router.delete('/common/files/:id', ({ params }) => {

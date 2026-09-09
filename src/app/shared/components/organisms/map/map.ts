@@ -164,6 +164,17 @@ export class AppMap implements OnDestroy {
    */
   readonly pointPicked = output<PuntoGeo>();
 
+  /**
+   * Si el mapa está esperando que alguien **toque un punto**.
+   *
+   * No cambia lo que se emite —`pointPicked` sale siempre—; cambia lo que se
+   * ve: el cursor pasa de la mano de arrastrar a la cruz de apuntar, que es la
+   * única pista visual de que acá un clic hace algo. Sin ella, quien llegó a
+   * «marcá en el mapa dónde vivís» arrastra el plano y no entiende por qué el
+   * pin no aparece.
+   */
+  readonly seleccionable = input(false);
+
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly documento = inject(DOCUMENT);
   private readonly injector = inject(Injector);

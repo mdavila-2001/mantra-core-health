@@ -8,7 +8,12 @@
   [breadcrumbs]="breadcrumbs()"
 />
 
-<div class="mi-perfil">
+<!-- Sin fichas laterales —el caso de cualquier paciente hoy— la rejilla no
+     reserva la columna: el perfil ocupa el ancho entero del área de contenido
+     y va centrado. Con la columna reservada y vacía, la tarjeta quedaba pegada
+     a la izquierda con un tercio de la pantalla en blanco a su derecha.
+     REGLA DE LA CASA, ver `docs/components/composition-rules.md` §5. -->
+<div class="mi-perfil" [class.mi-perfil--sin-lateral]="!hayLateral()">
   <div class="mi-perfil__principal">
     <!-- ─── El perfil, según quién entró ──────────────────────────────────────
        Con perfil profesional se muestra la trayectoria; si no, el resumen de
@@ -19,16 +24,59 @@
     @if (esProfesional()) {
       <app-practitioner-profile />
     } @else {
-      <!-- El host de estados envuelve **sólo** esta tarjeta: es la única que
-         depende del resumen, y cuando ese resumen falla con el 403 que pide
-         verificar la identidad, las otras dos siguen en pie. Justamente ahí es
-         cuando el historial de verificación tiene algo que decir. -->
+      <!-- UNA tarjeta con pestañas, en lectura y en edición (pedido del cliente
+         del 09/09/2026). La cabecera —retrato, título y lápiz— es la misma en
+         los dos estados; lo que cambia debajo es si los renglones se leen o
+         se escriben. Las pestañas son las de `PESTANAS_DEL_PERFIL`, las mismas
+         del editor y en el mismo orden, y el índice elegido se comparte: pulsar
+         el lápiz estando en «Contacto» abre el formulario en «Contacto».
+
+         El host de estados envuelve **sólo** el contenido de lectura: es lo
+         único que depende del resumen, y cuando ese resumen falla con el 403
+         que pide verificar la identidad, la cabecera sigue en pie. -->
       <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
         <div class="mi-perfil__cabecera">
-          <h2 class="mi-perfil__titulo">Tus datos</h2>
+          <div class="mi-perfil__identidad">
+            <!-- El retrato es el disparador de la subida, mismo patrón que el
+                 perfil profesional (P17): un `<label>` envuelve el avatar y un
+                 input de archivo oculto. -->
+            @if (datos(); as resumen) {
+              <label class="mi-perfil__foto" [class.is-subiendo]="subiendoFoto()">
+                <app-avatar
+                  size="lg"
+                  [src]="fotoUrl()"
+                  [name]="resumen.displayName ?? ''"
+                  [alt]="'Foto de ' + (resumen.displayName ?? 'tu perfil')"
+                />
+                <span class="solo-lectores">
+                  {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
+                </span>
+                <input
+                  type="file"
+                  class="solo-lectores"
+                  accept="image/*"
+                  data-testid="mi-perfil-foto"
+                  [disabled]="subiendoFoto()"
+                  (change)="alElegirFoto($event)"
+                />
+              </label>
+            }
+            <div class="mi-perfil__rotulo">
+              <h2 class="mi-perfil__titulo">Tus datos</h2>
+              @if (datos(); as resumen) {
+                <p class="mi-perfil__nombre">{{ resumen.displayName ?? 'Sin nombre registrado' }}</p>
+              }
+              @if (errorDeFoto(); as fallo) {
+                <p class="mi-perfil__foto-error" role="alert">{{ fallo }}</p>
+              }
+            </div>
+          </div>
 
-          <!-- FT-11-R04 · «Editar» habilita los campos ACÁ, no manda a otra
-               pantalla. El botón desaparece mientras se edita: sus acciones son
+          <!-- FT-11-R04 · el lápiz habilita los campos ACÁ, no manda a otra
+               pantalla. Es un botón de ícono —pedido del cliente del 09/09—:
+               el nombre «Editar» va en `aria-label` para el lector de pantalla
+               y en el globo, que aparece con el puntero y con el foco del
+               teclado. El botón desaparece mientras se edita: sus acciones son
                las del formulario, y dos «Editar» simultáneos no significan
                nada. -->
           @if (!editando() && datos() !== null) {
@@ -36,16 +84,19 @@
               app-button
               variant="outline"
               size="sm"
+              [iconOnly]="true"
+              aria-label="Editar"
+              appTooltip="Editar"
               data-testid="mi-perfil-editar"
               (clicked)="editar()"
             >
-              Editar
+              <app-nav-icon name="edit" />
             </button>
           }
         </div>
 
         <!-- FT-11-R03/R04 · sólo lectura al entrar; el mismo formulario del
-             editor cuando se pulsa «Editar». Es el MISMO componente que sirve
+             editor cuando se pulsa el lápiz. Es el MISMO componente que sirve
              la ruta `/my-account/profile/edit`, embebido: dos copias del
              formulario serían dos validaciones que se separan en el primer
              retoque que sólo se haga en una. -->
@@ -53,6 +104,7 @@
           <app-patient-profile-edit
             data-testid="mi-perfil-editor"
             [embebido]="true"
+            [(pestana)]="pestana"
             (cerrado)="terminarEdicion()"
           />
         } @else {
@@ -86,302 +138,326 @@
           </ng-container>
 
           @if (datos(); as resumen) {
-            <!-- El retrato es el disparador de la subida, mismo patrón que el
-                 perfil profesional (P17): un `<label>` envuelve el avatar y un
-                 input de archivo oculto. -->
-            <label class="mi-perfil__foto" [class.is-subiendo]="subiendoFoto()">
-              <app-avatar
-                size="lg"
-                [src]="fotoUrl()"
-                [name]="resumen.displayName ?? ''"
-                [alt]="'Foto de ' + (resumen.displayName ?? 'tu perfil')"
-              />
-              <span class="solo-lectores">
-                {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
-              </span>
-              <input
-                type="file"
-                class="solo-lectores"
-                accept="image/*"
-                data-testid="mi-perfil-foto"
-                [disabled]="subiendoFoto()"
-                (change)="alElegirFoto($event)"
-              />
-            </label>
-            @if (errorDeFoto(); as fallo) {
-              <p class="mi-perfil__foto-error" role="alert">{{ fallo }}</p>
-            }
+            <app-tabs [(selectedIndex)]="pestana" data-testid="mi-perfil-pestanas">
+              <!-- ─── Datos personales ─────────────────────────────────────── -->
+              <app-tab [label]="pestanas[0]">
+                <!-- Todo lo que la persona declaró al registrarse, y también lo
+                     que NO declaró.
 
-            <dl class="mi-perfil__datos">
-              <div class="mi-perfil__dato">
-                <dt>Nombre</dt>
-                <dd>{{ resumen.displayName ?? 'Sin registrar' }}</dd>
-              </div>
+                     Antes cada dato se dibujaba sólo si existía, con el argumento
+                     de que «una lista de Sin registrar no informa». En la ficha de
+                     otro es cierto. En la PROPIA es al revés: quien mira es el
+                     dueño del dato, y ocultarle el renglón le impide distinguir
+                     «no lo tengo cargado» de «la app no me lo muestra». Con el
+                     perfil real de Justin se veían cinco campos de doce, y los
+                     otros siete estaban en la base. -->
+                <dl class="mi-perfil__datos">
+                  <div class="mi-perfil__dato">
+                    <dt>Nombre</dt>
+                    <dd>{{ resumen.displayName ?? 'Sin registrar' }}</dd>
+                  </div>
 
-              <!-- F-34 · el código es lo único que depende de verificarse, y
-                 se muestra como una fila con estado, no tapando el resto. Sin
-                 verificar, el `<dd>` dice el estado **en palabras** —insignia
-                 informativa, no una alerta: no hay nada roto—.
+                  <!-- F-34 · el código es lo único que depende de verificarse, y
+                     se muestra como una fila con estado, no tapando el resto. Sin
+                     verificar, el `<dd>` dice el estado **en palabras** —insignia
+                     informativa, no una alerta: no hay nada roto—.
 
-                 Mientras la verificación no se ofrezca, la fila **no se dibuja**
-                 para quien no la tiene: «Pendiente de verificación» nombra un
-                 trámite que hoy no existe, y anunciar que falta algo que no se
-                 puede hacer es peor que no mostrar el renglón. Quien ya está
-                 verificado sigue viendo su código, que es un dato suyo. Ver
-                 `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. -->
-              @if (resumen.identityVerified || verificacionOfrecida) {
-                <div class="mi-perfil__dato">
-                  <dt>Código de paciente</dt>
-                  <dd
-                    data-testid="mi-perfil-codigo"
-                    [class.mi-perfil__cifra]="resumen.identityVerified"
+                     Mientras la verificación no se ofrezca, la fila **no se dibuja**
+                     para quien no la tiene: «Pendiente de verificación» nombra un
+                     trámite que hoy no existe, y anunciar que falta algo que no se
+                     puede hacer es peor que no mostrar el renglón. Quien ya está
+                     verificado sigue viendo su código, que es un dato suyo. Ver
+                     `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. -->
+                  @if (resumen.identityVerified || verificacionOfrecida) {
+                    <div class="mi-perfil__dato">
+                      <dt>Código de paciente</dt>
+                      <dd
+                        data-testid="mi-perfil-codigo"
+                        [class.mi-perfil__cifra]="resumen.identityVerified"
+                      >
+                        @if (resumen.identityVerified) {
+                          {{ resumen.patientCode ?? 'Sin registrar' }}
+                        } @else {
+                          <app-badge variant="info" value="Pendiente de verificación" />
+                        }
+                      </dd>
+                    </div>
+                  }
+
+                  <div class="mi-perfil__dato">
+                    <dt>Fecha de nacimiento</dt>
+                    <dd class="mi-perfil__cifra">
+                      @if (resumen.birthDate) {
+                        {{ resumen.birthDate | date: 'dd/MM/yyyy' }}
+                      } @else {
+                        Sin registrar
+                      }
+                    </dd>
+                  </div>
+
+                  <div class="mi-perfil__dato">
+                    <dt>Estado</dt>
+                    <dd>{{ estado() }}</dd>
+                  </div>
+
+                  @if (perfil(); as p) {
+                    <div class="mi-perfil__dato">
+                      <dt>Documento de identidad</dt>
+                      <dd class="mi-perfil__cifra">
+                        @if (p.nationalId) {
+                          {{ p.nationalId }}
+                          @if (p.issuerAdministrativeAreaConceptId; as depto) {
+                            <span class="mi-perfil__sufijo">{{ etiquetaDe(depto) }}</span>
+                          }
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                    <!-- La edad se calcula, no se guarda: el registro del cliente la
+                         pide «de manera automática» a partir de la fecha. Sin fecha
+                         no hay edad que mostrar, y el renglón dice por qué. -->
+                    <div class="mi-perfil__dato">
+                      <dt>Edad</dt>
+                      <dd class="mi-perfil__cifra">
+                        @if (edad(); as anios) {
+                          {{ anios }} años
+                        } @else {
+                          <span class="mi-perfil__ausente">Falta tu fecha de nacimiento</span>
+                        }
+                      </dd>
+                    </div>
+                    <!-- Dato clínico: cambia dosis, valores de referencia y tamizajes.
+                         La API lo devolvía desde siempre y la ficha no lo dibujaba. -->
+                    <div class="mi-perfil__dato">
+                      <dt>Sexo al nacer</dt>
+                      <dd>
+                        @if (p.sexAtBirth; as sexo) {
+                          {{ sexoEnPalabras(sexo) }}
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                    <div class="mi-perfil__dato">
+                      <dt>Ocupación</dt>
+                      <dd>
+                        @if (p.occupationConceptId || p.occupationFreeText) {
+                          {{ p.occupationConceptId ? etiquetaDe(p.occupationConceptId) : p.occupationFreeText }}
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                  }
+                </dl>
+
+                <!-- FT-11-R07/R08 · la contraseña NO es un campo más del
+                     formulario: cambiarla revoca sesiones y exige la actual, así
+                     que va por su propio flujo y con su propio botón. Ponerla entre
+                     el teléfono y la ocupación haría que un «Guardar» de datos de
+                     contacto tocara la credencial de acceso. -->
+                <p class="mi-perfil__accion">
+                  <a
+                    app-button-link
+                    variant="outline"
+                    size="sm"
+                    data-testid="mi-perfil-cambiar-contrasena"
+                    [routerLink]="rutaDeCambioDeContrasena"
                   >
-                    @if (resumen.identityVerified) {
-                      {{ resumen.patientCode ?? 'Sin registrar' }}
-                    } @else {
-                      <app-badge variant="info" value="Pendiente de verificación" />
-                    }
-                  </dd>
-                </div>
-              }
+                    Cambiar contraseña
+                  </a>
+                </p>
 
-              <div class="mi-perfil__dato">
-                <dt>Fecha de nacimiento</dt>
-                <dd class="mi-perfil__cifra">
-                  @if (resumen.birthDate) {
-                    {{ resumen.birthDate | date: 'dd/MM/yyyy' }}
+                <!-- Invitación, no muro: un enlace al pie de la lista que promete
+                   **sólo lo que es cierto** — hoy verificarse habilita el código de
+                   paciente y nada más. Y sólo mientras el trámite se ofrezca: es la
+                   invitación más directa que hay, así que se apaga con el mismo
+                   interruptor que las otras tres. -->
+                @if (verificacionOfrecida && !resumen.identityVerified) {
+                  <p class="mi-perfil__nota">
+                    <a app-link [routerLink]="rutaDeVerificacion">
+                      Verificá tu identidad para ver tu código de paciente
+                    </a>
+                  </p>
+                }
+              </app-tab>
+
+              <!-- ─── Contacto ─────────────────────────────────────────────── -->
+              <app-tab [label]="pestanas[1]">
+                @if (perfil(); as p) {
+                  <dl class="mi-perfil__datos">
+                    <div class="mi-perfil__dato">
+                      <dt>Correo</dt>
+                      <dd>
+                        @if (p.email) {
+                          {{ p.email }}
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                    <div class="mi-perfil__dato">
+                      <dt>Teléfono</dt>
+                      <dd class="mi-perfil__cifra">
+                        @if (p.phone) {
+                          {{ p.phone }}
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                    <!-- El municipio de residencia es lo que el editor pide con el
+                         árbol de ubicación (departamento → municipio). Se lee acá
+                         con la misma etiqueta del catálogo, para que lo que se
+                         eligió se vea donde se eligió. -->
+                    <div class="mi-perfil__dato">
+                      <dt>Municipio de residencia</dt>
+                      <dd data-testid="mi-perfil-municipio">
+                        @if (p.residenceMunicipalityConceptId; as municipio) {
+                          <!-- El nombre llega del catálogo un instante después
+                               que el perfil: mientras tanto no se dice «Sin
+                               registrar», que sería mentir sobre un dato que sí
+                               está. -->
+                          {{ etiquetaDe(municipio) || '…' }}
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                    <!-- El domicilio y el trabajo llevan su enlace al mapa cuando la
+                         dirección trae coordenadas: el registro de procesos pide
+                         «Ubicación GPS» en los dos (§1.9 y §1.11), y `common.addresses`
+                         ya guarda latitud y longitud. Faltaba dibujarlo. -->
+                    <div class="mi-perfil__dato">
+                      <dt>Domicilio</dt>
+                      <dd>
+                        @if (p.homeAddress; as dir) {
+                          {{ direccionLegible(dir) }}
+                          @if (enlaceAlMapa(dir); as mapa) {
+                            <a class="mi-perfil__mapa" [href]="mapa" target="_blank" rel="noopener noreferrer">
+                              Ver en el mapa
+                            </a>
+                          }
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                    <div class="mi-perfil__dato">
+                      <dt>Trabajo</dt>
+                      <dd>
+                        @if (p.workAddress; as dir) {
+                          {{ direccionLegible(dir) }}
+                          @if (enlaceAlMapa(dir); as mapa) {
+                            <a class="mi-perfil__mapa" [href]="mapa" target="_blank" rel="noopener noreferrer">
+                              Ver en el mapa
+                            </a>
+                          }
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                  </dl>
+                } @else {
+                  <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
+                }
+              </app-tab>
+
+              <!-- ─── Facturación ──────────────────────────────────────────── -->
+              <app-tab [label]="pestanas[2]">
+                @if (perfil(); as p) {
+                  <dl class="mi-perfil__datos">
+                    <div class="mi-perfil__dato">
+                      <dt>NIT</dt>
+                      <dd class="mi-perfil__cifra">
+                        @if (p.taxId) {
+                          {{ p.taxId }}
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                    <!-- Pegado al NIT porque son el mismo hecho: a nombre de quién
+                         factura esta persona. El registro pide los dos (§1.15). -->
+                    <div class="mi-perfil__dato">
+                      <dt>Razón social</dt>
+                      <dd>
+                        @if (p.taxHolderName) {
+                          {{ p.taxHolderName }}
+                        } @else {
+                          <span class="mi-perfil__ausente">Sin registrar</span>
+                        }
+                      </dd>
+                    </div>
+                  </dl>
+                } @else {
+                  <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
+                }
+              </app-tab>
+
+              <!-- ─── Seguros y tutores ────────────────────────────────────── -->
+              <app-tab [label]="pestanas[3]">
+                @if (perfil(); as p) {
+                  <!-- Seguros y tutores van fuera de la lista de datos: son varios y
+                       cada uno tiene más de un dato, así que una fila `dt`/`dd` los
+                       apretaría. El título de cada lista sólo aparece si declaró
+                       alguno; sin ninguno, un renglón dice que no hay. -->
+                  @if (p.coverages.length > 0) {
+                    <h3 class="mi-perfil__subtitulo">Tus seguros</h3>
+                    <ul class="mi-perfil__lista">
+                      @for (seguro of p.coverages; track seguro.carrierName + (seguro.planName ?? '')) {
+                        <li class="mi-perfil__item">
+                          <span class="mi-perfil__item-nombre">{{ seguro.carrierName }}</span>
+                          @if (seguro.planName) {
+                            <span class="mi-perfil__item-detalle">{{ seguro.planName }}</span>
+                          }
+                          <app-badge
+                            [variant]="seguro.isPublic ? 'info' : 'secondary'"
+                            [value]="seguro.isPublic ? 'Público' : 'Privado'"
+                          />
+                          <!-- Lo declarado al registrarse nace sin verificar, y
+                               decirlo evita que alguien crea que ya está confirmado
+                               con su aseguradora. -->
+                          @if (!seguro.verified) {
+                            <span class="mi-perfil__item-nota">Sin verificar con la aseguradora</span>
+                          }
+                        </li>
+                      }
+                    </ul>
                   } @else {
-                    Sin registrar
+                    <p class="mi-perfil__nota mi-perfil__nota--primera">No declaraste ningún seguro.</p>
                   }
-                </dd>
-              </div>
 
-              <div class="mi-perfil__dato">
-                <dt>Estado</dt>
-                <dd>{{ estado() }}</dd>
-              </div>
-
-              <!-- Todo lo que la persona declaró al registrarse, y también lo
-                   que NO declaró.
-
-                   Antes cada dato se dibujaba sólo si existía, con el argumento
-                   de que «una lista de Sin registrar no informa». En la ficha de
-                   otro es cierto. En la PROPIA es al revés: quien mira es el
-                   dueño del dato, y ocultarle el renglón le impide distinguir
-                   «no lo tengo cargado» de «la app no me lo muestra». Con el
-                   perfil real de Justin se veían cinco campos de doce, y los
-                   otros siete estaban en la base.
-
-                   `Fecha de nacimiento` ya decía «Sin registrar»; el resto no.
-                   Ahora es parejo. -->
-              @if (perfil(); as p) {
-                <div class="mi-perfil__dato">
-                  <dt>Documento de identidad</dt>
-                  <dd class="mi-perfil__cifra">
-                    @if (p.nationalId) {
-                      {{ p.nationalId }}
-                      @if (p.issuerAdministrativeAreaConceptId; as depto) {
-                        <span class="mi-perfil__sufijo">{{ etiquetaDe(depto) }}</span>
+                  @if (p.guardians.length > 0) {
+                    <h3 class="mi-perfil__subtitulo">Contactos y tutores</h3>
+                    <ul class="mi-perfil__lista">
+                      @for (tutor of p.guardians; track tutor.displayName ?? '' ; let i = $index) {
+                        <li class="mi-perfil__item">
+                          <span class="mi-perfil__item-nombre">
+                            {{ tutor.displayName ?? 'Sin nombre registrado' }}
+                          </span>
+                          @if (tutor.phone) {
+                            <span class="mi-perfil__item-detalle">{{ tutor.phone }}</span>
+                          }
+                          @if (tutor.isLegalGuardian) {
+                            <app-badge variant="info" value="Tutor legal" />
+                          }
+                          @if (tutor.isEmergencyContact) {
+                            <app-badge variant="secondary" value="Contacto de emergencia" />
+                          }
+                        </li>
                       }
-                    } @else {
-                      <span class="mi-perfil__ausente">Sin registrar</span>
-                    }
-                  </dd>
-                </div>
-                <div class="mi-perfil__dato">
-                  <dt>Correo</dt>
-                  <dd>
-                    @if (p.email) {
-                      {{ p.email }}
-                    } @else {
-                      <span class="mi-perfil__ausente">Sin registrar</span>
-                    }
-                  </dd>
-                </div>
-                <div class="mi-perfil__dato">
-                  <dt>Teléfono</dt>
-                  <dd class="mi-perfil__cifra">
-                    @if (p.phone) {
-                      {{ p.phone }}
-                    } @else {
-                      <span class="mi-perfil__ausente">Sin registrar</span>
-                    }
-                  </dd>
-                </div>
-                <!-- La edad se calcula, no se guarda: el registro del cliente la
-                     pide «de manera automática» a partir de la fecha. Sin fecha
-                     no hay edad que mostrar, y el renglón dice por qué. -->
-                <div class="mi-perfil__dato">
-                  <dt>Edad</dt>
-                  <dd class="mi-perfil__cifra">
-                    @if (edad(); as anios) {
-                      {{ anios }} años
-                    } @else {
-                      <span class="mi-perfil__ausente">Falta tu fecha de nacimiento</span>
-                    }
-                  </dd>
-                </div>
-                <!-- Dato clínico: cambia dosis, valores de referencia y tamizajes.
-                     La API lo devolvía desde siempre y la ficha no lo dibujaba. -->
-                <div class="mi-perfil__dato">
-                  <dt>Sexo al nacer</dt>
-                  <dd>
-                    @if (p.sexAtBirth; as sexo) {
-                      {{ sexoEnPalabras(sexo) }}
-                    } @else {
-                      <span class="mi-perfil__ausente">Sin registrar</span>
-                    }
-                  </dd>
-                </div>
-                <div class="mi-perfil__dato">
-                  <dt>Ocupación</dt>
-                  <dd>
-                    @if (p.occupationConceptId || p.occupationFreeText) {
-                      {{ p.occupationConceptId ? etiquetaDe(p.occupationConceptId) : p.occupationFreeText }}
-                    } @else {
-                      <span class="mi-perfil__ausente">Sin registrar</span>
-                    }
-                  </dd>
-                </div>
-                <div class="mi-perfil__dato">
-                  <dt>NIT</dt>
-                  <dd class="mi-perfil__cifra">
-                    @if (p.taxId) {
-                      {{ p.taxId }}
-                    } @else {
-                      <span class="mi-perfil__ausente">Sin registrar</span>
-                    }
-                  </dd>
-                </div>
-                <!-- Pegado al NIT porque son el mismo hecho: a nombre de quién
-                     factura esta persona. El registro pide los dos (§1.15). -->
-                <div class="mi-perfil__dato">
-                  <dt>Razón social</dt>
-                  <dd>
-                    @if (p.taxHolderName) {
-                      {{ p.taxHolderName }}
-                    } @else {
-                      <span class="mi-perfil__ausente">Sin registrar</span>
-                    }
-                  </dd>
-                </div>
-                <!-- El domicilio y el trabajo llevan su enlace al mapa cuando la
-                     dirección trae coordenadas: el registro de procesos pide
-                     «Ubicación GPS» en los dos (§1.9 y §1.11), y `common.addresses`
-                     ya guarda latitud y longitud. Faltaba dibujarlo. -->
-                <div class="mi-perfil__dato">
-                  <dt>Domicilio</dt>
-                  <dd>
-                    @if (p.homeAddress; as dir) {
-                      {{ direccionLegible(dir) }}
-                      @if (enlaceAlMapa(dir); as mapa) {
-                        <a class="mi-perfil__mapa" [href]="mapa" target="_blank" rel="noopener noreferrer">
-                          Ver en el mapa
-                        </a>
-                      }
-                    } @else {
-                      <span class="mi-perfil__ausente">Sin registrar</span>
-                    }
-                  </dd>
-                </div>
-                <div class="mi-perfil__dato">
-                  <dt>Trabajo</dt>
-                  <dd>
-                    @if (p.workAddress; as dir) {
-                      {{ direccionLegible(dir) }}
-                      @if (enlaceAlMapa(dir); as mapa) {
-                        <a class="mi-perfil__mapa" [href]="mapa" target="_blank" rel="noopener noreferrer">
-                          Ver en el mapa
-                        </a>
-                      }
-                    } @else {
-                      <span class="mi-perfil__ausente">Sin registrar</span>
-                    }
-                  </dd>
-                </div>
-              }
-            </dl>
-
-            @if (perfil(); as p) {
-              <!-- Seguros y tutores van fuera de la lista de datos: son varios y
-                   cada uno tiene más de un dato, así que una fila `dt`/`dd` los
-                   apretaría. Sólo aparecen si declaró alguno. -->
-              @if (p.coverages.length > 0) {
-                <h3 class="mi-perfil__subtitulo">Tus seguros</h3>
-                <ul class="mi-perfil__lista">
-                  @for (seguro of p.coverages; track seguro.carrierName + (seguro.planName ?? '')) {
-                    <li class="mi-perfil__item">
-                      <span class="mi-perfil__item-nombre">{{ seguro.carrierName }}</span>
-                      @if (seguro.planName) {
-                        <span class="mi-perfil__item-detalle">{{ seguro.planName }}</span>
-                      }
-                      <app-badge
-                        [variant]="seguro.isPublic ? 'info' : 'secondary'"
-                        [value]="seguro.isPublic ? 'Público' : 'Privado'"
-                      />
-                      <!-- Lo declarado al registrarse nace sin verificar, y
-                           decirlo evita que alguien crea que ya está confirmado
-                           con su aseguradora. -->
-                      @if (!seguro.verified) {
-                        <span class="mi-perfil__item-nota">Sin verificar con la aseguradora</span>
-                      }
-                    </li>
+                    </ul>
+                  } @else {
+                    <p class="mi-perfil__nota">No declaraste ningún contacto de emergencia ni tutor.</p>
                   }
-                </ul>
-              }
-
-              @if (p.guardians.length > 0) {
-                <h3 class="mi-perfil__subtitulo">Contactos y tutores</h3>
-                <ul class="mi-perfil__lista">
-                  @for (tutor of p.guardians; track tutor.displayName ?? '' ; let i = $index) {
-                    <li class="mi-perfil__item">
-                      <span class="mi-perfil__item-nombre">
-                        {{ tutor.displayName ?? 'Sin nombre registrado' }}
-                      </span>
-                      @if (tutor.phone) {
-                        <span class="mi-perfil__item-detalle">{{ tutor.phone }}</span>
-                      }
-                      @if (tutor.isLegalGuardian) {
-                        <app-badge variant="info" value="Tutor legal" />
-                      }
-                      @if (tutor.isEmergencyContact) {
-                        <app-badge variant="secondary" value="Contacto de emergencia" />
-                      }
-                    </li>
-                  }
-                </ul>
-              }
-            }
-
-            <!-- FT-11-R07/R08 · la contraseña NO es un campo más del
-                 formulario: cambiarla revoca sesiones y exige la actual, así
-                 que va por su propio flujo y con su propio botón. Ponerla entre
-                 el teléfono y la ocupación haría que un «Guardar» de datos de
-                 contacto tocara la credencial de acceso. -->
-            <p class="mi-perfil__accion">
-              <a
-                app-button-link
-                variant="outline"
-                size="sm"
-                data-testid="mi-perfil-cambiar-contrasena"
-                [routerLink]="rutaDeCambioDeContrasena"
-              >
-                Cambiar contraseña
-              </a>
-            </p>
-
-            <!-- Invitación, no muro: un enlace al pie de la lista que promete
-               **sólo lo que es cierto** — hoy verificarse habilita el código de
-               paciente y nada más. Y sólo mientras el trámite se ofrezca: es la
-               invitación más directa que hay, así que se apaga con el mismo
-               interruptor que las otras tres. -->
-            @if (verificacionOfrecida && !resumen.identityVerified) {
-              <p class="mi-perfil__nota">
-                <a app-link [routerLink]="rutaDeVerificacion">
-                  Verificá tu identidad para ver tu código de paciente
-                </a>
-              </p>
-            }
+                } @else {
+                  <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
+                }
+              </app-tab>
+            </app-tabs>
           }
         </app-view-state-host>
         }
@@ -393,7 +469,9 @@
        Verificación y acceso son dos fichas cortas: al lado del perfil, en una
        rejilla de columnas iguales, dejaban dos huecos del alto de la pantalla y
        espachurraban el perfil en un tercio. Son satélites de la identidad, no
-       hermanos suyos, y por eso van en un lateral angosto. -->
+       hermanos suyos, y por eso van en un lateral angosto. Sin ninguna de las
+       dos, el lateral no se dibuja y la rejilla no le reserva la columna. -->
+  @if (hayLateral()) {
   <aside class="mi-perfil__lateral" aria-label="Tu cuenta">
     <!-- ─── Verificación de identidad ─────────────────────────────────────────
          `GET /identity/me/verification-cases`. El backend lo publica desde
@@ -505,6 +583,7 @@
       </app-card>
     }
   </aside>
+  }
 
   <!-- El historial laboral (punto 9 del reclamo) ya no va acá: vive dentro de
        la pestaña Trayectoria de `app-practitioner-profile` (carril 05), con el

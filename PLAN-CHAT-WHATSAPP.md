@@ -31,6 +31,22 @@
   `shell-layout` **ya fallaban antes** de este trabajo (medido revirtiendo los cambios).
 - Capturas en claro, oscuro y móvil contra una API simulada desde el navegador.
 
+### Retoques del 09/09 sobre `mockup`
+
+- **Hora unificada** entre fila y burbuja (`horaDelReloj`), sin el cero de adelante.
+- **Menú ⋮ en la cabecera del hilo**: ver perfil, favorito, archivar. Y **buscar
+  dentro de la conversación** (lupa): deja sólo las coincidencias y las resalta.
+- **Reenviar** desde el menú del mensaje, eligiendo entre las otras conversaciones.
+  Va por el mismo camino que un envío (`ChatStore.reenviar`), adjunto incluido.
+- **Enlaces clicables** dentro de las burbujas; **contador de no leídos en el
+  título de la pestaña** («(3) AloVida - Chats»).
+- Los adjuntos con URL `data:image/…` o `blob:` se pintan como imagen (antes
+  la foto del lunar de la maqueta salía como documento).
+- El backend simulado ganó un **chat de grupo** (médica + pediatra + endocrino)
+  con documento, foto y citas, y una respuesta con cita en el hilo del paciente,
+  para que la maqueta muestre todo lo que el chat sabe hacer.
+- El cartel «Datos de prueba» de la maqueta ya no tapa el campo de escribir en móvil.
+
 ### Diferencias con el plan original
 
 - **El envío optimista, los adjuntos y los emojis entraron con F0–F2**, no en un PR

@@ -236,11 +236,12 @@ export class MyAgenda {
     // de octubre y aterrizar en septiembre se lee como un error.
     const mes = this.mesVisible();
     const hoy = new Date();
-    this.semanaVisible.set(
+    const lunes =
       mes.getMonth() === hoy.getMonth() && mes.getFullYear() === hoy.getFullYear()
         ? lunesDe(hoy)
-        : lunesDe(mes),
-    );
+        : lunesDe(mes);
+    this.semanaVisible.set(lunes);
+    this.cargarSemana(lunes);
   }
 
   /**
@@ -252,6 +253,7 @@ export class MyAgenda {
    */
   protected cambiarSemana(nueva: Date): void {
     this.semanaVisible.set(nueva);
+    this.cargarSemana(nueva);
     const mes = this.mesVisible();
     const finDeSemana = new Date(nueva.getFullYear(), nueva.getMonth(), nueva.getDate() + 6);
     const cruza =
@@ -298,6 +300,15 @@ export class MyAgenda {
   protected readonly diaAbierto = signal<Date | null>(null);
   protected readonly cuposDelDia = signal<readonly AgendaSlot[]>([]);
   protected readonly citasDelDia = signal<readonly Booking[]>([]);
+
+  /**
+   * Las citas de la semana mirada, para que la semana diga **con quién**.
+   *
+   * Señal aparte de `citasDelDia` y no la misma con otra ventana: el día se
+   * abre y se cierra sobre la semana, y compartir la señal haría que abrir el
+   * martes vaciara los otros seis. Son dos preguntas con dos ciclos de vida.
+   */
+  protected readonly citasDeLaSemana = signal<readonly Booking[]>([]);
 
   /**
    * Los estados del catálogo, ya resueltos.
@@ -1104,24 +1115,65 @@ export class MyAgenda {
       });
   }
 
-  /** Pide las etiquetas de los estados que aparecieron, y sólo de ésos. */
+  /**
+   * Los cupos no: sólo las citas de la semana mirada, en una llamada.
+   *
+   * Una y no siete: `searchBookings` acepta ventana, igual que la del día, y
+   * pedir siete veces lo mismo para agrupar después en el cliente es cara la
+   * red por comodidad de código. El tope es alto a propósito —una semana de
+   * consultorio lleno pasa holgada las cien— y la vista recorta a tres por día
+   * después, que es lo que entra en la celda.
+   *
+   * El fallo deja la semana **sin nombres, no rota**: los libres y los tomados
+   * salen de los cupos del mes, que ya están cargados. Perder los nombres no
+   * justifica perder la ocupación.
+   */
+  private cargarSemana(lunes: Date): void {
+    const recurso = this.recurso();
+    if (recurso === null) return;
+
+    const desde = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate());
+    const hasta = new Date(desde);
+    hasta.setDate(hasta.getDate() + 7);
+
+    this.scheduling
+      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: 200 })
+      .subscribe({
+        next: (pagina: { items: readonly Booking[] }) => {
+          this.citasDeLaSemana.set(pagina.items);
+          this.traducirEstados(pagina.items);
+        },
+        error: () => this.citasDeLaSemana.set([]),
+      });
+  }
+
+  /**
+   * Pide las etiquetas de los estados que aparecieron, y sólo de ésos.
+   *
+   * **Fusiona con lo ya resuelto en vez de reemplazarlo.** Desde que la semana
+   * también traduce sus estados hay dos llamadores, y con un `set` a secas
+   * abrir un día de una jornada confirmada borraba las etiquetas de la semana
+   * —que las tenía— y la semana volvía a mostrar como «viene» a un paciente
+   * cancelado. Un mapa por uuid no puede discrepar consigo mismo: lo que llega
+   * después completa, no pisa.
+   */
   private traducirEstados(citas: readonly Booking[]): void {
     const ids = [...new Set(citas.map((cita) => cita.statusConceptId))];
     if (ids.length === 0) return;
 
     this.terminology.readConceptLabels(ids).subscribe({
       next: (etiquetas) =>
-        this.estadosResueltos.set(
-          new Map(
-            [...etiquetas].map(([id, opcion]) => [
-              id,
-              { code: opcion.code, display: opcion.display },
-            ]),
-          ),
-        ),
+        this.estadosResueltos.update((resueltos) => {
+          const fusionado = new Map(resueltos);
+          for (const [id, opcion] of etiquetas) {
+            fusionado.set(id, { code: opcion.code, display: opcion.display });
+          }
+          return fusionado;
+        }),
       // Si el catálogo no responde, las filas igual se muestran con su texto
-      // neutro: perder la etiqueta no justifica perder la agenda del día.
-      error: () => this.estadosResueltos.set(new Map()),
+      // neutro: perder la etiqueta no justifica perder la agenda del día. Lo
+      // ya resuelto se conserva por el mismo motivo.
+      error: () => undefined,
     });
   }
 

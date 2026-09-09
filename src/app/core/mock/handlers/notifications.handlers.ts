@@ -2,6 +2,11 @@ import { reservas } from '../fixtures/agenda';
 import { conversaciones } from '../fixtures/comunidad';
 import { recetas } from '../fixtures/clinica';
 import { MEDICA, PACIENTE } from '../fixtures/personas';
+import {
+  avisoDeHorarioLiberado,
+  esperaUnHueco,
+  horariosLiberados,
+} from '../horario-liberado';
 import { notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, iso, paginar, uuid } from '../mock-store';
 
@@ -56,6 +61,41 @@ function paraMedica(): NotificacionSimulada[] {
 
 const notificaciones = new Coleccion<NotificacionSimulada>([...paraPaciente(), ...paraMedica()]);
 
+/**
+ * Deja una notificación nueva en la campana de alguien.
+ *
+ * Es la única forma de que un aviso nazca DURANTE la sesión y no del juego
+ * de fixtures: hasta ahora la campana sólo mostraba lo sembrado al arrancar,
+ * así que una acción del médico no tenía cómo llegarle al paciente.
+ *
+ * Nace sin leer y con la hora actual, que es lo que la hace aparecer arriba
+ * de todo y sumar al contador de la campana.
+ *
+ * No sabe de agendas ni de recetas a propósito: el texto lo redacta quien
+ * conoce el dominio y lo entrega armado.
+ */
+export function emitirNotificacion(datos: {
+  readonly userId: string;
+  readonly category: Categoria;
+  readonly subject: string;
+  readonly bodyText: string;
+  readonly destination?: { type: string; id: string } | null;
+  readonly payloadJson?: unknown;
+}): void {
+  notificaciones.agregar({
+    id: uuid(`notif-${datos.userId}-${Date.now()}-${Math.random()}`),
+    userId: datos.userId,
+    category: datos.category,
+    subject: datos.subject,
+    bodyText: datos.bodyText,
+    destination: datos.destination ?? null,
+    payloadJson: datos.payloadJson ?? null,
+    unread: true,
+    availableAt: ahora(),
+    readAt: null,
+  });
+}
+
 const preferencias = new Map<string, { categories: { category: Categoria; optedIn: boolean }[]; quietHours: { start: string; end: string } | null }>();
 
 function preferenciasDe(userId: string) {
@@ -69,7 +109,28 @@ function preferenciasDe(userId: string) {
 
 function propias(request: MockRequest): NotificacionSimulada[] {
   const userId = request.user?.id;
-  return notificaciones.filtrar((n) => n.userId === userId || (userId !== undefined && userId !== PACIENTE.userId && userId !== MEDICA.userId && n.userId === MEDICA.userId && n.category === 'SCHEDULING'));
+  const guardadas = notificaciones.filtrar((n) => n.userId === userId || (userId !== undefined && userId !== PACIENTE.userId && userId !== MEDICA.userId && n.userId === MEDICA.userId && n.category === 'SCHEDULING'));
+  return [...guardadas, ...huecosParaPaciente(userId)];
+}
+
+/**
+ * Los avisos de cupo libre, calculados **en cada lectura**.
+ *
+ * No se siembran con el resto porque no son un dato: son una conclusión sobre
+ * el reloj (ver `horario-liberado.ts`). Sembrarlos al arrancar los dejaría
+ * ahí desde el primer render, y lo que hay que poder mostrar es que *llegan*.
+ *
+ * Se guardan la primera vez que se los ve —y sólo entonces— para que marcarlos
+ * como leídos funcione igual que con cualquier otro: `POST .../read` busca la
+ * fila, y una notificación que sólo existe mientras dura la respuesta no tiene
+ * fila que actualizar.
+ */
+function huecosParaPaciente(userId: string | undefined): NotificacionSimulada[] {
+  if (userId !== PACIENTE.userId || !esperaUnHueco(PACIENTE.id)) return [];
+  return horariosLiberados()
+    .map((hueco) => avisoDeHorarioLiberado(hueco))
+    .filter((aviso) => !notificaciones.has(aviso.id))
+    .map((aviso) => notificaciones.agregar(aviso));
 }
 
 export function registrarNotificaciones(router: MockRouter): void {

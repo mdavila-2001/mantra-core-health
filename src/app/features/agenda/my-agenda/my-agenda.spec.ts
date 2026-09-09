@@ -183,6 +183,97 @@ describe('MyAgenda', () => {
     expect(fixture.nativeElement.querySelector('app-tarjeta-del-dia')).toBeNull();
   });
 
+  /* -- La semana con nombres ------------------------------------------------ */
+
+  /**
+   * «El médico puede revisar su calendario de citas con horarios y **nombre
+   * completo del paciente** de forma diaria, semanal y mensual.»
+   *
+   * La semana ya existía y sabía contar libres y tomados. Lo que no hacía era
+   * pedir las citas: sin esta lectura, `app-week-view` recibe una lista vacía y
+   * la mitad del pedido —con quién— no tiene de dónde salir.
+   */
+  describe('la semana trae a quién atiende', () => {
+    /** Deja la pantalla en la vista de semana y devuelve la petición de citas. */
+    function verLaSemana() {
+      const componente = fixture.componentInstance as unknown as {
+        solapa: { set(v: 'patron' | 'mes'): void };
+        verSemana(): void;
+      };
+      componente.solapa.set('mes');
+      componente.verSemana();
+      fixture.detectChanges();
+      return http.expectOne((r) => r.url === '/scheduling/bookings');
+    }
+
+    it('pide las citas de los siete días en UNA sola llamada, acotada por recurso', () => {
+      // Una y no siete: `searchBookings` acepta ventana, y pedir siete veces lo
+      // mismo para agrupar después en el cliente es cara la red por comodidad.
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+      conCuposHasta(new Date('2030-01-01'));
+
+      const req = verLaSemana();
+      req.flush({ items: [], count: 0 });
+
+      // Acotada por recurso: sin filtro la API contesta 422, igual que el día.
+      expect(req.request.params.get('resourceId')).toBe('res-1');
+
+      const desde = new Date(req.request.params.get('from') as string);
+      const hasta = new Date(req.request.params.get('to') as string);
+      const dias = Math.round((hasta.getTime() - desde.getTime()) / 86_400_000);
+      expect(dias, 'la ventana tiene que ser de siete días').toBe(7);
+      expect(desde.getDay(), 'la ventana arranca un lunes').toBe(1);
+    });
+
+    it('las citas llegan a la vista de semana', () => {
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+      conCuposHasta(new Date('2030-01-01'));
+
+      const req = verLaSemana();
+      const desde = new Date(req.request.params.get('from') as string);
+      req.flush({
+        items: [
+          {
+            id: 'b-1',
+            statusConceptId: 'st-1',
+            startAt: new Date(
+              desde.getFullYear(),
+              desde.getMonth(),
+              desde.getDate(),
+              9,
+            ).toISOString(),
+            patientName: 'Ana Paz',
+          },
+        ],
+        count: 1,
+      });
+      // La traducción de estados sale detrás de la lectura de citas.
+      http.expectOne((r) => r.url.includes('concept')).flush({ items: [] });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Ana Paz');
+    });
+
+    it('si la lectura falla la semana sigue mostrando la ocupación, sin nombres', () => {
+      // Los libres y los tomados salen de los cupos del mes, que ya están
+      // cargados: perder los nombres no justifica perder la agenda.
+      crear();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+      conCuposHasta(new Date('2030-01-01'));
+
+      verLaSemana().flush(null, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-week-view')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="semana-citas"]')).toBeNull();
+    });
+  });
+
   /* -- El horario vigente, el retirado y el histórico (TAREA-10) ------------ */
 
   describe('vigente vs retirado', () => {

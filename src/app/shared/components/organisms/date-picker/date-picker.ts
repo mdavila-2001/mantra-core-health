@@ -607,7 +607,6 @@ export class DatePicker {
     }
 
     const pos = input.selectionStart ?? 0;
-    const end = input.selectionEnd ?? pos;
     const seg = getSegmentAt(pos);
 
     // Navegación con Tab entre segmentos (Día -> Mes -> Año)

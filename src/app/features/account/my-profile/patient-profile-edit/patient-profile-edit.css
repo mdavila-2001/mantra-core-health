@@ -10,9 +10,68 @@
   display: grid;
   gap: var(--sp-5);
   margin-block-start: var(--sp-6);
-  /* Un formulario de campos angostos a lo ancho de una pantalla grande se lee
-     peor que uno acotado a la medida de un formulario. */
-  max-inline-size: 44rem;
+  /* REGLA DE LA CASA (pedido del cliente, 09/09/2026): el formulario va
+     centrado y a todo el ancho del área de contenido, en UNA tarjeta con
+     pestañas. Antes estaba acotado a 44rem y pegado a la izquierda, con la
+     mitad de la pantalla en blanco; los campos se reparten en columnas según
+     el ancho, que es lo que evita las casillas kilométricas. Ver
+     `docs/components/composition-rules.md` §5. */
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+/* Embebido en «Mi perfil» la tarjeta de arriba ya pone el aire: el margen
+   superior propio sumaba un hueco entre la cabecera con el lápiz y la tira de
+   pestañas. */
+.datos--embebido {
+  margin-block-start: 0;
+}
+
+/* Cada sección dentro de una pestaña: la primera pegada a la tira con aire, las
+   siguientes separadas por un filete, que es lo que antes hacían las tarjetas. */
+.datos__seccion {
+  margin-block-start: var(--sp-5);
+}
+
+.datos__seccion + .datos__seccion {
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* La nota junto a las acciones: dónde falta algo que no se ve. */
+.datos__pendiente {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+/* Seguros y tutores, en lectura: la misma lista de la ficha. */
+.datos__lista {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.datos__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.datos__item-nombre {
+  font-weight: 600;
+}
+
+.datos__item-detalle {
+  color: var(--text-muted);
 }
 
 .datos__titulo {
@@ -40,6 +99,12 @@
 @media (min-width: 780px) {
   .datos__campos {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .datos__campos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

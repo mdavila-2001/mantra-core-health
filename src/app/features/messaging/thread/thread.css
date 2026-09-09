@@ -127,6 +127,92 @@
   white-space: nowrap;
 }
 
+/* --- Buscar en la conversación ------------------------------------------- */
+
+.hilo__buscar {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e2) var(--e4);
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-3);
+}
+
+.hilo__buscar > svg {
+  flex: none;
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.hilo__buscar input {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  block-size: 34px;
+  padding-inline: var(--e3);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--sup-inset);
+  font: inherit;
+  font-size: var(--fs-caption);
+  color: var(--tinta);
+}
+
+.hilo__buscar input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.hilo__buscar input:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+  border-color: var(--petroleo);
+}
+
+.hilo__buscar-cuenta {
+  flex: none;
+  color: var(--tinta-2);
+  font-size: var(--fs-overline);
+  font-variant-numeric: tabular-nums;
+}
+
+.hilo__buscar-cerrar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.hilo__buscar-cerrar svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+/* Lo que coincide con lo buscado, con los colores del sistema. */
+.hilo__marca {
+  border-radius: 3px;
+  padding: 0 1px;
+  background: var(--info-bg);
+  color: var(--info-tinta);
+}
+
+/* Un enlace dentro de una burbuja: se ve como enlace, corta donde haga falta. */
+.hilo__enlace {
+  color: var(--petroleo);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+
 /* El «volver» sólo aparece en angosto: en escritorio la lista está al lado. */
 .hilo__volver {
   display: none;
@@ -470,156 +556,6 @@
   margin: 0 0 3px;
   color: var(--tinta-3);
   font-size: var(--fs-overline);
-}
-
-/* --- El menú del mensaje ------------------------------------------------- */
-
-.hilo__mas-mensaje {
-  position: absolute;
-  inset-block-start: 2px;
-  inset-inline-end: 2px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 20px;
-  block-size: 20px;
-  border: 0;
-  border-radius: 4px;
-  background: linear-gradient(to left, var(--chat-ajena) 60%, transparent);
-  color: var(--tinta-3);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity var(--mov-rapido) var(--curva);
-}
-
-.hilo__burbuja.is-propio .hilo__mas-mensaje {
-  background: linear-gradient(to left, var(--chat-propia) 60%, transparent);
-}
-
-.hilo__burbuja:hover .hilo__mas-mensaje,
-.hilo__burbuja:focus-within .hilo__mas-mensaje,
-.hilo__mas-mensaje[aria-expanded='true'] {
-  opacity: 1;
-}
-
-.hilo__mas-mensaje svg {
-  inline-size: 14px;
-  block-size: 14px;
-}
-
-.hilo__menu {
-  position: absolute;
-  inset-block-start: 20px;
-  inset-inline-end: 0;
-  z-index: 3;
-  margin: 0;
-  padding: var(--e1);
-  min-inline-size: 9rem;
-  list-style: none;
-  border: 1px solid var(--filete);
-  border-radius: var(--r-menu);
-  background: var(--sup-tarjeta);
-  box-shadow: var(--sombra);
-}
-
-.hilo__menu button {
-  inline-size: 100%;
-  padding: var(--e2) var(--e3);
-  border: 0;
-  border-radius: var(--r-ctrl);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: var(--fs-caption);
-  text-align: start;
-  cursor: pointer;
-}
-
-.hilo__menu button:hover,
-.hilo__menu button:focus-visible {
-  background: var(--sup-inset);
-}
-
-@media (hover: none) {
-  .hilo__mas-mensaje {
-    opacity: 1;
-  }
-}
-
-/* --- Bajar del todo ------------------------------------------------------ */
-
-.hilo__bajar {
-  position: absolute;
-  inset-block-end: 5.5rem;
-  inset-inline-end: var(--e6);
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: var(--e2) var(--e3);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-pill);
-  background: var(--sup-tarjeta);
-  box-shadow: var(--sombra-2);
-  color: var(--tinta-2);
-  cursor: pointer;
-}
-
-.hilo__bajar svg {
-  inline-size: 18px;
-  block-size: 18px;
-}
-
-.hilo__bajar-cuenta {
-  min-inline-size: 18px;
-  padding-inline: 5px;
-  border-radius: var(--r-pill);
-  background: var(--chat-no-leido);
-  color: #fff;
-  font-size: var(--fs-overline);
-  font-weight: 700;
-}
-
-/* --- El visor de imágenes ------------------------------------------------ */
-
-.hilo__visor {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--e6);
-  background: var(--velo);
-  cursor: zoom-out;
-}
-
-.hilo__visor img {
-  max-inline-size: 100%;
-  max-block-size: 100%;
-  border-radius: var(--r-menu);
-  box-shadow: var(--sombra);
-}
-
-.hilo__visor-cerrar {
-  position: absolute;
-  inset-block-start: var(--e4);
-  inset-inline-end: var(--e4);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, .16);
-  color: #fff;
-  cursor: pointer;
-}
-
-.hilo__visor-cerrar svg {
-  inline-size: 20px;
-  block-size: 20px;
 }
 
 /* --- Angosto ------------------------------------------------------------- */

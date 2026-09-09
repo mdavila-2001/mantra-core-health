@@ -1,4 +1,9 @@
-<div class="mapa" role="region" [attr.aria-label]="etiqueta()">
+<div
+  class="mapa"
+  role="region"
+  [class.mapa--seleccionable]="seleccionable()"
+  [attr.aria-label]="etiqueta()"
+>
   <div class="mapa__lienzo" #lienzo></div>
   @if (!listo()) {
     <p class="mapa__espera">Cargando el mapa…</p>
