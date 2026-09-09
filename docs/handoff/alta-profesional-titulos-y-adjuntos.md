@@ -1,6 +1,7 @@
 # Alta de profesional · títulos y adjuntos — qué falta para `dev`
 
-**Fecha:** 2026-09-07 · **Rama con lo visual:** `mockup` · **Estado:** pantalla lista, sin conectar
+**Fecha:** 2026-09-07 · **Actualizado:** 2026-09-09 (universidad, lugar de estudio y segunda
+profesión) · **Rama con lo visual:** `mockup` · **Estado:** pantalla lista, sin conectar
 
 ---
 
@@ -160,7 +161,10 @@ día que se conecte, falle y alguien la actualice a propósito.
 | Diploma del título (paso 7, opcional) | una credencial con `fileId` | `profiles:CREDENTIAL_TYPE_DEGREE` |
 | Matrícula profesional + su archivo | la credencial de la matrícula, hoy ya se crea | el tipo que ya usa el alta |
 | Registro del SEDES + su archivo | otra credencial | ídem |
-| Título universitario (repetible) | una credencial por fila | `..._DEGREE` |
+| **Universidad del título (paso 7)** | `issuingInstitutionText` de esa credencial | — |
+| **País de estudio (paso 7)** | `issuingCountryConceptId` — **el DTO no lo expone todavía**, ver §3.7 | — |
+| **Ciudad de estudio (paso 7)** | **no tiene columna**, ver §3.7 | — |
+| Otra profesión (repetible) | una credencial por fila, con su universidad, país, ciudad y archivo | `..._DEGREE` |
 | Diplomado (repetible) | una credencial por fila | `..._DIPLOMA` |
 | Maestría (repetible) | una credencial por fila | `..._MASTER` |
 | Doctorado (repetible) | una credencial por fila | `..._DOCTORATE` |
@@ -221,6 +225,51 @@ No la buscamos. El endpoint de verificación existe; falta confirmar si hay UI q
 llame. Si no la hay, es alcance propio y no parte de esto.
 
 ---
+
+### 3.7 Universidad, lugar de estudio y la segunda profesión (09/09/2026)
+
+El propietario pidió tres cosas más sobre esta misma pantalla, y las tres están **en
+pantalla y ninguna viaja**, igual que el resto de este documento:
+
+1. **Elegir la universidad** del título con el que ejerce.
+2. **El lugar de estudio: país y ciudad.**
+3. **Más de una profesión** — «hay doctores que aparte de ser doctores han estudiado otra
+   profesión» —, cada una opcional y con su universidad, su lugar de estudio y su diploma.
+
+Cómo quedó:
+
+- El paso 7 («Tu título profesional y foto») ganó un bloque **Universidad · País de estudio ·
+  Ciudad de estudio**, los tres opcionales, entre el título y su diploma. Son un campo
+  proyectado (`professionalTitleEducation`) porque la página ya estaba en el tope de cuatro.
+- El paso 10 («Tus títulos») ya permitía cargar varios de cada tipo; ahora **cada fila** lleva
+  las mismas tres casillas además del nombre y el archivo.
+- El primer tipo dejó de llamarse «Título profesional universitario» y es **«Otra
+  profesión»**: es el lugar de la segunda carrera. La profesión con la que ejerce ya se
+  eligió, obligatoria, en el paso 7 — rotularlo por el tipo de diploma escondía para qué está.
+
+**Los tres campos son de texto libre, y es una decisión, no una omisión:**
+
+| Campo | Por qué texto |
+|---|---|
+| Universidad | El modelo ya la guarda así a propósito (`issuingInstitutionText`: «las universidades del exterior no están en ningún catálogo nuestro»). **No hay padrón de universidades en ninguna de las cuatro capas** y la regla de datos del proyecto pide no hardcodear uno sin dataset ni estrategia de importación. |
+| País | La columna sí es un concepto (`issuing_country_concept_id`), pero hoy existen **dos** en toda la aplicación —`COUNTRY_BO` y `COUNTRY_PE` (`src/common/constants/concepts.ts`)— y **`VS_COUNTRY` no tiene miembros sembrados**. Un desplegable cerrado ofrecería dos opciones y dejaría afuera a quien estudió en Cuba, Argentina o España. |
+| Ciudad | **`profiles.professional_credentials` no tiene columna de ciudad.** Ver abajo. |
+
+#### Lo que falta del lado del modelo, y es lo único de esto que NO es sólo front
+
+- **País:** la columna existe; lo que falta es **sembrar `VS_COUNTRY`** y **exponer
+  `issuingCountryConceptId` en `AddOwnCredentialDto`**, que hoy no lo declara. Con eso el
+  campo pasa de texto a combobox sin tocar la pantalla más que en el origen de las opciones.
+- **Ciudad:** **no hay dónde guardarla.** Es cambio de modelo, por el camino obligatorio
+  (`.puml` → `gen_ddl.py` → `SQL/` → base → ORM; ADR-0021). Dos salidas posibles, y hay que
+  elegir a propósito: una columna `issuing_city_text` al lado de `issuing_institution_text`,
+  o `issuing_administrative_area_concept_id` si se quiere que sea catálogo. **La API no
+  escribe DDL: esto empieza en `mantra-core-health-model/`, no acá.**
+
+Hasta que eso pase, la ciudad se pregunta y **se pierde al enviar**. Está fijado por prueba
+(`nada de esto viaja en el alta todavía`), que también comprueba que los tres campos nuevos
+no se cuelen en el cuerpo: la API valida con `forbidNonWhitelisted` y un campo de más
+**rechaza el alta entera con 422**, no lo ignora.
 
 ### 3.6 Dos decisiones más, chicas, que dejó abiertas lo visual
 
