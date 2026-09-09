@@ -13,7 +13,21 @@
  * endpoint**: la pantalla existe, se recorre entera y cierra con una solicitud
  * — ver el JSDoc de `RegisterLaboratory`. La puerta abre; lo que hay del otro
  * lado es la maqueta.
+ *
+ * `imaging` entró con el alta del centro de imagenología, el módulo «ANÁLISIS
+ * MÉDICOS (RAYOS X, RESONANCIA, ETC.)» del mismo registro, y está en la misma
+ * situación que `laboratory`: pantalla de verdad, solicitud al final, sin
+ * endpoint todavía — ver el JSDoc de `RegisterImagingCenter`. Es un ícono
+ * aparte y no el mismo tubo de ensayo porque son dos altas distintas que
+ * conviven en la misma rejilla: con el mismo dibujo, elegir entre las dos sería
+ * leer los dos rótulos enteros.
  */
-export const ACCOUNT_ICON_NAMES = ['patient', 'practitioner', 'insurer', 'laboratory'] as const;
+export const ACCOUNT_ICON_NAMES = [
+  'patient',
+  'practitioner',
+  'insurer',
+  'laboratory',
+  'imaging',
+] as const;
 
 export type AccountIconName = (typeof ACCOUNT_ICON_NAMES)[number];

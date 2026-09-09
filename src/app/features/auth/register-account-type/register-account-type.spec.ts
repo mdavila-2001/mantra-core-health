@@ -29,7 +29,7 @@ describe('RegisterAccountType', () => {
       .map((el) => el.nativeElement as HTMLAnchorElement);
   }
 
-  it('ofrece las cuatro cuentas que tienen pantalla de alta, y ninguna más', () => {
+  it('ofrece las cinco cuentas que tienen pantalla de alta, y ninguna más', () => {
     const titulos = tarjetas().map((card) =>
       card.querySelector('.tipos__card-title')!.textContent!.trim(),
     );
@@ -38,7 +38,13 @@ describe('RegisterAccountType', () => {
     // ya eligió la suya.
     // «Médico» y no «Doctor» (F2 del plan de UX del 22/08/2026): en toda la
     // superficie que ve un paciente o un profesional se dice «médico».
-    expect(titulos).toEqual(['Paciente', 'Médico', 'Aseguradora', 'Laboratorio']);
+    expect(titulos).toEqual([
+      'Paciente',
+      'Médico',
+      'Aseguradora',
+      'Laboratorio',
+      'Imagenología',
+    ]);
   });
 
   it('cada tarjeta lleva a su alta', () => {
@@ -49,6 +55,7 @@ describe('RegisterAccountType', () => {
       '/auth/register/practitioner',
       '/auth/register/organization',
       '/auth/register/laboratory',
+      '/auth/register/imaging-center',
     ]);
   });
 
@@ -63,7 +70,7 @@ describe('RegisterAccountType', () => {
   it('la rejilla es una lista: el lector anuncia cuántas opciones hay antes de leerlas', () => {
     const items = fixture.debugElement.queryAll(By.css('.tipos__grid > li'));
 
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(5);
   });
 
   it('dice «Aseguradora», que es lo que el alta crea de verdad', () => {

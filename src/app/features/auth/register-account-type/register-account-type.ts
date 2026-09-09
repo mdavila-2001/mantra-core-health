@@ -16,7 +16,7 @@ interface TipoDeCuenta {
 }
 
 /**
- * Los cuatro tipos de cuenta que se dan de alta solos.
+ * Los cinco tipos de cuenta que se dan de alta solos.
  *
  * **No hay «Otro».** Cada tarjeta lleva a una pantalla de alta que existe. Una
  * que no llevara a ningún lado sería peor que no ofrecerla: quien la pulsa ya
@@ -32,6 +32,14 @@ interface TipoDeCuenta {
  * `RegisterLaboratory`—. Se ofrece igual porque la pantalla es de verdad y es
  * lo que hay que poder mirar y corregir; la tarjeta no promete nada que la
  * pantalla no cumpla.
+ *
+ * **«Imagenología» es la segunda en esa misma situación** —módulo «ANÁLISIS
+ * MÉDICOS (RAYOS X, RESONANCIA, ETC.)» del mismo registro, ver el JSDoc de
+ * `RegisterImagingCenter`—, y va **separada del laboratorio** por lo mismo que
+ * la fuente las escribe como dos módulos: son dos empresas distintas, con
+ * papeles distintos y equipos distintos. Una sola tarjeta «Laboratorio o centro
+ * de estudios» obligaría a preguntar cuál de las dos es adentro del formulario,
+ * que es la misma decisión movida a un peor lugar.
  */
 const TIPOS: readonly TipoDeCuenta[] = [
   {
@@ -61,6 +69,13 @@ const TIPOS: readonly TipoDeCuenta[] = [
     detalle: 'Recibí las órdenes médicas de la red y entregá los resultados por la app.',
     ruta: '/auth/register/laboratory',
     testId: 'tipo-laboratorio',
+  },
+  {
+    icono: 'imaging',
+    titulo: 'Imagenología',
+    detalle: 'Rayos X, ecografía, tomografía y resonancia. Recibí las órdenes de la red.',
+    ruta: '/auth/register/imaging-center',
+    testId: 'tipo-imagenologia',
   },
 ];
 

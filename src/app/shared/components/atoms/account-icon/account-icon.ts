@@ -95,6 +95,27 @@ import type { AccountIconName } from './account-icon.types';
           <path d="M6.5 20.75h11" />
         </svg>
       }
+      @case ('imaging') {
+        <!-- Cuatro esquinas y la línea del barrido: el mismo dibujo con el que
+             app-nav-icon dice «imagenología» en el menú, porque decir lo mismo
+             de dos maneras obliga a aprender dos. No es un tubo de ensayo —eso
+             es el laboratorio de al lado— ni una placa con un hueso, que a 24
+             píxeles es una mancha. -->
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M3 8.6V5.8A2.4 2.4 0 0 1 5.4 3.4h2.8M15.8 3.4h2.8A2.4 2.4 0 0 1 21 5.8v2.8" />
+          <path d="M21 15.4v2.8a2.4 2.4 0 0 1-2.4 2.4h-2.8M8.2 20.6H5.4A2.4 2.4 0 0 1 3 18.2v-2.8" />
+          <path d="M6.4 12h11.2" />
+        </svg>
+      }
     }
   `,
   styles: `
