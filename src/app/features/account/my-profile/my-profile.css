@@ -34,9 +34,37 @@
   }
 }
 
+/* Sin lateral, una sola columna a lo ancho y centrada.
+ *
+ * REGLA DE LA CASA (pedido del cliente, 09/09/2026): un formulario o una ficha
+ * que es lo único de su pantalla va **centrado y ocupando todo el ancho del
+ * área de contenido**, en UNA tarjeta con pestañas. Nunca pegado a la
+ * izquierda con un hueco al lado, ni acotado a una medida de columna cuando
+ * no hay otra columna. Ver `docs/components/composition-rules.md` §5. */
+.mi-perfil--sin-lateral {
+  grid-template-columns: minmax(0, 1fr);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.mi-perfil--sin-lateral .mi-perfil__principal {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
 .mi-perfil__principal {
   display: grid;
+  /* La pista explícita y el mínimo en cero: sin ellos, la tira de cuatro
+     pestañas —544 px de ancho natural— fija el mínimo de la tarjeta y en un
+     teléfono de 390 px la página entera se desplaza a lo ancho. Con el
+     contenedor acotado, la tira se desplaza por dentro con sus flechas. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.mi-perfil__principal > *,
+.mi-perfil__lateral > * {
   min-inline-size: 0;
 }
 
@@ -70,7 +98,7 @@
    está arriba de la lista de datos, no montado sobre una portada. */
 .mi-perfil__foto {
   display: inline-block;
-  margin-block-end: var(--sp-3);
+  flex: 0 0 auto;
   border-radius: 50%;
   cursor: pointer;
 }
@@ -81,7 +109,7 @@
 }
 
 .mi-perfil__foto-error {
-  margin: 0 0 var(--sp-3);
+  margin: var(--sp-1) 0 0;
   color: var(--error-tinta, var(--c-error-700));
   font-size: var(--fs-caption);
 }
@@ -97,6 +125,15 @@
      en dos columnas quedan apretadas contra el borde. */
   .mi-perfil__datos--una {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A lo ancho de una pantalla grande, la ficha sin lateral reparte los datos en
+   tres columnas: ocho renglones en dos columnas de 600 px dejan cada dato
+   flotando en un campo de blanco. */
+@media (min-width: 1120px) {
+  .mi-perfil--sin-lateral .mi-perfil__datos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -250,10 +287,37 @@
 .mi-perfil__cabecera {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
   margin-block-end: var(--sp-4);
+}
+
+/* Retrato, título y nombre en la misma línea: es la identidad de la tarjeta,
+   y las pestañas cuelgan de ella. */
+.mi-perfil__identidad {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.mi-perfil__rotulo {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.mi-perfil__nombre {
+  margin: 0;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* Dentro de una pestaña, el contenido empieza con aire respecto de la tira. */
+.mi-perfil app-tab > .mi-perfil__datos,
+.mi-perfil app-tab > .mi-perfil__nota--primera {
+  margin-block-start: var(--sp-5);
 }
 
 /* El título ya no lleva su propio margen inferior cuando va en la cabecera:

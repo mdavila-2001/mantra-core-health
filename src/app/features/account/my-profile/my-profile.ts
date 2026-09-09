@@ -29,8 +29,12 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
@@ -39,6 +43,7 @@ import {
   toCaseStatusPresentation,
 } from '../../identity-verification/case-status';
 import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
+import { PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
 
 /**
@@ -124,11 +129,15 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     Card,
     DatePipe,
     Link,
+    NavIcon,
     PageHeader,
     PatientProfileEdit,
     PractitionerProfile,
     RouterLink,
     StatusSeal,
+    Tab,
+    Tabs,
+    Tooltip,
     ViewStateHost,
   ],
   templateUrl: './my-profile.html',
@@ -214,6 +223,17 @@ export class MyProfile {
    * existiendo para eso—, es un estado momentáneo de esta pantalla.
    */
   protected readonly editando = signal(false);
+
+  /**
+   * Las pestañas de la tarjeta y cuál está abierta.
+   *
+   * Una sola tarjeta con pestañas, en lectura y en edición (pedido del cliente
+   * del 09/09/2026). El índice se comparte con el editor embebido: pulsar el
+   * lápiz estando en «Contacto» abre el formulario en «Contacto», y al volver
+   * a sólo lectura se sigue en la misma.
+   */
+  protected readonly pestanas = PESTANAS_DEL_PERFIL;
+  protected readonly pestana = signal(0);
 
   /**
    * Adónde va «Cambiar contraseña» (FT-11-R08).
@@ -303,6 +323,19 @@ export class MyProfile {
     if (!roles.includes('PATIENT')) return true;
     return ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
   });
+
+  /**
+   * Si la columna lateral tiene algo que mostrar.
+   *
+   * Hoy son dos fichas y las dos pueden estar apagadas a la vez —la
+   * verificación por el interruptor, el acceso para cualquier paciente—. Con
+   * las dos apagadas el `<aside>` no se dibuja y la rejilla no le reserva la
+   * columna: el perfil se centra a lo ancho en vez de quedar pegado a la
+   * izquierda con un hueco al lado.
+   */
+  protected readonly hayLateral = computed(
+    () => this.verificacionOfrecida || this.muestraElAcceso(),
+  );
 
   protected readonly tenantName = computed(() => {
     const id = this.auth.activeTenantId();
@@ -565,7 +598,18 @@ export class MyProfile {
       )
       .subscribe({
         next: ({ resumen, etiquetas }) => {
-          this.etiquetas.set(etiquetas);
+          // Se FUSIONA, no se reemplaza: el perfil completo pide sus propias
+          // etiquetas —ocupación, municipio, departamento— en paralelo, y si
+          // llegaban antes que esta, un `set` las pisaba con la sola etiqueta
+          // del estado. Se veía como «Ocupación» en blanco y el municipio «Sin
+          // registrar» teniendo los dos datos cargados.
+          this.etiquetas.update((prev) => {
+            const map = new Map(prev);
+            for (const [k, v] of etiquetas.entries()) {
+              map.set(k, v);
+            }
+            return map;
+          });
           this.resumen.set(ready(resumen));
         },
         error: (error: unknown) => this.resumen.set(errorToViewState<OwnPatientSummary>(error)),

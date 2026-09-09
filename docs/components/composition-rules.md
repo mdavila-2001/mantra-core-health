@@ -137,6 +137,44 @@ otro queda vacío».*
 
 Es el tipo de restricción que hay que saber antes de refactorizar ese archivo.
 
+## 5 · Una ficha o un formulario que es lo único de su pantalla va centrado, a lo ancho y en UNA tarjeta con pestañas
+
+**Regla de la casa, pedida por el cliente el 09/09/2026 a raíz de «Mi perfil»
+del paciente.** Vale para toda pantalla nueva o retocada a partir de esa
+fecha, y no admite «por ahora lo dejo así».
+
+Lo que se vio: la ficha del paciente medía 762 px en un área de 1176 px,
+pegada a la izquierda con 40 px de margen y **374 px en blanco a la
+derecha**. El editor, además, estaba acotado a `44rem` y dibujaba tres
+tarjetas apiladas. Dos causas, las dos comunes en el repositorio:
+
+1. una rejilla de dos columnas —principal y lateral— que **reserva la columna
+   lateral aunque no haya nada que poner en ella**;
+2. un `max-inline-size` de «medida de formulario» sin `margin-inline: auto`,
+   que en una pantalla ancha deja el formulario en la esquina.
+
+La regla, en tres partes:
+
+- **Centrado.** El bloque principal lleva `inline-size: 100%` y
+  `margin-inline: auto`. Si una rejilla tiene un lateral condicional, la
+  columna se quita con una clase cuando el lateral no se dibuja
+  (`.mi-perfil--sin-lateral` es el ejemplo canónico). Nunca una columna vacía.
+- **A lo ancho del área de contenido.** Sin topes propios de ancho: el tope lo
+  pone `.app-main__inner` (1440 px) y nadie más. Lo que evita las casillas
+  kilométricas no es acotar el formulario sino **repartir los campos en
+  columnas** según el ancho: una en móvil, dos desde 780 px, tres desde
+  1120 px.
+- **Una tarjeta con pestañas.** Una ficha con varias secciones va en UNA
+  `app-card` con `app-tabs`, no en tres tarjetas apiladas. Lectura y edición
+  comparten las mismas pestañas, en el mismo orden y con el índice compartido:
+  el lápiz abre el formulario en la pestaña que se estaba mirando
+  (`PESTANAS_DEL_PERFIL`). Como `app-tab` no dibuja el panel cerrado, los
+  valores del formulario viven en señales del componente, no en los controles.
+
+Cómo se comprueba, con navegador y no a ojo: la holgura izquierda y la derecha
+del bloque respecto de `.app-main__inner` difieren en ≤ 2 px, y el bloque
+mide ≥ 85 % del área. `playwright/mi-perfil-paciente.mjs` lo mide así.
+
 ## El barril y las rutas profundas
 
 `shared/index.ts` declara que **es** la API pública de `shared/`. En la práctica:

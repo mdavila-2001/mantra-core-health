@@ -127,6 +127,174 @@
   white-space: nowrap;
 }
 
+/* --- Buscar en la conversación ------------------------------------------- */
+
+.hilo__buscar {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e2) var(--e4);
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-3);
+}
+
+.hilo__buscar > svg {
+  flex: none;
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.hilo__buscar input {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  block-size: 34px;
+  padding-inline: var(--e3);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--sup-inset);
+  font: inherit;
+  font-size: var(--fs-caption);
+  color: var(--tinta);
+}
+
+.hilo__buscar input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.hilo__buscar input:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+  border-color: var(--petroleo);
+}
+
+.hilo__buscar-cuenta {
+  flex: none;
+  color: var(--tinta-2);
+  font-size: var(--fs-overline);
+  font-variant-numeric: tabular-nums;
+}
+
+.hilo__buscar-cerrar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.hilo__buscar-cerrar svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+/* Lo que coincide con lo buscado, con los colores del sistema. */
+.hilo__marca {
+  border-radius: 3px;
+  padding: 0 1px;
+  background: var(--info-bg);
+  color: var(--info-tinta);
+}
+
+/* Un enlace dentro de una burbuja: se ve como enlace, corta donde haga falta. */
+.hilo__enlace {
+  color: var(--petroleo);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+/* --- Reenviar ------------------------------------------------------------ */
+
+.hilo__aviso {
+  position: absolute;
+  inset-block-end: 5.5rem;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  margin: 0;
+  padding: var(--e2) var(--e4);
+  border-radius: var(--r-pill);
+  background: var(--tinta);
+  color: var(--sup-tarjeta);
+  font-size: var(--fs-caption);
+  box-shadow: var(--sombra-2);
+}
+
+.hilo__reenvio {
+  cursor: default;
+}
+
+.hilo__reenvio-caja {
+  inline-size: min(24rem, 100%);
+  max-block-size: 80vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+}
+
+.hilo__reenvio-titulo {
+  margin: 0;
+  padding: var(--e4) var(--e4) var(--e2);
+  font-family: var(--f-titulo);
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
+  color: var(--tinta-marca);
+}
+
+.hilo__reenvio-lista {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 var(--e2);
+  list-style: none;
+}
+
+.hilo__reenvio-lista button {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  inline-size: 100%;
+  padding: var(--e2) var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: var(--tinta);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.hilo__reenvio-lista button:hover,
+.hilo__reenvio-lista button:focus-visible {
+  background: var(--sup-inset);
+}
+
+.hilo__reenvio-cancelar {
+  margin: var(--e2) var(--e4) var(--e4);
+  align-self: flex-end;
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* El «volver» sólo aparece en angosto: en escritorio la lista está al lado. */
 .hilo__volver {
   display: none;

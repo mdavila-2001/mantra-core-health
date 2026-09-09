@@ -196,8 +196,42 @@ describe('PatientProfileEdit', () => {
     fixture.detectChanges();
   }
 
+  /**
+   * Abre la pestaña donde vive un campo.
+   *
+   * El formulario es UNA tarjeta con pestañas (pedido del 09/09/2026) y
+   * `app-tab` no dibuja el panel cerrado: para teclear el teléfono hay que
+   * estar en «Contacto», igual que la persona. Los valores viven en señales
+   * del componente, así que cambiar de pestaña no pierde lo tecleado.
+   */
+  function abrirPestana(indice: number): void {
+    const pestanas = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+      '[role="tab"]',
+    );
+    const pestana = pestanas[indice];
+    if (pestana === undefined) {
+      throw new Error(`No hay pestaña ${indice} en la pantalla.`);
+    }
+    if (pestana.getAttribute('aria-selected') !== 'true') {
+      pestana.click();
+      fixture.detectChanges();
+    }
+  }
+
+  /** En qué pestaña está cada campo, por su `data-testid`. */
+  function pestanaDe(testId: string): number {
+    if (/^perfil-(telefono|municipio|domicilio|trabajo|correo)/.test(testId)) {
+      return 1;
+    }
+    if (/^perfil-(nit|razon-social)/.test(testId)) {
+      return 2;
+    }
+    return 0;
+  }
+
   /** El `<select>` real de un campo, que vive dentro del átomo. */
   function desplegable(testId: string): HTMLSelectElement | null {
+    abrirPestana(pestanaDe(testId));
     return (fixture.nativeElement as HTMLElement).querySelector<HTMLSelectElement>(
       `[data-testid="${testId}"] select`,
     );
@@ -210,6 +244,7 @@ describe('PatientProfileEdit', () => {
 
   /** El `<input>` real del teléfono, que vive dentro de `app-phone-input`. */
   function campoDeTelefono(): HTMLInputElement {
+    abrirPestana(pestanaDe('perfil-telefono'));
     const campo = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
       '[data-testid="perfil-telefono"]',
     );
@@ -229,6 +264,7 @@ describe('PatientProfileEdit', () => {
 
   /** El texto del campo que envuelve a un control, sea ayuda o error. */
   function notaDelCampo(testId: string, clase: string): string {
+    abrirPestana(pestanaDe(testId));
     const campo = (fixture.nativeElement as HTMLElement)
       .querySelector(`[data-testid="${testId}"]`)
       ?.closest('app-form-field');

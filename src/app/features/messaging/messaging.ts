@@ -3,11 +3,13 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { debounceTime, filter, map, Subject } from 'rxjs';
 
@@ -76,6 +78,7 @@ export class Messaging {
   private readonly preferencias = inject(ChatPreferencias);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
+  private readonly titulo = inject(Title);
 
   protected readonly filtros = FILTROS;
 
@@ -179,6 +182,19 @@ export class Messaging {
         this.abrirConSlug(slug);
       }
     });
+
+    // «(3) AloVida - Chats» en la pestaña mientras haya sin leer, como
+    // cualquier chat: es lo que avisa desde otra pestaña sin abrir ésta. La
+    // `TitleStrategy` vuelve a estampar el título en cada navegación —el hilo
+    // es una ruta hija—, así que se aplica también tras cada `NavigationEnd`.
+    effect(() => {
+      this.store.sinLeer();
+      this.estamparTitulo();
+    });
+    this.router.events
+      .pipe(filter((evento) => evento instanceof NavigationEnd), takeUntilDestroyed())
+      .subscribe(() => queueMicrotask(() => this.estamparTitulo()));
+    inject(DestroyRef).onDestroy(() => this.titulo.setTitle(sinContador(this.titulo.getTitle())));
   }
 
   protected alEscribir(texto: string): void {
@@ -216,6 +232,12 @@ export class Messaging {
   protected alternarArchivados(): void {
     this.verArchivados.set(!this.verArchivados());
     this.filtro.set('todos');
+  }
+
+  private estamparTitulo(): void {
+    const base = sinContador(this.titulo.getTitle());
+    const cuantos = this.store.sinLeer();
+    this.titulo.setTitle(cuantos > 0 ? `(${cuantos}) ${base}` : base);
   }
 
   /** Lo que pide el menú de una fila. */
@@ -260,4 +282,9 @@ export class Messaging {
       void this.router.navigate(['/messaging', conversationId]);
     });
   }
+}
+
+/** Quita el «(3) » del frente de un título, si lo tiene. */
+function sinContador(titulo: string): string {
+  return titulo.replace(/^\(\d+\)\s+/u, '');
 }

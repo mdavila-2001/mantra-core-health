@@ -134,6 +134,17 @@ export const NAV_ICON_NAMES = [
   // lista no borra nada, y una papelera promete una destrucción que no ocurre.
   'remove',
 
+  // Y `edit`, la cuarta acción del set: el lápiz que habilita los campos de
+  // un formulario que entró en sólo lectura («Mi perfil», FT-11-R04). Responde
+  // «¿qué le hace este botón a lo que está al lado?», igual que `remove`.
+  //
+  // Entra porque el pedido del cliente es un **botón de lápiz**, y la única
+  // alternativa dentro del set era `note` —una hoja con un lápiz en la
+  // esquina— que ya nombra la sección «Evoluciones»: el mismo dibujo para
+  // «esta sección» y para «editar esto» rompe el reconocimiento, que es lo
+  // único que un ícono aporta.
+  'edit',
+
   // Preferencia del dispositivo: los tres del panel «Apariencia» y el que le
   // falta a «Permisos» (TAREA-17). No nombran una sección del menú, nombran un
   // valor de una preferencia — la misma excepción que ya vale para

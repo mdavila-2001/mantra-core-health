@@ -221,8 +221,11 @@ export class ChatStore {
   private encendido = false;
   private hiloMarcado = new Set<string>();
 
-  /** Las URL de descarga ya resueltas, por id de archivo. */
-  private readonly urlesDeArchivo = signal<ReadonlyMap<string, string>>(new Map());
+  /**
+   * Los adjuntos ya resueltos, por id de archivo: la `data:` URL lista para un
+   * `src` o un `href`, `''` mientras se pide, `null` si no se pudo leer.
+   */
+  private readonly urlesDeArchivo = signal<ReadonlyMap<string, string | null>>(new Map());
 
   /**
    * El hilo listo para leer: del más viejo al más nuevo, con los pendientes de
@@ -1001,6 +1004,33 @@ export class ChatStore {
     this.despachar(pendiente);
   }
 
+  /**
+   * Reenvía un mensaje —su texto y su adjunto— a otra conversación.
+   *
+   * Va por el mismo camino que un envío normal: si la conversación destino no
+   * es la abierta, la burbuja no se pinta acá pero la fila de la bandeja se
+   * actualiza en cuanto el servidor acusa. El adjunto se manda por su
+   * `fileId`: es el mismo archivo, no una copia.
+   */
+  reenviar(mensaje: MensajeDelHilo, conversationId: string): void {
+    const propio = this.perfil();
+    if (propio === null || mensaje.estado !== 'enviado') {
+      return;
+    }
+    const pendiente: MensajePendiente = {
+      claveTemporal: claveTemporal(),
+      conversationId,
+      bodyText: mensaje.bodyText ?? '',
+      ...(mensaje.attachmentFileId
+        ? { adjunto: { fileId: mensaje.attachmentFileId, nombre: 'Archivo adjunto', tipo: '' } }
+        : {}),
+      creadoEn: new Date(),
+      estado: 'enviando',
+    };
+    this.pendientes.update((lista) => [...lista, pendiente]);
+    this.despachar(pendiente);
+  }
+
   /** Reintenta uno que falló. */
   reintentar(pendiente: MensajePendiente): void {
     this.pendientes.update((lista) =>
@@ -1320,14 +1350,34 @@ export class ChatStore {
 
   /* --- Adjuntos ----------------------------------------------------------- */
 
-  /** La URL de descarga de un archivo, si ya se resolvió. */
+  /** El adjunto como `data:` URL, si ya se leyó; `null` si todavía no o si falló. */
   urlDe(fileId: string): string | null {
-    return this.urlesDeArchivo().get(fileId) ?? null;
+    return this.urlesDeArchivo().get(fileId) || null;
+  }
+
+  /** `true` si el archivo se pidió y no se pudo leer. */
+  adjuntoNoDisponible(fileId: string): boolean {
+    return this.urlesDeArchivo().get(fileId) === null;
   }
 
   /**
-   * Pide la URL de los adjuntos que se van a pintar y todavía no la tienen.
-   * Una vez por archivo: la firma vale para toda la sesión de la pantalla.
+   * Lee los adjuntos que se van a pintar y todavía no están. Una vez por
+   * archivo, por sesión de la pantalla.
+   *
+   * ## Por qué `contentDataUrl` y no `downloadUrl`
+   *
+   * Porque lo que devuelve `downloadUrl` **no es una URL de navegador**: el
+   * backend arma `file://local/<sha>?signature=…`, que ningún `<img>` carga, y
+   * la CSP del proyecto sólo admite `img-src 'self' data:`. Es el mismo motivo
+   * por el que la foto de perfil se pinta con `imageDataUrl` (ver
+   * `FilesClient`). Bajar los bytes por `HttpClient` deja además que el
+   * interceptor mande la sesión, que `GET …/content` exige.
+   *
+   * El backend hoy sólo entrega el contenido a quien subió el archivo o a un
+   * rol revisor: el adjunto **ajeno** de una conversación puede responder 403,
+   * y la burbuja lo dice («Archivo no disponible») en vez de quedarse
+   * «subiendo» para siempre. Que un participante pueda leer los adjuntos de su
+   * conversación está anotado en F4 del plan.
    */
   private resolverAdjuntos(mensajes: readonly MensajeDelHilo[]): void {
     if (!this.isBrowser) {
@@ -1342,15 +1392,11 @@ export class ChatStore {
       // Se reserva el lugar antes de pedir, para no pedir dos veces el mismo
       // archivo mientras la primera petición está en vuelo.
       this.urlesDeArchivo.update((mapa) => new Map(mapa).set(fileId, ''));
-      this.archivos.downloadUrl(fileId).subscribe({
-        next: ({ url }) =>
+      this.archivos.contentDataUrl(fileId).subscribe({
+        next: (url) =>
           this.urlesDeArchivo.update((mapa) => new Map(mapa).set(fileId, url)),
         error: () =>
-          this.urlesDeArchivo.update((mapa) => {
-            const copia = new Map(mapa);
-            copia.delete(fileId);
-            return copia;
-          }),
+          this.urlesDeArchivo.update((mapa) => new Map(mapa).set(fileId, null)),
       });
     }
   }

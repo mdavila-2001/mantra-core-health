@@ -276,22 +276,64 @@
             </ng-template>
 
             <ng-template appCampoPersonalizado="gpsDomicilio">
-              @if (gpsDomicilio(); as punto) {
+              @if (mapaDomicilioAbierto()) {
                 <div class="registro__ubicacion">
                   <!-- El mapa reemplazó al par de coordenadas. Un «-17,7833, -63,1821»
                        no le dice a nadie si el punto cayó en su casa; el pin sobre el
                        plano se lee de un vistazo, que es justo lo que hay que
-                       confirmar. -->
+                       confirmar.
+
+                       Y es también el selector: tocar el plano pone el pin, o lo corre
+                       si ya había uno. Sin pin todavía, `centro` va en `null` y el
+                       organismo abre su vista por defecto. -->
                   <app-map
                     class="registro__mapa"
                     data-testid="registro-mapa-domicilio"
                     [pines]="pinesDomicilio()"
-                    [centro]="punto"
+                    [centro]="gpsDomicilio()"
                     [zoom]="17"
-                    etiqueta="Tu ubicación actual en el mapa"
+                    [seleccionable]="true"
+                    etiqueta="Tu ubicación en el mapa"
+                    (pointPicked)="fijarPuntoDomicilio($event)"
                   />
 
-                  @if (direccionConfirmada()) {
+                  @if (gpsDomicilio() === null) {
+                    <p
+                      class="registro__ubicacion-estado"
+                      data-testid="registration-home-location-pick-hint"
+                    >
+                      Tocá el mapa en el lugar donde vivís para poner el pin.
+                    </p>
+                    <div class="registro__ubicacion-acciones">
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        data-testid="registro-usar-ubicacion"
+                        [isLoading]="pidiendoGps()"
+                        (clicked)="usarMiUbicacion()"
+                      >
+                        Usar mi ubicación
+                      </button>
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        aria-label="Quitar la ubicación de tu domicilio"
+                        appTooltip="Quitar la ubicación de tu domicilio"
+                        data-testid="registration-home-location-remove"
+                        (clicked)="quitarUbicacion()"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </div>
+                    @if (gpsRechazado()) {
+                      <p class="registro__ubicacion-aviso">
+                        No pudimos obtener tu ubicación. Podés marcar el punto tocando el mapa.
+                      </p>
+                    }
+                  } @else if (direccionConfirmada()) {
                     <p
                       appAnuncio
                       class="registro__ubicacion-estado"
@@ -306,6 +348,7 @@
                     <p class="registro__ubicacion-aviso" data-testid="registration-home-geocoding-notice">
                       {{ avisoSinGeocodificacion }}
                     </p>
+                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -343,6 +386,7 @@
                     >
                       {{ avisoUbicacionSinConfirmar }}
                     </p>
+                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -362,10 +406,26 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        aria-label="Quitar la ubicación de tu domicilio"
+                        appTooltip="Quitar la ubicación de tu domicilio"
+                        data-testid="registration-home-location-remove"
+                        (clicked)="quitarUbicacion()"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
                     </div>
                   }
                 </div>
               } @else {
+                <!-- Dos puertas, ninguna obligatoria: la ubicación del navegador,
+                     para quien está ahora mismo en su casa; y el mapa vacío, para
+                     quien no —la casa se declara desde el trabajo, o desde el
+                     teléfono de otro— o para quien negó el permiso. -->
                 <p class="registro__ubicacion">
                   <button
                     app-button
@@ -377,9 +437,18 @@
                   >
                     Usar mi ubicación
                   </button>
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    data-testid="registration-home-location-pick"
+                    (clicked)="marcarDomicilioEnMapa()"
+                  >
+                    Marcar en el mapa
+                  </button>
                   @if (gpsRechazado()) {
                     <span class="registro__ubicacion-aviso">
-                      No pudimos obtener tu ubicación. Podés seguir sin esto.
+                      No pudimos obtener tu ubicación. Podés marcarla en el mapa, o seguir sin esto.
                     </span>
                   }
                 </p>
@@ -478,18 +547,56 @@
                  permiso del navegador que el domicilio, con su propio estado:
                  son dos puntos distintos y confirmar uno no confirma el otro. -->
             <ng-template appCampoPersonalizado="gpsTrabajo">
-              @if (gpsTrabajo(); as punto) {
+              @if (mapaTrabajoAbierto()) {
                 <div class="registro__ubicacion">
                   <app-map
                     class="registro__mapa"
                     data-testid="registration-work-map"
                     [pines]="pinesTrabajo()"
-                    [centro]="punto"
+                    [centro]="gpsTrabajo()"
                     [zoom]="17"
+                    [seleccionable]="true"
                     etiqueta="El lugar donde trabajás, en el mapa"
+                    (pointPicked)="fijarPuntoDeTrabajo($event)"
                   />
 
-                  @if (direccionTrabajoConfirmada()) {
+                  @if (gpsTrabajo() === null) {
+                    <p
+                      class="registro__ubicacion-estado"
+                      data-testid="registration-work-location-pick-hint"
+                    >
+                      Tocá el mapa en el lugar donde trabajás para poner el pin.
+                    </p>
+                    <div class="registro__ubicacion-acciones">
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        data-testid="registration-work-location-use"
+                        [isLoading]="pidiendoGpsTrabajo()"
+                        (clicked)="usarMiUbicacionDeTrabajo()"
+                      >
+                        Usar mi ubicación
+                      </button>
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        aria-label="Quitar la ubicación de tu lugar de trabajo"
+                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
+                        data-testid="registration-work-location-remove"
+                        (clicked)="quitarUbicacionDeTrabajo()"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </div>
+                    @if (gpsTrabajoRechazado()) {
+                      <p class="registro__ubicacion-aviso">
+                        No pudimos obtener tu ubicación. Podés marcar el punto tocando el mapa.
+                      </p>
+                    }
+                  } @else if (direccionTrabajoConfirmada()) {
                     <p
                       appAnuncio
                       class="registro__ubicacion-estado"
@@ -503,6 +610,7 @@
                     >
                       {{ avisoSinGeocodificacion }}
                     </p>
+                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -538,6 +646,7 @@
                     >
                       {{ avisoUbicacionSinConfirmar }}
                     </p>
+                    <p class="registro__ubicacion-aviso">{{ avisoMoverPin }}</p>
                     <div class="registro__ubicacion-acciones">
                       <button
                         app-button
@@ -557,6 +666,18 @@
                       >
                         Volver a ubicarme
                       </button>
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        aria-label="Quitar la ubicación de tu lugar de trabajo"
+                        appTooltip="Quitar la ubicación de tu lugar de trabajo"
+                        data-testid="registration-work-location-remove"
+                        (clicked)="quitarUbicacionDeTrabajo()"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
                     </div>
                   }
                 </div>
@@ -572,9 +693,18 @@
                   >
                     Usar mi ubicación
                   </button>
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    data-testid="registration-work-location-pick"
+                    (clicked)="marcarTrabajoEnMapa()"
+                  >
+                    Marcar en el mapa
+                  </button>
                   @if (gpsTrabajoRechazado()) {
                     <span class="registro__ubicacion-aviso">
-                      No pudimos obtener tu ubicación. Podés seguir sin esto.
+                      No pudimos obtener tu ubicación. Podés marcarla en el mapa, o seguir sin esto.
                     </span>
                   }
                 </p>

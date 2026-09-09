@@ -19,6 +19,8 @@ import {
 } from '@core/data-access/terminology/bo-municipalities.service';
 import type { DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 
+import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+
 import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 
 /** Tope por página que acepta el contrato público (`limit` se recorta a 50). */
@@ -42,23 +44,6 @@ const PARAM_VERIFICADO = 'verificado';
 
 /** Clave del departamento elegido en el mapa, en la URL. */
 const PARAM_DEPARTAMENTO = 'departamento';
-
-/**
- * Quita tildes y baja a minúsculas, para casar el nombre de ciudad que trae el
- * directorio con el del municipio del catálogo.
- *
- * Los dos vienen escritos por gente distinta —uno lo cargó la organización en
- * su ficha, el otro lo siembra terminología— y «Potosí» y «potosi» tienen que
- * ser la misma ciudad. Sin esto el mapa dejaría fuera justo a los
- * departamentos cuyo nombre lleva tilde, que son la mitad.
- */
-function normalizar(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/gu, '')
-    .toLowerCase()
-    .trim();
-}
 
 /**
  * Lo común a los dos directorios públicos nuevos: clínicas y farmacias
@@ -139,23 +124,8 @@ export abstract class PublicDirectoryListing {
     })),
   );
 
-  /**
-   * De cada ciudad publicada al `conceptId` de su departamento.
-   *
-   * Se arma con los municipios del catálogo, que es el dueño del dato: una
-   * tabla de ciudades escrita acá se separaría del catálogo en cuanto alguien
-   * sembrara un municipio nuevo, y el directorio empezaría a esconder centros
-   * sin que nadie lo notara.
-   */
-  private readonly departamentoPorCiudad = computed<ReadonlyMap<string, string>>(() => {
-    const mapa = new Map<string, string>();
-    for (const rama of this.ramas()) {
-      for (const municipio of rama.municipios) {
-        mapa.set(normalizar(municipio.nombre), rama.conceptId);
-      }
-    }
-    return mapa;
-  });
+  /** De cada ciudad publicada al `conceptId` de su departamento. */
+  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
 
   /**
    * Los parámetros de la URL, que son **la** fuente de los tres cortes en
@@ -195,10 +165,10 @@ export abstract class PublicDirectoryListing {
    * pulsar. La cuenta que sirve es la de «cuánto hay ahí si voy».
    */
   protected readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(() => {
-    const porCiudad = this.departamentoPorCiudad();
+    const porCiudad = this.porCiudad();
     const cuenta = new Map<string, number>();
     for (const fila of this.paraElMapa()) {
-      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizar(fila.city));
+      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizarLugar(fila.city));
       if (conceptId === undefined) continue;
       cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
     }
@@ -309,9 +279,9 @@ export abstract class PublicDirectoryListing {
     if (departamento === null) {
       return todas;
     }
-    const porCiudad = this.departamentoPorCiudad();
+    const porCiudad = this.porCiudad();
     return todas.filter(
-      (fila) => fila.city !== null && porCiudad.get(normalizar(fila.city)) === departamento,
+      (fila) => fila.city !== null && porCiudad.get(normalizarLugar(fila.city)) === departamento,
     );
   });
 
