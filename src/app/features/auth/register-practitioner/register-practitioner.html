@@ -458,6 +458,44 @@
                  que usa el alta de paciente para su casa y su trabajo: pedir
                  permiso al navegador, dibujar el pin, dejar que alguien mire el
                  plano y diga que sí, y avisar en voz alta si no lo dice. -->
+            <!-- La localidad del consultorio: el mismo control que el
+                 domicilio, con su propio estado. Son dos lugares distintos y
+                 hay quien vive en una ciudad y atiende en otra. -->
+            <ng-template appCampoPersonalizado="municipioConsultorio">
+              @if (catalogoMunicipiosCaido()) {
+                <p class="registro__catalogo-caido">
+                  No pudimos traer el catálogo de ciudades. Podés seguir sin esto.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <app-location-picker
+                  testId="registration-practitioner-office"
+                  [ramas]="ramasMunicipios()"
+                  [value]="municipioConsultorio()"
+                  (valueChange)="municipioConsultorio.set($event)"
+                  mapLabel="Mapa de Bolivia: elegí el departamento donde está tu consultorio"
+                  municipalityLabel="Localidad del consultorio (opcional)"
+                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+                />
+              }
+            </ng-template>
+
+            <!-- El punto del consultorio. Mismo componente que el domicilio, y
+                 con su propia confirmación: confirmar uno no confirma el otro. -->
+            <ng-template appCampoPersonalizado="gpsConsultorio">
+              <app-ubicacion-picker
+                pinId="consultorio"
+                etiquetaConfirmada="Tu consultorio"
+                pregunta="¿Es acá donde atendés? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de tu consultorio"
+                etiquetaMapa="La ubicación de tu consultorio en el mapa"
+                [ids]="idsUbicacionConsultorio"
+                (confirmado)="gpsConsultorio.set($event)"
+              />
+            </ng-template>
+
             <ng-template appCampoPersonalizado="gpsDomicilio">
               <app-ubicacion-picker
                 pinId="domicilio"

@@ -4,6 +4,8 @@
  * transporte, no de la pantalla.
  */
 
+import type { NewOwnSite } from '../practice-sites/practice-sites.types';
+
 /**
  * Credenciales de inicio de sesión.
  *
@@ -301,6 +303,18 @@ export interface PractitionerRegistration {
 
   /** Longitud del domicilio. Ver {@link homeLatitude}. */
   readonly homeLongitude?: number;
+
+  /**
+   * El consultorio propio, si declaró uno al registrarse.
+   *
+   * Es el mismo cuerpo que ya recibe `POST /practitioners/me/sites`
+   * (ALV-005/006), reutilizado a propósito: el alta pública no puede llamar a
+   * esa ruta —termina en el login, sin sesión— así que el dato viaja adentro
+   * del alta y el backend usa el servicio que ya tiene.
+   *
+   * **La API todavía no lo acepta**; ver `PENDIENTES-BACKEND.md`.
+   */
+  readonly ownSite?: NewOwnSite;
 
   readonly licenseNumber: string;
   /**

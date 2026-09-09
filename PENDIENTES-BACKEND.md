@@ -23,6 +23,67 @@ que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
+## Abierto · P20 · El alta de profesional no recibe el consultorio propio
+
+**Levantado el 2026-09-09**, en la rama `mockup`. Misma forma que P19 y **el
+mismo bloqueo**: con `forbidNonWhitelisted` una clave que el DTO no declara
+rechaza el alta entera.
+
+### Por qué el dato viaja en el alta y no por su ruta
+
+El consultorio propio **ya existe de punta a punta**: `POST /practitioners/me/sites`
+(ALV-005/006), con `NewOwnSite` + `NewOwnSiteAddress`, y «Mi perfil → dónde
+trabajo» lo usa para registrarlo. Lo que no se puede es llamarlo desde el alta:
+esa ruta es `/me`, exige sesión, y **el registro termina en el login** — no
+inicia sesión solo. Así que el dato tiene que viajar adentro del alta, y el
+backend reutilizar el servicio que ya tiene.
+
+### Por qué importa que esté en el alta y no sólo en el perfil
+
+Quien ejerce puede atender en varios lugares, pero los demás son de otro: para
+figurar en una clínica hace falta que **esa clínica acepte la vinculación**
+(`practitioner_affiliations`, estado declarado → activo). Hasta que eso pase, su
+agenda no tiene dónde publicarse. El consultorio propio es el único lugar que no
+depende de que nadie confirme nada, y por eso quien se registra para empezar a
+atender lo necesita el primer día — no después de que alguien lo acepte.
+
+Es el punto 12/13/22 del módulo médico del registro de procesos («Dirección de
+trabajo», «Ubicación GPS Trabajo», «Ubicación GPS de cada consultorio de
+atención»).
+
+### Qué hace falta
+
+```
+ownSite?: {
+  name: string
+  timeZone?: string
+  address?: {
+    lines: string[]
+    city?: string
+    municipalityConceptId?: string
+    administrativeAreaConceptId?: string
+    latitude?: number    // exige longitude
+    longitude?: number   // exige latitude
+  }
+}
+```
+
+Es **exactamente** `NewOwnSite`, que el backend ya valida en su controlador de
+sedes. Del lado del servicio, `IamPractitionerSelfRegistrationService` tiene que
+llamar al mismo caso de uso que atiende `POST /practitioners/me/sites` — el que
+crea o reutiliza la práctica personal del profesional. No hace falta tocar el
+modelo.
+
+### Lo que queda por decidir, y no lo decide el front
+
+Si crear el consultorio debe **crear también su recurso de agenda**. Hoy la
+agenda trabaja sobre recursos (`scheduling`), cada uno con su sede, y una sede
+sin recurso no ofrece turnos. Quien conozca `scheduling` tiene que decir si el
+recurso nace con la sede o si se crea al publicar el primer horario. **El front
+no lo asume**: manda la sede y nada más.
+
+---
+
 ## Abierto · P19 · El alta de profesional no recibe el domicilio
 
 **Levantado el 2026-09-08**, en la rama `mockup`. **Bloquea el pase a `dev`**: no
