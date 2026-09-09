@@ -9,16 +9,17 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { DatePipe, isPlatformBrowser } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ChatStore, type MensajeDelHilo } from '../../../core/messaging/chat.store';
+import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 import {
   avatarDeConQuien as avatarDeConQuienDe,
   conQuien as conQuienDe,
 } from '../../../core/messaging/con-quien';
-import { etiquetaDeDia } from '../../../shared/date/hora-de-chat';
+import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/hora-de-chat';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { Composer } from './composer/composer';
@@ -76,14 +77,16 @@ const MARGEN_DEL_PIE = 90;
  */
 @Component({
   selector: 'app-thread',
-  imports: [Avatar, Composer, DatePipe, EmptyState, RouterLink],
+  imports: [Avatar, Composer, EmptyState, RouterLink],
   templateUrl: './thread.html',
   styleUrl: './thread.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Thread {
   protected readonly store = inject(ChatStore);
+  private readonly preferencias = inject(ChatPreferencias);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private readonly marco = viewChild<ElementRef<HTMLElement>>('marco');
@@ -99,6 +102,19 @@ export class Thread {
 
   /** Qué mensaje tiene el menú abierto. */
   protected readonly menuAbierto = signal<string | null>(null);
+
+  /** Si está abierto el menú de la cabecera. */
+  protected readonly menuCabecera = signal(false);
+
+  protected readonly esFavorito = computed(() => {
+    const id = this.store.activaId();
+    return id !== null && this.preferencias.favoritos().has(id);
+  });
+
+  protected readonly estaArchivado = computed(() => {
+    const id = this.store.activaId();
+    return id !== null && this.preferencias.archivados().has(id);
+  });
 
   /** La imagen que se está mirando a tamaño completo. */
   protected readonly imagenAbierta = signal<string | null>(null);
@@ -211,6 +227,7 @@ export class Thread {
         this.pegadoAbajo = true;
         this.nuevosAbajo.set(0);
         this.menuAbierto.set(null);
+        this.menuCabecera.set(false);
         this.store.abrir(id);
       }
     });
@@ -295,6 +312,42 @@ export class Thread {
 
   protected nombreDelAdjunto(mensaje: MensajeDelHilo): string {
     return mensaje.pendiente?.adjunto?.nombre ?? 'Archivo adjunto';
+  }
+
+  /** La hora de la burbuja, con el mismo formato que la fila de la bandeja. */
+  protected hora(fecha: Date | undefined): string {
+    return horaDelReloj(fecha);
+  }
+
+  /* --- El menú de la cabecera --------------------------------------------- */
+
+  protected alternarMenuCabecera(evento: Event): void {
+    evento.stopPropagation();
+    this.menuCabecera.update((abierto) => !abierto);
+  }
+
+  protected alternarFavorito(): void {
+    this.menuCabecera.set(false);
+    const id = this.store.activaId();
+    if (id !== null) {
+      this.preferencias.alternarFavorito(id);
+    }
+  }
+
+  protected alternarArchivado(): void {
+    this.menuCabecera.set(false);
+    const id = this.store.activaId();
+    if (id !== null) {
+      this.preferencias.alternarArchivado(id);
+    }
+  }
+
+  protected verPerfil(): void {
+    this.menuCabecera.set(false);
+    const peer = this.store.conversacionActiva()?.peers[0];
+    if (peer !== undefined) {
+      void this.router.navigate(['/public-profile', peer.profileId]);
+    }
   }
 
   /* --- Acciones sobre un mensaje ------------------------------------------ */

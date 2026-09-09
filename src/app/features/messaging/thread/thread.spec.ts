@@ -9,6 +9,7 @@ import { of } from 'rxjs';
 
 import { Thread } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
+import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 
 /**
  * Lo que estas pruebas fijan.
@@ -275,6 +276,34 @@ describe('Thread', () => {
     ]);
 
     expect(consultar('hilo-no-leidos')?.textContent).toContain('2 mensajes no leídos');
+  });
+
+  it('el menú de la cabecera marca favorito y archiva la conversación abierta', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+    const preferencias = TestBed.inject(ChatPreferencias);
+
+    consultar('hilo-menu')?.click();
+    fixture.detectChanges();
+    expect(consultar('hilo-ver-perfil')).not.toBeNull();
+
+    consultar('hilo-favorito')?.click();
+    fixture.detectChanges();
+    expect(preferencias.esFavorito('c-1')).toBe(true);
+    // Al elegir, el menú se cierra: es un menú, no un panel.
+    expect(consultar('hilo-favorito')).toBeNull();
+
+    consultar('hilo-menu')?.click();
+    fixture.detectChanges();
+    expect(consultar('hilo-favorito')?.textContent).toContain('Quitar de favoritos');
+
+    consultar('hilo-archivar')?.click();
+    fixture.detectChanges();
+    expect(preferencias.estaArchivado('c-1')).toBe(true);
+    // Archivar quita el favorito: la misma regla que en la bandeja.
+    expect(preferencias.esFavorito('c-1')).toBe(false);
+
+    // Se deja el navegador como estaba: las preferencias viven en localStorage.
+    preferencias.alternarArchivado('c-1');
   });
 
   function escribir(valor: string): void {

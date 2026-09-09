@@ -45,7 +45,10 @@
 
 .hilo__cabecera {
   position: relative;
-  z-index: 1;
+  /* Por encima del marco de mensajes (que lleva 1): el menú de la cabecera
+     se despliega sobre las burbujas y, con el mismo nivel, el marco lo tapaba
+     y se comía los clics. */
+  z-index: 2;
   flex: none;
   display: flex;
   align-items: center;
@@ -77,6 +80,50 @@
   font-size: var(--fs-overline);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* El menú de la cabecera, a la derecha del todo. */
+.hilo__acciones {
+  position: relative;
+  flex: none;
+  margin-inline-start: auto;
+}
+
+.hilo__mas {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva);
+}
+
+.hilo__mas:hover,
+.hilo__mas:focus-visible,
+.hilo__mas[aria-expanded='true'] {
+  background: var(--sup-inset);
+  color: var(--tinta-marca);
+}
+
+.hilo__mas svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+/* Con el selector del contenedor para ganarle a la regla general del menú,
+   que viene más abajo en el archivo. */
+.hilo__acciones .hilo__menu {
+  inset-block-start: calc(100% + 4px);
+  min-inline-size: 13rem;
+}
+
+.hilo__acciones .hilo__menu button {
   white-space: nowrap;
 }
 

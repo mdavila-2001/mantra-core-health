@@ -23,9 +23,7 @@ export function horaDeChat(fecha: Date, ahora = new Date()): string {
   }
 
   if (mismoDia(dia, ahora)) {
-    return dia
-      .toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit' })
-      .toLowerCase();
+    return horaDelReloj(dia);
   }
 
   const ayer = new Date(ahora);
@@ -47,6 +45,27 @@ export function horaDeChat(fecha: Date, ahora = new Date()): string {
     month: '2-digit',
     year: 'numeric',
   });
+}
+
+/**
+ * La hora del reloj a secas, como va en la burbuja y en la fila de hoy:
+ * `9:12`, `16:05`.
+ *
+ * Una sola función para las dos porque antes la fila decía `9:12` y la
+ * burbuja `09:12`: el mismo mensaje con dos horas distintas según dónde se
+ * mirara, y el cero de adelante es justo lo que ningún chat escribe.
+ */
+export function horaDelReloj(fecha: Date | string | undefined): string {
+  if (fecha === undefined) {
+    return '';
+  }
+  const dia = new Date(fecha);
+  if (Number.isNaN(dia.getTime())) {
+    return '';
+  }
+  return dia
+    .toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit' })
+    .toLowerCase();
 }
 
 /**

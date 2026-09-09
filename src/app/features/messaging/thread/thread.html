@@ -8,6 +8,44 @@
     <h1 class="hilo__nombre">{{ conQuien() }}</h1>
     <p class="hilo__estado">{{ subtitulo() }}</p>
   </div>
+
+  <!-- El menú de la conversación, como el de la cabecera de WhatsApp: lo
+       mismo que ofrece la fila de la bandeja, pero desde el hilo abierto, que
+       en angosto es lo único que se ve. -->
+  <div class="hilo__acciones">
+    <button
+      class="hilo__mas"
+      type="button"
+      data-testid="hilo-menu"
+      aria-label="Opciones de la conversación"
+      [attr.aria-expanded]="menuCabecera()"
+      (click)="alternarMenuCabecera($event)"
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
+    </button>
+
+    @if (menuCabecera()) {
+      <ul class="hilo__menu hilo__menu--cabecera" role="menu">
+        @if (!esGrupo()) {
+          <li role="none">
+            <button role="menuitem" type="button" data-testid="hilo-ver-perfil" (click)="verPerfil()">
+              Ver perfil
+            </button>
+          </li>
+        }
+        <li role="none">
+          <button role="menuitem" type="button" data-testid="hilo-favorito" (click)="alternarFavorito()">
+            {{ esFavorito() ? 'Quitar de favoritos' : 'Marcar como favorito' }}
+          </button>
+        </li>
+        <li role="none">
+          <button role="menuitem" type="button" data-testid="hilo-archivar" (click)="alternarArchivado()">
+            {{ estaArchivado() ? 'Desarchivar' : 'Archivar' }}
+          </button>
+        </li>
+      </ul>
+    }
+  </div>
 </header>
 
 <!-- ── Mensajes ───────────────────────────────────────────────────────── -->
@@ -106,7 +144,7 @@
               <span class="hilo__meta">
                 <span class="solo-lectores">{{ linea.propio ? 'Vos' : linea.autor }}, </span>
                 @if (linea.mensaje.sentAt) {
-                  <span class="hilo__hora">{{ linea.mensaje.sentAt | date: 'HH:mm' }}</span>
+                  <span class="hilo__hora">{{ hora(linea.mensaje.sentAt) }}</span>
                 }
                 @if (linea.propio) {
                   @switch (linea.mensaje.estado) {
