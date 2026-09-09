@@ -1,0 +1,146 @@
+/* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
+   `../registro-compartido/registro.css`, que esta pantalla declara junto a esta
+   hoja en sus `styleUrls`, igual que las altas de paciente, de profesional y de
+   laboratorio. */
+
+/* ------------------------------------------------------------------ adjuntos
+   Los siete papeles del alta. Caja punteada y no marco lleno: es una zona de
+   carga, no un campo donde se escribe — el mismo lenguaje que los respaldos del
+   alta de profesional y del laboratorio. */
+
+.imagen-adjunto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.imagen-adjunto__archivo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+}
+
+/* El glifo del papel: dice «esto que cargaste es un documento» sin una palabra
+   más. `app-nav-icon` lo pone `aria-hidden`, así que no agrega ruido al lector
+   de pantalla — el nombre del archivo ya está al lado. */
+.imagen-adjunto__glifo {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Un nombre de archivo puede no tener un solo espacio donde partir. Sin esto,
+   «autorizacion-radioproteccion-2026-firmada.pdf» estira la caja y se lleva
+   puesto el ancho de la página en un teléfono. */
+.imagen-adjunto__nombre {
+  overflow-wrap: anywhere;
+}
+
+.imagen-adjunto__peso {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.imagen-adjunto__subir {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+/* El `<label>` es el botón: el `<input type="file">` va oculto con `.sr-only`
+   —oculto a la vista, NO al teclado ni al lector— y el rótulo lo dispara. Un
+   `<button>` que llamara a `.click()` del input dejaría al campo sin nombre
+   accesible y sin foco propio. */
+.imagen-adjunto__label-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  background-color: var(--brand-primary);
+  color: var(--text-inverse);
+  transition: opacity 0.2s ease;
+}
+
+.imagen-adjunto__label-btn:hover {
+  opacity: 0.9;
+}
+
+/* El foco tiene que verse en el rótulo, porque el input que lo recibe está
+   oculto: sin esto, quien navega con teclado no sabe dónde está parado. */
+.imagen-adjunto__subir:focus-within .imagen-adjunto__label-btn {
+  outline: 4px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.imagen-adjunto__error {
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+  margin: var(--sp-3) 0 0;
+}
+
+/* ---------------------------------------------------------------- sucursales
+   Una tarjeta por local, con su nombre, su calle y su mapa. */
+
+.imagen-sucursales {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  width: 100%;
+}
+
+.imagen-sucursal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.imagen-sucursal__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.imagen-sucursal__titulo {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  margin: 0;
+}
+
+.imagen-sucursales__vacio {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ auxiliar
+   Oculto a la vista, presente para el teclado y el lector de pantalla. Es lo
+   que sostiene al `<input type="file">` detrás de su rótulo. */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

@@ -1,0 +1,254 @@
+<!-- El bloque de un papel adjunto: uno solo para los siete.
+
+     Se declara una vez y se monta siete veces con `ngTemplateOutlet` porque los
+     siete se comportan igual: mientras no hay archivo, un botón que abre el
+     explorador; cuando lo hay, su nombre, su peso y cómo sacarlo. Copiarlo
+     siete veces garantizaba que el arreglo del octavo se aplicara a seis.
+
+     El rótulo, la pista, el asterisco y el mensaje de error NO están acá: los
+     pone el motor alrededor del campo. -->
+<ng-template #bloqueAdjunto let-clave>
+  <div class="imagen-adjunto">
+    @if (adjuntoDe(clave); as adjunto) {
+      <p class="imagen-adjunto__archivo">
+        <app-nav-icon name="note" class="imagen-adjunto__glifo" />
+        <span class="imagen-adjunto__nombre">{{ adjunto.archivo }}</span>
+        <span class="imagen-adjunto__peso">{{ pesoLegible(adjunto.pesoBytes) }}</span>
+      </p>
+      <button
+        type="button"
+        app-button
+        variant="ghost"
+        size="sm"
+        [attr.data-testid]="'registro-imagen-quitar-' + clave"
+        (clicked)="quitarAdjunto(clave)"
+      >
+        Quitar archivo
+      </button>
+    } @else {
+      <label class="imagen-adjunto__subir">
+        <input
+          type="file"
+          class="sr-only"
+          [accept]="formatosDeRespaldo"
+          [attr.data-testid]="'registro-imagen-adjunto-' + clave"
+          (change)="adjuntar(clave, $event)"
+        />
+        <span class="imagen-adjunto__label-btn">Adjuntar archivo</span>
+      </label>
+    }
+  </div>
+</ng-template>
+
+<app-auth-split
+  claim="Sumá tu centro de imagenología a la red"
+  tagline="Rayos X, ecografía, tomografía y resonancia: recibí las órdenes médicas de toda la red y facturalas desde un solo lugar."
+  contentWidth="full"
+>
+  <div class="registro-conjunto" [class.registro-conjunto--solo]="enviada()">
+    <div class="registro">
+      @if (enviada()) {
+        <div class="registro__header">
+          <h1
+            appAnuncio
+            [asertivo]="false"
+            class="registro__title"
+            data-testid="registro-imagen-exito"
+          >
+            Recibimos la solicitud de tu centro
+          </h1>
+          <p class="registro__subtitle">
+            Vamos a revisar los papeles que adjuntaste y te escribimos al correo del representante
+            legal. Hasta que la solicitud se apruebe, el centro no aparece en las búsquedas de
+            pacientes.
+          </p>
+        </div>
+        <button
+          app-button
+          variant="primary"
+          size="lg"
+          class="registro__submit"
+          data-testid="registro-imagen-ir-login"
+          (clicked)="goToLogin()"
+        >
+          Ir a iniciar sesión
+        </button>
+      } @else {
+        <div class="registro__header">
+          <h1 class="registro__title">Registrá tu centro de imagenología</h1>
+          <!-- Sin contar los pasos: el indicador de arriba ya dice «Paso 1 de
+               N» y lo calcula solo. Un número escrito acá se desincroniza el
+               día que una sección se parta en dos. -->
+          <p class="registro__subtitle">
+            Necesitamos los datos legales de la empresa y qué estudios hacés. Podés volver atrás en
+            cualquier paso.
+          </p>
+        </div>
+
+        <div class="registro__body">
+          <app-paginated-form
+            data-testid="registro-form-imagenologia"
+            [paginas]="paginas"
+            [form]="form"
+            label="Registrar centro de imagenología"
+            submitLabel="Enviar solicitud"
+            [iconOnlyNav]="true"
+            (pasoVisible)="recordarPaso($event)"
+            (enviado)="submit()"
+          >
+            <ng-template appCampoPersonalizado="seprecFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'seprecFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="licenciaFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'licenciaFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="sedesFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'sedesFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="nitFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'nitFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="constitucionFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'constitucionFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="poderFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'poderFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="radioproteccionFile">
+              <ng-container
+                [ngTemplateOutlet]="bloqueAdjunto"
+                [ngTemplateOutletContext]="{ $implicit: 'radioproteccionFile' }"
+              />
+            </ng-template>
+
+            <ng-template appCampoPersonalizado="gpsCentral">
+              <app-ubicacion-picker
+                pinId="imagenologia-central"
+                etiquetaConfirmada="Tu centro"
+                pregunta="¿Es acá donde está la central? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de la central"
+                etiquetaMapa="La ubicación de tu centro en el mapa"
+                [ids]="idsUbicacionCentral"
+                (confirmado)="gpsCentral.set($event)"
+              />
+            </ng-template>
+
+            <!-- Las sucursales. Cada una trae su propio mapa, con su propio
+                 pin y su propia confirmación: confirmar una no confirma otra, y
+                 el mapa no se dibuja hasta que alguien pide la ubicación. -->
+            <ng-template appCampoPersonalizado="sucursales">
+              <div class="imagen-sucursales">
+                @for (sucursal of sucursales(); track sucursal.id; let i = $index) {
+                  <section class="imagen-sucursal">
+                    <header class="imagen-sucursal__cabecera">
+                      <h3 class="imagen-sucursal__titulo">Sucursal {{ i + 1 }}</h3>
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar la sucursal ' + (i + 1)"
+                        [appTooltip]="'Quitar la sucursal ' + (i + 1)"
+                        [attr.data-testid]="'registro-imagen-quitar-' + sucursal.id"
+                        (clicked)="quitarSucursal(sucursal.id)"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </header>
+
+                    <app-form-field [label]="'Nombre de la sucursal ' + (i + 1)">
+                      <app-input
+                        [testId]="'registro-imagen-' + sucursal.id + '-nombre'"
+                        placeholder="Sucursal Equipetrol"
+                        [value]="sucursal.nombre"
+                        (valueChange)="escribirNombreDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
+
+                    <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
+                      <app-input
+                        [testId]="'registro-imagen-' + sucursal.id + '-direccion'"
+                        placeholder="Av. San Martín 456"
+                        [value]="sucursal.direccion"
+                        (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
+
+                    <app-ubicacion-picker
+                      [pinId]="sucursal.id"
+                      etiquetaConfirmada="Esta sucursal"
+                      pregunta="¿Es acá donde está esta sucursal? Movete por el mapa para comprobarlo."
+                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
+                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
+                      [ids]="idsDeSucursal(sucursal.id)"
+                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                    />
+                  </section>
+                } @empty {
+                  <p class="imagen-sucursales__vacio">
+                    Todavía no agregaste ninguna. Si atendés en un solo local, no hace falta.
+                  </p>
+                }
+
+                <button
+                  app-button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  data-testid="registro-imagen-agregar-sucursal"
+                  (clicked)="agregarSucursal()"
+                >
+                  + Agregar sucursal
+                </button>
+              </div>
+            </ng-template>
+          </app-paginated-form>
+
+          <!-- El rechazo de un archivo es del bloque entero, no de un campo: se
+               dice una vez debajo del formulario y no siete veces, una por
+               papel. -->
+          @if (errorAdjunto(); as error) {
+            <p class="imagen-adjunto__error" role="alert" data-testid="registro-imagen-error-adjunto">
+              {{ error }}
+            </p>
+          }
+        </div>
+
+        <div class="registro__footer">
+          <p class="registro__pie">
+            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+          </p>
+        </div>
+      }
+    </div>
+
+    @if (!enviada()) {
+      <app-registro-ayuda class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
+    }
+  </div>
+</app-auth-split>

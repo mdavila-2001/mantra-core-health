@@ -1769,6 +1769,26 @@ export const routes: Routes = [
     title: 'AloVida - Registrar laboratorio',
   },
   {
+    // El alta del centro de imagenología: el módulo «ANÁLISIS MÉDICOS (RAYOS X,
+    // RESONANCIA, ETC.)» del registro del stakeholder. Los dieciocho puntos de
+    // datos legales son los mismos que los del laboratorio de sangre —la fuente
+    // los repite enteros—, y lo que cambia es qué estudios hace el centro; ver
+    // el JSDoc de `RegisterImagingCenter`. Tampoco tiene endpoint todavía:
+    // cierra con una solicitud, no con una cuenta.
+    //
+    // La ruta dice `imaging-center` y no `imaging` a secas para no chocar con
+    // `?kind=IMAGING`, que es la **categoría** del directorio de laboratorios:
+    // aquélla filtra una vitrina, ésta da de alta una empresa.
+    path: 'auth/register/imaging-center',
+    // Diferida por lo mismo que las otras altas largas: arrastra el mapa, que
+    // no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-imaging-center/register-imaging-center').then(
+        (m) => m.RegisterImagingCenter,
+      ),
+    title: 'AloVida - Registrar centro de imagenología',
+  },
+  {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…
     path: 'auth/verify-email',
     component: VerifyEmail,
