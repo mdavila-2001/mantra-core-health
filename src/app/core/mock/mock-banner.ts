@@ -41,9 +41,18 @@ import { MOCK_USERS } from './mock-session';
     </aside>
   `,
   styles: `
+    /* Abajo a la IZQUIERDA, pegado al borde del contenido.
+
+       Estaba abajo a la derecha, que es exactamente donde el chat clava su
+       botón de enviar: el cartel se lo comía y en la maqueta no se podía
+       mandar un mensaje. Es la única esquina que una pantalla puede reclamar
+       —una acción fija al pie va a la derecha—, así que el cartel se corre.
+
+       Se apoya después del menú para no taparle los ítems; en angosto, donde
+       el menú no está fijo, vuelve al borde. */
     .mock {
       position: fixed;
-      inset-inline-end: 12px;
+      inset-inline-start: calc(var(--w-nav, 264px) + 12px);
       inset-block-end: 12px;
       z-index: 9999;
       max-inline-size: 22rem;
@@ -53,6 +62,12 @@ import { MOCK_USERS } from './mock-session';
       color: #f9fafb;
       font: 12px/1.4 system-ui, sans-serif;
       box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+    }
+    /* Sin menú fijo al costado, el cartel vuelve al borde. */
+    @media (max-width: 60rem) {
+      .mock {
+        inset-inline-start: 12px;
+      }
     }
     .mock--plegado {
       padding: 0;
