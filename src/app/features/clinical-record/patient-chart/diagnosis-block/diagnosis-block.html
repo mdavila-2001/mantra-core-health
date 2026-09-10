@@ -143,7 +143,8 @@
       >
         <app-concept-select
           [target]="targetCursoClinico"
-          [(value)]="cursoClinico"
+          [value]="cursoClinico()"
+          (valueChange)="elegirCurso($event)"
           [labels]="etiquetasDeCurso"
           placeholder="Sin especificar"
         />
@@ -156,12 +157,43 @@
         <app-date-picker [(value)]="inicio" />
       </app-form-field>
 
+      <!-- La duración estimada, que es como el cliente lo pidió: «una duración
+           promedio del diagnóstico, y en caso de ser crónico que aparezca la
+           opción». De acá salen la fecha esperada y una sugerencia de curso;
+           elegir el curso a mano gana sobre la sugerencia. -->
       <app-form-field
-        label="Fecha esperada de resolución"
-        hint="Opcional. Tiene sentido sobre todo en curso agudo o subagudo."
+        label="Duración estimada"
+        hint="Opcional. Deriva la fecha de resolución esperada y sugiere el curso clínico."
       >
-        <app-date-picker [(value)]="fechaEsperada" />
+        <div class="diagnostico__chips-duracion">
+          @for (opcion of duraciones; track opcion.label) {
+            <app-chip
+              variant="primary"
+              size="sm"
+              selectable
+              [selected]="
+                opcion.dias === null ? esCronico() : !esCronico() && duracionDias() === opcion.dias
+              "
+              (selectedChange)="fijarDuracion(opcion.dias)"
+            >
+              {{ opcion.label }}
+            </app-chip>
+          }
+        </div>
       </app-form-field>
+
+      <!-- Con curso crónico no se pregunta: una condición de seguimiento
+           continuo no resuelve, y dejar el campo invita a inventar una fecha.
+           Entra y sale del DOM en vez de esconderse: un campo escondido igual
+           se tabula. -->
+      @if (!cursoEsCronico()) {
+        <app-form-field
+          label="Fecha esperada de resolución"
+          hint="Opcional. Tiene sentido sobre todo en curso agudo o subagudo."
+        >
+          <app-date-picker [(value)]="fechaEsperada" />
+        </app-form-field>
+      }
 
       <app-form-field
         label="Hallazgos clínicos y observaciones"

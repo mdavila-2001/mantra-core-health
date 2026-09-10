@@ -76,3 +76,12 @@
   gap: var(--sp-2);
 }
 
+
+/* Los chips de duración estimada, en fila. Mismo tratamiento que la pauta de la
+   receta: son atajos de una sola decisión y se leen de un vistazo. */
+.diagnostico__chips-duracion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}

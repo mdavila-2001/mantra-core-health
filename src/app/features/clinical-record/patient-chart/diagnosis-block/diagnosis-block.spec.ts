@@ -48,6 +48,22 @@ const CATALOGO_OPCIONAL = {
   options: [{ conceptId: 'sev-leve', code: 'COND_SEV_MILD', display: 'Mild', ordinal: 1 }],
 };
 
+/**
+ * El catálogo del **curso clínico**, con los códigos del backend.
+ *
+ * Los códigos importan: la pantalla busca el crónico por `COND_COURSE_CHRONIC`
+ * —no por posición— porque el orden de una expansión no es contrato.
+ */
+const CATALOGO_DE_CURSO = {
+  ...CATALOGO,
+  code: 'condition-clinical-course',
+  options: [
+    { conceptId: 'curso-agudo', code: 'COND_COURSE_ACUTE', display: 'Acute', ordinal: 1 },
+    { conceptId: 'curso-cronico', code: 'COND_COURSE_CHRONIC', display: 'Chronic', ordinal: 2 },
+    { conceptId: 'curso-subagudo', code: 'COND_COURSE_SUBACUTE', display: 'Subacute', ordinal: 3 },
+  ],
+};
+
 /** Una condición tal como vuelve del alta. */
 const RESPUESTA = {
   id: 'c-1',
@@ -100,7 +116,11 @@ describe('DiagnosisBlock', () => {
    */
   afterEach(() => {
     for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
-      opcional.flush(CATALOGO_OPCIONAL);
+      opcional.flush(
+        opcional.request.params.get('target')?.includes('clinical_course') === true
+          ? CATALOGO_DE_CURSO
+          : CATALOGO_OPCIONAL,
+      );
     }
     http.verify();
   });
@@ -133,7 +153,11 @@ describe('DiagnosisBlock', () => {
       req.flush(CATALOGO);
       fixture.detectChanges();
       for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
-        opcional.flush(CATALOGO_OPCIONAL);
+        opcional.flush(
+          opcional.request.params.get('target')?.includes('clinical_course') === true
+            ? CATALOGO_DE_CURSO
+            : CATALOGO_OPCIONAL,
+        );
       }
       return;
     }
@@ -381,7 +405,11 @@ describe('DiagnosisBlock', () => {
 
     expect(interno<() => string | null>('diagnostico')()).toBeNull();
     expect(interno<() => string | null>('severidad')()).toBeNull();
-    expect(interno<() => string | null>('cursoClinico')()).toBeNull();
+    // El curso sí resuelve, y no es una excepción a la regla: el catálogo de
+    // curso de esta prueba **tiene** `COND_COURSE_CHRONIC`. Lo que la regla
+    // prohíbe es caer en la primera opción cuando el valor no está, y eso
+    // siguen midiéndolo el diagnóstico y la severidad, que no están.
+    expect(interno<() => string | null>('cursoClinico')()).toBe('curso-cronico');
   });
 
   /* ---- el 409 del duplicado ------------------------------------------------ */
@@ -436,5 +464,92 @@ describe('DiagnosisBlock', () => {
     expect(interno<() => string | null>('errorDelDiagnostico')()).toContain(
       'Error interno del servidor',
     );
+  });
+  /* -- La duración estimada y el crónico (pedido del cliente) -------------- */
+
+  describe('la duración estimada', () => {
+    /**
+     * «Debería poderse poner una duración promedio del diagnóstico, y en caso
+     * de ser crónico debería aparecer la opción.» Elegir días deriva la fecha y
+     * sugiere el curso; nadie calcula a mano.
+     */
+    it('elegir días fija la fecha esperada y sugiere curso agudo', () => {
+      responderCatalogo();
+
+      señal<Date | null>('inicio').set(new Date(2026, 8, 1));
+      interno<(dias: number | null) => void>('fijarDuracion')(14);
+
+      const esperada = señal<Date | null>('fechaEsperada')();
+      expect(esperada?.getDate()).toBe(15);
+      expect(esperada?.getMonth()).toBe(8);
+      expect(señal<string | null>('cursoClinico')()).toBe('curso-agudo');
+      expect(interno<() => boolean>('cursoEsCronico')()).toBe(false);
+    });
+
+    /** Más de un mes deja de ser agudo: el corte clínico corriente. */
+    it('más de 30 días sugiere subagudo, no agudo', () => {
+      responderCatalogo();
+
+      interno<(dias: number | null) => void>('fijarDuracion')(90);
+
+      expect(señal<string | null>('cursoClinico')()).toBe('curso-subagudo');
+    });
+
+    /**
+     * Una condición de seguimiento continuo **no resuelve**: dejar el campo de
+     * fecha esperada invita a inventar una.
+     */
+    it('elegir crónico pone el curso crónico y borra la fecha esperada', () => {
+      responderCatalogo();
+
+      interno<(dias: number | null) => void>('fijarDuracion')(14);
+      expect(señal<Date | null>('fechaEsperada')()).not.toBeNull();
+
+      interno<(dias: number | null) => void>('fijarDuracion')(null);
+
+      expect(señal<string | null>('cursoClinico')()).toBe('curso-cronico');
+      expect(señal<Date | null>('fechaEsperada')()).toBeNull();
+      expect(interno<() => boolean>('cursoEsCronico')()).toBe(true);
+    });
+
+    /**
+     * Quien registra sabe más que la heurística. Elegido el curso a mano, la
+     * duración deja de pisarlo.
+     */
+    it('el curso elegido a mano gana sobre la sugerencia de la duración', () => {
+      responderCatalogo();
+
+      interno<(id: string | null) => void>('elegirCurso')('curso-cronico');
+      interno<(dias: number | null) => void>('fijarDuracion')(7);
+
+      expect(señal<string | null>('cursoClinico')()).toBe('curso-cronico');
+    });
+
+    /**
+     * El chip de crónico no puede aparecer marcado con el formulario recién
+     * abierto: es el defecto que la receta ya había corregido comparando
+     * `null === null`.
+     */
+    it('con el formulario recién abierto no hay ninguna duración elegida', () => {
+      responderCatalogo();
+
+      expect(interno<() => boolean>('esCronico')()).toBe(false);
+      expect(señal<number | null>('duracionDias')()).toBeNull();
+    });
+
+    /** Lo elegido viaja: el contrato declara los dos campos desde v4.0.8. */
+    it('el curso y la fecha esperada viajan en el alta', () => {
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+      señal<Date | null>('inicio').set(new Date(2026, 8, 1));
+      interno<(dias: number | null) => void>('fijarDuracion')(7);
+
+      interno<() => void>('registrar')();
+
+      const req = http.expectOne('/clinical/conditions');
+      expect(req.request.body.clinicalCourseConceptId).toBe('curso-agudo');
+      expect(req.request.body.expectedResolutionAt).toContain('2026-09-08');
+      req.flush(RESPUESTA);
+    });
   });
 });

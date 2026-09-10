@@ -16,6 +16,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
@@ -94,6 +95,46 @@ const ETIQUETAS_DE_CURSO: Readonly<Record<string, string>> = {
   COND_COURSE_UNKNOWN: 'Sin determinar',
 };
 
+/**
+ * El código del curso **crónico**, la salida del catálogo.
+ *
+ * Se busca por código y no por posición: es el que decide si la condición tiene
+ * fecha esperada de resolución o si es de seguimiento continuo, y el orden de
+ * la expansión no es contrato.
+ */
+const CODIGO_CURSO_CRONICO = 'COND_COURSE_CHRONIC';
+
+/** El curso que se aplica solo al elegir una duración con fecha. */
+const CODIGO_CURSO_AGUDO = 'COND_COURSE_ACUTE';
+
+/** El curso de las condiciones que duran más de un mes pero resuelven. */
+const CODIGO_CURSO_SUBAGUDO = 'COND_COURSE_SUBACUTE';
+
+/**
+ * Cuántos días separan lo agudo de lo subagudo.
+ *
+ * Es el corte clínico corriente y sirve para **sugerir** el curso, no para
+ * fijarlo: quien registra puede cambiarlo, y si lo cambia gana su elección.
+ */
+const DIAS_HASTA_SUBAGUDO = 30;
+
+/**
+ * Las duraciones que se ofrecen de un toque, y el «crónico» al final.
+ *
+ * El cliente lo pidió así: «debería poderse poner una duración promedio del
+ * diagnóstico, en caso de ser crónico debería aparecer la opción». Son los
+ * mismos chips que la receta usa para su pauta, por lo mismo: elegir «14 días»
+ * es una sola decisión y calcular la fecha a mano son tres.
+ */
+const DURACIONES_DEL_DIAGNOSTICO: readonly { readonly dias: number | null; readonly label: string }[] =
+  [
+    { dias: 7, label: '7 días' },
+    { dias: 14, label: '14 días' },
+    { dias: 30, label: '30 días' },
+    { dias: 90, label: '90 días' },
+    { dias: null, label: 'Crónico — seguimiento continuo' },
+  ];
+
 /** La fecha de hoy corrida `dias` hacia adelante. */
 function enDias(dias: number): Date {
   const fecha = new Date();
@@ -149,6 +190,7 @@ function enDias(dias: number): Date {
   imports: [
     Alert,
     AppButton,
+    Chip,
     AttachmentUploader,
     Badge,
     Card,
@@ -220,6 +262,79 @@ export class DiagnosisBlock {
    * es tan legítima como una aguda sin ella —quien registra decide.
    */
   protected readonly fechaEsperada = signal<Date | null>(null);
+
+  /* -- La duración estimada, y el crónico (pedido del cliente) -------------- */
+
+  protected readonly duraciones = DURACIONES_DEL_DIAGNOSTICO;
+
+  /** Los días elegidos de un toque, o `null` si nadie eligió o es crónico. */
+  protected readonly duracionDias = signal<number | null>(null);
+
+  /**
+   * Si se eligió «Crónico».
+   *
+   * Señal propia y no `duracionDias() === null`: sin ella el chip de crónico
+   * aparecía marcado con el formulario recién abierto, cuando nadie eligió
+   * nada. Es el mismo defecto que la receta ya había corregido.
+   */
+  protected readonly esCronico = signal(false);
+
+  /** Si el curso lo eligió una persona a mano; entonces la duración no lo pisa. */
+  private cursoElegidoAMano = false;
+
+  /** El concepto del curso crónico, cuando el catálogo llegó. */
+  private readonly conceptoDelCurso = (codigo: string): string | null =>
+    this.opcionesCurso().find((opcion) => opcion.code === codigo)?.conceptId ?? null;
+
+  /**
+   * Elige una duración estimada.
+   *
+   * Con días, deriva la fecha esperada desde el inicio —o desde hoy— y sugiere
+   * el curso: agudo hasta un mes, subagudo más allá. Con «crónico», el curso es
+   * crónico y **no hay fecha esperada**: una condición de seguimiento continuo
+   * no resuelve, y ofrecer el campo invita a inventar una fecha.
+   *
+   * @param dias - Los días previstos, o `null` para crónico.
+   */
+  protected fijarDuracion(dias: number | null): void {
+    this.duracionDias.set(dias);
+    if (dias === null) {
+      this.esCronico.set(true);
+      this.fechaEsperada.set(null);
+      if (!this.cursoElegidoAMano) this.cursoClinico.set(this.conceptoDelCurso(CODIGO_CURSO_CRONICO));
+      return;
+    }
+    this.esCronico.set(false);
+    const desde = this.inicio() ?? new Date();
+    const hasta = new Date(desde);
+    hasta.setDate(hasta.getDate() + dias);
+    this.fechaEsperada.set(hasta);
+    if (!this.cursoElegidoAMano) {
+      this.cursoClinico.set(
+        this.conceptoDelCurso(dias > DIAS_HASTA_SUBAGUDO ? CODIGO_CURSO_SUBAGUDO : CODIGO_CURSO_AGUDO),
+      );
+    }
+  }
+
+  /**
+   * Guarda el curso elegido a mano.
+   *
+   * A partir de acá la duración deja de sugerirlo: quien registra sabe más que
+   * la heurística, y pisarle la elección es peor que no sugerir nada.
+   */
+  protected elegirCurso(conceptId: string | null): void {
+    this.cursoElegidoAMano = true;
+    this.cursoClinico.set(conceptId);
+    this.esCronico.set(conceptId !== null && conceptId === this.conceptoDelCurso(CODIGO_CURSO_CRONICO));
+    if (this.esCronico()) this.fechaEsperada.set(null);
+  }
+
+  /** Si el curso elegido es el crónico: con él no se pregunta la resolución. */
+  protected readonly cursoEsCronico = computed(
+    () =>
+      this.esCronico() ||
+      (this.cursoClinico() !== null && this.cursoClinico() === this.conceptoDelCurso(CODIGO_CURSO_CRONICO)),
+  );
 
   /** Hallazgos y justificación clínica. Viaja como `noteText` (Patch v4.1.3). */
   protected readonly notasClinicas = signal<string>('');

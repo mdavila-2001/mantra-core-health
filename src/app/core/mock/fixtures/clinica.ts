@@ -35,8 +35,13 @@ export interface CondicionSimulada {
   readonly clinicalStatusConceptId: string;
   readonly verificationStatusConceptId: string;
   readonly severityConceptId: string;
+  readonly lateralityConceptId?: string;
+  /** Curso clínico: agudo, crónico, subagudo, recurrente (Patch v4.0.8). */
+  readonly clinicalCourseConceptId?: string;
   readonly encounterId?: string;
   readonly onsetAt: string;
+  /** Fecha esperada de resolución. Sólo tiene sentido en curso agudo o subagudo. */
+  readonly expectedResolutionAt?: string;
   readonly resolvedAt?: string;
   readonly noteText: string;
   readonly createdAt: string;

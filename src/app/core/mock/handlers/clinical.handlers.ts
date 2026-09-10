@@ -318,7 +318,7 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/clinical/conditions', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; encounterId?: string; categoryConceptId?: string; severityConceptId?: string; onsetAt?: string; noteText?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; encounterId?: string; categoryConceptId?: string; severityConceptId?: string; lateralityConceptId?: string; clinicalCourseConceptId?: string; onsetAt?: string; expectedResolutionAt?: string; noteText?: string }>(request);
     const nueva: CondicionSimulada = {
       id: nuevoId('condition'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -327,6 +327,13 @@ export function registrarClinica(router: MockRouter): void {
       clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
       verificationStatusConceptId: VERIFICACION_DX['DXV-PROVISIONAL']!,
       severityConceptId: datos.severityConceptId ?? SEVERIDAD['SEV-MILD']!,
+      // El curso y la fecha esperada **se guardan**: el contrato los declara
+      // desde el patch v4.0.8 y el simulador los descartaba, así que registrar
+      // un diagnóstico crónico daba una condición sin curso y la pantalla no
+      // podía decir que lo era.
+      ...(datos.lateralityConceptId === undefined ? {} : { lateralityConceptId: datos.lateralityConceptId }),
+      ...(datos.clinicalCourseConceptId === undefined ? {} : { clinicalCourseConceptId: datos.clinicalCourseConceptId }),
+      ...(datos.expectedResolutionAt === undefined ? {} : { expectedResolutionAt: datos.expectedResolutionAt }),
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
       onsetAt: datos.onsetAt ?? ahora(),
       noteText: datos.noteText ?? '',
@@ -338,7 +345,7 @@ export function registrarClinica(router: MockRouter): void {
       encounterId: nueva.encounterId,
       autorProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
     });
-    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', verificationStatus: 'PROVISIONAL', clinicalCourse: null, createdAt: nueva.createdAt } };
+    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', verificationStatus: 'PROVISIONAL', clinicalCourse: nueva.clinicalCourseConceptId ?? null, createdAt: nueva.createdAt } };
   });
 
   router.post('/clinical/conditions/:id/change-status', (request) => {
