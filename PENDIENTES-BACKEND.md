@@ -1,7 +1,8 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-10 (tarde) — **P27 es nuevo**: el paciente ya puede mover el punto de
-su domicilio y el de su trabajo en el mapa, y el `PATCH` del perfil no acepta coordenadas.
+**Actualizado:** 2026-09-10 (tarde) — **P27 y P28 son nuevos**: el paciente ya puede mover el
+punto de su domicilio y el de su trabajo en el mapa (y el `PATCH` no acepta coordenadas), y el
+perfil del médico no llega a cuatro campos que su propio registro pregunta.
 Antes, ese mismo día: **P23 a P26**, de la tanda del expediente clínico, las
 recetas, los adjuntos y el horario. Los cuatro comparten forma: el frontend ya manda el dato, la
 maqueta ya lo guarda y lo muestra, y **contra la API real la petición se rechaza entera** porque el
@@ -15,6 +16,27 @@ backend.
 | **P25** | Tres `OwnerType` y dos rutas `:id/attachments` — hoy sólo diagnósticos y procedimientos aceptan adjuntos |
 | **P26** | `encounter_id` en `allergy_intolerances` **y los cinco bindings de catálogo de alergia, que no existen** |
 | **P27** | Cuatro claves de coordenadas en el `PATCH` del perfil del paciente — hoy el punto del mapa se declara una sola vez, en el alta, y **no hay forma de cambiarlo nunca más** |
+| **P28** | Lo que el registro del médico pregunta y su perfil no puede editar: **sexo al nacer**, **documento y departamento emisor**, **correo de trabajo** y el **consultorio propio** |
+
+---
+
+## P28 · el perfil del médico no llega a los campos de su registro
+
+El pedido es que la ficha del médico muestre **los mismos campos de su registro** y que su editor
+permita cambiarlos. Buena parte ya se puede y está hecho —el título salió de texto libre a la
+lista cerrada de doce, el domicilio ganó su punto en el mapa, y la ficha muestra los cinco
+contactos que la API ya devolvía—. Lo que **no** se puede es esto, y en los cuatro casos el
+motivo es el mismo: el dato **no existe en el contrato de lectura ni en el de escritura**.
+
+| Campo del registro | Qué falta |
+|---|---|
+| **Sexo al nacer** | `OwnPractitionerProfile` no lo trae y el `PATCH` no lo acepta. El alta sí lo pregunta (`sexAtBirth`) y es dato clínico: manda en dosis, valores de referencia y tamizajes |
+| **Documento + departamento emisor** | Se **leen** (la ficha los muestra) pero el `PATCH` no los acepta: un error de tipeo en la cédula no tiene dónde corregirse |
+| **Correo de trabajo** | Se lee (`workEmail`) y no se edita. Acá es a propósito y está bien: es la identidad de acceso y necesita su propio trámite de verificación — el mismo caso que el correo del paciente |
+| **Consultorio propio** | El alta declara nombre, dirección, municipio y GPS del consultorio (`practice-sites`). El editor del perfil no los toca |
+
+Ninguno es urgente para la maqueta; los cuatro son necesarios para que «editar mi perfil»
+signifique de verdad «corregir lo que declaré al registrarme».
 
 ---
 

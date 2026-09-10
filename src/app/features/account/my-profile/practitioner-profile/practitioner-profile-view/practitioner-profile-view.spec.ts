@@ -563,7 +563,42 @@ describe('PractitionerProfileView', () => {
       telefono: '+591 70012345',
       correo: 'elena@example.test',
       domicilio: 'Santa Cruz de la Sierra',
+      // Los cuatro contactos que el registro pregunta por separado y la calle.
+      // La ficha mostraba UN teléfono y UN correo con los cinco ya disponibles.
+      celularPersonal: '+591 70099999',
+      celularTrabajo: '+591 70088888',
+      fijoTrabajo: '+591 3 3000000',
+      correoPersonal: 'elena.personal@example.test',
+      direccion: 'Av. Banzer 3er anillo',
     };
+
+    it('la ficha propia muestra los cinco contactos del registro, no uno de cada clase', () => {
+      // Pedido del propietario: la ficha del médico tiene que mostrar los
+      // mismos campos que su registro. Éstos faltaban aunque el dato viniera.
+      const host = montar({ ...PERFIL, datosPersonales: DATOS });
+      const texto = host.textContent ?? '';
+
+      expect(texto).toContain('+591 70099999');
+      expect(texto).toContain('+591 70088888');
+      expect(texto).toContain('+591 3 3000000');
+      expect(texto).toContain('elena.personal@example.test');
+      expect(texto).toContain('Av. Banzer 3er anillo');
+    });
+
+    it('un contacto no declarado no dibuja su renglón', () => {
+      // Cinco «—» seguidos se leen como una ficha rota, no como datos que
+      // faltan.
+      const host = montar({
+        ...PERFIL,
+        datosPersonales: { ...DATOS, celularTrabajo: '', fijoTrabajo: '', correoPersonal: '' },
+      });
+      const texto = host.textContent ?? '';
+
+      expect(texto).not.toContain('Celular del trabajo');
+      expect(texto).not.toContain('Fijo del trabajo');
+      expect(texto).not.toContain('Correo personal');
+      expect(texto).toContain('Celular personal');
+    });
 
     it('en la ficha propia se ven documento, edad, teléfono y domicilio', () => {
       const host = montar({ ...PERFIL, datosPersonales: DATOS });
@@ -595,6 +630,11 @@ describe('PractitionerProfileView', () => {
           telefono: '',
           correo: '',
           domicilio: '',
+          celularPersonal: '',
+          celularTrabajo: '',
+          fijoTrabajo: '',
+          correoPersonal: '',
+          direccion: '',
         },
       });
 
@@ -621,6 +661,11 @@ describe('PractitionerProfileView', () => {
       telefono: '+591 70012345',
       correo: 'elena@example.test',
       domicilio: 'Santa Cruz de la Sierra',
+      celularPersonal: '',
+      celularTrabajo: '',
+      fijoTrabajo: '',
+      correoPersonal: '',
+      direccion: '',
     };
 
     /** Con las pestañas arrancadas, lo que queda es lo que se ve sin navegar. */

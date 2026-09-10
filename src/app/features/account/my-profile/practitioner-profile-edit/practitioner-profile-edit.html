@@ -76,6 +76,22 @@
             />
           </app-form-field>
 
+          <!-- El punto en el mapa, el mismo bloque que el alta ya usaba para
+               `gpsDomicilio`. El contrato del PATCH lo aceptaba desde antes;
+               lo que faltaba era la pantalla. -->
+          <app-ubicacion-picker
+            pinId="edicion-domicilio"
+            etiquetaConfirmada="Tu domicilio"
+            pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
+            etiquetaQuitar="Quitar la ubicación de tu domicilio"
+            etiquetaMapa="La ubicación de tu domicilio en el mapa"
+            etiquetaMarcar="Marcar mi domicilio en el mapa"
+            indicacionMarcar="Tocá el mapa en la puerta de tu casa para poner el pin."
+            [ids]="idsGpsDomicilio"
+            [inicial]="gpsDomicilioGuardado()"
+            (confirmado)="gpsDomicilio.set($event)"
+          />
+
           <app-form-field
             label="Celular personal"
             hint="El número por el que te contactamos a vos. No se publica en tu ficha."
@@ -98,9 +114,30 @@
             <app-input [(value)]="fijoTrabajo" placeholder="+591 3 3000000" />
           </app-form-field>
 
-          <app-form-field label="Título profesional" hint="«Médica cardióloga», «Kinesiólogo».">
-            <app-input [(value)]="titulo" placeholder="Tu título" />
+          <!-- La MISMA lista cerrada del alta, no un texto libre: de este
+               título dependen el colegio de la habilitación y qué
+               especialidades se ofrecen, y escrito a mano la misma profesión
+               terminaba en cuatro variantes. -->
+          <app-form-field
+            label="Título profesional"
+            hint="Sale de la misma lista que el registro, para que la misma profesión no figure escrita de varias maneras."
+          >
+            <app-select
+              data-testid="edicion-titulo"
+              [options]="titulosProfesionales"
+              [(value)]="titulo"
+              placeholder="Elegí tu título profesional"
+            />
           </app-form-field>
+
+          @if (tituloFueraDeLista()) {
+            <!-- Un título viejo escrito a mano. No se borra ni se corrige solo:
+                 se avisa y la persona elige cuando quiera. -->
+            <p class="edicion__aviso" role="status" data-testid="edicion-titulo-fuera-de-lista">
+              Tu título figura como «{{ titulo() }}», que no está en la lista. Elegí el que
+              corresponda para que aparezca igual que en el registro.
+            </p>
+          }
 
           <app-form-field
             label="Biografía"

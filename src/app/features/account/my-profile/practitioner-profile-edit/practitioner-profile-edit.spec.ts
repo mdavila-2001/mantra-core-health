@@ -157,6 +157,77 @@ describe('PractitionerProfileEdit', () => {
     return (componente as unknown as Record<string, WritableSignal<T>>)[nombre];
   }
 
+  /**
+   * El editor tiene que ofrecer lo mismo que el registro — pedido del
+   * propietario: «basarse completamente en el registro del doctor».
+   *
+   * Dos huecos que tenía y el contrato del `PATCH` ya aceptaba: el punto del
+   * domicilio en el mapa y el título como lista cerrada. El registro los
+   * preguntaba desde siempre; el perfil no dejaba tocarlos.
+   */
+  describe('lo que el registro pregunta y el editor no ofrecía', () => {
+    it('siembra el mapa con el punto guardado del domicilio', () => {
+      montarYCargar({
+        homeAddress: { lines: 'Av. Banzer 3er anillo', latitude: -17.78, longitude: -63.18 },
+      });
+
+      expect(señal<unknown>('gpsDomicilioGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
+    });
+
+    it('media coordenada no siembra el mapa', () => {
+      montarYCargar({ homeAddress: { lines: 'Av. Banzer', latitude: -17.78 } });
+
+      expect(señal<unknown>('gpsDomicilioGuardado')()).toBeNull();
+    });
+
+    it('mover el punto lo manda como par, y no tocarlo no manda nada', () => {
+      montarYCargar();
+
+      señal<unknown>('gpsDomicilio').set({ lat: -16.5, lng: -68.15 });
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ homeLatitude: -16.5, homeLongitude: -68.15 });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('quitar el punto lo manda como null en los dos extremos', () => {
+      montarYCargar();
+
+      señal<unknown>('gpsDomicilio').set(null);
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ homeLatitude: null, homeLongitude: null });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('el título se elige de la MISMA lista cerrada que el registro', () => {
+      // Escrito a mano, la misma profesión terminaba en «Médico», «medico» y
+      // «Dr. en Medicina», y de ese título dependen el colegio de la
+      // habilitación y qué especialidades se ofrecen.
+      montarYCargar();
+
+      const opciones = interno<readonly { value: string }[]>('titulosProfesionales');
+      expect(opciones).toHaveLength(12);
+      expect(opciones.map((o) => o.value)).toContain('Odontólogo / Odontóloga');
+    });
+
+    it('un título viejo fuera de la lista se avisa, no se borra solo', () => {
+      // `PERFIL_BASE` trae «Cardióloga», que es de antes de la lista cerrada.
+      montarYCargar();
+
+      expect(interno<() => string>('titulo')()).toBe('Cardióloga');
+      expect(interno<() => boolean>('tituloFueraDeLista')()).toBe(true);
+    });
+
+    it('un título de la lista no dispara el aviso', () => {
+      montarYCargar({ professionalTitle: 'Médico / Médica' });
+
+      expect(interno<() => boolean>('tituloFueraDeLista')()).toBe(false);
+    });
+  });
+
   it('siembra el formulario con lo ya guardado', () => {
     montarYCargar();
 

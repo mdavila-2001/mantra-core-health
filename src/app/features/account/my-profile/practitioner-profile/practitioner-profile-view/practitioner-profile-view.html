@@ -201,6 +201,41 @@
                   <dd>{{ datos.domicilio }}</dd>
                 </div>
               }
+              <!-- Los cuatro contactos que el registro pregunta por separado y
+                   la calle. La ficha mostraba UN teléfono y UN correo con los
+                   cinco datos ya disponibles en la API. Cada renglón sólo
+                   aparece si la persona lo declaró: un «—» repetido cinco veces
+                   se lee como una ficha rota. -->
+              @if (datos.direccion) {
+                <div class="profesional__dato">
+                  <dt>Dirección</dt>
+                  <dd>{{ datos.direccion }}</dd>
+                </div>
+              }
+              @if (datos.celularPersonal) {
+                <div class="profesional__dato">
+                  <dt>Celular personal</dt>
+                  <dd class="profesional__cifra">{{ datos.celularPersonal }}</dd>
+                </div>
+              }
+              @if (datos.celularTrabajo) {
+                <div class="profesional__dato">
+                  <dt>Celular del trabajo</dt>
+                  <dd class="profesional__cifra">{{ datos.celularTrabajo }}</dd>
+                </div>
+              }
+              @if (datos.fijoTrabajo) {
+                <div class="profesional__dato">
+                  <dt>Fijo del trabajo</dt>
+                  <dd class="profesional__cifra">{{ datos.fijoTrabajo }}</dd>
+                </div>
+              }
+              @if (datos.correoPersonal) {
+                <div class="profesional__dato">
+                  <dt>Correo personal</dt>
+                  <dd>{{ datos.correoPersonal }}</dd>
+                </div>
+              }
             </dl>
           </section>
         }

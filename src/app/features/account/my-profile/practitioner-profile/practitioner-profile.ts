@@ -234,6 +234,13 @@ export class PractitionerProfile {
         telefono: perfil.phone ?? '',
         correo: perfil.email ?? '',
         domicilio: etiquetaOpcional(etiquetas, perfil.residenceMunicipalityConceptId),
+        // Los cuatro contactos del alta y la calle: la API ya los devolvía y la
+        // ficha mostraba sólo uno de cada clase.
+        celularPersonal: perfil.mobilePhone ?? '',
+        celularTrabajo: perfil.workMobilePhone ?? '',
+        fijoTrabajo: perfil.workLandline ?? '',
+        correoPersonal: perfil.personalEmail ?? '',
+        direccion: perfil.homeAddress?.lines ?? '',
       },
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,

@@ -47,6 +47,7 @@ import {
   type Coordenadas,
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { OPCIONES_TITULO_PROFESIONAL } from '../../../core/profesion/titulos-profesionales';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
   CampoDeFormulario,
@@ -224,41 +225,6 @@ const OPCIONES_AUTORIDAD_REGULADORA: readonly SelectOption<string>[] = [
  * profesionales en `src/common/seed/` ni en `dynamic-enum-catalog.ts`. Ver ahí
  * el detalle y el patrón de validación que corresponde el día que existan.
  */
-const OPCIONES_TITULO_PROFESIONAL: readonly SelectOption<string>[] = [
-  { value: 'Médico / Médica', label: 'Médico / Médica' },
-  {
-    value: 'Médico especialista / Médica especialista',
-    label: 'Médico especialista / Médica especialista',
-  },
-  { value: 'Odontólogo / Odontóloga', label: 'Odontólogo / Odontóloga' },
-  {
-    value: 'Licenciado / Licenciada en Enfermería',
-    label: 'Licenciado / Licenciada en Enfermería',
-  },
-  {
-    value: 'Licenciado / Licenciada en Bioquímica y Farmacia',
-    label: 'Licenciado / Licenciada en Bioquímica y Farmacia',
-  },
-  { value: 'Licenciado / Licenciada en Nutrición', label: 'Licenciado / Licenciada en Nutrición' },
-  {
-    value: 'Licenciado / Licenciada en Psicología',
-    label: 'Licenciado / Licenciada en Psicología',
-  },
-  {
-    value: 'Licenciado / Licenciada en Fisioterapia y Kinesiología',
-    label: 'Licenciado / Licenciada en Fisioterapia y Kinesiología',
-  },
-  {
-    value: 'Licenciado / Licenciada en Fonoaudiología',
-    label: 'Licenciado / Licenciada en Fonoaudiología',
-  },
-  {
-    value: 'Licenciado / Licenciada en Trabajo Social',
-    label: 'Licenciado / Licenciada en Trabajo Social',
-  },
-  { value: 'Técnico / Técnica en Radiología', label: 'Técnico / Técnica en Radiología' },
-  { value: 'Auxiliar de Enfermería', label: 'Auxiliar de Enfermería' },
-];
 
 /**
  * Sexo, con sus dos categorías (AC-05-7).

@@ -23,6 +23,15 @@ import { ConceptSelect } from '../../../../shared/components/molecules/concept-s
 import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import {
+  OPCIONES_TITULO_PROFESIONAL,
+  esTituloDeLaLista,
+} from '../../../../core/profesion/titulos-profesionales';
+import {
+  UbicacionPicker,
+  type Coordenadas,
+  type IdsDePrueba,
+} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
@@ -94,6 +103,7 @@ function soloFecha(fecha: Date): string {
     Select,
     Switch,
     Textarea,
+    UbicacionPicker,
     ViewStateHost,
   ],
   templateUrl: './practitioner-profile-edit.html',
@@ -164,6 +174,44 @@ export class PractitionerProfileEdit {
    * `PATCH`, y el backend la lee de vuelta en el resumen.
    */
   protected readonly direccion = signal('');
+
+  /**
+   * El punto del domicilio en el mapa — lo que el alta ya preguntaba
+   * (`gpsDomicilio`) y el editor no dejaba tocar.
+   *
+   * El contrato de `PATCH /profiles/practitioners/me` **ya aceptaba**
+   * `homeLatitude`/`homeLongitude`: lo que faltaba era la pantalla. Mismos tres
+   * estados que en el editor del paciente: sin tocar no viaja, quitado viaja
+   * como par de `null`, movido viaja como par.
+   */
+  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
+  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+
+  protected readonly idsGpsDomicilio: IdsDePrueba = {
+    mapa: 'edicion-domicilio-mapa',
+    confirmada: 'edicion-domicilio-confirmada',
+    avisoGeocodificacion: 'edicion-domicilio-aviso-geo',
+    quitar: 'edicion-domicilio-quitar-gps',
+    sinConfirmar: 'edicion-domicilio-sin-confirmar',
+    confirmar: 'edicion-domicilio-confirmar',
+    usarUbicacion: 'edicion-domicilio-usar-ubicacion',
+    marcarEnMapa: 'edicion-domicilio-marcar',
+  };
+
+  /** Las doce opciones del alta, compartidas: ver `titulos-profesionales`. */
+  protected readonly titulosProfesionales = OPCIONES_TITULO_PROFESIONAL;
+
+  /**
+   * Si el título guardado no está en la lista cerrada.
+   *
+   * Los perfiles anteriores a la lista tienen textos escritos a mano («Médica
+   * cardióloga»). No se borran ni se corrigen solos: se muestran, se avisa, y
+   * la persona elige de la lista cuando quiera. Pisar el dato al abrir la
+   * pantalla sería cambiar el perfil sin que nadie lo pidiera.
+   */
+  protected readonly tituloFueraDeLista = computed(
+    () => this.titulo() !== '' && !esTituloDeLaLista(this.titulo()),
+  );
   protected readonly guardandoPresentacion = signal(false);
 
   protected readonly bioLargoMaximo = 4000;
@@ -320,6 +368,14 @@ export class PractitionerProfileEdit {
     this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
     // ALV-009: la calle, si la declaró.
     this.direccion.set(perfil.homeAddress?.lines ?? '');
+    // Y su punto en el mapa. Las dos mitades tienen que estar: una latitud sin
+    // longitud pondría el pin en el meridiano cero.
+    const lat = perfil.homeAddress?.latitude;
+    const lng = perfil.homeAddress?.longitude;
+    this.gpsDomicilioGuardado.set(
+      lat === undefined || lng === undefined ? null : { lat, lng },
+    );
+    this.gpsDomicilio.set(undefined);
     if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
       this.cargarMunicipios();
     }
@@ -378,6 +434,8 @@ export class PractitionerProfileEdit {
       birthDate: string;
       residenceMunicipalityConceptId: string;
       homeAddressLines: string;
+      homeLatitude: number | null;
+      homeLongitude: number | null;
     }> = {};
     // ALV-003/009: los dos campos nuevos viajan sólo si cambiaron, como el
     // resto. La fecha se compara por día local (`toISOString` la pasaría por
@@ -394,6 +452,17 @@ export class PractitionerProfileEdit {
     }
     if (this.direccion() !== (original.homeAddress?.lines ?? '')) {
       cambios.homeAddressLines = this.direccion();
+    }
+    // El punto, con los mismos tres estados que en el editor del paciente:
+    // `undefined` no viaja, `null` quita y un par mueve. Mandar el punto actual
+    // «por las dudas» convertiría cada guardado en una reescritura del mapa.
+    const gps = this.gpsDomicilio();
+    if (gps === null) {
+      cambios.homeLatitude = null;
+      cambios.homeLongitude = null;
+    } else if (gps !== undefined) {
+      cambios.homeLatitude = gps.lat;
+      cambios.homeLongitude = gps.lng;
     }
     if (this.titulo() !== (original.professionalTitle ?? '')) {
       cambios.professionalTitle = this.titulo();
