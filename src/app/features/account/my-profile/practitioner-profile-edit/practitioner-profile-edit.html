@@ -160,15 +160,17 @@
             </app-form-field>
           }
 
-          <app-switch
-            [(checked)]="nuevaEspecialidadPrincipal"
-            label="Es mi especialidad principal"
-          />
-          <app-switch
-            [(checked)]="nuevaEspecialidadCertificada"
-            label="Tengo certificación de junta (board certified)"
-          />
+          <!-- Sin los dos interruptores («Es mi especialidad principal» y
+               «Tengo certificación de junta»): el propietario pidió el
+               2026-09-10 que esta pantalla se adapte al formulario del alta de
+               médico, y el alta no los tiene. Ahí la principal se elige en un
+               select —«Especialidad principal (opcional)»— al registrarse, y la
+               certificación de junta no se pregunta.
 
+               Consecuencia declarada, no escondida: agregar una especialidad
+               desde acá **nunca desplaza a la principal**. Cambiar cuál es la
+               principal más adelante no tiene hoy dónde hacerse; está anotado
+               en `docs/progress/BLOCKERS.md`. -->
           <app-form-actions
             submitLabel="Agregar especialidad"
             [pending]="guardandoEspecialidad()"
@@ -269,6 +271,27 @@
             <app-date-picker
               [(value)]="nuevaFechaEmisionCredencial"
               placeholder="Seleccionar fecha"
+            />
+          </app-form-field>
+
+          <!-- El diploma. Mismo criterio que el alta de médico: opcional, PDF o
+               foto, hasta 5 MB. Acá **sí llega al servidor** —el contrato del
+               título declara `fileId`— y es lo que después mira quien verifica.
+               La matrícula no tiene un campo equivalente en su contrato; ver
+               `docs/progress/BLOCKERS.md`. -->
+          <app-form-field
+            label="Diploma o certificado (opcional)"
+            hint="PDF, JPG o PNG. Hasta 5 MB. Lo mira el equipo que verifica; no se publica."
+          >
+            <app-file-input
+              data-testid="credencial-archivo"
+              testId="credencial-archivo"
+              removeTestId="credencial-archivo-quitar"
+              [(files)]="archivoDeCredencial"
+              [accept]="formatosDeRespaldo"
+              [maxSizeBytes]="maxBytesDeRespaldo"
+              [maxFiles]="1"
+              accessibleLabel="Diploma o certificado del título"
             />
           </app-form-field>
 

@@ -214,15 +214,20 @@ describe('PractitionerProfileEdit', () => {
   it('agregarEspecialidad hace un POST y recarga el perfil', () => {
     montarYCargar();
     señal<string>('nuevaEspecialidad').set('esp-cardio');
-    señal<boolean>('nuevaEspecialidadPrincipal').set(true);
 
     interno<() => void>('agregarEspecialidad')();
 
     const req = http.expectOne('/profiles/practitioners/per-1/specialties');
     expect(req.request.method).toBe('POST');
+    // Los dos interruptores se sacaron el 2026-09-10 —el alta de médico no los
+    // tiene y esta pantalla se adapta a ella—, así que una especialidad que se
+    // agrega después del alta es **adicional**: nunca desplaza a la principal, y
+    // nadie declaró certificación de junta. Eso es lo que viaja, y por eso se
+    // fija acá: si alguien vuelve a mandar `isPrimary: true` sin decidirlo,
+    // esta prueba lo dice.
     expect(req.request.body).toEqual({
       specialtyConceptId: 'esp-cardio',
-      isPrimary: true,
+      isPrimary: false,
       boardCertified: false,
     });
     req.flush({ id: 'sp-1' });
@@ -350,5 +355,66 @@ describe('PractitionerProfileEdit', () => {
     req.flush({ id: 'cred-1' });
 
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  /* ---- el diploma del título (2026-09-10) ---------------------------------- */
+
+  it('sin diploma no sube nada: el título va derecho', () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+    interno<() => void>('agregarCredencial')();
+
+    // Ni una petición al almacén de archivos.
+    expect(http.match('/common/files/upload')).toHaveLength(0);
+    http.expectOne('/profiles/practitioners/me/credentials').flush({ id: 'cred-1' });
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  it('con diploma sube primero el archivo y manda su id como fileId', () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+    señal<readonly File[]>('archivoDeCredencial').set([
+      new File(['x'], 'diploma.pdf', { type: 'application/pdf' }),
+    ]);
+
+    interno<() => void>('agregarCredencial')();
+
+    // Primero el archivo…
+    const subida = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
+    expect(subida.request.method).toBe('POST');
+    subida.flush({ id: 'file-77' });
+
+    // …y recién entonces el título, con el identificador que devolvió.
+    const req = http.expectOne('/profiles/practitioners/me/credentials');
+    expect(req.request.body).toEqual({
+      credentialTypeConceptId: 'cred-titulo',
+      number: 'Médico cirujano',
+      fileId: 'file-77',
+    });
+    req.flush({ id: 'cred-1' });
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  it('si la subida falla, el título NO se crea', () => {
+    // Un título sin el diploma que la persona creyó haber adjuntado es peor que
+    // un error: nadie se entera hasta que se lo rechazan.
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+    señal<readonly File[]>('archivoDeCredencial').set([
+      new File(['x'], 'diploma.pdf', { type: 'application/pdf' }),
+    ]);
+
+    interno<() => void>('agregarCredencial')();
+
+    http
+      .expectOne((r) => r.url.endsWith('/common/files/upload'))
+      .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
+
+    expect(http.match('/profiles/practitioners/me/credentials')).toHaveLength(0);
+    expect(interno<() => boolean>('guardandoCredencial')()).toBe(false);
   });
 });

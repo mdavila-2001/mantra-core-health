@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
@@ -19,6 +20,7 @@ import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
+import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
@@ -83,6 +85,7 @@ function soloFecha(fecha: Date): string {
     ConceptSelect,
     DatePicker,
     FormActions,
+    FileInput,
     FormField,
     Input,
     LocationPicker,
@@ -99,6 +102,7 @@ function soloFecha(fecha: Date): string {
 })
 export class PractitionerProfileEdit {
   private readonly profiles = inject(ProfilesClient);
+  private readonly files = inject(FilesClient);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
   private readonly catalogo = inject(MedicalSpecialtiesCatalog);
@@ -179,8 +183,27 @@ export class PractitionerProfileEdit {
   protected readonly catalogoCaido = signal(false);
 
   protected readonly nuevaEspecialidad = signal<string | null>(null);
-  protected readonly nuevaEspecialidadPrincipal = signal(false);
-  protected readonly nuevaEspecialidadCertificada = signal(false);
+  /**
+   * Los dos datos que el alta **no** pregunta.
+   *
+   * Eran dos interruptores en esta pantalla; el propietario pidió el 2026-09-10
+   * que el editor se adapte al formulario del alta de médico, y ahí la
+   * especialidad principal se elige en un select al registrarse y la
+   * certificación de junta no se pregunta.
+   *
+   * Se siguen mandando —el contrato los declara— con el único valor que esta
+   * pantalla puede afirmar con honestidad: una especialidad agregada después
+   * del alta es **adicional**, no la principal, y nadie declaró una
+   * certificación de junta.
+   */
+  private readonly ESPECIALIDAD_ADICIONAL = { isPrimary: false, boardCertified: false } as const;
+
+  /** El diploma del título que se está agregando. Uno, opcional. */
+  protected readonly archivoDeCredencial = signal<readonly File[]>([]);
+
+  /** Los mismos formatos y el mismo tope que el alta de médico. */
+  protected readonly formatosDeRespaldo = 'application/pdf,image/jpeg,image/png';
+  protected readonly maxBytesDeRespaldo = 5 * 1024 * 1024;
   protected readonly guardandoEspecialidad = signal(false);
 
   protected readonly puedeAgregarEspecialidad = computed(() => this.nuevaEspecialidad() !== null);
@@ -441,15 +464,13 @@ export class PractitionerProfileEdit {
     this.profiles
       .addSpecialty(profileId, {
         specialtyConceptId: especialidad,
-        isPrimary: this.nuevaEspecialidadPrincipal(),
-        boardCertified: this.nuevaEspecialidadCertificada(),
+        isPrimary: this.ESPECIALIDAD_ADICIONAL.isPrimary,
+        boardCertified: this.ESPECIALIDAD_ADICIONAL.boardCertified,
       })
       .subscribe({
         next: () => {
           this.guardandoEspecialidad.set(false);
           this.nuevaEspecialidad.set(null);
-          this.nuevaEspecialidadPrincipal.set(false);
-          this.nuevaEspecialidadCertificada.set(false);
           this.toasts.success(
             'Se agregó la especialidad. Queda pendiente de verificación.',
             'Especialidades',
@@ -503,9 +524,21 @@ export class PractitionerProfileEdit {
   }
 
   /**
-   * Agrega un título propio. Nace pendiente de verificación, como la
-   * especialidad y la matrícula — declarar un título no es haberlo
-   * acreditado.
+   * Agrega un título propio, con su diploma si lo hay.
+   *
+   * Nace pendiente de verificación, como la especialidad y la matrícula:
+   * declarar un título no es haberlo acreditado.
+   *
+   * **Dos pasos, no uno** (propietario, 2026-09-10: «poder agregar las
+   * matrículas y adjuntos en base a su módulo de creación de médico»). El
+   * archivo se sube primero con `FilesClient.upload` y su identificador viaja
+   * como `fileId` del título — la misma cadena que ya usa la verificación de
+   * identidad, y el mismo motivo por el que están separados en el backend: el
+   * mismo archivo puede colgarse de más de un recurso.
+   *
+   * Si la subida falla **no se crea el título**: un título sin el diploma que
+   * la persona creyó haber adjuntado es peor que un error, porque nadie se
+   * entera hasta que lo rechazan.
    */
   protected agregarCredencial(): void {
     const tipo = this.nuevoTipoCredencial();
@@ -515,6 +548,28 @@ export class PractitionerProfileEdit {
     }
 
     this.guardandoCredencial.set(true);
+    const archivo = this.archivoDeCredencial()[0];
+    if (archivo === undefined) {
+      this.crearCredencial(tipo, numero, undefined);
+      return;
+    }
+
+    // `DOCUMENT`/`PHI`: es documentación de una persona identificable, el mismo
+    // par con el que sube su evidencia la verificación de identidad.
+    this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
+      next: ({ id }) => this.crearCredencial(tipo, numero, id),
+      error: () => {
+        this.guardandoCredencial.set(false);
+        this.toasts.error(
+          'No pudimos subir el diploma, así que no se agregó el título. Probá de nuevo.',
+          'Formación',
+        );
+      },
+    });
+  }
+
+  /** El alta del título en sí, con el diploma ya subido si lo había. */
+  private crearCredencial(tipo: string, numero: string, fileId: string | undefined): void {
     const fecha = this.nuevaFechaEmisionCredencial();
     this.profiles
       .addOwnCredential({
@@ -522,6 +577,7 @@ export class PractitionerProfileEdit {
         number: numero,
         issuingInstitutionText: this.nuevaInstitucionCredencial().trim() || undefined,
         issueDate: fecha === null ? undefined : fechaIso(fecha),
+        ...(fileId === undefined ? {} : { fileId }),
       })
       .subscribe({
         next: () => {
@@ -530,6 +586,7 @@ export class PractitionerProfileEdit {
           this.nuevoNumeroCredencial.set('');
           this.nuevaInstitucionCredencial.set('');
           this.nuevaFechaEmisionCredencial.set(null);
+          this.archivoDeCredencial.set([]);
           this.toasts.success(
             'Se agregó el título. Queda pendiente de verificación.',
             'Formación',

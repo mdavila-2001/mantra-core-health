@@ -268,12 +268,8 @@
   ],
   "38": [
     {
-      "ruta": "/my-account?tab=personal&edit=1",
-      "nombre": "editar-datos-personales"
-    },
-    {
-      "ruta": "/my-account?tab=specialties&edit=1",
-      "nombre": "editar-especialidades-sin-switches"
+      "ruta": "/my-account/edit",
+      "nombre": "editar-perfil-medico"
     }
   ],
   "39": [
