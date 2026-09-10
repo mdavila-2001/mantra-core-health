@@ -55,6 +55,29 @@ export interface MedicationRequest {
   readonly id: string;
   readonly medicationConceptId: string;
   readonly statusConceptId: string;
+  /**
+   * La consulta en la que se prescribió, si nació de una.
+   *
+   * El backend lo devuelve y este tipo no lo declaraba, así que el dato llegaba
+   * y nadie podía leerlo con tipos: la ficha no tenía cómo agrupar las líneas
+   * de una misma receta.
+   */
+  readonly encounterId?: string;
+  /**
+   * La condición que la motiva — «para qué es» (Patch v4.1.6).
+   *
+   * Mismo caso: el backend ya lo publica en `MedicationRequestItemDto` y acá
+   * faltaba, así que la tabla de medicación no podía decir el diagnóstico.
+   */
+  readonly indicationConditionId?: string;
+  /**
+   * El motivo escrito a mano, cuando no hay condición registrada detrás.
+   *
+   * Es lo que el cliente pidió para los casos psiquiátricos y para quien «sólo
+   * fue a que le receten». **Todavía no existe en el backend**: ver P24 en
+   * `PENDIENTES-BACKEND.md`.
+   */
+  readonly indicationText?: string;
   readonly prescriberProfileId?: string;
   readonly doseText?: string;
   readonly frequencyText?: string;
@@ -383,6 +406,22 @@ export interface NewMedicationRequest {
    * termina impreso en el papel.
    */
   readonly indicationConditionId?: string;
+  /**
+   * El motivo de la receta escrito a mano, para cuando no hay un diagnóstico
+   * registrado detrás.
+   *
+   * El cliente lo pidió por su caso: «puede existir el caso que sólo se fue a
+   * hacer recetar y no necesitaría diagnóstico existente previo, sobre todo
+   * casos psiquiátricos».
+   *
+   * **Excluyente con `indicationConditionId`**, y el concepto gana si llegaran
+   * los dos — el mismo criterio que `occupation_free_text` frente a
+   * `occupation_concept_id` en `persons`.
+   *
+   * ⚠️ **Contra la API de hoy da 400**: `CreateMedicationRequestDto` no declara
+   * la clave y el backend valida con `forbidNonWhitelisted`. Ver P24.
+   */
+  readonly indicationText?: string;
 }
 
 /**

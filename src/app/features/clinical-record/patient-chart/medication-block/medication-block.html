@@ -311,14 +311,39 @@
            opción vacía es la primera y la de por omisión. -->
       <app-form-field icon="heart"
         label="¿Para qué es esta receta?"
-        hint="Opcional. El diagnóstico que la motiva, de los registrados en esta historia."
+        [hint]="
+          exigeDiagnostico()
+            ? 'Elegí el diagnóstico que la motiva, o escribí el motivo.'
+            : 'Opcional. El diagnóstico que la motiva, de los registrados en esta historia.'
+        "
+        [required]="exigeDiagnostico()"
       >
         <app-select
-          [(value)]="indicacion"
+          data-testid="receta-indicacion"
+          [value]="indicacion()"
+          (valueChange)="elegirIndicacion($event)"
           [options]="opcionesDeIndicacion()"
-          placeholder="Sin diagnóstico asociado"
         />
       </app-form-field>
+
+      <!-- El motivo escrito, para cuando no hay diagnóstico registrado detrás:
+           «sólo se fue a hacer recetar», que en psiquiatría es lo corriente.
+           Entra y sale del DOM en vez de esconderse: un campo escondido igual
+           se tabula. -->
+      @if (motivoEsLibre()) {
+        <app-form-field
+          icon="note"
+          label="¿Cuál es el motivo?"
+          hint="Se imprime en la receta como su diagnóstico."
+          [required]="true"
+        >
+          <app-input
+            data-testid="receta-motivo-libre"
+            [(value)]="motivoLibre"
+            placeholder="Trastorno de ansiedad generalizada"
+          />
+        </app-form-field>
+      }
 
       @if (errorDelFavorito(); as motivo) {
         <app-alert tone="error" [title]="'No se pudo guardar el favorito'">

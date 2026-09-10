@@ -285,7 +285,7 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/clinical/medication-requests', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; encounterId?: string; indicationConditionId?: string; indicationText?: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
     const nueva: RecetaSimulada = {
       id: nuevoId('rx'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -297,6 +297,16 @@ export function registrarClinica(router: MockRouter): void {
       validFrom: datos.validFrom ?? ahora(),
       validTo: datos.validTo ?? ahora(),
       patientInstructionsText: datos.patientInstructionsText ?? '',
+      // El «para qué es» de la receta. El concepto gana sobre el texto libre,
+      // igual que la ocupación del alta de paciente: el texto sólo tenía
+      // sentido para quien no encontró un diagnóstico registrado.
+      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.indicationConditionId === undefined
+        ? {}
+        : { indicationConditionId: datos.indicationConditionId }),
+      ...(datos.indicationConditionId !== undefined || datos.indicationText === undefined
+        ? {}
+        : { indicationText: datos.indicationText }),
       signedAt: null,
       issuedAt: null,
       createdAt: ahora(),

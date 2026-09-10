@@ -23,6 +23,54 @@ que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
+## Abierto · P24 · La receta no puede llevar un motivo escrito
+
+**Levantado el 2026-09-10.** El cliente lo pidió textual:
+
+> «Se debería de poder poner o escoger en una lista en la que salgan los diagnósticos ya
+> existentes **y una opción de poder escribir un título de diagnóstico propio**, porque puede
+> existir el caso que sólo se fue a hacer recetar y no necesitaría diagnóstico existente previo,
+> sobre todo casos psiquiátricos.»
+
+### Lo que ya existe
+
+`indicationConditionId` (Patch v4.1.6): la receta apunta a una condición **registrada**, el
+servidor comprueba que sea del mismo paciente y responde 422 si no. Está en el DTO de alta y en
+`MedicationRequestItemDto`.
+
+### Lo que falta
+
+**Una columna de texto.** `clinical.medication_requests` tiene `indication_condition_id` y ningún
+campo de texto para el motivo. Sin ella, la mitad del pedido —el caso psiquiátrico, y el de quien
+sólo fue a que le receten— no tiene dónde guardarse.
+
+| Capa | Qué hace falta |
+| --- | --- |
+| Modelo | `indication_text varchar(200) NULL` en `clinical.medication_requests`. Camino obligatorio: `.puml` → `gen_ddl.py` → `SQL/` → patch para bases vivas → `gen_entities.py`. **Nunca un `ALTER` a mano** (ADR-0021). |
+| DTO de alta | `indicationText?` con `@MaxLength(200)` en `CreateMedicationRequestDto` y en `EditMedicationRequestDraftDto`. |
+| DTO de lectura | `indicationText?` en `MedicationRequestItemDto`. |
+| Servicio | **Excluyente con la condición, y el concepto gana** si llegaran los dos — el mismo criterio que `occupation_free_text` frente a `occupation_concept_id` en `persons`. |
+| PDF | La receta impresa muestra uno u otro bajo «Diagnóstico». |
+
+### Estado del frontend
+
+La pantalla **ya lo manda** (`indicationText`) y la maqueta lo guarda y lo muestra. **Contra la API
+de hoy da 400**: `forbidNonWhitelisted` rechaza la petición entera por la clave que el DTO no
+declara. Es el mismo muro de P19, P20 y P22.
+
+### Dos cosas que este trabajo destapó y NO son pendientes
+
+- **La lectura ya traía el diagnóstico y el frontend lo tiraba.** `MedicationRequestItemDto`
+  publica `indicationConditionId` desde v4.1.6 y el tipo de vista `MedicationRequest` no lo
+  declaraba: el dato llegaba y nadie podía leerlo con tipos. Corregido acá, sin tocar el backend.
+- **«La receta a la que pertenece esa medicación» no existe como entidad.** En este modelo **cada
+  `medication_request` es una línea**; lo que agrupa varias es el encuentro y su fecha, y eso es lo
+  que la tabla muestra ahora en «Receta de». Un **número de receta** compartido por varias líneas
+  sería una entidad nueva (`prescriptions` con sus `lines`), no un campo: es decisión de modelo y
+  de negocio, no un arreglo de pantalla. **Queda planteado, sin resolver.**
+
+---
+
 ## Abierto · P23 · Cambiar un horario que tiene citas es imposible hoy
 
 **Levantado el 2026-09-10**, arreglando «la cita no acaba a la hora que debería». Es la causa
