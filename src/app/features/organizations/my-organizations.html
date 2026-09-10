@@ -1,21 +1,28 @@
-<app-page-header
-  title="Mis organizaciones"
-  subtitle="Dónde tenés una vinculación, y pedir una nueva"
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Mis organizaciones"
+    subtitle="Dónde tenés una vinculación, y pedir una nueva"
+  />
 
-<app-alert tone="info" class="explicacion">
-  <p>
-    Un profesional puede ejercer en más de una organización a la vez. Acá ves todas tus
-    vinculaciones —incluidas las pendientes de aprobación— y pedís vincularte a una nueva.
-    <strong>Ejemplo:</strong> elegís «Hospital Central», confirmás, y la vinculación queda
-    <em>pendiente</em> hasta que esa organización la apruebe.
-  </p>
-  <p>
-    <strong>Importante:</strong> pertenecer a una organización no te da acceso a sus
-    pacientes. El acceso a un paciente concreto depende siempre de una cita, derivación,
-    intervención o autorización con ese paciente.
-  </p>
-</app-alert>
+  <!-- La explicación larga sólo fuera del panel: adentro es una pestaña de un
+       panel de administración, y un párrafo de ocho renglones arriba de una
+       tabla es un párrafo que nadie vuelve a leer. Lo que no se puede perder
+       —que estar vinculado NO da acceso a los pacientes— se dice igual, corto,
+       al lado del formulario. -->
+  <app-alert tone="info" class="explicacion">
+    <p>
+      Un profesional puede ejercer en más de una organización a la vez. Acá ves todas tus
+      vinculaciones —incluidas las pendientes de aprobación— y pedís vincularte a una nueva.
+      <strong>Ejemplo:</strong> elegís «Hospital Central», confirmás, y la vinculación queda
+      <em>pendiente</em> hasta que esa organización la apruebe.
+    </p>
+    <p>
+      <strong>Importante:</strong> pertenecer a una organización no te da acceso a sus
+      pacientes. El acceso a un paciente concreto depende siempre de una cita, derivación,
+      intervención o autorización con ese paciente.
+    </p>
+  </app-alert>
+}
 
 <h2 class="titulo-de-seccion">Pedir una vinculación</h2>
 <app-card>
@@ -42,56 +49,77 @@
       {{ enviando() ? 'Enviando…' : 'Pedir vinculación' }}
     </button>
   </div>
+  @if (embedded()) {
+    <p class="nota-de-acceso">
+      Estar vinculado no da acceso a los pacientes de la organización: eso depende siempre de una
+      cita, derivación, intervención o autorización con esa persona.
+    </p>
+  }
 </app-card>
 
 <h2 class="titulo-de-seccion">Mis vinculaciones</h2>
-@if (!cargandoVinculaciones()) {
-  @if (filas().length === 0) {
-    <app-empty-state
-      title="Todavía no tenés vinculaciones"
-      description="Pedí una arriba para empezar."
-    />
-  } @else {
-    <ul class="lista-de-vinculaciones">
-      @for (fila of filas(); track fila.id) {
-        <li class="vinculacion" [class.es-final]="fila.isFinal">
-          <app-avatar
-            [src]="fila.avatarUrl"
-            [name]="fila.practiceName"
-            [alt]="'Logo de ' + fila.practiceName"
-            size="md"
-          />
-          <div class="vinculacion__cuerpo">
-            <div class="vinculacion__cabecera">
-              <span class="vinculacion__nombre">
-                {{ fila.practiceName }}
-                @if (fila.verified) {
-                  <span class="vinculacion__sello" title="Vinculación aceptada por la organización">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                      focusable="false"
-                    >
-                      <path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" />
-                      <path d="m9 12 2 2 4-4" />
-                    </svg>
-                    <span class="solo-lectores">Vinculación aceptada por la organización</span>
-                  </span>
-                }
-              </span>
-              <span class="vinculacion__estado">{{ fila.statusLabel }}</span>
-            </div>
-            @if (fila.isPrimary) {
-              <span class="vinculacion__principal">Organización principal</span>
-            }
-          </div>
-        </li>
-      }
-    </ul>
-  }
+
+<!-- El organismo de tabla del sistema, en vez de la lista de tarjetas que el
+     propietario marcó como «totalmente detonada» (2026-09-10). -->
+@if (filas().length === 0 && !cargandoVinculaciones()) {
+  <app-empty-state
+    title="Todavía no tenés vinculaciones"
+    description="Pedí una arriba para empezar."
+  />
+} @else {
+  <app-data-table
+    [state]="estadoDeLaTabla()"
+    [columns]="columnas()"
+    [trackBy]="porId"
+    caption="Tus vinculaciones con organizaciones"
+    data-testid="mis-vinculaciones"
+  />
 }
+
+<!-- Celdas con presentación propia. Un ng-template no renderiza nada por sí
+     solo: la tabla las instancia por fila. -->
+<ng-template #celdaOrg let-fila>
+  <span class="vinculacion__org">
+    <app-avatar
+      [src]="fila.avatarUrl"
+      [name]="fila.practiceName"
+      [alt]="'Logo de ' + fila.practiceName"
+      size="sm"
+    />
+    <span class="vinculacion__nombre">
+      {{ fila.practiceName }}
+      @if (fila.verified) {
+        <!-- El sello se gana, no se declara: sólo cuando la propia organización
+             aceptó la vinculación. -->
+        <span class="vinculacion__sello" title="Vinculación aceptada por la organización">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+          <span class="solo-lectores">Vinculación aceptada por la organización</span>
+        </span>
+      }
+    </span>
+  </span>
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  <app-badge [variant]="fila.statusVariant">{{ fila.statusLabel }}</app-badge>
+</ng-template>
+
+<ng-template #celdaPrincipal let-fila>
+  @if (fila.isPrimary) {
+    <span class="vinculacion__principal">Principal</span>
+  } @else {
+    <span class="vinculacion__sin-dato" aria-label="No es la organización principal">—</span>
+  }
+</ng-template>

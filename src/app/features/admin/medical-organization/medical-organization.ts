@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  linkedSignal,
   signal,
   viewChild,
   type TemplateRef,
@@ -23,7 +24,13 @@ import type {
   PracticeSummary,
 } from '../../../core/data-access/medical-organization/medical-organization.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { NavigationService } from '../../../core/navigation/navigation.service';
+import { MyOrganizations } from '../../organizations/my-organizations';
+
+/** El índice de «Mis vinculaciones», para no escribir `7` en dos lugares. */
+const PESTANA_VINCULACIONES = 7;
 import { empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
 import type {
   ViewState,
@@ -100,7 +107,7 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
  */
 @Component({
   selector: 'app-medical-organization',
-  imports: [AppButton, Badge, DataTable, PageHeader, Tab, Tabs],
+  imports: [AppButton, Badge, DataTable, MyOrganizations, PageHeader, Tab, Tabs],
   templateUrl: './medical-organization.html',
   styleUrl: './medical-organization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -108,8 +115,35 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
 export class MedicalOrganization {
   private readonly client = inject(MedicalOrganizationClient);
   private readonly navigation = inject(NavigationService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  private readonly parametros = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  /**
+   * La pestaña que abre la URL, y la que la persona elija después.
+   *
+   * `?tab=memberships` abre «Mis vinculaciones» directo. Lo necesita el
+   * aterrizaje de quien entra **sin ninguna organización**: antes caía en la
+   * pantalla «Mis organizaciones», cuyo vacío le explicaba que tenía que pedir
+   * el alta. Absorbida esa pantalla, mandarlo al panel sin más lo dejaría
+   * mirando siete tablas vacías de una organización que no tiene — y sin la
+   * única pestaña que sí puede usar, que no depende de tenant.
+   *
+   * **`linkedSignal` y no `signal` con el `snapshot`.** Angular reutiliza el
+   * componente cuando cambia sólo la query, así que el constructor no vuelve a
+   * correr: leer el snapshot una vez dejaba `?tab=memberships` sin efecto para
+   * cualquiera que ya estuviera en el panel. Así se recalcula cuando cambia la
+   * URL, y sigue siendo escribible para que un clic en otra pestaña mande.
+   */
+  protected readonly pestana = linkedSignal<number>(() =>
+    this.parametros().get('tab') === 'memberships' ? PESTANA_VINCULACIONES : 0,
+  );
+
+  protected readonly pestanaDeVinculaciones = PESTANA_VINCULACIONES;
 
   private readonly celdaSede =
     viewChild.required<TemplateRef<{ $implicit: OrganizationSite }>>('celdaSede');

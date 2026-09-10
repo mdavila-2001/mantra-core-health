@@ -1,89 +1,72 @@
-/* ============================================================================
-    Mis organizaciones. Sólo la disposición: los colores, tipos y espacios
-    salen de los tokens de ALOVIDA, nunca de valores literales acá.
-    ========================================================================== */
-
-.explicacion {
-  margin-bottom: var(--e5);
-}
-
-.explicacion p {
-  margin: 0 0 var(--e2);
-}
-
-.explicacion p:last-child {
-  margin-bottom: 0;
-}
+/* La lista de tarjetas se reemplazó por `app-data-table` el 2026-09-10 (pedido
+   del propietario: «que sea como están los organismos de tabla»). Lo que queda
+   acá es lo de las **celdas**: el organismo pinta la tabla, la presentación de
+   cada celda es de esta pantalla. */
 
 .titulo-de-seccion {
-  margin: var(--e6) 0 var(--e3);
-  font-size: var(--fs-h3);
-  font-weight: 600;
+  font-size: var(--fs-h3, 1.1rem);
+  margin: var(--e5) 0 var(--e3);
 }
 
+.explicacion,
 .alerta-de-formulario {
-  margin-bottom: var(--e3);
   display: block;
+  margin-bottom: var(--e4);
 }
 
 .formulario-de-solicitud {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: end;
   gap: var(--e3);
 }
 
-.lista-de-vinculaciones {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--e3);
-}
-
-.vinculacion {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--e3);
-  border: 1px solid var(--filete-2);
-  border-radius: var(--r-card);
-  padding: var(--e3) var(--e4);
-}
-
-.vinculacion.es-final {
-  opacity: 0.7;
-}
-
-.vinculacion__cuerpo {
-  flex: 1;
+.formulario-de-solicitud app-select {
+  flex: 1 1 18rem;
   min-inline-size: 0;
 }
 
-.vinculacion__cabecera {
-  display: flex;
+.nota-de-acceso {
+  margin: var(--e3) 0 0;
+  font-size: var(--fs-caption, 0.8rem);
+  color: var(--text-muted, var(--tinta-3));
+}
+
+/* ------------------------------------------------------------------ celdas */
+
+.vinculacion__org {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--e3);
+  gap: var(--e2);
+  min-inline-size: 0;
 }
 
 .vinculacion__nombre {
   display: inline-flex;
   align-items: center;
-  gap: var(--e1);
+  gap: 0.35rem;
+  overflow-wrap: anywhere;
+}
+
+/* El sello va con su tamaño en `em`: acompaña al nombre si la tabla cambia de
+   escala, en vez de quedarse en un tamaño fijo que en móvil se ve enorme. */
+.vinculacion__sello {
+  display: inline-flex;
+  inline-size: 1em;
+  block-size: 1em;
+  flex-shrink: 0;
+  color: var(--exito, var(--brand-primary));
+}
+
+.vinculacion__principal {
   font-weight: 600;
 }
 
-.vinculacion__sello {
-  display: inline-flex;
-  color: var(--aguamarina);
+.vinculacion__sin-dato {
+  color: var(--text-muted, var(--tinta-3));
 }
 
-.vinculacion__sello svg {
-  inline-size: 18px;
-  block-size: 18px;
-}
-
+/* Oculto a la vista, presente para el lector de pantalla. */
 .solo-lectores {
   position: absolute;
   inline-size: 1px;
@@ -93,18 +76,5 @@
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
-  border: 0;
-}
-
-.vinculacion__estado {
-  color: var(--tinta-3);
-  font-size: var(--fs-caption);
-}
-
-.vinculacion__principal {
-  display: inline-block;
-  margin-top: var(--e1);
-  color: var(--tinta-3);
-  font-size: 12px;
-  font-style: italic;
+  border-width: 0;
 }

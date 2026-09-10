@@ -246,7 +246,11 @@ describe('Groups', () => {
     fixture.detectChanges();
     abrirAlta();
 
-    expect(texto()).toContain('Configurar mi perfil público');
+    // La puerta a la vitrina se sacó el 2026-09-10; el aviso se queda porque
+    // sigue siendo cierto —el servidor rechaza el alta— y borrarlo dejaría el
+    // fallo sin explicación. Ver `docs/progress/BLOCKERS.md`.
+    expect(texto()).toContain('perfil público completo');
+    expect(texto()).not.toContain('Configurar mi perfil público');
   });
 
   it('con el perfil completo no avisa nada', () => {
@@ -269,7 +273,11 @@ describe('Groups', () => {
     fixture.detectChanges();
     abrirAlta();
 
-    expect(texto()).toContain('Configurar mi perfil público');
+    // La puerta a la vitrina se sacó el 2026-09-10; el aviso se queda porque
+    // sigue siendo cierto —el servidor rechaza el alta— y borrarlo dejaría el
+    // fallo sin explicación. Ver `docs/progress/BLOCKERS.md`.
+    expect(texto()).toContain('perfil público completo');
+    expect(texto()).not.toContain('Configurar mi perfil público');
   });
 
   /**
@@ -286,6 +294,10 @@ describe('Groups', () => {
 
     // Sin perfil resuelto se trata como incompleto, que es lo conservador:
     // ofrecer «público» y que falle sería peor que ofrecer sólo privado.
-    expect(texto()).toContain('Configurar mi perfil público');
+    // La puerta a la vitrina se sacó el 2026-09-10; el aviso se queda porque
+    // sigue siendo cierto —el servidor rechaza el alta— y borrarlo dejaría el
+    // fallo sin explicación. Ver `docs/progress/BLOCKERS.md`.
+    expect(texto()).toContain('perfil público completo');
+    expect(texto()).not.toContain('Configurar mi perfil público');
   });
 });

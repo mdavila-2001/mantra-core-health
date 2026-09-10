@@ -150,7 +150,6 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tone: 'info',
     paths: [
       'schedule',
-      'consultation',
       'progress-notes',
       'medical-records',
       'diagnostics',
@@ -187,8 +186,8 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     icon: 'building',
     tone: 'success',
     paths: [
-      'my-organizations',
       'administration/my-organization',
+      'administration/my-practice',
       'administration/medical-organization',
       'administration/accounting',
       'billing',
@@ -201,7 +200,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tagline: 'Tus datos, tus turnos, tus avisos y tu identidad verificada.',
     icon: 'patients',
     tone: 'warning',
-    paths: ['my-account', 'notification-center', 'my-account/identity/verify', 'tutorials'],
+    paths: ['my-account', 'notification-center', 'my-account/identity', 'tutorials'],
     catchAllGroups: ['Mi cuenta'],
   },
 ];

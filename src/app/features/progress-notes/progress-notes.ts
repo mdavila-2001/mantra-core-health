@@ -391,7 +391,13 @@ export class ProgressNotes {
           this.estado.set(
             ocurridas.length === 0
               ? empty(
-                  { label: 'Ir a Mis citas', route: '/schedule' },
+                  // «Consultas médicas» y no «Mis citas»: es el rótulo real de
+                  // `/schedule`. «Mis citas» es `my-account/appointments`, la
+                  // pantalla del **paciente** —declarada `hiddenFor:
+                  // ['PRACTITIONER']`—, así que el enlace nombraba una pantalla
+                  // que quien lo lee no puede abrir. Resuelto al mezclar las dos
+                  // ramas el 2026-09-10, que cambiaron esta misma línea.
+                  { label: 'Ir a Consultas médicas', route: '/schedule' },
                   `No registrás atenciones en los últimos ${this.dias()} días.`,
                 )
               : ready(ocurridas),

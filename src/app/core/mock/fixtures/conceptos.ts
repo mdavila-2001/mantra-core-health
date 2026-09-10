@@ -795,6 +795,35 @@ for (const [code, c] of registro) {
   }
 }
 
+
+/* ---- Estados de un caso de verificación de identidad ---------------------- *
+   Los nueve que `identity_assurance` emite, con el código **tal como llega al
+   catálogo**: `identity_assurance:CASE_*`. El módulo los declara internamente
+   como `IDA_CASE_*`, pero ese código nunca sale — ver el comentario de cabecera
+   de `features/identity-verification/case-status.ts`.
+
+   Sin estos nueve, `CaseStatusCatalog` busca por el prefijo, no encuentra nada,
+   y las dos pantallas que muestran un trámite pintan «Desconocido» en todas las
+   filas sin romper nada. Es exactamente lo que se veía antes del 2026-09-10. */
+conjunto(
+  'VS_IDENTITY_CASE_STATUS',
+  'Estados de un caso de verificación',
+  'El ciclo de vida de un trámite de identidad.',
+);
+
+export const ESTADO_DE_CASO = definir('VS_IDENTITY_CASE_STATUS', [
+  ['identity_assurance:CASE_OPEN', 'Case open'],
+  ['identity_assurance:CASE_CHECKS_PENDING', 'Case checks pending'],
+  ['identity_assurance:CASE_IN_VERIFICATION', 'Case in verification'],
+  ['identity_assurance:CASE_MANUAL_REVIEW', 'Case in manual review'],
+  ['identity_assurance:CASE_AT_RISK', 'Case at risk'],
+  ['identity_assurance:CASE_VERIFIED', 'Case verified'],
+  ['identity_assurance:CASE_ASSERTED', 'Case asserted'],
+  ['identity_assurance:CASE_REJECTED', 'Case rejected'],
+  ['identity_assurance:CASE_REVOKED', 'Case revoked'],
+  ['identity_assurance:CASE_EXPIRED', 'Case expired'],
+]);
+
 /* ---- consultas ----------------------------------------------------------- */
 
 export function conceptos(): readonly ConceptoSimulado[] {

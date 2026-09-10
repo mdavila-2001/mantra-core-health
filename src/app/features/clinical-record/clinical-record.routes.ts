@@ -27,7 +27,7 @@ export function patientChartRoute(profileId: string): string {
  * Cuelga del expediente y no es una sección del menú, por lo mismo que
  * `request-access`: no se entra a atender «a nadie», se entra a atender a
  * alguien, y la persona ya está elegida cuando se llega —desde la agenda, desde
- * «Consulta médica» o desde el propio expediente—.
+ * «Consultas médicas» o desde el propio expediente—.
  */
 export function encounterWorkspaceRoute(profileId: string): string {
   return `${CLINICAL_RECORD_ROUTE}/${profileId}/encounter`;

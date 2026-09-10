@@ -1,8 +1,10 @@
-<app-page-header
-  title="Mis verificaciones"
-  subtitle="El estado de tus trámites de verificación de identidad, y el detalle de cada uno."
-  [breadcrumbs]="breadcrumbs()"
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Mis verificaciones"
+    subtitle="El estado de tus trámites de verificación de identidad, y el detalle de cada uno."
+    [breadcrumbs]="breadcrumbs()"
+  />
+}
 
 <div class="casos">
   <app-view-state-host [state]="state()" (retry)="cargar()">

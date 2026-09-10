@@ -1,28 +1,14 @@
 <app-page-header
   title="Notificaciones"
   subtitle="Lo que pasó con tus recetas, tus consultas, tus turnos y tus mensajes."
-/>
-
-@if (error(); as mensaje) {
-  <app-alert tone="error" class="avisos__alerta">{{ mensaje }}</app-alert>
-}
-
-<div class="avisos__barra">
-  <button
-    app-button
-    variant="outline"
-    size="sm"
-    data-testid="avisos-filtro"
-    [attr.aria-pressed]="soloSinLeer()"
-    (clicked)="alternarFiltro()"
-  >
-    {{ soloSinLeer() ? 'Ver todas' : 'Ver sólo las no leídas' }}
-  </button>
-
+>
+  <!-- Las acciones de la bandeja entera van en el membrete, no sueltas sobre
+       la lista: son de la pantalla, no de una fila. -->
   @if (sinLeer() > 0) {
     <button
       app-button
-      variant="ghost"
+      page-actions
+      variant="primary"
       size="sm"
       data-testid="avisos-marcar-todas"
       (clicked)="marcarTodas()"
@@ -30,54 +16,117 @@
       Marcar todas como leídas ({{ sinLeer() }})
     </button>
   }
-</div>
+</app-page-header>
 
-@if (vacio()) {
-  <app-empty-state
-    [title]="soloSinLeer() ? 'No tenés notificaciones sin leer' : 'Todavía no tenés notificaciones'"
-    description="Acá van a aparecer los avisos de tus recetas, tus consultas, tus turnos y tus mensajes."
-    variant="empty"
-  />
-} @else {
-  <ul class="avisos__lista">
-    @for (aviso of avisos(); track aviso.id) {
-      <li class="avisos__fila" [class.is-sin-leer]="aviso.unread">
-        <!-- Con destino, la fila entera es el control que lleva ahí. Sin
-             destino es texto: un enlace que no lleva a ningún lado se lee como
-             producto roto. -->
-        @if (rutaDe(aviso)) {
-          <button
-            class="avisos__item"
-            type="button"
-            data-testid="aviso"
-            (click)="abrir(aviso)"
-          >
-            <span class="avisos__titulo">{{ aviso.subject }}</span>
-            @if (aviso.bodyText) {
-              <span class="avisos__detalle">{{ aviso.bodyText }}</span>
-            }
-            <span class="avisos__fecha">{{ aviso.availableAt | date: 'medium' }}</span>
-          </button>
-        } @else {
-          <div class="avisos__item is-inerte" data-testid="aviso">
-            <span class="avisos__titulo">{{ aviso.subject }}</span>
-            @if (aviso.bodyText) {
-              <span class="avisos__detalle">{{ aviso.bodyText }}</span>
-            }
-            <span class="avisos__fecha">{{ aviso.availableAt | date: 'medium' }}</span>
-          </div>
-        }
-      </li>
-    }
-  </ul>
-
-  @if (hayMas()) {
-    <div class="avisos__mas">
-      <!-- «Ver más» y no «página 3 de 47»: el contrato no da totales, así que
-           un número de páginas sería inventado. -->
-      <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
-        Ver más notificaciones
-      </button>
-    </div>
-  }
+@if (error(); as mensaje) {
+  <app-alert tone="error" class="avisos__alerta">{{ mensaje }}</app-alert>
 }
+
+<!-- UNA tarjeta con pestañas, a lo ancho del área y centrada: la regla de la
+     casa (`docs/components/composition-rules.md` §5). Antes la lista estaba
+     acotada a `68ch` y quedaba pegada a la izquierda con media pantalla en
+     blanco, que es lo que el propietario señaló el 2026-09-10. -->
+<app-card padding="none" class="avisos__tarjeta">
+  <app-tabs
+    [selectedIndex]="pestana()"
+    (selectedIndexChange)="elegirPestana($event)"
+    data-testid="avisos-pestanas"
+  >
+    <app-tab label="Todas">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
+    <app-tab [label]="sinLeer() > 0 ? 'Sin leer (' + sinLeer() + ')' : 'Sin leer'">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
+  </app-tabs>
+</app-card>
+
+<!-- La bandeja se declara una vez y se monta en las dos pestañas: el contenido
+     es el mismo, lo que cambia es qué pidió el servidor. Copiarla habría
+     garantizado que el arreglo de una se aplicara a la mitad. -->
+<ng-template #bandeja>
+  @if (vacio()) {
+    <div class="avisos__vacio">
+      <app-empty-state
+        [title]="
+          soloSinLeer() ? 'No tenés notificaciones sin leer' : 'Todavía no tenés notificaciones'
+        "
+        description="Acá van a aparecer los avisos de tus recetas, tus consultas, tus turnos y tus mensajes."
+        variant="empty"
+      />
+    </div>
+  } @else {
+    @for (grupo of grupos(); track grupo.etiqueta) {
+      <section class="avisos__dia">
+        <h2 class="avisos__dia-titulo">{{ grupo.etiqueta }}</h2>
+
+        <ul class="avisos__lista">
+          @for (aviso of grupo.avisos; track aviso.id) {
+            <li class="avisos__fila" [class.is-sin-leer]="aviso.unread">
+              <!-- Con destino, la fila entera es el control que lleva ahí. Sin
+                   destino es texto: un enlace que no lleva a ningún lado se lee
+                   como producto roto. -->
+              @if (rutaDe(aviso)) {
+                <button
+                  class="avisos__item"
+                  type="button"
+                  data-testid="aviso"
+                  (click)="abrir(aviso)"
+                >
+                  <ng-container
+                    [ngTemplateOutlet]="cuerpo"
+                    [ngTemplateOutletContext]="{ $implicit: aviso }"
+                  />
+                </button>
+              } @else {
+                <div class="avisos__item is-inerte" data-testid="aviso">
+                  <ng-container
+                    [ngTemplateOutlet]="cuerpo"
+                    [ngTemplateOutletContext]="{ $implicit: aviso }"
+                  />
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (hayMas()) {
+      <div class="avisos__mas">
+        <!-- «Ver más» y no «página 3 de 47»: el contrato no da totales, así que
+             un número de páginas sería inventado. -->
+        <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
+          Ver más notificaciones
+        </button>
+      </div>
+    }
+  }
+</ng-template>
+
+<!-- El contenido de una fila: dibujo, texto, cuándo y si es nueva. -->
+<ng-template #cuerpo let-aviso>
+  <span class="avisos__glifo" [attr.data-categoria]="aviso.category ?? 'OTRA'">
+    <app-nav-icon [name]="iconoDeCategoria(aviso.category)" />
+  </span>
+
+  <span class="avisos__texto">
+    <span class="avisos__titulo">{{ aviso.subject }}</span>
+    @if (aviso.bodyText) {
+      <span class="avisos__detalle">{{ aviso.bodyText }}</span>
+    }
+    <span class="avisos__meta">
+      <span class="avisos__categoria">{{ nombreDeCategoria(aviso.category) }}</span>
+      <span aria-hidden="true">·</span>
+      <!-- La hora exacta en el `title`: «hace 3 h» se lee de un vistazo, pero
+           cuando alguien necesita la hora, la necesita entera. -->
+      <time [attr.datetime]="aviso.availableAt.toISOString()" [attr.title]="aviso.availableAt">
+        {{ horaDe(aviso) }}
+      </time>
+    </span>
+  </span>
+
+  @if (aviso.unread) {
+    <app-badge variant="primary" class="avisos__nueva">Nueva</app-badge>
+  }
+</ng-template>
