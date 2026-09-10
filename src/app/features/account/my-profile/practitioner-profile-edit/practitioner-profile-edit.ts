@@ -6,6 +6,10 @@ import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.c
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import {
+  MAX_ATTACHMENT_BYTES,
+  SUPPORT_FILE_FORMATS,
+} from '../../../auth/registro-compartido/credenciales-del-medico';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import type { OwnPractitionerProfile } from '../../../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -250,8 +254,8 @@ export class PractitionerProfileEdit {
   protected readonly archivoDeCredencial = signal<readonly File[]>([]);
 
   /** Los mismos formatos y el mismo tope que el alta de médico. */
-  protected readonly formatosDeRespaldo = 'application/pdf,image/jpeg,image/png';
-  protected readonly maxBytesDeRespaldo = 5 * 1024 * 1024;
+  protected readonly formatosDeRespaldo = SUPPORT_FILE_FORMATS;
+  protected readonly maxBytesDeRespaldo = MAX_ATTACHMENT_BYTES;
   protected readonly guardandoEspecialidad = signal(false);
 
   protected readonly puedeAgregarEspecialidad = computed(() => this.nuevaEspecialidad() !== null);
@@ -263,6 +267,8 @@ export class PractitionerProfileEdit {
   protected readonly nuevoNumeroDeMatricula = signal('');
   protected readonly nuevaAutoridad = signal('');
   protected readonly nuevaFechaInscripcion = signal<Date | null>(null);
+  /** Respaldo visual de la matrícula; no se publica en la rama mockup. */
+  protected readonly archivoDeMatricula = signal<readonly File[]>([]);
   protected readonly guardandoMatricula = signal(false);
 
   protected readonly puedeAgregarMatricula = computed(
@@ -579,6 +585,7 @@ export class PractitionerProfileEdit {
           this.nuevoNumeroDeMatricula.set('');
           this.nuevaAutoridad.set('');
           this.nuevaFechaInscripcion.set(null);
+          this.archivoDeMatricula.set([]);
           this.toasts.success(
             'Se agregó la matrícula. Queda pendiente de verificación.',
             'Matrículas',

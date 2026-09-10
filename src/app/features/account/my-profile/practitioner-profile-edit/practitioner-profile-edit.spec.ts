@@ -336,6 +336,29 @@ describe('PractitionerProfileEdit', () => {
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
   });
 
+  it('conserva el respaldo local de matrícula mientras se completa el formulario', () => {
+    montarYCargar();
+    const respaldo = new File(['matrícula'], 'matricula.pdf', { type: 'application/pdf' });
+
+    señal<readonly File[]>('archivoDeMatricula').set([respaldo]);
+
+    expect(señal<readonly File[]>('archivoDeMatricula')()).toEqual([respaldo]);
+  });
+
+  it('limpia el respaldo local cuando la matrícula queda agregada', () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+    señal<readonly File[]>('archivoDeMatricula').set([
+      new File(['matrícula'], 'matricula.pdf', { type: 'application/pdf' }),
+    ]);
+
+    interno<() => void>('agregarMatricula')();
+    http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations').flush({ id: 'ja-1' });
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+
+    expect(señal<readonly File[]>('archivoDeMatricula')()).toEqual([]);
+  });
+
   /* -- Catálogo de especialidades (TJ-3 · F-19) ----------------------------- */
 
   it('ofrece las especialidades del catálogo del modelo, en castellano', () => {

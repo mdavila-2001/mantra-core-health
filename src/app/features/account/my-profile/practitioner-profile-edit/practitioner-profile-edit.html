@@ -255,6 +255,21 @@
             />
           </app-form-field>
 
+          <app-form-field
+            label="Respaldo de matrícula (opcional)"
+            hint="PDF, JPG o PNG. Hasta 5 MB. Podés arrastrarlo o elegirlo desde tu dispositivo."
+          >
+            <app-file-input
+              testId="matricula-archivo"
+              removeTestId="matricula-archivo-quitar"
+              [(files)]="archivoDeMatricula"
+              [accept]="formatosDeRespaldo"
+              [maxSizeBytes]="maxBytesDeRespaldo"
+              [maxFiles]="1"
+              accessibleLabel="Respaldo de la matrícula"
+            />
+          </app-form-field>
+
           <app-form-actions
             submitLabel="Agregar matrícula"
             [pending]="guardandoMatricula()"

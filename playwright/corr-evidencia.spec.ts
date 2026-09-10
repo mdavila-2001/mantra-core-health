@@ -350,6 +350,20 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           consola = 0;
           await page.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           await esperarAQueSeAsiente(page);
+          if (ruta.includes('with-file=1')) {
+            const input = page.getByTestId('matricula-archivo');
+            await expect(input).toBeVisible();
+            await input.setInputFiles({
+              name: 'matricula.png',
+              mimeType: 'image/png',
+              buffer: Buffer.from(
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLSDwAAAABJRU5ErkJggg==',
+                'base64',
+              ),
+            });
+            await expect(page.getByText('matricula.png')).toBeVisible();
+            await expect(page.locator('app-file-preview img')).toBeVisible();
+          }
           const foto = join(FOTOS, `${nombre}-${vp.nombre}-${tema}.png`);
           await page.screenshot({ path: foto, fullPage: true });
           const bytes = statSync(foto).size;

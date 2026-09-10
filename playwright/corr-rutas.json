@@ -282,11 +282,11 @@
   ],
   "39": [
     {
-      "ruta": "/my-account?tab=credentials&edit=1",
+      "ruta": "/my-account/edit",
       "nombre": "credenciales-edicion"
     },
     {
-      "ruta": "/my-account?tab=credentials&edit=1&with-file=1",
+      "ruta": "/my-account/edit?with-file=1",
       "nombre": "credenciales-con-adjunto"
     }
   ],

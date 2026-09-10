@@ -48,6 +48,10 @@ import {
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { OPCIONES_TITULO_PROFESIONAL } from '../../../core/profesion/titulos-profesionales';
+import {
+  MAX_ATTACHMENT_BYTES,
+  SUPPORT_FILE_FORMATS,
+} from '../registro-compartido/credenciales-del-medico';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import type {
   CampoDeFormulario,
@@ -365,10 +369,10 @@ interface RespaldoDeclarado {
 type ClaveDeRespaldo = 'professional-title' | 'license' | 'sedes';
 
 /** Tope de peso por adjunto. El mismo que la foto de perfil. */
-const MAX_BYTES_ADJUNTO = 5 * 1024 * 1024;
+const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
 
 /** Formatos que se aceptan como respaldo de un título o de una matrícula. */
-const FORMATOS_DE_RESPALDO = 'application/pdf,image/jpeg,image/png';
+const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
 
 const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
   { value: 'MALE', label: 'Masculino' },
