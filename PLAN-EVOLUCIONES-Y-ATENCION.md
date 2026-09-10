@@ -4,17 +4,35 @@ Fecha: 2026-09-09. Rama de referencia: `origin/mockup` (la que mira el usuario).
 
 ## Estado
 
-| Fase | Estado |
-|---|---|
-| 1 · «Atender» nace sólo de Mis citas | **Hecha** (`ced1531f`, `3e164060`, `b3f0fa58`, `fad06994`) |
-| 2 · Evoluciones deja de ser un espejo | Pendiente |
-| 3 · Expediente: sacar la card y mover las ediciones a modales | **3.1 hecha** (la card se fue con `3e164060`); 3.2–3.4 pendientes |
-| 4 · Verificación | Unitarias de la fase 1 hechas; los recorridos Playwright de las fases 2 y 3, pendientes |
-| 5 · Documentación | Pendiente |
+**Las cinco fases están hechas.** Última actualización: 2026-09-10.
 
-Lo que quedó fuera de la fase 1, a propósito: la fusión total de «Consulta
-médica» dentro de «Mis citas» (filtro «Hoy»), que el propio plan dejaba como
-seguimiento.
+| Fase | Estado | Commits |
+|---|---|---|
+| 1 · «Atender» nace sólo de Mis citas | Hecha | `ced1531f`, `3e164060`, `b3f0fa58`, `fad06994` |
+| 2 · Evoluciones deja de ser un espejo | Hecha | `b9a0175a` |
+| 3 · Expediente: la card y las ediciones a modales | Hecha | `3e164060` (3.1), `18736b37` (3.3), `76616d05` (3.2), `261050d4` (3.4) |
+| 4 · Verificación | Unitarias hechas; recorridos Playwright **sin correr** |
+| 5 · Documentación | Hecha |
+
+### Lo que quedó fuera, a propósito
+
+- **La fusión de «Consulta médica» dentro de «Mis citas»** (filtro «Hoy»). El
+  propio plan la dejaba como seguimiento.
+- **El handler mock de `GET /charts/notes`** (fase 2, punto 6, marcado
+  «opcional»): la pantalla ya trae las notas reales del expediente bajo
+  demanda, así que un mock del endpoint que no existe sólo enseñaría una
+  versión final que el backend todavía no puede sostener.
+- **Los recorridos Playwright de las fases 2 y 3.** Los de la fase 1 se
+  actualizaron (`fad06994`) pero **no se corrieron**: necesitan `ng serve`
+  levantado. Lo verificado hasta acá es `lint`, `typecheck`, `build` y las
+  unitarias.
+
+### Deuda que este trabajo deja anotada
+
+Las notas de una atención se reconocen **por su día calendario**: el contrato
+no ata una nota a una reserva. Dos atenciones de la misma persona el mismo día
+muestran las mismas notas. Está en `PENDIENTES-BACKEND.md` P18 junto con lo que
+haría falta para dejar de estimar.
 
 ## 1. Diagnóstico
 
