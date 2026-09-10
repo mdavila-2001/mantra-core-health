@@ -12,6 +12,32 @@ probarlo y cómo verificarlo en el navegador. Todo lo citado **fue leído en el 
 
 ---
 
+## Estado — actualizado el 2026-09-10
+
+Las ocho fases están **hechas y entregadas**, cada una en su PR apilado sobre el anterior. El orden
+de merge es el de la tabla.
+
+| Fase | PR | Estado |
+| --- | --- | --- |
+| 0 · `mockup` en verde (no estaba en el plan) | #405 | **Hecha** |
+| 1 · Horario: retira el anterior, y la vista previa dice el cierre | #406 | **Hecha** |
+| 2 · Las 43 fichas estándar en el simulador | #407 | **Hecha** |
+| 3 · Curso clínico, sus catálogos y la duración estimada | #409 | **Hecha** |
+| 4 · «Nuevo diagnóstico» desde el expediente, y la cita | #410 | **Hecha** |
+| 5 · La receta dice para qué es, y la tabla lo muestra | #411 | **Hecha** |
+| 6 · Adjuntos en tandas, en modal, y en receta y alergia | #412 | **Hecha** |
+| 7 · Alergias: el alta que el contrato esperaba | #415 | **Hecha** |
+| 8 · Documentación y cierre | este | **Hecha** |
+
+**Lo que quedó fuera, a propósito:** el número de receta compartido por varias líneas (es una
+entidad que el modelo no tiene, planteada en P24) y el catálogo clínico real de alergias (P26). Los
+dos son decisiones de modelo, no de pantalla.
+
+**Lo que hay que hacer en el backend antes de llevar nada a `dev`:** P23, P24, P25 y P26 de
+`PENDIENTES-BACKEND.md`.
+
+---
+
 ## 0 · Antes de tocar nada
 
 ### 0.1 Reglas de la casa que aplican a todo lo de abajo
