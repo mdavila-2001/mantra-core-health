@@ -76,6 +76,10 @@
       "nombre": "progress-notes"
     },
     {
+      "ruta": "/diagnostics",
+      "nombre": "diagnostics"
+    },
+    {
       "ruta": "/interventions",
       "nombre": "interventions"
     },
@@ -224,6 +228,10 @@
       "nombre": "notification-center"
     },
     {
+      "ruta": "/my-account/identity",
+      "nombre": "my-account_identity"
+    },
+    {
       "ruta": "/my-account/pharmacy-orders",
       "nombre": "my-account_pharmacy-orders"
     },
@@ -232,12 +240,12 @@
       "nombre": "my-account_loyalty"
     },
     {
-      "ruta": "/administration/pharmacy-orders",
-      "nombre": "administration_pharmacy-orders"
-    },
-    {
       "ruta": "/administration/my-practice",
       "nombre": "administration_my-practice"
+    },
+    {
+      "ruta": "/administration/pharmacy-orders",
+      "nombre": "administration_pharmacy-orders"
     }
   ],
   "35": [

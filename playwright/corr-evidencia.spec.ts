@@ -329,7 +329,16 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
         const page = await context.newPage();
         let consola = 0;
         page.on('console', (m) => {
-          if (m.type() === 'error') consola += 1;
+          if (m.type() !== 'error') return;
+          // **Una excepción, nombrada.** En esta rama no hay API: `mockBackend`
+          // intercepta HTTP, pero no WebSockets, así que el chat intenta abrir
+          // `ws://…/socket.io` contra un servidor que no existe y el navegador
+          // lo reporta como error en cada intento. Es del entorno de la maqueta,
+          // no de la pantalla — y contarlo dejaría `/messaging` en rojo para
+          // siempre, que es la forma más rápida de que nadie mire el rojo.
+          // Si algún día la rama levanta un socket, esta línea se cae sola.
+          if (m.text().includes('socket.io')) return;
+          consola += 1;
         });
         page.on('response', (r) => {
           if (r.status() >= 500) consola += 1;
