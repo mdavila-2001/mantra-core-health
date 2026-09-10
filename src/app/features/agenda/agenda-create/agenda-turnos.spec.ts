@@ -20,8 +20,8 @@ describe('calcularTurnos', () => {
     expect(r.total).toBe(8);
     expect(r.porDia[0].resto).toBe(0);
     expect(r.porDia[0].restoDesde).toBeNull();
-    expect(r.porDia[0].turnos[0]).toEqual({ desde: '09:00', hasta: '09:30' });
-    expect(r.porDia[0].turnos[7]).toEqual({ desde: '12:30', hasta: '13:00' });
+    expect(r.porDia[0].turnos[0]).toEqual({ desde: '09:00', hasta: '09:30', minutos: 30 });
+    expect(r.porDia[0].turnos[7]).toEqual({ desde: '12:30', hasta: '13:00', minutos: 30 });
   });
 
   it('trunca cuando el último turno no entra, igual que el backend', () => {
@@ -30,7 +30,7 @@ describe('calcularTurnos', () => {
     const r = calcularTurnos([franja('09:00', '16:00', 90)]);
 
     expect(r.total).toBe(4);
-    expect(r.porDia[0].turnos[3]).toEqual({ desde: '13:30', hasta: '15:00' });
+    expect(r.porDia[0].turnos[3]).toEqual({ desde: '13:30', hasta: '15:00', minutos: 90 });
     expect(r.porDia[0].resto).toBe(60);
     expect(r.porDia[0].restoDesde).toBe('15:00');
   });
@@ -109,9 +109,9 @@ describe('calcularTurnos', () => {
       const r = calcularTurnos([conReceso('09:00', '12:00', 20, 10)]);
 
       expect(r.total).toBe(6);
-      expect(r.porDia[0].turnos[0]).toEqual({ desde: '09:00', hasta: '09:20' });
-      expect(r.porDia[0].turnos[1]).toEqual({ desde: '09:30', hasta: '09:50' });
-      expect(r.porDia[0].turnos[5]).toEqual({ desde: '11:30', hasta: '11:50' });
+      expect(r.porDia[0].turnos[0]).toEqual({ desde: '09:00', hasta: '09:20', minutos: 20 });
+      expect(r.porDia[0].turnos[1]).toEqual({ desde: '09:30', hasta: '09:50', minutos: 20 });
+      expect(r.porDia[0].turnos[5]).toEqual({ desde: '11:30', hasta: '11:50', minutos: 20 });
     });
 
     it('el último turno entra si su CONSULTA entra: no exige respiro después', () => {

@@ -31,6 +31,15 @@ export interface Franja {
 export interface Turno {
   readonly desde: string;
   readonly hasta: string;
+  /**
+   * Cuánto dura, en minutos.
+   *
+   * Es el mismo número que la franja declara, y viaja con el turno porque la
+   * vista previa lo dice en palabras («8 turnos de 30 min»): sacarlo del
+   * formulario obligaría a cruzar el índice del día con el control, que es
+   * justo el cruce que ya se equivocó una vez.
+   */
+  readonly minutos: number;
 }
 
 /** Lo que sale de un día. */
@@ -101,7 +110,11 @@ function calcularDia(franja: Franja): DiaCalculado {
   // El último turno no necesita respiro después: entra si su CONSULTA entra.
   // Por eso el corte es sobre `desde + duración`, no sobre el paso completo.
   for (let desde = inicio; desde + franja.duracion <= fin; desde += paso) {
-    turnos.push({ desde: enTexto(desde), hasta: enTexto(desde + franja.duracion) });
+    turnos.push({
+      desde: enTexto(desde),
+      hasta: enTexto(desde + franja.duracion),
+      minutos: franja.duracion,
+    });
   }
 
   if (turnos.length === 0) {

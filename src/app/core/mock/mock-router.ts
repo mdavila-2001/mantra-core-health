@@ -38,28 +38,57 @@ export function reply(status: number, body: unknown = null): MockReply {
   return { status, body };
 }
 
+/**
+ * El `code` del contrato de errores, que es lo que la aplicación ramifica.
+ *
+ * **Sin él la maqueta no sabe explicar ningún fallo.** `readApiError` descarta
+ * todo cuerpo sin un `code` conocido (`core/http/api-error.ts`), así que un 409
+ * del simulador llegaba a la pantalla como «No pudimos completar la operación.
+ * (sin-id)» en vez de con su motivo — y los caminos de error, que son la mitad
+ * de lo que hay que poder mostrarle al cliente, no se podían ni ver.
+ *
+ * Los valores salen de `API_ERROR_CODES`; el estado HTTP no alcanza porque dos
+ * códigos distintos comparten el 403.
+ */
 export function notFound(message = 'No encontrado'): MockReply {
-  return reply(404, { statusCode: 404, message, error: 'Not Found' });
+  return reply(404, { statusCode: 404, code: 'NOT_FOUND', message, error: 'Not Found' });
 }
 
 export function conflict(message: string, details: unknown = {}): MockReply {
-  return reply(409, { statusCode: 409, message, error: 'Conflict', details });
+  return reply(409, { statusCode: 409, code: 'CONFLICT', message, error: 'Conflict', details });
 }
 
 export function preconditionFailed(message: string, details: unknown = {}): MockReply {
-  return reply(412, { statusCode: 412, message, error: 'Precondition Failed', details });
+  return reply(412, {
+    statusCode: 412,
+    code: 'PRECONDITION_FAILED',
+    message,
+    error: 'Precondition Failed',
+    details,
+  });
 }
 
 export function forbidden(message = 'No tenés permiso para esta operación'): MockReply {
-  return reply(403, { statusCode: 403, message, error: 'Forbidden' });
+  return reply(403, { statusCode: 403, code: 'FORBIDDEN', message, error: 'Forbidden' });
 }
 
 export function unauthorized(message = 'Credenciales inválidas'): MockReply {
-  return reply(401, { statusCode: 401, message, error: 'Unauthorized' });
+  return reply(401, {
+    statusCode: 401,
+    code: 'UNAUTHENTICATED',
+    message,
+    error: 'Unauthorized',
+  });
 }
 
 export function validation(message: string, issues: readonly unknown[] = []): MockReply {
-  return reply(422, { statusCode: 422, message, error: 'Unprocessable Entity', issues });
+  return reply(422, {
+    statusCode: 422,
+    code: 'VALIDATION_FAILED',
+    message,
+    error: 'Unprocessable Entity',
+    issues,
+  });
 }
 
 export function noContent(): MockReply {

@@ -406,9 +406,30 @@ export function registrarAgenda(router: MockRouter): void {
     return resto;
   });
 
+  /**
+   * Retira un horario publicado.
+   *
+   * **Responde 409 con las citas comprometidas**, igual que el contrato: sin
+   * eso la maqueta dejaba retirar cualquier horario y el camino del error —el
+   * que impide mover turnos de pacientes sin avisar— no se podía ni ver ni
+   * probar.
+   */
   router.delete('/scheduling/templates/:id', ({ params }) => {
     const t = plantillas.get(params['id']!);
     if (t === undefined) return notFound();
+    const delHorario = new Set(cupos.filtrar((c) => c.scheduleTemplateId === t.id).map((c) => c.id));
+    const comprometidas = reservas.filtrar(
+      (r) =>
+        delHorario.has(r.bookableSlotId) &&
+        r.startAt > ahora() &&
+        estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS'),
+    );
+    if (comprometidas.length > 0) {
+      return conflict(
+        `El horario tiene ${comprometidas.length} ${comprometidas.length === 1 ? 'cita comprometida' : 'citas comprometidas'}: resolvelas antes de cambiarlo.`,
+        { bookingIds: comprometidas.map((r) => r.id) },
+      );
+    }
     plantillas.actualizar(t.id, { retired: true, statusConceptId: ESTADO['ST-ARCHIVED']! });
     const libres = cupos.filtrar((c) => c.scheduleTemplateId === t.id && c.remainingCapacity > 0 && c.startAt > ahora());
     for (const c of libres) cupos.borrar(c.id);

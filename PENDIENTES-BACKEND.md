@@ -23,6 +23,64 @@ que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
+## Abierto · P23 · Cambiar un horario que tiene citas es imposible hoy
+
+**Levantado el 2026-09-10**, arreglando «la cita no acaba a la hora que debería». Es la causa
+raíz de ese reporte, y no está en el frontend.
+
+### Lo que pasa
+
+Cambiar el horario creaba una plantilla **más** y dejaba viva la anterior; nadie llamaba a
+`DELETE /scheduling/templates/:id`. Como `generate-slots` es idempotente **por instante de
+inicio** —lo dice su contrato y lo hace el simulador—, el cupo de las 08:00 sobrevivía con su
+fin viejo: pasar las consultas de 30 a 45 minutos dejaba el turno de las 08:00 terminando a las
+08:30.
+
+El frontend ya lo arregla llamando al retiro **antes** de publicar. Y ahí aparece el muro.
+
+### El muro
+
+`retireTemplate` (`scheduling-catalog.service.ts:963`) rechaza con **409** en cuanto hay **una**
+cita viva —`ACTIVE_BOOKING_STATES` = `BOOKING_CONFIRMED` + `BOOKING_CHECKED_IN`, sin filtro de
+fecha—. En la maqueta con datos de demostración son **42**. Un profesional en ejercicio siempre
+tiene citas confirmadas, así que **nunca** puede cambiar su horario.
+
+### Por qué el 409 se contradice con la propia operación
+
+El retiro **conserva los cupos con cita** y devuelve `keptSlots` para decirlo. Es decir: la
+operación ya está diseñada para no tocar los turnos comprometidos, y aun así se niega a correr
+cuando existen. Las dos cosas no pueden ser ciertas a la vez.
+
+Las otras dos rutas tampoco alcanzan:
+
+| Ruta | Por qué no sirve |
+| --- | --- |
+| `PATCH /scheduling/templates/:id` | Cambia las reglas y **no toca los cupos materializados** (lo dice su propia descripción). Regenerar después no arregla nada: los instantes viejos ya existen y se cuentan como `skipped`. La grilla publicada sigue siendo la vieja. |
+| `POST /scheduling/resources/:id/close-slots` | Cierra cupos **dejando una excepción** que cubre su rango — y esa excepción bloquearía también los cupos nuevos. |
+
+### Lo que hace falta, en orden de preferencia
+
+1. **Acotar el 409 a las citas del rango que se deja de publicar.** Retirar conserva las citas;
+   frenar por una cita de dentro de tres meses cuando el cambio rige desde mañana no protege a
+   nadie.
+2. O una ruta que **suelte los cupos libres futuros de una plantilla sin retirarla**
+   —`POST /scheduling/templates/:id/release-free-slots?from=`—, que es exactamente lo que
+   «cambiar mi horario» necesita y hoy sólo existe como efecto secundario del retiro.
+3. O que `generate-slots` acepte `replace=true` para una ventana: borra los libres y crea los
+   nuevos en una transacción.
+
+Mientras tanto el frontend **muestra el motivo del servidor tal cual** y enlaza a «Mi agenda»
+para resolver esas citas, en vez de publicar en silencio un horario que no rige.
+
+### Un defecto del simulador que esto destapó
+
+`mock-router.ts` emitía los errores **sin el `code` del contrato**, y `readApiError`
+(`core/http/api-error.ts`) descarta todo cuerpo sin un `code` conocido. Resultado: **cualquier**
+409, 422 o 403 de la maqueta llegaba a la pantalla como «No pudimos completar la operación.
+(sin-id)». Corregido en esta tanda: los seis ayudantes declaran su código.
+
+---
+
 ## Abierto · P22 · No hay forma de dar de alta al paciente que llega al mostrador
 
 **Levantado el 2026-09-09**, en la rama `mockup`, construyendo «paciente nuevo» dentro de
