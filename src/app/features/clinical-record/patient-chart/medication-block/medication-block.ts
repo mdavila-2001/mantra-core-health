@@ -52,6 +52,15 @@ import type { CasoRecetaDemo } from '../demo-presets';
  */
 export const TARGET_MEDICAMENTO = 'clinical.medication_requests.medication_concept_id';
 
+/**
+ * El valor con el que el selector dice «lo escribo yo».
+ *
+ * No es un identificador de nada: es la marca que destraba el campo de texto.
+ * Empieza y termina con guiones bajos para que no pueda confundirse jamás con
+ * un uuid de condición.
+ */
+const OTRO_MOTIVO = '__otro_motivo__';
+
 /** La vía de administración. Opcional en el DTO: sin binding, se omite y ya. */
 export const TARGET_VIA = 'clinical.medication_requests.route_concept_id';
 
@@ -296,6 +305,19 @@ export class MedicationBlock {
   readonly diagnosticos = input<readonly DiagnosticoEnFicha[]>([]);
 
   /**
+   * Si la receta exige declarar para qué es.
+   *
+   * El cliente lo pidió como regla: «siempre que se haga una receta médica debe
+   * de poderse poner un diagnóstico o porqué de la receta». Se cumple sin
+   * cerrar ningún caso: o se elige un diagnóstico de la historia, o se escribe
+   * el motivo. La opción «sin diagnóstico asociado» sigue existiendo en el
+   * contrato —hay recetas sintomáticas y profilácticas— y por eso esto es un
+   * input y no una constante: quien monte el bloque en otro contexto puede
+   * apagarlo.
+   */
+  readonly exigeDiagnostico = input(true);
+
+  /**
    * Los `medicationConceptId` de la medicación ya registrada, sin traducir.
    *
    * Es lo que {@link recetar} manda junto con el nuevo medicamento a
@@ -400,12 +422,49 @@ export class MedicationBlock {
    */
   protected readonly indicacion = signal<string | null>(null);
 
-  /** Las opciones del selector de indicación, con la vacía primero. */
+  /**
+   * Las opciones del selector de indicación: los diagnósticos de la historia,
+   * la vacía, y la salida para escribir uno propio.
+   *
+   * La salida la pidió el cliente por su caso: «puede existir el caso que sólo
+   * se fue a hacer recetar y no necesitaría diagnóstico existente previo, sobre
+   * todo casos psiquiátricos».
+   */
   protected readonly opcionesDeIndicacion = computed<readonly SelectOption<string | null>[]>(
     () => [
       { value: null, label: 'Sin diagnóstico asociado' },
       ...this.diagnosticos().map((dx) => ({ value: dx.id, label: dx.etiqueta })),
+      { value: OTRO_MOTIVO, label: 'Otro motivo — escribirlo' },
     ],
+  );
+
+  /** El motivo escrito a mano, cuando se eligió «Otro motivo». */
+  protected readonly motivoLibre = signal('');
+
+  /** Si se eligió escribir el motivo en vez de elegir un diagnóstico. */
+  protected readonly motivoEsLibre = computed(() => this.indicacion() === OTRO_MOTIVO);
+
+  /**
+   * Guarda la indicación elegida, y limpia el texto al dejar de escribirlo.
+   *
+   * Mismo criterio que la ocupación del alta: un motivo a mano que ya no
+   * describe nada no debe viajar.
+   */
+  protected elegirIndicacion(valor: string | null): void {
+    this.indicacion.set(valor);
+    if (valor !== OTRO_MOTIVO) this.motivoLibre.set('');
+  }
+
+  /**
+   * Si hay un porqué declarado para esta receta.
+   *
+   * Un diagnóstico de la historia, o un motivo escrito. La opción vacía no
+   * cuenta: es justamente la que {@link exigeDiagnostico} viene a impedir.
+   */
+  protected readonly hayMotivo = computed(
+    () =>
+      (this.indicacion() !== null && !this.motivoEsLibre()) ||
+      (this.motivoEsLibre() && this.motivoLibre().trim() !== ''),
   );
 
   /**
@@ -593,6 +652,7 @@ export class MedicationBlock {
       this.hayEncuentro() &&
       !this.sinOrganizacion() &&
       this.medicamento() !== null &&
+      (!this.exigeDiagnostico() || this.hayMotivo()) &&
       !this.registrando(),
   );
 
@@ -1015,7 +1075,14 @@ export class MedicationBlock {
         ...(indicaciones === '' ? {} : { patientInstructionsText: indicaciones }),
         // Para qué es la receta (v4.1.6). Se omite cuando no se eligió: una
         // prescripción sintomática o profiláctica no tiene diagnóstico detrás.
-        ...(indicacion === null ? {} : { indicationConditionId: indicacion }),
+        // Con «Otro motivo» viaja el texto y NO la condición: son excluyentes,
+        // y `__otro_motivo__` no es el id de nada.
+        ...(indicacion === null || indicacion === OTRO_MOTIVO
+          ? {}
+          : { indicationConditionId: indicacion }),
+        ...(indicacion === OTRO_MOTIVO && this.motivoLibre().trim() !== ''
+          ? { indicationText: this.motivoLibre().trim() }
+          : {}),
       })
       .subscribe({
         next: () => {
@@ -1332,6 +1399,7 @@ export class MedicationBlock {
     this.validTo.set(null);
     this.duracionDias.set(null);
     this.esCronico.set(false);
+    this.motivoLibre.set('');
     this.indicacionesPaciente.set('');
     // El diagnóstico y el favorito elegidos son de ESTA receta: la siguiente
     // arranca sin ellos, aunque sea para el mismo paciente.

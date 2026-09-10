@@ -104,6 +104,24 @@ export interface FilaClinica {
   readonly estado: string;
   readonly cuando: Date | null;
   readonly detalle: string;
+  /**
+   * El diagnóstico que motiva la fila — sólo la medicación lo llena hoy.
+   *
+   * «Siempre que se haga una receta médica debe de poderse poner un diagnóstico
+   * o porqué de la receta», y para que sirva de algo tiene que **verse** en la
+   * tabla. Puede ser el nombre de una condición registrada o el motivo escrito
+   * a mano.
+   */
+  readonly diagnostico?: string;
+  /**
+   * La consulta a la que pertenece la fila, en palabras.
+   *
+   * Es lo que agrupa las líneas de una misma receta: en este modelo **cada
+   * `medication_request` es una línea**, y lo que las junta es el encuentro y
+   * su fecha. Un «número de receta» compartido no existe en el modelo — ver la
+   * nota de P24.
+   */
+  readonly cita?: string;
 }
 
 /** Lo que la pantalla necesita de las dos lecturas, ya unido. */
@@ -337,8 +355,42 @@ export class PatientChart {
       estado: this.label(fila.statusConceptId),
       cuando: fila.validFrom ?? fila.createdAt,
       detalle: fila.validTo === undefined ? '' : 'Con fin previsto',
+      diagnostico: this.motivoDeLaReceta(fila),
+      cita: this.citaDeLaFila(fila.encounterId, fila.validFrom ?? fila.createdAt),
     })),
   );
+
+  /**
+   * Para qué es la receta: el diagnóstico registrado, o el motivo escrito.
+   *
+   * El concepto gana sobre el texto libre, igual que en el alta: el texto sólo
+   * tenía sentido para quien no encontró un diagnóstico registrado.
+   */
+  private motivoDeLaReceta(receta: {
+    readonly indicationConditionId?: string;
+    readonly indicationText?: string;
+  }): string {
+    if (receta.indicationConditionId !== undefined) {
+      const condicion = (this.datos()?.resumen.conditions ?? []).find(
+        (dx) => dx.id === receta.indicationConditionId,
+      );
+      // Sin la condición a la vista —recortada por el tope de la lectura— se
+      // dice que la hay en vez de callarlo: «sin diagnóstico» sería falso.
+      return condicion === undefined
+        ? 'Diagnóstico de la historia'
+        : this.label(condicion.codeConceptId);
+    }
+    return receta.indicationText ?? '';
+  }
+
+  /** La consulta de una fila, o su fecha si no cuelga de ninguna. */
+  private citaDeLaFila(encounterId: string | undefined, fecha: Date | undefined): string {
+    if (encounterId !== undefined) {
+      const encuentro = (this.datos()?.resumen.encounters ?? []).find((e) => e.id === encounterId);
+      if (encuentro !== undefined) return this.etiquetaDeCita(encuentro);
+    }
+    return fecha === undefined ? '' : fecha.toLocaleDateString('es-BO', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
 
   protected readonly observaciones = computed<readonly FilaClinica[]>(() =>
     (this.datos()?.resumen.observations ?? []).map((fila) => ({
@@ -645,6 +697,21 @@ export class PatientChart {
       // Patch v4.0.8: sólo `diagnosticos` transiciona de estado. Antes del
       // patch ninguna fila clínica tenía una acción de escritura propia —el
       // registro nacía activo y ahí se quedaba para siempre—.
+      // La medicación dice para qué es y de qué consulta viene. Las dos sólo
+      // se dibujan si alguna fila las llena: una columna vacía se lee como un
+      // dato que no cargó, no como una columna que ese bloque no tiene.
+      ...(clave === 'medicacion' && filas.some((f) => (f.diagnostico ?? '') !== '')
+        ? [
+            {
+              key: 'diagnostico',
+              header: 'Diagnóstico',
+              priority: 2,
+            } satisfies ColumnDef<FilaClinica>,
+          ]
+        : []),
+      ...(clave === 'medicacion' && filas.some((f) => (f.cita ?? '') !== '')
+        ? [{ key: 'cita', header: 'Receta de', priority: 3 } satisfies ColumnDef<FilaClinica>]
+        : []),
       ...(clave === 'diagnosticos'
         ? [
             {
