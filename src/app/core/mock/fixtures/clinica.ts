@@ -55,6 +55,20 @@ export interface AlergiaSimulada {
   readonly categoryConceptId: string;
   readonly criticalityConceptId: string;
   readonly clinicalStatusConceptId: string;
+  /**
+   * La consulta en la que se detectó.
+   *
+   * ⚠️ **La columna no existe en el backend**: `allergy_intolerances` no tiene
+   * `encounter_id` ni el DTO lo acepta. Ver P26.
+   */
+  readonly encounterId?: string;
+  /** Qué le pasó a la persona. Al menos una manifestación por reacción. */
+  readonly reactions?: readonly {
+    readonly id: string;
+    readonly manifestationConceptId: string;
+    readonly severityConceptId?: string;
+    readonly description?: string;
+  }[];
   readonly createdAt: string;
 }
 
