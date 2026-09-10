@@ -47,6 +47,7 @@ import {
   type Coordenadas,
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { unirNombres } from '../../../core/profesion/nombres-adicionales';
 import { OPCIONES_TITULO_PROFESIONAL } from '../../../core/profesion/titulos-profesionales';
 import {
   MAX_ATTACHMENT_BYTES,
@@ -1156,16 +1157,15 @@ export class RegisterPractitioner {
   /**
    * Los nombres que no son el primero, en una sola cadena.
    *
-   * El segundo, el tercero y los que se hayan agregado, separados por espacio y
-   * sin los vacíos. La base guarda todo esto en `middle_name`: no hay columna
-   * de tercer nombre, y `varchar` sin restricción admite los espacios.
+   * La codificación —todo lo que no es el primer nombre va junto en
+   * `middle_name`, separado por espacios— salió a `nombres-adicionales` cuando
+   * el editor del perfil tuvo que ofrecer las mismas casillas: el alta las
+   * escribía y el editor las leía con otro criterio, así que corregir el
+   * apellido desde el perfil borraba el tercer nombre declarado acá.
    */
   private nombresAdicionales(): string {
     const raw = this.formProfesional.getRawValue();
-    return [raw.middleName, raw.thirdName, ...this.nombresExtra()]
-      .map((nombre) => nombre.trim())
-      .filter((nombre) => nombre !== '')
-      .join(' ');
+    return unirNombres([raw.middleName, raw.thirdName, ...this.nombresExtra()]);
   }
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */

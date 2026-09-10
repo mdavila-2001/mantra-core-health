@@ -49,3 +49,25 @@
   gap: var(--sp-2);
   margin: 0;
 }
+
+/* La casilla agregada —un nombre más, una especialidad más— comparte renglón
+   con su botón de quitar, igual que en el alta de médico. */
+.edicion__casilla-extra {
+  align-items: center;
+  display: flex;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.edicion__casilla-extra app-input,
+.edicion__casilla-extra app-select {
+  flex: 1 1 auto;
+}
+
+/* El botón de sumar una casilla va en su propio renglón, alineado a la
+   izquierda: dentro de la grilla del formulario se estiraría a todo el ancho y
+   se leería como una acción del formulario, que no lo es. */
+.edicion__sumar {
+  justify-self: start;
+  margin: 0;
+}
