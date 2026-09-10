@@ -224,3 +224,25 @@ app-tab > .mi-perfil__seccion:first-child {
 .mi-perfil__cabecera .mi-perfil__titulo {
   margin-block-end: 0;
 }
+
+/* Un bloque dentro de una pestaña: sedes, el formulario de trayectoria. Separa
+   sin dibujar una caja — la caja ya la pone la tarjeta. */
+.mi-perfil__seccion {
+  margin-block-start: var(--sp-5);
+}
+
+/* El primer subtítulo de una pestaña no necesita el aire de arriba: se lo da la
+   tira de pestañas. Sin esto, «Tus consultorios y sedes» arranca con dos
+   separaciones sumadas y parece desprendido de su pestaña. */
+app-tab > .mi-perfil__subtitulo:first-child,
+app-tab > .mi-perfil__seccion:first-child > .mi-perfil__subtitulo:first-child {
+  margin-block-start: var(--sp-5);
+}
+
+/* Un dato que es un párrafo, no un valor: ocupa la fila entera.
+   La presentación del médico son cinco renglones de prosa; en una celda de la
+   rejilla de dos columnas estiraba la fila al alto del párrafo y dejaba la
+   columna de al lado en blanco. */
+.mi-perfil__dato--ancho {
+  grid-column: 1 / -1;
+}

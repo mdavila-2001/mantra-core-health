@@ -7,6 +7,7 @@ import { PracticeSitesClient } from '../../../../core/data-access/practice-sites
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import type {
+  OwnAddress,
   OwnPractitionerProfile,
   PractitionerAffiliation,
   PractitionerCredential,
@@ -241,6 +242,7 @@ export class PractitionerProfile {
         fijoTrabajo: perfil.workLandline ?? '',
         correoPersonal: perfil.personalEmail ?? '',
         direccion: perfil.homeAddress?.lines ?? '',
+        mapaDomicilio: enlaceAlMapa(perfil.homeAddress),
       },
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
@@ -424,6 +426,22 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
     actual: visibles.filter((afiliacion) => afiliacion.actual),
     historica: visibles.filter((afiliacion) => !afiliacion.actual),
   };
+}
+
+/**
+ * El enlace al mapa de una dirección, o `null` si no tiene coordenadas.
+ *
+ * Copia deliberada del criterio de la ficha del paciente (`MyProfile.enlaceAlMapa`),
+ * incluido el rechazo del `0,0`: una dirección de Santa Cruz no está en el
+ * meridiano de Greenwich, y un enlace al golfo de Guinea es peor que ningún
+ * enlace.
+ */
+function enlaceAlMapa(direccion: OwnAddress | undefined): string | null {
+  if (direccion === undefined) return null;
+  const { latitude, longitude } = direccion;
+  if (latitude == null || longitude == null) return null;
+  if (latitude === 0 && longitude === 0) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
 }
 
 /**

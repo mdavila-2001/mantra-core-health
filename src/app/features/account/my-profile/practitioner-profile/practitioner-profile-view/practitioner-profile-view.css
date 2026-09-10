@@ -1,3 +1,9 @@
+/* La ficha PROPIA usa la tarjeta del paciente, y usa literalmente su CSS: el
+   cliente pidió que las dos se vean igual, y una copia se separa de su original
+   en el primer retoque que se haga en una sola. Lo de abajo es la ficha AJENA
+   —la Guía de profesionales y la vista previa—, que conserva su dibujo. */
+@import '../../ficha-de-perfil.css';
+
 /* ============================================================================
     La vista del perfil profesional (R2-4). Sólo distribución — ni un color ni
     una tipografía que el sistema no tenga ya.
