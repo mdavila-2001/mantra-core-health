@@ -1267,6 +1267,34 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M51 promotions',
   },
   {
+    // **«Mi consultorio propio»** (propietario, 2026-09-10), en el lugar que
+    // ocupaba «Tu organización». Aquélla mostraba la organización del tenant
+    // activo —la clínica donde el médico está afiliado—, que no es suya: junto
+    // a «Mis organizaciones» y «Organización médica» eran tres tarjetas
+    // parecidas y ninguna contestaba «¿dónde atiendo yo?».
+    //
+    // `my-practice` y no `my-office`: es el término del modelo (`M14 practice`)
+    // y el que ya usa `NewOwnSite` en el contrato. La ruta no puede empezar por
+    // `practices`, que el proxy reserva entero para la API.
+    path: 'administration/my-practice',
+    label: 'Mi consultorio propio',
+    group: 'Administración',
+    icon: 'hospital',
+    // Sólo de quien ejerce: un consultorio propio es de un profesional.
+    roles: ['PRACTITIONER'],
+    // **Fuera del menú lateral, igual que la sección que reemplaza.** El menú
+    // del médico es una lista cerrada de nueve que el propio propietario fijó,
+    // con un spec que falla si alguien agrega la décima; «Tu organización»
+    // tampoco estaba ahí. Ocupa su mismo lugar: la zona «Administración» de
+    // «Tus accesos», que es donde el propietario señaló las tres tarjetas
+    // parecidas. Y se llega también desde «Mi perfil», que es donde alguien va
+    // a buscar «¿dónde atiendo?».
+    fueraDelMenuPara: ['PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Los lugares donde atendés por tu cuenta: dirección, mapa y horario.',
+    module: 'M14 practice',
+  },
+  {
     // TP-1: la organización como actor, no como dato.
     //
     // Distinta de «Organizaciones», que es el listado de la **plataforma**, y
@@ -1286,13 +1314,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // menú. La membresía viaja en el claim `tenants` del token, así que la
     // pregunta se puede hacer de este lado. Ficha F-31.
     path: 'administration/my-organization',
-    // §4.H · fuera del menú del médico: la administra el mostrador. El médico
-    // que además administra su clínica llega desde «Mi perfil».
-    fueraDelMenuPara: ['PRACTITIONER'],
-    // Y no existe para el paciente. `requiresTenant` se escribió para eso y no
-    // alcanza: el alta de paciente lo afilia al tenant por defecto, así que
-    // todos cumplen la condición. Medido contra la API viva.
-    hiddenFor: ['PATIENT'],
+    // **Invisible para el médico desde el 2026-09-10**, no sólo fuera de su
+    // menú. El propietario pidió sacar «Tu organización» «de todos lados» y
+    // poner en su lugar «Mi consultorio propio»: con `fueraDelMenuPara` la
+    // tarjeta seguía apareciendo en «Tus accesos», que es justo donde la
+    // señaló, al lado de otras dos parecidas.
+    //
+    // La pantalla **no se borra**: muestra la organización del tenant activo y
+    // la sigue viendo quien la administra, que es de quien es. Efecto
+    // conocido y aceptado: un médico que además administra su clínica la pierde
+    // de la navegación —tiene el rol `PRACTITIONER`—; le queda la ruta.
+    //
+    // `requiresTenant` no alcanzaba para esconderla del paciente: el alta de
+    // paciente lo afilia al tenant por defecto, así que todos cumplen la
+    // condición. Medido contra la API viva.
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
     // `[ANY_ROLE]` y no la ausencia del campo: F-20 exige que toda sección
     // declare sus roles, justamente para que un olvido no se lea como «la ve
     // cualquiera». Acá la ve cualquiera **a propósito**, y así queda dicho.

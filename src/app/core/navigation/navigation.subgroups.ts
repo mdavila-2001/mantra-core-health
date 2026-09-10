@@ -192,7 +192,11 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'building',
     // El padrón de organizaciones y las que son de uno. Van juntas porque son
     // la misma entidad vista desde arriba y desde adentro.
-    paths: ['administration/organizations', 'administration/my-organization'],
+    paths: [
+      'administration/organizations',
+      'administration/my-organization',
+      'administration/my-practice',
+    ],
   },
   {
     label: 'Seguros',

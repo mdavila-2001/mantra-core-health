@@ -17,19 +17,11 @@
   "32": [
     {
       "ruta": "/administration/my-practice",
-      "nombre": "mi-consultorio-lista"
-    },
-    {
-      "ruta": "/administration/my-practice?tab=new",
-      "nombre": "mi-consultorio-nuevo"
+      "nombre": "mi-consultorio-propio"
     },
     {
       "ruta": "/my-account",
-      "nombre": "perfil-enlace-a-consultorio"
-    },
-    {
-      "ruta": "/",
-      "nombre": "panel-administracion-sin-tu-organizacion"
+      "nombre": "perfil-enlaza-al-consultorio"
     }
   ],
   "33": [
@@ -242,6 +234,10 @@
     {
       "ruta": "/administration/pharmacy-orders",
       "nombre": "administration_pharmacy-orders"
+    },
+    {
+      "ruta": "/administration/my-practice",
+      "nombre": "administration_my-practice"
     }
   ],
   "35": [

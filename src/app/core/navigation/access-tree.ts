@@ -144,6 +144,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tone: 'success',
     paths: [
       'administration/my-organization',
+      'administration/my-practice',
       'administration/medical-organization',
       'administration/accounting',
       'billing',
