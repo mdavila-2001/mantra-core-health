@@ -75,24 +75,47 @@ describe('el aviso de demora le llega al paciente', () => {
   const MEDICA = MOCK_USERS.find((u) => u.email === 'medica@alovida.mock')!;
   const PACIENTE_USUARIO = MOCK_USERS.find((u) => u.email === 'paciente@alovida.mock')!;
 
+  /**
+   * El aviso **recién emitido**, encontrado por lo que no estaba antes.
+   *
+   * No `campana[0]`: la campana ordena por `availableAt`, y los fixtures siembran
+   * avisos a horas fijas del día (`iso(0, 8, 30)`). Corriendo la suite de
+   * madrugada, `ahora()` es **anterior** a esas horas y el aviso nuevo no queda
+   * primero — las pruebas pasaban de día y fallaban de noche. Identificar el
+   * propio por id no depende del reloj.
+   */
+  function avisoNuevoTras(accion: () => void): {
+    subject: string;
+    bodyText: string;
+    category: string;
+    unread: boolean;
+  } {
+    const antes = new Set(campanaDe(PACIENTE_USUARIO).map((a) => a.id));
+    accion();
+    const nuevo = campanaDe(PACIENTE_USUARIO).find((a) => !antes.has(a.id));
+    if (nuevo === undefined) throw new Error('No se emitió ningún aviso nuevo');
+    return nuevo;
+  }
+
   it('avisar la demora de un turno le deja una notificación al paciente de ESE turno', () => {
     const turno = turnoAvisable();
     const antes = campanaDe(PACIENTE_USUARIO).length;
 
-    const resultado = llamar(
-      'POST',
-      `/scheduling/bookings/${turno.id}/delay`,
-      { delayMinutes: 20, message: 'Se me complicó una urgencia' },
-      MEDICA,
-    ) as { notified: number; affected: number };
+    let resultadoCrudo: unknown;
+    const aviso = avisoNuevoTras(() => {
+      resultadoCrudo = llamar(
+        'POST',
+        `/scheduling/bookings/${turno.id}/delay`,
+        { delayMinutes: 20, message: 'Se me complicó una urgencia' },
+        MEDICA,
+      );
+    });
+    const resultado = resultadoCrudo as { notified: number; affected: number };
 
     expect(resultado.affected).toBe(1);
     expect(resultado.notified).toBe(1);
 
-    const despues = campanaDe(PACIENTE_USUARIO);
-    expect(despues.length).toBe(antes + 1);
-
-    const aviso = despues[0]!;
+    expect(campanaDe(PACIENTE_USUARIO).length).toBe(antes + 1);
     expect(aviso.category).toBe('SCHEDULING');
     expect(aviso.unread).toBe(true);
     // Los tres datos que el paciente necesita: cuánto, de qué cita y por qué.
@@ -104,9 +127,9 @@ describe('el aviso de demora le llega al paciente', () => {
   it('sin mensaje del profesional el aviso sigue diciendo cuánto y de qué cita', () => {
     const turno = turnoAvisable();
 
-    llamar('POST', `/scheduling/bookings/${turno.id}/delay`, { delayMinutes: 15 }, MEDICA);
-
-    const aviso = campanaDe(PACIENTE_USUARIO)[0]!;
+    const aviso = avisoNuevoTras(() =>
+      llamar('POST', `/scheduling/bookings/${turno.id}/delay`, { delayMinutes: 15 }, MEDICA),
+    );
     expect(aviso.subject).toContain('15 minutos');
     // Sin comillas vacías colgando al final del cuerpo.
     expect(aviso.bodyText).not.toContain('«»');
