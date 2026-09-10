@@ -329,11 +329,11 @@ describe('PatientChart', () => {
    */
   describe('adjuntar un archivo a un diagnóstico ya registrado (ALV-033)', () => {
     /**
-     * Ya no alterna un formulario dentro de la fila: abre el modal de esa
-     * condición (corrección del 10/09/2026). Cerrar es del modal y no del botón
-     * de la fila, y por eso son dos métodos y no uno que conmuta.
+     * Abre y cierra, ya no alterna: el subidor vive en un modal, y un botón de
+     * menú que cerrara el modal que está encima de él no tendría sentido —el
+     * modal se cierra por su propia salida—.
      */
-    it('abrirAdjuntos abre el modal de ESA fila, y cerrar lo baja', () => {
+    it('abre el modal de adjuntos de ESA fila, y se cierra por su salida', () => {
       responderNombre();
       responderExpediente();
 
@@ -342,13 +342,28 @@ describe('PatientChart', () => {
       interno<(id: string) => void>('abrirAdjuntos')('c-1');
       expect(interno<() => string | null>('adjuntandoArchivoA')()).toBe('c-1');
 
-      // Volver a pedirlo sobre la misma fila no lo cierra: un botón que
+      // Volver a pedirlo sobre la misma fila no lo cierra: un método que
       // conmutaba era justamente lo que abría la tabla en dos.
       interno<(id: string) => void>('abrirAdjuntos')('c-1');
       expect(interno<() => string | null>('adjuntandoArchivoA')()).toBe('c-1');
 
       interno<() => void>('cerrarAdjuntos')();
       expect(interno<() => string | null>('adjuntandoArchivoA')()).toBeNull();
+    });
+
+    /** El menú deja de deformar la tabla: la celda ya no despliega nada. */
+    it('la celda de acciones no despliega el subidor dentro de la tabla', () => {
+      responderNombre();
+      responderExpediente();
+      harness.fixture.detectChanges();
+
+      interno<(id: string) => void>('abrirAdjuntos')('c-1');
+      harness.fixture.detectChanges();
+
+      const raiz = harness.fixture.nativeElement as HTMLElement;
+      // El subidor está dentro del modal, no dentro de la tabla.
+      expect(raiz.querySelector('app-attachment-dialog')).not.toBeNull();
+      expect(raiz.querySelector('app-data-table app-attachment-uploader')).toBeNull();
     });
 
     /**

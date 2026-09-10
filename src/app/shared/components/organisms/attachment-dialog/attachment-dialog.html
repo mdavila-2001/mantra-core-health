@@ -1,7 +1,8 @@
 <!-- `dismissible` sigue a la cola: con archivos elegidos y sin mandar, los tres
      gestos de cierre pasan por `dismissAttempt` y preguntan. -->
 <app-content-dialog
-  heading="Adjuntar archivos"
+  [heading]="heading()"
+  [description]="description()"
   size="lg"
   [dismissible]="sePuedeCerrarSolo()"
   (dismissAttempt)="alIntentarCerrar()"

@@ -76,6 +76,13 @@ async function abrirExpediente(page: Page): Promise<void> {
   await expect(page.getByRole('tab').first()).toBeVisible({ timeout: 30_000 });
 }
 
+/** Abre el modal de adjuntos de la primera fila, por el menú de acciones. */
+async function abrirAdjuntosDesdeLaFila(page: Page): Promise<void> {
+  await page.getByTestId('expediente-acciones').first().click();
+  await page.getByRole('menuitem', { name: /Adjuntar archivos/ }).click();
+  await expect(page.getByTestId('content-dialog-title')).toContainText('Adjuntar archivos');
+}
+
 test.describe('Corrección 10/09/2026', () => {
   test('el expediente abre detalle y adjuntos en modal, nunca dentro de la fila', async ({
     page,
@@ -105,11 +112,12 @@ test.describe('Corrección 10/09/2026', () => {
     await expect(modal).toBeHidden();
 
     /* ── E05 · adjuntar archivos, sin Categoría ni Sensibilidad ─────────── */
-    const adjuntar = page.getByTestId('expediente-adjuntar-archivo').first();
-    await expect(adjuntar).toBeVisible();
-    await adjuntar.click();
+    // La fila ya no tiene un botón por acción: tiene su menú, y adjuntar es una
+    // de sus entradas. Ése es el reparto que dejó la regla 6 del sistema de
+    // diseño —lo que pide datos va a un modal; la celda conserva su alto—.
+    await abrirAdjuntosDesdeLaFila(page);
 
-    await expect(page.getByTestId('content-dialog-title')).toHaveText('Adjuntar archivos');
+    await expect(page.getByTestId('content-dialog-title')).toContainText('Adjuntar archivos');
     const cuerpo = page.getByTestId('content-dialog');
     await expect(cuerpo).not.toContainText('Categoría');
     await expect(cuerpo).not.toContainText('Sensibilidad');
@@ -259,8 +267,7 @@ test.describe('Corrección 10/09/2026', () => {
     // es un atajo: en teléfono la columna de acciones de la tabla se pliega
     // —comportamiento de `app-data-table`, anterior a esta corrección— y el botón
     // que abre el modal no queda a mano. Lo que hay que medir es el modal.
-    await page.getByTestId('expediente-adjuntar-archivo').first().click();
-    await expect(page.getByTestId('content-dialog-title')).toHaveText('Adjuntar archivos');
+    await abrirAdjuntosDesdeLaFila(page);
 
     for (const [nombre, tamano] of [
       ['alto-reducido-1024x600', { width: 1024, height: 600 }],

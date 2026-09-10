@@ -34,6 +34,11 @@ import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { Menu } from '../../../shared/components/molecules/menu/menu';
+import { MenuItem } from '../../../shared/components/molecules/menu/menu-item/menu-item';
+import { MenuTrigger } from '../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
+import { AttachmentDialog } from '../../../shared/components/organisms/attachment-dialog/attachment-dialog';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { ConceptSelect } from '../../../shared/components/molecules/concept-select/concept-select';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -46,8 +51,6 @@ import {
   atencionDesdeResumen,
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
-import { AttachmentDialog } from '../../../shared/components/organisms/attachment-dialog/attachment-dialog';
-import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -197,6 +200,9 @@ interface Expediente {
     DataTable,
     DatePipe,
     Link,
+    Menu,
+    MenuItem,
+    MenuTrigger,
     PdfExportButton,
     PageHeader,
     RouterLink,
@@ -694,6 +700,31 @@ export class PatientChart {
   /** La condición cuyo cambio de estado está en vuelo, o `null`. */
   protected readonly cambiandoEstado = signal<string | null>(null);
 
+  /**
+   * La condición cuyo modal de cambio de estado está abierto, o `null`.
+   *
+   * El selector y su «Aplicar» vivían **dentro de la celda** de cada fila: la
+   * celda crecía al desplegarse y el alto de la tabla dependía de si alguien
+   * había tocado el menú. Cualquier cambio sobre un registro existente que
+   * pida datos va en modal; la fila sólo tiene su menú.
+   */
+  protected readonly cambiandoEstadoDe = signal<FilaClinica | null>(null);
+
+  protected abrirCambioDeEstado(fila: FilaClinica): void {
+    this.cambiandoEstadoDe.set(fila);
+  }
+
+  protected cerrarCambioDeEstado(): void {
+    const fila = this.cambiandoEstadoDe();
+    if (fila !== null) {
+      // Lo elegido y no aplicado no sobrevive al cierre: si el modal se
+      // reabriera con un destino puesto de la vez anterior, «Aplicar» mandaría
+      // un cambio que quien lo toca no acaba de elegir.
+      this.elegirDestinoEstado(fila.id, null);
+    }
+    this.cambiandoEstadoDe.set(null);
+  }
+
   /** El destino elegido para esa fila, o `null` si no se eligió ninguno. */
   protected destinoEstadoDe(conditionId: string): string | null {
     return this.destinosDeEstado()[conditionId] ?? null;
@@ -721,8 +752,8 @@ export class PatientChart {
    *
    * Antes esto alternaba un formulario **dentro de la fila** —`alternarAdjuntos`,
    * con su botón que cambiaba a «Cerrar adjuntos»— y la tabla se abría en dos
-   * para hacerle sitio. La corrección del 10/09/2026 lo saca de ahí: la fila
-   * vuelve a ser de lectura y adjuntar pasa a `app-attachment-dialog`.
+   * para hacerle sitio. Ahora la fila sólo tiene su menú, y adjuntar pasa a
+   * `app-attachment-dialog`.
    */
   protected abrirAdjuntos(conditionId: string): void {
     this.adjuntandoArchivoA.set(conditionId);
@@ -897,6 +928,8 @@ export class PatientChart {
    * muestra tal cual la explica el servidor.
    */
   protected async cambiarEstadoClinico(fila: FilaClinica): Promise<void> {
+    // El modal se cierra en el camino feliz, dentro de `finalizar`: si algo
+    // falla, el mensaje tiene que verse donde se tomó la decisión.
     const destino = this.destinoEstadoDe(fila.id);
     if (destino === null || this.cambiandoEstado() !== null) {
       return;
@@ -926,6 +959,7 @@ export class PatientChart {
         next: () => {
           this.cambiandoEstado.set(null);
           this.elegirDestinoEstado(fila.id, null);
+          this.cambiandoEstadoDe.set(null);
           this.toasts.success(
             `Ahora figura como "${etiquetaDestino}".`,
             'Estado clínico actualizado',

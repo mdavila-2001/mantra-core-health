@@ -117,17 +117,37 @@ function guardarNota(encounterId: string): void {
   );
 }
 
+/**
+ * El aviso **recién emitido**, encontrado por lo que no estaba antes.
+ *
+ * No `campana[0]`: la campana ordena por `availableAt`, y los fixtures siembran
+ * avisos a horas fijas del día (`iso(0, 8, 30)`). Corriendo la suite de
+ * madrugada, `ahora()` es **anterior** a esas horas y el aviso nuevo no queda
+ * primero — las pruebas pasaban de día y fallaban de noche. Identificar el
+ * propio por id no depende del reloj.
+ */
+function avisoNuevoTras(accion: () => void): {
+  subject: string;
+  bodyText: string;
+  category: string;
+  unread: boolean;
+  destination: { type: string; id: string } | null;
+} {
+  const antes = new Set(campanaDe(PACIENTE_USUARIO).map((a) => a.id));
+  accion();
+  const nuevo = campanaDe(PACIENTE_USUARIO).find((a) => !antes.has(a.id));
+  if (nuevo === undefined) throw new Error('No se emitió ningún aviso nuevo');
+  return nuevo;
+}
+
 describe('el aviso de la ficha médica le llega al paciente', () => {
   it('guardar el diagnóstico le deja el aviso al paciente, sin cerrar la consulta', () => {
     const encuentro = abrirConsulta();
-    const antes = campanaDe(PACIENTE_USUARIO).length;
+    const cuantos = campanaDe(PACIENTE_USUARIO).length;
 
-    guardarDiagnostico(encuentro);
+    const aviso = avisoNuevoTras(() => guardarDiagnostico(encuentro));
 
-    const despues = campanaDe(PACIENTE_USUARIO);
-    expect(despues.length).toBe(antes + 1);
-
-    const aviso = despues[0]!;
+    expect(campanaDe(PACIENTE_USUARIO).length).toBe(cuantos + 1);
     expect(aviso.category).toBe('CLINICAL');
     expect(aviso.unread).toBe(true);
     expect(aviso.subject).toContain('ficha');
@@ -136,12 +156,10 @@ describe('el aviso de la ficha médica le llega al paciente', () => {
   it('el aviso lleva a la consulta, que es lo que hay que ir a leer', () => {
     const encuentro = abrirConsulta();
 
-    guardarDiagnostico(encuentro);
-
     // `ENCOUNTER` ya está ruteado a `/my-account/medical-record` en
     // `core/notifications/notification-routes.ts`: un aviso sin destino se
     // pinta como texto y deja a la persona buscando dónde estaba su ficha.
-    expect(campanaDe(PACIENTE_USUARIO)[0]!.destination).toEqual({
+    expect(avisoNuevoTras(() => guardarDiagnostico(encuentro)).destination).toEqual({
       type: 'ENCOUNTER',
       id: encuentro,
     });
@@ -150,9 +168,7 @@ describe('el aviso de la ficha médica le llega al paciente', () => {
   it('dice quién la escribió, y no adelanta el diagnóstico', () => {
     const encuentro = abrirConsulta();
 
-    guardarDiagnostico(encuentro);
-
-    const aviso = campanaDe(PACIENTE_USUARIO)[0]!;
+    const aviso = avisoNuevoTras(() => guardarDiagnostico(encuentro));
     // El nombre de quien atiende, sin «Dr.» ni «Dra.» inventados.
     expect(aviso.bodyText).toContain('Valeria');
     // Un renglón de la campana se lee desde la pantalla bloqueada del

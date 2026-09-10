@@ -23,7 +23,7 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
+import { AttachmentDialog } from '../../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
@@ -149,7 +149,7 @@ function enDias(dias: number): Date {
   imports: [
     Alert,
     AppButton,
-    AttachmentUploader,
+    AttachmentDialog,
     Badge,
     Card,
     ConceptSelect,

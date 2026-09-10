@@ -165,9 +165,15 @@ describe('IdentityVerification', () => {
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
     responderHistorial();
 
-    expect(interno<() => { id: string; status: string } | null>('caso')()).toEqual({
+    // El `type` no viene en la respuesta del alta: la pantalla lo deriva del
+    // trámite pedido, que es el mismo que el backend le asigna al caso. Sin
+    // afirmarlo acá, la derivación podría romperse sin que nadie lo note.
+    expect(
+      interno<() => { id: string; status: string; type: string } | null>('caso')(),
+    ).toEqual({
       id: 'c-1',
       status: 'PENDING',
+      type: 'PATIENT_IDENTITY',
     });
   });
 

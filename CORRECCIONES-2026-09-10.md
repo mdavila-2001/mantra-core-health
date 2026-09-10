@@ -1,8 +1,15 @@
 # Correcciones del 10/09/2026 — modales, archivos, vínculos clínicos, comunidades y directorios
 
-Rama base: `mockup` en `3ce6f5d2`. Estado: implementado y verificado en el
-entorno local con el backend simulado. Lo que **no** quedó cerrado está en la
-sección «Lo que no se pudo completar», con su motivo y lo que hace falta.
+Rama base: `mockup` en `3ce6f5d2`, integrado después con `45090672`. Estado:
+implementado y verificado en el entorno local con el backend simulado. Lo que
+**no** quedó cerrado está en la sección «Lo que no se pudo completar», con su
+motivo y lo que hace falta.
+
+> **Se cruzó con trabajo paralelo.** Mientras esto se hacía, `mockup` recibió
+> once commits que atacan el mismo pedido desde otro lado: un
+> `app-attachment-dialog` propio, el menú de acciones de la fila, el modal de
+> cambio de estado clínico y la regla 6 del sistema de diseño. Se integró
+> conservando **las dos** mitades, no eligiendo una. Ver §9.
 
 ---
 
@@ -225,9 +232,12 @@ una sola ruta escrita a mano en su plantilla.
 yarn lint        → 0 errores
 yarn typecheck   → 0 errores
 yarn build       → compila (las plantillas también)
-yarn test        → 5274 pruebas, 5272 pasan
+yarn test        → 445 archivos, 5292 pruebas, 0 fallos
 npx playwright test playwright/correcciones-2026-09-10.spec.ts → 4/4
 ```
+
+Los números son **después** de integrar `45090672`: la suite entera, la suya y
+la mía, en verde.
 
 **+31 pruebas unitarias nuevas**, ninguna existente debilitada. Las que
 cambiaron lo hicieron porque el comportamiento cambió, y dicen por qué:
@@ -243,18 +253,12 @@ cambiaron lo hicieron porque el comportamiento cambió, y dicen por qué:
 - `access-tree.spec.ts` (registro y panel) — la ausencia **localizada** de la
   portada y el acceso que abre modal sin desplegar nada bajo la tarjeta.
 
-### Los dos fallos que quedan son anteriores a este trabajo
+### Los fallos que este reporte daba por anteriores ya no están
 
-Vienen con los commits que trajo la rama y no los toca esta corrección:
-
-1. `identity-verification.spec.ts` · «encadena la apertura del caso…» — el
-   modelo del caso ganó `type: 'PATIENT_IDENTITY'` en FT-32 (`49bdc478`) y la
-   prueba no se actualizó.
-2. `shell-layout.spec.ts` · «los nombres de ícono…» — el icono `edit` está en
-   una de las dos listas y no en la otra.
-
-Se comprobó que no dependen de nada que se haya tocado acá; se dejan como están
-porque arreglarlos es otro alcance.
+Eran dos —`identity-verification.spec.ts` por el `type` que sumó FT-32, y
+`shell-layout.spec.ts` por el icono `edit` desparejo— y los arregló el trabajo
+paralelo en `392fcdf0`, con el mismo diagnóstico. Tras integrar, la suite queda
+sin fallos.
 
 ### Capturas
 
@@ -269,3 +273,31 @@ contar peticiones desde el navegador daría cero con la subida funcionando. Que
 sean tres peticiones —una por archivo— lo fija la prueba unitaria con
 `HttpTestingController`. El recorrido demuestra la interacción; la unitaria, el
 contrato.
+
+---
+
+## 9. La integración con el trabajo paralelo
+
+`origin/mockup` avanzó a `45090672` mientras esto se implementaba, con commits
+que resuelven parte del mismo pedido. Cuatro archivos colisionaron y ninguno se
+resolvió descartando un lado:
+
+| Qué | Cómo quedó |
+|---|---|
+| `attachment-dialog` (los dos lo crearon) | Se conserva **su** contrato —`heading`, `description`, una sola salida por `closed`— sobre **mi** implementación, que además trae el pie de acciones, el descarte confirmado, el contexto heredado y el ancho `lg`. Su `attachment-dialog.spec.ts` pasa sin tocarlo. |
+| La celda de acciones de la fila | Gana **su** menú («Cambiar estado clínico…», «Adjuntar archivos…»), que es mejor que mis botones sueltos. La entrada de adjuntar pasó a plural: la carga ya no es de un archivo. |
+| Cambiar estado clínico | **Su** modal, tal cual. Yo no lo había sacado de la celda. |
+| Detalle de la fila y vínculos clínicos | **Míos**, que ellos no tenían: la columna «Ver», el modal de detalle y los vínculos de cada bloque. |
+| `patient-chart.spec.ts` | Las pruebas de los dos lados, ninguna descartada. |
+
+Los dos lados renombraron `alternarAdjuntos` a `abrirAdjuntos` con la misma
+firma, lo que dice bastante sobre que el diagnóstico del problema era el mismo.
+
+**Dos cosas que quedaron de ellos y conviene mirar:**
+
+1. La columna de acciones sigue con el rótulo `Cambiar estado`, y su celda ahora
+   es un menú «Acciones» con dos entradas. El rótulo se quedó corto; no lo toqué
+   para no pisar su cambio.
+2. Arreglaron los tres fallos que este reporte daba por anteriores
+   (`392fcdf0`), así que la suite quedó entera en verde: **445 archivos, 5292
+   pruebas, 0 fallos**.

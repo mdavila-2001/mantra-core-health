@@ -101,6 +101,12 @@ export const NAV_ICON_NAMES = [
   'arrow-right',
   'remove',
 
+  // `edit`, la cuarta acción del set: el lápiz que habilita los campos de un
+  // formulario que entró en sólo lectura («Mi perfil», FT-11-R04). Estaba en
+  // `atoms/nav-icon/nav-icon.types.ts` —y dibujado— y faltaba acá, que es
+  // justo la separación que esta lista existe para impedir.
+  'edit',
+
   // Preferencia del dispositivo (TAREA-17): los tres de «Apariencia» y el que
   // le falta a «Permisos». Igual que `arrow-left`/`remove`, no nombran una
   // sección. El porqué está donde se dibujan: `atoms/nav-icon/nav-icon.types.ts`.

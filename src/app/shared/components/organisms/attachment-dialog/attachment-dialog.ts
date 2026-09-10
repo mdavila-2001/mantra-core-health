@@ -19,16 +19,20 @@ import {
 import { ContentDialog } from '../content-dialog/content-dialog';
 
 /**
- * **Adjuntar archivos**, en un modal.
+ * Adjuntar archivos **en un modal**, no dentro de la fila.
  *
- * ## Por qué existe en vez de repetir el par en cada pantalla
+ * ## Por qué existe
  *
- * Porque la corrección del 10/09/2026 pide que adjuntar deje de abrirse dentro
- * de la fila del registro. Antes cada llamador ponía el
- * `app-attachment-uploader` donde le quedaba —en el expediente, debajo de la
- * fila del diagnóstico— y el formulario empujaba la tabla hacia abajo. Con
- * esto, los tres sitios que adjuntan comparten el mismo modal, el mismo título
- * y el mismo descarte.
+ * El subidor se desplegaba dentro de la celda o del renglón del registro al
+ * que se adjunta: la tabla crecía de golpe, las filas de abajo se iban de la
+ * pantalla y el alto de la lista dependía de si alguien había tocado
+ * «Adjuntar». Un cambio sobre un registro existente que **pide datos** va en
+ * modal; la fila sólo tiene acciones directas o un menú.
+ *
+ * Es un envoltorio y no un componente nuevo a propósito: el modal es
+ * `content-dialog` y el formulario es `attachment-uploader`, los dos ya
+ * probados. Lo que agrega es atarlos, cerrar solo cuando el lote quedó
+ * vinculado y preguntar antes de tirar una selección a medio mandar.
  *
  * ```html
  * @if (adjuntandoA(); as conditionId) {
@@ -36,12 +40,16 @@ import { ContentDialog } from '../content-dialog/content-dialog';
  *     ownerType="CONDITION"
  *     [ownerId]="conditionId"
  *     [contexto]="contextoDelDiagnostico()"
- *     [linkVia]="enlazarAlDiagnostico"
- *     (attached)="recargar()"
+ *     [linkVia]="enlazarAdjuntoAlDiagnostico"
+ *     heading="Adjuntar archivos al diagnóstico"
  *     (closed)="cerrarAdjuntos()"
  *   />
  * }
  * ```
+ *
+ * Quien lo usa lo monta con un `@if`: el modal se abre al construirse
+ * —`content-dialog` llama a `showModal()` en su `afterNextRender`— y `closed`
+ * es la señal de desmontarlo, venga del botón, de `Escape` o del fondo.
  *
  * ## El descarte se pregunta, y sólo cuando hay algo que descartar
  *
@@ -52,8 +60,7 @@ import { ContentDialog } from '../content-dialog/content-dialog';
  *
  * Con una subida en curso el cierre **no se ofrece**: el resultado de cada
  * archivo se está escribiendo y ocultarlo dejaría a alguien sin saber cuáles
- * entraron. Ahí la confirmación no aparece y el gesto no hace nada, que es lo
- * único honesto mientras el lote viaja.
+ * entraron.
  */
 @Component({
   selector: 'app-attachment-dialog',
@@ -66,29 +73,55 @@ export class AttachmentDialog {
 
   /** A qué tipo de recurso se adjunta. */
   readonly ownerType = input.required<OwnerType>();
+
   /** El recurso concreto. */
   readonly ownerId = input.required<string>();
 
-  /** El contexto clínico heredado, en pares rótulo/valor. Ver el uploader. */
+  /**
+   * El título del modal, que es su nombre accesible.
+   *
+   * En plural desde que la carga admite varios archivos: un título que dice
+   * «un archivo» sobre un formulario que acepta doce es lo que hacía que nadie
+   * probara a elegir más de uno.
+   */
+  readonly heading = input('Adjuntar archivos');
+
+  /** Qué registro es, en una línea. `null` no dibuja nada. */
+  readonly description = input<string | null>(null);
+
+  /**
+   * Los vínculos clínicos que el lote hereda, en pares rótulo/valor.
+   *
+   * Es contexto de lectura, no un formulario: quien adjunta desde un
+   * diagnóstico ya tiene paciente, encuentro y diagnóstico resueltos por el
+   * registro padre, y lo que necesita es **verlos** antes de confirmar.
+   */
   readonly contexto = input<readonly ContextoDelAdjunto[]>([]);
 
-  /** El vínculo propio del dominio, si lo hay. Ver el uploader. */
+  /** El endpoint propio del dominio, si lo tiene. Ver `AttachmentUploader`. */
   readonly linkVia = input<((fileId: string, ownerId: string) => Observable<unknown>) | null>(
     null,
   );
 
-  /** Se emite cuando todo el lote quedó adjuntado. */
+  /** El lote quedó subido **y** vinculado, entero. */
   readonly attached = output<void>();
 
   /** Se emite por cada archivo que entró, mientras el lote avanza. */
   readonly progressed = output<void>();
 
-  /** Se cerró. Quien lo escucha baja la bandera que lo montó. */
+  /**
+   * Se cerró: por el botón, por `Escape`, por el fondo o porque el lote
+   * terminó de adjuntarse. Quien lo usa desmonta el modal acá.
+   *
+   * Es un solo camino de salida a propósito: con `attached` y `closed` como
+   * eventos separados, los consumidores tenían que acordarse de cerrar en los
+   * dos, y olvidarse de uno dejaba el modal abierto sobre una tarea terminada.
+   */
   readonly closed = output<void>();
 
   /**
-   * Sin `required`: la plantilla lo consulta en el mismo pase en el que se
-   * crea, y un `viewChild.required` ahí revienta antes de que exista.
+   * Sin `required`: la plantilla los consulta en el mismo pase en el que se
+   * crean, y un `viewChild.required` ahí revienta antes de que existan.
    */
   protected readonly uploader = viewChild(AttachmentUploader);
   private readonly dialog = viewChild(ContentDialog);
@@ -101,7 +134,15 @@ export class AttachmentDialog {
   /** Termina el lote: avisa y cierra. */
   protected alAdjuntar(): void {
     this.attached.emit();
-    this.dialog()?.close();
+    // `close()` del modal reemite `closed`. Si el diálogo todavía no se montó
+    // —una prueba que emite `attached` a mano—, se avisa igual: la salida es
+    // una sola y quien lo usa desmonta con ella.
+    const modal = this.dialog();
+    if (modal === undefined) {
+      this.closed.emit();
+      return;
+    }
+    modal.close();
   }
 
   /**
