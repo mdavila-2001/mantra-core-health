@@ -479,17 +479,22 @@ describe('PractitionerProfileView', () => {
     expect(subPestanas.some((texto) => texto.includes('Matrículas ('))).toBe(true);
   });
 
-  /* -- Vista previa del perfil público (carril 05) --------------------------- */
+  /* -- Vista previa del perfil público ---------------------------------------
+     Estaba: «"Ver cómo me ven" lleva a la vista previa de sólo lectura»
+     (ALV-004, carril 05). El propietario pidió el 2026-09-10 sacar el perfil
+     público «de todos lados», así que la prueba fija lo contrario — y lo fija,
+     en vez de borrarse, para que volver a agregar el botón sin decidirlo no
+     pase inadvertido. */
 
-  it('"Ver cómo me ven" lleva a la vista previa de sólo lectura (ALV-004)', () => {
+  it('la ficha propia NO ofrece «Ver cómo me ven»: el perfil público se sacó', () => {
     const host = montar(PERFIL, true);
 
     const enlace = Array.from(host.querySelectorAll('a[app-button]')).find((a) =>
       a.textContent?.includes('Ver cómo me ven'),
-    ) as HTMLAnchorElement;
+    );
 
-    expect(enlace).toBeTruthy();
-    expect(enlace.getAttribute('href')).toContain('/my-account/preview');
+    expect(enlace).toBeUndefined();
+    expect(host.innerHTML).not.toContain('/my-account/preview');
   });
 
   it('en previewMode no muestra sus propias acciones de dueño aunque esPropio venga en true', () => {

@@ -305,15 +305,16 @@
   "40": [
     {
       "ruta": "/my-account",
-      "nombre": "perfil-sin-botones-publicos"
+      "nombre": "perfil-sin-vitrina"
     },
     {
-      "ruta": "/my-account?tab=personal&edit=1",
+      "ruta": "/my-account/edit",
       "nombre": "editor-sin-vitrina"
     },
     {
       "ruta": "/my-account/preview",
-      "nombre": "preview-no-existe"
+      "nombre": "vitrina-borrada",
+      "esperado": "no-encontrado"
     },
     {
       "ruta": "/directory",
