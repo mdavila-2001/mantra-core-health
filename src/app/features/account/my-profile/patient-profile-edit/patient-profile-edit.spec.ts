@@ -405,6 +405,101 @@ describe('PatientProfileEdit', () => {
     expect(señal<string | null>('municipio')()).toBeNull();
   });
 
+  /* ---- el punto en el mapa de cada dirección ------------------------------ */
+
+  /**
+   * El GPS del domicilio y el del trabajo — lo que el alta ya preguntaba y el
+   * perfil no dejaba tocar.
+   *
+   * Hasta acá el contrato sólo aceptaba el TEXTO de la dirección; su propio
+   * comentario decía que «las coordenadas las conserva el backend de la
+   * dirección anterior», que es otra forma de decir que quien se mudaba se
+   * quedaba con el punto de la casa vieja para siempre.
+   */
+  describe('la ubicación en el mapa (como en una app de pedidos)', () => {
+    /** Un perfil con las dos direcciones y sólo el domicilio ubicado. */
+    const CON_DIRECCIONES = {
+      homeAddress: { lines: 'Av. Banzer 3er anillo', latitude: -17.78, longitude: -63.18 },
+      workAddress: { lines: 'Calle Ayacucho 241' },
+    };
+
+    it('siembra el mapa con el punto ya guardado, y deja vacío el que no lo tiene', () => {
+      // Sin esto, abrir «editar» mostraría el bloque vacío y quien guardara sin
+      // tocar el mapa perdería su ubicación.
+      montarYCargar(CON_DIRECCIONES);
+
+      expect(señal<unknown>('gpsDomicilioGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
+      expect(señal<unknown>('gpsTrabajoGuardado')()).toBeNull();
+    });
+
+    it('media coordenada no ubica nada: no siembra el mapa', () => {
+      montarYCargar({ homeAddress: { lines: 'Av. Banzer', latitude: -17.78 } });
+
+      expect(señal<unknown>('gpsDomicilioGuardado')()).toBeNull();
+    });
+
+    it('no tocar el mapa no manda coordenadas', () => {
+      // Mandar el punto actual «por las dudas» convertiría cualquier guardado
+      // en una reescritura de la ubicación.
+      montarYCargar(CON_DIRECCIONES);
+
+      señal<string>('nombre').set('Ana María');
+      interno<() => void>('guardar')();
+
+      const req = pedidoDeGuardado();
+      expect(req.request.body).toEqual({ name: 'Ana María' });
+      req.flush({ ...PERFIL_BASE, ...CON_DIRECCIONES });
+    });
+
+    it('confirmar un punto lo manda como par', () => {
+      montarYCargar(CON_DIRECCIONES);
+
+      señal<unknown>('gpsDomicilio').set({ lat: -16.5, lng: -68.15 });
+      interno<() => void>('guardar')();
+
+      const req = pedidoDeGuardado();
+      expect(req.request.body).toEqual({ homeLatitude: -16.5, homeLongitude: -68.15 });
+      req.flush({ ...PERFIL_BASE, ...CON_DIRECCIONES });
+    });
+
+    it('quitar el punto lo manda como null en los dos extremos', () => {
+      // `null` es «lo quité» y ausente es «no lo toqué»: son dos cosas
+      // distintas, y confundirlas borraría la ubicación de quien sólo vino a
+      // cambiar el teléfono.
+      montarYCargar(CON_DIRECCIONES);
+
+      señal<unknown>('gpsDomicilio').set(null);
+      interno<() => void>('guardar')();
+
+      const req = pedidoDeGuardado();
+      expect(req.request.body).toEqual({ homeLatitude: null, homeLongitude: null });
+      req.flush({ ...PERFIL_BASE, ...CON_DIRECCIONES });
+    });
+
+    it('el trabajo tiene su propio punto, independiente del domicilio', () => {
+      montarYCargar(CON_DIRECCIONES);
+
+      señal<unknown>('gpsTrabajo').set({ lat: -17.8, lng: -63.2 });
+      interno<() => void>('guardar')();
+
+      const req = pedidoDeGuardado();
+      expect(req.request.body).toEqual({ workLatitude: -17.8, workLongitude: -63.2 });
+      req.flush({ ...PERFIL_BASE, ...CON_DIRECCIONES });
+    });
+
+    it('los dos mapas se dibujan en la pestaña de ubicación', () => {
+      montarPintadoYCargado(CON_DIRECCIONES);
+      // Los mapas viven con las direcciones, en «Ubicación y contacto».
+      abrirPestana(pestanaDe('perfil-domicilio'));
+      fixture.detectChanges();
+
+      const mapas = (fixture.nativeElement as HTMLElement).querySelectorAll(
+        'app-ubicacion-picker',
+      );
+      expect(mapas).toHaveLength(2);
+    });
+  });
+
   /* ---- el diff: sólo lo que cambió ---------------------------------------- */
 
   it('guardar manda sólo el campo que cambió', () => {

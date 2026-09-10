@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -133,6 +142,24 @@ export const AVISO_MOVER_PIN =
 export class UbicacionPicker {
   private readonly documento = inject(DOCUMENT);
 
+  /** Si ya se sembró el punto guardado. Ver {@link inicial}. */
+  private sembrado = false;
+
+  constructor() {
+    // `effect` y no un valor inicial de la señal: el perfil llega por HTTP y el
+    // componente ya está montado cuando aparece.
+    effect(() => {
+      const guardado = this.inicial();
+      if (this.sembrado || guardado === null) return;
+      this.sembrado = true;
+      this.punto.set(guardado);
+      // Confirmado de entrada: es un punto que la persona ya dio por bueno
+      // alguna vez. Pedirle que lo vuelva a confirmar para no perderlo sería
+      // convertir «no toqué el mapa» en «borrá mi ubicación».
+      this.confirmada.set(true);
+    });
+  }
+
   /**
    * El identificador del pin en el mapa.
    *
@@ -164,6 +191,20 @@ export class UbicacionPicker {
   readonly indicacionMarcar = input('Tocá el mapa en el lugar exacto para poner el pin.');
 
   readonly ids = input.required<IdsDePrueba>();
+
+  /**
+   * El punto que la persona ya tenía guardado, si lo tenía.
+   *
+   * Existe para **editar**, que es un caso que el alta no tiene: en el registro
+   * se parte de cero, pero en el perfil hay que mostrar el pin que ya está y
+   * dejar moverlo. Sin esto, abrir «editar» mostraría el bloque vacío y quien
+   * guardara sin tocar el mapa perdería su ubicación.
+   *
+   * Se siembra **una sola vez**. Después manda la persona: si vuelve a pedir su
+   * ubicación, la corre o la quita, un dato que llegue tarde del servidor no
+   * puede pisar lo que acaba de hacer.
+   */
+  readonly inicial = input<Coordenadas | null>(null);
 
   /**
    * El punto confirmado, o `null`.

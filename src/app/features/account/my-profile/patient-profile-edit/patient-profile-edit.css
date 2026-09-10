@@ -96,6 +96,16 @@
   margin-block-start: var(--sp-4);
 }
 
+/* La dirección con su mapa: un bloque propio que ocupa el renglón entero.
+   Sin esto el mapa es un hijo más de la rejilla y cae en la columna siguiente,
+   debajo de otro campo — se vio en el navegador: el mapa del domicilio quedaba
+   bajo «Teléfono». */
+.datos__direccion {
+  display: grid;
+  gap: var(--sp-3);
+  grid-column: 1 / -1;
+}
+
 @media (min-width: 780px) {
   .datos__campos {
     grid-template-columns: repeat(2, minmax(0, 1fr));

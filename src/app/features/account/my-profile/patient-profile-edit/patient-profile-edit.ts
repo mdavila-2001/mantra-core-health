@@ -42,6 +42,11 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
+import {
+  UbicacionPicker,
+  type Coordenadas,
+  type IdsDePrueba,
+} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
 import { PESTANA, PESTANAS_DEL_PERFIL } from '../pestanas-del-perfil';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import {
@@ -130,6 +135,7 @@ function mismoDia(una: Date, otra: Date): boolean {
   selector: 'app-patient-profile-edit',
   imports: [
     ReferenceCombobox,
+    UbicacionPicker,
     AppButton,
     BackLink,
     Card,
@@ -266,6 +272,57 @@ export class PatientProfileEdit {
   protected readonly correo = signal('');
   protected readonly domicilio = signal('');
   protected readonly direccionTrabajo = signal('');
+
+  /**
+   * El punto en el mapa de cada dirección — lo que el alta ya preguntaba y el
+   * perfil no dejaba tocar.
+   *
+   * Es el patrón de una app de pedidos, y a propósito: se pide la ubicación al
+   * navegador o se marca el pin a mano sobre el mapa, y se confirma mirándolo.
+   * El mismo bloque que usa el registro (`app-ubicacion-picker`), no una copia:
+   * la dirección se escribe igual en los dos lados y ninguno adivina la calle a
+   * partir del punto —eso necesita un geocodificador que la política de
+   * seguridad del servidor no permite—.
+   *
+   * `undefined` es «no lo toqué» y `null` es «lo quité»: son dos cosas
+   * distintas al armar el cuerpo del PATCH, y confundirlas borraría la
+   * ubicación de quien sólo vino a cambiar el teléfono.
+   */
+  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
+  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
+
+  /** El punto guardado que el selector muestra al abrir. */
+  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
+
+  /**
+   * Los identificadores de prueba de cada mapa.
+   *
+   * Se pasan explícitos, como en el alta: el componente no los deriva de un
+   * prefijo porque los que ya existen no son uniformes, y renombrarlos rompería
+   * recorridos que hoy funcionan.
+   */
+  protected readonly idsGpsDomicilio: IdsDePrueba = {
+    mapa: 'perfil-domicilio-mapa',
+    confirmada: 'perfil-domicilio-confirmada',
+    avisoGeocodificacion: 'perfil-domicilio-aviso-geo',
+    quitar: 'perfil-domicilio-quitar-gps',
+    sinConfirmar: 'perfil-domicilio-sin-confirmar',
+    confirmar: 'perfil-domicilio-confirmar',
+    usarUbicacion: 'perfil-domicilio-usar-ubicacion',
+    marcarEnMapa: 'perfil-domicilio-marcar',
+  };
+
+  protected readonly idsGpsTrabajo: IdsDePrueba = {
+    mapa: 'perfil-trabajo-mapa',
+    confirmada: 'perfil-trabajo-confirmada',
+    avisoGeocodificacion: 'perfil-trabajo-aviso-geo',
+    quitar: 'perfil-trabajo-quitar-gps',
+    sinConfirmar: 'perfil-trabajo-sin-confirmar',
+    confirmar: 'perfil-trabajo-confirmar',
+    usarUbicacion: 'perfil-trabajo-usar-ubicacion',
+    marcarEnMapa: 'perfil-trabajo-marcar',
+  };
 
   /**
    * El teléfono va en un control reactivo y no en una señal como el resto.
@@ -456,6 +513,12 @@ export class PatientProfileEdit {
     this.correo.set(perfil.email ?? '');
     this.domicilio.set(perfil.homeAddress?.lines ?? '');
     this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+    this.gpsDomicilioGuardado.set(puntoDe(perfil.homeAddress));
+    this.gpsTrabajoGuardado.set(puntoDe(perfil.workAddress));
+    // Se reinician las intenciones: lo que la persona tocó en una visita
+    // anterior no puede seguir contando como cambio pendiente al releer.
+    this.gpsDomicilio.set(undefined);
+    this.gpsTrabajo.set(undefined);
 
     // Sin `emitEvent`: sembrar no es teclear, y el control ya queda validado.
     // El espejo se actualiza a mano, que es lo que ese evento haría. Se siembra
@@ -761,6 +824,12 @@ export class PatientProfileEdit {
       cambios.workAddressLines = trabajo;
     }
 
+    // El punto de cada dirección, con la misma regla de tres estados que el
+    // texto: sin tocar no viaja, quitado viaja como `null` en los dos extremos,
+    // y movido viaja como par. Nunca media coordenada.
+    Object.assign(cambios, coordenadasCambiadas('home', this.gpsDomicilio()));
+    Object.assign(cambios, coordenadasCambiadas('work', this.gpsTrabajo()));
+
     // La ocupación **sí se puede borrar**: es el único concepto de esta pantalla
     // cuyo validador admite la cadena vacía, así que volver a «Sin especificar»
     // la vacía en vez de no mandar nada. El texto libre de las altas viejas no
@@ -826,4 +895,37 @@ function telefonoCanonico(guardado: string | undefined): string {
 function textoCambiado(actual: string, guardado: string | undefined): string | undefined {
   const limpio = actual.trim();
   return limpio === (guardado ?? '') ? undefined : limpio;
+}
+
+/**
+ * El punto de una dirección, tal como sale del perfil leído.
+ *
+ * Las dos mitades tienen que estar: una dirección con latitud y sin longitud no
+ * ubica nada, y sembrar el mapa con eso pondría el pin en el meridiano cero.
+ */
+function puntoDe(
+  direccion: { latitude?: number; longitude?: number } | undefined,
+): Coordenadas | null {
+  if (direccion?.latitude === undefined || direccion.longitude === undefined) {
+    return null;
+  }
+  return { lat: direccion.latitude, lng: direccion.longitude };
+}
+
+/**
+ * Traduce la intención sobre el mapa a las claves del cuerpo del PATCH.
+ *
+ * `undefined` —no se tocó— no produce ninguna clave: mandar el punto actual
+ * «por las dudas» convertiría cualquier guardado en una reescritura de la
+ * ubicación, y bastaría un error de redondeo del servidor para moverla sola.
+ */
+function coordenadasCambiadas(
+  cual: 'home' | 'work',
+  intencion: Coordenadas | null | undefined,
+): Record<string, number | null> {
+  if (intencion === undefined) return {};
+  if (intencion === null) {
+    return { [`${cual}Latitude`]: null, [`${cual}Longitude`]: null };
+  }
+  return { [`${cual}Latitude`]: intencion.lat, [`${cual}Longitude`]: intencion.lng };
 }

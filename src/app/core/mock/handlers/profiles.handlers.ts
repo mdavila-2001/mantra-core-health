@@ -99,8 +99,24 @@ function perfilPropioDe(p: PacienteSimulado) {
     taxHolderName: p.displayName,
     email: p.email,
     ...(p.photoFileId === undefined ? {} : { photoFileId: p.photoFileId }),
-    homeAddress: { lines: p.direccion, city: displayDe(p.municipioId), municipalityConceptId: p.municipioId, latitude: -17.78, longitude: -63.18 },
-    workAddress: { lines: 'Av. Cañoto esq. Landívar, piso 3', city: displayDe(p.municipioId), municipalityConceptId: p.municipioId },
+    // El punto guardado manda sobre el de ejemplo: si no, editar la ubicación
+    // «funcionaba» y al recargar volvía el de la plaza principal.
+    homeAddress: {
+      lines: p.direccion,
+      city: displayDe(p.municipioId),
+      municipalityConceptId: p.municipioId,
+      ...(p.homeLat === undefined || p.homeLng === undefined
+        ? { latitude: -17.78, longitude: -63.18 }
+        : { latitude: p.homeLat, longitude: p.homeLng }),
+    },
+    workAddress: {
+      lines: p.direccionTrabajo ?? 'Av. Cañoto esq. Landívar, piso 3',
+      city: displayDe(p.municipioId),
+      municipalityConceptId: p.municipioId,
+      ...(p.workLat === undefined || p.workLng === undefined
+        ? {}
+        : { latitude: p.workLat, longitude: p.workLng }),
+    },
     coverages:
       p.aseguradora === undefined
         ? []
@@ -208,6 +224,27 @@ export function registrarPerfiles(router: MockRouter): void {
     return perfilPropioDe(p);
   });
 
+  /**
+   * Las coordenadas de una dirección, tal como llegan en el PATCH.
+   *
+   * Los dos extremos viajan juntos o no viajan: media coordenada no ubica nada,
+   * así que un cuerpo con sólo la latitud se ignora entero en vez de guardar un
+   * punto imposible. `null` en los dos **quita** el punto, que es distinto de no
+   * mandarlos —eso es «no lo toqué»— y por eso se distingue acá.
+   */
+  function coordenadasDelCuerpo(
+    cambios: Record<string, unknown>,
+    cual: 'home' | 'work',
+  ): Record<string, number | undefined> {
+    const lat = cambios[`${cual}Latitude`];
+    const lng = cambios[`${cual}Longitude`];
+    if (lat === null && lng === null) {
+      return { [`${cual}Lat`]: undefined, [`${cual}Lng`]: undefined };
+    }
+    if (typeof lat !== 'number' || typeof lng !== 'number') return {};
+    return { [`${cual}Lat`]: lat, [`${cual}Lng`]: lng };
+  }
+
   router.patch('/profiles/patients/me', (request) => {
     const p = pacienteDeSesion(request);
     if (p === undefined) return notFound('No tenés perfil de paciente');
@@ -221,6 +258,14 @@ export function registrarPerfiles(router: MockRouter): void {
       ...(typeof cambios['residenceMunicipalityConceptId'] === 'string' ? { municipioId: cambios['residenceMunicipalityConceptId'] } : {}),
       ...(typeof cambios['occupationConceptId'] === 'string' ? { ocupacionId: cambios['occupationConceptId'] } : {}),
       ...(typeof cambios['homeAddressLines'] === 'string' ? { direccion: cambios['homeAddressLines'] } : {}),
+      // La dirección de trabajo no se guardaba: el contrato la declaraba, la
+      // pantalla la mandaba y la maqueta la tiraba, así que editarla parecía
+      // funcionar hasta recargar.
+      ...(typeof cambios['workAddressLines'] === 'string'
+        ? { direccionTrabajo: cambios['workAddressLines'] }
+        : {}),
+      ...coordenadasDelCuerpo(cambios, 'home'),
+      ...coordenadasDelCuerpo(cambios, 'work'),
     });
     const conNombre = actualizado!;
     pacientes.actualizar(p.id, { displayName: `${conNombre.name}${conNombre.middleName ? ` ${conNombre.middleName}` : ''} ${conNombre.lastName} ${conNombre.motherLastName}` });

@@ -1,6 +1,8 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-10 — **P23 a P26 son nuevos**, de la tanda del expediente clínico, las
+**Actualizado:** 2026-09-10 (tarde) — **P27 es nuevo**: el paciente ya puede mover el punto de
+su domicilio y el de su trabajo en el mapa, y el `PATCH` del perfil no acepta coordenadas.
+Antes, ese mismo día: **P23 a P26**, de la tanda del expediente clínico, las
 recetas, los adjuntos y el horario. Los cuatro comparten forma: el frontend ya manda el dato, la
 maqueta ya lo guarda y lo muestra, y **contra la API real la petición se rechaza entera** porque el
 DTO no declara la clave (`forbidNonWhitelisted`). Ninguno se puede llevar a `dev` sin su lado de
@@ -12,6 +14,40 @@ backend.
 | **P24** | `indication_text` en `medication_requests` — el motivo escrito de la receta, para los casos sin diagnóstico previo |
 | **P25** | Tres `OwnerType` y dos rutas `:id/attachments` — hoy sólo diagnósticos y procedimientos aceptan adjuntos |
 | **P26** | `encounter_id` en `allergy_intolerances` **y los cinco bindings de catálogo de alergia, que no existen** |
+| **P27** | Cuatro claves de coordenadas en el `PATCH` del perfil del paciente — hoy el punto del mapa se declara una sola vez, en el alta, y **no hay forma de cambiarlo nunca más** |
+
+---
+
+## P27 · el paciente no puede mover su ubicación
+
+**Qué hace hoy el frontend.** El editor del perfil (pestaña «Ubicación y contacto») muestra el
+mismo selector de mapa que el alta —`app-ubicacion-picker`— debajo del domicilio y debajo de la
+dirección de trabajo: se pide la ubicación al navegador o se marca el pin a mano, y se confirma
+mirándolo. Es el patrón de una app de pedidos, que es como se pidió.
+
+**Qué falta.** `UpdatePatientProfileDto` no declara ninguna clave de coordenadas. El contrato del
+front ya las manda:
+
+```
+homeLatitude   homeLongitude
+workLatitude   workLongitude
+```
+
+Los cuatro son `number | null` y **viajan de a pares**: media coordenada no ubica nada. `null` en
+los dos extremos **quita** el punto; ausentes significan «no lo toqué», que es una afirmación
+distinta y por eso se distinguen.
+
+**Por qué importa más de lo que parece.** El comentario que había en el contrato del front decía
+que «las coordenadas las conserva el backend de la dirección anterior». Leído de cerca, eso
+significa que el punto se fija en el alta y **queda congelado para siempre**: alguien que se muda
+sigue apareciendo en la casa vieja y no tiene ninguna pantalla donde corregirlo.
+
+**Estado.** Implementado y verificado contra la maqueta, que ya guarda los cuatro valores y los
+devuelve. Contra la API real la petición se rechazaría entera con 422 por `forbidNonWhitelisted`.
+
+De paso, la maqueta tampoco guardaba `workAddressLines` —lo declaraba el contrato, la pantalla lo
+mandaba y el handler lo tiraba—, así que editar la dirección de trabajo parecía funcionar hasta
+recargar. Corregido.
 
 Antes: 2026-08-23 — **P15 a P18**, del plan de UX del 22/08. Antes: 2026-08-12 (tarde) · **P14 tiene diagnóstico nuevo y procedimiento de cierre —
 ver su sección: el modelo YA tiene las columnas; lo que falta es aplicar un patch en cada

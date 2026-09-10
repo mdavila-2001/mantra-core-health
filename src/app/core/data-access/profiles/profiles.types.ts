@@ -761,12 +761,27 @@ export interface OwnPatientProfileChanges {
   /**
    * El texto del domicilio (§1.8) y el de la dirección de trabajo (§1.10).
    *
-   * Sólo el texto: el municipio viaja por `residenceMunicipalityConceptId`,
-   * porque sale de un catálogo, y las coordenadas las conserva el backend de la
-   * dirección anterior. `''` quita la dirección.
+   * El municipio viaja aparte, por `residenceMunicipalityConceptId`, porque
+   * sale de un catálogo. `''` quita la dirección.
    */
   readonly homeAddressLines?: string;
   readonly workAddressLines?: string;
+  /**
+   * El punto en el mapa de cada dirección.
+   *
+   * Antes no existían y el comentario de este bloque decía que «las coordenadas
+   * las conserva el backend de la dirección anterior» — que es otra forma de
+   * decir que **el paciente no tenía cómo cambiarlas**: el alta las manda una
+   * vez y después quedaban congeladas para siempre, aunque se mudara.
+   *
+   * Van de a pares y nunca sueltas: media coordenada no ubica nada. Para
+   * **quitar** el punto se mandan los dos en `null`, que es una afirmación
+   * distinta de no mandarlos —eso es «no lo toqué»—.
+   */
+  readonly homeLatitude?: number | null;
+  readonly homeLongitude?: number | null;
+  readonly workLatitude?: number | null;
+  readonly workLongitude?: number | null;
 }
 
 /* ============================================================================

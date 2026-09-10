@@ -91,6 +91,19 @@ export interface PacienteSimulado {
   readonly photoFileId?: string;
   readonly aseguradora?: string;
   readonly plan?: string;
+  /**
+   * El punto en el mapa de cada dirección, cuando el paciente lo declaró.
+   *
+   * Opcionales porque los datos de ejemplo no los traen: se llenan cuando
+   * alguien edita su perfil y confirma la ubicación. Ver el PATCH de
+   * `/profiles/patients/me`.
+   */
+  readonly homeLat?: number;
+  readonly homeLng?: number;
+  readonly workLat?: number;
+  readonly workLng?: number;
+  /** La dirección de trabajo, que antes no se guardaba en ningún lado. */
+  readonly direccionTrabajo?: string;
 }
 
 const CIUDADES = [
