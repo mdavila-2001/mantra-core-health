@@ -328,32 +328,80 @@ describe('PatientChart', () => {
    * compartida— porque el expediente puede listar varios diagnósticos a la vez.
    */
   describe('adjuntar un archivo a un diagnóstico ya registrado (ALV-033)', () => {
-    it('alternarAdjuntos abre y cierra el subidor de ESA fila', () => {
+    /**
+     * El subidor pasó a **modal**: la fila sólo abre y cierra, y ya no crece
+     * dentro de la tabla. Es lo que la regla de la casa pide para toda edición
+     * que pida datos.
+     */
+    it('abrir y cerrar los adjuntos de ESA fila', () => {
       responderNombre();
       responderExpediente();
 
-      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBeNull();
+      expect(interno<() => unknown>('adjuntandoA')()).toBeNull();
 
-      interno<(id: string) => void>('alternarAdjuntos')('c-1');
-      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBe('c-1');
+      interno<(fila: { id: string; principal: string }, bloque: string) => void>('abrirAdjuntos')(
+        { id: 'c-1', principal: 'Hipertensión' },
+        'diagnosticos',
+      );
+      expect(interno<() => { id: string } | null>('adjuntandoA')()?.id).toBe('c-1');
 
-      interno<(id: string) => void>('alternarAdjuntos')('c-1');
-      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBeNull();
+      interno<() => void>('cerrarAdjuntos')();
+      expect(interno<() => unknown>('adjuntandoA')()).toBeNull();
     });
 
-    it('el vínculo del adjunto pasa por `clinical`, no por el genérico de `common`', () => {
+    /**
+     * Cada bloque liga por **su** ruta de `clinical`: el genérico de `common` no
+     * exige rol ni verifica que el dueño exista, y esto es dato clínico.
+     */
+    it('el vínculo pasa por la ruta de `clinical` del bloque, no por la genérica', () => {
       responderNombre();
       responderExpediente();
 
-      const enlazar =
-        interno<(fileId: string, conditionId: string) => { subscribe: (o: unknown) => void }>(
-          'enlazarAdjuntoAlDiagnostico',
-        );
-      enlazar('file-1', 'c-1').subscribe({ next: () => undefined });
+      const abrir = interno<(fila: { id: string; principal: string }, bloque: string) => void>(
+        'abrirAdjuntos',
+      );
+      const enlazar = interno<
+        (fileId: string, ownerId: string) => { subscribe: (o: unknown) => void }
+      >('enlazarAdjunto');
 
+      abrir({ id: 'c-1', principal: 'Hipertensión' }, 'diagnosticos');
+      enlazar('file-1', 'c-1').subscribe({ next: () => undefined });
       http
         .expectOne('/clinical/conditions/c-1/attachments')
         .flush({ id: 'link-1', fileId: 'file-1', ownerId: 'c-1', createdAt: '2026-01-01' });
+
+      abrir({ id: 'rx-1', principal: 'Enalapril' }, 'medicacion');
+      enlazar('file-2', 'rx-1').subscribe({ next: () => undefined });
+      http
+        .expectOne('/clinical/medication-requests/rx-1/attachments')
+        .flush({ id: 'link-2', fileId: 'file-2', ownerId: 'rx-1', createdAt: '2026-01-01' });
+
+      abrir({ id: 'al-1', principal: 'Penicilina' }, 'alergias');
+      enlazar('file-3', 'al-1').subscribe({ next: () => undefined });
+      http
+        .expectOne('/clinical/allergy-intolerances/al-1/attachments')
+        .flush({ id: 'link-3', fileId: 'file-3', ownerId: 'al-1', createdAt: '2026-01-01' });
+    });
+
+    /** El tipo de dueño acompaña al bloque; el encuentro cae al genérico. */
+    it('el tipo de dueño sale del bloque de la fila', () => {
+      responderNombre();
+      responderExpediente();
+
+      const abrir = interno<(fila: { id: string; principal: string }, bloque: string) => void>(
+        'abrirAdjuntos',
+      );
+      const dueno = interno<() => string>('duenoDelAdjunto');
+      const enlace = interno<() => unknown>('enlaceDelAdjunto');
+
+      abrir({ id: 'rx-1', principal: 'Enalapril' }, 'medicacion');
+      expect(dueno()).toBe('MEDICATION_REQUEST');
+      expect(enlace()).not.toBeNull();
+
+      abrir({ id: 'enc-1', principal: 'Consulta' }, 'encuentros');
+      expect(dueno()).toBe('ENCOUNTER');
+      // Los encuentros todavía no tienen ruta propia en `clinical`.
+      expect(enlace()).toBeNull();
     });
   });
 

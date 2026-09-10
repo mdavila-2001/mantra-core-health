@@ -1,4 +1,32 @@
 <app-card variant="outlined" padding="lg" class="receta">
+  <!-- ALV-033, ahora también en la receta: el archivo se liga a ESTA receta,
+       no al paciente en general. Sólo puede ofrecerse después de prescribir
+       —adjuntar exige que exista— y no se cierra solo: elegir los archivos
+       lleva su tiempo. -->
+  @if (recetaRecienCreada(); as requestId) {
+    <app-card variant="outlined" padding="lg" class="receta__adjuntos">
+      <div class="receta__adjuntos-encabezado">
+        <h3 class="receta__adjuntos-titulo">Adjuntar archivos a esta receta</h3>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="receta-adjuntos-cerrar"
+          (clicked)="cerrarAdjuntosDeLaReceta()"
+        >
+          Listo, sin adjuntar
+        </button>
+      </div>
+      <app-attachment-uploader
+        ownerType="MEDICATION_REQUEST"
+        [ownerId]="requestId"
+        [linkVia]="enlazarAdjuntoALaReceta"
+        (attachedAll)="cerrarAdjuntosDeLaReceta()"
+      />
+    </app-card>
+  }
+
   <h2 class="receta__titulo">Medicación</h2>
 
   <!-- El aviso de precondición va primero y en ámbar: no es un fallo, es un

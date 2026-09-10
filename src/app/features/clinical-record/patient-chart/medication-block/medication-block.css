@@ -116,3 +116,20 @@
   gap: var(--sp-3);
 }
 
+
+/* El panel de adjuntos de la receta recién prescrita. Mismo tratamiento que el
+   del diagnóstico: son la misma cosa en dos bloques. */
+.receta__adjuntos-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+}
+
+.receta__adjuntos-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 500;
+}

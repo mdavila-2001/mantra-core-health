@@ -133,6 +133,22 @@
      casa para toda edición que pida datos, y es lo que evita que la fila crezca
      y deforme la tabla. El bloque es EL MISMO de «Atención» —no una copia—, con
      el encuentro relajado: acá la cita se elige, y puede no haber ninguna. -->
+@if (adjuntandoA(); as destino) {
+  <app-content-dialog
+    [heading]="'Adjuntar archivos'"
+    [description]="destino.titulo"
+    closeLabel="Listo"
+    (closed)="cerrarAdjuntos()"
+  >
+    <app-attachment-uploader
+      [ownerType]="duenoDelAdjunto()"
+      [ownerId]="destino.id"
+      [linkVia]="enlaceDelAdjunto()"
+      (attachedAll)="cerrarAdjuntos()"
+    />
+  </app-content-dialog>
+}
+
 @if (altaDeDiagnosticoAbierta()) {
   <app-content-dialog
     heading="Nuevo diagnóstico"
@@ -213,23 +229,21 @@
         Aplicar
       </button>
     }
-    <button
-      app-button
-      variant="ghost"
-      size="sm"
-      type="button"
-      data-testid="expediente-adjuntar-archivo"
-      (clicked)="alternarAdjuntos(fila.id)"
-    >
-      {{ adjuntandoArchivoA() === fila.id ? 'Cerrar adjuntos' : 'Adjuntar archivo' }}
-    </button>
   </div>
-  @if (adjuntandoArchivoA() === fila.id) {
-    <app-attachment-uploader
-      ownerType="CONDITION"
-      [ownerId]="fila.id"
-      [linkVia]="enlazarAdjuntoAlDiagnostico"
-      (attached)="cerrarAdjuntos()"
-    />
-  }
+</ng-template>
+
+<!-- Adjuntar, para cualquier bloque que lo admita. Abre el modal en vez de
+     desplegarse dentro de la fila: el desplegable inline hacía crecer la celda
+     y deformaba la tabla. -->
+<ng-template #celdaAdjuntos let-fila>
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    type="button"
+    data-testid="expediente-adjuntar-archivo"
+    (clicked)="abrirAdjuntos(fila, bloqueDeLaFila(fila))"
+  >
+    Adjuntar
+  </button>
 </ng-template>

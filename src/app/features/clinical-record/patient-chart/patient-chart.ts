@@ -18,6 +18,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import type { OwnerType } from '../../../core/data-access/files/files.types';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
@@ -239,6 +240,8 @@ export class PatientChart {
   /** Patch v4.0.8: sólo la usa el bloque `diagnosticos`, ver {@link columnasPara}. */
   private readonly celdaAcciones =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAcciones');
+  private readonly celdaAdjuntos =
+    viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAdjuntos');
 
   /**
    * El perfil que se está mirando, leído del segmento `:profileId`.
@@ -647,19 +650,72 @@ export class PatientChart {
      de la historia: cualquier diagnóstico ya listado puede recibir un
      adjunto, no sólo el último. */
 
-  /** La condición a la que se le está ofreciendo adjuntar un archivo, o `null`. */
-  protected readonly adjuntandoArchivoA = signal<string | null>(null);
+  /**
+   * A qué registro se le están adjuntando archivos, o `null`.
+   *
+   * **En modal y no dentro de la fila.** El desplegable inline hacía crecer la
+   * celda y deformaba la tabla entera; es lo que la regla de la casa evita
+   * pidiendo modal para toda edición que pida datos.
+   */
+  protected readonly adjuntandoA = signal<{
+    readonly id: string;
+    readonly bloque: string;
+    readonly titulo: string;
+  } | null>(null);
 
-  /** El vínculo pasa por `clinical`, no por el genérico de `common` — mismo criterio que `diagnosis-block`. */
-  protected readonly enlazarAdjuntoAlDiagnostico = (fileId: string, conditionId: string) =>
-    this.clinical.attachFileToCondition(conditionId, fileId);
+  /**
+   * El vínculo pasa por `clinical` y no por el genérico de `common`.
+   *
+   * El de `common` no exige rol ni verifica que el dueño exista —sirve a
+   * cualquier contexto—, y esto es dato clínico. Cada bloque liga por su propia
+   * ruta; los encuentros todavía no tienen una y caen al genérico.
+   */
+  protected readonly enlazarAdjunto = (fileId: string, ownerId: string) => {
+    const bloque = this.adjuntandoA()?.bloque;
+    if (bloque === 'medicacion') return this.clinical.attachFileToMedicationRequest(ownerId, fileId);
+    if (bloque === 'alergias') return this.clinical.attachFileToAllergy(ownerId, fileId);
+    return this.clinical.attachFileToCondition(ownerId, fileId);
+  };
 
-  protected alternarAdjuntos(conditionId: string): void {
-    this.adjuntandoArchivoA.update((actual) => (actual === conditionId ? null : conditionId));
+  /** El tipo de dueño del vínculo, según el bloque de la fila. */
+  protected readonly duenoDelAdjunto = computed<OwnerType>(() => {
+    switch (this.adjuntandoA()?.bloque) {
+      case 'medicacion':
+        return 'MEDICATION_REQUEST';
+      case 'alergias':
+        return 'ALLERGY_INTOLERANCE';
+      case 'encuentros':
+        return 'ENCOUNTER';
+      default:
+        return 'CONDITION';
+    }
+  });
+
+  /** Los encuentros no tienen ruta propia en `clinical`: van por el genérico. */
+  protected readonly enlaceDelAdjunto = computed(() =>
+    this.adjuntandoA()?.bloque === 'encuentros' ? null : this.enlazarAdjunto,
+  );
+
+  /**
+   * De qué bloque es una fila.
+   *
+   * La celda de adjuntos es **una sola** plantilla para los cuatro bloques, y
+   * `ColumnDef.cell` no le pasa la clave: se deduce del identificador, que ya
+   * está indexado por bloque.
+   */
+  protected bloqueDeLaFila(fila: FilaClinica): string {
+    return (
+      this.bloques().find((bloque) => bloque.filas.some((f) => f.id === fila.id))?.clave ??
+      'diagnosticos'
+    );
+  }
+
+  protected abrirAdjuntos(fila: FilaClinica, bloque: string): void {
+    this.adjuntandoA.set({ id: fila.id, bloque, titulo: fila.principal });
   }
 
   protected cerrarAdjuntos(): void {
-    this.adjuntandoArchivoA.set(null);
+    this.adjuntandoA.set(null);
   }
 
   /**
@@ -719,6 +775,21 @@ export class PatientChart {
               header: 'Cambiar estado',
               priority: 2,
               cell: this.celdaAcciones(),
+            } satisfies ColumnDef<FilaClinica>,
+          ]
+        : []),
+      // «En todos los formularios debe poderse poner un adjunto… incluso en la
+      // medicación» — pedido del cliente. Los cuatro bloques que guardan dato
+      // clínico de una persona; los narrativos (notas, planes, documentos)
+      // tienen su propio camino y quedan fuera de esta tanda.
+      ...(this.puedeEscribir() &&
+      ['diagnosticos', 'medicacion', 'alergias', 'encuentros'].includes(clave ?? '')
+        ? [
+            {
+              key: 'adjuntos',
+              header: 'Archivos',
+              priority: 3,
+              cell: this.celdaAdjuntos(),
             } satisfies ColumnDef<FilaClinica>,
           ]
         : []),
