@@ -11,7 +11,7 @@ Fecha: 2026-09-09. Rama de referencia: `origin/mockup` (la que mira el usuario).
 | 1 · «Atender» nace sólo de Mis citas | Hecha | `ced1531f`, `3e164060`, `b3f0fa58`, `fad06994` |
 | 2 · Evoluciones deja de ser un espejo | Hecha | `b9a0175a` |
 | 3 · Expediente: la card y las ediciones a modales | Hecha | `3e164060` (3.1), `18736b37` (3.3), `76616d05` (3.2), `261050d4` (3.4) |
-| 4 · Verificación | Unitarias hechas; recorridos Playwright **sin correr** |
+| 4 · Verificación | Hecha | `4b67435d` (recorrido 15/15), `ff3a708c` (evidencia 18/18) |
 | 5 · Documentación | Hecha |
 
 ### Lo que quedó fuera, a propósito
@@ -22,10 +22,9 @@ Fecha: 2026-09-09. Rama de referencia: `origin/mockup` (la que mira el usuario).
   «opcional»): la pantalla ya trae las notas reales del expediente bajo
   demanda, así que un mock del endpoint que no existe sólo enseñaría una
   versión final que el backend todavía no puede sostener.
-- **Los recorridos Playwright de las fases 2 y 3.** Los de la fase 1 se
-  actualizaron (`fad06994`) pero **no se corrieron**: necesitan `ng serve`
-  levantado. Lo verificado hasta acá es `lint`, `typecheck`, `build` y las
-  unitarias.
+Todo lo demás está corrido contra `ng serve`: `playwright/evoluciones-y-atencion.mjs`
+da 15/15 y `playwright/verificacion-pedidos.mjs` 18/18, además de `lint`,
+`typecheck`, `build` y las unitarias.
 
 ### Deuda que este trabajo deja anotada
 
