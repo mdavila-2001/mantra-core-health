@@ -175,4 +175,13 @@ export interface DatosPersonalesVisibles {
   readonly correoPersonal: string;
   /** La calle del domicilio. El municipio sigue en `domicilio`. */
   readonly direccion: string;
+  /**
+   * El enlace al mapa del domicilio, o `null` si no declaró coordenadas.
+   *
+   * Se arma en el contenedor y no en la vista para que ésta siga sin saber de
+   * dónde salió el dato: acá llega un enlace listo o nada. Mismo criterio que
+   * la ficha del paciente, que ya lo hacía — el alta de médico pregunta la
+   * «Ubicación GPS» del domicilio y la ficha no la mostraba.
+   */
+  readonly mapaDomicilio: string | null;
 }
