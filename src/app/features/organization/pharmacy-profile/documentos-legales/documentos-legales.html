@@ -49,6 +49,9 @@
             </div>
           </dl>
 
+          <!-- Los seis papeles repiten los mismos dos botones, así que cada uno
+               dice de qué documento es: seis «Descargar» seguidos no se
+               distinguen escuchándolos de a uno. -->
           <div class="papeles__acciones">
             <button
               app-button
@@ -56,6 +59,7 @@
               size="sm"
               type="button"
               [attr.data-testid]="'ficha-descargar-' + fila.documento.clave"
+              [attr.aria-label]="'Descargar ' + fila.documento.nombre"
               (clicked)="avisarDescarga(fila)"
             >
               Descargar
@@ -66,6 +70,11 @@
               size="sm"
               type="button"
               [attr.data-testid]="'ficha-reemplazar-' + fila.documento.clave"
+              [attr.aria-label]="
+                (filaEnReemplazo() === fila.documento.clave
+                  ? 'Cancelar el reemplazo de '
+                  : 'Reemplazar ') + fila.documento.nombre
+              "
               (clicked)="alternarReemplazo(fila.documento.clave)"
             >
               {{ filaEnReemplazo() === fila.documento.clave ? 'Cancelar' : 'Reemplazar' }}

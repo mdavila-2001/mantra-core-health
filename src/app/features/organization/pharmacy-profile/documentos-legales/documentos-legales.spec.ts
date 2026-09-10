@@ -94,6 +94,17 @@ describe('DocumentosLegales', () => {
     expect(aviso?.message).toContain('seprec-matricula-comercio.pdf');
   });
 
+  it('los botones repetidos dicen de qué documento son', () => {
+    const root = montar(ready(DOCUMENTOS_DE_EJEMPLO));
+
+    expect(
+      root.querySelector('[data-testid="ficha-descargar-seprec"]')?.getAttribute('aria-label'),
+    ).toBe('Descargar SEPREC');
+    expect(
+      root.querySelector('[data-testid="ficha-reemplazar-seprec"]')?.getAttribute('aria-label'),
+    ).toBe('Reemplazar SEPREC');
+  });
+
   it('el selector de archivo se abre en la fila que se pidió, y en una sola', () => {
     const root = montar(ready(DOCUMENTOS_DE_EJEMPLO));
 
