@@ -203,12 +203,22 @@ export class Tabs implements TabsHost {
   constructor() {
     // Y cuando cambia el ancho DISPONIBLE, que no depende de ninguna señal: el
     // menú lateral que se pliega, una columna que se reparte de otra manera.
-    // `afterNextRender` sólo corre en el navegador, así que en el servidor —sin
-    // `ResizeObserver`— no hay nada que guardar.
+    // `afterNextRender` no corre en el servidor, así que ahí no hay nada que
+    // guardar.
+    //
+    // **Pero «navegador» no garantiza `ResizeObserver`.** jsdom —el entorno de
+    // las 5 000 pruebas de este repo— ejecuta `afterNextRender` y **no** lo
+    // implementa: el `new ResizeObserver` tiraba `ReferenceError` y volteaba la
+    // prueba entera de cualquier pantalla con pestañas suficientes para
+    // desbordar la tira. Se descubrió el 2026-09-10 al agregarle la octava
+    // pestaña a «Organización médica»: con siete no desbordaba y el fallo no
+    // aparecía. Sin el observador la tira sigue midiéndose al cambiar de
+    // pestaña y al cambiar el contenido; lo único que se pierde es el remedido
+    // ante un cambio de ancho, que en una prueba no ocurre.
     const destruccion = inject(DestroyRef);
     afterNextRender(() => {
       const tira = this.tablist()?.nativeElement;
-      if (tira === undefined) {
+      if (tira === undefined || typeof ResizeObserver === 'undefined') {
         return;
       }
       const observador = new ResizeObserver(() => this.medirDesborde());

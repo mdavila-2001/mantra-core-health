@@ -194,7 +194,7 @@ describe('rutas del armazón', () => {
      * (feedback de la analista, barrido del 18/08/2026).
      */
     it('las hijas de «Mi perfil» que son de quien atiende lo declaran y llevan el guard', () => {
-      const DE_QUIEN_ATIENDE = ['my-account/edit', 'my-account/preview', 'my-account/articles'];
+      const DE_QUIEN_ATIENDE = ['my-account/edit', 'my-account/articles'];
 
       for (const path of DE_QUIEN_ATIENDE) {
         const ruta = hijas.find((r) => r.path === path);

@@ -188,9 +188,9 @@ describe('seccionRolesGuard', () => {
 
   it('una hija de «Mi perfil» que declara roles propios no la abre el paciente', () => {
     // «Mi perfil» no declara roles, así que por prefijo pasaría cualquiera. La
-    // ruta manda: el paciente que escribe /my-account/preview a mano rebota
+    // ruta manda: el paciente que escribe /my-account/articles a mano rebota
     // (feedback de la analista, barrido del 18/08/2026).
-    expect(destino(ejecutar('/my-account/preview', ['USER', 'PATIENT'], DE_QUIEN_ATIENDE))).toBe(
+    expect(destino(ejecutar('/my-account/articles', ['USER', 'PATIENT'], DE_QUIEN_ATIENDE))).toBe(
       SECCION_DENEGADA_ROUTE,
     );
   });

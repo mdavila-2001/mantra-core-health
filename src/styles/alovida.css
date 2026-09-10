@@ -99,8 +99,14 @@
   --nav-halo-c:   rgba(122, 191, 232, .06);
   --nav-halo-0:   rgba(122, 191, 232, 0);
 
-  /* Superficies */
-  --sup-pagina:   #F6F3ED;
+  /* Superficies
+     `--sup-pagina` es **blanco** desde el 2026-09-10, por pedido del
+     propietario: «no me sirve si no tiene el fondo blanco». Era `#F6F3ED`, un
+     marfil cálido que venía del maestro de la bóveda. El blanco no deja a las
+     tarjetas sin contorno —`.app-card` lleva `1px solid var(--filete-2)`, así
+     que se siguen leyendo— y el modo oscuro no se toca: redefine este mismo
+     token más abajo. Ver también los dos velos del `<body>`. */
+  --sup-pagina:   #FFFFFF;
   --sup-tarjeta:  #FFFFFF;
   --sup-inset:    #F9F8F4;
   --sup-nav:      #0B557E;
@@ -348,6 +354,17 @@ html::after {
 :root[data-tema="oscuro"] body::before, :root[data-tema="oscuro"] body::after,
 :root[data-theme="dark"] body::before, :root[data-theme="dark"] body::after {
   opacity: 1;
+}
+
+/* En claro, los dos velos se apagan (propietario, 2026-09-10: «fondo blanco»).
+   No se borran: son el fondo vivo del modo oscuro, donde siguen respirando con
+   el puntero. Acá se apagan **por tema**, no bajando `--fondo-presencia`, que
+   lo escribe el runtime en cada movimiento del mouse y volvería a encenderlos
+   en el cuadro siguiente. Sin esto, el blanco de `--sup-pagina` se ve celeste:
+   los focos de menta y aguamarina van encima. */
+:root:not([data-tema="oscuro"]):not([data-theme="dark"]) body::before,
+:root:not([data-tema="oscuro"]):not([data-theme="dark"]) body::after {
+  opacity: 0;
 }
 h1, h2, h3 { margin: 0; font-family: var(--f-titulo); color: var(--tinta-marca); }
 h1, .titulo-h1 { font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -.015em; }
@@ -3796,9 +3813,16 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 
 /* --- Puente con la aplicación ------------------------------------------- *
    Lo único que se agrega a la hoja de la bóveda, y no sale de ella: el fondo
-   que allá llevaba cada archivo en su atributo `style`. */
+   que allá llevaba cada archivo en su atributo `style`.
 
-body {
+   **Sólo en oscuro desde el 2026-09-10.** En claro el propietario pidió fondo
+   blanco, y una imagen encima de un color blanco se sigue viendo celeste: el
+   color no alcanza si la textura queda. En oscuro la imagen no molesta —el
+   fondo siempre estuvo a plena vista ahí— y sacarla habría sido cambiar algo
+   que nadie pidió. */
+
+:root[data-tema="oscuro"] body,
+:root[data-theme="dark"] body {
   background-image: url("/alovida/imagenes/fondo-vista.svg");
 }
 

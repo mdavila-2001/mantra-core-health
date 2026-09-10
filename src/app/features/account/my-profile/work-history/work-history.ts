@@ -1,5 +1,6 @@
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -138,6 +139,24 @@ export class WorkHistory {
    * mismo dato dos veces con dos formas distintas.
    */
   readonly layout = input<'flat' | 'timeline'>('flat');
+
+  /**
+   * `true` para dibujar **sólo** «Dónde atiendo»: los consultorios propios y su
+   * alta, sin el historial laboral.
+   *
+   * Es otro eje que `layout`, no otro valor suyo: `layout` dice **cómo** se
+   * pinta el historial y esto dice **si** se pinta. Mezclarlos en un solo input
+   * daría un `'timeline' | 'flat' | 'sin-historial'` donde el tercer valor no
+   * responde la misma pregunta que los otros dos.
+   *
+   * Lo usa «Mi consultorio propio» (`administration/my-practice`), que es la
+   * pantalla que el propietario pidió el 2026-09-10 en lugar de «Tu
+   * organización». No se copió el formulario allá: crear, ubicar en el mapa y
+   * retirar un consultorio ya vive acá —con su catálogo de municipios, su
+   * confirmación y sus pruebas— y tenerlo dos veces garantiza que el arreglo de
+   * uno no llegue al otro.
+   */
+  readonly soloConsultorios = input(false, { transform: booleanAttribute });
 
   /** Se emite tras un alta exitosa, para que quien embebe el formulario recargue lo que ya tenía leído. */
   readonly added = output<void>();

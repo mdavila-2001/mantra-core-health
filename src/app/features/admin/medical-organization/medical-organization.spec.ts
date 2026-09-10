@@ -266,4 +266,47 @@ describe('MedicalOrganization', () => {
 
     expect(componente['consola']().status).toBe('ready');
   });
+
+  /* -- La pestaña absorbida (2026-09-10) ------------------------------------ */
+
+  it('«Mis vinculaciones» es la última pestaña, y el índice constante apunta a ella', async () => {
+    // El índice vive en una constante (`PESTANA_VINCULACIONES`) porque lo usan
+    // el aterrizaje del login y el `?tab=memberships`. La primera vez apuntó a
+    // «Inventario»: la pestaña se había insertado antes y nadie lo notó hasta
+    // ver la foto. Esto lo impide.
+    cargar();
+
+    const rotulos = Array.from(
+      harness.routeNativeElement!.querySelectorAll('[role="tab"]'),
+    ).map((t) => t.textContent?.trim());
+
+    expect(rotulos.at(-1)).toBe('Mis vinculaciones');
+    expect(componente['pestanaDeVinculaciones']).toBe(rotulos.length - 1);
+  });
+
+  it('con ?tab=memberships abre esa pestaña, no la primera', async () => {
+    // Es el aterrizaje de quien entra sin ninguna organización: sin esto caería
+    // en «Sedes», siete tablas vacías de una organización que no tiene.
+    //
+    // Se resuelve primero lo que dejó pendiente el `beforeEach`: navegar de
+    // nuevo sin hacerlo deja dos `/practices` en vuelo y el fallo se lee como
+    // si lo causara la pestaña.
+    cargar();
+
+    await harness.navigateByUrl(`${RUTA}?tab=memberships`);
+    harness.detectChanges();
+
+    // Angular **reutiliza** el componente cuando sólo cambia la query, así que
+    // esto además comprueba que la pestaña se recalcula sin volver a construir.
+    const activa = harness.routeNativeElement!.querySelector('[role="tab"][aria-selected="true"]');
+    expect(activa?.textContent?.trim()).toBe('Mis vinculaciones');
+
+    // Al abrirse, la pestaña monta «Mis vinculaciones», que pide lo suyo: la
+    // lista de organizaciones para el selector y las vinculaciones propias.
+    // Que aparezcan **acá y no antes** es la prueba de que el contenido de una
+    // pestaña cerrada no se instancia — que es lo que evita pedir `/practices`
+    // dos veces en cada visita al panel.
+    http.expectOne('/practices').flush([PRACTICA]);
+    http.expectOne('/practitioners/me/role-assignments').flush([]);
+  });
 });

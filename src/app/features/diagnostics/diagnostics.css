@@ -16,7 +16,17 @@
 .laboratorio__nota {
   display: grid;
   gap: var(--sp-3);
-  /* Texto corrido: a lo ancho de la tabla la línea se vuelve ilegible. */
+}
+
+/* **El tope va en el texto, no en la tarjeta** (propietario, 2026-09-10).
+   Estaba en `.laboratorio__nota`, así que la tarjeta medía 68ch y quedaba
+   pegada a la izquierda con 524 px en blanco a su derecha, justo debajo de una
+   tabla que sí llega a los bordes. El argumento de la medida de lectura es
+   correcto y se conserva —una línea a lo ancho de la tabla es ilegible—, pero
+   se aplica donde corresponde: al párrafo. La caja acompaña al resto de la
+   pantalla. */
+.laboratorio__nota-texto,
+.laboratorio__nota-titulo {
   max-inline-size: 68ch;
 }
 

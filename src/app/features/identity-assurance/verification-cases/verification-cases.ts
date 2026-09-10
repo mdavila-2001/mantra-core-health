@@ -1,9 +1,11 @@
 import { DatePipe } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  input,
   signal,
   viewChild,
   type TemplateRef,
@@ -45,7 +47,18 @@ const TYPE_LABELS: Readonly<Record<string, string>> = {
   PRACTITIONER_IDENTITY: 'Identidad profesional',
   PRACTITIONER_LICENSE: 'Matrícula profesional',
   PATIENT_IDENTITY: 'Identidad (paciente)',
-  TENANT_VERIFICATION: 'Institución',
+  // **El mismo tipo, con los dos códigos que circulan.** Acá decía sólo
+  // `TENANT_VERIFICATION`, pero el catálogo que publica
+  // `GET /identity/verification-types` lo llama `TENANT` — y como un código sin
+  // entrada se muestra tal cual, la tabla mostraba «TENANT» crudo al lado de
+  // «Identidad profesional» y «Matrícula profesional» (2026-09-10).
+  //
+  // Se aceptan los dos porque **no se pudo comprobar cuál emite el backend
+  // real**: se trabajó contra el simulador. El día que se confirme, sobra uno y
+  // esta entrada queda en una línea. Mismo patrón que `ALIAS_DEL_PAQUETE` en
+  // `admin/medical-laboratory`.
+  TENANT: 'Organización',
+  TENANT_VERIFICATION: 'Organización',
 };
 
 function typeLabel(type: string): string {
@@ -137,6 +150,16 @@ type CaseCell = TemplateRef<{ $implicit: CaseRow }>;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VerificationCases {
+  /**
+   * `true` cuando esta pantalla vive **dentro** del centro de verificación,
+   * como una de sus pestañas.
+   *
+   * Lo único que cambia es el membrete: adentro lo pone el contenedor, y dos
+   * títulos apilados serían dos pantallas dibujadas una encima de la otra. La
+   * ruta propia sigue existiendo y ahí el membrete se dibuja como siempre.
+   */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   private readonly identity = inject(IdentityClient);
   private readonly archivos = inject(FilesClient);
   private readonly descargas = inject(FileDownloader);

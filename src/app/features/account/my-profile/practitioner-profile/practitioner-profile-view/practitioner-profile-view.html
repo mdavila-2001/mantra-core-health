@@ -130,19 +130,6 @@
       <!-- Las pantallas del perfil, navegables DESDE el perfil. -->
       <div class="profesional__acciones">
         <a app-button variant="primary" routerLink="/my-account/edit"> Configurar mi perfil </a>
-        <!-- Va a «Cómo me ven» (`/my-account/preview`): la MISMA
-             `PublicProfileCard` que el Directorio de médicos, de SÓLO lectura.
-             ALV-004: lo que se configura de la ficha pública vive en
-             «Configurar mi perfil», no en una segunda pantalla. Es el ancla del
-             paso `preview` del tour. -->
-        <a
-          app-button
-          variant="outline"
-          routerLink="/my-account/preview"
-          appTutorialTarget="perfil-preview"
-        >
-          Ver cómo me ven
-        </a>
         <a app-button variant="outline" routerLink="/my-account/articles"> Mis artículos </a>
       </div>
     }

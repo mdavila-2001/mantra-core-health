@@ -1,0 +1,312 @@
+{
+  "31": [
+    {
+      "ruta": "/",
+      "nombre": "panel-tus-accesos-zona-consultas"
+    },
+    {
+      "ruta": "/schedule",
+      "nombre": "consultas-medicas-sigue-viva"
+    },
+    {
+      "ruta": "/consultation",
+      "nombre": "consultation-borrada",
+      "esperado": "no-encontrado"
+    }
+  ],
+  "32": [
+    {
+      "ruta": "/administration/my-practice",
+      "nombre": "mi-consultorio-propio"
+    },
+    {
+      "ruta": "/my-account",
+      "nombre": "perfil-enlaza-al-consultorio"
+    }
+  ],
+  "33": [
+    {
+      "ruta": "/administration/medical-organization?tab=memberships",
+      "nombre": "vinculaciones-en-el-panel"
+    },
+    {
+      "ruta": "/my-organizations",
+      "nombre": "mis-organizaciones-redirige"
+    }
+  ],
+  "34": [
+    {
+      "ruta": "/tutorials",
+      "nombre": "tutorials"
+    },
+    {
+      "ruta": "/messaging",
+      "nombre": "messaging"
+    },
+    {
+      "ruta": "/directories",
+      "nombre": "directories"
+    },
+    {
+      "ruta": "/nearby-places",
+      "nombre": "nearby-places"
+    },
+    {
+      "ruta": "/groups",
+      "nombre": "groups"
+    },
+    {
+      "ruta": "/laboratory-directory",
+      "nombre": "laboratory-directory"
+    },
+    {
+      "ruta": "/pharmacies-directory",
+      "nombre": "pharmacies-directory"
+    },
+    {
+      "ruta": "/schedule",
+      "nombre": "schedule"
+    },
+    {
+      "ruta": "/medical-records",
+      "nombre": "medical-records"
+    },
+    {
+      "ruta": "/progress-notes",
+      "nombre": "progress-notes"
+    },
+    {
+      "ruta": "/diagnostics",
+      "nombre": "diagnostics"
+    },
+    {
+      "ruta": "/interventions",
+      "nombre": "interventions"
+    },
+    {
+      "ruta": "/my-visits",
+      "nombre": "my-visits"
+    },
+    {
+      "ruta": "/glossary",
+      "nombre": "glossary"
+    },
+    {
+      "ruta": "/form-builder",
+      "nombre": "form-builder"
+    },
+    {
+      "ruta": "/my-services",
+      "nombre": "my-services"
+    },
+    {
+      "ruta": "/my-quotations",
+      "nombre": "my-quotations"
+    },
+    {
+      "ruta": "/questionnaires",
+      "nombre": "questionnaires"
+    },
+    {
+      "ruta": "/administration/patients",
+      "nombre": "administration_patients"
+    },
+    {
+      "ruta": "/administration/users",
+      "nombre": "administration_users"
+    },
+    {
+      "ruta": "/administration/organizations",
+      "nombre": "administration_organizations"
+    },
+    {
+      "ruta": "/administration/insurance",
+      "nombre": "administration_insurance"
+    },
+    {
+      "ruta": "/administration/brokers",
+      "nombre": "administration_brokers"
+    },
+    {
+      "ruta": "/administration/insurance-claims",
+      "nombre": "administration_insurance-claims"
+    },
+    {
+      "ruta": "/administration/delegated-access",
+      "nombre": "administration_delegated-access"
+    },
+    {
+      "ruta": "/administration/identity-providers",
+      "nombre": "administration_identity-providers"
+    },
+    {
+      "ruta": "/administration/identity-assurance",
+      "nombre": "administration_identity-assurance"
+    },
+    {
+      "ruta": "/administration/terminology",
+      "nombre": "administration_terminology"
+    },
+    {
+      "ruta": "/administration/content-packs",
+      "nombre": "administration_content-packs"
+    },
+    {
+      "ruta": "/administration/moderation",
+      "nombre": "administration_moderation"
+    },
+    {
+      "ruta": "/administration/health-context",
+      "nombre": "administration_health-context"
+    },
+    {
+      "ruta": "/administration/geolocation",
+      "nombre": "administration_geolocation"
+    },
+    {
+      "ruta": "/administration/services-catalog",
+      "nombre": "administration_services-catalog"
+    },
+    {
+      "ruta": "/administration/medical-organization",
+      "nombre": "administration_medical-organization"
+    },
+    {
+      "ruta": "/administration/medical-laboratory",
+      "nombre": "administration_medical-laboratory"
+    },
+    {
+      "ruta": "/administration/clinical-forms",
+      "nombre": "administration_clinical-forms"
+    },
+    {
+      "ruta": "/billing",
+      "nombre": "billing"
+    },
+    {
+      "ruta": "/administration/pharma-lab",
+      "nombre": "administration_pharma-lab"
+    },
+    {
+      "ruta": "/administration/accounting",
+      "nombre": "administration_accounting"
+    },
+    {
+      "ruta": "/assets-liabilities",
+      "nombre": "assets-liabilities"
+    },
+    {
+      "ruta": "/my-account",
+      "nombre": "my-account"
+    },
+    {
+      "ruta": "/my-account/appointments",
+      "nombre": "my-account_appointments"
+    },
+    {
+      "ruta": "/my-account/medical-record",
+      "nombre": "my-account_medical-record"
+    },
+    {
+      "ruta": "/my-account/diagnostic-results",
+      "nombre": "my-account_diagnostic-results"
+    },
+    {
+      "ruta": "/my-account/diagnostic-orders",
+      "nombre": "my-account_diagnostic-orders"
+    },
+    {
+      "ruta": "/my-account/questionnaires",
+      "nombre": "my-account_questionnaires"
+    },
+    {
+      "ruta": "/settings",
+      "nombre": "settings"
+    },
+    {
+      "ruta": "/notification-center",
+      "nombre": "notification-center"
+    },
+    {
+      "ruta": "/my-account/identity",
+      "nombre": "my-account_identity"
+    },
+    {
+      "ruta": "/my-account/pharmacy-orders",
+      "nombre": "my-account_pharmacy-orders"
+    },
+    {
+      "ruta": "/my-account/loyalty",
+      "nombre": "my-account_loyalty"
+    },
+    {
+      "ruta": "/administration/my-practice",
+      "nombre": "administration_my-practice"
+    },
+    {
+      "ruta": "/administration/pharmacy-orders",
+      "nombre": "administration_pharmacy-orders"
+    }
+  ],
+  "35": [
+    {
+      "ruta": "/notification-center",
+      "nombre": "notificaciones"
+    }
+  ],
+  "36": [
+    {
+      "ruta": "/my-account/identity",
+      "nombre": "identidad-verificar"
+    },
+    {
+      "ruta": "/my-account/identity?tab=cases",
+      "nombre": "identidad-tramites"
+    }
+  ],
+  "37": [
+    {
+      "ruta": "/my-account",
+      "nombre": "perfil-medico"
+    },
+    {
+      "ruta": "/my-account/edit",
+      "nombre": "perfil-medico-editar"
+    }
+  ],
+  "38": [
+    {
+      "ruta": "/my-account/edit",
+      "nombre": "editar-perfil-medico"
+    }
+  ],
+  "39": [
+    {
+      "ruta": "/my-account?tab=credentials&edit=1",
+      "nombre": "credenciales-edicion"
+    },
+    {
+      "ruta": "/my-account?tab=credentials&edit=1&with-file=1",
+      "nombre": "credenciales-con-adjunto"
+    }
+  ],
+  "40": [
+    {
+      "ruta": "/my-account",
+      "nombre": "perfil-sin-vitrina"
+    },
+    {
+      "ruta": "/my-account/edit",
+      "nombre": "editor-sin-vitrina"
+    },
+    {
+      "ruta": "/my-account/preview",
+      "nombre": "vitrina-borrada",
+      "esperado": "no-encontrado"
+    },
+    {
+      "ruta": "/directory",
+      "nombre": "directorio-sigue-vivo"
+    }
+  ]
+}
