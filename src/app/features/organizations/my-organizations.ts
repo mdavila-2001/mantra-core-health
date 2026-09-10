@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  signal,
+  viewChild,
+  type TemplateRef,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 
@@ -21,10 +31,29 @@ import { Select } from '../../shared/components/atoms/select/select';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
+import { Badge } from '../../shared/components/atoms/badge/badge';
+import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.types';
+import { DataTable } from '../../shared/components/organisms/data-table/data-table';
+import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { errorMessageOf } from '../../shared/forms/form-support';
 
-/** Una vinculación tal como la pinta la tarjeta de la lista. */
+/**
+ * El tono del sello de cada estado de vinculación.
+ *
+ * Aceptada en verde, pendiente en ámbar, y **rechazada o finalizada en neutro**
+ * y no en rojo: una vinculación que terminó no es un error de nadie, y pintarla
+ * de rojo en la lista propia haría leer como problema lo que es historia.
+ */
+function varianteDeEstado(estado: string): BadgeVariant {
+  if (estado === ROLE_ASSIGNMENT_STATUS.ACTIVE) return 'success';
+  if (estado === ROLE_ASSIGNMENT_STATUS.REJECTED || estado === ROLE_ASSIGNMENT_STATUS.ENDED) {
+    return 'secondary';
+  }
+  return 'warning';
+}
+
+/** Una vinculación tal como la pinta la tabla. */
 interface AssignmentRow extends MyRoleAssignment {
   readonly statusLabel: string;
   readonly isFinal: boolean;
@@ -34,6 +63,8 @@ interface AssignmentRow extends MyRoleAssignment {
    * suspendida, rechazada o finalizada cuentan como no verificado.
    */
   readonly verified: boolean;
+  /** El tono del sello de estado. Presentación, no dominio. */
+  readonly statusVariant: BadgeVariant;
 }
 
 /**
@@ -62,11 +93,35 @@ interface AssignmentRow extends MyRoleAssignment {
 @Component({
   selector: 'app-my-organizations',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AnnounceOnAppear, Alert, AppButton, Avatar, Card, EmptyState, PageHeader, Select],
+  imports: [
+    AnnounceOnAppear,
+    Alert,
+    AppButton,
+    Avatar,
+    Badge,
+    Card,
+    DataTable,
+    EmptyState,
+    PageHeader,
+    Select,
+  ],
   templateUrl: './my-organizations.html',
   styleUrl: './my-organizations.css',
 })
 export class MyOrganizations {
+  /**
+   * `true` cuando esta pantalla vive **dentro** del panel «Organización
+   * médica», como su pestaña «Mis vinculaciones».
+   *
+   * Cambia dos cosas: no dibuja su membrete —lo pone el panel— ni el bloque
+   * largo que explica qué es una vinculación, que en una pestaña de un panel de
+   * administración es un párrafo que nadie vuelve a leer. La ruta propia
+   * redirige acá desde el 2026-09-10, así que en la práctica siempre está
+   * embebida; el modo suelto se conserva porque el componente sigue siendo
+   * montable solo y su spec lo ejercita así.
+   */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   private readonly practiceSites = inject(PracticeSitesClient);
   private readonly accounting = inject(AccountingClient);
 
@@ -87,7 +142,34 @@ export class MyOrganizations {
         v.status === ROLE_ASSIGNMENT_STATUS.REJECTED ||
         v.status === ROLE_ASSIGNMENT_STATUS.ENDED,
       verified: v.status === ROLE_ASSIGNMENT_STATUS.ACTIVE,
+      statusVariant: varianteDeEstado(v.status),
     })),
+  );
+
+  /* --- la tabla ---------------------------------------------------------- *
+     El propietario pidió el 2026-09-10 que esta pantalla «sea como están los
+     organismos de tabla», porque la lista de tarjetas «está totalmente
+     detonada». Se usa `app-data-table`, que es el organismo del sistema, con
+     las celdas de presentación proyectadas. */
+
+  private readonly celdaOrganizacion =
+    viewChild.required<TemplateRef<{ $implicit: AssignmentRow }>>('celdaOrg');
+  private readonly celdaEstado =
+    viewChild.required<TemplateRef<{ $implicit: AssignmentRow }>>('celdaEstado');
+  private readonly celdaPrincipal =
+    viewChild.required<TemplateRef<{ $implicit: AssignmentRow }>>('celdaPrincipal');
+
+  protected readonly columnas = computed<readonly ColumnDef<AssignmentRow>[]>(() => [
+    { key: 'practiceName', header: 'Organización', priority: 1, cell: this.celdaOrganizacion() },
+    { key: 'status', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+    { key: 'isPrimary', header: 'Principal', priority: 3, cell: this.celdaPrincipal() },
+  ]);
+
+  protected readonly porId = (fila: AssignmentRow): string => fila.id;
+
+  /** El estado de la tabla, en los términos del M34. */
+  protected readonly estadoDeLaTabla = computed<ViewState<readonly AssignmentRow[]>>(() =>
+    this.vinculaciones() === undefined ? loading() : ready(this.filas()),
   );
 
   private readonly practicas = toSignal(

@@ -33,6 +33,11 @@
                 "glob": "leaflet.css",
                 "input": "node_modules/leaflet/dist",
                 "output": "assets/leaflet"
+              },
+              {
+                "glob": "pdf.worker.min.mjs",
+                "input": "node_modules/pdfjs-dist/build",
+                "output": "assets/pdfjs"
               }
             ],
             "styles": [

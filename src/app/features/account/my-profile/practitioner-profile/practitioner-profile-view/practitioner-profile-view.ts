@@ -1,3 +1,4 @@
+import { FileDropTarget } from '../../../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -17,11 +18,14 @@ import { AuthService } from '@core/auth/auth.service';
 import { RouterLink } from '@angular/router';
 
 import { WorkHistory } from '../../work-history/work-history';
+import { PESTANAS_DEL_PERFIL_MEDICO } from '../../pestanas-del-perfil-medico';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../../shared/components/atoms/button/button-link';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
+import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../../../../shared/components/atoms/tooltip/tooltip';
 import { Card } from '../../../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-help-block/tab-help-block';
@@ -78,6 +82,7 @@ interface FilaCredencial {
 @Component({
   selector: 'app-practitioner-profile-view',
   imports: [
+    FileDropTarget,
     Avatar,
     Badge,
     AppButton,
@@ -85,6 +90,8 @@ interface FilaCredencial {
     Card,
     Chip,
     DatePipe,
+    NavIcon,
+    Tooltip,
     RouterLink,
     StatusSeal,
     Tabs,
@@ -257,6 +264,22 @@ export class PractitionerProfileView {
 
   protected readonly pestanaSeleccionada = signal<number>(TAB.TRAYECTORIA);
   protected readonly TAB = TAB;
+
+  /**
+   * Las pestañas de la ficha PROPIA, las mismas seis del alta de médico.
+   *
+   * La ficha ajena —la Guía— conserva sus dos de siempre, declaradas en la
+   * plantilla: son otra pregunta, la de quien mira a un colega.
+   */
+  protected readonly pestanas = PESTANAS_DEL_PERFIL_MEDICO;
+
+  /**
+   * Adónde va «Cambiar contraseña».
+   *
+   * Al flujo de recuperación por correo, igual que en la ficha del paciente: es
+   * el único que puede verificar que quien cambia la clave es la persona.
+   */
+  protected readonly rutaDeCambioDeContrasena = '/auth/forgot-password';
 
   /** Especialidades, formación y matrículas agrupadas en declarado vs. verificado. */
   protected readonly credenciales = computed<{

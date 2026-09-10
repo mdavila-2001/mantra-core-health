@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -5,17 +6,28 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 
 import { NotificationsClient } from '../../core/data-access/notifications/notifications.client';
 import type { InAppNotification } from '../../core/data-access/notifications/notifications.types';
 import { rutaDeNotificacion } from '../../core/notifications/notification-routes';
 import { NotificationsStore } from '../../core/notifications/notifications.store';
+import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Alert } from '../../shared/components/molecules/alert/alert';
+import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
+import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import {
+  agruparPorDia,
+  horaRelativa,
+  iconoDeCategoria,
+  nombreDeCategoria,
+  type DiaDeAvisos,
+} from './notification-presentation';
 
 /** Cuántas trae cada página. */
 const PAGE_SIZE = 25;
@@ -46,7 +58,7 @@ const PAGE_SIZE = 25;
  */
 @Component({
   selector: 'app-notification-center',
-  imports: [Alert, AppButton, DatePipe, EmptyState, PageHeader],
+  imports: [Alert, AppButton, Badge, Card, EmptyState, NavIcon, NgTemplateOutlet, PageHeader, Tab, Tabs],
   templateUrl: './notification-center.html',
   styleUrl: './notification-center.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,8 +75,49 @@ export class NotificationCenter {
   protected readonly cargoAlgunaVez = signal(false);
   protected readonly sinLeer = signal(0);
 
-  /** Si se muestran sólo las no leídas. */
+  /** Si se muestran sólo las no leídas. Lo gobierna la pestaña. */
   protected readonly soloSinLeer = signal(false);
+
+  /**
+   * La pestaña abierta: 0 «Todas», 1 «Sin leer».
+   *
+   * **Dos y no seis.** La tentación era una pestaña por familia —clínico,
+   * turnos, mensajes, red—, pero la bandeja se pagina con cursor y el
+   * contrato sólo filtra por `unread`: una pestaña «Turnos» tendría que
+   * filtrar la página ya cargada, y mostraría tres de veinte turnos con un
+   * «ver más» que trae cualquier otra cosa. La familia se ve en cada fila,
+   * con su dibujo y su nombre, que es donde sirve.
+   */
+  protected readonly pestana = signal(0);
+
+  /**
+   * El reloj con el que se dicen los «hace 2 h».
+   *
+   * Se fija al cargar y no en cada render: un `Date.now()` dentro de la
+   * plantilla haría que la lista se repinte sola y que dos filas del mismo
+   * segundo digan cosas distintas.
+   */
+  protected readonly ahora = signal(new Date());
+
+  /** Los avisos repartidos por día, en el orden en que llegaron. */
+  protected readonly grupos = computed<readonly DiaDeAvisos[]>(() =>
+    agruparPorDia(this.avisos(), this.ahora()),
+  );
+
+  protected readonly iconoDeCategoria = iconoDeCategoria;
+  protected readonly nombreDeCategoria = nombreDeCategoria;
+
+  protected horaDe(aviso: InAppNotification): string {
+    return horaRelativa(aviso.availableAt, this.ahora());
+  }
+
+  /** Cambia de pestaña: es el mismo filtro de antes, con otra forma. */
+  protected elegirPestana(indice: number): void {
+    if (indice === this.pestana()) return;
+    this.pestana.set(indice);
+    this.soloSinLeer.set(indice === 1);
+    this.recargar();
+  }
 
   protected readonly hayMas = computed(() => this.cursor() !== null);
   protected readonly vacio = computed(
@@ -75,13 +128,8 @@ export class NotificationCenter {
     this.cargar();
   }
 
-  /** Alterna el filtro y vuelve a empezar: el cursor viejo es de otra consulta. */
-  protected alternarFiltro(): void {
-    this.soloSinLeer.set(!this.soloSinLeer());
-    this.recargar();
-  }
-
   protected recargar(): void {
+    this.ahora.set(new Date());
     this.avisos.set([]);
     this.cursor.set(null);
     this.cargoAlgunaVez.set(false);

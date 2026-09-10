@@ -317,3 +317,6 @@
     padding-inline: var(--e3);
   }
 }
+
+.composer__adjunto { flex-wrap: wrap; }
+.composer__adjunto app-file-preview { flex-basis: 100%; }

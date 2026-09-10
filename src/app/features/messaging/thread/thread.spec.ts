@@ -7,8 +7,9 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
-import { Thread } from './thread';
+import { Thread, trocear } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
+import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 
 /**
  * Lo que estas pruebas fijan.
@@ -275,6 +276,117 @@ describe('Thread', () => {
     ]);
 
     expect(consultar('hilo-no-leidos')?.textContent).toContain('2 mensajes no leídos');
+  });
+
+  it('el menú de la cabecera marca favorito y archiva la conversación abierta', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+    const preferencias = TestBed.inject(ChatPreferencias);
+
+    consultar('hilo-menu')?.click();
+    fixture.detectChanges();
+    expect(consultar('hilo-ver-perfil')).not.toBeNull();
+
+    consultar('hilo-favorito')?.click();
+    fixture.detectChanges();
+    expect(preferencias.esFavorito('c-1')).toBe(true);
+    // Al elegir, el menú se cierra: es un menú, no un panel.
+    expect(consultar('hilo-favorito')).toBeNull();
+
+    consultar('hilo-menu')?.click();
+    fixture.detectChanges();
+    expect(consultar('hilo-favorito')?.textContent).toContain('Quitar de favoritos');
+
+    consultar('hilo-archivar')?.click();
+    fixture.detectChanges();
+    expect(preferencias.estaArchivado('c-1')).toBe(true);
+    // Archivar quita el favorito: la misma regla que en la bandeja.
+    expect(preferencias.esFavorito('c-1')).toBe(false);
+
+    // Se deja el navegador como estaba: las preferencias viven en localStorage.
+    preferencias.alternarArchivado('c-1');
+  });
+
+  it('buscar en la conversación deja sólo las coincidencias, resaltadas', () => {
+    abrir([
+      mensaje('m-3', 'pp-2', 'Te mando el Holter mañana'),
+      mensaje('m-2', 'pp-1', 'Perfecto, gracias'),
+      mensaje('m-1', 'pp-2', 'Hola, ¿pudiste ver el hólter?'),
+    ]);
+
+    consultar('hilo-buscar-abrir')?.click();
+    fixture.detectChanges();
+    const caja = consultar('hilo-buscar-texto') as HTMLInputElement;
+    caja.value = 'holter';
+    caja.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    // Dos de tres, sin distinguir tildes ni mayúsculas.
+    expect(burbujas().length).toBe(2);
+    expect(consultar('hilo-buscar-cuenta')?.textContent).toContain('2 coincidencias');
+    const marcas = fixture.nativeElement.querySelectorAll('mark.hilo__marca');
+    expect(marcas.length).toBe(2);
+
+    // Cerrar devuelve el hilo entero.
+    caja.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(consultar('hilo-buscar-texto')).toBeNull();
+    expect(burbujas().length).toBe(3);
+  });
+
+  it('una URL en el texto se vuelve enlace, y no se resalta por dentro', () => {
+    const trozos = trocear('Mirá https://alovida.bo/mi-historia y avisame', 'historia');
+    expect(trozos).toEqual([
+      { tipo: 'texto', valor: 'Mirá ' },
+      { tipo: 'enlace', valor: 'https://alovida.bo/mi-historia' },
+      { tipo: 'texto', valor: ' y avisame' },
+    ]);
+
+    abrir([mensaje('m-1', 'pp-2', 'Entrá a https://alovida.bo/turnos')]);
+    const enlace = fixture.nativeElement.querySelector('a.hilo__enlace') as HTMLAnchorElement | null;
+    expect(enlace?.getAttribute('href')).toBe('https://alovida.bo/turnos');
+    expect(enlace?.getAttribute('rel')).toContain('noopener');
+  });
+
+  it('reenviar manda el mismo texto a la conversación elegida', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Te dejo la orden en la historia clínica')]);
+    // Otra conversación en la bandeja, para tener a quién reenviar.
+    store.conversaciones.update((lista) => [
+      ...lista,
+      {
+        id: 'c-2',
+        conversationTypeConceptId: 'c-direct',
+        unreadCount: 0,
+        peers: [{ profileId: 'pp-3', displayName: 'Dr. Ortega' }],
+      },
+    ]);
+    fixture.detectChanges();
+
+    consultar('hilo-menu-mensaje')?.click();
+    fixture.detectChanges();
+    consultar('hilo-reenviar')?.click();
+    fixture.detectChanges();
+
+    const destinos = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="hilo-reenviar-destino"]'),
+    ) as HTMLElement[];
+    // Sólo la otra: reenviarse a la misma conversación no es reenviar.
+    expect(destinos.map((d) => d.querySelector(':scope > span')?.textContent?.trim())).toEqual(['Dr. Ortega']);
+    destinos[0]!.click();
+    fixture.detectChanges();
+
+    const enviado = http.expectOne(
+      (r) => r.method === 'POST' && r.url === '/community/conversations/c-2/messages',
+    );
+    expect(enviado.request.body).toEqual({
+      senderProfileId: 'pp-1',
+      bodyText: 'Te dejo la orden en la historia clínica',
+    });
+    enviado.flush({ id: 'm-9', conversationId: 'c-2', sentAt: '2026-08-18T12:00:00.000Z' });
+    fixture.detectChanges();
+
+    expect(consultar('hilo-aviso')?.textContent).toContain('Reenviado a Dr. Ortega');
+    // El hilo abierto no cambió: el mensaje fue a otra conversación.
+    expect(burbujas().length).toBe(1);
   });
 
   function escribir(valor: string): void {

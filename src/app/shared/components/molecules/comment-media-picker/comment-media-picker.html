@@ -2,6 +2,7 @@
   <div class="media-picker__botones">
     @for (opcion of opciones; track opcion.kind) {
       <button
+        [appFileDropTarget]="archivo" (fileDropRejected)="error.set($event)"
         app-button
         type="button"
         variant="ghost"

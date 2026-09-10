@@ -19,6 +19,13 @@ import {
  * con este proyecto concreto.
  */
 describe('security-headers', () => {
+  it('permite previews locales de medios sin abrir frames u objetos', () => {
+    const policy = contentSecurityPolicy();
+    expect(policy).toContain("media-src 'self' blob:");
+    expect(policy).toContain("object-src 'none'");
+    expect(policy).toContain("frame-ancestors 'none'");
+  });
+
   describe('hashes de scripts en línea', () => {
     it('el hash es el sha256 del contenido exacto, en formato CSP', () => {
       // Vector conocido: sha256 de la cadena vacía.

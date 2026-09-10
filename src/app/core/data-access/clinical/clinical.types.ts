@@ -55,6 +55,22 @@ export interface MedicationRequest {
   readonly id: string;
   readonly medicationConceptId: string;
   readonly statusConceptId: string;
+  /**
+   * La consulta en la que se prescribió, si nació de una.
+   *
+   * El backend lo devuelve y este tipo no lo declaraba, así que el dato llegaba
+   * y nadie podía leerlo con tipos: la ficha no tenía cómo agrupar las líneas
+   * de una misma receta.
+   */
+  readonly encounterId?: string;
+  /**
+   * El motivo escrito a mano, cuando no hay condición registrada detrás.
+   *
+   * Es lo que el cliente pidió para los casos psiquiátricos y para quien «sólo
+   * fue a que le receten». **Todavía no existe en el backend**: ver P24 en
+   * `PENDIENTES-BACKEND.md`.
+   */
+  readonly indicationText?: string;
   readonly prescriberProfileId?: string;
   readonly doseText?: string;
   readonly frequencyText?: string;
@@ -62,6 +78,27 @@ export interface MedicationRequest {
   readonly validTo?: Date;
   /** Indicaciones al paciente impresas en la receta (Patch v4.1.3). */
   readonly patientInstructionsText?: string;
+  /**
+   * El diagnóstico que motiva la receta — «para qué es» (Patch v4.1.6).
+   *
+   * ## Se escribía y no se leía
+   *
+   * El alta lo manda desde v4.1.6 (`NewMedicationRequest.indicationConditionId`)
+   * y `GET /clinical/patients/:id/summary` lo devuelve —está en
+   * `MedicationRequestSummaryDto` y en `clinical-read.service.ts`—, pero este
+   * tipo no lo declaraba: el vínculo quedaba guardado en la base y desaparecía
+   * de la pantalla en cuanto se recargaba. Es exactamente el síntoma de
+   * «relación sólo visual» que la corrección del 10/09/2026 manda cerrar, y se
+   * cierra declarándolo: los mapeadores del cliente propagan por `...resto`.
+   *
+   * Es un `clinical.conditions.id`, no un concepto de terminología: se resuelve
+   * contra la lista de diagnósticos del propio expediente y no con
+   * `TerminologyClient`.
+   *
+   * Ausente cuando la receta no tiene diagnóstico detrás, que es un caso
+   * legítimo del contrato: una prescripción sintomática o profiláctica.
+   */
+  readonly indicationConditionId?: string;
   readonly signedAt?: Date;
   readonly issuedAt?: Date;
   readonly createdAt: Date;
@@ -383,6 +420,22 @@ export interface NewMedicationRequest {
    * termina impreso en el papel.
    */
   readonly indicationConditionId?: string;
+  /**
+   * El motivo de la receta escrito a mano, para cuando no hay un diagnóstico
+   * registrado detrás.
+   *
+   * El cliente lo pidió por su caso: «puede existir el caso que sólo se fue a
+   * hacer recetar y no necesitaría diagnóstico existente previo, sobre todo
+   * casos psiquiátricos».
+   *
+   * **Excluyente con `indicationConditionId`**, y el concepto gana si llegaran
+   * los dos — el mismo criterio que `occupation_free_text` frente a
+   * `occupation_concept_id` en `persons`.
+   *
+   * ⚠️ **Contra la API de hoy da 400**: `CreateMedicationRequestDto` no declara
+   * la clave y el backend valida con `forbidNonWhitelisted`. Ver P24.
+   */
+  readonly indicationText?: string;
 }
 
 /**

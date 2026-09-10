@@ -6,6 +6,7 @@
   #nativeDialog
   class="content-dialog"
   data-testid="content-dialog"
+  [attr.data-size]="size()"
   [attr.aria-labelledby]="headingId"
   [attr.aria-describedby]="description() === null ? null : descriptionId"
   (cancel)="handleNativeCancel($event)"
@@ -31,7 +32,7 @@
         size="sm"
         autofocus
         data-testid="content-dialog-close"
-        (clicked)="close()"
+        (clicked)="solicitarCierre()"
       >
         {{ closeLabel() }}
       </button>
@@ -40,5 +41,12 @@
     <div class="content-dialog__cuerpo">
       <ng-content />
     </div>
+
+    <!-- El pie va fuera del cuerpo con scroll —mismo reparto que `card`—: las
+         acciones de la operación no se buscan al final del recorrido. Si nadie
+         proyecta nada, el `:empty` del CSS lo deja sin dibujar. -->
+    <footer class="content-dialog__pie" data-testid="content-dialog-actions">
+      <ng-content select="[dialog-actions]" />
+    </footer>
   </div>
 </dialog>

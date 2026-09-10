@@ -258,27 +258,63 @@
                    viajando aparte: sale del catálogo, y estas son texto libre porque
                    una dirección boliviana real —«Av. Prolongación Beni #5100, esq.
                    6to anillo»— no entra en una lista. -->
-              <app-form-field
-                label="Domicilio"
-                hint="Calle, número y zona. Vaciarlo lo quita de tu ficha."
-              >
-                <app-input
-                  data-testid="perfil-domicilio"
-                  [(value)]="domicilio"
-                  placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
-                />
-              </app-form-field>
+              <!-- La dirección y su mapa van juntos y a lo ancho de la rejilla.
+                   Sueltos, el mapa caía en la columna siguiente —debajo del
+                   teléfono— y quedaba asociado al campo equivocado. -->
+              <div class="datos__direccion">
+                <app-form-field
+                  label="Domicilio"
+                  hint="Calle, número y zona. Vaciarlo lo quita de tu ficha."
+                >
+                  <app-input
+                    data-testid="perfil-domicilio"
+                    [(value)]="domicilio"
+                    placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
+                  />
+                </app-form-field>
 
-              <app-form-field
-                label="Dirección de trabajo"
-                hint="Dónde trabajás, si querés que figure."
-              >
-                <app-input
-                  data-testid="perfil-trabajo"
-                  [(value)]="direccionTrabajo"
-                  placeholder="Calle Ayacucho #241, Casco Viejo"
+                <!-- El punto en el mapa, como en una app de pedidos: se pide la
+                     ubicación o se marca el pin a mano, y se confirma mirándolo.
+                     Es el MISMO bloque del alta, no una copia. -->
+                <app-ubicacion-picker
+                pinId="perfil-domicilio"
+                etiquetaConfirmada="Tu casa"
+                pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de tu casa"
+                etiquetaMapa="La ubicación de tu casa en el mapa"
+                etiquetaMarcar="Marcar mi casa en el mapa"
+                indicacionMarcar="Tocá el mapa en la puerta de tu casa para poner el pin."
+                  [ids]="idsGpsDomicilio"
+                  [inicial]="gpsDomicilioGuardado()"
+                  (confirmado)="gpsDomicilio.set($event)"
                 />
-              </app-form-field>
+              </div>
+
+              <div class="datos__direccion">
+                <app-form-field
+                  label="Dirección de trabajo"
+                  hint="Dónde trabajás, si querés que figure."
+                >
+                  <app-input
+                    data-testid="perfil-trabajo"
+                    [(value)]="direccionTrabajo"
+                    placeholder="Calle Ayacucho #241, Casco Viejo"
+                  />
+                </app-form-field>
+
+                <app-ubicacion-picker
+                pinId="perfil-trabajo"
+                etiquetaConfirmada="Tu trabajo"
+                pregunta="¿Es acá donde trabajás? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de tu trabajo"
+                etiquetaMapa="La ubicación de tu trabajo en el mapa"
+                etiquetaMarcar="Marcar mi trabajo en el mapa"
+                indicacionMarcar="Tocá el mapa en la puerta de tu trabajo para poner el pin."
+                  [ids]="idsGpsTrabajo"
+                  [inicial]="gpsTrabajoGuardado()"
+                  (confirmado)="gpsTrabajo.set($event)"
+                />
+              </div>
 
               <!-- El correo se MUESTRA y no se edita, y eso hay que decirlo: antes no
                    aparecía, y no verlo se lee como que la app lo perdió.

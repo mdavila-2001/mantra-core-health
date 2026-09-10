@@ -487,7 +487,7 @@ describe('ProceduresBlock', () => {
      * carga: la acción se ofrece por fila y no sólo tras el alta, así que un
      * tratamiento viejo —no sólo el recién registrado— puede recibir un adjunto.
      */
-    it('«Adjuntar archivo» muestra el subidor para ESE tratamiento y no para otro', () => {
+    it('«Adjuntar archivo» abre el modal de ESE tratamiento y no de otro', () => {
       arrancar({
         dental: {
           items: [TRATAMIENTO, { ...TRATAMIENTO, id: 'd-2' }],
@@ -495,29 +495,30 @@ describe('ProceduresBlock', () => {
         },
       });
 
-      componente['alternarAdjuntos']('d-1');
+      componente['abrirAdjuntos']('d-1');
       fixture.detectChanges();
 
       const html = fixture.nativeElement as HTMLElement;
-      const uploaders = html.querySelectorAll('app-attachment-uploader');
-      expect(uploaders).toHaveLength(1);
-      expect(uploaders[0].getAttribute('ownerType')).toBe('PROCEDURE');
+      const modales = html.querySelectorAll('app-attachment-dialog');
+      expect(modales).toHaveLength(1);
+      expect(componente['adjuntandoArchivoA']()).toBe('d-1');
     });
 
-    it('volver a tocar «Adjuntar archivo» en la misma fila lo cierra', () => {
+    /**
+     * El subidor se desplegaba **dentro del renglón** y la lista crecía de
+     * golpe. Ahora está en un modal: el renglón conserva su alto.
+     */
+    it('el subidor ya no se despliega dentro de la lista', () => {
       arrancar({ dental: { items: [TRATAMIENTO], total: 1 } });
 
-      componente['alternarAdjuntos']('d-1');
+      componente['abrirAdjuntos']('d-1');
       fixture.detectChanges();
-      expect(
-        (fixture.nativeElement as HTMLElement).querySelector('app-attachment-uploader'),
-      ).not.toBeNull();
+      const html = fixture.nativeElement as HTMLElement;
+      expect(html.querySelector('ol app-attachment-uploader')).toBeNull();
 
-      componente['alternarAdjuntos']('d-1');
+      componente['cerrarAdjuntos']();
       fixture.detectChanges();
-      expect(
-        (fixture.nativeElement as HTMLElement).querySelector('app-attachment-uploader'),
-      ).toBeNull();
+      expect(html.querySelector('app-attachment-dialog')).toBeNull();
     });
 
     it('el vínculo del adjunto pasa por `clinical`, no por el genérico de `common`', () => {

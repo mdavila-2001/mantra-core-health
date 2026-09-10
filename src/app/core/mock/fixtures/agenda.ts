@@ -1,7 +1,7 @@
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
 import { TENANT_CLINICA } from '../mock-session';
-import { Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
+import { ahora, Coleccion, fecha, iso, isoDia, masMinutos, uuid } from '../mock-store';
 
 /* ============================================================================
     La agenda: recursos (uno por profesional), plantillas de horario, cupos
@@ -333,7 +333,55 @@ function generarReservas(): ReservaSimulada[] {
   return reservas;
 }
 
+/* ---- el cupo que se libera durante el recorrido ---------------------------
+
+   Nace **nueve minutos antes de ahora** y con su reserva confirmada, así que
+   cruza los diez minutos de gracia alrededor de un minuto después de abrir la
+   aplicación. Ahí la regla de `horario-liberado.ts` lo da por libre y el aviso
+   *llega* mientras alguien está mirando — que es lo que había que poder
+   mostrar. Si naciera ya vencido, la notificación estaría desde el primer
+   render y no se vería llegar nada.
+
+   Es un cupo propio y no uno de los generados porque aquéllos cuelgan de las
+   plantillas de horario —empiezan en horas redondas— y ninguno cae donde hace
+   falta. Éste existe sólo para el recorrido.
+
+   Lo reserva un paciente que **no** es la principal: el aviso es para ella, y
+   nadie se avisa a sí mismo de que su propio cupo quedó libre. */
+
+const CUPO_POR_LIBERARSE = uuid('slot-a-punto-de-liberarse');
+
+/* Los mismos diez minutos que `horario-liberado.ts`, declarados acá y no
+   importados de allá: aquel archivo lee este fixture, y traerlo de vuelta
+   cerraría un ciclo de importación —lo que `check-architecture` prohíbe—. Una
+   prueba comprueba que los dos números coinciden. */
+const MINUTOS_DE_GRACIA = 10;
+
+function sembrarCupoPorLiberarse(): void {
+  const inicio = masMinutos(ahora(), -(MINUTOS_DE_GRACIA - 1));
+  cupos.agregar({
+    id: CUPO_POR_LIBERARSE,
+    resourceId: RECURSO_MEDICA,
+    scheduleTemplateId: null,
+    startAt: inicio,
+    endAt: masMinutos(inicio, 30),
+    capacity: 1,
+    remainingCapacity: 0,
+    statusConceptId: ESTADO['ST-ACTIVE']!,
+    serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+  });
+  const cupo = cupos.get(CUPO_POR_LIBERARSE);
+  if (cupo === undefined) return;
+  reservas.agregar(
+    reserva(1, cupo, 'BK-CONFIRMED', {
+      reasonText: 'Control de presión arterial',
+    }),
+  );
+}
+
 export const reservas = new Coleccion<ReservaSimulada>(generarReservas());
+
+sembrarCupoPorLiberarse();
 
 /* ---- bloqueos ------------------------------------------------------------- */
 

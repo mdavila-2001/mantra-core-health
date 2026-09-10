@@ -23,13 +23,7 @@
      después escribir de qué es son dos mensajes que se leen al revés. -->
 @if (adjunto(); as archivo) {
   <div class="composer__adjunto" data-testid="composer-adjunto">
-    @if (vistaPreviaAdjunto(); as previa) {
-      <img class="composer__adjunto-imagen" [src]="previa" alt="" />
-    } @else {
-      <span class="composer__adjunto-icono" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3v5h5" /><path d="M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7z" /></svg>
-      </span>
-    }
+    <app-file-preview [file]="archivo" />
     <span class="composer__adjunto-nombre">{{ nombreDelAdjunto() }}</span>
     <button type="button" aria-label="Quitar el archivo" (click)="limpiarAdjunto()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
@@ -110,7 +104,7 @@
   </div>
 }
 
-<form class="composer" (submit)="$event.preventDefault(); enviar()">
+<form [appFileDropTarget]="archivo" (fileDropRejected)="error.set($event)" class="composer" (submit)="$event.preventDefault(); enviar()">
   <button
     class="composer__icono"
     type="button"

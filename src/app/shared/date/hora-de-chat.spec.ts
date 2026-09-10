@@ -1,4 +1,4 @@
-import { etiquetaDeDia, horaDeChat } from './hora-de-chat';
+import { etiquetaDeDia, horaDeChat, horaDelReloj } from './hora-de-chat';
 
 /**
  * Lo que estas pruebas fijan: que la bandeja diga la **hora del reloj** y no
@@ -30,6 +30,28 @@ describe('horaDeChat', () => {
 
   it('una fecha inválida no rompe la fila', () => {
     expect(horaDeChat(new Date('no-es-fecha'), ahora)).toBe('');
+  });
+});
+
+describe('horaDelReloj', () => {
+  it('no antepone el cero: la fila y la burbuja dicen la misma hora', () => {
+    expect(horaDelReloj(new Date('2026-09-08T09:12:00'))).toBe('9:12');
+    expect(horaDelReloj(new Date('2026-09-08T16:05:00'))).toBe('16:05');
+  });
+
+  it('acepta el texto ISO que trae el contrato', () => {
+    expect(horaDelReloj('2026-09-08T09:12:00')).toBe('9:12');
+  });
+
+  it('sin fecha o con una inválida devuelve vacío', () => {
+    expect(horaDelReloj(undefined)).toBe('');
+    expect(horaDelReloj('no-es-fecha')).toBe('');
+  });
+
+  it('es lo que dice la fila de hoy', () => {
+    const ahora = new Date('2026-09-08T20:30:00');
+    const cuando = new Date('2026-09-08T09:12:00');
+    expect(horaDeChat(cuando, ahora)).toBe(horaDelReloj(cuando));
   });
 });
 

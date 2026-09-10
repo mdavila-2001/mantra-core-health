@@ -12,7 +12,6 @@ import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { ActivateAccount } from './features/auth/activate-account/activate-account';
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
-import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
 import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
@@ -58,7 +57,6 @@ function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
  */
 const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
   dashboard: Dashboard,
-  'my-account/identity/verify': IdentityVerification,
 };
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
@@ -114,7 +112,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
   // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
   // y le costaba la descarga a todo el mundo, paciente incluido—.
-  consultation: () => import('./features/consultation/consultation').then((m) => m.Consultation),
   'progress-notes': () =>
     import('./features/progress-notes/progress-notes').then((m) => m.ProgressNotes),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
@@ -200,13 +197,26 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // FAR-I7: las campañas de la farmacia. Ruta hermana de la bandeja y no una
   // sección dentro del panel de organización, por el mismo motivo que aquélla:
   // el panel es de TP-1 y así no se le toca una línea.
+  // **La verificación de identidad dejó de ir directa** (2026-09-10). Iba, y el
+  // motivo era bueno mientras la ruta apuntaba a una pantalla sola: es la salida
+  // del 403 `IDENTITY_VERIFICATION_REQUIRED`, y diferirla agrega una descarga
+  // donde alguien ya está esperando.
+  //
+  // Al unificarla con «Mis trámites» dejó de ser una pantalla y pasó a ser un
+  // centro con pestañas, y con él entraron al paquete inicial las pestañas y la
+  // tarjeta. El bundle quedó **9 kB por encima del techo de `angular.json`** y el
+  // build pasó a fallar. El reparto correcto cambió con el tamaño: la descarga
+  // la paga una vez quien cae en un 403 —un camino de error, ya interrumpido— en
+  // vez de pagarla **toda** primera visita a la aplicación.
+  'my-account/identity': () =>
+    import('./features/identity-verification/identity-hub/identity-hub').then(
+      (m) => m.IdentityHub,
+    ),
+  'administration/my-practice': () =>
+    import('./features/practice/my-practice/my-practice').then((m) => m.MyPractice),
   'administration/pharmacy-campaigns': () =>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
-    ),
-  'my-account/identity/cases': () =>
-    import('./features/identity-assurance/verification-cases/verification-cases').then(
-      (m) => m.VerificationCases,
     ),
   'administration/delegated-access': () =>
     import('./features/delegated-access/delegated-access-home/delegated-access-home').then(
@@ -594,16 +604,6 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // La vitrina pública: se configura y se ve en la misma pantalla.
-    path: 'my-account/preview',
-    title: `${APP_TITLE} - Tu perfil público`,
-    ...soloDeQuienAtiende(),
-    loadComponent: () =>
-      import('./features/account/my-profile/public-profile-preview/public-profile-preview')
-        .then((m) => m.PublicProfilePreview)
-        .catch(() => chunkFallido()),
-  },
-  {
     // Publicar, revisar lo publicado y sus comentarios. Cuelga de la vitrina:
     // sin vitrina, no hay dónde publicar un artículo.
     path: 'my-account/articles',
@@ -958,8 +958,15 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   contabilidad: '/administration/accounting',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
-  'identidad/verificar': '/my-account/identity/verify',
-  'identidad/casos': '/my-account/identity/cases',
+  'identidad/verificar': '/my-account/identity',
+  'identidad/casos': '/my-account/identity',
+  // Las dos rutas propias de antes de unificar (2026-09-10). Están en
+  // historiales, en favoritos y en los correos que la plataforma ya mandó.
+  'my-account/identity/verify': '/my-account/identity',
+  'my-account/identity/cases': '/my-account/identity',
+  // «Mis organizaciones» pasó a ser una pestaña de «Organización médica»
+  // (2026-09-10). Está en historiales y en el lateral de «Mi perfil».
+  'my-organizations': '/administration/medical-organization',
   'administracion/pacientes': '/administration/patients',
   'administracion/usuarios': '/administration/users',
   'administracion/organizaciones': '/administration/organizations',
@@ -1754,6 +1761,39 @@ export const routes: Routes = [
     path: 'auth/register/organization',
     component: RegisterOrganization,
     title: 'AloVida - Registrar aseguradora',
+  },
+  {
+    // El alta del laboratorio de sangre: los dieciocho puntos de datos legales
+    // del proceso 4.1 del stakeholder. Todavía sin endpoint —cierra con una
+    // solicitud, no con una cuenta—; ver el JSDoc de `RegisterLaboratory`.
+    path: 'auth/register/laboratory',
+    // Diferida por lo mismo que las otras dos altas largas: arrastra el mapa,
+    // que no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-laboratory/register-laboratory').then(
+        (m) => m.RegisterLaboratory,
+      ),
+    title: 'AloVida - Registrar laboratorio',
+  },
+  {
+    // El alta del centro de imagenología: el módulo «ANÁLISIS MÉDICOS (RAYOS X,
+    // RESONANCIA, ETC.)» del registro del stakeholder. Los dieciocho puntos de
+    // datos legales son los mismos que los del laboratorio de sangre —la fuente
+    // los repite enteros—, y lo que cambia es qué estudios hace el centro; ver
+    // el JSDoc de `RegisterImagingCenter`. Tampoco tiene endpoint todavía:
+    // cierra con una solicitud, no con una cuenta.
+    //
+    // La ruta dice `imaging-center` y no `imaging` a secas para no chocar con
+    // `?kind=IMAGING`, que es la **categoría** del directorio de laboratorios:
+    // aquélla filtra una vitrina, ésta da de alta una empresa.
+    path: 'auth/register/imaging-center',
+    // Diferida por lo mismo que las otras altas largas: arrastra el mapa, que
+    // no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-imaging-center/register-imaging-center').then(
+        (m) => m.RegisterImagingCenter,
+      ),
+    title: 'AloVida - Registrar centro de imagenología',
   },
   {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…

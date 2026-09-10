@@ -225,6 +225,21 @@ export interface PublicProfileDetail {
   readonly specialties: readonly string[];
   /** Trayectoria laboral, de la más reciente a la más antigua. Vacía fuera de un profesional. */
   readonly trajectory: readonly PublicAffiliation[];
+
+  /**
+   * Los lugares donde atiende, con el propio primero.
+   *
+   * Es lo que pedía P16 de `PENDIENTES-BACKEND.md`, con las palabras del
+   * cliente: «en el perfil público del profesional falta los lugares donde
+   * atiende». `city` y `address` son **una** dirección y siguen sirviendo de
+   * respaldo; esto son las sedes, que es lo que hay que poder mirar antes de
+   * elegir a quién consultar.
+   *
+   * Vacía fuera de un profesional y en las fichas que todavía no cargaron
+   * ninguna — la pantalla cae al respaldo, que es el comportamiento que ya
+   * tenía.
+   */
+  readonly practiceSites: readonly PublicPracticeSite[];
   readonly ratingAverage: number | null;
   readonly ratingCount: number;
   readonly acceptsReviews: boolean;
@@ -232,6 +247,35 @@ export interface PublicProfileDetail {
   readonly posts: readonly PublicPostSummary[];
   /** Alimenta el `<lastmod>` del sitemap y el `og:updated_time`. */
   readonly updatedAt: Date;
+}
+
+/**
+ * Un lugar donde alguien atiende, tal como lo muestra su ficha pública.
+ *
+ * Más angosto que el `PracticeSite` de `practice-sites.types.ts` a propósito:
+ * aquél es la sede con la que trabaja quien la administra —código, zona
+ * horaria, estado— y esto es lo que un paciente necesita para decidir si le
+ * queda cerca. La ficha es anónima; no se publica de una sede más de lo que
+ * hace falta para ir.
+ */
+export interface PublicPracticeSite {
+  readonly id: string;
+  readonly name: string;
+  /** Dirección en una línea, o `null` si la sede no cargó ninguna. */
+  readonly addressText: string | null;
+  /** Punto en el mapa, si la sede lo tiene. Sin él no hay pin que dibujar. */
+  readonly location: PublicLocation | null;
+  /**
+   * Si es el consultorio propio del profesional, y no una sede de una
+   * organización a la que está vinculado.
+   *
+   * La ficha lo distingue porque no es lo mismo para quien elige: en el propio
+   * atiende él y punto; en el de una clínica hay una organización de por medio
+   * —con su recepción, su cobro y sus horarios—. Es también el único que puede
+   * existir sin que nadie lo haya aceptado, que es lo que lo hace el primero
+   * que un profesional recién registrado tiene para ofrecer.
+   */
+  readonly isOwn: boolean;
 }
 
 /** Un resultado de «lo más cercano», con su distancia. */

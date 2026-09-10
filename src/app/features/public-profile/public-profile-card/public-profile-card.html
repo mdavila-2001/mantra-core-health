@@ -285,12 +285,52 @@
           </section>
         }
 
-        @if (donde() || preview()) {
+        @if (donde() || sedes().length > 0 || preview()) {
           <section class="app-card perfil__seccion" id="donde-queda" #ancla>
             <div class="app-card__cabecera">
               <h2>{{ esLugar() ? 'Dónde queda' : 'Dónde atiende' }}</h2>
             </div>
-            @if (donde()) {
+            <!-- Las sedes, cuando las hay: son varias y son lugares distintos,
+                 así que van como lista y no como una línea. El consultorio
+                 propio va primero y lleva su distintivo — no es lo mismo para
+                 quien elige: ahí atiende él, sin una organización de por medio. -->
+            @if (sedes().length > 0) {
+              <ul class="perfil__sedes" data-testid="perfil-sedes">
+                @for (sede of sedes(); track sede.id) {
+                  <li class="perfil__sede">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M12 21.2s7-6 7-11.2a7 7 0 1 0-14 0c0 5.2 7 11.2 7 11.2z" />
+                      <circle cx="12" cy="9.8" r="2.6" />
+                    </svg>
+                    <div class="perfil__sede-texto">
+                      <p class="perfil__sede-nombre">
+                        {{ sede.name }}
+                        @if (sede.isOwn) {
+                          <app-badge variant="secondary" size="sm">Consultorio propio</app-badge>
+                        }
+                      </p>
+                      @if (sede.addressText) {
+                        <p class="perfil__sede-direccion">{{ sede.addressText }}</p>
+                      }
+                    </div>
+                  </li>
+                }
+              </ul>
+              @if (pines().length > 0) {
+                <div class="perfil__mapa">
+                  <app-map [pines]="pines()" [etiqueta]="etiquetaDelMapa()" />
+                </div>
+              }
+            } @else if (donde()) {
               <p class="perfil__donde">
                 <svg
                   viewBox="0 0 24 24"

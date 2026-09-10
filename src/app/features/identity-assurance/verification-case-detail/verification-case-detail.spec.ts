@@ -67,7 +67,7 @@ describe('VerificationCaseDetail', () => {
     const ausente = estado();
     expect(ausente.status).toBe('not-found');
     if (ausente.status !== 'not-found') return;
-    expect(ausente.nextAction?.route).toBe('/my-account/identity/cases');
+    expect(ausente.nextAction?.route).toBe('/my-account/identity');
     // `http.verify()` del afterEach comprueba que no salió ninguna petición.
   });
 

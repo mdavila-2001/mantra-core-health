@@ -5,3 +5,10 @@
 .casos__sin-dato {
     color: var(--text-secondary);
 }
+
+/* Lo que falló al traer la evidencia de un caso (FT-32-R02). */
+.casos__error {
+  margin-block-start: var(--sp-3);
+  color: var(--text-danger);
+  font-size: var(--fs-caption);
+}

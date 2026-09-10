@@ -1,5 +1,5 @@
 /* ============================================================================
-    Evoluciones — una fila por persona atendida, la más reciente arriba.
+    Evoluciones — una fila por atención, la más reciente arriba.
     ========================================================================== */
 
 :host {
@@ -59,6 +59,74 @@
   line-height: var(--lh-caption);
 }
 
-.evoluciones__veces {
+/* La hora manda sobre el nombre: la lista se recorre por cuando pasaron las
+   cosas, no por quien. Tabular para que las horas se comparen en columna. */
+.evoluciones__cuando {
   font-variant-numeric: tabular-nums;
+}
+
+.evoluciones__marcas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-1) 0 0;
+}
+
+.evoluciones__marca {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* Los periodos, arriba de la barra de filtros: son la ventana que se le pide
+   al servidor, no un filtro sobre lo ya traido. */
+.evoluciones__periodo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block: var(--sp-4) var(--sp-3);
+}
+
+.evoluciones__sin-coincidencias {
+  margin: var(--sp-4) 0;
+  color: var(--text-secondary);
+}
+
+/* ---- El detalle de una atencion ---------------------------------------- */
+
+.evoluciones__detalle-cuando {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cada nota separada de la siguiente por un filete: son registros distintos y
+   corridos se leen como un solo texto largo. */
+.evoluciones__nota {
+  padding-block: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.evoluciones__nota p {
+  margin: 0 0 var(--sp-2);
+}
+
+.evoluciones__nota-titulo {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.evoluciones__nota-pie {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.evoluciones__detalle-salida {
+  margin: var(--sp-4) 0 0;
 }

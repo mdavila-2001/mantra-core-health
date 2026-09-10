@@ -9,12 +9,18 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
+import type { NewPatientProfile } from '../../../core/data-access/profiles/profiles.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type { AgendaResource } from '../../../core/data-access/scheduling/scheduling.types';
 import {
   MODALIDADES,
   type ModalidadDeAtencion,
 } from '../../../core/data-access/scheduling/scheduling.types';
+import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
+import {
+  BoOccupationsCatalog,
+  CODIGO_OCUPACION_OTRA,
+} from '../../../core/data-access/terminology/bo-occupations.service';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -44,6 +50,24 @@ const DURACIONES = [15, 20, 30, 45, 60, 90, 120] as const;
 
 /** Duración por omisión: la consulta corriente. */
 const DURACION_POR_DEFECTO = 30;
+
+/**
+ * Con quién es la cita.
+ *
+ * `registrado` es el caso de todos los días y sigue siendo el que arranca
+ * elegido. `nuevo` es el del mostrador: llegó alguien que no está en el sistema
+ * —o que nadie supo identificar— y hay que atenderlo igual.
+ */
+type ModoDePaciente = 'registrado' | 'nuevo';
+
+/**
+ * Cuántos dígitos seguidos hacen que lo tecleado se lea como una cédula.
+ *
+ * El documento boliviano más corto que circula tiene seis. Por debajo de eso lo
+ * escrito es casi siempre el principio de un nombre, y buscar por documento
+ * devolvería vacío cuando en realidad falta seguir escribiendo.
+ */
+const DIGITOS_DE_CEDULA = 6;
 
 /**
  * Alta de cita del profesional — `/schedule/appointment/new`.
@@ -98,6 +122,8 @@ export class AppointmentNew {
   private readonly auth = inject(AuthService);
   private readonly scheduling = inject(SchedulingClient);
   private readonly profiles = inject(ProfilesClient);
+  private readonly ocupaciones = inject(BoOccupationsCatalog);
+  private readonly departamentos = inject(BoDepartmentsCatalog);
   private readonly toasts = inject(ToastService);
   private readonly router = inject(Router);
 
@@ -121,6 +147,165 @@ export class AppointmentNew {
   protected readonly paciente = signal<ReferenceOption | null>(null);
   protected readonly candidatos = signal<readonly ReferenceOption[]>([]);
   protected readonly buscando = signal(false);
+
+  /** Lo último que se tecleó en el buscador. Ver {@link registrarPacienteNuevo}. */
+  private readonly ultimaBusqueda = signal('');
+
+  /* -- El paciente que no está en el sistema -------------------------------- */
+
+  /**
+   * Buscar a alguien registrado o darlo de alta acá mismo.
+   *
+   * ## Por qué no manda a otra pantalla
+   *
+   * Porque el que llegó está parado en el mostrador. Salir a
+   * `/administration/patients/assisted-registration`, completar el alta, volver
+   * y rearmar la cita son cuatro pantallas para una consulta que empieza en dos
+   * minutos —y la mitad de las veces la fecha y la hora ya tecleadas se
+   * perderían en el camino—.
+   *
+   * ## Por qué tampoco es un formulario siempre visible
+   *
+   * Porque el caso raro no puede pagar el caso corriente: casi todas las citas
+   * son de gente ya registrada, y once campos de filiación colgando debajo de
+   * «¿Con quién?» convertirían el alta de cita en un alta de persona. El bloque
+   * entra y sale del DOM en vez de esconderse con CSS, por lo mismo que en el
+   * registro del paciente: un campo escondido igual se tabula.
+   */
+  protected readonly modo = signal<ModoDePaciente>('registrado');
+
+  /**
+   * El nombre, en tres casillas más los dos apellidos.
+   *
+   * Es lo que pide el registro de procesos del cliente (módulo Paciente
+   * §1.1.2): «tiene que existir 3 espacios para guardar nombres y otros que
+   * indique Apellido paterno y apellido materno». Se declara igual que en el
+   * alta del propio paciente para que las dos altas produzcan la misma persona;
+   * al enviar, el segundo y el tercero viajan juntos en `middleName`, que es la
+   * única columna que la base tiene para los nombres que no son el primero.
+   */
+  protected readonly nuevoNombre = signal('');
+  protected readonly nuevoSegundoNombre = signal('');
+  protected readonly nuevoTercerNombre = signal('');
+  protected readonly nuevoApellidoPaterno = signal('');
+  protected readonly nuevoApellidoMaterno = signal('');
+
+  /**
+   * La cédula y el departamento que la expidió.
+   *
+   * Van juntas y el departamento se elige de una lista porque el cliente lo
+   * pidió por su motivo (§1.1.4): «colocando con esto solo el número de su
+   * cedula … evitamos duplicidad o error del Departamento de la emisión». Dos
+   * personas distintas pueden compartir el número; el par no se repite.
+   */
+  protected readonly nuevoDocumento = signal('');
+  protected readonly nuevoDepartamentoDelDocumento = signal<string | null>(null);
+  protected readonly opcionesDeDepartamento = signal<readonly SelectOption<string>[]>([]);
+
+  protected readonly nuevoNacimiento = signal<Date | null>(null);
+  protected readonly nuevoCelular = signal('');
+
+  /** Quién responde por el paciente, si no puede hacerlo él (§1.1.11). */
+  protected readonly nuevoTutorNombre = signal('');
+  protected readonly nuevoTutorCelular = signal('');
+
+  /* -- La ocupación, con su lupa (§1.1.6–1.1.8) ----------------------------- */
+
+  protected readonly opcionesDeOcupacion = signal<
+    readonly { readonly value: string; readonly label: string; readonly code: string }[]
+  >([]);
+  protected readonly busquedaDeOcupacion = signal('');
+  protected readonly ocupacionElegida = signal<ReferenceOption | null>(null);
+  protected readonly otraOcupacion = signal('');
+  protected readonly catalogoDeOcupacionesCaido = signal(false);
+
+  /**
+   * Las ocupaciones que quedan para lo tecleado en la lupa.
+   *
+   * El filtrado es en memoria y no otra consulta: el catálogo entero ya llegó,
+   * y volver a la red por cada tecla sería pagar dos veces la misma lista.
+   */
+  protected readonly ocupacionesFiltradas = computed<readonly ReferenceOption[]>(() => {
+    const busqueda = this.busquedaDeOcupacion().trim().toLowerCase();
+    const todas = this.opcionesDeOcupacion();
+    const elegidas = busqueda
+      ? todas.filter((opcion) => opcion.label.toLowerCase().includes(busqueda))
+      : todas;
+    return elegidas.map((opcion) => ({ value: opcion.value, label: opcion.label }));
+  });
+
+  /**
+   * Si lo elegido es «Otra ocupación», la salida del catálogo.
+   *
+   * Es lo que destraba el «¿cuál?» escrito a mano que pide el registro del
+   * cliente (§1.1.7) para el oficio que no está en la lista. Se reconoce por el
+   * `code` del concepto y no por su texto visible.
+   */
+  protected readonly ocupacionEsOtra = computed(() => {
+    const elegida = this.ocupacionElegida();
+    if (elegida === null) return false;
+    return (
+      this.opcionesDeOcupacion().find((opcion) => opcion.value === elegida.value)?.code ===
+      CODIGO_OCUPACION_OTRA
+    );
+  });
+
+  /**
+   * La edad que sale de la fecha de nacimiento.
+   *
+   * «La app tiene que arrojar de manera automática la edad del paciente con la
+   * fecha de nacimiento ingresada» (§1.1.9): es un dato derivado, no una
+   * pregunta más —preguntar las dos cosas es invitar a que no coincidan—.
+   */
+  protected readonly edadDelNuevo = computed<number | null>(() => {
+    const nacimiento = this.nuevoNacimiento();
+    if (nacimiento === null) return null;
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+    // Todavía no cumplió este año: el mes que viene, o este mismo mes más
+    // adelante. Sin esta corrección la edad se adelanta hasta doce meses.
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) edad -= 1;
+    return edad >= 0 ? edad : null;
+  });
+
+  /** Lo que dice el campo de nacimiento debajo: la edad, en cuanto se puede. */
+  protected readonly pieDeNacimiento = computed(() => {
+    const edad = this.edadDelNuevo();
+    if (edad === null) return 'La edad la calculamos nosotros.';
+    return edad === 1 ? '1 año' : `${edad} años`;
+  });
+
+  /**
+   * Lo mínimo para dar de alta a alguien en el mostrador.
+   *
+   * Nombre, apellido paterno, cédula y celular. La cédula porque el cliente la
+   * exige (§1.1.3) y porque sin ella el próximo que lo busque lo vuelve a dar
+   * de alta; el celular porque es por donde se lo contacta —y hoy es el único
+   * dato de contacto que el mostrador consigue seguro—. Lo demás se completa
+   * después, en su ficha.
+   */
+  protected readonly pacienteNuevoListo = computed(
+    () =>
+      this.nuevoNombre().trim() !== '' &&
+      this.nuevoApellidoPaterno().trim() !== '' &&
+      this.nuevoDocumento().trim() !== '' &&
+      this.nuevoCelular().trim() !== '',
+  );
+
+  /** El nombre del paciente nuevo tal como se va a ver escrito. */
+  protected readonly nombreDelNuevo = computed(() =>
+    [
+      this.nuevoNombre(),
+      this.nuevoSegundoNombre(),
+      this.nuevoTercerNombre(),
+      this.nuevoApellidoPaterno(),
+      this.nuevoApellidoMaterno(),
+    ]
+      .map((parte) => parte.trim())
+      .filter((parte) => parte !== '')
+      .join(' '),
+  );
 
   /**
    * El día de la cita.
@@ -195,9 +380,14 @@ export class AppointmentNew {
     return Number.isInteger(valor) && valor > 0 ? valor : null;
   });
 
+  /** Si ya se sabe con quién es la cita, sea de la lista o del mostrador. */
+  protected readonly hayPaciente = computed(() =>
+    this.modo() === 'registrado' ? this.paciente() !== null : this.pacienteNuevoListo(),
+  );
+
   /** Cómo termina la frase de confirmación, para decir qué va a pasar. */
   protected readonly queVaAPasar = computed<string | null>(() => {
-    if (this.paciente() === null) return null;
+    if (!this.hayPaciente()) return null;
     const porVideo = this.modalidad() === 'TELECONSULTA';
     const aDomicilio = this.modalidad() === 'DOMICILIO';
     const donde = porVideo
@@ -205,13 +395,19 @@ export class AppointmentNew {
       : aDomicilio
         ? ' Vas a su domicilio.'
         : '';
+    // Con un paciente nuevo pasan dos cosas y no una, así que se dicen las dos.
+    // «Le avisamos al paciente» sería mentira acá: todavía no tiene cuenta por
+    // donde recibir el aviso — lo que tiene es una ficha para completar.
+    if (this.modo() === 'nuevo') {
+      return `Lo damos de alta con estos datos y agendamos la cita.${donde} Su ficha queda para completar.`;
+    }
     return `Se agenda la cita y le avisamos al paciente. No tiene que confirmar nada.${donde}`;
   });
 
   protected readonly puedeGuardar = computed(
     () =>
       !this.guardando() &&
-      this.paciente() !== null &&
+      this.hayPaciente() &&
       this.comienza() !== null &&
       this.minutos() !== null &&
       this.agendaElegida() !== null,
@@ -231,29 +427,193 @@ export class AppointmentNew {
     this.duracion.set(valor === null ? '' : String(valor));
   }
 
-  /** Busca pacientes por nombre o código. La molécula ya espera antes de emitir. */
+  /**
+   * Busca pacientes por nombre, código o cédula. La molécula ya espera antes de
+   * emitir.
+   *
+   * ## Por qué lo que son puros dígitos va por `nationalId`
+   *
+   * Porque `query` es texto libre **sobre el código de paciente y el nombre**,
+   * no sobre el documento: tecleada una cédula, la búsqueda por nombre no
+   * encuentra a nadie y la pantalla concluye que hay que darlo de alta —cuando
+   * la persona ya estaba—. El listado acepta el documento por su propio
+   * parámetro, que es exacto, y es la forma de evitar el duplicado que el
+   * cliente pide evitar (§1.1.4).
+   */
   protected buscarPaciente(texto: string): void {
-    if (texto.trim() === '') {
+    const limpio = texto.trim();
+    this.ultimaBusqueda.set(limpio);
+    if (limpio === '') {
       this.candidatos.set([]);
       return;
     }
     this.buscando.set(true);
-    this.profiles.searchPatients({ query: texto.trim(), limit: 10 }).subscribe({
-      next: (pagina) => {
-        this.buscando.set(false);
-        this.candidatos.set(
-          pagina.items.map((item) => ({
-            value: item.profileId,
-            label: item.displayName ?? item.patientCode,
-            // El código clínico como pista: distingue a dos personas con el
-            // mismo nombre sin mostrar ningún uuid.
-            hint: item.displayName === undefined ? undefined : item.patientCode,
+    this.profiles
+      .searchPatients(
+        esDocumento(limpio) ? { nationalId: limpio, limit: 10 } : { query: limpio, limit: 10 },
+      )
+      .subscribe({
+        next: (pagina) => {
+          this.buscando.set(false);
+          this.candidatos.set(
+            pagina.items.map((item) => ({
+              value: item.profileId,
+              label: item.displayName ?? item.patientCode,
+              // El código clínico como pista: distingue a dos personas con el
+              // mismo nombre sin mostrar ningún uuid.
+              hint: item.displayName === undefined ? undefined : item.patientCode,
+            })),
+          );
+        },
+        error: () => {
+          this.buscando.set(false);
+          this.candidatos.set([]);
+        },
+      });
+  }
+
+  /**
+   * Pasa a dar de alta a alguien que no está en el sistema.
+   *
+   * Suelta al paciente elegido: si quedara seleccionado, «¿con quién?» tendría
+   * dos respuestas a la vez y sólo una de las dos se vería en pantalla. Los
+   * catálogos se piden **acá** y no al abrir la pantalla, porque casi todas las
+   * citas son de gente ya registrada y ninguna de ellas necesita la lista de
+   * ocupaciones de Bolivia.
+   */
+  protected registrarPacienteNuevo(): void {
+    this.modo.set('nuevo');
+    this.paciente.set(null);
+    this.candidatos.set([]);
+    // Si lo que se buscó era una cédula, ya está escrita: pedirla de nuevo dos
+    // renglones más abajo es hacer teclear dos veces el mismo número, que es
+    // además donde aparecen los documentos con un dígito cambiado.
+    const buscado = this.ultimaBusqueda();
+    if (this.nuevoDocumento() === '' && esDocumento(buscado)) this.nuevoDocumento.set(buscado);
+    this.cargarCatalogos();
+  }
+
+  /**
+   * Vuelve a buscar en la lista.
+   *
+   * Lo escrito del paciente nuevo **no se borra**: quien se equivocó de botón
+   * —o quiso comprobar una vez más que no estaba— vuelve y sigue donde iba.
+   */
+  protected buscarRegistrado(): void {
+    this.modo.set('registrado');
+  }
+
+  /**
+   * Guarda la ocupación elegida en la lupa.
+   *
+   * @param opcion - La ocupación elegida, o `null` si la limpió.
+   */
+  protected elegirOcupacion(opcion: ReferenceOption | null): void {
+    this.ocupacionElegida.set(opcion);
+    // Al dejar de ser «Otra ocupación» se borra lo escrito a mano, para que no
+    // viaje un oficio que ya no describe a nadie.
+    if (!this.ocupacionEsOtra()) this.otraOcupacion.set('');
+  }
+
+  /** Reintento explícito del catálogo de ocupaciones tras un fallo. */
+  protected reintentarOcupaciones(): void {
+    this.ocupaciones.olvidar();
+    this.cargarOcupaciones();
+  }
+
+  /**
+   * Trae los dos catálogos del alta: departamentos y ocupaciones.
+   *
+   * Se piden una sola vez —los servicios cachean— y ninguno de los dos frena el
+   * alta si falla: el departamento del documento y la ocupación son opcionales,
+   * y lo que no puede faltar es la persona que está esperando.
+   */
+  private cargarCatalogos(): void {
+    if (this.opcionesDeDepartamento().length === 0) {
+      this.departamentos.listar().subscribe({
+        next: (opciones) =>
+          this.opcionesDeDepartamento.set(
+            opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+          ),
+        error: () => this.opcionesDeDepartamento.set([]),
+      });
+    }
+    if (this.opcionesDeOcupacion().length === 0) this.cargarOcupaciones();
+  }
+
+  private cargarOcupaciones(): void {
+    this.ocupaciones.listar().subscribe({
+      next: (opciones) => {
+        this.catalogoDeOcupacionesCaido.set(false);
+        // El `code` viaja además del identificador: es lo que reconoce a la
+        // salida «Otra ocupación» sin atarse a su texto visible.
+        this.opcionesDeOcupacion.set(
+          opciones.map((opcion) => ({
+            value: opcion.conceptId,
+            label: opcion.display,
+            code: opcion.code,
           })),
         );
       },
       error: () => {
-        this.buscando.set(false);
-        this.candidatos.set([]);
+        this.opcionesDeOcupacion.set([]);
+        this.catalogoDeOcupacionesCaido.set(true);
+      },
+    });
+  }
+
+  /**
+   * Guarda lo que se completó: una cita, o un alta de paciente y su cita.
+   *
+   * La bifurcación mira el **modo**, no si hay alguien elegido en la lista: con
+   * un paciente ya seleccionado, pasar a «paciente nuevo» y guardar habría
+   * agendado con el de antes.
+   */
+  protected guardar(): void {
+    const comienza = this.comienza();
+    const minutos = this.minutos();
+    const resourceId = this.agendaElegida();
+    if (!this.puedeGuardar() || comienza === null || minutos === null || resourceId === null) {
+      return;
+    }
+
+    this.guardando.set(true);
+    this.error.set(null);
+
+    if (this.modo() === 'registrado') {
+      const paciente = this.paciente();
+      if (paciente === null) {
+        this.guardando.set(false);
+        return;
+      }
+      this.agendar(paciente.value, comienza, minutos, resourceId);
+      return;
+    }
+
+    this.darDeAltaYAgendar(comienza, minutos, resourceId);
+  }
+
+  /**
+   * Da de alta al paciente del mostrador y, recién con su perfil, agenda.
+   *
+   * ## Dos peticiones y no una: qué falta para que sea una
+   *
+   * El alta de persona y la cita son **dos transacciones**, y eso es una
+   * concesión de la maqueta, no el diseño: si la segunda falla queda una
+   * persona registrada sin cita. Lo correcto es una sola llamada al registro
+   * asistido —`POST /iam/users/assisted-registration`, que ya existe y ya
+   * admite `CLINICIAN`— extendido con el bloque de filiación que hoy sólo
+   * acepta el alta que la propia persona hace de sí misma. Está anotado en
+   * `PENDIENTES-BACKEND.md` (P22) con la forma exacta.
+   */
+  private darDeAltaYAgendar(comienza: Date, minutos: number, resourceId: string): void {
+    this.profiles.createPatient(this.datosDelPacienteNuevo()).subscribe({
+      next: (perfil) => this.agendar(perfil.profileId, comienza, minutos, resourceId, true),
+      error: (error: unknown) => {
+        this.guardando.set(false);
+        this.error.set(
+          this.mensajeDeError(errorToViewState<never>(error), 'No pudimos registrar al paciente.'),
+        );
       },
     });
   }
@@ -265,27 +625,16 @@ export class AppointmentNew {
    * **tal cual**: ese mensaje ya está redactado para una persona, y
    * reescribirlo acá sólo podría empeorarlo o mentir.
    */
-  protected guardar(): void {
-    const paciente = this.paciente();
-    const comienza = this.comienza();
-    const minutos = this.minutos();
-    const resourceId = this.agendaElegida();
-    if (
-      !this.puedeGuardar() ||
-      paciente === null ||
-      comienza === null ||
-      minutos === null ||
-      resourceId === null
-    ) {
-      return;
-    }
-
-    this.guardando.set(true);
-    this.error.set(null);
-
+  private agendar(
+    patientProfileId: string,
+    comienza: Date,
+    minutos: number,
+    resourceId: string,
+    esAltaNueva = false,
+  ): void {
     this.scheduling
       .createDirectAppointment({
-        patientProfileId: paciente.value,
+        patientProfileId,
         resourceId,
         startAt: comienza.toISOString(),
         durationMinutes: minutos,
@@ -295,15 +644,17 @@ export class AppointmentNew {
       .subscribe({
         next: (creada) => {
           this.guardando.set(false);
-          this.toasts.success(
+          const quitados =
             creada.retractedSlots > 0
-              ? `Le avisamos al paciente. Esto quitó ${creada.retractedSlots} ${
-                  creada.retractedSlots === 1
-                    ? 'horario disponible'
-                    : 'horarios disponibles'
+              ? ` Esto quitó ${creada.retractedSlots} ${
+                  creada.retractedSlots === 1 ? 'horario disponible' : 'horarios disponibles'
                 }.`
-              : 'Le avisamos al paciente. No tiene que confirmar nada.',
-            'Cita agendada',
+              : '';
+          this.toasts.success(
+            esAltaNueva
+              ? `Quedó registrado y con la cita agendada.${quitados}`
+              : `Le avisamos al paciente. No tiene que confirmar nada.${quitados}`,
+            esAltaNueva ? 'Paciente registrado y cita agendada' : 'Cita agendada',
           );
           void this.router.navigate([AGENDA_ROUTE]);
         },
@@ -312,6 +663,50 @@ export class AppointmentNew {
           this.error.set(this.mensajeDeError(errorToViewState<never>(error)));
         },
       });
+  }
+
+  /**
+   * El cuerpo del alta del paciente del mostrador.
+   *
+   * Los opcionales vacíos **no se mandan**: el backend valida con
+   * `forbidNonWhitelisted` y una cadena vacía no es «sin dato», es un dato
+   * vacío. El segundo y el tercer nombre viajan juntos en `middleName` porque
+   * es la única columna que la base tiene para los nombres que no son el
+   * primero — el mismo criterio que el alta del propio paciente.
+   */
+  private datosDelPacienteNuevo(): NewPatientProfile {
+    const otrosNombres = [this.nuevoSegundoNombre(), this.nuevoTercerNombre()]
+      .map((parte) => parte.trim())
+      .filter((parte) => parte !== '')
+      .join(' ');
+    const nacimiento = this.nuevoNacimiento();
+    const ocupacion = this.ocupacionElegida();
+    const materno = this.nuevoApellidoMaterno().trim();
+    const departamento = this.nuevoDepartamentoDelDocumento();
+    const tutorNombre = this.nuevoTutorNombre().trim();
+    const tutorCelular = this.nuevoTutorCelular().trim();
+    const otroOficio = this.ocupacionEsOtra() ? this.otraOcupacion().trim() : '';
+
+    return {
+      name: this.nuevoNombre().trim(),
+      lastName: this.nuevoApellidoPaterno().trim(),
+      displayName: this.nombreDelNuevo(),
+      nationalId: this.nuevoDocumento().trim(),
+      phone: this.nuevoCelular().trim(),
+      ...(otrosNombres === '' ? {} : { middleName: otrosNombres }),
+      ...(materno === '' ? {} : { motherLastName: materno }),
+      ...(departamento === null ? {} : { issuerAdministrativeAreaConceptId: departamento }),
+      ...(nacimiento === null ? {} : { birthDate: fechaIso(nacimiento) }),
+      // El catálogo gana sobre el texto libre, igual que en el alta del propio
+      // paciente: el oficio a mano sólo tenía sentido para quien no encontró el
+      // suyo en la lista.
+      ...(ocupacion === null || this.ocupacionEsOtra()
+        ? {}
+        : { occupationConceptId: ocupacion.value }),
+      ...(otroOficio === '' ? {} : { occupationFreeText: otroOficio }),
+      ...(tutorNombre === '' ? {} : { guardianName: tutorNombre }),
+      ...(tutorCelular === '' ? {} : { guardianPhone: tutorCelular }),
+    };
   }
 
   /**
@@ -328,14 +723,17 @@ export class AppointmentNew {
    * cita.» en vez del texto con qué, cuándo y dónde que pide AC-14-7 — el 422
    * nunca llegaba a verse, ni una vez.
    */
-  private mensajeDeError(estado: ViewState<never>): string {
+  private mensajeDeError(
+    estado: ViewState<never>,
+    generico = 'No pudimos agendar la cita.',
+  ): string {
     if (estado.status === 'validation') {
-      return estado.issues[0]?.message ?? 'No pudimos agendar la cita.';
+      return estado.issues[0]?.message ?? generico;
     }
     if ('message' in estado && typeof estado.message === 'string' && estado.message !== '') {
       return estado.message;
     }
-    return 'No pudimos agendar la cita.';
+    return generico;
   }
 
   /**
@@ -367,4 +765,23 @@ export class AppointmentNew {
       },
     });
   }
+}
+
+/** Si lo tecleado se lee como una cédula y no como el principio de un nombre. */
+function esDocumento(texto: string): boolean {
+  return new RegExp(`^\\d{${DIGITOS_DE_CEDULA},}$`).test(texto);
+}
+
+/**
+ * La fecha en `YYYY-MM-DD`, **en hora local**.
+ *
+ * `toISOString()` convierte a UTC antes de recortar, así que una fecha elegida
+ * como 1 de enero en un huso al oeste de Greenwich se enviaría como 31 de
+ * diciembre. En una fecha de nacimiento eso es un día de diferencia en el
+ * registro civil de alguien.
+ */
+function fechaIso(fecha: Date): string {
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+  const dia = String(fecha.getDate()).padStart(2, '0');
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
 }

@@ -6,6 +6,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthService } from '../../../../../core/auth/auth.service';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
+import { PESTANAS_DEL_PERFIL_MEDICO } from '../../pestanas-del-perfil-medico';
 import { PractitionerProfileView } from './practitioner-profile-view';
 import type {
   AfiliacionVisible,
@@ -241,9 +242,14 @@ describe('PractitionerProfileView', () => {
   });
 
   it('el dueño sí ve su código profesional: le sirve ante quien administra', () => {
-    const portada = montar(PERFIL, true).querySelector('.profesional__portada');
+    // Desde el rediseño del 2026-09-10 la ficha propia es la MISMA tarjeta del
+    // paciente, así que el código no está en una portada: es un renglón más de
+    // «Datos personales», con su rótulo al lado.
+    const host = montar(PERFIL, true);
+    const ficha = host.querySelector('[data-testid="mi-perfil-pestanas"]');
 
-    expect(portada?.textContent).toContain('MED-7');
+    expect(ficha?.textContent).toContain('Código profesional');
+    expect(ficha?.textContent).toContain('MED-7');
   });
 
   it('el pie no muestra identificadores: sólo desde cuándo está en la plataforma', () => {
@@ -280,18 +286,37 @@ describe('PractitionerProfileView', () => {
 
   /* -- Las 3 pestañas superiores (carril 05) -------------------------------- */
 
-  it('las pestañas son dos: la vista previa tiene pantalla propia', () => {
-    // Era una tercera pestaña que mostraba, en sólo lectura, lo mismo que
-    // `/my-account/preview` — donde además se configura. Dos lugares para lo
-    // mismo, y el de acá no dejaba tocar nada.
+  it('el dueño ve las seis pestañas del alta de médico, y ninguna vista previa', () => {
+    // Pedido del cliente del 2026-09-10: la ficha del médico se muestra como la
+    // del paciente —una tarjeta con pestañas— y sus pestañas son los pasos de
+    // su propio registro. La vista previa del perfil público salió antes
+    // (CORR-10) y no vuelve por esta puerta.
     const host = montar(PERFIL, true);
 
     const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
       (boton) => boton.textContent?.trim() ?? '',
     );
-    expect(pestanas).toContain('Trayectoria');
-    expect(pestanas).toContain('Credenciales y verificaciones');
+    expect(pestanas).toEqual([...PESTANAS_DEL_PERFIL_MEDICO]);
     expect(pestanas).not.toContain('Vista previa del perfil público');
+  });
+
+  it('el dueño ve la misma cabecera que el paciente: «Tus datos» y el lápiz', () => {
+    const host = montar(PERFIL, true);
+
+    expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain('Tus datos');
+    const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
+    expect(lapiz?.getAttribute('aria-label')).toBe('Editar');
+  });
+
+  it('el dueño ve «Sin registrar» en lo que no cargó: es su ficha, no la de un colega', () => {
+    // En la ficha de otro, ocultar el renglón vacío es correcto. En la propia
+    // es al revés: sin el renglón, el dueño no distingue «no lo tengo cargado»
+    // de «la app no me lo muestra». Mismo criterio que la ficha del paciente.
+    const host = montar({ ...PERFIL, titulo: '' }, true);
+    const ficha = host.querySelector('[data-testid="mi-perfil-pestanas"]');
+
+    expect(ficha?.textContent).toContain('Título profesional');
+    expect(ficha?.textContent).toContain('Sin registrar');
   });
 
   it('un visitante no ve la pestaña de vista previa', () => {
@@ -343,6 +368,7 @@ describe('PractitionerProfileView', () => {
 
   it('el dueño ve «Retirar» sólo en un título pendiente, no en uno verificado', () => {
     const host = montar({ ...PERFIL, formacion: [...PERFIL.formacion, FORMACION_PENDIENTE] }, true);
+    seleccionarPestana(host, 'Trayectoria');
 
     expect(host.querySelector('[data-testid="formacion-retirar-cr-1"]')).toBeNull();
     expect(host.querySelector('[data-testid="formacion-retirar-cr-2"]')).not.toBeNull();
@@ -386,6 +412,7 @@ describe('PractitionerProfileView', () => {
 
   it('el dueño ve el formulario de alta de trayectoria embebido', () => {
     const host = montar(PERFIL, true);
+    seleccionarPestana(host, 'Trayectoria');
 
     expect(host.textContent).toContain('Agregar un vínculo');
     // No debe repetir su propio listado plano: ya está la línea de tiempo arriba.
@@ -403,8 +430,9 @@ describe('PractitionerProfileView', () => {
   it('el dueño ve la ayuda de cada pestaña', () => {
     const host = montar(PERFIL, true);
 
+    seleccionarPestana(host, 'Trayectoria');
     expect(host.querySelector('app-tab-help-block')).not.toBeNull();
-    seleccionarPestana(host, 'Credenciales y verificaciones');
+    seleccionarPestana(host, 'Credenciales');
     expect(host.textContent).toContain('Declarar no exige verificación previa');
   });
 
@@ -479,17 +507,22 @@ describe('PractitionerProfileView', () => {
     expect(subPestanas.some((texto) => texto.includes('Matrículas ('))).toBe(true);
   });
 
-  /* -- Vista previa del perfil público (carril 05) --------------------------- */
+  /* -- Vista previa del perfil público ---------------------------------------
+     Estaba: «"Ver cómo me ven" lleva a la vista previa de sólo lectura»
+     (ALV-004, carril 05). El propietario pidió el 2026-09-10 sacar el perfil
+     público «de todos lados», así que la prueba fija lo contrario — y lo fija,
+     en vez de borrarse, para que volver a agregar el botón sin decidirlo no
+     pase inadvertido. */
 
-  it('"Ver cómo me ven" lleva a la vista previa de sólo lectura (ALV-004)', () => {
+  it('la ficha propia NO ofrece «Ver cómo me ven»: el perfil público se sacó', () => {
     const host = montar(PERFIL, true);
 
     const enlace = Array.from(host.querySelectorAll('a[app-button]')).find((a) =>
       a.textContent?.includes('Ver cómo me ven'),
-    ) as HTMLAnchorElement;
+    );
 
-    expect(enlace).toBeTruthy();
-    expect(enlace.getAttribute('href')).toContain('/my-account/preview');
+    expect(enlace).toBeUndefined();
+    expect(host.innerHTML).not.toContain('/my-account/preview');
   });
 
   it('en previewMode no muestra sus propias acciones de dueño aunque esPropio venga en true', () => {
@@ -515,9 +548,14 @@ describe('PractitionerProfileView', () => {
     expect(host.textContent).toContain('Español · interpreta en consulta');
   });
 
-  it('esPropio rotula la actividad en segunda persona', () => {
+  it('el dueño conserva sus contadores de actividad, ahora como pestaña', () => {
+    // No sale del alta, pero ya se mostraba: tirarlo para «parecerse más al
+    // paciente» habría sido perder un dato con la excusa de un rediseño.
     const host = montar(PERFIL, true);
-    expect(host.textContent).toContain('Tu actividad en la plataforma');
+    seleccionarPestana(host, 'Actividad');
+
+    expect(host.textContent).toContain('Encuentros atendidos');
+    expect(host.textContent).toContain('Son los registros que dejaste asentados con esta cuenta');
   });
 
   it('un visitante ve la actividad en tercera persona', () => {
@@ -558,7 +596,43 @@ describe('PractitionerProfileView', () => {
       telefono: '+591 70012345',
       correo: 'elena@example.test',
       domicilio: 'Santa Cruz de la Sierra',
+      // Los cuatro contactos que el registro pregunta por separado y la calle.
+      // La ficha mostraba UN teléfono y UN correo con los cinco ya disponibles.
+      celularPersonal: '+591 70099999',
+      celularTrabajo: '+591 70088888',
+      fijoTrabajo: '+591 3 3000000',
+      correoPersonal: 'elena.personal@example.test',
+      direccion: 'Av. Banzer 3er anillo',
+      mapaDomicilio: null,
     };
+
+    it('la ficha propia muestra los cinco contactos del registro, no uno de cada clase', () => {
+      // Pedido del propietario: la ficha del médico tiene que mostrar los
+      // mismos campos que su registro. Éstos faltaban aunque el dato viniera.
+      const host = montar({ ...PERFIL, datosPersonales: DATOS });
+      const texto = host.textContent ?? '';
+
+      expect(texto).toContain('+591 70099999');
+      expect(texto).toContain('+591 70088888');
+      expect(texto).toContain('+591 3 3000000');
+      expect(texto).toContain('elena.personal@example.test');
+      expect(texto).toContain('Av. Banzer 3er anillo');
+    });
+
+    it('un contacto no declarado no dibuja su renglón', () => {
+      // Cinco «—» seguidos se leen como una ficha rota, no como datos que
+      // faltan.
+      const host = montar({
+        ...PERFIL,
+        datosPersonales: { ...DATOS, celularTrabajo: '', fijoTrabajo: '', correoPersonal: '' },
+      });
+      const texto = host.textContent ?? '';
+
+      expect(texto).not.toContain('Celular del trabajo');
+      expect(texto).not.toContain('Fijo del trabajo');
+      expect(texto).not.toContain('Correo personal');
+      expect(texto).toContain('Celular personal');
+    });
 
     it('en la ficha propia se ven documento, edad, teléfono y domicilio', () => {
       const host = montar({ ...PERFIL, datosPersonales: DATOS });
@@ -590,6 +664,12 @@ describe('PractitionerProfileView', () => {
           telefono: '',
           correo: '',
           domicilio: '',
+          celularPersonal: '',
+          celularTrabajo: '',
+          fijoTrabajo: '',
+          correoPersonal: '',
+          direccion: '',
+          mapaDomicilio: null,
         },
       });
 
@@ -598,16 +678,20 @@ describe('PractitionerProfileView', () => {
   });
 
   /**
-   * **Todo lo de la persona, junto y arriba.**
+   * **Todo lo de la persona, en UNA tarjeta con pestañas.**
    *
-   * Justin lo pidió con estas palabras: la matrícula estaba en la pestaña
-   * «Credenciales» y los datos en «Trayectoria», así que ver quién es y con qué
-   * ejerce obligaba a saltar de pestaña y a bajar. Ahora los dos van en una
-   * tarjeta pegada al nombre, y —lo que hace que el arreglo sirva— la matrícula
-   * de arriba es la COMPLETA: si abajo quedara el detalle real, habría que ir
-   * igual y no habríamos arreglado nada.
+   * Antes se pidió que la filiación y la matrícula salieran de las pestañas y
+   * subieran a una tarjeta propia, porque estaban repartidas en dos pestañas
+   * distintas y ver quién es y con qué ejerce obligaba a saltar entre ellas.
+   *
+   * El pedido del 2026-09-10 lo reemplaza y no lo contradice: la ficha del
+   * médico pasa a ser **la misma tarjeta del paciente**, y ahí la respuesta es
+   * la pestaña por defecto. Los datos siguen sin costar navegación —«Datos
+   * personales» es la primera— y la matrícula sigue siendo la COMPLETA en un
+   * solo lugar, ahora dentro de «Credenciales». Lo que se conserva es la
+   * exigencia: **una sola vez, y con su detalle**.
    */
-  describe('la filiación vive fuera de las pestañas', () => {
+  describe('la ficha propia es una sola tarjeta con pestañas', () => {
     const DATOS = {
       documento: '8812345',
       departamento: 'Santa Cruz',
@@ -616,26 +700,29 @@ describe('PractitionerProfileView', () => {
       telefono: '+591 70012345',
       correo: 'elena@example.test',
       domicilio: 'Santa Cruz de la Sierra',
+      celularPersonal: '',
+      celularTrabajo: '',
+      fijoTrabajo: '',
+      correoPersonal: '',
+      direccion: '',
+      mapaDomicilio: null,
     };
 
-    /** Con las pestañas arrancadas, lo que queda es lo que se ve sin navegar. */
-    function textoFueraDeLasPestanas(host: HTMLElement): string {
-      const copia = host.cloneNode(true) as HTMLElement;
-      copia.querySelectorAll('app-tabs').forEach((tabs) => tabs.remove());
-      return copia.textContent ?? '';
-    }
-
-    it('el dueño lee sus datos y su matrícula sin tocar una pestaña', () => {
+    it('el dueño lee sus datos sin tocar una pestaña: son la primera', () => {
       const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
-      const visible = textoFueraDeLasPestanas(host);
 
-      expect(visible).toContain('Tus datos');
-      expect(visible).toContain('8812345');
-      expect(visible).toContain('Tu habilitación');
-      expect(visible).toContain('LIC-3');
+      expect(host.textContent).toContain('Tus datos');
+      expect(host.textContent).toContain('8812345');
     });
 
-    it('la matrícula de arriba trae la vigencia: es el detalle, no un resumen', () => {
+    it('todo cuelga de UNA tarjeta: ni portada ni bloques sueltos alrededor', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+
+      expect(host.querySelector('.profesional__portada')).toBeNull();
+      expect(host.querySelectorAll('app-card')).toHaveLength(1);
+    });
+
+    it('la matrícula trae la vigencia: es el detalle, no un resumen', () => {
       const host = montar(
         {
           ...PERFIL,
@@ -647,29 +734,32 @@ describe('PractitionerProfileView', () => {
         },
         true,
       );
+      seleccionarPestana(host, 'Credenciales');
 
-      expect(textoFueraDeLasPestanas(host)).toContain('30/06/2030');
+      expect(host.textContent).toContain('LIC-3');
+      expect(host.textContent).toContain('30/06/2030');
     });
 
-    it('y entonces abajo ya no se repite: sin sub-pestaña «Matrículas»', () => {
+    it('y no se repite: una sola lista de matrículas, sin sub-pestañas', () => {
       const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
       // Sin abrirla no probaría nada: el panel de una pestaña inactiva no se
       // renderiza, así que sus sub-pestañas tampoco están en el DOM.
-      seleccionarPestana(host, 'Credenciales y verificaciones');
+      seleccionarPestana(host, 'Credenciales');
 
       const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
         (boton) => boton.textContent?.trim() ?? '',
       );
-      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Matrículas'))).toBe(false);
-      // Tampoco queda un tabset de UNA pestaña: la lista de especialidades pasa
-      // a ser un encabezado suelto, que es un rótulo y no un control que elige.
-      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Especialidades'))).toBe(false);
-      expect(host.textContent).toContain('Especialidades (');
+      expect(pestanas).toEqual([...PESTANAS_DEL_PERFIL_MEDICO]);
+      // El número, con su rótulo: a secas aparecería también dentro de la URL
+      // de la fuente de verificación de la formación, que es otro dato.
+      const texto = (host.textContent ?? '').replace(/\s+/g, ' ');
+      expect(texto.match(/Matrícula LIC-3/g) ?? []).toHaveLength(1);
     });
 
-    it('quien visita SÍ conserva las sub-pestañas: no tiene tarjeta arriba', () => {
-      // Sin `datosPersonales` no hay bloque de filiación, así que las dos
-      // sub-pestañas siguen siendo el único lugar donde vive el detalle.
+    it('quien visita conserva su ficha de siempre, con sus sub-pestañas', () => {
+      // La Guía de profesionales no cambió: este rediseño es el de la ficha
+      // PROPIA. Sin `datosPersonales` no hay bloque de filiación, así que las
+      // dos sub-pestañas siguen siendo el único lugar donde vive el detalle.
       const host = montar({ ...PERFIL, datosPersonales: null });
       seleccionarPestana(host, 'Credenciales y verificaciones');
 
@@ -751,7 +841,7 @@ describe('PractitionerProfileView', () => {
       http.expectOne('/common/files/file-1/content').flush(pngFalso());
       await esperarLaFoto(fixture, host);
 
-      const img = host.querySelector('.profesional__foto .avatar__image');
+      const img = host.querySelector('.mi-perfil__foto .avatar__image');
       // `data:` y no una ruta: la URL firmada del backend apunta a
       // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
       expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
@@ -803,7 +893,7 @@ describe('PractitionerProfileView', () => {
       http.expectOne('/common/files/file-1/content').flush(pngFalso());
       await esperarLaFoto(fixture, host);
 
-      const img = host.querySelector('.profesional__foto .avatar__image');
+      const img = host.querySelector('.mi-perfil__foto .avatar__image');
       // `data:` y no una ruta: la URL firmada del backend apunta a
       // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
       expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
@@ -823,7 +913,7 @@ describe('PractitionerProfileView', () => {
       http.expectOne('/common/files/file-1/content').flush(pngFalso());
       await esperarLaFoto(fixture, host);
 
-      const img = host.querySelector('.profesional__foto .avatar__image');
+      const img = host.querySelector('.mi-perfil__foto .avatar__image');
       // `data:` y no una ruta: la URL firmada del backend apunta a
       // `file://local/<sha>` y ningún navegador la carga. Ése era el defecto.
       expect(img?.getAttribute('src')).toMatch(/^data:image\/png;base64,/);
@@ -863,6 +953,6 @@ async function esperarLaFoto(fixture: ComponentFixture<unknown>, host: HTMLEleme
   for (let intento = 0; intento < 50; intento++) {
     await new Promise((listo) => setTimeout(listo, 0));
     fixture.detectChanges();
-    if (host.querySelector('.profesional__foto .avatar__image') !== null) return;
+    if (host.querySelector('.mi-perfil__foto .avatar__image') !== null) return;
   }
 }

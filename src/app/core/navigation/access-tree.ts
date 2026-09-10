@@ -83,10 +83,53 @@ export interface AccessArea {
 /**
  * Secciones que el árbol no ofrece nunca.
  *
- * Hoy sólo el panel: ofrecer «Panel» dentro del panel es un enlace a la
- * pantalla en la que ya estás, y ocupaba un lugar de los treinta y dos.
+ * **`dashboard`** — ofrecer «Panel» dentro del panel es un enlace a la pantalla
+ * en la que ya estás, y ocupaba un lugar de los treinta y dos.
+ *
+ * **`directories`** (10/09/2026) — la portada de los directorios. Dentro de la
+ * zona «Directorios» era una cuarta tarjeta, «Directorios», al lado de las que
+ * ya llevan a cada directorio concreto: un acceso al agrupador cuyos accesos
+ * estaban a su izquierda. El mismo rodeo que el 08/09 se sacó del menú lateral,
+ * repetido un escalón más adentro.
+ *
+ * Lo que **no** cambia: la sección sigue existiendo, con su ruta, su rol y su
+ * renglón en el menú lateral —que es el pedido explícito del cliente: ese
+ * acceso se conserva porque ya está—. Esto decide sólo dónde **no** se ofrece.
+ *
+ * Va acá y no sacándola de {@link AccessArea.paths}: la zona `red` declara
+ * `catchAllGroups: ['General']`, así que quitarla de `paths` la habría dejado
+ * caer en la misma zona por el cajón —mismo resultado, más difícil de encontrar—.
  */
-export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = ['dashboard'];
+export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = ['dashboard', 'directories'];
+
+/**
+ * Los accesos que, desde el panel, abren en un **modal** en vez de navegar.
+ *
+ * ## Por qué se declara acá y no en la plantilla del panel
+ *
+ * Por lo mismo que el reparto en zonas: el panel no escribe ni una ruta a mano
+ * —lee el registro—, y meter un `@if (seccion.path === 'groups')` en su
+ * plantilla habría empezado la lista de excepciones que este archivo existe
+ * para evitar. Acá cada excepción tiene nombre, y `access-tree.spec.ts` puede
+ * comprobar que la sección que se nombra existe de verdad.
+ *
+ * El valor es la **clave del contenido**, no un componente: `core/` no importa
+ * componentes de `features/`. El panel traduce la clave al modal que
+ * corresponde (`dashboard/access-tree`).
+ *
+ * ## Qué abre en modal y qué sigue navegando
+ *
+ * Sólo lo que el pedido del 10/09/2026 nombra: «Grupos y foros», que pasa a
+ * abrir Comunidades, y los tres directorios concretos, que se consultan sin
+ * salir del panel. La navegación estructural del menú lateral **no cambia**: las
+ * mismas rutas siguen abriendo las mismas pantallas completas.
+ */
+export const ACCESO_EN_MODAL: Readonly<Record<string, string>> = {
+  groups: 'comunidades',
+  'clinics-directory': 'directorio-clinicas',
+  'laboratory-directory': 'directorio-laboratorios',
+  'pharmacies-directory': 'directorio-farmacias',
+};
 
 /**
  * Las zonas, en el orden en que se dibujan.
@@ -107,7 +150,6 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tone: 'info',
     paths: [
       'schedule',
-      'consultation',
       'progress-notes',
       'medical-records',
       'diagnostics',
@@ -144,8 +186,8 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     icon: 'building',
     tone: 'success',
     paths: [
-      'my-organizations',
       'administration/my-organization',
+      'administration/my-practice',
       'administration/medical-organization',
       'administration/accounting',
       'billing',
@@ -158,7 +200,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tagline: 'Tus datos, tus turnos, tus avisos y tu identidad verificada.',
     icon: 'patients',
     tone: 'warning',
-    paths: ['my-account', 'notification-center', 'my-account/identity/verify', 'tutorials'],
+    paths: ['my-account', 'notification-center', 'my-account/identity', 'tutorials'],
     catchAllGroups: ['Mi cuenta'],
   },
 ];

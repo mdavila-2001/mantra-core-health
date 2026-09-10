@@ -216,6 +216,11 @@ describe('MedicationBlock', () => {
 
     expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
 
+    // Con el motivo puesto y sin medicamento sigue sin poder: el medicamento es
+    // obligatorio en el DTO y esta prueba mide **eso**, no el motivo.
+    señal<string | null>('indicacion').set('cond-1');
+    expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
+
     señal<string>('medicamento').set('med-amoxi');
     expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
   });
@@ -278,7 +283,10 @@ describe('MedicationBlock', () => {
       'opcionesDeIndicacion',
     )();
     expect(opciones[0].value).toBeNull();
-    expect(opciones.map((o) => o.value)).toEqual([null, 'cond-1', 'cond-2']);
+    // La vacía primero, los diagnósticos en el medio y la salida para escribir
+    // el motivo al final: es la que destraba los casos sin diagnóstico previo.
+    expect(opciones.map((o) => o.value)).toEqual([null, 'cond-1', 'cond-2', '__otro_motivo__']);
+    expect(opciones[3]?.label).toBe('Otro motivo — escribirlo');
   });
 
   /* ── v4.1.7 · los favoritos de prescripción ───────────────────────────── */
@@ -592,6 +600,12 @@ describe('MedicationBlock', () => {
     expect(interno<() => string>('indicacionesPaciente')()).toBe(caso.indicaciones);
     expect(interno<() => Date | null>('validFrom')()).not.toBeNull();
     expect(interno<() => Date | null>('validTo')()).not.toBeNull();
+
+    // El porqué de la receta es obligatorio desde que el cliente lo pidió como
+    // regla, y el caso de demostración no lo trae: se pone acá para que esta
+    // prueba siga midiendo lo suyo —que el caso resuelve los códigos— y no la
+    // regla, que tiene sus propias pruebas.
+    señal<string | null>('indicacion').set('cond-1');
     expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
   });
 
@@ -995,6 +1009,9 @@ describe('MedicationBlock', () => {
       );
 
     expect(interno<() => boolean>('hayPosologia')()).toBe(false);
+    // Con el porqué declarado: lo que mide esta prueba es que la ficha caída no
+    // impida prescribir, no la regla del diagnóstico.
+    señal<string | null>('indicacion').set('cond-1');
     expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
   });
 
@@ -1011,5 +1028,85 @@ describe('MedicationBlock', () => {
     expect(interno<() => readonly unknown[]>('concentraciones')()).toEqual([]);
     expect(interno<() => string | null>('concentracion')()).toBeNull();
     expect(interno<() => boolean>('hayPosologia')()).toBe(false);
+  });
+  /* -- El porqué de la receta (pedido del cliente) ------------------------- */
+
+  describe('el porqué de la receta', () => {
+    /**
+     * «Siempre que se haga una receta médica debe de poderse poner un
+     * diagnóstico o porqué de la receta.» La regla se cumple sin cerrar ningún
+     * caso: o se elige un diagnóstico de la historia, o se escribe el motivo.
+     */
+    it('sin diagnóstico ni motivo no deja prescribir', () => {
+      responderCatalogo();
+      señal<string>('medicamento').set('med-amoxi');
+
+      expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
+    });
+
+    it('un diagnóstico de la historia alcanza', () => {
+      responderCatalogo();
+      señal<string>('medicamento').set('med-amoxi');
+      señal<string | null>('indicacion').set('cond-1');
+
+      expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
+    });
+
+    /**
+     * El caso que el cliente nombró: «sólo se fue a hacer recetar y no
+     * necesitaría diagnóstico existente previo, sobre todo casos
+     * psiquiátricos».
+     */
+    it('«Otro motivo» pide escribirlo, y recién entonces deja prescribir', () => {
+      responderCatalogo();
+      señal<string>('medicamento').set('med-amoxi');
+      interno<(v: string | null) => void>('elegirIndicacion')('__otro_motivo__');
+
+      expect(interno<() => boolean>('motivoEsLibre')()).toBe(true);
+      expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
+
+      señal<string>('motivoLibre').set('Trastorno de ansiedad generalizada');
+      expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
+    });
+
+    /** Son excluyentes: `__otro_motivo__` no es el id de ninguna condición. */
+    it('con «Otro motivo» viaja el texto y NO la condición', async () => {
+      responderCatalogo();
+      señal<string>('medicamento').set('med-amoxi');
+      interno<(v: string | null) => void>('elegirIndicacion')('__otro_motivo__');
+      señal<string>('motivoLibre').set('Insomnio de conciliación');
+
+      await interno<() => Promise<void>>('recetar')();
+
+      const req = http.expectOne('/clinical/medication-requests');
+      expect(req.request.body.indicationText).toBe('Insomnio de conciliación');
+      expect('indicationConditionId' in req.request.body).toBe(false);
+      req.flush(RESPUESTA);
+    });
+
+    /** Y al revés: elegido un diagnóstico, el texto no viaja. */
+    it('con un diagnóstico elegido viaja la condición y no el texto', async () => {
+      responderCatalogo();
+      señal<string>('medicamento').set('med-amoxi');
+      interno<(v: string | null) => void>('elegirIndicacion')('cond-1');
+
+      await interno<() => Promise<void>>('recetar')();
+
+      const req = http.expectOne('/clinical/medication-requests');
+      expect(req.request.body.indicationConditionId).toBe('cond-1');
+      expect('indicationText' in req.request.body).toBe(false);
+      req.flush(RESPUESTA);
+    });
+
+    /** Cambiar de opción borra lo escrito: un motivo que ya no describe nada. */
+    it('salir de «Otro motivo» borra el texto', () => {
+      responderCatalogo();
+      interno<(v: string | null) => void>('elegirIndicacion')('__otro_motivo__');
+      señal<string>('motivoLibre').set('Algo');
+
+      interno<(v: string | null) => void>('elegirIndicacion')('cond-1');
+
+      expect(interno<() => string>('motivoLibre')()).toBe('');
+    });
   });
 });

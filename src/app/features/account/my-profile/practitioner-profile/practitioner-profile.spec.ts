@@ -213,6 +213,82 @@ describe('PractitionerProfile', () => {
     catalogo.flush(CONCEPTOS);
   });
 
+  /**
+   * El departamento que emitió el documento, al lado del número.
+   *
+   * La ficha lo dibuja como SUFIJO del documento —«5414404 Santa Cruz»— desde
+   * que existe el bloque, y el alta lo pregunta. Pero nadie pedía su etiqueta:
+   * el `Map` de terminología llegaba sin él, `etiquetaOpcional` devolvía cadena
+   * vacía y el renglón se leía como si el médico no lo hubiera declarado. Lo
+   * mismo con la localidad de residencia.
+   */
+  describe('la filiación: documento y dónde vive', () => {
+    const FILIACION = {
+      nationalId: '5414404',
+      issuerAdministrativeAreaConceptId: 'dep-sc',
+      residenceMunicipalityConceptId: 'mun-scz',
+    };
+
+    const CON_FILIACION = {
+      ...CONCEPTOS,
+      items: [
+        ...CONCEPTOS.items,
+        { conceptId: 'dep-sc', code: 'SC', display: 'Santa Cruz', codeSystemVersionId: 'csv-1' },
+        {
+          conceptId: 'mun-scz',
+          code: 'SC-SCZ',
+          display: 'Santa Cruz de la Sierra',
+          codeSystemVersionId: 'csv-1',
+        },
+      ],
+    };
+
+    it('pide la etiqueta del departamento emisor junto con el resto', () => {
+      montar();
+      http
+        .expectOne((r) => r.url === '/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL, ...FILIACION });
+
+      const catalogo = http.expectOne((r) => r.url === '/terminology/concepts');
+      const ids = (catalogo.request.params.get('ids') ?? '').split(',');
+      expect(ids).toContain('dep-sc');
+      expect(ids).toContain('mun-scz');
+      catalogo.flush(CON_FILIACION);
+    });
+
+    it('el departamento acompaña al número del documento', () => {
+      montar();
+      responder(FILIACION, CON_FILIACION);
+
+      expect(visible().datosPersonales?.documento).toBe('5414404');
+      expect(visible().datosPersonales?.departamento).toBe('Santa Cruz');
+      expect(visible().datosPersonales?.domicilio).toBe('Santa Cruz de la Sierra');
+    });
+
+    /**
+     * Vacío, y no «Sin registrar»: es un sufijo del número, así que sin
+     * etiqueta el renglón tiene que leerse «5414404» y no «5414404 Sin
+     * registrar», que diría que falta algo cuando el dato está.
+     */
+    it('sin el concepto en el catálogo, el sufijo queda vacío y el número sigue', () => {
+      montar();
+      responder(FILIACION);
+
+      expect(visible().datosPersonales?.documento).toBe('5414404');
+      expect(visible().datosPersonales?.departamento).toBe('');
+    });
+
+    it('un perfil sin departamento declarado no mete «undefined» en la petición', () => {
+      montar();
+      http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
+
+      const catalogo = http.expectOne((r) => r.url === '/terminology/concepts');
+      const ids = (catalogo.request.params.get('ids') ?? '').split(',');
+      expect(ids).not.toContain('undefined');
+      catalogo.flush(CONCEPTOS);
+    });
+  });
+
   it('traduce los conceptos: ningún uuid queda en el contrato', () => {
     montar();
     responder();

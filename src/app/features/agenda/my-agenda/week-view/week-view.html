@@ -72,6 +72,28 @@
             }
           }
         </button>
+
+        <!-- Con quién. Va FUERA del botón y no adentro: un `<ul>` dentro de un
+             `<button>` es HTML inválido —el botón sólo admite contenido de
+             frase— y el lector de pantalla lo aplana contra el nombre del
+             botón, que es justamente donde el nombre del paciente deja de
+             leerse como una lista. Acá son texto, no acciones: lo que se opera
+             es el día, y para eso está el botón de arriba. -->
+        @if (dia.citas.length > 0) {
+          <ul class="semana__citas" data-testid="semana-citas">
+            @for (cita of dia.citas; track cita.id) {
+              <li class="semana__cita">
+                <span class="semana__hora">{{ cita.desde | date: 'HH:mm' }}</span>
+                <span class="semana__paciente">{{ cita.paciente }}</span>
+              </li>
+            }
+            @if (dia.masCitas > 0) {
+              <li class="semana__cita semana__cita--resto">
+                +{{ dia.masCitas }} {{ dia.masCitas === 1 ? 'turno más' : 'turnos más' }}
+              </li>
+            }
+          </ul>
+        }
       </li>
     }
   </ol>

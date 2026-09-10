@@ -63,10 +63,35 @@ import { MOCK_USERS } from './mock-session';
       font: 12px/1.4 system-ui, sans-serif;
       box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
     }
-    /* Sin menú fijo al costado, el cartel vuelve al borde. */
+    /* En angosto no hay esquina libre abajo: el chat clava ahí el campo de
+       escribir de borde a borde y el cartel lo tapaba. Se va arriba, bajo el
+       header de la aplicación, y a la derecha, que es la franja que las
+       cabeceras dejan vacía. Achicado: en 390 px dos pastillas grandes son un
+       cuarto del ancho. */
     @media (max-width: 60rem) {
+      /* Plegado: una sola pastilla dentro de la barra de arriba, a la derecha
+         de la hamburguesa, que es el único hueco que ninguna pantalla usa.
+         Bajo el header tapaba el nombre de la conversación. */
       .mock {
-        inset-inline-start: 12px;
+        inset-inline-start: 60px;
+        inset-inline-end: auto;
+        inset-block-start: 14px;
+        inset-block-end: auto;
+        max-inline-size: calc(100vw - 16px);
+      }
+      /* Abierto, el panel baja del header y ocupa el ancho. */
+      .mock:not(.mock--plegado) {
+        inset-inline-start: 8px;
+        inset-inline-end: 8px;
+        inset-block-start: calc(var(--h-header, 64px) + 8px);
+      }
+      .mock__boton {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+      /* El stock de componentes es una herramienta de escritorio. */
+      .mock--plegado .mock__boton--stock {
+        display: none;
       }
     }
     .mock--plegado {

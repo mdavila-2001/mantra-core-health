@@ -4,6 +4,9 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { RegisterPatient } from './register-patient';
+import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
+import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
+import { EMPLEADOR, OCUPACION } from '../../../core/mock/fixtures/conceptos';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 
 const RESPUESTA = {
@@ -2347,6 +2350,43 @@ describe('RegisterPatient', () => {
       elegirCiudad('Quillacollo');
 
       expect(direccion()).toBe('Quillacollo');
+    });
+  });
+
+  /* ==========================================================================
+     Las dos salidas escritas a mano.
+
+     «Otra ocupación» y «Otra empresa» destraban un campo de texto libre, y quién
+     decide que la opción elegida es «otra» **compara por código**. Un filtro por
+     código es mudo cuando los dos lados hablan vocabularios distintos: no falla,
+     no avisa, sencillamente nunca da verdadero — y el campo escrito a mano deja
+     de aparecer, con la función construida y entera del otro lado.
+
+     Pasó en la rama `mockup` hasta el 09/09/2026: el simulador nombraba sus
+     ocupaciones `OCC-OTRA` y sus empleadores `EMP-INDEP`, y estas dos constantes
+     valen `occupation:bo:OTRA` y `employer:bo:OTRA`. Es la tercera vez que este
+     defecto muerde en el mismo fixture —antes fueron los departamentos
+     (`BO-SC`, que dejaba el mapa vacío) y las especialidades odontológicas—, así
+     que acá queda atado.
+
+     Se comprueba contra el catálogo del simulador porque es el único de los dos
+     que este repositorio puede leer, y es el que sirve la maqueta donde el
+     hueco apareció.
+     ========================================================================== */
+  describe('las salidas escritas a mano existen en el catálogo', () => {
+    it('«Otra ocupación» tiene el código que la pantalla busca', () => {
+      expect(OCUPACION[CODIGO_OCUPACION_OTRA], CODIGO_OCUPACION_OTRA).toBeDefined();
+    });
+
+    it('«Otra empresa» también', () => {
+      expect(EMPLEADOR[CODIGO_EMPRESA_OTRA], CODIGO_EMPRESA_OTRA).toBeDefined();
+    });
+
+    it('y no son las únicas: quedan opciones de verdad antes de la salida', () => {
+      // Si el catálogo fuera sólo «Otra», la lista no ofrecería nada y todo el
+      // mundo terminaría escribiendo a mano lo que el catálogo ya tiene.
+      expect(Object.keys(OCUPACION).length).toBeGreaterThan(10);
+      expect(Object.keys(EMPLEADOR).length).toBeGreaterThan(3);
     });
   });
 });

@@ -91,7 +91,7 @@ export interface EncuentroEnCurso {
  *
  * Separadas, cada una hace una cosa. El expediente es lectura —y por eso puede
  * quedarse con el ancho completo para sus ocho secciones—; ésta es escritura, y
- * es la que se abre desde la agenda y desde «Consulta médica», que es de donde
+ * es la que se abre desde la agenda y desde «Consultas médicas», que es de donde
  * se llega con un paciente para atenderlo. Las dos se enlazan mutuamente, así
  * que consultar la historia mientras se registra sigue estando a un clic.
  *

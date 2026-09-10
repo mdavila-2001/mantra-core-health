@@ -9,16 +9,18 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { DatePipe, isPlatformBrowser } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { isPlatformBrowser } from '@angular/common';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ChatStore, type MensajeDelHilo } from '../../../core/messaging/chat.store';
+import type { ConversationListItem } from '../../../core/data-access/community/community.types';
+import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 import {
   avatarDeConQuien as avatarDeConQuienDe,
   conQuien as conQuienDe,
 } from '../../../core/messaging/con-quien';
-import { etiquetaDeDia } from '../../../shared/date/hora-de-chat';
+import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/hora-de-chat';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { Composer } from './composer/composer';
@@ -58,6 +60,72 @@ const MARGEN_DE_CARGA = 220;
 /** Cuánto margen cuenta como «está al pie» para arrastrar el scroll. */
 const MARGEN_DEL_PIE = 90;
 
+/** Un pedazo del texto de una burbuja: texto plano, un enlace o una coincidencia. */
+export interface TrozoDeTexto {
+  readonly tipo: 'texto' | 'enlace' | 'marca';
+  readonly valor: string;
+}
+
+/** Lo que se reconoce como enlace dentro de un mensaje. Sólo http(s). */
+const ENLACE = /https?:\/\/[^\s<>"'）)\]]+/gu;
+
+/** Quita tildes y baja a minúsculas: «Holter» encuentra «hólter». */
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLowerCase();
+}
+
+/**
+ * Parte el texto de una burbuja en trozos: enlaces clicables y, si se está
+ * buscando, las coincidencias resaltadas.
+ *
+ * Los enlaces se reconocen primero y no se resaltan por dentro: una URL con
+ * un `<mark>` en el medio deja de ser un solo enlace para el navegador.
+ */
+export function trocear(texto: string, termino: string): readonly TrozoDeTexto[] {
+  const salida: TrozoDeTexto[] = [];
+  let desde = 0;
+  for (const enlace of texto.matchAll(ENLACE)) {
+    const indice = enlace.index ?? 0;
+    if (indice > desde) {
+      salida.push(...resaltar(texto.slice(desde, indice), termino));
+    }
+    salida.push({ tipo: 'enlace', valor: enlace[0] });
+    desde = indice + enlace[0].length;
+  }
+  if (desde < texto.length) {
+    salida.push(...resaltar(texto.slice(desde), termino));
+  }
+  return salida;
+}
+
+function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
+  const aguja = normalizar(termino.trim());
+  if (aguja === '') {
+    return [{ tipo: 'texto', valor: texto }];
+  }
+  // Normalizar no cambia el largo mientras sólo se quiten tildes combinadas,
+  // así que las posiciones valen para el texto original.
+  const pajar = normalizar(texto);
+  const salida: TrozoDeTexto[] = [];
+  let desde = 0;
+  let indice = pajar.indexOf(aguja);
+  while (indice !== -1) {
+    if (indice > desde) {
+      salida.push({ tipo: 'texto', valor: texto.slice(desde, indice) });
+    }
+    salida.push({ tipo: 'marca', valor: texto.slice(indice, indice + aguja.length) });
+    desde = indice + aguja.length;
+    indice = pajar.indexOf(aguja, desde);
+  }
+  if (desde < texto.length) {
+    salida.push({ tipo: 'texto', valor: texto.slice(desde) });
+  }
+  return salida;
+}
+
 /**
  * El hilo de una conversación — carril P2.
  *
@@ -76,17 +144,20 @@ const MARGEN_DEL_PIE = 90;
  */
 @Component({
   selector: 'app-thread',
-  imports: [Avatar, Composer, DatePipe, EmptyState, RouterLink],
+  imports: [Avatar, Composer, EmptyState, RouterLink],
   templateUrl: './thread.html',
-  styleUrl: './thread.css',
+  styleUrls: ['./thread.css', './thread-capas.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Thread {
   protected readonly store = inject(ChatStore);
+  private readonly preferencias = inject(ChatPreferencias);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private readonly marco = viewChild<ElementRef<HTMLElement>>('marco');
+  private readonly buscador = viewChild<ElementRef<HTMLInputElement>>('buscador');
 
   /** Si la vista está al pie. Arranca en `true`: un hilo se abre por el final. */
   private pegadoAbajo = true;
@@ -100,11 +171,41 @@ export class Thread {
   /** Qué mensaje tiene el menú abierto. */
   protected readonly menuAbierto = signal<string | null>(null);
 
+  /** Si está abierto el menú de la cabecera. */
+  protected readonly menuCabecera = signal(false);
+
+  protected readonly esFavorito = computed(() => {
+    const id = this.store.activaId();
+    return id !== null && this.preferencias.favoritos().has(id);
+  });
+
+  protected readonly estaArchivado = computed(() => {
+    const id = this.store.activaId();
+    return id !== null && this.preferencias.archivados().has(id);
+  });
+
   /** La imagen que se está mirando a tamaño completo. */
   protected readonly imagenAbierta = signal<string | null>(null);
 
   /** El mensaje al que saltó una cita, para destellarlo. */
   protected readonly destellando = signal<string | null>(null);
+
+  /** Si está abierta la búsqueda dentro de la conversación. */
+  protected readonly buscando = signal(false);
+
+  /** Lo que se busca dentro de la conversación. */
+  protected readonly termino = signal('');
+
+  /** El mensaje que se está por reenviar, mientras se elige a quién. */
+  protected readonly reenviando = signal<MensajeDelHilo | null>(null);
+
+  /** «Reenviado a …», un momento, después de reenviar. */
+  protected readonly avisoReenvio = signal<string | null>(null);
+
+  /** A qué conversaciones se puede reenviar: todas menos ésta. */
+  protected readonly destinosDeReenvio = computed(() =>
+    this.store.conversaciones().filter((c) => c.id !== this.store.activaId()),
+  );
 
   /** Con quién es la conversación. */
   protected readonly conQuien = computed(() => {
@@ -141,8 +242,40 @@ export class Thread {
     () => this.store.hiloCargado() && this.store.enOrden().length === 0,
   );
 
-  /** El hilo listo para pintar. */
+  /**
+   * El hilo listo para pintar.
+   *
+   * Con algo escrito en la búsqueda quedan sólo las burbujas que coinciden,
+   * con sus separadores de día: es una lista de resultados, no el hilo.
+   */
   protected readonly lineas = computed<readonly LineaDelHilo[]>(() => {
+    const aguja = normalizar(this.termino().trim());
+    if (aguja === '') {
+      return this.todasLasLineas();
+    }
+    const coinciden = this.todasLasLineas().filter(
+      (linea) =>
+        linea.tipo === 'mensaje' && normalizar(linea.mensaje.bodyText ?? '').includes(aguja),
+    );
+    // Cada resultado abre bloque: sin el vecino de arriba, la cola y el nombre
+    // del autor son lo que dice quién habló.
+    return coinciden.map((linea) =>
+      linea.tipo === 'mensaje' ? { ...linea, abreBloque: true } : linea,
+    );
+  });
+
+  /** Cuántas burbujas coinciden con lo buscado, para el rótulo. */
+  protected readonly rotuloDeBusqueda = computed(() => {
+    if (this.termino().trim() === '') {
+      return '';
+    }
+    const cuantas = this.lineas().filter((l) => l.tipo === 'mensaje').length;
+    return cuantas === 0
+      ? 'Sin coincidencias'
+      : `${cuantas} ${cuantas === 1 ? 'coincidencia' : 'coincidencias'}`;
+  });
+
+  private readonly todasLasLineas = computed<readonly LineaDelHilo[]>(() => {
     const salida: LineaDelHilo[] = [];
     const propio = this.store.perfil();
     const mensajes = this.store.enOrden();
@@ -211,6 +344,9 @@ export class Thread {
         this.pegadoAbajo = true;
         this.nuevosAbajo.set(0);
         this.menuAbierto.set(null);
+        this.menuCabecera.set(false);
+        this.cerrarBusqueda();
+        this.reenviando.set(null);
         this.store.abrir(id);
       }
     });
@@ -275,26 +411,168 @@ export class Thread {
 
   protected esImagen(mensaje: MensajeDelHilo): boolean {
     const tipo = mensaje.pendiente?.adjunto?.tipo;
-    if (tipo !== undefined) {
+    if (tipo !== undefined && tipo !== '') {
       return tipo.startsWith('image/');
     }
     // Sin el tipo del archivo —los que llegan del servidor no lo traen— se
-    // decide por la URL. No es adivinar: la URL firmada conserva el nombre.
+    // decide por la URL. No es adivinar: la URL firmada conserva el nombre, y
+    // una `data:image/…` dice lo que es en el esquema. La vista previa local
+    // (`blob:`) nunca llega acá: viene con su tipo.
     const url = this.urlDelAdjunto(mensaje);
-    return url !== null && /\.(png|jpe?g|gif|webp|avif)(\?|$)/i.test(url);
+    return (
+      url !== null &&
+      (/^data:image\//i.test(url) || /\.(png|jpe?g|gif|webp|avif)(\?|$)/i.test(url))
+    );
   }
 
   protected esAudio(mensaje: MensajeDelHilo): boolean {
     const tipo = mensaje.pendiente?.adjunto?.tipo;
-    if (tipo !== undefined) {
+    if (tipo !== undefined && tipo !== '') {
       return tipo.startsWith('audio/');
     }
     const url = this.urlDelAdjunto(mensaje);
-    return url !== null && /\.(webm|mp3|m4a|ogg|wav)(\?|$)/i.test(url);
+    return (
+      url !== null &&
+      (/^data:audio\//i.test(url) || /\.(webm|mp3|m4a|ogg|wav)(\?|$)/i.test(url))
+    );
+  }
+
+  /** El texto de una burbuja, en trozos: enlaces y coincidencias. */
+  protected segmentos(texto: string): readonly TrozoDeTexto[] {
+    return trocear(texto, this.termino());
+  }
+
+  /* --- Buscar en la conversación ------------------------------------------ */
+
+  protected abrirBusqueda(): void {
+    this.menuCabecera.set(false);
+    this.buscando.set(true);
+    if (this.isBrowser) {
+      setTimeout(() => this.buscador()?.nativeElement.focus());
+    }
+  }
+
+  protected alBuscar(valor: string): void {
+    this.termino.set(valor);
+  }
+
+  protected cerrarBusqueda(): void {
+    this.buscando.set(false);
+    this.termino.set('');
+  }
+
+  /* --- Reenviar ------------------------------------------------------------ */
+
+  protected reenviar(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.reenviando.set(mensaje);
+  }
+
+  protected cancelarReenvio(): void {
+    this.reenviando.set(null);
+  }
+
+  /**
+   * Cierra el reenvío sólo si el clic cayó en el fondo, no en el recuadro.
+   *
+   * Antes el recuadro paraba la propagación con un `(click)` propio, y un
+   * `(click)` sin equivalente de teclado no pasa la regla de accesibilidad
+   * —con razón: un recuadro no es un control—. Ponerle un `(keydown)` para
+   * callar al linter habría sido peor, porque también habría frenado el
+   * `Escape` que cierra desde el fondo. Se decide acá, mirando dónde cayó.
+   */
+  protected cerrarReenvioSiEsElFondo(evento: Event): void {
+    if (evento.target === evento.currentTarget) {
+      this.cancelarReenvio();
+    }
+  }
+
+  protected reenviarA(conversationId: string): void {
+    const mensaje = this.reenviando();
+    if (mensaje === null) {
+      return;
+    }
+    this.store.reenviar(mensaje, conversationId);
+    this.reenviando.set(null);
+    const destino = this.store.conversaciones().find((c) => c.id === conversationId);
+    this.avisoReenvio.set(`Reenviado a ${destino === undefined ? 'la conversación' : conQuienDe(destino)}`);
+    if (this.isBrowser) {
+      setTimeout(() => this.avisoReenvio.set(null), 2500);
+    }
+  }
+
+  protected nombreDeConversacion(conversacion: ConversationListItem): string {
+    return conQuienDe(conversacion);
+  }
+
+  protected avatarDeConversacion(conversacion: ConversationListItem): string | null {
+    return avatarDeConQuienDe(conversacion);
   }
 
   protected nombreDelAdjunto(mensaje: MensajeDelHilo): string {
     return mensaje.pendiente?.adjunto?.nombre ?? 'Archivo adjunto';
+  }
+
+  /**
+   * Con qué nombre se guarda un documento al descargarlo.
+   *
+   * El contrato no trae el nombre original del adjunto, así que se le pone
+   * uno con la extensión que dice el tipo de la `data:` URL: un archivo que
+   * se llame «Archivo adjunto» a secas no lo abre ningún visor.
+   */
+  protected nombreParaDescargar(mensaje: MensajeDelHilo): string {
+    const propio = mensaje.pendiente?.adjunto?.nombre;
+    if (propio !== undefined) {
+      return propio;
+    }
+    const url = this.urlDelAdjunto(mensaje) ?? '';
+    const tipo = /^data:([^;,]+)/i.exec(url)?.[1]?.toLowerCase() ?? '';
+    const extension =
+      { 'application/pdf': '.pdf', 'image/png': '.png', 'image/jpeg': '.jpg', 'audio/webm': '.webm', 'audio/mpeg': '.mp3' }[tipo] ?? '';
+    return `adjunto${extension}`;
+  }
+
+  protected adjuntoNoDisponible(mensaje: MensajeDelHilo): boolean {
+    return (
+      mensaje.attachmentFileId !== undefined &&
+      this.store.adjuntoNoDisponible(mensaje.attachmentFileId)
+    );
+  }
+
+  /** La hora de la burbuja, con el mismo formato que la fila de la bandeja. */
+  protected hora(fecha: Date | undefined): string {
+    return horaDelReloj(fecha);
+  }
+
+  /* --- El menú de la cabecera --------------------------------------------- */
+
+  protected alternarMenuCabecera(evento: Event): void {
+    evento.stopPropagation();
+    this.menuCabecera.update((abierto) => !abierto);
+  }
+
+  protected alternarFavorito(): void {
+    this.menuCabecera.set(false);
+    const id = this.store.activaId();
+    if (id !== null) {
+      this.preferencias.alternarFavorito(id);
+    }
+  }
+
+  protected alternarArchivado(): void {
+    this.menuCabecera.set(false);
+    const id = this.store.activaId();
+    if (id !== null) {
+      this.preferencias.alternarArchivado(id);
+    }
+  }
+
+  protected verPerfil(): void {
+    this.menuCabecera.set(false);
+    const peer = this.store.conversacionActiva()?.peers[0];
+    if (peer !== undefined) {
+      void this.router.navigate(['/public-profile', peer.profileId]);
+    }
   }
 
   /* --- Acciones sobre un mensaje ------------------------------------------ */

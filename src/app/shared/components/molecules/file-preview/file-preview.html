@@ -1,0 +1,72 @@
+<figure class="preview" aria-label="Vista previa del archivo">
+  @if (loading()) {
+    <p role="status">Preparando vista previa…</p>
+  }
+  @if (preview(); as source) {
+    <img [src]="source" [alt]="'Vista previa de ' + file().name" (error)="imageFailed()" />
+  }
+  @if (mediaUrl(); as source) {
+    @if (file().type.startsWith('video/')) {
+      <video
+        controls
+        playsinline
+        preload="metadata"
+        [src]="source"
+        [attr.aria-label]="'Vista previa de ' + file().name"
+        (error)="imageFailed()"
+      >
+        <track kind="captions" />
+      </video>
+    } @else {
+      <audio
+        controls
+        preload="metadata"
+        [src]="source"
+        [attr.aria-label]="'Escuchar ' + file().name"
+        (error)="imageFailed()"
+      ></audio>
+    }
+  }
+  @if (textPreview(); as text) {
+    <pre [attr.aria-label]="'Vista previa de ' + file().name">{{ text }}</pre>
+    @if (file().size > 65536) {
+      <figcaption>Vista previa de los primeros 64 KB.</figcaption>
+    }
+  }
+  @if (error(); as message) {
+    <p role="status">{{ message }}</p>
+  }
+  @if (
+    pages() > 1 && (file().type === 'application/pdf' || file().name.toLowerCase().endsWith('.pdf'))
+  ) {
+    <figcaption class="preview__navigation">
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [iconOnly]="true"
+        [disabled]="page() <= 1 || loading()"
+        (clicked)="page.set(page() - 1)"
+        aria-label="Página anterior del PDF"
+      >
+        <app-nav-icon name="arrow-left" />
+      </button>
+      <span aria-live="polite" [attr.aria-label]="'Página ' + page() + ' de ' + pages()"
+        >{{ page() }} / {{ pages() }}</span
+      >
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [iconOnly]="true"
+        [disabled]="page() >= pages() || loading()"
+        (clicked)="page.set(page() + 1)"
+        aria-label="Página siguiente del PDF"
+      >
+        <app-nav-icon name="arrow-right" />
+      </button>
+    </figcaption>
+  }
+</figure>

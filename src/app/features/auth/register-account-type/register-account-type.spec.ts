@@ -5,8 +5,8 @@ import { By } from '@angular/platform-browser';
 import { RegisterAccountType } from './register-account-type';
 
 /**
- * Lo que esta pantalla promete es **que las tres puertas abren**. Por eso lo que
- * se prueba es a dónde llevan las tarjetas y que sean enlaces de verdad: si el
+ * Lo que esta pantalla promete es **que las puertas abren**. Por eso lo que se
+ * prueba es a dónde llevan las tarjetas y que sean enlaces de verdad: si el
  * destino se escribe mal, el fallo no es una excepción sino un 404 al final de
  * una decisión que la persona ya tomó.
  */
@@ -29,16 +29,22 @@ describe('RegisterAccountType', () => {
       .map((el) => el.nativeElement as HTMLAnchorElement);
   }
 
-  it('ofrece las tres cuentas que tienen alta pública, y ninguna más', () => {
+  it('ofrece las cinco cuentas que tienen pantalla de alta, y ninguna más', () => {
     const titulos = tarjetas().map((card) =>
       card.querySelector('.tipos__card-title')!.textContent!.trim(),
     );
 
-    // Sin «Otro»: la API no tiene una cuarta alta pública, y una tarjeta que no
-    // lleva a ningún lado deja sin opción a quien ya eligió la suya.
+    // Sin «Otro»: una tarjeta que no lleva a ningún lado deja sin opción a quien
+    // ya eligió la suya.
     // «Médico» y no «Doctor» (F2 del plan de UX del 22/08/2026): en toda la
     // superficie que ve un paciente o un profesional se dice «médico».
-    expect(titulos).toEqual(['Paciente', 'Médico', 'Aseguradora']);
+    expect(titulos).toEqual([
+      'Paciente',
+      'Médico',
+      'Aseguradora',
+      'Laboratorio',
+      'Imagenología',
+    ]);
   });
 
   it('cada tarjeta lleva a su alta', () => {
@@ -48,6 +54,8 @@ describe('RegisterAccountType', () => {
       '/auth/register/patient',
       '/auth/register/practitioner',
       '/auth/register/organization',
+      '/auth/register/laboratory',
+      '/auth/register/imaging-center',
     ]);
   });
 
@@ -62,7 +70,7 @@ describe('RegisterAccountType', () => {
   it('la rejilla es una lista: el lector anuncia cuántas opciones hay antes de leerlas', () => {
     const items = fixture.debugElement.queryAll(By.css('.tipos__grid > li'));
 
-    expect(items).toHaveLength(3);
+    expect(items).toHaveLength(5);
   });
 
   it('dice «Aseguradora», que es lo que el alta crea de verdad', () => {

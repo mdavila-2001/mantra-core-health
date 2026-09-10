@@ -131,7 +131,7 @@ describe('MyProfile · con la verificación ofrecida', () => {
     expect(invitacion?.textContent?.trim()).toBe(
       'Verificá tu identidad para ver tu código de paciente',
     );
-    expect(invitacion?.getAttribute('href')).toBe('/my-account/identity/verify');
+    expect(invitacion?.getAttribute('href')).toBe('/my-account/identity');
   });
 
   /** Y la ficha lateral, que es lo que el interruptor apaga entero. */

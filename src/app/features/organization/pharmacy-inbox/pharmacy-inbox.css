@@ -21,6 +21,18 @@
   font-size: var(--fs-caption);
 }
 
+.bandeja__estado-sonido {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* El cartel de pedidos nuevos respira antes del tablero. El margen lo pone
+   quien lo ubica: el aviso no sabe dónde lo van a poner. */
+app-alert {
+  margin-block-end: var(--sp-4);
+}
+
 .bandeja {
   display: flex;
   flex-direction: column;
@@ -39,18 +51,37 @@
   min-width: 0;
 }
 
+/* La etiqueta y su contador se leen como UNA cosa, así que fluyen como texto
+   en vez de ser dos cajas flex. Era flex mientras acá adentro vivía un número
+   a tamaño de pie de foto; con un distintivo, en la columna angosta de 1440
+   el flex encogía la etiqueta hasta partirla en dos líneas y dejaba el
+   contador suelto contra el borde derecho, porque son dos ítems y cada uno
+   envuelve por su cuenta. En flujo de texto el contador acompaña a la última
+   palabra y envuelven juntos. No devolver `display: flex` sin resolver eso. */
 .bandeja__titulo {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
   margin: 0;
   font-size: var(--fs-h3);
 }
 
-.bandeja__conteo {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-  font-weight: 400;
+/* La última palabra de la etiqueta y la cifra, indivisibles.
+   Con la etiqueta suelta pasaba esto: «Esperando al paciente» mide 235 px y la
+   columna del tablero de cuatro mide 262 px a 1440, así que la etiqueta ENTRA
+   entera en la línea; el navegador la deja entera y corta en la única
+   oportunidad que le queda —el espacio de antes de la cifra—, y el contador
+   se va solo a la línea de abajo, contra el borde izquierdo. Pegando la
+   última palabra a la cifra, el corte se adelanta y bajan juntas:
+   «Esperando al / paciente 3». La unidad más ancha es «preparación» + cifra,
+   ~168 px: entra en cualquier columna del tablero. */
+.bandeja__cifra {
+  white-space: nowrap;
+}
+
+/* El aire que daba el `gap` del flex, ahora en margen: entre el texto y el
+   distintivo Angular no deja ningún nodo de espacio propio —sólo queda el
+   espacio final del nodo de la etiqueta, que es tipografía y no un token—. */
+.bandeja__titulo app-badge {
+  margin-inline-start: var(--sp-2);
+  vertical-align: middle;
 }
 
 .bandeja__vacio {
@@ -105,6 +136,14 @@
 
 .bandeja__renglones {
   color: var(--text-secondary);
+}
+
+/* El chip es inline-flex: sin este contenedor, la columna flex lo estiraría
+   de punta a punta de la tarjeta. */
+.bandeja__entrega {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
 .bandeja__pie {

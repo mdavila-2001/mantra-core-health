@@ -58,8 +58,8 @@ function fichaDe(p: PacienteSimulado) {
     masterPatientIndexCode: `MPI-${p.patientCode.slice(4)}`,
     displayName: p.displayName,
     birthDate: p.birthDate,
-    administrativeGenderConceptId: p.generoId,
-    sexAtBirthConceptId: p.sexoId,
+    ...(p.generoId === undefined ? {} : { administrativeGenderConceptId: p.generoId }),
+    ...(p.sexoId === undefined ? {} : { sexAtBirthConceptId: p.sexoId }),
     genderIdentityConceptId: null,
     nationalityConceptId: null,
     preferredLanguageConceptId: null,
@@ -87,7 +87,7 @@ function perfilPropioDe(p: PacienteSimulado) {
     motherLastName: p.motherLastName,
     displayName: p.displayName,
     birthDate: p.birthDate,
-    sexAtBirth: p.sexAtBirth,
+    ...(p.sexAtBirth === undefined ? {} : { sexAtBirth: p.sexAtBirth }),
     occupationConceptId: p.ocupacionId,
     phone: p.phone,
     residenceMunicipalityConceptId: p.municipioId,
@@ -99,8 +99,24 @@ function perfilPropioDe(p: PacienteSimulado) {
     taxHolderName: p.displayName,
     email: p.email,
     ...(p.photoFileId === undefined ? {} : { photoFileId: p.photoFileId }),
-    homeAddress: { lines: p.direccion, city: displayDe(p.municipioId), municipalityConceptId: p.municipioId, latitude: -17.78, longitude: -63.18 },
-    workAddress: { lines: 'Av. Cañoto esq. Landívar, piso 3', city: displayDe(p.municipioId), municipalityConceptId: p.municipioId },
+    // El punto guardado manda sobre el de ejemplo: si no, editar la ubicación
+    // «funcionaba» y al recargar volvía el de la plaza principal.
+    homeAddress: {
+      lines: p.direccion,
+      city: displayDe(p.municipioId),
+      municipalityConceptId: p.municipioId,
+      ...(p.homeLat === undefined || p.homeLng === undefined
+        ? { latitude: -17.78, longitude: -63.18 }
+        : { latitude: p.homeLat, longitude: p.homeLng }),
+    },
+    workAddress: {
+      lines: p.direccionTrabajo ?? 'Av. Cañoto esq. Landívar, piso 3',
+      city: displayDe(p.municipioId),
+      municipalityConceptId: p.municipioId,
+      ...(p.workLat === undefined || p.workLng === undefined
+        ? {}
+        : { latitude: p.workLat, longitude: p.workLng }),
+    },
     coverages:
       p.aseguradora === undefined
         ? []
@@ -174,7 +190,11 @@ export function registrarPerfiles(router: MockRouter): void {
   /* ---- pacientes ---------------------------------------------------------- */
 
   router.get('/profiles/patients', ({ query }) => {
-    const q = texto(query, 'query');
+    // `q`, no `query`: es como lo manda `ProfilesClient.searchPatients`. Leyendo
+    // la clave equivocada el filtro nunca se aplicaba —`contiene(x, null)` es
+    // `true`— y el buscador de pacientes devolvía la lista entera escribiera lo
+    // que escribiera quien buscaba.
+    const q = texto(query, 'q');
     const nationalId = texto(query, 'nationalId');
     const todos = pacientes
       .todos()
@@ -204,6 +224,27 @@ export function registrarPerfiles(router: MockRouter): void {
     return perfilPropioDe(p);
   });
 
+  /**
+   * Las coordenadas de una dirección, tal como llegan en el PATCH.
+   *
+   * Los dos extremos viajan juntos o no viajan: media coordenada no ubica nada,
+   * así que un cuerpo con sólo la latitud se ignora entero en vez de guardar un
+   * punto imposible. `null` en los dos **quita** el punto, que es distinto de no
+   * mandarlos —eso es «no lo toqué»— y por eso se distingue acá.
+   */
+  function coordenadasDelCuerpo(
+    cambios: Record<string, unknown>,
+    cual: 'home' | 'work',
+  ): Record<string, number | undefined> {
+    const lat = cambios[`${cual}Latitude`];
+    const lng = cambios[`${cual}Longitude`];
+    if (lat === null && lng === null) {
+      return { [`${cual}Lat`]: undefined, [`${cual}Lng`]: undefined };
+    }
+    if (typeof lat !== 'number' || typeof lng !== 'number') return {};
+    return { [`${cual}Lat`]: lat, [`${cual}Lng`]: lng };
+  }
+
   router.patch('/profiles/patients/me', (request) => {
     const p = pacienteDeSesion(request);
     if (p === undefined) return notFound('No tenés perfil de paciente');
@@ -217,6 +258,14 @@ export function registrarPerfiles(router: MockRouter): void {
       ...(typeof cambios['residenceMunicipalityConceptId'] === 'string' ? { municipioId: cambios['residenceMunicipalityConceptId'] } : {}),
       ...(typeof cambios['occupationConceptId'] === 'string' ? { ocupacionId: cambios['occupationConceptId'] } : {}),
       ...(typeof cambios['homeAddressLines'] === 'string' ? { direccion: cambios['homeAddressLines'] } : {}),
+      // La dirección de trabajo no se guardaba: el contrato la declaraba, la
+      // pantalla la mandaba y la maqueta la tiraba, así que editarla parecía
+      // funcionar hasta recargar.
+      ...(typeof cambios['workAddressLines'] === 'string'
+        ? { direccionTrabajo: cambios['workAddressLines'] }
+        : {}),
+      ...coordenadasDelCuerpo(cambios, 'home'),
+      ...coordenadasDelCuerpo(cambios, 'work'),
     });
     const conNombre = actualizado!;
     pacientes.actualizar(p.id, { displayName: `${conNombre.name}${conNombre.middleName ? ` ${conNombre.middleName}` : ''} ${conNombre.lastName} ${conNombre.motherLastName}` });
@@ -296,12 +345,62 @@ export function registrarPerfiles(router: MockRouter): void {
     body: { id: nuevoId('related'), patientProfileId: params['id'], personId: nuevoId('person'), status: 'ACTIVE', createdAt: ahora() },
   }));
 
+  /**
+   * Alta de un paciente hecha por personal.
+   *
+   * **La fila se guarda de verdad.** Antes se devolvía un `profileId` inventado
+   * que no quedaba en ninguna parte: el `GET /profiles/patients/:id` siguiente
+   * respondía 404, el paciente recién creado no aparecía al buscarlo y una cita
+   * agendada con él salía sin nombre en la agenda. Ahora entra en la colección,
+   * que es lo que hace utilizable el alta desde el mostrador.
+   *
+   * Lo que el mostrador no pregunta —sexo, domicilio, correo— **no se
+   * inventa**: queda vacío, y la ficha ya sabe mostrarse sin eso.
+   */
   router.post('/profiles/patients', (request) => {
-    const datos = cuerpo<{ patientCode: string; displayName?: string }>(request);
+    const datos = cuerpo<{
+      patientCode?: string;
+      displayName?: string;
+      name?: string;
+      middleName?: string;
+      lastName?: string;
+      motherLastName?: string;
+      birthDate?: string;
+      nationalId?: string;
+      phone?: string;
+      occupationConceptId?: string;
+      issuerAdministrativeAreaConceptId?: string;
+    }>(request);
     const id = nuevoId('paciente');
+    const nombre = datos.name ?? '';
+    const apellido = datos.lastName ?? '';
+    const materno = datos.motherLastName ?? '';
+    const nuevo: PacienteSimulado = {
+      id,
+      personId: uuid(`person-${id}`),
+      userId: uuid(`user-${id}`),
+      patientCode: datos.patientCode ?? `PAC-${Date.now() % 100000}`,
+      displayName: datos.displayName ?? [nombre, apellido, materno].filter((p) => p !== '').join(' '),
+      name: nombre,
+      ...(datos.middleName === undefined ? {} : { middleName: datos.middleName }),
+      lastName: apellido,
+      motherLastName: materno,
+      birthDate: datos.birthDate ?? '',
+      nationalId: datos.nationalId ?? '',
+      email: '',
+      phone: datos.phone ?? '',
+      municipioId: '',
+      departamentoId: datos.issuerAdministrativeAreaConceptId ?? '',
+      ocupacionId: datos.occupationConceptId ?? '',
+      direccion: '',
+      deceased: false,
+      // Nace sin identidad probada: nadie verificó nada en el mostrador.
+      identityVerified: false,
+    };
+    pacientes.agregar(nuevo);
     return {
       status: 201,
-      body: { profileId: id, personId: uuid(`person-${id}`), patientCode: datos.patientCode ?? `PAC-${Date.now() % 100000}`, recordLinkageStatus: 'UNLINKED', createdAt: ahora() },
+      body: { profileId: nuevo.id, personId: nuevo.personId, patientCode: nuevo.patientCode, recordLinkageStatus: 'UNLINKED', createdAt: ahora() },
     };
   });
 

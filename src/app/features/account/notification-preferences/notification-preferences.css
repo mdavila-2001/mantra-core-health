@@ -99,6 +99,10 @@
 
 .prefs__horas {
   display: flex;
+  /* Las dos horas se van a dos renglones cuando no entran. Sin esto, en un
+     teléfono de 375 el campo «Hasta» terminaba en 428 px y la **página entera**
+     se scrolleaba de lado — no sólo esta fila. Medido el 2026-09-10. */
+  flex-wrap: wrap;
   gap: var(--e3);
   margin-top: var(--e3);
   padding-inline-start: var(--e3);
@@ -108,7 +112,15 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  /* Puede encogerse y, si hay lugar, repartirse el ancho con su hermana. */
+  flex: 1 1 8rem;
+  min-inline-size: 0;
   font-size: 0.9rem;
+}
+
+.prefs__hora input {
+  inline-size: 100%;
+  min-inline-size: 0;
 }
 
 .prefs__hora input {

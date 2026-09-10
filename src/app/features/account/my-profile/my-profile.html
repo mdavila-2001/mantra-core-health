@@ -41,7 +41,7 @@
                  perfil profesional (P17): un `<label>` envuelve el avatar y un
                  input de archivo oculto. -->
             @if (datos(); as resumen) {
-              <label class="mi-perfil__foto" [class.is-subiendo]="subiendoFoto()">
+              <label [appFileDropTarget]="dropInput1" (fileDropRejected)="errorDeFoto.set($event)" class="mi-perfil__foto" [class.is-subiendo]="subiendoFoto()">
                 <app-avatar
                   size="lg"
                   [src]="fotoUrl()"
@@ -51,7 +51,7 @@
                 <span class="solo-lectores">
                   {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
                 </span>
-                <input
+                <input #dropInput1
                   type="file"
                   class="solo-lectores"
                   accept="image/*"
@@ -259,7 +259,7 @@
                      contacto tocara la credencial de acceso. -->
                 <p class="mi-perfil__accion">
                   <a
-                    app-button-link
+                    app-button
                     variant="outline"
                     size="sm"
                     data-testid="mi-perfil-cambiar-contrasena"
@@ -574,9 +574,8 @@
            camino habría convertido una limpieza de menú en una pérdida de
            acceso, que es lo único que no puede pasar. -->
         @if (esProfesional()) {
-          <nav class="mi-perfil__enlaces" aria-label="Tus organizaciones">
-            <a app-link routerLink="/my-organizations">Mis organizaciones</a>
-            <a app-link routerLink="/administration/my-organization">Tu organización</a>
+          <nav class="mi-perfil__enlaces" aria-label="Dónde ejercés">
+            <a app-link routerLink="/administration/my-practice">Mi consultorio propio</a>
             <a app-link routerLink="/administration/medical-organization">Organización médica</a>
           </nav>
         }

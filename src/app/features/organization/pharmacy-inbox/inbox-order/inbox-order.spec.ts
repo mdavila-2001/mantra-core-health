@@ -10,16 +10,23 @@ import {
   pharmacyOrderDtoFixture,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
+import {
+  ID_PEDIDO_CON_DELIVERY,
+  ID_PEDIDO_CON_SEGURO,
+} from '../../../../core/mock/fixtures/pedidos-de-farmacia';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { InboxOrder } from './inbox-order';
 
 describe('InboxOrder with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let confirmWithReason: ReturnType<typeof vi.fn>;
+  let toastInfo: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     confirmWithReason = vi.fn().mockResolvedValue('No trabajamos con esa presentación.');
+    toastInfo = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -30,6 +37,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
           provide: DialogService,
           useValue: { confirm: vi.fn().mockResolvedValue(true), confirmWithReason },
         },
+        { provide: ToastService, useValue: { info: toastInfo } },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -361,4 +369,243 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(text()).toContain('El código no coincide');
     expect(text()).toContain('Registrar retiro');
   });
+
+  /* ─── Lo que T-I3 suma: entrega, seguro y factura ──────────────────────── */
+
+  it('dice por qué medio se entrega el pedido', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+    const chip = element('[data-testid="mostrador-entrega"]');
+    expect(chip?.textContent?.trim()).toBe('Recojo en mostrador');
+    // El ámbar es el punto de acción único del sistema: una logística no lo usa.
+    expect(chip?.classList.contains('tone--warning')).toBe(false);
+    expect(text()).not.toContain('Datos de ejemplo');
+  });
+
+  it('el pedido de ejemplo se ve como delivery y muestra la dirección de entrega', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        id: ID_PEDIDO_CON_DELIVERY,
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-entrega"]')?.textContent?.trim()).toBe('Delivery');
+    const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
+    expect(detalle).toContain('Sale a la dirección de domicilio');
+    expect(detalle).toContain('Cristo Redentor');
+    // Y se declara maqueta, porque el medio lo puso la pantalla.
+    expect(text()).toContain('Datos de ejemplo');
+  });
+
+  it('lo que sale a domicilio no ofrece prepararlo para retiro en mostrador', async () => {
+    // La etiqueta dice delivery, así que la acción no puede contradecirla:
+    // las dos salen de la misma respuesta.
+    await mount(
+      pharmacyOrderDtoFixture({
+        id: ID_PEDIDO_CON_DELIVERY,
+        status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-entrega"]')?.textContent?.trim()).toBe('Delivery');
+    expect(element('[data-testid="mostrador-listo"]')).toBeNull();
+    expect(text()).not.toContain('Marcar listo para retirar');
+    // Y el texto tampoco se lo pide: no hay botón que respalde esa frase.
+    expect(text()).not.toContain('marcalo como listo');
+    expect(text()).toContain('sale por reparto, no se retira en el mostrador');
+  });
+
+  it('un pedido de retiro del contrato sigue ofreciendo la acción de siempre', async () => {
+    // La otra mitad: los pedidos reales no cambian de comportamiento.
+    await mount(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' } }),
+    );
+
+    expect(element('[data-testid="mostrador-entrega"]')?.textContent?.trim()).toBe(
+      'Recojo en mostrador',
+    );
+    expect(element('[data-testid="mostrador-listo"]')).not.toBeNull();
+    expect(text()).toContain('Marcar listo para retirar');
+    // Y sigue leyendo la frase de siempre, palabra por palabra.
+    expect(text()).toContain('Confirmado. Cuando esté armado, marcalo como listo.');
+  });
+
+  it('un pedido sin cobertura no inventa un seguro', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+    expect(element('[data-testid="mostrador-seguro"]')).toBeNull();
+    expect(text()).not.toContain('Aprobado por el seguro');
+  });
+
+  it('con seguro dice, renglón por renglón, lo aprobado y lo NO aprobado', async () => {
+    await mount(pedidoConSeguro());
+
+    const renglones = [
+      ...(harness.routeNativeElement?.querySelectorAll('.mostrador__cobertura app-badge') ?? []),
+    ];
+    expect(renglones.map((nodo) => nodo.textContent?.trim())).toEqual([
+      'Aprobado por el seguro',
+      'No aprobado',
+    ]);
+    expect(renglones[0]?.classList.contains('badge--success')).toBe(true);
+    expect(renglones[1]?.classList.contains('badge--error')).toBe(true);
+  });
+
+  it('el resumen separa lo que pone el seguro de lo que paga la persona', async () => {
+    await mount(pedidoConSeguro());
+    const resumen = element('[data-testid="mostrador-seguro"]')?.textContent ?? '';
+
+    expect(resumen).toContain('Cubre el seguro');
+    expect(resumen).toContain('Paga la persona (coaseguro)');
+    // 68,00 al 80 % son 54,40; la sertralina no aprobada la paga entera.
+    expect(resumen).toContain('54.40 BOB');
+    expect(resumen).toContain('109.10 BOB');
+    // Y se dice que es maqueta, en la propia pantalla.
+    expect(resumen).toContain('Datos de ejemplo');
+  });
+
+  it('descartar un renglón mueve el reparto del seguro, no sólo el total', async () => {
+    await mount(pedidoConSeguro());
+    const reparto = (): string =>
+      element('[data-testid="mostrador-seguro"]')?.textContent ?? '';
+    const total = (): string => element('[data-testid="mostrador-total-vivo"]')?.textContent ?? '';
+
+    expect(total()).toContain('163.50');
+    expect(reparto()).toContain('54.40 BOB');
+    expect(reparto()).toContain('109.10 BOB');
+
+    // El mostrador no tiene el primer renglón: baja el total …
+    chooseLineDecision('No disponible');
+
+    expect(total()).toContain('95.50');
+    // … y el reparto lo acompaña, en vez de seguir cobrando lo que no sale.
+    expect(reparto()).toContain('0.00 BOB');
+    expect(reparto()).toContain('95.50 BOB');
+    expect(reparto()).not.toContain('54.40 BOB');
+    expect(reparto()).not.toContain('109.10 BOB');
+  });
+
+  it('lo que sale por reparto no pide el código de retiro ni dice que alguien lo espera', async () => {
+    // No se alcanza con la semilla de hoy —el pedido de ejemplo no llega a
+    // este estado— pero el acoplamiento entrega↔retiro tiene que estar
+    // cerrado de los dos lados, no de uno.
+    await mount(
+      pharmacyOrderDtoFixture({
+        id: ID_PEDIDO_CON_DELIVERY,
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        pickupCode: null,
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-codigo"]')).toBeNull();
+    expect(element('[data-testid="mostrador-retirar"]')).toBeNull();
+    expect(text()).not.toContain('Registrar retiro');
+    expect(text()).not.toContain('espera en el mostrador con su código de retiro');
+    expect(text()).toContain('sale por reparto');
+  });
+
+  it('sin modalidad declarada, el código de retiro sigue estando: no saber no quita nada', async () => {
+    // `deliveryMode` es anulable en el contrato y el adaptador lo deja en
+    // `null`. Antes de este carril el formulario no miraba la modalidad, así
+    // que estos pedidos lo tenían: sacárselo sería cambiar comportamiento.
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        deliveryMode: null,
+        pickupCode: null,
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-entrega"]')).toBeNull();
+    expect(element('[data-testid="mostrador-codigo"]')).not.toBeNull();
+    expect(element('[data-testid="mostrador-retirar"]')).not.toBeNull();
+    expect(text()).toContain('Registrar retiro');
+  });
+
+  it('un pedido de retiro listo sigue pidiendo el código, como siempre', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        pickupCode: null,
+      }),
+    );
+
+    expect(element('[data-testid="mostrador-codigo"]')).not.toBeNull();
+    expect(text()).toContain('Registrar retiro');
+    expect(text()).toContain('El pedido espera en el mostrador con su código de retiro.');
+  });
+
+  it('la factura aparece recién cuando el pedido salió', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+        pickupCode: null,
+      }),
+    );
+    expect(element('[data-testid="mostrador-factura"]')).toBeNull();
+  });
+
+  it('el pedido entregado cierra con su factura y con la salida a la bandeja', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+    );
+    const factura = element('[data-testid="mostrador-factura"]');
+
+    expect(factura?.textContent).toContain('Enviada al paciente');
+    expect(factura?.textContent).toContain('68.00 BOB');
+    // La emite la maqueta al mirarla, nunca el día en que se hizo el pedido:
+    // una factura anterior a la entrega no existe.
+    expect(factura?.textContent).toContain(comoLaPintaLaPantalla(new Date()));
+    expect(factura?.textContent).not.toContain(
+      comoLaPintaLaPantalla(new Date('2026-09-03T14:00:00.000Z')),
+    );
+    // Va justo antes de la salida: el pie de la pantalla sigue siendo la bandeja.
+    expect(
+      factura?.closest('app-resumen-de-factura')?.nextElementSibling?.textContent?.trim(),
+    ).toBe('Volver a la bandeja');
+  });
+
+  it('la descarga del comprobante dice lo que es, en vez de bajar un archivo vacío', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+    );
+    click('mostrador-descargar-factura');
+
+    expect(toastInfo).toHaveBeenCalledOnce();
+    expect(toastInfo.mock.calls[0]?.[0]).toContain('módulo de facturación');
+  });
+
+  /** `dd/MM/yyyy`, el formato con el que el comprobante pinta las fechas. */
+  function comoLaPintaLaPantalla(fecha: Date): string {
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    return `${dia}/${mes}/${fecha.getFullYear()}`;
+  }
+
+  /** El pedido de ejemplo con cobertura, con un renglón que el seguro rebota. */
+  function pedidoConSeguro(): PharmacyOrderDto {
+    const base = pharmacyOrderDtoFixture();
+    return pharmacyOrderDtoFixture({
+      // Lo que lo identifica como el pedido con seguro es su id, no el nombre.
+      id: ID_PEDIDO_CON_SEGURO,
+      status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      patientName: 'Rosa Elena Quispe Vargas',
+      lines: [
+        base.lines[0],
+        {
+          ...base.lines[0],
+          productId: '00000000-0000-4000-8000-00000000000a',
+          brandName: 'Sertralina',
+          unitPriceAmount: '95.50',
+        },
+      ],
+    });
+  }
 });

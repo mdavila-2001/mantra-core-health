@@ -14,7 +14,8 @@
  * - El lugar de trabajo tiene el mismo selector, independiente.
  *
  * Y en el alta de profesional, que monta el componente compartido
- * `app-ubicacion-picker`: el mismo recorrido sobre su domicilio.
+ * `app-ubicacion-picker` DOS veces: el mismo recorrido sobre su domicilio y
+ * sobre su consultorio.
  *
  * Uso: `yarn node playwright/registro-ubicacion-en-mapa.mjs [urlBase]`
  */
@@ -77,15 +78,36 @@ async function empezarElAlta(pagina) {
     await pagina.getByTestId('registro-departamento-ci').locator('select').selectOption({ index: 1 });
   });
   await siguiente(pagina, 'registro-telefono', async () => {
-    const fecha = pagina.getByPlaceholder('DD/MM/AAAA');
-    await fecha.click();
-    await pagina.keyboard.press('Control+A');
-    await pagina.keyboard.press('Backspace');
-    await fecha.pressSequentially('01011990', { delay: 20 });
+    await escribirFecha(pagina, '01011990');
     await pagina.getByTestId('registro-genero').locator('select').selectOption({ label: 'Masculino' });
   });
   await pagina.getByTestId('registro-telefono').fill('70012345');
   await pagina.getByTestId('paginated-form-continuar').click();
+}
+
+/**
+ * Escribe una fecha en el campo enmascarado y comprueba que quedó escrita.
+ *
+ * La máscara reescribe el valor después de cada tecla, y a 20 ms el tecleo
+ * siguiente llegaba mientras reescribía: se perdían dígitos y quedaban fechas
+ * como «02/00/2198», que el formulario rechaza. Se teclea más lento y se
+ * relee: si lo que quedó no es lo que se quería, se vacía y se reintenta.
+ */
+async function escribirFecha(pagina, ddmmaaaa) {
+  const esperado = `${ddmmaaaa.slice(0, 2)}/${ddmmaaaa.slice(2, 4)}/${ddmmaaaa.slice(4)}`;
+  const campo = pagina.getByPlaceholder('DD/MM/AAAA');
+  for (let intento = 0; intento < 4; intento += 1) {
+    await campo.click();
+    await pagina.keyboard.press('Control+A');
+    await pagina.keyboard.press('Backspace');
+    await pagina.waitForTimeout(150);
+    await campo.pressSequentially(ddmmaaaa, { delay: 120 });
+    await pagina.waitForTimeout(250);
+    if ((await campo.inputValue()) === esperado) return;
+  }
+  throw new Error(
+    `La fecha quedó como «${await campo.inputValue()}» y se quería «${esperado}»`,
+  );
 }
 
 /** Centro del elemento, desplazado en píxeles. */
@@ -186,11 +208,7 @@ async function empezarElAltaDeProfesional(pagina) {
   });
   await siguiente(pagina, "registro-pro-celular-personal", async () => {
     await pagina.getByTestId("registration-practitioner-sex").locator("select").selectOption({ index: 1 });
-    const fecha = pagina.getByPlaceholder("DD/MM/AAAA");
-    await fecha.click();
-    await pagina.keyboard.press("Control+A");
-    await pagina.keyboard.press("Backspace");
-    await fecha.pressSequentially("02021985", { delay: 20 });
+    await escribirFecha(pagina, "02021985");
   });
   await siguiente(pagina, "registro-pro-celular-trabajo", async () => {
     await pagina.getByTestId("registro-pro-celular-personal").fill("70011223");
@@ -261,6 +279,18 @@ async function main() {
     confirmar: "registration-practitioner-home-location-confirm",
     sinConfirmar: "registration-practitioner-home-location-unconfirmed",
     confirmada: "registration-practitioner-home-location-confirmed",
+  });
+
+  // «Tu consultorio propio» es la página siguiente y no tiene obligatorios.
+  await siguiente(pagina, "registration-practitioner-office-location-use");
+  await recorrerSelector(pagina, capturar, "consultorio", {
+    mapa: "registration-practitioner-office-map",
+    usar: "registration-practitioner-office-location-use",
+    marcar: "registration-practitioner-office-location-pick",
+    indicacion: "registration-practitioner-office-location-pick-indicacion",
+    confirmar: "registration-practitioner-office-location-confirm",
+    sinConfirmar: "registration-practitioner-office-location-unconfirmed",
+    confirmada: "registration-practitioner-office-location-confirmed",
   });
 
   ok('sin errores de página', errores.length === 0, errores.join(' | '));

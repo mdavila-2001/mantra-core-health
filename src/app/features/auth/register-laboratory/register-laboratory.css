@@ -1,0 +1,50 @@
+/* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
+   `../registro-compartido/registro.css`, que esta pantalla declara junto a esta
+   hoja en sus `styleUrls`, igual que las altas de paciente y de profesional. */
+
+.lab-adjunto__error {
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+  margin: var(--sp-3) 0 0;
+}
+
+/* ---------------------------------------------------------------- sucursales
+   Una tarjeta por local, con su nombre, su calle y su mapa. */
+
+.lab-sucursales {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  width: 100%;
+}
+
+.lab-sucursal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-surface);
+}
+
+.lab-sucursal__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.lab-sucursal__titulo {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  margin: 0;
+}
+
+.lab-sucursales__vacio {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  margin: 0;
+}

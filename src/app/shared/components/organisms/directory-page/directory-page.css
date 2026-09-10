@@ -94,3 +94,13 @@
     padding: 0;
     list-style: none;
 }
+
+/* La bajada cuando el directorio va embebido en un modal: el título ya lo puso
+   el diálogo, pero la línea que dice de qué es el directorio sigue haciendo
+   falta. */
+.directorio__bajada-embebida {
+    margin: 0 0 var(--sp-4);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}

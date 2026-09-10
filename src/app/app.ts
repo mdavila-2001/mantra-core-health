@@ -6,6 +6,7 @@ import { filter } from 'rxjs';
 import { AlovidaRuntimeService } from '@core/alovida/alovida-runtime.service';
 import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
 import { MockBanner } from './core/mock/mock-banner';
+import { AvisoDeHuecoLibre } from './features/notifications/aviso-de-hueco-libre';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +18,7 @@ export class App {
   private readonly alovida = inject(AlovidaRuntimeService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly huecosLibres = inject(AvisoDeHuecoLibre);
 
   constructor() {
     /* Los comportamientos del marco ALOVIDA (menús, diálogo, cajón de
@@ -24,6 +26,10 @@ export class App {
        cada navegación: en la maqueta estática bastaba con DOMContentLoaded,
        pero acá el documento no se recarga entre pantallas. */
     this.alovida.instalar();
+    /* El aviso de cupo libre del punto 3.4 del registro de procesos. Se
+       enciende solo en la maqueta y sólo con sesión abierta: contra la API real
+       el empujón lo da el servidor (módulo 35). Ver `aviso-de-hueco-libre.ts`. */
+    this.huecosLibres.empezar();
     this.aplicarPantalla();
     this.router.events
       .pipe(

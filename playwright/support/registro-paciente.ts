@@ -35,6 +35,15 @@ export async function empezarElAlta(page: Page, documento = '9876543'): Promise<
   await page.getByTestId('paginated-form-continuar').click();
 
   await page.getByTestId('registro-documento').fill(documento);
+  // El departamento que expidió la cédula pasó a ser OBLIGATORIO (commit
+  // b300ade, «el departamento de emisión se ve —y es— obligatorio»). Sin esto
+  // el motor no deja pasar de página, y la suite se colgaba mucho más adelante
+  // esperando el campo de fecha de nacimiento, que nunca llegaba a dibujarse:
+  // un fallo que no decía nada de su causa.
+  await page
+    .getByTestId('registro-departamento-ci')
+    .locator('select')
+    .selectOption({ index: 1 });
   await page.getByTestId('paginated-form-continuar').click();
 
   // La página «Contanos un poco sobre vos» exige fecha de nacimiento y sexo

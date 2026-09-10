@@ -11,9 +11,14 @@
      otro «reintentá»: lo que resuelve este caso es ir a completar el perfil. -->
 @if (perfilIncompleto()) {
   <app-alert tone="warning" class="grupos__alerta" title="Te falta el perfil público">
+    <!-- Sin enlace desde el 2026-09-10: el propietario pidió sacar la
+         configuración de la vitrina «de todos lados», y ofrecer una puerta a una
+         pantalla borrada es peor que no ofrecer ninguna. El aviso se queda
+         porque sigue siendo cierto —el servidor rechaza el alta— y porque
+         borrarlo dejaría el fallo sin explicación. **Queda sin camino de
+         autoservicio: ver `docs/progress/BLOCKERS.md`.** -->
     Para crear un grupo público necesitás tu perfil público completo: nombre visible, foto y el
-    perfil en público.
-    <a app-link [routerLink]="['/my-account/preview']"> Configurar mi perfil público </a>
+    perfil en público. Pedíselo a quien administra tu organización.
   </app-alert>
 }
 
@@ -86,8 +91,7 @@
       @if (!perfilListoParaPublico()) {
         <p class="grupos__aviso-perfil">
           Para crear un grupo <strong>público</strong> necesitás tu perfil público completo: nombre
-          visible, foto y el perfil en público.
-          <a app-link [routerLink]="['/my-account/preview']"> Configurar mi perfil público </a>
+          visible, foto y el perfil en público. Pedíselo a quien administra tu organización.
         </p>
       }
 

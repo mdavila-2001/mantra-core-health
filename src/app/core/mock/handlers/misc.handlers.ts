@@ -12,6 +12,39 @@ import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
 
 /** De `esquema.tabla.columna` al conjunto de valores que la gobierna. */
 const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string])[] = [
+  /*
+   * El diagnóstico va PRIMERO y con la tabla en el patrón: `code_concept_id` es
+   * una columna que existe en media docena de tablas clínicas y cada una lee de
+   * un conjunto distinto.
+   *
+   * Faltaba, y no fallaba: sin patrón que casara, el fallback dejaba
+   * `VS_RECORD_STATUS`, así que el desplegable «Elegí un diagnóstico» ofrecía
+   * «Activo, Inactivo, Pendiente, Verificado…». Un catálogo equivocado se ve
+   * como un catálogo, no como un error: la pantalla no avisaba nada y los cinco
+   * casos de demostración salían «aplicados parcialmente». Con esto, el paso
+   * 2.6.1.1 —el médico registra su diagnóstico— se puede recorrer en la maqueta.
+   *
+   * `VS_CONDITION_CODE` ya existía en los fixtures, con sus quince códigos
+   * CIE-10; lo único que faltaba era esta línea.
+   */
+  [/conditions\.code_concept_id/, 'VS_CONDITION_CODE', 'Diagnóstico'],
+  // Los otros cuatro catálogos del diagnóstico. Sin ellos caían en el default
+  // —`VS_RECORD_STATUS`— y el selector de «Curso clínico» ofrecía
+  // Activo/Archivado: **«Crónico» no existía en la maqueta**. Van antes que
+  // `/severity/`, que casaría con `conditions.severity_concept_id` por su
+  // cuenta pero con otro conjunto.
+  // Los catálogos de la alergia. Van antes que `/severity/` porque la severidad
+  // de una reacción sí usa `VS_SEVERITY`, y ese patrón casaría igual.
+  [/allergy_reactions\.manifestation_concept_id/, 'VS_ALLERGY_MANIFESTATION', 'Manifestación'],
+  [/allergy_intolerances\.substance_concept_id/, 'VS_ALLERGY_SUBSTANCE', 'Sustancia'],
+  [/allergy_intolerances\.type_concept_id/, 'VS_ALLERGY_TYPE', 'Tipo'],
+  [/allergy_intolerances\.category_concept_id/, 'VS_ALLERGY_CATEGORY', 'Categoría'],
+  [/allergy_intolerances\.criticality_concept_id/, 'VS_ALLERGY_CRITICALITY', 'Criticidad'],
+  [/conditions\.clinical_course_concept_id/, 'VS_CONDITION_CLINICAL_COURSE', 'Curso clínico'],
+  [/conditions\.category_concept_id/, 'VS_CONDITION_CATEGORY', 'Categoría'],
+  [/conditions\.laterality_concept_id/, 'VS_CONDITION_LATERALITY', 'Lateralidad'],
+  [/conditions\.clinical_status_concept_id/, 'VS_CONDITION_CLINICAL_STATUS', 'Estado clínico'],
+
   [/sex_at_birth/, 'VS_BIRTH_SEX', 'Sexo al nacer'],
   [/gender/, 'VS_ADMINISTRATIVE_GENDER', 'Género'],
   [/municipality/, 'VS_BO_MUNICIPALITY', 'Municipio'],

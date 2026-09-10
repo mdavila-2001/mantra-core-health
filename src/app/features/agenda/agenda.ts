@@ -21,6 +21,7 @@ import { StatusSeal } from '../../shared/components/organisms/status-seal/status
 import { toBookingStatusPresentation, type BookingStatusPresentation } from './booking-status';
 import {
   CITA_QUERY_PARAM,
+  encounterWorkspaceRoute,
   MOTIVO_QUERY_PARAM,
   patientChartRoute,
 } from '../clinical-record/clinical-record.routes';
@@ -271,14 +272,25 @@ export interface CitaVisible {
    */
   readonly appointmentId: string | null;
   /**
-   * Lo que el enlace al expediente lleva en la URL, ya armado.
+   * Lo que el paso a la atención lleva en la URL, ya armado.
    *
    * Se compone acá y no en la plantilla porque son dos datos opcionales e
    * independientes: la expresión en línea que los combinaba se volvió ilegible
    * al segundo, y una plantilla que arma estructuras es una plantilla que nadie
    * puede probar por separado.
+   *
+   * Dejó de viajar con «Abrir expediente»: desde que la escritura se mudó a
+   * Atención, el expediente es lectura y no usaba ninguno de los dos. Ahora
+   * son de «Iniciar consulta», que es quien los precisa.
    */
-  readonly paramsDelExpediente: Readonly<Record<string, string>>;
+  readonly paramsDeLaAtencion: Readonly<Record<string, string>>;
+  /**
+   * A dónde lleva atender a esta persona, o `null` si la sesión no puede.
+   *
+   * Misma compuerta que el expediente: quien no puede abrir expedientes
+   * tampoco atiende.
+   */
+  readonly rutaAtencion: string | null;
   /**
    * Cuándo se pidió la cita — la columna «fecha y hora de solicitud» del punto 1.
    *
@@ -1457,8 +1469,14 @@ export class Agenda {
   }
 
   /**
-   * Inicia la atención. **En cualquier momento** (corrección #15): no espera a
-   * que llegue el día agendado, ni exige registrar la llegada antes.
+   * Inicia la atención y **entra a atender**. **En cualquier momento**
+   * (corrección #15): no espera a que llegue el día agendado, ni exige
+   * registrar la llegada antes.
+   *
+   * Antes sólo marcaba la cita como iniciada y recargaba la tabla: el botón
+   * decía «Iniciar consulta» y no llevaba a ninguna consulta, así que había
+   * que buscar a la persona por otro camino. Ahora éste es el **único** origen
+   * de la atención, y por eso navega.
    */
   protected iniciarAtencion(cita: CitaVisible): void {
     if (this.operando() !== null) {
@@ -1469,14 +1487,35 @@ export class Agenda {
     this.scheduling.startBooking(cita.id).subscribe({
       next: () => {
         this.operando.set(null);
-        this.toast.success('La atención quedó iniciada.', 'Consulta');
-        this.cargarAgenda();
+        this.irAAtender(cita);
       },
       error: (error: unknown) => {
         this.operando.set(null);
         this.avisarFallo(error, 'No se pudo iniciar la atención.');
       },
     });
+  }
+
+  /**
+   * Vuelve a una atención que ya está en curso, sin volver a iniciarla.
+   *
+   * `startBooking` sobre una cita ya iniciada es un 409: quien se fue de la
+   * pantalla y vuelve necesita entrar, no reintentar la transición.
+   */
+  protected continuarAtencion(cita: CitaVisible): void {
+    this.irAAtender(cita);
+  }
+
+  /** El paso a la pantalla de atención, con el motivo y el turno que la originó. */
+  private irAAtender(cita: CitaVisible): void {
+    const ruta = cita.rutaAtencion;
+    if (ruta === null) {
+      // Sin permiso para expedientes no hay a dónde ir: la cita quedó iniciada
+      // igual y la tabla tiene que reflejarlo.
+      this.cargarAgenda();
+      return;
+    }
+    void this.router.navigate([ruta], { queryParams: cita.paramsDeLaAtencion });
   }
 
   /**
@@ -1751,12 +1790,16 @@ export class Agenda {
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,
       appointmentId: cita.appointmentId ?? null,
-      paramsDelExpediente: {
+      paramsDeLaAtencion: {
         ...(cita.reasonText === undefined ? {} : { [MOTIVO_QUERY_PARAM]: cita.reasonText }),
         ...(cita.appointmentId === undefined || cita.appointmentId === null
           ? {}
           : { [CITA_QUERY_PARAM]: cita.appointmentId }),
       },
+      rutaAtencion:
+        paciente !== null && this.puedeVerExpedientes()
+          ? encounterWorkspaceRoute(paciente)
+          : null,
       llegadaRegistrada: cita.checkedInAt !== undefined,
       solicitada: cita.createdAt,
       pago: cita.paymentState ?? null,

@@ -1,0 +1,9 @@
+<app-page-header
+  title="Mi consultorio propio"
+  subtitle="Los lugares donde atendés por tu cuenta: su dirección, su punto en el mapa y su horario."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- El mismo componente que «Mi perfil» monta al pie, sin el historial laboral.
+     Ver el JSDoc de `MyPractice`. -->
+<app-work-history class="consultorio__bloque" [soloConsultorios]="true" />

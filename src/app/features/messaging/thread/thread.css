@@ -45,7 +45,10 @@
 
 .hilo__cabecera {
   position: relative;
-  z-index: 1;
+  /* Por encima del marco de mensajes (que lleva 1): el menú de la cabecera
+     se despliega sobre las burbujas y, con el mismo nivel, el marco lo tapaba
+     y se comía los clics. */
+  z-index: 2;
   flex: none;
   display: flex;
   align-items: center;
@@ -80,6 +83,136 @@
   white-space: nowrap;
 }
 
+/* El menú de la cabecera, a la derecha del todo. */
+.hilo__acciones {
+  position: relative;
+  flex: none;
+  margin-inline-start: auto;
+}
+
+.hilo__mas {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 36px;
+  block-size: 36px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva);
+}
+
+.hilo__mas:hover,
+.hilo__mas:focus-visible,
+.hilo__mas[aria-expanded='true'] {
+  background: var(--sup-inset);
+  color: var(--tinta-marca);
+}
+
+.hilo__mas svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+/* Con el selector del contenedor para ganarle a la regla general del menú,
+   que viene más abajo en el archivo. */
+.hilo__acciones .hilo__menu {
+  inset-block-start: calc(100% + 4px);
+  min-inline-size: 13rem;
+}
+
+.hilo__acciones .hilo__menu button {
+  white-space: nowrap;
+}
+
+/* --- Buscar en la conversación ------------------------------------------- */
+
+.hilo__buscar {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e2) var(--e4);
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-3);
+}
+
+.hilo__buscar > svg {
+  flex: none;
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.hilo__buscar input {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  block-size: 34px;
+  padding-inline: var(--e3);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--sup-inset);
+  font: inherit;
+  font-size: var(--fs-caption);
+  color: var(--tinta);
+}
+
+.hilo__buscar input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.hilo__buscar input:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+  border-color: var(--petroleo);
+}
+
+.hilo__buscar-cuenta {
+  flex: none;
+  color: var(--tinta-2);
+  font-size: var(--fs-overline);
+  font-variant-numeric: tabular-nums;
+}
+
+.hilo__buscar-cerrar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.hilo__buscar-cerrar svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+/* Lo que coincide con lo buscado, con los colores del sistema. */
+.hilo__marca {
+  border-radius: 3px;
+  padding: 0 1px;
+  background: var(--info-bg);
+  color: var(--info-tinta);
+}
+
+/* Un enlace dentro de una burbuja: se ve como enlace, corta donde haga falta. */
+.hilo__enlace {
+  color: var(--petroleo);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+
 /* El «volver» sólo aparece en angosto: en escritorio la lista está al lado. */
 .hilo__volver {
   display: none;
@@ -108,7 +241,13 @@
 }
 
 .hilo__cargando,
-.hilo__mas {
+/* El aviso de «Cargando mensajes anteriores…».
+   Se llamaba `.hilo__mas` igual que los DOS botones de la cabecera, así que las
+   reglas se fundían y el párrafo heredaba `inline-size: 36px` — el texto se
+   dibujaba en una columna de 36 px— mientras los botones heredaban
+   `text-align: center` y el cuerpo de tipografía de un pie. Una clase, un
+   dueño. */
+.hilo__cargando {
   margin: 0 0 var(--e3);
   color: var(--tinta-2);
   font-size: var(--fs-caption);
@@ -130,11 +269,6 @@
 /* En el flujo, no pegado arriba: un separador marca dónde empieza un día, y si
    se despega de ahí deja de marcar nada. */
 .hilo__dia,
-.hilo__no-leidos {
-  align-self: center;
-  margin-block: var(--e4);
-}
-
 .hilo__dia span,
 .hilo__no-leidos span {
   display: inline-block;
@@ -150,11 +284,15 @@
 }
 
 /* El de no leídos ocupa el ancho: es una línea de corte, no una etiqueta. */
+/* La línea de «no leídos», con su regla a cada lado. Estaba declarada dos
+   veces: la primera fijaba `align-self: center`, que ésta pisaba con `stretch`
+   —era código muerto—. Queda una sola, con el margen que sí valía. */
 .hilo__no-leidos {
   align-self: stretch;
   display: flex;
   align-items: center;
   gap: var(--e3);
+  margin-block: var(--e4);
 }
 
 .hilo__no-leidos::before,
@@ -423,156 +561,6 @@
   margin: 0 0 3px;
   color: var(--tinta-3);
   font-size: var(--fs-overline);
-}
-
-/* --- El menú del mensaje ------------------------------------------------- */
-
-.hilo__mas-mensaje {
-  position: absolute;
-  inset-block-start: 2px;
-  inset-inline-end: 2px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 20px;
-  block-size: 20px;
-  border: 0;
-  border-radius: 4px;
-  background: linear-gradient(to left, var(--chat-ajena) 60%, transparent);
-  color: var(--tinta-3);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity var(--mov-rapido) var(--curva);
-}
-
-.hilo__burbuja.is-propio .hilo__mas-mensaje {
-  background: linear-gradient(to left, var(--chat-propia) 60%, transparent);
-}
-
-.hilo__burbuja:hover .hilo__mas-mensaje,
-.hilo__burbuja:focus-within .hilo__mas-mensaje,
-.hilo__mas-mensaje[aria-expanded='true'] {
-  opacity: 1;
-}
-
-.hilo__mas-mensaje svg {
-  inline-size: 14px;
-  block-size: 14px;
-}
-
-.hilo__menu {
-  position: absolute;
-  inset-block-start: 20px;
-  inset-inline-end: 0;
-  z-index: 3;
-  margin: 0;
-  padding: var(--e1);
-  min-inline-size: 9rem;
-  list-style: none;
-  border: 1px solid var(--filete);
-  border-radius: var(--r-menu);
-  background: var(--sup-tarjeta);
-  box-shadow: var(--sombra);
-}
-
-.hilo__menu button {
-  inline-size: 100%;
-  padding: var(--e2) var(--e3);
-  border: 0;
-  border-radius: var(--r-ctrl);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: var(--fs-caption);
-  text-align: start;
-  cursor: pointer;
-}
-
-.hilo__menu button:hover,
-.hilo__menu button:focus-visible {
-  background: var(--sup-inset);
-}
-
-@media (hover: none) {
-  .hilo__mas-mensaje {
-    opacity: 1;
-  }
-}
-
-/* --- Bajar del todo ------------------------------------------------------ */
-
-.hilo__bajar {
-  position: absolute;
-  inset-block-end: 5.5rem;
-  inset-inline-end: var(--e6);
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: var(--e2) var(--e3);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-pill);
-  background: var(--sup-tarjeta);
-  box-shadow: var(--sombra-2);
-  color: var(--tinta-2);
-  cursor: pointer;
-}
-
-.hilo__bajar svg {
-  inline-size: 18px;
-  block-size: 18px;
-}
-
-.hilo__bajar-cuenta {
-  min-inline-size: 18px;
-  padding-inline: 5px;
-  border-radius: var(--r-pill);
-  background: var(--chat-no-leido);
-  color: #fff;
-  font-size: var(--fs-overline);
-  font-weight: 700;
-}
-
-/* --- El visor de imágenes ------------------------------------------------ */
-
-.hilo__visor {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--e6);
-  background: var(--velo);
-  cursor: zoom-out;
-}
-
-.hilo__visor img {
-  max-inline-size: 100%;
-  max-block-size: 100%;
-  border-radius: var(--r-menu);
-  box-shadow: var(--sombra);
-}
-
-.hilo__visor-cerrar {
-  position: absolute;
-  inset-block-start: var(--e4);
-  inset-inline-end: var(--e4);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, .16);
-  color: #fff;
-  cursor: pointer;
-}
-
-.hilo__visor-cerrar svg {
-  inline-size: 20px;
-  block-size: 20px;
 }
 
 /* --- Angosto ------------------------------------------------------------- */

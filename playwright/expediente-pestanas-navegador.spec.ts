@@ -94,9 +94,15 @@ test.describe('Expediente · pestañas con marco de ventana', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await estable(page);
 
-    /* ---- 4. «Atender» lleva a la pantalla de escritura -------------------- */
+    /* ---- 4. el expediente ya no es un origen de la atención --------------- */
 
-    await page.getByTestId('expediente-abrir-atencion').click();
+    /* Atender nace sólo de «Mis citas»: el expediente es lectura y perdió su
+       botón «Atender». Se comprueba que no está y se llega a la pantalla de
+       escritura por su URL, que es lo que esta prueba mira de acá en más. */
+    await expect(page.getByTestId('expediente-abrir-atencion')).toHaveCount(0);
+
+    const urlExpediente = page.url();
+    await page.goto(`${urlExpediente}/encounter`, { waitUntil: 'commit' });
     await page.waitForURL(/\/medical-records\/[^/]+\/encounter$/, { timeout: 60_000 });
     await estable(page);
 

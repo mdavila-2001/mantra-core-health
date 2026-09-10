@@ -1,0 +1,140 @@
+/**
+ * Las pestañas de la ficha del **médico**, espejo de las del paciente.
+ *
+ * ## Por qué existe
+ *
+ * Pedido del cliente del 2026-09-10: «la información del perfil del médico debe
+ * mostrar de la misma manera que la información del paciente, claro tomando en
+ * cuenta todos los campos del registro de creación del médico».
+ *
+ * O sea: la MISMA tarjeta —un solo `app-card` con pestañas, retrato y lápiz a
+ * la derecha— que {@link PESTANAS_DEL_PERFIL}, pero con los datos de un médico.
+ * La ficha del médico era otra cosa: cinco tarjetas apiladas, chips de vitrina y
+ * dos pestañas al fondo.
+ *
+ * ## El orden es el del alta, no el de la ficha vieja
+ *
+ * `auth/register-practitioner` pregunta en doce pasos, y ese orden es el que la
+ * persona ya recorrió una vez. Las cinco pestañas los agrupan sin reordenarlos:
+ *
+ * | Pasos del alta | Pestaña |
+ * |---|---|
+ * | nombre · documento · sexo y nacimiento · título profesional | Datos personales |
+ * | contacto privado · contacto del trabajo · dónde vivís | Contacto |
+ * | tu consultorio propio | Dónde atiendo |
+ * | dónde estudió el título · tus títulos | Trayectoria |
+ * | habilitación · respaldos · especialidades | Credenciales |
+ * | — (lo que registró con la cuenta) | Actividad |
+ *
+ * Las dos últimas filas no salen del alta y tampoco se podían tirar: la
+ * trayectoria laboral (UC-05-16) y los contadores de la plataforma ya se
+ * mostraban en la ficha vieja, y quitarlos para «parecerse más al paciente»
+ * habría sido perder información con la excusa de un rediseño.
+ *
+ * ## Por qué una constante y no cinco literales en la plantilla
+ *
+ * Igual que en el paciente: el índice se comparte con quien edite, y una lista
+ * escrita dos veces se desordena en el primer retoque que se haga en una sola.
+ */
+export const PESTANAS_DEL_PERFIL_MEDICO = [
+  'Datos personales',
+  'Contacto',
+  'Dónde atiendo',
+  'Trayectoria',
+  'Credenciales',
+  'Actividad',
+] as const;
+
+/** Los índices con nombre, para no escribir `3` donde se quiere decir «Credenciales». */
+export const PESTANA_MEDICO = {
+  personales: 0,
+  contacto: 1,
+  dondeAtiendo: 2,
+  trayectoria: 3,
+  credenciales: 4,
+  actividad: 5,
+} as const;
+
+/**
+ * Dónde se lee cada campo del alta de médico.
+ *
+ * La clave es la del `FormGroup` de `auth/register-practitioner`; el valor, la
+ * pestaña donde ese dato aparece en la ficha. Es el contrato que impide que el
+ * alta gane un campo y la ficha se entere seis meses después: el spec de al lado
+ * lee los `key:` del alta y falla si alguno no está acá.
+ *
+ * `password` es la única ausencia deliberada — una contraseña no se muestra;
+ * se cambia por su propio trámite, y la ficha ofrece ese camino.
+ */
+export const CAMPO_DEL_ALTA_EN_PESTANA: Readonly<Record<string, number>> = {
+  /* 1 · ¿Cómo te llamás? */
+  name: PESTANA_MEDICO.personales,
+  lastName: PESTANA_MEDICO.personales,
+  motherLastName: PESTANA_MEDICO.personales,
+
+  /* 2 · Tu documento de identidad */
+  nationalId: PESTANA_MEDICO.personales,
+  issuerAdministrativeAreaConceptId: PESTANA_MEDICO.personales,
+
+  /* 3 · Contanos un poco sobre vos */
+  sexAtBirth: PESTANA_MEDICO.personales,
+  birthDate: PESTANA_MEDICO.personales,
+
+  /* 4 · Cómo te contactamos en privado */
+  mobilePhone: PESTANA_MEDICO.contacto,
+  personalEmail: PESTANA_MEDICO.contacto,
+
+  /* 5 · El contacto de tu trabajo */
+  workMobilePhone: PESTANA_MEDICO.contacto,
+  workLandline: PESTANA_MEDICO.contacto,
+  email: PESTANA_MEDICO.contacto,
+
+  /* 6 · ¿Dónde vivís? */
+  municipio: PESTANA_MEDICO.contacto,
+  homeAddressLines: PESTANA_MEDICO.contacto,
+  gpsDomicilio: PESTANA_MEDICO.contacto,
+
+  /* 7 · Tu consultorio propio */
+  officeName: PESTANA_MEDICO.dondeAtiendo,
+  municipioConsultorio: PESTANA_MEDICO.dondeAtiendo,
+  officeAddressLines: PESTANA_MEDICO.dondeAtiendo,
+  gpsConsultorio: PESTANA_MEDICO.dondeAtiendo,
+
+  /* 8 · Tu título profesional y foto */
+  profilePhotoBase64: PESTANA_MEDICO.personales,
+  professionalTitle: PESTANA_MEDICO.personales,
+  professionalTitleEducation: PESTANA_MEDICO.trayectoria,
+  professionalTitleUniversity: PESTANA_MEDICO.trayectoria,
+  professionalTitleCountry: PESTANA_MEDICO.trayectoria,
+  professionalTitleCity: PESTANA_MEDICO.trayectoria,
+  professionalTitleFile: PESTANA_MEDICO.trayectoria,
+
+  /* 9 · Tu habilitación para ejercer */
+  licenseNumber: PESTANA_MEDICO.credenciales,
+  sedesLicenseNumber: PESTANA_MEDICO.credenciales,
+  regulatoryAuthority: PESTANA_MEDICO.credenciales,
+  licenseIssueDate: PESTANA_MEDICO.credenciales,
+
+  /* 10 · Los respaldos de tu habilitación */
+  credentialAttachments: PESTANA_MEDICO.credenciales,
+
+  /* 11 · Tus títulos */
+  academicTitles: PESTANA_MEDICO.trayectoria,
+
+  /* 12 · Tus especialidades */
+  specialtyPrimary: PESTANA_MEDICO.credenciales,
+  especialidadesExtra: PESTANA_MEDICO.credenciales,
+};
+
+/**
+ * El campo del alta que la ficha NO muestra, y por qué.
+ *
+ * Uno solo. Se declara acá para que el spec pueda distinguir «se olvidaron de
+ * mapearlo» de «se decidió no mostrarlo», que es la diferencia entre un defecto
+ * y una decisión.
+ */
+export const CAMPOS_DEL_ALTA_SIN_PESTANA: Readonly<Record<string, string>> = {
+  password:
+    'Una contraseña no se muestra nunca. La ficha ofrece el camino para cambiarla ' +
+    '(«Cambiar contraseña»), que es lo único que se puede hacer con ella.',
+};

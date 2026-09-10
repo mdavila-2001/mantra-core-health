@@ -1,3 +1,4 @@
+import { ESTADO_DE_CASO } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
 import { notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_CLINICA } from '../mock-session';
@@ -22,6 +23,38 @@ export const POLITICA = {
   organizacion: uuid('policy-tenant'),
 } as const;
 
+/**
+ * El estado de un caso, **como concepto**.
+ *
+ * El backend real no emite `'VERIFIED'`: emite el identificador del concepto
+ * `identity_assurance:CASE_VERIFIED`, y la interfaz lo resuelve contra
+ * terminología (`features/identity-verification/case-status.ts`). El simulador
+ * mandaba el enum interno en texto plano, así que la búsqueda por concepto no
+ * encontraba nada y **las dos pantallas de trámites pintaban «Desconocido» en
+ * todas las filas** — el defecto que el propietario señaló el 2026-09-10.
+ *
+ * Se guarda el enum corto en los datos, que es lo que se lee al escribirlos, y
+ * se traduce al salir. `CHECKS_PENDING` y `IN_REVIEW` son los dos nombres que
+ * el simulador ya usaba para estados que el catálogo llama distinto.
+ */
+const CONCEPTO_DE_ESTADO: Readonly<Record<string, string>> = {
+  OPEN: ESTADO_DE_CASO['identity_assurance:CASE_OPEN']!,
+  CHECKS_PENDING: ESTADO_DE_CASO['identity_assurance:CASE_CHECKS_PENDING']!,
+  IN_REVIEW: ESTADO_DE_CASO['identity_assurance:CASE_IN_VERIFICATION']!,
+  MANUAL_REVIEW: ESTADO_DE_CASO['identity_assurance:CASE_MANUAL_REVIEW']!,
+  AT_RISK: ESTADO_DE_CASO['identity_assurance:CASE_AT_RISK']!,
+  VERIFIED: ESTADO_DE_CASO['identity_assurance:CASE_VERIFIED']!,
+  ASSERTED: ESTADO_DE_CASO['identity_assurance:CASE_ASSERTED']!,
+  REJECTED: ESTADO_DE_CASO['identity_assurance:CASE_REJECTED']!,
+  REVOKED: ESTADO_DE_CASO['identity_assurance:CASE_REVOKED']!,
+  EXPIRED: ESTADO_DE_CASO['identity_assurance:CASE_EXPIRED']!,
+};
+
+/** El concepto del estado, o el enum tal cual si es uno que no está en el catálogo. */
+function conceptoDeEstado(estado: string): string {
+  return CONCEPTO_DE_ESTADO[estado] ?? estado;
+}
+
 interface CasoSimulado {
   readonly id: string;
   readonly status: string;
@@ -39,9 +72,9 @@ interface CasoSimulado {
 }
 
 const casos = new Coleccion<CasoSimulado>([
-  { id: uuid('case-paciente-identidad'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PATIENT, subjectEntityId: PACIENTE.id, identityVerificationPolicyId: POLITICA.paciente, riskScore: '0.12', openedAt: iso(-200, 10), expiresAt: iso(-193), completedAt: iso(-199, 15), userId: PACIENTE.userId, type: 'PATIENT_IDENTITY', evidenceFileId: uuid('file-ci-paciente'), checkIds: [uuid('check-1')] },
-  { id: uuid('case-medica-identidad'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: MEDICA.id, identityVerificationPolicyId: POLITICA.profesional, riskScore: '0.05', openedAt: iso(-500, 9), expiresAt: iso(-493), completedAt: iso(-498, 11), userId: MEDICA.userId, type: 'PRACTITIONER_IDENTITY', evidenceFileId: uuid('file-ci-medica'), checkIds: [uuid('check-2')] },
-  { id: uuid('case-medica-matricula'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: MEDICA.id, identityVerificationPolicyId: POLITICA.matricula, riskScore: '0.03', openedAt: iso(-495, 9), expiresAt: iso(-488), completedAt: iso(-490, 16), userId: MEDICA.userId, type: 'PRACTITIONER_LICENSE', evidenceFileId: uuid('file-matricula-medica'), checkIds: [uuid('check-3')] },
+  { id: uuid('case-paciente-identidad'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PATIENT, subjectEntityId: PACIENTE.id, identityVerificationPolicyId: POLITICA.paciente, riskScore: '0.12', openedAt: iso(-46, 10), expiresAt: iso(319), completedAt: iso(-45, 15), userId: PACIENTE.userId, type: 'PATIENT_IDENTITY', evidenceFileId: uuid('file-ci-paciente'), checkIds: [uuid('check-1')] },
+  { id: uuid('case-medica-identidad'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: MEDICA.id, identityVerificationPolicyId: POLITICA.profesional, riskScore: '0.05', openedAt: iso(-38, 9), expiresAt: iso(327), completedAt: iso(-37, 11), userId: MEDICA.userId, type: 'PRACTITIONER_IDENTITY', evidenceFileId: uuid('file-ci-medica'), checkIds: [uuid('check-2')] },
+  { id: uuid('case-medica-matricula'), status: 'VERIFIED', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: MEDICA.id, identityVerificationPolicyId: POLITICA.matricula, riskScore: '0.03', openedAt: iso(-12, 9), expiresAt: iso(353), completedAt: iso(-11, 16), userId: MEDICA.userId, type: 'PRACTITIONER_LICENSE', evidenceFileId: uuid('file-matricula-medica'), checkIds: [uuid('check-3')] },
   { id: uuid('case-medica-sanlucas'), status: 'IN_REVIEW', subjectTypeConceptId: SUJETO.TENANT, subjectEntityId: TENANT_CLINICA, identityVerificationPolicyId: POLITICA.organizacion, riskScore: '0.20', openedAt: iso(-3, 12), expiresAt: iso(4), completedAt: null, userId: MEDICA.userId, type: 'TENANT', evidenceFileId: uuid('file-nit-olivos'), checkIds: [uuid('check-4')] },
   { id: uuid('case-cola-1'), status: 'OPEN', subjectTypeConceptId: SUJETO.PRACTITIONER, subjectEntityId: PROFESIONALES[14]!.id, identityVerificationPolicyId: POLITICA.profesional, riskScore: '0.41', openedAt: iso(-2, 8), expiresAt: iso(5), completedAt: null, userId: PROFESIONALES[14]!.userId, type: 'PRACTITIONER_IDENTITY', evidenceFileId: uuid('file-ci-14'), checkIds: [uuid('check-5')] },
   { id: uuid('case-cola-2'), status: 'MANUAL_REVIEW', subjectTypeConceptId: SUJETO.PATIENT, subjectEntityId: PACIENTES[6]!.id, identityVerificationPolicyId: POLITICA.paciente, riskScore: '0.67', openedAt: iso(-5, 14), expiresAt: iso(2), completedAt: null, userId: PACIENTES[6]!.userId, type: 'PATIENT_IDENTITY', evidenceFileId: uuid('file-ci-p6'), checkIds: [uuid('check-6')] },
@@ -52,7 +85,7 @@ const casos = new Coleccion<CasoSimulado>([
 function casoPropio(c: CasoSimulado) {
   return {
     id: c.id,
-    status: c.status,
+    status: conceptoDeEstado(c.status),
     openedAt: c.openedAt,
     completedAt: c.completedAt,
     type: c.type,
@@ -114,7 +147,7 @@ export function registrarIdentidad(router: MockRouter): void {
       .todos()
       .filter((c) => status === null || status === '' || c.status === status)
       .slice(0, limit)
-      .map((c) => ({ id: c.id, status: c.status, subjectTypeConceptId: c.subjectTypeConceptId, subjectEntityId: c.subjectEntityId, identityVerificationPolicyId: c.identityVerificationPolicyId, riskScore: c.riskScore, openedAt: c.openedAt, expiresAt: c.expiresAt }));
+      .map((c) => ({ id: c.id, status: conceptoDeEstado(c.status), subjectTypeConceptId: c.subjectTypeConceptId, subjectEntityId: c.subjectEntityId, identityVerificationPolicyId: c.identityVerificationPolicyId, riskScore: c.riskScore, openedAt: c.openedAt, expiresAt: c.expiresAt }));
     return { items, count: items.length };
   });
 

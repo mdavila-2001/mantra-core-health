@@ -413,3 +413,6 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 
 /* breakpoints ALOVIDA (referencia; se usan al construir pantallas):
    móvil < 780 px · tablet 780–1024 px · escritorio > 1024 px — mobile-first */
+
+/* Los selectores compactos comparten el estado de arrastre del campo de archivos. */
+.file-drop-target--active { outline: 2px dashed var(--brand-primary); outline-offset: 2px; background: var(--bg-inset); }

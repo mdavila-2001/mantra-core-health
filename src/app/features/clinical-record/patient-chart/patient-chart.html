@@ -1,17 +1,4 @@
 <app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
-  <!-- Donde se escribe. El expediente es lectura; abrir el encuentro y
-       registrar sobre él vive en su propia pantalla, y este botón es el paso
-       de una a la otra sin volver a elegir a la persona. -->
-  <a
-    app-button
-    page-actions
-    variant="primary"
-    [routerLink]="rutaDeLaAtencion()"
-    data-testid="expediente-abrir-atencion"
-  >
-    Atender
-  </a>
-
   <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
        entera: sin eso el documento se llevaría el menú lateral. -->
   <app-pdf-export-button
@@ -28,6 +15,16 @@
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
   <div class="expediente" data-pdf-root #raizPdf>
+    <!-- Continuación, no un origen: atender nace sólo de «Mis citas». Esto
+         aparece únicamente si ya hay un encuentro abierto con esta persona. -->
+    @if (atencionEnCurso()) {
+      <app-alert tone="info" title="Tenés una consulta en curso con esta persona">
+        <a app-link [routerLink]="rutaDeLaAtencion()" data-testid="expediente-volver-atencion">
+          Volver a la consulta
+        </a>
+      </app-alert>
+    }
+
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado">
@@ -96,6 +93,41 @@
       <app-tabs appearance="browser">
         @for (bloque of bloques(); track bloque.clave) {
           <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
+            <!-- El alta del bloque, arriba de su tabla. El expediente sigue
+                 siendo lectura: registrar un diagnóstico no es atender —no abre
+                 encuentro, no cierra nada— y el cliente lo pidió textual,
+                 «primero debería poder crear un diagnóstico nuevo sobre el
+                 expediente del paciente». Va en modal, que es lo que la regla
+                 de la casa pide para toda edición que pida datos. -->
+            @if (puedeEscribir() && bloque.clave === 'diagnosticos') {
+              <div class="expediente__acciones-bloque">
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  data-testid="expediente-nuevo-diagnostico"
+                  (clicked)="abrirAltaDeDiagnostico()"
+                >
+                  Nuevo diagnóstico
+                </button>
+              </div>
+            }
+            @if (puedeEscribir() && bloque.clave === 'alergias') {
+              <div class="expediente__acciones-bloque">
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  data-testid="expediente-nueva-alergia"
+                  (clicked)="abrirAltaDeAlergia()"
+                >
+                  Nueva alergia
+                </button>
+              </div>
+            }
+
             <app-data-table
               [state]="estadoDe(bloque.filas, bloque.titulo)"
               [columns]="bloque.columnas"
@@ -108,25 +140,6 @@
       </app-tabs>
     </section>
 
-    <!-- ─── De dónde sale esto ───────────────────────────────────────────
-         No es relleno: un expediente que no dice de dónde viene cada bloque
-         invita a suponer que lo trae todo, y no lo trae. -->
-    <app-card variant="outlined" padding="lg" class="expediente__nota">
-      <h2 class="expediente__nota-titulo">Qué se está mirando</h2>
-      <p class="expediente__nota-texto">
-        Los cinco primeros bloques salen del registro clínico estructurado; las notas, los planes y
-        los documentos, del expediente narrativo. Son dos lecturas del backend y una sola historia:
-        la separación es de quién la escribe, no de quién la lee.
-      </p>
-      <p class="expediente__nota-texto">
-        Esta pantalla <strong>lee</strong>. Lo que se registra durante una consulta —abrir y cerrar
-        el encuentro, recetar, la internación y las fichas de especialidad— vive en
-        <strong>Atención</strong>, que se abre con el botón de arriba y trae a la misma persona. La
-        única escritura que quedó acá es el <strong>estado clínico</strong> de un diagnóstico, y con
-        su adjunto: es una corrección de lo que esta tabla muestra, no un registro de la consulta de
-        hoy.
-      </p>
-    </app-card>
   </div>
 </app-view-state-host>
 
@@ -172,44 +185,187 @@
      decide si la transición pedida es válida desde el estado actual —no se
      replica esa máquina acá, para no tener dos versiones de la misma regla. -->
 <ng-template #celdaAcciones let-fila>
-  <div class="expediente__accion-estado">
-    <app-concept-select
-      [target]="targetEstadoClinico"
-      [value]="destinoEstadoDe(fila.id)"
-      (valueChange)="elegirDestinoEstado(fila.id, $event)"
-      [labels]="etiquetasDeEstadoClinico"
-      placeholder="Cambiar a…"
-    />
-    @if (destinoEstadoDe(fila.id) !== null) {
+  <!-- Un solo botón y un menú: el selector de estado y el subidor de archivos
+       se desplegaban DENTRO de la celda, y la tabla crecía de golpe. Los dos
+       piden datos, así que los dos van a un modal. La celda conserva su alto. -->
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    type="button"
+    data-testid="expediente-acciones"
+    [appMenuTrigger]="menuDeAcciones"
+    [isLoading]="cambiandoEstado() === fila.id"
+  >
+    Acciones
+  </button>
+  <app-menu #menuDeAcciones>
+    <app-menu-item (selected)="abrirCambioDeEstado(fila)">Cambiar estado clínico…</app-menu-item>
+    <app-menu-item (selected)="abrirAdjuntos(fila, 'diagnosticos')">
+      Adjuntar archivos…
+    </app-menu-item>
+  </app-menu>
+</ng-template>
+
+<!-- Cambiar el estado clínico de un diagnóstico ya registrado. El backend
+     sigue validando la transición: esto sólo deja de deformar la tabla. -->
+@if (cambiandoEstadoDe(); as fila) {
+  <app-content-dialog
+    heading="Cambiar el estado clínico"
+    [description]="fila.principal"
+    (closed)="cerrarCambioDeEstado()"
+  >
+    <div class="expediente__accion-estado">
+      <app-concept-select
+        [target]="targetEstadoClinico"
+        [value]="destinoEstadoDe(fila.id)"
+        (valueChange)="elegirDestinoEstado(fila.id, $event)"
+        [labels]="etiquetasDeEstadoClinico"
+        placeholder="Cambiar a…"
+      />
       <button
         app-button
-        variant="outline"
+        variant="primary"
         size="sm"
         type="button"
         data-testid="expediente-cambiar-estado"
-        [disabled]="cambiandoEstado() !== null"
+        [disabled]="destinoEstadoDe(fila.id) === null || cambiandoEstado() !== null"
         (clicked)="cambiarEstadoClinico(fila)"
       >
         Aplicar
       </button>
-    }
-    <button
-      app-button
-      variant="ghost"
-      size="sm"
-      type="button"
-      data-testid="expediente-adjuntar-archivo"
-      (clicked)="alternarAdjuntos(fila.id)"
-    >
-      {{ adjuntandoArchivoA() === fila.id ? 'Cerrar adjuntos' : 'Adjuntar archivo' }}
-    </button>
-  </div>
-  @if (adjuntandoArchivoA() === fila.id) {
-    <app-attachment-uploader
-      ownerType="CONDITION"
-      [ownerId]="fila.id"
-      [linkVia]="enlazarAdjuntoAlDiagnostico"
-      (attached)="cerrarAdjuntos()"
-    />
-  }
+    </div>
+  </app-content-dialog>
+}
+
+<!-- La acción de apertura del detalle. Una sola plantilla para las ocho
+     tablas: el bloque se deduce de la fila. -->
+<ng-template #celdaVer let-fila>
+  <button
+    app-button
+    variant="outline"
+    size="sm"
+    type="button"
+    data-testid="expediente-ver-detalle"
+    [attr.aria-label]="'Ver detalle de ' + fila.principal"
+    (clicked)="verDetalle(fila)"
+  >
+    Ver
+  </button>
 </ng-template>
+
+<!-- El detalle de una fila, en modal. Al final de la plantilla y fuera de
+     `app-view-state-host`: vive sobre la pantalla, no dentro de la tabla. El
+     `<dialog>` nativo lo sube al top layer igual, pero declararlo acá deja
+     constancia de que no cuelga de ninguna fila. -->
+@if (filaEnDetalle(); as abierta) {
+  <app-content-dialog
+    [heading]="tituloDelDetalle()"
+    [description]="contextoDelPaciente()"
+    size="md"
+    (closed)="cerrarDetalle()"
+  >
+    <!-- Mismos rótulos que la tabla, más los vínculos que en la tabla no
+         entran. De lectura: esta pantalla no escribe, y lo que se escribe vive
+         en «Atención». -->
+    <dl class="expediente__detalle" data-testid="expediente-detalle">
+      <div class="expediente__detalle-fila">
+        <dt>Registro</dt>
+        <dd>
+          {{ abierta.fila.principal }}
+          @if (abierta.fila.secundario) {
+            <span class="expediente__secundario">{{ abierta.fila.secundario }}</span>
+          }
+        </dd>
+      </div>
+      <div class="expediente__detalle-fila">
+        <dt>Estado</dt>
+        <dd><app-badge variant="info" [value]="abierta.fila.estado" /></dd>
+      </div>
+      <div class="expediente__detalle-fila">
+        <dt>Fecha</dt>
+        <dd>
+          {{ abierta.fila.cuando ? (abierta.fila.cuando | date: 'd MMM y') : 'Sin fecha' }}
+        </dd>
+      </div>
+      @if (abierta.fila.detalle) {
+        <div class="expediente__detalle-fila">
+          <dt>Detalle</dt>
+          <dd>{{ abierta.fila.detalle }}</dd>
+        </div>
+      }
+      @for (vinculo of abierta.fila.vinculos; track vinculo.rotulo) {
+        <div class="expediente__detalle-fila">
+          <dt>{{ vinculo.rotulo }}</dt>
+          <dd>{{ vinculo.valor }}</dd>
+        </div>
+      }
+    </dl>
+  </app-content-dialog>
+}
+
+<!-- Adjuntar, para cualquier bloque que lo admita. Abre el modal en vez de
+     desplegarse dentro de la fila: el desplegable inline hacía crecer la celda
+     y deformaba la tabla. -->
+<ng-template #celdaAdjuntos let-fila>
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    type="button"
+    data-testid="expediente-adjuntar-archivo"
+    [attr.aria-label]="'Adjuntar archivos a ' + fila.principal"
+    (clicked)="abrirAdjuntos(fila, bloqueDeLaFila(fila))"
+  >
+    Adjuntar
+  </button>
+</ng-template>
+
+@if (adjuntandoA(); as destino) {
+  <app-attachment-dialog
+    [ownerType]="duenoDelAdjunto()"
+    [ownerId]="destino.id"
+    [contexto]="contextoDeLosAdjuntos()"
+    [linkVia]="enlaceDelAdjunto()"
+    [heading]="tituloDeLosAdjuntos()"
+    (attached)="recargar()"
+    (closed)="cerrarAdjuntos()"
+  />
+}
+
+<!-- El alta de diagnóstico y la de alergia, en modal y no dentro de la tabla:
+     es la regla de la casa para toda edición que pida datos. El bloque es EL
+     MISMO de «Atención» —no una copia—, con el encuentro relajado: acá la cita
+     se elige de las que el paciente ya tiene, y puede no haber ninguna. -->
+@if (altaDeDiagnosticoAbierta()) {
+  <app-content-dialog
+    heading="Nuevo diagnóstico"
+    [description]="descripcionDelAlta()"
+    closeLabel="Cerrar"
+    (closed)="cerrarAltaDeDiagnostico()"
+  >
+    <app-diagnosis-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="null"
+      [exigeEncuentro]="false"
+      [citas]="citasParaElDiagnostico()"
+      (cambio)="diagnosticoRegistrado()"
+    />
+  </app-content-dialog>
+}
+
+@if (altaDeAlergiaAbierta()) {
+  <app-content-dialog
+    heading="Nueva alergia"
+    [description]="descripcionDelAlta()"
+    closeLabel="Cerrar"
+    (closed)="cerrarAltaDeAlergia()"
+  >
+    <app-allergy-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="null"
+      [citas]="citasParaElDiagnostico()"
+      (cambio)="alergiaRegistrada()"
+    />
+  </app-content-dialog>
+}

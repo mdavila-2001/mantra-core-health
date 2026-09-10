@@ -141,6 +141,8 @@
           <app-week-view
             [semana]="semanaVisible()"
             [cupos]="cuposDelMes()"
+            [citas]="citasDeLaSemana()"
+            [etiquetas]="estadosResueltos()"
             [bloqueos]="bloqueosDelMes()"
             (semanaElegida)="cambiarSemana($event)"
             (diaElegido)="abrirDia($event)"

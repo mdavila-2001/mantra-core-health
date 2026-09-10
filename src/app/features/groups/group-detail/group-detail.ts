@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { CommunityClient } from '../../../core/data-access/community/community.client';
@@ -56,13 +65,42 @@ export class GroupDetail {
   private readonly route = inject(ActivatedRoute);
 
   /**
-   * El grupo, tomado de la ruta.
+   * El grupo, cuando lo monta otro componente.
    *
-   * Del snapshot y no de un `input`: el router de esta aplicacion no tiene
-   * `withComponentInputBinding`, asi que un input de ruta llegaria vacio. Es
-   * la misma lectura que hace la ficha de una encuesta.
+   * Lo usa el modal de Comunidades (10/09/2026), que abre la conversación de un
+   * grupo **dentro** de su área de contenido en vez de navegar. Vacío cuando la
+   * pantalla se abre por su ruta, que es el caso de siempre.
    */
-  private readonly groupIdRuta = this.route.snapshot.paramMap.get('groupId') ?? '';
+  readonly groupId = input('');
+
+  /**
+   * Si va embebido en otro contenedor.
+   *
+   * Con `true` no dibuja su `app-page-header`: dentro de un modal el título ya
+   * lo pone el diálogo, y dos encabezados uno debajo del otro es lo que hace
+   * que nadie sepa dónde está.
+   */
+  readonly embedded = input(false);
+
+  /**
+   * El grupo tomado de la ruta.
+   *
+   * Del snapshot y no de un `input` de ruta: el router de esta aplicacion no
+   * tiene `withComponentInputBinding`, asi que un input de ruta llegaria vacio.
+   * Es la misma lectura que hace la ficha de una encuesta.
+   */
+  private readonly groupIdDeLaRuta = this.route.snapshot.paramMap.get('groupId') ?? '';
+
+  /**
+   * Con cuál de los dos se trabaja: gana el que baja por `input`.
+   *
+   * Sin esto habría que elegir entre una pantalla con ruta y un componente
+   * embebible, y la alternativa era duplicar el muro —composer, hilos,
+   * moderación y altas— en el modal de Comunidades. Duplicarlo es cómo se
+   * pierden hilos: dos implementaciones del mismo muro divergen a la segunda
+   * corrección.
+   */
+  protected readonly groupIdActual = computed(() => this.groupId() || this.groupIdDeLaRuta);
 
   protected readonly grupo = signal<GroupDetailData | null>(null);
   protected readonly publicaciones = signal<readonly GroupWallItem[]>([]);
@@ -98,7 +136,32 @@ export class GroupDetail {
   });
 
   constructor() {
-    this.cargarFicha();
+    // En un `effect` y no en el constructor: cuando el grupo baja por `input`,
+    // en el constructor todavía no llegó. Y así cambiar de grupo dentro del
+    // modal de Comunidades relee, en vez de seguir mostrando el anterior.
+    effect(() => {
+      const id = this.groupIdActual();
+      untracked(() => {
+        if (id !== '') {
+          this.reiniciar();
+          this.cargarFicha();
+        }
+      });
+    });
+  }
+
+  /** Deja el componente como recién montado, para el grupo que sigue. */
+  private reiniciar(): void {
+    this.grupo.set(null);
+    this.publicaciones.set([]);
+    this.integrantes.set([]);
+    this.pendientes.set([]);
+    this.cursor.set(null);
+    this.error.set('');
+    this.aviso.set('');
+    this.muroCerrado.set(false);
+    this.noExiste.set(false);
+    this.respondiendoA.set(null);
   }
 
   /** Se une al grupo. En uno privado el alta queda esperando aprobación. */
@@ -116,7 +179,7 @@ export class GroupDetail {
           );
           return;
         }
-        this.community.joinGroup(this.groupIdRuta, propio.id).subscribe({
+        this.community.joinGroup(this.groupIdActual(), propio.id).subscribe({
           next: () => {
             this.aviso.set('Listo. Si el grupo es privado, tu ingreso queda en revisión.');
             this.cargarFicha();
@@ -135,7 +198,7 @@ export class GroupDetail {
       return;
     }
 
-    this.community.leaveGroup(this.groupIdRuta, perfilPropio).subscribe({
+    this.community.leaveGroup(this.groupIdActual(), perfilPropio).subscribe({
       next: () => {
         this.aviso.set('Saliste del grupo.');
         this.cargarFicha();
@@ -161,7 +224,7 @@ export class GroupDetail {
         const padre = this.respondiendoA();
         this.enviando.set(true);
         this.community
-          .publishGroupPost(this.groupIdRuta, {
+          .publishGroupPost(this.groupIdActual(), {
             authorProfileId: propio.id,
             bodyText,
             ...(padre === null ? {} : { parentCommentId: padre }),
@@ -199,7 +262,7 @@ export class GroupDetail {
 
   /** Da de baja a un integrante. */
   protected expulsar(member: GroupMember): void {
-    this.community.leaveGroup(this.groupIdRuta, member.memberProfileId).subscribe({
+    this.community.leaveGroup(this.groupIdActual(), member.memberProfileId).subscribe({
       next: () => this.cargarFicha(),
       error: () => this.error.set('No pudimos dar de baja a esa persona.'),
     });
@@ -220,7 +283,7 @@ export class GroupDetail {
   // --- Apoyo ---
 
   private resolverAlta(member: GroupMember, decision: 'APPROVE' | 'REJECT'): void {
-    this.community.updateGroupMember(this.groupIdRuta, member.id, { decision }).subscribe({
+    this.community.updateGroupMember(this.groupIdActual(), member.id, { decision }).subscribe({
       next: () => this.cargarFicha(),
       error: () => this.error.set('No pudimos resolver la solicitud.'),
     });
@@ -238,7 +301,7 @@ export class GroupDetail {
 
   private cargarFicha(): void {
     this.error.set('');
-    this.community.getGroup(this.groupIdRuta).subscribe({
+    this.community.getGroup(this.groupIdActual()).subscribe({
       next: (ficha) => {
         this.grupo.set(ficha);
         this.recargarMuro();
@@ -268,7 +331,7 @@ export class GroupDetail {
 
     const cursorActual = this.cursor();
     this.community
-      .listGroupWall(this.groupIdRuta, {
+      .listGroupWall(this.groupIdActual(), {
         limit: PAGE_SIZE,
         ...(cursorActual === null ? {} : { cursor: cursorActual }),
       })
@@ -291,7 +354,7 @@ export class GroupDetail {
 
   private cargarIntegrantes(): void {
     this.community
-      .listGroupMembers(this.groupIdRuta, {
+      .listGroupMembers(this.groupIdActual(), {
         limit: MIEMBROS_VISIBLES,
         joinStatus: 'ACTIVE',
       })
@@ -307,7 +370,7 @@ export class GroupDetail {
     }
 
     this.community
-      .listGroupMembers(this.groupIdRuta, {
+      .listGroupMembers(this.groupIdActual(), {
         limit: MIEMBROS_VISIBLES,
         joinStatus: 'PENDING',
       })
