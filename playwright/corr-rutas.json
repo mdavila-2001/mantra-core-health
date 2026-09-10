@@ -1,0 +1,162 @@
+{
+  "31": [
+    {
+      "ruta": "/",
+      "nombre": "panel-tus-accesos-zona-consultas"
+    },
+    {
+      "ruta": "/schedule",
+      "nombre": "consultas-medicas-sigue-viva"
+    },
+    {
+      "ruta": "/consultation",
+      "nombre": "consultation-ya-no-existe"
+    }
+  ],
+  "32": [
+    {
+      "ruta": "/administration/my-practice",
+      "nombre": "mi-consultorio-lista"
+    },
+    {
+      "ruta": "/administration/my-practice?tab=new",
+      "nombre": "mi-consultorio-nuevo"
+    },
+    {
+      "ruta": "/my-account",
+      "nombre": "perfil-enlace-a-consultorio"
+    },
+    {
+      "ruta": "/",
+      "nombre": "panel-administracion-sin-tu-organizacion"
+    }
+  ],
+  "33": [
+    {
+      "ruta": "/my-organizations",
+      "nombre": "redirige-a-organizacion-medica"
+    },
+    {
+      "ruta": "/administration/medical-organization?tab=memberships",
+      "nombre": "vinculaciones-tabla"
+    },
+    {
+      "ruta": "/administration/medical-organization?tab=memberships&empty=1",
+      "nombre": "vinculaciones-vacio"
+    }
+  ],
+  "34": [
+    {
+      "ruta": "/",
+      "nombre": "panel"
+    },
+    {
+      "ruta": "/schedule",
+      "nombre": "consultas"
+    },
+    {
+      "ruta": "/notifications",
+      "nombre": "notificaciones"
+    },
+    {
+      "ruta": "/my-account",
+      "nombre": "mi-perfil"
+    },
+    {
+      "ruta": "/directory",
+      "nombre": "directorio"
+    },
+    {
+      "ruta": "/administration/medical-organization",
+      "nombre": "organizacion-medica"
+    },
+    {
+      "ruta": "/administration/accounting",
+      "nombre": "contabilidad"
+    }
+  ],
+  "35": [
+    {
+      "ruta": "/notifications",
+      "nombre": "notificaciones-todas"
+    },
+    {
+      "ruta": "/notifications?tab=unread",
+      "nombre": "notificaciones-no-leidas"
+    },
+    {
+      "ruta": "/notifications?empty=1",
+      "nombre": "notificaciones-vacio"
+    }
+  ],
+  "36": [
+    {
+      "ruta": "/my-account/identity",
+      "nombre": "identidad-verificar"
+    },
+    {
+      "ruta": "/my-account/identity?tab=cases",
+      "nombre": "identidad-tramites"
+    },
+    {
+      "ruta": "/my-account/identity/cases",
+      "nombre": "redirige"
+    },
+    {
+      "ruta": "/my-account/identity/verify",
+      "nombre": "redirige"
+    }
+  ],
+  "37": [
+    {
+      "ruta": "/my-account",
+      "nombre": "perfil-medico-datos-personales"
+    },
+    {
+      "ruta": "/my-account?tab=practice",
+      "nombre": "perfil-medico-practica"
+    },
+    {
+      "ruta": "/my-account?tab=credentials",
+      "nombre": "perfil-medico-credenciales"
+    }
+  ],
+  "38": [
+    {
+      "ruta": "/my-account?tab=personal&edit=1",
+      "nombre": "editar-datos-personales"
+    },
+    {
+      "ruta": "/my-account?tab=specialties&edit=1",
+      "nombre": "editar-especialidades-sin-switches"
+    }
+  ],
+  "39": [
+    {
+      "ruta": "/my-account?tab=credentials&edit=1",
+      "nombre": "credenciales-edicion"
+    },
+    {
+      "ruta": "/my-account?tab=credentials&edit=1&with-file=1",
+      "nombre": "credenciales-con-adjunto"
+    }
+  ],
+  "40": [
+    {
+      "ruta": "/my-account",
+      "nombre": "perfil-sin-botones-publicos"
+    },
+    {
+      "ruta": "/my-account?tab=personal&edit=1",
+      "nombre": "editor-sin-vitrina"
+    },
+    {
+      "ruta": "/my-account/preview",
+      "nombre": "preview-no-existe"
+    },
+    {
+      "ruta": "/directory",
+      "nombre": "directorio-sigue-vivo"
+    }
+  ]
+}
