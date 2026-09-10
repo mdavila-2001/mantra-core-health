@@ -1,6 +1,6 @@
 <app-page-header
   title="Consulta médica"
-  subtitle="A quién tenés que atender hoy. Tocá «Abrir consulta» y entrás a su expediente con el motivo ya cargado."
+  subtitle="A quién tenés que atender hoy. Para empezar a atender, entrá desde «Mis citas»."
 />
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
@@ -40,17 +40,10 @@
           </div>
 
           <div class="consulta__accion">
-            @if (cita.ruta; as ruta) {
-              <a app-button variant="primary" [routerLink]="ruta" [queryParams]="cita.params">
-                Abrir consulta
-              </a>
-            } @else {
-              <!-- Sin `patientProfileId` no hay expediente que abrir. Se dice,
-                   en vez de ofrecer un botón que lleva a ninguna parte. -->
-              <p class="consulta__sin-expediente">
-                Esta reserva no trae el identificador del paciente. Abrila desde tu agenda.
-              </p>
-            }
+            <!-- Lectura. Atender nace de «Mis citas» y de ningún otro lado:
+                 dos botones para lo mismo en dos pantallas distintas era la
+                 confusión que esto viene a sacar. -->
+            <a app-link [routerLink]="rutaDeMisCitas">Ir a Mis citas</a>
           </div>
         </app-card>
       </li>
@@ -58,33 +51,18 @@
   </ul>
 </app-view-state-host>
 
-<!-- ─── El camino sin turno ─────────────────────────────────────────────────
-     No todo lo que se atiende tiene turno: una urgencia, alguien que llegó sin
-     cita, una interconsulta. Va **debajo** de los turnos y no arriba porque es
-     la excepción, no el camino de todos los días. -->
+<!-- ─── Quien llega sin turno ───────────────────────────────────────────
+     No se atiende sin cita: el turno de mostrador se da de alta y recién
+     entonces se atiende desde «Mis citas». Antes acá se pegaba un
+     identificador de perfil y se entraba directo, sin cita ni rastro de por
+     qué se abrió esa consulta. -->
 <app-card variant="outlined" padding="lg" class="consulta__directo">
-  <h2 class="consulta__directo-titulo">Atender a alguien sin turno</h2>
+  <h2 class="consulta__directo-titulo">¿Llegó alguien sin turno?</h2>
   <p class="consulta__directo-texto">
-    Pegá el identificador de perfil del paciente y entrás directo a su consulta. Si no lo tenés a
-    mano, buscalo en
-    <a [routerLink]="rutaDelArchivo">Archivo clínico</a>.
+    Registrale el turno de mostrador y va a aparecer en tu agenda del día. Desde ahí lo
+    atendés como a cualquier otro, y la consulta queda atada a su cita.
   </p>
-
-  <form class="consulta__directo-form" (submit)="$event.preventDefault(); abrirPorIdentificador()">
-    <app-form-field
-      label="Identificador de perfil"
-      hint="Lo trae cada cita de tu agenda, y también el expediente del paciente."
-      class="consulta__directo-campo"
-    >
-      <app-input
-        type="text"
-        placeholder="00000000-0000-0000-0000-000000000000"
-        [value]="identificador()"
-        (valueChange)="fijarIdentificador($event)"
-      />
-    </app-form-field>
-    <button app-button type="submit" variant="secondary" [disabled]="identificador().trim() === ''">
-      Abrir consulta
-    </button>
-  </form>
+  <a app-button variant="secondary" [routerLink]="rutaDelTurnoDeMostrador">
+    Registrar turno de mostrador
+  </a>
 </app-card>

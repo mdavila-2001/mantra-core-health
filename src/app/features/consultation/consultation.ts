@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '@core/auth/auth.service';
 import { SchedulingClient } from '@core/data-access/scheduling/scheduling.client';
@@ -9,22 +9,15 @@ import { TerminologyClient } from '@core/data-access/terminology/terminology.cli
 import { errorToViewState } from '@core/http/error-to-view-state';
 import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
-import { AppButton } from '@shared/components/atoms/button/button';
 import { AppButtonLink } from '@shared/components/atoms/button/button-link';
-import { Input } from '@shared/components/atoms/input/input';
+import { Link } from '@shared/components/atoms/link/link';
 import { Card } from '@shared/components/molecules/card/card';
-import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
-import { AGENDA_ROUTE } from '../agenda/agenda.routes';
+import { AGENDA_ROUTE, APPOINTMENT_NEW_ROUTE } from '../agenda/agenda.routes';
 import { miRecursoDeAgenda } from '../agenda/mi-recurso';
-import {
-  CITA_QUERY_PARAM,
-  CLINICAL_RECORD_ROUTE,
-  MOTIVO_QUERY_PARAM,
-  encounterWorkspaceRoute,
-} from '../clinical-record/clinical-record.routes';
+import { CLINICAL_RECORD_ROUTE } from '../clinical-record/clinical-record.routes';
 
 /** Una cita de hoy, ya resuelta para pintar. */
 export interface CitaDeHoy {
@@ -35,9 +28,6 @@ export interface CitaDeHoy {
   readonly motivo: string | null;
   readonly estado: string;
   readonly llego: boolean;
-  /** `null` cuando la reserva no trae el perfil: sin él no hay consulta que abrir. */
-  readonly ruta: string | null;
-  readonly params: Readonly<Record<string, string>>;
 }
 
 /**
@@ -67,21 +57,22 @@ export interface CitaDeHoy {
  * encuentro atado a su turno. **No es una segunda implementación**: es la misma
  * ruta y los mismos parámetros.
  *
- * ## Y por qué conserva «abrir por identificador»
+ * ## Por qué ya no abre la consulta
  *
- * Porque no todo lo que se atiende tiene turno: una urgencia, alguien que
- * llegó sin cita, una interconsulta. Sin esa salida, la pantalla sería más
- * ordenada y menos útil.
+ * Porque atender nace **sólo de «Mis citas»**. Esta pantalla y aquélla
+ * listaban los mismos turnos de hoy con botones distintos, y había un tercer
+ * camino —pegar un identificador de perfil— que entraba a atender **sin cita
+ * ni rastro** de por qué se abrió esa consulta. Quien llega sin turno tiene su
+ * camino: se le da de alta el turno de mostrador y aparece en la agenda del
+ * día. Acá queda la lectura: quién está esperando y desde cuándo.
  */
 @Component({
   selector: 'app-consultation',
   imports: [
-    AppButton,
     AppButtonLink,
     Card,
     DatePipe,
-    FormField,
-    Input,
+    Link,
     PageHeader,
     RouterLink,
     ViewStateHost,
@@ -94,9 +85,12 @@ export class Consultation {
   private readonly scheduling = inject(SchedulingClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
 
   protected readonly rutaDelArchivo = CLINICAL_RECORD_ROUTE;
+  /** El único origen de la atención. */
+  protected readonly rutaDeMisCitas = AGENDA_ROUTE;
+  /** El alta del turno de quien llegó sin cita (TAREA-14). */
+  protected readonly rutaDelTurnoDeMostrador = APPOINTMENT_NEW_ROUTE;
 
   /**
    * El estado de la lectura, con las citas **crudas**.
@@ -121,9 +115,6 @@ export class Consultation {
     const etiquetas = this.etiquetas();
     return actual.data.map((cita) => aCitaDeHoy(cita, etiquetas));
   });
-
-  /** Lo tecleado en «abrir por identificador». No viaja a la URL: es de un uso. */
-  protected readonly identificador = signal('');
 
   protected readonly hoy = new Date();
 
@@ -151,26 +142,6 @@ export class Consultation {
 
   constructor() {
     this.cargar();
-  }
-
-  protected fijarIdentificador(valor: string | number | null): void {
-    this.identificador.set(valor === null ? '' : String(valor));
-  }
-
-  /**
-   * Abre la consulta de alguien por su identificador.
-   *
-   * Sin validar la forma del uuid a mano, por lo mismo que el Archivo clínico:
-   * el backend responde 400 a uno mal formado y 404 a uno que no existe, y el
-   * expediente muestra los dos como corresponde. Repetir la validación acá sólo
-   * agregaría un segundo lugar donde equivocarse.
-   */
-  protected abrirPorIdentificador(): void {
-    const id = this.identificador().trim();
-    if (id === '') {
-      return;
-    }
-    void this.router.navigateByUrl(encounterWorkspaceRoute(encodeURIComponent(id)));
   }
 
   protected cargar(): void {
@@ -215,7 +186,7 @@ export class Consultation {
             this.estado.set(
               empty(
                 { label: 'Ver mi agenda', route: AGENDA_ROUTE },
-                'No tenés turnos para hoy. Si vas a atender a alguien sin turno, abrí su consulta por identificador acá abajo.',
+                'No tenés turnos para hoy. Si llegó alguien sin turno, registrale el de mostrador y va a aparecer acá.',
               ),
             );
             return;
@@ -246,7 +217,6 @@ export class Consultation {
 
 /** Traduce una reserva a la fila que la pantalla pinta. */
 function aCitaDeHoy(cita: Booking, etiquetas: ReadonlyMap<string, string>): CitaDeHoy {
-  const paciente = cita.patientProfileId ?? null;
   return {
     id: cita.id,
     desde: cita.startAt ?? null,
@@ -257,13 +227,6 @@ function aCitaDeHoy(cita: Booking, etiquetas: ReadonlyMap<string, string>): Cita
     motivo: cita.reasonText ?? null,
     estado: etiquetas.get(cita.statusConceptId) ?? 'Reservado',
     llego: cita.checkedInAt !== undefined,
-    ruta: paciente === null ? null : encounterWorkspaceRoute(paciente),
-    params: {
-      ...(cita.reasonText === undefined ? {} : { [MOTIVO_QUERY_PARAM]: cita.reasonText }),
-      ...(cita.appointmentId === undefined || cita.appointmentId === null
-        ? {}
-        : { [CITA_QUERY_PARAM]: cita.appointmentId }),
-    },
   };
 }
 
@@ -275,5 +238,5 @@ function aCitaDeHoy(cita: Booking, etiquetas: ReadonlyMap<string, string>): Cita
  */
 const SIN_AGENDA = empty(
   { label: 'Publicar mi horario', route: '/schedule/new' },
-  'Todavía no tenés agenda publicada, así que nadie puede pedirte turno. Igual podés abrir la consulta de alguien por su identificador.',
+  'Todavía no tenés agenda publicada, así que nadie puede pedirte turno.',
 );
