@@ -1,19 +1,63 @@
-<app-view-state-host [state]="state()" (retry)="retry.emit()">
+<app-view-state-host [state]="vista()" (retry)="retry.emit()">
   <div vsh-skeleton><app-skeleton variant="text" [lines]="8" /></div>
+
+  <!-- La carpeta vacía se dibuja acá y no con el cartel de serie porque su
+       próxima acción tiene que llevar a algún lado: el mismo formulario de
+       alta que usa la carpeta con papeles, sin una segunda copia. -->
+  <div vsh-empty class="papeles__sin-papeles">
+    @if (vacio(); as sinPapeles) {
+      <app-empty-state
+        variant="empty"
+        title="Todavía no hay papeles en la carpeta"
+        [description]="sinPapeles.message ?? ''"
+      >
+        <button
+          app-button
+          empty-actions
+          variant="primary"
+          type="button"
+          data-testid="ficha-cargar-primer-documento"
+          (clicked)="abrirAlta()"
+        >
+          {{ sinPapeles.nextAction.label }}
+        </button>
+      </app-empty-state>
+
+      <ng-container [ngTemplateOutlet]="formularioDeAlta" />
+    }
+  </div>
 
   <section class="papeles" aria-labelledby="ficha-papeles-titulo">
     <div class="papeles__encabezado">
       <h2 id="ficha-papeles-titulo" class="papeles__titulo">Carpeta legal</h2>
       <!-- Nada de esto sale de la API todavía: se dice, no se disimula. -->
       <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+
+      <!-- Con los seis papeles cargados no hay nada que agregar: el botón no
+           se ofrece en vez de ofrecerse y no hacer nada. -->
+      @if (puedeAgregar()) {
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="ficha-agregar-documento"
+          (clicked)="altaAbierta() ? cerrarAlta() : abrirAlta()"
+        >
+          {{ altaAbierta() ? 'Cancelar' : 'Agregar documento' }}
+        </button>
+      }
     </div>
 
-    <!-- Los tres estados de verificación se declaran provisionales en la propia
+    <!-- Los dos estados de revisión se declaran provisionales en la propia
          pantalla: quién revisa cada papel y con qué criterio está sin definir. -->
     <p class="papeles__nota" data-testid="ficha-nota-verificacion">
-      «Pendiente», «verificado» y «vencido» son estados provisionales: todavía está por
-      definirse quién revisa cada documento y con qué criterio.
+      «Pendiente de verificación» y «verificado» son estados provisionales: todavía está por
+      definirse quién revisa cada documento y con qué criterio. El plazo es otra cosa y lo dice
+      el distintivo de al lado.
     </p>
+
+    <ng-container [ngTemplateOutlet]="formularioDeAlta" />
 
     <ul class="papeles__lista" data-testid="ficha-documentos">
       @for (fila of filas(); track fila.documento.clave) {
@@ -31,7 +75,7 @@
               <dt class="papeles__etiqueta">Archivo</dt>
               <dd class="papeles__valor">
                 {{ fila.archivo }}
-                @if (fila.reemplazadoEnPantalla) {
+                @if (fila.sinSubir) {
                   <!-- Elegido recién y todavía sin subir: no es lo que hay guardado. -->
                   <app-chip variant="neutral" size="sm">Sin subir</app-chip>
                 }
@@ -40,12 +84,24 @@
 
             <div class="papeles__campo">
               <dt class="papeles__etiqueta">Emitido el</dt>
-              <dd class="papeles__valor">{{ fila.documento.emitidoEl | date: 'd MMM y' }}</dd>
+              <dd class="papeles__valor">
+                @if (fila.documento.emitidoEl; as emitido) {
+                  {{ emitido | date: 'd MMM y' }}
+                } @else {
+                  Sin declarar
+                }
+              </dd>
             </div>
 
             <div class="papeles__campo">
               <dt class="papeles__etiqueta">Vence el</dt>
-              <dd class="papeles__valor">{{ fila.documento.venceEl | date: 'd MMM y' }}</dd>
+              <dd class="papeles__valor">
+                @if (fila.documento.venceEl; as vence) {
+                  {{ vence | date: 'd MMM y' }}
+                } @else {
+                  Sin declarar
+                }
+              </dd>
             </div>
           </dl>
 
@@ -101,3 +157,57 @@
     </ul>
   </section>
 </app-view-state-host>
+
+<!-- El alta de un papel que todavía no está: se usa desde la carpeta vacía y
+     desde la carpeta con papeles, y por eso vive una sola vez acá. -->
+<ng-template #formularioDeAlta>
+  @if (altaAbierta()) {
+    <div class="papeles__alta" data-testid="ficha-alta-documento">
+      <app-form-field
+        icon="clipboard"
+        label="Qué documento estás cargando"
+        hint="Sólo aparecen los papeles del registro que todavía no cargaste."
+      >
+        <app-select
+          placeholder="Elegí el documento"
+          [options]="papelesQueFaltan()"
+          [value]="papelElegido()"
+          (valueChange)="elegirPapel($event)"
+        />
+      </app-form-field>
+
+      <app-form-field
+        icon="folder"
+        label="Archivo"
+        hint="Sólo PDF, hasta 10 MB. El archivo se ve acá, pero todavía no se sube."
+      >
+        <app-file-input
+          [accept]="aceptaPdf"
+          [maxSizeBytes]="maxBytes"
+          [maxFiles]="1"
+          [disabled]="papelElegido() === null"
+          (filesChange)="agregarPapel($event)"
+          (rejected)="avisarRechazos($event)"
+        />
+      </app-form-field>
+
+      <p class="papeles__nota">
+        Un papel cargado acá entra sin fechas: la emisión y el vencimiento los declara el módulo
+        de documentos legales, que es también quien calcula el plazo para todos igual.
+      </p>
+
+      <div class="papeles__acciones">
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="ficha-cancelar-alta"
+          (clicked)="cerrarAlta()"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  }
+</ng-template>

@@ -122,7 +122,10 @@ export const DOCUMENTOS_DE_EJEMPLO: readonly DocumentoLegal[] = [
     emitidoEl: new Date('2024-08-29T00:00:00.000Z'),
     venceEl: fechaEnDias(-12),
     diasParaVencer: -12,
-    verificacion: 'VENCIDO',
+    // Verificado **y** vencido a la vez: alguien lo miró y era el papel, y
+    // además se le terminó el plazo. Es el caso que obliga a que los dos
+    // distintivos digan cosas distintas.
+    verificacion: 'VERIFICADO',
   },
   {
     clave: 'poder-del-representante',

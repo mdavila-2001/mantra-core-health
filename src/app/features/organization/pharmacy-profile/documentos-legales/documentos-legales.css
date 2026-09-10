@@ -100,6 +100,25 @@
   gap: var(--sp-2);
 }
 
+/* La carpeta vacía y su alta: el cartel arriba y el formulario debajo, para
+   que la próxima acción y lo que abre se lean como una sola cosa. */
+.papeles__sin-papeles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.papeles__alta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  min-width: 0;
+}
+
 @media (min-width: 640px) {
   .papeles__campos {
     grid-template-columns: repeat(3, minmax(0, 1fr));

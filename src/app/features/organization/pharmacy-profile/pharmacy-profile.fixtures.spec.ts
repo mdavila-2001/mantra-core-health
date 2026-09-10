@@ -4,7 +4,7 @@ import {
   GENTE_DE_EJEMPLO,
   NOTA_DE_DATOS_DE_EJEMPLO,
 } from './pharmacy-profile.fixtures';
-import { TIPOS_DE_SOCIEDAD } from './pharmacy-profile.types';
+import { PAPELES_DEL_REGISTRO, TIPOS_DE_SOCIEDAD } from './pharmacy-profile.types';
 import { varianteDeVencimiento } from '../../../shared/utils/vencimiento/vencimiento';
 
 /**
@@ -16,9 +16,15 @@ describe('datos de ejemplo de la ficha de la farmacia', () => {
   const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
   const DIA = 24 * 60 * 60 * 1000;
 
-  /** El «hoy» del que cuelgan las fechas, reconstruido desde el primer papel. */
+  /**
+   * El «hoy» del que cuelgan las fechas, reconstruido desde el primer papel.
+   *
+   * Sin fecha declarada da `NaN`, que no es igual a nada: un ejemplo al que le
+   * falte el vencimiento no puede pasar las comprobaciones de coherencia.
+   */
   const HOY_DERIVADO =
-    DOCUMENTOS_DE_EJEMPLO[0].venceEl.getTime() - DOCUMENTOS_DE_EJEMPLO[0].diasParaVencer * DIA;
+    (DOCUMENTOS_DE_EJEMPLO[0].venceEl?.getTime() ?? Number.NaN) -
+    (DOCUMENTOS_DE_EJEMPLO[0].diasParaVencer ?? Number.NaN) * DIA;
 
   describe('la empresa', () => {
     it('el tipo de sociedad es uno de los ocho de la lista cerrada', () => {
@@ -35,8 +41,21 @@ describe('datos de ejemplo de la ficha de la farmacia', () => {
   });
 
   describe('los documentos', () => {
-    it('son los seis papeles que el registro pide', () => {
-      expect(DOCUMENTOS_DE_EJEMPLO).toHaveLength(6);
+    it('son los seis papeles que el registro pide, con sus mismos nombres', () => {
+      expect(
+        DOCUMENTOS_DE_EJEMPLO.map((documento) => ({
+          clave: documento.clave,
+          nombre: documento.nombre,
+        })),
+      ).toEqual(PAPELES_DEL_REGISTRO.map((papel) => ({ ...papel })));
+    });
+
+    it('los seis del ejemplo declaran sus fechas y su plazo', () => {
+      for (const documento of DOCUMENTOS_DE_EJEMPLO) {
+        expect(documento.emitidoEl, documento.clave).not.toBeNull();
+        expect(documento.venceEl, documento.clave).not.toBeNull();
+        expect(documento.diasParaVencer, documento.clave).not.toBeNull();
+      }
     });
 
     it('cada vencimiento concuerda con los días declarados', () => {
@@ -44,16 +63,16 @@ describe('datos de ejemplo de la ficha de la farmacia', () => {
       // que esto compara los seis contra la MISMA referencia: si alguno se
       // escribiera con otra fecha, acá se ve.
       for (const documento of DOCUMENTOS_DE_EJEMPLO) {
-        expect(documento.venceEl.getTime(), documento.clave).toBe(
-          HOY_DERIVADO + documento.diasParaVencer * DIA,
+        expect(documento.venceEl?.getTime(), documento.clave).toBe(
+          HOY_DERIVADO + (documento.diasParaVencer ?? Number.NaN) * DIA,
         );
       }
     });
 
     it('ninguno vence antes de emitirse', () => {
       for (const documento of DOCUMENTOS_DE_EJEMPLO) {
-        expect(documento.emitidoEl.getTime(), documento.clave).toBeLessThan(
-          documento.venceEl.getTime(),
+        expect(documento.emitidoEl?.getTime() ?? Number.NaN, documento.clave).toBeLessThan(
+          documento.venceEl?.getTime() ?? Number.NaN,
         );
       }
     });
@@ -71,9 +90,18 @@ describe('datos de ejemplo de la ficha de la farmacia', () => {
       expect(tonos).toEqual(new Set(['error', 'warning', 'success']));
     });
 
-    it('cubren los tres estados de verificación, incluido el pendiente', () => {
+    it('cubren los dos estados de revisión, incluido el pendiente', () => {
       const estados = new Set(DOCUMENTOS_DE_EJEMPLO.map((documento) => documento.verificacion));
-      expect(estados).toEqual(new Set(['VERIFICADO', 'PENDIENTE', 'VENCIDO']));
+      expect(estados).toEqual(new Set(['VERIFICADO', 'PENDIENTE']));
+    });
+
+    it('hay un papel verificado y vencido: son dos hechos, no uno solo', () => {
+      const vencido = DOCUMENTOS_DE_EJEMPLO.find(
+        (documento) => (documento.diasParaVencer ?? 0) < 0,
+      );
+
+      expect(vencido?.clave).toBe('certificado-sedes');
+      expect(vencido?.verificacion).toBe('VERIFICADO');
     });
 
     it('la clave de cada fila es legible, nunca un identificador técnico', () => {

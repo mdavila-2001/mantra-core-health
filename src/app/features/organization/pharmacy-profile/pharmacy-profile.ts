@@ -64,10 +64,16 @@ export function estadoDeLaCarpeta(
 export function avisoDeLaCarpeta(
   documentos: readonly DocumentoLegal[],
 ): AvisoDeLaCarpeta | null {
-  const vencidos = documentos.filter((documento) => documento.diasParaVencer < 0);
+  // Un papel sin vencimiento declarado no entra al aviso: no hay plazo del que
+  // avisar. Es el caso del que se acaba de cargar y todavía nadie transcribió.
+  const vencidos = documentos.filter(
+    (documento) => documento.diasParaVencer !== null && documento.diasParaVencer < 0,
+  );
   const porVencer = documentos.filter(
     (documento) =>
-      documento.diasParaVencer >= 0 && documento.diasParaVencer <= AVISO_DE_VENCIMIENTO_DIAS,
+      documento.diasParaVencer !== null &&
+      documento.diasParaVencer >= 0 &&
+      documento.diasParaVencer <= AVISO_DE_VENCIMIENTO_DIAS,
   );
 
   if (vencidos.length === 0 && porVencer.length === 0) {

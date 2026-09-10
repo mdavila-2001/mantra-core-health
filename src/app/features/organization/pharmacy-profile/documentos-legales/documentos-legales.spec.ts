@@ -1,9 +1,7 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 
 import { DOCUMENTOS_DE_EJEMPLO } from '../pharmacy-profile.fixtures';
 import { DocumentosLegales } from './documentos-legales';
-import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { DocumentoLegal } from '../pharmacy-profile.types';
@@ -13,12 +11,41 @@ describe('DocumentosLegales', () => {
   let fixture: ComponentFixture<DocumentosLegales>;
   let toasts: ToastService;
 
+  /** La carpeta vacía, tal como la declara la ficha. */
+  const CARPETA_VACIA = empty(
+    { label: 'Cargar el primer documento' },
+    'Todavía no hay ningún papel en la carpeta legal de tu farmacia.',
+  );
+
   function montar(state: ViewState<readonly DocumentoLegal[]>): HTMLElement {
     fixture = TestBed.createComponent(DocumentosLegales);
     toasts = TestBed.inject(ToastService);
     fixture.componentRef.setInput('state', state);
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
+  }
+
+  function pulsar(root: HTMLElement, testId: string): void {
+    const boton = root.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`);
+    expect(boton, testId).not.toBeNull();
+    boton?.click();
+    fixture.detectChanges();
+  }
+
+  /**
+   * Elige un archivo por el camino real: el `<input type="file">` que está en
+   * pantalla. jsdom no deja asignar `files`, así que se define la propiedad y
+   * se dispara el mismo evento que dispara el navegador.
+   */
+  function elegirArchivo(root: HTMLElement, nombre: string): void {
+    const campo = root.querySelector<HTMLInputElement>('input[type="file"]');
+    expect(campo).not.toBeNull();
+    Object.defineProperty(campo, 'files', {
+      value: [new File(['x'], nombre, { type: 'application/pdf' })],
+      configurable: true,
+    });
+    campo?.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
   }
 
   afterEach(() => fixture.destroy());
@@ -62,36 +89,30 @@ describe('DocumentosLegales', () => {
     expect(vencido?.className).toContain('badge--error');
   });
 
-  it('declara en pantalla que los estados de verificación son provisionales', () => {
+  it('un papel vencido y verificado dice las dos cosas, cada una en su distintivo', () => {
     const root = montar(ready(DOCUMENTOS_DE_EJEMPLO));
 
-    expect(root.querySelector('[data-testid="ficha-nota-verificacion"]')?.textContent).toContain(
-      'provisionales',
+    const fila = Array.from(root.querySelectorAll('li')).find((renglon) =>
+      renglon.textContent?.includes('Certificado SEDES'),
     );
+    const distintivos = Array.from(fila?.querySelectorAll('app-badge') ?? []);
+
+    expect(distintivos.map((badge) => badge.textContent?.trim())).toEqual([
+      'vencido hace 12 días',
+      'Verificado',
+    ]);
+    // Y con severidades distintas: el plazo alarma, la revisión está en orden.
+    expect(distintivos[0].className).toContain('badge--error');
+    expect(distintivos[1].className).toContain('badge--success');
   });
 
-  it('una carpeta vacía ofrece la próxima acción, no un cartel sin salida', () => {
-    const root = montar(empty({ label: 'Cargar el primer documento' }));
+  it('declara en pantalla que los estados de revisión son provisionales, y que el plazo va aparte', () => {
+    const nota = montar(ready(DOCUMENTOS_DE_EJEMPLO)).querySelector(
+      '[data-testid="ficha-nota-verificacion"]',
+    );
 
-    expect(root.textContent ?? '').toContain('Cargar el primer documento');
-    expect(root.querySelector('[data-testid="ficha-documentos"]')).toBeNull();
-  });
-
-  it('mientras carga muestra el esqueleto y ningún papel', () => {
-    const root = montar(loading());
-
-    expect(root.querySelector('app-skeleton')).not.toBeNull();
-    expect(root.textContent ?? '').not.toContain('Certificado SEDES');
-  });
-
-  it('la descarga no baja un archivo vacío: avisa qué falta para que exista', () => {
-    const root = montar(ready(DOCUMENTOS_DE_EJEMPLO));
-
-    root.querySelector<HTMLButtonElement>('[data-testid="ficha-descargar-seprec"]')?.click();
-
-    const aviso = toasts.toasts().at(-1);
-    expect(aviso?.title).toBe('Documento de ejemplo');
-    expect(aviso?.message).toContain('seprec-matricula-comercio.pdf');
+    expect(nota?.textContent ?? '').toContain('provisionales');
+    expect(nota?.textContent ?? '').toContain('El plazo es otra cosa');
   });
 
   it('los botones repetidos dicen de qué documento son', () => {
@@ -105,11 +126,20 @@ describe('DocumentosLegales', () => {
     ).toBe('Reemplazar SEPREC');
   });
 
+  it('la descarga no baja un archivo vacío: avisa qué falta para que exista', () => {
+    const root = montar(ready(DOCUMENTOS_DE_EJEMPLO));
+
+    pulsar(root, 'ficha-descargar-seprec');
+
+    const aviso = toasts.toasts().at(-1);
+    expect(aviso?.title).toBe('Documento de ejemplo');
+    expect(aviso?.message).toContain('seprec-matricula-comercio.pdf');
+  });
+
   it('el selector de archivo se abre en la fila que se pidió, y en una sola', () => {
     const root = montar(ready(DOCUMENTOS_DE_EJEMPLO));
 
-    root.querySelector<HTMLButtonElement>('[data-testid="ficha-reemplazar-nit"]')?.click();
-    fixture.detectChanges();
+    pulsar(root, 'ficha-reemplazar-nit');
 
     expect(root.querySelectorAll('app-file-input')).toHaveLength(1);
   });
@@ -117,13 +147,8 @@ describe('DocumentosLegales', () => {
   it('el archivo elegido se ve rotulado: se muestra, pero todavía no está subido', () => {
     const root = montar(ready(DOCUMENTOS_DE_EJEMPLO));
 
-    root.querySelector<HTMLButtonElement>('[data-testid="ficha-reemplazar-nit"]')?.click();
-    fixture.detectChanges();
-
-    const control = fixture.debugElement.query(By.directive(FileInput))
-      .componentInstance as FileInput;
-    control.files.set([new File(['x'], 'nit-actualizado.pdf', { type: 'application/pdf' })]);
-    fixture.detectChanges();
+    pulsar(root, 'ficha-reemplazar-nit');
+    elegirArchivo(root, 'nit-actualizado.pdf');
 
     const texto = root.textContent ?? '';
     expect(texto).toContain('nit-actualizado.pdf');
@@ -142,5 +167,108 @@ describe('DocumentosLegales', () => {
     const aviso = toasts.toasts().at(-1);
     expect(aviso?.title).toBe('Archivo no aceptado');
     expect(aviso?.message).toContain('el registro pide el documento en PDF');
+  });
+
+  it('mientras carga muestra el esqueleto y ningún papel', () => {
+    const root = montar(loading());
+
+    expect(root.querySelector('app-skeleton')).not.toBeNull();
+    expect(root.textContent ?? '').not.toContain('Certificado SEDES');
+  });
+
+  describe('la carpeta vacía', () => {
+    it('ofrece su próxima acción y no una lista en blanco', () => {
+      const root = montar(CARPETA_VACIA);
+
+      expect(root.querySelector('[data-testid="ficha-documentos"]')).toBeNull();
+      expect(
+        root.querySelector('[data-testid="ficha-cargar-primer-documento"]')?.textContent?.trim(),
+      ).toBe('Cargar el primer documento');
+    });
+
+    it('su próxima acción abre el alta ahí mismo, sin llevar a ninguna parte', () => {
+      const root = montar(CARPETA_VACIA);
+
+      pulsar(root, 'ficha-cargar-primer-documento');
+
+      expect(root.querySelectorAll('[data-testid="ficha-alta-documento"]')).toHaveLength(1);
+    });
+
+    it('cargar el primer papel saca a la carpeta del vacío', () => {
+      const root = montar(CARPETA_VACIA);
+
+      pulsar(root, 'ficha-cargar-primer-documento');
+      elegirArchivo(root, 'constitucion-escaneada.pdf');
+
+      expect(root.querySelector('[data-testid="ficha-documentos"]')).not.toBeNull();
+      expect(root.querySelectorAll('[data-testid="ficha-documentos"] li')).toHaveLength(1);
+      expect(root.querySelector('[data-testid="ficha-cargar-primer-documento"]')).toBeNull();
+    });
+
+    it('el papel recién cargado entra sin fechas, pendiente de revisión y sin subir', () => {
+      const root = montar(CARPETA_VACIA);
+
+      pulsar(root, 'ficha-cargar-primer-documento');
+      elegirArchivo(root, 'constitucion-escaneada.pdf');
+
+      const texto = root.querySelector('[data-testid="ficha-documentos"]')?.textContent ?? '';
+      expect(texto).toContain('Constitución de la empresa');
+      expect(texto).toContain('constitucion-escaneada.pdf');
+      expect(texto).toContain('Sin subir');
+      expect(texto).toContain('Sin declarar');
+      expect(texto).toContain('sin vencimiento declarado');
+      expect(texto).toContain('Pendiente de verificación');
+    });
+  });
+
+  describe('agregar un papel que falta', () => {
+    it('sólo ofrece los papeles del registro que la carpeta no tiene', () => {
+      const root = montar(ready(DOCUMENTOS_DE_EJEMPLO.slice(0, 4)));
+
+      pulsar(root, 'ficha-agregar-documento');
+
+      const opciones = Array.from(root.querySelectorAll('option'))
+        .map((opcion) => opcion.textContent?.trim())
+        .filter((texto) => texto !== 'Elegí el documento');
+      expect(opciones).toEqual(['Certificado SEDES', 'Poder del representante legal']);
+    });
+
+    it('con los seis cargados no se ofrece agregar nada', () => {
+      const root = montar(ready(DOCUMENTOS_DE_EJEMPLO));
+
+      expect(root.querySelector('[data-testid="ficha-agregar-documento"]')).toBeNull();
+    });
+
+    it('el papel agregado se suma a la carpeta y deja de ofrecerse', () => {
+      const root = montar(ready(DOCUMENTOS_DE_EJEMPLO.slice(0, 5)));
+
+      pulsar(root, 'ficha-agregar-documento');
+      elegirArchivo(root, 'poder-escaneado.pdf');
+
+      expect(root.querySelectorAll('[data-testid="ficha-documentos"] li')).toHaveLength(6);
+      expect(root.querySelector('[data-testid="ficha-agregar-documento"]')).toBeNull();
+      expect(root.querySelector('[data-testid="ficha-alta-documento"]')).toBeNull();
+    });
+
+    it('cargar un papel avisa que el archivo todavía no se sube', () => {
+      const root = montar(ready(DOCUMENTOS_DE_EJEMPLO.slice(0, 5)));
+
+      pulsar(root, 'ficha-agregar-documento');
+      elegirArchivo(root, 'poder-escaneado.pdf');
+
+      const aviso = toasts.toasts().at(-1);
+      expect(aviso?.title).toBe('Archivo de ejemplo');
+      expect(aviso?.message).toContain('poder-escaneado.pdf');
+    });
+
+    it('se puede cerrar el alta sin cargar nada', () => {
+      const root = montar(ready(DOCUMENTOS_DE_EJEMPLO.slice(0, 5)));
+
+      pulsar(root, 'ficha-agregar-documento');
+      pulsar(root, 'ficha-cancelar-alta');
+
+      expect(root.querySelector('[data-testid="ficha-alta-documento"]')).toBeNull();
+      expect(root.querySelectorAll('[data-testid="ficha-documentos"] li')).toHaveLength(5);
+    });
   });
 });

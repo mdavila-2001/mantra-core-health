@@ -65,36 +65,68 @@ export interface DatosLegalesDeLaEmpresa {
 /* ─── Los documentos legales ─────────────────────────────────────────────── */
 
 /**
- * En qué anda la verificación de un documento.
+ * Los seis papeles que el registro del cliente pide, en su orden.
  *
- * Los tres son **provisionales**: la API todavía no publica este estado, así
- * que quién verifica y con qué criterio está sin definir. La pantalla lo dice
- * en vez de disimularlo.
+ * La lista existe aparte de los documentos cargados porque son dos cosas
+ * distintas: esto es **lo que hay que presentar**, y un documento es uno de
+ * estos ya presentado. De acá sale lo que se puede agregar a una carpeta:
+ * agregar un papel es cargar uno de los seis que todavía falta, nunca inventar
+ * un trámite nuevo.
  */
-export type EstadoDeVerificacion = 'PENDIENTE' | 'VERIFICADO' | 'VENCIDO';
+export const PAPELES_DEL_REGISTRO = [
+  { clave: 'constitucion', nombre: 'Constitución de la empresa' },
+  { clave: 'nit', nombre: 'NIT' },
+  { clave: 'seprec', nombre: 'SEPREC' },
+  { clave: 'licencia-de-funcionamiento', nombre: 'Licencia de funcionamiento' },
+  { clave: 'certificado-sedes', nombre: 'Certificado SEDES' },
+  { clave: 'poder-del-representante', nombre: 'Poder del representante legal' },
+] as const;
+
+/**
+ * En qué anda la revisión de un documento.
+ *
+ * **Son dos, y «vencido» no es uno de ellos.** La vigencia y la revisión son
+ * hechos distintos: un papel verificado que caducó sigue estando verificado
+ * —alguien lo miró y dijo que era el papel que decía ser—, y lo que le pasó es
+ * que se le terminó el plazo. Con «vencido» dentro de esta lista, ese documento
+ * tenía que elegir cuál de los dos hechos contar, y el otro se perdía. Cada
+ * distintivo dice uno solo: el plazo lo dice el de al lado.
+ *
+ * Los dos son **provisionales**: la API todavía no publica este estado, así que
+ * quién revisa y con qué criterio está sin definir. La pantalla lo dice en vez
+ * de disimularlo.
+ */
+export type EstadoDeVerificacion = 'PENDIENTE' | 'VERIFICADO';
 
 /** Un papel de la carpeta legal: el archivo, desde cuándo vale y hasta cuándo. */
 export interface DocumentoLegal {
   /**
    * Con qué se identifica la fila. Es una clave corta y legible —nunca un
    * identificador técnico—: nada de esta pantalla debe poder filtrar un uuid.
+   * Es la misma clave con la que el papel figura en {@link PAPELES_DEL_REGISTRO}.
    */
   readonly clave: string;
   /** Cómo se llama el documento para quien lo busca en un cajón. */
   readonly nombre: string;
   /** El nombre del PDF cargado, tal como se muestra y como se descargaría. */
   readonly archivo: string;
-  readonly emitidoEl: Date;
-  readonly venceEl: Date;
   /**
-   * Cuántos días faltan para que caduque, en negativo si ya caducó.
+   * Las fechas del papel, o `null` cuando todavía nadie las declaró — el caso
+   * de un documento recién cargado, que ya existe antes de que alguien
+   * transcriba su emisión y su vencimiento.
+   */
+  readonly emitidoEl: Date | null;
+  readonly venceEl: Date | null;
+  /**
+   * Cuántos días faltan para que caduque, en negativo si ya caducó, y `null`
+   * mientras el papel no tenga vencimiento declarado.
    *
    * **Se declara, no se calcula del reloj de quien mira.** Es la misma decisión
    * que la ficha de organización médica dejó escrita para su API: el reloj del
    * navegador daría un resultado distinto por pantalla, y el aviso de
    * vencimiento tiene que ser el mismo para todos.
    */
-  readonly diasParaVencer: number;
+  readonly diasParaVencer: number | null;
   readonly verificacion: EstadoDeVerificacion;
 }
 

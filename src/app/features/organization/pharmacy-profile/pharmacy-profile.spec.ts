@@ -124,9 +124,22 @@ describe('PharmacyProfile', () => {
 
   describe('avisoDeLaCarpeta', () => {
     it('sin nada vencido ni por vencer, no hay aviso que dar', () => {
-      const enOrden = DOCUMENTOS_DE_EJEMPLO.filter((documento) => documento.diasParaVencer > 60);
+      const enOrden = DOCUMENTOS_DE_EJEMPLO.filter(
+        (documento) => (documento.diasParaVencer ?? 0) > 60,
+      );
 
       expect(avisoDeLaCarpeta(enOrden)).toBeNull();
+    });
+
+    it('un papel sin vencimiento declarado no dispara ningún aviso', () => {
+      const recienCargado = {
+        ...DOCUMENTOS_DE_EJEMPLO[0],
+        emitidoEl: null,
+        venceEl: null,
+        diasParaVencer: null,
+      };
+
+      expect(avisoDeLaCarpeta([recienCargado])).toBeNull();
     });
 
     it('lo vencido manda sobre lo que está por vencer: interrumpe', () => {
@@ -135,7 +148,10 @@ describe('PharmacyProfile', () => {
 
     it('sólo con papeles por vencer, el aviso espera su turno', () => {
       const porVencer = DOCUMENTOS_DE_EJEMPLO.filter(
-        (documento) => documento.diasParaVencer >= 0 && documento.diasParaVencer <= 30,
+        (documento) =>
+          documento.diasParaVencer !== null &&
+          documento.diasParaVencer >= 0 &&
+          documento.diasParaVencer <= 30,
       );
 
       expect(avisoDeLaCarpeta(porVencer)?.tono).toBe('warning');
@@ -144,7 +160,7 @@ describe('PharmacyProfile', () => {
 
     it('cuenta en singular cuando hay uno solo', () => {
       const unoVencido = DOCUMENTOS_DE_EJEMPLO.filter(
-        (documento) => documento.diasParaVencer < 0,
+        (documento) => (documento.diasParaVencer ?? 0) < 0,
       );
 
       expect(avisoDeLaCarpeta(unoVencido)?.mensaje).toContain('1 vencido');
