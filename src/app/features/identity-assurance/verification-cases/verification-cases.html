@@ -18,9 +18,46 @@
 <!-- Celdas con presentación propia. Un ng-template no renderiza nada por sí
      solo: la tabla las instancia por fila. -->
 <ng-template #idCell let-caso>
-  <a app-link class="tabular-nums" [routerLink]="['/my-account/identity/cases', caso.id]">
-    {{ caso.id }}
-  </a>
+  @if (caso.sinVeredicto) {
+    <!-- FT-32-R06/R07: sin veredicto no hay detalle que abrir. Es un botón y
+         no un enlace desactivado porque sí hace algo: explica en qué punto
+         está el trámite. -->
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      class="tabular-nums"
+      [attr.data-testid]="'case-pending-' + caso.id"
+      (clicked)="abrirAviso(caso)"
+    >
+      {{ caso.id }}
+    </button>
+  } @else {
+    <a app-link class="tabular-nums" [routerLink]="['/my-account/identity/cases', caso.id]">
+      {{ caso.id }}
+    </a>
+  }
+</ng-template>
+
+<ng-template #typeCell let-caso>
+  {{ caso.typeLabel }}
+</ng-template>
+
+<ng-template #evidenceCell let-caso>
+  @if (caso.evidenceFileId) {
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      [isLoading]="descargando() === caso.id"
+      [attr.data-testid]="'case-evidence-' + caso.id"
+      (clicked)="descargarEvidencia(caso)"
+    >
+      Descargar
+    </button>
+  } @else {
+    <span class="casos__sin-dato" aria-label="Sin evidencia adjunta">—</span>
+  }
 </ng-template>
 
 <ng-template #statusCell let-caso>
@@ -42,3 +79,22 @@
     <span class="casos__sin-dato" aria-label="Sin fecha registrada">—</span>
   }
 </ng-template>
+
+@if (errorDeDescarga(); as mensaje) {
+  <p class="casos__error" role="alert" data-testid="cases-download-error">{{ mensaje }}</p>
+}
+
+<!-- FT-32-R06/R07: lo que se abre en lugar del detalle. -->
+@if (avisoDe(); as caso) {
+  <app-content-dialog
+    heading="Todavía no hay un veredicto"
+    [description]="'Tu trámite ' + caso.id + ' está en ' + caso.statusLabel + '.'"
+    closeLabel="Entendido"
+    (closed)="cerrarAviso()"
+  >
+    <p>
+      Cuando termine de revisarse vas a poder abrir el detalle con el resultado y, si
+      corresponde, la evidencia que quedó registrada. No hace falta que hagas nada.
+    </p>
+  </app-content-dialog>
+}

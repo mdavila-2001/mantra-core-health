@@ -10,6 +10,8 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { FileDownloader } from '../../../core/data-access/files/file-downloader';
+import { FilesClient } from '../../../core/data-access/files/files.client';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
 import {
@@ -21,7 +23,9 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
@@ -49,22 +53,13 @@ function typeLabel(type: string): string {
 }
 
 /**
- * Lo que FT-32 todavía debe.
+ * Estados que todavía no tienen un veredicto que mostrar (FT-32-R06/R07).
  *
- * La pantalla se mergeó como `wip` (11417960) con el andamiaje de tres cosas
- * sin terminar, y el andamiaje —imports y constantes que nadie usaba— rompía
- * `yarn lint`. Se quitó, porque código muerto no es documentación; queda acá
- * anotado lo que falta, que sí lo es:
- *
- * 1. **R06/R07**: un caso en `pending` o `in-review` no debería abrir el
- *    detalle resolutivo —no hay veredicto que mostrar— sino un modal que
- *    invite a esperar. Hoy la celda del identificador enlaza al detalle sin
- *    condición, en todos los estados.
- * 2. **La evidencia no se descarga**: `CaseRow.evidenceFileId` se resuelve y
- *    no lo consume nadie; falta la columna con el botón de descarga.
- * 3. **R03 a medias**: `typeLabel` se calcula por fila pero no hay columna de
- *    tipo que lo muestre.
+ * El detalle resolutivo no se abre en ninguno de estos: no hay nada resuelto
+ * que enseñar, y abrir una pantalla vacía se lee como que el trámite falló.
+ * En su lugar se abre un aviso que dice en qué punto está.
  */
+const SIN_VEREDICTO: ReadonlySet<StatusSealVariant> = new Set(['pending', 'in-review']);
 
 /** Fila de la tabla: presentación ya resuelta, no el DTO del backend. */
 interface CaseRow {
@@ -74,6 +69,8 @@ interface CaseRow {
   readonly statusLabel: string;
   readonly typeLabel: string;
   readonly evidenceFileId: string | null;
+  /** FT-32-R06/R07: `true` mientras no haya veredicto que abrir. */
+  readonly sinVeredicto: boolean;
   readonly openedAt: Date | null;
   readonly completedAt: Date | null;
 }
@@ -101,6 +98,7 @@ function toCaseRow(verificationCase: VerificationCase): CaseRow {
     statusLabel: status.label,
     typeLabel: typeLabel(verificationCase.type),
     evidenceFileId: verificationCase.evidenceFileId ?? null,
+    sinVeredicto: SIN_VEREDICTO.has(status.variant),
     openedAt: verificationCase.openedAt ?? null,
     completedAt: verificationCase.completedAt ?? null,
   };
@@ -123,13 +121,25 @@ type CaseCell = TemplateRef<{ $implicit: CaseRow }>;
  */
 @Component({
   selector: 'app-verification-cases',
-  imports: [Badge, DataTable, DatePipe, Link, PageHeader, RouterLink, ViewStateHost],
+  imports: [
+    AppButton,
+    Badge,
+    ContentDialog,
+    DataTable,
+    DatePipe,
+    Link,
+    PageHeader,
+    RouterLink,
+    ViewStateHost,
+  ],
   templateUrl: './verification-cases.html',
   styleUrl: './verification-cases.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VerificationCases {
   private readonly identity = inject(IdentityClient);
+  private readonly archivos = inject(FilesClient);
+  private readonly descargas = inject(FileDownloader);
   private readonly navigation = inject(NavigationService);
   // `toCaseRow` resuelve el estado con `toCaseStatusPresentation`, que lee el
   // catálogo de terminología: inyectarlo acá es lo que lo llena.
@@ -155,19 +165,69 @@ export class VerificationCases {
   });
 
   private readonly idCell = viewChild<CaseCell>('idCell');
+  private readonly typeCell = viewChild<CaseCell>('typeCell');
   private readonly statusCell = viewChild<CaseCell>('statusCell');
+  private readonly evidenceCell = viewChild<CaseCell>('evidenceCell');
   private readonly openedCell = viewChild<CaseCell>('openedCell');
   private readonly completedCell = viewChild<CaseCell>('completedCell');
 
   /** `key` es el código estable de la columna; la etiqueta es presentación. */
   protected readonly columns = computed<readonly ColumnDef<CaseRow>[]>(() => [
     { key: 'id', header: 'Identificador', priority: 1, cell: this.idCell() },
+    { key: 'type', header: 'Tipo', priority: 2, cell: this.typeCell() },
     { key: 'status', header: 'Estado', priority: 1, cell: this.statusCell() },
     { key: 'openedAt', header: 'Apertura', priority: 2, cell: this.openedCell() },
     { key: 'completedAt', header: 'Finalización', priority: 2, cell: this.completedCell() },
+    { key: 'evidence', header: 'Evidencia', priority: 3, cell: this.evidenceCell() },
   ]);
 
   protected readonly byId = (row: CaseRow): string => row.id;
+
+  /** El caso cuyo aviso «todavía no hay veredicto» está abierto (R06/R07). */
+  protected readonly avisoDe = signal<CaseRow | null>(null);
+
+  /** El caso cuya evidencia se está trayendo, para no ofrecerla dos veces. */
+  protected readonly descargando = signal<string | null>(null);
+
+  /** Lo que falló al traer la evidencia; se muestra bajo la tabla. */
+  protected readonly errorDeDescarga = signal<string | null>(null);
+
+  protected abrirAviso(caso: CaseRow): void {
+    this.avisoDe.set(caso);
+  }
+
+  protected cerrarAviso(): void {
+    this.avisoDe.set(null);
+  }
+
+  /**
+   * Trae el archivo de evidencia y lo ofrece para guardar (FT-32-R02).
+   *
+   * Va por `contentDataUrl` y no por una URL del navegador: la CSP del
+   * servidor deja `connect-src` en `'self'`, así que el contenido viaja por el
+   * `GET` autenticado de siempre y se entrega como `data:` URL. El backend ya
+   * exige ser quien lo subió o tener rol revisor: no hace falta comprobarlo acá.
+   */
+  protected descargarEvidencia(caso: CaseRow): void {
+    const fileId = caso.evidenceFileId;
+    if (fileId === null || this.descargando() !== null) {
+      return;
+    }
+    this.descargando.set(caso.id);
+    this.errorDeDescarga.set(null);
+    this.archivos.contentDataUrl(fileId).subscribe({
+      next: (dataUrl) => {
+        this.descargas.trigger(dataUrl, `evidencia-${caso.id}`);
+        this.descargando.set(null);
+      },
+      error: () => {
+        this.descargando.set(null);
+        this.errorDeDescarga.set(
+          'No pudimos traer la evidencia de ese caso. Probá de nuevo en un momento.',
+        );
+      },
+    });
+  }
 
   constructor() {
     this.cargar();
