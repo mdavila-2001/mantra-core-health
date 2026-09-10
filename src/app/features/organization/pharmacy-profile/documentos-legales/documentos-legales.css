@@ -1,0 +1,128 @@
+/* Mobile-first: cada papel es una tarjeta apilada con sus datos uno debajo de
+   otro; desde ancho de tableta los campos entran en tres columnas y la fila se
+   lee de un vistazo, que es como se revisa una carpeta. */
+
+.papeles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.papeles__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.papeles__titulo {
+  margin: 0;
+  font-size: var(--fs-h2);
+}
+
+.papeles__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.papeles__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.papeles__fila {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  min-width: 0;
+}
+
+.papeles__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.papeles__nombre {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.papeles__estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.papeles__campos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.papeles__campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.papeles__etiqueta {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.papeles__valor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  min-width: 0;
+  /* El nombre de un escaneo no puede empujar la tarjeta fuera de la columna. */
+  overflow-wrap: anywhere;
+}
+
+.papeles__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* La carpeta vacía y su alta: el cartel arriba y el formulario debajo, para
+   que la próxima acción y lo que abre se lean como una sola cosa. */
+.papeles__sin-papeles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.papeles__alta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  min-width: 0;
+}
+
+/* 650 px es `--bp-sm` del sistema. El número va literal porque CSS no admite
+   variables en la condición de una consulta de medios (`styles.css:104-108`). */
+@media (min-width: 650px) {
+  .papeles__campos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
