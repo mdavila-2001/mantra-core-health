@@ -107,7 +107,6 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tone: 'info',
     paths: [
       'schedule',
-      'consultation',
       'progress-notes',
       'medical-records',
       'diagnostics',

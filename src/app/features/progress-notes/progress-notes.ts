@@ -177,7 +177,7 @@ export class ProgressNotes {
           this.estado.set(
             personas.length === 0
               ? empty(
-                  { label: 'Ir a Consulta médica', route: '/consultation' },
+                  { label: 'Ir a Consultas médicas', route: '/schedule' },
                   `No registrás atenciones en los últimos ${DIAS_HACIA_ATRAS} días.`,
                 )
               : ready(personas),

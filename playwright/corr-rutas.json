@@ -10,7 +10,8 @@
     },
     {
       "ruta": "/consultation",
-      "nombre": "consultation-ya-no-existe"
+      "nombre": "consultation-borrada",
+      "esperado": "no-encontrado"
     }
   ],
   "32": [
@@ -73,10 +74,6 @@
     {
       "ruta": "/pharmacies-directory",
       "nombre": "pharmacies-directory"
-    },
-    {
-      "ruta": "/consultation",
-      "nombre": "consultation"
     },
     {
       "ruta": "/schedule",

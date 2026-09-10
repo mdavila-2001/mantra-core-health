@@ -39,6 +39,12 @@ const FOTOS = join(DESTINO, 'fotos', FASE);
 interface Ruta {
   readonly ruta: string;
   readonly nombre: string;
+  /**
+   * `no-encontrado` para una ruta que este carril **borró**: la prueba pasa si
+   * la aplicación ya no la sirve. Sin esto, borrar una pantalla dejaría la
+   * matriz en rojo para siempre y el rojo dejaría de significar algo.
+   */
+  readonly esperado?: 'pantalla' | 'no-encontrado';
 }
 
 const RUTAS: readonly Ruta[] = (
@@ -190,7 +196,16 @@ function fila(
   m: Medicion,
   consola: number,
   foto: string,
+  esperado: Ruta['esperado'],
 ): { texto: string; ok: boolean } {
+  if (esperado === 'no-encontrado') {
+    // Se borró a propósito: lo que se comprueba es que ya no está.
+    const borrada = !m.cargo;
+    return {
+      texto: `| \`${ruta}\` | ${vp} | ${tema} | ${borrada ? 'BORRADA (esperado)' : 'FAIL (todavía carga)'} | — | — | — | — | \`${foto}\` |`,
+      ok: borrada,
+    };
+  }
   if (!m.cargo) {
     return {
       texto: `| \`${ruta}\` | ${vp} | ${tema} | SIN CARGAR | | | | | \`${foto}\` |`,
@@ -246,7 +261,7 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
 
         await entrarAlSimulador(page);
 
-        for (const { ruta, nombre } of RUTAS) {
+        for (const { ruta, nombre, esperado } of RUTAS) {
           consola = 0;
           await page.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           // Sin `networkidle`: con HMR no llega y da verdes falsos (CLAUDE.md §5).
@@ -254,11 +269,11 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           const foto = join(FOTOS, `${nombre}-${vp.nombre}-${tema}.png`);
           await page.screenshot({ path: foto, fullPage: true });
           const bytes = statSync(foto).size;
-          if (bytes < FOTO_MIN_BYTES) {
+          if (bytes < FOTO_MIN_BYTES && esperado !== 'no-encontrado') {
             errores.push(`${ruta} @ ${vp.nombre}/${tema}: foto vacía (${bytes} B)`);
           }
           const m = await medir(page);
-          const f = fila(ruta, vp.nombre, tema, m, consola, foto.replace(`${DESTINO}/`, ''));
+          const f = fila(ruta, vp.nombre, tema, m, consola, foto.replace(`${DESTINO}/`, ''), esperado);
           filas.push(f.texto);
           if (!f.ok) rojos += 1;
         }

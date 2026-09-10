@@ -380,39 +380,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */
 
   {
-    // §4.H del plan de UX · **la primera de las ocho opciones del médico**, y
-    // la única que no existía con ese nombre.
-    //
-    // El encuentro clínico ya se podía hacer: vive en `clinical-record` y en
-    // el chart del paciente. Lo que no había era **la puerta**. Para atender a
-    // alguien había que acordarse de que se entra por «Archivo clínico», que
-    // suena a lo que se consulta después, no a lo que se hace ahora. Es
-    // exactamente el síntoma 1 del plan: la aplicación no se explica sola.
-    //
-    // Así que es una pantalla corta y deliberadamente tonta —elegí paciente,
-    // entrá a su consulta— y no un módulo nuevo: la atención sigue ocurriendo
-    // donde ya ocurría. Duplicarla habría dado dos historias clínicas.
-    path: 'consultation',
-    label: 'Consulta médica',
-    group: 'Atención',
-    icon: 'stethoscope',
-    roles: ['CLINICIAN', 'PRACTITIONER'],
-    // **Fuera del menú del médico** (pedido del propietario, 04/09/2026):
-    // «nadie sabe qué hace». Nació como la PUERTA para empezar a atender, y esa
-    // puerta hoy está en otro lado y es mejor: cada fila de Consultas ofrece
-    // «Iniciar consulta» sobre la cita concreta, en vez de una pantalla que
-    // vuelve a preguntar a quién se atiende.
-    //
-    // `fueraDelMenuPara` y no borrarla: la pantalla sigue existiendo y
-    // alcanzable por su ruta y desde «Tus accesos». Si en unas semanas nadie
-    // la extrañó, se borra en su propio cambio — sacarla de la vista es
-    // reversible en un renglón, borrarla no.
-    fueraDelMenuPara: ['CLINICIAN', 'PRACTITIONER'],
-    availability: 'disponible',
-    summary: 'Empezá la atención de hoy: elegí al paciente y entrá a su consulta.',
-    module: 'M08 clinical',
-  },
-  {
     // **«Consultas»** (ALV-016). Antes decía «Turnos», que era el nombre exacto
     // de la lista cerrada del cliente (§4.H del plan de UX); el mismo cliente
     // pidió la nomenclatura clínica, que además es la que usa el resto del
@@ -472,8 +439,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'diagnostics',
     // §4.H · fuera del menú del médico: no está en la lista de ocho. La cola
     // del laboratorio y los estudios de un paciente se miran **desde el
-    // paciente**, que es donde se los pidió, y para eso están el Archivo
-    // clínico y la Consulta médica. Sigue siendo sección de primer nivel para
+    // paciente**, que es donde se los pidió, y para eso está el Archivo
+    // clínico. Sigue siendo sección de primer nivel para
     // `CLINICIAN`, que es quien la usa como bandeja.
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Laboratorio e imagen',
@@ -639,7 +606,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // plan de pagos— antes de la atención.
     //
     // **Sí corresponde agregarla al menú del médico** (a diferencia de
-    // «Encuestas» o «Consulta médica», que la nota de más abajo saca por
+    // «Encuestas», que la nota de más abajo saca por
     // `fueraDelMenuPara`): cotizar es un paso del flujo de atención que se iba
     // a repetir —no una tarea que se hace una vez y se olvida—, y a diferencia
     // de la ficha de un paciente (que cuelga como hija sin entrada propia,

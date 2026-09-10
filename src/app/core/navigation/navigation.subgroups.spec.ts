@@ -35,12 +35,14 @@ describe('NAV_SUBGROUPS', () => {
    * estaba detrás de «Consultorio», un escalón que había que desplegar para
    * encontrar una sola cosa (pedido del propietario, 04/09/2026).
    *
-   * `consultation` está acá por lo mismo y además salió del menú del médico.
-   *
    * La lista es corta a propósito: es la excepción, no la regla. Un subgrupo se
    * justifica cuando ordena varias secciones; envolver una sola es ruido.
+   *
+   * Era de dos: `consultation` salió del registro entero el 2026-09-10, cuando
+   * el propietario pidió borrar la pantalla vieja que duplicaba a «Consultas
+   * médicas».
    */
-  const SUELTAS_A_PROPOSITO = ['consultation', 'schedule'];
+  const SUELTAS_A_PROPOSITO = ['schedule'];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {
     const sinBloque = rutasDelRegistro.filter(
