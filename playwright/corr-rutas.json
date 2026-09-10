@@ -240,14 +240,6 @@
       "nombre": "notification-center"
     },
     {
-      "ruta": "/my-account/identity/verify",
-      "nombre": "my-account_identity_verify"
-    },
-    {
-      "ruta": "/my-account/identity/cases",
-      "nombre": "my-account_identity_cases"
-    },
-    {
       "ruta": "/my-account/pharmacy-orders",
       "nombre": "my-account_pharmacy-orders"
     },
@@ -274,14 +266,6 @@
     {
       "ruta": "/my-account/identity?tab=cases",
       "nombre": "identidad-tramites"
-    },
-    {
-      "ruta": "/my-account/identity/cases",
-      "nombre": "redirige"
-    },
-    {
-      "ruta": "/my-account/identity/verify",
-      "nombre": "redirige"
     }
   ],
   "37": [

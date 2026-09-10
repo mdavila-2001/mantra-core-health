@@ -12,7 +12,7 @@ import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { ActivateAccount } from './features/auth/activate-account/activate-account';
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
-import { IdentityVerification } from './features/identity-verification/identity-verification';
+import { IdentityHub } from './features/identity-verification/identity-hub/identity-hub';
 import { NotFound } from './features/not-found/not-found';
 import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
@@ -58,7 +58,7 @@ function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
  */
 const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
   dashboard: Dashboard,
-  'my-account/identity/verify': IdentityVerification,
+  'my-account/identity': IdentityHub,
 };
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
@@ -202,10 +202,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'administration/pharmacy-campaigns': () =>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
-    ),
-  'my-account/identity/cases': () =>
-    import('./features/identity-assurance/verification-cases/verification-cases').then(
-      (m) => m.VerificationCases,
     ),
   'administration/delegated-access': () =>
     import('./features/delegated-access/delegated-access-home/delegated-access-home').then(
@@ -957,8 +953,12 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   contabilidad: '/administration/accounting',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
-  'identidad/verificar': '/my-account/identity/verify',
-  'identidad/casos': '/my-account/identity/cases',
+  'identidad/verificar': '/my-account/identity',
+  'identidad/casos': '/my-account/identity',
+  // Las dos rutas propias de antes de unificar (2026-09-10). Están en
+  // historiales, en favoritos y en los correos que la plataforma ya mandó.
+  'my-account/identity/verify': '/my-account/identity',
+  'my-account/identity/cases': '/my-account/identity',
   'administracion/pacientes': '/administration/patients',
   'administracion/usuarios': '/administration/users',
   'administracion/organizaciones': '/administration/organizations',

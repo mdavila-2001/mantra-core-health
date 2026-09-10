@@ -1219,11 +1219,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M35 messaging',
   },
   {
-    // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino
-    // del 403 `IDENTITY_VERIFICATION_REQUIRED`: **no se renombra**. Cambiarla
-    // rompería la puerta que traduce ese error en una salida.
-    path: 'my-account/identity/verify',
-    label: 'Verificar identidad',
+    // **Una sola sección desde el 2026-09-10.** Eran dos —«Verificar identidad»
+    // y «Mis verificaciones»— que mostraban los mismos trámites: la primera los
+    // repetía debajo del formulario y la segunda era la tabla. El propietario
+    // pidió unirlas, y el resultado es una pantalla con dos pestañas
+    // (`features/identity-verification/identity-hub/`).
+    //
+    // `my-account/identity/verify` **no desaparece**: sigue siendo el destino
+    // que `IDENTITY_VERIFICATION_ROUTE` publica para el 403
+    // `IDENTITY_VERIFICATION_REQUIRED`, y ahora redirige acá. Romper esa puerta
+    // dejaría el error sin salida.
+    path: 'my-account/identity',
+    // «Mi identidad» y no «Verificación de identidad»: ese rótulo ya es de
+    // `administration/identity-assurance`, la cola de quien revisa. Dos
+    // secciones con el mismo nombre en el mismo producto son dos secciones que
+    // nadie sabe distinguir — y una prueba del registro las confunde también.
+    label: 'Mi identidad',
     group: 'Mi cuenta',
     icon: 'shield',
     roles: [ANY_ROLE],
@@ -1232,23 +1243,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // la pantalla y la salida del 403—, lo único que pierde es el renglón.
     ...(VERIFICACION_DE_IDENTIDAD_OFRECIDA ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
     availability: 'disponible',
-    summary: 'Validá tu identidad, tu matrícula o una organización a tu cargo.',
-    module: 'M27 identity_assurance',
-  },
-  {
-    // V27-01: los casos que la verificación de arriba abre. Sin roles porque
-    // el `GET /identity/me/verification-cases` tampoco los pide: cada quien
-    // ve únicamente lo suyo, y eso lo resuelve el backend.
-    path: 'my-account/identity/cases',
-    label: 'Mis verificaciones',
-    group: 'Mi cuenta',
-    icon: 'history',
-    roles: [ANY_ROLE],
-    // Con la de arriba y por lo mismo: el seguimiento de un trámite que hoy no
-    // se ofrece empezar no tiene por qué ocupar un renglón.
-    ...(VERIFICACION_DE_IDENTIDAD_OFRECIDA ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
-    availability: 'disponible',
-    summary: 'Seguí el estado de tus trámites de verificación de identidad.',
+    summary: 'Validá tu identidad o tu matrícula, y seguí el estado de tus trámites.',
     module: 'M27 identity_assurance',
   },
   {

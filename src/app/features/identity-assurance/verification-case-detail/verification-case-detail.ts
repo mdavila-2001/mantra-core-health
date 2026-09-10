@@ -20,7 +20,7 @@ import {
 } from '../../identity-verification/case-status';
 
 /** A dónde vuelve quien llegó a un caso que no existe o ya terminó de mirar. */
-const LIST_ROUTE = '/my-account/identity/cases';
+const LIST_ROUTE = '/my-account/identity';
 
 /**
  * V27-01 · Ficha de un caso de verificación propio.

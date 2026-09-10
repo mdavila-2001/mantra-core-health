@@ -165,9 +165,17 @@ describe('IdentityVerification', () => {
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
     responderHistorial();
 
-    expect(interno<() => { id: string; status: string } | null>('caso')()).toEqual({
+    // Los **tres** campos, no dos: el alta no devuelve el tipo, así que la
+    // pantalla lo deriva del trámite que se acaba de pedir (`TIPO_DEL_TRAMITE`).
+    // La expectativa se había quedado en dos y por eso este caso estaba en rojo
+    // desde antes del 2026-09-10 — sin que nada se rompiera en pantalla, que es
+    // lo que hace que un rojo así sobreviva.
+    expect(
+      interno<() => { id: string; status: string; type: string } | null>('caso')(),
+    ).toEqual({
       id: 'c-1',
       status: 'PENDING',
+      type: 'PATIENT_IDENTITY',
     });
   });
 

@@ -157,7 +157,7 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tagline: 'Tus datos, tus turnos, tus avisos y tu identidad verificada.',
     icon: 'patients',
     tone: 'warning',
-    paths: ['my-account', 'notification-center', 'my-account/identity/verify', 'tutorials'],
+    paths: ['my-account', 'notification-center', 'my-account/identity', 'tutorials'],
     catchAllGroups: ['Mi cuenta'],
   },
 ];

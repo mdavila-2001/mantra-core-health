@@ -367,7 +367,7 @@ describe('MyProfile', () => {
 
     const actual = estado();
     expect(actual.status).toBe('forbidden');
-    expect(actual.nextAction?.route).toBe('/my-account/identity/verify');
+    expect(actual.nextAction?.route).toBe('/my-account/identity');
   });
 
   it('un 403 corriente NO ofrece salida: no hay nada que la persona pueda hacer', () => {
@@ -540,7 +540,7 @@ describe('MyProfile', () => {
     expect(alerta?.textContent).toContain('cuando tu identidad esté verificada');
     expect(alerta?.textContent).not.toContain('No tenés acceso');
     expect(alerta?.textContent).not.toContain('Verifique su identidad');
-    expect(alerta?.querySelector('a[href="/my-account/identity/verify"]')).not.toBeNull();
+    expect(alerta?.querySelector('a[href="/my-account/identity"]')).not.toBeNull();
   });
 
   it('un 403 corriente sigue siendo un muro, y se pinta como tal', () => {

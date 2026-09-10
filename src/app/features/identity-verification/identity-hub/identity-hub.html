@@ -1,0 +1,22 @@
+<app-page-header
+  title="Verificación de identidad"
+  subtitle="Pedí una verificación y seguí el estado de tus trámites."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
+     (`docs/components/composition-rules.md` §5). -->
+<app-card padding="lg" class="identidad__tarjeta">
+  <app-tabs
+    [selectedIndex]="pestana()"
+    (selectedIndexChange)="elegirPestana($event)"
+    data-testid="identidad-pestanas"
+  >
+    <app-tab [label]="pestanas[0]">
+      <app-identity-verification [embedded]="true" />
+    </app-tab>
+    <app-tab [label]="pestanas[1]">
+      <app-verification-cases [embedded]="true" />
+    </app-tab>
+  </app-tabs>
+</app-card>
