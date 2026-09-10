@@ -1,6 +1,20 @@
 # Plan · Evoluciones, expediente y el botón «Atender»
 
-Fecha: 2026-09-09. Rama de referencia: `origin/mockup` (la que mira el usuario). Estado: **plan, sin implementar**.
+Fecha: 2026-09-09. Rama de referencia: `origin/mockup` (la que mira el usuario).
+
+## Estado
+
+| Fase | Estado |
+|---|---|
+| 1 · «Atender» nace sólo de Mis citas | **Hecha** (`ced1531f`, `3e164060`, `b3f0fa58`, `fad06994`) |
+| 2 · Evoluciones deja de ser un espejo | Pendiente |
+| 3 · Expediente: sacar la card y mover las ediciones a modales | **3.1 hecha** (la card se fue con `3e164060`); 3.2–3.4 pendientes |
+| 4 · Verificación | Unitarias de la fase 1 hechas; los recorridos Playwright de las fases 2 y 3, pendientes |
+| 5 · Documentación | Pendiente |
+
+Lo que quedó fuera de la fase 1, a propósito: la fusión total de «Consulta
+médica» dentro de «Mis citas» (filtro «Hoy»), que el propio plan dejaba como
+seguimiento.
 
 ## 1. Diagnóstico
 
