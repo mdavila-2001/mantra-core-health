@@ -228,6 +228,114 @@ describe('PractitionerProfileEdit', () => {
     });
   });
 
+  /**
+   * Las casillas que el alta de médico tiene y el editor no ofrecía.
+   *
+   * El alta pregunta tres nombres y deja sumar los que hagan falta —hay gente
+   * con cuatro y con cinco— y ofrece varias especialidades de una sola vez. El
+   * editor pedía UN segundo nombre y UNA especialidad por envío, así que quien
+   * se registró con tres nombres los perdía al corregir cualquier otra cosa.
+   */
+  describe('las casillas sumables del registro', () => {
+    it('reparte lo guardado en las tres casillas y en las agregadas', () => {
+      montarYCargar({ middleName: 'Lucía María Belén' });
+
+      expect(interno<() => string>('segundoNombre')()).toBe('Lucía');
+      expect(interno<() => string>('tercerNombre')()).toBe('María');
+      expect(interno<() => readonly string[]>('nombresExtra')()).toEqual(['Belén']);
+    });
+
+    it('los tres nombres viajan como UN solo campo del contrato', () => {
+      montarYCargar({ middleName: 'Lucía' });
+
+      señal<string>('tercerNombre').set('María');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ middleName: 'Lucía María' });
+      req.flush({ ...PERFIL_BASE, middleName: 'Lucía María' });
+    });
+
+    it('una casilla agregada y no llenada no manda un espacio de más', () => {
+      montarYCargar({ middleName: 'Lucía' });
+
+      interno<() => void>('agregarNombre')();
+      interno<() => void>('guardarPresentacion')();
+
+      // Nada cambió: la casilla vacía no es un cambio.
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('quitar el segundo nombre lo manda vacío, que es cómo se borra', () => {
+      montarYCargar({ middleName: 'Lucía' });
+
+      señal<string>('segundoNombre').set('');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ middleName: '' });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('agrega TODAS las especialidades elegidas, no la primera', () => {
+      montarYCargar();
+
+      señal<string>('nuevaEspecialidad').set('esp-cardio');
+      interno<() => void>('agregarCasillaDeEspecialidad')();
+      interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-pediatria');
+
+      interno<() => void>('agregarEspecialidad')();
+
+      const pedidos = http.match('/profiles/practitioners/per-1/specialties');
+      expect(pedidos).toHaveLength(2);
+      expect(pedidos.map((r) => (r.request.body as { specialtyConceptId: string }).specialtyConceptId)).toEqual([
+        'esp-cardio',
+        'esp-pediatria',
+      ]);
+      for (const pedido of pedidos) pedido.flush({ id: 'sp-x' });
+
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    });
+
+    it('elegir dos veces la misma declara una, no dos filas iguales', () => {
+      montarYCargar();
+
+      señal<string>('nuevaEspecialidad').set('esp-cardio');
+      interno<() => void>('agregarCasillaDeEspecialidad')();
+      interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-cardio');
+
+      interno<() => void>('agregarEspecialidad')();
+
+      const pedidos = http.match('/profiles/practitioners/per-1/specialties');
+      expect(pedidos).toHaveLength(1);
+      pedidos[0]!.flush({ id: 'sp-x' });
+
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    });
+
+    it('una casilla agregada alcanza para habilitar el botón', () => {
+      montarYCargar();
+
+      expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(false);
+
+      interno<() => void>('agregarCasillaDeEspecialidad')();
+      expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(false);
+
+      interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-pediatria');
+      expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
+    });
+
+    it('quitar una casilla la saca de lo que se va a mandar', () => {
+      montarYCargar();
+
+      interno<() => void>('agregarCasillaDeEspecialidad')();
+      interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-pediatria');
+      interno<(i: number) => void>('quitarCasillaDeEspecialidad')(0);
+
+      expect(interno<() => readonly string[]>('especialidadesElegidas')()).toEqual([]);
+    });
+  });
+
   it('siembra el formulario con lo ya guardado', () => {
     montarYCargar();
 
