@@ -150,44 +150,63 @@
      decide si la transición pedida es válida desde el estado actual —no se
      replica esa máquina acá, para no tener dos versiones de la misma regla. -->
 <ng-template #celdaAcciones let-fila>
-  <div class="expediente__accion-estado">
-    <app-concept-select
-      [target]="targetEstadoClinico"
-      [value]="destinoEstadoDe(fila.id)"
-      (valueChange)="elegirDestinoEstado(fila.id, $event)"
-      [labels]="etiquetasDeEstadoClinico"
-      placeholder="Cambiar a…"
-    />
-    @if (destinoEstadoDe(fila.id) !== null) {
+  <!-- Un solo botón y un menú: el selector de estado y el subidor de archivos
+       se desplegaban DENTRO de la celda, y la tabla crecía de golpe. Los dos
+       piden datos, así que los dos van a un modal. La celda conserva su alto. -->
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    type="button"
+    data-testid="expediente-acciones"
+    [appMenuTrigger]="menuDeAcciones"
+    [isLoading]="cambiandoEstado() === fila.id"
+  >
+    Acciones
+  </button>
+  <app-menu #menuDeAcciones>
+    <app-menu-item (selected)="abrirCambioDeEstado(fila)">Cambiar estado clínico…</app-menu-item>
+    <app-menu-item (selected)="abrirAdjuntos(fila.id)">Adjuntar archivo…</app-menu-item>
+  </app-menu>
+</ng-template>
+
+<!-- Cambiar el estado clínico de un diagnóstico ya registrado. El backend
+     sigue validando la transición: esto sólo deja de deformar la tabla. -->
+@if (cambiandoEstadoDe(); as fila) {
+  <app-content-dialog
+    heading="Cambiar el estado clínico"
+    [description]="fila.principal"
+    (closed)="cerrarCambioDeEstado()"
+  >
+    <div class="expediente__accion-estado">
+      <app-concept-select
+        [target]="targetEstadoClinico"
+        [value]="destinoEstadoDe(fila.id)"
+        (valueChange)="elegirDestinoEstado(fila.id, $event)"
+        [labels]="etiquetasDeEstadoClinico"
+        placeholder="Cambiar a…"
+      />
       <button
         app-button
-        variant="outline"
+        variant="primary"
         size="sm"
         type="button"
         data-testid="expediente-cambiar-estado"
-        [disabled]="cambiandoEstado() !== null"
+        [disabled]="destinoEstadoDe(fila.id) === null || cambiandoEstado() !== null"
         (clicked)="cambiarEstadoClinico(fila)"
       >
         Aplicar
       </button>
-    }
-    <button
-      app-button
-      variant="ghost"
-      size="sm"
-      type="button"
-      data-testid="expediente-adjuntar-archivo"
-      (clicked)="alternarAdjuntos(fila.id)"
-    >
-      {{ adjuntandoArchivoA() === fila.id ? 'Cerrar adjuntos' : 'Adjuntar archivo' }}
-    </button>
-  </div>
-  @if (adjuntandoArchivoA() === fila.id) {
-    <app-attachment-uploader
-      ownerType="CONDITION"
-      [ownerId]="fila.id"
-      [linkVia]="enlazarAdjuntoAlDiagnostico"
-      (attached)="cerrarAdjuntos()"
-    />
-  }
-</ng-template>
+    </div>
+  </app-content-dialog>
+}
+
+@if (adjuntandoArchivoA(); as conditionId) {
+  <app-attachment-dialog
+    ownerType="CONDITION"
+    [ownerId]="conditionId"
+    [linkVia]="enlazarAdjuntoAlDiagnostico"
+    heading="Adjuntar un archivo al diagnóstico"
+    (closed)="cerrarAdjuntos()"
+  />
+}

@@ -328,17 +328,37 @@ describe('PatientChart', () => {
    * compartida— porque el expediente puede listar varios diagnósticos a la vez.
    */
   describe('adjuntar un archivo a un diagnóstico ya registrado (ALV-033)', () => {
-    it('alternarAdjuntos abre y cierra el subidor de ESA fila', () => {
+    /**
+     * Abre y cierra, ya no alterna: el subidor vive en un modal, y un botón de
+     * menú que cerrara el modal que está encima de él no tendría sentido —el
+     * modal se cierra por su propia salida—.
+     */
+    it('abre el modal de adjuntos de ESA fila, y se cierra por su salida', () => {
       responderNombre();
       responderExpediente();
 
       expect(interno<() => string | null>('adjuntandoArchivoA')()).toBeNull();
 
-      interno<(id: string) => void>('alternarAdjuntos')('c-1');
+      interno<(id: string) => void>('abrirAdjuntos')('c-1');
       expect(interno<() => string | null>('adjuntandoArchivoA')()).toBe('c-1');
 
-      interno<(id: string) => void>('alternarAdjuntos')('c-1');
+      interno<() => void>('cerrarAdjuntos')();
       expect(interno<() => string | null>('adjuntandoArchivoA')()).toBeNull();
+    });
+
+    /** El menú deja de deformar la tabla: la celda ya no despliega nada. */
+    it('la celda de acciones no despliega el subidor dentro de la tabla', () => {
+      responderNombre();
+      responderExpediente();
+      harness.fixture.detectChanges();
+
+      interno<(id: string) => void>('abrirAdjuntos')('c-1');
+      harness.fixture.detectChanges();
+
+      const raiz = harness.fixture.nativeElement as HTMLElement;
+      // El subidor está dentro del modal, no dentro de la tabla.
+      expect(raiz.querySelector('app-attachment-dialog')).not.toBeNull();
+      expect(raiz.querySelector('app-data-table app-attachment-uploader')).toBeNull();
     });
 
     it('el vínculo del adjunto pasa por `clinical`, no por el genérico de `common`', () => {
