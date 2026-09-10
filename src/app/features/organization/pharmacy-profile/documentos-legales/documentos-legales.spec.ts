@@ -37,11 +37,11 @@ describe('DocumentosLegales', () => {
    * pantalla. jsdom no deja asignar `files`, así que se define la propiedad y
    * se dispara el mismo evento que dispara el navegador.
    */
-  function elegirArchivo(root: HTMLElement, nombre: string): void {
+  function elegirArchivo(root: HTMLElement, nombre: string, tipo = 'application/pdf'): void {
     const campo = root.querySelector<HTMLInputElement>('input[type="file"]');
     expect(campo).not.toBeNull();
     Object.defineProperty(campo, 'files', {
-      value: [new File(['x'], nombre, { type: 'application/pdf' })],
+      value: [new File(['x'], nombre, { type: tipo })],
       configurable: true,
     });
     campo?.dispatchEvent(new Event('change'));
@@ -158,15 +158,23 @@ describe('DocumentosLegales', () => {
   });
 
   it('lo que el control descarta se dice en voz alta, con el motivo', () => {
-    montar(ready(DOCUMENTOS_DE_EJEMPLO));
+    const root = montar(ready(DOCUMENTOS_DE_EJEMPLO));
 
-    fixture.componentInstance['avisarRechazos']([
-      { file: new File(['x'], 'licencia.docx'), reason: 'tipo' },
-    ]);
+    pulsar(root, 'ficha-reemplazar-nit');
+    // Un documento de texto donde va un PDF: el control lo descarta en
+    // silencio, y lo que se prueba es que la pantalla lo cuente.
+    elegirArchivo(
+      root,
+      'nit-actualizado.docx',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    );
 
     const aviso = toasts.toasts().at(-1);
     expect(aviso?.title).toBe('Archivo no aceptado');
+    expect(aviso?.message).toContain('«nit-actualizado.docx»');
     expect(aviso?.message).toContain('el registro pide el documento en PDF');
+    // Y no entra a la fila: lo rechazado no se muestra como si estuviera.
+    expect(root.textContent ?? '').not.toContain('nit-actualizado.docx');
   });
 
   it('mientras carga muestra el esqueleto y ningún papel', () => {
@@ -248,6 +256,22 @@ describe('DocumentosLegales', () => {
       expect(root.querySelectorAll('[data-testid="ficha-documentos"] li')).toHaveLength(6);
       expect(root.querySelector('[data-testid="ficha-agregar-documento"]')).toBeNull();
       expect(root.querySelector('[data-testid="ficha-alta-documento"]')).toBeNull();
+    });
+
+    it('un papel agregado también se puede reemplazar, y la fila muestra el último archivo', () => {
+      const root = montar(ready(DOCUMENTOS_DE_EJEMPLO.slice(0, 5)));
+
+      pulsar(root, 'ficha-agregar-documento');
+      elegirArchivo(root, 'poder-escaneado.pdf');
+      expect(root.textContent ?? '').toContain('poder-escaneado.pdf');
+
+      pulsar(root, 'ficha-reemplazar-poder-del-representante');
+      elegirArchivo(root, 'poder-corregido.pdf');
+
+      const texto = root.textContent ?? '';
+      expect(texto).toContain('poder-corregido.pdf');
+      expect(texto).not.toContain('poder-escaneado.pdf');
+      expect(texto).toContain('Sin subir');
     });
 
     it('cargar un papel avisa que el archivo todavía no se sube', () => {

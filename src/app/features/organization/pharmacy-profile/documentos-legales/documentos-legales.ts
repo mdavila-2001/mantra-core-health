@@ -151,7 +151,15 @@ export class DocumentosLegales {
     );
     // Lo agregado va al final, en el orden en que se cargó: es lo último que
     // hizo quien está mirando y ahí es donde lo va a buscar.
-    return [...recibidos, ...this.agregados().map((documento) => filaDe(documento, documento.archivo))];
+    //
+    // Un papel agregado también se puede reemplazar, así que su archivo sale
+    // del mismo mapa que el de los demás y sólo cae al de la carga cuando
+    // nadie lo reemplazó todavía. Sin esto, reemplazarlo avisaba que el
+    // archivo quedaba a la vista y la fila seguía mostrando el anterior.
+    const agregados = this.agregados().map((documento) =>
+      filaDe(documento, elegidos.get(documento.clave) ?? documento.archivo),
+    );
+    return [...recibidos, ...agregados];
   });
 
   /**

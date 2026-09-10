@@ -143,10 +143,13 @@
               label="Nuevo archivo"
               hint="Sólo PDF, hasta 10 MB. El archivo se ve acá, pero todavía no se sube."
             >
+              <!-- Un documento es un archivo, así que el control va sin
+                   `multiple`. Al soltar dos PDF de una vez se toma el primero
+                   y el segundo se descarta sin decir nada: el control sólo
+                   avisa de lo que rechaza por tipo o por tamaño. -->
               <app-file-input
                 [accept]="aceptaPdf"
                 [maxSizeBytes]="maxBytes"
-                [maxFiles]="1"
                 (filesChange)="tomarArchivo(fila.documento.clave, $event)"
                 (rejected)="avisarRechazos($event)"
               />
@@ -181,10 +184,11 @@
         label="Archivo"
         hint="Sólo PDF, hasta 10 MB. El archivo se ve acá, pero todavía no se sube."
       >
+        <!-- Sin `multiple`, como en el reemplazo: al soltar dos PDF entra el
+             primero y el segundo se descarta sin avisar. -->
         <app-file-input
           [accept]="aceptaPdf"
           [maxSizeBytes]="maxBytes"
-          [maxFiles]="1"
           [disabled]="papelElegido() === null"
           (filesChange)="agregarPapel($event)"
           (rejected)="avisarRechazos($event)"
