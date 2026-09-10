@@ -1,0 +1,94 @@
+<app-view-state-host [state]="state()" (retry)="retry.emit()">
+  <div vsh-skeleton><app-skeleton variant="text" [lines]="8" /></div>
+
+  <section class="papeles" aria-labelledby="ficha-papeles-titulo">
+    <div class="papeles__encabezado">
+      <h2 id="ficha-papeles-titulo" class="papeles__titulo">Carpeta legal</h2>
+      <!-- Nada de esto sale de la API todavía: se dice, no se disimula. -->
+      <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+    </div>
+
+    <!-- Los tres estados de verificación se declaran provisionales en la propia
+         pantalla: quién revisa cada papel y con qué criterio está sin definir. -->
+    <p class="papeles__nota" data-testid="ficha-nota-verificacion">
+      «Pendiente», «verificado» y «vencido» son estados provisionales: todavía está por
+      definirse quién revisa cada documento y con qué criterio.
+    </p>
+
+    <ul class="papeles__lista" data-testid="ficha-documentos">
+      @for (fila of filas(); track fila.documento.clave) {
+        <li class="papeles__fila">
+          <div class="papeles__cabecera">
+            <h3 class="papeles__nombre">{{ fila.documento.nombre }}</h3>
+            <div class="papeles__estados">
+              <app-badge [variant]="fila.tonoDeVigencia">{{ fila.vigencia }}</app-badge>
+              <app-badge [variant]="fila.tonoDeVerificacion">{{ fila.verificacion }}</app-badge>
+            </div>
+          </div>
+
+          <dl class="papeles__campos">
+            <div class="papeles__campo">
+              <dt class="papeles__etiqueta">Archivo</dt>
+              <dd class="papeles__valor">
+                {{ fila.archivo }}
+                @if (fila.reemplazadoEnPantalla) {
+                  <!-- Elegido recién y todavía sin subir: no es lo que hay guardado. -->
+                  <app-chip variant="neutral" size="sm">Sin subir</app-chip>
+                }
+              </dd>
+            </div>
+
+            <div class="papeles__campo">
+              <dt class="papeles__etiqueta">Emitido el</dt>
+              <dd class="papeles__valor">{{ fila.documento.emitidoEl | date: 'd MMM y' }}</dd>
+            </div>
+
+            <div class="papeles__campo">
+              <dt class="papeles__etiqueta">Vence el</dt>
+              <dd class="papeles__valor">{{ fila.documento.venceEl | date: 'd MMM y' }}</dd>
+            </div>
+          </dl>
+
+          <div class="papeles__acciones">
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              [attr.data-testid]="'ficha-descargar-' + fila.documento.clave"
+              (clicked)="avisarDescarga(fila)"
+            >
+              Descargar
+            </button>
+            <button
+              app-button
+              variant="secondary"
+              size="sm"
+              type="button"
+              [attr.data-testid]="'ficha-reemplazar-' + fila.documento.clave"
+              (clicked)="alternarReemplazo(fila.documento.clave)"
+            >
+              {{ filaEnReemplazo() === fila.documento.clave ? 'Cancelar' : 'Reemplazar' }}
+            </button>
+          </div>
+
+          @if (filaEnReemplazo() === fila.documento.clave) {
+            <app-form-field
+              icon="folder"
+              label="Nuevo archivo"
+              hint="Sólo PDF, hasta 10 MB. El archivo se ve acá, pero todavía no se sube."
+            >
+              <app-file-input
+                [accept]="aceptaPdf"
+                [maxSizeBytes]="maxBytes"
+                [maxFiles]="1"
+                (filesChange)="tomarArchivo(fila.documento.clave, $event)"
+                (rejected)="avisarRechazos($event)"
+              />
+            </app-form-field>
+          }
+        </li>
+      }
+    </ul>
+  </section>
+</app-view-state-host>

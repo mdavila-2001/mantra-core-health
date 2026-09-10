@@ -1,0 +1,90 @@
+/* Mobile-first: los campos apilados y el mapa al final; desde ancho de tableta
+   los datos entran en dos columnas y el mapa gana alto, que es donde marcar un
+   punto con el dedo deja de ser una lotería. */
+
+.empresa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.empresa__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.empresa__titulo {
+  margin: 0;
+  font-size: var(--fs-h2);
+}
+
+.empresa__subtitulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.empresa__campos,
+.empresa__formulario {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+}
+
+.empresa__campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.empresa__etiqueta {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.empresa__valor {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.empresa__nota,
+.empresa__ayuda {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+}
+
+.empresa__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.empresa__mapa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.empresa__punto {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* El alto, el borde y el radio del lienzo los pone el propio organismo del
+   mapa: repetirlos acá sería decidir dos veces lo mismo y que un día no
+   coincidan. */
+
+@media (min-width: 640px) {
+  .empresa__campos,
+  .empresa__formulario {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

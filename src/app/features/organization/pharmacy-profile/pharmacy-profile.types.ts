@@ -44,8 +44,13 @@ export const TIPOS_DE_SOCIEDAD = [
 /** Uno de los ocho de arriba: el tipo sale de la lista, no al revés. */
 export type TipoDeSociedad = (typeof TIPOS_DE_SOCIEDAD)[number];
 
-/** Los datos legales de la empresa: razón social, tipo, NIT, dirección y punto. */
-export interface DatosDeLaEmpresa {
+/**
+ * Los datos legales de la empresa: razón social, tipo, NIT, dirección y punto.
+ *
+ * El nombre lleva «legales» y no es adorno: lo distingue del componente que los
+ * dibuja, que se llama por la pestaña donde vive.
+ */
+export interface DatosLegalesDeLaEmpresa {
   readonly razonSocial: string;
   /** `null` mientras nadie haya elegido uno de los ocho. */
   readonly tipoDeSociedad: TipoDeSociedad | null;
@@ -111,7 +116,7 @@ export interface ContactoDeLaEmpresa {
 }
 
 /** La gente de la ficha: quien firma por la empresa y quienes la gestionan. */
-export interface RepresentanteYGerentes {
+export interface GenteDeLaEmpresa {
   readonly representante: ContactoDeLaEmpresa;
   readonly gerentes: readonly ContactoDeLaEmpresa[];
 }

@@ -1,8 +1,8 @@
 import type {
   ContactoDeLaEmpresa,
-  DatosDeLaEmpresa,
+  DatosLegalesDeLaEmpresa,
   DocumentoLegal,
-  RepresentanteYGerentes,
+  GenteDeLaEmpresa,
 } from './pharmacy-profile.types';
 
 /**
@@ -41,7 +41,7 @@ export const NOTA_DE_DATOS_DE_EJEMPLO = 'Datos de ejemplo';
 
 /* ─── La empresa ─────────────────────────────────────────────────────────── */
 
-export const EMPRESA_DE_EJEMPLO: DatosDeLaEmpresa = {
+export const EMPRESA_DE_EJEMPLO: DatosLegalesDeLaEmpresa = {
   razonSocial: 'Farmacia Andina S.R.L.',
   tipoDeSociedad: 'SRL',
   nit: '1028394027',
@@ -170,7 +170,7 @@ const GERENTES_DE_EJEMPLO: readonly ContactoDeLaEmpresa[] = [
   },
 ];
 
-export const GENTE_DE_EJEMPLO: RepresentanteYGerentes = {
+export const GENTE_DE_EJEMPLO: GenteDeLaEmpresa = {
   representante: REPRESENTANTE_DE_EJEMPLO,
   gerentes: GERENTES_DE_EJEMPLO,
 };
