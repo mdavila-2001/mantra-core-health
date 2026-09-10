@@ -158,3 +158,14 @@ Mantra Core Health Context/
 # en cada `yarn start` y `yarn build`, igual que `env.generated.ts`. Versionarlo
 # sería versionar una foto del código que se queda vieja al primer commit.
 src/app/features/component-stock/component-index.generated.ts
+
+# Scripts de auditoría puntual, inspección visual y exploración E2E (QA ad-hoc).
+# Herramientas efímeras de diagnóstico que se corren localmente contra el servidor
+# o el mock, pero no forman parte del build de Angular ni del bundle de producción.
+# Las evidencias e informes finales viven en las carpetas de auditoría del workspace.
+/*.mjs
+/scripts/run_audit*.mjs
+/scripts/run_medica_audit*.mjs
+/scripts/visual_qa_audit*.mjs
+/scripts/analyze_views*.mjs
+/scripts/capture_medica*.mjs

@@ -31,6 +31,7 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
+import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -39,9 +40,18 @@ import { Radio } from '../../../../shared/components/molecules/radio/radio';
 import { RadioGroup } from '../../../../shared/components/molecules/radio-group/radio-group';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { toBandejaStatusPresentation } from '../bandeja-status';
+import { entregaEnPantalla } from '../entrega-status';
+import {
+  NOTA_DE_DATOS_DE_EJEMPLO,
+  coberturaDeEjemplo,
+  facturaDeEjemplo,
+  type RenglonCubierto,
+} from '../pharmacy-inbox.fixtures';
+import { ResumenDeFactura } from './resumen-de-factura/resumen-de-factura';
 
 /** A dónde vuelve quien llegó a un pedido que ya no está. */
 const BANDEJA_ROUTE = '/administration/pharmacy-orders';
@@ -97,12 +107,14 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
     AppButton,
     Badge,
     Checkbox,
+    Chip,
     DatePipe,
     FormField,
     Input,
     PageHeader,
     Radio,
     RadioGroup,
+    ResumenDeFactura,
     RouterLink,
     Select,
     ViewStateHost,
@@ -117,9 +129,11 @@ export class InboxOrder {
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(DialogService);
   private readonly navigation = inject(NavigationService);
+  private readonly toasts = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly bandejaRoute = BANDEJA_ROUTE;
+  protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
 
   protected readonly state = signal<ViewState<PedidoFarmacia>>(loading());
   protected readonly pedido = computed(() => dataOf(this.state()));
@@ -139,14 +153,62 @@ export class InboxOrder {
   protected readonly codigoInvalido = signal(false);
 
   /**
+   * Por qué medio se entrega, dicho donde el mostrador decide si lo guarda en
+   * el estante de retiros o lo pone en la cola del reparto. Va primero porque
+   * de acá salen tanto la frase del estado como las acciones que se ofrecen.
+   */
+  protected readonly entrega = computed(() => {
+    const abierto = this.pedido();
+    return abierto === null ? null : entregaEnPantalla(abierto);
+  });
+
+  /**
    * El estado del pago, dicho donde el mostrador decide si cobra (FAR-I5).
    * Sólo lectura: el pago se registra al cerrar la dispensa, no acá. Lo
    * crítico es el «ya pagado» del QR de la demo — sin este badge, la
    * farmacia cobraría dos veces.
+   *
+   * La frase se compone con la entrega por lo mismo que `puedeMarcarListo`:
+   * si el texto pidiera marcar listo un pedido que sale por reparto, estaría
+   * pidiendo algo que esta pantalla —con razón— no ofrece.
    */
   protected readonly presentacion = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : toBandejaStatusPresentation(abierto.estado);
+    return abierto === null
+      ? null
+      : toBandejaStatusPresentation(abierto.estado, this.entrega()?.modalidad ?? null);
+  });
+
+  /**
+   * Lo que respondió el seguro, renglón por renglón — o `null` cuando la
+   * persona no tiene cobertura, que es lo normal. Sale de los datos de
+   * ejemplo de la pantalla y se rotula como tal: el contrato de la API no
+   * publica cobertura todavía.
+   */
+  protected readonly cobertura = computed(() => {
+    const abierto = this.pedido();
+    return abierto === null ? null : coberturaDeEjemplo(abierto, this.renglonesEnPie());
+  });
+
+  /**
+   * Los renglones que todavía se van a despachar, según lo que el mostrador
+   * lleva ajustado. Es la misma fuente que usa `totalEnVivo`: las dos cifras
+   * se leen juntas en la pantalla, así que no pueden salir de lecturas
+   * distintas del pedido — si el total baja al descartar un renglón y el
+   * reparto del seguro no se mueve, una de las dos miente.
+   */
+  private readonly renglonesEnPie = computed<ReadonlySet<number>>(() =>
+    new Set(
+      this.ajustes().flatMap((ajuste, indice) =>
+        ajuste.decision === 'NO_DISPONIBLE' ? [] : [indice],
+      ),
+    ),
+  );
+
+  /** La factura del pedido entregado, con la misma advertencia. */
+  protected readonly factura = computed(() => {
+    const abierto = this.pedido();
+    return abierto === null ? null : facturaDeEjemplo(abierto);
   });
 
   /** La revisión está abierta: los ajustes por renglón se pueden editar. */
@@ -160,12 +222,56 @@ export class InboxOrder {
     return abierto !== null && puedeRechazarsePorFarmacia(abierto.estado);
   });
 
-  protected readonly puedeMarcarListo = computed(() => {
-    const abierto = this.pedido();
-    return abierto !== null && puedePrepararse(abierto.estado) && abierto.modalidad === 'RETIRO';
+  /**
+   * **Sabemos** que el pedido sale por reparto. Con la modalidad sin declarar
+   * —la API la publica opcional y el adaptador la deja en `null`
+   * (`pharmacy-orders.adapter.ts:179-184`)— esto es `false`: no saber no es
+   * lo mismo que saber que no se retira.
+   */
+  private readonly salePorReparto = computed(() => {
+    const modalidad = this.entrega()?.modalidad ?? null;
+    return modalidad !== null && modalidad !== 'RETIRO';
   });
 
-  protected readonly enRetiro = computed(() => this.pedido()?.estado === 'LISTO_PARA_RETIRO');
+  /**
+   * Marcar listo es una acción **del mostrador**: prepara el pedido para que
+   * la persona lo pase a buscar. Por eso lee la modalidad de `entrega()` y no
+   * del pedido crudo — si leyera el crudo, un pedido rotulado «Delivery»
+   * ofrecería igual «Marcar listo para retirar», y la pantalla se
+   * contradiría a sí misma. Lo que sale a domicilio no pasa por acá; el
+   * despacho no es de este carril y la pantalla ya dice a dónde va.
+   *
+   * Ésta **afirma el retiro** (y `enRetiro`, abajo, niega el reparto) porque
+   * así era su comportamiento antes de este carril: ya exigía `RETIRO`
+   * explícito, así que un pedido sin modalidad declarada nunca ofreció este
+   * botón. Ver la nota de `enRetiro`: la asimetría es deliberada.
+   */
+  protected readonly puedeMarcarListo = computed(() => {
+    const abierto = this.pedido();
+    return (
+      abierto !== null &&
+      puedePrepararse(abierto.estado) &&
+      this.entrega()?.modalidad === 'RETIRO'
+    );
+  });
+
+  /**
+   * Registrar el retiro es, otra vez, una acción del mostrador: pide el
+   * código que trae la persona. Un pedido que sale por reparto no tiene a
+   * nadie a quien pedírselo, y ofrecerle el formulario contradiría la
+   * etiqueta que la misma pantalla le puso.
+   *
+   * **Se escribe negando el reparto, no afirmando el retiro**, y la
+   * diferencia con `puedeMarcarListo` no es un descuido: acá el formulario
+   * existía sin mirar la modalidad, así que un pedido cuya modalidad la API
+   * no declara **lo tenía**, y quitárselo sería cambiar comportamiento. La
+   * regla es la de `bandeja-status.ts`: el nulo significa «no sabemos», y no
+   * saber no puede quitarle una capacidad al mostrador. Unificar las dos
+   * condiciones vuelve a romper esto.
+   */
+  protected readonly enRetiro = computed(
+    () => this.pedido()?.estado === 'LISTO_PARA_RETIRO' && !this.salePorReparto(),
+  );
 
   /** Renglones en pie que todavía no salieron por el mostrador. */
   protected readonly pendientes = computed<readonly number[]>(() => {
@@ -360,6 +466,22 @@ export class InboxOrder {
 
   protected lineaDe(indice: number): string {
     return this.pedido()?.lineas[indice]?.medicamento ?? '';
+  }
+
+  /** Qué dijo el seguro de este renglón, o `null` si no hay cobertura. */
+  protected renglonCubierto(indice: number): RenglonCubierto | null {
+    return this.cobertura()?.renglones[indice] ?? null;
+  }
+
+  /**
+   * El PDF definitivo lo emite el módulo de facturación, que esta pantalla no
+   * consulta. Decirlo es más honesto que descargar un archivo vacío.
+   */
+  protected avisarDescargaDeFactura(): void {
+    this.toasts.info(
+      'La descarga del comprobante llega con el módulo de facturación. Lo que ves acá es un ejemplo.',
+      'Factura de ejemplo',
+    );
   }
 
   private aplicar(pedido: PedidoFarmacia): void {

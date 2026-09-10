@@ -17,8 +17,29 @@
             <app-badge [variant]="estado.tone" data-testid="mostrador-estado-badge">
               {{ estado.label }}
             </app-badge>
+            @if (entrega(); as modo) {
+              <app-chip
+                size="sm"
+                data-testid="mostrador-entrega"
+                [variant]="modo.presentacion.tone"
+              >
+                {{ modo.presentacion.label }}
+              </app-chip>
+              <!-- El medio lo puso la maqueta: se dice, no se disimula. -->
+              @if (modo.esEjemplo) {
+                <app-chip size="sm" variant="neutral">{{ notaDeEjemplo }}</app-chip>
+              }
+            }
             <span class="mostrador__secundario">{{ estado.descripcion }}</span>
           </p>
+          @if (entrega(); as modo) {
+            <p class="mostrador__secundario" data-testid="mostrador-entrega-detalle">
+              {{ modo.presentacion.descripcion }}
+              @if (modo.direccion !== null) {
+                — {{ modo.direccion }}
+              }
+            </p>
+          }
           <p class="mostrador__secundario">
             Receta electrónica
             @if (abierto.prescriptor !== null) {
@@ -47,6 +68,16 @@
                     <span class="cifras-tabulares">{{ linea.precio }} {{ linea.moneda }}</span>
                   } @else {
                     <span class="mostrador__secundario">Sin precio publicado</span>
+                  }
+                  @if (renglonCubierto(i); as cubierto) {
+                    <span class="mostrador__cobertura">
+                      <app-badge [variant]="cubierto.aprobado ? 'success' : 'error'">
+                        {{ cubierto.aprobado ? 'Aprobado por el seguro' : 'No aprobado' }}
+                      </app-badge>
+                      <span class="mostrador__secundario cifras-tabulares">
+                        Seguro {{ cubierto.cubierto }} · persona {{ cubierto.coaseguro }}
+                      </span>
+                    </span>
                   }
                 </div>
                 @if (ajustes()[i]; as ajuste) {
@@ -147,7 +178,7 @@
         <section class="mostrador__bloque" aria-labelledby="mostrador-renglones">
           <h3 id="mostrador-renglones" class="mostrador__subtitulo">Qué pidió</h3>
           <ul class="mostrador__lineas">
-            @for (linea of abierto.lineas; track $index) {
+            @for (linea of abierto.lineas; track $index; let i = $index) {
               <li class="mostrador__linea">
                 <div class="mostrador__linea-datos">
                   <span class="mostrador__principal">{{ linea.medicamento }}</span>
@@ -155,6 +186,16 @@
                     <span class="mostrador__secundario">{{ linea.presentacion }}</span>
                   }
                   <span class="mostrador__secundario">Cantidad: {{ linea.cantidad }}</span>
+                  @if (renglonCubierto(i); as cubierto) {
+                    <span class="mostrador__cobertura">
+                      <app-badge [variant]="cubierto.aprobado ? 'success' : 'error'">
+                        {{ cubierto.aprobado ? 'Aprobado por el seguro' : 'No aprobado' }}
+                      </app-badge>
+                      <span class="mostrador__secundario cifras-tabulares">
+                        Seguro {{ cubierto.cubierto }} · persona {{ cubierto.coaseguro }}
+                      </span>
+                    </span>
+                  }
                 </div>
                 <div class="mostrador__linea-precio">
                   @if (linea.precio !== null) {
@@ -175,6 +216,38 @@
               </strong>
             </p>
           }
+        </section>
+      }
+
+      <!-- ─── Lo que respondió el seguro ─────────────────────────────────── -->
+      @if (cobertura(); as seguro) {
+        <section
+          class="mostrador__bloque"
+          aria-labelledby="mostrador-seguro"
+          data-testid="mostrador-seguro"
+        >
+          <div class="mostrador__encabezado">
+            <h3 id="mostrador-seguro" class="mostrador__subtitulo">Cobertura del seguro</h3>
+            <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+          </div>
+          <p class="mostrador__secundario">
+            {{ seguro.aseguradora }} · {{ seguro.plan }} — cubre el {{ seguro.porcentaje }}% de
+            cada renglón aprobado. Lo no aprobado lo paga la persona en el mostrador.
+          </p>
+          <dl class="mostrador__reparto">
+            <div class="mostrador__reparto-dato">
+              <dt class="mostrador__secundario">Cubre el seguro</dt>
+              <dd class="mostrador__valor cifras-tabulares">
+                {{ seguro.totalCubierto }} {{ seguro.moneda }}
+              </dd>
+            </div>
+            <div class="mostrador__reparto-dato">
+              <dt class="mostrador__secundario">Paga la persona (coaseguro)</dt>
+              <dd class="mostrador__valor cifras-tabulares">
+                {{ seguro.totalCoaseguro }} {{ seguro.moneda }}
+              </dd>
+            </div>
+          </dl>
         </section>
       }
 
@@ -259,6 +332,14 @@
           {{ abierto.motivoDeRechazo }}
         </app-alert>
       }
+      <!-- ─── La factura, cuando el pedido ya salió ──────────────────────── -->
+      @if (factura(); as comprobante) {
+        <app-resumen-de-factura
+          [factura]="comprobante"
+          (descargaSolicitada)="avisarDescargaDeFactura()"
+        />
+      }
+
       <a app-button variant="ghost" [routerLink]="bandejaRoute">Volver a la bandeja</a>
     </div>
   }
