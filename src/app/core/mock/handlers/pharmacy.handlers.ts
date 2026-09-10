@@ -2,6 +2,9 @@ import { vitrinas } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { recetas } from '../fixtures/clinica';
 import { PACIENTE, pacientePorId } from '../fixtures/personas';
+// T-I3 · los identificadores de los pedidos de ejemplo de la bandeja viven en
+// un solo lugar, porque la pantalla también los usa.
+import { ID_PEDIDO_CON_DELIVERY, ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
 import { notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, contiene, cuerpo, iso, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
@@ -150,6 +153,15 @@ const pedidos = new Coleccion<PedidoSimulado>(
       { id: uuid('pharmacy-order-4'), estado: 'RECHAZADO' as const, createdAt: iso(-30, 11), expiresAt: iso(-25, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: PACIENTE.id, patientName: PACIENTE.displayName, pickupCode: 'AV-2214', rejectionReasonText: 'La receta adjunta está vencida. Pedí una nueva a tu médico.', lineas: [{ productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 0, fulfilledQuantity: 0, status: 'RELEASED' as const }], sustituciones: [] },
       { id: uuid('pharmacy-order-5'), estado: 'ENVIADO' as const, createdAt: iso(0, 8, 20), expiresAt: iso(3, 8), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-flores'), patientName: 'Daniela Flores Cuéllar', pickupCode: 'AV-6001', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-SALBUTAMOL').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
       { id: uuid('pharmacy-order-6'), estado: 'EN_REVISION' as const, createdAt: iso(0, 9, 5), expiresAt: iso(3, 9), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-mamani'), patientName: 'Jorge Luis Mamani Choque', pickupCode: 'AV-6002', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-METFORMINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-LOSARTAN').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      // T-I3 · el pedido de una persona CON seguro: la bandeja del mostrador lo usa para mostrar
+      // lo aprobado y lo no aprobado renglón por renglón. La cobertura no viaja en este DTO —el
+      // contrato de `pharmacy-orders` no la publica—, así que vive junto a la pantalla y se
+      // reconoce por el identificador; acá sólo nace el pedido.
+      { id: ID_PEDIDO_CON_SEGURO, estado: 'EN_REVISION' as const, createdAt: iso(0, 10, 15), expiresAt: iso(3, 10), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-quispe'), patientName: 'Rosa Elena Quispe Vargas', pickupCode: 'AV-6003', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-LEVOTIROXINA').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-SERTRALINA').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
+      // T-I3 · el pedido que sale a domicilio. `dto()` responde `RETIRO` para todos los pedidos
+      // (`:195`) y esa línea es compartida: el medio de entrega de este ejemplo también se lo
+      // pone la pantalla, por identificador, y se rotula como maqueta.
+      { id: ID_PEDIDO_CON_DELIVERY, estado: 'EN_REVISION' as const, createdAt: iso(0, 11, 40), expiresAt: iso(3, 11), pharmacyId: f0.id, medicationRequestId: null, patientProfileId: uuid('pid-p-gutierrez'), patientName: 'Vania Gutiérrez Peña', pickupCode: 'AV-6004', rejectionReasonText: null, lineas: [{ productId: productoDe(f0.id, 'MED-IBUPROFENO').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' as const }, { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' as const }], sustituciones: [] },
     ];
   })(),
 );
