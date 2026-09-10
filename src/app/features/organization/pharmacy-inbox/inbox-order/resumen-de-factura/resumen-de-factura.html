@@ -1,0 +1,51 @@
+<section
+  class="factura"
+  aria-labelledby="mostrador-factura-titulo"
+  data-testid="mostrador-factura"
+>
+  <div class="factura__encabezado">
+    <h3 id="mostrador-factura-titulo" class="factura__titulo">Factura</h3>
+    <!-- Nada de lo que sigue sale de la API todavía: se dice, no se disimula. -->
+    <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+  </div>
+
+  <dl class="factura__datos">
+    <div class="factura__dato">
+      <dt class="factura__etiqueta">Número</dt>
+      <dd class="factura__valor cifras-tabulares">{{ factura().numero }}</dd>
+    </div>
+    <div class="factura__dato">
+      <dt class="factura__etiqueta">Emitida el</dt>
+      <dd class="factura__valor">{{ factura().emitidaEl | date: 'dd/MM/yyyy' }}</dd>
+    </div>
+    <div class="factura__dato">
+      <dt class="factura__etiqueta">Total facturado</dt>
+      <dd class="factura__valor cifras-tabulares">
+        {{ factura().total }} {{ factura().moneda }}
+      </dd>
+    </div>
+    <div class="factura__dato">
+      <dt class="factura__etiqueta">Estado</dt>
+      <dd class="factura__valor">
+        <app-badge variant="success">{{ factura().estado }}</app-badge>
+      </dd>
+    </div>
+  </dl>
+
+  <div class="factura__acciones">
+    <button
+      app-button
+      variant="secondary"
+      size="sm"
+      type="button"
+      data-testid="mostrador-descargar-factura"
+      (clicked)="descargaSolicitada.emit()"
+    >
+      Descargar factura (PDF)
+    </button>
+  </div>
+
+  <p class="factura__pie">
+    La farmacia la emite y la persona la recibe en su app, junto con el pedido.
+  </p>
+</section>
