@@ -949,6 +949,9 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // historiales, en favoritos y en los correos que la plataforma ya mandó.
   'my-account/identity/verify': '/my-account/identity',
   'my-account/identity/cases': '/my-account/identity',
+  // «Mis organizaciones» pasó a ser una pestaña de «Organización médica»
+  // (2026-09-10). Está en historiales y en el lateral de «Mi perfil».
+  'my-organizations': '/administration/medical-organization',
   'administracion/pacientes': '/administration/patients',
   'administracion/usuarios': '/administration/users',
   'administracion/organizaciones': '/administration/organizations',

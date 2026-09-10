@@ -143,7 +143,6 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     icon: 'building',
     tone: 'success',
     paths: [
-      'my-organizations',
       'administration/my-organization',
       'administration/medical-organization',
       'administration/accounting',

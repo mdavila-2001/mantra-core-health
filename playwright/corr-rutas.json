@@ -34,16 +34,12 @@
   ],
   "33": [
     {
-      "ruta": "/my-organizations",
-      "nombre": "redirige-a-organizacion-medica"
-    },
-    {
       "ruta": "/administration/medical-organization?tab=memberships",
-      "nombre": "vinculaciones-tabla"
+      "nombre": "vinculaciones-en-el-panel"
     },
     {
-      "ruta": "/administration/medical-organization?tab=memberships&empty=1",
-      "nombre": "vinculaciones-vacio"
+      "ruta": "/my-organizations",
+      "nombre": "mis-organizaciones-redirige"
     }
   ],
   "34": [
@@ -202,10 +198,6 @@
     {
       "ruta": "/assets-liabilities",
       "nombre": "assets-liabilities"
-    },
-    {
-      "ruta": "/my-organizations",
-      "nombre": "my-organizations"
     },
     {
       "ruta": "/my-account",

@@ -920,7 +920,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // real lo hace la API, que responde 404 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'PERIOP_ADMIN', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Administrá sedes, áreas, quirófanos, consultorios, plantilla y legajo de tu organización.',
+    summary:
+      'Administrá sedes, áreas, quirófanos, consultorios, plantilla, legajo y tus vinculaciones.',
     module: 'M14 practice',
   },
   {
@@ -1026,26 +1027,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M16 accounting',
   },
 
-  {
-    // Carril 18. Autoservicio: el profesional pide vincularse a una
-    // organización y ve el estado de sus vinculaciones. No cuelga de
-    // `/organizaciones` porque el proxy desvía todo lo que empieza con `/org`
-    // a la API (ver `docs/design-system/port-alovida.md`); tampoco de
-    // `/practices` ni `/practitioners`, reservados igual en `proxy.conf.json`.
-    path: 'my-organizations',
-    // §4.H · fuera del menú del médico: es un trámite, no trabajo diario. Se
-    // llega desde «Mi perfil», que es donde alguien va a buscar «¿dónde
-    // trabajo?».
-    fueraDelMenuPara: ['PRACTITIONER'],
-    label: 'Mis organizaciones',
-    group: 'Administración',
-    icon: 'building',
-    roles: ['PRACTITIONER'],
-    availability: 'disponible',
-    summary:
-      'Vinculate a una organización y seguí el estado de tus vinculaciones.',
-    module: 'M14 practice',
-  },
 
   /* -- Mi cuenta · autoservicio, con navegación propia --------------------
      El vault lo pide separado: son datos de la persona sobre sí misma, no

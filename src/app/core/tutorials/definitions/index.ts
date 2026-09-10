@@ -379,15 +379,15 @@ const ORGANIZACIONES: TutorialDefinition = {
   title: 'Vincularte a una organización',
   description: 'Pedir una vinculación y entender qué implica (y qué no).',
   category: 'Administración',
-  route: '/my-organizations',
+  route: '/administration/medical-organization',
   roles: ['PRACTITIONER'],
   estimatedMinutes: 2,
   level: 'inicial',
   steps: [
     {
       id: 'que-es',
-      title: 'Mis organizaciones',
-      body: 'Podés ejercer en más de una organización a la vez. Acá pedís vincularte a una y ves el estado de tus vinculaciones.',
+      title: 'Mis vinculaciones',
+      body: 'Podés ejercer en más de una organización a la vez. En la pestaña «Mis vinculaciones» de este panel pedís vincularte a una y ves el estado de todas.',
     },
     {
       id: 'pendiente',

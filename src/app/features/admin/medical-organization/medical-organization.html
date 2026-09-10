@@ -127,7 +127,7 @@
   }
 }
 
-<app-tabs>
+<app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
   <app-tab label="Sedes">
     <app-data-table
       [state]="sedes()"
@@ -196,6 +196,22 @@
       caption="Insumos y equipamiento"
       (retry)="recargar()"
     />
+  </app-tab>
+  <!-- **«Mis vinculaciones» absorbió a «Mis organizaciones»** (propietario,
+       2026-09-10). Era una pantalla propia que preguntaba y respondía lo mismo
+       que este panel —en qué organizaciones ejerce esta persona— con otro
+       aspecto. Se monta el componente entero con `embedded`, así conserva su
+       lógica, su cliente de datos y sus pruebas; lo único que cambia es que no
+       dibuja su membrete ni la explicación larga. -->
+  <app-tab label="Mis vinculaciones">
+    <!-- Sólo cuando la pestaña está abierta. `app-tab` proyecta su contenido
+         aunque el panel no se vea, así que sin esto `MyOrganizations` se
+         instanciaba siempre y pedía `/practices` **por segunda vez** —una el
+         panel para su selector de organización y otra la pestaña para el
+         suyo—. Lo detectó su propia prueba: «found 2 requests». -->
+    @if (pestana() === pestanaDeVinculaciones) {
+      <app-my-organizations [embedded]="true" />
+    }
   </app-tab>
 </app-tabs>
 
