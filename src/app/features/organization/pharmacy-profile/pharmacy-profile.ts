@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  Injector,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
@@ -141,12 +151,22 @@ export function avisoDeLaCarpeta(
 })
 export class PharmacyProfile {
   private readonly navigation = inject(NavigationService);
+  private readonly injector = inject(Injector);
+
+  /** El panel de «Documentos», para llevarle el foco cuando se salta hasta él. */
+  private readonly panelDeDocumentos = viewChild.required<Tab, ElementRef<HTMLElement>>(
+    'panelDeDocumentos',
+    { read: ElementRef },
+  );
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly notaDeEjemplo = NOTA_DE_DATOS_DE_EJEMPLO;
 
   /** Qué pestaña se ve. Gobernada desde acá: ver la nota de la clase. */
   protected readonly pestana = signal(0);
+
+  /** Ya se está mirando la carpeta: no hay adónde llevar a nadie. */
+  protected readonly enDocumentos = computed(() => this.pestana() === PESTANA_DE_DOCUMENTOS);
 
   protected readonly empresa = signal<ViewState<DatosLegalesDeLaEmpresa>>(
     ready(EMPRESA_DE_EJEMPLO),
@@ -169,7 +189,23 @@ export class PharmacyProfile {
     this.gente.set(ready(GENTE_DE_EJEMPLO));
   }
 
+  /**
+   * Lleva a la carpeta legal, y **lleva también el foco**.
+   *
+   * El panel de una pestaña que no se ve no se oculta: se destruye. Así que el
+   * botón que acaba de pulsarse desaparece del documento y el foco cae al
+   * `<body>`: quien navega con el teclado vuelve al principio de la página, y
+   * quien usa un lector de pantalla no se entera de que la vista cambió. Por
+   * eso el foco se muda al panel de destino, que ya es enfocable cuando está
+   * activo.
+   *
+   * Se espera al dibujado siguiente porque el panel todavía no existe en el
+   * momento de cambiar la pestaña: recién nace cuando Angular vuelve a pintar.
+   */
   protected verDocumentos(): void {
     this.pestana.set(PESTANA_DE_DOCUMENTOS);
+    afterNextRender(() => this.panelDeDocumentos().nativeElement.focus(), {
+      injector: this.injector,
+    });
   }
 }

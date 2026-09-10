@@ -18,18 +18,22 @@
     [title]="vencimientos.titulo"
   >
     {{ vencimientos.mensaje }}
-    <div alert-actions>
-      <button
-        app-button
-        variant="secondary"
-        size="sm"
-        type="button"
-        data-testid="ficha-ir-a-documentos"
-        (clicked)="verDocumentos()"
-      >
-        Ver los documentos
-      </button>
-    </div>
+    <!-- Estando ya en la carpeta no hay adónde llevar a nadie: el aviso se
+         queda (se lee desde las tres pestañas) pero su acción se retira. -->
+    @if (!enDocumentos()) {
+      <div alert-actions>
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          data-testid="ficha-ir-a-documentos"
+          (clicked)="verDocumentos()"
+        >
+          Ver los documentos
+        </button>
+      </div>
+    }
   </app-alert>
 }
 
@@ -38,7 +42,10 @@
     <app-datos-de-la-empresa [state]="empresa()" (retry)="recargar()" />
   </app-tab>
 
-  <app-tab label="Documentos">
+  <!-- La referencia no se llama «documentos» a propósito: en una plantilla la
+       referencia gana sobre la propiedad del componente, y taparía la señal
+       `documentos()` que alimenta a esta misma pestaña. -->
+  <app-tab label="Documentos" #panelDeDocumentos>
     <app-documentos-legales [state]="documentos()" (retry)="recargar()" />
   </app-tab>
 
