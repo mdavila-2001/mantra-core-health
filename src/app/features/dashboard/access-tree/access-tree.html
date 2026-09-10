@@ -59,22 +59,7 @@
     <ul class="arbol__accesos">
       @for (seccion of abierta.sections; track seccion.path) {
         <li [style.animation-delay.ms]="$index * 35">
-          @if (seccion.availability === 'disponible') {
-            <a
-              class="arbol__acceso"
-              data-testid="panel-acceso"
-              [attr.data-ruta]="rutaDe(seccion)"
-              [routerLink]="rutaDe(seccion)"
-              [attr.aria-label]="seccion.label + '. ' + seccion.summary"
-              [appTooltip]="seccion.summary"
-              appTooltipPosition="bottom"
-            >
-              <span class="arbol__acceso-icono">
-                <app-nav-icon [name]="seccion.icon" />
-              </span>
-              <span class="arbol__acceso-nombre">{{ seccion.label }}</span>
-            </a>
-          } @else {
+          @if (seccion.availability !== 'disponible') {
             <!-- Sin enlace: lleva al placeholder, y prometer una pantalla que
                  no existe es peor que decir que falta. Tampoco lleva globo —un
                  globo pide foco, y esto no es enfocable justamente porque no se
@@ -91,6 +76,45 @@
               <span class="arbol__acceso-nombre">{{ seccion.label }}</span>
               <app-badge variant="secondary" value="En construcción" />
             </div>
+          } @else if (modalDe(seccion); as clave) {
+            <!-- Abre en modal, no navega (corrección del 10/09/2026). Un botón y
+                 no un enlace, porque no lleva a ninguna dirección: un `<a>` sin
+                 destino que abre una ventana es lo que rompe «abrir en otra
+                 pestaña» y el lector de pantalla. Mismo `data-testid` y mismo
+                 `data-ruta` que el enlace: las pruebas de navegador siguen
+                 preguntando por el acceso y no por su envoltorio. -->
+            <button
+              type="button"
+              class="arbol__acceso"
+              data-testid="panel-acceso"
+              [attr.data-ruta]="rutaDe(seccion)"
+              [attr.data-modal]="clave"
+              [attr.aria-haspopup]="'dialog'"
+              [attr.aria-label]="seccion.label + '. ' + seccion.summary"
+              [appTooltip]="seccion.summary"
+              appTooltipPosition="bottom"
+              (click)="abrirModal(seccion)"
+            >
+              <span class="arbol__acceso-icono">
+                <app-nav-icon [name]="seccion.icon" />
+              </span>
+              <span class="arbol__acceso-nombre">{{ seccion.label }}</span>
+            </button>
+          } @else {
+            <a
+              class="arbol__acceso"
+              data-testid="panel-acceso"
+              [attr.data-ruta]="rutaDe(seccion)"
+              [routerLink]="rutaDe(seccion)"
+              [attr.aria-label]="seccion.label + '. ' + seccion.summary"
+              [appTooltip]="seccion.summary"
+              appTooltipPosition="bottom"
+            >
+              <span class="arbol__acceso-icono">
+                <app-nav-icon [name]="seccion.icon" />
+              </span>
+              <span class="arbol__acceso-nombre">{{ seccion.label }}</span>
+            </a>
           }
         </li>
       }
@@ -168,4 +192,36 @@
     {{ totalDisponibles() }} secciones habilitadas en {{ zonas().length }} zonas. Abrí una para ver
     qué hay adentro.
   </p>
+}
+
+<!-- ═══ Los modales de los accesos ══════════════════════════════════════════
+     Al final de la plantilla y fuera de las tarjetas: el contenido de un acceso
+     no se despliega debajo de su tarjeta. Qué acceso abre cuál lo declara
+     `ACCESO_EN_MODAL` en `core/navigation/access-tree.ts`; acá sólo se traduce
+     la clave al componente, que es lo que `core/` no puede hacer.
+
+     Los tres directorios comparten el modal de consulta y **no** el contenido:
+     cada uno monta su propio componente, con su ruta, su rol y sus datos. Un
+     modal que llevara a los tres al mismo agrupador sería el mismo rodeo que
+     esta corrección vino a sacar. -->
+
+@switch (modalAbierto()) {
+  @case ('comunidades') {
+    <app-communities-dialog (closed)="cerrarModal()" />
+  }
+  @case ('directorio-clinicas') {
+    <app-content-dialog heading="Directorio de clínicas" size="xl" (closed)="cerrarModal()">
+      <app-clinics-directory [embebido]="true" />
+    </app-content-dialog>
+  }
+  @case ('directorio-laboratorios') {
+    <app-content-dialog heading="Directorio de laboratorios" size="xl" (closed)="cerrarModal()">
+      <app-laboratory-directory [embebido]="true" />
+    </app-content-dialog>
+  }
+  @case ('directorio-farmacias') {
+    <app-content-dialog heading="Directorio de farmacias" size="xl" (closed)="cerrarModal()">
+      <app-pharmacies-directory [embebido]="true" />
+    </app-content-dialog>
+  }
 }

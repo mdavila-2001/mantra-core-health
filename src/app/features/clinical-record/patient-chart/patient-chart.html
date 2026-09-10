@@ -171,23 +171,96 @@
         Aplicar
       </button>
     }
+    <!-- Abre el modal. Antes alternaba un formulario debajo de esta misma
+         fila y la tabla se partía en dos para hacerle sitio. -->
     <button
       app-button
       variant="ghost"
       size="sm"
       type="button"
       data-testid="expediente-adjuntar-archivo"
-      (clicked)="alternarAdjuntos(fila.id)"
+      (clicked)="abrirAdjuntos(fila.id)"
     >
-      {{ adjuntandoArchivoA() === fila.id ? 'Cerrar adjuntos' : 'Adjuntar archivo' }}
+      Adjuntar archivos
     </button>
   </div>
-  @if (adjuntandoArchivoA() === fila.id) {
-    <app-attachment-uploader
-      ownerType="CONDITION"
-      [ownerId]="fila.id"
-      [linkVia]="enlazarAdjuntoAlDiagnostico"
-      (attached)="cerrarAdjuntos()"
-    />
-  }
 </ng-template>
+
+<!-- La acción de apertura del detalle. Una sola plantilla para las ocho
+     tablas: el bloque se deduce de la fila. -->
+<ng-template #celdaVer let-fila>
+  <button
+    app-button
+    variant="outline"
+    size="sm"
+    type="button"
+    data-testid="expediente-ver-detalle"
+    [attr.aria-label]="'Ver detalle de ' + fila.principal"
+    (clicked)="verDetalle(fila)"
+  >
+    Ver
+  </button>
+</ng-template>
+
+<!-- ═══ Los dos modales ═════════════════════════════════════════════════════
+     Al final de la plantilla y fuera de `app-view-state-host`: viven sobre la
+     pantalla, no dentro de la tabla. El `<dialog>` nativo los sube al top layer
+     igual, pero declararlos acá deja constancia de que no cuelgan de ninguna
+     fila. -->
+
+@if (filaEnDetalle(); as abierta) {
+  <app-content-dialog
+    [heading]="tituloDelDetalle()"
+    [description]="contextoDelPaciente()"
+    size="md"
+    (closed)="cerrarDetalle()"
+  >
+    <!-- Mismos rótulos que la tabla, más los vínculos que en la tabla no
+         entran. De lectura: esta pantalla no escribe, y lo que se escribe vive
+         en «Atención». -->
+    <dl class="expediente__detalle" data-testid="expediente-detalle">
+      <div class="expediente__detalle-fila">
+        <dt>Registro</dt>
+        <dd>
+          {{ abierta.fila.principal }}
+          @if (abierta.fila.secundario) {
+            <span class="expediente__secundario">{{ abierta.fila.secundario }}</span>
+          }
+        </dd>
+      </div>
+      <div class="expediente__detalle-fila">
+        <dt>Estado</dt>
+        <dd><app-badge variant="info" [value]="abierta.fila.estado" /></dd>
+      </div>
+      <div class="expediente__detalle-fila">
+        <dt>Fecha</dt>
+        <dd>
+          {{ abierta.fila.cuando ? (abierta.fila.cuando | date: 'd MMM y') : 'Sin fecha' }}
+        </dd>
+      </div>
+      @if (abierta.fila.detalle) {
+        <div class="expediente__detalle-fila">
+          <dt>Detalle</dt>
+          <dd>{{ abierta.fila.detalle }}</dd>
+        </div>
+      }
+      @for (vinculo of abierta.fila.vinculos; track vinculo.rotulo) {
+        <div class="expediente__detalle-fila">
+          <dt>{{ vinculo.rotulo }}</dt>
+          <dd>{{ vinculo.valor }}</dd>
+        </div>
+      }
+    </dl>
+  </app-content-dialog>
+}
+
+@if (adjuntandoArchivoA(); as conditionId) {
+  <app-attachment-dialog
+    ownerType="CONDITION"
+    [ownerId]="conditionId"
+    [contexto]="contextoDeLosAdjuntos()"
+    [linkVia]="enlazarAdjuntoAlDiagnostico"
+    (attached)="recargar()"
+    (closed)="cerrarAdjuntos()"
+  />
+}

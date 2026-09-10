@@ -1,4 +1,4 @@
-import { computed, DestroyRef, Directive, inject, signal } from '@angular/core';
+import { computed, DestroyRef, Directive, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, type Params } from '@angular/router';
 import { of, switchMap, type Observable } from 'rxjs';
@@ -78,6 +78,16 @@ const PARAM_DEPARTAMENTO = 'departamento';
  */
 @Directive()
 export abstract class PublicDirectoryListing {
+  /**
+   * Si el directorio va embebido en otro contenedor.
+   *
+   * Lo pone el modal de consulta que abre «Tus accesos» (corrección del
+   * 10/09/2026): el mismo directorio, con sus mismos filtros y su misma
+   * autorización, sin el encabezado de página que el diálogo ya dibuja. La ruta
+   * sigue existiendo y sigue abriendo la pantalla completa.
+   */
+  readonly embebido = input(false);
+
   /** La búsqueda del vertical concreto. La declara cada subclase. */
   protected abstract buscar(filtros: PublicSearchQuery): Observable<PublicPage<PublicSearchResult>>;
 

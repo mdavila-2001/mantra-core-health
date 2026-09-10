@@ -58,10 +58,48 @@ export class FileInput {
   readonly maxSizeBytes = input<number | null>(null);
   readonly maxFiles = input<number | null>(null);
 
+  /**
+   * Si dibuja la lista de lo seleccionado.
+   *
+   * `false` cuando quien lo usa lleva su propia cola —con estado por archivo,
+   * como el adjunto clínico—: dos listas de lo mismo, una con estado y otra
+   * sin, se leen como dos selecciones distintas.
+   */
+  readonly showList = input(true);
+
   /** Lo descartado en el último intento, para poder explicarlo. */
   readonly rejected = output<readonly RejectedFile[]>();
 
   protected readonly isDragging = signal(false);
+
+  /* -- Los textos, en plural cuando corresponde (§9.9 de la corrección) ----- */
+
+  protected readonly textoDeArrastre = computed(() => {
+    if (this.isDragging()) {
+      return this.multiple() ? 'Soltá los archivos acá' : 'Soltá el archivo acá';
+    }
+    return this.multiple() ? 'Arrastrá uno o varios archivos acá' : 'Arrastrá tu archivo acá';
+  });
+
+  protected readonly textoSecundario = computed(() =>
+    this.multiple()
+      ? 'o seleccioná archivos desde tu dispositivo'
+      : 'o seleccioná desde tu dispositivo',
+  );
+
+  /**
+   * El rótulo del control nativo.
+   *
+   * Con varios ya elegidos dice «Añadir más archivos», que es lo que hace: la
+   * selección se acumula y no reemplaza. Con uno solo sigue diciendo
+   * «Reemplazar archivo», que es lo que hace en ese modo.
+   */
+  protected readonly textoDelBoton = computed(() => {
+    if (!this.multiple()) {
+      return this.files().length > 0 ? 'Reemplazar archivo' : this.label();
+    }
+    return this.files().length > 0 ? 'Añadir más archivos' : this.label();
+  });
 
   private readonly ownId = nextControlId('file');
   protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
