@@ -1,6 +1,19 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-08-23 — **P15 a P18 son nuevos**, del plan de UX del 22/08. Antes: 2026-08-12 (tarde) · **P14 tiene diagnóstico nuevo y procedimiento de cierre —
+**Actualizado:** 2026-09-10 — **P23 a P26 son nuevos**, de la tanda del expediente clínico, las
+recetas, los adjuntos y el horario. Los cuatro comparten forma: el frontend ya manda el dato, la
+maqueta ya lo guarda y lo muestra, y **contra la API real la petición se rechaza entera** porque el
+DTO no declara la clave (`forbidNonWhitelisted`). Ninguno se puede llevar a `dev` sin su lado de
+backend.
+
+| | Qué falta, en una línea |
+| --- | --- |
+| **P23** | Cambiar un horario con citas es imposible: el 409 salta con una cita viva mientras la propia operación conserva los cupos con cita |
+| **P24** | `indication_text` en `medication_requests` — el motivo escrito de la receta, para los casos sin diagnóstico previo |
+| **P25** | Tres `OwnerType` y dos rutas `:id/attachments` — hoy sólo diagnósticos y procedimientos aceptan adjuntos |
+| **P26** | `encounter_id` en `allergy_intolerances` **y los cinco bindings de catálogo de alergia, que no existen** |
+
+Antes: 2026-08-23 — **P15 a P18**, del plan de UX del 22/08. Antes: 2026-08-12 (tarde) · **P14 tiene diagnóstico nuevo y procedimiento de cierre —
 ver su sección: el modelo YA tiene las columnas; lo que falta es aplicar un patch en cada
 entorno con base viva.** P6 a P13 siguen cerrados y comprobados **contra la API viva** en
 `localhost:3000`, con la imagen reconstruida — no leyendo el código.
