@@ -1,6 +1,9 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-10 (tarde) — **P27 y P28 son nuevos**: el paciente ya puede mover el
+**Actualizado:** 2026-09-10 (noche) — **P27 se cerró y su nota estaba equivocada** (ver su
+sección: lo que faltaba no era aceptar coordenadas sino poder QUITAR el punto; resuelto en el
+PR #378 de la API) y **P29 es nuevo** —la matrícula sin `file_id`, que empieza en el repo del
+modelo—. Antes, esa misma tarde: **P27 y P28 nacieron**: el paciente ya puede mover el
 punto de su domicilio y el de su trabajo en el mapa (y el `PATCH` no acepta coordenadas), y el
 perfil del médico no llega a cuatro campos que su propio registro pregunta.
 Antes, ese mismo día: **P23 a P26**, de la tanda del expediente clínico, las
@@ -15,8 +18,51 @@ backend.
 | **P24** | `indication_text` en `medication_requests` — el motivo escrito de la receta, para los casos sin diagnóstico previo |
 | **P25** | Tres `OwnerType` y dos rutas `:id/attachments` — hoy sólo diagnósticos y procedimientos aceptan adjuntos |
 | **P26** | `encounter_id` en `allergy_intolerances` **y los cinco bindings de catálogo de alergia, que no existen** |
-| **P27** | Cuatro claves de coordenadas en el `PATCH` del perfil del paciente — hoy el punto del mapa se declara una sola vez, en el alta, y **no hay forma de cambiarlo nunca más** |
+| ~~**P27**~~ | ~~Coordenadas en el `PATCH` del perfil~~ — **la nota estaba MAL y ya está resuelto.** Ver abajo |
 | **P28** | Lo que el registro del médico pregunta y su perfil no puede editar: **sexo al nacer**, **documento y departamento emisor**, **correo de trabajo** y el **consultorio propio** |
+| **P29** | `file_id` en `profiles.jurisdiction_authorizations` — la matrícula no puede llevar adjunto, y **esto empieza en el repo del modelo, no en la API** |
+
+---
+
+## P29 · la matrícula no tiene dónde llevar su archivo
+
+El pedido de adjuntar los respaldos desde «editar perfil» quedó a medias por esto, y es el único
+de la lista que **no se arregla escribiendo API**.
+
+**El título sí puede.** `AddOwnCredentialDto` declara `fileId`, así que el diploma se sube por
+`POST /common/files/upload` y su id viaja con la credencial.
+
+**La matrícula no.** `NewJurisdictionAuthorization` no tiene ningún campo de archivo, y no es un
+olvido del DTO: **la tabla tampoco tiene la columna**. Verificado en las dos capas —
+
+```
+profiles.jurisdiction_authorizations
+  practitioner_profile_id · jurisdiction_concept_id · license_number
+  regulatory_authority · practice_scope_concept_id · state_concept_id
+  valid_from · valid_to · created_at · updated_at · … · row_version
+```
+
+— y en el `.puml` del módulo 05 (`diagram_05_profiles.puml`, la entidad no declara `file_id`).
+
+### Por qué no se pone igual en el front
+
+Porque aceptaría el PDF, mostraría su nombre y su peso, y **al guardar lo tiraría en silencio**.
+En el alta eso sería un mockup; acá no: la matrícula se guarda de verdad, así que el archivo
+perdido se lee como un fallo del producto.
+
+### La salida, por el camino obligatorio
+
+`file_id uuid NULL` con FK a `common.files`, igual que `professional_credentials.file_id`, que ya
+existe y es el precedente exacto. Y **empieza en `mantra-core-health-model/`**, no en la API
+(ADR-0021):
+
+```
+.puml  →  gen_ddl.py  →  SQL/  →  base viva  →  entidades MikroORM  →  DTO
+```
+
+Del lado del front son quince líneas ya escritas: el bloque de adjunto del alta, reusado.
+
+</details>
 
 ---
 
@@ -39,6 +85,26 @@ Ninguno es urgente para la maqueta; los cuatro son necesarios para que «editar 
 signifique de verdad «corregir lo que declaré al registrarme».
 
 ---
+
+## ~~P27~~ · resuelto, y la nota original estaba equivocada
+
+**Corrección (10/09, tarde).** Escribí que «el `PATCH` del perfil no acepta coordenadas».
+**Es falso:** las acepta desde el 04/09 (`80c66e77`), y el servicio las persiste. Lo que de
+verdad faltaba era más chico y más preciso: **no se podía QUITAR el punto**, por dos motivos que
+se sostenían entre sí —`@IsNumber()` rechaza `null` con 400, y la mezcla del servicio conserva el
+punto vigente cuando el cuerpo no trae ninguno—. Una ubicación mal puesta se podía cambiar por
+otra, nunca borrar.
+
+Cerrado en `mantra-core-health-api`, PR **#378**: el par pasa a tener tres estados —ausente
+conserva, dos números mueven, `null` en los dos quita—, con la misma regla en el perfil del
+paciente y en el del médico. **Medio `null` se sigue rechazando**: media coordenada no ubica nada.
+
+> Su prueba de integración quedó **escrita y sin correr** (`quitar-punto-del-mapa.int-spec.ts`):
+> el stack satura la Mac mini y el propietario pidió no levantarlo sin permiso. El cambio está en
+> TESTED, no en VERIFIED.
+
+<details>
+<summary>La nota original, para quien venga del historial</summary>
 
 ## P27 · el paciente no puede mover su ubicación
 
