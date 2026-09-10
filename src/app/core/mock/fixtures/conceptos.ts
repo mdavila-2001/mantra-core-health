@@ -555,6 +555,56 @@ export const SEVERIDAD = definir('VS_SEVERITY', [
   ['SEV-SEVERE', 'Grave'],
 ]);
 
+/* Los catálogos de la alergia.
+   ⚠️ **Provisionales, y declarados como tales.** El backend tiene cinco
+   conceptos sueltos de alergia (`ALG_ACTIVE`, `ALG_TYPE`, `ALG_HIGH`…) y
+   **ningún binding de enum dinámico**: `dynamic-enum-catalog.ts` no declara un
+   solo `target` de `clinical.allergy_intolerances.*`. Sin catálogo no hay
+   formulario, así que acá se acuñan los mínimos para que la maqueta funcione,
+   con el mismo criterio que `bo-occupations.catalog.ts`: cierran hoy el campo
+   sin fingir que son un catálogo clínico publicado. El real —un subconjunto
+   SNOMED, o el que el equipo clínico apruebe— es P26. */
+
+conjunto('VS_ALLERGY_TYPE', 'Tipo', 'Si es alergia inmunológica o intolerancia.');
+export const TIPO_ALERGIA = definir('VS_ALLERGY_TYPE', [
+  ['ALG_TYPE', 'Alergia'],
+  ['ALG_TYPE_INTOLERANCE', 'Intolerancia'],
+]);
+
+conjunto(
+  'VS_ALLERGY_MANIFESTATION',
+  'Manifestación',
+  'Qué le pasó a la persona. Provisional: ver P26.',
+);
+export const MANIFESTACION = definir('VS_ALLERGY_MANIFESTATION', [
+  ['ALG_MANIF_URTICARIA', 'Urticaria'],
+  ['ALG_MANIF_ANGIOEDEMA', 'Angioedema'],
+  ['ALG_MANIF_ANAPHYLAXIS', 'Anafilaxia'],
+  ['ALG_MANIF_BRONCHOSPASM', 'Broncoespasmo'],
+  ['ALG_MANIF_RASH', 'Erupción cutánea'],
+  ['ALG_MANIF_PRURITUS', 'Prurito'],
+  ['ALG_MANIF_NAUSEA', 'Náuseas o vómitos'],
+  ['ALG_MANIF_DIARRHEA', 'Diarrea'],
+]);
+
+conjunto(
+  'VS_ALLERGY_SUBSTANCE',
+  'Sustancia',
+  'Alérgenos que no son medicamentos. Los medicamentos salen del vademécum.',
+);
+export const SUSTANCIA_ALERGENO = definir('VS_ALLERGY_SUBSTANCE', [
+  ['ALG_SUB_PEANUT', 'Maní'],
+  ['ALG_SUB_SHELLFISH', 'Mariscos'],
+  ['ALG_SUB_EGG', 'Huevo'],
+  ['ALG_SUB_MILK', 'Leche de vaca'],
+  ['ALG_SUB_GLUTEN', 'Gluten'],
+  ['ALG_SUB_LATEX', 'Látex'],
+  ['ALG_SUB_DUST', 'Ácaros del polvo'],
+  ['ALG_SUB_POLLEN', 'Polen'],
+  ['ALG_SUB_HYMENOPTERA', 'Picadura de abeja o avispa'],
+  ['ALG_SUB_IODINE', 'Contraste yodado'],
+]);
+
 conjunto('VS_ALLERGY_CATEGORY', 'Categoría de alergia', 'Qué clase de alérgeno.');
 export const CATEGORIA_ALERGIA = definir('VS_ALLERGY_CATEGORY', [
   ['ALG-MEDICATION', 'Medicamento'],

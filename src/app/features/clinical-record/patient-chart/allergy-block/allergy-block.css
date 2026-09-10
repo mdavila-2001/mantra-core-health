@@ -1,0 +1,63 @@
+.alergia {
+  display: block;
+}
+
+.alergia__titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+}
+
+.alergia__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* Las reacciones, cada una en su caja: sin el marco, tres campos repetidos se
+   leen como un formulario que se repite por error. */
+.alergia__reacciones {
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.alergia__reacciones-titulo {
+  padding-inline: var(--sp-1);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.alergia__reaccion {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px dashed var(--border-subtle);
+}
+
+.alergia__reaccion:last-of-type {
+  border-block-end: none;
+  padding-block-end: 0;
+}
+
+.alergia__adjuntos-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+}
+
+.alergia__adjuntos-titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 500;
+}

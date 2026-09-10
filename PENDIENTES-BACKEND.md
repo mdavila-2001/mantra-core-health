@@ -23,6 +23,64 @@ que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
+## Abierto · P26 · La alergia no sabe en qué cita se detectó, y no tiene catálogos
+
+**Levantado el 2026-09-10**, construyendo el alta de alergias. El cliente lo pidió como calco del
+diagnóstico:
+
+> «Debe aparecer un campo select para colocar la enfermedad detectada en base a una cita ya
+> existente y/o finalizada. **Lo mismo para alergias.**»
+
+### 1 · Falta la columna del encuentro
+
+`clinical.allergy_intolerances` tiene custodio, paciente, sustancia, tipo, categoría, criticidad,
+estado clínico y verificación — **y ningún `encounter_id`**. `CreateAllergyIntoleranceDto` tampoco
+lo acepta.
+
+| Capa | Qué hace falta |
+| --- | --- |
+| Modelo | `encounter_id uuid NULL` (FK → `clinical.encounters`) en `clinical.allergy_intolerances`. Camino obligatorio: `.puml` → `gen_ddl.py` → `SQL/` → patch → `gen_entities.py`. **Nunca un `ALTER` a mano** (ADR-0021). |
+| DTO de alta | `encounterId?` con `@IsUUID()`. |
+| DTO de lectura | `encounterId?` en `AllergyItemDto`. |
+
+La pantalla **ya lo manda**; contra la API de hoy da 400.
+
+### 2 · No hay ningún catálogo de alergia
+
+Esto es lo más grande, y es lo que impedía que el formulario existiera.
+
+`dynamic-enum-catalog.ts` **no declara un solo `target` de
+`clinical.allergy_intolerances.*` ni de `clinical.allergy_reactions.*`**. Los conceptos de alergia
+del backend son **cinco sueltos** (`ALG_ACTIVE`, `ALG_CONFIRMED`, `ALG_TYPE`,
+`ALG_CATEGORY_MEDICATION`, `ALG_HIGH`), sin conjunto de valores que los agrupe.
+
+Sin catálogo no hay selector, y sin selector no hay formulario: por eso el contrato estaba entero
+desde el principio y **ninguna pantalla lo usaba**.
+
+Hacen falta cinco bindings, con sus conjuntos:
+
+| Target | Conjunto |
+| --- | --- |
+| `clinical.allergy_intolerances.substance_concept_id` | Alérgenos que no son medicamentos (los medicamentos ya salen del vademécum) |
+| `clinical.allergy_intolerances.type_concept_id` | Alergia / intolerancia |
+| `clinical.allergy_intolerances.category_concept_id` | Medicamento, alimento, ambiental, biológico |
+| `clinical.allergy_intolerances.criticality_concept_id` | Baja / alta / no determinable |
+| `clinical.allergy_reactions.manifestation_concept_id` | Manifestaciones clínicas |
+
+### ⚠️ Los códigos de la maqueta son provisionales y están declarados como tales
+
+El simulador acuña `VS_ALLERGY_TYPE`, `VS_ALLERGY_MANIFESTATION` y `VS_ALLERGY_SUBSTANCE` con
+listas cortas —ocho manifestaciones, diez sustancias— para que el formulario se pueda ver y probar.
+**No son un catálogo clínico publicado**, y el comentario del propio fixture lo dice, con el mismo
+criterio que `bo-occupations.catalog.ts`.
+
+El real tiene que salir de una fuente —un subconjunto de SNOMED CT, o el que el equipo clínico
+apruebe— con su procedencia declarada, igual que las 43 fichas estándar. **No lo inventamos acá.**
+
+Al reemplazarlos hay migración de datos: los identificadores se derivan del código.
+
+---
+
 ## Abierto · P25 · Sólo diagnósticos y procedimientos aceptan adjuntos
 
 **Levantado el 2026-09-10.** El cliente lo pidió como regla transversal:

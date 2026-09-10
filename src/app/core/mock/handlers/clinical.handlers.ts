@@ -397,7 +397,23 @@ export function registrarClinica(router: MockRouter): void {
   );
 
   router.post('/clinical/allergy-intolerances', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; substanceConceptId: string; typeConceptId?: string; categoryConceptId?: string; criticalityConceptId?: string; reactions?: unknown[] }>(request);
+    const datos = cuerpo<{
+      patientProfileId: string;
+      substanceConceptId: string;
+      typeConceptId?: string;
+      categoryConceptId?: string;
+      criticalityConceptId?: string;
+      encounterId?: string;
+      reactions?: readonly { manifestationConceptId: string; severityConceptId?: string; description?: string }[];
+    }>(request);
+    // Las reacciones **se guardan**: son el dato que dice qué le pasó a la
+    // persona, y el simulador sólo devolvía sus identificadores y las tiraba.
+    const reacciones = (datos.reactions ?? []).map((r) => ({
+      id: nuevoId('reaction'),
+      manifestationConceptId: r.manifestationConceptId,
+      ...(r.severityConceptId === undefined ? {} : { severityConceptId: r.severityConceptId }),
+      ...(r.description === undefined || r.description === '' ? {} : { description: r.description }),
+    }));
     const nueva = alergias.agregar({
       id: nuevoId('allergy'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -406,9 +422,11 @@ export function registrarClinica(router: MockRouter): void {
       categoryConceptId: datos.categoryConceptId ?? '',
       criticalityConceptId: datos.criticalityConceptId ?? '',
       clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
+      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(reacciones.length === 0 ? {} : { reactions: reacciones }),
       createdAt: ahora(),
     });
-    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', reactionIds: (datos.reactions ?? []).map(() => nuevoId('reaction')), createdAt: nueva.createdAt } };
+    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', reactionIds: reacciones.map((r) => r.id), createdAt: nueva.createdAt } };
   });
 
   router.post('/clinical/observations', (request) => {

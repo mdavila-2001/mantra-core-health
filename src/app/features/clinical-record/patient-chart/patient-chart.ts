@@ -20,6 +20,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import type { OwnerType } from '../../../core/data-access/files/files.types';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
+import { AllergyBlock } from './allergy-block/allergy-block';
 import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import type {
@@ -190,6 +191,7 @@ interface Expediente {
     ConceptSelect,
     ContentDialog,
     DiagnosisBlock,
+    AllergyBlock,
     DataTable,
     DatePipe,
     Link,
@@ -446,6 +448,22 @@ export class PatientChart {
       ? 'Se registra en la historia de esta persona.'
       : `Se registra en la historia de ${this.nombre()}.`,
   );
+
+  protected readonly altaDeAlergiaAbierta = signal(false);
+
+  protected abrirAltaDeAlergia(): void {
+    this.altaDeAlergiaAbierta.set(true);
+  }
+
+  protected cerrarAltaDeAlergia(): void {
+    this.altaDeAlergiaAbierta.set(false);
+  }
+
+  /** Registrada la alergia, se cierra el modal y se relee la historia. */
+  protected alergiaRegistrada(): void {
+    this.altaDeAlergiaAbierta.set(false);
+    this.recargar();
+  }
 
   protected abrirAltaDeDiagnostico(): void {
     this.altaDeDiagnosticoAbierta.set(true);

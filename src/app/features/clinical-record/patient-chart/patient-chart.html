@@ -113,6 +113,20 @@
                 </button>
               </div>
             }
+            @if (puedeEscribir() && bloque.clave === 'alergias') {
+              <div class="expediente__acciones-bloque">
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  data-testid="expediente-nueva-alergia"
+                  (clicked)="abrirAltaDeAlergia()"
+                >
+                  Nueva alergia
+                </button>
+              </div>
+            }
 
             <app-data-table
               [state]="estadoDe(bloque.filas, bloque.titulo)"
@@ -145,6 +159,22 @@
       [ownerId]="destino.id"
       [linkVia]="enlaceDelAdjunto()"
       (attachedAll)="cerrarAdjuntos()"
+    />
+  </app-content-dialog>
+}
+
+@if (altaDeAlergiaAbierta()) {
+  <app-content-dialog
+    heading="Nueva alergia"
+    [description]="descripcionDelAlta()"
+    closeLabel="Cerrar"
+    (closed)="cerrarAltaDeAlergia()"
+  >
+    <app-allergy-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="null"
+      [citas]="citasParaElDiagnostico()"
+      (cambio)="alergiaRegistrada()"
     />
   </app-content-dialog>
 }
