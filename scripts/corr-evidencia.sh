@@ -26,18 +26,10 @@ fi
 DEST="../docs/progress/evidence/lane-${LANE}"
 mkdir -p "$DEST"
 
-if [ "$MODO" = auditoria ]; then
-  if [ ! -f "$DEST/rutas.json" ]; then
-    # Primera vez: todas las rutas sin parámetros del mapa de navegación.
-    node -e '
-      const s = require("fs").readFileSync("src/app/core/navigation/navigation.map.ts","utf8");
-      const rutas = [...s.matchAll(/path:\s*\x27([^\x27]+)\x27/g)].map(m=>"/"+m[1]).filter(r=>!r.includes(":"));
-      require("fs").writeFileSync(process.argv[1], JSON.stringify([...new Set(rutas)], null, 2));
-    ' "$DEST/rutas.json"
-    echo "Generado $DEST/rutas.json ($(node -e 'console.log(require(process.argv[1]).length)' "$DEST/rutas.json") rutas). Podalo si hace falta."
-  fi
-  CORR_FASE="$FASE" CORR_RUTA="$RUTA" corepack yarn pw playwright/corr-regla-visual.spec.ts --workers=1 --max-failures=1 --reporter=list
-else
-  CORR_LANE="$LANE" CORR_FASE="$FASE" CORR_RUTA="$RUTA" corepack yarn pw playwright/corr-evidencia.spec.ts --workers=1 --max-failures=1 --reporter=list
-fi
+# La auditoría global es el carril 34: sus rutas salen de `playwright/corr-rutas.json`,
+# que se regenera con `scripts/corr-rutas.mjs` desde el mapa de navegación. Un solo
+# spec mide todo — dos implementaciones de la misma medición se separan en el primer
+# arreglo que alguien haga en una sola.
+if [ "$MODO" = auditoria ]; then LANE=34; fi
+CORR_LANE="$LANE" CORR_FASE="$FASE" CORR_RUTA="$RUTA" corepack yarn pw playwright/corr-evidencia.spec.ts --workers=1 --max-failures=1 --reporter=list
 echo "Evidencia en $DEST"

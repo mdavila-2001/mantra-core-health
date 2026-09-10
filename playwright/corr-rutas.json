@@ -47,32 +47,220 @@
   ],
   "34": [
     {
-      "ruta": "/",
-      "nombre": "panel"
+      "ruta": "/tutorials",
+      "nombre": "tutorials"
+    },
+    {
+      "ruta": "/messaging",
+      "nombre": "messaging"
+    },
+    {
+      "ruta": "/directories",
+      "nombre": "directories"
+    },
+    {
+      "ruta": "/nearby-places",
+      "nombre": "nearby-places"
+    },
+    {
+      "ruta": "/groups",
+      "nombre": "groups"
+    },
+    {
+      "ruta": "/laboratory-directory",
+      "nombre": "laboratory-directory"
+    },
+    {
+      "ruta": "/pharmacies-directory",
+      "nombre": "pharmacies-directory"
+    },
+    {
+      "ruta": "/consultation",
+      "nombre": "consultation"
     },
     {
       "ruta": "/schedule",
-      "nombre": "consultas"
+      "nombre": "schedule"
     },
     {
-      "ruta": "/notifications",
-      "nombre": "notificaciones"
+      "ruta": "/medical-records",
+      "nombre": "medical-records"
     },
     {
-      "ruta": "/my-account",
-      "nombre": "mi-perfil"
+      "ruta": "/progress-notes",
+      "nombre": "progress-notes"
     },
     {
-      "ruta": "/directory",
-      "nombre": "directorio"
+      "ruta": "/interventions",
+      "nombre": "interventions"
+    },
+    {
+      "ruta": "/my-visits",
+      "nombre": "my-visits"
+    },
+    {
+      "ruta": "/glossary",
+      "nombre": "glossary"
+    },
+    {
+      "ruta": "/form-builder",
+      "nombre": "form-builder"
+    },
+    {
+      "ruta": "/my-services",
+      "nombre": "my-services"
+    },
+    {
+      "ruta": "/my-quotations",
+      "nombre": "my-quotations"
+    },
+    {
+      "ruta": "/questionnaires",
+      "nombre": "questionnaires"
+    },
+    {
+      "ruta": "/administration/patients",
+      "nombre": "administration_patients"
+    },
+    {
+      "ruta": "/administration/users",
+      "nombre": "administration_users"
+    },
+    {
+      "ruta": "/administration/organizations",
+      "nombre": "administration_organizations"
+    },
+    {
+      "ruta": "/administration/insurance",
+      "nombre": "administration_insurance"
+    },
+    {
+      "ruta": "/administration/brokers",
+      "nombre": "administration_brokers"
+    },
+    {
+      "ruta": "/administration/insurance-claims",
+      "nombre": "administration_insurance-claims"
+    },
+    {
+      "ruta": "/administration/delegated-access",
+      "nombre": "administration_delegated-access"
+    },
+    {
+      "ruta": "/administration/identity-providers",
+      "nombre": "administration_identity-providers"
+    },
+    {
+      "ruta": "/administration/identity-assurance",
+      "nombre": "administration_identity-assurance"
+    },
+    {
+      "ruta": "/administration/terminology",
+      "nombre": "administration_terminology"
+    },
+    {
+      "ruta": "/administration/content-packs",
+      "nombre": "administration_content-packs"
+    },
+    {
+      "ruta": "/administration/moderation",
+      "nombre": "administration_moderation"
+    },
+    {
+      "ruta": "/administration/health-context",
+      "nombre": "administration_health-context"
+    },
+    {
+      "ruta": "/administration/geolocation",
+      "nombre": "administration_geolocation"
+    },
+    {
+      "ruta": "/administration/services-catalog",
+      "nombre": "administration_services-catalog"
     },
     {
       "ruta": "/administration/medical-organization",
-      "nombre": "organizacion-medica"
+      "nombre": "administration_medical-organization"
+    },
+    {
+      "ruta": "/administration/medical-laboratory",
+      "nombre": "administration_medical-laboratory"
+    },
+    {
+      "ruta": "/administration/clinical-forms",
+      "nombre": "administration_clinical-forms"
+    },
+    {
+      "ruta": "/billing",
+      "nombre": "billing"
+    },
+    {
+      "ruta": "/administration/pharma-lab",
+      "nombre": "administration_pharma-lab"
     },
     {
       "ruta": "/administration/accounting",
-      "nombre": "contabilidad"
+      "nombre": "administration_accounting"
+    },
+    {
+      "ruta": "/assets-liabilities",
+      "nombre": "assets-liabilities"
+    },
+    {
+      "ruta": "/my-organizations",
+      "nombre": "my-organizations"
+    },
+    {
+      "ruta": "/my-account",
+      "nombre": "my-account"
+    },
+    {
+      "ruta": "/my-account/appointments",
+      "nombre": "my-account_appointments"
+    },
+    {
+      "ruta": "/my-account/medical-record",
+      "nombre": "my-account_medical-record"
+    },
+    {
+      "ruta": "/my-account/diagnostic-results",
+      "nombre": "my-account_diagnostic-results"
+    },
+    {
+      "ruta": "/my-account/diagnostic-orders",
+      "nombre": "my-account_diagnostic-orders"
+    },
+    {
+      "ruta": "/my-account/questionnaires",
+      "nombre": "my-account_questionnaires"
+    },
+    {
+      "ruta": "/settings",
+      "nombre": "settings"
+    },
+    {
+      "ruta": "/notification-center",
+      "nombre": "notification-center"
+    },
+    {
+      "ruta": "/my-account/identity/verify",
+      "nombre": "my-account_identity_verify"
+    },
+    {
+      "ruta": "/my-account/identity/cases",
+      "nombre": "my-account_identity_cases"
+    },
+    {
+      "ruta": "/my-account/pharmacy-orders",
+      "nombre": "my-account_pharmacy-orders"
+    },
+    {
+      "ruta": "/my-account/loyalty",
+      "nombre": "my-account_loyalty"
+    },
+    {
+      "ruta": "/administration/pharmacy-orders",
+      "nombre": "administration_pharmacy-orders"
     }
   ],
   "35": [

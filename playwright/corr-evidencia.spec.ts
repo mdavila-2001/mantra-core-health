@@ -134,27 +134,25 @@ async function medir(page: Page): Promise<Medicion> {
       };
     }
 
-    // --- quién pinta el fondo, de verdad ---------------------------------
-    let pintor: HTMLElement | null = area;
-    let fondo = '';
-    let fondoQuien = '';
-    let fondoImagen = false;
-    while (pintor) {
-      const c = getComputedStyle(pintor);
-      const opaco = c.backgroundColor !== 'rgba(0, 0, 0, 0)' && c.backgroundColor !== 'transparent';
-      const conImagen = c.backgroundImage !== 'none';
-      if (opaco || conImagen) {
-        fondo = c.backgroundColor;
-        fondoImagen = conImagen;
-        fondoQuien =
-          pintor.tagName.toLowerCase() +
-          (typeof pintor.className === 'string' && pintor.className
-            ? `.${pintor.className.trim().split(/\s+/)[0]}`
-            : '');
-        break;
-      }
-      pintor = pintor.parentElement;
-    }
+    // --- qué se ve detrás del contenido ----------------------------------
+    // El `<body>` es quien pinta la página: `.app-main` y `.app-main__inner`
+    // son transparentes, y el degradado de `.app-shell` sólo cubre la franja
+    // del menú (`--w-nav`), no el área de contenido. Encima del color hay dos
+    // velos decorativos —`body::before` y `body::after`, los focos de menta y
+    // aguamarina que siguen al puntero—: con cualquiera de los dos encendido
+    // el fondo se ve celeste aunque el color de abajo sea blanco, así que
+    // cuentan como «no es blanco».
+    const cb = getComputedStyle(document.body);
+    const velo1 = Number(getComputedStyle(document.body, '::before').opacity || '0');
+    const velo2 = Number(getComputedStyle(document.body, '::after').opacity || '0');
+    const fondo = cb.backgroundColor;
+    const fondoImagen = cb.backgroundImage !== 'none' || velo1 > 0.01 || velo2 > 0.01;
+    const fondoQuien =
+      cb.backgroundImage !== 'none'
+        ? 'body + imagen'
+        : velo1 > 0.01 || velo2 > 0.01
+          ? `body + velo(${velo1.toFixed(2)}/${velo2.toFixed(2)})`
+          : 'body';
 
     // --- qué bloque mira el propietario ----------------------------------
     const tarjetas = Array.from(area.querySelectorAll('app-card')) as HTMLElement[];
@@ -203,12 +201,7 @@ function fila(
   // sobre un color blanco se seguiría viendo celeste, que es lo que el
   // propietario rechazó.
   const esBlanco = m.fondo === 'rgb(255, 255, 255)' && !m.fondoImagen;
-  const fondo =
-    tema === 'oscuro'
-      ? '—'
-      : esBlanco
-        ? 'PASS'
-        : `FAIL (${m.fondoQuien}: ${m.fondo}${m.fondoImagen ? ' + imagen' : ''})`;
+  const fondo = tema === 'oscuro' ? '—' : esBlanco ? 'PASS' : `FAIL (${m.fondoQuien}: ${m.fondo})`;
   const centrado =
     Math.abs(m.holguraIzq - m.holguraDer) <= HOLGURA_MAX_PX
       ? 'PASS'
