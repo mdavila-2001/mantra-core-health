@@ -22,6 +22,7 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Chip } from '../../../../shared/components/atoms/chip/chip';
+import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
@@ -51,6 +52,15 @@ import type { CasoRecetaDemo } from '../demo-presets';
  * tocar una línea.
  */
 export const TARGET_MEDICAMENTO = 'clinical.medication_requests.medication_concept_id';
+
+/**
+ * El valor con el que el selector dice «lo escribo yo».
+ *
+ * No es un identificador de nada: es la marca que destraba el campo de texto.
+ * Empieza y termina con guiones bajos para que no pueda confundirse jamás con
+ * un uuid de condición.
+ */
+const OTRO_MOTIVO = '__otro_motivo__';
 
 /** La vía de administración. Opcional en el DTO: sin binding, se omite y ya. */
 export const TARGET_VIA = 'clinical.medication_requests.route_concept_id';
@@ -248,6 +258,7 @@ export interface RecetaEnFicha {
     AppInput,
     Card,
     Chip,
+    AttachmentUploader,
     ConceptSelect,
     DatePicker,
     FormActions,
@@ -294,6 +305,19 @@ export class MedicationBlock {
    * opcional en el contrato.
    */
   readonly diagnosticos = input<readonly DiagnosticoEnFicha[]>([]);
+
+  /**
+   * Si la receta exige declarar para qué es.
+   *
+   * El cliente lo pidió como regla: «siempre que se haga una receta médica debe
+   * de poderse poner un diagnóstico o porqué de la receta». Se cumple sin
+   * cerrar ningún caso: o se elige un diagnóstico de la historia, o se escribe
+   * el motivo. La opción «sin diagnóstico asociado» sigue existiendo en el
+   * contrato —hay recetas sintomáticas y profilácticas— y por eso esto es un
+   * input y no una constante: quien monte el bloque en otro contexto puede
+   * apagarlo.
+   */
+  readonly exigeDiagnostico = input(true);
 
   /**
    * Los `medicationConceptId` de la medicación ya registrada, sin traducir.
@@ -400,12 +424,68 @@ export class MedicationBlock {
    */
   protected readonly indicacion = signal<string | null>(null);
 
-  /** Las opciones del selector de indicación, con la vacía primero. */
+  /**
+   * Las opciones del selector de indicación: los diagnósticos de la historia,
+   * la vacía, y la salida para escribir uno propio.
+   *
+   * La salida la pidió el cliente por su caso: «puede existir el caso que sólo
+   * se fue a hacer recetar y no necesitaría diagnóstico existente previo, sobre
+   * todo casos psiquiátricos».
+   */
   protected readonly opcionesDeIndicacion = computed<readonly SelectOption<string | null>[]>(
     () => [
       { value: null, label: 'Sin diagnóstico asociado' },
       ...this.diagnosticos().map((dx) => ({ value: dx.id, label: dx.etiqueta })),
+      { value: OTRO_MOTIVO, label: 'Otro motivo — escribirlo' },
     ],
+  );
+
+  /** El motivo escrito a mano, cuando se eligió «Otro motivo». */
+  protected readonly motivoLibre = signal('');
+
+  /* -- Adjuntos de la receta ------------------------------------------------ */
+
+  /**
+   * La receta recién prescrita, para ofrecerle adjuntos.
+   *
+   * «En todos los formularios debe de poderse poner un adjunto… **incluso en la
+   * medicación**, para referencias o relaciones», textual del cliente. Sólo
+   * puede ofrecerse después de guardar: el vínculo necesita el identificador.
+   */
+  protected readonly recetaRecienCreada = signal<string | null>(null);
+
+  /** El vínculo pasa por `clinical`, no por el genérico de `common`. */
+  protected readonly enlazarAdjuntoALaReceta = (fileId: string, requestId: string) =>
+    this.clinical.attachFileToMedicationRequest(requestId, fileId);
+
+  protected cerrarAdjuntosDeLaReceta(): void {
+    this.recetaRecienCreada.set(null);
+  }
+
+  /** Si se eligió escribir el motivo en vez de elegir un diagnóstico. */
+  protected readonly motivoEsLibre = computed(() => this.indicacion() === OTRO_MOTIVO);
+
+  /**
+   * Guarda la indicación elegida, y limpia el texto al dejar de escribirlo.
+   *
+   * Mismo criterio que la ocupación del alta: un motivo a mano que ya no
+   * describe nada no debe viajar.
+   */
+  protected elegirIndicacion(valor: string | null): void {
+    this.indicacion.set(valor);
+    if (valor !== OTRO_MOTIVO) this.motivoLibre.set('');
+  }
+
+  /**
+   * Si hay un porqué declarado para esta receta.
+   *
+   * Un diagnóstico de la historia, o un motivo escrito. La opción vacía no
+   * cuenta: es justamente la que {@link exigeDiagnostico} viene a impedir.
+   */
+  protected readonly hayMotivo = computed(
+    () =>
+      (this.indicacion() !== null && !this.motivoEsLibre()) ||
+      (this.motivoEsLibre() && this.motivoLibre().trim() !== ''),
   );
 
   /**
@@ -593,6 +673,7 @@ export class MedicationBlock {
       this.hayEncuentro() &&
       !this.sinOrganizacion() &&
       this.medicamento() !== null &&
+      (!this.exigeDiagnostico() || this.hayMotivo()) &&
       !this.registrando(),
   );
 
@@ -1015,13 +1096,24 @@ export class MedicationBlock {
         ...(indicaciones === '' ? {} : { patientInstructionsText: indicaciones }),
         // Para qué es la receta (v4.1.6). Se omite cuando no se eligió: una
         // prescripción sintomática o profiláctica no tiene diagnóstico detrás.
-        ...(indicacion === null ? {} : { indicationConditionId: indicacion }),
+        // Con «Otro motivo» viaja el texto y NO la condición: son excluyentes,
+        // y `__otro_motivo__` no es el id de nada.
+        ...(indicacion === null || indicacion === OTRO_MOTIVO
+          ? {}
+          : { indicationConditionId: indicacion }),
+        ...(indicacion === OTRO_MOTIVO && this.motivoLibre().trim() !== ''
+          ? { indicationText: this.motivoLibre().trim() }
+          : {}),
       })
       .subscribe({
-        next: () => {
+        next: (creada) => {
           this.registrando.set(false);
           this.registro.set(ready(null));
           this.limpiar();
+          // Adjuntar exige que la receta ya exista, así que el panel sólo puede
+          // ofrecerse acá. No se cierra solo: elegir los archivos lleva su
+          // tiempo, y cerrarlo por cuenta propia perdería la referencia.
+          this.recetaRecienCreada.set(creada.id);
           this.toasts.success('Queda en borrador hasta que la firmes.', 'Receta creada');
           this.cambio.emit();
         },
@@ -1332,6 +1424,7 @@ export class MedicationBlock {
     this.validTo.set(null);
     this.duracionDias.set(null);
     this.esCronico.set(false);
+    this.motivoLibre.set('');
     this.indicacionesPaciente.set('');
     // El diagnóstico y el favorito elegidos son de ESTA receta: la siguiente
     // arranca sin ellos, aunque sea para el mismo paciente.

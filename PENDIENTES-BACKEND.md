@@ -23,6 +23,226 @@ que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
+## Abierto · P26 · La alergia no sabe en qué cita se detectó, y no tiene catálogos
+
+**Levantado el 2026-09-10**, construyendo el alta de alergias. El cliente lo pidió como calco del
+diagnóstico:
+
+> «Debe aparecer un campo select para colocar la enfermedad detectada en base a una cita ya
+> existente y/o finalizada. **Lo mismo para alergias.**»
+
+### 1 · Falta la columna del encuentro
+
+`clinical.allergy_intolerances` tiene custodio, paciente, sustancia, tipo, categoría, criticidad,
+estado clínico y verificación — **y ningún `encounter_id`**. `CreateAllergyIntoleranceDto` tampoco
+lo acepta.
+
+| Capa | Qué hace falta |
+| --- | --- |
+| Modelo | `encounter_id uuid NULL` (FK → `clinical.encounters`) en `clinical.allergy_intolerances`. Camino obligatorio: `.puml` → `gen_ddl.py` → `SQL/` → patch → `gen_entities.py`. **Nunca un `ALTER` a mano** (ADR-0021). |
+| DTO de alta | `encounterId?` con `@IsUUID()`. |
+| DTO de lectura | `encounterId?` en `AllergyItemDto`. |
+
+La pantalla **ya lo manda**; contra la API de hoy da 400.
+
+### 2 · No hay ningún catálogo de alergia
+
+Esto es lo más grande, y es lo que impedía que el formulario existiera.
+
+`dynamic-enum-catalog.ts` **no declara un solo `target` de
+`clinical.allergy_intolerances.*` ni de `clinical.allergy_reactions.*`**. Los conceptos de alergia
+del backend son **cinco sueltos** (`ALG_ACTIVE`, `ALG_CONFIRMED`, `ALG_TYPE`,
+`ALG_CATEGORY_MEDICATION`, `ALG_HIGH`), sin conjunto de valores que los agrupe.
+
+Sin catálogo no hay selector, y sin selector no hay formulario: por eso el contrato estaba entero
+desde el principio y **ninguna pantalla lo usaba**.
+
+Hacen falta cinco bindings, con sus conjuntos:
+
+| Target | Conjunto |
+| --- | --- |
+| `clinical.allergy_intolerances.substance_concept_id` | Alérgenos que no son medicamentos (los medicamentos ya salen del vademécum) |
+| `clinical.allergy_intolerances.type_concept_id` | Alergia / intolerancia |
+| `clinical.allergy_intolerances.category_concept_id` | Medicamento, alimento, ambiental, biológico |
+| `clinical.allergy_intolerances.criticality_concept_id` | Baja / alta / no determinable |
+| `clinical.allergy_reactions.manifestation_concept_id` | Manifestaciones clínicas |
+
+### ⚠️ Los códigos de la maqueta son provisionales y están declarados como tales
+
+El simulador acuña `VS_ALLERGY_TYPE`, `VS_ALLERGY_MANIFESTATION` y `VS_ALLERGY_SUBSTANCE` con
+listas cortas —ocho manifestaciones, diez sustancias— para que el formulario se pueda ver y probar.
+**No son un catálogo clínico publicado**, y el comentario del propio fixture lo dice, con el mismo
+criterio que `bo-occupations.catalog.ts`.
+
+El real tiene que salir de una fuente —un subconjunto de SNOMED CT, o el que el equipo clínico
+apruebe— con su procedencia declarada, igual que las 43 fichas estándar. **No lo inventamos acá.**
+
+Al reemplazarlos hay migración de datos: los identificadores se derivan del código.
+
+---
+
+## Abierto · P25 · Sólo diagnósticos y procedimientos aceptan adjuntos
+
+**Levantado el 2026-09-10.** El cliente lo pidió como regla transversal:
+
+> «En todos los formularios debe de poderse poner un adjunto, un gestor para subir archivos de
+> todo tipo y formato **y en varias cantidades**, incluso en la medicación, para referencias o
+> relaciones.»
+
+### Lo que hay
+
+`OwnerType` (`common/dto/enums.ts`) declara cinco: `USER`, `PATIENT`, `TENANT`, `CONDITION`,
+`PROCEDURE`. Y hay dos rutas de dominio: `POST /clinical/conditions/:id/attachments` y
+`POST /clinical/procedures/:id/attachments`.
+
+### Lo que falta
+
+**Tres tipos de dueño y dos rutas.** La receta y la alergia no tienen dónde colgar un archivo, y
+son justamente los dos que el cliente nombró.
+
+| Capa | Qué hace falta |
+| --- | --- |
+| Conceptos | `OWNER_MEDICATION_REQUEST`, `OWNER_ALLERGY_INTOLERANCE`, `OWNER_ENCOUNTER` en `common/constants/concepts.ts`, con el mismo `def('common:owner-type:…')`. **No toca el `.puml`**: `file_links.owner_type_concept_id` es FK a terminología y el concepto se siembra al arrancar — lo dice el propio comentario de `files.types.ts`. |
+| Enum | Los tres valores en `OwnerType`. |
+| Rutas | `POST /clinical/medication-requests/:id/attachments` y `POST /clinical/allergy-intolerances/:id/attachments`, con su `attachFile()` **calcado de `procedures.service.ts`**: busca el recurso → 404 si no está → `filesService.createLink`. Son diez líneas cada una. |
+
+El genérico `POST /common/files/:id/links` **no alcanza** para dato clínico: no exige rol ni
+verifica que el dueño exista. Es a propósito —sirve a cualquier contexto— y por eso cada dominio
+liga por el suyo.
+
+### «De todo tipo y formato»: se amplía con firmas, no se abre
+
+`UPLOAD_MIME_ALLOWLIST` admite hoy ocho tipos —PDF, JPEG, PNG, WebP, GIF, DOCX, XLSX y texto— y el
+tipo se detecta por **firma de bytes** (`sniffMimeType`), no por extensión. Eso es lo que impide
+subir un ejecutable renombrado `.pdf`, y la regla `40-security.md` lo exige.
+
+Ampliarlo es agregar **firma + entrada** por cada formato nuevo: DICOM (`DICM` en el byte 128),
+HEIC/HEIF, TIFF, MP4/MOV (`ftyp`), MP3, WAV, ZIP, PPTX, CSV/RTF. Lo que **no** se debe hacer es
+aceptar cualquier cosa sin sniffing.
+
+Mientras tanto la pantalla **dice la lista real** en su ayuda en vez de prometer «todo tipo»: una
+promesa que el servidor va a romper con un 422 es peor que un límite dicho.
+
+### Varios archivos por petición no hace falta
+
+El frontend sube **en secuencia** —el backend recibe uno por petición,
+`FileInterceptor('file', { files: 1 })`— y el vínculo es por archivo. Si más adelante se quiere una
+sola transacción, `POST /charts/documents` ya recibe `files[]`.
+
+### Estado del frontend
+
+El subidor ya toma tandas de hasta diez, deduce la categoría del tipo del archivo, muestra
+«Adjuntando 3 de 7…» y no cancela la tanda por uno que falle. La maqueta sirve las dos rutas
+nuevas. **Contra la API de hoy responden 404** hasta que existan.
+
+---
+
+## Abierto · P24 · La receta no puede llevar un motivo escrito
+
+**Levantado el 2026-09-10.** El cliente lo pidió textual:
+
+> «Se debería de poder poner o escoger en una lista en la que salgan los diagnósticos ya
+> existentes **y una opción de poder escribir un título de diagnóstico propio**, porque puede
+> existir el caso que sólo se fue a hacer recetar y no necesitaría diagnóstico existente previo,
+> sobre todo casos psiquiátricos.»
+
+### Lo que ya existe
+
+`indicationConditionId` (Patch v4.1.6): la receta apunta a una condición **registrada**, el
+servidor comprueba que sea del mismo paciente y responde 422 si no. Está en el DTO de alta y en
+`MedicationRequestItemDto`.
+
+### Lo que falta
+
+**Una columna de texto.** `clinical.medication_requests` tiene `indication_condition_id` y ningún
+campo de texto para el motivo. Sin ella, la mitad del pedido —el caso psiquiátrico, y el de quien
+sólo fue a que le receten— no tiene dónde guardarse.
+
+| Capa | Qué hace falta |
+| --- | --- |
+| Modelo | `indication_text varchar(200) NULL` en `clinical.medication_requests`. Camino obligatorio: `.puml` → `gen_ddl.py` → `SQL/` → patch para bases vivas → `gen_entities.py`. **Nunca un `ALTER` a mano** (ADR-0021). |
+| DTO de alta | `indicationText?` con `@MaxLength(200)` en `CreateMedicationRequestDto` y en `EditMedicationRequestDraftDto`. |
+| DTO de lectura | `indicationText?` en `MedicationRequestItemDto`. |
+| Servicio | **Excluyente con la condición, y el concepto gana** si llegaran los dos — el mismo criterio que `occupation_free_text` frente a `occupation_concept_id` en `persons`. |
+| PDF | La receta impresa muestra uno u otro bajo «Diagnóstico». |
+
+### Estado del frontend
+
+La pantalla **ya lo manda** (`indicationText`) y la maqueta lo guarda y lo muestra. **Contra la API
+de hoy da 400**: `forbidNonWhitelisted` rechaza la petición entera por la clave que el DTO no
+declara. Es el mismo muro de P19, P20 y P22.
+
+### Dos cosas que este trabajo destapó y NO son pendientes
+
+- **La lectura ya traía el diagnóstico y el frontend lo tiraba.** `MedicationRequestItemDto`
+  publica `indicationConditionId` desde v4.1.6 y el tipo de vista `MedicationRequest` no lo
+  declaraba: el dato llegaba y nadie podía leerlo con tipos. Corregido acá, sin tocar el backend.
+- **«La receta a la que pertenece esa medicación» no existe como entidad.** En este modelo **cada
+  `medication_request` es una línea**; lo que agrupa varias es el encuentro y su fecha, y eso es lo
+  que la tabla muestra ahora en «Receta de». Un **número de receta** compartido por varias líneas
+  sería una entidad nueva (`prescriptions` con sus `lines`), no un campo: es decisión de modelo y
+  de negocio, no un arreglo de pantalla. **Queda planteado, sin resolver.**
+
+---
+
+## Abierto · P23 · Cambiar un horario que tiene citas es imposible hoy
+
+**Levantado el 2026-09-10**, arreglando «la cita no acaba a la hora que debería». Es la causa
+raíz de ese reporte, y no está en el frontend.
+
+### Lo que pasa
+
+Cambiar el horario creaba una plantilla **más** y dejaba viva la anterior; nadie llamaba a
+`DELETE /scheduling/templates/:id`. Como `generate-slots` es idempotente **por instante de
+inicio** —lo dice su contrato y lo hace el simulador—, el cupo de las 08:00 sobrevivía con su
+fin viejo: pasar las consultas de 30 a 45 minutos dejaba el turno de las 08:00 terminando a las
+08:30.
+
+El frontend ya lo arregla llamando al retiro **antes** de publicar. Y ahí aparece el muro.
+
+### El muro
+
+`retireTemplate` (`scheduling-catalog.service.ts:963`) rechaza con **409** en cuanto hay **una**
+cita viva —`ACTIVE_BOOKING_STATES` = `BOOKING_CONFIRMED` + `BOOKING_CHECKED_IN`, sin filtro de
+fecha—. En la maqueta con datos de demostración son **42**. Un profesional en ejercicio siempre
+tiene citas confirmadas, así que **nunca** puede cambiar su horario.
+
+### Por qué el 409 se contradice con la propia operación
+
+El retiro **conserva los cupos con cita** y devuelve `keptSlots` para decirlo. Es decir: la
+operación ya está diseñada para no tocar los turnos comprometidos, y aun así se niega a correr
+cuando existen. Las dos cosas no pueden ser ciertas a la vez.
+
+Las otras dos rutas tampoco alcanzan:
+
+| Ruta | Por qué no sirve |
+| --- | --- |
+| `PATCH /scheduling/templates/:id` | Cambia las reglas y **no toca los cupos materializados** (lo dice su propia descripción). Regenerar después no arregla nada: los instantes viejos ya existen y se cuentan como `skipped`. La grilla publicada sigue siendo la vieja. |
+| `POST /scheduling/resources/:id/close-slots` | Cierra cupos **dejando una excepción** que cubre su rango — y esa excepción bloquearía también los cupos nuevos. |
+
+### Lo que hace falta, en orden de preferencia
+
+1. **Acotar el 409 a las citas del rango que se deja de publicar.** Retirar conserva las citas;
+   frenar por una cita de dentro de tres meses cuando el cambio rige desde mañana no protege a
+   nadie.
+2. O una ruta que **suelte los cupos libres futuros de una plantilla sin retirarla**
+   —`POST /scheduling/templates/:id/release-free-slots?from=`—, que es exactamente lo que
+   «cambiar mi horario» necesita y hoy sólo existe como efecto secundario del retiro.
+3. O que `generate-slots` acepte `replace=true` para una ventana: borra los libres y crea los
+   nuevos en una transacción.
+
+Mientras tanto el frontend **muestra el motivo del servidor tal cual** y enlaza a «Mi agenda»
+para resolver esas citas, en vez de publicar en silencio un horario que no rige.
+
+### Un defecto del simulador que esto destapó
+
+`mock-router.ts` emitía los errores **sin el `code` del contrato**, y `readApiError`
+(`core/http/api-error.ts`) descarta todo cuerpo sin un `code` conocido. Resultado: **cualquier**
+409, 422 o 403 de la maqueta llegaba a la pantalla como «No pudimos completar la operación.
+(sin-id)». Corregido en esta tanda: los seis ayudantes declaran su código.
+
+---
+
 ## Abierto · P22 · No hay forma de dar de alta al paciente que llega al mostrador
 
 **Levantado el 2026-09-09**, en la rama `mockup`, construyendo «paciente nuevo» dentro de

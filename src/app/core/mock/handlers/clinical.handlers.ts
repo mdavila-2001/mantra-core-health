@@ -23,6 +23,8 @@ import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/p
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
+import { enlazarArchivo } from './files.handlers';
+import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -284,7 +286,7 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/clinical/medication-requests', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; medicationConceptId: string; encounterId?: string; indicationConditionId?: string; indicationText?: string; doseText?: string; frequencyText?: string; validFrom?: string; validTo?: string; patientInstructionsText?: string; prescriberProfileId?: string }>(request);
     const nueva: RecetaSimulada = {
       id: nuevoId('rx'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -296,6 +298,16 @@ export function registrarClinica(router: MockRouter): void {
       validFrom: datos.validFrom ?? ahora(),
       validTo: datos.validTo ?? ahora(),
       patientInstructionsText: datos.patientInstructionsText ?? '',
+      // El «para qué es» de la receta. El concepto gana sobre el texto libre,
+      // igual que la ocupación del alta de paciente: el texto sólo tenía
+      // sentido para quien no encontró un diagnóstico registrado.
+      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.indicationConditionId === undefined
+        ? {}
+        : { indicationConditionId: datos.indicationConditionId }),
+      ...(datos.indicationConditionId !== undefined || datos.indicationText === undefined
+        ? {}
+        : { indicationText: datos.indicationText }),
       signedAt: null,
       issuedAt: null,
       createdAt: ahora(),
@@ -317,7 +329,7 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/clinical/conditions', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; encounterId?: string; categoryConceptId?: string; severityConceptId?: string; onsetAt?: string; noteText?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; encounterId?: string; categoryConceptId?: string; severityConceptId?: string; lateralityConceptId?: string; clinicalCourseConceptId?: string; onsetAt?: string; expectedResolutionAt?: string; noteText?: string }>(request);
     const nueva: CondicionSimulada = {
       id: nuevoId('condition'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -326,6 +338,13 @@ export function registrarClinica(router: MockRouter): void {
       clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
       verificationStatusConceptId: VERIFICACION_DX['DXV-PROVISIONAL']!,
       severityConceptId: datos.severityConceptId ?? SEVERIDAD['SEV-MILD']!,
+      // El curso y la fecha esperada **se guardan**: el contrato los declara
+      // desde el patch v4.0.8 y el simulador los descartaba, así que registrar
+      // un diagnóstico crónico daba una condición sin curso y la pantalla no
+      // podía decir que lo era.
+      ...(datos.lateralityConceptId === undefined ? {} : { lateralityConceptId: datos.lateralityConceptId }),
+      ...(datos.clinicalCourseConceptId === undefined ? {} : { clinicalCourseConceptId: datos.clinicalCourseConceptId }),
+      ...(datos.expectedResolutionAt === undefined ? {} : { expectedResolutionAt: datos.expectedResolutionAt }),
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
       onsetAt: datos.onsetAt ?? ahora(),
       noteText: datos.noteText ?? '',
@@ -337,7 +356,7 @@ export function registrarClinica(router: MockRouter): void {
       encounterId: nueva.encounterId,
       autorProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
     });
-    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', verificationStatus: 'PROVISIONAL', clinicalCourse: null, createdAt: nueva.createdAt } };
+    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', verificationStatus: 'PROVISIONAL', clinicalCourse: nueva.clinicalCourseConceptId ?? null, createdAt: nueva.createdAt } };
   });
 
   router.post('/clinical/conditions/:id/change-status', (request) => {
@@ -351,11 +370,50 @@ export function registrarClinica(router: MockRouter): void {
     return sinPaciente(actualizada);
   });
 
-  router.post('/clinical/conditions/:id/attachments', () => ({ status: 201, body: { ok: true } }));
-  router.post('/clinical/procedures/:id/attachments', () => ({ status: 201, body: { ok: true } }));
+  /* ---- adjuntos ------------------------------------------------------------
+     Las cuatro rutas **guardan el vínculo** en vez de devolver `{ ok: true }`
+     y perderlo: sin eso, `GET /common/files/links` no devolvía nunca lo recién
+     adjuntado y la lista de archivos de una fila salía siempre vacía. */
+
+  const adjuntar = (ownerType: string, ownerId: string, request: MockRequest) => {
+    const { fileId } = cuerpo<{ fileId: string }>(request);
+    return {
+      status: 201,
+      body: enlazarArchivo({ ownerType, ownerId, fileId: fileId ?? '' }),
+    };
+  };
+
+  router.post('/clinical/conditions/:id/attachments', (request) =>
+    adjuntar('CONDITION', request.params['id']!, request),
+  );
+  router.post('/clinical/procedures/:id/attachments', (request) =>
+    adjuntar('PROCEDURE', request.params['id']!, request),
+  );
+  router.post('/clinical/medication-requests/:id/attachments', (request) =>
+    adjuntar('MEDICATION_REQUEST', request.params['id']!, request),
+  );
+  router.post('/clinical/allergy-intolerances/:id/attachments', (request) =>
+    adjuntar('ALLERGY_INTOLERANCE', request.params['id']!, request),
+  );
 
   router.post('/clinical/allergy-intolerances', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; substanceConceptId: string; typeConceptId?: string; categoryConceptId?: string; criticalityConceptId?: string; reactions?: unknown[] }>(request);
+    const datos = cuerpo<{
+      patientProfileId: string;
+      substanceConceptId: string;
+      typeConceptId?: string;
+      categoryConceptId?: string;
+      criticalityConceptId?: string;
+      encounterId?: string;
+      reactions?: readonly { manifestationConceptId: string; severityConceptId?: string; description?: string }[];
+    }>(request);
+    // Las reacciones **se guardan**: son el dato que dice qué le pasó a la
+    // persona, y el simulador sólo devolvía sus identificadores y las tiraba.
+    const reacciones = (datos.reactions ?? []).map((r) => ({
+      id: nuevoId('reaction'),
+      manifestationConceptId: r.manifestationConceptId,
+      ...(r.severityConceptId === undefined ? {} : { severityConceptId: r.severityConceptId }),
+      ...(r.description === undefined || r.description === '' ? {} : { description: r.description }),
+    }));
     const nueva = alergias.agregar({
       id: nuevoId('allergy'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -364,9 +422,11 @@ export function registrarClinica(router: MockRouter): void {
       categoryConceptId: datos.categoryConceptId ?? '',
       criticalityConceptId: datos.criticalityConceptId ?? '',
       clinicalStatusConceptId: ESTADO_CONDICION['COND-ACTIVE']!,
+      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(reacciones.length === 0 ? {} : { reactions: reacciones }),
       createdAt: ahora(),
     });
-    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', reactionIds: (datos.reactions ?? []).map(() => nuevoId('reaction')), createdAt: nueva.createdAt } };
+    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', reactionIds: reacciones.map((r) => r.id), createdAt: nueva.createdAt } };
   });
 
   router.post('/clinical/observations', (request) => {
@@ -494,43 +554,51 @@ export function registrarClinica(router: MockRouter): void {
    plantillas. Con el array dentro de la función, `POST /forms/assignments`
    devolvía un id y el campo no aparecía en ninguna parte.
    ---------------------------------------------------------------------- */
-export const PLANTILLAS_DE_EXPEDIENTE = [
-  plantilla('CARDIO-BASE', 'Evaluación cardiológica', ESPECIALIDAD['CARDIOLOGIA']!, [
-    ['pa_sistolica', 'Presión sistólica', 'NUMBER', true],
-    ['pa_diastolica', 'Presión diastólica', 'NUMBER', true],
-    ['fc', 'Frecuencia cardíaca', 'NUMBER', true],
-    ['soplo', 'Soplo cardíaco', 'BOOLEAN', false],
-    // La NYHA es una escala cerrada de cuatro clases: es texto libre sólo
-    // porque el seed no sabía declarar opciones, y como texto libre cada
-    // consultorio la escribe distinto y deja de ser comparable.
-    ['nyha', 'Clase funcional NYHA', 'code', false, ['I', 'II', 'III', 'IV']],
-    [
-      'factores',
-      'Factores de riesgo',
-      'code',
-      false,
-      ['Tabaquismo', 'Hipertensión', 'Diabetes', 'Dislipidemia', 'Antecedente familiar'],
-      // De varias: nadie tiene un solo factor de riesgo.
-      true,
-    ],
-  ]),
-  plantilla('PEDIA-CONTROL', 'Control de niño sano', ESPECIALIDAD['PEDIATRIA']!, [
-    ['peso', 'Peso (kg)', 'NUMBER', true],
-    ['talla', 'Talla (cm)', 'NUMBER', true],
-    ['perimetro', 'Perímetro cefálico', 'NUMBER', false],
-    ['vacunas_al_dia', 'Vacunas al día', 'BOOLEAN', true],
-    ['lactancia', 'Tipo de lactancia', 'code', false, ['Materna exclusiva', 'Mixta', 'Fórmula']],
-  ]),
-  plantilla('GINE-PRENATAL', 'Control prenatal', ESPECIALIDAD['GINECOLOGIA_OBSTETRICIA']!, [
-    ['semanas', 'Semanas de gestación', 'NUMBER', true],
-    ['altura_uterina', 'Altura uterina', 'NUMBER', false],
-    ['fcf', 'Frecuencia cardíaca fetal', 'NUMBER', true],
-  ]),
-  plantilla('MEDINT-GENERAL', 'Consulta de medicina interna', ESPECIALIDAD['MEDICINA_INTERNA']!, [
-    ['motivo', 'Motivo de consulta', 'TEXT', true],
-    ['examen', 'Examen físico', 'TEXT', true],
-  ]),
-];;
+/**
+ * El concepto de las fichas **transversales**.
+ *
+ * Consentimiento, anamnesis general, examen físico y epicrisis no pertenecen a
+ * ninguna disciplina, así que no están en `VS_MEDICAL_SPECIALTY`. El backend
+ * les acuña un concepto propio (`CODIGO_TRANSVERSAL` de
+ * `clinical-forms-seed.service.ts`) y acá se hace lo mismo, con el derivador de
+ * ids que usa `definir()`: el bloque clínico las reconoce por el prefijo
+ * `TRANSV_` de su código y las deja siempre a mano.
+ */
+const ESPECIALIDAD_TRANSVERSAL = uuid('concept-TRANSVERSAL');
+
+/**
+ * Las 43 fichas clínicas estándar, portadas del backend.
+ *
+ * Antes eran **cuatro escritas a mano**, con códigos que ni siquiera coincidían
+ * con los del catálogo sembrado (`CARDIO-BASE` contra `CARDIO_FICHA_BASE`).
+ * Para una doctora de medicina general, de neurología o de odontología el
+ * selector de «Formulario clínico» no tenía **nada** que ofrecer, que es lo que
+ * el cliente reportó como «no deja poner los formularios respectivos».
+ *
+ * Se generan desde los JSON del backend con `yarn mock:chart-templates`; el
+ * fixture es derivado y no se edita a mano.
+ */
+export const PLANTILLAS_DE_EXPEDIENTE = FICHAS_ESTANDAR.map((ficha) =>
+  plantilla(
+    ficha.code,
+    ficha.name,
+    ficha.specialty === 'TRANSVERSAL'
+      ? ESPECIALIDAD_TRANSVERSAL
+      : (ESPECIALIDAD[ficha.specialty] ?? ESPECIALIDAD_TRANSVERSAL),
+    ficha.fields.map(
+      (campo) =>
+        [
+          campo.code,
+          campo.name,
+          campo.dataType,
+          campo.required,
+          campo.options,
+          campo.multiple,
+        ] as const,
+    ),
+    ficha.provenance,
+  ),
+);
 
 function registroReceta(r: RecetaSimulada) {
   return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === ESTADO_RECETA['RX-DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };
@@ -549,6 +617,15 @@ export function plantilla(
   name: string,
   specialtyConceptId: string,
   campos: readonly (readonly [string, string, string, boolean, (readonly string[])?, boolean?])[],
+  provenance?: {
+    readonly sourceTitle: string;
+    readonly organization: string;
+    readonly url: string;
+    readonly license: string;
+    readonly sourceVersion?: string;
+    readonly retrievedAt: string;
+    readonly note?: string;
+  },
 ) {
   return {
     id: uuid(`chart-template-${code}`),
@@ -576,6 +653,10 @@ export function plantilla(
       // vacía la sección del estándar, y ofrecía editar lo que no se toca.
       own: false,
     })),
-    provenance: { sourceTitle: 'Guía de práctica clínica', organization: 'Ministerio de Salud', url: 'https://www.minsalud.gob.bo', license: 'CC BY 4.0', retrievedAt: '2026-01-15' },
+    // La procedencia REAL de la ficha —norma, organismo, URL y licencia—, tal
+    // como la declara el JSON del backend. Antes había una inventada fija para
+    // las cuatro plantillas escritas a mano; con las 43 portadas, inventarla
+    // sería declarar una fuente falsa en pantalla.
+    ...(provenance === undefined ? {} : { provenance }),
   };
 }

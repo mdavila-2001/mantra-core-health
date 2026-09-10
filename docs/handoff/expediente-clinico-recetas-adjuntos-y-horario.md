@@ -39,7 +39,25 @@ yarn start                          # :4200, con mockBackend=true en esta rama
 Cuentas del simulador (cualquier contraseña): `medica@alovida.mock` (doctora, tiene agenda y
 expediente de pacientes), `paciente@alovida.mock`.
 
-### 0.3 Mapa de los archivos que aparecen abajo
+### 0.3 Coordinación con el plan de evoluciones (`PLAN-EVOLUCIONES-Y-ATENCION.md`)
+
+Hay **otro plan en curso sobre los mismos archivos**, escrito el 09/09 y en ejecución. Este
+documento se apoya en él; no compite.
+
+| Su fase | Estado | Qué implica para lo de acá |
+| --- | --- | --- |
+| 1 · «Atender» nace sólo de Mis citas | **Hecha** (`ced1531`, `3e16406`, `b3f0fa5`, `fad0699`) | El expediente **ya no tiene** botón «Atender» ni la card «Qué se está mirando»: es lectura con un aviso de continuación. El §4.3.4 de acá —«Nuevo diagnóstico» desde el expediente— **no lo contradice**: registrar un diagnóstico no es atender, y el propio plan mueve las ediciones a modal en su 3.2. |
+| 3.1 · Sacar la card | **Hecha** (`3e16406`) | — |
+| 3.2 · `#celdaAcciones` pasa a menú + modal | **Pendiente** | Lo de acá lo **absorbe**: §4.3.4 y §7.2.2 abren en modal desde el principio, no inline. No dejar dos patrones. |
+| 3.3 · Organismo `attachment-dialog` | **Pendiente** | Lo construye la **fase 6** de acá (§7.2.1) y lo usan diagnóstico, receta, alergia, procedimientos y el expediente. Es la pieza que su plan pide y que acá hace falta en seis lugares. |
+| 2 · Evoluciones | Pendiente | No se toca desde acá. |
+
+Además, `3ce6f5d feat(uploads)` ya rehízo **`molecules/file-input`** con arrastrar-y-soltar,
+previsualizaciones (`molecules/file-preview`) y `shared/forms/file-accept.ts`. La fase 6 de acá
+**construye encima de eso**: el `app-file-input` ya sabe recibir varios archivos y mostrarlos; lo que
+falta es que `attachment-uploader` deje de pedir uno solo. No rehacer el campo.
+
+### 0.4 Mapa de los archivos que aparecen abajo
 
 ```text
 mantra-core-health/src/app/
@@ -451,8 +469,9 @@ Archivo: `patient-chart.html/.ts` (`/medical-records/:id`).
    «Nuevo diagnóstico» (`data-testid="expediente-nuevo-diagnostico"`). Sólo si la sesión puede
    escribir: mismo criterio que usa «Atención» (`encounter-workspace.ts`, `puedeRegistrar`) — rol
    `PRACTITIONER`/`CLINICIAN` y `auth.activeTenantId() !== null`.
-2. Al apretarlo se abre **el mismo `app-diagnosis-block`** en un `app-dialog` (o en un panel plegable
-   arriba de la tabla, lo que quede más limpio con la regla 6 de composición), con
+2. Al apretarlo se abre **el mismo `app-diagnosis-block`** dentro de un `<app-content-dialog>` — en
+   modal y no en un panel inline, que es lo que pide la fase 3.2 del plan de evoluciones para toda
+   edición que pida datos —, con
    `[patientProfileId]` y `[encounterId]="null"` (ver 4.3.5 para elegir la cita) y `(cambio)="recargar()"`.
 3. Al registrar, el bloque ya emite `cambio` → `recargar()` vuelve a pedir el resumen y la fila
    aparece en la tabla.
@@ -706,8 +725,9 @@ Tests (`medication-block.spec.ts`):
   pasen). Hoy: **1 archivo** (`[maxFiles]="1"`, `attachment-uploader.html:23`), **10 MB**
   (`MAX_BYTES`, `.ts:26`), categoría `DOCUMENT|IMAGE` y sensibilidad `NORMAL|PHI` por radios.
 - **Front, campo de archivo:** `app-file-input` **ya admite** `multiple`, `maxFiles`, `accept`,
-  `maxSizeBytes` (`molecules/file-input/file-input.ts:46-59`). El límite de uno es del subidor, no
-  del campo.
+  `maxSizeBytes`, y desde `3ce6f5d` además **arrastrar y soltar** y previsualizaciones
+  (`molecules/file-preview`, `shared/forms/file-accept.ts`). El límite de uno es del **subidor**, no
+  del campo: `attachment-uploader` le pasa `[maxFiles]="1"`.
 - **Front, tipos de dueño:** `OWNER_TYPES = ['USER','PATIENT','TENANT','CONDITION','PROCEDURE']`
   (`files.types.ts:12-18`). El comentario de al lado explica que sumar un tipo **no toca el modelo**:
   es un concepto que el backend acuña en `CONCEPTS.OWNER_*` y siembra al arrancar.

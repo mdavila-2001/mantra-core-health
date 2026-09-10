@@ -13,6 +13,7 @@ import { of, switchMap } from 'rxjs';
 
 import { ChartTemplatesClient } from '../../../../core/data-access/chart-templates/chart-templates.client';
 import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
+import { AllergyBlock } from '../allergy-block/allergy-block';
 import { DiagnosticsBlock } from '../diagnostics-block/diagnostics-block';
 import { FreeNoteBlock } from '../free-note-block/free-note-block';
 import { ProceduresBlock } from '../procedures-block/procedures-block';
@@ -75,6 +76,8 @@ export const PLANTILLA_HOJA_LIBRE = 'hoja-libre';
  * El prefijo las hace imposibles de confundir con el uuid de una plantilla.
  */
 export const BLOQUE_DIAGNOSTICO = 'bloque-diagnostico';
+/** La alergia: mismo criterio que el diagnóstico, otra entidad clínica. */
+export const BLOQUE_ALERGIA = 'bloque-alergia';
 export const BLOQUE_CIRUGIA = 'bloque-cirugia';
 export const BLOQUE_ODONTOLOGIA = 'bloque-odontologia';
 export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
@@ -91,6 +94,7 @@ export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 const ENTRADAS_FIJAS: readonly { readonly value: string; readonly label: string }[] = [
   { value: BLOQUE_DIAGNOSTICO, label: 'Diagnóstico — del catálogo CIE-10' },
   { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
+  { value: BLOQUE_ALERGIA, label: 'Alergia o intolerancia' },
   { value: BLOQUE_CIRUGIA, label: 'Cirugía' },
   { value: BLOQUE_ODONTOLOGIA, label: 'Odontología' },
   { value: BLOQUE_LABORATORIO, label: 'Laboratorio e imagenología' },
@@ -197,6 +201,7 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
     AppButton,
     Card,
     DiagnosisBlock,
+    AllergyBlock,
     DiagnosticsBlock,
     FreeNoteBlock,
     Checkbox,
@@ -382,6 +387,8 @@ export class SpecialtyFormBlock {
   protected readonly hojaLibre = computed(() => this.plantillaId() === PLANTILLA_HOJA_LIBRE);
 
   protected readonly esDiagnostico = computed(() => this.plantillaId() === BLOQUE_DIAGNOSTICO);
+
+  protected readonly esAlergia = computed(() => this.plantillaId() === BLOQUE_ALERGIA);
 
   protected readonly esCirugia = computed(() => this.plantillaId() === BLOQUE_CIRUGIA);
 

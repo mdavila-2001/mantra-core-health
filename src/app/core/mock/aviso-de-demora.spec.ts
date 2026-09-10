@@ -43,14 +43,31 @@ function peticion(
   };
 }
 
-function llamar(method: MockMethod, path: string, body: unknown, usuario: (typeof MOCK_USERS)[number] | null): unknown {
-  const req = peticion(method, path, body, usuario);
+function llamar(
+  method: MockMethod,
+  path: string,
+  body: unknown,
+  usuario: (typeof MOCK_USERS)[number] | null,
+  query = new URLSearchParams(),
+): unknown {
+  const req = { ...peticion(method, path, body, usuario), query };
   return router.match(method, path)!.handler(req);
 }
 
 /** Las notificaciones que hoy tiene esa persona en su campana. */
 function campanaDe(usuario: (typeof MOCK_USERS)[number]): { id: string; subject: string; bodyText: string; category: string; unread: boolean }[] {
-  const respuesta = llamar('GET', '/notifications/me', {}, usuario) as {
+  // `limit=100` y no la página por omisión: `GET /notifications/me` **pagina de
+  // a 20**, y estas pruebas van acumulando avisos sobre el mismo paciente. Sin
+  // esto, a partir del vigésimo la campana dejaba de traer el recién emitido y
+  // el fallo aparecía sólo al correr la suite entera, según qué se hubiera
+  // ejecutado antes.
+  const respuesta = llamar(
+    'GET',
+    '/notifications/me',
+    {},
+    usuario,
+    new URLSearchParams({ limit: '100' }),
+  ) as {
     items: { id: string; subject: string; bodyText: string; category: string; unread: boolean }[];
   };
   return respuesta.items;

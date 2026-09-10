@@ -15,6 +15,12 @@ export const OWNER_TYPES = [
   'TENANT',
   'CONDITION',
   'PROCEDURE',
+  // Los tres que el pedido de «adjuntos en todos los formularios» necesita. El
+  // backend todavía no los declara en su `OwnerType` (P25): la maqueta los
+  // sirve y contra la API real el vínculo responde 400 hasta que existan.
+  'MEDICATION_REQUEST',
+  'ALLERGY_INTOLERANCE',
+  'ENCOUNTER',
 ] as const;
 
 /**

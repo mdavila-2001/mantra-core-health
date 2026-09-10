@@ -172,6 +172,19 @@ describe('AgendaCreate', () => {
 
   afterEach(() => http.verify());
 
+  /**
+   * Contesta el retiro del horario vigente, que desde el arreglo del cierre de
+   * turnos precede a toda publicación de un cambio.
+   */
+  function retirarVigente(id = 'tpl-1'): void {
+    http.expectOne(`/scheduling/templates/${id}`).flush({
+      id,
+      statusConceptId: 'archived',
+      releasedSlots: 24,
+      keptSlots: 0,
+    });
+  }
+
   /** Enciende el lunes con su horario por defecto (9 a 13, 30 minutos). */
   function encenderLunes(): void {
     acc.alternarDia(0);
@@ -222,6 +235,59 @@ describe('AgendaCreate', () => {
         { dayOfWeek: 4, startTime: '15:00:00', endTime: '19:00:00', slotMinutes: 20 },
       ],
     };
+
+    /**
+     * El defecto que reportó el cliente: «la cita no acaba a la hora que
+     * debería». Publicar un cambio creaba una plantilla más y dejaba viva la
+     * anterior; como `generate-slots` es idempotente **por instante de
+     * inicio**, el cupo viejo de las 08:00 sobrevivía con su fin viejo.
+     */
+    it('cambiar el horario retira el vigente ANTES de crear el nuevo', () => {
+      crearConHorarioVigente(VIGENTE);
+      acc.publicar();
+
+      const retiro = http.expectOne('/scheduling/templates/tpl-1');
+      expect(retiro.request.method).toBe('DELETE');
+      // Todavía no se creó nada: el orden es lo que impide dos horarios vivos.
+      http.expectNone('/scheduling/resources/res-1/templates');
+
+      retiro.flush({
+        id: 'tpl-1',
+        statusConceptId: 'archived',
+        releasedSlots: 24,
+        keptSlots: 3,
+      });
+
+      http
+        .expectOne('/scheduling/resources/res-1/templates')
+        .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-2/generate-slots')
+        .flush({ templateId: 'tpl-2', created: 40, skipped: 0 });
+      fixture.detectChanges();
+    });
+
+    /**
+     * El 409 son citas de pacientes. Publicar igual las movería sin avisar, así
+     * que no se publica nada y el mensaje del servidor se muestra tal cual.
+     */
+    it('si el retiro responde 409, no crea la plantilla nueva', () => {
+      crearConHorarioVigente(VIGENTE);
+      acc.publicar();
+
+      http.expectOne('/scheduling/templates/tpl-1').flush(
+        {
+          code: 'CONFLICT',
+          message: 'El horario tiene 3 citas comprometidas: resolvelas antes de cambiarlo.',
+          details: { bookingIds: ['b-1', 'b-2', 'b-3'] },
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+      fixture.detectChanges();
+
+      http.expectNone('/scheduling/resources/res-1/templates');
+      expect(fixture.nativeElement.textContent).toContain('citas comprometidas');
+    });
 
     it('la pantalla se presenta como un cambio, no como un alta', () => {
       crearConHorarioVigente(VIGENTE);
@@ -274,6 +340,7 @@ describe('AgendaCreate', () => {
 
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
+      retirarVigente();
       http
         .expectOne('/scheduling/resources/res-1/templates')
         .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
@@ -299,6 +366,7 @@ describe('AgendaCreate', () => {
       // el defecto que este carril arregla — «Cambiar mi horario» dejaba al
       // médico con dos agendas y a los pacientes viendo los turnos de las dos.
       http.expectNone((r) => r.url === '/scheduling/resources' && r.method === 'POST');
+      retirarVigente();
       http
         .expectOne('/scheduling/resources/res-1/templates')
         .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
@@ -406,9 +474,11 @@ describe('AgendaCreate', () => {
       // El número de la fila y el de la vista previa son el MISMO cálculo. Lo
       // que esta prueba impide es que vuelvan a separarse.
       expect(acc.turnosDelDia(0)).toBe(5);
-      expect(texto).toContain('Lunes: 5 turnos');
-      // Y los arranques llevan el paso completo: 30 + 15.
-      expect(texto).toContain('09:45');
+      expect(texto).toContain('Lunes:');
+      // Y el paso completo —30 + 15— se ve en el cierre: sin contar el
+      // respiro, cinco turnos de 30 cerrarían a las 11:30, no a las 12:30.
+      expect(texto).toContain('de 09:00 a 12:30');
+      expect(texto).toContain('5 turnos de 30 min');
     });
 
     it('el resumen nombra el respiro sólo cuando lo hay', () => {

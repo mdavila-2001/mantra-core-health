@@ -35,8 +35,13 @@ export interface CondicionSimulada {
   readonly clinicalStatusConceptId: string;
   readonly verificationStatusConceptId: string;
   readonly severityConceptId: string;
+  readonly lateralityConceptId?: string;
+  /** Curso clínico: agudo, crónico, subagudo, recurrente (Patch v4.0.8). */
+  readonly clinicalCourseConceptId?: string;
   readonly encounterId?: string;
   readonly onsetAt: string;
+  /** Fecha esperada de resolución. Sólo tiene sentido en curso agudo o subagudo. */
+  readonly expectedResolutionAt?: string;
   readonly resolvedAt?: string;
   readonly noteText: string;
   readonly createdAt: string;
@@ -50,6 +55,20 @@ export interface AlergiaSimulada {
   readonly categoryConceptId: string;
   readonly criticalityConceptId: string;
   readonly clinicalStatusConceptId: string;
+  /**
+   * La consulta en la que se detectó.
+   *
+   * ⚠️ **La columna no existe en el backend**: `allergy_intolerances` no tiene
+   * `encounter_id` ni el DTO lo acepta. Ver P26.
+   */
+  readonly encounterId?: string;
+  /** Qué le pasó a la persona. Al menos una manifestación por reacción. */
+  readonly reactions?: readonly {
+    readonly id: string;
+    readonly manifestationConceptId: string;
+    readonly severityConceptId?: string;
+    readonly description?: string;
+  }[];
   readonly createdAt: string;
 }
 
@@ -57,6 +76,12 @@ export interface RecetaSimulada {
   readonly id: string;
   readonly patientProfileId: string;
   readonly medicationConceptId: string;
+  /** La consulta en la que se prescribió, si nació de una. */
+  readonly encounterId?: string;
+  /** El diagnóstico que la motiva (v4.1.6). */
+  readonly indicationConditionId?: string;
+  /** El motivo escrito a mano, cuando no hay diagnóstico detrás. Ver P24. */
+  readonly indicationText?: string;
   readonly statusConceptId: string;
   readonly prescriberProfileId: string;
   readonly doseText: string;
@@ -226,6 +251,16 @@ export const recetas = new Coleccion<RecetaSimulada>(
       medicationConceptId: MEDICAMENTO[med]!,
       statusConceptId: ESTADO_RECETA[estado]!,
       prescriberProfileId: i === 0 ? MEDICA.id : PROFESIONALES[(k + i) % 5]!.id,
+      // La primera receta de cada persona cuelga de su primer diagnóstico, y la
+      // segunda dice su motivo a mano: son los dos caminos que la tabla del
+      // expediente tiene que poder mostrar. Sin datos así, la columna
+      // «Diagnóstico» no aparecía nunca y no se podía ver el pedido cumplido.
+      ...(i === 0
+        ? {
+            encounterId: uuid(`encounter-${p.id}-0`),
+            indicationConditionId: uuid(`condition-${p.id}-${perfilClinicoDe(p).dx[0]?.[0] ?? ''}`),
+          }
+        : { indicationText: 'Control sintomático' }),
       doseText: dosis,
       frequencyText: frecuencia,
       validFrom: isoDia(estado === 'RX-ACTIVE' ? -20 - i * 3 : -120),

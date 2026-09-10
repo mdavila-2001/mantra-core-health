@@ -329,6 +329,19 @@ describe('PatientChart', () => {
    */
   describe('adjuntar un archivo a un diagnóstico ya registrado (ALV-033)', () => {
     /**
+     * `abrirAdjuntos` recibe la fila y su bloque: de la fila salen el id y el
+     * título del modal, y del bloque la ruta del vínculo y el tipo de dueño.
+     * Sólo se leen esos dos campos, así que la prueba no arma una fila entera.
+     */
+    function abridorDeAdjuntos(): (id: string, principal: string, bloque: string) => void {
+      const abrir =
+        interno<(fila: { id: string; principal: string }, bloque: string) => void>(
+          'abrirAdjuntos',
+        );
+      return (id, principal, bloque) => abrir({ id, principal }, bloque);
+    }
+
+    /**
      * Abre y cierra, ya no alterna: el subidor vive en un modal, y un botón de
      * menú que cerrara el modal que está encima de él no tendría sentido —el
      * modal se cierra por su propia salida—.
@@ -337,18 +350,19 @@ describe('PatientChart', () => {
       responderNombre();
       responderExpediente();
 
-      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBeNull();
+      const abrir = abridorDeAdjuntos();
+      expect(interno<() => unknown>('adjuntandoA')()).toBeNull();
 
-      interno<(id: string) => void>('abrirAdjuntos')('c-1');
-      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBe('c-1');
+      abrir('c-1', 'Diabetes tipo 2', 'diagnosticos');
+      expect(interno<() => { id: string } | null>('adjuntandoA')()?.id).toBe('c-1');
 
       // Volver a pedirlo sobre la misma fila no lo cierra: un método que
       // conmutaba era justamente lo que abría la tabla en dos.
-      interno<(id: string) => void>('abrirAdjuntos')('c-1');
-      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBe('c-1');
+      abrir('c-1', 'Diabetes tipo 2', 'diagnosticos');
+      expect(interno<() => { id: string } | null>('adjuntandoA')()?.id).toBe('c-1');
 
       interno<() => void>('cerrarAdjuntos')();
-      expect(interno<() => string | null>('adjuntandoArchivoA')()).toBeNull();
+      expect(interno<() => unknown>('adjuntandoA')()).toBeNull();
     });
 
     /** El menú deja de deformar la tabla: la celda ya no despliega nada. */
@@ -357,7 +371,7 @@ describe('PatientChart', () => {
       responderExpediente();
       harness.fixture.detectChanges();
 
-      interno<(id: string) => void>('abrirAdjuntos')('c-1');
+      abridorDeAdjuntos()('c-1', 'Diabetes tipo 2', 'diagnosticos');
       harness.fixture.detectChanges();
 
       const raiz = harness.fixture.nativeElement as HTMLElement;
@@ -367,40 +381,72 @@ describe('PatientChart', () => {
     });
 
     /**
-     * El lote hereda paciente, diagnóstico y encuentro del registro padre, y el
-     * modal los **muestra**: el vínculo lo da `attachFileToCondition`, no un
-     * campo que alguien vuelva a elegir.
+     * El lote hereda paciente, el registro padre y los vínculos que ese
+     * registro ya resolvió, y el modal los **muestra**: el vínculo lo da la
+     * ruta de `clinical`, no un campo que alguien vuelva a elegir.
      */
-    it('el contexto del lote sale del diagnóstico padre y de su encuentro', () => {
+    it('el contexto del lote sale del registro padre y de sus vínculos', () => {
       responderNombre();
       responderExpediente();
 
-      interno<(id: string) => void>('abrirAdjuntos')('c-1');
+      abridorDeAdjuntos()('c-1', 'Diabetes tipo 2', 'diagnosticos');
 
       const contexto =
         interno<() => readonly { rotulo: string; valor: string }[]>('contextoDeLosAdjuntos')();
 
-      expect(contexto.map((dato) => dato.rotulo)).toEqual([
-        'Paciente',
-        'Diagnóstico',
-        'Encuentro',
-      ]);
+      expect(contexto.map((dato) => dato.rotulo)).toEqual(['Paciente', 'Registro', 'Encuentro']);
       expect(contexto[1]?.valor).toBe('Diabetes tipo 2');
     });
 
-    it('el vínculo del adjunto pasa por `clinical`, no por el genérico de `common`', () => {
+    /**
+     * Cada bloque liga por **su** ruta de `clinical`: el genérico de `common` no
+     * exige rol ni verifica que el dueño exista, y esto es dato clínico.
+     */
+    it('el vínculo pasa por la ruta de `clinical` del bloque, no por la genérica', () => {
       responderNombre();
       responderExpediente();
 
-      const enlazar =
-        interno<(fileId: string, conditionId: string) => { subscribe: (o: unknown) => void }>(
-          'enlazarAdjuntoAlDiagnostico',
-        );
-      enlazar('file-1', 'c-1').subscribe({ next: () => undefined });
+      const abrir = abridorDeAdjuntos();
+      const enlazar = interno<
+        (fileId: string, ownerId: string) => { subscribe: (o: unknown) => void }
+      >('enlazarAdjunto');
 
+      abrir('c-1', 'Diabetes tipo 2', 'diagnosticos');
+      enlazar('file-1', 'c-1').subscribe({ next: () => undefined });
       http
         .expectOne('/clinical/conditions/c-1/attachments')
         .flush({ id: 'link-1', fileId: 'file-1', ownerId: 'c-1', createdAt: '2026-01-01' });
+
+      abrir('rx-1', 'Enalapril', 'medicacion');
+      enlazar('file-2', 'rx-1').subscribe({ next: () => undefined });
+      http
+        .expectOne('/clinical/medication-requests/rx-1/attachments')
+        .flush({ id: 'link-2', fileId: 'file-2', ownerId: 'rx-1', createdAt: '2026-01-01' });
+
+      abrir('al-1', 'Penicilina', 'alergias');
+      enlazar('file-3', 'al-1').subscribe({ next: () => undefined });
+      http
+        .expectOne('/clinical/allergy-intolerances/al-1/attachments')
+        .flush({ id: 'link-3', fileId: 'file-3', ownerId: 'al-1', createdAt: '2026-01-01' });
+    });
+
+    /** El tipo de dueño acompaña al bloque; el encuentro cae al genérico. */
+    it('el tipo de dueño sale del bloque de la fila', () => {
+      responderNombre();
+      responderExpediente();
+
+      const abrir = abridorDeAdjuntos();
+      const dueno = interno<() => string>('duenoDelAdjunto');
+      const enlace = interno<() => unknown>('enlaceDelAdjunto');
+
+      abrir('rx-1', 'Enalapril', 'medicacion');
+      expect(dueno()).toBe('MEDICATION_REQUEST');
+      expect(enlace()).not.toBeNull();
+
+      abrir('enc-1', 'Consulta', 'encuentros');
+      expect(dueno()).toBe('ENCOUNTER');
+      // Los encuentros todavía no tienen ruta propia en `clinical`.
+      expect(enlace()).toBeNull();
     });
   });
 
