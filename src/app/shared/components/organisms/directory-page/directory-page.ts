@@ -56,6 +56,16 @@ export class DirectoryPage {
    */
   readonly subtitulo = input.required<string>();
 
+  /**
+   * Si va embebido en otro contenedor —hoy, el modal de consulta que abre
+   * «Tus accesos»—.
+   *
+   * Con `true` no dibuja su `app-page-header`. El resto de la anatomía no
+   * cambia: los mismos filtros, el mismo contador y la misma rejilla, para que
+   * el directorio dentro del modal no sea otro directorio.
+   */
+  readonly embebido = input(false);
+
   readonly filtros = input<readonly FilterDef[]>([]);
   readonly etiquetaBusqueda = input('Buscar en el directorio');
 

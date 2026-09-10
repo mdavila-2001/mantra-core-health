@@ -17,18 +17,21 @@ function textoDe(bloques: readonly { text: string }[]): string {
 const PERIODO: EvolucionesParaPdf = {
   profesional: 'Dra. Valeria Salas',
   dias: 30,
-  personas: [
+  filtro: null,
+  atenciones: [
     {
-      nombre: 'Ana Quispe',
+      cuando: new Date('2026-09-01T14:00:00.000Z'),
+      paciente: 'Ana Quispe',
       motivo: 'Dolor de garganta',
-      ultima: new Date('2026-09-01T14:00:00.000Z'),
-      cuantas: 3,
+      estado: 'Completada',
+      tipo: 'Consulta',
     },
     {
-      nombre: 'Luis Rojas',
+      cuando: new Date('2026-08-28T09:00:00.000Z'),
+      paciente: 'Luis Rojas',
       motivo: null,
-      ultima: new Date('2026-08-28T09:00:00.000Z'),
-      cuantas: 1,
+      estado: 'Llegó y no se cerró',
+      tipo: null,
     },
   ],
 };
@@ -60,7 +63,7 @@ describe('Documento de Evoluciones', () => {
     );
 
     expect(filas).toHaveLength(2);
-    expect(filas[1]?.cells?.[1]).toBe('No registrado');
+    expect(filas[1]?.cells?.[2]).toBe('No registrado');
   });
 
   it('la tabla lleva su fila de encabezado, para que las columnas se nombren', () => {
@@ -68,16 +71,11 @@ describe('Documento de Evoluciones', () => {
       (bloque) => bloque.kind === 'row' && bloque.header === true,
     );
 
-    expect(cabecera?.cells).toEqual([
-      'Paciente',
-      'Motivo de la última',
-      'Última atención',
-      'Atenciones',
-    ]);
+    expect(cabecera?.cells).toEqual(['Cuándo', 'Paciente', 'Motivo', 'Estado', 'Tipo']);
   });
 
   it('sin atenciones lo dice con palabras y no imprime una tabla vacía', () => {
-    const bloques = bloquesDeEvoluciones({ ...PERIODO, personas: [] });
+    const bloques = bloquesDeEvoluciones({ ...PERIODO, atenciones: [] });
 
     expect(textoDe(bloques)).toContain('No hay atenciones registradas');
     expect(bloques.some((bloque) => bloque.kind === 'row')).toBe(false);
@@ -91,5 +89,38 @@ describe('Documento de Evoluciones', () => {
 
   it('deja constancia de cuándo se generó', () => {
     expect(textoDe(bloquesDeEvoluciones(PERIODO))).toContain('Documento generado el');
+  });
+
+  /**
+   * El papel sale de la pantalla **tal como se está viendo**. Si hay un filtro
+   * puesto, quien lo recibe tiene que saber que mira un recorte antes de sacar
+   * cuentas: sin eso, «3 atenciones» se lee como «hubo 3».
+   */
+  it('con un filtro puesto, el papel dice cuál', () => {
+    const texto = textoDe(
+      bloquesDeEvoluciones({ ...PERIODO, filtro: 'estado Completada · búsqueda «quispe»' }),
+    );
+
+    expect(texto).toContain('Filtro aplicado');
+    expect(texto).toContain('estado Completada');
+  });
+
+  it('un filtro que no deja nada lo dice así, y no como un período vacío', () => {
+    const texto = textoDe(
+      bloquesDeEvoluciones({ ...PERIODO, atenciones: [], filtro: 'estado En curso' }),
+    );
+
+    expect(texto).toContain('coincide con el filtro');
+    expect(texto).not.toContain('No hay atenciones registradas');
+  });
+
+  it('sin filtro no inventa una línea de filtro', () => {
+    expect(textoDe(bloquesDeEvoluciones(PERIODO))).not.toContain('Filtro aplicado');
+  });
+
+  it('el estado de cada atención va en el papel', () => {
+    const texto = textoDe(bloquesDeEvoluciones(PERIODO));
+
+    expect(texto).toContain('Llegó y no se cerró');
   });
 });

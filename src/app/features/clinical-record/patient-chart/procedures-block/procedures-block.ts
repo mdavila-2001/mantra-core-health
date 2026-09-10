@@ -36,7 +36,7 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
+import { AttachmentDialog } from '../../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { Odontogram } from '../odontogram/odontogram';
 
@@ -137,7 +137,7 @@ export interface TratamientoEnPantalla {
     Alert,
     AppButton,
     AppInput,
-    AttachmentUploader,
+    AttachmentDialog,
     Badge,
     Card,
     DatePipe,
@@ -294,8 +294,8 @@ export class ProceduresBlock {
   protected readonly enlazarAdjuntoAlTratamiento = (fileId: string, procedureId: string) =>
     this.clinical.attachFileToProcedure(procedureId, fileId);
 
-  protected alternarAdjuntos(procedureId: string): void {
-    this.adjuntandoArchivoA.update((actual) => (actual === procedureId ? null : procedureId));
+  protected abrirAdjuntos(procedureId: string): void {
+    this.adjuntandoArchivoA.set(procedureId);
   }
 
   protected cerrarAdjuntos(): void {

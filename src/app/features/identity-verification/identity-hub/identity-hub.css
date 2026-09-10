@@ -5,3 +5,9 @@
   inline-size: 100%;
   margin-inline: auto;
 }
+
+.identidad__cargando {
+  margin: 0;
+  padding: var(--e4) 0;
+  color: var(--text-muted, var(--tinta-3));
+}

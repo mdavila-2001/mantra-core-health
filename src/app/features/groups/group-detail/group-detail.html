@@ -5,7 +5,17 @@
     variant="empty"
   />
 } @else if (grupo(); as g) {
-  <app-page-header [title]="g.name" [subtitle]="g.description ?? ''" />
+  <!-- Embebido no lleva encabezado propio: dentro del modal de Comunidades el
+       título lo pone el diálogo, y dos encabezados apilados dejan a cualquiera
+       sin saber dónde está. -->
+  @if (!embedded()) {
+    <app-page-header [title]="g.name" [subtitle]="g.description ?? ''" />
+  } @else {
+    <h3 class="grupo__titulo-embebido">{{ g.name }}</h3>
+    @if (g.description) {
+      <p class="grupo__bajada-embebida">{{ g.description }}</p>
+    }
+  }
 
   @if (error(); as mensaje) {
     <app-alert tone="error" class="grupo__alerta">{{ mensaje }}</app-alert>

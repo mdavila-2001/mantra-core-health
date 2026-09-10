@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NavigationService } from '../../../core/navigation/navigation.service';
+import { Spinner } from '../../../shared/components/atoms/spinner/spinner';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
@@ -44,7 +45,7 @@ const PESTANA = { verificar: 0, tramites: 1 } as const;
  */
 @Component({
   selector: 'app-identity-hub',
-  imports: [Card, IdentityVerification, PageHeader, Tab, Tabs, VerificationCases],
+  imports: [Card, IdentityVerification, PageHeader, Spinner, Tab, Tabs, VerificationCases],
   templateUrl: './identity-hub.html',
   styleUrl: './identity-hub.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

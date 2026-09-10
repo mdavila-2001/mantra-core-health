@@ -1,0 +1,51 @@
+<!-- `dismissible` sigue a la cola: con archivos elegidos y sin mandar, los tres
+     gestos de cierre pasan por `dismissAttempt` y preguntan. -->
+<app-content-dialog
+  [heading]="heading()"
+  [description]="description()"
+  size="lg"
+  [dismissible]="sePuedeCerrarSolo()"
+  (dismissAttempt)="alIntentarCerrar()"
+  (closed)="closed.emit()"
+>
+  <app-attachment-uploader
+    [ownerType]="ownerType()"
+    [ownerId]="ownerId()"
+    [contexto]="contexto()"
+    [linkVia]="linkVia()"
+    [showActions]="false"
+    (attached)="alAdjuntar()"
+    (progressed)="progressed.emit()"
+  />
+
+  <!-- El pie del modal: fuera del cuerpo con scroll, así el botón que envía no
+       se busca al final de una cola de doce archivos. -->
+  <!-- Un `<ng-container>` y no los dos botones sueltos: con más de un nodo en la
+       raíz del `@if`, Angular no los proyecta al slot del pie (NG8011) y
+       terminaban dibujados en el cuerpo, debajo de la cola de archivos. -->
+  @if (uploader(); as carga) {
+    <ng-container dialog-actions>
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        data-testid="adjuntar-cancelar"
+        [disabled]="carga.enviando()"
+        (clicked)="alIntentarCerrar()"
+      >
+        Cancelar
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="adjuntar-confirmar"
+        [isLoading]="carga.enviando()"
+        [disabled]="!carga.puedeSubir()"
+        (clicked)="carga.subir()"
+      >
+        {{ carga.rotuloDeEnvio() }}
+      </button>
+    </ng-container>
+  }
+</app-content-dialog>

@@ -12,7 +12,6 @@ import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { ActivateAccount } from './features/auth/activate-account/activate-account';
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
-import { IdentityHub } from './features/identity-verification/identity-hub/identity-hub';
 import { NotFound } from './features/not-found/not-found';
 import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
@@ -58,7 +57,6 @@ function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
  */
 const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
   dashboard: Dashboard,
-  'my-account/identity': IdentityHub,
 };
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
@@ -199,6 +197,21 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // FAR-I7: las campañas de la farmacia. Ruta hermana de la bandeja y no una
   // sección dentro del panel de organización, por el mismo motivo que aquélla:
   // el panel es de TP-1 y así no se le toca una línea.
+  // **La verificación de identidad dejó de ir directa** (2026-09-10). Iba, y el
+  // motivo era bueno mientras la ruta apuntaba a una pantalla sola: es la salida
+  // del 403 `IDENTITY_VERIFICATION_REQUIRED`, y diferirla agrega una descarga
+  // donde alguien ya está esperando.
+  //
+  // Al unificarla con «Mis trámites» dejó de ser una pantalla y pasó a ser un
+  // centro con pestañas, y con él entraron al paquete inicial las pestañas y la
+  // tarjeta. El bundle quedó **9 kB por encima del techo de `angular.json`** y el
+  // build pasó a fallar. El reparto correcto cambió con el tamaño: la descarga
+  // la paga una vez quien cae en un 403 —un camino de error, ya interrumpido— en
+  // vez de pagarla **toda** primera visita a la aplicación.
+  'my-account/identity': () =>
+    import('./features/identity-verification/identity-hub/identity-hub').then(
+      (m) => m.IdentityHub,
+    ),
   'administration/my-practice': () =>
     import('./features/practice/my-practice/my-practice').then((m) => m.MyPractice),
   'administration/pharmacy-campaigns': () =>

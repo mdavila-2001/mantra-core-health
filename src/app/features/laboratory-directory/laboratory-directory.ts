@@ -5,6 +5,7 @@ import {
   DestroyRef,
   effect,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink, type Params } from '@angular/router';
@@ -161,6 +162,15 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LaboratoryDirectory {
+  /**
+   * Si va embebido en otro contenedor —el modal de consulta de «Tus accesos»—.
+   *
+   * Con `true` no dibuja encabezado de página: ni el de la portada de
+   * categorías ni el de `app-directory-page`. El recorrido es el mismo, la
+   * ruta sigue existiendo y sigue abriendo la pantalla completa.
+   */
+  readonly embebido = input(false);
+
   private readonly units = inject(DiagnosticUnitsClient);
   private readonly route = inject(ActivatedRoute);
 

@@ -190,19 +190,11 @@
                   size="sm"
                   type="button"
                   data-testid="odontologia-adjuntar-archivo"
-                  (clicked)="alternarAdjuntos(tratamiento.id)"
+                  (clicked)="abrirAdjuntos(tratamiento.id)"
                 >
-                  {{ adjuntandoArchivoA() === tratamiento.id ? 'Cerrar adjuntos' : 'Adjuntar archivo' }}
+                  Adjuntar archivo…
                 </button>
               </div>
-              @if (adjuntandoArchivoA() === tratamiento.id) {
-                <app-attachment-uploader
-                  ownerType="PROCEDURE"
-                  [ownerId]="tratamiento.id"
-                  [linkVia]="enlazarAdjuntoAlTratamiento"
-                  (attached)="cerrarAdjuntos()"
-                />
-              }
             </li>
           }
         </ol>
@@ -291,4 +283,16 @@
     }
   </div>
 </app-card>
+}
+
+<!-- El subidor se desplegaba DENTRO del renglón del tratamiento y la lista
+     crecía de golpe. Adjuntar pide datos: va en modal. -->
+@if (adjuntandoArchivoA(); as procedureId) {
+  <app-attachment-dialog
+    ownerType="PROCEDURE"
+    [ownerId]="procedureId"
+    [linkVia]="enlazarAdjuntoAlTratamiento"
+    heading="Adjuntar un archivo al tratamiento"
+    (closed)="cerrarAdjuntos()"
+  />
 }

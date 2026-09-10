@@ -71,8 +71,48 @@
     overscroll-behavior: contain;
 }
 
+/* -- El pie de acciones ----------------------------------------------------
+   Fuera del cuerpo: se ve con el formulario a medio recorrer. `:empty` deja
+   sin dibujar el modal que no proyecta acciones —los siete usos anteriores—,
+   así que ni el borde ni el espacio aparecen donde no había pie. */
+.content-dialog__pie:empty {
+    display: none;
+}
+
+.content-dialog__pie {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--sp-3);
+    padding: var(--sp-4) var(--sp-5);
+    border-block-start: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    border-end-start-radius: var(--r-lg);
+    border-end-end-radius: var(--r-lg);
+}
+
+/* -- Anchos de referencia --------------------------------------------------
+   Cuatro medidas y no una: un formulario de dos campos en 58rem queda perdido
+   y una conversación de grupo en 30rem no se lee. En teléfono no aplica
+   ninguna —el modal ocupa casi toda la pantalla—, porque la medida es un techo
+   y no un piso. */
 @media (min-width: 48rem) {
     .content-dialog {
+        inline-size: 46rem;
+        max-inline-size: min(92vw, 46rem);
+    }
+
+    .content-dialog[data-size='sm'] {
+        inline-size: 27.5rem;
+        max-inline-size: min(92vw, 27.5rem);
+    }
+
+    .content-dialog[data-size='md'] {
+        inline-size: 44rem;
+        max-inline-size: min(92vw, 44rem);
+    }
+
+    .content-dialog[data-size='lg'] {
         inline-size: 46rem;
         max-inline-size: min(92vw, 46rem);
     }
@@ -82,6 +122,26 @@
     .content-dialog {
         inline-size: 58rem;
         max-inline-size: min(90vw, 58rem);
+    }
+
+    .content-dialog[data-size='sm'] {
+        inline-size: 27.5rem;
+        max-inline-size: min(90vw, 27.5rem);
+    }
+
+    .content-dialog[data-size='md'] {
+        inline-size: 47.5rem;
+        max-inline-size: min(90vw, 47.5rem);
+    }
+
+    .content-dialog[data-size='lg'] {
+        inline-size: 57.5rem;
+        max-inline-size: min(90vw, 57.5rem);
+    }
+
+    .content-dialog[data-size='xl'] {
+        inline-size: 70rem;
+        max-inline-size: min(90vw, 70rem);
     }
 }
 

@@ -19,27 +19,13 @@
        ofrecerse después de guardar —adjuntar exige que la condición ya
        exista— y no desaparece solo: el archivo puede tardar en elegirse. -->
   @if (diagnosticoRecienRegistrado(); as conditionId) {
-    <app-card variant="outlined" padding="lg" class="diagnostico__adjuntos">
-      <div class="diagnostico__adjuntos-encabezado">
-        <h3 class="diagnostico__adjuntos-titulo">Adjuntar un archivo a este diagnóstico</h3>
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          type="button"
-          data-testid="diagnostico-adjuntos-cerrar"
-          (clicked)="cerrarAdjuntos()"
-        >
-          Listo, sin adjuntar
-        </button>
-      </div>
-      <app-attachment-uploader
-        ownerType="CONDITION"
-        [ownerId]="conditionId"
-        [linkVia]="enlazarAdjuntoAlDiagnostico"
-        (attached)="cerrarAdjuntos()"
-      />
-    </app-card>
+    <app-attachment-dialog
+      ownerType="CONDITION"
+      [ownerId]="conditionId"
+      [linkVia]="enlazarAdjuntoAlDiagnostico"
+      heading="Adjuntar un archivo a este diagnóstico"
+      (closed)="cerrarAdjuntos()"
+    />
   }
 
   <!-- ─── Registrar ────────────────────────────────────────────────────

@@ -1,0 +1,170 @@
+<!-- ═══ Comunidades ═════════════════════════════════════════════════════════
+     Tres niveles dentro del mismo modal: comunidades → comunidad → grupo. La
+     navegación es por niveles y no por rutas, así que cerrar devuelve la
+     pantalla de atrás tal como estaba.
+
+     En escritorio la lista de comunidades se queda a la izquierda mientras se
+     mira una: es la distribución interna del modal, no un cajón lateral de la
+     aplicación. En teléfono se navega de a un nivel. -->
+
+@if (error(); as mensaje) {
+  <app-alert tone="error" class="comunidades__alerta">{{ mensaje }}</app-alert>
+}
+
+@if (tenantId() === null) {
+  <!-- Una puerta, no un error: los grupos son por organización, y adivinar una
+       mostraría los de la equivocada. -->
+  <app-empty-state
+    title="Elegí una organización"
+    description="Las comunidades son de cada organización. Elegí una desde el encabezado para ver las suyas."
+    variant="empty"
+  />
+} @else if (vacio()) {
+  <app-empty-state
+    title="Todavía no hay comunidades"
+    description="Una comunidad reúne los grupos de un mismo tema. Cuando la organización publique temas, aparecen acá."
+    variant="empty"
+  />
+} @else {
+  <div class="comunidades" [attr.data-nivel]="nivel()">
+    <!-- ─── El listado de comunidades ──────────────────────────────────── -->
+    <section class="comunidades__lista" aria-label="Comunidades">
+      <app-search-field
+        label="Buscar comunidades"
+        placeholder="Buscar por nombre"
+        [(value)]="busqueda"
+        (searched)="buscar($event)"
+      />
+
+      @if (comunidadesVisibles().length === 0) {
+        <p class="comunidades__sin-resultados">Ninguna comunidad coincide con esa búsqueda.</p>
+      }
+
+      <ul class="comunidades__items">
+        @for (comunidad of comunidadesVisibles(); track comunidad.tema.id) {
+          <li>
+            <button
+              type="button"
+              class="comunidades__item"
+              data-testid="comunidad"
+              [class.is-abierta]="estaAbierta(comunidad)"
+              [attr.aria-current]="estaAbierta(comunidad) ? 'true' : null"
+              (click)="abrirComunidad(comunidad)"
+            >
+              <!-- Iniciales y no una imagen inventada: el tema no tiene
+                   portada en el contrato. -->
+              <span class="comunidades__sigla" aria-hidden="true">
+                {{ iniciales(comunidad.tema.name) }}
+              </span>
+              <span class="comunidades__texto">
+                <span class="comunidades__nombre">{{ comunidad.tema.name }}</span>
+                @if (comunidad.temas.length > 1) {
+                  <span class="comunidades__meta">
+                    {{ comunidad.temas.length }} secciones
+                  </span>
+                }
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <!-- ─── La comunidad abierta ───────────────────────────────────────── -->
+    <section class="comunidades__panel" aria-label="Comunidad">
+      @if (comunidadAbierta(); as comunidad) {
+        @if (grupoAbierto(); as grupo) {
+          <!-- La conversación, DENTRO del modal. No debajo de la fila del grupo
+               ni en otra pantalla. Es el mismo componente que la pantalla del
+               grupo: mismo muro, mismos hilos, mismos permisos. -->
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            type="button"
+            data-testid="comunidades-volver-grupo"
+            (clicked)="volver()"
+          >
+            Volver a {{ comunidad.tema.name }}
+          </button>
+
+          <app-group-detail [groupId]="grupo.id" [embedded]="true" />
+        } @else {
+          <header class="comunidades__cabecera">
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              class="comunidades__volver-movil"
+              data-testid="comunidades-volver-comunidad"
+              (clicked)="volver()"
+            >
+              Volver a comunidades
+            </button>
+            <h3 class="comunidades__titulo">{{ comunidad.tema.name }}</h3>
+          </header>
+
+          <!-- ── Anuncios ──────────────────────────────────────────────────
+               El espacio existe y está diferenciado de las conversaciones,
+               pero su contenido necesita un tipo de canal que el dominio no
+               tiene: los tipos de grupo son GENERAL y SUPPORT, y ninguno es un
+               tablón de anuncios. Se dice, en vez de disfrazar de anuncios el
+               muro del primer grupo. -->
+          <section class="comunidades__anuncios" aria-label="Anuncios">
+            <h4 class="comunidades__subtitulo">Anuncios</h4>
+            <app-alert tone="info" title="Esta comunidad todavía no tiene canal de anuncios">
+              Los anuncios son un canal aparte de las conversaciones de grupo. La plataforma
+              todavía no tiene ese tipo de canal, así que acá no hay nada que mostrar — y no se
+              muestra el muro de un grupo en su lugar.
+            </app-alert>
+          </section>
+
+          <!-- ── Los grupos de la comunidad ──────────────────────────────── -->
+          <section class="comunidades__grupos" aria-label="Grupos de la comunidad">
+            <h4 class="comunidades__subtitulo">Grupos</h4>
+
+            @if (cargandoGrupos()) {
+              <p class="comunidades__cargando">Cargando los grupos de la comunidad…</p>
+            } @else if (sinGrupos()) {
+              <app-empty-state
+                title="Esta comunidad todavía no tiene grupos"
+                description="Cuando se cree un grupo con este tema, aparece acá."
+                variant="empty"
+              />
+            } @else {
+              <ul class="comunidades__grupos-lista">
+                @for (grupo of gruposDeLaComunidad(); track grupo.id) {
+                  <li>
+                    <app-card>
+                      <button
+                        type="button"
+                        class="comunidades__grupo"
+                        data-testid="comunidad-grupo"
+                        (click)="abrirGrupo(grupo)"
+                      >
+                        <span class="comunidades__grupo-nombre">{{ grupo.name }}</span>
+                        @if (grupo.description) {
+                          <span class="comunidades__grupo-descripcion">{{ grupo.description }}</span>
+                        }
+                        <!-- La cifra sale del servicio; no se inventa actividad
+                             ni «conectados» para llenar la tarjeta. -->
+                        <span class="comunidades__grupo-meta">
+                          {{ grupo.memberCount ?? 0 }} integrantes
+                        </span>
+                      </button>
+                    </app-card>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        }
+      } @else {
+        <p class="comunidades__invitacion">
+          Elegí una comunidad para ver sus anuncios y sus grupos.
+        </p>
+      }
+    </section>
+  </div>
+}

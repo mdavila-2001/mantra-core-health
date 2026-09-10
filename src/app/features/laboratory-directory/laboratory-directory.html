@@ -8,14 +8,16 @@
 
        Las categorías salen de los centros ya cargados, con su cuenta: una que
        no tenga ninguno no se dibuja. -->
-  <app-page-header
-    title="Directorio de laboratorios"
-    [subtitle]="
-      'Elegí qué necesitás hacerte. ' +
-      totalDeCentros() +
-      ' centros verificados en la red.'
-    "
-  />
+  @if (!embebido()) {
+    <app-page-header
+      title="Directorio de laboratorios"
+      [subtitle]="
+        'Elegí qué necesitás hacerte. ' +
+        totalDeCentros() +
+        ' centros verificados en la red.'
+      "
+    />
+  }
 
   <app-view-state-host [state]="state()" (retry)="retry()">
     <ul class="rejilla" data-testid="portada-categorias">
@@ -53,6 +55,7 @@
   </a>
 
   <app-directory-page
+    [embebido]="embebido()"
     titulo="Directorio de laboratorios"
     subtitulo="Centros verificados de esta categoría, de toda la red. Tocá un chip para acotar."
     etiquetaBusqueda="Buscar por nombre o código del centro"
