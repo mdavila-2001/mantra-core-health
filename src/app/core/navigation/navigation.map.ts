@@ -1408,4 +1408,31 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Las campañas de tu farmacia: qué productos, con qué descuento y hasta cuándo.',
     module: 'M51 promotions',
   },
+  {
+    // La ficha legal de la farmacia: lo que la empresa es en los papeles —sus
+    // datos de registro, su carpeta de documentos y quién responde por ella—.
+    // No es la bandeja ni las promociones: es la farmacia mirándose a sí misma.
+    //
+    // Mismo criterio de acceso que sus dos hermanas: la membresía manda (claim
+    // `tenants`), no un rol del token — no existe un rol de farmacia minorista,
+    // y owner/admin/staff son filas de `tenant_memberships` que el front no
+    // decodifica.
+    path: 'administration/pharmacy-profile',
+    // §4.H · fuera del menú del médico: la ficha legal la lleva quien
+    // administra la farmacia, no el consultorio.
+    fueraDelMenuPara: ['PRACTITIONER'],
+    roles: [ANY_ROLE],
+    // Y no existe para el paciente. `requiresTenant` no alcanza: el alta de
+    // paciente lo afilia al tenant por defecto, así que cumple la condición y
+    // sin esto la ficha legal de una farmacia le aparecía en el menú.
+    hiddenFor: ['PATIENT'],
+    label: 'Ficha de la farmacia',
+    group: 'Administración',
+    // `building` y no `bag`: la bolsa es el mostrador, esto es la empresa.
+    icon: 'building',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Los datos legales de tu farmacia, su carpeta de documentos y sus responsables.',
+    module: 'M24 pharmacy',
+  },
 ];

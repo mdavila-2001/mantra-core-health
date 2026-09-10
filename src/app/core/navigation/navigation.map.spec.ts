@@ -122,6 +122,7 @@ describe('APP_SECTIONS', () => {
       'administration/my-organization',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
+      'administration/pharmacy-profile',
     ];
 
     for (const ruta of paraElMostrador) {
