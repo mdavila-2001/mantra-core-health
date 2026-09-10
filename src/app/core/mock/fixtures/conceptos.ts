@@ -503,6 +503,43 @@ export const ESTADO_CONDICION = definir('VS_CONDITION_CLINICAL_STATUS', [
   ['COND-RECURRENCE', 'Recurrente'],
 ]);
 
+/* Los tres catálogos del diagnóstico que faltaban, con **los códigos del
+   backend** (`clinical.concepts.ts`) y no con unos inventados: el bloque de
+   diagnóstico traduce por código —`ETIQUETAS_DE_CURSO`, `ETIQUETAS_DE_CATEGORIA`,
+   `ETIQUETAS_DE_LATERALIDAD`—, así que un código distinto deja el selector
+   mostrando el `display` en inglés. Es la misma clase de defecto que ya mordió
+   con los departamentos, las especialidades y las ocupaciones. */
+
+conjunto(
+  'VS_CONDITION_CLINICAL_COURSE',
+  'Curso clínico del diagnóstico',
+  'Si la condición es aguda —con resolución esperada— o crónica —seguimiento continuo—. Eje distinto del estado clínico.',
+);
+export const CURSO_CLINICO = definir('VS_CONDITION_CLINICAL_COURSE', [
+  ['COND_COURSE_ACUTE', 'Aguda'],
+  ['COND_COURSE_CHRONIC', 'Crónica'],
+  ['COND_COURSE_SUBACUTE', 'Subaguda'],
+  ['COND_COURSE_RECURRENT', 'Recurrente'],
+  ['COND_COURSE_UNKNOWN', 'Sin determinar'],
+]);
+
+conjunto(
+  'VS_CONDITION_CATEGORY',
+  'Categoría del diagnóstico',
+  'Si el registro es un diagnóstico del encuentro o un problema de la lista.',
+);
+export const CATEGORIA_CONDICION = definir('VS_CONDITION_CATEGORY', [
+  ['COND_DIAGNOSIS', 'Diagnóstico del encuentro'],
+  ['COND_PROBLEM', 'Problema de la lista'],
+]);
+
+conjunto('VS_CONDITION_LATERALITY', 'Lateralidad', 'Lado del cuerpo afectado, cuando aplica.');
+export const LATERALIDAD = definir('VS_CONDITION_LATERALITY', [
+  ['COND_LAT_LEFT', 'Izquierda'],
+  ['COND_LAT_RIGHT', 'Derecha'],
+  ['COND_LAT_BILATERAL', 'Bilateral'],
+]);
+
 conjunto('VS_CONDITION_VERIFICATION', 'Verificación diagnóstica', 'Certeza del diagnóstico.');
 export const VERIFICACION_DX = definir('VS_CONDITION_VERIFICATION', [
   ['DXV-CONFIRMED', 'Confirmado'],
