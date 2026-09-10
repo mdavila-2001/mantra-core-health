@@ -17,6 +17,8 @@ import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Chip } from '../../../../shared/components/atoms/chip/chip';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
@@ -135,6 +137,21 @@ const DURACIONES_DEL_DIAGNOSTICO: readonly { readonly dias: number | null; reado
     { dias: null, label: 'Crónico — seguimiento continuo' },
   ];
 
+/**
+ * Una cita del paciente, como opción para «¿en qué cita se detectó?».
+ *
+ * La arma quien hospeda al bloque: la atención la saca del encuentro en curso y
+ * el expediente, de la historia entera. Acá sólo se elige.
+ */
+export interface CitaDelPaciente {
+  /** El `clinical.encounters.id`, que es lo que viaja como `encounterId`. */
+  readonly id: string;
+  /** La cita en palabras: «9 sept 2026, 08:00 · Chequeo anual». */
+  readonly etiqueta: string;
+  /** Si sigue abierta. La que está en curso se preselecciona. */
+  readonly enCurso: boolean;
+}
+
 /** La fecha de hoy corrida `dias` hacia adelante. */
 function enDias(dias: number): Date {
   const fecha = new Date();
@@ -191,6 +208,7 @@ function enDias(dias: number): Date {
     Alert,
     AppButton,
     Chip,
+    Select,
     AttachmentUploader,
     Badge,
     Card,
@@ -221,6 +239,28 @@ export class DiagnosisBlock {
    */
   readonly encounterId = input<string | null>(null);
 
+  /**
+   * Las citas del paciente, para elegir en cuál se detectó la condición.
+   *
+   * El cliente lo pidió por nombre: «un campo select para colocar la enfermedad
+   * detectada en base a una cita ya existente y/o finalizada». El contrato ya
+   * acepta `encounterId` desde siempre; lo que faltaba era ofrecerlo.
+   *
+   * Vacío es un estado legítimo —se entra al expediente sin pasar por la
+   * agenda— y entonces el campo no se dibuja: un desplegable de una sola opción
+   * vacía es una pregunta que no existe.
+   */
+  readonly citas = input<readonly CitaDelPaciente[]>([]);
+
+  /**
+   * Si el bloque exige un encuentro abierto para dejar registrar.
+   *
+   * `true` en «Atención», que es donde el encuentro es el contexto. En el
+   * expediente es `false`: ahí el diagnóstico se ata a una cita **elegida** —o
+   * a ninguna—, y el contrato declara `encounterId` opcional.
+   */
+  readonly exigeEncuentro = input(true);
+
   /** Algo se escribió y el expediente tiene que releerse. */
   readonly cambio = output<void>();
 
@@ -249,6 +289,29 @@ export class DiagnosisBlock {
   protected readonly organizacion = this.auth.activeTenantId;
 
   /* -- El formulario ------------------------------------------------------- */
+
+  /** La cita elegida, o `null` por «sin cita asociada». */
+  protected readonly citaElegida = signal<string | null>(null);
+
+  /** Las opciones del selector de cita, con la vacía primero. */
+  protected readonly opcionesDeCita = computed<readonly SelectOption<string | null>[]>(() => [
+    { value: null, label: 'Sin cita asociada' },
+    ...this.citas().map((cita) => ({
+      value: cita.id,
+      label: cita.enCurso ? `${cita.etiqueta} · en curso` : cita.etiqueta,
+    })),
+  ]);
+
+  /**
+   * El encuentro que viaja en el alta.
+   *
+   * La cita elegida manda; si nadie eligió, el encuentro en curso que el
+   * anfitrión pasó por `encounterId`. Así «Atención» sigue comportándose igual
+   * sin que nadie elija nada.
+   */
+  protected readonly encuentroDelAlta = computed<string | null>(
+    () => this.citaElegida() ?? this.encounterId(),
+  );
 
   protected readonly diagnostico = signal<string | null>(null);
   protected readonly categoria = signal<string | null>(null);
@@ -385,6 +448,9 @@ export class DiagnosisBlock {
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
 
+  /** Si el bloque puede registrar sin encuentro abierto. */
+  protected readonly sinExigirEncuentro = computed(() => !this.exigeEncuentro());
+
   protected readonly hayEncuentro = computed(() => {
     const id = this.encounterId();
     return id !== null && id !== '';
@@ -401,7 +467,7 @@ export class DiagnosisBlock {
    */
   protected readonly puedeRegistrar = computed(
     () =>
-      this.hayEncuentro() &&
+      (this.hayEncuentro() || this.sinExigirEncuentro()) &&
       !this.sinOrganizacion() &&
       this.diagnostico() !== null &&
       !this.registrando(),
@@ -546,16 +612,17 @@ export class DiagnosisBlock {
     const patientProfileId = this.patientProfileId();
     const custodianTenantId = this.organizacion();
     const codeConceptId = this.diagnostico();
-    const encounterId = this.encounterId();
+    // La cita elegida manda sobre el encuentro del anfitrión, y **puede no
+    // haber ninguna**: el contrato declara `encounterId` opcional, y un
+    // diagnóstico registrado desde el expediente no siempre nace de una
+    // consulta —una condición que la persona ya traía no tiene cita—.
+    const encounterId = this.encuentroDelAlta();
 
-    if (
-      custodianTenantId === null ||
-      codeConceptId === null ||
-      encounterId === null ||
-      this.registrando()
-    ) {
+    if (custodianTenantId === null || codeConceptId === null || this.registrando()) {
       return;
     }
+    // En «Atención» el encuentro sigue siendo obligatorio: ahí es el contexto.
+    if (this.exigeEncuentro() && encounterId === null) return;
 
     const categoria = this.categoria();
     const severidad = this.severidad();
@@ -573,7 +640,7 @@ export class DiagnosisBlock {
         custodianTenantId,
         patientProfileId,
         codeConceptId,
-        encounterId,
+        ...(encounterId === null ? {} : { encounterId }),
         // Los opcionales sin elegir se **omiten**: el backend valida con
         // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
         ...(categoria === null ? {} : { categoryConceptId: categoria }),

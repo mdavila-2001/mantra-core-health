@@ -552,4 +552,81 @@ describe('DiagnosisBlock', () => {
       req.flush(RESPUESTA);
     });
   });
+  /* -- La cita en la que se detectó (pedido del cliente) ------------------- */
+
+  describe('el selector de cita', () => {
+    /** «Un campo select para colocar la enfermedad detectada en base a una cita
+     * ya existente y/o finalizada» — textual del cliente. */
+    it('sin citas que ofrecer, el campo no se dibuja', () => {
+      responderCatalogo();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="diagnostico-cita"]'),
+      ).toBeNull();
+    });
+
+    it('con citas, las ofrece y marca cuál sigue en curso', () => {
+      fixture.componentRef.setInput('citas', [
+        { id: 'enc-9', etiqueta: '7 sept 2026, 09:00 · Control', enCurso: false },
+        { id: 'enc-1', etiqueta: '10 sept 2026, 08:00 · Chequeo', enCurso: true },
+      ]);
+      responderCatalogo();
+
+      const opciones = interno<() => readonly { value: string | null; label: string }[]>(
+        'opcionesDeCita',
+      )();
+      expect(opciones[0]).toEqual({ value: null, label: 'Sin cita asociada' });
+      expect(opciones[1]?.label).toBe('7 sept 2026, 09:00 · Control');
+      expect(opciones[2]?.label).toContain('en curso');
+    });
+
+    /** La cita elegida gana sobre el encuentro que pasó el anfitrión. */
+    it('la cita elegida es la que viaja, no el encuentro en curso', () => {
+      fixture.componentRef.setInput('citas', [
+        { id: 'enc-9', etiqueta: '7 sept 2026, 09:00 · Control', enCurso: false },
+      ]);
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+      señal<string | null>('citaElegida').set('enc-9');
+
+      interno<() => void>('registrar')();
+
+      const req = http.expectOne('/clinical/conditions');
+      expect(req.request.body.encounterId).toBe('enc-9');
+      req.flush(RESPUESTA);
+    });
+  });
+
+  /* -- El bloque fuera de «Atención» --------------------------------------- */
+
+  describe('sin exigir encuentro (expediente)', () => {
+    /**
+     * En el expediente el diagnóstico se ata a una cita **elegida**, o a
+     * ninguna: el contrato declara `encounterId` opcional, y una condición que
+     * la persona ya traía no nace de ninguna consulta.
+     */
+    it('deja registrar sin encuentro, y la clave no viaja', () => {
+      fixture.componentRef.setInput('encounterId', null);
+      fixture.componentRef.setInput('exigeEncuentro', false);
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+
+      expect(interno<() => boolean>('puedeRegistrar')()).toBe(true);
+
+      interno<() => void>('registrar')();
+
+      const req = http.expectOne('/clinical/conditions');
+      expect('encounterId' in req.request.body).toBe(false);
+      req.flush(RESPUESTA);
+    });
+
+    /** En «Atención» el encuentro sigue siendo el contexto y sigue exigiéndose. */
+    it('con `exigeEncuentro`, sin encuentro no deja registrar', () => {
+      fixture.componentRef.setInput('encounterId', null);
+      responderCatalogo();
+      señal<string | null>('diagnostico').set('dx-1');
+
+      expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
+    });
+  });
 });

@@ -145,3 +145,11 @@
   font-weight: 600;
   color: var(--text-muted);
 }
+
+/* El alta del bloque, sobre su tabla y alineada a la derecha: es una acción del
+   bloque, no una columna más. */
+.expediente__acciones-bloque {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: var(--sp-3);
+}

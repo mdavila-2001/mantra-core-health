@@ -17,6 +17,9 @@ import { forkJoin, map, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
+import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
+import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import type {
   ClinicalSummary,
@@ -166,6 +169,8 @@ interface Expediente {
     AttachmentUploader,
     Badge,
     ConceptSelect,
+    ContentDialog,
+    DiagnosisBlock,
     DataTable,
     DatePipe,
     Link,
@@ -356,6 +361,88 @@ export class PatientChart {
       detalle: fila.endAt === undefined ? 'En curso' : 'Cerrado',
     })),
   );
+
+  /* -- El alta de diagnóstico desde el expediente --------------------------- */
+
+  /**
+   * Si esta sesión puede escribir en la historia.
+   *
+   * El frontend **no autoriza** —eso lo hace la API— pero tampoco ofrece lo que
+   * va a terminar en un 403: quien mira un expediente sin rol clínico no tiene
+   * por qué ver un botón que no le va a funcionar.
+   */
+  protected readonly puedeEscribir = computed(
+    () =>
+      this.auth.activeTenantId() !== null &&
+      this.auth.roles().some((rol) => rol === 'PRACTITIONER' || rol === 'CLINICIAN'),
+  );
+
+  protected readonly altaDeDiagnosticoAbierta = signal(false);
+
+  /**
+   * La bajada del modal, **con el nombre y nunca con el identificador**.
+   *
+   * `pacienteDeLaFicha()` es el uuid del perfil, y ponerlo acá dejaba
+   * «Se registra en la historia de c2aa6dda-67d6-…» delante de quien atiende.
+   * El médico no tiene por qué ver un identificador nunca.
+   */
+  protected readonly descripcionDelAlta = computed(() =>
+    this.nombre() === ''
+      ? 'Se registra en la historia de esta persona.'
+      : `Se registra en la historia de ${this.nombre()}.`,
+  );
+
+  protected abrirAltaDeDiagnostico(): void {
+    this.altaDeDiagnosticoAbierta.set(true);
+  }
+
+  protected cerrarAltaDeDiagnostico(): void {
+    this.altaDeDiagnosticoAbierta.set(false);
+  }
+
+  /** Registrado el diagnóstico, se cierra el modal y se relee la historia. */
+  protected diagnosticoRegistrado(): void {
+    this.altaDeDiagnosticoAbierta.set(false);
+    this.recargar();
+  }
+
+  /**
+   * Las citas del paciente, para «¿en qué cita se detectó?».
+   *
+   * **Todas**, no sólo las abiertas: el cliente pidió poder atarlo a «una cita
+   * ya existente y/o finalizada», y el caso corriente es justamente registrar
+   * después lo que se vio en una consulta que ya cerró. De la más reciente a la
+   * más vieja, que es el orden en que se busca una.
+   */
+  protected readonly citasParaElDiagnostico = computed<readonly CitaDelPaciente[]>(() =>
+    [...(this.datos()?.resumen.encounters ?? [])]
+      .sort((a, b) => (b.startAt?.getTime() ?? 0) - (a.startAt?.getTime() ?? 0))
+      .map((encuentro) => ({
+        id: encuentro.id,
+        etiqueta: this.etiquetaDeCita(encuentro),
+        enCurso: encuentro.endAt === undefined,
+      })),
+  );
+
+  /** «9 sept 2026, 08:00 · Chequeo anual». Sin uuid y sin jerga. */
+  private etiquetaDeCita(encuentro: {
+    readonly startAt?: Date;
+    readonly reasonText?: string;
+    readonly classConceptId?: string;
+  }): string {
+    const cuando =
+      encuentro.startAt === undefined
+        ? 'Sin fecha'
+        : encuentro.startAt.toLocaleString('es-BO', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+    const motivo = encuentro.reasonText ?? this.label(encuentro.classConceptId);
+    return motivo === '' || motivo === SIN_DATO ? cuando : `${cuando} · ${motivo}`;
+  }
 
   protected readonly notas = computed<readonly FilaClinica[]>(() =>
     (this.datos()?.chart.notes ?? []).map((fila) => ({

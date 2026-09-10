@@ -93,6 +93,27 @@
       <app-tabs appearance="browser">
         @for (bloque of bloques(); track bloque.clave) {
           <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
+            <!-- El alta del bloque, arriba de su tabla. El expediente sigue
+                 siendo lectura: registrar un diagnóstico no es atender —no abre
+                 encuentro, no cierra nada— y el cliente lo pidió textual,
+                 «primero debería poder crear un diagnóstico nuevo sobre el
+                 expediente del paciente». Va en modal, que es lo que la regla
+                 de la casa pide para toda edición que pida datos. -->
+            @if (puedeEscribir() && bloque.clave === 'diagnosticos') {
+              <div class="expediente__acciones-bloque">
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  data-testid="expediente-nuevo-diagnostico"
+                  (clicked)="abrirAltaDeDiagnostico()"
+                >
+                  Nuevo diagnóstico
+                </button>
+              </div>
+            }
+
             <app-data-table
               [state]="estadoDe(bloque.filas, bloque.titulo)"
               [columns]="bloque.columnas"
@@ -107,6 +128,27 @@
 
   </div>
 </app-view-state-host>
+
+<!-- El alta de diagnóstico, en modal y no dentro de la tabla: es la regla de la
+     casa para toda edición que pida datos, y es lo que evita que la fila crezca
+     y deforme la tabla. El bloque es EL MISMO de «Atención» —no una copia—, con
+     el encuentro relajado: acá la cita se elige, y puede no haber ninguna. -->
+@if (altaDeDiagnosticoAbierta()) {
+  <app-content-dialog
+    heading="Nuevo diagnóstico"
+    [description]="descripcionDelAlta()"
+    closeLabel="Cerrar"
+    (closed)="cerrarAltaDeDiagnostico()"
+  >
+    <app-diagnosis-block
+      [patientProfileId]="pacienteDeLaFicha()"
+      [encounterId]="null"
+      [exigeEncuentro]="false"
+      [citas]="citasParaElDiagnostico()"
+      (cambio)="diagnosticoRegistrado()"
+    />
+  </app-content-dialog>
+}
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPrincipal let-fila>
