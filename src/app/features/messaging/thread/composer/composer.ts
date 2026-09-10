@@ -1,3 +1,5 @@
+import { FilePreview } from '../../../../shared/components/molecules/file-preview/file-preview';
+import { FileDropTarget } from '../../../../shared/forms/file-drop-target';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -45,7 +47,13 @@ const TIPOS_ACEPTADOS = ['image/', 'audio/', 'video/', 'application/pdf'];
  */
 @Component({
   selector: 'app-composer',
-  imports: [FormsModule, Grabador, SelectorEmojis],
+  imports: [
+    FilePreview,
+    FileDropTarget,
+    FormsModule,
+    Grabador,
+    SelectorEmojis,
+  ],
   templateUrl: './composer.html',
   styleUrl: './composer.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,7 +78,6 @@ export class Composer {
 
   /** El archivo elegido, esperando la leyenda y el envío. */
   protected readonly adjunto = signal<File | null>(null);
-  protected readonly vistaPreviaAdjunto = signal<string | null>(null);
 
   /** Las plantillas de fábrica más las propias (carril P9). */
   protected readonly plantillasDisponibles = this.plantillas.todas;
@@ -200,18 +207,10 @@ export class Composer {
   private ponerAdjunto(archivo: File): void {
     this.limpiarAdjunto();
     this.adjunto.set(archivo);
-    if (this.isBrowser && archivo.type.startsWith('image/')) {
-      this.vistaPreviaAdjunto.set(URL.createObjectURL(archivo));
-    }
     this.enfocar();
   }
 
   protected limpiarAdjunto(): void {
-    const previa = this.vistaPreviaAdjunto();
-    if (previa !== null && this.isBrowser) {
-      URL.revokeObjectURL(previa);
-    }
-    this.vistaPreviaAdjunto.set(null);
     this.adjunto.set(null);
   }
 

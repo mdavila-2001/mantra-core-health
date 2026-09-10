@@ -1,43 +1,16 @@
-<!-- El bloque de un papel adjunto: uno solo para los siete.
-
-     Se declara una vez y se monta siete veces con `ngTemplateOutlet` porque los
-     siete se comportan igual: mientras no hay archivo, un botón que abre el
-     explorador; cuando lo hay, su nombre, su peso y cómo sacarlo. Copiarlo
-     siete veces garantizaba que el arreglo del octavo se aplicara a seis.
-
-     El rótulo, la pista, el asterisco y el mensaje de error NO están acá: los
-     pone el motor alrededor del campo. -->
+<!-- Un selector compartido para cada documento; los archivos viven en el formulario. -->
 <ng-template #bloqueAdjunto let-clave>
-  <div class="imagen-adjunto">
-    @if (adjuntoDe(clave); as adjunto) {
-      <p class="imagen-adjunto__archivo">
-        <app-nav-icon name="note" class="imagen-adjunto__glifo" />
-        <span class="imagen-adjunto__nombre">{{ adjunto.archivo }}</span>
-        <span class="imagen-adjunto__peso">{{ pesoLegible(adjunto.pesoBytes) }}</span>
-      </p>
-      <button
-        type="button"
-        app-button
-        variant="ghost"
-        size="sm"
-        [attr.data-testid]="'registro-imagen-quitar-' + clave"
-        (clicked)="quitarAdjunto(clave)"
-      >
-        Quitar archivo
-      </button>
-    } @else {
-      <label class="imagen-adjunto__subir">
-        <input
-          type="file"
-          class="sr-only"
-          [accept]="formatosDeRespaldo"
-          [attr.data-testid]="'registro-imagen-adjunto-' + clave"
-          (change)="adjuntar(clave, $event)"
-        />
-        <span class="imagen-adjunto__label-btn">Adjuntar archivo</span>
-      </label>
-    }
-  </div>
+  <app-file-input
+    [files]="filesForAttachment(clave)"
+    [accessibleLabel]="attachmentLabel(clave)"
+    [required]="isAttachmentRequired(clave)"
+    [hasError]="isAttachmentInvalid(clave)"
+    [accept]="formatosDeRespaldo"
+    [maxSizeBytes]="maxAttachmentBytes"
+    [testId]="'registro-imagen-adjunto-' + clave"
+    [removeTestId]="'registro-imagen-quitar-' + clave"
+    (filesChange)="updateAttachment(clave, $event)"
+  />
 </ng-template>
 
 <app-auth-split

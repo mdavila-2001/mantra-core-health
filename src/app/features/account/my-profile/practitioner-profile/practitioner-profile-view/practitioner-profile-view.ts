@@ -1,3 +1,4 @@
+import { FileDropTarget } from '../../../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -78,6 +79,7 @@ interface FilaCredencial {
 @Component({
   selector: 'app-practitioner-profile-view',
   imports: [
+    FileDropTarget,
     Avatar,
     Badge,
     AppButton,

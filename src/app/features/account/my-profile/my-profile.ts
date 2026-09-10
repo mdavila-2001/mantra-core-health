@@ -1,3 +1,4 @@
+import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -121,6 +122,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 @Component({
   selector: 'app-my-profile',
   imports: [
+    FileDropTarget,
     Alert,
     AppButton,
     AppButtonLink,

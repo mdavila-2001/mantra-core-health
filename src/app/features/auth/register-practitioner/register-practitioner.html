@@ -188,33 +188,10 @@
                  su archivo no, y mezclarlos haría dudar de cuál frena el paso. -->
             <ng-template appCampoPersonalizado="professionalTitleFile">
               <div class="registro-respaldo">
-                @if (respaldoTituloProfesional(); as adjunto) {
-                  <p class="registro-respaldo__archivo">
-                    <span class="registro-respaldo__nombre">{{ adjunto.archivo }}</span>
-                    <span class="registro-respaldo__peso">{{ pesoLegible(adjunto.pesoBytes) }}</span>
-                  </p>
-                  <button
-                    type="button"
-                    app-button
-                    variant="ghost"
-                    size="sm"
-                    data-testid="registro-pro-respaldo-quitar-titulo"
-                    (clicked)="quitarRespaldo('professional-title')"
-                  >
-                    Quitar archivo
-                  </button>
-                } @else {
-                  <label class="registro-respaldo__subir">
-                    <input
-                      type="file"
-                      class="sr-only"
-                      [accept]="formatosDeRespaldo"
-                      data-testid="registro-pro-respaldo-titulo"
-                      (change)="adjuntarRespaldo('professional-title', $event)"
-                    />
-                    <span class="registro-respaldo__label-btn">Adjuntar diploma</span>
-                  </label>
-                }
+                <app-file-input [files]="attachmentFiles()['professional-title'] ?? []"
+                  [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
+                  accessibleLabel="Título profesional" testId="registro-pro-respaldo-titulo" removeTestId="registro-pro-respaldo-quitar-titulo"
+                  (filesChange)="updateSupportFiles('professional-title', $event)" />
                 <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB.</p>
                 @if (errorAdjunto(); as error) {
                   <p class="registro-respaldos__error" role="alert">{{ error }}</p>
@@ -233,7 +210,7 @@
                   />
                 </div>
                 <div class="registro-foto__acciones">
-                  <label class="registro-foto__boton-subir">
+                  <label [appFileDropTarget]="inputFoto" (fileDropRejected)="errorFoto.set($event)" class="registro-foto__boton-subir">
                     <input
                       #inputFoto
                       type="file"
@@ -277,35 +254,11 @@
                   <div class="registro-respaldo">
                     <p class="registro-respaldo__titulo">{{ respaldo.etiqueta }}</p>
                     <p class="registro-respaldo__dato">{{ respaldo.valor || 'Sin cargar' }}</p>
-                    @if (respaldo.adjunto(); as adjunto) {
-                      <p class="registro-respaldo__archivo">
-                        <span class="registro-respaldo__nombre">{{ adjunto.archivo }}</span>
-                        <span class="registro-respaldo__peso">
-                          {{ pesoLegible(adjunto.pesoBytes) }}
-                        </span>
-                      </p>
-                      <button
-                        type="button"
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        [attr.data-testid]="'registro-pro-respaldo-quitar-' + respaldo.clave"
-                        (clicked)="quitarRespaldo(respaldo.clave)"
-                      >
-                        Quitar archivo
-                      </button>
-                    } @else {
-                      <label class="registro-respaldo__subir">
-                        <input
-                          type="file"
-                          class="sr-only"
-                          [accept]="formatosDeRespaldo"
-                          [attr.data-testid]="'registro-pro-respaldo-' + respaldo.clave"
-                          (change)="adjuntarRespaldo(respaldo.clave, $event)"
-                        />
-                        <span class="registro-respaldo__label-btn">Adjuntar archivo</span>
-                      </label>
-                    }
+                    <app-file-input [files]="attachmentFiles()[respaldo.clave] ?? []"
+                      [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
+                      [accessibleLabel]="respaldo.etiqueta" [testId]="'registro-pro-respaldo-' + respaldo.clave"
+                      [removeTestId]="'registro-pro-respaldo-quitar-' + respaldo.clave"
+                      (filesChange)="updateSupportFiles(respaldo.clave, $event)" />
                   </div>
                 }
                 <p class="registro-respaldos__ayuda">PDF, JPG o PNG. Máximo 5 MB por archivo.</p>
@@ -374,34 +327,10 @@
                             </label>
                           }
                         </div>
-                        @if (titulo.archivo; as archivo) {
-                          <p class="registro-titulo__archivo">
-                            <span class="registro-titulo__nombre-archivo">{{ archivo }}</span>
-                            <span class="registro-titulo__peso">
-                              {{ pesoLegible(titulo.pesoBytes) }}
-                            </span>
-                            <button
-                              type="button"
-                              app-button
-                              variant="ghost"
-                              size="sm"
-                              (clicked)="quitarArchivoDeTitulo(titulo.id)"
-                            >
-                              Quitar archivo
-                            </button>
-                          </p>
-                        } @else {
-                          <label class="registro-titulo__subir">
-                            <input
-                              type="file"
-                              class="sr-only"
-                              [accept]="formatosDeRespaldo"
-                              [attr.data-testid]="'registro-pro-titulo-archivo-' + titulo.id"
-                              (change)="adjuntarArchivoATitulo(titulo.id, $event)"
-                            />
-                            <span class="registro-titulo__label-btn">Adjuntar archivo</span>
-                          </label>
-                        }
+                        <app-file-input [files]="attachmentFiles()[titulo.id] ?? []"
+                          [accept]="formatosDeRespaldo" [maxSizeBytes]="maxAttachmentBytes"
+                          [accessibleLabel]="tipo.singular" [testId]="'registro-pro-titulo-archivo-' + titulo.id"
+                          (filesChange)="updateTitleFiles(titulo.id, $event)" />
                         <button
                           type="button"
                           app-button

@@ -1,3 +1,4 @@
+import { FileDropTarget } from '../../../../shared/forms/file-drop-target';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -138,6 +139,7 @@ export function fichaPublicaDe(
 @Component({
   selector: 'app-public-profile-settings',
   imports: [
+    FileDropTarget,
     Alert,
     Card,
     FormActions,

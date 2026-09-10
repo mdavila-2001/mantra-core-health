@@ -1,3 +1,5 @@
+import { FileDropTarget } from '../../../shared/forms/file-drop-target';
+import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -578,6 +580,8 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 @Component({
   selector: 'app-register-practitioner',
   imports: [
+    FileDropTarget,
+    FileInput,
     RouterLink,
     AppButton,
     NavIcon,
@@ -814,6 +818,7 @@ export class RegisterPractitioner {
 
   /** Quita una fila entera, con su adjunto. */
   quitarTitulo(id: string): void {
+    this.attachmentFiles.update(files => Object.fromEntries(Object.entries(files).filter(([key]) => key !== id)));
     this.titulos.update((titulos) => titulos.filter((titulo) => titulo.id !== id));
   }
 
@@ -841,6 +846,24 @@ export class RegisterPractitioner {
    */
   escribirNombreDeTitulo(id: string, nombre: string): void {
     this.escribirDatoDeTitulo(id, 'nombre', nombre);
+  }
+
+  readonly attachmentFiles = signal<Partial<Record<string, readonly File[]>>>({});
+  protected readonly maxAttachmentBytes = MAX_BYTES_ADJUNTO;
+
+  updateSupportFiles(key: ClaveDeRespaldo, files: readonly File[]): void {
+    this.attachmentFiles.update(current => ({ ...current, [key]: files }));
+    const file = files[0];
+    this.destinoDelRespaldo(key).set(file ? { archivo: file.name, pesoBytes: file.size } : null);
+    this.errorAdjunto.set(null);
+  }
+
+  updateTitleFiles(id: string, files: readonly File[]): void {
+    this.attachmentFiles.update(current => ({ ...current, [id]: files }));
+    const file = files[0];
+    this.titulos.update(titles => titles.map(title => title.id === id
+      ? { ...title, archivo: file?.name ?? null, pesoBytes: file?.size ?? null } : title));
+    this.errorAdjunto.set(null);
   }
 
   /** Adjunta el archivo elegido a un título, o avisa por qué no se pudo. */

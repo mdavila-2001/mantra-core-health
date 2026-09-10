@@ -41,7 +41,7 @@
                  perfil profesional (P17): un `<label>` envuelve el avatar y un
                  input de archivo oculto. -->
             @if (datos(); as resumen) {
-              <label class="mi-perfil__foto" [class.is-subiendo]="subiendoFoto()">
+              <label [appFileDropTarget]="dropInput1" (fileDropRejected)="errorDeFoto.set($event)" class="mi-perfil__foto" [class.is-subiendo]="subiendoFoto()">
                 <app-avatar
                   size="lg"
                   [src]="fotoUrl()"
@@ -51,7 +51,7 @@
                 <span class="solo-lectores">
                   {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
                 </span>
-                <input
+                <input #dropInput1
                   type="file"
                   class="solo-lectores"
                   accept="image/*"

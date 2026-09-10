@@ -1,3 +1,4 @@
+import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -259,6 +260,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 @Component({
   selector: 'app-register-laboratory',
   imports: [
+    FileInput,
     NgTemplateOutlet,
     RouterLink,
     Link,
@@ -419,6 +421,7 @@ export class RegisterLaboratory {
       campos: [
         {
           key: 'seprecFile',
+          ancho: 'mitad' as const,
           label: 'SEPREC',
           hint: 'La matrícula de comercio vigente.',
           control: 'custom' as const,
@@ -427,6 +430,7 @@ export class RegisterLaboratory {
         },
         {
           key: 'licenciaFile',
+          ancho: 'mitad' as const,
           label: 'Licencia de funcionamiento',
           hint: 'La que emite tu municipio.',
           control: 'custom' as const,
@@ -435,6 +439,7 @@ export class RegisterLaboratory {
         },
         {
           key: 'sedesFile',
+          ancho: 'mitad' as const,
           label: 'Certificado del SEDES',
           hint: 'El que habilita al laboratorio a operar.',
           control: 'custom' as const,
@@ -444,6 +449,7 @@ export class RegisterLaboratory {
         },
         {
           key: 'nitFile',
+          ancho: 'mitad' as const,
           label: 'NIT en PDF (opcional)',
           hint: 'El respaldo del número que escribiste antes.',
           control: 'custom' as const,
@@ -458,12 +464,14 @@ export class RegisterLaboratory {
       campos: [
         {
           key: 'constitucionFile',
+          ancho: 'mitad' as const,
           label: 'Constitución de la empresa (opcional)',
           hint: 'La escritura con la que se constituyó la sociedad.',
           control: 'custom' as const,
         },
         {
           key: 'poderFile',
+          ancho: 'mitad' as const,
           label: 'Poder del representante legal (opcional)',
           hint: 'No hace falta si el titular se representa a sí mismo.',
           control: 'custom' as const,
@@ -645,6 +653,35 @@ export class RegisterLaboratory {
       ],
     },
   ]);
+
+  readonly attachmentFiles = signal<Partial<Record<ClaveDeAdjunto, readonly File[]>>>({});
+  protected readonly maxAttachmentBytes = MAX_BYTES_ADJUNTO;
+
+  attachmentLabel(key: ClaveDeAdjunto): string {
+    return this.paginas.flatMap(page => page.campos).find(field => field.key === key)?.label ?? 'Documento';
+  }
+
+  isAttachmentRequired(key: ClaveDeAdjunto): boolean {
+    return this.form.controls[key].hasValidator(Validators.required);
+  }
+
+  isAttachmentInvalid(key: ClaveDeAdjunto): boolean {
+    const control = this.form.controls[key];
+    return control.touched && control.invalid;
+  }
+
+  filesForAttachment(key: ClaveDeAdjunto): readonly File[] {
+    return this.attachmentFiles()[key] ?? [];
+  }
+
+  updateAttachment(key: ClaveDeAdjunto, files: readonly File[]): void {
+    this.attachmentFiles.update(current => ({ ...current, [key]: files }));
+    const file = files[0];
+    const control = this.form.controls[key];
+    control.setValue(file ? { archivo: file.name, pesoBytes: file.size } : null);
+    control.markAsTouched();
+    this.errorAdjunto.set(null);
+  }
 
   /* --- adjuntos ---------------------------------------------------------- */
 

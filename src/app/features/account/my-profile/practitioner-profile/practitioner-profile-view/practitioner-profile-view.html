@@ -17,7 +17,7 @@
            (P17). En la ficha de otro profesional sigue siendo una imagen: nadie
            le cambia la foto a nadie. -->
       @if (esPropio()) {
-        <label class="profesional__foto" [class.is-subiendo]="subiendoFoto()">
+        <label [appFileDropTarget]="dropInput1" (fileDropRejected)="errorDeFoto.set($event)" class="profesional__foto" [class.is-subiendo]="subiendoFoto()">
           <app-avatar
             size="xl"
             [src]="fotoVisible()"
@@ -42,7 +42,7 @@
           <span class="solo-lectores">
             {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
           </span>
-          <input
+          <input #dropInput1
             type="file"
             class="solo-lectores"
             accept="image/*"

@@ -1,0 +1,25 @@
+{
+  "route": "http://localhost:4200/auth/register/laboratory",
+  "role": "public",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "errors": [],
+  "consoleErrors": [
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-+V6QP2X/8MAj8YK3o3LJClmuAjZSIqYg5HgbBWnPKKo='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked."
+  ],
+  "failedRequests": [],
+  "assertions": [
+    "keyboard chooser",
+    "image decoded",
+    "real PDF rendered",
+    "PDF pagination",
+    "drag and drop",
+    "replacement",
+    "long filename fits",
+    "no horizontal overflow"
+  ],
+  "result": "PASS"
+}

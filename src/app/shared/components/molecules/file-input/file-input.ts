@@ -9,10 +9,10 @@ import {
   signal,
 } from '@angular/core';
 
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '@shared/forms/form-control.context';
+import { FORM_CONTROL_CONTEXT, nextControlId } from '@shared/forms/form-control.context';
+
+import { matchesFileAccept } from '../../../forms/file-accept';
+import { FilePreview } from '../file-preview/file-preview';
 
 const BYTES_PER_UNIT = 1024;
 const SIZE_UNITS = ['bytes', 'KB', 'MB', 'GB', 'TB'] as const;
@@ -31,6 +31,7 @@ export interface RejectedFile {
 @Component({
   selector: 'app-file-input',
   standalone: true,
+  imports: [FilePreview],
   templateUrl: './file-input.html',
   styleUrl: './file-input.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +44,13 @@ export class FileInput {
   private readonly field = inject(FORM_CONTROL_CONTEXT, { optional: true });
 
   readonly files = model<readonly File[]>([]);
+  readonly testId = input<string | null>(null);
+  readonly removeTestId = input<string | null>(null);
+  readonly label = input('Adjuntar archivo');
+  readonly accessibleLabel = input('');
+  readonly hasError = input(false);
+  readonly required = input(false);
+  readonly feedback = signal<readonly string[]>([]);
   readonly multiple = input<boolean>(false);
   readonly disabled = input<boolean>(false);
   /** Lista al estilo del atributo nativo: `image/*,.pdf`. */
@@ -57,7 +65,20 @@ export class FileInput {
 
   private readonly ownId = nextControlId('file');
   protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
-  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
+  protected readonly labelId = computed(() => this.field?.labelId() ?? null);
+  protected readonly invalid = computed(
+    () => this.hasError() || this.field?.invalid() || this.feedback().length > 0,
+  );
+  protected readonly isRequired = computed(
+    () => this.required() || (this.field?.required() ?? false),
+  );
+  protected readonly feedbackId = computed(() => `${this.controlId()}-feedback`);
+  protected readonly describedBy = computed(
+    () =>
+      [this.field?.describedBy(), this.feedback().length ? this.feedbackId() : null]
+        .filter(Boolean)
+        .join(' ') || null,
+  );
 
   protected handleFileSelect(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -88,6 +109,7 @@ export class FileInput {
     if (this.disabled()) {
       return;
     }
+    this.feedback.set([]);
     this.files.set(this.files().filter((_, position) => position !== index));
   }
 
@@ -123,14 +145,26 @@ export class FileInput {
       }
     }
 
-    this.files.set(kept);
+    // Una sustitución rechazada no debe borrar el documento válido anterior.
+    if (kept.length > 0 || this.multiple()) this.files.set(kept);
+    this.feedback.set(
+      rejected.map(({ file, reason }) => {
+        const messages = {
+          tipo: 'Formato no permitido.',
+          tamaño: `Supera el límite de ${this.formatFileSize(this.maxSizeBytes() ?? 0)}.`,
+          duplicado: 'Este archivo ya está adjunto.',
+          cupo: 'Alcanzaste el máximo de archivos.',
+        };
+        return `${file.name}: ${messages[reason]}`;
+      }),
+    );
     if (rejected.length > 0) {
       this.rejected.emit(rejected);
     }
   }
 
   private rejectionReason(file: File, kept: readonly File[]): RejectedFile['reason'] | null {
-    if (!this.matchesAccept(file)) {
+    if (!matchesFileAccept(file, this.accept())) {
       return 'tipo';
     }
     const maxSize = this.maxSizeBytes();
@@ -145,31 +179,6 @@ export class FileInput {
       return 'cupo';
     }
     return null;
-  }
-
-  /** Misma semántica que el atributo nativo: `.pdf`, `image/*` o un MIME exacto. */
-  private matchesAccept(file: File): boolean {
-    const patterns = this.accept()
-      .split(',')
-      .map((pattern) => pattern.trim().toLowerCase())
-      .filter(Boolean);
-
-    if (patterns.length === 0) {
-      return true;
-    }
-
-    const mime = file.type.toLowerCase();
-    const name = file.name.toLowerCase();
-
-    return patterns.some((pattern) => {
-      if (pattern.startsWith('.')) {
-        return name.endsWith(pattern);
-      }
-      if (pattern.endsWith('/*')) {
-        return mime.startsWith(pattern.slice(0, -1));
-      }
-      return mime === pattern;
-    });
   }
 
   /** El navegador no da un id de archivo: se compara la terna que sí expone. */

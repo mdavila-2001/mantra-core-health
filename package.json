@@ -63,6 +63,7 @@
     "express": "^5.1.0",
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
+    "pdfjs-dist": "^6.3.289",
     "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
     "socket.io-client": "^4",

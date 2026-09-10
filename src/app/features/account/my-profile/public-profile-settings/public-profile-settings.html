@@ -79,9 +79,9 @@
             Quien te busque va a ver tus iniciales. Una foto es lo que hace que alguien reconozca a
             su médico en una lista.
             @if (tieneVitrina()) {
-              <label class="vitrina__foto-boton">
+              <label [appFileDropTarget]="dropInput1" (fileDropRejected)="errorDeFoto.set($event)" class="vitrina__foto-boton">
                 {{ subiendoFoto() ? 'Subiendo…' : 'Subir una foto' }}
-                <input
+                <input #dropInput1
                   type="file"
                   class="solo-lectores"
                   accept="image/*"
@@ -105,9 +105,9 @@
           <app-alert tone="info" title="Tu vitrina no tiene portada">
             Es la franja que se ve arriba de tu foto en tu ficha pública.
             @if (tieneVitrina()) {
-              <label class="vitrina__foto-boton">
+              <label [appFileDropTarget]="dropInput2" (fileDropRejected)="errorDePortada.set($event)" class="vitrina__foto-boton">
                 {{ subiendoPortada() ? 'Subiendo…' : 'Subir una portada' }}
-                <input
+                <input #dropInput2
                   type="file"
                   class="solo-lectores"
                   accept="image/*"
@@ -125,9 +125,9 @@
           }
         } @else if (tieneVitrina()) {
           <p class="vitrina__portada-acciones">
-            <label class="vitrina__foto-boton">
+            <label [appFileDropTarget]="dropInput3" (fileDropRejected)="errorDePortada.set($event)" class="vitrina__foto-boton">
               {{ subiendoPortada() ? 'Subiendo…' : 'Cambiar portada' }}
-              <input
+              <input #dropInput3
                 type="file"
                 class="solo-lectores"
                 accept="image/*"

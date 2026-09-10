@@ -1,43 +1,16 @@
-<!-- El bloque de un papel adjunto: uno solo para los seis.
-
-     Se declara una vez y se monta seis veces con `ngTemplateOutlet` porque los
-     seis se comportan igual: mientras no hay archivo, un botón que abre el
-     explorador; cuando lo hay, su nombre, su peso y cómo sacarlo. Copiarlo seis
-     veces garantizaba que el arreglo del séptimo se aplicara a cinco.
-
-     El rótulo, la pista, el asterisco y el mensaje de error NO están acá: los
-     pone el motor alrededor del campo. -->
+<!-- Un selector compartido para cada documento; los archivos viven en el formulario. -->
 <ng-template #bloqueAdjunto let-clave>
-  <div class="lab-adjunto">
-    @if (adjuntoDe(clave); as adjunto) {
-      <p class="lab-adjunto__archivo">
-        <app-nav-icon name="note" class="lab-adjunto__glifo" />
-        <span class="lab-adjunto__nombre">{{ adjunto.archivo }}</span>
-        <span class="lab-adjunto__peso">{{ pesoLegible(adjunto.pesoBytes) }}</span>
-      </p>
-      <button
-        type="button"
-        app-button
-        variant="ghost"
-        size="sm"
-        [attr.data-testid]="'registro-lab-quitar-' + clave"
-        (clicked)="quitarAdjunto(clave)"
-      >
-        Quitar archivo
-      </button>
-    } @else {
-      <label class="lab-adjunto__subir">
-        <input
-          type="file"
-          class="sr-only"
-          [accept]="formatosDeRespaldo"
-          [attr.data-testid]="'registro-lab-adjunto-' + clave"
-          (change)="adjuntar(clave, $event)"
-        />
-        <span class="lab-adjunto__label-btn">Adjuntar archivo</span>
-      </label>
-    }
-  </div>
+  <app-file-input
+    [files]="filesForAttachment(clave)"
+    [accessibleLabel]="attachmentLabel(clave)"
+    [required]="isAttachmentRequired(clave)"
+    [hasError]="isAttachmentInvalid(clave)"
+    [accept]="formatosDeRespaldo"
+    [maxSizeBytes]="maxAttachmentBytes"
+    [testId]="'registro-lab-adjunto-' + clave"
+    [removeTestId]="'registro-lab-quitar-' + clave"
+    (filesChange)="updateAttachment(clave, $event)"
+  />
 </ng-template>
 
 <app-auth-split
