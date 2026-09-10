@@ -23,6 +23,7 @@ import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/p
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
+import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -494,43 +495,51 @@ export function registrarClinica(router: MockRouter): void {
    plantillas. Con el array dentro de la función, `POST /forms/assignments`
    devolvía un id y el campo no aparecía en ninguna parte.
    ---------------------------------------------------------------------- */
-export const PLANTILLAS_DE_EXPEDIENTE = [
-  plantilla('CARDIO-BASE', 'Evaluación cardiológica', ESPECIALIDAD['CARDIOLOGIA']!, [
-    ['pa_sistolica', 'Presión sistólica', 'NUMBER', true],
-    ['pa_diastolica', 'Presión diastólica', 'NUMBER', true],
-    ['fc', 'Frecuencia cardíaca', 'NUMBER', true],
-    ['soplo', 'Soplo cardíaco', 'BOOLEAN', false],
-    // La NYHA es una escala cerrada de cuatro clases: es texto libre sólo
-    // porque el seed no sabía declarar opciones, y como texto libre cada
-    // consultorio la escribe distinto y deja de ser comparable.
-    ['nyha', 'Clase funcional NYHA', 'code', false, ['I', 'II', 'III', 'IV']],
-    [
-      'factores',
-      'Factores de riesgo',
-      'code',
-      false,
-      ['Tabaquismo', 'Hipertensión', 'Diabetes', 'Dislipidemia', 'Antecedente familiar'],
-      // De varias: nadie tiene un solo factor de riesgo.
-      true,
-    ],
-  ]),
-  plantilla('PEDIA-CONTROL', 'Control de niño sano', ESPECIALIDAD['PEDIATRIA']!, [
-    ['peso', 'Peso (kg)', 'NUMBER', true],
-    ['talla', 'Talla (cm)', 'NUMBER', true],
-    ['perimetro', 'Perímetro cefálico', 'NUMBER', false],
-    ['vacunas_al_dia', 'Vacunas al día', 'BOOLEAN', true],
-    ['lactancia', 'Tipo de lactancia', 'code', false, ['Materna exclusiva', 'Mixta', 'Fórmula']],
-  ]),
-  plantilla('GINE-PRENATAL', 'Control prenatal', ESPECIALIDAD['GINECOLOGIA_OBSTETRICIA']!, [
-    ['semanas', 'Semanas de gestación', 'NUMBER', true],
-    ['altura_uterina', 'Altura uterina', 'NUMBER', false],
-    ['fcf', 'Frecuencia cardíaca fetal', 'NUMBER', true],
-  ]),
-  plantilla('MEDINT-GENERAL', 'Consulta de medicina interna', ESPECIALIDAD['MEDICINA_INTERNA']!, [
-    ['motivo', 'Motivo de consulta', 'TEXT', true],
-    ['examen', 'Examen físico', 'TEXT', true],
-  ]),
-];;
+/**
+ * El concepto de las fichas **transversales**.
+ *
+ * Consentimiento, anamnesis general, examen físico y epicrisis no pertenecen a
+ * ninguna disciplina, así que no están en `VS_MEDICAL_SPECIALTY`. El backend
+ * les acuña un concepto propio (`CODIGO_TRANSVERSAL` de
+ * `clinical-forms-seed.service.ts`) y acá se hace lo mismo, con el derivador de
+ * ids que usa `definir()`: el bloque clínico las reconoce por el prefijo
+ * `TRANSV_` de su código y las deja siempre a mano.
+ */
+const ESPECIALIDAD_TRANSVERSAL = uuid('concept-TRANSVERSAL');
+
+/**
+ * Las 43 fichas clínicas estándar, portadas del backend.
+ *
+ * Antes eran **cuatro escritas a mano**, con códigos que ni siquiera coincidían
+ * con los del catálogo sembrado (`CARDIO-BASE` contra `CARDIO_FICHA_BASE`).
+ * Para una doctora de medicina general, de neurología o de odontología el
+ * selector de «Formulario clínico» no tenía **nada** que ofrecer, que es lo que
+ * el cliente reportó como «no deja poner los formularios respectivos».
+ *
+ * Se generan desde los JSON del backend con `yarn mock:chart-templates`; el
+ * fixture es derivado y no se edita a mano.
+ */
+export const PLANTILLAS_DE_EXPEDIENTE = FICHAS_ESTANDAR.map((ficha) =>
+  plantilla(
+    ficha.code,
+    ficha.name,
+    ficha.specialty === 'TRANSVERSAL'
+      ? ESPECIALIDAD_TRANSVERSAL
+      : (ESPECIALIDAD[ficha.specialty] ?? ESPECIALIDAD_TRANSVERSAL),
+    ficha.fields.map(
+      (campo) =>
+        [
+          campo.code,
+          campo.name,
+          campo.dataType,
+          campo.required,
+          campo.options,
+          campo.multiple,
+        ] as const,
+    ),
+    ficha.provenance,
+  ),
+);
 
 function registroReceta(r: RecetaSimulada) {
   return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === ESTADO_RECETA['RX-DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };
@@ -549,6 +558,15 @@ export function plantilla(
   name: string,
   specialtyConceptId: string,
   campos: readonly (readonly [string, string, string, boolean, (readonly string[])?, boolean?])[],
+  provenance?: {
+    readonly sourceTitle: string;
+    readonly organization: string;
+    readonly url: string;
+    readonly license: string;
+    readonly sourceVersion?: string;
+    readonly retrievedAt: string;
+    readonly note?: string;
+  },
 ) {
   return {
     id: uuid(`chart-template-${code}`),
@@ -576,6 +594,10 @@ export function plantilla(
       // vacía la sección del estándar, y ofrecía editar lo que no se toca.
       own: false,
     })),
-    provenance: { sourceTitle: 'Guía de práctica clínica', organization: 'Ministerio de Salud', url: 'https://www.minsalud.gob.bo', license: 'CC BY 4.0', retrievedAt: '2026-01-15' },
+    // La procedencia REAL de la ficha —norma, organismo, URL y licencia—, tal
+    // como la declara el JSON del backend. Antes había una inventada fija para
+    // las cuatro plantillas escritas a mano; con las 43 portadas, inventarla
+    // sería declarar una fuente falsa en pantalla.
+    ...(provenance === undefined ? {} : { provenance }),
   };
 }
