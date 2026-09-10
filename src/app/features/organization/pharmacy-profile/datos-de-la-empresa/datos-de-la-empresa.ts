@@ -103,7 +103,16 @@ export class DatosDeLaEmpresa {
 
   protected readonly editando = computed(() => this.borrador() !== null);
 
-  /** Lo aplicado en esta sesión de pantalla. Nada de esto se persiste. */
+  /**
+   * Lo aplicado en esta sesión de pantalla. Nada de esto se persiste.
+   *
+   * **Al cablear la API hay que limpiarlo cuando llegue un `state` nuevo.** Hoy
+   * es inalcanzable porque el estado no cambia nunca, pero con datos de verdad
+   * esto gana siempre sobre lo recibido: un «Aplicar en la ficha» taparía toda
+   * respuesta posterior del servidor y no habría forma de volver atrás salvo
+   * recargando la página. Que no se resuelva con `linkedSignal`: en este repo
+   * no reacciona bajo pruebas.
+   */
   private readonly aplicado = signal<DatosLegalesDeLaEmpresa | null>(null);
 
   private readonly recibido = computed(() => dataOf(this.state()));

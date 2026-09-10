@@ -27,4 +27,15 @@ import type { ContactoDeLaEmpresa } from '../../pharmacy-profile.types';
 })
 export class FichaDeContacto {
   readonly contacto = input.required<ContactoDeLaEmpresa>();
+
+  /**
+   * El número tal como lo marca el teléfono, sin los espacios con que se lee.
+   *
+   * `tel:` no los admite (RFC 3966 sólo acepta `-`, `.`, `(` y `)` como
+   * separadores). Casi todos los navegadores los toleran, pero el que no lo
+   * hace deja el enlace muerto, y el texto visible se conserva igual.
+   */
+  protected marcable(celular: string): string {
+    return celular.replace(/[^\d+]/g, '');
+  }
 }

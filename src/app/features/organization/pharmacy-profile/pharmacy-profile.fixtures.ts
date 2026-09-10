@@ -27,15 +27,20 @@ import type {
  * - **Lo que se pinta se rotula.** `NOTA_DE_DATOS_DE_EJEMPLO` es el cartel que
  *   acompaña a todo lo que sale de acá.
  *
- * TODO(T-I1): cuando el backend publique el perfil de la farmacia, estos datos
+ * TODO(API): cuando el backend publique el perfil de la farmacia, estos datos
  * se reemplazan por la respuesta de la API y este archivo se queda sólo con los
  * ejemplos de las pruebas.
  */
 
 /**
- * El cartel único: quien mira la pantalla sabe qué parte es maqueta. Es el
- * mismo texto que usa la bandeja del mostrador, a propósito — dos carteles
- * distintos para la misma advertencia se leen como dos cosas distintas.
+ * El cartel único de esta pantalla: quien la mira sabe qué parte es maqueta.
+ *
+ * La bandeja del mostrador declara por su lado un cartel con el mismo texto.
+ * **Que coincidan no está sostenido por nada** y no se promete acá: colgar una
+ * pantalla del archivo de ejemplos de otra sería peor acoplamiento que repetir
+ * dos palabras, y los dos archivos desaparecen cuando su contrato llegue. El
+ * día que el rótulo de maqueta tenga que ser uno solo en todo el producto, su
+ * sitio es `shared/`, no el archivo de ejemplos de una pantalla cualquiera.
  */
 export const NOTA_DE_DATOS_DE_EJEMPLO = 'Datos de ejemplo';
 

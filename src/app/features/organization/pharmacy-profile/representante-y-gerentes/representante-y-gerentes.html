@@ -27,7 +27,10 @@
           </button>
         </app-ficha-de-contacto>
 
-        @for (gerente of datos.gerentes; track gerente.cargo) {
+        <!-- Por correo y no por cargo: el cargo es texto del dato y nada lo
+             hace único. Dos «Gerente Comercial» —un interinato, dos sucursales—
+             y la clave repetida deja la lista entera sin dibujar. -->
+        @for (gerente of datos.gerentes; track gerente.correo) {
           <app-ficha-de-contacto [contacto]="gerente" />
         }
       </div>

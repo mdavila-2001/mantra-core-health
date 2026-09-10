@@ -24,7 +24,9 @@
   gap: var(--sp-4);
 }
 
-@media (min-width: 640px) {
+/* 650 px es `--bp-sm` del sistema. El número va literal porque CSS no admite
+   variables en la condición de una consulta de medios (`styles.css:104-108`). */
+@media (min-width: 650px) {
   .gente__bloques {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

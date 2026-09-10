@@ -11,7 +11,7 @@ import type { PuntoGeo } from '../../../shared/components/organisms/map/pin-mapa
  * que los dibuja**, y no en `core/`: escribir el DTO allá sería declarar un
  * contrato que el backend no publica.
  *
- * TODO(T-I1): cuando la API publique el perfil de la farmacia, estos tipos se
+ * TODO(API): cuando la API publique el perfil de la farmacia, estos tipos se
  * mudan al contrato y `pharmacy-profile.fixtures.ts` se queda sólo con los
  * ejemplos de las pruebas.
  */

@@ -41,11 +41,15 @@ describe('FichaDeContacto', () => {
     expect(correo?.getAttribute('href')).toBe('mailto:comercial@farmaciaandina.bo');
   });
 
-  it('con celular se ofrece llamarlo', () => {
+  it('con celular se ofrece llamarlo, y el enlace marca lo que se lee', () => {
     const root = montar(GERENTE);
 
     const telefono = root.querySelector<HTMLAnchorElement>('a[href^="tel:"]');
-    expect(telefono?.getAttribute('href')).toBe('tel:+591 70011224');
+    // El destino va sin espacios: `tel:` no los admite y el navegador que no
+    // los tolera deja el enlace muerto.
+    expect(telefono?.getAttribute('href')).toBe('tel:+59170011224');
+    // Y el texto visible los conserva, que es como se lee un número acá.
+    expect(telefono?.textContent?.trim()).toBe('+591 70011224');
     expect(root.textContent ?? '').toContain('Celular');
   });
 
