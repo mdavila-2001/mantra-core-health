@@ -31,14 +31,15 @@ const FORMATO_FECHA = new Intl.DateTimeFormat('es-BO', {
 /** El día solo, para la bajada del membrete. */
 const FORMATO_DIA = new Intl.DateTimeFormat('es-BO', { dateStyle: 'long' });
 
-/** Una persona atendida, ya en palabras. */
+/** Una atención del período, ya en palabras. */
 export interface EvolucionParaPdf {
-  readonly nombre: string;
-  /** El motivo de la última atención, o `null` si no se registró. */
+  readonly cuando: Date;
+  readonly paciente: string;
+  /** El motivo registrado, o `null` si no se anotó. */
   readonly motivo: string | null;
-  readonly ultima: Date;
-  /** Cuántas atenciones tuvo en el período. */
-  readonly cuantas: number;
+  readonly estado: string;
+  /** La tipología de la cita, o `null` si la reserva no tiene cita detrás. */
+  readonly tipo: string | null;
 }
 
 /** Lo que hace falta para imprimir la pantalla de Evoluciones. */
@@ -47,7 +48,14 @@ export interface EvolucionesParaPdf {
   readonly profesional: string;
   /** La ventana mirada, en días. */
   readonly dias: number;
-  readonly personas: readonly EvolucionParaPdf[];
+  /**
+   * Las atenciones **tal como se están viendo**: si hay filtros o una búsqueda
+   * puestos, el papel lleva lo mismo que la pantalla. Un PDF que ignora el
+   * filtro que alguien acaba de poner es un PDF que no era el que se pidió.
+   */
+  readonly atenciones: readonly EvolucionParaPdf[];
+  /** Qué se dejó afuera, en palabras, o `null` si se está viendo todo. */
+  readonly filtro: string | null;
 }
 
 /** Lo que el papel dice donde el dato no está. Nunca un hueco en blanco. */
@@ -63,7 +71,7 @@ export function bloquesDeEvoluciones(datos: EvolucionesParaPdf): readonly PdfBlo
   const bloques: PdfBlock[] = [
     {
       kind: 'note',
-      text: 'Este documento lista a quién se atendió en el período, no el texto de cada evolución: la lectura de las notas clínicas todavía no existe en la API.',
+      text: 'Este documento lista las atenciones del período, no el texto de cada evolución: la lectura de las notas clínicas todavía no existe en la API.',
     },
     { kind: 'heading', text: 'El período', level: 2 },
   ];
@@ -72,23 +80,32 @@ export function bloquesDeEvoluciones(datos: EvolucionesParaPdf): readonly PdfBlo
     bloques.push(campoDeBloque('Profesional', datos.profesional));
   }
   bloques.push(campoDeBloque('Ventana', `Últimos ${datos.dias} días`));
-  bloques.push(campoDeBloque('Pacientes atendidos', String(datos.personas.length)));
+  bloques.push(campoDeBloque('Atenciones', String(datos.atenciones.length)));
+  // Se dice arriba y no al pie: quien recibe el papel tiene que saber que está
+  // mirando un recorte antes de sacar cuentas con lo que ve.
+  if (datos.filtro !== null) {
+    bloques.push(campoDeBloque('Filtro aplicado', datos.filtro));
+  }
 
-  bloques.push({ kind: 'heading', text: 'Pacientes atendidos', level: 2 });
-  if (datos.personas.length === 0) {
+  bloques.push({ kind: 'heading', text: 'Atenciones', level: 2 });
+  if (datos.atenciones.length === 0) {
     bloques.push({
       kind: 'paragraph',
-      text: `No hay atenciones registradas en los últimos ${datos.dias} días.`,
+      text:
+        datos.filtro === null
+          ? `No hay atenciones registradas en los últimos ${datos.dias} días.`
+          : 'Ninguna atención del período coincide con el filtro aplicado.',
     });
   } else {
-    bloques.push(fila(['Paciente', 'Motivo de la última', 'Última atención', 'Atenciones'], true));
-    for (const persona of datos.personas) {
+    bloques.push(fila(['Cuándo', 'Paciente', 'Motivo', 'Estado', 'Tipo'], true));
+    for (const atencion of datos.atenciones) {
       bloques.push(
         fila([
-          persona.nombre,
-          persona.motivo ?? SIN_DATO,
-          FORMATO_FECHA.format(persona.ultima),
-          String(persona.cuantas),
+          FORMATO_FECHA.format(atencion.cuando),
+          atencion.paciente,
+          atencion.motivo ?? SIN_DATO,
+          atencion.estado,
+          atencion.tipo ?? SIN_DATO,
         ]),
       );
     }

@@ -41,12 +41,13 @@
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
       </span>
+      <!-- El texto se dice en plural cuando el control admite varios: «arrastrá
+           tu archivo» sobre una zona que acepta doce es lo que hacía que nadie
+           probara a soltar más de uno. -->
       <span class="dropzone-text">
-        {{ isDragging() ? 'Soltá el archivo acá' : 'Arrastrá tu archivo acá' }}
-        <span class="dropzone-or">o seleccioná desde tu dispositivo</span>
-        <span class="upload-button">{{
-          files().length && !multiple() ? 'Reemplazar archivo' : label()
-        }}</span>
+        {{ textoDeArrastre() }}
+        <span class="dropzone-or">{{ textoSecundario() }}</span>
+        <span class="upload-button">{{ textoDelBoton() }}</span>
       </span>
       <span class="dropzone-subtext">
         {{
@@ -61,7 +62,7 @@
               : 'Un archivo'
         }}
         @if (maxSizeBytes(); as limit) {
-          · Máximo {{ formatFileSize(limit) }}
+          · Máximo {{ formatFileSize(limit) }}{{ multiple() ? ' por archivo' : '' }}
         }
       </span>
     </label>
@@ -74,7 +75,7 @@
       }
     </div>
   }
-  @if (files().length > 0) {
+  @if (showList() && files().length > 0) {
     <ul class="file-list">
       @for (file of files(); track file.name + file.size + file.lastModified) {
         <li class="file-item">

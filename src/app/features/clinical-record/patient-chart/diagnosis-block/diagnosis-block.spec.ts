@@ -307,9 +307,12 @@ describe('DiagnosisBlock', () => {
 
       expect(interno<() => string | null>('diagnosticoRecienRegistrado')()).toBe('c-1');
       const html = fixture.nativeElement as HTMLElement;
-      const uploader = html.querySelector('app-attachment-uploader');
-      expect(uploader).not.toBeNull();
-      expect(uploader?.getAttribute('ownerType')).toBe('CONDITION');
+      // El subidor pasó a vivir dentro de `app-attachment-dialog`, así que lo
+      // que se comprueba es que el modal esté montado con esa condición: el
+      // `ownerType` viaja como entrada de señal y no como atributo del DOM.
+      const modal = html.querySelector('app-attachment-dialog');
+      expect(modal).not.toBeNull();
+      expect(modal?.querySelector('app-attachment-uploader')).not.toBeNull();
     });
 
     it('«Listo, sin adjuntar» lo cierra sin subir nada', () => {

@@ -64,13 +64,6 @@ export interface MedicationRequest {
    */
   readonly encounterId?: string;
   /**
-   * La condición que la motiva — «para qué es» (Patch v4.1.6).
-   *
-   * Mismo caso: el backend ya lo publica en `MedicationRequestItemDto` y acá
-   * faltaba, así que la tabla de medicación no podía decir el diagnóstico.
-   */
-  readonly indicationConditionId?: string;
-  /**
    * El motivo escrito a mano, cuando no hay condición registrada detrás.
    *
    * Es lo que el cliente pidió para los casos psiquiátricos y para quien «sólo
@@ -85,6 +78,27 @@ export interface MedicationRequest {
   readonly validTo?: Date;
   /** Indicaciones al paciente impresas en la receta (Patch v4.1.3). */
   readonly patientInstructionsText?: string;
+  /**
+   * El diagnóstico que motiva la receta — «para qué es» (Patch v4.1.6).
+   *
+   * ## Se escribía y no se leía
+   *
+   * El alta lo manda desde v4.1.6 (`NewMedicationRequest.indicationConditionId`)
+   * y `GET /clinical/patients/:id/summary` lo devuelve —está en
+   * `MedicationRequestSummaryDto` y en `clinical-read.service.ts`—, pero este
+   * tipo no lo declaraba: el vínculo quedaba guardado en la base y desaparecía
+   * de la pantalla en cuanto se recargaba. Es exactamente el síntoma de
+   * «relación sólo visual» que la corrección del 10/09/2026 manda cerrar, y se
+   * cierra declarándolo: los mapeadores del cliente propagan por `...resto`.
+   *
+   * Es un `clinical.conditions.id`, no un concepto de terminología: se resuelve
+   * contra la lista de diagnósticos del propio expediente y no con
+   * `TerminologyClient`.
+   *
+   * Ausente cuando la receta no tiene diagnóstico detrás, que es un caso
+   * legítimo del contrato: una prescripción sintomática o profiláctica.
+   */
+  readonly indicationConditionId?: string;
   readonly signedAt?: Date;
   readonly issuedAt?: Date;
   readonly createdAt: Date;

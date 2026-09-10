@@ -146,6 +146,52 @@
   color: var(--text-muted);
 }
 
+/* -- El detalle de una fila, en modal --------------------------------------
+   Pares rótulo/valor y no una tabla: es un registro, no filas y columnas. La
+   diferencia la nota quien navega con lector de pantalla. */
+
+.expediente__detalle {
+    display: grid;
+    gap: var(--sp-3);
+    margin: 0;
+}
+
+.expediente__detalle-fila {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+}
+
+@media (min-width: 30rem) {
+    .expediente__detalle-fila {
+        grid-template-columns: minmax(0, 11rem) minmax(0, 1fr);
+        gap: var(--sp-3);
+        align-items: baseline;
+    }
+}
+
+.expediente__detalle-fila dt {
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.expediente__detalle-fila dd {
+    margin: 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-primary);
+    /* Un nombre de diagnóstico largo parte donde haga falta antes que empujar
+       el ancho del modal. */
+    overflow-wrap: anywhere;
+}
+
+/* El secundario del registro, debajo del principal y no al lado: en el detalle
+   hay sitio para los dos renglones. */
+.expediente__detalle-fila dd .expediente__secundario {
+    display: block;
+}
+
 /* El alta del bloque, sobre su tabla y alineada a la derecha: es una acción del
    bloque, no una columna más. */
 .expediente__acciones-bloque {

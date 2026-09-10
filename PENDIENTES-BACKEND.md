@@ -548,12 +548,21 @@ dos escrituras.
 lectura de colección: no existe un `GET` por profesional ni por fecha. Sólo se
 llega a una nota entrando al expediente de su paciente.
 
-Consecuencia: la sección «Evoluciones» del panel del médico **no puede listar
-las notas**. Lista a quién atendió —desde `GET /scheduling/bookings`— con el
-enlace a cada expediente, y lo dice en la propia pantalla.
+Consecuencia: la sección «Evoluciones» del panel del médico lista **una fila
+por atención** —desde `GET /scheduling/bookings`, que es lo que sí se puede
+leer— y trae el texto de cada evolución **bajo demanda** al abrir una fila: una
+petición por clic contra `GET /charts/patients/:id/chart`, no N al cargar.
+
+Lo que sigue faltando es **atar una nota a su atención**. Dentro de esa lectura
+las notas de *esa* atención se reconocen por su día calendario, porque el
+contrato no ata una nota a una reserva: `ChartNote.encounterId` la ata a un
+encuentro, y el encuentro no viaja en la reserva. Dos atenciones de la misma
+persona el mismo día se muestran con las mismas notas, y es una estimación
+admitida a falta de la lectura.
 
 **Lo que haría falta:** `GET /charts/notes` acotado por profesional y ventana
-de fechas, devolviendo la última versión de cada nota.
+de fechas, devolviendo la última versión de cada nota, y el `encounterId` (o el
+`appointmentId`) en la reserva para poder cruzarlos sin estimar por fecha.
 
 ---
 

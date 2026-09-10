@@ -17,11 +17,6 @@ import { forkJoin, map, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
-import type { OwnerType } from '../../../core/data-access/files/files.types';
-import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
-import { AllergyBlock } from './allergy-block/allergy-block';
-import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import type {
   ClinicalSummary,
@@ -29,6 +24,7 @@ import type {
 } from '../../../core/data-access/clinical/clinical.types';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import type { OwnPractitionerProfile } from '../../../core/data-access/profiles/profiles.types';
+import type { OwnerType } from '../../../core/data-access/files/files.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -39,6 +35,11 @@ import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { Menu } from '../../../shared/components/molecules/menu/menu';
+import { MenuItem } from '../../../shared/components/molecules/menu/menu-item/menu-item';
+import { MenuTrigger } from '../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
+import { AttachmentDialog } from '../../../shared/components/organisms/attachment-dialog/attachment-dialog';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { ConceptSelect } from '../../../shared/components/molecules/concept-select/concept-select';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
@@ -51,13 +52,15 @@ import {
   atencionDesdeResumen,
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
-import { AttachmentUploader } from '../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { CLINICAL_RECORD_ROUTE, encounterWorkspaceRoute } from '../clinical-record.routes';
+import { AllergyBlock } from './allergy-block/allergy-block';
+import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
+import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
@@ -106,15 +109,37 @@ export interface FilaClinica {
   readonly estado: string;
   readonly cuando: Date | null;
   readonly detalle: string;
+
+  /**
+   * Los vínculos clínicos del registro, en pares rótulo/valor y ya en palabras.
+   *
+   * ## Por qué están en la fila y se muestran en el modal
+   *
+   * La corrección del 10/09/2026 pide que un registro dependiente deje ver con
+   * qué encuentro y con qué diagnóstico está relacionado. En la tabla no
+   * entran: cuatro columnas más volverían ilegible un resumen que ya lleva
+   * cuatro. Así que viajan con la fila y se leen en el detalle, que es lo que
+   * el propio pedido admite —«el listado puede usar referencias compactas»—.
+   *
+   * ## Y por qué a veces el valor dice que no hay vínculo
+   *
+   * Porque el contrato no guarda lo mismo en todos los bloques, y presentar una
+   * asociación fabricada sería peor que decirlo. Ver
+   * {@link PatientChart.vinculosDe}: cada bloque declara lo que el backend
+   * devuelve de verdad, y donde no hay campo, lo dice.
+   */
+  readonly vinculos: readonly VinculoClinico[];
+
   /**
    * El diagnóstico que motiva la fila — sólo la medicación lo llena hoy.
    *
    * «Siempre que se haga una receta médica debe de poderse poner un diagnóstico
    * o porqué de la receta», y para que sirva de algo tiene que **verse** en la
-   * tabla. Puede ser el nombre de una condición registrada o el motivo escrito
-   * a mano.
+   * tabla, no sólo en el detalle. Puede ser el nombre de una condición
+   * registrada o el motivo escrito a mano.
    */
   readonly diagnostico?: string;
+
   /**
    * La consulta a la que pertenece la fila, en palabras.
    *
@@ -124,6 +149,12 @@ export interface FilaClinica {
    * nota de P24.
    */
   readonly cita?: string;
+}
+
+/** Un vínculo clínico, ya resuelto a palabras. */
+export interface VinculoClinico {
+  readonly rotulo: string;
+  readonly valor: string;
 }
 
 /** Lo que la pantalla necesita de las dos lecturas, ya unido. */
@@ -186,15 +217,18 @@ interface Expediente {
   imports: [
     Alert,
     AppButton,
-    AttachmentUploader,
+    AllergyBlock,
+    AttachmentDialog,
     Badge,
     ConceptSelect,
     ContentDialog,
     DiagnosisBlock,
-    AllergyBlock,
     DataTable,
     DatePipe,
     Link,
+    Menu,
+    MenuItem,
+    MenuTrigger,
     PdfExportButton,
     PageHeader,
     RouterLink,
@@ -242,6 +276,10 @@ export class PatientChart {
   /** Patch v4.0.8: sólo la usa el bloque `diagnosticos`, ver {@link columnasPara}. */
   private readonly celdaAcciones =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAcciones');
+  /** El botón que abre el detalle en modal. La lleva **todo** bloque. */
+  private readonly celdaVer =
+    viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaVer');
+  /** El botón de adjuntos de los bloques que no tienen menú propio. */
   private readonly celdaAdjuntos =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAdjuntos');
 
@@ -336,6 +374,7 @@ export class PatientChart {
       estado: this.label(fila.clinicalStatusConceptId),
       cuando: fila.onsetAt ?? fila.createdAt,
       detalle: fila.resolvedAt === undefined ? '' : 'Resuelto',
+      vinculos: [{ rotulo: 'Encuentro', valor: this.describirEncuentro(fila.encounterId) }],
     })),
   );
 
@@ -349,6 +388,15 @@ export class PatientChart {
       // La criticidad es el dato que decide una conducta: va en el detalle, no
       // escondida en una columna que se pliega en móvil.
       detalle: this.label(fila.criticalityConceptId),
+      // `AllergyIntolerance` no tiene `encounterId` ni referencia a condición:
+      // ni en la escritura (`NewAllergyIntolerance`) ni en la lectura. Decirlo
+      // es lo honesto; poner una etiqueta de encuentro acá sería inventarla.
+      vinculos: [
+        {
+          rotulo: 'Vínculos clínicos',
+          valor: 'El registro de alergias no guarda encuentro ni diagnóstico.',
+        },
+      ],
     })),
   );
 
@@ -362,6 +410,15 @@ export class PatientChart {
       detalle: fila.validTo === undefined ? '' : 'Con fin previsto',
       diagnostico: this.motivoDeLaReceta(fila),
       cita: this.citaDeLaFila(fila.encounterId, fila.validFrom ?? fila.createdAt),
+      // El diagnóstico sí vuelve de la lectura (`indicationConditionId`) y es
+      // lo que hace verificable el vínculo después de recargar. El encuentro
+      // **también** vuelve: `MedicationRequest.encounterId` quedó declarado al
+      // integrar la rama de adjuntos múltiples, así que acá se resuelve en vez
+      // de decir que el resumen no lo devuelve.
+      vinculos: [
+        { rotulo: 'Diagnóstico', valor: this.describirDiagnostico(fila.indicationConditionId) },
+        { rotulo: 'Encuentro', valor: this.describirEncuentro(fila.encounterId) },
+      ],
     })),
   );
 
@@ -389,12 +446,14 @@ export class PatientChart {
   }
 
   /** La consulta de una fila, o su fecha si no cuelga de ninguna. */
-  private citaDeLaFila(encounterId: string | undefined, fecha: Date | undefined): string {
+  private citaDeLaFila(encounterId: string | undefined, fecha: Date | null | undefined): string {
     if (encounterId !== undefined) {
       const encuentro = (this.datos()?.resumen.encounters ?? []).find((e) => e.id === encounterId);
-      if (encuentro !== undefined) return this.etiquetaDeCita(encuentro);
+      if (encuentro !== undefined) {
+        return this.etiquetaDeCita(encuentro);
+      }
     }
-    return fecha === undefined ? '' : fecha.toLocaleDateString('es-BO', { day: 'numeric', month: 'short', year: 'numeric' });
+    return fecha === undefined || fecha === null ? '' : this.fechaCorta(fecha);
   }
 
   protected readonly observaciones = computed<readonly FilaClinica[]>(() =>
@@ -405,6 +464,7 @@ export class PatientChart {
       estado: this.label(fila.statusConceptId),
       cuando: fila.effectiveStartAt ?? null,
       detalle: this.label(fila.interpretationConceptId),
+      vinculos: [{ rotulo: 'Encuentro', valor: this.describirEncuentro(fila.encounterId) }],
     })),
   );
 
@@ -416,10 +476,96 @@ export class PatientChart {
       estado: this.label(fila.statusConceptId),
       cuando: fila.startAt ?? null,
       detalle: fila.endAt === undefined ? 'En curso' : 'Cerrado',
+      // Los diagnósticos del encuentro, derivados de los que declaran ese
+      // `encounterId`. Es la relación real y en el sentido correcto: el
+      // encuentro es el contexto y el diagnóstico cuelga de él, no al revés.
+      vinculos: [
+        { rotulo: 'Diagnósticos del encuentro', valor: this.diagnosticosDelEncuentro(fila.id) },
+      ],
     })),
   );
 
-  /* -- El alta de diagnóstico desde el expediente --------------------------- */
+  protected readonly notas = computed<readonly FilaClinica[]>(() =>
+    (this.datos()?.chart.notes ?? []).map((fila) => ({
+      id: fila.noteId,
+      principal: fila.chiefComplaintText ?? this.label(fila.noteTypeConceptId),
+      secundario: fila.assessmentText ?? fila.subjectiveText ?? '',
+      estado: this.label(fila.lifecycleStatusConceptId),
+      cuando: fila.signedAt ?? fila.createdAt,
+      // Derivado por el backend: no hace falta resolver terminología para saber
+      // si la persona lo ve en su portal, y es un dato que cambia qué se escribe.
+      detalle: fila.releasedToPatient ? 'Visible para la persona' : '',
+      vinculos: [{ rotulo: 'Encuentro', valor: this.describirEncuentro(fila.encounterId) }],
+    })),
+  );
+
+  protected readonly planes = computed<readonly FilaClinica[]>(() =>
+    (this.datos()?.chart.carePlans ?? []).map((fila) => ({
+      id: fila.id,
+      principal: fila.goalText ?? 'Plan sin objetivo escrito',
+      secundario: `${fila.activities.length} actividad${fila.activities.length === 1 ? '' : 'es'}`,
+      estado: this.label(fila.statusConceptId),
+      cuando: fila.startDate ?? fila.createdAt,
+      detalle: this.label(fila.intentConceptId),
+      // `CarePlan` no trae encuentro ni condición en la lectura de `chart`, y
+      // tampoco hay alta: el plan de cuidados es hoy sólo de lectura.
+      vinculos: [
+        {
+          rotulo: 'Vínculos clínicos',
+          valor: 'El plan de cuidados no guarda encuentro ni diagnóstico.',
+        },
+      ],
+    })),
+  );
+
+  protected readonly documentos = computed<readonly FilaClinica[]>(() =>
+    (this.datos()?.chart.documents ?? []).map((fila) => ({
+      id: fila.id,
+      principal: fila.title ?? 'Documento sin título',
+      secundario: fila.authorText ?? '',
+      estado: this.label(fila.statusConceptId),
+      cuando: fila.documentDate ?? fila.createdAt,
+      detalle: fila.isExternal === true ? 'Externo' : '',
+      vinculos: [
+        {
+          rotulo: 'Vínculos clínicos',
+          valor: 'El documento del expediente no guarda encuentro ni diagnóstico.',
+        },
+      ],
+    })),
+  );
+
+  /**
+   * Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada.
+   *
+   * Cada uno trae **sus** columnas y no las de todos: `detalle` significa una
+   * cosa distinta en cada bloque —la criticidad de una alergia, si un encuentro
+   * sigue abierto— y en varios no significa nada. Una columna «Detalle» vacía de
+   * punta a punta no es un dato que falta: es una columna que sobra, y se come
+   * el ancho que la tabla necesita para lo que sí trae.
+   */
+  protected readonly bloques = computed(() =>
+    [
+      { clave: 'diagnosticos', titulo: 'Diagnósticos', filas: this.diagnosticos() },
+      { clave: 'alergias', titulo: 'Alergias', filas: this.alergias() },
+      { clave: 'medicacion', titulo: 'Medicación', filas: this.medicacion() },
+      { clave: 'observaciones', titulo: 'Observaciones', filas: this.observaciones() },
+      { clave: 'encuentros', titulo: 'Encuentros', filas: this.encuentros() },
+      { clave: 'notas', titulo: 'Notas', filas: this.notas() },
+      { clave: 'planes', titulo: 'Planes de cuidados', filas: this.planes() },
+      { clave: 'documentos', titulo: 'Documentos', filas: this.documentos() },
+    ].map((bloque) => ({
+      ...bloque,
+      columnas: this.columnasPara(bloque.filas, bloque.clave),
+    })),
+  );
+
+  /* -- El alta de diagnóstico y de alergia desde el expediente -------------
+     «Primero debería poder crear un diagnóstico nuevo sobre el expediente del
+     paciente» — pedido del cliente que trae la rama de adjuntos múltiples. El
+     expediente sigue siendo lectura: registrar un diagnóstico no es atender —no
+     abre encuentro, no cierra nada— y por eso el alta va en modal y el bloque
+     es EL MISMO de «Atención», con el encuentro relajado. */
 
   /**
    * Si esta sesión puede escribir en la historia.
@@ -434,14 +580,12 @@ export class PatientChart {
       this.auth.roles().some((rol) => rol === 'PRACTITIONER' || rol === 'CLINICIAN'),
   );
 
-  protected readonly altaDeDiagnosticoAbierta = signal(false);
-
   /**
    * La bajada del modal, **con el nombre y nunca con el identificador**.
    *
-   * `pacienteDeLaFicha()` es el uuid del perfil, y ponerlo acá dejaba
-   * «Se registra en la historia de c2aa6dda-67d6-…» delante de quien atiende.
-   * El médico no tiene por qué ver un identificador nunca.
+   * `profileId()` es el uuid del perfil, y ponerlo acá dejaba «Se registra en la
+   * historia de c2aa6dda-67d6-…» delante de quien atiende. El médico no tiene
+   * por qué ver un identificador nunca.
    */
   protected readonly descripcionDelAlta = computed(() =>
     this.nombre() === ''
@@ -449,21 +593,8 @@ export class PatientChart {
       : `Se registra en la historia de ${this.nombre()}.`,
   );
 
+  protected readonly altaDeDiagnosticoAbierta = signal(false);
   protected readonly altaDeAlergiaAbierta = signal(false);
-
-  protected abrirAltaDeAlergia(): void {
-    this.altaDeAlergiaAbierta.set(true);
-  }
-
-  protected cerrarAltaDeAlergia(): void {
-    this.altaDeAlergiaAbierta.set(false);
-  }
-
-  /** Registrada la alergia, se cierra el modal y se relee la historia. */
-  protected alergiaRegistrada(): void {
-    this.altaDeAlergiaAbierta.set(false);
-    this.recargar();
-  }
 
   protected abrirAltaDeDiagnostico(): void {
     this.altaDeDiagnosticoAbierta.set(true);
@@ -476,6 +607,20 @@ export class PatientChart {
   /** Registrado el diagnóstico, se cierra el modal y se relee la historia. */
   protected diagnosticoRegistrado(): void {
     this.altaDeDiagnosticoAbierta.set(false);
+    this.recargar();
+  }
+
+  protected abrirAltaDeAlergia(): void {
+    this.altaDeAlergiaAbierta.set(true);
+  }
+
+  protected cerrarAltaDeAlergia(): void {
+    this.altaDeAlergiaAbierta.set(false);
+  }
+
+  /** Registrada la alergia, se cierra el modal y se relee la historia. */
+  protected alergiaRegistrada(): void {
+    this.altaDeAlergiaAbierta.set(false);
     this.recargar();
   }
 
@@ -517,64 +662,131 @@ export class PatientChart {
     return motivo === '' || motivo === SIN_DATO ? cuando : `${cuando} · ${motivo}`;
   }
 
-  protected readonly notas = computed<readonly FilaClinica[]>(() =>
-    (this.datos()?.chart.notes ?? []).map((fila) => ({
-      id: fila.noteId,
-      principal: fila.chiefComplaintText ?? this.label(fila.noteTypeConceptId),
-      secundario: fila.assessmentText ?? fila.subjectiveText ?? '',
-      estado: this.label(fila.lifecycleStatusConceptId),
-      cuando: fila.signedAt ?? fila.createdAt,
-      // Derivado por el backend: no hace falta resolver terminología para saber
-      // si la persona lo ve en su portal, y es un dato que cambia qué se escribe.
-      detalle: fila.releasedToPatient ? 'Visible para la persona' : '',
-    })),
-  );
-
-  protected readonly planes = computed<readonly FilaClinica[]>(() =>
-    (this.datos()?.chart.carePlans ?? []).map((fila) => ({
-      id: fila.id,
-      principal: fila.goalText ?? 'Plan sin objetivo escrito',
-      secundario: `${fila.activities.length} actividad${fila.activities.length === 1 ? '' : 'es'}`,
-      estado: this.label(fila.statusConceptId),
-      cuando: fila.startDate ?? fila.createdAt,
-      detalle: this.label(fila.intentConceptId),
-    })),
-  );
-
-  protected readonly documentos = computed<readonly FilaClinica[]>(() =>
-    (this.datos()?.chart.documents ?? []).map((fila) => ({
-      id: fila.id,
-      principal: fila.title ?? 'Documento sin título',
-      secundario: fila.authorText ?? '',
-      estado: this.label(fila.statusConceptId),
-      cuando: fila.documentDate ?? fila.createdAt,
-      detalle: fila.isExternal === true ? 'Externo' : '',
-    })),
-  );
+  /* -- Los vínculos clínicos, resueltos a palabras -------------------------
+     Lo que la corrección del 10/09/2026 pide ver de cada registro: con qué
+     encuentro y con qué diagnóstico está relacionado. Se resuelve contra lo que
+     el expediente **ya leyó** —el mismo resumen que pinta las tablas— y no con
+     una petición por fila: dos lecturas de la misma lista pueden discrepar. */
 
   /**
-   * Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada.
+   * El encuentro en palabras, o la ausencia dicha en voz alta.
    *
-   * Cada uno trae **sus** columnas y no las de todos: `detalle` significa una
-   * cosa distinta en cada bloque —la criticidad de una alergia, si un encuentro
-   * sigue abierto— y en varios no significa nada. Una columna «Detalle» vacía de
-   * punta a punta no es un dato que falta: es una columna que sobra, y se come
-   * el ancho que la tabla necesita para lo que sí trae.
+   * Un registro viejo sin `encounterId` es un caso legítimo —el campo es
+   * opcional en el contrato desde siempre— y se presenta como lo que es. No se
+   * le asigna el encuentro más reciente ni el primero de la lista: eso sería
+   * fabricar la asociación que esta pantalla existe para mostrar.
    */
-  protected readonly bloques = computed(() =>
-    [
-      { clave: 'diagnosticos', titulo: 'Diagnósticos', filas: this.diagnosticos() },
-      { clave: 'alergias', titulo: 'Alergias', filas: this.alergias() },
-      { clave: 'medicacion', titulo: 'Medicación', filas: this.medicacion() },
-      { clave: 'observaciones', titulo: 'Observaciones', filas: this.observaciones() },
-      { clave: 'encuentros', titulo: 'Encuentros', filas: this.encuentros() },
-      { clave: 'notas', titulo: 'Notas', filas: this.notas() },
-      { clave: 'planes', titulo: 'Planes de cuidados', filas: this.planes() },
-      { clave: 'documentos', titulo: 'Documentos', filas: this.documentos() },
-    ].map((bloque) => ({
-      ...bloque,
-      columnas: this.columnasPara(bloque.filas, bloque.clave),
-    })),
+  protected describirEncuentro(encounterId: string | undefined): string {
+    if (encounterId === undefined || encounterId === '') {
+      return 'Sin encuentro registrado';
+    }
+    const encuentro = (this.datos()?.resumen.encounters ?? []).find(
+      (fila) => fila.id === encounterId,
+    );
+    if (encuentro === undefined) {
+      // Puede haber quedado fuera del tope de 50 del bloque: existe, pero no
+      // está en esta lectura. Decir «sin encuentro» sería falso.
+      return 'Encuentro no incluido en esta lectura';
+    }
+    const clase = this.label(encuentro.classConceptId);
+    const cuando = this.fechaCorta(encuentro.startAt);
+    return [clase, cuando].filter((parte) => parte !== '').join(' · ');
+  }
+
+  /**
+   * El diagnóstico en palabras: el `indicationConditionId` de la receta.
+   *
+   * Se resuelve contra los diagnósticos del propio expediente porque es un
+   * `clinical.conditions.id` y no un concepto de terminología.
+   */
+  protected describirDiagnostico(conditionId: string | undefined): string {
+    if (conditionId === undefined || conditionId === '') {
+      return 'Sin diagnóstico asociado';
+    }
+    const condicion = (this.datos()?.resumen.conditions ?? []).find(
+      (fila) => fila.id === conditionId,
+    );
+    return condicion === undefined
+      ? 'Diagnóstico no incluido en esta lectura'
+      : this.label(condicion.codeConceptId);
+  }
+
+  /** Los diagnósticos documentados en un encuentro, o la ausencia. */
+  protected diagnosticosDelEncuentro(encounterId: string): string {
+    const codigos = (this.datos()?.resumen.conditions ?? [])
+      .filter((fila) => fila.encounterId === encounterId)
+      .map((fila) => this.label(fila.codeConceptId));
+    return codigos.length === 0 ? 'Sin diagnósticos documentados en este encuentro' : codigos.join(', ');
+  }
+
+  /** Una fecha corta, sin depender del `DatePipe` de la plantilla. */
+  private fechaCorta(fecha: Date | undefined): string {
+    if (fecha === undefined) {
+      return '';
+    }
+    return new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', year: 'numeric' }).format(
+      fecha,
+    );
+  }
+
+  /* -- El detalle de una fila, en modal ------------------------------------
+     Nunca dentro del listado: la regla principal de la corrección del
+     10/09/2026. La tabla queda de lectura y de acá no sale ningún formulario
+     debajo de la fila. */
+
+  /** La fila abierta en el modal de detalle, o `null`. */
+  protected readonly filaEnDetalle = signal<{
+    readonly fila: FilaClinica;
+    readonly bloque: string;
+  } | null>(null);
+
+  /**
+   * Abre el detalle de una fila.
+   *
+   * El bloque se deduce de dónde está la fila y no se pasa por parámetro: la
+   * plantilla de celda es **una** para las ocho tablas —el organismo la recibe
+   * por `ColumnDef.cell` y sólo le entrega la fila—, así que la alternativa era
+   * ocho plantillas iguales con una cadena distinta.
+   */
+  protected verDetalle(fila: FilaClinica): void {
+    const bloque = this.bloques().find((candidato) =>
+      candidato.filas.some((otra) => otra.id === fila.id),
+    );
+    this.filaEnDetalle.set({ fila, bloque: bloque?.clave ?? '' });
+  }
+
+  protected cerrarDetalle(): void {
+    this.filaEnDetalle.set(null);
+  }
+
+  /** El título del modal: específico del bloque, nunca «Detalle» a secas. */
+  protected readonly tituloDelDetalle = computed(() => {
+    const abierta = this.filaEnDetalle();
+    if (abierta === null) {
+      return '';
+    }
+    const titulos: Readonly<Record<string, string>> = {
+      diagnosticos: 'Detalle del diagnóstico',
+      alergias: 'Detalle de la alergia',
+      medicacion: 'Detalle de la receta',
+      observaciones: 'Detalle de la observación',
+      encuentros: 'Detalle del encuentro',
+      notas: 'Detalle de la nota clínica',
+      planes: 'Detalle del plan de cuidados',
+      documentos: 'Detalle del documento',
+    };
+    return titulos[abierta.bloque] ?? 'Detalle del registro';
+  });
+
+  /**
+   * La identificación mínima del paciente, arriba del detalle.
+   *
+   * El nombre cuando se pudo leer y el identificador cuando no —el padrón pide
+   * `SECURITY_ADMIN` y quien atiende no lo tiene—. No se repite la ficha entera:
+   * el detalle es de un registro, no de la persona.
+   */
+  protected readonly contextoDelPaciente = computed(() =>
+    this.nombre() === '' ? `Paciente ${this.profileId()}` : this.nombre(),
   );
 
   /* -- La banda de contexto ------------------------------------------------
@@ -653,6 +865,31 @@ export class PatientChart {
   /** La condición cuyo cambio de estado está en vuelo, o `null`. */
   protected readonly cambiandoEstado = signal<string | null>(null);
 
+  /**
+   * La condición cuyo modal de cambio de estado está abierto, o `null`.
+   *
+   * El selector y su «Aplicar» vivían **dentro de la celda** de cada fila: la
+   * celda crecía al desplegarse y el alto de la tabla dependía de si alguien
+   * había tocado el menú. Cualquier cambio sobre un registro existente que
+   * pida datos va en modal; la fila sólo tiene su menú.
+   */
+  protected readonly cambiandoEstadoDe = signal<FilaClinica | null>(null);
+
+  protected abrirCambioDeEstado(fila: FilaClinica): void {
+    this.cambiandoEstadoDe.set(fila);
+  }
+
+  protected cerrarCambioDeEstado(): void {
+    const fila = this.cambiandoEstadoDe();
+    if (fila !== null) {
+      // Lo elegido y no aplicado no sobrevive al cierre: si el modal se
+      // reabriera con un destino puesto de la vez anterior, «Aplicar» mandaría
+      // un cambio que quien lo toca no acaba de elegir.
+      this.elegirDestinoEstado(fila.id, null);
+    }
+    this.cambiandoEstadoDe.set(null);
+  }
+
   /** El destino elegido para esa fila, o `null` si no se eligió ninguno. */
   protected destinoEstadoDe(conditionId: string): string | null {
     return this.destinosDeEstado()[conditionId] ?? null;
@@ -662,11 +899,13 @@ export class PatientChart {
     this.destinosDeEstado.update((actual) => ({ ...actual, [conditionId]: destino }));
   }
 
-  /* -- ALV-033: adjuntar un archivo a un diagnóstico ya registrado --------
+  /* -- ALV-033: adjuntar archivos a un registro ya existente ---------------
      El alta ofrece adjuntar apenas se registra (`app-diagnosis-block`), pero
-     eso sólo alcanza al diagnóstico recién creado. Esta fila cubre el resto
-     de la historia: cualquier diagnóstico ya listado puede recibir un
-     adjunto, no sólo el último. */
+     eso sólo alcanza al registro recién creado. Esta columna cubre el resto de
+     la historia: cualquier fila ya listada puede recibir adjuntos, no sólo la
+     última. Y no sólo los diagnósticos: «en todos los formularios debe poderse
+     poner un adjunto… incluso en la medicación» — pedido del cliente que trae
+     la rama de adjuntos múltiples. */
 
   /**
    * A qué registro se le están adjuntando archivos, o `null`.
@@ -674,6 +913,9 @@ export class PatientChart {
    * **En modal y no dentro de la fila.** El desplegable inline hacía crecer la
    * celda y deformaba la tabla entera; es lo que la regla de la casa evita
    * pidiendo modal para toda edición que pida datos.
+   *
+   * Lleva el bloque además del id porque de él dependen la ruta del vínculo y
+   * el tipo de dueño: el mismo modal sirve a los cuatro.
    */
   protected readonly adjuntandoA = signal<{
     readonly id: string;
@@ -690,8 +932,12 @@ export class PatientChart {
    */
   protected readonly enlazarAdjunto = (fileId: string, ownerId: string) => {
     const bloque = this.adjuntandoA()?.bloque;
-    if (bloque === 'medicacion') return this.clinical.attachFileToMedicationRequest(ownerId, fileId);
-    if (bloque === 'alergias') return this.clinical.attachFileToAllergy(ownerId, fileId);
+    if (bloque === 'medicacion') {
+      return this.clinical.attachFileToMedicationRequest(ownerId, fileId);
+    }
+    if (bloque === 'alergias') {
+      return this.clinical.attachFileToAllergy(ownerId, fileId);
+    }
     return this.clinical.attachFileToCondition(ownerId, fileId);
   };
 
@@ -714,6 +960,17 @@ export class PatientChart {
     this.adjuntandoA()?.bloque === 'encuentros' ? null : this.enlazarAdjunto,
   );
 
+  /** El encabezado del modal, dicho con el bloque de la fila. */
+  protected readonly tituloDeLosAdjuntos = computed(() => {
+    const titulos: Readonly<Record<string, string>> = {
+      diagnosticos: 'Adjuntar archivos al diagnóstico',
+      medicacion: 'Adjuntar archivos a la receta',
+      alergias: 'Adjuntar archivos a la alergia',
+      encuentros: 'Adjuntar archivos al encuentro',
+    };
+    return titulos[this.adjuntandoA()?.bloque ?? ''] ?? 'Adjuntar archivos';
+  });
+
   /**
    * De qué bloque es una fila.
    *
@@ -723,11 +980,18 @@ export class PatientChart {
    */
   protected bloqueDeLaFila(fila: FilaClinica): string {
     return (
-      this.bloques().find((bloque) => bloque.filas.some((f) => f.id === fila.id))?.clave ??
+      this.bloques().find((bloque) => bloque.filas.some((otra) => otra.id === fila.id))?.clave ??
       'diagnosticos'
     );
   }
 
+  /**
+   * Abre el modal de adjuntos de esa fila.
+   *
+   * Antes esto alternaba un formulario **dentro de la fila** —`alternarAdjuntos`,
+   * con su botón que cambiaba a «Cerrar adjuntos»— y la tabla se abría en dos
+   * para hacerle sitio. Ahora la fila sólo abre el modal.
+   */
   protected abrirAdjuntos(fila: FilaClinica, bloque: string): void {
     this.adjuntandoA.set({ id: fila.id, bloque, titulo: fila.principal });
   }
@@ -735,6 +999,31 @@ export class PatientChart {
   protected cerrarAdjuntos(): void {
     this.adjuntandoA.set(null);
   }
+
+  /**
+   * El contexto que hereda el lote de adjuntos: paciente y los vínculos que el
+   * registro padre ya resolvió.
+   *
+   * Se **muestra** y no se pide: el vínculo lo da la ruta de `clinical`, que
+   * cuelga el archivo del registro, y el registro ya tiene su encuentro y su
+   * diagnóstico. Volver a elegirlos en el modal sería pedir dos veces lo que el
+   * padre ya resolvió, con la posibilidad de que la segunda respuesta no
+   * coincida.
+   */
+  protected readonly contextoDeLosAdjuntos = computed<readonly VinculoClinico[]>(() => {
+    const destino = this.adjuntandoA();
+    if (destino === null) {
+      return [];
+    }
+    const fila = this.bloques()
+      .find((bloque) => bloque.clave === destino.bloque)
+      ?.filas.find((otra) => otra.id === destino.id);
+    return [
+      { rotulo: 'Paciente', valor: this.contextoDelPaciente() },
+      { rotulo: 'Registro', valor: destino.titulo },
+      ...(fila?.vinculos ?? []),
+    ];
+  });
 
   /**
    * Las columnas de un bloque concreto.
@@ -768,24 +1057,18 @@ export class PatientChart {
             } satisfies ColumnDef<FilaClinica>,
           ]
         : []),
-      // Patch v4.0.8: sólo `diagnosticos` transiciona de estado. Antes del
-      // patch ninguna fila clínica tenía una acción de escritura propia —el
-      // registro nacía activo y ahí se quedaba para siempre—.
       // La medicación dice para qué es y de qué consulta viene. Las dos sólo
       // se dibujan si alguna fila las llena: una columna vacía se lee como un
       // dato que no cargó, no como una columna que ese bloque no tiene.
-      ...(clave === 'medicacion' && filas.some((f) => (f.diagnostico ?? '') !== '')
-        ? [
-            {
-              key: 'diagnostico',
-              header: 'Diagnóstico',
-              priority: 2,
-            } satisfies ColumnDef<FilaClinica>,
-          ]
+      ...(clave === 'medicacion' && filas.some((fila) => (fila.diagnostico ?? '') !== '')
+        ? [{ key: 'diagnostico', header: 'Diagnóstico', priority: 2 } satisfies ColumnDef<FilaClinica>]
         : []),
-      ...(clave === 'medicacion' && filas.some((f) => (f.cita ?? '') !== '')
+      ...(clave === 'medicacion' && filas.some((fila) => (fila.cita ?? '') !== '')
         ? [{ key: 'cita', header: 'Receta de', priority: 3 } satisfies ColumnDef<FilaClinica>]
         : []),
+      // Patch v4.0.8: sólo `diagnosticos` transiciona de estado. Antes del
+      // patch ninguna fila clínica tenía una acción de escritura propia —el
+      // registro nacía activo y ahí se quedaba para siempre—.
       ...(clave === 'diagnosticos'
         ? [
             {
@@ -796,12 +1079,26 @@ export class PatientChart {
             } satisfies ColumnDef<FilaClinica>,
           ]
         : []),
+      // El detalle, en todos los bloques y siempre en modal. Con `priority: 1`
+      // porque en teléfono es la única forma de leer lo que la tabla plegó: una
+      // acción de apertura que se pliega deja la fila sin salida.
+      // El rótulo es «Ver» y no «Detalle»: varios bloques ya traen una columna
+      // «Detalle» con un dato —la criticidad de una alergia, si un encuentro
+      // sigue abierto—, y dos columnas con el mismo nombre en la misma tabla
+      // no se distinguen. Lo mostró la captura del navegador.
+      {
+        key: 'ver',
+        header: 'Ver',
+        priority: 1,
+        cell: this.celdaVer(),
+      } satisfies ColumnDef<FilaClinica>,
       // «En todos los formularios debe poderse poner un adjunto… incluso en la
-      // medicación» — pedido del cliente. Los cuatro bloques que guardan dato
-      // clínico de una persona; los narrativos (notas, planes, documentos)
-      // tienen su propio camino y quedan fuera de esta tanda.
-      ...(this.puedeEscribir() &&
-      ['diagnosticos', 'medicacion', 'alergias', 'encuentros'].includes(clave ?? '')
+      // medicación» — pedido del cliente. Los bloques que guardan dato clínico
+      // de una persona; los narrativos (notas, planes, documentos) tienen su
+      // propio camino y quedan fuera de esta tanda. `diagnosticos` no la lleva
+      // porque ya adjunta desde su menú de acciones, y dos botones que abren el
+      // mismo modal en la misma fila es la clase de duda que sobra.
+      ...(this.puedeEscribir() && ['medicacion', 'alergias', 'encuentros'].includes(clave ?? '')
         ? [
             {
               key: 'adjuntos',
@@ -894,6 +1191,8 @@ export class PatientChart {
    * muestra tal cual la explica el servidor.
    */
   protected async cambiarEstadoClinico(fila: FilaClinica): Promise<void> {
+    // El modal se cierra en el camino feliz, dentro de `finalizar`: si algo
+    // falla, el mensaje tiene que verse donde se tomó la decisión.
     const destino = this.destinoEstadoDe(fila.id);
     if (destino === null || this.cambiandoEstado() !== null) {
       return;
@@ -923,6 +1222,7 @@ export class PatientChart {
         next: () => {
           this.cambiandoEstado.set(null);
           this.elegirDestinoEstado(fila.id, null);
+          this.cambiandoEstadoDe.set(null);
           this.toasts.success(
             `Ahora figura como "${etiquetaDestino}".`,
             'Estado clínico actualizado',

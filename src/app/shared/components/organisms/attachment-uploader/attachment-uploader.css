@@ -1,8 +1,207 @@
+/* ============================================================================
+    Adjuntar archivos — el cuerpo del modal.
 
-/* En qué va la tanda, debajo del botón y en tono secundario: es estado, no un
-   mensaje que haya que atender. */
-.adjuntar__progreso {
-  margin: var(--sp-2) 0 0;
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
+    Mobile-first: sólo consultas `min-width`. La cola es una lista de filas que
+    en teléfono se apilan en dos renglones y en escritorio entran en una: el
+    nombre de un estudio puede ser larguísimo y es lo único que no se puede
+    esconder sin dejar a alguien sin saber qué está subiendo.
+    ========================================================================== */
+
+/* -- El contexto heredado, de lectura --------------------------------------- */
+
+.adjuntar__contexto {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0 0 var(--sp-2);
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-surface-alt);
+}
+
+.adjuntar__contexto-fila {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+}
+
+@media (min-width: 30rem) {
+    .adjuntar__contexto-fila {
+        grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+        gap: var(--sp-3);
+        align-items: baseline;
+    }
+}
+
+.adjuntar__contexto-rotulo {
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.adjuntar__contexto-valor {
+    margin: 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.adjuntar__aclaracion {
+    margin: 0 0 var(--sp-4);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.adjuntar__rechazados {
+    margin: 0;
+    padding-inline-start: var(--sp-5);
+}
+
+/* -- La cola ---------------------------------------------------------------- */
+
+.adjuntar__cola {
+    margin-top: var(--sp-5);
+}
+
+.adjuntar__cola-titulo {
+    margin: 0 0 var(--sp-3);
+    font-family: var(--font-display);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.adjuntar__vacio {
+    margin: 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-secondary);
+}
+
+.adjuntar__lista {
+    display: grid;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* El motivo del fallo va a lo ancho, debajo: no entra en la columna del estado,
+   y meterlo ahí lo recortaba a «Erro…». */
+.adjuntar__item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        'nombre quitar'
+        'meta   quitar'
+        'error  error';
+    align-items: center;
+    gap: var(--sp-1) var(--sp-3);
+    padding: var(--sp-3);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+}
+
+@media (min-width: 40rem) {
+    .adjuntar__item {
+        grid-template-columns: minmax(0, 1fr) auto auto auto;
+        grid-template-areas:
+            'nombre tamano estado quitar'
+            'error  error  error  error';
+    }
+}
+
+.adjuntar__nombre {
+    grid-area: nombre;
+    min-inline-size: 0;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    color: var(--text-primary);
+    /* Se recorta a la vista y el nombre completo queda en el `title`: el modal
+       no crece porque alguien subió `estudio-de-imagen-2026-08-final-v3.pdf`. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.adjuntar__tamano {
+    grid-area: meta;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.adjuntar__estado {
+    grid-area: meta;
+    justify-self: end;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+@media (min-width: 40rem) {
+    .adjuntar__tamano {
+        grid-area: tamano;
+    }
+
+    .adjuntar__estado {
+        grid-area: estado;
+        justify-self: auto;
+    }
+}
+
+/* El estado va en texto —arriba— y el color sólo lo acompaña. */
+.adjuntar__item[data-estado='pendiente'] .adjuntar__estado {
+    color: var(--text-secondary);
+}
+
+.adjuntar__item[data-estado='subiendo'] .adjuntar__estado {
+    color: var(--st-info-fg);
+}
+
+.adjuntar__item[data-estado='adjuntado'] .adjuntar__estado {
+    color: var(--st-success-fg);
+}
+
+.adjuntar__item[data-estado='error'] .adjuntar__estado {
+    color: var(--st-error-fg);
+}
+
+.adjuntar__item[data-estado='error'] {
+    border-color: var(--st-error-bd);
+}
+
+.adjuntar__error {
+    grid-area: error;
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--st-error-fg);
+}
+
+.adjuntar__hueco {
+    grid-area: quitar;
+}
+
+.adjuntar__item > [app-button] {
+    grid-area: quitar;
+}
+
+.adjuntar__resumen {
+    margin: var(--sp-3) 0 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.adjuntar__acciones {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--sp-5);
 }

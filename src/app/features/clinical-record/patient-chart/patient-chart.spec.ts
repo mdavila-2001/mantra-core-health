@@ -329,24 +329,73 @@ describe('PatientChart', () => {
    */
   describe('adjuntar un archivo a un diagnóstico ya registrado (ALV-033)', () => {
     /**
-     * El subidor pasó a **modal**: la fila sólo abre y cierra, y ya no crece
-     * dentro de la tabla. Es lo que la regla de la casa pide para toda edición
-     * que pida datos.
+     * `abrirAdjuntos` recibe la fila y su bloque: de la fila salen el id y el
+     * título del modal, y del bloque la ruta del vínculo y el tipo de dueño.
+     * Sólo se leen esos dos campos, así que la prueba no arma una fila entera.
      */
-    it('abrir y cerrar los adjuntos de ESA fila', () => {
+    function abridorDeAdjuntos(): (id: string, principal: string, bloque: string) => void {
+      const abrir =
+        interno<(fila: { id: string; principal: string }, bloque: string) => void>(
+          'abrirAdjuntos',
+        );
+      return (id, principal, bloque) => abrir({ id, principal }, bloque);
+    }
+
+    /**
+     * Abre y cierra, ya no alterna: el subidor vive en un modal, y un botón de
+     * menú que cerrara el modal que está encima de él no tendría sentido —el
+     * modal se cierra por su propia salida—.
+     */
+    it('abre el modal de adjuntos de ESA fila, y se cierra por su salida', () => {
       responderNombre();
       responderExpediente();
 
+      const abrir = abridorDeAdjuntos();
       expect(interno<() => unknown>('adjuntandoA')()).toBeNull();
 
-      interno<(fila: { id: string; principal: string }, bloque: string) => void>('abrirAdjuntos')(
-        { id: 'c-1', principal: 'Hipertensión' },
-        'diagnosticos',
-      );
+      abrir('c-1', 'Diabetes tipo 2', 'diagnosticos');
+      expect(interno<() => { id: string } | null>('adjuntandoA')()?.id).toBe('c-1');
+
+      // Volver a pedirlo sobre la misma fila no lo cierra: un método que
+      // conmutaba era justamente lo que abría la tabla en dos.
+      abrir('c-1', 'Diabetes tipo 2', 'diagnosticos');
       expect(interno<() => { id: string } | null>('adjuntandoA')()?.id).toBe('c-1');
 
       interno<() => void>('cerrarAdjuntos')();
       expect(interno<() => unknown>('adjuntandoA')()).toBeNull();
+    });
+
+    /** El menú deja de deformar la tabla: la celda ya no despliega nada. */
+    it('la celda de acciones no despliega el subidor dentro de la tabla', () => {
+      responderNombre();
+      responderExpediente();
+      harness.fixture.detectChanges();
+
+      abridorDeAdjuntos()('c-1', 'Diabetes tipo 2', 'diagnosticos');
+      harness.fixture.detectChanges();
+
+      const raiz = harness.fixture.nativeElement as HTMLElement;
+      // El subidor está dentro del modal, no dentro de la tabla.
+      expect(raiz.querySelector('app-attachment-dialog')).not.toBeNull();
+      expect(raiz.querySelector('app-data-table app-attachment-uploader')).toBeNull();
+    });
+
+    /**
+     * El lote hereda paciente, el registro padre y los vínculos que ese
+     * registro ya resolvió, y el modal los **muestra**: el vínculo lo da la
+     * ruta de `clinical`, no un campo que alguien vuelva a elegir.
+     */
+    it('el contexto del lote sale del registro padre y de sus vínculos', () => {
+      responderNombre();
+      responderExpediente();
+
+      abridorDeAdjuntos()('c-1', 'Diabetes tipo 2', 'diagnosticos');
+
+      const contexto =
+        interno<() => readonly { rotulo: string; valor: string }[]>('contextoDeLosAdjuntos')();
+
+      expect(contexto.map((dato) => dato.rotulo)).toEqual(['Paciente', 'Registro', 'Encuentro']);
+      expect(contexto[1]?.valor).toBe('Diabetes tipo 2');
     });
 
     /**
@@ -357,26 +406,24 @@ describe('PatientChart', () => {
       responderNombre();
       responderExpediente();
 
-      const abrir = interno<(fila: { id: string; principal: string }, bloque: string) => void>(
-        'abrirAdjuntos',
-      );
+      const abrir = abridorDeAdjuntos();
       const enlazar = interno<
         (fileId: string, ownerId: string) => { subscribe: (o: unknown) => void }
       >('enlazarAdjunto');
 
-      abrir({ id: 'c-1', principal: 'Hipertensión' }, 'diagnosticos');
+      abrir('c-1', 'Diabetes tipo 2', 'diagnosticos');
       enlazar('file-1', 'c-1').subscribe({ next: () => undefined });
       http
         .expectOne('/clinical/conditions/c-1/attachments')
         .flush({ id: 'link-1', fileId: 'file-1', ownerId: 'c-1', createdAt: '2026-01-01' });
 
-      abrir({ id: 'rx-1', principal: 'Enalapril' }, 'medicacion');
+      abrir('rx-1', 'Enalapril', 'medicacion');
       enlazar('file-2', 'rx-1').subscribe({ next: () => undefined });
       http
         .expectOne('/clinical/medication-requests/rx-1/attachments')
         .flush({ id: 'link-2', fileId: 'file-2', ownerId: 'rx-1', createdAt: '2026-01-01' });
 
-      abrir({ id: 'al-1', principal: 'Penicilina' }, 'alergias');
+      abrir('al-1', 'Penicilina', 'alergias');
       enlazar('file-3', 'al-1').subscribe({ next: () => undefined });
       http
         .expectOne('/clinical/allergy-intolerances/al-1/attachments')
@@ -388,17 +435,15 @@ describe('PatientChart', () => {
       responderNombre();
       responderExpediente();
 
-      const abrir = interno<(fila: { id: string; principal: string }, bloque: string) => void>(
-        'abrirAdjuntos',
-      );
+      const abrir = abridorDeAdjuntos();
       const dueno = interno<() => string>('duenoDelAdjunto');
       const enlace = interno<() => unknown>('enlaceDelAdjunto');
 
-      abrir({ id: 'rx-1', principal: 'Enalapril' }, 'medicacion');
+      abrir('rx-1', 'Enalapril', 'medicacion');
       expect(dueno()).toBe('MEDICATION_REQUEST');
       expect(enlace()).not.toBeNull();
 
-      abrir({ id: 'enc-1', principal: 'Consulta' }, 'encuentros');
+      abrir('enc-1', 'Consulta', 'encuentros');
       expect(dueno()).toBe('ENCOUNTER');
       // Los encuentros todavía no tienen ruta propia en `clinical`.
       expect(enlace()).toBeNull();
@@ -575,12 +620,15 @@ describe('PatientChart', () => {
       interno<() => readonly { clave: string; columnas: { key: string }[] }[]>('bloques')();
     const diagnosticos = bloques.find((b) => b.clave === 'diagnosticos');
     expect(diagnosticos?.columnas.some((c) => c.key === 'detalle')).toBe(false);
-    // Las tres que siempre están, más `acciones` (Patch v4.0.8: sólo diagnósticos).
+    // Las tres que siempre están, más `acciones` (Patch v4.0.8: sólo
+    // diagnósticos) y `ver`, que la lleva **todo** bloque desde la corrección
+    // del 10/09/2026: el detalle se abre en modal y esa es su puerta.
     expect(diagnosticos?.columnas.map((c) => c.key)).toEqual([
       'principal',
       'estado',
       'cuando',
       'acciones',
+      'ver',
     ]);
   });
 
@@ -923,5 +971,204 @@ describe('PatientChart', () => {
     expect(texto).toContain('Profesional: No registrado');
     expect(texto).not.toContain('Matrícula');
     expect(texto).toContain('Organización: Hospital Central');
+  });
+
+  /* ═══ Vínculos clínicos y detalle en modal ════════════════════════════════
+     La corrección del 10/09/2026: cada registro dice con qué encuentro y con
+     qué diagnóstico está relacionado, y lo dice en un modal —nunca desplegado
+     dentro del listado—. Donde el contrato no guarda el vínculo, lo declara en
+     voz alta en vez de mostrar una asociación fabricada. */
+
+  describe('vínculos clínicos de cada bloque', () => {
+    it('un diagnóstico sin encuentro lo dice, no se le asigna el último', () => {
+      responderNombre();
+      responderExpediente();
+
+      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+        'diagnosticos',
+      )();
+
+      expect(filas[0]?.vinculos).toEqual([
+        { rotulo: 'Encuentro', valor: 'Sin encuentro registrado' },
+      ]);
+    });
+
+    it('un diagnóstico con encuentro lo nombra con su clase y su fecha', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          conditions: [
+            {
+              id: 'c-1',
+              codeConceptId: 'con-diabetes',
+              clinicalStatusConceptId: 'st-activa',
+              encounterId: 'e-1',
+              createdAt: '2026-01-03T00:00:00.000Z',
+            },
+          ],
+          encounters: [
+            {
+              id: 'e-1',
+              statusConceptId: 'st-final',
+              classConceptId: 'st-activa',
+              startAt: '2026-01-03T10:00:00.000Z',
+            },
+          ],
+        },
+      });
+
+      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+        'diagnosticos',
+      )();
+
+      expect(filas[0]?.vinculos[0]?.valor).toContain('Activa');
+      expect(filas[0]?.vinculos[0]?.valor).toContain('2026');
+    });
+
+    /**
+     * El vínculo que la corrección hace verificable: `indicationConditionId`
+     * viene de la lectura, así que sobrevive a recargar. Antes el tipo no lo
+     * declaraba y el diagnóstico de la receta desaparecía al releer.
+     */
+    it('la receta nombra el diagnóstico que la motiva, leído del resumen', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          medicationRequests: [
+            {
+              id: 'm-1',
+              medicationConceptId: 'con-diabetes',
+              statusConceptId: 'st-activa',
+              indicationConditionId: 'c-1',
+              createdAt: '2026-01-05T00:00:00.000Z',
+            },
+          ],
+        },
+      });
+
+      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+        'medicacion',
+      )();
+
+      expect(filas[0]?.vinculos[0]).toEqual({
+        rotulo: 'Diagnóstico',
+        valor: 'Diabetes tipo 2',
+      });
+    });
+
+    it('una receta sin diagnóstico asociado lo dice: es un caso legítimo', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          medicationRequests: [
+            {
+              id: 'm-1',
+              medicationConceptId: 'con-diabetes',
+              statusConceptId: 'st-activa',
+              createdAt: '2026-01-05T00:00:00.000Z',
+            },
+          ],
+        },
+      });
+
+      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+        'medicacion',
+      )();
+
+      expect(filas[0]?.vinculos[0]?.valor).toBe('Sin diagnóstico asociado');
+    });
+
+    /**
+     * `AllergyIntolerance` no tiene encuentro ni condición ni en la escritura ni
+     * en la lectura. Decirlo es lo honesto: una etiqueta de encuentro acá sería
+     * exactamente la «relación sólo visual» que el pedido prohíbe.
+     */
+    it('la alergia declara que su contrato no guarda vínculos', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          allergies: [
+            {
+              id: 'a-1',
+              substanceConceptId: 'con-diabetes',
+              clinicalStatusConceptId: 'st-activa',
+              createdAt: '2026-01-04T00:00:00.000Z',
+            },
+          ],
+        },
+      });
+
+      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+        'alergias',
+      )();
+
+      expect(filas[0]?.vinculos[0]?.valor).toContain('no guarda encuentro ni diagnóstico');
+    });
+
+    /** El sentido correcto: el encuentro es el contexto y el diagnóstico cuelga. */
+    it('el encuentro lista los diagnósticos que se documentaron en él', () => {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          conditions: [
+            {
+              id: 'c-1',
+              codeConceptId: 'con-diabetes',
+              clinicalStatusConceptId: 'st-activa',
+              encounterId: 'e-1',
+              createdAt: '2026-01-03T00:00:00.000Z',
+            },
+          ],
+          encounters: [
+            { id: 'e-1', statusConceptId: 'st-final', startAt: '2026-01-03T10:00:00.000Z' },
+          ],
+        },
+      });
+
+      const filas = interno<() => readonly { vinculos: { rotulo: string; valor: string }[] }[]>(
+        'encuentros',
+      )();
+
+      expect(filas[0]?.vinculos[0]).toEqual({
+        rotulo: 'Diagnósticos del encuentro',
+        valor: 'Diabetes tipo 2',
+      });
+    });
+  });
+
+  describe('el detalle se abre en modal', () => {
+    it('abre con la fila pedida y con el título del bloque, y cierra', () => {
+      responderNombre();
+      responderExpediente();
+
+      const fila = interno<() => readonly { id: string }[]>('observaciones')()[0]!;
+
+      expect(interno<() => unknown>('filaEnDetalle')()).toBeNull();
+
+      interno<(f: unknown) => void>('verDetalle')(fila);
+
+      expect(interno<() => { bloque: string } | null>('filaEnDetalle')()?.bloque).toBe(
+        'observaciones',
+      );
+      // Un título específico, nunca «Formulario» ni «Detalle» a secas.
+      expect(interno<() => string>('tituloDelDetalle')()).toBe('Detalle de la observación');
+
+      interno<() => void>('cerrarDetalle')();
+      expect(interno<() => unknown>('filaEnDetalle')()).toBeNull();
+    });
+
+    /**
+     * El bloque se deduce de dónde está la fila: la plantilla de celda es una
+     * sola para las ocho tablas y sólo recibe la fila.
+     */
+    it('deduce el bloque de la fila, no de un parámetro', () => {
+      responderNombre();
+      responderExpediente();
+
+      const diagnostico = interno<() => readonly { id: string }[]>('diagnosticos')()[0]!;
+      interno<(f: unknown) => void>('verDetalle')(diagnostico);
+
+      expect(interno<() => string>('tituloDelDetalle')()).toBe('Detalle del diagnóstico');
+    });
   });
 });

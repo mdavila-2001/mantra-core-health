@@ -1,4 +1,11 @@
-<app-page-header [title]="titulo()" [subtitle]="subtitulo()" />
+<!-- Embebido no lleva encabezado de página: dentro de un modal el título lo
+     pone el diálogo, y dos encabezados apilados dejan a cualquiera sin saber
+     dónde está. -->
+@if (!embebido()) {
+  <app-page-header [title]="titulo()" [subtitle]="subtitulo()" />
+} @else {
+  <p class="directorio__bajada-embebida">{{ subtitulo() }}</p>
+}
 
 <!-- Lo que un vertical necesita entre el título y los filtros. Hoy lo usan el
      directorio de clínicas y el de farmacias para su mapa de Bolivia: el mapa
