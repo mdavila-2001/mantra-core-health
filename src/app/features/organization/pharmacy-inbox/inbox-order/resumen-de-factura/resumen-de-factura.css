@@ -1,0 +1,66 @@
+/* Mobile-first: los datos apilados; en ancho de mostrador se acomodan en
+   dos columnas para que la factura entre de un vistazo. */
+
+.factura {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.factura__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.factura__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.factura__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.factura__dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.factura__etiqueta {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.factura__valor {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.factura__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.factura__pie {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+@media (min-width: 640px) {
+  .factura__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
