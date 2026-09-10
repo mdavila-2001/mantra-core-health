@@ -1,17 +1,4 @@
 <app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
-  <!-- Donde se escribe. El expediente es lectura; abrir el encuentro y
-       registrar sobre él vive en su propia pantalla, y este botón es el paso
-       de una a la otra sin volver a elegir a la persona. -->
-  <a
-    app-button
-    page-actions
-    variant="primary"
-    [routerLink]="rutaDeLaAtencion()"
-    data-testid="expediente-abrir-atencion"
-  >
-    Atender
-  </a>
-
   <!-- El PDF sale del bloque `[data-pdf-root]` de abajo, no de la página
        entera: sin eso el documento se llevaría el menú lateral. -->
   <app-pdf-export-button
@@ -28,6 +15,16 @@
      mientras el expediente no esté, no hay pestañas que dibujar. -->
 <app-view-state-host [state]="expediente()" (retry)="recargar()">
   <div class="expediente" data-pdf-root #raizPdf>
+    <!-- Continuación, no un origen: atender nace sólo de «Mis citas». Esto
+         aparece únicamente si ya hay un encuentro abierto con esta persona. -->
+    @if (atencionEnCurso()) {
+      <app-alert tone="info" title="Tenés una consulta en curso con esta persona">
+        <a app-link [routerLink]="rutaDeLaAtencion()" data-testid="expediente-volver-atencion">
+          Volver a la consulta
+        </a>
+      </app-alert>
+    }
+
     <!-- Un recorte silencioso en clínica se lee como «no hay antecedentes». -->
     @if (recorte()) {
       <app-alert tone="warning" title="Expediente recortado">
@@ -108,25 +105,6 @@
       </app-tabs>
     </section>
 
-    <!-- ─── De dónde sale esto ───────────────────────────────────────────
-         No es relleno: un expediente que no dice de dónde viene cada bloque
-         invita a suponer que lo trae todo, y no lo trae. -->
-    <app-card variant="outlined" padding="lg" class="expediente__nota">
-      <h2 class="expediente__nota-titulo">Qué se está mirando</h2>
-      <p class="expediente__nota-texto">
-        Los cinco primeros bloques salen del registro clínico estructurado; las notas, los planes y
-        los documentos, del expediente narrativo. Son dos lecturas del backend y una sola historia:
-        la separación es de quién la escribe, no de quién la lee.
-      </p>
-      <p class="expediente__nota-texto">
-        Esta pantalla <strong>lee</strong>. Lo que se registra durante una consulta —abrir y cerrar
-        el encuentro, recetar, la internación y las fichas de especialidad— vive en
-        <strong>Atención</strong>, que se abre con el botón de arriba y trae a la misma persona. La
-        única escritura que quedó acá es el <strong>estado clínico</strong> de un diagnóstico, y con
-        su adjunto: es una corrección de lo que esta tabla muestra, no un registro de la consulta de
-        hoy.
-      </p>
-    </app-card>
   </div>
 </app-view-state-host>
 

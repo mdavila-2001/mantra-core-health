@@ -446,6 +446,73 @@ describe('PatientChart', () => {
     );
   });
 
+  /* ---- el expediente dejó de ser un origen de la atención ----------------- */
+
+  /**
+   * Fase 1 del plan de atención: atender nace **sólo** de «Mis citas», donde
+   * está el turno que lo justifica. Entrar a atender desde el expediente
+   * salteaba ese paso y dejaba consultas sin cita detrás.
+   */
+  it('no ofrece «Atender»: el expediente es lectura', () => {
+    responderNombre();
+    responderExpediente();
+    harness.fixture.detectChanges();
+
+    const html: string = harness.fixture.nativeElement.innerHTML;
+    expect(html).not.toContain('expediente-abrir-atencion');
+  });
+
+  /**
+   * Lo que sí corresponde es la continuación: un encuentro sin `endAt` está
+   * abierto, y quien vino a consultar un antecedente tiene por dónde volver.
+   */
+  it('con un encuentro abierto ofrece volver a la consulta', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        encounters: [
+          { id: 'e-1', classConceptId: 'st-activa', startAt: '2026-05-20T10:00:00.000Z' },
+        ],
+      },
+    });
+    harness.fixture.detectChanges();
+
+    expect(interno<() => boolean>('atencionEnCurso')()).toBe(true);
+    const html: string = harness.fixture.nativeElement.innerHTML;
+    expect(html).toContain('expediente-volver-atencion');
+  });
+
+  it('con todos los encuentros cerrados no ofrece volver a ninguna consulta', () => {
+    responderNombre();
+    responderExpediente({
+      resumen: {
+        encounters: [
+          {
+            id: 'e-1',
+            classConceptId: 'st-activa',
+            startAt: '2026-05-20T10:00:00.000Z',
+            endAt: '2026-05-20T11:00:00.000Z',
+          },
+        ],
+      },
+    });
+    harness.fixture.detectChanges();
+
+    expect(interno<() => boolean>('atencionEnCurso')()).toBe(false);
+    const html: string = harness.fixture.nativeElement.innerHTML;
+    expect(html).not.toContain('expediente-volver-atencion');
+  });
+
+  /** Fase 3.1: era texto de arquitectura interna en la pantalla del médico. */
+  it('ya no muestra la tarjeta «Qué se está mirando»', () => {
+    responderNombre();
+    responderExpediente();
+    harness.fixture.detectChanges();
+
+    const texto: string = harness.fixture.nativeElement.textContent ?? '';
+    expect(texto).not.toContain('Qué se está mirando');
+  });
+
   /* ---- columnas por bloque ----------------------------------------------- */
 
   /**

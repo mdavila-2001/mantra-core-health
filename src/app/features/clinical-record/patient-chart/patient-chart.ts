@@ -32,10 +32,9 @@ import { dataOf, empty, loading, notFound, ready } from '../../../core/view-stat
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import type { BreadcrumbItem } from '../../../shared/components/molecules/breadcrumb/breadcrumb.types';
+import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../shared/components/molecules/concept-select/concept-select';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
@@ -164,13 +163,12 @@ interface Expediente {
   imports: [
     Alert,
     AppButton,
-    AppButtonLink,
     AttachmentUploader,
     Badge,
-    Card,
     ConceptSelect,
     DataTable,
     DatePipe,
+    Link,
     PdfExportButton,
     PageHeader,
     RouterLink,
@@ -263,12 +261,22 @@ export class PatientChart {
   );
 
   /**
-   * Donde se registra la consulta de esta misma persona.
+   * La atención que ya está abierta con esta persona, si la hay.
    *
-   * El expediente no escribe, pero es de donde se sale a escribir: quien llega
-   * a leer un antecedente y decide atender no debería tener que volver al menú
-   * y elegir a la persona de nuevo.
+   * El expediente **dejó de ser un origen de la atención**: atender nace sólo
+   * de «Mis citas», que es donde está el turno que la justifica. Entrar a
+   * atender desde acá salteaba ese paso y dejaba consultas sin cita detrás.
+   *
+   * Lo que sí corresponde es la continuación: quien está atendiendo, se vino a
+   * consultar un antecedente y quiere volver, tiene por dónde. Un encuentro
+   * está abierto mientras no tenga `endAt` — el mismo criterio que la columna
+   * «En curso» de la tabla de encuentros.
    */
+  protected readonly atencionEnCurso = computed(() =>
+    (this.datos()?.resumen.encounters ?? []).some((fila) => fila.endAt === undefined),
+  );
+
+  /** A dónde vuelve «Volver a la consulta». */
   protected readonly rutaDeLaAtencion = computed(() => encounterWorkspaceRoute(this.profileId()));
 
   /**

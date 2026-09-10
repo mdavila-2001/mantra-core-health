@@ -116,26 +116,6 @@
   text-transform: capitalize;
 }
 
-/* ── Nota de alcance ───────────────────────────────────────────────────────*/
-
-.expediente__nota {
-  display: block;
-  /* Es texto corrido: la medida de lectura manda sobre el ancho de la tabla. */
-  max-inline-size: 68ch;
-}
-
-.expediente__nota-titulo {
-  margin: 0 0 var(--sp-3);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  font-weight: 600;
-}
-
-.expediente__nota-texto {
-  margin: 0 0 var(--sp-3);
-  color: var(--text-secondary);
-}
-
 /* ── Patch v4.0.8: cambiar el estado clínico de un diagnóstico ────────────*/
 
 .expediente__accion-estado {
