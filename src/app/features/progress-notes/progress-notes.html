@@ -127,10 +127,14 @@
       }
     </app-view-state-host>
 
-    <p class="evoluciones__detalle-salida">
-      <a app-link [routerLink]="atencion.ruta" data-testid="evoluciones-abrir-expediente">
-        Abrir el expediente completo
-      </a>
-    </p>
+    <!-- Sólo cuando hay notas: sin ellas, la próxima acción del estado vacío
+         —que el M34 exige— ya ofrece este mismo enlace, y salían los dos. -->
+    @if (notasVisibles().length > 0) {
+      <p class="evoluciones__detalle-salida">
+        <a app-link [routerLink]="atencion.ruta" data-testid="evoluciones-abrir-expediente">
+          Abrir el expediente completo
+        </a>
+      </p>
+    }
   </app-content-dialog>
 }
