@@ -14,8 +14,8 @@
      componente: `M15 chart` no tiene lectura de colección de notas. -->
 <app-alert tone="info" title="Por ahora lista a quién atendiste, no las notas una por una">
   La lectura de las notas clínicas todavía no existe en la API, así que acá va lo que sí se puede
-  leer: las personas que atendiste, con el acceso directo a su expediente, que es donde su
-  evolución vive.
+  leer: las personas que atendiste, con el acceso directo a su expediente, que es donde su evolución
+  vive.
 </app-alert>
 
 <app-view-state-host [state]="estado()" (retry)="cargar()">
@@ -26,26 +26,34 @@
   <ul class="evoluciones__lista">
     @for (persona of personas(); track persona.profileId) {
       <li>
-        <app-card variant="outlined" padding="lg" class="evoluciones__fila">
-          <div class="evoluciones__datos">
-            <p class="evoluciones__nombre">{{ persona.nombre }}</p>
-            @if (persona.motivo) {
-              <p class="evoluciones__motivo">{{ persona.motivo }}</p>
-            }
-            <p class="evoluciones__cuando">
-              Última atención:
-              <time [attr.datetime]="persona.ultima.toISOString()">
-                {{ persona.ultima | date: "d 'de' MMMM, HH:mm" }}
-              </time>
-              @if (persona.cuantas > 1) {
-                <span class="evoluciones__veces">
-                  · {{ persona.cuantas }} atenciones en {{ dias }} días
-                </span>
+        <app-card variant="outlined" padding="lg">
+          <div class="evoluciones__fila">
+            <div class="evoluciones__datos">
+              <p class="evoluciones__nombre">{{ persona.nombre }}</p>
+              @if (persona.motivo) {
+                <p class="evoluciones__motivo">{{ persona.motivo }}</p>
               }
-            </p>
-          </div>
+              <p class="evoluciones__cuando">
+                Última atención:
+                <time [attr.datetime]="persona.ultima.toISOString()">
+                  {{ persona.ultima | date: "d 'de' MMMM, HH:mm" }}
+                </time>
+                @if (persona.cuantas > 1) {
+                  <span class="evoluciones__veces">
+                    · {{ persona.cuantas }} atenciones en {{ dias }} días
+                  </span>
+                }
+              </p>
+            </div>
 
-          <a app-button variant="secondary" [routerLink]="persona.ruta">Abrir su evolución</a>
+            <a
+              app-button
+              variant="secondary"
+              class="evoluciones__accion"
+              [routerLink]="persona.ruta"
+              >Abrir su evolución</a
+            >
+          </div>
         </app-card>
       </li>
     }
