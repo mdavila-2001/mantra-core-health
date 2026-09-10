@@ -103,17 +103,20 @@ describe('NotificationCenter', () => {
     expect(filas().length).toBe(2);
   });
 
-  it('el filtro de no leídas empieza de cero: el cursor viejo es de otra consulta', () => {
+  it('la pestaña «Sin leer» empieza de cero: el cursor viejo es de otra consulta', () => {
+    // El filtro dejó de ser un botón que alterna y pasó a ser la segunda
+    // pestaña (2026-09-10), pero la regla que se prueba es la misma: cambiar
+    // de vista descarta el cursor, porque pertenecía a otra consulta.
     http
       .expectOne((r) => r.url === '/notifications/me')
       .flush(pagina([aviso('n-1')], 'cursor-1'));
     fixture.detectChanges();
 
-    (
-      fixture.nativeElement.querySelector(
-        '[data-testid="avisos-filtro"]',
-      ) as HTMLButtonElement
-    ).click();
+    const pestanas = fixture.nativeElement.querySelectorAll(
+      '[data-testid="avisos-pestanas"] [role="tab"]',
+    ) as NodeListOf<HTMLElement>;
+    expect(pestanas.length).toBe(2);
+    pestanas[1]!.click();
     fixture.detectChanges();
 
     const filtrada = http.expectOne((r) => r.url === '/notifications/me');

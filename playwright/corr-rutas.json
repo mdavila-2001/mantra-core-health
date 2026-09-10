@@ -262,16 +262,8 @@
   ],
   "35": [
     {
-      "ruta": "/notifications",
-      "nombre": "notificaciones-todas"
-    },
-    {
-      "ruta": "/notifications?tab=unread",
-      "nombre": "notificaciones-no-leidas"
-    },
-    {
-      "ruta": "/notifications?empty=1",
-      "nombre": "notificaciones-vacio"
+      "ruta": "/notification-center",
+      "nombre": "notificaciones"
     }
   ],
   "36": [
