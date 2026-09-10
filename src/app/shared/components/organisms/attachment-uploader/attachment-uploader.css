@@ -1,0 +1,8 @@
+
+/* En qué va la tanda, debajo del botón y en tono secundario: es estado, no un
+   mensaje que haya que atender. */
+.adjuntar__progreso {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

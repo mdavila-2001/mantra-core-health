@@ -22,6 +22,7 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Chip } from '../../../../shared/components/atoms/chip/chip';
+import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
@@ -257,6 +258,7 @@ export interface RecetaEnFicha {
     AppInput,
     Card,
     Chip,
+    AttachmentUploader,
     ConceptSelect,
     DatePicker,
     FormActions,
@@ -440,6 +442,25 @@ export class MedicationBlock {
 
   /** El motivo escrito a mano, cuando se eligió «Otro motivo». */
   protected readonly motivoLibre = signal('');
+
+  /* -- Adjuntos de la receta ------------------------------------------------ */
+
+  /**
+   * La receta recién prescrita, para ofrecerle adjuntos.
+   *
+   * «En todos los formularios debe de poderse poner un adjunto… **incluso en la
+   * medicación**, para referencias o relaciones», textual del cliente. Sólo
+   * puede ofrecerse después de guardar: el vínculo necesita el identificador.
+   */
+  protected readonly recetaRecienCreada = signal<string | null>(null);
+
+  /** El vínculo pasa por `clinical`, no por el genérico de `common`. */
+  protected readonly enlazarAdjuntoALaReceta = (fileId: string, requestId: string) =>
+    this.clinical.attachFileToMedicationRequest(requestId, fileId);
+
+  protected cerrarAdjuntosDeLaReceta(): void {
+    this.recetaRecienCreada.set(null);
+  }
 
   /** Si se eligió escribir el motivo en vez de elegir un diagnóstico. */
   protected readonly motivoEsLibre = computed(() => this.indicacion() === OTRO_MOTIVO);
@@ -1085,10 +1106,14 @@ export class MedicationBlock {
           : {}),
       })
       .subscribe({
-        next: () => {
+        next: (creada) => {
           this.registrando.set(false);
           this.registro.set(ready(null));
           this.limpiar();
+          // Adjuntar exige que la receta ya exista, así que el panel sólo puede
+          // ofrecerse acá. No se cierra solo: elegir los archivos lleva su
+          // tiempo, y cerrarlo por cuenta propia perdería la referencia.
+          this.recetaRecienCreada.set(creada.id);
           this.toasts.success('Queda en borrador hasta que la firmes.', 'Receta creada');
           this.cambio.emit();
         },

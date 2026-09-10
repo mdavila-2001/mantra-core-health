@@ -23,6 +23,7 @@ import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/p
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
+import { enlazarArchivo } from './files.handlers';
 import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
 
 /* ============================================================================
@@ -369,8 +370,31 @@ export function registrarClinica(router: MockRouter): void {
     return sinPaciente(actualizada);
   });
 
-  router.post('/clinical/conditions/:id/attachments', () => ({ status: 201, body: { ok: true } }));
-  router.post('/clinical/procedures/:id/attachments', () => ({ status: 201, body: { ok: true } }));
+  /* ---- adjuntos ------------------------------------------------------------
+     Las cuatro rutas **guardan el vínculo** en vez de devolver `{ ok: true }`
+     y perderlo: sin eso, `GET /common/files/links` no devolvía nunca lo recién
+     adjuntado y la lista de archivos de una fila salía siempre vacía. */
+
+  const adjuntar = (ownerType: string, ownerId: string, request: MockRequest) => {
+    const { fileId } = cuerpo<{ fileId: string }>(request);
+    return {
+      status: 201,
+      body: enlazarArchivo({ ownerType, ownerId, fileId: fileId ?? '' }),
+    };
+  };
+
+  router.post('/clinical/conditions/:id/attachments', (request) =>
+    adjuntar('CONDITION', request.params['id']!, request),
+  );
+  router.post('/clinical/procedures/:id/attachments', (request) =>
+    adjuntar('PROCEDURE', request.params['id']!, request),
+  );
+  router.post('/clinical/medication-requests/:id/attachments', (request) =>
+    adjuntar('MEDICATION_REQUEST', request.params['id']!, request),
+  );
+  router.post('/clinical/allergy-intolerances/:id/attachments', (request) =>
+    adjuntar('ALLERGY_INTOLERANCE', request.params['id']!, request),
+  );
 
   router.post('/clinical/allergy-intolerances', (request) => {
     const datos = cuerpo<{ patientProfileId: string; substanceConceptId: string; typeConceptId?: string; categoryConceptId?: string; criticalityConceptId?: string; reactions?: unknown[] }>(request);

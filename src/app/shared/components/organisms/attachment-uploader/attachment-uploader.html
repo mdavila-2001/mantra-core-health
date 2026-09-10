@@ -13,25 +13,23 @@
 }
 
 <app-form-field
-  label="Archivo"
-  hint="Hasta 10 MB. Se registra con tu nombre y la hora."
+  [label]="maxFiles() === 1 ? 'Archivo' : 'Archivos'"
+  [hint]="hint()"
   [required]="true"
 >
   <app-file-input
     [(files)]="seleccionados"
     [maxSizeBytes]="maxBytes"
-    [maxFiles]="1"
+    [maxFiles]="maxFiles()"
+    [multiple]="maxFiles() > 1"
     [disabled]="enviando()"
     (rejected)="alRechazar($event)"
   />
 </app-form-field>
 
-<app-form-field label="Categoría" [required]="true">
-  <app-radio-group [(value)]="categoria" [disabled]="enviando()">
-    <app-radio value="DOCUMENT" label="Documento" />
-    <app-radio value="IMAGE" label="Imagen" />
-  </app-radio-group>
-</app-form-field>
+<!-- La categoría se deduce del tipo del archivo: era una pregunta cuya
+     respuesta ya estaba en lo que se acababa de elegir. La sensibilidad sí se
+     pregunta —eso no lo dice el archivo—. -->
 
 <app-form-field
   label="Sensibilidad"
@@ -47,9 +45,16 @@
 <button
   app-button
   variant="primary"
+  data-testid="adjuntar-enviar"
   [isLoading]="enviando()"
   [disabled]="!puedeSubir()"
   (clicked)="subir()"
 >
-  Adjuntar
+  {{ seleccionados().length > 1 ? 'Adjuntar los ' + seleccionados().length : 'Adjuntar' }}
 </button>
+
+<!-- En qué va la tanda. Una espera de siete subidas sin nada que la explique se
+     lee como que la pantalla se colgó. -->
+@if (progreso(); as texto) {
+  <p class="adjuntar__progreso" role="status" data-testid="adjuntar-progreso">{{ texto }}</p>
+}

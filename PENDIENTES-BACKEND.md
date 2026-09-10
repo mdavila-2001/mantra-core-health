@@ -23,6 +23,62 @@ que algo dejó de ser un problema es tan útil como saber que lo sigue siendo.
 
 ---
 
+## Abierto · P25 · Sólo diagnósticos y procedimientos aceptan adjuntos
+
+**Levantado el 2026-09-10.** El cliente lo pidió como regla transversal:
+
+> «En todos los formularios debe de poderse poner un adjunto, un gestor para subir archivos de
+> todo tipo y formato **y en varias cantidades**, incluso en la medicación, para referencias o
+> relaciones.»
+
+### Lo que hay
+
+`OwnerType` (`common/dto/enums.ts`) declara cinco: `USER`, `PATIENT`, `TENANT`, `CONDITION`,
+`PROCEDURE`. Y hay dos rutas de dominio: `POST /clinical/conditions/:id/attachments` y
+`POST /clinical/procedures/:id/attachments`.
+
+### Lo que falta
+
+**Tres tipos de dueño y dos rutas.** La receta y la alergia no tienen dónde colgar un archivo, y
+son justamente los dos que el cliente nombró.
+
+| Capa | Qué hace falta |
+| --- | --- |
+| Conceptos | `OWNER_MEDICATION_REQUEST`, `OWNER_ALLERGY_INTOLERANCE`, `OWNER_ENCOUNTER` en `common/constants/concepts.ts`, con el mismo `def('common:owner-type:…')`. **No toca el `.puml`**: `file_links.owner_type_concept_id` es FK a terminología y el concepto se siembra al arrancar — lo dice el propio comentario de `files.types.ts`. |
+| Enum | Los tres valores en `OwnerType`. |
+| Rutas | `POST /clinical/medication-requests/:id/attachments` y `POST /clinical/allergy-intolerances/:id/attachments`, con su `attachFile()` **calcado de `procedures.service.ts`**: busca el recurso → 404 si no está → `filesService.createLink`. Son diez líneas cada una. |
+
+El genérico `POST /common/files/:id/links` **no alcanza** para dato clínico: no exige rol ni
+verifica que el dueño exista. Es a propósito —sirve a cualquier contexto— y por eso cada dominio
+liga por el suyo.
+
+### «De todo tipo y formato»: se amplía con firmas, no se abre
+
+`UPLOAD_MIME_ALLOWLIST` admite hoy ocho tipos —PDF, JPEG, PNG, WebP, GIF, DOCX, XLSX y texto— y el
+tipo se detecta por **firma de bytes** (`sniffMimeType`), no por extensión. Eso es lo que impide
+subir un ejecutable renombrado `.pdf`, y la regla `40-security.md` lo exige.
+
+Ampliarlo es agregar **firma + entrada** por cada formato nuevo: DICOM (`DICM` en el byte 128),
+HEIC/HEIF, TIFF, MP4/MOV (`ftyp`), MP3, WAV, ZIP, PPTX, CSV/RTF. Lo que **no** se debe hacer es
+aceptar cualquier cosa sin sniffing.
+
+Mientras tanto la pantalla **dice la lista real** en su ayuda en vez de prometer «todo tipo»: una
+promesa que el servidor va a romper con un 422 es peor que un límite dicho.
+
+### Varios archivos por petición no hace falta
+
+El frontend sube **en secuencia** —el backend recibe uno por petición,
+`FileInterceptor('file', { files: 1 })`— y el vínculo es por archivo. Si más adelante se quiere una
+sola transacción, `POST /charts/documents` ya recibe `files[]`.
+
+### Estado del frontend
+
+El subidor ya toma tandas de hasta diez, deduce la categoría del tipo del archivo, muestra
+«Adjuntando 3 de 7…» y no cancela la tanda por uno que falle. La maqueta sirve las dos rutas
+nuevas. **Contra la API de hoy responden 404** hasta que existan.
+
+---
+
 ## Abierto · P24 · La receta no puede llevar un motivo escrito
 
 **Levantado el 2026-09-10.** El cliente lo pidió textual:

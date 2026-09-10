@@ -98,6 +98,32 @@ function metadatos(a: ArchivoSimulado) {
   };
 }
 
+/**
+ * Liga un archivo ya subido a un recurso, y **deja el vínculo guardado**.
+ *
+ * Vive acá y se exporta porque las rutas de adjuntos de `clinical` hacen lo
+ * mismo por su propio endpoint —el genérico de `common` no verifica que el
+ * dueño exista ni quién puede adjuntarle nada— y devolvían `{ ok: true }` sin
+ * guardar nada: `GET /common/files/links` no encontraba después lo adjuntado.
+ */
+export function enlazarArchivo(datos: {
+  readonly ownerType: string;
+  readonly ownerId: string;
+  readonly fileId: string;
+}): { id: string; fileId: string; ownerId: string; ownerType: string; createdAt: string } {
+  const archivo = archivos.get(datos.fileId);
+  if (archivo !== undefined) {
+    archivos.actualizar(archivo.id, { ownerType: datos.ownerType, ownerId: datos.ownerId });
+  }
+  return {
+    id: nuevoId('link'),
+    fileId: datos.fileId,
+    ownerId: datos.ownerId,
+    ownerType: datos.ownerType,
+    createdAt: ahora(),
+  };
+}
+
 export function registrarArchivos(router: MockRouter): void {
   router.post('/common/files/upload', (request) => {
     const form = request.body;
@@ -139,9 +165,14 @@ export function registrarArchivos(router: MockRouter): void {
 
   router.post('/common/files/:id/links', (request) => {
     const datos = request.body as { ownerType?: string; ownerId?: string } | null;
-    const a = archivos.get(request.params['id']!);
-    if (a !== undefined) archivos.actualizar(a.id, { ownerType: datos?.ownerType, ownerId: datos?.ownerId });
-    return { status: 201, body: { id: nuevoId('link'), fileId: request.params['id'], ownerId: datos?.ownerId ?? '', ownerType: datos?.ownerType ?? 'USER', createdAt: ahora() } };
+    return {
+      status: 201,
+      body: enlazarArchivo({
+        ownerType: datos?.ownerType ?? 'USER',
+        ownerId: datos?.ownerId ?? '',
+        fileId: request.params['id']!,
+      }),
+    };
   });
 
   router.post('/common/files/:id/download-url', ({ params }) => {
