@@ -1,48 +1,48 @@
-<div class="profesional">
-  <!-- ─── Quién es ─────────────────────────────────────────────────────────
-       La única tarjeta con elevación de la pantalla: la identidad pesa más
-       que los bloques. Foto si existe; si no, el avatar de iniciales — que es
-       el caso vacío correcto, no un defecto. Cabecera del carril 05: foto,
-       nombre, descripción profesional, cargo principal y especialidades
-       consolidadas como tags — todo fuera de las pestañas, porque identifica
-       a la persona sin importar qué pestaña se mire. -->
+<!-- ═══ La ficha propia: la MISMA tarjeta que el paciente ═════════════════════
+     Pedido del cliente del 2026-09-10: «la información del perfil del médico
+     debe mostrar de la misma manera que la información del paciente, claro
+     tomando en cuenta todos los campos del registro de creación del médico».
+
+     Así que es la tarjeta de `my-profile.html`, no una parecida: mismo retrato
+     que dispara la subida, misma cabecera con «Tus datos» y el lápiz a la
+     derecha, mismas pestañas, mismos renglones `dt`/`dd` y el mismo
+     «Sin registrar» en cursiva para lo que falta. El CSS es literalmente el
+     mismo archivo (`ficha-de-perfil.css`), importado por los dos componentes.
+
+     Lo que cambia es QUÉ dice cada renglón: los doce pasos de
+     `auth/register-practitioner`, repartidos por `PESTANAS_DEL_PERFIL_MEDICO`.
+
+     La ficha de OTRO profesional —la Guía— y la vista previa siguen con el
+     dibujo de siempre, abajo en el `@else`: éste es el perfil de uno mismo. -->
+@if (esPropio() && !previewMode()) {
   <app-card
-    class="profesional__portada"
-    variant="elevated"
+    class="mi-perfil__bloque"
+    variant="outlined"
     padding="lg"
     appTutorialTarget="perfil-portada"
   >
-    <div class="profesional__identidad">
-      <!-- El retrato es el disparador de la subida cuando el perfil es propio
-           (P17). En la ficha de otro profesional sigue siendo una imagen: nadie
-           le cambia la foto a nadie. -->
-      @if (esPropio()) {
-        <label [appFileDropTarget]="dropInput1" (fileDropRejected)="errorDeFoto.set($event)" class="profesional__foto" [class.is-subiendo]="subiendoFoto()">
+    <div class="mi-perfil__cabecera">
+      <div class="mi-perfil__identidad">
+        <!-- El retrato es el disparador de la subida (P17), y se conserva el
+             arrastrar-y-soltar: `appFileDropTarget` deja caer la foto encima
+             además de elegirla con el diálogo. -->
+        <label
+          [appFileDropTarget]="entradaDeFoto"
+          (fileDropRejected)="errorDeFoto.set($event)"
+          class="mi-perfil__foto"
+          [class.is-subiendo]="subiendoFoto()"
+        >
           <app-avatar
-            size="xl"
+            size="lg"
             [src]="fotoVisible()"
             [name]="perfil().nombre"
             [alt]="'Foto de ' + perfil().nombre"
           />
-          <span class="profesional__foto-capa" aria-hidden="true">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.6"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path
-                d="M4 8.5h2.8l1.4-2h7.6l1.4 2H20a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 20 21.5H4A1.5 1.5 0 0 1 2.5 20v-8A1.5 1.5 0 0 1 4 8.5z"
-              />
-              <circle cx="12" cy="14" r="3.6" />
-            </svg>
-          </span>
           <span class="solo-lectores">
             {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
           </span>
-          <input #dropInput1
+          <input
+            #entradaDeFoto
             type="file"
             class="solo-lectores"
             accept="image/*"
@@ -51,642 +51,1289 @@
             (change)="alElegirFoto($event)"
           />
         </label>
-      } @else {
-        <app-avatar
-          size="xl"
-          [src]="perfil().fotoUrl"
-          [name]="perfil().nombre"
-          [alt]="'Foto de ' + perfil().nombre"
-        />
-      }
 
-      <div class="profesional__identidad-texto">
-        <h2 class="profesional__nombre">{{ perfil().nombre }}</h2>
+        <div class="mi-perfil__rotulo">
+          <h2 class="mi-perfil__titulo">Tus datos</h2>
+          <p class="mi-perfil__nombre">{{ perfil().nombre }}</p>
+          @if (errorDeFoto(); as fallo) {
+            <p class="mi-perfil__foto-error" role="alert">{{ fallo }}</p>
+          }
+        </div>
+      </div>
 
-        @if (perfil().titulo) {
-          <p class="profesional__titulo">{{ perfil().titulo }}</p>
+      <!-- El lápiz, igual que en la ficha del paciente: botón de ícono, con el
+           nombre accesible en `aria-label` y en el globo. Va a la pantalla de
+           edición del médico, que es donde hoy vive su formulario. -->
+      <a
+        app-button
+        variant="outline"
+        size="sm"
+        [iconOnly]="true"
+        aria-label="Editar"
+        appTooltip="Editar"
+        data-testid="mi-perfil-editar"
+        routerLink="/my-account/edit"
+      >
+        <app-nav-icon name="edit" />
+      </a>
+    </div>
+
+    <app-tabs [(selectedIndex)]="pestanaSeleccionada" data-testid="mi-perfil-pestanas">
+      <!-- ─── Datos personales ─────────────────────────────────────────────
+           Pasos 1-3 y 8 del alta: cómo te llamás, tu documento, tu fecha de
+           nacimiento y tu título profesional.
+
+           Se dibuja TODO renglón, también el que está vacío. En la ficha de un
+           colega ocultar lo que no declaró es correcto; en la propia es al
+           revés — quien mira es el dueño del dato, y sin el renglón no puede
+           distinguir «no lo tengo cargado» de «la app no me lo muestra». Es el
+           mismo criterio que ya usa la ficha del paciente. -->
+      <app-tab [label]="pestanas[0]">
+        <dl class="mi-perfil__datos">
+          <div class="mi-perfil__dato">
+            <dt>Nombre</dt>
+            <dd>{{ perfil().nombre }}</dd>
+          </div>
+
+          <div class="mi-perfil__dato">
+            <dt>Código profesional</dt>
+            <dd class="mi-perfil__cifra" [title]="perfil().codigo">{{ perfil().codigo }}</dd>
+          </div>
+
+          @if (perfil().datosPersonales; as datos) {
+            <div class="mi-perfil__dato">
+              <dt>Documento de identidad</dt>
+              <dd class="mi-perfil__cifra">
+                @if (datos.documento) {
+                  {{ datos.documento }}
+                  @if (datos.departamento) {
+                    <span class="mi-perfil__sufijo">{{ datos.departamento }}</span>
+                  }
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </dd>
+            </div>
+
+            <div class="mi-perfil__dato">
+              <dt>Fecha de nacimiento</dt>
+              <dd class="mi-perfil__cifra">
+                @if (datos.fechaNacimiento) {
+                  {{ datos.fechaNacimiento | date: 'dd/MM/yyyy' }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </dd>
+            </div>
+
+            <!-- La edad se calcula de la fecha, no se guarda: el registro la
+                 pide «de manera automática». Sin fecha, el renglón dice por qué. -->
+            <div class="mi-perfil__dato">
+              <dt>Edad</dt>
+              <dd class="mi-perfil__cifra">
+                @if (datos.edad !== null) {
+                  {{ datos.edad }} años
+                } @else {
+                  <span class="mi-perfil__ausente">Falta tu fecha de nacimiento</span>
+                }
+              </dd>
+            </div>
+          }
+
+          <div class="mi-perfil__dato">
+            <dt>Título profesional</dt>
+            <dd>
+              @if (perfil().titulo) {
+                {{ perfil().titulo }}
+              } @else {
+                <span class="mi-perfil__ausente">Sin registrar</span>
+              }
+            </dd>
+          </div>
+
+          <!-- El estado de habilitación es lo que decide si puede ejercer: va
+               con la identidad, no escondido en una pestaña de trámites. -->
+          <div class="mi-perfil__dato">
+            <dt>Estado de habilitación</dt>
+            <dd>
+              @if (perfil().verificacion; as estado) {
+                <app-status-seal [variant]="estado.variant" [label]="estado.label" />
+              } @else {
+                <span class="mi-perfil__ausente">Sin determinar</span>
+              }
+            </dd>
+          </div>
+
+          <div class="mi-perfil__dato">
+            <dt>Estado de la práctica</dt>
+            <dd>{{ perfil().estadoDePractica }}</dd>
+          </div>
+
+          <div class="mi-perfil__dato mi-perfil__dato--ancho">
+            <dt>Presentación</dt>
+            <dd>
+              @if (perfil().bio) {
+                {{ perfil().bio }}
+              } @else {
+                <span class="mi-perfil__ausente">Sin registrar</span>
+              }
+            </dd>
+          </div>
+        </dl>
+
+        <!-- La contraseña NO es un campo más: cambiarla revoca sesiones y exige
+             la actual, así que va por su propio flujo y con su propio botón —
+             igual que en la ficha del paciente. -->
+        <p class="mi-perfil__accion">
+          <a
+            app-button
+            variant="outline"
+            size="sm"
+            data-testid="mi-perfil-cambiar-contrasena"
+            [routerLink]="rutaDeCambioDeContrasena"
+          >
+            Cambiar contraseña
+          </a>
+          <a app-button variant="outline" size="sm" routerLink="/my-account/articles">
+            Mis artículos
+          </a>
+        </p>
+      </app-tab>
+
+      <!-- ─── Contacto ─────────────────────────────────────────────────────
+           Pasos 4, 5 y 6 del alta. El registro pregunta CINCO contactos por
+           separado —celular personal, celular del trabajo, fijo del trabajo,
+           correo personal y correo de trabajo— y la ficha vieja mostraba uno
+           de cada clase. -->
+      <app-tab [label]="pestanas[1]">
+        @if (perfil().datosPersonales; as datos) {
+          <dl class="mi-perfil__datos">
+            <div class="mi-perfil__dato">
+              <dt>Correo de trabajo</dt>
+              <dd>
+                @if (datos.correo) {
+                  {{ datos.correo }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </dd>
+            </div>
+
+            <div class="mi-perfil__dato">
+              <dt>Correo personal</dt>
+              <dd>
+                @if (datos.correoPersonal) {
+                  {{ datos.correoPersonal }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </dd>
+            </div>
+
+            <div class="mi-perfil__dato">
+              <dt>Celular personal</dt>
+              <dd class="mi-perfil__cifra">
+                @if (datos.celularPersonal) {
+                  {{ datos.celularPersonal }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </dd>
+            </div>
+
+            <div class="mi-perfil__dato">
+              <dt>Celular del trabajo</dt>
+              <dd class="mi-perfil__cifra">
+                @if (datos.celularTrabajo) {
+                  {{ datos.celularTrabajo }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </dd>
+            </div>
+
+            <div class="mi-perfil__dato">
+              <dt>Fijo del trabajo</dt>
+              <dd class="mi-perfil__cifra">
+                @if (datos.fijoTrabajo) {
+                  {{ datos.fijoTrabajo }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </dd>
+            </div>
+
+            <div class="mi-perfil__dato">
+              <dt>Municipio de residencia</dt>
+              <dd>
+                @if (datos.domicilio) {
+                  {{ datos.domicilio }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </dd>
+            </div>
+
+            <!-- El alta pide la «Ubicación GPS» del domicilio y la ficha no la
+                 mostraba. Va como enlace dentro del renglón —una acción sobre
+                 ese dato—, igual que en la ficha del paciente. -->
+            <div class="mi-perfil__dato">
+              <dt>Domicilio</dt>
+              <dd>
+                @if (datos.direccion) {
+                  {{ datos.direccion }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+                @if (datos.mapaDomicilio; as mapa) {
+                  <a
+                    class="mi-perfil__mapa"
+                    [href]="mapa"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Ver en el mapa
+                  </a>
+                }
+              </dd>
+            </div>
+          </dl>
+        } @else {
+          <p class="mi-perfil__nota mi-perfil__nota--primera">
+            Todavía no pudimos traer estos datos.
+          </p>
+        }
+      </app-tab>
+
+      <!-- ─── Dónde atiendo ────────────────────────────────────────────────
+           Paso 7 del alta («tu consultorio propio») más la disponibilidad.
+           Es la pregunta que la trayectoria no contesta: dónde encontrarlo HOY. -->
+      <app-tab [label]="pestanas[2]">
+        <section class="mi-perfil__seccion" data-testid="perfil-sedes">
+          <h3 class="mi-perfil__subtitulo">Tus consultorios y sedes</h3>
+          <p class="mi-perfil__nota mi-perfil__nota--primera">
+            Se agregan y se retiran desde «Trayectoria».
+          </p>
+          @if (perfil().sedes?.length) {
+            <ul class="mi-perfil__lista">
+              @for (sede of perfil().sedes; track sede.id) {
+                <li class="mi-perfil__item" data-testid="perfil-sede">
+                  <span class="mi-perfil__item-nombre">{{ sede.nombre }}</span>
+                  @if (sede.direccion) {
+                    <span class="mi-perfil__item-detalle">{{ sede.direccion }}</span>
+                  }
+                  @if (sede.punto; as punto) {
+                    <a
+                      class="mi-perfil__mapa"
+                      [href]="
+                        'https://www.google.com/maps/search/?api=1&query=' +
+                        punto.lat +
+                        ',' +
+                        punto.lng
+                      "
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Ver en el mapa
+                    </a>
+                  }
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="mi-perfil__nota">
+              Todavía no registraste dónde atendés. Es lo que un paciente usa para llegar a tu
+              consultorio.
+            </p>
+          }
+        </section>
+
+        <h3 class="mi-perfil__subtitulo">Cómo atendés</h3>
+        <dl class="mi-perfil__datos">
+          <div class="mi-perfil__dato">
+            <dt>Telemedicina</dt>
+            <dd>{{ perfil().telemedicina ? 'Atendés por telemedicina' : 'No la ofrecés' }}</dd>
+          </div>
+          <div class="mi-perfil__dato">
+            <dt>Pacientes nuevos</dt>
+            <dd>
+              {{ perfil().aceptaPacientesNuevos ? 'Aceptás pacientes nuevos' : 'No los aceptás' }}
+            </dd>
+          </div>
+        </dl>
+      </app-tab>
+
+      <!-- ─── Trayectoria ──────────────────────────────────────────────────
+           Dónde se formó, dónde ejerció antes y dónde ejerce hoy (UC-05-16),
+           más los títulos del paso 11 del alta. -->
+      <app-tab [label]="pestanas[3]" appTutorialTarget="perfil-trayectoria">
+        <app-tab-help-block helpId="perfil-trayectoria-ayuda" tutorialId="perfil-profesional">
+          <p>
+            Acá se arma la línea de tiempo profesional: dónde se formó, dónde ejerció antes y dónde
+            ejerce hoy. Es lo que un paciente ve en el Directorio de médicos antes de pedir una
+            cita.
+          </p>
+          <p>
+            <strong>Ejemplo:</strong> formación en la Universidad Mayor de San Andrés (2010),
+            experiencia en el Hospital Obrero N.º 1 (2012–2016) y actividad actual en la Sede
+            Central Sopocachi.
+          </p>
+        </app-tab-help-block>
+
+        <h3 class="mi-perfil__subtitulo">Actividad actual</h3>
+        @if (perfil().actividadActual.length > 0) {
+          <ul class="mi-perfil__lista">
+            @for (afiliacion of perfil().actividadActual; track afiliacion.id) {
+              <li class="mi-perfil__item">
+                <span class="mi-perfil__item-nombre">{{ afiliacion.organizacion }}</span>
+                @if (afiliacion.cargo) {
+                  <span class="mi-perfil__item-detalle">{{ afiliacion.cargo }}</span>
+                }
+                <app-badge variant="success" value="En curso" />
+                <span class="mi-perfil__item-nota">
+                  Desde {{ afiliacion.desde | date: 'MMM y' }}
+                </span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mi-perfil__nota">
+            No hay actividad actual registrada. Es dónde ejercés hoy: el hospital o centro donde
+            atendés en este momento.
+          </p>
         }
 
-        @if (perfil().especialidadPrincipal) {
-          <p class="profesional__especialidad">{{ perfil().especialidadPrincipal }}</p>
+        <h3 class="mi-perfil__subtitulo">Experiencia histórica</h3>
+        @if (perfil().experienciaHistorica.length > 0) {
+          <ul class="mi-perfil__lista">
+            @for (afiliacion of perfil().experienciaHistorica; track afiliacion.id) {
+              <li class="mi-perfil__item">
+                <span class="mi-perfil__item-nombre">{{ afiliacion.organizacion }}</span>
+                @if (afiliacion.cargo) {
+                  <span class="mi-perfil__item-detalle">{{ afiliacion.cargo }}</span>
+                }
+                <span class="mi-perfil__item-nota">
+                  {{ afiliacion.desde | date: 'MMM y' }} — {{ afiliacion.hasta | date: 'MMM y' }}
+                </span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mi-perfil__nota">
+            No hay experiencia histórica registrada. Son los hospitales o centros donde ejerciste
+            antes de la actividad actual.
+          </p>
         }
 
-        <!-- El código profesional es del dueño: le sirve para identificarse ante
+        <h3 class="mi-perfil__subtitulo">Formación y títulos</h3>
+        @if (perfil().formacion.length > 0) {
+          <ul class="mi-perfil__lista" appTutorialTarget="perfil-formacion">
+            @for (estudio of perfil().formacion; track estudio.id) {
+              <li class="mi-perfil__item">
+                <span class="mi-perfil__item-nombre">{{ estudio.tipo }}</span>
+                @if (estudio.institucion) {
+                  <span class="mi-perfil__item-detalle">{{ estudio.institucion }}</span>
+                }
+                <app-status-seal [variant]="estudio.sello" [label]="estudio.estado" />
+                <span class="mi-perfil__item-nota">
+                  Nº <span class="mi-perfil__cifra">{{ estudio.numero }}</span>
+                  @if (estudio.desde) {
+                    · {{ estudio.desde | date: 'MMM y' }}
+                  }
+                  @if (estudio.hasta) {
+                    · {{ estudio.vencida ? 'venció' : 'vence' }}
+                    {{ estudio.hasta | date: 'MMM y' }}
+                  }
+                </span>
+                <!-- Sólo mientras sigue PENDIENTE: una vez verificado o
+                     rechazado es un hecho de la autoridad, no algo que el
+                     titular deshaga. -->
+                @if (estudio.sello === 'in-review') {
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    [attr.data-testid]="'formacion-retirar-' + estudio.id"
+                    (clicked)="retirarCredencial(estudio)"
+                  >
+                    Retirar
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mi-perfil__nota">
+            Todavía no hay títulos cargados. Son los que habilitan a ejercer, así que sin ninguno
+            verificado el perfil queda pendiente.
+          </p>
+        }
+
+        <!-- El formulario de alta de trayectoria, el mismo de siempre: no se
+             duplica ni se reescribe, se sigue embebiendo en modo «timeline». -->
+        <section class="mi-perfil__seccion">
+          <app-work-history layout="timeline" (added)="trayectoriaCambio.emit()" />
+        </section>
+      </app-tab>
+
+      <!-- ─── Credenciales ─────────────────────────────────────────────────
+           Pasos 9, 10 y 12 del alta: la habilitación para ejercer, sus
+           respaldos y las especialidades. -->
+      <app-tab [label]="pestanas[4]" appTutorialTarget="perfil-credenciales">
+        <app-tab-help-block helpId="perfil-credenciales-ayuda" tutorialId="perfil-profesional">
+          <p>
+            Acá se separa lo que declaraste de lo que ya fue
+            <strong>verificado</strong> contra una fuente — el colegio médico, el registro de
+            matrículas. Declarar no exige verificación previa.
+          </p>
+          <p>
+            <strong>Ejemplo:</strong> un título de posgrado recién cargado aparece en «Declarado»;
+            una vez que un administrador lo verifica contra una fuente, pasa a «Verificado».
+          </p>
+        </app-tab-help-block>
+
+        <h3 class="mi-perfil__subtitulo">Tu habilitación</h3>
+        @if (perfil().matriculas.length > 0) {
+          <ul class="mi-perfil__lista" appTutorialTarget="perfil-matriculas">
+            @for (matricula of perfil().matriculas; track matricula.id) {
+              <li class="mi-perfil__item">
+                <span class="mi-perfil__item-nombre">{{ matricula.jurisdiccion }}</span>
+                <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
+                <span class="mi-perfil__item-nota">
+                  Matrícula <span class="mi-perfil__cifra">{{ matricula.numero }}</span>
+                  @if (matricula.autoridad) {
+                    · {{ matricula.autoridad }}
+                  }
+                  @if (matricula.hasta) {
+                    · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mi-perfil__nota">
+            Todavía no registraste ninguna matrícula. Es lo que declara en qué jurisdicción está
+            habilitado tu ejercicio.
+          </p>
+        }
+
+        <h3 class="mi-perfil__subtitulo">Especialidades ({{ perfil().especialidades.length }})</h3>
+        @if (perfil().especialidades.length > 0) {
+          <ul class="mi-perfil__lista">
+            @for (especialidad of perfil().especialidades; track especialidad.id) {
+              <li class="mi-perfil__item">
+                <span class="mi-perfil__item-nombre">{{ especialidad.nombre }}</span>
+                @if (especialidad.principal) {
+                  <app-badge variant="primary" value="Principal" />
+                }
+                @if (especialidad.certificada) {
+                  <app-badge variant="success" value="Certificada" />
+                }
+                <span class="mi-perfil__item-nota">
+                  @if (especialidad.desde) {
+                    Desde {{ especialidad.desde | date: 'MMM y' }}
+                  }
+                  @if (especialidad.hasta) {
+                    · hasta {{ especialidad.hasta | date: 'MMM y' }}
+                  } @else if (especialidad.desde) {
+                    · en ejercicio
+                  }
+                  · {{ especialidad.estado }}
+                </span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mi-perfil__nota">
+            Todavía no hay especialidades registradas. Las carga quien administra la organización
+            junto con la credencial que las respalda.
+          </p>
+        }
+
+        <h3 class="mi-perfil__subtitulo">Idiomas</h3>
+        @if (perfil().idiomas.length > 0) {
+          <ul class="mi-perfil__lista">
+            @for (idioma of perfil().idiomas; track idioma.id) {
+              <li class="mi-perfil__item">
+                <span class="mi-perfil__item-nombre">{{ idioma.nombre }}</span>
+                @if (idioma.nivel) {
+                  <span class="mi-perfil__item-detalle">{{ idioma.nivel }}</span>
+                }
+                @if (idioma.interpreta) {
+                  <app-badge variant="info" value="Interpreta en consulta" />
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mi-perfil__nota">Todavía no declaraste ningún idioma.</p>
+        }
+
+        <h3 class="mi-perfil__subtitulo">Verificado ({{ credenciales().verificados.length }})</h3>
+        @if (credenciales().verificados.length > 0) {
+          <ul class="mi-perfil__lista">
+            @for (fila of credenciales().verificados; track fila.id) {
+              <li class="mi-perfil__item">
+                <app-badge variant="secondary" [value]="fila.categoria" />
+                <span class="mi-perfil__item-nombre">{{ fila.nombre }}</span>
+                <span class="mi-perfil__item-detalle">{{ fila.detalle }}</span>
+                @if (fila.fuente) {
+                  <span class="mi-perfil__item-nota">Fuente: {{ fila.fuente }}</span>
+                }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mi-perfil__nota">Todavía no hay nada verificado.</p>
+        }
+
+        <h3 class="mi-perfil__subtitulo">Declarado ({{ credenciales().declarados.length }})</h3>
+        @if (credenciales().declarados.length > 0) {
+          <ul class="mi-perfil__lista">
+            @for (fila of credenciales().declarados; track fila.id) {
+              <li class="mi-perfil__item">
+                <app-badge variant="secondary" [value]="fila.categoria" />
+                <span class="mi-perfil__item-nombre">{{ fila.nombre }}</span>
+                <span class="mi-perfil__item-detalle">{{ fila.detalle }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="mi-perfil__nota">No hay nada pendiente de verificación.</p>
+        }
+      </app-tab>
+
+      <!-- ─── Actividad ────────────────────────────────────────────────────
+           No sale del alta: son los registros que dejó asentados con esta
+           cuenta. Vivía en una tarjeta suelta y se conserva como pestaña —
+           tirarlo para «parecerse más al paciente» sería perder un dato que ya
+           se mostraba. -->
+      <app-tab [label]="pestanas[5]">
+        <dl class="mi-perfil__datos" appTutorialTarget="perfil-actividad">
+          @for (dato of perfil().actividad; track dato.clave) {
+            <div class="mi-perfil__dato">
+              <dt>{{ dato.rotulo }}</dt>
+              <dd class="mi-perfil__cifra">{{ dato.valor }}</dd>
+            </div>
+          }
+        </dl>
+
+        <p class="mi-perfil__nota">
+          Son los registros que dejaste asentados con esta cuenta. El detalle de cada uno vive en el
+          expediente de la persona atendida.
+        </p>
+      </app-tab>
+    </app-tabs>
+
+    @if (perfil().desde) {
+      <p class="mi-perfil__nota">En la plataforma desde {{ perfil().desde | date: 'MMMM y' }}</p>
+    }
+  </app-card>
+} @else {
+  <div class="profesional">
+    <!-- ─── Quién es ─────────────────────────────────────────────────────────
+       La única tarjeta con elevación de la pantalla: la identidad pesa más
+       que los bloques. Foto si existe; si no, el avatar de iniciales — que es
+       el caso vacío correcto, no un defecto. Cabecera del carril 05: foto,
+       nombre, descripción profesional, cargo principal y especialidades
+       consolidadas como tags — todo fuera de las pestañas, porque identifica
+       a la persona sin importar qué pestaña se mire. -->
+    <app-card
+      class="profesional__portada"
+      variant="elevated"
+      padding="lg"
+      appTutorialTarget="perfil-portada"
+    >
+      <div class="profesional__identidad">
+        <!-- El retrato es el disparador de la subida cuando el perfil es propio
+           (P17). En la ficha de otro profesional sigue siendo una imagen: nadie
+           le cambia la foto a nadie. -->
+        @if (esPropio()) {
+          <label
+            [appFileDropTarget]="dropInput1"
+            (fileDropRejected)="errorDeFoto.set($event)"
+            class="profesional__foto"
+            [class.is-subiendo]="subiendoFoto()"
+          >
+            <app-avatar
+              size="xl"
+              [src]="fotoVisible()"
+              [name]="perfil().nombre"
+              [alt]="'Foto de ' + perfil().nombre"
+            />
+            <span class="profesional__foto-capa" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M4 8.5h2.8l1.4-2h7.6l1.4 2H20a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 20 21.5H4A1.5 1.5 0 0 1 2.5 20v-8A1.5 1.5 0 0 1 4 8.5z"
+                />
+                <circle cx="12" cy="14" r="3.6" />
+              </svg>
+            </span>
+            <span class="solo-lectores">
+              {{ subiendoFoto() ? 'Subiendo tu foto…' : 'Cambiar mi foto de perfil' }}
+            </span>
+            <input
+              #dropInput1
+              type="file"
+              class="solo-lectores"
+              accept="image/*"
+              data-testid="perfil-foto"
+              [disabled]="subiendoFoto()"
+              (change)="alElegirFoto($event)"
+            />
+          </label>
+        } @else {
+          <app-avatar
+            size="xl"
+            [src]="perfil().fotoUrl"
+            [name]="perfil().nombre"
+            [alt]="'Foto de ' + perfil().nombre"
+          />
+        }
+
+        <div class="profesional__identidad-texto">
+          <h2 class="profesional__nombre">{{ perfil().nombre }}</h2>
+
+          @if (perfil().titulo) {
+            <p class="profesional__titulo">{{ perfil().titulo }}</p>
+          }
+
+          @if (perfil().especialidadPrincipal) {
+            <p class="profesional__especialidad">{{ perfil().especialidadPrincipal }}</p>
+          }
+
+          <!-- El código profesional es del dueño: le sirve para identificarse ante
              quien administra. Al paciente que abre la ficha desde la Guía no le
              dice nada y es vocabulario de sistema (feedback de la analista
              F-01/F-12, 18/08/2026). -->
-        @if (esPropio()) {
-          <p class="profesional__codigo">
-            Código profesional
-            <span class="profesional__cifra" [title]="perfil().codigo">{{ perfil().codigo }}</span>
-          </p>
+          @if (esPropio()) {
+            <p class="profesional__codigo">
+              Código profesional
+              <span class="profesional__cifra" [title]="perfil().codigo">{{
+                perfil().codigo
+              }}</span>
+            </p>
+          }
+        </div>
+
+        <!-- El estado de habilitación va en la portada porque es lo que decide
+           si puede ejercer, no un detalle administrativo. -->
+        @if (perfil().verificacion; as estado) {
+          <div class="profesional__sello">
+            <app-status-seal [variant]="estado.variant" [label]="estado.label" />
+            <span class="profesional__sello-pie">{{ perfil().estadoDePractica }}</span>
+          </div>
         }
       </div>
 
-      <!-- El estado de habilitación va en la portada porque es lo que decide
-           si puede ejercer, no un detalle administrativo. -->
-      @if (perfil().verificacion; as estado) {
-        <div class="profesional__sello">
-          <app-status-seal [variant]="estado.variant" [label]="estado.label" />
-          <span class="profesional__sello-pie">{{ perfil().estadoDePractica }}</span>
-        </div>
+      @if (errorDeFoto(); as fallo) {
+        <p class="profesional__foto-error" role="alert">{{ fallo }}</p>
       }
-    </div>
 
-    @if (errorDeFoto(); as fallo) {
-      <p class="profesional__foto-error" role="alert">{{ fallo }}</p>
-    }
-
-    <!-- Presentación: la descripción profesional que pide la cabecera del
+      <!-- Presentación: la descripción profesional que pide la cabecera del
          carril 05. Vivía como bloque aparte; acá arriba es donde el requisito
          la pide, junto al resto de la identidad. -->
-    @if (perfil().bio) {
-      <p class="profesional__bio">{{ perfil().bio }}</p>
-    }
+      @if (perfil().bio) {
+        <p class="profesional__bio">{{ perfil().bio }}</p>
+      }
 
-    <!-- Especialidades e idiomas consolidados como tags. El texto va
+      <!-- Especialidades e idiomas consolidados como tags. El texto va
          PROYECTADO: el `label` del chip es sólo el nombre accesible.
          La disponibilidad para pacientes nuevos ya no se estampa acá: se
          mostraba en TODA ficha, también en la de quien nunca tocó el ajuste,
          y el valor por defecto terminaba diciendo «No toma pacientes nuevos»
          de gente que sí los toma. El dato sigue existiendo en el perfil. -->
-    <div class="profesional__disponibilidad">
-      @if (perfil().telemedicina) {
-        <app-chip variant="info">Atiende por telemedicina</app-chip>
-      }
-      @for (especialidad of perfil().especialidades; track especialidad.id) {
-        <app-chip [variant]="especialidad.principal ? 'primary' : 'neutral'">
-          {{ especialidad.nombre }}
-        </app-chip>
-      }
-      @for (idioma of perfil().idiomas; track idioma.id) {
-        <app-chip variant="neutral">
-          {{ idioma.interpreta ? idioma.nombre + ' · interpreta en consulta' : idioma.nombre }}
-        </app-chip>
-      }
-    </div>
-
-    @if (esPropio() && !previewMode()) {
-      <!-- Las pantallas del perfil, navegables DESDE el perfil. -->
-      <div class="profesional__acciones">
-        <a app-button variant="primary" routerLink="/my-account/edit"> Configurar mi perfil </a>
-        <a app-button variant="outline" routerLink="/my-account/articles"> Mis artículos </a>
+      <div class="profesional__disponibilidad">
+        @if (perfil().telemedicina) {
+          <app-chip variant="info">Atiende por telemedicina</app-chip>
+        }
+        @for (especialidad of perfil().especialidades; track especialidad.id) {
+          <app-chip [variant]="especialidad.principal ? 'primary' : 'neutral'">
+            {{ especialidad.nombre }}
+          </app-chip>
+        }
+        @for (idioma of perfil().idiomas; track idioma.id) {
+          <app-chip variant="neutral">
+            {{ idioma.interpreta ? idioma.nombre + ' · interpreta en consulta' : idioma.nombre }}
+          </app-chip>
+        }
       </div>
-    }
-  </app-card>
 
-  <!-- ─── Tus datos y tus matrículas ─────────────────────────────────────
+      @if (esPropio() && !previewMode()) {
+        <!-- Las pantallas del perfil, navegables DESDE el perfil. -->
+        <div class="profesional__acciones">
+          <a app-button variant="primary" routerLink="/my-account/edit"> Configurar mi perfil </a>
+          <a app-button variant="outline" routerLink="/my-account/articles"> Mis artículos </a>
+        </div>
+      }
+    </app-card>
+
+    <!-- ─── Tus datos y tus matrículas ─────────────────────────────────────
        Juntos y arriba, pegados a la identidad. Antes «Tus datos» vivía dentro
        de la pestaña Trayectoria y la matrícula dentro de Credenciales, así que
        ver quién sos y con qué habilitación ejercés obligaba a cambiar de
        pestaña y a bajar. Son lo que identifica a la persona: van con su nombre,
        no repartidos. Sólo en la ficha propia. -->
-  @if (perfil().datosPersonales; as datos) {
-    <app-card class="profesional__bloque" variant="outlined" padding="lg">
-      <div class="profesional__filiacion">
-        <!-- Si no declaró ninguno, la sección entera no aparece: una lista de
+    @if (perfil().datosPersonales; as datos) {
+      <app-card class="profesional__bloque" variant="outlined" padding="lg">
+        <div class="profesional__filiacion">
+          <!-- Si no declaró ninguno, la sección entera no aparece: una lista de
              «Sin registrar» no informa. La habilitación sí se dibuja siempre —su
              vacío le dice al médico que le falta registrar la matrícula, que es
              accionable. -->
-        @if (
-          datos.documento ||
-          datos.telefono ||
-          datos.correo ||
-          datos.domicilio ||
-          datos.edad !== null
-        ) {
-          <section>
-            <h2 class="profesional__bloque-titulo">Tus datos</h2>
-            <dl class="profesional__datos">
-              @if (datos.documento) {
-                <div class="profesional__dato">
-                  <dt>Documento de identidad</dt>
-                  <dd class="profesional__cifra">
-                    {{ datos.documento }}
-                    @if (datos.departamento) {
-                      <span class="profesional__sufijo">{{ datos.departamento }}</span>
-                    }
-                  </dd>
-                </div>
-              }
-              @if (datos.fechaNacimiento) {
-                <div class="profesional__dato">
-                  <dt>Fecha de nacimiento</dt>
-                  <dd class="profesional__cifra">
-                    {{ datos.fechaNacimiento | date: 'dd/MM/yyyy' }}
-                  </dd>
-                </div>
-              }
-              @if (datos.edad !== null) {
-                <div class="profesional__dato">
-                  <dt>Edad</dt>
-                  <dd class="profesional__cifra">{{ datos.edad }} años</dd>
-                </div>
-              }
-              @if (datos.telefono) {
-                <div class="profesional__dato">
-                  <dt>Teléfono</dt>
-                  <dd class="profesional__cifra">{{ datos.telefono }}</dd>
-                </div>
-              }
-              @if (datos.correo) {
-                <div class="profesional__dato">
-                  <dt>Correo</dt>
-                  <dd>{{ datos.correo }}</dd>
-                </div>
-              }
-              @if (datos.domicilio) {
-                <div class="profesional__dato">
-                  <dt>Dónde vivís</dt>
-                  <dd>{{ datos.domicilio }}</dd>
-                </div>
-              }
-              <!-- Los cuatro contactos que el registro pregunta por separado y
+          @if (
+            datos.documento ||
+            datos.telefono ||
+            datos.correo ||
+            datos.domicilio ||
+            datos.edad !== null
+          ) {
+            <section>
+              <h2 class="profesional__bloque-titulo">Tus datos</h2>
+              <dl class="profesional__datos">
+                @if (datos.documento) {
+                  <div class="profesional__dato">
+                    <dt>Documento de identidad</dt>
+                    <dd class="profesional__cifra">
+                      {{ datos.documento }}
+                      @if (datos.departamento) {
+                        <span class="profesional__sufijo">{{ datos.departamento }}</span>
+                      }
+                    </dd>
+                  </div>
+                }
+                @if (datos.fechaNacimiento) {
+                  <div class="profesional__dato">
+                    <dt>Fecha de nacimiento</dt>
+                    <dd class="profesional__cifra">
+                      {{ datos.fechaNacimiento | date: 'dd/MM/yyyy' }}
+                    </dd>
+                  </div>
+                }
+                @if (datos.edad !== null) {
+                  <div class="profesional__dato">
+                    <dt>Edad</dt>
+                    <dd class="profesional__cifra">{{ datos.edad }} años</dd>
+                  </div>
+                }
+                @if (datos.telefono) {
+                  <div class="profesional__dato">
+                    <dt>Teléfono</dt>
+                    <dd class="profesional__cifra">{{ datos.telefono }}</dd>
+                  </div>
+                }
+                @if (datos.correo) {
+                  <div class="profesional__dato">
+                    <dt>Correo</dt>
+                    <dd>{{ datos.correo }}</dd>
+                  </div>
+                }
+                @if (datos.domicilio) {
+                  <div class="profesional__dato">
+                    <dt>Dónde vivís</dt>
+                    <dd>{{ datos.domicilio }}</dd>
+                  </div>
+                }
+                <!-- Los cuatro contactos que el registro pregunta por separado y
                    la calle. La ficha mostraba UN teléfono y UN correo con los
                    cinco datos ya disponibles en la API. Cada renglón sólo
                    aparece si la persona lo declaró: un «—» repetido cinco veces
                    se lee como una ficha rota. -->
-              @if (datos.direccion) {
-                <div class="profesional__dato">
-                  <dt>Dirección</dt>
-                  <dd>{{ datos.direccion }}</dd>
-                </div>
-              }
-              @if (datos.celularPersonal) {
-                <div class="profesional__dato">
-                  <dt>Celular personal</dt>
-                  <dd class="profesional__cifra">{{ datos.celularPersonal }}</dd>
-                </div>
-              }
-              @if (datos.celularTrabajo) {
-                <div class="profesional__dato">
-                  <dt>Celular del trabajo</dt>
-                  <dd class="profesional__cifra">{{ datos.celularTrabajo }}</dd>
-                </div>
-              }
-              @if (datos.fijoTrabajo) {
-                <div class="profesional__dato">
-                  <dt>Fijo del trabajo</dt>
-                  <dd class="profesional__cifra">{{ datos.fijoTrabajo }}</dd>
-                </div>
-              }
-              @if (datos.correoPersonal) {
-                <div class="profesional__dato">
-                  <dt>Correo personal</dt>
-                  <dd>{{ datos.correoPersonal }}</dd>
-                </div>
-              }
-            </dl>
-          </section>
-        }
+                @if (datos.direccion) {
+                  <div class="profesional__dato">
+                    <dt>Dirección</dt>
+                    <dd>{{ datos.direccion }}</dd>
+                  </div>
+                }
+                @if (datos.celularPersonal) {
+                  <div class="profesional__dato">
+                    <dt>Celular personal</dt>
+                    <dd class="profesional__cifra">{{ datos.celularPersonal }}</dd>
+                  </div>
+                }
+                @if (datos.celularTrabajo) {
+                  <div class="profesional__dato">
+                    <dt>Celular del trabajo</dt>
+                    <dd class="profesional__cifra">{{ datos.celularTrabajo }}</dd>
+                  </div>
+                }
+                @if (datos.fijoTrabajo) {
+                  <div class="profesional__dato">
+                    <dt>Fijo del trabajo</dt>
+                    <dd class="profesional__cifra">{{ datos.fijoTrabajo }}</dd>
+                  </div>
+                }
+                @if (datos.correoPersonal) {
+                  <div class="profesional__dato">
+                    <dt>Correo personal</dt>
+                    <dd>{{ datos.correoPersonal }}</dd>
+                  </div>
+                }
+              </dl>
+            </section>
+          }
 
-        <!-- La habilitación, al lado y no a dos clics: es lo que responde «¿con
+          <!-- La habilitación, al lado y no a dos clics: es lo que responde «¿con
              qué ejerce?», que se pregunta junto con «¿quién es?». Es el detalle
              COMPLETO —autoridad y vigencia incluidas—, no un resumen: si fuera
              un resumen habría que ir igual a la pestaña, que es justo lo que
              esto viene a evitar. Por eso abajo la sub-pestaña «Matrículas» ya
              no se dibuja en la ficha propia. -->
-        <section appTutorialTarget="perfil-matriculas">
-          <h2 class="profesional__bloque-titulo">Tu habilitación</h2>
-          @if (perfil().matriculas.length > 0) {
-            <ul class="profesional__lista">
-              @for (matricula of perfil().matriculas; track matricula.id) {
-                <li class="profesional__item">
-                  <div class="profesional__item-encabezado">
-                    <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
-                    <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
-                  </div>
-                  <p class="profesional__item-fechas">
-                    Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
-                    @if (matricula.autoridad) {
-                      · {{ matricula.autoridad }}
-                    }
-                    @if (matricula.hasta) {
-                      · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
-                    }
-                  </p>
-                </li>
-              }
-            </ul>
-          } @else {
-            <p class="profesional__nota">
-              Todavía no registraste ninguna matrícula. Es lo que declara en qué jurisdicción está
-              habilitado tu ejercicio.
-            </p>
-          }
-        </section>
-      </div>
-    </app-card>
-  }
+          <section appTutorialTarget="perfil-matriculas">
+            <h2 class="profesional__bloque-titulo">Tu habilitación</h2>
+            @if (perfil().matriculas.length > 0) {
+              <ul class="profesional__lista">
+                @for (matricula of perfil().matriculas; track matricula.id) {
+                  <li class="profesional__item">
+                    <div class="profesional__item-encabezado">
+                      <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
+                      <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
+                    </div>
+                    <p class="profesional__item-fechas">
+                      Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
+                      @if (matricula.autoridad) {
+                        · {{ matricula.autoridad }}
+                      }
+                      @if (matricula.hasta) {
+                        · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
+                      }
+                    </p>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="profesional__nota">
+                Todavía no registraste ninguna matrícula. Es lo que declara en qué jurisdicción está
+                habilitado tu ejercicio.
+              </p>
+            }
+          </section>
+        </div>
+      </app-card>
+    }
 
-  <!-- ─── Dónde atiende ─────────────────────────────────────────────────
+    <!-- ─── Dónde atiende ─────────────────────────────────────────────────
        ALV-005/006/010. Es la pregunta que la ficha no sabía contestar: la
        trayectoria dice dónde TRABAJÓ, no dónde encontrarlo hoy. Sin sedes la
        sección no se dibuja —no un texto vacío—: las sedes se cargan desde
        Trayectoria, y anunciar acá que faltan sería duplicar ese aviso. -->
-  @if (perfil().sedes?.length) {
-    <app-card
-      class="profesional__bloque"
-      variant="outlined"
-      padding="lg"
-      data-testid="perfil-sedes"
-    >
-      <h2 class="profesional__bloque-titulo">Dónde atiendo</h2>
-      <ul class="profesional__lista">
-        @for (sede of perfil().sedes; track sede.id) {
-          <li class="profesional__item" data-testid="perfil-sede">
-            <div class="profesional__item-encabezado">
-              <span class="profesional__item-titulo">{{ sede.nombre }}</span>
-            </div>
-            @if (sede.direccion) {
-              <p class="profesional__item-texto">{{ sede.direccion }}</p>
-            }
-          </li>
-        }
-      </ul>
-    </app-card>
-  }
+    @if (perfil().sedes?.length) {
+      <app-card
+        class="profesional__bloque"
+        variant="outlined"
+        padding="lg"
+        data-testid="perfil-sedes"
+      >
+        <h2 class="profesional__bloque-titulo">Dónde atiendo</h2>
+        <ul class="profesional__lista">
+          @for (sede of perfil().sedes; track sede.id) {
+            <li class="profesional__item" data-testid="perfil-sede">
+              <div class="profesional__item-encabezado">
+                <span class="profesional__item-titulo">{{ sede.nombre }}</span>
+              </div>
+              @if (sede.direccion) {
+                <p class="profesional__item-texto">{{ sede.direccion }}</p>
+              }
+            </li>
+          }
+        </ul>
+      </app-card>
+    }
 
-  <!-- ─── Qué lleva hecho acá ───────────────────────────────────────────
+    <!-- ─── Qué lleva hecho acá ───────────────────────────────────────────
        Cuentas de actividad. No es trayectoria —no es "dónde ejerció" sino
        "qué registró con esta cuenta"— así que se queda fuera de las pestañas
        del carril 05, que son sobre trayectoria/credenciales/vista pública. -->
-  <app-card class="profesional__bloque" variant="outlined" padding="lg">
-    <h2 class="profesional__bloque-titulo" appTutorialTarget="perfil-actividad">
-      {{ esPropio() ? 'Tu actividad en la plataforma' : 'Actividad en la plataforma' }}
-    </h2>
+    <app-card class="profesional__bloque" variant="outlined" padding="lg">
+      <h2 class="profesional__bloque-titulo" appTutorialTarget="perfil-actividad">
+        {{ esPropio() ? 'Tu actividad en la plataforma' : 'Actividad en la plataforma' }}
+      </h2>
 
-    <dl class="profesional__cifras">
-      @for (dato of perfil().actividad; track dato.clave) {
-        <div class="profesional__cifra-bloque">
-          <dt class="profesional__cifra-rotulo">{{ dato.rotulo }}</dt>
-          <dd class="profesional__cifra-valor">{{ dato.valor }}</dd>
-        </div>
-      }
-    </dl>
-
-    <p class="profesional__nota">
-      {{
-        esPropio()
-          ? 'Son los registros que dejaste asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.'
-          : 'Son los registros asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.'
-      }}
-    </p>
-  </app-card>
-
-  <!-- ─── Las 3 pestañas del carril 05 ──────────────────────────────────── -->
-  <app-card class="profesional__bloque" variant="outlined" padding="lg">
-    <app-tabs [(selectedIndex)]="pestanaSeleccionada">
-      <!-- 1. Trayectoria / historial profesional ------------------------- -->
-      <app-tab label="Trayectoria" appTutorialTarget="perfil-trayectoria">
-        <!-- La ayuda le habla a quien arma su perfil, no a quien lo mira: en la
-             ficha de la Guía y en la vista previa no va (barrido del 18/08/2026). -->
-        @if (esPropio() && !previewMode()) {
-          <app-tab-help-block helpId="perfil-trayectoria-ayuda" tutorialId="perfil-profesional">
-            <p>
-              Acá se arma la línea de tiempo profesional: dónde se formó, dónde ejerció antes y
-              dónde ejerce hoy. Es lo que un paciente ve en el Directorio de médicos antes de pedir
-              una cita.
-            </p>
-            <p>
-              <strong>Ejemplo:</strong> formación en la Universidad Mayor de San Andrés (2010),
-              experiencia en el Hospital Obrero N.º 1 (2012–2016) y actividad actual en la Sede
-              Central Sopocachi.
-            </p>
-          </app-tab-help-block>
+      <dl class="profesional__cifras">
+        @for (dato of perfil().actividad; track dato.clave) {
+          <div class="profesional__cifra-bloque">
+            <dt class="profesional__cifra-rotulo">{{ dato.rotulo }}</dt>
+            <dd class="profesional__cifra-valor">{{ dato.valor }}</dd>
+          </div>
         }
+      </dl>
 
-        <!-- Actividad actual: primero y destacada, porque es lo más relevante hoy. -->
-        <section class="profesional__fase">
-          <h3 class="profesional__fase-titulo">Actividad actual</h3>
-          @if (perfil().actividadActual.length > 0) {
-            <ol class="profesional__linea">
-              @for (afiliacion of perfil().actividadActual; track afiliacion.id) {
-                <li class="profesional__hito">
-                  <div class="profesional__hito-marca" aria-hidden="true"></div>
-                  <div class="profesional__hito-cuerpo">
-                    <div class="profesional__item-encabezado">
-                      <span class="profesional__item-titulo">{{ afiliacion.organizacion }}</span>
-                      <app-badge variant="success" value="En curso" />
-                    </div>
-                    <p class="profesional__item-texto">
-                      {{ afiliacion.cargo }}
-                    </p>
-                    <p class="profesional__item-fechas">
-                      Desde {{ afiliacion.desde | date: 'MMM y' }}
-                    </p>
-                  </div>
-                </li>
-              }
-            </ol>
-          } @else {
-            <p class="profesional__nota">
-              No hay actividad actual registrada. Es dónde ejerce hoy: el hospital o centro donde
-              atiende en este momento.
-            </p>
+      <p class="profesional__nota">
+        {{
+          esPropio()
+            ? 'Son los registros que dejaste asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.'
+            : 'Son los registros asentados con esta cuenta. El detalle de cada uno vive en el expediente de la persona atendida.'
+        }}
+      </p>
+    </app-card>
+
+    <!-- ─── Las 3 pestañas del carril 05 ──────────────────────────────────── -->
+    <app-card class="profesional__bloque" variant="outlined" padding="lg">
+      <app-tabs [(selectedIndex)]="pestanaSeleccionada">
+        <!-- 1. Trayectoria / historial profesional ------------------------- -->
+        <app-tab label="Trayectoria" appTutorialTarget="perfil-trayectoria">
+          <!-- La ayuda le habla a quien arma su perfil, no a quien lo mira: en la
+             ficha de la Guía y en la vista previa no va (barrido del 18/08/2026). -->
+          @if (esPropio() && !previewMode()) {
+            <app-tab-help-block helpId="perfil-trayectoria-ayuda" tutorialId="perfil-profesional">
+              <p>
+                Acá se arma la línea de tiempo profesional: dónde se formó, dónde ejerció antes y
+                dónde ejerce hoy. Es lo que un paciente ve en el Directorio de médicos antes de
+                pedir una cita.
+              </p>
+              <p>
+                <strong>Ejemplo:</strong> formación en la Universidad Mayor de San Andrés (2010),
+                experiencia en el Hospital Obrero N.º 1 (2012–2016) y actividad actual en la Sede
+                Central Sopocachi.
+              </p>
+            </app-tab-help-block>
           }
-        </section>
 
-        <!-- Experiencia histórica -->
-        <section class="profesional__fase">
-          <h3 class="profesional__fase-titulo">Experiencia histórica</h3>
-          @if (perfil().experienciaHistorica.length > 0) {
-            <ol class="profesional__linea">
-              @for (afiliacion of perfil().experienciaHistorica; track afiliacion.id) {
-                <li class="profesional__hito">
-                  <div class="profesional__hito-marca" aria-hidden="true"></div>
-                  <div class="profesional__hito-cuerpo">
-                    <div class="profesional__item-encabezado">
-                      <span class="profesional__item-titulo">{{ afiliacion.organizacion }}</span>
+          <!-- Actividad actual: primero y destacada, porque es lo más relevante hoy. -->
+          <section class="profesional__fase">
+            <h3 class="profesional__fase-titulo">Actividad actual</h3>
+            @if (perfil().actividadActual.length > 0) {
+              <ol class="profesional__linea">
+                @for (afiliacion of perfil().actividadActual; track afiliacion.id) {
+                  <li class="profesional__hito">
+                    <div class="profesional__hito-marca" aria-hidden="true"></div>
+                    <div class="profesional__hito-cuerpo">
+                      <div class="profesional__item-encabezado">
+                        <span class="profesional__item-titulo">{{ afiliacion.organizacion }}</span>
+                        <app-badge variant="success" value="En curso" />
+                      </div>
+                      <p class="profesional__item-texto">
+                        {{ afiliacion.cargo }}
+                      </p>
+                      <p class="profesional__item-fechas">
+                        Desde {{ afiliacion.desde | date: 'MMM y' }}
+                      </p>
                     </div>
-                    <p class="profesional__item-texto">
-                      {{ afiliacion.cargo }}
-                    </p>
-                    <p class="profesional__item-fechas">
-                      {{ afiliacion.desde | date: 'MMM y' }} —
-                      {{ afiliacion.hasta | date: 'MMM y' }}
-                    </p>
-                  </div>
-                </li>
-              }
-            </ol>
-          } @else {
-            <p class="profesional__nota">
-              No hay experiencia histórica registrada. Son los hospitales o centros donde ejerció
-              antes de la actividad actual.
-            </p>
-          }
-        </section>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <p class="profesional__nota">
+                No hay actividad actual registrada. Es dónde ejerce hoy: el hospital o centro donde
+                atiende en este momento.
+              </p>
+            }
+          </section>
 
-        <!-- Formación: se mantiene casi igual, es la misma línea de tiempo de siempre. -->
-        <section class="profesional__fase">
-          <h3 class="profesional__fase-titulo">Formación</h3>
-          @if (perfil().formacion.length > 0) {
-            <ol class="profesional__linea" appTutorialTarget="perfil-formacion">
-              @for (estudio of perfil().formacion; track estudio.id) {
-                <li class="profesional__hito" [class.profesional__hito--vencido]="estudio.vencida">
-                  <div class="profesional__hito-marca" aria-hidden="true"></div>
-
-                  <div class="profesional__hito-cuerpo">
-                    <div class="profesional__item-encabezado">
-                      <span class="profesional__item-titulo">{{ estudio.tipo }}</span>
-                      <app-status-seal [variant]="estudio.sello" [label]="estudio.estado" />
+          <!-- Experiencia histórica -->
+          <section class="profesional__fase">
+            <h3 class="profesional__fase-titulo">Experiencia histórica</h3>
+            @if (perfil().experienciaHistorica.length > 0) {
+              <ol class="profesional__linea">
+                @for (afiliacion of perfil().experienciaHistorica; track afiliacion.id) {
+                  <li class="profesional__hito">
+                    <div class="profesional__hito-marca" aria-hidden="true"></div>
+                    <div class="profesional__hito-cuerpo">
+                      <div class="profesional__item-encabezado">
+                        <span class="profesional__item-titulo">{{ afiliacion.organizacion }}</span>
+                      </div>
+                      <p class="profesional__item-texto">
+                        {{ afiliacion.cargo }}
+                      </p>
+                      <p class="profesional__item-fechas">
+                        {{ afiliacion.desde | date: 'MMM y' }} —
+                        {{ afiliacion.hasta | date: 'MMM y' }}
+                      </p>
                     </div>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <p class="profesional__nota">
+                No hay experiencia histórica registrada. Son los hospitales o centros donde ejerció
+                antes de la actividad actual.
+              </p>
+            }
+          </section>
 
-                    @if (estudio.institucion) {
-                      <p class="profesional__item-texto">{{ estudio.institucion }}</p>
-                    }
+          <!-- Formación: se mantiene casi igual, es la misma línea de tiempo de siempre. -->
+          <section class="profesional__fase">
+            <h3 class="profesional__fase-titulo">Formación</h3>
+            @if (perfil().formacion.length > 0) {
+              <ol class="profesional__linea" appTutorialTarget="perfil-formacion">
+                @for (estudio of perfil().formacion; track estudio.id) {
+                  <li
+                    class="profesional__hito"
+                    [class.profesional__hito--vencido]="estudio.vencida"
+                  >
+                    <div class="profesional__hito-marca" aria-hidden="true"></div>
 
-                    <p class="profesional__item-fechas">
-                      Nº <span class="profesional__cifra">{{ estudio.numero }}</span>
-                      @if (estudio.desde) {
-                        · {{ estudio.desde | date: 'MMM y' }}
+                    <div class="profesional__hito-cuerpo">
+                      <div class="profesional__item-encabezado">
+                        <span class="profesional__item-titulo">{{ estudio.tipo }}</span>
+                        <app-status-seal [variant]="estudio.sello" [label]="estudio.estado" />
+                      </div>
+
+                      @if (estudio.institucion) {
+                        <p class="profesional__item-texto">{{ estudio.institucion }}</p>
                       }
-                      @if (estudio.hasta) {
-                        · {{ estudio.vencida ? 'venció' : 'vence' }}
-                        {{ estudio.hasta | date: 'MMM y' }}
-                      }
-                    </p>
 
-                    <!-- ALV-009/formación: sólo mientras sigue PENDIENTE —una
+                      <p class="profesional__item-fechas">
+                        Nº <span class="profesional__cifra">{{ estudio.numero }}</span>
+                        @if (estudio.desde) {
+                          · {{ estudio.desde | date: 'MMM y' }}
+                        }
+                        @if (estudio.hasta) {
+                          · {{ estudio.vencida ? 'venció' : 'vence' }}
+                          {{ estudio.hasta | date: 'MMM y' }}
+                        }
+                      </p>
+
+                      <!-- ALV-009/formación: sólo mientras sigue PENDIENTE —una
                          vez verificado o rechazado es un hecho de la
                          autoridad, no algo que el titular deshaga. -->
-                    @if (esPropio() && estudio.sello === 'in-review') {
-                      <button
-                        app-button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        [attr.data-testid]="'formacion-retirar-' + estudio.id"
-                        (clicked)="retirarCredencial(estudio)"
-                      >
-                        Retirar
-                      </button>
-                    }
-                  </div>
-                </li>
-              }
-            </ol>
-          } @else {
-            <p class="profesional__nota">
-              Todavía no hay credenciales cargadas. Son las que habilitan a ejercer, así que sin
-              ninguna verificada el perfil queda pendiente.
-            </p>
-          }
-        </section>
+                      @if (esPropio() && estudio.sello === 'in-review') {
+                        <button
+                          app-button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          [attr.data-testid]="'formacion-retirar-' + estudio.id"
+                          (clicked)="retirarCredencial(estudio)"
+                        >
+                          Retirar
+                        </button>
+                      }
+                    </div>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <p class="profesional__nota">
+                Todavía no hay credenciales cargadas. Son las que habilitan a ejercer, así que sin
+                ninguna verificada el perfil queda pendiente.
+              </p>
+            }
+          </section>
 
-        <!-- Agregar: sólo quien es dueño de este perfil puede escribir su propia
+          <!-- Agregar: sólo quien es dueño de este perfil puede escribir su propia
              trayectoria. Reutiliza el formulario ya existente de historial
              laboral — no uno nuevo — en modo "timeline" para no repetir el
              listado que ya se ve arriba. -->
-        @if (esPropio() && !previewMode()) {
-          <section class="profesional__fase">
-            <app-work-history layout="timeline" (added)="trayectoriaCambio.emit()" />
-          </section>
-        }
-      </app-tab>
+          @if (esPropio() && !previewMode()) {
+            <section class="profesional__fase">
+              <app-work-history layout="timeline" (added)="trayectoriaCambio.emit()" />
+            </section>
+          }
+        </app-tab>
 
-      <!-- 2. Credenciales y verificaciones --------------------------------- -->
-      <app-tab label="Credenciales y verificaciones" appTutorialTarget="perfil-credenciales">
-        @if (esPropio() && !previewMode()) {
-          <app-tab-help-block helpId="perfil-credenciales-ayuda" tutorialId="perfil-profesional">
-            <p>
-              Acá se separa lo que el profesional <strong>declaró</strong> de lo que ya fue
-              <strong>verificado</strong> contra una fuente — el colegio médico, el registro de
-              matrículas. Declarar no exige verificación previa: en desarrollo/pruebas se puede usar
-              todo el perfil sin esperar el trámite.
-            </p>
-            <p>
-              <strong>Ejemplo:</strong> un título de posgrado recién cargado aparece en "Declarado";
-              una vez que un administrador lo verifica contra una fuente, pasa a "Verificado".
-            </p>
-          </app-tab-help-block>
-        }
+        <!-- 2. Credenciales y verificaciones --------------------------------- -->
+        <app-tab label="Credenciales y verificaciones" appTutorialTarget="perfil-credenciales">
+          @if (esPropio() && !previewMode()) {
+            <app-tab-help-block helpId="perfil-credenciales-ayuda" tutorialId="perfil-profesional">
+              <p>
+                Acá se separa lo que el profesional <strong>declaró</strong> de lo que ya fue
+                <strong>verificado</strong> contra una fuente — el colegio médico, el registro de
+                matrículas. Declarar no exige verificación previa: en desarrollo/pruebas se puede
+                usar todo el perfil sin esperar el trámite.
+              </p>
+              <p>
+                <strong>Ejemplo:</strong> un título de posgrado recién cargado aparece en
+                "Declarado"; una vez que un administrador lo verifica contra una fuente, pasa a
+                "Verificado".
+              </p>
+            </app-tab-help-block>
+          }
 
-        <div class="profesional__seguimiento">
-          <div class="profesional__seguimiento-grupo">
-            <h3 class="profesional__fase-titulo">
-              Verificado ({{ credenciales().verificados.length }})
-            </h3>
-            @if (credenciales().verificados.length > 0) {
-              <ul class="profesional__lista">
-                @for (fila of credenciales().verificados; track fila.id) {
-                  <li class="profesional__item">
-                    <div class="profesional__item-encabezado">
-                      <app-badge variant="secondary" [value]="fila.categoria" />
-                      <span class="profesional__item-titulo">{{ fila.nombre }}</span>
-                    </div>
-                    <p class="profesional__item-texto">{{ fila.detalle }}</p>
-                    @if (fila.fuente) {
-                      <p class="profesional__item-fechas">Fuente: {{ fila.fuente }}</p>
-                    }
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="profesional__nota">Todavía no hay nada verificado.</p>
-            }
+          <div class="profesional__seguimiento">
+            <div class="profesional__seguimiento-grupo">
+              <h3 class="profesional__fase-titulo">
+                Verificado ({{ credenciales().verificados.length }})
+              </h3>
+              @if (credenciales().verificados.length > 0) {
+                <ul class="profesional__lista">
+                  @for (fila of credenciales().verificados; track fila.id) {
+                    <li class="profesional__item">
+                      <div class="profesional__item-encabezado">
+                        <app-badge variant="secondary" [value]="fila.categoria" />
+                        <span class="profesional__item-titulo">{{ fila.nombre }}</span>
+                      </div>
+                      <p class="profesional__item-texto">{{ fila.detalle }}</p>
+                      @if (fila.fuente) {
+                        <p class="profesional__item-fechas">Fuente: {{ fila.fuente }}</p>
+                      }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="profesional__nota">Todavía no hay nada verificado.</p>
+              }
+            </div>
+
+            <div class="profesional__seguimiento-grupo">
+              <h3 class="profesional__fase-titulo">
+                Declarado ({{ credenciales().declarados.length }})
+              </h3>
+              @if (credenciales().declarados.length > 0) {
+                <ul class="profesional__lista">
+                  @for (fila of credenciales().declarados; track fila.id) {
+                    <li class="profesional__item">
+                      <div class="profesional__item-encabezado">
+                        <app-badge variant="secondary" [value]="fila.categoria" />
+                        <span class="profesional__item-titulo">{{ fila.nombre }}</span>
+                      </div>
+                      <p class="profesional__item-texto">{{ fila.detalle }}</p>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="profesional__nota">No hay nada pendiente de verificación.</p>
+              }
+            </div>
           </div>
 
-          <div class="profesional__seguimiento-grupo">
-            <h3 class="profesional__fase-titulo">
-              Declarado ({{ credenciales().declarados.length }})
-            </h3>
-            @if (credenciales().declarados.length > 0) {
-              <ul class="profesional__lista">
-                @for (fila of credenciales().declarados; track fila.id) {
-                  <li class="profesional__item">
-                    <div class="profesional__item-encabezado">
-                      <app-badge variant="secondary" [value]="fila.categoria" />
-                      <span class="profesional__item-titulo">{{ fila.nombre }}</span>
-                    </div>
-                    <p class="profesional__item-texto">{{ fila.detalle }}</p>
-                  </li>
-                }
-              </ul>
-            } @else {
-              <p class="profesional__nota">No hay nada pendiente de verificación.</p>
-            }
-          </div>
-        </div>
-
-        <!-- Especialidades y matrículas son la misma pregunta —«¿qué lo
+          <!-- Especialidades y matrículas son la misma pregunta —«¿qué lo
              habilita?»— contada dos veces. En la ficha PROPIA la matrícula ya
              está arriba, así que acá queda una sola lista y las sub-pestañas
              sobran: un tabset de una pestaña es un control que no elige nada.
              Para quien visita el perfil ajeno no hay tarjeta arriba, y las dos
              sub-pestañas siguen siendo el único lugar donde vive el detalle. -->
-        @if (perfil().datosPersonales) {
-          <h3 class="profesional__sub-titulo">
-            Especialidades ({{ perfil().especialidades.length }})
-          </h3>
-          @if (perfil().especialidades.length > 0) {
-            <ul class="profesional__lista">
-              @for (especialidad of perfil().especialidades; track especialidad.id) {
-                <li
-                  class="profesional__item"
-                  [class.profesional__item--pasado]="especialidad.hasta"
-                >
-                  <div class="profesional__item-encabezado">
-                    <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
-                    @if (especialidad.principal) {
-                      <app-badge variant="primary" value="Principal" />
-                    }
-                    @if (especialidad.certificada) {
-                      <app-badge variant="success" value="Certificada" />
-                    }
-                  </div>
-
-                  @if (especialidad.alcance) {
-                    <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
-                  }
-
-                  <p class="profesional__item-fechas">
-                    @if (especialidad.desde) {
-                      Desde {{ especialidad.desde | date: 'MMM y' }}
-                    }
-                    @if (especialidad.hasta) {
-                      · hasta {{ especialidad.hasta | date: 'MMM y' }}
-                    } @else if (especialidad.desde) {
-                      · en ejercicio
-                    }
-                    · {{ especialidad.estado }}
-                  </p>
-                </li>
-              }
-            </ul>
-          } @else {
-            <p class="profesional__nota">
-              Todavía no hay especialidades registradas. Las carga quien administra la organización
-              junto con la credencial que las respalda.
-            </p>
-          }
-        } @else {
-          <app-tabs orientation="horizontal">
-            <app-tab [label]="'Especialidades (' + perfil().especialidades.length + ')'">
-              @if (perfil().especialidades.length > 0) {
-                <ul class="profesional__lista">
-                  @for (especialidad of perfil().especialidades; track especialidad.id) {
-                    <li
-                      class="profesional__item"
-                      [class.profesional__item--pasado]="especialidad.hasta"
-                    >
-                      <div class="profesional__item-encabezado">
-                        <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
-                        @if (especialidad.principal) {
-                          <app-badge variant="primary" value="Principal" />
-                        }
-                        @if (especialidad.certificada) {
-                          <app-badge variant="success" value="Certificada" />
-                        }
-                      </div>
-
-                      @if (especialidad.alcance) {
-                        <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
+          @if (perfil().datosPersonales) {
+            <h3 class="profesional__sub-titulo">
+              Especialidades ({{ perfil().especialidades.length }})
+            </h3>
+            @if (perfil().especialidades.length > 0) {
+              <ul class="profesional__lista">
+                @for (especialidad of perfil().especialidades; track especialidad.id) {
+                  <li
+                    class="profesional__item"
+                    [class.profesional__item--pasado]="especialidad.hasta"
+                  >
+                    <div class="profesional__item-encabezado">
+                      <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
+                      @if (especialidad.principal) {
+                        <app-badge variant="primary" value="Principal" />
                       }
+                      @if (especialidad.certificada) {
+                        <app-badge variant="success" value="Certificada" />
+                      }
+                    </div>
 
-                      <p class="profesional__item-fechas">
-                        @if (especialidad.desde) {
-                          Desde {{ especialidad.desde | date: 'MMM y' }}
-                        }
-                        @if (especialidad.hasta) {
-                          · hasta {{ especialidad.hasta | date: 'MMM y' }}
-                        } @else if (especialidad.desde) {
-                          · en ejercicio
-                        }
-                        · {{ especialidad.estado }}
-                      </p>
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="profesional__nota">
-                  Todavía no hay especialidades registradas. Las carga quien administra la
-                  organización junto con la credencial que las respalda.
-                </p>
-              }
-            </app-tab>
+                    @if (especialidad.alcance) {
+                      <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
+                    }
 
-            <app-tab [label]="'Matrículas (' + perfil().matriculas.length + ')'">
-              @if (perfil().matriculas.length > 0) {
-                <ul class="profesional__lista" appTutorialTarget="perfil-matriculas">
-                  @for (matricula of perfil().matriculas; track matricula.id) {
-                    <li class="profesional__item">
-                      <div class="profesional__item-encabezado">
-                        <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
-                        <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
-                      </div>
+                    <p class="profesional__item-fechas">
+                      @if (especialidad.desde) {
+                        Desde {{ especialidad.desde | date: 'MMM y' }}
+                      }
+                      @if (especialidad.hasta) {
+                        · hasta {{ especialidad.hasta | date: 'MMM y' }}
+                      } @else if (especialidad.desde) {
+                        · en ejercicio
+                      }
+                      · {{ especialidad.estado }}
+                    </p>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="profesional__nota">
+                Todavía no hay especialidades registradas. Las carga quien administra la
+                organización junto con la credencial que las respalda.
+              </p>
+            }
+          } @else {
+            <app-tabs orientation="horizontal">
+              <app-tab [label]="'Especialidades (' + perfil().especialidades.length + ')'">
+                @if (perfil().especialidades.length > 0) {
+                  <ul class="profesional__lista">
+                    @for (especialidad of perfil().especialidades; track especialidad.id) {
+                      <li
+                        class="profesional__item"
+                        [class.profesional__item--pasado]="especialidad.hasta"
+                      >
+                        <div class="profesional__item-encabezado">
+                          <span class="profesional__item-titulo">{{ especialidad.nombre }}</span>
+                          @if (especialidad.principal) {
+                            <app-badge variant="primary" value="Principal" />
+                          }
+                          @if (especialidad.certificada) {
+                            <app-badge variant="success" value="Certificada" />
+                          }
+                        </div>
 
-                      <p class="profesional__item-fechas">
-                        Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
-                        @if (matricula.autoridad) {
-                          · {{ matricula.autoridad }}
+                        @if (especialidad.alcance) {
+                          <p class="profesional__item-texto">{{ especialidad.alcance }}</p>
                         }
-                        @if (matricula.hasta) {
-                          · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
-                        }
-                      </p>
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="profesional__nota">
-                  No hay matrículas registradas. Es lo que declara en qué jurisdicción está
-                  habilitado el ejercicio.
-                </p>
-              }
-            </app-tab>
-          </app-tabs>
-        }
-      </app-tab>
-    </app-tabs>
-  </app-card>
 
-  <!-- Sin identificadores al pie: el uuid del perfil y el de la persona no le
+                        <p class="profesional__item-fechas">
+                          @if (especialidad.desde) {
+                            Desde {{ especialidad.desde | date: 'MMM y' }}
+                          }
+                          @if (especialidad.hasta) {
+                            · hasta {{ especialidad.hasta | date: 'MMM y' }}
+                          } @else if (especialidad.desde) {
+                            · en ejercicio
+                          }
+                          · {{ especialidad.estado }}
+                        </p>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="profesional__nota">
+                    Todavía no hay especialidades registradas. Las carga quien administra la
+                    organización junto con la credencial que las respalda.
+                  </p>
+                }
+              </app-tab>
+
+              <app-tab [label]="'Matrículas (' + perfil().matriculas.length + ')'">
+                @if (perfil().matriculas.length > 0) {
+                  <ul class="profesional__lista" appTutorialTarget="perfil-matriculas">
+                    @for (matricula of perfil().matriculas; track matricula.id) {
+                      <li class="profesional__item">
+                        <div class="profesional__item-encabezado">
+                          <span class="profesional__item-titulo">{{ matricula.jurisdiccion }}</span>
+                          <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
+                        </div>
+
+                        <p class="profesional__item-fechas">
+                          Matrícula <span class="profesional__cifra">{{ matricula.numero }}</span>
+                          @if (matricula.autoridad) {
+                            · {{ matricula.autoridad }}
+                          }
+                          @if (matricula.hasta) {
+                            · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
+                          }
+                        </p>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="profesional__nota">
+                    No hay matrículas registradas. Es lo que declara en qué jurisdicción está
+                    habilitado el ejercicio.
+                  </p>
+                }
+              </app-tab>
+            </app-tabs>
+          }
+        </app-tab>
+      </app-tabs>
+    </app-card>
+
+    <!-- Sin identificadores al pie: el uuid del perfil y el de la persona no le
        dicen nada a nadie en esta ficha (feedback de la analista F-12,
        18/08/2026); si alguien tiene que reportar un problema, el dato vive en
        la consola de administración, no acá. -->
-  @if (perfil().desde) {
-    <p class="profesional__desde">En la plataforma desde {{ perfil().desde | date: 'MMMM y' }}</p>
-  }
-</div>
+    @if (perfil().desde) {
+      <p class="profesional__desde">En la plataforma desde {{ perfil().desde | date: 'MMMM y' }}</p>
+    }
+  </div>
+}
