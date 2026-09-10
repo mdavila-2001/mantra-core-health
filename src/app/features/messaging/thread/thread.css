@@ -241,7 +241,13 @@
 }
 
 .hilo__cargando,
-.hilo__mas {
+/* El aviso de «Cargando mensajes anteriores…».
+   Se llamaba `.hilo__mas` igual que los DOS botones de la cabecera, así que las
+   reglas se fundían y el párrafo heredaba `inline-size: 36px` — el texto se
+   dibujaba en una columna de 36 px— mientras los botones heredaban
+   `text-align: center` y el cuerpo de tipografía de un pie. Una clase, un
+   dueño. */
+.hilo__cargando {
   margin: 0 0 var(--e3);
   color: var(--tinta-2);
   font-size: var(--fs-caption);
@@ -263,11 +269,6 @@
 /* En el flujo, no pegado arriba: un separador marca dónde empieza un día, y si
    se despega de ahí deja de marcar nada. */
 .hilo__dia,
-.hilo__no-leidos {
-  align-self: center;
-  margin-block: var(--e4);
-}
-
 .hilo__dia span,
 .hilo__no-leidos span {
   display: inline-block;
@@ -283,11 +284,15 @@
 }
 
 /* El de no leídos ocupa el ancho: es una línea de corte, no una etiqueta. */
+/* La línea de «no leídos», con su regla a cada lado. Estaba declarada dos
+   veces: la primera fijaba `align-self: center`, que ésta pisaba con `stretch`
+   —era código muerto—. Queda una sola, con el margen que sí valía. */
 .hilo__no-leidos {
   align-self: stretch;
   display: flex;
   align-items: center;
   gap: var(--e3);
+  margin-block: var(--e4);
 }
 
 .hilo__no-leidos::before,
