@@ -159,16 +159,15 @@ async function main() {
     const browser = await pagina.locator('app-tabs[appearance="browser"], .tabs--browser').count();
     ok('expediente: las pestañas son un marco de ventana', browser > 0);
     ok('expediente: no aparece «Qué vas a registrar» en la ficha', !/qué vas a registrar/i.test(cuerpo));
-    ok('expediente: hay botón «Atender» que lleva a Atención', (await pagina.getByTestId('expediente-abrir-atencion').count()) > 0);
+    // Atender nace sólo de «Mis citas»: el expediente es lectura y perdió su
+    // botón. Lo que sí puede tener es la vuelta a una consulta ya abierta.
+    ok('expediente: ya no ofrece «Atender»', (await pagina.getByTestId('expediente-abrir-atencion').count()) === 0);
     ok('expediente: sigue el PDF de la historia', /descargar pdf|pdf/i.test(cuerpo));
     await capturar('expediente-pestanas', { fullPage: true });
-    const atender = pagina.getByTestId('expediente-abrir-atencion');
-    if ((await atender.count()) > 0) {
-      await atender.click();
-      await esperar(1500);
-      ok('atención: la escritura vive en su pantalla', /\/encounter/.test(pagina.url()), pagina.url());
-      await capturar('atencion-encounter', { fullPage: true });
-    }
+    await pagina.goto(`${pagina.url()}/encounter`);
+    await esperar(1500);
+    ok('atención: la escritura vive en su pantalla', /\/encounter/.test(pagina.url()), pagina.url());
+    await capturar('atencion-encounter', { fullPage: true });
   }
 
   /* ── 5 · Generador de formularios (Google Forms) ──────────────────────── */
