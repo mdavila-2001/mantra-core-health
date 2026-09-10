@@ -271,15 +271,11 @@
   "37": [
     {
       "ruta": "/my-account",
-      "nombre": "perfil-medico-datos-personales"
+      "nombre": "perfil-medico"
     },
     {
-      "ruta": "/my-account?tab=practice",
-      "nombre": "perfil-medico-practica"
-    },
-    {
-      "ruta": "/my-account?tab=credentials",
-      "nombre": "perfil-medico-credenciales"
+      "ruta": "/my-account/edit",
+      "nombre": "perfil-medico-editar"
     }
   ],
   "38": [

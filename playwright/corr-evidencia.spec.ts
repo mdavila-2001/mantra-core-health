@@ -105,6 +105,47 @@ interface Medicion {
 }
 
 /**
+ * Espera a que el contenido deje de moverse antes de medirlo.
+ *
+ * Un `waitForTimeout` fijo no alcanza: «Mi perfil» del médico pide cinco cosas
+ * distintas y pinta la columna lateral antes que la ficha. Medido a los 900 ms
+ * daba, a veces, **una sola tarjeta** —la del lateral— y la matriz reportaba
+ * «27 % del ancho» sobre una pantalla que en realidad estaba bien. Una medición
+ * que falla una de cada tres veces es peor que ninguna: enseña a ignorar el
+ * rojo.
+ *
+ * Se espera a que el número de tarjetas y el ancho del área se repitan dos
+ * veces seguidas. `networkidle` no sirve acá: con HMR no llega nunca
+ * (`CLAUDE.md` §5).
+ */
+async function esperarAQueSeAsiente(page: Page): Promise<void> {
+  const huella = async (): Promise<string> =>
+    page.evaluate(() => {
+      const area = document.querySelector('.app-main__inner');
+      const tarjetas = area ? area.querySelectorAll('app-card').length : -1;
+      // Mientras haya un esqueleto o un spinner, lo que se ve todavía no es la
+      // pantalla: medir ahí fue exactamente lo que dio «27 % del ancho» sobre
+      // «Mi perfil», cuando lo único pintado era la columna lateral.
+      const cargando = document.querySelectorAll('app-skeleton, app-spinner').length;
+      return `${tarjetas}:${document.body.scrollHeight}:${cargando}`;
+    });
+
+  // **Tres** muestras iguales, no dos: entre dos peticiones que tardan parecido
+  // hay una meseta de 250 ms en la que nada cambia y la pantalla sigue a medias.
+  let anterior = await huella();
+  let repeticiones = 0;
+  for (let intento = 0; intento < 16; intento += 1) {
+    await page.waitForTimeout(250);
+    const ahora = await huella();
+    repeticiones = ahora === anterior ? repeticiones + 1 : 0;
+    anterior = ahora;
+
+    const sinCargar = ahora.endsWith(':0');
+    if (repeticiones >= 2 && sinCargar) return;
+  }
+}
+
+/**
  * Mide lo que el propietario mira, no lo que es cómodo de medir.
  *
  * Dos trampas que esta función evita, las dos comprobadas en el navegador el
@@ -117,10 +158,14 @@ interface Medicion {
  *    `body` (`fondo-vista.svg`). Eso es lo que se reporta.
  * 2. **El hijo directo del área siempre ocupa el 100 %.** Medirlo daba PASS en
  *    todas las pantallas, incluso en las que el propietario señaló como
- *    pegadas a la izquierda. Lo que hay que medir es **la tarjeta**: el
- *    `app-card` más ancho del área. Si no hay ninguno, se cae al componente
- *    ruteado y se deja dicho en `queSeMidio`, para que nadie lea un PASS que
- *    no significa lo mismo.
+ *    pegadas a la izquierda. Lo que se mide es **la unión de las tarjetas**, de
+ *    la más a la izquierda a la más a la derecha. La tarjeta más ancha, que fue
+ *    el primer intento, castigaba cualquier disposición de dos columnas: en «Mi
+ *    perfil» la ficha mide 752 px y la columna lateral otros 313, y juntas
+ *    ocupan el 93 % — pero la más ancha sola daba «65 %». La regla §5 prohíbe la
+ *    columna **vacía**, no la columna. Si no hay tarjetas se cae al componente
+ *    ruteado y se deja dicho en `queSeMidio`, para que nadie lea un PASS que no
+ *    significa lo mismo.
  */
 async function medir(page: Page): Promise<Medicion> {
   return page.evaluate(() => {
@@ -160,29 +205,60 @@ async function medir(page: Page): Promise<Medicion> {
           ? `body + velo(${velo1.toFixed(2)}/${velo2.toFixed(2)})`
           : 'body';
 
-    // --- qué bloque mira el propietario ----------------------------------
-    const tarjetas = Array.from(area.querySelectorAll('app-card')) as HTMLElement[];
-    const visibles = tarjetas.filter((t) => t.getBoundingClientRect().width > 0);
-    const masAncha = visibles.sort(
-      (a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width,
-    )[0];
+    // --- qué ocupa el contenido, de verdad -------------------------------
+    // **La unión de las tarjetas, no la más ancha.** Medir la más ancha
+    // penalizaba cualquier disposición de dos columnas: en «Mi perfil» la
+    // ficha mide 752 px y la columna lateral —«Tu acceso», con contenido
+    // real— otros 313, y juntas ocupan el 93 % del área. Con la métrica
+    // anterior eso salía «FAIL 65 %», que habría empujado a romper un layout
+    // que la regla §5 permite: lo que prohíbe es la columna **vacía**, no la
+    // columna.
+    //
+    // Con la unión, un bloque angosto pegado a un lado sigue fallando —que es
+    // el defecto que hay que cazar— y dos columnas llenas pasan.
+    const tarjetas = (Array.from(area.querySelectorAll('app-card')) as HTMLElement[]).filter(
+      (t) => t.getBoundingClientRect().width > 0,
+    );
     const ruteado = Array.from(area.children).find(
       (c) => (c as HTMLElement).offsetWidth > 0,
     ) as HTMLElement | undefined;
-    const bloque = masAncha ?? ruteado;
 
     const a = area.getBoundingClientRect();
-    const b = bloque?.getBoundingClientRect();
+    let izq: number;
+    let der: number;
+    let ancho: number;
+    let queSeMidio: string;
+
+    if (tarjetas.length > 0) {
+      const cajas = tarjetas.map((t) => t.getBoundingClientRect());
+      const min = Math.min(...cajas.map((c) => c.left));
+      const max = Math.max(...cajas.map((c) => c.right));
+      izq = min - a.left;
+      der = a.right - max;
+      ancho = max - min;
+      queSeMidio = `${tarjetas.length} app-card`;
+    } else if (ruteado) {
+      const b = ruteado.getBoundingClientRect();
+      izq = b.left - a.left;
+      der = a.right - b.right;
+      ancho = b.width;
+      queSeMidio = `<${ruteado.tagName.toLowerCase()}>`;
+    } else {
+      izq = -1;
+      der = -1;
+      ancho = 0;
+      queSeMidio = 'nada';
+    }
 
     return {
       fondo,
       fondoQuien,
       fondoImagen,
-      holguraIzq: b ? b.left - a.left : -1,
-      holguraDer: b ? a.right - b.right : -1,
-      ancho: b?.width ?? 0,
+      holguraIzq: izq,
+      holguraDer: der,
+      ancho,
       anchoArea: a.width,
-      queSeMidio: masAncha ? 'app-card' : ruteado ? `<${ruteado.tagName.toLowerCase()}>` : 'nada',
+      queSeMidio,
       scrollHorizontal: document.documentElement.scrollWidth > window.innerWidth + 1,
       cargo: true,
     };
@@ -264,8 +340,7 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
         for (const { ruta, nombre, esperado } of RUTAS) {
           consola = 0;
           await page.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
-          // Sin `networkidle`: con HMR no llega y da verdes falsos (CLAUDE.md §5).
-          await page.waitForTimeout(900);
+          await esperarAQueSeAsiente(page);
           const foto = join(FOTOS, `${nombre}-${vp.nombre}-${tema}.png`);
           await page.screenshot({ path: foto, fullPage: true });
           const bytes = statSync(foto).size;

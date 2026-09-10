@@ -20,7 +20,23 @@
 
 .profesional {
   display: grid;
+  /* `minmax(0, 1fr)` y no la columna implícita `auto`: una pista `auto` se
+     estira hasta el **min-content del hijo más ancho**, y acá ese hijo es la
+     tarjeta de pestañas, cuya tira —«Trayectoria» + «Credenciales y
+     verificaciones»— no baja de 413 px. En un teléfono de 375 eso empujaba la
+     pista a 413, las cinco tarjetas con ella, y la **página entera** salía 50 px
+     más ancha que la pantalla: se scrolleaba de lado en todo el perfil.
+     Medido el 2026-09-10: `scrollWidth` 425 sobre un viewport de 375. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
+}
+
+/* Y el permiso para encogerse. Sin esto la pista ya mide bien pero los hijos
+   conservan `min-width: auto` y vuelven a desbordarla. La tira de pestañas ya
+   trae su propio `overflow-x: auto`, así que lo ancho scrollea **dentro de su
+   tarjeta**, que es donde corresponde. */
+.profesional > * {
+  min-inline-size: 0;
 }
 
 /* ── Portada ───────────────────────────────────────────────────────────────*/
