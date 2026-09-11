@@ -1,0 +1,60 @@
+/* Mobile-first: cargo, nombre y datos apilados; desde ancho de tableta los dos
+   datos de contacto entran en una línea, que es como se los lee al llamar. */
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  min-width: 0;
+}
+
+.contacto__cargo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.contacto__nombre {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+}
+
+.contacto__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.contacto__dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.contacto__etiqueta {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.contacto__valor {
+  margin: 0;
+  min-width: 0;
+  /* Un correo largo no puede empujar la tarjeta fuera de la columna. */
+  overflow-wrap: anywhere;
+}
+
+/* 650 px es `--bp-sm` del sistema. El número va literal porque CSS no admite
+   variables en la condición de una consulta de medios (`styles.css:104-108`). */
+@media (min-width: 650px) {
+  .contacto__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

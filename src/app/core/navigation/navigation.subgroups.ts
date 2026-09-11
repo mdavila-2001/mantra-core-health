@@ -258,8 +258,13 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     label: 'Farmacia',
     group: 'Administración',
     icon: 'bag',
-    // El mostrador: lo que se despacha y lo que se promociona.
-    paths: ['administration/pharmacy-orders', 'administration/pharmacy-campaigns'],
+    // El mostrador: lo que se despacha, lo que se promociona y la empresa que
+    // está detrás.
+    paths: [
+      'administration/pharmacy-orders',
+      'administration/pharmacy-campaigns',
+      'administration/pharmacy-profile',
+    ],
   },
 
   /* -- Facturación -------------------------------------------------------- */

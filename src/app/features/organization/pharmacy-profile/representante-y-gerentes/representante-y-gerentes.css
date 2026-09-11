@@ -1,0 +1,33 @@
+/* Mobile-first: las cuatro fichas apiladas; desde ancho de tableta entran de a
+   dos, que es donde el cargo y el contacto se leen sin scroll. */
+
+.gente {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.gente__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.gente__titulo {
+  margin: 0;
+  font-size: var(--fs-h2);
+}
+
+.gente__bloques {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* 650 px es `--bp-sm` del sistema. El número va literal porque CSS no admite
+   variables en la condición de una consulta de medios (`styles.css:104-108`). */
+@media (min-width: 650px) {
+  .gente__bloques {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

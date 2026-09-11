@@ -218,6 +218,17 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
     ),
+  // La ficha legal de la farmacia. Ruta hermana de las dos de arriba y no una
+  // sección del panel de organización, por el mismo motivo: el panel es de
+  // TP-1 y así no se le toca una línea. Diferida: arrastra el mapa.
+  'administration/pharmacy-profile': () =>
+    import('./features/organization/pharmacy-profile/pharmacy-profile').then(
+      (m) => m.PharmacyProfile,
+    ),
+  'my-account/identity/cases': () =>
+    import('./features/identity-assurance/verification-cases/verification-cases').then(
+      (m) => m.VerificationCases,
+    ),
   'administration/delegated-access': () =>
     import('./features/delegated-access/delegated-access-home/delegated-access-home').then(
       (m) => m.DelegatedAccessHome,

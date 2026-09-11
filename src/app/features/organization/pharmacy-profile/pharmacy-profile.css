@@ -1,0 +1,7 @@
+/* El aviso respira antes de las pestañas. El margen lo pone quien lo ubica: el
+   aviso no sabe dónde lo van a poner. */
+
+.ficha__aviso {
+  display: block;
+  margin-block-end: var(--sp-4);
+}
