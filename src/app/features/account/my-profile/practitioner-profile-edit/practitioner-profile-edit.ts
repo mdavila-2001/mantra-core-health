@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, model, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
@@ -29,6 +29,8 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import {
   separarNombres,
@@ -47,6 +49,7 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
 
 /** El campo de la jurisdicción, del catálogo dinámico. */
 const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
@@ -114,6 +117,8 @@ function soloFecha(fecha: Date): string {
     RouterLink,
     Select,
     Switch,
+    Tab,
+    Tabs,
     Textarea,
     Tooltip,
     UbicacionPicker,
@@ -131,6 +136,28 @@ export class PractitionerProfileEdit {
   private readonly catalogo = inject(MedicalSpecialtiesCatalog);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  /**
+   * La pestaña abierta. Es un `model` y no una señal propia por la misma razón
+   * que en el editor del paciente: el lápiz de la ficha abre el formulario en la
+   * pestaña que se estaba mirando, y para eso el índice tiene que poder venir de
+   * afuera.
+   */
+  readonly pestana = model<number>(PESTANA_EDITOR.personales);
+  protected readonly pestanas = PESTANAS_DEL_EDITOR_MEDICO;
+
+  /**
+   * Si la pestaña abierta es de las que se corrigen.
+   *
+   * «Datos personales» y «Contacto» son un solo formulario repartido en dos
+   * paneles y comparten el botón de guardar. «Trayectoria» y «Credenciales» no
+   * corrigen nada: agregan, y cada bloque tiene su propio «Agregar». Mostrar ahí
+   * «Guardar cambios» prometería guardar algo que ese botón no guarda.
+   */
+  protected readonly editandoPresentacion = computed(
+    () =>
+      this.pestana() === PESTANA_EDITOR.personales || this.pestana() === PESTANA_EDITOR.contacto,
+  );
 
   private readonly municipios = inject(BoMunicipalitiesCatalog);
 
