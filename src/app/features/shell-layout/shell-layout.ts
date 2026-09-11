@@ -26,6 +26,7 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
+import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
 
@@ -69,6 +70,7 @@ function contiene(ruta: string, url: string): boolean {
     TutorialTarget,
     NotificationBell,
     NavIcon,
+    Tooltip,
   ],
   templateUrl: './shell-layout.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
