@@ -430,6 +430,32 @@ export interface OrganizationRegistration {
     /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
     readonly motherLastName?: string;
   };
+  /**
+   * Documentos legales de afiliación en PDF (subtarea 1.2), ya subidos por
+   * `IamClient.uploadRegistrationDocument`. Opcional en el contrato —igual
+   * que `legalEntityType`—; obligatorio en el formulario público.
+   */
+  readonly legalDocuments?: OrganizationLegalDocuments;
+}
+
+/**
+ * Los cinco documentos que el registro de procesos exige (1.1.2 · 1.2.1 ·
+ * 1.3 · 1.4 · 1.5): cada valor es el `fileId` de una pre-carga ya subida.
+ */
+export interface OrganizationLegalDocuments {
+  readonly constitutionFileId: string;
+  readonly taxIdentifierFileId: string;
+  readonly commerceRegistryFileId: string;
+  readonly operatingLicenseFileId: string;
+  readonly healthAuthorityCertificateFileId: string;
+}
+
+/** Lo que devuelve la pre-carga de un documento legal, listo para reenviar en el alta. */
+export interface UploadedRegistrationDocument {
+  readonly fileId: string;
+  readonly originalName: string;
+  readonly sizeBytes: number;
+  readonly mimeType: string;
 }
 
 /** Lo que devuelve el alta de organización: el tenant y su owner recién creados. */
@@ -441,6 +467,11 @@ export interface RegisteredOrganization {
   readonly status: string;
   /** `false` cuando el owner no tiene correo pendiente de verificar: no es un fallo. */
   readonly emailVerificationSent: boolean;
+  /**
+   * Cuántos documentos legales quedaron registrados, pendientes de
+   * verificación. Ausente si el alta no declaró `legalDocuments`.
+   */
+  readonly legalDocumentsRegistered?: number;
 }
 
 /**

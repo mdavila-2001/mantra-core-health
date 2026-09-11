@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -7,16 +8,28 @@ import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { OrganizationRegistration } from '../../../core/data-access/iam/iam.types';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { DynamicEnumOption } from '../../../core/data-access/system-context/system-context.types';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
+import type {
+  PdfUploader,
+  UploadedDocument,
+} from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
+import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
+import {
+  camposDeDocumentosLegales,
+  DOCUMENTOS_LEGALES_DEL_REGISTRO,
+  type ClaveDeDocumentoLegal,
+} from '../registro-compartido/documentos-legales';
 
 /** Mínimos que exigen los DTO del backend. */
 const MIN_PASSWORD = 8;
@@ -84,6 +97,9 @@ const CODIGO_VALIDO = /^[A-Za-z0-9._-]+$/;
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
+    CampoPersonalizado,
+    NgTemplateOutlet,
+    DropzonePdf,
   ],
   templateUrl: './register-organization.html',
   styleUrl: './register-organization.css',
@@ -145,6 +161,30 @@ export class RegisterOrganization {
     timeZone: new FormControl('', {
       nonNullable: true,
       validators: [Validators.maxLength(MAX_ZONA_HORARIA)],
+    }),
+    // Documentos legales de afiliación (subtarea 1.2): guardan el `fileId`
+    // que devuelve la pre-carga, no el archivo. Obligatorio en el
+    // formulario, opcional en el contrato — mismo criterio que
+    // `legalEntityType` (ver el JSDoc de la clase).
+    constitutionFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    taxIdentifierFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    commerceRegistryFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    operatingLicenseFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    healthAuthorityCertificateFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
     }),
     // Datos del owner. El nombre va en sus cuatro partes, igual que en el
     // resto de las altas: el backend compone con ellas el nombre que muestra.
@@ -310,6 +350,13 @@ export class RegisterOrganization {
         ],
       },
       {
+        titulo: 'Documentación legal obligatoria (PDF)',
+        clave: 'documentos-legales',
+        icon: 'folder' as const,
+        hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',
+        campos: camposDeDocumentosLegales(this.incorporationCountryElegido(), uiLanguage()),
+      },
+      {
         titulo: 'Tu cuenta',
         hint: 'Quien administra la aseguradora en la plataforma.',
         campos: [
@@ -442,6 +489,67 @@ export class RegisterOrganization {
     });
   }
 
+  /** Los cinco documentos legales, en el orden del registro de procesos (subtarea 1.2). */
+  protected readonly documentosLegales = DOCUMENTOS_LEGALES_DEL_REGISTRO;
+
+  /** Cómo sube cada `app-dropzone-pdf`: delega en el mismo endpoint de pre-carga pública. */
+  protected readonly subirDocumento: PdfUploader = (file) =>
+    this.iam.uploadRegistrationDocument(file);
+
+  /**
+   * Lo que cada dropzone ya subió, para sobrevivir a que `app-paginated-form`
+   * la destruya y recree al navegar entre páginas del asistente.
+   * Ver el JSDoc de `documentoInicial` en `DropzonePdf`.
+   */
+  protected readonly documentosSubidos = signal<
+    Partial<Record<ClaveDeDocumentoLegal, UploadedDocument>>
+  >({});
+
+  /** Guarda el `fileId` que la dropzone recordó, en el control que le corresponde. */
+  protected registrarDocumento(clave: ClaveDeDocumentoLegal, fileId: string | null): void {
+    const control = this.form.controls[clave];
+    control.setValue(fileId ?? '');
+    control.markAsTouched();
+
+    if (fileId === null) {
+      this.documentosSubidos.update((actual) => {
+        const { [clave]: _omitido, ...resto } = actual;
+        return resto;
+      });
+    }
+  }
+
+  /** Recuerda el documento recién subido para poder restaurarlo tras ir y volver. */
+  protected recordarDocumento(clave: ClaveDeDocumentoLegal, documento: UploadedDocument): void {
+    this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
+  }
+
+  /**
+   * Lo ya subido para ese documento, si lo hay.
+   *
+   * Un método y no `documentosSubidos()[clave]` directo en la plantilla: el
+   * `let-clave` de `ngTemplateOutletContext` no tiene tipo (no hay guard de
+   * contexto para un `ng-template` sin directiva propia), y TypeScript no
+   * deja indexar un `Record` con una clave `any` bajo `noImplicitAny`.
+   */
+  protected documentoInicialDe(clave: ClaveDeDocumentoLegal): UploadedDocument | null {
+    return this.documentosSubidos()[clave] ?? null;
+  }
+
+  /** Si ese documento está tocado y vacío/incompleto — mismo criterio que el resto de los campos. */
+  protected esDocumentoInvalido(clave: ClaveDeDocumentoLegal): boolean {
+    const control = this.form.controls[clave];
+    return control.touched && control.invalid;
+  }
+
+  /** El rótulo ya traducido del documento, para pasárselo a su dropzone. */
+  protected etiquetaDeDocumento(clave: ClaveDeDocumentoLegal): string {
+    const campo = this.paginas()
+      .flatMap((pagina) => pagina.campos)
+      .find((c) => c.key === clave);
+    return campo?.label ?? '';
+  }
+
   submit(): void {
     if (this.isSubmitting()) {
       return;
@@ -501,6 +609,13 @@ export class RegisterOrganization {
         lastName: raw.lastName.trim(),
         ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
         ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
+      },
+      legalDocuments: {
+        constitutionFileId: raw.constitutionFileId,
+        taxIdentifierFileId: raw.taxIdentifierFileId,
+        commerceRegistryFileId: raw.commerceRegistryFileId,
+        operatingLicenseFileId: raw.operatingLicenseFileId,
+        healthAuthorityCertificateFileId: raw.healthAuthorityCertificateFileId,
       },
     };
   }
