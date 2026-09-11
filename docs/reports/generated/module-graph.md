@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-1248 archivos TypeScript bajo `src/` y 5194 importaciones internas.
+1334 archivos TypeScript bajo `src/` y 5562 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -55,7 +55,6 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/alovida/buscar/calificar-la-atencion-formulario/calificar-la-atencion-formulario.ts`
 - `src/app/features/alovida/buscar/cercania-detalle/cercania-detalle.ts`
 - `src/app/features/alovida/buscar/feed-publicaciones/feed-publicaciones.ts`
-- `src/app/features/alovida/buscar/hospitales-listado/hospitales-listado.ts`
 - `src/app/features/alovida/buscar/laboratorios-listado/laboratorios-listado.ts`
 - `src/app/features/alovida/buscar/medicamentos-listado/medicamentos-listado.ts`
 - `src/app/features/alovida/buscar/perfil-aseguradora-detalle/perfil-aseguradora-detalle.ts`
@@ -149,11 +148,10 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/alovida/terminologia/versiones-publicar/versiones-publicar.ts`
 - `src/app/features/clinical-record/request-access/request-access.ts`
 - `src/app/features/component-stock/component-stock.ts`
-- `src/app/features/consultation/consultation.ts`
+- `src/app/features/identity-verification/identity-hub/identity-hub.ts`
 - `src/app/features/interventions/interventions.routes.ts`
 - `src/app/features/interventions/interventions.ts`
-- `src/app/features/public-directories/clinics-directory.ts`
-- `src/app/features/public-directories/pharmacies-directory.ts`
+- `src/app/features/practice/my-practice/my-practice.ts`
 - `src/app/features/public-profile/public-post-detail/public-post-detail.ts`
 - `src/app/features/questionnaires/questionnaires.ts`
 - `src/app/features/quotations/quotation-list/quotation-list.ts`
@@ -168,45 +166,45 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/shared/components/atoms/button/button.ts` | 194 |
-| `src/app/core/view-state/view-state.types.ts` | 193 |
-| `src/app/core/view-state/view-state.ts` | 176 |
-| `src/app/core/http/error-to-view-state.ts` | 169 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 166 |
+| `src/app/shared/components/atoms/button/button.ts` | 206 |
+| `src/app/core/view-state/view-state.types.ts` | 192 |
+| `src/app/core/view-state/view-state.ts` | 175 |
+| `src/app/core/http/error-to-view-state.ts` | 168 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 168 |
 | `src/app/shared/components/molecules/alert/alert.ts` | 158 |
-| `src/app/core/navigation/navigation.service.ts` | 123 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 101 |
-| `src/app/shared/a11y/announce-on-appear.ts` | 86 |
-| `src/app/shared/components/atoms/input/input.ts` | 76 |
-| `src/app/shared/components/molecules/card/card.ts` | 72 |
-| `src/app/core/auth/auth.service.ts` | 69 |
+| `src/app/core/navigation/navigation.service.ts` | 125 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 103 |
+| `src/app/shared/a11y/announce-on-appear.ts` | 89 |
+| `src/app/shared/components/atoms/input/input.ts` | 77 |
+| `src/app/core/auth/auth.service.ts` | 74 |
+| `src/app/shared/components/molecules/card/card.ts` | 74 |
+| `src/app/shared/components/atoms/badge/badge.ts` | 66 |
 | `src/app/shared/forms/form-support.ts` | 65 |
-| `src/app/shared/components/atoms/badge/badge.ts` | 64 |
-| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 59 |
-| `src/app/shared/components/molecules/toast/toast.service.ts` | 58 |
-| `src/app/core/auth/session.store.ts` | 57 |
-| `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 50 |
-| `src/app/shared/forms/paginated/paginar-campos.ts` | 50 |
-| `src/app/shared/components/atoms/select/select.types.ts` | 49 |
+| `src/app/shared/components/molecules/toast/toast.service.ts` | 63 |
+| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 58 |
+| `src/app/core/auth/session.store.ts` | 56 |
+| `src/app/shared/components/atoms/select/select.types.ts` | 53 |
+| `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 51 |
+| `src/app/shared/forms/paginated/paginar-campos.ts` | 51 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 1111 |
-| `@angular/common` | 654 |
-| `@angular/router` | 507 |
-| `rxjs` | 188 |
-| `@angular/forms` | 114 |
-| `node:fs` | 21 |
+| `@angular/core` | 1170 |
+| `@angular/common` | 681 |
+| `@angular/router` | 519 |
+| `rxjs` | 201 |
+| `@angular/forms` | 120 |
+| `node:fs` | 24 |
+| `@angular/platform-browser` | 14 |
 | `@opentelemetry/api` | 12 |
-| `@angular/platform-browser` | 11 |
 | `@opentelemetry/sdk-trace-web` | 9 |
 | `@opentelemetry/semantic-conventions` | 7 |
+| `vitest` | 7 |
+| `jspdf` | 6 |
+| `node:path` | 5 |
 | `express` | 4 |
-| `jspdf` | 4 |
-| `node:path` | 4 |
-| `vitest` | 4 |
 | `@angular/ssr` | 3 |
 | `@faker-js/faker` | 3 |
 | `@opentelemetry/core` | 3 |

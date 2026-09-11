@@ -2,9 +2,9 @@
 
 # Inventario de componentes y servicios
 
-447 componentes y 84 servicios inyectables, leídos de `src/`.
+471 componentes y 88 servicios inyectables, leídos de `src/`.
 
-## Átomo (19)
+## Átomo (23)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -16,19 +16,23 @@
 | `button[app-button]` | `AppButton` | `variant`, `size`, `isLoading`, `disabled`, `type`, `iconOnly` | `clicked` | — | OnPush | sí |
 | `app-checkbox` | `Checkbox` | `disabled`, `label`, `hasError`, `indeterminate`, `hideLabel` | — | `checked` | OnPush | sí |
 | `app-chip` | `Chip` | `variant`, `size`, `label`, `removable`, `selectable` | `removed` | `selected` | OnPush | sí |
+| `app-data-type-icon` | `DataTypeIcon` | `tipo`, `multiple` | — | — | OnPush | **no** |
 | `app-divider` | `Divider` | `orientation`, `label` | — | — | OnPush | sí |
 | `app-input` | `Input` | `type`, `autocomplete`, `inputMode`, `placeholder`, `disabled`, `readonly`, `hasError`, `hasSuccess`, `testId`, `comboboxAria` | `focused`, `blurred` | `value` | OnPush | sí |
 | `a[app-link]` | `Link` | `variant`, `external` | — | — | OnPush | sí |
 | `app-nav-icon` | `NavIcon` | `name` | — | — | OnPush | **no** |
 | `app-progress` | `Progress` | `value`, `tone`, `size`, `label`, `showMarker` | — | — | OnPush | sí |
+| `app-question-type-icon` | `QuestionTypeIcon` | `tipo` | — | — | OnPush | **no** |
 | `app-select` | `Select` | `options`, `disabled`, `placeholder`, `hasError`, `ariaLabel` | `focused`, `blurred` | `value` | OnPush | sí |
+| `app-service-icon` | `ServiceIcon` | `servicio` | — | — | OnPush | sí |
 | `app-skeleton` | `Skeleton` | `variant`, `width`, `height`, `lines` | — | — | OnPush | sí |
+| `app-specialty-icon` | `SpecialtyIcon` | `especialidad` | — | — | OnPush | sí |
 | `app-spinner` | `Spinner` | `size`, `label`, `decorative` | — | — | OnPush | sí |
 | `app-switch` | `Switch` | `disabled`, `label` | — | `checked` | OnPush | sí |
 | `app-textarea` | `Textarea` | `placeholder`, `rows`, `maxRows`, `maxLength`, `autoResize`, `disabled`, `readonly`, `hasError` | `focused`, `blurred` | `value` | OnPush | sí |
 | `app-tooltip-panel` | `TooltipPanel` | `text`, `position`, `panelId`, `top`, `left` | — | — | OnPush | **no** |
 
-## Molécula (34)
+## Molécula (39)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -39,50 +43,58 @@
 | `app-breadcrumb` | `Breadcrumb` | `items` | — | — | OnPush | sí |
 | `app-card-detail-panel` | `CardDetailPanel` | `heading`, `rows`, `triggerLabel` | — | — | OnPush | sí |
 | `app-card` | `Card` | `variant`, `padding`, `interactive` | `activated` | — | OnPush | sí |
+| `app-checkbox-group` | `CheckboxGroup` | `options`, `disabled`, `hasError`, `allowOther`, `otherLabel` | — | `value` | OnPush | sí |
 | `app-comment-media-picker` | `CommentMediaPicker` | `disabled` | `cambio` | — | OnPush | sí |
 | `app-concept-select` | `ConceptSelect` | `target`, `disabled`, `valueField`, `labels`, `placeholder` | — | `value` | OnPush | **no** |
 | `app-dialog` | `Dialog` | `config` | `resolved` | — | OnPush | sí |
 | `app-empty-state` | `EmptyState` | `title`, `description`, `variant` | — | — | OnPush | sí |
-| `app-file-input` | `FileInput` | `multiple`, `disabled`, `accept`, `maxSizeBytes`, `maxFiles` | `rejected` | `files` | OnPush | sí |
+| `app-fact-list` | `FactList` | `hechos`, `disposicion`, `etiqueta` | — | — | OnPush | sí |
+| `app-file-input` | `FileInput` | `testId`, `removeTestId`, `label`, `accessibleLabel`, `hasError`, `required`, `multiple`, `disabled`, `accept`, `maxSizeBytes`, `maxFiles`, `showList` | `rejected` | `files` | OnPush | sí |
 | `app-file-preview-image` | `FilePreviewImage` | `fileId`, `altText` | — | — | OnPush | sí |
-| `app-form-field` | `FormField` | `label`, `hint`, `errorMessage`, `required`, `description` | — | — | OnPush | sí |
+| `app-file-preview` | `FilePreview` | `file` | — | — | OnPush | **no** |
+| `app-form-field` | `FormField` | `icon`, `label`, `hint`, `errorMessage`, `required`, `description` | — | — | OnPush | sí |
 | `app-menu-item` | `MenuItem` | `disabled`, `destructive` | `selected` | — | OnPush | **no** |
 | `app-menu` | `Menu` | — | `closed` | — | OnPush | sí |
 | `app-pagination` | `Pagination` | `totalItems`, `pageSizeOptions`, `showPageSize` | — | `page`, `pageSize` | OnPush | sí |
-| `app-pdf-export-button` | `PdfExportButton` | `filename`, `title`, `target`, `label`, `variant` | — | — | OnPush | sí |
+| `app-pdf-export-button` | `PdfExportButton` | `filename`, `title`, `subtitle`, `kind`, `target`, `label`, `variant` | — | — | OnPush | sí |
 | `app-pais-bandera` | `PaisBandera` | `iso` | — | — | OnPush | **no** |
 | `app-phone-input` | `PhoneInput` | `placeholder`, `hasError`, `disabled`, `testId` | — | — | OnPush | sí |
 | `app-post-preferences-menu` | `PostPreferencesMenu` | `postLink`, `profileLink`, `shareTitle`, `hasSession` | `hideSimilarRequested`, `reportRequested`, `contactRequested` | — | OnPush | sí |
 | `app-radio-group` | `RadioGroup` | `disabled`, `hasError`, `name` | — | `value` | OnPush | sí |
+| `app-radio-otro` | `RadioOtro` | `valores`, `label`, `placeholder`, `disabled` | — | — | OnPush | **no** |
 | `app-radio` | `Radio` | `value`, `label`, `disabled` | — | — | OnPush | **no** |
 | `app-reference-combobox` | `ReferenceCombobox` | `selected`, `options`, `loading`, `disabled`, `placeholder`, `debounceMs`, `minQueryLength`, `label`, `emptyMessage` | `searched`, `selectionChange` | `value` | OnPush | sí |
 | `li[app-result-card]` | `ResultCard` | `resultado`, `maximoDeMeta` | — | — | OnPush | sí |
 | `app-rich-text-editor` | `RichTextEditor` | `label`, `placeholder`, `readOnly` | `edited` | `html` | OnPush | sí |
 | `app-search-field` | `SearchField` | `placeholder`, `debounceMs`, `loading`, `disabled`, `label` | `searched` | `value` | OnPush | sí |
 | `li[app-search-result]` | `SearchResult` | `resultado` | — | — | OnPush | sí |
+| `app-section-heading` | `SectionHeading` | `icono`, `titulo`, `cuantos`, `nivel` | — | — | OnPush | sí |
 | `app-segmented-control` | `SegmentedControl` | `options`, `value`, `ariaLabel`, `size` | `valueChange` | — | OnPush | sí |
 | `app-stepper` | `Stepper` | `steps`, `label`, `interactive`, `compact` | `stepSelected` | — | OnPush | sí |
 | `app-tab-help-block` | `TabHelpBlock` | `helpId`, `title`, `tutorialId` | — | — | OnPush | sí |
 | `app-tab` | `Tab` | `label`, `disabled` | — | — | OnPush | **no** |
-| `app-tabs` | `Tabs` | `orientation` | — | `selectedIndex` | OnPush | sí |
+| `app-tabs` | `Tabs` | `orientation`, `appearance` | — | `selectedIndex` | OnPush | sí |
 | `app-toast` | `Toast` | `toast` | `dismissed` | — | OnPush | sí |
 
-## Organismo (26)
+## Organismo (30)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
-| `app-attachment-uploader` | `AttachmentUploader` | `ownerType`, `ownerId`, `linkVia` | `attached` | — | OnPush | sí |
+| `app-attachment-dialog` | `AttachmentDialog` | `ownerType`, `ownerId`, `heading`, `description`, `contexto`, `linkVia` | `attached`, `progressed`, `closed` | — | OnPush | sí |
+| `app-attachment-uploader` | `AttachmentUploader` | `ownerType`, `ownerId`, `contexto`, `linkVia`, `showActions` | `attached`, `progressed` | — | OnPush | sí |
 | `app-auth-layout` | `AuthLayout` | `title`, `subtitle`, `showBrand` | — | — | OnPush | sí |
 | `app-auth-split` | `AuthSplit` | `claim`, `tagline`, `contentWidth` | — | — | OnPush | sí |
-| `app-content-dialog` | `ContentDialog` | `heading`, `description`, `closeLabel` | `opened`, `closed` | — | OnPush | sí |
+| `app-content-dialog` | `ContentDialog` | `heading`, `description`, `closeLabel`, `size`, `dismissible` | `opened`, `dismissAttempt`, `closed` | — | OnPush | sí |
 | `app-data-table` | `DataTable` | `state`, `columns`, `trackBy`, `caption`, `selectable`, `sort`, `cursor`, `rowNavigable` | `sortChanged`, `cursorChanged`, `selectionChanged`, `rowActivated`, `retry`, `refresh` | — | OnPush | sí |
 | `app-date-picker` | `DatePicker` | `mode`, `disabled`, `placeholder`, `hasError`, `minDate`, `maxDate`, `allowKeyboard` | — | `value` | OnPush | sí |
-| `app-directory-page` | `DirectoryPage` | `titulo`, `subtitulo`, `filtros`, `etiquetaBusqueda`, `estado`, `grupos`, `sustantivo`, `aviso`, `textoSinCoincidencias` | `filtrosCambiaron`, `reintentar` | — | OnPush | **no** |
+| `app-department-map` | `DepartmentMap` | `departamentos`, `etiqueta`, `testId` | — | `value` | OnPush | sí |
+| `app-directory-page` | `DirectoryPage` | `titulo`, `subtitulo`, `embebido`, `filtros`, `etiquetaBusqueda`, `estado`, `grupos`, `sustantivo`, `aviso`, `textoSinCoincidencias` | `filtrosCambiaron`, `reintentar` | — | OnPush | **no** |
+| `app-fact-section` | `FactSection` | `icono`, `titulo`, `bloques`, `columnas`, `porPagina`, `conBuscador` | — | — | OnPush | sí |
 | `app-filter-bar` | `FilterBar` | `filters`, `searchLabel` | `filtersChanged` | — | OnPush | sí |
 | `app-form-actions` | `FormActions` | `submitLabel`, `cancelLabel`, `pending`, `disabled`, `destructive`, `correctionOnly`, `confirmTitle`, `confirmMessage` | `submitted`, `cancelled` | — | OnPush | sí |
 | `app-form-section` | `FormSection` | `legend`, `description`, `collapsible`, `invalid` | — | `expanded` | OnPush | sí |
 | `header[app-header]` | `Header` | `user`, `tenants`, `activeTenantId`, `showMenuButton`, `menuOpen`, `navPanelId` | `menuToggled`, `logoutRequested`, `tenantChanged` | — | OnPush | sí |
-| `app-map` | `AppMap` | `pines`, `etiqueta`, `centro`, `zoom` | `pinElegido`, `pointPicked` | `seleccionado` | OnPush | sí |
+| `app-map` | `AppMap` | `pines`, `etiqueta`, `centro`, `zoom`, `seleccionable` | `pinElegido`, `pointPicked` | `seleccionado` | OnPush | sí |
 | `app-notification-bell` | `NotificationBell` | — | — | — | OnPush | sí |
 | `app-page-header` | `PageHeader` | `title`, `subtitle`, `breadcrumbs`, `secondaryActions` | `actionSelected` | — | OnPush | sí |
 | `app-paginated-form` | `PaginatedForm` | `paginas`, `form`, `label`, `submitLabel`, `pending`, `destructive`, `confirmTitle`, `confirmMessage`, `cancelLabel`, `interactiveSteps`, `iconOnlyNav`, `compactSteps` | `enviado`, `cancelado`, `pasoVisible` | — | OnPush | sí |
@@ -92,13 +104,14 @@
 | `app-side-nav` | `SideNav` | `sections`, `collapsed`, `drawer`, `open` | `closeRequested` | — | OnPush | sí |
 | `app-specialty-browser` | `SpecialtyBrowser` | `state`, `groups`, `filters`, `searchLabel`, `noMatchesText`, `hasMore` | `filtersChanged`, `retry`, `moreRequested` | — | OnPush | sí |
 | `app-status-seal` | `StatusSeal` | `variant`, `label` | — | — | OnPush | sí |
+| `app-survey-form` | `SurveyForm` | `preguntas`, `faltantes`, `soloLectura`, `testIdPrefijo` | `respondido` | `respuestas` | OnPush | sí |
 | `app-tenant-switcher` | `TenantSwitcher` | `tenants`, `activeTenantId`, `variant` | `tenantChanged` | — | OnPush | sí |
 | `app-toast-container` | `ToastContainer` | — | — | — | OnPush | **no** |
 | `app-tree-select` | `TreeSelect` | `groups`, `disabled`, `hasError`, `placeholder`, `dialogTitle`, `searchPlaceholder`, `emptyMessage` | — | `value` | OnPush | sí |
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (365)
+## Feature (376)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -113,13 +126,11 @@
 | `app-where-to-buy` | `WhereToBuy` | — | — | — | OnPush | sí |
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
-| `app-patient-profile-edit` | `PatientProfileEdit` | `embebido` | `cerrado` | — | OnPush | sí |
+| `app-patient-profile-edit` | `PatientProfileEdit` | `embebido` | `cerrado` | `pestana` | OnPush | sí |
 | `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | — | OnPush | sí |
 | `app-practitioner-profile-view` | `PractitionerProfileView` | `perfil`, `esPropio`, `previewMode` | `trayectoriaCambio` | — | OnPush | sí |
 | `app-practitioner-profile` | `PractitionerProfile` | — | — | — | OnPush | sí |
-| `app-public-profile-preview` | `PublicProfilePreview` | — | — | — | OnPush | sí |
-| `app-public-profile-settings` | `PublicProfileSettings` | — | — | — | OnPush | sí |
-| `app-work-history` | `WorkHistory` | `layout` | `added` | — | OnPush | sí |
+| `app-work-history` | `WorkHistory` | `layout`, `soloConsultorios` | `added` | — | OnPush | sí |
 | `app-notification-preferences` | `NotificationPreferences` | — | — | — | OnPush | sí |
 | `app-new-order` | `NewOrder` | — | — | — | OnPush | sí |
 | `app-order-detail` | `OrderDetail` | — | — | — | OnPush | sí |
@@ -165,9 +176,9 @@
 | `app-day-view` | `DayView` | `dia`, `cupos`, `citas`, `bloqueos`, `tipologias`, `puedeRegistrarLlegada`, `etiquetas` | `accionPedida`, `ratoTocado`, `quitarOcupado`, `volver`, `diaCambiado`, `detallePedido`, `movimientoPedido`, `cierrePedido` | — | OnPush | sí |
 | `app-month-view` | `MonthView` | `mes`, `cupos`, `bloqueos` | `mesElegido`, `diaElegido` | — | OnPush | sí |
 | `app-my-agenda` | `MyAgenda` | — | — | — | OnPush | sí |
-| `app-schedule-grid` | `ScheduleGrid` | `reglas` | — | — | OnPush | sí |
+| `app-schedule-grid` | `ScheduleGrid` | `reglas`, `semana`, `conFechas`, `nombre`, `vigencia` | — | — | OnPush | sí |
 | `app-tarjeta-del-dia` | `TarjetaDelDia` | `dia`, `resourceId`, `desdeInicial`, `hastaInicial`, `ratosTomados` | `creada`, `cerrada` | — | OnPush | sí |
-| `app-week-view` | `WeekView` | `semana`, `cupos`, `bloqueos` | `semanaElegida`, `diaElegido` | — | OnPush | sí |
+| `app-week-view` | `WeekView` | `semana`, `cupos`, `bloqueos`, `citas`, `etiquetas` | `semanaElegida`, `diaElegido` | — | OnPush | sí |
 | `app-alovida-accesos-acceso-de-emergencia-formulario` | `AccesosAccesoDeEmergenciaFormulario` | — | — | — | Default | **no** |
 | `app-alovida-accesos-clinicos-del-paciente-formulario` | `AccesosClinicosDelPacienteFormulario` | — | — | — | Default | **no** |
 | `app-alovida-accesos-clinicos-del-paciente-listado` | `AccesosClinicosDelPacienteListado` | — | — | — | Default | **no** |
@@ -206,7 +217,7 @@
 | `app-alovida-buscar-cercania-detalle` | `BuscarCercaniaDetalle` | — | — | — | OnPush | **no** |
 | `app-feed-publicaciones` | `FeedPublicaciones` | — | — | — | OnPush | **no** |
 | `app-facility-directions-dialog` | `FacilityDirectionsDialog` | `facilityName`, `facilityLocation`, `facilityAddress` | `closed` | — | OnPush | sí |
-| `app-alovida-buscar-hospitales-listado` | `BuscarHospitalesListado` | — | — | — | OnPush | **no** |
+| `app-alovida-buscar-hospitales-listado` | `BuscarHospitalesListado` | — | — | — | OnPush | sí |
 | `app-alovida-buscar-laboratorios-listado` | `BuscarLaboratoriosListado` | — | — | — | OnPush | **no** |
 | `app-alovida-buscar-medicamentos-listado` | `BuscarMedicamentosListado` | — | — | — | OnPush | **no** |
 | `app-pharmacy-availability-dialog` | `PharmacyAvailabilityDialog` | `medicationName`, `offers`, `loading`, `failed`, `mapCenter`, `mapZoom`, `originLabel` | `closed` | — | OnPush | sí |
@@ -322,29 +333,34 @@
 | `app-forgot-password` | `ForgotPassword` | — | — | — | OnPush | sí |
 | `app-login` | `Login` | — | — | — | OnPush | sí |
 | `app-register-account-type` | `RegisterAccountType` | — | — | — | OnPush | sí |
+| `app-register-imaging-center` | `RegisterImagingCenter` | — | — | — | OnPush | sí |
+| `app-register-laboratory` | `RegisterLaboratory` | — | — | — | OnPush | sí |
 | `app-register-organization` | `RegisterOrganization` | — | — | — | OnPush | sí |
 | `app-register-patient` | `RegisterPatient` | — | — | — | OnPush | sí |
 | `app-register-practitioner` | `RegisterPractitioner` | — | — | — | OnPush | sí |
-| `app-department-map` | `DepartmentMap` | `departamentos`, `etiqueta`, `testId` | — | `value` | OnPush | sí |
 | `app-location-picker` | `LocationPicker` | `ramas`, `municipalityLabel`, `municipalityHint`, `municipalityDescription`, `required`, `errorMessage`, `mapLabel`, `testId` | — | `value` | OnPush | sí |
+| `app-ubicacion-picker` | `UbicacionPicker` | `pinId`, `etiquetaConfirmada`, `pregunta`, `etiquetaQuitar`, `etiquetaPedir`, `etiquetaMapa`, `etiquetaMarcar`, `indicacionMarcar`, `ids`, `inicial` | `confirmado` | — | OnPush | sí |
 | `app-resend-verification` | `ResendVerification` | — | — | — | OnPush | sí |
 | `app-reset-password` | `ResetPassword` | — | — | — | OnPush | sí |
 | `app-tenant-selection` | `TenantSelection` | — | — | — | OnPush | sí |
 | `app-verify-email` | `VerifyEmail` | — | — | — | OnPush | sí |
 | `app-campaign-detail` | `CampaignDetail` | — | — | — | OnPush | sí |
 | `app-clinical-record` | `ClinicalRecord` | — | — | — | OnPush | sí |
+| `app-encounter-workspace` | `EncounterWorkspace` | — | — | — | OnPush | sí |
 | `app-admission-block` | `AdmissionBlock` | `patientProfileId`, `encounterId`, `internaciones` | `cambio` | — | OnPush | sí |
-| `app-diagnosis-block` | `DiagnosisBlock` | `patientProfileId`, `encounterId` | `cambio` | — | OnPush | sí |
+| `app-allergy-block` | `AllergyBlock` | `patientProfileId`, `encounterId`, `citas` | `cambio` | — | OnPush | sí |
+| `app-diagnosis-block` | `DiagnosisBlock` | `patientProfileId`, `encounterId`, `citas`, `exigeEncuentro` | `cambio` | — | OnPush | sí |
 | `app-diagnostics-block` | `DiagnosticsBlock` | `patientProfileId`, `encounterId` | — | — | OnPush | sí |
 | `app-free-note-block` | `FreeNoteBlock` | `patientProfileId`, `encounterId` | `guardada` | — | OnPush | sí |
-| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas`, `diagnosticos`, `medicacionActivaConceptIds` | `cambio`, `descargar` | — | OnPush | sí |
+| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas`, `diagnosticos`, `exigeDiagnostico`, `medicacionActivaConceptIds` | `cambio`, `descargar` | — | OnPush | sí |
 | `app-odontogram` | `Odontogram` | `estados`, `marcas`, `seleccionada`, `readonly` | `pieza` | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
 | `app-procedures-block` | `ProceduresBlock` | `patientProfileId`, `encounterId`, `modo` | — | — | OnPush | sí |
 | `app-specialty-form-block` | `SpecialtyFormBlock` | `encounterId`, `patientProfileId` | `cambio` | — | OnPush | sí |
 | `app-request-access` | `RequestAccess` | — | — | — | OnPush | **no** |
+| `app-communities-dialog` | `CommunitiesDialog` | — | `closed` | — | OnPush | **no** |
+| `app-communities` | `Communities` | — | — | — | OnPush | sí |
 | `app-component-stock` | `ComponentStock` | — | — | — | OnPush | **no** |
-| `app-consultation` | `Consultation` | — | — | — | OnPush | **no** |
 | `app-access-tree` | `AccessTree` | `sections` | — | — | OnPush | sí |
 | `app-dashboard` | `Dashboard` | — | — | — | OnPush | sí |
 | `app-patient-home` | `PatientHome` | — | — | — | OnPush | sí |
@@ -374,6 +390,7 @@
 | `app-feed` | `Feed` | — | — | — | OnPush | sí |
 | `app-post-card` | `PostCard` | `post`, `actorProfileId`, `guardado`, `puedeReportar` | `reportar`, `cambio`, `guardarCambiado` | — | OnPush | sí |
 | `app-report-post` | `ReportPost` | `postId` | `reportado`, `cancelado` | — | OnPush | sí |
+| `app-field-editor` | `FieldEditor` | `campo`, `editable`, `esPrimero`, `esUltimo`, `guardando` | `guardar`, `borrar`, `duplicar`, `mover`, `agarrar` | — | OnPush | sí |
 | `app-form-builder` | `FormBuilder` | — | — | — | OnPush | sí |
 | `app-consent-revocation` | `ConsentRevocation` | — | — | — | OnPush | sí |
 | `app-geo-home` | `GeoHome` | — | — | — | OnPush | sí |
@@ -390,7 +407,7 @@
 | `app-glossary-term` | `GlossaryTerm` | — | — | — | OnPush | sí |
 | `app-glossary` | `Glossary` | — | — | — | OnPush | sí |
 | `app-group-composer` | `GroupComposer` | `accion`, `placeholder`, `enviando`, `cancelable` | `publicado`, `cancelado` | — | OnPush | **no** |
-| `app-group-detail` | `GroupDetail` | — | — | — | OnPush | sí |
+| `app-group-detail` | `GroupDetail` | `groupId`, `embedded` | — | — | OnPush | sí |
 | `app-group-post` | `GroupPost` | `post`, `puedeResponder`, `respondiendoA` | `responder` | — | OnPush | **no** |
 | `app-groups` | `Groups` | — | — | — | OnPush | sí |
 | `app-agent-form` | `AgentForm` | — | — | — | OnPush | sí |
@@ -422,9 +439,10 @@
 | `app-manual-review-form` | `ManualReviewForm` | — | — | — | OnPush | sí |
 | `app-review-decision-form` | `ReviewDecisionForm` | — | — | — | OnPush | sí |
 | `app-verification-case-detail` | `VerificationCaseDetail` | — | — | — | OnPush | sí |
-| `app-verification-cases` | `VerificationCases` | — | — | — | OnPush | sí |
+| `app-verification-cases` | `VerificationCases` | `embedded` | — | — | OnPush | sí |
 | `app-verification-policy-form` | `VerificationPolicyForm` | — | — | — | OnPush | sí |
-| `app-identity-verification` | `IdentityVerification` | — | — | — | OnPush | sí |
+| `app-identity-hub` | `IdentityHub` | — | — | — | OnPush | **no** |
+| `app-identity-verification` | `IdentityVerification` | `embedded` | — | — | OnPush | sí |
 | `app-broker-detail` | `BrokerDetail` | — | — | — | OnPush | sí |
 | `app-broker-directory` | `BrokerDirectory` | — | — | — | OnPush | sí |
 | `app-insurance-catalog` | `InsuranceCatalog` | — | — | — | OnPush | sí |
@@ -432,9 +450,12 @@
 | `app-insurance-claims` | `InsuranceClaims` | — | — | — | OnPush | sí |
 | `app-interventions` | `Interventions` | — | — | — | OnPush | **no** |
 | `app-laboratory-detail` | `LaboratoryDetail` | — | — | — | OnPush | sí |
-| `app-laboratory-directory` | `LaboratoryDirectory` | — | — | — | OnPush | sí |
-| `app-conversation-list` | `ConversationList` | `conversaciones`, `activaId`, `compacta` | — | — | OnPush | **no** |
+| `app-laboratory-directory` | `LaboratoryDirectory` | `embebido` | — | — | OnPush | sí |
+| `app-conversation-list` | `ConversationList` | `conversaciones`, `activaId`, `perfilPropio`, `resaltar` | `accion` | — | OnPush | **no** |
 | `app-messaging` | `Messaging` | — | — | — | OnPush | sí |
+| `app-composer` | `Composer` | — | `enviado` | — | OnPush | **no** |
+| `app-grabador` | `Grabador` | — | `grabado`, `fallo` | — | OnPush | **no** |
+| `app-selector-emojis` | `SelectorEmojis` | — | `elegido` | — | OnPush | **no** |
 | `app-thread` | `Thread` | — | — | — | OnPush | sí |
 | `app-my-services` | `MyServices` | — | — | — | OnPush | sí |
 | `app-nearby-places` | `NearbyPlaces` | — | — | — | OnPush | sí |
@@ -444,13 +465,15 @@
 | `app-organization-panel` | `OrganizationPanel` | — | — | — | OnPush | sí |
 | `app-pharmacy-campaigns` | `PharmacyCampaigns` | — | — | — | OnPush | sí |
 | `app-inbox-order` | `InboxOrder` | — | — | — | OnPush | sí |
+| `app-resumen-de-factura` | `ResumenDeFactura` | `factura` | `descargaSolicitada` | — | OnPush | sí |
 | `app-pharmacy-inbox` | `PharmacyInbox` | — | — | — | OnPush | sí |
-| `app-my-organizations` | `MyOrganizations` | — | — | — | OnPush | sí |
+| `app-my-organizations` | `MyOrganizations` | `embedded` | — | — | OnPush | sí |
 | `app-doctor-visits` | `DoctorVisits` | — | — | — | OnPush | sí |
 | `app-pharma-lab-home` | `PharmaLabHome` | — | — | — | OnPush | sí |
 | `app-visitor-visits` | `VisitorVisits` | — | — | — | OnPush | sí |
+| `app-my-practice` | `MyPractice` | — | — | — | OnPush | **no** |
 | `app-progress-notes` | `ProgressNotes` | — | — | — | OnPush | sí |
-| `app-clinics-directory` | `ClinicsDirectory` | — | — | — | OnPush | **no** |
+| `app-clinics-directory` | `ClinicsDirectory` | — | — | — | OnPush | sí |
 | `app-pharmacies-directory` | `PharmaciesDirectory` | — | — | — | OnPush | **no** |
 | `app-public-post-card` | `PublicPostCard` | `post`, `autorNombre`, `autorHeadline`, `autorAvatar`, `autorIniciales`, `slug`, `enfocada`, `autorEnlazado` | `pedidoDeOcultar`, `pedidoDeDenuncia`, `pedidoDeContacto` | — | OnPush | sí |
 | `app-public-post-comments` | `PublicPostComments` | `postId` | — | — | OnPush | sí |
@@ -459,6 +482,7 @@
 | `app-public-profile-card` | `PublicProfileCard` | `perfil`, `preview` | `escribir` | — | OnPush | sí |
 | `app-public-profile` | `PublicProfile` | — | — | — | OnPush | sí |
 | `app-surveys-home` | `SurveysHome` | — | — | — | OnPush | **no** |
+| `app-question-editor` | `QuestionEditor` | `pregunta`, `abierta`, `editable`, `esPrimera`, `esUltima`, `guardando` | `abrir`, `cerrar`, `guardar`, `borrar`, `mover` | — | OnPush | sí |
 | `app-survey-detail` | `SurveyDetailScreen` | — | — | — | OnPush | **no** |
 | `app-quotation-form` | `QuotationForm` | — | — | — | OnPush | sí |
 | `app-quotation-list` | `QuotationList` | — | — | — | OnPush | **no** |
@@ -481,7 +505,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (84)
+## Servicios (88)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -505,6 +529,7 @@
 | `DiagnosticUnitsClient` | `src/app/core/data-access/diagnostic-units/diagnostic-units.client.ts` | root | sí |
 | `DiagnosticsClient` | `src/app/core/data-access/diagnostics/diagnostics.client.ts` | root | sí |
 | `DirectoryClient` | `src/app/core/data-access/directory/directory.client.ts` | root | sí |
+| `FileDownloader` | `src/app/core/data-access/files/file-downloader.ts` | root | **no** |
 | `FilesClient` | `src/app/core/data-access/files/files.client.ts` | root | sí |
 | `FormsClient` | `src/app/core/data-access/forms/forms.client.ts` | root | sí |
 | `GeoClient` | `src/app/core/data-access/geo/geo.client.ts` | root | sí |
@@ -544,7 +569,9 @@
 | `ErrorReporter` | `src/app/core/errors/error-reporter.ts` | root | sí |
 | `TokenRefreshService` | `src/app/core/http/token-refresh.service.ts` | root | sí |
 | `Breakpoints` | `src/app/core/layout/breakpoints.ts` | root | sí |
+| `ChatPreferencias` | `src/app/core/messaging/chat-preferencias.ts` | root | **no** |
 | `ChatSocketService` | `src/app/core/messaging/chat-socket.service.ts` | root | **no** |
+| `ChatStore` | `src/app/core/messaging/chat.store.ts` | root | sí |
 | `MessageTemplates` | `src/app/core/messaging/message-templates.ts` | root | **no** |
 | `NavigationHistoryService` | `src/app/core/navigation/navigation-history.service.ts` | root | sí |
 | `NavigationService` | `src/app/core/navigation/navigation.service.ts` | root | sí |
@@ -563,6 +590,7 @@
 | `TutorialRegistry` | `src/app/core/tutorials/tutorial.registry.ts` | root | sí |
 | `TarifariosRecordados` | `src/app/features/admin/medical-laboratory/tarifarios-recordados.ts` | root | sí |
 | `CaseStatusCatalog` | `src/app/features/identity-verification/case-status.ts` | root | sí |
+| `AvisoDeHuecoLibre` | `src/app/features/notifications/aviso-de-hueco-libre.ts` | root | sí |
 | `AlarmaDePedidos` | `src/app/features/organization/pharmacy-inbox/alarma-de-pedidos.ts` | local | sí |
 | `DialogService` | `src/app/shared/components/molecules/dialog/dialog-service.ts` | root | **no** |
 | `PdfExportService` | `src/app/shared/components/molecules/pdf-export-button/pdf-export.service.ts` | root | **no** |
@@ -615,7 +643,6 @@
 - `CentroCard` — `src/app/features/alovida/buscar/centro-card/centro-card.ts`
 - `BuscarCercaniaDetalle` — `src/app/features/alovida/buscar/cercania-detalle/cercania-detalle.ts`
 - `FeedPublicaciones` — `src/app/features/alovida/buscar/feed-publicaciones/feed-publicaciones.ts`
-- `BuscarHospitalesListado` — `src/app/features/alovida/buscar/hospitales-listado/hospitales-listado.ts`
 - `BuscarLaboratoriosListado` — `src/app/features/alovida/buscar/laboratorios-listado/laboratorios-listado.ts`
 - `BuscarMedicamentosListado` — `src/app/features/alovida/buscar/medicamentos-listado/medicamentos-listado.ts`
 - `BuscarPerfilAseguradoraDetalle` — `src/app/features/alovida/buscar/perfil-aseguradora-detalle/perfil-aseguradora-detalle.ts`
@@ -708,27 +735,35 @@
 - `TerminologiaVersionesListado` — `src/app/features/alovida/terminologia/versiones-listado/versiones-listado.ts`
 - `TerminologiaVersionesPublicar` — `src/app/features/alovida/terminologia/versiones-publicar/versiones-publicar.ts`
 - `RequestAccess` — `src/app/features/clinical-record/request-access/request-access.ts`
+- `CommunitiesDialog` — `src/app/features/communities/communities-dialog.ts`
 - `ComponentStock` — `src/app/features/component-stock/component-stock.ts`
-- `Consultation` — `src/app/features/consultation/consultation.ts`
 - `OrganismsGallery` — `src/app/features/design-system-sample/organisms-gallery/organisms-gallery.ts`
 - `ErrorRecovery` — `src/app/features/error-recovery/error-recovery.ts`
 - `GroupComposer` — `src/app/features/groups/group-composer/group-composer.ts`
 - `GroupPost` — `src/app/features/groups/group-post/group-post.ts`
+- `IdentityHub` — `src/app/features/identity-verification/identity-hub/identity-hub.ts`
 - `Interventions` — `src/app/features/interventions/interventions.ts`
 - `ConversationList` — `src/app/features/messaging/conversation-list/conversation-list.ts`
-- `ClinicsDirectory` — `src/app/features/public-directories/clinics-directory.ts`
+- `Composer` — `src/app/features/messaging/thread/composer/composer.ts`
+- `Grabador` — `src/app/features/messaging/thread/composer/grabador.ts`
+- `SelectorEmojis` — `src/app/features/messaging/thread/composer/selector-emojis.ts`
+- `MyPractice` — `src/app/features/practice/my-practice/my-practice.ts`
 - `PharmaciesDirectory` — `src/app/features/public-directories/pharmacies-directory.ts`
 - `PublicPostDetail` — `src/app/features/public-profile/public-post-detail/public-post-detail.ts`
 - `SurveysHome` — `src/app/features/questionnaires/questionnaires.ts`
 - `SurveyDetailScreen` — `src/app/features/questionnaires/survey-detail/survey-detail.ts`
 - `QuotationList` — `src/app/features/quotations/quotation-list/quotation-list.ts`
 - `AccountIcon` — `src/app/shared/components/atoms/account-icon/account-icon.ts`
+- `DataTypeIcon` — `src/app/shared/components/atoms/data-type-icon/data-type-icon.ts`
 - `NavIcon` — `src/app/shared/components/atoms/nav-icon/nav-icon.ts`
+- `QuestionTypeIcon` — `src/app/shared/components/atoms/question-type-icon/question-type-icon.ts`
 - `TooltipPanel` — `src/app/shared/components/atoms/tooltip/tooltip-panel.ts`
 - `AccordionPanel` — `src/app/shared/components/molecules/accordion/accordion-panel/accordion-panel.ts`
 - `ConceptSelect` — `src/app/shared/components/molecules/concept-select/concept-select.ts`
+- `FilePreview` — `src/app/shared/components/molecules/file-preview/file-preview.ts`
 - `MenuItem` — `src/app/shared/components/molecules/menu/menu-item/menu-item.ts`
 - `PaisBandera` — `src/app/shared/components/molecules/phone-input/pais-bandera.ts`
+- `RadioOtro` — `src/app/shared/components/molecules/radio-otro/radio-otro.ts`
 - `Radio` — `src/app/shared/components/molecules/radio/radio.ts`
 - `Tab` — `src/app/shared/components/molecules/tabs/tab/tab.ts`
 - `DirectoryPage` — `src/app/shared/components/organisms/directory-page/directory-page.ts`
