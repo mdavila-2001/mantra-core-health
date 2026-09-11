@@ -238,6 +238,13 @@ export interface PayerProfile {
   readonly sigla: string;
   /** Dirección física. Hasta 300 caracteres. */
   readonly address: string;
+  /**
+   * Coordenadas de la casa matriz, si se registraron (subtarea 1.3). Sólo de
+   * lectura por ahora: `MyOrganization.payer` las trae de `GET /tenants/me`,
+   * pero ninguna puerta de escritura del front las manda todavía.
+   */
+  readonly latitude?: number;
+  readonly longitude?: number;
 }
 
 /** Datos de corredor. Mismo trato que {@link PayerProfile}, para `BROKER`. */

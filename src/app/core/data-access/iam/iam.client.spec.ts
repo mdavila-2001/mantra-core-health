@@ -300,4 +300,62 @@ describe('IamClient', () => {
     // La pantalla tiene que poder decir cuándo vence sin volver a parsear.
     expect(resultado?.activationExpiresAt).toBeInstanceOf(Date);
   });
+
+  describe('registerOrganization', () => {
+    const RESPUESTA = {
+      tenantId: 't-1',
+      code: 'ANDINA-SALUD',
+      ownerUserId: 'u-1',
+      status: 'pending',
+      emailVerificationSent: true,
+    };
+
+    /** El bloque `payer` sin la casa matriz georreferenciada (subtarea 1.3). */
+    const PAYER_SIN_UBICACION = {
+      carrierCode: 'CARRIER-AS',
+      regulatorIdentifier: 'NIT-123456',
+      sigla: 'AS',
+      address: 'Av. Siempre Viva 123',
+    };
+
+    it('con la casa matriz confirmada, manda latitude y longitude dentro de payer', () => {
+      client
+        .registerOrganization({
+          code: 'ANDINA-SALUD',
+          legalName: 'Andina Salud S.A.',
+          legalEntityType: 'SRL',
+          payer: { ...PAYER_SIN_UBICACION, latitude: -17.7833, longitude: -63.1821 },
+          owner: { email: 'a@m.test', password: 'secreto12', name: 'Ana', lastName: 'Paz' },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.payer).toEqual({
+        ...PAYER_SIN_UBICACION,
+        latitude: -17.7833,
+        longitude: -63.1821,
+      });
+
+      req.flush(RESPUESTA);
+    });
+
+    it('sin la casa matriz, payer no lleva latitude ni longitude', () => {
+      client
+        .registerOrganization({
+          code: 'ANDINA-SALUD',
+          legalName: 'Andina Salud S.A.',
+          legalEntityType: 'SRL',
+          payer: PAYER_SIN_UBICACION,
+          owner: { email: 'a@m.test', password: 'secreto12', name: 'Ana', lastName: 'Paz' },
+        })
+        .subscribe();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.payer).toEqual(PAYER_SIN_UBICACION);
+      expect('latitude' in req.request.body.organization.payer).toBe(false);
+      expect('longitude' in req.request.body.organization.payer).toBe(false);
+
+      req.flush(RESPUESTA);
+    });
+  });
 });
