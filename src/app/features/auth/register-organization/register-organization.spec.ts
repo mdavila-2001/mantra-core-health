@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
+import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { RegisterOrganization } from './register-organization';
 
 const RESPUESTA = {
@@ -11,6 +12,24 @@ const RESPUESTA = {
   ownerUserId: 'u-1',
   status: 'c-pendiente',
   emailVerificationSent: false,
+};
+
+/** La ruta del catálogo de tipos societarios (subtarea 1.1). */
+const RUTA_TIPO_SOCIETARIO = `/system-context/dynamic-enums?target=${CAMPO_TIPO_SOCIETARIO}`;
+
+/** Un recorte del catálogo real, con Bolivia y Brasil, alcanza para estas pruebas. */
+const CATALOGO_TIPO_SOCIETARIO = {
+  code: 'legal-entity-type',
+  name: 'Forma societaria',
+  definitionId: 'def-1',
+  valueSetId: 'vs-1',
+  allowCustomValue: false,
+  options: [
+    { conceptId: 'c-unipersonal', code: 'UNIPERSONAL', display: 'Sole proprietorship', ordinal: 0, isDefault: false },
+    { conceptId: 'c-srl', code: 'SRL', display: 'Limited liability company (S.R.L.)', ordinal: 1, isDefault: false },
+    { conceptId: 'c-br-ltda', code: 'BR_LTDA', display: 'Sociedade Limitada (Brazil)', ordinal: 8, isDefault: false },
+    { conceptId: 'c-br-sa', code: 'BR_SA', display: 'Sociedade Anônima (Brazil)', ordinal: 9, isDefault: false },
+  ],
 };
 
 describe('RegisterOrganization', () => {
@@ -41,6 +60,9 @@ describe('RegisterOrganization', () => {
     fixture = TestBed.createComponent(RegisterOrganization);
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
+    // El constructor pide el catálogo de tipos societarios: se responde acá
+    // para que las pruebas no tengan que repetirlo cada una.
+    http.expectOne(RUTA_TIPO_SOCIETARIO).flush(CATALOGO_TIPO_SOCIETARIO);
     await fixture.whenStable();
   });
 
@@ -50,12 +72,17 @@ describe('RegisterOrganization', () => {
 
   function completar(
     extra: Partial<
-      Record<'tradeName' | 'timeZone' | 'middleName' | 'motherLastName', string>
+      Record<
+        'tradeName' | 'timeZone' | 'middleName' | 'motherLastName' | 'incorporationCountry' | 'legalEntityType',
+        string
+      >
     > = {},
   ): void {
     component.form.setValue({
       code: 'ANDINA-SALUD',
       legalName: 'Andina Salud S.A.',
+      incorporationCountry: extra.incorporationCountry ?? 'BO',
+      legalEntityType: extra.legalEntityType ?? 'SRL',
       tradeName: extra.tradeName ?? '',
       sigla: 'AS',
       regulatorIdentifier: 'NIT-123456',
@@ -85,11 +112,21 @@ describe('RegisterOrganization', () => {
     component.submit();
 
     expect(component.form.controls.legalName.touched).toBe(true);
+    expect(component.form.controls.legalEntityType.touched).toBe(true);
     expect(component.form.controls.sigla.touched).toBe(true);
     expect(component.form.controls.regulatorIdentifier.touched).toBe(true);
     expect(component.form.controls.address.touched).toBe(true);
     expect(component.form.controls.carrierCode.touched).toBe(true);
     // `http.verify()` del afterEach falla si algo hubiera salido a la red.
+  });
+
+  it('sin tipo societario elegido, el campo queda inválido', () => {
+    fixture.detectChanges();
+    completar();
+    component.form.controls.legalEntityType.setValue('');
+
+    expect(component.form.controls.legalEntityType.invalid).toBe(true);
+    expect(component.form.invalid).toBe(true);
   });
 
   it('rechaza un código con caracteres que el backend no admite', () => {
@@ -119,6 +156,7 @@ describe('RegisterOrganization', () => {
       organization: {
         code: 'ANDINA-SALUD',
         legalName: 'Andina Salud S.A.',
+        legalEntityType: 'SRL',
         tenantType: 'PAYER',
         payer: {
           carrierCode: 'CARRIER-AS',
@@ -216,6 +254,46 @@ describe('RegisterOrganization', () => {
 
     // `expectOne` falla si hubo dos.
     http.expectOne('/iam/auth/register-organization').flush(RESPUESTA);
+  });
+
+  describe('tipo societario y país de constitución (subtarea 1.1)', () => {
+    it('Bolivia es el país de constitución por defecto', () => {
+      fixture.detectChanges();
+
+      expect(component.form.controls.incorporationCountry.value).toBe('BO');
+    });
+
+    it('cambiar el país a Brasil limpia una elección que dejó de pertenecer a la lista', () => {
+      fixture.detectChanges();
+      completar();
+
+      component.form.controls.incorporationCountry.setValue('BR');
+
+      // SRL no pertenece a Brasil: se limpia, no queda un valor fantasma que
+      // el desplegable nuevo ya no ofrece.
+      expect(component.form.controls.legalEntityType.value).toBe('');
+    });
+
+    it('cambiar el país sin haber elegido tipo societario no rompe nada', () => {
+      fixture.detectChanges();
+
+      expect(() => component.form.controls.incorporationCountry.setValue('US')).not.toThrow();
+      expect(component.form.controls.legalEntityType.value).toBe('');
+    });
+
+    it('mandar un código extranjero viaja tal cual en el contrato', () => {
+      fixture.detectChanges();
+      completar({ incorporationCountry: 'BR', legalEntityType: 'BR_LTDA' });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.legalEntityType).toBe('BR_LTDA');
+      // El país de constitución nunca viaja: PAYER no es territorial y el
+      // backend lo deriva del tipo societario.
+      expect(req.request.body.organization.countryConceptId).toBeUndefined();
+
+      req.flush(RESPUESTA);
+    });
   });
 
   describe('errores', () => {

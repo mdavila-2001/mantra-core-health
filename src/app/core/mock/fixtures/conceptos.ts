@@ -795,6 +795,35 @@ export const TIPO_ORGANIZACION = definir('VS_ORGANIZATION_TYPE', [
   ['ORG-CONSULTORIO', 'Consultorio'],
 ]);
 
+// El `display` en inglés técnico es a propósito: es lo que devuelve el
+// catálogo real (`legal-entity-type` en `dynamic-enum-catalog.ts` de la API).
+// La etiqueta que ve la persona sale de `legal-entity-types.dictionary.ts`,
+// por código — este conjunto sólo simula los VALORES y sus `conceptId`.
+conjunto('VS_LEGAL_ENTITY_TYPE', 'Forma societaria', 'Figura jurídica de la organización, por país.');
+export const TIPO_SOCIETARIO = definir('VS_LEGAL_ENTITY_TYPE', [
+  ['UNIPERSONAL', 'Sole proprietorship'],
+  ['SRL', 'Limited liability company (S.R.L.)'],
+  ['LTDA', 'Limited company (Ltda.)'],
+  ['SA', 'Corporation (S.A.)'],
+  ['SOCIEDAD_COLECTIVA', 'General partnership'],
+  ['COMANDITA_SIMPLE', 'Limited partnership'],
+  ['COMANDITA_ACCIONES', 'Partnership limited by shares'],
+  ['SUCURSAL_EXTRANJERA', 'Branch of a foreign company'],
+  ['BR_LTDA', 'Sociedade Limitada (Brazil)'],
+  ['BR_SA', 'Sociedade Anônima (Brazil)'],
+  ['BR_MEI', 'Microempreendedor Individual (Brazil)'],
+  ['BR_EI', 'Empresário Individual (Brazil)'],
+  ['BR_SLU', 'Sociedade Limitada Unipessoal (Brazil)'],
+  ['BR_FILIAL_EST', 'Foreign company branch (Brazil)'],
+  ['US_LLC', 'Limited Liability Company (US)'],
+  ['US_CORP', 'Corporation (US)'],
+  ['US_SOLE_PROP', 'Sole Proprietorship (US)'],
+  ['US_LLP', 'Limited Liability Partnership (US)'],
+  ['US_BRANCH', 'Foreign company branch (US)'],
+  ['AR_SAS', 'Sociedad por Acciones Simplificada (Argentina)'],
+  ['MX_S_RL', 'Sociedad de Responsabilidad Limitada (Mexico)'],
+]);
+
 conjunto('VS_FACILITY', 'Establecimientos de salud', 'Padrón de establecimientos.');
 export const ESTABLECIMIENTO = definir('VS_FACILITY', [
   ['FAC-OLIVOS', 'Clínica Los Olivos'],
