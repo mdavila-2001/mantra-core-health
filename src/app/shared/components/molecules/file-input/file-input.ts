@@ -67,6 +67,16 @@ export class FileInput {
    */
   readonly showList = input(true);
 
+  /**
+   * Si dibuja su propio mensaje de rechazo bajo la zona de soltar.
+   *
+   * `false` cuando quien lo usa lleva su propio estado de error —como
+   * `app-dropzone-pdf`, que ya muestra «Solo se admiten documentos PDF de
+   * hasta 10 MB.» en su propio `role="alert"`—: sin apagarlo, un mismo
+   * rechazo mostraría dos mensajes casi idénticos, uno de cada componente.
+   */
+  readonly showFeedback = input(true);
+
   /** Lo descartado en el último intento, para poder explicarlo. */
   readonly rejected = output<readonly RejectedFile[]>();
 
@@ -113,7 +123,10 @@ export class FileInput {
   protected readonly feedbackId = computed(() => `${this.controlId()}-feedback`);
   protected readonly describedBy = computed(
     () =>
-      [this.field?.describedBy(), this.feedback().length ? this.feedbackId() : null]
+      [
+        this.field?.describedBy(),
+        this.showFeedback() && this.feedback().length ? this.feedbackId() : null,
+      ]
         .filter(Boolean)
         .join(' ') || null,
   );
