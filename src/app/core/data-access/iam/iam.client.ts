@@ -305,6 +305,7 @@ export class IamClient {
       organization: {
         code: registration.code,
         legalName: registration.legalName,
+        legalEntityType: registration.legalEntityType,
         ...(registration.tradeName === undefined ? {} : { tradeName: registration.tradeName }),
         tenantType: 'PAYER',
         ...(registration.timeZone === undefined ? {} : { timeZone: registration.timeZone }),

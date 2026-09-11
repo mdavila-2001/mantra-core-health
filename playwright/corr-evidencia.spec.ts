@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
 
 /**
  * Evidencia fotográfica **medida** de un carril de correcciones (31–40).
@@ -12,12 +13,12 @@ import { join } from 'node:path';
  *
  * ## Por qué el ingreso es el del backend simulado
  *
- * La rama `mockup` declara `mockBackend: true` en los dos entornos: **no habla
- * con ninguna API**, un interceptor contesta todo (`src/app/core/mock/`). Así
- * que acá no se usan los actores de `support/actores.ts` —que crean cuentas
- * contra la API viva y necesitan Docker— sino las cuentas del propio
- * simulador: cualquier contraseña no vacía entra, y el identificador es el
- * correo. Ver `core/mock/handlers/auth.handlers.ts`.
+ * El ingreso y la espera viven en `support/simulador.ts`, compartidos con
+ * `premium-visual.spec.ts` —la otra auditoría de esta rama— para que las dos
+ * midan sobre exactamente el mismo estado. El resumen: `mockup` declara
+ * `mockBackend: true`, no habla con ninguna API, y se entra con las cuentas del
+ * propio simulador (`core/mock/handlers/auth.handlers.ts`), no con los actores
+ * de `support/actores.ts`, que necesitan Docker.
  *
  * Variables:
  *   CORR_LANE=35              carril (obligatoria)
@@ -64,33 +65,6 @@ const HOLGURA_MAX_PX = 2;
 const ANCHO_MIN = 0.85;
 const FOTO_MIN_BYTES = 8 * 1024;
 
-/**
- * Entra por la pantalla de ingreso, como una persona, contra el simulador.
- *
- * La doctora pertenece a **dos** organizaciones (Clínica Los Olivos y Hospital
- * San Lucas), así que el ingreso no termina en el panel: termina en
- * `/auth/organization`, eligiendo con cuál entra. Esperar «una ruta que no
- * empiece con /auth» sin resolver ese paso es esperar para siempre — y eso no
- * es un fallo del producto, es el producto pidiendo lo que necesita.
- */
-async function entrarAlSimulador(page: Page): Promise<void> {
-  await page.goto(`${BASE}/auth`, { waitUntil: 'domcontentloaded' });
-  await page.getByTestId('login-identifier').fill(`${USUARIO}@alovida.mock`);
-  await page.getByTestId('login-password').fill('cualquiera');
-  await page.getByTestId('login-submit').click();
-
-  await page.waitForURL(
-    (url) => !url.pathname.startsWith('/auth') || url.pathname.startsWith('/auth/organization'),
-    { timeout: 30_000 },
-  );
-
-  if (page.url().includes('/auth/organization')) {
-    // La primera de la lista: cuál se elige no cambia lo que estas fotos miden.
-    await page.getByRole('button').first().click();
-    await page.waitForURL((url) => !url.pathname.startsWith('/auth'), { timeout: 30_000 });
-  }
-}
-
 interface Medicion {
   readonly fondo: string;
   readonly fondoQuien: string;
@@ -102,47 +76,6 @@ interface Medicion {
   readonly queSeMidio: string;
   readonly scrollHorizontal: boolean;
   readonly cargo: boolean;
-}
-
-/**
- * Espera a que el contenido deje de moverse antes de medirlo.
- *
- * Un `waitForTimeout` fijo no alcanza: «Mi perfil» del médico pide cinco cosas
- * distintas y pinta la columna lateral antes que la ficha. Medido a los 900 ms
- * daba, a veces, **una sola tarjeta** —la del lateral— y la matriz reportaba
- * «27 % del ancho» sobre una pantalla que en realidad estaba bien. Una medición
- * que falla una de cada tres veces es peor que ninguna: enseña a ignorar el
- * rojo.
- *
- * Se espera a que el número de tarjetas y el ancho del área se repitan dos
- * veces seguidas. `networkidle` no sirve acá: con HMR no llega nunca
- * (`CLAUDE.md` §5).
- */
-async function esperarAQueSeAsiente(page: Page): Promise<void> {
-  const huella = async (): Promise<string> =>
-    page.evaluate(() => {
-      const area = document.querySelector('.app-main__inner');
-      const tarjetas = area ? area.querySelectorAll('app-card').length : -1;
-      // Mientras haya un esqueleto o un spinner, lo que se ve todavía no es la
-      // pantalla: medir ahí fue exactamente lo que dio «27 % del ancho» sobre
-      // «Mi perfil», cuando lo único pintado era la columna lateral.
-      const cargando = document.querySelectorAll('app-skeleton, app-spinner').length;
-      return `${tarjetas}:${document.body.scrollHeight}:${cargando}`;
-    });
-
-  // **Tres** muestras iguales, no dos: entre dos peticiones que tardan parecido
-  // hay una meseta de 250 ms en la que nada cambia y la pantalla sigue a medias.
-  let anterior = await huella();
-  let repeticiones = 0;
-  for (let intento = 0; intento < 16; intento += 1) {
-    await page.waitForTimeout(250);
-    const ahora = await huella();
-    repeticiones = ahora === anterior ? repeticiones + 1 : 0;
-    anterior = ahora;
-
-    const sinCargar = ahora.endsWith(':0');
-    if (repeticiones >= 2 && sinCargar) return;
-  }
 }
 
 /**
@@ -344,7 +277,7 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           if (r.status() >= 500) consola += 1;
         });
 
-        await entrarAlSimulador(page);
+        await entrarAlSimulador(page, USUARIO, BASE);
 
         for (const { ruta, nombre, esperado } of RUTAS) {
           consola = 0;

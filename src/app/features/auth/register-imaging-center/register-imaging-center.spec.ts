@@ -93,7 +93,7 @@ describe('RegisterImagingCenter', () => {
       'SA',
       'SOCIEDAD_COLECTIVA',
       'COMANDITA_SIMPLE',
-      'COMANDITA_POR_ACCIONES',
+      'COMANDITA_ACCIONES',
       'SUCURSAL_EXTRANJERA',
     ]);
   });

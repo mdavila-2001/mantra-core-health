@@ -56,6 +56,9 @@ const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string]
   [/language/, 'VS_LANGUAGE', 'Idioma'],
   [/nationality/, 'VS_NATIONALITY', 'Nacionalidad'],
   [/tenant_type|organization_type/, 'VS_ORGANIZATION_TYPE', 'Tipo de organización'],
+  // Subtarea 1.1: `directory.tenants.legal_entity_type_concept_id`. Va antes
+  // que nada más pudiera casar por casualidad con "type" a secas.
+  [/legal_entity_type/, 'VS_LEGAL_ENTITY_TYPE', 'Forma societaria'],
   [/credential_type/, 'VS_CREDENTIAL_TYPE', 'Tipo de credencial'],
   [/practitioner_category/, 'VS_PRACTITIONER_CATEGORY', 'Categoría profesional'],
   [/jurisdiction/, 'VS_JURISDICTION', 'Jurisdicción'],
