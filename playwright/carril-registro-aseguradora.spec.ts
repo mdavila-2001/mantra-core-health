@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+import { subirLosCincoDocumentos } from './helpers/documentos-legales';
+
 /**
  * Subtarea 1.1 · el selector de tipo societario en el alta pública de
  * aseguradora (`/auth/register/organization`).
@@ -151,7 +153,15 @@ test.describe('alta pública de aseguradora — tipo societario (subtarea 1.1)',
     await page.getByTestId('registro-organizacion-direccion').fill('Av. Siempre Viva 123');
     await page.getByTestId('paginated-form-continuar').click();
 
-    // Paso 4 · Tu cuenta (el motor la parte en dos por el tope de 4 campos)
+    // Paso 4 · Documentación legal obligatoria en PDF (subtarea 1.2); cubierta
+    // a fondo por `carril-registro-aseguradora-documentos.spec.ts` — acá sólo
+    // se completa para que el flujo llegue a la confirmación.
+    await expect(page.locator('.paginated-form__titulo')).toContainText(
+      'Documentación legal obligatoria (PDF)',
+    );
+    await subirLosCincoDocumentos(page);
+
+    // Paso 5 · Tu cuenta (el motor la parte en dos por el tope de 4 campos)
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
     await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
     await page.getByTestId('registro-organizacion-owner-apellido-paterno').fill('Paz');
