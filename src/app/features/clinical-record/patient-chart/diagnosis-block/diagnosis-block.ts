@@ -33,6 +33,7 @@ import type { DynamicEnumOption } from '../../../../core/data-access/system-cont
 import { environment } from '../../../../../environments/environment';
 import { CASOS_DIAGNOSTICO_DEMO, conceptIdPorCodigo } from '../demo-presets';
 import type { CasoDiagnosticoDemo } from '../demo-presets';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
 /**
  * La columna que gobierna el diagnóstico.
@@ -520,19 +521,7 @@ export class DiagnosisBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite registrar diagnósticos.';
-    }
-    if (state.status === 'not-found') {
-      return 'El expediente ya no existe. Recargá la pantalla.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDeFalloDeEscritura(state, { accion: 'registrar diagnósticos', sinPermiso: 'Tu rol no permite registrar diagnósticos.' });
   });
 
   constructor() {

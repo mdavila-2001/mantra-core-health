@@ -18,6 +18,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
 /** El alérgeno. Los medicamentos salen del vademécum; el resto, de este set. */
 export const TARGET_SUSTANCIA = 'clinical.allergy_intolerances.substance_concept_id';
@@ -178,16 +179,21 @@ export class AllergyBlock {
     () => !this.sinOrganizacion() && this.sustancia() !== null && !this.registrando(),
   );
 
-  protected readonly errorDeLaAlergia = computed<string | null>(() => {
-    const estado = this.registro();
-    if (estado.status === 'validation') {
-      return estado.issues[0]?.message ?? 'No pudimos registrar la alergia.';
-    }
-    if ('message' in estado && typeof estado.message === 'string' && estado.message !== '') {
-      return estado.message;
-    }
-    return estado.status === 'error' ? 'No pudimos registrar la alergia.' : null;
-  });
+  /**
+   * El fallo, en palabras y para los cinco estados en los que una escritura
+   * puede terminar mal.
+   *
+   * Esto eran tres ramas escritas a mano y **`offline` no era ninguna de las
+   * tres**: una petición que nunca llegaba desbloqueaba el formulario y no
+   * decía nada, así que la alergia parecía registrada. La regla vive ahora en
+   * `mensajeDeEscritura`, una sola vez para todos los bloques del expediente.
+   */
+  protected readonly errorDeLaAlergia = computed<string | null>(() =>
+    mensajeDeEscritura(this.registro(), {
+      accion: 'registrar la alergia',
+      sinPermiso: 'Tu rol no permite registrar alergias.',
+    }),
+  );
 
   protected registrar(): void {
     const custodianTenantId = this.organizacion();

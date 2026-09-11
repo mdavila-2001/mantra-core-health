@@ -30,6 +30,7 @@ import { ConceptSelect } from '../../../../shared/components/molecules/concept-s
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
 /**
  * La columna que gobierna qué se pide.
@@ -283,19 +284,7 @@ export class DiagnosticsBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite pedir estudios.';
-    }
-    if (state.status === 'not-found') {
-      return 'El expediente ya no existe. Recargá la pantalla.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDeFalloDeEscritura(state, { accion: 'pedir estudios', sinPermiso: 'Tu rol no permite pedir estudios.' });
   });
 
   /**

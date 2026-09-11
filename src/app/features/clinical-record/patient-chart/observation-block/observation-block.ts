@@ -27,7 +27,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
-import { mensajeDeEscritura } from '../mensaje-de-escritura';
+import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
 /** Qué se midió. Es lo único obligatorio del formulario, y lo dice el DTO. */
 export const TARGET_MEDICION = 'clinical.observations.code_concept_id';
@@ -203,7 +203,7 @@ export class ObservationBlock {
    * que no llega desbloqueaba el formulario sin decir nada.
    */
   protected readonly errorDeLaObservacion = computed<string | null>(() =>
-    mensajeDeEscritura(this.registro(), 'registrar la observación'),
+    mensajeDeEscritura(this.registro(), { accion: 'registrar la observación' }),
   );
 
   /**

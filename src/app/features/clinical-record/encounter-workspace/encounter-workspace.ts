@@ -59,6 +59,7 @@ import {
   type RecetaEnFicha,
 } from '../patient-chart/medication-block/medication-block';
 import { SpecialtyFormBlock } from '../patient-chart/specialty-form-block/specialty-form-block';
+import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -274,19 +275,11 @@ export class EncounterWorkspace {
       }
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite registrar encuentros.';
-    }
-    if (state.status === 'not-found') {
-      return 'El encuentro ya no existe. Recargá la atención.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDeFalloDeEscritura(state, {
+      accion: 'registrar encuentros',
+      sinPermiso: 'Tu rol no permite registrar encuentros.',
+      yaNoExiste: 'El encuentro ya no existe. Recargá la atención.',
+    });
   });
 
   /**

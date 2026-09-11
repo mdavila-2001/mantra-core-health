@@ -61,6 +61,7 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
 import { CLINICAL_RECORD_ROUTE, encounterWorkspaceRoute } from '../clinical-record.routes';
 import { AllergyBlock } from './allergy-block/allergy-block';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
@@ -1393,25 +1394,27 @@ export class PatientChart {
       });
   }
 
-  /** El fallo del cambio de estado, en palabras — mismo criterio que el resto de la app. */
+  /**
+   * El fallo del cambio de estado, en palabras — mismo criterio que el resto
+   * de la app, y ahora por el mismo camino.
+   *
+   * La validación se resuelve acá porque acá significa algo concreto: el `422`
+   * es la máquina de estados del backend rechazando una transición, no un campo
+   * mal llenado. El resto —permiso, ausencia, conexión, fallo inesperado— lo
+   * pone `mensajeDeFalloDeEscritura`, que es donde vive esa cola una sola vez.
+   */
   private mensajeDeErrorDeEstado(error: unknown): string {
     const state = errorToViewState<null>(error);
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite cambiar el estado clínico.';
-    }
-    if (state.status === 'not-found') {
-      return 'La condición ya no existe. Recargá la pantalla.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || 'Esa transición no es válida.';
     }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return 'Ocurrió un error inesperado.';
+    return (
+      mensajeDeFalloDeEscritura(state, {
+        accion: 'cambiar el estado clínico',
+        sinPermiso: 'Tu rol no permite cambiar el estado clínico.',
+        yaNoExiste: 'La condición ya no existe. Recargá la pantalla.',
+      }) ?? 'Ocurrió un error inesperado.'
+    );
   }
 
   /* -- Los documentos que se llevan en papel (corrección #16) --------------

@@ -39,7 +39,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
-import { mensajeDeEscritura } from '../mensaje-de-escritura';
+import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
 /** Qué clase de papel es: informe, laboratorio, consentimiento, certificado. */
 export const TARGET_CATEGORIA_DOCUMENTAL = 'chart.document_records.category_concept_id';
@@ -173,7 +173,7 @@ export class DocumentBlock {
    * que no llega desbloqueaba el formulario sin decir nada.
    */
   protected readonly errorDelDocumento = computed<string | null>(() =>
-    mensajeDeEscritura(this.registro(), 'registrar el documento'),
+    mensajeDeEscritura(this.registro(), { accion: 'registrar el documento' }),
   );
 
   /** Lo que el selector descartó por formato o tamaño, para poder explicarlo. */

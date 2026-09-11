@@ -26,7 +26,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
-import { mensajeDeEscritura } from '../mensaje-de-escritura';
+import { mensajeDeEscritura } from '../../mensaje-de-escritura';
 
 /** Qué clase de plan es: propuesta, plan u orden. */
 export const TARGET_INTENCION = 'chart.care_plans.intent_concept_id';
@@ -216,7 +216,7 @@ export class CarePlanBlock {
    * que no llega desbloqueaba el formulario sin decir nada.
    */
   protected readonly errorDelPlan = computed<string | null>(() =>
-    mensajeDeEscritura(this.registro(), 'abrir el plan'),
+    mensajeDeEscritura(this.registro(), { accion: 'abrir el plan' }),
   );
 
   protected registrar(): void {

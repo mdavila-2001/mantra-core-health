@@ -189,4 +189,47 @@ describe('AllergyBlock', () => {
 
     expect(interno<() => string | null>('alergiaRecienRegistrada')()).toBe('al-1');
   });
+
+  /**
+   * La petición que **nunca llegó** tiene que decirse.
+   *
+   * Era el agujero del mapeo anterior: `offline` no caía en ninguna de sus tres
+   * ramas, así que el formulario se desbloqueaba, no se guardaba nada y no se
+   * avisaba nada. Quien lo miraba se iba creyendo que la alergia quedó
+   * registrada, que en clínica es la peor de las tres posibilidades.
+   */
+  it('una petición que no llega se cuenta, no se calla', () => {
+    dibujar();
+    señal<string | null>('sustancia').set('sub-penicilina');
+
+    interno<() => void>('registrar')();
+    http.expectOne('/clinical/allergy-intolerances').error(new ProgressEvent('error'));
+    fixture.detectChanges();
+
+    expect(interno<() => boolean>('registrando')()).toBe(false);
+    expect(interno<() => string | null>('errorDeLaAlergia')()).toBe(
+      'No pudimos conectarnos. Revisá tu conexión y reintentá.',
+    );
+  });
+
+  /** El 403 lo explica con el permiso que falta, no con un genérico. */
+  it('el rol insuficiente se dice con el permiso que falta', () => {
+    dibujar();
+    señal<string | null>('sustancia').set('sub-penicilina');
+
+    interno<() => void>('registrar')();
+    // El cuerpo lleva `code`: `errorToViewState` mapea por el código del
+    // contrato y no por el estado HTTP —dos códigos distintos comparten el 403—.
+    http
+      .expectOne('/clinical/allergy-intolerances')
+      .flush(
+        { code: 'FORBIDDEN', message: '', timestamp: '', path: '' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+    fixture.detectChanges();
+
+    expect(interno<() => string | null>('errorDeLaAlergia')()).toBe(
+      'Tu rol no permite registrar alergias.',
+    );
+  });
 });

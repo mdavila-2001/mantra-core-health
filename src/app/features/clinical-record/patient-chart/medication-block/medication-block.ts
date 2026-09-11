@@ -43,6 +43,7 @@ import { environment } from '../../../../../environments/environment';
 import { CASOS_RECETA_DEMO, conceptIdPorCodigo } from '../demo-presets';
 import type { CasoRecetaDemo } from '../demo-presets';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
 /**
  * La columna que gobierna el medicamento.
@@ -779,19 +780,11 @@ export class MedicationBlock {
       }
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite recetar.';
-    }
-    if (state.status === 'not-found') {
-      return 'La receta ya no existe. Recargá el expediente.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDeFalloDeEscritura(state, {
+      accion: 'recetar',
+      sinPermiso: 'Tu rol no permite recetar.',
+      yaNoExiste: 'La receta ya no existe. Recargá el expediente.',
+    });
   });
 
   /** El sello de una receta según dónde esté del ciclo. */
