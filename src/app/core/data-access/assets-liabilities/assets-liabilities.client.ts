@@ -30,17 +30,17 @@ export class AssetsLiabilitiesClient {
   /** `GET /accounting/practitioner/assets` */
   listAssets(practiceId: string): Observable<readonly AssetSummary[]> {
     const params = new HttpParams().set('practiceId', practiceId);
-    return this.http.get<readonly AssetSummary[]>(this.url('assets'), { params });
+    return this.http.get<readonly AssetSummary[]>(this.url('/accounting/practitioner/assets'), { params });
   }
 
   /** `POST /accounting/practitioner/assets` */
   capitalizeAsset(input: CapitalizeOwnAssetInput): Observable<{ id: string }> {
-    return this.http.post<{ id: string }>(this.url('assets'), input);
+    return this.http.post<{ id: string }>(this.url('/accounting/practitioner/assets'), input);
   }
 
   /** `PATCH /accounting/practitioner/assets/:id/automation` */
   setAssetAutomation(assetId: string, automated: boolean): Observable<void> {
-    return this.http.patch<void>(this.url(`assets/${assetId}/automation`), { automated });
+    return this.http.patch<void>(this.url(`/accounting/practitioner/assets/${assetId}/automation`), { automated });
   }
 
   /** `POST /accounting/practitioner/assets/:id/progress` */
@@ -49,7 +49,7 @@ export class AssetsLiabilitiesClient {
     input: RegisterAssetProgressInput,
   ): Observable<ProgressRegistered> {
     return this.http.post<ProgressRegistered>(
-      this.url(`assets/${assetId}/progress`),
+      this.url(`/accounting/practitioner/assets/${assetId}/progress`),
       input,
     );
   }
@@ -57,18 +57,18 @@ export class AssetsLiabilitiesClient {
   /** `GET /accounting/practitioner/liabilities` */
   listLiabilities(practiceId: string): Observable<readonly LiabilitySummary[]> {
     const params = new HttpParams().set('practiceId', practiceId);
-    return this.http.get<readonly LiabilitySummary[]>(this.url('liabilities'), { params });
+    return this.http.get<readonly LiabilitySummary[]>(this.url('/accounting/practitioner/liabilities'), { params });
   }
 
   /** `POST /accounting/practitioner/liabilities` */
   createLiability(input: CreateOwnLiabilityInput): Observable<LiabilityCreated> {
-    return this.http.post<LiabilityCreated>(this.url('liabilities'), input);
+    return this.http.post<LiabilityCreated>(this.url('/accounting/practitioner/liabilities'), input);
   }
 
   /** `PATCH /accounting/practitioner/liabilities/:id/automation` */
   setLiabilityAutomation(liabilityId: string, automated: boolean): Observable<void> {
     return this.http.patch<void>(
-      this.url(`liabilities/${liabilityId}/automation`),
+      this.url(`/accounting/practitioner/liabilities/${liabilityId}/automation`),
       { automated },
     );
   }
@@ -79,12 +79,21 @@ export class AssetsLiabilitiesClient {
     input: RegisterLiabilityProgressInput,
   ): Observable<ProgressRegistered> {
     return this.http.post<ProgressRegistered>(
-      this.url(`liabilities/${liabilityId}/progress`),
+      this.url(`/accounting/practitioner/liabilities/${liabilityId}/progress`),
       input,
     );
   }
 
+  /**
+   * La ruta llega entera, como en el resto de los clientes.
+   *
+   * Antes este ayudante le anteponía `/accounting/practitioner/` a un tramo
+   * suelto. Leído desde la llamada no se veía el endpoint real, y
+   * `check-client-prefixes` —que compara lo que dice el código contra los
+   * prefijos del proxy— denunciaba las ocho operaciones como no ruteadas:
+   * veía `assets`, no `/accounting/practitioner/assets`.
+   */
   private url(path: string): string {
-    return apiUrl(this.baseUrl, `/accounting/practitioner/${path}`);
+    return apiUrl(this.baseUrl, path);
   }
 }

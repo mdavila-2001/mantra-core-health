@@ -86,7 +86,11 @@
       "/cds",
       "/billing/service-catalog",
       "/diagnostics/patients",
-      "/diagnostics/work-orders"
+      "/diagnostics/work-orders",
+      "/quotations",
+      "/prescription-favorites",
+      "/insurance-carrier-catalog",
+      "/admin/content-packs"
     ],
     "target": "http://localhost:3125",
     "secure": false,
