@@ -1,4 +1,15 @@
-import type { SelectOption } from '../../shared/components/atoms/select/select.types';
+/**
+ * La forma de una opción, declarada **acá** y no importada de
+ * `shared/components/atoms/select`: `core` es una capa por debajo de los
+ * componentes y no puede depender de ellos —`check-architecture` lo verifica—.
+ * No hace falta el import para que esto siga sirviendo a un `app-select`:
+ * TypeScript compara por estructura, así que esta lista sigue siendo un
+ * `SelectOption<string>[]` válido para quien la reciba.
+ */
+interface OpcionDeTitulo {
+  readonly value: string;
+  readonly label: string;
+}
 
 /**
  * El título profesional, como lista cerrada.
@@ -24,7 +35,7 @@ import type { SelectOption } from '../../shared/components/atoms/select/select.t
  * que lo que viaja es la etiqueta. El día que exista el concepto, esto pasa a
  * ser un mapeo y las dos pantallas lo heredan juntas.
  */
-export const OPCIONES_TITULO_PROFESIONAL: readonly SelectOption<string>[] = [
+export const OPCIONES_TITULO_PROFESIONAL: readonly OpcionDeTitulo[] = [
   { value: 'Médico / Médica', label: 'Médico / Médica' },
   {
     value: 'Médico especialista / Médica especialista',

@@ -2,7 +2,7 @@
   {
     "context": [
       "/iam",
-      "/public",
+      "/public/",
       "/terminology",
       "/profiles",
       "/identity",
