@@ -10,9 +10,22 @@ import {
   type LegalEntityCountryIso,
 } from '../../i18n/legal-entity-types.dictionary';
 import { uiLanguage, type UiLanguage } from '../../i18n/ui-language';
-import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { SystemContextClient } from './system-context.client';
 import type { DynamicEnumOption } from './system-context.types';
+
+/**
+ * La forma de una opción de lista, declarada **acá**.
+ *
+ * `core` es una capa por debajo de los componentes y no puede importar de
+ * `shared/components` —`check-architecture` lo verifica—. No hace falta el
+ * import para que esto siga sirviendo a un `app-select`: TypeScript compara
+ * por estructura, así que lo que sale de acá sigue siendo un
+ * `SelectOption<string>` válido para quien lo reciba.
+ */
+interface SelectOption<T> {
+  readonly value: T;
+  readonly label: string;
+}
 
 /**
  * El campo que gobierna el tipo societario de una organización.

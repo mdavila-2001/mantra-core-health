@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-1334 archivos TypeScript bajo `src/` y 5562 importaciones internas.
+1339 archivos TypeScript bajo `src/` y 5570 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -173,9 +173,9 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | `src/app/shared/components/organisms/page-header/page-header.ts` | 168 |
 | `src/app/shared/components/molecules/alert/alert.ts` | 158 |
 | `src/app/core/navigation/navigation.service.ts` | 125 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 103 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 101 |
 | `src/app/shared/a11y/announce-on-appear.ts` | 89 |
-| `src/app/shared/components/atoms/input/input.ts` | 77 |
+| `src/app/shared/components/atoms/input/input.ts` | 75 |
 | `src/app/core/auth/auth.service.ts` | 74 |
 | `src/app/shared/components/molecules/card/card.ts` | 74 |
 | `src/app/shared/components/atoms/badge/badge.ts` | 66 |
@@ -184,17 +184,17 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 | `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 58 |
 | `src/app/core/auth/session.store.ts` | 56 |
 | `src/app/shared/components/atoms/select/select.types.ts` | 53 |
-| `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 51 |
-| `src/app/shared/forms/paginated/paginar-campos.ts` | 51 |
+| `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 53 |
+| `src/app/shared/forms/paginated/paginar-campos.ts` | 53 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 1170 |
-| `@angular/common` | 681 |
+| `@angular/core` | 1175 |
+| `@angular/common` | 684 |
 | `@angular/router` | 519 |
-| `rxjs` | 201 |
+| `rxjs` | 203 |
 | `@angular/forms` | 120 |
 | `node:fs` | 24 |
 | `@angular/platform-browser` | 14 |

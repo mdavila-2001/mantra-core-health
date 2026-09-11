@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-471 componentes y 88 servicios inyectables, leídos de `src/`.
+471 componentes y 89 servicios inyectables, leídos de `src/`.
 
 ## Átomo (23)
 
@@ -505,7 +505,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (88)
+## Servicios (89)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -557,6 +557,7 @@
 | `SchedulingClient` | `src/app/core/data-access/scheduling/scheduling.client.ts` | root | sí |
 | `ServicesCatalogClient` | `src/app/core/data-access/services-catalog/services-catalog.client.ts` | root | sí |
 | `SurveysClient` | `src/app/core/data-access/surveys/surveys.client.ts` | root | **no** |
+| `LegalEntityTypesCatalog` | `src/app/core/data-access/system-context/legal-entity-types.service.ts` | root | sí |
 | `RelatedPersonRelationshipsCatalog` | `src/app/core/data-access/system-context/related-person-relationships.service.ts` | root | sí |
 | `SystemContextClient` | `src/app/core/data-access/system-context/system-context.client.ts` | root | sí |
 | `BoDepartmentsCatalog` | `src/app/core/data-access/terminology/bo-departments.service.ts` | root | **no** |
