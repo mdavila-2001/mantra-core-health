@@ -56,6 +56,44 @@ export const PESTANA_MEDICO = {
 } as const;
 
 /**
+ * Las pestañas del **editor** del perfil médico: las mismas de la ficha, menos
+ * dos.
+ *
+ * Pedido del cliente, repetido el 2026-09-11: editar el perfil tiene que ser
+ * «en varias pestañas». Hasta hoy el editor eran cuatro tarjetas apiladas con
+ * cuatro botones de guardar, que es justo lo que prohíbe
+ * `docs/components/composition-rules.md` §5.
+ *
+ * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO} en el mismo orden, salteando
+ * las dos que no tienen nada que editar acá:
+ *
+ * - **Dónde atiendo** — el consultorio propio se crea y se edita en su propia
+ *   pantalla (`/administration/my-practice`, CORR-02). Duplicar acá el
+ *   formulario daría dos lugares para el mismo dato y ninguna forma de saber
+ *   cuál ganó.
+ * - **Actividad** — son los contadores de la plataforma. No se editan: se
+ *   miran.
+ *
+ * El orden importa: quien viene de la ficha encuentra las pestañas donde las
+ * dejó, y las dos primeras son las que se corrigen; las dos últimas, las que se
+ * suman.
+ */
+export const PESTANAS_DEL_EDITOR_MEDICO = [
+  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.personales],
+  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.contacto],
+  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria],
+  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales],
+] as const;
+
+/** Los índices con nombre del editor. No son los de la ficha: son cuatro. */
+export const PESTANA_EDITOR = {
+  personales: 0,
+  contacto: 1,
+  trayectoria: 2,
+  credenciales: 3,
+} as const;
+
+/**
  * Dónde se lee cada campo del alta de médico.
  *
  * La clave es la del `FormGroup` de `auth/register-practitioner`; el valor, la

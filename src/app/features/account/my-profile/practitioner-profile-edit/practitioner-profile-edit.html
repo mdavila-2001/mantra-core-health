@@ -7,455 +7,502 @@
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
   @if (profileId(); as profileId) {
     <div class="edicion">
-      <!-- ─── Presentación ────────────────────────────────────────────────
-           Lo único que se EDITA: es el mismo registro, se corrige y se
-           reemplaza. -->
+      <!-- ─── UNA tarjeta con pestañas ────────────────────────────────────
+           Eran cuatro tarjetas apiladas —presentación, especialidades,
+           matrículas, formación— con cuatro botones de guardar, en una columna
+           de 44rem pegada a la izquierda. Es lo que el cliente rechazó dos
+           veces y lo que `composition-rules.md` §5 prohíbe desde el 09/09.
+
+           Las pestañas son las de la ficha de lectura
+           (`PESTANAS_DEL_EDITOR_MEDICO`): quien pulsa el lápiz en «Contacto»
+           llega acá y encuentra «Contacto». Los valores viven en señales del
+           componente y no en los controles, así que cambiar de pestaña no
+           pierde lo tecleado aunque `app-tab` desmonte el panel que se va. -->
       <app-card variant="outlined" padding="lg" class="edicion__bloque">
-        <h2 class="edicion__titulo">Presentación</h2>
-        <p class="edicion__nota">Cómo te ven las personas que consultan tu perfil.</p>
+        <app-tabs [(selectedIndex)]="pestana" data-testid="edicion-pestanas">
+          <!-- ─── Datos personales ──────────────────────────────────────── -->
+          <app-tab [label]="pestanas[0]">
+            <p class="edicion__nota">Cómo te ven las personas que consultan tu perfil.</p>
 
-        <form class="edicion__formulario" (submit)="$event.preventDefault()">
-          <!-- Los datos personales van primero: son de quien edita, y lo
-               profesional viene después. Vacío BORRA el dato opcional, que es
-               cómo se quita un segundo nombre que no se lleva. -->
-          <app-form-field label="Nombre">
-            <app-input [(value)]="nombre" placeholder="Tu nombre" />
-          </app-form-field>
-          <app-form-field label="Segundo nombre (opcional)">
-            <app-input
-              data-testid="edicion-segundo-nombre"
-              [(value)]="segundoNombre"
-              placeholder="Si tenés"
-            />
-          </app-form-field>
-
-          <!-- El tercero y los que hagan falta, como en el alta de médico: hay
-               gente con cuatro y con cinco nombres, y casillas fijas que casi
-               nadie llena son ruido. Los tres controles escriben el MISMO campo
-               (`middleName`), separado por espacios. -->
-          <app-form-field label="Tercer nombre (opcional)">
-            <app-input
-              data-testid="edicion-tercer-nombre"
-              [(value)]="tercerNombre"
-              placeholder="Si tenés"
-            />
-          </app-form-field>
-
-          @for (extra of nombresExtra(); track $index) {
-            <app-form-field [label]="'Nombre ' + ($index + 4)">
-              <div class="edicion__casilla-extra">
+            <form class="edicion__formulario" (submit)="$event.preventDefault()">
+              <!-- Vacío BORRA el dato opcional, que es cómo se quita un segundo
+                   nombre que no se lleva. -->
+              <app-form-field label="Nombre">
+                <app-input [(value)]="nombre" placeholder="Tu nombre" />
+              </app-form-field>
+              <app-form-field label="Segundo nombre (opcional)">
                 <app-input
-                  [testId]="'edicion-nombre-extra-' + $index"
-                  placeholder="Otro nombre"
-                  [value]="extra"
-                  (valueChange)="escribirNombreExtra($index, $event)"
+                  data-testid="edicion-segundo-nombre"
+                  [(value)]="segundoNombre"
+                  placeholder="Si tenés"
                 />
+              </app-form-field>
+
+              <!-- El tercero y los que hagan falta, como en el alta de médico: hay
+                   gente con cuatro y con cinco nombres, y casillas fijas que casi
+                   nadie llena son ruido. Los tres controles escriben el MISMO campo
+                   (`middleName`), separado por espacios. -->
+              <app-form-field label="Tercer nombre (opcional)">
+                <app-input
+                  data-testid="edicion-tercer-nombre"
+                  [(value)]="tercerNombre"
+                  placeholder="Si tenés"
+                />
+              </app-form-field>
+
+              @for (extra of nombresExtra(); track $index) {
+                <app-form-field [label]="'Nombre ' + ($index + 4)">
+                  <div class="edicion__casilla-extra">
+                    <app-input
+                      [testId]="'edicion-nombre-extra-' + $index"
+                      placeholder="Otro nombre"
+                      [value]="extra"
+                      (valueChange)="escribirNombreExtra($index, $event)"
+                    />
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [iconOnly]="true"
+                      [attr.aria-label]="'Quitar el nombre ' + ($index + 4)"
+                      [appTooltip]="'Quitar el nombre ' + ($index + 4)"
+                      [attr.data-testid]="'edicion-quitar-nombre-' + $index"
+                      (clicked)="quitarNombre($index)"
+                    >
+                      <app-nav-icon name="remove" />
+                    </button>
+                  </div>
+                </app-form-field>
+              }
+
+              <p class="edicion__sumar">
                 <button
                   app-button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  [iconOnly]="true"
-                  [attr.aria-label]="'Quitar el nombre ' + ($index + 4)"
-                  [appTooltip]="'Quitar el nombre ' + ($index + 4)"
-                  [attr.data-testid]="'edicion-quitar-nombre-' + $index"
-                  (clicked)="quitarNombre($index)"
+                  data-testid="edicion-agregar-nombre"
+                  (clicked)="agregarNombre()"
                 >
-                  <app-nav-icon name="remove" />
+                  + Agregar otro nombre
                 </button>
-              </div>
-            </app-form-field>
-          }
+              </p>
+              <app-form-field label="Apellido paterno">
+                <app-input [(value)]="apellidoPaterno" />
+              </app-form-field>
+              <app-form-field label="Apellido materno (opcional)">
+                <app-input [(value)]="apellidoMaterno" />
+              </app-form-field>
 
-          <p class="edicion__sumar">
-            <button
-              app-button
-              type="button"
-              variant="ghost"
-              size="sm"
-              data-testid="edicion-agregar-nombre"
-              (clicked)="agregarNombre()"
-            >
-              + Agregar otro nombre
-            </button>
-          </p>
-          <app-form-field label="Apellido paterno">
-            <app-input [(value)]="apellidoPaterno" />
-          </app-form-field>
-          <app-form-field label="Apellido materno (opcional)">
-            <app-input [(value)]="apellidoMaterno" />
-          </app-form-field>
+              <!-- ALV-003: el contrato ya aceptaba estos dos y el formulario no los
+                   ofrecía; la ficha los mostraba sin forma de corregirlos. -->
+              <app-form-field
+                label="Fecha de nacimiento"
+                hint="Se usa para calcular tu edad en la ficha. No se publica."
+              >
+                <app-date-picker [(value)]="fechaNacimiento" data-testid="edicion-nacimiento" />
+              </app-form-field>
 
-          <!-- ALV-003: el contrato ya aceptaba estos dos y el formulario no los
-               ofrecía; la ficha los mostraba sin forma de corregirlos. -->
-          <app-form-field
-            label="Fecha de nacimiento"
-            hint="Se usa para calcular tu edad en la ficha. No se publica."
-          >
-            <app-date-picker [(value)]="fechaNacimiento" data-testid="edicion-nacimiento" />
-          </app-form-field>
+              <!-- La MISMA lista cerrada del alta, no un texto libre: de este
+                   título dependen el colegio de la habilitación y qué
+                   especialidades se ofrecen, y escrito a mano la misma profesión
+                   terminaba en cuatro variantes. -->
+              <app-form-field
+                label="Título profesional"
+                hint="Sale de la misma lista que el registro, para que la misma profesión no figure escrita de varias maneras."
+              >
+                <app-select
+                  data-testid="edicion-titulo"
+                  [options]="titulosProfesionales"
+                  [(value)]="titulo"
+                  placeholder="Elegí tu título profesional"
+                />
+              </app-form-field>
 
-          @if (catalogoMunicipiosCaido()) {
-            <p class="edicion__aviso">
-              No pudimos traer el catálogo de municipios.
-              <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
-                Reintentar
-              </button>
+              @if (tituloFueraDeLista()) {
+                <!-- Un título viejo escrito a mano. No se borra ni se corrige solo:
+                     se avisa y la persona elige cuando quiera. -->
+                <p class="edicion__aviso" role="status" data-testid="edicion-titulo-fuera-de-lista">
+                  Tu título figura como «{{ titulo() }}», que no está en la lista. Elegí el que
+                  corresponda para que aparezca igual que en el registro.
+                </p>
+              }
+
+              <app-form-field
+                class="edicion__campo-ancho"
+                label="Biografía"
+                hint="Tu presentación en pocas palabras. Es lo que hace que tu perfil se lea como vos."
+              >
+                <app-textarea
+                  [(value)]="bio"
+                  [rows]="5"
+                  [maxLength]="bioLargoMaximo"
+                  [autoResize]="true"
+                  placeholder="Contá tu trayectoria, tu enfoque, lo que te interesa de tu especialidad."
+                />
+              </app-form-field>
+
+              <app-switch [(checked)]="aceptaNuevos" label="Acepto pacientes nuevos" />
+              <app-switch [(checked)]="telemedicina" label="Atiendo por telemedicina" />
+            </form>
+          </app-tab>
+
+          <!-- ─── Contacto ──────────────────────────────────────────────── -->
+          <app-tab [label]="pestanas[1]">
+            <p class="edicion__nota">
+              Dónde te ubican y por dónde te contactan. Se guarda junto con tus datos personales.
             </p>
-          } @else if (ramasMunicipios().length > 0) {
-            <!-- Sin @defer a propósito: esta pantalla ya es un chunk perezoso
-                 (`/my-account/edit`), y un bloque diferido obliga a compilar
-                 el componente de forma asíncrona en los specs (ver la nota del
-                 repo sobre @defer en CI). -->
-            <app-location-picker
-              testId="edicion-residencia"
-              [ramas]="ramasMunicipios()"
-              [value]="municipioResidencia()"
-              (valueChange)="municipioResidencia.set($event)"
-              mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
-              municipalityLabel="Localidad de residencia (opcional)"
-              municipalityHint="Sólo se ofrecen las del departamento que elegiste."
-            />
-          }
-          <!-- ALV-009: la calle va acá, con el resto de lo que se corrige —no
-               en un formulario aparte que sólo agregaba direcciones sueltas
-               que nadie volvía a leer. -->
-          <app-form-field
-            label="Dirección"
-            hint="Dónde atendés o dónde te ubican tus pacientes."
-          >
-            <app-input
-              data-testid="edicion-direccion"
-              [(value)]="direccion"
-              placeholder="Av. Siempre Viva 742, entre calles..."
-            />
-          </app-form-field>
 
-          <!-- El punto en el mapa, el mismo bloque que el alta ya usaba para
-               `gpsDomicilio`. El contrato del PATCH lo aceptaba desde antes;
-               lo que faltaba era la pantalla. -->
-          <app-ubicacion-picker
-            pinId="edicion-domicilio"
-            etiquetaConfirmada="Tu domicilio"
-            pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
-            etiquetaQuitar="Quitar la ubicación de tu domicilio"
-            etiquetaMapa="La ubicación de tu domicilio en el mapa"
-            etiquetaMarcar="Marcar mi domicilio en el mapa"
-            indicacionMarcar="Tocá el mapa en la puerta de tu casa para poner el pin."
-            [ids]="idsGpsDomicilio"
-            [inicial]="gpsDomicilioGuardado()"
-            (confirmado)="gpsDomicilio.set($event)"
-          />
+            <form class="edicion__formulario" (submit)="$event.preventDefault()">
+              @if (catalogoMunicipiosCaido()) {
+                <p class="edicion__aviso">
+                  No pudimos traer el catálogo de municipios.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else if (ramasMunicipios().length > 0) {
+                <!-- Sin @defer a propósito: esta pantalla ya es un chunk perezoso
+                     (`/my-account/edit`), y un bloque diferido obliga a compilar
+                     el componente de forma asíncrona en los specs (ver la nota del
+                     repo sobre @defer en CI). -->
+                <app-location-picker
+                  class="edicion__campo-ancho"
+                  testId="edicion-residencia"
+                  [ramas]="ramasMunicipios()"
+                  [value]="municipioResidencia()"
+                  (valueChange)="municipioResidencia.set($event)"
+                  mapLabel="Mapa de Bolivia: elegí el departamento donde vivís"
+                  municipalityLabel="Localidad de residencia (opcional)"
+                  municipalityHint="Sólo se ofrecen las del departamento que elegiste."
+                />
+              }
 
-          <app-form-field
-            label="Celular personal"
-            hint="El número por el que te contactamos a vos. No se publica en tu ficha."
-          >
-            <app-input [(value)]="celularPersonal" placeholder="+591 70000000" />
-          </app-form-field>
-          <app-form-field
-            label="Correo personal"
-            hint="Distinto del de trabajo, que es con el que entrás."
-          >
-            <app-input [(value)]="correoPersonal" placeholder="tu.correo@ejemplo.com" />
-          </app-form-field>
-          <app-form-field
-            label="Celular del trabajo"
-            hint="El número por el que te pueden contactar de tu consulta."
-          >
-            <app-input [(value)]="celularTrabajo" placeholder="+591 70000000" />
-          </app-form-field>
-          <app-form-field label="Fijo del trabajo" hint="La línea del consultorio.">
-            <app-input [(value)]="fijoTrabajo" placeholder="+591 3 3000000" />
-          </app-form-field>
+              <!-- ALV-009: la calle va acá, con el resto de lo que se corrige —no
+                   en un formulario aparte que sólo agregaba direcciones sueltas
+                   que nadie volvía a leer. -->
+              <app-form-field
+                class="edicion__campo-ancho"
+                label="Dirección"
+                hint="Dónde atendés o dónde te ubican tus pacientes."
+              >
+                <app-input
+                  data-testid="edicion-direccion"
+                  [(value)]="direccion"
+                  placeholder="Av. Siempre Viva 742, entre calles..."
+                />
+              </app-form-field>
 
-          <!-- La MISMA lista cerrada del alta, no un texto libre: de este
-               título dependen el colegio de la habilitación y qué
-               especialidades se ofrecen, y escrito a mano la misma profesión
-               terminaba en cuatro variantes. -->
-          <app-form-field
-            label="Título profesional"
-            hint="Sale de la misma lista que el registro, para que la misma profesión no figure escrita de varias maneras."
-          >
-            <app-select
-              data-testid="edicion-titulo"
-              [options]="titulosProfesionales"
-              [(value)]="titulo"
-              placeholder="Elegí tu título profesional"
-            />
-          </app-form-field>
+              <!-- El punto en el mapa, el mismo bloque que el alta ya usaba para
+                   `gpsDomicilio`. El contrato del PATCH lo aceptaba desde antes;
+                   lo que faltaba era la pantalla. -->
+              <app-ubicacion-picker
+                class="edicion__campo-ancho"
+                pinId="edicion-domicilio"
+                etiquetaConfirmada="Tu domicilio"
+                pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
+                etiquetaQuitar="Quitar la ubicación de tu domicilio"
+                etiquetaMapa="La ubicación de tu domicilio en el mapa"
+                etiquetaMarcar="Marcar mi domicilio en el mapa"
+                indicacionMarcar="Tocá el mapa en la puerta de tu casa para poner el pin."
+                [ids]="idsGpsDomicilio"
+                [inicial]="gpsDomicilioGuardado()"
+                (confirmado)="gpsDomicilio.set($event)"
+              />
 
-          @if (tituloFueraDeLista()) {
-            <!-- Un título viejo escrito a mano. No se borra ni se corrige solo:
-                 se avisa y la persona elige cuando quiera. -->
-            <p class="edicion__aviso" role="status" data-testid="edicion-titulo-fuera-de-lista">
-              Tu título figura como «{{ titulo() }}», que no está en la lista. Elegí el que
-              corresponda para que aparezca igual que en el registro.
+              <app-form-field
+                label="Celular personal"
+                hint="El número por el que te contactamos a vos. No se publica en tu ficha."
+              >
+                <app-input [(value)]="celularPersonal" placeholder="+591 70000000" />
+              </app-form-field>
+              <app-form-field
+                label="Correo personal"
+                hint="Distinto del de trabajo, que es con el que entrás."
+              >
+                <app-input [(value)]="correoPersonal" placeholder="tu.correo@ejemplo.com" />
+              </app-form-field>
+              <app-form-field
+                label="Celular del trabajo"
+                hint="El número por el que te pueden contactar de tu consulta."
+              >
+                <app-input [(value)]="celularTrabajo" placeholder="+591 70000000" />
+              </app-form-field>
+              <app-form-field label="Fijo del trabajo" hint="La línea del consultorio.">
+                <app-input [(value)]="fijoTrabajo" placeholder="+591 3 3000000" />
+              </app-form-field>
+            </form>
+          </app-tab>
+
+          <!-- ─── Trayectoria ───────────────────────────────────────────────
+               Se AGREGA, no se edita: un título verificado es un hecho
+               comprobado, no un texto que se corrige. Nace pendiente de
+               verificación; el tipo sale del catálogo dinámico (los cinco
+               CREDENTIAL_TYPE_*). -->
+          <app-tab [label]="pestanas[2]">
+            <h3 class="edicion__titulo">Agregar formación</h3>
+            <p class="edicion__nota">
+              Títulos, diplomados, maestrías y doctorados. Queda pendiente de verificación; podés
+              cargar varios de cada clase.
             </p>
-          }
 
-          <app-form-field
-            label="Biografía"
-            hint="Tu presentación en pocas palabras. Es lo que hace que tu perfil se lea como vos."
-          >
-            <app-textarea
-              [(value)]="bio"
-              [rows]="5"
-              [maxLength]="bioLargoMaximo"
-              [autoResize]="true"
-              placeholder="Contá tu trayectoria, tu enfoque, lo que te interesa de tu especialidad."
-            />
-          </app-form-field>
+            <form class="edicion__formulario" (submit)="$event.preventDefault()">
+              <app-form-field label="Tipo de título" [required]="true">
+                <app-concept-select
+                  data-testid="credencial-tipo"
+                  [target]="targetCredencial"
+                  [(value)]="nuevoTipoCredencial"
+                  placeholder="Elegí un tipo"
+                />
+              </app-form-field>
 
-          <app-switch [(checked)]="aceptaNuevos" label="Acepto pacientes nuevos" />
-          <app-switch [(checked)]="telemedicina" label="Atiendo por telemedicina" />
+              <app-form-field
+                label="Número / título obtenido"
+                [required]="true"
+                hint="El número de tu diploma, o el nombre del título si no tiene número."
+              >
+                <app-input
+                  data-testid="credencial-numero"
+                  [(value)]="nuevoNumeroCredencial"
+                  placeholder="Médico cirujano"
+                />
+              </app-form-field>
 
+              <app-form-field label="Institución (opcional)">
+                <app-input
+                  [(value)]="nuevaInstitucionCredencial"
+                  placeholder="Universidad Mayor de San Andrés"
+                />
+              </app-form-field>
+
+              <app-form-field label="Fecha de emisión (opcional)">
+                <app-date-picker
+                  [(value)]="nuevaFechaEmisionCredencial"
+                  placeholder="Seleccionar fecha"
+                />
+              </app-form-field>
+
+              <!-- El diploma. Mismo criterio que el alta de médico: opcional, PDF o
+                   foto, hasta 5 MB. Acá **sí llega al servidor** —el contrato del
+                   título declara `fileId`— y es lo que después mira quien verifica.
+                   La matrícula no tiene un campo equivalente en su contrato; ver
+                   `docs/progress/BLOCKERS.md`. -->
+              <app-form-field
+                class="edicion__campo-ancho"
+                label="Diploma o certificado (opcional)"
+                hint="PDF, JPG o PNG. Hasta 5 MB. Lo mira el equipo que verifica; no se publica."
+              >
+                <app-file-input
+                  data-testid="credencial-archivo"
+                  testId="credencial-archivo"
+                  removeTestId="credencial-archivo-quitar"
+                  [(files)]="archivoDeCredencial"
+                  [accept]="formatosDeRespaldo"
+                  [maxSizeBytes]="maxBytesDeRespaldo"
+                  [maxFiles]="1"
+                  accessibleLabel="Diploma o certificado del título"
+                />
+              </app-form-field>
+
+              <app-form-actions
+                class="edicion__campo-ancho"
+                submitLabel="Agregar título"
+                [pending]="guardandoCredencial()"
+                [disabled]="!puedeAgregarCredencial()"
+                (submitted)="agregarCredencial()"
+              />
+            </form>
+          </app-tab>
+
+          <!-- ─── Credenciales ──────────────────────────────────────────────
+               Especialidades y matrículas: las dos se AGREGAN y ninguna se
+               edita. Van juntas porque son la misma pregunta —qué estás
+               habilitado a ejercer y dónde— y separadas en dos tarjetas se leían
+               como dos trámites distintos. -->
+          <app-tab [label]="pestanas[3]">
+            <section class="edicion__seccion">
+              <h3 class="edicion__titulo">Agregar especialidades</h3>
+              <p class="edicion__nota">
+                Podés cargar varias de una vez, como en el registro. Quedan pendientes de
+                verificación hasta que se comprueben contra tu credencial. Las que ya tenés no se
+                editan desde acá: se ven en tu perfil.
+              </p>
+
+              <form class="edicion__formulario" (submit)="$event.preventDefault()">
+                <!-- TJ-3 · F-19: las 36 especialidades del modelo, en castellano. Antes
+                     esto pedía el catálogo por campo destino y llegaba una sola opción
+                     («General medicine specialty»), que además no la usa ninguna fila. -->
+                @if (catalogoCaido()) {
+                  <app-form-field label="Especialidad">
+                    <p class="edicion__aviso" data-testid="especialidades-caidas">
+                      No pudimos traer el catálogo de especialidades.
+                      <button
+                        app-button
+                        variant="ghost"
+                        size="sm"
+                        (clicked)="reintentarEspecialidades()"
+                      >
+                        Reintentar
+                      </button>
+                    </p>
+                  </app-form-field>
+                } @else {
+                  <app-form-field label="Especialidad" [required]="true">
+                    <app-select
+                      data-testid="especialidad-select"
+                      [options]="especialidades()"
+                      [(value)]="nuevaEspecialidad"
+                      placeholder="Elegí una especialidad"
+                    />
+                  </app-form-field>
+
+                  <!-- Las que se agreguen además, en casillas sumables: las mismas
+                       del alta de médico. Antes esto era una sola por envío, así que
+                       quien tiene tres especialidades tenía que elegir, guardar y
+                       esperar la recarga tres veces. -->
+                  @for (extra of especialidadesExtra(); track $index) {
+                    <app-form-field [label]="'Especialidad ' + ($index + 2)">
+                      <div class="edicion__casilla-extra">
+                        <app-select
+                          [attr.data-testid]="'especialidad-extra-' + $index"
+                          [options]="especialidades()"
+                          placeholder="Elegí una especialidad"
+                          [value]="extra === '' ? null : extra"
+                          (valueChange)="elegirEspecialidadExtra($index, $event)"
+                        />
+                        <button
+                          app-button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          [iconOnly]="true"
+                          [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
+                          [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
+                          [attr.data-testid]="'quitar-especialidad-' + $index"
+                          (clicked)="quitarCasillaDeEspecialidad($index)"
+                        >
+                          <app-nav-icon name="remove" />
+                        </button>
+                      </div>
+                    </app-form-field>
+                  }
+
+                  <p class="edicion__sumar">
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      data-testid="agregar-casilla-especialidad"
+                      (clicked)="agregarCasillaDeEspecialidad()"
+                    >
+                      + Agregar otra especialidad
+                    </button>
+                  </p>
+                }
+
+                <!-- Sin los dos interruptores («Es mi especialidad principal» y
+                     «Tengo certificación de junta»): el propietario pidió el
+                     2026-09-10 que esta pantalla se adapte al formulario del alta de
+                     médico, y el alta no los tiene. Ahí la principal se elige en un
+                     select —«Especialidad principal (opcional)»— al registrarse, y la
+                     certificación de junta no se pregunta.
+
+                     Consecuencia declarada, no escondida: agregar una especialidad
+                     desde acá **nunca desplaza a la principal**. Cambiar cuál es la
+                     principal más adelante no tiene hoy dónde hacerse; está anotado
+                     en `docs/progress/BLOCKERS.md`. -->
+                <app-form-actions
+                  class="edicion__campo-ancho"
+                  [submitLabel]="
+                    especialidadesElegidas().length > 1
+                      ? 'Agregar especialidades'
+                      : 'Agregar especialidad'
+                  "
+                  [pending]="guardandoEspecialidad()"
+                  [disabled]="!puedeAgregarEspecialidad()"
+                  (submitted)="agregarEspecialidad()"
+                />
+              </form>
+            </section>
+
+            <section class="edicion__seccion">
+              <h3 class="edicion__titulo">Agregar una matrícula</h3>
+              <p class="edicion__nota">
+                Dónde estás habilitado a ejercer. Queda pendiente de verificación.
+              </p>
+
+              <form class="edicion__formulario" (submit)="$event.preventDefault()">
+                <app-form-field label="Jurisdicción">
+                  <app-concept-select
+                    [target]="targetMatricula"
+                    [(value)]="nuevaJurisdiccion"
+                    placeholder="Sin especificar"
+                  />
+                </app-form-field>
+
+                <app-form-field label="Nº de matrícula" [required]="true">
+                  <app-input [(value)]="nuevoNumeroDeMatricula" placeholder="Nº de licencia" />
+                </app-form-field>
+
+                <app-form-field
+                  label="Autoridad regulatoria"
+                  hint="Ministerio de Salud y Deportes, Colegio de Odontólogos, SEDES..."
+                >
+                  <app-input [(value)]="nuevaAutoridad" placeholder="Colegio Médico de..." />
+                </app-form-field>
+
+                <app-form-field
+                  label="Fecha de inscripción"
+                  hint="Cuándo quedó registrada esta matrícula."
+                >
+                  <app-date-picker [(value)]="nuevaFechaInscripcion" placeholder="Seleccionar fecha" />
+                </app-form-field>
+
+                <app-form-field
+                  class="edicion__campo-ancho"
+                  label="Respaldo de matrícula (opcional)"
+                  hint="PDF, JPG o PNG. Hasta 5 MB. Podés arrastrarlo o elegirlo desde tu dispositivo."
+                >
+                  <app-file-input
+                    testId="matricula-archivo"
+                    removeTestId="matricula-archivo-quitar"
+                    [(files)]="archivoDeMatricula"
+                    [accept]="formatosDeRespaldo"
+                    [maxSizeBytes]="maxBytesDeRespaldo"
+                    [maxFiles]="1"
+                    accessibleLabel="Respaldo de la matrícula"
+                  />
+                </app-form-field>
+
+                <app-form-actions
+                  class="edicion__campo-ancho"
+                  submitLabel="Agregar matrícula"
+                  [pending]="guardandoMatricula()"
+                  [disabled]="!puedeAgregarMatricula()"
+                  (submitted)="agregarMatricula()"
+                />
+              </form>
+            </section>
+          </app-tab>
+        </app-tabs>
+
+        <!-- ─── El guardar de lo que se corrige ──────────────────────────────
+             Datos personales y Contacto son UN formulario repartido en dos
+             pestañas y se guardan juntos, así que el botón vive fuera de las
+             pestañas y no se duplica. En «Trayectoria» y «Credenciales» no
+             aparece: ahí no se corrige nada, se agrega, y cada bloque tiene su
+             propio «Agregar». Un «Guardar cambios» presente mientras se carga
+             una matrícula prometería guardar algo que no guarda. -->
+        @if (editandoPresentacion()) {
           <app-form-actions
-            submitLabel="Guardar presentación"
+            class="edicion__guardar"
+            submitLabel="Guardar cambios"
             [pending]="guardandoPresentacion()"
             (submitted)="guardarPresentacion()"
           />
-        </form>
-      </app-card>
-
-      <!-- ─── Especialidades ─────────────────────────────────────────────
-           Sólo se AGREGA: una especialidad verificada es un hecho comprobado,
-           no un texto que se corrige. -->
-      <app-card variant="outlined" padding="lg" class="edicion__bloque">
-        <h2 class="edicion__titulo">Agregar especialidades</h2>
-        <p class="edicion__nota">
-          Podés cargar varias de una vez, como en el registro. Quedan pendientes de verificación
-          hasta que se comprueben contra tu credencial. Las que ya tenés no se editan desde acá: se
-          ven en tu perfil.
-        </p>
-
-        <form class="edicion__formulario" (submit)="$event.preventDefault()">
-          <!-- TJ-3 · F-19: las 36 especialidades del modelo, en castellano. Antes
-               esto pedía el catálogo por campo destino y llegaba una sola opción
-               («General medicine specialty»), que además no la usa ninguna fila. -->
-          @if (catalogoCaido()) {
-            <app-form-field label="Especialidad">
-              <p class="edicion__aviso" data-testid="especialidades-caidas">
-                No pudimos traer el catálogo de especialidades.
-                <button app-button variant="ghost" size="sm" (clicked)="reintentarEspecialidades()">
-                  Reintentar
-                </button>
-              </p>
-            </app-form-field>
-          } @else {
-            <app-form-field label="Especialidad" [required]="true">
-              <app-select
-                data-testid="especialidad-select"
-                [options]="especialidades()"
-                [(value)]="nuevaEspecialidad"
-                placeholder="Elegí una especialidad"
-              />
-            </app-form-field>
-
-            <!-- Las que se agreguen además, en casillas sumables: las mismas
-                 del alta de médico. Antes esto era una sola por envío, así que
-                 quien tiene tres especialidades tenía que elegir, guardar y
-                 esperar la recarga tres veces. -->
-            @for (extra of especialidadesExtra(); track $index) {
-              <app-form-field [label]="'Especialidad ' + ($index + 2)">
-                <div class="edicion__casilla-extra">
-                  <app-select
-                    [attr.data-testid]="'especialidad-extra-' + $index"
-                    [options]="especialidades()"
-                    placeholder="Elegí una especialidad"
-                    [value]="extra === '' ? null : extra"
-                    (valueChange)="elegirEspecialidadExtra($index, $event)"
-                  />
-                  <button
-                    app-button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    [iconOnly]="true"
-                    [attr.aria-label]="'Quitar la especialidad ' + ($index + 2)"
-                    [appTooltip]="'Quitar la especialidad ' + ($index + 2)"
-                    [attr.data-testid]="'quitar-especialidad-' + $index"
-                    (clicked)="quitarCasillaDeEspecialidad($index)"
-                  >
-                    <app-nav-icon name="remove" />
-                  </button>
-                </div>
-              </app-form-field>
-            }
-
-            <p class="edicion__sumar">
-              <button
-                app-button
-                type="button"
-                variant="ghost"
-                size="sm"
-                data-testid="agregar-casilla-especialidad"
-                (clicked)="agregarCasillaDeEspecialidad()"
-              >
-                + Agregar otra especialidad
-              </button>
-            </p>
-          }
-
-          <!-- Sin los dos interruptores («Es mi especialidad principal» y
-               «Tengo certificación de junta»): el propietario pidió el
-               2026-09-10 que esta pantalla se adapte al formulario del alta de
-               médico, y el alta no los tiene. Ahí la principal se elige en un
-               select —«Especialidad principal (opcional)»— al registrarse, y la
-               certificación de junta no se pregunta.
-
-               Consecuencia declarada, no escondida: agregar una especialidad
-               desde acá **nunca desplaza a la principal**. Cambiar cuál es la
-               principal más adelante no tiene hoy dónde hacerse; está anotado
-               en `docs/progress/BLOCKERS.md`. -->
-          <app-form-actions
-            [submitLabel]="
-              especialidadesElegidas().length > 1 ? 'Agregar especialidades' : 'Agregar especialidad'
-            "
-            [pending]="guardandoEspecialidad()"
-            [disabled]="!puedeAgregarEspecialidad()"
-            (submitted)="agregarEspecialidad()"
-          />
-        </form>
-      </app-card>
-
-      <!-- ─── Matrículas ──────────────────────────────────────────────────
-           Mismo criterio: se agrega, no se edita. -->
-      <app-card variant="outlined" padding="lg" class="edicion__bloque">
-        <h2 class="edicion__titulo">Agregar una matrícula</h2>
-        <p class="edicion__nota">
-          Dónde estás habilitado a ejercer. Queda pendiente de verificación.
-        </p>
-
-        <form class="edicion__formulario" (submit)="$event.preventDefault()">
-          <app-form-field label="Jurisdicción">
-            <app-concept-select
-              [target]="targetMatricula"
-              [(value)]="nuevaJurisdiccion"
-              placeholder="Sin especificar"
-            />
-          </app-form-field>
-
-          <app-form-field label="Nº de matrícula" [required]="true">
-            <app-input [(value)]="nuevoNumeroDeMatricula" placeholder="Nº de licencia" />
-          </app-form-field>
-
-          <app-form-field
-            label="Autoridad regulatoria"
-            hint="Ministerio de Salud y Deportes, Colegio de Odontólogos, SEDES..."
-          >
-            <app-input [(value)]="nuevaAutoridad" placeholder="Colegio Médico de..." />
-          </app-form-field>
-
-          <app-form-field
-            label="Fecha de inscripción"
-            hint="Cuándo quedó registrada esta matrícula."
-          >
-            <app-date-picker
-              [(value)]="nuevaFechaInscripcion"
-              placeholder="Seleccionar fecha"
-            />
-          </app-form-field>
-
-          <app-form-field
-            label="Respaldo de matrícula (opcional)"
-            hint="PDF, JPG o PNG. Hasta 5 MB. Podés arrastrarlo o elegirlo desde tu dispositivo."
-          >
-            <app-file-input
-              testId="matricula-archivo"
-              removeTestId="matricula-archivo-quitar"
-              [(files)]="archivoDeMatricula"
-              [accept]="formatosDeRespaldo"
-              [maxSizeBytes]="maxBytesDeRespaldo"
-              [maxFiles]="1"
-              accessibleLabel="Respaldo de la matrícula"
-            />
-          </app-form-field>
-
-          <app-form-actions
-            submitLabel="Agregar matrícula"
-            [pending]="guardandoMatricula()"
-            [disabled]="!puedeAgregarMatricula()"
-            (submitted)="agregarMatricula()"
-          />
-        </form>
-      </app-card>
-
-      <!-- ─── Formación ───────────────────────────────────────────────────
-           Mismo criterio que especialidad y matrícula: se agrega, no se
-           edita. Nace pendiente de verificación; el tipo sale del catálogo
-           dinámico (los cinco CREDENTIAL_TYPE_*). -->
-      <app-card variant="outlined" padding="lg" class="edicion__bloque">
-        <h2 class="edicion__titulo">Agregar formación</h2>
-        <p class="edicion__nota">
-          Títulos, diplomados, maestrías y doctorados. Queda pendiente de verificación; podés
-          cargar varios de cada clase.
-        </p>
-
-        <form class="edicion__formulario" (submit)="$event.preventDefault()">
-          <app-form-field label="Tipo de título" [required]="true">
-            <app-concept-select
-              data-testid="credencial-tipo"
-              [target]="targetCredencial"
-              [(value)]="nuevoTipoCredencial"
-              placeholder="Elegí un tipo"
-            />
-          </app-form-field>
-
-          <app-form-field
-            label="Número / título obtenido"
-            [required]="true"
-            hint="El número de tu diploma, o el nombre del título si no tiene número."
-          >
-            <app-input
-              data-testid="credencial-numero"
-              [(value)]="nuevoNumeroCredencial"
-              placeholder="Médico cirujano"
-            />
-          </app-form-field>
-
-          <app-form-field label="Institución (opcional)">
-            <app-input
-              [(value)]="nuevaInstitucionCredencial"
-              placeholder="Universidad Mayor de San Andrés"
-            />
-          </app-form-field>
-
-          <app-form-field label="Fecha de emisión (opcional)">
-            <app-date-picker
-              [(value)]="nuevaFechaEmisionCredencial"
-              placeholder="Seleccionar fecha"
-            />
-          </app-form-field>
-
-          <!-- El diploma. Mismo criterio que el alta de médico: opcional, PDF o
-               foto, hasta 5 MB. Acá **sí llega al servidor** —el contrato del
-               título declara `fileId`— y es lo que después mira quien verifica.
-               La matrícula no tiene un campo equivalente en su contrato; ver
-               `docs/progress/BLOCKERS.md`. -->
-          <app-form-field
-            label="Diploma o certificado (opcional)"
-            hint="PDF, JPG o PNG. Hasta 5 MB. Lo mira el equipo que verifica; no se publica."
-          >
-            <app-file-input
-              data-testid="credencial-archivo"
-              testId="credencial-archivo"
-              removeTestId="credencial-archivo-quitar"
-              [(files)]="archivoDeCredencial"
-              [accept]="formatosDeRespaldo"
-              [maxSizeBytes]="maxBytesDeRespaldo"
-              [maxFiles]="1"
-              accessibleLabel="Diploma o certificado del título"
-            />
-          </app-form-field>
-
-          <app-form-actions
-            submitLabel="Agregar título"
-            [pending]="guardandoCredencial()"
-            [disabled]="!puedeAgregarCredencial()"
-            (submitted)="agregarCredencial()"
-          />
-        </form>
+        }
       </app-card>
 
       <p class="edicion__volver">
