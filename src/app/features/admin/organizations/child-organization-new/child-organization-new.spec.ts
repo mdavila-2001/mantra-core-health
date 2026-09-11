@@ -67,6 +67,7 @@ describe('ChildOrganizationNew', () => {
     interno<{ setValue: (v: unknown) => void }>('form').setValue({
       code: 'FILIAL-NORTE',
       legalName: 'Filial Norte S.R.L.',
+      tipo: null,
     });
     crudo<{ set: (v: ReferenceOption) => void }>('administrador').set(ADMIN);
   }
@@ -75,7 +76,7 @@ describe('ChildOrganizationNew', () => {
     // Una red puede tener un hospital y una farmacia: suponer el tipo de la
     // madre sería adivinar, y el contrato lo exige por eso.
     completar();
-    crudo<{ set: (v: string) => void }>('tipo').set('PHARMACY');
+    interno<{ controls: { tipo: { setValue: (v: string) => void } } }>('form').controls.tipo.setValue('PHARMACY');
     crudo<{ set: (v: ReferenceOption) => void }>('pais').set(PAIS);
     crudo<{ set: (v: ReferenceOption) => void }>('jurisdiccion').set(JURISDICCION);
     interno<() => void>('submit')();
@@ -98,7 +99,7 @@ describe('ChildOrganizationNew', () => {
   it('un tipo territorial sin país ni jurisdicción no se envía', () => {
     // El backend responde 422 nombrando cuáles faltan; la pantalla lo evita.
     completar();
-    crudo<{ set: (v: string) => void }>('tipo').set('HOSPITAL');
+    interno<{ controls: { tipo: { setValue: (v: string) => void } } }>('form').controls.tipo.setValue('HOSPITAL');
     interno<() => void>('submit')();
 
     http.expectNone(`/tenants/${TENANT_ID}/child-tenants`);
@@ -108,7 +109,7 @@ describe('ChildOrganizationNew', () => {
 
   it('un tipo no territorial no manda país ni jurisdicción', () => {
     completar();
-    crudo<{ set: (v: string) => void }>('tipo').set('PAYER');
+    interno<{ controls: { tipo: { setValue: (v: string) => void } } }>('form').controls.tipo.setValue('PAYER');
     interno<() => void>('submit')();
 
     const pedido = http.expectOne(`/tenants/${TENANT_ID}/child-tenants`);
@@ -126,8 +127,9 @@ describe('ChildOrganizationNew', () => {
     interno<{ setValue: (v: unknown) => void }>('form').setValue({
       code: 'FILIAL-NORTE',
       legalName: 'Filial Norte S.R.L.',
+      tipo: null,
     });
-    crudo<{ set: (v: string) => void }>('tipo').set('PAYER');
+    interno<{ controls: { tipo: { setValue: (v: string) => void } } }>('form').controls.tipo.setValue('PAYER');
     interno<() => void>('submit')();
 
     http.expectNone(`/tenants/${TENANT_ID}/child-tenants`);

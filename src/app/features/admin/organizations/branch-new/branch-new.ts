@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
@@ -13,16 +13,12 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
-import { Input } from '../../../../shared/components/atoms/input/input';
-import { Select } from '../../../../shared/components/atoms/select/select';
-import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
-import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
+import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 
 /** Largos que declara `CreateBranchDto`. */
@@ -69,17 +65,7 @@ const ETIQUETAS_DE_TIPO: Readonly<Record<BranchTypeCode, string>> = {
  */
 @Component({
   selector: 'app-branch-new',
-  imports: [
-    Alert,
-    AnnounceOnAppear,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
-    PageHeader,
-    ReactiveFormsModule,
-    Select,
-  ],
+  imports: [Alert, AnnounceOnAppear, PageHeader, PaginatedForm],
   templateUrl: './branch-new.html',
   styleUrl: './branch-new.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -128,17 +114,104 @@ export class BranchNew {
     longitude: new FormControl<number | null>(null, {
       validators: [Validators.min(LONGITUD_MINIMA), Validators.max(LONGITUD_MAXIMA)],
     }),
+    /**
+     * El tipo **vive en el grupo**, no en una señal aparte.
+     *
+     * Vivía afuera porque el `app-select` suelto trabajaba con el valor tipado
+     * en vez del texto del control. Con el motor de formularios paginados todo
+     * escribe en el grupo —es de él de donde el motor lee y valida—, así que
+     * mantenerlo afuera lo habría dejado fuera de la página. Es el mismo
+     * camino que ya hizo el alta de organización.
+     *
+     * Sigue siendo opcional: el contrato no exige `branchType`.
+     */
+    tipo: new FormControl<BranchTypeCode | null>(null),
   });
 
-  /**
-   * El tipo vive fuera del `FormGroup`, como en el alta de organización: el
-   * selector trabaja con el valor tipado, no con el texto del control.
-   */
-  protected readonly tipo = signal<BranchTypeCode | null>(null);
+  private readonly opcionesDeTipo = (Object.keys(ETIQUETAS_DE_TIPO) as BranchTypeCode[]).map(
+    (code) => ({ value: code, label: ETIQUETAS_DE_TIPO[code] }),
+  );
 
-  protected readonly opcionesDeTipo: readonly SelectOption<BranchTypeCode>[] = (
-    Object.keys(ETIQUETAS_DE_TIPO) as BranchTypeCode[]
-  ).map((code) => ({ value: code, label: ETIQUETAS_DE_TIPO[code] }));
+  /**
+   * Las dos páginas del alta, con el mismo corte que tenían las secciones.
+   *
+   * Seis campos de una vez superan el tope de cuatro que el sistema fija para
+   * un formulario, y el corte no es arbitrario: identificar la sede es lo que
+   * el alta exige, y lo operativo se puede completar después. `paginarCampos`
+   * es lo que reparte y lo que da la barra de avance.
+   *
+   * Es un `computed` porque los mensajes de error dependen de la respuesta del
+   * servidor —el 409 del código— y de la regla de las coordenadas.
+   */
+  protected readonly paginas = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'Identificación',
+        hint: 'Con qué se la nombra dentro de la organización.',
+        campos: [
+          {
+            key: 'code',
+            label: 'Código',
+            hint: 'Único dentro de esta organización. Es sobre lo que ordena el listado.',
+            control: 'text' as const,
+            required: true,
+            testId: 'alta-sucursal-codigo',
+            mensajeDeError: this.codigoEnConflicto()
+              ? 'Ya existe una sede con este código en la organización. Probá con otro.'
+              : 'Escribí el código de la sede.',
+          },
+          {
+            key: 'name',
+            label: 'Nombre',
+            control: 'text' as const,
+            required: true,
+            testId: 'alta-sucursal-nombre',
+            mensajeDeError: 'Escribí el nombre de la sede (hasta 300 caracteres).',
+          },
+          {
+            key: 'tipo',
+            label: 'Tipo de sede',
+            hint: 'Opcional. Cómo se atiende en esta dirección.',
+            control: 'select' as const,
+            options: this.opcionesDeTipo,
+            placeholder: 'Elegí un tipo',
+          },
+        ],
+      },
+      {
+        titulo: 'Datos operativos',
+        hint: 'Se pueden completar después, pero la zona horaria es lo que hace que un turno signifique la misma hora para todos.',
+        campos: [
+          {
+            key: 'timeZone',
+            label: 'Zona horaria',
+            hint: 'Opcional, en formato IANA (por ejemplo, America/La_Paz).',
+            control: 'text' as const,
+            testId: 'alta-sucursal-zona',
+            mensajeDeError: 'La zona horaria no puede superar los 100 caracteres.',
+          },
+          {
+            key: 'latitude',
+            label: 'Latitud',
+            hint: 'Opcional. Va junto con la longitud.',
+            control: 'number' as const,
+            testId: 'alta-sucursal-latitud',
+            mensajeDeError: this.coordenadaIncompleta()
+              ? 'Cargá las dos coordenadas o ninguna: una sola no ubica la sede.'
+              : 'La latitud va entre -90 y 90.',
+          },
+          {
+            key: 'longitude',
+            label: 'Longitud',
+            hint: 'Opcional. Va junto con la latitud.',
+            control: 'number' as const,
+            testId: 'alta-sucursal-longitud',
+            mensajeDeError: 'La longitud va entre -180 y 180.',
+          },
+        ],
+      },
+    ]),
+  );
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
@@ -187,10 +260,6 @@ export class BranchNew {
     );
   });
 
-  protected cambiarTipo(tipo: BranchTypeCode | null): void {
-    this.tipo.set(tipo);
-  }
-
   protected submit(): void {
     if (this.enviando()) {
       return;
@@ -219,8 +288,7 @@ export class BranchNew {
 
   /** El cuerpo de la petición; los opcionales vacíos no se mandan. */
   private datos(): NewBranch {
-    const { code, name, timeZone, latitude, longitude } = this.form.getRawValue();
-    const tipo = this.tipo();
+    const { code, name, timeZone, latitude, longitude, tipo } = this.form.getRawValue();
 
     return {
       code: code.trim(),
