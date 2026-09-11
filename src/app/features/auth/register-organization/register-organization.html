@@ -63,6 +63,19 @@
           (enviado)="submit()"
           data-testid="registro-organizacion-form"
         >
+          <ng-template appCampoPersonalizado="gpsCasaMatriz">
+            <app-ubicacion-picker
+              pinId="casa-matriz"
+              etiquetaConfirmada="Casa matriz"
+              pregunta="¿Es acá donde está la casa matriz? Movete por el mapa para comprobarlo."
+              etiquetaQuitar="Quitar la ubicación de la casa matriz"
+              etiquetaMapa="La casa matriz en el mapa"
+              indicacionMarcar="Tocá el mapa en el lugar exacto de la casa matriz."
+              [ids]="idsUbicacionCasaMatriz"
+              [inicial]="gpsCasaMatriz()"
+              (confirmado)="gpsCasaMatriz.set($event)"
+            />
+          </ng-template>
           <ng-template appCampoPersonalizado="constitutionFileId">
             <ng-container
               [ngTemplateOutlet]="bloqueDocumento"

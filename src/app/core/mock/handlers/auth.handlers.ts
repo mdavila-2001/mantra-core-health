@@ -128,6 +128,7 @@ export function registrarAuth(router: MockRouter): void {
         code?: string;
         legalEntityType?: string;
         legalDocuments?: Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>;
+        payer?: { latitude?: number; longitude?: number };
       };
     }>({ body });
     const legalEntityType = datos.organization?.legalEntityType;
@@ -146,6 +147,33 @@ export function registrarAuth(router: MockRouter): void {
         },
       });
     }
+    const payer = datos.organization?.payer;
+    if (payer?.latitude !== undefined || payer?.longitude !== undefined) {
+      // Mismo contrato que el `ValidationPipe` real: la casa matriz
+      // georreferenciada (subtarea 1.3) es ambas coordenadas o ninguna, y
+      // cada una dentro de su rango.
+      const mensajes: string[] = [];
+      if (payer?.latitude === undefined) {
+        mensajes.push('organization.payer.latitude must be a number');
+      } else if (payer.latitude < -90 || payer.latitude > 90) {
+        mensajes.push('organization.payer.latitude must not be greater than 90');
+      }
+      if (payer?.longitude === undefined) {
+        mensajes.push('organization.payer.longitude must be a number');
+      } else if (payer.longitude < -180 || payer.longitude > 180) {
+        mensajes.push('organization.payer.longitude must not be greater than 180');
+      }
+      if (mensajes.length > 0) {
+        return reply(400, {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          message: 'Validation failed',
+          error: 'Bad Request',
+          details: { messages: mensajes },
+        });
+      }
+    }
+
     const legalDocuments = datos.organization?.legalDocuments;
     if (legalDocuments !== undefined) {
       const faltantes = LEGAL_DOCUMENT_FIELDS.filter((campo) => !legalDocuments[campo]);
