@@ -1,9 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 
 import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/legal-entity-types.service';
+import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
 import { RegisterOrganization } from './register-organization';
 
 const RESPUESTA = {
@@ -70,10 +72,25 @@ describe('RegisterOrganization', () => {
     http.verify();
   });
 
+  /** Los 5 `fileId` que `completar()` usa por defecto (subtarea 1.2). */
+  const DOCUMENTOS_DE_PRUEBA = {
+    constitutionFileId: 'file-constitution',
+    taxIdentifierFileId: 'file-tax',
+    commerceRegistryFileId: 'file-commerce',
+    operatingLicenseFileId: 'file-license',
+    healthAuthorityCertificateFileId: 'file-sedes',
+  };
+
   function completar(
     extra: Partial<
       Record<
-        'tradeName' | 'timeZone' | 'middleName' | 'motherLastName' | 'incorporationCountry' | 'legalEntityType',
+        | 'tradeName'
+        | 'timeZone'
+        | 'middleName'
+        | 'motherLastName'
+        | 'incorporationCountry'
+        | 'legalEntityType'
+        | keyof typeof DOCUMENTOS_DE_PRUEBA,
         string
       >
     > = {},
@@ -95,7 +112,38 @@ describe('RegisterOrganization', () => {
       motherLastName: extra.motherLastName ?? '',
       email: 'admin@andina.test',
       password: 'secreto12',
+      constitutionFileId: extra.constitutionFileId ?? DOCUMENTOS_DE_PRUEBA.constitutionFileId,
+      taxIdentifierFileId: extra.taxIdentifierFileId ?? DOCUMENTOS_DE_PRUEBA.taxIdentifierFileId,
+      commerceRegistryFileId:
+        extra.commerceRegistryFileId ?? DOCUMENTOS_DE_PRUEBA.commerceRegistryFileId,
+      operatingLicenseFileId:
+        extra.operatingLicenseFileId ?? DOCUMENTOS_DE_PRUEBA.operatingLicenseFileId,
+      healthAuthorityCertificateFileId:
+        extra.healthAuthorityCertificateFileId ??
+        DOCUMENTOS_DE_PRUEBA.healthAuthorityCertificateFileId,
     });
+  }
+
+  /**
+   * Avanza el asistente hasta que el título de la página vigente contenga
+   * `fragmentoDeTitulo`, tope de 10 pasos (más de los que este alta puede
+   * tener). El motor sólo renderiza la página actual (subtarea 1.2: los
+   * `app-dropzone-pdf` de las páginas anteriores/siguientes no están en el
+   * DOM), así que las pruebas que verifican ese render tienen que llegar ahí
+   * primero — con el formulario ya completo, cada página vigente es válida
+   * y `Continuar` no se bloquea.
+   */
+  function avanzarHasta(fragmentoDeTitulo: string): void {
+    for (let paso = 0; paso < 10; paso += 1) {
+      const titulo = fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
+      if (titulo.includes(fragmentoDeTitulo)) return;
+      const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="paginated-form-continuar"]',
+      );
+      continuar?.click();
+      fixture.detectChanges();
+    }
+    throw new Error(`No se alcanzó una página con título que contenga «${fragmentoDeTitulo}»`);
   }
 
   it('se renderiza y muestra el formulario', () => {
@@ -164,6 +212,7 @@ describe('RegisterOrganization', () => {
           sigla: 'AS',
           address: 'Av. Siempre Viva 123',
         },
+        legalDocuments: DOCUMENTOS_DE_PRUEBA,
       },
       owner: {
         email: 'admin@andina.test',
@@ -254,6 +303,123 @@ describe('RegisterOrganization', () => {
 
     // `expectOne` falla si hubo dos.
     http.expectOne('/iam/auth/register-organization').flush(RESPUESTA);
+  });
+
+  describe('documentos legales de afiliación (subtarea 1.2)', () => {
+    /**
+     * Las instancias de `app-dropzone-pdf` renderizadas en la página
+     * VIGENTE. El motor sólo pinta la página actual, y con 5 campos
+     * `custom` en una sección de tope 4, se parte en «(1 de 2)» (los
+     * primeros 4) y «(2 de 2)» (el SEDES) — hay que estar en la página
+     * correcta para que aparezcan.
+     */
+    function dropzonesDeDocumentos(): DropzonePdf[] {
+      return fixture.debugElement
+        .queryAll(By.directive(DropzonePdf))
+        .map((de) => de.componentInstance as DropzonePdf);
+    }
+
+    it('la sección de documentos renderiza los 5 controles, todos obligatorios', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Documentación legal obligatoria (PDF) (1 de 2)');
+      const primeraTanda = dropzonesDeDocumentos();
+      avanzarHasta('Documentación legal obligatoria (PDF) (2 de 2)');
+      const segundaTanda = dropzonesDeDocumentos();
+
+      const dropzones = [...primeraTanda, ...segundaTanda];
+      expect(dropzones).toHaveLength(5);
+      for (const dropzone of dropzones) {
+        expect(dropzone.required()).toBe(true);
+      }
+    });
+
+    it('cada dropzone corresponde a un testId de documento distinto', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Documentación legal obligatoria (PDF) (1 de 2)');
+      const primeraTanda = dropzonesDeDocumentos().map((d) => d.testId());
+      avanzarHasta('Documentación legal obligatoria (PDF) (2 de 2)');
+      const segundaTanda = dropzonesDeDocumentos().map((d) => d.testId());
+
+      const testIds = [...primeraTanda, ...segundaTanda];
+      expect(new Set(testIds).size).toBe(5);
+      expect(testIds).toContain('registro-organizacion-doc-healthAuthorityCertificateFileId');
+    });
+
+    it('sin uno de los cinco documentos, el formulario queda inválido y no se envía', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.healthAuthorityCertificateFileId.setValue('');
+
+      component.submit();
+
+      expect(component.form.invalid).toBe(true);
+      expect(component.form.controls.healthAuthorityCertificateFileId.touched).toBe(true);
+      // `http.verify()` del afterEach falla si algo hubiera salido a la red.
+    });
+
+    it('cuando una dropzone recuerda un fileId, el control correspondiente lo guarda', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Documentación legal obligatoria (PDF) (2 de 2)');
+
+      const dropzoneSedes = dropzonesDeDocumentos().find(
+        (d) => d.testId() === 'registro-organizacion-doc-healthAuthorityCertificateFileId',
+      );
+      dropzoneSedes?.fileId.set('file-nuevo');
+      fixture.detectChanges();
+
+      expect(component.form.controls.healthAuthorityCertificateFileId.value).toBe('file-nuevo');
+      expect(component.form.controls.healthAuthorityCertificateFileId.touched).toBe(true);
+    });
+
+    it('cuando una dropzone se queda sin archivo, el control vuelve a quedar vacío', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Documentación legal obligatoria (PDF) (1 de 2)');
+
+      const dropzoneConstitucion = dropzonesDeDocumentos().find(
+        (d) => d.testId() === 'registro-organizacion-doc-constitutionFileId',
+      );
+      // `completar()` puso el valor directo en el control, sin pasar por la
+      // dropzone: hay que dejarla creer que tiene un archivo antes de que lo
+      // pierda, si no `fileId.set(null)` no cambia nada (ya era `null`) y la
+      // señal del `model()` no emite.
+      dropzoneConstitucion?.fileId.set('file-constitution');
+      fixture.detectChanges();
+      dropzoneConstitucion?.fileId.set(null);
+      fixture.detectChanges();
+
+      expect(component.form.controls.constitutionFileId.value).toBe('');
+    });
+
+    it('el cuerpo del alta lleva los 5 fileId bajo legalDocuments', () => {
+      fixture.detectChanges();
+      completar({
+        constitutionFileId: 'f-constitucion',
+        taxIdentifierFileId: 'f-nit',
+        commerceRegistryFileId: 'f-seprec',
+        operatingLicenseFileId: 'f-licencia',
+        healthAuthorityCertificateFileId: 'f-sedes',
+      });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.legalDocuments).toEqual({
+        constitutionFileId: 'f-constitucion',
+        taxIdentifierFileId: 'f-nit',
+        commerceRegistryFileId: 'f-seprec',
+        operatingLicenseFileId: 'f-licencia',
+        healthAuthorityCertificateFileId: 'f-sedes',
+      });
+
+      req.flush(RESPUESTA);
+    });
   });
 
   describe('tipo societario y país de constitución (subtarea 1.1)', () => {

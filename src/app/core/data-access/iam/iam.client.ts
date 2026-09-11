@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
@@ -23,6 +23,7 @@ import type {
   RegisteredPatient,
   RegisteredPractitioner,
   Session,
+  UploadedRegistrationDocument,
   UserListItem,
   UserPage,
   UserSearchQuery,
@@ -315,6 +316,14 @@ export class IamClient {
           sigla: registration.payer.sigla,
           address: registration.payer.address,
         },
+        // Documentos legales de afiliación (subtarea 1.2): van DENTRO de
+        // `organization`, como los declara `RegisterOrganizationDetailsDto`
+        // del backend — no al lado, o el servidor los ignora en silencio (el
+        // DTO no reconocería una clave de más ahí y `forbidNonWhitelisted`
+        // la rechazaría con 400).
+        ...(registration.legalDocuments === undefined
+          ? {}
+          : { legalDocuments: registration.legalDocuments }),
       },
       owner: {
         email: registration.owner.email,
@@ -332,6 +341,25 @@ export class IamClient {
           : { motherLastName: registration.owner.motherLastName }),
       },
     });
+  }
+
+  /**
+   * `POST /iam/auth/upload-registration-document`. Pre-carga pública de un
+   * documento legal en PDF (subtarea 1.2): quien todavía no tiene cuenta
+   * sube el archivo antes del alta y reenvía el `fileId` que devuelve.
+   *
+   * Multipart sin fijar `Content-Type` a mano: el navegador pone el
+   * `boundary`. `observe: 'events'` + `reportProgress: true` para que la
+   * zona de arrastre pueda dibujar el avance de la subida.
+   */
+  uploadRegistrationDocument(file: File): Observable<HttpEvent<UploadedRegistrationDocument>> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<UploadedRegistrationDocument>(
+      this.url('/iam/auth/upload-registration-document'),
+      form,
+      { reportProgress: true, observe: 'events' },
+    );
   }
 
   /** `POST /iam/auth/verify-email`. No desbloquea nada: deja constancia. */
