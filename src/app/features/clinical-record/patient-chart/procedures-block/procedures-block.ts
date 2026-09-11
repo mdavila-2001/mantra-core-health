@@ -36,9 +36,10 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
+import { AttachmentDialog } from '../../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { Odontogram } from '../odontogram/odontogram';
+import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
 
 /**
  * Cuántos casos quirúrgicos se traen, y de cuántos se pide el detalle.
@@ -137,7 +138,7 @@ export interface TratamientoEnPantalla {
     Alert,
     AppButton,
     AppInput,
-    AttachmentUploader,
+    AttachmentDialog,
     Badge,
     Card,
     DatePipe,
@@ -294,8 +295,8 @@ export class ProceduresBlock {
   protected readonly enlazarAdjuntoAlTratamiento = (fileId: string, procedureId: string) =>
     this.clinical.attachFileToProcedure(procedureId, fileId);
 
-  protected alternarAdjuntos(procedureId: string): void {
-    this.adjuntandoArchivoA.update((actual) => (actual === procedureId ? null : procedureId));
+  protected abrirAdjuntos(procedureId: string): void {
+    this.adjuntandoArchivoA.set(procedureId);
   }
 
   protected cerrarAdjuntos(): void {
@@ -438,16 +439,10 @@ export class ProceduresBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no permite registrar tratamientos odontológicos.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
+    return mensajeDeFalloDeEscritura(state, {
+      accion: 'registrar tratamientos odontológicos',
+      sinPermiso: 'Tu rol no permite registrar tratamientos odontológicos.',
+    });
   });
 
   constructor() {

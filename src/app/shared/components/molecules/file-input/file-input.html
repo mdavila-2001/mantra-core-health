@@ -2,6 +2,7 @@
   <div
     class="dropzone"
     [class.is-dragging]="isDragging()"
+    [class.has-files]="files().length > 0"
     [class.is-disabled]="disabled()"
     (dragover)="handleDragOver($event)"
     (dragleave)="handleDragLeave($event)"
@@ -14,6 +15,11 @@
       type="file"
       class="native-file-input"
       [id]="controlId()"
+      [attr.data-testid]="testId()"
+      [attr.aria-labelledby]="labelId()"
+      [attr.aria-label]="labelId() ? null : accessibleLabel() || null"
+      [attr.aria-invalid]="invalid()"
+      [attr.aria-required]="isRequired()"
       [multiple]="multiple()"
       [disabled]="disabled()"
       [attr.accept]="accept() || null"
@@ -22,27 +28,67 @@
     />
     <label class="dropzone-content" [attr.for]="controlId()">
       <span class="dropzone-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
       </span>
+      <!-- El texto se dice en plural cuando el control admite varios: «arrastrá
+           tu archivo» sobre una zona que acepta doce es lo que hacía que nadie
+           probara a soltar más de uno. -->
       <span class="dropzone-text">
-        <span class="highlight">Elegí un archivo</span> o arrastralo acá
+        {{ textoDeArrastre() }}
+        <span class="dropzone-or">{{ textoSecundario() }}</span>
+        <span class="upload-button">{{ textoDelBoton() }}</span>
       </span>
       <span class="dropzone-subtext">
-        {{ multiple() ? 'Se pueden adjuntar varios' : 'Un solo archivo' }}
+        {{
+          accept()
+            ? accept()
+                .replaceAll('application/', '')
+                .replaceAll('image/', '')
+                .replaceAll(',', ' · ')
+                .toUpperCase()
+            : multiple()
+              ? 'Varios archivos'
+              : 'Un archivo'
+        }}
+        @if (maxSizeBytes(); as limit) {
+          · Máximo {{ formatFileSize(limit) }}{{ multiple() ? ' por archivo' : '' }}
+        }
       </span>
     </label>
   </div>
 
-  @if (files().length > 0) {
+  @if (showFeedback() && feedback().length) {
+    <div class="file-feedback" [id]="feedbackId()" role="alert">
+      @for (message of feedback(); track message) {
+        <p>{{ message }}</p>
+      }
+    </div>
+  }
+  @if (showList() && files().length > 0) {
     <ul class="file-list">
       @for (file of files(); track file.name + file.size + file.lastModified) {
         <li class="file-item">
+          <app-file-preview [file]="file" />
           <span class="file-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
               <polyline points="14 2 14 8 20 8" />
             </svg>
@@ -55,10 +101,19 @@
             type="button"
             class="remove-file-btn"
             [disabled]="disabled()"
+            [attr.data-testid]="removeTestId()"
             (click)="removeFile($index)"
             [attr.aria-label]="'Quitar ' + file.name"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>

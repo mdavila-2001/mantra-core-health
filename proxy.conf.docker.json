@@ -2,7 +2,7 @@
   {
     "context": [
       "/iam",
-      "/public",
+      "/public/",
       "/terminology",
       "/profiles",
       "/identity",
@@ -49,7 +49,11 @@
       "/cds",
       "/billing/service-catalog",
       "/diagnostics/patients",
-      "/diagnostics/work-orders"
+      "/diagnostics/work-orders",
+      "/quotations",
+      "/prescription-favorites",
+      "/insurance-carrier-catalog",
+      "/admin/content-packs"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

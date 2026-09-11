@@ -371,6 +371,15 @@ import type { NavIconName } from './nav-icon.types';
           <circle cx="12" cy="12" r="8.2" />
           <path d="M8.4 12h7.2" />
         }
+        @case ('edit') {
+          <!-- Un lápiz inclinado, con la punta apoyada en un renglón: «editá
+               esto». Sin hoja debajo —esa es «note», la sección de
+               evoluciones— para que los dos glifos no se confundan en la misma
+               pantalla. Misma caja de 24 y el mismo aire que el resto. -->
+          <path d="m4.6 15.4 9.6-9.6a1.7 1.7 0 0 1 2.4 0l1.6 1.6a1.7 1.7 0 0 1 0 2.4l-9.6 9.6H4.6z" />
+          <path d="m12.8 7.2 4 4" />
+          <path d="M13.4 19.4h6" />
+        }
         @case ('arrow-right') {
           <!-- Flecha a la derecha: «Siguiente». Espejo exacto de arrow-left,
                para que los dos botones del mismo par pesen igual. -->

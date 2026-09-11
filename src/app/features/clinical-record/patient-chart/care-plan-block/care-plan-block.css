@@ -1,0 +1,46 @@
+.plan {
+  display: block;
+}
+
+.plan__titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+}
+
+.plan__form {
+  margin-block-start: var(--sp-4);
+}
+
+/* Los pasos, cada uno en su caja: sin el marco, tres campos repetidos se leen
+   como un formulario que se repite por error. */
+.plan__actividades {
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.plan__actividades-titulo {
+  padding-inline: var(--sp-1);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.plan__actividad {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px dashed var(--border-subtle);
+}
+
+.plan__actividad:last-of-type {
+  border-block-end: none;
+  padding-block-end: 0;
+}

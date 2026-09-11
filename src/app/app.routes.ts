@@ -5,14 +5,12 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
-import { RegisterOrganization } from './features/auth/register-organization/register-organization';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
 import { ActivateAccount } from './features/auth/activate-account/activate-account';
 import { ResendVerification } from './features/auth/resend-verification/resend-verification';
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
-import { IdentityVerification } from './features/identity-verification/identity-verification';
 import { NotFound } from './features/not-found/not-found';
 import { ALOVIDA_ROUTES } from './features/alovida/alovida.routes';
 import { perfilPublicoResolver } from './features/public-profile/public-profile.resolver';
@@ -58,7 +56,6 @@ function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
  */
 const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
   dashboard: Dashboard,
-  'my-account/identity/verify': IdentityVerification,
 };
 
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
@@ -114,7 +111,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Diferidas como el resto: sólo las alcanza quien atiende, y el presupuesto
   // del bundle inicial está al límite —cargarlas de entrada lo pasaba por 4 kB
   // y le costaba la descarga a todo el mundo, paciente incluido—.
-  consultation: () => import('./features/consultation/consultation').then((m) => m.Consultation),
   'progress-notes': () =>
     import('./features/progress-notes/progress-notes').then((m) => m.ProgressNotes),
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
@@ -200,6 +196,23 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // FAR-I7: las campañas de la farmacia. Ruta hermana de la bandeja y no una
   // sección dentro del panel de organización, por el mismo motivo que aquélla:
   // el panel es de TP-1 y así no se le toca una línea.
+  // **La verificación de identidad dejó de ir directa** (2026-09-10). Iba, y el
+  // motivo era bueno mientras la ruta apuntaba a una pantalla sola: es la salida
+  // del 403 `IDENTITY_VERIFICATION_REQUIRED`, y diferirla agrega una descarga
+  // donde alguien ya está esperando.
+  //
+  // Al unificarla con «Mis trámites» dejó de ser una pantalla y pasó a ser un
+  // centro con pestañas, y con él entraron al paquete inicial las pestañas y la
+  // tarjeta. El bundle quedó **9 kB por encima del techo de `angular.json`** y el
+  // build pasó a fallar. El reparto correcto cambió con el tamaño: la descarga
+  // la paga una vez quien cae en un 403 —un camino de error, ya interrumpido— en
+  // vez de pagarla **toda** primera visita a la aplicación.
+  'my-account/identity': () =>
+    import('./features/identity-verification/identity-hub/identity-hub').then(
+      (m) => m.IdentityHub,
+    ),
+  'administration/my-practice': () =>
+    import('./features/practice/my-practice/my-practice').then((m) => m.MyPractice),
   'administration/pharmacy-campaigns': () =>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
@@ -292,21 +305,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
-  {
-    // Carril P2 · el hilo de una conversación. Cuelga de `messaging` y se llega
-    // desde la bandeja o desde una notificación de la campana, no desde el
-    // menú: es la ficha de una conversación concreta.
-    //
-    // Sin `seccionRolesGuard` explícito porque su sección no declara roles; el
-    // backend comprueba que quien lee participe del hilo, que es la única
-    // barrera que importa acá.
-    path: 'messaging/:conversationId',
-    title: `${APP_TITLE} - Conversación`,
-    loadComponent: () =>
-      import('./features/messaging/thread/thread')
-        .then((m) => m.Thread)
-        .catch(() => chunkFallido()),
-  },
   {
     // El grupo por dentro (P7). El directorio es la sección `groups`, que el
     // registro declara; esto es la ficha a la que se llega desde una tarjeta,
@@ -414,6 +412,20 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/clinical-record/patient-chart/patient-chart')
         .then((m) => m.PatientChart)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La atención: todo lo que se ESCRIBE durante una consulta. Cuelga del
+    // expediente y comparte su compuerta de roles porque es la misma persona y
+    // el mismo permiso; lo que cambia es el modo de trabajo. Vivía dentro del
+    // expediente y se separó: leer una historia y registrar una consulta son
+    // dos cosas distintas, y compartiendo pantalla se estorbaban.
+    path: 'medical-records/:profileId/encounter',
+    title: `${APP_TITLE} - Atención clínica`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/clinical-record/encounter-workspace/encounter-workspace')
+        .then((m) => m.EncounterWorkspace)
         .catch(() => chunkFallido()),
   },
   {
@@ -599,16 +611,6 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/my-profile/patient-profile-edit/patient-profile-edit')
         .then((m) => m.PatientProfileEdit)
-        .catch(() => chunkFallido()),
-  },
-  {
-    // La vitrina pública: se configura y se ve en la misma pantalla.
-    path: 'my-account/preview',
-    title: `${APP_TITLE} - Tu perfil público`,
-    ...soloDeQuienAtiende(),
-    loadComponent: () =>
-      import('./features/account/my-profile/public-profile-preview/public-profile-preview')
-        .then((m) => m.PublicProfilePreview)
         .catch(() => chunkFallido()),
   },
   {
@@ -838,10 +840,56 @@ function pantallaDeGeolocalizacion(
  * nadie declaró. Menú y rutas salen del mismo array, así que o existen las dos
  * cosas o no existe ninguna.
  */
+/**
+ * Las secciones que además son un marco: la pantalla queda montada y lo que
+ * cambia es lo que se pinta en su `router-outlet`.
+ *
+ * Hoy es una sola, la mensajería. El hilo de una conversación **no** es otra
+ * pantalla: es el panel derecho del chat, y declararlo como hermana hacía que
+ * abrir una conversación destruyera la bandeja y la volviera a pedir —la lista
+ * parpadeaba, el scroll se perdía y durante un instante no había nada—. Es lo
+ * primero que separa esto de cualquier chat que la gente ya usa.
+ *
+ * La sección sigue siendo una sola entrada del registro, así que el menú, el
+ * título y `seccionRolesGuard` no cambian: el guard del padre cubre a las
+ * hijas, que es justo lo que se quiere.
+ */
+const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
+  messaging: [
+    {
+      // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
+      // —«elegí una conversación»— lo dibuja el propio marco, y un componente
+      // aparte para eso sería un fragmento más que descargar para no mostrar
+      // nada. Tiene que existir igual: una ruta con hijas sólo casa si alguna
+      // consume lo que queda de la dirección, y sin ésta `/messaging` a secas
+      // caía en el comodín de «no encontrada».
+      //
+      // `children: []` y no una ruta pelada: el router exige que toda ruta
+      // declare con qué se resuelve (NG04014), y una lista de hijas vacía es
+      // la forma de decir «con nada».
+      path: '',
+      children: [],
+    },
+    {
+      // Carril P2 · el hilo de una conversación, dentro del marco del chat. Se
+      // llega desde la bandeja o desde una notificación de la campana.
+      path: ':conversationId',
+      title: `${APP_TITLE} - Conversación`,
+      loadComponent: () =>
+        import('./features/messaging/thread/thread')
+          .then((m) => m.Thread)
+          .catch(() => chunkFallido()),
+    },
+  ],
+};
+
 function rutasDeSecciones(): Routes {
   return APP_SECTIONS.map((section) => ({
     path: section.path,
     title: titleOf(section),
+    ...(RUTAS_ANIDADAS[section.path] === undefined
+      ? {}
+      : { children: RUTAS_ANIDADAS[section.path] }),
     // Los roles que el registro declara se hacen cumplir **también por ruta**
     // (carril 02). Filtrar el menú es cortesía; quien escribe la dirección a
     // mano llega igual, y la corrección #2 pide que la Guía de profesionales no
@@ -920,8 +968,15 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   contabilidad: '/administration/accounting',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
-  'identidad/verificar': '/my-account/identity/verify',
-  'identidad/casos': '/my-account/identity/cases',
+  'identidad/verificar': '/my-account/identity',
+  'identidad/casos': '/my-account/identity',
+  // Las dos rutas propias de antes de unificar (2026-09-10). Están en
+  // historiales, en favoritos y en los correos que la plataforma ya mandó.
+  'my-account/identity/verify': '/my-account/identity',
+  'my-account/identity/cases': '/my-account/identity',
+  // «Mis organizaciones» pasó a ser una pestaña de «Organización médica»
+  // (2026-09-10). Está en historiales y en el lateral de «Mi perfil».
+  'my-organizations': '/administration/medical-organization',
   'administracion/pacientes': '/administration/patients',
   'administracion/usuarios': '/administration/users',
   'administracion/organizaciones': '/administration/organizations',
@@ -1713,9 +1768,47 @@ export const routes: Routes = [
   {
     // Signup público de una organización aseguradora: crea el tenant `PAYER`
     // y su usuario owner en la misma operación.
+    // Diferida desde la subtarea 1.2: la documentación legal en PDF arrastra
+    // `app-file-input` (y con él `FilePreview`/`pdfjs-dist`, diferido a su vez).
     path: 'auth/register/organization',
-    component: RegisterOrganization,
+    loadComponent: () =>
+      import('./features/auth/register-organization/register-organization').then(
+        (m) => m.RegisterOrganization,
+      ),
     title: 'AloVida - Registrar aseguradora',
+  },
+  {
+    // El alta del laboratorio de sangre: los dieciocho puntos de datos legales
+    // del proceso 4.1 del stakeholder. Todavía sin endpoint —cierra con una
+    // solicitud, no con una cuenta—; ver el JSDoc de `RegisterLaboratory`.
+    path: 'auth/register/laboratory',
+    // Diferida por lo mismo que las otras dos altas largas: arrastra el mapa,
+    // que no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-laboratory/register-laboratory').then(
+        (m) => m.RegisterLaboratory,
+      ),
+    title: 'AloVida - Registrar laboratorio',
+  },
+  {
+    // El alta del centro de imagenología: el módulo «ANÁLISIS MÉDICOS (RAYOS X,
+    // RESONANCIA, ETC.)» del registro del stakeholder. Los dieciocho puntos de
+    // datos legales son los mismos que los del laboratorio de sangre —la fuente
+    // los repite enteros—, y lo que cambia es qué estudios hace el centro; ver
+    // el JSDoc de `RegisterImagingCenter`. Tampoco tiene endpoint todavía:
+    // cierra con una solicitud, no con una cuenta.
+    //
+    // La ruta dice `imaging-center` y no `imaging` a secas para no chocar con
+    // `?kind=IMAGING`, que es la **categoría** del directorio de laboratorios:
+    // aquélla filtra una vitrina, ésta da de alta una empresa.
+    path: 'auth/register/imaging-center',
+    // Diferida por lo mismo que las otras altas largas: arrastra el mapa, que
+    // no tiene por qué viajar en el paquete inicial de toda visita.
+    loadComponent: () =>
+      import('./features/auth/register-imaging-center/register-imaging-center').then(
+        (m) => m.RegisterImagingCenter,
+      ),
+    title: 'AloVida - Registrar centro de imagenología',
   },
   {
     // El enlace del correo trae el token por query string: /auth/verificar?token=…

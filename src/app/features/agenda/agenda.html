@@ -362,12 +362,10 @@
   @if (cita.rutaExpediente || cita.rutaPaciente) {
     <span class="agenda__accesos">
       @if (cita.rutaExpediente) {
-        <!-- El turno viaja con lo suyo: el motivo precarga el del encuentro y la
-             cita clínica lo ata a este turno. Los dos son opcionales y se
-             componen en el componente. -->
-        <a app-link [routerLink]="cita.rutaExpediente" [queryParams]="cita.paramsDelExpediente"
-          >Abrir expediente</a
-        >
+        <!-- Lectura pura: el motivo y el turno viajan con «Iniciar consulta»,
+             que es quien los usa. El expediente no los mira desde que la
+             escritura se mudó a Atención. -->
+        <a app-link [routerLink]="cita.rutaExpediente">Abrir expediente</a>
       }
       @if (cita.rutaPaciente) {
         <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
@@ -526,6 +524,18 @@
     }
 
     @if (sePuedeCompletar(cita)) {
+      <!-- Ya está en curso: se vuelve a entrar, no se reinicia. `startBooking`
+           sobre una cita iniciada es un 409. -->
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        data-testid="agenda-continuar"
+        (clicked)="continuarAtencion(cita)"
+      >
+        Continuar consulta
+      </button>
+
       <button
         app-button
         variant="primary"

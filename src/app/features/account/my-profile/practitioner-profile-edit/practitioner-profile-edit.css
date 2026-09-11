@@ -1,15 +1,43 @@
-/* Configurar el perfil profesional. Tres bloques independientes —
-   presentación, especialidades, matrículas— en una columna, con medida de
-   formulario. Sólo distribución. */
+/* Configurar el perfil profesional: UNA tarjeta con pestañas, centrada y a lo
+   ancho del área de contenido (`composition-rules.md` §5). Sólo distribución.
+
+   Lo que había antes y por qué se fue: cuatro tarjetas apiladas, cada una con
+   su formulario acotado a `max-inline-size: 44rem` y sin `margin-inline: auto`.
+   En una pantalla de trabajo eso deja el formulario en la esquina izquierda con
+   media pantalla vacía al lado — el defecto exacto que la regla nombra. El tope
+   de ancho lo pone `.app-main__inner` (1440 px) y nadie más; lo que evita las
+   casillas kilométricas no es acotar el formulario sino repartir los campos en
+   columnas. */
 
 :host {
   display: block;
 }
 
+/* `minmax(0, 1fr)` y no la columna implícita: una celda de grilla mide
+   `min-width: auto`, así que la tarjeta tomaba el ancho de su contenido más
+   ancho —la tira de cuatro pestañas— en vez del ancho disponible. Medido el
+   2026-09-11 en un viewport de 375: tarjeta de 558 px y documento de 570, con
+   scroll horizontal de la página entera. La molécula de pestañas ya hacía su
+   parte (`min-width: 0` y su propio scroll); lo que faltaba era dejarle un
+   ancho que pudiera achicarse. */
 .edicion {
   display: grid;
   gap: var(--sp-5);
+  grid-template-columns: minmax(0, 1fr);
   margin-block-start: var(--sp-6);
+}
+
+.edicion__bloque {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+/* Dentro de «Credenciales» viven dos trámites —especialidades y matrículas—
+   separados por aire, no por otra tarjeta. */
+.edicion__seccion + .edicion__seccion {
+  border-block-start: 1px solid var(--border-subtle);
+  margin-block-start: var(--sp-6);
+  padding-block-start: var(--sp-5);
 }
 
 .edicion__titulo {
@@ -26,13 +54,41 @@
   line-height: var(--lh-caption);
 }
 
+/* Una columna en móvil, dos desde 780 px y tres desde 1120 px: los tres
+   escalones de la regla §5. `align-items: start` para que una casilla con
+   mensaje de error no estire a sus vecinas de la misma fila.
+
+   `minmax(0, …)` en los tres escalones, incluido el de una sola columna: una
+   celda de grilla mide `min-width: auto`, así que el área de arrastrar archivos
+   de «Credenciales» imponía su ancho mínimo y estiraba la columna, la tarjeta y
+   la página entera — 570 px de documento en un viewport de 375, medido el
+   2026-09-11. Con `minmax(0, 1fr)` la celda puede achicarse y el contenido que
+   no entra scrollea dentro de su caja, que es lo que pide `50-frontend.md` §9. */
 .edicion__formulario {
+  align-items: start;
   display: grid;
   gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
   margin-block-start: var(--sp-4);
-  /* Un formulario de campos angostos a lo ancho de una pantalla grande se lee
-     peor que uno acotado a la medida de un formulario. */
-  max-inline-size: 44rem;
+}
+
+@media (min-width: 780px) {
+  .edicion__formulario {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .edicion__formulario {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Lo que no es una casilla corta ocupa el renglón entero: la biografía, el mapa,
+   el selector de municipio, el área de arrastrar archivos y la fila de acciones.
+   Partirlos en una columna de un tercio los vuelve ilegibles. */
+.edicion__campo-ancho {
+  grid-column: 1 / -1;
 }
 
 .edicion__volver {
@@ -47,5 +103,36 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
+  grid-column: 1 / -1;
   margin: 0;
+}
+
+/* La casilla agregada —un nombre más, una especialidad más— comparte renglón
+   con su botón de quitar, igual que en el alta de médico. */
+.edicion__casilla-extra {
+  align-items: center;
+  display: flex;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.edicion__casilla-extra app-input,
+.edicion__casilla-extra app-select {
+  flex: 1 1 auto;
+}
+
+/* El botón de sumar una casilla va en su propio renglón, alineado a la
+   izquierda: dentro de la grilla del formulario se estiraría a todo el ancho y
+   se leería como una acción del formulario, que no lo es. */
+.edicion__sumar {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin: 0;
+}
+
+/* El guardar de la presentación cierra la tarjeta, separado de las pestañas: es
+   de las dos primeras, no del panel que se esté mirando. */
+.edicion__guardar {
+  display: block;
+  margin-block-start: var(--sp-5);
 }

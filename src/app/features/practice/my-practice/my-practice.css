@@ -1,0 +1,7 @@
+/* Sin tope de ancho propio: lo pone `.app-main__inner` y nadie más
+   (`docs/components/composition-rules.md` §5). */
+.consultorio__bloque {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}

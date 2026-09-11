@@ -428,6 +428,34 @@ export class ClinicalClient {
   }
 
   /**
+   * `POST /clinical/medication-requests/:id/attachments` — liga un archivo ya
+   * subido a **esta receta**.
+   *
+   * Mismo criterio que el diagnóstico: el vínculo genérico de `common` no
+   * verifica que la receta exista ni quién puede adjuntarle nada, y esto sí es
+   * dato clínico.
+   *
+   * ⚠️ **La ruta todavía no existe en el backend** (P25). La maqueta la sirve.
+   */
+  attachFileToMedicationRequest(requestId: string, fileId: string): Observable<void> {
+    return this.http.post<void>(
+      this.url(`/clinical/medication-requests/${encodeURIComponent(requestId)}/attachments`),
+      { fileId },
+    );
+  }
+
+  /**
+   * `POST /clinical/allergy-intolerances/:id/attachments` — liga un archivo ya
+   * subido a **esta alergia**. Mismo caso que el anterior, y mismo P25.
+   */
+  attachFileToAllergy(allergyId: string, fileId: string): Observable<void> {
+    return this.http.post<void>(
+      this.url(`/clinical/allergy-intolerances/${encodeURIComponent(allergyId)}/attachments`),
+      { fileId },
+    );
+  }
+
+  /**
    * `POST /clinical/allergy-intolerances` — registra una alergia con sus
    * reacciones (UC-08-09).
    *
@@ -470,7 +498,7 @@ export class ClinicalClient {
           ...observacion,
           effectiveStartAt: instanteDe(observacion.effectiveStartAt),
           issuedAt: instanteDe(observacion.issuedAt),
-          performers: observacion.performers.map((ejecutante) => sinAusentes(ejecutante)),
+          performers: observacion.performers?.map((ejecutante) => sinAusentes(ejecutante)),
           components: observacion.components?.map((componente) => sinAusentes(componente)),
           referenceRanges: observacion.referenceRanges?.map((rango) => sinAusentes(rango)),
         }),

@@ -1,5 +1,24 @@
-@if (error(); as mensaje) {
-  <app-alert tone="error" title="No pudimos adjuntar el archivo">{{ mensaje }}</app-alert>
+<!-- ═══ Adjuntar archivos ═══════════════════════════════════════════════════
+     El cuerpo del modal `app-attachment-dialog`. Cuatro cosas en orden: el
+     contexto clínico que se hereda, la zona de selección, la cola con el
+     resultado de cada archivo y el resumen.
+
+     Lo que ya NO está: «Categoría» y «Sensibilidad». Eran dos decisiones del
+     servidor disfrazadas de preguntas — ver `upload-policy.ts`. -->
+
+<!-- El contexto, de lectura: se hereda del registro padre por su vínculo
+     persistente, así que no se vuelve a elegir. Se muestra porque quien
+     adjunta tiene derecho a saber dónde está guardando. -->
+@if (contexto().length > 0) {
+  <dl class="adjuntar__contexto" data-testid="adjuntar-contexto">
+    @for (dato of contexto(); track dato.rotulo) {
+      <div class="adjuntar__contexto-fila">
+        <dt class="adjuntar__contexto-rotulo">{{ dato.rotulo }}</dt>
+        <dd class="adjuntar__contexto-valor">{{ dato.valor }}</dd>
+      </div>
+    }
+  </dl>
+  <p class="adjuntar__aclaracion">Estos vínculos se aplican a todos los archivos seleccionados.</p>
 }
 
 @if (rechazados().length) {
@@ -12,44 +31,108 @@
   </app-alert>
 }
 
+<!-- El aviso del lote a medias va con la lista al lado, no en lugar de ella:
+     lo que hay que revisar es cuál falló, no que algo falló. -->
+@if (conError() > 0 && adjuntados() > 0) {
+  <app-alert tone="warning" title="Algunos archivos no se pudieron adjuntar">
+    Revisá los elementos marcados. Los que ya entraron no se vuelven a mandar.
+  </app-alert>
+}
+
+<!-- La ayuda no repite el límite ni los formatos: la zona de arrastre ya los
+     dice, y decirlo dos veces en dos renglones seguidos es ruido. Acá va lo
+     único que la zona no dice. -->
 <app-form-field
-  label="Archivo"
-  hint="Hasta 10 MB. Se registra con tu nombre y la hora."
+  label="Archivos"
+  hint="Se registra con tu nombre y la hora."
   [required]="true"
 >
+  <!-- `showList=false`: la cola de abajo es la misma selección pero con estado,
+       y dos listas de lo mismo se leen como dos selecciones distintas.
+       Sin `maxFiles`: el servidor no configura un máximo de cantidad —cada
+       archivo va en su propia petición—, así que la pantalla no inventa uno. -->
   <app-file-input
     [(files)]="seleccionados"
+    label="Seleccionar archivos"
+    testId="adjuntar-archivos-input"
+    [multiple]="true"
+    [showList]="false"
+    [accept]="accept"
     [maxSizeBytes]="maxBytes"
-    [maxFiles]="1"
     [disabled]="enviando()"
     (rejected)="alRechazar($event)"
   />
 </app-form-field>
 
-<app-form-field label="Categoría" [required]="true">
-  <app-radio-group [(value)]="categoria" [disabled]="enviando()">
-    <app-radio value="DOCUMENT" label="Documento" />
-    <app-radio value="IMAGE" label="Imagen" />
-  </app-radio-group>
-</app-form-field>
+<section class="adjuntar__cola" aria-label="Archivos seleccionados">
+  <h3 class="adjuntar__cola-titulo">Archivos seleccionados</h3>
 
-<app-form-field
-  label="Sensibilidad"
-  hint="PHI es dato clínico protegido: sólo lo ve quien tiene permiso."
-  [required]="true"
->
-  <app-radio-group [(value)]="sensibilidad" [disabled]="enviando()">
-    <app-radio value="NORMAL" label="Normal" />
-    <app-radio value="PHI" label="PHI" />
-  </app-radio-group>
-</app-form-field>
+  @if (cola().length === 0) {
+    <p class="adjuntar__vacio" data-testid="adjuntar-vacio">
+      Todavía no seleccionaste archivos.
+    </p>
+  } @else {
+    <ul class="adjuntar__lista" data-testid="adjuntar-lista">
+      @for (archivo of cola(); track archivo.clave) {
+        <li class="adjuntar__item" [attr.data-estado]="archivo.estado">
+          <span class="adjuntar__nombre" [attr.title]="archivo.file.name">
+            {{ archivo.file.name }}
+          </span>
+          <span class="adjuntar__tamano">{{ tamano(archivo.file) }}</span>
+          <span class="adjuntar__estado">{{ etiquetaDeEstado(archivo.estado) }}</span>
 
-<button
-  app-button
-  variant="primary"
-  [isLoading]="enviando()"
-  [disabled]="!puedeSubir()"
-  (clicked)="subir()"
->
-  Adjuntar
-</button>
+          <!-- Un archivo ya adjuntado no se «quita»: quitarlo de esta lista no
+               lo desadjunta del recurso, y ofrecer el botón daría a entender
+               que sí. Se saca desde la lista de archivos del recurso. -->
+          @if (archivo.estado !== 'adjuntado') {
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              data-testid="adjuntar-quitar"
+              [disabled]="enviando()"
+              [attr.aria-label]="'Quitar ' + archivo.file.name"
+              (clicked)="quitar(archivo.clave)"
+            >
+              Quitar archivo
+            </button>
+          } @else {
+            <span class="adjuntar__hueco" aria-hidden="true"></span>
+          }
+
+          @if (archivo.error !== '') {
+            <p class="adjuntar__error" role="alert">{{ archivo.error }}</p>
+          }
+        </li>
+      }
+    </ul>
+
+    <p class="adjuntar__resumen" data-testid="adjuntar-resumen">
+      {{ resumen() }}
+      @if (adjuntados() > 0) {
+        · {{ adjuntados() }} ya
+        {{ adjuntados() === 1 ? 'adjuntado' : 'adjuntados' }}
+      }
+    </p>
+  }
+</section>
+
+<!-- El pie viaja al `footer` del modal: proyectado con `dialog-actions` desde
+     `app-attachment-dialog`, que es quien lo envuelve. Acá queda como acción
+     del formulario para los usos que todavía no pasan por el modal. -->
+@if (showActions()) {
+  <div class="adjuntar__acciones">
+    <button
+      app-button
+      variant="primary"
+      type="button"
+      data-testid="adjuntar-confirmar"
+      [isLoading]="enviando()"
+      [disabled]="!puedeSubir()"
+      (clicked)="subir()"
+    >
+      {{ rotuloDeEnvio() }}
+    </button>
+  </div>
+}

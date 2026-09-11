@@ -158,4 +158,30 @@ export interface DatosPersonalesVisibles {
   readonly correo: string;
   /** Municipio de residencia, en palabras. */
   readonly domicilio: string;
+  /**
+   * Los cuatro contactos que el registro pregunta por separado, y la calle.
+   *
+   * La ficha mostraba **un** teléfono y **un** correo, cuando el alta declara
+   * cinco datos de contacto distintos —celular personal, celular del trabajo,
+   * fijo del trabajo, correo personal y correo de trabajo— y la API los
+   * devuelve todos. El pedido es que la ficha muestre los mismos campos del
+   * registro, y estos faltaban aunque el dato estuviera.
+   *
+   * Vacío es «no lo declaró»: la ficha no dibuja el renglón.
+   */
+  readonly celularPersonal: string;
+  readonly celularTrabajo: string;
+  readonly fijoTrabajo: string;
+  readonly correoPersonal: string;
+  /** La calle del domicilio. El municipio sigue en `domicilio`. */
+  readonly direccion: string;
+  /**
+   * El enlace al mapa del domicilio, o `null` si no declaró coordenadas.
+   *
+   * Se arma en el contenedor y no en la vista para que ésta siga sin saber de
+   * dónde salió el dato: acá llega un enlace listo o nada. Mismo criterio que
+   * la ficha del paciente, que ya lo hacía — el alta de médico pregunta la
+   * «Ubicación GPS» del domicilio y la ficha no la mostraba.
+   */
+  readonly mapaDomicilio: string | null;
 }

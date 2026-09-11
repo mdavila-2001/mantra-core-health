@@ -1,10 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, model, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 
+import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
 import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import {
+  MAX_ATTACHMENT_BYTES,
+  SUPPORT_FILE_FORMATS,
+} from '../../../auth/registro-compartido/credenciales-del-medico';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
 import type { OwnPractitionerProfile } from '../../../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -13,19 +19,37 @@ import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
+import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
+import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import {
+  separarNombres,
+  unirNombres,
+} from '../../../../core/profesion/nombres-adicionales';
+import {
+  OPCIONES_TITULO_PROFESIONAL,
+  esTituloDeLaLista,
+} from '../../../../core/profesion/titulos-profesionales';
+import {
+  UbicacionPicker,
+  type Coordenadas,
+  type IdsDePrueba,
+} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { PublicProfileSettings } from '../public-profile-settings/public-profile-settings';
+import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
 
 /** El campo de la jurisdicción, del catálogo dinámico. */
 const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
@@ -84,15 +108,20 @@ function soloFecha(fecha: Date): string {
     ConceptSelect,
     DatePicker,
     FormActions,
+    FileInput,
     FormField,
     Input,
     LocationPicker,
+    NavIcon,
     PageHeader,
-    PublicProfileSettings,
     RouterLink,
     Select,
     Switch,
+    Tab,
+    Tabs,
     Textarea,
+    Tooltip,
+    UbicacionPicker,
     ViewStateHost,
   ],
   templateUrl: './practitioner-profile-edit.html',
@@ -101,11 +130,34 @@ function soloFecha(fecha: Date): string {
 })
 export class PractitionerProfileEdit {
   private readonly profiles = inject(ProfilesClient);
+  private readonly files = inject(FilesClient);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
   private readonly catalogo = inject(MedicalSpecialtiesCatalog);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  /**
+   * La pestaña abierta. Es un `model` y no una señal propia por la misma razón
+   * que en el editor del paciente: el lápiz de la ficha abre el formulario en la
+   * pestaña que se estaba mirando, y para eso el índice tiene que poder venir de
+   * afuera.
+   */
+  readonly pestana = model<number>(PESTANA_EDITOR.personales);
+  protected readonly pestanas = PESTANAS_DEL_EDITOR_MEDICO;
+
+  /**
+   * Si la pestaña abierta es de las que se corrigen.
+   *
+   * «Datos personales» y «Contacto» son un solo formulario repartido en dos
+   * paneles y comparten el botón de guardar. «Trayectoria» y «Credenciales» no
+   * corrigen nada: agregan, y cada bloque tiene su propio «Agregar». Mostrar ahí
+   * «Guardar cambios» prometería guardar algo que ese botón no guarda.
+   */
+  protected readonly editandoPresentacion = computed(
+    () =>
+      this.pestana() === PESTANA_EDITOR.personales || this.pestana() === PESTANA_EDITOR.contacto,
+  );
 
   private readonly municipios = inject(BoMunicipalitiesCatalog);
 
@@ -142,6 +194,19 @@ export class PractitionerProfileEdit {
      oficial con su circuito, el segundo es la credencial de acceso. */
   protected readonly nombre = signal('');
   protected readonly segundoNombre = signal('');
+  /**
+   * El tercer nombre, y las casillas que se agreguen después.
+   *
+   * El alta de médico pregunta tres y deja sumar las que hagan falta —hay
+   * gente con cuatro y con cinco—; el editor ofrecía **una sola**. Quien se
+   * había registrado con tres nombres, al corregir cualquier otra cosa acá,
+   * mandaba de vuelta sólo el segundo y **perdía el resto sin enterarse**.
+   *
+   * Los tres controles son el mismo dato: `middleName` guarda todo lo que no
+   * es el primer nombre, separado por espacios. Ver `nombres-adicionales`.
+   */
+  protected readonly tercerNombre = signal('');
+  protected readonly nombresExtra = signal<readonly string[]>([]);
   protected readonly apellidoPaterno = signal('');
   protected readonly apellidoMaterno = signal('');
   /* Los cuatro contactos que el alta pide por separado. El de trabajo y el
@@ -162,9 +227,79 @@ export class PractitionerProfileEdit {
    * `PATCH`, y el backend la lee de vuelta en el resumen.
    */
   protected readonly direccion = signal('');
+
+  /**
+   * El punto del domicilio en el mapa — lo que el alta ya preguntaba
+   * (`gpsDomicilio`) y el editor no dejaba tocar.
+   *
+   * El contrato de `PATCH /profiles/practitioners/me` **ya aceptaba**
+   * `homeLatitude`/`homeLongitude`: lo que faltaba era la pantalla. Mismos tres
+   * estados que en el editor del paciente: sin tocar no viaja, quitado viaja
+   * como par de `null`, movido viaja como par.
+   */
+  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
+  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+
+  protected readonly idsGpsDomicilio: IdsDePrueba = {
+    mapa: 'edicion-domicilio-mapa',
+    confirmada: 'edicion-domicilio-confirmada',
+    avisoGeocodificacion: 'edicion-domicilio-aviso-geo',
+    quitar: 'edicion-domicilio-quitar-gps',
+    sinConfirmar: 'edicion-domicilio-sin-confirmar',
+    confirmar: 'edicion-domicilio-confirmar',
+    usarUbicacion: 'edicion-domicilio-usar-ubicacion',
+    marcarEnMapa: 'edicion-domicilio-marcar',
+  };
+
+  /** Las doce opciones del alta, compartidas: ver `titulos-profesionales`. */
+  protected readonly titulosProfesionales = OPCIONES_TITULO_PROFESIONAL;
+
+  /**
+   * Si el título guardado no está en la lista cerrada.
+   *
+   * Los perfiles anteriores a la lista tienen textos escritos a mano («Médica
+   * cardióloga»). No se borran ni se corrigen solos: se muestran, se avisa, y
+   * la persona elige de la lista cuando quiera. Pisar el dato al abrir la
+   * pantalla sería cambiar el perfil sin que nadie lo pidiera.
+   */
+  protected readonly tituloFueraDeLista = computed(
+    () => this.titulo() !== '' && !esTituloDeLaLista(this.titulo()),
+  );
   protected readonly guardandoPresentacion = signal(false);
 
   protected readonly bioLargoMaximo = 4000;
+
+  /** Suma una casilla vacía de nombre, como en el alta. */
+  protected agregarNombre(): void {
+    this.nombresExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /**
+   * Quita una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   */
+  protected quitarNombre(indice: number): void {
+    this.nombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /**
+   * Escribe en una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   * @param valor - Lo que se escribió.
+   */
+  protected escribirNombreExtra(indice: number, valor: string | number | null): void {
+    const texto = valor === null ? '' : String(valor);
+    this.nombresExtra.update((actuales) =>
+      actuales.map((nombre, i) => (i === indice ? texto : nombre)),
+    );
+  }
+
+  /** Los nombres adicionales tal como los guarda el contrato: una sola cadena. */
+  private nombresAdicionales(): string {
+    return unirNombres([this.segundoNombre(), this.tercerNombre(), ...this.nombresExtra()]);
+  }
 
   /* -- Nueva especialidad ---------------------------------------------------- */
 
@@ -181,11 +316,83 @@ export class PractitionerProfileEdit {
   protected readonly catalogoCaido = signal(false);
 
   protected readonly nuevaEspecialidad = signal<string | null>(null);
-  protected readonly nuevaEspecialidadPrincipal = signal(false);
-  protected readonly nuevaEspecialidadCertificada = signal(false);
+
+  /**
+   * Las especialidades que se agregan además de la primera, en casillas
+   * sumables — las mismas del alta de médico.
+   *
+   * El editor ofrecía **una** por envío: un médico con tres especialidades
+   * tenía que elegir, guardar, esperar la recarga y volver a empezar, tres
+   * veces. El alta nunca lo pidió así, y ésta es la misma pantalla del mismo
+   * dato. La cadena vacía es «esta casilla todavía no eligió nada».
+   */
+  protected readonly especialidadesExtra = signal<readonly string[]>([]);
+
+  /** Suma una casilla vacía de especialidad. */
+  protected agregarCasillaDeEspecialidad(): void {
+    this.especialidadesExtra.update((actuales) => [...actuales, '']);
+  }
+
+  /**
+   * Quita una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   */
+  protected quitarCasillaDeEspecialidad(indice: number): void {
+    this.especialidadesExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
+  }
+
+  /**
+   * Elige la especialidad de una de las casillas agregadas.
+   *
+   * @param indice - Cuál de las casillas extra, empezando por 0.
+   * @param valor - El uuid elegido, o `null` si se volvió al vacío.
+   */
+  protected elegirEspecialidadExtra(indice: number, valor: string | null): void {
+    const elegida = valor ?? '';
+    this.especialidadesExtra.update((actuales) =>
+      actuales.map((especialidad, i) => (i === indice ? elegida : especialidad)),
+    );
+  }
+
+  /**
+   * Las elegidas, en orden y sin repetidas.
+   *
+   * Mismo criterio que el alta (`especialidadesElegidas`): elegir dos veces la
+   * misma declara una, no dos filas iguales pendientes de verificación.
+   */
+  protected especialidadesElegidas(): readonly string[] {
+    const elegidas = [this.nuevaEspecialidad() ?? '', ...this.especialidadesExtra()].filter(
+      (valor) => valor !== '',
+    );
+    return [...new Set(elegidas)];
+  }
+  /**
+   * Los dos datos que el alta **no** pregunta.
+   *
+   * Eran dos interruptores en esta pantalla; el propietario pidió el 2026-09-10
+   * que el editor se adapte al formulario del alta de médico, y ahí la
+   * especialidad principal se elige en un select al registrarse y la
+   * certificación de junta no se pregunta.
+   *
+   * Se siguen mandando —el contrato los declara— con el único valor que esta
+   * pantalla puede afirmar con honestidad: una especialidad agregada después
+   * del alta es **adicional**, no la principal, y nadie declaró una
+   * certificación de junta.
+   */
+  private readonly ESPECIALIDAD_ADICIONAL = { isPrimary: false, boardCertified: false } as const;
+
+  /** El diploma del título que se está agregando. Uno, opcional. */
+  protected readonly archivoDeCredencial = signal<readonly File[]>([]);
+
+  /** Los mismos formatos y el mismo tope que el alta de médico. */
+  protected readonly formatosDeRespaldo = SUPPORT_FILE_FORMATS;
+  protected readonly maxBytesDeRespaldo = MAX_ATTACHMENT_BYTES;
   protected readonly guardandoEspecialidad = signal(false);
 
-  protected readonly puedeAgregarEspecialidad = computed(() => this.nuevaEspecialidad() !== null);
+  protected readonly puedeAgregarEspecialidad = computed(
+    () => this.nuevaEspecialidad() !== null || this.especialidadesExtra().some((e) => e !== ''),
+  );
 
   /* -- Nueva matrícula --------------------------------------------------------- */
 
@@ -194,6 +401,8 @@ export class PractitionerProfileEdit {
   protected readonly nuevoNumeroDeMatricula = signal('');
   protected readonly nuevaAutoridad = signal('');
   protected readonly nuevaFechaInscripcion = signal<Date | null>(null);
+  /** Respaldo visual de la matrícula; no se publica en la rama mockup. */
+  protected readonly archivoDeMatricula = signal<readonly File[]>([]);
   protected readonly guardandoMatricula = signal(false);
 
   protected readonly puedeAgregarMatricula = computed(
@@ -284,7 +493,12 @@ export class PractitionerProfileEdit {
     this.titulo.set(perfil.professionalTitle ?? '');
     this.bio.set(perfil.professionalBio ?? '');
     this.nombre.set(perfil.name ?? '');
-    this.segundoNombre.set(perfil.middleName ?? '');
+    // `middleName` trae TODOS los nombres que no son el primero, separados por
+    // espacio: se reparten en las mismas casillas que el alta ofrece.
+    const adicionales = separarNombres(perfil.middleName);
+    this.segundoNombre.set(adicionales.segundo);
+    this.tercerNombre.set(adicionales.tercero);
+    this.nombresExtra.set(adicionales.extra);
     this.apellidoPaterno.set(perfil.lastName ?? '');
     this.apellidoMaterno.set(perfil.motherLastName ?? '');
     this.celularPersonal.set(perfil.mobilePhone ?? '');
@@ -299,6 +513,14 @@ export class PractitionerProfileEdit {
     this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
     // ALV-009: la calle, si la declaró.
     this.direccion.set(perfil.homeAddress?.lines ?? '');
+    // Y su punto en el mapa. Las dos mitades tienen que estar: una latitud sin
+    // longitud pondría el pin en el meridiano cero.
+    const lat = perfil.homeAddress?.latitude;
+    const lng = perfil.homeAddress?.longitude;
+    this.gpsDomicilioGuardado.set(
+      lat === undefined || lng === undefined ? null : { lat, lng },
+    );
+    this.gpsDomicilio.set(undefined);
     if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
       this.cargarMunicipios();
     }
@@ -357,6 +579,8 @@ export class PractitionerProfileEdit {
       birthDate: string;
       residenceMunicipalityConceptId: string;
       homeAddressLines: string;
+      homeLatitude: number | null;
+      homeLongitude: number | null;
     }> = {};
     // ALV-003/009: los dos campos nuevos viajan sólo si cambiaron, como el
     // resto. La fecha se compara por día local (`toISOString` la pasaría por
@@ -374,6 +598,17 @@ export class PractitionerProfileEdit {
     if (this.direccion() !== (original.homeAddress?.lines ?? '')) {
       cambios.homeAddressLines = this.direccion();
     }
+    // El punto, con los mismos tres estados que en el editor del paciente:
+    // `undefined` no viaja, `null` quita y un par mueve. Mandar el punto actual
+    // «por las dudas» convertiría cada guardado en una reescritura del mapa.
+    const gps = this.gpsDomicilio();
+    if (gps === null) {
+      cambios.homeLatitude = null;
+      cambios.homeLongitude = null;
+    } else if (gps !== undefined) {
+      cambios.homeLatitude = gps.lat;
+      cambios.homeLongitude = gps.lng;
+    }
     if (this.titulo() !== (original.professionalTitle ?? '')) {
       cambios.professionalTitle = this.titulo();
     }
@@ -390,8 +625,11 @@ export class PractitionerProfileEdit {
     // vacía SÍ viaja —es cómo se borra un segundo nombre— y por eso se compara
     // contra el original en vez de descartar los vacíos.
     if (this.nombre() !== (original.name ?? '')) cambios.name = this.nombre();
-    if (this.segundoNombre() !== (original.middleName ?? '')) {
-      cambios.middleName = this.segundoNombre();
+    // Los tres controles de nombre son un solo campo del contrato: viaja la
+    // cadena entera, y por eso se compara la cadena entera. Vacía SÍ viaja —es
+    // cómo se borra un segundo nombre que no se lleva—.
+    if (this.nombresAdicionales() !== (original.middleName ?? '')) {
+      cambios.middleName = this.nombresAdicionales();
     }
     if (this.apellidoPaterno() !== (original.lastName ?? '')) {
       cambios.lastName = this.apellidoPaterno();
@@ -432,40 +670,59 @@ export class PractitionerProfileEdit {
     });
   }
 
+  /**
+   * Agrega TODAS las especialidades elegidas, no una.
+   *
+   * Un envío por especialidad —el contrato es `POST .../specialties`, de a
+   * una— pero un solo gesto de la persona: las peticiones salen juntas y la
+   * pantalla espera a que terminen todas antes de recargar el perfil, para no
+   * pintar una lista a medio llenar.
+   *
+   * Si alguna falla se avisa y **no** se limpia el formulario: lo elegido
+   * sigue ahí para reintentar. La recarga corre igual, así que las que sí
+   * entraron aparecen en el perfil y no se agregan dos veces.
+   */
   protected agregarEspecialidad(): void {
     const profileId = this.profileId();
-    const especialidad = this.nuevaEspecialidad();
-    if (profileId === null || especialidad === null || this.guardandoEspecialidad()) {
+    const elegidas = this.especialidadesElegidas();
+    if (profileId === null || elegidas.length === 0 || this.guardandoEspecialidad()) {
       return;
     }
 
+    const varias = elegidas.length > 1;
     this.guardandoEspecialidad.set(true);
-    this.profiles
-      .addSpecialty(profileId, {
-        specialtyConceptId: especialidad,
-        isPrimary: this.nuevaEspecialidadPrincipal(),
-        boardCertified: this.nuevaEspecialidadCertificada(),
-      })
-      .subscribe({
-        next: () => {
-          this.guardandoEspecialidad.set(false);
-          this.nuevaEspecialidad.set(null);
-          this.nuevaEspecialidadPrincipal.set(false);
-          this.nuevaEspecialidadCertificada.set(false);
-          this.toasts.success(
-            'Se agregó la especialidad. Queda pendiente de verificación.',
-            'Especialidades',
-          );
-          this.cargar();
-        },
-        error: () => {
-          this.guardandoEspecialidad.set(false);
-          this.toasts.error(
-            'No se pudo agregar la especialidad. Probá de nuevo.',
-            'Especialidades',
-          );
-        },
-      });
+    forkJoin(
+      elegidas.map((especialidad) =>
+        this.profiles.addSpecialty(profileId, {
+          specialtyConceptId: especialidad,
+          isPrimary: this.ESPECIALIDAD_ADICIONAL.isPrimary,
+          boardCertified: this.ESPECIALIDAD_ADICIONAL.boardCertified,
+        }),
+      ),
+    ).subscribe({
+      next: () => {
+        this.guardandoEspecialidad.set(false);
+        this.nuevaEspecialidad.set(null);
+        this.especialidadesExtra.set([]);
+        this.toasts.success(
+          varias
+            ? `Se agregaron ${elegidas.length} especialidades. Quedan pendientes de verificación.`
+            : 'Se agregó la especialidad. Queda pendiente de verificación.',
+          'Especialidades',
+        );
+        this.cargar();
+      },
+      error: () => {
+        this.guardandoEspecialidad.set(false);
+        this.toasts.error(
+          varias
+            ? 'No se pudieron agregar todas las especialidades. Revisá cuáles quedaron y probá de nuevo.'
+            : 'No se pudo agregar la especialidad. Probá de nuevo.',
+          'Especialidades',
+        );
+        this.cargar();
+      },
+    });
   }
 
   protected agregarMatricula(): void {
@@ -491,6 +748,7 @@ export class PractitionerProfileEdit {
           this.nuevoNumeroDeMatricula.set('');
           this.nuevaAutoridad.set('');
           this.nuevaFechaInscripcion.set(null);
+          this.archivoDeMatricula.set([]);
           this.toasts.success(
             'Se agregó la matrícula. Queda pendiente de verificación.',
             'Matrículas',
@@ -505,9 +763,21 @@ export class PractitionerProfileEdit {
   }
 
   /**
-   * Agrega un título propio. Nace pendiente de verificación, como la
-   * especialidad y la matrícula — declarar un título no es haberlo
-   * acreditado.
+   * Agrega un título propio, con su diploma si lo hay.
+   *
+   * Nace pendiente de verificación, como la especialidad y la matrícula:
+   * declarar un título no es haberlo acreditado.
+   *
+   * **Dos pasos, no uno** (propietario, 2026-09-10: «poder agregar las
+   * matrículas y adjuntos en base a su módulo de creación de médico»). El
+   * archivo se sube primero con `FilesClient.upload` y su identificador viaja
+   * como `fileId` del título — la misma cadena que ya usa la verificación de
+   * identidad, y el mismo motivo por el que están separados en el backend: el
+   * mismo archivo puede colgarse de más de un recurso.
+   *
+   * Si la subida falla **no se crea el título**: un título sin el diploma que
+   * la persona creyó haber adjuntado es peor que un error, porque nadie se
+   * entera hasta que lo rechazan.
    */
   protected agregarCredencial(): void {
     const tipo = this.nuevoTipoCredencial();
@@ -517,6 +787,28 @@ export class PractitionerProfileEdit {
     }
 
     this.guardandoCredencial.set(true);
+    const archivo = this.archivoDeCredencial()[0];
+    if (archivo === undefined) {
+      this.crearCredencial(tipo, numero, undefined);
+      return;
+    }
+
+    // `DOCUMENT`/`PHI`: es documentación de una persona identificable, el mismo
+    // par con el que sube su evidencia la verificación de identidad.
+    this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
+      next: ({ id }) => this.crearCredencial(tipo, numero, id),
+      error: () => {
+        this.guardandoCredencial.set(false);
+        this.toasts.error(
+          'No pudimos subir el diploma, así que no se agregó el título. Probá de nuevo.',
+          'Formación',
+        );
+      },
+    });
+  }
+
+  /** El alta del título en sí, con el diploma ya subido si lo había. */
+  private crearCredencial(tipo: string, numero: string, fileId: string | undefined): void {
     const fecha = this.nuevaFechaEmisionCredencial();
     this.profiles
       .addOwnCredential({
@@ -524,6 +816,7 @@ export class PractitionerProfileEdit {
         number: numero,
         issuingInstitutionText: this.nuevaInstitucionCredencial().trim() || undefined,
         issueDate: fecha === null ? undefined : fechaIso(fecha),
+        ...(fileId === undefined ? {} : { fileId }),
       })
       .subscribe({
         next: () => {
@@ -532,6 +825,7 @@ export class PractitionerProfileEdit {
           this.nuevoNumeroCredencial.set('');
           this.nuevaInstitucionCredencial.set('');
           this.nuevaFechaEmisionCredencial.set(null);
+          this.archivoDeCredencial.set([]);
           this.toasts.success(
             'Se agregó el título. Queda pendiente de verificación.',
             'Formación',

@@ -49,7 +49,7 @@
   --carril: 3.75rem;
 
   display: grid;
-  grid-template-columns: var(--carril) repeat(var(--dias), minmax(6.5rem, 1fr));
+  grid-template-columns: var(--carril) repeat(var(--dias, 7), minmax(6.5rem, 1fr));
   min-inline-size: 100%;
   inline-size: max-content;
 }

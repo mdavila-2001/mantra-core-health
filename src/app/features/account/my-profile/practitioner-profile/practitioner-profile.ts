@@ -7,6 +7,7 @@ import { PracticeSitesClient } from '../../../../core/data-access/practice-sites
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import type {
+  OwnAddress,
   OwnPractitionerProfile,
   PractitionerAffiliation,
   PractitionerCredential,
@@ -234,6 +235,14 @@ export class PractitionerProfile {
         telefono: perfil.phone ?? '',
         correo: perfil.email ?? '',
         domicilio: etiquetaOpcional(etiquetas, perfil.residenceMunicipalityConceptId),
+        // Los cuatro contactos del alta y la calle: la API ya los devolvía y la
+        // ficha mostraba sólo uno de cada clase.
+        celularPersonal: perfil.mobilePhone ?? '',
+        celularTrabajo: perfil.workMobilePhone ?? '',
+        fijoTrabajo: perfil.workLandline ?? '',
+        correoPersonal: perfil.personalEmail ?? '',
+        direccion: perfil.homeAddress?.lines ?? '',
+        mapaDomicilio: enlaceAlMapa(perfil.homeAddress),
       },
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
@@ -420,6 +429,22 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
 }
 
 /**
+ * El enlace al mapa de una dirección, o `null` si no tiene coordenadas.
+ *
+ * Copia deliberada del criterio de la ficha del paciente (`MyProfile.enlaceAlMapa`),
+ * incluido el rechazo del `0,0`: una dirección de Santa Cruz no está en el
+ * meridiano de Greenwich, y un enlace al golfo de Guinea es peor que ningún
+ * enlace.
+ */
+function enlaceAlMapa(direccion: OwnAddress | undefined): string | null {
+  if (direccion === undefined) return null;
+  const { latitude, longitude } = direccion;
+  if (latitude == null || longitude == null) return null;
+  if (latitude === 0 && longitude === 0) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+}
+
+/**
  * Una sede, lista para la ficha (ALV-005/006/010).
  *
  * La dirección se normaliza a MAYÚSCULAS **al mostrar**, no al guardar
@@ -449,6 +474,14 @@ export function conceptosDe(perfil: OwnPractitionerProfile): readonly string[] {
     perfil.practitionerCategoryConceptId,
     perfil.verificationStatusConceptId,
     perfil.practiceStatusConceptId,
+    // Los dos conceptos de la filiación. La ficha los dibuja desde que existe
+    // —el departamento como sufijo del documento, «5414404 Santa Cruz», y la
+    // localidad de residencia—, pero nadie pedía sus etiquetas: el `Map`
+    // llegaba sin ellos, `etiquetaOpcional` devolvía cadena vacía y los dos
+    // renglones se veían como si el dato no estuviera. El dato estaba; faltaba
+    // pedir cómo se llama.
+    perfil.issuerAdministrativeAreaConceptId,
+    perfil.residenceMunicipalityConceptId,
     ...perfil.specialties.flatMap((especialidad) => [
       especialidad.specialtyConceptId,
       especialidad.verificationStatusConceptId,
@@ -466,5 +499,8 @@ export function conceptosDe(perfil: OwnPractitionerProfile): readonly string[] {
         ? [idioma.languageConceptId]
         : [idioma.languageConceptId, idioma.proficiencyConceptId],
     ),
-  ];
+    // Los opcionales que no vinieron se descartan acá: mandar `undefined` en
+    // la lista de ids lo convertiría en la cadena «undefined» dentro del
+    // `?ids=` de la petición.
+  ].filter((id): id is string => id !== undefined);
 }

@@ -89,3 +89,23 @@
 .grupo__cargando {
   color: var(--text-secondary);
 }
+
+/* -- Embebido en el modal de Comunidades ------------------------------------
+   El título del grupo, en el tamaño que le corresponde adentro de un modal
+   cuyo `h2` es el nombre de la comunidad. */
+
+.grupo__titulo-embebido {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-body-lg, var(--fs-body));
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.grupo__bajada-embebida {
+    margin: var(--sp-1) 0 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}

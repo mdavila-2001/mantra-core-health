@@ -29,7 +29,8 @@
       <div class="registro__header">
         <h1 class="registro__title">Registrá tu aseguradora</h1>
         <p class="registro__subtitle">
-          Creá la cuenta de tu organización y su usuario administrador en un solo paso.
+          Creá la cuenta de tu organización, adjuntá sus documentos legales y dala de alta con su
+          usuario administrador en un solo paso.
         </p>
       </div>
 
@@ -39,16 +40,60 @@
         }}</app-alert>
       }
 
+      <ng-template #bloqueDocumento let-clave>
+        <app-dropzone-pdf
+          [uploader]="subirDocumento"
+          [label]="etiquetaDeDocumento(clave)"
+          [required]="true"
+          [hasError]="esDocumentoInvalido(clave)"
+          [testId]="'registro-organizacion-doc-' + clave"
+          [documentoInicial]="documentoInicialDe(clave)"
+          (fileIdChange)="registrarDocumento(clave, $event)"
+          (uploaded)="recordarDocumento(clave, $event)"
+        />
+      </ng-template>
+
       <div class="registro__body">
         <app-paginated-form
-          [paginas]="paginas"
+          [paginas]="paginas()"
           [form]="form"
           label="Crear cuenta de la aseguradora"
           submitLabel="Crear cuenta de la aseguradora"
           [pending]="isSubmitting()"
           (enviado)="submit()"
           data-testid="registro-organizacion-form"
-        />
+        >
+          <ng-template appCampoPersonalizado="constitutionFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'constitutionFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="taxIdentifierFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'taxIdentifierFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="commerceRegistryFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'commerceRegistryFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="operatingLicenseFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'operatingLicenseFileId' }"
+            />
+          </ng-template>
+          <ng-template appCampoPersonalizado="healthAuthorityCertificateFileId">
+            <ng-container
+              [ngTemplateOutlet]="bloqueDocumento"
+              [ngTemplateOutletContext]="{ $implicit: 'healthAuthorityCertificateFileId' }"
+            />
+          </ng-template>
+        </app-paginated-form>
       </div>
 
       <div class="registro__footer">

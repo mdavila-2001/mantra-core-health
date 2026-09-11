@@ -27,6 +27,15 @@ app-map {
   z-index: 0;
 }
 
+/* Cuando el mapa espera un toque, el cursor lo dice: la cruz de apuntar en
+   lugar de la mano de arrastrar. Leaflet pone su `cursor: grab` sobre
+   `.leaflet-container` y `.leaflet-grab`; ambos se pisan, el segundo porque es
+   el que gana durante el arrastre. */
+.mapa--seleccionable .leaflet-container,
+.mapa--seleccionable .leaflet-grab {
+  cursor: crosshair;
+}
+
 .mapa__espera {
   position: absolute;
   inset: 0;

@@ -10,7 +10,7 @@
  *
  * **No apaga la función.** Las rutas siguen declaradas y alcanzables, las
  * pantallas siguen montadas y `errorToViewState` sigue traduciendo el 403
- * `IDENTITY_VERIFICATION_REQUIRED` en una salida hacia `/my-account/identity/verify`.
+ * `IDENTITY_VERIFICATION_REQUIRED` en una salida hacia `/my-account/identity`.
  * Eso último es deliberado: si la API llega a exigir la verificación para una
  * operación concreta, quitarle a la persona la puerta la dejaría en un error
  * sin salida, que es peor que el cartel que se quitó.

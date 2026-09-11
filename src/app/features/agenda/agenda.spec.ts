@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../core/auth/session.store';
@@ -604,7 +604,7 @@ describe('Agenda', () => {
 
     const fila = citas().data?.[0] as Record<string, unknown>;
     expect(fila['appointmentId']).toBe('ap-1');
-    expect(fila['paramsDelExpediente']).toEqual({ motivo: 'Control anual', cita: 'ap-1' });
+    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual', cita: 'ap-1' });
   });
 
   /**
@@ -617,7 +617,7 @@ describe('Agenda', () => {
 
     const fila = citas().data?.[0] as Record<string, unknown>;
     expect(fila['appointmentId']).toBeNull();
-    expect(fila['paramsDelExpediente']).toEqual({ motivo: 'Control anual' });
+    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual' });
   });
 
   it('una cita sin motivo no inventa uno para llevar', async () => {
@@ -1160,6 +1160,61 @@ describe('Agenda', () => {
       occurredAt: '2026-08-15T12:00:00.000Z',
     });
     responderResto();
+  });
+
+  /**
+   * Fase 1 del plan de atención: «Iniciar consulta» es el **único** origen de
+   * la atención, así que además de marcar la cita tiene que llevar allá. Antes
+   * sólo hacía `start` y recargaba la tabla: el botón prometía una consulta
+   * que no abría.
+   */
+  it('iniciar la consulta entra a atender, con el motivo y el turno en la URL', async () => {
+    // Atender exige poder abrir expedientes: es la misma compuerta.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+    await verSolapaDeCitas();
+
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    interno<(c: unknown) => void>('iniciarAtencion')(citas().data?.[0]);
+    await harness.fixture.whenStable();
+
+    http.expectOne('/scheduling/bookings/b-1/start').flush({
+      bookingId: 'b-1',
+      statusConceptId: 'c-curso',
+      occurredAt: '2026-08-15T12:00:00.000Z',
+    });
+    await harness.fixture.whenStable();
+
+    expect(navegar).toHaveBeenCalledTimes(1);
+    const [ruta, extras] = navegar.mock.calls[0] as [string[], { queryParams: unknown }];
+    expect(ruta[0]).toMatch(/\/medical-records\/[^/]+\/encounter$/);
+    expect(extras.queryParams).toEqual(citas().data?.[0]?.['paramsDeLaAtencion']);
+    // Ya no recarga la tabla: se fue de la pantalla. Si recargara, el
+    // `http.verify()` del afterEach encontraría la petición huérfana.
+  });
+
+  /**
+   * `startBooking` sobre una cita ya iniciada es un 409: volver a entrar tiene
+   * que navegar y **no** repetir la transición.
+   */
+  it('continuar una consulta en curso navega sin volver a iniciarla', async () => {
+    // Atender exige poder abrir expedientes: es la misma compuerta.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+    await verSolapaDeCitas();
+
+    expect(boton('agenda-continuar')).not.toBeNull();
+
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    interno<(c: unknown) => void>('continuarAtencion')(citas().data?.[0]);
+    await harness.fixture.whenStable();
+
+    expect(navegar).toHaveBeenCalledTimes(1);
+    // El `http.verify()` del afterEach falla si esto salió a la red.
   });
 
   it('una cita en curso ofrece completarla, y solo eso', async () => {

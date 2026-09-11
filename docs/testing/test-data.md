@@ -97,6 +97,7 @@ respuestas se declaran en `e2e/support/api.ts`. Ver
 | Generación aleatoria | No | **No, y mejor**: rompe el determinismo |
 | Base de datos de prueba | No | Cuando haya E2E contra API real |
 | Servidor de simulación (MSW) | No | Playwright ya intercepta la red |
+| Simulación de fallos | **Sí** | Ver [Provocar un fallo en la maqueta](fallos-simulados.md) |
 
 **La ausencia de generación aleatoria es deliberadamente buena**: una prueba que
 falla una de cada veinte ejecuciones se termina ignorando.

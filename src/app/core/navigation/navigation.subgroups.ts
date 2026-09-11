@@ -192,7 +192,11 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'building',
     // El padrón de organizaciones y las que son de uno. Van juntas porque son
     // la misma entidad vista desde arriba y desde adentro.
-    paths: ['administration/organizations', 'administration/my-organization', 'my-organizations'],
+    paths: [
+      'administration/organizations',
+      'administration/my-organization',
+      'administration/my-practice',
+    ],
   },
   {
     label: 'Seguros',
@@ -278,7 +282,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Mi cuenta',
     icon: 'patients',
     // Quién soy para la plataforma, y cómo lo demuestro.
-    paths: ['my-account', 'my-account/identity/verify', 'my-account/identity/cases'],
+    paths: ['my-account', 'my-account/identity'],
   },
   {
     label: 'Mis gestiones',

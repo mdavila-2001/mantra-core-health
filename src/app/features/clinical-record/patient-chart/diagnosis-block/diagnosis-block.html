@@ -19,27 +19,13 @@
        ofrecerse después de guardar —adjuntar exige que la condición ya
        exista— y no desaparece solo: el archivo puede tardar en elegirse. -->
   @if (diagnosticoRecienRegistrado(); as conditionId) {
-    <app-card variant="outlined" padding="lg" class="diagnostico__adjuntos">
-      <div class="diagnostico__adjuntos-encabezado">
-        <h3 class="diagnostico__adjuntos-titulo">Adjuntar un archivo a este diagnóstico</h3>
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          type="button"
-          data-testid="diagnostico-adjuntos-cerrar"
-          (clicked)="cerrarAdjuntos()"
-        >
-          Listo, sin adjuntar
-        </button>
-      </div>
-      <app-attachment-uploader
-        ownerType="CONDITION"
-        [ownerId]="conditionId"
-        [linkVia]="enlazarAdjuntoAlDiagnostico"
-        (attached)="cerrarAdjuntos()"
-      />
-    </app-card>
+    <app-attachment-dialog
+      ownerType="CONDITION"
+      [ownerId]="conditionId"
+      [linkVia]="enlazarAdjuntoAlDiagnostico"
+      heading="Adjuntar un archivo a este diagnóstico"
+      (closed)="cerrarAdjuntos()"
+    />
   }
 
   <!-- ─── Registrar ────────────────────────────────────────────────────
@@ -50,7 +36,7 @@
       Un diagnóstico queda bajo la custodia de una organización. Elegí una en el selector del
       encabezado para poder registrarlo.
     </app-alert>
-  } @else if (!hayEncuentro()) {
+  } @else if (!hayEncuentro() && exigeEncuentro()) {
     <app-alert tone="info" title="Abrí el encuentro para registrar">
       El diagnóstico se registra dentro de la consulta que lo motivó. Registrá el encuentro acá
       arriba y el formulario aparece.
@@ -92,6 +78,26 @@
     }
 
     <form class="diagnostico__formulario" (submit)="$event.preventDefault()">
+      <!-- «Un campo select para colocar la enfermedad detectada en base a una
+           cita ya existente y/o finalizada», textual del cliente. Sólo se
+           dibuja si hay citas que ofrecer: un desplegable con una única opción
+           vacía es una pregunta que no existe. -->
+      @if (opcionesDeCita().length > 1) {
+        <app-form-field
+          label="¿En qué cita se detectó?"
+          hint="Opcional. La consulta donde apareció la condición, incluidas las ya finalizadas."
+        >
+          <!-- Sin `placeholder`: la opción vacía ya está en la lista y es la
+               primera. Con las dos, «Sin cita asociada» aparecía repetida. -->
+          <app-select
+            data-testid="diagnostico-cita"
+            [value]="citaElegida()"
+            (valueChange)="citaElegida.set($event)"
+            [options]="opcionesDeCita()"
+          />
+        </app-form-field>
+      }
+
       <app-form-field
         label="Diagnóstico"
         hint="Del catálogo de terminología (CIE-10). Es lo único obligatorio."
@@ -143,7 +149,8 @@
       >
         <app-concept-select
           [target]="targetCursoClinico"
-          [(value)]="cursoClinico"
+          [value]="cursoClinico()"
+          (valueChange)="elegirCurso($event)"
           [labels]="etiquetasDeCurso"
           placeholder="Sin especificar"
         />
@@ -156,12 +163,43 @@
         <app-date-picker [(value)]="inicio" />
       </app-form-field>
 
+      <!-- La duración estimada, que es como el cliente lo pidió: «una duración
+           promedio del diagnóstico, y en caso de ser crónico que aparezca la
+           opción». De acá salen la fecha esperada y una sugerencia de curso;
+           elegir el curso a mano gana sobre la sugerencia. -->
       <app-form-field
-        label="Fecha esperada de resolución"
-        hint="Opcional. Tiene sentido sobre todo en curso agudo o subagudo."
+        label="Duración estimada"
+        hint="Opcional. Deriva la fecha de resolución esperada y sugiere el curso clínico."
       >
-        <app-date-picker [(value)]="fechaEsperada" />
+        <div class="diagnostico__chips-duracion">
+          @for (opcion of duraciones; track opcion.label) {
+            <app-chip
+              variant="primary"
+              size="sm"
+              selectable
+              [selected]="
+                opcion.dias === null ? esCronico() : !esCronico() && duracionDias() === opcion.dias
+              "
+              (selectedChange)="fijarDuracion(opcion.dias)"
+            >
+              {{ opcion.label }}
+            </app-chip>
+          }
+        </div>
       </app-form-field>
+
+      <!-- Con curso crónico no se pregunta: una condición de seguimiento
+           continuo no resuelve, y dejar el campo invita a inventar una fecha.
+           Entra y sale del DOM en vez de esconderse: un campo escondido igual
+           se tabula. -->
+      @if (!cursoEsCronico()) {
+        <app-form-field
+          label="Fecha esperada de resolución"
+          hint="Opcional. Tiene sentido sobre todo en curso agudo o subagudo."
+        >
+          <app-date-picker [(value)]="fechaEsperada" />
+        </app-form-field>
+      }
 
       <app-form-field
         label="Hallazgos clínicos y observaciones"

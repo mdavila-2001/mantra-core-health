@@ -232,6 +232,8 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
+    // Vista previa local de audio/video; sin proveedores externos ni iframes.
+    "media-src 'self' blob:",
     "base-uri 'self'",
     "form-action 'self'",
     ...(upgrade ? ['upgrade-insecure-requests'] : []),

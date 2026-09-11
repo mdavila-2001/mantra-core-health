@@ -2,7 +2,7 @@
 
 # Inventario de rutas
 
-Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 19 entradas declaradas.
+Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 21 entradas declaradas.
 
 | URL | Destino | Acceso | Render en servidor | Título |
 |---|---|---|---|---|
@@ -18,6 +18,8 @@ Leído de `src/app/app.routes.ts` y `src/app/app.routes.server.ts`. 19 entradas 
 | `/auth/register/patient` | `RegisterPatient` (diferida) | Pública | Prerender | AloVida - Crear cuenta de paciente |
 | `/auth/register/practitioner` | `RegisterPractitioner` (diferida) | Pública | Prerender | AloVida - Crear cuenta de profesional |
 | `/auth/register/organization` | `RegisterOrganization` | Pública | Prerender | AloVida - Registrar aseguradora |
+| `/auth/register/laboratory` | `RegisterLaboratory` (diferida) | Pública | Prerender | AloVida - Registrar laboratorio |
+| `/auth/register/imaging-center` | `RegisterImagingCenter` (diferida) | Pública | Client | AloVida - Registrar centro de imagenología |
 | `/auth/verify-email` | `VerifyEmail` | Pública | Client | AloVida - Verificar correo |
 | `/auth/forgot-password` | `ForgotPassword` | Pública | Prerender | AloVida - Recuperar contraseña |
 | `/auth/activate` | `ActivateAccount` | Pública | Client | AloVida - Activar cuenta |

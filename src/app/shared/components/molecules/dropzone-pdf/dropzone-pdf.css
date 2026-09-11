@@ -1,0 +1,82 @@
+:host {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.dropzone-pdf__estado {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.dropzone-pdf__estado:empty {
+  display: none;
+}
+
+.dropzone-pdf__nombre {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropzone-pdf__check {
+  flex: 0 0 auto;
+  inline-size: 1.1em;
+  block-size: 1.1em;
+  color: var(--st-success-fg);
+  transform: scale(1);
+  transition: transform var(--dur-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropzone-pdf__check {
+    transition: none;
+  }
+}
+
+.dropzone-pdf__quitar {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.dropzone-pdf__quitar:disabled {
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.dropzone-pdf__quitar:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.dropzone-pdf__error {
+  margin: var(--sp-2) 0 0;
+  color: var(--st-error-fg);
+  font-size: 0.875rem;
+}
+
+.sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

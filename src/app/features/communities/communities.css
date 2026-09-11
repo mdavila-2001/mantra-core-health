@@ -1,0 +1,206 @@
+/* ============================================================================
+    Comunidades — el cuerpo del modal.
+
+    Mobile-first: sólo consultas `min-width`. En teléfono se ve **un** nivel a la
+    vez y `data-nivel` decide cuál; a partir de 60rem entran los dos, con la
+    lista de comunidades a la izquierda. Esa columna es la distribución interna
+    del modal, no un cajón lateral de la aplicación.
+    ========================================================================== */
+
+.comunidades__alerta {
+    margin-block-end: var(--sp-4);
+}
+
+.comunidades {
+    display: grid;
+    gap: var(--sp-5);
+}
+
+/* En teléfono, un nivel por vez: dos listas apiladas en 360 px obligan a
+   recorrer la primera entera para llegar a lo que se abrió. */
+.comunidades[data-nivel='comunidad'] .comunidades__lista,
+.comunidades[data-nivel='grupo'] .comunidades__lista {
+    display: none;
+}
+
+.comunidades[data-nivel='comunidades'] .comunidades__panel {
+    display: none;
+}
+
+@media (min-width: 60rem) {
+    .comunidades {
+        grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+        align-items: start;
+    }
+
+    /* Con sitio, la lista se queda: cambiar de comunidad sin volver atrás es
+       lo que hace que esto se lea como un solo lugar y no como tres pantallas. */
+    .comunidades[data-nivel='comunidad'] .comunidades__lista,
+    .comunidades[data-nivel='grupo'] .comunidades__lista,
+    .comunidades[data-nivel='comunidades'] .comunidades__panel {
+        display: block;
+    }
+
+    .comunidades__volver-movil {
+        display: none;
+    }
+}
+
+/* -- El listado ------------------------------------------------------------- */
+
+.comunidades__items {
+    display: grid;
+    gap: var(--sp-1);
+    margin: var(--sp-4) 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.comunidades__item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    inline-size: 100%;
+    padding: var(--sp-3);
+    border: 1px solid transparent;
+    border-radius: var(--r-md);
+    background: transparent;
+    font: inherit;
+    color: var(--text-primary);
+    text-align: start;
+    cursor: pointer;
+}
+
+.comunidades__item:hover {
+    background: var(--bg-hover);
+}
+
+.comunidades__item.is-abierta {
+    border-color: var(--border-default);
+    background: var(--bg-surface-alt);
+}
+
+.comunidades__sigla {
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    border-radius: var(--r-full, 999px);
+    background: var(--st-primary-bg);
+    color: var(--st-primary-fg);
+    font-family: var(--font-display);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+}
+
+.comunidades__texto {
+    display: grid;
+    gap: var(--sp-1);
+    min-inline-size: 0;
+}
+
+.comunidades__nombre {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    /* Un nombre largo parte en dos renglones antes que estirar la columna. */
+    overflow-wrap: anywhere;
+}
+
+.comunidades__meta,
+.comunidades__sin-resultados,
+.comunidades__cargando,
+.comunidades__invitacion {
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.comunidades__sin-resultados,
+.comunidades__cargando,
+.comunidades__invitacion {
+    margin: var(--sp-4) 0 0;
+}
+
+/* -- La comunidad abierta --------------------------------------------------- */
+
+.comunidades__cabecera {
+    display: grid;
+    gap: var(--sp-2);
+    margin-block-end: var(--sp-4);
+}
+
+.comunidades__titulo {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--fs-h3);
+    line-height: var(--lh-h3);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.comunidades__subtitulo {
+    margin: 0 0 var(--sp-3);
+    font-family: var(--font-display);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Los anuncios, separados de los grupos por un borde y no sólo por espacio:
+   la diferencia entre «comunicaciones generales» y «una conversación más»
+   tiene que verse sin leer los títulos. */
+.comunidades__anuncios {
+    padding-block-end: var(--sp-5);
+    border-block-end: 1px solid var(--border-default);
+    margin-block-end: var(--sp-5);
+}
+
+.comunidades__grupos-lista {
+    display: grid;
+    gap: var(--sp-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 45rem) {
+    .comunidades__grupos-lista {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    }
+}
+
+.comunidades__grupo {
+    display: grid;
+    gap: var(--sp-1);
+    inline-size: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.comunidades__grupo-nombre {
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.comunidades__grupo-descripcion {
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-secondary);
+}
+
+.comunidades__grupo-meta {
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-muted, var(--text-secondary));
+}

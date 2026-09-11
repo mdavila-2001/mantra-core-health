@@ -95,3 +95,117 @@
 .articulos__ir {
   margin: 0;
 }
+
+/* ============================================================================
+    El compositor: UNA superficie de escritura, no un formulario.
+
+    El documento de corrección propone medidas y colores literales (#FFFFFF,
+    24px, #EEEEEE…). Acá mandan los tokens: el proyecto no usa valores fijos y
+    un hex donde iba un token rompe el tema oscuro sin avisar (regla 2 del
+    sistema de diseño). Las proporciones que el documento pide —cabecera
+    compacta, escritura dominante, pie a la derecha— se consiguen igual.
+    ========================================================================== */
+
+.compositor {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* ---- Cabecera: quién firma ---------------------------------------------- */
+
+.compositor__autor {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  /* `min-width: 0` en la fila y en la identidad: sin esto un nombre largo
+     ensancha la rejilla y empuja el avatar fuera de la tarjeta. */
+  min-inline-size: 0;
+}
+
+.compositor__identidad {
+  min-inline-size: 0;
+}
+
+.compositor__nombre {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  /* Un nombre largo se corta con puntos suspensivos, no rompe la fila. El
+     nombre completo sigue en el DOM para el lector de pantalla. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dónde va a parar lo que se escriba. Secundario a propósito: es contexto, no
+   una acción. */
+.compositor__alcance {
+  display: flex;
+  /* `flex-start` y no `center`: en pantalla angosta el texto se parte en dos
+     líneas y con `center` el ícono quedaba flotando entre las dos, leído como
+     si no perteneciera a ninguna. Pegado arriba acompaña a la primera. */
+  align-items: flex-start;
+  gap: var(--sp-1);
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.compositor__alcance-icono {
+  flex: 0 0 auto;
+  inline-size: 1em;
+  block-size: 1em;
+  /* Centrado ÓPTICO sobre la primera línea: el glifo mide 1em y la línea
+     `--lh-caption`, así que la mitad de esa diferencia lo baja a su eje. */
+  margin-block-start: calc((var(--lh-caption) - 1em) / 2);
+}
+
+/* ---- Escritura ----------------------------------------------------------- */
+
+/* El rótulo se oculta SOLO para la vista: el `for`/`id` que asocia el control
+   sigue intacto, así que el área de escritura conserva su nombre accesible.
+   Misma receta que la clase global `.sr-only`. */
+.compositor__campo ::ng-deep .form-field-label {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* El editor se funde con la superficie de la tarjeta: sin marco propio en
+   reposo, que es lo que lo hacía leerse como un campo de formulario dentro de
+   otra caja. El foco NO se toca — lo pinta el propio átomo y es lo único que
+   dice dónde está el cursor para quien navega con teclado. */
+.compositor__campo ::ng-deep .textarea-wrapper {
+  border-color: transparent;
+  background: transparent;
+}
+
+.compositor__campo ::ng-deep .native-textarea {
+  padding-inline: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+/* ---- Pie ----------------------------------------------------------------- */
+
+/* La línea tenue que separa la escritura de la acción. Va acá y no en
+   `app-form-actions`: ese organismo lo comparten muchas pantallas y sólo dibuja
+   su borde en teléfono. */
+.compositor__pie {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 780px) {
+  .compositor__pie {
+    padding-block-start: var(--sp-3);
+  }
+}

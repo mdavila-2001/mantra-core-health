@@ -107,7 +107,21 @@ interface DestinoDeUbicacion {
   readonly pidiendo: WritableSignal<boolean>;
   readonly confirmada: WritableSignal<boolean>;
   readonly rechazado: WritableSignal<boolean>;
+  /** Si se pidió el mapa vacío para poner el pin a mano. */
+  readonly marcando: WritableSignal<boolean>;
+  /** Si el punto actual lo dio el navegador y no un toque sobre el plano. */
+  readonly delNavegador: WritableSignal<boolean>;
 }
+
+/**
+ * Lo que se le dice a quien ya tiene un pin y quiere correrlo.
+ *
+ * Es la otra mitad del selector: el GPS acierta la manzana, no la puerta, y
+ * hasta ahora la única salida era «Volver a ubicarme», que devolvía la misma
+ * manzana. Tocar el plano corre el pin al punto exacto.
+ */
+const AVISO_MOVER_PIN =
+  'Si el pin no cayó justo, tocá el mapa en el lugar correcto y lo movemos.';
 
 /**
  * El identificador del pin del domicilio en el mapa.
@@ -546,7 +560,14 @@ export class RegisterPatient {
       }),
       // El departamento emisor es un `select` del motor cuando su catálogo llegó,
       // así que su valor vive donde viven los demás: en el formulario.
-      issuerAdministrativeAreaConceptId: new FormControl<string | null>(null),
+      //
+      // Obligatorio, igual que en el alta de profesional: el número y su
+      // expedición son UN documento escrito en dos casillas, y con el número
+      // obligatorio y la expedición no, la cédula queda a medias. Además es lo
+      // que distingue dos documentos con el mismo número.
+      issuerAdministrativeAreaConceptId: new FormControl<string | null>(null, {
+        validators: [Validators.required],
+      }),
       // Calle y número del domicilio. Las coordenadas van aparte: no se
       // escriben, se confirman sobre el mapa.
       homeAddressLines: new FormControl('', { nonNullable: true }),
@@ -837,13 +858,35 @@ export class RegisterPatient {
         id: PIN_DOMICILIO,
         lat: punto.lat,
         lng: punto.lng,
-        titulo: this.direccionConfirmada() ? 'Tu dirección' : 'Acá te encontramos',
+        titulo: this.direccionConfirmada()
+          ? 'Tu dirección'
+          : this.gpsDomicilioDelNavegador()
+            ? 'Acá te encontramos'
+            : 'El punto que marcaste',
       },
     ];
   });
 
   /** Si el navegador negó la ubicación, para poder decirlo sin frenar el alta. */
   readonly gpsRechazado = signal(false);
+
+  /**
+   * Si la persona pidió el mapa vacío para poner el pin del domicilio a mano.
+   *
+   * Es la segunda puerta del selector —la primera es el navegador— y existe
+   * porque la casa casi nunca se declara desde la casa. Sólo importa mientras
+   * no hay punto: con un pin puesto el mapa está abierto igual y tocarlo lo
+   * corre.
+   */
+  readonly marcandoDomicilio = signal(false);
+
+  /** Si el punto del domicilio lo dio el navegador; sólo cambia cómo se llama el pin. */
+  readonly gpsDomicilioDelNavegador = signal(false);
+
+  /** Si el mapa del domicilio tiene que estar en pantalla: hay pin, o se está por poner. */
+  readonly mapaDomicilioAbierto = computed(
+    () => this.gpsDomicilio() !== null || this.marcandoDomicilio(),
+  );
 
   /* ---- La misma ubicación, para el lugar de trabajo ------------------------
      Cuatro señales gemelas de las de arriba, no una estructura compartida: el
@@ -857,6 +900,11 @@ export class RegisterPatient {
   readonly pidiendoGpsTrabajo = signal(false);
   readonly direccionTrabajoConfirmada = signal(false);
   readonly gpsTrabajoRechazado = signal(false);
+  readonly marcandoTrabajo = signal(false);
+  readonly gpsTrabajoDelNavegador = signal(false);
+  readonly mapaTrabajoAbierto = computed(
+    () => this.gpsTrabajo() !== null || this.marcandoTrabajo(),
+  );
 
   readonly pinesTrabajo = computed<readonly PinMapa[]>(() => {
     const punto = this.gpsTrabajo();
@@ -868,7 +916,9 @@ export class RegisterPatient {
         lng: punto.lng,
         titulo: this.direccionTrabajoConfirmada()
           ? 'Tu lugar de trabajo'
-          : 'Acá te encontramos',
+          : this.gpsTrabajoDelNavegador()
+            ? 'Acá te encontramos'
+            : 'El punto que marcaste',
       },
     ];
   });
@@ -881,6 +931,9 @@ export class RegisterPatient {
 
   /** El aviso del punto capturado sin confirmar. Ver la constante. */
   protected readonly avisoUbicacionSinConfirmar = AVISO_UBICACION_SIN_CONFIRMAR;
+
+  /** La pista de que tocar el mapa corre el pin. Ver la constante. */
+  protected readonly avisoMoverPin = AVISO_MOVER_PIN;
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
@@ -1324,10 +1377,12 @@ export class RegisterPatient {
   private campoDepartamentoEmisor(testId: string): CampoDeFormulario {
     const base = {
       key: 'issuerAdministrativeAreaConceptId',
-      label: 'Departamento de emisión (opcional)',
+      label: 'Departamento de emisión',
+      required: true,
       hint: 'El «SC», «LP»... de tu cédula.',
       description:
         'El departamento que emitió tu cédula: distingue dos documentos con el mismo número.',
+      mensajeDeError: 'Elegí el departamento que expidió tu cédula.',
     } as const;
 
     return this.catalogoDepartamentosCaido()
@@ -1340,7 +1395,7 @@ export class RegisterPatient {
           ...base,
           control: 'select',
           options: this.opcionesDepartamento(),
-          placeholder: 'Sin especificar',
+          placeholder: 'Elegí el departamento',
           testId,
           icono: 'pin',
           // La otra mitad del renglón del documento. Ver la página que lo usa.
@@ -1843,22 +1898,83 @@ export class RegisterPatient {
    * no un requisito.
    */
   usarMiUbicacion(): void {
-    this.pedirUbicacion({
-      punto: this.gpsDomicilio,
-      pidiendo: this.pidiendoGps,
-      confirmada: this.direccionConfirmada,
-      rechazado: this.gpsRechazado,
-    });
+    this.pedirUbicacion(this.destinoDomicilio);
   }
 
   /** Lo mismo, para el lugar de trabajo. Ver {@link usarMiUbicacion}. */
   usarMiUbicacionDeTrabajo(): void {
-    this.pedirUbicacion({
+    this.pedirUbicacion(this.destinoTrabajo);
+  }
+
+  /**
+   * Abre el mapa vacío para poner el pin del domicilio a mano.
+   *
+   * No pide nada al navegador ni toca lo que hubiera: es la puerta para quien
+   * no quiere —o no puede— compartir dónde está ahora, que casi nunca es donde
+   * vive.
+   */
+  marcarDomicilioEnMapa(): void {
+    this.abrirMapa(this.destinoDomicilio);
+  }
+
+  /** Lo mismo, para el trabajo. */
+  marcarTrabajoEnMapa(): void {
+    this.abrirMapa(this.destinoTrabajo);
+  }
+
+  /**
+   * Un toque sobre el mapa del domicilio: el pin va ahí.
+   *
+   * Sirve para poner el primer pin sobre el mapa vacío y para correr uno que
+   * ya estaba, viniera del GPS o de otro toque. En los dos casos el punto queda
+   * **sin confirmar**: quien lo movió es quien tiene que mirarlo y decir que sí.
+   */
+  fijarPuntoDomicilio(punto: Coordenadas): void {
+    this.fijarPunto(this.destinoDomicilio, punto);
+  }
+
+  /** Lo mismo, para el trabajo. */
+  fijarPuntoDeTrabajo(punto: Coordenadas): void {
+    this.fijarPunto(this.destinoTrabajo, punto);
+  }
+
+  /** Las seis señales del domicilio, con el nombre que espera {@link pedirUbicacion}. */
+  private get destinoDomicilio(): DestinoDeUbicacion {
+    return {
+      punto: this.gpsDomicilio,
+      pidiendo: this.pidiendoGps,
+      confirmada: this.direccionConfirmada,
+      rechazado: this.gpsRechazado,
+      marcando: this.marcandoDomicilio,
+      delNavegador: this.gpsDomicilioDelNavegador,
+    };
+  }
+
+  /** Las seis señales del trabajo. Ver {@link destinoDomicilio}. */
+  private get destinoTrabajo(): DestinoDeUbicacion {
+    return {
       punto: this.gpsTrabajo,
       pidiendo: this.pidiendoGpsTrabajo,
       confirmada: this.direccionTrabajoConfirmada,
       rechazado: this.gpsTrabajoRechazado,
-    });
+      marcando: this.marcandoTrabajo,
+      delNavegador: this.gpsTrabajoDelNavegador,
+    };
+  }
+
+  private abrirMapa(destino: DestinoDeUbicacion): void {
+    destino.marcando.set(true);
+    destino.rechazado.set(false);
+  }
+
+  private fijarPunto(destino: DestinoDeUbicacion, punto: Coordenadas): void {
+    // Mover el pin es empezar de nuevo la confirmación: lo confirmado valía
+    // para el punto anterior.
+    destino.confirmada.set(false);
+    destino.punto.set({ lat: punto.lat, lng: punto.lng });
+    destino.delNavegador.set(false);
+    destino.marcando.set(false);
+    destino.rechazado.set(false);
   }
 
   /**
@@ -1888,6 +2004,8 @@ export class RegisterPatient {
           lat: posicion.coords.latitude,
           lng: posicion.coords.longitude,
         });
+        destino.delNavegador.set(true);
+        destino.marcando.set(false);
         destino.rechazado.set(false);
         destino.pidiendo.set(false);
       },
@@ -1923,16 +2041,18 @@ export class RegisterPatient {
     this.direccionTrabajoConfirmada.set(true);
   }
 
-  /** Olvida la ubicación capturada, y con ella su confirmación. */
+  /** Olvida la ubicación capturada, y con ella su confirmación; cierra el mapa. */
   quitarUbicacion(): void {
     this.gpsDomicilio.set(null);
     this.direccionConfirmada.set(false);
+    this.marcandoDomicilio.set(false);
   }
 
   /** Lo mismo, para el trabajo. */
   quitarUbicacionDeTrabajo(): void {
     this.gpsTrabajo.set(null);
     this.direccionTrabajoConfirmada.set(false);
+    this.marcandoTrabajo.set(false);
   }
 
   readonly state = signal<ViewState<null>>(ready(null));

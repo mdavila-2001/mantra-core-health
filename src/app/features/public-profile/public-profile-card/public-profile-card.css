@@ -25,15 +25,6 @@
      se ensancha es lo que antes era margen vacío. */
   max-inline-size: 64rem;
   margin-inline: auto;
-  /* Las pestañas llevan a secciones de esta misma página. Sin esto el salto es
-     un corte seco y se pierde de dónde a dónde se fue. */
-  scroll-behavior: smooth;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .perfil {
-    scroll-behavior: auto;
-  }
 }
 
 /* --- Encabezado ---------------------------------------------------------- */
@@ -44,9 +35,10 @@
   overflow: hidden;
   background: var(--sup-tarjeta);
   box-shadow: var(--sombra-1);
-  /* El ancla de la primera pestaña. Sin esto, «Inicio» deja el nombre pegado
-     al borde superior de la ventana. */
-  scroll-margin-block-start: var(--e5);
+  /* El ancla de la primera pestaña. La medida es la del header pegajoso más
+     aire: con menos, la pestaña deja la sección DEBAJO del header y parece que
+     no pasó nada. */
+  scroll-margin-block-start: calc(var(--h-header) + var(--e4));
 }
 
 .perfil__portada {
@@ -65,16 +57,8 @@
    una portada que se eligió así. */
 .perfil__portada--lisa {
   background-image:
-    repeating-linear-gradient(
-      118deg,
-      rgb(255 255 255 / 5.5%) 0 1px,
-      transparent 1px 15px
-    ),
-    repeating-linear-gradient(
-      28deg,
-      rgb(255 255 255 / 3.5%) 0 1px,
-      transparent 1px 22px
-    ),
+    repeating-linear-gradient(118deg, rgb(255 255 255 / 5.5%) 0 1px, transparent 1px 15px),
+    repeating-linear-gradient(28deg, rgb(255 255 255 / 3.5%) 0 1px, transparent 1px 22px),
     radial-gradient(70% 120% at 15% 0%, var(--nav-halo-a) 0%, var(--nav-halo-0) 70%),
     radial-gradient(60% 100% at 85% 10%, var(--nav-halo-c) 0%, var(--nav-halo-0) 70%),
     linear-gradient(115deg, var(--petroleo-x) 0%, var(--petroleo) 55%, var(--aguamarina) 130%);
@@ -317,7 +301,7 @@
 
   .perfil__riel {
     position: sticky;
-    inset-block-start: var(--e4);
+    inset-block-start: calc(var(--h-header) + var(--e4));
   }
 }
 
@@ -398,7 +382,7 @@
    deje pegadas al borde de la ventana. */
 .perfil__seccion {
   margin: 0;
-  scroll-margin-block-start: var(--e5);
+  scroll-margin-block-start: calc(var(--h-header) + var(--e4));
 }
 
 .perfil__parrafo {
@@ -441,6 +425,55 @@
   inline-size: 18px;
   block-size: 18px;
   color: var(--aguamarina);
+}
+
+/* --- Las sedes: una lista, porque son lugares distintos --------------------
+   Hereda el glifo y el aguamarina de `.perfil__donde` —es la misma pregunta
+   contestada con más de una respuesta—, y agrega el renglón de la dirección
+   debajo del nombre. */
+
+.perfil__sedes {
+  display: grid;
+  gap: var(--e3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.perfil__sede {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e2);
+}
+
+.perfil__sede svg {
+  flex: none;
+  inline-size: 18px;
+  block-size: 18px;
+  /* Alineado con la primera línea del nombre, no con el centro del bloque. */
+  margin-block-start: 2px;
+  color: var(--aguamarina);
+}
+
+.perfil__sede-texto {
+  display: grid;
+  gap: 2px;
+}
+
+.perfil__sede-nombre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  color: var(--tinta);
+}
+
+.perfil__sede-direccion {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }
 
 .perfil__mapa {

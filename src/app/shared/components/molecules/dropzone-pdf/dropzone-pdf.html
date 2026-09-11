@@ -1,0 +1,60 @@
+<app-file-input
+  [files]="archivos()"
+  [label]="label()"
+  [accessibleLabel]="label()"
+  [required]="required()"
+  [hasError]="hasError() || state().kind === 'error'"
+  [accept]="'application/pdf'"
+  [maxSizeBytes]="maxSizeBytes()"
+  [showList]="false"
+  [showFeedback]="false"
+  [disabled]="disabled() || state().kind === 'uploading'"
+  [testId]="testId()"
+  (filesChange)="aceptar($event)"
+  (rejected)="rechazar($event)"
+/>
+
+<p class="dropzone-pdf__estado" role="status" aria-live="polite" [attr.data-testid]="testId() + '-estado'">
+  @switch (state().kind) {
+    @case ('uploading') {
+      <span class="dropzone-pdf__nombre">Subiendo {{ nombreDelArchivo() }}…</span>
+      <app-progress
+        [value]="progresoParaBarra()"
+        [label]="'Subida de ' + label()"
+        size="sm"
+        [attr.data-testid]="testId() + '-progreso'"
+      />
+    }
+    @case ('ready') {
+      <span class="dropzone-pdf__nombre">{{ nombreDelArchivo() }} · {{ pesoDelArchivo() }}</span>
+      <svg
+        class="dropzone-pdf__check"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+      <span class="sr-only">Subido</span>
+      <button
+        type="button"
+        class="dropzone-pdf__quitar"
+        [attr.data-testid]="testId() + '-quitar'"
+        [disabled]="disabled()"
+        (click)="quitar()"
+      >
+        Quitar
+      </button>
+    }
+  }
+</p>
+
+@if (state().kind === 'error') {
+  <p class="dropzone-pdf__error" role="alert" [attr.data-testid]="testId() + '-error'">
+    {{ mensajeDeError() }}
+  </p>
+}

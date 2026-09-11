@@ -174,7 +174,24 @@ describe('DocumentosLegales', () => {
     expect(aviso?.message).toContain('«nit-actualizado.docx»');
     expect(aviso?.message).toContain('el registro pide el documento en PDF');
     // Y no entra a la fila: lo rechazado no se muestra como si estuviera.
-    expect(root.textContent ?? '').not.toContain('nit-actualizado.docx');
+    //
+    // Se mide contra la LISTA de documentos y no contra el componente entero
+    // (integración de `mockup`, 11/09/2026). `app-file-input` gana ahí una
+    // región `role="alert"` que nombra lo descartado con su motivo —«Formato no
+    // permitido. Sólo PDF»—, así que el nombre sí aparece, y debe aparecer: es
+    // el aviso pegado al control, para quien no ve pasar el toast. Lo que la
+    // prueba prohíbe sigue siendo lo mismo que prohibía: que el archivo se
+    // cuele en la fila como un papel cargado.
+    const lista = root.querySelector('[data-testid="ficha-documentos"]')?.cloneNode(true);
+    // El selector vive DENTRO de la fila del NIT, así que su aviso cuenta como
+    // texto de la lista: se lo quita antes de mirar. Lo que queda es la fila
+    // propiamente dicha, que es donde el archivo no tiene que estar.
+    if (lista instanceof Element) {
+      lista.querySelectorAll('app-file-input').forEach((selector) => selector.remove());
+    }
+    expect((lista as Element | undefined)?.textContent ?? '').not.toContain(
+      'nit-actualizado.docx',
+    );
   });
 
   it('mientras carga muestra el esqueleto y ningún papel', () => {

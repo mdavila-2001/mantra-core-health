@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
@@ -18,18 +18,16 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
-import { Input } from '../../../../shared/components/atoms/input/input';
-import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import type { BreadcrumbItem } from '../../../../shared/components/molecules/breadcrumb/breadcrumb.types';
-import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
-import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
+import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 
 /** Largos que declara `CreateChildTenantDto`. */
@@ -60,14 +58,10 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
   imports: [
     Alert,
     AnnounceOnAppear,
-    FormActions,
-    FormField,
-    FormSection,
-    Input,
+    CampoPersonalizado,
     PageHeader,
-    ReactiveFormsModule,
+    PaginatedForm,
     ReferenceCombobox,
-    Select,
   ],
   templateUrl: './child-organization-new.html',
   styleUrl: './child-organization-new.css',
@@ -107,13 +101,114 @@ export class ChildOrganizationNew {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
     }),
+    /**
+     * El tipo pasó de una señal suelta a un control del grupo: el motor de
+     * formularios paginados lee y valida **del grupo**, así que lo que quede
+     * afuera no entra en ninguna página. De este control dependen además las
+     * páginas que existen —país y jurisdicción sólo para los territoriales—.
+     */
+    tipo: new FormControl<TenantTypeCode | null>(null, {
+      validators: [Validators.required],
+    }),
   });
 
-  protected readonly tipo = signal<TenantTypeCode | null>(null);
+  protected readonly tipo = toSignal(this.form.controls.tipo.valueChanges, {
+    initialValue: this.form.controls.tipo.value,
+  });
   private readonly enviado = signal(false);
 
   protected readonly opcionesDeTipo: readonly SelectOption<TenantTypeCode>[] =
     TENANT_TYPE_CODES.map((code) => ({ value: code, label: TENANT_TYPE_LABELS[code] }));
+
+  /**
+   * Las páginas del alta. Las de país y jurisdicción **existen sólo si el tipo
+   * es territorial**, que es la misma condición que antes envolvía a esos dos
+   * campos en la plantilla: el motor no las dibuja porque no están, en vez de
+   * dibujarlas y esconderlas.
+   *
+   * Los tres buscadores van como `custom`: son comboboxes contra la API, no
+   * controles de texto.
+   */
+  protected readonly paginas = computed(() =>
+    paginarCampos([
+      {
+        titulo: 'Identificación',
+        hint: 'Con qué se la encuentra en la plataforma.',
+        campos: [
+          {
+            key: 'code',
+            label: 'Código',
+            control: 'text' as const,
+            required: true,
+            testId: 'alta-filial-codigo',
+            mensajeDeError: this.codigoEnConflicto()
+              ? 'Ya existe una organización con este código. Probá con otro.'
+              : 'Escribí el código de la sub-organización.',
+          },
+          {
+            key: 'legalName',
+            label: 'Razón social',
+            control: 'text' as const,
+            required: true,
+            testId: 'alta-filial-razon',
+            mensajeDeError: 'Escribí la razón social (hasta 300 caracteres).',
+          },
+        ],
+      },
+      {
+        titulo: 'Clasificación',
+        hint: 'No se hereda de la organización madre: una red puede tener un hospital y una farmacia.',
+        campos: [
+          {
+            key: 'tipo',
+            label: 'Tipo',
+            control: 'select' as const,
+            required: true,
+            options: this.opcionesDeTipo,
+            placeholder: 'Elegí un tipo',
+            mensajeDeError: 'Elegí el tipo de la sub-organización.',
+          },
+        ],
+      },
+      ...(this.esTerritorial()
+        ? [
+            {
+              titulo: 'Dónde opera',
+              hint: 'El backend lo exige para este tipo: determina bajo qué regulador presta atención.',
+              campos: [
+                {
+                  key: 'pais',
+                  label: 'País',
+                  hint: 'Buscá por nombre; el código acompaña para distinguir homónimos.',
+                  control: 'custom' as const,
+                  required: true,
+                },
+                {
+                  key: 'jurisdiccion',
+                  label: 'Jurisdicción',
+                  hint: 'La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO».',
+                  control: 'custom' as const,
+                  required: true,
+                },
+              ],
+            },
+          ]
+        : []),
+      {
+        titulo: 'Quién la administra',
+        hint: 'La cuenta tiene que existir. Queda como administradora de la sub-organización.',
+        campos: [
+          {
+            key: 'administrador',
+            label: 'Administrador',
+            hint: 'Buscá por nombre o correo y elegí de la lista.',
+            control: 'custom' as const,
+            required: true,
+          },
+        ],
+      },
+    ]),
+  );
 
   protected readonly esTerritorial = computed(() => {
     const tipo = this.tipo();
@@ -245,10 +340,6 @@ export class ChildOrganizationNew {
         cargando.set(false);
       },
     });
-  }
-
-  protected cambiarTipo(tipo: TenantTypeCode | null): void {
-    this.tipo.set(tipo);
   }
 
   protected submit(): void {

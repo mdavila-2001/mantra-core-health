@@ -5,9 +5,11 @@ import {
   computed,
   inject,
   input,
+  model,
   output,
   signal,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -38,6 +40,14 @@ import type { ReferenceOption } from '../../../../shared/components/molecules/re
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Card } from '../../../../shared/components/molecules/card/card';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
+import {
+  UbicacionPicker,
+  type Coordenadas,
+  type IdsDePrueba,
+} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+import { PESTANA, PESTANAS_DEL_PERFIL } from '../pestanas-del-perfil';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import {
   PhoneInput,
@@ -125,6 +135,7 @@ function mismoDia(una: Date, otra: Date): boolean {
   selector: 'app-patient-profile-edit',
   imports: [
     ReferenceCombobox,
+    UbicacionPicker,
     AppButton,
     BackLink,
     Card,
@@ -133,10 +144,13 @@ function mismoDia(una: Date, otra: Date): boolean {
     FormField,
     Input,
     NavIcon,
+    NgTemplateOutlet,
     PageHeader,
     PhoneInput,
     ReactiveFormsModule,
     Select,
+    Tab,
+    Tabs,
     Tooltip,
     TreeSelect,
     ViewStateHost,
@@ -187,9 +201,20 @@ export class PatientProfileEdit {
    */
   readonly cerrado = output<void>();
 
+  /**
+   * Las pestañas del formulario y cuál está abierta.
+   *
+   * Son las de la ficha de lectura, en el mismo orden (`PESTANAS_DEL_PERFIL`).
+   * Es un `model` y no una señal propia para que «Mi perfil» la comparta:
+   * el lápiz abre el formulario en la pestaña que se estaba mirando, y al
+   * guardar o cancelar la ficha vuelve a esa misma.
+   */
+  readonly pestana = model<number>(PESTANA.personales);
+  protected readonly pestanas = PESTANAS_DEL_PERFIL;
+
   protected readonly perfil = signal<ViewState<OwnPatientProfile>>(loading());
 
-  private readonly datos = computed(() => {
+  protected readonly datos = computed(() => {
     const estado = this.perfil();
     return estado.status === 'ready' ? estado.data : null;
   });
@@ -247,6 +272,57 @@ export class PatientProfileEdit {
   protected readonly correo = signal('');
   protected readonly domicilio = signal('');
   protected readonly direccionTrabajo = signal('');
+
+  /**
+   * El punto en el mapa de cada dirección — lo que el alta ya preguntaba y el
+   * perfil no dejaba tocar.
+   *
+   * Es el patrón de una app de pedidos, y a propósito: se pide la ubicación al
+   * navegador o se marca el pin a mano sobre el mapa, y se confirma mirándolo.
+   * El mismo bloque que usa el registro (`app-ubicacion-picker`), no una copia:
+   * la dirección se escribe igual en los dos lados y ninguno adivina la calle a
+   * partir del punto —eso necesita un geocodificador que la política de
+   * seguridad del servidor no permite—.
+   *
+   * `undefined` es «no lo toqué» y `null` es «lo quité»: son dos cosas
+   * distintas al armar el cuerpo del PATCH, y confundirlas borraría la
+   * ubicación de quien sólo vino a cambiar el teléfono.
+   */
+  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
+  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
+
+  /** El punto guardado que el selector muestra al abrir. */
+  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
+
+  /**
+   * Los identificadores de prueba de cada mapa.
+   *
+   * Se pasan explícitos, como en el alta: el componente no los deriva de un
+   * prefijo porque los que ya existen no son uniformes, y renombrarlos rompería
+   * recorridos que hoy funcionan.
+   */
+  protected readonly idsGpsDomicilio: IdsDePrueba = {
+    mapa: 'perfil-domicilio-mapa',
+    confirmada: 'perfil-domicilio-confirmada',
+    avisoGeocodificacion: 'perfil-domicilio-aviso-geo',
+    quitar: 'perfil-domicilio-quitar-gps',
+    sinConfirmar: 'perfil-domicilio-sin-confirmar',
+    confirmar: 'perfil-domicilio-confirmar',
+    usarUbicacion: 'perfil-domicilio-usar-ubicacion',
+    marcarEnMapa: 'perfil-domicilio-marcar',
+  };
+
+  protected readonly idsGpsTrabajo: IdsDePrueba = {
+    mapa: 'perfil-trabajo-mapa',
+    confirmada: 'perfil-trabajo-confirmada',
+    avisoGeocodificacion: 'perfil-trabajo-aviso-geo',
+    quitar: 'perfil-trabajo-quitar-gps',
+    sinConfirmar: 'perfil-trabajo-sin-confirmar',
+    confirmar: 'perfil-trabajo-confirmar',
+    usarUbicacion: 'perfil-trabajo-usar-ubicacion',
+    marcarEnMapa: 'perfil-trabajo-marcar',
+  };
 
   /**
    * El teléfono va en un control reactivo y no en una señal como el resto.
@@ -437,6 +513,12 @@ export class PatientProfileEdit {
     this.correo.set(perfil.email ?? '');
     this.domicilio.set(perfil.homeAddress?.lines ?? '');
     this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+    this.gpsDomicilioGuardado.set(puntoDe(perfil.homeAddress));
+    this.gpsTrabajoGuardado.set(puntoDe(perfil.workAddress));
+    // Se reinician las intenciones: lo que la persona tocó en una visita
+    // anterior no puede seguir contando como cambio pendiente al releer.
+    this.gpsDomicilio.set(undefined);
+    this.gpsTrabajo.set(undefined);
 
     // Sin `emitEvent`: sembrar no es teclear, y el control ya queda validado.
     // El espejo se actualiza a mano, que es lo que ese evento haría. Se siembra
@@ -591,6 +673,28 @@ export class PatientProfileEdit {
    * otro, no quitar. Mientras siga así, dejarlos en blanco no manda nada en vez
    * de provocar un `400` que la persona leería como un fallo del producto.
    */
+  /**
+   * Qué pestaña tiene un campo que impide guardar, cuando no es la abierta.
+   *
+   * Con el formulario repartido en pestañas, «Guardar» apagado por un nombre
+   * vacío en «Datos personales» mientras se mira «Contacto» es un botón que
+   * parece roto. La nota dice adónde ir. Es `null` cuando lo que falta está a
+   * la vista: ahí el campo ya lo dice con su propio error.
+   */
+  protected readonly pendienteEnOtraPestana = computed<string | null>(() => {
+    const abierta = this.pestana();
+    if (
+      abierta !== PESTANA.personales &&
+      (this.nombreVacio() || this.apellidoVacio() || this.sexoVacio())
+    ) {
+      return `Falta completar «${PESTANAS_DEL_PERFIL[PESTANA.personales]}».`;
+    }
+    if (abierta !== PESTANA.contacto && this.telefonoMalEscrito()) {
+      return `Revisá el teléfono en «${PESTANAS_DEL_PERFIL[PESTANA.contacto]}».`;
+    }
+    return null;
+  });
+
   /* -- Los nombres que no son el primero ----------------------------------
      Se guardan en UNA columna, separados por espacio (así los escribe el alta).
      Acá se reparten en casillas para poder corregir uno sin reescribir todos, y
@@ -720,6 +824,12 @@ export class PatientProfileEdit {
       cambios.workAddressLines = trabajo;
     }
 
+    // El punto de cada dirección, con la misma regla de tres estados que el
+    // texto: sin tocar no viaja, quitado viaja como `null` en los dos extremos,
+    // y movido viaja como par. Nunca media coordenada.
+    Object.assign(cambios, coordenadasCambiadas('home', this.gpsDomicilio()));
+    Object.assign(cambios, coordenadasCambiadas('work', this.gpsTrabajo()));
+
     // La ocupación **sí se puede borrar**: es el único concepto de esta pantalla
     // cuyo validador admite la cadena vacía, así que volver a «Sin especificar»
     // la vacía en vez de no mandar nada. El texto libre de las altas viejas no
@@ -785,4 +895,37 @@ function telefonoCanonico(guardado: string | undefined): string {
 function textoCambiado(actual: string, guardado: string | undefined): string | undefined {
   const limpio = actual.trim();
   return limpio === (guardado ?? '') ? undefined : limpio;
+}
+
+/**
+ * El punto de una dirección, tal como sale del perfil leído.
+ *
+ * Las dos mitades tienen que estar: una dirección con latitud y sin longitud no
+ * ubica nada, y sembrar el mapa con eso pondría el pin en el meridiano cero.
+ */
+function puntoDe(
+  direccion: { latitude?: number; longitude?: number } | undefined,
+): Coordenadas | null {
+  if (direccion?.latitude === undefined || direccion.longitude === undefined) {
+    return null;
+  }
+  return { lat: direccion.latitude, lng: direccion.longitude };
+}
+
+/**
+ * Traduce la intención sobre el mapa a las claves del cuerpo del PATCH.
+ *
+ * `undefined` —no se tocó— no produce ninguna clave: mandar el punto actual
+ * «por las dudas» convertiría cualquier guardado en una reescritura de la
+ * ubicación, y bastaría un error de redondeo del servidor para moverla sola.
+ */
+function coordenadasCambiadas(
+  cual: 'home' | 'work',
+  intencion: Coordenadas | null | undefined,
+): Record<string, number | null> {
+  if (intencion === undefined) return {};
+  if (intencion === null) {
+    return { [`${cual}Latitude`]: null, [`${cual}Longitude`]: null };
+  }
+  return { [`${cual}Latitude`]: intencion.lat, [`${cual}Longitude`]: intencion.lng };
 }

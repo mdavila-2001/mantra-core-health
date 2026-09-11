@@ -128,10 +128,11 @@ export { Tab } from './tabs/tab/tab';
 export {
   TAB_ACTIVATION_KEYS,
   TAB_NAVIGATION_KEYS,
+  TABS_APPEARANCES,
   TABS_ORIENTATIONS,
   TABS_PARENT,
 } from './tabs/tabs.types';
-export type { TabsHost, TabsOrientation } from './tabs/tabs.types';
+export type { TabsAppearance, TabsHost, TabsOrientation } from './tabs/tabs.types';
 
 export { Toast } from './toast/toast';
 export { ToastService } from './toast/toast.service';

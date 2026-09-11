@@ -4,6 +4,8 @@
  * transporte, no de la pantalla.
  */
 
+import type { NewOwnSite } from '../practice-sites/practice-sites.types';
+
 /**
  * Credenciales de inicio de sesión.
  *
@@ -302,6 +304,18 @@ export interface PractitionerRegistration {
   /** Longitud del domicilio. Ver {@link homeLatitude}. */
   readonly homeLongitude?: number;
 
+  /**
+   * El consultorio propio, si declaró uno al registrarse.
+   *
+   * Es el mismo cuerpo que ya recibe `POST /practitioners/me/sites`
+   * (ALV-005/006), reutilizado a propósito: el alta pública no puede llamar a
+   * esa ruta —termina en el login, sin sesión— así que el dato viaja adentro
+   * del alta y el backend usa el servicio que ya tiene.
+   *
+   * **La API todavía no lo acepta**; ver `PENDIENTES-BACKEND.md`.
+   */
+  readonly ownSite?: NewOwnSite;
+
   readonly licenseNumber: string;
   /**
    * Registro del SEDES: la habilitación departamental.
@@ -389,6 +403,13 @@ export interface RegisteredPractitioner {
 export interface OrganizationRegistration {
   readonly code: string;
   readonly legalName: string;
+  /**
+   * Tipo societario del diccionario internacional (subtarea 1.1), p. ej.
+   * `SRL`, `US_LLC`. El backend deriva de él el país de constitución cuando
+   * no se declara `countryConceptId` (que `PAYER` no exige: no es un tipo
+   * territorial).
+   */
+  readonly legalEntityType: string;
   readonly tradeName?: string;
   readonly timeZone?: string;
   readonly payer: {
@@ -409,6 +430,32 @@ export interface OrganizationRegistration {
     /** Apellido materno. Opcional: no todas las jurisdicciones lo emiten. */
     readonly motherLastName?: string;
   };
+  /**
+   * Documentos legales de afiliación en PDF (subtarea 1.2), ya subidos por
+   * `IamClient.uploadRegistrationDocument`. Opcional en el contrato —igual
+   * que `legalEntityType`—; obligatorio en el formulario público.
+   */
+  readonly legalDocuments?: OrganizationLegalDocuments;
+}
+
+/**
+ * Los cinco documentos que el registro de procesos exige (1.1.2 · 1.2.1 ·
+ * 1.3 · 1.4 · 1.5): cada valor es el `fileId` de una pre-carga ya subida.
+ */
+export interface OrganizationLegalDocuments {
+  readonly constitutionFileId: string;
+  readonly taxIdentifierFileId: string;
+  readonly commerceRegistryFileId: string;
+  readonly operatingLicenseFileId: string;
+  readonly healthAuthorityCertificateFileId: string;
+}
+
+/** Lo que devuelve la pre-carga de un documento legal, listo para reenviar en el alta. */
+export interface UploadedRegistrationDocument {
+  readonly fileId: string;
+  readonly originalName: string;
+  readonly sizeBytes: number;
+  readonly mimeType: string;
 }
 
 /** Lo que devuelve el alta de organización: el tenant y su owner recién creados. */
@@ -420,6 +467,11 @@ export interface RegisteredOrganization {
   readonly status: string;
   /** `false` cuando el owner no tiene correo pendiente de verificar: no es un fallo. */
   readonly emailVerificationSent: boolean;
+  /**
+   * Cuántos documentos legales quedaron registrados, pendientes de
+   * verificación. Ausente si el alta no declaró `legalDocuments`.
+   */
+  readonly legalDocumentsRegistered?: number;
 }
 
 /**

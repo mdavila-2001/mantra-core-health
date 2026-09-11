@@ -1,47 +1,79 @@
+/* La bandeja de avisos.
+
+   **Sin `max-inline-size`.** La lista estaba acotada a `68ch` con el argumento
+   del ancho de lectura, y en una pantalla de 1440 eso la dejaba pegada a la
+   izquierda con media pantalla en blanco — lo que el propietario señaló el
+   2026-09-10. El ancho lo pone `.app-main__inner` y nadie más
+   (`docs/components/composition-rules.md` §5); lo que evita la línea
+   kilométrica no es acotar la tarjeta sino **repartir la fila en columnas**:
+   el texto vive en su propia columna, entre el glifo y el estado. */
+
 .avisos__alerta {
   display: block;
   margin-bottom: var(--e4);
 }
 
-.avisos__barra {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--e2);
-  margin-bottom: var(--e4);
+.avisos__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
 }
+
+.avisos__vacio {
+  padding: var(--e6) var(--e4);
+}
+
+/* ------------------------------------------------------------------- el día
+   Un encabezado pegajoso por jornada. Es lo que permite bajar por una bandeja
+   larga sin perder de vista de cuándo es lo que se está leyendo. */
+
+.avisos__dia + .avisos__dia {
+  border-block-start: 1px solid var(--filete-2);
+}
+
+.avisos__dia-titulo {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  margin: 0;
+  padding: var(--e3) var(--e4);
+  background: var(--sup-tarjeta);
+  border-block-end: 1px solid var(--filete-2);
+  font-size: var(--fs-caption, 0.8rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, var(--tinta-3));
+}
+
+/* ------------------------------------------------------------------ la fila */
 
 .avisos__lista {
   display: flex;
   flex-direction: column;
-  gap: var(--e2);
   margin: 0;
   padding: 0;
   list-style: none;
-  /* Ancho de lectura: una línea que cruza una pantalla ancha entera obliga a
-     barrer con la vista para volver al principio de la siguiente. */
-  max-inline-size: 68ch;
 }
 
-.avisos__fila {
-  border: 1px solid var(--border-default);
-  border-radius: var(--radio-md, 0.75rem);
-  background: var(--bg-surface);
+.avisos__fila + .avisos__fila {
+  border-block-start: 1px solid var(--filete-2);
 }
 
-/* Sin leer se marca con una barra y con peso, no sólo con color: el color solo
+/* Sin leer se marca con una barra Y con peso, no sólo con color: el color solo
    no distingue nada para quien no lo percibe. */
 .avisos__fila.is-sin-leer {
-  border-inline-start: 4px solid var(--brand-primary);
+  border-inline-start: 4px solid var(--brand-primary, var(--aguamarina));
 }
 
 .avisos__item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: var(--e3);
   inline-size: 100%;
-  padding: var(--e3);
+  padding: var(--e3) var(--e4);
   border: 0;
-  border-radius: inherit;
   background: none;
   color: inherit;
   font: inherit;
@@ -54,25 +86,77 @@ button.avisos__item {
 
 button.avisos__item:hover,
 button.avisos__item:focus-visible {
-  background: var(--bg-hover);
+  background: var(--sup-hover, var(--sup-inset));
+}
+
+/* El dibujo de la familia: dice de qué se trata antes de leer el título, que
+   es lo que permite barrer treinta filas sin leerlas todas. */
+.avisos__glifo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  flex-shrink: 0;
+  border-radius: var(--r-full, 999px);
+  background: var(--sup-inset);
+  color: var(--tinta-2);
+}
+
+.avisos__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-inline-size: 0;
+}
+
+.avisos__titulo {
+  overflow-wrap: anywhere;
 }
 
 .avisos__fila.is-sin-leer .avisos__titulo {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .avisos__detalle {
-  color: var(--text-secondary);
+  color: var(--text-secondary, var(--tinta-2));
   font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
-.avisos__fecha {
-  color: var(--text-muted);
+.avisos__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted, var(--tinta-3));
   font-size: 0.8rem;
+}
+
+.avisos__categoria {
+  font-weight: 600;
+}
+
+.avisos__nueva {
+  flex-shrink: 0;
 }
 
 .avisos__mas {
   display: flex;
   justify-content: center;
-  margin-top: var(--e5);
+  padding: var(--e5);
+}
+
+/* ----------------------------------------------------------------- teléfono
+   En pantalla angosta el badge se va a la línea de la meta: en tres columnas
+   el título quedaba en dos palabras por renglón. */
+@media (max-width: 480px) {
+  .avisos__item {
+    grid-template-columns: auto 1fr;
+  }
+
+  .avisos__nueva {
+    grid-column: 2;
+    justify-self: start;
+  }
 }

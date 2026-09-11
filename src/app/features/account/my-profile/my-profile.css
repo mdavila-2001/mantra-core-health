@@ -1,6 +1,13 @@
 /* Resumen propio. Tres bloques que se acomodan solos: uno debajo del otro en
    móvil, y en fila desde tablet. Sólo distribución — ni un color ni una
-   tipografía que el sistema no tenga ya. */
+   tipografía que el sistema no tenga ya.
+
+   La TARJETA en sí —retrato, cabecera, pestañas y renglones— vive en
+   `ficha-de-perfil.css`, compartida con la ficha del médico: el cliente pidió
+   que las dos se vean igual, y dos copias del mismo CSS se separan en el primer
+   retoque que se haga en una sola. */
+
+@import './ficha-de-perfil.css';
 
 :host {
   display: block;
@@ -34,9 +41,37 @@
   }
 }
 
+/* Sin lateral, una sola columna a lo ancho y centrada.
+ *
+ * REGLA DE LA CASA (pedido del cliente, 09/09/2026): un formulario o una ficha
+ * que es lo único de su pantalla va **centrado y ocupando todo el ancho del
+ * área de contenido**, en UNA tarjeta con pestañas. Nunca pegado a la
+ * izquierda con un hueco al lado, ni acotado a una medida de columna cuando
+ * no hay otra columna. Ver `docs/components/composition-rules.md` §5. */
+.mi-perfil--sin-lateral {
+  grid-template-columns: minmax(0, 1fr);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.mi-perfil--sin-lateral .mi-perfil__principal {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
 .mi-perfil__principal {
   display: grid;
+  /* La pista explícita y el mínimo en cero: sin ellos, la tira de cuatro
+     pestañas —544 px de ancho natural— fija el mínimo de la tarjeta y en un
+     teléfono de 390 px la página entera se desplaza a lo ancho. Con el
+     contenedor acotado, la tira se desplaza por dentro con sus flechas. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
+  min-inline-size: 0;
+}
+
+.mi-perfil__principal > *,
+.mi-perfil__lateral > * {
   min-inline-size: 0;
 }
 
@@ -47,71 +82,13 @@
   min-inline-size: 0;
 }
 
-.mi-perfil__bloque {
-  display: block;
-  height: 100%;
-}
-
-.mi-perfil__titulo {
-  margin: 0 0 var(--sp-4);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  font-weight: 600;
-}
-
-.mi-perfil__datos {
-  display: grid;
-  gap: var(--sp-4);
-  margin: 0;
-}
-
-/* El retrato, disparador de la subida — mismo trato que el perfil profesional
-   (`.profesional__foto`), sin la capa de cámara: acá el avatar es más chico y
-   está arriba de la lista de datos, no montado sobre una portada. */
-.mi-perfil__foto {
-  display: inline-block;
-  margin-block-end: var(--sp-3);
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.mi-perfil__foto.is-subiendo {
-  cursor: progress;
-  opacity: 0.7;
-}
-
-.mi-perfil__foto-error {
-  margin: 0 0 var(--sp-3);
-  color: var(--error-tinta, var(--c-error-700));
-  font-size: var(--fs-caption);
-}
-
-/* Tablet. El literal es obligado: una media query no admite var(); el token
-   --bp-md declara el mismo 780px para el resto del sistema. */
-@media (min-width: 780px) {
-  .mi-perfil__datos {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+/* A lo ancho de una pantalla grande, la ficha sin lateral reparte los datos en
+   tres columnas: ocho renglones en dos columnas de 600 px dejan cada dato
+   flotando en un campo de blanco. */
+@media (min-width: 1120px) {
+  .mi-perfil--sin-lateral .mi-perfil__datos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
-  /* El bloque de acceso tiene dos datos y uno de ellos es una fila de insignias:
-     en dos columnas quedan apretadas contra el borde. */
-  .mi-perfil__datos--una {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.mi-perfil__dato dt {
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
-}
-
-.mi-perfil__dato dd {
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.mi-perfil__cifra {
-  font-variant-numeric: tabular-nums;
 }
 
 .mi-perfil__roles {
@@ -145,20 +122,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.mi-perfil__nota,
-.mi-perfil__vacio {
-  margin-block: var(--sp-4) 0;
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
-}
-
-/* La salida a corregir los datos propios. Clase propia y no `mi-perfil__nota`
-   porque no es una nota al pie: es la acción de la tarjeta, y se lee al tamaño
-   del cuerpo. */
-.mi-perfil__accion {
-  margin-block: var(--sp-4) 0;
-}
-
 /* §4.H del plan de UX · los enlaces a lo que salió del menú del médico. En
    fila y con separación clara: son tres destinos hermanos, no una lista. */
 .mi-perfil__enlaces {
@@ -168,97 +131,4 @@
   margin-block-start: var(--sp-4);
   padding-block-start: var(--sp-3);
   border-block-start: 1px solid var(--border-default);
-}
-
-/* --- Seguros y contactos ---------------------------------------------------
-   Van fuera de la lista `dt`/`dd` porque cada uno tiene varios datos y una
-   fila de dos columnas los apretaría. */
-.mi-perfil__subtitulo {
-  margin: var(--sp-5) 0 var(--sp-2);
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.mi-perfil__lista {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.mi-perfil__item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
-  background: var(--bg-surface-alt);
-}
-
-.mi-perfil__item-nombre {
-  font-weight: 600;
-}
-
-.mi-perfil__item-detalle {
-  color: var(--text-muted);
-}
-
-/* La advertencia de «sin verificar» es informativa, no una alarma: ocupa toda
-   la línea siguiente para no competir con el nombre de la aseguradora. */
-.mi-perfil__item-nota {
-  flex-basis: 100%;
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
-}
-
-/* El departamento emisor, al lado del documento y en segundo plano. */
-.mi-perfil__sufijo {
-  margin-left: var(--sp-2);
-  font-weight: 400;
-  color: var(--text-muted);
-}
-
-/* Lo que la persona todavía no cargó. Se dibuja el renglón igual —es la ficha
-   propia, y ocultarlo impide distinguir «no lo tengo» de «no me lo muestran»—
-   pero con menos peso que un dato real, para que la lista no parezca llena. */
-.mi-perfil__ausente {
-  color: var(--text-tertiary, var(--text-secondary));
-  font-style: italic;
-}
-
-/* El enlace al mapa vive dentro del renglón de la dirección, no debajo: es una
-   acción sobre ese dato, no un dato más. */
-.mi-perfil__mapa {
-  display: inline-block;
-  margin-left: var(--sp-2);
-  font-size: var(--fs-caption);
-  color: var(--brand-primary);
-  text-decoration: underline;
-}
-
-/* ─── FT-11 · la cabecera del bloque de datos ───────────────────────────────
-   El título y «Editar» en la misma línea: la acción pertenece a este bloque y
-   no a la página, y ponerla al pie de la lista —donde estaba el enlace— obliga
-   a recorrer doce renglones para encontrarla. */
-.mi-perfil__cabecera {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  margin-block-end: var(--sp-4);
-}
-
-/* El título ya no lleva su propio margen inferior cuando va en la cabecera:
-   lo pone el contenedor, y sumarlos separaba el título del contenido más que
-   del botón que tiene al lado. */
-.mi-perfil__cabecera .mi-perfil__titulo {
-  margin-block-end: 0;
 }

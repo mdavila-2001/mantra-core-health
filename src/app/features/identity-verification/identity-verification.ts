@@ -1,8 +1,10 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  input,
   linkedSignal,
   signal,
 } from '@angular/core';
@@ -143,6 +145,16 @@ const TIPO_DEL_TRAMITE: Readonly<Record<Tramite, string>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IdentityVerification {
+  /**
+   * `true` cuando esta pantalla vive **dentro** del centro de verificación,
+   * como una de sus pestañas.
+   *
+   * Lo único que cambia es el membrete: adentro lo pone el contenedor, y dos
+   * títulos apilados serían dos pantallas dibujadas una encima de la otra. La
+   * ruta propia sigue existiendo y ahí el membrete se dibuja como siempre.
+   */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   private readonly files = inject(FilesClient);
   private readonly identity = inject(IdentityClient);
   private readonly session = inject(SessionStore);

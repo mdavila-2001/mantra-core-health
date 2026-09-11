@@ -4,6 +4,9 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { RegisterPatient } from './register-patient';
+import { CODIGO_OCUPACION_OTRA } from '../../../core/data-access/terminology/bo-occupations.service';
+import { CODIGO_EMPRESA_OTRA } from '../../../core/data-access/terminology/bo-employers.service';
+import { EMPLEADOR, OCUPACION } from '../../../core/mock/fixtures/conceptos';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 
 const RESPUESTA = {
@@ -354,6 +357,9 @@ describe('RegisterPatient', () => {
       phone: extra.phone ?? '+591 70012345',
       birthDate: new Date(1990, 4, 17),
       sexAtBirth: 'FEMALE',
+      // El departamento que expidió la cédula es la otra mitad del documento
+      // y también es obligatorio: sin él el formulario no pasa de su página.
+      issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
       homeAddressLines: extra.homeAddressLines ?? '',
       workAddressLines: extra.workAddressLines ?? '',
       workEmployerFreeText: extra.workEmployerFreeText ?? '',
@@ -408,6 +414,9 @@ describe('RegisterPatient', () => {
     // cualquier huso al oeste de Greenwich, que es donde está Bolivia.
     birthDate: '1990-05-17',
     sexAtBirth: 'FEMALE',
+    // La otra mitad del documento, obligatoria desde que la cédula y su
+    // expedición dejaron de poder llegar separadas.
+    issuerAdministrativeAreaConceptId: DEPARTAMENTO_SANTA_CRUZ,
     residenceMunicipalityConceptId: MUNICIPIO_SACABA,
   };
 
@@ -1160,7 +1169,6 @@ describe('RegisterPatient', () => {
 
     const req = http.expectOne('/iam/auth/register-patient');
     const enviado = Object.keys(req.request.body as Record<string, unknown>);
-    expect(enviado).not.toContain('issuerAdministrativeAreaConceptId');
     expect(enviado).not.toContain('gender');
     expect(enviado).not.toContain('occupationConceptId');
     expect(enviado).not.toContain('occupationFreeText');
@@ -1342,6 +1350,88 @@ describe('RegisterPatient', () => {
     expect(pines[0].lng).toBe(-63.1821);
   });
 
+  /* ---- El pin también se pone a mano sobre el mapa ---------------------------
+     La casa casi nunca se declara desde la casa, y quien negó el permiso del
+     navegador también tiene que poder poner su pin. Así que el mapa se abre
+     vacío y se toca; y con un pin puesto, tocarlo lo corre. */
+
+  it('«Marcar en el mapa» abre el mapa vacío sin pedir nada al navegador', () => {
+    expect(component.mapaDomicilioAbierto()).toBe(false);
+
+    component.marcarDomicilioEnMapa();
+
+    expect(component.marcandoDomicilio()).toBe(true);
+    expect(component.mapaDomicilioAbierto()).toBe(true);
+    expect(component.gpsDomicilio()).toBeNull();
+    expect(component.pinesDomicilio()).toEqual([]);
+  });
+
+  it('tocar el mapa pone el pin del domicilio sin confirmarlo, y no viaja hasta que se confirme', () => {
+    completar();
+    component.marcarDomicilioEnMapa();
+
+    component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+
+    expect(component.gpsDomicilio()).toEqual({ lat: -16.5, lng: -68.15 });
+    expect(component.marcandoDomicilio()).toBe(false);
+    expect(component.direccionConfirmada()).toBe(false);
+    // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
+    expect(component.pinesDomicilio()[0].titulo).toBe('El punto que marcaste');
+
+    component.submit();
+    const sinConfirmar = http.expectOne('/iam/auth/register-patient');
+    expect(Object.keys(sinConfirmar.request.body as Record<string, unknown>)).not.toContain(
+      'homeLatitude',
+    );
+    sinConfirmar.flush(RESPUESTA);
+  });
+
+  it('el punto marcado a mano viaja igual que el del navegador una vez confirmado', () => {
+    completar();
+    component.fijarPuntoDomicilio({ lat: -16.5, lng: -68.15 });
+    component.confirmarDireccionActual();
+    component.submit();
+
+    const req = http.expectOne('/iam/auth/register-patient');
+    expect(req.request.body.homeLatitude).toBe(-16.5);
+    expect(req.request.body.homeLongitude).toBe(-68.15);
+    req.flush(RESPUESTA);
+  });
+
+  it('tocar el mapa con un punto ya confirmado lo corre y suelta la confirmación', () => {
+    component.gpsDomicilio.set({ lat: -17.7833, lng: -63.1821 });
+    component.confirmarDireccionActual();
+    expect(component.direccionConfirmada()).toBe(true);
+
+    component.fijarPuntoDomicilio({ lat: -17.79, lng: -63.19 });
+
+    expect(component.gpsDomicilio()).toEqual({ lat: -17.79, lng: -63.19 });
+    expect(component.direccionConfirmada()).toBe(false);
+  });
+
+  it('quitar la ubicación con el mapa vacío abierto lo cierra', () => {
+    component.marcarDomicilioEnMapa();
+    component.quitarUbicacion();
+
+    expect(component.marcandoDomicilio()).toBe(false);
+    expect(component.mapaDomicilioAbierto()).toBe(false);
+  });
+
+  it('el trabajo tiene su propio mapa a mano, independiente del domicilio', () => {
+    component.marcarTrabajoEnMapa();
+    expect(component.mapaTrabajoAbierto()).toBe(true);
+    expect(component.mapaDomicilioAbierto()).toBe(false);
+
+    component.fijarPuntoDeTrabajo({ lat: -17.4, lng: -66.1 });
+    expect(component.gpsTrabajo()).toEqual({ lat: -17.4, lng: -66.1 });
+    expect(component.direccionTrabajoConfirmada()).toBe(false);
+    expect(component.pinesTrabajo()[0].titulo).toBe('El punto que marcaste');
+    expect(component.gpsDomicilio()).toBeNull();
+
+    component.quitarUbicacionDeTrabajo();
+    expect(component.mapaTrabajoAbierto()).toBe(false);
+  });
+
   /* ---- La empresa, que reemplazó a la ubicación del trabajo ---- */
 
   /**
@@ -1501,6 +1591,24 @@ describe('RegisterPatient', () => {
     completar();
     component.submit();
     http.expectOne('/iam/auth/register-patient').flush(RESPUESTA);
+  });
+
+  /**
+   * El número de la cédula y el departamento que la expidió son UN documento
+   * escrito en dos casillas. Con el número obligatorio y la expedición no, la
+   * cédula quedaba a medias — y es lo único que distingue dos documentos con
+   * el mismo número. Mismo criterio que el alta de profesional.
+   */
+  it('sin departamento de emisión el formulario no se puede enviar', () => {
+    completar();
+    component.formPaciente.controls.issuerAdministrativeAreaConceptId.setValue(null);
+
+    expect(component.formPaciente.controls.issuerAdministrativeAreaConceptId.invalid).toBe(
+      true,
+    );
+
+    component.submit();
+    http.expectNone('/iam/auth/register-patient');
   });
 
   it('no deja enviar un teléfono de tutor sin su nombre', () => {
@@ -2242,6 +2350,43 @@ describe('RegisterPatient', () => {
       elegirCiudad('Quillacollo');
 
       expect(direccion()).toBe('Quillacollo');
+    });
+  });
+
+  /* ==========================================================================
+     Las dos salidas escritas a mano.
+
+     «Otra ocupación» y «Otra empresa» destraban un campo de texto libre, y quién
+     decide que la opción elegida es «otra» **compara por código**. Un filtro por
+     código es mudo cuando los dos lados hablan vocabularios distintos: no falla,
+     no avisa, sencillamente nunca da verdadero — y el campo escrito a mano deja
+     de aparecer, con la función construida y entera del otro lado.
+
+     Pasó en la rama `mockup` hasta el 09/09/2026: el simulador nombraba sus
+     ocupaciones `OCC-OTRA` y sus empleadores `EMP-INDEP`, y estas dos constantes
+     valen `occupation:bo:OTRA` y `employer:bo:OTRA`. Es la tercera vez que este
+     defecto muerde en el mismo fixture —antes fueron los departamentos
+     (`BO-SC`, que dejaba el mapa vacío) y las especialidades odontológicas—, así
+     que acá queda atado.
+
+     Se comprueba contra el catálogo del simulador porque es el único de los dos
+     que este repositorio puede leer, y es el que sirve la maqueta donde el
+     hueco apareció.
+     ========================================================================== */
+  describe('las salidas escritas a mano existen en el catálogo', () => {
+    it('«Otra ocupación» tiene el código que la pantalla busca', () => {
+      expect(OCUPACION[CODIGO_OCUPACION_OTRA], CODIGO_OCUPACION_OTRA).toBeDefined();
+    });
+
+    it('«Otra empresa» también', () => {
+      expect(EMPLEADOR[CODIGO_EMPRESA_OTRA], CODIGO_EMPRESA_OTRA).toBeDefined();
+    });
+
+    it('y no son las únicas: quedan opciones de verdad antes de la salida', () => {
+      // Si el catálogo fuera sólo «Otra», la lista no ofrecería nada y todo el
+      // mundo terminaría escribiendo a mano lo que el catálogo ya tiene.
+      expect(Object.keys(OCUPACION).length).toBeGreaterThan(10);
+      expect(Object.keys(EMPLEADOR).length).toBeGreaterThan(3);
     });
   });
 });

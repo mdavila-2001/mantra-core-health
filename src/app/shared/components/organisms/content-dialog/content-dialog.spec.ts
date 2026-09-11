@@ -147,3 +147,116 @@ describe('ContentDialog', () => {
     expect(document.body.style.overflow).toBe(antes);
   });
 });
+
+/* ═══ Lo que agregó la corrección del 10/09/2026 ══════════════════════════════
+   El pie de acciones, los anchos de referencia y el cierre con cambios
+   pendientes. Van en su propio anfitrión porque el de arriba fija el contrato
+   anterior y no hay que tocarlo para probar el nuevo. */
+
+@Component({
+  imports: [ContentDialog],
+  template: `
+    <button type="button" data-testid="abrir" (click)="abierto.set(true)">Editar</button>
+    @if (abierto()) {
+      <app-content-dialog
+        heading="Adjuntar archivos"
+        size="lg"
+        [dismissible]="sinCambios()"
+        (dismissAttempt)="intentos.set(intentos() + 1)"
+        (closed)="abierto.set(false)"
+      >
+        <p>El formulario</p>
+        <button dialog-actions type="button" data-testid="guardar">Guardar</button>
+      </app-content-dialog>
+    }
+  `,
+})
+class HostConPie {
+  readonly abierto = signal(false);
+  readonly sinCambios = signal(true);
+  readonly intentos = signal(0);
+}
+
+describe('ContentDialog · pie, ancho y descarte', () => {
+  let fixture: ComponentFixture<HostConPie>;
+  let host: HostConPie;
+
+  function dialogo(): HTMLDialogElement | null {
+    const element = document.querySelector('[data-testid="content-dialog"]');
+    return element instanceof HTMLDialogElement ? element : null;
+  }
+
+  async function abrir(): Promise<void> {
+    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="abrir"]',
+    );
+    boton?.focus();
+    boton?.click();
+    await fixture.whenStable();
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [HostConPie] }).compileComponents();
+    fixture = TestBed.createComponent(HostConPie);
+    host = fixture.componentInstance;
+    await fixture.whenStable();
+  });
+
+  /**
+   * El pie va **fuera** del cuerpo con scroll: en un formulario largo, el botón
+   * que guarda no puede estar al final del recorrido.
+   */
+  it('lo marcado con `dialog-actions` se proyecta al pie, no al cuerpo', async () => {
+    await abrir();
+
+    const pie = dialogo()?.querySelector('[data-testid="content-dialog-actions"]');
+    expect(pie?.querySelector('[data-testid="guardar"]')).not.toBeNull();
+    expect(
+      dialogo()?.querySelector('.content-dialog__cuerpo [data-testid="guardar"]'),
+    ).toBeNull();
+  });
+
+  it('el ancho de referencia viaja en el DOM, para que el CSS lo aplique', async () => {
+    await abrir();
+
+    expect(dialogo()?.dataset['size']).toBe('lg');
+  });
+
+  /**
+   * Los tres gestos de cierre —el botón, `Escape` y el fondo— tienen que ir por
+   * el mismo camino: si el botón cerrara de una mientras `Escape` pregunta, la
+   * confirmación de descarte se esquivaría con el ratón.
+   */
+  it('con cambios pendientes los tres gestos avisan en vez de cerrar', async () => {
+    await abrir();
+    host.sinCambios.set(false);
+    await fixture.whenStable();
+
+    dialogo()?.dispatchEvent(new Event('cancel', { cancelable: true }));
+    await fixture.whenStable();
+    expect(dialogo()).not.toBeNull();
+    expect(host.intentos()).toBe(1);
+
+    dialogo()?.click();
+    await fixture.whenStable();
+    expect(dialogo()).not.toBeNull();
+    expect(host.intentos()).toBe(2);
+
+    dialogo()
+      ?.querySelector<HTMLButtonElement>('[data-testid="content-dialog-close"]')
+      ?.click();
+    await fixture.whenStable();
+    expect(dialogo()).not.toBeNull();
+    expect(host.intentos()).toBe(3);
+  });
+
+  it('sin cambios pendientes cierra de una: no hay nada que descartar', async () => {
+    await abrir();
+
+    dialogo()?.dispatchEvent(new Event('cancel', { cancelable: true }));
+    await fixture.whenStable();
+
+    expect(dialogo()).toBeNull();
+    expect(host.intentos()).toBe(0);
+  });
+});

@@ -20,8 +20,15 @@ import { readApiError, type ApiErrorBody } from './api-error';
  *
  * La pantalla que la atiende es `features/identity-verification/`, que encadena
  * `FilesClient.upload` con `IdentityClient.requestPatientIdentityVerification`.
+ *
+ * **Desde el 2026-09-10 vive dentro del centro de verificación** —una pantalla
+ * con dos pestañas, `identity-hub/`— y esta constante apunta ahí. La dirección
+ * anterior, `/my-account/identity/verify`, sigue redirigiendo: está en
+ * historiales y en los correos ya enviados. Lo que **no** puede pasar es que la
+ * constante y el registro de navegación digan cosas distintas, y hay una prueba
+ * en `navigation.map.spec.ts` que lo impide.
  */
-export const IDENTITY_VERIFICATION_ROUTE = '/my-account/identity/verify';
+export const IDENTITY_VERIFICATION_ROUTE = '/my-account/identity';
 
 /**
  * Traduce un fallo de la API a uno de los 9 estados de UX del M34.

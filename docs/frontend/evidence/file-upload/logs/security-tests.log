@@ -1,0 +1,8 @@
+
+ RUN  v4.1.10 /Users/josejeremias/Desktop/Mantra Core Technologies/Mantra Core Health/mantra-core-health
+
+
+ Test Files  1 passed (1)
+      Tests  25 passed (25)
+   Start at  21:08:14
+   Duration  181ms (transform 21ms, setup 0ms, import 30ms, tests 6ms, environment 0ms)

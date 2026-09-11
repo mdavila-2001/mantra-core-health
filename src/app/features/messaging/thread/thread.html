@@ -1,86 +1,205 @@
-@if (error(); as mensaje) {
-  <app-alert tone="error" class="hilo__alerta">{{ mensaje }}</app-alert>
+<!-- ── Cabecera ───────────────────────────────────────────────────────── -->
+<header class="hilo__cabecera">
+  <a class="hilo__volver" routerLink="/messaging" aria-label="Volver a los chats">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+  </a>
+  <app-avatar [src]="avatar()" [name]="conQuien()" size="md" />
+  <div class="hilo__cabecera-texto">
+    <h1 class="hilo__nombre">{{ conQuien() }}</h1>
+    <p class="hilo__estado">{{ subtitulo() }}</p>
+  </div>
+
+  <!-- El menú de la conversación, como el de la cabecera de WhatsApp: lo
+       mismo que ofrece la fila de la bandeja, pero desde el hilo abierto, que
+       en angosto es lo único que se ve. -->
+  <div class="hilo__acciones">
+    <button
+      class="hilo__mas"
+      type="button"
+      data-testid="hilo-buscar-abrir"
+      aria-label="Buscar en la conversación"
+      [attr.aria-expanded]="buscando()"
+      (click)="abrirBusqueda()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+    </button>
+    <button
+      class="hilo__mas"
+      type="button"
+      data-testid="hilo-menu"
+      aria-label="Opciones de la conversación"
+      [attr.aria-expanded]="menuCabecera()"
+      (click)="alternarMenuCabecera($event)"
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
+    </button>
+
+    @if (menuCabecera()) {
+      <ul class="hilo__menu hilo__menu--cabecera" role="menu">
+        @if (!esGrupo()) {
+          <li role="none">
+            <button role="menuitem" type="button" data-testid="hilo-ver-perfil" (click)="verPerfil()">
+              Ver perfil
+            </button>
+          </li>
+        }
+        <li role="none">
+          <button role="menuitem" type="button" data-testid="hilo-favorito" (click)="alternarFavorito()">
+            {{ esFavorito() ? 'Quitar de favoritos' : 'Marcar como favorito' }}
+          </button>
+        </li>
+        <li role="none">
+          <button role="menuitem" type="button" data-testid="hilo-archivar" (click)="alternarArchivado()">
+            {{ estaArchivado() ? 'Desarchivar' : 'Archivar' }}
+          </button>
+        </li>
+      </ul>
+    }
+  </div>
+</header>
+
+<!-- Buscar dentro de la conversación: deja sólo las burbujas que coinciden y
+     las resalta. Debajo de la cabecera y no en un panel al costado: el panel
+     derecho ya es la conversación, y un tercer panel no entra en el ancho. -->
+@if (buscando()) {
+  <div class="hilo__buscar" data-testid="hilo-buscar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+    <input
+      #buscador
+      type="search"
+      data-testid="hilo-buscar-texto"
+      placeholder="Buscar en la conversación"
+      [value]="termino()"
+      (input)="alBuscar($any($event.target).value)"
+      (keydown.escape)="cerrarBusqueda()"
+    />
+    <span class="hilo__buscar-cuenta" data-testid="hilo-buscar-cuenta" aria-live="polite">{{ rotuloDeBusqueda() }}</span>
+    <button type="button" class="hilo__buscar-cerrar" aria-label="Cerrar la búsqueda" (click)="cerrarBusqueda()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" /></svg>
+    </button>
+  </div>
 }
 
-@if (!perfilResuelto()) {
-  <p class="hilo__cargando" role="status">Abriendo la conversación…</p>
-} @else if (perfil() === null) {
-  <app-empty-state
-    title="Todavía no tenés perfil público"
-    description="Los chats usan tu perfil de la red social. Se crea desde la bandeja, en un paso."
-    variant="empty"
-  />
-} @else {
-  <div class="hilo">
-    <!-- Carril izquierdo: las otras conversaciones. En un chat de escritorio
-         cambiar de hilo es un clic, no una vuelta a la bandeja. -->
-    <aside class="hilo__carril" aria-label="Tus conversaciones">
-      <header class="hilo__carril-cabecera">
-        <a class="hilo__volver" routerLink="/messaging">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
-          Chats
-        </a>
-      </header>
-      <div class="hilo__carril-lista">
-        <app-conversation-list
-          [conversaciones]="conversaciones()"
-          [activaId]="activaId()"
-          [compacta]="true"
-        />
-      </div>
-    </aside>
+<!-- ── Mensajes ───────────────────────────────────────────────────────── -->
+<div class="hilo__mensajes-marco" #marco (scroll)="alScrollear($event)">
+  @if (store.cargandoHilo() && !store.hiloCargado()) {
+    <p class="hilo__cargando" role="status">Abriendo la conversación…</p>
+  }
 
-    <!-- Panel derecho: la conversación. -->
-    <section class="hilo__panel" aria-label="Conversación">
-      <header class="hilo__cabecera">
-        <a class="hilo__volver hilo__volver--movil" routerLink="/messaging" aria-label="Volver a los chats">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
-        </a>
-        <app-avatar [src]="avatarDeConQuien()" [name]="conQuien()" size="md" />
-        <div class="hilo__cabecera-texto">
-          <h1 class="hilo__nombre">{{ conQuien() }}</h1>
-          <p class="hilo__estado">Conversación directa</p>
-        </div>
-      </header>
+  @if (store.cargandoHilo() && store.hiloCargado()) {
+    <p class="hilo__cargando" role="status">Cargando mensajes anteriores…</p>
+  }
 
-      <div class="hilo__mensajes-marco" #marco (scroll)="alScrollear($event)">
-        @if (hayMas()) {
-          <div class="hilo__mas">
-            <!-- Hacia arriba: en un hilo, «ver más» es ver lo anterior. -->
-            <button app-button variant="ghost" size="sm" [isLoading]="cargando()" (clicked)="verMas()">
-              Ver mensajes anteriores
-            </button>
-          </div>
-        }
+  @if (vacio()) {
+    <app-empty-state
+      title="Todavía no se escribieron nada"
+      description="Escribí el primer mensaje abajo."
+      variant="empty"
+    />
+  } @else {
+    <!-- `log` y no `list`: un hilo de mensajes es una región viva, y lo que
+         llega en vivo tiene que anunciarse a quien no lo ve. -->
+    <ol class="hilo__mensajes" role="log" aria-label="Mensajes de la conversación">
+      @for (linea of lineas(); track linea.clave) {
+        @switch (linea.tipo) {
+          @case ('fecha') {
+            <li class="hilo__dia"><span>{{ linea.etiqueta }}</span></li>
+          }
+          @case ('no-leidos') {
+            <li class="hilo__no-leidos" data-testid="hilo-no-leidos">
+              <span>{{ linea.cuantos }} {{ linea.cuantos === 1 ? 'mensaje no leído' : 'mensajes no leídos' }}</span>
+            </li>
+          }
+          @default {
+            <li
+              class="hilo__burbuja"
+              data-testid="mensaje"
+              [attr.data-clave]="linea.clave"
+              [class.is-propio]="linea.propio"
+              [class.is-abre]="linea.abreBloque"
+              [class.is-destello]="destellando() === linea.clave"
+              [class.is-fallado]="linea.mensaje.estado === 'fallado'"
+              [attr.data-propio]="linea.propio"
+            >
+              @if (esGrupo() && linea.abreBloque && !linea.propio) {
+                <p class="hilo__autor" [attr.data-tono]="linea.tono">{{ linea.autor }}</p>
+              }
 
-        @if (vacio()) {
-          <app-empty-state
-            title="Todavía no se escribieron nada"
-            description="Escribí el primer mensaje abajo."
-            variant="empty"
-          />
-        } @else {
-          <!-- `log` y no `list`: un hilo de mensajes es una región viva, y lo
-               que llega por sondeo tiene que anunciarse a quien no lo ve. -->
-          <ol class="hilo__mensajes" role="log" aria-label="Mensajes de la conversación">
-            @for (linea of lineas(); track linea.clave) {
-              @if (linea.tipo === 'fecha') {
-                <li class="hilo__dia"><span>{{ linea.etiqueta }}</span></li>
-              } @else {
-                <li
-                  class="hilo__burbuja"
-                  data-testid="mensaje"
-                  [class.is-propio]="linea.propio"
-                  [class.is-abre]="linea.abreBloque"
-                  [attr.data-propio]="linea.propio"
+              <!-- La cita: barra de color, autor y las primeras líneas. -->
+              @if (linea.mensaje.replyToMessageId) {
+                <button
+                  class="hilo__cita"
+                  type="button"
+                  [disabled]="citado(linea.mensaje) === null"
+                  (click)="irACitado(linea.mensaje)"
                 >
-                  <p class="hilo__texto">{{ linea.mensaje.bodyText }}</p>
-                  <p class="hilo__meta">
-                    <span class="solo-lectores">{{ linea.propio ? 'Vos' : conQuien() }}, </span>
-                    @if (linea.mensaje.sentAt) {
-                      {{ linea.mensaje.sentAt | date: 'HH:mm' }}
+                  <span class="hilo__cita-autor">{{ autorDeLaCita(linea.mensaje) }}</span>
+                  <span class="hilo__cita-texto">
+                    {{ citado(linea.mensaje)?.bodyText || 'Archivo adjunto' }}
+                  </span>
+                </button>
+              }
+
+              <!-- El adjunto, según lo que sea. -->
+              @if (linea.mensaje.attachmentFileId || linea.mensaje.pendiente?.adjunto) {
+                @if (urlDelAdjunto(linea.mensaje); as url) {
+                  @if (esImagen(linea.mensaje)) {
+                    <button
+                      class="hilo__imagen"
+                      type="button"
+                      data-testid="hilo-imagen"
+                      (click)="abrirImagen(url)"
+                    >
+                      <img [src]="url" [alt]="nombreDelAdjunto(linea.mensaje)" />
+                    </button>
+                  } @else if (esAudio(linea.mensaje)) {
+                    <audio class="hilo__audio" controls [src]="url"></audio>
+                  } @else {
+                    <!-- `download` y no `target="_blank"`: es una `data:` URL, y
+                         el navegador no abre esas en una pestaña nueva. -->
+                    <a class="hilo__documento" [href]="url" [download]="nombreParaDescargar(linea.mensaje)">
+                      <span class="hilo__documento-icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3v5h5" /><path d="M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7z" /></svg>
+                      </span>
+                      <span class="hilo__documento-nombre">{{ nombreDelAdjunto(linea.mensaje) }}</span>
+                    </a>
+                  }
+                } @else if (adjuntoNoDisponible(linea.mensaje)) {
+                  <p class="hilo__subiendo" role="status">Archivo no disponible</p>
+                } @else {
+                  <p class="hilo__subiendo" role="status">Subiendo el archivo…</p>
+                }
+              }
+
+              @if (linea.mensaje.bodyText; as texto) {
+                <!-- En trozos: los enlaces se pueden tocar y, buscando, las
+                     coincidencias se marcan. Todo en una línea de plantilla
+                     para no meterle espacios a un `pre-wrap`. -->
+                <p class="hilo__texto">@for (trozo of segmentos(texto); track $index) {@switch (trozo.tipo) {@case ('enlace') {<a class="hilo__enlace" [href]="trozo.valor" target="_blank" rel="noopener noreferrer">{{ trozo.valor }}</a>}@case ('marca') {<mark class="hilo__marca">{{ trozo.valor }}</mark>}@default {<ng-container>{{ trozo.valor }}</ng-container>}}}</p>
+              }
+
+              <!-- La hora flota a la derecha de la última línea: es lo que hace
+                   que un mensaje corto ocupe una línea y no dos. -->
+              <span class="hilo__meta">
+                <span class="solo-lectores">{{ linea.propio ? 'Vos' : linea.autor }}, </span>
+                @if (linea.mensaje.sentAt) {
+                  <span class="hilo__hora">{{ hora(linea.mensaje.sentAt) }}</span>
+                }
+                @if (linea.propio) {
+                  @switch (linea.mensaje.estado) {
+                    @case ('enviando') {
+                      <span class="hilo__ticks" data-testid="hilo-reloj" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 1.8" /></svg>
+                      </span>
+                      <span class="solo-lectores">Enviando</span>
                     }
-                    @if (linea.propio) {
+                    @case ('fallado') {
+                      <span class="hilo__ticks is-fallado" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.6v5M12 16.2v.2" /></svg>
+                      </span>
+                      <span class="solo-lectores">No se envió</span>
+                    }
+                    @default {
                       <span
                         class="hilo__ticks"
                         [class.is-leido]="leido(linea.mensaje)"
@@ -97,113 +216,124 @@
                       </span>
                       <span class="solo-lectores">{{ leido(linea.mensaje) ? 'Leído' : 'Enviado' }}</span>
                     }
-                  </p>
-                </li>
-              }
-            }
-          </ol>
-        }
-      </div>
-
-      <!-- Carril P9 · las plantillas del profesional. El desplegable se abre
-           SOBRE el composer, que es donde se usa: antes vivía encima como una
-           fila suelta y su botón se leía como el rótulo del campo de texto. -->
-      @if (plantillasAbiertas()) {
-        <div class="hilo__plantillas-panel">
-          <ul class="hilo__plantillas-lista">
-            @for (plantilla of plantillasDisponibles(); track plantilla) {
-              <li class="hilo__plantilla">
-                <button
-                  class="hilo__plantilla-texto"
-                  type="button"
-                  data-testid="hilo-plantilla"
-                  (click)="usarPlantilla(plantilla)"
-                >
-                  {{ plantilla }}
-                </button>
-                @if (esPropia(plantilla)) {
-                  <button
-                    class="hilo__plantilla-quitar"
-                    type="button"
-                    [attr.aria-label]="'Quitar la plantilla: ' + plantilla"
-                    (click)="olvidarPlantilla(plantilla)"
-                  >
-                    Quitar
-                  </button>
+                  }
                 }
-              </li>
-            }
-          </ul>
+              </span>
 
-          <div class="hilo__plantilla-nueva">
-            <label class="hilo__campo">
-              <span class="solo-lectores">Nueva plantilla</span>
-              <input
-                type="text"
-                data-testid="hilo-plantilla-nueva"
-                placeholder="Guardar una frase que uses seguido"
-                [ngModel]="plantillaNueva()"
-                (ngModelChange)="plantillaNueva.set($event)"
-                name="plantillaNueva"
-              />
-            </label>
-            <button
-              app-button
-              variant="outline"
-              size="sm"
-              type="button"
-              data-testid="hilo-plantilla-guardar"
-              (clicked)="guardarPlantilla()"
-            >
-              Guardar
-            </button>
-          </div>
-        </div>
+              @if (linea.mensaje.estado === 'fallado') {
+                <p class="hilo__reintento">
+                  No se envió.
+                  <button type="button" (click)="reintentar(linea.mensaje)">Reintentar</button>
+                  <button type="button" (click)="descartar(linea.mensaje)">Descartar</button>
+                </p>
+              }
+
+              <!-- El menú del mensaje, como la flecha de WhatsApp. -->
+              @if (linea.mensaje.estado === 'enviado') {
+                <button
+                  class="hilo__mas-mensaje"
+                  type="button"
+                  data-testid="hilo-menu-mensaje"
+                  aria-label="Opciones del mensaje"
+                  [attr.aria-expanded]="menuAbierto() === linea.clave"
+                  (click)="alternarMenu(linea.clave, $event)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
+                </button>
+
+                @if (menuAbierto() === linea.clave) {
+                  <ul class="hilo__menu" role="menu">
+                    <li role="none">
+                      <button role="menuitem" type="button" data-testid="hilo-responder" (click)="responder(linea.mensaje)">
+                        Responder
+                      </button>
+                    </li>
+                    @if (linea.mensaje.bodyText) {
+                      <li role="none">
+                        <button role="menuitem" type="button" (click)="copiar(linea.mensaje)">Copiar</button>
+                      </li>
+                    }
+                    @if (destinosDeReenvio().length > 0) {
+                      <li role="none">
+                        <button role="menuitem" type="button" data-testid="hilo-reenviar" (click)="reenviar(linea.mensaje)">
+                          Reenviar
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              }
+            </li>
+          }
+        }
       }
+    </ol>
+  }
+</div>
 
-      <form class="hilo__composer" (submit)="$event.preventDefault(); enviar()">
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          iconOnly
-          type="button"
-          data-testid="hilo-plantillas"
-          aria-label="Usar una plantilla"
-          [attr.aria-expanded]="plantillasAbiertas()"
-          (clicked)="alternarPlantillas()"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 4.5H7A1.5 1.5 0 0 0 5.5 6v13.5A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V6A1.5 1.5 0 0 0 17 4.5h-2" /><rect x="9" y="2.5" width="6" height="3.6" rx="1.2" /><path d="M8.8 11h6.4M8.8 15h4.2" /></svg>
-        </button>
+<!-- El botón de bajar, con cuántos llegaron mientras leías arriba. -->
+@if (nuevosAbajo() > 0) {
+  <button
+    class="hilo__bajar"
+    type="button"
+    data-testid="hilo-bajar"
+    [attr.aria-label]="nuevosAbajo() + ' mensajes nuevos. Ir al final'"
+    (click)="bajarDelTodo()"
+  >
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 10 6 6 6-6" /></svg>
+    <span class="hilo__bajar-cuenta">{{ nuevosAbajo() }}</span>
+  </button>
+}
 
-        <label class="hilo__campo hilo__campo--texto">
-          <span class="solo-lectores">Escribí tu mensaje</span>
-          <textarea
-            #composer
-            data-testid="hilo-texto"
-            rows="1"
-            placeholder="Escribí un mensaje"
-            [ngModel]="borrador()"
-            (ngModelChange)="borrador.set($event)"
-            name="borrador"
-            (keydown)="alTeclear($event)"
-          ></textarea>
-        </label>
+@if (avisoReenvio(); as aviso) {
+  <p class="hilo__aviso" role="status" data-testid="hilo-aviso">{{ aviso }}</p>
+}
 
-        <button
-          app-button
-          type="submit"
-          variant="primary"
-          iconOnly
-          data-testid="hilo-enviar"
-          aria-label="Enviar mensaje"
-          [disabled]="!puedeEnviar()"
-          [isLoading]="enviando()"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.4 20.4 17.3-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
-        </button>
-      </form>
-      <p class="hilo__ayuda">Enter envía · Shift+Enter hace salto de línea</p>
-    </section>
+<app-composer (enviado)="alEnviar()" />
+
+<!-- Elegir a quién reenviar: la misma lista de la bandeja, sin ésta. -->
+@if (reenviando()) {
+  <div
+    class="hilo__visor hilo__reenvio"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Reenviar mensaje"
+    tabindex="-1"
+    (click)="cerrarReenvioSiEsElFondo($event)"
+    (keydown.escape)="cancelarReenvio()"
+  >
+    <div class="hilo__reenvio-caja" role="document">
+      <h2 class="hilo__reenvio-titulo">Reenviar a…</h2>
+      <ul class="hilo__reenvio-lista">
+        @for (destino of destinosDeReenvio(); track destino.id) {
+          <li>
+            <button type="button" data-testid="hilo-reenviar-destino" (click)="reenviarA(destino.id)">
+              <app-avatar [src]="avatarDeConversacion(destino)" [name]="nombreDeConversacion(destino)" size="md" />
+              <span>{{ nombreDeConversacion(destino) }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+      <button type="button" class="hilo__reenvio-cancelar" (click)="cancelarReenvio()">Cancelar</button>
+    </div>
+  </div>
+}
+
+<!-- La imagen a tamaño completo. Un diálogo propio y no `app-dialog`: acá no
+     hay formulario ni acciones, sólo la foto y una cruz. -->
+@if (imagenAbierta(); as url) {
+  <div
+    class="hilo__visor"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Imagen del mensaje"
+    (click)="cerrarImagen()"
+    (keydown.escape)="cerrarImagen()"
+    tabindex="-1"
+  >
+    <button class="hilo__visor-cerrar" type="button" aria-label="Cerrar la imagen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+    <img [src]="url" alt="Imagen del mensaje" />
   </div>
 }

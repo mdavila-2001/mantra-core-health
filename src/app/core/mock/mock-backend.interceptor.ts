@@ -10,6 +10,7 @@ import { from, Observable, of, throwError, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { environment } from '../../../environments/environment';
+import { cuerpoDelFallo, falloPara, type FalloSimulado } from './fallos-simulados';
 import { apiRealForzada } from './modo-api';
 import { isMockReply, type MockMethod, type MockReply, type MockRequest, type MockRouter } from './mock-router';
 import { usuarioDeAccessToken } from './mock-session';
@@ -58,6 +59,16 @@ export const mockBackendInterceptor: HttpInterceptorFn = (request, next) => {
 
 function atender(router: MockRouter, request: HttpRequest<unknown>, path: string): Observable<HttpEvent<unknown>> {
   const method = request.method.toUpperCase() as MockMethod;
+
+  // El fallo a propósito va **antes** de buscar el manejador: lo que se quiere
+  // mirar es la pantalla contra una petición que sale mal, no el manejador
+  // devolviendo un error. Apagado salvo que la sesión lo declare; ver
+  // `fallos-simulados.ts`.
+  const fallo = falloPara(method, path);
+  if (fallo !== null) {
+    return timer(latencia(path)).pipe(mergeMap(() => emitirFallo(request, path, fallo)));
+  }
+
   const coincidencia = router.match(method, path);
   const query = new URLSearchParams(request.params.toString());
   const user = usuarioDe(request);
@@ -85,6 +96,35 @@ function atender(router: MockRouter, request: HttpRequest<unknown>, path: string
   }
 
   return timer(latencia(path)).pipe(mergeMap(() => emitir(request, respuesta)));
+}
+
+/**
+ * Emite un fallo declarado por la sesión.
+ *
+ * `red` se distingue de los demás y no es un capricho: el estado 0 es lo que
+ * `errorToViewState` lee como «la petición no llegó» (S8), y es el único que no
+ * tiene cuerpo ni código de contrato. Devolver un 500 en su lugar habría
+ * mostrado el aviso equivocado, que es justo lo que esto viene a poder
+ * distinguir.
+ */
+function emitirFallo(
+  request: HttpRequest<unknown>,
+  path: string,
+  fallo: FalloSimulado,
+): Observable<HttpEvent<unknown>> {
+  if (fallo.modo === 'red') {
+    return throwError(
+      () =>
+        new HttpErrorResponse({
+          status: 0,
+          statusText: 'Unknown Error',
+          url: request.url,
+          error: new ProgressEvent('error'),
+        }),
+    );
+  }
+  const { status, body } = cuerpoDelFallo(fallo, path);
+  return emitir(request, { status, body });
 }
 
 function emitir(request: HttpRequest<unknown>, respuesta: MockReply): Observable<HttpEvent<unknown>> {
@@ -210,6 +250,11 @@ function usuarioDe(request: HttpRequest<unknown>) {
 /** Un poco de espera, para que los estados de carga existan. */
 function latencia(path: string): number {
   if (path.startsWith('/terminology')) return 40;
+  // La pre-carga de documentos legales (subtarea 1.2) necesita quedarse el
+  // tiempo suficiente en «subiendo» para que el estado se vea: el simulador
+  // no emite `UploadProgress`, sólo la respuesta final, así que sin esto la
+  // barra pasaría de vacía a lista sin que nadie llegara a verla.
+  if (path === '/iam/auth/upload-registration-document') return 600;
   return 120 + Math.floor(Math.random() * 180);
 }
 

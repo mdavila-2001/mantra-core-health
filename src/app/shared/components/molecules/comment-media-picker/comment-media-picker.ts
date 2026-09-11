@@ -1,3 +1,4 @@
+import { FileDropTarget } from '../../../forms/file-drop-target';
 /* ============================================================================
     El selector de adjuntos de un comentario (REQ-01-011).
 
@@ -51,7 +52,7 @@ import {
 
 @Component({
   selector: 'app-comment-media-picker',
-  imports: [AppButton, Alert],
+  imports: [FileDropTarget, AppButton, Alert],
   templateUrl: './comment-media-picker.html',
   styleUrl: './comment-media-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

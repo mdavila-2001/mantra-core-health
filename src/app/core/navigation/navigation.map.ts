@@ -380,39 +380,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
   /* -- Atención · fase 1 del orden de trabajo ------------------------------ */
 
   {
-    // §4.H del plan de UX · **la primera de las ocho opciones del médico**, y
-    // la única que no existía con ese nombre.
-    //
-    // El encuentro clínico ya se podía hacer: vive en `clinical-record` y en
-    // el chart del paciente. Lo que no había era **la puerta**. Para atender a
-    // alguien había que acordarse de que se entra por «Archivo clínico», que
-    // suena a lo que se consulta después, no a lo que se hace ahora. Es
-    // exactamente el síntoma 1 del plan: la aplicación no se explica sola.
-    //
-    // Así que es una pantalla corta y deliberadamente tonta —elegí paciente,
-    // entrá a su consulta— y no un módulo nuevo: la atención sigue ocurriendo
-    // donde ya ocurría. Duplicarla habría dado dos historias clínicas.
-    path: 'consultation',
-    label: 'Consulta médica',
-    group: 'Atención',
-    icon: 'stethoscope',
-    roles: ['CLINICIAN', 'PRACTITIONER'],
-    // **Fuera del menú del médico** (pedido del propietario, 04/09/2026):
-    // «nadie sabe qué hace». Nació como la PUERTA para empezar a atender, y esa
-    // puerta hoy está en otro lado y es mejor: cada fila de Consultas ofrece
-    // «Iniciar consulta» sobre la cita concreta, en vez de una pantalla que
-    // vuelve a preguntar a quién se atiende.
-    //
-    // `fueraDelMenuPara` y no borrarla: la pantalla sigue existiendo y
-    // alcanzable por su ruta y desde «Tus accesos». Si en unas semanas nadie
-    // la extrañó, se borra en su propio cambio — sacarla de la vista es
-    // reversible en un renglón, borrarla no.
-    fueraDelMenuPara: ['CLINICIAN', 'PRACTITIONER'],
-    availability: 'disponible',
-    summary: 'Empezá la atención de hoy: elegí al paciente y entrá a su consulta.',
-    module: 'M08 clinical',
-  },
-  {
     // **«Consultas»** (ALV-016). Antes decía «Turnos», que era el nombre exacto
     // de la lista cerrada del cliente (§4.H del plan de UX); el mismo cliente
     // pidió la nomenclatura clínica, que además es la que usa el resto del
@@ -472,8 +439,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     path: 'diagnostics',
     // §4.H · fuera del menú del médico: no está en la lista de ocho. La cola
     // del laboratorio y los estudios de un paciente se miran **desde el
-    // paciente**, que es donde se los pidió, y para eso están el Archivo
-    // clínico y la Consulta médica. Sigue siendo sección de primer nivel para
+    // paciente**, que es donde se los pidió, y para eso está el Archivo
+    // clínico. Sigue siendo sección de primer nivel para
     // `CLINICIAN`, que es quien la usa como bandeja.
     fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Laboratorio e imagen',
@@ -639,7 +606,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // plan de pagos— antes de la atención.
     //
     // **Sí corresponde agregarla al menú del médico** (a diferencia de
-    // «Encuestas» o «Consulta médica», que la nota de más abajo saca por
+    // «Encuestas», que la nota de más abajo saca por
     // `fueraDelMenuPara`): cotizar es un paso del flujo de atención que se iba
     // a repetir —no una tarea que se hace una vez y se olvida—, y a diferencia
     // de la ficha de un paciente (que cuelga como hija sin entrada propia,
@@ -953,7 +920,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // real lo hace la API, que responde 404 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'PERIOP_ADMIN', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Administrá sedes, áreas, quirófanos, consultorios, plantilla y legajo de tu organización.',
+    summary:
+      'Administrá sedes, áreas, quirófanos, consultorios, plantilla, legajo y tus vinculaciones.',
     module: 'M14 practice',
   },
   {
@@ -1059,26 +1027,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M16 accounting',
   },
 
-  {
-    // Carril 18. Autoservicio: el profesional pide vincularse a una
-    // organización y ve el estado de sus vinculaciones. No cuelga de
-    // `/organizaciones` porque el proxy desvía todo lo que empieza con `/org`
-    // a la API (ver `docs/design-system/port-alovida.md`); tampoco de
-    // `/practices` ni `/practitioners`, reservados igual en `proxy.conf.json`.
-    path: 'my-organizations',
-    // §4.H · fuera del menú del médico: es un trámite, no trabajo diario. Se
-    // llega desde «Mi perfil», que es donde alguien va a buscar «¿dónde
-    // trabajo?».
-    fueraDelMenuPara: ['PRACTITIONER'],
-    label: 'Mis organizaciones',
-    group: 'Administración',
-    icon: 'building',
-    roles: ['PRACTITIONER'],
-    availability: 'disponible',
-    summary:
-      'Vinculate a una organización y seguí el estado de tus vinculaciones.',
-    module: 'M14 practice',
-  },
 
   /* -- Mi cuenta · autoservicio, con navegación propia --------------------
      El vault lo pide separado: son datos de la persona sobre sí misma, no
@@ -1252,11 +1200,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M35 messaging',
   },
   {
-    // La ruta es la que `IDENTITY_VERIFICATION_ROUTE` ya publica como destino
-    // del 403 `IDENTITY_VERIFICATION_REQUIRED`: **no se renombra**. Cambiarla
-    // rompería la puerta que traduce ese error en una salida.
-    path: 'my-account/identity/verify',
-    label: 'Verificar identidad',
+    // **Una sola sección desde el 2026-09-10.** Eran dos —«Verificar identidad»
+    // y «Mis verificaciones»— que mostraban los mismos trámites: la primera los
+    // repetía debajo del formulario y la segunda era la tabla. El propietario
+    // pidió unirlas, y el resultado es una pantalla con dos pestañas
+    // (`features/identity-verification/identity-hub/`).
+    //
+    // `my-account/identity/verify` **no desaparece**: sigue siendo el destino
+    // que `IDENTITY_VERIFICATION_ROUTE` publica para el 403
+    // `IDENTITY_VERIFICATION_REQUIRED`, y ahora redirige acá. Romper esa puerta
+    // dejaría el error sin salida.
+    path: 'my-account/identity',
+    // «Mi identidad» y no «Verificación de identidad»: ese rótulo ya es de
+    // `administration/identity-assurance`, la cola de quien revisa. Dos
+    // secciones con el mismo nombre en el mismo producto son dos secciones que
+    // nadie sabe distinguir — y una prueba del registro las confunde también.
+    label: 'Mi identidad',
     group: 'Mi cuenta',
     icon: 'shield',
     roles: [ANY_ROLE],
@@ -1265,23 +1224,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // la pantalla y la salida del 403—, lo único que pierde es el renglón.
     ...(VERIFICACION_DE_IDENTIDAD_OFRECIDA ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
     availability: 'disponible',
-    summary: 'Validá tu identidad, tu matrícula o una organización a tu cargo.',
-    module: 'M27 identity_assurance',
-  },
-  {
-    // V27-01: los casos que la verificación de arriba abre. Sin roles porque
-    // el `GET /identity/me/verification-cases` tampoco los pide: cada quien
-    // ve únicamente lo suyo, y eso lo resuelve el backend.
-    path: 'my-account/identity/cases',
-    label: 'Mis verificaciones',
-    group: 'Mi cuenta',
-    icon: 'history',
-    roles: [ANY_ROLE],
-    // Con la de arriba y por lo mismo: el seguimiento de un trámite que hoy no
-    // se ofrece empezar no tiene por qué ocupar un renglón.
-    ...(VERIFICACION_DE_IDENTIDAD_OFRECIDA ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
-    availability: 'disponible',
-    summary: 'Seguí el estado de tus trámites de verificación de identidad.',
+    summary: 'Validá tu identidad o tu matrícula, y seguí el estado de tus trámites.',
     module: 'M27 identity_assurance',
   },
   {
@@ -1324,6 +1267,34 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M51 promotions',
   },
   {
+    // **«Mi consultorio propio»** (propietario, 2026-09-10), en el lugar que
+    // ocupaba «Tu organización». Aquélla mostraba la organización del tenant
+    // activo —la clínica donde el médico está afiliado—, que no es suya: junto
+    // a «Mis organizaciones» y «Organización médica» eran tres tarjetas
+    // parecidas y ninguna contestaba «¿dónde atiendo yo?».
+    //
+    // `my-practice` y no `my-office`: es el término del modelo (`M14 practice`)
+    // y el que ya usa `NewOwnSite` en el contrato. La ruta no puede empezar por
+    // `practices`, que el proxy reserva entero para la API.
+    path: 'administration/my-practice',
+    label: 'Mi consultorio propio',
+    group: 'Administración',
+    icon: 'hospital',
+    // Sólo de quien ejerce: un consultorio propio es de un profesional.
+    roles: ['PRACTITIONER'],
+    // **Fuera del menú lateral, igual que la sección que reemplaza.** El menú
+    // del médico es una lista cerrada de nueve que el propio propietario fijó,
+    // con un spec que falla si alguien agrega la décima; «Tu organización»
+    // tampoco estaba ahí. Ocupa su mismo lugar: la zona «Administración» de
+    // «Tus accesos», que es donde el propietario señaló las tres tarjetas
+    // parecidas. Y se llega también desde «Mi perfil», que es donde alguien va
+    // a buscar «¿dónde atiendo?».
+    fueraDelMenuPara: ['PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Los lugares donde atendés por tu cuenta: dirección, mapa y horario.',
+    module: 'M14 practice',
+  },
+  {
     // TP-1: la organización como actor, no como dato.
     //
     // Distinta de «Organizaciones», que es el listado de la **plataforma**, y
@@ -1343,13 +1314,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // menú. La membresía viaja en el claim `tenants` del token, así que la
     // pregunta se puede hacer de este lado. Ficha F-31.
     path: 'administration/my-organization',
-    // §4.H · fuera del menú del médico: la administra el mostrador. El médico
-    // que además administra su clínica llega desde «Mi perfil».
-    fueraDelMenuPara: ['PRACTITIONER'],
-    // Y no existe para el paciente. `requiresTenant` se escribió para eso y no
-    // alcanza: el alta de paciente lo afilia al tenant por defecto, así que
-    // todos cumplen la condición. Medido contra la API viva.
-    hiddenFor: ['PATIENT'],
+    // **Invisible para el médico desde el 2026-09-10**, no sólo fuera de su
+    // menú. El propietario pidió sacar «Tu organización» «de todos lados» y
+    // poner en su lugar «Mi consultorio propio»: con `fueraDelMenuPara` la
+    // tarjeta seguía apareciendo en «Tus accesos», que es justo donde la
+    // señaló, al lado de otras dos parecidas.
+    //
+    // La pantalla **no se borra**: muestra la organización del tenant activo y
+    // la sigue viendo quien la administra, que es de quien es. Efecto
+    // conocido y aceptado: un médico que además administra su clínica la pierde
+    // de la navegación —tiene el rol `PRACTITIONER`—; le queda la ruta.
+    //
+    // `requiresTenant` no alcanzaba para esconderla del paciente: el alta de
+    // paciente lo afilia al tenant por defecto, así que todos cumplen la
+    // condición. Medido contra la API viva.
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
     // `[ANY_ROLE]` y no la ausencia del campo: F-20 exige que toda sección
     // declare sus roles, justamente para que un olvido no se lea como «la ve
     // cualquiera». Acá la ve cualquiera **a propósito**, y así queda dicho.

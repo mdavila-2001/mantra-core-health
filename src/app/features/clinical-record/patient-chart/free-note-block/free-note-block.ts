@@ -11,9 +11,13 @@ import {
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { RichTextEditor } from '../../../../shared/components/molecules/rich-text-editor/rich-text-editor';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 
 /**
  * La hoja en blanco: escribir la consulta sin completar campos.
@@ -49,7 +53,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
  */
 @Component({
   selector: 'app-free-note-block',
-  imports: [AppButton, Alert, RichTextEditor],
+  imports: [AppButton, Alert, FormField, RichTextEditor, Select],
   templateUrl: './free-note-block.html',
   styleUrl: './free-note-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +64,16 @@ export class FreeNoteBlock {
 
   /** La consulta en curso, si la nota nace dentro de una. */
   readonly encounterId = input<string | null>(null);
+
+  /**
+   * Las citas de la persona, para elegir de cuál es la nota.
+   *
+   * Mismo criterio que el diagnóstico y la alergia: desde el expediente no hay
+   * consulta en curso y la nota igual pertenece a una —«lo que se habló el
+   * martes»—. Vacío no dibuja el campo: un desplegable de una sola opción vacía
+   * es una pregunta que no existe.
+   */
+  readonly citas = input<readonly CitaDelPaciente[]>([]);
 
   /**
    * Se emite cuando la nota quedó guardada.
@@ -73,6 +87,18 @@ export class FreeNoteBlock {
 
   /** Lo escrito, como HTML saneado por el editor. */
   protected readonly contenido = signal('');
+
+  /** La cita elegida, o `null` por «sin cita asociada». */
+  protected readonly citaElegida = signal<string | null>(null);
+
+  /** Las opciones del selector de cita, con la vacía primero. */
+  protected readonly opcionesDeCita = computed<readonly SelectOption<string | null>[]>(() => [
+    { value: null, label: 'Sin cita asociada' },
+    ...this.citas().map((cita) => ({
+      value: cita.id,
+      label: cita.enCurso ? `${cita.etiqueta} · en curso` : cita.etiqueta,
+    })),
+  ]);
 
   /** Verdadero mientras la petición está en vuelo. */
   protected readonly guardando = signal(false);
@@ -128,13 +154,16 @@ export class FreeNoteBlock {
   private persistir(authorProfileId: string): void {
     const texto = this.contenido();
     const abierta = this.noteId();
+    // La cita elegida manda sobre el encuentro del anfitrión: desde el
+    // expediente no hay consulta en curso y la nota se ata a la que se elija.
+    const encuentro = this.citaElegida() ?? this.encounterId();
 
     const peticion =
       abierta === null
         ? this.notes.createNote({
             patientProfileId: this.patientProfileId(),
             authorProfileId,
-            ...(this.encounterId() === null ? {} : { encounterId: this.encounterId()! }),
+            ...(encuentro === null ? {} : { encounterId: encuentro }),
             subjectiveText: texto,
           })
         : this.notes.appendVersion(abierta, { authorProfileId, subjectiveText: texto });

@@ -1,3 +1,4 @@
+import { ROLE_ASSIGNMENT_STATUS } from '../../data-access/practice-sites/role-assignment-concepts';
 import { PRACTICE_CONSULTORIO, PRACTICE_OLIVOS, PRACTICE_SANLUCAS, SITIO_CONSULTORIO, SITIO_OLIVOS, SITIO_SANLUCAS } from '../fixtures/agenda';
 import { CARGO, ESPECIALIDAD, ESTABLECIMIENTO, ESTADO, PROCEDIMIENTO, displayDe } from '../fixtures/conceptos';
 import { MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
@@ -110,6 +111,32 @@ interface VinculacionSimulada {
   readonly practitionerProfileId: string;
 }
 
+/**
+ * El estado de una vinculación, **como concepto**.
+ *
+ * El backend real emite el identificador del concepto —`PRAC.RA_STATUS_*`— y la
+ * interfaz lo traduce con `roleAssignmentStatusLabel`, que compara contra los
+ * cinco UUID de `role-assignment-concepts.ts`. El simulador mandaba el enum
+ * corto en texto plano, así que ninguno casaba y la tabla de «Mis
+ * vinculaciones» mostraba **«Estado desconocido» en las cuatro filas** — el
+ * mismo defecto que tenían los trámites de identidad, con otra tabla.
+ *
+ * Se sigue escribiendo el enum corto en los datos, que es lo que se lee al
+ * mantenerlos, y se traduce al salir.
+ */
+const CONCEPTO_DE_VINCULACION: Readonly<Record<string, string>> = {
+  PENDING: ROLE_ASSIGNMENT_STATUS.PENDING,
+  ACTIVE: ROLE_ASSIGNMENT_STATUS.ACTIVE,
+  SUSPENDED: ROLE_ASSIGNMENT_STATUS.SUSPENDED,
+  REJECTED: ROLE_ASSIGNMENT_STATUS.REJECTED,
+  ENDED: ROLE_ASSIGNMENT_STATUS.ENDED,
+};
+
+/** El concepto del estado, o el enum tal cual si no está en la tabla. */
+function conceptoDeVinculacion(estado: string): string {
+  return CONCEPTO_DE_VINCULACION[estado] ?? estado;
+}
+
 const vinculaciones = new Coleccion<VinculacionSimulada>([
   { id: uuid('ra-olivos'), practiceId: PRACTICE_OLIVOS, practiceName: 'Clínica Los Olivos', practiceType: 'Clínica', practiceSiteId: SITIO_OLIVOS.id, roleConceptId: CARGO['ROLE-JEFE']!, specialtyConceptId: ESPECIALIDAD['CARDIOLOGIA']!, status: 'ACTIVE', isPrimary: true, validFrom: isoDia(-900), validTo: null, createdAt: iso(-900), avatarUrl: avatarSvg('Clínica Los Olivos', '#0f766e'), practitionerProfileId: MEDICA.id },
   { id: uuid('ra-sanlucas'), practiceId: PRACTICE_SANLUCAS, practiceName: 'Hospital San Lucas', practiceType: 'Hospital', practiceSiteId: SITIO_SANLUCAS.id, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['CARDIOLOGIA']!, status: 'PENDING', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-4), avatarUrl: avatarSvg('Hospital San Lucas', '#7c3aed'), practitionerProfileId: MEDICA.id },
@@ -121,6 +148,61 @@ const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: stri
   { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
   { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
 ]);
+
+/**
+ * Los lugares donde atiende alguien, con el propio primero.
+ *
+ * Vive acá —al lado de la colección— y se exporta porque **dos superficies
+ * preguntan lo mismo**: `GET /practitioners/:id/sites`, que exige sesión, y la
+ * ficha pública, que es anónima. Antes sólo existía la primera, y por eso la
+ * ficha no sabía decir dónde atiende nadie (P16 de `PENDIENTES-BACKEND.md`).
+ *
+ * El propio va primero a propósito: es el único que no depende de que una
+ * organización lo haya aceptado, así que es el que un profesional recién
+ * registrado tiene para ofrecer.
+ */
+export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesional[] {
+  const propias = sitiosPropios
+    .filtrar((s) => s.practitionerProfileId === practitionerProfileId)
+    .map(({ practitionerProfileId: _p, ...s }) => ({
+      ...s,
+      esPropio: s.practiceId === PRACTICE_CONSULTORIO,
+    }));
+  if (propias.length > 0) {
+    return [...propias].sort((a, b) => Number(b.esPropio) - Number(a.esPropio));
+  }
+
+  // Quien no cargó ninguna atiende donde su organización: es lo que el padrón
+  // sabe de él, y decir «no atiende en ningún lado» sería falso.
+  const p = profesionalPorId(practitionerProfileId);
+  if (p === undefined) return [];
+  const deLaOrganizacion = p.organizacion === 'Hospital San Lucas' ? SITIO_SANLUCAS : SITIO_OLIVOS;
+  return [
+    {
+      ...deLaOrganizacion,
+      practiceId: p.organizacion === 'Hospital San Lucas' ? PRACTICE_SANLUCAS : PRACTICE_OLIVOS,
+      latitude: p.lat,
+      longitude: p.lng,
+      status: 'ACTIVE',
+      esPropio: false,
+    },
+  ];
+}
+
+/** Una sede tal como la devuelve {@link sedesDe}. */
+export interface SedeDeProfesional {
+  readonly id: string;
+  readonly practiceId: string;
+  readonly code: string;
+  readonly name: string;
+  readonly timeZone: string | null;
+  readonly addressText: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+  readonly status: string;
+  /** Si es el consultorio propio y no una sede de una organización. */
+  readonly esPropio: boolean;
+}
 
 function concepto(code: string, display: string) {
   return { code, display };
@@ -182,7 +264,12 @@ export function registrarPracticas(router: MockRouter): void {
 
   router.get('/practitioners/me/role-assignments', (request) => {
     const hpid = request.user?.practitionerProfileId;
-    return vinculaciones.filtrar((v) => v.practitionerProfileId === hpid).map(({ practitionerProfileId: _p, ...v }) => v);
+    return vinculaciones
+      .filtrar((v) => v.practitionerProfileId === hpid)
+      .map(({ practitionerProfileId: _p, ...v }) => ({
+        ...v,
+        status: conceptoDeVinculacion(v.status),
+      }));
   });
 
   router.post('/practices/:id/role-assignments/self-request', (request) => {
@@ -213,11 +300,8 @@ export function registrarPracticas(router: MockRouter): void {
   });
 
   router.get('/practitioners/:id/sites', ({ params }) => {
-    const p = profesionalPorId(params['id']!);
-    if (p === undefined) return { items: [], count: 0 };
-    const items = p.id === MEDICA.id
-      ? sitiosPropios.todos().map(({ practitionerProfileId: _p, ...s }) => s)
-      : [{ ...(p.organizacion === 'Hospital San Lucas' ? SITIO_SANLUCAS : SITIO_OLIVOS), practiceId: p.organizacion === 'Hospital San Lucas' ? PRACTICE_SANLUCAS : PRACTICE_OLIVOS, latitude: p.lat, longitude: p.lng, status: 'ACTIVE' }];
+    // La misma regla que usa la ficha pública: una sola, y acá con sesión.
+    const items = sedesDe(params['id']!).map(({ esPropio: _e, ...s }) => s);
     return { items, count: items.length };
   });
 

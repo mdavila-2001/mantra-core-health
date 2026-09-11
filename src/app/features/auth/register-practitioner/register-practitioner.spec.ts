@@ -114,6 +114,9 @@ describe('RegisterPractitioner', () => {
         | 'motherLastName'
         | 'nationalId'
         | 'regulatoryAuthority'
+        | 'professionalTitleUniversity'
+        | 'professionalTitleCountry'
+        | 'professionalTitleCity'
         | 'specialtyPrimary'
         | 'profilePhotoBase64'
         | 'sexAtBirth',
@@ -135,11 +138,18 @@ describe('RegisterPractitioner', () => {
       licenseNumber: 'MP-12345',
       sedesLicenseNumber: 'T.I. 538/14',
       homeAddressLines: '',
+      officeName: '',
+      officeAddressLines: '',
       regulatoryAuthority: extra.regulatoryAuthority ?? '',
       // Obligatorio desde que dejó de ser «(opcional)»: es lo que dice qué
       // clase de profesional es, y de él dependen el colegio y las
       // especialidades. Las pruebas que lo ejercen lo pisan por `extra`.
       professionalTitle: extra.professionalTitle ?? 'Médico / Médica',
+      // Dónde estudió la profesión con la que ejerce. Los tres son opcionales,
+      // así que por defecto van vacíos; las pruebas que los ejercen los pisan.
+      professionalTitleUniversity: extra.professionalTitleUniversity ?? '',
+      professionalTitleCountry: extra.professionalTitleCountry ?? '',
+      professionalTitleCity: extra.professionalTitleCity ?? '',
       phone: extra.phone ?? '',
       mobilePhone: extra.mobilePhone ?? '+591 70011111',
       workMobilePhone: extra.workMobilePhone ?? '',
@@ -231,6 +241,11 @@ describe('RegisterPractitioner', () => {
         'personal-contact',
         'access',
         'residence',
+        // El consultorio propio va pegado al domicilio: son las dos preguntas
+        // de «dónde», y separarlas dejaba la del trabajo perdida entre los
+        // títulos. Es opcional, y aun así el lugar desde el que se publica la
+        // agenda mientras ninguna organización lo haya aceptado.
+        'own-office',
         // El título profesional va ANTES de la habilitación: de él dependen el
         // colegio que se ofrece ahí y la lista de especialidades. Preguntarlo
         // después dejaba las dos cosas eligiéndose a ciegas.
@@ -270,6 +285,16 @@ describe('RegisterPractitioner', () => {
       // y el punto del mapa. Era sólo la localidad mientras el DTO del
       // profesional no tuvo dónde poner las otras dos.
       expect(camposDe('residence')).toEqual(['municipio', 'homeAddressLines', 'gpsDomicilio']);
+      // El consultorio propio: cuatro campos, todos opcionales. Es un calco del
+      // lugar de trabajo del alta de paciente, con el nombre que le da el
+      // dominio — quien ejerce puede atender en varios lugares, y éste es el
+      // único que no depende de que otro lo acepte.
+      expect(camposDe('own-office')).toEqual([
+        'officeName',
+        'municipioConsultorio',
+        'officeAddressLines',
+        'gpsConsultorio',
+      ]);
       expect(camposDe('credentials')).toEqual([
         'licenseNumber',
         'sedesLicenseNumber',
@@ -279,6 +304,10 @@ describe('RegisterPractitioner', () => {
       expect(camposDe('practice')).toEqual([
         'profilePhotoBase64',
         'professionalTitle',
+        // Universidad, país y ciudad entran como UN campo proyectado, igual
+        // que los tres nombres: son tres casillas y la página ya está en el
+        // tope de cuatro.
+        'professionalTitleEducation',
         'professionalTitleFile',
       ]);
       expect(camposDe('specialties')).toEqual(['specialtyPrimary', 'especialidadesExtra']);
@@ -388,17 +417,21 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene doce páginas, ninguna de más de cuatro preguntas', () => {
-    // Doce y no menos porque el límite es de **campos por página**, no de
+  it('tiene trece páginas, ninguna de más de cuatro preguntas', () => {
+    // Trece y no menos porque el límite es de **campos por página**, no de
     // páginas: apretar el orden pedido en menos pasos es lo que este motor vino
     // a deshacer (AC-05-2, `MAX_CAMPOS_POR_PAGINA`). Las últimas cuatro son la
     // de contactos privados —separada de la del acceso al dejar de mezclar el
     // número personal con el del consultorio—, las dos de respaldos y títulos
     // —que no caben en la de habilitación, ya llena— y la contraseña, que
     // cierra el alta sola.
+    //
+    // La treceava es el **consultorio propio** (08/09/2026): sus cuatro campos
+    // no caben en la de residencia, que ya tiene tres, y meterlos ahí además
+    // mezclaría dos lugares distintos en una pregunta.
     const paginas = component.paginasProfesional();
 
-    expect(paginas.length).toBe(12);
+    expect(paginas.length).toBe(13);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -1025,10 +1058,105 @@ describe('RegisterPractitioner', () => {
       expect(component.respaldoSedes()?.archivo).toBe('sedes.jpg');
     });
 
+    it('una segunda profesión guarda su universidad, su país y su ciudad', () => {
+      component.agregarTitulo('UNIVERSITARIO');
+      const [profesion] = component.titulosDe('UNIVERSITARIO');
+
+      component.escribirDatoDeTitulo(profesion.id, 'nombre', 'Derecho');
+      component.escribirDatoDeTitulo(profesion.id, 'universidad', 'Universidad Gabriel René Moreno');
+      component.escribirDatoDeTitulo(profesion.id, 'pais', 'Bolivia');
+      component.escribirDatoDeTitulo(profesion.id, 'ciudad', 'Santa Cruz de la Sierra');
+
+      const [despues] = component.titulosDe('UNIVERSITARIO');
+      expect(despues.nombre).toBe('Derecho');
+      expect(despues.universidad).toBe('Universidad Gabriel René Moreno');
+      expect(despues.pais).toBe('Bolivia');
+      expect(despues.ciudad).toBe('Santa Cruz de la Sierra');
+    });
+
+    /**
+     * El pedido del propietario, entero: «hay doctores que aparte de ser
+     * doctores han estudiado otra profesión … cada uno con su respectiva
+     * universidad, lugar de estudio y pdf de su diploma».
+     */
+    it('dos profesiones distintas no se pisan: cada una con su universidad y su diploma', () => {
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('UNIVERSITARIO');
+      const [primera, segunda] = component.titulosDe('UNIVERSITARIO');
+
+      component.escribirDatoDeTitulo(primera.id, 'nombre', 'Medicina');
+      component.escribirDatoDeTitulo(primera.id, 'universidad', 'Universidad Mayor de San Andrés');
+      component.escribirDatoDeTitulo(primera.id, 'ciudad', 'La Paz');
+      component.adjuntarArchivoATitulo(
+        primera.id,
+        eventoDeArchivo('medicina.pdf', 'application/pdf', 1024),
+      );
+
+      component.escribirDatoDeTitulo(segunda.id, 'nombre', 'Ingeniería de Sistemas');
+      component.escribirDatoDeTitulo(segunda.id, 'universidad', 'Universidad Privada Boliviana');
+      component.escribirDatoDeTitulo(segunda.id, 'ciudad', 'Cochabamba');
+      component.adjuntarArchivoATitulo(
+        segunda.id,
+        eventoDeArchivo('sistemas.pdf', 'application/pdf', 2048),
+      );
+
+      const [a, b] = component.titulosDe('UNIVERSITARIO');
+      expect([a.nombre, a.universidad, a.ciudad, a.archivo]).toEqual([
+        'Medicina',
+        'Universidad Mayor de San Andrés',
+        'La Paz',
+        'medicina.pdf',
+      ]);
+      expect([b.nombre, b.universidad, b.ciudad, b.archivo]).toEqual([
+        'Ingeniería de Sistemas',
+        'Universidad Privada Boliviana',
+        'Cochabamba',
+        'sistemas.pdf',
+      ]);
+    });
+
+    it('ninguna profesión extra es obligatoria: el alta se manda sin cargar ninguna', () => {
+      expect(component.titulosDe('UNIVERSITARIO')).toHaveLength(0);
+
+      completarProfesional();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      req.flush(RESPUESTA_PRO);
+      expect(component.registered()).toBe(true);
+    });
+
+    it('quitar una profesión se lleva su universidad y deja intacta la otra', () => {
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('UNIVERSITARIO');
+      const [primera, segunda] = component.titulosDe('UNIVERSITARIO');
+      component.escribirDatoDeTitulo(primera.id, 'universidad', 'La que se va');
+      component.escribirDatoDeTitulo(segunda.id, 'universidad', 'La que queda');
+
+      component.quitarTitulo(primera.id);
+
+      const quedan = component.titulosDe('UNIVERSITARIO');
+      expect(quedan).toHaveLength(1);
+      expect(quedan[0].universidad).toBe('La que queda');
+    });
+
+    it('el título con el que ejerce lleva su universidad y su lugar de estudio', () => {
+      component.escribirEstudio('professionalTitleUniversity', 'Universidad Mayor de San Simón');
+      component.escribirEstudio('professionalTitleCountry', 'Bolivia');
+      component.escribirEstudio('professionalTitleCity', 'Cochabamba');
+
+      expect(component.valorDeEstudio('professionalTitleUniversity')).toBe(
+        'Universidad Mayor de San Simón',
+      );
+      expect(component.valorDeEstudio('professionalTitleCountry')).toBe('Bolivia');
+      expect(component.valorDeEstudio('professionalTitleCity')).toBe('Cochabamba');
+    });
+
     it('nada de esto viaja en el alta todavía: es sólo pantalla', () => {
       component.agregarTitulo('UNIVERSITARIO');
       const [titulo] = component.titulosDe('UNIVERSITARIO');
       component.escribirNombreDeTitulo(titulo.id, 'Medicina');
+      component.escribirDatoDeTitulo(titulo.id, 'universidad', 'Universidad Mayor de San Andrés');
       component.adjuntarArchivoATitulo(
         titulo.id,
         eventoDeArchivo('medicina.pdf', 'application/pdf', 1024),
@@ -1043,6 +1171,12 @@ describe('RegisterPractitioner', () => {
       const req = http.expectOne('/iam/auth/register-practitioner');
       expect(req.request.body.academicTitles).toBeUndefined();
       expect(req.request.body.credentialAttachments).toBeUndefined();
+      // La universidad y el lugar de estudio tampoco: no hay campo en el DTO
+      // del alta pública, y la API valida con `forbidNonWhitelisted` —mandarlos
+      // no los guardaría, rechazaría el alta entera con 422—.
+      expect(req.request.body.professionalTitleUniversity).toBeUndefined();
+      expect(req.request.body.professionalTitleCountry).toBeUndefined();
+      expect(req.request.body.professionalTitleCity).toBeUndefined();
       req.flush(RESPUESTA_PRO);
     });
   });
@@ -1303,6 +1437,104 @@ describe('RegisterPractitioner', () => {
       );
 
       expect(medicas.length).toBeGreaterThan(40);
+    });
+  });
+
+  /* ==========================================================================
+     El consultorio propio.
+
+     La regla que lo gobierna: la página entera es opcional, así que lo que
+     decide si viaja no es un campo obligatorio sino que haya **algo que
+     guardar**. Exigir el nombre haría que quien completa la dirección y se
+     olvida del rótulo pierda lo escrito sin que nadie se lo diga.
+     ========================================================================== */
+  describe('el consultorio propio', () => {
+    function cuerpoDelAlta(): Record<string, unknown> {
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      const cuerpo = req.request.body as Record<string, unknown>;
+      req.flush(RESPUESTA_PRO);
+      return cuerpo;
+    }
+
+    it('sin nada declarado, no viaja', () => {
+      completarProfesional();
+
+      expect(cuerpoDelAlta()['ownSite']).toBeUndefined();
+    });
+
+    it('con sólo el nombre, viaja sin dirección', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({ officeName: 'Consultorio Suárez' });
+
+      // Sin dirección y no con una vacía: una dirección vacía no es «sin
+      // dirección», es una fila vacía en `common.addresses`. Misma regla que
+      // `work-history.ts` al registrar una sede desde el perfil.
+      expect(cuerpoDelAlta()['ownSite']).toEqual({ name: 'Consultorio Suárez' });
+    });
+
+    it('con sólo la calle, viaja igual y con nombre por omisión', () => {
+      // El caso que motiva la regla: quien escribe la dirección y no el rótulo
+      // no pierde lo que escribió. `NewOwnSite.name` es obligatorio del lado
+      // del backend, así que se manda uno genérico y se renombra después.
+      completarProfesional();
+      component.formProfesional.patchValue({ officeAddressLines: 'Calle Libertad #120' });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        address: { lines: ['Calle Libertad #120'] },
+      });
+    });
+
+    it('con sólo el punto del mapa, viaja con la dirección que tiene', () => {
+      completarProfesional();
+      component.gpsConsultorio.set({ lat: -17.78, lng: -63.18 });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        // `lines` vacío y no ausente: el contrato lo declara obligatorio, y una
+        // sede ubicada en el mapa sin calle escrita es un caso corriente.
+        address: { lines: [], latitude: -17.78, longitude: -63.18 },
+      });
+    });
+
+    it('con todo, arma el cuerpo de `NewOwnSite`', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({
+        officeName: 'Consultorio Suárez',
+        officeAddressLines: 'Calle Libertad #120',
+      });
+      component.municipioConsultorio.set('mun-1');
+      component.gpsConsultorio.set({ lat: -17.78, lng: -63.18 });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Consultorio Suárez',
+        address: {
+          lines: ['Calle Libertad #120'],
+          municipalityConceptId: 'mun-1',
+          latitude: -17.78,
+          longitude: -63.18,
+        },
+      });
+    });
+
+    it('es un lugar distinto del domicilio, y no se pisan', () => {
+      // Hay quien vive en una ciudad y atiende en otra. Las dos localidades y
+      // los dos puntos son señales separadas: confirmar uno no confirma el otro.
+      completarProfesional();
+      component.municipioProfesional.set('mun-casa');
+      component.gpsDomicilio.set({ lat: -16.5, lng: -68.11 });
+      component.municipioConsultorio.set('mun-trabajo');
+      component.gpsConsultorio.set({ lat: -17.78, lng: -63.18 });
+
+      const cuerpo = cuerpoDelAlta();
+
+      expect(cuerpo['residenceMunicipalityConceptId']).toBe('mun-casa');
+      expect(cuerpo['homeLatitude']).toBe(-16.5);
+      expect(cuerpo['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        address: { lines: [], municipalityConceptId: 'mun-trabajo', latitude: -17.78, longitude: -63.18 },
+      });
     });
   });
 });

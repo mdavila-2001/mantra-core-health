@@ -67,6 +67,7 @@ describe('BranchNew', () => {
       timeZone: '',
       latitude: null,
       longitude: null,
+      tipo: null,
       ...valores,
     });
   }
@@ -86,8 +87,9 @@ describe('BranchNew', () => {
   });
 
   it('el tipo viaja como código, no como concept id', () => {
-    completar();
-    crudo<{ set: (v: string) => void }>('tipo').set('CLINIC');
+    // El tipo es un control del grupo desde que la pantalla usa el motor
+    // paginado: antes era una señal suelta con `.set()`.
+    completar({ tipo: 'CLINIC' });
     interno<() => void>('submit')();
 
     const pedido = http.expectOne(`/tenants/${TENANT_ID}/branches`);

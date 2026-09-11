@@ -3,341 +3,285 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   inject,
-  PLATFORM_ID,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { isPlatformBrowser } from '@angular/common';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { debounceTime, filter, map, Subject } from 'rxjs';
 
-import { CommunityClient } from '../../core/data-access/community/community.client';
-import { ChatSocketService } from '../../core/messaging/chat-socket.service';
+import { ChatStore } from '../../core/messaging/chat.store';
+import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
 import { conQuien } from '../../core/messaging/con-quien';
-import { SessionStore } from '../../core/auth/session.store';
-import type {
-  ConversationListItem,
-  PublicDirectoryResult,
-} from '../../core/data-access/community/community.types';
+import type { ConversationListItem } from '../../core/data-access/community/community.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
-import { ConversationList } from './conversation-list/conversation-list';
+import { ConversationList, type AccionDeFila } from './conversation-list/conversation-list';
 
-/** Cada cuánto se relee la bandeja, en milisegundos. */
-const SONDEO_MS = 60_000;
+/** Los cuatro filtros de la bandeja, en el orden en que se muestran. */
+const FILTROS = ['todos', 'no-leidos', 'favoritos', 'grupos'] as const;
 
-/**
- * Un slug legible a partir del nombre, con una cola al azar.
- *
- * La cola no es decoración: el slug es único en toda la plataforma y hay más de
- * una «María López». Sin ella, la segunda que entra a los chats se choca con un
- * 409 en el peor momento —al pulsar «crear mi perfil»— y no tiene forma de
- * arreglarlo desde esa pantalla.
- */
-function slugDe(nombre: string): string {
-  const base = nombre
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40);
-  const cola = Math.random().toString(36).slice(2, 8);
-  return `${base === '' ? 'perfil' : base}-${cola}`;
-}
+type Filtro = (typeof FILTROS)[number];
+
+/** Cuánto se espera antes de preguntarle al directorio, al tipear. */
+const ESPERA_DE_BUSQUEDA_MS = 300;
 
 /**
- * La bandeja de mensajería directa — carril P2.
+ * El marco de la mensajería — carril P2.
  *
- * ## Sobre `community.conversations`, no sobre el módulo 35
+ * ## Una sola pantalla
  *
- * Decisión tomada y no reabierta: el backend de mensajes directos ya existe
- * completo en `community` (conversaciones, participantes, mensajes, recibos).
- * El módulo 35 es el canal de **notificaciones** —la campana de P1—, y duplicar
- * el chat ahí sería tener dos mensajerías que se contradicen.
+ * La bandeja y el hilo eran dos pantallas hermanas: abrir una conversación
+ * destruía la lista y la volvía a pedir. Ahora esto es el marco —lista a la
+ * izquierda, `router-outlet` a la derecha— y el hilo es una ruta **hija**: al
+ * cambiar de conversación la lista no se entera, que es lo primero que separa
+ * esto de un chat de verdad.
  *
- * ## Quién es «yo» acá
+ * El estado no vive acá sino en `ChatStore`, que es de la aplicación y no de la
+ * pantalla: el hilo lee del mismo store y por eso no necesita volver a pedir
+ * nada para saber con quién está hablando.
  *
- * El perfil público de `community`, que **no** es el perfil de paciente que
- * trae el token: son entidades distintas y hay que preguntarle al backend cuál
- * es el propio. Quien todavía no lo creó ve una puerta —cómo crearlo—, no una
- * pantalla rota.
+ * ## El buscador busca dos cosas
  *
- * ## Sondeo cada 60 s, y ahora también WebSocket
- *
- * La decisión D2 original rechazaba WebSockets; se reabre a pedido explícito
- * para que la bandeja se entere en vivo de un mensaje nuevo. El socket es
- * **aditivo**: el sondeo de 60 s sigue igual, como red de seguridad si el
- * socket se cae — el minuto sigue siendo cuánto puede tardar en notarse un
- * mensaje si el WS falló, no el mecanismo normal de entrega. Bajo SSR ninguno
- * de los dos corre — el servidor pinta la lista que ya tiene.
+ * Lo que se escribe filtra **las conversaciones que ya tenés** y, en paralelo,
+ * busca **gente a la que todavía no le escribiste**. Son las dos razones por
+ * las que alguien abre un buscador de chat, y separarlas en dos cajas —una
+ * arriba y otra detrás de un botón— obligaba a saber de antemano cuál de las
+ * dos cosas estabas por hacer.
  */
 @Component({
   selector: 'app-messaging',
-  imports: [Alert, AppButton, ConversationList, EmptyState, FormsModule],
+  imports: [
+    Alert,
+    AppButton,
+    ConversationList,
+    EmptyState,
+    FormsModule,
+    RouterOutlet,
+  ],
   templateUrl: './messaging.html',
   styleUrl: './messaging.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    // El chat ocupa la ventana entera: el marco de la aplicación le saca su
+    // relleno sólo a esta pantalla. Sin esto el hilo quedaría con 40 px de aire
+    // alrededor y el composer flotando lejos del borde.
+    class: 'pantalla-a-sangre',
+  },
 })
 export class Messaging {
-  private readonly community = inject(CommunityClient);
-  private readonly chatSocket = inject(ChatSocketService);
-  private readonly sesion = inject(SessionStore);
+  protected readonly store = inject(ChatStore);
+  private readonly preferencias = inject(ChatPreferencias);
   private readonly router = inject(Router);
   private readonly ruta = inject(ActivatedRoute);
-  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly titulo = inject(Title);
 
-  private temporizador: ReturnType<typeof setTimeout> | null = null;
+  protected readonly filtros = FILTROS;
 
-  protected readonly conversaciones = signal<readonly ConversationListItem[]>(
-    [],
-  );
-  protected readonly cargando = signal(false);
-  protected readonly error = signal('');
-  protected readonly cargoAlgunaVez = signal(false);
-
-  /** Perfil público propio, o `null` si todavía no lo creó. */
-  protected readonly perfil = signal<string | null>(null);
-  protected readonly perfilResuelto = signal(false);
-
-  /** Mientras se crea la vitrina desde el estado vacío. */
-  protected readonly creandoPerfil = signal(false);
-
-  /** Si está abierto el buscador de «escribirle a alguien». */
-  protected readonly buscando = signal(false);
   protected readonly consulta = signal('');
-  protected readonly resultados = signal<readonly PublicDirectoryResult[]>([]);
-  protected readonly buscandoAhora = signal(false);
-  protected readonly abriendo = signal(false);
+  protected readonly filtro = signal<Filtro>('todos');
+  protected readonly verArchivados = signal(false);
+
+  private readonly tecleado = new Subject<string>();
+
+  /**
+   * La dirección actual, para saber si hay un hilo abierto.
+   *
+   * Hace falta en angosto, donde la lista y la conversación no caben juntas:
+   * con hilo abierto se ve sólo el hilo, y sin él sólo la lista.
+   */
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((evento) => evento instanceof NavigationEnd),
+      map(() => this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  protected readonly hayHiloAbierto = computed(() =>
+    /\/messaging\/[^/?#]+/.test(this.url()),
+  );
+
+  /** Las archivadas, que no se mezclan con el resto. */
+  protected readonly archivadas = computed(() =>
+    this.store
+      .conversaciones()
+      .filter((c) => this.preferencias.estaArchivado(c.id)),
+  );
+
+  /**
+   * Lo que se ve en la lista: el filtro elegido, menos lo archivado, y
+   * recortado por lo que se haya escrito en el buscador.
+   */
+  protected readonly visibles = computed<readonly ConversationListItem[]>(() => {
+    const consulta = this.consulta().trim().toLowerCase();
+    const filtro = this.filtro();
+    const enArchivados = this.verArchivados();
+
+    return this.store.conversaciones().filter((conversacion) => {
+      if (this.preferencias.estaArchivado(conversacion.id) !== enArchivados) {
+        return false;
+      }
+      if (filtro === 'no-leidos' && conversacion.unreadCount === 0) {
+        return false;
+      }
+      if (filtro === 'favoritos' && !this.preferencias.esFavorito(conversacion.id)) {
+        return false;
+      }
+      if (
+        filtro === 'grupos' &&
+        conversacion.groupId === undefined &&
+        conversacion.peers.length <= 1
+      ) {
+        return false;
+      }
+      if (consulta === '') {
+        return true;
+      }
+      const nombre = conQuien(conversacion).toLowerCase();
+      const ultimo = (conversacion.lastMessage?.bodyText ?? '').toLowerCase();
+      return nombre.includes(consulta) || ultimo.includes(consulta);
+    });
+  });
+
+  /** Cuántas sin leer hay, para el chip. */
+  protected readonly noLeidas = computed(
+    () => this.store.conversaciones().filter((c) => c.unreadCount > 0).length,
+  );
 
   protected readonly vacio = computed(
-    () => this.cargoAlgunaVez() && this.conversaciones().length === 0,
+    () => this.store.bandejaCargada() && this.visibles().length === 0,
+  );
+
+  /** `true` si hay algo escrito pero ninguna conversación propia casa. */
+  protected readonly sinCoincidencias = computed(
+    () => this.consulta().trim() !== '' && this.visibles().length === 0,
   );
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => this.detener());
+    this.store.iniciar();
+    inject(DestroyRef).onDestroy(() => this.store.detener());
 
-    this.community.getOwnProfile().subscribe({
-      next: (propio) => {
-        this.perfil.set(propio?.id ?? null);
-        this.perfilResuelto.set(true);
-        if (propio) {
-          this.cargar();
-          this.agendar();
-          this.chatSocket.joinInbox(propio.id);
-          this.atenderEscribirA();
-        }
-      },
-      error: () => {
-        this.perfilResuelto.set(true);
-        this.error.set('No pudimos saber si tenés perfil público.');
-      },
+    // Al directorio se le pregunta cuando la persona dejó de escribir: una
+    // petición por tecla contra un buscador que atraviesa todos los tenants es
+    // ruido para el servidor y resultados que parpadean para quien mira.
+    this.tecleado
+      .pipe(debounceTime(ESPERA_DE_BUSQUEDA_MS), takeUntilDestroyed())
+      .subscribe((texto) => this.store.buscarGente(texto));
+
+    // El `?escribirA=<slug>` con el que llega el botón «Enviar mensaje» de una
+    // ficha pública. Se atiende cuando el perfil propio ya está resuelto: sin
+    // eso no hay con qué abrir el hilo.
+    this.ruta.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
+      const slug = query.get('escribirA');
+      if (slug !== null && slug !== '') {
+        this.abrirConSlug(slug);
+      }
     });
 
-    // Mensaje nuevo o conversación nueva: releer la bandeja. No se inserta a
-    // mano — el servidor decide unread/lastMessage/orden, releer es lo único
-    // que garantiza que la fila quede consistente con lo que pintaría un
-    // refresco de página.
-    this.chatSocket.onMessage
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.cargar());
-    this.chatSocket.onNewConversation
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.cargar());
-  }
-
-  /** Con quién es cada conversación. Lo dibuja `app-conversation-list`. */
-  protected readonly conQuien = conQuien;
-
-  /**
-   * Crea la vitrina pública que la mensajería necesita, sin salir de acá.
-   *
-   * Antes esto era un cartel que mandaba a «Mi perfil» a buscar un formulario:
-   * quien entra a los chats quiere chatear, y hacerle recorrer otra sección
-   * para volver es exactamente la fricción que dejaba la pantalla muerta para
-   * cualquiera recién registrado.
-   *
-   * Se crea con lo mínimo —nombre y slug— y **sin publicarla en el directorio**:
-   * `visibility` va omitido a propósito, porque aparecer en la guía pública es
-   * una decisión aparte que se toma en «Mi perfil», no un efecto secundario de
-   * querer escribirle a alguien.
-   */
-  protected crearPerfil(): void {
-    const tenantId = this.sesion.activeTenantId();
-    if (tenantId === null || this.creandoPerfil()) {
-      this.error.set(
-        tenantId === null ? 'No pudimos saber en qué organización estás.' : '',
-      );
-      return;
-    }
-
-    const nombre = this.sesion.displayName() ?? 'Mi perfil';
-    this.creandoPerfil.set(true);
-    this.community
-      .upsertOwnProfile({ tenantId, slug: slugDe(nombre), displayName: nombre })
-      .subscribe({
-        next: (propio) => {
-          this.creandoPerfil.set(false);
-          this.perfil.set(propio.id);
-          this.cargar();
-          this.agendar();
-          this.chatSocket.joinInbox(propio.id);
-        },
-        error: () => {
-          this.creandoPerfil.set(false);
-          this.error.set('No pudimos crear tu perfil. Probá de nuevo.');
-        },
-      });
-  }
-
-  /**
-   * Atiende el `?escribirA=<slug>` con el que llega el botón «Enviar mensaje»
-   * de una ficha pública.
-   *
-   * Se ejecuta recién cuando se sabe cuál es el perfil propio: sin eso no hay
-   * con qué abrir el hilo. Si a quien llega le falta el perfil, no pasa nada
-   * malo —ve el estado vacío que se lo ofrece crear— y basta con volver a
-   * entrar desde la ficha.
-   */
-  private atenderEscribirA(): void {
-    const slug = this.ruta.snapshot.queryParamMap.get('escribirA');
-    if (slug !== null && slug !== '') {
-      this.abrirConSlug(slug);
-    }
-  }
-
-  protected alternarBusqueda(): void {
-    this.buscando.set(!this.buscando());
-    if (!this.buscando()) {
-      this.resultados.set([]);
-      this.consulta.set('');
-    }
-  }
-
-  /** Busca profesionales en el directorio público. */
-  protected buscar(): void {
-    const q = this.consulta().trim();
-    this.buscandoAhora.set(true);
-    this.community.searchPractitioners(q, 10).subscribe({
-      next: (items) => {
-        this.resultados.set(items);
-        this.buscandoAhora.set(false);
-      },
-      error: () => {
-        this.buscandoAhora.set(false);
-        this.error.set('No pudimos buscar profesionales.');
-      },
+    // «(3) AloVida - Chats» en la pestaña mientras haya sin leer, como
+    // cualquier chat: es lo que avisa desde otra pestaña sin abrir ésta. La
+    // `TitleStrategy` vuelve a estampar el título en cada navegación —el hilo
+    // es una ruta hija—, así que se aplica también tras cada `NavigationEnd`.
+    effect(() => {
+      this.store.sinLeer();
+      this.estamparTitulo();
     });
+    this.router.events
+      .pipe(filter((evento) => evento instanceof NavigationEnd), takeUntilDestroyed())
+      .subscribe(() => queueMicrotask(() => this.estamparTitulo()));
+    inject(DestroyRef).onDestroy(() => this.titulo.setTitle(sinContador(this.titulo.getTitle())));
   }
 
-  /**
-   * Abre el hilo con alguien del directorio.
-   *
-   * Son dos llamadas y no una porque el buscador público devuelve `slug` y no
-   * `profileId` —la superficie sin sesión no publica identificadores
-   * internos—, así que primero se resuelve la ficha y después se abre la
-   * conversación. La segunda es idempotente desde este carril: si el hilo ya
-   * existe, el backend devuelve ése.
-   */
-  protected escribirA(resultado: PublicDirectoryResult): void {
-    this.abrirConSlug(resultado.slug);
+  protected alEscribir(texto: string): void {
+    this.consulta.set(texto);
+    if (texto.trim() === '') {
+      this.store.limpiarBusqueda();
+    } else {
+      this.tecleado.next(texto);
+    }
   }
 
-  /**
-   * Abre —o crea— el hilo con quien tenga ese slug.
-   *
-   * Son dos llamadas y no una porque la superficie pública devuelve `slug` y no
-   * `profileId`: no publica identificadores internos. La segunda es idempotente
-   * desde este carril: si el hilo ya existe, el backend devuelve ése.
-   *
-   * Lo usan dos caminos: el buscador de acá y el botón «Enviar mensaje» de la
-   * ficha pública, que llega por `?escribirA=<slug>`.
-   */
+  protected limpiarBusqueda(): void {
+    this.consulta.set('');
+    this.store.limpiarBusqueda();
+  }
+
+  protected elegirFiltro(filtro: Filtro): void {
+    this.filtro.set(filtro);
+    this.verArchivados.set(false);
+  }
+
+  protected rotulo(filtro: Filtro): string {
+    switch (filtro) {
+      case 'todos':
+        return 'Todos';
+      case 'no-leidos':
+        return 'No leídos';
+      case 'favoritos':
+        return 'Favoritos';
+      case 'grupos':
+        return 'Grupos';
+    }
+  }
+
+  protected alternarArchivados(): void {
+    this.verArchivados.set(!this.verArchivados());
+    this.filtro.set('todos');
+  }
+
+  private estamparTitulo(): void {
+    const base = sinContador(this.titulo.getTitle());
+    const cuantos = this.store.sinLeer();
+    this.titulo.setTitle(cuantos > 0 ? `(${cuantos}) ${base}` : base);
+  }
+
+  /** Lo que pide el menú de una fila. */
+  protected atender(accion: AccionDeFila): void {
+    switch (accion.tipo) {
+      case 'favorito':
+        this.preferencias.alternarFavorito(accion.conversationId);
+        break;
+      case 'archivar':
+        this.preferencias.alternarArchivado(accion.conversationId);
+        break;
+      case 'leer':
+        this.store.marcarFilaLeida(accion.conversationId);
+        break;
+      case 'perfil':
+        this.verPerfil(accion.conversationId);
+        break;
+    }
+  }
+
+  private verPerfil(conversationId: string): void {
+    const conversacion = this.store
+      .conversaciones()
+      .find((c) => c.id === conversationId);
+    const peer = conversacion?.peers[0];
+    if (peer !== undefined) {
+      void this.router.navigate(['/public-profile', peer.profileId]);
+    }
+  }
+
+  /** Abre el hilo con alguien del directorio. */
+  protected escribirA(slug: string): void {
+    this.abrirConSlug(slug);
+  }
+
   private abrirConSlug(slug: string): void {
-    const propio = this.perfil();
-    if (propio === null || this.abriendo()) {
-      return;
-    }
-    this.abriendo.set(true);
-
-    this.community.readProfileBySlug(slug).subscribe({
-      next: (ficha) => {
-        // Uno no se escribe a sí mismo. Sin esto, «Enviar mensaje» en la propia
-        // ficha pública pedía una conversación con un solo participante
-        // repetido y el backend devolvía **otra** conversación cualquiera de
-        // las suyas: se abría un hilo ajeno al que se pidió.
-        if (ficha.id === propio) {
-          this.abriendo.set(false);
-          this.error.set('Ese es tu propio perfil: no podés escribirte.');
-          return;
-        }
-
-        this.community
-          .createConversation({
-            participantProfileIds: [propio, ficha.id],
-          })
-          .subscribe({
-            next: ({ id }) => {
-              this.abriendo.set(false);
-              void this.router.navigate(['/messaging', id]);
-            },
-            error: () => {
-              this.abriendo.set(false);
-              this.error.set('No pudimos abrir la conversación.');
-            },
-          });
-      },
-      error: () => {
-        this.abriendo.set(false);
-        this.error.set('No pudimos encontrar a esa persona.');
-      },
+    this.store.escribirA(slug, (conversationId) => {
+      this.limpiarBusqueda();
+      void this.router.navigate(['/messaging', conversationId]);
     });
   }
+}
 
-  protected recargar(): void {
-    this.cargar();
-  }
-
-  private cargar(): void {
-    const propio = this.perfil();
-    if (propio === null) {
-      return;
-    }
-    this.cargando.set(true);
-    this.community.listConversations({ profileId: propio, limit: 50 }).subscribe({
-      next: (pagina) => {
-        this.conversaciones.set(pagina.items);
-        this.cargoAlgunaVez.set(true);
-        this.cargando.set(false);
-        this.error.set('');
-      },
-      error: () => {
-        this.cargando.set(false);
-        this.cargoAlgunaVez.set(true);
-        // No se vacía lo que ya había: un tic fallido no es motivo para
-        // borrarle a alguien la bandeja que estaba mirando.
-        this.error.set('No pudimos cargar tus conversaciones.');
-      },
-    });
-  }
-
-  /** Encadena el próximo tic. Nunca hay dos vivos a la vez. */
-  private agendar(): void {
-    if (!this.isBrowser) {
-      return;
-    }
-    this.temporizador = setTimeout(() => {
-      this.cargar();
-      this.agendar();
-    }, SONDEO_MS);
-  }
-
-  private detener(): void {
-    if (this.temporizador !== null) {
-      clearTimeout(this.temporizador);
-      this.temporizador = null;
-    }
-  }
+/** Quita el «(3) » del frente de un título, si lo tiene. */
+function sinContador(titulo: string): string {
+  return titulo.replace(/^\(\d+\)\s+/u, '');
 }

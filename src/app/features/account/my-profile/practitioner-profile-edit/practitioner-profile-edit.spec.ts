@@ -157,6 +157,185 @@ describe('PractitionerProfileEdit', () => {
     return (componente as unknown as Record<string, WritableSignal<T>>)[nombre];
   }
 
+  /**
+   * El editor tiene que ofrecer lo mismo que el registro — pedido del
+   * propietario: «basarse completamente en el registro del doctor».
+   *
+   * Dos huecos que tenía y el contrato del `PATCH` ya aceptaba: el punto del
+   * domicilio en el mapa y el título como lista cerrada. El registro los
+   * preguntaba desde siempre; el perfil no dejaba tocarlos.
+   */
+  describe('lo que el registro pregunta y el editor no ofrecía', () => {
+    it('siembra el mapa con el punto guardado del domicilio', () => {
+      montarYCargar({
+        homeAddress: { lines: 'Av. Banzer 3er anillo', latitude: -17.78, longitude: -63.18 },
+      });
+
+      expect(señal<unknown>('gpsDomicilioGuardado')()).toEqual({ lat: -17.78, lng: -63.18 });
+    });
+
+    it('media coordenada no siembra el mapa', () => {
+      montarYCargar({ homeAddress: { lines: 'Av. Banzer', latitude: -17.78 } });
+
+      expect(señal<unknown>('gpsDomicilioGuardado')()).toBeNull();
+    });
+
+    it('mover el punto lo manda como par, y no tocarlo no manda nada', () => {
+      montarYCargar();
+
+      señal<unknown>('gpsDomicilio').set({ lat: -16.5, lng: -68.15 });
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ homeLatitude: -16.5, homeLongitude: -68.15 });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('quitar el punto lo manda como null en los dos extremos', () => {
+      montarYCargar();
+
+      señal<unknown>('gpsDomicilio').set(null);
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ homeLatitude: null, homeLongitude: null });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('el título se elige de la MISMA lista cerrada que el registro', () => {
+      // Escrito a mano, la misma profesión terminaba en «Médico», «medico» y
+      // «Dr. en Medicina», y de ese título dependen el colegio de la
+      // habilitación y qué especialidades se ofrecen.
+      montarYCargar();
+
+      const opciones = interno<readonly { value: string }[]>('titulosProfesionales');
+      expect(opciones).toHaveLength(12);
+      expect(opciones.map((o) => o.value)).toContain('Odontólogo / Odontóloga');
+    });
+
+    it('un título viejo fuera de la lista se avisa, no se borra solo', () => {
+      // `PERFIL_BASE` trae «Cardióloga», que es de antes de la lista cerrada.
+      montarYCargar();
+
+      expect(interno<() => string>('titulo')()).toBe('Cardióloga');
+      expect(interno<() => boolean>('tituloFueraDeLista')()).toBe(true);
+    });
+
+    it('un título de la lista no dispara el aviso', () => {
+      montarYCargar({ professionalTitle: 'Médico / Médica' });
+
+      expect(interno<() => boolean>('tituloFueraDeLista')()).toBe(false);
+    });
+  });
+
+  /**
+   * Las casillas que el alta de médico tiene y el editor no ofrecía.
+   *
+   * El alta pregunta tres nombres y deja sumar los que hagan falta —hay gente
+   * con cuatro y con cinco— y ofrece varias especialidades de una sola vez. El
+   * editor pedía UN segundo nombre y UNA especialidad por envío, así que quien
+   * se registró con tres nombres los perdía al corregir cualquier otra cosa.
+   */
+  describe('las casillas sumables del registro', () => {
+    it('reparte lo guardado en las tres casillas y en las agregadas', () => {
+      montarYCargar({ middleName: 'Lucía María Belén' });
+
+      expect(interno<() => string>('segundoNombre')()).toBe('Lucía');
+      expect(interno<() => string>('tercerNombre')()).toBe('María');
+      expect(interno<() => readonly string[]>('nombresExtra')()).toEqual(['Belén']);
+    });
+
+    it('los tres nombres viajan como UN solo campo del contrato', () => {
+      montarYCargar({ middleName: 'Lucía' });
+
+      señal<string>('tercerNombre').set('María');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ middleName: 'Lucía María' });
+      req.flush({ ...PERFIL_BASE, middleName: 'Lucía María' });
+    });
+
+    it('una casilla agregada y no llenada no manda un espacio de más', () => {
+      montarYCargar({ middleName: 'Lucía' });
+
+      interno<() => void>('agregarNombre')();
+      interno<() => void>('guardarPresentacion')();
+
+      // Nada cambió: la casilla vacía no es un cambio.
+      http.expectNone('/profiles/practitioners/me');
+    });
+
+    it('quitar el segundo nombre lo manda vacío, que es cómo se borra', () => {
+      montarYCargar({ middleName: 'Lucía' });
+
+      señal<string>('segundoNombre').set('');
+      interno<() => void>('guardarPresentacion')();
+
+      const req = http.expectOne('/profiles/practitioners/me');
+      expect(req.request.body).toEqual({ middleName: '' });
+      req.flush(PERFIL_BASE);
+    });
+
+    it('agrega TODAS las especialidades elegidas, no la primera', () => {
+      montarYCargar();
+
+      señal<string>('nuevaEspecialidad').set('esp-cardio');
+      interno<() => void>('agregarCasillaDeEspecialidad')();
+      interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-pediatria');
+
+      interno<() => void>('agregarEspecialidad')();
+
+      const pedidos = http.match('/profiles/practitioners/per-1/specialties');
+      expect(pedidos).toHaveLength(2);
+      expect(pedidos.map((r) => (r.request.body as { specialtyConceptId: string }).specialtyConceptId)).toEqual([
+        'esp-cardio',
+        'esp-pediatria',
+      ]);
+      for (const pedido of pedidos) pedido.flush({ id: 'sp-x' });
+
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    });
+
+    it('elegir dos veces la misma declara una, no dos filas iguales', () => {
+      montarYCargar();
+
+      señal<string>('nuevaEspecialidad').set('esp-cardio');
+      interno<() => void>('agregarCasillaDeEspecialidad')();
+      interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-cardio');
+
+      interno<() => void>('agregarEspecialidad')();
+
+      const pedidos = http.match('/profiles/practitioners/per-1/specialties');
+      expect(pedidos).toHaveLength(1);
+      pedidos[0]!.flush({ id: 'sp-x' });
+
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    });
+
+    it('una casilla agregada alcanza para habilitar el botón', () => {
+      montarYCargar();
+
+      expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(false);
+
+      interno<() => void>('agregarCasillaDeEspecialidad')();
+      expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(false);
+
+      interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-pediatria');
+      expect(interno<() => boolean>('puedeAgregarEspecialidad')()).toBe(true);
+    });
+
+    it('quitar una casilla la saca de lo que se va a mandar', () => {
+      montarYCargar();
+
+      interno<() => void>('agregarCasillaDeEspecialidad')();
+      interno<(i: number, v: string | null) => void>('elegirEspecialidadExtra')(0, 'esp-pediatria');
+      interno<(i: number) => void>('quitarCasillaDeEspecialidad')(0);
+
+      expect(interno<() => readonly string[]>('especialidadesElegidas')()).toEqual([]);
+    });
+  });
+
   it('siembra el formulario con lo ya guardado', () => {
     montarYCargar();
 
@@ -214,15 +393,20 @@ describe('PractitionerProfileEdit', () => {
   it('agregarEspecialidad hace un POST y recarga el perfil', () => {
     montarYCargar();
     señal<string>('nuevaEspecialidad').set('esp-cardio');
-    señal<boolean>('nuevaEspecialidadPrincipal').set(true);
 
     interno<() => void>('agregarEspecialidad')();
 
     const req = http.expectOne('/profiles/practitioners/per-1/specialties');
     expect(req.request.method).toBe('POST');
+    // Los dos interruptores se sacaron el 2026-09-10 —el alta de médico no los
+    // tiene y esta pantalla se adapta a ella—, así que una especialidad que se
+    // agrega después del alta es **adicional**: nunca desplaza a la principal, y
+    // nadie declaró certificación de junta. Eso es lo que viaja, y por eso se
+    // fija acá: si alguien vuelve a mandar `isPrimary: true` sin decidirlo,
+    // esta prueba lo dice.
     expect(req.request.body).toEqual({
       specialtyConceptId: 'esp-cardio',
-      isPrimary: true,
+      isPrimary: false,
       boardCertified: false,
     });
     req.flush({ id: 'sp-1' });
@@ -258,6 +442,29 @@ describe('PractitionerProfileEdit', () => {
     req.flush({ id: 'ja-1' });
 
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  it('conserva el respaldo local de matrícula mientras se completa el formulario', () => {
+    montarYCargar();
+    const respaldo = new File(['matrícula'], 'matricula.pdf', { type: 'application/pdf' });
+
+    señal<readonly File[]>('archivoDeMatricula').set([respaldo]);
+
+    expect(señal<readonly File[]>('archivoDeMatricula')()).toEqual([respaldo]);
+  });
+
+  it('limpia el respaldo local cuando la matrícula queda agregada', () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+    señal<readonly File[]>('archivoDeMatricula').set([
+      new File(['matrícula'], 'matricula.pdf', { type: 'application/pdf' }),
+    ]);
+
+    interno<() => void>('agregarMatricula')();
+    http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations').flush({ id: 'ja-1' });
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+
+    expect(señal<readonly File[]>('archivoDeMatricula')()).toEqual([]);
   });
 
   /* -- Catálogo de especialidades (TJ-3 · F-19) ----------------------------- */
@@ -350,5 +557,66 @@ describe('PractitionerProfileEdit', () => {
     req.flush({ id: 'cred-1' });
 
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  /* ---- el diploma del título (2026-09-10) ---------------------------------- */
+
+  it('sin diploma no sube nada: el título va derecho', () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+    interno<() => void>('agregarCredencial')();
+
+    // Ni una petición al almacén de archivos.
+    expect(http.match('/common/files/upload')).toHaveLength(0);
+    http.expectOne('/profiles/practitioners/me/credentials').flush({ id: 'cred-1' });
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  it('con diploma sube primero el archivo y manda su id como fileId', () => {
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+    señal<readonly File[]>('archivoDeCredencial').set([
+      new File(['x'], 'diploma.pdf', { type: 'application/pdf' }),
+    ]);
+
+    interno<() => void>('agregarCredencial')();
+
+    // Primero el archivo…
+    const subida = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
+    expect(subida.request.method).toBe('POST');
+    subida.flush({ id: 'file-77' });
+
+    // …y recién entonces el título, con el identificador que devolvió.
+    const req = http.expectOne('/profiles/practitioners/me/credentials');
+    expect(req.request.body).toEqual({
+      credentialTypeConceptId: 'cred-titulo',
+      number: 'Médico cirujano',
+      fileId: 'file-77',
+    });
+    req.flush({ id: 'cred-1' });
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  it('si la subida falla, el título NO se crea', () => {
+    // Un título sin el diploma que la persona creyó haber adjuntado es peor que
+    // un error: nadie se entera hasta que se lo rechazan.
+    montarYCargar();
+    señal<string>('nuevoTipoCredencial').set('cred-titulo');
+    señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+    señal<readonly File[]>('archivoDeCredencial').set([
+      new File(['x'], 'diploma.pdf', { type: 'application/pdf' }),
+    ]);
+
+    interno<() => void>('agregarCredencial')();
+
+    http
+      .expectOne((r) => r.url.endsWith('/common/files/upload'))
+      .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
+
+    expect(http.match('/profiles/practitioners/me/credentials')).toHaveLength(0);
+    expect(interno<() => boolean>('guardandoCredencial')()).toBe(false);
   });
 });

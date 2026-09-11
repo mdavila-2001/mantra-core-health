@@ -41,9 +41,18 @@ import { MOCK_USERS } from './mock-session';
     </aside>
   `,
   styles: `
+    /* Abajo a la IZQUIERDA, pegado al borde del contenido.
+
+       Estaba abajo a la derecha, que es exactamente donde el chat clava su
+       botón de enviar: el cartel se lo comía y en la maqueta no se podía
+       mandar un mensaje. Es la única esquina que una pantalla puede reclamar
+       —una acción fija al pie va a la derecha—, así que el cartel se corre.
+
+       Se apoya después del menú para no taparle los ítems; en angosto, donde
+       el menú no está fijo, vuelve al borde. */
     .mock {
       position: fixed;
-      inset-inline-end: 12px;
+      inset-inline-start: calc(var(--w-nav, 264px) + 12px);
       inset-block-end: 12px;
       z-index: 9999;
       max-inline-size: 22rem;
@@ -53,6 +62,37 @@ import { MOCK_USERS } from './mock-session';
       color: #f9fafb;
       font: 12px/1.4 system-ui, sans-serif;
       box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+    }
+    /* En angosto no hay esquina libre abajo: el chat clava ahí el campo de
+       escribir de borde a borde y el cartel lo tapaba. Se va arriba, bajo el
+       header de la aplicación, y a la derecha, que es la franja que las
+       cabeceras dejan vacía. Achicado: en 390 px dos pastillas grandes son un
+       cuarto del ancho. */
+    @media (max-width: 60rem) {
+      /* Plegado: una sola pastilla dentro de la barra de arriba, a la derecha
+         de la hamburguesa, que es el único hueco que ninguna pantalla usa.
+         Bajo el header tapaba el nombre de la conversación. */
+      .mock {
+        inset-inline-start: 60px;
+        inset-inline-end: auto;
+        inset-block-start: 14px;
+        inset-block-end: auto;
+        max-inline-size: calc(100vw - 16px);
+      }
+      /* Abierto, el panel baja del header y ocupa el ancho. */
+      .mock:not(.mock--plegado) {
+        inset-inline-start: 8px;
+        inset-inline-end: 8px;
+        inset-block-start: calc(var(--h-header, 64px) + 8px);
+      }
+      .mock__boton {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+      /* El stock de componentes es una herramienta de escritorio. */
+      .mock--plegado .mock__boton--stock {
+        display: none;
+      }
     }
     .mock--plegado {
       padding: 0;

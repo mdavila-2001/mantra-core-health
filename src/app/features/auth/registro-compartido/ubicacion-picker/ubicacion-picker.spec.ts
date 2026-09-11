@@ -17,6 +17,7 @@ const IDS: IdsDePrueba = {
   sinConfirmar: 'sin-confirmar',
   confirmar: 'confirmar',
   usarUbicacion: 'usar',
+  marcarEnMapa: 'marcar',
 };
 
 describe('UbicacionPicker', () => {
@@ -46,9 +47,83 @@ describe('UbicacionPicker', () => {
     return recibidos;
   }
 
-  it('sin punto ofrece pedirlo, y nada más', () => {
+  it('sin punto ofrece las dos puertas —el navegador y el mapa— y ningún mapa todavía', () => {
     expect(raiz().querySelector(`[data-testid="${IDS.usarUbicacion}"]`)).not.toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.marcarEnMapa}"]`)).not.toBeNull();
     expect(raiz().querySelector(`[data-testid="${IDS.mapa}"]`)).toBeNull();
+  });
+
+  /**
+   * La segunda puerta: la casa casi nunca se declara desde la casa, y quien
+   * negó el permiso del navegador también tiene que poder poner su pin.
+   */
+  it('«Marcar en el mapa» abre el mapa vacío, sin pin y sin pedir nada al navegador', () => {
+    const geo = { getCurrentPosition: vi.fn() };
+    Object.defineProperty(window.navigator, 'geolocation', { value: geo, configurable: true });
+
+    component.marcarEnMapa();
+    fixture.detectChanges();
+
+    expect(geo.getCurrentPosition).not.toHaveBeenCalled();
+    expect(component.marcando()).toBe(true);
+    expect(component.punto()).toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.mapa}"]`)).not.toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.marcarEnMapa}-indicacion"]`)).not.toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.confirmar}"]`)).toBeNull();
+
+    Reflect.deleteProperty(window.navigator, 'geolocation');
+  });
+
+  it('tocar el mapa pone el pin, sin confirmarlo: es la persona quien tiene que decir que sí', () => {
+    const recibidos = emitidos();
+    component.marcarEnMapa();
+
+    component.fijarPunto({ lat: -16.5, lng: -68.15 });
+    fixture.detectChanges();
+
+    expect(component.punto()).toEqual({ lat: -16.5, lng: -68.15 });
+    expect(component.marcando()).toBe(false);
+    expect(component.confirmada()).toBe(false);
+    expect(recibidos).toEqual([]);
+    expect(raiz().querySelector(`[data-testid="${IDS.sinConfirmar}"]`)).not.toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.confirmar}"]`)).not.toBeNull();
+    // El pin puesto a mano no se llama «Acá te encontramos»: eso sería mentir.
+    expect(component['pines']()[0].titulo).toBe('El punto que marcaste');
+  });
+
+  it('tocar el mapa con un punto ya confirmado lo corre y suelta la confirmación', () => {
+    const recibidos = emitidos();
+    component.punto.set({ lat: -17.78, lng: -63.18 });
+    component.confirmarDireccionActual();
+
+    component.fijarPunto({ lat: -17.79, lng: -63.19 });
+
+    // El `null` avisa a quien consume que el punto que tenía guardado ya no vale.
+    expect(recibidos).toEqual([{ lat: -17.78, lng: -63.18 }, null]);
+    expect(component.punto()).toEqual({ lat: -17.79, lng: -63.19 });
+    expect(component.confirmada()).toBe(false);
+
+    component.confirmarDireccionActual();
+    expect(recibidos.at(-1)).toEqual({ lat: -17.79, lng: -63.19 });
+  });
+
+  it('el mapa abierto para marcar avisa al organismo que espera un toque', () => {
+    component.marcarEnMapa();
+    fixture.detectChanges();
+
+    expect(raiz().querySelector('.mapa--seleccionable')).not.toBeNull();
+  });
+
+  it('quitar la ubicación con el mapa vacío abierto vuelve al principio', () => {
+    component.marcarEnMapa();
+    fixture.detectChanges();
+
+    component.quitarUbicacion();
+    fixture.detectChanges();
+
+    expect(component.marcando()).toBe(false);
+    expect(raiz().querySelector(`[data-testid="${IDS.mapa}"]`)).toBeNull();
+    expect(raiz().querySelector(`[data-testid="${IDS.marcarEnMapa}"]`)).not.toBeNull();
   });
 
   it('con un punto sin confirmar avisa que no se va a guardar', () => {
