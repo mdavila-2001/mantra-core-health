@@ -1,5 +1,5 @@
-import { ESTADO } from '../fixtures/conceptos';
-import { conflict, notFound, unauthorized, type MockRouter } from '../mock-router';
+import { ESTADO, TIPO_SOCIETARIO } from '../fixtures/conceptos';
+import { conflict, notFound, reply, unauthorized, type MockRouter } from '../mock-router';
 import {
   buscarUsuario,
   emitirAccessToken,
@@ -107,10 +107,28 @@ export function registrarAuth(router: MockRouter): void {
   });
 
   router.post('/iam/auth/register-organization', ({ body }) => {
-    const datos = cuerpo<{ code?: string; name?: string }>({ body });
+    const datos = cuerpo<{
+      organization?: { code?: string; legalEntityType?: string };
+    }>({ body });
+    const legalEntityType = datos.organization?.legalEntityType;
+    // Mismo contrato que el `ValidationPipe` real: un código fuera del
+    // diccionario es 400, no un 422 de negocio (subtarea 1.1).
+    if (legalEntityType !== undefined && !(legalEntityType in TIPO_SOCIETARIO)) {
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Validation failed',
+        error: 'Bad Request',
+        details: {
+          messages: [
+            `organization.legalEntityType must be one of the following values: ${Object.keys(TIPO_SOCIETARIO).join(', ')}`,
+          ],
+        },
+      });
+    }
     return {
       tenantId: nuevoId('tenant-nuevo'),
-      code: datos.code ?? 'ORG-NUEVA',
+      code: datos.organization?.code ?? 'ORG-NUEVA',
       ownerUserId: nuevoId('owner'),
       status: 'PENDING_VERIFICATION',
       verificationStatus: 'PENDING',

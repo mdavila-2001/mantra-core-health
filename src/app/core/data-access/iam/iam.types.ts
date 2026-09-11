@@ -403,6 +403,13 @@ export interface RegisteredPractitioner {
 export interface OrganizationRegistration {
   readonly code: string;
   readonly legalName: string;
+  /**
+   * Tipo societario del diccionario internacional (subtarea 1.1), p. ej.
+   * `SRL`, `US_LLC`. El backend deriva de él el país de constitución cuando
+   * no se declara `countryConceptId` (que `PAYER` no exige: no es un tipo
+   * territorial).
+   */
+  readonly legalEntityType: string;
   readonly tradeName?: string;
   readonly timeZone?: string;
   readonly payer: {
