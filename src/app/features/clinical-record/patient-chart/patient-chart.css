@@ -148,31 +148,49 @@
 
 /* -- El detalle de una fila, en modal --------------------------------------
    Pares rótulo/valor y no una tabla: es un registro, no filas y columnas. La
-   diferencia la nota quien navega con lector de pantalla. */
+   diferencia la nota quien navega con lector de pantalla.
+
+   Los pares van sobre una superficie hundida y separados por una línea: en la
+   versión anterior eran ocho renglones sueltos sobre el blanco del modal y no
+   se distinguía dónde terminaba un dato y empezaba el siguiente. El rótulo, en
+   versalitas: a la izquierda de un valor largo, la caja alta lo ancla sin
+   competir con él. */
 
 .expediente__detalle {
     display: grid;
-    gap: var(--sp-3);
     margin: 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    background: var(--bg-inset);
+    overflow: hidden;
 }
 
 .expediente__detalle-fila {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--sp-1);
+    padding: var(--sp-3) var(--sp-4);
+    border-block-end: 1px solid var(--border-subtle);
+}
+
+.expediente__detalle-fila:last-child {
+    border-block-end: none;
 }
 
 @media (min-width: 30rem) {
     .expediente__detalle-fila {
         grid-template-columns: minmax(0, 11rem) minmax(0, 1fr);
-        gap: var(--sp-3);
+        gap: var(--sp-4);
         align-items: baseline;
     }
 }
 
 .expediente__detalle-fila dt {
-    font-size: var(--fs-caption);
+    font-size: var(--fs-overline);
     line-height: var(--lh-caption);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     color: var(--text-secondary);
 }
 

@@ -112,7 +112,7 @@
       Una receta queda bajo la custodia de una organización. Elegí una en el selector del encabezado
       para poder prescribir.
     </app-alert>
-  } @else if (!hayEncuentro()) {
+  } @else if (!hayEncuentro() && !sinExigirEncuentro()) {
     <app-alert tone="info" title="Abrí el encuentro para recetar">
       La receta se registra dentro de la consulta que la motivó. Registrá el encuentro acá abajo y
       el formulario aparece.
@@ -155,6 +155,24 @@
     }
 
     <form class="receta__formulario app-form-grid" (submit)="$event.preventDefault()">
+      <!-- «Una cita ya existente y/o finalizada», textual del cliente. Sólo se
+           dibuja si hay citas que ofrecer: un desplegable con una única opción
+           vacía es una pregunta que no existe. En «Atención» no aparece —el
+           encuentro en curso ya es el contexto— porque ahí la lista baja vacía. -->
+      @if (opcionesDeCita().length > 1) {
+        <app-form-field icon="calendar"
+          label="¿De qué consulta es la receta?"
+          hint="La cita que la motiva, incluidas las ya finalizadas."
+        >
+          <app-select
+            data-testid="receta-cita"
+            [value]="citaElegida()"
+            (valueChange)="citaElegida.set($event)"
+            [options]="opcionesDeCita()"
+          />
+        </app-form-field>
+      }
+
       <!-- Los favoritos van ARRIBA porque su lugar en el flujo es antes de
            escribir: elegir uno rellena el resto. Sólo aparece si hay alguno —
            la lista arranca vacía y un desplegable sin opciones es un control

@@ -2,24 +2,51 @@
     Content dialog — el `<dialog>` nativo con contenido propio.
 
     Mobile-first: sólo consultas `min-width`. En el teléfono el modal ocupa
-    casi toda la pantalla, porque lo que muestra —una lista con un mapa— no se
-    lee en una tarjeta de 300 px. El `::backdrop` es del navegador: se lo pinta,
-    no se lo reemplaza por un div.
+    casi toda la pantalla, porque lo que muestra —una lista con un mapa, un
+    formulario clínico entero— no se lee en una tarjeta de 300 px. El
+    `::backdrop` es del navegador: se lo pinta, no se lo reemplaza por un div.
+
+    ## El acabado (10/09/2026)
+
+    El panel era una caja blanca con un borde de 1 px y nada más: sobre el
+    fondo de la aplicación —que también es claro— el modal no se despegaba, y
+    en un formulario largo no había manera de saber que el cuerpo seguía. Lo
+    que se agregó es lo que separa un modal de un `<div>` centrado:
+
+    - **El fondo se desenfoca.** Un velo oscuro solo no alcanza cuando lo que
+      hay detrás es una tabla con texto: el ojo la sigue leyendo. Con el
+      desenfoque, lo de atrás pasa a ser contexto y lo de adelante, tarea.
+    - **El panel es una superficie elevada**, con su aro de luz interior y la
+      sombra larga del sistema. La curva es la de bloque grande (`--r-xl`), no
+      la de tarjeta: un modal no es una tarjeta más de la página.
+    - **El encabezado y el pie se quedan quietos** y el cuerpo se recorre entre
+      los dos, con su barra de desplazamiento fina y sus sombras de corte.
+    - **Entra desde abajo y con escala**, apenas: 0,18 s. Lo justo para que se
+      lea de dónde salió. Con `prefers-reduced-motion` la regla global lo
+      vuelve instantáneo, que para un modal es exactamente lo correcto.
     ========================================================================== */
 
 .content-dialog {
     padding: 0;
     border: none;
     background: transparent;
+    color: var(--text-primary);
     /* El nativo trae un ancho raro y un margen automático que no sirven. */
     inline-size: calc(100vw - var(--sp-4) * 2);
     max-inline-size: calc(100vw - var(--sp-4) * 2);
     max-block-size: calc(100dvh - var(--sp-4) * 2);
 }
 
+/* El velo. Petróleo del sistema y no un negro cualquiera, y con desenfoque:
+   lo de atrás tiene que dejar de leerse, no sólo de verse. */
 .content-dialog::backdrop {
-    /* Petróleo del sistema, no un negro cualquiera. */
-    background: rgb(10 28 39 / 55%);
+    background: rgb(10 28 39 / 58%);
+    backdrop-filter: blur(6px) saturate(0.9);
+    -webkit-backdrop-filter: blur(6px) saturate(0.9);
+}
+
+.content-dialog[open]::backdrop {
+    animation: content-dialog-backdrop-in 0.18s ease both;
 }
 
 .content-dialog__panel {
@@ -28,23 +55,39 @@
     /* El panel manda el alto: el cuerpo se recorre adentro y el encabezado
        —con el botón de cerrar— nunca se va de pantalla. */
     max-block-size: calc(100dvh - var(--sp-4) * 2);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-xl);
     background: var(--bg-surface);
-    box-shadow: var(--shadow-lg);
+    /* El aro interior es lo que le da canto al panel en el tema oscuro, donde
+       la sombra sola no se ve contra un fondo ya oscuro. */
+    box-shadow:
+        inset 0 0 0 1px var(--border-subtle),
+        var(--shadow-lg);
     font-family: var(--font-body);
+    /* Recorta el encabezado y el pie contra la curva del panel: sin esto, sus
+       fondos planos asomaban por las cuatro esquinas. */
+    overflow: hidden;
 }
 
+/* -- El encabezado ---------------------------------------------------------
+   Se queda quieto mientras el cuerpo se recorre. Su fondo es la superficie
+   alterna para que el corte con el cuerpo se lea sin depender del borde, que
+   en oscuro casi no contrasta. */
 .content-dialog__encabezado {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: var(--sp-3);
-    padding: var(--sp-5) var(--sp-5) var(--sp-3);
-    border-block-end: 1px solid var(--border-default);
+    gap: var(--sp-4);
+    padding: var(--sp-5) var(--sp-5) var(--sp-4);
+    border-block-end: 1px solid var(--border-subtle);
+    background: var(--bg-surface-alt);
 }
 
 .content-dialog__texto {
     min-inline-size: 0;
+    /* La marquita de color a la izquierda del título: identifica el modal como
+       una tarea de la aplicación y no como un aviso del navegador. */
+    border-inline-start: 3px solid var(--brand-secondary);
+    padding-inline-start: var(--sp-4);
 }
 
 .content-dialog__titulo {
@@ -54,6 +97,7 @@
     line-height: var(--lh-h3);
     font-weight: 600;
     color: var(--text-primary);
+    text-wrap: balance;
 }
 
 .content-dialog__bajada {
@@ -63,12 +107,46 @@
     color: var(--text-secondary);
 }
 
+/* El botón de cerrar no se encoge: con un título largo, `flex` lo apretaba
+   hasta partirle el texto en dos renglones. */
+.content-dialog__cerrar {
+    flex: 0 0 auto;
+}
+
+/* -- El cuerpo -------------------------------------------------------------
+   Las sombras de corte se pintan con cuatro fondos: dos «tapas» del color de
+   la superficie, fijas al contenido, y dos degradados pegados al contenedor
+   (`scroll`). Arriba del todo la tapa cubre al degradado; en cuanto se
+   recorre, la tapa se va con el contenido y el degradado aparece. Es el truco
+   clásico y no cuesta ni un nodo ni un escuchador de scroll. */
 .content-dialog__cuerpo {
     flex: 1;
     min-block-size: 0;
-    padding: var(--sp-4) var(--sp-5) var(--sp-5);
+    padding: var(--sp-5);
     overflow-y: auto;
     overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+
+    background:
+        linear-gradient(var(--bg-surface) 30%, rgb(255 255 255 / 0%)) top / 100% 24px no-repeat,
+        linear-gradient(rgb(255 255 255 / 0%), var(--bg-surface) 70%) bottom / 100% 24px no-repeat,
+        radial-gradient(farthest-side at 50% 0, rgb(10 28 39 / 14%), rgb(255 255 255 / 0%)) top /
+            100% 10px no-repeat,
+        radial-gradient(farthest-side at 50% 100%, rgb(10 28 39 / 14%), rgb(255 255 255 / 0%))
+            bottom / 100% 10px no-repeat;
+    background-attachment: local, local, scroll, scroll;
+}
+
+.content-dialog__cuerpo::-webkit-scrollbar {
+    inline-size: 10px;
+}
+
+.content-dialog__cuerpo::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: var(--r-full);
+    background-clip: content-box;
+    background-color: var(--border-strong);
 }
 
 /* -- El pie de acciones ----------------------------------------------------
@@ -83,12 +161,20 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
+    align-items: center;
     gap: var(--sp-3);
     padding: var(--sp-4) var(--sp-5);
-    border-block-start: 1px solid var(--border-default);
-    background: var(--bg-surface);
-    border-end-start-radius: var(--r-lg);
-    border-end-end-radius: var(--r-lg);
+    border-block-start: 1px solid var(--border-subtle);
+    background: var(--bg-surface-alt);
+}
+
+/* En teléfono los botones del pie se reparten el ancho en vez de amontonarse
+   a la derecha: con dos acciones y poco sitio, el que confirma quedaba medio
+   fuera de la línea. */
+@media (max-width: 30rem) {
+    .content-dialog__pie > * {
+        flex: 1 1 auto;
+    }
 }
 
 /* -- Anchos de referencia --------------------------------------------------
@@ -115,6 +201,18 @@
     .content-dialog[data-size='lg'] {
         inline-size: 46rem;
         max-inline-size: min(92vw, 46rem);
+    }
+
+    .content-dialog__encabezado {
+        padding: var(--sp-6) var(--sp-6) var(--sp-4);
+    }
+
+    .content-dialog__cuerpo {
+        padding: var(--sp-6);
+    }
+
+    .content-dialog__pie {
+        padding: var(--sp-4) var(--sp-6);
     }
 }
 
@@ -148,12 +246,18 @@
 /* Entrada corta; la regla global de `prefers-reduced-motion` la vuelve
    instantánea, que para un modal es exactamente lo correcto. */
 .content-dialog[open] .content-dialog__panel {
-    animation: content-dialog-in 0.15s ease;
+    animation: content-dialog-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes content-dialog-in {
     from {
         opacity: 0;
-        transform: translateY(var(--sp-2));
+        transform: translateY(var(--sp-4)) scale(0.985);
+    }
+}
+
+@keyframes content-dialog-backdrop-in {
+    from {
+        opacity: 0;
     }
 }

@@ -11,6 +11,21 @@
     </app-alert>
   }
 
+  @if (opcionesDeCita().length > 1) {
+    <app-form-field
+      icon="calendar"
+      label="¿De qué consulta es la nota?"
+      hint="Opcional. La cita a la que pertenece, incluidas las ya finalizadas."
+    >
+      <app-select
+        data-testid="hoja-libre-cita"
+        [value]="citaElegida()"
+        (valueChange)="citaElegida.set($event)"
+        [options]="opcionesDeCita()"
+      />
+    </app-form-field>
+  }
+
   <app-rich-text-editor
     [(html)]="contenido"
     label="Nota de la consulta"

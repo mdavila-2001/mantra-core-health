@@ -46,10 +46,14 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
-import { downloadVisitPdf } from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import {
+  downloadPrescriptionPdf,
+  downloadVisitPdf,
+} from '../../../shared/utils/clinical-pdf/clinical-pdf';
 import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/firma-de-la-sesion';
 import {
   atencionDesdeResumen,
+  recetaDesdeResumen,
   type ContextoDelDocumento,
 } from '../../../shared/utils/clinical-pdf/from-summary';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
@@ -59,8 +63,18 @@ import { TutorialTarget } from '../../../shared/components/organisms/tutorial-ov
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { CLINICAL_RECORD_ROUTE, encounterWorkspaceRoute } from '../clinical-record.routes';
 import { AllergyBlock } from './allergy-block/allergy-block';
+import { CarePlanBlock } from './care-plan-block/care-plan-block';
+import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
+import { DocumentBlock } from './document-block/document-block';
+import { FreeNoteBlock } from './free-note-block/free-note-block';
+import { MedicationBlock } from './medication-block/medication-block';
+import type {
+  DiagnosticoEnFicha,
+  RecetaEnFicha,
+} from './medication-block/medication-block';
+import { ObservationBlock } from './observation-block/observation-block';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
@@ -99,6 +113,81 @@ const ETIQUETAS_DE_ESTADO_CLINICO: Readonly<Record<string, string>> = {
   COND_INACTIVE: 'Inactiva',
   COND_REMISSION: 'En remisión',
   COND_RESOLVED: 'Resuelta',
+};
+
+/**
+ * El alta que ofrece una pestaña del expediente.
+ *
+ * `rotulo` va en el botón, `titulo` en el encabezado del modal: no son lo mismo
+ * —«Nueva observación» contra «Registrar una observación»— y repetir el primero
+ * arriba del formulario deja el modal diciendo dos veces lo que ya dijo el
+ * botón que lo abrió.
+ */
+export interface AltaDelExpediente {
+  readonly rotulo: string;
+  readonly titulo: string;
+  /** El `data-testid` del botón. Estable: las pruebas de navegador lo usan. */
+  readonly testId: string;
+}
+
+/**
+ * Qué se puede **crear** desde cada pestaña del expediente.
+ *
+ * ## Por qué son siete y antes eran dos
+ *
+ * Porque el expediente ofrecía crear un diagnóstico y una alergia, y las otras
+ * seis pestañas eran de sólo lectura aunque el contrato de las siete estuviera
+ * publicado. Quien venía a cargar la presión que acababa de tomar, o a asentar
+ * el laboratorio que la persona trajo en la mano, no tenía dónde: la única
+ * puerta era abrir una atención, que es un acto clínico distinto —abre
+ * encuentro— y que no siempre corresponde.
+ *
+ * ## El expediente sigue siendo lectura
+ *
+ * Registrar acá **no es atender**: no abre encuentro, no cierra nada y el
+ * registro se ata a una cita ya existente o a ninguna. Es la misma regla con la
+ * que entró el alta de diagnóstico, extendida a las que faltaban.
+ *
+ * «Encuentros» queda deliberadamente fuera: abrir una consulta desde el
+ * expediente es exactamente el atajo que la pantalla dejó de ofrecer —atender
+ * nace de «Mis citas», donde está el turno que lo justifica—.
+ */
+const ALTAS_DEL_EXPEDIENTE: Readonly<Record<string, AltaDelExpediente>> = {
+  diagnosticos: {
+    rotulo: 'Nuevo diagnóstico',
+    titulo: 'Nuevo diagnóstico',
+    testId: 'expediente-nuevo-diagnostico',
+  },
+  alergias: {
+    rotulo: 'Nueva alergia',
+    titulo: 'Nueva alergia',
+    testId: 'expediente-nueva-alergia',
+  },
+  medicacion: {
+    rotulo: 'Nueva receta',
+    titulo: 'Prescribir medicación',
+    testId: 'expediente-nueva-receta',
+  },
+  observaciones: {
+    rotulo: 'Nueva observación',
+    titulo: 'Registrar una observación',
+    testId: 'expediente-nueva-observacion',
+  },
+  notas: {
+    rotulo: 'Nueva nota',
+    titulo: 'Escribir una nota clínica',
+    testId: 'expediente-nueva-nota',
+  },
+  planes: {
+    rotulo: 'Nuevo plan',
+    titulo: 'Abrir un plan de cuidados',
+    testId: 'expediente-nuevo-plan',
+  },
+  documentos: {
+    rotulo: 'Nuevo documento',
+    titulo: 'Registrar un documento',
+    testId: 'expediente-nuevo-documento',
+  },
 };
 
 /** Una fila de cualquiera de las tablas del expediente, ya sin uuid. */
@@ -220,15 +309,20 @@ interface Expediente {
     AllergyBlock,
     AttachmentDialog,
     Badge,
+    CarePlanBlock,
     ConceptSelect,
     ContentDialog,
     DiagnosisBlock,
     DataTable,
     DatePipe,
+    DocumentBlock,
+    FreeNoteBlock,
     Link,
+    MedicationBlock,
     Menu,
     MenuItem,
     MenuTrigger,
+    ObservationBlock,
     PdfExportButton,
     PageHeader,
     RouterLink,
@@ -593,36 +687,99 @@ export class PatientChart {
       : `Se registra en la historia de ${this.nombre()}.`,
   );
 
-  protected readonly altaDeDiagnosticoAbierta = signal(false);
-  protected readonly altaDeAlergiaAbierta = signal(false);
+  /**
+   * El bloque cuyo modal de alta está abierto, o `null`.
+   *
+   * Una señal para las siete y no una por bloque: sólo puede haber un modal a
+   * la vez —el `<dialog>` nativo se lleva el foco y el fondo— y siete banderas
+   * booleanas admitirían estados que la pantalla no puede mostrar.
+   */
+  protected readonly altaAbierta = signal<string | null>(null);
 
-  protected abrirAltaDeDiagnostico(): void {
-    this.altaDeDiagnosticoAbierta.set(true);
+  /** El alta de un bloque, o `null` si ese bloque no tiene una. */
+  protected altaDe(clave: string): AltaDelExpediente | undefined {
+    return ALTAS_DEL_EXPEDIENTE[clave];
   }
 
-  protected cerrarAltaDeDiagnostico(): void {
-    this.altaDeDiagnosticoAbierta.set(false);
+  /** Si la pestaña tiene que dibujar su botón de alta. */
+  protected ofreceAlta(clave: string): boolean {
+    return this.puedeEscribir() && this.altaDe(clave) !== undefined;
   }
 
-  /** Registrado el diagnóstico, se cierra el modal y se relee la historia. */
-  protected diagnosticoRegistrado(): void {
-    this.altaDeDiagnosticoAbierta.set(false);
+  protected abrirAlta(clave: string): void {
+    this.altaAbierta.set(clave);
+  }
+
+  protected cerrarAlta(): void {
+    this.altaAbierta.set(null);
+  }
+
+  /** El encabezado del modal abierto. Nunca «Nuevo registro» a secas. */
+  protected readonly tituloDelAlta = computed(
+    () => ALTAS_DEL_EXPEDIENTE[this.altaAbierta() ?? '']?.titulo ?? '',
+  );
+
+  /**
+   * Registrado lo que fuera, se cierra el modal y se relee la historia.
+   *
+   * Uno solo para las siete altas: lo que cambia es la pestaña, y lo que hay
+   * que hacer después es lo mismo en todas —el expediente vuelve a leer y la
+   * fila aparece porque el servidor la tiene, no porque la pintáramos—.
+   */
+  protected altaRegistrada(): void {
+    this.altaAbierta.set(null);
     this.recargar();
   }
 
-  protected abrirAltaDeAlergia(): void {
-    this.altaDeAlergiaAbierta.set(true);
-  }
+  /* -- Lo que los bloques de alta necesitan del expediente ------------------
+     Baja hecho y traducido, no se vuelve a pedir: es la misma lista que pintan
+     las pestañas, y dos lecturas de la misma lista pueden discrepar. */
 
-  protected cerrarAltaDeAlergia(): void {
-    this.altaDeAlergiaAbierta.set(false);
-  }
+  /** Las recetas de la persona, en la forma que `MedicationBlock` consume. */
+  protected readonly recetasEnFicha = computed<readonly RecetaEnFicha[]>(() =>
+    (this.datos()?.resumen.medicationRequests ?? []).map((receta) => ({
+      id: receta.id,
+      medicamento: this.label(receta.medicationConceptId),
+      indicacion: [receta.doseText, receta.frequencyText].filter(Boolean).join(' · '),
+      estado: this.label(receta.statusConceptId),
+      firmada: receta.signedAt !== undefined,
+      emitida: receta.issuedAt !== undefined,
+    })),
+  );
 
-  /** Registrada la alergia, se cierra el modal y se relee la historia. */
-  protected alergiaRegistrada(): void {
-    this.altaDeAlergiaAbierta.set(false);
-    this.recargar();
-  }
+  /**
+   * Los diagnósticos como opciones de «¿para qué es esta receta?».
+   *
+   * **Todos**, no sólo los activos: renovar el tratamiento de una condición ya
+   * resuelta es un acto clínico legítimo. Lo que sí lleva la etiqueta es el
+   * estado, para que elegir una resuelta sea una decisión y no un descuido.
+   */
+  protected readonly diagnosticosParaReceta = computed<readonly DiagnosticoEnFicha[]>(() =>
+    (this.datos()?.resumen.conditions ?? []).map((dx) => {
+      const principal = this.label(dx.codeConceptId);
+      return {
+        id: dx.id,
+        etiqueta: dx.resolvedAt === undefined ? principal : `${principal} · Resuelto`,
+      };
+    }),
+  );
+
+  /** Los mismos diagnósticos, para colgar de uno el plan de cuidados. */
+  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(
+    () => this.diagnosticosParaReceta(),
+  );
+
+  /**
+   * Los `medicationConceptId` ya registrados, para el chequeo de interacciones.
+   *
+   * Toda la medicación y no sólo la vigente: advertir de más sobre algo que ya
+   * no se toma es un error mucho más chico que no advertir sobre algo que sí.
+   */
+  protected readonly medicacionActivaConceptIds = computed<readonly string[]>(() =>
+    Array.from(
+      new Set((this.datos()?.resumen.medicationRequests ?? []).map((r) => r.medicationConceptId)),
+    ),
+  );
 
   /**
    * Las citas del paciente, para «¿en qué cita se detectó?».
@@ -1284,6 +1441,27 @@ export class PatientChart {
       ),
     );
     this.toasts.success('La atención se descargó como PDF.', 'Historia clínica');
+  }
+
+  /**
+   * Descarga **una receta** en papel, desde el bloque de medicación.
+   *
+   * Mismo camino que en «Atención» y con la misma firma: la regla de quién
+   * firma vive en `firma-de-la-sesion`, una sola vez, para que el mismo acto
+   * clínico no salga firmado distinto según desde qué pantalla se imprima.
+   */
+  protected descargarReceta(receta: RecetaEnFicha): void {
+    const guardada = (this.datos()?.resumen.medicationRequests ?? []).find(
+      (fila) => fila.id === receta.id,
+    );
+    if (guardada === undefined) {
+      return;
+    }
+
+    downloadPrescriptionPdf(
+      recetaDesdeResumen(guardada, this.contextoDelDocumento(), (id) => this.label(id)),
+    );
+    this.toasts.success('La receta se descargó como PDF.', 'Receta');
   }
 
   /**

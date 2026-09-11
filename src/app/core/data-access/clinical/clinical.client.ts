@@ -498,7 +498,7 @@ export class ClinicalClient {
           ...observacion,
           effectiveStartAt: instanteDe(observacion.effectiveStartAt),
           issuedAt: instanteDe(observacion.issuedAt),
-          performers: observacion.performers.map((ejecutante) => sinAusentes(ejecutante)),
+          performers: observacion.performers?.map((ejecutante) => sinAusentes(ejecutante)),
           components: observacion.components?.map((componente) => sinAusentes(componente)),
           referenceRanges: observacion.referenceRanges?.map((rango) => sinAusentes(rango)),
         }),

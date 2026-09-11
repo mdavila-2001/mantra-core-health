@@ -42,6 +42,7 @@ import type { DynamicEnumOption } from '../../../../core/data-access/system-cont
 import { environment } from '../../../../../environments/environment';
 import { CASOS_RECETA_DEMO, conceptIdPorCodigo } from '../demo-presets';
 import type { CasoRecetaDemo } from '../demo-presets';
+import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 
 /**
  * La columna que gobierna el medicamento.
@@ -318,6 +319,32 @@ export class MedicationBlock {
    * apagarlo.
    */
   readonly exigeDiagnostico = input(true);
+
+  /**
+   * Las citas del paciente, para elegir de qué consulta es la receta.
+   *
+   * Mismo criterio que el bloque de diagnóstico: el contrato acepta
+   * `encounterId` desde siempre y lo que faltaba era ofrecerlo. Vacío es un
+   * estado legítimo —se entra al expediente sin pasar por la agenda— y entonces
+   * el campo no se dibuja: un desplegable de una sola opción vacía es una
+   * pregunta que no existe.
+   */
+  readonly citas = input<readonly CitaDelPaciente[]>([]);
+
+  /**
+   * Si el bloque exige un encuentro **abierto** para dejar prescribir.
+   *
+   * `true` en «Atención», que es donde el encuentro es el contexto y donde
+   * sigue valiendo la regla de siempre: una receta suelta, sin la consulta que
+   * la motivó, es un dato que después nadie sabe explicar.
+   *
+   * `false` en el expediente, y no es la misma cosa con la guardia baja: ahí la
+   * receta se ata a una cita **elegida** de las que la persona ya tiene —
+   * incluidas las finalizadas—, que es el caso que el cliente pidió por nombre.
+   * Lo que se relaja es «el encuentro tiene que estar abierto ahora», no «la
+   * receta tiene consulta detrás».
+   */
+  readonly exigeEncuentro = input(true);
 
   /**
    * Los `medicationConceptId` de la medicación ya registrada, sin traducir.
@@ -654,6 +681,32 @@ export class MedicationBlock {
     () => this.favoritosAplican() && this.medicamento() !== null && !this.guardandoFavorito(),
   );
 
+  /** La cita elegida, o `null` por «sin cita asociada». */
+  protected readonly citaElegida = signal<string | null>(null);
+
+  /** Las opciones del selector de cita, con la vacía primero. */
+  protected readonly opcionesDeCita = computed<readonly SelectOption<string | null>[]>(() => [
+    { value: null, label: 'Sin cita asociada' },
+    ...this.citas().map((cita) => ({
+      value: cita.id,
+      label: cita.enCurso ? `${cita.etiqueta} · en curso` : cita.etiqueta,
+    })),
+  ]);
+
+  /**
+   * El encuentro que viaja en la receta.
+   *
+   * La cita elegida manda; si nadie eligió, el encuentro en curso que el
+   * anfitrión pasó por `encounterId`. Así «Atención» sigue comportándose igual
+   * sin que nadie elija nada.
+   */
+  protected readonly encuentroDeLaReceta = computed<string | null>(
+    () => this.citaElegida() ?? this.encounterId(),
+  );
+
+  /** Si el bloque puede prescribir sin encuentro abierto. */
+  protected readonly sinExigirEncuentro = computed(() => !this.exigeEncuentro());
+
   protected readonly hayEncuentro = computed(() => {
     const id = this.encounterId();
     return id !== null && id !== '';
@@ -670,7 +723,7 @@ export class MedicationBlock {
    */
   protected readonly puedeRecetar = computed(
     () =>
-      this.hayEncuentro() &&
+      (this.hayEncuentro() || this.sinExigirEncuentro()) &&
       !this.sinOrganizacion() &&
       this.medicamento() !== null &&
       (!this.exigeDiagnostico() || this.hayMotivo()) &&
@@ -1042,14 +1095,16 @@ export class MedicationBlock {
     const patientProfileId = this.patientProfileId();
     const custodianTenantId = this.organizacion();
     const medicationConceptId = this.medicamento();
-    const encounterId = this.encounterId();
+    // La cita elegida manda sobre el encuentro del anfitrión, y **puede no
+    // haber ninguna**: en el expediente el contrato declara `encounterId`
+    // opcional y la receta se ata a una consulta ya cerrada, o a ninguna.
+    const encounterId = this.encuentroDeLaReceta();
 
-    if (
-      custodianTenantId === null ||
-      medicationConceptId === null ||
-      encounterId === null ||
-      this.registrando()
-    ) {
+    if (custodianTenantId === null || medicationConceptId === null || this.registrando()) {
+      return;
+    }
+    // En «Atención» el encuentro sigue siendo obligatorio: ahí es el contexto.
+    if (this.exigeEncuentro() && encounterId === null) {
       return;
     }
 
@@ -1083,7 +1138,7 @@ export class MedicationBlock {
         custodianTenantId,
         patientProfileId,
         medicationConceptId,
-        encounterId,
+        ...(encounterId === null ? {} : { encounterId }),
         // Los opcionales vacíos se **omiten**: una dosis en blanco es una
         // indicación registrada que no dice nada, y se lee peor que su ausencia.
         ...(dosis === '' ? {} : { doseText: dosis }),
@@ -1372,7 +1427,7 @@ export class MedicationBlock {
   private async sinInteraccionesOConfirmadas(
     patientProfileId: string,
     medicationConceptId: string,
-    encounterId: string,
+    encounterId: string | null,
   ): Promise<boolean> {
     const sustancias = Array.from(
       new Set([...this.medicacionActivaConceptIds(), medicationConceptId]),
@@ -1387,7 +1442,9 @@ export class MedicationBlock {
         this.clinical.checkInteractions({
           patientProfileId,
           substanceConceptIds: sustancias,
-          encounterId,
+          // Sin encuentro se omite y no viaja en `null`: el DTO lo declara
+          // opcional y el motor compara sustancias, no consultas.
+          ...(encounterId === null ? {} : { encounterId }),
         }),
       );
     } catch {
@@ -1429,6 +1486,7 @@ export class MedicationBlock {
     // El diagnóstico y el favorito elegidos son de ESTA receta: la siguiente
     // arranca sin ellos, aunque sea para el mismo paciente.
     this.indicacion.set(null);
+    this.citaElegida.set(null);
     this.favoritoElegido.set(null);
     this.errorDelFavorito.set(null);
     this.ultimaCantidadSugerida = null;

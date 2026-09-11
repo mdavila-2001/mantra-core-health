@@ -594,19 +594,29 @@ export interface NewObservationReferenceRange {
 /**
  * Lo que hace falta para registrar una observación (UC-08-03).
  *
- * ## `performers` es obligatorio acá y opcional en el DTO
+ * ## `performers` se manda siempre que se pueda nombrar, y no siempre se puede
  *
- * Es una restricción **de este lado**, deliberada: el contrato admite una
- * observación sin ejecutante, pero una medición sin autor no es un registro
- * clínico —no se puede repreguntar, ni auditar, ni desestimar—. La pantalla
- * siempre sabe quién la está tomando, así que no hay caso legítimo en el que
- * omitirlo, y dejarlo opcional invitaba a olvidarlo.
+ * Una medición sin autor no es un registro clínico —no se puede repreguntar, ni
+ * auditar, ni desestimar—, y por eso este tipo lo declaró obligatorio durante
+ * un tiempo aunque el DTO lo tuviera opcional. La restricción se levantó al
+ * escribir la primera pantalla que registra observaciones, y no por comodidad:
+ * un ejecutante son **dos** datos —quién y de qué clase—, y el segundo es un
+ * `*_concept_id` que sale de `clinical.observation_performers.performer_type_concept_id`.
+ * Esa columna puede no tener conjunto de valores publicado en una instalación,
+ * y entonces el único ejecutante que la pantalla podría armar llevaría un uuid
+ * inventado. Entre registrar la medición sin autor y registrarla con un autor
+ * falso, lo primero es lo honesto; lo segundo es lo que la auditoría no puede
+ * distinguir de un dato real.
+ *
+ * Quien escribe una observación **debe** mandarlo cuando el catálogo lo permita:
+ * ver `ObservationBlock`, que lo resuelve del binding y lo omite sólo cuando el
+ * catálogo no publica la columna.
  */
 export interface NewObservation extends ObservationValue {
   readonly custodianTenantId: string;
   readonly patientProfileId: string;
   readonly codeConceptId: string;
-  readonly performers: readonly NewObservationPerformer[];
+  readonly performers?: readonly NewObservationPerformer[];
   readonly encounterId?: string;
   readonly basedOnServiceRequestId?: string;
   readonly categoryConceptId?: string;

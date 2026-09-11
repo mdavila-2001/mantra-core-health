@@ -45,6 +45,24 @@ const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string]
   [/conditions\.laterality_concept_id/, 'VS_CONDITION_LATERALITY', 'Lateralidad'],
   [/conditions\.clinical_status_concept_id/, 'VS_CONDITION_CLINICAL_STATUS', 'Estado clínico'],
 
+  /*
+   * Los catálogos de la observación, el plan de cuidados y el documento. Van
+   * ANTES que los patrones genéricos de abajo porque casarían con ellos por
+   * casualidad y con el conjunto equivocado: `quantity_unit_concept_id` habría
+   * caído en `/unit/` —las unidades de dosis, donde no existe «mmHg»— y
+   * `document_records.category_concept_id` en `/conditions\.category/` no, pero
+   * sí en cualquier `category` que se agregue después. Un catálogo equivocado
+   * se ve como un catálogo, no como un error.
+   */
+  [/observation_performers\.performer_type_concept_id/, 'VS_OBSERVATION_PERFORMER_TYPE', 'Tipo de ejecutante'],
+  [/observations\.code_concept_id/, 'VS_OBSERVATION_CODE', 'Medición'],
+  [/observations\.quantity_unit_concept_id/, 'VS_OBSERVATION_UNIT', 'Unidad'],
+  [/observations\.category_concept_id/, 'VS_OBSERVATION_CATEGORY', 'Categoría'],
+  [/observations\.interpretation_concept_id/, 'VS_OBSERVATION_INTERPRETATION', 'Interpretación'],
+  [/care_plans\.intent_concept_id/, 'VS_CARE_PLAN_INTENT', 'Intención del plan'],
+  [/care_plan_activities\.activity_concept_id/, 'VS_CARE_PLAN_ACTIVITY', 'Actividad'],
+  [/document_records\.category_concept_id/, 'VS_DOCUMENT_CATEGORY', 'Categoría documental'],
+
   [/sex_at_birth/, 'VS_BIRTH_SEX', 'Sexo al nacer'],
   [/gender/, 'VS_ADMINISTRATIVE_GENDER', 'Género'],
   [/municipality/, 'VS_BO_MUNICIPALITY', 'Municipio'],

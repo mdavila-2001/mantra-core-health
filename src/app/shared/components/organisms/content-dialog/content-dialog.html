@@ -24,20 +24,42 @@
       </div>
 
       <!-- `autofocus` acá y no en el contenido: el foco inicial tiene que caer
-           adentro del modal, y el primer control es el que cierra. -->
+           adentro del modal, y el primer control es el que cierra.
+
+           Lleva la cruz Y su texto. Sólo la cruz habría sido más limpia, pero
+           `closeLabel` no siempre dice «Cerrar» —hay modales que cierran con
+           «Entendido»— y esconder esa palabra detrás de un glifo le cambiaría
+           el sentido al botón. -->
       <button
         app-button
         type="button"
         variant="ghost"
         size="sm"
         autofocus
+        class="content-dialog__cerrar"
         data-testid="content-dialog-close"
         (clicked)="solicitarCierre()"
       >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="m7 7 10 10M17 7 7 17" />
+        </svg>
         {{ closeLabel() }}
       </button>
     </header>
 
+    <!-- El cuerpo se recorre adentro y avisa que sigue: las sombras de los
+         bordes aparecen sólo cuando hay algo más arriba o más abajo, con el
+         truco de los fondos fijos (`background-attachment: local`). Sin eso,
+         un formulario largo cortado a media pantalla se lee como uno que
+         termina ahí. -->
     <div class="content-dialog__cuerpo">
       <ng-content />
     </div>

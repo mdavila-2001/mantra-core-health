@@ -2,7 +2,7 @@
 
 # Inventario de componentes y servicios
 
-471 componentes y 89 servicios inyectables, leídos de `src/`.
+474 componentes y 91 servicios inyectables, leídos de `src/`.
 
 ## Átomo (23)
 
@@ -111,7 +111,7 @@
 | `app-tutorial-overlay` | `TutorialOverlay` | — | — | — | OnPush | sí |
 | `app-view-state-host` | `ViewStateHost` | `state` | `retry`, `refresh` | — | OnPush | sí |
 
-## Feature (376)
+## Feature (379)
 
 | Selector | Clase | Entradas | Salidas | Modelos | Detección | Prueba |
 |---|---|---|---|---|---|---|
@@ -127,7 +127,7 @@
 | `app-medical-articles` | `MedicalArticles` | — | — | — | OnPush | sí |
 | `app-my-profile` | `MyProfile` | — | — | — | OnPush | sí |
 | `app-patient-profile-edit` | `PatientProfileEdit` | `embebido` | `cerrado` | `pestana` | OnPush | sí |
-| `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | — | OnPush | sí |
+| `app-practitioner-profile-edit` | `PractitionerProfileEdit` | — | — | `pestana` | OnPush | sí |
 | `app-practitioner-profile-view` | `PractitionerProfileView` | `perfil`, `esPropio`, `previewMode` | `trayectoriaCambio` | — | OnPush | sí |
 | `app-practitioner-profile` | `PractitionerProfile` | — | — | — | OnPush | sí |
 | `app-work-history` | `WorkHistory` | `layout`, `soloConsultorios` | `added` | — | OnPush | sí |
@@ -349,10 +349,13 @@
 | `app-encounter-workspace` | `EncounterWorkspace` | — | — | — | OnPush | sí |
 | `app-admission-block` | `AdmissionBlock` | `patientProfileId`, `encounterId`, `internaciones` | `cambio` | — | OnPush | sí |
 | `app-allergy-block` | `AllergyBlock` | `patientProfileId`, `encounterId`, `citas` | `cambio` | — | OnPush | sí |
+| `app-care-plan-block` | `CarePlanBlock` | `patientProfileId`, `encounterId`, `citas`, `diagnosticos` | `cambio` | — | OnPush | sí |
 | `app-diagnosis-block` | `DiagnosisBlock` | `patientProfileId`, `encounterId`, `citas`, `exigeEncuentro` | `cambio` | — | OnPush | sí |
 | `app-diagnostics-block` | `DiagnosticsBlock` | `patientProfileId`, `encounterId` | — | — | OnPush | sí |
-| `app-free-note-block` | `FreeNoteBlock` | `patientProfileId`, `encounterId` | `guardada` | — | OnPush | sí |
-| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas`, `diagnosticos`, `exigeDiagnostico`, `medicacionActivaConceptIds` | `cambio`, `descargar` | — | OnPush | sí |
+| `app-document-block` | `DocumentBlock` | `patientProfileId`, `encounterId`, `citas` | `cambio` | — | OnPush | sí |
+| `app-free-note-block` | `FreeNoteBlock` | `patientProfileId`, `encounterId`, `citas` | `guardada` | — | OnPush | sí |
+| `app-medication-block` | `MedicationBlock` | `patientProfileId`, `encounterId`, `recetas`, `diagnosticos`, `exigeDiagnostico`, `citas`, `exigeEncuentro`, `medicacionActivaConceptIds` | `cambio`, `descargar` | — | OnPush | sí |
+| `app-observation-block` | `ObservationBlock` | `patientProfileId`, `encounterId`, `citas` | `cambio` | — | OnPush | sí |
 | `app-odontogram` | `Odontogram` | `estados`, `marcas`, `seleccionada`, `readonly` | `pieza` | — | OnPush | sí |
 | `app-patient-chart` | `PatientChart` | — | — | — | OnPush | sí |
 | `app-procedures-block` | `ProceduresBlock` | `patientProfileId`, `encounterId`, `modo` | — | — | OnPush | sí |
@@ -505,7 +508,7 @@
 |---|---|---|---|---|---|---|
 | `app-root` | `App` | — | — | — | Default | sí |
 
-## Servicios (89)
+## Servicios (91)
 
 | Clase | Archivo | Ámbito | Prueba |
 |---|---|---|---|
@@ -518,6 +521,8 @@
 | `AssetsLiabilitiesClient` | `src/app/core/data-access/assets-liabilities/assets-liabilities.client.ts` | root | sí |
 | `AuthProvidersClient` | `src/app/core/data-access/auth-providers/auth-providers.client.ts` | root | sí |
 | `AuthzClient` | `src/app/core/data-access/authz/authz.client.ts` | root | sí |
+| `ChartCarePlansClient` | `src/app/core/data-access/chart-care-plans/chart-care-plans.client.ts` | root | **no** |
+| `ChartDocumentsClient` | `src/app/core/data-access/chart-documents/chart-documents.client.ts` | root | **no** |
 | `ChartNotesClient` | `src/app/core/data-access/chart-notes/chart-notes.client.ts` | root | **no** |
 | `ChartTemplatesClient` | `src/app/core/data-access/chart-templates/chart-templates.client.ts` | root | sí |
 | `ClinicalClient` | `src/app/core/data-access/clinical/clinical.client.ts` | root | sí |

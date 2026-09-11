@@ -1,0 +1,16 @@
+.observacion {
+  display: block;
+}
+
+.observacion__titulo {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+}
+
+/* El reparto a dos columnas lo pone `app-form-grid`; acá sólo el aire que la
+   rejilla no cubre entre el aviso de error y los campos. */
+.observacion__form {
+  margin-block-start: var(--sp-4);
+}

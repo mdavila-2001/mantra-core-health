@@ -2,7 +2,7 @@
 
 # Grafo de módulos
 
-1339 archivos TypeScript bajo `src/` y 5570 importaciones internas.
+1350 archivos TypeScript bajo `src/` y 5656 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
@@ -166,24 +166,24 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/shared/components/atoms/button/button.ts` | 206 |
-| `src/app/core/view-state/view-state.types.ts` | 192 |
-| `src/app/core/view-state/view-state.ts` | 175 |
-| `src/app/core/http/error-to-view-state.ts` | 168 |
+| `src/app/shared/components/atoms/button/button.ts` | 207 |
+| `src/app/core/view-state/view-state.types.ts` | 196 |
+| `src/app/core/view-state/view-state.ts` | 178 |
+| `src/app/core/http/error-to-view-state.ts` | 171 |
 | `src/app/shared/components/organisms/page-header/page-header.ts` | 168 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 158 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 161 |
 | `src/app/core/navigation/navigation.service.ts` | 125 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 101 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 105 |
 | `src/app/shared/a11y/announce-on-appear.ts` | 89 |
-| `src/app/shared/components/atoms/input/input.ts` | 75 |
-| `src/app/core/auth/auth.service.ts` | 74 |
-| `src/app/shared/components/molecules/card/card.ts` | 74 |
+| `src/app/core/auth/auth.service.ts` | 80 |
+| `src/app/shared/components/atoms/input/input.ts` | 77 |
+| `src/app/shared/components/molecules/card/card.ts` | 77 |
 | `src/app/shared/components/atoms/badge/badge.ts` | 66 |
+| `src/app/shared/components/molecules/toast/toast.service.ts` | 66 |
 | `src/app/shared/forms/form-support.ts` | 65 |
-| `src/app/shared/components/molecules/toast/toast.service.ts` | 63 |
 | `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 58 |
+| `src/app/shared/components/atoms/select/select.types.ts` | 57 |
 | `src/app/core/auth/session.store.ts` | 56 |
-| `src/app/shared/components/atoms/select/select.types.ts` | 53 |
 | `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 53 |
 | `src/app/shared/forms/paginated/paginar-campos.ts` | 53 |
 
@@ -191,10 +191,10 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 1175 |
-| `@angular/common` | 684 |
+| `@angular/core` | 1186 |
+| `@angular/common` | 692 |
 | `@angular/router` | 519 |
-| `rxjs` | 203 |
+| `rxjs` | 207 |
 | `@angular/forms` | 120 |
 | `node:fs` | 24 |
 | `@angular/platform-browser` | 14 |

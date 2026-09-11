@@ -1,14 +1,17 @@
 import {
   alergias,
   condiciones,
+  documentos,
   documentosDe,
   encuentros,
   episodios,
   notas,
   observaciones,
   ordenes,
+  planes,
   planesDe,
   recetas,
+  CATEGORIA_DOCUMENTO,
   NOTA_TIPO_EVOLUCION,
   TIPO_ALERGIA,
   TIPO_EPISODIO,
@@ -18,10 +21,10 @@ import {
   type NotaSimulada,
   type RecetaSimulada,
 } from '../fixtures/clinica';
-import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
+import { CLASE_ENCUENTRO, ESPECIALIDAD, ESTADO, ESTADO_CONDICION, ESTADO_ENCUENTRO, ESTADO_RECETA, INTENCION_DEL_PLAN, SEVERIDAD, VERIFICACION_DX } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/personas';
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
-import { ahora, Coleccion, cuerpo, nuevoId, uuid } from '../mock-store';
+import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo } from './files.handlers';
 import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
@@ -430,8 +433,11 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/clinical/observations', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; valueDecimal?: number; quantityValue?: number; quantityUnitConceptId?: string; effectiveStartAt?: string; encounterId?: string; components?: unknown[] }>(request);
-    const valor = String(datos.quantityValue ?? datos.valueDecimal ?? '');
+    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; valueDecimal?: number; quantityValue?: number; valueText?: string; quantityUnitConceptId?: string; interpretationConceptId?: string; categoryConceptId?: string; effectiveStartAt?: string; encounterId?: string; components?: unknown[] }>(request);
+    // El texto libre cuenta como valor: una observación cualitativa —«ruidos
+    // cardíacos rítmicos»— no tiene número y guardarla vacía la dejaba sin
+    // nada que mostrar en la tabla del expediente.
+    const valor = String(datos.quantityValue ?? datos.valueDecimal ?? datos.valueText ?? '');
     const nueva = observaciones.agregar({
       id: nuevoId('obs'),
       patientProfileId: datos.patientProfileId ?? '',
@@ -442,6 +448,8 @@ export function registrarClinica(router: MockRouter): void {
       quantityUnitConceptId: datos.quantityUnitConceptId ?? '',
       effectiveStartAt: datos.effectiveStartAt ?? ahora(),
       ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.interpretationConceptId === undefined ? {} : { interpretationConceptId: datos.interpretationConceptId }),
+      ...(datos.categoryConceptId === undefined ? {} : { categoryConceptId: datos.categoryConceptId }),
     });
     return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, status: 'FINAL', componentIds: (datos.components ?? []).map(() => nuevoId('component')), rowVersion: 1, createdAt: ahora() } };
   });
@@ -526,6 +534,56 @@ export function registrarClinica(router: MockRouter): void {
       versionNumber: n.versionNumber + 1,
     });
     return { status: 201, body: { noteId: n.noteId, versionId, versionNumber: n.versionNumber + 1, lifecycleStatusConceptId: n.lifecycleStatusConceptId, versionStatusConceptId: ESTADO['ST-DRAFT']! } };
+  });
+
+  /* ---- planes de cuidados y documentos -------------------------------------
+     Las dos rutas existían en el backend desde UC-15-09/10 y la maqueta no las
+     tenía: el expediente sabía listar planes y documentos y no había forma de
+     crear ninguno. Guardan en colección —no devuelven un id y se olvidan—
+     porque lo que el expediente hace después de crear es **releer**, y una
+     fila que no vuelve de la lectura se ve exactamente igual que una escritura
+     que falló. */
+
+  router.post('/charts/care-plans', (request) => {
+    const datos = cuerpo<{ patientProfileId: string; conditionId?: string; encounterId?: string; intentConceptId?: string; goalText?: string; startDate?: string; endDate?: string; activities?: { activityConceptId?: string; scheduledAt?: string; detailText?: string }[] }>(request);
+    const actividades = (datos.activities ?? []).map((actividad) => ({
+      id: nuevoId('cp-act'),
+      statusConceptId: ESTADO['ST-PENDING']!,
+      detailText: actividad.detailText ?? '',
+      scheduledAt: actividad.scheduledAt ?? null,
+      ...(actividad.activityConceptId === undefined ? {} : { activityConceptId: actividad.activityConceptId }),
+    }));
+    const nuevo = planes.agregar({
+      id: nuevoId('careplan'),
+      patientProfileId: datos.patientProfileId ?? '',
+      statusConceptId: ESTADO['ST-ACTIVE']!,
+      intentConceptId: datos.intentConceptId ?? INTENCION_DEL_PLAN['CP-INTENT-PLAN']!,
+      goalText: datos.goalText ?? '',
+      startDate: datos.startDate ?? isoDia(0),
+      endDate: datos.endDate ?? null,
+      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.conditionId === undefined ? {} : { conditionId: datos.conditionId }),
+      activities: actividades,
+      createdAt: ahora(),
+    });
+    return { status: 201, body: { id: nuevo.id, statusConceptId: nuevo.statusConceptId, activityCount: actividades.length, createdAt: nuevo.createdAt } };
+  });
+
+  router.post('/charts/documents', (request) => {
+    const datos = cuerpo<{ patientProfileId: string; tenantId: string; title: string; categoryConceptId?: string; authorText?: string; isExternal?: boolean; encounterId?: string; files?: { fileId: string }[] }>(request);
+    const nuevo = documentos.agregar({
+      id: nuevoId('doc'),
+      patientProfileId: datos.patientProfileId ?? '',
+      title: datos.title ?? 'Documento sin título',
+      categoryConceptId: datos.categoryConceptId ?? CATEGORIA_DOCUMENTO,
+      statusConceptId: ESTADO['ST-DRAFT']!,
+      authorText: datos.authorText ?? request.user?.displayName ?? '',
+      isExternal: datos.isExternal ?? false,
+      documentDate: ahora(),
+      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      createdAt: ahora(),
+    });
+    return { status: 201, body: { id: nuevo.id, statusConceptId: nuevo.statusConceptId, fileCount: (datos.files ?? []).length, createdAt: nuevo.createdAt } };
   });
 
   /* ---- plantillas de expediente ------------------------------------------- */

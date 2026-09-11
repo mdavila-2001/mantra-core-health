@@ -656,6 +656,77 @@ export const OBSERVACION = definir('VS_OBSERVATION_CODE', [
   ['OBS-HBA1C', 'Hemoglobina glicosilada'],
 ]);
 
+/* ---- lo que la observación, el plan y el documento necesitan para su alta ---
+   Los tres bloques nuevos del expediente —observación, plan de cuidados y
+   documento— llenan columnas `*_concept_id` que el catálogo real todavía no
+   publica con un binding declarado. Se acuñan acá con el mismo criterio que los
+   de alergia: cierran hoy el campo sin fingir que son un catálogo clínico
+   aprobado. El real —UCUM para las unidades, un subconjunto SNOMED/LOINC para
+   el resto— sigue siendo P26. */
+
+conjunto('VS_OBSERVATION_UNIT', 'Unidad de medida', 'Unidades de una medición clínica.');
+export const UNIDAD_OBSERVACION = definir('VS_OBSERVATION_UNIT', [
+  ['OBSU-MMHG', 'mmHg'],
+  ['OBSU-BPM', 'latidos por minuto'],
+  ['OBSU-CELSIUS', '°C'],
+  ['OBSU-KG', 'kg'],
+  ['OBSU-CM', 'cm'],
+  ['OBSU-PERCENT', '%'],
+  ['OBSU-MGDL', 'mg/dL'],
+  ['OBSU-KGM2', 'kg/m²'],
+]);
+
+conjunto('VS_OBSERVATION_CATEGORY', 'Categoría de observación', 'De dónde sale la medición.');
+export const CATEGORIA_OBSERVACION = definir('VS_OBSERVATION_CATEGORY', [
+  ['OBSC-VITALS', 'Signos vitales'],
+  ['OBSC-EXAM', 'Examen físico'],
+  ['OBSC-LAB', 'Laboratorio'],
+  ['OBSC-SURVEY', 'Cuestionario'],
+]);
+
+conjunto('VS_OBSERVATION_INTERPRETATION', 'Interpretación', 'Cómo se lee el valor.');
+export const INTERPRETACION = definir('VS_OBSERVATION_INTERPRETATION', [
+  ['OBSI-NORMAL', 'Dentro de lo esperado'],
+  ['OBSI-HIGH', 'Por encima de lo esperado'],
+  ['OBSI-LOW', 'Por debajo de lo esperado'],
+  ['OBSI-CRITICAL', 'Valor crítico'],
+]);
+
+conjunto('VS_OBSERVATION_PERFORMER_TYPE', 'Tipo de ejecutante', 'Quién tomó la medición.');
+export const TIPO_DE_EJECUTANTE = definir('VS_OBSERVATION_PERFORMER_TYPE', [
+  ['OBSP-PRACTITIONER', 'Profesional que atiende'],
+  ['OBSP-LAB', 'Laboratorio'],
+  ['OBSP-DEVICE', 'Dispositivo'],
+  ['OBSP-PATIENT', 'La propia persona'],
+]);
+
+conjunto('VS_CARE_PLAN_INTENT', 'Intención del plan', 'Qué clase de plan es.');
+export const INTENCION_DEL_PLAN = definir('VS_CARE_PLAN_INTENT', [
+  ['CP-INTENT-PROPOSAL', 'Propuesta'],
+  ['CP-INTENT-PLAN', 'Plan'],
+  ['CP-INTENT-ORDER', 'Indicación'],
+]);
+
+conjunto('VS_CARE_PLAN_ACTIVITY', 'Actividad del plan', 'Qué clase de paso es.');
+export const ACTIVIDAD_DEL_PLAN = definir('VS_CARE_PLAN_ACTIVITY', [
+  ['CP-ACT-CONTROL', 'Control clínico'],
+  ['CP-ACT-STUDY', 'Estudio o laboratorio'],
+  ['CP-ACT-TREATMENT', 'Tratamiento'],
+  ['CP-ACT-EDUCATION', 'Educación de la persona'],
+  ['CP-ACT-REFERRAL', 'Derivación'],
+]);
+
+conjunto('VS_DOCUMENT_CATEGORY', 'Categoría documental', 'Qué clase de papel es.');
+export const CATEGORIA_DOCUMENTAL = definir('VS_DOCUMENT_CATEGORY', [
+  ['DOC-CAT-REPORT', 'Informe clínico'],
+  ['DOC-CAT-LAB', 'Resultado de laboratorio'],
+  ['DOC-CAT-IMAGING', 'Estudio de imagen'],
+  ['DOC-CAT-CONSENT', 'Consentimiento informado'],
+  ['DOC-CAT-CERTIFICATE', 'Certificado'],
+  ['DOC-CAT-DISCHARGE', 'Epicrisis o alta'],
+  ['DOC-CAT-EXTERNAL', 'Documento externo'],
+]);
+
 conjunto('VS_ROUTE', 'Vía de administración', 'Vía por la que se administra.');
 export const VIA = definir('VS_ROUTE', [
   ['ROUTE-ORAL', 'Vía oral'],
