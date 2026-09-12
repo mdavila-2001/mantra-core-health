@@ -290,13 +290,18 @@ describe('ShellLayout', () => {
     });
 
     /**
-     * Los dos escalones plegables de la barra.
+     * Los dos escalones plegables de la barra, y los dominios que no los tienen.
      *
      * Cincuenta y cinco secciones no entran en una lista: el dominio pliega, y
      * adentro pliega el bloque de cosas parecidas. Lo que estas pruebas cuidan
-     * no es el `<details>` —eso lo hace el navegador— sino las dos decisiones
-     * que sí son nuestras: qué se dibuja abierto sin que nadie lo toque, y
-     * cuándo un bloque **no** merece ser un desplegable.
+     * no es el `<details>` —eso lo hace el navegador— sino las tres decisiones
+     * que sí son nuestras: qué se dibuja abierto sin que nadie lo toque, cuándo
+     * un bloque **no** merece ser un desplegable, y qué dominios no se dibujan
+     * como contenedor en absoluto.
+     *
+     * Las pruebas de plegado usan una sesión de administración a propósito: el
+     * paciente ya no pliega nada —«General» y «Mi cuenta» están aplanados— y
+     * probar el plegado con quien no lo ve sería probarlo contra un DOM vacío.
      */
     describe('los desplegables', () => {
       function conSesion(roles: readonly string[]) {
@@ -304,8 +309,8 @@ describe('ShellLayout', () => {
         fixture.detectChanges();
       }
 
-      it('cada grupo es un desplegable con su ícono y su rótulo', () => {
-        conSesion(['PATIENT']);
+      it('cada grupo que se dibuja es un desplegable con su ícono y su rótulo', () => {
+        conSesion(['SECURITY_ADMIN']);
         const grupos = [...raiz().querySelectorAll('[data-testid="nav-grupo"]')];
 
         expect(grupos.length).toBeGreaterThan(0);
@@ -330,75 +335,158 @@ describe('ShellLayout', () => {
         }
       });
 
-      it('un bloque de varios destinos es un desplegable; uno de un solo destino, no', () => {
-        // El paciente ve sus cuatro pantallas clínicas —bloque «Mi salud»— y
-        // un solo chat, que es todo lo que le queda de «Comunidad». Un
-        // desplegable con un renglón adentro es un clic de más para llegar a
-        // lo mismo.
-        //
-        // **«Directorios» cambió de lado el 08/09/2026**, y por eso está acá
-        // como ejemplo de lo segundo y no de lo primero: sus cuatro
-        // directorios salieron del menú para que se entre por la portada, así
-        // que el bloque quedó con un solo renglón y esta misma regla lo dibuja
-        // suelto. Es exactamente el efecto que se buscaba — se aprieta
-        // «Directorios» y se llega a la pantalla que deja elegir.
+      it('un bloque que se dibuja como desplegable tiene más de un destino adentro', () => {
+        // La regla: un desplegable con un renglón adentro es un clic de más
+        // para llegar a lo mismo, así que un bloque de uno sale suelto. Se
+        // comprueba sobre lo que la barra dibujó —no contra una lista de
+        // rótulos escrita a mano— para que siga valiendo cuando cambien los
+        // roles de una sección y un bloque se quede con un solo renglón.
+        conSesion(['SECURITY_ADMIN']);
+
+        const bloques = [...raiz().querySelectorAll('[data-testid="nav-bloque"]')];
+        expect(bloques.length).toBeGreaterThan(0);
+        for (const bloque of bloques) {
+          const adentro = bloque.querySelectorAll('[data-testid="nav-enlace"]').length;
+          expect(adentro, bloque.getAttribute('data-bloque') ?? '').toBeGreaterThan(1);
+        }
+      });
+
+      it('el paciente no abre nada: sus destinos están todos a un clic', () => {
+        // «General» y «Mi cuenta» están en `GRUPOS_APLANADOS`, y son los dos
+        // únicos dominios que el paciente ve. Entrar a «Mis citas» eran tres
+        // clics —dominio, bloque, destino— y dos de ellos sobre rótulos que no
+        // llevan a ninguna pantalla.
         conSesion(['PATIENT']);
 
-        const bloques = [...raiz().querySelectorAll('[data-testid="nav-bloque"]')].map((b) =>
-          b.getAttribute('data-bloque'),
-        );
+        expect(raiz().querySelectorAll('[data-testid="nav-grupo"]').length).toBe(0);
+        expect(raiz().querySelectorAll('[data-testid="nav-bloque"]').length).toBe(0);
+        expect(raiz().querySelectorAll('details').length).toBe(0);
 
-        expect(bloques).toContain('Mi salud');
-        expect(bloques).not.toContain('Comunidad');
-        expect(bloques).not.toContain('Directorios');
-        // Y los destinos de los bloques de uno siguen estando, sueltos.
+        // Y no perdió un solo destino en el camino: los que colgaban de un
+        // bloque plegado siguen ahí, ahora sueltos.
         const enlaces = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
           a.getAttribute('data-route'),
         );
+        expect(enlaces).toContain('/my-account/appointments');
+        expect(enlaces).toContain('/my-account/pharmacy-orders');
+        expect(enlaces).toContain('/my-account/loyalty');
+        expect(enlaces).toContain('/my-account/medical-record');
+        expect(enlaces).toContain('/my-account/questionnaires');
         expect(enlaces).toContain('/messaging');
         expect(enlaces).toContain('/directories');
+        expect(enlaces).toContain('/nearby-places');
+        // Los fijos de arriba no se movieron: siguen siendo los primeros.
+        expect(enlaces.slice(0, 2)).toEqual(['/my-account', '/notification-center']);
       });
 
-      it('el grupo y el bloque de la pantalla actual se dibujan abiertos', async () => {
+      it('sin rótulo que las agrupe, las cosas parecidas siguen saliendo seguidas', () => {
+        // Aplanado, el orden es lo único que queda diciendo que «Mis citas»,
+        // «Mis pedidos» y «Mis puntos» son la misma clase de cosa. Por eso la
+        // barra recorre los bloques y no la lista plana del grupo: por `items`
+        // el orden es el del registro, y ahí las cuatro pantallas clínicas se
+        // meten entre las gestiones.
         conSesion(['PATIENT']);
-        await router.navigateByUrl('/my-account/questionnaires');
-        fixture.detectChanges();
 
-        const grupo = raiz().querySelector<HTMLDetailsElement>('[data-grupo="Mi cuenta"]');
-        const bloque = raiz().querySelector<HTMLDetailsElement>('[data-bloque="Mi salud"]');
+        const enlaces = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+        const seguidas = (rutas: readonly string[]) => {
+          const posiciones = rutas.map((ruta) => enlaces.indexOf(ruta));
+          expect(posiciones, rutas.join(', ')).not.toContain(-1);
+          return Math.max(...posiciones) - Math.min(...posiciones) === rutas.length - 1;
+        };
+
+        expect(
+          seguidas(['/my-account/appointments', '/my-account/pharmacy-orders', '/my-account/loyalty']),
+        ).toBe(true);
+        expect(
+          seguidas([
+            '/my-account/medical-record',
+            '/my-account/diagnostic-results',
+            '/my-account/diagnostic-orders',
+            '/my-account/questionnaires',
+          ]),
+        ).toBe(true);
+      });
+
+      /**
+       * El primer bloque que la barra dibujó, y el dominio que lo contiene.
+       *
+       * Sale del DOM y no de una constante para que la prueba no dependa de
+       * qué secciones ve hoy un administrador: lo que se verifica es la regla
+       * —el dominio y el bloque de la pantalla actual se abren solos—, no el
+       * reparto, que tiene sus propias pruebas.
+       */
+      function primerBloqueDibujado() {
+        const bloque = raiz().querySelector('[data-testid="nav-bloque"]');
+        const grupo = bloque?.closest('[data-testid="nav-grupo"]');
+        const destino = bloque
+          ?.querySelector('[data-testid="nav-enlace"]')
+          ?.getAttribute('data-route');
+        expect(bloque, 'la sesión de prueba no dibujó ningún bloque').not.toBeNull();
+        expect(destino, 'el bloque no tiene destinos').toBeTruthy();
+        // Las rutas de mentira del banco son un puñado elegido a mano, y el
+        // destino de esta prueba sale del menú: se declara la que toque, o
+        // `navigateByUrl` rechaza y la prueba falla por el doble, no por el
+        // código.
+        router.resetConfig([...router.config, { path: (destino ?? '').slice(1), children: [] }]);
+        return {
+          grupo: grupo?.getAttribute('data-grupo') ?? '',
+          bloque: bloque?.getAttribute('data-bloque') ?? '',
+          destino: destino ?? '',
+        };
+      }
+
+      it('el grupo y el bloque de la pantalla actual se dibujan abiertos', async () => {
+        conSesion(['SECURITY_ADMIN']);
+        const { grupo, bloque, destino } = primerBloqueDibujado();
+
+        await router.navigateByUrl(destino);
+        fixture.detectChanges();
 
         // Nadie los desplegó: si no se abrieran solos, la barra no diría dónde
         // está uno parado y habría que buscarlo abriendo dominios a mano.
-        expect(grupo?.open).toBe(true);
-        expect(bloque?.open).toBe(true);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(true);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-bloque="${bloque}"]`)?.open).toBe(
+          true,
+        );
       });
 
       it('lo que la persona pliega a mano gana sobre eso, y navegar no lo reabre', async () => {
-        conSesion(['PATIENT']);
-        await router.navigateByUrl('/my-account/questionnaires');
+        conSesion(['SECURITY_ADMIN']);
+        const { grupo, destino } = primerBloqueDibujado();
+        await router.navigateByUrl(destino);
         fixture.detectChanges();
 
-        interno<(clave: string, abierto: boolean) => void>('alPlegar')('Mi cuenta', false);
+        interno<(clave: string, abierto: boolean) => void>('alPlegar')(grupo, false);
         fixture.detectChanges();
 
-        expect(
-          raiz().querySelector<HTMLDetailsElement>('[data-grupo="Mi cuenta"]')?.open,
-        ).toBe(false);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(
+          false,
+        );
 
         // Volver a la misma pantalla no le discute la decisión a quien la tomó.
-        await router.navigateByUrl('/my-account');
+        await router.navigateByUrl(destino);
         fixture.detectChanges();
-        expect(
-          raiz().querySelector<HTMLDetailsElement>('[data-grupo="Mi cuenta"]')?.open,
-        ).toBe(false);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(
+          false,
+        );
       });
     });
 
     it('el nav pinta un grupo por sección del registro, con sus destinos', () => {
       const grupos = raiz().querySelectorAll('.app-side-nav__group');
-      const secciones = interno<() => readonly { label: string }[]>('sections')();
+      const secciones = interno<() => readonly { label: string; aplanado?: boolean }[]>(
+        'sections',
+      )();
 
-      expect(grupos.length).toBe(secciones.length);
+      // Los aplanados no cuentan: no dibujan contenedor, sueltan sus destinos.
+      // Lo que esta prueba cuida es que ninguna sección se quede sin pintar,
+      // no que todas se pinten igual.
+      expect(grupos.length).toBe(secciones.filter((s) => s.aplanado !== true).length);
+      expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(
+        secciones.filter((s) => s.aplanado === true).length,
+      );
       // Sin sesión sólo quedan las secciones sin roles, más la vitrina.
       const destinos = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
         a.getAttribute('data-route'),

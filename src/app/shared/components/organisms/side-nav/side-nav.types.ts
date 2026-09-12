@@ -46,6 +46,18 @@ export interface NavSection {
   readonly icon?: NavIconName;
   readonly items: readonly NavItem[];
   readonly blocks?: readonly NavBlock[];
+
+  /**
+   * Si el grupo se dibuja **sin contenedor**: sus destinos van sueltos, al
+   * mismo nivel que el rótulo que los encabezaría, y sin desplegables
+   * intermedios.
+   *
+   * Es presentación pura —un grupo aplanado ofrece los mismos destinos que uno
+   * plegado— y quién lo es lo decide `core/navigation`, no el organismo.
+   * Opcional porque un grupo sin la marca se pliega como siempre, que es lo que
+   * quieren la vitrina y cualquier consumidor que no conozca el reparto.
+   */
+  readonly aplanado?: boolean;
 }
 
 /**
