@@ -6,7 +6,15 @@
     de los contratos de otros.
     ========================================================================== */
 
-export const INPUT_TYPES = ['text', 'email', 'number', 'password', 'search', 'url'] as const;
+export const INPUT_TYPES = [
+  'text',
+  'email',
+  'number',
+  'password',
+  'search',
+  'url',
+  'date',
+] as const;
 export type InputType = (typeof INPUT_TYPES)[number];
 
 /**

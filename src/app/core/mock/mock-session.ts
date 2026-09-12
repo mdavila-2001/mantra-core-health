@@ -64,6 +64,14 @@ export const IDS = {
     userId: uuid('user-visitador'),
     personId: uuid('person-visitador'),
   },
+  aseguradora: {
+    userId: uuid('user-aseguradora-owner'),
+    personId: uuid('person-aseguradora-owner'),
+  },
+  aseguradoraStaff: {
+    userId: uuid('user-aseguradora-staff'),
+    personId: uuid('person-aseguradora-staff'),
+  },
 } as const;
 
 export const MOCK_USERS: readonly MockUser[] = [
@@ -138,6 +146,28 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.visitador.personId,
+  },
+  {
+    key: 'aseguradora',
+    id: IDS.aseguradora.userId,
+    email: 'aseguradora@alovida.mock',
+    nationalId: '7001001',
+    displayName: 'Patricia Suárez · Seguros Andina',
+    roles: ['USER'],
+    tenants: [TENANT_ASEGURADORA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.aseguradora.personId,
+  },
+  {
+    key: 'aseguradora_staff',
+    id: IDS.aseguradoraStaff.userId,
+    email: 'aseguradora.staff@alovida.mock',
+    nationalId: '7001002',
+    displayName: 'Luis Mercado · Seguros Andina',
+    roles: ['USER'],
+    tenants: [TENANT_ASEGURADORA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.aseguradoraStaff.personId,
   },
 ];
 

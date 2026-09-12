@@ -1,0 +1,121 @@
+<app-content-dialog
+  [heading]="mode() === 'create' ? 'Nueva cobertura' : 'Editar cobertura'"
+  [description]="'Plan: ' + planName()"
+  [dismissible]="!saving()"
+  (closed)="closed.emit()"
+>
+  @if (errorMessage(); as message) {
+    <app-alert appAnuncio tone="error">{{ message }}</app-alert>
+  }
+  <form class="insurance-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (mode() === 'create') {
+      <app-form-field
+        label="Categoría"
+        [required]="true"
+        [errorMessage]="
+          categoryConceptId() === null && form.touched ? 'Seleccioná una categoría.' : ''
+        "
+      >
+        <app-concept-select
+          target="insurance.insurance_plan_benefits.benefit_category_concept_id"
+          [(value)]="categoryConceptId"
+          placeholder="Seleccioná una categoría"
+        />
+      </app-form-field>
+      <div class="insurance-form__columns">
+        <app-form-field label="Vigente desde">
+          <app-input formControlName="effectiveFrom" type="date" testId="benefit-effective-from" />
+        </app-form-field>
+        <app-form-field
+          label="Vigente hasta"
+          [errorMessage]="
+            form.hasError('dateRange') && form.controls.effectiveTo.touched
+              ? 'La fecha final no puede ser anterior a la inicial.'
+              : ''
+          "
+        >
+          <app-input formControlName="effectiveTo" type="date" testId="benefit-effective-to" />
+        </app-form-field>
+      </div>
+    } @else if (benefit(); as current) {
+      <p class="insurance-form__context">Categoría: {{ current.category.display }}</p>
+    }
+
+    <div class="insurance-form__columns">
+      <app-form-field
+        label="Cobertura (%)"
+        hint="Entre 0 y 100, con hasta dos decimales."
+        [errorMessage]="
+          form.controls.coveragePercent.touched && form.controls.coveragePercent.invalid
+            ? 'Ingresá un porcentaje entre 0 y 100.'
+            : ''
+        "
+      >
+        <app-input
+          formControlName="coveragePercent"
+          inputMode="decimal"
+          testId="benefit-coverage"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Copago"
+        [errorMessage]="
+          form.controls.copayAmount.touched && form.controls.copayAmount.invalid
+            ? 'Ingresá un importe no negativo con hasta dos decimales.'
+            : ''
+        "
+      >
+        <app-input formControlName="copayAmount" inputMode="decimal" testId="benefit-copay" />
+      </app-form-field>
+      <app-form-field
+        label="Deducible"
+        [errorMessage]="
+          form.controls.deductibleAmount.touched && form.controls.deductibleAmount.invalid
+            ? 'Ingresá un importe no negativo con hasta dos decimales.'
+            : ''
+        "
+      >
+        <app-input
+          formControlName="deductibleAmount"
+          inputMode="decimal"
+          testId="benefit-deductible"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Tope anual"
+        [errorMessage]="
+          form.controls.annualLimitAmount.touched && form.controls.annualLimitAmount.invalid
+            ? 'Ingresá un importe no negativo con hasta dos decimales.'
+            : ''
+        "
+      >
+        <app-input
+          formControlName="annualLimitAmount"
+          inputMode="decimal"
+          testId="benefit-annual-limit"
+        />
+      </app-form-field>
+    </div>
+  </form>
+
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    variant="ghost"
+    [disabled]="saving()"
+    (clicked)="dialog().close()"
+  >
+    Cancelar
+  </button>
+  <button
+    dialog-actions
+    app-button
+    type="button"
+    [isLoading]="saving()"
+    [disabled]="saving()"
+    (clicked)="submit()"
+  >
+    {{ mode() === 'create' ? 'Crear cobertura' : 'Guardar cambios' }}
+  </button>
+</app-content-dialog>

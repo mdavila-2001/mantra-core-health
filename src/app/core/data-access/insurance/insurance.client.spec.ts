@@ -21,6 +21,7 @@ function carrierWire(overrides: Record<string, unknown> = {}) {
     planCount: 3,
     networkCount: 1,
     createdAt: '2026-08-09T12:00:00.000Z',
+    canAdminister: true,
     ...overrides,
   };
 }
@@ -61,47 +62,50 @@ describe('InsuranceClient', () => {
     let ficha: CarrierDetail | undefined;
     client.getCarrier('c-1').subscribe((detalle) => (ficha = detalle));
 
-    http.expectOne((r) => r.url === '/insurance-carriers/c-1').flush({
-      ...carrierWire(),
-      products: [
-        {
-          id: 'p-1',
-          productCode: 'PROD-1',
-          name: 'Salud Integral',
-          productType: { code: 'PRODUCT_TYPE_HEALTH', display: 'Producto de salud' },
-          marketSegment: null,
-          status: CONCEPTO,
-          plans: [
-            {
-              id: 'pl-1',
-              planCode: 'PLAN-1',
-              name: 'Plan Oro',
-              planType: null,
-              currency: null,
-              effectiveFrom: '2026-03-14',
-              effectiveTo: null,
-              status: CONCEPTO,
-              policyDocumentFileId: null,
-              benefits: [
-                {
-                  id: 'b-1',
-                  category: { code: 'BENEFIT_CATEGORY_GENERAL', display: 'Beneficio general' },
-                  service: null,
-                  coveragePercent: '80.00',
-                  copayAmount: null,
-                  deductibleAmount: null,
-                  annualLimitAmount: null,
-                  requiresPriorAuthorization: true,
-                  effectiveFrom: '2026-01-01',
-                  effectiveTo: null,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      networks: [],
-    });
+    http
+      .expectOne((r) => r.url === '/insurance-carriers/c-1')
+      .flush({
+        ...carrierWire(),
+        products: [
+          {
+            id: 'p-1',
+            productCode: 'PROD-1',
+            name: 'Salud Integral',
+            productType: { code: 'PRODUCT_TYPE_HEALTH', display: 'Producto de salud' },
+            marketSegment: null,
+            status: CONCEPTO,
+            plans: [
+              {
+                id: 'pl-1',
+                planCode: 'PLAN-1',
+                name: 'Plan Oro',
+                planType: null,
+                currency: null,
+                effectiveFrom: '2026-03-14',
+                effectiveTo: null,
+                status: CONCEPTO,
+                policyDocumentFileId: null,
+                benefits: [
+                  {
+                    id: 'b-1',
+                    category: { code: 'BENEFIT_CATEGORY_GENERAL', display: 'Beneficio general' },
+                    service: null,
+                    coveragePercent: '80.00',
+                    copayAmount: null,
+                    deductibleAmount: null,
+                    annualLimitAmount: null,
+                    requiresPriorAuthorization: true,
+                    approvalRules: { requiredDocuments: [], exclusionNotes: null },
+                    effectiveFrom: '2026-01-01',
+                    effectiveTo: null,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        networks: [],
+      });
 
     const plan = ficha?.products[0]?.plans[0];
     expect(plan?.effectiveFrom?.getFullYear()).toBe(2026);
@@ -118,47 +122,50 @@ describe('InsuranceClient', () => {
     let ficha: CarrierDetail | undefined;
     client.getCarrier('c-1').subscribe((detalle) => (ficha = detalle));
 
-    http.expectOne((r) => r.url === '/insurance-carriers/c-1').flush({
-      ...carrierWire(),
-      products: [
-        {
-          id: 'p-1',
-          productCode: 'PROD-1',
-          name: 'Salud Integral',
-          productType: { code: 'PRODUCT_TYPE_HEALTH', display: 'Producto de salud' },
-          marketSegment: null,
-          status: CONCEPTO,
-          plans: [
-            {
-              id: 'pl-1',
-              planCode: 'PLAN-1',
-              name: 'Plan Oro',
-              planType: null,
-              currency: null,
-              effectiveFrom: null,
-              effectiveTo: null,
-              status: CONCEPTO,
-              policyDocumentFileId: null,
-              benefits: [
-                {
-                  id: 'b-1',
-                  category: { code: 'BENEFIT_CATEGORY_GENERAL', display: 'Beneficio general' },
-                  service: null,
-                  coveragePercent: '80.50',
-                  copayAmount: '25.00',
-                  deductibleAmount: null,
-                  annualLimitAmount: null,
-                  requiresPriorAuthorization: null,
-                  effectiveFrom: null,
-                  effectiveTo: null,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      networks: [],
-    });
+    http
+      .expectOne((r) => r.url === '/insurance-carriers/c-1')
+      .flush({
+        ...carrierWire(),
+        products: [
+          {
+            id: 'p-1',
+            productCode: 'PROD-1',
+            name: 'Salud Integral',
+            productType: { code: 'PRODUCT_TYPE_HEALTH', display: 'Producto de salud' },
+            marketSegment: null,
+            status: CONCEPTO,
+            plans: [
+              {
+                id: 'pl-1',
+                planCode: 'PLAN-1',
+                name: 'Plan Oro',
+                planType: null,
+                currency: null,
+                effectiveFrom: null,
+                effectiveTo: null,
+                status: CONCEPTO,
+                policyDocumentFileId: null,
+                benefits: [
+                  {
+                    id: 'b-1',
+                    category: { code: 'BENEFIT_CATEGORY_GENERAL', display: 'Beneficio general' },
+                    service: null,
+                    coveragePercent: '80.50',
+                    copayAmount: '25.00',
+                    deductibleAmount: null,
+                    annualLimitAmount: null,
+                    requiresPriorAuthorization: null,
+                    approvalRules: { requiredDocuments: [], exclusionNotes: null },
+                    effectiveFrom: null,
+                    effectiveTo: null,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        networks: [],
+      });
 
     expect(ficha?.products[0]?.plans[0]?.benefits[0]?.coveragePercent).toBe('80.50');
     expect(ficha?.products[0]?.plans[0]?.benefits[0]?.copayAmount).toBe('25.00');
@@ -168,45 +175,47 @@ describe('InsuranceClient', () => {
     let perfil: BrokerProfile | undefined;
     client.getBroker('b-1').subscribe((p) => (perfil = p));
 
-    http.expectOne((r) => r.url === '/insurance-brokers/b-1').flush({
-      id: 'b-1',
-      brokerCode: 'BRK-1',
-      legalName: 'Corredores Andinos',
-      licenseNumber: 'MAT-77',
-      jurisdiction: null,
-      status: { code: 'BROKER_ACTIVE', display: 'Broker activo' },
-      verification: VERIFICADO,
-      independent: false,
-      currentCarrierCount: 1,
-      createdAt: '2026-08-09T12:00:00.000Z',
-      publicProfileId: null,
-      agreements: [
-        {
-          id: 'a-1',
-          insuranceCarrierId: 'c-1',
-          carrierLegalName: 'Aseguradora Uno',
-          agreementCode: 'AC-1',
-          commissionModel: null,
-          effectiveFrom: '2026-01-01',
-          effectiveTo: null,
-          status: { code: 'AGREEMENT_ACTIVE', display: 'Acuerdo activo' },
-          current: true,
-          contractFileId: null,
-        },
-        {
-          id: 'a-2',
-          insuranceCarrierId: 'c-2',
-          carrierLegalName: 'Aseguradora Dos',
-          agreementCode: 'AC-2',
-          commissionModel: null,
-          effectiveFrom: '2020-01-01',
-          effectiveTo: '2021-01-01',
-          status: { code: 'AGREEMENT_ACTIVE', display: 'Acuerdo activo' },
-          current: false,
-          contractFileId: null,
-        },
-      ],
-    });
+    http
+      .expectOne((r) => r.url === '/insurance-brokers/b-1')
+      .flush({
+        id: 'b-1',
+        brokerCode: 'BRK-1',
+        legalName: 'Corredores Andinos',
+        licenseNumber: 'MAT-77',
+        jurisdiction: null,
+        status: { code: 'BROKER_ACTIVE', display: 'Broker activo' },
+        verification: VERIFICADO,
+        independent: false,
+        currentCarrierCount: 1,
+        createdAt: '2026-08-09T12:00:00.000Z',
+        publicProfileId: null,
+        agreements: [
+          {
+            id: 'a-1',
+            insuranceCarrierId: 'c-1',
+            carrierLegalName: 'Aseguradora Uno',
+            agreementCode: 'AC-1',
+            commissionModel: null,
+            effectiveFrom: '2026-01-01',
+            effectiveTo: null,
+            status: { code: 'AGREEMENT_ACTIVE', display: 'Acuerdo activo' },
+            current: true,
+            contractFileId: null,
+          },
+          {
+            id: 'a-2',
+            insuranceCarrierId: 'c-2',
+            carrierLegalName: 'Aseguradora Dos',
+            agreementCode: 'AC-2',
+            commissionModel: null,
+            effectiveFrom: '2020-01-01',
+            effectiveTo: '2021-01-01',
+            status: { code: 'AGREEMENT_ACTIVE', display: 'Acuerdo activo' },
+            current: false,
+            contractFileId: null,
+          },
+        ],
+      });
 
     expect(perfil?.agreements).toHaveLength(2);
     expect(perfil?.agreements[0]?.current).toBe(true);
@@ -225,10 +234,72 @@ describe('InsuranceClient', () => {
   it('escapa el identificador en la ruta', () => {
     client.getCarrier('c/1').subscribe();
 
-    http.expectOne((r) => r.url === '/insurance-carriers/c%2F1').flush({
-      ...carrierWire(),
-      products: [],
-      networks: [],
-    });
+    http
+      .expectOne((r) => r.url === '/insurance-carriers/c%2F1')
+      .flush({
+        ...carrierWire(),
+        products: [],
+        networks: [],
+      });
+  });
+
+  it('crea un plan conservando fechas, moneda y la ruta escapada', () => {
+    const body = {
+      planCode: 'ORO-2',
+      name: 'Plan Oro 2',
+      effectiveFrom: '2026-10-01',
+      currencyConceptId: 'currency/id',
+    };
+    let id: string | undefined;
+    client.createPlan('product/id', body).subscribe((response) => (id = response.id));
+
+    const request = http.expectOne('/insurance-products/product%2Fid/plans');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(body);
+    request.flush({ id: 'plan-created' });
+    expect(id).toBe('plan-created');
+  });
+
+  it('crea una cobertura sin convertir sus decimales', () => {
+    const body = {
+      benefitCategoryConceptId: 'category/id',
+      coveragePercent: '80.50',
+      copayAmount: '25.00',
+    };
+    client.createBenefit('plan/id', body).subscribe();
+
+    const request = http.expectOne('/insurance-plans/plan%2Fid/benefits');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual(body);
+    request.flush({ id: 'benefit-created' });
+  });
+
+  it('reemplaza importes y permite borrar valores con null', () => {
+    const body = {
+      coveragePercent: '72.25',
+      copayAmount: null,
+      deductibleAmount: '100.00',
+      annualLimitAmount: null,
+    };
+    client.updateBenefit('plan/id', 'benefit/id', body).subscribe();
+
+    const request = http.expectOne('/insurance-plans/plan%2Fid/benefits/benefit%2Fid');
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual(body);
+    request.flush({ ok: true });
+  });
+
+  it('reemplaza las reglas documentales por la ruta específica', () => {
+    const body = {
+      requiresPriorAuthorization: true,
+      requiredDocuments: ['ORDEN_MEDICA'] as const,
+      exclusionNotes: 'No cubre tratamientos experimentales.',
+    };
+    client.updateBenefitRules('plan/id', 'benefit/id', body).subscribe();
+
+    const request = http.expectOne('/insurance-plans/plan%2Fid/benefits/benefit%2Fid/rules');
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual(body);
+    request.flush({ ok: true });
   });
 });

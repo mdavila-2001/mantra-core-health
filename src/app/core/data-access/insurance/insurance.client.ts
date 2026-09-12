@@ -25,6 +25,10 @@ import type {
   PlanBenefit,
   Product,
   ProviderNetwork,
+  CreateInsurancePlanInput,
+  CreatePlanBenefitInput,
+  UpdatePlanBenefitInput,
+  UpdatePlanBenefitRulesInput,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -158,10 +162,55 @@ export class InsuranceClient {
   /** `GET /insurance-carriers/:id` — catálogo comercial y red. */
   getCarrier(id: string): Observable<CarrierDetail> {
     return this.http
-      .get<WireCarrierDetail>(
-        this.url(`/insurance-carriers/${encodeURIComponent(id)}`),
-      )
+      .get<WireCarrierDetail>(this.url(`/insurance-carriers/${encodeURIComponent(id)}`))
       .pipe(map(toCarrierDetail));
+  }
+
+  /** Crea un plan dentro de un producto del carrier del tenant activo. */
+  createPlan(
+    productId: string,
+    body: CreateInsurancePlanInput,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-products/${encodeURIComponent(productId)}/plans`),
+      body,
+    );
+  }
+
+  /** Crea una cobertura dentro de un plan del carrier del tenant activo. */
+  createBenefit(planId: string, body: CreatePlanBenefitInput): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-plans/${encodeURIComponent(planId)}/benefits`),
+      body,
+    );
+  }
+
+  /** Reemplaza el subconjunto económico de una cobertura. */
+  updateBenefit(
+    planId: string,
+    benefitId: string,
+    body: UpdatePlanBenefitInput,
+  ): Observable<{ readonly ok: true }> {
+    return this.http.put<{ readonly ok: true }>(
+      this.url(
+        `/insurance-plans/${encodeURIComponent(planId)}/benefits/${encodeURIComponent(benefitId)}`,
+      ),
+      body,
+    );
+  }
+
+  /** Reemplaza autorización previa, documentos y exclusión. */
+  updateBenefitRules(
+    planId: string,
+    benefitId: string,
+    body: UpdatePlanBenefitRulesInput,
+  ): Observable<{ readonly ok: true }> {
+    return this.http.put<{ readonly ok: true }>(
+      this.url(
+        `/insurance-plans/${encodeURIComponent(planId)}/benefits/${encodeURIComponent(benefitId)}/rules`,
+      ),
+      body,
+    );
   }
 
   /** `GET /insurance-brokers` — brokers del tenant activo. */
@@ -182,9 +231,7 @@ export class InsuranceClient {
   /** `GET /insurance-brokers/:id` — perfil e historial de vinculaciones. */
   getBroker(id: string): Observable<BrokerProfile> {
     return this.http
-      .get<WireBrokerProfile>(
-        this.url(`/insurance-brokers/${encodeURIComponent(id)}`),
-      )
+      .get<WireBrokerProfile>(this.url(`/insurance-brokers/${encodeURIComponent(id)}`))
       .pipe(map(toBrokerProfile));
   }
 
@@ -245,9 +292,7 @@ export class InsuranceClient {
    */
   getClaim(id: string): Observable<ClaimDetail> {
     return this.http
-      .get<WireClaimDetail>(
-        this.url(`/insurance-claims/${encodeURIComponent(id)}`),
-      )
+      .get<WireClaimDetail>(this.url(`/insurance-claims/${encodeURIComponent(id)}`))
       .pipe(map(toClaimDetail));
   }
 
@@ -285,9 +330,7 @@ function toClaimListItem(body: WireClaimListItem): ClaimListItem {
   return { ...body, submittedAt: maybeDate(body.submittedAt) ?? null };
 }
 
-function toClaimAdjudication(
-  body: WireClaimAdjudication,
-): ClaimAdjudication {
+function toClaimAdjudication(body: WireClaimAdjudication): ClaimAdjudication {
   return { ...body, adjudicatedAt: new Date(body.adjudicatedAt) };
 }
 
@@ -305,9 +348,7 @@ function toClaimDetail(body: WireClaimDetail): ClaimDetail {
   return {
     ...body,
     header: toClaimListItem(body.header),
-    adjudication: body.adjudication
-      ? toClaimAdjudication(body.adjudication)
-      : null,
+    adjudication: body.adjudication ? toClaimAdjudication(body.adjudication) : null,
     adjudicationHistory: body.adjudicationHistory.map(toClaimAdjudication),
     disputes: body.disputes.map(toClaimDispute),
   };
