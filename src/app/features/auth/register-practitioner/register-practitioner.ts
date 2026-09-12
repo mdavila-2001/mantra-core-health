@@ -14,6 +14,7 @@ import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
   BirthSexCode,
+  NewRegistrationCredential,
   PractitionerRegistration,
 } from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
@@ -49,6 +50,7 @@ import {
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { unirNombres } from '../../../core/profesion/nombres-adicionales';
 import { OPCIONES_TITULO_PROFESIONAL } from '../../../core/profesion/titulos-profesionales';
+import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
 import {
   MAX_ATTACHMENT_BYTES,
   SUPPORT_FILE_FORMATS,
@@ -317,6 +319,12 @@ interface TituloDeclarado {
   readonly tipo: CodigoDeTitulo;
   /** Cómo se llama el título: «Medicina», «Salud Pública»… */
   readonly nombre: string;
+  /**
+   * El número del diploma. **Es el único dato obligatorio de la fila**: la
+   * columna que lo recibe (`professional_credentials.number`) es NOT NULL, así
+   * que una fila sin número no se puede guardar y el alta no la manda.
+   */
+  readonly numero: string;
   /** Dónde lo cursó: «Universidad Mayor de San Andrés». */
   readonly universidad: string;
   /** El país donde lo cursó. Ver {@link CampoDeEstudio} por qué es texto. */
@@ -358,7 +366,7 @@ interface TituloDeclarado {
 type CampoDeEstudio = 'universidad' | 'pais' | 'ciudad';
 
 /** Uno de los campos de una fila de título que se escriben a mano. */
-type CampoEditableDeTitulo = 'nombre' | CampoDeEstudio;
+type CampoEditableDeTitulo = 'nombre' | 'numero' | CampoDeEstudio;
 
 /** Un respaldo suelto: el de la matrícula y el del registro del SEDES. */
 interface RespaldoDeclarado {
@@ -579,6 +587,120 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
 export class RegisterPractitioner {
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
+  private readonly systemContext = inject(SystemContextClient);
+
+  /**
+   * De qué campo cuelga el catálogo de tipos de título.
+   *
+   * Se pide por **campo destino** y no por código de conjunto porque esta
+   * columna sí declara su amarre (`professional-credential-type`), a diferencia
+   * de la de especialidades. La ruta es pública, que es lo que la habilita en un
+   * alta sin sesión.
+   */
+  private readonly campoDeTipoDeTitulo =
+    'profiles.professional_credentials.credential_type_concept_id';
+
+  /**
+   * Qué concepto del catálogo corresponde a cada tipo de la pantalla.
+   *
+   * El mapeo es **por código**, nunca por rótulo: el código es la identidad
+   * estable del concepto y el rótulo del catálogo viene en inglés técnico.
+   */
+  private readonly codigoDeConceptoPorTipo: Readonly<Record<CodigoDeTitulo, string>> = {
+    UNIVERSITARIO: 'CREDENTIAL_TYPE_DEGREE',
+    DIPLOMADO: 'CREDENTIAL_TYPE_DIPLOMA',
+    MAESTRIA: 'CREDENTIAL_TYPE_MASTER',
+    DOCTORADO: 'CREDENTIAL_TYPE_DOCTORATE',
+  };
+
+  /** Código de concepto → uuid, tal como lo devolvió el catálogo. */
+  private readonly conceptoPorCodigo = signal<ReadonlyMap<string, string>>(new Map());
+
+  /** Qué frena el envío por el lado de los títulos, o `null` si nada. */
+  readonly errorTitulos = signal<string | null>(null);
+
+  /**
+   * Una fila que todavía no dice nada: se agregó y quedó en blanco.
+   *
+   * No frena el envío ni viaja, igual que una casilla de especialidad agregada
+   * y vacía. Lo que sí frena es una fila **con datos** y sin número.
+   */
+  private filaVacia(titulo: TituloDeclarado): boolean {
+    return (
+      titulo.numero.trim() === '' &&
+      titulo.nombre.trim() === '' &&
+      titulo.universidad.trim() === '' &&
+      titulo.pais.trim() === '' &&
+      titulo.ciudad.trim() === '' &&
+      titulo.archivo === null
+    );
+  }
+
+  /** Si esta fila declara algo pero le falta el número que la hace guardable. */
+  protected tituloSinNumero(titulo: TituloDeclarado): boolean {
+    return !this.filaVacia(titulo) && titulo.numero.trim() === '';
+  }
+
+  /** Si alguna fila declara algo sin número. Ver `tituloSinNumero`. */
+  protected hayTitulosSinNumero(): boolean {
+    return this.titulos().some((titulo) => this.tituloSinNumero(titulo));
+  }
+
+  /**
+   * Si hay filas listas para mandar cuyo tipo el catálogo no resolvió.
+   *
+   * Pasa si la lectura del catálogo falló. Mandar la fila sin tipo no es
+   * opción —el contrato lo exige— y descartarla en silencio es justamente lo
+   * que esta subtarea vino a corregir, así que el envío se frena y lo dice.
+   */
+  protected hayTitulosSinTipo(): boolean {
+    return this.titulos().some(
+      (titulo) =>
+        titulo.numero.trim() !== '' &&
+        this.conceptoPorCodigo().get(this.codigoDeConceptoPorTipo[titulo.tipo]) === undefined,
+    );
+  }
+
+  /**
+   * Los títulos que viajan en el alta.
+   *
+   * Sólo van los tres datos que hoy tienen dónde guardarse: el tipo, el número
+   * y la institución. El nombre, el país, la ciudad y el archivo se preguntan
+   * en pantalla y **no** viajan: ninguno tiene columna sin cambiar el modelo, y
+   * esta pantalla no es donde eso se decide.
+   */
+  private credencialesDeclaradas(): readonly NewRegistrationCredential[] {
+    const conceptos = this.conceptoPorCodigo();
+    return this.titulos().flatMap((titulo) => {
+      const numero = titulo.numero.trim();
+      const conceptId = conceptos.get(this.codigoDeConceptoPorTipo[titulo.tipo]);
+      if (numero === '' || conceptId === undefined) {
+        return [];
+      }
+      const universidad = titulo.universidad.trim();
+      return [
+        {
+          credentialTypeConceptId: conceptId,
+          number: numero,
+          ...(universidad === '' ? {} : { issuingInstitutionText: universidad }),
+        },
+      ];
+    });
+  }
+
+  /**
+   * Los tipos de título del catálogo. Un fallo no bloquea el alta: lo que
+   * bloquea es intentar mandar una fila cuyo tipo no se pudo resolver.
+   */
+  protected cargarTiposDeCredencial(): void {
+    this.systemContext.dynamicEnum(this.campoDeTipoDeTitulo).subscribe({
+      next: (enumeracion) =>
+        this.conceptoPorCodigo.set(
+          new Map(enumeracion.options.map((opcion) => [opcion.code, opcion.conceptId])),
+        ),
+      error: () => this.conceptoPorCodigo.set(new Map()),
+    });
+  }
 
   readonly formProfesional = new FormGroup({
     // Mismas cuatro partes que el paciente: la persona se registra igual sea
@@ -778,6 +900,7 @@ export class RegisterPractitioner {
         id: crypto.randomUUID(),
         tipo,
         nombre: '',
+        numero: '',
         universidad: '',
         pais: '',
         ciudad: '',
@@ -1900,6 +2023,7 @@ export class RegisterPractitioner {
     this.cargarDepartamentos();
     this.cargarMunicipios();
     this.cargarEspecialidades();
+    this.cargarTiposDeCredencial();
     this.acomodarColegioYEspecialidades();
 
     // El aviso de un envío fallido se va en cuanto se corrige algo.
@@ -2153,6 +2277,25 @@ export class RegisterPractitioner {
       return;
     }
 
+    // Una fila de título sin número no se puede guardar —la columna es NOT
+    // NULL—, así que el alta se frena acá y lo dice, en vez de mandarla y que
+    // la API la rechace entera. Quitar la fila es la otra salida.
+    if (this.hayTitulosSinNumero()) {
+      this.errorTitulos.set(
+        'Cada título necesita su número de diploma. Completalo o quitá la fila.',
+      );
+      return;
+    }
+    // Y tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
+    // tipo, que el contrato exige, o se perdería en silencio.
+    if (this.hayTitulosSinTipo()) {
+      this.errorTitulos.set(
+        'No pudimos cargar los tipos de título. Reintentá en unos segundos.',
+      );
+      return;
+    }
+    this.errorTitulos.set(null);
+
     this.state.set(loading());
 
     this.iam.registerPractitioner(this.datosProfesional()).subscribe({
@@ -2258,6 +2401,13 @@ export class RegisterPractitioner {
       ...(this.especialidadesElegidas().length === 0
         ? {}
         : { specialtyConceptIds: this.especialidadesElegidas() }),
+      // Los títulos declarados (subtarea 1.6). Sólo viaja lo que hoy tiene
+      // dónde guardarse: tipo, número e institución. El nombre del título, el
+      // país, la ciudad y el diploma se siguen preguntando y **no** viajan:
+      // ninguno tiene columna sin cambiar el modelo.
+      ...(this.credencialesDeclaradas().length === 0
+        ? {}
+        : { credentials: this.credencialesDeclaradas() }),
     };
   }
 

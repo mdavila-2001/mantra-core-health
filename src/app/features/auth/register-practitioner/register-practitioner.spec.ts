@@ -96,6 +96,13 @@ describe('RegisterPractitioner', () => {
       if (pendiente.cancelled) continue;
       pendiente.flush({ items: [] });
     }
+    // Y el de tipos de título (1.6), que el constructor pide por campo destino.
+    // Mismo criterio que los tres de arriba: las pruebas que no hablan de él lo
+    // dan por atendido acá para que `verify()` siga sirviendo.
+    for (const pendiente of http.match((r) => r.url.startsWith('/system-context/'))) {
+      if (pendiente.cancelled) continue;
+      pendiente.flush({ options: [] });
+    }
     http.verify();
   });
 
@@ -559,15 +566,17 @@ describe('RegisterPractitioner', () => {
 
       expect(filtradas.length).toBeGreaterThan(0);
       expect(filtradas.every((o) => o.label.toLowerCase().includes('odont'))).toBe(true);
-      // Ninguna petición NUEVA: quedan las tres lecturas de catálogo que el
-      // componente hace al nacer —departamentos, municipios y especialidades— y
-      // nada más. Eran cuatro hasta que se quitó la ocupación del alta de
-      // profesional. La lista de títulos es cerrada y ya está en memoria; si
+      // Ninguna petición NUEVA: quedan las cuatro lecturas de catálogo que el
+      // componente hace al nacer —departamentos, municipios, especialidades y
+      // los tipos de título (1.6)— y nada más. Fueron cuatro, tres al quitarse
+      // la ocupación, y vuelven a ser cuatro desde que los títulos viajan. La
+      // lista de títulos profesionales sigue siendo cerrada y en memoria; si
       // esto empezara a consultar, el número subiría acá antes que en producción.
       expect(http.match(() => true).map((p) => p.request.url)).toEqual([
         '/terminology/value-sets',
         '/terminology/value-sets',
         '/terminology/value-sets',
+        '/system-context/dynamic-enums',
       ]);
 
       // Y sin texto vuelven las doce: escribir y borrar no deja el campo vacío.
@@ -1152,28 +1161,135 @@ describe('RegisterPractitioner', () => {
       expect(component.valorDeEstudio('professionalTitleCity')).toBe('Cochabamba');
     });
 
-    it('nada de esto viaja en el alta todavía: es sólo pantalla', () => {
+    /**
+     * Responde el catálogo de tipos de título, que el constructor pide por
+     * campo destino. Sin él resuelto, una fila con número no se puede mandar:
+     * el contrato exige el concepto y la pantalla no lo inventa.
+     */
+    function catalogoDeTiposDeTitulo(): void {
+      http.expectOne((r) => r.url.startsWith('/system-context/dynamic-enums')).flush({
+        code: 'professional-credential-type',
+        name: 'Tipo de credencial profesional',
+        definitionId: 'def-1',
+        valueSetId: 'vs-cred',
+        options: [
+          { conceptId: 'c-degree', code: 'CREDENTIAL_TYPE_DEGREE', label: 'Academic degree' },
+          { conceptId: 'c-diploma', code: 'CREDENTIAL_TYPE_DIPLOMA', label: 'Diploma course' },
+          { conceptId: 'c-master', code: 'CREDENTIAL_TYPE_MASTER', label: "Master's degree" },
+        ],
+      });
+    }
+
+    it('los títulos declarados VIAJAN en el alta, uno por fila', () => {
+      catalogoDeTiposDeTitulo();
       component.agregarTitulo('UNIVERSITARIO');
-      const [titulo] = component.titulosDe('UNIVERSITARIO');
-      component.escribirNombreDeTitulo(titulo.id, 'Medicina');
-      component.escribirDatoDeTitulo(titulo.id, 'universidad', 'Universidad Mayor de San Andrés');
-      component.adjuntarArchivoATitulo(
-        titulo.id,
-        eventoDeArchivo('medicina.pdf', 'application/pdf', 1024),
+      component.agregarTitulo('MAESTRIA');
+      const [profesion] = component.titulosDe('UNIVERSITARIO');
+      const [maestria] = component.titulosDe('MAESTRIA');
+      component.escribirDatoDeTitulo(profesion.id, 'numero', 'TIT-1');
+      component.escribirDatoDeTitulo(
+        profesion.id,
+        'universidad',
+        'Universidad Mayor de San Andrés',
       );
-      component.adjuntarRespaldo(
-        'license',
-        eventoDeArchivo('matricula.pdf', 'application/pdf', 1024),
-      );
+      component.escribirDatoDeTitulo(maestria.id, 'numero', 'MAE-9');
+
       completarProfesional();
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toEqual([
+        {
+          credentialTypeConceptId: 'c-degree',
+          number: 'TIT-1',
+          issuingInstitutionText: 'Universidad Mayor de San Andrés',
+        },
+        { credentialTypeConceptId: 'c-master', number: 'MAE-9' },
+      ]);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('dos filas del mismo tipo viajan como dos credenciales', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('UNIVERSITARIO');
+      component.agregarTitulo('UNIVERSITARIO');
+      const [primera, segunda] = component.titulosDe('UNIVERSITARIO');
+      component.escribirDatoDeTitulo(primera.id, 'numero', 'TIT-1');
+      component.escribirDatoDeTitulo(segunda.id, 'numero', 'TIT-2');
+
+      completarProfesional();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(
+        (req.request.body.credentials as readonly { number: string }[]).map((c) => c.number),
+      ).toEqual(['TIT-1', 'TIT-2']);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('sin títulos el cuerpo no los menciona', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toBeUndefined();
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('una fila con datos y sin número frena el envío: nada se descarta en silencio', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('DIPLOMADO');
+      const [diplomado] = component.titulosDe('DIPLOMADO');
+      component.escribirDatoDeTitulo(diplomado.id, 'universidad', 'UPB');
+
+      completarProfesional();
+      component.submit();
+
+      http.expectNone('/iam/auth/register-practitioner');
+      expect(component.errorTitulos()).toBe(
+        'Cada título necesita su número de diploma. Completalo o quitá la fila.',
+      );
+    });
+
+    it('una fila agregada y vacía no frena ni viaja', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('DOCTORADO');
+
+      completarProfesional();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toBeUndefined();
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('lo que no tiene dónde guardarse sigue sin viajar', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('UNIVERSITARIO');
+      const [titulo] = component.titulosDe('UNIVERSITARIO');
+      component.escribirDatoDeTitulo(titulo.id, 'numero', 'TIT-1');
+      component.escribirNombreDeTitulo(titulo.id, 'Medicina');
+      component.escribirDatoDeTitulo(titulo.id, 'pais', 'Bolivia');
+      component.escribirDatoDeTitulo(titulo.id, 'ciudad', 'La Paz');
+      component.adjuntarArchivoATitulo(
+        titulo.id,
+        eventoDeArchivo('medicina.pdf', 'application/pdf', 1024),
+      );
+      component.escribirEstudio('professionalTitleUniversity', 'Universidad Mayor de San Simón');
+
+      completarProfesional();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      // La credencial lleva los tres datos que el modelo sabe guardar, y nada
+      // más: el nombre del título, el país, la ciudad y el archivo se preguntan
+      // en pantalla pero no tienen columna, así que no se mandan.
+      expect(req.request.body.credentials).toEqual([
+        { credentialTypeConceptId: 'c-degree', number: 'TIT-1' },
+      ]);
       expect(req.request.body.academicTitles).toBeUndefined();
       expect(req.request.body.credentialAttachments).toBeUndefined();
-      // La universidad y el lugar de estudio tampoco: no hay campo en el DTO
-      // del alta pública, y la API valida con `forbidNonWhitelisted` —mandarlos
-      // no los guardaría, rechazaría el alta entera con 422—.
       expect(req.request.body.professionalTitleUniversity).toBeUndefined();
       expect(req.request.body.professionalTitleCountry).toBeUndefined();
       expect(req.request.body.professionalTitleCity).toBeUndefined();

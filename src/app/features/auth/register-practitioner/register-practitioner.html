@@ -300,6 +300,22 @@
                           />
                         </label>
 
+                        <!-- El número del diploma. Es el único obligatorio de la
+                             fila: la columna que lo recibe es NOT NULL, así que
+                             sin él la fila no se puede guardar. -->
+                        <label class="registro-titulo__campo">
+                          <span class="sr-only">Número de {{ tipo.singular }}</span>
+                          <input
+                            type="text"
+                            class="registro-titulo__dato"
+                            placeholder="Número del diploma"
+                            [value]="titulo.numero"
+                            [attr.aria-invalid]="tituloSinNumero(titulo) ? 'true' : null"
+                            [attr.data-testid]="'registro-pro-titulo-numero-' + titulo.id"
+                            (input)="escribirDatoDeTitulo(titulo.id, 'numero', $any($event.target).value)"
+                          />
+                        </label>
+
                         <!-- Dónde se cursó. Los tres son opcionales y de texto
                              libre, por lo mismo que en el título principal. -->
                         <div class="registro-titulo__estudio">
