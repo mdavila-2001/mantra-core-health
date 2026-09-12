@@ -346,6 +346,13 @@ export interface ClaimLine {
   readonly deniedAmount: Money | null;
   readonly decision: InsuranceConcept | null;
   readonly denialReason: InsuranceConcept | null;
+  /**
+   * Cita textual de la cláusula contractual que fundamenta el rechazo (subtarea 2.2).
+   * `null` mientras el ítem no tenga dictamen, o si el dictamen es anterior a v4.2.9.
+   */
+  readonly policyClauseReference: string | null;
+  /** Justificación circunstanciada del rechazo, por ítem. Mismas condiciones de `null`. */
+  readonly denialRationale: string | null;
   /** `null` cuando el origen es una referencia de texto libre. */
   readonly referenceType: ClaimLineReferenceType | null;
   readonly reference: string | null;
