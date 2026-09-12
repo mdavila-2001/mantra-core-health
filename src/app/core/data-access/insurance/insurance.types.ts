@@ -40,6 +40,8 @@ export interface CarrierSummary {
   readonly planCount: number;
   readonly networkCount: number;
   readonly createdAt: Date;
+  /** Decisión de la API basada en la membresía activa del tenant. */
+  readonly canAdminister: boolean;
 }
 
 /** Respuesta del listado. No pagina: hay una aseguradora por organización. */
@@ -63,8 +65,54 @@ export interface PlanBenefit {
   readonly deductibleAmount: string | null;
   readonly annualLimitAmount: string | null;
   readonly requiresPriorAuthorization: boolean | null;
+  readonly approvalRules: BenefitApprovalRules;
   readonly effectiveFrom: Date | null;
   readonly effectiveTo: Date | null;
+}
+
+export const APPROVAL_DOCUMENT_CODES = [
+  'FIRMA_MEDICO',
+  'SELLO_MEDICO',
+  'ORDEN_MEDICA',
+  'INFORME_CLINICO',
+] as const;
+
+export type ApprovalDocumentCode = (typeof APPROVAL_DOCUMENT_CODES)[number];
+
+export interface BenefitApprovalRules {
+  readonly requiredDocuments: readonly ApprovalDocumentCode[];
+  readonly exclusionNotes: string | null;
+}
+
+export interface CreateInsurancePlanInput {
+  readonly planCode: string;
+  readonly name: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly currencyConceptId?: string;
+}
+
+export interface CreatePlanBenefitInput {
+  readonly benefitCategoryConceptId: string;
+  readonly serviceConceptId?: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly coveragePercent?: string;
+  readonly copayAmount?: string;
+  readonly deductibleAmount?: string;
+  readonly annualLimitAmount?: string;
+  readonly requiresPriorAuthorization?: boolean;
+}
+
+export interface UpdatePlanBenefitInput {
+  readonly coveragePercent: string | null;
+  readonly copayAmount: string | null;
+  readonly deductibleAmount: string | null;
+  readonly annualLimitAmount: string | null;
+}
+
+export interface UpdatePlanBenefitRulesInput extends BenefitApprovalRules {
+  readonly requiresPriorAuthorization: boolean;
 }
 
 /** Un plan del producto, con sus beneficios vigentes. */
@@ -284,9 +332,7 @@ export interface ClaimQuery {
 }
 
 /** Qué documento clínico respalda un ítem, cuando el modelo lo sabe. */
-export type ClaimLineReferenceType =
-  | 'DIAGNOSTIC_STUDY'
-  | 'MEDICATION_DISPENSATION';
+export type ClaimLineReferenceType = 'DIAGNOSTIC_STUDY' | 'MEDICATION_DISPENSATION';
 
 /** Un ítem de la solicitud, con su dictamen si lo tiene. */
 export interface ClaimLine {

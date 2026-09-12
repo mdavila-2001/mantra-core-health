@@ -61,10 +61,7 @@ import type { AppSection } from './navigation.types';
  * generador necesitó la misma pareja: dos listas iguales en dos archivos es
  * cómo una de las dos se queda corta.
  */
-export const ROLES_DE_QUIEN_ATIENDE: readonly string[] = [
-  'CLINICIAN',
-  'PRACTITIONER',
-];
+export const ROLES_DE_QUIEN_ATIENDE: readonly string[] = ['CLINICIAN', 'PRACTITIONER'];
 
 const ROLES_QUE_EJERCEN_O_ADMINISTRAN = [
   'PRACTITIONER',
@@ -473,13 +470,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Intervenciones',
     group: 'Atención',
     icon: 'scalpel',
-    roles: [
-      'SURGEON',
-      'ANESTHESIOLOGIST',
-      'PERIOP_NURSE',
-      'SURGERY_SCHEDULER',
-      'PERIOP_ADMIN',
-    ],
+    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN'],
     availability: 'disponible',
     summary: 'Mirá las intervenciones programadas y confirmá tu participación.',
     module: 'M53 procedures_perioperative',
@@ -708,7 +699,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Aseguradora',
     group: 'Administración',
     icon: 'umbrella',
-    roles: ['SECURITY_ADMIN'],
+    roles: [ANY_ROLE],
+    requiresTenant: true,
     availability: 'disponible',
     summary: 'Revisá tus productos, planes, coberturas y la red de prestadores.',
     module: 'M26 insurance',
@@ -1026,7 +1018,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Tus activos fijos y tus deudas: alta, avance y automatización.',
     module: 'M16 accounting',
   },
-
 
   /* -- Mi cuenta · autoservicio, con navegación propia --------------------
      El vault lo pide separado: son datos de la persona sobre sí misma, no

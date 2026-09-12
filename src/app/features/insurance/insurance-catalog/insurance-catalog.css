@@ -1,11 +1,24 @@
 :host {
   display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .catalog {
   display: grid;
   gap: var(--sp-4);
+  min-width: 0;
   margin-block-start: var(--sp-4);
+}
+
+.catalog__card,
+.catalog__plan {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .catalog__facts {
@@ -32,6 +45,31 @@
 
 .catalog__verification {
   margin: var(--sp-4) 0 0;
+}
+
+.catalog__readonly {
+  margin: var(--sp-3) 0 0;
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+}
+
+.catalog__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.catalog__heading h2 {
+  margin: 0;
+}
+
+.catalog__heading--plan {
+  margin-block-end: var(--sp-1);
 }
 
 .catalog__product-meta {
@@ -74,7 +112,22 @@
 
 .catalog__benefits {
   width: 100%;
+  min-width: 58rem;
   border-collapse: collapse;
+}
+
+.catalog__table-scroll {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  outline-offset: 2px;
+}
+
+.catalog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
 }
 
 /* La leyenda nombra la tabla para quien navega con lector de pantalla; no
@@ -138,8 +191,7 @@
     grid-template-columns: 1fr;
   }
 
-  .catalog__benefits {
-    display: block;
-    overflow-x: auto;
+  .catalog__heading {
+    align-items: flex-start;
   }
 }

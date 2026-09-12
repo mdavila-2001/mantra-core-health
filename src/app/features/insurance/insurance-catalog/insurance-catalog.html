@@ -35,6 +35,12 @@
             [label]="aseguradora.verification.display"
           />
         </p>
+        @if (!aseguradora.canAdminister) {
+          <p class="catalog__readonly" role="status">
+            Vista de solo lectura. Un owner o administrador de la organización puede modificar
+            planes y coberturas.
+          </p>
+        }
       </app-card>
 
       @if (aseguradora.products.length === 0) {
@@ -47,12 +53,28 @@
       } @else {
         @for (producto of aseguradora.products; track producto.id) {
           <app-card variant="outlined" padding="lg" class="catalog__card catalog__card--wide">
-            <h2 card-header>{{ producto.name }}</h2>
+            <div card-header class="catalog__heading">
+              <h2>{{ producto.name }}</h2>
+              @if (aseguradora.canAdminister) {
+                <button
+                  app-button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  [attr.aria-label]="'Crear un plan en ' + producto.name"
+                  (clicked)="productForNewPlan.set(producto)"
+                >
+                  + Nuevo plan
+                </button>
+              }
+            </div>
             <p class="catalog__product-meta">
               <app-chip variant="neutral" size="sm">{{ producto.productCode }}</app-chip>
               <app-chip variant="info" size="sm">{{ producto.productType.display }}</app-chip>
               @if (producto.marketSegment) {
-                <app-chip variant="neutral" size="sm">{{ producto.marketSegment.display }}</app-chip>
+                <app-chip variant="neutral" size="sm">{{
+                  producto.marketSegment.display
+                }}</app-chip>
               }
             </p>
 
@@ -61,10 +83,24 @@
             } @else {
               @for (plan of producto.plans; track plan.id) {
                 <section class="catalog__plan" [attr.aria-labelledby]="'plan-' + plan.id">
-                  <h3 class="catalog__plan-title" [id]="'plan-' + plan.id">
-                    {{ plan.name }}
-                    <span class="catalog__plan-code">{{ plan.planCode }}</span>
-                  </h3>
+                  <div class="catalog__heading catalog__heading--plan">
+                    <h3 class="catalog__plan-title" [id]="'plan-' + plan.id">
+                      {{ plan.name }}
+                      <span class="catalog__plan-code">{{ plan.planCode }}</span>
+                    </h3>
+                    @if (aseguradora.canAdminister) {
+                      <button
+                        app-button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        [attr.aria-label]="'Crear una cobertura en ' + plan.name"
+                        (clicked)="benefitEditor.set({ plan: plan, benefit: null })"
+                      >
+                        + Nueva cobertura
+                      </button>
+                    }
+                  </div>
                   <p class="catalog__plan-validity">
                     @if (plan.effectiveFrom) {
                       Vigente desde {{ plan.effectiveFrom | date: 'longDate' }}
@@ -79,52 +115,106 @@
                   @if (plan.benefits.length === 0) {
                     <p class="catalog__hollow">Sin coberturas cargadas.</p>
                   } @else {
-                    <table class="catalog__benefits">
-                      <caption class="catalog__benefits-caption">
-                        Coberturas de {{ plan.name }}
-                      </caption>
-                      <thead>
-                        <tr>
-                          <th scope="col">Prestación</th>
-                          <th scope="col">Cobertura</th>
-                          <th scope="col">Copago</th>
-                          <th scope="col">Deducible</th>
-                          <th scope="col">Tope anual</th>
-                          <th scope="col">Autorización previa</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (beneficio of plan.benefits; track beneficio.id) {
+                    <div
+                      class="catalog__table-scroll"
+                      tabindex="0"
+                      [attr.aria-label]="'Tabla desplazable de coberturas de ' + plan.name"
+                    >
+                      <table class="catalog__benefits">
+                        <caption class="catalog__benefits-caption">
+                          Coberturas de
+                          {{
+                            plan.name
+                          }}
+                        </caption>
+                        <thead>
                           <tr>
-                            <th scope="row">
-                              {{ beneficio.service?.display ?? beneficio.category.display }}
-                            </th>
-                            <!-- Los importes se pintan tal como llegan: son
+                            <th scope="col">Prestación</th>
+                            <th scope="col">Cobertura</th>
+                            <th scope="col">Copago</th>
+                            <th scope="col">Deducible</th>
+                            <th scope="col">Tope anual</th>
+                            <th scope="col">Autorización previa</th>
+                            @if (aseguradora.canAdminister) {
+                              <th scope="col">Acciones</th>
+                            }
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (beneficio of plan.benefits; track beneficio.id) {
+                            <tr>
+                              <th scope="row">
+                                {{ beneficio.service?.display ?? beneficio.category.display }}
+                              </th>
+                              <!-- Los importes se pintan tal como llegan: son
                                  `numeric` en la base y redondearlos acá cambiaría
                                  lo que la póliza dice. -->
-                            <td>
-                              {{ beneficio.coveragePercent ? beneficio.coveragePercent + '%' : '—' }}
-                            </td>
-                            <td>{{ beneficio.copayAmount ?? '—' }}</td>
-                            <td>{{ beneficio.deductibleAmount ?? '—' }}</td>
-                            <td>{{ beneficio.annualLimitAmount ?? '—' }}</td>
-                            <td>
-                              @switch (beneficio.requiresPriorAuthorization) {
-                                @case (true) {
-                                  Sí
+                              <td>
+                                {{
+                                  beneficio.coveragePercent ? beneficio.coveragePercent + '%' : '—'
+                                }}
+                              </td>
+                              <td>{{ beneficio.copayAmount ?? '—' }}</td>
+                              <td>{{ beneficio.deductibleAmount ?? '—' }}</td>
+                              <td>{{ beneficio.annualLimitAmount ?? '—' }}</td>
+                              <td>
+                                @switch (beneficio.requiresPriorAuthorization) {
+                                  @case (true) {
+                                    Sí
+                                  }
+                                  @case (false) {
+                                    No
+                                  }
+                                  @default {
+                                    Sin definir
+                                  }
                                 }
-                                @case (false) {
-                                  No
-                                }
-                                @default {
-                                  Sin definir
-                                }
+                              </td>
+                              @if (aseguradora.canAdminister) {
+                                <td>
+                                  <div class="catalog__actions">
+                                    <button
+                                      app-button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      [attr.aria-label]="
+                                        'Editar cobertura de ' +
+                                        (beneficio.service?.display ?? beneficio.category.display) +
+                                        ' en ' +
+                                        plan.name
+                                      "
+                                      (clicked)="
+                                        benefitEditor.set({ plan: plan, benefit: beneficio })
+                                      "
+                                    >
+                                      Editar cobertura
+                                    </button>
+                                    <button
+                                      app-button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      [attr.aria-label]="
+                                        'Editar reglas de aprobación de ' +
+                                        (beneficio.service?.display ?? beneficio.category.display) +
+                                        ' en ' +
+                                        plan.name
+                                      "
+                                      (clicked)="
+                                        rulesEditor.set({ plan: plan, benefit: beneficio })
+                                      "
+                                    >
+                                      Reglas de aprobación
+                                    </button>
+                                  </div>
+                                </td>
                               }
-                            </td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
                   }
                 </section>
               }
@@ -158,3 +248,33 @@
     </div>
   }
 </app-view-state-host>
+
+@if (productForNewPlan(); as product) {
+  <app-plan-form-dialog
+    [productId]="product.id"
+    [productName]="product.name"
+    (saved)="planCreated()"
+    (closed)="productForNewPlan.set(null)"
+  />
+}
+
+@if (benefitEditor(); as editor) {
+  <app-benefit-form-dialog
+    [mode]="editor.benefit === null ? 'create' : 'edit'"
+    [planId]="editor.plan.id"
+    [planName]="editor.plan.name"
+    [benefit]="editor.benefit"
+    (saved)="benefitSaved($event)"
+    (closed)="benefitEditor.set(null)"
+  />
+}
+
+@if (rulesEditor(); as editor) {
+  <app-approval-rules-dialog
+    [planId]="editor.plan.id"
+    [planName]="editor.plan.name"
+    [benefit]="editor.benefit"
+    (saved)="rulesSaved($event)"
+    (closed)="rulesEditor.set(null)"
+  />
+}
