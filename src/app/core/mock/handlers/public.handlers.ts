@@ -1,7 +1,7 @@
 import { comentarios, CONCEPTO, publicaciones, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
-import { sedesDe } from './practice.handlers';
+import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
 import { notFound, type MockRouter } from '../mock-router';
 import { ahora, contiene, iso, isoDia, paginar, texto, uuid } from '../mock-store';
 
@@ -86,6 +86,47 @@ const MEDICAMENTOS_VITRINA = Object.entries(MEDICAMENTO).map(([code, conceptId],
     code,
   };
 });
+
+/* ---- el catálogo que publica una farmacia -------------------------------- */
+
+/** Un entero estable por slug: la misma góndola en cada recarga. */
+function semillaDeFarmacia(slug: string): number {
+  return parseInt(uuid(`gondola-${slug}`).slice(0, 8), 16);
+}
+
+/**
+ * Qué medicamentos tiene una farmacia, con su marca y su precio.
+ *
+ * Sale de la misma vitrina que ya alimenta «dónde comprar mi receta»
+ * (`MEDICAMENTOS_VITRINA`), acotada y ordenada por el slug: dos farmacias no
+ * tienen el mismo surtido ni el mismo precio, y una que las tuviera todas al
+ * mismo importe no se parece a ninguna farmacia.
+ *
+ * El precio se mueve dentro de la banda que el propio medicamento declara
+ * (`priceFrom`..`priceTo`) — no es un número suelto — y el agotado se rotula
+ * en vez de esconderse: quien busca un remedio necesita saber que ahí no está.
+ */
+function productosDeFarmacia(slug: string) {
+  const base = semillaDeFarmacia(slug);
+  const cuantos = 8 + (base % 6);
+  return Array.from({ length: cuantos }, (_, i) => {
+    const m = MEDICAMENTOS_VITRINA[(base + i * 7) % MEDICAMENTOS_VITRINA.length]!;
+    const desde = Number(m.priceFrom);
+    const hasta = Number(m.priceTo);
+    const paso = (base + i * 13) % 5;
+    return {
+      id: uuid(`public-product-${slug}-${m.code}`),
+      genericName: m.genericName,
+      brandName: m.brands[(base + i) % m.brands.length]!,
+      presentation: m.presentations[0] ?? null,
+      therapeuticGroup: m.therapeuticGroup,
+      price: (desde + ((hasta - desde) * paso) / 4).toFixed(2),
+      currency: m.currency,
+      inStock: (base + i) % 7 !== 0,
+      requiresPrescription: m.requiresPrescription,
+    };
+  });
+}
 
 export function registrarPublico(router: MockRouter): void {
   router.get('/public/posts', ({ query }) => {
@@ -210,6 +251,23 @@ export function registrarPublico(router: MockRouter): void {
         .map(resumenDePost),
       updatedAt: iso(-1),
     };
+  });
+
+  /* ---- lo que cada ficha OFRECE (P30 y P31 de PENDIENTES-BACKEND.md) ------
+     Las dos cuelgan de `/public/profiles/:prefijo/:slug/…` y no de `/o/:slug/…`
+     por lo mismo que la ficha: `/o` es también una ruta del router, y el proxy
+     de desarrollo enruta comparando el comienzo de la ruta. */
+
+  router.get('/public/profiles/o/:slug/services', ({ params, query }) => {
+    const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined || v.kind !== 'ORGANIZATION') return notFound('Ficha no encontrada');
+    return paginaPublica(serviciosPublicadosDe(v.slug), query, 50);
+  });
+
+  router.get('/public/profiles/f/:slug/products', ({ params, query }) => {
+    const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined || v.kind !== 'PHARMACY') return notFound('Ficha no encontrada');
+    return paginaPublica(productosDeFarmacia(v.slug), query, 50);
   });
 
   const reaccionesDe = ({ params, query }: { params: Readonly<Record<string, string>>; query: URLSearchParams }) => {

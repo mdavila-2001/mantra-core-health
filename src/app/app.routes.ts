@@ -561,6 +561,39 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // La ficha de una clínica y la de una farmacia: el destino del clic en sus
+    // directorios, **dentro del panel**.
+    //
+    // Hasta el 11/09/2026 ese clic abría `/o/:slug` y `/f/:slug`, que son las
+    // fichas anónimas bajo el marco de la red social: quien entraba por su
+    // propio menú terminaba afuera de la aplicación, en el buscador público. El
+    // cliente lo pidió sacar sin excepciones.
+    //
+    // Cuelgan del directorio y no de un segmento propio porque son su detalle,
+    // igual que `laboratory-directory/:unitId` — y por `:slug` y no por id
+    // porque el slug es la identidad con la que el directorio público las
+    // lista; no sirve ningún otro identificador.
+    //
+    // Sin guard, igual que la ficha de laboratorio: las dos secciones de las
+    // que cuelgan declaran `roles: [ANY_ROLE]`, así que un guard de sección no
+    // acotaría nada y sólo agregaría una barrera que después nadie sabe por qué
+    // está.
+    path: 'clinics-directory/:slug',
+    title: `${APP_TITLE} - Perfil de clínica`,
+    loadComponent: () =>
+      import('./features/public-directories/clinic-detail/clinic-detail')
+        .then((m) => m.ClinicDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'pharmacies-directory/:slug',
+    title: `${APP_TITLE} - Perfil de farmacia`,
+    loadComponent: () =>
+      import('./features/public-directories/pharmacy-detail/pharmacy-detail')
+        .then((m) => m.PharmacyDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
     // El detalle de una solicitud de seguro (TAREA-16): se llega desde el
     // listado, nunca desde el menú.
     //

@@ -1,0 +1,119 @@
+/* ============================================================================
+    La ficha de una clínica y la de una farmacia, dentro del panel.
+
+    La rejilla y la tarjeta **no se pintan acá**: salen de
+    `shared/styles/rejilla-de-tarjetas.css`, la misma hoja que pinta «Mis
+    servicios» y las portadas de los directorios. Es justamente lo que el
+    cliente pidió — que se vea «tal como se ven mis servicios»—, así que
+    copiarla habría sido el primer paso para que dejaran de parecerse.
+
+    Lo que queda acá es lo único propio: el resumen del establecimiento y el
+    pie de cada tarjeta con su precio. Sólo distribución.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.ficha-publica {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-4);
+}
+
+.ficha-publica__bio {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+/* La nota que explica de quién es el precio. Va bajo el encabezado de la
+   sección y no en una alerta: no es un aviso, es la letra chica de la lista —y
+   una alerta por sección le daría a cada pantalla un tono de advertencia que
+   no le corresponde. */
+.ficha-publica__nota {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  text-wrap: pretty;
+}
+
+/* 18rem y no las 14 de la portada de un directorio, por lo mismo que «Mis
+   servicios»: acá la tarjeta no es un rótulo con su cuenta sino una prestación
+   con su importe y sus distintivos. */
+.ficha-publica__rejilla {
+  --rejilla-min: 18rem;
+}
+
+/* El nombre y el distintivo comparten renglón; el distintivo no lo estira. */
+.ficha-publica__titular {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* Empuja el precio al pie: las tarjetas de una fila terminan a la misma
+   altura, y así sus importes quedan alineados aunque los nombres ocupen una o
+   tres líneas. */
+.ficha-publica__precio {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  margin: auto 0 0;
+  padding-block-start: var(--sp-3);
+}
+
+.ficha-publica__rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.ficha-publica__monto {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+/* «Sin precio publicado» ocupa el renglón del importe con el peso de un dato
+   que falta y no el de una cifra: si se viera igual que un monto, se leería
+   como uno. Es la misma decisión que el «Definí el precio» de «Mis servicios». */
+.ficha-publica__sin-precio {
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 500;
+}
+
+/* Los distintivos del pie de la tarjeta: receta, agotado. Envuelven en vez de
+   desbordar — en 18rem entran dos, y en un teléfono uno. */
+.ficha-publica__sellos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 0;
+}
+
+/* Hay catálogo pero vino vacío. No es el estado S3 del host —la pantalla SÍ
+   tiene contenido: la ficha del establecimiento— así que se dice acá, en el
+   lugar donde la lista habría estado. */
+.ficha-publica__vacio {
+  margin: var(--sp-4) 0 0;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+/* El rótulo de un tramo del catálogo de una farmacia. Más chico que el título
+   de la sección y con su aire arriba: separa sin competir con él. */
+.ficha-publica__grupo {
+  margin: var(--sp-5) 0 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  letter-spacing: normal;
+}

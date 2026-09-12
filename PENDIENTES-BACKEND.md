@@ -1,6 +1,9 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-10 (noche) — **P27 se cerró y su nota estaba equivocada** (ver su
+**Actualizado:** 2026-09-12 — **P30 y P31 son nuevos**: la ficha de una clínica y la de una
+farmacia ya viven dentro del panel, y las dos lecturas que las llenan —qué servicios ofrece una
+organización y qué medicamentos tiene una farmacia— no existen en la API. Antes,
+2026-09-10 (noche): **P27 se cerró y su nota estaba equivocada** (ver su
 sección: lo que faltaba no era aceptar coordenadas sino poder QUITAR el punto; resuelto en el
 PR #378 de la API) y **P29 es nuevo** —la matrícula sin `file_id`, que empieza en el repo del
 modelo—. Antes, esa misma tarde: **P27 y P28 nacieron**: el paciente ya puede mover el
@@ -21,6 +24,95 @@ backend.
 | ~~**P27**~~ | ~~Coordenadas en el `PATCH` del perfil~~ — **la nota estaba MAL y ya está resuelto.** Ver abajo |
 | **P28** | Lo que el registro del médico pregunta y su perfil no puede editar: **sexo al nacer**, **documento y departamento emisor**, **correo de trabajo** y el **consultorio propio** |
 | **P29** | `file_id` en `profiles.jurisdiction_authorizations` — la matrícula no puede llevar adjunto, y **esto empieza en el repo del modelo, no en la API** |
+| **P30** | `GET /public/profiles/o/:slug/services` — qué ofrece una organización, con precio de referencia. La ficha ya está construida y espera |
+| **P31** | `GET /public/profiles/f/:slug/products` — qué medicamentos tiene una farmacia, con marca, precio y si hay stock |
+
+---
+
+## P30 y P31 · las fichas de clínica y farmacia no tienen qué ofrecer
+
+Las dos nacen del mismo pedido y del mismo día, así que van juntas: el cliente pidió que el
+clic sobre una clínica o una farmacia **no saque a nadie del panel**. Hasta el 11/09/2026 ese
+clic abría `/o/:slug` y `/f/:slug`, que son las fichas anónimas bajo el marco de la red social:
+quien entraba por su propio menú terminaba en el buscador público.
+
+Ahora el destino es `clinics-directory/:slug` y `pharmacies-directory/:slug`, dentro del panel.
+Y una ficha que no dice **qué ofrece** el lugar no justifica el clic: es la misma tarjeta del
+listado, más grande.
+
+### Lo que ya existe, y por qué no alcanza
+
+`GET /public/profiles/:prefix/:slug` sirve la identidad de la ficha —nombre, titular, ciudad,
+dirección— y nada de su oferta. Del otro lado sí existe el dato, pero **detrás de sesión y del
+tenant dueño**:
+
+- Los servicios de una organización se leen y se editan en «Mis servicios», que es la superficie
+  de **su dueño**: trae la práctica, la cuenta de ingresos y el código impositivo, que son cosas
+  de quien factura y no de quien se atiende.
+- El catálogo de una farmacia vive en `pharmacy_inventory`, cuyas lecturas exigen el tenant.
+
+`GET /pharmacy-inventory/availability` tampoco sirve acá: contesta «dónde comprar **esta**
+receta», partiendo de una lista de productos. La pregunta de la ficha es la inversa —«qué tiene
+**esta** farmacia»— y no hay receta de la que partir.
+
+### P30 · `GET /public/profiles/o/:slug/services`
+
+Anónima, paginada por cursor, con la misma envoltura que el resto de `/public/…`
+(`items`, `nextCursor`, `totalHint`, `generatedAt`). Un elemento:
+
+```
+id: string
+code: string            // el código del catálogo: así lo nombra una orden o un presupuesto
+name: string
+description: string | null   // qué incluye, cuando la organización lo escribió
+price: string | null         // TEXTO, no number — ver abajo
+currency: string | null      // 'BOB'; null cuando no hay precio
+isActive: boolean            // un servicio dado de baja se lista rotulado, no se esconde
+```
+
+### P31 · `GET /public/profiles/f/:slug/products`
+
+Igual de anónima y con la misma envoltura. Un elemento:
+
+```
+id: string
+genericName: string          // el genérico: es por lo que busca quien lleva una receta
+brandName: string | null     // null si vende el genérico
+presentation: string | null  // «500 mg comprimidos», «jarabe 120 ml»
+therapeuticGroup: string | null
+price: string | null
+currency: string | null
+inStock: boolean             // el agotado se rotula; esconderlo hace perder el viaje
+requiresPrescription: boolean
+```
+
+### Dos cosas que no son detalle de formato
+
+**Los importes viajan como texto**, igual que en `pharmacy.types.ts` y en el detalle de
+laboratorio: el `numeric` de la base no entra sin pérdida en un `number` de JavaScript, y un
+redondeo en un precio de salud no es un detalle de presentación.
+
+**`price: null` no es `'0.00'`.** Un cero se lee como «no se cobra», que es justo lo que «Mis
+servicios» ya evita con su «Definí el precio». Sin precio publicado va `null`, y la ficha lo
+dice con palabras.
+
+### Por qué cuelgan de `/public/profiles/…` y no de `/o/:slug/services`
+
+Por lo mismo que la ficha: `/o` es **también** una ruta del router del frontend, y
+`proxy.conf.json` enruta comparando el **comienzo** de la ruta. Un prefijo `/o` en el proxy se
+comería la ruta de aplicación. Ya mordió una vez con `/admin` y `/administracion/pacientes`, y
+`scripts/check-route-prefixes.mjs` lo verifica en CI.
+
+### Estado del frontend: las dos pantallas están hechas y esperan
+
+`ClinicDetail` y `PharmacyDetail` están construidas, ruteadas y probadas, y consumen
+`PublicCatalogClient`, que vive **aparte** de `PublicDirectoryClient` justamente porque aquél es
+la transcripción literal de `CONTRATO-PUBLICO.md` y esto todavía no está en ese contrato.
+
+Sobre la rama `mockup` las responde el simulador. **Contra la API real las dos se quedan en su
+estado de error hasta que el backend las publique: ninguna inventa datos ni esconde el hueco.**
+O sea que esto se puede mergear a `dev` antes que el backend y no rompe nada — pero las dos
+fichas se ven vacías hasta que exista.
 
 ---
 

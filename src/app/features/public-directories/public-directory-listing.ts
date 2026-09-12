@@ -94,6 +94,30 @@ export abstract class PublicDirectoryListing {
   /** Cómo se llama en singular lo que este directorio lista, para el vacío. */
   protected abstract readonly queSonEnSingular: string;
 
+  /**
+   * De dónde cuelga la ficha de un resultado, **dentro del panel**.
+   *
+   * Los dos directorios llevaban a `/o/:slug` y `/f/:slug`, que es la ficha
+   * anónima bajo el marco de la red social: quien entraba desde su menú se
+   * encontraba, sin pedirlo, fuera de la aplicación y en el buscador público.
+   * El cliente lo pidió expresamente y no admite excepciones, así que la ruta
+   * de la ficha la declara cada directorio y **no** sale del vertical.
+   *
+   * Es el mismo camino que ya hacía el directorio de laboratorios, que abre
+   * `/laboratory-directory/:unitId` sin salir nunca del armazón.
+   */
+  protected abstract readonly rutaDeLaFicha: string;
+
+  /**
+   * Cómo se dibuja cada tarjeta: sin la insignia del vertical —este directorio
+   * es de una sola clase— y con el destino de arriba.
+   */
+  private readonly opcionesDeTarjeta = {
+    mostrarTipo: false,
+    ruta: (fila: PublicSearchResult) =>
+      `${this.rutaDeLaFicha}/${encodeURIComponent(fila.slug)}`,
+  } as const;
+
   protected readonly estado = signal<ViewState<readonly PublicSearchResult[]>>(loading());
 
   /** Si se cortó por el techo de páginas, para poder decirlo. */
@@ -333,7 +357,7 @@ export abstract class PublicDirectoryListing {
         // repetirla en cada tarjeta le roba el renglón al subtítulo. Ver
         // `OpcionesDeTarjeta`.
         resultados: filas
-          .map((fila) => aTarjeta(fila, { mostrarTipo: false }))
+          .map((fila) => aTarjeta(fila, this.opcionesDeTarjeta))
           .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
@@ -343,7 +367,7 @@ export abstract class PublicDirectoryListing {
         id: 'sin-ciudad',
         nombre: 'Sin ciudad declarada',
         resultados: sinCiudad
-          .map((fila) => aTarjeta(fila, { mostrarTipo: false }))
+          .map((fila) => aTarjeta(fila, this.opcionesDeTarjeta))
           .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       });
     }

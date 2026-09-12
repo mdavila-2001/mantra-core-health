@@ -89,6 +89,21 @@ export interface OpcionesDeTarjeta {
    * lo dice su titular.
    */
   readonly mostrarTipo?: boolean;
+
+  /**
+   * A dónde lleva la tarjeta, cuando el destino **no** es la ficha pública.
+   *
+   * Por omisión es {@link rutaDeFicha}, que abre `/o/:slug` o `/f/:slug`: la
+   * ficha anónima bajo el marco de la red social. Eso es lo correcto en el
+   * buscador público —quien llega ahí ya está en esa superficie— y es
+   * justamente lo que el cliente pidió sacar de los directorios de clínicas y
+   * de farmacias: ahí se entra desde el panel, con sesión, y la tarjeta
+   * mandaba afuera de la aplicación.
+   *
+   * Recibe el resultado entero y no sólo el slug porque el destino puede
+   * depender del vertical, que es lo que ya hace la ruta por omisión.
+   */
+  readonly ruta?: (resultado: PublicSearchResult) => string;
 }
 
 /**
@@ -148,7 +163,7 @@ export function aTarjeta(
   return {
     id: `${resultado.kind}:${resultado.slug}`,
     title: resultado.displayName,
-    link: rutaDeFicha(resultado),
+    link: (opciones.ruta ?? rutaDeFicha)(resultado),
     figureText: inicialesDe(resultado.displayName),
     ...(resultado.avatarUrl === null ? {} : { figureImageUrl: resultado.avatarUrl }),
     // El titular es el subtítulo, no la primera línea de contexto: es qué es

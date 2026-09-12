@@ -1,0 +1,94 @@
+<app-page-header [title]="titulo()" [subtitle]="bajada()" [breadcrumbs]="breadcrumbs()" />
+
+<div class="ficha-publica">
+  <app-view-state-host [state]="estadoDeLaFicha()" (retry)="cargar()">
+    @if (ficha(); as perfil) {
+      <app-card variant="outlined" padding="lg">
+        <app-section-heading card-header icono="pill" titulo="La farmacia" />
+        <app-fact-list disposicion="columnas" [hechos]="identificacion(perfil)" />
+
+        @if (perfil.biography) {
+          <p class="ficha-publica__bio">{{ perfil.biography }}</p>
+        }
+      </app-card>
+    }
+  </app-view-state-host>
+
+  <!-- `aria-label` y no `aria-labelledby`: `app-section-heading` dibuja el
+       `<h2>` adentro y no expone su id, así que no hay a quién apuntar. -->
+  <section aria-label="Medicamentos y precios">
+    <app-section-heading
+      icono="pill"
+      titulo="Medicamentos y precios"
+      [cuantos]="items().length"
+    />
+    <p class="ficha-publica__nota">
+      Precios publicados por la farmacia. Los medicamentos con receta se
+      entregan sólo contra la receta del profesional.
+    </p>
+
+    <app-view-state-host [state]="estadoDelCatalogo()" (retry)="recargarCatalogo()">
+      <div vsh-skeleton class="rejilla ficha-publica__rejilla">
+        @for (hueco of huecosDelEsqueleto; track hueco) {
+          <app-skeleton variant="rect" height="11rem" />
+        }
+      </div>
+
+      @if (items().length === 0) {
+        <p class="ficha-publica__vacio" role="status">
+          Esta farmacia todavía no publicó su catálogo de medicamentos.
+        </p>
+      } @else {
+        @for (tramo of tramos(); track tramo.id) {
+          <h3 class="ficha-publica__grupo">{{ tramo.nombre }}</h3>
+
+          <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia
+               cuántos medicamentos hay antes de leer el primero. -->
+          <ul class="rejilla ficha-publica__rejilla" data-testid="pharmacy-products">
+            @for (producto of tramo.productos; track producto.id) {
+              <li>
+                <article class="rejilla__tarjeta" data-testid="pharmacy-product">
+                  <app-service-icon class="rejilla__icono" [servicio]="producto.genericName" />
+
+                  <div class="ficha-publica__titular">
+                    <h4 class="rejilla__nombre">{{ producto.genericName }}</h4>
+                  </div>
+
+                  @if (marcaYPresentacion(producto); as detalle) {
+                    <p class="rejilla__dato">{{ detalle }}</p>
+                  }
+
+                  <dl class="ficha-publica__precio">
+                    <dt class="ficha-publica__rotulo">Precio</dt>
+                    <dd
+                      class="ficha-publica__monto tabular-nums"
+                      data-testid="pharmacy-product-price"
+                    >
+                      @if (importe(producto.price, producto.currency); as monto) {
+                        {{ monto }}
+                      } @else {
+                        <span class="ficha-publica__sin-precio">Sin precio publicado</span>
+                      }
+                    </dd>
+                  </dl>
+
+                  <!-- Los dos distintivos son lo excepcional: lo que hay en
+                       stock y lo que se vende libre no se rotulan, porque
+                       rotularlo todo deja la rejilla sin nada que mirar. -->
+                  <p class="ficha-publica__sellos">
+                    @if (!producto.inStock) {
+                      <app-badge variant="warning" value="Sin stock" />
+                    }
+                    @if (producto.requiresPrescription) {
+                      <app-badge variant="secondary" value="Con receta" />
+                    }
+                  </p>
+                </article>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </app-view-state-host>
+  </section>
+</div>

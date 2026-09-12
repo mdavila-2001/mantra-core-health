@@ -94,6 +94,85 @@ const NOMENCLADOR = [
   ocrSuspect: i % 9 === 8,
 }));
 
+/* ---- el catálogo que una organización publica en su ficha ---------------- */
+
+/**
+ * Un servicio tal como lo lee alguien de afuera: sin práctica, sin cuenta de
+ * ingresos y sin código impositivo. Es el espejo de `PublicOfferedService`.
+ */
+export interface ServicioPublicado {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly price: string | null;
+  readonly currency: string | null;
+  readonly isActive: boolean;
+}
+
+/**
+ * Qué práctica está detrás de la ficha pública de una organización.
+ *
+ * Sólo las dos que el simulador modela de verdad. Con esto, la ficha de
+ * «Clínica Los Olivos» muestra **el mismo catálogo** que la Dra. Rojas edita en
+ * «Mis servicios»: un demo donde la clínica publica una lista y su médica ve
+ * otra se lee como dos productos distintos.
+ */
+const PRACTICA_POR_SLUG: Readonly<Record<string, string>> = {
+  'clinica-los-olivos': PRACTICE_OLIVOS,
+  'hospital-san-lucas': PRACTICE_SANLUCAS,
+};
+
+/** Un entero estable por slug: el mismo catálogo en cada recarga y en cada máquina. */
+function semilla(slug: string): number {
+  return parseInt(uuid(`catalogo-${slug}`).slice(0, 8), 16);
+}
+
+/**
+ * El catálogo que publica una organización.
+ *
+ * Las que tienen práctica modelada publican **sus** servicios. Las demás —los
+ * hospitales y clínicas del resto del país— publican un tramo del nomenclador,
+ * elegido por el slug y por eso siempre el mismo: son procedimientos reales del
+ * catálogo del simulador con su precio de referencia, no importes inventados
+ * tarjeta por tarjeta.
+ */
+export function serviciosPublicadosDe(slug: string): readonly ServicioPublicado[] {
+  const practiceId = PRACTICA_POR_SLUG[slug];
+  const propios =
+    practiceId === undefined
+      ? []
+      : servicios.filtrar((s) => s.practiceId === practiceId).map((s) => ({
+          id: s.id,
+          code: s.code,
+          name: s.name,
+          description: s.descriptionText ?? null,
+          // Un cero es «nadie declaró el arancel», no «es gratis»: viaja como
+          // `null` y la ficha lo dice con palabras.
+          price: Number(s.defaultPrice) === 0 ? null : s.defaultPrice,
+          currency: Number(s.defaultPrice) === 0 ? null : s.currencyCode,
+          isActive: s.isActive,
+        }));
+  if (propios.length > 0) {
+    return propios;
+  }
+
+  const base = semilla(slug);
+  const cuantos = 6 + (base % 7);
+  return Array.from({ length: cuantos }, (_, i) => {
+    const n = NOMENCLADOR[(base + i * 3) % NOMENCLADOR.length]!;
+    return {
+      id: uuid(`public-service-${slug}-${n.code}`),
+      code: n.code,
+      name: n.display,
+      description: `${n.specialty} · prestación del nomenclador.`,
+      price: n.referencePrice,
+      currency: n.priceUnit,
+      isActive: true,
+    };
+  });
+}
+
 interface VinculacionSimulada {
   readonly id: string;
   readonly practiceId: string;
