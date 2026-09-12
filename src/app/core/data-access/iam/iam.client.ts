@@ -315,6 +315,17 @@ export class IamClient {
           regulatorIdentifier: registration.payer.regulatorIdentifier,
           sigla: registration.payer.sigla,
           address: registration.payer.address,
+          // Casa matriz georreferenciada (subtarea 1.3): ambas o ninguna —
+          // el backend rechaza con 400 una sola de las dos. Una clave no
+          // copiada acá se perdería en silencio; una que el DTO no declare
+          // se rechaza por `forbidNonWhitelisted`.
+          ...(registration.payer.latitude === undefined ||
+          registration.payer.longitude === undefined
+            ? {}
+            : {
+                latitude: registration.payer.latitude,
+                longitude: registration.payer.longitude,
+              }),
         },
         // Documentos legales de afiliación (subtarea 1.2): van DENTRO de
         // `organization`, como los declara `RegisterOrganizationDetailsDto`

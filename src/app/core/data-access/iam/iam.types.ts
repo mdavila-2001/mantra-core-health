@@ -417,6 +417,12 @@ export interface OrganizationRegistration {
     readonly regulatorIdentifier: string;
     readonly sigla: string;
     readonly address: string;
+    /**
+     * Coordenadas de la casa matriz (subtarea 1.3). Ambas o ninguna: el
+     * backend rechaza con 400 una sola de las dos (`PayerProfileDto`).
+     */
+    readonly latitude?: number;
+    readonly longitude?: number;
   };
   readonly owner: {
     readonly email: string;

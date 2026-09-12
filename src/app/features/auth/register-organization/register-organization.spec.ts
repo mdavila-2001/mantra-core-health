@@ -6,6 +6,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { CAMPO_TIPO_SOCIETARIO } from '../../../core/data-access/system-context/legal-entity-types.service';
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
+import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
 import { RegisterOrganization } from './register-organization';
 
 const RESPUESTA = {
@@ -50,6 +51,9 @@ describe('RegisterOrganization', () => {
         provideHttpClientTesting(),
         // Router real: la plantilla tiene `routerLink` y necesita su contexto.
         provideRouter([]),
+        // El mapa de la casa matriz (subtarea 1.3) no debe cargar Leaflet de
+        // verdad en jsdom: ver el mismo provider en `design-system-sample.spec.ts`.
+        { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
       ],
     }).compileComponents();
 
@@ -419,6 +423,63 @@ describe('RegisterOrganization', () => {
       });
 
       req.flush(RESPUESTA);
+    });
+  });
+
+  describe('casa matriz georreferenciada (subtarea 1.3)', () => {
+    it('con la casa matriz confirmada, el cuerpo del alta lleva latitude y longitude', () => {
+      fixture.detectChanges();
+      completar();
+      component.gpsCasaMatriz.set({ lat: -17.7833, lng: -63.1821 });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.payer).toEqual({
+        carrierCode: 'CARRIER-AS',
+        regulatorIdentifier: 'NIT-123456',
+        sigla: 'AS',
+        address: 'Av. Siempre Viva 123',
+        latitude: -17.7833,
+        longitude: -63.1821,
+      });
+
+      req.flush(RESPUESTA);
+    });
+
+    it('la sección "Datos de la aseguradora" ofrece las dos puertas del mapa', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Datos de la aseguradora');
+
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="registro-organizacion-casa-matriz-location-use"]',
+        ),
+      ).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="registro-organizacion-casa-matriz-location-pick"]',
+        ),
+      ).not.toBeNull();
+    });
+
+    it('una casa matriz ya confirmada sobrevive a ir y volver de página', () => {
+      fixture.detectChanges();
+      completar();
+      component.gpsCasaMatriz.set({ lat: -17.7833, lng: -63.1821 });
+      fixture.detectChanges();
+      avanzarHasta('Datos de la aseguradora');
+
+      // El `effect` de `inicial` en `UbicacionPicker` siembra el punto y lo
+      // deja confirmado, aunque esta instancia del picker acaba de nacer: es
+      // lo que evita que ir y volver muestre el bloque vacío otra vez (misma
+      // lección que `documentoInicial` en `DropzonePdf`, subtarea 1.2).
+      expect(
+        fixture.nativeElement.querySelector(
+          '[data-testid="registro-organizacion-casa-matriz-location-confirmed"]',
+        ),
+      ).not.toBeNull();
     });
   });
 

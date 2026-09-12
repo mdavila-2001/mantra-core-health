@@ -30,6 +30,11 @@ import {
   DOCUMENTOS_LEGALES_DEL_REGISTRO,
   type ClaveDeDocumentoLegal,
 } from '../registro-compartido/documentos-legales';
+import {
+  UbicacionPicker,
+  type Coordenadas,
+  type IdsDePrueba,
+} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 
 /** Mínimos que exigen los DTO del backend. */
 const MIN_PASSWORD = 8;
@@ -100,6 +105,7 @@ const CODIGO_VALIDO = /^[A-Za-z0-9._-]+$/;
     CampoPersonalizado,
     NgTemplateOutlet,
     DropzonePdf,
+    UbicacionPicker,
   ],
   templateUrl: './register-organization.html',
   styleUrl: './register-organization.css',
@@ -347,6 +353,13 @@ export class RegisterOrganization {
             testId: 'registro-organizacion-direccion',
             mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
           },
+          {
+            key: 'gpsCasaMatriz',
+            label: 'Ubicación de la casa matriz en el mapa (opcional)',
+            hint: 'Usá tu GPS o tocá el plano. Sin el punto, la aseguradora no aparece cuando alguien busca la más cercana.',
+            control: 'custom' as const,
+            ancho: 'completo' as const,
+          },
         ],
       },
       {
@@ -489,6 +502,29 @@ export class RegisterOrganization {
     });
   }
 
+  /**
+   * La ubicación de la casa matriz, si la persona la confirmó (subtarea 1.3).
+   *
+   * Una señal y no un `FormControl`: el campo es `custom` (lo pinta
+   * `app-ubicacion-picker`, no un control de texto), y `app-paginated-form`
+   * tolera un campo `custom` sin control homónimo en el `FormGroup`. Pasarla
+   * como `[inicial]` al picker es lo que le permite sobrevivir a que el
+   * asistente destruya y recree esta página al navegar (misma lección que
+   * `documentosSubidos`, arriba).
+   */
+  readonly gpsCasaMatriz = signal<Coordenadas | null>(null);
+
+  protected readonly idsUbicacionCasaMatriz: IdsDePrueba = {
+    mapa: 'registro-organizacion-casa-matriz-map',
+    confirmada: 'registro-organizacion-casa-matriz-location-confirmed',
+    avisoGeocodificacion: 'registro-organizacion-casa-matriz-geocoding-notice',
+    quitar: 'registro-organizacion-casa-matriz-location-remove',
+    sinConfirmar: 'registro-organizacion-casa-matriz-location-unconfirmed',
+    confirmar: 'registro-organizacion-casa-matriz-location-confirm',
+    usarUbicacion: 'registro-organizacion-casa-matriz-location-use',
+    marcarEnMapa: 'registro-organizacion-casa-matriz-location-pick',
+  };
+
   /** Los cinco documentos legales, en el orden del registro de procesos (subtarea 1.2). */
   protected readonly documentosLegales = DOCUMENTOS_LEGALES_DEL_REGISTRO;
 
@@ -589,6 +625,7 @@ export class RegisterOrganization {
     const timeZone = raw.timeZone.trim();
     const segundoNombre = raw.middleName.trim();
     const apellidoMaterno = raw.motherLastName.trim();
+    const casaMatriz = this.gpsCasaMatriz();
 
     return {
       code: raw.code.trim(),
@@ -601,6 +638,9 @@ export class RegisterOrganization {
         regulatorIdentifier: raw.regulatorIdentifier.trim(),
         sigla: raw.sigla.trim(),
         address: raw.address.trim(),
+        ...(casaMatriz === null
+          ? {}
+          : { latitude: casaMatriz.lat, longitude: casaMatriz.lng }),
       },
       owner: {
         email: raw.email.trim(),
