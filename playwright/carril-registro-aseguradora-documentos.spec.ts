@@ -10,6 +10,7 @@ import {
   subirArchivo,
   subirLosCincoDocumentos,
 } from './helpers/documentos-legales';
+import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
  * Subtarea 1.2 · documentación legal en PDF del autorregistro de aseguradora
@@ -182,6 +183,16 @@ test.describe('alta pública de aseguradora — documentación legal en PDF (sub
     await llegarADocumentos(page);
 
     await subirLosCincoDocumentos(page);
+
+    // Representante legal y directorio ejecutivo (subtarea 1.4); cubiertos a
+    // fondo por `carril-registro-aseguradora-representante.spec.ts` — acá
+    // sólo se completan para que el flujo llegue a la confirmación.
+    await expect(page.locator('.paginated-form__titulo')).toContainText(
+      'Representante legal (1 de 2)',
+    );
+    await completarRepresentanteLegal(page);
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
+    await completarGerencias(page);
 
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
     await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');

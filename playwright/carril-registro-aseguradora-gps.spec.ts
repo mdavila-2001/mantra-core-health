@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { subirLosCincoDocumentos } from './helpers/documentos-legales';
 import { centroDelPin, tocar } from './helpers/mapa';
+import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
  * Subtarea 1.3 · casa matriz georreferenciada del autorregistro de
@@ -189,6 +190,16 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
     );
     await subirLosCincoDocumentos(page);
 
+    // Representante legal y directorio ejecutivo (subtarea 1.4); cubiertos a
+    // fondo por `carril-registro-aseguradora-representante.spec.ts` — acá
+    // sólo se completan para que el flujo llegue a la confirmación.
+    await expect(page.locator('.paginated-form__titulo')).toContainText(
+      'Representante legal (1 de 2)',
+    );
+    await completarRepresentanteLegal(page);
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
+    await completarGerencias(page);
+
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
     await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
     await page.getByTestId('registro-organizacion-owner-apellido-paterno').fill('Paz');
@@ -226,6 +237,16 @@ test.describe('alta pública de aseguradora — casa matriz georreferenciada (su
       'Documentación legal obligatoria (PDF)',
     );
     await subirLosCincoDocumentos(page);
+
+    // Representante legal y directorio ejecutivo (subtarea 1.4); cubiertos a
+    // fondo por `carril-registro-aseguradora-representante.spec.ts` — acá
+    // sólo se completan para que el flujo llegue a la confirmación.
+    await expect(page.locator('.paginated-form__titulo')).toContainText(
+      'Representante legal (1 de 2)',
+    );
+    await completarRepresentanteLegal(page);
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
+    await completarGerencias(page);
 
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
     await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
