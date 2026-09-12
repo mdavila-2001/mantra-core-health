@@ -3,7 +3,7 @@ import { ESTADO } from '../fixtures/conceptos';
 import { PACIENTES, pacientePorId } from '../fixtures/personas';
 import { PRACTICAS, servicios } from './practice.handlers';
 import { notFound, preconditionFailed, type MockRouter } from '../mock-router';
-import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
+import { ahora, Coleccion, cuerpo, hoy, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Contabilidad (plan de cuentas, diario, mayor, balances), cotizaciones con
@@ -16,6 +16,34 @@ const DIRECCION = { DEBIT: uuid('concept-direction-debit'), CREDIT: uuid('concep
 const MONEDA_BOB = uuid('concept-currency-bob');
 const TIPO_ASIENTO = uuid('concept-transaction-type-standard');
 const PERIODO_ACTUAL = uuid('fiscal-period-2026');
+
+/** Los seis estados del asiento, tal como los declara la API (`ACCT_TXN_*`). */
+export const FLUJO = {
+  DRAFT: 'DRAFT',
+  AUTO_CLASSIFIED: 'AUTO_CLASSIFIED',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  APPROVED: 'APPROVED',
+  POSTED: 'POSTED',
+  REVERSED: 'REVERSED',
+} as const;
+export type EstadoDeFlujo = (typeof FLUJO)[keyof typeof FLUJO];
+
+/**
+ * Qué se puede hacer con un documento en cada estado.
+ *
+ * Es la máquina de la API, no una interpretación: DRAFT → AUTO_CLASSIFIED →
+ * PENDING_REVIEW → APPROVED → POSTED → REVERSED, y un documento posteado **no
+ * se edita, se revierte**. La pantalla no ofrece más acciones que éstas porque
+ * el backend no acepta más.
+ */
+export const TRANSICIONES: Readonly<Record<EstadoDeFlujo, readonly string[]>> = {
+  DRAFT: ['classify'],
+  AUTO_CLASSIFIED: ['submit-review'],
+  PENDING_REVIEW: ['approve'],
+  APPROVED: ['post'],
+  POSTED: ['reverse'],
+  REVERSED: [],
+};
 
 interface CuentaSimulada {
   readonly id: string;
@@ -78,13 +106,17 @@ interface AsientoSimulado {
   readonly totalAmount: string;
   readonly postedAt: string | null;
   readonly description: string;
+  /** El estado en la máquina de seis pasos de la API (`ACCT_TXN_*`). */
+  readonly flujo: EstadoDeFlujo;
+  readonly reversalOfId?: string | null;
   readonly lines: readonly { id: string; lineNo: number; accountId: string; directionConceptId: string; amountBase: string; memo: string; currencyConceptId: string }[];
 }
 
-function asiento(indice: number, dias: number, descripcion: string, debito: string, credito: string, importe: string, borrador = false): AsientoSimulado {
+function asiento(indice: number, dias: number, descripcion: string, debito: string, credito: string, importe: string, borrador = false, flujo?: EstadoDeFlujo): AsientoSimulado {
   const id = uuid(`journal-${indice}`);
   return {
     id,
+    flujo: flujo ?? (borrador ? FLUJO.DRAFT : FLUJO.POSTED),
     practiceId: PRACTICAS[0]!.id,
     transactionNumber: `AS-2026-${String(1000 + indice).padStart(5, '0')}`,
     transactionDate: isoDia(dias),
@@ -123,6 +155,14 @@ const asientos = new Coleccion<AsientoSimulado>([
   asiento(18, -2, 'Consultas de la semana (efectivo)', '1.1', '4.1', '3100.00'),
   asiento(19, -1, 'Compra de tensiómetro', '5.2', '1.1', '450.00', true),
   asiento(20, 0, 'Certificados de aptitud', '1.1', '4.3', '300.00', true),
+  // Los cuatro siguientes existen para que la bandeja muestre los seis estados
+  // del flujo. Ninguno está posteado, así que NO tocan el balance: un documento
+  // que no llegó a POSTED no existe para el mayor, que es justamente la regla
+  // que hace útil el flujo.
+  asiento(21, -3, 'Mantenimiento del ecocardiógrafo', '5.2', '2.3', '1250.00', true, FLUJO.AUTO_CLASSIFIED),
+  asiento(22, -4, 'Honorarios de anestesista externo', '5.4', '2.3', '2100.00', true, FLUJO.PENDING_REVIEW),
+  asiento(23, -6, 'Compra de sillas para sala de espera', '1.4', '2.3', '3400.00', true, FLUJO.APPROVED),
+  asiento(24, -12, 'Consultas de la semana (anulado por error de cuenta)', '1.1', '4.1', '1900.00', true, FLUJO.REVERSED),
 ]);
 
 function saldoDe(accountId: string, hasta: string | null = null): { debit: number; credit: number } {
@@ -243,7 +283,403 @@ function cronograma(principal: number, cuotas: number, pagadas: number, startDat
   });
 }
 
+
+/* ============================================================================
+    El plano SAP del módulo: ejercicio y períodos, el flujo de seis estados del
+    documento, las partidas abiertas y los objetos de controlling.
+
+    Nada de esto se inventó para la maqueta: son tablas que el modelo canónico
+    ya declara en el módulo 16 —`fiscal_years`, `fiscal_periods`, `open_items`,
+    `clearing_documents`, `cost_centers`, `profit_centers`, `segments`— y
+    estados que la API ya nombra en `accounting.concepts.ts`. Lo que faltaba era
+    poder VERLOS: la API tiene el lado de escritura (postear, compensar,
+    bloquear un período) y ninguna lectura, así que la pantalla no tenía de
+    dónde leer. Acá se sirven para que el cockpit exista mientras esas lecturas
+    se construyen del otro lado.
+    ========================================================================== */
+
+const EJERCICIO = uuid('fiscal-year-2026');
+const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+/**
+ * Los doce períodos del ejercicio, con el estado que tendría una contabilidad
+ * llevada al día: los meses cerrados atrás, el corriente abierto, el resto sin
+ * abrir todavía. Un período cerrado rechaza asientos — eso es lo que hace que
+ * «cerrar el mes» signifique algo.
+ */
+function periodosDelEjercicio(): readonly {
+  id: string;
+  fiscalYearId: string;
+  periodNumber: number;
+  name: string;
+  startsOn: string;
+  endsOn: string;
+  status: 'CLOSED' | 'OPEN' | 'PLANNED';
+  closedAt: string | null;
+}[] {
+  const mesActual = hoy().getMonth();
+  return MESES.map((nombre, i) => {
+    const ultimoDia = new Date(2026, i + 1, 0).getDate();
+    return {
+      id: i === mesActual ? PERIODO_ACTUAL : uuid(`fiscal-period-2026-${i + 1}`),
+      fiscalYearId: EJERCICIO,
+      periodNumber: i + 1,
+      name: `${nombre} 2026`,
+      startsOn: `2026-${String(i + 1).padStart(2, '0')}-01`,
+      endsOn: `2026-${String(i + 1).padStart(2, '0')}-${ultimoDia}`,
+      status: i < mesActual ? 'CLOSED' : i === mesActual ? 'OPEN' : 'PLANNED',
+      closedAt: i < mesActual ? iso(-((mesActual - i) * 30), 20) : null,
+    };
+  });
+}
+
+const periodos = new Coleccion(periodosDelEjercicio().map((p) => ({ ...p })));
+
+/* ---- objetos de controlling ------------------------------------------------
+   Centros de coste, centros de beneficio y segmentos. En una práctica médica no
+   son abstracciones: el centro de coste es dónde se gasta (consultorio,
+   imagenología, administración) y el de beneficio es qué línea de servicio deja
+   margen. El segmento es el corte por el que se reporta hacia afuera. */
+interface Dimension {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly kind: 'COST_CENTER' | 'PROFIT_CENTER' | 'SEGMENT';
+}
+
+const DIMENSIONES: readonly Dimension[] = [
+  ['CC-100', 'Consultorio', 'COST_CENTER'],
+  ['CC-200', 'Imagenología y estudios', 'COST_CENTER'],
+  ['CC-900', 'Administración', 'COST_CENTER'],
+  ['PC-10', 'Consulta ambulatoria', 'PROFIT_CENTER'],
+  ['PC-20', 'Estudios cardiológicos', 'PROFIT_CENTER'],
+  ['SEG-CLI', 'Atención clínica', 'SEGMENT'],
+].map(([code, name, kind]) => ({
+  id: uuid(`dimension-${code}`),
+  code: code!,
+  name: name!,
+  kind: kind as Dimension['kind'],
+}));
+
+/**
+ * A qué objeto de controlling se imputa cada cuenta.
+ *
+ * Es el `account_determination_rules` del modelo, simplificado a lo que una
+ * práctica necesita: el gasto de alquiler es del consultorio, el de insumos de
+ * imagenología, el sueldo de administración; el ingreso por consultas es de
+ * ambulatoria y el de procedimientos, de estudios.
+ */
+const IMPUTACION: Readonly<Record<string, { costCenter: string; profitCenter: string }>> = {
+  '4.1': { costCenter: 'CC-100', profitCenter: 'PC-10' },
+  '4.2': { costCenter: 'CC-200', profitCenter: 'PC-20' },
+  '4.3': { costCenter: 'CC-900', profitCenter: 'PC-10' },
+  '5.1': { costCenter: 'CC-100', profitCenter: 'PC-10' },
+  '5.2': { costCenter: 'CC-200', profitCenter: 'PC-20' },
+  '5.3': { costCenter: 'CC-100', profitCenter: 'PC-10' },
+  '5.4': { costCenter: 'CC-900', profitCenter: 'PC-10' },
+  '5.5': { costCenter: 'CC-200', profitCenter: 'PC-20' },
+  '5.6': { costCenter: 'CC-900', profitCenter: 'PC-10' },
+};
+
+/* ---- partidas abiertas -----------------------------------------------------
+   Lo que se debe y lo que deben, todavía sin compensar. La antigüedad es la
+   pregunta que un contador hace primero: no «cuánto me deben» sino «desde
+   cuándo». */
+interface PartidaAbierta {
+  readonly id: string;
+  readonly documentNumber: string;
+  readonly accountCode: string;
+  readonly accountName: string;
+  readonly partnerName: string;
+  readonly side: 'RECEIVABLE' | 'PAYABLE';
+  readonly documentDate: string;
+  readonly dueDate: string;
+  readonly amount: string;
+  readonly clearedAmount: string;
+  clearingDocumentId: string | null;
+}
+
+function partida(
+  indice: number,
+  lado: PartidaAbierta['side'],
+  socio: string,
+  diasEmision: number,
+  diasVencimiento: number,
+  importe: string,
+  compensado = '0.00',
+): PartidaAbierta {
+  const esCobro = lado === 'RECEIVABLE';
+  return {
+    id: uuid(`open-item-${indice}`),
+    documentNumber: `${esCobro ? 'FC' : 'FP'}-2026-${String(400 + indice).padStart(4, '0')}`,
+    accountCode: esCobro ? '1.3' : '2.3',
+    accountName: esCobro ? 'Cuentas por cobrar aseguradoras' : 'Proveedores',
+    partnerName: socio,
+    side: lado,
+    documentDate: isoDia(diasEmision),
+    dueDate: isoDia(diasVencimiento),
+    amount: importe,
+    clearedAmount: compensado,
+    clearingDocumentId: null,
+  };
+}
+
+const partidasAbiertas = new Coleccion<PartidaAbierta>([
+  partida(1, 'RECEIVABLE', 'Seguros Andina', -75, -45, '4820.00'),
+  partida(2, 'RECEIVABLE', 'Alianza Salud', -58, -28, '2650.00'),
+  partida(3, 'RECEIVABLE', 'Seguros Andina', -40, -10, '1980.00'),
+  partida(4, 'RECEIVABLE', 'Nacional Vida', -22, 8, '3120.00'),
+  partida(5, 'RECEIVABLE', 'Alianza Salud', -9, 21, '1450.00', '450.00'),
+  partida(6, 'PAYABLE', 'Insumos Médicos del Sur', -66, -36, '2210.00'),
+  partida(7, 'PAYABLE', 'Droguería Boliviana', -31, -1, '1740.00'),
+  partida(8, 'PAYABLE', 'Servicios Eléctricos SA', -12, 18, '780.00'),
+]);
+
+/** Los tramos de antigüedad con los que se mira una cartera. */
+const TRAMOS = [
+  { key: 'CORRIENTE', label: 'Por vencer', desde: -1, hasta: 0 },
+  { key: 'D1_30', label: '1 a 30 días', desde: 1, hasta: 30 },
+  { key: 'D31_60', label: '31 a 60 días', desde: 31, hasta: 60 },
+  { key: 'D61_90', label: '61 a 90 días', desde: 61, hasta: 90 },
+  { key: 'D90_MAS', label: 'Más de 90 días', desde: 91, hasta: 100000 },
+] as const;
+
+function diasDeAtraso(vencimiento: string): number {
+  const ms = hoy().getTime() - new Date(`${vencimiento}T00:00:00`).getTime();
+  return Math.floor(ms / 86_400_000);
+}
+
+function tramoDe(vencimiento: string): string {
+  const atraso = diasDeAtraso(vencimiento);
+  if (atraso <= 0) return 'CORRIENTE';
+  return TRAMOS.find((t) => atraso >= t.desde && atraso <= t.hasta)?.key ?? 'D90_MAS';
+}
+
 export function registrarFinanzas(router: MockRouter): void {
+  /* ---- el plano SAP: lecturas que la API todavía no tiene ------------------
+     `POST fiscal-periods/:id/lock`, `POST open-items`, `POST clearing-documents`
+     y las cinco acciones del flujo SÍ existen en la API real
+     (`accounting.controller`). Lo que no existe es cómo LEER nada de eso, así
+     que el cockpit no tendría de dónde pintar. Estas lecturas se sirven acá con
+     los nombres de las tablas del modelo, para que el día que la API las
+     publique la pantalla no tenga que cambiar de vocabulario. */
+
+  router.get('/accounting/fiscal-years', () => {
+    const items = periodos.todos().sort((a, b) => a.periodNumber - b.periodNumber);
+    const abierto = items.find((p) => p.status === 'OPEN') ?? items[items.length - 1]!;
+    return {
+      fiscalYearId: EJERCICIO,
+      name: 'Ejercicio 2026',
+      startsOn: '2026-01-01',
+      endsOn: '2026-12-31',
+      currentPeriodId: abierto.id,
+      periods: items,
+      count: items.length,
+    };
+  });
+
+  router.post('/accounting/fiscal-periods/:id/lock', ({ params }) => {
+    const periodo = periodos.get(params['id']!);
+    if (periodo === undefined) return notFound('Período no encontrado');
+    if (periodo.status === 'CLOSED') {
+      return preconditionFailed('El período ya está cerrado', { periodId: periodo.id });
+    }
+    // Cerrar con documentos sin postear es exactamente lo que un cierre debe
+    // impedir: quedarían fuera del ejercicio sin que nadie lo note.
+    const pendientes = asientos.filtrar(
+      (a) => a.fiscalPeriodId === periodo.id && a.flujo !== FLUJO.POSTED && a.flujo !== FLUJO.REVERSED,
+    );
+    if (pendientes.length > 0) {
+      return preconditionFailed(
+        `No se puede cerrar: quedan ${pendientes.length} documento(s) sin postear en el período`,
+        { pending: pendientes.map((a) => a.transactionNumber) },
+      );
+    }
+    const cerrado = periodos.actualizar(periodo.id, { status: 'CLOSED', closedAt: ahora() });
+    return { status: 200, body: cerrado };
+  });
+
+  router.get('/accounting/open-items', ({ query }) => {
+    const lado = texto(query, 'side');
+    const items = partidasAbiertas
+      .todos()
+      .filter((p) => lado === null || p.side === lado)
+      .map((p) => {
+        const pendiente = Number(p.amount) - Number(p.clearedAmount);
+        return {
+          ...p,
+          openAmount: d(pendiente),
+          overdueDays: Math.max(0, diasDeAtraso(p.dueDate)),
+          agingBucket: tramoDe(p.dueDate),
+          cleared: pendiente < 0.01,
+        };
+      })
+      .filter((p) => !p.cleared)
+      .sort((a, b) => b.overdueDays - a.overdueDays);
+
+    const resumen = TRAMOS.map((t) => {
+      const delTramo = items.filter((p) => p.agingBucket === t.key);
+      return {
+        bucket: t.key,
+        label: t.label,
+        receivable: d(delTramo.filter((p) => p.side === 'RECEIVABLE').reduce((s, p) => s + Number(p.openAmount), 0)),
+        payable: d(delTramo.filter((p) => p.side === 'PAYABLE').reduce((s, p) => s + Number(p.openAmount), 0)),
+        count: delTramo.length,
+      };
+    });
+
+    return {
+      items,
+      count: items.length,
+      aging: resumen,
+      totalReceivable: d(items.filter((p) => p.side === 'RECEIVABLE').reduce((s, p) => s + Number(p.openAmount), 0)),
+      totalPayable: d(items.filter((p) => p.side === 'PAYABLE').reduce((s, p) => s + Number(p.openAmount), 0)),
+    };
+  });
+
+  router.post('/accounting/clearing-documents', (request) => {
+    const datos = cuerpo<{ openItemIds?: string[] }>(request);
+    const ids = datos.openItemIds ?? [];
+    const encontradas = ids.map((id) => partidasAbiertas.get(id)).filter((p) => p !== undefined);
+    if (encontradas.length === 0) {
+      return preconditionFailed('No se indicó ninguna partida a compensar', { openItemIds: ids });
+    }
+    const documento = nuevoId('clearing');
+    let total = 0;
+    for (const partida of encontradas) {
+      total += Number(partida.amount) - Number(partida.clearedAmount);
+      partidasAbiertas.actualizar(partida.id, {
+        clearedAmount: partida.amount,
+        clearingDocumentId: documento,
+      });
+    }
+    return {
+      status: 201,
+      body: {
+        clearingDocumentId: documento,
+        clearedItems: encontradas.length,
+        clearedAmount: d(total),
+        clearedAt: ahora(),
+      },
+    };
+  });
+
+  router.get('/accounting/dimensions', () => {
+    const codigoDeCuenta = new Map(CUENTAS.map((c) => [c.id, c.code]));
+    const acumulado = new Map<string, { debit: number; credit: number }>();
+    for (const a of asientos.filtrar((x) => x.flujo === FLUJO.POSTED)) {
+      for (const l of a.lines) {
+        const codigo = codigoDeCuenta.get(l.accountId);
+        const imputacion = codigo === undefined ? undefined : IMPUTACION[codigo];
+        if (imputacion === undefined) continue;
+        for (const clave of [imputacion.costCenter, imputacion.profitCenter, 'SEG-CLI']) {
+          const actual = acumulado.get(clave) ?? { debit: 0, credit: 0 };
+          if (l.directionConceptId === DIRECCION.DEBIT) actual.debit += Number(l.amountBase);
+          else actual.credit += Number(l.amountBase);
+          acumulado.set(clave, actual);
+        }
+      }
+    }
+    const items = DIMENSIONES.map((dim) => {
+      const { debit, credit } = acumulado.get(dim.code) ?? { debit: 0, credit: 0 };
+      return {
+        ...dim,
+        // Para un objeto de controlling el resultado es lo que ingresó menos lo
+        // que costó: el haber de las cuentas de ingreso contra el debe de las
+        // de gasto, que es como quedan imputadas las líneas.
+        debit: d(debit),
+        credit: d(credit),
+        result: d(credit - debit),
+      };
+    });
+    return { items, count: items.length };
+  });
+
+  /* ---- el flujo del documento ---------------------------------------------
+     Las cinco acciones existen en la API real. Acá mueven el estado y, en
+     `post`, es cuando el asiento entra de verdad al mayor: hasta ese momento no
+     toca ningún saldo. */
+  const accion = (
+    desde: EstadoDeFlujo,
+    hasta: EstadoDeFlujo,
+    alPostear = false,
+  ) =>
+    ({ params }: { params: Record<string, string> }) => {
+      const a = asientos.get(params['id']!);
+      if (a === undefined) return notFound('Asiento no encontrado');
+      if (a.flujo !== desde) {
+        return preconditionFailed(
+          `El documento está en ${a.flujo} y esta acción sale de ${desde}`,
+          { current: a.flujo, expected: desde },
+        );
+      }
+      const cambios: Partial<AsientoSimulado> = alPostear
+        ? { flujo: hasta, statusConceptId: ESTADO['ST-COMPLETED']!, postedAt: ahora() }
+        : { flujo: hasta };
+      const actualizado = asientos.actualizar(a.id, cambios);
+      return { status: 200, body: { id: a.id, transactionNumber: a.transactionNumber, status: actualizado?.flujo } };
+    };
+
+  router.post('/accounting/journal-transactions/:id/classify', accion(FLUJO.DRAFT, FLUJO.AUTO_CLASSIFIED));
+  router.post('/accounting/journal-transactions/:id/submit-review', accion(FLUJO.AUTO_CLASSIFIED, FLUJO.PENDING_REVIEW));
+  router.post('/accounting/journal-transactions/:id/approve', accion(FLUJO.PENDING_REVIEW, FLUJO.APPROVED));
+  router.post('/accounting/journal-transactions/:id/post', accion(FLUJO.APPROVED, FLUJO.POSTED, true));
+
+  /* Revertir no edita: crea el documento espejo y deja los dos a la vista. Es
+     la única forma de corregir algo posteado, y es lo que exige la matriz
+     `<<IMMUTABLE>>` del modelo. */
+  router.post('/accounting/journal-transactions/:id/reverse', ({ params }) => {
+    const a = asientos.get(params['id']!);
+    if (a === undefined) return notFound('Asiento no encontrado');
+    if (a.flujo !== FLUJO.POSTED) {
+      return preconditionFailed('Sólo se revierte un documento posteado', { current: a.flujo });
+    }
+    const id = nuevoId('journal');
+    asientos.agregar({
+      ...a,
+      id,
+      flujo: FLUJO.POSTED,
+      reversalOfId: a.id,
+      transactionNumber: `${a.transactionNumber}-R`,
+      transactionDate: isoDia(0),
+      description: `Reversión de ${a.transactionNumber} · ${a.description}`,
+      postedAt: ahora(),
+      lines: a.lines.map((l, i) => ({
+        ...l,
+        id: nuevoId('line'),
+        lineNo: i + 1,
+        // El espejo: lo que estaba en el debe va al haber y al revés.
+        directionConceptId: l.directionConceptId === DIRECCION.DEBIT ? DIRECCION.CREDIT : DIRECCION.DEBIT,
+      })),
+    });
+    asientos.actualizar(a.id, { flujo: FLUJO.REVERSED });
+    return { status: 201, body: { id, reversalOf: a.id, transactionNumber: `${a.transactionNumber}-R` } };
+  });
+
+  /* El flujo de documentos: qué documentos cuelgan de éste. Es
+     `accounting_document_links` del modelo. */
+  router.get('/accounting/journal-transactions/:id/document-flow', ({ params }) => {
+    const a = asientos.get(params['id']!);
+    if (a === undefined) return notFound('Asiento no encontrado');
+    const reversiones = asientos.filtrar((x) => x.reversalOfId === a.id);
+    const origen = a.reversalOfId === null || a.reversalOfId === undefined ? null : asientos.get(a.reversalOfId);
+    const nodo = (x: AsientoSimulado, rol: string) => ({
+      id: x.id,
+      role: rol,
+      transactionNumber: x.transactionNumber,
+      transactionDate: x.transactionDate,
+      totalAmount: x.totalAmount,
+      status: x.flujo,
+    });
+    return {
+      items: [
+        ...(origen === undefined || origen === null ? [] : [nodo(origen, 'ORIGEN')]),
+        nodo(a, 'ACTUAL'),
+        ...reversiones.map((r) => nodo(r, 'REVERSION')),
+      ],
+    };
+  });
+
   router.get('/accounting/accounts', ({ query }) => {
     const limit = Number(query.get('limit') ?? 200) || 200;
     const items = CUENTAS.slice(0, limit).map((c) => ({ ...c, parentAccountId: c.parentAccountId ?? undefined }));
@@ -297,6 +733,7 @@ export function registrarFinanzas(router: MockRouter): void {
     const id = nuevoId('journal');
     const nuevo: AsientoSimulado = {
       id,
+      flujo: borrador ? FLUJO.DRAFT : FLUJO.POSTED,
       practiceId: datos.practiceId ?? PRACTICAS[0]!.id,
       transactionNumber: `AS-2026-${String(1000 + asientos.tamano + 1).padStart(5, '0')}`,
       transactionDate: datos.transactionDate ?? isoDia(0),
@@ -334,6 +771,7 @@ export function registrarFinanzas(router: MockRouter): void {
     const id = nuevoId('journal');
     asientos.agregar({
       id,
+      flujo: FLUJO.POSTED,
       practiceId: datos.practiceId ?? PRACTICAS[0]!.id,
       transactionNumber: `AS-2026-${String(1000 + asientos.tamano + 1).padStart(5, '0')}`,
       transactionDate: datos.transactionDate ?? isoDia(0),

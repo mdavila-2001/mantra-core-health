@@ -49,6 +49,15 @@ export interface JournalTransaction {
   /** Decimal como texto. No convertir a número: ver la cabecera del archivo. */
   readonly totalAmount?: string;
   readonly postedAt?: Date;
+  /**
+   * Dónde está el documento en el flujo de seis pasos.
+   *
+   * Es distinto de `statusConceptId`, que es el concepto de terminología: éste
+   * es el **código** del estado, que es lo que la pantalla necesita para saber
+   * qué acción ofrecer. Opcional porque la API todavía no lo publica en el
+   * listado; cuando falta, un asiento con `postedAt` se lee como posteado.
+   */
+  readonly status?: WorkflowStatus;
 }
 
 /** Una línea del asiento: contra qué cuenta y de qué lado. */

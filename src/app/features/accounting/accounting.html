@@ -23,6 +23,24 @@
   "
 />
 
+<!-- La entrada al cockpit. Va arriba y no al fondo: quien lleva los libros
+     entra a mirar cómo va el ejercicio, no a leer el diario renglón por
+     renglón. Es un enlace y no un botón porque lleva a otra pantalla — se abre
+     en otra pestaña y se copia la dirección. -->
+<p class="acceso-al-cockpit">
+  <a
+    app-button
+    variant="primary"
+    routerLink="/administration/accounting/cockpit"
+    data-testid="ir-al-cockpit"
+  >
+    Abrir el cockpit contable
+  </a>
+  <span class="acceso-al-cockpit__nota">
+    Estado del ejercicio, documentos frenados en el flujo y cartera por cobrar.
+  </span>
+</p>
+
 @if (esMedico()) {
   <app-alert tone="info" class="explicacion">
     <p>

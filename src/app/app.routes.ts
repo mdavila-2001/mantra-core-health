@@ -306,6 +306,20 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  */
 const PANTALLAS_HIJAS: Routes = [
   {
+    // El cockpit contable: el estado del ejercicio, el flujo de los documentos
+    // y lo que falta cobrar. Cuelga de Contabilidad y **no** entra al menú: la
+    // lista de secciones del médico es cerrada y hay un spec que falla si
+    // alguien le agrega una (carril 9). Se llega desde la propia pantalla de
+    // Contabilidad, que es de donde se sale a buscarlo.
+    path: 'administration/accounting/cockpit',
+    title: `${APP_TITLE} - Cockpit contable`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/accounting/cockpit/cockpit')
+        .then((m) => m.Cockpit)
+        .catch(() => chunkFallido()),
+  },
+  {
     // El grupo por dentro (P7). El directorio es la sección `groups`, que el
     // registro declara; esto es la ficha a la que se llega desde una tarjeta,
     // y por eso vive acá y no en el menú.

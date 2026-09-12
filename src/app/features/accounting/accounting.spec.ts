@@ -1,3 +1,4 @@
+import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -101,6 +102,10 @@ describe('Accounting — Carril 18 (auto-servicio contable del doctor)', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        // La pantalla enlaza al cockpit con `routerLink`, y esa directiva pide
+        // `ActivatedRoute`. Sin router el componente ni se construye — no es
+        // una concesión de la prueba, es la dependencia real del enlace.
+        provideRouter([]),
         { provide: CsvExportService, useValue: csvExportEspiado },
       ],
     }).compileComponents();
