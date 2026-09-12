@@ -22,7 +22,10 @@ import {
   type VitrinaSimulada,
 } from '../fixtures/comunidad';
 import { ESTADO } from '../fixtures/conceptos';
-import { conflict, forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
+// La ventana de edición es una sola regla: la maqueta la aplica con la misma
+// constante que la pantalla, para que no puedan separarse.
+import { VENTANA_DE_EDICION_MS } from '../../messaging/chat.store';
 import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -53,6 +56,24 @@ conjunto(seguimientos, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(vitrinas.t
 conjunto(marcadores, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(publicaciones.todos()[0]!.id);
 conjunto(marcadores, vitrinaDe(uuid('pid-paciente'))?.id ?? '').add(publicaciones.todos()[6]!.id);
 
+/**
+ * `true` si quien usa la maqueta encendió la respuesta automática.
+ *
+ * Se lee del mismo lugar donde la guarda la pantalla. Es la única manera de
+ * que la maqueta pueda demostrar la regla: hace falta que **alguien escriba**
+ * para que se dispare, y en una maqueta de una sola sesión no hay nadie del
+ * otro lado. Fuera de la maqueta esto no existe: el mensaje entrante lo manda
+ * una persona de verdad.
+ */
+function respuestaAutomaticaEncendida(): boolean {
+  try {
+    const crudo = globalThis.localStorage?.getItem('alovida.chat-respuesta-automatica');
+    return crudo !== null && crudo !== undefined && JSON.parse(crudo).activa === true;
+  } catch {
+    return false;
+  }
+}
+
 function vitrinaDeSesion(request: MockRequest): VitrinaSimulada | undefined {
   const user = request.user;
   if (user === null) return undefined;
@@ -64,6 +85,12 @@ function perfilPublico(v: VitrinaSimulada) {
     id: v.id,
     tenantId: v.tenantId,
     targetTypeConceptId: TIPO_VITRINA[v.kind],
+    // La vertical en claro, además del concepto. `targetTypeConceptId` es un
+    // uuid de terminología que el cliente no puede interpretar sin su tabla, y
+    // sin esto el panel de contacto del chat no sabe si la ficha tiene URL
+    // pública (`/p`, `/o`…) o es la de un paciente, que no la tiene. Pedido a
+    // la API real; hasta entonces llega `undefined` y el panel degrada.
+    kind: v.kind,
     slug: v.slug,
     displayName: v.displayName,
     headline: v.headline,
@@ -158,7 +185,7 @@ function conversacion(c: { id: string; conversationTypeConceptId: string; groupI
     groupId: c.groupId,
     lastMessageAt: ultimo?.sentAt ?? null,
     messageCount: delHilo.length,
-    lastMessage: ultimo === undefined ? null : { id: ultimo.id, senderProfileId: ultimo.senderProfileId, bodyText: ultimo.bodyText, sentAt: ultimo.sentAt },
+    lastMessage: ultimo === undefined ? null : { id: ultimo.id, senderProfileId: ultimo.senderProfileId, bodyText: ultimo.bodyText, attachmentFileId: ultimo.attachmentFileId, sentAt: ultimo.sentAt },
     unreadCount: c.noLeidosPor[yo] ?? 0,
     peers: c.participantes
       .filter((p) => p !== yo)
@@ -617,7 +644,54 @@ export function registrarComunidad(router: MockRouter): void {
         mensajes.agregar({ ...nuevo, id: nuevoId('msg-soporte'), senderProfileId: SOPORTE_ID, bodyText: 'Gracias por escribirnos. Un agente va a responderte en breve.', sentAt: ahora() });
       }, 1500);
     }
+    // El otro lado también contesta, para poder ver la respuesta automática
+    // sin dos navegadores: en la maqueta no hay nadie del otro lado que
+    // escriba, y sin un mensaje entrante la regla no se dispara nunca. Sólo
+    // con la respuesta automática encendida, y una sola vez por mensaje.
+    else if (respuestaAutomaticaEncendida()) {
+      const otro = c.participantes.find((p) => p !== nuevo.senderProfileId);
+      if (otro !== undefined) {
+        setTimeout(() => {
+          mensajes.agregar({
+            ...nuevo,
+            id: nuevoId('msg-eco'),
+            senderProfileId: otro,
+            bodyText: 'Hola, ¿estás por ahí?',
+            attachmentFileId: null,
+            contentTypeConceptId: CONCEPTO.messageText,
+            sentAt: ahora(),
+          });
+        }, 2000);
+      }
+    }
     return { status: 201, body: { id: nuevo.id, conversationId: c.id, sentAt: nuevo.sentAt } };
+  });
+
+  /**
+   * Editar un mensaje propio, con la ventana de cinco minutos (F4.5).
+   *
+   * La ventana se comprueba **acá y no sólo en la pantalla**: ocultar el botón
+   * no es la regla, es la comodidad. Fuera de la ventana responde 422, que es
+   * lo que responde la API del proyecto ante una precondición incumplida.
+   */
+  router.patch('/community/conversations/:id/messages/:messageId', (request) => {
+    const m = mensajes.get(request.params['messageId']!);
+    if (m === undefined || m.conversationId !== request.params['id']) {
+      return notFound('Mensaje no encontrado');
+    }
+    const datos = cuerpo<{ senderProfileId?: string; bodyText?: string }>(request);
+    const yo = datos.senderProfileId ?? vitrinaDeSesion(request)?.id ?? '';
+    if (m.senderProfileId !== yo) {
+      return validation('Sólo el autor puede editar su mensaje');
+    }
+    const texto = (datos.bodyText ?? '').trim();
+    if (texto === '') {
+      return validation('El mensaje no puede quedar vacío');
+    }
+    if (Date.now() - new Date(m.sentAt).getTime() > VENTANA_DE_EDICION_MS) {
+      return validation('Pasaron más de 5 minutos: el mensaje ya no se puede editar');
+    }
+    return mensajes.actualizar(m.id, { bodyText: texto, isEdited: true });
   });
 
   router.post('/community/conversations/:id/read', (request) => {

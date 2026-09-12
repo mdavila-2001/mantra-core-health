@@ -13,6 +13,8 @@ import { CommunityClient } from '../data-access/community/community.client';
 import { FilesClient } from '../data-access/files/files.client';
 import { SessionStore } from '../auth/session.store';
 import { ChatSocketService } from './chat-socket.service';
+import { ChatAutoReply } from './chat-auto-reply';
+import { stickerDe, type Sticker } from './sticker-pack.generated';
 import type {
   ConversationListItem,
   DirectMessage,
@@ -30,6 +32,46 @@ export const PAGINA_DE_MENSAJES = 30;
 
 /** Cuántas conversaciones trae la bandeja. */
 const LIMITE_DE_BANDEJA = 50;
+
+/**
+ * Cuánto tiempo se puede editar un mensaje después de mandarlo.
+ *
+ * Cinco minutos, contados contra `sentAt` — la hora del servidor, no la del
+ * navegador de quien edita: el reloj local se puede atrasar, y la ventana sería
+ * la que quisiera cada máquina.
+ *
+ * **La regla también vive en el servidor.** Acá se aplica para que el menú no
+ * ofrezca algo que va a fallar; ocultar el botón no es la barrera. La maqueta
+ * responde 422 fuera de la ventana, igual que la API.
+ */
+export const VENTANA_DE_EDICION_MS = 5 * 60_000;
+
+/**
+ * `true` si el mensaje todavía se puede editar.
+ *
+ * Se pide `ahora` en vez de leer el reloj adentro para que la vista pueda
+ * recalcular con un tic propio —y para que una prueba pueda pararlo.
+ *
+ * @param mensaje - El mensaje a mirar.
+ * @param propio - El perfil de quien está mirando.
+ * @param ahora - En qué instante se pregunta.
+ */
+export function editable(
+  mensaje: MensajeDelHilo,
+  propio: string | null,
+  ahora: number,
+): boolean {
+  return (
+    mensaje.estado === 'enviado' &&
+    mensaje.id !== null &&
+    propio !== null &&
+    mensaje.senderProfileId === propio &&
+    // Sin texto no hay nada que editar: una foto sola se borra, no se corrige.
+    (mensaje.bodyText ?? '').trim() !== '' &&
+    mensaje.sentAt !== undefined &&
+    ahora - mensaje.sentAt.getTime() <= VENTANA_DE_EDICION_MS
+  );
+}
 
 /**
  * Un mensaje que ya se ve en el hilo pero que el servidor todavía no acusó.
@@ -72,6 +114,8 @@ export interface MensajeDelHilo {
   readonly attachmentFileId?: string;
   readonly sentAt?: Date;
   readonly estado: 'enviando' | 'fallado' | 'enviado';
+  /** Si su texto se cambió después de mandarlo — se dice en la burbuja. */
+  readonly isEdited?: boolean;
   /** Sólo en los pendientes: con qué reintentar. */
   readonly pendiente?: MensajePendiente;
 }
@@ -112,6 +156,7 @@ export class ChatStore {
   private readonly community = inject(CommunityClient);
   private readonly archivos = inject(FilesClient);
   private readonly socket = inject(ChatSocketService);
+  private readonly autoReply = inject(ChatAutoReply);
   private readonly sesion = inject(SessionStore);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -158,6 +203,14 @@ export class ChatStore {
   readonly respondiendoA = signal<MensajeDelHilo | null>(null);
 
   /**
+   * Qué mensaje propio se está editando, si alguno.
+   *
+   * Responder y editar son excluyentes: el composer es uno solo, y las dos
+   * cosas quieren el mismo campo con distinto significado.
+   */
+  readonly editando = signal<MensajeDelHilo | null>(null);
+
+  /**
    * Cuántos sin leer tenía la conversación al abrirla.
    *
    * Se guarda porque abrir el hilo apaga el contador en el acto, y el
@@ -177,6 +230,16 @@ export class ChatStore {
   private temporizadorHilo: ReturnType<typeof setTimeout> | null = null;
   private encendido = false;
   private hiloMarcado = new Set<string>();
+
+  /**
+   * Cuándo se le mandó la última respuesta automática a cada conversación.
+   *
+   * En memoria y no en el navegador a propósito: el descanso entre avisos
+   * protege a la otra persona de recibir cinco carteles seguidos, y una sesión
+   * nueva es un momento razonable para volver a empezar. Persistirlo sería
+   * guardar un dato de comportamiento ajeno sin necesidad.
+   */
+  private readonly ultimoAvisoPorConversacion = new Map<string, number>();
 
   /**
    * Los adjuntos ya resueltos, por id de archivo: la `data:` URL lista para un
@@ -201,6 +264,7 @@ export class ChatStore {
         attachmentFileId: mensaje.attachmentFileId,
         sentAt: mensaje.sentAt,
         estado: 'enviado',
+        isEdited: mensaje.isEdited,
       }));
 
     const enVuelo = this.pendientes()
@@ -243,7 +307,20 @@ export class ChatStore {
       }
       this.aplicarEnLaFila(mensaje);
       this.recargarBandeja();
+      this.quizasResponderSolo(mensaje);
     });
+
+    // Edición ajena: se aplica sobre la burbuja que ya está en pantalla. Sin
+    // esto, el otro lado corregiría su mensaje y acá seguiría el texto viejo
+    // hasta el próximo tic de sondeo.
+    this.socket.onMessageUpdated
+      .pipe(takeUntilDestroyed())
+      .subscribe((mensaje) => {
+        if (mensaje.conversationId === this.activaId()) {
+          this.aplicarTexto(mensaje.id, mensaje.bodyText, mensaje.isEdited ?? true);
+        }
+        this.recargarBandeja();
+      });
 
     this.socket.onRead.pipe(takeUntilDestroyed()).subscribe((evento) => {
       if (evento.conversationId !== this.activaId()) {
@@ -273,6 +350,9 @@ export class ChatStore {
    * entrar no vuelve a pedir el perfil.
    */
   iniciar(): void {
+    // Entrar a la mensajería cuenta como estar: es lo primero que desactiva la
+    // respuesta automática.
+    this.autoReply.marcarActividad();
     if (this.encendido) {
       this.recargarBandeja();
       return;
@@ -447,6 +527,9 @@ export class ChatStore {
    * nombre del nuevo en la cabecera.
    */
   abrir(conversationId: string): void {
+    // Abrir un chat es la prueba más clara de que estás mirando: le corre el
+    // reloj a la respuesta automática.
+    this.autoReply.marcarActividad();
     if (this.activaId() === conversationId) {
       return;
     }
@@ -461,6 +544,7 @@ export class ChatStore {
     this.peerReadUpTo.set(null);
     this.hiloCargado.set(false);
     this.respondiendoA.set(null);
+    this.editando.set(null);
     this.noLeidosAlAbrir.set(
       this.conversaciones().find((c) => c.id === conversationId)?.unreadCount ?? 0,
     );
@@ -484,6 +568,7 @@ export class ChatStore {
     this.cursor.set(null);
     this.hiloCargado.set(false);
     this.respondiendoA.set(null);
+    this.editando.set(null);
     if (this.temporizadorHilo !== null) {
       clearTimeout(this.temporizadorHilo);
       this.temporizadorHilo = null;
@@ -517,7 +602,7 @@ export class ChatStore {
           // respuesta se pudo haber cambiado de conversación, y volcar acá lo
           // que llegó tarde mostraría los mensajes de un chat en otro.
           if (this.activaId() !== conversationId) {
-            this.cargandoHilo.set(false);
+            this.descartarYPedirElActual();
             return;
           }
           if (primera) {
@@ -536,11 +621,39 @@ export class ChatStore {
           }
         },
         error: () => {
+          if (this.activaId() !== conversationId) {
+            this.descartarYPedirElActual();
+            return;
+          }
           this.cargandoHilo.set(false);
           this.hiloCargado.set(true);
           this.error.set('No pudimos cargar la conversación.');
         },
       });
+  }
+
+  /**
+   * Descarta una respuesta que llegó tarde y pide la conversación que **sí**
+   * está abierta ahora.
+   *
+   * ## El defecto que cierra
+   *
+   * `cargarHilo()` sale temprano si ya hay una carga en vuelo. Cambiando de
+   * chat rápido —o volviendo al anterior antes de que conteste el servidor—
+   * pasaba esto: el segundo `abrir()` vaciaba los mensajes y llamaba a
+   * `cargarHilo()`, que se iba sin pedir nada porque el primero seguía viajando;
+   * y cuando el primero llegaba, se descartaba por ser de otra conversación.
+   * Resultado: **el hilo quedaba en blanco** —con la cabecera y la bandeja
+   * correctas— hasta que el sondeo lo rescatara treinta segundos después.
+   *
+   * Lo encontró el navegador, no las unitarias: hace falta una respuesta que
+   * tarde entre dos clics para que la carrera exista.
+   */
+  private descartarYPedirElActual(): void {
+    this.cargandoHilo.set(false);
+    if (this.activaId() !== null && !this.hiloCargado()) {
+      this.cargarHilo(true);
+    }
   }
 
   /** Trae la página anterior — lo que se llama al llegar arriba de todo. */
@@ -607,6 +720,92 @@ export class ChatStore {
 
   responder(mensaje: MensajeDelHilo | null): void {
     this.respondiendoA.set(mensaje);
+    if (mensaje !== null) {
+      this.editando.set(null);
+    }
+  }
+
+  /* --- Editar un mensaje propio (F4.5) ------------------------------------ */
+
+  /**
+   * Entra —o sale— del modo edición.
+   *
+   * Rechaza en silencio el mensaje que ya no se puede editar: entre que se
+   * abrió el menú y se eligió «Editar» pudo vencer la ventana, y abrir el
+   * composer para que el servidor conteste 422 es peor que no abrirlo.
+   */
+  editar(mensaje: MensajeDelHilo | null): void {
+    if (mensaje === null) {
+      this.editando.set(null);
+      return;
+    }
+    if (!editable(mensaje, this.perfil(), Date.now())) {
+      return;
+    }
+    this.respondiendoA.set(null);
+    this.editando.set(mensaje);
+  }
+
+  /**
+   * Guarda el texto nuevo del mensaje que se está editando.
+   *
+   * Se pinta antes de que el servidor conteste, igual que un envío, y **se
+   * revierte** si falla: dejar el texto nuevo en pantalla después de un 422
+   * sería mostrar como guardado algo que no se guardó.
+   */
+  confirmarEdicion(texto: string): void {
+    const mensaje = this.editando();
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    const cuerpo = texto.trim();
+    if (
+      mensaje === null ||
+      mensaje.id === null ||
+      propio === null ||
+      conversationId === null
+    ) {
+      return;
+    }
+    // Sin cambios no se toca nada: un PATCH que deja el texto igual marcaría el
+    // mensaje como editado sin que nadie lo haya editado.
+    if (cuerpo === '' || cuerpo === (mensaje.bodyText ?? '')) {
+      this.editando.set(null);
+      return;
+    }
+
+    const messageId = mensaje.id;
+    const anterior = mensaje.bodyText;
+    this.editando.set(null);
+    this.aplicarTexto(messageId, cuerpo, true);
+
+    this.community
+      .editMessage(conversationId, messageId, {
+        senderProfileId: propio,
+        bodyText: cuerpo,
+      })
+      .subscribe({
+        next: (editado) => {
+          this.aplicarTexto(messageId, editado.bodyText ?? cuerpo, true);
+          this.recargarBandeja();
+        },
+        error: () => {
+          this.aplicarTexto(messageId, anterior, mensaje.isEdited ?? false);
+          this.error.set('No pudimos editar el mensaje. Pasaron más de 5 minutos o ya no se puede cambiar.');
+        },
+      });
+  }
+
+  /** Cambia el texto de un mensaje ya cargado, y su marca de editado. */
+  private aplicarTexto(
+    messageId: string,
+    bodyText: string | undefined,
+    isEdited: boolean,
+  ): void {
+    this.mensajes.update((lista) =>
+      lista.map((m) =>
+        m.id === messageId ? { ...m, bodyText, isEdited } : m,
+      ),
+    );
   }
 
   /**
@@ -623,6 +822,7 @@ export class ChatStore {
     if (propio === null || conversationId === null || cuerpo === '') {
       return;
     }
+    this.autoReply.marcarActividad();
 
     const responde = this.respondiendoA();
     const pendiente: MensajePendiente = {
@@ -660,6 +860,37 @@ export class ChatStore {
       ...(mensaje.attachmentFileId
         ? { adjunto: { fileId: mensaje.attachmentFileId, nombre: 'Archivo adjunto', tipo: '' } }
         : {}),
+      creadoEn: new Date(),
+      estado: 'enviando',
+    };
+    this.pendientes.update((lista) => [...lista, pendiente]);
+    this.despachar(pendiente);
+  }
+
+  /**
+   * Manda un sticker del pack.
+   *
+   * Viaja como cualquier adjunto —`MEDIA` con su `attachmentFileId`—, así que
+   * no hace falta ningún tipo de mensaje nuevo en el modelo. Lo que lo
+   * distingue de una foto es que su id está en el pack, que es del producto y
+   * el cliente ya tiene: por eso no se sube nada y no se le piden los bytes al
+   * servidor.
+   */
+  enviarSticker(sticker: Sticker): void {
+    const conversationId = this.activaId();
+    if (this.perfil() === null || conversationId === null) {
+      return;
+    }
+    const pendiente: MensajePendiente = {
+      claveTemporal: claveTemporal(),
+      conversationId,
+      bodyText: '',
+      adjunto: {
+        fileId: sticker.id,
+        nombre: sticker.nombre,
+        tipo: 'image/svg+xml',
+        vistaPrevia: sticker.url,
+      },
       creadoEn: new Date(),
       estado: 'enviando',
     };
@@ -812,9 +1043,14 @@ export class ChatStore {
 
   /* --- Adjuntos ----------------------------------------------------------- */
 
-  /** El adjunto como `data:` URL, si ya se leyó; `null` si todavía no o si falló. */
+  /**
+   * El adjunto como `data:` URL, si ya se leyó; `null` si todavía no o falló.
+   *
+   * Un sticker se resuelve en el acto y sin red: es un archivo del producto,
+   * servido con la aplicación, no algo que subió alguien.
+   */
   urlDe(fileId: string): string | null {
-    return this.urlesDeArchivo().get(fileId) || null;
+    return stickerDe(fileId)?.url ?? this.urlesDeArchivo().get(fileId) ?? null;
   }
 
   /** `true` si el archivo se pidió y no se pudo leer. */
@@ -848,7 +1084,13 @@ export class ChatStore {
     const yaResueltos = this.urlesDeArchivo();
     for (const mensaje of mensajes) {
       const fileId = mensaje.attachmentFileId;
-      if (fileId === undefined || yaResueltos.has(fileId)) {
+      // Un sticker no se pide: su URL sale del pack, que viene con la
+      // aplicación. Pedirlo sería un 404 por cada sticker de la conversación.
+      if (
+        fileId === undefined ||
+        yaResueltos.has(fileId) ||
+        stickerDe(fileId) !== undefined
+      ) {
         continue;
       }
       // Se reserva el lugar antes de pedir, para no pedir dos veces el mismo
@@ -861,6 +1103,115 @@ export class ChatStore {
           this.urlesDeArchivo.update((mapa) => new Map(mapa).set(fileId, null)),
       });
     }
+  }
+
+  /* --- Respuesta automática por inactividad -------------------------------- */
+
+  /**
+   * Contesta sola, si corresponde, al mensaje que acaba de llegar.
+   *
+   * La regla entera —«hace N minutos que no aparezco, y a esta persona no le
+   * avisé en las últimas M horas, y estamos fuera de mi horario»— la decide
+   * `ChatAutoReply`; acá sólo se descarta lo que no es un mensaje ajeno y se
+   * manda el texto.
+   *
+   * **Sólo funciona con la aplicación abierta.** Una respuesta automática de
+   * verdad la manda el servidor aunque el navegador esté cerrado; eso exige la
+   * tabla que el modelo todavía no declara. Está dicho en `ChatAutoReply` y en
+   * la pantalla que la configura, para que nadie la confunda con un contestador
+   * del servidor.
+   */
+  private quizasResponderSolo(mensaje: DirectMessage): void {
+    const propio = this.perfil();
+    if (propio === null || mensaje.senderProfileId === propio) {
+      return;
+    }
+    const ahora = Date.now();
+    const ultimo = this.ultimoAvisoPorConversacion.get(mensaje.conversationId) ?? null;
+    if (!this.autoReply.corresponde(ahora, ultimo)) {
+      return;
+    }
+
+    this.ultimoAvisoPorConversacion.set(mensaje.conversationId, ahora);
+    const pendiente: MensajePendiente = {
+      claveTemporal: claveTemporal(),
+      conversationId: mensaje.conversationId,
+      bodyText: this.autoReply.configuracion().texto,
+      creadoEn: new Date(),
+      estado: 'enviando',
+    };
+    this.pendientes.update((lista) => [...lista, pendiente]);
+    this.despachar(pendiente);
+  }
+
+  /* --- Descargar la conversación ------------------------------------------ */
+
+  /** `true` mientras se junta la conversación para bajarla. */
+  readonly exportando = signal(false);
+
+  /**
+   * Junta la conversación entera y la entrega como JSON.
+   *
+   * ## Por qué recorre todas las páginas
+   *
+   * Porque bajar «la conversación» y entregar los últimos treinta mensajes
+   * sería mentir en el nombre del archivo. Se pide página por página con el
+   * mismo cursor del hilo, hasta que el servidor deja de dar más.
+   *
+   * ## Qué lleva y qué no
+   *
+   * Lleva el texto, quién lo escribió, cuándo, si fue editado, a qué mensaje
+   * respondía y **la referencia** de cada adjunto. No lleva los bytes de los
+   * adjuntos: un chat con tres radiografías daría un archivo de decenas de
+   * megas que nadie puede abrir en un editor de texto, y las referencias
+   * alcanzan para volver a pedirlos.
+   *
+   * @param alTerminar - Recibe el JSON ya armado, o `null` si algo falló.
+   */
+  exportarConversacion(alTerminar: (json: string | null) => void): void {
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    const conversacion = this.conversacionActiva();
+    if (propio === null || conversationId === null || this.exportando()) {
+      alTerminar(null);
+      return;
+    }
+
+    this.exportando.set(true);
+    const juntados: DirectMessage[] = [];
+
+    const pedir = (cursor: string | null): void => {
+      this.community
+        .listMessages(conversationId, {
+          profileId: propio,
+          limit: PAGINA_DE_MENSAJES,
+          ...(cursor === null ? {} : { cursor }),
+        })
+        .subscribe({
+          next: (pagina) => {
+            juntados.push(...pagina.items);
+            if (pagina.nextCursor !== null) {
+              pedir(pagina.nextCursor);
+              return;
+            }
+            this.exportando.set(false);
+            alTerminar(
+              JSON.stringify(
+                armarExportacion(conversationId, propio, conversacion, juntados),
+                null,
+                2,
+              ),
+            );
+          },
+          error: () => {
+            this.exportando.set(false);
+            this.error.set('No pudimos descargar la conversación.');
+            alTerminar(null);
+          },
+        });
+    };
+
+    pedir(null);
   }
 
   /* --- Escribirle a alguien nuevo ----------------------------------------- */
@@ -996,6 +1347,96 @@ export class ChatStore {
       this.temporizadorHilo = null;
     }
   }
+}
+
+/**
+ * La conversación lista para escribirse en un archivo.
+ *
+ * Es el formato del archivo que baja la persona, así que se declara acá y no se
+ * arma al vuelo: alguien lo va a abrir, y los nombres de sus claves son parte
+ * de lo que entregamos.
+ */
+export interface ConversacionExportada {
+  /** Qué es este archivo, para quien lo abra sin contexto. */
+  readonly formato: 'alovida.conversacion';
+  readonly version: 1;
+  readonly exportadoEn: string;
+  readonly conversacion: {
+    readonly id: string;
+    readonly esGrupo: boolean;
+    readonly participantes: readonly {
+      readonly profileId: string;
+      readonly nombre: string;
+      readonly soyYo: boolean;
+    }[];
+  };
+  readonly mensajes: readonly {
+    readonly id: string;
+    readonly autorProfileId: string;
+    readonly autor: string;
+    readonly propio: boolean;
+    readonly texto: string | null;
+    readonly enviadoEn: string | null;
+    readonly editado: boolean;
+    readonly respondeA: string | null;
+    readonly adjunto: { readonly fileId: string; readonly sticker: string | null } | null;
+  }[];
+}
+
+function armarExportacion(
+  conversationId: string,
+  propio: string,
+  conversacion: ConversationListItem | undefined,
+  mensajes: readonly DirectMessage[],
+): ConversacionExportada {
+  const nombrePorPerfil = new Map<string, string>(
+    (conversacion?.peers ?? []).map((peer) => [
+      peer.profileId,
+      peer.displayName ?? 'Alguien',
+    ]),
+  );
+
+  return {
+    formato: 'alovida.conversacion',
+    version: 1,
+    exportadoEn: new Date().toISOString(),
+    conversacion: {
+      id: conversationId,
+      esGrupo: (conversacion?.peers.length ?? 0) > 1,
+      participantes: [
+        { profileId: propio, nombre: 'Yo', soyYo: true },
+        ...(conversacion?.peers ?? []).map((peer) => ({
+          profileId: peer.profileId,
+          nombre: peer.displayName ?? 'Alguien',
+          soyYo: false,
+        })),
+      ],
+    },
+    // Del más viejo al más nuevo: se lee como la conversación, no como la
+    // devuelve el contrato —que pagina hacia atrás—.
+    mensajes: [...mensajes]
+      .sort((a, b) => (a.sentAt?.getTime() ?? 0) - (b.sentAt?.getTime() ?? 0))
+      .map((mensaje) => ({
+        id: mensaje.id,
+        autorProfileId: mensaje.senderProfileId,
+        autor:
+          mensaje.senderProfileId === propio
+            ? 'Yo'
+            : (nombrePorPerfil.get(mensaje.senderProfileId) ?? 'Alguien'),
+        propio: mensaje.senderProfileId === propio,
+        texto: mensaje.bodyText ?? null,
+        enviadoEn: mensaje.sentAt?.toISOString() ?? null,
+        editado: mensaje.isEdited === true,
+        respondeA: mensaje.replyToMessageId ?? null,
+        adjunto:
+          mensaje.attachmentFileId === undefined
+            ? null
+            : {
+                fileId: mensaje.attachmentFileId,
+                sticker: stickerDe(mensaje.attachmentFileId)?.nombre ?? null,
+              },
+      })),
+  };
 }
 
 /** Identidad de un mensaje mientras no tenga la del servidor. */

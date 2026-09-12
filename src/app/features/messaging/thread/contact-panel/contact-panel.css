@@ -1,0 +1,202 @@
+/* La hoja de «Información del contacto».
+
+   Se apoya en el hilo, no en la ventana: `position: absolute` sobre el `:host`
+   del hilo —que ya es `position: relative`— para que en escritorio cubra la
+   conversación y deje la bandeja a la vista, como el panel de contacto de
+   WhatsApp. En angosto no hay bandeja visible y ocupa todo, que es lo mismo.
+
+   Mobile-first: la regla base es la de pantalla chica y la media query agrega
+   el ancho fijo del costado. */
+
+:host {
+  display: contents;
+}
+
+/* El contenedor recibe el foco al abrirse para que Escape llegue, pero no es
+   un control: su anillo de foco confundiría. Los de adentro sí lo llevan. */
+.contacto:focus {
+  outline: none;
+}
+
+.contacto {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--velo);
+}
+
+.contacto__hoja {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  max-block-size: 100%;
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+}
+
+/* --- Cabecera ------------------------------------------------------------ */
+
+.contacto__cabecera {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  min-block-size: var(--h-header);
+  padding-inline: var(--e4);
+  border-block-end: 1px solid var(--filete);
+}
+
+.contacto__titulo {
+  flex: 1 1 auto;
+  margin: 0;
+  font-family: var(--f-titulo);
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
+  color: var(--tinta-marca);
+}
+
+.contacto__cerrar {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.contacto__cerrar:hover {
+  background: var(--sup-inset);
+  color: var(--tinta);
+}
+
+.contacto__cerrar:focus-visible,
+.contacto__accion:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+.contacto__cerrar svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+/* --- Cuerpo -------------------------------------------------------------- */
+
+.contacto__cuerpo {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e6) var(--e4) var(--e8);
+  text-align: center;
+}
+
+.contacto__nombre {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  margin: 0;
+  font-family: var(--f-titulo);
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+/* El sello lleva su propio color de marca: sobre el nombre, en tinta normal,
+   no se distinguiría de una viñeta. */
+.contacto__sello {
+  display: inline-flex;
+  color: var(--tinta-marca);
+}
+
+.contacto__sello svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.contacto__titular {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--tinta-2);
+}
+
+.contacto__estado,
+.contacto__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--tinta-3);
+}
+
+.contacto__bloque {
+  inline-size: 100%;
+  margin-block-start: var(--e3);
+  padding-block-start: var(--e4);
+  border-block-start: 1px solid var(--filete);
+  text-align: start;
+}
+
+.contacto__rotulo {
+  margin: 0 0 var(--e2);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.contacto__texto {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--tinta-2);
+  white-space: pre-wrap;
+}
+
+/* --- La salida a la ficha pública ---------------------------------------- */
+
+.contacto__accion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  margin-block-start: var(--e4);
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--tinta-marca);
+  text-decoration: none;
+  /* 44 px de alto real: es un destino táctil, no un enlace de párrafo. */
+  min-block-size: 44px;
+  box-sizing: border-box;
+}
+
+.contacto__accion:hover {
+  background: var(--sup-inset);
+}
+
+.contacto__accion svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+/* Desde donde la conversación comparte pantalla con la bandeja, la hoja deja
+   de ocupar todo y se apoya en el costado derecho. */
+@media (min-width: 60rem) {
+  .contacto__hoja {
+    inline-size: min(24rem, 100%);
+    border-inline-start: 1px solid var(--filete);
+  }
+}

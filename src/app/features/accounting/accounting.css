@@ -236,3 +236,21 @@
         grid-column: 1 / -1;
     }
 }
+
+
+/* La entrada al cockpit: la acción y su explicación en el mismo renglón, para
+   que no parezca un botón suelto sin contexto. */
+.acceso-al-cockpit {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin: var(--sp-4) 0 0;
+}
+
+.acceso-al-cockpit__nota {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  flex: 1 1 18rem;
+}

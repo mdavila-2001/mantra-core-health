@@ -1,7 +1,9 @@
 # Persistencia
 
-Dos claves en `localStorage`. Nada más. Ni cookies propias, ni `sessionStorage`,
-ni `IndexedDB`.
+Seis claves en `localStorage`: dos de la sesión y la apariencia, y cuatro de
+preferencias del chat. Ni cookies propias, ni `IndexedDB`. `sessionStorage` lo
+usa **sólo la maqueta** de la rama `mockup`, para que sus tablas en memoria
+sobrevivan a una recarga.
 
 ---
 
@@ -11,6 +13,10 @@ ni `IndexedDB`.
 |---|---|---|---|
 | `mantra.refresh-token` | Refresh token de la sesión | `RefreshTokenStorage` | **Alta** |
 | `mantra-core-health.theme` | `'light'` o `'dark'` | `ThemeService` + el script de `index.html` | Nula |
+| `alovida.chat-preferencias` | Favoritos, archivados y emojis recientes | `ChatPreferencias` | Baja |
+| `alovida.plantillas-mensaje` | Las frases propias del profesional | `MessageTemplates` | Baja |
+| `alovida.chat-respuesta-automatica` | Si contestar solo, tras cuántos minutos, con qué texto, cada cuántas horas y en qué franja | `ChatAutoReply` | Baja |
+| `alovida.chat-ultima-actividad` | Cuándo se estuvo por última vez en la mensajería | `ChatAutoReply` | Baja |
 
 Verificable:
 
@@ -18,8 +24,22 @@ Verificable:
 grep -rn "localStorage\|sessionStorage\|indexedDB\|document.cookie" src/ --include="*.ts" --include="*.html"
 ```
 
-Devuelve `RefreshTokenStorage`, `ThemeService` y el script en línea de
-`index.html`. Nada más toca el almacenamiento.
+### Por qué las cuatro del chat están acá y no en el servidor
+
+Porque **no hay dónde guardarlas**: `community.conversation_participants` sólo
+declara `muted_until`, y el modelo no tiene ninguna tabla de preferencias de
+chat por perfil. Las cuatro son estado de quien mira, no datos clínicos, así que
+el costo de que vivan en el navegador es conocido y acotado: **se pierden al
+cambiar de máquina**.
+
+Las tres clases las exponen como señales y no como acceso al almacenamiento
+justamente para que el día que el modelo declare su tabla cambien de origen sin
+que ninguna pantalla se entere.
+
+Hay un límite que conviene no olvidar, y que la pantalla de Ajustes dice en voz
+alta: **la respuesta automática sólo sale con la aplicación abierta**. Un
+contestador de verdad lo manda el servidor aunque el navegador esté cerrado, y
+eso exige la tabla que todavía no existe.
 
 ## El access token **no** se persiste
 

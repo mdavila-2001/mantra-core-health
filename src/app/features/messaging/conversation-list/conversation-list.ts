@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
 import { avatarDeConQuien, conQuien } from '../../../core/messaging/con-quien';
 import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
+import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
 import { horaDeChat } from '../../../shared/date/hora-de-chat';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 
@@ -123,6 +124,17 @@ export class ConversationList {
       return cuerpo;
     }
     return conversacion.lastMessage === undefined ? '' : 'Archivo adjunto';
+  }
+
+  /**
+   * `true` si el último mensaje es un sticker del pack.
+   *
+   * El contrato de la bandeja todavía no manda el `attachmentFileId` del
+   * último mensaje, así que esto sólo puede saberse cuando llegue: hasta
+   * entonces un sticker se anuncia como «Archivo adjunto», que no es falso.
+   */
+  protected esSticker(conversacion: ConversationListItem): boolean {
+    return stickerDe(conversacion.lastMessage?.attachmentFileId) !== undefined;
   }
 
   /** `true` si el último mensaje es un adjunto sin texto. */

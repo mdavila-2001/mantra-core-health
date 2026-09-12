@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -13,7 +14,12 @@ import { isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { ChatStore, type MensajeDelHilo } from '../../../core/messaging/chat.store';
+import {
+  ChatStore,
+  editable,
+  type MensajeDelHilo,
+} from '../../../core/messaging/chat.store';
+import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
 import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
 import {
@@ -24,6 +30,7 @@ import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/hora-de-chat';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { Composer } from './composer/composer';
+import { ContactPanel } from './contact-panel/contact-panel';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -53,6 +60,16 @@ export type LineaDelHilo =
 
 /** Cuántos tonos rotan los nombres de autor en un grupo. */
 const TONOS = 8;
+
+/**
+ * Cada cuánto se revisa si algún mensaje salió de la ventana de edición.
+ *
+ * Treinta segundos: el menú tiene que dejar de ofrecer «Editar» cuando la
+ * ventana vence, y sin un tic propio eso sólo pasaría si algo más provocara un
+ * redibujo. Preciso al medio minuto alcanza —el servidor es quien decide—, y
+ * un tic por segundo sería redibujar el hilo entero sesenta veces de más.
+ */
+const TIC_DE_EDICION_MS = 30_000;
 
 /** A cuántos píxeles del tope se pide la página anterior. */
 const MARGEN_DE_CARGA = 220;
@@ -144,7 +161,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
  */
 @Component({
   selector: 'app-thread',
-  imports: [Avatar, Composer, EmptyState, RouterLink],
+  imports: [Avatar, Composer, ContactPanel, EmptyState, RouterLink],
   templateUrl: './thread.html',
   styleUrls: ['./thread.css', './thread-capas.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -173,6 +190,28 @@ export class Thread {
 
   /** Si está abierto el menú de la cabecera. */
   protected readonly menuCabecera = signal(false);
+
+  /** Si está abierta la hoja de «Información del contacto». */
+  protected readonly contactoAbierto = signal(false);
+
+  /**
+   * El reloj de la ventana de edición.
+   *
+   * Es una señal y no `Date.now()` suelto porque `puedeEditarse()` se lee desde
+   * la plantilla: sin una dependencia que cambie, el menú seguiría ofreciendo
+   * «Editar» diez minutos después de mandado.
+   */
+  private readonly ahora = signal(Date.now());
+
+  /**
+   * El perfil del otro lado, cuando hay uno solo.
+   *
+   * En un grupo no hay «el contacto»: son varios, y el panel de contacto no es
+   * la pantalla para eso. Por eso el menú sólo lo ofrece fuera de los grupos.
+   */
+  protected readonly perfilDelOtro = computed(
+    () => this.store.conversacionActiva()?.peers[0]?.profileId ?? null,
+  );
 
   protected readonly esFavorito = computed(() => {
     const id = this.store.activaId();
@@ -347,7 +386,18 @@ export class Thread {
         this.menuCabecera.set(false);
         this.cerrarBusqueda();
         this.reenviando.set(null);
+        this.contactoAbierto.set(false);
         this.store.abrir(id);
+      }
+    });
+
+    // `?contacto=1` es con lo que llega «Ver perfil» desde la fila de la
+    // bandeja: en angosto esa fila no tiene el hilo abierto, así que la acción
+    // navega hasta acá y pide la hoja. Mismo patrón que el `?responder=` del
+    // composer.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((query) => {
+      if (query.get('contacto') !== null) {
+        this.contactoAbierto.set(true);
       }
     });
 
@@ -359,6 +409,13 @@ export class Thread {
       const total = this.store.enOrden().length;
       this.alCambiarElHilo(total);
     });
+
+    // El reloj de la ventana de edición. Sólo en el navegador: bajo SSR no hay
+    // menú que actualizar y un intervalo dejaría colgada la renderización.
+    if (this.isBrowser) {
+      const tic = setInterval(() => this.ahora.set(Date.now()), TIC_DE_EDICION_MS);
+      inject(DestroyRef).onDestroy(() => clearInterval(tic));
+    }
   }
 
   /** El nombre de quien escribió, para el rótulo de un grupo. */
@@ -407,6 +464,23 @@ export class Thread {
     return mensaje.attachmentFileId === undefined
       ? null
       : this.store.urlDe(mensaje.attachmentFileId);
+  }
+
+  /**
+   * `true` si el mensaje es un sticker del pack.
+   *
+   * Un sticker se dibuja **sin burbuja** y más grande: meterlo en el mismo
+   * recuadro que una foto lo convertiría en una estampilla, que es justo lo que
+   * un sticker no es. Se sabe por su `fileId`, que está en el pack del
+   * producto — no hace falta un tipo de mensaje nuevo en el modelo.
+   */
+  protected esSticker(mensaje: MensajeDelHilo): boolean {
+    return stickerDe(mensaje.attachmentFileId) !== undefined;
+  }
+
+  /** Cómo se anuncia el sticker a quien no lo ve. */
+  protected nombreDelSticker(mensaje: MensajeDelHilo): string {
+    return stickerDe(mensaje.attachmentFileId)?.nombre ?? 'Sticker';
   }
 
   protected esImagen(mensaje: MensajeDelHilo): boolean {
@@ -567,11 +641,64 @@ export class Thread {
     }
   }
 
+  /**
+   * Abre la hoja del contacto.
+   *
+   * Antes navegaba a `/public-profile/<profileId>`, **una ruta que no existe**:
+   * las fichas públicas son `/p|o|f|l|s/:slug` y se llega por slug, no por id.
+   * Así que «Ver perfil» caía en el 404 desde el menú del hilo y desde el de la
+   * fila de la bandeja. Ver `ContactPanel` para por qué la respuesta es un
+   * panel y no un enlace arreglado.
+   */
   protected verPerfil(): void {
     this.menuCabecera.set(false);
-    const peer = this.store.conversacionActiva()?.peers[0];
-    if (peer !== undefined) {
-      void this.router.navigate(['/public-profile', peer.profileId]);
+    if (this.perfilDelOtro() !== null) {
+      this.contactoAbierto.set(true);
+    }
+  }
+
+  /**
+   * Cierra la hoja y borra el `?contacto` de la dirección.
+   *
+   * Sin borrarlo, volver atrás en el navegador —o recargar— reabriría un panel
+   * que ya se había cerrado, y la dirección dejaría de describir lo que se ve.
+   */
+  /**
+   * Baja la conversación entera como JSON.
+   *
+   * El archivo se arma en el navegador con lo que junta el store y se entrega
+   * por un `<a download>` de un `blob:` que se revoca en el acto. Sólo en el
+   * navegador: bajo SSR no hay a quién entregarle un archivo.
+   */
+  protected descargarConversacion(): void {
+    this.menuCabecera.set(false);
+    if (!this.isBrowser) {
+      return;
+    }
+    this.store.exportarConversacion((json) => {
+      if (json === null) {
+        return;
+      }
+      const url = URL.createObjectURL(
+        new Blob([json], { type: 'application/json' }),
+      );
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = nombreDeArchivo(this.conQuien());
+      enlace.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  protected cerrarContacto(): void {
+    this.contactoAbierto.set(false);
+    if (this.route.snapshot.queryParamMap.get('contacto') !== null) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { contacto: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
     }
   }
 
@@ -585,6 +712,21 @@ export class Thread {
   protected responder(mensaje: MensajeDelHilo): void {
     this.menuAbierto.set(null);
     this.store.responder(mensaje);
+  }
+
+  /**
+   * `true` si el mensaje todavía está dentro de la ventana de cinco minutos.
+   *
+   * La regla vive en el store —y también en el servidor—; acá sólo se decide si
+   * el menú lo ofrece.
+   */
+  protected puedeEditarse(mensaje: MensajeDelHilo): boolean {
+    return editable(mensaje, this.store.perfil(), this.ahora());
+  }
+
+  protected editar(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.store.editar(mensaje);
   }
 
   protected copiar(mensaje: MensajeDelHilo): void {
@@ -706,6 +848,24 @@ export class Thread {
   protected alEnviar(): void {
     this.pegadoAbajo = true;
   }
+}
+
+/**
+ * Con qué nombre se guarda la conversación descargada.
+ *
+ * Con el nombre de la otra persona y la fecha: tres conversaciones bajadas el
+ * mismo día tienen que distinguirse en la carpeta de descargas sin abrirlas.
+ */
+function nombreDeArchivo(conQuien: string): string {
+  const limpio = conQuien
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, '-')
+    .replace(/^-+|-+$/gu, '')
+    .slice(0, 40);
+  const dia = new Date().toISOString().slice(0, 10);
+  return `chat-${limpio === '' ? 'conversacion' : limpio}-${dia}.json`;
 }
 
 /** Un tono estable a partir del id, para el nombre del autor en un grupo. */

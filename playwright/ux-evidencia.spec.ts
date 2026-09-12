@@ -104,7 +104,7 @@ test.describe('el panel del médico', () => {
     await expect(page.getByRole('heading', { name: 'Bloquear días u horarios' })).toBeVisible();
     await capturar(page, '09-bloqueo-por-rango-y-franja');
 
-    await page.goto(`${BASE}/administration/accounting`);
+    await page.goto(`${BASE}/administration/accounting/libros`);
     await capturar(page, '20-mi-facturacion');
 
     await page.goto(`${BASE}/laboratory-directory`);

@@ -38,7 +38,10 @@ import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../shared/a11y/announce-on-appear';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
+import { RouterLink } from '@angular/router';
+
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Select } from '../../shared/components/atoms/select/select';
@@ -172,6 +175,7 @@ export interface MesFacturado {
     AnnounceOnAppear,
     Alert,
     AppButton,
+    AppButtonLink,
     Badge,
     Card,
     DataTable,
@@ -180,6 +184,7 @@ export interface MesFacturado {
     PageHeader,
     PdfExportButton,
     ReactiveFormsModule,
+    RouterLink,
     Select,
     StatusSeal,
     Tab,

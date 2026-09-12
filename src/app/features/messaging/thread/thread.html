@@ -53,6 +53,17 @@
             {{ estaArchivado() ? 'Desarchivar' : 'Archivar' }}
           </button>
         </li>
+        <li role="none">
+          <button
+            role="menuitem"
+            type="button"
+            data-testid="hilo-descargar"
+            [disabled]="store.exportando()"
+            (click)="descargarConversacion()"
+          >
+            {{ store.exportando() ? 'Preparando la descarga…' : 'Descargar conversación (JSON)' }}
+          </button>
+        </li>
       </ul>
     }
   </div>
@@ -119,6 +130,7 @@
               [class.is-abre]="linea.abreBloque"
               [class.is-destello]="destellando() === linea.clave"
               [class.is-fallado]="linea.mensaje.estado === 'fallado'"
+              [class.is-sticker]="esSticker(linea.mensaje)"
               [attr.data-propio]="linea.propio"
             >
               @if (esGrupo() && linea.abreBloque && !linea.propio) {
@@ -143,7 +155,18 @@
               <!-- El adjunto, según lo que sea. -->
               @if (linea.mensaje.attachmentFileId || linea.mensaje.pendiente?.adjunto) {
                 @if (urlDelAdjunto(linea.mensaje); as url) {
-                  @if (esImagen(linea.mensaje)) {
+                  @if (esSticker(linea.mensaje)) {
+                    <!-- Sin recuadro ni lupa: un sticker ya es la imagen, y
+                         ampliarlo no muestra nada que no se vea. -->
+                    <img
+                      class="hilo__sticker"
+                      data-testid="hilo-sticker"
+                      [src]="url"
+                      [alt]="nombreDelSticker(linea.mensaje)"
+                      width="128"
+                      height="128"
+                    />
+                  } @else if (esImagen(linea.mensaje)) {
                     <button
                       class="hilo__imagen"
                       type="button"
@@ -182,6 +205,9 @@
                    que un mensaje corto ocupe una línea y no dos. -->
               <span class="hilo__meta">
                 <span class="solo-lectores">{{ linea.propio ? 'Vos' : linea.autor }}, </span>
+                @if (linea.mensaje.isEdited) {
+                  <span class="hilo__editado" data-testid="hilo-editado">editado</span>
+                }
                 @if (linea.mensaje.sentAt) {
                   <span class="hilo__hora">{{ hora(linea.mensaje.sentAt) }}</span>
                 }
@@ -248,6 +274,16 @@
                         Responder
                       </button>
                     </li>
+                    <!-- Sólo el propio y sólo dentro de los cinco minutos. El
+                         ítem desaparece solo cuando la ventana vence: ofrecerlo
+                         para que el servidor conteste 422 sería peor. -->
+                    @if (puedeEditarse(linea.mensaje)) {
+                      <li role="none">
+                        <button role="menuitem" type="button" data-testid="hilo-editar" (click)="editar(linea.mensaje)">
+                          Editar
+                        </button>
+                      </li>
+                    }
                     @if (linea.mensaje.bodyText) {
                       <li role="none">
                         <button role="menuitem" type="button" (click)="copiar(linea.mensaje)">Copiar</button>
@@ -317,6 +353,16 @@
       <button type="button" class="hilo__reenvio-cancelar" (click)="cancelarReenvio()">Cancelar</button>
     </div>
   </div>
+}
+
+<!-- «Información del contacto»: quién es el otro lado, sin salir del hilo. -->
+@if (contactoAbierto() && perfilDelOtro(); as profileId) {
+  <app-contact-panel
+    [profileId]="profileId"
+    [displayName]="conQuien()"
+    [avatarUrl]="avatar()"
+    (closed)="cerrarContacto()"
+  />
 }
 
 <!-- La imagen a tamaño completo. Un diálogo propio y no `app-dialog`: acá no

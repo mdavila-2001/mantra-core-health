@@ -349,7 +349,10 @@ const CONTABILIDAD: TutorialDefinition = {
   description:
     'El balance de sumas y saldos y el libro diario de tu práctica, y cómo registrar un ingreso o un gasto.',
   category: 'Facturación',
-  route: '/administration/accounting',
+  // Los pasos explican el balance, el diario y cómo registrar un movimiento:
+  // eso vive en los libros, que desde el 2026-09-12 están un clic adentro de
+  // Contabilidad —la dirección de la sección abre el cockpit—.
+  route: '/administration/accounting/libros',
   roles: ['BILLING_ADMIN', 'ACCOUNTANT', 'PRACTITIONER'],
   estimatedMinutes: 3,
   level: 'intermedio',

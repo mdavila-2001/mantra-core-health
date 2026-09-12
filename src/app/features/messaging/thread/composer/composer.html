@@ -5,6 +5,20 @@
   </p>
 }
 
+<!-- La tira de «editando». Misma forma que la de responder y en el mismo lugar:
+     las dos dicen «lo que escribas ahora va a otro lado que un mensaje nuevo». -->
+@if (editando(); as enEdicion) {
+  <div class="composer__respuesta composer__respuesta--edicion" data-testid="composer-editando">
+    <div class="composer__respuesta-texto">
+      <span class="composer__respuesta-autor">Editando tu mensaje</span>
+      <span class="composer__respuesta-cuerpo">{{ enEdicion.bodyText }}</span>
+    </div>
+    <button type="button" data-testid="composer-editar-cancelar" aria-label="Cancelar la edición" (click)="cancelarEdicion()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+  </div>
+}
+
 <!-- La tira de «respondiendo a». Va pegada arriba del campo, que es donde se
      está mirando cuando se elige responder. -->
 @if (store.respondiendoA(); as citado) {
@@ -34,7 +48,43 @@
 <!-- Los paneles se abren SOBRE el composer, que es donde se usan. -->
 @if (panel() === 'emojis') {
   <div class="composer__panel">
-    <app-selector-emojis (elegido)="insertar($event)" />
+    <div class="composer__solapas" role="tablist" aria-label="Emojis o stickers">
+      <button
+        class="composer__solapa"
+        type="button"
+        role="tab"
+        data-testid="composer-solapa-emojis"
+        [class.is-activa]="solapa() === 'emojis'"
+        [attr.aria-selected]="solapa() === 'emojis'"
+        (click)="solapa.set('emojis')"
+      >
+        Emojis
+      </button>
+      <button
+        class="composer__solapa"
+        type="button"
+        role="tab"
+        data-testid="composer-solapa-stickers"
+        [class.is-activa]="solapa() === 'stickers'"
+        [attr.aria-selected]="solapa() === 'stickers'"
+        (click)="solapa.set('stickers')"
+      >
+        Stickers
+      </button>
+    </div>
+
+    @if (solapa() === 'emojis') {
+      <!-- Diferido: el catálogo son 1 946 emojis con su nombre en castellano, y
+           es lo más pesado del chat. Quien nunca abre el panel no lo descarga, y
+           quien lo abre ve el marcador un cuadro antes de tenerlo. -->
+      @defer (on immediate) {
+        <app-selector-emojis (elegido)="insertar($event)" />
+      } @placeholder {
+        <p class="composer__panel-cargando" role="status">Cargando emojis…</p>
+      }
+    } @else {
+      <app-sticker-picker (elegido)="mandarSticker($event)" />
+    }
   </div>
 }
 
@@ -105,22 +155,26 @@
 }
 
 <form [appFileDropTarget]="archivo" (fileDropRejected)="error.set($event)" class="composer" (submit)="$event.preventDefault(); enviar()">
-  <button
-    class="composer__icono"
-    type="button"
-    data-testid="composer-adjuntar"
-    aria-label="Adjuntar un archivo"
-    [attr.aria-expanded]="panel() === 'adjuntar'"
-    (click)="alternar('adjuntar')"
-  >
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
-  </button>
+  <!-- Editando no se adjunta: la edición cambia el texto de un mensaje que ya
+       salió, y agregarle un archivo sería otro mensaje. -->
+  @if (editando() === null) {
+    <button
+      class="composer__icono"
+      type="button"
+      data-testid="composer-adjuntar"
+      aria-label="Adjuntar un archivo"
+      [attr.aria-expanded]="panel() === 'adjuntar'"
+      (click)="alternar('adjuntar')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
+    </button>
+  }
 
   <button
     class="composer__icono"
     type="button"
     data-testid="composer-emojis"
-    aria-label="Elegir un emoji"
+    aria-label="Elegir un emoji o un sticker"
     [attr.aria-expanded]="panel() === 'emojis'"
     (click)="alternar('emojis')"
   >
@@ -133,7 +187,7 @@
       #campo
       data-testid="hilo-texto"
       rows="1"
-      placeholder="Escribí un mensaje"
+      [placeholder]="editando() === null ? 'Escribí un mensaje' : 'Editá tu mensaje'"
       title="Enter envía · Shift+Enter hace salto de línea"
       [ngModel]="texto()"
       (ngModelChange)="alEscribir($event)"
@@ -142,7 +196,18 @@
     ></textarea>
   </label>
 
-  @if (puedeEnviar()) {
+  @if (editando() !== null) {
+    <!-- Guardar, no enviar: el tilde dice que esto corrige algo que ya existe.
+         Y nunca el grabador — una nota de voz no edita un texto. -->
+    <button
+      class="composer__enviar"
+      type="submit"
+      data-testid="composer-editar-guardar"
+      aria-label="Guardar el cambio"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 12.5 5 5L20 6.5" /></svg>
+    </button>
+  } @else if (puedeEnviar()) {
     <button
       class="composer__enviar"
       type="submit"

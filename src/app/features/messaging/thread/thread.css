@@ -582,3 +582,42 @@
     inset-inline-end: var(--e3);
   }
 }
+
+/* «editado», a la izquierda de la hora y con su mismo peso visual: es un dato
+   de la misma clase —cuándo y cómo quedó el mensaje—, no un aviso. */
+.hilo__editado {
+  font-size: var(--fs-caption);
+  font-style: italic;
+  opacity: .8;
+}
+
+/* El sticker: sin fondo, sin borde y sin la lupa de las fotos. La burbuja que
+   lo contiene se vuelve transparente porque un sticker dentro de un rectángulo
+   de color es una estampilla, no un sticker. */
+.hilo__sticker {
+  display: block;
+  inline-size: 128px;
+  block-size: 128px;
+  max-inline-size: 100%;
+}
+
+.hilo__burbuja.is-sticker {
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* La cola de la burbuja tampoco: sin fondo, quedaría un triangulito suelto. */
+.hilo__burbuja.is-sticker::after,
+.hilo__burbuja.is-sticker::before {
+  display: none;
+}
+
+/* La hora vuelve adentro del recuadro del sticker, sobre un velo, porque el
+   sticker no tiene fondo donde apoyarla. */
+.hilo__burbuja.is-sticker .hilo__meta {
+  padding: 2px var(--e2);
+  border-radius: var(--r-pill);
+  background: var(--velo);
+  color: #fff;
+}

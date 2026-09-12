@@ -1,0 +1,370 @@
+/* Cockpit contable. Sólo distribución: ni un color ni una tipografía propios —
+   todo sale de los 188 tokens del sistema.
+
+   La forma es la de un cockpit de verdad: una barra de contexto arriba que no
+   se pierde, una rejilla de indicadores que se lee de un vistazo, y el detalle
+   debajo en pestañas. Centrado y a lo ancho del área, como pide
+   `composition-rules.md` §5: sin topes propios de ancho. */
+
+:host {
+  display: block;
+}
+
+/* ---- barra de contexto ----------------------------------------------------
+   Qué sociedad, qué ejercicio, qué período. Va primero porque decide si un
+   asiento se puede postear: enterarse después es enterarse tarde. */
+.contexto {
+  display: block;
+  inline-size: 100%;
+  margin-block-start: var(--sp-5);
+}
+
+.contexto__campos {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 780px) {
+  .contexto__campos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.contexto__dato {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.contexto__rango {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+}
+
+.contexto__estado {
+  align-items: center;
+  border-block-start: 1px solid var(--border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-3);
+}
+
+.contexto__ayuda {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  flex: 1 1 16rem;
+}
+
+/* ---- indicadores ----------------------------------------------------------
+   Cuatro por fila en escritorio, dos en tableta, uno en teléfono. `auto-fit`
+   con un mínimo: una cifra apretada en una columna de 120 px no se compara con
+   nada, que es para lo único que sirve un indicador. */
+.tiles {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  margin-block: var(--sp-5);
+}
+
+.tile {
+  display: block;
+}
+
+.tile__rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tile__cifra {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+  /* Cifras tabulares: en una columna de importes, los dígitos tienen que caer
+     en la misma vertical o compararlos exige leerlos. */
+  font-variant-numeric: tabular-nums;
+}
+
+.tile__cifra--chica {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+/* Un resultado negativo no se dice sólo con color —quien no distingue rojo lo
+   perdería—: el signo menos viaja en el propio texto. El color acompaña. */
+.tile__cifra--negativa {
+  color: var(--st-error-fg);
+}
+
+.tile__pie {
+  align-items: center;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* ---- secciones del detalle ------------------------------------------------ */
+.seccion__nota {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin: 0 0 var(--sp-4);
+}
+
+.grupo + .grupo {
+  margin-block-start: var(--sp-5);
+}
+
+.grupo__cabecera {
+  align-items: center;
+  display: flex;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-2);
+}
+
+.grupo__titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.grupo__cuenta {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- documentos del flujo -------------------------------------------------
+   Una fila por documento: número, fecha, importe y la única acción que su
+   estado admite. Sin menú de acciones porque no hay dónde elegir: el backend
+   acepta una sola transición por estado. */
+.documentos,
+.partidas,
+.dimensiones {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.documento,
+.partida,
+.dimension {
+  align-items: center;
+  border-block-end: 1px solid var(--border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding-block: var(--sp-3);
+}
+
+.documento__numero,
+.dimension__codigo {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  min-inline-size: 9rem;
+}
+
+.documento__fecha,
+.partida__vencimiento {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.documento__importe,
+.partida__importe,
+.dimension__resultado {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  /* Los importes se empujan a la derecha para poder compararlos de un vistazo. */
+  margin-inline-start: auto;
+}
+
+/* La cabecera de una corrida: sus cifras y el botón que la dispara, juntos.
+   El botón vive al lado del número que va a mover, no al final de la lista. */
+.corrida {
+  align-items: end;
+  background: var(--bg-inset);
+  border-radius: var(--r-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.corrida__cifra {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin: 0;
+}
+
+.corrida__rotulo {
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.corrida button {
+  margin-inline-start: auto;
+}
+
+.dimension__nombre {
+  display: flex;
+  flex-direction: column;
+}
+
+.dimension__detalle {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+}
+
+.grupo__resto {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  margin: var(--sp-3) 0 0;
+}
+
+.documento__final {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* El número de documento abre su flujo. Es un botón y no un enlace porque no
+   navega: despliega acá mismo. Se pinta como el texto que era. */
+.documento__numero--abrible {
+  background: none;
+  border: none;
+  color: var(--brand-primary);
+  cursor: pointer;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  padding: 0;
+  text-align: start;
+}
+
+.documento__numero--abrible:hover {
+  text-decoration: underline;
+}
+
+/* La cadena del documento: de dónde salió y qué se hizo con él. Sangrada
+   debajo de su fila, en el orden en que ocurrió. */
+.flujo {
+  border-inline-start: 2px solid var(--border-default);
+  flex-basis: 100%;
+  list-style: none;
+  margin: var(--sp-2) 0 var(--sp-2) var(--sp-4);
+  padding: 0 0 0 var(--sp-4);
+}
+
+.flujo__nodo {
+  align-items: baseline;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-caption);
+  gap: var(--sp-3);
+  padding-block: var(--sp-1);
+}
+
+.flujo__nodo--actual {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.flujo__papel {
+  min-inline-size: 8rem;
+}
+
+.flujo__numero,
+.flujo__importe {
+  font-variant-numeric: tabular-nums;
+}
+
+.flujo__importe {
+  margin-inline-start: auto;
+}
+
+/* ---- antigüedad de la cartera --------------------------------------------- */
+.antiguedad {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  margin-block-end: var(--sp-5);
+  overflow: hidden;
+}
+
+.antiguedad__fila {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.antiguedad__fila + .antiguedad__fila {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.antiguedad__fila--cabecera {
+  background: var(--bg-inset);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+}
+
+.antiguedad__cifra {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+/* ---- partidas y dimensiones ----------------------------------------------- */
+.partida__quien {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 12rem;
+}
+
+.partida__socio,
+.dimension__nombre {
+  font-weight: 600;
+}
+
+.partida__doc {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.partida__vencida {
+  color: var(--st-warning-fg);
+  font-weight: 600;
+}
+
+.dimension__resultado--negativo {
+  color: var(--st-error-fg);
+}
+
+.nota-de-origen {
+  display: block;
+  margin-block-start: var(--sp-5);
+}
