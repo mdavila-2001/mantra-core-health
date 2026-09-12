@@ -5,7 +5,6 @@ import { ShellLayout } from './features/shell-layout/shell-layout';
 import { Login } from './features/auth/login/login';
 import { TenantSelection } from './features/auth/tenant-selection/tenant-selection';
 import { RegisterAccountType } from './features/auth/register-account-type/register-account-type';
-import { RegisterOrganization } from './features/auth/register-organization/register-organization';
 import { VerifyEmail } from './features/auth/verify-email/verify-email';
 import { ForgotPassword } from './features/auth/forgot-password/forgot-password';
 import { ResetPassword } from './features/auth/reset-password/reset-password';
@@ -1769,8 +1768,13 @@ export const routes: Routes = [
   {
     // Signup público de una organización aseguradora: crea el tenant `PAYER`
     // y su usuario owner en la misma operación.
+    // Diferida desde la subtarea 1.2: la documentación legal en PDF arrastra
+    // `app-file-input` (y con él `FilePreview`/`pdfjs-dist`, diferido a su vez).
     path: 'auth/register/organization',
-    component: RegisterOrganization,
+    loadComponent: () =>
+      import('./features/auth/register-organization/register-organization').then(
+        (m) => m.RegisterOrganization,
+      ),
     title: 'AloVida - Registrar aseguradora',
   },
   {

@@ -68,7 +68,7 @@
     </label>
   </div>
 
-  @if (feedback().length) {
+  @if (showFeedback() && feedback().length) {
     <div class="file-feedback" [id]="feedbackId()" role="alert">
       @for (message of feedback(); track message) {
         <p>{{ message }}</p>

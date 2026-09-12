@@ -15,6 +15,22 @@ import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../
     IAM: sesión, altas y usuarios.
     ========================================================================== */
 
+/**
+ * Los cinco campos del bloque `legalDocuments` (subtarea 1.2), en el mismo
+ * orden que el registro de procesos: Constitución · NIT · SEPREC · licencia
+ * · SEDES.
+ */
+const LEGAL_DOCUMENT_FIELDS = [
+  'constitutionFileId',
+  'taxIdentifierFileId',
+  'commerceRegistryFileId',
+  'operatingLicenseFileId',
+  'healthAuthorityCertificateFileId',
+] as const;
+
+/** Espejo de `FILE_STORAGE_MAX_SIZE_BYTES` de la API (10 MiB por archivo). */
+const MAX_REGISTRATION_DOCUMENT_BYTES = 10 * 1024 * 1024;
+
 interface LoginBody {
   email?: string;
   nationalId?: string;
@@ -108,7 +124,11 @@ export function registrarAuth(router: MockRouter): void {
 
   router.post('/iam/auth/register-organization', ({ body }) => {
     const datos = cuerpo<{
-      organization?: { code?: string; legalEntityType?: string };
+      organization?: {
+        code?: string;
+        legalEntityType?: string;
+        legalDocuments?: Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>;
+      };
     }>({ body });
     const legalEntityType = datos.organization?.legalEntityType;
     // Mismo contrato que el `ValidationPipe` real: un código fuera del
@@ -126,6 +146,26 @@ export function registrarAuth(router: MockRouter): void {
         },
       });
     }
+    const legalDocuments = datos.organization?.legalDocuments;
+    if (legalDocuments !== undefined) {
+      const faltantes = LEGAL_DOCUMENT_FIELDS.filter((campo) => !legalDocuments[campo]);
+      if (faltantes.length > 0) {
+        // Mismo contrato que el `ValidationPipe` real: el bloque es todo o
+        // nada (subtarea 1.2).
+        return reply(400, {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          message: 'Validation failed',
+          error: 'Bad Request',
+          details: {
+            messages: faltantes.map(
+              (campo) => `organization.legalDocuments.${campo} must be a UUID`,
+            ),
+          },
+        });
+      }
+    }
+
     return {
       tenantId: nuevoId('tenant-nuevo'),
       code: datos.organization?.code ?? 'ORG-NUEVA',
@@ -133,7 +173,56 @@ export function registrarAuth(router: MockRouter): void {
       status: 'PENDING_VERIFICATION',
       verificationStatus: 'PENDING',
       emailVerificationSent: true,
+      ...(legalDocuments === undefined ? {} : { legalDocumentsRegistered: 5 }),
     };
+  });
+
+  router.post('/iam/auth/upload-registration-document', ({ body }) => {
+    // Pre-carga pública de un documento legal (subtarea 1.2). Sin
+    // `File.arrayBuffer()`: el manejador es síncrono y no puede esperar la
+    // lectura asíncrona de los bytes, así que se declara por tipo/nombre —
+    // el sniff por firma binaria real sólo lo hace la API.
+    if (!(typeof FormData !== 'undefined' && body instanceof FormData)) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'No se recibió contenido en el campo "file"',
+        error: 'Unprocessable Entity',
+      });
+    }
+    const archivo = body.get('file');
+    if (!(archivo instanceof File)) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'No se recibió contenido en el campo "file"',
+        error: 'Unprocessable Entity',
+      });
+    }
+    if (archivo.size > MAX_REGISTRATION_DOCUMENT_BYTES) {
+      return reply(413, {
+        statusCode: 413,
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'El archivo excede el tamaño máximo permitido',
+        error: 'Payload Too Large',
+      });
+    }
+    const esPdf = archivo.type === 'application/pdf' || /\.pdf$/i.test(archivo.name);
+    if (!esPdf) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'Solo se admiten documentos PDF',
+        error: 'Unprocessable Entity',
+        details: { detectedMimeType: archivo.type || null },
+      });
+    }
+    return reply(201, {
+      fileId: nuevoId('registro-doc'),
+      originalName: archivo.name,
+      sizeBytes: archivo.size,
+      mimeType: 'application/pdf',
+    });
   });
 
   router.post('/iam/auth/verify-email', ({ body }) => {

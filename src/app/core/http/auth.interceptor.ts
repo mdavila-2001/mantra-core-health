@@ -35,6 +35,9 @@ const PUBLIC_PATHS: readonly string[] = [
   '/iam/auth/token/refresh',
   '/iam/auth/register-patient',
   '/iam/auth/register-organization',
+  // La pre-carga de documentos legales (subtarea 1.2): sin sesión, igual que
+  // el alta que la reclama después.
+  '/iam/auth/upload-registration-document',
   '/iam/auth/register-practitioner',
   '/iam/auth/verify-email',
   // Verificado contra la API viva: responde 401 con un token de activación

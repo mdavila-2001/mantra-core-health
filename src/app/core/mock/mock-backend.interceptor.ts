@@ -250,6 +250,11 @@ function usuarioDe(request: HttpRequest<unknown>) {
 /** Un poco de espera, para que los estados de carga existan. */
 function latencia(path: string): number {
   if (path.startsWith('/terminology')) return 40;
+  // La pre-carga de documentos legales (subtarea 1.2) necesita quedarse el
+  // tiempo suficiente en «subiendo» para que el estado se vea: el simulador
+  // no emite `UploadProgress`, sólo la respuesta final, así que sin esto la
+  // barra pasaría de vacía a lista sin que nadie llegara a verla.
+  if (path === '/iam/auth/upload-registration-document') return 600;
   return 120 + Math.floor(Math.random() * 180);
 }
 
