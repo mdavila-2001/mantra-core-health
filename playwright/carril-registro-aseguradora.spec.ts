@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { subirLosCincoDocumentos } from './helpers/documentos-legales';
+import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
  * Subtarea 1.1 · el selector de tipo societario en el alta pública de
@@ -161,7 +162,18 @@ test.describe('alta pública de aseguradora — tipo societario (subtarea 1.1)',
     );
     await subirLosCincoDocumentos(page);
 
-    // Paso 5 · Tu cuenta (el motor la parte en dos por el tope de 4 campos)
+    // Paso 5 · Representante legal y Paso 6 · Directorio ejecutivo (subtarea
+    // 1.4); cubiertos a fondo por
+    // `carril-registro-aseguradora-representante.spec.ts` — acá sólo se
+    // completan para que el flujo llegue a la confirmación.
+    await expect(page.locator('.paginated-form__titulo')).toContainText(
+      'Representante legal (1 de 2)',
+    );
+    await completarRepresentanteLegal(page);
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
+    await completarGerencias(page);
+
+    // Paso 7 · Tu cuenta (el motor la parte en dos por el tope de 4 campos)
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
     await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
     await page.getByTestId('registro-organizacion-owner-apellido-paterno').fill('Paz');

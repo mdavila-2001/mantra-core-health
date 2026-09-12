@@ -342,6 +342,16 @@ export class IamClient {
         ...(registration.legalDocuments === undefined
           ? {}
           : { legalDocuments: registration.legalDocuments }),
+        // Representante legal y gerencias de contacto (subtarea 1.4): mismo
+        // criterio que `legalDocuments` — dentro de `organization`, nunca
+        // dentro de `payer` (el registro de procesos repite el mismo bloque
+        // para farmacia/laboratorio/imagenología; no es dato de aseguradora).
+        ...(registration.legalRepresentative === undefined
+          ? {}
+          : { legalRepresentative: registration.legalRepresentative }),
+        ...(registration.executives === undefined
+          ? {}
+          : { executives: registration.executives }),
       },
       owner: {
         email: registration.owner.email,

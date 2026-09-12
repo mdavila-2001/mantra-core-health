@@ -55,6 +55,33 @@ export interface MyOrganization extends TenantListItem {
    * decodificar `tenantTypeConceptId` — mismo principio que `isVerified`.
    */
   readonly payer?: PayerProfile;
+  /**
+   * Quién representa legalmente a la organización (subtarea 1.4). Al nivel
+   * de la organización y no dentro de `payer`: no es dato de aseguradora — el
+   * registro de procesos pide el mismo bloque para farmacia, laboratorio e
+   * imagenología.
+   *
+   * Sólo tipos por ahora: la pantalla «Mi organización» todavía no lo dibuja
+   * (deuda declarada en la tarjeta T-34 de la bóveda).
+   */
+  readonly legalRepresentative?: OrganizationContactPerson;
+  /** Las gerencias de contacto declaradas, en orden canónico. Ver {@link legalRepresentative}. */
+  readonly executives?: readonly OrganizationContactPerson[];
+}
+
+/**
+ * Una persona que la organización declara como contacto: su representante
+ * legal o una de sus gerencias (subtarea 1.4). No es una cuenta de la
+ * plataforma: es a quién llamar.
+ */
+export interface OrganizationContactPerson {
+  /** El cargo, en su código canónico (`LEGAL_REPRESENTATIVE`, `GENERAL_MANAGER`…). */
+  readonly role: string;
+  readonly fullName: string;
+  readonly email?: string;
+  readonly phone?: string;
+  /** Documento de identidad, si se declaró (sólo el representante legal). */
+  readonly idNumber?: string;
 }
 
 /**

@@ -264,6 +264,24 @@ export class PaginatedForm {
    */
   readonly pasoVisible = output<PaginaDeFormulario>();
 
+  /**
+   * La página que el motor acaba de rechazar al intentar pasar de ella (o la
+   * primera inválida al enviar).
+   *
+   * Existe para los campos `custom` respaldados por un `FormGroup`: el motor
+   * marca el grupo entero (`markAsTouched`, no a sus hijos) y bloquea
+   * «Siguiente», pero quien dibuja adentro —un acordeón, por ejemplo— necesita
+   * saber que ese intento ocurrió para marcar y desplegar lo suyo. Escuchar
+   * `TouchedChangeEvent` del grupo no sirve: el `blur` del primer campo hijo
+   * ya sube `touched` al grupo, así que cuando el motor lo marca de nuevo no
+   * cambia nada y no se emite.
+   *
+   * Sale la página entera, igual que {@link pasoVisible}, y se emite en cada
+   * intento fallido: al bloquear «Siguiente» y al saltar a la primera página
+   * inválida desde «Enviar».
+   */
+  readonly rechazada = output<PaginaDeFormulario>();
+
   /** Las plantillas de los campos `custom`, por `key`. */
   private readonly personalizados = contentChildren(CampoPersonalizado);
 
@@ -530,7 +548,10 @@ export class PaginatedForm {
       const fallo = this.paginas().findIndex((pagina) =>
         pagina.campos.some((campo) => this.form().get(campo.key)?.invalid === true),
       );
-      if (fallo !== -1) this.indice.set(fallo);
+      if (fallo !== -1) {
+        this.indice.set(fallo);
+        this.rechazada.emit(this.paginas()[fallo]);
+      }
       return;
     }
 
@@ -570,6 +591,7 @@ export class PaginatedForm {
       control.markAsTouched();
       if (control.invalid) valida = false;
     }
+    if (!valida) this.rechazada.emit(pagina);
     return valida;
   }
 }
