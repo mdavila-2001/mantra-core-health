@@ -616,15 +616,27 @@ export class RegisterPractitioner {
   /** Código de concepto → uuid, tal como lo devolvió el catálogo. */
   private readonly conceptoPorCodigo = signal<ReadonlyMap<string, string>>(new Map());
 
+  /** Si hay una lectura del catálogo de tipos en vuelo. */
+  private readonly pidiendoTiposDeTitulo = signal(false);
+
   /**
-   * Si la lectura del catálogo de tipos falló y todavía no se recuperó.
+   * Si el catálogo de tipos no sirve y ya no se está pidiendo: lo que enciende
+   * el aviso con su botón «Reintentar» en el paso.
    *
-   * Mismo papel que `catalogoDepartamentosCaido`: lo que enciende el aviso con
-   * su botón «Reintentar» en el paso, porque un catálogo vacío y uno caído se
-   * ven igual desde la plantilla y sólo el segundo se puede arreglar pidiendo
-   * de nuevo.
+   * Se deriva del MISMO mapa que frena el envío (`hayTitulosSinTipo`), y no de
+   * una bandera aparte encendida en el `error` del observable. Con la bandera,
+   * un 200 que no trajera los tipos —o un `next` que reventara al mapearlos—
+   * dejaba el mapa vacío y la bandera apagada: el alert decía «pulsá
+   * Reintentar» y el botón no existía. Así, si hay una fila que no puede
+   * resolver su tipo, el botón está, porque los dos leen lo mismo.
    */
-  readonly catalogoTiposDeTituloCaido = signal(false);
+  readonly catalogoTiposDeTituloCaido = computed(() => {
+    if (this.pidiendoTiposDeTitulo()) {
+      return false;
+    }
+    const conceptos = this.conceptoPorCodigo();
+    return Object.values(this.codigoDeConceptoPorTipo).some((codigo) => !conceptos.has(codigo));
+  });
 
   /**
    * El aviso de que el catálogo no cargó, en un solo sitio.
@@ -715,9 +727,13 @@ export class RegisterPractitioner {
    * bloquea es intentar mandar una fila cuyo tipo no se pudo resolver.
    */
   protected cargarTiposDeCredencial(): void {
+    this.pidiendoTiposDeTitulo.set(true);
     this.systemContext.dynamicEnum(this.campoDeTipoDeTitulo).subscribe({
       next: (enumeracion) => {
-        this.catalogoTiposDeTituloCaido.set(false);
+        // Primero se apaga «pidiendo», y recién después se toca el mapa: si
+        // mapear la respuesta reventara, el mapa quedaría vacío con el aviso
+        // encendido, que es lo correcto, y no vacío con el aviso apagado.
+        this.pidiendoTiposDeTitulo.set(false);
         this.conceptoPorCodigo.set(
           new Map(enumeracion.options.map((opcion) => [opcion.code, opcion.conceptId])),
         );
@@ -726,8 +742,8 @@ export class RegisterPractitioner {
         this.retirarAvisoDeCatalogo();
       },
       error: () => {
+        this.pidiendoTiposDeTitulo.set(false);
         this.conceptoPorCodigo.set(new Map());
-        this.catalogoTiposDeTituloCaido.set(true);
       },
     });
   }
@@ -891,10 +907,18 @@ export class RegisterPractitioner {
    * viven en el formulario, viven en un signal.
    */
   protected readonly camposDeEstudioDeFila = [
-    { campo: 'universidad', label: 'Universidad', placeholder: 'Universidad' },
-    { campo: 'pais', label: 'País', placeholder: 'País' },
-    { campo: 'ciudad', label: 'Ciudad', placeholder: 'Ciudad' },
-  ] as const satisfies readonly { campo: CampoDeEstudio; label: string; placeholder: string }[];
+    // La universidad viaja como `issuingInstitutionText`, que el contrato acota
+    // a 200: se acota acá igual, para que el exceso no llegue a ser un 400 en
+    // inglés técnico. País y ciudad no viajan todavía, así que no tienen tope.
+    { campo: 'universidad', label: 'Universidad', placeholder: 'Universidad', maxlength: 200 },
+    { campo: 'pais', label: 'País', placeholder: 'País', maxlength: null },
+    { campo: 'ciudad', label: 'Ciudad', placeholder: 'Ciudad', maxlength: null },
+  ] as const satisfies readonly {
+    campo: CampoDeEstudio;
+    label: string;
+    placeholder: string;
+    maxlength: number | null;
+  }[];
 
   protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
 

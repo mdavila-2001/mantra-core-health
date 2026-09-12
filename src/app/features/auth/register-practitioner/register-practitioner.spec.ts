@@ -979,6 +979,66 @@ describe('RegisterPractitioner', () => {
    * que es lo que hay que conservar cuando esto se conecte de verdad.
    */
   describe('títulos y respaldos (sólo pantalla)', () => {
+    /* ---- El paso, por el DOM ------------------------------------------------
+       El motor sólo pinta la página actual y no deja saltar por el índice a un
+       paso nunca visitado, así que a «Tus títulos» se llega como la persona:
+       «Siguiente» de a uno. Con el paso en pantalla, lo que se prueba son las
+       casillas y los botones de verdad, no los métodos que hay detrás. */
+
+    /** El aviso que se lee en pantalla, si hay alguno. */
+    function avisoVisible(): string | null {
+      fixture.detectChanges();
+      const alerta: HTMLElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="registro-error"]',
+      );
+      return alerta === null ? null : (alerta.textContent?.trim() ?? '');
+    }
+
+    /** Lleva la pantalla hasta el paso «Tus títulos», «Siguiente» de a uno. */
+    function irAlPasoDeTitulos(): void {
+      fixture.detectChanges();
+      for (let pagina = 0; pagina < 12; pagina += 1) {
+        if (fixture.nativeElement.querySelector('.registro-titulos') !== null) return;
+        const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+          '[data-testid="paginated-form-continuar"]',
+        );
+        if (continuar === null) break;
+        continuar.click();
+        fixture.detectChanges();
+      }
+      throw new Error('No se llegó al paso «Tus títulos»');
+    }
+
+    /** Un elemento del paso por su `data-testid`, o nada. */
+    function enElPaso<T extends HTMLElement>(testId: string): T | null {
+      fixture.detectChanges();
+      return fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+    }
+
+    /** La casilla del número de la fila, en el DOM del paso. */
+    function casillaDeNumero(id: string): HTMLInputElement {
+      const casilla = enElPaso<HTMLInputElement>(`registro-pro-titulo-numero-${id}`);
+      if (casilla === null) throw new Error('La fila no está en el DOM');
+      return casilla;
+    }
+
+    /** Escribe en una casilla como lo hace el teclado: valor + evento `input`. */
+    function escribirEnCasilla(testId: string, valor: string): void {
+      const casilla = enElPaso<HTMLInputElement>(testId);
+      if (casilla === null) throw new Error(`No está la casilla ${testId}`);
+      casilla.value = valor;
+      casilla.dispatchEvent(new Event('input', { bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    /** Pulsa un botón del paso. */
+    function pulsar(testId: string): void {
+      const boton = enElPaso<HTMLButtonElement>(testId);
+      if (boton === null) throw new Error(`No está el botón ${testId}`);
+      boton.click();
+      fixture.detectChanges();
+    }
+
     /** Un evento `change` de un `<input type="file">` con el archivo dado. */
     function eventoDeArchivo(nombre: string, tipo: string, bytes: number): Event {
       const archivo = new File(['x'], nombre, { type: tipo });
@@ -1243,13 +1303,23 @@ describe('RegisterPractitioner', () => {
      * último paso, pulsaba «Crear cuenta» y no pasaba nada, sin saber qué
      * corregir ni dónde. No alcanza con no llamar a la API.
      */
-    it('una fila con datos y sin número frena el envío y lo dice en pantalla', () => {
-      catalogoDeTiposDeTitulo();
-      component.agregarTitulo('DIPLOMADO');
-      const [diplomado] = component.titulosDe('DIPLOMADO');
-      component.escribirDatoDeTitulo(diplomado.id, 'universidad', 'Nur');
+    /**
+     * Una fila de diplomado con universidad y sin número, hecha por el DOM del
+     * paso: «+ Agregar» y teclado. Devuelve el id de la fila.
+     */
+    function filaDeDiplomadoSinNumero(): string {
+      irAlPasoDeTitulos();
+      pulsar('registro-pro-agregar-DIPLOMADO');
+      const [fila] = component.titulosDe('DIPLOMADO');
+      escribirEnCasilla(`registro-pro-titulo-universidad-${fila.id}`, 'Nur');
+      return fila.id;
+    }
 
+    it('una fila con datos y sin número frena el envío, lo dice en pantalla y marca la fila', () => {
+      catalogoDeTiposDeTitulo();
       completarProfesional();
+      const id = filaDeDiplomadoSinNumero();
+
       component.submit();
       fixture.detectChanges();
 
@@ -1257,33 +1327,40 @@ describe('RegisterPractitioner', () => {
 
       // 1) El aviso se VE: el alert vive fuera del motor, así que se lee desde
       // cualquier paso, y `appAnuncio` lo anuncia a lectores de pantalla.
-      const alerta: HTMLElement | null = fixture.nativeElement.querySelector(
-        '[data-testid="registro-error"]',
-      );
-      expect(alerta).not.toBeNull();
-      expect(alerta?.textContent).toContain('número de diploma');
+      expect(avisoVisible()).toContain('número de diploma');
       // 2) Y dirige al paso donde está el campo: el índice de pasos es navegable.
-      expect(alerta?.textContent).toContain('Tus títulos');
-      // 3) La fila señalada es la que está mal, que es lo que marca el campo
-      //    como inválido en la plantilla (`aria-invalid` + mensaje en la fila).
-      expect(component.tituloSinNumero(component.titulosDe('DIPLOMADO')[0])).toBe(true);
+      expect(avisoVisible()).toContain('Tus títulos');
+      // 3) La fila señalada es la que está mal, EN el DOM: `aria-invalid`,
+      //    el borde de peligro y el mensaje propio, enlazado por
+      //    `aria-describedby` para que el lector lo diga junto a la casilla.
+      const casilla = casillaDeNumero(id);
+      expect(casilla.getAttribute('aria-invalid')).toBe('true');
+      expect(casilla.classList.contains('registro-titulo__dato--invalido')).toBe(true);
+      expect(casilla.getAttribute('aria-describedby')).toBe(
+        `registro-pro-titulo-numero-error-${id}`,
+      );
+      expect(enElPaso(`registro-pro-titulo-numero-error-${id}`)?.textContent).toContain(
+        'Falta el número',
+      );
     });
 
-    it('completar el número borra el aviso y deja enviar', () => {
+    it('completar el número en la casilla borra el aviso, desmarca la fila y deja enviar', () => {
       catalogoDeTiposDeTitulo();
-      component.agregarTitulo('DIPLOMADO');
-      const [fila] = component.titulosDe('DIPLOMADO');
-      component.escribirDatoDeTitulo(fila.id, 'universidad', 'Nur');
       completarProfesional();
+      const id = filaDeDiplomadoSinNumero();
       component.submit();
-      expect(component.errorMessage()).not.toBeNull();
+      expect(avisoVisible()).not.toBeNull();
 
       // Las filas no viven en el `FormGroup`, así que escribir el número no
       // dispara `valueChanges`: sin la limpieza propia, el aviso se quedaría
       // contradiciendo a la pantalla.
-      component.escribirDatoDeTitulo(fila.id, 'numero', 'DIP-7');
-      expect(component.errorMessage()).toBeNull();
-      expect(component.tituloSinNumero(component.titulosDe('DIPLOMADO')[0])).toBe(false);
+      escribirEnCasilla(`registro-pro-titulo-numero-${id}`, 'DIP-7');
+
+      expect(avisoVisible()).toBeNull();
+      const casilla = casillaDeNumero(id);
+      expect(casilla.getAttribute('aria-invalid')).toBeNull();
+      expect(casilla.classList.contains('registro-titulo__dato--invalido')).toBe(false);
+      expect(enElPaso(`registro-pro-titulo-numero-error-${id}`)).toBeNull();
 
       component.submit();
       const req = http.expectOne('/iam/auth/register-practitioner');
@@ -1293,18 +1370,57 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('quitar la fila problemática también borra el aviso', () => {
+    it('el botón «Quitar» de la fila problemática la saca del paso y borra el aviso', () => {
       catalogoDeTiposDeTitulo();
-      component.agregarTitulo('DIPLOMADO');
-      const [fila] = component.titulosDe('DIPLOMADO');
-      component.escribirDatoDeTitulo(fila.id, 'universidad', 'Nur');
       completarProfesional();
+      const id = filaDeDiplomadoSinNumero();
       component.submit();
-      expect(component.errorMessage()).not.toBeNull();
+      expect(avisoVisible()).not.toBeNull();
 
-      component.quitarTitulo(fila.id);
+      pulsar(`registro-pro-titulo-quitar-${id}`);
 
-      expect(component.errorMessage()).toBeNull();
+      expect(avisoVisible()).toBeNull();
+      expect(enElPaso(`registro-pro-titulo-numero-${id}`)).toBeNull();
+      expect(component.titulosDe('DIPLOMADO')).toHaveLength(0);
+    });
+
+    it('las casillas acotan lo que el contrato acota: número 100, universidad 200', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      const id = filaDeDiplomadoSinNumero();
+
+      // El exceso se frena en la casilla, no como un 400 en inglés técnico.
+      expect(casillaDeNumero(id).getAttribute('maxlength')).toBe('100');
+      expect(
+        enElPaso<HTMLInputElement>(`registro-pro-titulo-universidad-${id}`)?.getAttribute(
+          'maxlength',
+        ),
+      ).toBe('200');
+      // País y ciudad no viajan todavía, así que no se les impone un tope.
+      expect(
+        enElPaso<HTMLInputElement>(`registro-pro-titulo-pais-${id}`)?.hasAttribute('maxlength'),
+      ).toBe(false);
+      expect(
+        enElPaso<HTMLInputElement>(`registro-pro-titulo-ciudad-${id}`)?.hasAttribute(
+          'maxlength',
+        ),
+      ).toBe(false);
+    });
+
+    it('el paso dice qué se guarda hoy y qué se completa después desde el perfil', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      irAlPasoDeTitulos();
+
+      // Sin esta línea la pantalla prometía guardar lo que descarta: el nombre,
+      // el país, la ciudad y el diploma se preguntan pero no viajan.
+      const alcance = (enElPaso('registro-pro-titulos-alcance')?.textContent ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      expect(alcance).toBe(
+        'En esta alta se guardan el tipo, el número y la universidad de cada título. ' +
+          'El nombre, el país, la ciudad y el archivo que completes aquí todavía no se guardan.',
+      );
     });
 
     it('una fila agregada y vacía no frena ni viaja', () => {
@@ -1390,60 +1506,63 @@ describe('RegisterPractitioner', () => {
         component.escribirDatoDeTitulo(fila.id, 'universidad', 'Universidad Mayor de San Simón');
       }
 
-      /** El aviso que se lee en pantalla, si hay alguno. */
-      function avisoVisible(): string | null {
-        fixture.detectChanges();
-        const alerta: HTMLElement | null = fixture.nativeElement.querySelector(
-          '[data-testid="registro-error"]',
-        );
-        return alerta === null ? null : (alerta.textContent?.trim() ?? '');
+      /** El botón «Reintentar» del paso, tal como está en el DOM, o nada. */
+      function botonReintentar(): HTMLButtonElement | null {
+        return enElPaso<HTMLButtonElement>('registro-pro-titulos-reintentar');
       }
 
-      it('la primera carga fallida enciende el aviso del paso y frena el envío diciéndolo', () => {
+      /**
+       * El defecto que esto fija, en su segunda forma: el aviso decía «el botón
+       * Reintentar vuelve a pedirlos» y en el paso no había ningún botón. El
+       * botón colgaba de una bandera que sólo encendía el `error` del
+       * observable, y el alert del mapa vacío. Acá se recorre la cadena entera
+       * y por el DOM: fallo → botón en el paso → clic real → GET → 200 →
+       * catálogo → alert fuera → lo escrito, intacto.
+       */
+      it('con la carga caída, «Reintentar» está en el paso y el clic real recupera el catálogo', () => {
         catalogoDeTiposCaido();
         filaConNumero();
+        const [fila] = component.titulosDe('UNIVERSITARIO');
         completarProfesional();
         component.submit();
 
-        // No sale el alta: la fila viajaría sin el concepto que el contrato exige.
+        // Frenado y dicho, nombrando el botón.
         http.expectNone('/iam/auth/register-practitioner');
-        // El paso enciende su aviso con botón, como el de departamentos.
-        expect(component.catalogoTiposDeTituloCaido()).toBe(true);
-        // Y el mensaje del envío nombra el botón que de verdad reintenta, en
-        // vez de mandar a repetir un paso que no pide nada.
         expect(avisoVisible()).toContain('Reintentar');
         expect(avisoVisible()).not.toContain('reintentá en unos segundos');
-      });
 
-      it('«Reintentar» vuelve a pedirlo y, al responder, el aviso se va sin recargar', () => {
-        catalogoDeTiposCaido();
-        filaConNumero();
-        completarProfesional();
-        component.submit();
-        expect(avisoVisible()).not.toBeNull();
+        // El botón existe donde el aviso manda a buscarlo, y es el mismo
+        // estado: si el alert está, el botón está.
+        irAlPasoDeTitulos();
+        const boton = botonReintentar();
+        expect(boton).not.toBeNull();
+        expect(casillaDeNumero(fila.id).value).toBe('TIT-1');
 
-        component.reintentarTiposDeCredencial();
+        // Clic de verdad sobre el `<button>`: dispara el GET.
+        boton?.click();
         catalogoDeTiposCompleto();
+        fixture.detectChanges();
 
+        // Catálogo repoblado, aviso y botón fuera, lo escrito sigue ahí.
         expect(component.catalogoTiposDeTituloCaido()).toBe(false);
-        expect(component.errorMessage()).toBeNull();
+        expect(botonReintentar()).toBeNull();
         expect(avisoVisible()).toBeNull();
+        expect(casillaDeNumero(fila.id).value).toBe('TIT-1');
+        expect(component.titulosDe('UNIVERSITARIO')[0].universidad).toBe(
+          'Universidad Mayor de San Simón',
+        );
       });
 
-      it('el reintento no toca lo ya escrito, y el envío siguiente arma credentials[]', () => {
+      it('tras el reintento con éxito, el envío arma credentials[] con lo escrito', () => {
         catalogoDeTiposCaido();
         filaConNumero();
         completarProfesional();
         component.submit();
+        irAlPasoDeTitulos();
 
-        component.reintentarTiposDeCredencial();
+        botonReintentar()?.click();
         catalogoDeTiposCompleto();
-
-        // Lo escrito antes del fallo sigue en su fila: vive en su propio
-        // signal, que el reintento no mira.
-        const [fila] = component.titulosDe('UNIVERSITARIO');
-        expect(fila.numero).toBe('TIT-1');
-        expect(fila.universidad).toBe('Universidad Mayor de San Simón');
+        fixture.detectChanges();
 
         component.submit();
 
@@ -1458,20 +1577,44 @@ describe('RegisterPractitioner', () => {
         req.flush(RESPUESTA_PRO);
       });
 
-      it('un segundo fallo conserva el aviso y el alta sigue sin salir', () => {
+      it('un segundo fallo deja el botón y el aviso, y el alta sigue sin salir', () => {
         catalogoDeTiposCaido();
         filaConNumero();
         completarProfesional();
         component.submit();
+        irAlPasoDeTitulos();
 
-        component.reintentarTiposDeCredencial();
+        botonReintentar()?.click();
         catalogoDeTiposCaido();
+        fixture.detectChanges();
 
-        expect(component.catalogoTiposDeTituloCaido()).toBe(true);
+        expect(botonReintentar()).not.toBeNull();
         expect(avisoVisible()).toContain('Reintentar');
 
         component.submit();
         http.expectNone('/iam/auth/register-practitioner');
+      });
+
+      it('un 200 sin los tipos también enciende el botón: manda el mapa, no el error', () => {
+        // La forma exacta que dejó el botón ausente en el E2E: respuesta
+        // correcta pero inútil. Con la bandera de `error` no había botón.
+        http
+          .expectOne((r) => r.url.startsWith('/system-context/dynamic-enums'))
+          .flush({
+            code: 'professional-credential-type',
+            name: 'Tipo de credencial profesional',
+            definitionId: 'def-1',
+            valueSetId: 'vs-cred',
+            options: [],
+          });
+        filaConNumero();
+        completarProfesional();
+        component.submit();
+
+        http.expectNone('/iam/auth/register-practitioner');
+        expect(avisoVisible()).toContain('Reintentar');
+        irAlPasoDeTitulos();
+        expect(botonReintentar()).not.toBeNull();
       });
 
       it('el aviso del número que falta NO se borra cuando el catálogo carga', () => {
@@ -1482,8 +1625,9 @@ describe('RegisterPractitioner', () => {
         completarProfesional();
         component.submit();
         expect(avisoVisible()).toContain('número de diploma');
+        irAlPasoDeTitulos();
 
-        component.reintentarTiposDeCredencial();
+        botonReintentar()?.click();
         catalogoDeTiposCompleto();
 
         // El catálogo ya está, pero la fila sigue sin número: retirar este

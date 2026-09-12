@@ -277,6 +277,15 @@
             -->
             <ng-template appCampoPersonalizado="academicTitles">
               <div class="registro-titulos">
+                <!-- Qué se guarda hoy y qué no, dicho antes de que lo escriban.
+                     Las casillas de nombre, país, ciudad y diploma se siguen
+                     preguntando (no se ocultan en esta pasada) pero no viajan:
+                     sin esta línea la pantalla prometía guardar lo que descarta. -->
+                <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-alcance">
+                  En esta alta se guardan el tipo, el número y la universidad de cada título. El
+                  nombre, el país, la ciudad y el archivo que completes aquí todavía no se
+                  guardan.
+                </p>
                 <!-- Sin catálogo de tipos, una fila con número no se puede
                      mandar: el contrato exige el concepto. Se avisa acá, donde
                      se escriben, y con el botón que vuelve a pedirlo —mismo
@@ -328,6 +337,7 @@
                             type="text"
                             class="registro-titulo__dato"
                             placeholder="Número del diploma"
+                            maxlength="100"
                             [value]="titulo.numero"
                             [attr.aria-invalid]="tituloSinNumero(titulo) ? 'true' : null"
                             [attr.aria-describedby]="
@@ -363,6 +373,7 @@
                                 type="text"
                                 class="registro-titulo__dato"
                                 [placeholder]="campo.placeholder"
+                                [attr.maxlength]="campo.maxlength"
                                 [value]="titulo[campo.campo]"
                                 [attr.data-testid]="
                                   'registro-pro-titulo-' + campo.campo + '-' + titulo.id
@@ -388,6 +399,7 @@
                           variant="ghost"
                           size="sm"
                           [attr.aria-label]="'Quitar ' + tipo.singular"
+                          [attr.data-testid]="'registro-pro-titulo-quitar-' + titulo.id"
                           (clicked)="quitarTitulo(titulo.id)"
                         >
                           Quitar
