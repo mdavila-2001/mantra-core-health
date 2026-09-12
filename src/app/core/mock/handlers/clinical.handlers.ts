@@ -590,13 +590,13 @@ export function registrarClinica(router: MockRouter): void {
 
   router.get('/charts/templates', ({ query }) => {
     const esp = query.get('specialtyConceptId');
-    return PLANTILLAS_DE_EXPEDIENTE.filter((t) => esp === null || esp === '' || t.specialtyConceptId === esp);
+    return plantillasVigentes().filter((t) => esp === null || esp === '' || t.specialtyConceptId === esp);
   });
-  router.get('/charts/templates/:id', ({ params }) => PLANTILLAS_DE_EXPEDIENTE.find((t) => t.id === params['id']) ?? notFound('Plantilla no encontrada'));
+  router.get('/charts/templates/:id', ({ params }) => plantillasVigentes().find((t) => t.id === params['id']) ?? notFound('Plantilla no encontrada'));
   router.post('/charts/templates', (request) => {
     const datos = cuerpo<{ specialtyConceptId: string; code: string; name: string; fields: { code: string; name: string; dataType: string; required?: boolean }[] }>(request);
     const nueva = plantilla(datos.code ?? 'NUEVA', datos.name ?? 'Plantilla nueva', datos.specialtyConceptId ?? '', (datos.fields ?? []).map((f) => [f.code, f.name, f.dataType, f.required ?? false] as const));
-    PLANTILLAS_DE_EXPEDIENTE.push(nueva);
+    PLANTILLAS_CREADAS.push(nueva);
     return { status: 201, body: nueva };
   });
   router.post('/charts/templates/:id/assignments', (request) => {
@@ -657,6 +657,28 @@ export const PLANTILLAS_DE_EXPEDIENTE = FICHAS_ESTANDAR.map((ficha) =>
     ficha.provenance,
   ),
 );
+
+/**
+ * Las plantillas que alguien creó por `POST /charts/templates` durante la
+ * sesión.
+ *
+ * Van aparte de {@link PLANTILLAS_DE_EXPEDIENTE} y no empujadas dentro, porque
+ * ese arreglo **es el fixture** —«las 43 fichas estándar»— y hay una prueba que
+ * lo afirma contando. Empujar ahí convertía una creación del simulador en
+ * estado que sobrevive al archivo de prueba que la hizo: los specs de un mismo
+ * worker comparten la instancia del módulo, así que `fichas-estandar.spec.ts`
+ * veía 51 fichas estándar donde hay 43 — y sólo cuando el reparto del pool
+ * ponía antes al spec que crea. Un rojo que no se reproduce aislado.
+ */
+const PLANTILLAS_CREADAS: ReturnType<typeof plantilla>[] = [];
+
+/**
+ * El catálogo que sirve la API simulada: el estándar más lo creado en la
+ * sesión. Es lo que leen todas las rutas; el fixture queda intacto.
+ */
+export function plantillasVigentes(): readonly ReturnType<typeof plantilla>[] {
+  return [...PLANTILLAS_DE_EXPEDIENTE, ...PLANTILLAS_CREADAS];
+}
 
 function registroReceta(r: RecetaSimulada) {
   return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === ESTADO_RECETA['RX-DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };
