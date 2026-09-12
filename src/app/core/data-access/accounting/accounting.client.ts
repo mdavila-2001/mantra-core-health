@@ -5,13 +5,16 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
+  AccrualRegister,
   BalanceSheet,
   ClearingResult,
   ControllingObject,
   DocumentFlowNode,
   FiscalPeriod,
   FiscalYear,
+  FixedAssetRegister,
   OpenItemsPage,
+  RunResult,
   WorkflowAction,
   ChartOfAccounts,
   FinancialStatementLine,
@@ -337,6 +340,36 @@ export class AccountingClient {
       this.url(`/accounting/journal-transactions/${transactionId}/${action}`),
       {},
     );
+  }
+
+
+  /** `GET /accounting/assets` — el registro de activos con su valor neto. */
+  fixedAssets(practiceId: string): Observable<FixedAssetRegister> {
+    return this.http.get<FixedAssetRegister>(this.url('/accounting/assets'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /**
+   * `POST /accounting/depreciation/run` — la corrida de amortización.
+   *
+   * No es un informe: crea el asiento del período y mueve los saldos. Por eso
+   * falla si el período está cerrado, igual que cualquier otro posteo.
+   */
+  runDepreciation(practiceId: string): Observable<RunResult> {
+    return this.http.post<RunResult>(this.url('/accounting/depreciation/run'), { practiceId });
+  }
+
+  /** `GET /accounting/accrual-objects` — devengos y cuánto queda por reconocer. */
+  accrualObjects(practiceId: string): Observable<AccrualRegister> {
+    return this.http.get<AccrualRegister>(this.url('/accounting/accrual-objects'), {
+      params: new HttpParams().set('practiceId', practiceId),
+    });
+  }
+
+  /** `POST /accounting/accruals/run` — reconoce el período de cada devengo. */
+  runAccruals(practiceId: string): Observable<RunResult> {
+    return this.http.post<RunResult>(this.url('/accounting/accruals/run'), { practiceId });
   }
 
   private url(path: string): string {

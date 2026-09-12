@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
 import { Cockpit } from './cockpit';
@@ -25,6 +26,9 @@ function montar(): { fixture: ReturnType<typeof TestBed.createComponent<Cockpit>
       provideZonelessChangeDetection(),
       provideHttpClient(),
       provideHttpClientTesting(),
+      // El cockpit enlaza a los libros con `routerLink`, y esa directiva pide
+      // `ActivatedRoute`: sin router el componente no se construye.
+      provideRouter([]),
       { provide: API_BASE_URL, useValue: BASE },
     ],
   });

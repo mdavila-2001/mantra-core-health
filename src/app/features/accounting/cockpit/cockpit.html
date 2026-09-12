@@ -1,7 +1,21 @@
 <app-page-header
-  title="Cockpit contable"
+  title="Contabilidad"
   subtitle="Cómo va el ejercicio, qué documentos están frenados y qué falta cobrar."
-/>
+>
+  <!-- El título sigue siendo «Contabilidad»: es uno de los nombres exactos de
+       la lista del cliente, y una sección que en el menú se llama de una forma
+       y en su pantalla de otra le agrega una duda a quien acaba de tocar el
+       renglón. Lo que cambió es qué se muestra primero. -->
+  <a
+    app-button
+    page-actions
+    variant="outline"
+    routerLink="/administration/accounting/libros"
+    data-testid="ir-a-los-libros"
+  >
+    Balance y libro diario
+  </a>
+</app-page-header>
 
 <!-- ─── Barra de contexto ───────────────────────────────────────────────────
      Sociedad, ejercicio y período, siempre a la vista. En una contabilidad el
@@ -163,7 +177,15 @@
               <ul class="documentos">
                 @for (doc of grupo.documentos; track doc.id) {
                   <li class="documento">
-                    <span class="documento__numero">{{ doc.transactionNumber }}</span>
+                    <button
+                      type="button"
+                      class="documento__numero documento__numero--abrible"
+                      [attr.aria-expanded]="flujoAbierto() === doc.id"
+                      [attr.data-testid]="'flujo-' + doc.id"
+                      (click)="verFlujo(doc.id)"
+                    >
+                      {{ doc.transactionNumber }}
+                    </button>
                     <span class="documento__fecha">{{ doc.transactionDate | date: 'dd/MM/yyyy' }}</span>
                     <span class="documento__importe">{{ importe(doc.totalAmount ?? '0.00') }}</span>
                     @if (grupo.accion; as accion) {
@@ -180,6 +202,29 @@
                     } @else {
                       <span class="documento__final">Cerrado</span>
                     }
+
+                    @if (flujoAbierto() === doc.id) {
+                      <ol class="flujo" [attr.data-testid]="'cadena-' + doc.id">
+                        @for (nodo of cadenaDelFlujo(); track nodo.id) {
+                          <li class="flujo__nodo" [class.flujo__nodo--actual]="nodo.role === 'ACTUAL'">
+                            <span class="flujo__papel">
+                              {{
+                                nodo.role === 'ORIGEN'
+                                  ? 'Origen'
+                                  : nodo.role === 'ACTUAL'
+                                    ? 'Este documento'
+                                    : 'Reversión'
+                              }}
+                            </span>
+                            <span class="flujo__numero">{{ nodo.transactionNumber }}</span>
+                            <span class="flujo__fecha">{{ nodo.transactionDate }}</span>
+                            <span class="flujo__importe">{{ importe(nodo.totalAmount) }}</span>
+                          </li>
+                        } @empty {
+                          <li class="flujo__nodo">Leyendo el flujo…</li>
+                        }
+                      </ol>
+                    }
                   </li>
                 }
               </ul>
@@ -187,7 +232,7 @@
               @if (grupo.ocultos > 0) {
                 <p class="grupo__resto">
                   y {{ grupo.ocultos }} más.
-                  <a app-link routerLink="/administration/accounting">Verlos en el libro diario</a>
+                  <a app-link routerLink="/administration/accounting/libros">Verlos en el libro diario</a>
                 </p>
               }
             </section>
@@ -293,6 +338,115 @@
           </section>
         }
       </app-tab>
+
+      <!-- ─── Cierre: activos y devengos ──────────────────────────────────── -->
+      <app-tab label="Cierre del período">
+        <p class="seccion__nota">
+          Lo que hay que correr antes de cerrar el mes. Ninguna de las dos es un
+          informe: cada corrida crea su asiento y mueve los saldos, y por eso las dos
+          fallan si el período está cerrado.
+        </p>
+
+        <section class="grupo">
+          <header class="grupo__cabecera">
+            <h3 class="grupo__titulo">Activos fijos</h3>
+            <span class="grupo__cuenta">{{ tablero.activos.items.length }}</span>
+          </header>
+
+          <div class="corrida">
+            <p class="corrida__cifra">
+              <span class="corrida__rotulo">Cargo del próximo mes</span>
+              {{ importe(tablero.activos.monthlyCharge) }}
+            </p>
+            <p class="corrida__cifra">
+              <span class="corrida__rotulo">Valor neto en libros</span>
+              {{ importe(tablero.activos.totalNetBookValue) }}
+            </p>
+            <p class="corrida__cifra">
+              <span class="corrida__rotulo">Amortización acumulada</span>
+              {{ importe(tablero.activos.totalAccumulated) }}
+            </p>
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              [isLoading]="corriendo() === 'amortizacion'"
+              data-testid="correr-amortizacion"
+              (clicked)="amortizar()"
+            >
+              Correr la amortización
+            </button>
+          </div>
+
+          <ul class="dimensiones">
+            @for (activo of tablero.activos.items; track activo.id) {
+              <li class="dimension" [attr.data-testid]="'activo-' + activo.code">
+                <span class="dimension__codigo">{{ activo.code }}</span>
+                <span class="dimension__nombre">
+                  {{ activo.name }}
+                  <span class="dimension__detalle">
+                    {{ activo.className }} · {{ activo.usefulLifeMonths }} meses ·
+                    {{ importe(activo.monthlyDepreciation) }}/mes
+                    @if (!activo.depreciable) {
+                      · <strong>no entra en la corrida</strong>
+                    }
+                  </span>
+                </span>
+                <span class="dimension__resultado">{{ importe(activo.netBookValue) }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="grupo">
+          <header class="grupo__cabecera">
+            <h3 class="grupo__titulo">Devengos</h3>
+            <span class="grupo__cuenta">{{ tablero.devengos.items.length }}</span>
+          </header>
+
+          <div class="corrida">
+            <p class="corrida__cifra">
+              <span class="corrida__rotulo">Reconoce este período</span>
+              {{ importe(tablero.devengos.periodCharge) }}
+            </p>
+            <p class="corrida__cifra">
+              <span class="corrida__rotulo">Queda por reconocer</span>
+              {{ importe(tablero.devengos.pendingTotal) }}
+            </p>
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              [isLoading]="corriendo() === 'devengo'"
+              data-testid="correr-devengo"
+              (clicked)="devengar()"
+            >
+              Correr el devengo
+            </button>
+          </div>
+
+          <ul class="dimensiones">
+            @for (devengo of tablero.devengos.items; track devengo.id) {
+              <li class="dimension" [attr.data-testid]="'devengo-' + devengo.code">
+                <span class="dimension__codigo">{{ devengo.code }}</span>
+                <span class="dimension__nombre">
+                  {{ devengo.name }}
+                  <span class="dimension__detalle">
+                    {{ devengo.kind === 'REVENUE' ? 'Ingreso diferido' : 'Gasto anticipado' }} ·
+                    {{ devengo.postedPeriods }}/{{ devengo.periods }} períodos ·
+                    {{ importe(devengo.periodAmount) }} por período
+                  </span>
+                </span>
+                @if (devengo.completed) {
+                  <app-badge variant="success">Reconocido entero</app-badge>
+                }
+                <span class="dimension__resultado">{{ importe(devengo.pendingAmount) }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      </app-tab>
+
     </app-tabs>
 
     <app-alert tone="info" class="nota-de-origen">

@@ -196,6 +196,51 @@
   margin-inline-start: auto;
 }
 
+/* La cabecera de una corrida: sus cifras y el botón que la dispara, juntos.
+   El botón vive al lado del número que va a mover, no al final de la lista. */
+.corrida {
+  align-items: end;
+  background: var(--bg-inset);
+  border-radius: var(--r-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-block-end: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.corrida__cifra {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin: 0;
+}
+
+.corrida__rotulo {
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.corrida button {
+  margin-inline-start: auto;
+}
+
+.dimension__nombre {
+  display: flex;
+  flex-direction: column;
+}
+
+.dimension__detalle {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+}
+
 .grupo__resto {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
@@ -205,6 +250,62 @@
 .documento__final {
   color: var(--text-muted);
   font-size: var(--fs-caption);
+}
+
+/* El número de documento abre su flujo. Es un botón y no un enlace porque no
+   navega: despliega acá mismo. Se pinta como el texto que era. */
+.documento__numero--abrible {
+  background: none;
+  border: none;
+  color: var(--brand-primary);
+  cursor: pointer;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  padding: 0;
+  text-align: start;
+}
+
+.documento__numero--abrible:hover {
+  text-decoration: underline;
+}
+
+/* La cadena del documento: de dónde salió y qué se hizo con él. Sangrada
+   debajo de su fila, en el orden en que ocurrió. */
+.flujo {
+  border-inline-start: 2px solid var(--border-default);
+  flex-basis: 100%;
+  list-style: none;
+  margin: var(--sp-2) 0 var(--sp-2) var(--sp-4);
+  padding: 0 0 0 var(--sp-4);
+}
+
+.flujo__nodo {
+  align-items: baseline;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-caption);
+  gap: var(--sp-3);
+  padding-block: var(--sp-1);
+}
+
+.flujo__nodo--actual {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.flujo__papel {
+  min-inline-size: 8rem;
+}
+
+.flujo__numero,
+.flujo__importe {
+  font-variant-numeric: tabular-nums;
+}
+
+.flujo__importe {
+  margin-inline-start: auto;
 }
 
 /* ---- antigüedad de la cartera --------------------------------------------- */

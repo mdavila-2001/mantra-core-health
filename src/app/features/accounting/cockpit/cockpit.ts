@@ -8,10 +8,13 @@ import { toObservable } from '@angular/core/rxjs-interop';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
 import type {
+  AccrualRegister,
   BalanceSheet,
   ControllingObject,
   FiscalPeriod,
+  DocumentFlowNode,
   FiscalYear,
+  FixedAssetRegister,
   IncomeStatement,
   JournalTransaction,
   OpenItemsPage,
@@ -24,6 +27,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Select } from '../../../shared/components/atoms/select/select';
@@ -89,6 +93,7 @@ import {
     Alert,
     DatePipe,
     AppButton,
+    AppButtonLink,
     Badge,
     Card,
     FormField,
@@ -111,6 +116,13 @@ export class Cockpit {
 
   /** Fuerza una relectura sin tocar la práctica elegida. */
   private readonly recarga = signal(0);
+
+  /** Qué corrida está en curso, para apagar su botón mientras tanto. */
+  readonly corriendo = signal<'amortizacion' | 'devengo' | null>(null);
+
+  /** El documento cuyo flujo está abierto, y su cadena. */
+  readonly flujoAbierto = signal<string | null>(null);
+  readonly cadenaDelFlujo = signal<readonly DocumentFlowNode[]>([]);
 
   /** La pestaña abierta del cockpit: documentos, partidas o controlling. */
   readonly pestana = signal(0);
@@ -240,6 +252,8 @@ export class Cockpit {
             situacion: this.accounting.balanceSheet(practiceId, {}),
             partidas: this.accounting.openItems(practiceId),
             controlling: this.accounting.controllingObjects(practiceId),
+            activos: this.accounting.fixedAssets(practiceId),
+            devengos: this.accounting.accrualObjects(practiceId),
             diario: this.accounting.listJournal(practiceId, { limit: 50 }).pipe(map((p) => p.items)),
           }).pipe(
             map((datos): ViewState<Tablero> => ready(datos)),
@@ -250,6 +264,31 @@ export class Cockpit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((estado) => this.tablero.set(estado));
+  }
+
+  /**
+   * Abre —o cierra— el flujo de un documento.
+   *
+   * El flujo contesta la pregunta que un número de asiento no contesta solo:
+   * de dónde salió y qué se hizo después con él. Una reversión sin su original
+   * a la vista es un importe negativo sin explicación.
+   */
+  verFlujo(transactionId: string): void {
+    if (this.flujoAbierto() === transactionId) {
+      this.flujoAbierto.set(null);
+      this.cadenaDelFlujo.set([]);
+      return;
+    }
+    this.flujoAbierto.set(transactionId);
+    this.cadenaDelFlujo.set([]);
+    this.accounting
+      .documentFlow(transactionId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (cadena) => this.cadenaDelFlujo.set(cadena),
+        error: () =>
+          this.toasts.show({ type: 'error', message: 'No se pudo leer el flujo del documento.' }),
+      });
   }
 
   recargar(): void {
@@ -294,6 +333,65 @@ export class Cockpit {
             type: 'error',
             message: 'No se cerró: quedan documentos sin postear en el período.',
           }),
+      });
+  }
+
+  /**
+   * La corrida de amortización del período.
+   *
+   * No es un informe: crea el asiento y mueve los saldos, así que después hay
+   * que releer el tablero entero — el resultado del período acaba de cambiar.
+   */
+  amortizar(): void {
+    const practiceId = this.practicaElegida();
+    if (practiceId === null) return;
+    this.corriendo.set('amortizacion');
+    this.accounting
+      .runDepreciation(practiceId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) => {
+          this.corriendo.set(null);
+          this.toasts.show({
+            type: 'success',
+            message: `Amortización de ${r.periodName}: ${this.importe(r.amount)} sobre ${r.assets ?? 0} activos · ${r.transactionNumber}`,
+          });
+          this.recargar();
+        },
+        error: () => {
+          this.corriendo.set(null);
+          this.toasts.show({
+            type: 'error',
+            message: 'No se corrió la amortización. Revisá que el período esté abierto.',
+          });
+        },
+      });
+  }
+
+  /** La corrida de devengos: reconoce el período de cada objeto pendiente. */
+  devengar(): void {
+    const practiceId = this.practicaElegida();
+    if (practiceId === null) return;
+    this.corriendo.set('devengo');
+    this.accounting
+      .runAccruals(practiceId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) => {
+          this.corriendo.set(null);
+          this.toasts.show({
+            type: 'success',
+            message: `Devengo de ${r.periodName}: ${this.importe(r.amount)} en ${r.objects ?? 0} objetos`,
+          });
+          this.recargar();
+        },
+        error: () => {
+          this.corriendo.set(null);
+          this.toasts.show({
+            type: 'error',
+            message: 'No se corrió el devengo. Revisá que el período esté abierto.',
+          });
+        },
       });
   }
 
@@ -347,6 +445,8 @@ interface Tablero {
   readonly resultado: IncomeStatement;
   readonly situacion: BalanceSheet;
   readonly partidas: OpenItemsPage;
+  readonly activos: FixedAssetRegister;
+  readonly devengos: AccrualRegister;
   readonly controlling: readonly ControllingObject[];
   readonly diario: readonly JournalTransaction[];
 }

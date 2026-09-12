@@ -455,6 +455,129 @@ function tramoDe(vencimiento: string): string {
   return TRAMOS.find((t) => atraso >= t.desde && atraso <= t.hasta)?.key ?? 'D90_MAS';
 }
 
+
+/* ---- activos fijos y devengos, con sus corridas ----------------------------
+   Las dos tablas que faltaban del plano SAP: `asset_classes` con su
+   `depreciation_areas` —cuántos meses vive cada clase de activo y contra qué
+   cuentas se amortiza— y `accrual_objects` con su `accrual_schedule_lines`.
+
+   Lo que las hace valer no es el listado: es la **corrida**. Amortizar y
+   devengar no son informes, son asientos. En SAP se ejecutan por período, y
+   cada ejecución deja su documento en el mayor. Acá igual: `depreciation/run` y
+   `accruals/run` crean un asiento POSTEADO y los saldos se mueven. Por eso las
+   dos rechazan si el período está cerrado — un asiento en un mes cerrado es
+   exactamente lo que cerrar un mes impide. */
+
+interface ClaseDeActivo {
+  readonly code: string;
+  readonly name: string;
+  /** Vida útil en meses. Es lo que fija la cuota, no una preferencia. */
+  readonly usefulLifeMonths: number;
+  /** Cuenta de gasto y cuenta de amortización acumulada. */
+  readonly expenseAccount: string;
+  readonly accumulatedAccount: string;
+}
+
+const CLASES_DE_ACTIVO: readonly ClaseDeActivo[] = [
+  { code: 'EQ', name: 'Equipamiento médico', usefulLifeMonths: 60, expenseAccount: '5.5', accumulatedAccount: '1.5' },
+  { code: 'MOB', name: 'Mobiliario clínico', usefulLifeMonths: 120, expenseAccount: '5.5', accumulatedAccount: '1.5' },
+  { code: 'IT', name: 'Equipos informáticos', usefulLifeMonths: 36, expenseAccount: '5.5', accumulatedAccount: '1.5' },
+];
+
+function claseDe(codigo: string): ClaseDeActivo {
+  const prefijo = codigo.split('-')[0] ?? 'EQ';
+  return CLASES_DE_ACTIVO.find((c) => c.code === prefijo) ?? CLASES_DE_ACTIVO[0]!;
+}
+
+/** La cuota lineal del mes: coste entre vida útil. Sin valor residual. */
+function cuotaMensualDe(activo: { code: string; acquisitionCost: string }): number {
+  return Number(activo.acquisitionCost) / claseDe(activo.code).usefulLifeMonths;
+}
+
+interface Devengo {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly kind: 'EXPENSE' | 'REVENUE';
+  readonly totalAmount: string;
+  readonly periods: number;
+  postedPeriods: number;
+  readonly startsOn: string;
+  /** Contra qué cuentas se reparte cada período. */
+  readonly debitAccount: string;
+  readonly creditAccount: string;
+}
+
+const devengos = new Coleccion<Devengo>([
+  {
+    id: uuid('accrual-seguro'),
+    code: 'DEV-001',
+    name: 'Seguro de responsabilidad civil, pagado por el año',
+    kind: 'EXPENSE',
+    totalAmount: '7200.00',
+    periods: 12,
+    postedPeriods: 4,
+    startsOn: isoDia(-120),
+    // Se pagó entero y se reconoce mes a mes: gasto contra el anticipo.
+    debitAccount: '5.3',
+    creditAccount: '1.2',
+  },
+  {
+    id: uuid('accrual-alquiler'),
+    code: 'DEV-002',
+    name: 'Alquiler del consultorio, semestre adelantado',
+    kind: 'EXPENSE',
+    totalAmount: '27000.00',
+    periods: 6,
+    postedPeriods: 2,
+    startsOn: isoDia(-60),
+    debitAccount: '5.1',
+    creditAccount: '1.2',
+  },
+  {
+    id: uuid('accrual-plan'),
+    code: 'DEV-003',
+    name: 'Plan anual de control cardiológico cobrado por adelantado',
+    kind: 'REVENUE',
+    totalAmount: '14400.00',
+    periods: 12,
+    postedPeriods: 3,
+    startsOn: isoDia(-90),
+    // Ingreso diferido: se reconoce el ingreso a medida que se presta.
+    debitAccount: '2.2',
+    creditAccount: '4.1',
+  },
+]);
+
+/** Crea el asiento de una corrida y lo deja POSTEADO, como hace la real. */
+function asientoDeCorrida(descripcion: string, debito: string, credito: string, importe: number): AsientoSimulado {
+  const id = nuevoId('journal');
+  const monto = d(importe);
+  return {
+    id,
+    flujo: FLUJO.POSTED,
+    practiceId: PRACTICAS[0]!.id,
+    transactionNumber: `AS-2026-${String(1000 + asientos.tamano + 1).padStart(5, '0')}`,
+    transactionDate: isoDia(0),
+    fiscalPeriodId: PERIODO_ACTUAL,
+    statusConceptId: ESTADO['ST-COMPLETED']!,
+    transactionTypeConceptId: TIPO_ASIENTO,
+    currencyConceptId: MONEDA_BOB,
+    totalAmount: monto,
+    postedAt: ahora(),
+    description: descripcion,
+    lines: [
+      { id: nuevoId('line'), lineNo: 1, accountId: cuenta(debito), directionConceptId: DIRECCION.DEBIT, amountBase: monto, memo: descripcion, currencyConceptId: MONEDA_BOB },
+      { id: nuevoId('line'), lineNo: 2, accountId: cuenta(credito), directionConceptId: DIRECCION.CREDIT, amountBase: monto, memo: descripcion, currencyConceptId: MONEDA_BOB },
+    ],
+  };
+}
+
+/** El período corriente, o `undefined` si el ejercicio no tiene ninguno abierto. */
+function periodoAbierto(): { id: string; name: string; status: string } | undefined {
+  return periodos.todos().find((p) => p.status === 'OPEN');
+}
+
 export function registrarFinanzas(router: MockRouter): void {
   /* ---- el plano SAP: lecturas que la API todavía no tiene ------------------
      `POST fiscal-periods/:id/lock`, `POST open-items`, `POST clearing-documents`
@@ -593,6 +716,147 @@ export function registrarFinanzas(router: MockRouter): void {
       };
     });
     return { items, count: items.length };
+  });
+
+  /* ---- activos fijos: registro y corrida de amortización ------------------- */
+  router.get('/accounting/assets', ({ query }) => {
+    const practiceId = texto(query, 'practiceId');
+    const items = activos
+      .filtrar((a) => practiceId === null || a.practiceId === practiceId)
+      .map((a) => {
+        const clase = claseDe(a.code);
+        const acumulada = Number(a.acquisitionCost) - Number(a.bookValue);
+        return {
+          id: a.id,
+          code: a.code,
+          name: a.name,
+          className: clase.name,
+          classCode: clase.code,
+          usefulLifeMonths: clase.usefulLifeMonths,
+          acquisitionCost: a.acquisitionCost,
+          accumulatedDepreciation: d(acumulada),
+          netBookValue: a.bookValue,
+          monthlyDepreciation: d(cuotaMensualDe(a)),
+          // Amortizado del todo o dado de baja: ya no entra en la corrida.
+          depreciable: a.statusConceptId === ESTADO['ST-ACTIVE'] && Number(a.bookValue) > 0.01,
+          status: a.statusConceptId === ESTADO['ST-ACTIVE'] ? 'ACTIVE' : 'RETIRED',
+        };
+      })
+      .sort((a, b) => a.code.localeCompare(b.code));
+
+    return {
+      items,
+      count: items.length,
+      totalAcquisition: d(items.reduce((s, a) => s + Number(a.acquisitionCost), 0)),
+      totalAccumulated: d(items.reduce((s, a) => s + Number(a.accumulatedDepreciation), 0)),
+      totalNetBookValue: d(items.reduce((s, a) => s + Number(a.netBookValue), 0)),
+      monthlyCharge: d(items.filter((a) => a.depreciable).reduce((s, a) => s + Number(a.monthlyDepreciation), 0)),
+    };
+  });
+
+  router.post('/accounting/depreciation/run', () => {
+    const periodo = periodoAbierto();
+    if (periodo === undefined) {
+      return preconditionFailed('No hay período abierto: la amortización no tiene dónde postearse', {});
+    }
+    const elegibles = activos.filtrar(
+      (a) => a.statusConceptId === ESTADO['ST-ACTIVE'] && Number(a.bookValue) > 0.01,
+    );
+    if (elegibles.length === 0) {
+      return preconditionFailed('No hay activos amortizables', {});
+    }
+    let total = 0;
+    for (const activo of elegibles) {
+      // La última cuota nunca deja el valor neto en negativo: amortiza lo que
+      // queda y el activo termina en cero, que es donde tiene que terminar.
+      const cuota = Math.min(cuotaMensualDe(activo), Number(activo.bookValue));
+      total += cuota;
+      activos.actualizar(activo.id, { bookValue: d(Number(activo.bookValue) - cuota) });
+    }
+    // Un solo documento colectivo, como la corrida real: gasto contra
+    // amortización acumulada.
+    const asiento = asientoDeCorrida(
+      `Amortización del período · ${periodo.name} · ${elegibles.length} activos`,
+      '5.5',
+      '1.5',
+      total,
+    );
+    asientos.agregar(asiento);
+    return {
+      status: 201,
+      body: {
+        transactionId: asiento.id,
+        transactionNumber: asiento.transactionNumber,
+        assets: elegibles.length,
+        amount: d(total),
+        periodName: periodo.name,
+      },
+    };
+  });
+
+  /* ---- devengos: objetos y corrida ---------------------------------------- */
+  router.get('/accounting/accrual-objects', () => {
+    const items = devengos.todos().map((dev) => {
+      const cuota = Number(dev.totalAmount) / dev.periods;
+      return {
+        id: dev.id,
+        code: dev.code,
+        name: dev.name,
+        kind: dev.kind,
+        totalAmount: dev.totalAmount,
+        periods: dev.periods,
+        postedPeriods: dev.postedPeriods,
+        remainingPeriods: dev.periods - dev.postedPeriods,
+        periodAmount: d(cuota),
+        recognizedAmount: d(cuota * dev.postedPeriods),
+        pendingAmount: d(cuota * (dev.periods - dev.postedPeriods)),
+        startsOn: dev.startsOn,
+        completed: dev.postedPeriods >= dev.periods,
+      };
+    });
+    return {
+      items,
+      count: items.length,
+      pendingTotal: d(items.reduce((s, i) => s + Number(i.pendingAmount), 0)),
+      periodCharge: d(items.filter((i) => !i.completed).reduce((s, i) => s + Number(i.periodAmount), 0)),
+    };
+  });
+
+  router.post('/accounting/accruals/run', () => {
+    const periodo = periodoAbierto();
+    if (periodo === undefined) {
+      return preconditionFailed('No hay período abierto: el devengo no tiene dónde postearse', {});
+    }
+    const pendientes = devengos.filtrar((dev) => dev.postedPeriods < dev.periods);
+    if (pendientes.length === 0) {
+      return preconditionFailed('No queda ningún devengo con períodos pendientes', {});
+    }
+    const creados: string[] = [];
+    let total = 0;
+    for (const dev of pendientes) {
+      const cuota = Number(dev.totalAmount) / dev.periods;
+      total += cuota;
+      // Un documento por objeto y no uno colectivo: cada devengo va contra sus
+      // propias cuentas, y juntarlos escondería contra qué se imputó cada uno.
+      const asiento = asientoDeCorrida(
+        `Devengo ${dev.code} · ${dev.name} · período ${dev.postedPeriods + 1}/${dev.periods}`,
+        dev.debitAccount,
+        dev.creditAccount,
+        cuota,
+      );
+      asientos.agregar(asiento);
+      creados.push(asiento.transactionNumber);
+      devengos.actualizar(dev.id, { postedPeriods: dev.postedPeriods + 1 });
+    }
+    return {
+      status: 201,
+      body: {
+        objects: pendientes.length,
+        amount: d(total),
+        transactionNumbers: creados,
+        periodName: periodo.name,
+      },
+    };
   });
 
   /* ---- el flujo del documento ---------------------------------------------

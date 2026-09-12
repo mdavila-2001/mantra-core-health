@@ -156,8 +156,13 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/insurance-claims/insurance-claims').then(
       (m) => m.InsuranceClaims,
     ),
+  // Contabilidad abre en el **cockpit**: el estado del ejercicio, los documentos
+  // frenados y la cartera. Los libros —balance, diario y el registro de
+  // movimientos— viven en `administration/accounting/libros`, a un clic. El
+  // orden es el que pidió el propietario el 2026-09-12: primero cómo va el
+  // ejercicio, después el renglón por renglón.
   'administration/accounting': () =>
-    import('./features/accounting/accounting').then((m) => m.Accounting),
+    import('./features/accounting/cockpit/cockpit').then((m) => m.Cockpit),
   // FT-26 · activos y pasivos, en auto-servicio del doctor.
   'assets-liabilities': () =>
     import('./features/assets-liabilities/assets-liabilities').then(
@@ -306,17 +311,17 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  */
 const PANTALLAS_HIJAS: Routes = [
   {
-    // El cockpit contable: el estado del ejercicio, el flujo de los documentos
-    // y lo que falta cobrar. Cuelga de Contabilidad y **no** entra al menú: la
-    // lista de secciones del médico es cerrada y hay un spec que falla si
-    // alguien le agrega una (carril 9). Se llega desde la propia pantalla de
-    // Contabilidad, que es de donde se sale a buscarlo.
-    path: 'administration/accounting/cockpit',
-    title: `${APP_TITLE} - Cockpit contable`,
+    // Los libros: balance de sumas y saldos, diario y el registro de ingresos y
+    // gastos. Era la pantalla de Contabilidad hasta el 2026-09-12; ahora esa
+    // dirección abre el cockpit y esto queda un clic más adentro. **No** entra
+    // al menú: la lista de secciones del médico es cerrada y hay un spec que
+    // falla si alguien le agrega una (carril 9).
+    path: 'administration/accounting/libros',
+    title: `${APP_TITLE} - Libros contables`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
-      import('./features/accounting/cockpit/cockpit')
-        .then((m) => m.Cockpit)
+      import('./features/accounting/accounting')
+        .then((m) => m.Accounting)
         .catch(() => chunkFallido()),
   },
   {

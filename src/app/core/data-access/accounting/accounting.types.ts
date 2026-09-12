@@ -423,3 +423,63 @@ export interface ClearingResult {
   readonly clearedItems: number;
   readonly clearedAmount: string;
 }
+
+/** Un activo fijo con su clase, su amortización acumulada y su valor neto. */
+export interface FixedAsset {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly className: string;
+  readonly classCode: string;
+  readonly usefulLifeMonths: number;
+  readonly acquisitionCost: string;
+  readonly accumulatedDepreciation: string;
+  readonly netBookValue: string;
+  readonly monthlyDepreciation: string;
+  /** Si entra en la próxima corrida. Un activo en cero o de baja, no. */
+  readonly depreciable: boolean;
+  readonly status: 'ACTIVE' | 'RETIRED';
+}
+
+export interface FixedAssetRegister {
+  readonly items: readonly FixedAsset[];
+  readonly totalAcquisition: string;
+  readonly totalAccumulated: string;
+  readonly totalNetBookValue: string;
+  /** Lo que costará la próxima corrida de amortización. */
+  readonly monthlyCharge: string;
+}
+
+/** Un gasto o un ingreso cobrado por adelantado, repartido en períodos. */
+export interface AccrualObject {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly kind: 'EXPENSE' | 'REVENUE';
+  readonly totalAmount: string;
+  readonly periods: number;
+  readonly postedPeriods: number;
+  readonly remainingPeriods: number;
+  readonly periodAmount: string;
+  readonly recognizedAmount: string;
+  readonly pendingAmount: string;
+  readonly startsOn: string;
+  readonly completed: boolean;
+}
+
+export interface AccrualRegister {
+  readonly items: readonly AccrualObject[];
+  readonly pendingTotal: string;
+  /** Lo que reconocerá la próxima corrida de devengo. */
+  readonly periodCharge: string;
+}
+
+/** Lo que devuelve una corrida: su documento y cuánto movió. */
+export interface RunResult {
+  readonly amount: string;
+  readonly periodName: string;
+  readonly transactionNumber?: string;
+  readonly transactionNumbers?: readonly string[];
+  readonly assets?: number;
+  readonly objects?: number;
+}
