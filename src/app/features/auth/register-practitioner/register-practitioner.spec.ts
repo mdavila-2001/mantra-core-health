@@ -1,13 +1,16 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
 import { ESPECIALIDAD } from '../../../core/mock/fixtures/conceptos';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
+import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
+import { mockBackendInterceptor } from '../../../core/mock/mock-backend.interceptor';
 
 const RESPUESTA_PRO = {
   userId: 'u',
@@ -979,6 +982,66 @@ describe('RegisterPractitioner', () => {
    * que es lo que hay que conservar cuando esto se conecte de verdad.
    */
   describe('títulos y respaldos (sólo pantalla)', () => {
+    /* ---- El paso, por el DOM ------------------------------------------------
+       El motor sólo pinta la página actual y no deja saltar por el índice a un
+       paso nunca visitado, así que a «Tus títulos» se llega como la persona:
+       «Siguiente» de a uno. Con el paso en pantalla, lo que se prueba son las
+       casillas y los botones de verdad, no los métodos que hay detrás. */
+
+    /** El aviso que se lee en pantalla, si hay alguno. */
+    function avisoVisible(): string | null {
+      fixture.detectChanges();
+      const alerta: HTMLElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="registro-error"]',
+      );
+      return alerta === null ? null : (alerta.textContent?.trim() ?? '');
+    }
+
+    /** Lleva la pantalla hasta el paso «Tus títulos», «Siguiente» de a uno. */
+    function irAlPasoDeTitulos(): void {
+      fixture.detectChanges();
+      for (let pagina = 0; pagina < 12; pagina += 1) {
+        if (fixture.nativeElement.querySelector('.registro-titulos') !== null) return;
+        const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+          '[data-testid="paginated-form-continuar"]',
+        );
+        if (continuar === null) break;
+        continuar.click();
+        fixture.detectChanges();
+      }
+      throw new Error('No se llegó al paso «Tus títulos»');
+    }
+
+    /** Un elemento del paso por su `data-testid`, o nada. */
+    function enElPaso<T extends HTMLElement>(testId: string): T | null {
+      fixture.detectChanges();
+      return fixture.nativeElement.querySelector(`[data-testid="${testId}"]`);
+    }
+
+    /** La casilla del número de la fila, en el DOM del paso. */
+    function casillaDeNumero(id: string): HTMLInputElement {
+      const casilla = enElPaso<HTMLInputElement>(`registro-pro-titulo-numero-${id}`);
+      if (casilla === null) throw new Error('La fila no está en el DOM');
+      return casilla;
+    }
+
+    /** Escribe en una casilla como lo hace el teclado: valor + evento `input`. */
+    function escribirEnCasilla(testId: string, valor: string): void {
+      const casilla = enElPaso<HTMLInputElement>(testId);
+      if (casilla === null) throw new Error(`No está la casilla ${testId}`);
+      casilla.value = valor;
+      casilla.dispatchEvent(new Event('input', { bubbles: true }));
+      fixture.detectChanges();
+    }
+
+    /** Pulsa un botón del paso. */
+    function pulsar(testId: string): void {
+      const boton = enElPaso<HTMLButtonElement>(testId);
+      if (boton === null) throw new Error(`No está el botón ${testId}`);
+      boton.click();
+      fixture.detectChanges();
+    }
+
     /** Un evento `change` de un `<input type="file">` con el archivo dado. */
     function eventoDeArchivo(nombre: string, tipo: string, bytes: number): Event {
       const archivo = new File(['x'], nombre, { type: tipo });
@@ -1237,18 +1300,129 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('una fila con datos y sin número frena el envío: nada se descarta en silencio', () => {
-      catalogoDeTiposDeTitulo();
-      component.agregarTitulo('DIPLOMADO');
-      const [diplomado] = component.titulosDe('DIPLOMADO');
-      component.escribirDatoDeTitulo(diplomado.id, 'universidad', 'UPB');
+    /**
+     * El defecto que esto fija: la guardia frenaba el envío **en silencio**.
+     * Quien completaba la universidad y se olvidaba del número llegaba al
+     * último paso, pulsaba «Crear cuenta» y no pasaba nada, sin saber qué
+     * corregir ni dónde. No alcanza con no llamar a la API.
+     */
+    /**
+     * Una fila de diplomado con universidad y sin número, hecha por el DOM del
+     * paso: «+ Agregar» y teclado. Devuelve el id de la fila.
+     */
+    function filaDeDiplomadoSinNumero(): string {
+      irAlPasoDeTitulos();
+      pulsar('registro-pro-agregar-DIPLOMADO');
+      const [fila] = component.titulosDe('DIPLOMADO');
+      escribirEnCasilla(`registro-pro-titulo-universidad-${fila.id}`, 'Nur');
+      return fila.id;
+    }
 
+    it('una fila con datos y sin número frena el envío, lo dice en pantalla y marca la fila', () => {
+      catalogoDeTiposDeTitulo();
       completarProfesional();
+      const id = filaDeDiplomadoSinNumero();
+
       component.submit();
+      fixture.detectChanges();
 
       http.expectNone('/iam/auth/register-practitioner');
-      expect(component.errorTitulos()).toBe(
-        'Cada título necesita su número de diploma. Completalo o quitá la fila.',
+
+      // 1) El aviso se VE: el alert vive fuera del motor, así que se lee desde
+      // cualquier paso, y `appAnuncio` lo anuncia a lectores de pantalla.
+      expect(avisoVisible()).toContain('número de diploma');
+      // 2) Y dirige al paso donde está el campo: el índice de pasos es navegable.
+      expect(avisoVisible()).toContain('Tus títulos');
+      // 3) La fila señalada es la que está mal, EN el DOM: `aria-invalid`,
+      //    el borde de peligro y el mensaje propio, enlazado por
+      //    `aria-describedby` para que el lector lo diga junto a la casilla.
+      const casilla = casillaDeNumero(id);
+      expect(casilla.getAttribute('aria-invalid')).toBe('true');
+      expect(casilla.classList.contains('registro-titulo__dato--invalido')).toBe(true);
+      expect(casilla.getAttribute('aria-describedby')).toBe(
+        `registro-pro-titulo-numero-error-${id}`,
+      );
+      expect(enElPaso(`registro-pro-titulo-numero-error-${id}`)?.textContent).toContain(
+        'Falta el número',
+      );
+    });
+
+    it('completar el número en la casilla borra el aviso, desmarca la fila y deja enviar', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      const id = filaDeDiplomadoSinNumero();
+      component.submit();
+      expect(avisoVisible()).not.toBeNull();
+
+      // Las filas no viven en el `FormGroup`, así que escribir el número no
+      // dispara `valueChanges`: sin la limpieza propia, el aviso se quedaría
+      // contradiciendo a la pantalla.
+      escribirEnCasilla(`registro-pro-titulo-numero-${id}`, 'DIP-7');
+
+      expect(avisoVisible()).toBeNull();
+      const casilla = casillaDeNumero(id);
+      expect(casilla.getAttribute('aria-invalid')).toBeNull();
+      expect(casilla.classList.contains('registro-titulo__dato--invalido')).toBe(false);
+      expect(enElPaso(`registro-pro-titulo-numero-error-${id}`)).toBeNull();
+
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toEqual([
+        { credentialTypeConceptId: 'c-diploma', number: 'DIP-7', issuingInstitutionText: 'Nur' },
+      ]);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('el botón «Quitar» de la fila problemática la saca del paso y borra el aviso', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      const id = filaDeDiplomadoSinNumero();
+      component.submit();
+      expect(avisoVisible()).not.toBeNull();
+
+      pulsar(`registro-pro-titulo-quitar-${id}`);
+
+      expect(avisoVisible()).toBeNull();
+      expect(enElPaso(`registro-pro-titulo-numero-${id}`)).toBeNull();
+      expect(component.titulosDe('DIPLOMADO')).toHaveLength(0);
+    });
+
+    it('las casillas acotan lo que el contrato acota: número 100, universidad 200', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      const id = filaDeDiplomadoSinNumero();
+
+      // El exceso se frena en la casilla, no como un 400 en inglés técnico.
+      expect(casillaDeNumero(id).getAttribute('maxlength')).toBe('100');
+      expect(
+        enElPaso<HTMLInputElement>(`registro-pro-titulo-universidad-${id}`)?.getAttribute(
+          'maxlength',
+        ),
+      ).toBe('200');
+      // País y ciudad no viajan todavía, así que no se les impone un tope.
+      expect(
+        enElPaso<HTMLInputElement>(`registro-pro-titulo-pais-${id}`)?.hasAttribute('maxlength'),
+      ).toBe(false);
+      expect(
+        enElPaso<HTMLInputElement>(`registro-pro-titulo-ciudad-${id}`)?.hasAttribute(
+          'maxlength',
+        ),
+      ).toBe(false);
+    });
+
+    it('el paso dice qué se guarda hoy y qué se completa después desde el perfil', () => {
+      catalogoDeTiposDeTitulo();
+      completarProfesional();
+      irAlPasoDeTitulos();
+
+      // Sin esta línea la pantalla prometía guardar lo que descarta: el nombre,
+      // el país, la ciudad y el diploma se preguntan pero no viajan.
+      const alcance = (enElPaso('registro-pro-titulos-alcance')?.textContent ?? '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      expect(alcance).toBe(
+        'En esta alta se guardan el tipo, el número y la universidad de cada título. ' +
+          'El nombre, el país, la ciudad y el archivo que completes aquí todavía no se guardan.',
       );
     });
 
@@ -1294,6 +1468,175 @@ describe('RegisterPractitioner', () => {
       expect(req.request.body.professionalTitleCountry).toBeUndefined();
       expect(req.request.body.professionalTitleCity).toBeUndefined();
       req.flush(RESPUESTA_PRO);
+    });
+
+    /**
+     * El defecto que esto fija: el catálogo se leía UNA sola vez, en el
+     * constructor, y un fallo dejaba el mapa vacío para toda la vida de la
+     * pantalla. El aviso mandaba «volvé al paso y reintentá», pero volver de
+     * paso no pedía nada: sin recargar la página no había salida.
+     */
+    describe('cuando el catálogo de tipos no carga', () => {
+      /** La lectura que hace el constructor, caída. */
+      function catalogoDeTiposCaido(): void {
+        http
+          .expectOne((r) => r.url.startsWith('/system-context/dynamic-enums'))
+          .flush(null, { status: 503, statusText: 'Service Unavailable' });
+      }
+
+      /** La respuesta buena, con los cinco tipos que publica la API. */
+      function catalogoDeTiposCompleto(): void {
+        http.expectOne((r) => r.url.startsWith('/system-context/dynamic-enums')).flush({
+          code: 'professional-credential-type',
+          name: 'Tipo de credencial profesional',
+          definitionId: 'def-1',
+          valueSetId: 'vs-cred',
+          options: [
+            { conceptId: 'c-degree', code: 'CREDENTIAL_TYPE_DEGREE', label: 'Academic degree' },
+            { conceptId: 'c-diploma', code: 'CREDENTIAL_TYPE_DIPLOMA', label: 'Diploma course' },
+            { conceptId: 'c-master', code: 'CREDENTIAL_TYPE_MASTER', label: "Master's degree" },
+            { conceptId: 'c-doctor', code: 'CREDENTIAL_TYPE_DOCTORATE', label: 'Doctorate' },
+            { conceptId: 'c-spec', code: 'CREDENTIAL_TYPE_SPECIALTY', label: 'Specialty' },
+          ],
+        });
+      }
+
+      /** Una fila lista para viajar: la que el catálogo caído deja varada. */
+      function filaConNumero(): void {
+        component.agregarTitulo('UNIVERSITARIO');
+        const [fila] = component.titulosDe('UNIVERSITARIO');
+        component.escribirDatoDeTitulo(fila.id, 'numero', 'TIT-1');
+        component.escribirDatoDeTitulo(fila.id, 'universidad', 'Universidad Mayor de San Simón');
+      }
+
+      /** El botón «Reintentar» del paso, tal como está en el DOM, o nada. */
+      function botonReintentar(): HTMLButtonElement | null {
+        return enElPaso<HTMLButtonElement>('registro-pro-titulos-reintentar');
+      }
+
+      /**
+       * El defecto que esto fija, en su segunda forma: el aviso decía «el botón
+       * Reintentar vuelve a pedirlos» y en el paso no había ningún botón. El
+       * botón colgaba de una bandera que sólo encendía el `error` del
+       * observable, y el alert del mapa vacío. Acá se recorre la cadena entera
+       * y por el DOM: fallo → botón en el paso → clic real → GET → 200 →
+       * catálogo → alert fuera → lo escrito, intacto.
+       */
+      it('con la carga caída, «Reintentar» está en el paso y el clic real recupera el catálogo', () => {
+        catalogoDeTiposCaido();
+        filaConNumero();
+        const [fila] = component.titulosDe('UNIVERSITARIO');
+        completarProfesional();
+        component.submit();
+
+        // Frenado y dicho, nombrando el botón.
+        http.expectNone('/iam/auth/register-practitioner');
+        expect(avisoVisible()).toContain('Reintentar');
+        expect(avisoVisible()).not.toContain('reintentá en unos segundos');
+
+        // El botón existe donde el aviso manda a buscarlo, y es el mismo
+        // estado: si el alert está, el botón está.
+        irAlPasoDeTitulos();
+        const boton = botonReintentar();
+        expect(boton).not.toBeNull();
+        expect(casillaDeNumero(fila.id).value).toBe('TIT-1');
+
+        // Clic de verdad sobre el `<button>`: dispara el GET.
+        boton?.click();
+        catalogoDeTiposCompleto();
+        fixture.detectChanges();
+
+        // Catálogo repoblado, aviso y botón fuera, lo escrito sigue ahí.
+        expect(component.catalogoTiposDeTituloCaido()).toBe(false);
+        expect(botonReintentar()).toBeNull();
+        expect(avisoVisible()).toBeNull();
+        expect(casillaDeNumero(fila.id).value).toBe('TIT-1');
+        expect(component.titulosDe('UNIVERSITARIO')[0].universidad).toBe(
+          'Universidad Mayor de San Simón',
+        );
+      });
+
+      it('tras el reintento con éxito, el envío arma credentials[] con lo escrito', () => {
+        catalogoDeTiposCaido();
+        filaConNumero();
+        completarProfesional();
+        component.submit();
+        irAlPasoDeTitulos();
+
+        botonReintentar()?.click();
+        catalogoDeTiposCompleto();
+        fixture.detectChanges();
+
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.credentials).toEqual([
+          {
+            credentialTypeConceptId: 'c-degree',
+            number: 'TIT-1',
+            issuingInstitutionText: 'Universidad Mayor de San Simón',
+          },
+        ]);
+        req.flush(RESPUESTA_PRO);
+      });
+
+      it('un segundo fallo deja el botón y el aviso, y el alta sigue sin salir', () => {
+        catalogoDeTiposCaido();
+        filaConNumero();
+        completarProfesional();
+        component.submit();
+        irAlPasoDeTitulos();
+
+        botonReintentar()?.click();
+        catalogoDeTiposCaido();
+        fixture.detectChanges();
+
+        expect(botonReintentar()).not.toBeNull();
+        expect(avisoVisible()).toContain('Reintentar');
+
+        component.submit();
+        http.expectNone('/iam/auth/register-practitioner');
+      });
+
+      it('un 200 sin los tipos también enciende el botón: manda el mapa, no el error', () => {
+        // La forma exacta que dejó el botón ausente en el E2E: respuesta
+        // correcta pero inútil. Con la bandera de `error` no había botón.
+        http
+          .expectOne((r) => r.url.startsWith('/system-context/dynamic-enums'))
+          .flush({
+            code: 'professional-credential-type',
+            name: 'Tipo de credencial profesional',
+            definitionId: 'def-1',
+            valueSetId: 'vs-cred',
+            options: [],
+          });
+        filaConNumero();
+        completarProfesional();
+        component.submit();
+
+        http.expectNone('/iam/auth/register-practitioner');
+        expect(avisoVisible()).toContain('Reintentar');
+        irAlPasoDeTitulos();
+        expect(botonReintentar()).not.toBeNull();
+      });
+
+      it('el aviso del número que falta NO se borra cuando el catálogo carga', () => {
+        catalogoDeTiposCaido();
+        component.agregarTitulo('DIPLOMADO');
+        const [fila] = component.titulosDe('DIPLOMADO');
+        component.escribirDatoDeTitulo(fila.id, 'universidad', 'Nur');
+        completarProfesional();
+        component.submit();
+        expect(avisoVisible()).toContain('número de diploma');
+        irAlPasoDeTitulos();
+
+        botonReintentar()?.click();
+        catalogoDeTiposCompleto();
+
+        // El catálogo ya está, pero la fila sigue sin número: retirar este
+        // aviso de rebote dejaría el envío frenado y la pantalla muda.
+        expect(avisoVisible()).toContain('número de diploma');
+      });
     });
   });
 
@@ -1652,5 +1995,45 @@ describe('RegisterPractitioner', () => {
         address: { lines: [], municipalityConceptId: 'mun-trabajo', latitude: -17.78, longitude: -63.18 },
       });
     });
+  });
+});
+
+describe('RegisterPractitioner con mockBackend', () => {
+  it('resuelve los cinco tipos canónicos de credencial desde el backend simulado', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [RegisterPractitioner],
+      providers: [
+        provideHttpClient(withInterceptors([mockBackendInterceptor])),
+        provideRouter([]),
+        { provide: RefreshTokenStorage, useClass: AlmacenFalso },
+      ],
+    }).compileComponents();
+
+    const target = 'profiles.professional_credentials.credential_type_concept_id';
+    const enumeracion = await firstValueFrom(
+      TestBed.inject(SystemContextClient).dynamicEnum(target),
+    );
+    const fixture = TestBed.createComponent(RegisterPractitioner);
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    const conceptos = (
+      component as unknown as {
+        conceptoPorCodigo: () => ReadonlyMap<string, string>;
+      }
+    ).conceptoPorCodigo();
+    const codigosCanonicos = [
+      'CREDENTIAL_TYPE_DEGREE',
+      'CREDENTIAL_TYPE_DIPLOMA',
+      'CREDENTIAL_TYPE_MASTER',
+      'CREDENTIAL_TYPE_DOCTORATE',
+      'CREDENTIAL_TYPE_SPECIALTY',
+    ];
+
+    expect(codigosCanonicos.map((code) => conceptos.get(code))).toEqual(
+      enumeracion.options.map((option) => option.conceptId),
+    );
+
+    fixture.destroy();
   });
 });

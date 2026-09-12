@@ -48,6 +48,7 @@ function conjunto(internalCode: string, name: string, description: string): Conj
 function definir(
   valueSet: string,
   entradas: readonly (readonly [code: string, display: string, definition?: string])[],
+  ordinalInicial = 1,
 ): Readonly<Record<string, string>> {
   const ids: Record<string, string> = {};
   entradas.forEach(([code, display, definition], indice) => {
@@ -65,7 +66,7 @@ function definir(
       ...(definition === undefined ? {} : { definition }),
       valueSets: [valueSet],
       selectable: true,
-      ordinal: indice + 1,
+      ordinal: indice + ordinalInicial,
     });
     ids[code] = id;
   });
@@ -418,13 +419,12 @@ export const CATEGORIA_PROFESIONAL = definir('VS_PRACTITIONER_CATEGORY', [
 
 conjunto('VS_CREDENTIAL_TYPE', 'Tipos de credencial', 'Títulos y certificaciones.');
 export const TIPO_CREDENCIAL = definir('VS_CREDENTIAL_TYPE', [
-  ['CRED-TITULO', 'Título profesional'],
-  ['CRED-ESPECIALIDAD', 'Título de especialidad'],
-  ['CRED-MAESTRIA', 'Maestría'],
-  ['CRED-DOCTORADO', 'Doctorado'],
-  ['CRED-DIPLOMADO', 'Diplomado'],
-  ['CRED-SEDES', 'Registro SEDES'],
-]);
+  ['CREDENTIAL_TYPE_DEGREE', 'Academic degree credential'],
+  ['CREDENTIAL_TYPE_DIPLOMA', 'Diploma course credential'],
+  ['CREDENTIAL_TYPE_MASTER', "Master's degree credential"],
+  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorate degree credential'],
+  ['CREDENTIAL_TYPE_SPECIALTY', 'Specialty degree credential'],
+], 0);
 
 conjunto('VS_JURISDICTION', 'Jurisdicciones', 'Ámbito de la matrícula.');
 export const JURISDICCION = definir('VS_JURISDICTION', [
