@@ -74,6 +74,14 @@ function respuestaAutomaticaEncendida(): boolean {
   }
 }
 
+/**
+ * Las respuestas automáticas configuradas, por perfil (F4.7).
+ *
+ * Un `Map` y no una `Coleccion`: se busca siempre por perfil, nunca por id, y
+ * hay a lo sumo una por perfil.
+ */
+const respuestasAutomaticas = new Map<string, Record<string, unknown>>();
+
 function vitrinaDeSesion(request: MockRequest): VitrinaSimulada | undefined {
   const user = request.user;
   if (user === null) return undefined;
@@ -262,6 +270,49 @@ export function registrarComunidad(router: MockRouter): void {
   });
 
   /* ---- publicaciones -------------------------------------------------------- */
+
+  /**
+   * La respuesta automática del perfil (F4.7).
+   *
+   * En memoria, como el resto de la maqueta. Va **antes** que
+   * `/community/profiles/:id`: el enrutador prueba por cantidad de segmentos
+   * literales, pero dejar la específica después de la genérica es la forma de
+   * que un cambio futuro la apague sin que nadie se entere.
+   */
+  router.get('/community/profiles/:id/auto-reply', ({ params }) => {
+    return respuestasAutomaticas.get(params['id']!) ?? null;
+  });
+
+  router.put('/community/profiles/:id/auto-reply', (request) => {
+    const perfil = request.params['id']!;
+    const datos = cuerpo<{
+      isActive: boolean;
+      inactivityMinutes: number;
+      bodyText: string;
+      cooldownHours: number;
+      onlyOutsideBusinessHours: boolean;
+      businessHoursFrom?: string;
+      businessHoursTo?: string;
+    }>(request);
+    const guardada = {
+      id: uuid(`auto-reply-${perfil}`),
+      publicProfileId: perfil,
+      isActive: datos.isActive ?? false,
+      inactivityMinutes: datos.inactivityMinutes ?? 30,
+      bodyText: datos.bodyText ?? '',
+      cooldownHours: datos.cooldownHours ?? 4,
+      onlyOutsideBusinessHours: datos.onlyOutsideBusinessHours ?? false,
+      businessHoursFrom: datos.onlyOutsideBusinessHours
+        ? (datos.businessHoursFrom ?? null)
+        : null,
+      businessHoursTo: datos.onlyOutsideBusinessHours
+        ? (datos.businessHoursTo ?? null)
+        : null,
+      updatedAt: ahora(),
+    };
+    respuestasAutomaticas.set(perfil, guardada);
+    return guardada;
+  });
 
   router.get('/community/profiles/:id/posts', ({ params, query }) => {
     const actor = texto(query, 'actorProfileId');

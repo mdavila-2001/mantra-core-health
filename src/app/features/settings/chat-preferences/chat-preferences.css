@@ -13,6 +13,12 @@
   color: var(--tinta-2);
 }
 
+/* Guardada en el servidor el aviso deja de ser una advertencia: es una
+   confirmación, y el color lo dice antes que el texto. */
+.chat-prefs__aviso.is-ok {
+  border-inline-start-color: var(--menta);
+}
+
 .chat-prefs__interruptor {
   display: flex;
   align-items: flex-start;

@@ -123,9 +123,19 @@ describe('Settings', () => {
 
   it('monta el panel de avisos: dejó de ser una pantalla y no dejó de existir', () => {
     mount();
-    // El panel pide sus preferencias al montarse; hasta que contestan dice
-    // «cargando», que es lo correcto y no lo que esta prueba mira.
-    http.expectOne(() => true).flush({ categories: [], quietHours: null });
+    // Dos paneles piden datos al montarse: el de avisos sus preferencias, y el
+    // de chats el perfil público —del que cuelga la respuesta automática—. Se
+    // contesta lo que pida cada uno; lo que esta prueba mira es que el panel de
+    // avisos esté, no cuántas lecturas hace la pantalla.
+    http
+      .match(() => true)
+      .forEach((pedido) =>
+        pedido.flush(
+          pedido.request.url.includes('preferences')
+            ? { categories: [], quietHours: null }
+            : null,
+        ),
+      );
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-notification-preferences')).not.toBeNull();

@@ -5,13 +5,22 @@
     texto. Es para avisar que no estás mirando, no para responder por vos.
   </p>
 
-  <!-- El límite se dice en la pantalla y no sólo en el código: la respuesta
-       vive en este navegador, así que con AloVida cerrado no sale nadie a
-       contestar. Prometer un contestador sería mentir. -->
-  <p class="chat-prefs__aviso" data-testid="chat-prefs-limite">
-    Funciona mientras tengas AloVida abierto en este navegador, y se guarda sólo acá: en otro
-    dispositivo vas a tener que configurarla de nuevo.
-  </p>
+  <!-- Lo que se promete cambia según dónde esté guardada, y se dice en la
+       pantalla y no sólo en el código. Guardada en el servidor contesta siempre;
+       guardada acá, sólo con la aplicación abierta. Prometer lo segundo como si
+       fuera lo primero sería mentir. -->
+  @if (enElServidor()) {
+    <p class="chat-prefs__aviso is-ok" data-testid="chat-prefs-limite">
+      Guardada en tu cuenta: contesta aunque tengas AloVida cerrado, y vale en todos tus
+      dispositivos.
+    </p>
+  } @else {
+    <p class="chat-prefs__aviso" data-testid="chat-prefs-limite">
+      Guardada sólo en este navegador: funciona mientras tengas AloVida abierto, y en otro
+      dispositivo vas a tener que configurarla de nuevo. Creá tu perfil público desde los chats
+      para que conteste siempre.
+    </p>
+  }
 
   <label class="chat-prefs__interruptor">
     <input

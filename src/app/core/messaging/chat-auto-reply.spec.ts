@@ -1,3 +1,8 @@
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 import {
@@ -41,15 +46,22 @@ describe('ChatAutoReply', () => {
    */
   const RELOJ_PLANTADO = new Date('2026-09-11T07:00:00');
 
+  let http: HttpTestingController;
+
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(RELOJ_PLANTADO);
     localStorage.clear();
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
     servicio = TestBed.inject(ChatAutoReply);
   });
 
   afterEach(() => {
+    http.match(() => true).forEach((pedido) => pedido.flush(null));
+    http.verify();
     vi.useRealTimers();
     localStorage.clear();
   });
@@ -160,6 +172,104 @@ describe('ChatAutoReply', () => {
 
     expect(otro.configuracion().minutosDeInactividad).toBe(45);
     expect(otro.configuracion().texto).toBe('Vuelvo a las 18.');
+  });
+
+  /* --- El servidor manda (F4.7) -------------------------------------------- */
+
+  describe('sincronización con el servidor', () => {
+    it('sin perfil público no sube nada: queda sólo en este navegador', () => {
+      servicio.guardar({ activa: true }, null);
+
+      expect(servicio.enElServidor()).toBe(false);
+      http.expectNone(() => true);
+    });
+
+    it('con perfil sube lo configurado', () => {
+      servicio.guardar({ activa: true, minutosDeInactividad: 15 }, 'pp-1');
+
+      const pedido = http.expectOne('/community/profiles/pp-1/auto-reply');
+      expect(pedido.request.method).toBe('PUT');
+      expect(pedido.request.body).toMatchObject({
+        isActive: true,
+        inactivityMinutes: 15,
+      });
+      pedido.flush({
+        id: 'ar-1',
+        publicProfileId: 'pp-1',
+        isActive: true,
+        inactivityMinutes: 15,
+        bodyText: 'Vuelvo luego.',
+        cooldownHours: 4,
+        onlyOutsideBusinessHours: false,
+        businessHoursFrom: null,
+        businessHoursTo: null,
+        updatedAt: '2026-09-11T10:00:00.000Z',
+      });
+
+      // Y ahora la pantalla puede prometer que contesta con la app cerrada.
+      expect(servicio.enElServidor()).toBe(true);
+    });
+
+    it('lo del servidor gana sobre la copia local', () => {
+      // Se configuró en otro dispositivo: lo que vale es eso.
+      servicio.guardar({ minutosDeInactividad: 5 }, null);
+
+      servicio.cargar('pp-1');
+      http.expectOne('/community/profiles/pp-1/auto-reply').flush({
+        id: 'ar-1',
+        publicProfileId: 'pp-1',
+        isActive: true,
+        inactivityMinutes: 90,
+        bodyText: 'Estoy en quirófano.',
+        cooldownHours: 8,
+        onlyOutsideBusinessHours: true,
+        businessHoursFrom: '07:00:00',
+        businessHoursTo: '15:00:00',
+        updatedAt: '2026-09-11T10:00:00.000Z',
+      });
+
+      expect(servicio.configuracion().minutosDeInactividad).toBe(90);
+      expect(servicio.configuracion().texto).toBe('Estoy en quirófano.');
+      // Postgres devuelve `time` con segundos; la pantalla usa `HH:MM`.
+      expect(servicio.configuracion().horarioDesde).toBe('07:00');
+    });
+
+    it('si el servidor no la tiene y acá sí, se sube en vez de perderse', () => {
+      servicio.guardar({ activa: true, texto: 'De antes de la tabla.' }, null);
+
+      servicio.cargar('pp-1');
+      http.expectOne('/community/profiles/pp-1/auto-reply').flush(null);
+
+      const subida = http.expectOne('/community/profiles/pp-1/auto-reply');
+      expect(subida.request.method).toBe('PUT');
+      expect(subida.request.body).toMatchObject({
+        bodyText: 'De antes de la tabla.',
+      });
+      subida.flush({
+        id: 'ar-1',
+        publicProfileId: 'pp-1',
+        isActive: true,
+        inactivityMinutes: 30,
+        bodyText: 'De antes de la tabla.',
+        cooldownHours: 4,
+        onlyOutsideBusinessHours: false,
+        businessHoursFrom: null,
+        businessHoursTo: null,
+        updatedAt: '2026-09-11T10:00:00.000Z',
+      });
+    });
+
+    it('si la lectura falla, lo local sigue valiendo y la pantalla no promete de más', () => {
+      servicio.guardar({ activa: true }, null);
+
+      servicio.cargar('pp-1');
+      http
+        .expectOne('/community/profiles/pp-1/auto-reply')
+        .error(new ProgressEvent('error'));
+
+      expect(servicio.configuracion().activa).toBe(true);
+      expect(servicio.enElServidor()).toBe(false);
+    });
   });
 
   it('un valor corrupto en el almacenamiento no deja a nadie sin chat', () => {
