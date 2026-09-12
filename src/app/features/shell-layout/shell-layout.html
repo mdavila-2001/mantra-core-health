@@ -66,7 +66,13 @@
 
          Un bloque con **un solo** destino visible no se dibuja como
          desplegable: sería un clic de más para llegar a lo mismo. Sale suelto,
-         con su ícono, en el lugar que le toca del orden. -->
+         con su ícono, en el lugar que le toca del orden.
+
+         Y hay dominios que directamente no se dibujan: los que `aplanado`
+         marca —«General» y «Mi cuenta»— sueltan sus destinos acá arriba, sin
+         rótulo y sin plegables intermedios. El paciente llegaba a «Mis citas»
+         abriendo dos desplegables que no llevan a ninguna pantalla; ahora es un
+         clic. Quiénes son lo dice `GRUPOS_APLANADOS`, no esta plantilla. -->
     <!-- Arriba de los dominios, y sueltos: «Mi perfil» y «Notificaciones». No
          cuelgan de un desplegable porque nadie se pregunta a qué dominio
          pertenecen, y para el médico eran un plegable de dos renglones que
@@ -81,53 +87,68 @@
     }
 
     @for (grupo of sections(); track grupo.label) {
-      @let claveGrupo = clavePlegable(grupo.label);
-      <details
-        class="app-side-nav__group"
-        data-testid="nav-grupo"
-        [attr.data-grupo]="grupo.label"
-        [open]="abierto(claveGrupo, grupo.items)"
-        (toggle)="alPlegar(claveGrupo, $any($event.target).open)"
-      >
-        <summary class="app-side-nav__group-summary" [class.tiene-la-pantalla]="contieneLaPantalla(grupo.items)">
-          <app-nav-icon [name]="grupo.icon ?? 'directory'" />
-          <span class="app-side-nav__eyebrow">{{ grupo.label }}</span>
-          <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-        </summary>
-
-        <div class="app-side-nav__group-cuerpo">
+      @if (grupo.aplanado) {
+        <!-- Se recorre por bloques y no `grupo.items` aunque el rótulo del
+             bloque no se dibuje: sin él, lo único que sigue diciendo que «Mis
+             citas», «Mis pedidos» y «Mis puntos» son la misma clase de cosa es
+             que salgan seguidas. Por `items` salen en el orden del registro, y
+             ahí las cuatro pantallas clínicas se meten en el medio. -->
+        <div class="app-side-nav__sueltos" data-testid="nav-sueltos" [attr.data-grupo]="grupo.label">
           @for (bloque of grupo.blocks ?? []; track bloque.label) {
-            @if (bloque.items.length > 1) {
-              @let claveBloque = clavePlegable(grupo.label, bloque.label);
-              <details
-                class="app-side-nav__block"
-                data-testid="nav-bloque"
-                [attr.data-bloque]="bloque.label"
-                [open]="abierto(claveBloque, bloque.items)"
-                (toggle)="alPlegar(claveBloque, $any($event.target).open)"
-              >
-                <summary
-                  class="app-side-nav__item"
-                  [class.is-activo]="contieneLaPantalla(bloque.items)"
-                >
-                  <app-nav-icon [name]="bloque.icon ?? 'directory'" />
-                  <span class="side-nav__label">{{ bloque.label }}</span>
-                  <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-                </summary>
-                <div class="app-side-nav__sub">
-                  @for (item of bloque.items; track item.route) {
-                    <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
-                  }
-                </div>
-              </details>
-            } @else {
-              @for (item of bloque.items; track item.route) {
-                <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
-              }
+            @for (item of bloque.items; track item.route) {
+              <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
             }
           }
         </div>
-      </details>
+      } @else {
+        @let claveGrupo = clavePlegable(grupo.label);
+        <details
+          class="app-side-nav__group"
+          data-testid="nav-grupo"
+          [attr.data-grupo]="grupo.label"
+          [open]="abierto(claveGrupo, grupo.items)"
+          (toggle)="alPlegar(claveGrupo, $any($event.target).open)"
+        >
+          <summary class="app-side-nav__group-summary" [class.tiene-la-pantalla]="contieneLaPantalla(grupo.items)">
+            <app-nav-icon [name]="grupo.icon ?? 'directory'" />
+            <span class="app-side-nav__eyebrow">{{ grupo.label }}</span>
+            <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+          </summary>
+
+          <div class="app-side-nav__group-cuerpo">
+            @for (bloque of grupo.blocks ?? []; track bloque.label) {
+              @if (bloque.items.length > 1) {
+                @let claveBloque = clavePlegable(grupo.label, bloque.label);
+                <details
+                  class="app-side-nav__block"
+                  data-testid="nav-bloque"
+                  [attr.data-bloque]="bloque.label"
+                  [open]="abierto(claveBloque, bloque.items)"
+                  (toggle)="alPlegar(claveBloque, $any($event.target).open)"
+                >
+                  <summary
+                    class="app-side-nav__item"
+                    [class.is-activo]="contieneLaPantalla(bloque.items)"
+                  >
+                    <app-nav-icon [name]="bloque.icon ?? 'directory'" />
+                    <span class="side-nav__label">{{ bloque.label }}</span>
+                    <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+                  </summary>
+                  <div class="app-side-nav__sub">
+                    @for (item of bloque.items; track item.route) {
+                      <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
+                    }
+                  </div>
+                </details>
+              } @else {
+                @for (item of bloque.items; track item.route) {
+                  <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
+                }
+              }
+            }
+          </div>
+        </details>
+      }
     }
   </nav>
 

@@ -406,6 +406,26 @@ describe('NavigationService', () => {
       expect(service.menu().map((g) => g.label)).toContain('Administración');
     });
 
+    it('«General» y «Mi cuenta» vienen aplanados; los dominios de trabajo, no', () => {
+      // Lo que la barra necesita para no dibujar un contenedor. El paciente
+      // llegaba a «Mis citas» abriendo dos desplegables que no llevan a
+      // ninguna pantalla; aplanado, el dominio suelta sus destinos en la barra
+      // y sigue ofreciendo exactamente los mismos.
+      abrirSesion(['SECURITY_ADMIN', 'CLINICIAN', 'BILLING']);
+
+      const aplanados = service
+        .menu()
+        .filter((grupo) => grupo.aplanado)
+        .map((grupo) => grupo.label);
+
+      expect(aplanados).toEqual(['General', 'Mi cuenta']);
+      // Aplanar no filtra: el grupo conserva su reparto en bloques, que es lo
+      // que lo deja volver a plegarse sin recalcular nada.
+      for (const grupo of service.menu()) {
+        expect(grupo.blocks.length, grupo.label).toBeGreaterThan(0);
+      }
+    });
+
     it('los grupos salen en el orden declarado, no en el del registro', () => {
       abrirSesion(['SECURITY_ADMIN', 'CLINICIAN', 'BILLING']);
 

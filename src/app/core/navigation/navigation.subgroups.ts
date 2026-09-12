@@ -347,3 +347,25 @@ export const NAV_GROUP_ICONS: Record<NavGroup, NavIconName> = {
   // Una persona: mis propios datos, no los que administro.
   'Mi cuenta': 'patients',
 };
+
+/**
+ * Los dominios que **no** se dibujan como contenedor: sus destinos van sueltos.
+ *
+ * Un dominio aplanado sigue existiendo —el registro reparte sus secciones igual
+ * y el breadcrumb lo sigue nombrando—; lo único que pierde es el desplegable
+ * que lo envolvía en la barra. Y con él pierden el suyo sus bloques: aplanar a
+ * medias —sacar el dominio pero dejar «Mis gestiones» plegado— deja el mismo
+ * problema una pulgada más abajo.
+ *
+ * Por qué estos dos y no todos. «General» y «Mi cuenta» son los dominios de
+ * quien **usa** la plataforma para lo suyo: el paciente entraba a «Mi cuenta»,
+ * después a «Mis gestiones» y recién ahí veía «Mis citas» — tres clics para el
+ * destino más frecuente del producto, y dos de ellos sobre rótulos que no
+ * llevan a ninguna pantalla. Aplanados, su menú entero son catorce renglones a
+ * un clic, que entran en una barra sin desplazarla. «Administración» tiene
+ * veintidós secciones y aplanarla cambiaría un problema por otro; los dominios
+ * de trabajo se quedan como están hasta que alguien lo pida mirando esa barra.
+ *
+ * Pedido del propietario del producto, 12/09/2026.
+ */
+export const GRUPOS_APLANADOS: ReadonlySet<NavGroup> = new Set<NavGroup>(['General', 'Mi cuenta']);

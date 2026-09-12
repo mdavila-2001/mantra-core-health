@@ -626,6 +626,12 @@ app-shell-layout { display: block; }
   border-bottom: 1px solid rgba(255, 255, 255, .08);
 }
 
+/* Un dominio aplanado («General», «Mi cuenta»): sus destinos se apilan como
+   los fijos de arriba, sin rótulo que los encabece ni sangría que los hunda.
+   La línea separadora la ponen los fijos; acá no va otra, o la barra del
+   paciente terminaría más rayada que ordenada. */
+.app-side-nav__sueltos { display: flex; flex-direction: column; gap: 2px; }
+
 .app-side-nav__group { display: flex; flex-direction: column; gap: 2px; }
 .app-side-nav__group-summary {
   display: flex; align-items: center; gap: var(--e3);
