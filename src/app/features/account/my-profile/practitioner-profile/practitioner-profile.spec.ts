@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { PractitionerProfile } from './practitioner-profile';
 import type { PerfilProfesionalVisible } from './practitioner-profile-view/practitioner-profile-view.types';
@@ -149,7 +150,14 @@ describe('PractitionerProfile', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      // `provideRouter([])` no es adorno: estas pruebas leen el contrato
+      // resuelto y nunca llaman a `detectChanges()`, pero la plantilla del
+      // componente usa `RouterLink`, y cuando la foto resuelve **después** de
+      // terminar la prueba, la detección de cambios que dispara ese cambio de
+      // señal alcanza a renderizarla y pide `ActivatedRoute`. Sin el router,
+      // eso salía como `NG0201` no capturado: la suite quedaba en verde y el
+      // proceso terminaba en 1, una de cada tres corridas.
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     http = TestBed.inject(HttpTestingController);
   });
