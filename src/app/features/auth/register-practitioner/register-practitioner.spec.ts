@@ -1350,6 +1350,147 @@ describe('RegisterPractitioner', () => {
       expect(req.request.body.professionalTitleCity).toBeUndefined();
       req.flush(RESPUESTA_PRO);
     });
+
+    /**
+     * El defecto que esto fija: el catálogo se leía UNA sola vez, en el
+     * constructor, y un fallo dejaba el mapa vacío para toda la vida de la
+     * pantalla. El aviso mandaba «volvé al paso y reintentá», pero volver de
+     * paso no pedía nada: sin recargar la página no había salida.
+     */
+    describe('cuando el catálogo de tipos no carga', () => {
+      /** La lectura que hace el constructor, caída. */
+      function catalogoDeTiposCaido(): void {
+        http
+          .expectOne((r) => r.url.startsWith('/system-context/dynamic-enums'))
+          .flush(null, { status: 503, statusText: 'Service Unavailable' });
+      }
+
+      /** La respuesta buena, con los cinco tipos que publica la API. */
+      function catalogoDeTiposCompleto(): void {
+        http.expectOne((r) => r.url.startsWith('/system-context/dynamic-enums')).flush({
+          code: 'professional-credential-type',
+          name: 'Tipo de credencial profesional',
+          definitionId: 'def-1',
+          valueSetId: 'vs-cred',
+          options: [
+            { conceptId: 'c-degree', code: 'CREDENTIAL_TYPE_DEGREE', label: 'Academic degree' },
+            { conceptId: 'c-diploma', code: 'CREDENTIAL_TYPE_DIPLOMA', label: 'Diploma course' },
+            { conceptId: 'c-master', code: 'CREDENTIAL_TYPE_MASTER', label: "Master's degree" },
+            { conceptId: 'c-doctor', code: 'CREDENTIAL_TYPE_DOCTORATE', label: 'Doctorate' },
+            { conceptId: 'c-spec', code: 'CREDENTIAL_TYPE_SPECIALTY', label: 'Specialty' },
+          ],
+        });
+      }
+
+      /** Una fila lista para viajar: la que el catálogo caído deja varada. */
+      function filaConNumero(): void {
+        component.agregarTitulo('UNIVERSITARIO');
+        const [fila] = component.titulosDe('UNIVERSITARIO');
+        component.escribirDatoDeTitulo(fila.id, 'numero', 'TIT-1');
+        component.escribirDatoDeTitulo(fila.id, 'universidad', 'Universidad Mayor de San Simón');
+      }
+
+      /** El aviso que se lee en pantalla, si hay alguno. */
+      function avisoVisible(): string | null {
+        fixture.detectChanges();
+        const alerta: HTMLElement | null = fixture.nativeElement.querySelector(
+          '[data-testid="registro-error"]',
+        );
+        return alerta === null ? null : (alerta.textContent?.trim() ?? '');
+      }
+
+      it('la primera carga fallida enciende el aviso del paso y frena el envío diciéndolo', () => {
+        catalogoDeTiposCaido();
+        filaConNumero();
+        completarProfesional();
+        component.submit();
+
+        // No sale el alta: la fila viajaría sin el concepto que el contrato exige.
+        http.expectNone('/iam/auth/register-practitioner');
+        // El paso enciende su aviso con botón, como el de departamentos.
+        expect(component.catalogoTiposDeTituloCaido()).toBe(true);
+        // Y el mensaje del envío nombra el botón que de verdad reintenta, en
+        // vez de mandar a repetir un paso que no pide nada.
+        expect(avisoVisible()).toContain('Reintentar');
+        expect(avisoVisible()).not.toContain('reintentá en unos segundos');
+      });
+
+      it('«Reintentar» vuelve a pedirlo y, al responder, el aviso se va sin recargar', () => {
+        catalogoDeTiposCaido();
+        filaConNumero();
+        completarProfesional();
+        component.submit();
+        expect(avisoVisible()).not.toBeNull();
+
+        component.reintentarTiposDeCredencial();
+        catalogoDeTiposCompleto();
+
+        expect(component.catalogoTiposDeTituloCaido()).toBe(false);
+        expect(component.errorMessage()).toBeNull();
+        expect(avisoVisible()).toBeNull();
+      });
+
+      it('el reintento no toca lo ya escrito, y el envío siguiente arma credentials[]', () => {
+        catalogoDeTiposCaido();
+        filaConNumero();
+        completarProfesional();
+        component.submit();
+
+        component.reintentarTiposDeCredencial();
+        catalogoDeTiposCompleto();
+
+        // Lo escrito antes del fallo sigue en su fila: vive en su propio
+        // signal, que el reintento no mira.
+        const [fila] = component.titulosDe('UNIVERSITARIO');
+        expect(fila.numero).toBe('TIT-1');
+        expect(fila.universidad).toBe('Universidad Mayor de San Simón');
+
+        component.submit();
+
+        const req = http.expectOne('/iam/auth/register-practitioner');
+        expect(req.request.body.credentials).toEqual([
+          {
+            credentialTypeConceptId: 'c-degree',
+            number: 'TIT-1',
+            issuingInstitutionText: 'Universidad Mayor de San Simón',
+          },
+        ]);
+        req.flush(RESPUESTA_PRO);
+      });
+
+      it('un segundo fallo conserva el aviso y el alta sigue sin salir', () => {
+        catalogoDeTiposCaido();
+        filaConNumero();
+        completarProfesional();
+        component.submit();
+
+        component.reintentarTiposDeCredencial();
+        catalogoDeTiposCaido();
+
+        expect(component.catalogoTiposDeTituloCaido()).toBe(true);
+        expect(avisoVisible()).toContain('Reintentar');
+
+        component.submit();
+        http.expectNone('/iam/auth/register-practitioner');
+      });
+
+      it('el aviso del número que falta NO se borra cuando el catálogo carga', () => {
+        catalogoDeTiposCaido();
+        component.agregarTitulo('DIPLOMADO');
+        const [fila] = component.titulosDe('DIPLOMADO');
+        component.escribirDatoDeTitulo(fila.id, 'universidad', 'Nur');
+        completarProfesional();
+        component.submit();
+        expect(avisoVisible()).toContain('número de diploma');
+
+        component.reintentarTiposDeCredencial();
+        catalogoDeTiposCompleto();
+
+        // El catálogo ya está, pero la fila sigue sin número: retirar este
+        // aviso de rebote dejaría el envío frenado y la pantalla muda.
+        expect(avisoVisible()).toContain('número de diploma');
+      });
+    });
   });
 
   it('sin título profesional no manda el alta: dice qué clase de profesional es', () => {

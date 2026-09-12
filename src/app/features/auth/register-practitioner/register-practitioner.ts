@@ -617,6 +617,26 @@ export class RegisterPractitioner {
   private readonly conceptoPorCodigo = signal<ReadonlyMap<string, string>>(new Map());
 
   /**
+   * Si la lectura del catálogo de tipos falló y todavía no se recuperó.
+   *
+   * Mismo papel que `catalogoDepartamentosCaido`: lo que enciende el aviso con
+   * su botón «Reintentar» en el paso, porque un catálogo vacío y uno caído se
+   * ven igual desde la plantilla y sólo el segundo se puede arreglar pidiendo
+   * de nuevo.
+   */
+  readonly catalogoTiposDeTituloCaido = signal(false);
+
+  /**
+   * El aviso de que el catálogo no cargó, en un solo sitio.
+   *
+   * Está acá y no escrito dos veces porque el éxito del reintento tiene que
+   * poder reconocer ESTE aviso para retirarlo: el otro aviso del paso —el del
+   * número que falta— viaja por el mismo canal y no debe borrarse de rebote.
+   */
+  private readonly avisoCatalogoDeTipos =
+    'No pudimos cargar los tipos de título. En el paso «Tus títulos», el botón «Reintentar» vuelve a pedirlos.';
+
+  /**
    * Una fila que todavía no dice nada: se agregó y quedó en blanco.
    *
    * No frena el envío ni viaja, igual que una casilla de especialidad agregada
@@ -696,12 +716,51 @@ export class RegisterPractitioner {
    */
   protected cargarTiposDeCredencial(): void {
     this.systemContext.dynamicEnum(this.campoDeTipoDeTitulo).subscribe({
-      next: (enumeracion) =>
+      next: (enumeracion) => {
+        this.catalogoTiposDeTituloCaido.set(false);
         this.conceptoPorCodigo.set(
           new Map(enumeracion.options.map((opcion) => [opcion.code, opcion.conceptId])),
-        ),
-      error: () => this.conceptoPorCodigo.set(new Map()),
+        );
+        // Si el envío se había frenado por esto, el aviso se retira solo: el
+        // catálogo ya está y volver a pulsar «Crear cuenta» va a funcionar.
+        this.retirarAvisoDeCatalogo();
+      },
+      error: () => {
+        this.conceptoPorCodigo.set(new Map());
+        this.catalogoTiposDeTituloCaido.set(true);
+      },
     });
+  }
+
+  /**
+   * Vuelve a pedir el catálogo de tipos de título.
+   *
+   * Público porque lo usan la plantilla —el botón «Reintentar» del paso— y las
+   * pruebas. Olvida lo memoizado antes de pedir, igual que
+   * `reintentarDepartamentos`: el cliente ya descarta la entrada al fallar,
+   * pero pedirlo explícitamente es lo que hace que este método signifique
+   * «volvé a la red» y no «devolveme lo que tengas guardado».
+   *
+   * Lo escrito en las filas no se toca: vive en `titulos`, que esto no mira.
+   */
+  reintentarTiposDeCredencial(): void {
+    this.systemContext.forget(this.campoDeTipoDeTitulo);
+    this.cargarTiposDeCredencial();
+  }
+
+  /**
+   * Retira el aviso del catálogo, y sólo ése.
+   *
+   * Se compara el mensaje porque las dos advertencias del paso —catálogo caído
+   * y número que falta— son `validation` sobre el mismo campo: borrar la otra
+   * de rebote dejaría el envío frenado sin nada en pantalla, que es el defecto
+   * que esta subtarea ya corrigió una vez.
+   */
+  private retirarAvisoDeCatalogo(): void {
+    const state = this.state();
+    if (state.status === 'validation' && state.issues[0]?.message === this.avisoCatalogoDeTipos) {
+      this.state.set(ready(null));
+    }
   }
 
   readonly formProfesional = new FormGroup({
@@ -2320,15 +2379,14 @@ export class RegisterPractitioner {
     }
     // Y tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
     // tipo, que el contrato exige, o se perdería en silencio.
+    //
+    // El aviso nombra el botón que de verdad reintenta. Antes decía «volvé al
+    // paso y reintentá en unos segundos», y volver de paso no pedía nada: el
+    // catálogo se leía una sola vez en el constructor, así que quien caía acá
+    // no tenía salida sin recargar la página.
     if (this.hayTitulosSinTipo()) {
       this.state.set(
-        validation([
-          {
-            field: 'academicTitles',
-            message:
-              'No pudimos cargar los tipos de título. Volvé al paso «Tus títulos» y reintentá en unos segundos.',
-          },
-        ]),
+        validation([{ field: 'academicTitles', message: this.avisoCatalogoDeTipos }]),
       );
       return;
     }

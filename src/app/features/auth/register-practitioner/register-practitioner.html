@@ -277,6 +277,25 @@
             -->
             <ng-template appCampoPersonalizado="academicTitles">
               <div class="registro-titulos">
+                <!-- Sin catálogo de tipos, una fila con número no se puede
+                     mandar: el contrato exige el concepto. Se avisa acá, donde
+                     se escriben, y con el botón que vuelve a pedirlo —mismo
+                     patrón que el catálogo de departamentos—. Lo ya escrito no
+                     se pierde: las filas viven en su propio signal. -->
+                @if (catalogoTiposDeTituloCaido()) {
+                  <p class="registro__catalogo-caido" data-testid="registro-pro-titulos-catalogo-caido">
+                    No pudimos traer los tipos de título.
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="registro-pro-titulos-reintentar"
+                      (clicked)="reintentarTiposDeCredencial()"
+                    >
+                      Reintentar
+                    </button>
+                  </p>
+                }
                 @for (tipo of tiposDeTitulo; track tipo.codigo) {
                   <section class="registro-titulo-tipo">
                     <h3 class="registro-titulo-tipo__nombre">{{ tipo.etiqueta }}</h3>
