@@ -229,9 +229,27 @@
                     <span class="claim__absent">Sin dictaminar</span>
                   }
                 </td>
-                <td>
-                  @if (line.denialReason) {
+                <td data-testid="claim-line-reason">
+                  @if (line.policyClauseReference || line.denialRationale) {
+                    <div class="claim__denial">
+                      @if (line.policyClauseReference) {
+                        <app-badge
+                          variant="error"
+                          size="sm"
+                          class="claim__clause"
+                          [label]="'Cláusula de exclusión: ' + line.policyClauseReference"
+                        >{{ line.policyClauseReference }}</app-badge>
+                      } @else if (line.denialReason) {
+                        <app-badge variant="warning" size="sm">{{ line.denialReason.display }}</app-badge>
+                      }
+                      @if (line.denialRationale) {
+                        <p class="claim__rationale">{{ line.denialRationale }}</p>
+                      }
+                    </div>
+                  } @else if (line.denialReason) {
                     {{ line.denialReason.display }}
+                  } @else if (line.decision && line.deniedAmount) {
+                    <span class="claim__absent">Sin motivo registrado</span>
                   } @else {
                     <span class="claim__absent">—</span>
                   }
@@ -255,9 +273,8 @@
       </div>
 
       <p class="claim__note">
-        La descripción en texto plano por ítem no está registrada en el modelo:
-        el único texto de la disposición es el del dictamen completo, y figura
-        arriba.
+        La disposición de arriba es del dictamen completo; la cláusula y la
+        justificación de la columna «Motivo» son del ítem puntual.
       </p>
     </section>
 

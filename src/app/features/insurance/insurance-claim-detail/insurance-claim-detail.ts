@@ -49,15 +49,15 @@ import { currencySuffix, formatAmount, formatMoney } from '../money-format';
  * **dice** en vez de taparlo — un descuadre entre lo facturado y la suma de
  * los ítems es exactamente lo que alguien tiene que ver.
  *
- * ## Lo que no se muestra por ítem, y por qué
+ * ## La cláusula y la justificación son del ítem; la disposición, de la versión
  *
- * `claim_line_adjudications` tiene motivo catalogado de rechazo
- * (`reason_concept_id`) pero **no** tiene texto libre por ítem: el único texto
- * de la disposición es `claim_adjudication_versions.disposition_text`, que es
- * **de la versión entera**. Se muestra donde corresponde —una vez, con el
- * dictamen— y la tabla dice que la descripción por ítem no está registrada.
- * Repetir el texto de la versión en cada fila lo haría pasar por un motivo
- * particular de ese ítem.
+ * `claim_line_adjudications` tiene el motivo catalogado (`reason_concept_id`,
+ * todavía sin catálogo real — P-16-4) y, desde v4.2.9 (subtarea 2.2), la cita
+ * textual de la cláusula contractual (`policy_clause_reference`) y la
+ * justificación circunstanciada (`denial_rationale`) **por ítem**. El texto de
+ * `claim_adjudication_versions.disposition_text` sigue siendo **de la versión
+ * entera** y se muestra donde corresponde, una vez, con el dictamen: repetirlo
+ * en cada fila lo haría pasar por un motivo particular de ese ítem.
  */
 @Component({
   selector: 'app-insurance-claim-detail',
