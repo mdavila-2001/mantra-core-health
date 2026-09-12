@@ -442,6 +442,44 @@ export interface OrganizationRegistration {
    * que `legalEntityType`—; obligatorio en el formulario público.
    */
   readonly legalDocuments?: OrganizationLegalDocuments;
+  /**
+   * El representante legal de la organización, con su poder notariado
+   * (subtarea 1.4). Va acá y no dentro de `payer`: el registro de procesos
+   * repite el mismo bloque para farmacia, laboratorio e imagenología — es
+   * onboarding del tenant, no de la aseguradora. Opcional en el contrato,
+   * obligatorio en el formulario.
+   */
+  readonly legalRepresentative?: OrganizationLegalRepresentative;
+  /**
+   * Las tres gerencias de contacto (subtarea 1.4). Ver
+   * {@link OrganizationRegistration.legalRepresentative}.
+   */
+  readonly executives?: OrganizationExecutives;
+}
+
+/** Nombre, celular y correo de una gerencia de contacto (subtarea 1.4). */
+export interface OrganizationContactPerson {
+  readonly fullName: string;
+  readonly phone: string;
+  readonly email: string;
+}
+
+/** El representante legal declarado en el alta, con su poder notariado ya subido. */
+export interface OrganizationLegalRepresentative {
+  readonly fullName: string;
+  readonly idNumber: string;
+  readonly email: string;
+  /** Opcional: el registro de procesos no lo pide, pero si se captura no se tira. */
+  readonly phone?: string;
+  /** `fileId` del poder, ya subido por `IamClient.uploadRegistrationDocument`. */
+  readonly powerOfAttorneyFileId: string;
+}
+
+/** Las tres gerencias de contacto de la organización (subtarea 1.4). */
+export interface OrganizationExecutives {
+  readonly generalManager: OrganizationContactPerson;
+  readonly commercialManager: OrganizationContactPerson;
+  readonly marketingManager: OrganizationContactPerson;
 }
 
 /**
@@ -478,6 +516,12 @@ export interface RegisteredOrganization {
    * verificación. Ausente si el alta no declaró `legalDocuments`.
    */
   readonly legalDocumentsRegistered?: number;
+  /**
+   * Cuántos vínculos de representación quedaron registrados —el representante
+   * legal más las tres gerencias— (subtarea 1.4). Ausente si el alta no
+   * declaró ninguno de los dos bloques.
+   */
+  readonly representativesRegistered?: number;
 }
 
 /**

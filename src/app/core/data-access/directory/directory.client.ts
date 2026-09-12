@@ -576,6 +576,10 @@ function toMyOrganization(body: ConNulos<WireMyOrganization>): MyOrganization {
     // Presente sólo si el tenant es `PAYER`: su presencia es la señal de que
     // se trata de una aseguradora, sin decodificar `tenantTypeConceptId`.
     payer: limpio.payer,
+    // Representante legal y gerencias (subtarea 1.4): al nivel de la
+    // organización, cualquiera sea su tipo — ver `MyOrganization`.
+    legalRepresentative: limpio.legalRepresentative,
+    executives: limpio.executives,
   };
 }
 
