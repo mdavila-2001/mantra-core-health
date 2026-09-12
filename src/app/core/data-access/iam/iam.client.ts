@@ -288,6 +288,13 @@ export class IamClient {
       // El institucional. El de acceso es `email`, que desde el cambio de
       // identidad de acceso lleva el correo PERSONAL del profesional.
       ...(registration.workEmail === undefined ? {} : { workEmail: registration.workEmail }),
+      // Los títulos declarados en el alta (subtarea 1.6). Van acá por lo mismo
+      // que avisa el comentario de arriba: sin este renglón la pantalla
+      // preguntaría títulos que nadie guarda. La lista vacía no viaja: un alta
+      // sin títulos es el caso normal y el contrato la omite.
+      ...(registration.credentials === undefined || registration.credentials.length === 0
+        ? {}
+        : { credentials: registration.credentials.map((credencial) => ({ ...credencial })) }),
     });
   }
 

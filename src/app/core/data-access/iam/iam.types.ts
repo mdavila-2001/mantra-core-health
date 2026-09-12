@@ -380,6 +380,32 @@ export interface PractitionerRegistration {
   readonly occupationConceptId?: string;
   /** Ocupación en texto libre, para cuando no está en el catálogo. */
   readonly occupationFreeText?: string;
+  /**
+   * Los títulos académicos declarados en el alta (subtarea 1.6).
+   *
+   * Cada elemento es una credencial: el alta las crea en la misma transacción
+   * que la cuenta y el perfil. **No se manda junto con un `credentialNumber`
+   * suelto**: la API responde 422 porque no sabría si es el mismo título dos
+   * veces.
+   */
+  readonly credentials?: readonly NewRegistrationCredential[];
+}
+
+/**
+ * Un título declarado en el alta pública.
+ *
+ * Es el subconjunto mínimo de {@link NewOwnCredential} que el alta sabe
+ * persistir hoy. El nombre del título, el país, la ciudad y el diploma **no
+ * viajan**: no tienen dónde guardarse sin cambiar el modelo, y esta pantalla no
+ * es donde eso se decide.
+ */
+export interface NewRegistrationCredential {
+  /** Uno de los cinco `CREDENTIAL_TYPE_*` del catálogo, por concept id. */
+  readonly credentialTypeConceptId: string;
+  /** Número o código del diploma. Obligatorio: la columna es NOT NULL. */
+  readonly number: string;
+  /** Dónde se cursó, como texto libre. */
+  readonly issuingInstitutionText?: string;
 }
 
 export interface RegisteredPractitioner {
