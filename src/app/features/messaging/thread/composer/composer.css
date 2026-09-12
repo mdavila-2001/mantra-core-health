@@ -320,3 +320,57 @@
 
 .composer__adjunto { flex-wrap: wrap; }
 .composer__adjunto app-file-preview { flex-basis: 100%; }
+
+/* La tira de edición (F4.5).
+
+   Misma anatomía que la de responder, con la barra en ámbar: son dos estados
+   del mismo campo y hay que poder distinguirlos de un vistazo — responder
+   escribe algo nuevo, editar cambia algo que la otra persona ya leyó. */
+.composer__respuesta--edicion .composer__respuesta-texto {
+  border-inline-start-color: var(--ambar);
+}
+
+/* El marcador del catálogo de emojis mientras llega su fragmento. Ocupa el
+   mismo alto que la rejilla para que el panel no salte al aparecer. */
+.composer__panel-cargando {
+  margin: 0;
+  padding: var(--e6) var(--e4);
+  text-align: center;
+  font-size: var(--fs-caption);
+  color: var(--tinta-3);
+}
+
+/* Las dos pestañas del panel de figuritas. Texto y no iconos: «emoji» y
+   «sticker» no tienen símbolo que se entienda sin leerlo. */
+.composer__solapas {
+  flex: none;
+  display: flex;
+  gap: var(--e1);
+  padding: var(--e2) var(--e3) 0;
+}
+
+.composer__solapa {
+  padding: var(--e2) var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl) var(--r-ctrl) 0 0;
+  background: none;
+  color: var(--tinta-3);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.composer__solapa:hover {
+  color: var(--tinta);
+}
+
+.composer__solapa.is-activa {
+  background: var(--sup-inset);
+  color: var(--tinta-marca);
+}
+
+.composer__solapa:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -2px;
+}

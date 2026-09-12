@@ -310,3 +310,107 @@ export interface BalanceSheet {
   readonly nextCursor: string | null;
   readonly truncated: boolean;
 }
+
+/* ============================================================================
+    El plano SAP: ejercicio y períodos, flujo del documento, partidas abiertas
+    y objetos de controlling.
+
+    Los nombres son los de las tablas del módulo 16 del modelo canónico
+    —`fiscal_periods`, `open_items`, `clearing_documents`, `cost_centers`,
+    `profit_centers`, `segments`— y los estados, los que la API declara en
+    `accounting.concepts.ts`. No se inventó vocabulario: el día que la API
+    publique estas lecturas, la pantalla no cambia de idioma.
+    ========================================================================== */
+
+/** Los seis estados por los que pasa un asiento antes de existir en el mayor. */
+export type WorkflowStatus =
+  | 'DRAFT'
+  | 'AUTO_CLASSIFIED'
+  | 'PENDING_REVIEW'
+  | 'APPROVED'
+  | 'POSTED'
+  | 'REVERSED';
+
+/** Las cinco acciones que mueven ese estado. Son las de la API, no más. */
+export type WorkflowAction = 'classify' | 'submit-review' | 'approve' | 'post' | 'reverse';
+
+/** Un período contable. Cerrado no admite asientos: eso es cerrar el mes. */
+export interface FiscalPeriod {
+  readonly id: string;
+  readonly periodNumber: number;
+  readonly name: string;
+  readonly startsOn: string;
+  readonly endsOn: string;
+  readonly status: 'CLOSED' | 'OPEN' | 'PLANNED';
+  readonly closedAt?: string;
+}
+
+export interface FiscalYear {
+  readonly fiscalYearId: string;
+  readonly name: string;
+  readonly startsOn: string;
+  readonly endsOn: string;
+  readonly currentPeriodId: string;
+  readonly periods: readonly FiscalPeriod[];
+}
+
+/** Una factura pendiente de cobro o de pago, con su antigüedad. */
+export interface OpenItem {
+  readonly id: string;
+  readonly documentNumber: string;
+  readonly accountCode: string;
+  readonly accountName: string;
+  readonly partnerName: string;
+  readonly side: 'RECEIVABLE' | 'PAYABLE';
+  readonly documentDate: string;
+  readonly dueDate: string;
+  readonly amount: string;
+  readonly clearedAmount: string;
+  readonly openAmount: string;
+  readonly overdueDays: number;
+  readonly agingBucket: string;
+}
+
+/** Un tramo de antigüedad de la cartera. */
+export interface AgingBucket {
+  readonly bucket: string;
+  readonly label: string;
+  readonly receivable: string;
+  readonly payable: string;
+  readonly count: number;
+}
+
+export interface OpenItemsPage {
+  readonly items: readonly OpenItem[];
+  readonly aging: readonly AgingBucket[];
+  readonly totalReceivable: string;
+  readonly totalPayable: string;
+}
+
+/** Un centro de coste, de beneficio o un segmento, con su resultado. */
+export interface ControllingObject {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly kind: 'COST_CENTER' | 'PROFIT_CENTER' | 'SEGMENT';
+  readonly debit: string;
+  readonly credit: string;
+  readonly result: string;
+}
+
+/** Un documento del flujo: el original, éste, y sus reversiones. */
+export interface DocumentFlowNode {
+  readonly id: string;
+  readonly role: string;
+  readonly transactionNumber: string;
+  readonly transactionDate: string;
+  readonly totalAmount: string;
+  readonly status: WorkflowStatus;
+}
+
+/** Lo que devuelve compensar un grupo de partidas. */
+export interface ClearingResult {
+  readonly clearingDocumentId: string;
+  readonly clearedItems: number;
+  readonly clearedAmount: string;
+}

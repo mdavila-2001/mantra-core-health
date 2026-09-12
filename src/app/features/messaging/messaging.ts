@@ -258,14 +258,19 @@ export class Messaging {
     }
   }
 
+  /**
+   * Abre la conversación con la hoja del contacto desplegada.
+   *
+   * Antes navegaba a `/public-profile/<profileId>`, **una ruta que no existe**
+   * —las fichas públicas son `/p|o|f|l|s/:slug`—, así que «Ver perfil» caía en
+   * el 404. Ahora abre el hilo pidiéndole la hoja con `?contacto=1`: es el
+   * mismo destino que el «Ver perfil» del menú del hilo, y desde la bandeja
+   * hace falta pasar por el hilo porque en angosto la fila no lo tiene abierto.
+   */
   private verPerfil(conversationId: string): void {
-    const conversacion = this.store
-      .conversaciones()
-      .find((c) => c.id === conversationId);
-    const peer = conversacion?.peers[0];
-    if (peer !== undefined) {
-      void this.router.navigate(['/public-profile', peer.profileId]);
-    }
+    void this.router.navigate(['/messaging', conversationId], {
+      queryParams: { contacto: 1 },
+    });
   }
 
   /** Abre el hilo con alguien del directorio. */

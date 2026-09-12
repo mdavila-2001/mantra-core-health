@@ -5,11 +5,13 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   output,
   PLATFORM_ID,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
@@ -20,7 +22,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ChatStore } from '../../../../core/messaging/chat.store';
 import { MessageTemplates } from '../../../../core/messaging/message-templates';
 import { SelectorEmojis } from './selector-emojis';
+import { StickerPicker } from './sticker-picker/sticker-picker';
 import { Grabador } from './grabador';
+import type { Sticker } from '../../../../core/messaging/sticker-pack.generated';
 
 /** Lo más grande que se deja adjuntar. Más que esto no sube por el móvil. */
 const TOPE_DE_ARCHIVO = 20 * 1024 * 1024;
@@ -53,6 +57,7 @@ const TIPOS_ACEPTADOS = ['image/', 'audio/', 'video/', 'application/pdf'];
     FormsModule,
     Grabador,
     SelectorEmojis,
+    StickerPicker,
   ],
   templateUrl: './composer.html',
   styleUrl: './composer.css',
@@ -74,6 +79,15 @@ export class Composer {
   protected readonly panel = signal<'ninguno' | 'emojis' | 'adjuntar' | 'plantillas'>(
     'ninguno',
   );
+
+  /**
+   * Qué pestaña del panel de figuritas está abierta.
+   *
+   * Emojis y stickers comparten panel y botón: son la misma pregunta —«mandar
+   * algo que no es texto»— y dos botones al lado del campo obligarían a
+   * decidir cuál de los dos antes de abrir ninguno.
+   */
+  protected readonly solapa = signal<'emojis' | 'stickers'>('emojis');
   protected readonly error = signal('');
 
   /** El archivo elegido, esperando la leyenda y el envío. */
@@ -82,6 +96,17 @@ export class Composer {
   /** Las plantillas de fábrica más las propias (carril P9). */
   protected readonly plantillasDisponibles = this.plantillas.todas;
   protected readonly plantillaNueva = signal('');
+
+  /** El mensaje que se está editando, si alguno (F4.5). */
+  protected readonly editando = this.store.editando;
+
+  /**
+   * Lo que se estaba escribiendo antes de entrar a editar.
+   *
+   * Editar toma prestado el campo; cancelar tiene que devolver la frase a
+   * medias que había, no dejarlo vacío.
+   */
+  private readonly borradorEnEspera = signal<string | null>(null);
 
   protected readonly puedeEnviar = computed(
     () => this.texto().trim() !== '' || this.adjunto() !== null,
@@ -94,6 +119,30 @@ export class Composer {
       this.texto.set(this.store.borrador());
       this.panel.set('ninguno');
       this.limpiarAdjunto();
+    });
+
+    // El modo edición nace en el hilo (`store.editar()`), así que el campo
+    // tiene que reaccionar a él y no al revés: es el store el que sabe si el
+    // mensaje todavía está dentro de la ventana de cinco minutos.
+    effect(() => {
+      const mensaje = this.store.editando();
+      untracked(() => {
+        if (mensaje !== null) {
+          if (this.borradorEnEspera() === null) {
+            this.borradorEnEspera.set(this.texto());
+          }
+          this.texto.set(mensaje.bodyText ?? '');
+          this.panel.set('ninguno');
+          this.limpiarAdjunto();
+          this.enfocar();
+          return;
+        }
+        const enEspera = this.borradorEnEspera();
+        if (enEspera !== null) {
+          this.texto.set(enEspera);
+          this.borradorEnEspera.set(null);
+        }
+      });
     });
 
     // El «responder» llega desde el hilo: cuando aparece, el foco va al campo,
@@ -109,7 +158,12 @@ export class Composer {
 
   protected alEscribir(valor: string): void {
     this.texto.set(valor);
-    this.store.guardarBorrador(valor);
+    // Editando, lo que se teclea es el texto del mensaje, no un borrador de la
+    // conversación: guardarlo dejaría el composer con esa frase después de
+    // cancelar.
+    if (this.editando() === null) {
+      this.store.guardarBorrador(valor);
+    }
   }
 
   /** Enter envía; Shift+Enter hace salto de línea. */
@@ -118,12 +172,29 @@ export class Composer {
       evento.preventDefault();
       this.enviar();
     }
-    if (evento.key === 'Escape' && this.store.respondiendoA() !== null) {
-      this.store.responder(null);
+    if (evento.key === 'Escape') {
+      if (this.editando() !== null) {
+        this.cancelarEdicion();
+      } else if (this.store.respondiendoA() !== null) {
+        this.store.responder(null);
+      }
     }
   }
 
+  /** Sale del modo edición sin guardar. */
+  protected cancelarEdicion(): void {
+    this.store.editar(null);
+    this.enfocar();
+  }
+
   protected enviar(): void {
+    // Editando, «enviar» es guardar el cambio: no nace un mensaje nuevo.
+    if (this.editando() !== null) {
+      this.store.confirmarEdicion(this.texto());
+      this.enfocar();
+      return;
+    }
+
     const archivo = this.adjunto();
     if (archivo !== null) {
       this.store.enviarAdjunto(archivo, this.texto());
@@ -148,6 +219,15 @@ export class Composer {
 
   protected cerrarPanel(): void {
     this.panel.set('ninguno');
+  }
+
+  /* --- Stickers ------------------------------------------------------------ */
+
+  /** Un sticker se manda al tocarlo: es el mensaje, no parte de uno. */
+  protected mandarSticker(sticker: Sticker): void {
+    this.store.enviarSticker(sticker);
+    this.panel.set('ninguno');
+    this.enviado.emit();
   }
 
   /* --- Emojis -------------------------------------------------------------- */

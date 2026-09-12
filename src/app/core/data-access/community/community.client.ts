@@ -22,6 +22,7 @@ import type {
   ConversationsQuery,
   DirectMessage,
   DirectMessagePage,
+  EditDirectMessage,
   FeedListItem,
   FeedPage,
   FeedQuery,
@@ -1084,6 +1085,34 @@ export class CommunityClient {
           ...fecha('sentAt', body.sentAt),
         })),
       );
+  }
+
+  /**
+   * `PATCH /community/conversations/:id/messages/:messageId` — cambia el texto
+   * de un mensaje propio (F4.5).
+   *
+   * El servidor lo marca `isEdited` y empuja `conversation:message:updated` a
+   * los demás participantes. Rechaza con **422** el mensaje ajeno, el ya
+   * eliminado y el que quedó fuera de la ventana de edición.
+   *
+   * @param conversationId - El hilo.
+   * @param messageId - Qué mensaje.
+   * @param datos - Quién lo escribió y el texto nuevo.
+   * @returns El mensaje ya editado.
+   */
+  editMessage(
+    conversationId: string,
+    messageId: string,
+    datos: EditDirectMessage,
+  ): Observable<DirectMessage> {
+    return this.http
+      .patch<WireMessage>(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}`,
+        ),
+        datos,
+      )
+      .pipe(map(toMessage));
   }
 
   /**

@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { Thread, trocear } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
 import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
+import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
 
 /**
  * Lo que estas pruebas fijan.
@@ -387,6 +388,174 @@ describe('Thread', () => {
     expect(consultar('hilo-aviso')?.textContent).toContain('Reenviado a Dr. Ortega');
     // El hilo abierto no cambió: el mensaje fue a otra conversación.
     expect(burbujas().length).toBe(1);
+  });
+
+  /* --- Stickers ----------------------------------------------------------- */
+
+  describe('stickers', () => {
+    it('se manda al tocarlo y se dibuja sin burbuja', () => {
+      abrir([]);
+
+      (consultar('composer-emojis') as HTMLElement).click();
+      fixture.detectChanges();
+      (consultar('composer-solapa-stickers') as HTMLElement).click();
+      fixture.detectChanges();
+
+      const primero = fixture.nativeElement.querySelector(
+        '[data-testid="composer-sticker"]',
+      ) as HTMLElement;
+      primero.click();
+      fixture.detectChanges();
+
+      const enviado = http.expectOne(
+        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
+      );
+      // Viaja como cualquier adjunto: no hace falta un tipo de mensaje nuevo.
+      expect(enviado.request.body).toMatchObject({
+        senderProfileId: 'pp-1',
+        contentType: 'MEDIA',
+        attachmentFileId: PACK_DE_STICKERS[0].id,
+      });
+      enviado.flush({
+        id: 'm-9',
+        conversationId: 'c-1',
+        sentAt: new Date().toISOString(),
+      });
+      fixture.detectChanges();
+
+      expect(consultar('hilo-sticker')).not.toBeNull();
+      // Sin burbuja: la clase lo dice y el CSS la vacía.
+      expect(burbujas()[0]?.classList.contains('is-sticker')).toBe(true);
+    });
+
+    it('no le pide los bytes al servidor: el pack viene con la aplicación', () => {
+      abrir([
+        {
+          ...mensaje('m-1', 'pp-2', ''),
+          bodyText: null,
+          attachmentFileId: PACK_DE_STICKERS[1].id,
+        },
+      ]);
+
+      expect(consultar('hilo-sticker')?.getAttribute('src')).toBe(
+        PACK_DE_STICKERS[1].url,
+      );
+      http.expectNone((r) => r.url.includes('/common/files/'));
+    });
+  });
+
+  /* --- Editar un mensaje propio (F4.5) ----------------------------------- */
+
+  describe('editar', () => {
+    /** Un mensaje propio mandado hace `haceMs`, para pisar la ventana. */
+    const propioReciente = (id: string, haceMs: number, texto: string) => ({
+      ...mensaje(id, 'pp-1', texto),
+      sentAt: new Date(Date.now() - haceMs).toISOString(),
+    });
+
+    /** Abre el menú de la única burbuja en pantalla. */
+    const abrirMenu = (): void => {
+      (consultar('hilo-menu-mensaje') as HTMLElement).click();
+      fixture.detectChanges();
+    };
+
+    /**
+     * Elige «Editar» y espera a que el campo tenga el texto.
+     *
+     * El `await` no es ceremonia: `[ngModel]` escribe el `<textarea>` en una
+     * microtarea, así que leer el DOM en el mismo tic devuelve el valor viejo.
+     */
+    const elegirEditar = async (): Promise<void> => {
+      (consultar('hilo-editar') as HTMLElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    };
+
+    it('ofrece «Editar» en un mensaje propio de hace un minuto', () => {
+      abrir([propioReciente('m-1', 60_000, 'Nos vemos a als 5')]);
+      abrirMenu();
+
+      expect(consultar('hilo-editar')).not.toBeNull();
+    });
+
+    it('no lo ofrece pasados los cinco minutos', () => {
+      abrir([propioReciente('m-1', 6 * 60_000, 'Viejo')]);
+      abrirMenu();
+
+      expect(consultar('hilo-editar')).toBeNull();
+    });
+
+    it('no lo ofrece en el mensaje de otro', () => {
+      abrir([{ ...mensaje('m-1', 'pp-2', 'Suyo'), sentAt: new Date().toISOString() }]);
+      abrirMenu();
+
+      expect(consultar('hilo-editar')).toBeNull();
+    });
+
+    it('el composer entra en modo edición con el texto cargado', async () => {
+      abrir([propioReciente('m-1', 60_000, 'Nos vemos a als 5')]);
+      abrirMenu();
+      await elegirEditar();
+
+      expect(consultar('composer-editando')).not.toBeNull();
+      expect((consultar('hilo-texto') as HTMLTextAreaElement).value).toBe(
+        'Nos vemos a als 5',
+      );
+      // Guardar, no enviar: son dos gestos distintos y el botón lo dice.
+      expect(consultar('composer-editar-guardar')).not.toBeNull();
+      expect(consultar('hilo-enviar')).toBeNull();
+      // Y no se adjunta mientras se edita.
+      expect(consultar('composer-adjuntar')).toBeNull();
+    });
+
+    it('guardar manda el PATCH y sale del modo edición', async () => {
+      abrir([propioReciente('m-1', 60_000, 'Nos vemos a als 5')]);
+      abrirMenu();
+      await elegirEditar();
+
+      escribir('Nos vemos a las 5');
+      (consultar('composer-editar-guardar') as HTMLElement).click();
+      fixture.detectChanges();
+
+      const pedido = http.expectOne(
+        (r) => r.url === '/community/conversations/c-1/messages/m-1',
+      );
+      expect(pedido.request.method).toBe('PATCH');
+      pedido.flush({
+        ...mensaje('m-1', 'pp-1', 'Nos vemos a las 5'),
+        isEdited: true,
+      });
+      fixture.detectChanges();
+
+      expect(consultar('composer-editando')).toBeNull();
+      expect(burbujas()[0]?.textContent).toContain('Nos vemos a las 5');
+      expect(consultar('hilo-editado')).not.toBeNull();
+    });
+
+    it('cancelar devuelve lo que se estaba escribiendo antes', async () => {
+      abrir([propioReciente('m-1', 60_000, 'Original')]);
+      escribir('media frase');
+      abrirMenu();
+      await elegirEditar();
+      expect((consultar('hilo-texto') as HTMLTextAreaElement).value).toBe('Original');
+
+      (consultar('composer-editar-cancelar') as HTMLElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(consultar('composer-editando')).toBeNull();
+      expect((consultar('hilo-texto') as HTMLTextAreaElement).value).toBe('media frase');
+      // Cancelar no toca el mensaje.
+      http.expectNone((r) => r.url === '/community/conversations/c-1/messages/m-1');
+    });
+
+    it('dice «editado» en un mensaje que ya venía editado del servidor', () => {
+      abrir([{ ...mensaje('m-1', 'pp-2', 'Corregido'), isEdited: true }]);
+
+      expect(consultar('hilo-editado')).not.toBeNull();
+    });
   });
 
   function escribir(valor: string): void {

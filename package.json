@@ -37,7 +37,8 @@
     "audit:vistas": "node scripts/audit-design-views.mjs",
     "e2e:auditoria": "playwright test playwright/auditoria-prompts.spec.ts --reporter=list",
     "stock:generate": "node scripts/generate-component-index.mjs",
-    "mock:chart-templates": "node scripts/gen-chart-templates-fixture.mjs"
+    "mock:chart-templates": "node scripts/gen-chart-templates-fixture.mjs",
+    "emoji:catalog": "node scripts/gen-emoji-catalog.mjs"
   },
   "private": true,
   "packageManager": "yarn@4.18.0",
