@@ -385,10 +385,11 @@
                 <span class="dimension__nombre">
                   {{ activo.name }}
                   <span class="dimension__detalle">
-                    {{ activo.className }} · {{ activo.usefulLifeMonths }} meses ·
-                    {{ importe(activo.monthlyDepreciation) }}/mes
-                    @if (!activo.depreciable) {
-                      · <strong>no entra en la corrida</strong>
+                    {{ activo.className }} · {{ activo.usefulLifeMonths }} meses
+                    @if (activo.depreciable) {
+                      · {{ importe(activo.monthlyDepreciation) }}/mes
+                    } @else {
+                      · <strong>{{ activo.status === 'RETIRED' ? 'dado de baja' : 'amortizado del todo' }}, no entra en la corrida</strong>
                     }
                   </span>
                 </span>
@@ -451,9 +452,10 @@
 
     <app-alert tone="info" class="nota-de-origen">
       <p>
-        El ejercicio, las partidas abiertas y los centros los sirve hoy el simulador de
-        esta rama. La API ya tiene las escrituras equivalentes —cerrar período,
-        compensar, postear, revertir— y todavía no publica cómo leerlas.
+        El ejercicio, las partidas abiertas, los centros, los activos y los devengos los
+        sirve hoy el simulador de esta rama. La API ya tiene las escrituras equivalentes
+        —cerrar período, compensar, postear, revertir, amortizar, devengar— y todavía no
+        publica cómo leer ninguna de ellas.
       </p>
     </app-alert>
   }
