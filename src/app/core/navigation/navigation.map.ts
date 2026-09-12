@@ -690,17 +690,26 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // existir sin inventarse los datos. Entra ahora con
     // `GET /insurance-carriers` y su ficha.
     //
-    // El rol es el mismo que «Organizaciones» porque hoy es el único que
-    // significa «administra esta organización»: la plataforma no tiene todavía
-    // un rol de aseguradora. **La autoridad no es esta línea** — la API acota
-    // por pertenencia al tenant, no por rol global —, así que el día que exista
-    // un `INSURANCE_ADMIN` este es el único lugar que cambia.
+    // El rol **dejó de ser** el de «Organizaciones» con la consola de planes y
+    // coberturas: quien administra una aseguradora es owner o admin de su
+    // tenant, y eso es una fila de `tenant_memberships` que el token no
+    // transporta como rol. Exigir `SECURITY_ADMIN` le cerraba la puerta justo a
+    // esa persona, así que la sección pasó a `ANY_ROLE` + `requiresTenant` y la
+    // capacidad real la resuelve la API (`carrier.canAdminister`).
+    //
+    // `hiddenFor` es el complemento que `requiresTenant` necesita, y no es
+    // opcional: el alta de paciente lo afilia al tenant por defecto, así que
+    // *todos* cumplen la condición de membresía. Sin esta línea, un paciente y
+    // un médico veían «Aseguradora» en su menú de administración — que es
+    // exactamente lo que destaparon `access-tree.spec.ts` y
+    // `navigation.service.spec.ts`. Mismo par que «Tu organización».
     path: 'administration/insurance',
     label: 'Aseguradora',
     group: 'Administración',
     icon: 'umbrella',
     roles: [ANY_ROLE],
     requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Revisá tus productos, planes, coberturas y la red de prestadores.',
     module: 'M26 insurance',
