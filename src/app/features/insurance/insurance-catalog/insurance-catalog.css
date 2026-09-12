@@ -50,8 +50,8 @@
 .catalog__readonly {
   margin: var(--sp-3) 0 0;
   padding: var(--sp-3);
-  border-radius: var(--radius-md);
-  background: var(--surface-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
   color: var(--text-secondary);
 }
 
