@@ -5,26 +5,48 @@ import {
   conceptos,
   conjuntoPorId,
   miembrosDe,
-  slugDe,
   todosLosConjuntos,
   type ConceptoSimulado,
 } from '../fixtures/conceptos';
+import {
+  CATEGORIAS,
+  ETIQUETAS,
+  PARAGUAS,
+  conjuntoDeGlosarioPorId,
+  conjuntoEnLinea,
+  fichaEnLinea,
+  miembrosDeConjunto,
+  terminoEnLinea,
+  terminoPorId,
+  type ConceptoDeGlosario,
+} from '../fixtures/glosario';
 import { notFound, type MockRouter } from '../mock-router';
 import { contiene, iso, paginar, texto } from '../mock-store';
 
 /* ============================================================================
     Terminología: conjuntos de valores, conceptos, etiquetas y el glosario.
+
+    El glosario NO se arma acá: lo sirve `fixtures/glosario.ts`, que indexa el
+    catálogo curado del backend (12 categorías `glossary-category-*`, 15
+    etiquetas `glossary-tag-*` y 69 términos con definición clínica, resumen
+    llano, sinónimos y relaciones tipadas). Hasta el 2026-09-11 este archivo
+    inventaba siete categorías propias —`glossary-diseases`, `glossary-symptoms`…—
+    con códigos que el backend no tiene: la pantalla filtra por el prefijo
+    canónico y las descartaba todas, así que la maqueta nunca mostró una sola
+    definición.
     ========================================================================== */
 
-const CATEGORIAS_GLOSARIO: Readonly<Record<string, string>> = {
-  'glossary-diseases': 'Enfermedades',
-  'glossary-symptoms': 'Síntomas',
-  'glossary-procedures': 'Procedimientos',
-  'glossary-medications': 'Medicamentos',
-  'glossary-anatomy': 'Anatomía',
-  'glossary-tests': 'Estudios diagnósticos',
-  'glossary-other': 'Otros términos',
-};
+/** Un término del glosario coincide por nombre, sinónimo, definición o código. */
+function coincide(termino: ConceptoDeGlosario, q: string | null): boolean {
+  return (
+    contiene(termino.esName, q) ||
+    contiene(termino.enDisplay, q) ||
+    contiene(termino.code, q) ||
+    contiene(termino.clinicalDefinitionEs, q) ||
+    contiene(termino.plainSummaryEs, q) ||
+    (termino.esSynonyms ?? []).some((sinonimo) => contiene(sinonimo, q))
+  );
+}
 
 function opcion(c: ConceptoSimulado) {
   return {
@@ -38,69 +60,51 @@ function opcion(c: ConceptoSimulado) {
   };
 }
 
-function categoriaDe(c: ConceptoSimulado): { internalCode: string; name: string } | null {
-  const vs = c.valueSets.find((v) => v.startsWith('glossary-') && v !== 'glossary-all-terms');
-  return vs === undefined ? null : { internalCode: vs, name: CATEGORIAS_GLOSARIO[vs] ?? vs };
-}
-
-function terminoDeGlosario(c: ConceptoSimulado) {
-  const categoria = categoriaDe(c);
-  return {
-    conceptId: c.id,
-    code: c.code,
-    display: c.display,
-    slug: slugDe(c.display),
-    translated: true,
-    category: categoria,
-    shortDefinition: c.definition ?? `Término del catálogo: ${c.display}.`,
-    tags: categoria === null ? [] : [categoria.name],
-    relationsCount: relacionesDe(c).length,
-    status: 'active' as const,
-    valueSets: c.valueSets
-      .filter((v) => v.startsWith('glossary-'))
-      .map((v) => ({ id: conjuntoPorId(v)?.id ?? v, internalCode: v, name: CATEGORIAS_GLOSARIO[v] ?? 'Glosario' })),
-  };
-}
-
-function relacionesDe(c: ConceptoSimulado) {
-  const categoria = categoriaDe(c);
-  if (categoria === null) return [];
-  const tipo =
-    categoria.internalCode === 'glossary-diseases'
-      ? 'TREATMENT'
-      : categoria.internalCode === 'glossary-medications'
-        ? 'DISEASE'
-        : 'RELATED_TERM';
-  const destino =
-    categoria.internalCode === 'glossary-diseases'
-      ? 'glossary-medications'
-      : categoria.internalCode === 'glossary-medications'
-        ? 'glossary-diseases'
-        : 'glossary-symptoms';
-  return miembrosDe(destino)
-    .slice(c.ordinal % 3, (c.ordinal % 3) + 3)
-    .map((r) => ({ type: tipo, conceptId: r.id, slug: slugDe(r.display), display: r.display }));
-}
-
 export function registrarTerminologia(router: MockRouter): void {
   router.get('/terminology/value-sets', ({ query }) => {
     const code = texto(query, 'code');
     const q = texto(query, 'query') ?? texto(query, 'q');
-    const todos = todosLosConjuntos()
+    // Los del glosario van primero y en el orden de la grilla; el resto del
+    // catálogo de la plataforma va detrás, como hasta ahora.
+    const delGlosario = [PARAGUAS, ...CATEGORIAS, ...ETIQUETAS].map(conjuntoEnLinea);
+    const delCatalogo = todosLosConjuntos().map((c) => ({
+      id: c.id,
+      internalCode: c.internalCode,
+      name: c.name,
+      description: c.description,
+      defaultVersionId: c.defaultVersionId,
+      memberCount: miembrosDe(c.internalCode).length,
+    }));
+    const todos = [...delGlosario, ...delCatalogo]
       .filter((c) => code === null || c.internalCode === code)
-      .filter((c) => contiene(c.name, q) || contiene(c.internalCode, q))
-      .map((c) => ({
-        id: c.id,
-        internalCode: c.internalCode,
-        name: c.name,
-        description: c.description,
-        defaultVersionId: c.defaultVersionId,
-        memberCount: miembrosDe(c.internalCode).length,
-      }));
+      .filter((c) => contiene(c.name, q) || contiene(c.internalCode, q));
     return paginar(todos, query, 50);
   });
 
   router.get('/terminology/value-sets/:id/$expand', ({ params, query }) => {
+    const delGlosario = conjuntoDeGlosarioPorId(params['id']!);
+    if (delGlosario !== undefined) {
+      const pagina = paginar(
+        miembrosDeConjunto(delGlosario).map((t, indice) => ({
+          conceptId: t.id,
+          code: t.code,
+          display: t.esName,
+          definition: t.plainSummaryEs,
+          selectable: true,
+          codeSystemVersionId: CODE_SYSTEM_VERSION_ID,
+          ordinal: indice + 1,
+        })),
+        query,
+        200,
+      );
+      return {
+        valueSetId: delGlosario.id,
+        valueSetVersionId: delGlosario.defaultVersionId,
+        version: '1.0.0',
+        ...pagina,
+      };
+    }
+
     const conjunto = conjuntoPorId(params['id']!);
     if (conjunto === undefined) return notFound('Conjunto de valores no encontrado');
     const pagina = paginar(miembrosDe(conjunto.internalCode).map(opcion), query, 200);
@@ -130,13 +134,16 @@ export function registrarTerminologia(router: MockRouter): void {
 
     // El glosario: `includeValueSets` sin `valueSetId` acota al paraguas.
     if (includeValueSets) {
-      const conjunto = valueSetId === null ? undefined : conjuntoPorId(valueSetId);
-      const universo = conjunto === undefined ? miembrosDe('glossary-all-terms') : miembrosDe(conjunto.internalCode);
-      const items = universo
-        .filter((c) => contiene(c.display, q) || contiene(c.code, q) || contiene(c.definition, q))
-        .slice(0, limit)
-        .map(terminoDeGlosario);
-      return { items, count: items.length, limit };
+      const conjunto = valueSetId === null ? PARAGUAS : conjuntoDeGlosarioPorId(valueSetId);
+      const universo = conjunto === undefined ? [] : miembrosDeConjunto(conjunto);
+      const coincidentes = universo.filter((t) => coincide(t, q));
+      // `count` es el total que coincide, no el recortado: es lo que la
+      // pantalla lee para avisar que se mostró sólo una parte.
+      return {
+        items: coincidentes.slice(0, limit).map(terminoEnLinea),
+        count: coincidentes.length,
+        limit,
+      };
     }
 
     const items = conceptos()
@@ -146,30 +153,12 @@ export function registrarTerminologia(router: MockRouter): void {
     return { items, count: items.length, limit };
   });
 
-  router.get('/terminology/concepts/:id', ({ params, query }) => {
+  router.get('/terminology/concepts/:id', ({ params }) => {
+    const delGlosario = terminoPorId(params['id']!);
+    if (delGlosario !== undefined) return fichaEnLinea(delGlosario);
+
     const c = conceptoPorId(params['id']!);
     if (c === undefined) return notFound('Concepto no encontrado');
-    const categoria = categoriaDe(c);
-    if (query.get('includeValueSets') === 'true' || categoria !== null) {
-      const base = terminoDeGlosario(c);
-      return {
-        ...base,
-        codeSystemVersionId: CODE_SYSTEM_VERSION_ID,
-        synonyms: [{ value: c.display, language: 'es', preferred: true }],
-        category:
-          categoria === null ? null : { ...categoria, valueSetId: conjuntoPorId(categoria.internalCode)?.id ?? '' },
-        tags: categoria === null ? [] : [{ ...categoria, valueSetId: conjuntoPorId(categoria.internalCode)?.id ?? '' }],
-        clinicalDefinition: { text: c.definition ?? `Definición clínica de ${c.display}.`, translated: true },
-        plainSummary: {
-          text: c.definition
-            ? `En palabras simples: ${c.definition.charAt(0).toLowerCase()}${c.definition.slice(1)}`
-            : `Explicación sencilla de ${c.display}.`,
-          translated: true,
-        },
-        relations: relacionesDe(c),
-        properties: { code: c.code, system: 'AloVida' },
-      };
-    }
     return { ...opcion(c), designations: [{ language: 'es', value: c.display, preferred: true }] };
   });
 

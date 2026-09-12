@@ -38,6 +38,7 @@
     "e2e:auditoria": "playwright test playwright/auditoria-prompts.spec.ts --reporter=list",
     "stock:generate": "node scripts/generate-component-index.mjs",
     "mock:chart-templates": "node scripts/gen-chart-templates-fixture.mjs",
+    "mock:glossary": "node scripts/gen-glossary-fixture.mjs",
     "emoji:catalog": "node scripts/gen-emoji-catalog.mjs"
   },
   "private": true,

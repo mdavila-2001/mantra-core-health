@@ -926,62 +926,13 @@ export const ESTADO_SOLICITUD = definir('VS_CLAIM_STATUS', [
   ['CLM-PAID', 'Pagada'],
 ]);
 
-/* ---- glosario: categorías --------------------------------------------- */
-
-conjunto('glossary-all-terms', 'Glosario de terminología médica', 'Todos los términos del glosario.');
-conjunto('glossary-diseases', 'Enfermedades', 'Diagnósticos y enfermedades.');
-conjunto('glossary-symptoms', 'Síntomas', 'Síntomas y signos.');
-conjunto('glossary-procedures', 'Procedimientos', 'Procedimientos y cirugías.');
-conjunto('glossary-medications', 'Medicamentos', 'Fármacos del vademécum.');
-conjunto('glossary-anatomy', 'Anatomía', 'Partes del cuerpo.');
-conjunto('glossary-tests', 'Estudios diagnósticos', 'Laboratorio e imagen.');
-conjunto('glossary-other', 'Otros términos', 'Términos que no caen en otra categoría.');
-
-export const SINTOMA = definir('glossary-symptoms', [
-  ['SX-FIEBRE', 'Fiebre', 'Elevación de la temperatura corporal por encima de 38 °C.'],
-  ['SX-CEFALEA', 'Cefalea', 'Dolor de cabeza.'],
-  ['SX-DISNEA', 'Disnea', 'Sensación de falta de aire.'],
-  ['SX-TOS', 'Tos', 'Expulsión brusca de aire de los pulmones.'],
-  ['SX-NAUSEA', 'Náusea', 'Sensación de malestar con ganas de vomitar.'],
-  ['SX-MAREO', 'Mareo', 'Sensación de inestabilidad o vértigo.'],
-  ['SX-DOLOR-TORACICO', 'Dolor torácico', 'Dolor en el pecho.'],
-  ['SX-FATIGA', 'Fatiga', 'Cansancio persistente.'],
-]);
-
-export const ANATOMIA = definir('glossary-anatomy', [
-  ['AN-CORAZON', 'Corazón', 'Órgano muscular que bombea la sangre.'],
-  ['AN-HIGADO', 'Hígado', 'Órgano que metaboliza nutrientes y depura toxinas.'],
-  ['AN-RINON', 'Riñón', 'Órgano que filtra la sangre y produce la orina.'],
-  ['AN-TIROIDES', 'Tiroides', 'Glándula que regula el metabolismo.'],
-  ['AN-RODILLA', 'Rodilla', 'Articulación entre el fémur y la tibia.'],
-]);
-
-export const OTRO_TERMINO = definir('glossary-other', [
-  ['OT-TRIAJE', 'Triaje', 'Clasificación de pacientes según la urgencia de su atención.'],
-  ['OT-INTERCONSULTA', 'Interconsulta', 'Consulta a otro especialista sobre un paciente.'],
-  ['OT-ALTA', 'Alta médica', 'Fin de la atención por recuperación o derivación.'],
-  ['OT-CONSENTIMIENTO', 'Consentimiento informado', 'Autorización del paciente tras conocer riesgos y beneficios.'],
-]);
-
-// Los diagnósticos, medicamentos, procedimientos y estudios también son
-// términos del glosario, bajo su categoría.
-for (const [code, vs] of [
-  ...Object.keys(DIAGNOSTICO).map((c) => [c, 'glossary-diseases'] as const),
-  ...Object.keys(MEDICAMENTO).map((c) => [c, 'glossary-medications'] as const),
-  ...Object.keys(PROCEDIMIENTO).map((c) => [c, 'glossary-procedures'] as const),
-  ...Object.keys(ESTUDIO).map((c) => [c, 'glossary-tests'] as const),
-]) {
-  const existente = registro.get(code);
-  if (existente !== undefined) {
-    registro.set(code, { ...existente, valueSets: [...existente.valueSets, vs] });
-  }
-}
-for (const [code, c] of registro) {
-  if (c.valueSets.some((vs) => vs.startsWith('glossary-'))) {
-    registro.set(code, { ...c, valueSets: [...c.valueSets, 'glossary-all-terms'] });
-  }
-}
-
+/* ---- glosario ------------------------------------------------------------
+   El glosario médico ya no vive acá. Hasta el 2026-09-11 este archivo
+   inventaba siete categorías (`glossary-diseases`, `glossary-symptoms`…) con
+   códigos que el backend no tiene: la pantalla filtra por el prefijo canónico
+   `glossary-category-*` y las descartaba todas, así que la maqueta nunca
+   mostró una definición. Ahora lo sirve `fixtures/glosario.ts`, que indexa el
+   catálogo curado del backend — 12 categorías, 15 etiquetas y 69 términos. */
 
 /* ---- Estados de un caso de verificación de identidad ---------------------- *
    Los nueve que `identity_assurance` emite, con el código **tal como llega al
