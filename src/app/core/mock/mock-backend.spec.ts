@@ -1,5 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
+import { TIPO_CREDENCIAL } from './fixtures/conceptos';
 import { PACIENTE, PACIENTES, PROFESIONALES } from './fixtures/personas';
 import { reservas } from './fixtures/agenda';
 import { publicaciones, vitrinas } from './fixtures/comunidad';
@@ -79,6 +80,40 @@ describe('backend simulado', () => {
       expect(respuesta.accessToken).toBeTypeOf('string');
       expect(buscarUsuario(user.email)?.id).toBe(user.id);
     }
+  });
+
+  it('dynamic-enum de credenciales replica las cinco opciones canónicas del API', () => {
+    const target = 'profiles.professional_credentials.credential_type_concept_id';
+    const ruta = router.match('GET', '/system-context/dynamic-enums')!;
+    const respuesta = ruta.handler({
+      ...peticion('GET', '/system-context/dynamic-enums', null),
+      query: new URLSearchParams({ target }),
+    }) as {
+      options: readonly {
+        conceptId: string;
+        code: string;
+        display: string;
+        ordinal: number;
+        isDefault: boolean;
+      }[];
+    };
+    const opcionesCanonicas = [
+      ['CREDENTIAL_TYPE_DEGREE', 'Academic degree credential'],
+      ['CREDENTIAL_TYPE_DIPLOMA', 'Diploma course credential'],
+      ['CREDENTIAL_TYPE_MASTER', "Master's degree credential"],
+      ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorate degree credential'],
+      ['CREDENTIAL_TYPE_SPECIALTY', 'Specialty degree credential'],
+    ] as const;
+
+    expect(respuesta.options).toEqual(
+      opcionesCanonicas.map(([code, display], ordinal) => ({
+        conceptId: TIPO_CREDENCIAL[code]!,
+        code,
+        display,
+        ordinal,
+        isDefault: ordinal === 0,
+      })),
+    );
   });
 
   for (const user of [null, ...MOCK_USERS]) {

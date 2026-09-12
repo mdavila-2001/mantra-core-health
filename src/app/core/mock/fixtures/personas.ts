@@ -519,7 +519,7 @@ export function credencialesDe(p: ProfesionalSimulado) {
   return [
     {
       id: uuid(`cred-titulo-${p.id}`),
-      credentialTypeConceptId: TIPO_CREDENCIAL['CRED-TITULO']!,
+      credentialTypeConceptId: TIPO_CREDENCIAL['CREDENTIAL_TYPE_DEGREE']!,
       number: `TIT-${p.practitionerCode.slice(4)}`,
       issuingInstitutionText: 'Universidad Mayor de San Andrés',
       issueDate: isoDia(-365 * 12),
@@ -532,7 +532,7 @@ export function credencialesDe(p: ProfesionalSimulado) {
       : [
           {
             id: uuid(`cred-esp-${p.id}`),
-            credentialTypeConceptId: TIPO_CREDENCIAL['CRED-ESPECIALIDAD']!,
+            credentialTypeConceptId: TIPO_CREDENCIAL['CREDENTIAL_TYPE_SPECIALTY']!,
             number: `ESP-${p.practitionerCode.slice(4)}`,
             issuingInstitutionText: 'Colegio Médico de Bolivia',
             issueDate: isoDia(-365 * 7),
@@ -540,15 +540,6 @@ export function credencialesDe(p: ProfesionalSimulado) {
             ...(p.verified ? { verifiedAt: iso(-180) } : {}),
           },
         ]),
-    {
-      id: uuid(`cred-sedes-${p.id}`),
-      credentialTypeConceptId: TIPO_CREDENCIAL['CRED-SEDES']!,
-      number: `SEDES-${p.matricula}`,
-      issuingInstitutionText: 'SEDES Santa Cruz',
-      issueDate: isoDia(-365 * 6),
-      expiryDate: isoDia(365 * 2),
-      stateConceptId: ESTADO['ST-ACTIVE']!,
-    },
   ];
 }
 
@@ -561,6 +552,16 @@ export function licenciasDe(p: ProfesionalSimulado) {
       regulatoryAuthority: 'Ministerio de Salud y Deportes',
       stateConceptId: ESTADO['ST-ACTIVE']!,
       validFrom: isoDia(-365 * 10),
+    },
+    {
+      // SEDES es una habilitación departamental, no formación académica.
+      id: uuid(`lic-sedes-${p.id}`),
+      jurisdictionConceptId: JURISDICCION['JUR-SC']!,
+      licenseNumber: `SEDES-${p.matricula}`,
+      regulatoryAuthority: 'SEDES Santa Cruz',
+      stateConceptId: ESTADO['ST-ACTIVE']!,
+      validFrom: isoDia(-365 * 6),
+      validTo: isoDia(365 * 2),
     },
   ];
 }

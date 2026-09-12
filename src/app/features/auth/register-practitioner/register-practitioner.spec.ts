@@ -1,13 +1,16 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { NAV_ICON_NAMES } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { ESPECIALIDADES_ODONTOLOGICAS, RegisterPractitioner } from './register-practitioner';
 import { ESPECIALIDAD } from '../../../core/mock/fixtures/conceptos';
 import { RefreshTokenStorage } from '../../../core/auth/refresh-token.storage';
 import type { BirthSexCode } from '../../../core/data-access/iam/iam.types';
+import { SystemContextClient } from '../../../core/data-access/system-context/system-context.client';
+import { mockBackendInterceptor } from '../../../core/mock/mock-backend.interceptor';
 
 const RESPUESTA_PRO = {
   userId: 'u',
@@ -1992,5 +1995,45 @@ describe('RegisterPractitioner', () => {
         address: { lines: [], municipalityConceptId: 'mun-trabajo', latitude: -17.78, longitude: -63.18 },
       });
     });
+  });
+});
+
+describe('RegisterPractitioner con mockBackend', () => {
+  it('resuelve los cinco tipos canónicos de credencial desde el backend simulado', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [RegisterPractitioner],
+      providers: [
+        provideHttpClient(withInterceptors([mockBackendInterceptor])),
+        provideRouter([]),
+        { provide: RefreshTokenStorage, useClass: AlmacenFalso },
+      ],
+    }).compileComponents();
+
+    const target = 'profiles.professional_credentials.credential_type_concept_id';
+    const enumeracion = await firstValueFrom(
+      TestBed.inject(SystemContextClient).dynamicEnum(target),
+    );
+    const fixture = TestBed.createComponent(RegisterPractitioner);
+    const component = fixture.componentInstance;
+    await fixture.whenStable();
+    const conceptos = (
+      component as unknown as {
+        conceptoPorCodigo: () => ReadonlyMap<string, string>;
+      }
+    ).conceptoPorCodigo();
+    const codigosCanonicos = [
+      'CREDENTIAL_TYPE_DEGREE',
+      'CREDENTIAL_TYPE_DIPLOMA',
+      'CREDENTIAL_TYPE_MASTER',
+      'CREDENTIAL_TYPE_DOCTORATE',
+      'CREDENTIAL_TYPE_SPECIALTY',
+    ];
+
+    expect(codigosCanonicos.map((code) => conceptos.get(code))).toEqual(
+      enumeracion.options.map((option) => option.conceptId),
+    );
+
+    fixture.destroy();
   });
 });
