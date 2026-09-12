@@ -239,3 +239,11 @@
     align-items: center;
   }
 }
+
+/* La rejilla del catálogo de estudios. 18rem y no las 14 de la portada de un
+   directorio, igual que «Mis servicios»: la tarjeta no es un rótulo con su
+   cuenta sino un estudio con su preparación, sus importes y un botón. El resto
+   de la disciplina sale de las hojas compartidas. */
+.laboratorio__rejilla {
+  --rejilla-min: 18rem;
+}

@@ -44,7 +44,7 @@
                  justo lo que una rejilla de tarjetas iguales no dejaba hacer. -->
             <app-service-icon class="rejilla__icono" [servicio]="servicio.name" />
 
-            <div class="mis-servicios__ficha">
+            <div class="tarjeta-servicio__ficha">
               <h2 class="rejilla__nombre">{{ servicio.name }}</h2>
 
               <!-- Sólo lo inactivo lleva distintivo: en una rejilla, un «Activo»
@@ -60,7 +60,7 @@
             @if (enEdicion() === servicio.id) {
               <!-- El campo reemplaza al importe en su mismo lugar: la tarjeta no
                    cambia de alto al abrirse y la rejilla no salta. -->
-              <div class="mis-servicios__edicion">
+              <div class="tarjeta-servicio__edicion">
                 <app-form-field
                   label="Precio"
                   [errorMessage]="errorDelPrecio() ?? ''"
@@ -78,7 +78,7 @@
                   />
                 </app-form-field>
 
-                <div class="mis-servicios__acciones">
+                <div class="tarjeta-servicio__acciones">
                   <button
                     app-button
                     type="button"
@@ -104,20 +104,20 @@
                 </div>
               </div>
             } @else {
-              <dl class="mis-servicios__precio">
-                <dt class="mis-servicios__rotulo">Precio de referencia</dt>
-                <dd class="mis-servicios__monto tabular-nums" data-testid="my-services-price">
+              <dl class="tarjeta-servicio__precio">
+                <dt class="tarjeta-servicio__rotulo">Precio de referencia</dt>
+                <dd class="tarjeta-servicio__monto tabular-nums" data-testid="my-services-price">
                   @if (sinPrecio(servicio)) {
                     <!-- Un «0.00» se lee como que la consulta no se cobra. Lo
                          que pasa de verdad es que nadie declaró el arancel. -->
-                    <span class="mis-servicios__pendiente">Definí el precio</span>
+                    <span class="tarjeta-servicio__pendiente">Definí el precio</span>
                   } @else {
                     {{ precio(servicio) }}
                   }
                 </dd>
               </dl>
 
-              <div class="mis-servicios__acciones">
+              <div class="tarjeta-servicio__acciones">
                 <button
                   app-button
                   type="button"
@@ -136,7 +136,7 @@
     </ul>
 
     @if (hayMas()) {
-      <div class="mis-servicios__mas">
+      <div class="tarjeta-servicio__mas">
         <button
           app-button
           type="button"

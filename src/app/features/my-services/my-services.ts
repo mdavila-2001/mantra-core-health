@@ -129,11 +129,15 @@ const SIN_PRACTICA_ELEGIDA = empty(
     ViewStateHost,
   ],
   templateUrl: './my-services.html',
-  // La hoja compartida va **primera**: Angular concatena los estilos en este
-  // orden, y lo de abajo son los ajustes de esta pantalla sobre esa base.
+  // Las hojas compartidas van **primero**: Angular concatena los estilos en
+  // este orden, y lo de abajo son los ajustes de esta pantalla sobre esa base.
   // Al revés, `.rejilla` pisaría a `.mis-servicios__rejilla` —misma
   // especificidad, gana la última— y el ancho de columna de acá no se aplicaría.
-  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './my-services.css'],
+  styleUrls: [
+    '../../shared/styles/rejilla-de-tarjetas.css',
+    '../../shared/styles/tarjeta-de-servicio.css',
+    './my-services.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyServices {
