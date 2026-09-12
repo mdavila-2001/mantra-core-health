@@ -393,6 +393,10 @@ interface SolicitudSimulada {
     billed: string;
     approved: string | null;
     decision: string;
+    /** Cita de la cláusula contractual, sólo en líneas DENIED (subtarea 2.2). */
+    clause: string | null;
+    /** Justificación circunstanciada, sólo en líneas DENIED. */
+    rationale: string | null;
   }[];
 }
 
@@ -435,7 +439,16 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
       'REJECTED',
       'Rechazada',
       true,
-      [['Paquete de prevención', '890.00', '0.00', 'DENIED']],
+      [
+        [
+          'Paquete de prevención',
+          '890.00',
+          '0.00',
+          'DENIED',
+          'Cláusula 4.1: Preexistencia declarada al momento de la afiliación',
+          'La condición fue declarada como preexistencia en la solicitud de afiliación y queda excluida durante el período de carencia.',
+        ],
+      ],
     ],
     [
       'CLM-2026-0171',
@@ -459,7 +472,14 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
       false,
       [
         ['Control cardiológico', '180.00', '150.00', 'APPROVED'],
-        ['ECG', '120.00', '0.00', 'DENIED'],
+        [
+          'ECG',
+          '120.00',
+          '0.00',
+          'DENIED',
+          'Cláusula 12.3: Estudios complementarios sin autorización previa',
+          'El estudio requiere autorización previa del área médica según las condiciones generales de la póliza.',
+        ],
       ],
     ],
     [
@@ -491,9 +511,19 @@ const solicitudes = new Coleccion<SolicitudSimulada>(
       submittedAt: iso(dias as number, 10),
       status: c(code as string, display as string),
       hasOpenDispute: disputa as boolean,
-      lineas: (lineas as [string, string, string | null, string][]).map(
-        ([service, b, a, decision]) => ({ service, billed: b, approved: a, decision }),
-      ),
+      lineas: (
+        lineas as [string, string, string | null, string, string?, string?][]
+      ).map(([service, b, a, decision, clause, rationale]) => ({
+        service,
+        billed: b,
+        approved: a,
+        decision,
+        // Sólo las líneas DENIED de la receta traen los dos últimos elementos
+        // (subtarea 2.2); el resto los destructura como `undefined` y acá se
+        // normalizan a `null`, igual que hace la API.
+        clause: clause ?? null,
+        rationale: rationale ?? null,
+      })),
     }),
   ),
 );
@@ -762,6 +792,8 @@ export function registrarSeguros(router: MockRouter): void {
       billed: l.billedAmount,
       approved: null,
       decision: 'PENDING',
+      clause: null,
+      rationale: null,
     }));
     const nueva = solicitudes.agregar({
       id: nuevoId('claim'),
@@ -825,6 +857,8 @@ export function registrarSeguros(router: MockRouter): void {
               : 'Pendiente',
         ),
         denialReason: l.decision === 'DENIED' ? c('NOT_COVERED', 'No cubierto') : null,
+        policyClauseReference: l.clause,
+        denialRationale: l.rationale,
         referenceType: null,
         reference: null,
       })),
