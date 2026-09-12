@@ -216,10 +216,17 @@
 }
 
 .registro-respaldos__error,
-.registro-titulos__error {
+.registro-titulos__error,
+.registro-titulo__error {
   font-size: var(--fs-caption);
   color: var(--text-danger);
   margin: 0;
+}
+
+/* El campo que falta completar se señala también por color, no sólo por el
+   texto de al lado; `aria-invalid` lo dice a quien usa lector de pantalla. */
+.registro-titulo__dato--invalido {
+  border-color: var(--text-danger);
 }
 
 /* ------------------------------------------------------------------ títulos */

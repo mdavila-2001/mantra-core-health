@@ -1237,19 +1237,74 @@ describe('RegisterPractitioner', () => {
       req.flush(RESPUESTA_PRO);
     });
 
-    it('una fila con datos y sin número frena el envío: nada se descarta en silencio', () => {
+    /**
+     * El defecto que esto fija: la guardia frenaba el envío **en silencio**.
+     * Quien completaba la universidad y se olvidaba del número llegaba al
+     * último paso, pulsaba «Crear cuenta» y no pasaba nada, sin saber qué
+     * corregir ni dónde. No alcanza con no llamar a la API.
+     */
+    it('una fila con datos y sin número frena el envío y lo dice en pantalla', () => {
       catalogoDeTiposDeTitulo();
       component.agregarTitulo('DIPLOMADO');
       const [diplomado] = component.titulosDe('DIPLOMADO');
-      component.escribirDatoDeTitulo(diplomado.id, 'universidad', 'UPB');
+      component.escribirDatoDeTitulo(diplomado.id, 'universidad', 'Nur');
 
       completarProfesional();
       component.submit();
+      fixture.detectChanges();
 
       http.expectNone('/iam/auth/register-practitioner');
-      expect(component.errorTitulos()).toBe(
-        'Cada título necesita su número de diploma. Completalo o quitá la fila.',
+
+      // 1) El aviso se VE: el alert vive fuera del motor, así que se lee desde
+      // cualquier paso, y `appAnuncio` lo anuncia a lectores de pantalla.
+      const alerta: HTMLElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="registro-error"]',
       );
+      expect(alerta).not.toBeNull();
+      expect(alerta?.textContent).toContain('número de diploma');
+      // 2) Y dirige al paso donde está el campo: el índice de pasos es navegable.
+      expect(alerta?.textContent).toContain('Tus títulos');
+      // 3) La fila señalada es la que está mal, que es lo que marca el campo
+      //    como inválido en la plantilla (`aria-invalid` + mensaje en la fila).
+      expect(component.tituloSinNumero(component.titulosDe('DIPLOMADO')[0])).toBe(true);
+    });
+
+    it('completar el número borra el aviso y deja enviar', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('DIPLOMADO');
+      const [fila] = component.titulosDe('DIPLOMADO');
+      component.escribirDatoDeTitulo(fila.id, 'universidad', 'Nur');
+      completarProfesional();
+      component.submit();
+      expect(component.errorMessage()).not.toBeNull();
+
+      // Las filas no viven en el `FormGroup`, así que escribir el número no
+      // dispara `valueChanges`: sin la limpieza propia, el aviso se quedaría
+      // contradiciendo a la pantalla.
+      component.escribirDatoDeTitulo(fila.id, 'numero', 'DIP-7');
+      expect(component.errorMessage()).toBeNull();
+      expect(component.tituloSinNumero(component.titulosDe('DIPLOMADO')[0])).toBe(false);
+
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      expect(req.request.body.credentials).toEqual([
+        { credentialTypeConceptId: 'c-diploma', number: 'DIP-7', issuingInstitutionText: 'Nur' },
+      ]);
+      req.flush(RESPUESTA_PRO);
+    });
+
+    it('quitar la fila problemática también borra el aviso', () => {
+      catalogoDeTiposDeTitulo();
+      component.agregarTitulo('DIPLOMADO');
+      const [fila] = component.titulosDe('DIPLOMADO');
+      component.escribirDatoDeTitulo(fila.id, 'universidad', 'Nur');
+      completarProfesional();
+      component.submit();
+      expect(component.errorMessage()).not.toBeNull();
+
+      component.quitarTitulo(fila.id);
+
+      expect(component.errorMessage()).toBeNull();
     });
 
     it('una fila agregada y vacía no frena ni viaja', () => {

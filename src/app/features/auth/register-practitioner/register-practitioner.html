@@ -311,9 +311,25 @@
                             placeholder="Número del diploma"
                             [value]="titulo.numero"
                             [attr.aria-invalid]="tituloSinNumero(titulo) ? 'true' : null"
+                            [attr.aria-describedby]="
+                              tituloSinNumero(titulo) ? 'registro-pro-titulo-numero-error-' + titulo.id : null
+                            "
+                            [class.registro-titulo__dato--invalido]="tituloSinNumero(titulo)"
                             [attr.data-testid]="'registro-pro-titulo-numero-' + titulo.id"
                             (input)="escribirDatoDeTitulo(titulo.id, 'numero', $any($event.target).value)"
                           />
+                          <!-- El aviso vive en la fila, al lado del campo que
+                               hay que corregir: el resumen de arriba dice QUÉ
+                               pasa y esto dice DÓNDE. -->
+                          @if (tituloSinNumero(titulo)) {
+                            <span
+                              class="registro-titulo__error"
+                              [id]="'registro-pro-titulo-numero-error-' + titulo.id"
+                              [attr.data-testid]="'registro-pro-titulo-numero-error-' + titulo.id"
+                            >
+                              Falta el número de este {{ tipo.singular }}.
+                            </span>
+                          }
                         </label>
 
                         <!-- Dónde se cursó. Los tres son opcionales y de texto

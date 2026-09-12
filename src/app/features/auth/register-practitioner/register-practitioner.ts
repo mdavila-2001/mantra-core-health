@@ -18,7 +18,7 @@ import type {
   PractitionerRegistration,
 } from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { loading, ready } from '../../../core/view-state/view-state';
+import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -616,9 +616,6 @@ export class RegisterPractitioner {
   /** Código de concepto → uuid, tal como lo devolvió el catálogo. */
   private readonly conceptoPorCodigo = signal<ReadonlyMap<string, string>>(new Map());
 
-  /** Qué frena el envío por el lado de los títulos, o `null` si nada. */
-  readonly errorTitulos = signal<string | null>(null);
-
   /**
    * Una fila que todavía no dice nada: se agregó y quedó en blanco.
    *
@@ -636,8 +633,13 @@ export class RegisterPractitioner {
     );
   }
 
-  /** Si esta fila declara algo pero le falta el número que la hace guardable. */
-  protected tituloSinNumero(titulo: TituloDeclarado): boolean {
+  /**
+   * Si esta fila declara algo pero le falta el número que la hace guardable.
+   *
+   * Público porque lo usan la plantilla —para marcar el campo— y las pruebas,
+   * que comprueban que la fila señalada es la que está mal.
+   */
+  tituloSinNumero(titulo: TituloDeclarado): boolean {
     return !this.filaVacia(titulo) && titulo.numero.trim() === '';
   }
 
@@ -914,6 +916,21 @@ export class RegisterPractitioner {
   quitarTitulo(id: string): void {
     this.attachmentFiles.update(files => Object.fromEntries(Object.entries(files).filter(([key]) => key !== id)));
     this.titulos.update((titulos) => titulos.filter((titulo) => titulo.id !== id));
+    this.limpiarAvisoDeTitulos();
+  }
+
+  /**
+   * Borra el aviso en cuanto se corrige lo que lo provocó.
+   *
+   * Hace falta aparte de `limpiarElErrorAlCorregir()` porque las filas de
+   * títulos no viven en el `FormGroup` —viven en un signal—, así que escribir
+   * el número no dispara `valueChanges` y el aviso se quedaría contradiciendo
+   * a la pantalla.
+   */
+  private limpiarAvisoDeTitulos(): void {
+    if (this.state().status === 'validation') {
+      this.state.set(ready(null));
+    }
   }
 
   /**
@@ -929,6 +946,7 @@ export class RegisterPractitioner {
     this.titulos.update((titulos) =>
       titulos.map((titulo) => (titulo.id === id ? { ...titulo, [campo]: valor } : titulo)),
     );
+    this.limpiarAvisoDeTitulos();
   }
 
   /**
@@ -2280,21 +2298,40 @@ export class RegisterPractitioner {
     // Una fila de título sin número no se puede guardar —la columna es NOT
     // NULL—, así que el alta se frena acá y lo dice, en vez de mandarla y que
     // la API la rechace entera. Quitar la fila es la otra salida.
+    //
+    // El aviso va por el MISMO canal que el error de envío (`state` →
+    // `errorMessage()` → `app-alert` con `appAnuncio`), que ya se anuncia a
+    // lectores de pantalla y vive fuera del motor, así que se ve desde
+    // cualquier paso. Nombra el paso al que hay que volver porque el índice de
+    // pasos es navegable (`interactiveSteps`): el motor **no** expone una vía
+    // para saltar de página desde afuera, y abrirla sería tocar un organismo
+    // que usan las otras altas.
     if (this.hayTitulosSinNumero()) {
-      this.errorTitulos.set(
-        'Cada título necesita su número de diploma. Completalo o quitá la fila.',
+      this.state.set(
+        validation([
+          {
+            field: 'academicTitles',
+            message:
+              'Volvé al paso «Tus títulos»: cada título necesita su número de diploma. Completalo o quitá la fila.',
+          },
+        ]),
       );
       return;
     }
     // Y tampoco se manda si el catálogo de tipos no cargó: la fila viajaría sin
     // tipo, que el contrato exige, o se perdería en silencio.
     if (this.hayTitulosSinTipo()) {
-      this.errorTitulos.set(
-        'No pudimos cargar los tipos de título. Reintentá en unos segundos.',
+      this.state.set(
+        validation([
+          {
+            field: 'academicTitles',
+            message:
+              'No pudimos cargar los tipos de título. Volvé al paso «Tus títulos» y reintentá en unos segundos.',
+          },
+        ]),
       );
       return;
     }
-    this.errorTitulos.set(null);
 
     this.state.set(loading());
 
