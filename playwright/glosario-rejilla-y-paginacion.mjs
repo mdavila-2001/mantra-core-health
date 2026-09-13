@@ -37,7 +37,7 @@ async function main() {
     pagina.screenshot({ path: `${SALIDA}/${nombre}.png`, ...opciones });
 
   await pagina.goto(`${BASE}/auth`, { waitUntil: 'domcontentloaded', timeout: 180_000 });
-  await pagina.getByTestId('login-identifier').fill('paciente@alovida.mock');
+  await pagina.getByTestId('login-identifier').fill('medica@alovida.mock');
   await pagina.getByTestId('login-password').fill('mockup');
   await pagina.getByTestId('login-submit').click();
   await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
