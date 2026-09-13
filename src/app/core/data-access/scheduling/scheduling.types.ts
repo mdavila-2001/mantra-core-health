@@ -173,7 +173,7 @@ export interface NewPaymentState {
 export interface BookingInsuranceClaim {
   readonly id: string;
   readonly claimIdentifier: string;
-  /** Código del estado: `SUBMITTED`, `IN_REVIEW`, `APPROVED`, `PARTIAL`, `REJECTED`, `PAID`. */
+  /** Código del concepto de estado: `CLAIM_SUBMITTED`, `CLAIM_ADJUDICATED`, `CLAIM_PAID`, `CLAIM_REVERSED`. */
   readonly statusCode: string;
   readonly statusDisplay: string;
   /** ISO; `null` si todavía no se envió. */

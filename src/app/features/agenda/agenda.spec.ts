@@ -970,6 +970,11 @@ describe('Agenda', () => {
     expect(tono('PARTIAL')).toBe('warning');
     expect(tono('REJECTED')).toBe('error');
     expect(tono('IN_REVIEW')).toBe('info');
+    // Los del catálogo de la API.
+    expect(tono('CLAIM_PAID')).toBe('success');
+    expect(tono('CLAIM_ADJUDICATED')).toBe('primary');
+    expect(tono('CLAIM_REVERSED')).toBe('error');
+    expect(tono('CLAIM_SUBMITTED')).toBe('info');
   });
 
   it('una cita sin paciente no enlaza a ningún expediente', async () => {

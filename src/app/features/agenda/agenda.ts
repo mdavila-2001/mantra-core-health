@@ -2035,12 +2035,19 @@ export class Agenda {
 
   /** El tono del estado de la solicitud: el mismo código siempre con el mismo color. */
   protected tonoDeSolicitud(codigo: string): BadgeVariant {
+    // Los `CLAIM_*` son los del catálogo de la API (`INS`); los cortos, los que
+    // siembra el simulador. Un código que no se conoce va en tono informativo:
+    // la etiqueta la manda el servidor, así que igual se lee bien.
     switch (codigo) {
+      case 'CLAIM_PAID':
       case 'APPROVED':
       case 'PAID':
         return 'success';
+      case 'CLAIM_ADJUDICATED':
+        return 'primary';
       case 'PARTIAL':
         return 'warning';
+      case 'CLAIM_REVERSED':
       case 'REJECTED':
         return 'error';
       default:
