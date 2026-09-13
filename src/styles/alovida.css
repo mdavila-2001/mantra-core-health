@@ -2048,6 +2048,9 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
   box-shadow: inset 0 -1px 0 var(--sombra-azul-suave);
 }
 .app-nav-toggle:hover { border-color: var(--petroleo); }
+/* El mismo control sirve también en escritorio: allí no abre un segundo menú,
+   sino que recoge o devuelve la barra fija para ganar ancho de trabajo. */
+html[data-js] .app-nav-toggle { display: inline-flex; }
 .app-buscar-toggle {
   display: none;
   width: var(--h-ctrl); height: var(--h-ctrl); flex: none;
@@ -2165,6 +2168,25 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
   .barra-maqueta__estados::-webkit-scrollbar { display: none; }
 
   .pagina-indice { padding: var(--e8) var(--e6); }
+}
+
+/* En escritorio la barra empieza visible. Al recogerla el contenido recupera
+   su ancho; el nav queda fuera de la ventana pero no se elimina del DOM, así
+   el botón conserva su `aria-controls` y el cambio no recrea la navegación. */
+@media (min-width: 901px) {
+  html[data-js].nav-collapsed .app-shell {
+    padding-left: 0;
+    background: none;
+  }
+
+  html[data-js].nav-collapsed .app-side-nav {
+    transform: translateX(-101%);
+    transition: transform var(--mov-medio) var(--curva);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html[data-js].nav-collapsed .app-side-nav { transition: none; }
+  }
 }
 
 /* 21.4 · ≤ 640 px — la tabla pasa a tarjetas ----------------------------- *

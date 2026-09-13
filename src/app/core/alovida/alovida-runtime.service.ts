@@ -1126,10 +1126,27 @@ export class AlovidaRuntimeService {
 
     const raiz = this.document.documentElement;
 
+    const esCajon = () => this.consultaDeMedios(ANCHO_CAJON)?.matches ?? false;
+
+    const actualizarBoton = () => {
+      const expandido = esCajon()
+        ? raiz.classList.contains('nav-abierto')
+        : !raiz.classList.contains('nav-collapsed');
+      if (expandido) {
+        nav.removeAttribute('inert');
+      } else {
+        nav.setAttribute('inert', '');
+      }
+      boton.setAttribute('aria-expanded', String(expandido));
+      boton.setAttribute(
+        'aria-label',
+        expandido ? 'Ocultar el menú de navegación' : 'Abrir el menú de navegación',
+      );
+    };
+
     const abrir = () => {
       raiz.classList.add('nav-abierto');
-      boton.setAttribute('aria-expanded', 'true');
-      boton.setAttribute('aria-label', 'Cerrar el menú de navegación');
+      actualizarBoton();
       nav.querySelector<HTMLElement>(FOCALIZABLES)?.focus();
     };
 
@@ -1138,28 +1155,38 @@ export class AlovidaRuntimeService {
         return;
       }
       raiz.classList.remove('nav-abierto');
-      boton.setAttribute('aria-expanded', 'false');
-      boton.setAttribute('aria-label', 'Abrir el menú de navegación');
+      actualizarBoton();
       if (devolverFoco) {
         boton.focus();
       }
     };
 
-    boton.addEventListener('click', () =>
-      raiz.classList.contains('nav-abierto') ? cerrar(true) : abrir(),
-    );
+    boton.addEventListener('click', () => {
+      if (esCajon()) {
+        if (raiz.classList.contains('nav-abierto')) {
+          cerrar(true);
+        } else {
+          abrir();
+        }
+        return;
+      }
+
+      raiz.classList.toggle('nav-collapsed');
+      actualizarBoton();
+      boton.focus();
+    });
     velo.addEventListener('click', () => cerrar(true));
 
     /* Elegir un ítem cierra el cajón: si el enlace navega, igual; si es la
        pantalla actual, el cajón no puede quedarse tapando lo que se eligió. */
     nav.addEventListener('click', (evento) => {
-      if ((evento.target as HTMLElement | null)?.closest('.app-side-nav__item')) {
+      if (esCajon() && (evento.target as HTMLElement | null)?.closest('.app-side-nav__item')) {
         cerrar(false);
       }
     });
 
     this.document.addEventListener('keydown', (evento) => {
-      if (evento.key === 'Escape') {
+      if (evento.key === 'Escape' && esCajon()) {
         cerrar(true);
       }
       if (evento.key !== 'Tab' || !raiz.classList.contains('nav-abierto')) {
@@ -1170,14 +1197,14 @@ export class AlovidaRuntimeService {
       this.atraparFoco(evento, nav);
     });
 
-    /* Al ensanchar la ventana el nav vuelve a ser columna: el estado abierto
-       dejaría el <body> sin scroll y el velo encendido sobre nada. */
-    this.consultaDeMedios(ANCHO_CAJON)?.addEventListener('change', (e) => {
-      if (!e.matches) {
-        cerrar(false);
-      }
+    /* Al cruzar el punto de quiebre se restablece el estado inicial del modo
+       nuevo: evita dejar el velo móvil o el sidebar de escritorio oculto. */
+    this.consultaDeMedios(ANCHO_CAJON)?.addEventListener('change', () => {
+      raiz.classList.remove('nav-abierto', 'nav-collapsed');
+      actualizarBoton();
     });
 
+    actualizarBoton();
     this.mudarSelectorDeOrganizacion(nav);
   }
 
