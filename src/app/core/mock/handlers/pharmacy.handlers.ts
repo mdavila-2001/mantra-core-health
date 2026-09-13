@@ -1,3 +1,4 @@
+import { patientSettlementForItems } from '../fixtures/patient-settlements';
 import { vitrinas } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { recetas } from '../fixtures/clinica';
@@ -166,7 +167,26 @@ const pedidos = new Coleccion<PedidoSimulado>(
   })(),
 );
 
-function dto(p: PedidoSimulado) {
+for (const suffix of ['partial', 'denied', 'pending']) {
+  const original = pedidos.get(uuid('pharmacy-order-1'))!;
+  pedidos.agregar({ ...original, id: uuid(`pharmacy-copay-${suffix}`), estado: 'CONFIRMADO' });
+}
+
+function settlementForOrder(order: PedidoSimulado) {
+  if (['CANCELADO', 'RECHAZADO', 'VENCIDO'].includes(order.estado)) return { insuranceSettlement: null, insuranceSettlementAvailability: 'NOT_AVAILABLE' };
+  if (order.sustituciones.some((substitution) => substitution.status === 'PROPOSED')) return { insuranceSettlement: null, insuranceSettlementAvailability: 'UNDER_REVIEW' };
+  if (order.id === uuid('pharmacy-copay-pending')) return { insuranceSettlement: null, insuranceSettlementAvailability: 'PENDING_PUBLICATION' };
+  const result = order.id === uuid('pharmacy-order-1') ? 'APPROVED'
+    : order.id === uuid('pharmacy-copay-partial') ? 'PARTIALLY_APPROVED'
+      : order.id === uuid('pharmacy-copay-denied') ? 'DENIED' : undefined;
+  if (result) return patientSettlementForItems(order.id, result, order.lineas.map((line) => {
+    const product = productos.get(line.productId)!;
+    return { id: line.productId, name: product.brandName ?? product.genericName ?? product.productCode, unitAmount: product.price, quantity: line.requestedQuantity };
+  }));
+  return { insuranceSettlement: null, insuranceSettlementAvailability: order.estado === 'ENVIADO' ? 'PENDING_PUBLICATION' : 'NOT_AVAILABLE' };
+}
+
+function dto(p: PedidoSimulado, owner = false) {
   const farmacia = FARMACIAS.find((f) => f.id === p.pharmacyId) ?? FARMACIAS[0]!;
   const lineas = p.lineas.map((l) => {
     const prod = productos.get(l.productId);
@@ -201,6 +221,7 @@ function dto(p: PedidoSimulado) {
     patientName: p.patientName,
     deliveryMode: c('PINV_DELIVERY_RETIRO', 'Retiro en farmacia'),
     pickupCode: p.pickupCode,
+    ...(owner ? settlementForOrder(p) : {}),
     totalAmount: total.toFixed(2),
     currency: BOB,
     rejectionReasonText: p.rejectionReasonText,
@@ -277,7 +298,7 @@ export function registrarFarmacia(router: MockRouter): void {
   });
 
   router.get('/pharmacy/orders/me', (request) => {
-    const items = pedidosVisibles(request).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(dto);
+    const items = pedidosVisibles(request).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((order) => dto(order, true));
     return { items, count: items.length };
   });
 
@@ -287,7 +308,7 @@ export function registrarFarmacia(router: MockRouter): void {
       .todos()
       .filter((p) => status === null || p.estado === status || `PINV_ORDER_${p.estado}` === status)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(dto);
+      .map((order) => dto(order));
     return { items, count: items.length };
   });
 
@@ -316,9 +337,9 @@ export function registrarFarmacia(router: MockRouter): void {
     return { status: 201, body: dto(nuevo) };
   });
 
-  router.get('/pharmacy/orders/:id', ({ params }) => {
-    const p = pedidos.get(params['id']!);
-    return p === undefined ? notFound('Pedido no encontrado') : dto(p);
+  router.get('/pharmacy/orders/:id', (request) => {
+    const p = pedidos.get(request.params['id']!);
+    return p === undefined ? notFound('Pedido no encontrado') : dto(p, p.patientProfileId === request.user?.patientProfileId);
   });
 
   router.post('/pharmacy/orders/:id/review', ({ params }) => cambiar(params['id']!, 'EN_REVISION'));

@@ -629,20 +629,45 @@ export interface OwnAddress {
   readonly longitude?: number;
 }
 
-/**
- * Un seguro declarado.
- *
- * La aseguradora y el plan llegan **en palabras** y no como uuid: el backend
- * los resuelve para que la pantalla no tenga que pedir dos catálogos más sólo
- * para pintar una línea de texto.
- */
+export type CoverageValidity = 'CURRENT' | 'UPCOMING' | 'EXPIRED' | 'INACTIVE' | 'UNKNOWN';
+
+/** Una regla del plan de seguro, sin convertir ausencias en ceros. */
+export interface CoverageBenefitSummary {
+  readonly id: string;
+  readonly categoryCode?: string;
+  readonly categoryName?: string;
+  readonly serviceConceptId?: string;
+  readonly serviceName?: string;
+  readonly coveragePercent?: string;
+  readonly copayAmount?: string;
+  readonly deductibleAmount?: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly validityStatus?: CoverageValidity;
+  readonly statusCode?: string;
+}
+
+/** Un seguro declarado por el paciente. */
 export interface OwnCoverage {
+  readonly id: string;
+  readonly planId?: string;
+  readonly coverageOrder?: number;
   readonly carrierName: string;
   readonly planName?: string;
   readonly isPublic: boolean;
+  readonly policyIdentifier?: string;
   readonly memberIdentifier?: string;
-  /** Lo declarado al registrarse nace SIN verificar. */
   readonly verified: boolean;
+  readonly status?: string;
+  readonly statusCode?: string;
+  readonly validityStatus?: CoverageValidity;
+  readonly referenceDate?: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly currencyCode?: string;
+  readonly carrierWhatsappNumber?: string;
+  readonly carrierCallCenterPhone?: string;
+  readonly benefits: readonly CoverageBenefitSummary[];
 }
 
 /** Un tutor o persona autorizada, con su teléfono. */

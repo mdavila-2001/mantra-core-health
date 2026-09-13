@@ -1,3 +1,4 @@
+import { PatientCoverageCard } from '../../../shared/components/molecules/patient-coverage-card/patient-coverage-card';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
@@ -122,6 +123,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 @Component({
   selector: 'app-my-profile',
   imports: [
+    PatientCoverageCard,
     FileDropTarget,
     Alert,
     AppButton,

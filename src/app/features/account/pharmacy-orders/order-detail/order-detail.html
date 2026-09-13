@@ -183,6 +183,11 @@
         </p>
       </section>
 
+      <app-patient-insurance-settlement
+        [settlement]="abierto.insuranceSettlement ?? null"
+        [availability]="abierto.insuranceSettlementAvailability ?? 'NOT_AVAILABLE'"
+      />
+
       <!-- ─── Cancelar, mientras el estado lo permite ────────────────────── -->
       @if (puedeCancelar()) {
         <div class="pedido__acciones">

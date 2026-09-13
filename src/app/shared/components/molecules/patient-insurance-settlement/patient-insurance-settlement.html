@@ -1,0 +1,61 @@
+<section
+  class="settlement"
+  aria-label="Liquidación del seguro"
+  data-testid="patient-insurance-settlement"
+>
+  <h3>Liquidación del seguro</h3>
+  @if (published(); as details) {
+    <div class="settlement__heading">
+      <p>{{ details.carrierName }}</p>
+      <app-badge [variant]="details.result === 'APPROVED' ? 'success' : 'warning'">{{
+        resultText(details.result)
+      }}</app-badge>
+    </div>
+    <p class="settlement__reference">
+      Póliza: {{ details.policyIdentifier ?? 'No registrada' }} · Reclamo
+      {{ details.claimIdentifier }} · Versión {{ details.adjudicationVersion }}
+    </p>
+    <dl class="settlement__amounts cifras-tabulares">
+      <div>
+        <dt>Total facturado</dt>
+        <dd>{{ details.totalBilledAmount }} {{ currency(details.currencyCode) }}</dd>
+      </div>
+      <div>
+        <dt>Cubierto por el seguro</dt>
+        <dd>{{ details.totalApprovedAmount }} {{ currency(details.currencyCode) }}</dd>
+      </div>
+      <div class="settlement__patient">
+        <dt>A tu cargo</dt>
+        <dd>{{ details.totalPatientAmount }} {{ currency(details.currencyCode) }}</dd>
+      </div>
+      <div>
+        <dt>Excluido sin asignar</dt>
+        <dd>{{ details.totalDeniedAmount }} {{ currency(details.currencyCode) }}</dd>
+      </div>
+    </dl>
+    <p class="settlement__note">
+      A tu cargo es la responsabilidad confirmada por la aseguradora. Los pagos realizados no se
+      descuentan en esta liquidación. Un importe excluido sin asignar no constituye una deuda
+      confirmada.
+    </p>
+    @if (details.exclusions.length > 0) {
+      <h4>Exclusiones del seguro</h4>
+      <ul class="settlement__exclusions">
+        @for (exclusion of details.exclusions; track exclusion.claimLineId) {
+          <li>
+            <strong
+              >{{ exclusion.itemName }} · {{ exclusion.amount }}
+              {{ currency(details.currencyCode) }}</strong
+            >
+            <p class="settlement__clause">Cláusula: {{ exclusion.policyClauseReference }}</p>
+            <p class="settlement__clause">
+              Justificación: {{ exclusion.denialRationale ?? 'No informada' }}
+            </p>
+          </li>
+        }
+      </ul>
+    }
+  } @else {
+    <p role="status">{{ availabilityText() }}</p>
+  }
+</section>

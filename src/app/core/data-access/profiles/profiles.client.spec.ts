@@ -21,6 +21,27 @@ describe('ProfilesClient', () => {
     http.verify();
   });
 
+  it('normalizes old coverage responses and nested nullable benefits without losing zero', () => {
+    client.getOwnPatientProfile().subscribe((profile) => {
+      expect(profile.coverages[0].benefits).toEqual([]);
+      expect(profile.coverages[0].id).not.toBe(profile.coverages[1].id);
+      expect(profile.coverages[2].id).toBe('coverage-stable');
+      const benefit = profile.coverages[2].benefits[0];
+      expect(benefit.coveragePercent).toBe('80.50');
+      expect(benefit.copayAmount).toBe('0.00');
+      expect(benefit.deductibleAmount).toBeUndefined();
+      expect(profile.coverages[2].planId).toBe('plan');
+      expect(profile.coverages[2].coverageOrder).toBe(2);
+    });
+    const legacy = { carrierName: 'Andina', planName: 'Integral', isPublic: false, verified: false };
+    http.expectOne('/profiles/patients/me').flush({
+      personId: 'person', patientProfileId: 'patient', identityVerified: false, guardians: [],
+      coverages: [legacy, legacy, { ...legacy, id: 'coverage-stable', planId: 'plan', coverageOrder: 2,
+        benefits: [{ id: 'benefit-stable', coveragePercent: '80.50', copayAmount: '0.00', deductibleAmount: null }],
+      }],
+    });
+  });
+
   it('createPatient no manda las claves opcionales ausentes', () => {
     client.createPatient({ patientCode: 'PAC-1' }).subscribe();
 

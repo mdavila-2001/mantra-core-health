@@ -804,7 +804,14 @@ function toOwnPatientProfile(body: ConNulos<WireOwnPatientProfile>): OwnPatientP
     // Las listas son obligatorias en el contrato, pero se defienden igual: una
     // API anterior a este cambio las omite, y la pantalla las recorre sin
     // preguntar. Vacías dicen «no declaró ninguna», que es lo correcto ahí.
-    coverages: limpio.coverages ?? [],
+    coverages: (limpio.coverages ?? []).map((coverage, index) => ({
+      ...sinNulos(coverage),
+      id: coverage.id ?? `legacy:${coverage.policyIdentifier ?? coverage.memberIdentifier ?? coverage.planId ?? 'coverage'}:${index}`,
+      benefits: (coverage.benefits ?? []).map((benefit, benefitIndex) => ({
+        ...sinNulos(benefit),
+        id: benefit.id ?? `legacy-benefit:${index}:${benefitIndex}`,
+      })),
+    })),
     guardians: limpio.guardians ?? [],
   };
 }

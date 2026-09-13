@@ -1,3 +1,4 @@
+import { PatientInsuranceSettlement } from '../../../../shared/components/molecules/patient-insurance-settlement/patient-insurance-settlement';
 import { DatePipe, DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -67,7 +68,7 @@ const LADO_DEL_QR = 176;
  */
 @Component({
   selector: 'app-order-detail',
-  imports: [
+  imports: [PatientInsuranceSettlement,
     Alert,
     AppButton,
     AppButtonLink,

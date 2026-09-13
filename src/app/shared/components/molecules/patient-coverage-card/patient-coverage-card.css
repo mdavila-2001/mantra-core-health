@@ -1,0 +1,66 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.coverage {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+  overflow-wrap: anywhere;
+}
+h3,
+h4,
+p {
+  margin: 0;
+}
+h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+}
+h4 {
+  font-size: var(--fs-body);
+}
+.coverage__badges,
+.coverage__contacts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+}
+.coverage__badges {
+  margin-block-start: var(--sp-2);
+}
+.coverage__data {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+dt,
+.coverage__note,
+.coverage__benefits span,
+.coverage__contacts span {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+dd {
+  margin: 0;
+}
+.coverage__benefits {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding-inline-start: var(--sp-4);
+}
+.coverage__benefits li {
+  display: grid;
+  gap: var(--sp-2);
+}
+.coverage__contacts a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
