@@ -70,6 +70,21 @@ interface MatriculaAgregada {
   readonly validFrom?: string;
 }
 
+/**
+ * Cuál especialidad eligió el profesional como principal (UC-05-06·P).
+ *
+ * Una tabla aparte y no un campo en `especialidadesAgregadas` porque la
+ * principal puede ser una del fixture, que es de sólo lectura: acá se guarda
+ * **la elección**, y el perfil la aplica al armar la respuesta. Una fila por
+ * profesional; su `id` es el del perfil.
+ */
+interface PrincipalElegida {
+  readonly id: string;
+  readonly specialtyId: string;
+}
+
+const principalElegida = new Coleccion<PrincipalElegida>([], 'mock.perfil-medico.principal');
+
 const especialidadesAgregadas = new Coleccion<EspecialidadAgregada>([], 'mock.perfil-medico.especialidades');
 const credencialesAgregadas = new Coleccion<CredencialAgregada>([], 'mock.perfil-medico.credenciales');
 const matriculasAgregadas = new Coleccion<MatriculaAgregada>([], 'mock.perfil-medico.matriculas');
@@ -78,6 +93,22 @@ const matriculasAgregadas = new Coleccion<MatriculaAgregada>([], 'mock.perfil-me
 function sinDueno<T extends { readonly profileId: string }>(fila: T): Omit<T, 'profileId'> {
   const { profileId: _dueno, ...resto } = fila;
   return resto;
+}
+
+/**
+ * Aplica la principal elegida, si la hay.
+ *
+ * Sin elección se devuelve la lista tal cual: la principal es la del fixture.
+ * Con elección manda ella y las demás quedan adicionales — hay una sola
+ * vigente, igual que en el servidor.
+ */
+function conElegidaAlFrente<T extends { readonly id: string; readonly isPrimary?: boolean }>(
+  profileId: string,
+  especialidades: readonly T[],
+): T[] {
+  const elegida = principalElegida.get(profileId);
+  if (elegida === undefined) return [...especialidades];
+  return especialidades.map((e) => ({ ...e, isPrimary: e.id === elegida.specialtyId }));
 }
 
 function profesionalDeSesion(request: MockRequest): ProfesionalSimulado | undefined {
@@ -207,10 +238,10 @@ export function perfilProfesionalDe(p: ProfesionalSimulado) {
     practiceStatusConceptId: ESTADO['ST-ACTIVE']!,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
-    specialties: [
+    specialties: conElegidaAlFrente(p.id, [
       ...especialidadesDe(p),
       ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno),
-    ],
+    ]),
     credentials: [
       ...credencialesDe(p),
       ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno),
@@ -619,6 +650,21 @@ export function registrarPerfiles(router: MockRouter): void {
     });
     return { status: 201, body: { id: nueva.id } };
   });
+  router.patch('/profiles/practitioners/me/specialties/:id/primary', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const specialtyId = request.params['id']!;
+    // La ajena y la inexistente responden lo mismo, igual que el servidor.
+    const propias = conElegidaAlFrente(p.id, [
+      ...especialidadesDe(p),
+      ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno),
+    ]);
+    const especialidad = propias.find((e) => e.id === specialtyId);
+    if (especialidad === undefined) return notFound();
+    principalElegida.agregar({ id: p.id, specialtyId });
+    return { status: 200, body: { id: specialtyId, isPrimary: true } };
+  });
+
   router.post('/profiles/practitioners/:id/jurisdiction-authorizations', (request) => {
     const datos = cuerpo<{ licenseNumber: string; jurisdictionConceptId?: string; regulatoryAuthority?: string; validFrom?: string }>(request);
     const nueva = matriculasAgregadas.agregar({

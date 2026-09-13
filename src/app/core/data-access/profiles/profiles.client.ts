@@ -611,6 +611,27 @@ export class ProfilesClient {
    * agregar una nueva — vigente y sin tocar las anteriores, que siguen contando
    * como trayectoria.
    */
+  /**
+   * `PATCH /profiles/practitioners/me/specialties/:id/primary` (UC-05-06·P) —
+   * cuál de las especialidades propias es la principal.
+   *
+   * Sin `profileId`: el sujeto sale de la sesión, como el resto del
+   * autoservicio. Hasta el 13/09/2026 `isPrimary` sólo podía fijarse al
+   * agregar, así que una especialidad cargada después del alta quedaba
+   * adicional para siempre; ver `docs/progress/BLOCKERS.md`.
+   *
+   * Es idempotente: marcar la que ya lo es devuelve la misma especialidad.
+   *
+   * @param specialtyId - La especialidad que pasa a ser la principal.
+   * @returns La especialidad, ya primaria.
+   */
+  setOwnPrimarySpecialty(specialtyId: string): Observable<{ readonly id: string }> {
+    return this.http.patch<{ readonly id: string }>(
+      this.url(`/profiles/practitioners/me/specialties/${specialtyId}/primary`),
+      {},
+    );
+  }
+
   addSpecialty(profileId: string, especialidad: NewSpecialty): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(
       this.url(`/profiles/practitioners/${profileId}/specialties`),
