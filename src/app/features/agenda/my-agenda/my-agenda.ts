@@ -160,6 +160,10 @@ const SIN_DATO = 'Sin registrar';
   templateUrl: './my-agenda.html',
   styleUrl: './my-agenda.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:keydown.escape)': 'avisoAbierto.set(false)',
+    '(document:click)': 'cerrarAvisoSiAfuera($event)',
+  },
 })
 export class MyAgenda {
   private readonly scheduling = inject(SchedulingClient);
@@ -198,6 +202,21 @@ export class MyAgenda {
 
   protected readonly cuposHasta = signal<Date | null>(null);
   protected readonly generando = signal(false);
+
+  /** Si el globo del «i» con el aviso de agotamiento está abierto. */
+  protected readonly avisoAbierto = signal(false);
+
+  protected alternarAviso(): void {
+    this.avisoAbierto.update((abierto) => !abierto);
+  }
+
+  /** Un clic fuera del «i» y de su globo lo cierra, como cualquier popover. */
+  protected cerrarAvisoSiAfuera(evento: Event): void {
+    if (!this.avisoAbierto()) return;
+    const objetivo = evento.target as Element | null;
+    if (objetivo?.closest?.('.mi-agenda__aviso')) return;
+    this.avisoAbierto.set(false);
+  }
 
   /* -- La solapa del mes ---------------------------------------------------- */
 

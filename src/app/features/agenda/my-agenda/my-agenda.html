@@ -44,12 +44,7 @@
           />
         } @else {
           <div class="mi-agenda__acciones-mes">
-            <button
-              app-button
-              variant="secondary"
-              type="button"
-              (clicked)="abrirBloqueo()"
-            >
+            <button app-button variant="secondary" type="button" (clicked)="abrirBloqueo()">
               Bloquear días u horarios
             </button>
           </div>
@@ -158,126 +153,194 @@
         }
       }
     } @else {
-      <!-- El parche manual del horizonte rodante: nadie regenera cupos todavía,
-         así que una agenda se vacía en silencio si no se avisa. Va ARRIBA de la
-         tarjeta: es lo único de la pantalla que pide hacer algo, y debajo de la
-         tabla de históricos quedaba pegado a una sección que es historia. -->
-      @if (seAgotan()) {
-        <app-alert
-          class="mi-agenda__agotan"
-          tone="warning"
-          title="Tus turnos publicados se están por agotar"
-        >
-          Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
-          >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga publicado.
-          <div alert-actions>
-            <button
-              app-button
-              size="sm"
-              [isLoading]="generando()"
-              (clicked)="generarSiguientePeriodo()"
-            >
-              Abrir tres meses más
-            </button>
-          </div>
-        </app-alert>
-      }
-
       <section class="mi-agenda__tarjeta">
-        <!-- Arriba a la izquierda de la tarjeta, los estados y todas las
-             acciones del horario: se leen antes que la grilla y no compiten
-             con ella. Todas son íconos con nombre accesible y tooltip. -->
+        <!-- Arriba de la tarjeta, una sola barra: los estados a la izquierda y
+             las acciones del horario a la derecha (pedido del cliente). Se
+             leen antes que la grilla y no compiten con ella. Las acciones son
+             íconos con nombre accesible y tooltip. -->
         <div class="mi-agenda__estados" data-testid="horario-barra">
-          <app-badge variant="success">Vigente</app-badge>
-          @if (p.permanente) {
-            <!-- Las palabras y las mayúsculas son del propietario (punto 5). -->
-            <app-badge variant="secondary">HORARIO PERMANENTE</app-badge>
-          }
-          <!-- «Editar sobre la fila», del pedido original. Va acá y no en un
+          <div class="mi-agenda__chips" data-testid="horario-chips">
+            <app-badge variant="success">Vigente</app-badge>
+            @if (p.permanente) {
+              <!-- Las palabras y las mayúsculas son del propietario (punto 5). -->
+              <app-badge variant="secondary">HORARIO PERMANENTE</app-badge>
+            }
+          </div>
+          <div class="mi-agenda__barra-acciones" data-testid="horario-acciones">
+            <!-- El parche manual del horizonte rodante: nadie regenera cupos
+               todavía, así que una agenda se vacía en silencio si no se avisa.
+               El aviso vive detrás de este «i» (pedido del cliente) para no
+               empujar la grilla hacia abajo; el globo lleva el mismo texto y
+               el mismo botón que antes iban en la alerta de arriba. -->
+            @if (seAgotan()) {
+              <div class="mi-agenda__aviso">
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  [iconOnly]="true"
+                  data-testid="aviso-agotan"
+                  aria-label="Advertencia: tus turnos se están por agotar"
+                  aria-controls="aviso-agotan-globo"
+                  [attr.aria-expanded]="avisoAbierto()"
+                  (clicked)="alternarAviso()"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 11v5M12 8h.01" />
+                  </svg>
+                </button>
+                <!-- Oculto y no ausente: el texto sigue en el documento para el
+                   lector de pantalla que recorre la barra. -->
+                <div
+                  id="aviso-agotan-globo"
+                  class="mi-agenda__aviso-globo"
+                  role="dialog"
+                  aria-label="Advertencia"
+                  data-testid="aviso-agotan-globo"
+                  [hidden]="!avisoAbierto()"
+                >
+                  <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
+                    Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
+                    >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga
+                    publicado.
+                    <div alert-actions>
+                      <button
+                        app-button
+                        size="sm"
+                        [isLoading]="generando()"
+                        (clicked)="generarSiguientePeriodo()"
+                      >
+                        Abrir tres meses más
+                      </button>
+                    </div>
+                  </app-alert>
+                </div>
+              </div>
+            }
+            <!-- «Editar sobre la fila», del pedido original. Va acá y no en un
                menú: cambiar el horario es lo que uno viene a hacer a esta
                pantalla después de mirarlo. -->
-          <!-- «Editar y borrar deben ser iconos sobre la fila de horarios»,
+            <!-- «Editar y borrar deben ser iconos sobre la fila de horarios»,
                punto 7 del pedido. Icono con NOMBRE ACCESIBLE y tooltip: un
                botón que sólo es un dibujo no se puede leer ni con lector de
                pantalla ni por alguien que no reconoce el símbolo. -->
-          <a
-            app-button
-            variant="ghost"
-            size="sm"
-            [iconOnly]="true"
-            data-testid="horario-editar"
-            [routerLink]="rutaEditarHorario"
-            aria-label="Cambiar mi horario"
-            appTooltip="Cambiar mi horario"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
-          </a>
-          <!-- El «borrar» del punto 7. No dice «Borrar»: retirar es lo que
+            <a
+              app-button
+              variant="ghost"
+              size="sm"
+              [iconOnly]="true"
+              data-testid="horario-editar"
+              [routerLink]="rutaEditarHorario"
+              aria-label="Cambiar mi horario"
+              appTooltip="Cambiar mi horario"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+            </a>
+            <!-- El «borrar» del punto 7. No dice «Borrar»: retirar es lo que
                pasa de verdad (ver `retirarHorario`), y el ícono no cambia esa
                semántica, sólo su forma. Sigue detrás de la misma confirmación
                destructiva — el ícono no es menos protección que el botón de
                texto que reemplaza. -->
-          <button
-            app-button
-            variant="ghost"
-            size="sm"
-            type="button"
-            [iconOnly]="true"
-            data-testid="horario-retirar"
-            aria-label="Retirar horario"
-            appTooltip="Retirar horario"
-            [isLoading]="retirando()"
-            (clicked)="retirarHorario()"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-              <path d="M10 11v6M14 11v6" />
-            </svg>
-          </button>
-          <!-- Los bloqueos tienen pantalla propia desde que se les dio el mismo
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              [iconOnly]="true"
+              data-testid="horario-retirar"
+              aria-label="Retirar horario"
+              appTooltip="Retirar horario"
+              [isLoading]="retirando()"
+              (clicked)="retirarHorario()"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
+                <path d="M10 11v6M14 11v6" />
+              </svg>
+            </button>
+            <!-- Los bloqueos tienen pantalla propia desde que se les dio el mismo
                flujo que a los horarios. Desde acá se llega, que es donde uno
                mira su agenda y se acuerda de que cerró algo. -->
-          <a
-            app-button
-            variant="ghost"
-            size="sm"
-            [iconOnly]="true"
-            data-testid="ver-bloqueos"
-            [routerLink]="rutaBloqueos"
-            aria-label="Ver mis bloqueos"
-            appTooltip="Ver mis bloqueos de agenda"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="17" rx="2" />
-              <path d="M3 9h18M8 2v4M16 2v4" />
-              <path d="m9.5 12.5 5 5M14.5 12.5l-5 5" />
-            </svg>
-          </a>
-          <!-- Agendar una cita sin ir a buscar el día: es lo que uno quiere
+            <a
+              app-button
+              variant="ghost"
+              size="sm"
+              [iconOnly]="true"
+              data-testid="ver-bloqueos"
+              [routerLink]="rutaBloqueos"
+              aria-label="Ver mis bloqueos"
+              appTooltip="Ver mis bloqueos de agenda"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="17" rx="2" />
+                <path d="M3 9h18M8 2v4M16 2v4" />
+                <path d="m9.5 12.5 5 5M14.5 12.5l-5 5" />
+              </svg>
+            </a>
+            <!-- Agendar una cita sin ir a buscar el día: es lo que uno quiere
                hacer justo después de acordarla en el consultorio. -->
-          <a
-            app-button
-            variant="secondary"
-            size="sm"
-            [iconOnly]="true"
-            data-testid="agendar-cita"
-            [routerLink]="rutaAgendarCita"
-            aria-label="Agendar una cita"
-            appTooltip="Agendar una cita a un paciente"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="17" rx="2" />
-              <path d="M3 9h18M8 2v4M16 2v4" />
-              <path d="M12 12v6M9 15h6" />
-            </svg>
-          </a>
+            <a
+              app-button
+              variant="secondary"
+              size="sm"
+              [iconOnly]="true"
+              data-testid="agendar-cita"
+              [routerLink]="rutaAgendarCita"
+              aria-label="Agendar una cita"
+              appTooltip="Agendar una cita a un paciente"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="17" rx="2" />
+                <path d="M3 9h18M8 2v4M16 2v4" />
+                <path d="M12 12v6M9 15h6" />
+              </svg>
+            </a>
+          </div>
         </div>
 
         <h2 class="mi-agenda__titulo">Atendés estos días</h2>
@@ -295,23 +358,9 @@
           [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambies.'"
         />
 
-        <ul class="mi-agenda__semana" aria-label="Días que atendés">
-          @for (dia of p.semana; track dia.numero) {
-            <li
-              class="mi-agenda__dia"
-              [class.mi-agenda__dia--activo]="dia.activo"
-              [attr.aria-label]="dia.activo ? dia.largo + ': atendés' : dia.largo + ': no atendés'"
-            >
-              <span aria-hidden="true">{{ dia.corto }}</span>
-            </li>
-          }
-        </ul>
-
-        @if (p.vigencia) {
-          <p class="mi-agenda__vigencia">{{ p.vigencia }}</p>
-        } @else {
-          <p class="mi-agenda__vigencia">Sin fecha de fin: rige hasta que lo cambies.</p>
-        }
+        <!-- Debajo de la grilla no va la semanita de círculos ni la vigencia
+             (pedido del cliente): los días ya están en la grilla y la vigencia
+             se lee en el globo de cada franja. -->
         @if (!seAgotan() && cuposHastaTexto()) {
           <p class="mi-agenda__cupos" role="status">
             Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
@@ -373,8 +422,15 @@
                         appTooltip="Ver cómo era"
                         (clicked)="verHorarioViejo(viejo)"
                       >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
                           <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
                           <circle cx="12" cy="12" r="3" />
                         </svg>
@@ -394,8 +450,15 @@
                         [isLoading]="operandoHorario() === viejo.id"
                         (clicked)="reactivarHorario(viejo)"
                       >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
                           <path d="M3 12a9 9 0 1 0 3-6.7" />
                           <path d="M3 4v5h5" />
                         </svg>

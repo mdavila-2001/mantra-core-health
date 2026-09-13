@@ -32,37 +32,6 @@
   font-weight: 600;
 }
 
-.mi-agenda__semana {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--sp-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* En lectura no es un botón: es un indicador. Mismo tamaño que el del
-   formulario para que se reconozca, sin cursor ni foco. */
-.mi-agenda__dia {
-  display: grid;
-  place-items: center;
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
-  border: 2px solid var(--border-subtle);
-  border-radius: var(--r-full);
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.mi-agenda__dia--activo {
-  background: var(--st-primary-bg);
-  border-color: var(--st-primary-bd);
-  color: var(--st-primary-fg);
-}
-
-.mi-agenda__vigencia,
 .mi-agenda__cupos {
   margin: 0;
   color: var(--text-secondary);
@@ -113,22 +82,64 @@
   margin-block-end: var(--sp-4);
 }
 
-/* Las etiquetas de estado del horario (puntos 5 y 7). En fila y con gap: son
-   dos piezas que se leen juntas, no dos párrafos. */
+/* La barra del horario: las etiquetas de estado (puntos 5 y 7) a la izquierda
+   y las acciones a la derecha (pedido del cliente). Si no entran en un renglón
+   —un teléfono— las acciones bajan y siguen pegadas a la derecha. */
 .mi-agenda__estados {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   gap: var(--sp-2);
   margin: 0;
 }
 
-/* El aviso de agotamiento, arriba de la tarjeta y separado de ella. */
-.mi-agenda__agotan {
-  display: block;
-  margin-block-end: var(--sp-4);
+.mi-agenda__chips,
+.mi-agenda__barra-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mi-agenda__barra-acciones {
+  margin-inline-start: auto;
+  justify-content: flex-end;
+}
+
+/* El aviso de agotamiento, detrás del «i»: el globo cuelga del botón,
+   alineado a su derecha para no salirse de la tarjeta. */
+.mi-agenda__aviso {
+  position: relative;
+}
+
+.mi-agenda__aviso-globo {
+  position: absolute;
+  inset-block-start: calc(100% + var(--sp-2));
+  inset-inline-end: 0;
+  z-index: 20;
+  inline-size: min(24rem, calc(100vw - 2rem));
   text-align: start;
+  border-radius: var(--r-md);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.14);
+}
+
+.mi-agenda__aviso-globo app-alert {
+  display: block;
+}
+
+/* En un teléfono el «i» no queda a la derecha de todo y un globo de 24rem
+   colgado de él se salía por la izquierda: ahí cuelga de la barra entera. */
+@media (max-width: 40rem) {
+  .mi-agenda__aviso {
+    position: static;
+  }
+
+  .mi-agenda__aviso-globo {
+    inset-inline: 0;
+    inline-size: auto;
+  }
 }
 
 .mi-agenda__acciones {

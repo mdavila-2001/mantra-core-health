@@ -507,38 +507,67 @@ describe('MyAgenda', () => {
     expect(bloqueos[0].textContent).toContain('Congreso');
   });
 
-  it('el aviso de agotamiento va arriba de la tarjeta, no debajo de los históricos', () => {
+  it('el aviso de agotamiento vive detrás de un «i» en la barra y se abre al pulsarlo', () => {
+    // Pedido del cliente: el aviso no ocupa lugar arriba de la tarjeta; un
+    // botón de info abre un globo con el texto y «Abrir tres meses más».
     crear();
     conRecurso();
     conPlantilla([{ dayOfWeek: 2, startTime: '09:00:00', endTime: '13:00:00' }]);
     conCuposHasta(new Date(Date.now() + 10 * 24 * 60 * 60 * 1000));
 
-    const aviso: HTMLElement | null = fixture.nativeElement.querySelector('.mi-agenda__agotan');
-    const tarjeta: HTMLElement | null = fixture.nativeElement.querySelector('.mi-agenda__tarjeta');
-    expect(aviso).not.toBeNull();
-    expect(aviso!.compareDocumentPosition(tarjeta!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const acciones: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="horario-acciones"]',
+    );
+    const boton: HTMLElement | null = acciones.querySelector('[data-testid="aviso-agotan"]');
+    const globo: HTMLElement | null = acciones.querySelector('[data-testid="aviso-agotan-globo"]');
+    expect(boton).not.toBeNull();
+    expect(globo!.hidden).toBe(true);
+    expect(boton!.getAttribute('aria-expanded')).toBe('false');
+
+    boton!.click();
+    fixture.detectChanges();
+    expect(globo!.hidden).toBe(false);
+    expect(globo!.textContent).toContain('Abrir tres meses más');
+
+    document.body.click();
+    fixture.detectChanges();
+    expect(globo!.hidden).toBe(true);
   });
 
-  it('la semanita marca los días que atiende y los que no, con palabras', () => {
+  it('sin agotamiento no hay «i» de aviso', () => {
     crear();
     conRecurso();
     conPlantilla([{ dayOfWeek: 2, startTime: '09:00:00', endTime: '13:00:00' }]);
     conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
 
-    const dias = fixture.nativeElement.querySelectorAll('.mi-agenda__dia');
-    expect(dias).toHaveLength(7);
-    // El color nunca solo: el estado va también en el nombre accesible.
-    expect(dias[1].getAttribute('aria-label')).toBe('Martes: atendés');
-    expect(dias[0].getAttribute('aria-label')).toBe('Lunes: no atendés');
+    expect(fixture.nativeElement.querySelector('[data-testid="aviso-agotan"]')).toBeNull();
   });
 
-  it('sin fecha de fin lo dice, en vez de dejar el dato en blanco', () => {
+  it('debajo de la grilla no van la semanita de círculos ni la vigencia', () => {
+    // Pedido del cliente: los días ya están en la grilla y la vigencia se lee
+    // en el globo de cada franja.
     crear();
     conRecurso();
     conPlantilla([{ dayOfWeek: 2, startTime: '09:00:00', endTime: '13:00:00' }]);
     conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
 
-    expect(fixture.nativeElement.textContent).toContain('rige hasta que lo cambies');
+    expect(fixture.nativeElement.querySelector('.mi-agenda__semana')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('rige hasta que lo cambies');
+  });
+
+  it('la barra lleva los estados a la izquierda y las acciones a la derecha, separados', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 2, startTime: '09:00:00', endTime: '13:00:00' }]);
+    conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
+
+    const barra: HTMLElement = fixture.nativeElement.querySelector('[data-testid="horario-barra"]');
+    const [chips, acciones] = Array.from(barra.children) as HTMLElement[];
+    expect(chips.dataset['testid']).toBe('horario-chips');
+    expect(chips.querySelector('[app-button]')).toBeNull();
+    expect(acciones.dataset['testid']).toBe('horario-acciones');
+    expect(acciones.querySelector('[data-testid="horario-editar"]')).not.toBeNull();
+    expect(acciones.querySelector('app-badge')).toBeNull();
   });
 
   it('sin horario publicado ofrece publicarlo, en vez de un error', () => {

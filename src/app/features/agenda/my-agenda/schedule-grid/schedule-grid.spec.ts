@@ -134,24 +134,34 @@ describe('ScheduleGrid', () => {
     // los martes de 9 a 13» tiene que leerse como «mañana a las 9».
     montar([regla(1, '09:00:00', '13:00:00')]);
 
-    expect(fixture.nativeElement.textContent).toContain('Semana del 7 al 11 de septiembre');
-    const numeros = cabeceras().map((c) => c.querySelector('.grilla__dia-numero')?.textContent?.trim());
-    expect(numeros).toEqual(['7', '8', '9', '10', '11']);
+    expect(fixture.nativeElement.textContent).toContain('Semana del 7 al 13 de septiembre');
+    const numeros = cabeceras().map((c) =>
+      c.querySelector('.grilla__dia-numero')?.textContent?.trim(),
+    );
+    expect(numeros).toEqual(['7', '8', '9', '10', '11', '12', '13']);
 
     const hoy = cabeceras().filter((c) => c.getAttribute('aria-current') === 'date');
     expect(hoy).toHaveLength(1);
     expect(hoy[0].textContent).toContain('9');
   });
 
-  it('va de lunes al último día atendido, con viernes como mínimo', () => {
-    // Un fin de semana vacío no dice nada que la ausencia no diga; pero el
-    // sábado, si se atiende, entra.
+  it('muestra la semana entera, de lunes a domingo, aunque no se atienda el fin de semana', () => {
+    // Pedido del cliente: faltaban sábado y domingo.
     montar([regla(2, '09:00:00', '13:00:00')]);
-    expect(cabeceras()).toHaveLength(5);
+    expect(cabeceras()).toHaveLength(7);
+    expect(cabeceras().at(-2)?.textContent).toContain('Sáb');
+    expect(cabeceras().at(-1)?.textContent).toContain('Dom');
+  });
 
-    montar([regla(6, '09:00:00', '13:00:00')]);
-    expect(cabeceras()).toHaveLength(6);
-    expect(cabeceras().at(-1)?.textContent).toContain('Sáb');
+  it('un día sin nada asignado va en una columna angosta', () => {
+    // Lo práctico: se ve que el día existe, pero no le roba ancho a los que
+    // se atienden.
+    montar([regla(1, '09:00:00', '13:00:00'), regla(6, '09:00:00', '13:00:00')]);
+
+    const vacios = cabeceras().map((c) => c.classList.contains('grilla__dia--vacio'));
+    expect(vacios).toEqual([false, true, true, true, true, false, true]);
+    const tabla: HTMLElement = fixture.nativeElement.querySelector('.grilla__tabla');
+    expect(tabla.style.gridTemplateColumns).toContain('var(--ancho-dia-vacio)');
   });
 
   it('la franja es UN bloque continuo, con alto proporcional a lo que dura', () => {
@@ -173,9 +183,11 @@ describe('ScheduleGrid', () => {
     const columnas: HTMLElement[] = Array.from(
       fixture.nativeElement.querySelectorAll('.grilla__columna'),
     );
-    const conBloque = columnas.map((c) => c.querySelectorAll('[data-testid="horario-bloque"]').length);
-    // lunes, martes, miércoles, jueves, viernes
-    expect(conBloque).toEqual([1, 0, 1, 0, 0]);
+    const conBloque = columnas.map(
+      (c) => c.querySelectorAll('[data-testid="horario-bloque"]').length,
+    );
+    // lunes a domingo
+    expect(conBloque).toEqual([1, 0, 1, 0, 0, 0, 0]);
   });
 
   it('sin fechas —el horario retirado del diálogo— sólo lleva los nombres de los días', () => {
@@ -232,7 +244,7 @@ describe('ScheduleGrid', () => {
     const conBloqueo = columnas.map(
       (c) => c.querySelectorAll('[data-testid="horario-bloqueo"]').length,
     );
-    expect(conBloqueo).toEqual([0, 0, 1, 0, 0]);
+    expect(conBloqueo).toEqual([0, 0, 1, 0, 0, 0, 0]);
     const [b] = bloqueosPintados();
     expect(parseFloat(b.style.top)).toBeCloseTo(50, 2);
     expect(parseFloat(b.style.height)).toBeCloseTo(25, 2);
@@ -244,7 +256,9 @@ describe('ScheduleGrid', () => {
 
   it('un bloqueo de varios días se parte por día y cubre enteros los del medio', () => {
     montar([regla(1, '09:00:00', '13:00:00')], {
-      bloqueos: [{ desde: new Date(2026, 8, 7, 20, 0), hasta: new Date(2026, 8, 9, 8, 0), motivo: null }],
+      bloqueos: [
+        { desde: new Date(2026, 8, 7, 20, 0), hasta: new Date(2026, 8, 9, 8, 0), motivo: null },
+      ],
     });
 
     const pintados = bloqueosPintados();
@@ -262,7 +276,11 @@ describe('ScheduleGrid', () => {
     montar([regla(1, '09:00:00', '13:00:00')], { bloqueos: [fuera] });
     expect(bloqueosPintados()).toHaveLength(0);
 
-    const dentro: BloqueoDelMes = { ...fuera, desde: new Date(2026, 8, 8, 9), hasta: new Date(2026, 8, 8, 10) };
+    const dentro: BloqueoDelMes = {
+      ...fuera,
+      desde: new Date(2026, 8, 8, 9),
+      hasta: new Date(2026, 8, 8, 10),
+    };
     montar([regla(1, '09:00:00', '13:00:00')], { bloqueos: [dentro], conFechas: false });
     expect(bloqueosPintados()).toHaveLength(0);
   });

@@ -126,9 +126,10 @@ const SEPARACION_GLOBO = 8;
  *
  * El horario es un patrón semanal, pero se mira desde un día concreto: la
  * cabecera lleva las fechas de esta semana y el día de hoy marcado, para que
- * «atendés los martes de 9 a 13» se lea como «mañana a las 9». Se muestran
- * de lunes al último día que se atiende, con viernes como mínimo — un fin de
- * semana vacío no dice nada que la ausencia no diga.
+ * «atendés los martes de 9 a 13» se lea como «mañana a las 9». Se muestra la
+ * semana entera, de lunes a domingo (pedido del cliente: faltaban sábado y
+ * domingo); un día sin nada asignado va en una columna angosta, al mínimo,
+ * para que no le robe ancho a los que se atienden.
  *
  * ## El detalle, al pasar el mouse
  *
@@ -219,16 +220,11 @@ export class ScheduleGrid {
   /** El lunes de la semana mirada. */
   protected readonly lunes = computed(() => lunesDe(this.semana()));
 
-  /** Los días que se dibujan: de lunes al último atendido, viernes como mínimo. */
+  /** Los días que se dibujan: la semana entera, de lunes a domingo. */
   protected readonly dias = computed<readonly DiaDelHorario[]>(() => {
-    const conAtencion = new Set(this.reglas().map((r) => r.dayOfWeek));
-    let ultimo = 4; // viernes, en posiciones de ORDEN
-    ORDEN.forEach((d, i) => {
-      if (conAtencion.has(d)) ultimo = Math.max(ultimo, i);
-    });
     const lunes = this.lunes();
     const hoy = medianoche(this.semana());
-    return ORDEN.slice(0, ultimo + 1).map((numero, i) => {
+    return ORDEN.map((numero, i) => {
       const fecha = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i);
       return {
         numero,
@@ -239,6 +235,28 @@ export class ScheduleGrid {
       };
     });
   });
+
+  /**
+   * Las columnas de la cuadrícula: el carril de horas y un día cada una. Un
+   * día sin nada asignado queda angosto, al mínimo; los que se atienden se
+   * reparten el resto del ancho.
+   */
+  protected readonly columnas = computed(() => {
+    const conAtencion = new Set(this.reglas().map((r) => r.dayOfWeek));
+    const anchos = this.dias().map((d) =>
+      conAtencion.has(d.numero) ? 'minmax(var(--ancho-dia), 1fr)' : 'var(--ancho-dia-vacio)',
+    );
+    return {
+      plantilla: `var(--carril) ${anchos.join(' ')}`,
+      conAtencion: anchos.filter((a) => a.startsWith('minmax')).length,
+      vacios: anchos.filter((a) => !a.startsWith('minmax')).length,
+    };
+  });
+
+  /** Si un día no tiene nada asignado: su columna va angosta. */
+  protected diaVacio(dia: number): boolean {
+    return !this.reglas().some((r) => r.dayOfWeek === dia);
+  }
 
   /** Las horas que se dibujan: el día entero, de 00 a 23. */
   protected readonly horas = computed(() =>

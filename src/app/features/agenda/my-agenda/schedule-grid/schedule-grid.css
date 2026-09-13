@@ -54,11 +54,25 @@
 .grilla__tabla {
   --alto-hora: 3.25rem;
   --carril: 3.75rem;
+  /* Un día sin nada asignado va angosto: se ve que existe y no roba ancho. */
+  --ancho-dia: 6.5rem;
+  --ancho-dia-vacio: 3rem;
 
   display: grid;
-  grid-template-columns: var(--carril) repeat(var(--dias, 7), minmax(6.5rem, 1fr));
+  /* Las columnas las arma el componente (`columnas()`), día por día. */
+  grid-template-columns: var(--carril) repeat(7, minmax(var(--ancho-dia), 1fr));
   inline-size: 100%;
-  min-inline-size: calc(var(--carril) + var(--dias, 7) * 6.5rem);
+  min-inline-size: calc(
+    var(--carril) + var(--con-atencion, 7) * var(--ancho-dia) + var(--vacios, 0) *
+      var(--ancho-dia-vacio)
+  );
+}
+
+/* En la columna angosta el número del día se achica para entrar. */
+.grilla__dia--vacio .grilla__dia-numero {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  font-size: 1rem;
 }
 
 /* ---- la cabecera ------------------------------------------------------------ */
@@ -233,7 +247,8 @@
   border-radius: var(--r-md);
   border: 1px dashed var(--st-error-bd);
   border-inline-start: 3px solid var(--st-error-bd);
-  background: repeating-linear-gradient(
+  background:
+    repeating-linear-gradient(
       135deg,
       transparent 0 6px,
       color-mix(in srgb, var(--st-error-bd) 18%, transparent) 6px 12px
