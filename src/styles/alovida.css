@@ -840,6 +840,16 @@ app-shell-layout { display: block; }
 }
 .app-header__buscador { flex: 1; max-width: 420px; min-width: 200px; }
 .app-header__derecha { margin-left: auto; display: flex; align-items: center; gap: var(--e3); flex: none; }
+/* La vuelta atrás del marco, a la izquierda del todo y al lado del menú. El
+   aspecto entero lo pone `app-back-link`: lo único que hace falta acá es
+   soltarle la altura fija que este archivo le da a TODO `[app-button]`. Con
+   ella el botón de ícono quedaba de 44 de ancho por 40 de alto en teléfono
+   —el ancho sale del área táctil mínima que el átomo fija con `min-height`— y
+   se veía ovalado. Con `height: auto` manda el átomo y la caja vuelve a ser
+   cuadrada en los dos anchos. */
+.app-header__volver a[app-button],
+.app-public-header__volver a[app-button] { height: auto; flex: none; }
+
 .app-header__ajustes {
   display: inline-flex; align-items: center; justify-content: center;
   inline-size: 2.5rem; block-size: 2.5rem;

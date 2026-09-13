@@ -26,6 +26,7 @@ import { TutorialTarget } from '../../shared/components/organisms/tutorial-overl
 // declara hotspot— y se monta acá porque el armazón es lo único que existe
 // exactamente una vez por sesión con interfaz.
 import { NotificationBell } from '../../shared/components/organisms/notification-bell/notification-bell';
+import { BackLink } from '../../shared/components/atoms/back-link/back-link';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
@@ -70,6 +71,7 @@ function contiene(ruta: string, url: string): boolean {
     TutorialOverlay,
     TutorialTarget,
     NotificationBell,
+    BackLink,
     NavIcon,
     Tooltip,
   ],
