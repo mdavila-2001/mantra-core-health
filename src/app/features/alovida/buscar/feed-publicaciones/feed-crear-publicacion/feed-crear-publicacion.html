@@ -1,0 +1,47 @@
+<section class="crear" aria-label="Crear publicación" data-testid="feed-crear">
+  @if (!resuelto()) {
+    <div class="crear__barra" aria-live="polite" aria-busy="true">
+      <span class="solo-lectores">Cargando…</span>
+      <span class="crear__avatar crear__avatar--esqueleto"></span>
+      <span class="app-skeleton crear__pill-esqueleto"></span>
+    </div>
+  } @else if (perfil(); as p) {
+    @if (abierto()) {
+      <!-- El mismo compositor del muro con sesión: publicar es publicar. -->
+      <app-composer [profileId]="p.id" (publicado)="alPublicar($event)" />
+      <button type="button" class="crear__cerrar" data-testid="feed-crear-cerrar" (click)="cerrar()">
+        Cancelar
+      </button>
+    } @else {
+      <div class="crear__barra">
+        @if (foto(); as src) {
+          <img class="crear__avatar" [src]="src" alt="" width="48" height="48" />
+        } @else {
+          <span class="crear__avatar crear__avatar--iniciales" aria-hidden="true">{{ iniciales() }}</span>
+        }
+        <button type="button" class="crear__pill" data-testid="feed-crear-abrir" (click)="abrir()">
+          Crear publicación
+        </button>
+      </div>
+      <div class="crear__atajos">
+        <!-- Los atajos abren el mismo compositor: no hay un flujo distinto por
+             tipo. Lo que cada uno puede o no adjuntar lo dice el compositor. -->
+        <button type="button" class="crear__atajo" (click)="abrir()">
+          <svg class="crear__icono crear__icono--foto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
+          Foto
+        </button>
+        <button type="button" class="crear__atajo" (click)="abrir()">
+          <svg class="crear__icono crear__icono--articulo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h11l3 3v13H5z"/><path d="M8 10h8M8 14h8M8 18h5"/></svg>
+          Escribir artículo
+        </button>
+      </div>
+    }
+  } @else {
+    <div class="crear__barra">
+      <span class="crear__avatar crear__avatar--iniciales" aria-hidden="true">{{ iniciales() }}</span>
+      <a class="crear__pill crear__pill--enlace" routerLink="/my-account/profile/edit" data-testid="feed-crear-sin-vitrina">
+        Creá tu vitrina pública para publicar
+      </a>
+    </div>
+  }
+</section>

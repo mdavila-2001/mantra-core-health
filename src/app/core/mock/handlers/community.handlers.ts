@@ -355,7 +355,9 @@ export function registrarComunidad(router: MockRouter): void {
     return p === undefined ? notFound() : resumenDeReacciones(p, texto(query, 'actorProfileId'));
   });
 
-  router.post('/community/reactions', (request) => {
+  // `CommunityClient.react` manda `PUT` (es un upsert sobre `(actor, objeto)`);
+  // el muro con sesión y la red social pública comparten este mismo handler.
+  const reaccionar = (request: MockRequest) => {
     const datos = cuerpo<{ actorProfileId: string; reactableType: string; reactableRefId: string; reactionType: Reaccion }>(request);
     const p = publicaciones.get(datos.reactableRefId ?? '');
     if (p !== undefined && datos.actorProfileId !== undefined && datos.reactionType !== undefined) {
@@ -372,7 +374,9 @@ export function registrarComunidad(router: MockRouter): void {
       publicaciones.actualizar(p.id, { reacciones, reaccionDelActor });
     }
     return { status: 201, body: { id: nuevoId('reaction') } };
-  });
+  };
+  router.post('/community/reactions', reaccionar);
+  router.put('/community/reactions', reaccionar);
 
   router.post('/community/comments', (request) => {
     const datos = cuerpo<{ authorProfileId: string; commentableRefId: string; bodyText: string; parentCommentId?: string; media?: { fileId: string }[] }>(request);

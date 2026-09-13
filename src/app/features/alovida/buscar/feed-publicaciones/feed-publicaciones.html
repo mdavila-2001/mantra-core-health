@@ -1,15 +1,24 @@
-<div class="app-page-header" app-page-header>
-  <span class="app-page-header__icono" aria-hidden="true">
-    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5h16M4 12h16M4 18.5h10"></path></svg>
-  </span>
-  <div class="app-page-header__texto">
-    <div class="app-page-header__titulo"><h1>Lo último de los profesionales</h1></div>
-    <p class="caption">
-      Divulgación escrita por los médicos de AloVida. Orienta, no diagnostica: para tu caso
-      concreto, consultá.
-    </p>
-  </div>
-</div>
+<!-- Sin encabezado de página (pedido del 13/09/2026): la red social abre
+     directo en el contenido. El nombre de la pantalla sigue en la pestaña del
+     navegador (`title` de la ruta) y el `h1` queda para lectores de pantalla,
+     que lo necesitan para saber dónde están. -->
+<h1 class="solo-lectores">Red social de AloVida</h1>
+
+<div class="red" [class.red--con-perfil]="conSesion()" data-testid="red-social">
+  <aside class="red__izquierda" aria-label="Tendencias y anuncios">
+    <app-feed-tendencias />
+    <app-feed-banner />
+  </aside>
+
+  <div class="red__centro">
+    @if (conSesion()) {
+      <app-feed-crear-publicacion
+        [perfil]="perfil()"
+        [resuelto]="perfilResuelto()"
+        [foto]="detalle()?.avatarUrl ?? null"
+        (publicado)="alPublicar()"
+      />
+    }
 
 <section class="app-view-state-host" app-view-state-host>
   @switch (estado()) {
@@ -35,6 +44,8 @@
                 [autorAvatar]="post.authorAvatarUrl"
                 [autorIniciales]="iniciales(post)"
                 [autorEnlazado]="true"
+                [conAcciones]="true"
+                [actorProfileId]="actor()"
                 (pedidoDeDenuncia)="abrirDenuncia($event)"
                 (pedidoDeOcultar)="pedirOcultar()"
                 (pedidoDeContacto)="pedirContacto($event)"
@@ -98,3 +109,11 @@
     }
   }
 </section>
+  </div>
+
+  @if (conSesion()) {
+    <aside class="red__derecha" aria-label="Tu perfil">
+      <app-feed-perfil-mini [perfil]="perfil()" [resuelto]="perfilResuelto()" [detalle]="detalle()" />
+    </aside>
+  }
+</div>
