@@ -238,8 +238,16 @@
 
            Cuando no hay paso propio que deshacer —enlace de un correo, recarga,
            primera pantalla de la sesión— `app-back-link` cae a su respaldo, y
-           el respaldo del armazón es el panel. -->
-      <app-back-link class="app-header__volver" fallback="/dashboard" label="Volver" iconOnly />
+           el respaldo del armazón es el panel.
+
+           **Menos en el panel**, donde no se dibuja. Ahí el respaldo ES la
+           pantalla en la que uno está, así que la flecha o no hace nada o, si
+           el historial todavía trae el ingreso, devuelve a él —y volver al
+           ingreso se lee como haber cerrado la sesión—. Pedido del cliente del
+           13/09/2026. -->
+      @if (!enElPanel()) {
+        <app-back-link class="app-header__volver" fallback="/dashboard" label="Volver" iconOnly />
+      }
 
       <!-- Acá había un buscador «en toda la organización» **sin un solo
            manejador**: ni `(input)`, ni `(keydown.enter)`, ni formulario. Se

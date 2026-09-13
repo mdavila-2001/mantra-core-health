@@ -618,19 +618,47 @@ app-shell-layout { display: block; }
   white-space: nowrap; overflow: hidden;
 }
 
-/* El botón de recoger. Cuadrado, del talle de un control chico, y apagado
-   hasta que se lo mira: gobierna el ancho de la barra, no navega a ningún
-   lado, así que no compite con los destinos. */
+/* El botón de recoger.
+
+   Era cuadrado del talle chico (32 px), sin borde y apagado al 60 % de blanco:
+   «apagado hasta que se lo mira» funcionaba mientras compartía fila con el
+   logotipo, pero recogida la barra es **lo único** que queda de la cabecera —un
+   trazo tenue sobre un carril de 76 px— y ahí no se encuentra. Pedido del
+   cliente del 13/09/2026: más grande y más visible, con borde.
+
+   Ahora es del talle de un control normal (40 px), con caja propia y un borde
+   que se ve antes de tocarlo.
+
+   **El borde sale de un token con gemelo oscuro.** La barra es petróleo en los
+   dos temas, así que el borde es claro en ambos; lo que cambia es cuánto. En
+   claro la página de al lado es casi blanca y el ojo llega al botón con el iris
+   cerrado: necesita más cuerpo. En oscuro todo está apagado y el mismo borde
+   gritaría más que los destinos, que son lo que de verdad hay que leer. */
+:root {
+  --nav-recoger-borde: rgba(255, 255, 255, .42);
+  --nav-recoger-fondo: rgba(255, 255, 255, .10);
+  --nav-recoger-tinta: rgba(255, 255, 255, .85);
+}
+:root[data-tema="oscuro"], :root[data-theme="dark"] {
+  --nav-recoger-borde: rgba(159, 216, 208, .48);
+  --nav-recoger-fondo: rgba(159, 216, 208, .10);
+  --nav-recoger-tinta: rgba(255, 255, 255, .78);
+}
 .app-side-nav__recoger {
   display: inline-flex; align-items: center; justify-content: center;
-  width: var(--h-ctrl-sm); height: var(--h-ctrl-sm); flex: none;
-  padding: 0; border: 0; border-radius: var(--r-ctrl);
-  background: transparent; color: rgba(255, 255, 255, .6);
+  width: var(--h-ctrl); height: var(--h-ctrl); flex: none;
+  padding: 0; border-radius: var(--r-ctrl);
+  border: 1px solid var(--nav-recoger-borde);
+  background: var(--nav-recoger-fondo); color: var(--nav-recoger-tinta);
   cursor: pointer;
-  transition: color .16s ease, background-color .16s ease;
+  transition: color .16s ease, background-color .16s ease, border-color .16s ease;
 }
-.app-side-nav__recoger svg { width: 1.05rem; height: 1.05rem; }
-.app-side-nav__recoger:hover { color: #fff; background: rgba(159, 216, 208, .16); }
+.app-side-nav__recoger svg { width: 1.35rem; height: 1.35rem; }
+.app-side-nav__recoger:hover {
+  color: #fff;
+  border-color: var(--aguamarina);
+  background: rgba(159, 216, 208, .22);
+}
 .app-side-nav__recoger:focus-visible {
   outline: 2px solid var(--aguamarina); outline-offset: 2px;
 }
@@ -2164,9 +2192,20 @@ h1, h2, h3, .titulo-h1, .app-dialog__titulo { overflow-wrap: break-word; }
   box-shadow: inset 0 -1px 0 var(--sombra-azul-suave);
 }
 .app-nav-toggle:hover { border-color: var(--petroleo); }
-/* El mismo control sirve también en escritorio: allí no abre un segundo menú,
-   sino que recoge o devuelve la barra fija para ganar ancho de trabajo. */
-html[data-js] .app-nav-toggle { display: inline-flex; }
+/* **Sólo en modo cajón.** Acá vivía `html[data-js] .app-nav-toggle {
+   display: inline-flex }`, sin ancho mínimo, y con eso el botón aparecía
+   también en escritorio. Allí no abría ningún menú: le ponía `nav-collapsed` a
+   la raíz, y eso sacaba la barra de la pantalla con un `translateX(-101%)`.
+
+   O sea que en escritorio había dos controles pegados que parecían lo mismo y
+   no lo eran: el `»` de la barra la recoge a un carril de íconos —el menú sigue
+   ahí— y éste la hacía desaparecer entera. El cliente lo pidió fuera el
+   13/09/2026, con su función: «queremos que siga estando nuestro menú».
+
+   Se retira de escritorio y se queda donde es la única puerta: por debajo de
+   900 px la barra es un cajón fuera de pantalla, con su propio `»` adentro, y
+   sin esta hamburguesa no habría forma de llegar al menú. Esa regla vive en el
+   bloque `@media (max-width: 900px)` de más abajo. */
 .app-buscar-toggle {
   display: none;
   width: var(--h-ctrl); height: var(--h-ctrl); flex: none;
@@ -2286,24 +2325,11 @@ html[data-js] .app-nav-toggle { display: inline-flex; }
   .pagina-indice { padding: var(--e8) var(--e6); }
 }
 
-/* En escritorio la barra empieza visible. Al recogerla el contenido recupera
-   su ancho; el nav queda fuera de la ventana pero no se elimina del DOM, así
-   el botón conserva su `aria-controls` y el cambio no recrea la navegación. */
-@media (min-width: 901px) {
-  html[data-js].nav-collapsed .app-shell {
-    padding-left: 0;
-    background: none;
-  }
-
-  html[data-js].nav-collapsed .app-side-nav {
-    transform: translateX(-101%);
-    transition: transform var(--mov-medio) var(--curva);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    html[data-js].nav-collapsed .app-side-nav { transition: none; }
-  }
-}
+/* Acá vivía el bloque `html[data-js].nav-collapsed` que en escritorio sacaba la
+   barra de la ventana con `translateX(-101%)`. Se va con el botón que lo
+   encendía (13/09/2026): en escritorio la barra ya no se esconde, se recoge a
+   un carril de íconos —`.app-shell.is-nav-recogido`, más arriba—, que es el
+   único estado que el cliente pidió. Nadie escribe ya `nav-collapsed`. */
 
 /* 21.4 · ≤ 640 px — la tabla pasa a tarjetas ----------------------------- *
    Una tabla de nueve columnas con scroll horizontal en un teléfono es

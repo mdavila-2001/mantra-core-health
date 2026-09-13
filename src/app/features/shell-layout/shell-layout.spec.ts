@@ -64,6 +64,8 @@ describe('ShellLayout', () => {
           { path: 'laboratory-directory', children: [] },
           { path: 'laboratory-directory/:id', children: [] },
           { path: 'clinics-directory', children: [] },
+          // El panel: es donde la flecha de volver NO se dibuja.
+          { path: 'dashboard', children: [] },
         ]),
       ],
     }).compileComponents();
@@ -676,6 +678,48 @@ describe('ShellLayout', () => {
       );
       expect(destinos).toContain('/dashboard');
       expect(destinos).toContain('/design-system');
+    });
+
+    /**
+     * La flecha de volver, y el único lugar donde no va.
+     *
+     * El panel es el principio del camino: quien entra, aterriza ahí. No hay
+     * paso propio que deshacer, así que `app-back-link` cae a su respaldo… que
+     * es el panel. Pulsarla desde el panel no hacía nada o —si el historial del
+     * navegador todavía traía el ingreso— devolvía a él, que se lee como haber
+     * cerrado la sesión. El cliente lo reportó así el 13/09/2026.
+     */
+    describe('la flecha de volver', () => {
+      async function ir(url: string) {
+        await router.navigateByUrl(url);
+        fixture.detectChanges();
+      }
+
+      function flecha(): Element | null {
+        return raiz().querySelector('app-back-link');
+      }
+
+      it('no se dibuja en el panel', async () => {
+        await ir('/dashboard');
+        expect(flecha()).toBeNull();
+      });
+
+      it('sí se dibuja en cualquier otra pantalla', async () => {
+        await ir('/my-account');
+        expect(flecha()).not.toBeNull();
+      });
+
+      /** Ir y volver: la flecha reaparece al salir del panel y se va al entrar. */
+      it('aparece y desaparece al cruzar el panel', async () => {
+        await ir('/dashboard');
+        expect(flecha()).toBeNull();
+
+        await ir('/settings');
+        expect(flecha()).not.toBeNull();
+
+        await ir('/dashboard');
+        expect(flecha()).toBeNull();
+      });
     });
 
     /**

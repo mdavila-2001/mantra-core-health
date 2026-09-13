@@ -43,6 +43,9 @@ function contiene(ruta: string, url: string): boolean {
   return url === ruta || url.startsWith(`${ruta}/`);
 }
 
+/** El panel. Constante y no literal suelto: lo miran dos cosas distintas acá. */
+const PANEL = '/dashboard';
+
 /**
  * Armazón de todas las pantallas con sesión.
  *
@@ -310,6 +313,19 @@ export class ShellLayout {
   protected alternarNav(): void {
     this.shell.toggleCollapsed();
   }
+
+  /**
+   * Si estamos parados en el panel, que es donde «volver» no tiene a dónde ir.
+   *
+   * El panel es el principio del camino: quien entra, aterriza acá. No hay paso
+   * propio que deshacer, así que `app-back-link` cae a su respaldo… que es el
+   * panel. Pulsarlo desde el panel no hace nada, o —si el historial del
+   * navegador todavía trae la pantalla de ingreso— devuelve a ella, que se lee
+   * como haber cerrado la sesión. El cliente lo reportó así el 13/09/2026.
+   *
+   * En todas las demás pantallas la flecha se queda: ahí sí deshace un paso.
+   */
+  protected readonly enElPanel = computed(() => this.urlActual() === PANEL);
 
   /**
    * Clic sobre el rótulo de un dominio.

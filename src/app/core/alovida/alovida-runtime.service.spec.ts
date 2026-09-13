@@ -348,24 +348,33 @@ describe('AlovidaRuntimeService', () => {
       expect(document.documentElement.classList.contains('nav-abierto')).toBe(false);
     });
 
-    it('en escritorio oculta y restaura la barra con el botón de navegación', () => {
+    /**
+     * Lo contrario de lo que esta prueba pedía hasta el 13/09/2026.
+     *
+     * Antes el botón, en escritorio, le ponía `nav-collapsed` a la raíz — y esa
+     * clase sacaba la barra de la ventana con un `translateX(-101%)`—. Quedaban
+     * dos controles pegados que parecían el mismo y no lo eran: el `»` de la
+     * barra la recoge a un carril de íconos, con el menú todavía ahí, y éste la
+     * hacía desaparecer entera. El cliente lo pidió fuera, con su función:
+     * «queremos que siga estando nuestro menú».
+     *
+     * En escritorio el botón ya ni se dibuja (`alovida.css`, §21.3). Se prueba
+     * igual que **no hace nada** si alguien lo alcanza —un estilo perdido, un
+     * clic por script, la vitrina— porque lo que no puede volver es el efecto.
+     */
+    it('en escritorio el botón de navegación ya no esconde la barra', () => {
       montarMarco();
       servicio.refrescar();
       const boton = document.querySelector<HTMLElement>('.app-nav-toggle') as HTMLElement;
 
       boton.click();
-
-      expect(document.documentElement.classList.contains('nav-collapsed')).toBe(true);
-      expect(document.querySelector('.app-side-nav')?.hasAttribute('inert')).toBe(true);
-      expect(boton.getAttribute('aria-expanded')).toBe('false');
-      expect(boton.getAttribute('aria-label')).toBe('Abrir el menú de navegación');
-
       boton.click();
 
       expect(document.documentElement.classList.contains('nav-collapsed')).toBe(false);
+      /* Y la barra sigue siendo navegable: `inert` la dejaba fuera del alcance
+         del teclado aunque estuviera a la vista. */
       expect(document.querySelector('.app-side-nav')?.hasAttribute('inert')).toBe(false);
       expect(boton.getAttribute('aria-expanded')).toBe('true');
-      expect(boton.getAttribute('aria-label')).toBe('Ocultar el menú de navegación');
     });
 
     it('elegir un ítem cierra el cajón: no puede quedar tapando lo que se eligió', () => {
