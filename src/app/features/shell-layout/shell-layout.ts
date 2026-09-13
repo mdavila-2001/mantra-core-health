@@ -19,6 +19,7 @@ import { NavigationService } from '../../core/navigation/navigation.service';
 import type { HeaderUser } from '../../shared/components/organisms/header/header.types';
 import type { NavSection } from '../../shared/components/organisms/side-nav/side-nav.types';
 import type { TenantOption } from '../../shared/components/organisms/tenant-switcher/tenant-switcher.types';
+import { ShellService } from '../../shared/components/organisms/shell/shell-service';
 import { TutorialOverlay } from '../../shared/components/organisms/tutorial-overlay/tutorial-overlay';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 // Carril P1: la campana. Es propiedad de P1 durante la tanda —el README lo
@@ -80,6 +81,10 @@ export class ShellLayout {
   private readonly router = inject(Router);
   private readonly breakpoints = inject(Breakpoints);
   private readonly navigation = inject(NavigationService);
+  /* El estado de la barra recogida no es de este componente: ya vivía en
+     `ShellService`, con su persistencia y su lectura diferida a después del
+     primer render. Acá se consume, no se reimplementa. */
+  private readonly shell = inject(ShellService);
   /* Inyectado, no global: bajo SSR no hay `document` y el armazón se renderiza
      igual en el servidor. */
   private readonly document = inject(DOCUMENT);
@@ -267,6 +272,62 @@ export class ShellLayout {
    */
   protected alPlegar(clave: string, abierto: boolean): void {
     this.plegadosAMano.update((estado) => ({ ...estado, [clave]: abierto }));
+  }
+
+  /* ==========================================================================
+      La barra recogida
+
+      Recogerla deja un carril de íconos: la marca sin su palabra, los destinos
+      sueltos con su ícono y el rótulo de cada dominio, también sólo su ícono.
+      Lo que se va es el texto y el cuerpo de los dominios; lo que se gana es el
+      ancho, que en una tabla de nueve columnas se nota.
+
+      **Nada se esconde del lector de pantalla.** Los rótulos no se borran: se
+      marcan `solo-lectores`, así el nombre accesible del enlace sigue siendo su
+      texto y no hace falta duplicarlo en un `aria-label` que podría separarse
+      de él. Para quien mira, el nombre vuelve como globo de ayuda.
+
+      El estado vive en `ShellService` —que ya lo persistía— y sólo manda por
+      encima de 900 px: más abajo la barra es un cajón, y recoger un cajón no
+      significa nada.
+     ========================================================================== */
+
+  /**
+   * Si la barra está recogida a su carril de íconos.
+   *
+   * Son **dos** preguntas y las dos tienen que decir que sí: que la persona la
+   * haya recogido, y que en este ancho exista un carril al que recogerla. Por
+   * debajo de 901 px la barra es un cajón sobre el contenido, y un cajón
+   * recogido son ocho íconos sin nombre — que es exactamente lo que pasaba
+   * cuando esto era sólo `shell.isCollapsed`.
+   */
+  protected readonly navRecogido = computed(
+    () => this.shell.isCollapsed() && this.breakpoints.canCollapseNav(),
+  );
+
+  protected alternarNav(): void {
+    this.shell.toggleCollapsed();
+  }
+
+  /**
+   * Clic sobre el rótulo de un dominio.
+   *
+   * Con la barra desplegada no hace nada: el `<details>` pliega solo, que es
+   * justamente por lo que es un `<details>`.
+   *
+   * Recogida, el cuerpo del dominio no se dibuja, así que abrirlo no mostraría
+   * nada. El clic entonces **despliega la barra** y deja ese dominio abierto,
+   * que es lo que la persona estaba pidiendo al tocarlo. Se corta el gesto
+   * nativo para que el `<details>` no cambie de estado por el camino y la barra
+   * no vuelva con los dominios al revés de como quedaron.
+   */
+  protected alTocarElDominio(evento: Event, grupo: string): void {
+    if (!this.navRecogido()) {
+      return;
+    }
+    evento.preventDefault();
+    this.shell.setCollapsed(false);
+    this.plegadosAMano.update((estado) => ({ ...estado, [this.clavePlegable(grupo)]: true }));
   }
 
   protected readonly user = computed<HeaderUser | null>(() => {

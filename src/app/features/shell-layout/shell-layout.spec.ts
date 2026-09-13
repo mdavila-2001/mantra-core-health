@@ -10,6 +10,7 @@ import {
   NAV_ICON_NAMES as NAV_ICON_NAMES_DEL_NAV,
   type NavSection,
 } from '../../shared/components/organisms/side-nav/side-nav.types';
+import { NAV_STORAGE_KEY } from '../../shared/components/organisms/shell/shell-service';
 import { ShellLayout } from './shell-layout';
 
 /**
@@ -529,6 +530,131 @@ describe('ShellLayout', () => {
           false,
         );
       });
+    });
+
+    /**
+     * Recoger la barra.
+     *
+     * Es un cambio de ancho, no de contenido: recogida sigue teniendo los
+     * mismos destinos, con el mismo nombre, en el mismo orden. Lo que estas
+     * pruebas cuidan es justamente eso —que al encogerse no se pierda ni un
+     * nombre accesible— más el gesto que la devuelve, que es lo único que no
+     * puede hacer la hoja de estilos sola.
+     */
+    describe('la barra recogida', () => {
+      beforeEach(() => {
+        // `ShellService` persiste la preferencia en `localStorage` y la lee
+        // tras el primer render. Sin limpiarla, el estado de una prueba se
+        // filtra a la siguiente y el orden de ejecución pasa a importar.
+        try {
+          localStorage.removeItem(NAV_STORAGE_KEY);
+        } catch {
+          // Sin storage no hay nada que limpiar, que es el mismo caso que el
+          // servicio ya tolera.
+        }
+        abrirSesion({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: [] });
+        fixture.detectChanges();
+      });
+
+      function boton(): HTMLButtonElement {
+        const control = raiz().querySelector<HTMLButtonElement>('[data-testid="nav-recoger"]');
+        expect(control, 'la barra no dibujó el botón de recoger').not.toBeNull();
+        return control as HTMLButtonElement;
+      }
+
+      function marco(): HTMLElement {
+        return raiz().querySelector('.app-shell') as HTMLElement;
+      }
+
+      it('arranca desplegada y el botón lo dice', () => {
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-expanded')).toBe('true');
+        // Apunta a la barra que encoge, y ese id existe en el marcado: no lo
+        // inventa nadie al hidratar.
+        expect(boton().getAttribute('aria-controls')).toBe('app-side-nav');
+        expect(raiz().querySelector('#app-side-nav')?.classList.contains('app-side-nav')).toBe(
+          true,
+        );
+      });
+
+      it('un clic la recoge y otro la devuelve', () => {
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(true);
+        expect(boton().getAttribute('aria-expanded')).toBe('false');
+        expect(boton().getAttribute('aria-label')).toBe('Desplegar el menú');
+
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-label')).toBe('Recoger el menú');
+      });
+
+      it('recogida no pierde ni un destino, ni el nombre de ninguno', () => {
+        const antes = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+
+        boton().click();
+        fixture.detectChanges();
+
+        const despues = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')];
+        expect(despues.map((a) => a.getAttribute('data-route'))).toEqual(antes);
+
+        // El rótulo no se borra: se esconde de la vista. Un ícono sin nombre es
+        // un destino mudo para quien usa lector de pantalla, y `display: none`
+        // lo saca del árbol de accesibilidad además de la pantalla.
+        for (const enlace of despues) {
+          const rotulo = enlace.querySelector('.side-nav__label');
+          expect(rotulo?.textContent?.trim(), enlace.getAttribute('data-route') ?? '').toBeTruthy();
+          expect(rotulo?.classList.contains('solo-lectores')).toBe(true);
+        }
+      });
+
+      it('recogida, el rótulo de un dominio la despliega y deja ese dominio abierto', () => {
+        // Recogida, el cuerpo del dominio no se dibuja: abrir el `<details>`
+        // ahí no mostraría nada. El gesto que sí sirve es desplegar la barra
+        // con ese dominio abierto, y es el que el rótulo tiene que hacer.
+        const { grupo } = primerGrupoDibujado();
+        interno<(clave: string, abierto: boolean) => void>('alPlegar')(grupo, false);
+        boton().click();
+        fixture.detectChanges();
+
+        const summary = raiz().querySelector<HTMLElement>(`[data-grupo="${grupo}"] > summary`);
+        summary?.click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(true);
+      });
+
+      it('desplegada, el rótulo sigue plegando y nada más', () => {
+        const { grupo } = primerGrupoDibujado();
+        const antes = raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open;
+
+        interno<(evento: Event, grupo: string) => void>('alTocarElDominio')(
+          new Event('click', { cancelable: true }),
+          grupo,
+        );
+        fixture.detectChanges();
+
+        // No tocó el ancho ni forzó el estado del dominio: con la barra
+        // desplegada el `<details>` se gobierna solo, que es por lo que es un
+        // `<details>`.
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(
+          antes,
+        );
+      });
+
+      /** El mismo ayudante de `los desplegables`, que este bloque también usa. */
+      function primerGrupoDibujado(): { grupo: string } {
+        const grupo = raiz().querySelector('[data-testid="nav-grupo"]');
+        expect(grupo, 'la sesión de prueba no dibujó ningún dominio plegable').not.toBeNull();
+        return { grupo: grupo?.getAttribute('data-grupo') ?? '' };
+      }
     });
 
     it('el nav pinta un grupo por sección del registro, con sus destinos', () => {

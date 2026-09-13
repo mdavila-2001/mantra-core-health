@@ -18,8 +18,18 @@
      hace esta región. `<output>` ya es una región viva por sí misma. -->
 <output class="solo-lectores" aria-live="polite">{{ anuncio() }}</output>
 
-<div class="app-shell" app-shell>
-  <nav class="app-side-nav" aria-label="Navegación principal" appTutorialTarget="shell-nav">
+<div class="app-shell" app-shell [class.is-nav-recogido]="navRecogido()">
+  <!-- El `id` se declara acá y no lo inventa nadie en caliente: es el destino
+       del `aria-controls` del botón que la recoge, y también el que busca el
+       cajón de ancho chico (`AlovidaRuntimeService`, que sólo lo pone si falta).
+       Un `aria-controls` que apunta a un id inventado después de hidratar no
+       existe durante el render del servidor. -->
+  <nav
+    class="app-side-nav"
+    id="app-side-nav"
+    aria-label="Navegación principal"
+    appTutorialTarget="shell-nav"
+  >
     <div class="app-side-nav__fondo" aria-hidden="true">
       <svg class="app-side-nav__textura" viewBox="0 0 264 1024" preserveAspectRatio="xMidYMid slice" fill="none">
         <defs>
@@ -49,10 +59,37 @@
          el único camino de vuelta al inicio sería el rastro de migas de la
          pantalla en la que uno esté. Un logotipo que lleva al inicio es además
          lo que cualquiera prueba primero. -->
-    <a class="app-side-nav__marca" routerLink="/dashboard" aria-label="AloVida — ir al panel">
-      <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
-      <span>AloVida</span>
-    </a>
+    <div class="app-side-nav__cabecera">
+      <a class="app-side-nav__marca" routerLink="/dashboard" aria-label="AloVida — ir al panel">
+        <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="34" height="25" />
+        <span class="app-side-nav__palabra">AloVida</span>
+      </a>
+
+      <!-- Recoger la barra.
+
+           Vive dentro de la barra y no en el encabezado por dos razones: es lo
+           que gobierna, y recogida sigue estando donde estaba —si viviera en el
+           encabezado, el gesto de volver a desplegarla habría que buscarlo en
+           otra parte de la pantalla.
+
+           Es un botón y no un `<details>` más: no revela contenido oculto,
+           cambia el ancho de una columna que sigue entera. `aria-expanded` dice
+           en cuál de los dos estados está, y apunta con `aria-controls` a la
+           barra que encoge. -->
+      <button
+        class="app-side-nav__recoger"
+        type="button"
+        data-testid="nav-recoger"
+        aria-controls="app-side-nav"
+        [attr.aria-expanded]="!navRecogido()"
+        [attr.aria-label]="navRecogido() ? 'Desplegar el menú' : 'Recoger el menú'"
+        [appTooltip]="navRecogido() ? 'Desplegar el menú' : 'Recoger el menú'"
+        appTooltipPosition="right"
+        (click)="alternarNav()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6"></path><path d="M20 6l-6 6 6 6"></path></svg>
+      </button>
+    </div>
 
     <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
          que cambia es cómo se pintan, no de dónde vienen.
@@ -116,9 +153,18 @@
           [open]="abierto(claveGrupo, grupo.items)"
           (toggle)="alPlegar(claveGrupo, $any($event.target).open)"
         >
-          <summary class="app-side-nav__group-summary" [class.tiene-la-pantalla]="contieneLaPantalla(grupo.items)">
+          <summary
+            class="app-side-nav__group-summary"
+            [class.tiene-la-pantalla]="contieneLaPantalla(grupo.items)"
+            [appTooltip]="navRecogido() ? grupo.label : ''"
+            appTooltipPosition="right"
+            (click)="alTocarElDominio($event, grupo.label)"
+          >
             <app-nav-icon [name]="grupo.icon ?? 'directory'" />
-            <span class="app-side-nav__eyebrow">{{ grupo.label }}</span>
+            <!-- Recogida la barra el rótulo no se borra, se esconde de la vista:
+                 así el nombre accesible del desplegable sigue siendo su texto y
+                 no hay un `aria-label` paralelo que pueda quedar desfasado. -->
+            <span class="app-side-nav__eyebrow" [class.solo-lectores]="navRecogido()">{{ grupo.label }}</span>
             <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
           </summary>
 
@@ -142,9 +188,14 @@
   <ng-template #destino let-item>
     @if (item.disabled) {
       <!-- Deshabilitado: ni ancla ni foco. Sigue anunciándose como tal. -->
-      <span class="app-side-nav__item is-disabled" aria-disabled="true">
+      <span
+        class="app-side-nav__item is-disabled"
+        aria-disabled="true"
+        [appTooltip]="navRecogido() ? item.label : ''"
+        appTooltipPosition="right"
+      >
         <app-nav-icon [name]="item.icon ?? 'directory'" />
-        <span class="side-nav__label">{{ item.label }}</span>
+        <span class="side-nav__label" [class.solo-lectores]="navRecogido()">{{ item.label }}</span>
       </span>
     } @else {
       <!-- Cada entrada del menú es un objetivo posible: los tutoriales que
@@ -159,9 +210,11 @@
         [routerLink]="item.route"
         [class.is-activo]="rutaActiva() === item.route"
         [attr.aria-current]="rutaActiva() === item.route ? 'page' : null"
+        [appTooltip]="navRecogido() ? item.label : ''"
+        appTooltipPosition="right"
       >
         <app-nav-icon [name]="item.icon ?? 'directory'" />
-        <span class="side-nav__label">{{ item.label }}</span>
+        <span class="side-nav__label" [class.solo-lectores]="navRecogido()">{{ item.label }}</span>
         @if (item.badge) {
           <span class="app-badge" data-tono="info">{{ item.badge }}</span>
         }
