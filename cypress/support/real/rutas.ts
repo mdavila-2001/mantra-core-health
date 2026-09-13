@@ -26,6 +26,8 @@ export const RUTAS = {
   registroPaciente: '/auth/register/patient',
   /** El destino del login. */
   panel: '/dashboard',
+  /** La ficha propia, incluido el perfil profesional. */
+  miCuenta: '/my-account',
   /** El portal de turnos del paciente: los suyos y los horarios pedibles. */
   misTurnos: '/my-account/appointments',
   /** Donde el titular sube su evidencia de identidad. */
