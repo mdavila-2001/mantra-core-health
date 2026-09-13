@@ -724,6 +724,9 @@ export class Agenda {
     return vista === 'agenda' && this.esQuienAtiende() ? 1 : 0;
   });
 
+  /** Si la solapa abierta es «Mi agenda», que no usa los filtros de las listas. */
+  protected readonly enMiAgenda = computed(() => this.esQuienAtiende() && this.pestana() === 1);
+
   protected readonly incluirCanceladas = computed(() => this.params()?.get('canceladas') === 'si');
 
   /* -- Derivados ----------------------------------------------------------- */

@@ -62,20 +62,10 @@
   color: var(--st-primary-fg);
 }
 
-.mi-agenda__franjas {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 .mi-agenda__vigencia,
 .mi-agenda__cupos {
   margin: 0;
   color: var(--text-secondary);
-}
-
-.mi-agenda__cupos {
-  margin-top: var(--sp-4);
 }
 
 /* ---- las solapas ------------------------------------------------------------ */
@@ -128,10 +118,17 @@
 .mi-agenda__estados {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   gap: var(--sp-2);
-  margin: 0 0 var(--sp-3);
+  margin: 0;
+}
+
+/* El aviso de agotamiento, arriba de la tarjeta y separado de ella. */
+.mi-agenda__agotan {
+  display: block;
+  margin-block-end: var(--sp-4);
+  text-align: start;
 }
 
 .mi-agenda__acciones {

@@ -89,13 +89,21 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
   }
 
-  /** Responde los cupos con su último inicio. */
+  /** Responde los cupos con su último inicio, y los bloqueos de la semana. */
   function conCuposHasta(fecha: Date | null): void {
     const req = http.expectOne((r) => r.url === '/scheduling/slots');
     req.flush({
       items: fecha === null ? [] : [{ id: 's', startAt: fecha.toISOString() }],
       count: 1,
     });
+    conBloqueosDeLaSemana();
+  }
+
+  /** Responde la lectura de bloqueos de la semana que la grilla pinta en rojo. */
+  function conBloqueosDeLaSemana(items: unknown[] = []): void {
+    for (const req of http.match((r) => r.url === '/scheduling/resources/res-1/exceptions')) {
+      req.flush({ items, count: items.length });
+    }
     fixture.detectChanges();
   }
 
@@ -305,10 +313,14 @@ describe('MyAgenda', () => {
       fixture.detectChanges();
       conCuposHasta(new Date('2030-01-01'));
 
-      const texto: string = fixture.nativeElement.textContent;
-      // El lunes es de la vigente; el miércoles, de la retirada.
-      expect(texto).toContain('unes');
-      expect(texto).not.toContain('iércoles');
+      // El lunes es de la vigente; el miércoles, de la retirada. Se mira en las
+      // franjas de la grilla: el renglón en palabras ya no existe.
+      const franjas = Array.from(
+        fixture.nativeElement.querySelectorAll(
+          '.mi-agenda__tarjeta [data-testid="horario-bloque"]',
+        ) as NodeListOf<HTMLElement>,
+      ).map((b) => b.getAttribute('aria-label') ?? '');
+      expect(franjas).toEqual(['lunes de 09:00 a 13:00: atendés']);
     });
 
     it('los horarios retirados se listan aparte, como historia', () => {
@@ -398,13 +410,14 @@ describe('MyAgenda', () => {
     conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Martes de 09:00 a 13:00');
+    expect(texto).toContain('09:00 – 13:00');
     expect(texto).toContain('consultas de 30 min');
     expect(texto).not.toContain('dayOfWeek');
     expect(texto).not.toContain('tpl-1');
   });
 
-  it('agrupa las franjas idénticas en un solo renglón', () => {
+  it('no repite en un renglón lo que la grilla ya dibuja', () => {
+    // Pedido del cliente: «Lunes, Martes… de 08:00 a 12:00» era redundante.
     crear();
     conRecurso();
     conPlantilla([
@@ -413,21 +426,97 @@ describe('MyAgenda', () => {
     ]);
     conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
 
-    expect(fixture.nativeElement.textContent).toContain('Lunes y Jueves de 09:00 a 13:00');
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('Lunes y Jueves de 09:00 a 13:00');
+    expect(fixture.nativeElement.querySelector('.mi-agenda__franjas')).toBeNull();
   });
 
-  it('separa las franjas que no son iguales', () => {
+  it('una plantilla sin tamaño de turno se dice «tamaño libre»', () => {
     crear();
     conRecurso();
-    conPlantilla([
-      { dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00', slotMinutes: 30 },
-      { dayOfWeek: 4, startTime: '14:00:00', endTime: '18:00:00', slotMinutes: 30 },
-    ]);
+    conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
     conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
 
-    const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Lunes de 09:00 a 13:00');
-    expect(texto).toContain('Jueves de 14:00 a 18:00');
+    expect(fixture.nativeElement.textContent).toContain('tamaño libre');
+  });
+
+  it('el tamaño de la plantilla vale para las franjas que no traen el suyo', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }], {
+      slotMinutes: 20,
+    });
+    conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
+
+    expect(fixture.nativeElement.textContent).toContain('consultas de 20 min');
+  });
+
+  it('los estados y todas las acciones van juntos, arriba de la tarjeta, como íconos', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+    conCuposHasta(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
+
+    const tarjeta: HTMLElement = fixture.nativeElement.querySelector('.mi-agenda__tarjeta');
+    const barra = tarjeta.querySelector('[data-testid="horario-barra"]');
+    expect(tarjeta.firstElementChild).toBe(barra);
+    expect(barra?.textContent).toContain('Vigente');
+    for (const [testId, nombre] of [
+      ['horario-editar', 'Cambiar mi horario'],
+      ['horario-retirar', 'Retirar horario'],
+      ['ver-bloqueos', 'Ver mis bloqueos'],
+      ['agendar-cita', 'Agendar una cita'],
+    ]) {
+      const icono = barra?.querySelector(`[data-testid="${testId}"]`);
+      expect(icono, testId).not.toBeNull();
+      expect(icono?.getAttribute('aria-label')).toBe(nombre);
+      expect(icono?.hasAttribute('appTooltip'), `${testId} sin tooltip`).toBe(true);
+      expect(icono?.querySelector('svg'), `${testId} no es ícono`).not.toBeNull();
+    }
+  });
+
+  it('pide los bloqueos de esta semana y los pinta en rojo en la grilla', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+    http
+      .expectOne((r) => r.url === '/scheduling/slots')
+      .flush({ items: [{ id: 's', startAt: '2030-01-01T00:00:00Z' }], count: 1 });
+
+    const req = http.expectOne((r) => r.url === '/scheduling/resources/res-1/exceptions');
+    const desde = new Date(req.request.params.get('from') as string);
+    const hasta = new Date(req.request.params.get('to') as string);
+    expect(desde.getDay(), 'la ventana arranca un lunes').toBe(1);
+    expect(Math.round((hasta.getTime() - desde.getTime()) / 86_400_000)).toBe(7);
+
+    const inicio = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate(), 10);
+    const fin = new Date(desde.getFullYear(), desde.getMonth(), desde.getDate(), 11);
+    req.flush({
+      items: [
+        { id: 'ex-1', startAt: inicio.toISOString(), endAt: fin.toISOString(), reason: 'Congreso' },
+        // Las que abren disponibilidad no son bloqueos.
+        { id: 'ex-2', startAt: inicio.toISOString(), endAt: fin.toISOString(), isAvailable: true },
+      ],
+      count: 2,
+    });
+    fixture.detectChanges();
+
+    const bloqueos = fixture.nativeElement.querySelectorAll('[data-testid="horario-bloqueo"]');
+    expect(bloqueos).toHaveLength(1);
+    expect(bloqueos[0].textContent).toContain('10:00 – 11:00');
+    expect(bloqueos[0].textContent).toContain('Congreso');
+  });
+
+  it('el aviso de agotamiento va arriba de la tarjeta, no debajo de los históricos', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 2, startTime: '09:00:00', endTime: '13:00:00' }]);
+    conCuposHasta(new Date(Date.now() + 10 * 24 * 60 * 60 * 1000));
+
+    const aviso: HTMLElement | null = fixture.nativeElement.querySelector('.mi-agenda__agotan');
+    const tarjeta: HTMLElement | null = fixture.nativeElement.querySelector('.mi-agenda__tarjeta');
+    expect(aviso).not.toBeNull();
+    expect(aviso!.compareDocumentPosition(tarjeta!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('la semanita marca los días que atiende y los que no, con palabras', () => {
@@ -493,6 +582,7 @@ describe('MyAgenda', () => {
     expect(dias).toBeLessThanOrEqual(92);
 
     req.flush({ items: [], count: 0 });
+    conBloqueosDeLaSemana();
   });
 
   it('avisa cuando los turnos publicados se están por agotar', () => {
@@ -525,9 +615,9 @@ describe('MyAgenda', () => {
     http
       .expectOne((r) => r.url === '/scheduling/slots')
       .flush({ message: 'x' }, { status: 500, statusText: 'Server Error' });
-    fixture.detectChanges();
+    conBloqueosDeLaSemana();
 
-    expect(fixture.nativeElement.textContent).toContain('Martes de 09:00 a 13:00');
+    expect(fixture.nativeElement.textContent).toContain('09:00 – 13:00');
   });
 
   /**

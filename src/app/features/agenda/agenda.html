@@ -144,7 +144,11 @@
       </section>
     }
 
-    <!-- ─── Filtros ─────────────────────────────────────────────────────── -->
+    <!-- ─── Filtros ───────────────────────────────────────────────────────
+         La ventana, su navegación, las canceladas y la sede son de las listas
+         de consultas y cupos. «Mi agenda» es el horario publicado: no se filtra
+         por ventana, y mostrarlos ahí sugería que la cambiaban. -->
+    @if (!enMiAgenda()) {
     <form class="agenda__filtros" (submit)="$event.preventDefault()">
       <!-- Ya no se elige el recurso acá. El lugar donde se publica la agenda
            se elige en el conmutador de organización de la barra superior, así
@@ -234,6 +238,7 @@
           para este recurso. Se carga desde la asignación del profesional a una sede.
         }
       </p>
+    }
     }
 
     <app-tabs

@@ -158,39 +158,36 @@
         }
       }
     } @else {
-      <section class="mi-agenda__tarjeta">
-        <h2 class="mi-agenda__titulo">Atendés estos días</h2>
-
-        <!-- La grilla por horas, que es lo que el pedido original pide en su
-             punto 1: «una vista de los días de la semana por horas, resaltado
-             con otro color los que corresponden atención». La semanita de
-             abajo se queda: reconoce de inmediato el formulario con el que se
-             publicó, y la grilla responde otra pregunta —cuándo, no qué días—. -->
-        <app-schedule-grid
-          [reglas]="reglasVigentes()"
-          [nombre]="nombreDelHorario()"
-          [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambies.'"
-        />
-
-        <ul class="mi-agenda__semana" aria-label="Días que atendés">
-          @for (dia of p.semana; track dia.numero) {
-            <li
-              class="mi-agenda__dia"
-              [class.mi-agenda__dia--activo]="dia.activo"
-              [attr.aria-label]="dia.activo ? dia.largo + ': atendés' : dia.largo + ': no atendés'"
+      <!-- El parche manual del horizonte rodante: nadie regenera cupos todavía,
+         así que una agenda se vacía en silencio si no se avisa. Va ARRIBA de la
+         tarjeta: es lo único de la pantalla que pide hacer algo, y debajo de la
+         tabla de históricos quedaba pegado a una sección que es historia. -->
+      @if (seAgotan()) {
+        <app-alert
+          class="mi-agenda__agotan"
+          tone="warning"
+          title="Tus turnos publicados se están por agotar"
+        >
+          Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
+          >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga publicado.
+          <div alert-actions>
+            <button
+              app-button
+              size="sm"
+              [isLoading]="generando()"
+              (clicked)="generarSiguientePeriodo()"
             >
-              <span aria-hidden="true">{{ dia.corto }}</span>
-            </li>
-          }
-        </ul>
+              Abrir tres meses más
+            </button>
+          </div>
+        </app-alert>
+      }
 
-        <ul class="mi-agenda__franjas">
-          @for (franja of p.franjas; track franja.texto) {
-            <li>{{ franja.texto }}</li>
-          }
-        </ul>
-
-        <p class="mi-agenda__estados">
+      <section class="mi-agenda__tarjeta">
+        <!-- Arriba a la izquierda de la tarjeta, los estados y todas las
+             acciones del horario: se leen antes que la grilla y no compiten
+             con ella. Todas son íconos con nombre accesible y tooltip. -->
+        <div class="mi-agenda__estados" data-testid="horario-barra">
           <app-badge variant="success">Vigente</app-badge>
           @if (p.permanente) {
             <!-- Las palabras y las mayúsculas son del propietario (punto 5). -->
@@ -249,10 +246,18 @@
             app-button
             variant="ghost"
             size="sm"
+            [iconOnly]="true"
             data-testid="ver-bloqueos"
             [routerLink]="rutaBloqueos"
+            aria-label="Ver mis bloqueos"
+            appTooltip="Ver mis bloqueos de agenda"
           >
-            Ver mis bloqueos
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="17" rx="2" />
+              <path d="M3 9h18M8 2v4M16 2v4" />
+              <path d="m9.5 12.5 5 5M14.5 12.5l-5 5" />
+            </svg>
           </a>
           <!-- Agendar una cita sin ir a buscar el día: es lo que uno quiere
                hacer justo después de acordarla en el consultorio. -->
@@ -260,17 +265,58 @@
             app-button
             variant="secondary"
             size="sm"
+            [iconOnly]="true"
             data-testid="agendar-cita"
             [routerLink]="rutaAgendarCita"
+            aria-label="Agendar una cita"
+            appTooltip="Agendar una cita a un paciente"
           >
-            Agendar una cita
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="17" rx="2" />
+              <path d="M3 9h18M8 2v4M16 2v4" />
+              <path d="M12 12v6M9 15h6" />
+            </svg>
           </a>
-        </p>
+        </div>
+
+        <h2 class="mi-agenda__titulo">Atendés estos días</h2>
+
+        <!-- La grilla por horas, que es lo que el pedido original pide en su
+             punto 1. Las 24 horas, el tamaño de turno en cada franja y los
+             bloqueos de esta semana en rojo. La semanita de abajo se queda; el
+             renglón «Lunes, Martes… de 08:00 a 12:00» se fue: repetía en
+             palabras lo que la grilla ya dibuja. -->
+        <app-schedule-grid
+          [reglas]="reglasVigentes()"
+          [slotMinutes]="slotDelHorario()"
+          [bloqueos]="bloqueosDeLaSemana()"
+          [nombre]="nombreDelHorario()"
+          [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambies.'"
+        />
+
+        <ul class="mi-agenda__semana" aria-label="Días que atendés">
+          @for (dia of p.semana; track dia.numero) {
+            <li
+              class="mi-agenda__dia"
+              [class.mi-agenda__dia--activo]="dia.activo"
+              [attr.aria-label]="dia.activo ? dia.largo + ': atendés' : dia.largo + ': no atendés'"
+            >
+              <span aria-hidden="true">{{ dia.corto }}</span>
+            </li>
+          }
+        </ul>
 
         @if (p.vigencia) {
           <p class="mi-agenda__vigencia">{{ p.vigencia }}</p>
         } @else {
           <p class="mi-agenda__vigencia">Sin fecha de fin: rige hasta que lo cambies.</p>
+        }
+        @if (!seAgotan() && cuposHastaTexto()) {
+          <p class="mi-agenda__cupos" role="status">
+            Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
+            >.
+          </p>
         }
 
         <!-- El punto 8, textual del propietario. Es una regla, no una nota al
@@ -371,6 +417,7 @@
                ninguna, así que la cabecera lleva sólo los nombres de los días. -->
           <app-schedule-grid
             [reglas]="viejo.rules"
+            [slotMinutes]="viejo.slotMinutes ?? null"
             [conFechas]="false"
             [nombre]="viejo.name"
             [vigencia]="vigenciaDe(viejo)"
@@ -385,28 +432,6 @@
             {{ vigenciaDe(viejo) }}
           </p>
         </app-content-dialog>
-      }
-
-      <!-- El parche manual del horizonte rodante: nadie regenera cupos todavía,
-         así que una agenda se vacía en silencio si no se avisa. -->
-      @if (seAgotan()) {
-        <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
-          Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
-          >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga publicado.
-          <button
-            app-button
-            size="sm"
-            [isLoading]="generando()"
-            (clicked)="generarSiguientePeriodo()"
-          >
-            Abrir tres meses más
-          </button>
-        </app-alert>
-      } @else if (cuposHastaTexto()) {
-        <p class="mi-agenda__cupos" role="status">
-          Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
-          >.
-        </p>
       }
     }
   }

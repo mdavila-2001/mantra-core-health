@@ -104,15 +104,9 @@ interface DiaDelPatron {
   readonly activo: boolean;
 }
 
-/** Una franja dicha en palabras. */
-interface FranjaVisible {
-  readonly texto: string;
-}
-
 /** Lo que la tarjeta necesita saber del horario publicado. */
 interface Patron {
   readonly semana: readonly DiaDelPatron[];
-  readonly franjas: readonly FranjaVisible[];
   readonly vigencia: string | null;
   /**
    * Si el horario no tiene fecha de fin.
@@ -269,6 +263,9 @@ export class MyAgenda {
   protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
   protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);
 
+  /** Los bloqueos de la semana en curso, para la grilla del horario. */
+  protected readonly bloqueosDeLaSemana = signal<readonly BloqueoDelMes[]>([]);
+
   /**
    * Las tipologías de actividad, para pintar el día.
    *
@@ -352,28 +349,11 @@ export class MyAgenda {
       activo: activos.has(numero),
     }));
 
-    // Se agrupan las franjas idénticas: «lunes y jueves de 9:00 a 13:00» en vez
-    // de dos renglones que dicen lo mismo.
-    const porHorario = new Map<string, number[]>();
-    for (const regla of plantilla.rules) {
-      const clave = `${regla.startTime}|${regla.endTime}|${regla.slotMinutes ?? plantilla.slotMinutes ?? ''}`;
-      porHorario.set(clave, [...(porHorario.get(clave) ?? []), regla.dayOfWeek]);
-    }
-
-    const franjas = [...porHorario.entries()].map(([clave, dias]) => {
-      const [desde, hasta, minutos] = clave.split('|');
-      const nombres = ORDEN_VISUAL.filter((n) => dias.includes(n)).map((n) => NOMBRE_DEL_DIA[n]);
-      const cuando =
-        nombres.length === 1
-          ? nombres[0]
-          : `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`;
-      const duracion = minutos === '' ? '' : ` · consultas de ${minutos} min`;
-      return { texto: `${cuando} de ${sinSegundos(desde)} a ${sinSegundos(hasta)}${duracion}` };
-    });
-
+    // Las franjas ya no se dicen en palabras («Lunes, Martes… de 08:00 a
+    // 12:00»): el cliente lo pidió fuera por redundante con la grilla, que las
+    // dibuja con sus horas y su tamaño de turno.
     return {
       semana,
-      franjas,
       vigencia:
         plantilla.validTo === undefined
           ? null
@@ -468,8 +448,35 @@ export class MyAgenda {
         // Los cupos se leen sólo si hay horario: sin plantilla no puede haber
         // ninguno, y preguntarlo sería un viaje para confirmar un cero.
         this.leerHastaCuandoHayCupos(resourceId);
+        this.leerBloqueosDeLaSemana(resourceId);
       },
       error: (error: unknown) => this.estado.set(errorToViewState<PublishedTemplate>(error)),
+    });
+  }
+
+  /**
+   * Los bloqueos de la semana en curso, para pintarlos en rojo en la grilla.
+   *
+   * Lectura aparte de la del mes: la solapa del horario abre primero y no
+   * carga el mes. Si falla, la grilla se ve sin bloqueos — el horario sigue
+   * sirviendo.
+   */
+  private leerBloqueosDeLaSemana(resourceId: string): void {
+    const lunes = lunesDe(new Date());
+    const siguiente = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + 7);
+    this.scheduling.listExceptions(resourceId, { from: lunes, to: siguiente }).subscribe({
+      next: (pagina) =>
+        this.bloqueosDeLaSemana.set(
+          pagina.items
+            .filter((e) => e.isAvailable !== true)
+            .map((e) => ({
+              id: e.id,
+              desde: new Date(e.startAt),
+              hasta: new Date(e.endAt),
+              motivo: e.reason ?? null,
+            })),
+        ),
+      error: () => this.bloqueosDeLaSemana.set([]),
     });
   }
 
@@ -651,6 +658,12 @@ export class MyAgenda {
     this.solapa.set(cual);
     if (cual === 'mes' && this.cuposDelMes().length === 0) {
       this.cargarMes();
+    }
+    // Volver al horario relee los bloqueos: si se acaba de bloquear algo en el
+    // mes, la grilla no puede seguir mostrando la semana sin el rojo.
+    const recurso = this.recurso();
+    if (cual === 'patron' && recurso !== null) {
+      this.leerBloqueosDeLaSemana(recurso.id);
     }
   }
 
@@ -964,6 +977,12 @@ export class MyAgenda {
   protected readonly nombreDelHorario = computed(() => {
     const e = this.estado();
     return e.status === 'ready' || e.status === 'stale' ? (e.data?.name ?? null) : null;
+  });
+
+  /** El tamaño de turno de la plantilla, para las franjas que no declaran el suyo. */
+  protected readonly slotDelHorario = computed(() => {
+    const e = this.estado();
+    return e.status === 'ready' || e.status === 'stale' ? (e.data?.slotMinutes ?? null) : null;
   });
 
   protected readonly rutaEditarHorario = '/schedule/edit';
@@ -1373,9 +1392,4 @@ function siguienteDia(fecha: Date): Date {
 
 function dosDigitos(valor: number): string {
   return String(valor).padStart(2, '0');
-}
-
-/** `09:00:00` → `09:00`: los segundos de una regla nunca son distintos de cero. */
-function sinSegundos(hora: string): string {
-  return hora.slice(0, 5);
 }
