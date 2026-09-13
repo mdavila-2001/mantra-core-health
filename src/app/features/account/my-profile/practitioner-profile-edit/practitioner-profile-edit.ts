@@ -517,7 +517,7 @@ export class PractitionerProfileEdit {
     opcionesAutoridadReguladora(this.titulo()),
   );
   protected readonly nuevaFechaInscripcion = signal<Date | null>(null);
-  /** Respaldo visual de la matrícula; no se publica en la rama mockup. */
+  /** El carnet del colegio. Viaja como `fileId`, igual que el diploma. */
   protected readonly archivoDeMatricula = signal<readonly File[]>([]);
   protected readonly guardandoMatricula = signal(false);
 
@@ -963,6 +963,20 @@ export class PractitionerProfileEdit {
     });
   }
 
+  /**
+   * Agrega una matrícula, con su respaldo si lo hay.
+   *
+   * **Dos pasos, no uno**, igual que el título: el archivo se sube primero con
+   * `FilesClient.upload` y su identificador viaja como `fileId`. Hasta el
+   * 13/09/2026 el contrato no tenía ese campo —`NewJurisdictionAuthorization`
+   * no lo declaraba— así que este formulario aceptaba el PDF, lo mostraba con
+   * su nombre y su peso, y lo **tiraba en silencio** al guardar: el defecto que
+   * el bloqueo de `docs/progress/BLOCKERS.md` describía. Ya no.
+   *
+   * Si la subida falla **no se crea la matrícula**: una matrícula sin el carnet
+   * que la persona creyó haber adjuntado es peor que un error, porque nadie se
+   * entera hasta que se la rechazan.
+   */
   protected agregarMatricula(): void {
     const profileId = this.profileId();
     const numero = this.nuevoNumeroDeMatricula().trim();
@@ -971,12 +985,35 @@ export class PractitionerProfileEdit {
     }
 
     this.guardandoMatricula.set(true);
+    const archivo = this.archivoDeMatricula()[0];
+    if (archivo === undefined) {
+      this.crearMatricula(profileId, numero, undefined);
+      return;
+    }
+
+    // `DOCUMENT`/`PHI`: es documentación de una persona identificable, el mismo
+    // par con el que sube su diploma el título de acá abajo.
+    this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
+      next: ({ id }) => this.crearMatricula(profileId, numero, id),
+      error: () => {
+        this.guardandoMatricula.set(false);
+        this.toasts.error(
+          'No pudimos subir el respaldo, así que no se agregó la matrícula. Probá de nuevo.',
+          'Matrículas',
+        );
+      },
+    });
+  }
+
+  /** El alta de la matrícula en sí, con el respaldo ya subido si lo había. */
+  private crearMatricula(profileId: string, numero: string, fileId: string | undefined): void {
     const fechaInscripcion = this.nuevaFechaInscripcion();
     this.profiles
       .addJurisdictionAuthorization(profileId, {
         licenseNumber: numero,
         regulatoryAuthority: this.nuevaAutoridad().trim() || undefined,
         validFrom: fechaInscripcion === null ? undefined : fechaIso(fechaInscripcion),
+        ...(fileId === undefined ? {} : { fileId }),
       })
       .subscribe({
         next: () => {

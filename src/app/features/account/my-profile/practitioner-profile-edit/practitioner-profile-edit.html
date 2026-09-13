@@ -321,10 +321,10 @@
                 </app-form-field>
 
                 <!-- El diploma. Mismo criterio que el alta de médico: opcional, PDF o
-                     foto, hasta 5 MB. Acá **sí llega al servidor** —el contrato del
-                     título declara `fileId`— y es lo que después mira quien verifica.
-                     La matrícula no tiene un campo equivalente en su contrato; ver
-                     `docs/progress/BLOCKERS.md`. -->
+                     foto, hasta 5 MB. Llega al servidor —el contrato del título
+                     declara `fileId`— y es lo que después mira quien verifica.
+                     Desde el 13/09/2026 la matrícula tiene el mismo campo y el
+                     mismo camino. -->
                 <app-form-field
                   class="edicion__campo-ancho"
                   label="Diploma o certificado (opcional)"
@@ -547,10 +547,14 @@
                   <app-date-picker [(value)]="nuevaFechaInscripcion" placeholder="Seleccionar fecha" />
                 </app-form-field>
 
+                <!-- El carnet del colegio. Desde el 13/09/2026 viaja como `fileId`,
+                     igual que el diploma: antes el selector estaba pero el contrato
+                     no tenía dónde llevar el archivo, así que se tiraba en silencio.
+                     El texto dice a dónde va, como el del diploma. -->
                 <app-form-field
                   class="edicion__campo-ancho"
                   label="Respaldo de matrícula (opcional)"
-                  hint="PDF, JPG o PNG. Hasta 5 MB. Podés arrastrarlo o elegirlo desde tu dispositivo."
+                  hint="PDF, JPG o PNG. Hasta 5 MB. Lo mira el equipo que verifica; no se publica."
                 >
                   <app-file-input
                     testId="matricula-archivo"

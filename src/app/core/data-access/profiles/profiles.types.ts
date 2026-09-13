@@ -110,6 +110,15 @@ export interface NewJurisdictionAuthorization {
   /** ISO `YYYY-MM-DD`. */
   readonly validFrom?: string;
   readonly validTo?: string;
+  /**
+   * El respaldo de la matrícula —el carnet del colegio—, ya subido con
+   * `FilesClient.upload`.
+   *
+   * Existe desde el 13/09/2026 (modelo v4.2.11 + API). Hasta entonces el
+   * contrato no tenía dónde llevarlo y el selector del formulario tiraba el
+   * archivo en silencio; ver `docs/progress/BLOCKERS.md`.
+   */
+  readonly fileId?: string;
 }
 
 export interface PractitionerProfile {
