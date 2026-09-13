@@ -93,17 +93,6 @@
   align-items: flex-start;
 }
 
-/* El identificador del cupo es el que se manda para reservar. `all` lo
-   selecciona entero de un clic: copiar un uuid a mano es donde se cometen los
-   errores. */
-.agenda__id {
-  font-variant-numeric: tabular-nums;
-  font-size: var(--fs-caption);
-  user-select: all;
-  /* Un uuid no tiene puntos de corte naturales; sin esto desborda la celda. */
-  overflow-wrap: anywhere;
-}
-
 /*
  * Las acciones de una fila, agrupadas.
  *

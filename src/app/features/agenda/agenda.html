@@ -417,13 +417,6 @@
   }
 </ng-template>
 
-<ng-template #celdaCupoId let-cupo>
-  <!-- `user-select: all` en el CSS: es el valor que hay que mandar a
-       `POST /scheduling/slots/{id}/holds`, y copiar un uuid a mano es
-       exactamente donde se cometen los errores. -->
-  <code class="agenda__id">{{ cupo.id }}</code>
-</ng-template>
-
 <ng-template #celdaPago let-cita>
   <!-- Una sola línea: el estado y, pegado a él, el lápiz que lo cambia. Antes
        eran un guión suelto y un «Cambiar» de texto en otro renglón, que en
@@ -717,16 +710,24 @@
     <!-- Ancla y no botón: reservar navega, así que conserva «abrir en pestaña
          nueva» y el destino en la barra de estado. La franja viaja en la URL
          porque la pantalla de reserva relee el cupo para revalidarlo. -->
+    <!-- Ícono con su globo, como las acciones de Consultas. Sin lugar no se
+         dibuja nada: «Completo» ya lo dice la columna de disponibilidad. -->
     <a
       app-button
       variant="primary"
       size="sm"
+      [iconOnly]="true"
+      data-testid="agenda-reservar"
+      aria-label="Reservar este cupo"
+      appTooltip="Reservar este cupo"
       [routerLink]="rutaDeReserva(cupo)"
       [queryParams]="paramsDeReserva(cupo)"
     >
-      Reservar
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="17" rx="2" />
+        <path d="M3 9h18M8 2v4M16 2v4M12 12.5v6M9 15.5h6" />
+      </svg>
     </a>
-  } @else {
-    <span class="agenda__hasta">Sin lugar</span>
   }
 </ng-template>

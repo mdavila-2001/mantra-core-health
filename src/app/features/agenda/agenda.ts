@@ -444,8 +444,6 @@ export class Agenda {
     viewChild.required<TemplateRef<{ $implicit: CupoVisible }>>('celdaFranja');
   private readonly celdaDisponibilidad =
     viewChild.required<TemplateRef<{ $implicit: CupoVisible }>>('celdaDisponibilidad');
-  private readonly celdaCupoId =
-    viewChild.required<TemplateRef<{ $implicit: CupoVisible }>>('celdaCupoId');
   private readonly celdaAccionesCita =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaAccionesCita');
   private readonly celdaReservar =
@@ -1037,8 +1035,10 @@ export class Agenda {
    * pantalla (P-13-2).
    */
   protected readonly columnasDeCupos = computed<readonly ColumnDef<CupoVisible>[]>(() => [
+    // Sin «Recurso» ni «Identificador del cupo» (propietario, 2026-09-13): el
+    // recurso es el mismo en cada fila —«Agenda de [nombre]» repetido— y el
+    // uuid viaja solo en el enlace de reservar; a quien mira no le dice nada.
     { key: 'franja', header: 'Franja', priority: 1, cell: this.celdaFranja() },
-    { key: 'recurso', header: 'Recurso', priority: 1 },
     {
       key: 'disponibilidad',
       header: 'Disponibilidad',
@@ -1046,14 +1046,11 @@ export class Agenda {
       cell: this.celdaDisponibilidad(),
     },
     { key: 'estado', header: 'Estado', priority: 2 },
-    // Se muestra por lo mismo que el catálogo muestra el `conceptId`: es el
-    // valor que hay que mandar para reservar, no ruido técnico.
-    { key: 'id', header: 'Identificador del cupo', priority: 3, cell: this.celdaCupoId() },
     ...(this.puedeReservar()
       ? [
           {
             key: 'reservar',
-            header: 'Reservar',
+            header: 'Acciones',
             priority: 1,
             cell: this.celdaReservar(),
           } satisfies ColumnDef<CupoVisible>,
