@@ -1,0 +1,17 @@
+<section class="banners" aria-label="Espacios publicitarios">
+  @for (b of banners; track b.id) {
+    <article class="banner" [attr.data-tono]="b.tono" [attr.data-testid]="'feed-banner-' + b.id">
+      <!-- Quién paga, arriba y en letra chica: es lo primero que se lee, y por
+           eso mismo no puede faltar. -->
+      <p class="banner__rotulo">{{ b.rotulo }}</p>
+      <div class="banner__arte" aria-hidden="true">
+        <span class="banner__marca">{{ b.titulo }}</span>
+      </div>
+      <h2 class="banner__titulo">{{ b.titulo }}</h2>
+      <p class="banner__texto">{{ b.texto }}</p>
+      <a class="banner__accion" app-button data-variante="secundario" data-tam="sm" [routerLink]="b.enlace">{{
+        b.accion
+      }}</a>
+    </article>
+  }
+</section>

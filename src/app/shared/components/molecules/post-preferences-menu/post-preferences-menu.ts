@@ -103,6 +103,18 @@ export class PostPreferencesMenu {
     return new URL(ruta, this.document.location.origin).toString();
   }
 
+  /**
+   * Compartir desde afuera del menú.
+   *
+   * La fila de acciones de la tarjeta (Recomendar · Comentar · Compartir ·
+   * Enviar) ofrece «Compartir» como botón visible, y compartir es lo mismo se
+   * toque donde se toque: `navigator.share` si existe, copiar el enlace si no.
+   * Se expone el gesto en vez de duplicar la lógica en la tarjeta.
+   */
+  compartir(): void {
+    this.run('share');
+  }
+
   protected activate(entry: PostPreferenceEntry): void {
     if (entry.access === 'session' && !this.hasSession()) {
       void this.goToLogin();

@@ -1,26 +1,88 @@
-/* El feed de la portada. Columna angosta y centrada, como la de la ficha: un
-   compilado de publicaciones no se lee a lo ancho de un monitor. */
+/* La red social: tres columnas, como una red profesional.
+
+   Izquierda (tendencias + banners) · centro (crear + feed) · derecha (perfil
+   mini, sólo con sesión). Sin sesión la rejilla tiene DOS columnas y el feed
+   se queda con el ancho de la derecha: nunca una columna vacía reservada
+   (composition-rules §5).
+
+   Mobile-first: una columna con el feed primero; desde 900 px entra la
+   izquierda; desde 1200 px, la derecha. Las columnas laterales son pegajosas
+   debajo del header para que acompañen el scroll de un feed largo. */
+
+.red {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'centro' 'izquierda';
+  gap: var(--e5);
+  inline-size: 100%;
+  max-inline-size: 76rem;
+  margin-inline: auto;
+  align-items: start;
+}
+
+.red__izquierda { grid-area: izquierda; }
+.red__centro { grid-area: centro; min-inline-size: 0; }
+.red__derecha { grid-area: derecha; }
+
+.red__izquierda,
+.red__derecha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+/* Fuera de la rejilla de tres columnas la derecha no se dibuja: debajo de
+   1200 px el perfil propio ya está en la barra de «Crear publicación». */
+.red__derecha { display: none; }
+
+.red__centro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+}
+
+@media (min-width: 900px) {
+  .red {
+    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr);
+    grid-template-areas: 'izquierda centro';
+  }
+
+  .red__izquierda {
+    position: sticky;
+    top: calc(var(--h-header) + var(--e4));
+  }
+}
+
+@media (min-width: 1200px) {
+  .red--con-perfil {
+    grid-template-columns: minmax(15rem, 17rem) minmax(0, 1fr) minmax(16rem, 19rem);
+    grid-template-areas: 'izquierda centro derecha';
+  }
+
+  .red--con-perfil .red__derecha {
+    display: flex;
+    position: sticky;
+    top: calc(var(--h-header) + var(--e4));
+  }
+}
 
 .feed {
   display: flex;
   flex-direction: column;
   gap: var(--e4);
-  margin: 0 auto;
+  margin: 0;
   padding: 0;
   list-style: none;
-  max-inline-size: 34rem;
 }
 
 .feed__mas,
 .feed__fin {
-  margin: var(--e5) auto 0;
-  max-inline-size: 34rem;
+  margin: var(--e5) 0 0;
   text-align: center;
 }
 
 .feed__esqueleto {
-  margin: 0 auto var(--e4);
-  max-inline-size: 34rem;
+  margin: 0 0 var(--e4);
 }
 
 .feed__esqueleto .app-skeleton {

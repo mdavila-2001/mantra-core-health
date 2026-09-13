@@ -1,0 +1,62 @@
+<section class="tendencias" aria-labelledby="tendencias-titulo" data-testid="feed-tendencias">
+  <h2 id="tendencias-titulo" class="tendencias__titulo">Doctores en tendencia esta semana</h2>
+
+  @switch (estado()) {
+    @case ('datos') {
+      <ol class="tendencias__lista">
+        @for (d of doctores(); track d.slug) {
+          <li class="doctor" data-testid="feed-tendencia">
+            <a class="doctor__retrato" [routerLink]="['/p', d.slug]" tabindex="-1" aria-hidden="true">
+              @if (d.avatarUrl; as foto) {
+                <img class="doctor__avatar" [src]="foto" alt="" width="40" height="40" loading="lazy" />
+              } @else {
+                <span class="doctor__avatar doctor__avatar--iniciales">{{ iniciales(d) }}</span>
+              }
+            </a>
+            <div class="doctor__texto">
+              <p class="doctor__nombre">
+                <a [routerLink]="['/p', d.slug]" class="doctor__enlace">{{ d.displayName }}</a>
+                @if (d.verified) {
+                  <svg class="doctor__sello" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2.5 14.7 5l3.6-.4.9 3.5 3.1 1.9-1.6 3.2 1.6 3.2-3.1 1.9-.9 3.5-3.6-.4L12 23.5 9.3 21l-3.6.4-.9-3.5-3.1-1.9 1.6-3.2-1.6-3.2 3.1-1.9.9-3.5 3.6.4z"/><path d="m8.5 12.5 2.3 2.3 4.7-4.8"/></svg>
+                  <span class="solo-lectores">Verificado</span>
+                }
+              </p>
+              @if (d.headline) {
+                <p class="doctor__titular">{{ d.headline }}</p>
+              }
+              <p class="doctor__resenas">
+                @if (d.ratingAverage !== null) {
+                  <span class="doctor__estrella" aria-hidden="true">★</span>
+                  {{ d.ratingAverage }} · {{ d.ratingCount }} {{ d.ratingCount === 1 ? 'reseña' : 'reseñas' }}
+                } @else {
+                  Sin reseñas todavía
+                }
+              </p>
+            </div>
+          </li>
+        }
+      </ol>
+      <a class="tendencias__pie" routerLink="/search/practitioners">Ver todos los profesionales →</a>
+    }
+
+    @case ('carga') {
+      <div class="tendencias__esqueleto" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando los profesionales en tendencia…</span>
+        <span class="app-skeleton"></span>
+        <span class="app-skeleton"></span>
+        <span class="app-skeleton"></span>
+      </div>
+    }
+
+    @case ('vacio') {
+      <p class="tendencias__vacio">Todavía no hay profesionales publicados.</p>
+    }
+
+    @case ('error') {
+      <p class="tendencias__vacio">No pudimos leer el directorio.</p>
+      <button type="button" class="tendencias__pie tendencias__pie--boton" (click)="reintentar()">
+        Reintentar
+      </button>
+    }
+  }
+</section>

@@ -33,12 +33,14 @@ import {
   computed,
   inject,
   input,
+  output,
   signal,
   type OnInit,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { SessionStore } from '@core/auth/session.store';
+import { CommunityClient } from '@core/data-access/community/community.client';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import {
   PUBLIC_PROFILE_PREFIX,
@@ -89,6 +91,57 @@ export class PublicPostComments implements OnInit {
   private readonly sesion = inject(SessionStore);
 
   readonly postId = input.required<string>();
+
+  /**
+   * La vitrina de quien mira. Con ella el hilo dibuja su propio redactor
+   * arriba —«Agregá un comentario…»—, como en cualquier red profesional; sin
+   * ella «Responder» sigue mandando a entrar o al muro, como antes.
+   */
+  readonly actorProfileId = input<string | null>(null);
+
+  /** Se publicó un comentario desde este hilo: la tarjeta suma al contador. */
+  readonly comentado = output<void>();
+
+  private readonly community = inject(CommunityClient);
+
+  protected readonly borrador = signal('');
+  protected readonly enviando = signal(false);
+  protected readonly falloAlEnviar = signal(false);
+
+  /**
+   * Publica el comentario y **relee** el hilo.
+   *
+   * No se inserta a mano: el servidor decide orden, profundidad y moderación,
+   * y componer eso en el cliente es reimplementar su regla. Lo escrito se
+   * conserva si falla: perder un comentario por un error de red no se perdona.
+   */
+  protected enviar(evento?: Event): void {
+    evento?.preventDefault();
+    const actor = this.actorProfileId();
+    const texto = this.borrador().trim();
+    if (actor === null || texto.length === 0 || this.enviando()) return;
+
+    this.enviando.set(true);
+    this.falloAlEnviar.set(false);
+    this.community
+      .createComment({ authorProfileId: actor, commentableRefId: this.postId(), bodyText: texto })
+      .subscribe({
+        next: () => {
+          this.borrador.set('');
+          this.enviando.set(false);
+          this.comentado.emit();
+          this.leer();
+        },
+        error: () => {
+          this.enviando.set(false);
+          this.falloAlEnviar.set(true);
+        },
+      });
+  }
+
+  protected escribir(evento: Event): void {
+    this.borrador.set((evento.target as HTMLTextAreaElement).value);
+  }
 
   /** Si hay sesión: sin ella, «Responder» manda a entrar con retorno. */
   protected readonly haySesion = this.sesion.isAuthenticated;
