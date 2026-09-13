@@ -545,6 +545,131 @@ describe('PractitionerProfileEdit', () => {
     ]);
   });
 
+  /* -- Cuál es la principal (2026-09-13) -------------------------------------
+     El bloqueo del 2026-09-10: al adaptar el editor al formulario del alta
+     salieron los interruptores sueltos, y con ellos «Es mi especialidad
+     principal». Vuelve como gesto sobre una fila que ya existe. */
+
+  const DOS_ESPECIALIDADES = {
+    specialties: [
+      {
+        id: 'e-1',
+        specialtyConceptId: 'esp-cardio',
+        isPrimary: true,
+        boardCertified: true,
+        verificationStatusConceptId: 'st-v',
+        verified: true,
+      },
+      {
+        id: 'e-2',
+        specialtyConceptId: 'esp-pedia',
+        isPrimary: false,
+        boardCertified: false,
+        verificationStatusConceptId: 'st-v',
+        verified: true,
+      },
+    ],
+  };
+
+  it('cada fila dice si es la principal y si sigue vigente', () => {
+    montarYCargar({
+      specialties: [
+        ...DOS_ESPECIALIDADES.specialties,
+        {
+          id: 'e-3',
+          specialtyConceptId: 'esp-pedia',
+          isPrimary: false,
+          boardCertified: false,
+          verificationStatusConceptId: 'st-v',
+          verified: true,
+          validTo: '2025-12-31T00:00:00.000Z',
+        },
+      ],
+    });
+
+    const filas = interno<() => readonly Record<string, unknown>[]>('filasEspecialidades')();
+    expect(filas).toEqual([
+      expect.objectContaining({ id: 'e-1', esPrincipal: true, vigente: true }),
+      expect.objectContaining({ id: 'e-2', esPrincipal: false, vigente: true }),
+      expect.objectContaining({ id: 'e-3', esPrincipal: false, vigente: false }),
+    ]);
+  });
+
+  it('marcar como principal hace PATCH sin ningún profileId y recarga el perfil', () => {
+    montarYCargar(DOS_ESPECIALIDADES);
+
+    const fila = interno<() => readonly { id: string }[]>('filasEspecialidades')()[1]!;
+    interno<(f: unknown) => void>('marcarComoPrincipal')(fila);
+
+    // `me`, no el perfil de la petición: no hay especialidad ajena que marcar
+    // escribiendo una URL.
+    const req = http.expectOne('/profiles/practitioners/me/specialties/e-2/primary');
+    expect(req.request.method).toBe('PATCH');
+    req.flush({ id: 'e-2', isPrimary: true });
+
+    http.expectOne('/profiles/practitioners/me/summary').flush({
+      ...PERFIL_BASE,
+      specialties: [
+        { ...DOS_ESPECIALIDADES.specialties[0], isPrimary: false },
+        { ...DOS_ESPECIALIDADES.specialties[1], isPrimary: true },
+      ],
+    });
+    // Las lecturas de terminología que dispara la recarga las drena el
+    // `afterEach`: el catálogo ya está resuelto y esta prueba no lo mira.
+
+    expect(interno<() => string | null>('marcandoPrincipal')()).toBeNull();
+    expect(interno<() => readonly Record<string, unknown>[]>('filasEspecialidades')()).toEqual([
+      expect.objectContaining({ id: 'e-2', esPrincipal: true }),
+      expect.objectContaining({ id: 'e-1', esPrincipal: false }),
+    ]);
+  });
+
+  it('la que ya es principal no se vuelve a marcar', () => {
+    montarYCargar(DOS_ESPECIALIDADES);
+
+    const principal = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0]!;
+    interno<(f: unknown) => void>('marcarComoPrincipal')(principal);
+
+    expect(http.match((r) => r.url.includes('/specialties/'))).toHaveLength(0);
+  });
+
+  it('una que ya no se ejerce no se puede marcar', () => {
+    // El servidor la rechaza con 412; ofrecerlo sería prometer lo que no se
+    // puede cumplir, así que ni se pide.
+    montarYCargar({
+      specialties: [
+        {
+          id: 'e-9',
+          specialtyConceptId: 'esp-pedia',
+          isPrimary: false,
+          boardCertified: false,
+          verificationStatusConceptId: 'st-v',
+          verified: true,
+          validTo: '2025-12-31T00:00:00.000Z',
+        },
+      ],
+    });
+
+    const vieja = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0]!;
+    interno<(f: unknown) => void>('marcarComoPrincipal')(vieja);
+
+    expect(http.match((r) => r.url.includes('/specialties/'))).toHaveLength(0);
+  });
+
+  it('si el cambio falla, el perfil no se recarga y el botón se destraba', () => {
+    montarYCargar(DOS_ESPECIALIDADES);
+
+    const fila = interno<() => readonly { id: string }[]>('filasEspecialidades')()[1]!;
+    interno<(f: unknown) => void>('marcarComoPrincipal')(fila);
+
+    http
+      .expectOne('/profiles/practitioners/me/specialties/e-2/primary')
+      .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
+
+    expect(http.match('/profiles/practitioners/me/summary')).toHaveLength(0);
+    expect(interno<() => string | null>('marcandoPrincipal')()).toBeNull();
+  });
+
   /* -- Catálogo de especialidades (TJ-3 · F-19) ----------------------------- */
 
   it('ofrece las especialidades del catálogo del modelo, en castellano', () => {

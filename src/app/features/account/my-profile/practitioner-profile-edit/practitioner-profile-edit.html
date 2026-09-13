@@ -493,7 +493,7 @@
                   class="edicion__tabla"
                   data-testid="tabla-especialidades"
                   [state]="estadoEspecialidades()"
-                  [columns]="columnasEspecialidades"
+                  [columns]="columnasEspecialidades()"
                   [trackBy]="claveDeFila"
                   caption="Especialidades cargadas, la principal primero"
                 />
@@ -612,3 +612,36 @@
     </div>
   }
 </app-view-state-host>
+
+<!-- La columna «Tipo» de «Tus especialidades cargadas». Un ng-template no
+     renderiza nada por sí solo: la tabla lo instancia por fila.
+
+     Acá vive el «marcar como principal» que el bloqueo del 2026-09-10 dejó
+     pendiente. Es un gesto sobre una fila que ya existe —no una casilla en el
+     formulario de alta, que es lo que el propietario pidió sacar—, así que la
+     celda que dice «Adicional» es también la que ofrece dejar de serlo.
+
+     La principal no lleva botón: para cambiarla se marca otra, y un botón que
+     no hace nada es peor que ninguno. Una que ya no se ejerce tampoco, porque
+     el servidor la rechaza con 412 y ofrecerlo sería prometer lo que no se
+     puede cumplir. -->
+<ng-template #celdaRol let-fila>
+  @if (fila.esPrincipal) {
+    <app-badge variant="success" value="Principal" />
+  } @else if (fila.vigente) {
+    <button
+      app-button
+      type="button"
+      variant="ghost"
+      size="sm"
+      [isLoading]="marcandoPrincipal() === fila.id"
+      [disabled]="marcandoPrincipal() !== null"
+      [attr.data-testid]="'especialidad-principal-' + fila.id"
+      (clicked)="marcarComoPrincipal(fila)"
+    >
+      Marcar como principal
+    </button>
+  } @else {
+    {{ fila.rol }}
+  }
+</ng-template>
