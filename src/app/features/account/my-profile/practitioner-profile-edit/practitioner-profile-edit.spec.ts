@@ -487,10 +487,78 @@ describe('PractitionerProfileEdit', () => {
     ]);
 
     interno<() => void>('agregarMatricula')();
+    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'file-9' });
     http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations').flush({ id: 'ja-1' });
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
 
     expect(señal<readonly File[]>('archivoDeMatricula')()).toEqual([]);
+  });
+
+  /* ---- el respaldo de la matrícula (2026-09-13) ----------------------------
+     El pedido del propietario del 2026-09-10 —«poder agregar las matrículas y
+     adjuntos en base a su módulo de creación de médico»— quedó a medias porque
+     `NewJurisdictionAuthorization` no declaraba `fileId`. El selector estaba en
+     la pantalla igual, así que aceptaba el PDF y lo tiraba al guardar. El campo
+     existe desde el modelo v4.2.11; estas tres pruebas son las del diploma,
+     aplicadas a la matrícula. */
+
+  it('sin respaldo no sube nada: la matrícula va derecha', () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+
+    interno<() => void>('agregarMatricula')();
+
+    // Ni una petición al almacén de archivos.
+    expect(http.match('/common/files/upload')).toHaveLength(0);
+    http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations').flush({ id: 'ja-1' });
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  it('con respaldo sube primero el archivo y manda su id como fileId', () => {
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+    señal<string>('nuevaAutoridad').set('Colegio Médico');
+    señal<readonly File[]>('archivoDeMatricula').set([
+      new File(['x'], 'matricula.pdf', { type: 'application/pdf' }),
+    ]);
+
+    interno<() => void>('agregarMatricula')();
+
+    // Primero el archivo…
+    const subida = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
+    expect(subida.request.method).toBe('POST');
+    subida.flush({ id: 'file-88' });
+
+    // …y recién entonces la matrícula, con el identificador que devolvió.
+    const req = http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations');
+    expect(req.request.body).toEqual({
+      licenseNumber: 'LIC-9',
+      regulatoryAuthority: 'Colegio Médico',
+      fileId: 'file-88',
+    });
+    req.flush({ id: 'ja-1' });
+    http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+  });
+
+  it('si la subida falla, la matrícula NO se crea', () => {
+    // Una matrícula sin el carnet que la persona creyó haber adjuntado es peor
+    // que un error: nadie se entera hasta que se la rechazan.
+    montarYCargar();
+    señal<string>('nuevoNumeroDeMatricula').set('LIC-9');
+    señal<readonly File[]>('archivoDeMatricula').set([
+      new File(['x'], 'matricula.pdf', { type: 'application/pdf' }),
+    ]);
+
+    interno<() => void>('agregarMatricula')();
+
+    http
+      .expectOne((r) => r.url.endsWith('/common/files/upload'))
+      .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
+
+    expect(
+      http.match('/profiles/practitioners/per-1/jurisdiction-authorizations'),
+    ).toHaveLength(0);
+    expect(interno<() => boolean>('guardandoMatricula')()).toBe(false);
   });
 
   it('la matrícula ofrece tres autoridades, con el colegio del título', () => {
