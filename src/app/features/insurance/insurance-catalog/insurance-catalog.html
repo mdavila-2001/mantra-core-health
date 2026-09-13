@@ -25,6 +25,36 @@
             <dt>Estado</dt>
             <dd>{{ aseguradora.status.display }}</dd>
           </div>
+          <div>
+            <dt>WhatsApp</dt>
+            <dd>
+              @if (aseguradora.whatsappNumber; as whatsapp) {
+                <a app-link [href]="whatsappHref(whatsapp)" [external]="true">{{ whatsapp }}</a>
+              } @else {
+                Sin registrar
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Call center</dt>
+            <dd>
+              @if (aseguradora.callCenterPhone; as telefono) {
+                <a app-link [href]="'tel:' + dialable(telefono)">{{ telefono }}</a>
+              } @else {
+                Sin registrar
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Correo de siniestros</dt>
+            <dd>
+              @if (aseguradora.supportEmail; as correo) {
+                <a app-link [href]="'mailto:' + correo">{{ correo }}</a>
+              } @else {
+                Sin registrar
+              }
+            </dd>
+          </div>
         </dl>
         <!-- Declarado y verificado se muestran por separado a propósito: que una
              aseguradora diga tener un registro no es que la plataforma lo haya

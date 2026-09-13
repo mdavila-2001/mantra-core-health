@@ -18,6 +18,9 @@ const RESUMEN = {
   carrierCode: 'ASEG-001',
   legalName: 'Aseguradora del Sur S.A.',
   regulatorIdentifier: 'REG-99',
+  whatsappNumber: '+59171548278',
+  callCenterPhone: '800-10-6060',
+  supportEmail: 'siniestros@aseguradoradelsur.com.bo',
   jurisdiction: null,
   status: ACTIVO,
   verification: { code: 'VERIFICATION_PENDING', display: 'Verificación pendiente' },
@@ -149,6 +152,24 @@ describe('InsuranceCatalog', () => {
     const texto: string = fixture.nativeElement.textContent;
     expect(texto).toContain('80.50%');
     expect(texto).toContain('25.00');
+  });
+
+  it('muestra los canales de contacto de la aseguradora (subtarea 2.3)', () => {
+    mount();
+    http.expectOne('/insurance-carriers').flush({ items: [RESUMEN], count: 1 });
+    http.expectOne(`/insurance-carriers/${CARRIER_ID}`).flush(FICHA);
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('+59171548278');
+    expect(texto).toContain('800-10-6060');
+    expect(texto).toContain('siniestros@aseguradoradelsur.com.bo');
+
+    const enlaces: NodeListOf<HTMLAnchorElement> =
+      fixture.nativeElement.querySelectorAll('a[href^="tel:"]');
+    expect(Array.from(enlaces).some((a) => a.getAttribute('href') === 'tel:800106060')).toBe(
+      true,
+    );
   });
 
   it('no imprime identificadores técnicos', () => {

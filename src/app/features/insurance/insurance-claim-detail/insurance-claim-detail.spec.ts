@@ -62,6 +62,9 @@ function detalleWire(over: Record<string, unknown> = {}) {
       patient: { id: 'p-1', displayName: 'Rosa Quispe', patientCode: 'PAC-1', memberIdentifier: 'AF-1' },
       carrierName: 'Nacional Seguros',
       insuranceCarrierId: 'c-1',
+      carrierWhatsappNumber: '+59171548278',
+      carrierCallCenterPhone: '800-10-6060',
+      carrierSupportEmail: 'siniestros@nacional.com.bo',
       policyIdentifier: 'POL-1',
       policyBrokerName: null,
       billedTotal: { amount: '300.00', currency: BOB },
@@ -202,5 +205,63 @@ describe('InsuranceClaimDetail · cláusula y justificación del rechazo', () =>
 
     const filas = fixture.nativeElement.querySelectorAll('[data-testid="claim-line-reason"]');
     expect(filas[1].textContent?.trim()).toBe('Sin motivo registrado');
+  });
+});
+
+/**
+ * Los canales de contacto directo de la aseguradora (subtarea 2.3): la
+ * cabecera de la solicitud ya trae los tres canales, y esta pantalla sólo
+ * los muestra — no hace ninguna petición adicional.
+ */
+describe('InsuranceClaimDetail · canales de contacto de la aseguradora', () => {
+  let fixture: ComponentFixture<InsuranceClaimDetail>;
+  let http: HttpTestingController;
+
+  function mount(): void {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ claimId: CLAIM_ID })) },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(InsuranceClaimDetail);
+    fixture.detectChanges();
+  }
+
+  afterEach(() => http.verify());
+
+  function responder(detalle: Record<string, unknown> = detalleWire()): void {
+    http.expectOne(`/insurance-claims/${CLAIM_ID}`).flush(detalle);
+    fixture.detectChanges();
+  }
+
+  it('muestra la sección de asistencia con el botón de WhatsApp con href a wa.me', () => {
+    mount();
+    responder();
+
+    const seccion = fixture.nativeElement.querySelector('h2#claim-contact');
+    expect(seccion?.textContent).toContain('Asistencia y soporte de la aseguradora');
+
+    const boton = fixture.nativeElement.querySelector('[data-testid="btn-whatsapp-claim"]');
+    expect(boton).not.toBeNull();
+    const href: string = boton.getAttribute('href');
+    expect(href.startsWith('https://wa.me/')).toBe(true);
+    expect(decodeURIComponent(href)).toContain('CLM-2026-0001');
+  });
+
+  it('sin WhatsApp registrado, el botón no aparece pero el call center sí', () => {
+    mount();
+    const detalle = detalleWire();
+    (detalle['header'] as Record<string, unknown>)['carrierWhatsappNumber'] = null;
+    responder(detalle);
+
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-whatsapp-claim"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="btn-callcenter-claim"]')).not.toBeNull();
   });
 });
