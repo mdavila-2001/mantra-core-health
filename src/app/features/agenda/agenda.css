@@ -33,38 +33,6 @@
   padding-block-end: var(--sp-2);
 }
 
-/* ALV-024. Alineado con el borde inferior de los campos, como el interruptor:
-   ninguno de los tres botones lleva etiqueta arriba. */
-.agenda__navegacion-temporal {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-1);
-  flex: 0 0 auto;
-  padding-block-end: var(--sp-2);
-}
-
-/* De quién es la agenda. Se lee como un dato con su rótulo —no como un campo—
-   porque no hay nada que elegir acá: el lugar se elige en la barra superior. */
-.agenda__ambito {
-  flex: 1 1 14rem;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  padding-block-end: var(--sp-2);
-}
-
-.agenda__ambito-rotulo {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
-.agenda__ambito-valor {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
 .agenda__aviso {
   margin: var(--sp-3) 0 0;
   color: var(--text-muted);
@@ -157,7 +125,7 @@
  */
 .agenda__acciones {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--sp-2);
 }
@@ -213,8 +181,8 @@
 .agenda__pago {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  flex-wrap: wrap;
+  gap: var(--sp-1);
+  white-space: nowrap;
 }
 
 /* «con seguro» acompaña al estado: es un dato secundario y se lee como tal, no
@@ -226,4 +194,52 @@
 
 .agenda__sin-pago {
   color: var(--text-secondary);
+}
+
+/* ---- paginación de la ventana (ALV-024) ----------------------------------
+   Al pie de la lista, como el cursor de la tabla: el rango a la izquierda dice
+   qué página se mira y las flechas a la derecha la mueven. */
+.agenda__paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-4);
+}
+
+.agenda__paginacion-rango {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  /* Con «Hoy», el día de la semana llega en minúscula del formato de fecha. */
+  text-transform: capitalize;
+}
+
+.agenda__paginacion-controles {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* «Llegó»: el ícono de registrar llegada, sin botón, en el tono de lo hecho.
+   Mide lo mismo que un botón chico para que la fila no salte al registrarla. */
+.agenda__llego {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 32px;
+  block-size: 32px;
+  color: var(--st-success-fg, var(--text-secondary));
+}
+
+.agenda__llego svg {
+  inline-size: 1.2em;
+  block-size: 1.2em;
+}
+
+/* Cancelar es la única destructiva de la fila: el rojo aparece recién al
+   apuntarla, para que no compita en reposo con la acción principal. */
+.agenda__accion-destructiva:hover {
+  --_btn-fg-hover: var(--c-error-600);
 }

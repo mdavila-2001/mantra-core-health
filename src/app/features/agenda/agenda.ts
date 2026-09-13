@@ -1,4 +1,4 @@
-import { DatePipe, formatDate } from '@angular/common';
+import { DatePipe, NgTemplateOutlet, formatDate } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -397,6 +397,7 @@ export interface CupoVisible {
     StatusSeal,
     DataTable,
     DatePipe,
+    NgTemplateOutlet,
     FormField,
     Link,
     PageHeader,
@@ -693,6 +694,25 @@ export class Agenda {
     const base = valida ? fecha : new Date();
     base.setHours(0, 0, 0, 0);
     return base;
+  });
+
+  /**
+   * La página de la ventana que se está mirando, en texto: «13 – 19 sept.
+   * 2026». Va al pie de la lista junto a los controles que la mueven, para que
+   * «Siguiente» diga a dónde llevó.
+   */
+  protected readonly rangoDeVentana = computed(() => {
+    const dias = VENTANAS.find((v) => v.clave === this.ventanaElegida())?.dias ?? 7;
+    const desde = this.fechaBase();
+    const hasta = new Date(desde);
+    hasta.setDate(hasta.getDate() + dias - 1);
+    const fin = formatDate(hasta, 'd MMM y', this.idioma);
+    if (dias === 1) return formatDate(desde, 'EEEE d MMM y', this.idioma);
+    const inicio =
+      desde.getMonth() === hasta.getMonth() && desde.getFullYear() === hasta.getFullYear()
+        ? formatDate(desde, 'd', this.idioma)
+        : formatDate(desde, desde.getFullYear() === hasta.getFullYear() ? 'd MMM' : 'd MMM y', this.idioma);
+    return `${inicio} – ${fin}`;
   });
 
   /** Si la ventana es la de hoy, o si se navegó a otra (ALV-024). */

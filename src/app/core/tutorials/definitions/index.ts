@@ -127,13 +127,6 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
       body: 'Acá están tus citas comprometidas y los cupos que todavía podés ofrecer. Son dos pestañas de la misma agenda.',
     },
     {
-      id: 'ambito',
-      title: 'De quién es esta agenda',
-      body: 'Si atendés, ves la tuya y sólo la tuya. Las agendas de otros profesionales las maneja quien reparte turnos.',
-      target: 'agenda-ambito',
-      placement: 'bottom',
-    },
-    {
       id: 'ventana',
       title: 'Cambiá la ventana',
       body: 'Elegí «Hoy» para ver sólo lo de hoy. Probalo: el listado se recarga solo.',
