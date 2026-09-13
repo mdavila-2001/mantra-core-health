@@ -1128,10 +1128,15 @@ export class AlovidaRuntimeService {
 
     const esCajon = () => this.consultaDeMedios(ANCHO_CAJON)?.matches ?? false;
 
+    /* El botón habla SÓLO del cajón.
+
+       Antes decía además si la barra de escritorio estaba escondida, y de paso
+       le ponía `inert` — con lo cual, recogida, la barra dejaba de ser
+       navegable con el teclado aunque siguiera a la vista. En escritorio ya no
+       hay nada que anunciar: la barra está siempre, recogida o no, y el control
+       que la recoge es el `»` que vive dentro de ella. */
     const actualizarBoton = () => {
-      const expandido = esCajon()
-        ? raiz.classList.contains('nav-abierto')
-        : !raiz.classList.contains('nav-collapsed');
+      const expandido = !esCajon() || raiz.classList.contains('nav-abierto');
       if (expandido) {
         nav.removeAttribute('inert');
       } else {
@@ -1162,18 +1167,22 @@ export class AlovidaRuntimeService {
     };
 
     boton.addEventListener('click', () => {
-      if (esCajon()) {
-        if (raiz.classList.contains('nav-abierto')) {
-          cerrar(true);
-        } else {
-          abrir();
-        }
+      /* Sólo el cajón. Acá había una segunda rama para escritorio que hacía
+         `raiz.classList.toggle('nav-collapsed')`, y esa clase sacaba la barra
+         de la ventana con un `translateX(-101%)`. Dos controles pegados que
+         parecían lo mismo y no lo eran: el `»` de la barra la recoge a un
+         carril de íconos —el menú sigue ahí— y éste la hacía desaparecer.
+         Retirado a pedido del cliente el 13/09/2026, con su función: «queremos
+         que siga estando nuestro menú». En escritorio el botón ni se dibuja
+         (`alovida.css`, §21.3). */
+      if (!esCajon()) {
         return;
       }
-
-      raiz.classList.toggle('nav-collapsed');
-      actualizarBoton();
-      boton.focus();
+      if (raiz.classList.contains('nav-abierto')) {
+        cerrar(true);
+      } else {
+        abrir();
+      }
     });
     velo.addEventListener('click', () => cerrar(true));
 
@@ -1200,7 +1209,7 @@ export class AlovidaRuntimeService {
     /* Al cruzar el punto de quiebre se restablece el estado inicial del modo
        nuevo: evita dejar el velo móvil o el sidebar de escritorio oculto. */
     this.consultaDeMedios(ANCHO_CAJON)?.addEventListener('change', () => {
-      raiz.classList.remove('nav-abierto', 'nav-collapsed');
+      raiz.classList.remove('nav-abierto');
       actualizarBoton();
     });
 
