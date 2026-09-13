@@ -611,14 +611,14 @@
            tirarlo para «parecerse más al paciente» sería perder un dato que ya
            se mostraba. -->
       <app-tab [label]="pestanas[5]">
-        <dl class="mi-perfil__datos" appTutorialTarget="perfil-actividad">
-          @for (dato of perfil().actividad; track dato.clave) {
-            <div class="mi-perfil__dato">
-              <dt>{{ dato.rotulo }}</dt>
-              <dd class="mi-perfil__cifra">{{ dato.valor }}</dd>
-            </div>
-          }
-        </dl>
+        <!-- Contadores, no renglones de ficha (pedido del cliente del
+             13/09/2026). Viven en su propio componente: el dibujo es el de las
+             cifras del panel y el CSS no entraba acá —esta hoja estaba a 20
+             bytes del techo que `angular.json` pone por componente—. -->
+        <app-practitioner-activity
+          [actividad]="perfil().actividad"
+          appTutorialTarget="perfil-actividad"
+        />
 
         <p class="mi-perfil__nota">
           Son los registros que dejaste asentados con esta cuenta. El detalle de cada uno vive en el

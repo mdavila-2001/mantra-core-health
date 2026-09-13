@@ -48,7 +48,6 @@ const RESUMEN_SIN_VERIFICAR = {
   identityVerified: false,
 };
 
-
 /**
  * Atiende la lectura del perfil completo, que la tarjeta pide junto al resumen.
  *
@@ -124,16 +123,18 @@ describe('MyProfile', () => {
     function conPerfil(perfil: Record<string, unknown>): string {
       http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
       // El resumen dispara la lectura del catálogo para traducir el estado.
-      http.expectOne((r) => r.url === '/terminology/concepts').flush({
-        items: [],
-        count: 0,
-      });
+      http
+        .expectOne((r) => r.url === '/terminology/concepts')
+        .flush({
+          items: [],
+          count: 0,
+        });
       // La señal se toma del componente SIN pasar por `interno`: ése liga las
       // funciones al componente, y una señal ES una función — ligada, pierde
       // `.set`.
-      const señal = (fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>)[
-        'perfil'
-      ];
+      const señal = (
+        fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>
+      )['perfil'];
       señal.set({
         personId: 'per-1',
         patientProfileId: 'pp-1',
@@ -447,33 +448,20 @@ describe('MyProfile', () => {
     fixture.detectChanges();
   }
 
-  it('«Tu acceso» nombra el rol en palabras, con el código sólo en data-role', () => {
-    // La sesión se abre después de crear la pantalla: las insignias derivan de
-    // una señal, así que reaccionan igual. Con un rol de trabajo, porque desde
-    // F-22 la tarjeta no se le muestra a un paciente.
-    TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] }),
-      refreshToken: 'r-1',
-    });
-    responderResumen();
-
-    const insignias = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll('.mi-perfil__roles app-badge'),
-    ];
-    expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Profesional sanitario']);
-    expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PRACTITIONER']);
-  });
-
   /**
-   * F-22. «Organización: Care Default Tenant» y «Roles: Paciente» responden a
-   * «¿por qué no veo tal cosa?», una pregunta de quien trabaja acá. Un paciente
-   * no tiene secciones que le falten: tiene lo suyo.
+   * Pedido del cliente del 13/09/2026: la tarjeta «Tu acceso» sale de «Mi
+   * perfil». Sus dos renglones —«Organización» y «Roles»— son vocabulario de
+   * sistema, y la respuesta a «¿por qué no veo tal cosa?» no justificaba una
+   * columna entera al lado del perfil.
+   *
+   * Se prueba con un rol de trabajo a propósito: era el único caso en que la
+   * tarjeta se dibujaba, así que es el que demuestra que ya no queda ninguno.
    */
-  it('a un paciente no se le muestra «Tu acceso» ni su organización', () => {
+  it('«Tu acceso» ya no se muestra, tampoco a quien viene a trabajar', () => {
     TestBed.inject(SessionStore).start({
       accessToken: jwt({
         sub: 'u-1',
-        roles: ['USER', 'PATIENT'],
+        roles: ['USER', 'PRACTITIONER'],
         tenants: ['t-1'],
         tenantNames: { 't-1': 'Care Default Tenant' },
       }),
@@ -486,23 +474,9 @@ describe('MyProfile', () => {
     expect(raiz.textContent).not.toContain('Tu acceso');
     expect(raiz.textContent).not.toContain('Care Default Tenant');
     expect(raiz.textContent).not.toContain('Organización');
-  });
-
-  /** Quien atiende y además es paciente entra a trabajar: la tarjeta le sirve. */
-  it('a quien atiende sí se le muestra, aunque además sea paciente', () => {
-    TestBed.inject(SessionStore).start({
-      accessToken: jwt({
-        sub: 'u-1',
-        roles: ['PATIENT', 'PRACTITIONER'],
-        tenants: ['t-1'],
-      }),
-      refreshToken: 'r-1',
-    });
-    responderResumen();
-
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-acceso"]'),
-    ).not.toBeNull();
+    // Sin lateral que dibujar, la ficha ocupa el ancho entero (REGLA DE LA CASA).
+    expect(raiz.querySelector('.mi-perfil__lateral')).toBeNull();
+    expect(raiz.querySelector('.mi-perfil--sin-lateral')).not.toBeNull();
   });
 
   it('los identificadores del perfil y la persona ya no se muestran', () => {
@@ -574,7 +548,7 @@ describe('MyProfile', () => {
     );
   }
 
-  /** La lista de datos de «Tus datos» — no la de «Tu acceso», que comparte clase. */
+  /** La lista de datos de «Tus datos», acotada a la columna del perfil. */
   function listaDeDatos(): HTMLElement | null {
     return (fixture.nativeElement as HTMLElement).querySelector(
       '.mi-perfil__principal .mi-perfil__datos',
@@ -957,7 +931,12 @@ describe('MyProfile · foto de perfil', () => {
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
     TestBed.inject(SessionStore).start({
-      accessToken: jwt({ sub: 'u-2', hpid: 'hp-1', roles: ['USER', 'PRACTITIONER'], tenants: ['t-1'] }),
+      accessToken: jwt({
+        sub: 'u-2',
+        hpid: 'hp-1',
+        roles: ['USER', 'PRACTITIONER'],
+        tenants: ['t-1'],
+      }),
       refreshToken: 'r-1',
     });
     const otroFixture = TestBed.createComponent(MyProfile);
@@ -1077,8 +1056,63 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
     const pestanas = raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]');
     pestanas[1].click();
     fixture.detectChanges();
-    expect(
-      raiz.querySelector('[data-testid="mi-perfil-municipio"]')?.textContent?.trim(),
-    ).toBe('Santa Cruz de la Sierra');
+    expect(raiz.querySelector('[data-testid="mi-perfil-municipio"]')?.textContent?.trim()).toBe(
+      'Santa Cruz de la Sierra',
+    );
+  });
+});
+
+/**
+ * §4.H del plan de UX · el camino de vuelta a lo que salió del menú del médico.
+ *
+ * «Mi consultorio propio» y «Organización médica» vivían al pie de la tarjeta
+ * «Tu acceso». La tarjeta se fue el 13/09/2026 y ellos se quedaron, ahora bajo
+ * el perfil: son los únicos accesos a esas dos pantallas, y borrarlos con la
+ * tarjeta habría convertido una limpieza visual en una pérdida de acceso.
+ *
+ * Describe propio porque `esProfesional()` decide en el constructor qué resumen
+ * se pide: la sesión tiene que estar abierta antes de crear la pantalla.
+ */
+describe('MyProfile · los accesos de quien atiende', () => {
+  it('el profesional conserva «Mi consultorio propio» y «Organización médica»', () => {
+    TestBed.configureTestingModule({
+      imports: [MyProfile],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({
+        sub: 'u-2',
+        hpid: 'hp-1',
+        roles: ['USER', 'PRACTITIONER'],
+        tenants: ['t-1'],
+      }),
+      refreshToken: 'r-1',
+    });
+
+    const fixture = TestBed.createComponent(MyProfile);
+    const http = TestBed.inject(HttpTestingController);
+    resolverEstadosDeCaso(http);
+    fixture.detectChanges();
+    // El perfil profesional falla a propósito: los enlaces viven FUERA de esa
+    // tarjeta, y lo que se prueba es justamente que no dependen de ella.
+    http.expectOne('/profiles/practitioners/me/summary').error(new ProgressEvent('error'), {
+      status: 500,
+    });
+    fixture.detectChanges();
+
+    const destinos = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
+        'nav[aria-label="Dónde ejercés"] a',
+      ),
+    ];
+    expect(destinos.map((a) => a.textContent?.trim())).toEqual([
+      'Mi consultorio propio',
+      'Organización médica',
+    ]);
+    expect(destinos.map((a) => a.getAttribute('href'))).toEqual([
+      '/administration/my-practice',
+      '/administration/medical-organization',
+    ]);
+    http.verify();
   });
 });
