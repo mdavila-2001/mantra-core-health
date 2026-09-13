@@ -353,23 +353,31 @@
        titular y al profesional de esa agenda, y a nadie más. Sin nombre dice
        «Paciente asignado» —hay alguien, y no te corresponde saber quién— o «Sin
        paciente», que es lo que ya decía esta celda cuando no había enlaces. -->
-  <span class="agenda__paciente">{{ cita.paciente }}</span>
+  <!-- El nombre ES el acceso al expediente (propietario, 2026-09-13): antes
+       había un «Abrir expediente» debajo que repetía la fila. Al pasar el
+       puntero —o llegar con el teclado— el globo dice quién es, cuándo fue su
+       última consulta y por qué; el historial se pide recién ahí, una vez por
+       paciente. Sin permiso para el expediente, el nombre queda como texto. -->
+  @if (cita.rutaExpediente) {
+    <a
+      app-link
+      class="agenda__paciente-enlace"
+      data-testid="agenda-paciente"
+      [routerLink]="cita.rutaExpediente"
+      [appTooltip]="resumenDelPaciente(cita)"
+      (mouseenter)="precargarUltimaConsulta(cita)"
+      (focus)="precargarUltimaConsulta(cita)"
+      >{{ cita.paciente }}</a
+    >
+  } @else {
+    <span class="agenda__paciente">{{ cita.paciente }}</span>
+  }
 
-  <!-- Dos destinos distintos, no dos formas de lo mismo: el expediente es la
-       historia de quien llega y lo abre quien atiende; la ficha es la filiación
-       y la abre administración. Se ofrecen los que la sesión pueda abrir, y
-       ninguno cuando no puede abrir ninguno. -->
-  @if (cita.rutaExpediente || cita.rutaPaciente) {
+  <!-- La ficha es la filiación y la abre administración: otro destino, no otra
+       forma del expediente. -->
+  @if (cita.rutaPaciente) {
     <span class="agenda__accesos">
-      @if (cita.rutaExpediente) {
-        <!-- Lectura pura: el motivo y el turno viajan con «Iniciar consulta»,
-             que es quien los usa. El expediente no los mira desde que la
-             escritura se mudó a Atención. -->
-        <a app-link [routerLink]="cita.rutaExpediente">Abrir expediente</a>
-      }
-      @if (cita.rutaPaciente) {
-        <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
-      }
+      <a app-link [routerLink]="cita.rutaPaciente">Ver ficha</a>
     </span>
   }
 </ng-template>
@@ -395,10 +403,6 @@
        `POST /scheduling/slots/{id}/holds`, y copiar un uuid a mano es
        exactamente donde se cometen los errores. -->
   <code class="agenda__id">{{ cupo.id }}</code>
-</ng-template>
-
-<ng-template #celdaSolicitada let-cita>
-  <span class="agenda__cuando">{{ cita.solicitada | date: 'd MMM, HH:mm' }}</span>
 </ng-template>
 
 <ng-template #celdaPago let-cita>

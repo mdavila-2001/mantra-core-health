@@ -14,7 +14,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
@@ -51,6 +51,7 @@ import { Select } from '../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { Switch } from '../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../shared/components/atoms/textarea/textarea';
+import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import type { DialogDetail } from '../../shared/components/molecules/dialog/dialog.types';
 import { DialogService } from '../../shared/components/molecules/dialog/dialog-service';
@@ -174,6 +175,19 @@ const CODIGOS_SIN_PAGO: ReadonlySet<string> = new Set(['BOOKING_CANCELLED']);
 
 /** Estados en los que el backend acepta mover o cancelar una cita vigente. */
 const CODIGOS_VIGENTES: ReadonlySet<string> = new Set(['BOOKING_CONFIRMED', 'BOOKING_CHECKED_IN']);
+
+/**
+ * Estados de una cita pasada que cuentan como consulta hecha, para «Última
+ * consulta» del globo del paciente. Una solicitud sin responder, una cancelada
+ * o una ausencia no son una consulta.
+ */
+const CODIGOS_DE_CONSULTA: ReadonlySet<string> = new Set([
+  'BOOKING_CONFIRMED',
+  'BOOKING_CHECKED_IN',
+  'BOOKING_IN_PROGRESS',
+  'BOOKING_COMPLETED',
+  'EV_BOOKING_DONE',
+]);
 
 /**
  * Roles que pueden mirar la agenda **de otro recurso**.
@@ -392,6 +406,7 @@ export interface CupoVisible {
     Tab,
     Tabs,
     Textarea,
+    Tooltip,
     MyAgenda,
   ],
   templateUrl: './agenda.html',
@@ -419,9 +434,6 @@ export class Agenda {
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaCuando');
   private readonly celdaEstado =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaEstado');
-
-  private readonly celdaSolicitada =
-    viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaSolicitada');
 
   private readonly celdaPago =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPago');
@@ -948,35 +960,24 @@ export class Agenda {
   }
 
   /**
-   * Las columnas del ciclo completo (ALV-019), en el orden que ordena una lista
-   * mixta: **el estado primero**. En una lista donde conviven lo que espera
-   * respuesta y lo que ya está confirmado, lo que decide si la fila pide algo
-   * es el estado, no la hora.
-   *
-   * `solicitada` sólo dice algo en las que esperan respuesta —en una confirmada
-   * es ruido—, así que la celda la deja vacía y la columna cede primero en
-   * pantalla chica.
+   * Las columnas del ciclo completo (ALV-019), en el orden que fijó el
+   * propietario el 2026-09-13: Fecha y hora · Paciente · Motivo de consulta ·
+   * Seguro · Estado · Pago, y las acciones al final para quien puede operarlas.
+   * Lo que espera respuesta igual se reconoce: encabeza la lista y lleva su sello.
    */
   protected readonly columnasDeConsultas = computed<readonly ColumnDef<CitaVisible>[]>(() => [
-    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+    // Orden pedido por el propietario (2026-09-13): cuándo, con quién, por qué,
+    // con qué cobertura, en qué estado y si pagó. «Solicitada» y «Recurso» se
+    // fueron: el recurso ya lo dice el selector de arriba, y cuándo se pidió
+    // sigue en «Ver detalle», que es donde importa.
     { key: 'cuando', header: 'Fecha y hora', priority: 1, cell: this.celdaCuando() },
     { key: 'paciente', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
-    { key: 'solicitada', header: 'Solicitada', priority: 3, cell: this.celdaSolicitada() },
-    // ALV-017: en la agenda propia el recurso es el MISMO en todas las filas —
-    // el nombre del profesional repetido tantas veces como citas tenga, sin
-    // distinguir nada. Sólo aparece cuando se mira la agenda de otro o cuando
-    // la tabla puede mezclar recursos, que es cuando el dato separa filas.
-    ...(this.mirandoAgendaPropia()
-      ? []
-      : [{ key: 'recurso', header: 'Recurso', priority: 2 } satisfies ColumnDef<CitaVisible>]),
-    { key: 'motivo', header: 'Motivo', priority: 3 },
-    // ALV-021. Prioridad 3, junto al motivo: es información de contexto, no
-    // algo que se opere como el pago. Texto plano — «Particular» o el nombre
-    // de la aseguradora no necesitan sello ni color.
+    { key: 'motivo', header: 'Motivo de consulta', priority: 3 },
+    // ALV-021. Texto plano — «Particular» o el nombre de la aseguradora no
+    // necesitan sello ni color.
     { key: 'cobertura', header: 'Seguro', priority: 3 },
-    // Prioridad 2: en pantalla chica cede antes que el estado de la cita y la
-    // fecha, pero antes que el motivo. Quien mira la agenda en el teléfono
-    // quiere saber a qué hora y con quién; el pago viene después.
+    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
+    // Prioridad 2: en el teléfono cede antes que la fecha y el paciente.
     { key: 'pago', header: 'Pago', priority: 2, cell: this.celdaPago() },
     // La columna sólo existe para quien puede ejecutar las acciones: ofrecer
     // botones que la API va a rechazar con 403 es ofrecer un error.
@@ -1373,6 +1374,97 @@ export class Agenda {
    * pedir el historial de cada fila de la agenda sería el mismo defecto que ya
    * evitamos en la columna de pago.
    */
+  /**
+   * Las citas de cada paciente, leídas la primera vez que se pasa por su nombre.
+   * `null` mientras la lectura está en vuelo.
+   */
+  private readonly historiales = signal<ReadonlyMap<string, readonly Booking[] | null | 'error'>>(
+    new Map(),
+  );
+
+  /** Pide el historial del paciente para el globo, una sola vez por persona. */
+  protected precargarUltimaConsulta(cita: CitaVisible): void {
+    const paciente = cita.patientProfileId;
+    if (paciente === null || this.historiales().has(paciente)) {
+      return;
+    }
+    this.guardarHistorial(paciente, null);
+    this.scheduling
+      .searchBookings({ patientProfileId: paciente, limit: 50 })
+      .pipe(
+        // Las etiquetas cargadas son las de los estados de la ventana a la vista
+        // —confirmadas, solicitadas—; las citas pasadas traen otros («Atendida»)
+        // y sin resolverlos ninguna contaba como consulta. Se piden las que faltan.
+        switchMap((pagina) => {
+          const faltan = [
+            ...new Set(
+              pagina.items
+                .map((cita) => cita.statusConceptId)
+                .filter((id): id is string => id !== undefined && !this.etiquetas().has(id)),
+            ),
+          ];
+          if (faltan.length === 0) {
+            return of(pagina.items);
+          }
+          return this.terminology.readConceptLabels(faltan).pipe(
+            catchError(() => of<ConceptLabels>(new Map())),
+            map((nuevas) => {
+              this.etiquetas.update((actuales) => new Map([...actuales, ...nuevas]));
+              return pagina.items;
+            }),
+          );
+        }),
+      )
+      .subscribe({
+        next: (citas) => this.guardarHistorial(paciente, citas),
+        error: () => this.guardarHistorial(paciente, 'error'),
+      });
+  }
+
+  private guardarHistorial(paciente: string, valor: readonly Booking[] | null | 'error'): void {
+    this.historiales.update((mapa) => new Map(mapa).set(paciente, valor));
+  }
+
+  /**
+   * El globo del nombre del paciente: quién es, cuándo fue su última consulta
+   * y por qué. «Última» es la más reciente **antes de esta cita** que llegó a
+   * ser consulta —ver `CODIGOS_DE_CONSULTA`—.
+   */
+  protected resumenDelPaciente(cita: CitaVisible): string {
+    const paciente = cita.patientProfileId;
+    const historial = paciente === null ? undefined : this.historiales().get(paciente);
+    if (historial === undefined || historial === null) {
+      return `${cita.paciente} · Buscando la última consulta…`;
+    }
+    if (historial === 'error') {
+      return `${cita.paciente} · No se pudo leer la última consulta`;
+    }
+
+    const limite = cita.cuando ?? new Date();
+    const ultima = historial
+      .filter(
+        (b): b is Booking & { startAt: Date } =>
+          b.id !== cita.id &&
+          b.startAt instanceof Date &&
+          b.startAt < limite &&
+          CODIGOS_DE_CONSULTA.has(this.codigoDeEstado(b)),
+      )
+      .sort((a, b) => b.startAt.getTime() - a.startAt.getTime())[0];
+
+    if (ultima === undefined) {
+      return `${cita.paciente} · Sin consultas anteriores`;
+    }
+    const fecha = formatDate(ultima.startAt, 'd MMM y', this.idioma);
+    return `${cita.paciente} · Última consulta: ${fecha} · ${ultima.reasonText ?? 'Sin motivo registrado'}`;
+  }
+
+  private codigoDeEstado(cita: Booking): string {
+    return toBookingStatusPresentation(
+      cita.statusConceptId === undefined ? undefined : this.etiquetas().get(cita.statusConceptId),
+      SIN_DATO,
+    ).code;
+  }
+
   protected verHistorialDelPaciente(cita: CitaVisible): void {
     const paciente = cita.patientProfileId;
     if (paciente === null || this.operando() !== null) {

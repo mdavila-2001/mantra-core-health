@@ -124,6 +124,12 @@ export class DataTable<Row> {
     this.columns().filter((column) => column.priority < MOBILE_DETAIL_PRIORITY),
   );
 
+  /** Clases de la celda: las secundarias se marcan para que el CSS las pliegue en móvil. */
+  protected cellClassFor(column: ColumnDef<Row>): string {
+    const secundaria = column.priority >= MOBILE_DETAIL_PRIORITY ? ' data-table__secondary' : '';
+    return `data-table__cell${secundaria} data-table__cell--${column.align ?? 'start'}`;
+  }
+
   /** Las que en móvil se pliegan a la fila de detalle — nunca se ocultan. */
   protected readonly secondaryColumns = computed(() =>
     this.columns().filter((column) => column.priority >= MOBILE_DETAIL_PRIORITY),

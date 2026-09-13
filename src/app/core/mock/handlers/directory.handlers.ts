@@ -2,7 +2,7 @@ import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, ESTADO, TIPO_ORGANIZACION } from '../fixtures/conceptos';
 import { afiliaciones, MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
 import { notFound, type MockRequest, type MockRouter } from '../mock-router';
-import { MOCK_USERS, TENANT_ASEGURADORA, TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_PLATAFORMA } from '../mock-session';
+import { MOCK_USERS, TENANT_ASEGURADORA, TENANT_CLINICA, TENANT_CONSULTORIO, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_PLATAFORMA } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -29,6 +29,7 @@ export const ALCANCE_ACCESO = { ALL_TENANT: uuid('concept-access-scope-all'), BR
 const TIPO_SUCURSAL = { CLINIC: uuid('concept-branch-clinic'), OFFICE: uuid('concept-branch-office') } as const;
 
 const tenants = new Coleccion<TenantSimulado>([
+  { id: TENANT_CONSULTORIO, code: 'ROJAS', legalName: 'Consultorio Dra. Valeria Rojas Mendoza', tradeName: 'Mi consultorio', tenantTypeConceptId: TIPO_ORGANIZACION['ORG-CLINICA']!, statusConceptId: ESTADO['ST-ACTIVE']!, verificationStatusConceptId: ESTADO['ST-VERIFIED']!, parentTenantId: null, createdAt: iso(-700), timeZone: 'America/La_Paz' },
   { id: TENANT_CLINICA, code: 'OLIVOS', legalName: 'Clínica Los Olivos S.R.L.', tradeName: 'Clínica Los Olivos', tenantTypeConceptId: TIPO_ORGANIZACION['ORG-CLINICA']!, statusConceptId: ESTADO['ST-ACTIVE']!, verificationStatusConceptId: ESTADO['ST-VERIFIED']!, parentTenantId: null, createdAt: iso(-900), timeZone: 'America/La_Paz' },
   { id: TENANT_HOSPITAL, code: 'SANLUCAS', legalName: 'Fundación Hospital San Lucas', tradeName: 'Hospital San Lucas', tenantTypeConceptId: TIPO_ORGANIZACION['ORG-HOSPITAL']!, statusConceptId: ESTADO['ST-ACTIVE']!, verificationStatusConceptId: ESTADO['ST-VERIFIED']!, parentTenantId: null, createdAt: iso(-800), timeZone: 'America/La_Paz' },
   { id: TENANT_FARMACIA, code: 'FARVIDA', legalName: 'Farmacia Vida S.A.', tradeName: 'Farmacia Vida', tenantTypeConceptId: TIPO_ORGANIZACION['ORG-FARMACIA']!, statusConceptId: ESTADO['ST-ACTIVE']!, verificationStatusConceptId: ESTADO['ST-VERIFIED']!, parentTenantId: null, createdAt: iso(-400), timeZone: 'America/La_Paz' },
@@ -47,6 +48,7 @@ const sucursales = new Coleccion<{ id: string; tenantId: string; code: string; n
 ]);
 
 const membresias = new Coleccion<{ id: string; tenantId: string; userId: string; tenantRoleConceptId: string; statusConceptId: string; accessScopeConceptId: string; primaryBranchId: string | null; startDate: string; endDate: string | null; createdAt: string }>([
+  { id: uuid('membership-medica-consultorio'), tenantId: TENANT_CONSULTORIO, userId: MEDICA.userId, tenantRoleConceptId: ROL_TENANT.OWNER, statusConceptId: ESTADO['ST-ACTIVE']!, accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT, primaryBranchId: null, startDate: isoDia(-700), endDate: null, createdAt: iso(-700) },
   { id: uuid('membership-admin-olivos'), tenantId: TENANT_CLINICA, userId: MOCK_USERS[2]!.id, tenantRoleConceptId: ROL_TENANT.OWNER, statusConceptId: ESTADO['ST-ACTIVE']!, accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT, primaryBranchId: uuid('branch-olivos-central'), startDate: isoDia(-900), endDate: null, createdAt: iso(-900) },
   { id: uuid('membership-medica-olivos'), tenantId: TENANT_CLINICA, userId: MEDICA.userId, tenantRoleConceptId: ROL_TENANT.ADMIN, statusConceptId: ESTADO['ST-ACTIVE']!, accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT, primaryBranchId: uuid('branch-olivos-central'), startDate: isoDia(-800), endDate: null, createdAt: iso(-800) },
   ...PROFESIONALES.slice(1, 8).map((p, i) => ({ id: uuid(`membership-${p.id}`), tenantId: p.tenantId, userId: p.userId, tenantRoleConceptId: ROL_TENANT.STAFF, statusConceptId: i === 5 ? ESTADO['ST-INACTIVE']! : ESTADO['ST-ACTIVE']!, accessScopeConceptId: i % 2 === 0 ? ALCANCE_ACCESO.ALL_TENANT : ALCANCE_ACCESO.BRANCH, primaryBranchId: p.tenantId === TENANT_CLINICA ? uuid('branch-olivos-central') : uuid('branch-sanlucas-central'), startDate: isoDia(-500 + i * 30), endDate: i === 5 ? isoDia(-20) : null, createdAt: iso(-500 + i * 30) })),
@@ -60,7 +62,7 @@ const asignaciones = new Coleccion<{ id: string; membershipId: string; branchId:
 
 function organizacionPropia(t: TenantSimulado, request: MockRequest) {
   const user = request.user;
-  const esAdmin = user?.roles.includes('SECURITY_ADMIN') || user?.roles.includes('SUPERADMIN') || (t.id === TENANT_CLINICA && user?.key === 'medica');
+  const esAdmin = user?.roles.includes('SECURITY_ADMIN') || user?.roles.includes('SUPERADMIN') || ((t.id === TENANT_CLINICA || t.id === TENANT_CONSULTORIO) && user?.key === 'medica');
   return {
     ...t,
     parentTenantId: t.parentTenantId ?? undefined,

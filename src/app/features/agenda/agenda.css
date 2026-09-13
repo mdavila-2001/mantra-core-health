@@ -108,6 +108,13 @@
   color: var(--text-primary);
 }
 
+/* El nombre como enlace: en bloque para que un nombre largo parta en líneas,
+   pero del ancho del texto para que el globo no se abra desde el vacío. */
+.agenda__paciente-enlace {
+  display: block;
+  width: fit-content;
+}
+
 /* Los dos accesos de una cita —expediente y ficha— apilados, no en fila: en la
    columna angosta del móvil, dos enlaces uno al lado del otro se tocan con el
    pulgar a la vez. */

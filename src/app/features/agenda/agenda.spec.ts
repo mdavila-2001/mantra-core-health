@@ -585,6 +585,90 @@ describe('Agenda', () => {
     expect((citas().data?.[0] as Record<string, unknown>)['rutaExpediente']).toBeNull();
   });
 
+  /** Orden pedido por el propietario el 2026-09-13; las acciones van al final. */
+  it('las columnas van en el orden pedido: fecha, paciente, motivo, seguro, estado, pago', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder();
+
+    const claves = interno<() => readonly { key: string }[]>('columnasDeConsultas')().map(
+      (columna) => columna.key,
+    );
+    expect(claves.filter((clave) => clave !== 'acciones')).toEqual([
+      'cuando',
+      'paciente',
+      'motivo',
+      'cobertura',
+      'estado',
+      'pago',
+    ]);
+  });
+
+  /**
+   * El globo del nombre: la última consulta ANTERIOR a esta cita que llegó a
+   * ser consulta —una cancelada no cuenta—, con su motivo. Se pide una vez.
+   */
+  it('el globo del paciente dice su última consulta y el motivo', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder();
+
+    const fila = citas().data?.[0];
+    const precargar = interno<(cita: unknown) => void>('precargarUltimaConsulta');
+    const resumen = interno<(cita: unknown) => string>('resumenDelPaciente');
+
+    precargar(fila);
+    expect(resumen(fila)).toContain('Buscando la última consulta');
+
+    http
+      .expectOne(
+        (r) => r.url === '/scheduling/bookings' && r.params.get('patientProfileId') === 'p-1',
+      )
+      .flush({
+        items: [
+          CITA,
+          // «Atendida» no está entre las etiquetas de la ventana: hay que pedirla.
+          {
+            ...CITA,
+            id: 'b-0',
+            startAt: '2026-07-01T13:00:00.000Z',
+            statusConceptId: 'c-atendida',
+            reasonText: 'Dolor de cabeza',
+          },
+          {
+            ...CITA,
+            id: 'b-x',
+            startAt: '2026-07-20T13:00:00.000Z',
+            statusConceptId: 'c-cancelada',
+            reasonText: 'Cancelada, no cuenta',
+          },
+        ],
+        count: 3,
+        limit: 50,
+        truncated: false,
+      });
+    http
+      .expectOne((r) => r.url === '/terminology/concepts')
+      .flush({
+        items: [
+          {
+            conceptId: 'c-atendida',
+            code: 'BOOKING_COMPLETED',
+            display: 'Atendida',
+            codeSystemVersionId: 'csv-1',
+          },
+        ],
+        count: 1,
+        limit: 200,
+      });
+
+    const texto = resumen(fila);
+    expect(texto).toContain('Última consulta');
+    expect(texto).toContain('Dolor de cabeza');
+    expect(texto).not.toContain('no cuenta');
+
+    precargar(fila);
+    http.expectNone((r) => r.url === '/scheduling/bookings');
+  });
+
   /** El motivo viaja al expediente para precargar el del encuentro. */
   it('lleva el motivo de la cita para precargar el del encuentro', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });

@@ -48,10 +48,21 @@ function coincide(termino: ConceptoDeGlosario, q: string | null): boolean {
   );
 }
 
+/**
+ * El código tal como lo publica la API real.
+ *
+ * Los estados de reserva se siembran como `BK-CONFIRMED` por comodidad, pero la
+ * agenda reconoce `BOOKING_CONFIRMED` (`features/agenda/booking-status.ts`): sin
+ * esta traducción todas las citas del simulador se veían «Sin registrar».
+ */
+function codigoPublicado(codigo: string): string {
+  return codigo.startsWith('BK-') ? `BOOKING_${codigo.slice(3).replace(/-/g, '_')}` : codigo;
+}
+
 function opcion(c: ConceptoSimulado) {
   return {
     conceptId: c.id,
-    code: c.code,
+    code: codigoPublicado(c.code),
     display: c.display,
     ...(c.definition === undefined ? {} : { definition: c.definition }),
     selectable: c.selectable,

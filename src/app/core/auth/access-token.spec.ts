@@ -125,6 +125,11 @@ describe('decodeAccessToken', () => {
     expect(claims?.hpid).toBeUndefined();
   });
 
+  it('lee `ownTenantId` y descarta uno vacío', () => {
+    expect(decodeAccessToken(makeToken({ sub: 'u-1', ownTenantId: 't-9' }))?.ownTenantId).toBe('t-9');
+    expect(decodeAccessToken(makeToken({ sub: 'u-1', ownTenantId: '' }))?.ownTenantId).toBeUndefined();
+  });
+
   it('descarta un `tenantNames` que no sea un mapa de textos', () => {
     const claims = decodeAccessToken(
       makeToken({ sub: 'u-1', tenantNames: ['no', 'es', 'un', 'mapa'] }),

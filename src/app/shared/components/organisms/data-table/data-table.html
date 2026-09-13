@@ -20,10 +20,15 @@
             </th>
           }
 
-          @for (column of primaryColumns(); track column.key) {
+          <!-- En el orden en que el consumidor las declara. Las secundarias
+               llevan su clase: en escritorio son columnas normales y en móvil
+               el CSS las pliega al detalle. Antes iban todas al final, y una
+               tabla no podía poner una columna de detalle entre dos
+               imprescindibles. -->
+          @for (column of columns(); track column.key) {
             <th
               scope="col"
-              [class]="'data-table__cell data-table__cell--' + (column.align ?? 'start')"
+              [class]="cellClassFor(column)"
               [attr.aria-sort]="ariaSortFor(column)"
             >
               @if (column.sortable) {
@@ -38,24 +43,6 @@
                   <span class="data-table__sort-icon" aria-hidden="true">
                     {{ sortDirectionFor(column) === 'asc' ? '▲' : sortDirectionFor(column) === 'desc' ? '▼' : '↕' }}
                   </span>
-                </button>
-              } @else {
-                {{ column.header }}
-              }
-            </th>
-          }
-
-          <!-- Las secundarias tienen su encabezado propio: en escritorio son
-               columnas normales; en móvil el CSS las pliega al detalle. -->
-          @for (column of secondaryColumns(); track column.key) {
-            <th
-              scope="col"
-              [class]="'data-table__cell data-table__secondary data-table__cell--' + (column.align ?? 'start')"
-              [attr.aria-sort]="ariaSortFor(column)"
-            >
-              @if (column.sortable) {
-                <button type="button" class="data-table__sort" (click)="toggleSort(column)">
-                  {{ column.header }}
                 </button>
               } @else {
                 {{ column.header }}
@@ -90,18 +77,8 @@
               </td>
             }
 
-            @for (column of primaryColumns(); track column.key) {
-              <td [class]="'data-table__cell data-table__cell--' + (column.align ?? 'start')">
-                @if (column.cell) {
-                  <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
-                } @else {
-                  {{ cellValue(row, column) }}
-                }
-              </td>
-            }
-
-            @for (column of secondaryColumns(); track column.key) {
-              <td [class]="'data-table__cell data-table__secondary data-table__cell--' + (column.align ?? 'start')">
+            @for (column of columns(); track column.key) {
+              <td [class]="cellClassFor(column)">
                 @if (column.cell) {
                   <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
                 } @else {
