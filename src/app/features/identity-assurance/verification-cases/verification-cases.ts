@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url';
 import { FileDownloader } from '../../../core/data-access/files/file-downloader';
 import { FilesClient } from '../../../core/data-access/files/files.client';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
@@ -27,6 +28,7 @@ import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { StoredFilePreview } from '../../../shared/components/molecules/stored-file-preview/stored-file-preview';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
@@ -143,6 +145,7 @@ type CaseCell = TemplateRef<{ $implicit: CaseRow }>;
     Link,
     PageHeader,
     RouterLink,
+    StoredFilePreview,
     ViewStateHost,
   ],
   templateUrl: './verification-cases.html',
@@ -215,6 +218,9 @@ export class VerificationCases {
   /** Lo que falló al traer la evidencia; se muestra bajo la tabla. */
   protected readonly errorDeDescarga = signal<string | null>(null);
 
+  /** El caso cuya vista previa está desplegada, si alguno (5.2). */
+  protected readonly previsualizando = signal<string | null>(null);
+
   protected abrirAviso(caso: CaseRow): void {
     this.avisoDe.set(caso);
   }
@@ -226,10 +232,20 @@ export class VerificationCases {
   /**
    * Trae el archivo de evidencia y lo ofrece para guardar (FT-32-R02).
    *
-   * Va por `contentDataUrl` y no por una URL del navegador: la CSP del
-   * servidor deja `connect-src` en `'self'`, así que el contenido viaja por el
-   * `GET` autenticado de siempre y se entrega como `data:` URL. El backend ya
-   * exige ser quien lo subió o tener rol revisor: no hace falta comprobarlo acá.
+   * Va por el `GET` autenticado y no por una URL del navegador: la CSP del
+   * servidor deja `connect-src` en `'self'`, así que el contenido viaja por ahí
+   * y se entrega como `data:` URL. El backend ya exige ser quien lo subió o
+   * tener rol revisor: no hace falta comprobarlo acá.
+   *
+   * ## Por qué `storedFileContent` y no `contentDataUrl` (5.2)
+   *
+   * Por el **nombre con el que se guarda**. Hasta ahora se ofrecía como
+   * `evidencia-<idDelCaso>`, sin extensión: el sistema operativo lo recibía
+   * como un tipo desconocido y quien lo bajaba tenía que adivinar con qué
+   * abrirlo. El nombre real ya viajaba en `Content-Disposition` de esa misma
+   * respuesta; sólo hacía falta leerlo. Si no viene —`original_name` es
+   * nullable y el backend simulado no emite la cabecera— se conserva el nombre
+   * de antes: es reserva, no invención.
    */
   protected descargarEvidencia(caso: CaseRow): void {
     const fileId = caso.evidenceFileId;
@@ -238,18 +254,40 @@ export class VerificationCases {
     }
     this.descargando.set(caso.id);
     this.errorDeDescarga.set(null);
-    this.archivos.contentDataUrl(fileId).subscribe({
-      next: (dataUrl) => {
-        this.descargas.trigger(dataUrl, `evidencia-${caso.id}`);
-        this.descargando.set(null);
+    this.archivos.storedFileContent(fileId).subscribe({
+      next: (contenido) => {
+        blobToDataUrl(contenido.blob).subscribe({
+          next: (dataUrl) => {
+            this.descargas.trigger(
+              dataUrl,
+              contenido.originalName ?? `evidencia-${caso.id}`,
+            );
+            this.descargando.set(null);
+          },
+          error: () => this.fallaDeDescarga(),
+        });
       },
-      error: () => {
-        this.descargando.set(null);
-        this.errorDeDescarga.set(
-          'No pudimos traer la evidencia de ese caso. Probá de nuevo en un momento.',
-        );
-      },
+      error: () => this.fallaDeDescarga(),
     });
+  }
+
+  /** Un solo sitio para el fallo: el motivo no se distingue, a propósito. */
+  private fallaDeDescarga(): void {
+    this.descargando.set(null);
+    this.errorDeDescarga.set(
+      'No pudimos traer la evidencia de ese caso. Probá de nuevo en un momento.',
+    );
+  }
+
+  /**
+   * Abre o cierra la vista previa de la evidencia de una fila (5.2).
+   *
+   * Desplegable por fila y no diálogo: quien revisa sus solicitudes quiere ver
+   * qué mandó sin perder de vista el estado de las demás. Una sola abierta a la
+   * vez — dos PDF rasterizando en paralelo es trabajo que nadie pidió.
+   */
+  protected alternarVistaPrevia(caso: CaseRow): void {
+    this.previsualizando.update((actual) => (actual === caso.id ? null : caso.id));
   }
 
   constructor() {

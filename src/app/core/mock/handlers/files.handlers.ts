@@ -187,9 +187,20 @@ export function registrarArchivos(router: MockRouter): void {
     // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
     // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
     // `image/…`— y al abrirlo se veía un cartel, no un documento.
-    return a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
-      ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
-      : a.dataUrl;
+    const body =
+      a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
+        ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
+        : a.dataUrl;
+    // 5.2 · el nombre viaja donde lo pone la API real. Sin esta cabecera todo
+    // adjunto se guardaba con un nombre de reserva, y la paridad mock↔real se
+    // rompía justo en lo que 5.2 tiene que demostrar. Se codifica igual que el
+    // backend (`filename*=UTF-8''…`), acentos incluidos.
+    return {
+      body,
+      headers: {
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
+      },
+    };
   });
 
   router.delete('/common/files/:id', ({ params }) => {
