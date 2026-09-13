@@ -58,6 +58,12 @@ export { FileInput } from './file-input/file-input';
 export { FilePreviewImage } from './file-preview-image/file-preview-image';
 export type { RejectedFile } from './file-input/file-input';
 
+/* Hermano de `FilePreviewImage`: los dos parten de un `fileId` ya almacenado.
+   Aquél resuelve la imagen de un adjunto de comentario; éste sirve cualquier
+   archivo propio —con su nombre, su tipo y su tamaño— y delega la vista previa
+   en `FilePreview`, que no se exporta acá porque sólo se usa desde dentro. */
+export { StoredFilePreview } from './stored-file-preview/stored-file-preview';
+
 export { FormField } from './form-field/form-field';
 
 /* `MenuItem` y `MenuTrigger` solo tienen sentido dentro de un `Menu`. */
