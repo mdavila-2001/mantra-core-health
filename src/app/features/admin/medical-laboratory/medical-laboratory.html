@@ -9,26 +9,40 @@
 />
 
 <!-- El selector sólo aparece con más de una unidad: un laboratorio tiene una o
-     unas pocas, y ofrecer una lista de un elemento es ruido. -->
+     unas pocas, y ofrecer una lista de un elemento es ruido.
+
+     Es el MISMO campo que «Práctica» en «Mis servicios» (`features/my-services`):
+     `app-form-field` + `app-select`, no un `<select>` desnudo. Las dos preguntas
+     son la misma —de qué ámbito es el catálogo que estoy mirando— y hasta el
+     13/09/2026 una se veía como un control del producto y la otra como un
+     control del navegador, con su propio alto, su propio borde y su rótulo al
+     costado. -->
 @if (listado.status === 'ready' && listado.data.length > 1) {
-  <section class="laboratorio__selector">
-    <label for="unidad-elegida">Unidad</label>
-    <select
-      id="unidad-elegida"
+  <app-form-field
+    label="Unidad"
+    hint="El catálogo de estudios, los tarifarios y el personal son propios de cada unidad."
+  >
+    <app-select
       [value]="unidadElegida()"
-      (change)="elegirUnidad($any($event.target).value)"
-    >
-      @for (unidad of listado.data; track unidad.id) {
-        <option [value]="unidad.id">{{ unidad.name }} ({{ unidad.code }})</option>
-      }
-    </select>
-  </section>
+      (valueChange)="elegirUnidad($event)"
+      [options]="opcionesDeUnidad()"
+      placeholder="Elegí una unidad"
+      data-testid="lab-unit"
+    />
+  </app-form-field>
 }
 
 @switch (estado.status) {
   @case ('ready') {
     @if (detalle) {
-      <section class="laboratorio__ambito" aria-label="Laboratorio">
+      <!-- La ficha del laboratorio con la MISMA envoltura que su perfil público
+           (`features/laboratory-directory/laboratory-detail`): tarjeta con
+           borde y un encabezado que la nombra. Era una losa gris sin título
+           colgada del `page-header`, y quien entraba no tenía cómo saber si lo
+           que leía era la unidad elegida o la organización entera. -->
+      <app-card variant="outlined" padding="lg" class="laboratorio__ficha">
+        <app-section-heading card-header icono="flask" titulo="Identificación" />
+
         <dl class="laboratorio__datos">
           <div>
             <dt>Código</dt>
@@ -74,8 +88,8 @@
         @if (!detalle.publiclyListed) {
           <div class="laboratorio__publicar">
             <p class="laboratorio__secundario">
-              Mientras no se publique, ningún paciente puede encontrar este
-              laboratorio ni reservar en él.
+              Mientras no se publique, ningún paciente puede encontrar este laboratorio ni reservar
+              en él.
             </p>
             <!-- `isLoading` pone el `aria-busy` y corta el click: mientras
                  publica, insistir no manda una segunda petición. -->
@@ -93,7 +107,7 @@
             }
           </div>
         }
-      </section>
+      </app-card>
     }
 
     @if (
@@ -104,22 +118,20 @@
       <section class="laboratorio__avisos" role="status">
         @if (acreditacionesPorVencer().length > 0) {
           <p>
-            <strong>{{ acreditacionesPorVencer().length }}</strong> acreditación(es)
-            vencidas o por vencer dentro del mes.
+            <strong>{{ acreditacionesPorVencer().length }}</strong> acreditación(es) vencidas o por
+            vencer dentro del mes.
           </p>
         }
         @if (equiposPorCalibrar().length > 0) {
           <p>
-            <strong>{{ equiposPorCalibrar().length }}</strong> equipo(s) con la
-            calibración vencida o próxima a vencer.
+            <strong>{{ equiposPorCalibrar().length }}</strong> equipo(s) con la calibración vencida
+            o próxima a vencer.
           </p>
         }
         <!-- Sin nadie habilitado, ningún resultado se puede dar por definitivo:
              es una condición de operación, no un detalle de configuración. -->
         @if (validadores().length === 0) {
-          <p>
-            Ningún integrante del personal tiene permiso para validar resultados.
-          </p>
+          <p>Ningún integrante del personal tiene permiso para validar resultados.</p>
         }
       </section>
     }
@@ -132,9 +144,7 @@
   @case ('error') {
     <section class="laboratorio__ambito laboratorio__ambito--error" role="alert">
       <p>{{ estado.message ?? 'No se pudo cargar el laboratorio.' }}</p>
-      <button app-button variant="secondary" type="button" (click)="recargar()">
-        Reintentar
-      </button>
+      <button app-button variant="secondary" type="button" (click)="recargar()">Reintentar</button>
     </section>
   }
   @case ('forbidden') {
@@ -151,9 +161,7 @@
   @case ('offline') {
     <section class="laboratorio__ambito laboratorio__ambito--error" role="alert">
       <p>No pudimos comunicarnos con el servidor.</p>
-      <button app-button variant="secondary" type="button" (click)="recargar()">
-        Reintentar
-      </button>
+      <button app-button variant="secondary" type="button" (click)="recargar()">Reintentar</button>
     </section>
   }
   @default {
@@ -219,12 +227,13 @@
                acepta. -->
           @if (catalogoFallo()) {
             <app-alert tone="warning" title="El catálogo de estudios no está disponible">
-              Sin él no se puede decir qué estudio es este, así que la oferta no
-              se puede publicar todavía. Volvé a intentarlo más tarde.
+              Sin él no se puede decir qué estudio es este, así que la oferta no se puede publicar
+              todavía. Volvé a intentarlo más tarde.
             </app-alert>
           }
 
-          <app-form-field icon="flask"
+          <app-form-field
+            icon="flask"
             label="Estudio"
             [required]="true"
             hint="Sale del catálogo clínico: es el mismo con el que un médico pide el estudio."
@@ -238,7 +247,8 @@
             />
           </app-form-field>
 
-          <app-form-field icon="labels"
+          <app-form-field
+            icon="labels"
             label="Código en la unidad"
             [required]="true"
             hint="Con el que el laboratorio lo nombra puertas adentro. Hasta 60 caracteres."
@@ -246,7 +256,8 @@
             <app-input [(value)]="codigoDelEstudio" placeholder="HEM" />
           </app-form-field>
 
-          <app-form-field icon="tag"
+          <app-form-field
+            icon="tag"
             label="Nombre visible"
             [required]="true"
             hint="El que lee el paciente en el directorio. Se propone el del catálogo y se puede cambiar."
@@ -255,7 +266,8 @@
           </app-form-field>
 
           @if (opcionesDeSede().length > 0) {
-            <app-form-field icon="hospital"
+            <app-form-field
+              icon="hospital"
               label="Sucursal"
               hint="Dejalo sin elegir si el estudio se hace en todas."
             >
@@ -273,7 +285,8 @@
             <app-checkbox [(checked)]="tomaADomicilio" label="Se puede tomar a domicilio" />
           </div>
 
-          <app-form-field icon="note"
+          <app-form-field
+            icon="note"
             label="Instrucciones de preparación"
             hint="Lo que el paciente tiene que hacer antes: ayuno, suspender un medicamento, traer algo."
           >
@@ -345,40 +358,68 @@
                 <!-- Se listan TODOS los tarifarios, también los internos: el
                      directorio sólo publica los marcados como públicos, y sin
                      los otros no habría manera de ver el convenio con una
-                     aseguradora. -->
-                <dl class="tarjeta-servicio__precios" data-testid="lab-study-prices">
-                  <dt class="tarjeta-servicio__rotulo">
-                    {{ estudio.prices.length === 1 ? 'Precio' : 'Precios' }}
-                  </dt>
+                     aseguradora.
 
-                  @if (estudio.prices.length === 0) {
-                    <dd class="tarjeta-servicio__renglon-precio">
+                     Con UN solo importe la tarjeta usa la misma pieza que «Mis
+                     servicios» —rótulo e importe en el mismo renglón de base,
+                     `tarjeta-servicio__precio`—, y sólo se apila cuando hay
+                     varios, que es para lo que la hoja compartida declara
+                     `tarjeta-servicio__precios`. La mayoría de los estudios
+                     tiene un tarifario: apilarlos a todos hacía que la misma
+                     cifra se leyera de dos formas distintas en dos pantallas
+                     que muestran lo mismo. -->
+                @if (estudio.prices.length === 0) {
+                  <dl class="tarjeta-servicio__precio" data-testid="lab-study-prices">
+                    <dt class="tarjeta-servicio__rotulo">Precio</dt>
+                    <dd class="tarjeta-servicio__monto">
                       <span class="tarjeta-servicio__pendiente">Sin precio cargado</span>
                     </dd>
-                  } @else {
+                  </dl>
+                } @else if (estudio.prices.length === 1) {
+                  @for (precio of estudio.prices; track precio.id) {
+                    <dl class="tarjeta-servicio__precio" data-testid="lab-study-prices">
+                      <dt class="tarjeta-servicio__rotulo">Precio</dt>
+                      <dd class="tarjeta-servicio__monto cifras-tabulares">
+                        {{ importeDe(precio) }}
+                      </dd>
+                      <dd class="tarjeta-servicio__tarifario">
+                        {{ precio.scheduleCode }}
+                      </dd>
+                      @if (!precio.schedulePublic) {
+                        <dd><app-badge variant="secondary" value="interno" /></dd>
+                      }
+                    </dl>
+                  }
+                } @else {
+                  <dl class="tarjeta-servicio__precios" data-testid="lab-study-prices">
+                    <dt class="tarjeta-servicio__rotulo">Precios</dt>
                     @for (precio of estudio.prices; track precio.id) {
                       <dd class="tarjeta-servicio__renglon-precio">
                         <span class="tarjeta-servicio__monto cifras-tabulares">
-                          {{ precio.patientAmount ?? precio.baseAmount }}
-                          @if (precio.currency) {
-                            {{ etiquetaDe(precio.currency) }}
-                          }
+                          {{ importeDe(precio) }}
                         </span>
-                        <span class="laboratorio__secundario">{{ precio.scheduleCode }}</span>
+                        <span class="tarjeta-servicio__tarifario">{{ precio.scheduleCode }}</span>
                         @if (!precio.schedulePublic) {
                           <app-badge variant="secondary" value="interno" />
                         }
                       </dd>
                     }
-                  }
-                </dl>
+                  </dl>
+                }
 
+                <!-- `outline` y no `danger`, igual que «Editar precio» en «Mis
+                     servicios»: un rojo por tarjeta repetido trece veces deja
+                     de señalar peligro y pasa a ser el color de la rejilla,
+                     que es justo lo contrario de lo que un botón destructivo
+                     tiene que hacer. Lo destructivo se dice donde se decide:
+                     el diálogo de `quitarOferta()` sigue siendo `destructive`
+                     y sigue nombrando el estudio que se quita. -->
                 @if (sePuedeQuitar(estudio)) {
                   <div class="tarjeta-servicio__acciones">
                     <button
                       app-button
                       type="button"
-                      variant="danger"
+                      variant="outline"
                       size="sm"
                       [isLoading]="quitandoOferta() === estudio.id"
                       (clicked)="quitarOferta(estudio)"
@@ -417,7 +458,8 @@
         <form class="laboratorio__formulario" (submit)="$event.preventDefault()">
           <h3 class="laboratorio__formulario-titulo">Nuevo tarifario</h3>
 
-          <app-form-field icon="labels"
+          <app-form-field
+            icon="labels"
             label="Código"
             [required]="true"
             hint="Con el que se lo nombra: PUBLICO, CONVENIO-A. Hasta 60 caracteres."
@@ -426,7 +468,8 @@
           </app-form-field>
 
           @if (opcionesDeSede().length > 0) {
-            <app-form-field icon="hospital"
+            <app-form-field
+              icon="hospital"
               label="Sucursal"
               hint="Dejalo sin elegir si rige en todas."
             >
@@ -439,7 +482,11 @@
             </app-form-field>
           }
 
-          <app-form-field icon="calendar" label="Vigente desde" hint="Sin fecha, rige desde que se crea.">
+          <app-form-field
+            icon="calendar"
+            label="Vigente desde"
+            hint="Sin fecha, rige desde que se crea."
+          >
             <app-date-picker [(value)]="vigenteDesdeTarifario" />
           </app-form-field>
 
@@ -504,89 +551,90 @@
      médicos, reservas de análisis, resultados, encuestas y contabilidad del
      laboratorio. Cada uno tiene su módulo y su carril; construir una segunda
      versión acá sería la duplicación que el carril prohíbe. -->
-<section class="laboratorio__cobertura" aria-labelledby="cobertura-lab-titulo">
-  <h2 id="cobertura-lab-titulo">Qué administra esta pantalla y qué no</h2>
-  <dl>
-    <div>
-      <dt>Acá</dt>
-      <dd>
-        Se ven las sucursales, el equipamiento con su calibración, el personal
-        con sus permisos de validación y firma, y las acreditaciones. Se
-        administran la publicación de la unidad en el directorio, el catálogo de
-        estudios —sumar y quitar— y los tarifarios — módulo 23
-        (<code>diagnostic_units</code>).
-      </dd>
-    </div>
-    <div>
-      <dt>El precio de un estudio</dt>
-      <dd>
-        Acá <strong>se lee</strong>. Cada tarjeta muestra lo que rige en cada
-        tarifario, y desde esta pantalla no se carga ni se cierra ninguno: el
-        precio de un estudio no es un importe suelto que cada centro escriba
-        cuando quiera, sino una versión dentro de un tarifario, append-only del
-        lado del servidor. Cargarlo es tarea de quien administra los tarifarios,
-        y se hace fuera de acá.
-      </dd>
-    </div>
+<!-- Plegada, y cerrada de entrada. El texto no sobra —dice qué NO administra
+     esta pantalla, que es lo que evita que alguien busque acá el precio de un
+     estudio— pero desplegado son nueve párrafos de documentación debajo del
+     catálogo: la pantalla terminaba siendo más manual que consola. Se guarda
+     detrás de un `app-accordion`, que es la pieza del banco para exactamente
+     esto, y el catálogo vuelve a ser lo último que se ve. -->
+<app-accordion class="laboratorio__cobertura">
+  <app-accordion-panel heading="Qué administra esta pantalla y qué no">
+    <dl>
+      <div>
+        <dt>Acá</dt>
+        <dd>
+          Se ven las sucursales, el equipamiento con su calibración, el personal con sus permisos de
+          validación y firma, y las acreditaciones. Se administran la publicación de la unidad en el
+          directorio, el catálogo de estudios —sumar y quitar— y los tarifarios — módulo 23
+          (<code>diagnostic_units</code>).
+        </dd>
+      </div>
+      <div>
+        <dt>El precio de un estudio</dt>
+        <dd>
+          Acá <strong>se lee</strong>. Cada tarjeta muestra lo que rige en cada tarifario, y desde
+          esta pantalla no se carga ni se cierra ninguno: el precio de un estudio no es un importe
+          suelto que cada centro escriba cuando quiera, sino una versión dentro de un tarifario,
+          append-only del lado del servidor. Cargarlo es tarea de quien administra los tarifarios, y
+          se hace fuera de acá.
+        </dd>
+      </div>
 
-    <div>
-      <dt>Editar un estudio</dt>
-      <dd>
-        No se puede, y no es un pendiente de pantalla: el catálogo es
-        append-only. Corregir una oferta es quitarla y publicarla de nuevo. Un
-        botón «editar» acá terminaría en un error del servidor.
-      </dd>
-    </div>
-    <div>
-      <dt>La lista de tarifarios</dt>
-      <dd>
-        La plataforma todavía no devuelve los tarifarios de una unidad: la ficha
-        trae los precios, y de ahí se deduce cuáles existen. Por eso acá ves los
-        que ya tienen algún precio y los que creaste en esta pestaña. Uno recién
-        creado y sin ningún precio no se ve desde otra pestaña ni desde otra
-        computadora hasta que le cargues el primero.
-      </dd>
-    </div>
-    <div>
-      <dt>Tarifario de una aseguradora</dt>
-      <dd>
-        Un tarifario se puede atar a una aseguradora, pero el campo pide su
-        identificador y ninguna lectura de la plataforma lo entrega todavía. Se
-        omite en vez de ofrecer un campo que nadie puede llenar.
-      </dd>
-    </div>
-    <div>
-      <dt>Sucursales, equipos, personal y acreditaciones</dt>
-      <dd>
-        Se listan y se vigilan sus vencimientos; darlos de alta o modificarlos
-        todavía no tiene pantalla y se hace fuera de acá.
-      </dd>
-    </div>
-    <div>
-      <dt>Reservas y resultados</dt>
-      <dd>
-        Los consume la vista del paciente sobre el módulo 20
-        (<code>diagnostics</code>), en <strong>Laboratorio e imagen</strong>.
-        Esta pantalla configura la oferta; no duplica la cola clínica.
-      </dd>
-    </div>
-    <div>
-      <dt>Visitadores médicos</dt>
-      <dd>
-        La visita médica se modela como un tipo de cita del módulo 41
-        (<code>scheduling</code>) y todavía no tiene consola propia. No se
-        declara acá para no prometer una agenda que nadie despacha.
-      </dd>
-    </div>
-    <div>
-      <dt>Contabilidad y encuestas</dt>
-      <dd>
-        Viven en los módulos 16 (contabilidad) y 9 (formularios), con sus
-        propios carriles.
-      </dd>
-    </div>
-  </dl>
-</section>
+      <div>
+        <dt>Editar un estudio</dt>
+        <dd>
+          No se puede, y no es un pendiente de pantalla: el catálogo es append-only. Corregir una
+          oferta es quitarla y publicarla de nuevo. Un botón «editar» acá terminaría en un error del
+          servidor.
+        </dd>
+      </div>
+      <div>
+        <dt>La lista de tarifarios</dt>
+        <dd>
+          La plataforma todavía no devuelve los tarifarios de una unidad: la ficha trae los precios,
+          y de ahí se deduce cuáles existen. Por eso acá ves los que ya tienen algún precio y los
+          que creaste en esta pestaña. Uno recién creado y sin ningún precio no se ve desde otra
+          pestaña ni desde otra computadora hasta que le cargues el primero.
+        </dd>
+      </div>
+      <div>
+        <dt>Tarifario de una aseguradora</dt>
+        <dd>
+          Un tarifario se puede atar a una aseguradora, pero el campo pide su identificador y
+          ninguna lectura de la plataforma lo entrega todavía. Se omite en vez de ofrecer un campo
+          que nadie puede llenar.
+        </dd>
+      </div>
+      <div>
+        <dt>Sucursales, equipos, personal y acreditaciones</dt>
+        <dd>
+          Se listan y se vigilan sus vencimientos; darlos de alta o modificarlos todavía no tiene
+          pantalla y se hace fuera de acá.
+        </dd>
+      </div>
+      <div>
+        <dt>Reservas y resultados</dt>
+        <dd>
+          Los consume la vista del paciente sobre el módulo 20 (<code>diagnostics</code>), en
+          <strong>Laboratorio e imagen</strong>. Esta pantalla configura la oferta; no duplica la
+          cola clínica.
+        </dd>
+      </div>
+      <div>
+        <dt>Visitadores médicos</dt>
+        <dd>
+          La visita médica se modela como un tipo de cita del módulo 41 (<code>scheduling</code>) y
+          todavía no tiene consola propia. No se declara acá para no prometer una agenda que nadie
+          despacha.
+        </dd>
+      </div>
+      <div>
+        <dt>Contabilidad y encuestas</dt>
+        <dd>Viven en los módulos 16 (contabilidad) y 9 (formularios), con sus propios carriles.</dd>
+      </div>
+    </dl>
+  </app-accordion-panel>
+</app-accordion>
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 

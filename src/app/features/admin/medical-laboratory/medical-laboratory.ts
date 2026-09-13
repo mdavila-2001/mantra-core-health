@@ -18,6 +18,7 @@ import type {
   DiagnosticUnitAdminDetail,
   DiagnosticUnitAdminEquipment,
   DiagnosticUnitAdminItem,
+  DiagnosticUnitAdminPrice,
   DiagnosticUnitAdminSite,
   DiagnosticUnitAdminStaff,
   DiagnosticUnitAdminStudy,
@@ -43,9 +44,13 @@ import { ServiceIcon } from '../../../shared/components/atoms/service-icon/servi
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
+import { Accordion } from '../../../shared/components/molecules/accordion/accordion';
+import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -175,9 +180,12 @@ const LARGO_MAXIMO_DE_NOMBRE = 200;
 @Component({
   selector: 'app-medical-laboratory',
   imports: [
+    Accordion,
+    AccordionPanel,
     Alert,
     AppButton,
     Badge,
+    Card,
     Checkbox,
     DataTable,
     DatePicker,
@@ -185,6 +193,7 @@ const LARGO_MAXIMO_DE_NOMBRE = 200;
     FormField,
     Input,
     PageHeader,
+    SectionHeading,
     Select,
     ServiceIcon,
     Skeleton,
@@ -276,6 +285,20 @@ export class MedicalLaboratory {
 
   /** Las unidades del tenant, publicadas o no. */
   protected readonly unidades = signal<ViewState<readonly DiagnosticUnitAdminItem[]>>(loading());
+
+  /**
+   * Las unidades, como las pide `app-select`.
+   *
+   * El nombre lleva el código entre paréntesis porque dos sedes de un mismo
+   * laboratorio se llaman casi igual —«Central» y «Central Norte»— y el código
+   * es lo único que las separa sin ambigüedad.
+   */
+  protected readonly opcionesDeUnidad = computed<readonly SelectOption<string>[]>(() =>
+    (dataOf(this.unidades()) ?? []).map((unidad) => ({
+      value: unidad.id,
+      label: `${unidad.name} (${unidad.code})`,
+    })),
+  );
 
   /** La unidad elegida. Vacío mientras el listado no resolvió. */
   protected readonly unidadElegida = signal('');
@@ -593,8 +616,14 @@ export class MedicalLaboratory {
     this.cargarCatalogoDeEstudios();
   }
 
-  protected elegirUnidad(unitId: string): void {
-    if (unitId === '' || unitId === this.unidadElegida()) return;
+  /**
+   * `null` además de `''` porque el que emite es `app-select`, y un select se
+   * puede vaciar: es la misma firma que `cambiarPractica()` en «Mis servicios».
+   * Vaciarlo no cambia de unidad —no existe «ninguna unidad» que administrar—,
+   * así que se ignora y la ficha en pantalla se queda donde estaba.
+   */
+  protected elegirUnidad(unitId: string | null): void {
+    if (unitId === null || unitId === '' || unitId === this.unidadElegida()) return;
     this.unidadElegida.set(unitId);
     // Los tarifarios recordados y los formularios abiertos son de la unidad que
     // se deja atrás: arrastrarlos ofrecería cargar un precio en el tarifario de
@@ -614,6 +643,26 @@ export class MedicalLaboratory {
 
   protected etiquetaDe(concepto: DiagnosticConcept | null | undefined): string {
     return concepto?.display ?? '—';
+  }
+
+  /**
+   * El importe de un precio, escrito como lo escribe «Mis servicios»:
+   * `250.00 BOB`.
+   *
+   * La moneda va por su **código** y no por su `display`. El concepto trae las
+   * dos grafías —`BOB` y «Boliviano»— y la tarjeta usaba la larga, así que la
+   * misma cifra se leía «40.00 Boliviano» acá y «40.00 BOB» en la pantalla del
+   * médico. El código es además lo que cabe al lado de un número sin robarle el
+   * renglón.
+   *
+   * Se muestra `patientAmount` cuando lo hay: es lo que paga quien viene sin
+   * convenio, que es la pregunta que se hace mirando el catálogo. `baseAmount`
+   * es el respaldo cuando el tarifario no distingue.
+   */
+  protected importeDe(precio: DiagnosticUnitAdminPrice): string {
+    const monto = precio.patientAmount ?? precio.baseAmount;
+    const moneda = precio.currency?.code;
+    return moneda === undefined ? monto : `${monto} ${moneda}`;
   }
 
   protected varianteDe(concepto: DiagnosticConcept | null | undefined): BadgeVariant {

@@ -92,6 +92,18 @@
   gap: var(--sp-1) var(--sp-2);
 }
 
+/* El tarifario al que pertenece el importe: un código corto en mayúsculas
+   —`PUBLICO`, `CONVENIO-A`— que la tarjeta necesita para que dos cifras no se
+   lean como dos precios del mismo trato. Va con el peso de un rótulo y no con
+   el de un dato: al lado de la cifra, en el cuerpo del texto, competía con
+   ella y se leía como parte del importe. */
+.tarjeta-servicio__tarifario {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 .tarjeta-servicio__edicion {
   display: grid;
   gap: var(--sp-2);
