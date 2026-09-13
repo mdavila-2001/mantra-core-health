@@ -304,7 +304,7 @@ describe('AlovidaRuntimeService', () => {
     });
   });
 
-  describe('marco móvil', () => {
+  describe('navegación lateral adaptable', () => {
     function montarMarco() {
       document.body.innerHTML = `
         <nav class="app-side-nav"><a class="app-side-nav__item" href="#x">Inicio</a></nav>
@@ -336,6 +336,7 @@ describe('AlovidaRuntimeService', () => {
 
     it('el botón del cajón lo abre y lo cierra', () => {
       montarMarco();
+      declararMatchMedia(true);
       servicio.refrescar();
       const boton = document.querySelector<HTMLElement>('.app-nav-toggle') as HTMLElement;
 
@@ -347,8 +348,29 @@ describe('AlovidaRuntimeService', () => {
       expect(document.documentElement.classList.contains('nav-abierto')).toBe(false);
     });
 
+    it('en escritorio oculta y restaura la barra con el botón de navegación', () => {
+      montarMarco();
+      servicio.refrescar();
+      const boton = document.querySelector<HTMLElement>('.app-nav-toggle') as HTMLElement;
+
+      boton.click();
+
+      expect(document.documentElement.classList.contains('nav-collapsed')).toBe(true);
+      expect(document.querySelector('.app-side-nav')?.hasAttribute('inert')).toBe(true);
+      expect(boton.getAttribute('aria-expanded')).toBe('false');
+      expect(boton.getAttribute('aria-label')).toBe('Abrir el menú de navegación');
+
+      boton.click();
+
+      expect(document.documentElement.classList.contains('nav-collapsed')).toBe(false);
+      expect(document.querySelector('.app-side-nav')?.hasAttribute('inert')).toBe(false);
+      expect(boton.getAttribute('aria-expanded')).toBe('true');
+      expect(boton.getAttribute('aria-label')).toBe('Ocultar el menú de navegación');
+    });
+
     it('elegir un ítem cierra el cajón: no puede quedar tapando lo que se eligió', () => {
       montarMarco();
+      declararMatchMedia(true);
       servicio.refrescar();
       document.querySelector<HTMLElement>('.app-nav-toggle')?.click();
 
@@ -359,6 +381,7 @@ describe('AlovidaRuntimeService', () => {
 
     it('el velo cierra el cajón al tocarlo', () => {
       montarMarco();
+      declararMatchMedia(true);
       servicio.refrescar();
       document.querySelector<HTMLElement>('.app-nav-toggle')?.click();
 
