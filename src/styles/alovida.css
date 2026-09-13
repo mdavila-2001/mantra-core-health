@@ -657,25 +657,6 @@ app-shell-layout { display: block; }
 .app-side-nav__group-summary.tiene-la-pantalla app-nav-icon { opacity: 1; }
 .app-side-nav__group-cuerpo { display: flex; flex-direction: column; gap: 2px; }
 .app-side-nav__eyebrow { padding: 0; color: inherit; flex: 1 1 auto; }
-/* El bloque es `display: contents`: no aporta caja propia, así que sus renglones
-   se apilan con los sueltos del grupo como si fueran hermanos. Sin esto, un
-   grupo con bloques y destinos sueltos mezclados los separaría en dos columnas
-   de espaciado distinto. */
-.app-side-nav__block { display: contents; }
-.app-side-nav__block > summary { list-style: none; cursor: pointer; }
-.app-side-nav__block > summary::-webkit-details-marker { display: none; }
-.app-side-nav__block[open] > summary .app-side-nav__chevron { transform: rotate(180deg); }
-/* Un bloque abierto no marca «acá estás»: lo marca el renglón de adentro, que
-   ya se ve. La marca del `summary` es para cuando está plegado y el destino
-   activo no está a la vista. */
-.app-side-nav__block[open] > summary.is-activo {
-  background: none; box-shadow: none; font-weight: inherit;
-  color: rgba(255, 255, 255, .84);
-}
-.app-side-nav__block[open] > summary.is-activo::before { content: none; }
-.app-side-nav__block[open] > summary.is-activo:hover {
-  color: #fff; background: rgba(159, 216, 208, .16);
-}
 
 .app-side-nav__item {
   position: relative;
@@ -718,9 +699,9 @@ app-shell-layout { display: block; }
   color: rgba(255, 255, 255, .72);
 }
 .app-side-nav__sub .app-side-nav__item.is-activo { color: #fff; }
-/* La flecha la comparten los dos escalones: gira al abrirse, y es la única
-   señal de que el renglón despliega algo en vez de llevar a una pantalla.
-   En el rótulo del grupo va más chica, como su tipografía. */
+/* La flecha del único escalón plegable que queda —el dominio—: gira al abrirse,
+   y es la única señal de que el renglón despliega algo en vez de llevar a una
+   pantalla. Va más chica que un ícono de destino, como su tipografía. */
 .app-side-nav__chevron { width: 1rem; height: 1rem; margin-left: auto; transition: transform .16s ease; }
 .app-side-nav__group-summary .app-side-nav__chevron { width: .85rem; height: .85rem; }
 .app-side-nav__group[open] > summary .app-side-nav__chevron { transform: rotate(180deg); }

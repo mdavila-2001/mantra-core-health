@@ -57,22 +57,29 @@
     <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
          que cambia es cómo se pintan, no de dónde vienen.
 
-         Dos escalones plegables, y los dos son `<details>` nativos: el dominio
-         afuera y el bloque de cosas parecidas adentro. Es `<details>` y no un
-         botón con `aria-expanded` porque el elemento ya trae gratis lo que
-         habría que reimplementar —teclado, semántica de revelado, «buscar en la
-         página» que abre lo cerrado— y porque sin JavaScript la barra sigue
-         siendo navegable.
+         **Un solo escalón plegable, y es el tope.** El dominio pliega; adentro
+         van los destinos, y nada más. Es `<details>` y no un botón con
+         `aria-expanded` porque el elemento ya trae gratis lo que habría que
+         reimplementar —teclado, semántica de revelado, «buscar en la página»
+         que abre lo cerrado— y porque sin JavaScript la barra sigue siendo
+         navegable.
 
-         Un bloque con **un solo** destino visible no se dibuja como
-         desplegable: sería un clic de más para llegar a lo mismo. Sale suelto,
-         con su ícono, en el lugar que le toca del orden.
+         Acá vivía un segundo `<details>` por bloque («Personas»,
+         «Organizaciones», «Red de salud»…), y con él llegar a una pantalla
+         costaba tres clics, dos de ellos sobre rótulos que no llevan a ningún
+         lado. Se retira: todo destino está ahora a dos clics del borde de la
+         barra, y `shell-layout.spec` falla si vuelve a anidarse uno.
+
+         Los bloques no desaparecen del modelo, y siguen mandando acá: la barra
+         recorre `grupo.blocks` y no `grupo.items` porque, sin el rótulo que los
+         agrupaba, lo único que queda diciendo que «Laboratorio médico» y
+         «Laboratorio farmacéutico» son la misma clase de cosa es que salgan
+         seguidas. Por `items` el orden es el del registro, y ahí se mezclan.
 
          Y hay dominios que directamente no se dibujan: los que `aplanado`
          marca —«General» y «Mi cuenta»— sueltan sus destinos acá arriba, sin
-         rótulo y sin plegables intermedios. El paciente llegaba a «Mis citas»
-         abriendo dos desplegables que no llevan a ninguna pantalla; ahora es un
-         clic. Quiénes son lo dice `GRUPOS_APLANADOS`, no esta plantilla. -->
+         rótulo y sin plegable ninguno. Quiénes son lo dice `GRUPOS_APLANADOS`,
+         no esta plantilla. -->
     <!-- Arriba de los dominios, y sueltos: «Mi perfil» y «Notificaciones». No
          cuelgan de un desplegable porque nadie se pregunta a qué dominio
          pertenecen, y para el médico eran un plegable de dos renglones que
@@ -117,33 +124,8 @@
 
           <div class="app-side-nav__group-cuerpo">
             @for (bloque of grupo.blocks ?? []; track bloque.label) {
-              @if (bloque.items.length > 1) {
-                @let claveBloque = clavePlegable(grupo.label, bloque.label);
-                <details
-                  class="app-side-nav__block"
-                  data-testid="nav-bloque"
-                  [attr.data-bloque]="bloque.label"
-                  [open]="abierto(claveBloque, bloque.items)"
-                  (toggle)="alPlegar(claveBloque, $any($event.target).open)"
-                >
-                  <summary
-                    class="app-side-nav__item"
-                    [class.is-activo]="contieneLaPantalla(bloque.items)"
-                  >
-                    <app-nav-icon [name]="bloque.icon ?? 'directory'" />
-                    <span class="side-nav__label">{{ bloque.label }}</span>
-                    <svg class="app-side-nav__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
-                  </summary>
-                  <div class="app-side-nav__sub">
-                    @for (item of bloque.items; track item.route) {
-                      <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
-                    }
-                  </div>
-                </details>
-              } @else {
-                @for (item of bloque.items; track item.route) {
-                  <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
-                }
+              @for (item of bloque.items; track item.route) {
+                <ng-container *ngTemplateOutlet="destino; context: { $implicit: item }" />
               }
             }
           </div>

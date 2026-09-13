@@ -203,20 +203,24 @@ export class ShellLayout {
   }
 
   /* ==========================================================================
-      Los desplegables de la barra
+      El desplegable de la barra
 
-      La barra tiene dos escalones plegables: el dominio (`General`, `Atención`,
-      …) y, adentro, el bloque de cosas parecidas (`Directorios`, `Mi salud`).
-      Los dos se comportan igual, así que los gobierna un solo par de métodos y
-      un solo mapa de estado.
+      La barra tiene **un solo** escalón plegable: el dominio (`General`,
+      `Atención`, …). Adentro van los destinos, sueltos.
+
+      Hubo un segundo escalón —el bloque de cosas parecidas: «Directorios», «Mi
+      salud»— y se retiró: con él, entrar a una pantalla costaba tres clics y
+      dos caían sobre rótulos que no llevan a ninguna parte. El reparto en
+      bloques sigue vivo en `core/navigation`, pero ahora sólo decide el
+      **orden** en que salen los destinos, no un renglón que haya que abrir.
 
       **Lo abierto se calcula, y sólo se recuerda lo que la persona toca.** El
       valor por omisión es «abierto si acá adentro está la pantalla en la que
-      estás»: navegar a `/my-account/diagnostic-results` abre «Mi cuenta» y «Mi
-      salud» sin que nadie los despliegue, que es lo que hace que la barra
-      siempre muestre dónde estás parado. Guardar el estado de los veintiún
-      bloques desde el arranque haría lo contrario — congelaría el menú tal como
-      quedó en la primera pantalla.
+      estás»: navegar a `/my-account/diagnostic-results` abre «Mi cuenta» sin
+      que nadie la despliegue, que es lo que hace que la barra siempre muestre
+      dónde estás parado. Guardar el estado de los cinco dominios desde el
+      arranque haría lo contrario — congelaría el menú tal como quedó en la
+      primera pantalla.
      ========================================================================== */
 
   /**
@@ -231,9 +235,16 @@ export class ShellLayout {
    */
   private readonly plegadosAMano = signal<Readonly<Record<string, boolean>>>({});
 
-  /** Clave estable de un desplegable. El grupo la prefija: hay bloques homónimos. */
-  protected clavePlegable(grupo: string, bloque?: string): string {
-    return bloque === undefined ? grupo : `${grupo}/${bloque}`;
+  /**
+   * Clave estable de un desplegable.
+   *
+   * Hoy es el rótulo del dominio y nada más —son cinco y no se repiten—. Sigue
+   * siendo una función y no el rótulo suelto en la plantilla porque es el único
+   * lugar donde se decide de qué está hecha la clave del mapa de plegados: si
+   * mañana hiciera falta prefijarla, se prefija acá y no en cada llamada.
+   */
+  protected clavePlegable(grupo: string): string {
+    return grupo;
   }
 
   /** Si algún destino de la lista es —o contiene— la pantalla actual. */
