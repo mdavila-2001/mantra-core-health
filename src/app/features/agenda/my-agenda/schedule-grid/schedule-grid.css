@@ -201,17 +201,20 @@
   outline-offset: 1px;
 }
 
+/* El texto parte renglón en vez de cortarse: con seis o siete días una columna
+   mide unos 100 px, y «09:00 – 13:00» quedaba «09:00 – 13:0» en la vista
+   previa del horario retirado. */
 .grilla__bloque-horas {
   font-size: var(--fs-caption);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .grilla__bloque-detalle {
   font-size: 12px;
   opacity: 0.85;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* ---- el bloqueo de agenda ------------------------------------------------- */
@@ -227,7 +230,6 @@
   gap: 2px;
   min-block-size: 1.25rem;
   padding: var(--sp-1) var(--sp-2);
-  overflow: hidden;
   border-radius: var(--r-md);
   border: 1px dashed var(--st-error-bd);
   border-inline-start: 3px solid var(--st-error-bd);
@@ -239,6 +241,20 @@
     var(--st-error-bg);
   color: var(--st-error-fg);
   z-index: 2;
+  /* Sin `overflow: hidden`: rompería el rótulo pegajoso de abajo. El recorte
+     lo pone la caja que scrollea. */
+  overflow: visible;
+}
+
+/* Un bloqueo de día entero empieza a las 00:00, fuera de la vista: el rótulo
+   se queda pegado bajo la cabecera mientras el bloque siga a la vista, para
+   que el rojo nunca se vea sin decir por qué. */
+.grilla__bloqueo-rotulo {
+  position: sticky;
+  top: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 /* La línea de «ahora», la raya roja que recorre el día en Google Calendar. Se

@@ -83,10 +83,12 @@
                 [attr.aria-label]="bloqueo.etiqueta"
                 [attr.title]="bloqueo.etiqueta"
               >
-                <span class="grilla__bloque-horas">Bloqueado · {{ bloqueo.desde }} – {{ bloqueo.hasta }}</span>
-                @if (bloqueo.motivo) {
-                  <span class="grilla__bloque-detalle">{{ bloqueo.motivo }}</span>
-                }
+                <span class="grilla__bloqueo-rotulo">
+                  <span class="grilla__bloque-horas">Bloqueado · {{ bloqueo.desde }} – {{ bloqueo.hasta }}</span>
+                  @if (bloqueo.motivo) {
+                    <span class="grilla__bloque-detalle">{{ bloqueo.motivo }}</span>
+                  }
+                </span>
               </div>
             }
             @if (dia.esHoy && ahora() !== null) {

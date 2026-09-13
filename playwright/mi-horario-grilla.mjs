@@ -79,28 +79,51 @@ if ((await agotan.count()) > 0) {
 
 await pagina.screenshot({ path: `${SALIDA}/1-mi-horario.png`, fullPage: true });
 
-await barra.getByTestId('ver-bloqueos').hover();
-await pagina.waitForTimeout(700);
-await pagina.locator('.mi-agenda__tarjeta').screenshot({ path: `${SALIDA}/2-tooltip-bloqueos.png` });
-const tooltip = await pagina.getByRole('tooltip').allTextContents();
-verificar('el ícono de bloqueos tiene tooltip', tooltip.some((t) => t.includes('bloqueos')), tooltip.join(' | '));
+// El tooltip se lee ANTES de cualquier captura: la captura de un elemento lo
+// desplaza a la vista con el mouse quieto, y el puntero termina sobre una
+// franja de la grilla — se cierra el tooltip y se abre el globo de detalle.
+for (const [id, texto] of [
+  ['ver-bloqueos', 'Ver mis bloqueos de agenda'],
+  ['agendar-cita', 'Agendar una cita a un paciente'],
+]) {
+  await barra.getByTestId(id).hover();
+  await pagina.waitForTimeout(700);
+  const tooltips = await pagina.getByRole('tooltip').allTextContents();
+  verificar(`«${id}» tiene tooltip descriptivo`, tooltips.some((t) => t.includes(texto)), tooltips.join(' | '));
+  if (id === 'ver-bloqueos') {
+    await pagina.screenshot({ path: `${SALIDA}/2-tooltip-bloqueos.png` });
+  }
+}
 await pagina.mouse.move(0, 0);
 
 /* ---- Un bloqueo de esta semana, en rojo ---------------------------------- */
 
 await pagina.getByRole('tab', { name: 'Cómo viene el mes' }).click();
-await pagina.getByRole('button', { name: /^viernes 11/i }).click();
+// `toLocaleDateString('es-BO')` escribe «viernes, 11 de septiembre», con coma.
+await pagina.getByRole('button', { name: /^viernes,? 11 de/i }).click();
 await pagina.getByRole('button', { name: 'Bloquear este día' }).click();
 const dialogo = pagina.getByRole('dialog');
 await dialogo.getByRole('textbox').fill('Congreso de prueba');
 await dialogo.getByRole('button', { name: 'Bloquear el día' }).click();
 await pagina.waitForTimeout(1200);
 await pagina.getByRole('tab', { name: 'Mi horario' }).click();
-const bloqueo = pagina.locator('.mi-agenda__tarjeta [data-testid="horario-bloqueo"]').first();
+// El que se acaba de crear, no uno sembrado por la maqueta.
+const bloqueo = pagina
+  .locator('.mi-agenda__tarjeta [data-testid="horario-bloqueo"]')
+  .filter({ hasText: 'Congreso de prueba' });
 await bloqueo.waitFor({ timeout: 30_000 });
 const colorFondo = await bloqueo.evaluate((el) => getComputedStyle(el).backgroundColor);
-verificar('el bloqueo aparece en la grilla', true, ((await bloqueo.textContent()) ?? '').trim());
-await bloqueo.scrollIntoViewIfNeeded();
+verificar('el bloqueo recién creado aparece en la grilla', true, ((await bloqueo.textContent()) ?? '').trim());
+const rotuloVisible = await pagina.locator('.mi-agenda__tarjeta .grilla__scroll').evaluate((caja) => {
+  const rotulo = [...caja.querySelectorAll('.grilla__bloqueo-rotulo')].find((r) =>
+    r.textContent?.includes('Congreso de prueba'),
+  );
+  if (!rotulo) return false;
+  const a = caja.getBoundingClientRect();
+  const b = rotulo.getBoundingClientRect();
+  return b.top >= a.top && b.bottom <= a.bottom;
+});
+verificar('el rótulo del bloqueo de día entero se ve sin scrollear', rotuloVisible);
 await pagina.locator('.mi-agenda__tarjeta').screenshot({ path: `${SALIDA}/3-bloqueo-en-rojo.png` });
 process.stdout.write(`   fondo del bloqueo: ${colorFondo}\n`);
 
@@ -124,13 +147,19 @@ if ((await vistaPrevia.count()) > 0) {
   const recorte = await modal.locator('.grilla__scroll').evaluate((el) => {
     const caja = el.getBoundingClientRect();
     const bloques = [...el.querySelectorAll('[data-testid="horario-bloque"]')].map((b) => b.getBoundingClientRect());
+    const textos = [...el.querySelectorAll('.grilla__bloque-horas, .grilla__bloque-detalle')];
     return {
       desborde: el.scrollWidth - el.clientWidth,
       bloquesDentro: bloques.every((b) => b.right <= caja.right + 1),
+      textoSinCortar: textos.every((t) => t.scrollWidth <= t.clientWidth + 1),
       detalle: el.querySelector('[data-testid="horario-bloque"]')?.textContent?.trim(),
     };
   });
-  verificar('la vista previa no corta la última columna', recorte.desborde <= 1 && recorte.bloquesDentro, JSON.stringify(recorte));
+  verificar(
+    'la vista previa no corta la última columna ni su texto',
+    recorte.desborde <= 1 && recorte.bloquesDentro && recorte.textoSinCortar,
+    JSON.stringify(recorte),
+  );
   await modal.screenshot({ path: `${SALIDA}/4-vista-previa.png` });
 } else {
   verificar('hay un horario retirado para abrir la vista previa', false);
