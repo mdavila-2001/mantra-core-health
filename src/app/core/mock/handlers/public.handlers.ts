@@ -1,4 +1,4 @@
-import { comentarios, CONCEPTO, publicaciones, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
+import { comentarios, CONCEPTO, publicaciones, resenas, vitrinaPorSlug, vitrinas, type VitrinaSimulada } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { afiliaciones, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
 import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
@@ -251,6 +251,42 @@ export function registrarPublico(router: MockRouter): void {
         .map(resumenDePost),
       updatedAt: iso(-1),
     };
+  });
+
+  /* ---- las opiniones de una ficha, con quién las dio ----------------------
+     Contrato del simulador: la API real todavía no lo publica (ver
+     «Opiniones públicas de una ficha» en PENDIENTES-BACKEND.md). Cuelga de
+     `/public/profiles/:prefijo/:slug/…` por lo mismo que los servicios. */
+
+  router.get('/public/profiles/:prefix/:slug/reviews', ({ params, query }) => {
+    const v = vitrinaPorSlug(params['slug']!);
+    if (v === undefined || v.kind === 'PATIENT') return notFound('Ficha no encontrada');
+    const items = resenas
+      .filtrar((r) => r.targetPublicProfileId === v.id)
+      .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+      .map((r) => {
+        const anonima = r.reviewerDisplayModeConceptId === CONCEPTO.reviewDisplayAnon;
+        const conFicha = vitrinas.get(r.reviewerProfileId);
+        const publica = conFicha !== undefined && conFicha.kind !== 'PATIENT' && conFicha.visibility === 'PUBLIC';
+        const respuesta = r.responses[0];
+        return {
+          id: r.id,
+          rating: r.overallRating,
+          text: r.reviewText === '' ? null : r.reviewText,
+          publishedAt: r.publishedAt,
+          reviewer: anonima
+            ? { displayName: 'Paciente verificado', headline: 'Eligió no mostrar su nombre', avatarUrl: null, slug: null, kind: null }
+            : {
+                displayName: r.reviewerDisplayName ?? conFicha?.displayName ?? 'Paciente',
+                headline: publica ? conFicha.headline : 'Paciente',
+                avatarUrl: r.reviewerAvatarUrl ?? conFicha?.avatarUrl ?? null,
+                slug: publica ? conFicha.slug : null,
+                kind: publica ? (conFicha.kind as ClasePublica) : null,
+              },
+          response: respuesta === undefined ? null : { text: respuesta.responseText, publishedAt: respuesta.publishedAt },
+        };
+      });
+    return paginaPublica(items, query, 20);
   });
 
   /* ---- lo que cada ficha OFRECE (P30 y P31 de PENDIENTES-BACKEND.md) ------

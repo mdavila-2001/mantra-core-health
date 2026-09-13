@@ -1,0 +1,65 @@
+/* Los mismos botones del carrusel de una publicación (`.publicacion__paso`),
+   fuera de la imagen: acá van sobre la tarjeta, así que toman los colores del
+   tema en vez del negro translúcido que necesita una foto. */
+
+:host {
+  display: block;
+}
+
+.pasos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e3);
+  margin-block-start: var(--e4);
+}
+
+.pasos__boton {
+  /* 44×44 aunque el chevrón mida 20: es el área táctil mínima. */
+  inline-size: 44px;
+  block-size: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--filete-2);
+  border-radius: var(--r-full);
+  background: var(--sup-inset);
+  color: var(--tinta);
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva);
+}
+
+.pasos__boton svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.pasos__boton:hover:not(:disabled) {
+  background: var(--aguamarina);
+  color: var(--tinta-sobre-marca, #0b1a1f);
+}
+
+.pasos__boton:focus-visible {
+  outline: 3px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+/* En el extremo el botón sigue ahí —para que la fila no salte— pero se ve y se
+   anuncia como inoperable. */
+.pasos__boton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pasos__contador {
+  margin: 0;
+  min-inline-size: 4.5rem;
+  padding: 2px var(--e3);
+  border-radius: var(--r-full);
+  background: var(--sup-inset);
+  color: var(--tinta-2);
+  font-size: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

@@ -381,6 +381,9 @@ export interface ResenaSimulada {
   readonly id: string;
   readonly targetPublicProfileId: string;
   readonly reviewerProfileId: string;
+  /** El nombre con el que se muestra quien opinó, cuando no tiene ficha propia. */
+  readonly reviewerDisplayName?: string;
+  readonly reviewerAvatarUrl?: string;
   readonly overallRating: number;
   readonly reviewText: string;
   readonly reviewerDisplayModeConceptId: string;
@@ -399,19 +402,49 @@ const RESENAS_TEXTO = [
   [4, 'Buen trato y buena explicación del tratamiento.'],
 ] as const;
 
+/**
+ * Quiénes opinan en las fichas: pacientes sin ficha pública propia. Se arman de
+ * dos listas para que haya muchas personas distintas y ninguna ficha repita
+ * nombre entre sus opiniones.
+ */
+const NOMBRES_QUE_OPINAN = ['Carla', 'Diego', 'Mariela', 'Rodrigo', 'Lucía', 'Fernando', 'Gabriela', 'Óscar', 'Paola', 'Javier', 'Daniela', 'Marco', 'Verónica', 'Luis', 'Silvia', 'Andrés', 'Natalia', 'Hugo', 'Camila', 'Ramiro'];
+const APELLIDOS_QUE_OPINAN = ['Justiniano', 'Vargas', 'Suárez', 'Quiroga', 'Mamani', 'Céspedes', 'Arteaga', 'Gutiérrez', 'Rivero', 'Chávez', 'Paz', 'Moreno', 'Añez', 'Flores', 'Saucedo', 'Terrazas', 'Roca', 'Aguilera', 'Montaño', 'Salvatierra', 'Heredia'];
+const COLORES_QUE_OPINAN = ['#1f6f8b', '#0f766e', '#7c3aed', '#b45309', '#be123c', '#4f46e5', '#0891b2'];
+
+/** Los desvíos que reparten las estrellas alrededor del promedio de la ficha. */
+const DESVIOS = [0.3, -0.7, 0.1, -0.3, 0.4, -1.2, 0.2, 0, -0.4, 0.5];
+
+/**
+ * Una opinión por cada calificación que declara la ficha (`ratingCount`): el
+ * «(8)» de la cabecera y la lista del modal tienen que decir lo mismo. Un tercio
+ * son sólo estrellas, sin texto — también es alguien que calificó.
+ *
+ * Todas con el nombre visible: el cliente pidió que en la ficha pública se vea
+ * **quién** opinó. El modo anónimo sigue existiendo en el contrato para quien lo
+ * elija al publicar (ver `POST /community/profiles/:id/reviews`).
+ */
 export const resenas = new Coleccion<ResenaSimulada>(
   VITRINAS.filter((v) => v.kind !== 'PATIENT' && v.ratingCount > 0).flatMap((v, i) =>
-    Array.from({ length: 2 + (i % 3) }, (_, k) => {
-      const [rating, texto] = RESENAS_TEXTO[(i + k) % RESENAS_TEXTO.length]!;
+    Array.from({ length: v.ratingCount }, (_, k) => {
+      const promedio = v.ratingAverage ?? 4.5;
+      const rating = Math.min(5, Math.max(1, Math.round(promedio + DESVIOS[(i + k) % DESVIOS.length]!)));
+      const texto = RESENAS_TEXTO.find(([estrellas]) => estrellas === rating)?.[1] ?? RESENAS_TEXTO[(i + k) % RESENAS_TEXTO.length]![1];
+      const nombre =
+        k === 0
+          ? VITRINA_PACIENTE.displayName
+          : `${NOMBRES_QUE_OPINAN[(k * 7 + i) % NOMBRES_QUE_OPINAN.length]} ${APELLIDOS_QUE_OPINAN[(k * 3 + i * 5) % APELLIDOS_QUE_OPINAN.length]}`;
+      const id = `review-${v.id}-${k}`;
       return {
-        id: uuid(`review-${v.id}-${k}`),
+        id: k < 4 ? uuid(id) : id,
         targetPublicProfileId: v.id,
-        reviewerProfileId: k === 0 ? VITRINA_PACIENTE.id : VITRINAS.at(-(k + 1))!.id,
+        reviewerProfileId: k === 0 ? VITRINA_PACIENTE.id : `reviewer-${i}-${k}`,
+        reviewerDisplayName: nombre,
+        reviewerAvatarUrl: k === 0 ? VITRINA_PACIENTE.avatarUrl : avatarSvg(nombre, COLORES_QUE_OPINAN[k % COLORES_QUE_OPINAN.length]!),
         overallRating: rating,
-        reviewText: texto,
-        reviewerDisplayModeConceptId: k % 2 === 0 ? CONCEPTO.reviewDisplayReal : CONCEPTO.reviewDisplayAnon,
+        reviewText: k % 3 === 2 ? '' : texto,
+        reviewerDisplayModeConceptId: CONCEPTO.reviewDisplayReal,
         verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
-        publishedAt: iso(-k * 20 - 3, 18),
+        publishedAt: iso(-k * 6 - 3, 8 + (k % 10)),
         dimensionScores: [
           { dimensionConceptId: CONCEPTO.reviewDim.COMMUNICATION, score: rating },
           { dimensionConceptId: CONCEPTO.reviewDim.PUNCTUALITY, score: Math.max(1, rating - 1) },

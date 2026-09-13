@@ -226,6 +226,10 @@ const vinculaciones = new Coleccion<VinculacionSimulada>([
 const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string }>([
   { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
   { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
+  // Dos sedes más para la médica: con cuatro, «Dónde atiende» de su ficha
+  // pública pasa de una página y se puede ver el paginado funcionando.
+  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
+  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
 ]);
 
 /**

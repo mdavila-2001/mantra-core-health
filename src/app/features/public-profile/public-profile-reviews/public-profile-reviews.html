@@ -1,0 +1,196 @@
+<app-content-dialog [heading]="titulo()" size="lg" closeLabel="Cerrar" (closed)="cerrado.emit()">
+  @switch (estado()) {
+    @case ('datos') {
+      <!-- El resumen: el promedio y cómo se reparten las estrellas. -->
+      <div class="opiniones__resumen" data-testid="reviews-summary">
+        <div class="opiniones__promedio">
+          <span class="opiniones__numero">{{ promedioTexto() }}</span>
+          <span class="opiniones__estrellas" aria-hidden="true">
+            @for (n of cincoEstrellas; track n) {
+              <svg viewBox="0 0 24 24" [class.apagada]="!estrellaDelPromedio(n)">
+                <path d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z" />
+              </svg>
+            }
+          </span>
+          <span class="opiniones__total">
+            {{ todas().length }} {{ todas().length === 1 ? 'calificación' : 'calificaciones' }}
+          </span>
+        </div>
+        <ul class="opiniones__barras">
+          @for (fila of distribucion(); track fila.estrellas) {
+            <li class="opiniones__barra">
+              <span class="opiniones__barra-rotulo">{{ fila.estrellas }} ★</span>
+              <span class="opiniones__barra-riel" aria-hidden="true">
+                <span class="opiniones__barra-relleno" [style.width.%]="fila.porcentaje"></span>
+              </span>
+              <span class="opiniones__barra-cuenta">{{ fila.cuantas }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div class="opiniones__pestanas" role="tablist" aria-label="Qué mirar">
+        <button
+          type="button"
+          role="tab"
+          class="opiniones__pestana"
+          data-testid="reviews-tab-opiniones"
+          [attr.aria-selected]="pestana() === 'opiniones'"
+          (click)="elegir('opiniones')"
+        >
+          Opiniones ({{ conTexto().length }})
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="opiniones__pestana"
+          data-testid="reviews-tab-estrellas"
+          [attr.aria-selected]="pestana() === 'estrellas'"
+          (click)="elegir('estrellas')"
+        >
+          Quiénes dieron estrellas ({{ todas().length }})
+        </button>
+      </div>
+
+      @if (pestana() === 'opiniones') {
+        @if (conTexto().length === 0) {
+          <p class="opiniones__vacio">
+            Todavía nadie escribió una opinión. Las calificaciones con estrellas están en la otra
+            pestaña.
+          </p>
+        } @else {
+          <ul class="opiniones__lista" data-testid="reviews-list">
+            @for (opinion of visiblesOpiniones(); track opinion.id) {
+              <li class="opinion">
+                <div class="opinion__cabecera">
+                  <ng-container
+                    *ngTemplateOutlet="persona; context: { $implicit: opinion }"
+                  ></ng-container>
+                  <span class="opinion__fecha">{{
+                    opinion.publishedAt | date: "d 'de' MMM 'de' y"
+                  }}</span>
+                </div>
+                <p
+                  class="opinion__estrellas"
+                  role="img"
+                  [attr.aria-label]="rotuloEstrellas(opinion.rating)"
+                >
+                  @for (n of cincoEstrellas; track n) {
+                    <svg viewBox="0 0 24 24" aria-hidden="true" [class.apagada]="n > opinion.rating">
+                      <path
+                        d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z"
+                      />
+                    </svg>
+                  }
+                </p>
+                <p class="opinion__texto">{{ opinion.text }}</p>
+                @if (opinion.response; as respuesta) {
+                  <div class="opinion__respuesta">
+                    <p class="opinion__respuesta-autor">Respuesta de {{ displayName() }}</p>
+                    <p>{{ respuesta.text }}</p>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+          <app-public-profile-pager
+            [total]="conTexto().length"
+            [pageSize]="porPagina"
+            [(page)]="paginaOpiniones"
+            label="opiniones"
+            testId="reviews-pager"
+          />
+        }
+      } @else {
+        @if (todas().length === 0) {
+          <p class="opiniones__vacio">Todavía nadie calificó esta ficha.</p>
+        } @else {
+          <ul class="opiniones__lista" data-testid="raters-list">
+            @for (opinion of visiblesEstrellas(); track opinion.id) {
+              <li class="opinion opinion--fila">
+                <ng-container
+                  *ngTemplateOutlet="persona; context: { $implicit: opinion }"
+                ></ng-container>
+                <span
+                  class="opinion__estrellas"
+                  role="img"
+                  data-testid="rater-stars"
+                  [attr.aria-label]="rotuloEstrellas(opinion.rating)"
+                >
+                  @for (n of cincoEstrellas; track n) {
+                    <svg viewBox="0 0 24 24" aria-hidden="true" [class.apagada]="n > opinion.rating">
+                      <path
+                        d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z"
+                      />
+                    </svg>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+          <app-public-profile-pager
+            [total]="todas().length"
+            [pageSize]="porPagina"
+            [(page)]="paginaEstrellas"
+            label="calificaciones"
+            testId="raters-pager"
+          />
+        }
+      }
+    }
+
+    @case ('carga') {
+      <div class="opiniones__esqueleto" aria-live="polite" aria-busy="true">
+        <span class="solo-lectores">Cargando opiniones…</span>
+        <span class="app-skeleton"></span>
+        <span class="app-skeleton"></span>
+        <span class="app-skeleton"></span>
+      </div>
+    }
+
+    @case ('error') {
+      <div class="app-alert" app-alert data-tono="error" role="alert">
+        <div class="app-alert__cuerpo">
+          <strong>No pudimos leer las opiniones.</strong>
+          <p>Volvé a intentarlo en un momento.</p>
+        </div>
+      </div>
+      <p class="opiniones__reintentar">
+        <button app-button data-variante="secundario" type="button" (click)="reintentar()">
+          Reintentar
+        </button>
+      </p>
+    }
+  }
+</app-content-dialog>
+
+<!-- Quién opinó: foto o iniciales y nombre; con ficha pública, enlazado. -->
+<ng-template #persona let-opinion>
+  @if (enlace(opinion); as destino) {
+    <a class="opinion__persona" [routerLink]="destino">
+      <ng-container *ngTemplateOutlet="retrato; context: { $implicit: opinion }"></ng-container>
+    </a>
+  } @else {
+    <span class="opinion__persona">
+      <ng-container *ngTemplateOutlet="retrato; context: { $implicit: opinion }"></ng-container>
+    </span>
+  }
+</ng-template>
+
+<ng-template #retrato let-opinion>
+  @if (opinion.reviewer.avatarUrl) {
+    <img class="opinion__avatar" [src]="opinion.reviewer.avatarUrl" alt="" width="40" height="40" />
+  } @else {
+    <span class="opinion__avatar opinion__avatar--iniciales" aria-hidden="true">{{
+      iniciales(opinion)
+    }}</span>
+  }
+  <span class="opinion__firma">
+    <span class="opinion__nombre" data-testid="review-author">{{
+      opinion.reviewer.displayName
+    }}</span>
+    @if (opinion.reviewer.headline) {
+      <span class="opinion__titular">{{ opinion.reviewer.headline }}</span>
+    }
+  </span>
+</ng-template>

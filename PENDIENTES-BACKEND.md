@@ -1234,3 +1234,22 @@ Los cuatro cierres están en uso y verificados contra la API viva, no sólo comp
 y `no-authenticated-user` ofrecen el trámite de verificación; **`no-person-linked` no**, porque
 verificar la identidad de una persona que todavía no está vinculada a la cuenta no es algo que quien
 mira pueda hacer. Ofrecérselo sería un callejón con cartel de salida.
+
+---
+
+## Opiniones públicas de una ficha — 13/09/2026
+
+El cliente pidió que en la ficha pública se vean **las opiniones y quiénes las dieron**, y **quiénes dieron estrellas**, al tocar «8 opiniones» o la estrella de la cabecera. La maqueta lo resuelve con un contrato que la API real **no publica todavía**:
+
+`GET /public/profiles/:prefijo/:slug/reviews?cursor&limit` → página pública (`items`, `nextCursor`, `totalHint`, `generatedAt`) de:
+
+| Campo | Tipo | Nota |
+| --- | --- | --- |
+| `id` | uuid | |
+| `rating` | 1..5 | `overall_rating` |
+| `text` | string | null | `null` si sólo calificó |
+| `publishedAt` | ISO | |
+| `reviewer` | `{ displayName, headline, avatarUrl, slug, kind }` | `slug`/`kind` en `null` si quien opinó no tiene ficha pública; con modo anónimo, `displayName: "Paciente verificado"` |
+| `response` | `{ text, publishedAt }` | null | la primera respuesta de la ficha |
+
+Sin sesión, como el resto de `/public`. Nunca `reviewerProfileId`, `userId` ni uuids de conceptos. Simulador: `core/mock/handlers/public.handlers.ts`; cliente: `PublicDirectoryClient.profileReviews`.

@@ -15,6 +15,7 @@ import type {
   PublicPractitionerQuery,
   PublicPracticeSite,
   PublicProfileDetail,
+  PublicProfileReview,
   PublicSearchQuery,
   PublicSearchResult,
 } from './public-directory.types';
@@ -36,6 +37,11 @@ type WireNearbyResult = PublicNearbyResult;
 
 type WirePost = Omit<PublicPostSummary, 'publishedAt'> & {
   readonly publishedAt: string;
+};
+
+type WireReview = Omit<PublicProfileReview, 'publishedAt' | 'response'> & {
+  readonly publishedAt: string;
+  readonly response: { readonly text: string; readonly publishedAt: string } | null;
 };
 
 type WireComment = Omit<PublicComment, 'createdAt'> & {
@@ -245,6 +251,39 @@ export class PublicDirectoryClient {
         this.url(`/public/profiles/${prefijo}/${encodeURIComponent(slug)}`),
       )
       .pipe(map(toProfile));
+  }
+
+  /**
+   * `GET /public/profiles/:prefijo/:slug/reviews` — las opiniones de una ficha,
+   * con quién las dio y cuántas estrellas puso cada uno.
+   *
+   * **Contrato del simulador:** la API real todavía no lo publica (ver
+   * `PENDIENTES-BACKEND.md`, «Opiniones públicas de una ficha»).
+   */
+  profileReviews(
+    kind: PublicProfileDetail['kind'],
+    slug: string,
+    opciones: { cursor?: string; limit?: number } = {},
+  ): Observable<PublicPage<PublicProfileReview>> {
+    const prefijo = PUBLIC_PROFILE_PREFIX[kind];
+    return this.http
+      .get<WirePage<WireReview>>(
+        this.url(`/public/profiles/${prefijo}/${encodeURIComponent(slug)}/reviews`),
+        { params: this.paginaParams(opciones) },
+      )
+      .pipe(
+        map((body) => ({
+          ...toPage(body),
+          items: body.items.map((opinion) => ({
+            ...opinion,
+            publishedAt: new Date(opinion.publishedAt),
+            response:
+              opinion.response === null
+                ? null
+                : { ...opinion.response, publishedAt: new Date(opinion.response.publishedAt) },
+          })),
+        })),
+      );
   }
 
   /* ---- las tres lecturas sociales públicas (TAREA 01 §5.1) --------------- */

@@ -163,6 +163,34 @@ export interface PublicPostReaction extends PublicSocialActor {
   readonly reactionType: PublicReactionCode | null;
 }
 
+/**
+ * Una opinión de la ficha pública: quién la dio, con cuántas estrellas y qué
+ * escribió.
+ *
+ * `text` es `null` cuando la persona sólo calificó: también cuenta, porque es
+ * alguien que dio estrellas y la ficha las suma en su promedio.
+ *
+ * `reviewer.slug` y `reviewer.kind` son `null` cuando quien opinó no tiene
+ * ficha pública propia —un paciente—: se muestra su nombre, pero no hay a dónde
+ * enlazar.
+ */
+export interface PublicProfileReview {
+  readonly id: string;
+  /** De 1 a 5. */
+  readonly rating: number;
+  readonly text: string | null;
+  readonly publishedAt: Date;
+  readonly reviewer: {
+    readonly displayName: string;
+    readonly headline: string | null;
+    readonly avatarUrl: string | null;
+    readonly slug: string | null;
+    readonly kind: PublicResultKind | null;
+  };
+  /** La respuesta de la ficha a esta opinión, si la hubo. */
+  readonly response: { readonly text: string; readonly publishedAt: Date } | null;
+}
+
 /** Un comentario del hilo público, con su autor adentro. */
 export interface PublicComment {
   readonly id: string;

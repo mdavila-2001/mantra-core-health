@@ -247,6 +247,11 @@
 }
 
 .perfil__tab {
+  /* Es un `<button>`: sin esto hereda fondo, borde y tipografía del sistema. */
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   flex: none;
@@ -636,4 +641,30 @@
   .perfil__acciones > * {
     flex: 1 1 100%;
   }
+}
+
+/* --- La calificación de la cabecera, tocable ------------------------------ */
+
+.perfil__calificacion-boton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--r-ctrl);
+}
+
+.perfil__opiniones-boton {
+  color: var(--tinta-marca);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.perfil__calificacion-boton:hover {
+  color: var(--tinta-marca);
+}
+
+.perfil__calificacion-boton:focus-visible {
+  outline: 3px solid var(--anillo-foco);
+  outline-offset: 2px;
 }
