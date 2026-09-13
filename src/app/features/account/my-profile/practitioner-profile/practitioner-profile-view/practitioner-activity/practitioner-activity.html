@@ -1,0 +1,12 @@
+<!-- Una `<dl>` sería lo natural para «rótulo → valor», pero su modelo de
+     contenido sólo admite `div`, `dt` y `dd`, y cada caja es un `app-card`.
+     El panel resolvió lo mismo con `<section>` + tarjetas y párrafos; se
+     repite ese dibujo en vez de inventar otro. -->
+<div class="actividad">
+  @for (dato of actividad(); track dato.clave) {
+    <app-card variant="outlined" padding="md" [attr.data-testid]="'actividad-' + dato.clave">
+      <p class="actividad__rotulo">{{ dato.rotulo }}</p>
+      <p class="actividad__valor">{{ dato.valor }}</p>
+    </app-card>
+  }
+</div>

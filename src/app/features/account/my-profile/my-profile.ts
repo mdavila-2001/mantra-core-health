@@ -5,7 +5,6 @@ import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { rolesConEtiqueta } from '../../../core/auth/role-labels';
 import { FilesClient } from '../../../core/data-access/files/files.client';
 import { IdentityClient } from '../../../core/data-access/identity/identity.client';
 import type { VerificationCase } from '../../../core/data-access/identity/identity.types';
@@ -103,22 +102,6 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
  * Los dos últimos bloques —verificación de identidad y acceso— son de la
  * **cuenta**, no del perfil, así que se muestran en los dos casos.
  */
-/**
- * Los roles con los que se viene a trabajar, no a atenderse.
- *
- * Mismo criterio que el panel: quien tiene alguno de estos ve «Tu acceso»
- * aunque además sea paciente, porque para él la pregunta que responde esa
- * tarjeta sí existe.
- */
-const ROLES_DE_TRABAJO: readonly string[] = [
-  'SUPERADMIN',
-  'SECURITY_ADMIN',
-  'SCHEDULING_ADMIN',
-  'SCHEDULING_AGENT',
-  'PRACTITIONER',
-  'CLINICIAN',
-];
-
 @Component({
   selector: 'app-my-profile',
   imports: [
@@ -283,7 +266,15 @@ export class MyProfile {
   protected readonly rutaDeVerificacion = IDENTITY_VERIFICATION_ROUTE;
 
   /**
-   * Si la ficha «Verificación de identidad» se dibuja.
+   * Si la ficha «Verificación de identidad» —y con ella la columna lateral— se
+   * dibuja.
+   *
+   * Desde el 13/09/2026 es la única ficha del lateral: «Tu acceso» salió a
+   * pedido del cliente —sus dos renglones eran vocabulario de sistema— y sus
+   * dos enlaces se mudaron al pie del perfil. Con el interruptor apagado el
+   * `<aside>` no se dibuja y la rejilla no le reserva la columna: el perfil
+   * ocupa el ancho entero en vez de quedar pegado a la izquierda con un hueco
+   * al lado.
    *
    * Campo y no import suelto porque la plantilla sólo lee miembros de la clase.
    * Ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
@@ -294,54 +285,6 @@ export class MyProfile {
   protected readonly motivoDelMuro = computed(() => {
     const estado = this.resumen();
     return estado.status === 'forbidden' ? (estado.message ?? null) : null;
-  });
-
-  /**
-   * Los roles con etiqueta, para las insignias de «Tu acceso».
-   *
-   * El código crudo no se pinta —es vocabulario de sistema— pero sigue viajando
-   * en `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
-   */
-  protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.auth.roles()));
-
-  /**
-   * Si se muestra la tarjeta «Tu acceso» (F-22).
-   *
-   * A quien viene a atenderse no le dice nada: «Organización: Care Default
-   * Tenant» y «Roles: Paciente» son la respuesta a «¿por qué no veo tal cosa?»,
-   * una pregunta que se hace quien trabaja acá y tiene secciones que le faltan.
-   * Un paciente no tiene secciones que le falten: tiene lo suyo. Es la cuarta
-   * fuga de la misma regla —cero organización, roles ni jerga en su vista— y
-   * los barridos anteriores no alcanzaron esta pantalla.
-   *
-   * Se oculta en vez de reemplazarse: lo que iría en su lugar —su código de
-   * paciente— todavía no tiene formato decidido (H-04).
-   *
-   * Se pregunta por los roles de trabajo, igual que el panel: quien atiende y
-   * además es paciente entra a trabajar, y la tarjeta le sirve.
-   */
-  protected readonly muestraElAcceso = computed(() => {
-    const roles = this.auth.roles();
-    if (!roles.includes('PATIENT')) return true;
-    return ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
-  });
-
-  /**
-   * Si la columna lateral tiene algo que mostrar.
-   *
-   * Hoy son dos fichas y las dos pueden estar apagadas a la vez —la
-   * verificación por el interruptor, el acceso para cualquier paciente—. Con
-   * las dos apagadas el `<aside>` no se dibuja y la rejilla no le reserva la
-   * columna: el perfil se centra a lo ancho en vez de quedar pegado a la
-   * izquierda con un hueco al lado.
-   */
-  protected readonly hayLateral = computed(
-    () => this.verificacionOfrecida || this.muestraElAcceso(),
-  );
-
-  protected readonly tenantName = computed(() => {
-    const id = this.auth.activeTenantId();
-    return id === null ? null : this.auth.tenantName(id);
   });
 
   /**
@@ -392,7 +335,6 @@ export class MyProfile {
     this.cargarCasos();
     this.cargarPerfil();
   }
-
 
   /**
    * La etiqueta de un concepto, o nada.

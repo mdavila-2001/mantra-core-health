@@ -18,6 +18,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { RouterLink } from '@angular/router';
 
 import { WorkHistory } from '../../work-history/work-history';
+import { PractitionerActivity } from './practitioner-activity/practitioner-activity';
 import { PESTANAS_DEL_PERFIL_MEDICO } from '../../pestanas-del-perfil-medico';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
@@ -99,6 +100,7 @@ interface FilaCredencial {
     TabHelpBlock,
     TutorialTarget,
     WorkHistory,
+    PractitionerActivity,
     // Auto-referencia deliberada (carril 05): la pestaña Preview se pinta
     // reinstanciando este mismo componente en modo ajeno — ver `previewMode`.
     PractitionerProfileView,

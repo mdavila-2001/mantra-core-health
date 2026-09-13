@@ -91,12 +91,6 @@
   }
 }
 
-.mi-perfil__roles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-
 .mi-perfil__sello {
   margin-block-end: var(--sp-4);
 }
@@ -123,12 +117,14 @@
 }
 
 /* §4.H del plan de UX · los enlaces a lo que salió del menú del médico. En
-   fila y con separación clara: son tres destinos hermanos, no una lista. */
+   fila y con separación clara: son dos destinos hermanos, no una lista.
+
+   Sin filo: desde que «Tu acceso» se fue (13/09/2026) la tira ya no cuelga del
+   pie de una tarjeta sino de la columna, y una línea a todo el ancho por encima
+   de dos enlaces parece el borde de una caja que no existe. */
 .mi-perfil__enlaces {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-4);
-  margin-block-start: var(--sp-4);
-  padding-block-start: var(--sp-3);
-  border-block-start: 1px solid var(--border-default);
+  padding-inline: var(--sp-1);
 }

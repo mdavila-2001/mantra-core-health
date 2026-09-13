@@ -1,0 +1,34 @@
+/* `auto-fit` con mínimo de 12rem y no un número fijo de columnas: son cuatro
+   contadores hoy y el modelo puede traer otro mañana; la rejilla reparte lo que
+   haya sin que nadie retoque un `repeat(4, …)`. En un teléfono caen en una sola
+   columna sin tocar nada. */
+.actividad {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-5);
+}
+
+/* Rótulo en «overline» y no en caption, igual que en el panel: cuatro tarjetas
+   en fila necesitan que la etiqueta se distinga de la cifra por FORMA y no sólo
+   por tamaño, o las dos líneas se leen como un párrafo de dos renglones. */
+.actividad__rotulo {
+  margin: 0;
+  font-size: var(--fs-overline);
+  line-height: var(--lh-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Tabular: cuatro cifras en fila se comparan de un vistazo sólo si los dígitos
+   ocupan lo mismo. */
+.actividad__valor {
+  margin: var(--sp-1) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
