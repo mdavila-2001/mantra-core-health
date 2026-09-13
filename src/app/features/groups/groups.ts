@@ -13,6 +13,7 @@ import { AppButton } from '../../shared/components/atoms/button/button';
 import { Link } from '../../shared/components/atoms/link/link';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Switch } from '../../shared/components/atoms/switch/switch';
+import { VitrinaMinima } from '../communities/vitrina-minima/vitrina-minima';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
@@ -59,6 +60,7 @@ const PAGE_SIZE = 20;
     RouterLink,
     SearchField,
     Switch,
+    VitrinaMinima,
   ],
   templateUrl: './groups.html',
   styleUrl: './groups.css',
@@ -152,6 +154,19 @@ export class Groups {
    * enlace a configurar el perfil—, que es lo único que resuelve el caso.
    */
   protected readonly perfilIncompleto = signal(false);
+
+  /**
+   * La vitrina se acaba de crear desde el aviso.
+   *
+   * Se guarda lo que devolvió el `PUT` en vez de releer: el cuerpo de la
+   * respuesta es la vitrina entera, y `perfilListoParaPublico` se recalcula
+   * sola con ella. Bajar el aviso es parte del mismo gesto — dejarlo puesto
+   * después de resolverlo diría que sigue faltando algo.
+   */
+  protected alCrearLaVitrina(perfil: OwnPublicProfile): void {
+    this.perfilPropio.set(perfil);
+    this.perfilIncompleto.set(false);
+  }
 
   protected readonly puedeCrear = computed(() => this.slug().length > 0 && !this.guardando());
 

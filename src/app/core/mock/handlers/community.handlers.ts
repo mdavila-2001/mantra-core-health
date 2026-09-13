@@ -22,6 +22,7 @@ import {
   type VitrinaSimulada,
 } from '../fixtures/comunidad';
 import { ESTADO } from '../fixtures/conceptos';
+import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
 // constante que la pantalla, para que no puedan separarse.
@@ -537,7 +538,33 @@ export function registrarComunidad(router: MockRouter): void {
 
   router.post('/community/groups', (request) => {
     const datos = cuerpo<{ slug: string; name: string; description?: string; visibility?: string; groupType?: string; topicId?: string; ownerProfileId?: string }>(request);
-    const owner = datos.ownerProfileId ?? vitrinaDeSesion(request)?.id ?? VITRINA_MEDICA.id;
+
+    // Un grupo público exige vitrina completa —nombre visible, foto y
+    // visibilidad pública—, y el servidor lo rechaza con su propio código para
+    // que la pantalla pueda ofrecer una salida en vez de repetir «reintentá».
+    // El simulador no lo emitía: la rama que lo atiende en `groups.ts` estaba
+    // muerta en la maqueta y no había forma de revisarla. Desde el 13/09/2026
+    // sí, que es cuando esa rama pasó a ofrecer crear la vitrina ahí mismo.
+    const esPublico = datos.visibility !== 'PRIVATE' && datos.visibility !== 'SECRET';
+    const propia = vitrinaDeSesion(request);
+    const vitrinaCompleta =
+      propia !== undefined &&
+      propia.displayName.trim() !== '' &&
+      propia.avatarFileId !== '' &&
+      propia.visibility === 'PUBLIC';
+    if (esPublico && !vitrinaCompleta) {
+      return {
+        status: 422,
+        body: {
+          statusCode: 422,
+          code: PERFIL_PUBLICO_REQUERIDO,
+          message: 'Necesitás tu perfil público completo para crear un grupo público',
+          error: 'Unprocessable Entity',
+        },
+      };
+    }
+
+    const owner = datos.ownerProfileId ?? propia?.id ?? VITRINA_MEDICA.id;
     const nuevo = grupos.agregar({
       id: nuevoId('group'),
       tenantId: request.user?.tenants[0] ?? '',

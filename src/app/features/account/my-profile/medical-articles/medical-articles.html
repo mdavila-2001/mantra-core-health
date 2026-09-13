@@ -8,13 +8,12 @@
 
 <div class="articulos">
   @if (sinVitrinaTodavia()) {
-    <!-- Mismo caso que «Grupos»: la configuración de la vitrina se sacó el
-         2026-09-10 y este aviso quedó sin camino de autoservicio. Ver
-         `docs/progress/BLOCKERS.md`. -->
-    <app-alert tone="info" title="Necesitás tu vitrina pública primero">
-      Los artículos se publican en tu vitrina pública, y todavía no configuraste una. Pedíselo a
-      quien administra tu organización.
-    </app-alert>
+    <!-- Dejó de ser un callejón sin salida el 13/09/2026. El aviso decía
+         «pedíselo a quien administra tu organización», y nadie podía: el
+         contrato sólo sabe de la vitrina propia. Ahora se crea acá mismo, con
+         lo mínimo que el servidor exige — no vuelve al perfil, que es de donde
+         el propietario la mandó sacar. Ver `docs/progress/BLOCKERS.md`. -->
+    <app-vitrina-minima motivo="articulos" (creada)="alCrearLaVitrina()" />
   } @else {
     <!-- ─── Publicar ────────────────────────────────────────────────────── -->
     <app-card variant="outlined" padding="lg" class="articulos__publicar">
