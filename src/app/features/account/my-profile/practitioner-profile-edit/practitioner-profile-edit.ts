@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, model, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { FormControl, ReactiveFormsModule, type AbstractControl, type ValidationErrors } from '@angular/forms';
+import { catchError, forkJoin, of } from 'rxjs';
 
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
@@ -12,6 +13,8 @@ import {
   SUPPORT_FILE_FORMATS,
 } from '../../../auth/registro-compartido/credenciales-del-medico';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
+import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
+import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import type { OwnPractitionerProfile } from '../../../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
@@ -26,6 +29,10 @@ import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { Card } from '../../../../shared/components/molecules/card/card';
+import {
+  PhoneInput,
+  telefonoCompleto,
+} from '../../../../shared/components/molecules/phone-input/phone-input';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
@@ -36,6 +43,7 @@ import {
   separarNombres,
   unirNombres,
 } from '../../../../core/profesion/nombres-adicionales';
+import { opcionesAutoridadReguladora } from '../../../../core/profesion/autoridades-reguladoras';
 import {
   OPCIONES_TITULO_PROFESIONAL,
   esTituloDeLaLista,
@@ -45,14 +53,13 @@ import {
   type Coordenadas,
   type IdsDePrueba,
 } from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
+import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
-
-/** El campo de la jurisdicción, del catálogo dinámico. */
-const TARGET_MATRICULA = 'profiles.jurisdiction_authorizations.jurisdiction_concept_id';
 
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
 const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
@@ -63,6 +70,67 @@ function fechaIso(fecha: Date): string {
   const mes = String(fecha.getMonth() + 1).padStart(2, '0');
   const dia = String(fecha.getDate()).padStart(2, '0');
   return `${anio}-${mes}-${dia}`;
+}
+
+/** Una fila de «Tu trayectoria cargada». */
+interface FilaFormacion {
+  readonly id: string;
+  readonly tipo: string;
+  readonly numero: string;
+  readonly institucion: string;
+  readonly emision: string;
+  readonly estado: string;
+}
+
+/** Una fila de «Tus especialidades cargadas». */
+interface FilaEspecialidad {
+  readonly id: string;
+  readonly especialidad: string;
+  readonly rol: string;
+  readonly desde: string;
+  readonly estado: string;
+}
+
+/** Una fila de «Tus matrículas cargadas». */
+interface FilaMatricula {
+  readonly id: string;
+  readonly numero: string;
+  readonly autoridad: string;
+  readonly inscripcion: string;
+  readonly estado: string;
+}
+
+/** Lo que dice la columna «Estado» mientras el concepto no tiene etiqueta. */
+const PENDIENTE_DE_VERIFICACION = 'Pendiente de verificación';
+
+const FORMATO_DE_FECHA = new Intl.DateTimeFormat('es-BO', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+});
+
+/**
+ * Una fecha del perfil como la lee una persona, o una raya.
+ *
+ * Acepta también la cadena ISO: el simulador y el cliente no convierten todas
+ * las fechas anidadas, y una tabla no puede romperse por eso.
+ */
+function fechaLegible(fecha: Date | string | undefined): string {
+  if (fecha === undefined) return '—';
+  const valor = fecha instanceof Date ? fecha : new Date(fecha);
+  return Number.isNaN(valor.getTime()) ? '—' : FORMATO_DE_FECHA.format(valor);
+}
+
+/** Para ordenar por fecha: sin fecha va al final. */
+function marcaDeTiempo(fecha: Date | string | undefined): number {
+  if (fecha === undefined) return 0;
+  const valor = fecha instanceof Date ? fecha.getTime() : new Date(fecha).getTime();
+  return Number.isNaN(valor) ? 0 : valor;
+}
+
+/** Un teléfono vacío es válido (en el editor los tres son opcionales); uno a medias, no. */
+function telefonoOpcional(control: AbstractControl): ValidationErrors | null {
+  return control.value === '' ? null : telefonoCompleto(control);
 }
 
 /**
@@ -106,6 +174,7 @@ function soloFecha(fecha: Date): string {
     AppButton,
     Card,
     ConceptSelect,
+    DataTable,
     DatePicker,
     FormActions,
     FileInput,
@@ -114,6 +183,8 @@ function soloFecha(fecha: Date): string {
     LocationPicker,
     NavIcon,
     PageHeader,
+    PhoneInput,
+    ReactiveFormsModule,
     RouterLink,
     Select,
     Switch,
@@ -134,6 +205,7 @@ export class PractitionerProfileEdit {
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
   private readonly catalogo = inject(MedicalSpecialtiesCatalog);
+  private readonly terminologia = inject(TerminologyClient);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -145,6 +217,7 @@ export class PractitionerProfileEdit {
    */
   readonly pestana = model<number>(PESTANA_EDITOR.personales);
   protected readonly pestanas = PESTANAS_DEL_EDITOR_MEDICO;
+  protected readonly pestanaEditor = PESTANA_EDITOR;
 
   /**
    * Si la pestaña abierta es de las que se corrigen.
@@ -184,7 +257,8 @@ export class PractitionerProfileEdit {
 
   protected readonly titulo = signal('');
   protected readonly bio = signal('');
-  protected readonly aceptaNuevos = signal(false);
+  /* «Acepto pacientes nuevos» ya no se pregunta (propietario, 13/09/2026):
+     siempre está habilitado. Ver `guardarPresentacion`. */
   protected readonly telemedicina = signal(false);
 
   /* -- Los datos personales, que hasta ahora no se podían corregir ---------
@@ -212,9 +286,24 @@ export class PractitionerProfileEdit {
   /* Los cuatro contactos que el alta pide por separado. El de trabajo y el
      privado dejaron de ser el mismo dato, así que el perfil también los
      distingue: cada uno se guarda en su propia fila de puntos de contacto. */
-  protected readonly celularPersonal = signal('');
-  protected readonly celularTrabajo = signal('');
-  protected readonly fijoTrabajo = signal('');
+  /* Los tres teléfonos son el campo del alta (`app-phone-input`): bandera y
+     prefijo del país, y el número nacional. Es un `ControlValueAccessor`, por
+     eso van en `FormControl` y no en señales; los controles viven en el
+     componente, así que cambiar de pestaña no los pierde. */
+  protected readonly celularPersonal = new FormControl('', {
+    nonNullable: true,
+    validators: [telefonoOpcional],
+  });
+  protected readonly celularTrabajo = new FormControl('', {
+    nonNullable: true,
+    validators: [telefonoOpcional],
+  });
+  protected readonly fijoTrabajo = new FormControl('', {
+    nonNullable: true,
+    validators: [telefonoOpcional],
+  });
+  /** El mismo texto que el alta pone bajo un teléfono incompleto. */
+  protected readonly mensajeTelefonoIncompleto = 'El número está incompleto para el país elegido.';
   protected readonly correoPersonal = signal('');
   /**
    * La calle, ALV-009.
@@ -239,6 +328,18 @@ export class PractitionerProfileEdit {
    */
   protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
   protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+
+  /**
+   * El punto con el que abre el mapa: lo último que la persona dejó, o lo guardado.
+   *
+   * «Contacto» se dibuja sólo mientras está abierta (ver la plantilla), así que
+   * el selector se vuelve a crear cada vez que se vuelve a la pestaña. Sembrarlo
+   * siempre con lo guardado desharía un pin movido y confirmado antes de irse.
+   */
+  protected readonly gpsDomicilioInicial = computed(() => {
+    const elegido = this.gpsDomicilio();
+    return elegido === undefined ? this.gpsDomicilioGuardado() : elegido;
+  });
 
   protected readonly idsGpsDomicilio: IdsDePrueba = {
     mapa: 'edicion-domicilio-mapa',
@@ -268,6 +369,15 @@ export class PractitionerProfileEdit {
   protected readonly guardandoPresentacion = signal(false);
 
   protected readonly bioLargoMaximo = 4000;
+
+  /**
+   * Si un teléfono se tiene que ver en rojo: incompleto y ya tocado.
+   *
+   * @param control - Uno de los tres teléfonos.
+   */
+  protected enRojo(control: FormControl<string>): boolean {
+    return control.invalid && (control.dirty || control.touched);
+  }
 
   /** Suma una casilla vacía de nombre, como en el alta. */
   protected agregarNombre(): void {
@@ -396,10 +506,16 @@ export class PractitionerProfileEdit {
 
   /* -- Nueva matrícula --------------------------------------------------------- */
 
-  protected readonly targetMatricula = TARGET_MATRICULA;
-  protected readonly nuevaJurisdiccion = signal<string | null>(null);
   protected readonly nuevoNumeroDeMatricula = signal('');
   protected readonly nuevaAutoridad = signal('');
+
+  /**
+   * Las tres autoridades del alta: Ministerio de Salud, SEDES y el colegio de
+   * la profesión, con el colegio resuelto por el título elegido arriba.
+   */
+  protected readonly opcionesAutoridad = computed(() =>
+    opcionesAutoridadReguladora(this.titulo()),
+  );
   protected readonly nuevaFechaInscripcion = signal<Date | null>(null);
   /** Respaldo visual de la matrícula; no se publica en la rama mockup. */
   protected readonly archivoDeMatricula = signal<readonly File[]>([]);
@@ -426,6 +542,116 @@ export class PractitionerProfileEdit {
   protected readonly puedeAgregarCredencial = computed(
     () => this.nuevoTipoCredencial() !== null && this.nuevoNumeroCredencial().trim() !== '',
   );
+
+  /* -- Lo ya cargado, en tablas --------------------------------------------
+     Pedido del propietario (13/09/2026): debajo de cada «Agregar», la tabla con
+     lo que ya está cargado. Se leen del mismo perfil que siembra el formulario,
+     así que la recarga que sigue a cada «Agregar» ya las pone al día. */
+
+  /** Las etiquetas de los conceptos de las tres tablas. */
+  private readonly etiquetas = signal<ConceptLabels>(new Map());
+
+  protected readonly claveDeFila = (fila: { readonly id: string }): string => fila.id;
+
+  protected readonly columnasFormacion: readonly ColumnDef<FilaFormacion>[] = [
+    { key: 'tipo', header: 'Tipo', priority: 1 },
+    { key: 'numero', header: 'Número / título', priority: 1 },
+    { key: 'institucion', header: 'Institución', priority: 2 },
+    { key: 'emision', header: 'Emisión', priority: 2 },
+    { key: 'estado', header: 'Estado', priority: 1 },
+  ];
+
+  protected readonly columnasEspecialidades: readonly ColumnDef<FilaEspecialidad>[] = [
+    { key: 'especialidad', header: 'Especialidad', priority: 1 },
+    { key: 'rol', header: 'Tipo', priority: 2 },
+    { key: 'desde', header: 'Desde', priority: 2 },
+    { key: 'estado', header: 'Estado', priority: 1 },
+  ];
+
+  protected readonly columnasMatriculas: readonly ColumnDef<FilaMatricula>[] = [
+    { key: 'numero', header: 'Nº de matrícula', priority: 1 },
+    { key: 'autoridad', header: 'Autoridad', priority: 1 },
+    { key: 'inscripcion', header: 'Inscripción', priority: 2 },
+    { key: 'estado', header: 'Estado', priority: 1 },
+  ];
+
+  /** Los títulos, del más reciente al más antiguo, como en la ficha. */
+  protected readonly filasFormacion = computed<readonly FilaFormacion[]>(() => {
+    const perfil = this.datos();
+    if (perfil === null) return [];
+    return [...perfil.credentials]
+      .sort((a, b) => marcaDeTiempo(b.issueDate) - marcaDeTiempo(a.issueDate))
+      .map((credencial) => ({
+        id: credencial.id,
+        tipo: this.etiqueta(credencial.credentialTypeConceptId, 'Título'),
+        numero: credencial.number,
+        institucion: credencial.issuingInstitutionText ?? '—',
+        emision: fechaLegible(credencial.issueDate),
+        estado:
+          credencial.verifiedAt !== undefined
+            ? 'Verificado'
+            : this.etiqueta(credencial.stateConceptId, PENDIENTE_DE_VERIFICACION),
+      }));
+  });
+
+  /** Las especialidades, la principal primero. */
+  protected readonly filasEspecialidades = computed<readonly FilaEspecialidad[]>(() => {
+    const perfil = this.datos();
+    if (perfil === null) return [];
+    const delCatalogo = new Map(this.especialidades().map((o) => [o.value, o.label]));
+    return [...perfil.specialties]
+      .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
+      .map((especialidad) => ({
+        id: especialidad.id,
+        especialidad: this.etiqueta(
+          especialidad.specialtyConceptId,
+          delCatalogo.get(especialidad.specialtyConceptId) ?? 'Especialidad',
+        ),
+        rol: especialidad.isPrimary ? 'Principal' : 'Adicional',
+        desde: fechaLegible(especialidad.validFrom),
+        estado: especialidad.verified
+          ? 'Verificada'
+          : this.etiqueta(especialidad.verificationStatusConceptId, PENDIENTE_DE_VERIFICACION),
+      }));
+  });
+
+  protected readonly filasMatriculas = computed<readonly FilaMatricula[]>(() => {
+    const perfil = this.datos();
+    if (perfil === null) return [];
+    return perfil.licenses.map((matricula) => ({
+      id: matricula.id,
+      numero: matricula.licenseNumber,
+      autoridad: matricula.regulatoryAuthority ?? '—',
+      inscripcion: fechaLegible(matricula.validFrom),
+      estado: this.etiqueta(matricula.stateConceptId, PENDIENTE_DE_VERIFICACION),
+    }));
+  });
+
+  protected readonly estadoFormacion = computed(() => ready(this.filasFormacion()));
+  protected readonly estadoEspecialidades = computed(() => ready(this.filasEspecialidades()));
+  protected readonly estadoMatriculas = computed(() => ready(this.filasMatriculas()));
+
+  /** La etiqueta de un concepto, o lo que se diga mientras no llegue. */
+  private etiqueta(conceptId: string | undefined, porDefecto: string): string {
+    if (conceptId === undefined) return porDefecto;
+    return this.etiquetas().get(conceptId)?.display ?? porDefecto;
+  }
+
+  /**
+   * Pide las etiquetas de lo que muestran las tablas. Un fallo no rompe nada:
+   * las tablas siguen, con «Pendiente de verificación» en vez del estado.
+   */
+  private cargarEtiquetas(perfil: OwnPractitionerProfile): void {
+    const ids = [
+      ...perfil.specialties.flatMap((e) => [e.specialtyConceptId, e.verificationStatusConceptId]),
+      ...perfil.credentials.flatMap((c) => [c.credentialTypeConceptId, c.stateConceptId]),
+      ...perfil.licenses.map((m) => m.stateConceptId),
+    ].filter((id): id is string => id !== undefined);
+    this.terminologia
+      .readConceptLabels(ids)
+      .pipe(catchError(() => of<ConceptLabels>(new Map())))
+      .subscribe((etiquetas) => this.etiquetas.set(etiquetas));
+  }
 
   constructor() {
     this.cargar();
@@ -477,6 +703,7 @@ export class PractitionerProfileEdit {
       next: (perfil) => {
         this.sembrarFormulario(perfil);
         this.perfil.set(ready(perfil));
+        this.cargarEtiquetas(perfil);
       },
       error: (error: unknown) => this.perfil.set(errorToViewState<OwnPractitionerProfile>(error)),
     });
@@ -501,11 +728,10 @@ export class PractitionerProfileEdit {
     this.nombresExtra.set(adicionales.extra);
     this.apellidoPaterno.set(perfil.lastName ?? '');
     this.apellidoMaterno.set(perfil.motherLastName ?? '');
-    this.celularPersonal.set(perfil.mobilePhone ?? '');
-    this.celularTrabajo.set(perfil.workMobilePhone ?? '');
-    this.fijoTrabajo.set(perfil.workLandline ?? '');
+    this.celularPersonal.reset(perfil.mobilePhone ?? '');
+    this.celularTrabajo.reset(perfil.workMobilePhone ?? '');
+    this.fijoTrabajo.reset(perfil.workLandline ?? '');
     this.correoPersonal.set(perfil.personalEmail ?? '');
-    this.aceptaNuevos.set(perfil.acceptsNewPatients);
     this.telemedicina.set(perfil.telehealthAvailable);
     // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
     // ofrecía. Se siembran desde el perfil, igual que el resto.
@@ -563,6 +789,16 @@ export class PractitionerProfileEdit {
       return;
     }
 
+    // Un teléfono a medias no viaja: se marca, se lleva a la persona a
+    // «Contacto» —puede estar mirando «Datos personales»— y se dice por qué.
+    const telefonos = [this.celularPersonal, this.celularTrabajo, this.fijoTrabajo];
+    if (telefonos.some((telefono) => telefono.invalid)) {
+      telefonos.forEach((telefono) => telefono.markAsTouched());
+      this.pestana.set(PESTANA_EDITOR.contacto);
+      this.toasts.error('Hay un teléfono incompleto. Revisalo en «Contacto».', 'Perfil');
+      return;
+    }
+
     const cambios: Partial<{
       professionalTitle: string;
       professionalBio: string;
@@ -615,8 +851,10 @@ export class PractitionerProfileEdit {
     if (this.bio() !== (original.professionalBio ?? '')) {
       cambios.professionalBio = this.bio();
     }
-    if (this.aceptaNuevos() !== original.acceptsNewPatients) {
-      cambios.acceptsNewPatients = this.aceptaNuevos();
+    // «Acepto pacientes nuevos» siempre está habilitado: un perfil que lo tenía
+    // apagado se corrige en el primer guardado, sin preguntar.
+    if (!original.acceptsNewPatients) {
+      cambios.acceptsNewPatients = true;
     }
     if (this.telemedicina() !== original.telehealthAvailable) {
       cambios.telehealthAvailable = this.telemedicina();
@@ -637,14 +875,14 @@ export class PractitionerProfileEdit {
     if (this.apellidoMaterno() !== (original.motherLastName ?? '')) {
       cambios.motherLastName = this.apellidoMaterno();
     }
-    if (this.celularPersonal() !== (original.mobilePhone ?? '')) {
-      cambios.mobilePhone = this.celularPersonal();
+    if (this.celularPersonal.value !== (original.mobilePhone ?? '')) {
+      cambios.mobilePhone = this.celularPersonal.value;
     }
-    if (this.celularTrabajo() !== (original.workMobilePhone ?? '')) {
-      cambios.workMobilePhone = this.celularTrabajo();
+    if (this.celularTrabajo.value !== (original.workMobilePhone ?? '')) {
+      cambios.workMobilePhone = this.celularTrabajo.value;
     }
-    if (this.fijoTrabajo() !== (original.workLandline ?? '')) {
-      cambios.workLandline = this.fijoTrabajo();
+    if (this.fijoTrabajo.value !== (original.workLandline ?? '')) {
+      cambios.workLandline = this.fijoTrabajo.value;
     }
     if (this.correoPersonal() !== (original.personalEmail ?? '')) {
       cambios.personalEmail = this.correoPersonal();
@@ -737,14 +975,12 @@ export class PractitionerProfileEdit {
     this.profiles
       .addJurisdictionAuthorization(profileId, {
         licenseNumber: numero,
-        jurisdictionConceptId: this.nuevaJurisdiccion() ?? undefined,
         regulatoryAuthority: this.nuevaAutoridad().trim() || undefined,
         validFrom: fechaInscripcion === null ? undefined : fechaIso(fechaInscripcion),
       })
       .subscribe({
         next: () => {
           this.guardandoMatricula.set(false);
-          this.nuevaJurisdiccion.set(null);
           this.nuevoNumeroDeMatricula.set('');
           this.nuevaAutoridad.set('');
           this.nuevaFechaInscripcion.set(null);

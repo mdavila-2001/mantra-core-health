@@ -136,3 +136,22 @@
   display: block;
   margin-block-start: var(--sp-5);
 }
+
+/* Las tablas de lo ya cargado van debajo de su «Agregar», dentro de la misma
+   sección: son la respuesta a «¿dónde quedó lo que acabo de cargar?». */
+.edicion__subtitulo {
+  margin: var(--sp-6) 0 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.edicion__tabla {
+  display: block;
+  margin-block-start: var(--sp-3);
+}
+
+.edicion__vacio {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

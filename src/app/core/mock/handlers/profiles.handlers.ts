@@ -1,4 +1,4 @@
-import { ESTABLECIMIENTO, ESTADO, TIPO_VINCULO, displayDe } from '../fixtures/conceptos';
+import { ESTABLECIMIENTO, ESTADO, JURISDICCION, TIPO_VINCULO, displayDe } from '../fixtures/conceptos';
 import {
   afiliaciones,
   CATEGORIA_MEDICO,
@@ -19,7 +19,7 @@ import {
   type ProfesionalSimulado,
 } from '../fixtures/personas';
 import { conflict, forbidden, noContent, notFound, type MockRequest, type MockRouter } from '../mock-router';
-import { ahora, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Perfiles: pacientes, profesionales, guía y afiliaciones.
@@ -31,6 +31,53 @@ function pacienteDeSesion(request: MockRequest): PacienteSimulado | undefined {
   // Un profesional también puede tener su propio perfil de paciente.
   if (request.user?.key === 'medica') return PACIENTE;
   return undefined;
+}
+
+/* ---- lo que el médico agrega desde «Configurar tu perfil» ------------------
+   Estos tres POST contestaban 201 y no guardaban nada, así que la tabla de lo
+   cargado que muestra el editor (13/09/2026) nunca veía la fila nueva. Se
+   guardan con clave de sessionStorage para poder comprobar «agregar → recargar
+   → sigue ahí». Nacen pendientes de verificación, como en la API. */
+
+interface EspecialidadAgregada {
+  readonly id: string;
+  readonly profileId: string;
+  readonly specialtyConceptId: string;
+  readonly isPrimary: boolean;
+  readonly boardCertified: boolean;
+  readonly verificationStatusConceptId: string;
+  readonly verified: boolean;
+  readonly validFrom: string;
+}
+
+interface CredencialAgregada {
+  readonly id: string;
+  readonly profileId: string;
+  readonly credentialTypeConceptId: string;
+  readonly number: string;
+  readonly issuingInstitutionText?: string;
+  readonly issueDate?: string;
+  readonly stateConceptId: string;
+}
+
+interface MatriculaAgregada {
+  readonly id: string;
+  readonly profileId: string;
+  readonly jurisdictionConceptId: string;
+  readonly licenseNumber: string;
+  readonly regulatoryAuthority?: string;
+  readonly stateConceptId: string;
+  readonly validFrom?: string;
+}
+
+const especialidadesAgregadas = new Coleccion<EspecialidadAgregada>([], 'mock.perfil-medico.especialidades');
+const credencialesAgregadas = new Coleccion<CredencialAgregada>([], 'mock.perfil-medico.credenciales');
+const matriculasAgregadas = new Coleccion<MatriculaAgregada>([], 'mock.perfil-medico.matriculas');
+
+/** La fila tal como la devuelve el perfil: sin el dueño, que es de la maqueta. */
+function sinDueno<T extends { readonly profileId: string }>(fila: T): Omit<T, 'profileId'> {
+  const { profileId: _dueno, ...resto } = fila;
+  return resto;
 }
 
 function profesionalDeSesion(request: MockRequest): ProfesionalSimulado | undefined {
@@ -160,9 +207,18 @@ export function perfilProfesionalDe(p: ProfesionalSimulado) {
     practiceStatusConceptId: ESTADO['ST-ACTIVE']!,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
-    specialties: especialidadesDe(p),
-    credentials: credencialesDe(p),
-    licenses: licenciasDe(p),
+    specialties: [
+      ...especialidadesDe(p),
+      ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno),
+    ],
+    credentials: [
+      ...credencialesDe(p),
+      ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno),
+    ],
+    licenses: [
+      ...licenciasDe(p),
+      ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno),
+    ],
     languages: idiomasDe(p),
     affiliations: afiliaciones.filtrar((a) => a.practitionerProfileId === p.id),
     activity: { encounters: 312, medicationRequests: 208, clinicalNotes: 275, documents: 41 },
@@ -504,8 +560,25 @@ export function registrarPerfiles(router: MockRouter): void {
     return noContent();
   });
 
-  router.post('/profiles/practitioners/me/credentials', () => ({ status: 201, body: { id: nuevoId('cred') } }));
-  router.delete('/profiles/practitioners/me/credentials/:id', () => noContent());
+  router.post('/profiles/practitioners/me/credentials', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const datos = cuerpo<{ credentialTypeConceptId: string; number: string; issuingInstitutionText?: string; issueDate?: string }>(request);
+    const nueva = credencialesAgregadas.agregar({
+      id: nuevoId('cred'),
+      profileId: p.id,
+      credentialTypeConceptId: datos.credentialTypeConceptId ?? '',
+      number: datos.number ?? '',
+      ...(datos.issuingInstitutionText === undefined ? {} : { issuingInstitutionText: datos.issuingInstitutionText }),
+      ...(datos.issueDate === undefined ? {} : { issueDate: datos.issueDate }),
+      stateConceptId: ESTADO['ST-PENDING']!,
+    });
+    return { status: 201, body: { id: nueva.id } };
+  });
+  router.delete('/profiles/practitioners/me/credentials/:id', ({ params }) => {
+    credencialesAgregadas.borrar(params['id']!);
+    return noContent();
+  });
 
   router.get('/profiles/practitioners/me/linkable-organizations', ({ query }) => {
     const q = texto(query, 'query') ?? texto(query, 'q');
@@ -532,8 +605,33 @@ export function registrarPerfiles(router: MockRouter): void {
     return p === undefined ? notFound() : perfilProfesionalDe(p);
   });
 
-  router.post('/profiles/practitioners/:id/specialties', () => ({ status: 201, body: { id: nuevoId('spec') } }));
-  router.post('/profiles/practitioners/:id/jurisdiction-authorizations', () => ({ status: 201, body: { id: nuevoId('jur') } }));
+  router.post('/profiles/practitioners/:id/specialties', (request) => {
+    const datos = cuerpo<{ specialtyConceptId: string; isPrimary?: boolean; boardCertified?: boolean }>(request);
+    const nueva = especialidadesAgregadas.agregar({
+      id: nuevoId('spec'),
+      profileId: request.params['id']!,
+      specialtyConceptId: datos.specialtyConceptId ?? '',
+      isPrimary: datos.isPrimary ?? false,
+      boardCertified: datos.boardCertified ?? false,
+      verificationStatusConceptId: ESTADO['ST-PENDING']!,
+      verified: false,
+      validFrom: isoDia(0),
+    });
+    return { status: 201, body: { id: nueva.id } };
+  });
+  router.post('/profiles/practitioners/:id/jurisdiction-authorizations', (request) => {
+    const datos = cuerpo<{ licenseNumber: string; jurisdictionConceptId?: string; regulatoryAuthority?: string; validFrom?: string }>(request);
+    const nueva = matriculasAgregadas.agregar({
+      id: nuevoId('jur'),
+      profileId: request.params['id']!,
+      jurisdictionConceptId: datos.jurisdictionConceptId ?? JURISDICCION['JUR-BO']!,
+      licenseNumber: datos.licenseNumber ?? '',
+      ...(datos.regulatoryAuthority === undefined ? {} : { regulatoryAuthority: datos.regulatoryAuthority }),
+      stateConceptId: ESTADO['ST-PENDING']!,
+      ...(datos.validFrom === undefined ? {} : { validFrom: datos.validFrom }),
+    });
+    return { status: 201, body: { id: nueva.id } };
+  });
 
   router.post('/profiles/practitioners', (request) => {
     const datos = cuerpo<{ practitionerCode: string }>(request);

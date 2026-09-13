@@ -341,7 +341,6 @@ describe('PractitionerProfileEdit', () => {
 
     expect(interno<() => string>('titulo')()).toBe('Cardióloga');
     expect(interno<() => string>('bio')()).toBe('Bio actual.');
-    expect(interno<() => boolean>('aceptaNuevos')()).toBe(true);
   });
 
   /**
@@ -368,14 +367,41 @@ describe('PractitionerProfileEdit', () => {
     http.expectNone('/profiles/practitioners/me');
   });
 
-  it('un booleano que vuelve a false también se detecta como cambio', () => {
-    montarYCargar({ acceptsNewPatients: true });
+  /**
+   * «Acepto pacientes nuevos» ya no se pregunta (propietario, 13/09/2026):
+   * siempre está habilitado. Un perfil viejo que lo tenía apagado se corrige en
+   * el primer guardado.
+   */
+  it('un perfil que no aceptaba pacientes nuevos queda habilitado al guardar', () => {
+    montarYCargar({ acceptsNewPatients: false });
 
-    señal<boolean>('aceptaNuevos').set(false);
     interno<() => void>('guardarPresentacion')();
 
     const req = http.expectOne('/profiles/practitioners/me');
-    expect(req.request.body).toEqual({ acceptsNewPatients: false });
+    expect(req.request.body).toEqual({ acceptsNewPatients: true });
+    req.flush(PERFIL_BASE);
+  });
+
+  /* ---- teléfonos: el campo del alta, con país ------------------------------ */
+
+  it('no guarda con un teléfono a medias y lleva a «Contacto»', () => {
+    montarYCargar();
+
+    interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 7001');
+    interno<() => void>('guardarPresentacion')();
+
+    http.expectNone('/profiles/practitioners/me');
+    expect(interno<() => number>('pestana')()).toBe(1);
+  });
+
+  it('un teléfono completo viaja con su prefijo', () => {
+    montarYCargar();
+
+    interno<{ setValue(valor: string): void }>('celularTrabajo').setValue('+591 70012345');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ workMobilePhone: '+591 70012345' });
     req.flush(PERFIL_BASE);
   });
 
@@ -465,6 +491,58 @@ describe('PractitionerProfileEdit', () => {
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
 
     expect(señal<readonly File[]>('archivoDeMatricula')()).toEqual([]);
+  });
+
+  it('la matrícula ofrece tres autoridades, con el colegio del título', () => {
+    montarYCargar({ professionalTitle: 'Odontólogo / Odontóloga' });
+
+    const opciones = interno<() => readonly { value: string; label: string }[]>('opcionesAutoridad')();
+    expect(opciones.map((o) => o.label)).toEqual([
+      'Ministerio de Salud',
+      'SEDES (Gobernación)',
+      'Colegio de la profesión (Colegio de Odontólogos de Bolivia)',
+    ]);
+    expect(opciones[2]?.value).toBe('Colegio de Odontólogos de Bolivia');
+  });
+
+  /* -- Las tablas de lo ya cargado (13/09/2026) ------------------------------ */
+
+  it('las tres tablas muestran lo que el perfil ya tiene cargado', () => {
+    montarYCargar({
+      credentials: [
+        { id: 'c-1', credentialTypeConceptId: 'tipo-1', number: 'TIT-1', stateConceptId: 'st-p' },
+      ],
+      specialties: [
+        {
+          id: 's-1',
+          specialtyConceptId: 'esp-cardio',
+          isPrimary: true,
+          boardCertified: false,
+          verificationStatusConceptId: 'st-v',
+          verified: true,
+        },
+      ],
+      licenses: [
+        {
+          id: 'l-1',
+          jurisdictionConceptId: 'jur-1',
+          licenseNumber: 'MP-1',
+          regulatoryAuthority: 'Ministerio de Salud y Deportes',
+          stateConceptId: 'st-a',
+        },
+      ],
+    });
+
+    expect(interno<() => readonly object[]>('filasFormacion')()).toEqual([
+      expect.objectContaining({ id: 'c-1', numero: 'TIT-1', institucion: '—' }),
+    ]);
+    // Sin etiqueta del concepto, el nombre sale del catálogo de especialidades.
+    expect(interno<() => readonly object[]>('filasEspecialidades')()).toEqual([
+      expect.objectContaining({ especialidad: 'Cardiología', rol: 'Principal', estado: 'Verificada' }),
+    ]);
+    expect(interno<() => readonly object[]>('filasMatriculas')()).toEqual([
+      expect.objectContaining({ numero: 'MP-1', autoridad: 'Ministerio de Salud y Deportes' }),
+    ]);
   });
 
   /* -- Catálogo de especialidades (TJ-3 · F-19) ----------------------------- */

@@ -48,6 +48,12 @@ import {
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+import {
+  COLEGIO_DE_LA_PROFESION,
+  colegioDelTitulo,
+  esColegio,
+  opcionesAutoridadReguladora,
+} from '../../../core/profesion/autoridades-reguladoras';
 import { OPCIONES_TITULO_PROFESIONAL } from '../../../core/profesion/titulos-profesionales';
 import {
   MAX_ATTACHMENT_BYTES,
@@ -124,8 +130,6 @@ export const ESPECIALIDADES_ODONTOLOGICAS: ReadonlySet<string> = new Set([
 const NOMBRE_CONSULTORIO_POR_OMISION = 'Mi consultorio';
 
 const TITULO_ODONTOLOGO = 'Odontólogo / Odontóloga';
-const COLEGIO_MEDICO = 'Colegio Médico de Bolivia';
-const COLEGIO_ODONTOLOGOS = 'Colegio de Odontólogos de Bolivia';
 /** Títulos cuya autoridad natural es el Colegio Médico. */
 const TITULOS_MEDICOS: ReadonlySet<string> = new Set([
   'Médico / Médica',
@@ -178,33 +182,9 @@ const TITULOS_MEDICOS: ReadonlySet<string> = new Set([
  * catálogo no está disponible»—. Es el mismo que ya usa el alta de profesional
  * para `specialtyConceptIds`, y es copiable tal cual.
  */
-const OPCIONES_AUTORIDAD_REGULADORA: readonly SelectOption<string>[] = [
-  { value: 'Ministerio de Salud y Deportes', label: 'Ministerio de Salud y Deportes' },
-  { value: 'Colegio Médico de Bolivia', label: 'Colegio Médico de Bolivia' },
-  { value: 'Colegio de Odontólogos de Bolivia', label: 'Colegio de Odontólogos de Bolivia' },
-  { value: 'Colegio de Enfermeras de Bolivia', label: 'Colegio de Enfermeras de Bolivia' },
-  {
-    value: 'Colegio de Bioquímica y Farmacia de Bolivia',
-    label: 'Colegio de Bioquímica y Farmacia de Bolivia',
-  },
-  {
-    value: 'Colegio de Nutricionistas y Dietistas de Bolivia',
-    label: 'Colegio de Nutricionistas y Dietistas de Bolivia',
-  },
-  { value: 'Colegio de Psicólogos de Bolivia', label: 'Colegio de Psicólogos de Bolivia' },
-  {
-    value: 'Colegio de Fisioterapia y Kinesiología de Bolivia',
-    label: 'Colegio de Fisioterapia y Kinesiología de Bolivia',
-  },
-  {
-    value: 'Colegio de Trabajadores Sociales de Bolivia',
-    label: 'Colegio de Trabajadores Sociales de Bolivia',
-  },
-  {
-    value: 'Servicio Departamental de Salud (SEDES)',
-    label: 'Servicio Departamental de Salud (SEDES)',
-  },
-];
+// La lista vive en `core/profesion/autoridades-reguladoras.ts` desde el 13/09/2026:
+// son tres —Ministerio de Salud, SEDES y el colegio de la profesión— y el editor
+// del perfil ofrece las mismas. Lo de arriba sigue valiendo para ella.
 
 /**
  * El título profesional, como lista cerrada.
@@ -1707,9 +1687,9 @@ export class RegisterPractitioner {
           {
             key: 'regulatoryAuthority',
             label: 'Autoridad que la emitió (opcional)',
-            hint: 'Quién emitió tu matrícula.',
+            hint: 'El Ministerio de Salud, el SEDES de tu gobernación o el colegio de tu profesión.',
             control: 'select',
-            options: OPCIONES_AUTORIDAD_REGULADORA,
+            options: opcionesAutoridadReguladora(titulo),
             placeholder: 'Sin especificar',
             testId: 'registro-pro-autoridad',
             icono: 'building',
@@ -1933,14 +1913,16 @@ export class RegisterPractitioner {
       // limpieza de más abajo.
       this.tituloProfesionalElegido.set(valor);
 
-      const esOdontologo = valor === TITULO_ODONTOLOGO;
-      if (esOdontologo && (autoridad.value === '' || autoridad.value === COLEGIO_MEDICO)) {
-        autoridad.setValue(COLEGIO_ODONTOLOGOS);
-      } else if (
-        TITULOS_MEDICOS.has(valor) &&
-        (autoridad.value === '' || autoridad.value === COLEGIO_ODONTOLOGOS)
-      ) {
-        autoridad.setValue(COLEGIO_MEDICO);
+      // El colegio sigue a la profesión: la opción «Colegio de la profesión»
+      // lleva el nombre del colegio de ese título. Vacía, se llena sólo si el
+      // título tiene colegio conocido; un colegio ya elegido se cambia por el
+      // del título nuevo. Ministerio o SEDES, elegidos a mano, no se tocan.
+      const colegio = colegioDelTitulo(valor);
+      const actual = autoridad.value;
+      const cambiar =
+        actual === '' ? colegio !== COLEGIO_DE_LA_PROFESION : esColegio(actual) && actual !== colegio;
+      if (cambiar) {
+        autoridad.setValue(colegio);
       }
 
       // Cambiar de profesión cambia la lista que se ofrece, así que lo ya
