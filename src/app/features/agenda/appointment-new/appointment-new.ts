@@ -335,7 +335,8 @@ export class AppointmentNew {
    * deja la columna en nulo—.
    */
   protected readonly modalidad = signal<ModalidadDeAtencion>('PRESENCIAL');
-  protected readonly modalidades = MODALIDADES;
+  protected readonly opcionesDeModalidad: readonly SelectOption<ModalidadDeAtencion>[] =
+    MODALIDADES.map((opcion) => ({ value: opcion.valor, label: opcion.nombre }));
 
   protected readonly opcionesDeDuracion: readonly SelectOption<string>[] =
     DURACIONES.map((minutos) => ({
@@ -415,20 +416,6 @@ export class AppointmentNew {
       this.minutos() !== null &&
       this.agendaElegida() !== null,
   );
-
-  /**
-   * Guarda lo que se escribió en «Minutos exactos», siempre como texto.
-   *
-   * `app-input[type=number]` emite un **número** (lee `target.valueAsNumber`),
-   * y `duracion` es la misma variable que compara `app-select` contra el
-   * `value` de cada atajo con `===`. Sin este cruce a texto, escribir un
-   * atajo acá (30, 60…) dejaba a «Duración» mostrando «Seleccionar opción»
-   * en vez del atajo que en realidad quedó elegido, porque `30 === '30'` es
-   * `false` — las dos mitades del mismo dato dejaban de coincidir.
-   */
-  protected actualizarDuracionLibre(valor: string | number | null): void {
-    this.duracion.set(valor === null ? '' : String(valor));
-  }
 
   /**
    * Busca pacientes por nombre, código o cédula. La molécula ya espera antes de
