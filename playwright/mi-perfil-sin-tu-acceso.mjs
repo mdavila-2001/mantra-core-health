@@ -47,9 +47,33 @@ async function entrar(pagina, correo) {
   }
 }
 
+/**
+ * El navegador, a nivel de módulo para que lo alcance el cierre de emergencia.
+ *
+ * El 13/09/2026 una corrida de este guion se cortó a mitad y dejó **cuatro
+ * procesos de Chromium vivos**, con la máquina en load 25 sobre 10 núcleos —
+ * suficiente para que el guardián de recursos bloqueara toda prueba de
+ * navegador de las demás sesiones. `await navegador.close()` al final del
+ * camino feliz no se ejecuta cuando algo revienta antes, ni cuando llega un
+ * Ctrl-C. La regla `20-resource-control.md` no se cumple sólo cuando todo sale
+ * bien.
+ */
+let navegador;
+
+async function cerrarNavegador() {
+  await navegador?.close().catch(() => {});
+  navegador = undefined;
+}
+
+for (const senal of ['SIGINT', 'SIGTERM']) {
+  process.on(senal, () => {
+    void cerrarNavegador().then(() => process.exit(130));
+  });
+}
+
 async function main() {
   mkdirSync(SALIDA, { recursive: true });
-  const navegador = await chromium.launch();
+  navegador = await chromium.launch();
   const errores = [];
   const respuestasFeas = [];
 
@@ -158,6 +182,28 @@ async function main() {
   });
   await medica.emulateMedia({ colorScheme: 'light' });
 
+  /* Tablet antes que teléfono: `30-testing.md` pide los tres anchos, y 768 es
+     justo donde la rejilla `auto-fit` de los contadores decide si entran dos
+     por fila o cuatro. Es el ancho donde un `minmax` mal puesto se nota, y el
+     que faltaba. */
+  await medica.setViewportSize({ width: 768, height: 1024 });
+  await medica.waitForTimeout(500);
+  await medica.screenshot({
+    path: `${SALIDA}/${SUFIJO}-medica-actividad-768.png`,
+    fullPage: true,
+  });
+  ok(
+    'tablet · sin desborde horizontal',
+    await medica.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+  );
+  const enTablet = await medica.locator('.actividad app-card').first().boundingBox();
+  const segundaEnTablet = await medica.locator('.actividad app-card').nth(1).boundingBox();
+  ok(
+    'tablet · los contadores siguen repartiendo el ancho',
+    segundaEnTablet ? Math.abs(enTablet.width - segundaEnTablet.width) <= 1 : true,
+    `${Math.round(enTablet.width)}px cada una`,
+  );
+
   await medica.setViewportSize({ width: 375, height: 812 });
   await medica.waitForTimeout(500);
   await medica.screenshot({ path: `${SALIDA}/${SUFIJO}-medica-actividad-375.png`, fullPage: true });
@@ -172,6 +218,14 @@ async function main() {
     await medica.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
   );
 
+  await paciente.setViewportSize({ width: 768, height: 1024 });
+  await paciente.waitForTimeout(500);
+  await paciente.screenshot({ path: `${SALIDA}/${SUFIJO}-paciente-768.png`, fullPage: true });
+  ok(
+    'tablet · el perfil del paciente sin desborde horizontal',
+    await paciente.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+  );
+
   await paciente.setViewportSize({ width: 375, height: 812 });
   await paciente.waitForTimeout(500);
   await paciente.screenshot({ path: `${SALIDA}/${SUFIJO}-paciente-375.png`, fullPage: true });
@@ -179,7 +233,7 @@ async function main() {
   ok('sin errores de consola', errores.length === 0, errores.join(' · '));
   ok('sin respuestas 4xx/5xx', respuestasFeas.length === 0, respuestasFeas.slice(0, 3).join(' · '));
 
-  await navegador.close();
+  await cerrarNavegador();
 
   const fallaron = veredictos.filter((v) => !v.cond);
   process.stdout.write(
@@ -189,7 +243,10 @@ async function main() {
   process.exit(fallaron.length === 0 ? 0 : 1);
 }
 
-main().catch((e) => {
+main().catch(async (e) => {
+  /* Cerrar ANTES de escribir el error: si el `write` falla, el navegador ya
+     está muerto igual. */
+  await cerrarNavegador();
   process.stderr.write(String(e) + '\n');
   process.exit(1);
 });
