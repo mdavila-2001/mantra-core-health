@@ -165,6 +165,29 @@
   }
 }
 
+/* -- Seguro con solicitud ---------------------------------------------------
+   La aseguradora como enlace y el estado de la solicitud debajo. Botón y no
+   ancla: abre un resumen en la misma pantalla, no navega. Se ve como los demás
+   enlaces de la fila —el nombre del paciente— para que se lea igual de tocable. */
+.agenda__seguro-enlace {
+  display: block;
+  inline-size: fit-content;
+  margin: 0 0 var(--sp-1);
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: start;
+  color: var(--brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.agenda__seguro-enlace:hover {
+  color: var(--brand-primary-hover);
+}
+
 /* -- El estado de pago en la fila (TAREA-13 punto 5) ----------------------- */
 
 .agenda__pago {
@@ -231,4 +254,26 @@
    apuntarla, para que no compita en reposo con la acción principal. */
 .agenda__accion-destructiva:hover {
   --_btn-fg-hover: var(--c-error-600);
+}
+
+/* ---- la tabla en el teléfono ----------------------------------------------
+   Fecha, Paciente y Estado tienen que entrar en 400 px sin scroll lateral: el
+   día va abreviado y el sello se aprieta. Desde tablet, todo como siempre. */
+.agenda__cuando--corta {
+  display: none;
+}
+
+@media (max-width: 779px) {
+  .agenda__cuando--larga {
+    display: none;
+  }
+
+  .agenda__cuando--corta {
+    display: block;
+  }
+
+  .agenda__sello {
+    padding: var(--sp-1) var(--sp-2);
+    column-gap: var(--sp-1);
+  }
 }

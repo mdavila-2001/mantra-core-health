@@ -342,7 +342,11 @@
 
 <ng-template #celdaCuando let-cita>
   @if (cita.cuando) {
-    <span class="agenda__cuando">{{ cita.cuando | date: 'EEEE d MMM, HH:mm' }}</span>
+    <!-- Dos formas de la misma fecha: en el teléfono el día va abreviado
+         («Mié 16 Sept»), porque «Miércoles» sólo ensanchaba la columna y
+         sacaba de la pantalla la de Estado. -->
+    <span class="agenda__cuando agenda__cuando--larga">{{ cita.cuando | date: 'EEEE d MMM, HH:mm' }}</span>
+    <span class="agenda__cuando agenda__cuando--corta">{{ cita.cuando | date: 'EEE d MMM, HH:mm' }}</span>
     @if (cita.hasta) {
       <span class="agenda__hasta">hasta {{ cita.hasta | date: 'HH:mm' }}</span>
     }
@@ -358,7 +362,7 @@
        diseño es que la silueta del ícono cambie con el estado —«no el mismo
        círculo teñido»—, porque quien no distingue los colores necesita algo más
        que el color para separar una cita confirmada de una cancelada. -->
-  <app-status-seal [variant]="cita.estado.variant" [label]="cita.estado.label" />
+  <app-status-seal class="agenda__sello" [variant]="cita.estado.variant" [label]="cita.estado.label" />
 </ng-template>
 
 <ng-template #celdaPaciente let-cita>
@@ -414,6 +418,28 @@
     <app-badge variant="success" [value]="cupo.disponibilidad" />
   } @else {
     <app-badge variant="warning" value="Completo" />
+  }
+</ng-template>
+
+<ng-template #celdaSeguro let-cita>
+  <!-- Con solicitud presentada, la aseguradora es el acceso a su estado
+       (propietario, 2026-09-13): el nombre abre el resumen y, debajo, el
+       estado se lee sin abrir nada. Sin solicitud queda como texto:
+       «Particular» o la aseguradora, que es lo que siempre dijo. -->
+  @if (cita.solicitudSeguro; as solicitud) {
+    <button
+      type="button"
+      class="agenda__seguro-enlace"
+      data-testid="agenda-seguro"
+      [attr.aria-label]="'Ver la solicitud de seguro ' + solicitud.numero"
+      appTooltip="Ver la solicitud de seguro"
+      (click)="verSolicitudDeSeguro(cita)"
+    >
+      {{ cita.cobertura }}
+    </button>
+    <app-badge size="sm" [variant]="tonoDeSolicitud(solicitud.codigo)">{{ solicitud.estado }}</app-badge>
+  } @else {
+    {{ cita.cobertura }}
   }
 </ng-template>
 

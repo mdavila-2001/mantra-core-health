@@ -43,6 +43,7 @@ import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Badge } from '../../shared/components/atoms/badge/badge';
+import type { BadgeVariant } from '../../shared/components/atoms/badge/badge.types';
 import { Menu } from '../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../shared/components/molecules/menu/menu-item/menu-item';
 import { MenuTrigger } from '../../shared/components/molecules/menu/menu-trigger/menu-trigger';
@@ -92,6 +93,9 @@ const SIN_DATO = 'Sin registrar';
 
 /** Roles que sí pueden abrir la ficha de un paciente (`GET /profiles/patients/:id`). */
 const ROLES_CON_FICHA = ['SECURITY_ADMIN', 'SUPERADMIN'];
+
+/** Roles que abren el detalle de una solicitud de seguro (`administration/insurance-claims/:id`). */
+const ROLES_CON_SOLICITUDES_DE_SEGURO = ['BILLING_OPERATOR', 'SECURITY_ADMIN', 'SUPERADMIN'];
 
 /**
  * Roles que sí pueden abrir el expediente clínico.
@@ -232,6 +236,15 @@ const DEMORA_POR_DEFECTO = '20';
 const MAX_MENSAJE_DE_DEMORA = 300;
 
 /** Una cita ya lista para pintar: sin uuid, con el recurso y el estado resueltos. */
+/** Lo que la fila sabe de la solicitud de seguro de su cita. */
+export interface SolicitudDeSeguroVisible {
+  readonly id: string;
+  readonly numero: string;
+  readonly estado: string;
+  readonly codigo: string;
+  readonly enviada: Date | null;
+}
+
 export interface CitaVisible {
   readonly id: string;
   readonly cuando: Date | null;
@@ -268,6 +281,12 @@ export interface CitaVisible {
    * usa la columna de pago para «no corresponde».
    */
   readonly cobertura: string;
+  /**
+   * La solicitud de seguro de esta cita, si hay una: la celda de Seguro se
+   * vuelve un botón que dice en qué está. `null` también cuando quien mira no
+   * puede ver al paciente —la API la omite—: no hay nada que abrir.
+   */
+  readonly solicitudSeguro: SolicitudDeSeguroVisible | null;
   /** El expediente clínico de la persona citada, si la sesión puede abrirlo. */
   readonly rutaExpediente: string | null;
   /**
@@ -436,6 +455,8 @@ export class Agenda {
   private readonly celdaEstado =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaEstado');
 
+  private readonly celdaSeguro =
+    viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaSeguro');
   private readonly celdaPago =
     viewChild.required<TemplateRef<{ $implicit: CitaVisible }>>('celdaPago');
   private readonly celdaPaciente =
@@ -996,7 +1017,7 @@ export class Agenda {
     { key: 'motivo', header: 'Motivo de consulta', priority: 3 },
     // ALV-021. Texto plano — «Particular» o el nombre de la aseguradora no
     // necesitan sello ni color.
-    { key: 'cobertura', header: 'Seguro', priority: 3 },
+    { key: 'cobertura', header: 'Seguro', priority: 3, cell: this.celdaSeguro() },
     { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
     // Prioridad 2: en el teléfono cede antes que la fecha y el paciente.
     { key: 'pago', header: 'Pago', priority: 2, cell: this.celdaPago() },
@@ -1007,7 +1028,11 @@ export class Agenda {
           {
             key: 'acciones',
             header: 'Acciones',
-            priority: 1,
+            // Prioridad 2: en el teléfono van al detalle de la fila, a un toque.
+            // Con Fecha, Paciente y Estado la tabla ya llena los 400 px, y como
+            // columna quedaban fuera de la pantalla, detrás de un scroll lateral
+            // que nadie descubre.
+            priority: 2,
             cell: this.celdaAccionesCita(),
           } satisfies ColumnDef<CitaVisible>,
         ]
@@ -1898,6 +1923,16 @@ export class Agenda {
         cita.insuranceCarrierName === undefined
           ? '—'
           : (cita.insuranceCarrierName ?? 'Particular'),
+      solicitudSeguro: cita.insuranceClaim
+        ? {
+            id: cita.insuranceClaim.id,
+            numero: cita.insuranceClaim.claimIdentifier,
+            estado: cita.insuranceClaim.statusDisplay,
+            codigo: cita.insuranceClaim.statusCode,
+            enviada:
+              cita.insuranceClaim.submittedAt === null ? null : new Date(cita.insuranceClaim.submittedAt),
+          }
+        : null,
       rutaExpediente:
         paciente !== null && this.puedeVerExpedientes() ? patientChartRoute(paciente) : null,
       motivoCrudo: cita.reasonText ?? null,
@@ -1960,6 +1995,64 @@ export class Agenda {
    * si acá no figurara, el enlace se escondería para alguien a quien la API sí
    * le responde.
    */
+  /**
+   * El resumen de la solicitud de seguro de una cita: en qué está, su número y
+   * cuándo se envió. Es lo que la médica necesita para contestarle al paciente
+   * «¿ya me cubrió el seguro?» sin salir de la agenda.
+   *
+   * El detalle completo —líneas, dictamen, disputas— es de facturación y pide
+   * su rol: a quien lo tiene, el diálogo le ofrece abrirlo; a quien no, sólo
+   * cerrar. Ofrecer el enlace a todos sería ofrecer un 403.
+   */
+  protected async verSolicitudDeSeguro(cita: CitaVisible): Promise<void> {
+    const solicitud = cita.solicitudSeguro;
+    if (solicitud === null) return;
+    const puedeAbrir = this.puedeVerSolicitudesDeSeguro();
+    const abrir = await this.dialogs.confirm({
+      title: `Solicitud de seguro ${solicitud.numero}`,
+      message: puedeAbrir
+        ? `Lo que ${cita.cobertura} lleva resuelto de esta consulta.`
+        : `Lo que ${cita.cobertura} lleva resuelto de esta consulta. El detalle de lo aprobado lo ve facturación.`,
+      details: [
+        { label: 'Estado', value: solicitud.estado },
+        { label: 'Aseguradora', value: cita.cobertura },
+        { label: 'Paciente', value: cita.paciente },
+        {
+          label: 'Enviada',
+          value:
+            solicitud.enviada === null
+              ? 'Todavía no se envió'
+              : formatDate(solicitud.enviada, "d 'de' MMMM 'de' y", this.idioma),
+        },
+      ],
+      confirmLabel: puedeAbrir ? 'Abrir la solicitud' : 'Entendido',
+      cancelLabel: 'Cerrar',
+    });
+    if (abrir && puedeAbrir) {
+      void this.router.navigate(['/administration/insurance-claims', solicitud.id]);
+    }
+  }
+
+  /** El tono del estado de la solicitud: el mismo código siempre con el mismo color. */
+  protected tonoDeSolicitud(codigo: string): BadgeVariant {
+    switch (codigo) {
+      case 'APPROVED':
+      case 'PAID':
+        return 'success';
+      case 'PARTIAL':
+        return 'warning';
+      case 'REJECTED':
+        return 'error';
+      default:
+        return 'info';
+    }
+  }
+
+  private puedeVerSolicitudesDeSeguro(): boolean {
+    const roles = this.auth.roles();
+    return ROLES_CON_SOLICITUDES_DE_SEGURO.some((rol) => roles.includes(rol));
+  }
+
   private puedeVerFichas(): boolean {
     const roles = this.auth.roles();
     return ROLES_CON_FICHA.some((rol) => roles.includes(rol));

@@ -41,7 +41,9 @@
 }
 
 .data-table__cell {
-    padding: var(--sp-3);
+    /* Base móvil más apretada: con 12 px por lado, tres columnas ya no entran
+       en 400 px y la tabla se va de la pantalla. Desde tablet vuelve a 12. */
+    padding: var(--sp-2);
     text-align: start;
     border-block-end: 1px solid var(--border-default);
     vertical-align: top;
@@ -63,7 +65,6 @@ thead .data-table__cell {
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    white-space: nowrap;
 }
 
 .data-table__row:hover {
@@ -98,7 +99,7 @@ thead .data-table__cell {
 .data-table__select-cell,
 .data-table__detail-toggle-cell {
     inline-size: var(--sp-12);
-    padding: var(--sp-2) var(--sp-3);
+    padding: var(--sp-2) var(--sp-1);
     border-block-end: 1px solid var(--border-default);
 }
 
@@ -157,6 +158,16 @@ thead .data-table__cell {
 
 /* ≥ tablet: entran como columnas y el botón de detalle deja de hacer falta. */
 @media (min-width: 780px) {
+    .data-table__cell {
+        padding: var(--sp-3);
+    }
+
+    /* En el teléfono el encabezado parte en dos líneas: sin eso, «FECHA Y
+       HORA» fijaba el ancho de la columna y la tabla se salía de la pantalla. */
+    thead .data-table__cell {
+        white-space: nowrap;
+    }
+
     .data-table__secondary {
         display: table-cell;
     }

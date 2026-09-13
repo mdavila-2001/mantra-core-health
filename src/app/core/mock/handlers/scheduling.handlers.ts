@@ -13,6 +13,7 @@ import {
 } from '../fixtures/agenda';
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
 import { emitirNotificacion } from './notifications.handlers';
+import { solicitudDeLaCita } from './insurance.handlers';
 import { pacientePorId } from '../fixtures/personas';
 import { conflict, noContent, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
@@ -218,7 +219,10 @@ export function registrarAgenda(router: MockRouter): void {
       .filter((r) => dentro(r.startAt, from, to))
       .filter((r) => includeCancelled || !estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED'))
       .sort((a, b) => a.startAt.localeCompare(b.startAt));
-    return { items: todos.slice(0, limit), count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
+    // `insuranceClaim` se resuelve al leer, como en la API: la solicitud cambia de
+    // estado sin que la cita se entere.
+    const items = todos.slice(0, limit).map((r) => ({ ...r, insuranceClaim: solicitudDeLaCita(r) }));
+    return { items, count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
   });
 
   router.get('/scheduling/bookings/:id', ({ params }) => reservas.get(params['id']!) ?? notFound('Reserva no encontrada'));

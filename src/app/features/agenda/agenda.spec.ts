@@ -888,6 +888,90 @@ describe('Agenda', () => {
     expect(fila['cobertura']).not.toBe('Particular');
   });
 
+  /* -- Seguro clicable: el estado de la solicitud (propietario, 2026-09-13) -- */
+
+  const SOLICITUD = {
+    id: 'claim-1',
+    claimIdentifier: 'CLM-2026-0142',
+    statusCode: 'APPROVED',
+    statusDisplay: 'Aprobada',
+    submittedAt: '2026-09-01T10:00:00.000Z',
+  };
+
+  it('con solicitud de seguro, la fila la trae con su estado', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder({
+      citas: [{ ...CITA, insuranceCarrierName: 'Seguros Illimani', insuranceClaim: SOLICITUD }],
+    });
+
+    const fila = citas().data?.[0] as Record<string, unknown>;
+    expect(fila['solicitudSeguro']).toEqual({
+      id: 'claim-1',
+      numero: 'CLM-2026-0142',
+      estado: 'Aprobada',
+      codigo: 'APPROVED',
+      enviada: new Date('2026-09-01T10:00:00.000Z'),
+    });
+  });
+
+  it('sin solicitud (`null` o campo omitido), la celda no ofrece nada que abrir', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder({
+      citas: [
+        { ...CITA, id: 'b-null', insuranceCarrierName: 'Seguros Illimani', insuranceClaim: null },
+        { ...CITA, id: 'b-sin', insuranceCarrierName: 'Seguros Illimani' },
+      ],
+    });
+
+    for (const fila of (citas().data ?? []) as Record<string, unknown>[]) {
+      expect(fila['solicitudSeguro']).toBeNull();
+    }
+  });
+
+  it('la médica ve el estado en un resumen, sin enlace a facturación', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder({
+      citas: [{ ...CITA, insuranceCarrierName: 'Seguros Illimani', insuranceClaim: SOLICITUD }],
+    });
+    const dialogs = TestBed.inject(DialogService);
+    const confirmar = vi.spyOn(dialogs, 'confirm').mockResolvedValue(true);
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    await interno<(c: unknown) => Promise<void>>('verSolicitudDeSeguro')(citas().data?.[0]);
+
+    const config = confirmar.mock.calls[0]?.[0];
+    expect(config?.title).toContain('CLM-2026-0142');
+    expect(config?.details).toContainEqual({ label: 'Estado', value: 'Aprobada' });
+    expect(config?.confirmLabel).toBe('Entendido');
+    // Sin rol de facturación el detalle es un 403: no se navega aunque confirme.
+    expect(navegar).not.toHaveBeenCalled();
+  });
+
+  it('con rol de facturación, el resumen abre la solicitud', async () => {
+    await montar({ roles: ['PRACTITIONER', 'BILLING_OPERATOR'], hpid: 'hp-1' });
+    await responder({
+      citas: [{ ...CITA, insuranceCarrierName: 'Seguros Illimani', insuranceClaim: SOLICITUD }],
+    });
+    vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    await interno<(c: unknown) => Promise<void>>('verSolicitudDeSeguro')(citas().data?.[0]);
+
+    expect(navegar).toHaveBeenCalledWith(['/administration/insurance-claims', 'claim-1']);
+  });
+
+  it('el tono del estado sigue al código, no a la etiqueta', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responder();
+    const tono = interno<(c: string) => string>('tonoDeSolicitud');
+
+    expect(tono('APPROVED')).toBe('success');
+    expect(tono('PAID')).toBe('success');
+    expect(tono('PARTIAL')).toBe('warning');
+    expect(tono('REJECTED')).toBe('error');
+    expect(tono('IN_REVIEW')).toBe('info');
+  });
+
   it('una cita sin paciente no enlaza a ningún expediente', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     const { patientProfileId: _omitido, ...sinPaciente } = CITA;

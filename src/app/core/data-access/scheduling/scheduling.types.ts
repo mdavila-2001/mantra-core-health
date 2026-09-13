@@ -165,6 +165,21 @@ export interface NewPaymentState {
   readonly insuranceUsed?: boolean;
 }
 
+/**
+ * Lo que la agenda necesita de una solicitud de seguro para decir en qué está:
+ * número, estado y cuándo se envió. El detalle completo —líneas, dictamen,
+ * disputas— sigue en `GET /insurance-claims/:id`, que pide rol de facturación.
+ */
+export interface BookingInsuranceClaim {
+  readonly id: string;
+  readonly claimIdentifier: string;
+  /** Código del estado: `SUBMITTED`, `IN_REVIEW`, `APPROVED`, `PARTIAL`, `REJECTED`, `PAID`. */
+  readonly statusCode: string;
+  readonly statusDisplay: string;
+  /** ISO; `null` si todavía no se envió. */
+  readonly submittedAt: string | null;
+}
+
 export interface Booking {
   readonly id: string;
   readonly patientProfileId?: string;
@@ -221,6 +236,15 @@ export interface Booking {
    * corresponde verla, que es una pregunta distinta.
    */
   readonly insuranceCarrierName?: string | null;
+  /**
+   * La solicitud de seguro de esta cita, si se presentó una.
+   *
+   * Se enlaza por la consulta atendida: cita → `clinical.encounters` →
+   * `insurance.insurance_claims.encounter_id`, y viaja la más reciente. Misma
+   * regla que `insuranceCarrierName`: `null` es «se buscó y no hay»; **ausente**
+   * es que quien mira no puede ver al paciente.
+   */
+  readonly insuranceClaim?: BookingInsuranceClaim | null;
   /**
    * Por qué la cita está como está, cuando el último cambio lo explicó.
    *
