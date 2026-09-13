@@ -268,15 +268,73 @@ describe('Glossary', () => {
     expect(html().querySelector('.glosario__abecedario')).toBeNull();
   });
 
-  it('con varios tramos el abecedario ancla a cada inicial', async () => {
+  it('con varios tramos el abecedario ofrece cada inicial, y cada tramo tiene su ancla', async () => {
     responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
     await harness.fixture.whenStable();
 
-    const enlaces = [...html().querySelectorAll('.glosario__abecedario a')];
-    expect(enlaces.map((a) => a.getAttribute('href'))).toEqual([
-      '#glosario-letra-B',
-      '#glosario-letra-H',
-    ]);
+    expect(textos('.glosario__abecedario button')).toEqual(['B', 'H']);
+    expect(html().querySelector('#glosario-letra-B')).not.toBeNull();
+    expect(html().querySelector('#glosario-letra-H')).not.toBeNull();
+  });
+
+  // --- Paginación ------------------------------------------------------------
+
+  /** `n` términos distintos, uno por inicial en orden (A, B, C…, y vuelta a empezar). */
+  function terminos(n: number) {
+    return Array.from({ length: n }, (_, i) => ({
+      ...TERMINO,
+      conceptId: `c-${String(i).padStart(3, '0')}`,
+      display: `${String.fromCharCode(65 + (i % 26))}término ${String(i).padStart(3, '0')}`,
+    }));
+  }
+
+  it('el cuerpo se pagina: con 30 términos la primera página muestra 12 y hay paginador', async () => {
+    responderLanding([CATEGORIA], terminos(30));
+    await harness.fixture.whenStable();
+
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(12);
+    expect(html().querySelector('app-pagination')).not.toBeNull();
+    expect(html().querySelector('app-pagination')?.textContent).toContain('1–12 de 30');
+  });
+
+  it('ir a la última página muestra el resto, no una página llena de más', async () => {
+    responderLanding([CATEGORIA], terminos(30));
+    await harness.fixture.whenStable();
+
+    interno<(p: number) => void>('irAPagina')(3);
+    await harness.fixture.whenStable();
+
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(6);
+    expect(html().querySelector('app-pagination')?.textContent).toContain('25–30 de 30');
+  });
+
+  it('el abecedario lleva a la página donde empieza la letra, aunque no sea la actual', async () => {
+    responderLanding([CATEGORIA], terminos(30));
+    await harness.fixture.whenStable();
+
+    // Uno por inicial: la «P» es el término 15, que cae en la página 2.
+    expect(html().querySelector('#glosario-letra-P')).toBeNull();
+    const botonP = [...html().querySelectorAll<HTMLButtonElement>('.glosario__abecedario button')]
+      .find((b) => b.textContent?.trim() === 'P');
+    botonP?.click();
+    await harness.fixture.whenStable();
+
+    expect(interno<() => number>('paginaActual')()).toBe(2);
+    expect(html().querySelector('#glosario-letra-P')).not.toBeNull();
+  });
+
+  it('un filtro nuevo vuelve a la primera página', async () => {
+    responderLanding([CATEGORIA], terminos(30));
+    await harness.fixture.whenStable();
+    interno<(p: number) => void>('irAPagina')(3);
+    await harness.fixture.whenStable();
+
+    await irA({ q: 'término' });
+    responderTerminos(terminos(30));
+    await harness.fixture.whenStable();
+
+    expect(interno<() => number>('paginaActual')()).toBe(1);
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(12);
   });
 
   // --- Filtrar: por texto o por categoría ----------------------------------

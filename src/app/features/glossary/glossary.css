@@ -1,12 +1,13 @@
 /* ============================================================================
     Glosario médico — enciclopedia.
 
-    Tres franjas: el buscador, la fila de categorías y el cuerpo de
-    definiciones con su índice alfabético. Sólo distribución y jerarquía — ni
-    un color ni una tipografía que el sistema no tenga ya.
+    Tres franjas: el buscador, la rejilla de categorías y el cuerpo de
+    definiciones —tarjetas por página, con su índice alfabético—. Sólo
+    distribución y jerarquía: ni un color ni una tipografía que el sistema no
+    tenga ya.
 
-    Mobile-first: lo de abajo es la lectura en un teléfono, y las dos únicas
-    reglas de medios ensanchan a partir de ahí.
+    Mobile-first: las rejillas usan `auto-fill` con un mínimo, así que suman
+    columnas solas a medida que hay ancho, sin reglas de medios.
     ========================================================================== */
 
 :host {
@@ -44,11 +45,11 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--sp-3);
-  /* El filete bajo el titular es lo que hace que una pantalla se lea como un
-     artículo y no como un tablero: separa el encabezado del cuerpo sin encajar
+  /* El filete bajo el titular separa el encabezado del cuerpo sin encajar
      nada en una caja. */
   padding-block-end: var(--sp-2);
   border-block-end: 1px solid var(--border-default);
+  scroll-margin-block-start: var(--sp-6);
 }
 
 .glosario__titulo-cuerpo {
@@ -58,6 +59,7 @@
   line-height: var(--lh-h2);
   font-weight: 600;
   color: var(--text-primary);
+  scroll-margin-block-start: var(--sp-6);
 }
 
 /* Botón que se lee como enlace: volver al índice completo es una acción menor
@@ -73,34 +75,32 @@
   cursor: pointer;
 }
 
-/* --- Fila de categorías ---------------------------------------------------
-   Una fila y no una grilla: las doce categorías son el mapa de la
-   enciclopedia y tienen que caber por encima del contenido. Se desplaza en
-   horizontal dentro de su propia caja —nunca el cuerpo de la página— con
-   anclaje de desplazamiento, que es como se hojea una fila en un teléfono. */
+/* --- Rejilla de categorías -------------------------------------------------
+   Una rejilla y no una fila con desplazamiento lateral: la fila recortaba la
+   última tarjeta contra el borde y escondía la mitad de las categorías fuera
+   de la vista. Con `auto-fill` caben todas, en tantas columnas como permita el
+   ancho, y las tarjetas de una misma fila igualan su alto. */
 
-.glosario__fila {
-  display: flex;
+.glosario__rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
   gap: var(--sp-3);
   margin: 0;
-  padding: 0 0 var(--sp-2);
+  padding: 0;
   list-style: none;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  /* El anillo de foco de una tarjeta no debe quedar recortado por el marco. */
-  scroll-padding-inline: var(--sp-1);
 }
 
-.glosario__columna {
-  flex: 0 0 15rem;
-  scroll-snap-align: start;
+.glosario__celda {
+  display: flex;
+  min-inline-size: 0;
 }
 
 .glosario__tarjeta {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: var(--sp-1);
-  block-size: 100%;
+  gap: var(--sp-3);
+  min-inline-size: 0;
   padding: var(--sp-4);
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
@@ -109,12 +109,13 @@
   text-decoration: none;
   transition:
     border-color var(--dur-fast) var(--ease-standard),
-    background-color var(--dur-fast) var(--ease-standard);
+    background-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
 }
 
 .glosario__tarjeta:hover {
   border-color: var(--border-strong);
-  background: var(--bg-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .glosario__tarjeta:focus-visible {
@@ -128,16 +129,51 @@
   box-shadow: inset 0 0 0 1px var(--brand-primary);
 }
 
-.glosario__icono {
+.glosario__tarjeta-cabeza {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.glosario__tarjeta-texto {
+  display: grid;
+  min-inline-size: 0;
+}
+
+/* El ícono va sobre un disco con el color de marca muy rebajado: le da peso de
+   insignia sin sumar un color que el sistema no tenga. */
+.glosario__insignia {
+  display: inline-grid;
   flex: none;
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
   color: var(--brand-primary);
+}
+
+.glosario__insignia--chica {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+.glosario__icono {
+  display: block;
+  inline-size: 1.375rem;
+  block-size: 1.375rem;
+}
+
+.glosario__insignia--chica .glosario__icono {
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
 }
 
 /* El ícono del glosario dibuja su `<svg>` a pelo, sin la regla de `:host` que
    traen `nav-icon` y los otros átomos del sistema. */
 .glosario__icono svg {
+  display: block;
   inline-size: 100%;
   block-size: 100%;
 }
@@ -160,7 +196,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-1);
-  margin-block-start: var(--sp-2);
 }
 
 /* --- Cuerpo de la enciclopedia -------------------------------------------- */
@@ -188,7 +223,7 @@
 }
 
 /* Índice alfabético. Las letras son el atajo de una lista larga; se leen como
-   una fila de teclas, no como prosa. */
+   una fila de teclas. Las que caen en la página actual se rellenan. */
 .glosario__abecedario {
   display: flex;
   flex-wrap: wrap;
@@ -199,19 +234,27 @@
 }
 
 .glosario__letra-enlace {
-  min-inline-size: 2rem;
+  min-inline-size: 2.25rem;
   padding: var(--sp-1) var(--sp-2);
+  border: 1px solid var(--border-default);
   border-radius: var(--r-sm);
+  background: var(--bg-surface);
   color: var(--text-link);
+  font: inherit;
   font-size: var(--fs-caption);
   font-weight: 600;
   text-align: center;
-  text-decoration: none;
+  cursor: pointer;
 }
 
 .glosario__letra-enlace:hover {
+  border-color: var(--border-strong);
   background: var(--bg-hover);
-  text-decoration: underline;
+}
+
+.glosario__letra-enlace--en-pagina {
+  border-color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
 }
 
 .glosario__tramo {
@@ -221,7 +264,7 @@
 /* La inicial encabeza su tramo con el mismo filete del encabezado: es la misma
    jerarquía de artículo, un nivel más abajo. */
 .glosario__letra {
-  margin: 0 0 var(--sp-3);
+  margin: 0 0 var(--sp-4);
   padding-block-end: var(--sp-1);
   border-block-end: 1px solid var(--border-default);
   font-family: var(--font-display);
@@ -229,22 +272,64 @@
   line-height: var(--lh-h3);
   font-weight: 600;
   color: var(--brand-primary);
+  scroll-margin-block-start: var(--sp-6);
 }
 
+/* Las definiciones van en tarjetas de ancho fijo mínimo: una columna en el
+   teléfono, dos o tres en un monitor. Cada tarjeta tiene medida de lectura
+   propia, así que sobra aire y no línea larga. */
 .glosario__entradas {
   display: grid;
-  gap: var(--sp-5);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: var(--sp-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.glosario__entrada-celda {
+  display: flex;
+  min-inline-size: 0;
+}
+
+/* `app-card` pone encabezado, cuerpo y pie como hijos directos del host: con
+   tres filas y la del medio elástica, el pie queda abajo en todas las tarjetas
+   de una fila aunque las definiciones midan distinto. */
 .glosario__entrada {
+  position: relative;
   display: grid;
-  gap: var(--sp-1);
-  /* La definición se lee, no se compara: se la deja en un ancho de lectura en
-     vez de estirarla de punta a punta de un monitor. */
-  max-inline-size: 72ch;
+  flex: 1;
+  grid-template-rows: auto 1fr auto;
+  min-inline-size: 0;
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.glosario__entrada:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.glosario__entrada:focus-within {
+  border-color: var(--brand-primary);
+}
+
+.glosario__entrada-cabeza {
+  display: grid;
+  justify-items: start;
+  gap: var(--sp-2);
+}
+
+.glosario__entrada-categoria {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .glosario__entrada-titulo {
@@ -254,15 +339,53 @@
   line-height: var(--lh-body-lg);
   font-weight: 600;
   letter-spacing: normal;
+  overflow-wrap: anywhere;
 }
 
-.glosario__entrada-titulo a {
-  color: var(--text-link);
+.glosario__entrada-enlace {
+  color: var(--text-primary);
   text-decoration: none;
 }
 
-.glosario__entrada-titulo a:hover {
-  text-decoration: underline;
+/* El enlace se estira sobre toda la tarjeta: cualquier punto de ella abre la
+   ficha, y el foco se dibuja sobre la tarjeta y no sobre la línea del título. */
+.glosario__entrada-enlace::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.glosario__entrada-enlace:focus-visible {
+  outline: none;
+}
+
+.glosario__entrada-enlace:focus-visible::after {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.glosario__entrada:hover .glosario__entrada-enlace {
+  color: var(--text-link);
+}
+
+.glosario__entrada-definicion {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: var(--lh-body-lg);
+  text-wrap: pretty;
+  /* Una definición larga no estira la fila entera: se corta a cuatro líneas y
+     la ficha tiene el resto. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+
+.glosario__entrada-pie {
+  display: grid;
+  gap: var(--sp-3);
 }
 
 .glosario__entrada-clasificacion {
@@ -272,31 +395,51 @@
   margin: 0;
 }
 
-.glosario__entrada-definicion {
+.glosario__entrada-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
   margin: 0;
-  color: var(--text-secondary);
-  line-height: var(--lh-body-lg);
-  text-wrap: pretty;
-}
-
-.glosario__entrada-relaciones {
-  margin: 0;
-  color: var(--text-muted);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-subtle);
   font-size: var(--fs-caption);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .glosario__tarjeta {
-    transition: none;
-  }
+.glosario__entrada-relaciones {
+  color: var(--text-muted);
 }
 
-/* A partir de la tablet las entradas se leen en dos columnas: el ancho de
-   lectura ya está fijado por la entrada, así que lo que sobra es aire, no
-   línea más larga. */
-@media (min-width: 60rem) {
-  .glosario__entradas {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-5) var(--sp-8);
+.glosario__entrada-leer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--text-link);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.glosario__entrada-leer svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.glosario__entrada:hover .glosario__entrada-leer svg {
+  transform: translateX(2px);
+}
+
+/* --- Paginación ----------------------------------------------------------- */
+
+.glosario__paginacion {
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-default);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glosario__tarjeta,
+  .glosario__entrada,
+  .glosario__entrada-leer svg {
+    transition: none;
   }
 }

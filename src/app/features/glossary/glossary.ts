@@ -1,9 +1,12 @@
+import { DOCUMENT } from '@angular/common';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  Injector,
   signal,
   untracked,
 } from '@angular/core';
@@ -22,6 +25,8 @@ import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Chip } from '../../shared/components/atoms/chip/chip';
+import { Card } from '../../shared/components/molecules/card/card';
+import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import { SearchField } from '../../shared/components/molecules/search-field/search-field';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
@@ -43,6 +48,12 @@ const TOPE = 200;
 /** Tope de conjuntos de valores al leer las categorías. El catálogo tiene un puñado. */
 const TOPE_CATEGORIAS = 200;
 
+/**
+ * Tamaños de página del cuerpo. Múltiplos de 12 para que la rejilla cierre
+ * filas completas con una, dos, tres o cuatro columnas.
+ */
+export const TAMANOS_DE_PAGINA: readonly number[] = Object.freeze([12, 24, 48]);
+
 /** Una categoría de la fila de tarjetas, con las etiquetas que de verdad usa. */
 export interface TarjetaDeCategoria {
   readonly id: string;
@@ -63,14 +74,15 @@ export interface TarjetaDeCategoria {
  * Las tres piezas, en el orden en que se leen:
  *
  * 1. **El buscador**, arriba y ancho, como en cualquier enciclopedia.
- * 2. **La fila de categorías**: una tarjeta por categoría clínica, con su
+ * 2. **La rejilla de categorías**: una tarjeta por categoría clínica, con su
  *    ícono, su conteo y **chips con las etiquetas que sus términos realmente
- *    llevan** — no una lista fija, sino las que salen del propio corpus. Es
- *    una fila y no una grilla alta: las doce categorías tienen que verse de un
- *    vistazo por encima del contenido, que es lo que se vino a leer.
- * 3. **El cuerpo**: las definiciones. Sin filtro son **todas**, agrupadas por
- *    inicial con su índice alfabético; con filtro, las que coinciden. En los
- *    dos casos se ven la definición y las etiquetas sin abrir nada.
+ *    llevan** — no una lista fija, sino las que salen del propio corpus. Antes
+ *    era una fila con desplazamiento lateral que recortaba tarjetas contra el
+ *    borde; el propietario pidió una rejilla (2026-09-13).
+ * 3. **El cuerpo**: las definiciones, en tarjetas y **paginadas** en el
+ *    cliente. Sin filtro son **todas**; con filtro, las que coinciden. Cada
+ *    página se agrupa por inicial, y el abecedario salta a la página donde
+ *    empieza cada letra.
  *
  * La tabla de resultados que traía la ronda anterior se retiró: el propietario
  * pidió una enciclopedia al estilo Wikipedia, y un artículo no se hojea en una
@@ -96,7 +108,16 @@ export interface TarjetaDeCategoria {
  */
 @Component({
   selector: 'app-glossary',
-  imports: [Chip, GlossaryCategoryIcon, PageHeader, RouterLink, SearchField, ViewStateHost],
+  imports: [
+    Card,
+    Chip,
+    GlossaryCategoryIcon,
+    PageHeader,
+    Pagination,
+    RouterLink,
+    SearchField,
+    ViewStateHost,
+  ],
   templateUrl: './glossary.html',
   styleUrl: './glossary.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -106,6 +127,8 @@ export class Glossary {
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -241,14 +264,48 @@ export class Glossary {
     return estado.status === 'ready' ? estado.data : [];
   });
 
-  /** El cuerpo de la enciclopedia: los términos agrupados por inicial. */
-  protected readonly grupos = computed<readonly GrupoAlfabetico[]>(() =>
+  /** Todos los tramos por inicial, antes de paginar: de acá sale el abecedario. */
+  private readonly tramos = computed<readonly GrupoAlfabetico[]>(() =>
     porInicial(this.visibles()),
   );
 
-  /** Las iniciales con términos, para el índice alfabético de arriba. */
+  /** Los términos en orden de índice —por tramo y dentro de él—, listos para cortar en páginas. */
+  private readonly ordenados = computed<readonly GlossaryTerm[]>(() =>
+    this.tramos().flatMap((tramo) => tramo.terminos),
+  );
+
+  /** Las iniciales con términos en **todo** el resultado, no sólo en la página. */
   protected readonly iniciales = computed<readonly string[]>(() =>
-    this.grupos().map((grupo) => grupo.letra),
+    this.tramos().map((tramo) => tramo.letra),
+  );
+
+  protected readonly tamanosDePagina = TAMANOS_DE_PAGINA;
+
+  /** Términos por página. */
+  protected readonly porPagina = signal(TAMANOS_DE_PAGINA[0]);
+
+  /** La página pedida, 1-based. Puede quedar fuera de rango: manda {@link paginaActual}. */
+  private readonly paginaPedida = signal(1);
+
+  protected readonly paginaActual = computed(() => {
+    const paginas = Math.max(1, Math.ceil(this.ordenados().length / this.porPagina()));
+    return Math.min(paginas, Math.max(1, this.paginaPedida()));
+  });
+
+  /** Los términos de la página que se está mirando. */
+  private readonly enPagina = computed<readonly GlossaryTerm[]>(() => {
+    const desde = (this.paginaActual() - 1) * this.porPagina();
+    return this.ordenados().slice(desde, desde + this.porPagina());
+  });
+
+  /** El cuerpo de la enciclopedia: los términos de la página, agrupados por inicial. */
+  protected readonly grupos = computed<readonly GrupoAlfabetico[]>(() =>
+    porInicial(this.enPagina()),
+  );
+
+  /** Las iniciales que caen en la página actual, para marcarlas en el abecedario. */
+  protected readonly inicialesEnPagina = computed<ReadonlySet<string>>(
+    () => new Set(this.grupos().map((grupo) => grupo.letra)),
   );
 
   protected readonly cantidadVisible = computed(() => this.visibles().length);
@@ -268,6 +325,14 @@ export class Glossary {
   constructor() {
     this.cargarCategorias();
     this.cargarCorpus();
+
+    // Un filtro nuevo es otro resultado: quedarse en la página 4 de la búsqueda
+    // anterior deja a la persona en un lugar que no eligió, o en ninguno.
+    effect(() => {
+      this.busqueda();
+      this.categoriaCodigo();
+      untracked(() => this.paginaPedida.set(1));
+    });
 
     effect(() => {
       const texto = this.busqueda();
@@ -297,6 +362,32 @@ export class Glossary {
   /** Vuelve al índice completo: limpia categoría **y** texto. */
   protected verTodo(): void {
     this.navegar({ category: null, q: null });
+  }
+
+  /** Cambia de página y lleva la lectura al principio del cuerpo, no al pie donde quedó. */
+  protected irAPagina(pagina: number): void {
+    this.paginaPedida.set(pagina);
+    this.desplazarA('glosario-cuerpo-titulo');
+  }
+
+  /**
+   * Salta a una inicial. Con paginación el tramo puede estar en otra página,
+   * así que primero se va a la página donde empieza y, ya dibujada, se
+   * desplaza hasta él. Un `href="#…"` no alcanza: el ancla no existe hasta
+   * cambiar de página, y con `<base href>` navegaría fuera de la ruta.
+   */
+  protected irALetra(letra: string): void {
+    const indice = this.ordenados().findIndex((termino) => inicialDe(termino.display) === letra);
+    if (indice < 0) return;
+    this.paginaPedida.set(Math.floor(indice / this.porPagina()) + 1);
+    this.desplazarA(`glosario-letra-${letra}`);
+  }
+
+  private desplazarA(id: string): void {
+    afterNextRender(
+      () => this.document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      { injector: this.injector },
+    );
   }
 
   protected recargar(): void {
