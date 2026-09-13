@@ -1,0 +1,67 @@
+/* Una tarjeta sobria: esto no es una pantalla de configuración, es el requisito
+   de una función pedido donde la función lo exige. Fondo blanco y ancho
+   completo del contenedor que la reciba, como el resto de las superficies. */
+/* `container-type` y no una media query: esto se monta en dos sitios de ancho
+   muy distinto —el ancho entero de «Mis artículos» y la columna angosta del
+   alta de un grupo—, y la pantalla mide lo mismo en los dos. Preguntarle al
+   viewport daría dos columnas dentro de una caja de 290 px, que es justo el
+   defecto que se quería evitar. Mismo recurso que `public-profile-card`. */
+.vitrina {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  container-type: inline-size;
+  padding: var(--sp-5);
+  width: 100%;
+}
+
+.vitrina__titulo {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin: 0;
+}
+
+.vitrina__ayuda {
+  color: var(--text-muted);
+  margin: var(--sp-1) 0 0;
+}
+
+.vitrina__error {
+  margin-block-start: var(--sp-4);
+}
+
+/* Dos columnas cuando la CAJA da para dos —nombre y enlace son cortos y
+   hermanos—, una sola cuando no. `minmax(0, …)` en los dos escalones: sin él la
+   celda mide `min-width: auto` y el área de arrastrar archivos estira la página
+   entera, que es el defecto que ya se midió el 2026-09-11 en «Credenciales». */
+.vitrina__form {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+  margin-block-start: var(--sp-4);
+}
+
+@container (min-width: 34rem) {
+  .vitrina__form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.vitrina__ancho,
+.vitrina__enlace,
+.vitrina__acciones {
+  grid-column: 1 / -1;
+}
+
+.vitrina__enlace {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin: 0;
+}
+
+.vitrina__acciones {
+  display: flex;
+  justify-content: flex-end;
+}
