@@ -103,7 +103,9 @@ mkdirSync(EVIDENCIAS, { recursive: true });
 console.log(`[recorrido-real] Levantando ng serve en ${BASE_URL}…`);
 const servidor = spawn(
   'yarn',
-  ['ng', 'serve', '--port', PUERTO_SERVE, '--configuration', 'development'],
+  // `real-api` y no `development`: en la rama `mockup` development tiene la maqueta
+  // encendida, y esta suite terminaría hablando con el simulador (B-24).
+  ['ng', 'serve', '--port', PUERTO_SERVE, '--configuration', 'real-api'],
   {
     cwd: RAIZ,
     stdio: 'ignore',
