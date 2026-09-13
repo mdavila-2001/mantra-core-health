@@ -71,6 +71,10 @@ interface DetalleAseguradoraSimulado {
   readonly carrierCode: string;
   readonly legalName: string;
   readonly regulatorIdentifier: string | null;
+  /** Canales de contacto directo (subtarea 2.3): ficticios, formato boliviano. */
+  readonly whatsappNumber: string | null;
+  readonly callCenterPhone: string | null;
+  readonly supportEmail: string | null;
   readonly jurisdiction: ReturnType<typeof c> | null;
   readonly status: ReturnType<typeof c>;
   readonly verification: ReturnType<typeof c>;
@@ -100,6 +104,10 @@ const ASEGURADORAS = [
     name: 'Seguros Andina',
     regulatorIdentifier: 'APS-0042',
     isPublic: false,
+    // Ficticios, formato boliviano (subtarea 2.3): la aseguradora del mock.
+    whatsapp: '+59170000101',
+    callCenter: '800-10-0101',
+    supportEmail: 'siniestros@andina.mock.bo',
     planes: [
       ['ANDINA-INT', 'Plan Integral'],
       ['ANDINA-FAM', 'Plan Familiar'],
@@ -113,6 +121,10 @@ const ASEGURADORAS = [
     name: 'La Vitalicia',
     regulatorIdentifier: 'APS-0007',
     isPublic: false,
+    // Sin WhatsApp a propósito: escenario "sólo call center" (Escenario 2).
+    whatsapp: null,
+    callCenter: '800-10-0102',
+    supportEmail: 'siniestros@vitalicia.mock.bo',
     planes: [
       ['VIT-SALUD', 'Salud Total'],
       ['VIT-BASICO', 'Salud Básica'],
@@ -125,6 +137,9 @@ const ASEGURADORAS = [
     name: 'Alianza Seguros',
     regulatorIdentifier: 'APS-0015',
     isPublic: false,
+    whatsapp: '+59170000103',
+    callCenter: '800-10-0103',
+    supportEmail: 'siniestros@alianza.mock.bo',
     planes: [
       ['ALZ-ORO', 'Plan Oro'],
       ['ALZ-PLATA', 'Plan Plata'],
@@ -137,6 +152,9 @@ const ASEGURADORAS = [
     name: 'Caja Nacional de Salud',
     regulatorIdentifier: 'ASUSS-001',
     isPublic: true,
+    whatsapp: null,
+    callCenter: '800-10-0104',
+    supportEmail: null,
     planes: [['CNS-GEN', 'Seguro social obligatorio']],
   },
   {
@@ -146,6 +164,10 @@ const ASEGURADORAS = [
     name: 'Caja Petrolera de Salud',
     regulatorIdentifier: 'ASUSS-002',
     isPublic: true,
+    // Escenario "ningún canal registrado".
+    whatsapp: null,
+    callCenter: null,
+    supportEmail: null,
     planes: [['CPS-GEN', 'Seguro social obligatorio']],
   },
 ];
@@ -156,6 +178,9 @@ function resumenDeAseguradora(a: (typeof ASEGURADORAS)[number], i: number, canAd
     carrierCode: a.carrierCode,
     legalName: a.legalName,
     regulatorIdentifier: a.regulatorIdentifier,
+    whatsappNumber: a.whatsapp,
+    callCenterPhone: a.callCenter,
+    supportEmail: a.supportEmail,
     jurisdiction: c('BO', 'Bolivia'),
     status: c('ACTIVE', 'Activa'),
     verification: c('VERIFIED', 'Verificada'),
@@ -542,6 +567,9 @@ function itemDeSolicitud(s: SolicitudSimulada) {
     },
     carrierName: aseguradora.name,
     insuranceCarrierId: aseguradora.id,
+    carrierWhatsappNumber: aseguradora.whatsapp,
+    carrierCallCenterPhone: aseguradora.callCenter,
+    carrierSupportEmail: aseguradora.supportEmail,
     policyIdentifier: s.policyIdentifier,
     policyBrokerName: s.carrierIndex === 0 ? CORREDORES[0]!.legalName : null,
     billedTotal: money(s.billed),

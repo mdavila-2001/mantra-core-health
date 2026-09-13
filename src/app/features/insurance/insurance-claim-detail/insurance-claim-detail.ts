@@ -27,6 +27,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { currencySuffix, formatAmount, formatMoney } from '../money-format';
+import { InsuranceContactChannels } from './insurance-contact-channels/insurance-contact-channels';
 
 /**
  * Detalle de una solicitud de seguro — `administration/insurance-claims/:claimId`.
@@ -58,6 +59,14 @@ import { currencySuffix, formatAmount, formatMoney } from '../money-format';
  * `claim_adjudication_versions.disposition_text` sigue siendo **de la versión
  * entera** y se muestra donde corresponde, una vez, con el dictamen: repetirlo
  * en cada fila lo haría pasar por un motivo particular de ese ítem.
+ *
+ * ## El contacto de la aseguradora es un enlace, no una acción (subtarea 2.3)
+ *
+ * `app-insurance-contact-channels` dibuja WhatsApp/call center/correo de
+ * `detail.header` — la cabecera de la solicitud ya trae los tres canales, sin
+ * una consulta aparte. Esta pantalla no envía nada por su cuenta: los botones
+ * son anclas que abren el canal con el destino y, en el caso de WhatsApp, el
+ * mensaje ya cargados; el resto lo hace el teléfono o el correo del usuario.
  */
 @Component({
   selector: 'app-insurance-claim-detail',
@@ -65,6 +74,7 @@ import { currencySuffix, formatAmount, formatMoney } from '../money-format';
     Alert,
     AppButton,
     Badge,
+    InsuranceContactChannels,
     PageHeader,
     RouterLink,
     Tooltip,

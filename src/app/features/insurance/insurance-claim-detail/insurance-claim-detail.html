@@ -81,6 +81,16 @@
       </dl>
     </section>
 
+    <!-- ---- contacto directo con la aseguradora (subtarea 2.3) ------------ -->
+    <section class="claim__contact" aria-labelledby="claim-contact">
+      <h2 id="claim-contact" class="claim__section-title">Asistencia y soporte de la aseguradora</h2>
+      <p class="claim__note">
+        ¿Consultas sobre copagos, coberturas o requisitos adicionales de esta solicitud?
+        Contactá a {{ detail.header.carrierName }} por sus canales oficiales.
+      </p>
+      <app-insurance-contact-channels [header]="detail.header" />
+    </section>
+
     <!-- ---- el dictamen -------------------------------------------------- -->
     @if (detail.adjudication; as dictamen) {
       <section class="claim__adjudication" aria-labelledby="claim-adjudication">
