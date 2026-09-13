@@ -1,10 +1,18 @@
 import { Location } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import {
+  booleanAttribute,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+} from '@angular/core';
 import { Router } from '@angular/router';
 
 import { NavigationHistoryService } from '../../../../core/navigation/navigation-history.service';
 import { AppButtonLink } from '../button/button-link';
 import { NavIcon } from '../nav-icon/nav-icon';
+import { Tooltip } from '../tooltip/tooltip';
 
 /**
  * La salida de una pantalla profunda: «Volver».
@@ -55,7 +63,7 @@ import { NavIcon } from '../nav-icon/nav-icon';
  */
 @Component({
   selector: 'app-back-link',
-  imports: [AppButtonLink, NavIcon],
+  imports: [AppButtonLink, NavIcon, Tooltip],
   templateUrl: './back-link.html',
   styleUrl: './back-link.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,6 +82,12 @@ export class BackLink {
 
   /** El texto visible. «Volver a las encuestas» dice más que «Volver». */
   readonly label = input('Volver');
+
+  /**
+   * Sólo la flecha, sin texto. El `label` no se pierde: pasa a ser el nombre
+   * accesible y el tooltip, porque una flecha sola no dice a dónde vuelve.
+   */
+  readonly iconOnly = input(false, { transform: booleanAttribute });
 
   /** El respaldo como árbol de URL, que es lo que el router sabe navegar. */
   private readonly fallbackUrl = computed(() => {
