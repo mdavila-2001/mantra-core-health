@@ -12,6 +12,7 @@ import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '@core/auth/auth.service';
+import { BackLink } from '@shared/components/atoms/back-link/back-link';
 import { PublicNavRail } from '@shared/components/organisms/public-nav-rail/public-nav-rail';
 import { AlovidaThemeToggleDirective } from '@core/alovida/alovida-theme-toggle.directive';
 
@@ -20,6 +21,7 @@ import { AlovidaDesignNotice } from './alovida-design-notice';
 @Component({
   selector: 'app-alovida-public-shell',
   imports: [
+    BackLink,
     PublicNavRail,
     AlovidaDesignNotice,
     RouterLink,

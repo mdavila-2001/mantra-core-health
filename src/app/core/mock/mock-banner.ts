@@ -71,9 +71,14 @@ import { MOCK_USERS } from './mock-session';
     @media (max-width: 60rem) {
       /* Plegado: una sola pastilla dentro de la barra de arriba, a la derecha
          de la hamburguesa, que es el único hueco que ninguna pantalla usa.
-         Bajo el header tapaba el nombre de la conversación. */
+         Bajo el header tapaba el nombre de la conversación.
+
+         Los 112 px son la cuenta de lo que hay antes: 12 de margen + 40 de
+         hamburguesa + 8 de aire + 44 de la flecha de «Volver» del marco + 8.
+         Eran 60 —justo el borde de la flecha— y el cartel la tapaba entera en
+         un teléfono, que es donde la flecha más se usa. */
       .mock {
-        inset-inline-start: 60px;
+        inset-inline-start: 112px;
         inset-inline-end: auto;
         inset-block-start: 14px;
         inset-block-end: auto;

@@ -189,6 +189,23 @@
 
   <div class="app-main">
     <header class="app-header" app-header>
+      <!-- La vuelta atrás del marco: arriba a la izquierda, pegada al menú.
+
+           El botón del menú lo inyecta `AlovidaRuntimeService` con un
+           `insertBefore(…, header.firstChild)`, así que en teléfono queda a la
+           izquierda de esta flecha: las dos salidas del marco —abrir el menú y
+           deshacer el último paso— terminan juntas, que es donde se las busca.
+
+           Vive en el armazón y no en cada pantalla porque «volver» es la misma
+           promesa en todas: deshacer el paso que se dio. Las pocas pantallas
+           que ya traen su propio «Volver a X» en el encabezado no se tocan —
+           aquél nombra el destino, éste deshace el paso; no compiten.
+
+           Cuando no hay paso propio que deshacer —enlace de un correo, recarga,
+           primera pantalla de la sesión— `app-back-link` cae a su respaldo, y
+           el respaldo del armazón es el panel. -->
+      <app-back-link class="app-header__volver" fallback="/dashboard" label="Volver" iconOnly />
+
       <!-- Acá había un buscador «en toda la organización» **sin un solo
            manejador**: ni `(input)`, ni `(keydown.enter)`, ni formulario. Se
            escribía, se apretaba Enter, y no pasaba nada. Y el tutorial del

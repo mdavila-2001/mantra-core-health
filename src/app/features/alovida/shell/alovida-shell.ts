@@ -19,6 +19,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter, map, startWith } from 'rxjs';
 
 import { AlovidaThemeToggleDirective } from '@core/alovida/alovida-theme-toggle.directive';
+import { BackLink } from '@shared/components/atoms/back-link/back-link';
 
 import { MODULO_POR_SEGMENTO, type SeccionAlovida } from '../alovida-nav.data';
 import { AlovidaDesignNotice } from './alovida-design-notice';
@@ -36,6 +37,7 @@ const SIN_SECCIONES: readonly SeccionAlovida[] = [];
   selector: 'app-alovida-shell',
   imports: [
     NgTemplateOutlet,
+    BackLink,
     AlovidaDesignNotice,
     RouterLink,
     RouterLinkActive,
