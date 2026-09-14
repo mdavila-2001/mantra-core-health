@@ -749,6 +749,28 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
+    // Subtarea 3.1 (M26, v4.2.14): el tablero de siniestralidad, gasto per
+    // cápita y epidemiología — cara de LA ASEGURADORA, no del prestador.
+    //
+    // Mismo patrón que «Aseguradora» (`administration/insurance`, arriba): la
+    // dueña de una aseguradora sólo tiene el rol global `USER` — su autoridad
+    // es la membresía OWNER/ADMIN del tenant, que el token no transporta como
+    // rol. `BILLING_OPERATOR`/`FINANCIAL_AUDITOR` del pedido original NO
+    // aplican: el primero es el rol del PRESTADOR («Solicitudes de seguro»,
+    // arriba) y el segundo no existe en ningún catálogo de roles del proyecto.
+    // La capacidad real la resuelve la API (membresía o `INSURANCE_OPERATOR`).
+    path: 'administration/insurance-analytics',
+    label: 'Siniestralidad y analítica',
+    group: 'Administración',
+    icon: 'chart',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Tablero actuarial de siniestralidad, gasto per cápita y morbilidad.',
+    module: 'M26 insurance',
+  },
+  {
     // W2/F3 (M29): el backend del módulo es solo de comando —sin GET—, así
     // que la sección entra como panel de operaciones; los listados llegan
     // con sus endpoints de consulta.
