@@ -107,6 +107,55 @@ describe('ChatStore', () => {
     http.verify();
   });
 
+  it('resuelve adjuntos del hilo sólo por la ruta contextual', () => {
+    encender();
+    store.abrir('c-1');
+    contestarHilo([
+      {
+        ...mensaje('m-file'),
+        bodyText: null,
+        attachmentFileId: 'file-1',
+      },
+    ]);
+    TestBed.tick();
+
+    const req = http.expectOne(
+      (request) =>
+        request.url ===
+        '/community/conversations/c-1/attachments/file-1/content',
+    );
+    expect(req.request.params.get('profileId')).toBe('pp-1');
+    http.expectNone((request) => request.url === '/common/files/file-1/content');
+    req.flush(new Blob(['contenido'], { type: 'text/plain' }));
+  });
+
+  it('un 404 contextual no expone URL ni blob al hilo', () => {
+    encender();
+    store.abrir('c-1');
+    contestarHilo([
+      {
+        ...mensaje('m-file'),
+        bodyText: null,
+        attachmentFileId: 'file-ajeno',
+      },
+    ]);
+    TestBed.tick();
+
+    http
+      .expectOne(
+        '/community/conversations/c-1/attachments/file-ajeno/content?profileId=pp-1',
+      )
+      .flush(
+        new Blob(['Archivo adjunto no encontrado'], {
+          type: 'application/json',
+        }),
+        { status: 404, statusText: 'Not Found' },
+      );
+
+    expect(store.urlDe('file-ajeno')).toBeNull();
+    expect(store.adjuntoNoDisponible('file-ajeno')).toBe(true);
+  });
+
   it('pide el perfil propio una sola vez, aunque se vuelva a entrar', () => {
     encender();
     // Volver a la pantalla no vuelve a preguntar quién soy.
