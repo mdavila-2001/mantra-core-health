@@ -2,6 +2,7 @@ import type { Money } from '../../core/data-access/insurance/insurance.types';
 import {
   currencySuffix,
   formatAmount,
+  formatKpiAmount,
   formatMoney,
   SIN_IMPORTE,
 } from './money-format';
@@ -64,5 +65,45 @@ describe('currencySuffix', () => {
   it('devuelve cadena vacía cuando no hay moneda', () => {
     expect(currencySuffix(bs('1.00', null))).toBe('');
     expect(currencySuffix(null)).toBe('');
+  });
+});
+
+describe('formatKpiAmount (subtarea 3.1, v4.2.14)', () => {
+  it('separa miles con punto y decimal con coma, en el formato boliviano oficial', () => {
+    expect(formatKpiAmount('280000.00', { code: 'BOB', display: 'Boliviano' })).toBe(
+      '280.000,00 Bs',
+    );
+  });
+
+  it('agrupa correctamente montos de una, dos y varias cifras', () => {
+    expect(formatKpiAmount('0.00', { code: 'BOB', display: 'Boliviano' })).toBe('0,00 Bs');
+    expect(formatKpiAmount('62.77', { code: 'BOB', display: 'Boliviano' })).toBe('62,77 Bs');
+    expect(formatKpiAmount('1234567.89', { code: 'BOB', display: 'Boliviano' })).toBe(
+      '1.234.567,89 Bs',
+    );
+  });
+
+  it('una moneda distinta de BOB muestra su código, no "Bs"', () => {
+    expect(formatKpiAmount('1000.00', { code: 'USD', display: 'US Dollar' })).toBe(
+      '1.000,00 USD',
+    );
+  });
+
+  it('sin moneda declarada muestra sólo el número agrupado', () => {
+    expect(formatKpiAmount('1000.00', null)).toBe('1.000,00');
+  });
+
+  it('no hace aritmética: nunca pasa el importe por Number()', () => {
+    // Un importe con más de 15 dígitos perdería precisión al pasar por
+    // Number(); esta función sólo reacomoda el texto.
+    expect(formatKpiAmount('123456789012345.67', { code: 'BOB', display: 'Boliviano' })).toBe(
+      '123.456.789.012.345,67 Bs',
+    );
+  });
+
+  it('conserva el signo negativo, agrupando sólo la parte entera', () => {
+    expect(formatKpiAmount('-1500.50', { code: 'BOB', display: 'Boliviano' })).toBe(
+      '-1.500,50 Bs',
+    );
   });
 });
