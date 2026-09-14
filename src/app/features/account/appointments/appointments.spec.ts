@@ -872,7 +872,7 @@ function montarCancelacion(opts: Opciones) {
 }
 
 /**
- * Abre la sección «Pedir un turno».
+ * Abre la sección «Buscar cita».
  *
  * La pantalla ya no apila las citas propias y la grilla de horarios: son dos
  * secciones y se muestra una a la vez, porque para pedir un turno había que
@@ -904,11 +904,6 @@ function api(comp: Appointments) {
   return comp as unknown as {
     esCancelable(t: { codigo: string }): boolean;
     cancelarTurno(t: unknown): Promise<void>;
-    esReprogramable(t: { codigo: string }): boolean;
-    iniciarReprogramacion(t: unknown): void;
-    cancelarReprogramacion(): void;
-    reprogramarA(h: unknown): Promise<void>;
-    reprogramando(): string | null;
     elegirAgenda(clave: string | null): void;
     turnosListos(): readonly { id: string; codigo: string; resourceId: string; estado: string }[];
   };
@@ -1065,114 +1060,59 @@ describe('Appointments · cancelar turno propio', () => {
 });
 
 /**
- * Reprogramar el turno propio (V41-02·A, cara paciente).
+ * El paciente NO reprograma (pedido del propietario, 13/09/2026).
  *
- * Lo que estas pruebas fijan:
+ * Mover una cita es decisión del profesional: es su agenda la que se reordena.
+ * Antes esta pantalla ofrecía «Reprogramar» sobre las citas vigentes y tenía un
+ * modo entero para hacerlo; se sacó. Lo que queda es ver y cancelar.
  *
- * 1. **La allowlist de reprogramar es propia, no la de cancelar.** El backend
- *    sólo mueve una cita vigente (confirmada o con llegada): una solicitada o
- *    pendiente se puede cancelar pero no mover.
- * 2. **El modo es inequívoco.** Fuera de él, la grilla sigue enlazando a pedir
- *    un turno nuevo; dentro, el mismo hueco mueve el turno y no navega.
- * 3. **El servidor es la verdad.** Tras mover se relee todo; el 422 y el 409
- *    son avisos amables, nunca una alarma roja.
+ * Estas pruebas fijan la ausencia en los tres lugares donde vivía, porque una
+ * ausencia sin prueba vuelve sola en el siguiente cambio: la lista, el detalle
+ * del calendario y la grilla de horarios —que ya no tiene un segundo
+ * significado para el mismo clic—.
  */
-describe('Appointments · reprogramar turno propio', () => {
+describe('Appointments · el paciente no reprograma', () => {
   const GRILLA = {
     tenant: 't-1',
     resources: [{ id: 'r-1', name: 'Consultorio Cardiología' }],
     slots: [cupoMock('slot-9')],
   };
 
-  /** El horario destino tal como lo entrega la grilla ya mapeada. */
-  const HORARIO = {
-    id: 'slot-9',
-    desde: new Date('2026-08-14T13:00:00.000Z'),
-    hasta: new Date('2026-08-14T13:30:00.000Z'),
-    resourceId: 'r-1',
-    lugaresLibres: 1,
-  };
-
-  it('muestra "Reprogramar" solo para confirmado y con llegada', () => {
+  it('ninguna cita vigente ofrece mover: ni confirmada ni con llegada', () => {
     const { fixture } = montarCancelacion({
-      bookings: [
-        citaMock('b-conf', 's-conf'),
-        citaMock('b-in', 's-in'),
-        citaMock('b-req', 's-req'),
-        citaMock('b-canc', 's-canc'),
-      ],
+      bookings: [citaMock('b-conf', 's-conf'), citaMock('b-in', 's-in')],
       labels: [
-        etiqueta('s-conf', 'BOOKING_CONFIRMED'),
-        etiqueta('s-in', 'BOOKING_CHECKED_IN'),
-        etiqueta('s-req', 'scheduling:BOOKING_REQUESTED'),
-        etiqueta('s-canc', 'BOOKING_CANCELLED'),
+        etiqueta('s-conf', 'BOOKING_CONFIRMED', 'Booking confirmed'),
+        etiqueta('s-in', 'scheduling:BOOKING_CHECKED_IN', 'Patient checked in'),
       ],
     });
     fixture.detectChanges();
 
-    // Confirmado y con llegada sí; solicitado (cancelable pero NO movible) y
-    // cancelado, no.
-    expect(fixture.nativeElement.querySelectorAll('.turnos__reprogramar').length).toBe(2);
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).not.toContain('Reprogramar');
+    // Cancelar sí sigue estando: lo que se quitó es mover, no toda acción.
+    expect(fixture.nativeElement.querySelectorAll('.turnos__cancelar').length).toBe(2);
   });
 
-  it('no ofrece reprogramar en los estados que el backend rechaza', () => {
-    const { comp } = montarCancelacion({ bookings: [], labels: [] });
-    const a = api(comp);
-
-    for (const code of [
-      'BOOKING_REQUESTED',
-      'scheduling:BOOKING_REQUESTED',
-      'BOOKING_PENDING_CONFIRMATION',
-      'scheduling:BOOKING_PENDING_CONFIRMATION',
-      'BOOKING_CANCELLED',
-      'scheduling:BOOKING_COMPLETED',
-      'EV_BOOKING_DONE',
-      'scheduling:BOOKING_NO_SHOW',
-      'BOOKING_RESCHEDULED',
-      'FOO',
-      '',
-    ]) {
-      expect(a.esReprogramable({ codigo: code })).toBe(false);
-    }
-
-    for (const code of [
-      'BOOKING_CONFIRMED',
-      'BOOKING_CHECKED_IN',
-      'scheduling:BOOKING_CONFIRMED',
-    ]) {
-      expect(a.esReprogramable({ codigo: code })).toBe(true);
-    }
-  });
-
-  it('entrar al modo identifica el turno origen', () => {
-    const { comp } = montarCancelacion({
+  it('el detalle del calendario tampoco lo ofrece', async () => {
+    const { fixture, comp } = montarCancelacion({
       bookings: [citaMock('b1', 's1')],
       labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
     });
-    const a = api(comp);
 
-    a.iniciarReprogramacion(a.turnosListos()[0]);
+    vista(comp).elegirVista('calendario');
+    await fixture.whenStable();
+    fixture.detectChanges();
 
-    expect(a.reprogramando()).toBe('b1');
+    vista(comp).abrirDetalle('b1');
+    fixture.detectChanges();
+
+    const detalle = fixture.nativeElement.querySelector('[data-testid="turnos-detalle"]');
+    expect(detalle.textContent).not.toContain('Reprogramar');
+    expect(detalle.textContent).toContain('Cancelar');
   });
 
-  it('salir del modo no toca nada', () => {
-    const { comp, rescheduleBooking } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-
-    a.cancelarReprogramacion();
-
-    expect(a.reprogramando()).toBeNull();
-    expect(rescheduleBooking).not.toHaveBeenCalled();
-  });
-
-  it('fuera del modo, el horario sigue enlazando a pedir un turno nuevo', async () => {
+  it('el horario siempre enlaza a pedir una cita nueva: el clic significa una sola cosa', async () => {
     const { fixture, comp } = montarCancelacion({
       bookings: [citaMock('b1', 's1')],
       labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
@@ -1185,152 +1125,10 @@ describe('Appointments · reprogramar turno propio', () => {
     expect(ancla).not.toBeNull();
     expect(ancla.getAttribute('href')).toContain('book/slot-9');
     expect(fixture.nativeElement.querySelector('.turnos__mover')).toBeNull();
-  });
-
-  it('en el modo, el horario ofrece «mover acá» y no enlaza a la reserva', async () => {
-    const { fixture, comp } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-    // La grilla que mueve el turno vive en la otra sección: el botón la abre
-    // solo. Si no lo hiciera, «Reprogramar» no haría nada visible.
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(seccion(comp).seccion()).toBe('pedir');
-    expect(fixture.nativeElement.querySelector('.turnos__horario a')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.turnos__mover')).not.toBeNull();
-    // Y el aviso dice qué turno se está moviendo, con su salida.
-    expect(
-      fixture.nativeElement.querySelector('[data-testid="turnos-reprogramando"]'),
-    ).not.toBeNull();
-  });
-
-  it('con la confirmación negada no llama a rescheduleBooking', async () => {
-    const { comp, rescheduleBooking } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      confirm: false,
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-
-    await a.reprogramarA(HORARIO);
-
-    expect(rescheduleBooking).not.toHaveBeenCalled();
-  });
-
-  it('con la confirmación afirmativa mueve el turno origen al slot elegido', async () => {
-    const { comp, rescheduleBooking } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-
-    await a.reprogramarA(HORARIO);
-
-    expect(rescheduleBooking).toHaveBeenCalledWith('b1', {
-      toSlotId: 'slot-9',
-      reasonText: MOTIVO_DE_PRUEBA,
-    });
-  });
-
-  it('tras mover releé turnos y horarios, limpia el modo y avisa el éxito', async () => {
-    const { comp, searchBookings, toast } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-    const horarios = vi.spyOn(comp as unknown as { cargarHorarios(): void }, 'cargarHorarios');
-    const antes = searchBookings.mock.calls.length;
-
-    await a.reprogramarA(HORARIO);
-
-    expect(toast.success).toHaveBeenCalled();
-    expect(toast.error).not.toHaveBeenCalled();
-    expect(searchBookings.mock.calls.length).toBe(antes + 1);
-    expect(horarios).toHaveBeenCalled();
-    expect(a.reprogramando()).toBeNull();
-  });
-
-  it('el 422 de cita no vigente es aviso amable —no rojo—, recarga y sale del modo', async () => {
-    const { comp, rescheduleBooking, searchBookings, toast } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-    rescheduleBooking.mockReturnValue(
-      throwError(
-        () =>
-          new HttpErrorResponse({
-            status: 422,
-            error: { code: 'PRECONDITION_FAILED', message: 'Solo se reprograma una cita vigente' },
-          }),
-      ),
-    );
-    const horarios = vi.spyOn(comp as unknown as { cargarHorarios(): void }, 'cargarHorarios');
-    const antes = searchBookings.mock.calls.length;
-
-    await a.reprogramarA(HORARIO);
-
-    expect(toast.info).toHaveBeenCalled();
-    expect(toast.error).not.toHaveBeenCalled();
-    expect(searchBookings.mock.calls.length).toBe(antes + 1);
-    expect(horarios).toHaveBeenCalled();
-    expect(a.reprogramando()).toBeNull();
-  });
-
-  it('el 409 de cupo recién ocupado es aviso amable, recarga y deja elegir otro', async () => {
-    const { comp, rescheduleBooking, searchBookings, toast } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-    rescheduleBooking.mockReturnValue(
-      throwError(
-        () =>
-          new HttpErrorResponse({
-            status: 409,
-            error: { code: 'CONFLICT', message: 'El slot destino no tiene cupos' },
-          }),
-      ),
-    );
-    const horarios = vi.spyOn(comp as unknown as { cargarHorarios(): void }, 'cargarHorarios');
-    const antes = searchBookings.mock.calls.length;
-
-    await a.reprogramarA(HORARIO);
-
-    expect(toast.info).toHaveBeenCalled();
-    expect(toast.error).not.toHaveBeenCalled();
-    expect(searchBookings.mock.calls.length).toBe(antes + 1);
-    expect(horarios).toHaveBeenCalled();
-    // El modo sigue activo: el turno origen no cambió, sólo hay que elegir
-    // otro horario de la lista ya refrescada.
-    expect(a.reprogramando()).toBe('b1');
+    expect(fixture.nativeElement.querySelector('[data-testid="turnos-reprogramando"]')).toBeNull();
   });
 });
 
-/**
- * La presentación del estado (E3 — barrido del lado paciente).
- *
- * Antes el mapa sólo nombraba cuatro estados y comparaba el código **sin
- * normalizar**: un turno `scheduling:BOOKING_REQUESTED` —la forma real del
- * catálogo vivo— se leía «Sin confirmar el estado» al lado de un botón
- * Cancelar que sí sabía qué estado era. Estas pruebas fijan que etiqueta y
- * allowlists usan el mismo normalizador y que ningún estado real queda mudo.
- */
 describe('booking-status · presentación por código normalizado', () => {
   function concepto(code: string): ValueSetOption {
     return { conceptId: 'c-x', code, display: code, codeSystemVersionId: 'csv-1' };
@@ -1359,6 +1157,20 @@ describe('booking-status · presentación por código normalizado', () => {
     for (const [code, label] of casos) {
       expect(toBookingStatusPresentation(concepto(code)).label).toBe(label);
     }
+  });
+
+  it('lo que está pendiente de respuesta se ve en ámbar, no en azul', () => {
+    // Pedido comparte tono con «Por confirmar» y con la lista de espera: las
+    // tres son la misma situación —falta que el consultorio conteste— y leerlas
+    // del mismo color es lo que deja ver de un vistazo qué está en el aire.
+    expect(toBookingStatusPresentation(concepto('BOOKING_REQUESTED'))).toEqual({
+      tone: 'warning',
+      label: 'Pedido',
+    });
+    expect(toBookingStatusPresentation(concepto('BOOKING_PENDING_CONFIRMATION'))).toEqual({
+      tone: 'warning',
+      label: 'Por confirmar',
+    });
   });
 
   it('los estados que ya se nombraban no cambian de palabra ni de tono', () => {
@@ -1404,7 +1216,7 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
     expect(texto).toContain('Pedido');
     expect(texto).not.toContain('Sin confirmar el estado');
     expect(fixture.nativeElement.querySelector('.turnos__cancelar')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.turnos__reprogramar')).toBeNull();
+    expect(texto).not.toContain('Reprogramar');
   });
 
   it('un turno ya atendido dice «Atendido» y no ofrece ninguna acción', () => {
@@ -1416,7 +1228,7 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
 
     expect(api(comp).turnosListos()[0].estado).toBe('Atendido');
     expect(fixture.nativeElement.querySelector('.turnos__cancelar')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.turnos__reprogramar')).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Reprogramar');
   });
 
   it('sin organización activa, el aviso dice que se elige desde el encabezado', async () => {
@@ -1758,7 +1570,7 @@ describe('Appointments · mis citas y pedir un turno son dos secciones', () => {
     const rotulos = [...control.querySelectorAll('button')].map((b: HTMLButtonElement) =>
       (b.textContent ?? '').trim(),
     );
-    expect(rotulos).toEqual(['Mis citas', 'Pedir un turno']);
+    expect(rotulos).toEqual(['Mis citas', 'Buscar cita']);
     expect(control.querySelector('[data-value="citas"]').getAttribute('aria-checked')).toBe('true');
   });
 
@@ -1795,25 +1607,6 @@ describe('Appointments · mis citas y pedir un turno son dos secciones', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="turnos-dia-elegido"]'),
     ).not.toBeNull();
-  });
-
-  it('salir del modo reprogramación devuelve a las citas, no deja mirando horarios', async () => {
-    const { fixture, comp } = montarCancelacion({
-      bookings: [citaMock('b1', 's1')],
-      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
-      ...CON_GRILLA,
-    });
-    const a = api(comp);
-    a.iniciarReprogramacion(a.turnosListos()[0]);
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    a.cancelarReprogramacion();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(seccion(comp).seccion()).toBe('citas');
-    expect(fixture.nativeElement.querySelector('.turnos__lista')).not.toBeNull();
   });
 });
 
