@@ -674,14 +674,25 @@ export class Agenda {
    * parámetro, o con uno que no parsea, es HOY — el comportamiento de
    * siempre, así que ningún enlace viejo cambia de significado.
    */
-  protected readonly fechaBase = computed<Date>(() => {
-    const pedida = this.params()?.get('desde');
-    const fecha = pedida === null ? null : new Date(`${pedida}T00:00:00`);
-    const valida = fecha !== null && !Number.isNaN(fecha.getTime());
-    const base = valida ? fecha : new Date();
-    base.setHours(0, 0, 0, 0);
-    return base;
-  });
+  protected readonly fechaBase = computed<Date>(
+    () => {
+      const pedida = this.params()?.get('desde');
+      const fecha = pedida === null ? null : new Date(`${pedida}T00:00:00`);
+      const valida = fecha !== null && !Number.isNaN(fecha.getTime());
+      const base = valida ? fecha : new Date();
+      base.setHours(0, 0, 0, 0);
+      return base;
+    },
+    {
+      // **Por instante y no por identidad.** Devuelve un `Date` nuevo en cada
+      // recálculo, y con la igualdad por defecto —`Object.is`— dos días idénticos
+      // se leían como distintos: el efecto de carga depende de esta señal, así
+      // que CUALQUIER cambio de la URL —abrir otra solapa, sin ir más lejos—
+      // relanzaba las tres lecturas de la agenda aunque la ventana no se hubiera
+      // movido un solo día.
+      equal: (anterior, actual) => anterior.getTime() === actual.getTime(),
+    },
+  );
 
   /** Si la ventana es la de hoy, o si se navegó a otra (ALV-024). */
   protected readonly enVentanaDeHoy = computed(() => {
@@ -1198,6 +1209,142 @@ export class Agenda {
           this.avisarFallo(error, 'No se pudo cancelar la cita.');
         },
       });
+  }
+
+  /* -- Reprogramar (UC-41-08) ----------------------------------------------
+     **Mover una cita es de quien atiende, no de quien la pidió** (propietario,
+     2026-09-13). Reordenar el día reacomoda a los demás pacientes de esa
+     agenda, así que la decisión es del profesional y del mostrador; la vista
+     del paciente ve y cancela, y nada más.
+
+     El gesto es el mismo que la reserva y por eso reusa la solapa de cupos: se
+     elige la cita, la pantalla pasa a «Cupos» y cada cupo libre ofrece «mover
+     acá» en vez de «reservar». Un cupo no puede significar dos cosas a la vez,
+     así que mientras dura el modo la reserva no se ofrece. */
+
+  /** La cita que se está moviendo, o `null` fuera del modo. */
+  protected readonly reprogramando = signal<string | null>(null);
+
+  protected readonly enReprogramacion = computed(() => this.reprogramando() !== null);
+
+  /**
+   * El cupo destino mientras el POST está en vuelo, sólo para la hilera.
+   *
+   * `operando()` ya frena el doble clic, pero guarda el id de la **cita** y en
+   * la grilla de cupos no hay ninguna fila con ese id: sin esto, o no gira
+   * ninguna hilera o giran todas, y las dos cosas mienten sobre qué se está
+   * moviendo.
+   */
+  protected readonly cupoDestino = signal<string | null>(null);
+
+  /**
+   * La cita origen ya resuelta, para nombrarla en el aviso y en el diálogo.
+   *
+   * Puede ser `null` con el modo abierto —se cambió de recurso o de ventana y
+   * la cita quedó fuera de la lectura—, y eso no rompe nada: el aviso dice «la
+   * cita» y el destino sigue siendo válido, porque la operación viaja con el id
+   * y no con la fila.
+   */
+  protected readonly citaEnReprogramacion = computed<CitaVisible | null>(() => {
+    const id = this.reprogramando();
+    if (id === null) {
+      return null;
+    }
+    const estado = this.citas();
+    if (estado.status !== 'ready' && estado.status !== 'stale') {
+      return null;
+    }
+    return estado.data.find((cita) => cita.id === id) ?? null;
+  });
+
+  /**
+   * Entra al modo: se abre «Cupos», que es donde están los destinos posibles.
+   *
+   * Sin ese salto el botón no haría nada visible desde la lista de consultas.
+   */
+  protected iniciarReprogramacion(cita: CitaVisible): void {
+    if (this.operando() !== null) {
+      return;
+    }
+    this.reprogramando.set(cita.id);
+    this.publicar({ vista: 'cupos' });
+  }
+
+  /**
+   * Sale sin tocar nada y vuelve a «Consultas»: es de donde se vino, y quedarse
+   * en la grilla deja mirando cupos que ya se decidió no usar.
+   */
+  protected cancelarReprogramacion(): void {
+    this.reprogramando.set(null);
+    this.cupoDestino.set(null);
+    this.publicar({ vista: null });
+  }
+
+  /**
+   * Mueve la cita al cupo elegido, con confirmación que nombra origen y
+   * destino.
+   *
+   * Un solo POST: el backend libera el cupo viejo y ocupa el nuevo en la misma
+   * operación, y el estado de la cita **no cambia**. El motivo es obligatorio
+   * (corrección #14) y el paciente lo ve junto al horario nuevo — moverle el
+   * día a alguien sin decirle por qué es la mitad del aviso.
+   */
+  protected async reprogramarA(cupo: CupoVisible): Promise<void> {
+    const origenId = this.reprogramando();
+    if (origenId === null || this.operando() !== null) {
+      return;
+    }
+
+    const origen = this.citaEnReprogramacion();
+    const motivo = await this.dialogs.confirmWithReason(
+      {
+        title: 'Mover la cita',
+        message: `${origen === null ? 'La cita' : this.nombreDeLaCita(origen)} pasa al ${this.nombreDelCupo(cupo)}. El horario anterior queda libre y el estado de la cita no cambia.`,
+        confirmLabel: 'Mover la cita',
+        cancelLabel: 'Volver',
+      },
+      {
+        label: 'Motivo del cambio',
+        placeholder: 'Por qué se mueve la cita',
+        hint: 'El paciente lo va a ver junto con el horario nuevo.',
+      },
+    );
+    if (motivo === null) {
+      return;
+    }
+
+    this.operando.set(origenId);
+    this.cupoDestino.set(cupo.id);
+    this.scheduling.rescheduleBooking(origenId, { toSlotId: cupo.id, reasonText: motivo }).subscribe({
+      next: () => {
+        this.operando.set(null);
+        this.cupoDestino.set(null);
+        this.reprogramando.set(null);
+        this.toast.success('La cita quedó en el horario nuevo.', 'Reprogramación');
+        // De vuelta a «Consultas»: el resultado del movimiento se ve ahí, no en
+        // la grilla de cupos desde la que se eligió el destino.
+        this.publicar({ vista: null });
+        this.cargarAgenda();
+      },
+      error: (error: unknown) => {
+        this.operando.set(null);
+        this.cupoDestino.set(null);
+        this.avisarFallo(error, 'No se pudo mover la cita.');
+      },
+    });
+  }
+
+  /** Cómo se nombra la cita origen en el diálogo: a quién y cuándo. */
+  private nombreDeLaCita(cita: CitaVisible): string {
+    if (cita.cuando === null) {
+      return `La cita de ${cita.paciente}`;
+    }
+    return `La cita de ${cita.paciente} del ${formatDate(cita.cuando, "EEEE d 'de' MMMM, HH:mm", this.idioma)}`;
+  }
+
+  /** Cómo se nombra el cupo destino en el diálogo. */
+  private nombreDelCupo(cupo: CupoVisible): string {
+    return formatDate(cupo.desde, "EEEE d 'de' MMMM, HH:mm", this.idioma);
   }
 
   /* -- lo que decide quien atiende (correcciones #11 y #15) ---------------- */
