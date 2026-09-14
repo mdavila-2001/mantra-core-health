@@ -1136,6 +1136,132 @@ describe('Agenda', () => {
     await pendiente;
   });
 
+  /* ---- mover la cita (UC-41-08) -------------------------------------------
+     **Es de quien atiende, no de quien pidió el turno** (propietario,
+     2026-09-13): reordenar el día reacomoda a los demás pacientes de esa
+     agenda. La vista del paciente ve y cancela, y su prueba de que no ofrece
+     «Reprogramar» vive en `account/appointments`. Acá se fija la mitad que
+     falta: que acá sí se ofrece, y que hace lo que dice. */
+
+  it('una cita vigente ofrece moverla a otro horario', async () => {
+    await montar();
+    await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+    await verSolapaDeCitas();
+
+    expect(boton('agenda-reprogramar')).not.toBeNull();
+  });
+
+  /**
+   * El backend sólo mueve una cita **vigente**; sobre una solicitud sin
+   * responder devuelve 422. Un botón que va a fallar es un error con forma de
+   * oferta, así que no se dibuja.
+   */
+  it('una solicitud sin responder no ofrece moverla', async () => {
+    await montar();
+    await responderConEstado('BOOKING_PENDING_CONFIRMATION', 'Por confirmar');
+    await verSolapaDeCitas();
+
+    expect(boton('agenda-reprogramar')).toBeNull();
+  });
+
+  it('moverla abre la solapa de cupos, y el cupo deja de ofrecer reservar', async () => {
+    await montar();
+    await responder();
+    await verSolapaDeCitas();
+
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    // Dos vueltas: la primera resuelve la navegación que abre «Cupos» y la
+    // segunda pinta su panel, que hasta entonces no existía en el DOM.
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(true);
+    // Sin el salto a «Cupos» el botón no haría nada visible: los destinos
+    // posibles están ahí. Sin «Mi agenda» —no es quien atiende— es la solapa 1.
+    expect(interno<() => number>('pestana')()).toBe(1);
+    expect(boton('agenda-reprogramando')).not.toBeNull();
+    expect(boton('agenda-mover-aca')).not.toBeNull();
+    // El mismo hueco no puede significar dos cosas a la vez.
+    expect(boton('agenda-reservar')).toBeNull();
+  });
+
+  it('sin motivo no se mueve nada', async () => {
+    await montar();
+    await responder();
+
+    vi.spyOn(TestBed.inject(DialogService), 'confirmWithReason').mockResolvedValue(null);
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    await interno<(c: unknown) => Promise<void>>('reprogramarA')(cupos().data?.[0]);
+
+    // El `http.verify()` del afterEach falla si algo salió a la red.
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(true);
+  });
+
+  it('con motivo manda el cupo destino, recarga y sale del modo', async () => {
+    await montar();
+    await responder();
+
+    vi.spyOn(TestBed.inject(DialogService), 'confirmWithReason').mockResolvedValue(
+      'La sala quedó ocupada por una urgencia',
+    );
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    const pendiente = interno<(c: unknown) => Promise<void>>('reprogramarA')(cupos().data?.[0]);
+    await harness.fixture.whenStable();
+
+    const req = http.expectOne('/scheduling/bookings/b-1/reschedule');
+    expect(req.request.method).toBe('POST');
+    // El motivo es obligatorio (corrección #14): el paciente lo lee junto con
+    // el horario nuevo. Moverle el día sin decir por qué es medio aviso.
+    expect(req.request.body).toEqual({
+      toSlotId: 's-1',
+      reasonText: 'La sala quedó ocupada por una urgencia',
+    });
+    req.flush({ bookingId: 'b-1', fromSlotId: 's-0', toSlotId: 's-1' });
+    responderRecarga();
+    await pendiente;
+
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(false);
+  });
+
+  /**
+   * Un fallo deja el modo puesto: el destino elegido puede haberse llenado
+   * entre que se miró y se tocó, y lo que corresponde es elegir otro — no
+   * volver a la lista y empezar de cero.
+   */
+  it('si el servidor rechaza el movimiento, el modo sigue puesto', async () => {
+    await montar();
+    await responder();
+
+    vi.spyOn(TestBed.inject(DialogService), 'confirmWithReason').mockResolvedValue('Sin lugar');
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    const pendiente = interno<(c: unknown) => Promise<void>>('reprogramarA')(cupos().data?.[0]);
+    await harness.fixture.whenStable();
+
+    http
+      .expectOne('/scheduling/bookings/b-1/reschedule')
+      .flush({ message: 'El cupo ya no tiene lugar' }, { status: 422, statusText: 'Unprocessable' });
+    await pendiente;
+
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(true);
+    expect(interno<() => string | null>('cupoDestino')()).toBeNull();
+  });
+
+  it('dejar la cita como está apaga el modo y vuelve a las consultas', async () => {
+    await montar();
+    await responder();
+
+    interno<(c: unknown) => void>('iniciarReprogramacion')(primeraCita());
+    await harness.fixture.whenStable();
+    interno<() => void>('cancelarReprogramacion')();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    expect(interno<() => boolean>('enReprogramacion')()).toBe(false);
+    expect(interno<() => number>('pestana')()).toBe(0);
+  });
+
   /**
    * Corrección #15: el botón existe sobre una cita confirmada **sin ninguna
    * comprobación de fecha**. La cita de estas pruebas es del 8 de agosto y la
