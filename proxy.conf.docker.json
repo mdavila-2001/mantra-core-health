@@ -53,7 +53,10 @@
       "/quotations",
       "/prescription-favorites",
       "/insurance-carrier-catalog",
-      "/admin/content-packs"
+      "/admin/content-packs",
+      "/insurance-plans",
+      "/insurance-products",
+      "/insurance/analytics"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

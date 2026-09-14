@@ -1040,7 +1040,7 @@ quién lo compartió. No es la cola clínica, que sigue en `/diagnostics`.
 | `POST` | `/diagnostic-results/me/:reportId/shares/:shareId/revoke` | `DiagnosticResults` |
 | `GET` | `/diagnostic-units/search` | `LaboratoryDirectory` |
 
-### `InsuranceClient` — 9 operaciones
+### `InsuranceClient` — 14 operaciones
 
 La superficie de lectura de aseguradoras y corredores (M26). Solo la relación
 comercial: ni el corredor ni la aseguradora ven historial médico.
@@ -1056,6 +1056,21 @@ comercial: ni el corredor ni la aseguradora ven historial médico.
 | `GET` | `/insurance-claims` | `BrokerDetail` y 5 pantallas más | No |
 | `POST` | `/insurance-claims/:claimId/disputes` | `BrokerDetail` y 5 pantallas más | No |
 | `GET` | `/insurance-claims/:id` | `BrokerDetail` y 5 pantallas más | No |
+| `POST` | `/insurance-products/:productId/plans` | `InsuranceCatalog` |
+| `POST` | `/insurance-plans/:planId/benefits` | `InsuranceCatalog` |
+| `PUT` | `/insurance-plans/:planId/benefits/:benefitId` | `InsuranceCatalog` |
+| `PUT` | `/insurance-plans/:planId/benefits/:benefitId/rules` | `InsuranceCatalog` |
+| `PUT` | `/insurance-plans/:planId/premium` | `InsuranceCatalog` |
+
+### `InsuranceAnalyticsClient` — 1 operación · subtarea 3.1, v4.2.14
+
+El tablero de siniestralidad, gasto per cápita y morbilidad de la
+aseguradora del tenant activo (M26). Todo agregado; ningún identificador de
+paciente cruza esta ruta.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/insurance/analytics/loss-ratio` | `InsuranceAnalytics` |
 
 ### `PharmaLabClient` — 21 operaciones · carril 17
 

@@ -29,6 +29,7 @@ import type {
   CreatePlanBenefitInput,
   UpdatePlanBenefitInput,
   UpdatePlanBenefitRulesInput,
+  UpdatePlanPremiumInput,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -211,6 +212,20 @@ export class InsuranceClient {
       ),
       body,
     );
+  }
+
+  /**
+   * Declara (o quita, con `null`) la prima de lista mensual de un plan del
+   * carrier del tenant activo (v4.2.14, subtarea 3.1).
+   */
+  updatePlanPremium(
+    planId: string,
+    body: UpdatePlanPremiumInput,
+  ): Observable<{ readonly id: string; readonly monthlyPremiumAmount: string | null }> {
+    return this.http.put<{
+      readonly id: string;
+      readonly monthlyPremiumAmount: string | null;
+    }>(this.url(`/insurance-plans/${encodeURIComponent(planId)}/premium`), body);
   }
 
   /** `GET /insurance-brokers` — brokers del tenant activo. */
