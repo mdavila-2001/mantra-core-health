@@ -547,10 +547,7 @@ const RAMAS: readonly RamaDepartamento[] = [
   },
 ];
 
-async function montarConSedes(
-  confirmar = true,
-  secciones?: 'ambas' | 'consultorios' | 'historial',
-) {
+async function montarConSedes(confirmar = true) {
   const dialogs = { confirm: vi.fn(async () => confirmar) };
   const municipios = { listar: () => of(RAMAS), olvidar: vi.fn() };
   await TestBed.configureTestingModule({
@@ -570,11 +567,6 @@ async function montarConSedes(
   }).compileComponents();
 
   const fixture: ComponentFixture<WorkHistory> = TestBed.createComponent(WorkHistory);
-  /* El input se fija ANTES del primer `detectChanges`: es el que decide si el
-     componente pide las sedes, y ponerlo después ya llegaría tarde. */
-  if (secciones !== undefined) {
-    fixture.componentRef.setInput('secciones', secciones);
-  }
   fixture.detectChanges();
   const http = TestBed.inject(HttpTestingController);
   http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
@@ -732,146 +724,5 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     // Sin cargo no se dibuja el renglón del cargo, tampoco un guion.
     expect(fixture.nativeElement.querySelector('.historial__cargo')).toBeNull();
     http.verify();
-  });
-});
-
-
-/**
- * Lo que el cliente pidió el 13/09/2026 sobre «Dónde atiendo».
- *
- * Tres cosas que antes no existían y ninguna prueba sostenía:
- *
- * 1. El bloque **sale de Trayectoria**. Hasta ahora el componente dibujaba
- *    siempre los dos —consultorios e historial— y el único interruptor era
- *    `soloConsultorios`, que sólo sabía suprimir el segundo.
- * 2. **El consultorio propio es uno solo**, y se corrige. No es regla de
- *    pantalla: `POST /practitioners/me/sites` reutiliza la práctica personal,
- *    así que la propia es una por persona — y el botón de alta seguía
- *    ofreciendo la segunda.
- * 3. **Atender en un hospital que ya existe no es crear un consultorio.** Había
- *    una sola puerta, así que quien atiende en la Clínica Foianini terminaba
- *    creándose un consultorio con el nombre de la clínica.
- */
-describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', () => {
-  afterEach(() => TestBed.resetTestingModule());
-
-  /** La misma sede, marcada como propia o como ajena. */
-  const propia = (over: Record<string, unknown> = {}) =>
-    sedeEnCable({ id: 'site-propio', name: 'Consultorio Dra. Pérez', esPropio: true, ...over });
-  const ajena = (over: Record<string, unknown> = {}) =>
-    sedeEnCable({ id: 'site-ajeno', name: 'Hospital San Lucas', esPropio: false, ...over });
-
-  it('con `secciones="historial"» no dibuja los consultorios', async () => {
-    const { fixture, http } = await montarConSedes(true, 'historial');
-
-    expect(fixture.nativeElement.querySelector('[data-testid="sedes-propias"]')).toBeNull();
-    // Y no pide las sedes que no va a dibujar.
-    http.verify();
-  });
-
-  it('con `secciones="consultorios"» no dibuja el historial laboral', async () => {
-    const { fixture, http } = await montarConSedes(true, 'consultorios');
-    http.expectOne(SITIOS).flush({ items: [], count: 0 });
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('[data-testid="sedes-propias"]')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('Agregar un vínculo');
-    http.verify();
-  });
-
-  it('distingue el consultorio propio del lugar donde trabaja', async () => {
-    const { fixture, http } = await montarConSedes();
-    http.expectOne(SITIOS).flush({ items: [propia(), ajena()], count: 2 });
-    fixture.detectChanges();
-
-    const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Tu consultorio');
-    expect(texto).toContain('Trabajás acá');
-  });
-
-  it('el propio se puede editar; el ajeno, sólo retirar', async () => {
-    const { fixture, http } = await montarConSedes();
-    http.expectOne(SITIOS).flush({ items: [propia(), ajena()], count: 2 });
-    fixture.detectChanges();
-
-    const filas = [
-      ...fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]'),
-    ] as HTMLElement[];
-    expect(filas).toHaveLength(2);
-    expect(filas[0].querySelector('[data-testid="sede-editar"]')).not.toBeNull();
-    expect(filas[1].querySelector('[data-testid="sede-editar"]')).toBeNull();
-    // Retirar sigue estando en los dos: dejar de atender en un lugar vale para
-    // el propio y para el ajeno.
-    expect(filas[0].querySelector('[data-testid="sede-quitar"]')).not.toBeNull();
-    expect(filas[1].querySelector('[data-testid="sede-quitar"]')).not.toBeNull();
-  });
-
-  it('teniendo uno propio, ya no ofrece crear otro', async () => {
-    const { fixture, http } = await montarConSedes();
-    http.expectOne(SITIOS).flush({ items: [propia()], count: 1 });
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).toBeNull();
-    expect(
-      fixture.nativeElement.querySelector('[data-testid="sede-propia-unica"]')?.textContent,
-    ).toContain('Consultorio Dra. Pérez');
-  });
-
-  /**
-   * Sin la marca la pantalla no puede saberlo, y esconder el alta sería peor
-   * que ofrecerla de más: dejaría a alguien sin forma de cargar el primero.
-   */
-  it('sin `esPropio` en el cable, el alta sigue disponible', async () => {
-    const { fixture, http } = await montarConSedes();
-    http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
-  });
-
-  it('editar el propio manda un PATCH a su id, no un alta nueva', async () => {
-    const { fixture, http } = await montarConSedes();
-    http.expectOne(SITIOS).flush({ items: [propia({ addressText: 'Av. Brasil 1234' })], count: 1 });
-    fixture.detectChanges();
-
-    const componente = api(fixture);
-    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(
-      propia({ addressText: 'Av. Brasil 1234' }),
-    );
-    fixture.detectChanges();
-    // El formulario abre con lo que ya tenía cargado.
-    expect(leer(componente, 'nombreDeSedeNueva')).toBe('Consultorio Dra. Pérez');
-    expect(leer(componente, 'direccionDeSede')).toBe('Av. Brasil 1234');
-
-    componente['nombreDeSedeNueva'].set('Consultorio Dra. Pérez · Equipetrol');
-    componente['registrarSede']();
-
-    const req = http.expectOne(
-      (r) => r.url === `${SITIO_PROPIO}/site-propio` && r.method === 'PATCH',
-    );
-    expect((req.request.body as { name: string }).name).toBe(
-      'Consultorio Dra. Pérez · Equipetrol',
-    );
-    req.flush(propia());
-    http.expectOne(SITIOS).flush({ items: [propia()], count: 1 });
-    http.verify();
-  });
-
-  it('elegir un establecimiento del padrón declara que atiende ahí, en curso', async () => {
-    const { fixture, http } = await montarConSedes();
-    http.expectOne(SITIOS).flush({ items: [], count: 0 });
-    fixture.detectChanges();
-
-    const componente = api(fixture);
-    componente['lugarElegido'].set({ value: 'fac-1', label: 'Clínica Foianini' });
-    componente['atiendoAca']();
-
-    const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
-    const cuerpo = req.request.body as Record<string, unknown>;
-    expect(cuerpo['organizationName']).toBe('Clínica Foianini');
-    // Sin `endDate`: es dónde atiende HOY, y así lo lee la ficha.
-    expect(cuerpo['endDate']).toBeUndefined();
-    // Y sin cargo: acá la pregunta es dónde, no como qué.
-    expect(cuerpo['roleTitle']).toBeUndefined();
   });
 });

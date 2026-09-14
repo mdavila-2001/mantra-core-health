@@ -131,19 +131,13 @@ describe('PractitionerProfileView', () => {
   const dialogs = { confirm: vi.fn(async () => confirmar) };
 
   /**
-   * Con `esPropio=true` se embebe `<app-work-history>`, que lee su historial al
-   * iniciarse. Sin responderle, `http.verify()` fallaría en cualquier prueba
-   * que monte la vista como dueño.
-   *
-   * **Una sola lectura, no dos.** Acá se respondía también
-   * `/practitioners/prac-1/sites`, porque el bloque pedía los consultorios
-   * aunque no fuera a dibujarlos. Desde el 13/09/2026 «Dónde atiendo» salió de
-   * Trayectoria —la pestaña se monta con `secciones="historial"`— y esa
-   * petición ya no se hace: pedir lo que no se dibuja era una llamada por
-   * visita a una pantalla que no la usa.
+   * Con `esPropio=true` se embebe `<app-work-history layout="timeline">`, que
+   * llama a la API propia apenas se construye. Sin responderle, `http.verify()`
+   * fallaría en cualquier prueba que monte la vista como dueño.
    */
   function responderWorkHistory(): void {
     http.expectOne('/profiles/practitioners/me/affiliations').flush({ items: [], count: 0 });
+    http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
   }
 
   /**

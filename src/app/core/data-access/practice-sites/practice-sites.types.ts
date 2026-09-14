@@ -28,20 +28,6 @@ export interface PracticeSite {
   readonly latitude: number | null;
   readonly longitude: number | null;
   readonly status: string;
-  /**
-   * Si es **su** consultorio —su práctica personal— y no la sede de otro.
-   *
-   * Es la diferencia que la lista no sabía decir: «Consultorio Dra. Rojas» y
-   * «Hospital San Lucas» llegaban con la misma forma y se dibujaban idénticos,
-   * con el mismo «Retirar» al lado, cuando retirar lo propio y desvincularse de
-   * un hospital no son el mismo acto. Uno se crea y se corrige solo; el otro
-   * depende de que la organización lo acepte.
-   *
-   * Opcional porque la API **todavía no lo manda** (P32 de
-   * `PENDIENTES-BACKEND.md`): ausente se lee como «no sé», y la pantalla lo
-   * trata como ajeno, que es la lectura prudente.
-   */
-  readonly esPropio?: boolean;
 }
 
 /**
@@ -73,24 +59,6 @@ export interface NewOwnSiteAddress {
 export interface NewOwnSite {
   readonly name: string;
   /** Zona horaria IANA. Por defecto la de La Paz. */
-  readonly timeZone?: string;
-  readonly address?: NewOwnSiteAddress;
-}
-
-/**
- * Corrección de un consultorio propio.
- *
- * Los mismos campos que el alta, todos opcionales: es un `PATCH`, y lo que no
- * viaja no se toca. Sin esto, arreglar un nombre mal tipeado o una mudanza
- * obligaba a retirar el consultorio y crear otro —y el id cambia, que es el que
- * la agenda referencia—.
- *
- * **La API todavía no expone esta ruta**: es la mitad del P28 de
- * `PENDIENTES-BACKEND.md`, que ya declara el consultorio propio entre lo que el
- * registro pregunta y el perfil no puede editar.
- */
-export interface OwnSitePatch {
-  readonly name?: string;
   readonly timeZone?: string;
   readonly address?: NewOwnSiteAddress;
 }

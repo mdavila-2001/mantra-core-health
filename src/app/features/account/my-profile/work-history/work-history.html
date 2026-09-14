@@ -7,7 +7,6 @@
          Va primero porque es el dato que la agenda y la ficha pública usan
          HOY; el historial de abajo es dónde trabajó ANTES. Las direcciones se
          muestran en MAYÚSCULAS al renderizar (ALV-010), nunca se guardan así. -->
-    @if (muestraConsultorios()) {
     <section class="historial__sedes" data-testid="sedes-propias">
       <h2 class="historial__titulo">Dónde atiendo</h2>
       <p class="historial__intro">
@@ -20,48 +19,21 @@
           @for (sede of sedes(); track sede.id) {
             <li class="historial__item" data-testid="sede-propia">
               <div class="historial__institucion">
-                <!-- Tuyo o de otro: es la diferencia que la lista no sabía
-                     decir. El propio lo creás y lo corregís vos; en el ajeno lo
-                     que tenés es un vínculo, y la sede es de la organización.
-                     Sin la marca los dos se dibujaban idénticos, con el mismo
-                     «Retirar» al lado. La insignia va en la misma línea del
-                     nombre: debajo se leería como un segundo renglón de dato. -->
-                <span class="historial__linea">
-                  <strong>{{ sede.name }}</strong>
-                  @if (sede.esPropio) {
-                    <app-badge variant="success" value="Tu consultorio" />
-                  } @else {
-                    <app-badge variant="secondary" value="Trabajás acá" />
-                  }
-                </span>
+                <strong>{{ sede.name }}</strong>
                 @if (sede.addressText) {
                   <span class="historial__sede">{{ sede.addressText | uppercase }}</span>
                 }
               </div>
-              <div class="historial__acciones">
-                @if (sede.esPropio) {
-                  <button
-                    app-button
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    data-testid="sede-editar"
-                    (clicked)="abrirEdicionDeSede(sede)"
-                  >
-                    Editar
-                  </button>
-                }
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="sede-quitar"
-                  (clicked)="quitarSede(sede)"
-                >
-                  Retirar
-                </button>
-              </div>
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="sede-quitar"
+                (clicked)="quitarSede(sede)"
+              >
+                Retirar
+              </button>
             </li>
           }
         </ul>
@@ -76,81 +48,25 @@
       }
 
       @if (!altaDeSedeAbierta()) {
-        <!-- ─── Las dos puertas, y son distintas ──────────────────────────
-             Crear un consultorio **tuyo** y declarar que atendés en un
-             hospital que ya existe no son la misma operación. Antes había una
-             sola —«Agregar un consultorio propio»—, así que quien atiende en
-             la Clínica Foianini terminaba creándose un consultorio con el
-             nombre de la clínica. -->
-        @if (consultorioPropio() === null) {
-          <p class="historial__escape">
-            <button
-              app-button
-              variant="secondary"
-              size="sm"
-              type="button"
-              data-testid="sede-agregar"
-              (clicked)="abrirAltaDeSede()"
-            >
-              Agregar mi consultorio propio
-            </button>
-          </p>
-        } @else {
-          <!-- Uno solo. No es una regla de pantalla: `POST
-               /practitioners/me/sites` «crea —o reutiliza— la práctica personal
-               del profesional», así que la propia es una por persona. El botón
-               de alta seguía ahí después del primero, invitando al segundo. -->
-          <p class="historial__vacio historial__nota-propia" data-testid="sede-propia-unica">
-            Tu consultorio propio es «{{ consultorioPropio()?.name }}». Es uno solo: para
-            cambiarle el nombre o la dirección, usá «Editar» en su línea.
-          </p>
-        }
-
-        <div class="historial__padron" data-testid="sede-padron">
-          <h3 class="historial__subtitulo">¿Atendés en un consultorio, clínica u hospital?</h3>
-          <p class="historial__intro">
-            Buscalo por su nombre en el padrón oficial de salud y elegilo. No hace falta
-            crearlo: ya existe.
-          </p>
-          <app-form-field
-            label="Buscar el establecimiento"
-            hint="Escribí el nombre y elegilo de la lista."
+        <p class="historial__escape">
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="sede-agregar"
+            (clicked)="abrirAltaDeSede()"
           >
-            <app-reference-combobox
-              [selected]="lugarElegido()"
-              [options]="lugaresDelPadron()"
-              [loading]="buscandoLugar()"
-              placeholder="Clínica Foianini"
-              emptyMessage="Ningún establecimiento coincide"
-              (searched)="buscarLugar($event)"
-              (selectionChange)="lugarElegido.set($event)"
-            />
-          </app-form-field>
-          @if (lugarElegido(); as lugar) {
-            <p class="historial__escape">
-              <button
-                app-button
-                variant="secondary"
-                size="sm"
-                type="button"
-                data-testid="sede-padron-confirmar"
-                [isLoading]="vinculandoLugar()"
-                (clicked)="atiendoAca()"
-              >
-                Atiendo en {{ lugar.label }}
-              </button>
-            </p>
-          }
-        </div>
+            Agregar un consultorio propio
+          </button>
+        </p>
       } @else {
         <form
           class="historial__formulario"
           data-testid="sede-formulario"
           (submit)="$event.preventDefault()"
         >
-          <h3 class="historial__subtitulo">
-            {{ sedeEnEdicion() === null ? 'Nuevo consultorio' : 'Corregir tu consultorio' }}
-          </h3>
+          <h3 class="historial__subtitulo">Nuevo consultorio</h3>
 
           <app-form-field label="Nombre" hint="Como lo va a ver el paciente." [required]="true">
             <app-input
@@ -236,7 +152,7 @@
           }
 
           <app-form-actions
-            [submitLabel]="sedeEnEdicion() === null ? 'Guardar consultorio' : 'Guardar los cambios'"
+            submitLabel="Guardar consultorio"
             cancelLabel="Cancelar"
             [pending]="registrandoSede()"
             [disabled]="!puedeRegistrarSede()"
@@ -246,12 +162,11 @@
         </form>
       }
     </section>
-    }
 
     <!-- El historial laboral. Se suprime entero cuando esta pantalla se monta
-         como «Mi consultorio propio» o como la pestaña «Dónde atiendo» del
-         editor: allá la pregunta es dónde atiende hoy, no dónde ejerció antes. -->
-    @if (muestraHistorial()) {
+         como «Mi consultorio propio»: allá la pregunta es dónde atiende hoy,
+         no dónde ejerció antes. -->
+    @if (!soloConsultorios()) {
       @if (layout() === 'flat') {
         <h2 class="historial__titulo">Historial laboral</h2>
         <p class="historial__intro">

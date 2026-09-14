@@ -378,18 +378,13 @@ export function registrarPracticas(router: MockRouter): void {
   });
 
   router.get('/practitioners/me/sites', (request) => {
-    const items = sedesDe(request.user?.practitionerProfileId ?? MEDICA.id);
+    const items = sitiosPropios.filtrar((s) => s.practitionerProfileId === request.user?.practitionerProfileId).map(({ practitionerProfileId: _p, ...s }) => s);
     return { items, count: items.length };
   });
 
-  /* `esPropio` viaja: es lo que separa «mi consultorio» de «un hospital donde
-     me aceptaron», y sin él las dos cosas se dibujaban idénticas, con el mismo
-     botón «Retirar» al lado — cuando retirar lo propio y desvincularse de un
-     hospital no son el mismo acto. La maqueta ya lo calculaba y lo tiraba justo
-     antes de responder. Ver P32 de `PENDIENTES-BACKEND.md`. */
   router.get('/practitioners/:id/sites', ({ params }) => {
     // La misma regla que usa la ficha pública: una sola, y acá con sesión.
-    const items = sedesDe(params['id']!);
+    const items = sedesDe(params['id']!).map(({ esPropio: _e, ...s }) => s);
     return { items, count: items.length };
   });
 
@@ -408,33 +403,7 @@ export function registrarPracticas(router: MockRouter): void {
       practitionerProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
     });
     const { practitionerProfileId: _p, ...resto } = nuevo;
-    return { status: 201, body: { ...resto, esPropio: resto.practiceId === PRACTICE_CONSULTORIO } };
-  });
-
-  /* Corregir el consultorio propio. La API todavía no lo tiene —es la mitad
-     del P28 de `PENDIENTES-BACKEND.md`— y sin esto un error de tipeo en el
-     nombre o una mudanza obligaban a retirarlo y volver a crearlo, lo que
-     cambia el id que la agenda referencia. */
-  router.patch('/practitioners/me/sites/:id', (request) => {
-    const sitio = sitiosPropios.get(request.params['id']!);
-    if (sitio === undefined) return notFound('Consultorio no encontrado');
-    const datos = cuerpo<{ name?: string; timeZone?: string; address?: { lines: string[]; city?: string; latitude?: number; longitude?: number } }>(request);
-    const direccion =
-      datos.address === undefined
-        ? {}
-        : {
-            addressText: [...datos.address.lines, datos.address.city ?? ''].filter((l) => l !== '').join(', '),
-            latitude: datos.address.latitude ?? null,
-            longitude: datos.address.longitude ?? null,
-          };
-    const actualizado = sitiosPropios.actualizar(sitio.id, {
-      ...(datos.name === undefined ? {} : { name: datos.name }),
-      ...(datos.timeZone === undefined ? {} : { timeZone: datos.timeZone }),
-      ...direccion,
-    });
-    if (actualizado === undefined) return notFound('Consultorio no encontrado');
-    const { practitionerProfileId: _p, ...resto } = actualizado;
-    return { ...resto, esPropio: resto.practiceId === PRACTICE_CONSULTORIO };
+    return { status: 201, body: resto };
   });
 
   router.delete('/practitioners/me/sites/:id', ({ params }) => {

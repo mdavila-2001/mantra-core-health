@@ -26,7 +26,6 @@ backend.
 | **P29** | `file_id` en `profiles.jurisdiction_authorizations` — la matrícula no puede llevar adjunto, y **esto empieza en el repo del modelo, no en la API** |
 | **P30** | `GET /public/profiles/o/:slug/services` — qué ofrece una organización, con precio de referencia. La ficha ya está construida y espera |
 | **P31** | `GET /public/profiles/f/:slug/products` — qué medicamentos tiene una farmacia, con marca, precio y si hay stock |
-| **P32** | Dos cosas del consultorio propio: `esPropio` en las sedes que devuelve `/practitioners/:id/sites`, y `PATCH /practitioners/me/sites/:id` para corregirlo |
 
 ---
 
@@ -1254,53 +1253,3 @@ El cliente pidió que en la ficha pública se vean **las opiniones y quiénes la
 | `response` | `{ text, publishedAt }` | null | la primera respuesta de la ficha |
 
 Sin sesión, como el resto de `/public`. Nunca `reviewerProfileId`, `userId` ni uuids de conceptos. Simulador: `core/mock/handlers/public.handlers.ts`; cliente: `PublicDirectoryClient.profileReviews`.
-
-
----
-
-## P32 · El consultorio propio: cuál es, y cómo se corrige
-
-**Nace el 2026-09-13.** Son dos huecos de la misma pregunta, y los dos los destapó
-el mismo pedido del cliente: separar «crear mi consultorio» de «atiendo en un
-hospital que ya existe».
-
-### a) `esPropio` en las sedes
-
-`GET /practitioners/:profileId/sites` devuelve las sedes «de sus asignaciones de
-rol vigentes», y ahí conviven dos cosas distintas:
-
-- **su** consultorio, creado con `POST /practitioners/me/sites`, que según el
-  propio contrato «crea —o reutiliza— la **práctica personal** del profesional»;
-- las sedes de **otras** organizaciones, donde lo que tiene es una vinculación
-  que ellas aceptaron.
-
-La respuesta no dice cuál es cuál. `practiceId` viaja, pero nada declara cuál de
-esas prácticas es la personal, así que el frontend no puede deducirlo sin
-adivinar. El efecto en pantalla era que «Consultorio Dra. Rojas» y «Hospital San
-Lucas» se dibujaban **idénticos**, con el mismo botón «Retirar» al lado —cuando
-retirar lo propio y desvincularse de un hospital no son el mismo acto—.
-
-**Qué falta:** un booleano por sede. La maqueta ya lo sirve como `esPropio` y el
-tipo `PracticeSite` lo declara **opcional**: ausente se lee como «no sé» y la
-pantalla lo trata como ajeno, que es la lectura prudente. El día que la API lo
-mande, la interfaz ya lo usa.
-
-### b) `PATCH /practitioners/me/sites/:siteId`
-
-Hoy el consultorio propio se puede **crear** y **retirar**, no corregir. Un
-nombre mal tipeado o una mudanza obligan a retirarlo y crear otro — y eso cambia
-el `id`, que es el que la agenda referencia en cada turno.
-
-Es la mitad del **P28**, que ya declara el consultorio propio entre «lo que el
-registro del médico pregunta y su perfil no puede editar». Con el bloque ahora
-en «Editar tu info → Dónde atiendo», el botón «Editar» existe y la maqueta lo
-atiende; contra la API real la petición no tiene ruta.
-
-**Cuerpo esperado**, el mismo del alta con todo opcional:
-
-```jsonc
-{ "name": "…", "timeZone": "America/La_Paz", "address": { "lines": ["…"], "city": "…", "municipalityConceptId": "…", "latitude": 0, "longitude": 0 } }
-```
-
-**Sólo el propio.** Una sede de otra organización no se corrige desde acá: es de
-ella, y lo que uno tiene con ella es una vinculación, no la sede.

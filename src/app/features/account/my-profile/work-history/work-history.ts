@@ -1,11 +1,11 @@
 import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
   input,
-  type OnInit,
   output,
   signal,
 } from '@angular/core';
@@ -28,7 +28,6 @@ import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
@@ -108,7 +107,6 @@ import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/
     Alert,
     AppButton,
     AppMap,
-    Badge,
     Card,
     DatePicker,
     DatePipe,
@@ -125,7 +123,7 @@ import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/
   styleUrl: './work-history.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WorkHistory implements OnInit {
+export class WorkHistory {
   private readonly profiles = inject(ProfilesClient);
   private readonly sites = inject(PracticeSitesClient);
   private readonly municipios = inject(BoMunicipalitiesCatalog);
@@ -143,34 +141,22 @@ export class WorkHistory implements OnInit {
   readonly layout = input<'flat' | 'timeline'>('flat');
 
   /**
-   * Qué bloques se dibujan: los dos, sólo «Dónde atiendo» o sólo el historial.
+   * `true` para dibujar **sólo** «Dónde atiendo»: los consultorios propios y su
+   * alta, sin el historial laboral.
    *
    * Es otro eje que `layout`, no otro valor suyo: `layout` dice **cómo** se
-   * pinta el historial y esto dice **cuál** de los dos bloques se pinta.
+   * pinta el historial y esto dice **si** se pinta. Mezclarlos en un solo input
+   * daría un `'timeline' | 'flat' | 'sin-historial'` donde el tercer valor no
+   * responde la misma pregunta que los otros dos.
    *
-   * Era un `soloConsultorios` booleano. Pasó a tres valores el 13/09/2026,
-   * cuando el cliente pidió que «Dónde atiendo» **saliera de Trayectoria**: hizo
-   * falta el caso inverso —el historial sin los consultorios— y dos booleanos
-   * excluyentes es justo el interruptor que la casa no escribe.
-   *
-   * Quién usa cada uno:
-   *
-   * - `'consultorios'` — «Mi consultorio propio» (`administration/my-practice`)
-   *   y la pestaña «Dónde atiendo» del editor del perfil. No se copió el
-   *   formulario a ninguna de las dos: crear, ubicar en el mapa y retirar un
-   *   consultorio vive acá —con su catálogo de municipios, su confirmación y
-   *   sus pruebas— y tenerlo dos veces garantiza que el arreglo de uno no
-   *   llegue al otro.
-   * - `'historial'` — la pestaña «Trayectoria» de la ficha del médico.
-   * - `'ambas'` — nadie hoy; queda como el valor neutro del componente.
+   * Lo usa «Mi consultorio propio» (`administration/my-practice`), que es la
+   * pantalla que el propietario pidió el 2026-09-10 en lugar de «Tu
+   * organización». No se copió el formulario allá: crear, ubicar en el mapa y
+   * retirar un consultorio ya vive acá —con su catálogo de municipios, su
+   * confirmación y sus pruebas— y tenerlo dos veces garantiza que el arreglo de
+   * uno no llegue al otro.
    */
-  readonly secciones = input<'ambas' | 'consultorios' | 'historial'>('ambas');
-
-  /** Si toca dibujar el bloque «Dónde atiendo». */
-  protected readonly muestraConsultorios = computed(() => this.secciones() !== 'historial');
-
-  /** Si toca dibujar el historial laboral. */
-  protected readonly muestraHistorial = computed(() => this.secciones() !== 'consultorios');
+  readonly soloConsultorios = input(false, { transform: booleanAttribute });
 
   /** Se emite tras un alta exitosa, para que quien embebe el formulario recargue lo que ya tenía leído. */
   readonly added = output<void>();
@@ -334,59 +320,6 @@ export class WorkHistory implements OnInit {
   protected readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
   protected readonly catalogoMunicipiosCaido = signal(false);
 
-  /**
-   * El consultorio propio, si ya tiene uno. **Hay uno solo.**
-   *
-   * No es una regla de pantalla: es lo que el backend modela. `POST
-   * /practitioners/me/sites` «crea —o **reutiliza**— la práctica personal del
-   * profesional», así que la práctica propia es una sola por persona. Lo que
-   * faltaba era decirlo en la interfaz: hasta hoy el botón «Agregar un
-   * consultorio propio» seguía ahí después de crear el primero, invitando a
-   * cargar el segundo.
-   *
-   * `esPropio` llega ausente contra la API real (P32): sin la marca, todo se
-   * lee como ajeno y el botón de alta sigue disponible, que es la degradación
-   * prudente — nunca esconde un camino.
-   */
-  protected readonly consultorioPropio = computed<PracticeSite | null>(
-    () => this.sedes().find((sede) => sede.esPropio === true) ?? null,
-  );
-
-  /**
-   * El consultorio que se está corrigiendo, o `null` si el formulario da de
-   * alta uno nuevo.
-   *
-   * Un solo formulario para las dos cosas y no dos: los campos son los mismos
-   * —nombre, calle, ciudad, municipio y punto— y duplicarlo garantizaría que el
-   * arreglo de uno no llegue al otro, que es la razón por la que este bloque
-   * vive en un componente y no copiado en cada pantalla.
-   */
-  protected readonly sedeEnEdicion = signal<PracticeSite | null>(null);
-
-  /* ---- Atiendo en uno que ya existe --------------------------------------
-
-     Crear un consultorio propio y declarar que atendés en la Clínica Foianini
-     NO son la misma operación, y hasta hoy la pantalla ofrecía una sola puerta:
-     «Agregar un consultorio propio», que crea una práctica **tuya**. Quien
-     atiende en un hospital terminaba creándose un consultorio con el nombre del
-     hospital.
-
-     El buscador es el mismo padrón oficial de salud que el formulario del
-     historial ya usa (`searchLinkableOrganizations`), con sus propias señales:
-     los dos bloques pueden estar en pantalla a la vez y compartir señal los
-     haría pelearse por lo tecleado.
-
-     Elegir uno registra un vínculo **en curso** —`addAffiliation` sin fecha de
-     fin—, que es lo que la ficha lee como «dónde ejerce hoy». No se inventa un
-     estado de aprobación: el vínculo queda **declarado por vos**, que es
-     exactamente lo que `avisoDelVinculo` ya sabe contar. */
-
-  /** Lo que devolvió el padrón para este buscador. */
-  protected readonly lugaresDelPadron = signal<readonly ReferenceOption[]>([]);
-  protected readonly buscandoLugar = signal(false);
-  protected readonly lugarElegido = signal<ReferenceOption | null>(null);
-  protected readonly vinculandoLugar = signal(false);
-
   protected readonly registrandoSede = signal(false);
   protected readonly registroDeSede = signal<ViewState<null>>(ready(null));
   protected readonly errorDeSede = computed<string | null>(() => mensajeDe(this.registroDeSede()));
@@ -428,17 +361,7 @@ export class WorkHistory implements OnInit {
     () => this.nombreDeSedeNueva().trim() !== '' && !this.registrandoSede(),
   );
 
-  /**
-   * Las dos lecturas del bloque.
-   *
-   * En `ngOnInit` y no en el constructor porque **una de las dos depende de un
-   * input**: montado como «sólo el historial» —la pestaña Trayectoria— los
-   * consultorios no se dibujan y pedirlos es una petición por visita a una
-   * pantalla que no los usa. En el constructor `secciones` todavía vale su
-   * valor por omisión, así que la pregunta se haría siempre. Lo destapó su
-   * propia prueba.
-   */
-  ngOnInit(): void {
+  constructor() {
     if (this.esProfesional()) {
       this.cargar();
       this.cargarSedes();
@@ -560,100 +483,9 @@ export class WorkHistory implements OnInit {
     }
   }
 
-  /**
-   * Abre el mismo formulario, pero cargado con lo que el consultorio ya tiene.
-   *
-   * La dirección vuelve como una sola línea porque así la manda el backend
-   * (`addressText` viene compuesto): separarla en calle, ciudad y municipio
-   * exigiría adivinar dónde corta cada pieza, y adivinar sobre la dirección de
-   * un consultorio es peor que pedir que se reescriba. El municipio y el punto
-   * sí vuelven, porque llegan como dato y no como texto.
-   */
-  protected abrirEdicionDeSede(sede: PracticeSite): void {
-    this.sedeEnEdicion.set(sede);
-    this.nombreDeSedeNueva.set(sede.name);
-    this.direccionDeSede.set(sede.addressText ?? '');
-    this.ciudadDeSede.set('');
-    this.municipioDeSede.set(null);
-    this.puntoDeSede.set(
-      sede.latitude === null || sede.longitude === null
-        ? null
-        : { lat: sede.latitude, lng: sede.longitude },
-    );
-    this.mapaAbierto.set(false);
-    this.registroDeSede.set(ready(null));
-    this.altaDeSedeAbierta.set(true);
-    if (this.ramasMunicipios().length === 0) {
-      this.cargarMunicipios();
-    }
-  }
-
   protected cerrarAltaDeSede(): void {
     this.altaDeSedeAbierta.set(false);
-    this.sedeEnEdicion.set(null);
     this.limpiarSede();
-  }
-
-  /**
-   * Busca en el padrón mientras se escribe, para «Dónde atiendo».
-   *
-   * Gemelo de `buscarEnPadron`, con sus propias señales y no las suyas: los dos
-   * buscadores pueden convivir en la misma tarjeta. Un fallo deja la lista
-   * vacía y no se anuncia: es un buscador, no un trámite.
-   */
-  protected buscarLugar(texto: string): void {
-    if (texto.trim() === '') {
-      this.lugaresDelPadron.set([]);
-      return;
-    }
-    this.buscandoLugar.set(true);
-    this.profiles.searchLinkableOrganizations(texto).subscribe({
-      next: (pagina) => {
-        this.buscandoLugar.set(false);
-        this.lugaresDelPadron.set(pagina.items.map(comoOpcion));
-      },
-      error: () => {
-        this.buscandoLugar.set(false);
-        this.lugaresDelPadron.set([]);
-      },
-    });
-  }
-
-  /**
-   * Declara que atiende en el establecimiento elegido.
-   *
-   * Es un vínculo **sin fecha de fin**: así lo lee la ficha como «dónde ejerce
-   * hoy». Sin cargo, porque acá la pregunta es dónde y no como qué —el cargo se
-   * agrega desde el historial, que es donde vive esa pregunta—.
-   */
-  protected atiendoAca(): void {
-    const lugar = this.lugarElegido();
-    if (lugar === null || this.vinculandoLugar()) {
-      return;
-    }
-    this.vinculandoLugar.set(true);
-    this.registroDeSede.set(loading());
-    this.profiles
-      .addAffiliation({ organizationName: lugar.label, startDate: soloFecha(new Date()) })
-      .subscribe({
-        next: () => {
-          this.vinculandoLugar.set(false);
-          this.registroDeSede.set(ready(null));
-          this.lugarElegido.set(null);
-          this.lugaresDelPadron.set([]);
-          this.toasts.success(
-            `${lugar.label} ya figura entre los lugares donde atendés.`,
-            'Listo',
-          );
-          this.cargarSedes();
-          this.cargar();
-          this.added.emit();
-        },
-        error: (error: unknown) => {
-          this.vinculandoLugar.set(false);
-          this.registroDeSede.set(errorToViewState<null>(error));
-        },
-      });
   }
 
   protected reintentarMunicipios(): void {
@@ -703,36 +535,27 @@ export class WorkHistory implements OnInit {
             ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
           };
 
-    const enEdicion = this.sedeEnEdicion();
-    const cuerpo = {
-      name: this.nombreDeSedeNueva().trim(),
-      ...(address === undefined ? {} : { address }),
-    };
-
     this.registrandoSede.set(true);
     this.registroDeSede.set(loading());
-    const peticion =
-      enEdicion === null
-        ? this.sites.createOwnSite(cuerpo)
-        : this.sites.updateOwnSite(enEdicion.id, cuerpo);
-    peticion.subscribe({
-      next: () => {
-        this.registrandoSede.set(false);
-        this.registroDeSede.set(ready(null));
-        const corregido = enEdicion !== null;
-        this.cerrarAltaDeSede();
-        this.toasts.success(
-          corregido ? 'Guardamos los cambios.' : 'Ya figura entre tus consultorios.',
-          corregido ? 'Consultorio actualizado' : 'Consultorio registrado',
-        );
-        this.cargarSedes();
-        this.added.emit();
-      },
-      error: (error: unknown) => {
-        this.registrandoSede.set(false);
-        this.registroDeSede.set(errorToViewState<null>(error));
-      },
-    });
+    this.sites
+      .createOwnSite({
+        name: this.nombreDeSedeNueva().trim(),
+        ...(address === undefined ? {} : { address }),
+      })
+      .subscribe({
+        next: () => {
+          this.registrandoSede.set(false);
+          this.registroDeSede.set(ready(null));
+          this.cerrarAltaDeSede();
+          this.toasts.success('Ya figura entre tus consultorios.', 'Consultorio registrado');
+          this.cargarSedes();
+          this.added.emit();
+        },
+        error: (error: unknown) => {
+          this.registrandoSede.set(false);
+          this.registroDeSede.set(errorToViewState<null>(error));
+        },
+      });
   }
 
   /**
@@ -843,12 +666,6 @@ export class WorkHistory implements OnInit {
    * opcional sería cambiar una comodidad por una funcionalidad.
    */
   private cargarSedes(): void {
-    /* Montado como «sólo el historial» —la pestaña Trayectoria— el bloque de
-       consultorios no se dibuja, así que pedirlos es una petición por cada
-       visita a una pestaña que no los usa. Lo destapó su propia prueba. */
-    if (!this.muestraConsultorios()) {
-      return;
-    }
     const profileId = this.auth.practitionerProfileId();
     if (profileId === null) {
       return;

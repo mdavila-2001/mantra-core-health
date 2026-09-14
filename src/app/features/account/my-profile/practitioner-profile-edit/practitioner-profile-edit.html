@@ -271,31 +271,12 @@
             }
           </app-tab>
 
-          <!-- ─── Dónde atiendo ─────────────────────────────────────────────
-               Vivía en «Trayectoria», que es donde nadie lo busca: la
-               trayectoria es dónde ejerciste ANTES y esto es dónde atendés HOY.
-               El cliente pidió separarlos el 13/09/2026.
-
-               No está copiado: es el MISMO `app-work-history` que montan «Mi
-               consultorio propio» y la pestaña Trayectoria, con `secciones`
-               diciendo cuál de sus dos bloques se dibuja. Un arreglo llega a
-               las tres.
-
-               Igual que la de Contacto, sólo se dibuja con la pestaña abierta:
-               adentro hay un mapa de Leaflet, y montarlo sobre un nodo fuera
-               del documento lo deja en 0 px de alto. -->
-          <app-tab [label]="pestanas[2]">
-            @if (pestana() === pestanaEditor.dondeAtiendo) {
-              <app-work-history secciones="consultorios" />
-            }
-          </app-tab>
-
           <!-- ─── Trayectoria ───────────────────────────────────────────────
                Se AGREGA, no se edita: un título verificado es un hecho
                comprobado, no un texto que se corrige. Nace pendiente de
                verificación; el tipo sale del catálogo dinámico (los cinco
                CREDENTIAL_TYPE_*). Debajo, la tabla de lo ya cargado. -->
-          <app-tab [label]="pestanas[3]">
+          <app-tab [label]="pestanas[2]">
             <section class="edicion__seccion">
               <h3 class="edicion__titulo">Agregar formación</h3>
               <p class="edicion__nota">
@@ -399,7 +380,7 @@
                edita. Van juntas porque son la misma pregunta —qué estás
                habilitado a ejercer y dónde— y separadas en dos tarjetas se leían
                como dos trámites distintos. Cada una con su tabla debajo. -->
-          <app-tab [label]="pestanas[4]">
+          <app-tab [label]="pestanas[3]">
             <section class="edicion__seccion">
               <h3 class="edicion__titulo">Agregar especialidades</h3>
               <p class="edicion__nota">
