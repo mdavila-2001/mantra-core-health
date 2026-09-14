@@ -15,13 +15,14 @@
      La ficha de OTRO profesional —la Guía— y la vista previa siguen con el
      dibujo de siempre, abajo en el `@else`: éste es el perfil de uno mismo. -->
 @if (esPropio() && !previewMode()) {
-  <app-card
-    class="mi-perfil__bloque"
-    variant="outlined"
-    padding="lg"
-    appTutorialTarget="perfil-portada"
-  >
-    <div class="mi-perfil__cabecera">
+  <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
+    <!-- El ancla del tutorial va en la CABECERA y no en la tarjeta.
+         Colgada de la tarjeta —que en la ficha propia es una sola y contiene
+         las seis pestañas— el paso «Cómo te ven» resaltaba la pantalla entera
+         mientras hablaba del nombre y la foto, y encima dejaba al globo sin
+         lugar donde posarse: es el mismo defecto del 13/09/2026. En la ficha
+         ajena el ancla sigue en su portada, que sí es sólo la identidad. -->
+    <div class="mi-perfil__cabecera" appTutorialTarget="perfil-portada">
       <div class="mi-perfil__identidad">
         <!-- El retrato es el disparador de la subida (P17), y se conserva el
              arrastrar-y-soltar: `appFileDropTarget` deja caer la foto encima

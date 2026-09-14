@@ -24,6 +24,16 @@ const SEPARACION = 12;
 /** Ancho del globo. Fijo: un globo que cambia de ancho por paso marea. */
 const ANCHO = 340;
 
+/**
+ * Alto con el que se ubica el globo **antes** de poder medirlo.
+ *
+ * Sólo se usa en el primer cuadro y en el servidor, donde no hay layout. En
+ * cuanto el globo existe, `altoDelGlobo` lo reemplaza por la medida real: el
+ * defecto que esto arregla venía justamente de dar por sentado un alto de 200
+ * px para un globo que mide 233 o más.
+ */
+const ALTO_ESTIMADO = 240;
+
 /** El rectángulo del recorte y la posición del globo, ya resueltos. */
 interface Geometria {
   readonly recorte: { top: number; left: number; width: number; height: number } | null;
@@ -92,6 +102,18 @@ export class TutorialOverlay {
   /** A quién devolverle el foco cuando el recorrido termina. */
   private focoPrevio: HTMLElement | null = null;
 
+  /**
+   * El alto REAL del globo, medido.
+   *
+   * Antes se ubicaba suponiendo 200 px. Un globo con título largo, pista y
+   * aviso de espera mide 233 o más, así que el cálculo lo dejaba asomando por
+   * debajo del borde — y con un ancla alta y `placement: 'bottom'`, entero
+   * fuera de la pantalla: medido el 13/09/2026 en «Tu perfil profesional»,
+   * `top: 1242` con una ventana de 1000. Invisible, y con «Dejarlo» y
+   * «Siguiente» inalcanzables: el doctor quedaba atrapado.
+   */
+  private readonly altoDelGlobo = signal(ALTO_ESTIMADO);
+
   protected readonly geometria = computed<Geometria>(() => {
     this.reloj();
     const activo = this.paso();
@@ -102,7 +124,7 @@ export class TutorialOverlay {
       // que vas a aprender») y del último, que no señalan nada.
       return {
         recorte: null,
-        globo: { top: this.alto() / 2 - 120, left: this.ancho() / 2 - ANCHO / 2 },
+        globo: this.ubicar(new DOMRect(0, 0, 0, 0), 'center'),
         lado: 'center',
       };
     }
@@ -150,6 +172,25 @@ export class TutorialOverlay {
         this.enfocarElGlobo();
         this.remedir();
       });
+    });
+
+    // El alto se mide, no se supone. Un `ResizeObserver` y no una medición al
+    // montar porque el contenido del globo cambia en cada paso —hay pasos con
+    // pista y aviso de espera y pasos sin nada de eso— y un alto viejo vuelve a
+    // dejarlo fuera de la pantalla.
+    effect((alLimpiar) => {
+      const globo = this.globo()?.nativeElement;
+      if (globo === undefined || typeof ResizeObserver === 'undefined') {
+        return;
+      }
+      const observador = new ResizeObserver(() => {
+        const alto = globo.offsetHeight;
+        if (alto > 0) {
+          this.altoDelGlobo.set(alto);
+        }
+      });
+      observador.observe(globo);
+      alLimpiar(() => observador.disconnect());
     });
   }
 
@@ -222,50 +263,90 @@ export class TutorialOverlay {
   }
 
   /**
-   * Elige el lado con más espacio, salvo que la definición fije uno.
+   * Elige el lado, midiendo si el globo **entra de verdad**.
    *
    * La medición es contra la ventana y no contra el documento: lo que importa es
-   * si el globo entra **en pantalla**, no si entra en la página.
+   * si el globo entra en pantalla, no si entra en la página.
+   *
+   * **El lado que pide la definición ya no gana solo.** Antes se devolvía tal
+   * cual, sin mirar si había lugar: por eso «Tu perfil profesional», que ancla
+   * en la tarjeta entera del perfil y pide `placement: 'bottom'`, ponía el globo
+   * debajo del pie de una tarjeta que no termina en pantalla — es decir, fuera.
+   * Ahora el pedido es una preferencia: se respeta si entra, y si no se busca
+   * dónde sí.
    */
   private elegirLado(caja: DOMRect, pedido: string): Geometria['lado'] {
-    if (pedido !== 'auto' && pedido !== 'center') {
-      return pedido as Geometria['lado'];
-    }
     if (pedido === 'center') {
       return 'center';
     }
-    const abajo = this.alto() - caja.bottom;
-    if (abajo > 220) {
-      return 'bottom';
+
+    const alto = this.altoDelGlobo();
+    const cabe: Record<string, boolean> = {
+      bottom: this.alto() - caja.bottom >= alto + SEPARACION + AIRE,
+      top: caja.top >= alto + SEPARACION + AIRE,
+      right: this.ancho() - caja.right >= ANCHO + SEPARACION + AIRE,
+      left: caja.left >= ANCHO + SEPARACION + AIRE,
+    };
+
+    if (pedido !== 'auto' && cabe[pedido] === true) {
+      return pedido as Geometria['lado'];
     }
-    if (caja.top > 220) {
-      return 'top';
+    for (const lado of ['bottom', 'top', 'right', 'left'] as const) {
+      if (cabe[lado] === true) {
+        return lado;
+      }
     }
-    return this.ancho() - caja.right > ANCHO + SEPARACION ? 'right' : 'left';
+    // No entra en ningún lado —un ancla que ocupa casi toda la pantalla, o una
+    // ventana muy baja—: al centro, que siempre se ve. El marco sigue señalando
+    // el elemento, así que no se pierde a qué se refiere.
+    return 'center';
   }
 
-  /** Dónde va el globo, ya sujeto a los bordes para que no se salga. */
+  /**
+   * Dónde va el globo, **sujeto a la pantalla en los dos ejes**.
+   *
+   * Lo que estaba roto era el eje vertical: `bottom` no se sujetaba en absoluto
+   * y los otros tres lados usaban un alto fijo de 200 px que no es el del globo.
+   * Ahora los cuatro pasan por `sujetar` con el alto medido, así que el globo no
+   * puede terminar fuera — que es lo que dejaba al doctor sin «Dejarlo» ni
+   * «Siguiente» a la vista.
+   */
   private ubicar(caja: DOMRect, lado: Geometria['lado']): { top: number; left: number } {
     const centrado = caja.left + caja.width / 2 - ANCHO / 2;
+    const alto = this.altoDelGlobo();
+    const enVertical = (valor: number): number => this.sujetar(valor, alto, this.alto());
 
     switch (lado) {
       case 'bottom':
-        return { top: caja.bottom + SEPARACION, left: this.sujetar(centrado, ANCHO) };
+        return { top: enVertical(caja.bottom + SEPARACION), left: this.sujetar(centrado, ANCHO) };
       case 'top':
-        return { top: Math.max(AIRE, caja.top - SEPARACION - 200), left: this.sujetar(centrado, ANCHO) };
+        return {
+          top: enVertical(caja.top - SEPARACION - alto),
+          left: this.sujetar(centrado, ANCHO),
+        };
       case 'right':
-        return { top: this.sujetar(caja.top, 200, this.alto()), left: caja.right + SEPARACION };
+        return { top: enVertical(caja.top), left: this.sujetar(caja.right + SEPARACION, ANCHO) };
       case 'left':
         return {
-          top: this.sujetar(caja.top, 200, this.alto()),
-          left: Math.max(AIRE, caja.left - SEPARACION - ANCHO),
+          top: enVertical(caja.top),
+          left: this.sujetar(caja.left - SEPARACION - ANCHO, ANCHO),
         };
       default:
-        return { top: this.alto() / 2 - 120, left: this.ancho() / 2 - ANCHO / 2 };
+        return {
+          top: enVertical(this.alto() / 2 - alto / 2),
+          left: this.sujetar(this.ancho() / 2 - ANCHO / 2, ANCHO),
+        };
     }
   }
 
-  /** Mantiene un borde dentro de la pantalla. */
+  /**
+   * Mantiene un borde dentro de la pantalla.
+   *
+   * El `Math.max(AIRE, …)` del tope existe para la ventana más chica que el
+   * globo: ahí se prefiere que asome por abajo —el globo tiene su propio
+   * `overflow`, así que sus botones siguen alcanzables— antes que empujarlo
+   * hacia arriba y cortarle el encabezado.
+   */
   private sujetar(valor: number, tamano: number, limite = this.ancho()): number {
     return Math.min(Math.max(AIRE, valor), Math.max(AIRE, limite - tamano - AIRE));
   }
