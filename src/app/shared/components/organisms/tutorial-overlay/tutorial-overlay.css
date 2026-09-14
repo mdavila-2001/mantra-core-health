@@ -68,6 +68,15 @@
   box-shadow: var(--shadow-lg);
   font-family: var(--font-body);
   animation: tutorial-entrada var(--dur-base) var(--ease-out);
+  /* El último seguro. La ubicación ya sujeta el globo a la pantalla, pero en una
+     ventana más baja que el propio globo —una laptop de 768 con un paso de
+     texto largo— no hay posición que lo haga entrar. Entonces se desplaza por
+     dentro, y sus botones siguen alcanzables en vez de quedar debajo del borde.
+     Es lo que convertía un tutorial en una trampa. */
+  max-block-size: calc(100vh - var(--sp-4));
+  overflow-y: auto;
+  /* El desplazamiento pertenece al globo, no arrastra la página detrás. */
+  overscroll-behavior: contain;
 }
 
 /* Se posa, no rebota: el rebote se reserva para confirmar una acción del dedo,
@@ -92,12 +101,39 @@
 
 .tutorial-globo__progreso {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
   margin: 0;
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-secondary);
+}
+
+/* La × de cerrar. «Dejarlo» al pie dice lo mismo, pero está al final de un
+   bloque de texto y no se lee como una salida: el propietario avisó el
+   13/09/2026 de que un doctor no sabría cómo cerrar esto. La × arriba a la
+   derecha es la salida que cualquiera reconoce sin leer nada. */
+.tutorial-globo__cerrar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  margin: calc(var(--sp-2) * -1) calc(var(--sp-2) * -1) 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tutorial-globo__cerrar:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .tutorial-globo__tutorial {
@@ -152,12 +188,20 @@
   line-height: var(--lh-caption);
 }
 
+/* Los botones quedan pegados al pie del globo mientras su cuerpo se desplaza:
+   en el caso en que el texto no entra, llegar a «Siguiente» no puede exigir
+   bajar hasta el final de la explicación. */
 .tutorial-globo__acciones {
+  position: sticky;
+  inset-block-end: calc(var(--sp-4) * -1);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
   margin-block-start: var(--sp-2);
+  padding-block: var(--sp-2) var(--sp-4);
+  margin-block-end: calc(var(--sp-4) * -1);
+  background: var(--bg-surface);
 }
 
 .tutorial-globo__avance {
