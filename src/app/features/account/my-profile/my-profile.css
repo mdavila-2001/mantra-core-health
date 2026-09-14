@@ -132,3 +132,5 @@
   padding-block-start: var(--sp-3);
   border-block-start: 1px solid var(--border-default);
 }
+
+.mi-perfil__coverages { gap: var(--sp-4); }

@@ -2,6 +2,7 @@
    que se lee de arriba abajo, y encerrar cada bloque en su borde compite con
    la tabla de ítems, que sí necesita el suyo. */
 .claim__header,
+.claim__contact,
 .claim__adjudication,
 .claim__lines,
 .claim__actions,

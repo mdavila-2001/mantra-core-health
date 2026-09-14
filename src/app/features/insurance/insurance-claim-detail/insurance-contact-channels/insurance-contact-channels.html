@@ -1,0 +1,52 @@
+<div class="contact-channels" data-testid="insurance-contact-channels">
+  @if (whatsapp(); as url) {
+    <a
+      app-button
+      variant="primary"
+      size="sm"
+      [href]="url"
+      target="_blank"
+      rel="noopener noreferrer"
+      data-testid="btn-whatsapp-claim"
+      [appTooltip]="'Abre WhatsApp con ' + carrierName() + ' en una pestaña nueva'"
+    >
+      <svg class="contact-channels__icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+        <path
+          d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.28-2.42 5.84a8.19 8.19 0 0 1-5.82 2.41c-1.46 0-2.9-.38-4.17-1.11l-.3-.18-3.12.82.83-3.04-.2-.31a8.216 8.216 0 0 1-1.26-4.43c0-4.54 3.7-8.24 8.24-8.24z"
+        />
+      </svg>
+      Chatear por WhatsApp
+      <span class="sr-only">(se abre en una pestaña nueva)</span>
+    </a>
+  }
+
+  @if (callCenterHref(); as href) {
+    <a
+      app-button
+      variant="outline"
+      size="sm"
+      [href]="href"
+      data-testid="btn-callcenter-claim"
+      [appTooltip]="'Llamar al call center de ' + carrierName()"
+    >
+      Llamar al call center · {{ callCenterDisplay() }}
+    </a>
+  }
+
+  @if (supportEmail(); as correo) {
+    <a
+      app-link
+      variant="subtle"
+      [href]="'mailto:' + correo"
+      data-testid="btn-support-email-claim"
+    >
+      Escribir a siniestros
+    </a>
+  }
+
+  @if (!hasAnyChannel()) {
+    <p class="contact-channels__absent" data-testid="insurance-contact-absent">
+      La aseguradora no registró canales de contacto.
+    </p>
+  }
+</div>

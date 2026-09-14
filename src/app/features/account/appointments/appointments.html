@@ -170,17 +170,6 @@
                 </p>
               }
               <div class="turnos__acciones">
-                @if (esReprogramable(turno)) {
-                  <button
-                    app-button
-                    variant="ghost"
-                    size="sm"
-                    [isLoading]="operando() === turno.id"
-                    (clicked)="iniciarReprogramacion(turno)"
-                  >
-                    Reprogramar
-                  </button>
-                }
                 @if (esCancelable(turno)) {
                   <button
                     app-button
@@ -233,18 +222,6 @@
                 </div>
                 <div class="turnos__acciones">
                   <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
-                  @if (esReprogramable(turno)) {
-                    <button
-                      app-button
-                      variant="ghost"
-                      size="sm"
-                      class="turnos__reprogramar"
-                      [isLoading]="operando() === turno.id"
-                      (clicked)="iniciarReprogramacion(turno)"
-                    >
-                      Reprogramar
-                    </button>
-                  }
                   @if (esCancelable(turno)) {
                     <button
                       app-button
@@ -336,31 +313,7 @@
   }
 
   <section class="turnos__bloque" aria-labelledby="pedir-turno">
-    <h2 id="pedir-turno" class="turnos__titulo">Pedir un turno</h2>
-
-    @if (turnoEnReprogramacion(); as origen) {
-      <!-- Modo reprogramación: la misma grilla de abajo pasa a mover este
-           turno. El aviso dice cuál, y la salida no toca nada. -->
-      <div class="turnos__reprogramando">
-        <app-alert tone="info" title="Estás moviendo una cita" data-testid="turnos-reprogramando">
-          @if (origen.cuando !== null) {
-            Elegí el horario nuevo para la cita del
-            {{ origen.cuando | date: "EEEE d 'de' MMM 'a las' HH:mm" }}.
-          } @else {
-            Elegí el horario nuevo para esta cita.
-          }
-        </app-alert>
-        <button
-          app-button
-          variant="outline"
-          size="sm"
-          class="turnos__volver"
-          (clicked)="cancelarReprogramacion()"
-        >
-          Volver sin mover la cita
-        </button>
-      </div>
-    }
+    <h2 id="pedir-turno" class="turnos__titulo">Agendar una cita</h2>
 
     @if (organizacion() === null) {
       <app-alert tone="warning" title="Elegí una organización">
@@ -537,30 +490,15 @@
                     }}</span>
                   }
                 </div>
-                @if (reprogramando() === null) {
-                  <a
-                    app-button
-                    variant="primary"
-                    size="sm"
-                    [routerLink]="rutaDeReserva(horario)"
-                    [queryParams]="paramsDeReserva(horario)"
-                  >
-                    Pedir este horario
-                  </a>
-                } @else {
-                  <!-- En modo reprogramación el mismo hueco mueve el turno en
-                       vez de pedir uno nuevo: no se navega a la reserva. -->
-                  <button
-                    app-button
-                    variant="primary"
-                    size="sm"
-                    class="turnos__mover"
-                    [isLoading]="operando() !== null"
-                    (clicked)="reprogramarA(horario)"
-                  >
-                    Mover acá
-                  </button>
-                }
+                <a
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  [routerLink]="rutaDeReserva(horario)"
+                  [queryParams]="paramsDeReserva(horario)"
+                >
+                  Pedir este horario
+                </a>
               </li>
             }
           </ul>

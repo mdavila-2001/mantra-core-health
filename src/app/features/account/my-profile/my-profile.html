@@ -405,25 +405,9 @@
                        apretaría. El título de cada lista sólo aparece si declaró
                        alguno; sin ninguno, un renglón dice que no hay. -->
                   @if (p.coverages.length > 0) {
-                    <h3 class="mi-perfil__subtitulo">Tus seguros</h3>
-                    <ul class="mi-perfil__lista">
-                      @for (seguro of p.coverages; track seguro.carrierName + (seguro.planName ?? '')) {
-                        <li class="mi-perfil__item">
-                          <span class="mi-perfil__item-nombre">{{ seguro.carrierName }}</span>
-                          @if (seguro.planName) {
-                            <span class="mi-perfil__item-detalle">{{ seguro.planName }}</span>
-                          }
-                          <app-badge
-                            [variant]="seguro.isPublic ? 'info' : 'secondary'"
-                            [value]="seguro.isPublic ? 'Público' : 'Privado'"
-                          />
-                          <!-- Lo declarado al registrarse nace sin verificar, y
-                               decirlo evita que alguien crea que ya está confirmado
-                               con su aseguradora. -->
-                          @if (!seguro.verified) {
-                            <span class="mi-perfil__item-nota">Sin verificar con la aseguradora</span>
-                          }
-                        </li>
+                    <ul class="mi-perfil__lista mi-perfil__coverages">
+                      @for (coverage of p.coverages; track coverage.id ?? $index) {
+                        <li><app-patient-coverage-card [coverage]="coverage" [patientName]="p.displayName" /></li>
                       }
                     </ul>
                   } @else {

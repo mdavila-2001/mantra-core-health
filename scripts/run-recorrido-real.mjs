@@ -38,7 +38,9 @@ import { resolve } from 'node:path';
 const RAIZ = resolve(import.meta.dirname, '..');
 const CARPETA = 'real';
 const EVIDENCIAS = resolve(RAIZ, 'artifacts', CARPETA);
-const API = process.env.E2E_API_URL ?? 'http://localhost:3000';
+// El proxy de Angular apunta al puerto host 3125. La API escucha 3000 dentro
+// de su contenedor y el execution set real publica el mapping 3125:3000.
+const API = process.env.E2E_API_URL ?? 'http://localhost:3125';
 const PUERTO_SERVE = process.env.E2E_SERVE_PORT ?? '4200';
 const BASE_URL = `http://localhost:${PUERTO_SERVE}`;
 
@@ -103,9 +105,7 @@ mkdirSync(EVIDENCIAS, { recursive: true });
 console.log(`[recorrido-real] Levantando ng serve en ${BASE_URL}…`);
 const servidor = spawn(
   'yarn',
-  // `real-api` y no `development`: en la rama `mockup` development tiene la maqueta
-  // encendida, y esta suite terminaría hablando con el simulador (B-24).
-  ['ng', 'serve', '--port', PUERTO_SERVE, '--configuration', 'real-api'],
+  ['ng', 'serve', '--port', PUERTO_SERVE, '--configuration', 'e2e-real'],
   {
     cwd: RAIZ,
     stdio: 'ignore',
@@ -143,6 +143,9 @@ const entorno = {
   // `E2E_SUITE` levanta la exclusión que deja estas specs fuera de la corrida
   // por defecto; sin ella, el `--spec` de abajo no encontraría ningún archivo.
   E2E_SUITE: 'real',
+  // Los actores creados con `cy.request` tienen que usar la misma API que
+  // comprobó el runner antes de compilar la aplicación.
+  E2E_API_URL: API,
   // Con `E2E_BASE_URL` puesta, el arnés NO se levanta: no hay API simulada de
   // por medio y las peticiones llegan al backend por el proxy de `ng serve`.
   E2E_BASE_URL: BASE_URL,

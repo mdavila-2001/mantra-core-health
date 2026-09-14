@@ -29,6 +29,14 @@ export interface CarrierSummary {
   readonly carrierCode: string;
   readonly legalName: string;
   readonly regulatorIdentifier: string | null;
+  /**
+   * Canales de contacto directo de la aseguradora (subtarea 2.3): WhatsApp
+   * (E.164), teléfono/línea gratuita del call center y correo de
+   * siniestros. `null` cuando la aseguradora no publicó ese canal.
+   */
+  readonly whatsappNumber: string | null;
+  readonly callCenterPhone: string | null;
+  readonly supportEmail: string | null;
   readonly jurisdiction: InsuranceConcept | null;
   readonly status: InsuranceConcept;
   /**
@@ -304,6 +312,14 @@ export interface ClaimListItem {
   readonly patient: ClaimPatient;
   readonly carrierName: string;
   readonly insuranceCarrierId: string;
+  /**
+   * Canales de contacto directo de la aseguradora (subtarea 2.3). Viajan en
+   * la cabecera de la solicitud porque el detalle **es** la fila. `null`
+   * cuando la aseguradora no publicó ese canal.
+   */
+  readonly carrierWhatsappNumber: string | null;
+  readonly carrierCallCenterPhone: string | null;
+  readonly carrierSupportEmail: string | null;
   readonly policyIdentifier: string | null;
   readonly policyBrokerName: string | null;
   readonly billedTotal: Money;

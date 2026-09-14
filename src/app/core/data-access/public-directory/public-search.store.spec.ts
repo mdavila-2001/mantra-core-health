@@ -1,11 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Subject, of, throwError, type Observable } from 'rxjs';
 
 import type { PublicPage, PublicSearchResult } from './public-directory.types';
-import { BusquedaPublica, TAMANO_DE_PAGINA } from './public-search.store';
+import {
+  BusquedaPublica,
+  MAX_PAGINAS_TERRITORIAL,
+  POR_PETICION_TERRITORIAL,
+  TAMANO_DE_PAGINA,
+  type CorteTerritorial,
+  type FilaConCiudad,
+} from './public-search.store';
 
 /**
  * Lo que estas pruebas fijan.
@@ -368,5 +375,207 @@ describe('BusquedaPublica', () => {
 
       expect(llamadas.length).toBe(2);
     });
+  });
+});
+
+/* ============================================================================
+    El corte territorial (subtarea 2.3).
+
+    Con `territorio`, el store trae el directorio entero y pagina en memoria.
+    Acá se prueba el store con un corte de mentira —el departamento es el
+    prefijo de la ciudad, «CB-…»—; el corte real, contra el catálogo, se prueba
+    en `shared/geo/filtro-territorial.spec.ts` y en las pantallas.
+    ========================================================================== */
+
+describe('BusquedaPublica · con corte territorial', () => {
+  function pagina(
+    items: readonly PublicSearchResult[],
+    nextCursor: string | null = null,
+  ): PublicPage<PublicSearchResult> {
+    return { items, nextCursor, totalHint: null, generatedAt: new Date('2026-09-12T00:00:00Z') };
+  }
+
+  function fila(slug: string, city: string | null): PublicSearchResult {
+    return {
+      kind: 'INSURER',
+      slug,
+      displayName: slug,
+      headline: null,
+      city,
+      avatarUrl: null,
+      verified: false,
+      ratingAverage: null,
+      ratingCount: 0,
+      coverUrl: null,
+      address: null,
+      location: null,
+      hasPublishedAgenda: false,
+      nextAvailableDate: null,
+    };
+  }
+
+  /** `n` filas del mismo departamento de mentira. */
+  function varias(n: number, departamento: string): PublicSearchResult[] {
+    return Array.from({ length: n }, (_, i) => fila(`${departamento}-${i}`, `${departamento}-Ciudad`));
+  }
+
+  function corteDePrueba() {
+    const departamento = signal<string | null>(null);
+    const ciudad = signal<string | null>(null);
+    const enElLugar = (city: string | null): boolean => {
+      const elegido = departamento();
+      if (elegido !== null && (city === null || !city.startsWith(`${elegido}-`))) {
+        return false;
+      }
+      const municipio = ciudad();
+      return municipio === null || city === municipio;
+    };
+    const corte: CorteTerritorial = {
+      departamentoElegido: departamento,
+      ciudad,
+      nombreDelDepartamento: computed(() => departamento()),
+      recortar: <T extends FilaConCiudad>(filas: readonly T[]): readonly T[] =>
+        filas.filter((f) => enElLugar(f.city)),
+      ciudades: () => [],
+      cuentaPorDepartamento: () => new Map<string, number>(),
+      sinUbicar: () => 0,
+    };
+    return { corte, departamento };
+  }
+
+  async function montar(
+    lectura: (filtros: Record<string, unknown>) => Observable<PublicPage<PublicSearchResult>>,
+  ) {
+    const llamadas: Record<string, unknown>[] = [];
+    const { corte, departamento } = corteDePrueba();
+
+    @Component({ template: '' })
+    class Anfitrion {
+      readonly busqueda = new BusquedaPublica(
+        (filtros) => {
+          llamadas.push({ ...filtros });
+          return lectura(filtros as Record<string, unknown>);
+        },
+        [],
+        { territorio: corte },
+      );
+    }
+
+    TestBed.configureTestingModule({
+      providers: [provideRouter([{ path: 'search', component: Anfitrion }])],
+    });
+    const harness = await RouterTestingHarness.create('/search');
+    const busqueda = (harness.routeDebugElement!.componentInstance as Anfitrion).busqueda;
+    return { busqueda, llamadas, departamento };
+  }
+
+  it('recorre el cursor entero, pidiendo de a lo que el servidor acepta', async () => {
+    const { busqueda, llamadas } = await montar((filtros) =>
+      filtros['cursor'] === undefined
+        ? of(pagina([fila('la-paz', 'LP-La Paz')], 'cursor-2'))
+        : of(pagina([fila('cochabamba', 'CB-Cochabamba')])),
+    );
+
+    expect(llamadas.length).toBe(2);
+    expect(llamadas[0]?.['limit']).toBe(POR_PETICION_TERRITORIAL);
+    expect(llamadas[1]?.['cursor']).toBe('cursor-2');
+    expect(busqueda.resultados().map((r) => r.slug)).toEqual(['la-paz', 'cochabamba']);
+  });
+
+  it('el corte ve el directorio entero, no sólo la primera página', async () => {
+    const { busqueda, departamento } = await montar((filtros) =>
+      filtros['cursor'] === undefined
+        ? of(pagina([fila('la-paz', 'LP-La Paz')], 'cursor-2'))
+        : of(pagina([fila('cochabamba', 'CB-Cochabamba')])),
+    );
+
+    departamento.set('CB');
+
+    // Recortar sólo la primera página habría dicho «no hay nada en Cochabamba».
+    expect(busqueda.resultados().map((r) => r.slug)).toEqual(['cochabamba']);
+  });
+
+  it('cambiar el lugar no vuelve a pedir y vuelve a la primera página', async () => {
+    const { busqueda, llamadas, departamento } = await montar(() => of(pagina(varias(30, 'CB'))));
+
+    busqueda.siguiente();
+    expect(busqueda.pagina()).toBe(2);
+    expect(busqueda.resultados().length).toBe(5);
+
+    departamento.set('CB');
+
+    expect(busqueda.pagina()).toBe(1);
+    expect(busqueda.resultados().length).toBe(TAMANO_DE_PAGINA);
+    expect(llamadas.length).toBe(1);
+  });
+
+  it('«Anteriores» y «Siguientes» se mueven en memoria, sin pedir', async () => {
+    const { busqueda, llamadas } = await montar(() => of(pagina(varias(30, 'CB'))));
+
+    expect(busqueda.hayAnteriores()).toBe(false);
+    expect(busqueda.haySiguientes()).toBe(true);
+    busqueda.siguiente();
+    expect(busqueda.haySiguientes()).toBe(false);
+    busqueda.anterior();
+
+    expect(busqueda.pagina()).toBe(1);
+    expect(llamadas.length).toBe(1);
+  });
+
+  it('un lugar sin resultados deja «vacio», y soltarlo vuelve a «datos»', async () => {
+    const { busqueda, departamento } = await montar(() => of(pagina(varias(3, 'CB'))));
+
+    departamento.set('TJ');
+    expect(busqueda.estado()).toBe('vacio');
+
+    departamento.set(null);
+    expect(busqueda.estado()).toBe('datos');
+  });
+
+  it('el total del rótulo es exacto: el directorio está entero en memoria', async () => {
+    const { busqueda, departamento } = await montar(() =>
+      of(pagina([...varias(30, 'CB'), ...varias(2, 'LP')])),
+    );
+
+    departamento.set('LP');
+
+    expect(busqueda.rotuloDePagina()).toBe('2 de 2 · página 1 de 1');
+  });
+
+  it('un directorio que no termina dentro del techo de páginas lo avisa', async () => {
+    let n = 0;
+    const { busqueda, llamadas } = await montar(() =>
+      of(pagina([fila(`f-${n++}`, 'CB-Cochabamba')], 'siempre-hay-otra')),
+    );
+
+    expect(llamadas.length).toBe(MAX_PAGINAS_TERRITORIAL);
+    expect(busqueda.recortada()).toBe(true);
+    expect(busqueda.avisoDelLugar()).toContain('primeros resultados');
+  });
+
+  it('un fallo al reintentar deja «error» y no borra lo leído', async () => {
+    let falla = false;
+    const { busqueda } = await montar(() =>
+      falla ? throwError(() => new Error('sin red')) : of(pagina(varias(2, 'CB'))),
+    );
+
+    falla = true;
+    busqueda.reintentar();
+
+    expect(busqueda.estado()).toBe('error');
+    expect(busqueda.resultados().length).toBe(2);
+  });
+
+  it('el lugar no viaja al servidor', async () => {
+    const { busqueda, llamadas, departamento } = await montar(() => of(pagina(varias(2, 'CB'))));
+
+    departamento.set('CB');
+    busqueda.buscar();
+
+    expect(llamadas.length).toBe(2);
+    for (const llamada of llamadas) {
+      expect(Object.keys(llamada)).not.toContain('departamento');
+      expect(llamada['city'] ?? '').toBe('');
+    }
   });
 });
