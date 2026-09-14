@@ -96,16 +96,31 @@ describe('PatientCoverageCard', () => {
     expect(link.textContent).toContain('pestaña nueva');
   });
 
-  it('preserves expired policies and the public classification', () => {
-    const element = mount({
-      ...coverage,
-      isPublic: true,
-      validityStatus: 'EXPIRED',
-      statusCode: 'COVERAGE_ACTIVE',
-      status: 'Cobertura activa',
-    });
-    expect(element.textContent).toContain('Público');
-    expect(element.textContent).toContain('Vencida');
-    expect(element.textContent).not.toContain('Cobertura activa');
-  });
+  it.each([
+    { statusCode: 'COVERAGE_ACTIVE', validityStatus: 'EXPIRED' as const, label: 'Vencida' },
+    {
+      statusCode: 'insurance:COVERAGE_ACTIVE',
+      validityStatus: 'EXPIRED' as const,
+      label: 'Vencida',
+    },
+    {
+      statusCode: 'insurance:COVERAGE_ACTIVE',
+      validityStatus: 'UPCOMING' as const,
+      label: 'Vigencia futura',
+    },
+  ])(
+    'prioritizes $validityStatus for $statusCode while preserving public classification',
+    ({ statusCode, validityStatus, label }) => {
+      const element = mount({
+        ...coverage,
+        isPublic: true,
+        validityStatus,
+        statusCode,
+        status: 'Cobertura activa',
+      });
+      expect(element.textContent).toContain('Público');
+      expect(element.textContent).toContain(label);
+      expect(element.textContent).not.toContain('Cobertura activa');
+    },
+  );
 });

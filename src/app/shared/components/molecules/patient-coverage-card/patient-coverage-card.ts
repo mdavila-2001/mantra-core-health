@@ -37,7 +37,8 @@ export class PatientCoverageCard {
   });
   protected statusText(): string {
     const coverage = this.coverage();
-    return coverage.statusCode === 'COVERAGE_ACTIVE' && coverage.validityStatus !== 'CURRENT'
+    return ['COVERAGE_ACTIVE', 'insurance:COVERAGE_ACTIVE'].includes(coverage.statusCode ?? '') &&
+      coverage.validityStatus !== 'CURRENT'
       ? this.validityText(coverage.validityStatus)
       : (coverage.status ?? 'No informado');
   }

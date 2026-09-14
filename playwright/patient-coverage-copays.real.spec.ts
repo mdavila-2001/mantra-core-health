@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test, type BrowserContext } from '@playwright/test';
 import { entrar, irA } from './support/sesion';
 
 interface RealPatient {
@@ -23,6 +23,8 @@ interface CopaysFixture {
 }
 
 test.describe.configure({ mode: 'serial' });
+test.use({ serviceWorkers: 'block' });
+const blockedRequestsByContext = new WeakMap<BrowserContext, string[]>();
 let fixture: CopaysFixture;
 const orderStates = ['approved', 'partial', 'denied', 'pending'] as const;
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -56,6 +58,33 @@ function requireSettlementOrders(): void {
   requireOrderIds(fixture.diagnosticOrders, 'diagnosticOrders');
 }
 
+test.beforeEach(async ({ context }) => {
+  const blockedRequests: string[] = [];
+  blockedRequestsByContext.set(context, blockedRequests);
+  await context.route(
+    (url) => url.port === '3000',
+    async (route) => {
+      const request = route.request();
+      blockedRequests.push(`${request.method()} ${new URL(request.url()).origin}`);
+      await route.abort('blockedbyclient');
+    },
+  );
+  await context.routeWebSocket(
+    (url) => url.port === '3000',
+    async (socket) => {
+      blockedRequests.push(`WEBSOCKET ${new URL(socket.url()).origin}`);
+      await socket.close({ code: 1008, reason: 'Forbidden API port' });
+    },
+  );
+});
+
+test.afterEach(({ context }) => {
+  expect(
+    blockedRequestsByContext.get(context) ?? [],
+    'The isolated journey must never request port 3000',
+  ).toEqual([]);
+});
+
 test.beforeAll(() => {
   const path =
     process.env['E2E_COPAYS_FIXTURE'] ??
@@ -73,6 +102,18 @@ for (const viewport of [
     test.use({ viewport });
 
     test('real patient profile displays policy and benefits', async ({ page }, info) => {
+      const apiResponses: { method: string; origin: string; path: string; status: number }[] = [];
+      page.on('response', (response) => {
+        const url = new URL(response.url());
+        if (['/iam/auth/login', '/profiles/patients/me'].includes(url.pathname)) {
+          apiResponses.push({
+            method: response.request().method(),
+            origin: url.origin,
+            path: url.pathname,
+            status: response.status(),
+          });
+        }
+      });
       await entrar(page, {
         rol: 'paciente',
         identificador: fixture.patient.nationalId,
@@ -85,7 +126,45 @@ for (const viewport of [
         .getByTestId('patient-coverage-card')
         .filter({ hasText: 'Plan Copagos Real' });
       await expect(policy).toBeVisible();
-      await expect(policy).toContainText('Hemograma completo');
+      await expect(policy).toContainText('Complete blood count');
+      await expect(policy.getByText('Vigente', { exact: true })).toBeVisible();
+      await expect(policy).not.toContainText('Inactiva');
+      await expect(
+        policy.getByRole('listitem').filter({ hasText: 'Complete blood count' }),
+      ).toContainText('Vigente · Desde');
+      await expect(policy).toContainText('80.25%');
+      await expect(
+        policy.getByText('Copago', { exact: true }).locator('..').locator('dd'),
+      ).toHaveText(/^0(?:\.0+)? Bs$/);
+      await expect(
+        policy.getByText('Deducible', { exact: true }).locator('..').locator('dd'),
+      ).toHaveText('10.50 Bs');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+      expect(apiResponses).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: '/iam/auth/login', status: 200 }),
+          expect.objectContaining({ path: '/profiles/patients/me', status: 200 }),
+        ]),
+      );
+      const trafficPath = info.outputPath('real-profile-traffic.json');
+      writeFileSync(
+        trafficPath,
+        JSON.stringify(
+          {
+            viewport,
+            apiResponses,
+            blockedPort3000Requests: blockedRequestsByContext.get(page.context()) ?? [],
+          },
+          null,
+          2,
+        ),
+      );
+      await info.attach('real-profile-traffic', {
+        path: trafficPath,
+        contentType: 'application/json',
+      });
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.screenshot({
         path: info.outputPath(`real-coverage-${viewport.width}.png`),
@@ -133,8 +212,8 @@ for (const viewport of [
         }
         if (state === 'denied') {
           await expect(
-            settlement.locator('dl > div').filter({ hasText: 'A tu cargo' }),
-          ).toContainText('0.00');
+            settlement.locator('dl > div').filter({ hasText: 'A tu cargo' }).locator('dd'),
+          ).toHaveText(/^0(?:\.0+)? Bs$/);
         }
         if (state === 'pending') await expect(settlement.locator('dl')).toHaveCount(0);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
