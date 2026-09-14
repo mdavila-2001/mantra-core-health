@@ -15,6 +15,10 @@
  *
  *   - `build.configurations.real-api` reemplaza `environment.ts` por
  *     `environment.real-api.ts`, y `serve.configurations.real-api` la usa;
+ *   - `real-api` apaga SSR y prerender (`server: false`, `ssr: false`,
+ *     `outputMode: static`), igual que `e2e-real`: con la maqueta apagada el
+ *     prerender pide datos a una API que en el build no existe, la app no
+ *     estabiliza y el build queda colgado;
  *   - `development` sigue reemplazándolo por `environment.development.ts`,
  *     `production` no lo reemplaza, y los defaults no cambiaron;
  *   - el servidor de desarrollo sigue teniendo `proxyConfig`;
@@ -49,6 +53,10 @@ exigir(
   reemplazoDe('real-api') === 'src/environments/environment.real-api.ts',
   'build «real-api» tiene que reemplazar environment.ts por environment.real-api.ts',
 );
+const realApi = build.configurations?.['real-api'] ?? {};
+exigir(realApi.server === false, 'build «real-api» tiene que declarar server: false');
+exigir(realApi.ssr === false, 'build «real-api» tiene que declarar ssr: false');
+exigir(realApi.outputMode === 'static', 'build «real-api» tiene que declarar outputMode: static');
 exigir(
   reemplazoDe('development') === 'src/environments/environment.development.ts',
   'build «development» tiene que seguir usando environment.development.ts',
@@ -81,4 +89,6 @@ if (errores.length > 0) {
   for (const error of errores) console.error(`  ✗ ${error}`);
   process.exit(1);
 }
-console.log('[check-real-api-config] ✓ real-api apaga la maqueta; development y production intactos.');
+console.log(
+  '[check-real-api-config] ✓ real-api apaga la maqueta y el SSR; development y production intactos.',
+);
