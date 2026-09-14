@@ -131,6 +131,25 @@ export function registrarIdentidad(router: MockRouter): void {
     { type: 'TENANT', label: 'Organización', description: 'NIT y licencia de funcionamiento.', requiresFile: true, forRoles: ['SECURITY_ADMIN'] },
   ]);
 
+  // `IdentityClient.listVerificationTypes` (FT-32-R09/R11): qué trámites puede
+  // iniciar el titular y cuáles ya tienen una solicitud viva. La forma es
+  // `{ types }`, no un arreglo: el cliente hace `cuerpo.types.map`.
+  router.get('/identity/me/verification-types', (request) => {
+    const roles = request.user?.roles ?? [];
+    const vivos = new Set(casos.filtrar((c) => c.userId === request.user?.id && c.completedAt === null && c.status !== 'EXPIRED').map((c) => c.type));
+    const catalogo = [
+      { code: 'PATIENT_IDENTITY', label: 'Identidad de paciente', roles: ['PATIENT'] },
+      { code: 'PRACTITIONER_IDENTITY', label: 'Identidad profesional', roles: ['PRACTITIONER', 'CLINICIAN'] },
+      { code: 'PRACTITIONER_LICENSE', label: 'Matrícula profesional', roles: ['PRACTITIONER', 'CLINICIAN'] },
+      { code: 'TENANT_VERIFICATION', label: 'Organización', roles: ['SECURITY_ADMIN', 'SUPERADMIN'] },
+    ];
+    return {
+      types: catalogo
+        .filter((t) => roles.includes('SUPERADMIN') || t.roles.some((r) => roles.includes(r)))
+        .map(({ code, label }) => ({ code, label, hasPendingRequest: vivos.has(code) || (code === 'TENANT_VERIFICATION' && vivos.has('TENANT')) })),
+    };
+  });
+
   router.get('/identity/me/verification-cases', (request) => casos.filtrar((c) => c.userId === request.user?.id).map(casoPropio));
 
   router.get('/identity/me/verification-cases/:id', ({ params }) => {
@@ -239,3 +258,6 @@ export function registrarIdentidad(router: MockRouter): void {
 
   router.post('/identity/assertions/:id/revoke', ({ params }) => ({ id: params['id'], revokedAt: ahora(), caseStatus: 'REVOKED' }));
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+casos.persistirEn('mock.identity.casos');

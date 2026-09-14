@@ -657,3 +657,7 @@ export function personasRelacionadasDe(p: PacienteSimulado) {
 }
 
 export const CATEGORIA_MEDICO = CATEGORIA_PROFESIONAL['PC-MEDICO']!;
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+pacientes.persistirEn('mock.personas.pacientes');
+afiliaciones.persistirEn('mock.personas.afiliaciones');

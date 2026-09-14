@@ -121,7 +121,7 @@ export function registrarAgenda(router: MockRouter): void {
       id: nuevoId('resource'),
       name: datos.name ?? 'Recurso nuevo',
       resourceTypeConceptId: uuid('concept-resource-practitioner'),
-      resourceRefType: datos.resourceRefType ?? 'PRACTITIONER',
+      resourceRefType: datos.resourceRefType ?? 'health_practitioner_profiles',
       resourceRefId: datos.resourceRefId ?? '',
       practitionerName: datos.name ?? null,
       practiceId: datos.practiceId ?? null,
@@ -227,7 +227,10 @@ export function registrarAgenda(router: MockRouter): void {
 
   router.get('/scheduling/bookings/:id', ({ params }) => reservas.get(params['id']!) ?? notFound('Reserva no encontrada'));
 
-  router.post('/scheduling/bookings/:id/payment-state', (request) => {
+  /* El cliente hace `PUT` (es idempotente) y devuelve `PaymentStateInfo`, no
+     la reserva: la agenda lee `estado.label` para el aviso. Con `POST` y la
+     reserva entera el eco genérico decía «undefined.» y nada cambiaba. */
+  const marcarPago = (request: MockRequest) => {
     const r = reservas.get(request.params['id']!);
     if (r === undefined) return notFound();
     const datos = cuerpo<{ state: 'PENDING' | 'PARTIALLY_PAID' | 'PAID'; insuranceUsed?: boolean }>(request);
@@ -242,8 +245,10 @@ export function registrarAgenda(router: MockRouter): void {
         markedAt: ahora(),
       },
     });
-    return actualizada;
-  });
+    return actualizada?.paymentState ?? notFound();
+  };
+  router.put('/scheduling/bookings/:id/payment-state', marcarPago);
+  router.post('/scheduling/bookings/:id/payment-state', marcarPago);
 
   router.post('/scheduling/bookings/:id/cancel', (request) => {
     const r = reservas.get(request.params['id']!);

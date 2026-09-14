@@ -76,8 +76,10 @@ function organizacionPropia(t: TenantSimulado, request: MockRequest) {
 export function registrarDirectorio(router: MockRouter): void {
   // Sustituye al `/admin/tenants` genérico de auth: acá está el modelo completo.
   router.get('/admin/tenants', ({ query }) => {
-    const q = texto(query, 'query');
-    const status = texto(query, 'statusConceptId');
+    // El cliente manda `q` y `status` (`DirectoryClient.searchTenants`); los
+    // nombres largos quedan como respaldo.
+    const q = texto(query, 'q') ?? texto(query, 'query');
+    const status = texto(query, 'status') ?? texto(query, 'statusConceptId');
     const todos = tenants
       .todos()
       .filter((t) => contiene(t.legalName, q) || contiene(t.tradeName, q) || contiene(t.code, q))
@@ -240,3 +242,9 @@ export function registrarDirectorio(router: MockRouter): void {
     return { items: items.slice(0, limit), truncated: items.length > limit };
   });
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+tenants.persistirEn('mock.directory.tenants');
+sucursales.persistirEn('mock.directory.sucursales');
+membresias.persistirEn('mock.directory.membresias');
+asignaciones.persistirEn('mock.directory.asignaciones');

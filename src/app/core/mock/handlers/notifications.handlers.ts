@@ -178,3 +178,6 @@ export function registrarNotificaciones(router: MockRouter): void {
     return siguiente;
   });
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+notificaciones.persistirEn('mock.notifications.notificaciones');

@@ -305,3 +305,6 @@ export function registrarSeguros(router: MockRouter): void {
     return { status: 201, body: { id: nuevoId('dispute'), disputeType: c('APPEAL', 'Apelación'), disputeReason: c('COVERAGE', 'Discrepancia de cobertura'), status: c('OPEN', 'Abierta'), submittedAt: ahora(), filingDeadline: iso(30) } };
   });
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+solicitudes.persistirEn('mock.insurance.solicitudes');

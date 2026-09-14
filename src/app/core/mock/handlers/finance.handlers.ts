@@ -1208,3 +1208,12 @@ export function registrarFinanzas(router: MockRouter): void {
     return { status: 201, body: { transactionId: nuevoId('journal'), installmentNumber: p.pagadas + 1, amount: d(capital) } };
   });
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+asientos.persistirEn('mock.finance.asientos');
+cotizaciones.persistirEn('mock.finance.cotizaciones');
+activos.persistirEn('mock.finance.activos');
+pasivos.persistirEn('mock.finance.pasivos');
+periodos.persistirEn('mock.finance.periodos');
+partidasAbiertas.persistirEn('mock.finance.partidasAbiertas');
+devengos.persistirEn('mock.finance.devengos');

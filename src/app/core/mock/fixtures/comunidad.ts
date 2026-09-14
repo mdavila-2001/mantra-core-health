@@ -613,3 +613,14 @@ export const encuestaDePublicacion = {
   ],
   totalVotes: 100,
 };
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+vitrinas.persistirEn('mock.comunidad.vitrinas');
+publicaciones.persistirEn('mock.comunidad.publicaciones');
+comentarios.persistirEn('mock.comunidad.comentarios');
+resenas.persistirEn('mock.comunidad.resenas');
+grupos.persistirEn('mock.comunidad.grupos');
+miembrosDeGrupo.persistirEn('mock.comunidad.miembrosDeGrupo');
+muroDeGrupo.persistirEn('mock.comunidad.muroDeGrupo');
+conversaciones.persistirEn('mock.comunidad.conversaciones');
+mensajes.persistirEn('mock.comunidad.mensajes');

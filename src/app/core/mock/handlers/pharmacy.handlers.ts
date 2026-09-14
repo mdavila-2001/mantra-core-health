@@ -382,3 +382,7 @@ export function registrarFarmacia(router: MockRouter): void {
     return cambiar(p.id, completo ? 'RETIRADO' : 'LISTO_PARA_RETIRO', { lineas });
   });
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+productos.persistirEn('mock.pharmacy.productos');
+pedidos.persistirEn('mock.pharmacy.pedidos');

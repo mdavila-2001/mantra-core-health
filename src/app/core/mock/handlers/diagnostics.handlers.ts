@@ -402,3 +402,8 @@ export function registrarDiagnostico(router: MockRouter): void {
   void PRIORIDAD;
   void PACIENTES;
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+informes.persistirEn('mock.diagnostics.informes');
+compartidos.persistirEn('mock.diagnostics.compartidos');
+ordenesDeTrabajo.persistirEn('mock.diagnostics.ordenesDeTrabajo');

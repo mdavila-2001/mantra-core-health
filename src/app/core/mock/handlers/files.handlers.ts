@@ -228,3 +228,6 @@ export function registrarArchivos(router: MockRouter): void {
     return noContent();
   });
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+archivos.persistirEn('mock.files.archivos');

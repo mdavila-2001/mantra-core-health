@@ -555,3 +555,8 @@ export function registrarPracticas(router: MockRouter): void {
   // Establecimientos vinculables usan el padrón: mismo catálogo que `linkable-organizations`.
   void ESTABLECIMIENTO;
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+servicios.persistirEn('mock.practice.servicios');
+vinculaciones.persistirEn('mock.practice.vinculaciones');
+sitiosPropios.persistirEn('mock.practice.sitiosPropios');

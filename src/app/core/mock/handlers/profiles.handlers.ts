@@ -400,6 +400,11 @@ export function registrarPerfiles(router: MockRouter): void {
     const cambios = cuerpo<Record<string, unknown>>(request);
     const actualizado = pacientes.actualizar(p.id, {
       ...(typeof cambios['name'] === 'string' ? { name: cambios['name'] } : {}),
+      // El segundo nombre viaja como `middleName` y con `''` se borra: sin
+      // esta línea la pantalla decía «actualizado» y al releer volvía el viejo.
+      ...(typeof cambios['middleName'] === 'string'
+        ? { middleName: cambios['middleName'] === '' ? undefined : cambios['middleName'] }
+        : {}),
       ...(typeof cambios['lastName'] === 'string' ? { lastName: cambios['lastName'] } : {}),
       ...(typeof cambios['motherLastName'] === 'string' ? { motherLastName: cambios['motherLastName'] } : {}),
       ...(typeof cambios['phone'] === 'string' ? { phone: cambios['phone'] } : {}),

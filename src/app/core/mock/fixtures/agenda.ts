@@ -104,7 +104,12 @@ export const recursos = new Coleccion<RecursoSimulado>(
       id: recursoDe(p),
       name: `Agenda de ${p.displayName}`,
       resourceTypeConceptId: uuid('concept-resource-practitioner'),
-      resourceRefType: 'PRACTITIONER',
+      // El nombre de la TABLA, como lo emite la API real
+      // (`scheduling-agenda.service.ts`): la ficha pública y la agenda filtran
+      // «los recursos de este profesional» con esa lista, y con `'PRACTITIONER'`
+      // ningún recurso era suyo — la ficha decía «Todavía no publicó horarios»
+      // con 41 cupos cargados.
+      resourceRefType: 'health_practitioner_profiles',
       resourceRefId: p.id,
       practitionerName: p.displayName,
       practiceId: p.organizacion === 'Hospital San Lucas' ? PRACTICE_SANLUCAS : PRACTICE_OLIVOS,
@@ -457,3 +462,10 @@ export const listaDeEspera = new Coleccion<{
 ]);
 
 export const TENANT_AGENDA = TENANT_CLINICA;
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+recursos.persistirEn('mock.agenda.recursos');
+plantillas.persistirEn('mock.agenda.plantillas');
+reservas.persistirEn('mock.agenda.reservas');
+bloqueos.persistirEn('mock.agenda.bloqueos');
+listaDeEspera.persistirEn('mock.agenda.listaDeEspera');

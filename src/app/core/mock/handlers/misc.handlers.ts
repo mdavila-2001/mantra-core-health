@@ -252,3 +252,8 @@ export function registrarVarios(router: MockRouter): void {
   void ESPECIALIDAD;
   void profesionalPorId;
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+favoritas.persistirEn('mock.misc.favoritas');
+relaciones.persistirEn('mock.misc.relaciones');
+representaciones.persistirEn('mock.misc.representaciones');

@@ -493,3 +493,15 @@ export const ordenes = new Coleccion<OrdenSimulada>(
     })),
   ),
 );
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+condiciones.persistirEn('mock.clinica.condiciones');
+alergias.persistirEn('mock.clinica.alergias');
+recetas.persistirEn('mock.clinica.recetas');
+observaciones.persistirEn('mock.clinica.observaciones');
+encuentros.persistirEn('mock.clinica.encuentros');
+episodios.persistirEn('mock.clinica.episodios');
+notas.persistirEn('mock.clinica.notas');
+planes.persistirEn('mock.clinica.planes');
+documentos.persistirEn('mock.clinica.documentos');
+ordenes.persistirEn('mock.clinica.ordenes');

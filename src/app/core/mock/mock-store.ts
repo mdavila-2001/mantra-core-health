@@ -121,7 +121,7 @@ export class Coleccion<T extends { readonly id: string }> {
   private readonly filas = new Map<string, T>();
 
   /** Dónde se guarda, o `null` si esta tabla no sobrevive a la recarga. */
-  private readonly clave: string | null;
+  private clave: string | null;
 
   constructor(iniciales: readonly T[] = [], clave?: string) {
     this.clave = clave ?? null;
@@ -200,6 +200,32 @@ export class Coleccion<T extends { readonly id: string }> {
       this.guardar();
     }
     return borrada;
+  }
+
+  /**
+   * Hace que esta tabla sobreviva a la recarga (F5) dentro de la misma pestaña.
+   *
+   * Es la misma persistencia que la `clave` del constructor, pero aplicable a
+   * una tabla ya construida: los fixtures declaran la colección con sus filas
+   * iniciales en una expresión larga, y agregarle un segundo argumento a cada
+   * constructor multilínea era más ruido que esta línea al pie del archivo.
+   *
+   * Lo guardado gana sobre las filas iniciales, por el mismo motivo que en el
+   * constructor: si no, recargar pisaría con el fixture lo que la persona
+   * acaba de escribir. Nació para la demostración: un registro creado en
+   * pantalla que desaparece con F5 se ve exactamente igual que un guardado que
+   * falló, y no hay forma de explicarle a quien prueba que «era la memoria».
+   */
+  persistirEn(clave: string): this {
+    this.clave = clave;
+    const guardadas = this.leerGuardadas();
+    if (guardadas !== null) {
+      this.filas.clear();
+      for (const fila of guardadas) {
+        this.filas.set(fila.id, fila);
+      }
+    }
+    return this;
   }
 
   filtrar(predicado: (fila: T) => boolean): T[] {

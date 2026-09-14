@@ -612,3 +612,7 @@ export function registrarEncuestas(router: MockRouter): void {
     return { targetResourceConceptId: target, allowTenantFields: true, maximumFields, used, remaining: maximumFields - used };
   });
 }
+
+/* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
+encuestas.persistirEn('mock.surveys-forms.encuestas');
+invitaciones.persistirEn('mock.surveys-forms.invitaciones');
