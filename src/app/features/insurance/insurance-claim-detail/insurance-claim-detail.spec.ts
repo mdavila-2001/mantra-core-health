@@ -195,8 +195,8 @@ describe('InsuranceClaimDetail · cláusula y justificación del rechazo', () =>
   it('un ítem denegado sin cláusula ni justificación dice que no hay motivo registrado', () => {
     mount();
     const sinCita = detalleWire();
-    (sinCita['lines'] as Array<Record<string, unknown>>)[1] = {
-      ...(sinCita['lines'] as Array<Record<string, unknown>>)[1],
+    (sinCita['lines'] as Record<string, unknown>[])[1] = {
+      ...(sinCita['lines'] as Record<string, unknown>[])[1],
       policyClauseReference: null,
       denialRationale: null,
       denialReason: null,

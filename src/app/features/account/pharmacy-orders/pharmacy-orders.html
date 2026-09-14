@@ -27,6 +27,15 @@
                   Total estimado: {{ pedido.totalEstimado }} {{ pedido.moneda }}
                 </span>
               }
+              @if (pedido.insuranceSettlementAvailability === 'AVAILABLE') {
+                @if (pedido.insuranceSettlement; as settlement) {
+                  <span class="pedidos__secundario cifras-tabulares">A tu cargo: {{ settlement.totalPatientAmount }} {{ settlement.currencyCode === 'BOB' ? 'Bs' : settlement.currencyCode }}</span>
+                }
+              } @else if (pedido.insuranceSettlementAvailability === 'PENDING_PUBLICATION') {
+                <span class="pedidos__secundario">Liquidación pendiente de publicación</span>
+              } @else if (pedido.insuranceSettlementAvailability === 'UNDER_REVIEW') {
+                <span class="pedidos__secundario">Liquidación en revisión</span>
+              }
             </div>
             <app-badge [variant]="estadoDe(pedido).tone">{{ estadoDe(pedido).label }}</app-badge>
           </a>
