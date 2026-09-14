@@ -397,14 +397,14 @@ export class Appointments {
    * Sin íconos a propósito: el conmutador de lista/calendario que vive dentro
    * de «Mis citas» ya usa `calendar`, y repetir ese dibujo acá con otro
    * significado rompe lo único que un ícono aporta, que es reconocer de un
-   * vistazo. Dos rótulos de dos palabras se leen igual de rápido.
+   * vistazo. Dos rótulos cortos se leen igual de rápido.
    */
   protected readonly seccionesDisponibles: readonly SegmentedOption<SeccionDeTurnos>[] = [
     { value: 'citas', label: 'Mis citas', description: 'Ver las citas que ya pediste' },
     {
       value: 'pedir',
-      label: 'Buscar cita',
-      description: 'Buscar un horario libre y pedir una cita nueva',
+      label: 'Agendar una cita',
+      description: 'Buscar un horario libre y agendar una cita nueva',
     },
   ];
 
@@ -414,7 +414,7 @@ export class Appointments {
 
   /**
    * Abre una sección, venga del conmutador o de una acción que necesita la otra
-   * —elegir un día en el calendario termina en «Buscar cita»—.
+   * —elegir un día en el calendario termina en «Agendar una cita»—.
    *
    * `replaceUrl` como el resto de la pantalla: cambiar de sección no puede
    * dejar una entrada de historial por clic, o «atrás» obligaría a deshacer
@@ -550,7 +550,7 @@ export class Appointments {
    * Se señaló un día en el calendario: se ofrecen los horarios libres de ese día.
    *
    * Antes los horarios estaban debajo del calendario y bastaba con filtrarlos;
-   * ahora viven en «Buscar cita», así que el gesto abre esa sección con el
+   * ahora viven en «Agendar una cita», así que el gesto abre esa sección con el
    * día ya puesto. Sigue sin ser un viaje de ida: el aviso de arriba de la
    * grilla dice qué día se está mirando y ofrece volver a verlos todos, y el
    * conmutador devuelve al calendario en un clic.

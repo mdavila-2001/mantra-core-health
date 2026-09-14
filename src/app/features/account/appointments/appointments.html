@@ -35,7 +35,7 @@
       <!-- El rótulo lo pone el conmutador de arriba: acá el título se
            conserva sólo como encabezado para lectores de pantalla, que es lo
            que da a la sección un nombre y un lugar en el índice. -->
-      <h2 id="pedir-turno" class="sr-only">Buscar cita</h2>
+      <h2 id="pedir-turno" class="sr-only">Agendar una cita</h2>
 
       @if (organizacion() === null) {
         <app-alert tone="warning" title="Elegí una organización">
@@ -511,7 +511,7 @@
             data-testid="turnos-pedir-desde-vacio"
             (clicked)="elegirSeccion('pedir')"
           >
-            Buscar cita
+            Agendar una cita
           </button>
         }
         @default {
