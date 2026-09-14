@@ -69,6 +69,7 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { WorkHistory } from '../work-history/work-history';
 import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
 
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
@@ -209,6 +210,7 @@ function soloFecha(fecha: Date): string {
     Tooltip,
     UbicacionPicker,
     ViewStateHost,
+    WorkHistory,
   ],
   templateUrl: './practitioner-profile-edit.html',
   styleUrl: './practitioner-profile-edit.css',

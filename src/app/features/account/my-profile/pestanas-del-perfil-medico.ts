@@ -64,33 +64,47 @@ export const PESTANA_MEDICO = {
  * cuatro botones de guardar, que es justo lo que prohíbe
  * `docs/components/composition-rules.md` §5.
  *
- * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO} en el mismo orden, salteando
- * las dos que no tienen nada que editar acá:
+ * Son las de {@link PESTANAS_DEL_PERFIL_MEDICO} en el mismo orden, salteando la
+ * única que no tiene nada que editar acá:
  *
- * - **Dónde atiendo** — el consultorio propio se crea y se edita en su propia
- *   pantalla (`/administration/my-practice`, CORR-02). Duplicar acá el
- *   formulario daría dos lugares para el mismo dato y ninguna forma de saber
- *   cuál ganó.
  * - **Actividad** — son los contadores de la plataforma. No se editan: se
  *   miran.
  *
+ * ## «Dónde atiendo» volvió, y por qué
+ *
+ * Estuvo fuera hasta el 13/09/2026, con este argumento: el consultorio propio
+ * se crea en `/administration/my-practice`, y duplicar acá el formulario daría
+ * dos lugares para el mismo dato. El argumento era bueno pero la conclusión
+ * estaba mal, porque el formulario **no** estaba sólo allá: también vivía en la
+ * pestaña «Trayectoria», que es donde nadie lo busca —la trayectoria es dónde
+ * ejerciste antes, no dónde atendés hoy—.
+ *
+ * El cliente pidió sacarlo de Trayectoria. Y la ficha no podía quedárselo: la
+ * ficha **muestra**, y cargar un consultorio es editar. Así que el bloque viene
+ * acá, que es donde alguien que quiere cambiar dónde atiende lo va a buscar.
+ *
+ * **No se duplica nada**: las tres superficies montan el MISMO
+ * `app-work-history` —esta pestaña, «Mi consultorio propio» y Trayectoria— con
+ * distinto valor de su input `secciones`. Un arreglo llega a las tres.
+ *
  * El orden importa: quien viene de la ficha encuentra las pestañas donde las
- * dejó, y las dos primeras son las que se corrigen; las dos últimas, las que se
- * suman.
+ * dejó.
  */
 export const PESTANAS_DEL_EDITOR_MEDICO = [
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.personales],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.contacto],
+  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.dondeAtiendo],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales],
 ] as const;
 
-/** Los índices con nombre del editor. No son los de la ficha: son cuatro. */
+/** Los índices con nombre del editor. No son los de la ficha: son cinco. */
 export const PESTANA_EDITOR = {
   personales: 0,
   contacto: 1,
-  trayectoria: 2,
-  credenciales: 3,
+  dondeAtiendo: 2,
+  trayectoria: 3,
+  credenciales: 4,
 } as const;
 
 /**

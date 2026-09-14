@@ -7,6 +7,7 @@ import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   MyRoleAssignment,
   NewOwnSite,
+  OwnSitePatch,
   PracticeSite,
   PracticeSitePage,
   RoleAssignmentResult,
@@ -103,6 +104,26 @@ export class PracticeSitesClient {
    */
   createOwnSite(input: NewOwnSite): Observable<PracticeSite> {
     return this.http.post<PracticeSite>(this.url('/practitioners/me/sites'), input);
+  }
+
+  /**
+   * `PATCH /practitioners/me/sites/:siteId` — corrijo mi consultorio propio.
+   *
+   * **Sólo el propio.** Una sede de otra organización no se corrige desde acá:
+   * es de ella, y lo que uno tiene con ella es una vinculación, no la sede.
+   *
+   * La API todavía no expone la ruta (P28 de `PENDIENTES-BACKEND.md`); la
+   * maqueta sí, y el perfil ya la usa.
+   *
+   * @param siteId - El consultorio a corregir.
+   * @param input - Sólo los campos que cambian.
+   * @returns La sede con los cambios aplicados.
+   */
+  updateOwnSite(siteId: string, input: OwnSitePatch): Observable<PracticeSite> {
+    return this.http.patch<PracticeSite>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}`),
+      input,
+    );
   }
 
   /**

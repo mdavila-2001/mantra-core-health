@@ -23,7 +23,7 @@ import { WorkHistory } from '../../account/my-profile/work-history/work-history'
  * Crear un consultorio, ubicarlo en el mapa, elegir su municipio y retirarlo ya
  * vive en `WorkHistory`, con su catálogo, su confirmación y sus 31 pruebas.
  * Copiarlo acá habría garantizado que el arreglo de uno no llegara al otro
- * —regla 50-frontend §3—. Se monta con `soloConsultorios`, que suprime el
+ * —regla 50-frontend §3—. Se monta con `secciones="consultorios"`, que suprime el
  * historial laboral: acá la pregunta es dónde atiende hoy, no dónde ejerció.
  *
  * Es también la respuesta al «igualmente desde el perfil se puede hacer lo
