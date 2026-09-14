@@ -384,104 +384,147 @@
           </p>
         </app-tab-help-block>
 
-        <h3 class="mi-perfil__subtitulo">Actividad actual</h3>
-        @if (perfil().actividadActual.length > 0) {
-          <ul class="mi-perfil__lista">
-            @for (afiliacion of perfil().actividadActual; track afiliacion.id) {
-              <li class="mi-perfil__item">
-                <span class="mi-perfil__item-nombre">{{ afiliacion.organizacion }}</span>
-                @if (afiliacion.cargo) {
-                  <span class="mi-perfil__item-detalle">{{ afiliacion.cargo }}</span>
-                }
-                <app-badge variant="success" value="En curso" />
-                <span class="mi-perfil__item-nota">
-                  Desde {{ afiliacion.desde | date: 'MMM y' }}
-                </span>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="mi-perfil__nota">
-            No hay actividad actual registrada. Es dónde ejercés hoy: el hospital o centro donde
-            atendés en este momento.
-          </p>
-        }
+        <!-- ─── La trayectoria, como una línea de nodos ─────────────────────
+             Eran tres listas de la MISMA tarjeta marfil (`mi-perfil__item`),
+             una debajo de la otra: doce cajas iguales donde nada decía qué
+             fase era cuál, qué seguía en curso ni en qué orden pasó
+             («prefiero que se vea como nodos, en lugar de estos cards
+             horribles» — propietario, 13/09/2026).
 
-        <h3 class="mi-perfil__subtitulo">Experiencia histórica</h3>
-        @if (perfil().experienciaHistorica.length > 0) {
-          <ul class="mi-perfil__lista">
-            @for (afiliacion of perfil().experienciaHistorica; track afiliacion.id) {
-              <li class="mi-perfil__item">
-                <span class="mi-perfil__item-nombre">{{ afiliacion.organizacion }}</span>
-                @if (afiliacion.cargo) {
-                  <span class="mi-perfil__item-detalle">{{ afiliacion.cargo }}</span>
-                }
-                <span class="mi-perfil__item-nota">
-                  {{ afiliacion.desde | date: 'MMM y' }} — {{ afiliacion.hasta | date: 'MMM y' }}
-                </span>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="mi-perfil__nota">
-            No hay experiencia histórica registrada. Son los hospitales o centros donde ejerciste
-            antes de la actividad actual.
-          </p>
-        }
+             Ahora cada fase es una línea con un nodo por hito y **su** color en
+             el nodo: aguamarina lo que sigue en curso, gris lo que terminó,
+             y en formación el color del sello del trámite. El color es lo que
+             convierte tres listas en una historia, y el hilo lo que dice que
+             van en orden.
 
-        <h3 class="mi-perfil__subtitulo">Formación y títulos</h3>
-        @if (perfil().formacion.length > 0) {
-          <ul class="mi-perfil__lista" appTutorialTarget="perfil-formacion">
-            @for (estudio of perfil().formacion; track estudio.id) {
-              <li class="mi-perfil__item">
-                <span class="mi-perfil__item-nombre">{{ estudio.tipo }}</span>
-                @if (estudio.institucion) {
-                  <span class="mi-perfil__item-detalle">{{ estudio.institucion }}</span>
-                }
-                <app-status-seal [variant]="estudio.sello" [label]="estudio.estado" />
-                <span class="mi-perfil__item-nota">
-                  Nº <span class="mi-perfil__cifra">{{ estudio.numero }}</span>
-                  @if (estudio.desde) {
-                    · {{ estudio.desde | date: 'MMM y' }}
-                  }
-                  @if (estudio.hasta) {
-                    · {{ estudio.vencida ? 'venció' : 'vence' }}
-                    {{ estudio.hasta | date: 'MMM y' }}
-                  }
-                </span>
-                <!-- Sólo mientras sigue PENDIENTE: una vez verificado o
-                     rechazado es un hecho de la autoridad, no algo que el
-                     titular deshaga. -->
-                @if (estudio.sello === 'in-review') {
-                  <button
-                    app-button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    [attr.data-testid]="'formacion-retirar-' + estudio.id"
-                    (clicked)="retirarCredencial(estudio)"
-                  >
-                    Retirar
-                  </button>
-                }
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="mi-perfil__nota">
-            Todavía no hay títulos cargados. Son los que habilitan a ejercer, así que sin ninguno
-            verificado el perfil queda pendiente.
-          </p>
-        }
+             Las clases son propias (`trayecto__*`) y no `mi-perfil__*` a
+             propósito: ese prefijo vive en `ficha-de-perfil.css`, que esta
+             ficha **comparte literalmente con la del paciente** —el cliente
+             pidió que las dos se vean igual—, así que retocarlo acá le
+             cambiaría el dibujo a una pantalla que nadie tocó. -->
+
+        <section class="trayecto trayecto--curso">
+          <h3 class="trayecto__titulo">Actividad actual</h3>
+          @if (perfil().actividadActual.length > 0) {
+            <ol class="trayecto__linea">
+              @for (afiliacion of perfil().actividadActual; track afiliacion.id) {
+                <li class="trayecto__nodo">
+                  <span class="trayecto__marca" aria-hidden="true"></span>
+                  <div class="trayecto__cuerpo">
+                    <div class="trayecto__encabezado">
+                      <span class="trayecto__nombre">{{ afiliacion.organizacion }}</span>
+                      @if (afiliacion.cargo) {
+                        <span class="trayecto__cargo">{{ afiliacion.cargo }}</span>
+                      }
+                      <app-badge variant="success" value="En curso" />
+                    </div>
+                    <p class="trayecto__fechas">Desde {{ afiliacion.desde | date: 'MMM y' }}</p>
+                  </div>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="mi-perfil__nota">
+              No hay actividad actual registrada. Es dónde ejercés hoy: el hospital o centro donde
+              atendés en este momento.
+            </p>
+          }
+        </section>
+
+        <section class="trayecto trayecto--pasado">
+          <h3 class="trayecto__titulo">Experiencia histórica</h3>
+          @if (perfil().experienciaHistorica.length > 0) {
+            <ol class="trayecto__linea">
+              @for (afiliacion of perfil().experienciaHistorica; track afiliacion.id) {
+                <li class="trayecto__nodo">
+                  <span class="trayecto__marca" aria-hidden="true"></span>
+                  <div class="trayecto__cuerpo">
+                    <div class="trayecto__encabezado">
+                      <span class="trayecto__nombre">{{ afiliacion.organizacion }}</span>
+                      @if (afiliacion.cargo) {
+                        <span class="trayecto__cargo">{{ afiliacion.cargo }}</span>
+                      }
+                    </div>
+                    <p class="trayecto__fechas">
+                      {{ afiliacion.desde | date: 'MMM y' }} —
+                      {{ afiliacion.hasta | date: 'MMM y' }}
+                    </p>
+                  </div>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="mi-perfil__nota">
+              No hay experiencia histórica registrada. Son los hospitales o centros donde ejerciste
+              antes de la actividad actual.
+            </p>
+          }
+        </section>
+
+        <section class="trayecto trayecto--formacion">
+          <h3 class="trayecto__titulo">Formación y títulos</h3>
+          @if (perfil().formacion.length > 0) {
+            <ol class="trayecto__linea" appTutorialTarget="perfil-formacion">
+              @for (estudio of perfil().formacion; track estudio.id) {
+                <!-- El nodo toma el color del sello: el trámite pendiente no se
+                     lee igual que el verificado, y el vencido tampoco. -->
+                <li class="trayecto__nodo trayecto__nodo--{{ estudio.sello }}">
+                  <span class="trayecto__marca" aria-hidden="true"></span>
+                  <div class="trayecto__cuerpo">
+                    <div class="trayecto__encabezado">
+                      <span class="trayecto__nombre">{{ estudio.tipo }}</span>
+                      @if (estudio.institucion) {
+                        <span class="trayecto__cargo">{{ estudio.institucion }}</span>
+                      }
+                      <app-status-seal [variant]="estudio.sello" [label]="estudio.estado" />
+                    </div>
+                    <p class="trayecto__fechas">
+                      Nº <span class="mi-perfil__cifra">{{ estudio.numero }}</span>
+                      @if (estudio.desde) {
+                        · {{ estudio.desde | date: 'MMM y' }}
+                      }
+                      @if (estudio.hasta) {
+                        · {{ estudio.vencida ? 'venció' : 'vence' }}
+                        {{ estudio.hasta | date: 'MMM y' }}
+                      }
+                    </p>
+                    <!-- Sólo mientras sigue PENDIENTE: una vez verificado o
+                         rechazado es un hecho de la autoridad, no algo que el
+                         titular deshaga. -->
+                    @if (estudio.sello === 'in-review') {
+                      <p class="trayecto__acciones">
+                        <button
+                          app-button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          [attr.data-testid]="'formacion-retirar-' + estudio.id"
+                          (clicked)="retirarCredencial(estudio)"
+                        >
+                          Retirar
+                        </button>
+                      </p>
+                    }
+                  </div>
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="mi-perfil__nota">
+              Todavía no hay títulos cargados. Son los que habilitan a ejercer, así que sin ninguno
+              verificado el perfil queda pendiente.
+            </p>
+          }
+        </section>
 
         <!-- El formulario de alta de trayectoria, el mismo de siempre: no se
              duplica ni se reescribe, se sigue embebiendo en modo «timeline». -->
         <section class="mi-perfil__seccion">
           <app-work-history
-                layout="timeline"
-                secciones="historial"
-                (added)="trayectoriaCambio.emit()"
-              />
+            layout="timeline"
+            secciones="historial"
+            (added)="trayectoriaCambio.emit()"
+          />
         </section>
       </app-tab>
 

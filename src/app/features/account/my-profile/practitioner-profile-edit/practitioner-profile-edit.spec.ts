@@ -288,10 +288,9 @@ describe('PractitionerProfileEdit', () => {
 
       const pedidos = http.match('/profiles/practitioners/per-1/specialties');
       expect(pedidos).toHaveLength(2);
-      expect(pedidos.map((r) => (r.request.body as { specialtyConceptId: string }).specialtyConceptId)).toEqual([
-        'esp-cardio',
-        'esp-pediatria',
-      ]);
+      expect(
+        pedidos.map((r) => (r.request.body as { specialtyConceptId: string }).specialtyConceptId),
+      ).toEqual(['esp-cardio', 'esp-pediatria']);
       for (const pedido of pedidos) pedido.flush({ id: 'sp-x' });
 
       http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
@@ -488,7 +487,9 @@ describe('PractitionerProfileEdit', () => {
 
     interno<() => void>('agregarMatricula')();
     http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'file-9' });
-    http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations').flush({ id: 'ja-1' });
+    http
+      .expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations')
+      .flush({ id: 'ja-1' });
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
 
     expect(señal<readonly File[]>('archivoDeMatricula')()).toEqual([]);
@@ -510,7 +511,9 @@ describe('PractitionerProfileEdit', () => {
 
     // Ni una petición al almacén de archivos.
     expect(http.match('/common/files/upload')).toHaveLength(0);
-    http.expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations').flush({ id: 'ja-1' });
+    http
+      .expectOne('/profiles/practitioners/per-1/jurisdiction-authorizations')
+      .flush({ id: 'ja-1' });
     http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
   });
 
@@ -555,16 +558,15 @@ describe('PractitionerProfileEdit', () => {
       .expectOne((r) => r.url.endsWith('/common/files/upload'))
       .flush({ message: 'nope' }, { status: 500, statusText: 'Server Error' });
 
-    expect(
-      http.match('/profiles/practitioners/per-1/jurisdiction-authorizations'),
-    ).toHaveLength(0);
+    expect(http.match('/profiles/practitioners/per-1/jurisdiction-authorizations')).toHaveLength(0);
     expect(interno<() => boolean>('guardandoMatricula')()).toBe(false);
   });
 
   it('la matrícula ofrece tres autoridades, con el colegio del título', () => {
     montarYCargar({ professionalTitle: 'Odontólogo / Odontóloga' });
 
-    const opciones = interno<() => readonly { value: string; label: string }[]>('opcionesAutoridad')();
+    const opciones =
+      interno<() => readonly { value: string; label: string }[]>('opcionesAutoridad')();
     expect(opciones.map((o) => o.label)).toEqual([
       'Ministerio de Salud',
       'SEDES (Gobernación)',
@@ -606,7 +608,11 @@ describe('PractitionerProfileEdit', () => {
     ]);
     // Sin etiqueta del concepto, el nombre sale del catálogo de especialidades.
     expect(interno<() => readonly object[]>('filasEspecialidades')()).toEqual([
-      expect.objectContaining({ especialidad: 'Cardiología', rol: 'Principal', estado: 'Verificada' }),
+      expect.objectContaining({
+        especialidad: 'Cardiología',
+        rol: 'Principal',
+        estado: 'Verificada',
+      }),
     ]);
     expect(interno<() => readonly object[]>('filasMatriculas')()).toEqual([
       expect.objectContaining({ numero: 'MP-1', autoridad: 'Ministerio de Salud y Deportes' }),
@@ -814,7 +820,9 @@ describe('PractitionerProfileEdit', () => {
     montarYCargar();
     señal<string>('nuevoTipoCredencial').set('cred-titulo');
     señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
-    señal<string>('nuevaInstitucionCredencial').set('UMSA');
+    // La institución sale del catálogo desde el 13/09/2026: lo que viaja sigue
+    // siendo el nombre, así que el cuerpo del POST no cambia de forma.
+    señal<string>('institucionElegida').set('Universidad Mayor de San Andrés');
 
     interno<() => void>('agregarCredencial')();
 
@@ -823,7 +831,7 @@ describe('PractitionerProfileEdit', () => {
     expect(req.request.body).toEqual({
       credentialTypeConceptId: 'cred-titulo',
       number: 'Médico cirujano',
-      issuingInstitutionText: 'UMSA',
+      issuingInstitutionText: 'Universidad Mayor de San Andrés',
     });
     req.flush({ id: 'cred-1' });
 
@@ -889,5 +897,272 @@ describe('PractitionerProfileEdit', () => {
 
     expect(http.match('/profiles/practitioners/me/credentials')).toHaveLength(0);
     expect(interno<() => boolean>('guardandoCredencial')()).toBe(false);
+  });
+
+  /* ======================================================================
+      Institución como lista, y las acciones de las tres tablas
+      (propietario, 13/09/2026)
+     ====================================================================== */
+
+  describe('la institución sale de un catálogo, no del teclado', () => {
+    it('lo elegido del catálogo viaja como el nombre de la institución', () => {
+      montarYCargar();
+      señal<string>('nuevoTipoCredencial').set('cred-titulo');
+      señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+      señal<string>('institucionElegida').set('Universidad Mayor de San Simón');
+
+      interno<() => void>('agregarCredencial')();
+
+      const req = http.expectOne('/profiles/practitioners/me/credentials');
+      // El valor de la opción ES el nombre: el contrato sigue recibiendo
+      // `issuingInstitutionText`, no un id que el backend no sabría resolver.
+      expect(req.request.body.issuingInstitutionText).toBe('Universidad Mayor de San Simón');
+      req.flush({ id: 'cred-1' });
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    });
+
+    it('«otra» abre el campo a mano y manda lo escrito', () => {
+      // Sin esta salida, una lista de universidades bolivianas le impide cargar
+      // el título a cualquiera que se formó en el exterior.
+      montarYCargar();
+      señal<string>('nuevoTipoCredencial').set('cred-titulo');
+      señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+      expect(interno<() => boolean>('institucionFueraDeCatalogo')()).toBe(false);
+      señal<string>('institucionElegida').set('__otra__');
+      expect(interno<() => boolean>('institucionFueraDeCatalogo')()).toBe(true);
+
+      señal<string>('institucionEscrita').set('  Universidad de La Habana  ');
+      interno<() => void>('agregarCredencial')();
+
+      const req = http.expectOne('/profiles/practitioners/me/credentials');
+      expect(req.request.body.issuingInstitutionText).toBe('Universidad de La Habana');
+      req.flush({ id: 'cred-1' });
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    });
+
+    it('sin elegir institución no viaja el campo', () => {
+      montarYCargar();
+      señal<string>('nuevoTipoCredencial').set('cred-titulo');
+      señal<string>('nuevoNumeroCredencial').set('Médico cirujano');
+
+      interno<() => void>('agregarCredencial')();
+
+      const req = http.expectOne('/profiles/practitioners/me/credentials');
+      expect('issuingInstitutionText' in req.request.body).toBe(false);
+      req.flush({ id: 'cred-1' });
+      http.expectOne('/profiles/practitioners/me/summary').flush(PERFIL_BASE);
+    });
+  });
+
+  describe('las acciones de las tablas', () => {
+    /** Un perfil con una fila de cada cosa, para que las tablas tengan qué mostrar. */
+    const PERFIL_CON_FILAS = {
+      credentials: [
+        {
+          id: 'cred-9',
+          credentialTypeConceptId: 'cred-titulo',
+          number: 'TIT-1',
+          issuingInstitutionText: 'Universidad Mayor de San Andrés',
+          issueDate: '2016-03-01T12:00:00.000Z',
+          stateConceptId: 'st-pending',
+          fileId: 'file-diploma',
+        },
+        {
+          // Verificado: ni se corrige ni se retira, y la tabla no ofrece el botón.
+          id: 'cred-10',
+          credentialTypeConceptId: 'cred-titulo',
+          number: 'TIT-2',
+          stateConceptId: 'st-ok',
+          verifiedAt: '2020-01-01T00:00:00.000Z',
+        },
+      ],
+      specialties: [
+        {
+          id: 'spec-9',
+          specialtyConceptId: 'esp-cardio',
+          isPrimary: true,
+          boardCertified: false,
+          verificationStatusConceptId: 'st-pending',
+          verified: false,
+        },
+      ],
+      licenses: [
+        {
+          id: 'lic-9',
+          jurisdictionConceptId: 'jur-bo',
+          licenseNumber: 'MP-123',
+          regulatoryAuthority: 'SEDES Santa Cruz',
+          stateConceptId: 'st-ok',
+          fileId: 'file-carnet',
+        },
+      ],
+    };
+
+    /** Responde que sí al diálogo de confirmación, sin montar el `<dialog>`. */
+    function confirmarSiempre(): void {
+      const dialogos = interno<{ confirm: () => Promise<boolean> }>('dialogs');
+      dialogos.confirm = () => Promise.resolve(true);
+    }
+
+    it('la fila pendiente se puede corregir y retirar; la verificada no', () => {
+      montarYCargar(PERFIL_CON_FILAS);
+
+      const filas =
+        interno<() => readonly { id: string; pendiente: boolean }[]>('filasFormacion')();
+      expect(filas.find((f) => f.id === 'cred-9')?.pendiente).toBe(true);
+      // Un título ya verificado es un hecho de quien lo comprobó: el servidor
+      // responde 422 y la tabla no ofrece el botón.
+      expect(filas.find((f) => f.id === 'cred-10')?.pendiente).toBe(false);
+    });
+
+    it('retirar un título confirma primero y después hace el DELETE', async () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      confirmarSiempre();
+
+      const fila = interno<() => readonly { id: string }[]>('filasFormacion')().find(
+        (f) => f.id === 'cred-9',
+      );
+      interno<(f: unknown) => void>('retirarFormacion')(fila);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const req = http.expectOne('/profiles/practitioners/me/credentials/cred-9');
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+      http
+        .expectOne('/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+    });
+
+    it('retirar una especialidad y una matrícula pega en su propia ruta', async () => {
+      montarYCargar(PERFIL_CON_FILAS);
+      confirmarSiempre();
+
+      const especialidad = interno<() => readonly { id: string }[]>('filasEspecialidades')()[0];
+      interno<(f: unknown) => void>('retirarEspecialidad')(especialidad);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const reqEspecialidad = http.expectOne('/profiles/practitioners/me/specialties/spec-9');
+      expect(reqEspecialidad.request.method).toBe('DELETE');
+      reqEspecialidad.flush(null);
+      http
+        .expectOne('/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+
+      const matricula = interno<() => readonly { id: string }[]>('filasMatriculas')()[0];
+      interno<(f: unknown) => void>('retirarMatricula')(matricula);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      const reqMatricula = http.expectOne(
+        '/profiles/practitioners/me/jurisdiction-authorizations/lic-9',
+      );
+      expect(reqMatricula.request.method).toBe('DELETE');
+      reqMatricula.flush(null);
+      http
+        .expectOne('/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+    });
+
+    it('editar un título siembra el diálogo con lo que hay y manda un PATCH', () => {
+      montarYCargar(PERFIL_CON_FILAS);
+
+      const fila = interno<() => readonly { id: string }[]>('filasFormacion')().find(
+        (f) => f.id === 'cred-9',
+      );
+      interno<(f: unknown) => void>('editarFormacion')(fila);
+
+      // Los valores salen del perfil CRUDO: la fila de la tabla lleva las
+      // etiquetas ya resueltas, y devolverlas mandaría texto donde el servidor
+      // espera un uuid de concepto.
+      expect(señal<string>('edicionTipo')()).toBe('cred-titulo');
+      expect(señal<string>('edicionNumero')()).toBe('TIT-1');
+      // La institución estaba en el catálogo, así que se siembra el desplegable
+      // y no el campo a mano.
+      expect(señal<string>('edicionInstitucionElegida')()).toBe('Universidad Mayor de San Andrés');
+      expect(interno<() => boolean>('edicionInstitucionFueraDeCatalogo')()).toBe(false);
+
+      señal<string>('edicionNumero').set('TIT-1-CORREGIDO');
+      interno<() => void>('guardarEdicion')();
+
+      const req = http.expectOne('/profiles/practitioners/me/credentials/cred-9');
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({
+        credentialTypeConceptId: 'cred-titulo',
+        number: 'TIT-1-CORREGIDO',
+        issuingInstitutionText: 'Universidad Mayor de San Andrés',
+        issueDate: '2016-03-01',
+      });
+      req.flush(null);
+      expect(señal<unknown>('edicion')()).toBeNull();
+      http
+        .expectOne('/profiles/practitioners/me/summary')
+        .flush({ ...PERFIL_BASE, ...PERFIL_CON_FILAS });
+    });
+
+    it('una institución vieja escrita a mano abre el campo a mano, no se pisa', () => {
+      // Mismo criterio que el título profesional: un dato cargado antes de la
+      // lista no se corrige solo al abrir la pantalla.
+      montarYCargar({
+        ...PERFIL_CON_FILAS,
+        credentials: [
+          { ...PERFIL_CON_FILAS.credentials[0], issuingInstitutionText: 'UMSA' },
+          PERFIL_CON_FILAS.credentials[1],
+        ],
+      });
+
+      const fila = interno<() => readonly { id: string }[]>('filasFormacion')().find(
+        (f) => f.id === 'cred-9',
+      );
+      interno<(f: unknown) => void>('editarFormacion')(fila);
+
+      expect(señal<string>('edicionInstitucionElegida')()).toBe('__otra__');
+      expect(señal<string>('edicionInstitucionEscrita')()).toBe('UMSA');
+    });
+
+    it('descargar el diploma pide el CONTENIDO del archivo, no una URL firmada', () => {
+      montarYCargar(PERFIL_CON_FILAS);
+
+      const fila = interno<() => readonly { id: string }[]>('filasFormacion')().find(
+        (f) => f.id === 'cred-9',
+      );
+      interno<(f: unknown) => void>('descargarDiploma')(fila);
+
+      // Por `/content` y no por `/download-url`: la CSP del servidor deja
+      // `connect-src` en `'self'` y la URL firmada apunta a `file://local/<sha>`,
+      // que el navegador no abre — el mismo defecto que ya tenía la foto de perfil.
+      const req = http.expectOne('/common/files/file-diploma/content');
+      expect(req.request.method).toBe('GET');
+      expect(interno<() => string | null>('descargando')()).toBe('cred-9');
+      req.flush(new Blob(['%PDF'], { type: 'application/pdf' }));
+    });
+
+    it('la matrícula baja su propio respaldo', () => {
+      montarYCargar(PERFIL_CON_FILAS);
+
+      const fila = interno<() => readonly { id: string }[]>('filasMatriculas')()[0];
+      interno<(f: unknown) => void>('descargarCarnet')(fila);
+
+      http.expectOne('/common/files/file-carnet/content').flush(new Blob(['%PDF']));
+    });
+
+    it('si la descarga falla, lo dice y el botón deja de estar cargando', () => {
+      montarYCargar(PERFIL_CON_FILAS);
+
+      const fila = interno<() => readonly { id: string }[]>('filasFormacion')().find(
+        (f) => f.id === 'cred-9',
+      );
+      interno<(f: unknown) => void>('descargarDiploma')(fila);
+
+      http
+        .expectOne('/common/files/file-diploma/content')
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      // Sin esto, un fallo dejaba el botón girando para siempre y bloqueaba las
+      // descargas de las otras filas, que comparten la señal.
+      expect(interno<() => string | null>('descargando')()).toBeNull();
+    });
   });
 });

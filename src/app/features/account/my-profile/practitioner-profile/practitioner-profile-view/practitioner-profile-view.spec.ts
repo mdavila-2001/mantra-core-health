@@ -762,6 +762,52 @@ describe('PractitionerProfileView', () => {
       expect(texto.match(/Matrícula LIC-3/g) ?? []).toHaveLength(1);
     });
 
+    /* ---- la trayectoria como nodos (propietario, 13/09/2026) ------------- */
+
+    it('la trayectoria propia son nodos, no las tarjetas de la ficha del paciente', () => {
+      // «Prefiero que se vea como nodos, en lugar de estos cards horribles».
+      // Las tres fases eran tres listas de `mi-perfil__item`, que es CSS
+      // compartido con la ficha del paciente: por eso el dibujo nuevo estrena
+      // clases propias en vez de retocar aquéllas.
+      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+      seleccionarPestana(host, 'Trayectoria');
+
+      const fases = Array.from(host.querySelectorAll('.trayecto')).map((s) =>
+        s.querySelector('.trayecto__titulo')?.textContent?.trim(),
+      );
+      expect(fases).toEqual(['Actividad actual', 'Experiencia histórica', 'Formación y títulos']);
+
+      // Un nodo por hito, cada uno con su marca.
+      const enCurso = host.querySelector('.trayecto--curso');
+      expect(enCurso?.querySelectorAll('.trayecto__nodo')).toHaveLength(
+        PERFIL.actividadActual.length,
+      );
+      expect(enCurso?.querySelectorAll('.trayecto__marca')).toHaveLength(
+        PERFIL.actividadActual.length,
+      );
+      expect(enCurso?.textContent).toContain('Sede Central Sopocachi');
+    });
+
+    it('el nodo de un título toma el color de su sello', () => {
+      // El anillo y el sello hablan del MISMO trámite: si el anillo fuera
+      // siempre del color de la fase, un título rechazado se vería igual que
+      // uno verificado hasta leer la etiqueta.
+      const host = montar(
+        {
+          ...PERFIL,
+          datosPersonales: DATOS,
+          formacion: [
+            { ...PERFIL.formacion[0], id: 'cr-9', sello: 'rejected', estado: 'Rechazado' },
+          ],
+        },
+        true,
+      );
+      seleccionarPestana(host, 'Trayectoria');
+
+      const nodo = host.querySelector('.trayecto--formacion .trayecto__nodo');
+      expect(nodo?.classList.contains('trayecto__nodo--rejected')).toBe(true);
+    });
+
     it('quien visita conserva su ficha de siempre, con sus sub-pestañas', () => {
       // La Guía de profesionales no cambió: este rediseño es el de la ficha
       // PROPIA. Sin `datosPersonales` no hay bloque de filiación, así que las

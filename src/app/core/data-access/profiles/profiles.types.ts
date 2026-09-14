@@ -186,6 +186,18 @@ export interface PractitionerCredential {
   readonly verifiedAt?: Date;
   /** Contra qué se comprobó. Ausente antes de verificar. */
   readonly verificationSourceUri?: string;
+  /**
+   * El diploma adjuntado al cargar el título, para poder descargarlo.
+   *
+   * El alta lo acepta desde siempre (`NewOwnCredential.fileId`) pero la
+   * **lectura** no lo devolvía: el archivo entraba y no había forma de volver
+   * a verlo, ni siquiera para quien lo subió. Lo pidió el propietario el
+   * 13/09/2026 («descargar elementos»).
+   *
+   * Hoy lo sirve el simulador de la rama `mockup`; el `PractitionerCredentialDto`
+   * de la API todavía no lo declara. Ver `docs/progress/BLOCKERS.md`.
+   */
+  readonly fileId?: string;
 }
 
 /**
@@ -214,6 +226,54 @@ export interface PractitionerLicense {
   readonly stateConceptId: string;
   readonly validFrom?: Date;
   readonly validTo?: Date;
+  /**
+   * El carnet del colegio adjuntado al cargarla. Mismo hueco y misma fecha que
+   * {@link PractitionerCredential.fileId}: el alta lo acepta, la lectura
+   * todavía no lo devuelve fuera del simulador.
+   */
+  readonly fileId?: string;
+}
+
+/* ---- Corregir lo ya cargado ------------------------------------------------
+   Los tres `PATCH` que la tabla de «Configurar tu perfil» necesita para que
+   «Editar» no sea borrar y volver a cargar.
+
+   **Ninguno existe todavía en la API.** Están escritos con la forma REST que le
+   corresponde a cada recurso —y el simulador de la rama `mockup` los atiende—
+   para que el día que el backend los publique no haya que rehacer la pantalla:
+   lo que cambia es quién responde, no qué se pide. Ver
+   `docs/progress/BLOCKERS.md`.
+
+   Los tres son PARCIALES: lo que no viaja no se toca. Un `undefined` no borra
+   —`stripUndefined` lo quita del cuerpo—, así que corregir el número de un
+   título no puede llevarse por delante su fecha de emisión. */
+
+/** Lo corregible de un título propio (`PATCH …/me/credentials/:id`). */
+export interface OwnCredentialChanges {
+  readonly credentialTypeConceptId?: string;
+  readonly number?: string;
+  readonly issuingInstitutionText?: string;
+  /** ISO `YYYY-MM-DD`, mismo criterio que en el alta. */
+  readonly issueDate?: string;
+  readonly fileId?: string;
+}
+
+/** Lo corregible de una especialidad propia (`PATCH …/me/specialties/:id`). */
+export interface OwnSpecialtyChanges {
+  readonly specialtyConceptId?: string;
+  readonly boardCertified?: boolean;
+}
+
+/**
+ * Lo corregible de una matrícula propia
+ * (`PATCH …/me/jurisdiction-authorizations/:id`).
+ */
+export interface OwnLicenseChanges {
+  readonly licenseNumber?: string;
+  readonly regulatoryAuthority?: string;
+  /** ISO `YYYY-MM-DD`. */
+  readonly validFrom?: string;
+  readonly fileId?: string;
 }
 
 /**

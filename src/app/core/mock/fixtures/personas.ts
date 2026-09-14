@@ -526,6 +526,9 @@ export function credencialesDe(p: ProfesionalSimulado) {
       stateConceptId: ESTADO['ST-VERIFIED']!,
       verifiedAt: iso(-200),
       verificationSourceUri: 'https://sedes.gob.bo/verificacion',
+      // El diploma escaneado. Lo registra `files.handlers.ts` con este mismo
+      // id: sin un archivo detrás, «Descargar» sería un botón que falla.
+      fileId: uuid(`file-diploma-${p.id}`),
     },
     ...(p.especialidades.length === 0
       ? []
@@ -561,6 +564,8 @@ export function licenciasDe(p: ProfesionalSimulado) {
       regulatoryAuthority: 'Ministerio de Salud y Deportes',
       stateConceptId: ESTADO['ST-ACTIVE']!,
       validFrom: isoDia(-365 * 10),
+      /** El carnet del colegio. Mismo criterio que el diploma de arriba. */
+      fileId: uuid(`file-matricula-${p.id}`),
     },
   ];
 }

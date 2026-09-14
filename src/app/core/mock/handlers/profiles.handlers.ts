@@ -58,6 +58,8 @@ interface CredencialAgregada {
   readonly issuingInstitutionText?: string;
   readonly issueDate?: string;
   readonly stateConceptId: string;
+  /** El diploma, para que la tabla pueda ofrecerlo. */
+  readonly fileId?: string;
 }
 
 interface MatriculaAgregada {
@@ -68,6 +70,8 @@ interface MatriculaAgregada {
   readonly regulatoryAuthority?: string;
   readonly stateConceptId: string;
   readonly validFrom?: string;
+  /** El carnet del colegio. Mismo criterio que el diploma del título. */
+  readonly fileId?: string;
 }
 
 /**
@@ -89,6 +93,56 @@ const especialidadesAgregadas = new Coleccion<EspecialidadAgregada>([], 'mock.pe
 const credencialesAgregadas = new Coleccion<CredencialAgregada>([], 'mock.perfil-medico.credenciales');
 const matriculasAgregadas = new Coleccion<MatriculaAgregada>([], 'mock.perfil-medico.matriculas');
 
+/* ---- corregir y retirar lo ya cargado -------------------------------------
+   Las acciones de las tres tablas de «Configurar tu perfil» (propietario,
+   13/09/2026). Dos tablas laterales y no un campo en cada colección, por la
+   misma razón que `principalElegida`: la mitad de las filas que se ven salen de
+   los fixtures, que son de sólo lectura. Acá se guarda **lo que la persona
+   hizo**, y el perfil lo aplica al armar la respuesta — así una fila sembrada y
+   una agregada se editan y se retiran igual.
+
+   Los ids son uuid y no se repiten entre títulos, especialidades y matrículas,
+   así que una sola tabla de cada cosa alcanza para las tres. */
+
+/** Los ids que dejaron de verse. */
+const retiradasDelPerfil = new Coleccion<{ readonly id: string }>([], 'mock.perfil-medico.retiradas');
+
+/** Un parche sobre una fila: lo que la persona corrigió, encima de lo que había. */
+interface CorreccionDePerfil {
+  readonly id: string;
+  readonly cambios: Record<string, unknown>;
+}
+
+const correccionesDelPerfil = new Coleccion<CorreccionDePerfil>([], 'mock.perfil-medico.correcciones');
+
+/**
+ * Lo que se ve de una colección del perfil: sin lo retirado y con lo corregido
+ * encima. Los parches se acumulan al guardarlos, así que corregir dos veces el
+ * mismo título no pierde la primera corrección.
+ */
+function visiblesDelPerfil<T extends { readonly id: string }>(filas: readonly T[]): T[] {
+  return filas
+    .filter((fila) => !retiradasDelPerfil.has(fila.id))
+    .map((fila) => {
+      const parche = correccionesDelPerfil.get(fila.id);
+      return parche === undefined ? fila : ({ ...fila, ...parche.cambios } as T);
+    });
+}
+
+/** Anota un parche sobre una fila, acumulándolo con lo que ya se le había hecho. */
+function corregirDelPerfil(id: string, cambios: Record<string, unknown>): void {
+  const anterior = correccionesDelPerfil.get(id);
+  correccionesDelPerfil.agregar({ id, cambios: { ...anterior?.cambios, ...cambios } });
+}
+
+/**
+ * Si una fila del perfil propio existe hoy: la sembrada y la agregada valen, la
+ * retirada ya no. Es lo que distingue un `404` de un cambio aplicado.
+ */
+function existeEnElPerfil(filas: readonly { readonly id: string }[], id: string): boolean {
+  return !retiradasDelPerfil.has(id) && filas.some((fila) => fila.id === id);
+}
+
 /** La fila tal como la devuelve el perfil: sin el dueño, que es de la maqueta. */
 function sinDueno<T extends { readonly profileId: string }>(fila: T): Omit<T, 'profileId'> {
   const { profileId: _dueno, ...resto } = fila;
@@ -109,6 +163,23 @@ function conElegidaAlFrente<T extends { readonly id: string; readonly isPrimary?
   const elegida = principalElegida.get(profileId);
   if (elegida === undefined) return [...especialidades];
   return especialidades.map((e) => ({ ...e, isPrimary: e.id === elegida.specialtyId }));
+}
+
+/* Lo sembrado más lo agregado, sin filtrar: la base sobre la que
+   `visiblesDelPerfil` aplica retiros y correcciones. Tres funciones y no tres
+   expresiones repetidas, porque las usan la lectura del perfil y las rutas que
+   escriben, y separarse sería servir una lista y escribir sobre otra. */
+
+function especialidadesPropiasDe(p: ProfesionalSimulado) {
+  return [...especialidadesDe(p), ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno)];
+}
+
+function credencialesPropiasDe(p: ProfesionalSimulado) {
+  return [...credencialesDe(p), ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno)];
+}
+
+function matriculasPropiasDe(p: ProfesionalSimulado) {
+  return [...licenciasDe(p), ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno)];
 }
 
 function profesionalDeSesion(request: MockRequest): ProfesionalSimulado | undefined {
@@ -238,18 +309,9 @@ export function perfilProfesionalDe(p: ProfesionalSimulado) {
     practiceStatusConceptId: ESTADO['ST-ACTIVE']!,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
-    specialties: conElegidaAlFrente(p.id, [
-      ...especialidadesDe(p),
-      ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno),
-    ]),
-    credentials: [
-      ...credencialesDe(p),
-      ...credencialesAgregadas.filtrar((c) => c.profileId === p.id).map(sinDueno),
-    ],
-    licenses: [
-      ...licenciasDe(p),
-      ...matriculasAgregadas.filtrar((m) => m.profileId === p.id).map(sinDueno),
-    ],
+    specialties: conElegidaAlFrente(p.id, visiblesDelPerfil(especialidadesPropiasDe(p))),
+    credentials: visiblesDelPerfil(credencialesPropiasDe(p)),
+    licenses: visiblesDelPerfil(matriculasPropiasDe(p)),
     languages: idiomasDe(p),
     affiliations: afiliaciones.filtrar((a) => a.practitionerProfileId === p.id),
     activity: { encounters: 312, medicationRequests: 208, clinicalNotes: 275, documents: 41 },
@@ -594,7 +656,7 @@ export function registrarPerfiles(router: MockRouter): void {
   router.post('/profiles/practitioners/me/credentials', (request) => {
     const p = profesionalDeSesion(request);
     if (p === undefined) return notFound();
-    const datos = cuerpo<{ credentialTypeConceptId: string; number: string; issuingInstitutionText?: string; issueDate?: string }>(request);
+    const datos = cuerpo<{ credentialTypeConceptId: string; number: string; issuingInstitutionText?: string; issueDate?: string; fileId?: string }>(request);
     const nueva = credencialesAgregadas.agregar({
       id: nuevoId('cred'),
       profileId: p.id,
@@ -602,12 +664,84 @@ export function registrarPerfiles(router: MockRouter): void {
       number: datos.number ?? '',
       ...(datos.issuingInstitutionText === undefined ? {} : { issuingInstitutionText: datos.issuingInstitutionText }),
       ...(datos.issueDate === undefined ? {} : { issueDate: datos.issueDate }),
+      // El diploma se devuelve en la lectura: sin esto, el título recién
+      // cargado se quedaba sin nada que descargar aunque se hubiera adjuntado.
+      ...(datos.fileId === undefined ? {} : { fileId: datos.fileId }),
       stateConceptId: ESTADO['ST-PENDING']!,
     });
     return { status: 201, body: { id: nueva.id } };
   });
-  router.delete('/profiles/practitioners/me/credentials/:id', ({ params }) => {
-    credencialesAgregadas.borrar(params['id']!);
+  /* ---- corregir y retirar lo cargado (propietario, 13/09/2026) ------------
+     De las seis rutas de acá abajo, **sólo el `DELETE` del título existe en la
+     API**. Las otras las sirve este simulador con la forma REST que le toca a
+     cada recurso, para que publicarlas del lado del servidor no obligue a tocar
+     la pantalla. El detalle de lo que falta está en
+     `docs/pendientes-backend-perfil-profesional.md`.
+
+     Todas responden `404` a la fila que no existe o no es propia —el mismo par
+     indistinguible que usa el resto del módulo— y `204` cuando aplicaron. */
+
+  router.patch('/profiles/practitioners/me/credentials/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(credencialesPropiasDe(p), id)) return notFound();
+    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    return noContent();
+  });
+
+  router.delete('/profiles/practitioners/me/credentials/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(credencialesPropiasDe(p), id)) return notFound();
+    // Se borra la agregada y se anota el retiro: la sembrada no se puede borrar
+    // —el fixture es de sólo lectura— pero sí dejar de mostrarse.
+    credencialesAgregadas.borrar(id);
+    retiradasDelPerfil.agregar({ id });
+    return noContent();
+  });
+
+  router.patch('/profiles/practitioners/me/specialties/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
+    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    return noContent();
+  });
+
+  router.delete('/profiles/practitioners/me/specialties/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(especialidadesPropiasDe(p), id)) return notFound();
+    especialidadesAgregadas.borrar(id);
+    retiradasDelPerfil.agregar({ id });
+    // Si la que se va era la principal, la elección deja de tener sujeto: se
+    // borra para que el perfil no marque como principal una fila que ya no está.
+    if (principalElegida.get(p.id)?.specialtyId === id) {
+      principalElegida.borrar(p.id);
+    }
+    return noContent();
+  });
+
+  router.patch('/profiles/practitioners/me/jurisdiction-authorizations/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
+    corregirDelPerfil(id, cuerpo<Record<string, unknown>>(request));
+    return noContent();
+  });
+
+  router.delete('/profiles/practitioners/me/jurisdiction-authorizations/:id', (request) => {
+    const p = profesionalDeSesion(request);
+    if (p === undefined) return notFound();
+    const id = request.params['id']!;
+    if (!existeEnElPerfil(matriculasPropiasDe(p), id)) return notFound();
+    matriculasAgregadas.borrar(id);
+    retiradasDelPerfil.agregar({ id });
     return noContent();
   });
 
@@ -655,10 +789,7 @@ export function registrarPerfiles(router: MockRouter): void {
     if (p === undefined) return notFound();
     const specialtyId = request.params['id']!;
     // La ajena y la inexistente responden lo mismo, igual que el servidor.
-    const propias = conElegidaAlFrente(p.id, [
-      ...especialidadesDe(p),
-      ...especialidadesAgregadas.filtrar((e) => e.profileId === p.id).map(sinDueno),
-    ]);
+    const propias = conElegidaAlFrente(p.id, visiblesDelPerfil(especialidadesPropiasDe(p)));
     const especialidad = propias.find((e) => e.id === specialtyId);
     if (especialidad === undefined) return notFound();
     principalElegida.agregar({ id: p.id, specialtyId });
@@ -666,7 +797,7 @@ export function registrarPerfiles(router: MockRouter): void {
   });
 
   router.post('/profiles/practitioners/:id/jurisdiction-authorizations', (request) => {
-    const datos = cuerpo<{ licenseNumber: string; jurisdictionConceptId?: string; regulatoryAuthority?: string; validFrom?: string }>(request);
+    const datos = cuerpo<{ licenseNumber: string; jurisdictionConceptId?: string; regulatoryAuthority?: string; validFrom?: string; fileId?: string }>(request);
     const nueva = matriculasAgregadas.agregar({
       id: nuevoId('jur'),
       profileId: request.params['id']!,
@@ -675,6 +806,7 @@ export function registrarPerfiles(router: MockRouter): void {
       ...(datos.regulatoryAuthority === undefined ? {} : { regulatoryAuthority: datos.regulatoryAuthority }),
       stateConceptId: ESTADO['ST-PENDING']!,
       ...(datos.validFrom === undefined ? {} : { validFrom: datos.validFrom }),
+      ...(datos.fileId === undefined ? {} : { fileId: datos.fileId }),
     });
     return { status: 201, body: { id: nueva.id } };
   });

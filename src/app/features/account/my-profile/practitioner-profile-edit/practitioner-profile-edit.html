@@ -325,12 +325,38 @@
                   />
                 </app-form-field>
 
-                <app-form-field label="Institución (opcional)">
-                  <app-input
-                    [(value)]="nuevaInstitucionCredencial"
-                    placeholder="Universidad Mayor de San Andrés"
+                <!-- Lista cerrada y no texto libre (propietario, 13/09/2026):
+                     escrita a mano, la misma casa de estudios llegaba como
+                     «UMSA», «U.M.S.A.» y «Universidad Mayor de San Andres», y
+                     quien verifica el título tenía que reconciliarlas a ojo. -->
+                <app-form-field
+                  label="Institución (opcional)"
+                  hint="Las universidades del sistema boliviano y las privadas autorizadas."
+                >
+                  <app-select
+                    data-testid="credencial-institucion"
+                    [options]="opcionesInstitucion"
+                    [(value)]="institucionElegida"
+                    placeholder="Elegí dónde lo cursaste"
                   />
                 </app-form-field>
+
+                <!-- La salida para quien se formó afuera. Sin esto, una lista
+                     de universidades bolivianas le impide cargar su título a
+                     cualquiera que estudió en Cuba, Argentina o España — que es
+                     justo el caso que este campo abre. -->
+                @if (institucionFueraDeCatalogo()) {
+                  <app-form-field
+                    label="¿Cuál?"
+                    hint="El nombre completo de la institución, como figura en tu diploma."
+                  >
+                    <app-input
+                      data-testid="credencial-institucion-otra"
+                      [(value)]="institucionEscrita"
+                      placeholder="Universidad de La Habana"
+                    />
+                  </app-form-field>
+                }
 
                 <app-form-field label="Fecha de emisión (opcional)">
                   <app-date-picker
@@ -377,7 +403,8 @@
             <section class="edicion__seccion" data-testid="edicion-formacion-cargada">
               <h3 class="edicion__titulo">Tu trayectoria cargada</h3>
               <p class="edicion__nota">
-                Del título más reciente al más antiguo. Lo pendiente lo revisa el equipo que verifica.
+                Del título más reciente al más antiguo. Lo pendiente lo revisa el equipo que
+                verifica.
               </p>
               @if (filasFormacion().length === 0) {
                 <p class="edicion__vacio">Todavía no cargaste ningún título.</p>
@@ -386,7 +413,7 @@
                   class="edicion__tabla"
                   data-testid="tabla-formacion"
                   [state]="estadoFormacion()"
-                  [columns]="columnasFormacion"
+                  [columns]="columnasFormacion()"
                   [trackBy]="claveDeFila"
                   caption="Títulos y formación cargados, del más reciente al más antiguo"
                 />
@@ -563,7 +590,10 @@
                   label="Fecha de inscripción (opcional)"
                   hint="Cuándo te registraste, no cuándo vence."
                 >
-                  <app-date-picker [(value)]="nuevaFechaInscripcion" placeholder="Seleccionar fecha" />
+                  <app-date-picker
+                    [(value)]="nuevaFechaInscripcion"
+                    placeholder="Seleccionar fecha"
+                  />
                 </app-form-field>
 
                 <!-- El carnet del colegio. Desde el 13/09/2026 viaja como `fileId`,
@@ -603,7 +633,7 @@
                   class="edicion__tabla"
                   data-testid="tabla-matriculas"
                   [state]="estadoMatriculas()"
-                  [columns]="columnasMatriculas"
+                  [columns]="columnasMatriculas()"
                   [trackBy]="claveDeFila"
                   caption="Matrículas cargadas"
                 />
@@ -668,3 +698,250 @@
     {{ fila.rol }}
   }
 </ng-template>
+
+<!-- ─── Las acciones de cada fila ───────────────────────────────────────────
+     «En la tabla se pueda eliminar registros, editar registros o descargar
+     elementos, esto debe aparecer como botones de acciones» (propietario,
+     13/09/2026).
+
+     Los tres botones llevan texto y no sólo un ícono: son acciones de
+     consecuencia distinta —una abre, otra baja un archivo, otra borra— y tres
+     glifos seguidos obligan a adivinar cuál es cuál. «Retirar» va último y en
+     tono de peligro, que es el orden en el que se leen y el único que no se
+     quiere pulsar por error.
+
+     «Descargar» sólo aparece si hay archivo: un botón que falla siempre es
+     peor que ninguno. -->
+
+<ng-template #celdaAccionesFormacion let-fila>
+  <div class="edicion__acciones">
+    <!-- Editar y retirar, sólo mientras el trámite sigue abierto: un título ya
+         verificado es un hecho de quien lo comprobó, y corregirlo por detrás
+         invalidaría la comprobación. El servidor responde 422. -->
+    @if (fila.pendiente) {
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [attr.data-testid]="'formacion-editar-' + fila.id"
+        (clicked)="editarFormacion(fila)"
+      >
+        Editar
+      </button>
+    }
+    @if (fila.fileId) {
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [isLoading]="descargando() === fila.id"
+        [disabled]="descargando() !== null"
+        [attr.data-testid]="'formacion-descargar-' + fila.id"
+        (clicked)="descargarDiploma(fila)"
+      >
+        Descargar
+      </button>
+    }
+    @if (fila.pendiente) {
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [isLoading]="retirando() === fila.id"
+        [disabled]="retirando() !== null"
+        [attr.data-testid]="'formacion-retirar-' + fila.id"
+        (clicked)="retirarFormacion(fila)"
+      >
+        Retirar
+      </button>
+    }
+    <!-- Lo verificado no se edita ni se retira, y decirlo evita que se busque
+         el botón que falta como si fuera una falla de la pantalla. -->
+    @if (!fila.pendiente) {
+      <span class="edicion__acciones-nota">Verificado: ya no se corrige</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #celdaAccionesEspecialidad let-fila>
+  <div class="edicion__acciones">
+    <button
+      app-button
+      type="button"
+      variant="ghost"
+      size="sm"
+      [attr.data-testid]="'especialidad-editar-' + fila.id"
+      (clicked)="editarEspecialidad(fila)"
+    >
+      Editar
+    </button>
+    <button
+      app-button
+      type="button"
+      variant="ghost"
+      size="sm"
+      [isLoading]="retirando() === fila.id"
+      [disabled]="retirando() !== null"
+      [attr.data-testid]="'especialidad-retirar-' + fila.id"
+      (clicked)="retirarEspecialidad(fila)"
+    >
+      Retirar
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #celdaAccionesMatricula let-fila>
+  <div class="edicion__acciones">
+    <button
+      app-button
+      type="button"
+      variant="ghost"
+      size="sm"
+      [attr.data-testid]="'matricula-editar-' + fila.id"
+      (clicked)="editarMatricula(fila)"
+    >
+      Editar
+    </button>
+    @if (fila.fileId) {
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [isLoading]="descargando() === fila.id"
+        [disabled]="descargando() !== null"
+        [attr.data-testid]="'matricula-descargar-' + fila.id"
+        (clicked)="descargarCarnet(fila)"
+      >
+        Descargar
+      </button>
+    }
+    <button
+      app-button
+      type="button"
+      variant="ghost"
+      size="sm"
+      [isLoading]="retirando() === fila.id"
+      [disabled]="retirando() !== null"
+      [attr.data-testid]="'matricula-retirar-' + fila.id"
+      (clicked)="retirarMatricula(fila)"
+    >
+      Retirar
+    </button>
+  </div>
+</ng-template>
+
+<!-- ─── El diálogo de edición ───────────────────────────────────────────────
+     UNO para los tres recursos y no tres diálogos: es el mismo gesto —corregir
+     la fila señalada— y lo único que cambia son los campos. Tres modales
+     iguales se separan en el primer retoque que se haga en uno solo.
+
+     Se monta con `@if` y no oculto: `app-content-dialog` llama a `showModal()`
+     al crearse, así que existir es estar abierto. -->
+@if (edicion(); as enCurso) {
+  <app-content-dialog
+    size="md"
+    [heading]="'Editar ' + enCurso.nombre"
+    data-testid="edicion-dialogo"
+    (closed)="cerrarEdicion()"
+  >
+    <form class="edicion__formulario" (submit)="$event.preventDefault()">
+      @switch (enCurso.recurso) {
+        @case ('formacion') {
+          <app-form-field label="Tipo de título" [required]="true">
+            <app-concept-select
+              data-testid="edicion-credencial-tipo"
+              [target]="targetCredencial"
+              [(value)]="edicionTipo"
+              placeholder="Elegí un tipo"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Número / título obtenido"
+            [required]="true"
+            hint="El número de tu diploma, o el nombre del título si no tiene número."
+          >
+            <app-input data-testid="edicion-credencial-numero" [(value)]="edicionNumero" />
+          </app-form-field>
+
+          <app-form-field label="Institución">
+            <app-select
+              data-testid="edicion-credencial-institucion"
+              [options]="opcionesInstitucion"
+              [(value)]="edicionInstitucionElegida"
+              placeholder="Elegí dónde lo cursaste"
+            />
+          </app-form-field>
+
+          @if (edicionInstitucionFueraDeCatalogo()) {
+            <app-form-field label="¿Cuál?">
+              <app-input
+                data-testid="edicion-credencial-institucion-otra"
+                [(value)]="edicionInstitucionEscrita"
+                placeholder="Universidad de La Habana"
+              />
+            </app-form-field>
+          }
+
+          <app-form-field label="Fecha de emisión">
+            <app-date-picker [(value)]="edicionEmision" placeholder="Seleccionar fecha" />
+          </app-form-field>
+        }
+
+        @case ('especialidad') {
+          <!-- Cuál es la principal NO se toca acá: ya tiene su propio gesto en
+               la columna «Tipo», que es el único que sabe desmarcar a la
+               anterior. Dos caminos para el mismo hecho dejarían dos
+               principales. -->
+          <app-form-field label="Especialidad" [required]="true">
+            <app-select
+              data-testid="edicion-especialidad"
+              [options]="especialidades()"
+              [(value)]="edicionEspecialidad"
+              placeholder="Elegí la especialidad"
+            />
+          </app-form-field>
+
+          <app-switch
+            [(checked)]="edicionCertificada"
+            label="Certificada por el colegio o consejo"
+          />
+        }
+
+        @case ('matricula') {
+          <app-form-field label="Nº de matrícula" [required]="true">
+            <app-input data-testid="edicion-matricula-numero" [(value)]="edicionNumero" />
+          </app-form-field>
+
+          <app-form-field label="Autoridad que la emitió">
+            <app-select
+              data-testid="edicion-matricula-autoridad"
+              [options]="opcionesAutoridad()"
+              [value]="edicionAutoridad() === '' ? null : edicionAutoridad()"
+              placeholder="Elegí la autoridad"
+              (valueChange)="edicionAutoridad.set($event ?? '')"
+            />
+          </app-form-field>
+
+          <app-form-field label="Fecha de inscripción">
+            <app-date-picker [(value)]="edicionInscripcion" placeholder="Seleccionar fecha" />
+          </app-form-field>
+        }
+      }
+    </form>
+
+    <app-form-actions
+      dialog-actions
+      submitLabel="Guardar cambios"
+      cancelLabel="Cancelar"
+      [pending]="guardandoEdicion()"
+      [disabled]="!puedeGuardarEdicion()"
+      (submitted)="guardarEdicion()"
+      (cancelled)="cerrarEdicion()"
+    />
+  </app-content-dialog>
+}
