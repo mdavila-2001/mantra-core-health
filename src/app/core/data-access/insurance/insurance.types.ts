@@ -98,6 +98,13 @@ export interface CreateInsurancePlanInput {
   readonly effectiveFrom?: string;
   readonly effectiveTo?: string;
   readonly currencyConceptId?: string;
+  /** Prima de lista mensual del plan, en la moneda del plan (v4.2.14). */
+  readonly monthlyPremiumAmount?: string;
+}
+
+/** Reemplazo completo de la prima de lista mensual de un plan (v4.2.14). */
+export interface UpdatePlanPremiumInput {
+  readonly monthlyPremiumAmount: string | null;
 }
 
 export interface CreatePlanBenefitInput {
@@ -130,6 +137,12 @@ export interface Plan {
   readonly name: string;
   readonly planType: InsuranceConcept | null;
   readonly currency: InsuranceConcept | null;
+  /**
+   * Prima de lista mensual del plan, en su moneda (v4.2.14). `null` cuando la
+   * aseguradora no la declaró — es el denominador del loss ratio del tablero
+   * de siniestralidad.
+   */
+  readonly monthlyPremiumAmount: string | null;
   readonly effectiveFrom: Date | null;
   readonly effectiveTo: Date | null;
   readonly status: InsuranceConcept;

@@ -49,6 +49,8 @@ interface PlanSimulado {
   readonly name: string;
   readonly planType: ReturnType<typeof c> | null;
   readonly currency: ReturnType<typeof c> | null;
+  /** Prima de lista mensual del plan (v4.2.14, subtarea 3.1). `null` = sin declarar. */
+  readonly monthlyPremiumAmount: string | null;
   readonly effectiveFrom: string | null;
   readonly effectiveTo: string | null;
   readonly status: ReturnType<typeof c>;
@@ -172,6 +174,22 @@ const ASEGURADORAS = [
   },
 ];
 
+/**
+ * Prima de lista mensual por código de plan, en Bs (v4.2.14, subtarea 3.1).
+ * Ficticia y declarada como tal — igual que el resto de los datos del mock.
+ * `ALZ-PLATA` queda sin prima a propósito: escenario «sin prima registrada».
+ */
+const PRIMAS: Readonly<Record<string, string>> = {
+  'ANDINA-INT': '450.00',
+  'ANDINA-FAM': '680.00',
+  'ANDINA-ORO': '920.00',
+  'VIT-SALUD': '510.00',
+  'VIT-BASICO': '260.00',
+  'ALZ-ORO': '780.00',
+  'CNS-GEN': '150.00',
+  'CPS-GEN': '150.00',
+};
+
 function resumenDeAseguradora(a: (typeof ASEGURADORAS)[number], i: number, canAdminister = false) {
   return {
     id: a.id,
@@ -215,6 +233,7 @@ function detalleDeAseguradora(
           name: name!,
           planType: c(k === 0 ? 'PREMIUM' : 'STANDARD', k === 0 ? 'Premium' : 'Estándar'),
           currency: BOB,
+          monthlyPremiumAmount: PRIMAS[code!] ?? null,
           effectiveFrom: isoDia(-365),
           effectiveTo: null,
           status: c('ACTIVE', 'Vigente'),
@@ -291,7 +310,12 @@ function detalleDeAseguradora(
   };
 }
 
-const catalogoAdministrable = new Coleccion<DetalleAseguradoraSimulado>(
+/**
+ * Exportado para `insurance-analytics.handlers.ts` (subtarea 3.1): el tablero
+ * lee las mismas primas y planes que edita la consola, incluidas las que se
+ * hayan declarado en la sesión vía `PUT .../premium`.
+ */
+export const catalogoAdministrable = new Coleccion<DetalleAseguradoraSimulado>(
   [detalleDeAseguradora(ASEGURADORAS[0]!, 0)],
   'mock-insurance-administration',
 );
@@ -306,7 +330,8 @@ function administraCatalogo(request: MockRequest): boolean {
   );
 }
 
-function perteneceALaAseguradora(request: MockRequest): boolean {
+/** Exportado: es también el guardián de `GET /insurance/analytics/loss-ratio`. */
+export function perteneceALaAseguradora(request: MockRequest): boolean {
   return request.user?.tenants.includes(TENANT_ASEGURADORA) ?? false;
 }
 
@@ -333,7 +358,7 @@ function localizarProducto(productId: string) {
   return undefined;
 }
 
-function localizarPlan(planId: string) {
+export function localizarPlan(planId: string) {
   for (const carrier of catalogoAdministrable.todos()) {
     for (const product of carrier.products) {
       const plan = product.plans.find((item) => item.id === planId);
@@ -622,6 +647,7 @@ export function registrarSeguros(router: MockRouter): void {
       effectiveFrom?: string;
       effectiveTo?: string;
       currencyConceptId?: string;
+      monthlyPremiumAmount?: string;
     }>(request);
     const id = nuevoId('insurance-plan');
     const plan = {
@@ -630,6 +656,7 @@ export function registrarSeguros(router: MockRouter): void {
       name: datos.name ?? 'Plan nuevo',
       planType: c('STANDARD', 'Estándar'),
       currency: datos.currencyConceptId === undefined ? BOB : concepto(datos.currencyConceptId),
+      monthlyPremiumAmount: datos.monthlyPremiumAmount ?? null,
       effectiveFrom: datos.effectiveFrom ?? isoDia(0),
       effectiveTo: datos.effectiveTo ?? null,
       status: c('ACTIVE', 'Vigente'),
@@ -744,6 +771,24 @@ export function registrarSeguros(router: MockRouter): void {
     );
     actualizarProducto(match.carrier, match.product, { plans });
     return { ok: true };
+  });
+
+  /**
+   * Subtarea 3.1 (v4.2.14) — declarar o quitar la prima de lista mensual de un
+   * plan. Reemplazo completo de un solo valor, como el resto de las
+   * mutaciones económicas del catálogo.
+   */
+  router.put('/insurance-plans/:planId/premium', (request) => {
+    if (!administraCatalogo(request)) return forbidden();
+    const match = localizarPlan(request.params['planId']!);
+    if (match === undefined) return notFound('Plan no encontrado');
+    const datos = cuerpo<{ monthlyPremiumAmount: string | null }>(request);
+    const monthlyPremiumAmount = datos.monthlyPremiumAmount ?? null;
+    const plans = match.product.plans.map((plan) =>
+      plan.id === match.plan.id ? { ...plan, monthlyPremiumAmount } : plan,
+    );
+    actualizarProducto(match.carrier, match.product, { plans });
+    return { id: match.plan.id, monthlyPremiumAmount };
   });
 
   router.get('/insurance-brokers', () => ({

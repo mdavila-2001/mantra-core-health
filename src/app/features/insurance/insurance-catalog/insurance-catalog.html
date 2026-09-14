@@ -141,6 +141,22 @@
                       · hasta {{ plan.effectiveTo | date: 'longDate' }}
                     }
                   </p>
+                  <p class="catalog__plan-validity" data-testid="plan-monthly-premium-value">
+                    Prima mensual ·
+                    {{ plan.monthlyPremiumAmount ?? 'Sin registrar' }}
+                    @if (aseguradora.canAdminister) {
+                      <button
+                        app-button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        [attr.aria-label]="'Editar la prima de lista mensual de ' + plan.name"
+                        (clicked)="premiumEditor.set(plan)"
+                      >
+                        Editar prima
+                      </button>
+                    }
+                  </p>
 
                   @if (plan.benefits.length === 0) {
                     <p class="catalog__hollow">Sin coberturas cargadas.</p>
@@ -306,5 +322,13 @@
     [benefit]="editor.benefit"
     (saved)="rulesSaved($event)"
     (closed)="rulesEditor.set(null)"
+  />
+}
+
+@if (premiumEditor(); as plan) {
+  <app-plan-premium-dialog
+    [plan]="plan"
+    (saved)="premiumSaved($event)"
+    (closed)="premiumEditor.set(null)"
   />
 }

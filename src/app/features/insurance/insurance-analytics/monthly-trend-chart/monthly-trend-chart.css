@@ -1,0 +1,66 @@
+.trend-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.trend-chart__legend {
+  align-items: center;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-caption);
+  gap: var(--sp-1);
+}
+
+.trend-chart__swatch {
+  border-radius: var(--r-xs);
+  display: inline-block;
+  height: 0.75em;
+  margin-inline-start: var(--sp-2);
+  width: 0.75em;
+}
+
+.trend-chart__swatch--billed {
+  background: var(--c-petrol-500);
+}
+
+.trend-chart__swatch--approved {
+  background: var(--c-aqua-500);
+}
+
+/* Ancho fijo por mes (monthly-trend-chart.ts: MONTH_WIDTH) empuja el SVG más
+   allá del contenedor en periodos largos; el desborde se resuelve acá, no en
+   la página (regla de artefactos: sólo tablas/diagramas pueden scrollear). */
+.trend-chart__scroll {
+  overflow-x: auto;
+}
+
+.trend-chart__svg {
+  display: block;
+  height: 11rem;
+  min-width: 100%;
+}
+
+.trend-chart__axis {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+}
+
+.trend-chart__bar {
+  rx: 2;
+}
+
+.trend-chart__bar--billed {
+  fill: var(--c-petrol-500);
+}
+
+.trend-chart__bar--approved {
+  fill: var(--c-aqua-500);
+}
+
+.trend-chart__label {
+  fill: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 8px;
+}

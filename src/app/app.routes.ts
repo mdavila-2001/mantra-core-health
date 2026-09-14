@@ -156,6 +156,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/insurance-claims/insurance-claims').then(
       (m) => m.InsuranceClaims,
     ),
+  'administration/insurance-analytics': () =>
+    import('./features/insurance/insurance-analytics/insurance-analytics').then(
+      (m) => m.InsuranceAnalytics,
+    ),
   // Contabilidad abre en el **cockpit**: el estado del ejercicio, los documentos
   // frenados y la cartera. Los libros —balance, diario y el registro de
   // movimientos— viven en `administration/accounting/libros`, a un clic. El

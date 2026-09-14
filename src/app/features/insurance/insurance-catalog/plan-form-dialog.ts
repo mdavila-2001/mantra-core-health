@@ -19,6 +19,9 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { apiErrorMessage, dateRangeValidator, optional } from './insurance-form.helpers';
 
+/** Sin decimales negativos y hasta dos decimales — mismo patrón que el resto del módulo. */
+const MONEY = /^\d+(?:\.\d{1,2})?$/;
+
 @Component({
   selector: 'app-plan-form-dialog',
   imports: [
@@ -55,6 +58,7 @@ export class PlanFormDialog {
       name: ['', [Validators.required, Validators.maxLength(200)]],
       effectiveFrom: [''],
       effectiveTo: [''],
+      monthlyPremiumAmount: ['', Validators.pattern(MONEY)],
     },
     { validators: dateRangeValidator },
   );
@@ -76,6 +80,7 @@ export class PlanFormDialog {
         ...optional('effectiveFrom', value.effectiveFrom),
         ...optional('effectiveTo', value.effectiveTo),
         ...(currency === null ? {} : { currencyConceptId: currency }),
+        ...optional('monthlyPremiumAmount', value.monthlyPremiumAmount),
       })
       .subscribe({
         next: () => {

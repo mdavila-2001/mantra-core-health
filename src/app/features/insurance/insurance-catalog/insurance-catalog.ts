@@ -27,6 +27,7 @@ import { dialable, whatsappDigits } from '../../../shared/utils/telephone/teleph
 import { ApprovalRulesDialog } from './approval-rules-dialog';
 import { BenefitFormDialog } from './benefit-form-dialog';
 import { PlanFormDialog } from './plan-form-dialog';
+import { PlanPremiumDialog } from './plan-premium-dialog';
 
 /**
  * Catálogo de la aseguradora del tenant activo: productos, planes, coberturas y
@@ -55,6 +56,7 @@ import { PlanFormDialog } from './plan-form-dialog';
     ApprovalRulesDialog,
     BenefitFormDialog,
     PlanFormDialog,
+    PlanPremiumDialog,
   ],
   templateUrl: './insurance-catalog.html',
   styleUrl: './insurance-catalog.css',
@@ -85,6 +87,7 @@ export class InsuranceCatalog {
     readonly plan: Plan;
     readonly benefit: PlanBenefit;
   } | null>(null);
+  protected readonly premiumEditor = signal<Plan | null>(null);
 
   constructor() {
     this.load();
@@ -109,6 +112,13 @@ export class InsuranceCatalog {
     }
     this.patchBenefit(editor.plan.id, editor.benefit.id, update);
     this.toasts.success('La cobertura se actualizó correctamente.');
+  }
+
+  protected premiumSaved(monthlyPremiumAmount: string | null): void {
+    const plan = this.premiumEditor();
+    if (plan === null) return;
+    this.patchPlan(plan.id, { monthlyPremiumAmount });
+    this.toasts.success('La prima de lista se actualizó correctamente.');
   }
 
   protected rulesSaved(update: UpdatePlanBenefitRulesInput): void {
@@ -172,6 +182,22 @@ export class InsuranceCatalog {
       next: (detail) => this.state.set(ready(detail)),
       error: (error: unknown) => this.state.set(errorToViewState<CarrierDetail>(error)),
     });
+  }
+
+  private patchPlan(planId: string, patch: Partial<Plan>): void {
+    const current = this.carrier();
+    if (current === null) return;
+    this.state.set(
+      ready({
+        ...current,
+        products: current.products.map((product) => ({
+          ...product,
+          plans: product.plans.map((plan) =>
+            plan.id === planId ? { ...plan, ...patch } : plan,
+          ),
+        })),
+      }),
+    );
   }
 
   private patchBenefit(planId: string, benefitId: string, patch: Partial<PlanBenefit>): void {

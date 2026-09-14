@@ -52,6 +52,22 @@
         placeholder="Seleccioná una moneda"
       />
     </app-form-field>
+    <app-form-field
+      label="Prima mensual"
+      hint="Prima de lista mensual, en la moneda del plan. Es el denominador del loss ratio del tablero de siniestralidad."
+      [errorMessage]="
+        form.controls.monthlyPremiumAmount.touched &&
+        form.controls.monthlyPremiumAmount.invalid
+          ? 'Ingresá un importe no negativo con hasta dos decimales.'
+          : ''
+      "
+    >
+      <app-input
+        formControlName="monthlyPremiumAmount"
+        inputMode="decimal"
+        testId="plan-monthly-premium"
+      />
+    </app-form-field>
   </form>
 
   <button

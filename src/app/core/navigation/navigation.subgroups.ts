@@ -202,11 +202,12 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     label: 'Seguros',
     group: 'Administración',
     icon: 'umbrella',
-    // Quién paga, quién intermedia y qué se le presentó.
+    // Quién paga, quién intermedia, qué se le presentó y qué dice el agregado.
     paths: [
       'administration/insurance',
       'administration/brokers',
       'administration/insurance-claims',
+      'administration/insurance-analytics',
     ],
   },
   {

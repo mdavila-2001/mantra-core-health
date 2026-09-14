@@ -90,7 +90,10 @@
       "/quotations",
       "/prescription-favorites",
       "/insurance-carrier-catalog",
-      "/admin/content-packs"
+      "/admin/content-packs",
+      "/insurance-plans",
+      "/insurance-products",
+      "/insurance/analytics"
     ],
     "target": "http://localhost:3125",
     "secure": false,
