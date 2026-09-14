@@ -109,6 +109,35 @@ const VISTA_POR_DEFECTO: VistaDeTurnos = 'lista';
 const PARAM_DE_VISTA = 'vista';
 
 /**
+ * Las dos cosas que se vienen a hacer a esta pantalla.
+ *
+ * ## Por qué son dos secciones y no una sola columna larga
+ *
+ * Estaban apiladas: primero los turnos propios —con su conmutador de vista, su
+ * barra de filtros y la lista entera— y recién después, al fondo, el formulario
+ * para pedir uno nuevo. Quien entraba a pedir turno tenía que recorrer sus
+ * citas de punta a punta para llegar a lo que venía a hacer, y en un teléfono
+ * eso son varias pantallas de scroll.
+ *
+ * Son dos tareas distintas —mirar lo que ya tengo, buscar hora nueva— y cada
+ * una se hace de una sola: se eligen arriba y se muestra una a la vez. Nada se
+ * quitó; lo que cambia es que dejan de estar una debajo de la otra.
+ */
+export type SeccionDeTurnos = 'citas' | 'pedir';
+
+/** La sección por omisión: entrar a «Mis citas» es entrar a ver las propias. */
+const SECCION_POR_DEFECTO: SeccionDeTurnos = 'citas';
+
+/**
+ * Clave del parámetro de la URL que recuerda la sección abierta.
+ *
+ * En la URL por el mismo motivo que la vista y los filtros: el enlace se
+ * comparte con la sección puesta —«entrá acá a pedir turno»— y recargar no
+ * devuelve a la persona al principio.
+ */
+const PARAM_DE_SECCION = 'seccion';
+
+/**
  * Clave del parámetro que abre un turno concreto (P8).
  *
  * Es lo que hace navegable un aviso: la notificación de demora, de cambio de
@@ -364,6 +393,60 @@ export class Appointments {
     });
   }
 
+  /* ---- mirar mis citas o pedir una nueva ---------------------------------- */
+
+  /**
+   * Qué sección se está mirando. Sale de la URL, igual que la vista.
+   */
+  protected readonly seccion = computed<SeccionDeTurnos>(() =>
+    this.params()?.get(PARAM_DE_SECCION) === 'pedir' ? 'pedir' : SECCION_POR_DEFECTO,
+  );
+
+  protected readonly enPedirTurno = computed(() => this.seccion() === 'pedir');
+
+  /**
+   * Las dos tareas de la pantalla, arriba de todo.
+   *
+   * Sin íconos a propósito: el conmutador de lista/calendario que vive dentro
+   * de «Mis citas» ya usa `calendar`, y repetir ese dibujo acá con otro
+   * significado rompe lo único que un ícono aporta, que es reconocer de un
+   * vistazo. Dos rótulos de dos palabras se leen igual de rápido.
+   */
+  protected readonly seccionesDisponibles: readonly SegmentedOption<SeccionDeTurnos>[] = [
+    { value: 'citas', label: 'Mis citas', description: 'Ver las citas que ya pediste' },
+    {
+      value: 'pedir',
+      label: 'Pedir un turno',
+      description: 'Buscar un horario libre y pedir una cita nueva',
+    },
+  ];
+
+  protected elegirSeccion(seccion: SeccionDeTurnos): void {
+    this.irASeccion(seccion);
+  }
+
+  /**
+   * Abre una sección, venga del conmutador o de una acción que necesita la otra
+   * —reprogramar y elegir un día en el calendario terminan en «Pedir un
+   * turno»—.
+   *
+   * `replaceUrl` como el resto de la pantalla: cambiar de sección no puede
+   * dejar una entrada de historial por clic, o «atrás» obligaría a deshacer
+   * cada ida y vuelta antes de salir de la pantalla. Y se corta temprano si ya
+   * se está ahí: navegar a lo mismo vuelve a correr los guards para nada.
+   */
+  private irASeccion(seccion: SeccionDeTurnos): void {
+    if (this.seccion() === seccion) {
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [PARAM_DE_SECCION]: seccion === SECCION_POR_DEFECTO ? null : seccion },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
   /* ---- FT-05 · buscar y filtrar tus citas --------------------------------- */
 
   /**
@@ -480,13 +563,15 @@ export class Appointments {
   /**
    * Se señaló un día en el calendario: se ofrecen los horarios libres de ese día.
    *
-   * No navega ni cambia de vista: el calendario sigue a la vista y debajo
-   * aparece lo que hay ese día. Cambiar de pantalla en respuesta a un clic en
-   * un número obligaría a volver para probar con otro día, que es la queja que
-   * originó esto.
+   * Antes los horarios estaban debajo del calendario y bastaba con filtrarlos;
+   * ahora viven en «Pedir un turno», así que el gesto abre esa sección con el
+   * día ya puesto. Sigue sin ser un viaje de ida: el aviso de arriba de la
+   * grilla dice qué día se está mirando y ofrece volver a verlos todos, y el
+   * conmutador devuelve al calendario en un clic.
    */
   protected elegirDiaDeHorarios(dia: Date): void {
     this.diaDeHorarios.set(dia);
+    this.irASeccion('pedir');
   }
 
   /** Vuelve a ofrecer los horarios de toda la ventana. */
@@ -1301,6 +1386,9 @@ export class Appointments {
     }
 
     this.reprogramando.set(turno.id);
+    // La grilla que mueve el turno vive en «Pedir un turno»: se abre sola, o el
+    // botón «Reprogramar» no haría nada visible desde la lista.
+    this.irASeccion('pedir');
     // El turno guarda el recurso; la pantalla ahora elige la agenda y el lugar.
     // Se preselecciona su MISMO consultorio y no «cualquiera»: mover un turno
     // es querer otro horario, no otro lugar.
@@ -1316,9 +1404,14 @@ export class Appointments {
     }
   }
 
-  /** Sale del modo reprogramación sin tocar nada. */
+  /**
+   * Sale del modo reprogramación sin tocar nada, y vuelve a «Mis citas»: es de
+   * donde se vino, y quedarse en la grilla dejaría a la persona mirando
+   * horarios que ya decidió no usar.
+   */
   protected cancelarReprogramacion(): void {
     this.reprogramando.set(null);
+    this.irASeccion('citas');
   }
 
   /**
@@ -1358,6 +1451,9 @@ export class Appointments {
           this.operando.set(null);
           this.reprogramando.set(null);
           this.toast.success('Movimos tu turno al horario nuevo.', 'Turno reprogramado');
+          // De vuelta a la lista: lo que se quiere ver después de mover un
+          // turno es el turno en su hora nueva, no la grilla de horarios.
+          this.irASeccion('citas');
           // El servidor es la verdad: la lista muestra la hora nueva y el cupo
           // viejo vuelve a ofrecerse releyendo, no restando a mano.
           this.recargar();

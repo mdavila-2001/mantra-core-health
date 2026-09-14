@@ -6,6 +6,18 @@
     escritorio, y una tabla de agenda en 360 px no se lee.
     ========================================================================== */
 
+/* ─── Las dos tareas de la pantalla ─────────────────────────────────────────
+   El conmutador encabeza la vista, así que va pegado al encabezado de página y
+   separado del contenido de la sección que abre: es lo que hace leerlo como
+   «qué estoy haciendo» y no como un control más del bloque de abajo.
+
+   `display: block` porque es un componente y por omisión es `display: inline`,
+   que ignoraría el margen de abajo. */
+.turnos__secciones {
+  display: block;
+  margin-block: var(--sp-2) var(--sp-5);
+}
+
 .turnos__bloque {
   margin-block-end: var(--sp-6);
 }

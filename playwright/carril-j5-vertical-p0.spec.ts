@@ -172,7 +172,9 @@ test.describe('Carril J5 · la vertical P0 de punta a punta', () => {
     await entrar(page, paciente);
 
     await test.step('la doctora recién publicada aparece en el buscador', async () => {
-      await irA(page, MIS_TURNOS);
+      // Pedir turno es una sección propia del portal, no el fondo de la lista
+      // de citas propias: se entra directo con la sección puesta.
+      await irA(page, `${MIS_TURNOS}?seccion=pedir`);
       await estable(page);
 
       // El selector de profesional es un buscador desde J4: se escribe parte

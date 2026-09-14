@@ -296,9 +296,17 @@ describe('Recorrido real · el camino del consumidor', () => {
     irA(RUTAS.misTurnos);
     estable();
     portalQuieto();
-    cy.contains(/tus turnos/i).should('exist');
-    cy.contains(/pedir un turno/i).should('exist');
+    // El portal abre en «Mis citas» y pedir un turno es la otra sección: antes
+    // estaban apiladas y había que bajar hasta el fondo para pedir hora.
+    cy.get('[data-testid="turnos-secciones"] [data-value="citas"]').should(
+      'have.attr',
+      'aria-checked',
+      'true',
+    );
     capturar({ carpeta: 'consumidor-02-portal', titulo: 'Mis turnos' }, 'al-entrar');
+
+    cy.get('[data-testid="turnos-secciones"] [data-value="pedir"]').click();
+    portalQuieto();
 
     // ¿La sección ofrece agendas? El selector aparece cuando los recursos
     // llegaron; si en su lugar hay un aviso, ese aviso es el dato.
