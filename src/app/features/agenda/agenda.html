@@ -144,6 +144,45 @@
       </section>
     }
 
+    <!-- ─── Moviendo una cita (UC-41-08) ──────────────────────────────────
+         Un aviso persistente y no un diálogo: elegir el horario nuevo es
+         navegar —cambiar de ventana, mirar otro día—, y un modal no sobrevive a
+         eso. Mientras esté puesto, los cupos ofrecen «mover acá». -->
+    @if (enReprogramacion()) {
+      <section
+        class="agenda__reprogramando"
+        data-testid="agenda-reprogramando"
+        aria-labelledby="reprogramando-titulo"
+        role="status"
+      >
+        <h2 id="reprogramando-titulo" class="agenda__reprogramando-titulo">Elegí el horario nuevo</h2>
+        <p class="agenda__reprogramando-ayuda">
+          @if (citaEnReprogramacion(); as origen) {
+            Estás moviendo la cita de <strong>{{ origen.paciente }}</strong>
+            @if (origen.cuando !== null) {
+              del {{ origen.cuando | date: "EEEE d 'de' MMMM, HH:mm" }}
+            }
+            . Tocá «Mover acá» en el cupo que quieras: el horario anterior queda libre y la cita
+            conserva su estado.
+          } @else {
+            Tocá «Mover acá» en el cupo que quieras. El horario anterior queda libre y la cita
+            conserva su estado.
+          }
+        </p>
+        <div class="agenda__reprogramando-acciones">
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="agenda-reprogramando-salir"
+            (clicked)="cancelarReprogramacion()"
+          >
+            Dejar la cita como está
+          </button>
+        </div>
+      </section>
+    }
+
     <!-- ─── Filtros ───────────────────────────────────────────────────────
          La ventana, su navegación, las canceladas y la sede son de las listas
          de consultas y cupos. «Mi agenda» es el horario publicado: no se filtra
@@ -707,6 +746,30 @@
       </button>
     }
 
+    @if (puedeAtender() && estaVigente(cita)) {
+      <!-- Mover la cita (UC-41-08). Del profesional y del mostrador: reordenar
+           el día reacomoda a los demás pacientes, y esa decisión no es de quien
+           pidió el turno. Sólo sobre una cita vigente — el backend responde 422
+           sobre cualquier otro estado. -->
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        [iconOnly]="true"
+        data-testid="agenda-reprogramar"
+        aria-label="Mover la cita a otro horario"
+        appTooltip="Mover la cita a otro horario"
+        [isLoading]="operando() === cita.id"
+        (clicked)="iniciarReprogramacion(cita)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="17" rx="2" />
+          <path d="M3 9h18M8 2v4M16 2v4M8 15h7M12.5 12l3 3-3 3" />
+        </svg>
+      </button>
+    }
+
     @if (estaVigente(cita) || porResponder(cita)) {
       <!-- Destructiva: pide confirmación y exige motivo. -->
       <button
@@ -733,6 +796,22 @@
 
 <ng-template #celdaReservar let-cupo>
   @if (cupo.disponible) {
+    @if (enReprogramacion()) {
+      <!-- El mismo hueco no puede significar dos cosas: mientras se mueve una
+           cita, el cupo es un destino y no una reserva nueva. Con texto y no
+           sólo ícono — es la acción que la pantalla está pidiendo, y un globo
+           que hay que descubrir no sirve para eso. -->
+      <button
+        app-button
+        variant="primary"
+        size="sm"
+        data-testid="agenda-mover-aca"
+        [isLoading]="cupoDestino() === cupo.id"
+        (clicked)="reprogramarA(cupo)"
+      >
+        Mover acá
+      </button>
+    } @else {
     <!-- Ancla y no botón: reservar navega, así que conserva «abrir en pestaña
          nueva» y el destino en la barra de estado. La franja viaja en la URL
          porque la pantalla de reserva relee el cupo para revalidarlo. -->
@@ -755,5 +834,6 @@
         <path d="M3 9h18M8 2v4M16 2v4M12 12.5v6M9 15.5h6" />
       </svg>
     </a>
+    }
   }
 </ng-template>

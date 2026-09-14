@@ -872,7 +872,7 @@ function montarCancelacion(opts: Opciones) {
 }
 
 /**
- * Abre la sección «Buscar cita».
+ * Abre la sección «Agendar una cita».
  *
  * La pantalla ya no apila las citas propias y la grilla de horarios: son dos
  * secciones y se muestra una a la vez, porque para pedir un turno había que
@@ -1570,7 +1570,7 @@ describe('Appointments · mis citas y pedir un turno son dos secciones', () => {
     const rotulos = [...control.querySelectorAll('button')].map((b: HTMLButtonElement) =>
       (b.textContent ?? '').trim(),
     );
-    expect(rotulos).toEqual(['Mis citas', 'Buscar cita']);
+    expect(rotulos).toEqual(['Mis citas', 'Agendar una cita']);
     expect(control.querySelector('[data-value="citas"]').getAttribute('aria-checked')).toBe('true');
   });
 
