@@ -311,8 +311,12 @@
       <app-tab [label]="pestanas[2]">
         <section class="mi-perfil__seccion" data-testid="perfil-sedes">
           <h3 class="mi-perfil__subtitulo">Tus consultorios y sedes</h3>
+          <!-- La ficha MUESTRA; no da de alta. El botón de agregar vivía acá
+               al lado en «Trayectoria», que es de dónde salió el 13/09/2026: la
+               ficha es para mirar tus datos, y cargar un consultorio es
+               editarlos. El camino se dice, no se esconde. -->
           <p class="mi-perfil__nota mi-perfil__nota--primera">
-            Se agregan y se retiran desde «Trayectoria».
+            Se agregan y se retiran desde «Editar tu info», en «Dónde atiendo».
           </p>
           @if (perfil().sedes?.length) {
             <ul class="mi-perfil__lista">
@@ -473,7 +477,11 @@
         <!-- El formulario de alta de trayectoria, el mismo de siempre: no se
              duplica ni se reescribe, se sigue embebiendo en modo «timeline». -->
         <section class="mi-perfil__seccion">
-          <app-work-history layout="timeline" (added)="trayectoriaCambio.emit()" />
+          <app-work-history
+                layout="timeline"
+                secciones="historial"
+                (added)="trayectoriaCambio.emit()"
+              />
         </section>
       </app-tab>
 
@@ -1126,7 +1134,11 @@
              listado que ya se ve arriba. -->
           @if (esPropio() && !previewMode()) {
             <section class="profesional__fase">
-              <app-work-history layout="timeline" (added)="trayectoriaCambio.emit()" />
+              <app-work-history
+                layout="timeline"
+                secciones="historial"
+                (added)="trayectoriaCambio.emit()"
+              />
             </section>
           }
         </app-tab>
