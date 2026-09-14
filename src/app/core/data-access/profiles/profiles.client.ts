@@ -12,10 +12,13 @@ import type {
   NewPractitionerProfile,
   NewRelatedPerson,
   NewSpecialty,
+  OwnCredentialChanges,
+  OwnLicenseChanges,
   OwnPatientProfile,
   OwnPatientProfileChanges,
   OwnPatientSummary,
   OwnPractitionerProfile,
+  OwnSpecialtyChanges,
   PatientDetail,
   PatientMergeEvent,
   PatientMergeEventPage,
@@ -663,9 +666,7 @@ export class ProfilesClient {
    * llamada: el registro de procesos pide poder cargar varios de cada clase.
    * Nace siempre PENDIENTE de verificación.
    */
-  addOwnCredential(
-    credencial: NewOwnCredential,
-  ): Observable<{ readonly id: string }> {
+  addOwnCredential(credencial: NewOwnCredential): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(
       this.url('/profiles/practitioners/me/credentials'),
       stripUndefined(credencial),
@@ -680,6 +681,83 @@ export class ProfilesClient {
   removeOwnCredential(credentialId: string): Observable<void> {
     return this.http.delete<void>(
       this.url(`/profiles/practitioners/me/credentials/${encodeURIComponent(credentialId)}`),
+    );
+  }
+
+  /* ---- Corregir y retirar lo ya cargado ---------------------------------
+     Las acciones de las tres tablas de «Configurar tu perfil», pedidas por el
+     propietario el 13/09/2026: «que en la tabla se pueda eliminar registros,
+     editar registros o descargar elementos».
+
+     **De los cinco, sólo `removeOwnCredential` existe hoy en la API.** Los
+     otros cuatro los atiende el simulador de la rama `mockup` —que es el
+     backend de esta rama, `mockBackend: true` fijo— y están escritos con la
+     forma REST que le toca a cada recurso, para que publicarlos del lado del
+     servidor no obligue a tocar la pantalla. El hueco queda anotado en
+     `docs/progress/BLOCKERS.md`, no escondido acá. */
+
+  /**
+   * `PATCH /profiles/practitioners/me/credentials/:id` — corrige un título
+   * propio.
+   *
+   * Parcial: lo que no viaja no se toca. Mismo límite que el retiro —sólo
+   * mientras sigue PENDIENTE—, porque un título ya verificado es un hecho de
+   * quien lo comprobó y corregirlo por detrás invalidaría la comprobación.
+   */
+  updateOwnCredential(credentialId: string, cambios: OwnCredentialChanges): Observable<void> {
+    return this.http.patch<void>(
+      this.url(`/profiles/practitioners/me/credentials/${encodeURIComponent(credentialId)}`),
+      stripUndefined(cambios),
+    );
+  }
+
+  /**
+   * `PATCH /profiles/practitioners/me/specialties/:id` — corrige una
+   * especialidad propia.
+   *
+   * `isPrimary` **no viaja acá**: cuál es la principal ya tiene su propia
+   * operación (`setOwnPrimarySpecialty`), que es la que sabe desmarcar a la
+   * anterior. Dos caminos para el mismo hecho dejarían dos principales.
+   */
+  updateOwnSpecialty(specialtyId: string, cambios: OwnSpecialtyChanges): Observable<void> {
+    return this.http.patch<void>(
+      this.url(`/profiles/practitioners/me/specialties/${encodeURIComponent(specialtyId)}`),
+      stripUndefined(cambios),
+    );
+  }
+
+  /**
+   * `DELETE /profiles/practitioners/me/specialties/:id` — retira una
+   * especialidad cargada por error.
+   */
+  removeOwnSpecialty(specialtyId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(`/profiles/practitioners/me/specialties/${encodeURIComponent(specialtyId)}`),
+    );
+  }
+
+  /**
+   * `PATCH /profiles/practitioners/me/jurisdiction-authorizations/:id` —
+   * corrige una matrícula propia.
+   */
+  updateOwnLicense(licenseId: string, cambios: OwnLicenseChanges): Observable<void> {
+    return this.http.patch<void>(
+      this.url(
+        `/profiles/practitioners/me/jurisdiction-authorizations/${encodeURIComponent(licenseId)}`,
+      ),
+      stripUndefined(cambios),
+    );
+  }
+
+  /**
+   * `DELETE /profiles/practitioners/me/jurisdiction-authorizations/:id` —
+   * retira una matrícula cargada por error.
+   */
+  removeOwnLicense(licenseId: string): Observable<void> {
+    return this.http.delete<void>(
+      this.url(
+        `/profiles/practitioners/me/jurisdiction-authorizations/${encodeURIComponent(licenseId)}`,
+      ),
     );
   }
 

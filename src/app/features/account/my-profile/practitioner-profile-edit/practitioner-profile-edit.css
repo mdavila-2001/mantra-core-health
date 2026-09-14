@@ -155,3 +155,24 @@
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }
+
+/* ── La columna de acciones de las tres tablas ──────────────────────────────
+   Los botones en una fila, alineados al final de la celda: es la columna más a
+   la derecha y es donde la vista los busca. `flex-wrap` porque en el teléfono
+   tres botones no entran en el ancho de una celda, y prefiero que bajen a que
+   la tabla scrollee de lado para alcanzar «Retirar». */
+.edicion__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-1);
+}
+
+/* Lo que ya no se puede corregir dice por qué, en vez de dejar la celda vacía:
+   una celda en blanco se lee como una pantalla a medio cargar. */
+.edicion__acciones-nota {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
