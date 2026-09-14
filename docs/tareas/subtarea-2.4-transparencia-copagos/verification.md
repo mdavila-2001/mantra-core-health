@@ -55,6 +55,8 @@ El build de producción terminó en **166,570 s**, generó `dist/mantra-core-hea
 
 El push del commit UI `7dc9c765` completó con código 0 el hook oficial `.githooks/pre-push`: ejecutó `yarn build` y `node scripts/check-bundle-budget.mjs`. El build de producción pasó sin omitir el hook. Se abrió el [PR UI #454](https://github.com/mdavila-2001/mantra-core-health/pull/454) como borrador hacia `dev`, con revisores `jsaldias39` y `PabloArauzCaballero`, mientras se completa el recorrido real.
 
+El push final del código `78345b46` terminó con **código 0**, ejecutando el hook oficial sin `SALTAR_BUILD` ni `--no-verify`. `yarn build` pasó en **162,317 s**, prerenderizó ocho rutas y reportó **1,15 MB** de inicial (326,96 kB estimados de transferencia). `check-bundle-budget` también pasó; su medición de entradas fue **248,42 kB**. Son métricas de herramientas distintas y no se suman. Se conservaron las advertencias existentes de imports, presupuestos y CommonJS. Log local: `artifacts/patient-coverage-copays/real-profile/ui-pre-push-final.log`.
+
 ## Playwright y revisión visual
 
 ```powershell
