@@ -178,14 +178,43 @@
                   } @else if (esAudio(linea.mensaje)) {
                     <audio class="hilo__audio" controls [src]="url"></audio>
                   } @else {
-                    <!-- `download` y no `target="_blank"`: es una `data:` URL, y
-                         el navegador no abre esas en una pestaña nueva. -->
-                    <a class="hilo__documento" [href]="url" [download]="nombreParaDescargar(linea.mensaje)">
-                      <span class="hilo__documento-icono" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3v5h5" /><path d="M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7z" /></svg>
-                      </span>
-                      <span class="hilo__documento-nombre">{{ nombreDelAdjunto(linea.mensaje) }}</span>
-                    </a>
+                    <div class="hilo__documento-bloque">
+                      <!-- `download` y no `target="_blank"`: es una `data:` URL, y
+                           el navegador no abre esas en una pestaña nueva. -->
+                      <a class="hilo__documento" data-testid="hilo-documento" [href]="url" [download]="nombreParaDescargar(linea.mensaje)">
+                        <span class="hilo__documento-icono" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3v5h5" /><path d="M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7z" /></svg>
+                        </span>
+                        <span class="hilo__documento-texto">
+                          <span class="hilo__documento-nombre">{{ nombreDelAdjunto(linea.mensaje) }}</span>
+                          <!-- 5.2 · tipo y tamaño reales, leídos del contenido que ya bajó
+                               la ruta contextual: sin petición nueva. -->
+                          @if (detalleDelAdjunto(linea.mensaje); as detalle) {
+                            <span class="hilo__documento-detalle" data-testid="hilo-documento-detalle">{{ detalle }}</span>
+                          }
+                        </span>
+                      </a>
+                      @if (esPdfAdjunto(linea.mensaje)) {
+                        <button
+                          class="hilo__documento-ver"
+                          type="button"
+                          data-testid="hilo-documento-ver"
+                          [attr.aria-expanded]="vistaPreviaAbierta() === linea.mensaje.id"
+                          (click)="alternarVistaPrevia(linea.mensaje)"
+                        >
+                          {{ vistaPreviaAbierta() === linea.mensaje.id ? 'Ocultar vista previa' : 'Ver vista previa' }}
+                        </button>
+                        @if (vistaPreviaAbierta() === linea.mensaje.id) {
+                          @if (archivoParaVistaPrevia(linea.mensaje); as archivo) {
+                            <!-- El motor existente rasteriza el PDF y trae su propio
+                                 aviso si no puede: acá sólo se le pasa el archivo. -->
+                            <app-file-preview class="hilo__documento-preview" data-testid="hilo-documento-preview" [file]="archivo" />
+                          } @else {
+                            <p class="hilo__subiendo" role="status">No pudimos preparar la vista previa. Podés descargarlo.</p>
+                          }
+                        }
+                      }
+                    </div>
                   }
                 } @else if (adjuntoNoDisponible(linea.mensaje)) {
                   <p class="hilo__subiendo" role="status">Archivo no disponible</p>

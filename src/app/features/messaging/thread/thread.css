@@ -557,6 +557,42 @@
   white-space: nowrap;
 }
 
+/* 5.2 · el documento con su tipo y tamaño, y la vista previa del PDF debajo,
+   dentro de la misma burbuja: es contexto de ese mensaje, no otra pantalla. */
+.hilo__documento-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  min-inline-size: 0;
+}
+
+.hilo__documento-texto {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.hilo__documento-detalle {
+  font-size: var(--fs-caption);
+  color: var(--tinta-3);
+}
+
+.hilo__documento-ver {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: var(--fs-caption);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.hilo__documento-preview {
+  display: block;
+  max-inline-size: 28rem;
+}
+
 .hilo__subiendo {
   margin: 0 0 3px;
   color: var(--tinta-3);
