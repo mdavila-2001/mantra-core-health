@@ -312,7 +312,7 @@ describe('Appointments', () => {
       expect(fixture.nativeElement.textContent).toContain('Consultorio Cardiología');
     });
 
-    it('el vacío de laboratorios no le dice a la persona que espere sin más', () => {
+    it('el vacío de laboratorios no le dice a la persona que espere sin más', async () => {
       montar();
       responderArranque([]);
 
@@ -320,6 +320,7 @@ describe('Appointments', () => {
       fixture.detectChanges();
       http.expectOne((r) => r.url === '/scheduling/resources').flush({ items: [], count: 0 });
       fixture.detectChanges();
+      await irAPedirTurno(fixture, componente);
 
       const texto: string = fixture.nativeElement.textContent;
       expect(texto).toContain('Todavía no hay laboratorios con horarios');
@@ -870,6 +871,34 @@ function montarCancelacion(opts: Opciones) {
   };
 }
 
+/**
+ * Abre la sección «Pedir un turno».
+ *
+ * La pantalla ya no apila las citas propias y la grilla de horarios: son dos
+ * secciones y se muestra una a la vez, porque para pedir un turno había que
+ * bajar por todas las citas hasta el final. Cuál está abierta vive en la URL,
+ * así que abrirla es una navegación y hay que esperarla antes de mirar el DOM.
+ */
+async function irAPedirTurno(
+  fixture: ComponentFixture<Appointments>,
+  comp: Appointments,
+): Promise<void> {
+  seccion(comp).elegirSeccion('pedir');
+  await fixture.whenStable();
+  fixture.detectChanges();
+}
+
+/** Acceso tipado a la sección abierta. */
+function seccion(comp: Appointments) {
+  return comp as unknown as {
+    elegirSeccion(s: 'citas' | 'pedir'): void;
+    seccion(): 'citas' | 'pedir';
+    enPedirTurno(): boolean;
+    elegirDiaDeHorarios(dia: Date): void;
+    diaDeHorarios(): Date | null;
+  };
+}
+
 /** Acceso tipado a los miembros protegidos que las pruebas ejercen. */
 function api(comp: Appointments) {
   return comp as unknown as {
@@ -1143,14 +1172,14 @@ describe('Appointments · reprogramar turno propio', () => {
     expect(rescheduleBooking).not.toHaveBeenCalled();
   });
 
-  it('fuera del modo, el horario sigue enlazando a pedir un turno nuevo', () => {
+  it('fuera del modo, el horario sigue enlazando a pedir un turno nuevo', async () => {
     const { fixture, comp } = montarCancelacion({
       bookings: [citaMock('b1', 's1')],
       labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
       ...GRILLA,
     });
     api(comp).elegirAgenda('recurso:r-1');
-    fixture.detectChanges();
+    await irAPedirTurno(fixture, comp);
 
     const ancla = fixture.nativeElement.querySelector('.turnos__horario a');
     expect(ancla).not.toBeNull();
@@ -1158,7 +1187,7 @@ describe('Appointments · reprogramar turno propio', () => {
     expect(fixture.nativeElement.querySelector('.turnos__mover')).toBeNull();
   });
 
-  it('en el modo, el horario ofrece «mover acá» y no enlaza a la reserva', () => {
+  it('en el modo, el horario ofrece «mover acá» y no enlaza a la reserva', async () => {
     const { fixture, comp } = montarCancelacion({
       bookings: [citaMock('b1', 's1')],
       labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
@@ -1166,8 +1195,12 @@ describe('Appointments · reprogramar turno propio', () => {
     });
     const a = api(comp);
     a.iniciarReprogramacion(a.turnosListos()[0]);
+    // La grilla que mueve el turno vive en la otra sección: el botón la abre
+    // solo. Si no lo hiciera, «Reprogramar» no haría nada visible.
+    await fixture.whenStable();
     fixture.detectChanges();
 
+    expect(seccion(comp).seccion()).toBe('pedir');
     expect(fixture.nativeElement.querySelector('.turnos__horario a')).toBeNull();
     expect(fixture.nativeElement.querySelector('.turnos__mover')).not.toBeNull();
     // Y el aviso dice qué turno se está moviendo, con su salida.
@@ -1386,10 +1419,10 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
     expect(fixture.nativeElement.querySelector('.turnos__reprogramar')).toBeNull();
   });
 
-  it('sin organización activa, el aviso dice que se elige desde el encabezado', () => {
+  it('sin organización activa, el aviso dice que se elige desde el encabezado', async () => {
     // Sin `tenant`: el caso real de una sesión sin organización activa.
-    const { fixture } = montarCancelacion({ bookings: [], labels: [] });
-    fixture.detectChanges();
+    const { fixture, comp } = montarCancelacion({ bookings: [], labels: [] });
+    await irAPedirTurno(fixture, comp);
 
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(texto).toContain('Elegí una organización');
@@ -1597,7 +1630,7 @@ describe('Appointments · lista de espera (P8)', () => {
     expect(enrollWaitlist).not.toHaveBeenCalled();
   });
 
-  it('ya anotado en esa agenda: se dice, no se ofrece anotarse de nuevo', () => {
+  it('ya anotado en esa agenda: se dice, no se ofrece anotarse de nuevo', async () => {
     const { fixture, comp } = montarCancelacion({
       bookings: [],
       labels: [],
@@ -1607,7 +1640,7 @@ describe('Appointments · lista de espera (P8)', () => {
     });
 
     p8(comp).elegirAgenda('recurso:r-1');
-    fixture.detectChanges();
+    await irAPedirTurno(fixture, comp);
 
     expect(p8(comp).yaEnEspera()).toBe(true);
     expect(
@@ -1667,6 +1700,123 @@ describe('Appointments · la demora se ve en el turno (P8)', () => {
 });
 
 /** Acceso tipado a lo que las pruebas de vista dual ejercen. */
+/**
+ * Mirar las citas propias y pedir una nueva son dos secciones, no una columna
+ * larga.
+ *
+ * El pedido fue literal: «tenés que bajar mucho para pedir un turno con un
+ * doctor después de ver tus citas». Estaban apiladas —conmutador de vista,
+ * barra de filtros, la lista entera y recién al fondo el formulario—, así que
+ * quien entraba a pedir hora recorría todas sus citas antes de llegar. Estas
+ * pruebas fijan que se muestre una a la vez y que las acciones que necesitan la
+ * otra la abran solas, en vez de dejar un botón que no hace nada visible.
+ */
+describe('Appointments · mis citas y pedir un turno son dos secciones', () => {
+  const CON_GRILLA = {
+    tenant: 't-1',
+    resources: [{ id: 'r-1', name: 'Consultorio Cardiología' }],
+    slots: [cupoMock('slot-9')],
+  };
+
+  it('arranca en «Mis citas» y la búsqueda de horarios no está debajo', () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+      ...CON_GRILLA,
+    });
+
+    expect(seccion(comp).seccion()).toBe('citas');
+    expect(fixture.nativeElement.querySelector('.turnos__lista')).not.toBeNull();
+    // Lo que antes obligaba a bajar: el selector de con quién pedir el turno.
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="turnos-tipo-profesional"]'),
+    ).toBeNull();
+  });
+
+  it('el conmutador lleva a pedir turno sin pasar por la lista de citas', async () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+      ...CON_GRILLA,
+    });
+
+    await irAPedirTurno(fixture, comp);
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="turnos-tipo-profesional"]'),
+    ).not.toBeNull();
+    // Y las citas dejan de estar en el medio: ese es el punto del cambio.
+    expect(fixture.nativeElement.querySelector('.turnos__lista')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="turnos-filtros"]')).toBeNull();
+  });
+
+  it('el conmutador de secciones ofrece las dos, con la abierta marcada', () => {
+    const { fixture } = montarCancelacion({ bookings: [], labels: [] });
+
+    const control = fixture.nativeElement.querySelector('[data-testid="turnos-secciones"]');
+    expect(control).not.toBeNull();
+    const rotulos = [...control.querySelectorAll('button')].map((b: HTMLButtonElement) =>
+      (b.textContent ?? '').trim(),
+    );
+    expect(rotulos).toEqual(['Mis citas', 'Pedir un turno']);
+    expect(control.querySelector('[data-value="citas"]').getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('sin ninguna cita, el vacío ofrece pedir una en vez de sólo nombrarla', async () => {
+    const { fixture, comp } = montarCancelacion({ bookings: [], labels: [], ...CON_GRILLA });
+
+    const boton = fixture.nativeElement.querySelector(
+      '[data-testid="turnos-pedir-desde-vacio"]',
+    ) as HTMLButtonElement | null;
+    expect(boton).not.toBeNull();
+
+    boton?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(seccion(comp).seccion()).toBe('pedir');
+  });
+
+  it('elegir un día en el calendario abre la búsqueda con ese día puesto', async () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+      ...CON_GRILLA,
+    });
+    const dia = new Date('2026-08-14T00:00:00.000Z');
+
+    seccion(comp).elegirDiaDeHorarios(dia);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(seccion(comp).seccion()).toBe('pedir');
+    expect(seccion(comp).diaDeHorarios()).toEqual(dia);
+    // Y se dice qué día se está mirando, con la salida para ver todos.
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="turnos-dia-elegido"]'),
+    ).not.toBeNull();
+  });
+
+  it('salir del modo reprogramación devuelve a las citas, no deja mirando horarios', async () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+      ...CON_GRILLA,
+    });
+    const a = api(comp);
+    a.iniciarReprogramacion(a.turnosListos()[0]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    a.cancelarReprogramacion();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(seccion(comp).seccion()).toBe('citas');
+    expect(fixture.nativeElement.querySelector('.turnos__lista')).not.toBeNull();
+  });
+});
+
 function vista(comp: Appointments) {
   return comp as unknown as {
     elegirVista(v: 'lista' | 'calendario'): void;
