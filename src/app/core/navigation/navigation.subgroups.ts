@@ -357,15 +357,32 @@ export const NAV_GROUP_ICONS: Record<NavGroup, NavIconName> = {
  * medias —sacar el dominio pero dejar «Mis gestiones» plegado— deja el mismo
  * problema una pulgada más abajo.
  *
- * Por qué estos dos y no todos. «General» y «Mi cuenta» son los dominios de
+ * Por qué estos cuatro y no todos. «General» y «Mi cuenta» son los dominios de
  * quien **usa** la plataforma para lo suyo: el paciente entraba a «Mi cuenta»,
  * después a «Mis gestiones» y recién ahí veía «Mis citas» — tres clics para el
  * destino más frecuente del producto, y dos de ellos sobre rótulos que no
  * llevan a ninguna pantalla. Aplanados, su menú entero son catorce renglones a
- * un clic, que entran en una barra sin desplazarla. «Administración» tiene
- * veintidós secciones y aplanarla cambiaría un problema por otro; los dominios
- * de trabajo se quedan como están hasta que alguien lo pida mirando esa barra.
+ * un clic, que entran en una barra sin desplazarla.
  *
- * Pedido del propietario del producto, 12/09/2026.
+ * «Atención» y «Facturación» se suman el 13/09/2026, y por el mismo motivo
+ * mirado desde la otra silla: son **los dos únicos dominios de trabajo que ve
+ * quien ejerce**, y eran lo único que su barra le hacía abrir. Abrir un
+ * desplegable para llegar a «Archivo clínico» o a «Consultas médicas» —las
+ * pantallas donde pasa el día— es el costo que la barra le cobraba a cada
+ * paciente que atiende. Aplanados, el médico ve nueve renglones de atención y
+ * los de facturación seguidos, todos a un clic, y no le queda ni un `<details>`
+ * en la barra.
+ *
+ * «Administración» sigue plegada: tiene veintidós secciones, aplanarla
+ * cambiaría un problema por otro, y no la ve quien ejerce.
+ *
+ * Pedido del propietario del producto: 12/09/2026 los dos primeros, 13/09/2026
+ * los dos de trabajo —mirando la barra del médico, que es la condición que este
+ * comentario dejaba puesta—.
  */
-export const GRUPOS_APLANADOS: ReadonlySet<NavGroup> = new Set<NavGroup>(['General', 'Mi cuenta']);
+export const GRUPOS_APLANADOS: ReadonlySet<NavGroup> = new Set<NavGroup>([
+  'General',
+  'Atención',
+  'Facturación',
+  'Mi cuenta',
+]);
