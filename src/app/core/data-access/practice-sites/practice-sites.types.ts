@@ -42,6 +42,22 @@ export interface PracticeSite {
    * trata como ajeno, que es la lectura prudente.
    */
   readonly esPropio?: boolean;
+
+  /**
+   * El archivo del **QR bancario** que el profesional quiere cobrar en esta
+   * sede, o `null` si todavía no configuró ninguno.
+   *
+   * Es por sede y no por persona a propósito: un médico que atiende en su
+   * consultorio y en una clínica no cobra por la misma cuenta en los dos
+   * lugares, y un único QR de perfil lo obligaría a corregirlo cada vez que
+   * cambia de establecimiento.
+   *
+   * Opcional por el mismo motivo que {@link PracticeSite.esPropio}: la API
+   * **todavía no lo manda** (P33 de `PENDIENTES-BACKEND.md`). Ausente se lee
+   * como «no hay ninguno configurado», que es lo que la pantalla avisa en
+   * ámbar — nunca esconde el camino para cargarlo.
+   */
+  readonly bankQrFileId?: string | null;
 }
 
 /**

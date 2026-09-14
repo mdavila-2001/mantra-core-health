@@ -875,3 +875,160 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     expect(cuerpo['roleTitle']).toBeUndefined();
   });
 });
+
+/**
+ * Lo que el cliente pidió el 13/09/2026 sobre las acciones de cada sede.
+ *
+ * 1. **Editar y retirar en ícono**, con su globo. Antes eran dos rótulos, y con
+ *    un tercero la fila se partía en dos renglones apenas el nombre del
+ *    hospital era largo.
+ * 2. **Un botón de QR** por sede, que abre el QR bancario con el que cobra ahí.
+ * 3. **En ámbar cuando falta.** Y no sólo en ámbar: el color solo no dice nada
+ *    a quien no lo ve (WCAG 1.4.1), así que el nombre accesible cambia también.
+ */
+describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  const conQr = (over: Record<string, unknown> = {}) =>
+    sedeEnCable({ id: 'site-qr', name: 'Consultorio Dra. Pérez', esPropio: true, bankQrFileId: 'file-qr', ...over });
+  const sinQr = (over: Record<string, unknown> = {}) =>
+    sedeEnCable({ id: 'site-sin-qr', name: 'Hospital San Lucas', esPropio: false, bankQrFileId: null, ...over });
+
+  /** Las filas de «Dónde atiendo», en el orden en que se dibujan. */
+  function filas(fixture: ComponentFixture<WorkHistory>): HTMLElement[] {
+    return [...fixture.nativeElement.querySelectorAll('[data-testid="sede-propia"]')];
+  }
+
+  it('editar y retirar son íconos con nombre accesible y globo', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [conQr()], count: 1 });
+    fixture.detectChanges();
+
+    const editar = filas(fixture)[0]!.querySelector('[data-testid="sede-editar"]')!;
+    const retirar = filas(fixture)[0]!.querySelector('[data-testid="sede-quitar"]')!;
+
+    // Sin texto visible: lo que queda es el glifo.
+    expect(editar.textContent?.trim()).toBe('');
+    expect(retirar.textContent?.trim()).toBe('');
+    expect(editar.querySelector('svg')).not.toBeNull();
+    expect(retirar.querySelector('svg')).not.toBeNull();
+
+    // Y el nombre nombra la sede: «Editar» repetido cuatro veces no le sirve a
+    // quien navega por lista de botones.
+    expect(editar.getAttribute('aria-label')).toBe('Editar Consultorio Dra. Pérez');
+
+    // El globo, con el teclado y no sólo con el puntero: un ícono sin texto
+    // que sólo se explica al apuntarlo no se explica a quien no apunta.
+    editar.dispatchEvent(new FocusEvent('focus'));
+    fixture.detectChanges();
+    expect(document.body.querySelector('app-tooltip-panel')?.textContent?.trim()).toBe(
+      'Editar Consultorio Dra. Pérez',
+    );
+    editar.dispatchEvent(new FocusEvent('blur'));
+  });
+
+  /**
+   * El glifo dice «borrar» porque es el que se reconoce; el texto dice lo que
+   * de verdad pasa, que no es lo mismo en las dos sedes.
+   */
+  it('retirar se nombra distinto en la propia y en la ajena', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
+    fixture.detectChanges();
+
+    const nombres = filas(fixture).map((fila) =>
+      fila.querySelector('[data-testid="sede-quitar"]')!.getAttribute('aria-label'),
+    );
+    expect(nombres).toEqual([
+      'Retirar Consultorio Dra. Pérez de tus consultorios',
+      'Dejar de atender en Hospital San Lucas',
+    ]);
+  });
+
+  it('toda sede tiene su botón de QR, propia o ajena', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
+    fixture.detectChanges();
+
+    expect(
+      filas(fixture).map((fila) => fila.querySelector('[data-testid="sede-qr"]') !== null),
+    ).toEqual([true, true]);
+  });
+
+  it('sin QR configurado el botón va en ámbar Y lo dice con palabras', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
+    fixture.detectChanges();
+
+    const [conImagen, sinImagen] = filas(fixture).map(
+      (fila) => fila.querySelector('[data-testid="sede-qr"]')!,
+    );
+
+    expect(sinImagen!.classList).toContain('historial__qr--sin-configurar');
+    expect(conImagen!.classList).not.toContain('historial__qr--sin-configurar');
+
+    // El color no puede ser la única señal.
+    expect(sinImagen!.getAttribute('aria-label')).toBe(
+      'Configurar el QR bancario de Hospital San Lucas',
+    );
+    expect(conImagen!.getAttribute('aria-label')).toBe(
+      'Ver el QR bancario de Consultorio Dra. Pérez',
+    );
+  });
+
+  /**
+   * `bankQrFileId` llega ausente contra la API real (P33). Ausente se lee como
+   * «no hay ninguno», que es lo que deja el camino para cargarlo — nunca lo
+   * esconde.
+   */
+  it('sin `bankQrFileId` en el cable, se trata como sin configurar', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
+    fixture.detectChanges();
+
+    expect(filas(fixture)[0]!.querySelector('[data-testid="sede-qr"]')!.classList).toContain(
+      'historial__qr--sin-configurar',
+    );
+  });
+
+  /**
+   * Uno solo y fuera del `@for`: dentro habría un `<dialog>` por fila —cuatro
+   * en el DOM para uno que se abre— y cada uno pidiendo su imagen.
+   */
+  it('el modal no existe hasta que se pide, y entonces es uno solo', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [conQr(), sinQr()], count: 2 });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-site-bank-qr-dialog')).toBeNull();
+
+    filas(fixture)[0]!.querySelector<HTMLButtonElement>('[data-testid="sede-qr"]')!.click();
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelectorAll('app-site-bank-qr-dialog'),
+    ).toHaveLength(1);
+  });
+
+  /**
+   * Tras guardar, lo único visible es que esa fila deja el ámbar. Releer las
+   * cuatro sedes para enterarse de eso es una vuelta completa por un dato que
+   * ya está en la mano.
+   */
+  it('guardar un QR apaga el ámbar de esa fila sin releer la lista', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [sinQr()], count: 1 });
+    fixture.detectChanges();
+
+    (
+      api(fixture)['registrarQrDeSede'] as unknown as (s: unknown, f: string) => void
+    )(sinQr(), 'file-nuevo');
+    fixture.detectChanges();
+
+    expect(filas(fixture)[0]!.querySelector('[data-testid="sede-qr"]')!.classList).not.toContain(
+      'historial__qr--sin-configurar',
+    );
+    // Y no se volvió a pedir nada.
+    http.verify();
+  });
+});

@@ -38,28 +38,102 @@
                   <span class="historial__sede">{{ sede.addressText | uppercase }}</span>
                 }
               </div>
+              <!-- Tres acciones por sede, las tres en ícono: con el texto
+                   completo («Editar», «Retirar», «QR bancario») la fila se
+                   partía en dos renglones en cuanto el nombre del hospital era
+                   largo. El nombre accesible y el globo dicen SIEMPRE sobre qué
+                   sede actúan: «Editar» a secas, repetido cuatro veces, no le
+                   sirve a quien navega por lista de botones. -->
               <div class="historial__acciones">
+                <!-- El QR va primero porque es el único que avisa de algo: sin
+                     configurar se pinta en ámbar, y una advertencia al final de
+                     la fila se lee después de las acciones que no urgen. -->
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  iconOnly
+                  class="historial__qr"
+                  [class.historial__qr--sin-configurar]="!tieneQrBancario(sede)"
+                  data-testid="sede-qr"
+                  [attr.aria-label]="etiquetaDelQr(sede)"
+                  [appTooltip]="etiquetaDelQr(sede)"
+                  (clicked)="abrirQrDeSede(sede)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1" />
+                  </svg>
+                </button>
+
                 @if (sede.esPropio) {
                   <button
                     app-button
                     variant="ghost"
                     size="sm"
                     type="button"
+                    iconOnly
                     data-testid="sede-editar"
+                    [attr.aria-label]="'Editar ' + sede.name"
+                    [appTooltip]="'Editar ' + sede.name"
                     (clicked)="abrirEdicionDeSede(sede)"
                   >
-                    Editar
+                    <svg
+                        viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M4 20h4l10-10a2.83 2.83 0 0 0-4-4L4 16v4Z" />
+                      <path d="m13.5 6.5 4 4" />
+                    </svg>
                   </button>
                 }
+
+                <!-- El glifo es el de borrar, que es el que todo el mundo
+                     reconoce, y el texto dice lo que de verdad pasa: la sede no
+                     se borra, deja de figurar. Por eso el globo no dice
+                     «Eliminar» y cambia según de quién sea la sede. -->
                 <button
                   app-button
                   variant="ghost"
                   size="sm"
                   type="button"
+                  iconOnly
+                  class="historial__retirar"
                   data-testid="sede-quitar"
+                  [attr.aria-label]="etiquetaDeRetiro(sede)"
+                  [appTooltip]="etiquetaDeRetiro(sede)"
                   (clicked)="quitarSede(sede)"
                 >
-                  Retirar
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+                  </svg>
                 </button>
               </div>
             </li>
@@ -246,6 +320,17 @@
         </form>
       }
     </section>
+    }
+
+    <!-- El QR bancario de una sede. Fuera del `@for` a propósito: montado
+         dentro habría uno por fila —cuatro `<dialog>` en el DOM para uno que se
+         abre— y cada uno pidiendo su imagen al abrirse la tarjeta. -->
+    @if (sedeConQrAbierto(); as sede) {
+      <app-site-bank-qr-dialog
+        [site]="sede"
+        (saved)="registrarQrDeSede(sede, $event)"
+        (closed)="cerrarQrDeSede()"
+      />
     }
 
     <!-- El historial laboral. Se suprime entero cuando esta pantalla se monta

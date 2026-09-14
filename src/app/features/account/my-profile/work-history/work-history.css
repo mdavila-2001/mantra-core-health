@@ -190,12 +190,58 @@
   gap: var(--sp-2);
 }
 
-/* Las acciones de una sede propia son dos —corregirla y retirarla— y van
-   juntas al final de la fila, no apiladas. */
+/* Las acciones de una sede son tres —su QR bancario, corregirla y retirarla— y
+   van juntas al final de la fila, no apiladas. En ícono: con los tres rótulos
+   completos la fila se partía en dos renglones apenas el nombre del hospital
+   pasaba de corto. */
 .historial__acciones {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
+  gap: var(--sp-1);
+  /* Los tres botones no siguen la línea de base del nombre: el `baseline` de la
+     fila los subiría, y un ícono no tiene línea de base que alinear. */
+  align-self: center;
+}
+
+/* El QR sin configurar, en ámbar: es lo único de esta fila que está a medias, y
+   el médico tiene que poder verlo de un vistazo entre cuatro sedes. El color no
+   lo dice solo —el globo y el nombre accesible dicen «Configurar el QR bancario
+   de …» contra «Ver el QR bancario de …»—, que es lo que pide WCAG 1.4.1.
+
+   ## Por qué `--c-warning-600` y no los otros tres ámbares
+
+   Medido, no elegido a ojo. La rampa de REDSAT es un ámbar de arena, no un
+   amarillo de semáforo, así que el escalón decide entre «se ve» y «se lee como
+   marrón»:
+
+   | Token | Sobre la tarjeta clara | Cómo se lee |
+   |---|---|---|
+   | `--c-amber-500` (el acento) | **2,06:1** | ámbar, pero no llega a 3:1 |
+   | `--c-amber-600` | **3,09:1** | ámbar, y pasa |
+   | `--c-amber-700` | 4,94:1 | ya tira a marrón |
+   | `--c-amber-800` | 8,29:1 | marrón: no dice «ámbar» |
+
+   3:1 es el mínimo de WCAG 1.4.11 para un objeto gráfico, y el 600 es el único
+   escalón que lo cumple sin dejar de parecer ámbar. Sirve en los dos temas —
+   sobre la superficie oscura queda por encima de 4:1—, así que es un solo token
+   y no un par con media query: en este proyecto el tema lo resuelven las
+   variables de `styles.css`, y ningún componente escribe `prefers-color-scheme`.
+
+   El trazo sube a 2 px: a 3:1 justo, una línea de 1,6 px se desdibuja. */
+.historial__qr--sin-configurar {
+  color: var(--c-warning-600);
+}
+
+.historial__qr--sin-configurar svg {
+  stroke-width: 2;
+}
+
+/* Retirar es destructivo en su efecto aunque no borre la sede: la tinta lo
+   dice antes de que nadie lea el globo. Sólo al apuntarlo, para que cuatro
+   filas no se lean como cuatro advertencias. */
+.historial__retirar:hover,
+.historial__retirar:focus-visible {
+  color: var(--text-danger);
 }
 
 /* La segunda puerta: buscar un establecimiento que ya existe. Va separada del

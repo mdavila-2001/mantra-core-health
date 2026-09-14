@@ -27,6 +27,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import { SiteBankQrDialog } from './site-bank-qr-dialog/site-bank-qr-dialog';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -38,6 +39,7 @@ import { Input } from '../../../../shared/components/atoms/input/input';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
@@ -119,6 +121,8 @@ import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/
     LocationPicker,
     ReferenceCombobox,
     Select,
+    SiteBankQrDialog,
+    Tooltip,
     UpperCasePipe,
   ],
   templateUrl: './work-history.html',
@@ -362,6 +366,23 @@ export class WorkHistory implements OnInit {
    * vive en un componente y no copiado en cada pantalla.
    */
   protected readonly sedeEnEdicion = signal<PracticeSite | null>(null);
+
+  /* -- El QR bancario de cada sede ----------------------------------------- */
+
+  /**
+   * La sede cuyo QR bancario se está mirando, o `null` si el modal está cerrado.
+   *
+   * Se guarda el **id** y la sede se recalcula de la lista, y no al revés: tras
+   * subir un QR la lista se relee y la sede guardada sería la vieja, con su
+   * `bankQrFileId` anterior — el modal seguiría abierto mostrando el estado
+   * previo al cambio que acaba de hacer.
+   */
+  private readonly sedeConQrAbiertoId = signal<string | null>(null);
+
+  protected readonly sedeConQrAbierto = computed<PracticeSite | null>(() => {
+    const id = this.sedeConQrAbiertoId();
+    return id === null ? null : (this.sedes().find((sede) => sede.id === id) ?? null);
+  });
 
   /* ---- Atiendo en uno que ya existe --------------------------------------
 
@@ -761,6 +782,67 @@ export class WorkHistory implements OnInit {
         this.registroDeSede.set(errorToViewState<null>(error));
       },
     });
+  }
+
+  /* -- El QR bancario (una sede, una cuenta) ------------------------------- */
+
+  /** Si la sede ya tiene un QR bancario configurado. */
+  protected tieneQrBancario(sede: PracticeSite): boolean {
+    return (sede.bankQrFileId ?? null) !== null;
+  }
+
+  /**
+   * Qué dice el botón del QR de esa sede, en el globo y para el lector.
+   *
+   * Dos textos y no uno porque son dos cosas distintas: mirar el que ya está y
+   * cargar el que falta. Con un único «QR bancario» el ámbar sería la única
+   * pista de que hay algo pendiente, y el color solo no alcanza para decirlo
+   * (WCAG 1.4.1).
+   */
+  protected etiquetaDelQr(sede: PracticeSite): string {
+    return this.tieneQrBancario(sede)
+      ? `Ver el QR bancario de ${sede.name}`
+      : `Configurar el QR bancario de ${sede.name}`;
+  }
+
+  /**
+   * Qué dice el botón de retirar, que no es el mismo acto en las dos sedes.
+   *
+   * En la propia se deja de ofrecer un consultorio que es suyo; en la ajena se
+   * corta un vínculo con una organización. El glifo es el mismo —el de borrar,
+   * que es el que se reconoce— y el texto es el que aclara que nada se borra.
+   */
+  protected etiquetaDeRetiro(sede: PracticeSite): string {
+    return sede.esPropio === true
+      ? `Retirar ${sede.name} de tus consultorios`
+      : `Dejar de atender en ${sede.name}`;
+  }
+
+  protected abrirQrDeSede(sede: PracticeSite): void {
+    this.sedeConQrAbiertoId.set(sede.id);
+  }
+
+  protected cerrarQrDeSede(): void {
+    this.sedeConQrAbiertoId.set(null);
+  }
+
+  /**
+   * Anota el QR recién guardado en la sede que lo recibió.
+   *
+   * Se actualiza la lista en memoria en vez de releerla del servidor: la única
+   * consecuencia visible es que el botón de esa fila deja de estar en ámbar, y
+   * pedir las cuatro sedes otra vez para enterarse de eso es una vuelta
+   * completa por un dato que ya tenemos en la mano.
+   *
+   * @param sede - La sede que recibió el QR.
+   * @param fileId - El archivo que quedó como su QR.
+   */
+  protected registrarQrDeSede(sede: PracticeSite, fileId: string): void {
+    this.sedes.update((sedes) =>
+      sedes.map((actual) =>
+        actual.id === sede.id ? { ...actual, bankQrFileId: fileId } : actual,
+      ),
+    );
   }
 
   /**

@@ -127,6 +127,33 @@ export class PracticeSitesClient {
   }
 
   /**
+   * `PUT /practitioners/me/sites/:siteId/bank-qr` — el QR bancario con el que
+   * cobro **en esta sede**.
+   *
+   * Va por su propia ruta y no dentro del `PATCH` del consultorio por dos
+   * razones. La primera es de alcance: el `PATCH` sólo corrige el consultorio
+   * **propio**, y el QR se configura también en la clínica u hospital donde el
+   * profesional atiende sin ser dueño de la sede — lo que se guarda ahí no es
+   * la sede, es con qué cobra él en ella. La segunda es de contrato: el
+   * archivo ya está subido (`FilesClient.upload`) y lo único que viaja es su
+   * id, así que mezclarlo con nombre y dirección obligaría a mandar el resto
+   * del consultorio para cambiar una imagen.
+   *
+   * La API todavía no expone la ruta (P33 de `PENDIENTES-BACKEND.md`); la
+   * maqueta sí, y el perfil ya la usa.
+   *
+   * @param siteId - La sede donde se cobra con ese QR.
+   * @param fileId - El archivo ya subido, o `null` para dejarla sin QR.
+   * @returns La sede con el QR aplicado.
+   */
+  setSiteBankQr(siteId: string, fileId: string | null): Observable<PracticeSite> {
+    return this.http.put<PracticeSite>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/bank-qr`),
+      { fileId },
+    );
+  }
+
+  /**
    * `DELETE /practitioners/me/sites/:siteId` — ALV-005: dejo de atender en
    * esa sede. No se borra: se cierra mi vinculación vigente con ella.
    */

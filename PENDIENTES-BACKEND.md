@@ -1,6 +1,8 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-12 — **P30 y P31 son nuevos**: la ficha de una clínica y la de una
+**Actualizado:** 2026-09-13 — **P33 es nuevo**: el QR bancario con el que el profesional cobra
+**en cada sede** no existe en ninguna capa, y el pedido del cliente ya está construido contra la
+maqueta. Antes, 2026-09-12 — **P30 y P31 son nuevos**: la ficha de una clínica y la de una
 farmacia ya viven dentro del panel, y las dos lecturas que las llenan —qué servicios ofrece una
 organización y qué medicamentos tiene una farmacia— no existen en la API. Antes,
 2026-09-10 (noche): **P27 se cerró y su nota estaba equivocada** (ver su
@@ -27,6 +29,7 @@ backend.
 | **P30** | `GET /public/profiles/o/:slug/services` — qué ofrece una organización, con precio de referencia. La ficha ya está construida y espera |
 | **P31** | `GET /public/profiles/f/:slug/products` — qué medicamentos tiene una farmacia, con marca, precio y si hay stock |
 | **P32** | Dos cosas del consultorio propio: `esPropio` en las sedes que devuelve `/practitioners/:id/sites`, y `PATCH /practitioners/me/sites/:id` para corregirlo |
+| **P33** | El **QR bancario por sede**: `bankQrFileId` en las sedes y `PUT /practitioners/me/sites/:id/bank-qr`. **Empieza en el repo del modelo, no en la API** |
 
 ---
 
@@ -1304,3 +1307,72 @@ atiende; contra la API real la petición no tiene ruta.
 
 **Sólo el propio.** Una sede de otra organización no se corrige desde acá: es de
 ella, y lo que uno tiene con ella es una vinculación, no la sede.
+
+---
+
+## P33 · El QR bancario con el que se cobra en cada sede
+
+**Nace el 2026-09-13**, del pedido del cliente sobre «Dónde atiendo»: cada sede
+tiene que poder mostrar el QR bancario que el profesional quiere usar **ahí**.
+
+### Por qué es por sede y no del profesional
+
+Porque no se cobra igual en todos lados. Una médica que atiende en su
+consultorio y además en la Clínica Los Olivos no recauda por la misma cuenta en
+los dos: en el consultorio cobra ella, y en la clínica puede cobrar la clínica.
+Un QR único de perfil la obligaría a corregirlo cada vez que cambia de
+establecimiento — que es la clase de error que se descubre tarde y con la plata
+en la cuenta equivocada.
+
+### Lo que falta, en las cuatro capas
+
+Esto **no empieza en la API**: la columna no existe. La dirección del cambio la
+fija el ADR-0021 (`.puml` → `gen_ddl.py` → `SQL/` → base → entidades), así que
+el trabajo arranca en `mantra-core-health-model/`.
+
+1. **Modelo** — `practice.practice_sites` gana una FK opcional al archivo:
+
+   ```text
+   bank_qr_file_id  uuid  NULL  → common.files(id)
+   ```
+
+   Opcional de verdad: una sede sin QR es un estado normal y corriente, no un
+   dato faltante. Va en la sede y no en `role_assignments` porque lo que
+   identifica es **dónde** se cobra, no bajo qué vínculo — y el vínculo se
+   renueva, se suspende y se vuelve a crear.
+
+2. **Lectura** — `GET /practitioners/:profileId/sites` devuelve `bankQrFileId`
+   (`string | null`). El tipo `PracticeSite` del frontend ya lo declara
+   **opcional**, con el mismo criterio que `esPropio` (P32): ausente se lee como
+   «no hay ninguno configurado», que es lo que la pantalla avisa en ámbar — y
+   así nunca esconde el camino para cargarlo.
+
+3. **Escritura** — `PUT /practitioners/me/sites/:siteId/bank-qr`:
+
+   ```jsonc
+   { "fileId": "uuid del archivo ya subido, o null para dejarla sin QR" }
+   ```
+
+   Devuelve la sede con el QR aplicado, en el mismo formato que la lista.
+
+**Ruta propia y no parte del `PATCH` del consultorio (P32-b)**, por dos motivos:
+
+- **Alcance.** Aquel `PATCH` corrige el consultorio **propio**, y el QR se
+  configura también en la clínica donde el profesional atiende sin ser dueño de
+  la sede. Lo que se guarda ahí no es la sede: es con qué cobra **él** en ella.
+  El backend tiene que autorizarlo por «tengo una asignación de rol vigente en
+  esta sede», no por «soy el dueño de la práctica».
+- **Contrato.** El archivo ya entró por `POST /common/files/upload`, así que lo
+  único que viaja es su id. Mezclarlo con nombre y dirección obligaría a mandar
+  el consultorio entero para cambiar una imagen.
+
+### Lo que el frontend ya hace
+
+El archivo se sube con `FilesClient.upload(file, 'IMAGE', 'NORMAL')` — un QR no
+es dato clínico— y la imagen se muestra bajando el contenido autenticado
+(`GET /common/files/:id/content`), porque un `<img src>` no manda cabeceras y la
+URL firmada del backend no es una URL de navegador.
+
+Simulador: `core/mock/handlers/practice.handlers.ts`; cliente:
+`PracticeSitesClient.setSiteBankQr`; pantalla:
+`features/account/my-profile/work-history/site-bank-qr-dialog`.

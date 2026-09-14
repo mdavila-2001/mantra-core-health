@@ -223,13 +223,16 @@ const vinculaciones = new Coleccion<VinculacionSimulada>([
   { id: uuid('ra-foianini'), practiceId: uuid('practice-foianini'), practiceName: 'Clínica Foianini', practiceType: 'Clínica', practiceSiteId: null, roleConceptId: CARGO['ROLE-MEDICO']!, specialtyConceptId: ESPECIALIDAD['MEDICINA_INTERNA']!, status: 'REJECTED', isPrimary: false, validFrom: null, validTo: null, createdAt: iso(-40), avatarUrl: avatarSvg('Clínica Foianini', '#b45309'), practitionerProfileId: MEDICA.id },
 ]);
 
-const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string }>([
-  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
-  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
+const sitiosPropios = new Coleccion<{ id: string; practiceId: string; code: string; name: string; timeZone: string | null; addressText: string | null; latitude: number | null; longitude: number | null; status: string; practitionerProfileId: string; bankQrFileId: string | null }>([
+  // Sólo el consultorio propio arranca con QR bancario cargado: las otras tres
+  // sedes quedan sin él para que el aviso en ámbar —«todavía no configuraste
+  // ninguno»— se vea en la misma lista que el estado ya resuelto.
+  { ...SITIO_CONSULTORIO, practiceId: PRACTICE_CONSULTORIO, latitude: -17.7863, longitude: -63.1812, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: uuid('file-qr-consultorio') },
+  { ...SITIO_OLIVOS, practiceId: PRACTICE_OLIVOS, latitude: -17.7712, longitude: -63.1955, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null },
   // Dos sedes más para la médica: con cuatro, «Dónde atiende» de su ficha
   // pública pasa de una página y se puede ver el paginado funcionando.
-  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
-  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICA.id },
+  { ...SITIO_SANLUCAS, practiceId: PRACTICE_SANLUCAS, latitude: -17.762, longitude: -63.19, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null },
+  { id: uuid('site-equipetrol-rojas'), name: 'Centro Médico Equipetrol', code: 'EQUIPETROL', addressText: 'Calle Las Palmas N.º 55, Equipetrol, Santa Cruz de la Sierra', timeZone: 'America/La_Paz', practiceId: PRACTICE_OLIVOS, latitude: -17.7648, longitude: -63.1978, status: 'ACTIVE', practitionerProfileId: MEDICA.id, bankQrFileId: null },
 ]);
 
 /**
@@ -268,6 +271,9 @@ export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesion
       longitude: p.lng,
       status: 'ACTIVE',
       esPropio: false,
+      // Una sede deducida de la organización no es una fila de nadie, así que
+      // no hay dónde guardarle un QR: se responde «sin configurar».
+      bankQrFileId: null,
     },
   ];
 }
@@ -285,6 +291,8 @@ export interface SedeDeProfesional {
   readonly status: string;
   /** Si es el consultorio propio y no una sede de una organización. */
   readonly esPropio: boolean;
+  /** El QR bancario con el que el profesional cobra acá, o `null`. */
+  readonly bankQrFileId: string | null;
 }
 
 function concepto(code: string, display: string) {
@@ -406,6 +414,9 @@ export function registrarPracticas(router: MockRouter): void {
       longitude: datos.address?.longitude ?? null,
       status: 'ACTIVE',
       practitionerProfileId: request.user?.practitionerProfileId ?? MEDICA.id,
+      // Un consultorio recién creado no tiene con qué cobrar todavía: el QR se
+      // carga después, desde su propia fila.
+      bankQrFileId: null,
     });
     const { practitionerProfileId: _p, ...resto } = nuevo;
     return { status: 201, body: { ...resto, esPropio: resto.practiceId === PRACTICE_CONSULTORIO } };
@@ -432,6 +443,21 @@ export function registrarPracticas(router: MockRouter): void {
       ...(datos.timeZone === undefined ? {} : { timeZone: datos.timeZone }),
       ...direccion,
     });
+    if (actualizado === undefined) return notFound('Consultorio no encontrado');
+    const { practitionerProfileId: _p, ...resto } = actualizado;
+    return { ...resto, esPropio: resto.practiceId === PRACTICE_CONSULTORIO };
+  });
+
+  /* El QR bancario de una sede. Ruta propia y no parte del `PATCH` de arriba:
+     aquél corrige el consultorio **propio** y esto se configura también en la
+     clínica donde el profesional atiende sin ser dueño de la sede — lo que se
+     guarda no es la sede, es con qué cobra él en ella. Ver P33 de
+     `PENDIENTES-BACKEND.md`. */
+  router.put('/practitioners/me/sites/:id/bank-qr', (request) => {
+    const sitio = sitiosPropios.get(request.params['id']!);
+    if (sitio === undefined) return notFound('Consultorio no encontrado');
+    const { fileId } = cuerpo<{ fileId: string | null }>(request);
+    const actualizado = sitiosPropios.actualizar(sitio.id, { bankQrFileId: fileId ?? null });
     if (actualizado === undefined) return notFound('Consultorio no encontrado');
     const { practitionerProfileId: _p, ...resto } = actualizado;
     return { ...resto, esPropio: resto.practiceId === PRACTICE_CONSULTORIO };

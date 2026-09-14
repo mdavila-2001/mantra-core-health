@@ -1,0 +1,105 @@
+<app-content-dialog
+  [heading]="titulo()"
+  description="La imagen que tus pacientes escanean para pagarte cuando te atienden acá."
+  size="sm"
+  closeLabel="Cerrar"
+  (closed)="cerrar()"
+>
+  <div class="qr-sede">
+    @if (error(); as mensaje) {
+      <app-alert tone="error" data-testid="sede-qr-error">{{ mensaje }}</app-alert>
+    }
+
+    @if (pidiendoImagen()) {
+      @if (subiendo()) {
+        <!-- La zona de soltar desaparece mientras sube: dejarla disponible
+             invita a soltar un segundo archivo sobre una subida en curso, y el
+             que gana sería el que termine último. -->
+        <p class="qr-sede__subiendo" data-testid="sede-qr-subiendo">
+          <app-spinner size="sm" decorative />
+          Subiendo tu QR…
+        </p>
+      } @else {
+        <app-file-input
+          testId="sede-qr-archivo"
+          label="Elegir la imagen"
+          accessibleLabel="Imagen del QR bancario"
+          [accept]="accept"
+          [maxSizeBytes]="maxSizeBytes"
+          [showList]="false"
+          [showFeedback]="false"
+          [files]="elegidos()"
+          (filesChange)="subir($event)"
+          (rejected)="rechazar($event)"
+        />
+
+        @if (fileId() !== null) {
+          <!-- Sólo al reemplazar: sin esto, abrir el lápiz sin querer dejaba
+               como única salida cerrar el modal entero. -->
+          <p class="qr-sede__escape">
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              data-testid="sede-qr-cancelar"
+              (clicked)="cancelarReemplazo()"
+            >
+              Dejar el que ya tenía
+            </button>
+          </p>
+        }
+      }
+    } @else {
+      <figure class="qr-sede__figura">
+        <!-- El lápiz va sobre la esquina de la imagen: es la acción de ESA
+             imagen, y en el pie se leería como una acción del modal. -->
+        <button
+          app-button
+          variant="neutral"
+          size="sm"
+          type="button"
+          iconOnly
+          class="qr-sede__reemplazar"
+          data-testid="sede-qr-reemplazar"
+          [attr.aria-label]="'Cambiar el QR bancario de ' + site().name"
+          appTooltip="Cambiar el QR"
+          appTooltipPosition="left"
+          (clicked)="reemplazar()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M4 20h4l10-10a2.83 2.83 0 0 0-4-4L4 16v4Z" />
+            <path d="m13.5 6.5 4 4" />
+          </svg>
+        </button>
+
+        @if (bajandoImagen()) {
+          <p class="qr-sede__cargando"><app-spinner size="sm" label="Cargando el QR" /></p>
+        } @else if (imagen(); as fuente) {
+          <img
+            class="qr-sede__imagen"
+            data-testid="sede-qr-imagen"
+            [src]="fuente"
+            [alt]="'QR bancario de ' + site().name"
+          />
+        } @else {
+          <!-- El QR está configurado y no se pudo dibujar. Se dice así, y no
+               como «no tenés ninguno»: son dos cosas distintas y la segunda
+               llevaría a cargar otro encima del que ya está. -->
+          <p class="qr-sede__sin-imagen" data-testid="sede-qr-sin-imagen">
+            No pudimos mostrar la imagen guardada. Podés cargar otra con el lápiz.
+          </p>
+        }
+      </figure>
+    }
+  </div>
+</app-content-dialog>
