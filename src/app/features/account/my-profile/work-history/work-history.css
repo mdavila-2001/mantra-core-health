@@ -180,3 +180,35 @@
   line-height: var(--lh-caption);
   font-variant-numeric: tabular-nums;
 }
+
+/* El nombre y su insignia, en una línea: «Consultorio Dra. Rojas · Tu
+   consultorio». Debajo, la insignia se leería como otro renglón de dato. */
+.historial__linea {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Las acciones de una sede propia son dos —corregirla y retirarla— y van
+   juntas al final de la fila, no apiladas. */
+.historial__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* La segunda puerta: buscar un establecimiento que ya existe. Va separada del
+   alta del consultorio propio por una línea, porque son dos operaciones
+   distintas y pegadas se leen como pasos de la misma. */
+.historial__padron {
+  margin-block-start: var(--sp-5);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* El aviso de que el consultorio propio es uno solo. Sin aire se lee como el
+   pie de la última sede de la lista, que es otra cosa: habla de TODAS. */
+.historial__nota-propia {
+  margin-block-start: var(--sp-4);
+}
