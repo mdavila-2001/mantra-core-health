@@ -26,6 +26,20 @@ describe('PatientInsuranceSettlement', () => {
     expect(element.textContent).toContain('Justificación: No informada');
   });
 
+  it('degrada un AVAILABLE con importes incompletos a revisión, sin anunciar disponibilidad', () => {
+    const fixture = TestBed.createComponent(PatientInsuranceSettlement);
+    const incompleto = {
+      ...patientSettlementFixture('approved', 'APPROVED').insuranceSettlement,
+      totalPatientAmount: '',
+    };
+    fixture.componentRef.setInput('availability', 'AVAILABLE');
+    fixture.componentRef.setInput('settlement', incompleto);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('dl')).toBeNull();
+    expect(element.querySelector('[role="status"]')?.textContent).toContain('en revisión');
+  });
+
   it.each(['PENDING_PUBLICATION', 'UNDER_REVIEW', 'NOT_AVAILABLE'])(
     'does not show a definitive charge for %s',
     (availability) => {

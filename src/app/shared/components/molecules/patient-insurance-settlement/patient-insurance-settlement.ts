@@ -16,23 +16,27 @@ import { Badge } from '../../atoms/badge/badge';
 export class PatientInsuranceSettlement {
   readonly settlement = input<Settlement | null>(null);
   readonly availability = input<InsuranceSettlementAvailability>('NOT_AVAILABLE');
-  protected readonly published = computed(
-    () =>
-      normalizePatientSettlement({
-        insuranceSettlementAvailability: this.availability(),
-        insuranceSettlement: this.settlement(),
-      }).insuranceSettlement,
+  private readonly normalized = computed(() =>
+    normalizePatientSettlement({
+      insuranceSettlementAvailability: this.availability(),
+      insuranceSettlement: this.settlement(),
+    }),
   );
-  protected readonly availabilityText = computed(
-    () =>
-      ({
-        AVAILABLE: 'Liquidación en revisión',
-        PENDING_PUBLICATION: 'La aseguradora todavía no publicó la liquidación de este pedido.',
-        UNDER_REVIEW:
-          'La liquidación está en revisión. El cargo al paciente todavía no está confirmado.',
-        NOT_AVAILABLE: 'No hay una liquidación del seguro disponible para este pedido.',
-      })[this.availability()],
-  );
+  protected readonly published = computed(() => this.normalized().insuranceSettlement);
+  // El texto sale de la disponibilidad YA normalizada, no del input: un AVAILABLE
+  // con importes incompletos se degrada a UNDER_REVIEW, y decir «disponible»
+  // mientras no se muestra ni un importe sería anunciar un cargo que no hay.
+  protected readonly availabilityText = computed(() => {
+    const availability = this.normalized().insuranceSettlementAvailability;
+    return availability === 'AVAILABLE'
+      ? null
+      : {
+          PENDING_PUBLICATION: 'La aseguradora todavía no publicó la liquidación de este pedido.',
+          UNDER_REVIEW:
+            'La liquidación está en revisión. El cargo al paciente todavía no está confirmado.',
+          NOT_AVAILABLE: 'No hay una liquidación del seguro disponible para este pedido.',
+        }[availability];
+  });
   protected resultText(result: Settlement['result']): string {
     return {
       APPROVED: 'Aprobado',
