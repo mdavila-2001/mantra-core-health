@@ -50,6 +50,11 @@ test.describe('Expediente · pestañas con marco de ventana', () => {
 
     // Se entra por la lista, como una persona: el identificador del paciente es
     // del banco de datos simulado y fijarlo acá ataría la prueba a la semilla.
+    // El archivo no lista a nadie hasta que se busca: Enter dispara la búsqueda
+    // sin esperar la demora del tipeo.
+    const buscador = page.getByRole('textbox', { name: 'Buscar por nombre o código' });
+    await buscador.fill('Ana');
+    await buscador.press('Enter');
     await page.getByRole('link', { name: 'Ver expediente' }).first().click();
     await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
     await estable(page);
@@ -102,20 +107,20 @@ test.describe('Expediente · pestañas con marco de ventana', () => {
     await expect(page.getByTestId('expediente-abrir-atencion')).toHaveCount(0);
 
     const urlExpediente = page.url();
-    await page.goto(`${urlExpediente}/encounter`, { waitUntil: 'commit' });
-    await page.waitForURL(/\/medical-records\/[^/]+\/encounter$/, { timeout: 60_000 });
+    await page.goto(`${urlExpediente}/consultation`, { waitUntil: 'commit' });
+    await page.waitForURL(/\/medical-records\/[^/]+\/consultation$/, { timeout: 60_000 });
     await estable(page);
 
-    await expect(page.getByRole('heading', { name: 'Encuentro', exact: true })).toBeVisible();
+    await expect(page.getByTestId('consulta-encuentro')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Qué vas a registrar' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Registrar encuentro' })).toBeVisible();
+    await expect(page.locator('[data-testid^="consulta-casilla-"]')).toHaveCount(9);
     expect(await desbordeHorizontal(page)).toBe(0);
 
-    await page.screenshot({ path: join(SALIDA, 'atencion-1440.png'), fullPage: false });
+    await page.screenshot({ path: join(SALIDA, 'consulta-1440.png'), fullPage: false });
 
     /* ---- 5. y se vuelve al expediente sin volver a elegir a nadie --------- */
 
-    await page.getByTestId('atencion-ver-expediente').click();
+    await page.getByTestId('consulta-ver-expediente').click();
     await page.waitForURL(/\/medical-records\/[^/]+$/, { timeout: 60_000 });
     await estable(page);
     await expect(page.locator('app-tabs.tabs--browser').first()).toBeVisible();

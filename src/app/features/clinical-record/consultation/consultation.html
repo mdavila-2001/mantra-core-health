@@ -1,0 +1,252 @@
+<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
+  <!-- La lectura, a un clic: consultar un antecedente mientras se registra. -->
+  <a
+    app-button
+    page-actions
+    variant="outline"
+    [routerLink]="rutaDelExpediente()"
+    data-testid="consulta-ver-expediente"
+  >
+    Ver expediente
+  </a>
+</app-page-header>
+
+<app-view-state-host [state]="consulta()" (retry)="recargar()">
+  <div class="consulta">
+    <!-- ─── El encuentro ───────────────────────────────────────────────────
+         Primero y a todo el ancho: es el registro de que se atendió a esta
+         persona y lo que ata todo lo que se registre debajo. -->
+    <section
+      class="consulta__encuentro"
+      aria-label="Encuentro"
+      appTutorialTarget="consulta-encuentro"
+      data-testid="consulta-encuentro"
+    >
+      @if (errorDelRegistro(); as mensaje) {
+        <app-alert tone="error" data-testid="encuentro-error">{{ mensaje }}</app-alert>
+      }
+
+      @if (encuentrosEnCurso().length > 0) {
+        <ul class="consulta__en-curso" data-testid="encuentros-en-curso">
+          @for (encuentro of encuentrosEnCurso(); track encuentro.id) {
+            <li class="consulta__en-curso-item">
+              <div class="consulta__en-curso-datos">
+                <app-status-seal variant="in-review" label="Encuentro en curso" />
+                <span class="consulta__principal">{{ encuentro.motivo }}</span>
+                <span class="consulta__secundario">
+                  {{ encuentro.clase }}
+                  @if (encuentro.desde) {
+                    · desde {{ encuentro.desde | date: 'd MMM, HH:mm' }}
+                  }
+                  · {{ totalDeEncuentros() }} encuentro{{ totalDeEncuentros() === 1 ? '' : 's' }}
+                  en la historia
+                </span>
+              </div>
+              <button
+                app-button
+                variant="outline"
+                type="button"
+                data-testid="consulta-cerrar-encuentro"
+                [isLoading]="cerrando() === encuentro.id"
+                [disabled]="cerrando() !== null"
+                (clicked)="cerrarEncuentro(encuentro)"
+              >
+                Cerrar encuentro
+              </button>
+            </li>
+          }
+        </ul>
+      } @else if (sinOrganizacion()) {
+        <!-- `tenantId` es obligatorio en el check-in: decirlo antes y no con
+             un error tras el envío. -->
+        <app-alert tone="info" title="Elegí una organización">
+          Un encuentro queda bajo la custodia de una organización. Elegí una en el selector del
+          encabezado para poder registrarlo.
+        </app-alert>
+      } @else {
+        <form class="consulta__apertura" (submit)="$event.preventDefault()">
+          <div class="consulta__apertura-campo">
+            <app-form-field
+              icon="note"
+              label="Motivo de consulta"
+              [hint]="
+                citaDeOrigen()
+                  ? 'El encuentro queda vinculado a la cita desde la que llegaste.'
+                  : 'Opcional. Si llegaste desde la agenda, viene el motivo de la cita.'
+              "
+            >
+              <app-textarea
+                [(value)]="motivo"
+                [rows]="3"
+                [maxLength]="topeDelMotivo"
+                placeholder="Por qué consulta la persona"
+              />
+            </app-form-field>
+          </div>
+          <button
+            app-button
+            variant="primary"
+            type="button"
+            data-testid="consulta-abrir-encuentro"
+            [isLoading]="registrando()"
+            [disabled]="!puedeRegistrar()"
+            (clicked)="registrarEncuentro()"
+          >
+            Abrir encuentro
+          </button>
+        </form>
+      }
+    </section>
+
+    <!-- ─── La rejilla ─────────────────────────────────────────────────────
+         Todo lo que se puede registrar, a la vista. Cada casilla es un botón
+         y abre su formulario en modal: la tabla de abajo nunca se abre en dos
+         para hacerle sitio a un formulario. -->
+    <section
+      class="consulta__registro"
+      aria-labelledby="consulta-rejilla-titulo"
+      appTutorialTarget="consulta-rejilla"
+    >
+      <h2 id="consulta-rejilla-titulo" class="consulta__titulo">Qué vas a registrar</h2>
+
+      <ul class="consulta__rejilla" data-testid="consulta-rejilla">
+        @for (casilla of casillas(); track casilla.clave) {
+          <li>
+            <button
+              type="button"
+              class="consulta__casilla"
+              [attr.data-testid]="casilla.testId"
+              (click)="abrir(casilla.clave)"
+            >
+              <span class="consulta__casilla-icono" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  focusable="false"
+                >
+                  <path [attr.d]="casilla.icono" />
+                </svg>
+              </span>
+              <span class="consulta__casilla-texto">
+                <span class="consulta__casilla-titulo">{{ casilla.titulo }}</span>
+                <span class="consulta__casilla-descripcion">{{ casilla.descripcion }}</span>
+              </span>
+              @if (casilla.cantidad !== null) {
+                <span class="consulta__casilla-cantidad">
+                  {{ casilla.cantidad }}
+                  <span class="consulta__casilla-cantidad-rotulo">
+                    en la historia
+                  </span>
+                </span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  </div>
+</app-view-state-host>
+
+<!-- ─── El formulario de la casilla elegida ──────────────────────────────
+     Un solo modal para las nueve, con el bloque elegido adentro. Cada bloque
+     es EL MISMO que usa el expediente, atado al encuentro en curso cuando lo
+     hay y a una cita ya existente cuando no. -->
+@if (casillaAbierta(); as casilla) {
+  <app-content-dialog
+    [heading]="tituloDelModal()"
+    [description]="descripcionDelModal()"
+    size="lg"
+    closeLabel="Cerrar"
+    data-testid="consulta-modal"
+    (closed)="cerrarCasilla()"
+  >
+    @switch (casilla) {
+      @case ('diagnosticos') {
+        <app-diagnosis-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          [exigeEncuentro]="false"
+          [citas]="citas()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+      @case ('alergias') {
+        <app-allergy-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          [citas]="citas()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+      @case ('medicacion') {
+        <!-- La receta trae su lista: firmar y emitir son pasos de la misma
+             prescripción y se terminan acá. -->
+        <app-medication-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          [exigeEncuentro]="false"
+          [citas]="citas()"
+          [recetas]="recetas()"
+          [medicacionActivaConceptIds]="medicacionActivaConceptIds()"
+          [diagnosticos]="diagnosticosParaReceta()"
+          (cambio)="recargar()"
+          (descargar)="descargarReceta($event)"
+        />
+      }
+      @case ('observaciones') {
+        <app-observation-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          [citas]="citas()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+      @case ('notas') {
+        <!-- La hoja en blanco no cierra el modal al guardar: cada guardado
+             crea una versión y quien escribe suele seguir escribiendo. -->
+        <app-free-note-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          [citas]="citas()"
+          (guardada)="recargar()"
+        />
+      }
+      @case ('planes') {
+        <app-care-plan-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          [citas]="citas()"
+          [diagnosticos]="diagnosticosParaElPlan()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+      @case ('documentos') {
+        <app-document-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          [citas]="citas()"
+          (cambio)="altaRegistrada()"
+        />
+      }
+      @case ('formulario') {
+        <app-specialty-form-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          (cambio)="recargar()"
+        />
+      }
+      @case ('internacion') {
+        <app-admission-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="encuentroActual()"
+          [internaciones]="internaciones()"
+          (cambio)="recargar()"
+        />
+      }
+    }
+  </app-content-dialog>
+}

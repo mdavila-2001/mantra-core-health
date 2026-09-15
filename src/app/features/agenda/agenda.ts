@@ -21,7 +21,7 @@ import { StatusSeal } from '../../shared/components/organisms/status-seal/status
 import { toBookingStatusPresentation, type BookingStatusPresentation } from './booking-status';
 import {
   CITA_QUERY_PARAM,
-  encounterWorkspaceRoute,
+  consultationRoute,
   MOTIVO_QUERY_PARAM,
   patientChartRoute,
 } from '../clinical-record/clinical-record.routes';
@@ -2092,7 +2092,7 @@ export class Agenda {
       },
       rutaAtencion:
         paciente !== null && this.puedeVerExpedientes()
-          ? encounterWorkspaceRoute(paciente)
+          ? consultationRoute(paciente)
           : null,
       llegadaRegistrada: cita.checkedInAt !== undefined,
       solicitada: cita.createdAt,

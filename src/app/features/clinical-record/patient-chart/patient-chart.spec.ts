@@ -737,7 +737,7 @@ describe('PatientChart', () => {
 
   /* ---- lo que se mudó a «Atención» -----------------------------------
      Abrir y cerrar el encuentro, la receta y la internación ya no viven acá:
-     sus pruebas están en `encounter-workspace.spec.ts`. Lo que queda es lo
+     sus pruebas están en `consultation/consultation.spec.ts`. Lo que queda es lo
      único que el expediente sigue escribiendo —el estado clínico de un
      diagnóstico y su adjunto— y los papeles que genera. */
 

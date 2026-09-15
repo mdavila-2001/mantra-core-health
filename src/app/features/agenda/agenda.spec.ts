@@ -1488,7 +1488,7 @@ describe('Agenda', () => {
 
     expect(navegar).toHaveBeenCalledTimes(1);
     const [ruta, extras] = navegar.mock.calls[0] as [string[], { queryParams: unknown }];
-    expect(ruta[0]).toMatch(/\/medical-records\/[^/]+\/encounter$/);
+    expect(ruta[0]).toMatch(/\/medical-records\/[^/]+\/consultation$/);
     expect(extras.queryParams).toEqual(citas().data?.[0]?.['paramsDeLaAtencion']);
     // Ya no recarga la tabla: se fue de la pantalla. Si recargara, el
     // `http.verify()` del afterEach encontraría la petición huérfana.

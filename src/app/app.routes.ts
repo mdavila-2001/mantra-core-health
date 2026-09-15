@@ -434,17 +434,16 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // La atención: todo lo que se ESCRIBE durante una consulta. Cuelga del
-    // expediente y comparte su compuerta de roles porque es la misma persona y
-    // el mismo permiso; lo que cambia es el modo de trabajo. Vivía dentro del
-    // expediente y se separó: leer una historia y registrar una consulta son
-    // dos cosas distintas, y compartiendo pantalla se estorbaban.
-    path: 'medical-records/:profileId/encounter',
-    title: `${APP_TITLE} - Atención clínica`,
+    // La consulta: lo que se registra mientras se atiende. Nace sólo de
+    // «Iniciar consulta» en la agenda y comparte la compuerta del expediente
+    // porque es la misma persona y el mismo permiso. Es una rejilla con todo lo
+    // que se puede registrar; cada casilla abre su formulario en modal.
+    path: 'medical-records/:profileId/consultation',
+    title: `${APP_TITLE} - Consulta`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
-      import('./features/clinical-record/encounter-workspace/encounter-workspace')
-        .then((m) => m.EncounterWorkspace)
+      import('./features/clinical-record/consultation/consultation')
+        .then((m) => m.Consultation)
         .catch(() => chunkFallido()),
   },
   {

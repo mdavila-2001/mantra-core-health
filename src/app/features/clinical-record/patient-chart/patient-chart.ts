@@ -62,7 +62,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
-import { CLINICAL_RECORD_ROUTE, encounterWorkspaceRoute } from '../clinical-record.routes';
+import { CLINICAL_RECORD_ROUTE, consultationRoute } from '../clinical-record.routes';
 import { AllergyBlock } from './allergy-block/allergy-block';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
@@ -438,7 +438,7 @@ export class PatientChart {
   );
 
   /** A dónde vuelve «Volver a la consulta». */
-  protected readonly rutaDeLaAtencion = computed(() => encounterWorkspaceRoute(this.profileId()));
+  protected readonly rutaDeLaAtencion = computed(() => consultationRoute(this.profileId()));
 
   /**
    * La ruta de navegación, con el paciente como último escalón.
