@@ -414,6 +414,18 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // La factura del pedido (T-E4 · F2.1.12, F3.3). Hermana del comprobante
+    // interno y distinta de él: el comprobante dice que no es una factura.
+    // Sin contrato de facturación, un pedido sin factura dice su vacío honesto.
+    path: 'my-account/pharmacy-orders/:orderId/invoice',
+    title: `${APP_TITLE} - Factura`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/order-invoice/order-invoice')
+        .then((m) => m.OrderInvoice)
+        .catch(() => chunkFallido()),
+  },
+  {
     // El mismo pedido, visto desde el mostrador (carril FAR-I3): la
     // «recepción por un link» del registro del cliente. Hija de la bandeja;
     // hereda por prefijo su regla de acceso por membresía.
