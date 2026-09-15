@@ -189,6 +189,58 @@
              no compite por la atención con «tu receta está lista». -->
         <app-notification-bell />
 
+        <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
+             elegir: una cuenta sin dependientes no necesita conmutar nada, y un
+             desplegable de un solo elemento es ruido.
+
+             Mismo marcado que el selector de organización —`.menu-anclaje` con
+             su `.app-menu`— porque el comportamiento lo da el runtime, que
+             conmuta el `hidden` de cualquier menú anclado con ese contrato. -->
+        @if (dependientes().length > 0) {
+          <div class="menu-anclaje">
+            <button
+              class="app-tenant-switcher"
+              type="button"
+              data-testid="header-paciente-activo"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="menu-pacientes"
+              [attr.aria-label]="'Atendiendo a: ' + (nombreDelPacienteActivo() ?? 'vos') + '. Cambiar de persona'"
+            >
+              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <span>{{ nombreDelPacienteActivo() }}</span>
+              <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+            <div class="app-menu" id="menu-pacientes" role="menu" hidden>
+              <button
+                class="app-menu-item"
+                type="button"
+                role="menuitem"
+                [attr.aria-current]="!operandoPorDependiente() ? 'true' : null"
+                (click)="volverAMiPerfil()"
+              >
+                Yo ({{ user()?.displayName }})
+              </button>
+              @for (dependiente of dependientes(); track dependiente.id) {
+                <button
+                  class="app-menu-item"
+                  type="button"
+                  role="menuitem"
+                  [attr.aria-current]="
+                    pacienteActivo() === dependiente.patientProfileId ? 'true' : null
+                  "
+                  (click)="elegirPaciente(dependiente.patientProfileId)"
+                >
+                  {{ dependiente.fullName }} · {{ dependiente.relationshipDisplay }}
+                </button>
+              }
+              <a class="app-menu-item" role="menuitem" routerLink="/my-account/dependents">
+                Administrar dependientes
+              </a>
+            </div>
+          </div>
+        }
+
         @if (tenants().length > 1) {
           <div class="menu-anclaje">
             <button
@@ -288,6 +340,22 @@
         }
       </div>
     </header>
+
+    <!-- B.1 · el aviso de que se está actuando por otra persona. Va una sola
+         vez acá y no en cada pantalla: quien pide un turno, lee una receta o
+         mira una historia tiene que saber de quién son, y repetirlo pantalla
+         por pantalla garantiza que alguna se olvide.
+
+         `role="status"` y no `alert`: es contexto permanente mientras dure la
+         conmutación, no una interrupción. -->
+    @if (operandoPorDependiente()) {
+      <p class="app-contexto-paciente" role="status" data-testid="aviso-paciente-activo">
+        Atendiéndose en representación de: <strong>{{ nombreDelPacienteActivo() }}</strong>.
+        <button type="button" class="app-contexto-paciente__salir" (click)="volverAMiPerfil()">
+          Volver a mi perfil
+        </button>
+      </p>
+    }
 
     <!-- El índice negativo lo hace enfocable por script tras navegar sin
          meterlo en el orden de tabulación. -->

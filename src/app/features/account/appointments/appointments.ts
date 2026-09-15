@@ -1,11 +1,19 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
   AgendaResource,
@@ -272,22 +280,37 @@ export class Appointments {
   private readonly scheduling = inject(SchedulingClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly auth = inject(AuthService);
+  private readonly contexto = inject(PatientContextService);
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);
   private readonly fecha = inject(DatePipe);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  /** Quién es el titular. Sin esto no hay turnos propios que pedir ni mostrar. */
-  private readonly perfil = this.auth.patientProfileId();
+  /**
+   * De quién son los turnos que se muestran.
+   *
+   * **Computado y no una instantánea** (B.1): el titular puede pasar a operar
+   * por un dependiente sin recargar, y una constante leída al construir dejaría
+   * la pantalla mostrando los turnos de la persona anterior. Cae al propio
+   * perfil cuando no hay nadie elegido.
+   */
+  private readonly perfilActivo = this.contexto.activePatientProfileId;
 
   /**
    * La cuenta no es de un paciente.
    *
    * No es un error ni una falta de permisos: el personal de salud tiene sesión
-   * válida y ninguna razón para tener turnos propios acá.
+   * válida y ninguna razón para tener turnos propios acá. Se mira el perfil del
+   * token y no el activo: quien atiende no tiene ni uno ni otro.
    */
-  protected readonly sinPerfilDePaciente = this.perfil === null;
+  protected readonly sinPerfilDePaciente = this.auth.patientProfileId() === null;
+
+  /** De quién se están viendo los turnos, para el rótulo de la pantalla. */
+  protected readonly nombreDelPacienteActivo = this.contexto.activePatientName;
+
+  /** Si se está mirando la agenda de un dependiente y no la propia. */
+  protected readonly operandoPorDependiente = this.contexto.isActingForDependent;
 
   /**
    * La salida cuando la cuenta no es de un paciente: la agenda de la
@@ -829,10 +852,17 @@ export class Appointments {
   });
 
   constructor() {
-    if (this.perfil !== null) {
+    // Se recarga con cada conmutación de paciente, no sólo al montar: los
+    // turnos de un hijo no son los de su madre, y dejar los anteriores en
+    // pantalla sería mostrar los datos de otra persona bajo su nombre.
+    effect(() => {
+      const perfil = this.perfilActivo();
+      if (perfil === null) return;
       this.cargarTurnos();
-      this.cargarRecursos();
       this.cargarEsperas();
+    });
+    if (this.auth.patientProfileId() !== null) {
+      this.cargarRecursos();
     }
   }
 
@@ -840,7 +870,7 @@ export class Appointments {
 
   /** Los turnos del titular. El backend filtra por perfil, no por organización. */
   protected cargarTurnos(): void {
-    const perfil = this.perfil;
+    const perfil = this.perfilActivo();
     if (perfil === null) {
       return;
     }
@@ -1042,7 +1072,7 @@ export class Appointments {
    * queda sin bloque, que es exactamente lo que pasaba antes de que existiera.
    */
   protected cargarEsperas(): void {
-    const perfil = this.perfil;
+    const perfil = this.perfilActivo();
     if (perfil === null) {
       return;
     }
@@ -1064,7 +1094,7 @@ export class Appointments {
    * para que nadie se quede esperando una cita que no existe.
    */
   protected async anotarmeEnEspera(): Promise<void> {
-    const perfil = this.perfil;
+    const perfil = this.perfilActivo();
     const tenantId = this.organizacion();
     const resourceId = this.recursoParaEspera();
     if (perfil === null || tenantId === null || resourceId === null || this.anotandose()) {

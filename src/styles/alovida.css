@@ -774,6 +774,41 @@ app-shell-layout { display: block; }
   background: var(--ambar); border: 2px solid var(--sup-pagina);
 }
 
+/* B.1 · el aviso de que se está operando por otra persona.
+
+   Va entre el encabezado y el contenido, a lo ancho y con el mismo relleno
+   lateral que `.app-main__inner`: pegado al borde parecería parte del marco, y
+   dentro del `<main>` cada pantalla tendría que acordarse de dibujarlo.
+
+   Tono de aviso y no de error: representar a un hijo es normal, lo que no es
+   normal es no darse cuenta de que se está haciendo. */
+.app-contexto-paciente {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e4);
+  margin: 0;
+  padding: var(--e4) var(--e8);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border-bottom: 1px solid var(--st-warning-bd);
+  font-size: var(--fs-caption);
+}
+
+.app-contexto-paciente__salir {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.app-contexto-paciente__salir:hover {
+  text-decoration: none;
+}
+
 .app-main { display: flex; flex-direction: column; min-width: 0; width: 100%; }
 .app-main__inner {
   /* El aire lateral se publica como variable porque hay piezas que necesitan

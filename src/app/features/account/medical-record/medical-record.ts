@@ -6,6 +6,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
 import type {
@@ -165,12 +166,19 @@ export class MedicalRecord {
   private readonly terminology = inject(TerminologyClient);
   private readonly forms = inject(FormsClient);
   private readonly auth = inject(AuthService);
+  private readonly contexto = inject(PatientContextService);
   private readonly toasts = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   /** Quién es el titular. Sin esto no hay historia propia que pedir. */
-  private readonly perfil = this.auth.patientProfileId();
+  /**
+   * De quién es la historia que se muestra.
+   *
+   * Computado (B.1): quien representa a un dependiente lee la suya sin cambiar
+   * de cuenta, y una instantánea dejaría la pantalla clavada en el titular.
+   */
+  private readonly perfil = this.contexto.activePatientProfileId();
 
   /**
    * La cuenta no es de un paciente.
