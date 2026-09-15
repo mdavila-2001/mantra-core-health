@@ -38,16 +38,28 @@
   list-style: none;
 }
 
+/* El renglón apila tres franjas: datos y precio, controles, y el panel. */
 .confirmacion__linea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* Una alternativa elegida se nota sin gritar: sólo el borde cambia. */
+.confirmacion__linea--alternativa {
+  border-color: var(--st-info-bd);
+}
+
+.confirmacion__linea-cuerpo {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
 }
 
 .confirmacion__linea-datos {
@@ -62,6 +74,52 @@
   flex-direction: column;
   align-items: flex-end;
   gap: var(--sp-1);
+}
+
+.confirmacion__subtotal {
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+}
+
+.confirmacion__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.confirmacion__linea-controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.confirmacion__cantidad {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.confirmacion__cantidad-valor {
+  min-width: var(--sp-6);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* El conmutador de demostración: se lee como maqueta, no como un ajuste. */
+.confirmacion__seguro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px dashed var(--st-info-bd);
+  border-radius: var(--r-md);
+  background: var(--st-info-bg);
 }
 
 .confirmacion__total {
