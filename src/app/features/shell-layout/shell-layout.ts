@@ -16,6 +16,7 @@ import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
 import { NavigationService } from '../../core/navigation/navigation.service';
+import { PatientContextService } from '../../core/patient-context/patient-context.service';
 import type { HeaderUser } from '../../shared/components/organisms/header/header.types';
 import type { NavSection } from '../../shared/components/organisms/side-nav/side-nav.types';
 import type { TenantOption } from '../../shared/components/organisms/tenant-switcher/tenant-switcher.types';
@@ -86,6 +87,16 @@ export class ShellLayout {
 
   protected readonly activeTenantId = this.auth.activeTenantId;
 
+  /* B.1 · por quién se está operando. El armazón es el único lugar que existe
+     una vez por sesión con interfaz, así que es donde el conmutador y su aviso
+     pueden vivir sin que cada pantalla los repita. */
+  private readonly contextoDePaciente = inject(PatientContextService);
+
+  protected readonly dependientes = this.contextoDePaciente.dependents;
+  protected readonly pacienteActivo = this.contextoDePaciente.activePatientProfileId;
+  protected readonly operandoPorDependiente = this.contextoDePaciente.isActingForDependent;
+  protected readonly nombreDelPacienteActivo = this.contextoDePaciente.activePatientName;
+
   /**
    * El shell no mide la ventana: la recibe. Sin esto el nav se queda como columna fija de 260 px
    * también en un teléfono, empujando el contenido fuera de la pantalla.
@@ -115,6 +126,12 @@ export class ShellLayout {
     // acumula— pero hacerlo en el arranque lo cargaría también en las pantallas
     // públicas, donde no hay ningún tutorial que ofrecer.
     this.tutorials.register(TUTORIALS);
+
+    /* Los dependientes se piden una sola vez, al montar el armazón: el
+       conmutador tiene que estar antes de que la persona lo busque, y pedirlos
+       desde cada pantalla los pediría cinco veces. El servicio no hace nada
+       bajo SSR ni en una cuenta que no es de un paciente. */
+    this.contextoDePaciente.loadDependents();
 
     this.urlActual.set(this.rutaLimpia());
     this.router.events
@@ -378,5 +395,24 @@ export class ShellLayout {
   protected changeTenant(tenantId: string): void {
     this.auth.selectTenant(tenantId);
     void this.router.navigateByUrl('/dashboard');
+  }
+
+  /**
+   * Pasa a operar por un dependiente.
+   *
+   * No navega, a diferencia del cambio de organización: acá el contenido de la
+   * pantalla sigue siendo del mismo tipo —las citas siguen siendo citas— y
+   * quien conmuta suele estar mirando justamente eso. Las pantallas que leen el
+   * contexto se recargan solas.
+   *
+   * @param patientProfileId - El dependiente elegido.
+   */
+  protected elegirPaciente(patientProfileId: string): void {
+    this.contextoDePaciente.selectPatient(patientProfileId);
+  }
+
+  /** Vuelve a operar por uno mismo. */
+  protected volverAMiPerfil(): void {
+    this.contextoDePaciente.resetToSelf();
   }
 }

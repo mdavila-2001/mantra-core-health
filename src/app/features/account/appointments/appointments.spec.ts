@@ -832,7 +832,15 @@ function montarCancelacion(opts: Opciones) {
       // hay — los casos de la grilla la declaran.
       {
         provide: AuthService,
-        useValue: { patientProfileId: () => 'p-1', activeTenantId: () => opts.tenant ?? null },
+        // `userId` y `displayName` los necesita `PatientContextService` (B.1),
+        // del que la pantalla toma por quién se está operando: sin ellos el
+        // efecto que descarta la elección al cambiar de cuenta revienta.
+        useValue: {
+          userId: () => 'u-1',
+          displayName: () => 'Ana Quispe',
+          patientProfileId: () => 'p-1',
+          activeTenantId: () => opts.tenant ?? null,
+        },
       },
       { provide: DialogService, useValue: { confirm, confirmWithReason } },
       { provide: ToastService, useValue: toast },

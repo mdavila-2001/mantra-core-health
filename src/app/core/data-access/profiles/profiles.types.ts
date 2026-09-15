@@ -957,3 +957,72 @@ export interface LinkableOrganizationPage {
   readonly count: number;
   readonly limit: number;
 }
+
+
+/**
+ * Qué es el dependiente para quien lo representa, ya dado vuelta por el
+ * servidor.
+ *
+ * La columna del modelo describe a la persona **relacionada** —«soy su
+ * madre»—, y la tarjeta necesita decir lo contrario —«Hijo/a»—. La inversión la
+ * hace la API para que ningún cliente tenga que conocer los conceptos del
+ * catálogo para nombrar a un hijo.
+ */
+export type DependentRelationshipCode = 'CHILD' | 'PARENT' | 'SPOUSE' | 'WARD' | 'OTHER';
+
+/**
+ * Una persona a cargo: un menor sin teléfono propio, una madre tutelada.
+ *
+ * `patientProfileId` es lo que viaja en las reservas y en la lectura de su
+ * historia; `id` es el apoderamiento que sostiene la representación, y hará
+ * falta el día que se pueda revocar.
+ */
+export interface Dependent {
+  /** El apoderamiento que habilita a actuar por esta persona. */
+  readonly id: string;
+  /** Su perfil de paciente: el sujeto de sus turnos y de su historia. */
+  readonly patientProfileId: string;
+  readonly personId: string;
+  /** Nombre visible, ya compuesto por el servidor. */
+  readonly fullName: string;
+  readonly name?: string;
+  readonly lastName?: string;
+  readonly birthDate?: Date;
+  /**
+   * Edad cumplida, calculada por el servidor.
+   *
+   * No se deriva acá a propósito: hacerlo en el navegador daría edades
+   * distintas según la hora del aparato.
+   */
+  readonly ageYears?: number;
+  readonly nationalId?: string;
+  readonly relationshipCode: DependentRelationshipCode;
+  /** Cómo se dice ese parentesco en pantalla («Hijo/a»). */
+  readonly relationshipDisplay: string;
+  /** Si el vínculo afirma la tutela legal. */
+  readonly isLegalGuardian: boolean;
+}
+
+/**
+ * Lo que el formulario manda para registrar a un dependiente.
+ *
+ * `relationshipConceptId` es qué es **el titular** para él —«soy su madre»—, no
+ * al revés: es el sentido que esa columna tiene en todas las filas que ya
+ * existen.
+ *
+ * Sin correo ni contraseña: el dependiente no inicia sesión, que es justamente
+ * el caso.
+ */
+export interface NewDependent {
+  readonly name: string;
+  readonly middleName?: string;
+  readonly lastName: string;
+  readonly motherLastName?: string;
+  /** `YYYY-MM-DD`. Obligatoria: la edad distingue a un menor de un tutelado. */
+  readonly birthDate: string;
+  readonly sexAtBirth?: 'MALE' | 'FEMALE' | 'INTERSEX' | 'UNKNOWN';
+  /** Opcional: un recién nacido todavía no tiene cédula. */
+  readonly nationalId?: string;
+  readonly issuerAdministrativeAreaConceptId?: string;
+  readonly relationshipConceptId: string;
+}

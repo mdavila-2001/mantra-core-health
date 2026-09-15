@@ -1,0 +1,93 @@
+/* ============================================================================
+    Dependientes — la lista de personas a cargo y el alta de una nueva.
+
+    Centrada y a lo ancho, como el resto de las pantallas de la cuenta: nada
+    pegado a la izquierda con media pantalla vacía al lado.
+    ========================================================================== */
+
+.dependents {
+  display: grid;
+  gap: var(--sp-5);
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding-block: var(--sp-5);
+}
+
+.dependents__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.dependents__estado {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.dependents__lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* La ficha se parte en dos líneas en pantalla chica: el nombre y el parentesco
+   primero, la acción después. Apretarlos en una fila deja el botón sin ancho
+   táctil. */
+.dependents__ficha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.dependents__quien {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.dependents__nombre {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dependents__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* ---------------------------------------------------------------- el alta -- */
+
+.dependents-form {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.dependents-form__columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.dependents-form__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}
+
+@media (max-width: 36rem) {
+  .dependents-form__columns {
+    grid-template-columns: 1fr;
+  }
+}

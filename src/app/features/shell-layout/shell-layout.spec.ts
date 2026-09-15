@@ -169,6 +169,10 @@ describe('ShellLayout', () => {
       //
       // «Mi perfil» ya no aparece en este tramo: encabeza la lista como destino
       // fijo, fuera del grupo.
+      //
+      // Los dependientes (B.1) van con el mismo criterio que «Mis turnos»: sin
+      // rol, porque el filtro real es tener perfil de paciente.
+      '/my-account/dependents',
       '/my-account/appointments',
       // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
       // «Mis turnos»: el filtro real es tener perfil de paciente, que es un

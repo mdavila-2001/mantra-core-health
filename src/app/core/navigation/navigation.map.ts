@@ -1056,6 +1056,23 @@ export const APP_SECTIONS: readonly AppSection[] = [
      mirar lo suyo. */
 
   {
+    // B.1 · las personas a cargo del titular. Sin `roles` por lo mismo que «Mis
+    // citas»: el filtro real es tener perfil de paciente, que no es un rol sino
+    // un dato de la cuenta, y la pantalla lo dice cuando falta en vez de
+    // esconderse del menú.
+    path: 'my-account/dependents',
+    // Es del paciente: a quien atiende no se le ofrece.
+    hiddenFor: ['PRACTITIONER'],
+    label: 'Dependientes',
+    group: 'Mi cuenta',
+    icon: 'patients',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary:
+      'Registrá a quienes están a tu cargo y pedí turnos o consultá su historia en su nombre.',
+    module: 'M05 profiles',
+  },
+  {
     path: 'my-account',
     label: 'Mi perfil',
     group: 'Mi cuenta',

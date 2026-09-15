@@ -14,6 +14,7 @@ import {
 import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
 import { emitirNotificacion } from './notifications.handlers';
 import { pacientePorId } from '../fixtures/personas';
+import { representaA } from './profiles.handlers';
 import { conflict, noContent, notFound, preconditionFailed, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
 
@@ -47,7 +48,12 @@ function reservaVisible(request: MockRequest, r: ReservaSimulada): boolean {
   const user = request.user;
   if (user === null) return false;
   if (user.patientProfileId !== undefined && user.practitionerProfileId === undefined) {
-    return r.patientProfileId === user.patientProfileId;
+    // Lo suyo, y lo de quienes representa (B.1): quien pidió el turno de su hijo
+    // tiene que verlo en su listado.
+    return (
+      r.patientProfileId === user.patientProfileId ||
+      representaA(user.patientProfileId, r.patientProfileId)
+    );
   }
   return true;
 }
