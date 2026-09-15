@@ -1,9 +1,13 @@
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import type { StepperStep } from '../../../shared/components/molecules/stepper/stepper.types';
-import { esEstadoTerminal } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
+import {
+  esEstadoTerminal,
+  estaPagado,
+} from '../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type {
   EstadoDePedido,
   ModalidadDeEntrega,
+  PagoDelPedido,
   PedidoFarmacia,
 } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 
@@ -37,7 +41,9 @@ const PRESENTACION_POR_ESTADO: Readonly<Record<EstadoDePedido, PedidoStatusPrese
     },
     CONFIRMADO: {
       tone: 'success',
-      label: 'Confirmado',
+      // T-E4: lo que la persona necesita saber es que se está preparando; la
+      // confirmación ya pasó. El código del contrato sigue siendo CONFIRMADO.
+      label: 'En preparación',
       descripcion: 'La farmacia confirmó tu pedido y lo está preparando.',
     },
     ACEPTACION_PENDIENTE: {
@@ -87,15 +93,20 @@ export function toPedidoStatusPresentation(estado: EstadoDePedido): PedidoStatus
  * «Retirado» — nadie pasó por el mostrador — sino «Entregado». Y con el pago
  * ya registrado (FAR-I5), «pagás al retirar» dejaría de ser verdad: la frase
  * del mostrador cambia. Para todo lo demás delega en la tabla por estado.
+ *
+ * `pagado` sale del pedido por omisión; el detalle lo pasa explícito.
  */
-export function presentacionDePedido(pedido: PedidoFarmacia): PedidoStatusPresentation {
+export function presentacionDePedido(
+  pedido: PedidoFarmacia,
+  pagado: boolean = estaPagado(pedido),
+): PedidoStatusPresentation {
   if (
     pedido.estado === 'RETIRADO' &&
     (pedido.modalidad === 'DOMICILIO' || pedido.modalidad === 'TRABAJO')
   ) {
     return { tone: 'secondary', label: 'Entregado', descripcion: 'Tu pedido llegó.' };
   }
-  if (pedido.estado === 'LISTO_PARA_RETIRO' && pedido.pago?.estado === 'PAGADO') {
+  if (pedido.estado === 'LISTO_PARA_RETIRO' && pagado) {
     return {
       tone: 'success',
       label: 'Listo para retirar',
@@ -117,6 +128,21 @@ export function etiquetaDeModalidad(modalidad: ModalidadDeEntrega | null): strin
 }
 
 /**
+ * El medio de pago en palabras, para el badge del detalle (T-E4), o `null`
+ * sin un pago registrado: sin pago no hay badge. Son las mismas palabras que
+ * el resumen de `order-payment`.
+ */
+export function etiquetaDeMedioDePago(pago: PagoDelPedido | null): string | null {
+  if (pago?.estado !== 'PAGADO') {
+    return null;
+  }
+  if (pago.origen === 'QR_DEMO') {
+    return 'Pagado por QR (demo)';
+  }
+  return pago.origen === 'MOSTRADOR' ? 'Pagado en mostrador' : 'Pagado';
+}
+
+/**
  * La línea de tiempo del pedido para el `app-stepper`, ya resuelta.
  *
  * El recorrido feliz es fijo; el paso de la decisión sólo aparece mientras la
@@ -124,11 +150,19 @@ export function etiquetaDeModalidad(modalidad: ModalidadDeEntrega | null): strin
  * receta original vuelve a `CONFIRMADO` y su línea de tiempo sigue derecha,
  * porque la propuesta quedó como historia y no como etapa pendiente.
  *
+ * El paso «Pagado» (T-E4) sigue la misma regla: aparece **sólo con un pago
+ * registrado**. Sin pago, la línea de tiempo es la de siempre y el pedido se
+ * paga al retirar. Con pago, va después de «Enviado» —el pago del checkout
+ * sale junto con el pedido— y antes de «En preparación».
+ *
  * Los terminales que cortan el recorrido (`RECHAZADO`, `VENCIDO`,
  * `CANCELADO`) devuelven vacío: un final anticipado se cuenta con un aviso y
  * sus salidas, no con una línea de progreso que insinúa que sigue.
  */
-export function pasosDeLaLineaDeTiempo(pedido: PedidoFarmacia): readonly StepperStep[] {
+export function pasosDeLaLineaDeTiempo(
+  pedido: PedidoFarmacia,
+  pagado: boolean = estaPagado(pedido),
+): readonly StepperStep[] {
   const { estado } = pedido;
   if (esEstadoTerminal(estado) && estado !== 'RETIRADO') {
     return [];
@@ -140,8 +174,10 @@ export function pasosDeLaLineaDeTiempo(pedido: PedidoFarmacia): readonly Stepper
   const esEnvio = pedido.modalidad !== 'RETIRO';
   const recorrido: readonly { readonly estados: readonly EstadoDePedido[]; readonly label: string }[] = [
     { estados: ['ENVIADO'], label: 'Enviado' },
+    // Como «en camino», el pago no es un estado del contrato: viaja aparte.
+    ...(pagado ? [{ estados: [] as readonly EstadoDePedido[], label: 'Pagado' }] : []),
     { estados: ['EN_REVISION'], label: 'En revisión' },
-    { estados: ['CONFIRMADO'], label: 'Confirmado' },
+    { estados: ['CONFIRMADO'], label: 'En preparación' },
     ...(conDecision
       ? [
           {
@@ -166,7 +202,10 @@ export function pasosDeLaLineaDeTiempo(pedido: PedidoFarmacia): readonly Stepper
   const actual =
     esEnvio && pedido.envio === 'EN_CAMINO' && estado !== 'RETIRADO'
       ? recorrido.findIndex((paso) => paso.label === 'En camino')
-      : recorrido.findIndex((paso) => paso.estados.includes(estado));
+      : pagado && estado === 'ENVIADO'
+        ? // Enviado y pagado a la vez: lo último que pasó es el pago.
+          recorrido.findIndex((paso) => paso.label === 'Pagado')
+        : recorrido.findIndex((paso) => paso.estados.includes(estado));
   return recorrido.map((paso, indice) => ({
     label: paso.label,
     status:

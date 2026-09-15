@@ -9,6 +9,7 @@ import {
   pharmacyOrderDtoFixture,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
+import { uuid } from '../../../../core/mock/mock-store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { OrderDetail } from './order-detail';
 
@@ -32,16 +33,14 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
 
   afterEach(() => http.verify());
 
-  async function mount(response?: PharmacyOrderDto): Promise<void> {
+  async function mount(
+    response?: PharmacyOrderDto,
+    orderId: string = PHARMACY_ORDER_TEST_IDS.order,
+  ): Promise<void> {
     harness = await RouterTestingHarness.create();
-    const navigation = harness.navigateByUrl(
-      `/my-account/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}`,
-      OrderDetail,
-    );
+    const navigation = harness.navigateByUrl(`/my-account/pharmacy-orders/${orderId}`, OrderDetail);
     await navigation;
-    http.expectOne(`/pharmacy/orders/${PHARMACY_ORDER_TEST_IDS.order}`).flush(
-      response ?? pharmacyOrderDtoFixture(),
-    );
+    http.expectOne(`/pharmacy/orders/${orderId}`).flush(response ?? pharmacyOrderDtoFixture());
     harness.detectChanges();
   }
 
@@ -49,10 +48,12 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     return harness.routeNativeElement?.textContent ?? '';
   }
 
+  function byTestId(testId: string): HTMLElement | null {
+    return harness.routeNativeElement?.querySelector<HTMLElement>(`[data-testid="${testId}"]`) ?? null;
+  }
+
   function click(testId: string): void {
-    harness.routeNativeElement
-      ?.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`)
-      ?.click();
+    byTestId(testId)?.click();
     harness.detectChanges();
   }
 
@@ -151,5 +152,129 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     harness.detectChanges();
     expect(confirmDialog).toHaveBeenCalledOnce();
     expect(text()).toContain('Cancelado');
+    // Un pedido cancelado no tiene ni tendrá factura: no hay bloque que prometerla.
+    expect(byTestId('tu-factura')).toBeNull();
+  });
+
+  describe('tracking and invoice (T-E4)', () => {
+    it('keeps a real order without payment honest: no «Pagado», no payment badge, no invoice', async () => {
+      await mount();
+
+      expect(byTestId('pedido-medio-de-pago')).toBeNull();
+      expect(text()).not.toContain('Pagado');
+      expect(text()).not.toContain('Datos de ejemplo');
+      expect(byTestId('tu-factura-vacia')?.textContent).toContain(
+        'La farmacia emite tu factura cuando te entrega el pedido.',
+      );
+      expect(byTestId('tu-factura-ver')).toBeNull();
+      expect(byTestId('tu-factura-comprobante')?.getAttribute('href')).toBe(
+        `/my-account/pharmacy-orders/${PHARMACY_ORDER_TEST_IDS.order}/receipt`,
+      );
+      // El pedido real sigue cancelable, como antes.
+      expect(byTestId('pedido-cancelar')).not.toBeNull();
+    });
+
+    it('says «En preparación» for a confirmed order', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' } }),
+      );
+      expect(byTestId('pedido-estado-badge')?.textContent).toContain('En preparación');
+    });
+
+    it('a delivered real order without invoice data says so, without inventing one', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+      );
+      expect(byTestId('pedido-estado-badge')?.textContent).toContain('Retirado');
+      expect(byTestId('tu-factura-vacia')?.textContent).toContain('todavía no está disponible');
+      expect(byTestId('tu-factura-ver')).toBeNull();
+    });
+
+    it('demo order ready for pickup and already paid: says so and cannot be cancelled', async () => {
+      const id = uuid('pharmacy-order-1');
+      await mount(
+        pharmacyOrderDtoFixture({
+          id,
+          status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
+          pickupCode: 'ABC234',
+        }),
+        id,
+      );
+
+      expect(byTestId('pedido-medio-de-pago')?.textContent).toContain('Pagado por QR (demo)');
+      expect(text()).toContain('Datos de ejemplo');
+      expect(text()).toContain('Ya está pagado');
+      expect(text()).not.toContain('pagás al retirar');
+      expect(byTestId('pedido-cancelar')).toBeNull();
+      expect(byTestId('tu-factura-ver')).toBeNull();
+    });
+
+    it('the delivery branch comes only from the contract: «Entregado» without demo data', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({
+          status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' },
+          deliveryMode: { code: 'PINV_DELIVERY_DOMICILIO', display: 'Domicilio' },
+        }),
+      );
+
+      expect(byTestId('pedido-estado-badge')?.textContent).toContain('Entregado');
+      expect(text()).toContain('Envío a domicilio');
+      expect(text()).toContain('En camino');
+      expect(byTestId('pedido-medio-de-pago')).toBeNull();
+    });
+
+    it('the demo never overrides the contract delivery mode', async () => {
+      const id = uuid('pharmacy-order-3');
+      await mount(
+        pharmacyOrderDtoFixture({
+          id,
+          status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' },
+          deliveryMode: { code: 'PINV_DELIVERY_DOMICILIO', display: 'Domicilio' },
+        }),
+        id,
+      );
+      expect(byTestId('pedido-estado-badge')?.textContent).toContain('Entregado');
+      expect(text()).toContain('Envío a domicilio');
+      // El pago sí es de ejemplo: el contrato no lo publica.
+      expect(byTestId('pedido-medio-de-pago')?.textContent).toContain('Pagado por QR (demo)');
+    });
+
+    it('demo order paid and picked up: «Retirado», its invoice and the internal receipt apart', async () => {
+      const id = uuid('pharmacy-order-3');
+      await mount(
+        pharmacyOrderDtoFixture({ id, status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+        id,
+      );
+
+      expect(byTestId('pedido-estado-badge')?.textContent).toContain('Retirado');
+      expect(byTestId('pedido-medio-de-pago')?.textContent).toContain('Pagado por QR (demo)');
+      const factura = byTestId('tu-factura')?.textContent ?? '';
+      for (const rotulo of ['Número', 'Emitida el', 'Total facturado', 'Estado']) {
+        expect(factura).toContain(rotulo);
+      }
+      expect(byTestId('tu-factura-total')?.textContent).toContain('61.20 BOB');
+      expect(byTestId('tu-factura-ver')?.getAttribute('href')).toBe(
+        `/my-account/pharmacy-orders/${id}/invoice`,
+      );
+      expect(byTestId('tu-factura-descargar')).not.toBeNull();
+      expect(byTestId('tu-factura-comprobante')?.getAttribute('href')).toBe(
+        `/my-account/pharmacy-orders/${id}/receipt`,
+      );
+    });
+
+    it('real insurance settlement still renders next to the invoice block', async () => {
+      const id = uuid('pharmacy-order-3');
+      await mount(
+        pharmacyOrderDtoFixture({
+          id,
+          status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' },
+          insuranceSettlementAvailability: 'PENDING_PUBLICATION',
+          insuranceSettlement: null,
+        }),
+        id,
+      );
+      expect(byTestId('patient-insurance-settlement')).not.toBeNull();
+      expect(byTestId('tu-factura')).not.toBeNull();
+    });
   });
 });
