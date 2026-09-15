@@ -84,3 +84,16 @@ export function movimientoEnPalabras(
   const verbo = direccion === 'CREDITO' ? 'Sumaste' : 'Restaste';
   return `${verbo} ${puntosEnPalabras(puntos)} — ${etiquetaDeMotivo(motivo).toLowerCase()}`;
 }
+
+/**
+ * Cómo se dice un multiplicador de promoción: «x2», «x3» (F4.5).
+ *
+ * **No es el del nivel.** `NivelDeMembresia.multiplicador` escala toda la
+ * acumulación de un nivel y hoy vale «1» o «1.25»; éste lo pone una promoción,
+ * dura hasta una fecha y no tiene contrato. Vive acá, con el resto de cómo se
+ * dicen los puntos, para que el chip de «Mis puntos» y la tarjeta de promoción
+ * de T-E7 («Puntos x2») salgan del mismo lugar y no de dos copias.
+ */
+export function etiquetaDeMultiplicador(factor: string): string {
+  return `x${factor.trim()}`;
+}
