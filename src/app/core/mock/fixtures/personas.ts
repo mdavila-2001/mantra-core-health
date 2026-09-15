@@ -646,8 +646,8 @@ export const afiliaciones = new Coleccion<AfiliacionSimulada>(afiliacionesInicia
 /** Familiares y contactos de cada paciente. */
 export function personasRelacionadasDe(p: PacienteSimulado) {
   const base = [
-    { id: uuid(`rel-1-${p.id}`), displayName: `${['Rosa', 'Juan', 'Marta', 'Carlos'][p.patientCode.charCodeAt(6) % 4]} ${p.lastName}`, relationshipConceptId: PARENTESCO[p.sexAtBirth === 'FEMALE' ? 'REL-MADRE' : 'REL-PADRE']!, isEmergencyContact: true, isLegalGuardian: p.birthDate > '2007-01-01' },
-    { id: uuid(`rel-2-${p.id}`), displayName: `${['Pedro', 'Laura', 'Raúl', 'Inés'][p.patientCode.charCodeAt(7) % 4]} ${p.motherLastName}`, relationshipConceptId: PARENTESCO['REL-HERMANO']!, isEmergencyContact: false, isLegalGuardian: false },
+    { id: uuid(`rel-1-${p.id}`), displayName: `${['Rosa', 'Juan', 'Marta', 'Carlos'][p.patientCode.charCodeAt(6) % 4]} ${p.lastName}`, relationshipConceptId: PARENTESCO[p.sexAtBirth === 'FEMALE' ? 'RELATIONSHIP_MOTHER' : 'RELATIONSHIP_FATHER']!, isEmergencyContact: true, isLegalGuardian: p.birthDate > '2007-01-01' },
+    { id: uuid(`rel-2-${p.id}`), displayName: `${['Pedro', 'Laura', 'Raúl', 'Inés'][p.patientCode.charCodeAt(7) % 4]} ${p.motherLastName}`, relationshipConceptId: PARENTESCO['RELATIONSHIP_SIBLING']!, isEmergencyContact: false, isLegalGuardian: false },
   ];
   return p.aseguradora === undefined ? base.slice(0, 1) : base;
 }

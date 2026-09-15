@@ -340,14 +340,14 @@ conjunto(
   'Relación de una persona con el paciente.',
 );
 export const PARENTESCO = definir('VS_RELATED_PERSON_RELATIONSHIP', [
-  ['REL-MADRE', 'Madre'],
-  ['REL-PADRE', 'Padre'],
-  ['REL-CONYUGE', 'Cónyuge'],
-  ['REL-HIJO', 'Hijo/a'],
-  ['REL-HERMANO', 'Hermano/a'],
-  ['REL-TUTOR', 'Tutor/a legal'],
-  ['REL-AMIGO', 'Amigo/a'],
-  ['REL-OTRO', 'Otro'],
+  ['RELATIONSHIP_MOTHER', 'Madre'],
+  ['RELATIONSHIP_FATHER', 'Padre'],
+  ['RELATIONSHIP_SPOUSE', 'Cónyuge'],
+  ['RELATIONSHIP_CHILD', 'Hijo/a'],
+  ['RELATIONSHIP_SIBLING', 'Hermano/a'],
+  ['RELATIONSHIP_GUARDIAN', 'Tutor/a legal'],
+  ['RELATIONSHIP_FRIEND', 'Amigo/a'],
+  ['RELATIONSHIP_OTHER', 'Otro'],
 ]);
 
 conjunto('VS_LANGUAGE', 'Idiomas', 'Idiomas de atención.');

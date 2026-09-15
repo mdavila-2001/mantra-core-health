@@ -28,6 +28,7 @@ import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
 import { enlazarArchivo } from './files.handlers';
 import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
+import { representaA } from './profiles.handlers';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -39,6 +40,8 @@ function puedeLeer(request: MockRequest, patientProfileId: string): boolean {
   if (user === null) return false;
   if (user.roles.includes('SUPERADMIN')) return true;
   if (user.patientProfileId === patientProfileId) return true;
+  // Y quien lo representa (B.1): la historia de un menor la lee su tutor.
+  if (representaA(user.patientProfileId, patientProfileId)) return true;
   return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN');
 }
 
