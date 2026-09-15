@@ -1,6 +1,7 @@
 import { MOTIVOS_DE_PUNTOS } from '../../../core/data-access/loyalty/loyalty.types';
 import {
   etiquetaDeMotivo,
+  etiquetaDeMultiplicador,
   movimientoEnPalabras,
   puntosEnPalabras,
   signoDe,
@@ -61,5 +62,11 @@ describe('presentación del movimiento de puntos', () => {
 
   it('la concordancia llega al anuncio para lector de pantalla', () => {
     expect(movimientoEnPalabras('DEBITO', '1', 'CANJE')).toBe('Restaste 1 punto — canje');
+  });
+
+  it('el multiplicador de promoción se dice «x2», un solo texto para reusar', () => {
+    expect(etiquetaDeMultiplicador('2')).toBe('x2');
+    expect(etiquetaDeMultiplicador('3')).toBe('x3');
+    expect(etiquetaDeMultiplicador(' 2 ')).toBe('x2');
   });
 });
