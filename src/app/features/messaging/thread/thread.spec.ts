@@ -564,4 +564,125 @@ describe('Thread', () => {
     area.dispatchEvent(new Event('input'));
     fixture.detectChanges();
   }
+  /* --- 5.2 · metadata y vista previa de adjuntos -------------------------- */
+
+  /**
+   * Lo que fija este bloque: 5.1 ya pinta los adjuntos del hilo por la ruta
+   * contextual (imagen con `<img>`, documento como descarga). 5.2 **no rehace
+   * eso**: suma el tipo y el tamaño reales —leídos del contenido que ya bajó,
+   * sin petición nueva— y la vista previa del PDF dentro de la burbuja. Cada
+   * caso sirve el contenido por la ruta contextual y comprueba que no se toca
+   * `/common/files` ni la URL firmada.
+   */
+  describe('adjuntos (5.2)', () => {
+    const conAdjunto = (id: string, fileId: string) => ({
+      ...mensaje(id, 'pp-2', ''),
+      bodyText: null,
+      contentTypeConceptId: 'c-media',
+      attachmentFileId: fileId,
+    });
+
+    /** Contesta el contenido por la ruta contextual y espera a que el store lo tenga. */
+    const servir = async (fileId: string, cuerpo: Blob | null, falla = false): Promise<void> => {
+      fixture.detectChanges();
+      const pedido = http.expectOne((r) => r.url.includes(`/attachments/${fileId}/content`));
+      expect(pedido.request.url).toContain('/community/conversations/c-1/attachments/');
+      expect(pedido.request.url).not.toContain('/common/files');
+      expect(pedido.request.url).not.toContain('download-url');
+      if (falla) {
+        pedido.flush(null, { status: 404, statusText: 'Not Found' });
+      } else {
+        pedido.flush(cuerpo);
+      }
+      // `blobToDataUrl` usa FileReader, que no es una tarea de la zona.
+      for (let i = 0; i < 100 && store.urlDe(fileId) === ''; i += 1) {
+        await new Promise((listo) => setTimeout(listo, 5));
+      }
+      fixture.detectChanges();
+    };
+
+    const bytes = (tipo: string, cantidad: number): Blob =>
+      new Blob([new Uint8Array(cantidad).fill(37)], { type: tipo });
+
+    it('una imagen se sigue pintando como imagen, sin detalle ni vista previa nueva', async () => {
+      abrir([conAdjunto('m-1', 'f-img')]);
+      await servir('f-img', bytes('image/png', 16));
+
+      expect(consultar('hilo-imagen')).not.toBeNull();
+      expect(consultar('hilo-documento')).toBeNull();
+      expect(consultar('hilo-documento-ver')).toBeNull();
+    });
+
+    it('un PDF muestra su tipo y su tamaño reales y conserva la descarga', async () => {
+      abrir([conAdjunto('m-1', 'f-pdf')]);
+      await servir('f-pdf', bytes('application/pdf', 8));
+
+      const enlace = consultar('hilo-documento') as HTMLAnchorElement;
+      expect(enlace).not.toBeNull();
+      expect(enlace.getAttribute('href')).toMatch(/^data:application\/pdf;base64,/);
+      expect(enlace.getAttribute('download')).toBe('adjunto.pdf');
+      expect(consultar('hilo-documento-detalle')?.textContent?.trim()).toBe('PDF · 8 bytes');
+    });
+
+    it('la vista previa del PDF se abre dentro del hilo y no quita la descarga', async () => {
+      abrir([conAdjunto('m-1', 'f-pdf')]);
+      await servir('f-pdf', bytes('application/pdf', 8));
+
+      const ver = consultar('hilo-documento-ver') as HTMLButtonElement;
+      expect(ver.getAttribute('aria-expanded')).toBe('false');
+      expect(consultar('hilo-documento-preview')).toBeNull();
+
+      ver.click();
+      fixture.detectChanges();
+      expect(consultar('hilo-documento-preview')).not.toBeNull();
+      expect(consultar('hilo-documento-ver')?.getAttribute('aria-expanded')).toBe('true');
+      expect(consultar('hilo-documento')).not.toBeNull();
+
+      (consultar('hilo-documento-ver') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(consultar('hilo-documento-preview')).toBeNull();
+    });
+
+    it('un tipo sin vista previa sigue descargable, con metadata y sin fingir preview', async () => {
+      abrir([conAdjunto('m-1', 'f-docx')]);
+      await servir(
+        'f-docx',
+        bytes('application/vnd.openxmlformats-officedocument.wordprocessingml.document', 2048),
+      );
+
+      expect(consultar('hilo-documento')).not.toBeNull();
+      expect(consultar('hilo-documento-detalle')?.textContent?.trim()).toBe('Documento Word · 2 KB');
+      expect(consultar('hilo-documento-ver')).toBeNull();
+    });
+
+    it('un contenido sin tipo declarado no rompe el hilo ni ofrece vista previa', async () => {
+      abrir([conAdjunto('m-1', 'f-sin-tipo')]);
+      await servir('f-sin-tipo', new Blob([new Uint8Array(4)]));
+
+      expect(consultar('hilo-documento')).not.toBeNull();
+      expect(consultar('hilo-documento-ver')).toBeNull();
+    });
+
+    it('un adjunto que falla lo avisa y el resto de la conversación sigue', async () => {
+      abrir([conAdjunto('m-2', 'f-roto'), mensaje('m-1', 'pp-1', 'Te lo mando')]);
+      await servir('f-roto', null, true);
+
+      expect(fixture.nativeElement.textContent).toContain('Archivo no disponible');
+      expect(fixture.nativeElement.textContent).toContain('Te lo mando');
+      expect(consultar('hilo-documento-ver')).toBeNull();
+    });
+
+    it('ningún interno de storage aparece en la vista, ni se pide la URL firmada', async () => {
+      abrir([conAdjunto('m-1', 'f-pdf')]);
+      await servir('f-pdf', bytes('application/pdf', 8));
+      (consultar('hilo-documento-ver') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      const html = (fixture.nativeElement as HTMLElement).innerHTML;
+      for (const interno of ['s3://', 'file://', 'storageUri', 'objectKey', 'bucket', 'contentHash']) {
+        expect(html).not.toContain(interno);
+      }
+      expect(http.match((r) => r.url.includes('download-url') || r.url.includes('/common/files'))).toHaveLength(0);
+    });
+  });
 });
