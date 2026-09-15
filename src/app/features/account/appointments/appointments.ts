@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -858,8 +859,15 @@ export class Appointments {
     effect(() => {
       const perfil = this.perfilActivo();
       if (perfil === null) return;
-      this.cargarTurnos();
-      this.cargarEsperas();
+      // `untracked`: lo único que tiene que disparar la recarga es el cambio de
+      // paciente. Las dos lecturas consultan por dentro otras señales —la
+      // organización, el día elegido— y sin esto cada una quedaría como
+      // dependencia del efecto: cualquier cambio suyo volvería a pedir los
+      // turnos, y una que la propia recarga escribe lo haría girar sin fin.
+      untracked(() => {
+        this.cargarTurnos();
+        this.cargarEsperas();
+      });
     });
     if (this.auth.patientProfileId() !== null) {
       this.cargarRecursos();
