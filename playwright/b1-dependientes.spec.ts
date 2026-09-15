@@ -23,12 +23,17 @@ import { expect, test, type Page } from '@playwright/test';
 /** La cuenta de paciente de la maqueta. */
 const PACIENTE = { documento: '7654321', clave: 'demo' };
 
-/** Entra al portal como paciente y espera a que el armazón esté dibujado. */
+/**
+ * Entra al portal como paciente y espera a que el armazón esté dibujado.
+ *
+ * La pantalla de acceso vive en `/auth` y no en `/auth/login`: esta última es un
+ * 404, y buscar el campo en ella agota el plazo sin decir por qué.
+ */
 async function entrarComoPaciente(page: Page): Promise<void> {
-  await page.goto('/auth/login');
-  await page.getByLabel(/documento|cédula|correo/i).first().fill(PACIENTE.documento);
-  await page.getByLabel(/contraseña/i).first().fill(PACIENTE.clave);
-  await page.getByRole('button', { name: /ingresar|iniciar sesión|entrar/i }).first().click();
+  await page.goto('/auth');
+  await page.getByTestId('login-identifier').fill(PACIENTE.documento);
+  await page.getByTestId('login-password').fill(PACIENTE.clave);
+  await page.getByTestId('login-submit').click();
   await expect(page.getByTestId('header-cuenta')).toBeVisible({ timeout: 30_000 });
 }
 
@@ -40,10 +45,19 @@ async function registrarDependiente(page: Page, nombre: string): Promise<void> {
   await page.getByTestId('dependent-name').fill(nombre);
   await page.getByTestId('dependent-last-name').fill('Quispe');
 
-  // La fecha va por el selector propio del sistema, que escribe en su campo.
+  // El selector de fecha se maneja **tecla por tecla**: su campo está
+  // enmascarado y el valor lo arma `handleInputKeydown` segmento a segmento.
+  // `fill()` escribe el valor de golpe sin pasar por ahí, así que el componente
+  // lo descarta al perder el foco y el formulario queda sin fecha.
   const fecha = page.getByTestId('dependent-birth-date').getByRole('textbox');
-  await fecha.fill('14/03/2018');
+  await fecha.click();
+  // `Home` antes de teclear: el clic deja el cursor donde cayó, y si cae al
+  // final los primeros dígitos se escriben en el AÑO. El componente maneja esa
+  // tecla y vuelve al segmento del día.
+  await fecha.press('Home');
+  await fecha.pressSequentially('14032018');
   await fecha.blur();
+  await expect(fecha).toHaveValue('14/03/2018');
 
   // «Soy su madre»: el titular declara qué es él para el dependiente.
   await page
@@ -59,7 +73,13 @@ test.describe('B.1 · dependientes', () => {
   test('registrar a un hijo, conmutar y volver al perfil propio', async ({ page }) => {
     const errores: string[] = [];
     page.on('console', (mensaje) => {
-      if (mensaje.type() === 'error') errores.push(mensaje.text());
+      if (mensaje.type() !== 'error') return;
+      // La política de contenido del servidor sólo admite dos hashes de script
+      // en línea, y el servidor de desarrollo inyecta los suyos para recargar en
+      // caliente. Ese rechazo aparece al cargar cualquier ruta de la aplicación
+      // y es anterior a esta pantalla: no se puede tomar como error del carril.
+      if (mensaje.text().includes('Content Security Policy')) return;
+      errores.push(mensaje.text());
     });
 
     await entrarComoPaciente(page);
@@ -97,27 +117,64 @@ test.describe('B.1 · dependientes', () => {
     expect(errores).toEqual([]);
   });
 
-  test('la pantalla entra en teléfono, tableta y escritorio', async ({ page }) => {
-    await entrarComoPaciente(page);
-    await page.goto('/my-account/dependents');
-    await registrarDependiente(page, 'Rosa');
-
-    for (const [nombre, ancho, alto] of [
-      ['telefono', 390, 844],
-      ['tableta', 820, 1180],
-      ['escritorio', 1440, 900],
-    ] as const) {
-      await page.setViewportSize({ width: ancho, height: alto });
-      // Nada desborda a lo ancho: el cuerpo no scrollea en horizontal.
-      const desborda = await page.evaluate(
-        () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
-      );
-      expect(desborda, `desborde horizontal en ${nombre}`).toBe(false);
-      await expect(page.getByTestId('dependents-lista')).toContainText('Rosa Quispe');
-      await page.screenshot({
-        path: `artifacts/playwright/b1-dependientes-${nombre}.png`,
-        fullPage: true,
+  /**
+   * Los tres anchos, cada uno en su propia ventana.
+   *
+   * **No se redimensiona una ventana ya dibujada**: el armazón decide al
+   * montarse si el menú es una columna fija o un cajón, y cambiar el tamaño
+   * después lo deja en el modo anterior tapando el contenido. Lo que vive una
+   * persona es abrir la aplicación en su teléfono, así que cada medida abre su
+   * propio contexto y recorre el alta entera ahí.
+   */
+  for (const [nombre, ancho, alto] of [
+    ['telefono', 390, 844],
+    ['tableta', 820, 1180],
+    ['escritorio', 1440, 900],
+  ] as const) {
+    test(`la pantalla entra en ${nombre}`, async ({ browser }) => {
+      const contexto = await browser.newContext({
+        viewport: { width: ancho, height: alto },
+        locale: 'es-BO',
       });
-    }
-  });
+      const page = await contexto.newPage();
+      try {
+        await entrarComoPaciente(page);
+        await page.goto('/my-account/dependents');
+        await registrarDependiente(page, 'Rosa');
+
+        await expect(page.getByTestId('dependents-lista')).toContainText('Rosa Quispe');
+
+        // Nada desborda a lo ancho: el cuerpo no scrollea en horizontal.
+        await expect
+          .poll(
+            () =>
+              page.evaluate(
+                () =>
+                  document.documentElement.scrollWidth -
+                  document.documentElement.clientWidth,
+              ),
+            { message: `desborde horizontal en ${nombre}` },
+          )
+          .toBeLessThanOrEqual(1);
+
+        // Y el nombre del dependiente se lee entero, sin quedar tapado por el
+        // menú: se compara su caja con la del contenido principal.
+        const tarjeta = page.getByTestId('dependents-lista').getByText('Rosa Quispe');
+        const caja = await tarjeta.boundingBox();
+        expect(caja, `sin caja visible en ${nombre}`).not.toBeNull();
+        expect(caja!.x, `nombre cortado por la izquierda en ${nombre}`).toBeGreaterThanOrEqual(0);
+        expect(
+          caja!.x + caja!.width,
+          `nombre cortado por la derecha en ${nombre}`,
+        ).toBeLessThanOrEqual(ancho);
+
+        await page.screenshot({
+          path: `artifacts/playwright/b1-dependientes-${nombre}.png`,
+          fullPage: true,
+        });
+      } finally {
+        await contexto.close();
+      }
+    });
+  }
 });

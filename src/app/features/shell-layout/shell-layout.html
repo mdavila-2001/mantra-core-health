@@ -350,7 +350,14 @@
          conmutación, no una interrupción. -->
     @if (operandoPorDependiente()) {
       <p class="app-contexto-paciente" role="status" data-testid="aviso-paciente-activo">
-        Atendiéndose en representación de: <strong>{{ nombreDelPacienteActivo() }}</strong>.
+        <!-- La frase entera en UN elemento: el contenedor es flex con `gap`, así
+             que cada nodo de texto suelto se convierte en un elemento propio.
+             Y sin punto final: delante de un botón no aporta nada, y en
+             pantalla angosta se separaba del nombre al ajustar la línea. -->
+        <span
+          >Atendiéndose en representación de:
+          <strong>{{ nombreDelPacienteActivo() }}</strong></span
+        >
         <button type="button" class="app-contexto-paciente__salir" (click)="volverAMiPerfil()">
           Volver a mi perfil
         </button>
