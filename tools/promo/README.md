@@ -1,13 +1,18 @@
 # Material de comunicación de AloVida
 
-Dos piezas hechas con **capturas de la maqueta andando**: el video las mueve —zoom, recuadros,
-cursor— y el mazo las muestra quietas. Ninguna de las dos dibuja pantallas a mano.
+Dos piezas hechas con el frontend de este repositorio. **El video no usa capturas: usa el
+frontend.** `extraer-pantallas.mjs` congela el DOM y las hojas de estilo de cada pantalla —lo que
+sirve la aplicación, sin una caja dibujada a mano— y `video.html` las monta en iframes y las
+**anima**: escribe en los campos reales, revela las tarjetas reales, abre el menú real y cambia el
+estado de un cobro con las clases del propio sistema de diseño. El mazo sí son capturas quietas de
+esa misma maqueta.
 
 | Pieza | Archivo | Salida |
 |---|---|---|
-| **Video** | `video.html` | `alovida-1080p.mp4` (90 s · 1920×1080 · 30 fps · sin audio), 720p y portada |
+| **Video** | `video.html` + `extraer-pantallas.mjs` | `alovida-1080p.mp4` (92 s · 1920×1080 · 30 fps · sin audio), 720p y portada |
 | **Mazo de paciente y médico** | `deck-paciente-y-medico.html` | `AloVida-modulos-paciente-medico.pdf` (15 láminas 16:9) y un PNG por lámina |
-| Tokens de marca | `marca.css` | compartido por las dos |
+| Tokens de marca | `marca.css` | del mazo y de los rótulos del video |
+| Artboards de Claude Design | `a-canvas.mjs` | un `.dc.html` por pantalla, con el mismo HTML y CSS |
 
 ```bash
 yarn start                                   # las dos piezas necesitan la maqueta levantada
@@ -43,11 +48,16 @@ cartel flotante del modo demostración y fotografía a 2× de densidad:
 del arancel odontológico 2026 y de sus especialidades —datos de los catálogos de
 `markdown_convertidos/`—, firmado por una persona de la maqueta.
 
-Además escribe **`regiones.js`**: dónde está, en porcentaje de cada imagen, lo que el video resalta
-—la tarjeta «Médico», el botón «Pedir este horario», la columna «Pago», el texto del catálogo
-CIE-10…—. Se mide con `boundingBox()` en el momento de la captura, así que los recuadros del video
-**no son coordenadas escritas a ojo**: si la pantalla cambia de sitio, el recuadro la sigue, y si el
-elemento desaparece el generador falla en vez de resaltar el vacío.
+Esas capturas alimentan **el mazo**. El video no las usa: trabaja sobre el DOM congelado, apunta a
+los elementos por selector —`.tipos__card`, `.turnos__horario`, `app-menu.menu--open`— y posiciona
+el puntero con el `getBoundingClientRect()` del elemento real. Si una pantalla cambia, el video
+cambia con ella o falla; no hay coordenadas escritas a ojo.
+
+## El canvas de Claude Design
+
+`a-canvas.mjs` convierte esas mismas pantallas congeladas en artboards `.dc.html` —el mismo HTML y
+el mismo CSS, con las tipografías incrustadas porque el lienzo no sale a la red— para revisarlas y
+exportarlas fuera del video.
 
 Las direcciones que dependen de datos —el perfil público, la consulta— se resuelven navegando, no
 con identificadores escritos a mano, para que sobrevivan a un cambio de semillas.
@@ -57,18 +67,21 @@ con identificadores escritos a mano, para que sobrevivan a un cambio de semillas
 | Tramo | Qué se ve |
 |---|---|
 | 00 · Marca | Logotipo y claim. |
-| 01 · Registro | Los cinco tipos de cuenta y el alta del profesional, con sus trece pasos. |
-| 02 · El paciente pide turno | Busca al profesional, elige sede y pide el horario; la cita queda con su estado. |
-| 03 · La agenda del médico | Las que esperan respuesta encabezan la lista; motivo, seguro, estado y pago en la misma fila. |
-| 04 · La consulta | Qué se registra durante la consulta, con lo que ya hay en la historia. |
-| 05 · El cobro | El menú del estado de pago, sin salir de la agenda. |
-| 06 · La red social | El muro profesional —con una publicación hecha durante la captura— y el perfil público con su matrícula verificada. |
-| 07 · Los directorios | Las especialidades de la red y las clínicas y hospitales por departamento. |
-| 08 · Cierre | Marca y los cuatro atributos. |
+| 01 · Registro | Las cinco tarjetas de cuenta aparecen, el puntero elige «Médico» y el alta del profesional **se escribe**: nombre y apellido, en sus campos reales. |
+| 02 · El paciente pide turno | Se teclea el nombre del profesional en el buscador real, aparecen los horarios y el puntero pide uno; después, «Mis citas» con sus estados. |
+| 03 · La agenda y el cobro | La tabla del día entra fila por fila, se abre el **menú real** de la columna «Pago» y al elegir «Pagada» el badge pasa de ámbar a verde: `badge--warning` → `badge--success`, las clases del propio sistema de diseño. |
+| 04 · La consulta | Las nueve casillas de lo que se registra, y el puntero abre «Diagnóstico». |
+| 05 · La red social | La publicación se **escribe** en el compositor real, el botón se habilita, se publica y el post aparece en el muro. |
+| 06 · Los directorios | Las especialidades de la red y las clínicas por departamento, entrando en cascada. |
+| 07 · Cierre | Marca y los cuatro atributos. |
+
+Nada de eso está redibujado: el DOM es el de la aplicación y la animación se limita a mover
+opacidad, desplazamiento y clases sobre él.
 
 `video.html` no usa animaciones de CSS: declara pistas `{t0, t1, función}` y **cada fotograma es
-función pura de `t`** (`window.__seek(t)`). El generador mueve la página fotograma a fotograma,
-fotografía y encadena con ffmpeg. De ahí salen tres propiedades que importan:
+función pura de `t`** (`window.__seek(t)`). El generador levanta un servidor mínimo —los iframes
+tienen que ser del mismo origen para que el escenario pueda escribir en los campos de las
+pantallas—, mueve la página fotograma a fotograma, fotografía y encadena con ffmpeg. De ahí salen tres propiedades que importan:
 
 - la fluidez no depende de la velocidad de la máquina;
 - dos corridas dan el mismo video;

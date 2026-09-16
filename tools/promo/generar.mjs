@@ -1,8 +1,14 @@
 /**
  * Genera el material de comunicación de AloVida: el **video promocional** y el
- * **mazo de diapositivas de los módulos de paciente y médico**. Las dos piezas se
- * arman con **capturas de la maqueta andando**: el video las mueve con zoom y
- * recuadros, el mazo las muestra quietas.
+ * **mazo de diapositivas de los módulos de paciente y médico**.
+ *
+ * El **video se arma con el frontend mismo**: `extraer-pantallas.mjs` congela el DOM
+ * y las hojas de estilo de cada pantalla —lo que sirve este repositorio, sin una
+ * caja dibujada a mano— y `video.html` las monta en iframes y las ANIMA: escribe en
+ * los campos reales, revela las tarjetas reales, abre el menú real y cambia el
+ * estado de un cobro con las clases del propio sistema de diseño.
+ *
+ * El **mazo** sigue siendo capturas quietas de esa misma maqueta.
  *
  *   node tools/promo/generar.mjs                # las dos cosas
  *   node tools/promo/generar.mjs --solo-deck    # sólo el PDF y los PNG
@@ -24,8 +30,9 @@
  */
 import { chromium } from 'playwright';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, rmSync, copyFileSync, existsSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { mkdirSync, rmSync, copyFileSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
@@ -58,7 +65,7 @@ for (const [origen, destino] of copias) {
   if (!existsSync(src)) throw new Error(`Falta ${origen}. ¿Corriste \`yarn install\`?`);
   copyFileSync(src, join(activos, destino));
 }
-for (const archivo of ['video.html', 'deck-paciente-y-medico.html', 'marca.css']) {
+for (const archivo of ['deck-paciente-y-medico.html', 'marca.css']) {
   copyFileSync(join(aqui, archivo), join(salida, archivo));
 }
 
@@ -281,14 +288,37 @@ if (!soloVideo) {
   await pagina.close();
 }
 
-/* --- 5 · el video: fotograma a fotograma y a MP4 --- */
+/* --- 5 · el video: el frontend congelado, animado y fotografiado --- */
 if (!soloDeck) {
+  /* 5.1 · el DOM y el CSS de cada pantalla, tal como los sirve este repositorio */
+  const { extraerPantallas } = await import('./extraer-pantallas.mjs');
+  await extraerPantallas({ navegador, base: BASE, salida });
+  copyFileSync(join(aqui, 'video.html'), join(salida, 'video.html'));
+
+  /* 5.2 · un servidor mínimo: los iframes tienen que ser del mismo origen para
+     que el escenario pueda escribir en los campos de las pantallas */
+  const tipos = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
+    '.woff2': 'font/woff2', '.woff': 'font/woff', '.svg': 'image/svg+xml', '.png': 'image/png' };
+  const servidor = createServer((pedido, respuesta) => {
+    const ruta = decodeURIComponent(new URL(pedido.url, 'http://x').pathname);
+    const archivo = join(salida, ruta === '/' ? 'video.html' : ruta);
+    if (!archivo.startsWith(salida)) { respuesta.writeHead(403).end(); return; }
+    try {
+      const cuerpo = readFileSync(archivo);
+      respuesta.writeHead(200, { 'content-type': tipos[extname(archivo)] ?? 'application/octet-stream' });
+      respuesta.end(cuerpo);
+    } catch { respuesta.writeHead(404).end(); }
+  });
+  await new Promise((ok) => servidor.listen(0, '127.0.0.1', ok));
+  const puerto = servidor.address().port;
+
+  /* 5.3 · fotograma a fotograma */
   rmSync(fotogramas, { recursive: true, force: true });
   mkdirSync(fotogramas, { recursive: true });
   const pagina = await navegador.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   pagina.on('pageerror', (e) => fallos.push('video: ' + e));
-  await pagina.goto('file://' + join(salida, 'video.html'));
-  await pagina.evaluate(() => document.fonts.ready);
+  await pagina.goto(`http://127.0.0.1:${puerto}/video.html`);
+  await pagina.evaluate(() => window.__listo);
   const duracion = await pagina.evaluate(() => window.__dur);
   const total = Math.round(duracion * FPS);
   console.log(`video: ${duracion}s · ${total} fotogramas a ${FPS} fps`);
@@ -296,11 +326,13 @@ if (!soloDeck) {
   for (let i = 0; i < total; i++) {
     await pagina.evaluate((t) => window.__seek(t), i / FPS);
     await pagina.screenshot({ path: join(fotogramas, `f${String(i).padStart(5, '0')}.png`) });
-    if (i % 150 === 0) console.log(`  ${i}/${total} · ${((Date.now() - inicio) / 1000).toFixed(0)}s`);
+    if (i % 200 === 0) console.log(`  ${i}/${total} · ${((Date.now() - inicio) / 1000).toFixed(0)}s`);
   }
   await pagina.close();
+  servidor.close();
   if (readdirSync(fotogramas).length !== total) throw new Error('Faltan fotogramas en disco.');
 
+  /* 5.4 · a MP4 */
   const codificar = (args, nombre) => {
     const r = spawnSync('ffmpeg', args, { stdio: 'inherit' });
     if (r.error || r.status !== 0) throw new Error(`ffmpeg falló al escribir ${nombre}.`);
@@ -314,7 +346,7 @@ if (!soloDeck) {
   codificar(['-y', '-i', mp4, '-vf', 'scale=1280:720:flags=lanczos', '-c:v', 'libx264', '-preset', 'slow',
     '-crf', '21', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mp4720], mp4720);
   const portada = join(salida, 'portada.png');
-  codificar(['-y', '-i', mp4, '-ss', '00:00:02.6', '-frames:v', '1', portada], portada);
+  codificar(['-y', '-i', mp4, '-ss', '00:00:09.4', '-frames:v', '1', portada], portada);
   if (!conservar) rmSync(fotogramas, { recursive: true, force: true });
 }
 
