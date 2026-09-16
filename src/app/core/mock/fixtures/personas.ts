@@ -97,11 +97,15 @@ export interface PacienteSimulado {
    * Opcionales porque los datos de ejemplo no los traen: se llenan cuando
    * alguien edita su perfil y confirma la ubicación. Ver el PATCH de
    * `/profiles/patients/me`.
+   *
+   * `null` es «lo quitaron» (subtarea B.2), distinto de `undefined` —«nunca
+   * se tocó»—: sin la distinción, quitar el pin de la casa y volver a leer el
+   * perfil lo devolvía al punto de la plaza principal.
    */
-  readonly homeLat?: number;
-  readonly homeLng?: number;
-  readonly workLat?: number;
-  readonly workLng?: number;
+  readonly homeLat?: number | null;
+  readonly homeLng?: number | null;
+  readonly workLat?: number | null;
+  readonly workLng?: number | null;
   /** La dirección de trabajo, que antes no se guardaba en ningún lado. */
   readonly direccionTrabajo?: string;
 }
