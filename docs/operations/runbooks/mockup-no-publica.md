@@ -120,6 +120,21 @@ cuatro builds simultáneos dejaron el equipo 45 minutos inservible.
 Ese `memory.high` = RAM/4 (3.969 MB en la H310) es el **límite real**: da igual
 lo que diga `--memory`. Umbrales en `/etc/default/h310-guardian`.
 
+> **Daño colateral: el panel de Coolify.** El guardián mata por imagen todo
+> contenedor `coolify-helper`, y Coolify usa **esa misma imagen** para su
+> actualización nocturna de las 00:00. Si coincide con un apretón de memoria,
+> le corta el `docker compose up` a media faena: el contenedor `coolify` queda
+> **creado pero sin arrancar** y el panel se queda sin nadie escuchando en el
+> 8000. Dos detalles que lo vuelven traicionero: el registro de la
+> actualización escribe *«Upgrade completed successfully»* igual, y
+> `restart: always` **no** lo rescata, porque esa política sólo actúa sobre
+> contenedores que arrancaron al menos una vez.
+>
+> Desde el 16/09/2026 lo cubre `coolify-en-pie.timer` (cada 5 min): si el
+> contenedor no está `running`, lo arranca — y se abstiene mientras exista
+> `/data/coolify/source/.upgrade-status`, para no pelearse con una
+> actualización en curso. Se ve con `journalctl -t coolify-en-pie`.
+
 ---
 
 ## Mitigación

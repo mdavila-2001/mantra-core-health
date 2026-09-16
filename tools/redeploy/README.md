@@ -215,6 +215,13 @@ En la bitácora del despliegue eso se ve sólo como `exit code: 137`. Quien lo
 diga de verdad es `journalctl -t h310-guardian`. Y hay un envoltorio,
 `h310-turno-de-build`, que pone estos temporizadores en fila detrás de Coolify.
 
+Ese guardián tiene un daño colateral conocido: mata por imagen todo contenedor
+`coolify-helper`, y Coolify usa la misma para actualizarse cada noche a las
+00:00. Cuando coincide con un apretón de memoria, el panel amanece muerto —el
+contenedor queda creado y sin arrancar, y `restart: always` no lo rescata
+porque nunca llegó a arrancar—. Lo cubre `coolify-en-pie.timer`, que lo levanta
+cada cinco minutos y se aparta mientras haya una actualización en curso.
+
 Por eso el `Dockerfile` compila con **un** trabajador de esbuild y un montón de
 1,5 GB: no se trata de pedir más memoria, sino de caber. El procedimiento
 completo —cómo distinguir las tres causas y cómo salir de cada una— está en el
