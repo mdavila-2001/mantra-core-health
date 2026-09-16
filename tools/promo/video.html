@@ -1,0 +1,312 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>AloVida — video con pantallas reales</title>
+<style>
+@font-face{font-family:Poppins;src:url(assets/poppins-latin-500-normal.woff2) format('woff2');font-weight:500;font-display:block}
+@font-face{font-family:Poppins;src:url(assets/poppins-latin-600-normal.woff2) format('woff2');font-weight:600;font-display:block}
+@font-face{font-family:Poppins;src:url(assets/poppins-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:block}
+@font-face{font-family:'Inter Variable';src:url(assets/inter-latin-wght-normal.woff2) format('woff2');font-weight:100 900;font-display:block}
+:root{
+  --petroleo:#0B557E; --petroleo-p:#0B3953; --aguamarina:#4FB3A9; --menta:#9FD8D0; --ambar:#E4A96B;
+  --tinta:#242828; --tinta-3:#787B7B; --filete-2:#E3EAE7;
+  --sans:'Inter Variable',system-ui,sans-serif; --display:Poppins,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#fff}
+body{font-family:var(--sans);color:var(--tinta);-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:#fff}
+#wash{position:absolute;inset:0;background:
+  radial-gradient(1100px 700px at 6% -12%, rgba(79,179,169,.16), transparent 60%),
+  radial-gradient(900px 620px at 102% 110%, rgba(11,85,126,.14), transparent 62%), #fff}
+#grano{position:absolute;inset:0;opacity:.5;
+  background-image:linear-gradient(rgba(11,85,126,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(11,85,126,.045) 1px,transparent 1px);
+  background-size:64px 64px;-webkit-mask-image:radial-gradient(1400px 900px at 50% 45%,#000 20%,transparent 78%)}
+
+/* ---- marca ---- */
+.marca{position:absolute;inset:0;display:grid;place-items:center;opacity:0;background:
+  radial-gradient(1200px 820px at 20% 0%, #0E6A95 0%, transparent 55%),
+  radial-gradient(1000px 700px at 90% 100%, #10796F 0%, transparent 52%),
+  linear-gradient(140deg,#0B557E 0%,#0B3953 48%,#072F45 100%)}
+.anillo{position:absolute;left:50%;top:50%;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;border:1.5px solid rgba(159,216,208,.35);opacity:0}
+.marca-centro{position:relative;text-align:center}
+.marca-centro img{width:200px;display:block;margin:0 auto 32px}
+.wordmark{font-family:var(--display);font-weight:700;font-size:112px;letter-spacing:-.02em;color:#fff;line-height:1}
+.wordmark span{display:inline-block}
+.linea{width:0;height:3px;background:linear-gradient(90deg,var(--menta),var(--aguamarina));margin:28px auto 24px;border-radius:3px}
+.claim{font-family:var(--display);font-weight:500;font-size:33px;color:#CFE7E3}
+.pastillas{display:flex;gap:14px;justify-content:center;margin-top:36px}
+.pastilla{border:1px solid rgba(159,216,208,.45);border-radius:999px;padding:12px 24px;font-size:20px;color:#EAF6F4;opacity:0}
+
+/* ---- tomas: una pantalla real por toma ---- */
+.toma{position:absolute;left:260px;top:86px;width:1400px;height:919px;border-radius:20px;overflow:hidden;
+  border:1px solid var(--filete-2);box-shadow:0 46px 92px -34px rgba(11,57,83,.46),0 8px 22px rgba(11,57,83,.08);
+  background:#fff;opacity:0;will-change:transform,opacity}
+.toma .lienzo{position:relative;width:100%;will-change:transform}
+.toma img{display:block;width:100%;height:auto}
+.toma.alta img{height:100%;object-fit:cover;object-position:top left}
+.foco{position:absolute;border:2.5px solid var(--aguamarina);border-radius:12px;opacity:0;
+  box-shadow:0 0 0 9999px rgba(7,47,69,.52), 0 0 26px rgba(79,179,169,.55);pointer-events:none}
+
+/* ---- cursor y rótulos ---- */
+#cursor{position:absolute;width:30px;height:30px;left:0;top:0;z-index:60;opacity:0;filter:drop-shadow(0 4px 8px rgba(7,47,69,.4))}
+#pulso{position:absolute;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:2px solid var(--aguamarina);opacity:0;z-index:59}
+#rotulo{position:absolute;left:150px;bottom:54px;z-index:70;opacity:0}
+.rot-caja{display:inline-block;background:linear-gradient(120deg,rgba(11,85,126,.97),rgba(11,57,83,.97));
+  border-radius:18px;padding:20px 30px 22px;box-shadow:0 22px 44px -18px rgba(7,47,69,.6)}
+.rot-eyebrow{font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--menta);font-weight:600;margin-bottom:8px}
+.rot-tit{font-family:var(--display);font-weight:600;font-size:33px;color:#fff}
+#paso{position:absolute;left:150px;top:36px;z-index:70;display:flex;align-items:center;gap:14px;opacity:0}
+#paso .num{font-family:var(--display);font-weight:700;font-size:20px;color:var(--petroleo)}
+#paso .raya{width:60px;height:2px;background:var(--aguamarina);border-radius:2px}
+#paso .txt{font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta-3);font-weight:600}
+</style>
+<div id="stage">
+  <div id="wash"></div>
+  <div id="grano"></div>
+  <div id="tomas"></div>
+  <div class="marca" id="marcaIn">
+    <div class="anillo" id="a1"></div><div class="anillo" id="a2"></div><div class="anillo" id="a3"></div>
+    <div class="marca-centro">
+      <img src="assets/alovida-logo-blanco.svg" id="logoIn" alt="AloVida">
+      <div class="wordmark" id="wmIn"></div>
+      <div class="linea" id="lineaIn"></div>
+      <div class="claim" id="claimIn">Pedir turno, atender, diagnosticar y cobrar.</div>
+    </div>
+  </div>
+  <div class="marca" id="marcaOut">
+    <div class="marca-centro">
+      <img src="assets/alovida-logo-blanco.svg" id="logoOut" alt="AloVida">
+      <div class="wordmark" id="wmOut" style="font-size:96px">AloVida</div>
+      <div class="claim" id="claimOut" style="margin-top:20px">Todo esto ya funciona, y se puede recorrer en vivo.</div>
+      <div class="pastillas">
+        <div class="pastilla" id="pa1">Turnos reales</div>
+        <div class="pastilla" id="pa2">Historia clínica</div>
+        <div class="pastilla" id="pa3">Receta firmada</div>
+        <div class="pastilla" id="pa4">Cobros y seguros</div>
+      </div>
+    </div>
+  </div>
+  <div id="paso"><span class="num">01</span><span class="raya"></span><span class="txt">Registro</span></div>
+  <div id="rotulo"><div class="rot-caja"><div class="rot-eyebrow">AloVida</div><div class="rot-tit">Texto</div></div></div>
+  <div id="pulso"></div>
+  <div id="cursor"><svg viewBox="0 0 24 24" width="30" height="30"><path d="M4 2l7.5 19 2.4-7.6 7.6-2.4L4 2z" fill="#fff" stroke="#0B3953" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+</div>
+<script src="regiones.js"></script>
+<script>
+/* ============================================================================
+   Mismo motor determinista del primer video: cada fotograma es función pura de
+   `t`. Lo que cambia es el material: acá las pantallas son **capturas del front
+   corriendo**, y los recuadros que las resaltan salen de las cajas que midió el
+   capturador (`regiones.js`), no de coordenadas escritas a ojo.
+   ========================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const TOMAS = $('#tomas'), CUR = $('#cursor'), PULSO = $('#pulso'),
+      ROT = $('#rotulo'), ROTE = $('.rot-eyebrow'), ROTT = $('.rot-tit'), PASO = $('#paso');
+const EZ = {
+  out: p => 1 - Math.pow(1 - p, 3),
+  io:  p => (p < .5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3)/2),
+  lin: p => p,
+  atras: p => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3*Math.pow(p-1,3) + c1*Math.pow(p-1,2); },
+};
+const PISTAS = [];
+const pista = (t0, dur, fn, e = EZ.out) => PISTAS.push({ t0, t1: t0 + dur, fn, e });
+const mez = (a, b, p) => a + (b - a) * p;
+function trans(el, o){
+  const s = el.__t = Object.assign({ x:0, y:0, s:1 }, el.__t, o);
+  el.style.transform = `translate3d(${s.x}px,${s.y}px,0) scale(${s.s})`;
+}
+const opa  = (el,t0,dur,a,b,e) => pista(t0,dur,p => el.style.opacity = mez(a,b,p), e);
+const desY = (el,t0,dur,a,b,e) => pista(t0,dur,p => trans(el,{y:mez(a,b,p)}), e);
+
+/* la ventana de la toma, en coordenadas del escenario */
+const MARCO = { x:260, y:86, w:1400, h:919 };
+const region = (toma, marca) => {
+  const r = window.__regiones?.[toma]?.marcas?.[marca];
+  if (!r) throw new Error(`No hay región medida para ${toma}.${marca}`);
+  return r;
+};
+const centroDe = (toma, marca) => {
+  const r = region(toma, marca);
+  return { x: MARCO.x + (r.x + r.w/2)/100*MARCO.w, y: MARCO.y + (r.y + r.h/2)/100*MARCO.h };
+};
+
+/* --- cursor --- */
+let ultimo = () => ({ x:1740, y:1030 });
+function cursorVisible(t0,dur,a,b){ opa(CUR,t0,dur,a,b,EZ.lin); }
+function cursorA(t0, dur, destino){
+  const desde = ultimo;
+  pista(t0, dur, p => {
+    const a = desde(), b = destino();
+    const arco = Math.sin(Math.PI*p) * -Math.min(80, Math.abs(b.x-a.x)*.13);
+    CUR.style.left = mez(a.x,b.x,p) + 'px';
+    CUR.style.top  = (mez(a.y,b.y,p) + arco) + 'px';
+  }, EZ.io);
+  ultimo = destino;
+}
+function clic(t0){
+  const d = ultimo;
+  pista(t0,.001,() => { const c = d(); PULSO.style.left = c.x+'px'; PULSO.style.top = c.y+'px'; }, EZ.lin);
+  pista(t0,.42,p => { PULSO.style.opacity = (1-p)*.9; trans(PULSO,{s:mez(.35,1.5,p)}); });
+  pista(t0,.10,p => trans(CUR,{s:mez(1,.82,p)}));
+  pista(t0+.10,.16,p => trans(CUR,{s:mez(.82,1,p)}));
+}
+
+/* --- rótulos --- */
+function rotulo(t0, dur, eyebrow, titulo){
+  pista(t0,.001,() => { ROTE.textContent = eyebrow; ROTT.textContent = titulo; }, EZ.lin);
+  opa(ROT,t0,.45,0,1); desY(ROT,t0,.5,22,0);
+  opa(ROT,t0+dur-.4,.4,1,0,EZ.lin);
+}
+function paso(t0, dur, num, txt){
+  pista(t0,.001,() => { $('#paso .num').textContent = num; $('#paso .txt').textContent = txt; }, EZ.lin);
+  opa(PASO,t0,.4,0,1);
+  opa(PASO,t0+dur-.35,.35,1,0,EZ.lin);
+}
+
+/* --- una toma = una captura del front --- */
+function toma(nombre, t0, t1, cfg = {}){
+  const el = document.createElement('div');
+  el.className = 'toma';
+  el.innerHTML = `<div class="lienzo"><img src="capturas/${nombre}.png" alt=""></div>`;
+  TOMAS.appendChild(el);
+  const lienzo = el.firstElementChild;
+  const org = cfg.zoom ? region(nombre, cfg.zoom) : null;
+  lienzo.style.transformOrigin = org ? `${org.x + org.w/2}% ${org.y + org.h/2}%` : '50% 34%';
+  opa(el, t0, .55, 0, 1);
+  desY(el, t0, .7, 16, 0);
+  /* deriva lenta: la imagen nunca está del todo quieta */
+  pista(t0, t1 - t0, p => trans(lienzo, { s: mez(1, 1.045, p) }), EZ.lin);
+  if (cfg.zoom){
+    const tz = cfg.tz ?? t0 + 2;
+    pista(tz, 1.3, p => trans(lienzo, { s: mez(1.03, cfg.z ?? 1.22, p) }), EZ.io);
+  }
+  opa(el, t1 - .5, .5, 1, 0, EZ.lin);
+  el.__lienzo = lienzo;
+  return el;
+}
+/** Recuadro que apaga el resto de la pantalla. Vive dentro de la toma: si la toma
+    hace zoom, el recuadro va con ella. */
+function foco(el, nombre, marca, t0, dur, margen = 1, extra = {}){
+  const r = region(nombre, marca);
+  const d = document.createElement('div');
+  d.className = 'foco';
+  d.style.left = (r.x - margen) + '%'; d.style.top = (r.y - margen*1.5) + '%';
+  d.style.width = (r.w + margen*2 + (extra.w ?? 0)) + '%';
+  d.style.height = (r.h + margen*3 + (extra.h ?? 0)) + '%';
+  (el.__lienzo ?? el).appendChild(d);
+  opa(d, t0, .5, 0, 1);
+  opa(d, t0 + dur - .45, .45, 1, 0, EZ.lin);
+  return d;
+}
+
+/* ===================== 00 · marca ===================== */
+const mIn = $('#marcaIn');
+$('#wmIn').innerHTML = 'AloVida'.split('').map((c,i) => `<span id="l${i}">${c}</span>`).join('');
+opa(mIn, 0, .5, 0, 1, EZ.lin);
+opa(mIn, 5.7, .6, 1, 0, EZ.lin);
+pista(0,.001,()=>{ $('#logoIn').style.opacity = 0; }, EZ.lin);
+opa($('#logoIn'), .15, .7, 0, 1);
+pista(.15, 1.1, p => trans($('#logoIn'), { s: mez(.78,1,p) }), EZ.atras);
+for (let i = 0; i < 7; i++){ const l = $('#l'+i); l.style.opacity = 0; opa(l, .85 + i*.07, .5, 0, 1); desY(l, .85 + i*.07, .6, 24, 0); }
+pista(1.7,.8,p => $('#lineaIn').style.width = (230*p) + 'px');
+{ const c = $('#claimIn'); c.style.opacity = 0; opa(c, 2.1, .7, 0, 1); desY(c, 2.1, .8, 16, 0); }
+[['#a1',0],['#a2',.5],['#a3',1.0]].forEach(([sel,off]) => {
+  const el = $(sel);
+  pista(.2 + off, 4.4, p => { el.style.opacity = Math.sin(Math.PI*p)*.5; trans(el, { s: mez(.55, 2.6, p) }); }, EZ.lin);
+});
+
+/* ===================== 01 · registro ===================== */
+const t1 = toma('reg-tipos', 6.0, 12.6, { zoom:'medico', tz:9.2, z:1.5 });
+cursorVisible(7.3,.4,0,1);
+cursorA(7.5, 1.05, () => centroDe('reg-tipos','medico'));
+clic(8.7);
+foco(t1, 'reg-tipos', 'medico', 8.8, 3.2);
+cursorVisible(9.4,.4,1,0);
+
+const t2 = toma('reg-medico', 12.4, 19.2);
+foco(t2, 'reg-medico', 'paso', 14.2, 3.6, .6);
+
+paso(6.4, 12.8, '01', 'Registro');
+rotulo(6.7, 4.0, 'Registro', 'Cinco tipos de cuenta, y cada una pide lo suyo.');
+rotulo(13.0, 4.4, 'Registro · médico', 'Trece pasos: matrícula, colegio y especialidad.');
+
+/* ===================== 02 · el paciente pide turno ===================== */
+const t3 = toma('paciente-agendar', 19.0, 27.0, { zoom:'turno', tz:24.4, z:1.35 });
+foco(t3, 'paciente-agendar', 'buscador', 20.4, 2.6, 1.2);
+cursorVisible(22.3,.4,0,1);
+cursorA(22.5, 1.1, () => centroDe('paciente-agendar','turno'));
+clic(23.7);
+foco(t3, 'paciente-agendar', 'turno', 23.8, 2.8, 1.2);
+cursorVisible(24.4,.4,1,0);
+
+const t4 = toma('paciente-mis-citas', 26.8, 33.0);
+foco(t4, 'paciente-mis-citas', 'lista', 28.4, 3.6, .4);
+
+paso(19.2, 13.6, '02', 'El paciente pide turno');
+rotulo(19.6, 4.0, 'Paciente', 'Elegís profesional, sede y horario libre.');
+rotulo(23.9, 2.6, 'Paciente', 'Pedís el turno que te sirve.');
+rotulo(27.6, 4.2, 'Paciente', 'La cita queda pedida, con su estado.');
+
+/* ===================== 03 · la agenda del médico ===================== */
+const t5 = toma('medico-consultas', 32.8, 42.0, { zoom:'pago', tz:39.4, z:1.45 });
+foco(t5, 'medico-consultas', 'aviso', 34.2, 2.4, 1.2);
+foco(t5, 'medico-consultas', 'fila', 36.8, 2.4, .5);
+foco(t5, 'medico-consultas', 'pago', 39.5, 2.1, 1.6, { h: 26, w: 4 });
+
+paso(33.0, 9.0, '03', 'La agenda del médico');
+rotulo(33.6, 3.6, 'Médico', 'Las solicitudes llegan a la agenda.');
+rotulo(37.4, 4.2, 'Médico', 'Motivo, seguro, estado y pago en la misma fila.');
+
+/* ===================== 04 · atención y diagnóstico ===================== */
+const t6 = toma('medico-consulta', 41.8, 48.8);
+foco(t6, 'medico-consulta', 'registrar', 43.4, 4.0, 1.4);
+
+const t7 = toma('medico-diagnostico', 48.6, 55.8, { zoom:'cie', tz:51.4, z:1.5 });
+foco(t7, 'medico-diagnostico', 'cie', 50.4, 4.4, 1.4);
+
+paso(42.0, 13.8, '04', 'Atención y diagnóstico');
+rotulo(42.6, 4.4, 'Médico', 'Todo lo de la consulta, en una pantalla.');
+rotulo(49.4, 4.4, 'Diagnóstico', 'Del catálogo CIE-10, no de un campo libre.');
+
+/* ===================== 05 · cobro y seguro ===================== */
+const t8 = toma('medico-pago', 55.6, 62.4, { zoom:'menu', tz:58.4, z:1.4 });
+cursorVisible(56.3,.4,0,1);
+cursorA(56.5, 1.0, () => centroDe('medico-pago','menu'));
+clic(57.6);
+foco(t8, 'medico-pago', 'menu', 57.7, 3.6, 1.2);
+cursorVisible(58.3,.4,1,0);
+
+const t9 = toma('seguros-solicitudes', 62.2, 69.8);
+foco(t9, 'seguros-solicitudes', 'tabla', 63.8, 4.2, .5);
+
+paso(56.0, 13.6, '05', 'Cobro y seguro');
+rotulo(56.4, 4.0, 'Cobros', 'El estado del pago se marca en la fila.');
+rotulo(63.2, 4.4, 'Seguros', 'Lo presentado a cada aseguradora, con su dictamen.');
+
+/* ===================== 06 · cierre ===================== */
+const mOut = $('#marcaOut');
+opa(mOut, 69.6, .7, 0, 1, EZ.lin);
+{ const l = $('#logoOut'); l.style.opacity = 0; opa(l, 70.0, .7, 0, 1); pista(70.0, 1.0, p => trans(l, { s: mez(.82,1,p) }), EZ.atras); }
+{ const w = $('#wmOut'); w.style.opacity = 0; opa(w, 70.4, .7, 0, 1); desY(w, 70.4, .8, 20, 0); }
+{ const c = $('#claimOut'); c.style.opacity = 0; opa(c, 70.9, .7, 0, 1); desY(c, 70.9, .8, 16, 0); }
+['#pa1','#pa2','#pa3','#pa4'].forEach((sel,i) => { const e = $(sel); opa(e, 71.5 + i*.14, .55, 0, 1); desY(e, 71.5 + i*.14, .6, 14, 0); });
+opa(mOut, 77.0, 1.0, 1, 0, EZ.lin);
+
+/* ===================== reproducción / captura ===================== */
+const DURACION = 78.0;
+window.__dur = DURACION;
+window.__render = t => {
+  for (const k of PISTAS){
+    if (t < k.t0) continue;
+    const p = k.t1 > k.t0 ? Math.min(1, (t - k.t0) / (k.t1 - k.t0)) : 1;
+    k.fn(k.e(p), t);
+  }
+};
+window.__seek = t => window.__render(t);
+window.__render(0);
+if (location.search.includes('play')){
+  const t0 = performance.now();
+  const bucle = () => { window.__render(((performance.now() - t0)/1000) % DURACION); requestAnimationFrame(bucle); };
+  requestAnimationFrame(bucle);
+}
+</script>
