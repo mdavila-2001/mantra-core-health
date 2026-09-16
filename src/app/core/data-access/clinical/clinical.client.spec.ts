@@ -426,6 +426,43 @@ describe('ClinicalClient', () => {
     http.expectOne('/clinical/medication-requests/rx%2F1/issue').flush(RECETA_BORRADOR);
   });
 
+  /* ---- el PDF oficial (B.3) ------------------------------------------------ */
+
+  it('downloadPrescriptionPdf pide bytes y lee el nombre de Content-Disposition', async () => {
+    const recibido = new Promise<{ blob: Blob; fileName?: string }>((resolve) => {
+      client.downloadPrescriptionPdf('rx-1').subscribe(resolve);
+    });
+
+    const req = http.expectOne((r) => r.url === '/clinical/prescriptions/rx-1/pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+
+    req.flush(new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: 'application/pdf' }), {
+      headers: { 'Content-Disposition': "attachment; filename*=UTF-8''receta-rx-1.pdf" },
+    });
+
+    await expect(recibido).resolves.toMatchObject({ fileName: 'receta-rx-1.pdf' });
+  });
+
+  it('downloadPrescriptionPdf escapa el identificador de la receta', () => {
+    client.downloadPrescriptionPdf('rx/1').subscribe();
+
+    http.expectOne('/clinical/prescriptions/rx%2F1/pdf').flush(new Blob([]));
+  });
+
+  it('downloadPrescriptionPdf sin Content-Disposition deja el nombre ausente', async () => {
+    const recibido = new Promise<{ blob: Blob; fileName?: string }>((resolve) => {
+      client.downloadPrescriptionPdf('rx-2').subscribe(resolve);
+    });
+
+    http
+      .expectOne((r) => r.url === '/clinical/prescriptions/rx-2/pdf')
+      .flush(new Blob([new Uint8Array([1])]));
+
+    const contenido = await recibido;
+    expect(contenido.fileName).toBeUndefined();
+  });
+
   /* ---- los tres registros de la ficha ------------------------------------- */
 
   it('createCondition serializa el inicio y omite lo que no vino', () => {
