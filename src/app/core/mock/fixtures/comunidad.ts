@@ -1,3 +1,4 @@
+import { imagenesDeVitrina, SEMILLAS_DE_VITRINA } from './bolivia-eje-central';
 import { ESPECIALIDAD, ESTADO } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
@@ -259,6 +260,43 @@ export const VITRINAS: readonly VitrinaSimulada[] = [
     address: '',
     lat: -17.78,
     lng: -63.18,
+    specialties: [],
+    ratingAverage: null,
+    ratingCount: 0,
+    hasPublishedAgenda: false,
+    seguidores: 0,
+  })),
+
+  /* Los 10 laboratorios y las 50 sucursales de farmacia del corpus «Bolivia
+     Salud · Eje Central» (ver `bolivia-eje-central.ts`). Existen, tienen
+     dirección y horario publicados, y su ficha cita la fuente.
+
+     Van **sin opiniones ni puntuación**: son negocios reales con nombre y
+     apellido, y fabricarles una nota media sería una afirmación sobre alguien
+     que existe. `ratingAverage: null` es lo que las pantallas ya saben dibujar
+     como «todavía sin opiniones».
+
+     `acceptsReviews` sí queda abierto: que nadie haya opinado no significa que
+     no se pueda. */
+  ...SEMILLAS_DE_VITRINA.map((semilla) => ({
+    id: uuid(`public-profile-${semilla.clave}`),
+    tenantId: semilla.tenantId,
+    targetId: semilla.targetId,
+    kind: semilla.kind,
+    slug: semilla.slug,
+    displayName: semilla.displayName,
+    headline: semilla.headline,
+    biography: semilla.biography,
+    ...imagenesDeVitrina(semilla),
+    avatarFileId: uuid(`avatar-${semilla.clave}`),
+    coverFileId: uuid(`cover-${semilla.clave}`),
+    verified: semilla.verified,
+    acceptsReviews: true,
+    visibility: 'PUBLIC' as const,
+    city: semilla.city,
+    address: semilla.address,
+    lat: semilla.lat,
+    lng: semilla.lng,
     specialties: [],
     ratingAverage: null,
     ratingCount: 0,

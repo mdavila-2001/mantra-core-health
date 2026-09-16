@@ -1,0 +1,818 @@
+{
+  "categoria": "nutricion_vitaminas_oligoelementos",
+  "total": 26,
+  "pruebas": [
+    {
+      "id": "test_000985",
+      "nombre_normalizado": "Vitamina B12",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": "pg/mL",
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000986",
+      "nombre_normalizado": "Ácido fólico sérico",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000987",
+      "nombre_normalizado": "Folato eritrocitario",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000988",
+      "nombre_normalizado": "Vitamina B1 tiamina",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000989",
+      "nombre_normalizado": "Vitamina B2 riboflavina",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000990",
+      "nombre_normalizado": "Vitamina B6 piridoxal-5-fosfato",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000991",
+      "nombre_normalizado": "Vitamina C",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000992",
+      "nombre_normalizado": "Vitamina A retinol",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000993",
+      "nombre_normalizado": "Vitamina E alfa-tocoferol",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000994",
+      "nombre_normalizado": "Vitamina K",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000995",
+      "nombre_normalizado": "1,25-dihidroxivitamina D",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000996",
+      "nombre_normalizado": "Zinc",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000997",
+      "nombre_normalizado": "Cobre",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000998",
+      "nombre_normalizado": "Selenio",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000999",
+      "nombre_normalizado": "Manganeso",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001000",
+      "nombre_normalizado": "Cromo",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001001",
+      "nombre_normalizado": "Yodo urinario",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001002",
+      "nombre_normalizado": "Magnesio eritrocitario",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001003",
+      "nombre_normalizado": "Prealbúmina",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001004",
+      "nombre_normalizado": "Retinol-binding protein",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001005",
+      "nombre_normalizado": "Carnitina libre",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001006",
+      "nombre_normalizado": "Carnitina total",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001007",
+      "nombre_normalizado": "Perfil de aminoácidos plasmáticos",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001008",
+      "nombre_normalizado": "Perfil de ácidos orgánicos urinarios",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001009",
+      "nombre_normalizado": "Perfil de acilcarnitinas",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_001010",
+      "nombre_normalizado": "Omega-3 index",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "nutricion_vitaminas_oligoelementos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "suero/plasma/sangre/orina según analito"
+      ],
+      "metodologias_habituales": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    }
+  ]
+}

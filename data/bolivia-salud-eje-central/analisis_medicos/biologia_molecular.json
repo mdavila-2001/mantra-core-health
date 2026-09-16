@@ -1,0 +1,1616 @@
+{
+  "categoria": "biologia_molecular",
+  "total": 50,
+  "pruebas": [
+    {
+      "id": "test_000595",
+      "nombre_normalizado": "Panel ITS por RT-PCR multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Hisopado/medio molecular u orina según panel. Evitar tratamientos tópicos genitales y recolectar según protocolo específico.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000596",
+      "nombre_normalizado": "Panel de úlceras genitales por RT-PCR multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Hisopado/medio molecular u orina según panel. Evitar tratamientos tópicos genitales y recolectar según protocolo específico.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000597",
+      "nombre_normalizado": "Panel de Candida por RT-PCR multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Hisopado/medio molecular u orina según panel. Evitar tratamientos tópicos genitales y recolectar según protocolo específico.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000598",
+      "nombre_normalizado": "VPH 14 genotipos de alto riesgo por RT-PCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Hisopado/medio molecular u orina según panel. Evitar tratamientos tópicos genitales y recolectar según protocolo específico.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000599",
+      "nombre_normalizado": "Streptococcus grupo B por PCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Hisopado/medio molecular u orina según panel. Evitar tratamientos tópicos genitales y recolectar según protocolo específico.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000600",
+      "nombre_normalizado": "Panel gastrointestinal viral multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000601",
+      "nombre_normalizado": "Panel gastrointestinal bacteriano 1 multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000602",
+      "nombre_normalizado": "Panel gastrointestinal bacteriano 2 multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000603",
+      "nombre_normalizado": "Panel gastrointestinal parasitario multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000604",
+      "nombre_normalizado": "H. pylori y resistencia a claritromicina por PCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000605",
+      "nombre_normalizado": "Panel respiratorio viral 1 multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000606",
+      "nombre_normalizado": "Panel respiratorio viral 2 multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000607",
+      "nombre_normalizado": "Panel respiratorio viral 3 multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000608",
+      "nombre_normalizado": "Panel respiratorio bacteriano multiplex",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000609",
+      "nombre_normalizado": "Mycobacterium tuberculosis y resistencia a rifampicina/isoniazida por PCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000610",
+      "nombre_normalizado": "Panel meningitis/encefalitis viral 1",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000611",
+      "nombre_normalizado": "Panel meningitis/encefalitis viral 2",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000612",
+      "nombre_normalizado": "Panel meningitis/encefalitis bacteriano",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000613",
+      "nombre_normalizado": "Panel SARS-CoV-2 e Influenza/RSV",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000614",
+      "nombre_normalizado": "Panel arbovirus Zika-Dengue-Chikungunya",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000615",
+      "nombre_normalizado": "BCR-ABL1 p210 cuantitativo",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000616",
+      "nombre_normalizado": "BCR-ABL1 p190 cuantitativo",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000617",
+      "nombre_normalizado": "JAK2 V617F",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000618",
+      "nombre_normalizado": "CALR mutaciones exón 9",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000619",
+      "nombre_normalizado": "MPL W515 mutaciones",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000620",
+      "nombre_normalizado": "PML-RARA",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000621",
+      "nombre_normalizado": "FLT3 ITD/TKD",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000622",
+      "nombre_normalizado": "NPM1 mutación",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000623",
+      "nombre_normalizado": "Factor V Leiden por PCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000624",
+      "nombre_normalizado": "Protrombina G20210A por PCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000625",
+      "nombre_normalizado": "MTHFR C677T",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000626",
+      "nombre_normalizado": "MTHFR A1298C",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000627",
+      "nombre_normalizado": "HFE C282Y",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000628",
+      "nombre_normalizado": "HFE H63D",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000629",
+      "nombre_normalizado": "KRAS mutaciones",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000630",
+      "nombre_normalizado": "NRAS mutaciones",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000631",
+      "nombre_normalizado": "BRAF V600E",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000632",
+      "nombre_normalizado": "EGFR mutaciones",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000633",
+      "nombre_normalizado": "ALK reordenamiento molecular",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000634",
+      "nombre_normalizado": "ROS1 reordenamiento molecular",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000635",
+      "nombre_normalizado": "HER2 amplificación por ISH",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000636",
+      "nombre_normalizado": "BRCA1/BRCA2 secuenciación",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000637",
+      "nombre_normalizado": "DPYD variantes farmacogenéticas",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000638",
+      "nombre_normalizado": "CYP2C19 genotipificación",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000639",
+      "nombre_normalizado": "CYP2D6 genotipificación",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000640",
+      "nombre_normalizado": "CYP2C9 genotipificación",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000641",
+      "nombre_normalizado": "VKORC1 genotipificación",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000642",
+      "nombre_normalizado": "UGT1A1 genotipificación",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000643",
+      "nombre_normalizado": "TPMT genotipificación",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000644",
+      "nombre_normalizado": "NUDT15 genotipificación",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "biologia_molecular",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "muestra clínica según diana; medio molecular cuando aplique"
+      ],
+      "metodologias_habituales": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    }
+  ]
+}

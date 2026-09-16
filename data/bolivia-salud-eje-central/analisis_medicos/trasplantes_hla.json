@@ -1,0 +1,567 @@
+{
+  "categoria": "trasplantes_hla",
+  "total": 18,
+  "pruebas": [
+    {
+      "id": "test_000912",
+      "nombre_normalizado": "Tipificación HLA-A",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000913",
+      "nombre_normalizado": "Tipificación HLA-B",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000914",
+      "nombre_normalizado": "Tipificación HLA-C",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000915",
+      "nombre_normalizado": "Tipificación HLA-DRB1",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000916",
+      "nombre_normalizado": "Tipificación HLA-DQB1",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000917",
+      "nombre_normalizado": "Tipificación HLA-DPB1",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000918",
+      "nombre_normalizado": "Tipificación HLA alta resolución NGS",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000919",
+      "nombre_normalizado": "HLA-B27",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000920",
+      "nombre_normalizado": "HLA-DQ2",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000921",
+      "nombre_normalizado": "HLA-DQ8",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000922",
+      "nombre_normalizado": "Panel reactivo de anticuerpos HLA (PRA)",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000923",
+      "nombre_normalizado": "Anticuerpos anti-HLA clase I",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000924",
+      "nombre_normalizado": "Anticuerpos anti-HLA clase II",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000925",
+      "nombre_normalizado": "Anticuerpos específicos del donante (DSA)",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000926",
+      "nombre_normalizado": "Crossmatch linfocitario CDC",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000927",
+      "nombre_normalizado": "Crossmatch por citometría de flujo",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000928",
+      "nombre_normalizado": "Crossmatch virtual",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000929",
+      "nombre_normalizado": "C4d en biopsia de trasplante",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "trasplantes_hla",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre EDTA y/o suero"
+      ],
+      "metodologias_habituales": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    }
+  ]
+}

@@ -1,0 +1,228 @@
+{
+  "fuentes": [
+    {
+      "id": "src_agemed",
+      "organizacion": "AGEMED Bolivia",
+      "tipo": "regulador",
+      "url": "https://apiwww.agemed.gob.bo/api/listautcom/empresas",
+      "uso": "Registro/listados de farmacias legalmente establecidas y establecimientos farmacéuticos",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_sedes_lp",
+      "organizacion": "SEDES La Paz",
+      "tipo": "regulador_departamental",
+      "url": "https://www.sedeslapaz.gob.bo/wp-content/uploads/2022/11/sistema-SIHACOES-28092022.pdf",
+      "uso": "Establecimientos autorizados/habilitados; documento histórico consultado",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_sedes_cbba_lab",
+      "organizacion": "SEDES Cochabamba",
+      "tipo": "regulador_departamental",
+      "url": "https://www.sedescochabamba.gob.bo/laboratorio.php",
+      "uso": "Requisitos y regulación de laboratorios",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_sedes_cbba_farm",
+      "organizacion": "SEDES Cochabamba",
+      "tipo": "regulador_departamental",
+      "url": "https://www.sedescochabamba.gob.bo/farmacia.php",
+      "uso": "Requisitos y regulación de farmacias",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_plexus_tests",
+      "organizacion": "Plexus Laboratorio Clínico y Molecular",
+      "tipo": "sitio_oficial",
+      "url": "https://plexuslaboratorio.com/pruebas-de-laboratorio/",
+      "uso": "Catálogo de pruebas, preparación y biología molecular",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_plexus_lp",
+      "organizacion": "Plexus Laboratorio Clínico y Molecular",
+      "tipo": "sitio_oficial",
+      "url": "https://plexuslaboratorio.com/laboratorios-en-la-paz/",
+      "uso": "Sucursales La Paz/El Alto",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_plexus_sc",
+      "organizacion": "Plexus Laboratorio Clínico y Molecular",
+      "tipo": "sitio_oficial",
+      "url": "https://plexuslaboratorio.com/laboratorios-santa-cruz/",
+      "uso": "Sucursales Santa Cruz",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_zuna_tests",
+      "organizacion": "DR+ZUNA",
+      "tipo": "sitio_oficial",
+      "url": "https://www.labzuna.com.bo/catalogo-de-pruebas/",
+      "uso": "Catálogo de pruebas",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_zuna_red",
+      "organizacion": "DR+ZUNA",
+      "tipo": "sitio_oficial",
+      "url": "https://www.labzuna.com.bo/red-de-laboratorios/",
+      "uso": "Red de laboratorios y direcciones",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_zuna_calidad",
+      "organizacion": "DR+ZUNA",
+      "tipo": "sitio_oficial",
+      "url": "https://www.labzuna.com.bo/gestion-de-calidad/",
+      "uso": "Gestión y control externo de calidad",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_seladis",
+      "organizacion": "SELADIS - UMSA",
+      "tipo": "institucional",
+      "url": "https://seladis.umsa.bo/",
+      "uso": "Áreas de diagnóstico especializado y contacto",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_inlasa",
+      "organizacion": "INLASA",
+      "tipo": "institucional",
+      "url": "https://inlasa.gob.bo/",
+      "uso": "Centro nacional de referencia y servicios",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_cenetrop",
+      "organizacion": "CENETROP",
+      "tipo": "institucional",
+      "url": "https://www.cenetrop.org.bo/",
+      "uso": "Medicina tropical y laboratorio de referencia",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_magnus",
+      "organizacion": "Laboratorio Magnus",
+      "tipo": "sitio_oficial",
+      "url": "https://laboratoriomagnus.com/sucursales.php",
+      "uso": "Sucursales Cochabamba",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_universo",
+      "organizacion": "Laboratorio Universo",
+      "tipo": "sitio_oficial",
+      "url": "https://www.labuniverso.com/",
+      "uso": "Servicios y sede Cochabamba",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_praxis",
+      "organizacion": "Laboratorio Praxis",
+      "tipo": "sitio_oficial",
+      "url": "https://laboratoriopraxis.com/",
+      "uso": "Servicios y sede Cochabamba",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_labclinics",
+      "organizacion": "LabClinics SRL",
+      "tipo": "sitio_oficial",
+      "url": "https://lab-clinics.com/",
+      "uso": "Sede La Paz",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_farmacorp",
+      "organizacion": "Farmacorp",
+      "tipo": "sitio_oficial",
+      "url": "https://farmacorp.com/pages/sucursales-farmacorp",
+      "uso": "Directorio actual de sucursales (interfaz dinámica)",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_farmacorp_hist",
+      "organizacion": "Farmacorp",
+      "tipo": "sitio_oficial_historico",
+      "url": "https://farmacorp.com/pages/bases-de-la-promocion-momentos-dorados",
+      "uso": "Direcciones publicadas en bases promocionales; usar como línea base histórica, no como prueba de vigencia 2026",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_hipermaxi",
+      "organizacion": "Hipermaxi",
+      "tipo": "sitio_oficial",
+      "url": "https://informacion.hipermaxi.com/",
+      "uso": "Presencia nacional y número de farmacias",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_hipermaxi_hist",
+      "organizacion": "Hipermaxi",
+      "tipo": "documento_corporativo_historico",
+      "url": "https://informacion.hipermaxi.com/wp-content/uploads/2023/01/2%C2%B0-PROYECTO-DE-PROMOCION-SET-PARILLERO-AJ-.1.pdf",
+      "uso": "Ejemplos de farmacias/sucursales y direcciones históricas",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_farmacias_bolivia",
+      "organizacion": "Farmacias Bolivia",
+      "tipo": "sitio_oficial",
+      "url": "https://www.farmaciasbolivia.com.bo/",
+      "uso": "Cadena; sitio observado en mantenimiento durante investigación",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_chavez",
+      "organizacion": "Farmacias Chávez",
+      "tipo": "sitio_oficial",
+      "url": "https://www.farmaciaschavez.com.bo/",
+      "uso": "Cadena y comercio electrónico",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_loinc",
+      "organizacion": "Regenstrief Institute - LOINC",
+      "tipo": "terminologia",
+      "url": "https://loinc.org/",
+      "uso": "Estándar de identificación de observaciones/pruebas. No se asignan códigos sin verificación puntual.",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_snomed",
+      "organizacion": "SNOMED International",
+      "tipo": "terminologia",
+      "url": "https://www.snomed.org/",
+      "uso": "Terminología clínica. No se asignan códigos sin verificación puntual.",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_clsi",
+      "organizacion": "Clinical and Laboratory Standards Institute",
+      "tipo": "estandar",
+      "url": "https://clsi.org/",
+      "uso": "Buenas prácticas y estándares de laboratorio",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_cdc",
+      "organizacion": "CDC",
+      "tipo": "referencia_clinica",
+      "url": "https://www.cdc.gov/laboratory/",
+      "uso": "Referencia para pruebas de laboratorio e infecciosas",
+      "fecha_verificacion": "2026-09-13"
+    },
+    {
+      "id": "src_who",
+      "organizacion": "World Health Organization",
+      "tipo": "referencia_clinica",
+      "url": "https://www.who.int/health-topics/laboratory-quality-management",
+      "uso": "Gestión de calidad y diagnóstico",
+      "fecha_verificacion": "2026-09-13"
+    }
+  ]
+}

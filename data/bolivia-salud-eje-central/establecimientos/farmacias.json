@@ -1,0 +1,78 @@
+{
+  "cadenas_farmacias": [
+    {
+      "id": "farm_farmacorp",
+      "nombre": "Farmacorp",
+      "tipo": "cadena_farmacias",
+      "descripcion": "Cadena nacional de farmacias y retail de salud con presencia en el eje central.",
+      "cobertura": [
+        "La Paz",
+        "El Alto",
+        "Cochabamba",
+        "Santa Cruz de la Sierra"
+      ],
+      "fuentes": [
+        "src_farmacorp",
+        "src_farmacorp_hist",
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_hipermaxi",
+      "nombre": "Hipermaxi Farmacias",
+      "tipo": "cadena_farmacias",
+      "descripcion": "Red de farmacias vinculada a Hipermaxi; la empresa declara 37 farmacias en Bolivia.",
+      "cobertura": [
+        "La Paz",
+        "El Alto",
+        "Cochabamba",
+        "Santa Cruz de la Sierra"
+      ],
+      "fuentes": [
+        "src_hipermaxi",
+        "src_hipermaxi_hist",
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_bolivia",
+      "nombre": "Farmacias Bolivia",
+      "tipo": "cadena_farmacias",
+      "descripcion": "Cadena boliviana de farmacias con presencia en La Paz y otras ciudades; durante la investigación el sitio corporativo estuvo en mantenimiento.",
+      "cobertura": [
+        "La Paz"
+      ],
+      "fuentes": [
+        "src_farmacias_bolivia",
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_chavez",
+      "nombre": "Farmacias Chávez",
+      "tipo": "cadena_farmacias",
+      "descripcion": "Cadena boliviana con plataforma de comercio electrónico y selector de sucursales.",
+      "cobertura": [
+        "La Paz",
+        "Santa Cruz de la Sierra"
+      ],
+      "fuentes": [
+        "src_chavez",
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_economica",
+      "nombre": "Farmacias Económica / registros homónimos",
+      "tipo": "farmacia_cadena_o_nombre_comercial_pendiente_reconciliacion",
+      "descripcion": "Registros encontrados en directorios públicos; requiere reconciliar razón social y habilitación individual con AGEMED/SEDES antes de tratarlo como una única cadena.",
+      "cobertura": [
+        "Santa Cruz de la Sierra",
+        "Cochabamba"
+      ],
+      "fuentes": [
+        "src_agemed"
+      ]
+    }
+  ]
+}

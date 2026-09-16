@@ -1,0 +1,183 @@
+{
+  "paneles": [
+    {
+      "id": "panel_renal",
+      "nombre": "Perfil renal",
+      "componentes_nombres": [
+        "Creatinina sérica",
+        "Nitrógeno ureico (BUN/NUS)",
+        "Ácido úrico",
+        "Urea"
+      ],
+      "componentes_ids": [
+        "test_000090",
+        "test_000089",
+        "test_000092",
+        "test_000088"
+      ],
+      "fuentes": [
+        "src_plexus_tests"
+      ]
+    },
+    {
+      "id": "panel_lipidico",
+      "nombre": "Perfil lipídico",
+      "componentes_nombres": [
+        "Colesterol total",
+        "HDL colesterol",
+        "LDL colesterol directo",
+        "VLDL colesterol",
+        "Triglicéridos"
+      ],
+      "componentes_ids": [
+        "test_000143",
+        "test_000144",
+        "test_000145",
+        "test_000147",
+        "test_000148"
+      ],
+      "fuentes": [
+        "src_plexus_tests"
+      ]
+    },
+    {
+      "id": "panel_hepatico",
+      "nombre": "Perfil hepático",
+      "componentes_nombres": [
+        "AST/TGO",
+        "ALT/TGP",
+        "Fosfatasa alcalina",
+        "Bilirrubina total",
+        "Bilirrubina directa",
+        "Bilirrubina indirecta",
+        "GGT"
+      ],
+      "componentes_ids": [
+        "test_000120",
+        "test_000121",
+        "test_000122",
+        "test_000117",
+        "test_000118",
+        "test_000119",
+        "test_000123"
+      ],
+      "fuentes": [
+        "src_plexus_tests"
+      ]
+    },
+    {
+      "id": "panel_electrolitos",
+      "nombre": "Perfil electrolítico",
+      "componentes_nombres": [
+        "Sodio",
+        "Potasio",
+        "Cloro"
+      ],
+      "componentes_ids": [
+        "test_000093",
+        "test_000094",
+        "test_000095"
+      ],
+      "fuentes": [
+        "src_plexus_tests"
+      ]
+    },
+    {
+      "id": "panel_hierro",
+      "nombre": "Perfil de hierro",
+      "componentes_nombres": [
+        "Hierro sérico",
+        "Capacidad total de fijación del hierro (TIBC)",
+        "Saturación de transferrina",
+        "Ferritina",
+        "Transferrina"
+      ],
+      "componentes_ids": [
+        "test_000102",
+        "test_000103",
+        "test_000105",
+        "test_000107",
+        "test_000106"
+      ],
+      "fuentes": [
+        "src_plexus_tests"
+      ]
+    },
+    {
+      "id": "panel_tiroideo",
+      "nombre": "Perfil tiroideo",
+      "componentes_nombres": [
+        "TSH ultrasensible",
+        "T4 libre",
+        "T3 libre"
+      ],
+      "componentes_ids": [
+        "test_000176",
+        "test_000177",
+        "test_000179"
+      ],
+      "fuentes": [
+        "src_plexus_tests"
+      ]
+    },
+    {
+      "id": "panel_prostatico",
+      "nombre": "Perfil prostático",
+      "componentes_nombres": [
+        "PSA total",
+        "PSA libre",
+        "Relación PSA libre/total"
+      ],
+      "componentes_ids": [
+        "test_000681",
+        "test_000682",
+        "test_000683"
+      ],
+      "fuentes": [
+        "src_plexus_tests"
+      ]
+    },
+    {
+      "id": "panel_torch_igg",
+      "nombre": "TORCH IgG",
+      "componentes_nombres": [
+        "Toxoplasma IgG",
+        "Rubéola IgG",
+        "CMV IgG",
+        "HSV-1 IgG",
+        "HSV-2 IgG"
+      ],
+      "componentes_ids": [
+        "test_000449",
+        "test_000451",
+        "test_000453",
+        "test_000455",
+        "test_000457"
+      ],
+      "fuentes": [
+        "src_plexus_tests"
+      ]
+    },
+    {
+      "id": "panel_torch_igm",
+      "nombre": "TORCH IgM",
+      "componentes_nombres": [
+        "Toxoplasma IgM",
+        "Rubéola IgM",
+        "CMV IgM",
+        "HSV-1 IgM",
+        "HSV-2 IgM"
+      ],
+      "componentes_ids": [
+        "test_000450",
+        "test_000452",
+        "test_000454",
+        "test_000456",
+        "test_000458"
+      ],
+      "fuentes": [
+        "src_plexus_tests"
+      ]
+    }
+  ]
+}

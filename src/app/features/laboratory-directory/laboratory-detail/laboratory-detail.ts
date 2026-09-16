@@ -163,7 +163,14 @@ export class LaboratoryDetail {
     return [
       { etiqueta: 'Código', valor: study.code, icono: 'tag' },
       {
-        etiqueta: 'Precio público',
+        // El rótulo lo decide la tarifa, no está fijo.
+        //
+        // «Precio público» significa que el centro lo publicó, y de los centros
+        // del corpus no sabemos ninguno: el corpus no recogió tarifas. Lo que
+        // se ve ahí es una cifra de demostración, y llamarla pública la haría
+        // pasar por dato verificado —que es justo lo que este directorio no
+        // puede permitirse, porque los centros que lista existen—.
+        etiqueta: precio?.scheduleCode === 'MAQUETA' ? 'Precio de demostración' : 'Precio público',
         valor:
           precio === undefined ? null : this.priceLabel(precio.amount, precio.currency.display),
         icono: 'billing',

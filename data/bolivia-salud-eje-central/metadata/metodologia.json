@@ -1,0 +1,23 @@
+{
+  "fecha_corte": "2026-09-13",
+  "jerarquia_fuentes": [
+    "reguladores/SEDES",
+    "instituciones públicas/universitarias",
+    "sitios oficiales de cadenas/centros",
+    "directorios/mapas como evidencia complementaria"
+  ],
+  "normalizacion": [
+    "IDs estables",
+    "null para desconocido",
+    "fuente por registro",
+    "distinción entre vigencia actual, histórica y no verificada",
+    "pruebas, paneles y metodologías separados"
+  ],
+  "criterios_no_inventar": [
+    "coordenadas",
+    "habilitación legal",
+    "códigos terminológicos",
+    "horarios/teléfonos no publicados",
+    "rangos de referencia universales"
+  ]
+}

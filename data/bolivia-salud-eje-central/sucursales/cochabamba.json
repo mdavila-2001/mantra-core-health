@@ -1,0 +1,173 @@
+{
+  "sucursales": [
+    {
+      "id": "suc_magnus_central",
+      "parent_id": "lab_magnus",
+      "nombre": "Central",
+      "tipo": "laboratorio",
+      "direccion": "Av. Oquendo entre Heroínas y Colombia, Edificio Romero PB, oficina A",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": "63999980",
+      "horario": "Lun-Vie 07:00-21:00; fines de semana 07:00-19:00",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_magnus"
+      ]
+    },
+    {
+      "id": "suc_magnus_suecia",
+      "parent_id": "lab_magnus",
+      "nombre": "Sucursal Av. Suecia",
+      "tipo": "laboratorio",
+      "direccion": "Av. Suecia, referencia Biblioteca Avión",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": "63999980",
+      "horario": null,
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_magnus"
+      ]
+    },
+    {
+      "id": "suc_universo_cbba",
+      "parent_id": "lab_universo",
+      "nombre": "Laboratorio Universo",
+      "tipo": "laboratorio",
+      "direccion": "Av. Libertador Bolívar Nº 1708",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": null,
+      "horario": "Emergencias 24 horas (servicio publicado)",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_universo"
+      ]
+    },
+    {
+      "id": "suc_praxis_cbba",
+      "parent_id": "lab_praxis",
+      "nombre": "Central Cochabamba",
+      "tipo": "laboratorio",
+      "direccion": "Av. Ramón Rivero Nº 330, Edificio Caprice, planta baja",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": "62224224 / 70793117",
+      "horario": null,
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_praxis"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_022",
+      "parent_id": "farm_farmacorp",
+      "nombre": "San Martín",
+      "direccion": "Av. San Martín esq. Sucre",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_023",
+      "parent_id": "farm_farmacorp",
+      "nombre": "América",
+      "direccion": "Av. América esq. Pando",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_024",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Aranjuez",
+      "direccion": "Av. América Nro. 488, Mall Aranjuez",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_025",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Ecológica",
+      "direccion": "Av. Ecológica Nro. 350, Zona Chilimarca",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_hipermaxi_001",
+      "parent_id": "farm_hipermaxi",
+      "nombre": "Juan de la Rosa",
+      "direccion": "Av. Juan de la Rosa y Gabriel René Moreno N°207033",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "documento_corporativo_historico; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_hipermaxi_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_hipermaxi_002",
+      "parent_id": "farm_hipermaxi",
+      "nombre": "Sacaba-CBBA",
+      "direccion": "Av. Chapare esq. Villazón",
+      "zona": null,
+      "ciudad": "Sacaba",
+      "departamento": "Cochabamba",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "documento_corporativo_historico; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_hipermaxi_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_hipermaxi_003",
+      "parent_id": "farm_hipermaxi",
+      "nombre": "Circunvalación CBBA",
+      "direccion": "Av. Circunvalación entre Hernán Siles y Uzeda",
+      "zona": null,
+      "ciudad": "Cochabamba",
+      "departamento": "Cochabamba",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "documento_corporativo_historico; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_hipermaxi_hist"
+      ]
+    }
+  ]
+}

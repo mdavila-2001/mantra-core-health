@@ -1,0 +1,657 @@
+{
+  "categoria": "inmunohematologia_banco_sangre",
+  "total": 21,
+  "pruebas": [
+    {
+      "id": "test_000891",
+      "nombre_normalizado": "Grupo ABO",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000892",
+      "nombre_normalizado": "Factor RhD",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000893",
+      "nombre_normalizado": "Fenotipo Rh extendido C/c/E/e",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000894",
+      "nombre_normalizado": "Fenotipo Kell",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000895",
+      "nombre_normalizado": "Antígeno K",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000896",
+      "nombre_normalizado": "Prueba de Coombs directa (DAT)",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000897",
+      "nombre_normalizado": "Coombs indirecta (IAT)",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000898",
+      "nombre_normalizado": "Screening de anticuerpos irregulares",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "panel_perfil",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000899",
+      "nombre_normalizado": "Identificación de anticuerpos irregulares",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000900",
+      "nombre_normalizado": "Titulación de anticuerpos eritrocitarios",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000901",
+      "nombre_normalizado": "Prueba cruzada mayor",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000902",
+      "nombre_normalizado": "Prueba cruzada menor",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000903",
+      "nombre_normalizado": "Compatibilidad pretransfusional electrónica",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000904",
+      "nombre_normalizado": "Elución de anticuerpos eritrocitarios",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000905",
+      "nombre_normalizado": "Adsorción autóloga",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000906",
+      "nombre_normalizado": "Adsorción alogénica",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000907",
+      "nombre_normalizado": "Prueba de Kleihauer-Betke",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000908",
+      "nombre_normalizado": "Cuantificación de hemorragia fetomaterna por citometría",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000909",
+      "nombre_normalizado": "Fenotipo D débil",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000910",
+      "nombre_normalizado": "Genotipo RhD",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000911",
+      "nombre_normalizado": "Genotipo eritrocitario extendido",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "inmunohematologia_banco_sangre",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "sangre total EDTA/suero según prueba"
+      ],
+      "metodologias_habituales": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    }
+  ]
+}

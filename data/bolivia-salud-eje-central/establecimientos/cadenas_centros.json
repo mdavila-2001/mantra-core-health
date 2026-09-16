@@ -1,0 +1,263 @@
+{
+  "laboratorios_y_centros": [
+    {
+      "id": "lab_plexus",
+      "nombre": "Plexus Laboratorio Clínico y Molecular",
+      "tipo": "laboratorio_clinico_molecular",
+      "descripcion": "Red privada boliviana de laboratorio clínico y molecular con pruebas rutinarias y especializadas, biología molecular, inmunología, alergología, microbiología y servicio a domicilio.",
+      "ciudades": [
+        "La Paz",
+        "El Alto",
+        "Santa Cruz de la Sierra"
+      ],
+      "servicios": [
+        "laboratorio clínico",
+        "biología molecular",
+        "microbiología",
+        "inmunología",
+        "alergología",
+        "toma a domicilio",
+        "resultados en línea"
+      ],
+      "fuentes": [
+        "src_plexus_tests",
+        "src_plexus_lp",
+        "src_plexus_sc"
+      ]
+    },
+    {
+      "id": "lab_zuna",
+      "nombre": "DR+ZUNA",
+      "tipo": "laboratorio_clinico",
+      "descripcion": "Red privada de laboratorios en Santa Cruz con toma de muestras, catálogo amplio de pruebas, automatización y participación en esquemas externos de control de calidad.",
+      "ciudades": [
+        "Santa Cruz de la Sierra"
+      ],
+      "servicios": [
+        "laboratorio clínico",
+        "toma pediátrica",
+        "toma ginecológica",
+        "pruebas especializadas"
+      ],
+      "fuentes": [
+        "src_zuna_tests",
+        "src_zuna_red",
+        "src_zuna_calidad"
+      ]
+    },
+    {
+      "id": "lab_seladis",
+      "nombre": "SELADIS - UMSA",
+      "tipo": "laboratorio_universitario_referencia",
+      "descripcion": "Servicio universitario especializado con áreas de genética molecular, endocrinología y biomarcadores, histocompatibilidad e inmunogenética, hematología, citología, bioquímica clínica, inmunología, bacteriología, micología, virología y parasitología.",
+      "ciudades": [
+        "La Paz"
+      ],
+      "servicios": [
+        "genética molecular",
+        "inmunogenética",
+        "hematología",
+        "bioquímica clínica",
+        "microbiología",
+        "virología",
+        "parasitología",
+        "citología"
+      ],
+      "fuentes": [
+        "src_seladis"
+      ]
+    },
+    {
+      "id": "lab_inlasa",
+      "nombre": "INLASA",
+      "tipo": "laboratorio_nacional_referencia",
+      "descripcion": "Instituto Nacional de Laboratorios de Salud con funciones de referencia, vigilancia y servicios especializados.",
+      "ciudades": [
+        "La Paz"
+      ],
+      "servicios": [
+        "referencia nacional",
+        "salud pública",
+        "diagnóstico especializado"
+      ],
+      "fuentes": [
+        "src_inlasa"
+      ]
+    },
+    {
+      "id": "lab_cenetrop",
+      "nombre": "CENETROP",
+      "tipo": "centro_referencia_medicina_tropical",
+      "descripcion": "Centro nacional de medicina tropical con actividades clínicas, de laboratorio, epidemiológicas, investigación, enseñanza y evaluación externa de calidad.",
+      "ciudades": [
+        "Santa Cruz de la Sierra"
+      ],
+      "servicios": [
+        "medicina tropical",
+        "diagnóstico",
+        "referencia",
+        "investigación"
+      ],
+      "fuentes": [
+        "src_cenetrop"
+      ]
+    },
+    {
+      "id": "lab_magnus",
+      "nombre": "Laboratorio Magnus",
+      "tipo": "laboratorio_clinico",
+      "descripcion": "Laboratorio clínico privado de Cochabamba con sedes publicadas y toma de muestra a domicilio.",
+      "ciudades": [
+        "Cochabamba"
+      ],
+      "servicios": [
+        "laboratorio clínico",
+        "toma a domicilio"
+      ],
+      "fuentes": [
+        "src_magnus"
+      ]
+    },
+    {
+      "id": "lab_universo",
+      "nombre": "Laboratorio Universo",
+      "tipo": "laboratorio_clinico",
+      "descripcion": "Laboratorio clínico privado con química sanguínea, marcadores tumorales, micología, extracción a domicilio y atención de emergencias.",
+      "ciudades": [
+        "Cochabamba"
+      ],
+      "servicios": [
+        "química clínica",
+        "marcadores tumorales",
+        "micología",
+        "toma a domicilio"
+      ],
+      "fuentes": [
+        "src_universo"
+      ]
+    },
+    {
+      "id": "lab_praxis",
+      "nombre": "Laboratorio Praxis",
+      "tipo": "laboratorio_clinico_especializado",
+      "descripcion": "Laboratorio privado con servicios de citometría de flujo, biología molecular y plataformas sindrómicas, además de laboratorio clínico.",
+      "ciudades": [
+        "Cochabamba",
+        "La Paz"
+      ],
+      "servicios": [
+        "laboratorio clínico",
+        "citometría de flujo",
+        "biología molecular",
+        "paneles sindrómicos"
+      ],
+      "fuentes": [
+        "src_praxis"
+      ]
+    },
+    {
+      "id": "lab_labclinics",
+      "nombre": "LabClinics SRL",
+      "tipo": "laboratorio_clinico",
+      "descripcion": "Laboratorio clínico privado con sede central publicada en La Paz.",
+      "ciudades": [
+        "La Paz"
+      ],
+      "servicios": [
+        "laboratorio clínico"
+      ],
+      "fuentes": [
+        "src_labclinics"
+      ]
+    },
+    {
+      "id": "lab_hsjdd",
+      "nombre": "Hospital San Juan de Dios - Laboratorio",
+      "tipo": "laboratorio_hospitalario_publico",
+      "descripcion": "Laboratorio de diagnóstico de establecimiento hospitalario público de Santa Cruz de la Sierra.",
+      "ciudades": [
+        "Santa Cruz de la Sierra"
+      ],
+      "servicios": [
+        "laboratorio hospitalario"
+      ],
+      "fuentes": []
+    }
+  ],
+  "cadenas_farmacias": [
+    {
+      "id": "farm_farmacorp",
+      "nombre": "Farmacorp",
+      "tipo": "cadena_farmacias",
+      "descripcion": "Cadena nacional de farmacias y retail de salud con presencia en el eje central.",
+      "cobertura": [
+        "La Paz",
+        "El Alto",
+        "Cochabamba",
+        "Santa Cruz de la Sierra"
+      ],
+      "fuentes": [
+        "src_farmacorp",
+        "src_farmacorp_hist",
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_hipermaxi",
+      "nombre": "Hipermaxi Farmacias",
+      "tipo": "cadena_farmacias",
+      "descripcion": "Red de farmacias vinculada a Hipermaxi; la empresa declara 37 farmacias en Bolivia.",
+      "cobertura": [
+        "La Paz",
+        "El Alto",
+        "Cochabamba",
+        "Santa Cruz de la Sierra"
+      ],
+      "fuentes": [
+        "src_hipermaxi",
+        "src_hipermaxi_hist",
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_bolivia",
+      "nombre": "Farmacias Bolivia",
+      "tipo": "cadena_farmacias",
+      "descripcion": "Cadena boliviana de farmacias con presencia en La Paz y otras ciudades; durante la investigación el sitio corporativo estuvo en mantenimiento.",
+      "cobertura": [
+        "La Paz"
+      ],
+      "fuentes": [
+        "src_farmacias_bolivia",
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_chavez",
+      "nombre": "Farmacias Chávez",
+      "tipo": "cadena_farmacias",
+      "descripcion": "Cadena boliviana con plataforma de comercio electrónico y selector de sucursales.",
+      "cobertura": [
+        "La Paz",
+        "Santa Cruz de la Sierra"
+      ],
+      "fuentes": [
+        "src_chavez",
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_economica",
+      "nombre": "Farmacias Económica / registros homónimos",
+      "tipo": "farmacia_cadena_o_nombre_comercial_pendiente_reconciliacion",
+      "descripcion": "Registros encontrados en directorios públicos; requiere reconciliar razón social y habilitación individual con AGEMED/SEDES antes de tratarlo como una única cadena.",
+      "cobertura": [
+        "Santa Cruz de la Sierra",
+        "Cochabamba"
+      ],
+      "fuentes": [
+        "src_agemed"
+      ]
+    }
+  ]
+}

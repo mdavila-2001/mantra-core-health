@@ -1,0 +1,74 @@
+{
+  "centros": [
+    {
+      "id": "lab_seladis",
+      "nombre": "SELADIS - UMSA",
+      "tipo": "laboratorio_universitario_referencia",
+      "descripcion": "Servicio universitario especializado con áreas de genética molecular, endocrinología y biomarcadores, histocompatibilidad e inmunogenética, hematología, citología, bioquímica clínica, inmunología, bacteriología, micología, virología y parasitología.",
+      "ciudades": [
+        "La Paz"
+      ],
+      "servicios": [
+        "genética molecular",
+        "inmunogenética",
+        "hematología",
+        "bioquímica clínica",
+        "microbiología",
+        "virología",
+        "parasitología",
+        "citología"
+      ],
+      "fuentes": [
+        "src_seladis"
+      ]
+    },
+    {
+      "id": "lab_inlasa",
+      "nombre": "INLASA",
+      "tipo": "laboratorio_nacional_referencia",
+      "descripcion": "Instituto Nacional de Laboratorios de Salud con funciones de referencia, vigilancia y servicios especializados.",
+      "ciudades": [
+        "La Paz"
+      ],
+      "servicios": [
+        "referencia nacional",
+        "salud pública",
+        "diagnóstico especializado"
+      ],
+      "fuentes": [
+        "src_inlasa"
+      ]
+    },
+    {
+      "id": "lab_cenetrop",
+      "nombre": "CENETROP",
+      "tipo": "centro_referencia_medicina_tropical",
+      "descripcion": "Centro nacional de medicina tropical con actividades clínicas, de laboratorio, epidemiológicas, investigación, enseñanza y evaluación externa de calidad.",
+      "ciudades": [
+        "Santa Cruz de la Sierra"
+      ],
+      "servicios": [
+        "medicina tropical",
+        "diagnóstico",
+        "referencia",
+        "investigación"
+      ],
+      "fuentes": [
+        "src_cenetrop"
+      ]
+    },
+    {
+      "id": "lab_hsjdd",
+      "nombre": "Hospital San Juan de Dios - Laboratorio",
+      "tipo": "laboratorio_hospitalario_publico",
+      "descripcion": "Laboratorio de diagnóstico de establecimiento hospitalario público de Santa Cruz de la Sierra.",
+      "ciudades": [
+        "Santa Cruz de la Sierra"
+      ],
+      "servicios": [
+        "laboratorio hospitalario"
+      ],
+      "fuentes": []
+    }
+  ]
+}

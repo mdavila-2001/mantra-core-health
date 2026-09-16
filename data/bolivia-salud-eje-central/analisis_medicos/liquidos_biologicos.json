@@ -1,0 +1,734 @@
+{
+  "categoria": "liquidos_biologicos",
+  "total": 23,
+  "pruebas": [
+    {
+      "id": "test_000822",
+      "nombre_normalizado": "Citoquímico de líquido cefalorraquídeo",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000823",
+      "nombre_normalizado": "Recuento celular en LCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000824",
+      "nombre_normalizado": "Proteínas en LCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000825",
+      "nombre_normalizado": "Glucosa en LCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000826",
+      "nombre_normalizado": "Lactato en LCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000827",
+      "nombre_normalizado": "Bandas oligoclonales en LCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000828",
+      "nombre_normalizado": "Índice IgG LCR/suero",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000829",
+      "nombre_normalizado": "Cultivo de LCR",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000830",
+      "nombre_normalizado": "Citoquímico de líquido pleural",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000831",
+      "nombre_normalizado": "Citoquímico de líquido ascítico",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000832",
+      "nombre_normalizado": "Citoquímico de líquido sinovial",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000833",
+      "nombre_normalizado": "Citoquímico de líquido pericárdico",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": true,
+      "evidencia_disponibilidad_bolivia": [
+        "src_plexus_tests",
+        "src_zuna_tests"
+      ],
+      "alcance": "bolivia_y_global",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000834",
+      "nombre_normalizado": "Cristales en líquido sinovial",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000835",
+      "nombre_normalizado": "Recuento celular en líquido sinovial",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000836",
+      "nombre_normalizado": "ADA en líquido pleural",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000837",
+      "nombre_normalizado": "ADA en líquido ascítico",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000838",
+      "nombre_normalizado": "Triglicéridos en líquido pleural",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000839",
+      "nombre_normalizado": "Amilasa en líquido pleural",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000840",
+      "nombre_normalizado": "pH de líquido pleural",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000841",
+      "nombre_normalizado": "LDH en líquido pleural",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000842",
+      "nombre_normalizado": "Proteínas en líquido pleural",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000843",
+      "nombre_normalizado": "SAAG albúmina suero-ascitis",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    },
+    {
+      "id": "test_000844",
+      "nombre_normalizado": "Citología de líquidos corporales",
+      "sinonimos_abreviaturas": [],
+      "tipo_entidad": "prueba_individual",
+      "categoria": "liquidos_biologicos",
+      "subcategoria": null,
+      "analito_microorganismo_gen_diana": null,
+      "muestras_habituales": [
+        "líquido biológico especificado"
+      ],
+      "metodologias_habituales": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ],
+      "tipo_resultado": "cualitativo_cuantitativo_o_semicuantitativo_segun_metodo",
+      "unidades_tipicas": null,
+      "uso_indicacion_clinica": "Diagnóstico, tamizaje, seguimiento o estratificación según contexto clínico; consultar guía específica y laboratorio ejecutor.",
+      "preparacion_paciente": null,
+      "requisitos_preanaliticos_conservacion": "Depende de muestra y método. Confirmar instrucciones del laboratorio ejecutor; no extrapolar condiciones entre plataformas.",
+      "tat_orientativo": null,
+      "codigos": {
+        "LOINC": null,
+        "SNOMED_CT": null,
+        "otros": []
+      },
+      "disponibilidad_bolivia_verificada": null,
+      "evidencia_disponibilidad_bolivia": [],
+      "alcance": "catalogo_global_no_implica_disponibilidad_local",
+      "fecha_revision": "2026-09-13",
+      "categorias_relacionadas": []
+    }
+  ]
+}
