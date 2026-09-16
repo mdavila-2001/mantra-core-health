@@ -54,6 +54,15 @@ CONTENEDOR="${MOCKUP_CONTENEDOR:-alovida-mockup}"
 # `deadlock` que no menciona la memoria por ninguna parte (salida 129). El pico
 # medido con 447 componentes y sus fragmentos diferidos ronda los 4,5 GB.
 MEMORIA="${MOCKUP_MEMORIA:-6g}"
+# El techo de memoria + swap del contenedor. **Mayor que `MEMORIA` a propósito:**
+# cuando los dos valores coinciden, Docker le prohíbe el swap al contenedor, y
+# entonces el límite deja de ser un techo y pasa a ser una sentencia — si la
+# máquina no tiene los 6 GB libres en RAM, el kernel mata la construcción con
+# `exit code: 137` en vez de dejarla desbordar. Es lo que pasó el 15/09/2026:
+# la H310 estaba con 5 GiB disponibles sosteniendo el resto de la plataforma, y
+# siete despliegues seguidos murieron ahí. Con holgura de swap la construcción
+# se vuelve lenta, que es mucho mejor que imposible.
+MEMORIA_SWAP="${MOCKUP_MEMORIA_SWAP:-10g}"
 URL="${MOCKUP_URL:-https://pablo-h310.taila8f993.ts.net:8443}"
 
 BITACORA="$ESTADO/redeploy.log"
@@ -76,7 +85,7 @@ construir_y_publicar() {
   log "BUILD: construyendo $corto"
   # `--target build` se queda en la etapa que compila: no hace falta la imagen
   # de ejecución, sólo su `dist/`.
-  if ! docker build --target build --memory "$MEMORIA" --memory-swap "$MEMORIA" \
+  if ! docker build --target build --memory "$MEMORIA" --memory-swap "$MEMORIA_SWAP" \
       -t "$imagen" "$RAIZ" >>"$BITACORA" 2>&1; then
     log "BUILD: FALLÓ $corto — se sigue sirviendo $(commit_servido)"
     # Se anota el fallo para no reintentar en bucle cada dos minutos contra un
