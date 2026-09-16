@@ -8,11 +8,11 @@
  * Uso: `node playwright/verificacion-pedidos.mjs [urlBase]`
  */
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const BASE = process.argv[2] ?? 'http://localhost:4328';
-const SALIDA = new URL('../evidencias/verificacion-pedidos-2026-09-09', import.meta.url).pathname
-  .replace(/^\/([A-Za-z]:)/, '$1');
+const SALIDA = fileURLToPath(new URL('../evidencias/verificacion-pedidos-2026-09-09', import.meta.url));
 const RUIDO = [/favicon/i, /Content Security Policy/i, /inline script/i];
 
 const veredictos = [];
