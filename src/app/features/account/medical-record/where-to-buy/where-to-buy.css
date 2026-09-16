@@ -33,13 +33,6 @@
   color: var(--text-secondary);
 }
 
-.compra__proximamente {
-  margin: 0;
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
 .compra__items,
 .compra__sedes {
   list-style: none;

@@ -72,6 +72,20 @@
                 distancias y no se guarda —, o medí desde una ciudad sin dar tu ubicación.
               </p>
               <div class="compra__ubicacion-acciones">
+                @for (lugar of lugaresGuardados(); track lugar.etiqueta) {
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    [attr.data-testid]="
+                      lugar.etiqueta === 'tu casa' ? 'where-to-buy-origin-home' : 'where-to-buy-origin-work'
+                    "
+                    (clicked)="medirDesde(lugar)"
+                  >
+                    {{ lugar.etiqueta === 'tu casa' ? 'Tu casa' : 'Tu trabajo' }}
+                  </button>
+                }
                 <button
                   app-button
                   variant="primary"
@@ -101,9 +115,6 @@
                   distancias: el orden por cobertura no cambia.
                 </p>
               }
-              <p class="compra__proximamente">
-                Próximamente: tu domicilio y tu trabajo como puntos de partida.
-              </p>
             }
           </section>
 
