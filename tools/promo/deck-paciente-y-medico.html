@@ -1,0 +1,323 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>AloVida · módulos de paciente y médico</title>
+<link rel="stylesheet" href="heredado.css">
+<style>
+html,body{width:auto;height:auto;overflow:visible;background:#DDE5E3}
+@page{size:1920px 1080px;margin:0}
+@media print{body{background:#fff}.lamina{margin:0 !important}}
+
+.lamina{width:1920px;height:1080px;position:relative;background:#fff;overflow:hidden;margin:0 auto 26px;
+  padding:80px 100px 84px;display:flex;flex-direction:column;page-break-after:always;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.lamina:last-child{page-break-after:auto}
+.lamina.oscura{background:
+  radial-gradient(1200px 820px at 18% -6%, #0E6A95 0%, transparent 56%),
+  radial-gradient(1000px 700px at 92% 104%, #10796F 0%, transparent 52%),
+  linear-gradient(140deg,#0B557E 0%,#0B3953 50%,#072F45 100%);color:#fff}
+
+.kicker{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.kicker .raya{width:46px;height:3px;background:var(--aguamarina);border-radius:3px}
+.kicker span{font-size:18px;letter-spacing:.16em;text-transform:uppercase;color:var(--tinta-3);font-weight:600}
+.oscura .kicker span{color:var(--menta)}
+h2{font-family:var(--display);font-weight:600;font-size:52px;line-height:1.1;letter-spacing:-.02em;color:var(--petroleo)}
+.oscura h2{color:#fff}
+
+/* dos columnas: texto a la izquierda, pantalla a la derecha */
+.dos-col{flex:1;display:grid;grid-template-columns:480px 1fr;gap:64px;align-items:center;min-height:0}
+.lista{list-style:none}
+.lista li{position:relative;padding-left:32px;font-size:23px;line-height:1.5;color:var(--tinta-2);margin-top:22px}
+.lista li::before{content:'';position:absolute;left:0;top:12px;width:12px;height:12px;border-radius:50%;background:var(--aguamarina)}
+.lista li b{color:var(--tinta);font-weight:600}
+.nota{font-size:17px;color:var(--tinta-3);margin-top:34px;font-style:italic}
+
+.pantalla{border-radius:18px;overflow:hidden;border:1px solid var(--filete-2);
+  box-shadow:0 38px 80px -34px rgba(11,57,83,.45);background:#fff;justify-self:center}
+.pantalla img{display:block;width:100%;height:auto}
+.pantalla--alta{max-height:800px}
+.pantalla--alta img{max-height:800px;width:auto;object-fit:cover;object-position:top}
+
+.par{display:grid;grid-template-columns:1fr 1fr;gap:38px;align-items:start}
+.par .pantalla{height:560px}
+.par .pantalla img{height:560px;width:100%;object-fit:cover;object-position:top left}
+.par .lista li{margin-top:18px;font-size:22px}
+
+/* la tira del recorrido */
+.tira{display:flex;align-items:stretch;gap:0;margin-top:20px}
+.tira .paso{flex:1;text-align:center;position:relative;padding:0 18px}
+.tira .paso::before{content:'';position:absolute;left:0;right:0;top:27px;height:3px;background:var(--filete-2)}
+.tira .paso:first-child::before{left:50%}
+.tira .paso:last-child::before{right:50%}
+.tira .bolita{position:relative;width:56px;height:56px;border-radius:50%;background:#fff;border:3px solid var(--aguamarina);
+  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px;color:var(--petroleo);margin:0 auto 20px}
+.tira .paso:last-child .bolita{background:var(--petroleo);border-color:var(--petroleo);color:#fff}
+.tira h4{font-family:var(--display);font-weight:600;font-size:25px;color:var(--petroleo);margin-bottom:8px}
+.tira p{font-size:19px;color:var(--tinta-2);line-height:1.4}
+
+.pie{position:absolute;left:100px;right:100px;bottom:40px;display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid var(--filete-2);padding-top:18px;font-size:18px;color:var(--tinta-3)}
+.pie .m{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:600;color:var(--petroleo)}
+.pie img{width:25px}
+</style>
+
+<!-- 01 · portada -->
+<section class="lamina oscura sin-pie" style="justify-content:center;padding-left:140px">
+  <img src="assets/alovida-logo-blanco.svg" style="width:96px;margin-bottom:40px">
+  <div style="font-family:var(--display);font-weight:700;font-size:96px;letter-spacing:-.025em;line-height:1">AloVida</div>
+  <div style="font-family:var(--display);font-weight:500;font-size:42px;color:var(--menta);margin-top:12px">Módulos de paciente y médico</div>
+  <p style="font-size:30px;line-height:1.5;color:#CFE7E3;max-width:1080px;margin-top:34px">
+    Pedir cita, dar turnos, atender, diagnosticar, cobrar y la red social entre profesionales y pacientes.
+    <b style="color:#fff;font-weight:600">Todas las pantallas de este mazo son capturas de la aplicación andando.</b></p>
+  <div style="position:absolute;left:140px;bottom:86px;font-size:20px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55)">
+    Mantra Core Technologies · septiembre de 2026</div>
+</section>
+
+<!-- 02 · el recorrido -->
+<section class="lamina">
+  <div class="kicker"><i class="raya"></i><span>El recorrido</span></div>
+  <h2>De pedir el turno a cobrar la consulta</h2>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div class="tira">
+      <div class="paso"><div class="bolita">1</div><h4>Pide turno</h4><p>El paciente elige profesional, sede y horario libre.</p></div>
+      <div class="paso"><div class="bolita">2</div><h4>Entra a la agenda</h4><p>La consulta aparece en la lista del médico con su estado.</p></div>
+      <div class="paso"><div class="bolita">3</div><h4>Atiende</h4><p>Registra llegada, inicia la consulta y la completa.</p></div>
+      <div class="paso"><div class="bolita">4</div><h4>Diagnostica</h4><p>Diagnóstico del catálogo CIE-10, receta y órdenes.</p></div>
+      <div class="paso"><div class="bolita">5</div><h4>Cobra</h4><p>Estado del pago en la fila y el asiento en contabilidad.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 · pedir turno -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Paciente</span></div>
+      <h2>Elige con quién<br>y a qué hora</h2>
+      <ul class="lista">
+        <li>Busca al profesional <b>por su nombre</b>.</li>
+        <li>Si atiende en varios lugares, <b>elige la sede</b>.</li>
+        <li>Ve los <b>horarios libres</b> y pide el que le sirve.</li>
+      </ul>
+      <p class="nota">Pantalla real · «Mis citas → Agendar una cita».</p>
+    </div>
+    <div class="pantalla"><img src="capturas/paciente-agendar.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 04 · mis citas -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Paciente</span></div>
+      <h2>Sus citas,<br>con su estado</h2>
+      <ul class="lista">
+        <li><b>Pedido, confirmado y atendido</b>, con filtro por estado y por fecha.</li>
+        <li>Se ven en <b>lista o en calendario</b>.</li>
+        <li>Cancelar o pedir otro horario, desde la misma fila.</li>
+      </ul>
+      <p class="nota">Pantalla real · «Mis citas».</p>
+    </div>
+    <div class="pantalla"><img src="capturas/paciente-mis-citas.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 05 · agenda del médico -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Médico</span></div>
+      <h2>La agenda<br>del día</h2>
+      <ul class="lista">
+        <li>Tres pestañas: <b>consultas, mi agenda y cupos</b>.</li>
+        <li>Cada fila trae <b>motivo, seguro, estado y pago</b>.</li>
+        <li>Las que esperan respuesta <b>encabezan la lista</b>.</li>
+      </ul>
+      <p class="nota">Pantalla real · «Consultas médicas».</p>
+    </div>
+    <div class="pantalla"><img src="capturas/medico-consultas.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 06 · cobro en la fila -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Cobros</span></div>
+      <h2>El cobro se marca<br>en la misma fila</h2>
+      <ul class="lista">
+        <li><b>Pendiente, parcial o pagada</b>, en un clic.</li>
+        <li>Se distingue lo que va <b>con seguro</b> de lo particular.</li>
+        <li>Sin salir de la agenda ni abrir otro sistema.</li>
+      </ul>
+      <p class="nota">Pantalla real · menú de la columna «Pago».</p>
+    </div>
+    <div class="pantalla"><img src="capturas/medico-pago.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 07 · la consulta -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Médico</span></div>
+      <h2>Qué se registra<br>en la consulta</h2>
+      <ul class="lista">
+        <li>El motivo llega <b>desde la cita</b>, no se vuelve a tipear.</li>
+        <li>Diagnóstico, receta, observación, nota, plan y documentos.</li>
+        <li>Cada bloque dice <b>cuánto hay ya en la historia</b>.</li>
+      </ul>
+      <p class="nota">Pantalla real · «Consulta» del archivo clínico.</p>
+    </div>
+    <div class="pantalla"><img src="capturas/medico-consulta.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 08 · diagnóstico -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Diagnóstico</span></div>
+      <h2>Sale del catálogo,<br>no de un campo libre</h2>
+      <ul class="lista">
+        <li><b>CIE-10</b> del catálogo de terminología: es lo único obligatorio.</li>
+        <li>Categoría, severidad, lateralidad y curso clínico, opcionales.</li>
+        <li>Queda enlazado a <b>la cita donde se detectó</b>.</li>
+      </ul>
+      <p class="nota">Pantalla real · «Nuevo diagnóstico».</p>
+    </div>
+    <div class="pantalla pantalla--alta"><img src="capturas/medico-diagnostico.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 09 · resultados del paciente -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Paciente</span></div>
+      <h2>Los resultados<br>le llegan a él</h2>
+      <ul class="lista">
+        <li>Sólo lo que <b>ya firmó y liberó</b> un profesional.</li>
+        <li>Descarga el archivo cuando quiere.</li>
+        <li>Puede <b>compartirlo con otro profesional</b>.</li>
+      </ul>
+      <p class="nota">Pantalla real · «Mis resultados».</p>
+    </div>
+    <div class="pantalla"><img src="capturas/paciente-resultados.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 10 · precios y contabilidad -->
+<section class="lamina">
+  <div class="kicker"><i class="raya"></i><span>Cobros</span></div>
+  <h2>Precio de referencia y libros al día</h2>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;margin-top:26px">
+    <div class="par">
+      <div>
+        <div class="pantalla"><img src="capturas/medico-servicios.png" alt=""></div>
+        <ul class="lista" style="margin-top:12px">
+          <li><b>Mis servicios</b>: cada prestación con su precio, por práctica.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="pantalla"><img src="capturas/medico-contabilidad.png" alt=""></div>
+        <ul class="lista" style="margin-top:12px">
+          <li><b>Contabilidad</b>: resultado del período, por cobrar y por pagar.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 · red social · muro -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Red social</span></div>
+      <h2>El muro<br>profesional</h2>
+      <ul class="lista">
+        <li>Se publica con <b>#etiquetas</b> que se guardan solas.</li>
+        <li>Cada publicación elige <b>quién puede leerla</b>: pública, seguidores o nadie.</li>
+        <li>Reacciones <b>«me sirve»</b> y <b>«me hizo pensar»</b>, más comentarios.</li>
+      </ul>
+      <p class="nota">Pantalla real · «Muro profesional».</p>
+    </div>
+    <div class="pantalla"><img src="capturas/social-muro.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 12 · red social · perfil público -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Red social</span></div>
+      <h2>El perfil que<br>ve el paciente</h2>
+      <ul class="lista">
+        <li><b>Verificado</b>, con su registro SEDES y su vencimiento.</li>
+        <li>Trayectoria, formación y dónde atiende hoy.</li>
+        <li><b>Actividad en la plataforma</b>: encuentros, recetas y notas asentadas.</li>
+      </ul>
+      <p class="nota">Pantalla real · perfil del directorio de médicos.</p>
+    </div>
+    <div class="pantalla"><img src="capturas/social-perfil.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 13 · red social · chats -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Red social</span></div>
+      <h2>Los chats,<br>en el mismo lugar</h2>
+      <ul class="lista">
+        <li>Conversaciones con el profesional y con <b>soporte</b>.</li>
+        <li>No leídos, favoritos y <b>grupos</b>.</li>
+        <li>Los avisos de la cita llegan <b>al mismo hilo</b>, no a otro canal.</li>
+      </ul>
+      <p class="nota">Pantalla real · «Chats».</p>
+    </div>
+    <div class="pantalla"><img src="capturas/social-chats.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 14 · red social · directorios -->
+<section class="lamina">
+  <div class="dos-col">
+    <div>
+      <div class="kicker"><i class="raya"></i><span>Red social</span></div>
+      <h2>Cuatro directorios,<br>una sola red</h2>
+      <ul class="lista">
+        <li>Médicos, laboratorios, clínicas y farmacias.</li>
+        <li>Agrupados como una guía: <b>por especialidad, categoría o ciudad</b>.</li>
+        <li>La <b>verificación</b> se ve en la ficha, no hay que preguntarla.</li>
+      </ul>
+      <p class="nota">Pantalla real · «Directorios».</p>
+    </div>
+    <div class="pantalla"><img src="capturas/social-directorios.png" alt=""></div>
+  </div>
+</section>
+
+<!-- 15 · cierre -->
+<section class="lamina oscura sin-pie" style="justify-content:center;padding-left:140px">
+  <div class="kicker"><i class="raya"></i><span>Lo que se puede mostrar hoy</span></div>
+  <h2 style="font-size:66px;line-height:1.08">Pedir cita, atender, diagnosticar,<br>cobrar y estar en la red</h2>
+  <p style="font-size:29px;line-height:1.5;color:#CFE7E3;max-width:1080px;margin-top:28px">
+    Todo lo de este mazo está funcionando en la maqueta y se puede recorrer en vivo, pantalla por pantalla,
+    en una reunión de veinte minutos.</p>
+  <div style="display:flex;align-items:center;gap:18px;margin-top:64px">
+    <img src="assets/alovida-logo-blanco.svg" style="width:48px">
+    <div style="font-family:var(--display);font-weight:600;font-size:32px">AloVida · Mantra Core Technologies</div>
+  </div>
+</section>
+
+<script>
+const laminas = [...document.querySelectorAll('.lamina')];
+laminas.forEach((l, i) => {
+  if (l.classList.contains('sin-pie')) return;
+  const pie = document.createElement('div');
+  pie.className = 'pie';
+  pie.innerHTML = `<div class="m"><img src="assets/alovida-logo.svg" alt="">AloVida · paciente y médico</div>
+                   <div>${String(i + 1).padStart(2, '0')} / ${String(laminas.length).padStart(2, '0')}</div>`;
+  l.appendChild(pie);
+});
+window.__laminas = laminas.length;
+</script>
