@@ -29,7 +29,9 @@ import { chromium } from 'playwright';
 const BASE = process.argv[2] ?? 'http://localhost:4200';
 // `fileURLToPath` y no `.pathname`: la ruta del workspace tiene espacios, y
 // `.pathname` los deja como `%20` y crea una carpeta con ese nombre literal.
-const SALIDA = fileURLToPath(new URL('../artifacts/playwright/patient-gps-nearby-places', import.meta.url));
+const SALIDA = fileURLToPath(
+  new URL('../artifacts/playwright/patient-gps-nearby-places', import.meta.url),
+);
 
 /** El aviso de la política de contenido del servidor de desarrollo: anterior a este carril. */
 const RUIDO_CSP = /Content Security Policy|Refused to execute inline script/i;
@@ -104,7 +106,8 @@ async function recorridoDeEscritorio(navegador) {
   pagina.on('console', (m) => {
     if (m.type() === 'error' && !RUIDO_CSP.test(m.text())) errores.push(m.text());
   });
-  const capturar = (nombre) => pagina.screenshot({ path: `${SALIDA}/1440-${nombre}.png`, fullPage: true });
+  const capturar = (nombre) =>
+    pagina.screenshot({ path: `${SALIDA}/1440-${nombre}.png`, fullPage: true });
 
   await ingresar(pagina);
 
@@ -113,9 +116,16 @@ async function recorridoDeEscritorio(navegador) {
   await pagina.getByTestId('search-origin-picker').waitFor({ timeout: 30_000 });
   const casa = pagina.getByTestId('segmentado-home');
   await casa.waitFor({ timeout: 20_000 });
-  ok('«Tu casa» se ofrece y queda elegida de entrada', (await casa.getAttribute('aria-checked')) === 'true');
+  ok(
+    '«Tu casa» se ofrece y queda elegida de entrada',
+    (await casa.getAttribute('aria-checked')) === 'true',
+  );
   const antes = await distanciasDeImagenologia(pagina);
-  ok('imagenología lista centros desde la casa, con el GPS negado', antes.length > 0, antes.join(' · '));
+  ok(
+    'imagenología lista centros desde la casa, con el GPS negado',
+    antes.length > 0,
+    antes.join(' · '),
+  );
   await capturar('01-nearby-desde-casa');
 
   /* ── 2 · «Ubicación actual» con el GPS negado ────────────────────────── */
@@ -133,7 +143,10 @@ async function recorridoDeEscritorio(navegador) {
   await abrirContactoEnEditor(pagina);
   const mapa = pagina.getByTestId('perfil-domicilio-mapa');
   await mapa.waitFor({ timeout: 20_000 });
-  ok('el editor abre con el pin guardado ya confirmado', await pagina.getByTestId('perfil-domicilio-confirmada').isVisible());
+  ok(
+    'el editor abre con el pin guardado ya confirmado',
+    await pagina.getByTestId('perfil-domicilio-confirmada').isVisible(),
+  );
   await mapa.locator('.leaflet-marker-icon').first().waitFor({ timeout: 20_000 });
   const caja = await mapa.boundingBox();
   // Un toque a ~120 px del centro, a zoom 17, corre el pin unos cientos de metros.
@@ -144,11 +157,24 @@ async function recorridoDeEscritorio(navegador) {
   await capturar('03-pin-movido');
   await guardarPerfil(pagina);
   const enlaceDespues = await enlaceDelDomicilio(pagina);
-  ok('guardar cambia el punto del domicilio («Ver en el mapa»)', enlaceDespues !== null && enlaceDespues !== enlaceAntes, `${enlaceAntes} → ${enlaceDespues}`);
+  ok(
+    'guardar cambia el punto del domicilio («Ver en el mapa»)',
+    enlaceDespues !== null && enlaceDespues !== enlaceAntes,
+    `${enlaceAntes} → ${enlaceDespues}`,
+  );
 
   // Releer desde el editor: el pin sembrado es el nuevo, confirmado.
   await abrirContactoEnEditor(pagina);
-  ok('releído, el editor vuelve a mostrar el pin confirmado', await pagina.getByTestId('perfil-domicilio-confirmada').waitFor({ timeout: 15_000 }).then(() => true, () => false));
+  ok(
+    'releído, el editor vuelve a mostrar el pin confirmado',
+    await pagina
+      .getByTestId('perfil-domicilio-confirmada')
+      .waitFor({ timeout: 15_000 })
+      .then(
+        () => true,
+        () => false,
+      ),
+  );
   await pagina.getByRole('button', { name: 'Cancelar' }).click();
   await pagina.getByTestId('mi-perfil-editar').waitFor({ timeout: 30_000 });
 
@@ -156,32 +182,57 @@ async function recorridoDeEscritorio(navegador) {
   await spaGo(pagina, '/nearby-places');
   await pagina.getByTestId('segmentado-home').waitFor({ timeout: 20_000 });
   const despues = await distanciasDeImagenologia(pagina);
-  ok('mover la casa cambia las distancias', despues.join('|') !== antes.join('|'), `${antes.join(' · ')} → ${despues.join(' · ')}`);
+  ok(
+    'mover la casa cambia las distancias',
+    despues.join('|') !== antes.join('|'),
+    `${antes.join(' · ')} → ${despues.join(' · ')}`,
+  );
   await capturar('04-nearby-casa-nueva');
 
   /* ── 5 · «Dónde comprar» mide desde la casa ──────────────────────────── */
   await pagina.getByRole('tab', { name: 'Farmacias' }).click();
   const verFarmacias = pagina.getByRole('link', { name: 'Ver farmacias cercanas' }).first();
-  const receta = await verFarmacias.waitFor({ timeout: 15_000 }).then(() => true, () => false);
+  const receta = await verFarmacias.waitFor({ timeout: 15_000 }).then(
+    () => true,
+    () => false,
+  );
   if (receta) {
     await verFarmacias.click();
     const origen = pagina.getByTestId('compra-origen');
     await origen.waitFor({ timeout: 30_000 });
-    ok('«Dónde comprar» mide desde tu casa sin pedir nada', ((await origen.textContent()) ?? '').includes('tu casa'));
+    ok(
+      '«Dónde comprar» mide desde tu casa sin pedir nada',
+      ((await origen.textContent()) ?? '').includes('tu casa'),
+    );
     await capturar('05-donde-comprar-desde-casa');
   } else {
-    omitido('«Dónde comprar» mide desde tu casa', 'la paciente de la maqueta no tiene recetas emitidas');
+    omitido(
+      '«Dónde comprar» mide desde tu casa',
+      'la paciente de la maqueta no tiene recetas emitidas',
+    );
   }
 
   /* ── 6 · Quitar el pin deja sólo la ubicación actual ─────────────────── */
   await abrirContactoEnEditor(pagina);
   await pagina.getByTestId('perfil-domicilio-quitar-gps').first().click();
   await guardarPerfil(pagina);
-  ok('sin punto, la lectura ya no ofrece «Ver en el mapa» del domicilio', (await enlaceDelDomicilio(pagina)) === null);
+  ok(
+    'sin punto, la lectura ya no ofrece «Ver en el mapa» del domicilio',
+    (await enlaceDelDomicilio(pagina)) === null,
+  );
   await spaGo(pagina, '/nearby-places');
   const unico = pagina.getByTestId('search-origin-current-only');
-  ok('sin lugares guardados, sólo queda «Usar mi ubicación actual»', await unico.waitFor({ timeout: 20_000 }).then(() => true, () => false));
-  ok('con el enlace a completar el perfil', await pagina.getByTestId('search-origin-profile-link').isVisible());
+  ok(
+    'sin lugares guardados, sólo queda «Usar mi ubicación actual»',
+    await unico.waitFor({ timeout: 20_000 }).then(
+      () => true,
+      () => false,
+    ),
+  );
+  ok(
+    'con el enlace a completar el perfil',
+    await pagina.getByTestId('search-origin-profile-link').isVisible(),
+  );
   await capturar('06-sin-lugares');
 
   ok('sin errores de página ni de consola (escritorio)', errores.length === 0, errores.join(' | '));
@@ -189,7 +240,10 @@ async function recorridoDeEscritorio(navegador) {
 }
 
 async function recorridoMovil(navegador) {
-  const contexto = await navegador.newContext({ viewport: { width: 390, height: 844 }, permissions: [] });
+  const contexto = await navegador.newContext({
+    viewport: { width: 390, height: 844 },
+    permissions: [],
+  });
   const pagina = await contexto.newPage();
   await ingresar(pagina);
   await spaGo(pagina, '/nearby-places');
@@ -211,7 +265,9 @@ async function main() {
     await navegador.close();
   }
   const fallidos = veredictos.filter((v) => !v.cond);
-  process.stdout.write(`\n${veredictos.length - fallidos.length}/${veredictos.length} verificaciones OK · capturas en ${SALIDA}\n`);
+  process.stdout.write(
+    `\n${veredictos.length - fallidos.length}/${veredictos.length} verificaciones OK · capturas en ${SALIDA}\n`,
+  );
   process.exit(fallidos.length === 0 ? 0 : 1);
 }
 
