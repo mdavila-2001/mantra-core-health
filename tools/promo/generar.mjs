@@ -176,7 +176,23 @@ async function capturarPantallas() {
   await med.setViewportSize({ width: 1600, height: 1050 });
   await med.goto(BASE + '/feed', { waitUntil: 'domcontentloaded' });
   await med.waitForTimeout(2800);
-  await foto(med, 'social-muro');
+  /* Se publica de verdad, con la propia pantalla: el texto sale de los catálogos
+     de `markdown_convertidos/` (el arancel odontológico y sus especialidades),
+     nunca de los archivos de personas. */
+  await med
+    .locator('main textarea')
+    .first()
+    .fill(
+      'Ya está cargado el arancel odontológico 2026 en el catálogo de servicios: endodoncia, ' +
+        'periodoncia, ortodoncia y odontopediatría tienen su precio de referencia. #aranceles #odontología',
+    );
+  await med.waitForTimeout(800);
+  await med.getByRole('button', { name: /^Publicar$/ }).first().click();
+  await med.waitForTimeout(2800);
+  await foto(med, 'social-muro', {
+    privacidad: med.getByText('Quién puede leerla').first(),
+    reacciones: med.getByText('Me sirve').first(),
+  });
 
   /* al perfil público se llega por el directorio, no por un id escrito a mano */
   await pac.goto(BASE + '/directory', { waitUntil: 'domcontentloaded' });
@@ -189,7 +205,10 @@ async function capturarPantallas() {
   if (!perfil) throw new Error('No encontré un perfil en el directorio de médicos.');
   await pac.goto(BASE + perfil, { waitUntil: 'domcontentloaded' });
   await pac.waitForTimeout(2800);
-  await foto(pac, 'social-perfil');
+  await foto(pac, 'social-perfil', {
+    verificado: pac.getByText('Verificado').first(),
+    actividad: pac.getByText('Actividad en la plataforma').first(),
+  });
 
   await pac.goto(BASE + '/messaging', { waitUntil: 'domcontentloaded' });
   await pac.waitForTimeout(2600);
@@ -201,6 +220,20 @@ async function capturarPantallas() {
   await pac.goto(BASE + '/directories', { waitUntil: 'domcontentloaded' });
   await pac.waitForTimeout(2400);
   await foto(pac, 'social-directorios');
+
+  await pac.goto(BASE + '/directory', { waitUntil: 'domcontentloaded' });
+  await pac.waitForTimeout(2600);
+  await foto(pac, 'directorio-medicos', {
+    especialidad: pac.locator('main').getByText('Cardiología').first(),
+  });
+
+  await pac.goto(BASE + '/clinics-directory', { waitUntil: 'domcontentloaded' });
+  await pac.waitForTimeout(2800);
+  await foto(pac, 'directorio-clinicas', {
+    mapa: pac.locator('main svg').first(),
+    /* la ficha del establecimiento, no el subtítulo de la página */
+    ficha: pac.locator('main a, main article, main li').filter({ hasText: /Verificado/ }).first(),
+  });
 
   /* lo presentado a cada aseguradora: hoy sólo lo alcanza la cuenta de plataforma */
   const adm = await sesion('superadmin@alovida.mock');
