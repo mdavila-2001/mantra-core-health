@@ -1,0 +1,52 @@
+<div class="origen" data-testid="search-origin-picker">
+  @if (places() === null) {
+    <p class="origen__nota" role="status" data-testid="search-origin-status">
+      Buscando tus lugares guardados…
+    </p>
+  } @else if (hasSavedPlace()) {
+    <app-segmented-control
+      [options]="options()"
+      [value]="selected()"
+      ariaLabel="Desde dónde buscar"
+      (valueChange)="elegir($event)"
+    />
+    @if (locating()) {
+      <p class="origen__nota" role="status" data-testid="search-origin-status">
+        Buscando tu ubicación actual…
+      </p>
+    }
+    @if (denied()) {
+      <app-alert tone="warning" data-testid="search-origin-status">
+        No pudimos usar tu ubicación actual. Elegí uno de tus lugares guardados, o
+        <button app-button variant="ghost" size="sm" type="button" (clicked)="useCurrentLocation()">
+          reintentar
+        </button>
+        .
+      </app-alert>
+    }
+  } @else {
+    <div class="origen__unico" data-testid="search-origin-current-only">
+      <button
+        app-button
+        variant="primary"
+        size="sm"
+        type="button"
+        [isLoading]="locating()"
+        (clicked)="useCurrentLocation()"
+      >
+        Usar mi ubicación actual
+      </button>
+      <p class="origen__nota">
+        Guardá tu casa en
+        <a routerLink="/my-account/profile/edit" data-testid="search-origin-profile-link">Mi perfil</a>
+        para buscar desde ahí sin usar el GPS.
+      </p>
+      @if (denied()) {
+        <p class="origen__nota" role="status" data-testid="search-origin-status">
+          No pudimos usar tu ubicación. Revisá el permiso de ubicación del navegador y volvé a
+          intentar.
+        </p>
+      }
+    </div>
+  }
+</div>
