@@ -5,7 +5,7 @@
 />
 
 <app-view-state-host [state]="state()" (retry)="cargar()">
-  @if (pedido(); as abierto) {
+  @if (vista(); as abierto) {
     <div class="pedido" data-testid="pedido-detalle">
       <!-- ─── El estado, en palabras ─────────────────────────────────────── -->
       @if (presentacion(); as estado) {
@@ -18,6 +18,13 @@
             <app-badge [variant]="estado.tone" data-testid="pedido-estado-badge">
               {{ estado.label }}
             </app-badge>
+            <!-- El medio de pago, sólo si hay un pago registrado (T-E4). -->
+            @if (medioDePago(); as medio) {
+              <app-badge variant="success" data-testid="pedido-medio-de-pago">{{ medio }}</app-badge>
+              @if (pagoDeEjemplo()) {
+                <app-chip variant="neutral" size="sm">{{ notaDeEjemplo }}</app-chip>
+              }
+            }
             <span class="pedido__secundario">{{ estado.descripcion }}</span>
           </p>
         </section>
@@ -103,7 +110,11 @@
             }
           </p>
           <p class="pedido__secundario">
-            Es un código de identificación, no un pago: pagás al retirar, en la farmacia.
+            @if (pagado()) {
+              Es un código de identificación: tu pedido ya está pagado.
+            } @else {
+              Es un código de identificación, no un pago: pagás al retirar, en la farmacia.
+            }
           </p>
         </section>
       }
@@ -187,6 +198,11 @@
         [settlement]="abierto.insuranceSettlement ?? null"
         [availability]="abierto.insuranceSettlementAvailability ?? 'NOT_AVAILABLE'"
       />
+
+      <!-- ─── Tu factura (T-E4) ──────────────────────────────────────────── -->
+      @if (mostrarFactura()) {
+        <app-tu-factura [orderId]="abierto.id" [estado]="abierto.estado" [factura]="factura()" />
+      }
 
       <!-- ─── Cancelar, mientras el estado lo permite ────────────────────── -->
       @if (puedeCancelar()) {

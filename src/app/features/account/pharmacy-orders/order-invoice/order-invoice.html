@@ -1,0 +1,27 @@
+<app-page-header
+  title="Factura"
+  subtitle="El documento que emite el comercio por tu compra."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="state()" (retry)="cargar()">
+  @if (documento(); as papel) {
+    <div class="factura-pagina">
+      <app-hoja-de-factura [documento]="papel" [nota]="nota" />
+
+      <div class="factura-pagina__acciones">
+        <button app-button variant="primary" size="sm" type="button" data-testid="factura-descargar"
+          (clicked)="descargar()">
+          Descargar PDF
+        </button>
+        <a app-button variant="ghost" size="sm" [routerLink]="rutaDelComprobante()"
+          data-testid="factura-comprobante">
+          Ver comprobante interno
+        </a>
+        <a app-button variant="ghost" size="sm" [routerLink]="rutaDelPedido()">
+          Volver al pedido
+        </a>
+      </div>
+    </div>
+  }
+</app-view-state-host>
