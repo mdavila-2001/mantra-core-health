@@ -53,7 +53,7 @@ CONTENEDOR="${MOCKUP_CONTENEDOR:-alovida-mockup}"
 # 6 GB y no 4: con 4 la construcción de Angular moría en esbuild con un
 # `deadlock` que no menciona la memoria por ninguna parte (salida 129). El pico
 # medido con 447 componentes y sus fragmentos diferidos ronda los 4,5 GB.
-MEMORIA="${MOCKUP_MEMORIA:-6g}"
+MEMORIA="${MOCKUP_MEMORIA:-4g}"
 # El techo de memoria + swap del contenedor. **Mayor que `MEMORIA` a propósito:**
 # cuando los dos valores coinciden, Docker le prohíbe el swap al contenedor, y
 # entonces el límite deja de ser un techo y pasa a ser una sentencia — si la
@@ -62,7 +62,7 @@ MEMORIA="${MOCKUP_MEMORIA:-6g}"
 # la H310 estaba con 5 GiB disponibles sosteniendo el resto de la plataforma, y
 # siete despliegues seguidos murieron ahí. Con holgura de swap la construcción
 # se vuelve lenta, que es mucho mejor que imposible.
-MEMORIA_SWAP="${MOCKUP_MEMORIA_SWAP:-10g}"
+MEMORIA_SWAP="${MOCKUP_MEMORIA_SWAP:-8g}"
 URL="${MOCKUP_URL:-https://pablo-h310.taila8f993.ts.net:8443}"
 
 BITACORA="$ESTADO/redeploy.log"

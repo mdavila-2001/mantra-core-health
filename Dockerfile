@@ -49,13 +49,19 @@ ENV CYPRESS_INSTALL_BINARY=0 \
     # una construcción con techo de 4 GB moría con
     # `esbuild: all goroutines are asleep - deadlock` y salida 129 —que no dice
     # «me quedé sin memoria», pero es lo que era—.
-    NODE_OPTIONS=--max-old-space-size=3072 \
+    NODE_OPTIONS=--max-old-space-size=2048 \
     # Cuántos procesos de esbuild corren a la vez. Por omisión, uno por núcleo:
     # con doce núcleos y 447 fragmentos diferidos el pico se va por encima de los
     # 6 GB y el cgroup mata la construcción (`ng build` a 4,7 GB de RSS, medido).
-    # Con dos trabajadores tarda algo más y cabe. En un portátil con memoria de
-    # sobra no hace falta tocar nada: esto sólo aplica a la imagen.
-    NG_BUILD_MAX_WORKERS=2
+    #
+    # **Uno, desde el 16/09/2026.** Con dos cabía cuando la H310 tenía la
+    # máquina para ella, pero hoy sostiene dos stacks en paralelo —dos
+    # OpenSearch de 1 GB cada uno— y deja 4,1 GiB disponibles: por debajo de
+    # esos 4,7 GB de pico. Cada trabajador es un proceso con su propio montón,
+    # así que quitar uno es lo que más baja el pico. Tarda más y cabe, que es
+    # justo el canje que hace falta acá. En un portátil con memoria de sobra no
+    # hace falta tocar nada: esto sólo aplica a la imagen.
+    NG_BUILD_MAX_WORKERS=1
 
 # `--immutable` falla si el lockfile no cuadra: es lo que garantiza que lo
 # instalado sea exactamente lo declarado.
