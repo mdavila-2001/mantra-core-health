@@ -3,6 +3,10 @@ import { provideRouter } from '@angular/router';
 import { NEVER, of, throwError, type Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
+import { routes } from '../../../app.routes';
+import { APP_SECTIONS } from '../../../core/navigation/navigation.map';
+import { NAV_SUBGROUPS } from '../../../core/navigation/navigation.subgroups';
+import { seccionRolesGuard } from '../../../core/navigation/section-roles.guard';
 import {
   CAMPANAS_SEMBRADAS,
   idSembrado,
@@ -162,6 +166,48 @@ describe('Promotions con la fuente por defecto', () => {
 
     expect(raiz.querySelector('[data-testid="promocion-tarjeta"]')).toBeNull();
     expect(normalizado(raiz.textContent)).toContain('Todavía no recibiste promociones');
+  });
+});
+
+/**
+ * El registro de la sección: una sola entrada en el menú, sólo para pacientes,
+ * dentro de «Mis gestiones», y la ruta carga esta pantalla y no el placeholder.
+ */
+describe('Promotions en la navegación', () => {
+  const PATH = 'my-account/promotions';
+
+  it('aparece una sola vez en APP_SECTIONS, restringida a PATIENT', () => {
+    const secciones = APP_SECTIONS.filter((section) => section.path === PATH);
+
+    expect(secciones.length).toBe(1);
+    expect(secciones[0].roles).toEqual(['PATIENT']);
+    expect(secciones[0].group).toBe('Mi cuenta');
+  });
+
+  it('está una sola vez en «Mis gestiones», junto a lo que ya estaba', () => {
+    const conElPath = NAV_SUBGROUPS.filter((subgrupo) => subgrupo.paths.includes(PATH));
+
+    expect(conElPath.map((subgrupo) => subgrupo.label)).toEqual(['Mis gestiones']);
+    expect(conElPath[0].paths.filter((path) => path === PATH).length).toBe(1);
+    expect(conElPath[0].paths).toEqual(
+      expect.arrayContaining([
+        'my-account/appointments',
+        'my-account/pharmacy-orders',
+        'my-account/loyalty',
+      ]),
+    );
+  });
+
+  it('la ruta carga Promotions, detrás del guard de roles', async () => {
+    const armazon = routes.find(
+      (route) => route.path === '' && route.component !== undefined && route.children !== undefined,
+    );
+    const ruta = armazon?.children?.find((route) => route.path === PATH);
+
+    expect(ruta).toBeDefined();
+    expect(ruta?.canActivate).toContain(seccionRolesGuard);
+    const componente = await (ruta?.loadComponent as () => Promise<unknown>)();
+    expect(componente).toBe(Promotions);
   });
 });
 

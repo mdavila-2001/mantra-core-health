@@ -1306,6 +1306,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M51 promotions',
   },
   {
+    // Las promociones que las farmacias le mandaron al paciente (T-E7). Mismo
+    // criterio que «Mis puntos»: rol de paciente, sin `exclusiveRoles`. Icono
+    // `tag`: ningún otro de «Mi cuenta» lo usa.
+    path: 'my-account/promotions',
+    label: 'Promociones',
+    group: 'Mi cuenta',
+    icon: 'tag',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Las promociones que te mandaron las farmacias.',
+    module: 'M51 promotions',
+  },
+  {
     // **«Mi consultorio propio»** (propietario, 2026-09-10), en el lugar que
     // ocupaba «Tu organización». Aquélla mostraba la organización del tenant
     // activo —la clínica donde el médico está afiliado—, que no es suya: junto

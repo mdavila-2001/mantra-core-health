@@ -200,6 +200,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   'my-account/loyalty': () =>
     import('./features/account/loyalty/loyalty').then((m) => m.Loyalty),
+  'my-account/promotions': () =>
+    import('./features/account/promotions/promotions').then((m) => m.Promotions),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
