@@ -171,6 +171,55 @@ Ahora, en cada ciclo, compara la suma de comprobación del archivo con la que
 tenía al arrancar y se relanza con `exec` si cambió. `exec` conserva el PID, así
 que el archivo de PID sigue valiendo.
 
+## El otro despliegue: el mockup
+
+[`mockup.sh`](mockup.sh) es un supervisor **distinto** de `redeploy.sh`: vigila
+la rama `mockup` en vez de `dev`, y publica en
+`https://pablo-h310.taila8f993.ts.net:8443` a través de un Funnel de Tailscale.
+No comparte nada con lo de arriba salvo la idea.
+
+La forma también es otra, y a propósito más simple: **no hay SSR ni API**. El
+backend de esa rama vive dentro del navegador, así que basta con servir
+archivos estáticos:
+
+```
+Funnel :8443  →  127.0.0.1:4001  →  nginx  →  publico/actual  →  entregas/<sha>/
+```
+
+Publica en dos tiempos para que nadie vea una versión a medias: construye en un
+contenedor, extrae `dist/.../browser` a `publico/entregas/<sha>/` y **mueve el
+enlace** `publico/actual` con `mv -T`, que es atómico. Nada de `rsync` encima de
+lo que se está sirviendo. Guarda las tres últimas entregas, así que **volver
+atrás es mover el enlace**, no reconstruir.
+
+Se actualiza a sí mismo: antes de construir hace `git reset --hard
+origin/mockup`, de modo que un arreglo a este mismo script viaja en el commit
+que lo trae.
+
+### Cuando un commit falla, no se reintenta
+
+Se anota en `estado/COMMIT_FALLIDO` y el temporizador salta con `ya falló antes;
+esperando a que la rama avance`. Evita reconstruir en bucle algo que no compila
+—y significa que **esperar no arregla nada**: hay que empujar un commit nuevo—.
+
+### El guardián puede matarte el build
+
+La H310 sostiene varias plataformas a la vez, así que corre
+`h310-guardian.service`: vigila la presión de memoria, estrangula los builds
+(`memory.high` = un cuarto de la RAM) y los **mata** cuando el swap libre baja
+del 20%, dejando **600 segundos de enfriamiento en los que todo build nuevo
+muere al nacer**. Existe porque cuatro builds simultáneos congelaron el equipo
+45 minutos; no es algo que haya que desactivar.
+
+En la bitácora del despliegue eso se ve sólo como `exit code: 137`. Quien lo
+diga de verdad es `journalctl -t h310-guardian`. Y hay un envoltorio,
+`h310-turno-de-build`, que pone estos temporizadores en fila detrás de Coolify.
+
+Por eso el `Dockerfile` compila con **un** trabajador de esbuild y un montón de
+1,5 GB: no se trata de pedir más memoria, sino de caber. El procedimiento
+completo —cómo distinguir las tres causas y cómo salir de cada una— está en el
+runbook [El mockup no publica](../../docs/operations/runbooks/mockup-no-publica.md).
+
 ## Si algo va mal
 
 - **El enlace da 502/503** — no hay nadie hospedando el túnel o el proxy está
