@@ -1,0 +1,70 @@
+/* El QR bancario de una sede. Una sola columna: lo único que hay que mirar es
+   la imagen, y cualquier reparto a dos columnas la achicaría justo cuando la
+   pregunta es si se escanea. */
+.qr-sede {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* La imagen y su lápiz. `relative` porque el lápiz se ancla a la esquina de la
+   figura, no del modal. */
+.qr-sede__figura {
+  position: relative;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  /* Fondo claro SIEMPRE, también en modo oscuro: un QR se escanea por
+     contraste, y muchos vienen con fondo transparente. Sobre una superficie
+     oscura, un QR de módulos negros y fondo transparente queda ilegible para
+     la cámara — y este modal existe para que se pueda escanear. */
+  background: #ffffff;
+}
+
+.qr-sede__imagen {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 16rem;
+  /* Un QR es cuadrado: `contain` lo deja entero aunque el recorte del archivo
+     no lo sea. Estirarlo es la única deformación que lo vuelve inescaneable. */
+  block-size: auto;
+  object-fit: contain;
+}
+
+.qr-sede__reemplazar {
+  position: absolute;
+  inset-block-start: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+}
+
+.qr-sede__cargando,
+.qr-sede__sin-imagen {
+  margin: 0;
+  padding-block: var(--sp-6);
+  color: var(--c-neutral-600);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  text-align: center;
+}
+
+.qr-sede__subiendo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-block: var(--sp-6);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* La salida del reemplazo. Discreta: es la vuelta atrás, no la acción. */
+.qr-sede__escape {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+}

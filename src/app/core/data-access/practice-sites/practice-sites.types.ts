@@ -28,6 +28,37 @@ export interface PracticeSite {
   readonly latitude: number | null;
   readonly longitude: number | null;
   readonly status: string;
+  /**
+   * Si es **su** consultorio —su práctica personal— y no la sede de otro.
+   *
+   * Es la diferencia que la lista no sabía decir: «Consultorio Dra. Rojas» y
+   * «Hospital San Lucas» llegaban con la misma forma y se dibujaban idénticos,
+   * con el mismo «Retirar» al lado, cuando retirar lo propio y desvincularse de
+   * un hospital no son el mismo acto. Uno se crea y se corrige solo; el otro
+   * depende de que la organización lo acepte.
+   *
+   * La API **ya lo manda** (P32-a, cerrado). Sigue declarado opcional a
+   * propósito: el frontend puede quedar desplegado contra una API anterior, y
+   * ausente se lee como «no sé» —la pantalla lo trata como ajeno, que es la
+   * lectura prudente— en vez de romperse.
+   */
+  readonly isOwnSite?: boolean;
+
+  /**
+   * El archivo del **QR bancario** que el profesional quiere cobrar en esta
+   * sede, o `null` si todavía no configuró ninguno.
+   *
+   * Es por sede y no por persona a propósito: un médico que atiende en su
+   * consultorio y en una clínica no cobra por la misma cuenta en los dos
+   * lugares, y un único QR de perfil lo obligaría a corregirlo cada vez que
+   * cambia de establecimiento.
+   *
+   * Opcional por el mismo motivo que {@link PracticeSite.isOwnSite}: la API
+   * **ya lo manda** (P33, cerrado), pero ausente se sigue leyendo como «no
+   * hay ninguno configurado», que es lo que la pantalla avisa en ámbar —
+   * nunca esconde el camino para cargarlo.
+   */
+  readonly bankQrFileId?: string | null;
 }
 
 /**
@@ -59,6 +90,25 @@ export interface NewOwnSiteAddress {
 export interface NewOwnSite {
   readonly name: string;
   /** Zona horaria IANA. Por defecto la de La Paz. */
+  readonly timeZone?: string;
+  readonly address?: NewOwnSiteAddress;
+}
+
+/**
+ * Corrección de un consultorio propio.
+ *
+ * Los mismos campos que el alta, todos opcionales: es un `PATCH`, y lo que no
+ * viaja no se toca. Sin esto, arreglar un nombre mal tipeado o una mudanza
+ * obligaba a retirar el consultorio y crear otro —y el id cambia, que es el que
+ * la agenda referencia—.
+ *
+ * La API expone la ruta desde el cierre del **P32-b**
+ * (`PATCH /practitioners/me/sites/:siteId`), que era la mitad del P28: el
+ * consultorio propio estaba entre lo que el registro pregunta y el perfil no
+ * podía editar.
+ */
+export interface OwnSitePatch {
+  readonly name?: string;
   readonly timeZone?: string;
   readonly address?: NewOwnSiteAddress;
 }
