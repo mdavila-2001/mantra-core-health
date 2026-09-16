@@ -31,14 +31,12 @@ import type { AlternativaDeEjemplo } from './new-order.fixtures';
  *
  * ## La ruta
  *
- * `null` mientras el checkout no exista: E muestra «Continuar» deshabilitado
- * y conserva el envío real que ya estaba integrado. Cuando T-E3 publique su
- * ruta —sin `:orderId`, porque el pedido todavía no existe—, este valor pasa a
- * ser esa ruta y E deja de ofrecer el envío directo.
+ * La del checkout de T-E3, sin `:orderId` porque el pedido todavía no existe.
+ * Con `null`, E muestra «Continuar» deshabilitado.
  */
 export const RUTA_DEL_CHECKOUT = new InjectionToken<string | null>('RUTA_DEL_CHECKOUT', {
   providedIn: 'root',
-  factory: () => null,
+  factory: () => '/my-account/pharmacy-orders/checkout',
 });
 
 /** La clave del traspaso dentro de `NavigationExtras.state`. */

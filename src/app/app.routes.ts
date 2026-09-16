@@ -392,6 +392,18 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // El checkout del pedido (T-E3 · pantalla G): entrega, dirección, medio de
+    // pago y resumen. Sin `:orderId`: el pedido se crea recién en su
+    // confirmación final (D-FARMOCK-T-E1-01). Antes de `:orderId`, como `new`.
+    path: 'my-account/pharmacy-orders/checkout',
+    title: `${APP_TITLE} - Entrega y pago`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/checkout/checkout')
+        .then((m) => m.Checkout)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La ficha de un pedido concreto: línea de tiempo, decisión de sustitución
     // y código de retiro. `new` va declarada antes: el router prueba en orden
     // y el parámetro se la tragaría.
