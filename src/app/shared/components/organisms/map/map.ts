@@ -21,12 +21,15 @@ import type * as Leaflet from 'leaflet';
 
 import type { PinMapa, PuntoGeo } from './pin-mapa.types';
 
-/** Tiles públicos de OpenStreetMap: sin API key. Cambiar de proveedor es cambiar esta URL. */
-const TILES_OSM = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+/**
+ * Mosaicos de CARTO para la demo: no carga el servidor comunitario de OSM,
+ * que bloquea las solicitudes de esta aplicación por su política de uso.
+ */
+const DEMO_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
-/** La atribución es condición de uso de OSM, no un adorno. */
-const ATRIBUCION_OSM =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+/** La atribución de OSM y CARTO es condición de uso, no un adorno. */
+const DEMO_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 const ZOOM_MAXIMO = 19;
 
@@ -230,7 +233,11 @@ export class AppMap implements OnDestroy {
 
     const mapa = L.map(this.lienzo().nativeElement, { maxZoom: ZOOM_MAXIMO });
     mapa.setView(CENTRO_POR_DEFECTO, ZOOM_POR_DEFECTO);
-    L.tileLayer(TILES_OSM, { attribution: ATRIBUCION_OSM, maxZoom: ZOOM_MAXIMO }).addTo(mapa);
+    L.tileLayer(DEMO_TILES, {
+      attribution: DEMO_ATTRIBUTION,
+      maxZoom: ZOOM_MAXIMO,
+      subdomains: 'abcd',
+    }).addTo(mapa);
     this.mapa = mapa;
     // El bus de eventos de Leaflet no existe en el doble de `map.spec.ts` ni
     // en jsdom: el mismo resguardo que usa `dialog.ts` con `showModal()`.

@@ -86,26 +86,6 @@ services:
       SSR_ALLOWED_HOSTS: '${APP_DOMAIN}'
     expose:
       - '4000'
-    ports:
-      # Publicado SOLO en el bucle local del host, y el `127.0.0.1:` de delante
-      # es la mitad que importa.
-      #
-      # Traefik —el proxy que pone Coolify— corre en esta misma máquina, así que
-      # alcanza el 4000 por el bucle local igual de bien. Lo que se gana es que
-      # nadie de fuera puede saltarse el proxy pidiendo el puerto a pelo: sin
-      # TLS, sin el dominio correcto y sin las cabeceras que Coolify añade.
-      #
-      # Sin ese prefijo Docker abre el puerto en TODAS las interfaces, y encima
-      # lo hace por debajo del firewall: escribe sus reglas antes en la cadena,
-      # de modo que un `ufw deny 4000` no lo tapa. El puerto quedaría abierto a
-      # internet creyendo que está cerrado.
-      #
-      # El precio, que conviene saber: el 4000 del host queda tomado por este
-      # contenedor. Un despliegue que intente solaparse con el anterior —Coolify
-      # con «despliegue sin cortes» activado— chocará con «port is already
-      # allocated». Si se activa esa opción, hay que borrar este bloque y dejar
-      # sólo el `expose`, que es todo lo que Traefik necesita de verdad.
-      - '127.0.0.1:4000:4000'
     deploy:
       resources:
         limits:

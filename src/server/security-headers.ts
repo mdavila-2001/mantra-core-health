@@ -225,10 +225,10 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     "style-src 'self' 'unsafe-inline'",
     // Las tipografías están autoalojadas: no hace falta abrir ningún CDN.
     "font-src 'self'",
-    // `data:` cubre los SVG en línea del sistema de diseño. Los tiles de
-    // OpenStreetMap son el único origen de imagen ajeno: el mapa (Leaflet, sin
-    // clave de API) los pide directo del navegador y sin ellos queda gris.
-    "img-src 'self' data: https://tile.openstreetmap.org",
+    // `data:` cubre los SVG en línea del sistema de diseño. Los mosaicos de
+    // CARTO son el único origen de imagen ajeno y el mapa los pide directo del
+    // navegador; el comodín cubre los subdominios `a` a `d` del proveedor.
+    "img-src 'self' data: https://*.basemaps.cartocdn.com",
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
