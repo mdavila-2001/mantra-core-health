@@ -17,11 +17,10 @@
     }
     @if (denied()) {
       <app-alert tone="warning" data-testid="search-origin-status">
-        No pudimos usar tu ubicación actual. Elegí uno de tus lugares guardados, o
+        No pudimos usar tu ubicación actual. La búsqueda sigue desde el punto que ya estaba elegido.
         <button app-button variant="ghost" size="sm" type="button" (clicked)="useCurrentLocation()">
-          reintentar
+          Reintentar
         </button>
-        .
       </app-alert>
     }
   } @else {
@@ -38,7 +37,7 @@
       </button>
       <p class="origen__nota">
         Guardá tu casa en
-        <a routerLink="/my-account/profile/edit" data-testid="search-origin-profile-link">Mi perfil</a>
+        <a app-link routerLink="/my-account/profile/edit" data-testid="search-origin-profile-link">Mi perfil</a>
         para buscar desde ahí sin usar el GPS.
       </p>
       @if (denied()) {

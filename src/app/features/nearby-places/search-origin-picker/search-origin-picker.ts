@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 
 import type { SavedPlaces } from '../../../core/data-access/profiles/saved-places';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
@@ -49,7 +50,7 @@ const GPS_MAX_AGE_MS = 300_000;
  */
 @Component({
   selector: 'app-search-origin-picker',
-  imports: [Alert, AppButton, RouterLink, SegmentedControl],
+  imports: [Alert, AppButton, Link, RouterLink, SegmentedControl],
   templateUrl: './search-origin-picker.html',
   styleUrl: './search-origin-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
