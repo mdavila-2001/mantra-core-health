@@ -739,6 +739,27 @@ export class CommunityClient {
   }
 
   /**
+   * `POST /patients/me/reviews` — califico **la atención que recibí**, sin
+   * nombrar la vitrina del profesional (C.2).
+   *
+   * Es la que usa el portal del paciente. `publishReview` sigue existiendo y
+   * hace lo mismo: es la que usa quien ya tiene el id de la vitrina en la mano
+   * —el panel interno—. Acá no lo tenemos y no deberíamos: la ficha pública se
+   * abre por slug y **no publica su id**, así que el destinatario lo deriva el
+   * servidor del encuentro declarado.
+   *
+   * El servidor comprueba, como siempre, que la atención sea mía, que haya
+   * terminado, que la haya atendido ese profesional y que no la haya
+   * calificado ya.
+   *
+   * @param review - Atención, estrellas, texto y cómo quiero firmar.
+   * @returns El id de la reseña y si quedó verificada.
+   */
+  publishOwnReview(review: NewReview): Observable<ReviewCreated> {
+    return this.http.post<ReviewCreated>(this.url('/patients/me/reviews'), review);
+  }
+
+  /**
    * `POST /community/profiles/:profileId/reviews/:reviewId/responses` —
    * el profesional contesta una reseña de su propia vitrina.
    *
