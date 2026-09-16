@@ -273,10 +273,10 @@ export class AccountingClient {
   /* ---- el plano SAP -------------------------------------------------------
      Las cinco acciones del flujo y el cierre de período existen en la API real
      (`POST journal-transactions/:id/{classify,submit-review,approve,post,reverse}`,
-     `POST fiscal-periods/:id/lock`, `POST clearing-documents`). Las LECTURAS de
-     esta sección todavía no: hoy las sirve el simulador de la rama `mockup`.
-     Están escritas contra los nombres de las tablas del modelo para que, cuando
-     la API las publique, sólo cambie de dónde vienen. */
+     `POST fiscal-periods/:id/lock`, `POST clearing-documents`), y desde el
+     PR #403 también las LECTURAS de esta sección: `accounting-cockpit.controller.ts`
+     las publica con los mismos nombres de tabla del modelo; el interceptor
+     mock (`finance.handlers.ts`) las espeja para desarrollar sin la API arriba. */
 
   /** `GET /accounting/fiscal-years` — el ejercicio con sus doce períodos. */
   fiscalYear(practiceId: string): Observable<FiscalYear> {
