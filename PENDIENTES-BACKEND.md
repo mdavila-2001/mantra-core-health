@@ -21,6 +21,71 @@ backend.
 | ~~**P27**~~ | ~~Coordenadas en el `PATCH` del perfil~~ — **la nota estaba MAL y ya está resuelto.** Ver abajo |
 | **P28** | Lo que el registro del médico pregunta y su perfil no puede editar: **sexo al nacer**, **documento y departamento emisor**, **correo de trabajo** y el **consultorio propio** |
 | **P29** | `file_id` en `profiles.jurisdiction_authorizations` — la matrícula no puede llevar adjunto, y **esto empieza en el repo del modelo, no en la API** |
+| **P34** | Ninguna capa sabe qué farmacia abre 24 h ni cuál está de turno — **empieza en el repo del modelo**, y la guardia rotativa tiene tres preguntas de producto sin responder |
+
+---
+
+## P34 · No hay forma de saber qué farmacia está abierta a las 3 de la mañana
+
+**Nace el 2026-09-16**, de la subtarea E.2: «filtro en el mapa para identificar sucursales
+abiertas 24 horas y de turno». Las otras dos mitades de esa tarea ya están hechas —la alarma
+de la bandeja y la preparación de la muestra en la orden del paciente—; ésta **no se puede
+hacer sin el modelo**, y por eso se anota en vez de inventarse.
+
+### Lo que hay, y por qué no alcanza
+
+`pharmacy.pharmacy_sites` declara `home_delivery_available`, `pickup_available`,
+`dispensing_mode_concept_id` y `pharmacy_site_type_concept_id`. Ninguno responde la pregunta.
+El único miembro sembrado del tipo de sede es `PHARM_SITE_TYPE_DISPENSING`, así que tampoco
+hay un concepto que se pueda reutilizar. `GET /public/search/pharmacies` devuelve lo que esa
+tabla tiene, y el directorio (`features/public-directories/pharmacies-directory`) pinta lo
+que recibe.
+
+Y no hay tabla de horarios de farmacia en ninguna parte: el `grep` de `hours` sobre `SQL/`
+da cero, igual que en `practice`. `platform_ops.on_call_schedules` existe, pero es la guardia
+de **operaciones de la plataforma** —quién atiende un incidente—, no la de un local.
+
+### Son dos cosas distintas y conviene separarlas
+
+**a) «Abierta 24 horas»** es una propiedad estable del local. Es barata:
+
+```text
+pharmacy_sites.open_24h  boolean  NULL
+```
+
+Nullable de verdad: «no lo declaró» no es «no abre de noche», y un `false` por defecto
+convertiría el silencio de todo el padrón en una afirmación falsa sobre cada farmacia.
+
+**b) «De turno» (guardia rotativa)** NO es una propiedad del local: cambia cada noche y la
+publica una autoridad —en Bolivia, el colegio departamental de bioquímica y farmacia—. Hace
+falta una tabla con fechas, del orden de:
+
+```text
+pharmacy_on_call_shifts
+  pharmacy_site_id  uuid    <<FK>>
+  starts_at         timestamptz
+  ends_at           timestamptz
+  source_concept_id uuid    <<FK>>   -- quién publicó el turno
+```
+
+**Y acá hay tres preguntas que no las decide el frontend**, por eso no se propone el DDL
+cerrado:
+
+1. **Quién carga el rol.** ¿Lo carga cada farmacia, lo carga la plataforma, o se importa del
+   colegio? De eso depende si la tabla necesita procedencia y verificación o alcanza con un
+   alta administrativa.
+2. **Con qué granularidad.** ¿El turno es por municipio, por departamento o por zona? El
+   filtro del mapa cambia según eso: «de turno cerca mío» no significa lo mismo que «de
+   turno en La Paz».
+3. **Qué pasa con un turno vencido.** Una farmacia que figura de turno con el rol del mes
+   pasado es peor que ninguna información: alguien maneja de noche hasta una puerta cerrada.
+   Si no hay una regla de caducidad, el dato no se puede publicar.
+
+### Mientras tanto
+
+El directorio **no muestra un filtro que no puede cumplir**. Un control «24 horas» que
+devuelve la lista entera —o que no devuelve nada— es peor que no tenerlo: enseña que el
+filtro no anda y de paso hace dudar del resto de la pantalla.
 
 ---
 
