@@ -1,0 +1,99 @@
+<app-content-dialog
+  heading="Calificar la atención"
+  [description]="'Tu opinión va a figurar en la ficha de ' + professionalName() + '.'"
+  size="md"
+  (closed)="closed.emit()"
+>
+  @if (cargandoAtenciones()) {
+    <p data-testid="calificar-cargando">Buscando tus atenciones…</p>
+  } @else if (atenciones().length === 0) {
+    <!-- Sin atenciones cerradas no hay formulario que mostrar: el servidor lo
+         rechazaría, y ofrecerlo sería invitar a un error que sólo se descubre
+         al enviar. -->
+    <p data-testid="calificar-sin-atenciones">
+      Todavía no tenés ninguna atención cerrada. Se puede calificar recién cuando el
+      profesional cierra la consulta en el sistema.
+    </p>
+  } @else {
+    <form class="calificar" (submit)="$event.preventDefault()">
+      <app-form-field
+        label="Qué atención estás calificando"
+        hint="Sólo aparecen las tuyas que ya están cerradas."
+        data-testid="calificar-atencion"
+      >
+        <app-select
+          [options]="opciones()"
+          [value]="encuentro()"
+          placeholder="Elegí la atención"
+          (valueChange)="encuentro.set($event)"
+        />
+      </app-form-field>
+
+      <app-form-field label="Calificación general" hint="1 es muy mala y 5 es excelente.">
+        <!-- Estrellas como radios: es una elección entre cinco, y un control
+             de lista lo dice sin depender de que se vean los glifos. -->
+        <div class="calificar__estrellas" role="radiogroup" aria-label="Calificación general">
+          @for (valor of puntajes; track valor) {
+            <label class="calificar__estrella">
+              <input
+                type="radio"
+                name="calificacion"
+                [value]="valor"
+                [checked]="puntaje() === valor"
+                (change)="puntaje.set(valor)"
+              />
+              <span>{{ valor }} · {{ leyenda(valor) }}</span>
+            </label>
+          }
+        </div>
+      </app-form-field>
+
+      <app-form-field
+        label="Qué querés contar"
+        hint="Opcional. Contá cómo fue la atención."
+      >
+        <app-textarea
+          [value]="comentario()"
+          [rows]="5"
+          [maxLength]="1000"
+          (valueChange)="comentario.set($event)"
+        />
+      </app-form-field>
+
+      <!-- El `hint` no va en la casilla —no lo declara— sino al lado: la
+           consecuencia de marcarla hay que decirla, no deducirla. -->
+      <div class="calificar__anonimo">
+        <app-checkbox
+          label="Publicar sin mi nombre"
+          [checked]="anonimo()"
+          (checkedChange)="anonimo.set($event)"
+          data-testid="calificar-anonimo"
+        />
+        <p class="calificar__ayuda">
+          Si la dejás marcada, tu opinión sale como «Paciente verificado».
+        </p>
+      </div>
+
+      @if (error(); as mensaje) {
+        <app-alert tone="error" data-testid="calificar-error">{{ mensaje }}</app-alert>
+      }
+
+      <div class="calificar__acciones">
+        <button app-button variant="ghost" type="button" (clicked)="closed.emit()">
+          Cancelar
+        </button>
+        <button
+          app-button
+          variant="primary"
+          type="button"
+          data-testid="calificar-enviar"
+          [disabled]="!puedeEnviar()"
+          [isLoading]="enviando()"
+          (clicked)="enviar()"
+        >
+          Publicar opinión
+        </button>
+      </div>
+    </form>
+  }
+</app-content-dialog>
