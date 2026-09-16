@@ -614,7 +614,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     fixture.detectChanges();
 
     expect(leer(componente, 'departamentoDeSede')).toBe('dep-sc');
-    componente['registrarSede']();
+    componente['guardarSede']();
 
     const req = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
     expect(req.request.body).toEqual({
@@ -644,7 +644,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     componente['abrirAltaDeSede']();
     componente['nombreDeSedeNueva'].set('Consultorio');
     fixture.detectChanges();
-    componente['registrarSede']();
+    componente['guardarSede']();
 
     // Sin dirección no viaja `address`: una fila vacía en common.addresses no
     // es «sin dirección».
@@ -661,7 +661,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
       lng: -68.15,
     });
     fixture.detectChanges();
-    componente['registrarSede']();
+    componente['guardarSede']();
 
     const conPunto = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
     expect(conPunto.request.body.address).toEqual({
@@ -723,6 +723,158 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
 
     // Sin cargo no se dibuja el renglón del cargo, tampoco un guion.
     expect(fixture.nativeElement.querySelector('.historial__cargo')).toBeNull();
+    http.verify();
+  });
+});
+
+describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  const PROPIA = sedeEnCable({ id: 'site-propia', name: 'Consultorio Dra. Pérez', isOwnSite: true });
+  const AJENA = sedeEnCable({
+    id: 'site-hospital',
+    name: 'Hospital San Lucas',
+    isOwnSite: false,
+    bankQrFileId: 'file-qr',
+  });
+
+  it('distingue el consultorio propio del hospital, y sólo ofrece corregir el propio', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA, AJENA], count: 2 });
+    fixture.detectChanges();
+
+    const marcas = fixture.nativeElement.querySelectorAll('[data-testid="sede-propia-marca"]');
+    expect(marcas.length).toBe(1);
+    // Corregir alcanza sólo al propio: la sede del hospital es de él.
+    const editar = fixture.nativeElement.querySelectorAll('[data-testid="sede-editar"]');
+    expect(editar.length).toBe(1);
+    // El QR, en cambio, va en las dos: también se cobra donde no sos dueño.
+    expect(fixture.nativeElement.querySelectorAll('[data-testid="sede-qr"]').length).toBe(2);
+    http.verify();
+  });
+
+  it('avisa qué sede no tiene QR de cobro, sin esconder el camino para cargarlo', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA, AJENA], count: 2 });
+    fixture.detectChanges();
+
+    // La propia no tiene QR; el hospital sí.
+    const avisos = fixture.nativeElement.querySelectorAll('[data-testid="sede-sin-qr"]');
+    expect(avisos.length).toBe(1);
+    http.verify();
+  });
+
+  it('esconde el alta cuando ya hay un consultorio propio: la práctica personal es UNA', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).toBeNull();
+    http.verify();
+  });
+
+  it('sin la marca lo trata como ajeno y deja el alta disponible', async () => {
+    // Un frontend desplegado contra una API anterior al P32-a: ausente se lee
+    // como «no sé», y la degradación prudente nunca esconde un camino.
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [sedeEnCable()], count: 1 });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-editar"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-agregar"]')).not.toBeNull();
+    http.verify();
+  });
+
+  it('corrige el nombre con un PATCH y NO manda dirección si el formulario la deja en blanco', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    fixture.detectChanges();
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    fixture.detectChanges();
+    // El formulario arranca con el nombre que ya tenía.
+    expect(leer<string>(componente, 'nombreDeSedeNueva')).toBe('Consultorio Dra. Pérez');
+
+    componente['nombreDeSedeNueva'].set('Consultorio Sur');
+    componente['guardarSede']();
+
+    const req = http.expectOne(
+      (r) => r.url === `${SITIO_PROPIO}/site-propia` && r.method === 'PATCH',
+    );
+    // Sin calle escrita no viaja `address`: en blanco es «no la toques», que
+    // es exactamente lo que el PATCH hace con lo que no recibe.
+    expect(req.request.body).toEqual({ name: 'Consultorio Sur' });
+    req.flush(sedeEnCable({ name: 'Consultorio Sur', isOwnSite: true }));
+
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    fixture.detectChanges();
+    expect(leer<boolean>(componente, 'altaDeSedeAbierta')).toBe(false);
+    http.verify();
+  });
+
+  it('manda la dirección entera cuando sí se escribe una calle', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const componente = api(fixture);
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    componente['direccionDeSede'].set('Calle Nueva 99');
+    componente['ciudadDeSede'].set('Santa Cruz');
+    componente['municipioDeSede'].set('mun-scz');
+    fixture.detectChanges();
+    componente['guardarSede']();
+
+    const req = http.expectOne(
+      (r) => r.url === `${SITIO_PROPIO}/site-propia` && r.method === 'PATCH',
+    );
+    expect(req.request.body).toEqual({
+      name: 'Consultorio Dra. Pérez',
+      address: {
+        lines: ['Calle Nueva 99'],
+        city: 'Santa Cruz',
+        municipalityConceptId: 'mun-scz',
+        administrativeAreaConceptId: 'dep-sc',
+      },
+    });
+    req.flush(sedeEnCable());
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    http.verify();
+  });
+
+  it('refleja el QR recién guardado sin volver a pedir la lista', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    fixture.detectChanges();
+    const componente = api(fixture);
+
+    (componente['abrirQrDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    (componente['qrGuardado'] as unknown as (id: string) => void)('file-nuevo');
+    fixture.detectChanges();
+
+    const sedes = leer<readonly { bankQrFileId?: string | null }[]>(componente, 'sedes');
+    expect(sedes[0].bankQrFileId).toBe('file-nuevo');
+    // El aviso en ámbar desaparece sin volver a pedir la lista de sedes.
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-sin-qr"]')).toBeNull();
+    expect(http.match(SITIOS).length).toBe(0);
+
+    // El modal, que sigue abierto, sí baja la imagen nueva para mostrarla: es
+    // el contenido del archivo, no la lista.
+    http
+      .expectOne('/common/files/file-nuevo/content')
+      .flush(new Blob(['qr'], { type: 'image/png' }));
+    http.verify();
+  });
+
+  it('nombra el retiro distinto según de quién sea la sede', async () => {
+    const { fixture, http } = await montarConSedes();
+    http.expectOne(SITIOS).flush({ items: [PROPIA, AJENA], count: 2 });
+    fixture.detectChanges();
+    const componente = api(fixture);
+
+    const etiqueta = componente['etiquetaDeRetiro'] as unknown as (s: unknown) => string;
+    expect(etiqueta(PROPIA)).toBe('Retirar Consultorio Dra. Pérez de tus consultorios');
+    expect(etiqueta(AJENA)).toBe('Dejar de atender en Hospital San Lucas');
     http.verify();
   });
 });
