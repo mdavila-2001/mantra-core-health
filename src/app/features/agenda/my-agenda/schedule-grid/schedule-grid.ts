@@ -1,6 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import type { PublishedRule } from '../../../../core/data-access/scheduling/scheduling.types';
+import type { BloqueoDelMes } from '../month-view/month-view';
 import { lunesDe } from '../week-view/week-view';
 
 /** Una columna de la grilla: un día de la semana en curso. */
@@ -25,11 +35,37 @@ export interface BloqueDelHorario {
   /** Porcentaje del alto de la grilla que ocupa. */
   readonly alto: number;
   readonly etiqueta: string;
-  /** «consultas de 30 min», si la franja lo declara. */
-  readonly detalle: string | null;
+  /** «consultas de 30 min», o «tamaño libre» cuando la franja es dinámica. */
+  readonly detalle: string;
   /** Lo que se cuenta al pasar el mouse: rótulo y valor, en orden. */
   readonly datos: readonly { readonly rotulo: string; readonly valor: string }[];
 }
+
+/** Un bloqueo de agenda recortado al día en que se dibuja. */
+export interface BloqueoDelHorario {
+  readonly id: string;
+  readonly dia: number;
+  readonly desde: string;
+  readonly hasta: string;
+  readonly top: number;
+  readonly alto: number;
+  readonly motivo: string | null;
+  readonly etiqueta: string;
+}
+
+/**
+ * Cuánto día se dibuja (AC-C3-01).
+ *
+ * `atencion` recorta la grilla a las horas que el horario publicado usa —lo
+ * que se mira noventa y nueve veces de cada cien—; `completo` la abre de 00:00
+ * a 23:59, que es lo que hace falta para ver una guardia de madrugada, un
+ * bloqueo de día entero o un turno de mostrador fuera de hora.
+ *
+ * Es un rango y no un booleano `veinticuatroHoras` porque el nombre de lo que
+ * se ve importa: quien elige está eligiendo «mi horario» o «el día», no
+ * activando una opción.
+ */
+export type RangoDeGrilla = 'atencion' | 'completo';
 
 /** El bloque bajo el puntero y dónde dibujar su globo. */
 interface Globo {
@@ -104,9 +140,10 @@ const SEPARACION_GLOBO = 8;
  *
  * El horario es un patrón semanal, pero se mira desde un día concreto: la
  * cabecera lleva las fechas de esta semana y el día de hoy marcado, para que
- * «atendés los martes de 9 a 13» se lea como «mañana a las 9». Se muestran
- * de lunes al último día que se atiende, con viernes como mínimo — un fin de
- * semana vacío no dice nada que la ausencia no diga.
+ * «atendés los martes de 9 a 13» se lea como «mañana a las 9». Se muestra la
+ * semana entera, de lunes a domingo (pedido del cliente: faltaban sábado y
+ * domingo); un día sin nada asignado va en una columna angosta, al mínimo,
+ * para que no le robe ancho a los que se atienden.
  *
  * ## El detalle, al pasar el mouse
  *
@@ -116,10 +153,24 @@ const SEPARACION_GLOBO = 8;
  * teclado. Escribirlo todo adentro del bloque lo volvería ilegible en una
  * franja de una hora.
  *
- * ## Sólo las horas que se usan
+ * ## Las 24 horas, abierta donde atendés
  *
- * La grilla arranca en la primera hora que atendés y termina en la última. Un
- * día de 24 filas con dos pintadas obliga a buscar dónde está lo que importa.
+ * La grilla dibuja el día entero, como un calendario, y no sólo el rango que
+ * se atiende: un bloqueo a las 19:00 o una consulta fuera de hora también
+ * tienen que tener dónde verse. Para no obligar a buscar lo que importa, la
+ * caja scrollea por dentro con la cabecera fija y abre en la primera hora
+ * atendida.
+ *
+ * Quien prefiera la versión apretada la pide con `rango = 'atencion'`
+ * (AC-C3-01): la grilla se recorta entonces a las horas del horario publicado.
+ * Es una preferencia de lectura y no dos vistas distintas — las mismas franjas,
+ * los mismos bloqueos, medidos contra menos horas.
+ *
+ * ## Los bloqueos, en rojo
+ *
+ * En la semana en curso se pintan los bloqueos de agenda por encima de las
+ * franjas, en el rojo que ya usa el mes. Un horario retirado (sin fechas) no
+ * los lleva: no es de ninguna semana.
  *
  * ## El color no va solo
  *
@@ -159,19 +210,56 @@ export class ScheduleGrid {
   /** Hasta cuándo rige, ya en palabras («Rige hasta el 30 de junio»). Opcional. */
   readonly vigencia = input<string | null>(null);
 
+  /**
+   * El tamaño de turno de la plantilla, para las franjas que no declaran el
+   * suyo. Sin ninguno de los dos la franja es dinámica: «tamaño libre».
+   */
+  readonly slotMinutes = input<number | null>(null);
+
+  /** Los bloqueos de agenda; sólo se dibujan en la semana con fechas. */
+  readonly bloqueos = input<readonly BloqueoDelMes[]>([]);
+
+  /**
+   * Cuánto día se dibuja (AC-C3-01).
+   *
+   * Por omisión `completo`, que es el comportamiento que trae la maqueta y el
+   * que responde la pregunta difícil: un bloqueo a las 22:00 no tiene dónde
+   * verse en una grilla recortada a las horas de consulta. Quien quiera la
+   * versión apretada la pide, y la caja abre igual en la primera hora
+   * atendida, así que abrir el día no cuesta buscar nada.
+   */
+  readonly rango = input<RangoDeGrilla>('completo');
+
+  private readonly caja = viewChild<ElementRef<HTMLElement>>('caja');
+
+  constructor() {
+    // Abre en la primera hora atendida. Corre cuando cambian las reglas o el
+    // rango, no en cada dibujo: si el médico scrollea, no se le devuelve la
+    // caja a su lugar.
+    afterRenderEffect(() => {
+      const caja = this.caja()?.nativeElement;
+      const reglas = this.reglas();
+      const horas = this.horas();
+      if (!caja || reglas.length === 0 || horas.length === 0) return;
+      const primera = Math.min(...reglas.map((r) => hora(r.startTime)));
+      // Índice DENTRO de las horas dibujadas, no la hora absoluta: con el rango
+      // recortado la grilla arranca en la primera atendida, así que la hora 8
+      // es la fila 0 y buscar la fila 8 dejaría la caja ocho horas más abajo.
+      const fila = caja.querySelectorAll<HTMLElement>('.grilla__hora')[primera - horas[0]];
+      const cabecera = caja.querySelector<HTMLElement>('.grilla__esquina');
+      if (!fila || !cabecera) return;
+      caja.scrollTop = Math.max(0, fila.offsetTop - cabecera.offsetHeight - 12);
+    });
+  }
+
   /** El lunes de la semana mirada. */
   protected readonly lunes = computed(() => lunesDe(this.semana()));
 
-  /** Los días que se dibujan: de lunes al último atendido, viernes como mínimo. */
+  /** Los días que se dibujan: la semana entera, de lunes a domingo. */
   protected readonly dias = computed<readonly DiaDelHorario[]>(() => {
-    const conAtencion = new Set(this.reglas().map((r) => r.dayOfWeek));
-    let ultimo = 4; // viernes, en posiciones de ORDEN
-    ORDEN.forEach((d, i) => {
-      if (conAtencion.has(d)) ultimo = Math.max(ultimo, i);
-    });
     const lunes = this.lunes();
     const hoy = medianoche(this.semana());
-    return ORDEN.slice(0, ultimo + 1).map((numero, i) => {
+    return ORDEN.map((numero, i) => {
       const fecha = new Date(lunes.getFullYear(), lunes.getMonth(), lunes.getDate() + i);
       return {
         numero,
@@ -183,18 +271,48 @@ export class ScheduleGrid {
     });
   });
 
-  /** Las horas que se dibujan: de la primera atendida a la última. */
+  /**
+   * Las columnas de la cuadrícula: el carril de horas y un día cada una. Un
+   * día sin nada asignado queda angosto, al mínimo; los que se atienden se
+   * reparten el resto del ancho.
+   */
+  protected readonly columnas = computed(() => {
+    const conAtencion = new Set(this.reglas().map((r) => r.dayOfWeek));
+    const anchos = this.dias().map((d) =>
+      conAtencion.has(d.numero) ? 'minmax(var(--ancho-dia), 1fr)' : 'var(--ancho-dia-vacio)',
+    );
+    return {
+      plantilla: `var(--carril) ${anchos.join(' ')}`,
+      conAtencion: anchos.filter((a) => a.startsWith('minmax')).length,
+      vacios: anchos.filter((a) => !a.startsWith('minmax')).length,
+    };
+  });
+
+  /** Si un día no tiene nada asignado: su columna va angosta. */
+  protected diaVacio(dia: number): boolean {
+    return !this.reglas().some((r) => r.dayOfWeek === dia);
+  }
+
+  /**
+   * Las horas que se dibujan (AC-C3-01).
+   *
+   * En `completo`, el día entero: de 00 a 23. En `atencion`, de la primera
+   * hora atendida a la última — el fin de la franja es exclusivo, así que un
+   * horario que termina 13:00 **no** ocupa la fila de las 13.
+   *
+   * Sin reglas no se dibuja ninguna hora, en los dos rangos: una grilla de 24
+   * filas vacías no dice nada que el estado vacío no diga mejor.
+   */
   protected readonly horas = computed(() => {
     const reglas = this.reglas();
     if (reglas.length === 0) return [] as number[];
+    if (this.rango() === 'completo') return Array.from({ length: 24 }, (_, i) => i);
 
     let desde = 23;
     let hasta = 0;
     for (const r of reglas) {
       desde = Math.min(desde, hora(r.startTime));
-      // El fin es exclusivo: una franja que termina 13:00 no ocupa la fila de
-      // las 13. Se resta un minuto antes de tomar la hora.
-      hasta = Math.max(hasta, hora(r.endTime, -1));
+      hasta = Math.max(hasta, horaDelFin(r.endTime));
     }
     if (hasta < desde) return [] as number[];
     return Array.from({ length: hasta - desde + 1 }, (_, i) => desde + i);
@@ -221,6 +339,7 @@ export class ScheduleGrid {
       .map((r) => {
         const inicio = minutos(r.startTime);
         const fin = minutos(r.endTime);
+        const tamano = r.slotMinutes ?? this.slotMinutes();
         return {
           id: `${r.dayOfWeek}-${r.startTime}`,
           dia: r.dayOfWeek,
@@ -229,11 +348,68 @@ export class ScheduleGrid {
           top: ((inicio - arranque) / total) * 100,
           alto: ((fin - inicio) / total) * 100,
           etiqueta: `${LARGO[r.dayOfWeek]} de ${hhmm(r.startTime)} a ${hhmm(r.endTime)}: atendés`,
-          detalle: r.slotMinutes ? `consultas de ${r.slotMinutes} min` : null,
-          datos: datosDe(r, fin - inicio),
+          detalle: tamano ? `consultas de ${tamano} min` : 'tamaño libre',
+          datos: datosDe(r, fin - inicio, tamano),
         };
       })
       .sort((a, b) => a.top - b.top);
+  });
+
+  /**
+   * Los bloqueos que pisan la semana visible, partidos por día y medidos
+   * contra **las horas que se están dibujando**. Uno de varios días se dibuja
+   * entero en los del medio.
+   *
+   * Se mide contra `horas()` y no contra las 24 fijas porque con el rango
+   * `atencion` la grilla arranca a las 08:00: un bloqueo medido desde
+   * medianoche se dibujaría un tercio más arriba de donde va. Lo que cae
+   * enteramente fuera del rango visible no se dibuja — pero **sus horas
+   * siguen diciendo la verdad**: el rótulo dice «14:00 – 22:00» aunque la
+   * grilla recorte a las 20:00, porque el bloqueo dura eso.
+   */
+  protected readonly bloqueosPintados = computed<readonly BloqueoDelHorario[]>(() => {
+    if (!this.conFechas() || this.reglas().length === 0) return [];
+    const horas = this.horas();
+    if (horas.length === 0) return [];
+    const arranque = horas[0] * 60;
+    const total = horas.length * 60;
+
+    const pintados: BloqueoDelHorario[] = [];
+    for (const dia of this.dias()) {
+      const inicioDia = dia.fecha.getTime();
+      const finDia = new Date(
+        dia.fecha.getFullYear(),
+        dia.fecha.getMonth(),
+        dia.fecha.getDate() + 1,
+      ).getTime();
+      this.bloqueos().forEach((b, i) => {
+        const desde = Math.max(b.desde.getTime(), inicioDia);
+        const hasta = Math.min(b.hasta.getTime(), finDia);
+        if (hasta <= desde) return;
+        const minDesde = (desde - inicioDia) / 60_000;
+        const minHasta = (hasta - inicioDia) / 60_000;
+        // Recortado a la ventana visible para medirlo; el texto conserva las
+        // horas reales del bloqueo, que es el dato que la persona necesita.
+        const visibleDesde = Math.max(minDesde, arranque);
+        const visibleHasta = Math.min(minHasta, arranque + total);
+        if (visibleHasta <= visibleDesde) return;
+        const textoDesde = reloj(minDesde);
+        const textoHasta = reloj(minHasta);
+        pintados.push({
+          id: `${b.id ?? i}-${dia.numero}`,
+          dia: dia.numero,
+          desde: textoDesde,
+          hasta: textoHasta,
+          top: ((visibleDesde - arranque) / total) * 100,
+          alto: ((visibleHasta - visibleDesde) / total) * 100,
+          motivo: b.motivo,
+          etiqueta:
+            `${LARGO[dia.numero]} de ${textoDesde} a ${textoHasta}: bloqueado` +
+            (b.motivo ? ` (${b.motivo})` : ''),
+        });
+      });
+    }
+    return pintados;
   });
 
   /**
@@ -260,6 +436,11 @@ export class ScheduleGrid {
   /** Los bloques de un día, para pintarlos dentro de su columna. */
   protected bloquesDe(dia: number): readonly BloqueDelHorario[] {
     return this.bloques().filter((b) => b.dia === dia);
+  }
+
+  /** Los bloqueos de un día, para pintarlos en rojo dentro de su columna. */
+  protected bloqueosDe(dia: number): readonly BloqueoDelHorario[] {
+    return this.bloqueosPintados().filter((b) => b.dia === dia);
   }
 
   /** Si en ese día y esa hora se atiende, aunque sea una parte de la hora. */
@@ -313,17 +494,20 @@ export class ScheduleGrid {
 function datosDe(
   r: PublishedRule,
   duracion: number,
+  tamano: number | null,
 ): readonly { readonly rotulo: string; readonly valor: string }[] {
   const datos: { rotulo: string; valor: string }[] = [
     { rotulo: 'Horario', valor: `${hhmm(r.startTime)} – ${hhmm(r.endTime)}` },
     { rotulo: 'Duración', valor: enPalabras(duracion) },
   ];
-  if (r.slotMinutes) {
+  if (tamano) {
     const respiro = r.gapMinutes ?? 0;
-    const turnos = Math.floor((duracion + respiro) / (r.slotMinutes + respiro));
-    datos.push({ rotulo: 'Cada consulta', valor: `${r.slotMinutes} min` });
+    const turnos = Math.floor((duracion + respiro) / (tamano + respiro));
+    datos.push({ rotulo: 'Cada consulta', valor: `${tamano} min` });
     if (respiro > 0) datos.push({ rotulo: 'Respiro entre consultas', valor: `${respiro} min` });
     datos.push({ rotulo: 'Turnos en la franja', valor: String(turnos) });
+  } else {
+    datos.push({ rotulo: 'Cada consulta', valor: 'Tamaño libre' });
   }
   if (r.capacityPerSlot && r.capacityPerSlot > 1) {
     datos.push({ rotulo: 'Pacientes por turno', valor: String(r.capacityPerSlot) });
@@ -339,9 +523,26 @@ function enPalabras(minutos: number): string {
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
-/** La hora de un `HH:MM:SS`, opcionalmente corriendo N minutos. */
-function hora(texto: string, ajusteMinutos = 0): number {
-  return Math.floor((minutos(texto) + ajusteMinutos) / 60);
+/** La hora de un `HH:MM:SS`. */
+function hora(texto: string): number {
+  return Math.floor(minutos(texto) / 60);
+}
+
+/**
+ * La última hora que ocupa una franja que termina en `texto`.
+ *
+ * El fin es exclusivo: «hasta las 13:00» no ocupa la fila de las 13. Se resta
+ * un minuto antes de tomar la hora, que es como lo hacía la grilla recortada
+ * antes de que existiera el día completo.
+ */
+function horaDelFin(texto: string): number {
+  return Math.floor((minutos(texto) - 1) / 60);
+}
+
+/** `HH:MM` de unos minutos desde medianoche; el fin del día se escribe 24:00. */
+function reloj(min: number): string {
+  const redondo = Math.round(min);
+  return `${String(Math.floor(redondo / 60)).padStart(2, '0')}:${String(redondo % 60).padStart(2, '0')}`;
 }
 
 /** Los minutos desde medianoche de un `HH:MM` o `HH:MM:SS`. */

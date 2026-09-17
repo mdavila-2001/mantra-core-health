@@ -35,31 +35,67 @@
 
 /* Varias columnas no entran en un teléfono: scrollea dentro de su caja y la
    página nunca se va de lado. */
+/* Las 24 horas no entran de alto: la caja scrollea en los dos sentidos, con la
+   cabecera y el carril de horas fijos. `position: relative` la vuelve el
+   `offsetParent` de las filas, que es con lo que se abre en la primera hora. */
 .grilla__scroll {
-  overflow-x: auto;
+  position: relative;
+  overflow: auto;
+  max-block-size: 34rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   background: var(--bg-surface);
 }
 
 /* Un solo `grid` para cabecera y cuerpo: así las columnas de los días quedan
-   alineadas milimétricamente con sus fechas, sin sincronizar dos tablas. */
+   alineadas milimétricamente con sus fechas, sin sincronizar dos tablas.
+   El ancho mínimo sale de las columnas y no de `max-content`: con éste, la
+   última columna del diálogo se estiraba y el bloque quedaba cortado. */
 .grilla__tabla {
   --alto-hora: 3.25rem;
   --carril: 3.75rem;
+  /* Un día sin nada asignado va angosto: se ve que existe y no roba ancho. */
+  --ancho-dia: 6.5rem;
+  --ancho-dia-vacio: 3rem;
 
   display: grid;
-  grid-template-columns: var(--carril) repeat(var(--dias, 7), minmax(6.5rem, 1fr));
-  min-inline-size: 100%;
-  inline-size: max-content;
+  /* Las columnas las arma el componente (`columnas()`), día por día. */
+  grid-template-columns: var(--carril) repeat(7, minmax(var(--ancho-dia), 1fr));
+  inline-size: 100%;
+  min-inline-size: calc(
+    var(--carril) + var(--con-atencion, 7) * var(--ancho-dia) + var(--vacios, 0) *
+      var(--ancho-dia-vacio)
+  );
+}
+
+/* En la columna angosta el número del día se achica para entrar. */
+.grilla__dia--vacio .grilla__dia-numero {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  font-size: 1rem;
 }
 
 /* ---- la cabecera ------------------------------------------------------------ */
 
 .grilla__esquina,
 .grilla__dia {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   background: var(--bg-surface);
   border-block-end: 1px solid var(--border-subtle);
+}
+
+.grilla__esquina {
+  left: 0;
+  z-index: 6;
+}
+
+.grilla__horas {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  background: var(--bg-surface);
 }
 
 .grilla__dia {
@@ -179,17 +215,61 @@
   outline-offset: 1px;
 }
 
+/* El texto parte renglón en vez de cortarse: con seis o siete días una columna
+   mide unos 100 px, y «09:00 – 13:00» quedaba «09:00 – 13:0» en la vista
+   previa del horario retirado. */
 .grilla__bloque-horas {
   font-size: var(--fs-caption);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .grilla__bloque-detalle {
   font-size: 12px;
   opacity: 0.85;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---- el bloqueo de agenda ------------------------------------------------- */
+
+/* En rojo, como en el mes, y rayado: sigue distinguiéndose de una franja por
+   forma aunque no se vea el color. */
+.grilla__bloqueo {
+  position: absolute;
+  inset-inline: 3px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-block-size: 1.25rem;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--st-error-bd);
+  border-inline-start: 3px solid var(--st-error-bd);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      transparent 0 6px,
+      color-mix(in srgb, var(--st-error-bd) 18%, transparent) 6px 12px
+    ),
+    var(--st-error-bg);
+  color: var(--st-error-fg);
+  z-index: 2;
+  /* Sin `overflow: hidden`: rompería el rótulo pegajoso de abajo. El recorte
+     lo pone la caja que scrollea. */
+  overflow: visible;
+}
+
+/* Un bloqueo de día entero empieza a las 00:00, fuera de la vista: el rótulo
+   se queda pegado bajo la cabecera mientras el bloque siga a la vista, para
+   que el rojo nunca se vea sin decir por qué. */
+.grilla__bloqueo-rotulo {
+  position: sticky;
+  top: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 /* La línea de «ahora», la raya roja que recorre el día en Google Calendar. Se
@@ -199,7 +279,7 @@
   inset-inline: 0;
   block-size: 2px;
   background: var(--st-error-fg);
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
 }
 

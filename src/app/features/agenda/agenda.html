@@ -3,6 +3,21 @@
   subtitle="Las consultas comprometidas y los cupos que quedan por ofrecer."
   [breadcrumbs]="breadcrumbs()"
 >
+  @if (puedeIngresarPorMostrador()) {
+    <!-- AC-C3-03 · el ingreso por mostrador. Va en las acciones de la página y
+         no dentro del día: quien lo usa está atendiendo el mostrador y llega a
+         esta pantalla con alguien parado enfrente, así que el gesto tiene que
+         estar donde se entra, no donde se navega. -->
+    <button
+      app-button
+      page-actions
+      variant="secondary"
+      data-testid="agenda-ingreso-mostrador"
+      (clicked)="abrirMostrador()"
+    >
+      Ingreso Mostrador
+    </button>
+  }
   @if (puedeAvisarDemora()) {
     <!-- P8 · registro del cliente 4.2: «el médico informa a los pacientes que
          se va a demorar». Va en las acciones de la página porque la demora es
@@ -356,6 +371,21 @@
     </app-tabs>
   }
 </div>
+
+<!-- ─── Ingreso por mostrador (AC-C3-03) ──────────────────────────────────
+     Entra y sale del DOM en vez de esconderse: el modal monta un `<dialog>`
+     nativo con su trampa de foco, y dejarlo montado y cerrado deja sus campos
+     en el orden de tabulación de la página de atrás.
+
+     `recursoElegido()` no puede ser nulo acá: `puedeIngresarPorMostrador()` lo
+     exige antes de ofrecer el botón, y sin botón nadie abre el modal. -->
+@if (mostradorAbierto() && recursoElegido(); as recurso) {
+  <app-walk-in-form
+    [resourceId]="recurso"
+    (cerrado)="cerrarMostrador()"
+    (creado)="mostradorCreado($event)"
+  />
+}
 
 <!-- ─── Plantillas de celda ───────────────────────────────────────────────
      El organismo las recibe por `ColumnDef.cell`. -->

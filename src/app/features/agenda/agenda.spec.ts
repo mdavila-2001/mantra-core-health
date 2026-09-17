@@ -410,6 +410,52 @@ describe('Agenda', () => {
     expect(solapas.map((s) => s.textContent?.trim())).not.toContain('Mi agenda');
   });
 
+  /* -- Ingreso por mostrador (AC-C3-03) ------------------------------------ */
+
+  /** El botón que abre el modal, o `null` si no se ofrece. */
+  function botonDeMostrador(): HTMLElement | null {
+    return harness.fixture.nativeElement.querySelector('[data-testid="agenda-ingreso-mostrador"]');
+  }
+
+  it('ofrece el ingreso por mostrador a quien atiende, con recurso elegido', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos();
+    responderResto();
+    harness.fixture.detectChanges();
+
+    expect(botonDeMostrador()?.textContent).toContain('Ingreso Mostrador');
+    // Cerrado hasta que alguien lo toque: el `<dialog>` atrapa el foco, y
+    // dejarlo montado metería sus campos en el orden de tabulación de atrás.
+    expect(harness.fixture.nativeElement.querySelector('app-walk-in-form')).toBeNull();
+  });
+
+  it('sin agenda elegida no ofrece el mostrador: el turno no tendría dónde ir', async () => {
+    // Mismo criterio que el aviso de demora. La autoridad sigue siendo la API
+    // —`walk-in` declara SCHEDULING_ADMIN, AGENT y PRACTITIONER—; esconder el
+    // botón sólo evita ofrecer un gesto que no se puede completar.
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos([]);
+    harness.fixture.detectChanges();
+
+    expect(botonDeMostrador()).toBeNull();
+  });
+
+  it('el botón abre el modal sobre la agenda, sin navegar', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await responderRecursos();
+    responderResto();
+    harness.fixture.detectChanges();
+
+    const antes = TestBed.inject(Router).url;
+    botonDeMostrador()?.click();
+    harness.fixture.detectChanges();
+
+    expect(harness.fixture.nativeElement.querySelector('app-walk-in-form')).not.toBeNull();
+    // Sigue en la misma pantalla: quien atiende el mostrador tiene a la
+    // siguiente persona esperando y no puede perder el día de vista.
+    expect(TestBed.inject(Router).url).toBe(antes);
+  });
+
   it('sin rol de padrón no ofrece el enlace a la ficha del paciente', async () => {
     await montar({ roles: ['SCHEDULING_AGENT'] });
     await responder();
