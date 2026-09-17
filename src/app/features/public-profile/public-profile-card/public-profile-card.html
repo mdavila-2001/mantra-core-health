@@ -178,6 +178,35 @@
                 </a>
               }
 
+              <!-- Calificar va acá y no en el modal de opiniones: abrir un
+                   <dialog> encima de otro deja dos trampas de foco anidadas, y
+                   Escape cerraría el de arriba dejando el de abajo abierto.
+                   Quien ya se atendió entra por la ficha, no por la lista. -->
+              @if (puedeCalificar()) {
+                <button
+                  class="perfil__accion-secundaria"
+                  type="button"
+                  data-testid="perfil-calificar"
+                  (click)="abrirCalificacion()"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      d="m12 3.4 2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.4 6.6 20.2l1-6.1-4.4-4.3 6.1-.9z"
+                    />
+                  </svg>
+                  Calificar mi atención
+                </button>
+              }
+
               <!-- Compartir es lo que se hace con la ficha de una organización:
                    se le pasa a alguien. El enlace se arma del slug y no de la
                    barra de direcciones — ver `urlPublica`. -->
@@ -482,6 +511,16 @@
         [promedio]="p.ratingAverage"
         [pestanaInicial]="pestana"
         (cerrado)="cerrarOpiniones()"
+      />
+    }
+
+    <!-- Calificar la atención recibida. Hermano del modal de opiniones y no
+         hijo: dos <dialog> modales anidados se pisan el foco. -->
+    @if (calificando()) {
+      <app-rate-encounter-dialog
+        [professionalName]="p.displayName"
+        (saved)="calificacionPublicada()"
+        (closed)="cerrarCalificacion()"
       />
     }
   </article>

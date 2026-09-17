@@ -24,6 +24,8 @@ import {
   PUBLIC_PROFILE_PREFIX,
   type PublicProfileDetail,
 } from '@core/data-access/public-directory/public-directory.types';
+import { AuthService } from '@core/auth/auth.service';
+import { RateEncounterDialog } from '../rate-encounter-dialog/rate-encounter-dialog';
 import { inicialesDe } from '@shared/text/iniciales';
 
 /** Cuántas publicaciones se ven por página en la ficha. */
@@ -96,6 +98,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
     PublicPostCard,
     PublicProfilePager,
     PublicProfileReviews,
+    RateEncounterDialog,
   ],
   templateUrl: './public-profile-card.html',
   styleUrl: './public-profile-card.css',
@@ -350,6 +353,45 @@ export class PublicProfileCard {
 
   protected cerrarOpiniones(): void {
     this.opinionesAbiertas.set(null);
+  }
+
+  /* ==========================================================================
+      Calificar la atención recibida.
+      ====================================================================== */
+
+  private readonly auth = inject(AuthService);
+
+  /**
+   * Si quien mira puede calificar: una sesión con perfil de paciente.
+   *
+   * No comprueba que se haya atendido con ESTE profesional —eso lo sabe el
+   * servidor, y averiguarlo acá exigiría cruzar sus atenciones con una ficha
+   * pública que a propósito no publica a quién representa—. Ofrecerlo y que
+   * el servidor explique por qué no, cuando no corresponde, es mejor que
+   * esconder el camino a quien sí puede.
+   */
+  protected readonly puedeCalificar = computed(() => this.auth.patientProfileId() !== null);
+
+  /** Si el diálogo de calificar está abierto. */
+  protected readonly calificando = signal(false);
+
+  protected abrirCalificacion(): void {
+    this.calificando.set(true);
+  }
+
+  protected cerrarCalificacion(): void {
+    this.calificando.set(false);
+  }
+
+  /**
+   * Publicada la opinión, se abre la lista para que la vea.
+   *
+   * El modal de opiniones relee al montarse, así que abrirlo acá es lo que
+   * hace que la recién publicada aparezca sin recargar la página.
+   */
+  protected calificacionPublicada(): void {
+    this.calificando.set(false);
+    this.opinionesAbiertas.set('opiniones');
   }
 
   /* ==========================================================================
