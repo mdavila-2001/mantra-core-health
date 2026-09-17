@@ -4,11 +4,16 @@
  * del formato y que las tipografías viajan incrustadas (el lienzo no sale a la red).
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-const dir = '/private/tmp/claude-501/-Users-josejeremias-Desktop-Mantra-Core-Technologies/1901004d-50fd-4c2e-930f-484f6d1c06d9/scratchpad/video3';
-mkdirSync(dir + '/canvas', { recursive: true });
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+/* lee lo que dejó `extraer-pantallas.mjs`: `artifacts/promo` */
+const aqui = dirname(fileURLToPath(import.meta.url));
+const dir = join(aqui, '..', '..', 'artifacts', 'promo');
+mkdirSync(join(dir, 'canvas'), { recursive: true });
 
 /** Las tipografías del repositorio, incrustadas: el lienzo no puede ir a buscarlas. */
-const fuente = (archivo) => readFileSync(`${dir}/fuentes/${archivo}`).toString('base64');
+const fuente = (archivo) => readFileSync(join(dir, 'fuentes', archivo)).toString('base64');
 const CARAS = `
 /* ---- tipografías del repositorio, incrustadas para el lienzo ---- */
 @font-face{font-family:'Inter Variable';src:url(data:font/woff2;base64,${fuente('inter-latin-wght-normal.woff2')}) format('woff2');font-weight:100 900;font-style:normal;font-display:block}
@@ -32,7 +37,7 @@ const PANTALLAS = [
 
 const artboards = [];
 PANTALLAS.forEach(([archivo, nombre, titulo], i) => {
-  const crudo = readFileSync(`${dir}/pantallas/${archivo}.html`, 'utf8');
+  const crudo = readFileSync(join(dir, 'pantallas', `${archivo}.html`), 'utf8');
   const css = crudo.slice(crudo.indexOf('<style>') + 7, crudo.indexOf('</style>'));
   const cuerpo = crudo.slice(crudo.indexOf('>', crudo.indexOf('<body')) + 1, crudo.lastIndexOf('</body>'));
   /* las caras van al final para ganarle a las @font-face que apuntan a archivos sueltos */
@@ -56,13 +61,13 @@ ${cuerpo}
 </x-dc>
 </body>
 </html>`;
-  writeFileSync(`${dir}/canvas/${nombre}.dc.html`, dc);
+  writeFileSync(join(dir, 'canvas', `${nombre}.dc.html`), dc);
   const col = i % 3, fila = Math.floor(i / 3);
   artboards.push({ file: `${nombre}.dc.html`, title: titulo, x: col * 1680, y: fila * 1140, w: 1520, h: 950 });
   console.log(`· ${nombre}.dc.html · ${(dc.length/1024).toFixed(0)} kB`);
 });
 
-writeFileSync(`${dir}/canvas/canvas.json`, JSON.stringify({
+writeFileSync(join(dir, 'canvas', 'canvas.json'), JSON.stringify({
   artboards,
   annotations: [{
     id: 'de-donde-sale', x: 0, y: -170, w: 900,

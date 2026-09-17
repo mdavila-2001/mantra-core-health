@@ -1,15 +1,19 @@
 # Material de comunicación de AloVida
 
-Dos piezas hechas con el frontend de este repositorio. **El video no usa capturas: usa el
-frontend.** `extraer-pantallas.mjs` congela el DOM y las hojas de estilo de cada pantalla —lo que
-sirve la aplicación, sin una caja dibujada a mano— y `video.html` las monta en iframes y las
-**anima**: escribe en los campos reales, revela las tarjetas reales, abre el menú real y cambia el
-estado de un cobro con las clases del propio sistema de diseño. El mazo sí son capturas quietas de
-esa misma maqueta.
+Material hecho con el frontend de este repositorio, no con recreaciones.
+
+**Los videos son tres, uno por módulo** —paciente, médico y farmacia—, y cada uno graba el
+**ejercicio completo manejando la aplicación de verdad**: se entra con la cuenta de la maqueta, se
+escribe campo por campo —los que el layout separa van separados—, se hace clic donde hay que hacerlo
+y se fotografía lo que la aplicación responde. Los módulos van por separado a propósito: cada
+ejercicio se mira solo. **La marca aparece al final**, cuando el ejercicio terminó; nunca lo abre.
 
 | Pieza | Archivo | Salida |
 |---|---|---|
-| **Video** | `video.html` + `extraer-pantallas.mjs` | `alovida-1080p.mp4` (92 s · 1920×1080 · 30 fps · sin audio), 720p y portada |
+| **Video · paciente** | `flujos/paciente.mjs` | `alovida-flujo-paciente-1080p.mp4` (+ 720p) |
+| **Video · médico** | `flujos/medico.mjs` | `alovida-flujo-medico-1080p.mp4` (+ 720p) |
+| **Video · farmacia** | `flujos/farmacia.mjs` | `alovida-flujo-farmacia-1080p.mp4` (+ 720p) |
+| Motor y escenario | `flujos/motor.mjs`, `flujos/flujo.html` | manejan la aplicación y pintan marco, rótulos y puntero |
 | **Mazo de paciente y médico** | `deck-paciente-y-medico.html` | `AloVida-modulos-paciente-medico.pdf` (15 láminas 16:9) y un PNG por lámina |
 | Tokens de marca | `marca.css` | del mazo y de los rótulos del video |
 | Artboards de Claude Design | `a-canvas.mjs` | un `.dc.html` por pantalla, con el mismo HTML y CSS |
@@ -19,7 +23,8 @@ yarn start                                   # las dos piezas necesitan la maque
 node tools/promo/generar.mjs --solo-deck     # PDF + PNG (rápido, sin ffmpeg)
 
 brew install ffmpeg                          # una vez; sólo lo necesita el video
-node tools/promo/generar.mjs --solo-video    # MP4 1080p, 720p y portada
+node tools/promo/flujos/grabar.mjs           # los tres ejercicios
+node tools/promo/flujos/grabar.mjs --solo farmacia
 node tools/promo/generar.mjs                 # las dos
 node tools/promo/generar.mjs --base http://localhost:4300
 ```
@@ -62,34 +67,26 @@ exportarlas fuera del video.
 Las direcciones que dependen de datos —el perfil público, la consulta— se resuelven navegando, no
 con identificadores escritos a mano, para que sobrevivan a un cambio de semillas.
 
-## El video
+## Los ejercicios
 
-| Tramo | Qué se ve |
+| Módulo | Qué se recorre |
 |---|---|
-| 00 · Marca | Logotipo y claim. |
-| 01 · Registro | Las cinco tarjetas de cuenta aparecen, el puntero elige «Médico» y el alta del profesional **se escribe**: nombre y apellido, en sus campos reales. |
-| 02 · El paciente pide turno | Se teclea el nombre del profesional en el buscador real, aparecen los horarios y el puntero pide uno; después, «Mis citas» con sus estados. |
-| 03 · La agenda y el cobro | La tabla del día entra fila por fila, se abre el **menú real** de la columna «Pago» y al elegir «Pagada» el badge pasa de ámbar a verde: `badge--warning` → `badge--success`, las clases del propio sistema de diseño. |
-| 04 · La consulta | Las nueve casillas de lo que se registra, y el puntero abre «Diagnóstico». |
-| 05 · La red social | La publicación se **escribe** en el compositor real, el botón se habilita, se publica y el post aparece en el muro. |
-| 06 · Los directorios | Las especialidades de la red y las clínicas por departamento, entrando en cascada. |
-| 07 · Cierre | Marca y los cuatro atributos. |
+| **Paciente** | Crea la cuenta —cada nombre y cada apellido en su propio campo, como los separa el layout—, busca al profesional, pide el horario, ve la cita con su estado, mira sus resultados y sigue su receta hasta el pedido de farmacia. |
+| **Médico** | La agenda del día, registrar la llegada, iniciar la consulta, dejar el diagnóstico del catálogo CIE-10, la receta, y marcar el cobro sin salir de la agenda. |
+| **Farmacia** | La bandeja del mostrador, el pedido que llega con su receta electrónica, confirmarlo con lo que hay —tal cual, sustituto o no disponible— y ver la bandeja moverse. |
 
-Nada de eso está redibujado: el DOM es el de la aplicación y la animación se limita a mover
-opacidad, desplazamiento y clases sobre él.
+Cada módulo es un archivo aparte y termina con la marca.
 
-`video.html` no usa animaciones de CSS: declara pistas `{t0, t1, función}` y **cada fotograma es
-función pura de `t`** (`window.__seek(t)`). El generador levanta un servidor mínimo —los iframes
-tienen que ser del mismo origen para que el escenario pueda escribir en los campos de las
-pantallas—, mueve la página fotograma a fotograma, fotografía y encadena con ffmpeg. De ahí salen tres propiedades que importan:
+## Cómo está grabado
 
-- la fluidez no depende de la velocidad de la máquina;
-- dos corridas dan el mismo video;
-- se puede inspeccionar cualquier instante: abrí `artifacts/promo/video.html` y ejecutá
-  `__seek(42.5)` en la consola; con `video.html?play` se reproduce en vivo y en bucle.
+`flujos/motor.mjs` maneja la aplicación y anota, fotograma a fotograma, qué foto toca, dónde está el
+puntero y qué rótulo va encima; deja `app/*.png` (sin repetir lo que no cambia) y `guion.js`.
+`flujos/flujo.html` reproduce ese guion con el marco, el módulo y la escena arriba, el rótulo abajo y
+el puntero con su clic — y el cierre de marca. `grabar.mjs` levanta un servidor mínimo sobre lo
+grabado, fotografía el escenario y encadena con ffmpeg.
 
-El ffmpeg que trae Playwright **no sirve**: está compilado sólo con VP8/WebM (`--disable-everything`),
-así que no puede escribir H.264. El mazo no lo necesita.
+Escribir es escribir: el motor teclea letra por letra en el campo real y fotografía cada pulsación,
+así que lo que se ve es la aplicación respondiendo, no una animación de texto.
 
 ## Qué es y qué no es
 

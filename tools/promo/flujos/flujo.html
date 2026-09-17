@@ -1,0 +1,177 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>AloVida — ejercicio completo</title>
+<style>
+@font-face{font-family:Poppins;src:url(assets/poppins-latin-500-normal.woff2) format('woff2');font-weight:500;font-display:block}
+@font-face{font-family:Poppins;src:url(assets/poppins-latin-600-normal.woff2) format('woff2');font-weight:600;font-display:block}
+@font-face{font-family:Poppins;src:url(assets/poppins-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:block}
+@font-face{font-family:'Inter Variable';src:url(assets/inter-latin-wght-normal.woff2) format('woff2');font-weight:100 900;font-display:block}
+:root{--petroleo:#0B557E;--petroleo-p:#0B3953;--aguamarina:#4FB3A9;--menta:#9FD8D0;
+  --tinta:#242828;--tinta-3:#787B7B;--filete-2:#E3EAE7;
+  --sans:'Inter Variable',system-ui,sans-serif;--display:Poppins,system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#fff}
+body{font-family:var(--sans);color:var(--tinta);-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden}
+#wash{position:absolute;inset:0;background:
+  radial-gradient(1100px 700px at 6% -12%, rgba(79,179,169,.16), transparent 60%),
+  radial-gradient(900px 620px at 102% 110%, rgba(11,85,126,.14), transparent 62%), #fff}
+#grano{position:absolute;inset:0;opacity:.5;
+  background-image:linear-gradient(rgba(11,85,126,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(11,85,126,.045) 1px,transparent 1px);
+  background-size:64px 64px;-webkit-mask-image:radial-gradient(1400px 900px at 50% 45%,#000 20%,transparent 78%)}
+
+#ventana{position:absolute;left:200px;top:70px;width:1520px;height:950px;border-radius:20px;overflow:hidden;
+  border:1px solid var(--filete-2);box-shadow:0 46px 92px -34px rgba(11,57,83,.46),0 8px 22px rgba(11,57,83,.08);
+  background:#fff;opacity:0}
+#pantalla{display:block;width:1520px;height:950px}
+
+#cursor{position:absolute;width:30px;height:30px;left:0;top:0;z-index:60;opacity:0;filter:drop-shadow(0 4px 8px rgba(7,47,69,.4))}
+#pulso{position:absolute;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:2px solid var(--aguamarina);opacity:0;z-index:59}
+#rotulo{position:absolute;left:150px;bottom:54px;z-index:70;opacity:0}
+.rot-caja{display:inline-block;background:linear-gradient(120deg,rgba(11,85,126,.97),rgba(11,57,83,.97));
+  border-radius:18px;padding:20px 30px 22px;box-shadow:0 22px 44px -18px rgba(7,47,69,.6)}
+.rot-eyebrow{font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--menta);font-weight:600;margin-bottom:8px}
+.rot-tit{font-family:var(--display);font-weight:600;font-size:33px;color:#fff}
+#paso{position:absolute;left:150px;top:26px;z-index:70;display:flex;align-items:center;gap:14px;opacity:0}
+#paso .mod{font-family:var(--display);font-weight:700;font-size:19px;color:var(--petroleo);letter-spacing:.02em}
+#paso .raya{width:52px;height:2px;background:var(--aguamarina);border-radius:2px}
+#paso .esc{font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta-3);font-weight:600}
+
+/* el cierre: la marca va al final, no al principio */
+#cierre{position:absolute;inset:0;display:grid;place-items:center;opacity:0;background:
+  radial-gradient(1200px 820px at 20% 0%, #0E6A95 0%, transparent 55%),
+  radial-gradient(1000px 700px at 90% 100%, #10796F 0%, transparent 52%),
+  linear-gradient(140deg,#0B557E 0%,#0B3953 48%,#072F45 100%)}
+#cierre .centro{text-align:center}
+#cierre img{width:170px;display:block;margin:0 auto 34px;opacity:0}
+#cierre .wordmark{font-family:var(--display);font-weight:700;font-size:104px;letter-spacing:-.02em;color:#fff;line-height:1;opacity:0}
+#cierre .linea{width:0;height:3px;background:linear-gradient(90deg,var(--menta),var(--aguamarina));margin:26px auto 22px;border-radius:3px}
+#cierre .claim{font-family:var(--display);font-weight:500;font-size:32px;color:#CFE7E3;opacity:0}
+</style>
+<div id="stage">
+  <div id="wash"></div>
+  <div id="grano"></div>
+  <div id="ventana"><img id="pantalla" alt=""></div>
+  <div id="paso"><span class="mod">PACIENTE</span><span class="raya"></span><span class="esc">Escena</span></div>
+  <div id="rotulo"><div class="rot-caja"><div class="rot-eyebrow">AloVida</div><div class="rot-tit">Texto</div></div></div>
+  <div id="pulso"></div>
+  <div id="cursor"><svg viewBox="0 0 24 24" width="30" height="30"><path d="M4 2l7.5 19 2.4-7.6 7.6-2.4L4 2z" fill="#fff" stroke="#0B3953" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+  <div id="cierre">
+    <div class="centro">
+      <img src="assets/alovida-logo-blanco.svg" id="cLogo" alt="AloVida">
+      <div class="wordmark" id="cWm">AloVida</div>
+      <div class="linea" id="cLinea"></div>
+      <div class="claim" id="cClaim">El ejercicio completo, en el producto.</div>
+    </div>
+  </div>
+</div>
+<script>
+/* ============================================================================
+   Reproduce un ejercicio grabado de la aplicación: `guion.js` dice qué fotograma
+   toca en cada instante, dónde está el puntero y qué rótulo va encima. La marca
+   aparece al FINAL, cuando el ejercicio terminó.
+   ========================================================================== */
+const $ = (s) => document.querySelector(s);
+const FLUJO = new URLSearchParams(location.search).get('f') ?? 'paciente';
+const TITULOS = { paciente: 'PACIENTE', medico: 'MÉDICO', farmacia: 'FARMACIA' };
+const CIERRES = {
+  paciente: 'Pedir turno, ver la cita, seguir la receta.',
+  medico: 'Recibir, atender, diagnosticar y cobrar.',
+  farmacia: 'De la receta electrónica al mostrador.',
+};
+const CIERRE = 6.4;          // segundos de marca al final
+const mez = (a, b, p) => a + (b - a) * p;
+const suave = (p) => 1 - Math.pow(1 - p, 3);
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+
+let G = null, imagenes = new Map(), DUR = 0, DUR_APP = 0;
+
+window.__listo = (async () => {
+  await new Promise((ok, err) => {
+    const s = document.createElement('script');
+    s.src = `${FLUJO}/guion.js`; s.onload = ok; s.onerror = err;
+    document.head.appendChild(s);
+  });
+  G = window.__guion;
+  DUR_APP = G.frames.length / G.fps;
+  DUR = DUR_APP + CIERRE;
+  window.__dur = DUR;
+  $('#paso .mod').textContent = TITULOS[FLUJO] ?? FLUJO.toUpperCase();
+  $('#cClaim').textContent = CIERRES[FLUJO] ?? '';
+  /* todas las fotos cargadas antes de empezar: si no, aparecen fotogramas en blanco */
+  const unicas = [...new Set(G.frames)];
+  await Promise.all(unicas.map((n) => new Promise((ok) => {
+    const im = new Image();
+    im.onload = () => { imagenes.set(n, im.src); ok(); };
+    im.onerror = ok;
+    im.src = `${FLUJO}/app/${n}`;
+  })));
+  await document.fonts.ready;
+  window.__render(0);
+  return true;
+})();
+
+window.__render = (t) => {
+  const i = Math.min(G.frames.length - 1, Math.max(0, Math.round(t * G.fps)));
+  const enApp = t < DUR_APP;
+
+  /* la ventana con la aplicación */
+  const entrada = clamp01(t / .6), salida = clamp01((DUR_APP - t) / .5);
+  $('#ventana').style.opacity = enApp ? suave(entrada) * (t > DUR_APP - .5 ? salida : 1) : 0;
+  if (enApp) {
+    const src = imagenes.get(G.frames[i]);
+    if (src && $('#pantalla').src !== src) $('#pantalla').src = src;
+  }
+
+  /* el puntero, tal como se movió durante la grabación */
+  const c = G.puntero[i] ?? { v: false };
+  const cur = $('#cursor'), pul = $('#pulso');
+  cur.style.opacity = enApp && c.v ? 1 : 0;
+  if (c.v) {
+    cur.style.left = (200 + c.x / 100 * 1520) + 'px';
+    cur.style.top = (70 + c.y / 100 * 950) + 'px';
+  }
+  if (enApp && c.p >= 0) {
+    pul.style.opacity = (1 - c.p) * .9;
+    pul.style.left = cur.style.left; pul.style.top = cur.style.top;
+    pul.style.transform = `scale(${mez(.35, 1.5, c.p)})`;
+  } else pul.style.opacity = 0;
+
+  /* módulo y escena, arriba a la izquierda */
+  const esc = G.escenas.find((e) => i >= e.desde && i < e.hasta);
+  $('#paso').style.opacity = enApp && esc ? suave(clamp01((t - .5) / .5)) : 0;
+  if (esc) $('#paso .esc').textContent = esc.nombre;
+
+  /* el rótulo de turno */
+  const rot = G.rotulos.find((r) => i >= r.desde && i < r.hasta);
+  const R = $('#rotulo');
+  if (enApp && rot) {
+    const dentro = (i - rot.desde) / G.fps, resta = (rot.hasta - i) / G.fps;
+    R.style.opacity = Math.min(suave(clamp01(dentro / .45)), clamp01(resta / .4));
+    R.style.transform = `translateY(${mez(20, 0, suave(clamp01(dentro / .5)))}px)`;
+    $('.rot-eyebrow').textContent = rot.eyebrow;
+    $('.rot-tit').textContent = rot.titulo;
+  } else R.style.opacity = 0;
+
+  /* la marca, al final */
+  const u = t - DUR_APP;
+  $('#cierre').style.opacity = u > -.4 ? suave(clamp01((u + .4) / .7)) * clamp01((DUR - t) / .8) : 0;
+  const ap = (el, desde, dur = .7, dy = 0) => {
+    const p = suave(clamp01((u - desde) / dur));
+    el.style.opacity = p;
+    if (dy) el.style.transform = `translateY(${mez(dy, 0, p)}px)`;
+  };
+  ap($('#cLogo'), .3, .8);
+  ap($('#cWm'), .7, .7, 20);
+  $('#cLinea').style.width = (220 * suave(clamp01((u - 1.1) / .8))) + 'px';
+  ap($('#cClaim'), 1.5, .7, 16);
+};
+window.__seek = (t) => window.__render(t);
+if (location.search.includes('play')) {
+  window.__listo.then(() => {
+    const t0 = performance.now();
+    const bucle = () => { window.__render(((performance.now() - t0) / 1000) % window.__dur); requestAnimationFrame(bucle); };
+    requestAnimationFrame(bucle);
+  });
+}
+</script>
