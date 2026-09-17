@@ -146,6 +146,7 @@ nav:
       - Estado de servidor: data-and-state/server-state.md
       - Estado de cliente: data-and-state/client-state.md
       - Formularios y validación: data-and-state/forms-and-validation.md
+      - Corpus Bolivia · Eje Central: data/bolivia-eje-central.md
       - Caché: data-and-state/caching.md
       - Persistencia: data-and-state/persistence.md
       - Actualizaciones optimistas: data-and-state/optimistic-updates.md

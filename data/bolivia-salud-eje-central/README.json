@@ -1,0 +1,23 @@
+{
+  "nombre": "Bolivia Salud Eje Central - corpus JSON",
+  "version_esquema": "1.0.0",
+  "fecha_corte": "2026-09-13",
+  "alcance_geografico": [
+    "La Paz",
+    "El Alto",
+    "Cochabamba",
+    "Santa Cruz de la Sierra"
+  ],
+  "contenido": {
+    "establecimientos": "Directorio investigado de laboratorios/centros y cadenas de farmacias, con fuentes y estado de verificación.",
+    "analisis_medicos": "Catálogo taxonómico amplio de pruebas médicas. Incluye oferta boliviana verificada en fuentes puntuales y un corpus global adicional que no implica disponibilidad local."
+  },
+  "advertencias": [
+    "No representa un censo legal completo de todas las farmacias o laboratorios del eje central.",
+    "Los registros históricos se identifican explícitamente y no se interpretan como vigentes en 2026.",
+    "No se inventan códigos LOINC/SNOMED; permanecen null si no fueron verificados individualmente.",
+    "El universo de pruebas médicas no es cerrado: existen ensayos ultraespecializados, variantes propietarias y nuevos biomarcadores."
+  ],
+  "encoding": "UTF-8",
+  "formato": "JSON válido, indentado"
+}

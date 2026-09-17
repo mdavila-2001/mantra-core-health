@@ -1,0 +1,499 @@
+{
+ "farm_suc_farmacorp_001": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "ciudad",
+  "query": "La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_002": {
+  "lat": -16.501936,
+  "lng": -68.132378,
+  "precision": "via",
+  "query": "Av. 16 de Julio, La Paz, Bolivia",
+  "display": "Avenida 16 de Julio, Casco Viejo, Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_003": {
+  "lat": -16.508777,
+  "lng": -68.123825,
+  "precision": "via",
+  "query": "Calle Pedro Salazar, La Paz, Bolivia",
+  "display": "Calle Pedro Salazar, Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_004": {
+  "lat": -16.533758,
+  "lng": -68.074588,
+  "precision": "direccion",
+  "query": "Av. García Lanza, Achumani, La Paz, Bolivia",
+  "display": "Banco Nacional de Bolivia, 1484, Avenida Manuel Víctor García Lanza, Achumani, Calacoto, Sur, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_005": {
+  "lat": -16.539276,
+  "lng": -68.077956,
+  "precision": "direccion",
+  "query": "Calle 21, Calacoto, Los Pinos, La Paz, Bolivia",
+  "display": "Calle 21, San Miguel, Calacoto, Sur, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_006": {
+  "lat": -16.524777,
+  "lng": -68.151411,
+  "precision": "direccion",
+  "query": "Ciudad Satélite, El Alto, Bolivia",
+  "display": "Ciudad Satélite, PLAN 405, Distrito 1, El Alto, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_007": {
+  "lat": -16.51458,
+  "lng": -68.119876,
+  "precision": "direccion",
+  "query": "Av. Arce No. 2809, La Paz, Bolivia",
+  "display": "Avenida Aniceto Arce, Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_008": {
+  "lat": -16.527076,
+  "lng": -68.106528,
+  "precision": "direccion",
+  "query": "Av. Hernando Siles No. 5204, Obrajes, La Paz, Bolivia",
+  "display": "Avenida Hernando Siles Reyes, Obrajes, Sur, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_009": {
+  "lat": -16.540289,
+  "lng": -68.06979,
+  "precision": "via",
+  "query": "Av. Juan Muñoz Reyes   calle 28, La Paz, Bolivia",
+  "display": "Avenida Juan Muñoz Reyes, Cota Cota, Calacoto, Sur, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_010": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "ciudad",
+  "query": "La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_011": {
+  "lat": -16.524235,
+  "lng": -68.067253,
+  "precision": "via",
+  "query": "Av. The Strongest, La Paz, Bolivia",
+  "display": "Avenida The Strongest, Calacoto, Sur, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_012": {
+  "lat": -16.504823,
+  "lng": -68.162434,
+  "precision": "ciudad",
+  "query": "El Alto, Bolivia",
+  "display": "El Alto, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_013": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "ciudad",
+  "query": "La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_014": {
+  "lat": -16.505827,
+  "lng": -68.129103,
+  "precision": "via",
+  "query": "Av. Arce, La Paz, Bolivia",
+  "display": "Avenida Aniceto Arce, Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_015": {
+  "lat": -16.58218,
+  "lng": -68.23889,
+  "precision": "via",
+  "query": "Av. Ballivián, La Paz, Bolivia",
+  "display": "Avenida Ballivian, Viacha, Ingavi, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_016": {
+  "lat": -16.522388,
+  "lng": -68.154992,
+  "precision": "via",
+  "query": "Av. Satélite N° 200, El Alto, Bolivia",
+  "display": "Avenida Satélite, PLAN 405, Distrito 1, El Alto, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_017": {
+  "lat": -16.530627,
+  "lng": -68.073367,
+  "precision": "direccion",
+  "query": "Calle 16 N° 416, Achumani, La Paz, Bolivia",
+  "display": "Calle 16, Achumani, Calacoto, Sur, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_018": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "ciudad",
+  "query": "La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_019": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "ciudad",
+  "query": "La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_020": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "ciudad",
+  "query": "La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_021": {
+  "lat": -16.513404,
+  "lng": -68.12894,
+  "precision": "via",
+  "query": "Sopocachi, La Paz, Bolivia",
+  "display": "Sopocachi, Cotahuma, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_farmacorp_022": {
+  "lat": -17.401246,
+  "lng": -66.167568,
+  "precision": "ciudad",
+  "query": "Cochabamba, Bolivia",
+  "display": "Cochabamba, Juan De La Rosa, Molle, Cochabamba, Cercado, Cochabamba, Bolivia"
+ },
+ "farm_suc_farmacorp_023": {
+  "lat": -17.401246,
+  "lng": -66.167568,
+  "precision": "ciudad",
+  "query": "Cochabamba, Bolivia",
+  "display": "Cochabamba, Juan De La Rosa, Molle, Cochabamba, Cercado, Cochabamba, Bolivia"
+ },
+ "farm_suc_farmacorp_024": {
+  "lat": -17.373297,
+  "lng": -66.155121,
+  "precision": "via",
+  "query": "Mall Aranjuez, Cochabamba, Bolivia",
+  "display": "Paseo Aranjuez, Avenida América, Portales, Adela Zamudio, Cochabamba, Cercado, Cochabamba, Bolivia"
+ },
+ "farm_suc_farmacorp_025": {
+  "lat": -17.324245,
+  "lng": -66.208377,
+  "precision": "via",
+  "query": "Chilimarca, Cochabamba, Bolivia",
+  "display": "Avenida Chilimarca, Molinos, Colcapirhua, Quillacollo, Cochabamba, Bolivia"
+ },
+ "farm_suc_farmacorp_026": {
+  "lat": -17.783422,
+  "lng": -63.182085,
+  "precision": "ciudad",
+  "query": "Santa Cruz de la Sierra, Bolivia",
+  "display": "Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_farmacorp_027": {
+  "lat": -17.796539,
+  "lng": -63.211951,
+  "precision": "via",
+  "query": "Av. Piraí  2do Anillo, Santa Cruz de la Sierra, Bolivia",
+  "display": "Avenida Piraí, Villa Rosario, El Pari, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_farmacorp_028": {
+  "lat": -17.783422,
+  "lng": -63.182085,
+  "precision": "ciudad",
+  "query": "Santa Cruz de la Sierra, Bolivia",
+  "display": "Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_farmacorp_029": {
+  "lat": -17.793143,
+  "lng": -63.186325,
+  "precision": "direccion",
+  "query": "Av. Irala #564, Santa Cruz de la Sierra, Bolivia",
+  "display": "Avenida Irala, La Adobería, Centro, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_farmacorp_030": {
+  "lat": -17.783422,
+  "lng": -63.182085,
+  "precision": "ciudad",
+  "query": "Santa Cruz de la Sierra, Bolivia",
+  "display": "Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_farmacorp_031": {
+  "lat": -17.783422,
+  "lng": -63.182085,
+  "precision": "ciudad",
+  "query": "Santa Cruz de la Sierra, Bolivia",
+  "display": "Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_farmacorp_032": {
+  "lat": -17.770485,
+  "lng": -63.171517,
+  "precision": "via",
+  "query": "Av. Trinidad   2do Anillo, Santa Cruz de la Sierra, Bolivia",
+  "display": "Avenida Trinidad, El Paraíso, Norte Interno, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_farmacorp_033": {
+  "lat": -17.803877,
+  "lng": -63.112848,
+  "precision": "via",
+  "query": "Villa 1º de Mayo, Santa Cruz de la Sierra, Bolivia",
+  "display": "Villa Cochabamba, Villa 1 de Mayo, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_farmacorp_034": {
+  "lat": -17.743403,
+  "lng": -63.172776,
+  "precision": "via",
+  "query": "Av. Cristo Redentor, Santa Cruz de la Sierra, Bolivia",
+  "display": "Avenida Cristo Redentor, 2 de Febrero, Norte, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_farmacorp_035": {
+  "lat": -17.783422,
+  "lng": -63.182085,
+  "precision": "ciudad",
+  "query": "Santa Cruz de la Sierra, Bolivia",
+  "display": "Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_hipermaxi_001": {
+  "lat": -17.401246,
+  "lng": -66.167568,
+  "precision": "ciudad",
+  "query": "Cochabamba, Bolivia",
+  "display": "Cochabamba, Juan De La Rosa, Molle, Cochabamba, Cercado, Cochabamba, Bolivia"
+ },
+ "farm_suc_hipermaxi_002": {
+  "lat": -17.388289,
+  "lng": -66.096024,
+  "precision": "via",
+  "query": "Av. Chapare  Villazón, Sacaba, Bolivia",
+  "display": "Hydro System Bolivia, Avenida Eliodoro Villazón, Urbanización Los Olivos III, Quintanilla, Sacaba, Chapare, Cochabamba, Bolivia"
+ },
+ "farm_suc_hipermaxi_003": {
+  "lat": -17.346837,
+  "lng": -66.194464,
+  "precision": "via",
+  "query": "Av. Circunvalación, Cochabamba, Bolivia",
+  "display": "Avenida Circunvalación, Molle Molle, Colcapirhua, Quillacollo, Cochabamba, Bolivia"
+ },
+ "farm_suc_hipermaxi_004": {
+  "lat": -17.783422,
+  "lng": -63.182085,
+  "precision": "ciudad",
+  "query": "Santa Cruz de la Sierra, Bolivia",
+  "display": "Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_hipermaxi_005": {
+  "lat": -17.791453,
+  "lng": -63.118934,
+  "precision": "direccion",
+  "query": "Calle Florida N°187, Santa Cruz de la Sierra, Bolivia",
+  "display": "Calle Florida, 18 de Marzo, Villa 1 de Mayo, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_hipermaxi_006": {
+  "lat": -17.782657,
+  "lng": -63.183681,
+  "precision": "via",
+  "query": "Casco Viejo, Santa Cruz de la Sierra, Bolivia",
+  "display": "Casco Viejo, Calle 21 de Mayo, Centro, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_hipermaxi_007": {
+  "lat": -17.753463,
+  "lng": -63.196479,
+  "precision": "direccion",
+  "query": "Av. San Martín, 4to Anillo, Santa Cruz de la Sierra, Bolivia",
+  "display": "4 anillo entre canal isuto y avenida San Martin, Avenida Antonio Vaca Diez, Villa Brígida, Piraí, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_hipermaxi_008": {
+  "lat": -17.770212,
+  "lng": -63.178891,
+  "precision": "via",
+  "query": "Av. Beni, Santa Cruz de la Sierra, Bolivia",
+  "display": "Avenida Beni, Máquina Vieja, Centro, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_hipermaxi_009": {
+  "lat": -17.822803,
+  "lng": -63.144695,
+  "precision": "via",
+  "query": "Av. Paurito, Santa Cruz de la Sierra, Bolivia",
+  "display": "Avenida Paurito, Villa Unión, Plan 3000, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "farm_suc_map_001": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "via",
+  "query": "La Paz, La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_map_002": {
+  "lat": -16.508127,
+  "lng": -68.125823,
+  "precision": "direccion",
+  "query": "Av. Arce, La Paz, La Paz, Bolivia",
+  "display": "Avenida Aniceto Arce, Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_map_003": {
+  "lat": -16.497445,
+  "lng": -68.128707,
+  "precision": "direccion",
+  "query": "Yungas 876, La Paz, Bolivia",
+  "display": "Farmacias Bolivia, 876, Calle Yungas, Casco Viejo, Miraflores, Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_map_004": {
+  "lat": -16.558535,
+  "lng": -68.225386,
+  "precision": "direccion",
+  "query": "Av. Hernando Siles 642, La Paz, Bolivia",
+  "display": "Avenida Hernando Siles, San Martín de Porres, Alto Chijini, Distrito 12, El Alto, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_map_005": {
+  "lat": -16.501943,
+  "lng": -68.121241,
+  "precision": "via",
+  "query": "Av. Busch 1924, La Paz, Bolivia",
+  "display": "Edificio C&C II, 1924, Avenida German Busch, Miraflores, Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "farm_suc_map_006": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "ciudad",
+  "query": "La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "suc_cenetrop_sc": {
+  "lat": -17.783422,
+  "lng": -63.182085,
+  "precision": "ciudad",
+  "query": "Santa Cruz de la Sierra, Bolivia",
+  "display": "Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "suc_hsjdd_sc": {
+  "lat": -17.778996,
+  "lng": -63.184154,
+  "precision": "direccion",
+  "query": "Calle Cuéllar #474, Santa Cruz de la Sierra, Bolivia",
+  "display": "Calle Cuéllar, Centro, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "suc_inlasa_lp": {
+  "lat": -16.50861,
+  "lng": -68.118744,
+  "precision": "via",
+  "query": "Rafael Zubieta, La Paz, Bolivia",
+  "display": "Calle Rafael Zubieta, Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "suc_labclinics_lp": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "ciudad",
+  "query": "La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "suc_magnus_central": {
+  "lat": -17.390358,
+  "lng": -66.150079,
+  "precision": "via",
+  "query": "Av. Oquendo, Cochabamba, Bolivia",
+  "display": "Avenida Oquendo, Santa Ana, Adela Zamudio, Cochabamba, Cercado, Cochabamba, Bolivia"
+ },
+ "suc_magnus_suecia": {
+  "lat": -17.419833,
+  "lng": -66.142773,
+  "precision": "via",
+  "query": "Av. Suecia, Cochabamba, Bolivia",
+  "display": "Avenida Suecia, San Juan Bautista, Alejo Calatayud, Cochabamba, Cercado, Cochabamba, Bolivia"
+ },
+ "suc_plexus_el_alto": {
+  "lat": -16.524777,
+  "lng": -68.151411,
+  "precision": "zona",
+  "query": "Ciudad Satélite, El Alto, Bolivia",
+  "display": "Ciudad Satélite, PLAN 405, Distrito 1, El Alto, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "suc_plexus_lp_calacoto": {
+  "lat": -16.515086,
+  "lng": -68.091578,
+  "precision": "via",
+  "query": "Calle 15, La Paz, Bolivia",
+  "display": "Calle 15, Bolognia, Irpavi, Obrajes, Sur, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "suc_plexus_lp_centro": {
+  "lat": -16.507659,
+  "lng": -68.127319,
+  "precision": "zona",
+  "query": "Centro/Sopocachi, La Paz, Bolivia",
+  "display": "Banco Nacional de Bolivia, Avenida 6 de Agosto, Sopocachi, Cotahuma, Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "suc_plexus_lp_miraflores": {
+  "lat": -16.495545,
+  "lng": -68.133623,
+  "precision": "ciudad",
+  "query": "La Paz, Bolivia",
+  "display": "Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "suc_plexus_lp_obrajes": {
+  "lat": -16.52719,
+  "lng": -68.10837,
+  "precision": "zona",
+  "query": "Obrajes, La Paz, Bolivia",
+  "display": "Obrajes, Sur, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "suc_plexus_sc_area_medica": {
+  "lat": -17.766834,
+  "lng": -63.189257,
+  "precision": "direccion",
+  "query": "Calle Franz Tamayo #11, Santa Cruz de la Sierra, Bolivia",
+  "display": "Calle Franz Tamayo, Avaroa, Piraí, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "suc_plexus_sc_centro": {
+  "lat": -17.782922,
+  "lng": -63.18197,
+  "precision": "zona",
+  "query": "Centro, Santa Cruz de la Sierra, Bolivia",
+  "display": "Centro, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "suc_plexus_sc_equipetrol": {
+  "lat": -17.760262,
+  "lng": -63.199583,
+  "precision": "zona",
+  "query": "Equipetrol/Sirari, Santa Cruz de la Sierra, Bolivia",
+  "display": "Centro Empresarial Equipetrol, 1700, Avenida San Martín, Sirari, Piraí, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "suc_praxis_cbba": {
+  "lat": -17.379457,
+  "lng": -66.143927,
+  "precision": "via",
+  "query": "Av. Ramón Rivero, Cochabamba, Bolivia",
+  "display": "Avenida Ramón Rivero, Martín Cárdenas, Adela Zamudio, Cochabamba, Cercado, Cochabamba, Bolivia"
+ },
+ "suc_seladis_lp": {
+  "lat": -16.502422,
+  "lng": -68.129784,
+  "precision": "zona",
+  "query": "Centro, La Paz, Bolivia",
+  "display": "Centro, Municipio Nuestra Señora de La Paz, Provincia Pedro Domingo Murillo, La Paz, Bolivia"
+ },
+ "suc_universo_cbba": {
+  "lat": -17.373912,
+  "lng": -66.162297,
+  "precision": "via",
+  "query": "Av. Libertador Bolívar, Cochabamba, Bolivia",
+  "display": "Avenida Libertador Simón Bolívar, Adela Zamudio, Cochabamba, Cercado, Cochabamba, Bolivia"
+ },
+ "suc_zuna_central": {
+  "lat": -17.744357,
+  "lng": -63.161087,
+  "precision": "via",
+  "query": "Av. Alemana, Santa Cruz de la Sierra, Bolivia",
+  "display": "Rotonda Quinto Anillo y Avenida Alemana, Norte, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "suc_zuna_centro": {
+  "lat": -17.775015,
+  "lng": -63.184645,
+  "precision": "direccion",
+  "query": "Calle 21 de Mayo Nº 464, Santa Cruz de la Sierra, Bolivia",
+  "display": "Calle 21 de Mayo, Bartos, Centro, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "suc_zuna_frances": {
+  "lat": -17.749196,
+  "lng": -63.192041,
+  "precision": "direccion",
+  "query": "Calle Tiluchi Nº 10, Santa Cruz de la Sierra, Bolivia",
+  "display": "Calle Tiluchi, 2 de Abril, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ },
+ "suc_zuna_obrero": {
+  "lat": -17.77199,
+  "lng": -63.154568,
+  "precision": "direccion",
+  "query": "Av. Japón Nº 3809, Santa Cruz de la Sierra, Bolivia",
+  "display": "Tercer Anillo Externo, Chacarilla, Norte Interno, Municipio Santa Cruz de la Sierra, Provincia Andrés Ibáñez, Santa Cruz, Bolivia"
+ }
+}

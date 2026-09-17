@@ -1,0 +1,538 @@
+{
+  "sucursales": [
+    {
+      "id": "suc_plexus_lp_centro",
+      "parent_id": "lab_plexus",
+      "nombre": "Centro 24 horas",
+      "tipo": "laboratorio",
+      "direccion": "Av. 6 de Agosto #2882, Edificio Cosmopolitan, planta baja",
+      "zona": "Centro/Sopocachi",
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": "61007763",
+      "horario": "24 horas, todos los días",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_plexus_lp"
+      ]
+    },
+    {
+      "id": "suc_plexus_lp_calacoto",
+      "parent_id": "lab_plexus",
+      "nombre": "Calacoto",
+      "tipo": "laboratorio",
+      "direccion": "Calle 15 #8054, Edificio Plaza 15, piso 2, oficina G",
+      "zona": "Calacoto",
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": "Lun-Vie 07:30-19:00; Sáb 07:30-12:00",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_plexus_lp"
+      ]
+    },
+    {
+      "id": "suc_plexus_lp_obrajes",
+      "parent_id": "lab_plexus",
+      "nombre": "Obrajes",
+      "tipo": "laboratorio",
+      "direccion": "Calle 9 con Av. Hernando Siles #5411",
+      "zona": "Obrajes",
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": "Lun-Vie 07:30-19:00; Sáb 07:30-12:00",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_plexus_lp"
+      ]
+    },
+    {
+      "id": "suc_plexus_el_alto",
+      "parent_id": "lab_plexus",
+      "nombre": "El Alto",
+      "tipo": "laboratorio",
+      "direccion": "Ciudad Satélite, Av. del Policía #25, frente a Cinebol",
+      "zona": "Ciudad Satélite",
+      "ciudad": "El Alto",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": "Lun-Vie 07:30-15:00; Sáb 07:30-12:00",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_plexus_lp"
+      ]
+    },
+    {
+      "id": "suc_plexus_lp_miraflores",
+      "parent_id": "lab_plexus",
+      "nombre": "Miraflores",
+      "tipo": "laboratorio",
+      "direccion": "Calle Claudio Sanjinés #1587 esq. Francisco de Miranda",
+      "zona": "Miraflores",
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": "Lun-Vie 07:30-19:00; Sáb 07:30-12:00",
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_plexus_lp"
+      ]
+    },
+    {
+      "id": "suc_seladis_lp",
+      "parent_id": "lab_seladis",
+      "nombre": "SELADIS",
+      "tipo": "laboratorio_referencia",
+      "direccion": "Av. Villazón Nº 1995, Plaza del Bicentenario",
+      "zona": "Centro",
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": "2222435",
+      "horario": null,
+      "estado_verificacion": "verificado_sitio_institucional_2026",
+      "fuentes": [
+        "src_seladis"
+      ]
+    },
+    {
+      "id": "suc_inlasa_lp",
+      "parent_id": "lab_inlasa",
+      "nombre": "INLASA",
+      "tipo": "laboratorio_referencia",
+      "direccion": "Rafael Zubieta Nº 1889",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": "2226048 / 2225196",
+      "horario": null,
+      "estado_verificacion": "direccion_fuente_secundaria_institucional; contacto_oficial",
+      "fuentes": [
+        "src_inlasa",
+        "src_zuna_calidad"
+      ]
+    },
+    {
+      "id": "suc_labclinics_lp",
+      "parent_id": "lab_labclinics",
+      "nombre": "Laboratorio Central",
+      "tipo": "laboratorio",
+      "direccion": "Calle Campos Nº 334 esquina Av. 6 de Agosto",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": "2 2430846",
+      "horario": null,
+      "estado_verificacion": "verificado_sitio_oficial_2026",
+      "fuentes": [
+        "src_labclinics"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_001",
+      "parent_id": "farm_farmacorp",
+      "nombre": "San Miguel",
+      "direccion": "21 de Mayo esq. Patiño No. 1488, San Miguel",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_002",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Prado",
+      "direccion": "Av. 16 de Julio No. 1804, El Prado",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_003",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Avaroa",
+      "direccion": "Calle Pedro Salazar No. 497",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_004",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Achumani I",
+      "direccion": "Av. García Lanza, Achumani",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_005",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Los Pinos",
+      "direccion": "Calle 21, Calacoto, Los Pinos",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_006",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Satélite",
+      "direccion": "Ciudad Satélite",
+      "zona": null,
+      "ciudad": "El Alto",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_007",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Arce",
+      "direccion": "Av. Arce No. 2809",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_008",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Obrajes",
+      "direccion": "Av. Hernando Siles No. 5204, Obrajes",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_009",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Cota Cota I",
+      "direccion": "Av. Juan Muñoz Reyes No. 500 esq. calle 28, Zona Cota Cota",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_010",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Saavedra",
+      "direccion": "Av. Saavedra Nº 625 esq. Villalobos, Miraflores",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_011",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Achumani II",
+      "direccion": "Av. The Strongest Nº 197, Urb. PB, Edif. La Pequeña Villa",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_012",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Río Seco Teleférico",
+      "direccion": "Zona Río Seco Ex Tranca, Estación Mi Teleférico Río Seco",
+      "zona": null,
+      "ciudad": "El Alto",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_013",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Shopping Norte",
+      "direccion": "Calle Potosí esq. Socabaya, Edificio Shopping Norte",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_014",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Torres del Poeta",
+      "direccion": "Av. Arce, Plaza Isabel La Católica, Edificio Torres del Poeta",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_015",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Flor de Loto",
+      "direccion": "Av. Ballivián Nº 514, Calacoto",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_016",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Cielo Mall",
+      "direccion": "Av. Satélite N° 200, Ed. Cielo Mall",
+      "zona": null,
+      "ciudad": "El Alto",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_017",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Achumani III",
+      "direccion": "Calle 16 N° 416, Achumani",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_018",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Plaza Venezuela",
+      "direccion": "Av. 16 de Julio esq. Colombia N° 1408",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_019",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Av. Busch",
+      "direccion": "Av. Busch esq. Panamá N° 1508",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_020",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Los Pinos II",
+      "direccion": "Av. José Aguirre Acha N°27 esq. Calle 5",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_farmacorp_021",
+      "parent_id": "farm_farmacorp",
+      "nombre": "Proxi Sopocachi",
+      "direccion": "Av. Guachalla, Edificio Tiffany, Sopocachi",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "linea_base_historica_corporativa; vigencia_2026_no_inferida",
+      "fuentes": [
+        "src_farmacorp_hist"
+      ]
+    },
+    {
+      "id": "farm_suc_map_001",
+      "parent_id": "farm_bolivia",
+      "nombre": "A. Mendoza",
+      "direccion": "GV46+QH3, La Paz",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": "+591 2 2453015",
+      "horario": null,
+      "estado_verificacion": "registro_publico_de_mapa/directorio; requiere_reconciliacion_agemed",
+      "fuentes": [
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_suc_map_002",
+      "parent_id": "farm_bolivia",
+      "nombre": "Isabel la Católica",
+      "direccion": "Av. Arce, La Paz",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": "+591 2 2616207",
+      "horario": null,
+      "estado_verificacion": "registro_publico_de_mapa/directorio; requiere_reconciliacion_agemed",
+      "fuentes": [
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_suc_map_003",
+      "parent_id": "farm_bolivia",
+      "nombre": "Yungas",
+      "direccion": "Yungas 876",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": "+591 2 2200260",
+      "horario": null,
+      "estado_verificacion": "registro_publico_de_mapa/directorio; requiere_reconciliacion_agemed",
+      "fuentes": [
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_suc_map_004",
+      "parent_id": "farm_chavez",
+      "nombre": "Hernando Siles",
+      "direccion": "Av. Hernando Siles 642",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "registro_publico_de_mapa/directorio; requiere_reconciliacion_agemed",
+      "fuentes": [
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_suc_map_005",
+      "parent_id": "farm_chavez",
+      "nombre": "Av. Busch",
+      "direccion": "Torre C&C II, Av. Busch 1924",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "registro_publico_de_mapa/directorio; requiere_reconciliacion_agemed",
+      "fuentes": [
+        "src_agemed"
+      ]
+    },
+    {
+      "id": "farm_suc_map_006",
+      "parent_id": "farm_chavez",
+      "nombre": "Pedro Salazar",
+      "direccion": "Av. 20 de Octubre esq. Pedro Salazar 2497",
+      "zona": null,
+      "ciudad": "La Paz",
+      "departamento": "La Paz",
+      "telefono": null,
+      "horario": null,
+      "estado_verificacion": "registro_publico_de_mapa/directorio; requiere_reconciliacion_agemed",
+      "fuentes": [
+        "src_agemed"
+      ]
+    }
+  ]
+}

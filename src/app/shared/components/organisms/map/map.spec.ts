@@ -57,6 +57,7 @@ class RegistroLeaflet {
   readonly vistas: unknown[] = [];
   readonly encuadres: unknown[] = [];
   readonly marcadores: MarcadorFalso[] = [];
+  readonly tiles: string[] = [];
   gruposQuitados = 0;
   mapasQuitados = 0;
 }
@@ -70,7 +71,10 @@ function leafletFalso(registro: RegistroLeaflet): unknown {
         registro.mapasQuitados += 1;
       },
     }),
-    tileLayer: () => ({ addTo: () => undefined }),
+    tileLayer: (url: string) => {
+      registro.tiles.push(url);
+      return { addTo: () => undefined };
+    },
     layerGroup: () => ({
       addTo: () => undefined,
       remove: () => {
@@ -184,6 +188,14 @@ describe('AppMap', () => {
     expect(segundo.opciones.icon.html.className).toContain('mapa__pin--warning');
     // El camino por teclado es la lista: el pin no entra al orden de tabulación.
     expect(primero.opciones.keyboard).toBe(false);
+  });
+
+  it('usa el proveedor de tiles de la demo, en vez del servidor público bloqueado de OSM', async () => {
+    const { registro } = await crearMontado();
+
+    expect(registro.tiles).toEqual([
+      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    ]);
   });
 
   it('con varios pines encuadra con fitBounds sobre todas las coordenadas', async () => {

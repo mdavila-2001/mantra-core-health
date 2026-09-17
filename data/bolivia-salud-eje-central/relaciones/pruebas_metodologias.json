@@ -1,0 +1,6291 @@
+{
+  "relaciones": [
+    {
+      "prueba_id": "test_000001",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000002",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000003",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000004",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000005",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000006",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000007",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000008",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000009",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000010",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000011",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000012",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000013",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000014",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000015",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000016",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000017",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000018",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000019",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000020",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000021",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000022",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000023",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000024",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000025",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000026",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000027",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000028",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000029",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000030",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000031",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000032",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000033",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000034",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000035",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000036",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000037",
+      "metodologias": [
+        "analizador hematológico",
+        "microscopía cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000038",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000039",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000040",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000041",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000042",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000043",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000044",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000045",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000046",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000047",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000048",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000049",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000050",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000051",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000052",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000053",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000054",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000055",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000056",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000057",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000058",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000059",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000060",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000061",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000062",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000063",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000064",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000065",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000066",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000067",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000068",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000069",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000070",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000071",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000072",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000073",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000074",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000075",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000076",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000077",
+      "metodologias": [
+        "coagulometría",
+        "método funcional/inmunológico según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000078",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000079",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000080",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000081",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000082",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000083",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000084",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000085",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000086",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000087",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000088",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000089",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000090",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000091",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000092",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000093",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000094",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000095",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000096",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000097",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000098",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000099",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000100",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000101",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000102",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000103",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000104",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000105",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000106",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000107",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000108",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000109",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000110",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000111",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000112",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000113",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000114",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000115",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000116",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000117",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000118",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000119",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000120",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000121",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000122",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000123",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000124",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000125",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000126",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000127",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000128",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000129",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000130",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000131",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000132",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000133",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000134",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000135",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000136",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000137",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000138",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000139",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000140",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000141",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000142",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000143",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000144",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000145",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000146",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000147",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000148",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000149",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000150",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000151",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000152",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000153",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000154",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000155",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000156",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000157",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000158",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000159",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000160",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000161",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000162",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000163",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000164",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000165",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000166",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000167",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000168",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000169",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000170",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000171",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000172",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000173",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000174",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000175",
+      "metodologias": [
+        "espectrofotometría/enzimático/inmunoensayo según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000176",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000177",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000178",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000179",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000180",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000181",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000182",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000183",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000184",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000185",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000186",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000187",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000188",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000189",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000190",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000191",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000192",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000193",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000194",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000195",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000196",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000197",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000198",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000199",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000200",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000201",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000202",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000203",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000204",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000205",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000206",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000207",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000208",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000209",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000210",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000211",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000212",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000213",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000214",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000215",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000216",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000217",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000218",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000219",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000220",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000221",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000222",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000223",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000224",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000225",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000226",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000227",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000228",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000229",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000230",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000231",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000232",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000233",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000234",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000235",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000236",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000237",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000238",
+      "metodologias": [
+        "inmunoensayo; LC-MS/MS en pruebas seleccionadas"
+      ]
+    },
+    {
+      "prueba_id": "test_000239",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000240",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000241",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000242",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000243",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000244",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000245",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000246",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000247",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000248",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000249",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000250",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000251",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000252",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000253",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000254",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000255",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000256",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000257",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000258",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000259",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000260",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000261",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000262",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000263",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000264",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000265",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000266",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000267",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000268",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000269",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000270",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000271",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000272",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000273",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000274",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000275",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000276",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000277",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000278",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000279",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000280",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000281",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000282",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000283",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000284",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000285",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000286",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000287",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000288",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000289",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000290",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000291",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000292",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000293",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000294",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000295",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000296",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000297",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000298",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000299",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000300",
+      "metodologias": [
+        "inmunoensayo/IFI/inmunoblot según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000301",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000302",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000303",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000304",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000305",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000306",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000307",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000308",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000309",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000310",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000311",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000312",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000313",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000314",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000315",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000316",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000317",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000318",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000319",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000320",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000321",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000322",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000323",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000324",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000325",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000326",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000327",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000328",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000329",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000330",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000331",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000332",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000333",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000334",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000335",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000336",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000337",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000338",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000339",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000340",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000341",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000342",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000343",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000344",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000345",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000346",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000347",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000348",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000349",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000350",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000351",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000352",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000353",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000354",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000355",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000356",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000357",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000358",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000359",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000360",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000361",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000362",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000363",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000364",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000365",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000366",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000367",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000368",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000369",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000370",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000371",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000372",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000373",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000374",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000375",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000376",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000377",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000378",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000379",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000380",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000381",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000382",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000383",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000384",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000385",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000386",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000387",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000388",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000389",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000390",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000391",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000392",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000393",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000394",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000395",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000396",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000397",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000398",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000399",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000400",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000401",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000402",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000403",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000404",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000405",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000406",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000407",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000408",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000409",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000410",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000411",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000412",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000413",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000414",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000415",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000416",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000417",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000418",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000419",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000420",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000421",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000422",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000423",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000424",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000425",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000426",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000427",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000428",
+      "metodologias": [
+        "inmunoensayo de IgE específica, p.ej. ImmunoCAP"
+      ]
+    },
+    {
+      "prueba_id": "test_000429",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000430",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000431",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000432",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000433",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000434",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000435",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000436",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000437",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000438",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000439",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000440",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000441",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000442",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000443",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000444",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000445",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000446",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000447",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000448",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000449",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000450",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000451",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000452",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000453",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000454",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000455",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000456",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000457",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000458",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000459",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000460",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000461",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000462",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000463",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000464",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000465",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000466",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000467",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000468",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000469",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000470",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000471",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000472",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000473",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000474",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000475",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000476",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000477",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000478",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000479",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000480",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000481",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000482",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000483",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000484",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000485",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000486",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000487",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000488",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000489",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000490",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000491",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000492",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000493",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000494",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000495",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000496",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000497",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000498",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000499",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000500",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000501",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000502",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000503",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000504",
+      "metodologias": [
+        "inmunoensayo/aglutinación/prueba rápida según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000505",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000506",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000507",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000508",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000509",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000510",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000511",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000512",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000513",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000514",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000515",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000516",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000517",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000518",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000519",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000520",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000521",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000522",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000523",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000524",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000525",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000526",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000527",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000528",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000529",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000530",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000531",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000532",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000533",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000534",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000535",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000536",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000537",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000538",
+      "metodologias": [
+        "cultivo, microscopía e identificación; susceptibilidad cuando aplique"
+      ]
+    },
+    {
+      "prueba_id": "test_000539",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000540",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000541",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000542",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000543",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000544",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000545",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000546",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000547",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000548",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000549",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000550",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000551",
+      "metodologias": [
+        "microscopía, cultivo, antígeno o susceptibilidad según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000552",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000553",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000554",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000555",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000556",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000557",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000558",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000559",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000560",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000561",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000562",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000563",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000564",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000565",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000566",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000567",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000568",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000569",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000570",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000571",
+      "metodologias": [
+        "microscopía, antígeno o serología según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000572",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000573",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000574",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000575",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000576",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000577",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000578",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000579",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000580",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000581",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000582",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000583",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000584",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000585",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000586",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000587",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000588",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000589",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000590",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000591",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000592",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000593",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000594",
+      "metodologias": [
+        "NAAT/RT-PCR, antígeno o cuantificación según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000595",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000596",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000597",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000598",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000599",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000600",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000601",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000602",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000603",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000604",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000605",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000606",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000607",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000608",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000609",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000610",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000611",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000612",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000613",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000614",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000615",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000616",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000617",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000618",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000619",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000620",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000621",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000622",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000623",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000624",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000625",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000626",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000627",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000628",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000629",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000630",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000631",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000632",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000633",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000634",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000635",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000636",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000637",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000638",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000639",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000640",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000641",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000642",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000643",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000644",
+      "metodologias": [
+        "PCR/RT-PCR/qPCR/multiplex/NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000645",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000646",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000647",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000648",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000649",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000650",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000651",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000652",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000653",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000654",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000655",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000656",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000657",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000658",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000659",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000660",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000661",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000662",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000663",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000664",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000665",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000666",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000667",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000668",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000669",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000670",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000671",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000672",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000673",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000674",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000675",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000676",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000677",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000678",
+      "metodologias": [
+        "cariotipo/FISH/PCR/MLPA/Sanger/NGS/microarray según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000679",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000680",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000681",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000682",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000683",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000684",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000685",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000686",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000687",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000688",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000689",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000690",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000691",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000692",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000693",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000694",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000695",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000696",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000697",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000698",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000699",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000700",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000701",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000702",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000703",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000704",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000705",
+      "metodologias": [
+        "inmunoensayo u otra plataforma validada"
+      ]
+    },
+    {
+      "prueba_id": "test_000706",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000707",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000708",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000709",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000710",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000711",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000712",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000713",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000714",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000715",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000716",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000717",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000718",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000719",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000720",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000721",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000722",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000723",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000724",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000725",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000726",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000727",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000728",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000729",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000730",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000731",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000732",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000733",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000734",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000735",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000736",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000737",
+      "metodologias": [
+        "inmunoensayo de tamizaje y/o GC-MS/LC-MS/MS confirmatorio"
+      ]
+    },
+    {
+      "prueba_id": "test_000738",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000739",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000740",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000741",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000742",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000743",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000744",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000745",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000746",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000747",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000748",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000749",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000750",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000751",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000752",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000753",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000754",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000755",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000756",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000757",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000758",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000759",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000760",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000761",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000762",
+      "metodologias": [
+        "inmunoensayo, HPLC o LC-MS/MS según fármaco"
+      ]
+    },
+    {
+      "prueba_id": "test_000763",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000764",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000765",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000766",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000767",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000768",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000769",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000770",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000771",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000772",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000773",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000774",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000775",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000776",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000777",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000778",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000779",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000780",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000781",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000782",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000783",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000784",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000785",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000786",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000787",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000788",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000789",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000790",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000791",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000792",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000793",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000794",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000795",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000796",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000797",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000798",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000799",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000800",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000801",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000802",
+      "metodologias": [
+        "tira reactiva, química y microscopía/automatización"
+      ]
+    },
+    {
+      "prueba_id": "test_000803",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000804",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000805",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000806",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000807",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000808",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000809",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000810",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000811",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000812",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000813",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000814",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000815",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000816",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000817",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000818",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000819",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000820",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000821",
+      "metodologias": [
+        "inmunoquímica, química, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000822",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000823",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000824",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000825",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000826",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000827",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000828",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000829",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000830",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000831",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000832",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000833",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000834",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000835",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000836",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000837",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000838",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000839",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000840",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000841",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000842",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000843",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000844",
+      "metodologias": [
+        "química, recuento celular, microscopía o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000845",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000846",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000847",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000848",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000849",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000850",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000851",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000852",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000853",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000854",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000855",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000856",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000857",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000858",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000859",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000860",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000861",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000862",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000863",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000864",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000865",
+      "metodologias": [
+        "microscopía, CASA, inmunoensayo o cultivo según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000866",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000867",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000868",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000869",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000870",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000871",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000872",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000873",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000874",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000875",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000876",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000877",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000878",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000879",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000880",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000881",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000882",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000883",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000884",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000885",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000886",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000887",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000888",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000889",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000890",
+      "metodologias": [
+        "inmunoensayo, PCR, FISH, cariotipo o NGS según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000891",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000892",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000893",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000894",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000895",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000896",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000897",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000898",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000899",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000900",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000901",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000902",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000903",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000904",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000905",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000906",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000907",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000908",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000909",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000910",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000911",
+      "metodologias": [
+        "hemaglutinación, gel, fase sólida o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000912",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000913",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000914",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000915",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000916",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000917",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000918",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000919",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000920",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000921",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000922",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000923",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000924",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000925",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000926",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000927",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000928",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000929",
+      "metodologias": [
+        "PCR-SSO/SSP, Sanger/NGS, Luminex o citometría según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000930",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000931",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000932",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000933",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000934",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000935",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000936",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000937",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000938",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000939",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000940",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000941",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000942",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000943",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000944",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000945",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000946",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000947",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000948",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000949",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000950",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000951",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000952",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000953",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000954",
+      "metodologias": [
+        "microscopía, histología, inmunohistoquímica o ISH según estudio"
+      ]
+    },
+    {
+      "prueba_id": "test_000955",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000956",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000957",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000958",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000959",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000960",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000961",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000962",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000963",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000964",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000965",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000966",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000967",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000968",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000969",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000970",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000971",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000972",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000973",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000974",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000975",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000976",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000977",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000978",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000979",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000980",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000981",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000982",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000983",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000984",
+      "metodologias": [
+        "inmunoensayo, fluorometría, MS/MS o molecular según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_000985",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000986",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000987",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000988",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000989",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000990",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000991",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000992",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000993",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000994",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000995",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000996",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000997",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000998",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_000999",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001000",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001001",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001002",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001003",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001004",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001005",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001006",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001007",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001008",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001009",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001010",
+      "metodologias": [
+        "inmunoensayo, HPLC, espectrometría o ICP-MS según analito"
+      ]
+    },
+    {
+      "prueba_id": "test_001011",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001012",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001013",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001014",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001015",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001016",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001017",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001018",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001019",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001020",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001021",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001022",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001023",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001024",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001025",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001026",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001027",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001028",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001029",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001030",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001031",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001032",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001033",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001034",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    },
+    {
+      "prueba_id": "test_001035",
+      "metodologias": [
+        "método validado según prueba"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+{
+  "package": "bolivia_salud_eje_central",
+  "schema_version": "1.0.0",
+  "generated_at_utc": "2026-09-13T14:09:16.222668+00:00",
+  "fecha_corte": "2026-09-13",
+  "conteos": {
+    "laboratorios_centros": 10,
+    "sucursales_laboratorios": 21,
+    "cadenas_farmacias": 5,
+    "registros_sucursales_farmacia": 50,
+    "pruebas_medicas_normalizadas": 1035,
+    "categorias_pruebas": 27,
+    "archivos_json": 45
+  },
+  "archivos": [
+    {
+      "ruta": "README.json",
+      "bytes": 1120,
+      "sha256": "c046c957b5fb7b06d00bb524480169ab22aab10752bc2e6df7c34719023e1cad"
+    },
+    {
+      "ruta": "analisis_medicos/alergologia.json",
+      "bytes": 167514,
+      "sha256": "9c814c64cc947a7b3aa6db3effb8e525b2468d0aec2b44f11a8b4375ba00b182"
+    },
+    {
+      "ruta": "analisis_medicos/anatomia_patologica_citologia.json",
+      "bytes": 34749,
+      "sha256": "0fa8e2c278d93ffc7ce5ddb0cf4d5b1210f27fed74e3972df8c523a4322d29e5"
+    },
+    {
+      "ruta": "analisis_medicos/biologia_molecular.json",
+      "bytes": 68944,
+      "sha256": "4bf152b1866e430a6517c9de51c5c2f56c676aaa46500593c53870c22f815dc3"
+    },
+    {
+      "ruta": "analisis_medicos/catalogo_maestro.json",
+      "bytes": 1391882,
+      "sha256": "70c4388cd11bb14220461d1b1c5570d1e891a4d78679672724c7ec92d615c7a6"
+    },
+    {
+      "ruta": "analisis_medicos/coagulacion_hemostasia.json",
+      "bytes": 54359,
+      "sha256": "020b336fdad13ec2a3619128c7a91ad5023b78232ad9871094f077bada0ae250"
+    },
+    {
+      "ruta": "analisis_medicos/embarazo_prenatal.json",
+      "bytes": 34533,
+      "sha256": "4f1ed444e241b164ba3cab11c942be39b87daa370945b5f2dd111fc87a18900c"
+    },
+    {
+      "ruta": "analisis_medicos/endocrinologia.json",
+      "bytes": 84013,
+      "sha256": "37f613f7eb15ece99ee3b93d0b8bfdf3df72472977060b234866f870dd8c7e93"
+    },
+    {
+      "ruta": "analisis_medicos/fertilidad_andrologia.json",
+      "bytes": 28321,
+      "sha256": "dac777afe0a2494ab91de89fbe8ceae1f94a42f46a10e4d447be54e6972e998f"
+    },
+    {
+      "ruta": "analisis_medicos/genetica_citogenetica_genomica.json",
+      "bytes": 47208,
+      "sha256": "76d8c0d09a73f82258679353db16d784e7e9663f7ce1a7c11fb9b04ea078dd21"
+    },
+    {
+      "ruta": "analisis_medicos/heces_coproparasitologia.json",
+      "bytes": 26038,
+      "sha256": "9e6953e68dc4a14f3d4f09e4217965bd30fdf316536c784abb8905f8dc36ec84"
+    },
+    {
+      "ruta": "analisis_medicos/hematologia.json",
+      "bytes": 49742,
+      "sha256": "69e4c0ce2b4e7541c9584bca079b3a13f320068e7f58831c2ff50c3590222537"
+    },
+    {
+      "ruta": "analisis_medicos/inmunohematologia_banco_sangre.json",
+      "bytes": 28875,
+      "sha256": "d865f9c2d2ef6234961490d697351d08714f4d2999be33979e12c0c2894b5ee5"
+    },
+    {
+      "ruta": "analisis_medicos/inmunologia_autoinmunidad.json",
+      "bytes": 82073,
+      "sha256": "650be441bac679617b5f1fac040e63842a3bd064c0b5691b91eaa2255c66d25c"
+    },
+    {
+      "ruta": "analisis_medicos/liquidos_biologicos.json",
+      "bytes": 31476,
+      "sha256": "919e029ac1f816eba90084005e06d119aff50507242b9ef3762d2207d9441fb4"
+    },
+    {
+      "ruta": "analisis_medicos/metabolismo_neonatal.json",
+      "bytes": 41312,
+      "sha256": "59ea56b41fbce687c95d1e895c0320e687ed1c1d9a9c9913462a69b6dfbe7df2"
+    },
+    {
+      "ruta": "analisis_medicos/micologia.json",
+      "bytes": 17690,
+      "sha256": "e08c0b94a9f2152fb731db6cbf331338923013f343be132032f902c3904b8516"
+    },
+    {
+      "ruta": "analisis_medicos/microbiologia_bacteriologia.json",
+      "bytes": 47602,
+      "sha256": "3de9814def117ae8fffb3a0e2da68baf57591336917be648e3aab3ca76720bac"
+    },
+    {
+      "ruta": "analisis_medicos/monitoreo_terapeutico.json",
+      "bytes": 33694,
+      "sha256": "9b5c0b0a400e79feab25edd923ffb50d7c25a222e2db25487a05a2ffebf45adf"
+    },
+    {
+      "ruta": "analisis_medicos/nutricion_vitaminas_oligoelementos.json",
+      "bytes": 35690,
+      "sha256": "61197d01940309b8efd9d421b05aaee764bfdce2138b03171ef1660faebaeadf"
+    },
+    {
+      "ruta": "analisis_medicos/ocupacional_otros.json",
+      "bytes": 32961,
+      "sha256": "034ec23a1451948da7e6146b661aa431ed2fb96244bbbc95ba72b51a55662fe0"
+    },
+    {
+      "ruta": "analisis_medicos/oncologia_marcadores.json",
+      "bytes": 36187,
+      "sha256": "ef2d728ae4da4eab55f18a728c7f620c63772d2a6a01d1ebd7838667b2fe0c76"
+    },
+    {
+      "ruta": "analisis_medicos/parasitologia.json",
+      "bytes": 27236,
+      "sha256": "72eb407b89d6670d3cf0f9cb233eee370913aee93f31100a92f467cf9452c8d4"
+    },
+    {
+      "ruta": "analisis_medicos/quimica_clinica.json",
+      "bytes": 130987,
+      "sha256": "33b72a6e620151474eb92ad80892f48af917356cfb7f3c6eccb1d2804c249a72"
+    },
+    {
+      "ruta": "analisis_medicos/serologia_infecciosas.json",
+      "bytes": 101838,
+      "sha256": "0b613ac0437625a085b03f41d14315a8244cc2633facb00b9734b9f3368fdbb6"
+    },
+    {
+      "ruta": "analisis_medicos/toxicologia_drogas.json",
+      "bytes": 43131,
+      "sha256": "c3596658a23d518972f0fcacc3550ad84c636556784d40c677740e9a408ddfcc"
+    },
+    {
+      "ruta": "analisis_medicos/trasplantes_hla.json",
+      "bytes": 24157,
+      "sha256": "91c08e39f493104baca7014fdc24768b1c5a22b7892cb21e491827e4305a0d3f"
+    },
+    {
+      "ruta": "analisis_medicos/uroanalisis.json",
+      "bytes": 52618,
+      "sha256": "dc7714fa752b33ba846eb47e1cd5304c1796a2cdb8274f324f22ba9867f94be5"
+    },
+    {
+      "ruta": "analisis_medicos/virologia.json",
+      "bytes": 30908,
+      "sha256": "8a364df9d11153f377309387b59229d28f422ae5f4449959e4e0f28908b5e8e1"
+    },
+    {
+      "ruta": "establecimientos/cadenas_centros.json",
+      "bytes": 7692,
+      "sha256": "2d1d7882d6a6090ee0d016f62fa7b541cc4ffc34742cf49adaa82b1b6f882b04"
+    },
+    {
+      "ruta": "establecimientos/centros_diagnosticos.json",
+      "bytes": 2203,
+      "sha256": "a5e97c38f54420334ca9fb8a23878af0f275403cb5561e5eeaa0262b103aaf68"
+    },
+    {
+      "ruta": "establecimientos/farmacias.json",
+      "bytes": 2206,
+      "sha256": "9a277ce91343bc9a260eb636846df3c805b01dad7891ca32910147150b00a670"
+    },
+    {
+      "ruta": "establecimientos/laboratorios.json",
+      "bytes": 5479,
+      "sha256": "70de0eef67c2b92dda67efb44a923a33abdd0c3156ffae4761c5ed03e49e66fc"
+    },
+    {
+      "ruta": "metadata/esquema_datos.json",
+      "bytes": 1362,
+      "sha256": "4fc4f5838571851905df87277f7414123e04d5b6ec5fc059d4c97ae1618af9c4"
+    },
+    {
+      "ruta": "metadata/fuentes.json",
+      "bytes": 7961,
+      "sha256": "edc586de954225a51e7b44c7b08b84014685aa7b7cb2e0dff7189226eae264e4"
+    },
+    {
+      "ruta": "metadata/metodologia.json",
+      "bytes": 644,
+      "sha256": "d2293be25c76857ccefc51672a92c68c8c7865f3c02da2b05d93b6143db2aa91"
+    },
+    {
+      "ruta": "metadata/taxonomia.json",
+      "bytes": 3066,
+      "sha256": "86b1afbc87f8cdd9d9085db0f5444ad8e8a25f2c2b5a7df6b7c02ee5b80843f4"
+    },
+    {
+      "ruta": "relaciones/establecimientos_pruebas.json",
+      "bytes": 43063,
+      "sha256": "0504ad4d9a22c0cf7ba07a0452aa49572eda7e3e13874d67146bb078483b81d4"
+    },
+    {
+      "ruta": "relaciones/paneles_perfiles.json",
+      "bytes": 3814,
+      "sha256": "71cb98a36999e25a08d2c7f39f2ff7dc11adf717afeb18c523b4e18382975e16"
+    },
+    {
+      "ruta": "relaciones/pruebas_metodologias.json",
+      "bytes": 149057,
+      "sha256": "78351f0774f70d299126a05e21f0bc1d4468b2a3c4ac8050ac7f34f4022e3127"
+    },
+    {
+      "ruta": "relaciones/pruebas_muestras.json",
+      "bytes": 113041,
+      "sha256": "04916512d37a14af799d4fa7dc1f7e0ef3faf065b4b91b9d1ab10c9680e6ae7a"
+    },
+    {
+      "ruta": "sucursales/cochabamba.json",
+      "bytes": 5189,
+      "sha256": "4031222a946bc4a33d3f976501ac4b056674965c56c4bd38c54606e3a5f43ff8"
+    },
+    {
+      "ruta": "sucursales/la_paz_el_alto.json",
+      "bytes": 16076,
+      "sha256": "b5c328575dea42acf06429b947055added3e4ce8200b842bbcf8149a84b9915e"
+    },
+    {
+      "ruta": "sucursales/santa_cruz.json",
+      "bytes": 11728,
+      "sha256": "9deeb87a166fd5d678bad7e57205ee67853ec371783c1ed4ff86ec36c3409a16"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { FARMACIAS_DEL_CORPUS } from '../fixtures/bolivia-eje-central';
 import { vitrinas } from '../fixtures/comunidad';
 import { MEDICAMENTO, displayDe } from '../fixtures/conceptos';
 import { recetas } from '../fixtures/clinica';
@@ -32,19 +33,37 @@ interface FarmaciaSimulada {
   readonly homeDelivery: boolean;
 }
 
+/** Las 50 sucursales del corpus, por su slug: da el nombre y el horario reales. */
+const DEL_CORPUS = new Map(FARMACIAS_DEL_CORPUS.map((farmacia) => [farmacia.slug, farmacia]));
+
+/**
+ * Las farmacias del mostrador, sacadas de sus vitrinas públicas.
+ *
+ * Son las ocho de siempre más las **50 sucursales reales** del corpus «Bolivia
+ * Salud · Eje Central», con su dirección publicada y su punto en el mapa. Para
+ * las del corpus el nombre de la sucursal es el que usa la cadena; para las de
+ * la maqueta sigue siendo el de siempre.
+ *
+ * El reparto a domicilio queda en la primera —la de la maqueta— porque el
+ * corpus no declara qué sucursal reparte. Ponérselo a todas sería prometer un
+ * servicio en nombre de un negocio que existe.
+ */
 const FARMACIAS: readonly FarmaciaSimulada[] = vitrinas
   .filtrar((v) => v.kind === 'PHARMACY')
-  .map((v, i) => ({
-    id: v.tenantId,
-    code: v.slug.toUpperCase().replace(/-/g, '_'),
-    name: v.displayName,
-    siteId: uuid(`pharmacy-site-${v.slug}`),
-    siteName: i === 0 ? 'Sucursal Central' : 'Sucursal principal',
-    addressText: v.address,
-    lat: v.lat,
-    lng: v.lng,
-    homeDelivery: i === 0,
-  }));
+  .map((v, i) => {
+    const corpus = DEL_CORPUS.get(v.slug);
+    return {
+      id: v.tenantId,
+      code: v.slug.toUpperCase().replace(/-/g, '_'),
+      name: v.displayName,
+      siteId: corpus?.siteId ?? uuid(`pharmacy-site-${v.slug}`),
+      siteName: corpus?.siteName ?? (i === 0 ? 'Sucursal Central' : 'Sucursal principal'),
+      addressText: v.address,
+      lat: v.lat,
+      lng: v.lng,
+      homeDelivery: corpus === undefined && i === 0,
+    };
+  });
 
 interface ProductoSimulado {
   readonly id: string;

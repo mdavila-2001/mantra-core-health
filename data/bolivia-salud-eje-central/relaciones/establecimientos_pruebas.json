@@ -1,0 +1,1517 @@
+{
+  "nota": "La disponibilidad por establecimiento individual no se infiere salvo cuando existe evidencia específica. La lista siguiente marca el catálogo fuente a nivel de red, no cada sucursal.",
+  "relaciones": [
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000001",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000002",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000003",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000012",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000014",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000017",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000038",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000039",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000040",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000043",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000044",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000078",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000086",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000088",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000089",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000090",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000092",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000093",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000094",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000095",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000098",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000099",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000100",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000101",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000102",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000107",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000108",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000109",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000117",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000118",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000119",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000120",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000121",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000122",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000123",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000125",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000127",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000128",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000129",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000130",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000131",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000133",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000136",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000143",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000144",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000147",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000148",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000163",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000176",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000177",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000178",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000179",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000180",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000181",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000182",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000183",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000184",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000185",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000186",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000187",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000189",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000190",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000193",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000194",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000195",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000207",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000208",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000209",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000210",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000211",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000212",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000213",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000214",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000216",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000217",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000218",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000219",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000220",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000221",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000222",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000223",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000224",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000226",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000227",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000228",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000229",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000230",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000231",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000232",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000239",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000240",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000241",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000243",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000244",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000246",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000247",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000248",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000251",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000252",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000253",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000254",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000255",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000256",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000258",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000259",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000260",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000261",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000262",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000263",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000266",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000267",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000274",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000275",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000276",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000283",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000284",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000287",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000288",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000289",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000290",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000295",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000435",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000436",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000437",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000439",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000440",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000441",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000444",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000445",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000446",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000449",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000450",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000451",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000452",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000453",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000454",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000466",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000467",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000468",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000469",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000470",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000472",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000473",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000476",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000478",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000483",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000484",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000485",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000486",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000487",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000489",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000490",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000491",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000492",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000493",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000494",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000495",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000496",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000505",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000506",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000509",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000510",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000512",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000531",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000533",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000539",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000540",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000541",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000552",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000553",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000556",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000557",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000580",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000584",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000594",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000595",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000596",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000597",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000598",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000599",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000600",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000601",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000602",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000603",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000604",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000605",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000606",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000607",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000608",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000609",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000610",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000611",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000612",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000613",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000614",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000673",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000679",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000680",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000681",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000682",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000684",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000685",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000686",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000706",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000711",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000718",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000719",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000720",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000724",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000725",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000727",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000728",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000729",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000731",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000732",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000738",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000739",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000740",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000744",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000745",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000763",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000776",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000777",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000780",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000784",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000799",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000803",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000805",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000806",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000807",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000808",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000812",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000814",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000817",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000822",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000830",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000831",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000832",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000833",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000866",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000867",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000868",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000869",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000870",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000871",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000919",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000930",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000955",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000958",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000959",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000985",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    },
+    {
+      "establecimiento_id": "lab_plexus",
+      "prueba_id": "test_000986",
+      "estado": "catalogo_red_verificado",
+      "fuente_id": "src_plexus_tests"
+    }
+  ]
+}
