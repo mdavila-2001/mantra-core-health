@@ -5,13 +5,16 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
-import type { NewPatientProfile } from '../../../core/data-access/profiles/profiles.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-import type { AgendaResource } from '../../../core/data-access/scheduling/scheduling.types';
+import type {
+  AgendaResource,
+  WalkInPatient,
+} from '../../../core/data-access/scheduling/scheduling.types';
 import {
   MODALIDADES,
   type ModalidadDeAtencion,
@@ -594,28 +597,66 @@ export class AppointmentNew {
   }
 
   /**
-   * Da de alta al paciente del mostrador y, recién con su perfil, agenda.
+   * Da de alta al paciente del mostrador **y** agenda, en una sola llamada.
    *
-   * ## Dos peticiones y no una: qué falta para que sea una
+   * ## Una petición, una transacción — P22 cerrado
    *
-   * El alta de persona y la cita son **dos transacciones**, y eso es una
-   * concesión de la maqueta, no el diseño: si la segunda falla queda una
-   * persona registrada sin cita. Lo correcto es una sola llamada al registro
-   * asistido —`POST /iam/users/assisted-registration`, que ya existe y ya
-   * admite `CLINICIAN`— extendido con el bloque de filiación que hoy sólo
-   * acepta el alta que la propia persona hace de sí misma. Está anotado en
-   * `PENDIENTES-BACKEND.md` (P22) con la forma exacta.
+   * Esto eran dos peticiones: `POST /profiles/patients` y después la cita. Y
+   * no era sólo feo, estaba **roto**: `CreatePatientDto` no declara cédula,
+   * celular, ocupación ni tutor, así que `forbidNonWhitelisted` rechazaba la
+   * petición entera con 400 y el alta de mostrador no funcionaba ni una vez
+   * contra la API real. Lo que sí funcionaba —en la maqueta, con sus datos
+   * simulados— dejaba además una persona registrada sin cita cuando la
+   * segunda llamada fallaba.
+   *
+   * `POST /scheduling/appointments/walk-in` es el endpoint que P22 pedía y que
+   * el backend mergeó: recibe el bloque de filiación entero, crea persona,
+   * perfil, identificador, teléfono y tutor, reserva, **abre el encuentro** y
+   * arranca la atención en una sola transacción. La reserva nace
+   * `IN_PROGRESS`, no `CONFIRMED`: quien llegó al mostrador ya está ahí.
+   *
+   * El 409 —«ese documento ya está registrado»— se traduce, porque su salida
+   * no está en el mensaje sino en la pantalla: hay que volver a buscar a esa
+   * persona en la lista de arriba.
    */
   private darDeAltaYAgendar(comienza: Date, minutos: number, resourceId: string): void {
-    this.profiles.createPatient(this.datosDelPacienteNuevo()).subscribe({
-      next: (perfil) => this.agendar(perfil.profileId, comienza, minutos, resourceId, true),
-      error: (error: unknown) => {
-        this.guardando.set(false);
-        this.error.set(
-          this.mensajeDeError(errorToViewState<never>(error), 'No pudimos registrar al paciente.'),
-        );
-      },
-    });
+    this.scheduling
+      .createWalkInAppointment({
+        patient: this.datosDelPacienteNuevo(),
+        resourceId,
+        startAt: comienza.toISOString(),
+        durationMinutes: minutos,
+        ...(this.motivo().trim() === '' ? {} : { reasonText: this.motivo().trim() }),
+        channel: this.modalidad(),
+      })
+      .subscribe({
+        next: (creado) => {
+          this.guardando.set(false);
+          const quitados =
+            creado.retractedSlots > 0
+              ? ` Esto quitó ${creado.retractedSlots} ${
+                  creado.retractedSlots === 1 ? 'horario disponible' : 'horarios disponibles'
+                }.`
+              : '';
+          this.toasts.success(
+            `Quedó registrado con el código ${creado.patientCode} y la atención ya está abierta.${quitados}`,
+            'Paciente registrado y atención abierta',
+          );
+          void this.router.navigate([AGENDA_ROUTE]);
+        },
+        error: (error: unknown) => {
+          this.guardando.set(false);
+          if (error instanceof HttpErrorResponse && error.status === 409) {
+            this.error.set(
+              'Ese documento ya está registrado. Buscalo arriba por su cédula y agendale el turno.',
+            );
+            return;
+          }
+          this.error.set(
+            this.mensajeDeError(errorToViewState<never>(error), 'No pudimos registrar al paciente.'),
+          );
+        },
+      });
   }
 
   /**
@@ -666,15 +707,19 @@ export class AppointmentNew {
   }
 
   /**
-   * El cuerpo del alta del paciente del mostrador.
+   * La filiación del paciente del mostrador, tal como la recibe el walk-in.
    *
    * Los opcionales vacíos **no se mandan**: el backend valida con
    * `forbidNonWhitelisted` y una cadena vacía no es «sin dato», es un dato
    * vacío. El segundo y el tercer nombre viajan juntos en `middleName` porque
    * es la única columna que la base tiene para los nombres que no son el
    * primero — el mismo criterio que el alta del propio paciente.
+   *
+   * **Sin `displayName`.** `WalkInPatientDto` no lo declara —lo compone el
+   * servidor con las partes del nombre, que es donde tiene que decidirse— y
+   * mandarlo haría rebotar la petición entera con 400.
    */
-  private datosDelPacienteNuevo(): NewPatientProfile {
+  private datosDelPacienteNuevo(): WalkInPatient {
     const otrosNombres = [this.nuevoSegundoNombre(), this.nuevoTercerNombre()]
       .map((parte) => parte.trim())
       .filter((parte) => parte !== '')
@@ -690,7 +735,6 @@ export class AppointmentNew {
     return {
       name: this.nuevoNombre().trim(),
       lastName: this.nuevoApellidoPaterno().trim(),
-      displayName: this.nombreDelNuevo(),
       nationalId: this.nuevoDocumento().trim(),
       phone: this.nuevoCelular().trim(),
       ...(otrosNombres === '' ? {} : { middleName: otrosNombres }),
@@ -705,7 +749,9 @@ export class AppointmentNew {
         : { occupationConceptId: ocupacion.value }),
       ...(otroOficio === '' ? {} : { occupationFreeText: otroOficio }),
       ...(tutorNombre === '' ? {} : { guardianName: tutorNombre }),
-      ...(tutorCelular === '' ? {} : { guardianPhone: tutorCelular }),
+      // El teléfono del tutor sin su nombre lo rechaza el alta: no se manda
+      // suelto, porque el rechazo llegaría sin señalar qué falta.
+      ...(tutorNombre === '' || tutorCelular === '' ? {} : { guardianPhone: tutorCelular }),
     };
   }
 

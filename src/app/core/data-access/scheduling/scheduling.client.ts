@@ -59,6 +59,8 @@ import type {
   AvailabilityExceptionPage,
   NewDirectAppointment,
   DirectAppointmentCreated,
+  NewWalkInAppointment,
+  WalkInAppointmentCreated,
 } from './scheduling.types';
 
 /**
@@ -485,6 +487,62 @@ export class SchedulingClient {
       // patrón que dejó la modalidad sin escribir del lado de la API.
       ...(cita.channel === undefined ? {} : { channel: cita.channel }),
     });
+  }
+
+  /**
+   * `POST /scheduling/appointments/walk-in` — el turno de mostrador (AC-3.3).
+   *
+   * Registra al paciente sin cuenta, reserva, abre el encuentro y arranca la
+   * atención **en una sola transacción**. La reserva nace `IN_PROGRESS` y no
+   * `CONFIRMED`: quien llegó al mostrador ya está ahí, no esperando un
+   * check-in posterior.
+   *
+   * Los tres rechazos que la pantalla tiene que saber leer: **404** el recurso
+   * no existe; **409** el documento YA está registrado —ahí no se insiste, se
+   * busca al paciente con `GET /profiles/patients?nationalId=` y se le agenda
+   * con {@link createDirectAppointment}—; **422** el horario choca con otro
+   * turno del profesional o del paciente.
+   */
+  createWalkInAppointment(turno: NewWalkInAppointment): Observable<WalkInAppointmentCreated> {
+    const p = turno.patient;
+    return this.http.post<WalkInAppointmentCreated>(
+      this.url('/scheduling/appointments/walk-in'),
+      {
+        // Campo a campo, igual que el resto de este cliente: el backend valida
+        // con `forbidNonWhitelisted` y un opcional en `undefined` viaja como
+        // clave declarada, que vuelve 400. Ojo al agregar campos —lo que el
+        // contrato declare y esta lista no repita se descarta EN SILENCIO.
+        patient: {
+          name: p.name,
+          lastName: p.lastName,
+          nationalId: p.nationalId,
+          phone: p.phone,
+          ...(p.middleName === undefined ? {} : { middleName: p.middleName }),
+          ...(p.motherLastName === undefined ? {} : { motherLastName: p.motherLastName }),
+          ...(p.issuerAdministrativeAreaConceptId === undefined
+            ? {}
+            : { issuerAdministrativeAreaConceptId: p.issuerAdministrativeAreaConceptId }),
+          ...(p.birthDate === undefined ? {} : { birthDate: p.birthDate }),
+          ...(p.occupationConceptId === undefined
+            ? {}
+            : { occupationConceptId: p.occupationConceptId }),
+          ...(p.occupationFreeText === undefined
+            ? {}
+            : { occupationFreeText: p.occupationFreeText }),
+          ...(p.guardianName === undefined ? {} : { guardianName: p.guardianName }),
+          ...(p.guardianPhone === undefined ? {} : { guardianPhone: p.guardianPhone }),
+          ...(p.guardianRelationshipConceptId === undefined
+            ? {}
+            : { guardianRelationshipConceptId: p.guardianRelationshipConceptId }),
+        },
+        resourceId: turno.resourceId,
+        startAt: turno.startAt,
+        durationMinutes: turno.durationMinutes,
+        ...(turno.reasonText === undefined ? {} : { reasonText: turno.reasonText }),
+        // Ausente = presencial: no se manda un valor que nadie eligió.
+        ...(turno.channel === undefined ? {} : { channel: turno.channel }),
+      },
+    );
   }
 
   /**

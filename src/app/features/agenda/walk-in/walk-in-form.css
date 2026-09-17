@@ -1,0 +1,63 @@
+/* ============================================================================
+    Ingreso por mostrador — el turno de quien acaba de llegar (AC-C3-03).
+
+    Es un formulario corto a propósito: alguien está esperando de pie mientras
+    se completa. Una columna, y los campos que se leen de a pares —nombre y
+    apellido, duración y motivo— en dos, porque juntos ocupan un renglón y
+    apilados ocupan cuatro.
+    ========================================================================== */
+
+.mostrador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+/* Dos columnas donde entran; una sola en teléfono. `auto-fit` y no un
+   `repeat(2, …)` fijo: el modal cambia de ancho con la ventana y el punto en
+   que dos campos dejan de entrar lo decide su medida, no un breakpoint. */
+.mostrador__grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--sp-3);
+}
+
+.mostrador__alta {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.mostrador__alta-titulo {
+  padding: 0 var(--sp-1);
+  font-weight: 600;
+}
+
+.mostrador__alta-nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* La salida del paso: «registralo ahora» / «buscalo en el sistema». Renglón
+   propio y no un botón en la esquina — es la mitad del formulario, no una
+   acción secundaria. */
+.mostrador__salida {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.mostrador__ahora {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
