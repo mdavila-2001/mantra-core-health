@@ -12,12 +12,12 @@
  * Uso: `node playwright/mi-perfil-paciente.mjs [urlBase] [sufijo]`
  */
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const BASE = process.argv[2] ?? 'http://localhost:4333';
 const SUFIJO = process.argv[3] ?? 'despues';
-const SALIDA = new URL('../evidencias/mi-perfil-centrado-2026-09-09', import.meta.url).pathname
-  .replace(/^\/([A-Za-z]:)/, '$1');
+const SALIDA = fileURLToPath(new URL('../evidencias/mi-perfil-centrado-2026-09-09', import.meta.url));
 
 const veredictos = [];
 const ok = (nombre, cond, detalle = '') => {

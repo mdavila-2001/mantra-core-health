@@ -1,4 +1,4 @@
-import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -7,6 +7,8 @@ import { catchError, map, of, switchMap, type Observable } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ClinicalClient } from '../../core/data-access/clinical/clinical.client';
 import type { MedicationRequest } from '../../core/data-access/clinical/clinical.types';
+import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
+import { NO_SAVED_PLACES, savedPlacesOf, type SavedPlaces } from '../../core/data-access/profiles/saved-places';
 import { PublicDirectoryClient } from '../../core/data-access/public-directory/public-directory.client';
 import type { PublicNearbyResult } from '../../core/data-access/public-directory/public-directory.types';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
@@ -20,6 +22,8 @@ import { Card } from '../../shared/components/molecules/card/card';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import { SearchOriginPicker } from './search-origin-picker/search-origin-picker';
+import type { SearchOrigin } from './search-origin-picker/search-origin-picker.types';
 
 /** Radio por omisión de "cerca": 15 km, como el resto de la búsqueda pública de proximidad. */
 const RADIO_KM = 15;
@@ -82,11 +86,29 @@ function aLugarCercano(item: PublicNearbyResult): LugarCercano {
  * 2. `DIAGNOSTIC_UNIT` junta laboratorios y centros de imagenología: la
  *    búsqueda pública no separa el subtipo. Se muestra el `headline` tal
  *    cual lo publica el centro, que es el único dato honesto disponible.
+ *
+ * ## El origen ya no depende sólo del GPS (subtarea B.2)
+ *
+ * `app-search-origin-picker` ofrece el domicilio y el trabajo que el
+ * paciente ya declaró en «Mi perfil» —con coordenadas— antes de pedirle el
+ * GPS: quien lo negó, o entra desde un escritorio, deja de quedarse sin
+ * poder ver nada cercano. Se preselecciona la casa (o el trabajo, si no hay
+ * casa); si no hay ninguno, sólo queda «Ubicación actual».
  */
 @Component({
   selector: 'app-nearby-places',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Alert, AppButton, Card, NgTemplateOutlet, PageHeader, RouterLink, Tab, Tabs],
+  imports: [
+    Alert,
+    AppButton,
+    Card,
+    NgTemplateOutlet,
+    PageHeader,
+    RouterLink,
+    SearchOriginPicker,
+    Tab,
+    Tabs,
+  ],
   templateUrl: './nearby-places.html',
   styleUrl: './nearby-places.css',
 })
@@ -95,7 +117,7 @@ export class NearbyPlaces {
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly directorio = inject(PublicDirectoryClient);
-  private readonly documento = inject(DOCUMENT);
+  private readonly profiles = inject(ProfilesClient);
 
   protected readonly pestanaActiva = signal(0);
 
@@ -152,42 +174,41 @@ export class NearbyPlaces {
   );
 
   /* ============================================================================
-      Imagenología y centros médicos — geolocalización compartida.
+      Imagenología y centros médicos — desde dónde buscar.
       ========================================================================== */
 
-  protected readonly estadoDeUbicacion = signal<'pendiente' | 'localizando' | 'lista' | 'denegada'>(
-    'pendiente',
+  /**
+   * Los lugares que el paciente ya declaró, o `null` mientras se están
+   * cargando. Sin sesión de paciente —o si el perfil falla— cae a
+   * {@link NO_SAVED_PLACES}: `app-search-origin-picker` degrada sola a sólo
+   * «Ubicación actual», que es el comportamiento de antes de este carril.
+   */
+  protected readonly lugaresGuardados = toSignal(
+    toObservable(this.auth.patientProfileId).pipe(
+      switchMap((perfil): Observable<SavedPlaces | null> =>
+        perfil === null
+          ? of(NO_SAVED_PLACES)
+          : this.profiles.getOwnPatientProfile().pipe(
+              map(savedPlacesOf),
+              catchError(() => of(NO_SAVED_PLACES)),
+            ),
+      ),
+    ),
+    { initialValue: null },
   );
-  private readonly ubicacion = signal<{ lat: number; lng: number } | null>(null);
 
-  protected pedirUbicacion(): void {
-    const geo = this.documento.defaultView?.navigator?.geolocation;
-    if (!geo) {
-      this.estadoDeUbicacion.set('denegada');
-      return;
-    }
-    this.estadoDeUbicacion.set('localizando');
-    geo.getCurrentPosition(
-      (posicion) => {
-        this.ubicacion.set({ lat: posicion.coords.latitude, lng: posicion.coords.longitude });
-        this.estadoDeUbicacion.set('lista');
-      },
-      () => this.estadoDeUbicacion.set('denegada'),
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
-    );
-  }
+  /** El origen elegido en `app-search-origin-picker`; `null` hasta que hay uno. */
+  protected readonly origen = signal<SearchOrigin | null>(null);
 
   private cercanosDe(kind: 'DIAGNOSTIC_UNIT' | 'ORGANIZATION', activaEn: number) {
     return toSignal(
-      toObservable(
-        computed(() => ({ ubicacion: this.ubicacion(), pestana: this.pestanaActiva() })),
-      ).pipe(
-        switchMap(({ ubicacion, pestana }): Observable<ViewState<readonly LugarCercano[]>> => {
-          if (pestana !== activaEn || ubicacion === null) {
+      toObservable(computed(() => ({ origen: this.origen(), pestana: this.pestanaActiva() }))).pipe(
+        switchMap(({ origen, pestana }): Observable<ViewState<readonly LugarCercano[]>> => {
+          if (pestana !== activaEn || origen === null) {
             return of(empty({ label: 'Elegir una pestaña' }));
           }
           return this.directorio
-            .nearby({ lat: ubicacion.lat, lng: ubicacion.lng, radiusKm: RADIO_KM, kind, limit: LIMITE })
+            .nearby({ lat: origen.lat, lng: origen.lng, radiusKm: RADIO_KM, kind, limit: LIMITE })
             .pipe(
               map((pagina): ViewState<readonly LugarCercano[]> =>
                 pagina.items.length === 0

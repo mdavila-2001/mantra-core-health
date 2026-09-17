@@ -4,6 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
@@ -107,6 +108,7 @@ export class BookingNew {
   private readonly profiles = inject(ProfilesClient);
   private readonly navigation = inject(NavigationService);
   private readonly auth = inject(AuthService);
+  private readonly contexto = inject(PatientContextService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
@@ -296,11 +298,14 @@ export class BookingNew {
     // fija acá y no en la plantilla para que el resto del ciclo —retener,
     // confirmar, el aviso de la retención— no tenga que saber por dónde entró.
     if (this.esAutoservicio) {
-      const perfil = this.auth.patientProfileId();
+      // El paciente activo y no el del token (B.1): quien entró a pedirle turno
+      // a su hijo lo eligió antes en la cabecera, y tomar el del token le
+      // reservaría a ella misma sin decírselo.
+      const perfil = this.contexto.activePatientProfileId();
       if (perfil !== null) {
         this.paciente.set({
           value: perfil,
-          label: this.auth.displayName() ?? 'Vos',
+          label: this.contexto.activePatientName() ?? 'Vos',
         });
       }
     }

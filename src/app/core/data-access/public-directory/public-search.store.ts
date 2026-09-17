@@ -7,7 +7,7 @@
     estados, y avanzan por cursor. Esta clase es ese comportamiento, una vez.
     ========================================================================== */
 
-import { DestroyRef, computed, inject, signal } from '@angular/core';
+import { DestroyRef, computed, inject, signal, type Signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -68,6 +68,53 @@ export const TAMANO_DE_PAGINA = 25;
  */
 const PAUSA_AL_ESCRIBIR_MS = 300;
 
+/* ---- el corte territorial (subtarea 2.3) --------------------------------- */
+
+/** Lo único que el corte territorial necesita saber de una fila para ubicarla. */
+export interface FilaConCiudad {
+  readonly city: string | null;
+}
+
+/**
+ * El corte por lugar —departamento y después municipio— que una pantalla le
+ * entrega al store.
+ *
+ * Es una interfaz y no la clase porque la implementación,
+ * `shared/geo/filtro-territorial.ts`, habla con el catálogo de municipios y con
+ * el router, y `core` no depende de `shared`. Al store le basta con saber qué
+ * está elegido y cómo recortar.
+ */
+export interface CorteTerritorial {
+  readonly departamentoElegido: Signal<string | null>;
+  readonly ciudad: Signal<string | null>;
+  readonly nombreDelDepartamento: Signal<string | null>;
+  recortar<T extends FilaConCiudad>(filas: readonly T[]): readonly T[];
+  ciudades(filas: readonly FilaConCiudad[]): readonly string[];
+  cuentaPorDepartamento(filas: readonly FilaConCiudad[]): ReadonlyMap<string, number>;
+  sinUbicar(filas: readonly FilaConCiudad[]): number;
+}
+
+/** Lo que una pantalla puede encender además de la lectura y sus filtros de URL. */
+export interface OpcionesDeBusqueda {
+  /**
+   * El corte territorial. Sin él, el store se comporta exactamente como antes
+   * de la subtarea 2.3: una página por petición, avanzando por cursor.
+   */
+  readonly territorio?: CorteTerritorial;
+}
+
+/** Cuántos resultados pide cada petición al recorrer el directorio entero. Es el tope del servidor. */
+export const POR_PETICION_TERRITORIAL = 50;
+
+/**
+ * Cuántas páginas se recorren como máximo al traer el directorio entero.
+ *
+ * El mismo techo que clínicas, farmacias y hospitales: un catálogo que crezca sin
+ * control no puede encadenar peticiones indefinidamente. Cuando se llega, la
+ * pantalla **lo dice** en vez de seguir pidiendo en silencio.
+ */
+export const MAX_PAGINAS_TERRITORIAL = 10;
+
 /**
  * El estado de una pantalla de búsqueda pública, con paginación por cursor.
  *
@@ -96,6 +143,17 @@ const PAUSA_AL_ESCRIBIR_MS = 300;
  * `estado` pasa a `'error'` pero `resultados` conserva la página anterior, para
  * que reintentar no sea la única salida de una pantalla en blanco. La maqueta
  * lo dice en su propio texto de error: «tu búsqueda se mantiene escrita».
+ *
+ * ## Con corte territorial, el directorio se trae entero (subtarea 2.3)
+ *
+ * El contrato de estas búsquedas no acota por lugar: cada fila trae su ciudad y
+ * nada más. Recortar **una página** de veinticinco por departamento escondería
+ * lo que ese departamento tiene en la página siguiente —«no hay nada en Oruro»
+ * cuando lo hay, tres páginas más allá—, que es el defecto que hospitales tuvo
+ * que corregir. Así que con `territorio` el store recorre el cursor una vez,
+ * con el texto y los filtros propios viajando al servidor como siempre, y
+ * pagina en memoria sobre lo ya recortado. Cambiar el lugar no vuelve a pedir:
+ * sólo vuelve a la primera página.
  */
 export class BusquedaPublica {
   private readonly peticiones = new Subject<PublicSearchQuery>();
@@ -143,15 +201,89 @@ export class BusquedaPublica {
    */
   private readonly cursores = signal<readonly string[]>([]);
 
-  readonly estado = this._estado.asReadonly();
-  readonly resultados = this._resultados.asReadonly();
+  /* ---- sólo con corte territorial ---------------------------------------- */
+
+  /** El corte territorial, o `null` si la pantalla no lo encendió. */
+  private readonly territorio: CorteTerritorial | null;
+
+  /** El directorio entero, tal como llegó. Los cortes de lugar se aplican encima. */
+  private readonly _todos = signal<readonly PublicSearchResult[]>([]);
+
+  private readonly _recortada = signal(false);
+
+  /** Si el recorrido se cortó por el techo de páginas, para poder decirlo. */
+  readonly recortada = this._recortada.asReadonly();
+
+  /**
+   * En qué página local se está, atada al lugar con el que se llegó a ella.
+   *
+   * La página 3 de La Paz no es la página 3 de Cochabamba: si el lugar elegido
+   * ya no es el de la llave, se está en la primera. Así cambiar de lugar vuelve
+   * al principio sin una suscripción más a la URL.
+   */
+  private readonly _paginaLocal = signal<{ readonly llave: string; readonly indice: number }>({
+    llave: '',
+    indice: 0,
+  });
+
+  private readonly llaveDelLugar = computed(() =>
+    this.territorio === null
+      ? ''
+      : `${this.territorio.departamentoElegido() ?? ''}|${this.territorio.ciudad() ?? ''}`,
+  );
+
+  private readonly indiceLocal = computed(() => {
+    const pagina = this._paginaLocal();
+    return pagina.llave === this.llaveDelLugar() ? pagina.indice : 0;
+  });
+
+  /** Lo que queda del directorio después del corte de lugar. */
+  private readonly filtradas = computed<readonly PublicSearchResult[]>(() =>
+    this.territorio === null ? [] : this.territorio.recortar(this._todos()),
+  );
+
+  /* ---- lo que lee la pantalla ------------------------------------------- */
+
+  /**
+   * El estado de la pantalla.
+   *
+   * Con corte territorial, un directorio que llegó con filas pero que el lugar
+   * elegido deja sin ninguna es `'vacio'`, no `'datos'` con una grilla en
+   * blanco.
+   */
+  readonly estado = computed<EstadoBusqueda>(() => {
+    const estado = this._estado();
+    if (this.territorio !== null && estado === 'datos' && this.filtradas().length === 0) {
+      return 'vacio';
+    }
+    return estado;
+  });
+
+  /** Las filas de la página en pantalla. */
+  readonly resultados = computed<readonly PublicSearchResult[]>(() => {
+    if (this.territorio === null) {
+      return this._resultados();
+    }
+    const desde = this.indiceLocal() * TAMANO_DE_PAGINA;
+    return this.filtradas().slice(desde, desde + TAMANO_DE_PAGINA);
+  });
+
   readonly totalHint = this._totalHint.asReadonly();
 
   /** En qué página se está, contando desde 1. Es para el rótulo, no para pedir. */
-  readonly pagina = computed(() => this.cursores().length + 1);
+  readonly pagina = computed(() =>
+    this.territorio === null ? this.cursores().length + 1 : this.indiceLocal() + 1,
+  );
 
-  readonly hayAnteriores = computed(() => this.cursores().length > 0);
-  readonly haySiguientes = computed(() => this._nextCursor() !== null);
+  readonly hayAnteriores = computed(() =>
+    this.territorio === null ? this.cursores().length > 0 : this.indiceLocal() > 0,
+  );
+
+  readonly haySiguientes = computed(() =>
+    this.territorio === null
+      ? this._nextCursor() !== null
+      : (this.indiceLocal() + 1) * TAMANO_DE_PAGINA < this.filtradas().length,
+  );
 
   /**
    * El rótulo de la paginación, con el matiz que exige el contrato.
@@ -159,8 +291,16 @@ export class BusquedaPublica {
    * `totalHint` es una **pista** y puede ser `null`; escribir «N resultados»
    * con ella sería afirmar un total que la API no calculó. Cuando no hay pista
    * el rótulo dice cuántos se están viendo y en qué página, que es cierto.
+   *
+   * Con corte territorial el total **es exacto** —el directorio está entero en
+   * memoria—, así que se dice sin el «aproximadamente».
    */
   readonly rotuloDePagina = computed(() => {
+    if (this.territorio !== null) {
+      const total = this.filtradas().length;
+      const paginas = Math.max(1, Math.ceil(total / TAMANO_DE_PAGINA));
+      return `${this.resultados().length} de ${total} · página ${this.indiceLocal() + 1} de ${paginas}`;
+    }
     const vistos = this._resultados().length;
     const total = this._totalHint();
     const pagina = this.pagina();
@@ -168,6 +308,67 @@ export class BusquedaPublica {
       return `${vistos} de aproximadamente ${total} · página ${pagina}`;
     }
     return `${vistos} en esta página · página ${pagina}`;
+  });
+
+  /** Los municipios del departamento elegido con algo publicado, para los chips. */
+  readonly ciudadesDelLugar = computed<readonly string[]>(
+    () => this.territorio?.ciudades(this._todos()) ?? [],
+  );
+
+  /** Cuánto tiene cada departamento, sin el corte del propio mapa. */
+  readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(
+    () => this.territorio?.cuentaPorDepartamento(this._todos()) ?? new Map<string, number>(),
+  );
+
+  /**
+   * El resumen que acompaña al mapa. `null` sin departamento elegido: el propio
+   * mapa ya escribe «Todavía no elegiste departamento».
+   */
+  readonly resumenDelLugar = computed<string | null>(() => {
+    const territorio = this.territorio;
+    const elegido = territorio?.departamentoElegido() ?? null;
+    if (territorio === null || elegido === null) {
+      return null;
+    }
+    const nombre = territorio.nombreDelDepartamento() ?? '';
+    const cuantos = this.cuentaPorDepartamento().get(elegido) ?? 0;
+    if (cuantos === 0) {
+      return `Todavía no hay nada publicado en ${nombre}.`;
+    }
+    return `${cuantos} ${cuantos === 1 ? 'resultado' : 'resultados'} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+  });
+
+  /**
+   * Lo que el corte de lugar no puede mostrar, dicho en vez de callado.
+   *
+   * Una ficha sin ciudad, con una ciudad que no es un municipio del catálogo o
+   * con un nombre que el catálogo repite entre departamentos no se puede ubicar:
+   * no aparece al acotar por departamento. Esconderla sin avisar sería decir que
+   * no existe.
+   */
+  readonly avisoDelLugar = computed<string | null>(() => {
+    if (this.territorio === null) {
+      return null;
+    }
+    const avisos: string[] = [];
+    if (this._recortada()) {
+      avisos.push(
+        'Se muestran los primeros resultados del directorio: usá el buscador para encontrar lo que no aparezca.',
+      );
+    }
+    if (this.territorio.departamentoElegido() !== null) {
+      const sinUbicar = this.territorio.sinUbicar(this._todos());
+      if (sinUbicar === 1) {
+        avisos.push(
+          '1 resultado no declara una ciudad que diga de qué departamento es; aparece al ver todo el país.',
+        );
+      } else if (sinUbicar > 1) {
+        avisos.push(
+          `${sinUbicar} resultados no declaran una ciudad que diga de qué departamento son; aparecen al ver todo el país.`,
+        );
+      }
+    }
+    return avisos.length === 0 ? null : avisos.join(' ');
   });
 
   /**
@@ -190,7 +391,12 @@ export class BusquedaPublica {
      * Ejemplo: `['specialty']` en el directorio de profesionales.
      */
     private readonly nombresDeParametros: readonly string[] = [],
+    opciones: OpcionesDeBusqueda = {},
   ) {
+    // Antes de cualquier suscripción: la primera lectura ocurre en este mismo
+    // constructor y ya tiene que saber si recorre el directorio entero.
+    this.territorio = opciones.territorio ?? null;
+
     const destroyRef = inject(DestroyRef);
     const ruta = this.ruta;
     const router = this.router;
@@ -213,7 +419,7 @@ export class BusquedaPublica {
       .pipe(
         tap(() => this._estado.set('carga')),
         switchMap((filtros) =>
-          this.lectura(filtros, this._parametros()).pipe(
+          this.leer(filtros).pipe(
             // El error se convierte en un valor para que el flujo siga vivo:
             // un `error` que sube mata la suscripción, y la pantalla quedaría
             // sin poder reintentar sin recargarse entera.
@@ -304,6 +510,12 @@ export class BusquedaPublica {
 
   /** Avanza. No hace nada si no hay siguiente: el botón va deshabilitado. */
   siguiente(): void {
+    if (this.territorio !== null) {
+      if (this.haySiguientes()) {
+        this._paginaLocal.set({ llave: this.llaveDelLugar(), indice: this.indiceLocal() + 1 });
+      }
+      return;
+    }
     const cursor = this._nextCursor();
     if (cursor === null) return;
     this.cursores.update((pila) => [...pila, cursor]);
@@ -312,6 +524,12 @@ export class BusquedaPublica {
 
   /** Retrocede una página repitiendo la petición con la que se llegó a ella. */
   anterior(): void {
+    if (this.territorio !== null) {
+      if (this.hayAnteriores()) {
+        this._paginaLocal.set({ llave: this.llaveDelLugar(), indice: this.indiceLocal() - 1 });
+      }
+      return;
+    }
     if (this.cursores().length === 0) return;
     const pila = this.cursores().slice(0, -1);
     this.cursores.set(pila);
@@ -320,22 +538,64 @@ export class BusquedaPublica {
 
   /** Reintenta la página en pantalla, sin perder la posición ni los filtros. */
   reintentar(): void {
-    this.pedir(this.cursores().at(-1));
+    this.pedir(this.territorio === null ? this.cursores().at(-1) : undefined);
   }
 
   private pedir(cursor: string | undefined): void {
     const filtros: PublicSearchQuery = {
       q: this.texto().trim(),
       city: this.ciudad(),
-      limit: TAMANO_DE_PAGINA,
+      limit: this.territorio === null ? TAMANO_DE_PAGINA : POR_PETICION_TERRITORIAL,
       ...(cursor === undefined ? {} : { cursor }),
     };
     this.peticiones.next(filtros);
   }
 
+  /** Una página, o con corte territorial el directorio entero en una sola página. */
+  private leer(filtros: PublicSearchQuery): Observable<PublicPage<PublicSearchResult>> {
+    if (this.territorio === null) {
+      return this.lectura(filtros, this._parametros());
+    }
+    this._recortada.set(false);
+    return this.leerTodo(filtros, [], 0);
+  }
+
+  /**
+   * Recorre el cursor hasta agotarlo, o hasta el techo de páginas.
+   *
+   * Recursivo y no un bucle porque cada página depende del cursor de la
+   * anterior: no se pueden pedir en paralelo.
+   */
+  private leerTodo(
+    filtros: PublicSearchQuery,
+    acumulado: readonly PublicSearchResult[],
+    paginasLeidas: number,
+  ): Observable<PublicPage<PublicSearchResult>> {
+    return this.lectura(filtros, this._parametros()).pipe(
+      switchMap((pagina) => {
+        const items = [...acumulado, ...pagina.items];
+        if (pagina.nextCursor === null || paginasLeidas + 1 >= MAX_PAGINAS_TERRITORIAL) {
+          if (pagina.nextCursor !== null) {
+            this._recortada.set(true);
+          }
+          return of({ ...pagina, items, nextCursor: null, totalHint: items.length });
+        }
+        return this.leerTodo({ ...filtros, cursor: pagina.nextCursor }, items, paginasLeidas + 1);
+      }),
+    );
+  }
+
   private recibir(pagina: PublicPage<PublicSearchResult> | null): void {
     if (pagina === null) {
       this._estado.set('error');
+      return;
+    }
+    if (this.territorio !== null) {
+      this._todos.set(pagina.items);
+      this._paginaLocal.set({ llave: this.llaveDelLugar(), indice: 0 });
+      this._nextCursor.set(null);
+      this._totalHint.set(pagina.items.length);
+      this._estado.set(pagina.items.length === 0 ? 'vacio' : 'datos');
       return;
     }
     this._resultados.set(pagina.items);

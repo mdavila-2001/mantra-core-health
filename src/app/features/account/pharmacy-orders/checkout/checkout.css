@@ -1,0 +1,163 @@
+/* Mobile-first: un paso por vez, acciones apiladas en el teléfono. */
+
+.checkout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.checkout__paso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.checkout__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.checkout__titulo:focus {
+  outline: none;
+}
+
+.checkout__principal {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.checkout__secundario {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.checkout__nota {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.checkout__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.checkout__direcciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checkout__direccion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.checkout__direccion--elegida {
+  border-color: var(--st-success-bd);
+}
+
+.checkout__direccion-datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.checkout__pago {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+.checkout__pago app-form-field {
+  align-self: stretch;
+}
+
+.checkout__qr canvas {
+  display: block;
+}
+
+/* La tarjeta de la maqueta: proporción de tarjeta real, sin marca. */
+.checkout__tarjeta {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  max-width: calc(var(--sp-20) * 4);
+  aspect-ratio: 1.586;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+}
+
+.checkout__tarjeta-numero {
+  font-size: var(--fs-h3);
+}
+
+.checkout__tarjeta-pie {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+}
+
+.checkout__campos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+  align-self: stretch;
+}
+
+.checkout__elecciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.checkout__elecciones dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.checkout__elecciones dd {
+  margin: 0;
+}
+
+.checkout__acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 768px) {
+  .checkout__campos {
+    grid-template-columns: 1fr 2fr;
+  }
+
+  .checkout__acciones {
+    flex-direction: row;
+    align-items: center;
+  }
+}

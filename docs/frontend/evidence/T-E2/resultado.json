@@ -1,0 +1,133 @@
+{
+  "tarea": "T-E2",
+  "base": "http://127.0.0.1:4232",
+  "aprobadas": 25,
+  "total": 25,
+  "comprobaciones": [
+    {
+      "nombre": "flujo real: el orden y el conmutador existen sobre el mock",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-flujo-real-deriva-del-mock--1440x900.png"
+    },
+    {
+      "nombre": "receta del mock con renglones consultables",
+      "ok": true,
+      "detalle": "Enalapril 10 mg comprimidos, Atorvastatina 20 mg comprimidos, Paracetamol 500 mg comprimidos"
+    },
+    {
+      "nombre": "sin seguro 390x844: tres sedes, sin cobertura de seguro",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-sin-seguro--390x844.png"
+    },
+    {
+      "nombre": "con seguro 390x844: cobertura y desglose en cada sede",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-con-seguro--390x844.png · Cobertura de lo aprobado: 2 de 2 | Cobertura de lo aprobado: 1 de 2 | Cobertura de lo aprobado: 1 de 2"
+    },
+    {
+      "nombre": "con seguro 390x844: el mapa sigue en pantalla",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "sin seguro 768x1024: tres sedes, sin cobertura de seguro",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-sin-seguro--768x1024.png"
+    },
+    {
+      "nombre": "con seguro 768x1024: cobertura y desglose en cada sede",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-con-seguro--768x1024.png · Cobertura de lo aprobado: 2 de 2 | Cobertura de lo aprobado: 1 de 2 | Cobertura de lo aprobado: 1 de 2"
+    },
+    {
+      "nombre": "con seguro 768x1024: el mapa sigue en pantalla",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "sin seguro 1024x768: tres sedes, sin cobertura de seguro",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-sin-seguro--1024x768.png"
+    },
+    {
+      "nombre": "con seguro 1024x768: cobertura y desglose en cada sede",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-con-seguro--1024x768.png · Cobertura de lo aprobado: 2 de 2 | Cobertura de lo aprobado: 1 de 2 | Cobertura de lo aprobado: 1 de 2"
+    },
+    {
+      "nombre": "con seguro 1024x768: el mapa sigue en pantalla",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "sin seguro 1440x900: tres sedes, sin cobertura de seguro",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-sin-seguro--1440x900.png"
+    },
+    {
+      "nombre": "con seguro 1440x900: cobertura y desglose en cada sede",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-con-seguro--1440x900.png · Cobertura de lo aprobado: 2 de 2 | Cobertura de lo aprobado: 1 de 2 | Cobertura de lo aprobado: 1 de 2"
+    },
+    {
+      "nombre": "con seguro 1440x900: el mapa sigue en pantalla",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "sin seguro 1920x1080: tres sedes, sin cobertura de seguro",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-sin-seguro--1920x1080.png"
+    },
+    {
+      "nombre": "con seguro 1920x1080: cobertura y desglose en cada sede",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-con-seguro--1920x1080.png · Cobertura de lo aprobado: 2 de 2 | Cobertura de lo aprobado: 1 de 2 | Cobertura de lo aprobado: 1 de 2"
+    },
+    {
+      "nombre": "con seguro 1920x1080: el mapa sigue en pantalla",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "orden: «Más cerca» deja la sede sin distancia al final",
+      "ok": true,
+      "detalle": "Farmacia Andina · Sucursal Centro (evidencia) → Farmacia del Sur · Sucursal Norte (evidencia) → Farmacia del Sur · Sucursal Plan Tres Mil (evidencia)"
+    },
+    {
+      "nombre": "orden: «Más barato» cambia el listado respecto del backend",
+      "ok": true,
+      "detalle": "Farmacia del Sur · Sucursal Norte (evidencia) → Farmacia Andina · Sucursal Centro (evidencia) → Farmacia del Sur · Sucursal Plan Tres Mil (evidencia)"
+    },
+    {
+      "nombre": "orden: «Receta completa primero» vuelve al orden del backend",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "vacío con seguro: se dice y el conmutador sigue a mano",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-con-seguro-vacio--1440x900.png"
+    },
+    {
+      "nombre": "error con seguro: reintento visible",
+      "ok": true,
+      "detalle": "paciente--elegir-farmacia-fixture-evidencia-con-seguro-error--1440x900.png"
+    },
+    {
+      "nombre": "CTA: navega a new-order",
+      "ok": true,
+      "detalle": "http://127.0.0.1:4232/my-account/pharmacy-orders/new"
+    },
+    {
+      "nombre": "CTA: ninguna escritura HTTP desde where-to-buy",
+      "ok": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "sin errores de página",
+      "ok": true,
+      "detalle": ""
+    }
+  ]
+}

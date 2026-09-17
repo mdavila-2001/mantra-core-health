@@ -61,10 +61,7 @@ import type { AppSection } from './navigation.types';
  * generador necesitó la misma pareja: dos listas iguales en dos archivos es
  * cómo una de las dos se queda corta.
  */
-export const ROLES_DE_QUIEN_ATIENDE: readonly string[] = [
-  'CLINICIAN',
-  'PRACTITIONER',
-];
+export const ROLES_DE_QUIEN_ATIENDE: readonly string[] = ['CLINICIAN', 'PRACTITIONER'];
 
 const ROLES_QUE_EJERCEN_O_ADMINISTRAN = [
   'PRACTITIONER',
@@ -473,13 +470,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Intervenciones',
     group: 'Atención',
     icon: 'scalpel',
-    roles: [
-      'SURGEON',
-      'ANESTHESIOLOGIST',
-      'PERIOP_NURSE',
-      'SURGERY_SCHEDULER',
-      'PERIOP_ADMIN',
-    ],
+    roles: ['SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_NURSE', 'SURGERY_SCHEDULER', 'PERIOP_ADMIN'],
     availability: 'disponible',
     summary: 'Mirá las intervenciones programadas y confirmá tu participación.',
     module: 'M53 procedures_perioperative',
@@ -699,16 +690,26 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // existir sin inventarse los datos. Entra ahora con
     // `GET /insurance-carriers` y su ficha.
     //
-    // El rol es el mismo que «Organizaciones» porque hoy es el único que
-    // significa «administra esta organización»: la plataforma no tiene todavía
-    // un rol de aseguradora. **La autoridad no es esta línea** — la API acota
-    // por pertenencia al tenant, no por rol global —, así que el día que exista
-    // un `INSURANCE_ADMIN` este es el único lugar que cambia.
+    // El rol **dejó de ser** el de «Organizaciones» con la consola de planes y
+    // coberturas: quien administra una aseguradora es owner o admin de su
+    // tenant, y eso es una fila de `tenant_memberships` que el token no
+    // transporta como rol. Exigir `SECURITY_ADMIN` le cerraba la puerta justo a
+    // esa persona, así que la sección pasó a `ANY_ROLE` + `requiresTenant` y la
+    // capacidad real la resuelve la API (`carrier.canAdminister`).
+    //
+    // `hiddenFor` es el complemento que `requiresTenant` necesita, y no es
+    // opcional: el alta de paciente lo afilia al tenant por defecto, así que
+    // *todos* cumplen la condición de membresía. Sin esta línea, un paciente y
+    // un médico veían «Aseguradora» en su menú de administración — que es
+    // exactamente lo que destaparon `access-tree.spec.ts` y
+    // `navigation.service.spec.ts`. Mismo par que «Tu organización».
     path: 'administration/insurance',
     label: 'Aseguradora',
     group: 'Administración',
     icon: 'umbrella',
-    roles: ['SECURITY_ADMIN'],
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
     summary: 'Revisá tus productos, planes, coberturas y la red de prestadores.',
     module: 'M26 insurance',
@@ -745,6 +746,28 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Lo que presentaste a cada aseguradora, con lo que aprobó.',
+    module: 'M26 insurance',
+  },
+  {
+    // Subtarea 3.1 (M26, v4.2.14): el tablero de siniestralidad, gasto per
+    // cápita y epidemiología — cara de LA ASEGURADORA, no del prestador.
+    //
+    // Mismo patrón que «Aseguradora» (`administration/insurance`, arriba): la
+    // dueña de una aseguradora sólo tiene el rol global `USER` — su autoridad
+    // es la membresía OWNER/ADMIN del tenant, que el token no transporta como
+    // rol. `BILLING_OPERATOR`/`FINANCIAL_AUDITOR` del pedido original NO
+    // aplican: el primero es el rol del PRESTADOR («Solicitudes de seguro»,
+    // arriba) y el segundo no existe en ningún catálogo de roles del proyecto.
+    // La capacidad real la resuelve la API (membresía o `INSURANCE_OPERATOR`).
+    path: 'administration/insurance-analytics',
+    label: 'Siniestralidad y analítica',
+    group: 'Administración',
+    icon: 'chart',
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Tablero actuarial de siniestralidad, gasto per cápita y morbilidad.',
     module: 'M26 insurance',
   },
   {
@@ -1027,12 +1050,28 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M16 accounting',
   },
 
-
   /* -- Mi cuenta · autoservicio, con navegación propia --------------------
      El vault lo pide separado: son datos de la persona sobre sí misma, no
      registros que administra. Sin roles, porque nadie necesita permiso para
      mirar lo suyo. */
 
+  {
+    // B.1 · las personas a cargo del titular. Sin `roles` por lo mismo que «Mis
+    // citas»: el filtro real es tener perfil de paciente, que no es un rol sino
+    // un dato de la cuenta, y la pantalla lo dice cuando falta en vez de
+    // esconderse del menú.
+    path: 'my-account/dependents',
+    // Es del paciente: a quien atiende no se le ofrece.
+    hiddenFor: ['PRACTITIONER'],
+    label: 'Dependientes',
+    group: 'Mi cuenta',
+    icon: 'patients',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary:
+      'Registrá a quienes están a tu cargo y pedí turnos o consultá su historia en su nombre.',
+    module: 'M05 profiles',
+  },
   {
     path: 'my-account',
     label: 'Mi perfil',
@@ -1264,6 +1303,19 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ['PATIENT'],
     availability: 'disponible',
     summary: 'Tus puntos: lo que sumaste con tus compras y cómo canjearlo.',
+    module: 'M51 promotions',
+  },
+  {
+    // Las promociones que las farmacias le mandaron al paciente (T-E7). Mismo
+    // criterio que «Mis puntos»: rol de paciente, sin `exclusiveRoles`. Icono
+    // `tag`: ningún otro de «Mi cuenta» lo usa.
+    path: 'my-account/promotions',
+    label: 'Promociones',
+    group: 'Mi cuenta',
+    icon: 'tag',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Las promociones que te mandaron las farmacias.',
     module: 'M51 promotions',
   },
   {

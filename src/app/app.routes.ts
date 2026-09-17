@@ -156,6 +156,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/insurance-claims/insurance-claims').then(
       (m) => m.InsuranceClaims,
     ),
+  'administration/insurance-analytics': () =>
+    import('./features/insurance/insurance-analytics/insurance-analytics').then(
+      (m) => m.InsuranceAnalytics,
+    ),
   // Contabilidad abre en el **cockpit**: el estado del ejercicio, los documentos
   // frenados y la cartera. Los libros —balance, diario y el registro de
   // movimientos— viven en `administration/accounting/libros`, a un clic. El
@@ -178,6 +182,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/moderation/moderation').then((m) => m.Moderation),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-profile/my-profile').then((m) => m.MyProfile),
+  'my-account/dependents': () =>
+    import('./features/account/dependents/dependents').then((m) => m.Dependents),
   'my-account/appointments': () =>
     import('./features/account/appointments/appointments').then((m) => m.Appointments),
   'my-account/medical-record': () =>
@@ -194,6 +200,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   'my-account/loyalty': () =>
     import('./features/account/loyalty/loyalty').then((m) => m.Loyalty),
+  'my-account/promotions': () =>
+    import('./features/account/promotions/promotions').then((m) => m.Promotions),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
@@ -386,6 +394,18 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // El checkout del pedido (T-E3 · pantalla G): entrega, dirección, medio de
+    // pago y resumen. Sin `:orderId`: el pedido se crea recién en su
+    // confirmación final (D-FARMOCK-T-E1-01). Antes de `:orderId`, como `new`.
+    path: 'my-account/pharmacy-orders/checkout',
+    title: `${APP_TITLE} - Entrega y pago`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/checkout/checkout')
+        .then((m) => m.Checkout)
+        .catch(() => chunkFallido()),
+  },
+  {
     // La ficha de un pedido concreto: línea de tiempo, decisión de sustitución
     // y código de retiro. `new` va declarada antes: el router prueba en orden
     // y el parámetro se la tragaría.
@@ -407,6 +427,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/order-receipt/order-receipt')
         .then((m) => m.OrderReceipt)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // La factura del pedido (T-E4 · F2.1.12, F3.3). Hermana del comprobante
+    // interno y distinta de él: el comprobante dice que no es una factura.
+    // Sin contrato de facturación, un pedido sin factura dice su vacío honesto.
+    path: 'my-account/pharmacy-orders/:orderId/invoice',
+    title: `${APP_TITLE} - Factura`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/order-invoice/order-invoice')
+        .then((m) => m.OrderInvoice)
         .catch(() => chunkFallido()),
   },
   {

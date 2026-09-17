@@ -338,52 +338,6 @@ export class WorkHistory implements OnInit {
   protected readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
   protected readonly catalogoMunicipiosCaido = signal(false);
 
-  /**
-   * El consultorio propio, si ya tiene uno. **Hay uno solo.**
-   *
-   * No es una regla de pantalla: es lo que el backend modela. `POST
-   * /practitioners/me/sites` «crea —o **reutiliza**— la práctica personal del
-   * profesional», así que la práctica propia es una sola por persona. Lo que
-   * faltaba era decirlo en la interfaz: hasta hoy el botón «Agregar un
-   * consultorio propio» seguía ahí después de crear el primero, invitando a
-   * cargar el segundo.
-   *
-   * `esPropio` llega ausente contra la API real (P32): sin la marca, todo se
-   * lee como ajeno y el botón de alta sigue disponible, que es la degradación
-   * prudente — nunca esconde un camino.
-   */
-  protected readonly consultorioPropio = computed<PracticeSite | null>(
-    () => this.sedes().find((sede) => sede.esPropio === true) ?? null,
-  );
-
-  /**
-   * El consultorio que se está corrigiendo, o `null` si el formulario da de
-   * alta uno nuevo.
-   *
-   * Un solo formulario para las dos cosas y no dos: los campos son los mismos
-   * —nombre, calle, ciudad, municipio y punto— y duplicarlo garantizaría que el
-   * arreglo de uno no llegue al otro, que es la razón por la que este bloque
-   * vive en un componente y no copiado en cada pantalla.
-   */
-  protected readonly sedeEnEdicion = signal<PracticeSite | null>(null);
-
-  /* -- El QR bancario de cada sede ----------------------------------------- */
-
-  /**
-   * La sede cuyo QR bancario se está mirando, o `null` si el modal está cerrado.
-   *
-   * Se guarda el **id** y la sede se recalcula de la lista, y no al revés: tras
-   * subir un QR la lista se relee y la sede guardada sería la vieja, con su
-   * `bankQrFileId` anterior — el modal seguiría abierto mostrando el estado
-   * previo al cambio que acaba de hacer.
-   */
-  private readonly sedeConQrAbiertoId = signal<string | null>(null);
-
-  protected readonly sedeConQrAbierto = computed<PracticeSite | null>(() => {
-    const id = this.sedeConQrAbiertoId();
-    return id === null ? null : (this.sedes().find((sede) => sede.id === id) ?? null);
-  });
-
   /* ---- Atiendo en uno que ya existe --------------------------------------
 
      Crear un consultorio propio y declarar que atendés en la Clínica Foianini
@@ -443,6 +397,49 @@ export class WorkHistory implements OnInit {
       r.municipios.some((m) => m.conceptId === municipio),
     );
     return rama?.conceptId ?? null;
+  });
+
+  /**
+   * El consultorio propio, si ya tiene uno. **Hay uno solo.**
+   *
+   * No es una regla de pantalla: es lo que el backend modela. `POST
+   * /practitioners/me/sites` crea —o **reutiliza**— la práctica personal del
+   * profesional, así que la práctica propia es una sola por persona. Lo que
+   * faltaba era decirlo en la interfaz: el botón «Agregar un consultorio
+   * propio» seguía ahí después de crear el primero, invitando a cargar el
+   * segundo.
+   *
+   * `isOwnSite` lo manda la API desde el cierre del P32-a. Si llegara ausente
+   * —un frontend desplegado contra una API anterior— todo se lee como ajeno y
+   * el botón de alta sigue disponible: la degradación prudente nunca esconde
+   * un camino.
+   */
+  protected readonly consultorioPropio = computed<PracticeSite | null>(
+    () => this.sedes().find((sede) => sede.isOwnSite === true) ?? null,
+  );
+
+  /**
+   * La sede que se está corrigiendo, o `null` si el formulario da de alta una.
+   *
+   * Un solo formulario para las dos cosas y no dos: los campos son los mismos
+   * —nombre, calle, ciudad, municipio y punto— y duplicarlo garantizaría que
+   * el arreglo de uno no llegue al otro.
+   */
+  protected readonly sedeEnEdicion = signal<PracticeSite | null>(null);
+
+  /** La sede cuyo QR bancario está abierto, o `null` si no hay ninguno. */
+  protected readonly sedeConQrAbiertoId = signal<string | null>(null);
+
+  /**
+   * La sede del modal de QR, releída de la lista.
+   *
+   * Se resuelve por id contra `sedes()` y no se guarda la sede entera para que
+   * el modal vea el `bankQrFileId` recién guardado sin que haya que pasárselo
+   * a mano.
+   */
+  protected readonly sedeConQrAbierto = computed<PracticeSite | null>(() => {
+    const id = this.sedeConQrAbiertoId();
+    return id === null ? null : (this.sedes().find((s) => s.id === id) ?? null);
   });
 
   protected readonly puedeRegistrarSede = computed(
@@ -581,34 +578,6 @@ export class WorkHistory implements OnInit {
     }
   }
 
-  /**
-   * Abre el mismo formulario, pero cargado con lo que el consultorio ya tiene.
-   *
-   * La dirección vuelve como una sola línea porque así la manda el backend
-   * (`addressText` viene compuesto): separarla en calle, ciudad y municipio
-   * exigiría adivinar dónde corta cada pieza, y adivinar sobre la dirección de
-   * un consultorio es peor que pedir que se reescriba. El municipio y el punto
-   * sí vuelven, porque llegan como dato y no como texto.
-   */
-  protected abrirEdicionDeSede(sede: PracticeSite): void {
-    this.sedeEnEdicion.set(sede);
-    this.nombreDeSedeNueva.set(sede.name);
-    this.direccionDeSede.set(sede.addressText ?? '');
-    this.ciudadDeSede.set('');
-    this.municipioDeSede.set(null);
-    this.puntoDeSede.set(
-      sede.latitude === null || sede.longitude === null
-        ? null
-        : { lat: sede.latitude, lng: sede.longitude },
-    );
-    this.mapaAbierto.set(false);
-    this.registroDeSede.set(ready(null));
-    this.altaDeSedeAbierta.set(true);
-    if (this.ramasMunicipios().length === 0) {
-      this.cargarMunicipios();
-    }
-  }
-
   protected cerrarAltaDeSede(): void {
     this.altaDeSedeAbierta.set(false);
     this.sedeEnEdicion.set(null);
@@ -703,26 +672,8 @@ export class WorkHistory implements OnInit {
    * dirección es válida —se puede cargar después— y mandar una dirección
    * vacía no es «sin dirección», es una fila vacía en `common.addresses`.
    */
-  protected registrarSede(): void {
-    if (!this.puedeRegistrarSede()) {
-      return;
-    }
-    const direccion = this.direccionDeSede().trim();
-    const ciudad = this.ciudadDeSede().trim();
-    const municipio = this.municipioDeSede();
-    const departamento = this.departamentoDeSede();
-    const punto = this.puntoDeSede();
-
-    const address: NewOwnSite['address'] =
-      direccion === ''
-        ? undefined
-        : {
-            lines: [direccion],
-            ...(ciudad === '' ? {} : { city: ciudad }),
-            ...(municipio === null ? {} : { municipalityConceptId: municipio }),
-            ...(departamento === null ? {} : { administrativeAreaConceptId: departamento }),
-            ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
-          };
+  private registrarSede(): void {
+    const address = this.direccionDelFormulario();
 
     const enEdicion = this.sedeEnEdicion();
     const cuerpo = {
@@ -754,6 +705,125 @@ export class WorkHistory implements OnInit {
         this.registroDeSede.set(errorToViewState<null>(error));
       },
     });
+  }
+
+  /**
+   * Abre el formulario ya cargado con la sede que se va a corregir (P32-b).
+   *
+   * Prellena el nombre y el punto, y **deja la dirección en blanco a
+   * propósito**: la lista trae `addressText` ya compuesta por el backend y
+   * descomponerla en calle, ciudad y municipio sería adivinar. Vacía significa
+   * «no la toques», que es exactamente lo que el `PATCH` hace con lo que no
+   * viaja en el cuerpo — y el formulario lo dice con todas las letras.
+   *
+   * @param sede - El consultorio propio a corregir.
+   */
+  protected abrirEdicionDeSede(sede: PracticeSite): void {
+    this.limpiarSede();
+    this.sedeEnEdicion.set(sede);
+    this.nombreDeSedeNueva.set(sede.name);
+    if (sede.latitude !== null && sede.longitude !== null) {
+      this.puntoDeSede.set({ lat: sede.latitude, lng: sede.longitude });
+    }
+    this.altaDeSedeAbierta.set(true);
+    if (this.ramasMunicipios().length === 0) {
+      this.cargarMunicipios();
+    }
+  }
+
+  /**
+   * Guarda el formulario: da de alta una sede nueva, o corrige la que se está
+   * editando. Son dos escrituras distintas y cada una tiene su método.
+   */
+  protected guardarSede(): void {
+    if (!this.puedeRegistrarSede()) {
+      return;
+    }
+    const enEdicion = this.sedeEnEdicion();
+    if (enEdicion === null) {
+      this.registrarSede();
+    } else {
+      this.corregirSede(enEdicion);
+    }
+  }
+
+  /**
+   * Refleja el QR recién guardado sin volver a pedir la lista entera.
+   *
+   * El modal ya habló con la API y sabe el `fileId` que quedó; recargar sería
+   * una petición de más para un dato que ya está en la mano.
+   *
+   * @param fileId - El archivo que quedó como QR de esa sede.
+   */
+  protected qrGuardado(fileId: string): void {
+    const id = this.sedeConQrAbiertoId();
+    if (id === null) {
+      return;
+    }
+    this.sedes.update((sedes) =>
+      sedes.map((sede) => (sede.id === id ? { ...sede, bankQrFileId: fileId } : sede)),
+    );
+  }
+
+  /**
+   * Corrige el consultorio propio (P32-b).
+   *
+   * La dirección sólo viaja si el formulario tiene una calle escrita: vacía
+   * significa «conservá la que ya tenía», no «borrala».
+   *
+   * @param sede - El consultorio que se está corrigiendo.
+   */
+  private corregirSede(sede: PracticeSite): void {
+    const address = this.direccionDelFormulario();
+    this.registrandoSede.set(true);
+    this.registroDeSede.set(loading());
+    this.sites
+      .updateOwnSite(sede.id, {
+        name: this.nombreDeSedeNueva().trim(),
+        ...(address === undefined ? {} : { address }),
+      })
+      .subscribe({
+        next: () => {
+          this.registrandoSede.set(false);
+          this.registroDeSede.set(ready(null));
+          this.cerrarAltaDeSede();
+          this.toasts.success('Los cambios ya figuran en tu ficha.', 'Consultorio corregido');
+          this.cargarSedes();
+          this.added.emit();
+        },
+        error: (error: unknown) => {
+          this.registrandoSede.set(false);
+          this.registroDeSede.set(errorToViewState<null>(error));
+        },
+      });
+  }
+
+  /**
+   * La dirección tal como la declara el formulario, o `undefined` si no hay
+   * calle escrita.
+   *
+   * Una sede sin dirección es válida —se puede cargar después— y mandar una
+   * dirección vacía no es «sin dirección», es una fila vacía en
+   * `common.addresses`.
+   *
+   * @returns La dirección a mandar, o `undefined` para no mandar ninguna.
+   */
+  private direccionDelFormulario(): NewOwnSite['address'] {
+    const direccion = this.direccionDeSede().trim();
+    if (direccion === '') {
+      return undefined;
+    }
+    const ciudad = this.ciudadDeSede().trim();
+    const municipio = this.municipioDeSede();
+    const departamento = this.departamentoDeSede();
+    const punto = this.puntoDeSede();
+    return {
+      lines: [direccion],
+      ...(ciudad === '' ? {} : { city: ciudad }),
+      ...(municipio === null ? {} : { municipalityConceptId: municipio }),
+      ...(departamento === null ? {} : { administrativeAreaConceptId: departamento }),
+      ...(punto === null ? {} : { latitude: punto.lat, longitude: punto.lng }),
+    };
   }
 
   /**
@@ -813,7 +883,7 @@ export class WorkHistory implements OnInit {
    * que es el que se reconoce— y el texto es el que aclara que nada se borra.
    */
   protected etiquetaDeRetiro(sede: PracticeSite): string {
-    return sede.esPropio === true
+    return sede.isOwnSite === true
       ? `Retirar ${sede.name} de tus consultorios`
       : `Dejar de atender en ${sede.name}`;
   }

@@ -1,0 +1,61 @@
+<section class="tu-factura" aria-labelledby="tu-factura-titulo" data-testid="tu-factura">
+  <div class="tu-factura__encabezado">
+    <h3 id="tu-factura-titulo" class="tu-factura__titulo">Tu factura</h3>
+    @if (factura()) {
+      <app-chip variant="neutral" size="sm">{{ nota }}</app-chip>
+    }
+  </div>
+
+  @if (factura(); as papel) {
+    <dl class="tu-factura__datos">
+      <div class="tu-factura__dato">
+        <dt class="tu-factura__etiqueta">{{ rotulos.numero }}</dt>
+        <dd class="tu-factura__valor cifras-tabulares">{{ papel.numero }}</dd>
+      </div>
+      <div class="tu-factura__dato">
+        <dt class="tu-factura__etiqueta">{{ rotulos.emitidaEl }}</dt>
+        <dd class="tu-factura__valor">{{ papel.emitidaEl | date: 'dd/MM/yyyy' }}</dd>
+      </div>
+      <div class="tu-factura__dato">
+        <dt class="tu-factura__etiqueta">{{ rotulos.total }}</dt>
+        <dd class="tu-factura__valor cifras-tabulares" data-testid="tu-factura-total">
+          @if (papel.total !== null) {
+            {{ papel.total }} {{ papel.moneda }}
+          } @else {
+            No disponible
+          }
+        </dd>
+      </div>
+      <div class="tu-factura__dato">
+        <dt class="tu-factura__etiqueta">{{ rotulos.estado }}</dt>
+        <dd class="tu-factura__valor">
+          <app-badge variant="success">{{ papel.estado }}</app-badge>
+        </dd>
+      </div>
+    </dl>
+  } @else {
+    <p class="tu-factura__vacio" data-testid="tu-factura-vacia">{{ motivoSinFactura() }}</p>
+  }
+
+  <div class="tu-factura__acciones">
+    @if (factura()) {
+      <a app-button variant="primary" size="sm" [routerLink]="rutaDeFactura()" data-testid="tu-factura-ver">
+        Ver factura
+      </a>
+      <button app-button variant="secondary" size="sm" type="button" data-testid="tu-factura-descargar"
+        (clicked)="descargar()">
+        Descargar PDF
+      </button>
+    }
+    <a app-button variant="ghost" size="sm" [routerLink]="rutaDeComprobante()"
+      data-testid="tu-factura-comprobante">
+      Ver comprobante interno
+    </a>
+  </div>
+
+  @if (descargaFallida()) {
+    <p class="tu-factura__vacio" role="alert">
+      No pudimos preparar el PDF. Probá de nuevo desde «Ver factura».
+    </p>
+  }
+</section>

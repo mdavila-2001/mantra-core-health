@@ -26,8 +26,9 @@ import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/p
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
-import { enlazarArchivo } from './files.handlers';
+import { enlazarArchivo, pdfMinimo } from './files.handlers';
 import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
+import { representaA } from './profiles.handlers';
 
 /* ============================================================================
     Expediente clínico: resumen, gráfico (notas, planes, documentos), y las
@@ -39,6 +40,8 @@ function puedeLeer(request: MockRequest, patientProfileId: string): boolean {
   if (user === null) return false;
   if (user.roles.includes('SUPERADMIN')) return true;
   if (user.patientProfileId === patientProfileId) return true;
+  // Y quien lo representa (B.1): la historia de un menor la lee su tutor.
+  if (representaA(user.patientProfileId, patientProfileId)) return true;
   return user.practitionerProfileId !== undefined || user.roles.includes('SECURITY_ADMIN');
 }
 
@@ -331,6 +334,55 @@ export function registrarClinica(router: MockRouter): void {
     return registroReceta(recetas.actualizar(r.id, { issuedAt: ahora(), statusConceptId: ESTADO_RECETA['RX-ACTIVE']! })!);
   });
 
+  /**
+   * `GET /clinical/prescriptions/:id/pdf` — el PDF oficial de la receta (B.3).
+   *
+   * Reusa `pdfMinimo` (mismo generador que ya sirve `/download-url`): alcanza
+   * para que el botón del portal descargue un archivo `%PDF` de verdad y
+   * ejercite el camino completo (blob autenticado → `data:` URL → guardado),
+   * que es lo que el barrido de Playwright del mock puede comprobar.
+   */
+  router.get('/clinical/prescriptions/:id/pdf', (request) => {
+    const r = recetas.get(request.params['id']!);
+    if (r === undefined) return notFound('Receta no encontrada');
+    if (!puedeLeer(request, r.patientProfileId)) return forbidden();
+
+    const esOficial = r.issuedAt !== null;
+    const texto = esOficial
+      ? `Receta oficial ${r.id}`
+      : `Copia de trabajo ${r.id} - sin validez farmaceutica`;
+    return {
+      status: 200,
+      body: new Blob([pdfMinimo(texto)], { type: 'application/pdf' }),
+      headers: {
+        'Content-Disposition': `attachment; filename*=UTF-8''receta-${r.id}.pdf`,
+        'Cache-Control': 'private, no-store',
+      },
+    };
+  });
+
+  /**
+   * `GET /public/prescriptions/:id/verify` — verificación pública, sin PHI
+   * (B.3). La maqueta no modela matrícula/jurisdicción, así que
+   * `prescriberLicense` viaja `null`; el contrato real se ejercita contra la
+   * API viva en `clinical-prescriptions-pdf.int-spec.ts` del backend.
+   */
+  router.get('/public/prescriptions/:id/verify', ({ params }) => {
+    const r = recetas.get(params['id']!);
+    if (r === undefined) return notFound('Receta no encontrada');
+    return {
+      status: 200,
+      body: {
+        id: r.id,
+        status: r.issuedAt !== null ? 'ISSUED' : 'DRAFT',
+        issuedAt: r.issuedAt,
+        contentHash: r.issuedAt !== null ? uuid(`sello-${r.id}`).replace(/-/g, '') : null,
+        prescriberLicense: null,
+      },
+      headers: { 'Cache-Control': 'no-store' },
+    };
+  });
+
   router.post('/clinical/conditions', (request) => {
     const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; encounterId?: string; categoryConceptId?: string; severityConceptId?: string; lateralityConceptId?: string; clinicalCourseConceptId?: string; onsetAt?: string; expectedResolutionAt?: string; noteText?: string }>(request);
     const nueva: CondicionSimulada = {
@@ -594,13 +646,13 @@ export function registrarClinica(router: MockRouter): void {
 
   router.get('/charts/templates', ({ query }) => {
     const esp = query.get('specialtyConceptId');
-    return PLANTILLAS_DE_EXPEDIENTE.filter((t) => esp === null || esp === '' || t.specialtyConceptId === esp);
+    return plantillasVigentes().filter((t) => esp === null || esp === '' || t.specialtyConceptId === esp);
   });
-  router.get('/charts/templates/:id', ({ params }) => PLANTILLAS_DE_EXPEDIENTE.find((t) => t.id === params['id']) ?? notFound('Plantilla no encontrada'));
+  router.get('/charts/templates/:id', ({ params }) => plantillasVigentes().find((t) => t.id === params['id']) ?? notFound('Plantilla no encontrada'));
   router.post('/charts/templates', (request) => {
     const datos = cuerpo<{ specialtyConceptId: string; code: string; name: string; fields: { code: string; name: string; dataType: string; required?: boolean }[] }>(request);
     const nueva = plantilla(datos.code ?? 'NUEVA', datos.name ?? 'Plantilla nueva', datos.specialtyConceptId ?? '', (datos.fields ?? []).map((f) => [f.code, f.name, f.dataType, f.required ?? false] as const));
-    PLANTILLAS_DE_EXPEDIENTE.push(nueva);
+    PLANTILLAS_CREADAS.push(nueva);
     return { status: 201, body: nueva };
   });
   router.post('/charts/templates/:id/assignments', (request) => {
@@ -661,6 +713,28 @@ export const PLANTILLAS_DE_EXPEDIENTE = FICHAS_ESTANDAR.map((ficha) =>
     ficha.provenance,
   ),
 );
+
+/**
+ * Las plantillas que alguien creó por `POST /charts/templates` durante la
+ * sesión.
+ *
+ * Van aparte de {@link PLANTILLAS_DE_EXPEDIENTE} y no empujadas dentro, porque
+ * ese arreglo **es el fixture** —«las 43 fichas estándar»— y hay una prueba que
+ * lo afirma contando. Empujar ahí convertía una creación del simulador en
+ * estado que sobrevive al archivo de prueba que la hizo: los specs de un mismo
+ * worker comparten la instancia del módulo, así que `fichas-estandar.spec.ts`
+ * veía 51 fichas estándar donde hay 43 — y sólo cuando el reparto del pool
+ * ponía antes al spec que crea. Un rojo que no se reproduce aislado.
+ */
+const PLANTILLAS_CREADAS: ReturnType<typeof plantilla>[] = [];
+
+/**
+ * El catálogo que sirve la API simulada: el estándar más lo creado en la
+ * sesión. Es lo que leen todas las rutas; el fixture queda intacto.
+ */
+export function plantillasVigentes(): readonly ReturnType<typeof plantilla>[] {
+  return [...PLANTILLAS_DE_EXPEDIENTE, ...PLANTILLAS_CREADAS];
+}
 
 function registroReceta(r: RecetaSimulada) {
   return { id: r.id, patientProfileId: r.patientProfileId, status: r.statusConceptId === ESTADO_RECETA['RX-DRAFT'] ? 'DRAFT' : 'ACTIVE', replacesRequestId: null, replacedByRequestId: null, renewedFromRequestId: null, signedAt: r.signedAt, createdAt: r.createdAt };

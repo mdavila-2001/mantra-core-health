@@ -1,3 +1,5 @@
+import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
+
 /* ============================================================================
     Tipos de la vista para el circuito diagnóstico: `diagnostics` (M20) y la
     orden de servicio de `clinical` (M08).
@@ -219,7 +221,7 @@ export interface PatientDiagnosticResults {
  * `hasReleasedResult` lo decide el servidor y no se recalcula acá: que exista un
  * informe no quiere decir que haya un resultado que esta persona pueda leer.
  */
-export interface PatientOrder {
+export interface PatientOrder extends PatientSettlementFields {
   readonly id: string;
   readonly encounterId?: string;
   readonly codeConceptId: string;

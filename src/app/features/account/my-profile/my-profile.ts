@@ -1,3 +1,4 @@
+import { PatientCoverageCard } from '../../../shared/components/molecules/patient-coverage-card/patient-coverage-card';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
@@ -105,6 +106,7 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
 @Component({
   selector: 'app-my-profile',
   imports: [
+    PatientCoverageCard,
     FileDropTarget,
     Alert,
     AppButton,

@@ -1,0 +1,62 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.settlement {
+  margin-block: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+  overflow-wrap: anywhere;
+}
+h3,
+h4,
+p {
+  margin: 0;
+}
+h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+}
+h4 {
+  margin-block-start: var(--sp-4);
+  font-size: var(--fs-body);
+}
+.settlement__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-block: var(--sp-2);
+}
+.settlement__reference,
+.settlement__note {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+.settlement__amounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: var(--sp-3);
+  margin-block: var(--sp-4);
+}
+dt {
+  color: var(--text-secondary);
+}
+dd {
+  margin: var(--sp-1) 0 0;
+  font-weight: 600;
+}
+.settlement__patient dd {
+  font-size: var(--fs-h3);
+}
+.settlement__exclusions {
+  display: grid;
+  gap: var(--sp-4);
+  padding-inline-start: var(--sp-4);
+}
+.settlement__clause {
+  white-space: pre-wrap;
+  margin-block-start: var(--sp-2);
+}

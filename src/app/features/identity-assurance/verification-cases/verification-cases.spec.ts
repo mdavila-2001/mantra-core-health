@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { FileDownloader } from '../../../core/data-access/files/file-downloader';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { ESTADOS_DE_CASO, resolverEstadosDeCaso } from '../../../../testing/case-status';
 import { VerificationCases } from './verification-cases';
@@ -58,6 +59,21 @@ describe('VerificationCases', () => {
 
   function recargar(): void {
     (component as unknown as { cargar: () => void }).cargar.bind(component)();
+  }
+
+  /**
+   * El nombre con el que se ofrece guardar el archivo (5.2).
+   *
+   * Devuelve una promesa que se resuelve cuando `FileDownloader.trigger` se
+   * llama de verdad. Hace falta porque el contenido pasa por `FileReader`, que
+   * no es una tarea de la zona de Angular: `whenStable()` vuelve antes.
+   */
+  function nombreOfrecido(): Promise<string> {
+    return new Promise<string>((resolve) => {
+      TestBed.inject(FileDownloader).trigger = (_dataUrl: string, nombre: string) => {
+        resolve(nombre);
+      };
+    });
   }
 
   it('pide los casos propios al montarse y traduce el estado a palabras', () => {
@@ -177,6 +193,93 @@ describe('VerificationCases', () => {
     req.flush(new Blob(['x'], { type: 'text/plain' }));
 
     expect(componente.errorDeDescarga()).toBeNull();
+  });
+
+  /**
+   * 5.2 · el archivo se guarda con **su** nombre.
+   *
+   * Antes se ofrecía como `evidencia-<idDelCaso>`, sin extensión: el sistema
+   * operativo lo recibía como tipo desconocido. El nombre real ya venía en
+   * `Content-Disposition` de esa misma respuesta; ahora se usa.
+   */
+  it('5.2: guarda la evidencia con el nombre real que trae la respuesta', async () => {
+    // `blobToDataUrl` decodifica con `FileReader`, que no es una tarea de la
+    // zona de Angular: `whenStable()` vuelve antes de que el archivo esté
+    // listo. Se espera al efecto de verdad —que se ofrezca el archivo— en vez
+    // de a un momento del framework que no lo incluye.
+    const guardado = nombreOfrecido();
+
+    http
+      .expectOne('/identity/me/verification-cases')
+      .flush([{ id: 'caso-9', status: CASE_VERIFIED, evidenceFileId: 'file-7' }]);
+    fixture.detectChanges();
+
+    const listo = estado();
+    if (listo.status !== 'ready') return;
+    const componente = component as unknown as {
+      descargarEvidencia: (fila: unknown) => void;
+    };
+    componente.descargarEvidencia(listo.data[0]);
+
+    http
+      .expectOne('/common/files/file-7/content')
+      .flush(new Blob([new Uint8Array([1, 2])], { type: 'application/pdf' }), {
+        headers: {
+          'Content-Disposition': "attachment; filename*=UTF-8''c%C3%A9dula.pdf",
+        },
+      });
+
+    await expect(guardado).resolves.toBe('cédula.pdf');
+  });
+
+  /**
+   * Y cuando el nombre no viene —`original_name` es nullable— se conserva el de
+   * antes. No se inventa uno: el fallback es explícito y estable.
+   */
+  it('5.2: sin Content-Disposition conserva el nombre de reserva', async () => {
+    const guardado = nombreOfrecido();
+
+    http
+      .expectOne('/identity/me/verification-cases')
+      .flush([{ id: 'caso-9', status: CASE_VERIFIED, evidenceFileId: 'file-7' }]);
+    fixture.detectChanges();
+
+    const listo = estado();
+    if (listo.status !== 'ready') return;
+    const componente = component as unknown as {
+      descargarEvidencia: (fila: unknown) => void;
+    };
+    componente.descargarEvidencia(listo.data[0]);
+
+    http
+      .expectOne('/common/files/file-7/content')
+      .flush(new Blob([new Uint8Array([1])], { type: 'application/pdf' }));
+
+    await expect(guardado).resolves.toBe('evidencia-caso-9');
+  });
+
+  /**
+   * 5.2 · ver antes de bajar. El panel se abre y se cierra, y **una sola fila a
+   * la vez**: dos PDF rasterizando en paralelo es trabajo que nadie pidió.
+   */
+  it('5.2: la vista previa se abre y se cierra por fila', () => {
+    http
+      .expectOne('/identity/me/verification-cases')
+      .flush([{ id: 'caso-9', status: CASE_VERIFIED, evidenceFileId: 'file-7' }]);
+    fixture.detectChanges();
+
+    const listo = estado();
+    if (listo.status !== 'ready') return;
+    const componente = component as unknown as {
+      alternarVistaPrevia: (fila: unknown) => void;
+      previsualizando: () => string | null;
+    };
+
+    expect(componente.previsualizando()).toBeNull();
+    componente.alternarVistaPrevia(listo.data[0]);
+    expect(componente.previsualizando()).toBe('caso-9');
+    componente.alternarVistaPrevia(listo.data[0]);
+    expect(componente.previsualizando()).toBeNull();
   });
 
   it('FT-32-R02: si la evidencia falla, lo dice y no queda cargando', () => {

@@ -15,7 +15,7 @@ const SEDE: PracticeSite = {
   latitude: null,
   longitude: null,
   status: 'c-activo',
-  esPropio: true,
+  isOwnSite: true,
 };
 
 const CONTENIDO = '/common/files/file-qr/content';

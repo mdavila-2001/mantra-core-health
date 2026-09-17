@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
@@ -13,22 +13,31 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { DynamicEnumOption } from '../../../core/data-access/system-context/system-context.types';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { Input } from '../../../shared/components/atoms/input/input';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { Accordion, AccordionPanel, FormField } from '../../../shared/components/molecules';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
 import type {
   PdfUploader,
   UploadedDocument,
 } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
+import {
+  PhoneInput,
+  telefonoCompleto,
+} from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
+import { mensajeDeError } from '../../../shared/forms/paginated/mensaje-de-error';
 import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import {
   camposDeDocumentosLegales,
+  campoDelPoderNotariado,
   DOCUMENTOS_LEGALES_DEL_REGISTRO,
-  type ClaveDeDocumentoLegal,
+  type ClaveDeDocumentoDelAlta,
 } from '../registro-compartido/documentos-legales';
 import {
   UbicacionPicker,
@@ -50,8 +59,41 @@ const MAX_NIT = 100;
 const MAX_SIGLA = 20;
 const MAX_DIRECCION = 300;
 
+/** Largos del representante legal y las gerencias (subtarea 1.4), iguales a los del DTO del backend. */
+const MIN_NOMBRE_CONTACTO = 3;
+const MAX_NOMBRE_CONTACTO = 200;
+const MIN_CI_REPRESENTANTE = 4;
+const MAX_CI_REPRESENTANTE = 50;
+const MAX_CORREO = 320;
+
 /** Mismo patrón que el DTO del backend para el código único del tenant. */
 const CODIGO_VALIDO = /^[A-Za-z0-9._-]+$/;
+
+/** Los tres campos de una gerencia de contacto (subtarea 1.4): nombre, celular, correo. */
+function grupoDeGerente(): FormGroup<{
+  fullName: FormControl<string>;
+  phone: FormControl<string>;
+  email: FormControl<string>;
+}> {
+  return new FormGroup({
+    fullName: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.minLength(MIN_NOMBRE_CONTACTO),
+        Validators.maxLength(MAX_NOMBRE_CONTACTO),
+      ],
+    }),
+    phone: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, telefonoCompleto],
+    }),
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
+    }),
+  });
+}
 
 /**
  * Registro público de una organización aseguradora
@@ -106,6 +148,16 @@ const CODIGO_VALIDO = /^[A-Za-z0-9._-]+$/;
     NgTemplateOutlet,
     DropzonePdf,
     UbicacionPicker,
+    // Representante legal y gerencias (subtarea 1.4): el acordeón se declara
+    // fuera del `[formGroup]` del motor (como los demás `ng-template` de
+    // `appCampoPersonalizado`), así que sus controles se enchufan con
+    // `[formControl]` y no con `formControlName` — de ahí `ReactiveFormsModule`.
+    ReactiveFormsModule,
+    Accordion,
+    AccordionPanel,
+    FormField,
+    Input,
+    PhoneInput,
   ],
   templateUrl: './register-organization.html',
   styleUrl: './register-organization.css',
@@ -191,6 +243,47 @@ export class RegisterOrganization {
     healthAuthorityCertificateFileId: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
+    }),
+    // Representante legal (subtarea 1.4). El teléfono es el único opcional:
+    // el registro de procesos no lo pide, y `telefonoCompleto` deja pasar la
+    // cadena vacía (ver su JSDoc).
+    legalRepresentativeFullName: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.minLength(MIN_NOMBRE_CONTACTO),
+        Validators.maxLength(MAX_NOMBRE_CONTACTO),
+      ],
+    }),
+    legalRepresentativeIdNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.minLength(MIN_CI_REPRESENTANTE),
+        Validators.maxLength(MAX_CI_REPRESENTANTE),
+      ],
+    }),
+    legalRepresentativeEmail: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
+    }),
+    legalRepresentativePhone: new FormControl('', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
+    powerOfAttorneyFileId: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    // Las tres gerencias de contacto (subtarea 1.4), como un único grupo
+    // anidado: es lo que le permite al motor bloquear «Siguiente» y saltar a
+    // esta página cuando algo falta (`form.get('executives')` existe y es
+    // inválido), cosa que 9 controles sueltos con un campo `custom` sin
+    // `FormControl` homónimo no lograrían — ver `paginaEsValida` del motor.
+    executives: new FormGroup({
+      generalManager: grupoDeGerente(),
+      commercialManager: grupoDeGerente(),
+      marketingManager: grupoDeGerente(),
     }),
     // Datos del owner. El nombre va en sus cuatro partes, igual que en el
     // resto de las altas: el backend compone con ellas el nombre que muestra.
@@ -370,6 +463,65 @@ export class RegisterOrganization {
         campos: camposDeDocumentosLegales(this.incorporationCountryElegido(), uiLanguage()),
       },
       {
+        titulo: 'Representante legal',
+        clave: 'legal-representative',
+        hint: 'Quien está facultado para firmar en nombre de la aseguradora.',
+        campos: [
+          {
+            key: 'legalRepresentativeFullName',
+            label: 'Nombre completo del representante legal',
+            control: 'text' as const,
+            required: true,
+            testId: 'registro-organizacion-representante-nombre',
+            mensajeDeError: 'Escribí el nombre del representante legal.',
+          },
+          {
+            key: 'legalRepresentativeIdNumber',
+            label: 'Cédula de identidad',
+            hint: 'Como figura en el carnet, con su extensión. Ej. 4872190 SC',
+            control: 'text' as const,
+            required: true,
+            testId: 'registro-organizacion-representante-ci',
+            mensajeDeError: 'Escribí el número de cédula.',
+          },
+          {
+            key: 'legalRepresentativeEmail',
+            label: 'Correo oficial de notificaciones',
+            control: 'email' as const,
+            required: true,
+            testId: 'registro-organizacion-representante-correo',
+            mensajeDeError: 'Ingresá un correo válido.',
+          },
+          {
+            key: 'legalRepresentativePhone',
+            label: 'Teléfono de contacto (opcional)',
+            control: 'tel' as const,
+            testId: 'registro-organizacion-representante-telefono',
+            mensajeDeError: 'Completá el número.',
+          },
+          campoDelPoderNotariado(this.incorporationCountryElegido(), uiLanguage()),
+        ],
+      },
+      {
+        titulo: 'Directorio ejecutivo',
+        clave: 'executives',
+        hint: 'Contactos para convenios, conciliaciones y soporte de siniestros.',
+        campos: [
+          {
+            // Sin rótulo a propósito: el `app-form-field` externo de un
+            // campo `custom` pintaría un `<label for>` hacia un control que
+            // no existe (nadie reclama `FORM_CONTROL_CONTEXT` acá), y el
+            // título de la página más el encabezado de cada gerencia ya
+            // dicen de qué se trata cada cosa.
+            key: 'executives',
+            label: '',
+            control: 'custom' as const,
+            ancho: 'completo' as const,
+            mensajeDeError: 'Completá nombre, celular y correo de las tres gerencias.',
+          },
+        ],
+      },
+      {
         titulo: 'Tu cuenta',
         hint: 'Quien administra la aseguradora en la plataforma.',
         campos: [
@@ -538,11 +690,11 @@ export class RegisterOrganization {
    * Ver el JSDoc de `documentoInicial` en `DropzonePdf`.
    */
   protected readonly documentosSubidos = signal<
-    Partial<Record<ClaveDeDocumentoLegal, UploadedDocument>>
+    Partial<Record<ClaveDeDocumentoDelAlta, UploadedDocument>>
   >({});
 
   /** Guarda el `fileId` que la dropzone recordó, en el control que le corresponde. */
-  protected registrarDocumento(clave: ClaveDeDocumentoLegal, fileId: string | null): void {
+  protected registrarDocumento(clave: ClaveDeDocumentoDelAlta, fileId: string | null): void {
     const control = this.form.controls[clave];
     control.setValue(fileId ?? '');
     control.markAsTouched();
@@ -556,7 +708,7 @@ export class RegisterOrganization {
   }
 
   /** Recuerda el documento recién subido para poder restaurarlo tras ir y volver. */
-  protected recordarDocumento(clave: ClaveDeDocumentoLegal, documento: UploadedDocument): void {
+  protected recordarDocumento(clave: ClaveDeDocumentoDelAlta, documento: UploadedDocument): void {
     this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
   }
 
@@ -568,22 +720,117 @@ export class RegisterOrganization {
    * contexto para un `ng-template` sin directiva propia), y TypeScript no
    * deja indexar un `Record` con una clave `any` bajo `noImplicitAny`.
    */
-  protected documentoInicialDe(clave: ClaveDeDocumentoLegal): UploadedDocument | null {
+  protected documentoInicialDe(clave: ClaveDeDocumentoDelAlta): UploadedDocument | null {
     return this.documentosSubidos()[clave] ?? null;
   }
 
   /** Si ese documento está tocado y vacío/incompleto — mismo criterio que el resto de los campos. */
-  protected esDocumentoInvalido(clave: ClaveDeDocumentoLegal): boolean {
+  protected esDocumentoInvalido(clave: ClaveDeDocumentoDelAlta): boolean {
     const control = this.form.controls[clave];
     return control.touched && control.invalid;
   }
 
   /** El rótulo ya traducido del documento, para pasárselo a su dropzone. */
-  protected etiquetaDeDocumento(clave: ClaveDeDocumentoLegal): string {
+  protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
     const campo = this.paginas()
       .flatMap((pagina) => pagina.campos)
       .find((c) => c.key === clave);
     return campo?.label ?? '';
+  }
+
+  /** Las tres gerencias del acordeón (subtarea 1.4), en el orden del registro de procesos. */
+  protected readonly gerencias: readonly {
+    readonly key: 'generalManager' | 'commercialManager' | 'marketingManager';
+    readonly heading: string;
+    readonly testId: string;
+    readonly expanded: ReturnType<typeof signal<boolean>>;
+  }[] = [
+    {
+      key: 'generalManager',
+      heading: '1. Gerente General',
+      testId: 'general-manager',
+      // Abierta por defecto: es la primera que se completa, y un acordeón que
+      // arranca con las tres plegadas obligaría a un clic antes de escribir
+      // nada.
+      expanded: signal(true),
+    },
+    {
+      key: 'commercialManager',
+      heading: '2. Gerente Comercial',
+      testId: 'commercial-manager',
+      expanded: signal(false),
+    },
+    {
+      key: 'marketingManager',
+      heading: '3. Gerente de Marketing',
+      testId: 'marketing-manager',
+      expanded: signal(false),
+    },
+  ];
+
+  /** Los tres campos de cada gerencia, iguales para las tres. */
+  protected readonly camposDeGerencia: readonly {
+    readonly key: 'fullName' | 'phone' | 'email';
+    readonly label: string;
+    readonly hint?: string;
+    readonly control: 'text' | 'tel' | 'email';
+    readonly autocomplete?: string;
+  }[] = [
+    { key: 'fullName', label: 'Nombre completo', control: 'text', autocomplete: 'name' },
+    {
+      key: 'phone',
+      label: 'Celular',
+      hint: 'Con WhatsApp activo.',
+      control: 'tel',
+      autocomplete: 'tel',
+    },
+    { key: 'email', label: 'Correo corporativo', control: 'email', autocomplete: 'email' },
+  ];
+
+  /**
+   * El `FormControl` de un campo de una gerencia, dentro del grupo `executives`.
+   *
+   * Tipado como `FormControl` y no como `AbstractControl`: `[formControl]`
+   * (`FormControlDirective`) exige el tipo concreto, y el grupo anidado sólo
+   * contiene `FormControl`s (nunca otro `FormGroup`).
+   */
+  protected controlDeGerencia(
+    gerenciaKey: 'generalManager' | 'commercialManager' | 'marketingManager',
+    campoKey: 'fullName' | 'phone' | 'email',
+  ): FormControl<string> {
+    return this.form.controls.executives.controls[gerenciaKey].controls[campoKey];
+  }
+
+  /** Reusa los mismos textos de error que el resto del alta. */
+  protected errorDeGerencia(
+    gerenciaKey: 'generalManager' | 'commercialManager' | 'marketingManager',
+    campo: { readonly key: 'fullName' | 'phone' | 'email'; readonly label: string },
+  ): string {
+    return mensajeDeError(this.controlDeGerencia(gerenciaKey, campo.key), {
+      label: campo.label,
+      mensajeDeError: campo.key === 'phone' ? 'Completá el número.' : undefined,
+    });
+  }
+
+  /**
+   * Marca y despliega el acordeón cuando el motor bloquea «Siguiente» en la
+   * página `executives` (salida `rechazada` del motor, subtarea 1.4).
+   *
+   * Hace falta porque el motor sólo marca **al grupo** (`markAsTouched`), no
+   * a sus hijos, y el `blur` del primer campo ya dejó tocado al grupo, así
+   * que un segundo `markAsTouched` del motor no dispara nada nuevo — de ahí
+   * que esto viva acá y no escuchando el propio `FormGroup`.
+   */
+  protected alRechazarPagina(pagina: PaginaDeFormulario): void {
+    if (pagina.clave !== 'executives') return;
+
+    const grupo = this.form.controls.executives;
+    grupo.markAllAsTouched();
+    for (const gerencia of this.gerencias) {
+      if (grupo.controls[gerencia.key].invalid) {
+        gerencia.expanded.set(true);
+      }
+    }
   }
 
   submit(): void {
@@ -626,6 +873,12 @@ export class RegisterOrganization {
     const segundoNombre = raw.middleName.trim();
     const apellidoMaterno = raw.motherLastName.trim();
     const casaMatriz = this.gpsCasaMatriz();
+    const telefonoRepresentante = raw.legalRepresentativePhone.trim();
+    const gerente = (g: { fullName: string; phone: string; email: string }) => ({
+      fullName: g.fullName.trim(),
+      phone: g.phone.trim(),
+      email: g.email.trim(),
+    });
 
     return {
       code: raw.code.trim(),
@@ -656,6 +909,20 @@ export class RegisterOrganization {
         commerceRegistryFileId: raw.commerceRegistryFileId,
         operatingLicenseFileId: raw.operatingLicenseFileId,
         healthAuthorityCertificateFileId: raw.healthAuthorityCertificateFileId,
+      },
+      // Representante legal y gerencias (subtarea 1.4): al nivel de
+      // `organization`, nunca dentro de `payer` — ver el JSDoc de la clase.
+      legalRepresentative: {
+        fullName: raw.legalRepresentativeFullName.trim(),
+        idNumber: raw.legalRepresentativeIdNumber.trim(),
+        email: raw.legalRepresentativeEmail.trim(),
+        ...(telefonoRepresentante === '' ? {} : { phone: telefonoRepresentante }),
+        powerOfAttorneyFileId: raw.powerOfAttorneyFileId,
+      },
+      executives: {
+        generalManager: gerente(raw.executives.generalManager),
+        commercialManager: gerente(raw.executives.commercialManager),
+        marketingManager: gerente(raw.executives.marketingManager),
       },
     };
   }

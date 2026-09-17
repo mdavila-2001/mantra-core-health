@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { normalizePatientSettlement } from '../insurance/patient-insurance-settlement.types';
 import type {
   DiagnosticOrder,
   DiagnosticOrderCreated,
@@ -417,7 +418,7 @@ function toPatientResult({
 }
 
 function toPatientOrder({ createdAt, ...resto }: WirePatientOrder): PatientOrder {
-  return { ...resto, createdAt: new Date(createdAt) };
+  return { ...resto, ...normalizePatientSettlement(resto), createdAt: new Date(createdAt) };
 }
 
 function toShare({ validFrom, validTo, ...resto }: WireShare): DiagnosticResultShare {

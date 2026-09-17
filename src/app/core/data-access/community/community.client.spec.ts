@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 
 import { CommunityClient } from './community.client';
 import type {
@@ -42,6 +43,23 @@ describe('CommunityClient', () => {
 
     client = TestBed.inject(CommunityClient);
     http = TestBed.inject(HttpTestingController);
+  });
+
+  it('descarga el adjunto por conversación y perfil, no por common/files', async () => {
+    const result = firstValueFrom(
+      client.conversationAttachmentDataUrl('conv-1', 'profile-1', 'file-1'),
+    );
+    const req = http.expectOne(
+      (request) =>
+        request.url ===
+        '/community/conversations/conv-1/attachments/file-1/content',
+    );
+    expect(req.request.params.get('profileId')).toBe('profile-1');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['contenido'], { type: 'text/plain' }));
+
+    await expect(result).resolves.toMatch(/^data:text\/plain;base64,/);
+    http.expectNone((request) => request.url.includes('/common/files/'));
   });
 
   afterEach(() => http.verify());

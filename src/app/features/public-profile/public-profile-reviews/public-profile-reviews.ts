@@ -1,197 +1,216 @@
-/* ============================================================================
-    Las opiniones de una ficha pública, y quiénes dieron estrellas.
-
-    ## Qué reemplaza
-
-    El «★ 4,9 (8)» de la cabecera era texto: decía cuántas opiniones había y no
-    dejaba leer ninguna. La pregunta que ese número produce —«¿qué dijeron?,
-    ¿quiénes?»— no tenía respuesta en la ficha pública.
-
-    ## Dos pestañas, una sola lectura
-
-    «Opiniones» son las que traen texto; «Quiénes dieron estrellas» es **todos**
-    los que calificaron, con o sin texto, y cuántas estrellas puso cada uno.
-    Salen de la misma lectura: una persona que sólo dio estrellas también
-    calificó, y esconderla haría que la lista no sumara el número de la cabecera.
-
-    `organisms/content-dialog` pone el `<dialog>` nativo —fondo, trampa de foco,
-    Escape, vuelta del foco— y esto pone el contenido.
-    ========================================================================== */
-
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
   input,
-  output,
   signal,
   type OnInit,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { EMPTY, expand, reduce } from 'rxjs';
+import { DatePipe } from '@angular/common';
 
+import { AuthService } from '@core/auth/auth.service';
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
-import {
-  PUBLIC_PROFILE_PREFIX,
-  type PublicProfileDetail,
-  type PublicProfileReview,
+import type {
+  PublicProfileDetail,
+  PublicProfileReview,
 } from '@core/data-access/public-directory/public-directory.types';
-import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
-import { inicialesDe } from '@shared/text/iniciales';
+import { errorToViewState } from '@core/http/error-to-view-state';
+import { loading, ready } from '@core/view-state/view-state';
+import type { ViewState } from '@core/view-state/view-state.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { RateEncounterDialog } from '../rate-encounter-dialog/rate-encounter-dialog';
 
-import { PublicProfilePager } from '../public-profile-pager/public-profile-pager';
+/** Cuántas opiniones se traen por página. */
+const POR_PAGINA = 10;
 
-export type PestanaDeOpiniones = 'opiniones' | 'estrellas';
+/** El máximo de estrellas, para dibujar las vacías y para el texto accesible. */
+const ESTRELLAS = 5;
 
-type EstadoLista = 'carga' | 'datos' | 'error';
-
-/** Cuántas opiniones entran en una página del modal. */
-export const OPINIONES_POR_PAGINA = 5;
-
-/** Cuántas trae cada pedido al servidor; se piden todas las páginas seguidas. */
-const LOTE = 50;
-
+/**
+ * Las **opiniones** de una ficha pública (P31).
+ *
+ * ## Por qué es un componente y no un bloque más de la tarjeta
+ *
+ * La tarjeta de la ficha (`app-public-profile-card`) la comparten la ficha
+ * pública y la vista previa de «Tu perfil público». Las opiniones se piden en
+ * una segunda llamada y se paginan, así que meterlas ahí obligaría a la vista
+ * previa a hacer un viaje que no necesita — y a alguien a mirar sus propias
+ * opiniones desde el editor de su perfil, que no es la pantalla donde se leen.
+ *
+ * ## El promedio no se calcula acá
+ *
+ * Viene con la página y es el del **perfil**, no el de lo que se está
+ * mirando. Promediar `items` daría un número que cambia al pulsar «Ver más»,
+ * y el visitante leería dos valores distintos para la misma pregunta en la
+ * misma pantalla.
+ *
+ * ## Quién firma
+ *
+ * `reviewerDisplayName` en `null` significa que el autor **eligió** publicar
+ * como anónimo, no que falte el dato: la pantalla lo dice con palabras
+ * («Paciente verificado») y nunca deja un hueco. El backend ni siquiera pide
+ * el nombre de quien eligió el anonimato.
+ */
 @Component({
   selector: 'app-public-profile-reviews',
-  imports: [ContentDialog, DatePipe, NgTemplateOutlet, PublicProfilePager, RouterLink],
+  imports: [AppButton, Alert, DatePipe, RateEncounterDialog],
   templateUrl: './public-profile-reviews.html',
   styleUrl: './public-profile-reviews.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublicProfileReviews implements OnInit {
   private readonly directorio = inject(PublicDirectoryClient);
+  private readonly auth = inject(AuthService);
 
+  /** Qué clase de sujeto es. Fija el prefijo de la ruta pública. */
   readonly kind = input.required<PublicProfileDetail['kind']>();
-  readonly slug = input.required<string>();
-  readonly displayName = input.required<string>();
-  /** El promedio de la cabecera, como número; `null` si nadie calificó. */
-  readonly promedio = input<number | null>(null);
-  /** Con qué pestaña se abre: «8 opiniones» abre una, la estrella la otra. */
-  readonly pestanaInicial = input<PestanaDeOpiniones>('opiniones');
 
-  readonly cerrado = output<void>();
+  /** El slug de la ficha, tal como está en la URL. */
+  readonly slug = input.required<string>();
+
+  /** Cómo se llama a quien se califica, para el texto del diálogo. */
+  readonly professionalName = input.required<string>();
+
+  protected readonly estado = signal<ViewState<null>>(ready(null));
+  protected readonly opiniones = signal<readonly PublicProfileReview[]>([]);
+  protected readonly promedio = signal<number | null>(null);
+  protected readonly total = signal(0);
+  private readonly cursor = signal<string | null>(null);
+
+  /** Si quedan más por traer. */
+  protected readonly hayMas = computed(() => this.cursor() !== null);
+
+  protected readonly cargando = computed(() => this.estado().status === 'loading');
+
+  /** El fallo de la carga, en palabras, o `null` si no hubo. */
+  protected readonly error = computed<string | null>(() => {
+    const estado = this.estado();
+    if (estado.status === 'offline') {
+      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    }
+    if (estado.status === 'error') {
+      return 'No pudimos traer las opiniones.';
+    }
+    return null;
+  });
 
   /**
-   * La pestaña elegida. Arranca en `null` y cae a {@link pestanaInicial}: un
-   * `linkedSignal` no se recalcula en TestBed en este repo (ver la nota de
-   * memoria del equipo), y esto hace lo mismo sin depender de él.
+   * El promedio con una decimal y coma, como se escribe acá.
+   *
+   * `null` cuando nadie calificó: la plantilla dice «Sin calificaciones», que
+   * no es lo mismo que un cero.
    */
-  private readonly elegida = signal<PestanaDeOpiniones | null>(null);
-  protected readonly pestana = computed(() => this.elegida() ?? this.pestanaInicial());
-
-  protected readonly todas = signal<readonly PublicProfileReview[]>([]);
-  protected readonly cargando = signal(true);
-  protected readonly fallo = signal(false);
-  protected readonly paginaOpiniones = signal(0);
-  protected readonly paginaEstrellas = signal(0);
-  protected readonly porPagina = OPINIONES_POR_PAGINA;
-  protected readonly cincoEstrellas = [1, 2, 3, 4, 5] as const;
-
-  protected readonly estado = computed<EstadoLista>(() => {
-    if (this.fallo()) return 'error';
-    return this.cargando() ? 'carga' : 'datos';
-  });
-
-  /** Las que traen texto: lo que se lee en «Opiniones». */
-  protected readonly conTexto = computed(() => this.todas().filter((o) => o.text !== null));
-
-  protected readonly titulo = computed(() => `Opiniones sobre ${this.displayName()}`);
-
-  /** El promedio con coma decimal, como se lee en castellano. */
-  protected readonly promedioTexto = computed(() => {
+  protected readonly promedioTexto = computed<string | null>(() => {
     const media = this.promedio();
-    return media === null ? '—' : media.toFixed(1).replace('.', ',');
+    return media === null ? null : media.toFixed(1).replace('.', ',');
   });
 
-  /** Cuántas personas dieron 5, 4, 3, 2 y 1 estrellas, con su proporción. */
-  protected readonly distribucion = computed(() => {
-    const todas = this.todas();
-    return [5, 4, 3, 2, 1].map((estrellas) => {
-      const cuantas = todas.filter((o) => o.rating === estrellas).length;
-      return {
-        estrellas,
-        cuantas,
-        porcentaje: todas.length === 0 ? 0 : Math.round((cuantas / todas.length) * 100),
-      };
-    });
-  });
-
-  protected readonly visiblesOpiniones = computed(() =>
-    this.recorte(this.conTexto(), this.paginaOpiniones()),
+  /**
+   * Si quien mira puede calificar: una sesión con perfil de paciente.
+   *
+   * No comprueba que se haya atendido con ESTE profesional —eso lo sabe el
+   * servidor, y averiguarlo acá exigiría cruzar sus atenciones con una ficha
+   * pública que a propósito no publica a quién representa—. Ofrecerlo y que
+   * el servidor explique por qué no, cuando no corresponde, es mejor que
+   * esconder el camino a quien sí puede.
+   */
+  protected readonly puedeCalificar = computed(
+    () => this.auth.patientProfileId() !== null,
   );
 
-  protected readonly visiblesEstrellas = computed(() =>
-    this.recorte(this.todas(), this.paginaEstrellas()),
-  );
+  /** Si el diálogo de calificar está abierto. */
+  protected readonly calificando = signal(false);
 
-  /** `input.required` no tiene valor en el constructor: la lectura va acá. */
+  protected abrirCalificacion(): void {
+    this.calificando.set(true);
+  }
+
+  protected cerrarCalificacion(): void {
+    this.calificando.set(false);
+  }
+
+  /**
+   * Recarga las opiniones desde cero tras publicar una.
+   *
+   * Se descarta lo que había en vez de insertar la nueva arriba: el promedio y
+   * el total los calcula el servidor, y componerlos acá daría dos números
+   * distintos para la misma pregunta hasta la siguiente visita.
+   */
+  protected calificacionPublicada(): void {
+    this.calificando.set(false);
+    this.opiniones.set([]);
+    this.cursor.set(null);
+    this.cargar();
+  }
+
   ngOnInit(): void {
-    this.leer();
+    this.cargar();
   }
 
-  protected elegir(pestana: PestanaDeOpiniones): void {
-    this.elegida.set(pestana);
-  }
-
-  protected reintentar(): void {
-    this.leer();
-  }
-
-  protected iniciales(opinion: PublicProfileReview): string {
-    return inicialesDe(opinion.reviewer.displayName);
-  }
-
-  /** El enlace a la ficha de quien opinó, o `null` si no tiene ficha pública. */
-  protected enlace(opinion: PublicProfileReview): readonly string[] | null {
-    const { kind, slug } = opinion.reviewer;
-    if (kind === null || slug === null || kind === 'MEDICATION') return null;
-    return [`/${PUBLIC_PROFILE_PREFIX[kind]}`, slug];
-  }
-
-  protected rotuloEstrellas(rating: number): string {
-    return rating === 1 ? '1 estrella' : `${rating} estrellas`;
-  }
-
-  /** Si la estrella `n` del promedio va encendida (redondeo a la media estrella). */
-  protected estrellaDelPromedio(n: number): boolean {
-    return n <= Math.round(this.promedio() ?? 0);
-  }
-
-  private recorte(
-    lista: readonly PublicProfileReview[],
-    pagina: number,
-  ): readonly PublicProfileReview[] {
-    const ultima = Math.max(0, Math.ceil(lista.length / OPINIONES_POR_PAGINA) - 1);
-    const desde = Math.min(Math.max(0, pagina), ultima) * OPINIONES_POR_PAGINA;
-    return lista.slice(desde, desde + OPINIONES_POR_PAGINA);
-  }
-
-  /** Pide todas las páginas seguidas: la distribución necesita la lista entera. */
-  private leer(): void {
-    this.cargando.set(true);
-    this.fallo.set(false);
-    const pedir = (cursor?: string) =>
-      this.directorio.profileReviews(this.kind(), this.slug(), { cursor, limit: LOTE });
-
-    pedir()
-      .pipe(
-        expand((pagina) => (pagina.nextCursor === null ? EMPTY : pedir(pagina.nextCursor))),
-        reduce(
-          (acumuladas, pagina) => [...acumuladas, ...pagina.items],
-          [] as PublicProfileReview[],
-        ),
-      )
+  /**
+   * Trae la página siguiente, o la primera si todavía no hay ninguna.
+   *
+   * Acumula en vez de reemplazar: «Ver más opiniones» agrega debajo, no
+   * cambia de página — quien venía leyendo la cuarta no vuelve al principio.
+   */
+  protected cargar(): void {
+    if (this.cargando()) {
+      return;
+    }
+    this.estado.set(loading());
+    const cursorActual = this.cursor();
+    this.directorio
+      .profileReviews(this.kind(), this.slug(), {
+        limit: POR_PAGINA,
+        ...(cursorActual === null ? {} : { cursor: cursorActual }),
+      })
       .subscribe({
-        next: (todas) => {
-          this.todas.set(todas);
-          this.cargando.set(false);
+        next: (pagina) => {
+          this.opiniones.update((previas) => [...previas, ...pagina.items]);
+          this.promedio.set(pagina.ratingAverage);
+          this.total.set(pagina.ratingCount);
+          this.cursor.set(pagina.nextCursor);
+          this.estado.set(ready(null));
         },
-        error: () => {
-          this.cargando.set(false);
-          this.fallo.set(true);
+        error: (error: unknown) => {
+          this.estado.set(errorToViewState<null>(error));
         },
       });
+  }
+
+  /**
+   * Las cinco posiciones de estrella de una opinión, llenas o vacías.
+   *
+   * Se calcula acá y no con un `@for` sobre un arreglo en la plantilla porque
+   * la plantilla no debe construir datos; y son cinco casillas siempre, para
+   * que «3 de 5» se lea de un vistazo sin contar.
+   *
+   * @param puntaje - Las estrellas que puso el autor.
+   * @returns Cinco booleanos, uno por posición.
+   */
+  protected estrellas(puntaje: number): readonly boolean[] {
+    return Array.from({ length: ESTRELLAS }, (_, i) => i < puntaje);
+  }
+
+  /**
+   * Cómo se nombra al autor de una opinión.
+   *
+   * @param opinion - La opinión a rotular.
+   * @returns El nombre que eligió mostrar, o el rótulo del anonimato.
+   */
+  protected autor(opinion: PublicProfileReview): string {
+    return opinion.reviewerDisplayName ?? 'Paciente verificado';
+  }
+
+  /**
+   * El puntaje dicho con palabras, para quien no ve las estrellas.
+   *
+   * @param puntaje - Las estrellas que puso el autor.
+   * @returns La frase para el lector de pantalla.
+   */
+  protected puntajeAccesible(puntaje: number): string {
+    return `${puntaje} de ${ESTRELLAS} estrellas`;
   }
 }

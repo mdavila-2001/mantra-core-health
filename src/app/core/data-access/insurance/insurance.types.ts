@@ -29,6 +29,14 @@ export interface CarrierSummary {
   readonly carrierCode: string;
   readonly legalName: string;
   readonly regulatorIdentifier: string | null;
+  /**
+   * Canales de contacto directo de la aseguradora (subtarea 2.3): WhatsApp
+   * (E.164), teléfono/línea gratuita del call center y correo de
+   * siniestros. `null` cuando la aseguradora no publicó ese canal.
+   */
+  readonly whatsappNumber: string | null;
+  readonly callCenterPhone: string | null;
+  readonly supportEmail: string | null;
   readonly jurisdiction: InsuranceConcept | null;
   readonly status: InsuranceConcept;
   /**
@@ -40,6 +48,8 @@ export interface CarrierSummary {
   readonly planCount: number;
   readonly networkCount: number;
   readonly createdAt: Date;
+  /** Decisión de la API basada en la membresía activa del tenant. */
+  readonly canAdminister: boolean;
 }
 
 /** Respuesta del listado. No pagina: hay una aseguradora por organización. */
@@ -63,8 +73,61 @@ export interface PlanBenefit {
   readonly deductibleAmount: string | null;
   readonly annualLimitAmount: string | null;
   readonly requiresPriorAuthorization: boolean | null;
+  readonly approvalRules: BenefitApprovalRules;
   readonly effectiveFrom: Date | null;
   readonly effectiveTo: Date | null;
+}
+
+export const APPROVAL_DOCUMENT_CODES = [
+  'FIRMA_MEDICO',
+  'SELLO_MEDICO',
+  'ORDEN_MEDICA',
+  'INFORME_CLINICO',
+] as const;
+
+export type ApprovalDocumentCode = (typeof APPROVAL_DOCUMENT_CODES)[number];
+
+export interface BenefitApprovalRules {
+  readonly requiredDocuments: readonly ApprovalDocumentCode[];
+  readonly exclusionNotes: string | null;
+}
+
+export interface CreateInsurancePlanInput {
+  readonly planCode: string;
+  readonly name: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly currencyConceptId?: string;
+  /** Prima de lista mensual del plan, en la moneda del plan (v4.2.14). */
+  readonly monthlyPremiumAmount?: string;
+}
+
+/** Reemplazo completo de la prima de lista mensual de un plan (v4.2.14). */
+export interface UpdatePlanPremiumInput {
+  readonly monthlyPremiumAmount: string | null;
+}
+
+export interface CreatePlanBenefitInput {
+  readonly benefitCategoryConceptId: string;
+  readonly serviceConceptId?: string;
+  readonly effectiveFrom?: string;
+  readonly effectiveTo?: string;
+  readonly coveragePercent?: string;
+  readonly copayAmount?: string;
+  readonly deductibleAmount?: string;
+  readonly annualLimitAmount?: string;
+  readonly requiresPriorAuthorization?: boolean;
+}
+
+export interface UpdatePlanBenefitInput {
+  readonly coveragePercent: string | null;
+  readonly copayAmount: string | null;
+  readonly deductibleAmount: string | null;
+  readonly annualLimitAmount: string | null;
+}
+
+export interface UpdatePlanBenefitRulesInput extends BenefitApprovalRules {
+  readonly requiresPriorAuthorization: boolean;
 }
 
 /** Un plan del producto, con sus beneficios vigentes. */
@@ -74,6 +137,12 @@ export interface Plan {
   readonly name: string;
   readonly planType: InsuranceConcept | null;
   readonly currency: InsuranceConcept | null;
+  /**
+   * Prima de lista mensual del plan, en su moneda (v4.2.14). `null` cuando la
+   * aseguradora no la declaró — es el denominador del loss ratio del tablero
+   * de siniestralidad.
+   */
+  readonly monthlyPremiumAmount: string | null;
   readonly effectiveFrom: Date | null;
   readonly effectiveTo: Date | null;
   readonly status: InsuranceConcept;
@@ -256,6 +325,14 @@ export interface ClaimListItem {
   readonly patient: ClaimPatient;
   readonly carrierName: string;
   readonly insuranceCarrierId: string;
+  /**
+   * Canales de contacto directo de la aseguradora (subtarea 2.3). Viajan en
+   * la cabecera de la solicitud porque el detalle **es** la fila. `null`
+   * cuando la aseguradora no publicó ese canal.
+   */
+  readonly carrierWhatsappNumber: string | null;
+  readonly carrierCallCenterPhone: string | null;
+  readonly carrierSupportEmail: string | null;
   readonly policyIdentifier: string | null;
   readonly policyBrokerName: string | null;
   readonly billedTotal: Money;
@@ -284,9 +361,7 @@ export interface ClaimQuery {
 }
 
 /** Qué documento clínico respalda un ítem, cuando el modelo lo sabe. */
-export type ClaimLineReferenceType =
-  | 'DIAGNOSTIC_STUDY'
-  | 'MEDICATION_DISPENSATION';
+export type ClaimLineReferenceType = 'DIAGNOSTIC_STUDY' | 'MEDICATION_DISPENSATION';
 
 /** Un ítem de la solicitud, con su dictamen si lo tiene. */
 export interface ClaimLine {
@@ -300,6 +375,13 @@ export interface ClaimLine {
   readonly deniedAmount: Money | null;
   readonly decision: InsuranceConcept | null;
   readonly denialReason: InsuranceConcept | null;
+  /**
+   * Cita textual de la cláusula contractual que fundamenta el rechazo (subtarea 2.2).
+   * `null` mientras el ítem no tenga dictamen, o si el dictamen es anterior a v4.2.9.
+   */
+  readonly policyClauseReference: string | null;
+  /** Justificación circunstanciada del rechazo, por ítem. Mismas condiciones de `null`. */
+  readonly denialRationale: string | null;
   /** `null` cuando el origen es una referencia de texto libre. */
   readonly referenceType: ClaimLineReferenceType | null;
   readonly reference: string | null;

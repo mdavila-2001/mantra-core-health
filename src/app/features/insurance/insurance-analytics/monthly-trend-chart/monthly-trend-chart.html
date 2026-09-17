@@ -1,0 +1,73 @@
+<div class="trend-chart" data-testid="chart-monthly-trend">
+  <div class="trend-chart__legend">
+    <span class="trend-chart__swatch trend-chart__swatch--billed"></span>
+    Facturado
+    <span class="trend-chart__swatch trend-chart__swatch--approved"></span>
+    Aprobado
+  </div>
+
+  <div class="trend-chart__scroll" tabindex="0" aria-label="Gráfico desplazable de la tendencia mensual">
+    <svg
+      class="trend-chart__svg"
+      [attr.viewBox]="'0 0 ' + viewBoxWidth() + ' ' + (chartHeight + labelHeight)"
+      role="img"
+      [attr.aria-label]="resumenAccesible()"
+      preserveAspectRatio="xMinYMax meet"
+    >
+      <line
+        class="trend-chart__axis"
+        x1="0"
+        [attr.y1]="chartHeight"
+        [attr.x2]="viewBoxWidth()"
+        [attr.y2]="chartHeight"
+      />
+      @for (barra of bars(); track barra.period) {
+        <g [attr.transform]="'translate(' + barra.x + ', 0)'">
+          <title>
+            {{ barra.monthLabel }} · Facturado {{ formatear(barra.billedAmount) }} · Aprobado
+            {{ formatear(barra.approvedAmount) }} · {{ barra.claimsCount }} reclamo(s)
+          </title>
+          <rect
+            class="trend-chart__bar trend-chart__bar--billed"
+            x="10"
+            [attr.y]="chartHeight - barra.billedHeight"
+            width="14"
+            [attr.height]="barra.billedHeight"
+          />
+          <rect
+            class="trend-chart__bar trend-chart__bar--approved"
+            x="28"
+            [attr.y]="chartHeight - barra.approvedHeight"
+            width="14"
+            [attr.height]="barra.approvedHeight"
+          />
+          <text class="trend-chart__label" x="28" [attr.y]="chartHeight + 16" text-anchor="middle">
+            {{ barra.monthLabel }}
+          </text>
+        </g>
+      }
+    </svg>
+  </div>
+
+  <table class="sr-only">
+    <caption>Tendencia mensual, facturado y aprobado</caption>
+    <thead>
+      <tr>
+        <th scope="col">Mes</th>
+        <th scope="col">Facturado</th>
+        <th scope="col">Aprobado</th>
+        <th scope="col">Reclamos</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (barra of bars(); track barra.period) {
+        <tr>
+          <td>{{ barra.monthLabel }}</td>
+          <td>{{ formatear(barra.billedAmount) }}</td>
+          <td>{{ formatear(barra.approvedAmount) }}</td>
+          <td>{{ barra.claimsCount }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,31 @@
+.promociones__aviso {
+  margin: 0 0 var(--sp-3);
+}
+
+.promociones__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.promociones__notificacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-top: var(--sp-6);
+}
+
+.promociones__subtitulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+}
+
+.promociones__secundario {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

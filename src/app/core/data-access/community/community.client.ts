@@ -359,6 +359,24 @@ export class CommunityClient {
       .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
   }
 
+  /** Bytes del adjunto autorizados por conversación y perfil participante. */
+  conversationAttachmentDataUrl(
+    conversationId: string,
+    profileId: string,
+    fileId: string,
+  ): Observable<string> {
+    const params = new HttpParams().set('profileId', profileId);
+    return this.http
+      .get(
+        this.url(
+          `/community/conversations/${encodeURIComponent(conversationId)}` +
+            `/attachments/${encodeURIComponent(fileId)}/content`,
+        ),
+        { params, responseType: 'blob' },
+      )
+      .pipe(switchMap((bytes) => blobToDataUrl(bytes)));
+  }
+
   /**
    * `GET /community/posts/:postId/reactions` — el resumen de reacciones.
    *

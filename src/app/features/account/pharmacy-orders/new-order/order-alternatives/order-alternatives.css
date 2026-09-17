@@ -1,0 +1,81 @@
+/* El panel cuelga de su renglón: se distingue por el fondo, no por el peso. */
+
+:host {
+  display: block;
+}
+
+.alternativas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.alternativas__nota {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.alternativas__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alternativas__opcion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+}
+
+.alternativas__opcion--elegida {
+  border-color: var(--st-success-bd);
+  background: var(--st-success-bg);
+}
+
+.alternativas__datos {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.alternativas__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.alternativas__secundario {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.alternativas__precio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-1);
+}
+
+.alternativas__ahorro {
+  color: var(--st-success-fg);
+  font-size: var(--fs-caption);
+}

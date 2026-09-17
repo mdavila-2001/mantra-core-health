@@ -15,12 +15,13 @@
  * (con `yarn start` levantado en el 4200).
  */
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
 const BASE = 'http://localhost:4200';
 const SUFIJO = process.argv[2] ?? 'antes';
 const ANCHO = Number(process.argv[3] ?? 1440);
-const SALIDA = new URL('../artifacts/cita-ancho', import.meta.url).pathname;
+const SALIDA = fileURLToPath(new URL('../artifacts/cita-ancho', import.meta.url));
 
 const navegador = await chromium.launch();
 const contexto = await navegador.newContext({ viewport: { width: ANCHO, height: 1100 } });

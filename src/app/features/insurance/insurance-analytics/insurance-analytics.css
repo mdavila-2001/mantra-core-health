@@ -1,0 +1,96 @@
+/* Tablero de siniestralidad (subtarea 3.1). Sólo distribución: todo el color
+   y la tipografía salen de los tokens del sistema — mismo molde que
+   `features/accounting/cockpit/cockpit.css` (`.tiles`/`.tile__*`). */
+
+:host {
+  display: block;
+}
+
+.analytics__filters {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin-block: var(--sp-5);
+}
+
+.analytics__filter-range {
+  flex: 1 1 20rem;
+}
+
+.analytics__period {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin: 0 0 var(--sp-4);
+}
+
+/* Cuatro/cinco tarjetas por fila en escritorio, una por fila en teléfono —
+   mismo `auto-fit` que el cockpit contable. */
+.analytics__tiles {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  margin-block: var(--sp-5);
+}
+
+.tile {
+  display: block;
+}
+
+.tile__rotulo {
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.tile__cifra {
+  font-family: var(--font-body);
+  font-size: var(--fs-h2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  line-height: var(--lh-h2);
+  margin: var(--sp-2) 0 0;
+}
+
+.tile__pie {
+  align-items: center;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-caption);
+  gap: var(--sp-2);
+  line-height: var(--lh-caption);
+  margin: var(--sp-2) 0 0;
+}
+
+.analytics__section {
+  margin-block: var(--sp-6);
+}
+
+.analytics__section-title {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: var(--lh-h3);
+  margin: 0 0 var(--sp-3);
+}
+
+.analytics__note {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  margin: 0 0 var(--sp-3);
+}
+
+.analytics__immunization-figures {
+  align-items: center;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-caption);
+  gap: var(--sp-2);
+  margin: var(--sp-3) 0 0;
+}

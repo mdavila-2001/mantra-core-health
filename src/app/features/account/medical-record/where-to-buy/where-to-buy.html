@@ -43,6 +43,16 @@
                     @if (item.productId === null) {
                       <app-badge variant="warning">Sin producto publicado</app-badge>
                     }
+                    @if (conSeguro()) {
+                      <!-- T-E2: con seguro, cada renglón dice si entra en lo aprobado. -->
+                      <span data-testid="compra-item-seguro">
+                        @if (estaAprobado(item)) {
+                          <app-badge variant="success">Aprobado por el seguro</app-badge>
+                        } @else {
+                          <app-badge variant="secondary">A tu cargo</app-badge>
+                        }
+                      </span>
+                    }
                   </div>
                 </li>
               }
@@ -72,6 +82,20 @@
                 distancias y no se guarda —, o medí desde una ciudad sin dar tu ubicación.
               </p>
               <div class="compra__ubicacion-acciones">
+                @for (lugar of lugaresGuardados(); track lugar.etiqueta) {
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    [attr.data-testid]="
+                      lugar.etiqueta === 'tu casa' ? 'where-to-buy-origin-home' : 'where-to-buy-origin-work'
+                    "
+                    (clicked)="medirDesde(lugar)"
+                  >
+                    {{ lugar.etiqueta === 'tu casa' ? 'Tu casa' : 'Tu trabajo' }}
+                  </button>
+                }
                 <button
                   app-button
                   variant="primary"
@@ -101,16 +125,40 @@
                   distancias: el orden por cobertura no cambia.
                 </p>
               }
-              <p class="compra__proximamente">
-                Próximamente: tu domicilio y tu trabajo como puntos de partida.
-              </p>
             }
           </section>
 
           <!-- ─── Las sucursales ─────────────────────────────────────────────── -->
           <section class="compra__bloque" aria-labelledby="compra-sedes">
             <h2 id="compra-sedes" class="compra__titulo">Sucursales</h2>
-            <app-view-state-host [state]="resultados()" (retry)="consultar()">
+
+            <!-- T-E2 · F2.1.4, F2.2.2: el orden y la variante con seguro viven
+                 fuera del estado de las sucursales, para que un vacío propio de
+                 la variante siempre ofrezca cómo apagarla. -->
+            <div class="compra__controles" data-testid="compra-controles">
+              <app-segmented-control
+                data-testid="compra-orden"
+                [options]="opcionesDeOrden"
+                [value]="orden()"
+                ariaLabel="Cómo ordenar las sucursales"
+                (valueChange)="orden.set($event)"
+              />
+              <div class="compra__seguro" data-testid="compra-variante-seguro">
+                <app-switch
+                  label="Ver la variante con seguro"
+                  data-testid="compra-seguro"
+                  [checked]="conSeguro()"
+                  (checkedChange)="conSeguro.set($event)"
+                />
+                <app-badge variant="info">{{ notaDeDemostracion }}</app-badge>
+                <span class="compra__secundario">
+                  Qué aprueba el seguro es un dato de ejemplo, no la respuesta de tu aseguradora.
+                  Las sucursales, existencias y precios son los de la consulta.
+                </span>
+              </div>
+            </div>
+
+            <app-view-state-host [state]="estadoDeSedes()" (retry)="consultar()">
               @if (resultado(); as datos) {
                 @if (datos.sinProducto.length > 0) {
                   <app-alert tone="warning" title="No todo se pudo consultar">
@@ -138,7 +186,7 @@
                 }
 
                 <ul class="compra__sedes" data-testid="compra-sedes">
-                  @for (sede of datos.sedes; track sede.codigo) {
+                  @for (sede of sedesOrdenadas(); track sede.codigo) {
                     <li
                       class="compra__sede"
                       [id]="'compra-sede-' + sede.codigo"
@@ -166,7 +214,27 @@
                             Total no disponible: falta algún precio publicado
                           }
                         </span>
-                        @if (!sede.completa) {
+                        @if (conSeguro()) {
+                          <!-- T-E2 · F2.2.2: evaluada sólo sobre lo aprobado. -->
+                          <p class="compra__cobertura" data-testid="compra-cobertura-seguro">
+                            {{ coberturaDeLoAprobado(sede.conSeguro) }}
+                          </p>
+                          @if (!sede.conSeguro.completa && sede.conSeguro.faltantes.length > 0) {
+                            <p class="compra__faltantes" data-testid="compra-faltantes">
+                              Le falta de lo aprobado: {{ sede.conSeguro.faltantes.join(', ') }}
+                            </p>
+                          }
+                          <p class="compra__desglose" data-testid="compra-desglose-seguro">
+                            <span>
+                              Aprobado:
+                              {{ sede.conSeguro.aprobado ?? 'no disponible, falta algún precio' }}
+                            </span>
+                            <span>
+                              A tu cargo:
+                              {{ sede.conSeguro.aCargo ?? 'no disponible, falta algún precio' }}
+                            </span>
+                          </p>
+                        } @else if (!sede.completa) {
                           <p class="compra__faltantes" data-testid="compra-faltantes">
                             Le falta: {{ sede.faltantes.join(', ') }}
                           </p>
@@ -192,9 +260,19 @@
                         }
                       </div>
                       <div class="compra__acciones">
-                        <app-badge [variant]="sede.completa ? 'success' : 'warning'">
-                          {{ sede.completa ? 'Tiene todo' : 'Le falta algo' }}
-                        </app-badge>
+                        @if (conSeguro()) {
+                          <app-badge [variant]="sede.conSeguro.completa ? 'success' : 'warning'">
+                            {{
+                              sede.conSeguro.completa
+                                ? 'Tiene todo lo aprobado'
+                                : 'Le falta algo aprobado'
+                            }}
+                          </app-badge>
+                        } @else {
+                          <app-badge [variant]="sede.completa ? 'success' : 'warning'">
+                            {{ sede.completa ? 'Tiene todo' : 'Le falta algo' }}
+                          </app-badge>
+                        }
                         <button
                           app-button
                           variant="primary"

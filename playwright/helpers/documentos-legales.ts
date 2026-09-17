@@ -16,6 +16,9 @@ export const CLAVES_DE_DOCUMENTOS_LEGALES = [
 
 export type ClaveDeDocumentoLegal = (typeof CLAVES_DE_DOCUMENTOS_LEGALES)[number];
 
+/** Las claves de documento que puede manejar un `<app-dropzone-pdf>` en este alta (subtarea 1.4). */
+export type ClaveDeDocumentoDelAlta = ClaveDeDocumentoLegal | 'powerOfAttorneyFileId';
+
 export interface ArchivoDePrueba {
   readonly name: string;
   readonly mimeType: string;
@@ -43,8 +46,14 @@ export function archivoFalso(
   return { name, mimeType, buffer: Buffer.alloc(bytes) };
 }
 
-/** El testId de la dropzone de un documento (`dropzone-pdf.ts`). */
-function testIdDeDocumento(clave: ClaveDeDocumentoLegal): string {
+/**
+ * El testId de la dropzone de un documento (`dropzone-pdf.ts`).
+ *
+ * Exportado desde la subtarea 1.4: el helper del poder notariado
+ * (`representante-legal.ts`) lo necesita para el sexto documento del alta,
+ * que vive fuera de {@link CLAVES_DE_DOCUMENTOS_LEGALES}.
+ */
+export function testIdDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
   return `registro-organizacion-doc-${clave}`;
 }
 
@@ -54,7 +63,7 @@ function testIdDeDocumento(clave: ClaveDeDocumentoLegal): string {
  */
 export async function subirArchivo(
   page: Page,
-  clave: ClaveDeDocumentoLegal,
+  clave: ClaveDeDocumentoDelAlta,
   archivo: ArchivoDePrueba,
 ): Promise<void> {
   const testId = testIdDeDocumento(clave);
@@ -62,7 +71,10 @@ export async function subirArchivo(
 }
 
 /** Espera a que la dropzone de `clave` termine en `ready` (subida exitosa). */
-export async function esperarSubidaLista(page: Page, clave: ClaveDeDocumentoLegal): Promise<void> {
+export async function esperarSubidaLista(
+  page: Page,
+  clave: ClaveDeDocumentoDelAlta,
+): Promise<void> {
   await expect(page.getByTestId(`${testIdDeDocumento(clave)}-quitar`)).toBeVisible({
     timeout: 15_000,
   });
@@ -72,8 +84,9 @@ export async function esperarSubidaLista(page: Page, clave: ClaveDeDocumentoLega
  * Sube los 5 documentos legales y avanza el asistente, asumiendo que la
  * página vigente es «Documentación legal obligatoria (PDF) (1 de 2)» —los
  * primeros 4 documentos— y que después de «Continuar» aparece «(2 de 2)»
- * —el certificado del SEDES—. Deja el asistente en la página siguiente
- * («Tu cuenta»).
+ * —el certificado del SEDES—. Deja el asistente en «Representante legal
+ * (1 de 2)» (subtarea 1.4: ya no en «Tu cuenta», que corría el orden de las
+ * páginas hasta la 1.3).
  */
 export async function subirLosCincoDocumentos(page: Page): Promise<void> {
   const [primeraTanda, segundaTanda] = [

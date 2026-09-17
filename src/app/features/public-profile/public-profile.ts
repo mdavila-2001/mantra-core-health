@@ -15,6 +15,7 @@ import type { PublicProfileDetail } from '@core/data-access/public-directory/pub
 
 import { jsonLdDePerfil, serializarJsonLd } from './public-profile.jsonld';
 import { PublicProfileCard } from './public-profile-card/public-profile-card';
+import { PublicProfileReviews } from './public-profile-reviews/public-profile-reviews';
 import type { PerfilPublicoResuelto } from './public-profile.resolver';
 
 /**
@@ -77,7 +78,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  */
 @Component({
   selector: 'app-public-profile',
-  imports: [PublicProfileCard, RouterLink],
+  imports: [PublicProfileCard, PublicProfileReviews, RouterLink],
   templateUrl: './public-profile.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

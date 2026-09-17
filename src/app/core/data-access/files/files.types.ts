@@ -110,3 +110,38 @@ export interface DownloadUrl {
   readonly url: string;
   readonly expiresAt: Date;
 }
+
+/**
+ * El contenido de un archivo almacenado, con la metadata que **viene con él**.
+ *
+ * ## De dónde sale cada campo
+ *
+ * De la propia respuesta de `GET /common/files/:id/content`, no de un endpoint
+ * de metadata: `mimeType` y `sizeBytes` son el `type` y el `size` del `Blob`
+ * —que el navegador rellena con el `Content-Type` y con los bytes recibidos— y
+ * `originalName` sale de `Content-Disposition`. Es metadata que el sistema ya
+ * emitía y que nadie estaba leyendo.
+ *
+ * ## Por qué el tipo del Blob es fiable
+ *
+ * Porque el backend no sirve lo que declaró quien subió: deduce el tipo de los
+ * primeros bytes al recibir el archivo y persiste **ese**. Un `.html`
+ * renombrado a `.png` llega como `text/plain`, no como `text/html`.
+ */
+export interface StoredFileContent {
+  /** Los bytes, listos para previsualizar o guardar. */
+  readonly blob: Blob;
+  /** Tipo real, tal como lo sirvió la API. Vacío si la respuesta no lo trajo. */
+  readonly mimeType: string;
+  /** Tamaño real de lo recibido, en bytes. */
+  readonly sizeBytes: number;
+  /**
+   * El nombre con el que se subió, **sólo si pudo leerse con certeza**.
+   *
+   * Ausente cuando el archivo no tiene `original_name`, cuando la respuesta no
+   * trae la cabecera —el backend simulado no la emite— o cuando venía
+   * malformada. Quien lo muestre debe traer su propio texto de reserva: acá no
+   * se inventa un nombre.
+   */
+  readonly originalName?: string;
+}

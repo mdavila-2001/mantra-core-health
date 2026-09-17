@@ -5,6 +5,7 @@ import {
   NOMBRE_DE_CATEGORIA,
   pruebaDelCorpus,
 } from '../fixtures/bolivia-eje-central';
+import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { ordenes } from '../fixtures/clinica';
 import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO, ESTUDIO, PRIORIDAD, displayDe } from '../fixtures/conceptos';
@@ -467,9 +468,12 @@ export function registrarDiagnostico(router: MockRouter): void {
 
   router.get('/diagnostic-results/me/orders', (request) => {
     const id = pacienteDeSesion(request);
-    const items = ordenes.filtrar((o) => o.patientProfileId === id).map((o) => {
+    const items = ordenes.filtrar((o) => o.patientProfileId === id).map((o, index) => {
       const informe = informes.filtrar((r) => r.serviceRequestId === o.id)[0];
       return {
+        ...(index === 3
+          ? { insuranceSettlement: null, insuranceSettlementAvailability: 'PENDING_PUBLICATION' }
+          : patientSettlementFixture(o.id, (['APPROVED', 'PARTIALLY_APPROVED', 'DENIED'] as const)[index % 3]!, '100.00', displayDe(o.codeConceptId))),
         id: o.id,
         encounterId: o.encounterId,
         codeConceptId: o.codeConceptId,

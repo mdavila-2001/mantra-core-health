@@ -1,0 +1,91 @@
+<app-page-header
+  title="Dependientes"
+  subtitle="Las personas a tu cargo. Podés pedirles turno y ver su historia clínica en su nombre."
+/>
+
+<div class="dependents">
+  @if (sinPerfilDePaciente()) {
+    <app-alert tone="info">
+      Esta cuenta no tiene perfil de paciente, así que no puede registrar dependientes. Si
+      atendés en la plataforma, tus pacientes se gestionan desde
+      <a routerLink="/agenda">la agenda</a>.
+    </app-alert>
+  } @else {
+    <div class="dependents__acciones">
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="dependents-nuevo"
+        (click)="registrando.set(true)"
+      >
+        Registrar dependiente
+      </button>
+      @if (contexto.isActingForDependent()) {
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          data-testid="dependents-volver-a-mi"
+          (click)="volverAMi()"
+        >
+          Volver a mi perfil
+        </button>
+      }
+    </div>
+
+    @if (loading() && !loaded()) {
+      <p class="dependents__estado" role="status">Buscando a quiénes representás…</p>
+    } @else if (dependents().length === 0) {
+      <app-empty-state
+        title="Todavía no registraste a nadie"
+        description="Registrá a un hijo o hija, a tu madre o padre, o a alguien a quien representás. Vas a poder pedirle turno y ver su historia sin cambiar de cuenta."
+      />
+    } @else {
+      <ul class="dependents__lista" data-testid="dependents-lista">
+        @for (dependiente of dependents(); track dependiente.id) {
+          <li>
+            <app-card variant="outlined">
+              <div class="dependents__ficha">
+                <div class="dependents__quien">
+                  <h2 class="dependents__nombre">{{ dependiente.fullName }}</h2>
+                  <p class="dependents__datos">
+                    <span>{{ dependiente.relationshipDisplay }}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{{ edad(dependiente) }}</span>
+                    @if (dependiente.nationalId; as documento) {
+                      <span aria-hidden="true">·</span>
+                      <span>Documento {{ documento }}</span>
+                    }
+                  </p>
+                </div>
+
+                @if (activo() === dependiente.patientProfileId) {
+                  <app-badge variant="success">Perfil activo</app-badge>
+                } @else {
+                  <button
+                    app-button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    [attr.aria-label]="'Actuar por ' + dependiente.fullName"
+                    (click)="elegir(dependiente)"
+                  >
+                    Actuar por esta persona
+                  </button>
+                }
+              </div>
+            </app-card>
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>
+
+@if (registrando()) {
+  <app-dependent-form-dialog
+    (saved)="registrado($event)"
+    (closed)="registrando.set(false)"
+  />
+}

@@ -128,6 +128,21 @@ export function registrarAuth(router: MockRouter): void {
         legalEntityType?: string;
         legalDocuments?: Record<(typeof LEGAL_DOCUMENT_FIELDS)[number], string | undefined>;
         payer?: { latitude?: number; longitude?: number };
+        // Representante legal y gerencias (subtarea 1.4). El mock NO prueba
+        // que la API real acepte estas claves: eso lo hace el int-spec de la
+        // API. Esto sólo espeja el `ValidationPipe` para que el formulario
+        // no pase en falso contra un backend simulado.
+        legalRepresentative?: {
+          fullName?: string;
+          idNumber?: string;
+          email?: string;
+          phone?: string;
+          powerOfAttorneyFileId?: string;
+        };
+        executives?: Record<
+          'generalManager' | 'commercialManager' | 'marketingManager',
+          { fullName?: string; phone?: string; email?: string } | undefined
+        >;
       };
     }>({ body });
     const legalEntityType = datos.organization?.legalEntityType;
@@ -193,6 +208,64 @@ export function registrarAuth(router: MockRouter): void {
       }
     }
 
+    // Representante legal y gerencias (subtarea 1.4): mismo contrato que el
+    // `ValidationPipe` real. `legalRepresentative` no trae bloque
+    // todo-o-nada propio —cada campo se valida por separado, como hace el
+    // DTO real con sus propios decoradores—; `executives` sí es todo-o-nada
+    // por gerencia, con `@IsNotEmptyObject` cubriendo la ausencia total.
+    const mensajesRepresentacion: string[] = [];
+    const legalRepresentative = datos.organization?.legalRepresentative;
+    if (legalRepresentative !== undefined) {
+      if (!legalRepresentative.fullName) {
+        mensajesRepresentacion.push('organization.legalRepresentative.fullName should not be empty');
+      }
+      if (!legalRepresentative.idNumber) {
+        mensajesRepresentacion.push('organization.legalRepresentative.idNumber should not be empty');
+      }
+      if (!legalRepresentative.email || !legalRepresentative.email.includes('@')) {
+        mensajesRepresentacion.push('organization.legalRepresentative.email must be an email');
+      }
+      if (!legalRepresentative.powerOfAttorneyFileId) {
+        mensajesRepresentacion.push(
+          'organization.legalRepresentative.powerOfAttorneyFileId must be a UUID',
+        );
+      }
+    }
+    const executives = datos.organization?.executives;
+    if (executives !== undefined) {
+      for (const rol of ['generalManager', 'commercialManager', 'marketingManager'] as const) {
+        const gerencia = executives[rol];
+        if (!gerencia) {
+          mensajesRepresentacion.push(`organization.executives.${rol} should not be empty`);
+          continue;
+        }
+        if (!gerencia.fullName) {
+          mensajesRepresentacion.push(`organization.executives.${rol}.fullName should not be empty`);
+        }
+        if (!gerencia.email || !gerencia.email.includes('@')) {
+          mensajesRepresentacion.push(`organization.executives.${rol}.email must be an email`);
+        }
+        if (!gerencia.phone || gerencia.phone.length < 7) {
+          mensajesRepresentacion.push(
+            `organization.executives.${rol}.phone must be longer than or equal to 7 characters`,
+          );
+        }
+      }
+    }
+    if (mensajesRepresentacion.length > 0) {
+      return reply(400, {
+        statusCode: 400,
+        code: 'VALIDATION_FAILED',
+        message: 'Validation failed',
+        error: 'Bad Request',
+        details: { messages: mensajesRepresentacion },
+      });
+    }
+    const representativesRegistered =
+      legalRepresentative === undefined && executives === undefined
+        ? undefined
+        : (legalRepresentative === undefined ? 0 : 1) + (executives === undefined ? 0 : 3);
+
     return {
       tenantId: nuevoId('tenant-nuevo'),
       code: datos.organization?.code ?? 'ORG-NUEVA',
@@ -201,6 +274,7 @@ export function registrarAuth(router: MockRouter): void {
       verificationStatus: 'PENDING',
       emailVerificationSent: true,
       ...(legalDocuments === undefined ? {} : { legalDocumentsRegistered: 5 }),
+      ...(representativesRegistered === undefined ? {} : { representativesRegistered }),
     };
   });
 

@@ -47,16 +47,39 @@
 
 <ng-template #evidenceCell let-caso>
   @if (caso.evidenceFileId) {
-    <button
-      app-button
-      variant="outline"
-      size="sm"
-      [isLoading]="descargando() === caso.id"
-      [attr.data-testid]="'case-evidence-' + caso.id"
-      (clicked)="descargarEvidencia(caso)"
-    >
-      Descargar
-    </button>
+    <div class="casos__evidencia">
+      <!-- 5.2 · ver antes de bajar. El contenido llega por el mismo GET
+           autenticado que la descarga: no hay una segunda ruta al binario. -->
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        [attr.aria-expanded]="previsualizando() === caso.id"
+        [attr.data-testid]="'case-evidence-preview-' + caso.id"
+        (clicked)="alternarVistaPrevia(caso)"
+      >
+        {{ previsualizando() === caso.id ? 'Ocultar' : 'Ver' }}
+      </button>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [isLoading]="descargando() === caso.id"
+        [attr.data-testid]="'case-evidence-' + caso.id"
+        (clicked)="descargarEvidencia(caso)"
+      >
+        Descargar
+      </button>
+    </div>
+
+    @if (previsualizando() === caso.id) {
+      <app-stored-file-preview
+        class="casos__vista-previa"
+        [fileId]="caso.evidenceFileId"
+        nombreDeReserva="Evidencia de la solicitud"
+        [attr.data-testid]="'case-evidence-panel-' + caso.id"
+      />
+    }
   } @else {
     <span class="casos__sin-dato" aria-label="Sin evidencia adjunta">—</span>
   }
