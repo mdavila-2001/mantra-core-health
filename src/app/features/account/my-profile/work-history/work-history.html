@@ -20,20 +20,69 @@
             <li class="historial__item" data-testid="sede-propia">
               <div class="historial__institucion">
                 <strong>{{ sede.name }}</strong>
+                <!-- Qué clase de sede es. Sin esto, «Consultorio Dra. Rojas» y
+                     «Hospital San Lucas» se leían idénticos, con el mismo
+                     «Retirar» al lado — y retirar lo propio no es el mismo
+                     acto que desvincularse de un hospital. -->
+                @if (sede.isOwnSite) {
+                  <span class="historial__marca historial__marca--propia" data-testid="sede-propia-marca">
+                    Consultorio propio
+                  </span>
+                } @else {
+                  <span class="historial__marca" data-testid="sede-ajena-marca">
+                    Atendés acá
+                  </span>
+                }
                 @if (sede.addressText) {
                   <span class="historial__sede">{{ sede.addressText | uppercase }}</span>
                 }
+                @if (!sede.bankQrFileId) {
+                  <span class="historial__aviso-qr" data-testid="sede-sin-qr">
+                    Sin QR de cobro configurado
+                  </span>
+                }
               </div>
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                data-testid="sede-quitar"
-                (clicked)="quitarSede(sede)"
-              >
-                Retirar
-              </button>
+              <div class="historial__acciones-sede">
+                <!-- El QR va en todas: también se cobra en la clínica donde
+                     atiende sin ser dueño de la sede. -->
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="sede-qr"
+                  [attr.aria-label]="'QR bancario de ' + sede.name"
+                  (clicked)="abrirQrDeSede(sede)"
+                >
+                  QR bancario
+                </button>
+                <!-- Corregir sólo alcanza al propio: la sede de un hospital es
+                     de él, y lo que se tiene con él es una vinculación. -->
+                @if (sede.isOwnSite) {
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    data-testid="sede-editar"
+                    [attr.aria-label]="'Corregir ' + sede.name"
+                    (clicked)="abrirEdicionDeSede(sede)"
+                  >
+                    Editar
+                  </button>
+                }
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="sede-quitar"
+                  [attr.aria-label]="etiquetaDeRetiro(sede)"
+                  (clicked)="quitarSede(sede)"
+                >
+                  Retirar
+                </button>
+              </div>
             </li>
           }
         </ul>
@@ -48,25 +97,35 @@
       }
 
       @if (!altaDeSedeAbierta()) {
-        <p class="historial__escape">
-          <button
-            app-button
-            variant="secondary"
-            size="sm"
-            type="button"
-            data-testid="sede-agregar"
-            (clicked)="abrirAltaDeSede()"
-          >
-            Agregar un consultorio propio
-          </button>
-        </p>
+        @if (!consultorioPropio()) {
+          <p class="historial__escape">
+            <button
+              app-button
+              variant="secondary"
+              size="sm"
+              type="button"
+              data-testid="sede-agregar"
+              (clicked)="abrirAltaDeSede()"
+            >
+              Agregar un consultorio propio
+            </button>
+          </p>
+        }
       } @else {
         <form
           class="historial__formulario"
           data-testid="sede-formulario"
           (submit)="$event.preventDefault()"
         >
-          <h3 class="historial__subtitulo">Nuevo consultorio</h3>
+          <h3 class="historial__subtitulo">
+            {{ sedeEnEdicion() ? 'Corregir el consultorio' : 'Nuevo consultorio' }}
+          </h3>
+          @if (sedeEnEdicion()) {
+            <p class="historial__intro" data-testid="sede-edicion-aviso">
+              Lo que dejes en blanco queda como está. Para cambiar la dirección,
+              escribila entera de nuevo.
+            </p>
+          }
 
           <app-form-field label="Nombre" hint="Como lo va a ver el paciente." [required]="true">
             <app-input
@@ -156,10 +215,21 @@
             cancelLabel="Cancelar"
             [pending]="registrandoSede()"
             [disabled]="!puedeRegistrarSede()"
-            (submitted)="registrarSede()"
+            (submitted)="guardarSede()"
             (cancelled)="cerrarAltaDeSede()"
           />
         </form>
+      }
+
+      <!-- El QR bancario de la sede (P33). Vive fuera de la lista porque es un
+           modal: colgarlo de cada renglón instanciaría uno por sede, y sólo
+           puede haber uno abierto. -->
+      @if (sedeConQrAbierto(); as sedeDelQr) {
+        <app-site-bank-qr-dialog
+          [site]="sedeDelQr"
+          (saved)="qrGuardado($event)"
+          (closed)="cerrarQrDeSede()"
+        />
       }
     </section>
 

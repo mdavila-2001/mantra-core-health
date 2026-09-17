@@ -180,3 +180,37 @@
   line-height: var(--lh-caption);
   font-variant-numeric: tabular-nums;
 }
+
+/* ─── Dónde atiendo: qué clase de sede es y qué se puede hacer con ella ───
+   La marca no es decoración: el consultorio propio y el hospital donde se
+   atiende se corrigen y se retiran de formas distintas, y hasta que la lista
+   no lo dijo los dos renglones se leían igual. */
+.historial__marca {
+  justify-self: start;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--surface-hover);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.historial__marca--propia {
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+}
+
+/* Ámbar: falta un dato que hace falta para cobrar, y no es un error. */
+.historial__aviso-qr {
+  color: var(--st-warning-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.historial__acciones-sede {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  align-items: center;
+}

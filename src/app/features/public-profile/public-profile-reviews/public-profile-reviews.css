@@ -1,0 +1,136 @@
+.opiniones {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.opiniones__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.opiniones__titulo {
+  margin: 0;
+}
+
+.opiniones__resumen {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  margin: 0;
+}
+
+/* Ámbar es el color de la estrella en todo el producto, y acá no cuenta como
+   el punto de acción único: no hay nada que pulsar en el promedio. */
+.opiniones__media {
+  display: inline-flex;
+  gap: var(--sp-1);
+  align-items: center;
+  color: var(--st-warning-fg);
+  font-weight: 600;
+}
+
+.opiniones__media svg,
+.opiniones__estrella {
+  inline-size: 1em;
+  block-size: 1em;
+}
+
+.opiniones__total,
+.opiniones__fecha,
+.opiniones__vacio {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.opiniones__lista {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.opiniones__item {
+  display: grid;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.opiniones__item:last-child {
+  padding-block-end: 0;
+  border-block-end: none;
+}
+
+.opiniones__autor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: baseline;
+  margin: 0;
+}
+
+.opiniones__estrellas {
+  display: flex;
+  gap: var(--sp-1);
+  align-items: center;
+  margin: 0;
+  color: var(--st-warning-fg);
+}
+
+/* La estrella vacía se apaga con color, no se quita: las cinco casillas tienen
+   que ocupar el mismo ancho en todas las filas para que se comparen de un
+   vistazo. */
+.opiniones__estrella--vacia {
+  color: var(--border-subtle);
+}
+
+.opiniones__texto {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.opiniones__respuesta {
+  display: grid;
+  gap: var(--sp-1);
+  margin-inline-start: var(--sp-4);
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 2px solid var(--border-subtle);
+}
+
+.opiniones__respuesta p {
+  margin: 0;
+}
+
+.opiniones__respuesta-autor {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.opiniones__mas {
+  margin: 0;
+}
+
+/* El texto que sólo escucha quien no ve las estrellas. Va por componente y no
+   global, como el resto del repo (`data-table`, `dropzone-pdf`). */
+.sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.opiniones__calificar {
+  margin: 0;
+}
