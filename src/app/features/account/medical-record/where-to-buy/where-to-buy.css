@@ -33,13 +33,6 @@
   color: var(--text-secondary);
 }
 
-.compra__proximamente {
-  margin: 0;
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
 .compra__items,
 .compra__sedes {
   list-style: none;
@@ -173,4 +166,38 @@
 
 .compra__promo {
   font-size: var(--fs-caption);
+}
+
+/* El orden y la variante con seguro (T-E2): una barra que se apila en móvil. */
+.compra__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.compra__seguro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.compra__cobertura {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* «Aprobado / a tu cargo»: dos importes que se leen juntos. */
+.compra__desglose {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
 }

@@ -5,16 +5,29 @@ import { InsuranceClient } from '../../../core/data-access/insurance/insurance.c
 import type {
   CarrierDetail,
   CarrierSummary,
+  Plan,
+  PlanBenefit,
+  Product,
+  UpdatePlanBenefitInput,
+  UpdatePlanBenefitRulesInput,
 } from '../../../core/data-access/insurance/insurance.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Chip } from '../../../shared/components/atoms/chip/chip';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Link } from '../../../shared/components/atoms/link/link';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { StatusSeal } from '../../../shared/components/organisms/status-seal/status-seal';
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { dialable, whatsappDigits } from '../../../shared/utils/telephone/telephone';
+import { ApprovalRulesDialog } from './approval-rules-dialog';
+import { BenefitFormDialog } from './benefit-form-dialog';
+import { PlanFormDialog } from './plan-form-dialog';
+import { PlanPremiumDialog } from './plan-premium-dialog';
 
 /**
  * Catálogo de la aseguradora del tenant activo: productos, planes, coberturas y
@@ -31,16 +44,50 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
  */
 @Component({
   selector: 'app-insurance-catalog',
-  imports: [Card, Chip, DatePipe, PageHeader, StatusSeal, ViewStateHost],
+  imports: [
+    Card,
+    Chip,
+    DatePipe,
+    AppButton,
+    Link,
+    PageHeader,
+    StatusSeal,
+    ViewStateHost,
+    ApprovalRulesDialog,
+    BenefitFormDialog,
+    PlanFormDialog,
+    PlanPremiumDialog,
+  ],
   templateUrl: './insurance-catalog.html',
   styleUrl: './insurance-catalog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InsuranceCatalog {
   private readonly insurance = inject(InsuranceClient);
+  private readonly toasts = inject(ToastService);
+
+  /** Teléfono listo para `tel:` (subtarea 2.3): sólo dígitos y el signo `+`. */
+  protected dialable(raw: string): string {
+    return dialable(raw);
+  }
+
+  /** El enlace de WhatsApp de la propia aseguradora, sin mensaje precargado. */
+  protected whatsappHref(raw: string): string {
+    return `https://wa.me/${whatsappDigits(raw)}`;
+  }
 
   protected readonly state = signal<ViewState<CarrierDetail>>(loading());
   protected readonly carrier = computed(() => dataOf(this.state()));
+  protected readonly productForNewPlan = signal<Product | null>(null);
+  protected readonly benefitEditor = signal<{
+    readonly plan: Plan;
+    readonly benefit: PlanBenefit | null;
+  } | null>(null);
+  protected readonly rulesEditor = signal<{
+    readonly plan: Plan;
+    readonly benefit: PlanBenefit;
+  } | null>(null);
+  protected readonly premiumEditor = signal<Plan | null>(null);
 
   constructor() {
     this.load();
@@ -48,6 +95,43 @@ export class InsuranceCatalog {
 
   protected retry(): void {
     this.load();
+  }
+
+  protected planCreated(): void {
+    this.toasts.success('El plan se creó correctamente.');
+    this.reloadCarrier();
+  }
+
+  protected benefitSaved(update: UpdatePlanBenefitInput | null): void {
+    const editor = this.benefitEditor();
+    if (editor === null) return;
+    if (update === null || editor.benefit === null) {
+      this.toasts.success('La cobertura se creó correctamente.');
+      this.reloadCarrier();
+      return;
+    }
+    this.patchBenefit(editor.plan.id, editor.benefit.id, update);
+    this.toasts.success('La cobertura se actualizó correctamente.');
+  }
+
+  protected premiumSaved(monthlyPremiumAmount: string | null): void {
+    const plan = this.premiumEditor();
+    if (plan === null) return;
+    this.patchPlan(plan.id, { monthlyPremiumAmount });
+    this.toasts.success('La prima de lista se actualizó correctamente.');
+  }
+
+  protected rulesSaved(update: UpdatePlanBenefitRulesInput): void {
+    const editor = this.rulesEditor();
+    if (editor === null) return;
+    this.patchBenefit(editor.plan.id, editor.benefit.id, {
+      requiresPriorAuthorization: update.requiresPriorAuthorization,
+      approvalRules: {
+        requiredDocuments: update.requiredDocuments,
+        exclusionNotes: update.exclusionNotes,
+      },
+    });
+    this.toasts.success('Las reglas de aprobación se actualizaron.');
   }
 
   /**
@@ -89,5 +173,53 @@ export class InsuranceCatalog {
       next: (detail) => this.state.set(ready(detail)),
       error: (error: unknown) => this.state.set(errorToViewState<CarrierDetail>(error)),
     });
+  }
+
+  private reloadCarrier(): void {
+    const current = this.carrier();
+    if (current === null) return;
+    this.insurance.getCarrier(current.id).subscribe({
+      next: (detail) => this.state.set(ready(detail)),
+      error: (error: unknown) => this.state.set(errorToViewState<CarrierDetail>(error)),
+    });
+  }
+
+  private patchPlan(planId: string, patch: Partial<Plan>): void {
+    const current = this.carrier();
+    if (current === null) return;
+    this.state.set(
+      ready({
+        ...current,
+        products: current.products.map((product) => ({
+          ...product,
+          plans: product.plans.map((plan) =>
+            plan.id === planId ? { ...plan, ...patch } : plan,
+          ),
+        })),
+      }),
+    );
+  }
+
+  private patchBenefit(planId: string, benefitId: string, patch: Partial<PlanBenefit>): void {
+    const current = this.carrier();
+    if (current === null) return;
+    this.state.set(
+      ready({
+        ...current,
+        products: current.products.map((product) => ({
+          ...product,
+          plans: product.plans.map((plan) =>
+            plan.id !== planId
+              ? plan
+              : {
+                  ...plan,
+                  benefits: plan.benefits.map((benefit) =>
+                    benefit.id === benefitId ? { ...benefit, ...patch } : benefit,
+                  ),
+                },
+          ),
+        })),
+      }),
+    );
   }
 }

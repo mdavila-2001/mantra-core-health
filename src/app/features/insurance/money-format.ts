@@ -1,4 +1,4 @@
-import type { Money } from '../../core/data-access/insurance/insurance.types';
+import type { InsuranceConcept, Money } from '../../core/data-access/insurance/insurance.types';
 
 /**
  * Texto con el que se muestra la ausencia de un importe.
@@ -57,4 +57,30 @@ export function formatAmount(money: Money | null): string {
 export function currencySuffix(money: Money | null): string {
   const display = money?.currency?.display;
   return display ? ` · ${display}` : '';
+}
+
+/**
+ * Formato del tablero de siniestralidad (subtarea 3.1): separador de miles con
+ * punto y decimal con coma — `280.000,00 Bs` —, el formato oficial boliviano
+ * (AC-03-01). Distinto adrede de {@link formatMoney}: ese formato es el de las
+ * solicitudes individuales (sin separador de miles, moneda por `display`); acá
+ * el tablero agrega miles de bolivianos y necesita legibilidad, no un eco
+ * literal de la base.
+ *
+ * El importe llega **ya sumado y redondeado en Postgres**: esta función sólo
+ * reacomoda dígitos de texto, nunca hace `Number()` ni aritmética.
+ *
+ * @param amount - Cadena decimal, ya redondeada a 2 decimales por la API.
+ * @param currency - Moneda del tablero, o `null` si no hay reclamos en el periodo.
+ * @returns `'280.000,00 Bs'` (BOB), `'280.000,00 USD'` (otra moneda) o
+ *   `'280.000,00'` (sin moneda declarada).
+ */
+export function formatKpiAmount(amount: string, currency: InsuranceConcept | null): string {
+  const texto = amount.trim();
+  const negativo = texto.startsWith('-');
+  const [entera = '0', decimal = '00'] = (negativo ? texto.slice(1) : texto).split('.');
+  const agrupada = entera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const numero = `${negativo ? '-' : ''}${agrupada},${decimal.slice(0, 2).padEnd(2, '0')}`;
+  if (currency === null) return numero;
+  return `${numero} ${currency.code === 'BOB' ? 'Bs' : currency.code}`;
 }

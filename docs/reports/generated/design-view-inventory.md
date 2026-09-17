@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 60 secciones del registro, 106 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 63 secciones del registro, 108 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -25,7 +25,7 @@ Carril 01. 60 secciones del registro, 106 pantallas hijas o de operación y 126 
 | cualquier sesión | `/messaging` | `Messaging` | CommunityClient | conectada | ninguna |
 | cualquier sesión | `/directories` | `DirectoriesOverview` | — | presentacional | verificar que no deba listar |
 | PATIENT | `/directory` | `PractitionersDirectory` | ProfilesClient, TerminologyClient | conectada | ninguna |
-| PATIENT | `/nearby-places` | `NearbyPlaces` | ClinicalClient, PublicDirectoryClient, TerminologyClient | conectada | ninguna |
+| PATIENT | `/nearby-places` | `NearbyPlaces` | ClinicalClient, ProfilesClient, PublicDirectoryClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/groups` | `Groups` | CommunityClient | conectada | ninguna |
 | cualquier sesión | `/laboratory-directory` | `LaboratoryDirectory` | DiagnosticUnitsClient | conectada | ninguna |
 | cualquier sesión | `/clinics-directory` | `ClinicsDirectory` | PublicCatalogClient, PublicDirectoryClient | conectada | ninguna |
@@ -45,9 +45,10 @@ Carril 01. 60 secciones del registro, 106 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN | `/administration/patients` | `PatientList` | ProfilesClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | SECURITY_ADMIN | `/administration/users` | `UserRegistration` | IamClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/organizations` | `OrganizationList` | DirectoryClient, TerminologyClient | conectada | ninguna |
-| SECURITY_ADMIN | `/administration/insurance` | `InsuranceCatalog` | InsuranceClient | conectada | ninguna |
+| cualquier sesión | `/administration/insurance` | `InsuranceCatalog` | InsuranceClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/brokers` | `BrokerDirectory` | InsuranceClient | conectada | ninguna |
 | BILLING_OPERATOR · SECURITY_ADMIN | `/administration/insurance-claims` | `InsuranceClaims` | InsuranceClient | conectada | ninguna |
+| cualquier sesión | `/administration/insurance-analytics` | `InsuranceAnalytics` | InsuranceAnalyticsClient, InsuranceClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/delegated-access` | `DelegatedAccessHome` | — | presentacional | verificar que no deba listar |
 | IDENTITY_ADMIN | `/administration/identity-providers` | `AuthProvidersHome` | — | presentacional | verificar que no deba listar |
 | SECURITY_ADMIN | `/administration/identity-assurance` | `IdentityAdminHome` | — | presentacional | verificar que no deba listar |
@@ -64,17 +65,19 @@ Carril 01. 60 secciones del registro, 106 pantallas hijas o de operación y 126 
 | PHARMA_LAB_ADMIN · BUSINESS_ADMIN · PLATFORM_ADMIN | `/administration/pharma-lab` | `PharmaLabHome` | PharmaLabClient | conectada | ninguna |
 | SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting` | `Cockpit` | AccountingClient | conectada | ninguna |
 | PRACTITIONER | `/assets-liabilities` | `AssetsLiabilities` | AccountingClient, AssetsLiabilitiesClient | conectada | ninguna |
+| cualquier sesión | `/my-account/dependents` | `Dependents` | ProfilesClient | conectada | ninguna |
 | cualquier sesión | `/my-account` | `MyProfile` | CommunityClient, FilesClient, IdentityClient, PracticeSitesClient, ProfilesClient, TerminologyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | cualquier sesión | `/my-account/appointments` | `Appointments` | SchedulingClient, TerminologyClient | conectada | ninguna |
-| cualquier sesión | `/my-account/medical-record` | `MedicalRecord` | ClinicalClient, DiagnosticsClient, FormsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, TerminologyClient | conectada con deuda | resolver: `TODO`/`FIXME`, promesa sin pantalla |
+| cualquier sesión | `/my-account/medical-record` | `MedicalRecord` | ClinicalClient, DiagnosticsClient, FormsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, TerminologyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | cualquier sesión | `/my-account/diagnostic-results` | `DiagnosticResults` | DiagnosticsClient, FilesClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/my-account/diagnostic-orders` | `DiagnosticOrders` | DiagnosticsClient, TerminologyClient | conectada con deuda | resolver: promesa sin pantalla |
 | cualquier sesión | `/my-account/questionnaires` | `Questionnaires` | ClinicalClient, SurveysClient | conectada | ninguna |
 | cualquier sesión | `/settings` | `Settings` | — | presentacional | verificar que no deba listar |
 | cualquier sesión | `/notification-center` | `NotificationCenter` | NotificationsClient | conectada | ninguna |
 | cualquier sesión | `/my-account/identity` | `IdentityHub` | — | presentacional | verificar que no deba listar |
-| PATIENT | `/my-account/pharmacy-orders` | `PharmacyOrders` | PharmacyCampaignsClient, PharmacyOrdersClient | conectada | ninguna |
+| PATIENT | `/my-account/pharmacy-orders` | `PharmacyOrders` | PharmacyCampaignsClient, PharmacyOrdersClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | PATIENT | `/my-account/loyalty` | `Loyalty` | LoyaltyClient | conectada | ninguna |
+| PATIENT | `/my-account/promotions` | `Promotions` | — | presentacional | verificar que no deba listar |
 | PRACTITIONER | `/administration/my-practice` | `MyPractice` | — | presentacional | verificar que no deba listar |
 | cualquier sesión | `/administration/my-organization` | `OrganizationPanel` | DirectoryClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | cualquier sesión | `/administration/pharmacy-orders` | `PharmacyInbox` | PharmacyOrdersClient, PharmacyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
@@ -169,17 +172,19 @@ Carril 01. 60 secciones del registro, 106 pantallas hijas o de operación y 126 
 | cualquier sesión | `/groups/:groupId` | `GroupDetail` | CommunityClient | conectada |
 | cualquier sesión | `/laboratory-directory/:unitId` | `LaboratoryDetail` | DiagnosticUnitsClient | conectada |
 | CLINICIAN · PRACTITIONER | `/medical-records/:profileId` | `PatientChart` | ChartCarePlansClient, ChartDocumentsClient, ChartNotesClient, ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, PrescriptionFavoritesClient, ProceduresClient, ProfilesClient, SystemContextClient, TerminologyClient | conectada |
-| CLINICIAN · PRACTITIONER | `/medical-records/:profileId/encounter` | `EncounterWorkspace` | ClinicalClient, ProfilesClient, TerminologyClient | conectada |
+| CLINICIAN · PRACTITIONER | `/medical-records/:profileId/consultation` | `Consultation` | ClinicalClient, ProfilesClient, TerminologyClient | conectada |
 | CLINICIAN · PRACTITIONER | `/medical-records/:profileId/request-access` | `RequestAccess` | AuthzClient, ProfilesClient | conectada |
 | cualquier sesión | `/my-account/access-requests` | `AccessRequests` | AuthzClient, ProfilesClient | conectada |
 | cualquier sesión | `/my-account/appointments/book/:slotId` | `BookingNew` | ProfilesClient, SchedulingClient | conectada |
 | cualquier sesión | `/my-account/articles` | `MedicalArticles` | CommunityClient | conectada |
-| cualquier sesión | `/my-account/edit` | `PractitionerProfileEdit` | FilesClient, ProfilesClient | conectada |
+| cualquier sesión | `/my-account/edit` | `PractitionerProfileEdit` | FilesClient, ProfilesClient, TerminologyClient | conectada |
 | cualquier sesión | `/my-account/identity/cases/:caseId` | `VerificationCaseDetail` | IdentityClient | conectada |
-| cualquier sesión | `/my-account/medical-record/where-to-buy/:requestId` | `WhereToBuy` | ClinicalClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, TerminologyClient | conectada con deuda |
+| cualquier sesión | `/my-account/medical-record/where-to-buy/:requestId` | `WhereToBuy` | ClinicalClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, TerminologyClient | conectada con deuda |
 | PATIENT | `/my-account/pharmacy-orders/:orderId` | `OrderDetail` | PharmacyOrdersClient | conectada |
+| PATIENT | `/my-account/pharmacy-orders/:orderId/invoice` | `OrderInvoice` | PharmacyOrdersClient | conectada con deuda |
 | PATIENT | `/my-account/pharmacy-orders/:orderId/receipt` | `OrderReceipt` | PharmacyOrdersClient | conectada |
-| PATIENT | `/my-account/pharmacy-orders/new` | `NewOrder` | PharmacyCampaignsClient, PharmacyOrdersClient | conectada |
+| PATIENT | `/my-account/pharmacy-orders/checkout` | `Checkout` | PharmacyCampaignsClient, PharmacyOrdersClient | conectada |
+| PATIENT | `/my-account/pharmacy-orders/new` | `NewOrder` | PharmacyCampaignsClient, PharmacyOrdersClient | conectada con deuda |
 | cualquier sesión | `/my-account/profile/edit` | `PatientProfileEdit` | ProfilesClient | conectada con deuda |
 | cualquier sesión | `/my-account/questionnaires/:invitationId` | `QuestionnaireAnswer` | SurveysClient | conectada |
 | cualquier sesión | `/my-quotations/new` | `QuotationForm` | ProfilesClient, QuotationsClient, SchedulingClient, ServicesCatalogClient | conectada |
@@ -329,9 +334,9 @@ Las 126 pantallas de `features/alovida/`, generadas por `scripts/port-vistas-alo
 
 | Estado | Pantallas |
 |---|---|
-| conectada | 149 |
+| conectada | 150 |
 | maqueta portada | 119 |
-| conectada con deuda | 12 |
-| presentacional | 10 |
+| conectada con deuda | 15 |
+| presentacional | 11 |
 | placeholder | 1 |
 | con deuda | 1 |

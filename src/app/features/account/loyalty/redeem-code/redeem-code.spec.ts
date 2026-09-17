@@ -80,6 +80,24 @@ describe('RedeemCode', () => {
     expect(porTestId('canje-vence')?.textContent).toContain('14:45');
   });
 
+  it('dice que el código se muestra en la caja del supermercado, con el vencimiento a la vista', () => {
+    montar();
+
+    expect(porTestId('canje-caja')?.textContent?.trim()).toBe(
+      'Mostrá este código en la caja del supermercado',
+    );
+    expect(porTestId('canje-vence')?.textContent).toContain('14:45');
+  });
+
+  it('se titula «Código de canje» y no manda a ningún mostrador (D-T-E6-02)', () => {
+    montar();
+
+    expect(fixture.nativeElement.querySelector('#canje-titulo')?.textContent?.trim()).toBe(
+      'Código de canje',
+    );
+    expect(texto().toLowerCase()).not.toContain('mostrador');
+  });
+
   it('no pinta ningún identificador interno', () => {
     montar();
 

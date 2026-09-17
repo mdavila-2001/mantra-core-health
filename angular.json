@@ -97,6 +97,34 @@
                   "with": "src/environments/environment.development.ts"
                 }
               ]
+            },
+            "e2e-real": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "server": false,
+              "ssr": false,
+              "outputMode": "static",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.e2e-real.ts"
+                }
+              ]
+            },
+            "real-api": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "server": false,
+              "ssr": false,
+              "outputMode": "static",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.real-api.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -120,6 +148,12 @@
             },
             "development": {
               "buildTarget": "mantra-core-health:build:development"
+            },
+            "e2e-real": {
+              "buildTarget": "mantra-core-health:build:e2e-real"
+            },
+            "real-api": {
+              "buildTarget": "mantra-core-health:build:real-api"
             },
             "lan": {
               "buildTarget": "mantra-core-health:build:development",

@@ -15,12 +15,18 @@ import type {
   GeoPoint,
 } from '../../../../core/data-access/pharmacy/pharmacy.types';
 import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
+import {
+  aCentavos,
+  aTexto,
+} from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import type { CampanaDeFarmacia } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import type {
   BorradorDePedido,
   LineaDePedido,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { NO_SAVED_PLACES, savedPlacesOf, type SavedPlaces } from '../../../../core/data-access/profiles/saved-places';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -31,15 +37,22 @@ import { AppButtonLink } from '../../../../shared/components/atoms/button/button
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Link } from '../../../../shared/components/atoms/link/link';
+import { Switch } from '../../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { EmptyState } from '../../../../shared/components/molecules/empty-state/empty-state';
+import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
-import type { PinMapa } from '../../../../shared/components/organisms/map/pin-mapa.types';
+import type {
+  EstadoDePin,
+  PinMapa,
+} from '../../../../shared/components/organisms/map/pin-mapa.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
+import { aprobadosPorElSeguroDeEjemplo, NOTA_DE_DEMOSTRACION } from './where-to-buy.fixtures';
 
 /** Los estudios que le pidieron a esta persona. Ya existe y ya se lee. */
 const MIS_ESTUDIOS_ROUTE = '/my-account/diagnostic-orders';
@@ -72,13 +85,27 @@ const CANTIDAD_POR_RENGLON = 1;
 /**
  * Puntos de referencia para medir distancias sin entregar la ubicación: las
  * plazas centrales de las ciudades donde la red opera. Son datos públicos del
- * mapa, no datos de la persona. Domicilio y trabajo van a sumarse acá cuando
- * el backend exponga las direcciones del paciente — hoy no hay contrato.
+ * mapa, no datos de la persona — el domicilio y el trabajo declarados por el
+ * paciente son otro juego de puntos, `lugaresGuardados` más abajo, que se
+ * ofrecen primero porque ya sabemos que le quedan cerca.
  */
 const CIUDADES: readonly PuntoDeReferencia[] = [
   { etiqueta: 'Santa Cruz de la Sierra', lat: -17.7833, lng: -63.1821 },
   { etiqueta: 'La Paz', lat: -16.4957, lng: -68.1335 },
   { etiqueta: 'Cochabamba', lat: -17.3895, lng: -66.1568 },
+];
+
+/** Cómo se ordenan las sucursales en la lista (T-E2 · F2.1.4). */
+export type OrdenDeSedes = 'receta-completa' | 'mas-cerca' | 'mas-barato';
+
+/**
+ * Las tres maneras de mirar la misma lista. La primera es la del backend y es
+ * la que se abre: ordenar no vuelve a consultar, sólo reacomoda lo que llegó.
+ */
+export const OPCIONES_DE_ORDEN: readonly SegmentedOption<OrdenDeSedes>[] = [
+  { value: 'receta-completa', label: 'Receta completa primero' },
+  { value: 'mas-cerca', label: 'Más cerca' },
+  { value: 'mas-barato', label: 'Más barato' },
 ];
 
 /** Un lugar con nombre desde donde medir distancias. */
@@ -121,16 +148,42 @@ interface SedeVisible {
   readonly direccion: string | null;
   /** «1,2 km», o `null` sin origen o sin coordenadas de la sede. */
   readonly distancia: string | null;
+  /** La distancia del backend sin formatear: la clave de «Más cerca». */
+  readonly distanciaKm: number | null;
   readonly completa: boolean;
   /** Los medicamentos de la receta que esta sede NO puede confirmar. */
   readonly faltantes: readonly string[];
   /** «96.50 BOB», o `null` si falta un precio o las listas mezclan monedas. */
   readonly total: string | null;
+  /** El total en centavos, o `null` si no es un importe: la clave de «Más barato». */
+  readonly totalCentavos: number | null;
   readonly retiro: boolean | null;
   readonly delivery: boolean | null;
   /** Coordenadas reales de la sede; `null` si el directorio no las publica. */
   readonly lat: number | null;
   readonly lng: number | null;
+  /** La misma sede evaluada sólo sobre lo aprobado por el seguro (demostración). */
+  readonly conSeguro: CoberturaConSeguro;
+}
+
+/**
+ * Una sede mirada con seguro (T-E2 · F2.2.2): la cobertura cuenta sólo los
+ * renglones aprobados, y el precio se parte en lo aprobado y lo que paga la
+ * persona. Se calcula junto con la vista normal para que el conmutador no
+ * vuelva a consultar nada.
+ */
+export interface CoberturaConSeguro {
+  /** Cuántos renglones incluidos aprueba el seguro: el «M» de «N de M». */
+  readonly aprobados: number;
+  /** Cuántos de esos puede confirmar esta sede: el «N». */
+  readonly cubiertos: number;
+  readonly completa: boolean;
+  /** Los aprobados que esta sede NO puede confirmar. */
+  readonly faltantes: readonly string[];
+  /** «68.00 BOB» por lo aprobado disponible, o `null` si falta un precio. */
+  readonly aprobado: string | null;
+  /** «28.50 BOB» por lo no aprobado disponible, o `null` si falta un precio. */
+  readonly aCargo: string | null;
 }
 
 /** El resultado de la consulta, listo para pintarse. */
@@ -138,7 +191,12 @@ interface ResultadoDeSedes {
   readonly sedes: readonly SedeVisible[];
   /** Medicamentos incluidos sin producto publicado: nadie puede confirmarlos. */
   readonly sinProducto: readonly string[];
+  /** Renglones incluidos que aprueba el seguro; `0` vacía la variante con seguro. */
+  readonly aprobadosIncluidos: number;
 }
+
+/** Sin sucursales que mostrar: la pantalla no llegó a consultar. */
+const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [], aprobadosIncluidos: 0 };
 
 /**
  * **Dónde comprar mi receta** (carril E3, sobre las lecturas E2 del backend).
@@ -148,16 +206,28 @@ interface ResultadoDeSedes {
  * Qué sucursales pueden surtir los medicamentos recetados, cuáles los tienen
  * **todos** (completas, primero) y a cuáles les falta algo (parciales, con el
  * faltante dicho por su nombre), con dirección, distancia y total estimado.
- * El orden lo decide el backend: completas primero, después distancia, total
- * y nombre — la pantalla no lo reordena.
+ * El orden por defecto es el del backend: completas primero, después
+ * distancia, total y nombre — «Receta completa primero» lo respeta tal cual.
+ * «Más cerca» y «Más barato» (T-E2) reacomodan en la pantalla lo que ya llegó,
+ * sin volver a consultar; ver {@link ordenarSedes}.
  *
- * ## La ubicación se pide, no se toma
+ * ## La variante con seguro es una demostración
  *
- * Mismo patrón que «Cerca mío» (P4): la consulta sale **sin coordenadas** al
- * entrar —la disponibilidad no las necesita— y la API de geolocalización del
- * navegador no se toca hasta que alguien aprieta el botón. La alternativa sin
- * entregar la ubicación es medir desde una ciudad; domicilio y trabajo se
- * suman cuando exista el contrato de direcciones del paciente.
+ * El conmutador (T-E2 · F2.2.2) evalúa lista y mapa sólo sobre los renglones
+ * que el seguro aprueba y parte el precio en «aprobado / a tu cargo». Qué se
+ * aprueba sale de `where-to-buy.fixtures.ts`, no de un contrato; las sedes,
+ * existencias y precios siguen siendo los de la disponibilidad. El borrador
+ * del pedido no se entera: el CTA arma el mismo borrador con o sin seguro.
+ *
+ * ## La ubicación se pide, no se toma — salvo la que ya diste
+ *
+ * Mismo patrón que «Cerca mío» (P4): la API de geolocalización del navegador
+ * no se toca hasta que alguien aprieta «Compartir mi ubicación». Domicilio y
+ * trabajo (subtarea B.2) son la excepción, y no una contradicción: son datos
+ * que la persona **ya declaró** en su perfil, no algo que el navegador
+ * entregue sin que se sepa. Por eso la casa se preselecciona sin pedir
+ * permiso — la primera consulta de disponibilidad ya sale con ese origen —,
+ * y las ciudades siguen ahí para quien no declaró ninguno de los dos.
  *
  * ## El puente receta → producto
  *
@@ -186,6 +256,8 @@ interface ResultadoDeSedes {
     Link,
     PageHeader,
     RouterLink,
+    SegmentedControl,
+    Switch,
     Tab,
     Tabs,
     ViewStateHost,
@@ -199,6 +271,7 @@ export class WhereToBuy {
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly pharmacy = inject(PharmacyClient);
+  private readonly profiles = inject(ProfilesClient);
   private readonly campaigns = inject(PharmacyCampaignsClient);
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly route = inject(ActivatedRoute);
@@ -221,6 +294,15 @@ export class WhereToBuy {
   protected readonly rutaDeLaboratorios = LABORATORIOS_ROUTE;
   protected readonly rutaDeClinicas = CLINICAS_ROUTE;
   protected readonly ciudades = CIUDADES;
+  protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
+  protected readonly notaDeDemostracion = NOTA_DE_DEMOSTRACION;
+
+  /**
+   * El domicilio y el trabajo del paciente, como puntos de referencia
+   * (subtarea B.2). Vacío hasta que el perfil responde; si no declaró
+   * ninguno de los dos, se queda vacío y sólo quedan las ciudades.
+   */
+  protected readonly lugaresGuardados = signal<readonly PuntoDeReferencia[]>([]);
 
   /** La última respuesta cruda: el borrador necesita los precios por línea. */
   private ultimaConsulta: {
@@ -243,6 +325,46 @@ export class WhereToBuy {
   protected readonly items = computed(() => dataOf(this.lista())?.items ?? []);
   protected readonly resultado = computed(() => dataOf(this.resultados()));
 
+  /* ---- el orden y la variante con seguro (T-E2) --------------------------- */
+
+  protected readonly orden = signal<OrdenDeSedes>('receta-completa');
+
+  /** El conmutador de demostración de la variante con seguro. */
+  protected readonly conSeguro = signal(false);
+
+  /** Qué renglones aprueba el seguro, de ejemplo, sobre la receta entera. */
+  private readonly aprobadosPorElSeguro = computed(() =>
+    aprobadosPorElSeguroDeEjemplo(this.items().map((item) => item.conceptId)),
+  );
+
+  /** La lista en el orden elegido. Una copia: la respuesta no se toca. */
+  protected readonly sedesOrdenadas = computed(() =>
+    ordenarSedes(this.resultado()?.sedes ?? [], this.orden()),
+  );
+
+  /**
+   * El estado de las sucursales tal como se pinta. Es el mismo de la consulta
+   * —cargando, vacío y error pasan intactos—, salvo un caso propio de la
+   * variante: con seguro y ningún renglón incluido aprobado no hay nada que
+   * evaluar, y eso se dice con su salida en vez de mostrar «0 de 0».
+   */
+  protected readonly estadoDeSedes = computed<ViewState<ResultadoDeSedes>>(() => {
+    const estado = this.resultados();
+    const datos = dataOf(estado);
+    if (
+      this.conSeguro() &&
+      datos !== null &&
+      datos.sedes.length > 0 &&
+      datos.aprobadosIncluidos === 0
+    ) {
+      return empty(
+        { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
+        'Con el seguro, ninguno de los medicamentos que elegiste está aprobado. Apagá la variante con seguro para ver la receta completa.',
+      );
+    }
+    return estado;
+  });
+
   /** Las sedes que el mapa puede ubicar: las que tienen coordenadas. */
   protected readonly sedesEnElMapa = computed(() =>
     (this.resultado()?.sedes ?? []).filter(
@@ -264,10 +386,8 @@ export class WhereToBuy {
       lat: sede.lat,
       lng: sede.lng,
       titulo: `${sede.farmacia} · ${sede.sede}`,
-      subtitulo: subtituloDePin(sede),
-      estado: sede.completa
-        ? { etiqueta: 'Tiene todo', tono: 'success' as const }
-        : { etiqueta: 'Le falta algo', tono: 'warning' as const },
+      subtitulo: subtituloDePin(sede, this.conSeguro()),
+      estado: estadoDePin(sede, this.conSeguro()),
       ctaEtiqueta: 'Ver en la lista',
     })),
   );
@@ -283,7 +403,7 @@ export class WhereToBuy {
       // No es un vacío de datos ni un error: la pantalla no le corresponde a
       // esta cuenta, y el aviso lo dice con su propia salida.
       this.lista.set(empty({ label: 'Ir a mi historia', route: MI_HISTORIA_ROUTE }));
-      this.resultados.set(ready({ sedes: [], sinProducto: [] }));
+      this.resultados.set(ready(SIN_SEDES));
       return;
     }
     this.cargar();
@@ -319,6 +439,14 @@ export class WhereToBuy {
               .readConceptLabels(filas.map((fila) => fila.medicationConceptId))
               .pipe(catchError(() => of<ConceptLabels>(new Map()))),
             productos: this.productosDe(filas.map((fila) => fila.medicationConceptId)),
+            // Domicilio y trabajo del paciente, para ofrecerlos como puntos
+            // de referencia sin pedirle el GPS (subtarea B.2). Un fallo acá
+            // no puede tumbar la consulta de disponibilidad: se degrada a
+            // «sin lugares guardados», que es exactamente lo que había antes.
+            places: this.profiles.getOwnPatientProfile().pipe(
+              map(savedPlacesOf),
+              catchError(() => of<SavedPlaces>(NO_SAVED_PLACES)),
+            ),
           });
         }),
       )
@@ -326,7 +454,7 @@ export class WhereToBuy {
         next: (carga) => {
           if (carga === null) {
             this.lista.set(notFound({ label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE }));
-            this.resultados.set(ready({ sedes: [], sinProducto: [] }));
+            this.resultados.set(ready(SIN_SEDES));
             return;
           }
           const items = carga.filas.map((fila) => itemDe(fila, carga.etiquetas, carga.productos));
@@ -342,11 +470,12 @@ export class WhereToBuy {
             ),
           );
           this.lista.set(ready({ items }));
+          this.sembrarLugaresGuardados(carga.places);
           this.consultar();
         },
         error: (error: unknown) => {
           this.lista.set(errorToViewState<ListaDeCompra>(error));
-          this.resultados.set(ready({ sedes: [], sinProducto: [] }));
+          this.resultados.set(ready(SIN_SEDES));
         },
       });
   }
@@ -367,6 +496,13 @@ export class WhereToBuy {
   protected estaIncluido(item: ItemDeReceta): boolean {
     return this.incluidos().has(item.conceptId);
   }
+
+  /** Si el seguro aprueba el renglón, de ejemplo (T-E2). */
+  protected estaAprobado(item: ItemDeReceta): boolean {
+    return this.aprobadosPorElSeguro().has(item.conceptId);
+  }
+
+  protected readonly coberturaDeLoAprobado = coberturaDeLoAprobado;
 
   protected alternar(item: ItemDeReceta, incluir: boolean): void {
     const proximos = new Set(this.incluidos());
@@ -411,6 +547,11 @@ export class WhereToBuy {
       return;
     }
 
+    // Con seguro se evalúa sobre lo aprobado: lo que no tiene producto también
+    // cuenta, porque ninguna sede puede confirmarlo.
+    const aprobados = this.aprobadosPorElSeguro();
+    const sinProductoPorConcepto = incluidos.filter((item) => item.productId === null);
+
     this.resultados.set(loading());
     const origen = this.origen();
     this.pharmacy
@@ -432,7 +573,9 @@ export class WhereToBuy {
           }
           this.ultimaConsulta = { respuesta, consultables, sinProducto };
           this.sembrarPromociones(respuesta);
-          this.resultados.set(ready(evaluar(respuesta, consultables, sinProducto)));
+          this.resultados.set(
+            ready(evaluar(respuesta, consultables, sinProducto, sinProductoPorConcepto, aprobados)),
+          );
         },
         error: (error: unknown) => this.resultados.set(errorToViewState<ResultadoDeSedes>(error)),
       });
@@ -501,6 +644,31 @@ export class WhereToBuy {
   }
 
   /* ---- la ubicación: se pide, no se toma ---------------------------------- */
+
+  /**
+   * Ofrece la casa y el trabajo del paciente como origen, y preselecciona la
+   * casa si existe.
+   *
+   * A diferencia de `compartirUbicacion`, esto **no pide nada al
+   * navegador**: la casa es un dato que la persona ya declaró en su perfil,
+   * así que usarla de entrada no es «tomar» su ubicación, es leer lo que ya
+   * dio. Si no hay casa pero sí trabajo, el trabajo queda ofrecido como
+   * botón — pero no se preselecciona: `casa` es la lectura por defecto más
+   * útil, no cualquiera de las dos.
+   */
+  private sembrarLugaresGuardados(places: SavedPlaces): void {
+    const referencias: PuntoDeReferencia[] = [];
+    if (places.home !== null) {
+      referencias.push({ etiqueta: 'tu casa', ...places.home });
+    }
+    if (places.work !== null) {
+      referencias.push({ etiqueta: 'tu trabajo', ...places.work });
+    }
+    this.lugaresGuardados.set(referencias);
+    if (places.home !== null) {
+      this.origen.set({ etiqueta: 'tu casa', ...places.home });
+    }
+  }
 
   /** Pide la ubicación al navegador. Sólo se llama desde el botón. */
   protected compartirUbicacion(): void {
@@ -589,13 +757,72 @@ function geoPuntoDe(punto: PuntoDeReferencia): GeoPoint {
   return { lat: punto.lat, lng: punto.lng };
 }
 
-/** El renglón secundario del pin: distancia rotulada y dirección, lo que haya. */
-function subtituloDePin(sede: SedeVisible): string | undefined {
+/**
+ * El renglón secundario del pin: distancia rotulada y dirección, lo que haya;
+ * con seguro, primero la cobertura de lo aprobado — lo mismo que dice la tarjeta.
+ */
+function subtituloDePin(sede: SedeVisible, conSeguro: boolean): string | undefined {
   const partes = [
+    conSeguro ? coberturaDeLoAprobado(sede.conSeguro) : null,
     sede.distancia === null ? null : `${sede.distancia} en línea recta`,
     sede.direccion,
   ].filter((parte): parte is string => parte !== null);
   return partes.length === 0 ? undefined : partes.join(' · ');
+}
+
+/** El estado del pin: el mismo criterio que el badge de la tarjeta. */
+function estadoDePin(sede: SedeVisible, conSeguro: boolean): EstadoDePin {
+  if (conSeguro) {
+    return sede.conSeguro.completa
+      ? { etiqueta: 'Tiene todo lo aprobado', tono: 'success' }
+      : { etiqueta: 'Le falta algo aprobado', tono: 'warning' };
+  }
+  return sede.completa
+    ? { etiqueta: 'Tiene todo', tono: 'success' }
+    : { etiqueta: 'Le falta algo', tono: 'warning' };
+}
+
+/** «Cobertura de lo aprobado: 3 de 3». */
+export function coberturaDeLoAprobado(cobertura: CoberturaConSeguro): string {
+  return `Cobertura de lo aprobado: ${cobertura.cubiertos} de ${cobertura.aprobados}`;
+}
+
+/**
+ * Las sedes en el orden elegido (T-E2 · F2.1.4). **Pura y sin mutar**: devuelve
+ * la misma lista con «Receta completa primero» —el orden del backend, sin
+ * recalcular nada— y una copia reacomodada con las otras dos.
+ *
+ * - «Más cerca»: distancia ascendente.
+ * - «Más barato»: total ascendente, en centavos.
+ * - Un valor ausente o que no es un número finito no negativo va al final;
+ *   el `0` es un valor válido (una sede a 0 km, un total 0.00).
+ * - Los empates, entre sí y entre ausentes, conservan el orden del backend:
+ *   el índice original desempata, sin depender de la estabilidad del `sort`.
+ */
+export function ordenarSedes<
+  T extends { readonly distanciaKm: number | null; readonly totalCentavos: number | null },
+>(sedes: readonly T[], orden: OrdenDeSedes): readonly T[] {
+  if (orden === 'receta-completa') {
+    return sedes;
+  }
+  const claveDe = (sede: T) => (orden === 'mas-cerca' ? sede.distanciaKm : sede.totalCentavos);
+  return sedes
+    .map((sede, indice) => ({ sede, indice, clave: claveValida(claveDe(sede)) }))
+    .sort((a, b) => {
+      if (a.clave === null || b.clave === null) {
+        if (a.clave === b.clave) {
+          return a.indice - b.indice;
+        }
+        return a.clave === null ? 1 : -1;
+      }
+      return a.clave - b.clave || a.indice - b.indice;
+    })
+    .map(({ sede }) => sede);
+}
+
+/** Un número utilizable para ordenar, o `null`. `0` vale; `NaN` e infinitos no. */
+function claveValida(valor: number | null | undefined): number | null {
+  return typeof valor === 'number' && Number.isFinite(valor) && valor >= 0 ? valor : null;
 }
 
 /**
@@ -679,6 +906,8 @@ function evaluar(
   respuesta: AvailabilityResult,
   consultables: readonly (ItemDeReceta & { productId: string })[],
   sinProducto: readonly string[],
+  sinProductoPorConcepto: readonly ItemDeReceta[],
+  aprobados: ReadonlySet<string>,
 ): ResultadoDeSedes {
   const nombrePorProducto = new Map(consultables.map((item) => [item.productId, item.medicamento]));
 
@@ -698,18 +927,103 @@ function evaluar(
       direccion: sede.addressText,
       distancia:
         sede.distanceKm === null ? null : `${sede.distanceKm.toFixed(1).replace('.', ',')} km`,
+      distanciaKm: sede.distanceKm,
       completa: faltantes.length === 0,
       faltantes,
       total:
         sede.totalAmount === null
           ? null
           : `${sede.totalAmount} ${sede.currency?.code ?? ''}`.trim(),
+      totalCentavos: sede.totalAmount === null ? null : aCentavos(sede.totalAmount),
       retiro: sede.pickupAvailable,
       delivery: sede.homeDeliveryAvailable,
       lat: sede.latitude,
       lng: sede.longitude,
+      conSeguro: coberturaConSeguro(sede, consultables, sinProductoPorConcepto, aprobados),
     };
   });
 
-  return { sedes, sinProducto };
+  const aprobadosIncluidos =
+    consultables.filter((item) => aprobados.has(item.conceptId)).length +
+    sinProductoPorConcepto.filter((item) => aprobados.has(item.conceptId)).length;
+
+  return { sedes, sinProducto, aprobadosIncluidos };
+}
+
+/**
+ * Una sede evaluada sólo sobre los renglones aprobados (T-E2 · F2.2.2).
+ *
+ * - **Cobertura:** de los aprobados incluidos, cuántos confirma la sede. Un
+ *   aprobado sin producto publicado cuenta y falta, como en la vista normal.
+ * - **Aprobado / a tu cargo:** lo que la sede cobra por lo disponible, partido
+ *   por la aprobación. Lo que la sede no tiene no suma en ninguno de los dos.
+ * - **Aritmética en centavos** (`pharmacy-campaigns.money`): un precio que
+ *   falta, que no es un importe o que viene en otra moneda deja esa parte en
+ *   `null` — se dice, no se estima.
+ *
+ * Exportada a propósito: es pura y el spec la ejercita directo.
+ */
+export function coberturaConSeguro(
+  sede: AvailabilitySite,
+  consultables: readonly (ItemDeReceta & { productId: string })[],
+  sinProductoPorConcepto: readonly ItemDeReceta[],
+  aprobados: ReadonlySet<string>,
+): CoberturaConSeguro {
+  const porProducto = new Map(sede.products.map((producto) => [producto.productId, producto]));
+  const disponible = (item: ItemDeReceta & { productId: string }) =>
+    porProducto.has(item.productId) && !sede.missingProductIds.includes(item.productId);
+
+  const aprobadosConProducto = consultables.filter((item) => aprobados.has(item.conceptId));
+  const aprobadosSinProducto = sinProductoPorConcepto.filter((item) =>
+    aprobados.has(item.conceptId),
+  );
+  const faltantes = [
+    ...aprobadosConProducto.filter((item) => !disponible(item)).map((item) => item.medicamento),
+    ...aprobadosSinProducto.map((item) => item.medicamento),
+  ];
+  const cantidadAprobada = aprobadosConProducto.length + aprobadosSinProducto.length;
+
+  const importeDe = (items: readonly (ItemDeReceta & { productId: string })[]) =>
+    importeDeProductos(
+      items.filter(disponible).map((item) => porProducto.get(item.productId)),
+      sede.currency?.code ?? null,
+    );
+
+  return {
+    aprobados: cantidadAprobada,
+    cubiertos: cantidadAprobada - faltantes.length,
+    completa: cantidadAprobada > 0 && faltantes.length === 0,
+    faltantes,
+    aprobado: importeDe(aprobadosConProducto),
+    aCargo: importeDe(consultables.filter((item) => !aprobados.has(item.conceptId))),
+  };
+}
+
+/**
+ * Lo que paga el paciente por esos productos, un envase por renglón, sumado en
+ * centavos: «96.50 BOB». `null` si alguno no tiene precio, no es un importe o
+ * viene en otra moneda que el resto. Sin productos, «0.00»: no pagar nada es
+ * un dato, no una ausencia.
+ */
+function importeDeProductos(
+  productos: readonly (AvailabilityProduct | undefined)[],
+  monedaDeLaSede: string | null,
+): string | null {
+  let centavos = 0;
+  let moneda = monedaDeLaSede;
+  for (const producto of productos) {
+    const precio = producto?.price ?? null;
+    const importe = precio?.patientAmount ?? precio?.unitAmount ?? null;
+    const enCentavos = importe === null ? null : aCentavos(importe);
+    if (precio === null || enCentavos === null) {
+      return null;
+    }
+    const suMoneda = precio.currency?.code ?? moneda;
+    if (moneda !== null && suMoneda !== null && suMoneda !== moneda) {
+      return null;
+    }
+    moneda = suMoneda;
+    centavos += enCentavos * CANTIDAD_POR_RENGLON;
+  }
+  return `${aTexto(centavos)} ${moneda ?? ''}`.trim();
 }

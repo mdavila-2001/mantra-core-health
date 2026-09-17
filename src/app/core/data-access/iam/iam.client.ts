@@ -288,6 +288,13 @@ export class IamClient {
       // El institucional. El de acceso es `email`, que desde el cambio de
       // identidad de acceso lleva el correo PERSONAL del profesional.
       ...(registration.workEmail === undefined ? {} : { workEmail: registration.workEmail }),
+      // Los títulos declarados en el alta (subtarea 1.6). Van acá por lo mismo
+      // que avisa el comentario de arriba: sin este renglón la pantalla
+      // preguntaría títulos que nadie guarda. La lista vacía no viaja: un alta
+      // sin títulos es el caso normal y el contrato la omite.
+      ...(registration.credentials === undefined || registration.credentials.length === 0
+        ? {}
+        : { credentials: registration.credentials.map((credencial) => ({ ...credencial })) }),
     });
   }
 
@@ -335,6 +342,16 @@ export class IamClient {
         ...(registration.legalDocuments === undefined
           ? {}
           : { legalDocuments: registration.legalDocuments }),
+        // Representante legal y gerencias de contacto (subtarea 1.4): mismo
+        // criterio que `legalDocuments` — dentro de `organization`, nunca
+        // dentro de `payer` (el registro de procesos repite el mismo bloque
+        // para farmacia/laboratorio/imagenología; no es dato de aseguradora).
+        ...(registration.legalRepresentative === undefined
+          ? {}
+          : { legalRepresentative: registration.legalRepresentative }),
+        ...(registration.executives === undefined
+          ? {}
+          : { executives: registration.executives }),
       },
       owner: {
         email: registration.owner.email,

@@ -121,6 +121,47 @@ Sobre la rama `mockup` las responde el simulador. **Contra la API real las dos s
 estado de error hasta que el backend las publique: ninguna inventa datos ni esconde el hueco.**
 O sea que esto se puede mergear a `dev` antes que el backend y no rompe nada — pero las dos
 fichas se ven vacías hasta que exista.
+## ~~P32 y P33~~ · el consultorio propio y su QR bancario — **CERRADOS**
+
+**Nacieron el 2026-09-13 en la rama `mockup`** (de ahí que esta copia de `dev` no los
+listara) y **se cerraron el 2026-09-16** con la subtarea C.1. Se anotan acá para que
+esta copia no diga que faltan cosas que ya están.
+
+| Lo que faltaba | Cómo quedó |
+|---|---|
+| `esPropio` por sede | **`isOwnSite`**, en `GET /practitioners/:profileId/sites` |
+| Corregir el consultorio propio | `PATCH /practitioners/me/sites/:siteId` |
+| El QR bancario por sede | `bankQrFileId` en la lectura + `PUT /practitioners/me/sites/:siteId/bank-qr` |
+
+Cuatro decisiones que no se deducen del contrato:
+
+1. **Se llama `isOwnSite`, no `esPropio`.** La maqueta lo sirvió en castellano; la regla
+   de gobernanza pide los contratos en inglés técnico, así que el campo viaja en inglés y
+   el tipo `PracticeSite` del frontend se renombró con él. Quien traiga pantallas de
+   `mockup` tiene que renombrarlo también.
+2. **`isOwnSite` no es «la práctica es de tipo consultorio».** Sale de comparar la
+   práctica de la sede con la **práctica personal** del profesional (tipo consultorio y él
+   como cuenta administradora). Un consultorio particular **ajeno** es tan ajeno como un
+   hospital, y darlo por propio ofrecería un «Editar» que el `PATCH` después rechaza.
+3. **El QR autoriza distinto que el `PATCH`.** El `PATCH` exige ser dueño del consultorio;
+   el QR sólo exige **vinculación vigente con la sede**, porque también se cobra en la
+   clínica donde el profesional atiende sin ser dueño del lugar. Lo que se guarda ahí no es
+   la sede: es con qué cobra él en ella.
+4. **El QR no acepta PDF.** El frontend lo sube con categoría `IMAGE` (JPG, PNG, WEBP). Un
+   QR dentro de un PDF no se puede mostrar en el modal ni escanear desde la pantalla, que es
+   lo único que esto hace.
+
+**Lo que sigue abierto del P28:** el consultorio propio ya se corrige, pero **sexo al
+nacer** y **documento + departamento emisor** siguen sin entrar en el `PATCH` del perfil.
+
+**Lo que NO entró, y por qué:**
+
+- **Teléfono de la sede.** `common.contact_points` identifica a su dueño por
+  `owner_type_concept_id` y el value set **no declara ningún miembro para una sede**.
+  Agregarlo es un cambio de modelo (nota de value set + `VS_OWNER` + binding del
+  generador), no un campo más en un DTO.
+- **Horario de atención.** No existe tabla de horarios en `practice`. Lo único que la sede
+  declara es su huso (`time_zone`), y eso sí se corrige.
 
 ---
 

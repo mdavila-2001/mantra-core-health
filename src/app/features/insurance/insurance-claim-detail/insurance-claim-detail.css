@@ -2,6 +2,7 @@
    que se lee de arriba abajo, y encerrar cada bloque en su borde compite con
    la tabla de ítems, que sí necesita el suyo. */
 .claim__header,
+.claim__contact,
 .claim__adjudication,
 .claim__lines,
 .claim__actions,
@@ -128,6 +129,31 @@
     color: var(--text-secondary);
     font-style: italic;
     font-variant-numeric: normal;
+}
+
+/* La cita de la cláusula y la justificación viven en la misma celda que el
+   motivo (subtarea 2.2): apiladas, no en línea, porque una cláusula real es
+   larga y competir por el ancho con el resto de la fila la corta a la mitad. */
+.claim__denial {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-1);
+    max-inline-size: 22rem;
+}
+
+/* El badge de cláusula anula el `nowrap` del badge base: una cita de una
+   sola línea sin cortar desbordaría la celda y, con ella, la tabla entera. */
+.claim__clause {
+    white-space: normal;
+    text-align: start;
+    line-height: 1.25;
+}
+
+.claim__rationale {
+    margin: 0;
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+    line-height: 1.35;
 }
 
 /* El id del documento de origen es un botón que se lee como un dato tocable,

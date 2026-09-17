@@ -76,3 +76,34 @@ export function camposDeDocumentosLegales(
     };
   });
 }
+
+/**
+ * El poder notariado del representante legal (subtarea 1.4).
+ *
+ * Va aparte de {@link DOCUMENTOS_LEGALES_DEL_REGISTRO} — que `documentos-legales.spec.ts`
+ * fija en cinco, en ese orden— y no se le suma como sexto elemento: la clave de
+ * este documento (`powerOfAttorneyFileId`) no pertenece al bloque `legalDocuments`
+ * de la organización, sino a `legalRepresentative`. El rótulo ya está traducido
+ * en el diccionario desde la subtarea 1.2 («Reservado para el hito 1.4»).
+ */
+export const CLAVE_PODER_NOTARIADO = 'powerOfAttorneyFileId' as const;
+
+/** Las claves de documento que puede manejar un `<app-dropzone-pdf>` en este alta. */
+export type ClaveDeDocumentoDelAlta = ClaveDeDocumentoLegal | typeof CLAVE_PODER_NOTARIADO;
+
+/** El campo `custom` del poder notariado, mismo patrón que los cinco de la empresa. */
+export function campoDelPoderNotariado(
+  countryIso: string,
+  lang: UiLanguage = uiLanguage(),
+): CampoDeFormulario {
+  const texto = legalDocumentText('POWER_OF_ATTORNEY_DOC', countryIso, lang);
+  return {
+    key: CLAVE_PODER_NOTARIADO,
+    label: texto.label,
+    hint: texto.hint,
+    control: 'custom' as const,
+    required: true,
+    ancho: 'completo' as const,
+    mensajeDeError: MENSAJE_DOCUMENTO_OBLIGATORIO,
+  };
+}

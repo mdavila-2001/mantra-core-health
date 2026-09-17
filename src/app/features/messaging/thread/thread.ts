@@ -31,6 +31,15 @@ import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { Composer } from './composer/composer';
 import { ContactPanel } from './contact-panel/contact-panel';
+import { FilePreview } from '../../../shared/components/molecules/file-preview/file-preview';
+import { formatearTamano } from '../../../core/data-access/files/upload-policy';
+import {
+  archivoDeDataUrl,
+  esPdf,
+  metadatosDeDataUrl,
+  nombreDelTipo,
+  type MetadatosDeAdjunto,
+} from '../../../core/messaging/adjunto-metadata';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -161,7 +170,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
  */
 @Component({
   selector: 'app-thread',
-  imports: [Avatar, Composer, ContactPanel, EmptyState, RouterLink],
+  imports: [Avatar, Composer, ContactPanel, EmptyState, FilePreview, RouterLink],
   templateUrl: './thread.html',
   styleUrls: ['./thread.css', './thread-capas.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -585,6 +594,70 @@ export class Thread {
 
   protected nombreDelAdjunto(mensaje: MensajeDelHilo): string {
     return mensaje.pendiente?.adjunto?.nombre ?? 'Archivo adjunto';
+  }
+
+  /* --- 5.2 · metadata y vista previa de adjuntos ------------------------- */
+
+  /**
+   * La burbuja cuya vista previa de PDF está abierta. Una sola a la vez: dos
+   * PDF rasterizando en paralelo es trabajo que nadie pidió.
+   */
+  protected readonly vistaPreviaAbierta = signal<string | null>(null);
+
+  /**
+   * El `File` de cada vista previa, armado una sola vez por contenido.
+   *
+   * Decodificar un base64 de varios megas en cada ciclo de detección sería
+   * caro, y además `app-file-preview` volvería a rasterizar si recibiera un
+   * `File` nuevo con el mismo contenido: la identidad del objeto importa.
+   */
+  private readonly archivosDeVistaPrevia = new Map<string, File | null>();
+
+  /**
+   * Tipo y tamaño reales del adjunto, leídos del contenido que ya bajó 5.1.
+   *
+   * No hay petición nueva: el `data:` URL que guarda el store se armó con el
+   * `Content-Type` que sirvió la ruta contextual. `null` para la vista previa
+   * local de un envío en curso (`blob:`) o cualquier contenido que no se pueda
+   * leer con certeza.
+   */
+  protected metadatosDelAdjunto(mensaje: MensajeDelHilo): MetadatosDeAdjunto | null {
+    return metadatosDeDataUrl(this.urlDelAdjunto(mensaje));
+  }
+
+  /** «PDF · 2.1 KB», o `null` si no hay metadata que decir. */
+  protected detalleDelAdjunto(mensaje: MensajeDelHilo): string | null {
+    const metadatos = this.metadatosDelAdjunto(mensaje);
+    return metadatos === null
+      ? null
+      : `${nombreDelTipo(metadatos.mimeType)} · ${formatearTamano(metadatos.sizeBytes)}`;
+  }
+
+  /**
+   * `true` si el adjunto es un PDF que se puede previsualizar en el hilo.
+   *
+   * Sólo PDF: las imágenes ya se ven (5.1) y el resto de documentos no tiene
+   * vista previa honesta en el navegador. No se finge una que no existe.
+   */
+  protected esPdfAdjunto(mensaje: MensajeDelHilo): boolean {
+    return !this.esImagen(mensaje) && !this.esAudio(mensaje) && esPdf(this.metadatosDelAdjunto(mensaje));
+  }
+
+  protected alternarVistaPrevia(mensaje: MensajeDelHilo): void {
+    this.vistaPreviaAbierta.update((abierta) => (abierta === mensaje.id ? null : mensaje.id));
+  }
+
+  /**
+   * El archivo para `app-file-preview`, o `null` si el contenido no se pudo
+   * decodificar — y entonces la burbuja lo dice y sigue ofreciendo la descarga.
+   */
+  protected archivoParaVistaPrevia(mensaje: MensajeDelHilo): File | null {
+    const url = this.urlDelAdjunto(mensaje);
+    if (url === null) return null;
+    if (!this.archivosDeVistaPrevia.has(url)) {
+      this.archivosDeVistaPrevia.set(url, archivoDeDataUrl(url, this.nombreParaDescargar(mensaje)));
+    }
+    return this.archivosDeVistaPrevia.get(url) ?? null;
   }
 
   /**

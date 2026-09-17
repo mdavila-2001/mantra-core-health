@@ -85,6 +85,29 @@ describe('RegisterOrganization', () => {
     healthAuthorityCertificateFileId: 'file-sedes',
   };
 
+  /** El representante legal que `completar()` usa por defecto (subtarea 1.4). */
+  const REPRESENTANTE_DE_PRUEBA = {
+    legalRepresentativeFullName: 'Mariana Siles Justiniano',
+    legalRepresentativeIdNumber: '4872190 SC',
+    legalRepresentativeEmail: 'legal@andina.test',
+    powerOfAttorneyFileId: 'file-poder',
+  };
+
+  /** Las tres gerencias que `completar()` usa por defecto (subtarea 1.4). */
+  const GERENCIAS_DE_PRUEBA = {
+    generalManager: {
+      fullName: 'Carlos Mendoza',
+      phone: '+591 70000001',
+      email: 'gm@andina.test',
+    },
+    commercialManager: { fullName: 'Ana Paz', phone: '+591 70000002', email: 'cm@andina.test' },
+    marketingManager: {
+      fullName: 'Luis Rojas',
+      phone: '+591 70000003',
+      email: 'mm@andina.test',
+    },
+  };
+
   function completar(
     extra: Partial<
       Record<
@@ -94,7 +117,9 @@ describe('RegisterOrganization', () => {
         | 'motherLastName'
         | 'incorporationCountry'
         | 'legalEntityType'
-        | keyof typeof DOCUMENTOS_DE_PRUEBA,
+        | 'legalRepresentativePhone'
+        | keyof typeof DOCUMENTOS_DE_PRUEBA
+        | keyof typeof REPRESENTANTE_DE_PRUEBA,
         string
       >
     > = {},
@@ -125,20 +150,32 @@ describe('RegisterOrganization', () => {
       healthAuthorityCertificateFileId:
         extra.healthAuthorityCertificateFileId ??
         DOCUMENTOS_DE_PRUEBA.healthAuthorityCertificateFileId,
+      legalRepresentativeFullName:
+        extra.legalRepresentativeFullName ?? REPRESENTANTE_DE_PRUEBA.legalRepresentativeFullName,
+      legalRepresentativeIdNumber:
+        extra.legalRepresentativeIdNumber ??
+        REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
+      legalRepresentativeEmail:
+        extra.legalRepresentativeEmail ?? REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
+      legalRepresentativePhone: extra.legalRepresentativePhone ?? '',
+      powerOfAttorneyFileId:
+        extra.powerOfAttorneyFileId ?? REPRESENTANTE_DE_PRUEBA.powerOfAttorneyFileId,
+      executives: GERENCIAS_DE_PRUEBA,
     });
   }
 
   /**
    * Avanza el asistente hasta que el título de la página vigente contenga
-   * `fragmentoDeTitulo`, tope de 10 pasos (más de los que este alta puede
-   * tener). El motor sólo renderiza la página actual (subtarea 1.2: los
-   * `app-dropzone-pdf` de las páginas anteriores/siguientes no están en el
-   * DOM), así que las pruebas que verifican ese render tienen que llegar ahí
-   * primero — con el formulario ya completo, cada página vigente es válida
-   * y `Continuar` no se bloquea.
+   * `fragmentoDeTitulo`, tope de 12 pasos (más de los que este alta puede
+   * tener desde que sumó el representante legal y el directorio ejecutivo,
+   * subtarea 1.4). El motor sólo renderiza la página actual (subtarea 1.2:
+   * los `app-dropzone-pdf` de las páginas anteriores/siguientes no están en
+   * el DOM), así que las pruebas que verifican ese render tienen que llegar
+   * ahí primero — con el formulario ya completo, cada página vigente es
+   * válida y `Continuar` no se bloquea.
    */
   function avanzarHasta(fragmentoDeTitulo: string): void {
-    for (let paso = 0; paso < 10; paso += 1) {
+    for (let paso = 0; paso < 12; paso += 1) {
       const titulo = fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
       if (titulo.includes(fragmentoDeTitulo)) return;
       const continuar: HTMLButtonElement | null = fixture.nativeElement.querySelector(
@@ -217,6 +254,13 @@ describe('RegisterOrganization', () => {
           address: 'Av. Siempre Viva 123',
         },
         legalDocuments: DOCUMENTOS_DE_PRUEBA,
+        legalRepresentative: {
+          fullName: REPRESENTANTE_DE_PRUEBA.legalRepresentativeFullName,
+          idNumber: REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
+          email: REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
+          powerOfAttorneyFileId: REPRESENTANTE_DE_PRUEBA.powerOfAttorneyFileId,
+        },
+        executives: GERENCIAS_DE_PRUEBA,
       },
       owner: {
         email: 'admin@andina.test',
@@ -480,6 +524,143 @@ describe('RegisterOrganization', () => {
           '[data-testid="registro-organizacion-casa-matriz-location-confirmed"]',
         ),
       ).not.toBeNull();
+    });
+  });
+
+  describe('representante legal y gerencias (subtarea 1.4)', () => {
+    function dropzonePoder(): DropzonePdf | undefined {
+      return fixture.debugElement
+        .queryAll(By.directive(DropzonePdf))
+        .map((de) => de.componentInstance as DropzonePdf)
+        .find((d) => d.testId() === 'registro-organizacion-doc-powerOfAttorneyFileId');
+    }
+
+    function paneles(): HTMLElement[] {
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('app-accordion-panel'),
+      );
+    }
+
+    it('el cuerpo del alta lleva legalRepresentative y executives, y ninguno de los dos dentro de payer', () => {
+      fixture.detectChanges();
+      completar({ legalRepresentativePhone: '+591 70099999' });
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.legalRepresentative).toEqual({
+        fullName: REPRESENTANTE_DE_PRUEBA.legalRepresentativeFullName,
+        idNumber: REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
+        email: REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
+        phone: '+591 70099999',
+        powerOfAttorneyFileId: REPRESENTANTE_DE_PRUEBA.powerOfAttorneyFileId,
+      });
+      expect(req.request.body.organization.executives).toEqual(GERENCIAS_DE_PRUEBA);
+      expect('legalRepresentative' in req.request.body.organization.payer).toBe(false);
+      expect('executives' in req.request.body.organization.payer).toBe(false);
+
+      req.flush(RESPUESTA);
+    });
+
+    it('sin el teléfono del representante (opcional), el cuerpo no lleva la clave phone', () => {
+      fixture.detectChanges();
+      completar();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect('phone' in req.request.body.organization.legalRepresentative).toBe(false);
+
+      req.flush(RESPUESTA);
+    });
+
+    it('sin el poder notariado, «Continuar» no avanza y la dropzone queda marcada', () => {
+      fixture.detectChanges();
+      completar({ powerOfAttorneyFileId: '' });
+      fixture.detectChanges();
+      avanzarHasta('Representante legal (1 de 2)');
+      fixture.debugElement
+        .query(By.css('[data-testid="paginated-form-continuar"]'))
+        .nativeElement.click();
+      fixture.detectChanges();
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('.paginated-form__titulo')
+          ?.textContent,
+      ).toContain('Representante legal (2 de 2)');
+      expect(dropzonePoder()).toBeDefined();
+      expect(dropzonePoder()?.required()).toBe(true);
+      expect(component.form.controls.powerOfAttorneyFileId.invalid).toBe(true);
+    });
+
+    it('«Directorio ejecutivo» muestra los tres paneles, el primero ya desplegado', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Directorio ejecutivo');
+
+      const filas = paneles();
+      expect(filas).toHaveLength(3);
+      expect(filas[0].classList.contains('is-expanded')).toBe(true);
+      expect(filas[1].classList.contains('is-expanded')).toBe(false);
+      expect(filas[2].classList.contains('is-expanded')).toBe(false);
+    });
+
+    /**
+     * Este caso ejercita B0 de punta a punta: el motor bloquea «Siguiente»
+     * sobre el `FormGroup` de `executives` (no sobre sus hijos), emite
+     * `rechazada`, y `alRechazarPagina` abre el panel y marca sus campos —
+     * sin esa salida nueva del motor, esto no tendría cómo pasar.
+     */
+    it('con la gerencia de marketing incompleta, «Continuar» no avanza y su panel se despliega solo', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.executives.controls.marketingManager.controls.fullName.setValue('');
+      fixture.detectChanges();
+      avanzarHasta('Directorio ejecutivo');
+
+      fixture.debugElement
+        .query(By.css('[data-testid="paginated-form-continuar"]'))
+        .nativeElement.click();
+      fixture.detectChanges();
+
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('.paginated-form__titulo')
+          ?.textContent,
+      ).toContain('Directorio ejecutivo');
+      expect(paneles()[2].classList.contains('is-expanded')).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Este dato es obligatorio.',
+      );
+    });
+
+    it('un correo de gerencia mal escrito se marca al salir del campo', () => {
+      fixture.detectChanges();
+      completar();
+      const control = component.form.controls.executives.controls.generalManager.controls.email;
+      control.setValue('gerente.general@');
+      control.markAsTouched();
+      fixture.detectChanges();
+      avanzarHasta('Directorio ejecutivo');
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Revisá el correo: falta el arroba o el dominio.',
+      );
+    });
+
+    it('ir y volver del «Directorio ejecutivo» conserva los valores escritos', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Directorio ejecutivo');
+      avanzarHasta('Tu cuenta (1 de 2)');
+      fixture.debugElement
+        .query(By.css('[data-testid="paginated-form-atras"]'))
+        .nativeElement.click();
+      fixture.detectChanges();
+
+      expect(
+        component.form.controls.executives.controls.generalManager.controls.fullName.value,
+      ).toBe(GERENCIAS_DE_PRUEBA.generalManager.fullName);
     });
   });
 

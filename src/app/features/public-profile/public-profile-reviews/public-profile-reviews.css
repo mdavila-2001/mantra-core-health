@@ -1,259 +1,136 @@
-/* ============================================================================
-    Opiniones y quiénes dieron estrellas — MOBILE-FIRST.
-    El modal ya scrollea su cuerpo: acá no hay `overflow` propio.
-    ========================================================================== */
+.opiniones {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.opiniones__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.opiniones__titulo {
+  margin: 0;
+}
 
 .opiniones__resumen {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--e4);
-  padding-block-end: var(--e4);
-  border-block-end: 1px solid var(--filete-2);
-}
-
-@media (min-width: 560px) {
-  .opiniones__resumen {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: var(--e6);
-  }
-}
-
-.opiniones__promedio {
   display: flex;
-  flex-direction: column;
+  gap: var(--sp-2);
   align-items: center;
-  gap: var(--e1, 4px);
+  margin: 0;
 }
 
-.opiniones__numero {
-  font-size: 40px;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--tinta);
-}
-
-.opiniones__estrellas,
-.opinion__estrellas {
+/* Ámbar es el color de la estrella en todo el producto, y acá no cuenta como
+   el punto de acción único: no hay nada que pulsar en el promedio. */
+.opiniones__media {
   display: inline-flex;
-  gap: 2px;
-  margin: 0;
-  color: var(--ambar);
-}
-
-.opiniones__estrellas svg,
-.opinion__estrellas svg {
-  inline-size: 16px;
-  block-size: 16px;
-  fill: currentColor;
-}
-
-svg.apagada {
-  color: var(--filete-2);
-  opacity: 0.6;
-}
-
-.opiniones__total {
-  color: var(--tinta-2);
-  font-size: var(--fs-caption);
-}
-
-.opiniones__barras {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.opiniones__barra {
-  display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr) 2.5rem;
+  gap: var(--sp-1);
   align-items: center;
-  gap: var(--e2);
-  font-size: var(--fs-caption);
-  color: var(--tinta-2);
-}
-
-.opiniones__barra-riel {
-  display: block;
-  block-size: 8px;
-  border-radius: var(--r-full);
-  background: var(--sup-inset);
-  overflow: hidden;
-}
-
-.opiniones__barra-relleno {
-  display: block;
-  block-size: 100%;
-  border-radius: var(--r-full);
-  background: var(--ambar);
-}
-
-.opiniones__barra-cuenta {
-  text-align: end;
-  font-variant-numeric: tabular-nums;
-}
-
-.opiniones__pestanas {
-  display: flex;
-  gap: var(--e4);
-  margin-block: var(--e4);
-  border-block-end: 1px solid var(--filete-2);
-  overflow-x: auto;
-}
-
-.opiniones__pestana {
-  flex: none;
-  min-block-size: 44px;
-  padding: 0 2px;
-  border: 0;
-  border-block-end: 2px solid transparent;
-  background: none;
-  color: var(--tinta-2);
-  font: inherit;
-  font-size: 15px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.opiniones__pestana:hover {
-  color: var(--tinta-marca);
-}
-
-.opiniones__pestana[aria-selected='true'] {
-  color: var(--tinta-marca);
+  color: var(--st-warning-fg);
   font-weight: 600;
-  border-block-end-color: var(--aguamarina);
 }
 
-.opiniones__pestana:focus-visible {
-  outline: 3px solid var(--anillo-foco);
-  outline-offset: -3px;
+.opiniones__media svg,
+.opiniones__estrella {
+  inline-size: 1em;
+  block-size: 1em;
+}
+
+.opiniones__total,
+.opiniones__fecha,
+.opiniones__vacio {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .opiniones__lista {
-  list-style: none;
+  display: grid;
+  gap: var(--sp-4);
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--e3);
+  list-style: none;
 }
 
-.opinion {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e2);
-  padding: var(--e3);
-  border: 1px solid var(--filete-2);
-  border-radius: var(--r-ctrl);
+.opiniones__item {
+  display: grid;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-4);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
-.opinion--fila {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+.opiniones__item:last-child {
+  padding-block-end: 0;
+  border-block-end: none;
 }
 
-.opinion__cabecera {
+.opiniones__autor {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--e2);
+  gap: var(--sp-2);
+  align-items: baseline;
+  margin: 0;
 }
 
-.opinion__persona {
+.opiniones__estrellas {
   display: flex;
+  gap: var(--sp-1);
   align-items: center;
-  gap: var(--e3);
-  min-inline-size: 0;
-  color: inherit;
-  text-decoration: none;
+  margin: 0;
+  color: var(--st-warning-fg);
 }
 
-a.opinion__persona:hover .opinion__nombre {
-  text-decoration: underline;
+/* La estrella vacía se apaga con color, no se quita: las cinco casillas tienen
+   que ocupar el mismo ancho en todas las filas para que se comparen de un
+   vistazo. */
+.opiniones__estrella--vacia {
+  color: var(--border-subtle);
 }
 
-.opinion__avatar {
-  flex: none;
-  inline-size: 40px;
-  block-size: 40px;
-  border-radius: var(--r-full);
-  object-fit: cover;
+.opiniones__texto {
+  margin: 0;
+  white-space: pre-line;
 }
 
-.opinion__avatar--iniciales {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--sup-inset);
-  color: var(--tinta-2);
-  font-weight: 600;
+.opiniones__respuesta {
+  display: grid;
+  gap: var(--sp-1);
+  margin-inline-start: var(--sp-4);
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 2px solid var(--border-subtle);
 }
 
-.opinion__firma {
-  display: flex;
-  flex-direction: column;
-  min-inline-size: 0;
+.opiniones__respuesta p {
+  margin: 0;
 }
 
-.opinion__nombre {
-  font-weight: 600;
-  color: var(--tinta);
-}
-
-.opinion__titular,
-.opinion__fecha {
-  color: var(--tinta-2);
+.opiniones__respuesta-autor {
+  color: var(--text-muted);
   font-size: var(--fs-caption);
-}
-
-.opinion__texto {
-  margin: 0;
-  color: var(--tinta);
-  line-height: 1.5;
-}
-
-.opinion__respuesta {
-  margin-inline-start: var(--e4);
-  padding: var(--e2) var(--e3);
-  border-inline-start: 3px solid var(--aguamarina);
-  background: var(--sup-inset);
-  border-radius: var(--r-ctrl);
-}
-
-.opinion__respuesta p {
-  margin: 0;
-}
-
-.opinion__respuesta-autor {
-  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
   font-weight: 600;
-  color: var(--tinta-marca);
 }
 
-.opiniones__vacio {
+.opiniones__mas {
   margin: 0;
-  color: var(--tinta-2);
 }
 
-.opiniones__reintentar {
-  margin: var(--e4) 0 0;
-  display: flex;
-  justify-content: center;
+/* El texto que sólo escucha quien no ve las estrellas. Va por componente y no
+   global, como el resto del repo (`data-table`, `dropzone-pdf`). */
+.sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.opiniones__esqueleto {
-  display: flex;
-  flex-direction: column;
-  gap: var(--e3);
-}
-
-.opiniones__esqueleto .app-skeleton {
-  block-size: 56px;
+.opiniones__calificar {
+  margin: 0;
 }

@@ -153,6 +153,9 @@ function sufijoDeAlta(): string {
 /** El catálogo de municipios que el alta del paciente exige como residencia. */
 const MUNICIPALITY_VALUE_SET = 'VS_BO_MUNICIPALITY';
 
+/** El catálogo de departamentos, para el «quién emitió tu documento». */
+const DEPARTMENT_VALUE_SET = 'VS_BO_DEPARTMENT';
+
 /**
  * Fecha de nacimiento del paciente de prueba: una adulta, fija, para que la
  * corrida sea reproducible.
@@ -166,27 +169,45 @@ const PATIENT_BIRTH_DATE = '1995-05-20';
  * El alta del paciente exige un municipio de residencia real —un UUID del
  * catálogo— y escribirlo acá sería atarse a los ids de una siembra concreta.
  */
-async function firstMunicipalityConceptId(api: APIRequestContext): Promise<string> {
+async function firstConceptIdOfValueSet(
+  api: APIRequestContext,
+  valueSetCode: string,
+): Promise<string> {
   const valueSets = await api.get('/terminology/value-sets', {
-    params: { code: MUNICIPALITY_VALUE_SET },
+    params: { code: valueSetCode },
   });
   const catalog = (await valueSets.json()) as {
     items?: { id: string; internalCode: string }[];
   };
   const valueSet = (catalog.items ?? []).find(
-    (item) => item.internalCode === MUNICIPALITY_VALUE_SET,
+    (item) => item.internalCode === valueSetCode,
   );
   if (valueSet === undefined) {
-    throw new Error(`el catálogo ${MUNICIPALITY_VALUE_SET} no está publicado en la API`);
+    throw new Error(`el catálogo ${valueSetCode} no está publicado en la API`);
   }
 
   const expansion = await api.get(`/terminology/value-sets/${valueSet.id}/$expand`);
   const firstPage = (await expansion.json()) as { items?: { conceptId: string }[] };
-  const municipality = firstPage.items?.[0];
-  if (municipality === undefined) {
-    throw new Error(`el catálogo ${MUNICIPALITY_VALUE_SET} no tiene municipios publicados`);
+  const primerMiembro = firstPage.items?.[0];
+  if (primerMiembro === undefined) {
+    throw new Error(`el catálogo ${valueSetCode} no tiene miembros publicados`);
   }
-  return municipality.conceptId;
+  return primerMiembro.conceptId;
+}
+
+async function firstMunicipalityConceptId(api: APIRequestContext): Promise<string> {
+  return firstConceptIdOfValueSet(api, MUNICIPALITY_VALUE_SET);
+}
+
+/**
+ * Un departamento real del catálogo (`VS_BO_DEPARTMENT`), para
+ * `issuerAdministrativeAreaConceptId` — el «departamento que emitió tu
+ * documento» que `RegisterPatientDto` exige. Mismo camino que
+ * {@link firstMunicipalityConceptId}: se obtiene de la API, no se hardcodea
+ * un uuid.
+ */
+async function firstDepartmentConceptId(api: APIRequestContext): Promise<string> {
+  return firstConceptIdOfValueSet(api, DEPARTMENT_VALUE_SET);
 }
 
 /**
@@ -204,9 +225,15 @@ export async function crearPaciente(api: APIRequestContext): Promise<Actor> {
   const sufijo = sufijoDeAlta();
   const nationalId = `CI-PW-${sufijo}`;
 
-  // El alta exige fecha de nacimiento y municipio de residencia (UUID del
-  // catálogo): sin ellos la API responde 400 y ninguna prueba de paciente corre.
-  const residenceMunicipalityConceptId = await firstMunicipalityConceptId(api);
+  // El alta exige fecha de nacimiento, municipio de residencia y
+  // departamento emisor del documento (los tres, UUID del catálogo): sin
+  // ellos `RegisterPatientDto` responde 400 `VALIDATION_FAILED` y ninguna
+  // prueba de paciente corre.
+  const [residenceMunicipalityConceptId, issuerAdministrativeAreaConceptId] =
+    await Promise.all([
+      firstMunicipalityConceptId(api),
+      firstDepartmentConceptId(api),
+    ]);
   const respuesta = await api.post('/iam/auth/register-patient', {
     data: {
       nationalId,
@@ -218,6 +245,7 @@ export async function crearPaciente(api: APIRequestContext): Promise<Actor> {
       sexAtBirth: 'FEMALE',
       birthDate: PATIENT_BIRTH_DATE,
       residenceMunicipalityConceptId,
+      issuerAdministrativeAreaConceptId,
     },
   });
 

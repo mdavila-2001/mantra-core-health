@@ -155,6 +155,10 @@ describe('NavigationService', () => {
         // «Mi perfil» tampoco aparece acá: desde el 07/09/2026 es un destino
         // fijo y se dibuja arriba de todo, fuera de «Mi cuenta». Sigue estando
         // —encabeza la lista—, sólo que ya no cuelga del grupo.
+        // Los dependientes (B.1) tampoco exigen rol: el filtro real es tener
+        // perfil de paciente, que no es un rol sino un dato de la cuenta, y la
+        // pantalla lo dice cuando falta. Mismo criterio que «Mis citas».
+        '/my-account/dependents',
         '/my-account/appointments',
         // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
         // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.

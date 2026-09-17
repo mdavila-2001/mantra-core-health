@@ -46,3 +46,53 @@ export function departamentoPorCiudad(
   }
   return mapa;
 }
+
+/** Dónde queda una ciudad, cuando su nombre alcanza para saberlo. */
+export interface LugarDeCiudad {
+  /** `conceptId` del departamento. */
+  readonly departamento: string;
+  /** El nombre del municipio como lo escribe el catálogo, no como vino en la ficha. */
+  readonly municipio: string;
+}
+
+/**
+ * Como `departamentoPorCiudad`, pero **sin adivinar** cuando el nombre no
+ * alcanza.
+ *
+ * Siete nombres de municipio se repiten entre departamentos —«San Pedro» está
+ * en Santa Cruz y en Pando—, y el directorio público sólo trae la ciudad como
+ * texto: una ficha de «San Pedro» no dice de cuál de los dos es.
+ * `departamentoPorCiudad` se queda con el último que ve, así que la cuenta
+ * como del otro departamento; acá esos nombres **no se asignan a ninguno**. Una
+ * ficha ambigua no aparece al acotar por departamento —un faltante que la
+ * pantalla puede explicar— en vez de aparecer en el departamento equivocado,
+ * que no se puede explicar. Se sigue viendo al mirar todo el país.
+ *
+ * Qué nombres son ambiguos lo decide el catálogo, no una lista escrita acá.
+ *
+ * `departamentoPorCiudad` queda igual a propósito: la usan clínicas, farmacias
+ * y hospitales, y cambiarles el comportamiento no es de la subtarea 2.3.
+ */
+export function lugarInequivocoPorCiudad(
+  ramas: readonly RamaDepartamento[],
+): ReadonlyMap<string, LugarDeCiudad> {
+  const lugares = new Map<string, LugarDeCiudad>();
+  const ambiguos = new Set<string>();
+  for (const rama of ramas) {
+    for (const municipio of rama.municipios) {
+      const clave = normalizarLugar(municipio.nombre);
+      const previo = lugares.get(clave);
+      if (previo !== undefined) {
+        if (previo.departamento !== rama.conceptId) {
+          ambiguos.add(clave);
+        }
+        continue;
+      }
+      lugares.set(clave, { departamento: rama.conceptId, municipio: municipio.nombre });
+    }
+  }
+  for (const clave of ambiguos) {
+    lugares.delete(clave);
+  }
+  return lugares;
+}

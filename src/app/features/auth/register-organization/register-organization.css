@@ -127,3 +127,19 @@ form {
   line-height: var(--lh-caption);
   color: var(--text-secondary);
 }
+
+/* El acordeón de las tres gerencias (subtarea 1.4): tres columnas para nombre,
+   celular y correo cuando entran; una sola en pantalla angosta, antes que
+   estrechar los controles a menos de lo que se escribe adentro. */
+.register-org__executive-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-3);
+  padding-block: var(--sp-2);
+}
+
+@media (max-width: 768px) {
+  .register-org__executive-grid {
+    grid-template-columns: 1fr;
+  }
+}

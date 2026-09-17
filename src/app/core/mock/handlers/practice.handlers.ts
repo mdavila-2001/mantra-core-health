@@ -252,10 +252,10 @@ export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesion
     .filtrar((s) => s.practitionerProfileId === practitionerProfileId)
     .map(({ practitionerProfileId: _p, ...s }) => ({
       ...s,
-      esPropio: s.practiceId === PRACTICE_CONSULTORIO,
+      isOwnSite: s.practiceId === PRACTICE_CONSULTORIO,
     }));
   if (propias.length > 0) {
-    return [...propias].sort((a, b) => Number(b.esPropio) - Number(a.esPropio));
+    return [...propias].sort((a, b) => Number(b.isOwnSite) - Number(a.isOwnSite));
   }
 
   // Quien no cargó ninguna atiende donde su organización: es lo que el padrón
@@ -270,7 +270,7 @@ export function sedesDe(practitionerProfileId: string): readonly SedeDeProfesion
       latitude: p.lat,
       longitude: p.lng,
       status: 'ACTIVE',
-      esPropio: false,
+      isOwnSite: false,
       // Una sede deducida de la organización no es una fila de nadie, así que
       // no hay dónde guardarle un QR: se responde «sin configurar».
       bankQrFileId: null,
@@ -290,7 +290,7 @@ export interface SedeDeProfesional {
   readonly longitude: number | null;
   readonly status: string;
   /** Si es el consultorio propio y no una sede de una organización. */
-  readonly esPropio: boolean;
+  readonly isOwnSite: boolean;
   /** El QR bancario con el que el profesional cobra acá, o `null`. */
   readonly bankQrFileId: string | null;
 }
@@ -390,7 +390,7 @@ export function registrarPracticas(router: MockRouter): void {
     return { items, count: items.length };
   });
 
-  /* `esPropio` viaja: es lo que separa «mi consultorio» de «un hospital donde
+  /* `isOwnSite` viaja: es lo que separa «mi consultorio» de «un hospital donde
      me aceptaron», y sin él las dos cosas se dibujaban idénticas, con el mismo
      botón «Retirar» al lado — cuando retirar lo propio y desvincularse de un
      hospital no son el mismo acto. La maqueta ya lo calculaba y lo tiraba justo
@@ -419,7 +419,7 @@ export function registrarPracticas(router: MockRouter): void {
       bankQrFileId: null,
     });
     const { practitionerProfileId: _p, ...resto } = nuevo;
-    return { status: 201, body: { ...resto, esPropio: resto.practiceId === PRACTICE_CONSULTORIO } };
+    return { status: 201, body: { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO } };
   });
 
   /* Corregir el consultorio propio. La API todavía no lo tiene —es la mitad
@@ -445,7 +445,7 @@ export function registrarPracticas(router: MockRouter): void {
     });
     if (actualizado === undefined) return notFound('Consultorio no encontrado');
     const { practitionerProfileId: _p, ...resto } = actualizado;
-    return { ...resto, esPropio: resto.practiceId === PRACTICE_CONSULTORIO };
+    return { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO };
   });
 
   /* El QR bancario de una sede. Ruta propia y no parte del `PATCH` de arriba:
@@ -460,7 +460,7 @@ export function registrarPracticas(router: MockRouter): void {
     const actualizado = sitiosPropios.actualizar(sitio.id, { bankQrFileId: fileId ?? null });
     if (actualizado === undefined) return notFound('Consultorio no encontrado');
     const { practitionerProfileId: _p, ...resto } = actualizado;
-    return { ...resto, esPropio: resto.practiceId === PRACTICE_CONSULTORIO };
+    return { ...resto, isOwnSite: resto.practiceId === PRACTICE_CONSULTORIO };
   });
 
   router.delete('/practitioners/me/sites/:id', ({ params }) => {

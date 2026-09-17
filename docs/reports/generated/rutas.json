@@ -80,6 +80,7 @@
       "componente": "NearbyPlaces",
       "apis": [
         "ClinicalClient",
+        "ProfilesClient",
         "PublicDirectoryClient",
         "TerminologyClient"
       ],
@@ -395,9 +396,7 @@
       "ruta": "/administration/insurance",
       "etiqueta": "Aseguradora",
       "grupo": "Administración",
-      "roles": [
-        "SECURITY_ADMIN"
-      ],
+      "roles": [],
       "rolesExclusivos": false,
       "componente": "InsuranceCatalog",
       "apis": [
@@ -432,6 +431,20 @@
       "rolesExclusivos": false,
       "componente": "InsuranceClaims",
       "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/insurance-analytics",
+      "etiqueta": "Siniestralidad y analítica",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "InsuranceAnalytics",
+      "apis": [
+        "InsuranceAnalyticsClient",
         "InsuranceClient"
       ],
       "estado": "conectada",
@@ -682,6 +695,19 @@
       "parametrizada": false
     },
     {
+      "ruta": "/my-account/dependents",
+      "etiqueta": "Dependientes",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Dependents",
+      "apis": [
+        "ProfilesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/my-account",
       "etiqueta": "Mi perfil",
       "grupo": "Mi cuenta",
@@ -727,6 +753,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
         "PharmacyClient",
+        "ProfilesClient",
         "TerminologyClient"
       ],
       "estado": "conectada con deuda",
@@ -823,7 +850,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -839,6 +866,19 @@
         "LoyaltyClient"
       ],
       "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/promotions",
+      "etiqueta": "Promociones",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Promotions",
+      "apis": [],
+      "estado": "presentacional",
       "parametrizada": false
     },
     {
@@ -2069,13 +2109,13 @@
       "parametrizada": true
     },
     {
-      "ruta": "/medical-records/:profileId/encounter",
+      "ruta": "/medical-records/:profileId/consultation",
       "seccion": "Archivo clínico",
       "roles": [
         "CLINICIAN",
         "PRACTITIONER"
       ],
-      "componente": "EncounterWorkspace",
+      "componente": "Consultation",
       "apis": [
         "ClinicalClient",
         "ProfilesClient",
@@ -2141,7 +2181,8 @@
       "componente": "PractitionerProfileEdit",
       "apis": [
         "FilesClient",
-        "ProfilesClient"
+        "ProfilesClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -2167,6 +2208,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
         "PharmacyClient",
+        "ProfilesClient",
         "TerminologyClient"
       ],
       "estado": "conectada con deuda",
@@ -2186,6 +2228,19 @@
       "parametrizada": true
     },
     {
+      "ruta": "/my-account/pharmacy-orders/:orderId/invoice",
+      "seccion": "Mis pedidos",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "OrderInvoice",
+      "apis": [
+        "PharmacyOrdersClient"
+      ],
+      "estado": "conectada con deuda",
+      "parametrizada": true
+    },
+    {
       "ruta": "/my-account/pharmacy-orders/:orderId/receipt",
       "seccion": "Mis pedidos",
       "roles": [
@@ -2199,6 +2254,20 @@
       "parametrizada": true
     },
     {
+      "ruta": "/my-account/pharmacy-orders/checkout",
+      "seccion": "Mis pedidos",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "Checkout",
+      "apis": [
+        "PharmacyCampaignsClient",
+        "PharmacyOrdersClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/my-account/pharmacy-orders/new",
       "seccion": "Mis pedidos",
       "roles": [
@@ -2209,7 +2278,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {

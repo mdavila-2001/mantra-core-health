@@ -128,3 +128,5 @@
   gap: var(--sp-4);
   padding-inline: var(--sp-1);
 }
+
+.mi-perfil__coverages { gap: var(--sp-4); }

@@ -1050,59 +1050,61 @@ export class ChatStore {
    * servido con la aplicación, no algo que subió alguien.
    */
   urlDe(fileId: string): string | null {
-    return stickerDe(fileId)?.url ?? this.urlesDeArchivo().get(fileId) ?? null;
+    const key = this.attachmentKey(fileId);
+    return stickerDe(fileId)?.url ?? this.urlesDeArchivo().get(key) ?? null;
   }
 
   /** `true` si el archivo se pidió y no se pudo leer. */
   adjuntoNoDisponible(fileId: string): boolean {
-    return this.urlesDeArchivo().get(fileId) === null;
+    return this.urlesDeArchivo().get(this.attachmentKey(fileId)) === null;
   }
 
   /**
    * Lee los adjuntos que se van a pintar y todavía no están. Una vez por
    * archivo, por sesión de la pantalla.
    *
-   * ## Por qué `contentDataUrl` y no `downloadUrl`
-   *
-   * Porque lo que devuelve `downloadUrl` **no es una URL de navegador**: el
-   * backend arma `file://local/<sha>?signature=…`, que ningún `<img>` carga, y
-   * la CSP del proyecto sólo admite `img-src 'self' data:`. Es el mismo motivo
-   * por el que la foto de perfil se pinta con `imageDataUrl` (ver
-   * `FilesClient`). Bajar los bytes por `HttpClient` deja además que el
-   * interceptor mande la sesión, que `GET …/content` exige.
-   *
-   * El backend hoy sólo entrega el contenido a quien subió el archivo o a un
-   * rol revisor: el adjunto **ajeno** de una conversación puede responder 403,
-   * y la burbuja lo dice («Archivo no disponible») en vez de quedarse
-   * «subiendo» para siempre. Que un participante pueda leer los adjuntos de su
-   * conversación está anotado en F4 del plan.
+   * Se usa la ruta contextual de community, con conversación y perfil propio.
+   * La ruta genérica de archivos sólo autoriza dueño/revisor y no puede probar
+   * que un receptor participa del hilo; usarla acá volvería el UUID la única
+   * relación entre la burbuja y sus bytes.
    */
   private resolverAdjuntos(mensajes: readonly MensajeDelHilo[]): void {
     if (!this.isBrowser) {
       return;
     }
+    const conversationId = this.activaId();
+    const profileId = this.perfil();
+    if (conversationId === null || profileId === null) return;
     const yaResueltos = this.urlesDeArchivo();
     for (const mensaje of mensajes) {
       const fileId = mensaje.attachmentFileId;
+      const key = fileId ? `${conversationId}:${fileId}` : '';
       // Un sticker no se pide: su URL sale del pack, que viene con la
       // aplicación. Pedirlo sería un 404 por cada sticker de la conversación.
       if (
         fileId === undefined ||
-        yaResueltos.has(fileId) ||
+        yaResueltos.has(key) ||
         stickerDe(fileId) !== undefined
       ) {
         continue;
       }
       // Se reserva el lugar antes de pedir, para no pedir dos veces el mismo
       // archivo mientras la primera petición está en vuelo.
-      this.urlesDeArchivo.update((mapa) => new Map(mapa).set(fileId, ''));
-      this.archivos.contentDataUrl(fileId).subscribe({
-        next: (url) =>
-          this.urlesDeArchivo.update((mapa) => new Map(mapa).set(fileId, url)),
-        error: () =>
-          this.urlesDeArchivo.update((mapa) => new Map(mapa).set(fileId, null)),
-      });
+      this.urlesDeArchivo.update((mapa) => new Map(mapa).set(key, ''));
+      this.community
+        .conversationAttachmentDataUrl(conversationId, profileId, fileId)
+        .subscribe({
+          next: (url) =>
+            this.urlesDeArchivo.update((mapa) => new Map(mapa).set(key, url)),
+          error: () =>
+            this.urlesDeArchivo.update((mapa) => new Map(mapa).set(key, null)),
+        });
     }
+  }
+
+  /** La caché en memoria no cruza conversaciones. */
+  private attachmentKey(fileId: string): string {
+    return `${this.activaId() ?? 'sin-conversacion'}:${fileId}`;
   }
 
   /* --- Respuesta automática por inactividad -------------------------------- */

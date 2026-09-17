@@ -16,14 +16,12 @@
  * Uso: `yarn node playwright/evoluciones-y-atencion.mjs [urlBase]`
  */
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import { chromium } from 'playwright';
 
 const BASE = process.argv[2] ?? 'http://localhost:4346';
-const SALIDA = new URL('../artifacts/playwright/evoluciones-y-atencion', import.meta.url).pathname.replace(
-  /^\/([A-Za-z]:)/,
-  '$1',
-);
+const SALIDA = fileURLToPath(new URL('../artifacts/playwright/evoluciones-y-atencion', import.meta.url));
 const RUIDO = [/favicon/i, /Content Security Policy/i, /inline script/i, /socket\.io/i];
 
 const veredictos = [];

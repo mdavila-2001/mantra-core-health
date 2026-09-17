@@ -37,11 +37,12 @@ export interface PracticeSite {
    * un hospital no son el mismo acto. Uno se crea y se corrige solo; el otro
    * depende de que la organización lo acepte.
    *
-   * Opcional porque la API **todavía no lo manda** (P32 de
-   * `PENDIENTES-BACKEND.md`): ausente se lee como «no sé», y la pantalla lo
-   * trata como ajeno, que es la lectura prudente.
+   * La API **ya lo manda** (P32-a, cerrado). Sigue declarado opcional a
+   * propósito: el frontend puede quedar desplegado contra una API anterior, y
+   * ausente se lee como «no sé» —la pantalla lo trata como ajeno, que es la
+   * lectura prudente— en vez de romperse.
    */
-  readonly esPropio?: boolean;
+  readonly isOwnSite?: boolean;
 
   /**
    * El archivo del **QR bancario** que el profesional quiere cobrar en esta
@@ -52,10 +53,10 @@ export interface PracticeSite {
    * lugares, y un único QR de perfil lo obligaría a corregirlo cada vez que
    * cambia de establecimiento.
    *
-   * Opcional por el mismo motivo que {@link PracticeSite.esPropio}: la API
-   * **todavía no lo manda** (P33 de `PENDIENTES-BACKEND.md`). Ausente se lee
-   * como «no hay ninguno configurado», que es lo que la pantalla avisa en
-   * ámbar — nunca esconde el camino para cargarlo.
+   * Opcional por el mismo motivo que {@link PracticeSite.isOwnSite}: la API
+   * **ya lo manda** (P33, cerrado), pero ausente se sigue leyendo como «no
+   * hay ninguno configurado», que es lo que la pantalla avisa en ámbar —
+   * nunca esconde el camino para cargarlo.
    */
   readonly bankQrFileId?: string | null;
 }
@@ -101,9 +102,10 @@ export interface NewOwnSite {
  * obligaba a retirar el consultorio y crear otro —y el id cambia, que es el que
  * la agenda referencia—.
  *
- * **La API todavía no expone esta ruta**: es la mitad del P28 de
- * `PENDIENTES-BACKEND.md`, que ya declara el consultorio propio entre lo que el
- * registro pregunta y el perfil no puede editar.
+ * La API expone la ruta desde el cierre del **P32-b**
+ * (`PATCH /practitioners/me/sites/:siteId`), que era la mitad del P28: el
+ * consultorio propio estaba entre lo que el registro pregunta y el perfil no
+ * podía editar.
  */
 export interface OwnSitePatch {
   readonly name?: string;

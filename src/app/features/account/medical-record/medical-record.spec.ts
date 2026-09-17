@@ -5,6 +5,8 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { SessionStore } from '../../../core/auth/session.store';
+import { FileDownloader } from '../../../core/data-access/files/file-downloader';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { MedicalRecord } from './medical-record';
 
 /**
@@ -157,18 +159,39 @@ describe('MedicalRecord', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
 
+  /** Espía de los toasts (B.3): esta pantalla no monta el contenedor real. */
+  const toasts = { success: vi.fn(), error: vi.fn() };
+
   beforeEach(() => {
+    toasts.success.mockClear();
+    toasts.error.mockClear();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'my-account/medical-record', component: MedicalRecord }]),
+        { provide: ToastService, useValue: toasts },
       ],
     });
     http = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => http.verify());
+
+  /**
+   * Se resuelve cuando `FileDownloader.trigger` se llama de verdad, con el
+   * nombre del archivo ofrecido (B.3). Hace falta porque el contenido pasa
+   * por `FileReader` (`blobToDataUrl`), que no es una tarea de la zona de
+   * Angular: `whenStable()`/`detectChanges()` vuelven antes de que termine.
+   * Mismo patrón que `verification-cases.spec.ts`.
+   */
+  function nombreDescargado(): Promise<{ dataUrl: string; fileName: string }> {
+    return new Promise((resolve) => {
+      TestBed.inject(FileDownloader).trigger = (dataUrl: string, fileName: string) => {
+        resolve({ dataUrl, fileName });
+      };
+    });
+  }
 
   /** Abre sesión con perfil de paciente (`pid`) antes de montar. */
   async function montar(claims: Record<string, unknown> = { pid: 'pp-1' }): Promise<void> {
@@ -271,6 +294,80 @@ describe('MedicalRecord', () => {
 
     await abrirPestana(1);
     expect(raiz?.querySelector('[data-testid="historia-descargar-receta"]')).not.toBeNull();
+  });
+
+  /* ---- B.3 · el PDF oficial de la receta, desde la API ------------------- */
+
+  it('descargar la receta pide el PDF oficial a la API y dispara la descarga', async () => {
+    await montar();
+    responder();
+    await abrirPestana(1);
+
+    const boton = harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+      '[data-testid="historia-descargar-receta"]',
+    );
+    boton?.click();
+    harness.detectChanges();
+
+    const descargado = nombreDescargado();
+
+    const req = http.expectOne((r) => r.url === '/clinical/prescriptions/m-1/pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+
+    req.flush(new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], { type: 'application/pdf' }), {
+      headers: { 'Content-Disposition': "attachment; filename*=UTF-8''receta-m-1.pdf" },
+    });
+
+    const { dataUrl, fileName } = await descargado;
+    harness.detectChanges();
+
+    expect(dataUrl).toMatch(/^data:application\/pdf;base64,/);
+    expect(fileName).toBe('receta-m-1.pdf');
+    expect(toasts.success).toHaveBeenCalledWith('Descarga iniciada exitosamente', 'Receta oficial');
+  });
+
+  it('si la API falla, avisa el error y el botón vuelve a estar disponible', async () => {
+    await montar();
+    responder();
+    await abrirPestana(1);
+
+    const boton = harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+      '[data-testid="historia-descargar-receta"]',
+    );
+    boton?.click();
+    harness.detectChanges();
+
+    http
+      .expectOne((r) => r.url === '/clinical/prescriptions/m-1/pdf')
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    harness.detectChanges();
+
+    expect(toasts.error).toHaveBeenCalledWith(
+      'No pudimos descargar la receta oficial. Reintentá en un momento.',
+      'Receta oficial',
+    );
+    expect(toasts.success).not.toHaveBeenCalled();
+    // El botón no queda trabado: una segunda descarga sí sale a la red.
+    boton?.click();
+    harness.detectChanges();
+    http.expectOne((r) => r.url === '/clinical/prescriptions/m-1/pdf').flush(new Blob([]));
+  });
+
+  it('una segunda descarga no sale mientras la primera está en vuelo', async () => {
+    await montar();
+    responder();
+    await abrirPestana(1);
+
+    const boton = harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+      '[data-testid="historia-descargar-receta"]',
+    );
+    boton?.click();
+    boton?.click();
+    harness.detectChanges();
+
+    // Sólo una petición en vuelo: `http.expectOne` revienta si hubiera dos.
+    http.expectOne((r) => r.url === '/clinical/prescriptions/m-1/pdf').flush(new Blob([]));
   });
 
   it('una historia sin nada registrado lo dice, con su salida', async () => {

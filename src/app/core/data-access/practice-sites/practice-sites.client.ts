@@ -112,8 +112,8 @@ export class PracticeSitesClient {
    * **Sólo el propio.** Una sede de otra organización no se corrige desde acá:
    * es de ella, y lo que uno tiene con ella es una vinculación, no la sede.
    *
-   * La API todavía no expone la ruta (P28 de `PENDIENTES-BACKEND.md`); la
-   * maqueta sí, y el perfil ya la usa.
+   * Expuesta por la API desde el cierre del P32-b. Devuelve la sede con los
+   * cambios aplicados, en el mismo formato que la lista.
    *
    * @param siteId - El consultorio a corregir.
    * @param input - Sólo los campos que cambian.
@@ -139,8 +139,9 @@ export class PracticeSitesClient {
    * id, así que mezclarlo con nombre y dirección obligaría a mandar el resto
    * del consultorio para cambiar una imagen.
    *
-   * La API todavía no expone la ruta (P33 de `PENDIENTES-BACKEND.md`); la
-   * maqueta sí, y el perfil ya la usa.
+   * Expuesta por la API desde el cierre del P33. Autoriza por vinculación
+   * vigente con la sede, no por ser dueño de la práctica: por eso también
+   * funciona en la clínica donde el profesional atiende sin ser dueño.
    *
    * @param siteId - La sede donde se cobra con ese QR.
    * @param fileId - El archivo ya subido, o `null` para dejarla sin QR.

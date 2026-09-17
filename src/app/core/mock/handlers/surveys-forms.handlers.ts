@@ -2,7 +2,7 @@ import { reservas } from '../fixtures/agenda';
 import { ESTADO } from '../fixtures/conceptos';
 import { PACIENTE } from '../fixtures/personas';
 import { notFound, type MockRouter } from '../mock-router';
-import { PLANTILLAS_DE_EXPEDIENTE } from './clinical.handlers';
+import { plantillasVigentes } from './clinical.handlers';
 import { ahora, Coleccion, cuerpo, iso, isoDia, nuevoId, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -457,11 +457,11 @@ export function registrarEncuestas(router: MockRouter): void {
 
   /** La plantilla cuyo target coincide, o `undefined`. */
   const plantillaPorTarget = (target: string) =>
-    PLANTILLAS_DE_EXPEDIENTE.find((t) => t.fieldTargetConceptId === target);
+    plantillasVigentes().find((t) => t.fieldTargetConceptId === target);
 
   /** La plantilla que tiene colgada esta asignacion, o `undefined`. */
   const plantillaPorAsignacion = (assignmentId: string) =>
-    PLANTILLAS_DE_EXPEDIENTE.find((t) => t.fields.some((f) => f.assignmentId === assignmentId));
+    plantillasVigentes().find((t) => t.fields.some((f) => f.assignmentId === assignmentId));
 
   router.post('/forms/field-definitions', (request) => {
     const datos = cuerpo<Partial<DefinicionSimulada>>(request);
@@ -538,7 +538,7 @@ export function registrarEncuestas(router: MockRouter): void {
       definiciones.set(fieldId, aplicar(definicion));
     }
     // Y en la plantilla, que es de donde lee la pantalla.
-    for (const plantilla of PLANTILLAS_DE_EXPEDIENTE) {
+    for (const plantilla of plantillasVigentes()) {
       plantilla.fields = plantilla.fields.map((f) =>
         f.fieldId !== fieldId || !f.own ? f : aplicar(f),
       );

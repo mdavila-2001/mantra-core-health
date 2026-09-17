@@ -277,6 +277,34 @@
             -->
             <ng-template appCampoPersonalizado="academicTitles">
               <div class="registro-titulos">
+                <!-- Qué se guarda hoy y qué no, dicho antes de que lo escriban.
+                     Las casillas de nombre, país, ciudad y diploma se siguen
+                     preguntando (no se ocultan en esta pasada) pero no viajan:
+                     sin esta línea la pantalla prometía guardar lo que descarta. -->
+                <p class="registro-titulos__ayuda" data-testid="registro-pro-titulos-alcance">
+                  En esta alta se guardan el tipo, el número y la universidad de cada título. El
+                  nombre, el país, la ciudad y el archivo que completes aquí todavía no se
+                  guardan.
+                </p>
+                <!-- Sin catálogo de tipos, una fila con número no se puede
+                     mandar: el contrato exige el concepto. Se avisa acá, donde
+                     se escriben, y con el botón que vuelve a pedirlo —mismo
+                     patrón que el catálogo de departamentos—. Lo ya escrito no
+                     se pierde: las filas viven en su propio signal. -->
+                @if (catalogoTiposDeTituloCaido()) {
+                  <p class="registro__catalogo-caido" data-testid="registro-pro-titulos-catalogo-caido">
+                    No pudimos traer los tipos de título.
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      data-testid="registro-pro-titulos-reintentar"
+                      (clicked)="reintentarTiposDeCredencial()"
+                    >
+                      Reintentar
+                    </button>
+                  </p>
+                }
                 @for (tipo of tiposDeTitulo; track tipo.codigo) {
                   <section class="registro-titulo-tipo">
                     <h3 class="registro-titulo-tipo__nombre">{{ tipo.etiqueta }}</h3>
@@ -300,6 +328,39 @@
                           />
                         </label>
 
+                        <!-- El número del diploma. Es el único obligatorio de la
+                             fila: la columna que lo recibe es NOT NULL, así que
+                             sin él la fila no se puede guardar. -->
+                        <label class="registro-titulo__campo">
+                          <span class="sr-only">Número de {{ tipo.singular }}</span>
+                          <input
+                            type="text"
+                            class="registro-titulo__dato"
+                            placeholder="Número del diploma"
+                            maxlength="100"
+                            [value]="titulo.numero"
+                            [attr.aria-invalid]="tituloSinNumero(titulo) ? 'true' : null"
+                            [attr.aria-describedby]="
+                              tituloSinNumero(titulo) ? 'registro-pro-titulo-numero-error-' + titulo.id : null
+                            "
+                            [class.registro-titulo__dato--invalido]="tituloSinNumero(titulo)"
+                            [attr.data-testid]="'registro-pro-titulo-numero-' + titulo.id"
+                            (input)="escribirDatoDeTitulo(titulo.id, 'numero', $any($event.target).value)"
+                          />
+                          <!-- El aviso vive en la fila, al lado del campo que
+                               hay que corregir: el resumen de arriba dice QUÉ
+                               pasa y esto dice DÓNDE. -->
+                          @if (tituloSinNumero(titulo)) {
+                            <span
+                              class="registro-titulo__error"
+                              [id]="'registro-pro-titulo-numero-error-' + titulo.id"
+                              [attr.data-testid]="'registro-pro-titulo-numero-error-' + titulo.id"
+                            >
+                              Falta el número de este {{ tipo.singular }}.
+                            </span>
+                          }
+                        </label>
+
                         <!-- Dónde se cursó. Los tres son opcionales y de texto
                              libre, por lo mismo que en el título principal. -->
                         <div class="registro-titulo__estudio">
@@ -312,6 +373,7 @@
                                 type="text"
                                 class="registro-titulo__dato"
                                 [placeholder]="campo.placeholder"
+                                [attr.maxlength]="campo.maxlength"
                                 [value]="titulo[campo.campo]"
                                 [attr.data-testid]="
                                   'registro-pro-titulo-' + campo.campo + '-' + titulo.id
@@ -337,6 +399,7 @@
                           variant="ghost"
                           size="sm"
                           [attr.aria-label]="'Quitar ' + tipo.singular"
+                          [attr.data-testid]="'registro-pro-titulo-quitar-' + titulo.id"
                           (clicked)="quitarTitulo(titulo.id)"
                         >
                           Quitar

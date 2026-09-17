@@ -46,6 +46,7 @@ const PAGINAS: readonly PaginaDeFormulario[] = [
       label="Crear cuenta"
       submitLabel="Crear cuenta"
       (enviado)="enviados = enviados + 1"
+      (rechazada)="rechazadas.push($event)"
     >
       <ng-template appCampoPersonalizado="odontograma">
         <p data-testid="widget-propio">un mapa dental</p>
@@ -69,6 +70,7 @@ class Host {
     odontograma: new FormControl<string | null>(null),
   });
   enviados = 0;
+  readonly rechazadas: PaginaDeFormulario[] = [];
 }
 
 /** Una página con las piezas nuevas: glifo, descripción y un desplegable. */
@@ -273,6 +275,29 @@ describe('PaginatedForm', () => {
       fixture.detectChanges();
 
       expect(titulo()).toBe('Identidad');
+    });
+
+    /**
+     * Sin esta salida, un campo `custom` respaldado por un `FormGroup` anidado
+     * (el acordeón de gerencias del alta de aseguradora) no tiene forma de
+     * saber que el motor acaba de bloquear «Siguiente»: `markAsTouched` sobre
+     * el grupo no marca a los hijos.
+     */
+    it('emite `rechazada` con la página al bloquear «Siguiente»', () => {
+      botonContinuar().click();
+      fixture.detectChanges();
+
+      expect(host.rechazadas).toHaveLength(1);
+      expect(host.rechazadas[0].titulo).toBe('Identidad');
+    });
+
+    it('no emite `rechazada` cuando la página es válida', () => {
+      host.form.controls.documento.setValue('1234567');
+
+      botonContinuar().click();
+      fixture.detectChanges();
+
+      expect(host.rechazadas).toHaveLength(0);
     });
   });
 

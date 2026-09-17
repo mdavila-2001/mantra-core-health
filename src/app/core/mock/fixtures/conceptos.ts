@@ -48,6 +48,7 @@ function conjunto(internalCode: string, name: string, description: string): Conj
 function definir(
   valueSet: string,
   entradas: readonly (readonly [code: string, display: string, definition?: string])[],
+  ordinalInicial = 1,
 ): Readonly<Record<string, string>> {
   const ids: Record<string, string> = {};
   entradas.forEach(([code, display, definition], indice) => {
@@ -65,7 +66,7 @@ function definir(
       ...(definition === undefined ? {} : { definition }),
       valueSets: [valueSet],
       selectable: true,
-      ordinal: indice + 1,
+      ordinal: indice + ordinalInicial,
     });
     ids[code] = id;
   });
@@ -206,7 +207,7 @@ export const OCUPACION = definir('VS_BO_OCCUPATION', [
   ['occupation:bo:VENDEDOR', 'Vendedor / Vendedora'],
   ['occupation:bo:VETERINARIO', 'Veterinario / Veterinaria'],
   ['occupation:bo:ZAPATERO', 'Zapatero / Zapatera'],
-  ['occupation:bo:OTRA', 'Otra ocupación'],  // la salida escrita a mano
+  ['occupation:bo:OTRA', 'Otra ocupación'], // la salida escrita a mano
 ]);
 
 conjunto('VS_BO_EMPLOYER', 'Empleadores', 'Empresas e instituciones registradas.');
@@ -219,9 +220,8 @@ export const EMPLEADOR = definir('VS_BO_EMPLOYER', [
   ['employer:bo:INDEPENDIENTE', 'Trabajo por mi cuenta (independiente)'],
   ['employer:bo:NEGOCIO_PROPIO', 'Tengo mi propio negocio'],
   ['employer:bo:SIN_EMPLEADOR', 'No estoy trabajando'],
-  ['employer:bo:OTRA', 'Otra empresa (la escribo)'],  // la salida escrita a mano
+  ['employer:bo:OTRA', 'Otra empresa (la escribo)'], // la salida escrita a mano
 ]);
-
 
 /* ---- especialidades médicas ----------------------------------------------
 
@@ -277,14 +277,14 @@ export const ESPECIALIDAD = definir('VS_MEDICAL_SPECIALTY', [
   ['MEDICINA_EMERGENCIA', 'Medicina de Emergencia'],
   ['MEDICINA_INTENSIVA', 'Medicina Intensiva'],
   ['NUTRICION', 'Nutrición y Dietética', 'Alimentación y metabolismo.'],
-  ['ODONTOLOGIA', 'Odontología', 'Salud bucal.'],  // odontológica
+  ['ODONTOLOGIA', 'Odontología', 'Salud bucal.'], // odontológica
   ['FISIOTERAPIA', 'Fisioterapia y Rehabilitación', 'Rehabilitación física.'],
   ['ENFERMERIA', 'Enfermería'],
   ['BIOQUIMICA_CLINICA', 'Bioquímica Clínica'],
   ['OBSTETRICIA', 'Obstetricia'],
   ['MEDICINA_DEPORTIVA', 'Medicina Deportiva'],
   ['ANATOMIA_PATOLOGICA', 'Anatomía Patológica'],
-  ['CIRUGIA_BUCOMAXILOFACIAL', 'Cirugía Bucomaxilofacial'],  // odontológica
+  ['CIRUGIA_BUCOMAXILOFACIAL', 'Cirugía Bucomaxilofacial'], // odontológica
   ['CIRUGIA_PEDIATRICA', 'Cirugía Pediátrica'],
   ['MEDICINA_DEL_TRABAJO', 'Medicina del Trabajo'],
   ['MEDICINA_FISICA_REHABILITACION', 'Medicina Física y Rehabilitación'],
@@ -301,20 +301,24 @@ export const ESPECIALIDAD = definir('VS_MEDICAL_SPECIALTY', [
   ['ONCOLOGIA_PEDIATRICA', 'Oncología Pediátrica'],
   ['ORTOPEDIA_PEDIATRICA', 'Ortopedia Pediátrica'],
   ['TERAPIA_INTENSIVA_PEDIATRICA', 'Terapia Intensiva Pediátrica'],
-  ['ENDODONCIA', 'Endodoncia'],  // odontológica
-  ['ORTODONCIA', 'Ortodoncia'],  // odontológica
-  ['PERIODONCIA', 'Periodoncia'],  // odontológica
-  ['ESTETICA_DENTAL', 'Estética Dental'],  // odontológica
-  ['REHABILITACION_ORAL', 'Rehabilitación Oral'],  // odontológica
-  ['CIRUGIA_ORAL_MAXILOFACIAL', 'Cirugía Oral y Maxilofacial'],  // odontológica
-  ['ODONTOPEDIATRIA', 'Odontopediatría'],  // odontológica
-  ['IMPLANTOLOGIA_ORAL', 'Implantología Oral'],  // odontológica
-  ['ARMONIZACION_OROFACIAL', 'Armonización Orofacial'],  // odontológica
+  ['ENDODONCIA', 'Endodoncia'], // odontológica
+  ['ORTODONCIA', 'Ortodoncia'], // odontológica
+  ['PERIODONCIA', 'Periodoncia'], // odontológica
+  ['ESTETICA_DENTAL', 'Estética Dental'], // odontológica
+  ['REHABILITACION_ORAL', 'Rehabilitación Oral'], // odontológica
+  ['CIRUGIA_ORAL_MAXILOFACIAL', 'Cirugía Oral y Maxilofacial'], // odontológica
+  ['ODONTOPEDIATRIA', 'Odontopediatría'], // odontológica
+  ['IMPLANTOLOGIA_ORAL', 'Implantología Oral'], // odontológica
+  ['ARMONIZACION_OROFACIAL', 'Armonización Orofacial'], // odontológica
 ]);
 
 /* ---- demografía y contactos ---------------------------------------------- */
 
-conjunto('VS_ADMINISTRATIVE_GENDER', 'Género administrativo', 'Género con el que se registra la persona.');
+conjunto(
+  'VS_ADMINISTRATIVE_GENDER',
+  'Género administrativo',
+  'Género con el que se registra la persona.',
+);
 export const GENERO = definir('VS_ADMINISTRATIVE_GENDER', [
   ['GEN-F', 'Femenino'],
   ['GEN-M', 'Masculino'],
@@ -330,16 +334,20 @@ export const SEXO = definir('VS_BIRTH_SEX', [
   ['SEX-U', 'Desconocido'],
 ]);
 
-conjunto('VS_RELATED_PERSON_RELATIONSHIP', 'Parentesco', 'Relación de una persona con el paciente.');
+conjunto(
+  'VS_RELATED_PERSON_RELATIONSHIP',
+  'Parentesco',
+  'Relación de una persona con el paciente.',
+);
 export const PARENTESCO = definir('VS_RELATED_PERSON_RELATIONSHIP', [
-  ['REL-MADRE', 'Madre'],
-  ['REL-PADRE', 'Padre'],
-  ['REL-CONYUGE', 'Cónyuge'],
-  ['REL-HIJO', 'Hijo/a'],
-  ['REL-HERMANO', 'Hermano/a'],
-  ['REL-TUTOR', 'Tutor/a legal'],
-  ['REL-AMIGO', 'Amigo/a'],
-  ['REL-OTRO', 'Otro'],
+  ['RELATIONSHIP_MOTHER', 'Madre'],
+  ['RELATIONSHIP_FATHER', 'Padre'],
+  ['RELATIONSHIP_SPOUSE', 'Cónyuge'],
+  ['RELATIONSHIP_CHILD', 'Hijo/a'],
+  ['RELATIONSHIP_SIBLING', 'Hermano/a'],
+  ['RELATIONSHIP_GUARDIAN', 'Tutor/a legal'],
+  ['RELATIONSHIP_FRIEND', 'Amigo/a'],
+  ['RELATIONSHIP_OTHER', 'Otro'],
 ]);
 
 conjunto('VS_LANGUAGE', 'Idiomas', 'Idiomas de atención.');
@@ -382,7 +390,11 @@ export const RH = definir('VS_RH_FACTOR', [
 
 /* ---- estados genéricos --------------------------------------------------- */
 
-conjunto('VS_RECORD_STATUS', 'Estados de registro', 'Estados administrativos de personas y perfiles.');
+conjunto(
+  'VS_RECORD_STATUS',
+  'Estados de registro',
+  'Estados administrativos de personas y perfiles.',
+);
 export const ESTADO = definir('VS_RECORD_STATUS', [
   ['ST-ACTIVE', 'Activo'],
   ['ST-INACTIVE', 'Inactivo'],
@@ -418,13 +430,12 @@ export const CATEGORIA_PROFESIONAL = definir('VS_PRACTITIONER_CATEGORY', [
 
 conjunto('VS_CREDENTIAL_TYPE', 'Tipos de credencial', 'Títulos y certificaciones.');
 export const TIPO_CREDENCIAL = definir('VS_CREDENTIAL_TYPE', [
-  ['CRED-TITULO', 'Título profesional'],
-  ['CRED-ESPECIALIDAD', 'Título de especialidad'],
-  ['CRED-MAESTRIA', 'Maestría'],
-  ['CRED-DOCTORADO', 'Doctorado'],
-  ['CRED-DIPLOMADO', 'Diplomado'],
-  ['CRED-SEDES', 'Registro SEDES'],
-]);
+  ['CREDENTIAL_TYPE_DEGREE', 'Academic degree credential'],
+  ['CREDENTIAL_TYPE_DIPLOMA', 'Diploma course credential'],
+  ['CREDENTIAL_TYPE_MASTER', "Master's degree credential"],
+  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorate degree credential'],
+  ['CREDENTIAL_TYPE_SPECIALTY', 'Specialty degree credential'],
+], 0);
 
 conjunto('VS_JURISDICTION', 'Jurisdicciones', 'Ámbito de la matrícula.');
 export const JURISDICCION = definir('VS_JURISDICTION', [
@@ -433,7 +444,11 @@ export const JURISDICCION = definir('VS_JURISDICTION', [
   ['JUR-LP', 'Departamental La Paz'],
 ]);
 
-conjunto('VS_AFFILIATION_TYPE', 'Tipos de vínculo laboral', 'Cómo se vincula el profesional con una organización.');
+conjunto(
+  'VS_AFFILIATION_TYPE',
+  'Tipos de vínculo laboral',
+  'Cómo se vincula el profesional con una organización.',
+);
 export const TIPO_VINCULO = definir('VS_AFFILIATION_TYPE', [
   ['AFF-PLANTA', 'Personal de planta'],
   ['AFF-CONSULTOR', 'Consultor/a'],
@@ -745,7 +760,11 @@ export const UNIDAD = definir('VS_DOSE_UNIT', [
   ['UNIT-GOTAS', 'gotas'],
 ]);
 
-conjunto('VS_SERVICE_REQUEST_CATEGORY', 'Categoría de orden', 'Laboratorio, imagen, interconsulta.');
+conjunto(
+  'VS_SERVICE_REQUEST_CATEGORY',
+  'Categoría de orden',
+  'Laboratorio, imagen, interconsulta.',
+);
 export const CATEGORIA_ORDEN = definir('VS_SERVICE_REQUEST_CATEGORY', [
   ['SRQ-LAB', 'Laboratorio'],
   ['SRQ-IMAGING', 'Imagenología'],
@@ -815,16 +834,32 @@ export const PROCEDIMIENTO = definir('VS_PROCEDURE', [
 
 conjunto('VS_CONDITION_CODE', 'Diagnósticos (CIE-10)', 'Códigos de diagnóstico.');
 export const DIAGNOSTICO = definir('VS_CONDITION_CODE', [
-  ['I10', 'Hipertensión arterial esencial', 'Presión arterial persistentemente elevada sin causa secundaria identificada.'],
-  ['E11', 'Diabetes mellitus tipo 2', 'Trastorno metabólico crónico con hiperglucemia por resistencia a la insulina.'],
+  [
+    'I10',
+    'Hipertensión arterial esencial',
+    'Presión arterial persistentemente elevada sin causa secundaria identificada.',
+  ],
+  [
+    'E11',
+    'Diabetes mellitus tipo 2',
+    'Trastorno metabólico crónico con hiperglucemia por resistencia a la insulina.',
+  ],
   ['E78.5', 'Dislipidemia', 'Alteración de los niveles de lípidos en sangre.'],
   ['J45', 'Asma bronquial', 'Enfermedad inflamatoria crónica de las vías respiratorias.'],
   ['M54.5', 'Lumbalgia', 'Dolor en la región lumbar.'],
   ['K21.0', 'Enfermedad por reflujo gastroesofágico', 'Retorno del contenido gástrico al esófago.'],
-  ['F41.1', 'Trastorno de ansiedad generalizada', 'Ansiedad y preocupación excesivas y persistentes.'],
+  [
+    'F41.1',
+    'Trastorno de ansiedad generalizada',
+    'Ansiedad y preocupación excesivas y persistentes.',
+  ],
   ['E03.9', 'Hipotiroidismo', 'Producción insuficiente de hormona tiroidea.'],
   ['N39.0', 'Infección urinaria', 'Infección del tracto urinario.'],
-  ['J06.9', 'Infección respiratoria aguda', 'Infección aguda de las vías respiratorias superiores.'],
+  [
+    'J06.9',
+    'Infección respiratoria aguda',
+    'Infección aguda de las vías respiratorias superiores.',
+  ],
   ['M17', 'Gonartrosis', 'Artrosis de la rodilla.'],
   ['G43', 'Migraña', 'Cefalea primaria recurrente.'],
   ['E66', 'Obesidad', 'Exceso de grasa corporal.'],
@@ -870,7 +905,11 @@ export const TIPO_ORGANIZACION = definir('VS_ORGANIZATION_TYPE', [
 // catálogo real (`legal-entity-type` en `dynamic-enum-catalog.ts` de la API).
 // La etiqueta que ve la persona sale de `legal-entity-types.dictionary.ts`,
 // por código — este conjunto sólo simula los VALORES y sus `conceptId`.
-conjunto('VS_LEGAL_ENTITY_TYPE', 'Forma societaria', 'Figura jurídica de la organización, por país.');
+conjunto(
+  'VS_LEGAL_ENTITY_TYPE',
+  'Forma societaria',
+  'Figura jurídica de la organización, por país.',
+);
 export const TIPO_SOCIETARIO = definir('VS_LEGAL_ENTITY_TYPE', [
   ['UNIPERSONAL', 'Sole proprietorship'],
   ['SRL', 'Limited liability company (S.R.L.)'],
@@ -960,6 +999,33 @@ export const ESTADO_DE_CASO = definir('VS_IDENTITY_CASE_STATUS', [
   ['identity_assurance:CASE_REJECTED', 'Case rejected'],
   ['identity_assurance:CASE_REVOKED', 'Case revoked'],
   ['identity_assurance:CASE_EXPIRED', 'Case expired'],
+]);
+
+/* ---- Catálogos administrativos de seguros -------------------------------- */
+conjunto(
+  'VS_INSURANCE_PLAN_CURRENCY',
+  'Monedas de planes de seguro',
+  'Monedas admitidas para los importes de planes y coberturas.',
+);
+
+export const MONEDA_PLAN_SEGURO = definir('VS_INSURANCE_PLAN_CURRENCY', [
+  ['BOB', 'Boliviano'],
+  ['USD', 'Dólar estadounidense'],
+]);
+
+conjunto(
+  'VS_INSURANCE_BENEFIT_CATEGORY',
+  'Categorías de cobertura',
+  'Categorías administrables de prestaciones cubiertas por un plan.',
+);
+
+export const CATEGORIA_COBERTURA = definir('VS_INSURANCE_BENEFIT_CATEGORY', [
+  ['BENEFIT_CATEGORY_GENERAL', 'General'],
+  ['BENEFIT_CATEGORY_OUTPATIENT', 'Consulta externa'],
+  ['BENEFIT_CATEGORY_EMERGENCY', 'Emergencias'],
+  ['BENEFIT_CATEGORY_HOSPITALIZATION', 'Hospitalización'],
+  ['BENEFIT_CATEGORY_LAB_IMAGING', 'Laboratorio e imagen'],
+  ['BENEFIT_CATEGORY_PHARMACY', 'Farmacia'],
 ]);
 
 /* ---- consultas ----------------------------------------------------------- */

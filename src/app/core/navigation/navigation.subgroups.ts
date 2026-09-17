@@ -202,11 +202,12 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     label: 'Seguros',
     group: 'Administración',
     icon: 'umbrella',
-    // Quién paga, quién intermedia y qué se le presentó.
+    // Quién paga, quién intermedia, qué se le presentó y qué dice el agregado.
     paths: [
       'administration/insurance',
       'administration/brokers',
       'administration/insurance-claims',
+      'administration/insurance-analytics',
     ],
   },
   {
@@ -282,14 +283,19 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Mi cuenta',
     icon: 'patients',
     // Quién soy para la plataforma, y cómo lo demuestro.
-    paths: ['my-account', 'my-account/identity'],
+    paths: ['my-account', 'my-account/identity', 'my-account/dependents'],
   },
   {
     label: 'Mis gestiones',
     group: 'Mi cuenta',
     icon: 'calendar',
     // Lo que tengo en curso: un turno, un pedido, mis puntos.
-    paths: ['my-account/appointments', 'my-account/pharmacy-orders', 'my-account/loyalty'],
+    paths: [
+      'my-account/appointments',
+      'my-account/pharmacy-orders',
+      'my-account/loyalty',
+      'my-account/promotions',
+    ],
   },
   {
     label: 'Mi salud',

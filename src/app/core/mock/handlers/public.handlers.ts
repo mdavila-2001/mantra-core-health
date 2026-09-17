@@ -240,7 +240,7 @@ export function registrarPublico(router: MockRouter): void {
                 sede.latitude === null || sede.longitude === null
                   ? null
                   : { lat: sede.latitude, lng: sede.longitude },
-              isOwn: sede.esPropio,
+              isOwn: sede.isOwnSite,
             })),
       ratingAverage: v.ratingAverage,
       ratingCount: v.ratingCount,

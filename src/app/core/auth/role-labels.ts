@@ -33,6 +33,8 @@ export const ROLE_LABELS: Readonly<Record<string, string>> = {
   BILLING_OPERATOR: 'Operación de facturación',
   FINANCE: 'Finanzas',
   CASHIER: 'Caja',
+  /** Rol de negocio de `authz.roles` (subtarea 3.1, v4.2.14): cara de la aseguradora. */
+  INSURANCE_OPERATOR: 'Operación de aseguradora',
 };
 
 /**

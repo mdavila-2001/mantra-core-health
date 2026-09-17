@@ -1,0 +1,56 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+  inline-size: 100%;
+}
+
+.stored-file {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.stored-file__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.stored-file__dato {
+  min-inline-size: 0;
+}
+
+.stored-file__dato dt {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.stored-file__dato dd {
+  margin: 0;
+  font-size: var(--fs-body);
+  /* Un nombre de archivo largo no puede ensanchar la fila ni desbordar el
+     diálogo: se parte por donde haga falta, aunque no tenga espacios. */
+  overflow-wrap: anywhere;
+}
+
+.stored-file__dd--reserva {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.stored-file__aviso {
+  font-size: var(--fs-caption);
+  font-style: normal;
+}
+
+.stored-file__estado {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.stored-file__estado--error {
+  color: var(--text-danger, var(--text-secondary));
+}

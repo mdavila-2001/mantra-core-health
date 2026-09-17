@@ -1,0 +1,169 @@
+/* Mobile-first: todo apilado; con ancho, emisor y comprador lado a lado y los
+   datos de cabecera en tres columnas. Ocupa el ancho del contenido: es una
+   ficha, no una columna angosta pegada a un costado. */
+
+.factura {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+.factura__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.factura__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.factura__titulo {
+  margin: 0;
+  font-size: var(--fs-h2);
+}
+
+.factura__subtitulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.factura__datos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.factura__dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.factura__etiqueta {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.factura__valor {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.factura__partes {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.factura__parte,
+.factura__detalle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.factura__campos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+}
+
+.factura__campos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.factura__campos dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.factura__lineas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.factura__linea {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-2);
+  border-block-end: 1px dashed var(--border-default);
+}
+
+.factura__descripcion {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.factura__secundario {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.factura__cuentas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+}
+
+.factura__cuenta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.factura__cuenta dt {
+  color: var(--text-secondary);
+}
+
+.factura__cuenta dd {
+  margin: 0;
+  text-align: end;
+}
+
+.factura__cuenta--total {
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--border-default);
+  font-weight: 700;
+}
+
+.factura__cuenta--total dt {
+  color: var(--text-primary);
+}
+
+.factura__pie {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+@media (min-width: 768px) {
+  .factura__datos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .factura__partes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

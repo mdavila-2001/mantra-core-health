@@ -1,0 +1,137 @@
+<app-content-dialog
+  heading="Registrar dependiente"
+  description="Una persona a tu cargo: un hijo o hija, tu madre o tu padre, alguien a quien representás. No necesita cuenta propia."
+  [dismissible]="!saving()"
+  (closed)="closed.emit()"
+>
+  @if (errorMessage(); as mensaje) {
+    <app-alert appAnuncio tone="error">{{ mensaje }}</app-alert>
+  }
+  @if (opcionesParentesco().length === 0) {
+    <app-alert tone="warning">
+      No pudimos cargar los parentescos. Recargá la página para volver a intentarlo.
+    </app-alert>
+  }
+
+  <form class="dependents-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="dependents-form__columns">
+      <app-form-field
+        label="Primer nombre"
+        [required]="true"
+        [errorMessage]="
+          form.controls.name.touched && form.controls.name.invalid
+            ? 'Escribí su primer nombre.'
+            : ''
+        "
+      >
+        <app-input formControlName="name" autocomplete="off" testId="dependent-name" />
+      </app-form-field>
+      <app-form-field label="Segundo nombre">
+        <app-input
+          formControlName="middleName"
+          autocomplete="off"
+          testId="dependent-middle-name"
+        />
+      </app-form-field>
+      <app-form-field
+        label="Apellido paterno"
+        [required]="true"
+        [errorMessage]="
+          form.controls.lastName.touched && form.controls.lastName.invalid
+            ? 'Escribí su apellido paterno.'
+            : ''
+        "
+      >
+        <app-input formControlName="lastName" autocomplete="off" testId="dependent-last-name" />
+      </app-form-field>
+      <app-form-field label="Apellido materno">
+        <app-input
+          formControlName="motherLastName"
+          autocomplete="off"
+          testId="dependent-mother-last-name"
+        />
+      </app-form-field>
+    </div>
+
+    <app-form-field
+      label="Fecha de nacimiento"
+      [required]="true"
+      [hint]="edadDeclarada() ?? ''"
+      [errorMessage]="faltaLaFecha() ? 'Elegí su fecha de nacimiento.' : ''"
+    >
+      <app-date-picker
+        [(value)]="fechaDeNacimiento"
+        [hasError]="faltaLaFecha()"
+        maxDate="today"
+        placeholder="DD/MM/AAAA"
+        data-testid="dependent-birth-date"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Tu relación con esta persona"
+      [required]="true"
+      hint="Lo que vos sos para ella."
+      [errorMessage]="
+        form.controls.relationshipConceptId.touched &&
+        form.controls.relationshipConceptId.invalid
+          ? 'Elegí qué sos para esta persona.'
+          : ''
+      "
+    >
+      <app-select
+        formControlName="relationshipConceptId"
+        [options]="opcionesParentesco()"
+        placeholder="Elegí una opción"
+        data-testid="dependent-relationship"
+      />
+    </app-form-field>
+
+    <div class="dependents-form__columns">
+      <app-form-field
+        label="Documento de identidad"
+        hint="Opcional: dejalo vacío si todavía no tiene."
+        [errorMessage]="
+          form.controls.nationalId.touched && form.controls.nationalId.invalid
+            ? 'El documento sólo admite letras, dígitos, punto y guion.'
+            : ''
+        "
+      >
+        <app-input
+          formControlName="nationalId"
+          autocomplete="off"
+          testId="dependent-national-id"
+        />
+      </app-form-field>
+      <app-form-field label="Departamento que lo expidió">
+        <app-select
+          formControlName="issuerAdministrativeAreaConceptId"
+          [options]="opcionesDepartamento()"
+          placeholder="Elegí un departamento"
+          data-testid="dependent-issuer"
+        />
+      </app-form-field>
+    </div>
+
+    <div class="dependents-form__acciones">
+      <button
+        app-button
+        type="button"
+        variant="secondary"
+        [disabled]="saving()"
+        (click)="dialog().close()"
+      >
+        Cancelar
+      </button>
+      <button
+        app-button
+        type="submit"
+        variant="primary"
+        [isLoading]="saving()"
+        data-testid="dependent-submit"
+      >
+        Registrar
+      </button>
+    </div>
+  </form>
+</app-content-dialog>

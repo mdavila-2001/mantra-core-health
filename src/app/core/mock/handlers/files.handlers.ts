@@ -84,8 +84,12 @@ const archivos = new Coleccion<ArchivoSimulado>([
   { id: uuid('file-qr-consultorio'), currentVersionId: uuid('v-file-qr-consultorio'), originalName: 'qr-banco-union.png', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: qrSvg('site-consultorio-rojas', 'Banco Unión · Cta. 1000-4477') },
 ]);
 
-/** Un PDF de una página con una línea de texto. Lo justo para que un visor lo abra. */
-function pdfMinimo(texto: string): string {
+/**
+ * Un PDF de una página con una línea de texto. Lo justo para que un visor lo
+ * abra. Exportada: la reutiliza `clinical.handlers.ts` para el PDF simulado
+ * de la receta (B.3), en vez de escribir un segundo generador mínimo.
+ */
+export function pdfMinimo(texto: string): string {
   const limpio = texto.replace(/[^\x20-\x7e]/g, '?').replace(/[()\\]/g, '');
   const contenido = `BT /F1 18 Tf 60 740 Td (${limpio}) Tj ET`;
   const objetos = [
@@ -218,9 +222,20 @@ export function registrarArchivos(router: MockRouter): void {
     // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
     // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
     // `image/…`— y al abrirlo se veía un cartel, no un documento.
-    return a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
-      ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
-      : a.dataUrl;
+    const body =
+      a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
+        ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
+        : a.dataUrl;
+    // 5.2 · el nombre viaja donde lo pone la API real. Sin esta cabecera todo
+    // adjunto se guardaba con un nombre de reserva, y la paridad mock↔real se
+    // rompía justo en lo que 5.2 tiene que demostrar. Se codifica igual que el
+    // backend (`filename*=UTF-8''…`), acentos incluidos.
+    return {
+      body,
+      headers: {
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
+      },
+    };
   });
 
   router.delete('/common/files/:id', ({ params }) => {

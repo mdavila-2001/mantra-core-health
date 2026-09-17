@@ -1,3 +1,5 @@
+import type { PatientSettlementFields } from '../insurance/patient-insurance-settlement.types';
+
 /**
  * Tipos del pedido de farmacia (carril FAR-I2, sobre el contrato acordado de
  * la tanda de farmacia — README del día 1).
@@ -141,7 +143,7 @@ export interface PagoDelPedido {
 }
 
 /** Un pedido de farmacia, tal como las pantallas lo leen. */
-export interface PedidoFarmacia {
+export interface PedidoFarmacia extends PatientSettlementFields {
   readonly id: string;
   readonly estado: EstadoDePedido;
   readonly creadoEl: Date;

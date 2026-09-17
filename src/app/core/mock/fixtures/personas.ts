@@ -97,11 +97,15 @@ export interface PacienteSimulado {
    * Opcionales porque los datos de ejemplo no los traen: se llenan cuando
    * alguien edita su perfil y confirma la ubicación. Ver el PATCH de
    * `/profiles/patients/me`.
+   *
+   * `null` es «lo quitaron» (subtarea B.2), distinto de `undefined` —«nunca
+   * se tocó»—: sin la distinción, quitar el pin de la casa y volver a leer el
+   * perfil lo devolvía al punto de la plaza principal.
    */
-  readonly homeLat?: number;
-  readonly homeLng?: number;
-  readonly workLat?: number;
-  readonly workLng?: number;
+  readonly homeLat?: number | null;
+  readonly homeLng?: number | null;
+  readonly workLat?: number | null;
+  readonly workLng?: number | null;
   /** La dirección de trabajo, que antes no se guardaba en ningún lado. */
   readonly direccionTrabajo?: string;
 }
@@ -519,7 +523,7 @@ export function credencialesDe(p: ProfesionalSimulado) {
   return [
     {
       id: uuid(`cred-titulo-${p.id}`),
-      credentialTypeConceptId: TIPO_CREDENCIAL['CRED-TITULO']!,
+      credentialTypeConceptId: TIPO_CREDENCIAL['CREDENTIAL_TYPE_DEGREE']!,
       number: `TIT-${p.practitionerCode.slice(4)}`,
       issuingInstitutionText: 'Universidad Mayor de San Andrés',
       issueDate: isoDia(-365 * 12),
@@ -535,7 +539,7 @@ export function credencialesDe(p: ProfesionalSimulado) {
       : [
           {
             id: uuid(`cred-esp-${p.id}`),
-            credentialTypeConceptId: TIPO_CREDENCIAL['CRED-ESPECIALIDAD']!,
+            credentialTypeConceptId: TIPO_CREDENCIAL['CREDENTIAL_TYPE_SPECIALTY']!,
             number: `ESP-${p.practitionerCode.slice(4)}`,
             issuingInstitutionText: 'Colegio Médico de Bolivia',
             issueDate: isoDia(-365 * 7),
@@ -543,15 +547,6 @@ export function credencialesDe(p: ProfesionalSimulado) {
             ...(p.verified ? { verifiedAt: iso(-180) } : {}),
           },
         ]),
-    {
-      id: uuid(`cred-sedes-${p.id}`),
-      credentialTypeConceptId: TIPO_CREDENCIAL['CRED-SEDES']!,
-      number: `SEDES-${p.matricula}`,
-      issuingInstitutionText: 'SEDES Santa Cruz',
-      issueDate: isoDia(-365 * 6),
-      expiryDate: isoDia(365 * 2),
-      stateConceptId: ESTADO['ST-ACTIVE']!,
-    },
   ];
 }
 
@@ -566,6 +561,16 @@ export function licenciasDe(p: ProfesionalSimulado) {
       validFrom: isoDia(-365 * 10),
       /** El carnet del colegio. Mismo criterio que el diploma de arriba. */
       fileId: uuid(`file-matricula-${p.id}`),
+    },
+    {
+      // SEDES es una habilitación departamental, no formación académica.
+      id: uuid(`lic-sedes-${p.id}`),
+      jurisdictionConceptId: JURISDICCION['JUR-SC']!,
+      licenseNumber: `SEDES-${p.matricula}`,
+      regulatoryAuthority: 'SEDES Santa Cruz',
+      stateConceptId: ESTADO['ST-ACTIVE']!,
+      validFrom: isoDia(-365 * 6),
+      validTo: isoDia(365 * 2),
     },
   ];
 }
@@ -650,8 +655,8 @@ export const afiliaciones = new Coleccion<AfiliacionSimulada>(afiliacionesInicia
 /** Familiares y contactos de cada paciente. */
 export function personasRelacionadasDe(p: PacienteSimulado) {
   const base = [
-    { id: uuid(`rel-1-${p.id}`), displayName: `${['Rosa', 'Juan', 'Marta', 'Carlos'][p.patientCode.charCodeAt(6) % 4]} ${p.lastName}`, relationshipConceptId: PARENTESCO[p.sexAtBirth === 'FEMALE' ? 'REL-MADRE' : 'REL-PADRE']!, isEmergencyContact: true, isLegalGuardian: p.birthDate > '2007-01-01' },
-    { id: uuid(`rel-2-${p.id}`), displayName: `${['Pedro', 'Laura', 'Raúl', 'Inés'][p.patientCode.charCodeAt(7) % 4]} ${p.motherLastName}`, relationshipConceptId: PARENTESCO['REL-HERMANO']!, isEmergencyContact: false, isLegalGuardian: false },
+    { id: uuid(`rel-1-${p.id}`), displayName: `${['Rosa', 'Juan', 'Marta', 'Carlos'][p.patientCode.charCodeAt(6) % 4]} ${p.lastName}`, relationshipConceptId: PARENTESCO[p.sexAtBirth === 'FEMALE' ? 'RELATIONSHIP_MOTHER' : 'RELATIONSHIP_FATHER']!, isEmergencyContact: true, isLegalGuardian: p.birthDate > '2007-01-01' },
+    { id: uuid(`rel-2-${p.id}`), displayName: `${['Pedro', 'Laura', 'Raúl', 'Inés'][p.patientCode.charCodeAt(7) % 4]} ${p.motherLastName}`, relationshipConceptId: PARENTESCO['RELATIONSHIP_SIBLING']!, isEmergencyContact: false, isLegalGuardian: false },
   ];
   return p.aseguradora === undefined ? base.slice(0, 1) : base;
 }
