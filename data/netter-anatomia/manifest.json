@@ -1,0 +1,26 @@
+{
+ "package": "Taxonomia_Anatomica_Netter_IA_v2_AUDITADA",
+ "schemaVersion": "2.0.0",
+ "sourceArchive": "Taxonomia_Anatomica_Netter_IA_v2_AUDITADA_100MB_plus.zip",
+ "sourceSha256": "e4526e787aa1f653f91fe5e309d5ec5ca92625da0825abc9aabd2f29d26676a7",
+ "primarySource": "# Fuente primaria\n\nFrank H. Netter, MD. **Atlas de Anatomía Humana. 4.ª edición.** Elsevier/Masson.\n\nEsta versión del corpus usa como identificador canónico el **número de lámina (1-548)** y no la página física del archivo escaneado. El PDF local contiene 631 páginas físicas: portadas, portadillas de sección, láminas, bibliografía e índice. El índice alfabético ocupa páginas físicas 585-630 en el archivo local y sus números remiten a láminas, no a páginas PDF.",
+ "normalizationSource": "# Fuente de normalización\n\nFIPAT. *Terminologia Anatomica*. 2nd ed. 2019; approved/adopted by the IFAA General Assembly, 2020.\n\nSe usa como estándar de referencia para nomenclatura, no como sustituto silencioso del Atlas. La página de FIPAT identifica a sus terminologías como el estándar internacional.",
+ "counts": {
+  "regions": 8,
+  "subregions": 65,
+  "plates": 548,
+  "entities": 3161,
+  "types": 27,
+  "clinicalNotes": 5
+ },
+ "warnings": [
+  "`consensus_high` no equivale a validación humana término por término.",
+  "No inferir origen/inserción, inervación, territorio vascular, diagnóstico ni tratamiento desde estas entradas.",
+  "La forma del término es la del índice del Atlas, sin corregir.",
+  "La clínica no se atribuye al Atlas y no es prescripción."
+ ],
+ "notIncluded": [
+  "11_raw_ocr/ y los datasets de entrenamiento: no se muestran en pantalla.",
+  "Ilustraciones y texto corrido del Atlas: obra con derechos."
+ ]
+}

@@ -1,0 +1,522 @@
+[
+ {
+  "id": "R01S01",
+  "regionId": "R01",
+  "name": "Anatomía de superficie",
+  "plateFrom": 1,
+  "plateTo": 1,
+  "definition": "La subregión **Anatomía de superficie** organiza referencias externas y puntos palpables que permiten orientar estructuras profundas sobre el cuerpo vivo; sirve de puente entre examen físico, imagen y disección. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S02",
+  "regionId": "R01",
+  "name": "Huesos y ligamentos",
+  "plateFrom": 2,
+  "plateTo": 22,
+  "definition": "La subregión **Huesos y ligamentos** organiza componentes rígidos y estabilizadores del sistema musculoesquelético. Los huesos aportan soporte y superficies articulares; los ligamentos limitan o guían movimiento y conectan elementos esqueléticos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S03",
+  "regionId": "R01",
+  "name": "Cara superficial",
+  "plateFrom": 23,
+  "plateTo": 26,
+  "definition": "La subregión **Cara superficial** organiza capas superficiales de la cara, músculos de expresión, vasos, nervios cutáneos y glándulas; las relaciones son relevantes para expresión, sensibilidad y abordajes clínicos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S04",
+  "regionId": "R01",
+  "name": "Cuello",
+  "plateFrom": 27,
+  "plateTo": 35,
+  "definition": "La subregión **Cuello** organiza compartimentos cervicales y relaciones entre músculos, fascias, vía aérea, tubo digestivo, tiroides, grandes vasos, plexos y nervios. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S05",
+  "regionId": "R01",
+  "name": "Región nasal",
+  "plateFrom": 36,
+  "plateTo": 50,
+  "definition": "La subregión **Región nasal** organiza nariz, cavidad nasal, tabique, cornetes, senos paranasales, vasos e inervación; integra vía aérea superior y relaciones con órbita, cavidad oral y base del cráneo. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S06",
+  "regionId": "R01",
+  "name": "Región bucal",
+  "plateFrom": 51,
+  "plateTo": 62,
+  "definition": "La subregión **Región bucal** organiza cavidad oral, dientes, lengua, glándulas salivales, músculos de masticación y su neurovasculatura; región clave para masticación, deglución y habla. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S07",
+  "regionId": "R01",
+  "name": "Faringe",
+  "plateFrom": 63,
+  "plateTo": 73,
+  "definition": "La subregión **Faringe** organiza conducto fibromuscular compartido por aparatos respiratorio y digestivo, con músculos constrictores/elevadores, mucosa, vasos, linfáticos e inervación. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S08",
+  "regionId": "R01",
+  "name": "Glándula tiroides y laringe",
+  "plateFrom": 74,
+  "plateTo": 80,
+  "definition": "La subregión **Glándula tiroides y laringe** organiza relaciones de tiroides, paratiroides y laringe con tráquea, faringe, vasos tiroideos y nervios laríngeos; reúne anatomía endocrina y de la vía aérea/fonación. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S09",
+  "regionId": "R01",
+  "name": "Órbita y contenido",
+  "plateFrom": 81,
+  "plateTo": 91,
+  "definition": "La subregión **Órbita y contenido** organiza cavidad ósea de la órbita y sus contenidos: globo ocular, músculos extraoculares, aparato lagrimal, vasos, nervios y fascias. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S10",
+  "regionId": "R01",
+  "name": "Oído",
+  "plateFrom": 92,
+  "plateTo": 98,
+  "definition": "La subregión **Oído** organiza oído externo, medio e interno, incluyendo membrana timpánica, huesecillos, laberintos óseo y membranoso y nervio vestibulococlear. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S11",
+  "regionId": "R01",
+  "name": "Meninges y encéfalo",
+  "plateFrom": 99,
+  "plateTo": 115,
+  "definition": "La subregión **Meninges y encéfalo** organiza cubiertas meníngeas, espacios, senos venosos y principales divisiones del encéfalo; integra relaciones entre cerebro, cerebelo, tronco encefálico y sistema ventricular. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S12",
+  "regionId": "R01",
+  "name": "Nervios craneales y cervicales",
+  "plateFrom": 116,
+  "plateTo": 135,
+  "definition": "La subregión **Nervios craneales y cervicales** organiza trayectos, ganglios y distribuciones de nervios craneales y plexo cervical, con componentes motores, sensitivos y autónomos cuando la fuente los representa. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S13",
+  "regionId": "R01",
+  "name": "Vasculatura cerebral",
+  "plateFrom": 136,
+  "plateTo": 148,
+  "definition": "La subregión **Vasculatura cerebral** organiza sistema arterial y venoso del encéfalo y meninges, con especial atención al círculo arterial, ramas cerebrales, venas profundas y senos relacionados. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R01S14",
+  "regionId": "R01",
+  "name": "Exploraciones regionales",
+  "plateFrom": 149,
+  "plateTo": 151,
+  "definition": "La subregión **Exploraciones regionales** organiza imágenes diagnósticas o vistas clínicas usadas para trasladar relaciones anatómicas a radiografía, TC, RM o angiografía. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R02S01",
+  "regionId": "R02",
+  "name": "Anatomía de superficie",
+  "plateFrom": 152,
+  "plateTo": 152,
+  "definition": "La subregión **Anatomía de superficie** organiza referencias externas y puntos palpables que permiten orientar estructuras profundas sobre el cuerpo vivo; sirve de puente entre examen físico, imagen y disección. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R02S02",
+  "regionId": "R02",
+  "name": "Huesos y ligamentos",
+  "plateFrom": 153,
+  "plateTo": 159,
+  "definition": "La subregión **Huesos y ligamentos** organiza componentes rígidos y estabilizadores del sistema musculoesquelético. Los huesos aportan soporte y superficies articulares; los ligamentos limitan o guían movimiento y conectan elementos esqueléticos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R02S03",
+  "regionId": "R02",
+  "name": "Médula espinal",
+  "plateFrom": 160,
+  "plateTo": 173,
+  "definition": "La subregión **Médula espinal** organiza médula espinal, meninges, raíces, tractos y vascularización dentro del canal vertebral. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R02S04",
+  "regionId": "R02",
+  "name": "Músculos y nervios",
+  "plateFrom": 174,
+  "plateTo": 180,
+  "definition": "La subregión **Músculos y nervios** organiza músculos del dorso y su inervación, organizados topográficamente respecto a columna, costillas y fascia. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R03S01",
+  "regionId": "R03",
+  "name": "Anatomía de superficie",
+  "plateFrom": 181,
+  "plateTo": 181,
+  "definition": "La subregión **Anatomía de superficie** organiza referencias externas y puntos palpables que permiten orientar estructuras profundas sobre el cuerpo vivo; sirve de puente entre examen físico, imagen y disección. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R03S02",
+  "regionId": "R03",
+  "name": "Glándula mamaria",
+  "plateFrom": 182,
+  "plateTo": 184,
+  "definition": "La subregión **Glándula mamaria** organiza mama y sus relaciones con piel, fascia, pared torácica, vasos, linfáticos y estructuras axilares. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R03S03",
+  "regionId": "R03",
+  "name": "Pared corporal",
+  "plateFrom": 185,
+  "plateTo": 195,
+  "definition": "La subregión **Pared corporal** organiza capas musculares, óseas, fasciales y neurovasculares que forman una pared regional y separan cavidades de tejidos superficiales. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R03S04",
+  "regionId": "R03",
+  "name": "Pulmones",
+  "plateFrom": 196,
+  "plateTo": 210,
+  "definition": "La subregión **Pulmones** organiza pulmones, pleuras, árbol traqueobronquial, hilios, segmentos y circulación pulmonar/bronquial en contexto topográfico. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R03S05",
+  "regionId": "R03",
+  "name": "Corazón",
+  "plateFrom": 211,
+  "plateTo": 229,
+  "definition": "La subregión **Corazón** organiza morfología externa e interna del corazón, válvulas, cámaras, sistema de conducción, circulación coronaria y relaciones pericárdicas. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R03S06",
+  "regionId": "R03",
+  "name": "Mediastino",
+  "plateFrom": 230,
+  "plateTo": 241,
+  "definition": "La subregión **Mediastino** organiza espacio central torácico entre cavidades pleurales que contiene corazón, grandes vasos, tráquea, esófago, timo, nervios y linfáticos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R03S07",
+  "regionId": "R03",
+  "name": "Exploraciones regionales",
+  "plateFrom": 242,
+  "plateTo": 242,
+  "definition": "La subregión **Exploraciones regionales** organiza imágenes diagnósticas o vistas clínicas usadas para trasladar relaciones anatómicas a radiografía, TC, RM o angiografía. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R03S08",
+  "regionId": "R03",
+  "name": "Anatomía seccional",
+  "plateFrom": 243,
+  "plateTo": 246,
+  "definition": "La subregión **Anatomía seccional** organiza cortes anatómicos que muestran relaciones espaciales simultáneas entre estructuras de una región. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S01",
+  "regionId": "R04",
+  "name": "Anatomía de superficie",
+  "plateFrom": 247,
+  "plateTo": 247,
+  "definition": "La subregión **Anatomía de superficie** organiza referencias externas y puntos palpables que permiten orientar estructuras profundas sobre el cuerpo vivo; sirve de puente entre examen físico, imagen y disección. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S02",
+  "regionId": "R04",
+  "name": "Pared corporal",
+  "plateFrom": 248,
+  "plateTo": 267,
+  "definition": "La subregión **Pared corporal** organiza capas musculares, óseas, fasciales y neurovasculares que forman una pared regional y separan cavidades de tejidos superficiales. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S03",
+  "regionId": "R04",
+  "name": "Cavidad peritoneal",
+  "plateFrom": 268,
+  "plateTo": 274,
+  "definition": "La subregión **Cavidad peritoneal** organiza peritoneo, mesos, omentos, recesos y relaciones intraperitoneales que suspenden o conectan vísceras. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S04",
+  "regionId": "R04",
+  "name": "Vísceras (intestino)",
+  "plateFrom": 275,
+  "plateTo": 285,
+  "definition": "La subregión **Vísceras (intestino)** organiza segmentos del tubo digestivo abdominal, sus paredes, continuidades y relaciones topográficas. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S05",
+  "regionId": "R04",
+  "name": "Vísceras (órganos accesorios)",
+  "plateFrom": 286,
+  "plateTo": 299,
+  "definition": "La subregión **Vísceras (órganos accesorios)** organiza hígado, vesícula biliar, páncreas y otros órganos accesorios relacionados con digestión y conductos asociados. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S06",
+  "regionId": "R04",
+  "name": "Vasculatura visceral",
+  "plateFrom": 300,
+  "plateTo": 317,
+  "definition": "La subregión **Vasculatura visceral** organiza arterias, venas y sistemas portales que irrigan y drenan vísceras abdominales. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S07",
+  "regionId": "R04",
+  "name": "Inervación",
+  "plateFrom": 318,
+  "plateTo": 328,
+  "definition": "La subregión **Inervación** organiza vías autonómicas y somáticas relevantes para la región, incluidos plexos, ganglios y nervios periféricos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S08",
+  "regionId": "R04",
+  "name": "Riñones y glándulas suprarrenales",
+  "plateFrom": 329,
+  "plateTo": 347,
+  "definition": "La subregión **Riñones y glándulas suprarrenales** organiza riñones, uréteres proximales y glándulas suprarrenales con fascia, vasos, hilios e inervación retroperitoneal. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S09",
+  "regionId": "R04",
+  "name": "Secciones abdominales",
+  "plateFrom": 348,
+  "plateTo": 349,
+  "definition": "La subregión **Secciones abdominales** organiza cortes transversales del abdomen para correlación con imagen y relaciones retroperitoneales/peritoneales. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R04S10",
+  "regionId": "R04",
+  "name": "Exploraciones regionales",
+  "plateFrom": 350,
+  "plateTo": 350,
+  "definition": "La subregión **Exploraciones regionales** organiza imágenes diagnósticas o vistas clínicas usadas para trasladar relaciones anatómicas a radiografía, TC, RM o angiografía. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S01",
+  "regionId": "R05",
+  "name": "Anatomía de superficie",
+  "plateFrom": 351,
+  "plateTo": 351,
+  "definition": "La subregión **Anatomía de superficie** organiza referencias externas y puntos palpables que permiten orientar estructuras profundas sobre el cuerpo vivo; sirve de puente entre examen físico, imagen y disección. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S02",
+  "regionId": "R05",
+  "name": "Huesos y ligamentos",
+  "plateFrom": 352,
+  "plateTo": 355,
+  "definition": "La subregión **Huesos y ligamentos** organiza componentes rígidos y estabilizadores del sistema musculoesquelético. Los huesos aportan soporte y superficies articulares; los ligamentos limitan o guían movimiento y conectan elementos esqueléticos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S03",
+  "regionId": "R05",
+  "name": "Suelo de la pelvis y contenido",
+  "plateFrom": 356,
+  "plateTo": 364,
+  "definition": "La subregión **Suelo de la pelvis y contenido** organiza músculos, fascias y ligamentos del suelo pélvico junto con vísceras y espacios que sostienen. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S04",
+  "regionId": "R05",
+  "name": "Vejiga urinaria",
+  "plateFrom": 365,
+  "plateTo": 368,
+  "definition": "La subregión **Vejiga urinaria** organiza vejiga, uréter distal, uretra proximal, soporte, irrigación e inervación pélvica. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S05",
+  "regionId": "R05",
+  "name": "Útero, vagina y estructuras de soporte",
+  "plateFrom": 369,
+  "plateTo": 375,
+  "definition": "La subregión **Útero, vagina y estructuras de soporte** organiza órganos genitales internos femeninos y sus ligamentos, fascias, relaciones y soporte pélvico. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S06",
+  "regionId": "R05",
+  "name": "Anatomía seccional",
+  "plateFrom": 376,
+  "plateTo": 376,
+  "definition": "La subregión **Anatomía seccional** organiza cortes anatómicos que muestran relaciones espaciales simultáneas entre estructuras de una región. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S07",
+  "regionId": "R05",
+  "name": "Periné y genitales externos: mujer",
+  "plateFrom": 377,
+  "plateTo": 379,
+  "definition": "La subregión **Periné y genitales externos: mujer** organiza triángulos perineales y genitales externos femeninos con músculos, fascias, vasos y nervios. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S08",
+  "regionId": "R05",
+  "name": "Periné y genitales externos: varón",
+  "plateFrom": 380,
+  "plateTo": 387,
+  "definition": "La subregión **Periné y genitales externos: varón** organiza triángulos perineales y genitales externos masculinos con cuerpos eréctiles, músculos, fascias, vasos y nervios. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S09",
+  "regionId": "R05",
+  "name": "Estructuras homólogas de los genitales",
+  "plateFrom": 388,
+  "plateTo": 389,
+  "definition": "La subregión **Estructuras homólogas de los genitales** organiza correspondencias anatómicas derivadas de primordios embrionarios comunes entre genitales masculinos y femeninos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S10",
+  "regionId": "R05",
+  "name": "Testículo, epidídimo y conducto deferente",
+  "plateFrom": 390,
+  "plateTo": 390,
+  "definition": "La subregión **Testículo, epidídimo y conducto deferente** organiza gónada masculina y vías espermáticas proximales con cubiertas, vasos y relaciones del cordón espermático. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S11",
+  "regionId": "R05",
+  "name": "Recto",
+  "plateFrom": 391,
+  "plateTo": 396,
+  "definition": "La subregión **Recto** organiza recto, conducto anal y estructuras de soporte y continencia en relación con pelvis y periné. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S12",
+  "regionId": "R05",
+  "name": "Exploraciones regionales",
+  "plateFrom": 397,
+  "plateTo": 397,
+  "definition": "La subregión **Exploraciones regionales** organiza imágenes diagnósticas o vistas clínicas usadas para trasladar relaciones anatómicas a radiografía, TC, RM o angiografía. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S13",
+  "regionId": "R05",
+  "name": "Vasculatura",
+  "plateFrom": 398,
+  "plateTo": 408,
+  "definition": "La subregión **Vasculatura** organiza redes arteriales y venosas regionales, incluidas anastomosis y relaciones con compartimentos anatómicos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R05S14",
+  "regionId": "R05",
+  "name": "Inervación",
+  "plateFrom": 409,
+  "plateTo": 417,
+  "definition": "La subregión **Inervación** organiza vías autonómicas y somáticas relevantes para la región, incluidos plexos, ganglios y nervios periféricos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R06S01",
+  "regionId": "R06",
+  "name": "Anatomía de superficie",
+  "plateFrom": 418,
+  "plateTo": 418,
+  "definition": "La subregión **Anatomía de superficie** organiza referencias externas y puntos palpables que permiten orientar estructuras profundas sobre el cuerpo vivo; sirve de puente entre examen físico, imagen y disección. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R06S02",
+  "regionId": "R06",
+  "name": "Hombro y axila",
+  "plateFrom": 419,
+  "plateTo": 430,
+  "definition": "La subregión **Hombro y axila** organiza cintura escapular, articulación del hombro, axila, plexo braquial y vasos axilares. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R06S03",
+  "regionId": "R06",
+  "name": "Brazo",
+  "plateFrom": 431,
+  "plateTo": 435,
+  "definition": "La subregión **Brazo** organiza segmento entre hombro y codo con húmero, compartimentos musculares y paquete neurovascular. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R06S04",
+  "regionId": "R06",
+  "name": "Codo y antebrazo",
+  "plateFrom": 436,
+  "plateTo": 451,
+  "definition": "La subregión **Codo y antebrazo** organiza articulaciones del codo/radiocubitales, radio y ulna, compartimentos flexor y extensor, nervios y vasos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R06S05",
+  "regionId": "R06",
+  "name": "Carpo y mano",
+  "plateFrom": 452,
+  "plateTo": 471,
+  "definition": "La subregión **Carpo y mano** organiza huesos y ligamentos del carpo, túneles, tendones, músculos intrínsecos, nervios, arterias y dedos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R06S06",
+  "regionId": "R06",
+  "name": "Inervación y vasculatura",
+  "plateFrom": 472,
+  "plateTo": 483,
+  "definition": "La subregión **Inervación y vasculatura** organiza distribución regional de nervios periféricos, arterias, venas y linfáticos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R06S07",
+  "regionId": "R06",
+  "name": "Exploraciones regionales",
+  "plateFrom": 484,
+  "plateTo": 484,
+  "definition": "La subregión **Exploraciones regionales** organiza imágenes diagnósticas o vistas clínicas usadas para trasladar relaciones anatómicas a radiografía, TC, RM o angiografía. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R07S01",
+  "regionId": "R07",
+  "name": "Anatomía de superficie",
+  "plateFrom": 485,
+  "plateTo": 485,
+  "definition": "La subregión **Anatomía de superficie** organiza referencias externas y puntos palpables que permiten orientar estructuras profundas sobre el cuerpo vivo; sirve de puente entre examen físico, imagen y disección. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R07S02",
+  "regionId": "R07",
+  "name": "Cadera y muslo",
+  "plateFrom": 486,
+  "plateTo": 505,
+  "definition": "La subregión **Cadera y muslo** organiza pelvis proximal, articulación coxofemoral, fémur, compartimentos del muslo y estructuras neurovasculares. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R07S03",
+  "regionId": "R07",
+  "name": "Rodilla",
+  "plateFrom": 506,
+  "plateTo": 512,
+  "definition": "La subregión **Rodilla** organiza articulación femorotibial y femoropatelar, meniscos, ligamentos, bursas y relaciones neurovasculares. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R07S04",
+  "regionId": "R07",
+  "name": "Pierna",
+  "plateFrom": 513,
+  "plateTo": 522,
+  "definition": "La subregión **Pierna** organiza tibia, fíbula, membrana interósea y compartimentos musculares entre rodilla y tobillo. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R07S05",
+  "regionId": "R07",
+  "name": "Tobillo y pie",
+  "plateFrom": 523,
+  "plateTo": 537,
+  "definition": "La subregión **Tobillo y pie** organiza articulaciones del tobillo y pie, arcos, fascia plantar, tendones, músculos, nervios y vasos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R07S06",
+  "regionId": "R07",
+  "name": "Inervación y vasculatura",
+  "plateFrom": 538,
+  "plateTo": 546,
+  "definition": "La subregión **Inervación y vasculatura** organiza distribución regional de nervios periféricos, arterias, venas y linfáticos. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R07S07",
+  "regionId": "R07",
+  "name": "Exploraciones regionales",
+  "plateFrom": 547,
+  "plateTo": 547,
+  "definition": "La subregión **Exploraciones regionales** organiza imágenes diagnósticas o vistas clínicas usadas para trasladar relaciones anatómicas a radiografía, TC, RM o angiografía. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ },
+ {
+  "id": "R08S01",
+  "regionId": "R08",
+  "name": "Figuras clave para las secciones transversales",
+  "plateFrom": 548,
+  "plateTo": 548,
+  "definition": "La subregión **Figuras clave para las secciones transversales** organiza síntesis de puntos anatómicos necesarios para interpretar cortes axiales a distintos niveles corporales. Se utiliza como nodo intermedio entre una región extensa y las láminas individuales. Esta granularidad ayuda a una IA a distinguir estructuras cercanas pero pertenecientes a contextos distintos y a recuperar la lámina correcta sin inventar relaciones funcionales."
+ }
+]
