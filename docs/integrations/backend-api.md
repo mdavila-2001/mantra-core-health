@@ -773,7 +773,7 @@ acreditaciones e inventario, y ninguna operación los volvía a mencionar.
 > `GET /practices` ya lo consumía `AccountingClient` para elegir de qué práctica
 > son los libros. Se reusa el mismo endpoint: no se forkea el contrato.
 
-### `DiagnosticsClient` — 5 operaciones
+### `DiagnosticsClient` — 6 operaciones
 
 Laboratorios e imagenología (M52).
 
@@ -782,6 +782,7 @@ Laboratorios e imagenología (M52).
 | `GET` | `/diagnostics/patients/:patientProfileId/orders` | `DiagnosticsBlock` · `Diagnostics` |
 | `GET` | `/diagnostics/patients/:patientProfileId/imaging-studies` | `DiagnosticsBlock` · `Diagnostics` |
 | `GET` | `/diagnostics/work-orders` | `Diagnostics` |
+| `POST` | `/clinical/service-requests/duplicate-check` | `DiagnosticsBlock` (antiduplicación de estudios · T-26, subtarea 3.2) |
 | `POST` | `/clinical/service-requests` | `Diagnostics` (pedir un estudio) |
 | `GET` | `/diagnostic-results/me/orders` | `DiagnosticOrders` y 4 pantallas más | No |
 
@@ -1061,6 +1062,14 @@ comercial: ni el corredor ni la aseguradora ven historial médico.
 | `PUT` | `/insurance-plans/:planId/benefits/:benefitId` | `InsuranceCatalog` |
 | `PUT` | `/insurance-plans/:planId/benefits/:benefitId/rules` | `InsuranceCatalog` |
 | `PUT` | `/insurance-plans/:planId/premium` | `InsuranceCatalog` |
+
+> **`GET /insurance-claims/:id` gana `lines[].duplicateStudy` (subtarea 3.2, v4.2.17).**
+> Cuando el ítem factura una orden de laboratorio/imagenología con un informe
+> previo del mismo estudio dentro de la ventana de antiduplicación, la línea
+> trae `duplicateStudy: { previousDiagnosticReportId, studyName, performedAt,
+> daysAgo, providerName, justification, reused } | null` — sin el informe en
+> sí (FT-32-R02); lo consume `InsuranceClaimDetail` (badge «Posible
+> duplicado» · `BILLING_OPERATOR`/`SECURITY_ADMIN`).
 
 ### `InsuranceAnalyticsClient` — 1 operación · subtarea 3.1, v4.2.14
 

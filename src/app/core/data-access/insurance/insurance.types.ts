@@ -363,6 +363,24 @@ export interface ClaimQuery {
 /** Qué documento clínico respalda un ítem, cuando el modelo lo sabe. */
 export type ClaimLineReferenceType = 'DIAGNOSTIC_STUDY' | 'MEDICATION_DISPENSATION';
 
+/**
+ * El estudio duplicado que originó la orden de esta línea (antiduplicación,
+ * subtarea 3.2). Nunca incluye el informe: fecha, prestador, estudio y la
+ * justificación del médico, si la hay.
+ */
+export interface ClaimLineDuplicateStudy {
+  readonly previousDiagnosticReportId: string;
+  readonly studyName: string;
+  readonly performedAt: Date;
+  /** Días entre el estudio previo y ESTA orden, no contra hoy. */
+  readonly daysAgo: number;
+  readonly providerName: string;
+  /** `null` cuando la orden reutilizó el informe (sin justificación). */
+  readonly justification: string | null;
+  /** Si la orden nació satisfecha por el informe previo (no facturable). */
+  readonly reused: boolean;
+}
+
 /** Un ítem de la solicitud, con su dictamen si lo tiene. */
 export interface ClaimLine {
   readonly id: string;
@@ -385,6 +403,8 @@ export interface ClaimLine {
   /** `null` cuando el origen es una referencia de texto libre. */
   readonly referenceType: ClaimLineReferenceType | null;
   readonly reference: string | null;
+  /** `null` salvo que la orden de origen esté enlazada a un informe previo. */
+  readonly duplicateStudy: ClaimLineDuplicateStudy | null;
 }
 
 /** Una versión del dictamen. Las versiones no se editan: se suceden. */

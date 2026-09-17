@@ -40,6 +40,14 @@ export interface DiagnosticOrder {
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly createdAt: Date;
+  /**
+   * Antiduplicación de estudios (v4.2.17). El informe previo que satisface
+   * esta orden, si el médico eligió reutilizarlo o repetir el estudio con
+   * justificación. Ausente en cualquier otro caso.
+   */
+  readonly previousDiagnosticReportId?: string;
+  /** La justificación del médico, si repitió un estudio duplicado. */
+  readonly duplicateOverrideReason?: string;
 }
 
 /**
@@ -96,6 +104,15 @@ export interface NewDiagnosticOrder {
   readonly priorityConceptId?: string;
   readonly requesterProfileId?: string;
   readonly performerTenantId?: string;
+  /**
+   * Antiduplicación de estudios (v4.2.17). Presente sólo cuando el chequeo
+   * previo detectó un duplicado y el médico decidió: junto con
+   * `reusePreviousReport` (reutilizar) o `duplicateOverrideReason` (repetir
+   * con justificación), nunca los dos a la vez.
+   */
+  readonly previousDiagnosticReportId?: string;
+  readonly reusePreviousReport?: boolean;
+  readonly duplicateOverrideReason?: string;
 }
 
 /**
@@ -110,6 +127,48 @@ export interface DiagnosticOrderCreated {
   readonly status: string;
   readonly intent: string;
   readonly createdAt: Date;
+}
+
+/* ============================================================================
+    Antiduplicación de estudios (v4.2.17, subtarea 3.2, T-26). El chequeo
+    previo al alta: «¿el paciente ya se hizo este estudio hace poco?».
+    ========================================================================== */
+
+/** Lo que hace falta para pre-validar duplicidad antes de pedir un estudio. */
+export interface DuplicateStudyCheck {
+  readonly patientProfileId: string;
+  readonly codeConceptId?: string;
+  readonly diagnosticStudyOfferingId?: string;
+  readonly encounterId: string;
+  readonly windowDays?: number;
+}
+
+/** El estudio previo que satisface (o casi satisface) el pedido nuevo. */
+export interface PreviousStudy {
+  readonly reportId: string;
+  readonly serviceRequestId?: string;
+  readonly studyName: string;
+  readonly providerName: string;
+  readonly performedAt: Date;
+  readonly daysAgo: number;
+  readonly resultsAvailable: boolean;
+  /** `undefined` salvo que el informe sea de la misma organización de quien pide. */
+  readonly conclusionText?: string;
+  /** Sin endpoint de descarga para el profesional hoy: siempre ausente. */
+  readonly reportDownloadUrl?: string;
+  readonly sameOrganization: boolean;
+}
+
+/** Respuesta del chequeo de duplicidad. */
+export interface DuplicateStudyCheckResult {
+  readonly isDuplicate: boolean;
+  readonly previousStudy?: PreviousStudy;
+  /** Texto en castellano listo para mostrar, si hubo duplicado. */
+  readonly warningMessage?: string;
+  readonly requiresJustification: boolean;
+  /** Si hay un informe del mismo estudio todavía sin liberar dentro de la ventana. */
+  readonly pendingReport: boolean;
+  readonly windowDays: number;
 }
 
 /**
