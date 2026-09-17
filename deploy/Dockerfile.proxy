@@ -31,11 +31,20 @@ FROM nginx:1.27-alpine
 COPY deploy/nginx.coolify.conf /etc/nginx/conf.d/default.conf
 COPY deploy/api-locations.conf /etc/nginx/api-locations.conf
 
-# Falla el build, y no el arranque, si la configuración tiene un error de
-# sintaxis. Sin esto un `;` perdido se descubre cuando el contenedor ya está
-# reemplazando al anterior.
-RUN nginx -t
-
+# ─── Aquí NO se valida la configuración, y no por dejadez ────────────────────
+#
+# La primera versión traía un `RUN nginx -t` para que un `;` perdido rompiera el
+# build en vez de descubrirse con el contenedor ya reemplazando al anterior. No
+# puede ser: `nginx -t` no comprueba sintaxis, ARRANCA la configuración, y eso
+# incluye resolver por DNS los `server` de cada `upstream`. Dentro del
+# contenedor de construcción no existe ningún `api`, así que aborta con
+#
+#   [emerg] host not found in upstream "api:3000"
+#
+# y el despliegue muere por una razón que no tiene nada que ver con el archivo
+# (despliegue 706, 17/09). Quien valida de verdad es el arranque del contenedor,
+# con la red `alovida` ya puesta: si la configuración está rota, nginx no
+# levanta, el healthcheck no pasa y Coolify deja en pie el contenedor anterior.
 EXPOSE 80
 
 # No pide `/` —que redirige al login— sino la comprobación del propio nginx:
