@@ -73,11 +73,12 @@ body{font-family:var(--sans);color:var(--tinta);-webkit-font-smoothing:antialias
    ========================================================================== */
 const $ = (s) => document.querySelector(s);
 const FLUJO = new URLSearchParams(location.search).get('f') ?? 'paciente';
-const TITULOS = { paciente: 'PACIENTE', medico: 'MÉDICO', farmacia: 'FARMACIA' };
+const TITULOS = { paciente: 'PACIENTE', medico: 'MÉDICO', farmacia: 'FARMACIA', aseguradora: 'ASEGURADORA' };
 const CIERRES = {
   paciente: 'Pedir turno, ver la cita, seguir la receta.',
   medico: 'Recibir, atender, diagnosticar y cobrar.',
   farmacia: 'De la receta electrónica al mostrador.',
+  aseguradora: 'Coberturas, corredores y dictámenes.',
 };
 const CIERRE = 6.4;          // segundos de marca al final
 const mez = (a, b, p) => a + (b - a) * p;

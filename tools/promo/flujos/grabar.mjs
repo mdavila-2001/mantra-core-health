@@ -5,8 +5,8 @@
  *   node tools/promo/flujos/grabar.mjs --solo farmacia
  *   node tools/promo/flujos/grabar.mjs --base http://localhost:4300
  *
- * Cada módulo va por separado a propósito: el ejercicio del paciente, el del médico
- * y el de la farmacia se miran solos. Los tres se graban **manejando la aplicación**
+ * Cada módulo va por separado a propósito: el ejercicio del paciente, el del médico,
+ * el de la farmacia y el de la aseguradora se miran solos. Los tres se graban **manejando la aplicación**
  * —se escribe campo por campo, se hace clic y se fotografía lo que responde—, y los
  * tres terminan con la marca, nunca la abren.
  *
@@ -27,8 +27,8 @@ const FPS = 30;
 const arg = (n, pd) => { const i = process.argv.indexOf(n); return i > -1 ? process.argv[i + 1] : pd; };
 const BASE = arg('--base', 'http://localhost:4200').replace(/\/$/, '');
 const solo = arg('--solo', null);
-const MODULOS = ['paciente', 'medico', 'farmacia'].filter((m) => !solo || m === solo);
-if (!MODULOS.length) throw new Error(`No conozco el módulo «${solo}». Son: paciente, medico, farmacia.`);
+const MODULOS = ['paciente', 'medico', 'farmacia', 'aseguradora'].filter((m) => !solo || m === solo);
+if (!MODULOS.length) throw new Error(`No conozco el módulo «${solo}». Son: paciente, medico, farmacia, aseguradora.`);
 
 try {
   const sonda = await fetch(BASE);

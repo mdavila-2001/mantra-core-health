@@ -73,6 +73,17 @@ export function crearMotor({ navegador, base, dir, flujo }) {
     const porLetra = Math.max(1, Math.round(FPS / cps));
     for (const letra of texto) { await pg.keyboard.type(letra); await foto(porLetra); }
   };
+  /** Baja o sube la pantalla, fotografiando el recorrido. */
+  const desplazar = async (hasta, segundos = 1.1) => {
+    const desde = await pg.evaluate(() => window.scrollY);
+    const n = Math.max(1, Math.round(segundos * FPS / 2));
+    for (let i = 1; i <= n; i++) {
+      const p = i / n, e = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+      await pg.evaluate((y) => window.scrollTo(0, y), desde + (hasta - desde) * e);
+      await foto(2);
+    }
+  };
+
   const ir = async (ruta, { espera = 2400, quieto = .35 } = {}) => {
     await pg.goto(base + ruta, { waitUntil: 'domcontentloaded' });
     await pg.waitForTimeout(espera);
@@ -122,6 +133,6 @@ export function crearMotor({ navegador, base, dir, flujo }) {
 
   return {
     get pagina() { return pg; },
-    sesion, ir, foto, animar, sostener, mover, clic, escribir, escena, rotulo, ocultarPuntero, guardar,
+    sesion, ir, foto, animar, sostener, mover, clic, escribir, desplazar, escena, rotulo, ocultarPuntero, guardar,
   };
 }

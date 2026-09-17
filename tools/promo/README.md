@@ -2,7 +2,7 @@
 
 Material hecho con el frontend de este repositorio, no con recreaciones.
 
-**Los videos son tres, uno por módulo** —paciente, médico y farmacia—, y cada uno graba el
+**Los videos son cuatro, uno por módulo** —paciente, médico, farmacia y aseguradora—, y cada uno graba el
 **ejercicio completo manejando la aplicación de verdad**: se entra con la cuenta de la maqueta, se
 escribe campo por campo —los que el layout separa van separados—, se hace clic donde hay que hacerlo
 y se fotografía lo que la aplicación responde. Los módulos van por separado a propósito: cada
@@ -13,6 +13,7 @@ ejercicio se mira solo. **La marca aparece al final**, cuando el ejercicio termi
 | **Video · paciente** | `flujos/paciente.mjs` | `alovida-flujo-paciente-1080p.mp4` (+ 720p) |
 | **Video · médico** | `flujos/medico.mjs` | `alovida-flujo-medico-1080p.mp4` (+ 720p) |
 | **Video · farmacia** | `flujos/farmacia.mjs` | `alovida-flujo-farmacia-1080p.mp4` (+ 720p) |
+| **Video · aseguradora** | `flujos/aseguradora.mjs` | `alovida-flujo-aseguradora-1080p.mp4` (+ 720p) |
 | Motor y escenario | `flujos/motor.mjs`, `flujos/flujo.html` | manejan la aplicación y pintan marco, rótulos y puntero |
 | **Mazo de paciente y médico** | `deck-paciente-y-medico.html` | `AloVida-modulos-paciente-medico.pdf` (15 láminas 16:9) y un PNG por lámina |
 | Tokens de marca | `marca.css` | del mazo y de los rótulos del video |
@@ -23,7 +24,7 @@ yarn start                                   # las dos piezas necesitan la maque
 node tools/promo/generar.mjs --solo-deck     # PDF + PNG (rápido, sin ffmpeg)
 
 brew install ffmpeg                          # una vez; sólo lo necesita el video
-node tools/promo/flujos/grabar.mjs           # los tres ejercicios
+node tools/promo/flujos/grabar.mjs           # los cuatro ejercicios
 node tools/promo/flujos/grabar.mjs --solo farmacia
 node tools/promo/generar.mjs                 # las dos
 node tools/promo/generar.mjs --base http://localhost:4300
@@ -74,6 +75,7 @@ con identificadores escritos a mano, para que sobrevivan a un cambio de semillas
 | **Paciente** | Crea la cuenta —cada nombre y cada apellido en su propio campo, como los separa el layout—, busca al profesional, pide el horario, ve la cita con su estado, mira sus resultados y sigue su receta hasta el pedido de farmacia. |
 | **Médico** | La agenda del día, registrar la llegada, iniciar la consulta, dejar el diagnóstico del catálogo CIE-10, la receta, y marcar el cobro sin salir de la agenda. |
 | **Farmacia** | La bandeja del mostrador, el pedido que llega con su receta electrónica, confirmarlo con lo que hay —tal cual, sustituto o no disponible— y ver la bandeja moverse. |
+| **Aseguradora** | El catálogo de la compañía con sus planes y coberturas —prestación por prestación: cobertura, copago, deducible, tope y autorización previa—, los corredores con su matrícula, lo presentado a cada compañía filtrando por aseguradora, el dictamen ítem por ítem (aprobado, denegado y su motivo) y el reclamo, que no borra el dictamen sino que lo referencia. |
 
 Cada módulo es un archivo aparte y termina con la marca.
 
