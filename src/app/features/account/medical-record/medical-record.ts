@@ -14,6 +14,8 @@ import type {
   Encounter,
   MedicationRequest,
 } from '../../../core/data-access/clinical/clinical.types';
+import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url';
+import { FileDownloader } from '../../../core/data-access/files/file-downloader';
 import { FormsClient } from '../../../core/data-access/forms/forms.client';
 import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -30,15 +32,10 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import {
-  downloadHistoryPdf,
-  downloadPrescriptionPdf,
-  downloadVisitPdf,
-} from '../../../shared/utils/clinical-pdf/clinical-pdf';
+import { downloadHistoryPdf, downloadVisitPdf } from '../../../shared/utils/clinical-pdf/clinical-pdf';
 import type { DocumentoDeFormulario } from '../../../shared/utils/clinical-pdf/clinical-pdf.types';
 import {
   atencionDesdeResumen,
-  recetaDesdeResumen,
   type ContextoDelDocumento,
   historiaDesdeFuentes,
 } from '../../../shared/utils/clinical-pdf/from-summary';
@@ -168,6 +165,7 @@ export class MedicalRecord {
   private readonly auth = inject(AuthService);
   private readonly contexto = inject(PatientContextService);
   private readonly toasts = inject(ToastService);
+  private readonly descargas = inject(FileDownloader);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -229,6 +227,13 @@ export class MedicalRecord {
 
   /** El documento completo se está armando: dos lecturas más en vuelo. */
   protected readonly armandoHistoria = signal(false);
+
+  /**
+   * La receta que se está bajando ahora mismo (B.3), o `null` si ninguna.
+   * Una a la vez: bajar dos PDFs juntos no cambia el resultado y complica el
+   * `isLoading` de cada botón para nada.
+   */
+  protected readonly descargandoReceta = signal<string | null>(null);
 
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
@@ -499,17 +504,43 @@ export class MedicalRecord {
       .map(comoDocumentoDeFormulario);
   }
 
-  /** Descarga la receta. Disponible en cualquier momento posterior a su emisión. */
+  /**
+   * Descarga el PDF **oficial** de la receta (corrección #16, subtarea B.3).
+   *
+   * Ya no se arma en el navegador: el backend es el único que conoce la
+   * matrícula y la especialidad del profesional, y es quien decide si el
+   * documento sale como oficial o como copia de trabajo (borrador) —
+   * distinción que un generador del lado del cliente no puede hacer sin
+   * inventar el dato.
+   */
   protected descargarReceta(receta: RecetaVisible): void {
-    const guardada = this.datos()?.medicationRequests.find((fila) => fila.id === receta.id);
-    if (guardada === undefined) {
+    if (this.descargandoReceta() !== null) {
       return;
     }
+    this.descargandoReceta.set(receta.id);
 
-    downloadPrescriptionPdf(
-      recetaDesdeResumen(guardada, this.contextoDelDocumento(), (id) => this.label(id)),
+    this.clinical.downloadPrescriptionPdf(receta.id).subscribe({
+      next: ({ blob, fileName }) => {
+        blobToDataUrl(blob).subscribe({
+          next: (dataUrl) => {
+            this.descargas.trigger(dataUrl, fileName ?? `receta-${receta.id}.pdf`);
+            this.descargandoReceta.set(null);
+            this.toasts.success('Descarga iniciada exitosamente', 'Receta oficial');
+          },
+          error: () => this.fallaAlDescargarReceta(),
+        });
+      },
+      error: () => this.fallaAlDescargarReceta(),
+    });
+  }
+
+  /** Un solo sitio para el fallo: el motivo no se distingue, a propósito. */
+  private fallaAlDescargarReceta(): void {
+    this.descargandoReceta.set(null);
+    this.toasts.error(
+      'No pudimos descargar la receta oficial. Reintentá en un momento.',
+      'Receta oficial',
     );
-    this.toasts.success('Descargamos tu receta.', 'Receta');
   }
 
   /**
