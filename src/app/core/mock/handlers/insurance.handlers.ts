@@ -884,6 +884,27 @@ export function registrarSeguros(router: MockRouter): void {
     return { status: 201, body: itemDeSolicitud(nueva) };
   });
 
+  /**
+   * Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2): el ítem
+   * «Perfil lipídico» de `CLM-2026-0142` viene de un estudio repetido con
+   * justificación — la unidad diagnóstica que facturó no es la organización
+   * del informe previo (`TENANT_LABORATORIO`), así que quien factura no ve la
+   * conclusión, sólo la justificación del médico. El resto de las líneas de
+   * todas las solicitudes viaja con `duplicateStudy: null`.
+   */
+  function duplicateStudyDe(claimIdentifier: string, service: string) {
+    if (claimIdentifier !== 'CLM-2026-0142' || service !== 'Perfil lipídico') return null;
+    return {
+      previousDiagnosticReportId: uuid('report-order-0-STUDY-PERFIL-LIPIDICO'),
+      studyName: 'Perfil lipídico',
+      performedAt: iso(-14, 9),
+      daysAgo: 14,
+      providerName: 'Laboratorio Central',
+      justification: 'Control de dislipidemia con cambio reciente de tratamiento; se repite para verificar respuesta.',
+      reused: false,
+    };
+  }
+
   router.get('/insurance-claims/:id', ({ params }) => {
     const s = solicitudes.get(params['id']!);
     if (s === undefined) return notFound('Solicitud no encontrada');
@@ -934,6 +955,7 @@ export function registrarSeguros(router: MockRouter): void {
         denialRationale: l.rationale,
         referenceType: null,
         reference: null,
+        duplicateStudy: duplicateStudyDe(s.claimIdentifier, l.service),
       })),
       lineBilledTotal: money(s.billed),
       lineApprovedTotal: s.approved === null ? null : money(s.approved),

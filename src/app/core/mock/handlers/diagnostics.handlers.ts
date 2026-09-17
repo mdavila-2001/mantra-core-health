@@ -4,7 +4,7 @@ import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO, ESTUDIO, PRIORIDAD, displayDe } from '../fixtures/conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
-import { TENANT_CLINICA, TENANT_LABORATORIO } from '../mock-session';
+import { TENANT_CLINICA, TENANT_LABORATORIO, TENANT_NAMES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -20,7 +20,7 @@ function c(code: string, display: string) {
 const ROL_CONTENIDO = uuid('concept-result-content-role-report');
 const FORMATO_PDF = uuid('concept-presentation-format-pdf');
 
-interface InformeSimulado {
+export interface InformeSimulado {
   readonly id: string;
   readonly patientProfileId: string;
   readonly serviceRequestId: string;
@@ -45,7 +45,7 @@ const CONCLUSIONES: Readonly<Record<string, string>> = {
   'Ecografía abdominal': 'Hígado de tamaño y ecogenicidad conservados. Vesícula sin litiasis. Riñones normales.',
 };
 
-const informes = new Coleccion<InformeSimulado>(
+export const informes = new Coleccion<InformeSimulado>(
   ordenes
     .filtrar((o) => o.statusConceptId === ESTADO['ST-COMPLETED'])
     .map((o, i) => ({
@@ -228,7 +228,109 @@ function pacienteDeSesion(request: MockRequest): string {
   return request.user?.patientProfileId ?? (request.user?.key === 'medica' ? PACIENTE.id : '');
 }
 
+/* ---- antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2) ------------ */
+
+/** Mismo default que `DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS` del servidor. */
+export const DUPLICATE_STUDY_WINDOW_DAYS = 30;
+
+const MILISEGUNDOS_POR_DIA = 86_400_000;
+
+function diasDesde(fechaIso: string): number {
+  return Math.max(0, Math.floor((Date.now() - Date.parse(fechaIso)) / MILISEGUNDOS_POR_DIA));
+}
+
+/**
+ * El informe liberado más reciente del mismo paciente y estudio dentro de la
+ * ventana, más si hay uno sin liberar todavía (informativo, `pendingReport`).
+ * Espejo simplificado de `DuplicateStudyDetector` del servidor: acá no hay
+ * dos caminos de liberación que reconciliar, `released` ya es la señal única.
+ */
+export function estudioDuplicado(
+  patientProfileId: string,
+  codeConceptId: string,
+  windowDays: number,
+): { readonly informe: InformeSimulado; readonly performedAt: string } | null {
+  const candidatos = informes
+    .filtrar((r) => r.patientProfileId === patientProfileId && r.codeConceptId === codeConceptId && r.released)
+    .map((r) => ({ informe: r, performedAt: r.releasedAt ?? r.issuedAt }))
+    .filter(({ performedAt }) => diasDesde(performedAt) <= windowDays)
+    .sort((a, b) => Date.parse(b.performedAt) - Date.parse(a.performedAt));
+  return candidatos[0] ?? null;
+}
+
+function hayInformePendiente(patientProfileId: string, codeConceptId: string): boolean {
+  return informes.filtrar(
+    (r) => r.patientProfileId === patientProfileId && r.codeConceptId === codeConceptId && !r.released,
+  ).length > 0;
+}
+
+/**
+ * El `PreviousStudyDto` del estudio detectado. La conclusión sólo viaja si
+ * quien pide comparte organización con el informe —mismo recorte de FT-32-R02
+ * que hace el servidor—.
+ */
+export function estudioPrevio(
+  informe: InformeSimulado,
+  performedAt: string,
+  user: MockUser | null,
+) {
+  const sameOrganization = user?.tenants.includes(informe.custodianTenantId) ?? false;
+  return {
+    reportId: informe.id,
+    serviceRequestId: informe.serviceRequestId,
+    studyName: displayDe(informe.codeConceptId),
+    providerName: TENANT_NAMES[informe.custodianTenantId] ?? 'Prestador',
+    performedAt,
+    daysAgo: diasDesde(performedAt),
+    resultsAvailable: true,
+    conclusionText: sameOrganization ? informe.conclusionText : null,
+    reportDownloadUrl: null,
+    sameOrganization,
+  };
+}
+
 export function registrarDiagnostico(router: MockRouter): void {
+  /*
+   * `POST /clinical/service-requests/duplicate-check` — vive acá y no en
+   * `clinical.handlers.ts` porque necesita cruzar `informes`, que es de este
+   * módulo. La ruta empieza con `/clinical` en el contrato real (el chequeo
+   * hereda el `@Roles` del controller de órdenes); el router del mock no
+   * agrupa por archivo, así que esto no cambia nada para quien lo consume.
+   */
+  router.post('/clinical/service-requests/duplicate-check', (request) => {
+    const datos = cuerpo<{
+      patientProfileId?: string;
+      codeConceptId?: string;
+      windowDays?: number;
+    }>(request);
+    const patientProfileId = datos.patientProfileId ?? '';
+    const codeConceptId = datos.codeConceptId ?? '';
+    const windowDays = datos.windowDays ?? DUPLICATE_STUDY_WINDOW_DAYS;
+    const pendingReport = hayInformePendiente(patientProfileId, codeConceptId);
+    const encontrado = estudioDuplicado(patientProfileId, codeConceptId, windowDays);
+
+    if (encontrado === null) {
+      return {
+        isDuplicate: false,
+        previousStudy: null,
+        warningMessage: null,
+        requiresJustification: false,
+        pendingReport,
+        windowDays,
+      };
+    }
+
+    const previousStudy = estudioPrevio(encontrado.informe, encontrado.performedAt, request.user);
+    return {
+      isDuplicate: true,
+      previousStudy,
+      warningMessage: `Ya se hizo ${previousStudy.studyName} hace ${previousStudy.daysAgo} días.`,
+      requiresJustification: true,
+      pendingReport,
+      windowDays,
+    };
+  });
+
   router.get('/diagnostics/patients/:id/orders', ({ params, query }) => {
     const id = params['id']!;
     const limit = Number(query.get('limit') ?? 50) || 50;
