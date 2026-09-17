@@ -1,5 +1,11 @@
 /* ============================================================================
-    La ficha de una clínica y la de una farmacia, dentro del panel.
+    La ficha de un establecimiento dentro del panel: una clínica, una farmacia
+    y un centro de diagnóstico o de imagenología.
+
+    Vive en `shared/styles/` y no junto a una de las tres porque la tercera la
+    estrenó desde otra carpeta —`features/laboratory-directory/`—: dejarla en
+    `features/public-directories/` habría obligado a cruzar de feature para
+    leer un CSS, que es el primer paso para copiarlo.
 
     La rejilla y la tarjeta **no se pintan acá**: salen de
     `shared/styles/rejilla-de-tarjetas.css`, la misma hoja que pinta «Mis
@@ -7,8 +13,9 @@
     cliente pidió — que se vea «tal como se ven mis servicios»—, así que
     copiarla habría sido el primer paso para que dejaran de parecerse.
 
-    Lo que queda acá es lo único propio: el resumen del establecimiento y el
-    pie de cada tarjeta con su precio. Sólo distribución.
+    Lo que queda acá es lo único propio: el resumen del establecimiento, sus
+    modalidades de atención y el pie de cada tarjeta con su precio. Sólo
+    distribución.
     ========================================================================== */
 
 :host {
@@ -25,6 +32,33 @@
   margin: var(--sp-3) 0 0;
   color: var(--text-secondary);
   text-wrap: pretty;
+}
+
+/* ---- el encabezado de una sección del catálogo --------------------------- */
+
+/* El rótulo de la sección a la izquierda y sus controles a la derecha, en el
+   mismo renglón mientras haya sitio. Los controles son **de la sección**, así
+   que viven en su encabezado y no encima de la rejilla — ahí se leerían como
+   un filtro de la ficha entera. Es la misma disposición que traía
+   `app-fact-section`, que es de donde salió esta pantalla. */
+.ficha-publica__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+/* El título empuja al resto a la derecha sin necesitar un `margin-left: auto`
+   en cada control. */
+.ficha-publica__titulo {
+  margin-inline-end: auto;
+}
+
+/* Ancho cómodo en escritorio; en un teléfono el `flex-wrap` lo baja de
+   renglón y ahí ocupa todo el ancho, que es lo que hace usable teclear. */
+.ficha-publica__buscador {
+  flex: 1 1 16rem;
+  max-inline-size: 22rem;
 }
 
 /* La nota que explica de quién es el precio. Va bajo el encabezado de la
@@ -90,6 +124,31 @@
   font-weight: 500;
 }
 
+/* ---- las modalidades del resumen ---------------------------------------- */
+
+/* «Atención sin cita», «Toma de muestras a domicilio»: cosas que el
+   establecimiento **hace o no hace**, no campos con valor. Por eso son
+   etiquetas al pie del resumen y no filas de `app-fact-list` — una fila
+   «Atención sin cita → Sí» obligaría a dibujar también los «No», y una ficha
+   llena de noes dice de un lugar lo que no ofrece antes que lo que sí. */
+.ficha-publica__modalidades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha-publica__modalidades li {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-subtle, var(--border-default));
+  border-radius: var(--r-full);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 /* Los distintivos del pie de la tarjeta: receta, agotado. Envuelven en vez de
    desbordar — en 18rem entran dos, y en un teléfono uno. */
 .ficha-publica__sellos {
@@ -97,6 +156,15 @@
   flex-wrap: wrap;
   gap: var(--sp-1);
   margin: var(--sp-2) 0 0;
+}
+
+/* Cuando la tarjeta NO lleva precio —una sede, por ejemplo— los distintivos
+   son su pie, así que les toca el empujón que en las otras da `__precio`: las
+   tarjetas de una fila terminan a la misma altura y sus sellos quedan
+   alineados aunque los nombres ocupen una o tres líneas. */
+.ficha-publica__sellos--pie {
+  margin-block-start: auto;
+  padding-block-start: var(--sp-3);
 }
 
 /* Hay catálogo pero vino vacío. No es el estado S3 del host —la pantalla SÍ
