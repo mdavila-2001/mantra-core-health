@@ -41,7 +41,7 @@ import { PublicCatalogDetail } from '../public-catalog-detail';
     ViewStateHost,
   ],
   templateUrl: './clinic-detail.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', '../catalogo-publico.css'],
+  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', '../../../shared/styles/ficha-publica.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClinicDetail extends PublicCatalogDetail<PublicOfferedService> {

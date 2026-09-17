@@ -58,7 +58,7 @@ const SIN_GRUPO = 'Sin grupo declarado';
     ViewStateHost,
   ],
   templateUrl: './pharmacy-detail.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', '../catalogo-publico.css'],
+  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', '../../../shared/styles/ficha-publica.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
