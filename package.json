@@ -40,6 +40,7 @@
     "mock:chart-templates": "node scripts/gen-chart-templates-fixture.mjs",
     "mock:bolivia": "node scripts/gen-bolivia-corpus-fixture.mjs",
     "mock:glossary": "node scripts/gen-glossary-fixture.mjs",
+    "mock:anatomy": "node scripts/gen-anatomy-fixture.mjs",
     "emoji:catalog": "node scripts/gen-emoji-catalog.mjs"
   },
   "private": true,

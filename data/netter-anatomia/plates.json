@@ -1,0 +1,3838 @@
+[
+ {
+  "plate": 1,
+  "title": "Anatomía de superficie: cabeza y cuello",
+  "regionId": "R01",
+  "subregionId": "R01S01",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 2,
+  "title": "Cráneo: visión anterior",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 3,
+  "title": "Cráneo: radiografía anteroposterior al",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 4,
+  "title": "Cráneo: visión lateral",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 5,
+  "title": "Cráneo: radiografía lateral ES",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 6,
+  "title": "q Cráneo: sección sagital media",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 7,
+  "title": "Calvaria",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 8,
+  "title": "Base del cráneo: visión inferior",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 9,
+  "title": "Huesos de la base del cráneo: visión superior",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 10,
+  "title": "ql Agujeros de la base del cráneo: visión inferior",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 11,
+  "title": "Agujeros de la base del cráneo: visión superior La",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 12,
+  "title": "Cráneo de recién nacido",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 13,
+  "title": "Esqueleto óseo de cabeza y cuello EN",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 14,
+  "title": "Base del cráneo: fosas pterigoideas",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 15,
+  "title": "Mandíbula AS",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 16,
+  "title": "Y Articulación temporomandibular",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 17,
+  "title": "Vértebras cervicales: atlas y axis al",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 18,
+  "title": "d E Vértebras cervicales (continuación)",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 19,
+  "title": "Vértebras cervicales: articulaciones uncovertebrales",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 20,
+  "title": "En Cambios degenerativos en vértebras cervicales",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 21,
+  "title": "Ligamentos craneocervicales externos úl",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 22,
+  "title": "Ligamentos craneocervicales internos",
+  "regionId": "R01",
+  "subregionId": "R01S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 23,
+  "title": "Arterias y venas superficiales de la cara y cuero cabelludo ul",
+  "regionId": "R01",
+  "subregionId": "R01S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 24,
+  "title": "E. Nervios cutáneos de la cabeza y cuello",
+  "regionId": "R01",
+  "subregionId": "R01S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 25,
+  "title": "Ramos del nervio facial y glándula parótida Et",
+  "regionId": "R01",
+  "subregionId": "R01S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 26,
+  "title": "a | Músculos de la expresión facial: visión lateral",
+  "regionId": "R01",
+  "subregionId": "R01S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 27,
+  "title": "Músculos del cuello: visión lateral",
+  "regionId": "R01",
+  "subregionId": "R01S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 28,
+  "title": "Músculos del cuello: visión anterior",
+  "regionId": "R01",
+  "subregionId": "R01S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 29,
+  "title": "Músculos suprahioideos e infrahioideos A i",
+  "regionId": "R01",
+  "subregionId": "R01S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 30,
+  "title": "Músculos escalenos y prevertebrales",
+  "regionId": "R01",
+  "subregionId": "R01S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 31,
+  "title": "Venas superficiales y nervios cutáneos del cuello aa",
+  "regionId": "R01",
+  "subregionId": "R01S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 32,
+  "title": "Plexo cervical in situ",
+  "regionId": "R01",
+  "subregionId": "R01S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 33,
+  "title": "Arteria subclavia a",
+  "regionId": "R01",
+  "subregionId": "R01S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 34,
+  "title": "a Arterias carótidas",
+  "regionId": "R01",
+  "subregionId": "R01S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 35,
+  "title": "Fascias del cuello aa",
+  "regionId": "R01",
+  "subregionId": "R01S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 36,
+  "title": "A Nariz",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 37,
+  "title": "Región nasal o",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 38,
+  "title": "Ñ Pared lateral de la cavidad nasal (continuación)",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 39,
+  "title": "Pared medial de la cavidad nasal (tabique nasal)",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 40,
+  "title": "y Arteria maxilar",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 41,
+  "title": "Aa. de la cavidad nasal: tabique nasal reclinado hacia arriba al",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 42,
+  "title": "hs Nn. de la cavidad nasal: tabique nasal reclinado hacia arriba",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 43,
+  "title": "Nervios de la cavidad nasal (continuación) les",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 44,
+  "title": "y Inervación autónoma de la cavidad nasal",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 45,
+  "title": "Nervios oftálmico (V,) y maxilar (V,) Ed h",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 46,
+  "title": "Nervio mandibular (V,)",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 47,
+  "title": "Cavidad nasal y senos paranasales: sección transversal É E",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 48,
+  "title": "Senos paranasales",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 49,
+  "title": "Senos paranasales (continuación)",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 50,
+  "title": "Senos paranasales: cambios con la edad",
+  "regionId": "R01",
+  "subregionId": "R01S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 51,
+  "title": "Inspección de la cavidad bucal el",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 52,
+  "title": "E Techo de la boca",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 53,
+  "title": "Suelo de la boca",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 54,
+  "title": "Músculos implicados en la masticación",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 55,
+  "title": "Músculos implicados en la masticación (continuación) Ei",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 56,
+  "title": "a Dientes",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 57,
+  "title": "Dientes (continuación)",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 58,
+  "title": "Lengua",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 59,
+  "title": "Lengua (continuación) au",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 60,
+  "title": "Lengua y glándulas salivales: secciones",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 61,
+  "title": "Glándulas salivales",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 62,
+  "title": "d E Inervación aferente de la boca y faringe",
+  "regionId": "R01",
+  "subregionId": "R01S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 63,
+  "title": "Faringe: sección media (sagital)",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 64,
+  "title": "Fauces",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 65,
+  "title": "Músculos de la faringe: sección media (sagital)",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 66,
+  "title": "q Faringe: visión posterior abierta",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 67,
+  "title": "Mm. de la faringe: visión posterior abierta parcialmente E :",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 68,
+  "title": "al Músculos de la faringe: visión lateral",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 69,
+  "title": "Arterias de las regiones bucal y faríngea El",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 70,
+  "title": "E Venas de las regiones bucal y faríngea",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 71,
+  "title": "Nervios de las regiones bucal y faringea dl",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 72,
+  "title": "Vasos y nódulos linfáticos de la cabeza y cuello",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 73,
+  "title": "Vasos y nódulos linfáticos de la faringe y lengua EN",
+  "regionId": "R01",
+  "subregionId": "R01S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 74,
+  "title": "Glándula tiroides: visión anterior",
+  "regionId": "R01",
+  "subregionId": "R01S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 75,
+  "title": "Glándula tiroides y faringe: visión posterior EN",
+  "regionId": "R01",
+  "subregionId": "R01S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 76,
+  "title": "cs Glándulas paratiroides",
+  "regionId": "R01",
+  "subregionId": "R01S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 77,
+  "title": "Cartílagos de la laringe a",
+  "regionId": "R01",
+  "subregionId": "R01S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 78,
+  "title": "a Músculos intrínsecos de la laringe",
+  "regionId": "R01",
+  "subregionId": "R01S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 79,
+  "title": "Acciones de los músculos intrínsecos de la laringe EN",
+  "regionId": "R01",
+  "subregionId": "R01S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 80,
+  "title": "A Nervios de la laringe",
+  "regionId": "R01",
+  "subregionId": "R01S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 81,
+  "title": "Párpados E i",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 82,
+  "title": "E: Aparato lagrimal",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 83,
+  "title": "Fascias de la órbita y globo ocular xi",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 84,
+  "title": "E | Músculos extrínsecos del ojo",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 85,
+  "title": "Arterias y venas de la órbita y párpados al",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 86,
+  "title": "Nervios de la órbita",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 87,
+  "title": "Globo ocular",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 88,
+  "title": "Cámaras anterior y posterior del ojo",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 89,
+  "title": "Lente y estructuras de soporte",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 90,
+  "title": "a Arterias y venas intrinsecas del ojo",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 91,
+  "title": "Aporte vascular del ojo El",
+  "regionId": "R01",
+  "subregionId": "R01S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 92,
+  "title": "ji Via de recepción del sonido",
+  "regionId": "R01",
+  "subregionId": "R01S10",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 93,
+  "title": "Oído externo y cavidad timpánica al",
+  "regionId": "R01",
+  "subregionId": "R01S10",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 94,
+  "title": "pl Cavidad timpánica",
+  "regionId": "R01",
+  "subregionId": "R01S10",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 95,
+  "title": "Laberintos óseo y membranoso i",
+  "regionId": "R01",
+  "subregionId": "R01S10",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 96,
+  "title": "É ‘ Laberintos óseo y membranoso (continuación)",
+  "regionId": "R01",
+  "subregionId": "R01S10",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 97,
+  "title": "Orientación del laberinto en el cráneo",
+  "regionId": "R01",
+  "subregionId": "R01S10",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 98,
+  "title": "E Trompa auditiva (faringotimpánica, de Eustaquio)",
+  "regionId": "R01",
+  "subregionId": "R01S10",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 99,
+  "title": "Meninges y venas diploicas pa E",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 100,
+  "title": "i Arterias meningeas",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 101,
+  "title": "Hematoma epidural",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 102,
+  "title": "Meninges y venas cerebrales superficiales",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 103,
+  "title": "Senos venosos de la duramadre pa i",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 104,
+  "title": "Senos venosos de la duramadre (continuación)",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 105,
+  "title": "Cerebro: visiones laterales",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 106,
+  "title": "Cerebro: visiones mediales",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 107,
+  "title": "Cerebro: visión inferior le i",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 108,
+  "title": "Ventrículos del encéfalo",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 109,
+  "title": "Circulación del líquido cerebroespinal (cefalorraquídeo) E »",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 110,
+  "title": "Núcleos (ganglios) basales",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 111,
+  "title": "Tálamo",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 112,
+  "title": "Hipocampo y fórnix",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 113,
+  "title": "e e” ae",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 114,
+  "title": "Tronco del encéfalo",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 115,
+  "title": "Cuarto ventrículo y cerebelo EJ",
+  "regionId": "R01",
+  "subregionId": "R01S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 116,
+  "title": "Núcleos de los nn. craneales en el tronco del encéfalo: esquema",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 117,
+  "title": "Núcleos de los nn. craneales en el tronco del encéfalo (cont.) E E",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 118,
+  "title": "Nn. craneales (distribución motora y sensitiva): esquema |",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 119,
+  "title": "Nervio olfatorio (1): esquema al",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 120,
+  "title": "dl Nervio óptico (11) (vía óptica): esquema i",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 121,
+  "title": "Nervios oculomotor (III), troclear (IV) y abducens (VI): esquema Es",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 122,
+  "title": "a Nervio trigémino (V): esquema",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 123,
+  "title": "Nervio facial (VII): esquema al",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 124,
+  "title": "Nervio vestibulococlear (VII): esquema",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 125,
+  "title": "Nervio glosofaringeo (IX): esquema Ñ E",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 126,
+  "title": "E Nervio vago (X): esquema",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 127,
+  "title": "Nervio accesorio (XI): esquema li",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 128,
+  "title": "J E Nervio hipogloso (XII): esquema",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 129,
+  "title": "Plexo cervical: esquema a",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 130,
+  "title": "hs Nervios autónomos en el cuello",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 131,
+  "title": "Nervios autónomos en la cabeza El",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 132,
+  "title": "J i Ganglio ciliar: esquema",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 133,
+  "title": "Ganglios pterigopalatino y submandibular: esquema a",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 134,
+  "title": "a Ganglio ótico: esquema",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 135,
+  "title": "Vías gustativas: esquema Ee",
+  "regionId": "R01",
+  "subregionId": "R01S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 136,
+  "title": "id Arterias del encéfalo y meninges",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 137,
+  "title": "Venas de la columna vertebral: venas vertebrales",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 138,
+  "title": "h Arterias del encéfalo: esquema",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 139,
+  "title": "Arterias del encéfalo: visiones inferiores K i",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 140,
+  "title": "Circulo arterial del cerebro (de Willis)",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 141,
+  "title": "Arterias del encéfalo: visión y sección frontales EN",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 142,
+  "title": "E Arterias del encéfalo: visiones lateral y medial",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 143,
+  "title": "Arterias de la fosa craneal posterior E i",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 144,
+  "title": "Venas de la fosa craneal posterior",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 145,
+  "title": "Venas profundas del encéfalo PA.",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 146,
+  "title": "Venas subependimarias del encéfalo",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 147,
+  "title": "Hipotálamo e hipófisis A",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 148,
+  "title": "E Arterias y venas de hipotálamo e hipófisis",
+  "regionId": "R01",
+  "subregionId": "R01S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 149,
+  "title": "Exploración de la cabeza: imágenes sagitales de RM E i",
+  "regionId": "R01",
+  "subregionId": "R01S14",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 150,
+  "title": "a a Exploración de la cabeza: imágenes axiales de TC",
+  "regionId": "R01",
+  "subregionId": "R01S14",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 151,
+  "title": "Exploración de la cabeza: imágenes coronales de TC dr",
+  "regionId": "R01",
+  "subregionId": "R01S14",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 152,
+  "title": "Dorso",
+  "regionId": "R02",
+  "subregionId": "R02S01",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 153,
+  "title": "Columna vertebral",
+  "regionId": "R02",
+  "subregionId": "R02S02",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 154,
+  "title": "Vértebras torácicas pa",
+  "regionId": "R02",
+  "subregionId": "R02S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 155,
+  "title": "Vértebras lumbares",
+  "regionId": "R02",
+  "subregionId": "R02S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 156,
+  "title": "Vértebras lumbares: radiografías",
+  "regionId": "R02",
+  "subregionId": "R02S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 157,
+  "title": "Sacro y cóccix",
+  "regionId": "R02",
+  "subregionId": "R02S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 158,
+  "title": "Ligamentos vertebrales: región lumbar",
+  "regionId": "R02",
+  "subregionId": "R02S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 159,
+  "title": "Ligamentos vertebrales: región lumbosacra",
+  "regionId": "R02",
+  "subregionId": "R02S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 160,
+  "title": "Médula espinal y ramos ventrales espinales in situ 12",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 161,
+  "title": "Relación de las raíces de los nn. espinales con las vértebras",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 162,
+  "title": "Hernia discal lumbar: manifestaciones clínicas",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 163,
+  "title": "Punción lumbar y anestesia epidural",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 164,
+  "title": "Dermatomas A",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 165,
+  "title": "Sistema nervioso simpatico: topografia general",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 166,
+  "title": "Sistema nervioso parasimpático: topografía general 12",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 167,
+  "title": "Sistema nervioso simpático: esquema",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 168,
+  "title": "Sistema nervioso parasimpático: esquema A",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 169,
+  "title": "Membranas y raíces nerviosas espinales",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 170,
+  "title": "Origen del nervio espinal: secciones transversales jes",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 171,
+  "title": "Arterias de la médula espinal: esquema",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 172,
+  "title": "Arterias de la médula espinal: distribución intrínseca El",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 173,
+  "title": "Venas de la médula espinal y columna vertebral",
+  "regionId": "R02",
+  "subregionId": "R02S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 174,
+  "title": "Músculos del dorso: planos superficiales",
+  "regionId": "R02",
+  "subregionId": "R02S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 175,
+  "title": "el Músculos del dorso: planos intermedios",
+  "regionId": "R02",
+  "subregionId": "R02S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 176,
+  "title": "Músculos del dorso: planos profundos 12",
+  "regionId": "R02",
+  "subregionId": "R02S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 177,
+  "title": "Nervios del dorso",
+  "regionId": "R02",
+  "subregionId": "R02S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 178,
+  "title": "Triángulo suboccipital 12",
+  "regionId": "R02",
+  "subregionId": "R02S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 179,
+  "title": "Región lumbar del dorso: sección transversal",
+  "regionId": "R02",
+  "subregionId": "R02S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 180,
+  "title": "Nervio espinal torácico típico",
+  "regionId": "R02",
+  "subregionId": "R02S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 181,
+  "title": "Tórax 13",
+  "regionId": "R03",
+  "subregionId": "R03S01",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 182,
+  "title": "Glándula mamaria: lámina 182",
+  "regionId": "R03",
+  "subregionId": "R03S02",
+  "titleConfidence": "derived_from_toc"
+ },
+ {
+  "plate": 183,
+  "title": "Arterias de la glándula mamaria Ei",
+  "regionId": "R03",
+  "subregionId": "R03S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 184,
+  "title": "l Vasos y nódulos linfáticos de la glándula mamaria",
+  "regionId": "R03",
+  "subregionId": "R03S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 185,
+  "title": "Esqueleto óseo del tórax",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 186,
+  "title": "ql Costillas y articulaciones esternocostales",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 187,
+  "title": "Articulaciones costovertebrales",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 188,
+  "title": "Pared torácica anterior",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 189,
+  "title": "Pared torácica anterior (continuación) Ei",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 190,
+  "title": "Colocación de un tubo de drenaje torácico",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 191,
+  "title": "Pared torácica anterior: visión interna E",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 192,
+  "title": "El Nervios y arterias intercostales",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 193,
+  "title": "Nervio frénico Él",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 194,
+  "title": "El Diafragma: cara torácica",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 195,
+  "title": "Diafragma: cara abdominal Él",
+  "regionId": "R03",
+  "subregionId": "R03S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 196,
+  "title": "Topografía de los pulmones: visión anterior",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 197,
+  "title": "Topografía de los pulmones: visión posterior",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 198,
+  "title": "Pulmones in situ: visión anterior",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 199,
+  "title": "Pulmones: visiones mediales ES",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 200,
+  "title": "Segmentos broncopulmonares",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 201,
+  "title": "Segmentos broncopulmonares (continuación) ep",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 202,
+  "title": "Tráquea y bronquios mayores",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 203,
+  "title": "Nomenclatura de los bronquios: esquema",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 204,
+  "title": "Vías intrapulmonares: esquema",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 205,
+  "title": "Circulación sanguínea intrapulmonar: esquema",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 206,
+  "title": "El Grandes vasos del mediastino superior",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 207,
+  "title": "Arterias y venas bronquiales",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 208,
+  "title": "El Vasos y nódulos linfáticos del pulmón",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 209,
+  "title": "Nervios autónomos en el tórax",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 210,
+  "title": "El Inervación del árbol traqueobronquial: esquema",
+  "regionId": "R03",
+  "subregionId": "R03S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 211,
+  "title": "Corazón in situ",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 212,
+  "title": "Corazón: exposición anterior",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 213,
+  "title": "Radiografía del tórax 13",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 214,
+  "title": "a Corazón: caras basal y diafragmática",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 215,
+  "title": "Saco pericárdico E",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 216,
+  "title": "gs Arterias coronarias y venas cardiacas",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 217,
+  "title": "Arterias coronarias y venas cardíacas: variaciones",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 218,
+  "title": "Arterias coronarias: visiones arteriográficas",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 219,
+  "title": "Arterias coronarias: visiones arteriográficas (continuación) E",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 220,
+  "title": "a] Atrio (aurícula) y ventrículo derechos",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 221,
+  "title": "Atrio (aurícula) y ventrículo izquierdos",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 222,
+  "title": "ad Válvulas y esqueleto fibroso del corazón",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 223,
+  "title": "Válvulas y esqueleto fibroso del corazón (continuación)",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 224,
+  "title": "Atrios (aurículas), ventrículos y septo interventricular",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 225,
+  "title": "Sistema de conducción del corazón EI",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 226,
+  "title": "El Nervios del corazón",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 227,
+  "title": "Inervación del corazón: esquema Él",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 228,
+  "title": "Inervación de los vasos sanguíneos: esquema",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 229,
+  "title": "Circulación prenatal y posnatal a",
+  "regionId": "R03",
+  "subregionId": "R03S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 230,
+  "title": "Mediastino: visión lateral derecha",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 231,
+  "title": "Mediastino: visión lateral izquierda E",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 232,
+  "title": "Esófago in situ",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 233,
+  "title": "Topografía y constricciones del esófago 3.",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 234,
+  "title": "ca Musculatura del esófago",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 235,
+  "title": "Unión faringoesofágica El",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 236,
+  "title": "Unión esofagogástrica",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 237,
+  "title": "Arterias del esófago",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 238,
+  "title": "Venas del esófago",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 239,
+  "title": "Vasos y nódulos linfáticos del esófago",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 240,
+  "title": "El Nervios del esófago",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 241,
+  "title": "Mediastino: sección transversal La",
+  "regionId": "R03",
+  "subregionId": "R03S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 242,
+  "title": "Exploraciones de tórax: imágenes axiales de TC",
+  "regionId": "R03",
+  "subregionId": "R03S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 243,
+  "title": "Sección transversal del tórax a nivel de T3 eS:",
+  "regionId": "R03",
+  "subregionId": "R03S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 244,
+  "title": "Sección transversal del tórax a nivel del disco T3-4",
+  "regionId": "R03",
+  "subregionId": "R03S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 245,
+  "title": "Sección transversal del tórax a nivel del disco T4-5",
+  "regionId": "R03",
+  "subregionId": "R03S08",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 246,
+  "title": "Sección transversal del tórax a nivel de T7",
+  "regionId": "R03",
+  "subregionId": "R03S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 247,
+  "title": "Abdomen El",
+  "regionId": "R04",
+  "subregionId": "R04S01",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 248,
+  "title": "Esqueleto óseo del abdomen",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 249,
+  "title": "Pared abdominal anterior: disección superficial",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 250,
+  "title": "Pared abdominal anterior: disección intermedia",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 251,
+  "title": "Regiones inguinal y femoral",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 252,
+  "title": "Vaina del recto: secciones transversales",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 253,
+  "title": "Pared abdominal anterior: visión interna E",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 254,
+  "title": "Pared abdominal posterolateral",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 255,
+  "title": "Arterias de la pared abdominal anterior",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 256,
+  "title": "Venas de la pared abdominal anterior",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 257,
+  "title": "Nervios de la pared abdominal anterior",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 258,
+  "title": "Nervios toracoabdominales",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 259,
+  "title": "Región inguinal: disecciones",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 260,
+  "title": "Conducto inguinal y cordón espermático",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 261,
+  "title": "Hernia inguinal indirecta La",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 262,
+  "title": "Vaina femoral y conducto inguinal",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 263,
+  "title": "Pared abdominal posterior: visión interna El",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 264,
+  "title": "Arterias de la pared abdominal posterior",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 265,
+  "title": "Venas de la pared abdominal posterior",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 266,
+  "title": "Vasos y nódulos linfáticos de la pared abdominal posterior",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 267,
+  "title": "Nervios de la pared abdominal posterior la",
+  "regionId": "R04",
+  "subregionId": "R04S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 268,
+  "title": "Regiones y planos del abdomen",
+  "regionId": "R04",
+  "subregionId": "R04S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 269,
+  "title": "Omento (epiplón) mayor y vísceras abdominales",
+  "regionId": "R04",
+  "subregionId": "R04S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 270,
+  "title": "Relaciones mesentéricas de los intestinos",
+  "regionId": "R04",
+  "subregionId": "R04S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 271,
+  "title": "Omento mayor y bolsa omental",
+  "regionId": "R04",
+  "subregionId": "R04S03",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 272,
+  "title": "Bolsa omental: estómago reflejado",
+  "regionId": "R04",
+  "subregionId": "R04S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 273,
+  "title": "Bolsa omental: sección transversal",
+  "regionId": "R04",
+  "subregionId": "R04S03",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 274,
+  "title": "Peritoneo de la pared abdominal posterior",
+  "regionId": "R04",
+  "subregionId": "R04S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 275,
+  "title": "Estómago in situ la",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 276,
+  "title": "Mucosa del estómago",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 277,
+  "title": "Musculatura del estómago",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 278,
+  "title": "Duodeno in situ",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 279,
+  "title": "Mucosa y musculatura del duodeno",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 280,
+  "title": "Al Mucosa y musculatura del intestino delgado",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 281,
+  "title": "Región ileocecal",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 282,
+  "title": "Región ileocecal (continuación)",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 283,
+  "title": "Apéndice vermiforme",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 284,
+  "title": "Mucosa y musculatura del intestino grueso",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 285,
+  "title": "Colon sigmoide: variaciones en su posición a",
+  "regionId": "R04",
+  "subregionId": "R04S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 286,
+  "title": "Topografía del hígado",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 287,
+  "title": "Caras y lecho del hígado",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 288,
+  "title": "Hígado in situ y variaciones en su forma",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 289,
+  "title": "Segmentos y lobulillos hepáticos: distribución de vasos y conductos Ea ]",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 290,
+  "title": "na Sistemas vascular y de conductos intrahepáticos",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 291,
+  "title": "Estructura del hígado: esquema",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 292,
+  "title": "Sistema biliar intrahepático: esquema",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 293,
+  "title": "Sección transversal del abdomen a nivel de T10",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 294,
+  "title": "Vesícula biliar y conductos biliares extrahepáticos",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 295,
+  "title": "Unión del colédoco y el duodeno",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 296,
+  "title": "A Variaciones en los conductos cístico y hepáticos",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 297,
+  "title": "Sección transversal del abdomen a nivel de T12",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 298,
+  "title": "Páncreas in situ",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 299,
+  "title": "Bazo la",
+  "regionId": "R04",
+  "subregionId": "R04S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 300,
+  "title": "Arterias del estómago, higado y bazo",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 301,
+  "title": "Arterias del hígado, páncreas, duodeno y bazo",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 302,
+  "title": "a Variaciones en el tronco celiaco",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 303,
+  "title": "Arteriografía celíaca",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 304,
+  "title": "Arterias del duodeno y cabeza del páncreas",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 305,
+  "title": "Variaciones arteriales y vascularización colateral del hígado y vesícula biliar 4",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 306,
+  "title": "E. Arterias del intestino delgado",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 307,
+  "title": "Arterias del intestino grueso",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 308,
+  "title": "Variaciones arteriales del intestino grueso",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 309,
+  "title": "Venas del estómago, duodeno, páncreas y bazo",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 310,
+  "title": "a Venas del intestino delgado",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 311,
+  "title": "Venas del intestino grueso",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 312,
+  "title": "Tributarias de la vena porta hepática: anastomosis portocava",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 313,
+  "title": "Variaciones de la vena porta hepática la",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 314,
+  "title": "Vasos y nódulos linfáticos del estómago",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 315,
+  "title": "Vasos y nódulos linfáticos del páncreas",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 316,
+  "title": "Vasos y nódulos linfáticos del intestino delgado",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 317,
+  "title": "Vasos y nódulos linfáticos del intestino grueso",
+  "regionId": "R04",
+  "subregionId": "R04S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 318,
+  "title": "Nervios y ganglios autónomos del abdomen",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 319,
+  "title": "Nervios del estómago y duodeno",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 320,
+  "title": "Nervios del estómago y duodeno (continuación)",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 321,
+  "title": "Inervación del estómago y duodeno: esquema La",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 322,
+  "title": "Nervios del intestino delgado",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 323,
+  "title": "Nervios del intestino grueso",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 324,
+  "title": "Inervación de los intestinos delgado y grueso: esquema",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 325,
+  "title": "Vías reflejas autónomas: esquema",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 326,
+  "title": "Plexos autónomos intrínsecos del intestino: esquema ye",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 327,
+  "title": "Inervación del hígado y tracto biliar: esquema",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 328,
+  "title": "Inervación del páncreas: esquema",
+  "regionId": "R04",
+  "subregionId": "R04S07",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 329,
+  "title": "Riñones in situ: visiones anteriores",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 330,
+  "title": "Riñones in situ: visiones posteriores",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 331,
+  "title": "Sección transversal del abdomen a nivel de T12",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 332,
+  "title": "Arteria y vena renales in situ la",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 333,
+  "title": "Variaciones en la arteria y vena renales",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 334,
+  "title": "Estructura macroscópica del riñón",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 335,
+  "title": "Arterias intrarrenales y segmentos del riñón",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 336,
+  "title": "Nefrona y túbulo colector: esquema",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 337,
+  "title": "Vasos sanguíneos en el parénquima renal: esquema",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 338,
+  "title": "Sección transversal del abdomen a nivel de T12-L1",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 339,
+  "title": "Sección transversal del abdomen a nivel de L1-2",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 340,
+  "title": "Uréteres",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 341,
+  "title": "Arterias de los uréteres y vejiga urinaria",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 342,
+  "title": "Fascia renal LA.",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 343,
+  "title": "Vasos y nódulos linfáticos de los riñones y vejiga urinaria",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 344,
+  "title": "Nervios de riñones, uréteres y vejiga urinaria El",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 345,
+  "title": "Inervación de los riñones y uréteres superiores: esquema",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 346,
+  "title": "Nervios de las glándulas suprarrenales: disección y esquema La",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 347,
+  "title": "Arterias y venas de las glándulas suprarrenales in situ",
+  "regionId": "R04",
+  "subregionId": "R04S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 348,
+  "title": "Pared y vísceras abdominales: sección paramediana sagital",
+  "regionId": "R04",
+  "subregionId": "R04S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 349,
+  "title": "Sección transversal del abdomen a nivel de L3,",
+  "regionId": "R04",
+  "subregionId": "R04S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 350,
+  "title": "Exploraciones abdominales: imágenes axiales de TC",
+  "regionId": "R04",
+  "subregionId": "R04S10",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 351,
+  "title": "Anatomía de superficie = o",
+  "regionId": "R05",
+  "subregionId": "R05S01",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 352,
+  "title": "Huesos y ligamentos de la pelvis",
+  "regionId": "R05",
+  "subregionId": "R05S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 353,
+  "title": "Huesos y ligamentos de la pelvis (continuación) ES",
+  "regionId": "R05",
+  "subregionId": "R05S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 354,
+  "title": "Diferencias de sexo de la pelvis: medidas",
+  "regionId": "R05",
+  "subregionId": "R05S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 355,
+  "title": "Radiografías de la pelvis: mujer y varón",
+  "regionId": "R05",
+  "subregionId": "R05S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 356,
+  "title": "Diafragma pélvico: mujer",
+  "regionId": "R05",
+  "subregionId": "R05S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 357,
+  "title": "Diafragma pélvico: mujer (continuación)",
+  "regionId": "R05",
+  "subregionId": "R05S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 358,
+  "title": "Diafragma pélvico: varón",
+  "regionId": "R05",
+  "subregionId": "R05S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 359,
+  "title": "Diafragma pélvico: varón (continuación)",
+  "regionId": "R05",
+  "subregionId": "R05S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 360,
+  "title": "Vísceras pélvicas y periné: mujer |",
+  "regionId": "R05",
+  "subregionId": "R05S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 361,
+  "title": "Vísceras pélvicas y periné: varón",
+  "regionId": "R05",
+  "subregionId": "R05S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 362,
+  "title": "l Contenido de la pelvis: mujer |",
+  "regionId": "R05",
+  "subregionId": "R05S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 363,
+  "title": "Contenido de la pelvis: varón",
+  "regionId": "R05",
+  "subregionId": "R05S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 364,
+  "title": "Fascia y espacios potenciales endopélvicos",
+  "regionId": "R05",
+  "subregionId": "R05S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 365,
+  "title": "Vejiga urinaria: orientación y soportes",
+  "regionId": "R05",
+  "subregionId": "R05S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 366,
+  "title": "El Vejiga urinaria: mujer y varón",
+  "regionId": "R05",
+  "subregionId": "R05S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 367,
+  "title": "Esfínteres",
+  "regionId": "R05",
+  "subregionId": "R05S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 368,
+  "title": "Cistouretrografías: mujer y varón",
+  "regionId": "R05",
+  "subregionId": "R05S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 369,
+  "title": "Vísceras pélvicas: mujer",
+  "regionId": "R05",
+  "subregionId": "R05S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 370,
+  "title": "Útero, vagina y estructuras de soporte: lámina 370",
+  "regionId": "R05",
+  "subregionId": "R05S05",
+  "titleConfidence": "derived_from_toc"
+ },
+ {
+  "plate": 371,
+  "title": "Útero y anexos",
+  "regionId": "R05",
+  "subregionId": "R05S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 372,
+  "title": "Ligamentos pélvicos",
+  "regionId": "R05",
+  "subregionId": "R05S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 373,
+  "title": "Útero: cambios con la edad y patrón muscular",
+  "regionId": "R05",
+  "subregionId": "R05S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 374,
+  "title": "Útero: posición y prolapso",
+  "regionId": "R05",
+  "subregionId": "R05S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 375,
+  "title": "Embarazo ectópico",
+  "regionId": "R05",
+  "subregionId": "R05S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 376,
+  "title": "l Pelvis masculina: unión vesicoprostática",
+  "regionId": "R05",
+  "subregionId": "R05S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 377,
+  "title": "Periné y genitales externos femeninos (vulva) Ls",
+  "regionId": "R05",
+  "subregionId": "R05S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 378,
+  "title": "l Periné femenino (disección superficial)",
+  "regionId": "R05",
+  "subregionId": "R05S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 379,
+  "title": "Periné y periné profundo femenino",
+  "regionId": "R05",
+  "subregionId": "R05S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 380,
+  "title": "l Periné y genitales externos (disección superficial)",
+  "regionId": "R05",
+  "subregionId": "R05S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 381,
+  "title": "Periné y genitales externos (disección profunda) E",
+  "regionId": "R05",
+  "subregionId": "R05S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 382,
+  "title": "Pene",
+  "regionId": "R05",
+  "subregionId": "R05S08",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 383,
+  "title": "Espacios perineales",
+  "regionId": "R05",
+  "subregionId": "R05S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 384,
+  "title": "Próstata y vesículas seminales",
+  "regionId": "R05",
+  "subregionId": "R05S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 385,
+  "title": "Uretra",
+  "regionId": "R05",
+  "subregionId": "R05S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 386,
+  "title": "Descenso del testículo",
+  "regionId": "R05",
+  "subregionId": "R05S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 387,
+  "title": "Escroto y contenido",
+  "regionId": "R05",
+  "subregionId": "R05S08",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 388,
+  "title": "Estructuras homólogas de los genitales externos",
+  "regionId": "R05",
+  "subregionId": "R05S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 389,
+  "title": "Estructuras homólogas de los genitales internos",
+  "regionId": "R05",
+  "subregionId": "R05S09",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 390,
+  "title": "Sección transversal através del escroto y testículo a",
+  "regionId": "R05",
+  "subregionId": "R05S10",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 391,
+  "title": "Recto in situ: mujer y varón A",
+  "regionId": "R05",
+  "subregionId": "R05S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 392,
+  "title": "Fosas isquioanales",
+  "regionId": "R05",
+  "subregionId": "R05S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 393,
+  "title": "Recto y conducto anal",
+  "regionId": "R05",
+  "subregionId": "R05S11",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 394,
+  "title": "l Musculatura anorrectal",
+  "regionId": "R05",
+  "subregionId": "R05S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 395,
+  "title": "Músculo esfínter externo del ano: visiones perineales",
+  "regionId": "R05",
+  "subregionId": "R05S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 396,
+  "title": "Espacios reales y potenciales perineopélvicos",
+  "regionId": "R05",
+  "subregionId": "R05S11",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 397,
+  "title": "Exploraciones pélvicas: imágenes sagitales de RM",
+  "regionId": "R05",
+  "subregionId": "R05S12",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 398,
+  "title": "Arterias del recto y conducto anal: varón",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 399,
+  "title": "Venas del recto y conducto anal: mujer",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 400,
+  "title": "a Arterias y venas de los órganos pélvicos: mujer",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 401,
+  "title": "Arterias y venas del testículo",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 402,
+  "title": "Arterias y venas de la pelvis: mujer",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 403,
+  "title": "Arterias y venas de la pelvis: varón",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 404,
+  "title": "l Arterias y venas del periné y útero",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 405,
+  "title": "Arterias y venas del periné: varón",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 406,
+  "title": "Vasos y nódulos linfáticos de la pelvis y genitales: mujer",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 407,
+  "title": "Vasos y nódulos linfáticos del periné: mujer ls",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 408,
+  "title": "ños) Vasos y nódulos linfáticos de la pelvis y genitales: varón",
+  "regionId": "R05",
+  "subregionId": "R05S13",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 409,
+  "title": "Nervios de los genitales externos: varón",
+  "regionId": "R05",
+  "subregionId": "R05S14",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 410,
+  "title": "Nervios de las vísceras pélvicas: varón",
+  "regionId": "R05",
+  "subregionId": "R05S14",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 411,
+  "title": "Nervios del periné: varón",
+  "regionId": "R05",
+  "subregionId": "R05S14",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 412,
+  "title": "Nervios de las vísceras pélvicas: mujer",
+  "regionId": "R05",
+  "subregionId": "R05S14",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 413,
+  "title": "Nervios del periné y genitales externos: mujer ls",
+  "regionId": "R05",
+  "subregionId": "R05S14",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 414,
+  "title": "Vías nerviosas en el parto",
+  "regionId": "R05",
+  "subregionId": "R05S14",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 415,
+  "title": "Inervación de los órganos reproductores femeninos: esquema iS",
+  "regionId": "R05",
+  "subregionId": "R05S14",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 416,
+  "title": "El Inervación de los órganos reproductores masculinos: esquema",
+  "regionId": "R05",
+  "subregionId": "R05S14",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 417,
+  "title": "Plexos autonómicos de la pelvis",
+  "regionId": "R05",
+  "subregionId": "R05S14",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 418,
+  "title": "pro Vel atin",
+  "regionId": "R06",
+  "subregionId": "R06S01",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 419,
+  "title": "E Clavícula y articulación esternoclavicular",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 420,
+  "title": "Húmero y escápula: visiones anteriores i J",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 421,
+  "title": "Húmero y escápula: visiones posteriores",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 422,
+  "title": "Hombro: radiografía anteroposterior gl",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 423,
+  "title": "Articulación del hombro (glenohumeral)",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 424,
+  "title": "Músculos del hombro",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 425,
+  "title": "Músculos del manguito rotador",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 426,
+  "title": "Disección escapulohumeral L6",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 427,
+  "title": "Arteria axilar y anastomosis alrededor de la escápula",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 428,
+  "title": "Fascias pectoral, clavipectoral y axilar E J",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 429,
+  "title": "Axila (disección): visión anterior",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 430,
+  "title": "Plexo braquial: esquema l6",
+  "regionId": "R06",
+  "subregionId": "R06S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 431,
+  "title": "Músculos del brazo: visiones anteriores",
+  "regionId": "R06",
+  "subregionId": "R06S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 432,
+  "title": "Músculos del brazo: visiones posteriores Le",
+  "regionId": "R06",
+  "subregionId": "R06S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 433,
+  "title": "l Arteria braquial in situ",
+  "regionId": "R06",
+  "subregionId": "R06S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 434,
+  "title": "Arteria braquial y anastomosis alrededor del codo",
+  "regionId": "R06",
+  "subregionId": "R06S03",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 435,
+  "title": "Brazo: secciones transversales seriadas",
+  "regionId": "R06",
+  "subregionId": "R06S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 436,
+  "title": "Huesos del codo",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 437,
+  "title": "Codo: radiografías",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 438,
+  "title": "Ligamentos del codo",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 439,
+  "title": "Huesos del antebrazo",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 440,
+  "title": "Mm. individualizados del antebrazo: rotadores del radio G",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 441,
+  "title": "Mm. individualizados del antebrazo: extensores del carpo y dedos",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 442,
+  "title": "Mm. individualizados del antebrazo: flexores del carpo f",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 443,
+  "title": "l Mm. individualizados del antebrazo: flexores de los dedos",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 444,
+  "title": "Músculos del antebrazo (plano superficial): visión posterior",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 445,
+  "title": "Músculos del antebrazo (plano profundo): visión posterior",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 446,
+  "title": "Músculos del antebrazo (plano superficial): visión anterior",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 447,
+  "title": "Músculos del antebrazo (plano intermedio): visión anterior",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 448,
+  "title": "Músculos del antebrazo (plano profundo): visión anterior",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 449,
+  "title": "l Antebrazo: secciones transversales seriadas",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 450,
+  "title": "Inserciones de los músculos del antebrazo: visión anterior G",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 451,
+  "title": "Inserciones de los músculos del antebrazo: visión posterior",
+  "regionId": "R06",
+  "subregionId": "R06S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 452,
+  "title": "Huesos del carpo Gi",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 453,
+  "title": "Movimientos del carpo",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 454,
+  "title": "Ligamentos del carpo G",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 455,
+  "title": "l Ligamentos del carpo (continuación)",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 456,
+  "title": "Huesos del carpo y mano",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 457,
+  "title": "Carpo y mano: radiografia anteroposterior",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 458,
+  "title": "Ligamentos metacarpofalángicos e interfalángicos G",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 459,
+  "title": "El Carpo y mano: disecciones palmares superficiales",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 460,
+  "title": "Carpo y mano: disecciones palmares profundas",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 461,
+  "title": "l Tendones flexores, arterias y nervios en el carpo",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 462,
+  "title": "Bolsas, espacios y vainas tendinosas de la mano",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 463,
+  "title": "Músculos lumbricales y bolsas, espacios y vainas: esquema",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 464,
+  "title": "Tendones flexores y extensores en los dedos",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 465,
+  "title": "Músculos intrínsecos de la mano",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 466,
+  "title": "Arterias y nervios de la mano: visiones palmares iG",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 467,
+  "title": "Carpo y mano: disección radial superficial",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 468,
+  "title": "Carpo y mano: disección dorsal superficial . 5.",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 469,
+  "title": "l Carpo y mano: disección dorsal profunda",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 470,
+  "title": "Tendones de los extensores del carpo A 5.",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 471,
+  "title": "parse dedo ace",
+  "regionId": "R06",
+  "subregionId": "R06S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 472,
+  "title": "Inervación cutánea del carpo y mano",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 473,
+  "title": "l Arterias y nervios del miembro superior",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 474,
+  "title": "Nervio musculocutáneo Gi",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 475,
+  "title": "l Nervio mediano",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 476,
+  "title": "Nervio cubital Ñ",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 477,
+  "title": "l Nervio radial en el brazo y nervios posteriores del hombro",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 478,
+  "title": "Nervio radial en el antebrazo Le",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 479,
+  "title": "Nervios cutaneos y venas superficiales del hombro y brazo",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 480,
+  "title": "Nervios cutáneos y venas superficiales del antebrazo iG",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 481,
+  "title": "l Inervación cutánea del miembro superior",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 482,
+  "title": "Dermatomas del miembro superior",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 483,
+  "title": "Vasos y nódulos linfáticos del miembro superior",
+  "regionId": "R06",
+  "subregionId": "R06S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 484,
+  "title": "TC de arteriografías del miembro superior",
+  "regionId": "R06",
+  "subregionId": "R06S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 485,
+  "title": "Miembro inferior EA",
+  "regionId": "R07",
+  "subregionId": "R07S01",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 486,
+  "title": "Bi Hueso coxal",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 487,
+  "title": "Articulación de la cadera ied",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 488,
+  "title": "Articulación de la cadera: radiografía anteroposterior",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 489,
+  "title": "Fémur",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 490,
+  "title": "ho Inserciones óseas de los mm. de cadera y muslo: visión anterior",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 491,
+  "title": "Inserciones óseas de los mm. de cadera y muslo: visión posterior lr",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 492,
+  "title": "Músculos del muslo: visiones anteriores",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 493,
+  "title": "Músculos del muslo: visiones anteriores (continuación) we",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 494,
+  "title": "Al Músculos de la cadera y muslo: visión lateral",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 495,
+  "title": "Músculos de la cadera y muslo: visiones posteriores a",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 496,
+  "title": "bo Músculos psoas e ilíaco",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 497,
+  "title": "Plexos lumbosacro y coccígeo E",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 498,
+  "title": "ho Plexo lumbar",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 499,
+  "title": "Plexos sacro y coccígeo",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 500,
+  "title": "E Arterias y nervios del muslo: visiones anteriores",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 501,
+  "title": "Arterias y nervios del muslo: visiones anteriores (continuación) Be:",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 502,
+  "title": "Arterias y nervios del muslo: visión posterior",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 503,
+  "title": "Nervios de la cadera y nalga de",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 504,
+  "title": "yA Arterias de la cabeza y cuello femorales",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 505,
+  "title": "Muslo: secciones transversales seriadas od",
+  "regionId": "R07",
+  "subregionId": "R07S02",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 506,
+  "title": "i Rodilla: visiones lateral y medial",
+  "regionId": "R07",
+  "subregionId": "R07S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 507,
+  "title": "Rodilla: visiones anteriores",
+  "regionId": "R07",
+  "subregionId": "R07S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 508,
+  "title": "a Rodilla: interior",
+  "regionId": "R07",
+  "subregionId": "R07S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 509,
+  "title": "Rodilla: ligamentos cruzados y colaterales leg",
+  "regionId": "R07",
+  "subregionId": "R07S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 510,
+  "title": "ho Rodilla: radiografía anteroposterior",
+  "regionId": "R07",
+  "subregionId": "R07S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 511,
+  "title": "Rodilla: visiones posterior y sagital Ey:",
+  "regionId": "R07",
+  "subregionId": "R07S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 512,
+  "title": "a Arterias del muslo y rodilla: esquema",
+  "regionId": "R07",
+  "subregionId": "R07S03",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 513,
+  "title": "Tibia y fíbula (peroné)",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 514,
+  "title": "a Tibia y peroné (continuación)",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 515,
+  "title": "Inserciones de los músculos de la pierna",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 516,
+  "title": "Be Músculos de la pierna (disección superficial): visión posterior",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 517,
+  "title": "Músculos de la pierna (disección intermedia): visión posterior nd",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 518,
+  "title": "cl Músculos de la pierna (disección profunda): visión posterior",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 519,
+  "title": "Músculos de la pierna (disección superficial): visión anterior",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 520,
+  "title": "Es! Músculos de la pierna (disección profunda): visión anterior",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 521,
+  "title": "Músculos de la pierna: visión lateral Er",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 522,
+  "title": "Pierna: secciones transversales y compartimientos de la fascia",
+  "regionId": "R07",
+  "subregionId": "R07S04",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 523,
+  "title": "Huesos del pie",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 524,
+  "title": "al Huesos del pie (continuación)",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 525,
+  "title": "Calcáneo lr:",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 526,
+  "title": "re Tobillo: radiografías",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 527,
+  "title": "Ligamentos y tendones del tobillo ms",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 528,
+  "title": "E Ligamentos y tendones del pie: visión plantar",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 529,
+  "title": "Vainas tendinosas del tobillo ig",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 530,
+  "title": "a Músculos del dorso del pie: disección superficial",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 531,
+  "title": "Dorso del pie: disección profunda",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 532,
+  "title": "A Planta del pie: disección superficial",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 533,
+  "title": "Músculos de la planta del pie: primer plano ka",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 534,
+  "title": "el Músculos de la planta del pie: segundo plano",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 535,
+  "title": "Músculos de la planta del pie: tercer plano be",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 536,
+  "title": "Músculos interóseos y arterias profundas del pie",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 537,
+  "title": "Músculos interóseos del pie es",
+  "regionId": "R07",
+  "subregionId": "R07S05",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 538,
+  "title": "a Nervios femoral y cutaneo femoral lateral",
+  "regionId": "R07",
+  "subregionId": "R07S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 539,
+  "title": "Nervio obturador Ez:",
+  "regionId": "R07",
+  "subregionId": "R07S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 540,
+  "title": "Nervios ciático y cutáneo femoral posterior",
+  "regionId": "R07",
+  "subregionId": "R07S06",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 541,
+  "title": "Nervio tibial",
+  "regionId": "R07",
+  "subregionId": "R07S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 542,
+  "title": "fe Nervio peroneo común",
+  "regionId": "R07",
+  "subregionId": "R07S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 543,
+  "title": "Dermatomas del miembro inferior",
+  "regionId": "R07",
+  "subregionId": "R07S06",
+  "titleConfidence": "gold_manual"
+ },
+ {
+  "plate": 544,
+  "title": "A Nn. y vv. superficiales del miembro inferior: visión anterior",
+  "regionId": "R07",
+  "subregionId": "R07S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 545,
+  "title": "Nn. y vv. superficiales del miembro inferior: visión posterior os",
+  "regionId": "R07",
+  "subregionId": "R07S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 546,
+  "title": "q Vasos y nódulos linfáticos del miembro inferior",
+  "regionId": "R07",
+  "subregionId": "R07S06",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 547,
+  "title": "TC de arteriografías del miembro inferior",
+  "regionId": "R07",
+  "subregionId": "R07S07",
+  "titleConfidence": "gold_ocr_title"
+ },
+ {
+  "plate": 548,
+  "title": "Figuras clave para las secciones transversales",
+  "regionId": "R08",
+  "subregionId": "R08S01",
+  "titleConfidence": "gold_manual"
+ }
+]

@@ -9,6 +9,14 @@ import {
   type ConceptoSimulado,
 } from '../fixtures/conceptos';
 import {
+  coincideAnatomia,
+  entradaEnLinea,
+  entradaPorId,
+  esConjuntoConAnatomia,
+  fichaAnatomicaEnLinea,
+  ENTRADAS as ENTRADAS_ANATOMICAS,
+} from '../fixtures/anatomia';
+import {
   CATEGORIAS,
   ETIQUETAS,
   PARAGUAS,
@@ -77,7 +85,15 @@ export function registrarTerminologia(router: MockRouter): void {
     const q = texto(query, 'query') ?? texto(query, 'q');
     // Los del glosario van primero y en el orden de la grilla; el resto del
     // catálogo de la plataforma va detrás, como hasta ahora.
-    const delGlosario = [PARAGUAS, ...CATEGORIAS, ...ETIQUETAS].map(conjuntoEnLinea);
+    const delGlosario = [PARAGUAS, ...CATEGORIAS, ...ETIQUETAS].map((conjunto) => {
+      const enLinea = conjuntoEnLinea(conjunto);
+      // `conjuntoEnLinea` sólo cuenta el catálogo curado. Sin esto la tarjeta
+      // «Anatomía» diría 3 y la categoría tendría 3 164: la grilla esconde las
+      // que declaran cero, así que el conteo decide qué se ve.
+      return esConjuntoConAnatomia(conjunto)
+        ? { ...enLinea, memberCount: enLinea.memberCount + ENTRADAS_ANATOMICAS.length }
+        : enLinea;
+    });
     const delCatalogo = todosLosConjuntos().map((c) => ({
       id: c.id,
       internalCode: c.internalCode,
@@ -95,12 +111,26 @@ export function registrarTerminologia(router: MockRouter): void {
   router.get('/terminology/value-sets/:id/$expand', ({ params, query }) => {
     const delGlosario = conjuntoDeGlosarioPorId(params['id']!);
     if (delGlosario !== undefined) {
+      const curados = miembrosDeConjunto(delGlosario).map((t) => ({
+        conceptId: t.id,
+        code: t.code,
+        display: t.esName,
+        definition: t.plainSummaryEs,
+      }));
+      const anatomicos = esConjuntoConAnatomia(delGlosario)
+        ? ENTRADAS_ANATOMICAS.map((e) => {
+            const enLinea = entradaEnLinea(e);
+            return {
+              conceptId: enLinea.conceptId,
+              code: enLinea.code,
+              display: enLinea.display,
+              definition: enLinea.shortDefinition,
+            };
+          })
+        : [];
       const pagina = paginar(
-        miembrosDeConjunto(delGlosario).map((t, indice) => ({
-          conceptId: t.id,
-          code: t.code,
-          display: t.esName,
-          definition: t.plainSummaryEs,
+        [...curados, ...anatomicos].map((miembro, indice) => ({
+          ...miembro,
           selectable: true,
           codeSystemVersionId: CODE_SYSTEM_VERSION_ID,
           ordinal: indice + 1,
@@ -146,12 +176,24 @@ export function registrarTerminologia(router: MockRouter): void {
     // El glosario: `includeValueSets` sin `valueSetId` acota al paraguas.
     if (includeValueSets) {
       const conjunto = valueSetId === null ? PARAGUAS : conjuntoDeGlosarioPorId(valueSetId);
-      const universo = conjunto === undefined ? [] : miembrosDeConjunto(conjunto);
-      const coincidentes = universo.filter((t) => coincide(t, q));
+      if (conjunto === undefined) return { items: [], count: 0, limit };
+
+      const curados = miembrosDeConjunto(conjunto)
+        .filter((t) => coincide(t, q))
+        .map(terminoEnLinea);
+      // La taxonomía de Netter vive aparte del catálogo curado (ver
+      // `fixtures/anatomia.ts`) y entra por la misma categoría «Anatomía».
+      const anatomicos = esConjuntoConAnatomia(conjunto)
+        ? ENTRADAS_ANATOMICAS.filter((e) => coincideAnatomia(e, q)).map(entradaEnLinea)
+        : [];
+      // Los curados van primero: están escritos por alguien, con definición
+      // clínica y resumen llano. Las 3 161 entradas del índice son el fondo.
+      const coincidentes = [...curados, ...anatomicos];
+
       // `count` es el total que coincide, no el recortado: es lo que la
       // pantalla lee para avisar que se mostró sólo una parte.
       return {
-        items: coincidentes.slice(0, limit).map(terminoEnLinea),
+        items: coincidentes.slice(0, limit),
         count: coincidentes.length,
         limit,
       };
@@ -167,6 +209,9 @@ export function registrarTerminologia(router: MockRouter): void {
   router.get('/terminology/concepts/:id', ({ params }) => {
     const delGlosario = terminoPorId(params['id']!);
     if (delGlosario !== undefined) return fichaEnLinea(delGlosario);
+
+    const anatomico = entradaPorId(params['id']!);
+    if (anatomico !== undefined) return fichaAnatomicaEnLinea(anatomico);
 
     const c = conceptoPorId(params['id']!);
     if (c === undefined) return notFound('Concepto no encontrado');

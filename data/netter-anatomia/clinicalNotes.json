@@ -1,0 +1,42 @@
+[
+ {
+  "plate": 20,
+  "title": "Cambios degenerativos de la columna cervical",
+  "definition": "Cambios degenerativos de la columna cervical se utiliza aquí para describir cambios osteoarticulares degenerativos de vértebras y articulaciones cervicales que pueden estrechar espacios o comprometer estructuras nerviosas. La lámina de Netter aporta el contexto anatómico visual; esta definición clínica no se atribuye al texto del Atlas salvo por la existencia de la lámina/título correspondiente.",
+  "treatment": "El tratamiento depende de síntomas y gravedad. Para estenosis sintomática, Mayo Clinic describe opciones como AINE, algunos fármacos para dolor neuropático y, en determinados casos, inyecciones; fisioterapia y cirugía forman parte del espectro terapéutico según el cuadro.",
+  "verificationSource": "Mayo Clinic, Estenosis espinal — diagnóstico y tratamiento.",
+  "guardrail": "No usar este archivo como prescripción ni como protocolo individual. El tratamiento depende de evaluación clínica, urgencia, edad, embarazo, comorbilidades, contraindicaciones y recursos disponibles."
+ },
+ {
+  "plate": 101,
+  "title": "Hematoma epidural intracraneal",
+  "definition": "Hematoma epidural intracraneal se utiliza aquí para describir acumulación de sangre entre cráneo y duramadre que puede producir efecto de masa y compresión encefálica. La lámina de Netter aporta el contexto anatómico visual; esta definición clínica no se atribuye al texto del Atlas salvo por la existencia de la lámina/título correspondiente.",
+  "treatment": "La evaluación es urgente y se apoya típicamente en TC. Los hematomas epidurales grandes o arteriales suelen requerir evacuación quirúrgica; algunos venosos pequeños pueden vigilarse con imagen seriada bajo criterio neuroquirúrgico.",
+  "verificationSource": "Manual Merck/MSD, Hematomas intracraneales y Traumatismo encefalocraneano; revisión web 2026.",
+  "guardrail": "No usar este archivo como prescripción ni como protocolo individual. El tratamiento depende de evaluación clínica, urgencia, edad, embarazo, comorbilidades, contraindicaciones y recursos disponibles."
+ },
+ {
+  "plate": 162,
+  "title": "Hernia de disco lumbar",
+  "definition": "Hernia de disco lumbar se utiliza aquí para describir desplazamiento de material discal que puede irritar o comprimir raíces nerviosas. La lámina de Netter aporta el contexto anatómico visual; esta definición clínica no se atribuye al texto del Atlas salvo por la existencia de la lámina/título correspondiente.",
+  "treatment": "El manejo suele comenzar de forma conservadora. Mayo Clinic enumera analgésicos de venta libre como acetaminofén/paracetamol, ibuprofeno o naproxeno; para dolor neuropático menciona gabapentina, pregabalina, duloxetina o venlafaxina; también pueden usarse relajantes musculares o inyecciones de esteroides en escenarios seleccionados. La cirugía se reserva para indicaciones específicas.",
+  "verificationSource": "Mayo Clinic, Hernia de disco — diagnóstico y tratamiento; actualizado en 2026.",
+  "guardrail": "No usar este archivo como prescripción ni como protocolo individual. El tratamiento depende de evaluación clínica, urgencia, edad, embarazo, comorbilidades, contraindicaciones y recursos disponibles."
+ },
+ {
+  "plate": 374,
+  "title": "Prolapso uterino / prolapso de órganos pélvicos",
+  "definition": "Prolapso uterino / prolapso de órganos pélvicos se utiliza aquí para describir descenso de uno o más órganos pélvicos por alteración de sus estructuras de soporte. La lámina de Netter aporta el contexto anatómico visual; esta definición clínica no se atribuye al texto del Atlas salvo por la existencia de la lámina/título correspondiente.",
+  "treatment": "Las opciones incluyen observación en casos leves, ejercicios del suelo pélvico, pesarios y cirugía según síntomas, grado y preferencias. Los medicamentos no reconstruyen por sí solos el soporte anatómico.",
+  "verificationSource": "ACOG, Pelvic Support Problems / Surgery for Pelvic Organ Prolapse.",
+  "guardrail": "No usar este archivo como prescripción ni como protocolo individual. El tratamiento depende de evaluación clínica, urgencia, edad, embarazo, comorbilidades, contraindicaciones y recursos disponibles."
+ },
+ {
+  "plate": 375,
+  "title": "Embarazo ectópico",
+  "definition": "Embarazo ectópico se utiliza aquí para describir implantación del embarazo fuera de la cavidad uterina, con localización tubárica frecuente. La lámina de Netter aporta el contexto anatómico visual; esta definición clínica no se atribuye al texto del Atlas salvo por la existencia de la lámina/título correspondiente.",
+  "treatment": "El tratamiento depende de estabilidad, localización, tamaño y seguimiento. En casos seleccionados no rotos puede emplearse metotrexato bajo protocolo y control de hCG; la cirugía es necesaria en rotura o cuando el tratamiento médico no es apropiado.",
+  "verificationSource": "ACOG, Ectopic Pregnancy / Tubal Ectopic Pregnancy.",
+  "guardrail": "No usar este archivo como prescripción ni como protocolo individual. El tratamiento depende de evaluación clínica, urgencia, edad, embarazo, comorbilidades, contraindicaciones y recursos disponibles."
+ }
+]
