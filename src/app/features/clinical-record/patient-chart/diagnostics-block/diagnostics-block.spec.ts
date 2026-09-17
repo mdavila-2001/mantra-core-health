@@ -71,6 +71,24 @@ const INFORME_BORRADOR = {
   currentReleasedVersionId: undefined,
 };
 
+/**
+ * El estudio previo, tal como lo manda el servidor (antiduplicación de
+ * estudios, v4.2.17, T-26): forma de transporte, con `null` en vez de
+ * ausente y `performedAt` como texto, no `Date`.
+ */
+const PREVIOUS_STUDY_WIRE = {
+  reportId: 'dr-previo',
+  serviceRequestId: null,
+  studyName: 'Hemograma completo',
+  providerName: 'Laboratorio Central',
+  performedAt: '2026-08-01T10:00:00.000Z',
+  daysAgo: 13,
+  resultsAvailable: true,
+  conclusionText: null,
+  reportDownloadUrl: null,
+  sameOrganization: true,
+};
+
 /** base64url **sobre UTF-8**, como el token real. */
 function jwt(payload: Record<string, unknown>): string {
   const b64 = (o: unknown) => {
@@ -135,6 +153,37 @@ describe('DiagnosticsBlock', () => {
     for (const req of http.match((r) => r.url === '/terminology/concepts')) {
       req.flush({ items: [], total: 0 });
     }
+  }
+
+  /**
+   * Responde `POST /clinical/service-requests/duplicate-check`.
+   *
+   * Sin duplicado, sólo `isDuplicate: false` importa —el resto no se lee—.
+   * Con duplicado, siempre el mismo estudio previo: es el que las pruebas de
+   * reutilizar/repetir esperan de vuelta en el alta.
+   */
+  function responderChequeo(isDuplicate: boolean): void {
+    const req = http.expectOne((r) => r.url === '/clinical/service-requests/duplicate-check');
+    expect(req.request.method).toBe('POST');
+    req.flush(
+      isDuplicate
+        ? {
+            isDuplicate: true,
+            previousStudy: PREVIOUS_STUDY_WIRE,
+            warningMessage: 'Ya se hizo este estudio hace poco.',
+            requiresJustification: true,
+            pendingReport: false,
+            windowDays: 30,
+          }
+        : {
+            isDuplicate: false,
+            previousStudy: null,
+            warningMessage: null,
+            requiresJustification: false,
+            pendingReport: false,
+            windowDays: 30,
+          },
+    );
   }
 
   afterEach(() => {
@@ -272,6 +321,9 @@ describe('DiagnosticsBlock', () => {
     componente['categoria'].set('cat-lab');
     componente['pedir']();
 
+    // Primero pregunta si es un duplicado; sin uno, el alta sigue directo.
+    responderChequeo(false);
+
     const req = http.expectOne((r) => r.url === '/clinical/service-requests');
     expect(req.request.method).toBe('POST');
     expect(req.request.body.codeConceptId).toBe('code-hemograma');
@@ -293,6 +345,116 @@ describe('DiagnosticsBlock', () => {
     responderCircuito({ ...CIRCUITO_VACIO, orders: [ORDEN] });
     fixture.detectChanges();
     expect(componente['estudios']().length).toBe(1);
+  });
+
+  /**
+   * Antiduplicación de estudios (v4.2.17, T-26). Cuatro casos, sobre el mismo
+   * `pedir()` de arriba: el chequeo encuentra un duplicado y abre el diálogo
+   * en vez de mandar el alta; reutilizar y repetir mandan la decisión que
+   * corresponde; el chequeo fallando no manda nada (fail closed); y la
+   * carrera entre el chequeo y el alta reabre el diálogo con lo que vino en
+   * el propio 422.
+   */
+  describe('antiduplicación de estudios', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      responderCatalogos();
+      responderCircuito();
+      componente['estudio'].set('code-hemograma');
+      componente['categoria'].set('cat-lab');
+    });
+
+    it('con duplicado abre el diálogo y no manda el alta', () => {
+      componente['pedir']();
+      responderChequeo(true);
+      fixture.detectChanges();
+
+      expect(componente['duplicateCheck']()).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="duplicate-study-warning-dialog"]'),
+      ).not.toBeNull();
+      http.expectNone((r) => r.url === '/clinical/service-requests');
+    });
+
+    it('reutilizar manda `reusePreviousReport` y el informe previo', () => {
+      componente['pedir']();
+      responderChequeo(true);
+      fixture.detectChanges();
+
+      componente['confirmReuse']();
+
+      const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(req.request.body.previousDiagnosticReportId).toBe('dr-previo');
+      expect(req.request.body.reusePreviousReport).toBe(true);
+      expect('duplicateOverrideReason' in req.request.body).toBe(false);
+      req.flush({
+        id: 'sr-2',
+        patientProfileId: 'p-1',
+        status: 'st-satisfecha',
+        intent: 'st-orden',
+        createdAt: '2026-08-14T10:00:00.000Z',
+      });
+      responderCircuito();
+    });
+
+    it('repetir manda la justificación', () => {
+      componente['pedir']();
+      responderChequeo(true);
+      fixture.detectChanges();
+
+      componente['confirmRepeat']('Sospecha de anemia aguda, hay que repetirlo hoy mismo.');
+
+      const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(req.request.body.previousDiagnosticReportId).toBe('dr-previo');
+      expect(req.request.body.duplicateOverrideReason).toBe(
+        'Sospecha de anemia aguda, hay que repetirlo hoy mismo.',
+      );
+      expect('reusePreviousReport' in req.request.body).toBe(false);
+      req.flush({
+        id: 'sr-3',
+        patientProfileId: 'p-1',
+        status: 'st-activa',
+        intent: 'st-orden',
+        createdAt: '2026-08-14T10:00:00.000Z',
+      });
+      responderCircuito();
+    });
+
+    it('si el chequeo falla, no manda el alta (fail closed)', () => {
+      componente['pedir']();
+
+      http
+        .expectOne((r) => r.url === '/clinical/service-requests/duplicate-check')
+        .flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      expect(componente['duplicateCheck']()).toBeNull();
+      expect(componente['errorDelPedido']()).not.toBeNull();
+      http.expectNone((r) => r.url === '/clinical/service-requests');
+    });
+
+    it('la carrera entre el chequeo y el alta reabre el diálogo con el 422', () => {
+      componente['pedir']();
+      responderChequeo(false);
+
+      const alta = http.expectOne((r) => r.url === '/clinical/service-requests');
+      alta.flush(
+        {
+          code: 'PRECONDITION_FAILED',
+          message: 'Ya existe un estudio igual reciente.',
+          timestamp: '2026-08-14T10:00:00.000Z',
+          path: '/clinical/service-requests',
+          details: {
+            reason: 'DUPLICATE_STUDY_DETECTED',
+            previousStudy: PREVIOUS_STUDY_WIRE,
+          },
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+      fixture.detectChanges();
+
+      expect(componente['duplicateCheck']()?.previousStudy?.reportId).toBe('dr-previo');
+    });
   });
 
   it('el fallo del histórico no impide pedir', () => {

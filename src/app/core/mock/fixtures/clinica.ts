@@ -470,6 +470,14 @@ export interface OrdenSimulada {
   readonly encounterId?: string;
   readonly reasonText: string;
   readonly createdAt: string;
+  /**
+   * Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2): el informe
+   * previo que satisface esta orden, cuando el médico decidió reutilizarlo o
+   * repetir el estudio con justificación. Ausente en cualquier otra orden —
+   * ninguna de las cuatro sembradas por paciente lo trae.
+   */
+  readonly previousDiagnosticReportId?: string;
+  readonly duplicateOverrideReason?: string;
 }
 
 export const ordenes = new Coleccion<OrdenSimulada>(

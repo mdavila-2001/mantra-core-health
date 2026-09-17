@@ -9,6 +9,8 @@ import type {
   ClaimAdjudication,
   ClaimDetail,
   ClaimDispute,
+  ClaimLine,
+  ClaimLineDuplicateStudy,
   ClaimListItem,
   ClaimPage,
   ClaimQuery,
@@ -99,11 +101,23 @@ type WireClaimDispute = Omit<ClaimDispute, 'submittedAt' | 'filingDeadline'> & {
   readonly filingDeadline: string | null;
 };
 
+// Antiduplicación de estudios (subtarea 3.2): `duplicateStudy.performedAt`
+// llega como texto ISO, no como `Date` — el resto de la línea ya venía sin
+// mapear (`toClaimDetail` esparcía `lines` tal cual); se corrige acá.
+type WireClaimLineDuplicateStudy = Omit<ClaimLineDuplicateStudy, 'performedAt'> & {
+  readonly performedAt: string;
+};
+
+type WireClaimLine = Omit<ClaimLine, 'duplicateStudy'> & {
+  readonly duplicateStudy: WireClaimLineDuplicateStudy | null;
+};
+
 type WireClaimDetail = Omit<
   ClaimDetail,
-  'header' | 'adjudication' | 'adjudicationHistory' | 'disputes'
+  'header' | 'lines' | 'adjudication' | 'adjudicationHistory' | 'disputes'
 > & {
   readonly header: WireClaimListItem;
+  readonly lines: readonly WireClaimLine[];
   readonly adjudication: WireClaimAdjudication | null;
   readonly adjudicationHistory: readonly WireClaimAdjudication[];
   readonly disputes: readonly WireClaimDispute[];
@@ -363,9 +377,19 @@ function toClaimDetail(body: WireClaimDetail): ClaimDetail {
   return {
     ...body,
     header: toClaimListItem(body.header),
+    lines: body.lines.map(toClaimLine),
     adjudication: body.adjudication ? toClaimAdjudication(body.adjudication) : null,
     adjudicationHistory: body.adjudicationHistory.map(toClaimAdjudication),
     disputes: body.disputes.map(toClaimDispute),
+  };
+}
+
+function toClaimLine(body: WireClaimLine): ClaimLine {
+  return {
+    ...body,
+    duplicateStudy: body.duplicateStudy
+      ? { ...body.duplicateStudy, performedAt: new Date(body.duplicateStudy.performedAt) }
+      : null,
   };
 }
 

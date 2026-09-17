@@ -90,6 +90,18 @@ const ENUMS: readonly (readonly [patron: RegExp, valueSet: string, name: string]
   [/care_plan_activities\.activity_concept_id/, 'VS_CARE_PLAN_ACTIVITY', 'Actividad'],
   [/document_records\.category_concept_id/, 'VS_DOCUMENT_CATEGORY', 'Categoría documental'],
 
+  /*
+   * Laboratorio e imagenología (antiduplicación de estudios, v4.2.17, T-26,
+   * subtarea 3.2). Sin estas tres filas el selector «Estudio» de
+   * `DiagnosticsBlock` caía al fallback `VS_RECORD_STATUS` y la maqueta no
+   * podía pedir un estudio: mismo defecto que ya se había cerrado para el
+   * diagnóstico. Van antes de `/category/` a secas, que casaría con
+   * `service_requests.category_concept_id` pero con el conjunto equivocado.
+   */
+  [/service_requests\.code_concept_id/, 'VS_DIAGNOSTIC_STUDY', 'Estudio'],
+  [/service_requests\.category_concept_id/, 'VS_SERVICE_REQUEST_CATEGORY', 'Tipo'],
+  [/service_requests\.priority_concept_id/, 'VS_PRIORITY', 'Prioridad'],
+
   [/sex_at_birth/, 'VS_BIRTH_SEX', 'Sexo al nacer'],
   [/gender/, 'VS_ADMINISTRATIVE_GENDER', 'Género'],
   [/municipality/, 'VS_BO_MUNICIPALITY', 'Municipio'],
