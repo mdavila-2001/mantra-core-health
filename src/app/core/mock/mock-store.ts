@@ -1,3 +1,5 @@
+import { buildInfo } from '../../../environments/env.generated';
+
 /* ============================================================================
     Ayudantes del backend simulado: identificadores estables, fechas relativas
     a «hoy», paginación por cursor y colecciones en memoria.
@@ -134,12 +136,30 @@ export class Coleccion<T extends { readonly id: string }> {
   }
 
   /**
-   * Lo que quedó de una visita anterior, o `null` si no hay o no se puede leer.
+   * Lo que quedó de una visita anterior, o `null` si no sirve.
    *
-   * Tolerante a propósito: el almacenamiento puede estar bloqueado —modo
-   * privado, política del navegador— o traer basura de una versión anterior de
-   * la maqueta. En cualquiera de los dos casos se arranca de los fixtures, que
-   * es peor que persistir pero mucho mejor que una pantalla rota.
+   * ## Por qué lleva el sello del build, y qué defecto evita
+   *
+   * Lo guardado gana sobre el fixture —esa es toda la gracia de persistir—,
+   * pero eso convierte cada despliegue en una trampa: quien tenga la pestaña
+   * abierta de antes **sigue viendo los datos viejos para siempre**, porque su
+   * `sessionStorage` pisa el fixture nuevo en cada recarga. No hay error, no
+   * hay aviso; la pantalla se ve perfecta y muestra lo que ya no existe.
+   *
+   * Ocurrió de verdad: al traer los laboratorios y las farmacias reales del
+   * corpus boliviano, quien ya tenía la maqueta abierta seguía viendo los ocho
+   * inventados, y desde el navegador no había forma de distinguirlo de un
+   * despliegue que no había llegado.
+   *
+   * El sello es `buildInfo.commit`, que cambia en cada build. Si no coincide,
+   * lo guardado es de otra versión de la maqueta y se descarta: se pierde lo
+   * que esa pestaña hubiera escrito —que es de mentira— y se gana que el
+   * despliegue se vea sin cerrar la pestaña ni vaciar nada a mano.
+   *
+   * Sigue siendo tolerante con todo lo demás: el almacenamiento puede estar
+   * bloqueado (modo privado, política del navegador) o traer basura. En
+   * cualquier caso se arranca de los fixtures, que es mucho mejor que una
+   * pantalla rota.
    */
   private leerGuardadas(): readonly T[] | null {
     if (this.clave === null || typeof sessionStorage === 'undefined') {
@@ -148,20 +168,34 @@ export class Coleccion<T extends { readonly id: string }> {
     try {
       const crudo = sessionStorage.getItem(this.clave);
       if (crudo === null) return null;
-      const filas: unknown = JSON.parse(crudo);
-      return Array.isArray(filas) ? (filas as T[]) : null;
+      const guardado: unknown = JSON.parse(crudo);
+      if (
+        guardado === null ||
+        typeof guardado !== 'object' ||
+        !('build' in guardado) ||
+        !('filas' in guardado)
+      ) {
+        // Formato de antes del sello: es de otra versión por definición.
+        return null;
+      }
+      const { build, filas } = guardado as { build: unknown; filas: unknown };
+      if (build !== buildInfo.commit || !Array.isArray(filas)) return null;
+      return filas as T[];
     } catch {
       return null;
     }
   }
 
-  /** Vuelca la tabla. Silencioso ante fallo: el simulador nunca rompe la app. */
+  /** Vuelca la tabla con su sello. Silencioso ante fallo: nunca rompe la app. */
   private guardar(): void {
     if (this.clave === null || typeof sessionStorage === 'undefined') {
       return;
     }
     try {
-      sessionStorage.setItem(this.clave, JSON.stringify(this.todos()));
+      sessionStorage.setItem(
+        this.clave,
+        JSON.stringify({ build: buildInfo.commit, filas: this.todos() }),
+      );
     } catch {
       // Cuota llena o almacenamiento bloqueado: se sigue en memoria.
     }
