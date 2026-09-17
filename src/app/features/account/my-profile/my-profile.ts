@@ -283,6 +283,23 @@ export class MyProfile {
    */
   protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
 
+  /**
+   * Si el lateral tiene algo que dibujar.
+   *
+   * Hoy su único habitante es la verificación de identidad: «Tu acceso» salió
+   * de esta pantalla por pedido del cliente del 13/09/2026 —«Organización» y
+   * «Roles» son vocabulario de sistema— y su prueba lo fija. Sin nada que
+   * poner, la rejilla no reserva la columna y la ficha ocupa el ancho entero.
+   *
+   * Es un método y no un `computed`: `verificacionOfrecida` es una constante
+   * de módulo copiada en un campo, no una señal, y
+   * `my-profile.verificacion-ofrecida.spec.ts` la enciende escribiendo el campo
+   * después de construir. Un `computed` no se enteraría.
+   */
+  protected hayLateral(): boolean {
+    return this.verificacionOfrecida;
+  }
+
   /** El mensaje de un 403 que no es el de identidad: se muestra como lo haría el host. */
   protected readonly motivoDelMuro = computed(() => {
     const estado = this.resumen();

@@ -39,11 +39,6 @@ type WirePost = Omit<PublicPostSummary, 'publishedAt'> & {
   readonly publishedAt: string;
 };
 
-type WireReview = Omit<PublicProfileReview, 'publishedAt' | 'response'> & {
-  readonly publishedAt: string;
-  readonly response: { readonly text: string; readonly publishedAt: string } | null;
-};
-
 type WireComment = Omit<PublicComment, 'createdAt'> & {
   readonly createdAt: string;
 };

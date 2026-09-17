@@ -97,7 +97,7 @@
                 class="perfil__estrella perfil__calificacion-boton"
                 data-testid="perfil-estrellas"
                 title="Ver quiénes dieron estrellas"
-                (click)="abrirOpiniones('estrellas')"
+                (click)="abrirOpiniones()"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -117,7 +117,7 @@
                 type="button"
                 class="perfil__opiniones perfil__calificacion-boton perfil__opiniones-boton"
                 data-testid="perfil-opiniones"
-                (click)="abrirOpiniones('opiniones')"
+                (click)="abrirOpiniones()"
               >
                 {{ p.ratingCount }} {{ p.ratingCount === 1 ? 'opinión' : 'opiniones' }}
               </button>
@@ -501,16 +501,14 @@
       </aside>
     </div>
 
-    <!-- Las opiniones y quiénes dieron estrellas. Se monta sólo al abrir: la
-         lectura sale de la API recién cuando alguien la pide. -->
-    @if (opinionesAbiertas(); as pestana) {
+    <!-- Las opiniones. Se montan sólo al desplegarlas: la lectura sale a la
+         API recién cuando alguien la pide. Misma forma que en
+         `public-profile.html`, que es donde este componente ya vivía. -->
+    @if (opinionesAbiertas()) {
       <app-public-profile-reviews
         [kind]="p.kind"
         [slug]="p.slug"
-        [displayName]="p.displayName"
-        [promedio]="p.ratingAverage"
-        [pestanaInicial]="pestana"
-        (cerrado)="cerrarOpiniones()"
+        [professionalName]="p.displayName"
       />
     }
 

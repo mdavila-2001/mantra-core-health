@@ -113,7 +113,18 @@ describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
     expect(sedes()).toBe(1);
   });
 
-  it('«2 opiniones» abre el modal y muestra quién opinó; la estrella abre quiénes calificaron', async () => {
+  /**
+   * Hasta el merge de `dev` esto abría un modal con dos pestañas —«2 opiniones»
+   * una, la estrella la otra— y el cable traía `rating`, `text` y `reviewer`.
+   * Ese componente ya no existe: quedó la versión que se monta en línea, con el
+   * contrato nuevo (`overallRating`, `reviewText`, `reviewerDisplayName`), que
+   * es el único que soporta que alguien opine en anónimo.
+   *
+   * Lo que sigue valiendo, y es lo que se prueba, es que los dos botones de la
+   * calificación abran las opiniones y que las opiniones se lean. Las pestañas
+   * son una función a recuperar aparte, no algo que este archivo deba fingir.
+   */
+  it('«2 opiniones» despliega las opiniones y se leen', async () => {
     const { fixture, el, q } = crear();
     const http = TestBed.inject(HttpTestingController);
 
@@ -127,38 +138,37 @@ describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
         items: [
           {
             id: 'r1',
-            rating: 5,
-            text: 'Excelente atención.',
+            overallRating: 5,
+            reviewText: 'Excelente atención.',
+            reviewerDisplayName: 'Carla Vargas',
             publishedAt: '2026-08-02T00:00:00Z',
-            reviewer: { displayName: 'Carla Vargas', headline: 'Paciente', avatarUrl: null, slug: null, kind: null },
-            response: null,
+            editedAt: null,
+            responses: [],
           },
           {
             id: 'r2',
-            rating: 4,
-            text: null,
+            overallRating: 4,
+            reviewText: null,
+            // Quien eligió el anonimato no manda nombre: la pantalla lo dice
+            // con palabras, nunca con un hueco.
+            reviewerDisplayName: null,
             publishedAt: '2026-08-01T00:00:00Z',
-            reviewer: { displayName: 'Diego Suárez', headline: 'Paciente', avatarUrl: null, slug: null, kind: null },
-            response: null,
+            editedAt: null,
+            responses: [],
           },
         ],
         nextCursor: null,
-        totalHint: 2,
-        generatedAt: '2026-08-03T00:00:00Z',
+        ratingAverage: 4.5,
+        ratingCount: 2,
       });
     fixture.detectChanges();
     await fixture.whenStable();
 
-    const autores = () =>
-      [...el.querySelectorAll('[data-testid="review-author"]')].map((n) => n.textContent!.trim());
-    expect(autores()).toEqual(['Carla Vargas']);
-
-    q('reviews-tab-estrellas')!.click();
-    fixture.detectChanges();
-    expect(autores()).toEqual(['Carla Vargas', 'Diego Suárez']);
-    expect(
-      [...el.querySelectorAll('[data-testid="rater-stars"]')].map((n) => n.getAttribute('aria-label')),
-    ).toEqual(['5 estrellas', '4 estrellas']);
+    expect(el.querySelectorAll('[data-testid="opinion"]').length).toBe(2);
+    const texto = el.textContent ?? '';
+    expect(texto).toContain('Excelente atención.');
+    expect(texto).toContain('Carla Vargas');
+    expect(texto).toContain('Paciente verificado');
     http.verify();
   });
 });

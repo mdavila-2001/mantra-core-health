@@ -17,7 +17,6 @@ import { PublicPostCard } from '../public-post-card/public-post-card';
 import { PublicProfilePager } from '../public-profile-pager/public-profile-pager';
 import {
   PublicProfileReviews,
-  type PestanaDeOpiniones,
 } from '../public-profile-reviews/public-profile-reviews';
 
 import {
@@ -341,18 +340,29 @@ export class PublicProfileCard {
   }
 
   /* ==========================================================================
-      Las opiniones: quién opinó y quién dio estrellas, en un modal.
+      Las opiniones.
+
+      Hasta el merge de `dev` esto abría un modal con dos pestañas —«8
+      opiniones» abría una, la estrella la otra—. Ese modal ya no existe: el
+      merge dejó la versión de `PublicProfileReviews` que se monta **en línea**,
+      sin pestañas y sin salida `cerrado`, y esta tarjeta seguía hablándole al
+      componente anterior. La rama no compilaba.
+
+      Se reconcilia con el componente que quedó, que es el que trae el contrato
+      nuevo —con anonimato de quien opina— y sus pruebas. Los dos botones ahora
+      despliegan la misma sección. Recuperar las pestañas es una función, no un
+      arreglo de compilación: va aparte y con su decisión.
       ====================================================================== */
 
-  /** Qué pestaña del modal está abierta, o `null` si el modal está cerrado. */
-  protected readonly opinionesAbiertas = signal<PestanaDeOpiniones | null>(null);
+  /** Si la sección de opiniones está desplegada. */
+  protected readonly opinionesAbiertas = signal(false);
 
-  protected abrirOpiniones(pestana: PestanaDeOpiniones): void {
-    this.opinionesAbiertas.set(pestana);
+  protected abrirOpiniones(): void {
+    this.opinionesAbiertas.set(true);
   }
 
   protected cerrarOpiniones(): void {
-    this.opinionesAbiertas.set(null);
+    this.opinionesAbiertas.set(false);
   }
 
   /* ==========================================================================
@@ -386,12 +396,12 @@ export class PublicProfileCard {
   /**
    * Publicada la opinión, se abre la lista para que la vea.
    *
-   * El modal de opiniones relee al montarse, así que abrirlo acá es lo que
-   * hace que la recién publicada aparezca sin recargar la página.
+   * La sección de opiniones relee al montarse, así que desplegarla acá es lo
+   * que hace que la recién publicada aparezca sin recargar la página.
    */
   protected calificacionPublicada(): void {
     this.calificando.set(false);
-    this.opinionesAbiertas.set('opiniones');
+    this.opinionesAbiertas.set(true);
   }
 
   /* ==========================================================================

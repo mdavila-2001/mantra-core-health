@@ -174,22 +174,12 @@ export interface PublicPostReaction extends PublicSocialActor {
  * ficha pública propia —un paciente—: se muestra su nombre, pero no hay a dónde
  * enlazar.
  */
-export interface PublicProfileReview {
-  readonly id: string;
-  /** De 1 a 5. */
-  readonly rating: number;
-  readonly text: string | null;
-  readonly publishedAt: Date;
-  readonly reviewer: {
-    readonly displayName: string;
-    readonly headline: string | null;
-    readonly avatarUrl: string | null;
-    readonly slug: string | null;
-    readonly kind: PublicResultKind | null;
-  };
-  /** La respuesta de la ficha a esta opinión, si la hubo. */
-  readonly response: { readonly text: string; readonly publishedAt: Date } | null;
-}
+/* La declaración de `PublicProfileReview` que había acá quedó duplicada tras el
+   merge de `dev`: convivían la forma vieja (`rating`, `text`, `reviewer`) y la
+   nueva (`overallRating`, `reviewText`, `reviewerDisplayName`, `responses[]`),
+   y TypeScript las fusionaba en una interfaz imposible. Se conserva la nueva,
+   más abajo: es la que habla el cliente y la única que soporta el anonimato de
+   quien opina. Nadie consumía la vieja. */
 
 /** Un comentario del hilo público, con su autor adentro. */
 export interface PublicComment {
