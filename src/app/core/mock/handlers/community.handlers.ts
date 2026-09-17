@@ -21,6 +21,7 @@ import {
   type PublicacionSimulada,
   type VitrinaSimulada,
 } from '../fixtures/comunidad';
+import { encuentros } from '../fixtures/clinica';
 import { ESTADO } from '../fixtures/conceptos';
 import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
 import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
@@ -510,6 +511,49 @@ export function registrarComunidad(router: MockRouter): void {
       responses: [],
     });
     return { status: 201, body: { id: nueva.id, overallRating: nueva.overallRating, verified: true, dimensionCount: nueva.dimensionScores.length } };
+  });
+
+  /**
+   * `POST /patients/me/reviews` — el paciente califica la atención que recibió.
+   *
+   * Es la misma reseña que la de arriba, pero **sin nombrar la vitrina**: la
+   * ficha pública se abre por slug y no publica su id, así que acá el
+   * destinatario se deriva del encuentro declarado —igual que en el servidor
+   * real—, por su `primaryPractitionerId`.
+   */
+  router.post('/patients/me/reviews', (request) => {
+    const datos = cuerpo<{ verifiedEncounterId: string; overallRating: number; reviewText?: string; displayMode?: string }>(request);
+    // `cuerpo` devuelve un Partial: la atención es obligatoria y sin ella no
+    // hay a quién calificar, así que se rechaza acá y no se adivina una.
+    const atencionId = datos.verifiedEncounterId;
+    if (atencionId === undefined || atencionId === '') {
+      return validation('Falta la atención que respalda la calificación');
+    }
+    const atencion = encuentros.get(atencionId);
+    if (atencion === undefined) return notFound('Esa atención no existe');
+    const destino = vitrinaDe(atencion.primaryPractitionerId);
+    if (destino === undefined) return notFound('Quien te atendió no tiene ficha pública');
+    const actor = vitrinaDeSesion(request);
+    if (actor !== undefined && actor.id !== atencion.patientProfileId && vitrinaDe(atencion.patientProfileId)?.id !== actor.id) {
+      return forbidden('Esa atención no es tuya');
+    }
+    const yaCalificada = resenas.filtrar(
+      (r) => r.targetPublicProfileId === destino.id && r.reviewerProfileId === (actor?.id ?? ''),
+    );
+    if (yaCalificada.length > 0) return conflict('Ya calificaste esta atención');
+    const nueva = resenas.agregar({
+      id: nuevoId('review'),
+      targetPublicProfileId: destino.id,
+      reviewerProfileId: actor?.id ?? '',
+      overallRating: datos.overallRating ?? 5,
+      reviewText: datos.reviewText ?? '',
+      reviewerDisplayModeConceptId: datos.displayMode === 'ANONYMOUS' ? CONCEPTO.reviewDisplayAnon : CONCEPTO.reviewDisplayReal,
+      verificationStatusConceptId: ESTADO['ST-VERIFIED']!,
+      publishedAt: ahora(),
+      dimensionScores: [],
+      responses: [],
+    });
+    return { status: 201, body: { id: nueva.id, overallRating: nueva.overallRating, verified: true, dimensionCount: 0 } };
   });
 
   router.post('/community/profiles/:id/reviews/:reviewId/responses', (request) => {
