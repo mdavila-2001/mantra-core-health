@@ -114,6 +114,15 @@ const CONCEPTOS = {
   limit: 200,
 };
 
+/** El perfil propio, sin domicilio ni trabajo guardados (subtarea B.2). */
+const PERFIL_SIN_LUGARES = { personId: 'per-1', patientProfileId: 'pp-1', identityVerified: false };
+
+/** El mismo perfil, con la casa declarada con coordenadas. */
+const PERFIL_CON_CASA = {
+  ...PERFIL_SIN_LUGARES,
+  homeAddress: { lines: 'Av. Banzer 3er anillo', latitude: -17.78, longitude: -63.18 },
+};
+
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
 const BOB = { code: 'BOB', display: 'Boliviano' };
@@ -255,7 +264,14 @@ describe('WhereToBuy', () => {
   }
 
   /** Resuelve el recorrido completo hasta la consulta de disponibilidad. */
-  function responderHastaProductos(): void {
+  /**
+   * `PERFIL_SIN_LUGARES` por omisión: las pruebas que ya afirmaban «nadie dio
+   * una ubicación» siguen siendo ciertas sin tocarlas — sólo un perfil con
+   * domicilio hace que la primera consulta de disponibilidad lleve `lat`.
+   */
+  function responderHastaProductos(
+    perfil: Record<string, unknown> = PERFIL_SIN_LUGARES,
+  ): void {
     http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
     http
@@ -272,6 +288,7 @@ describe('WhereToBuy', () => {
           r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
       )
       .flush(productosDelConcepto(FIXTURE_IDS.conceptoIbuprofeno));
+    http.expectOne('/profiles/patients/me').flush(perfil);
     harness.detectChanges();
   }
 
@@ -466,6 +483,7 @@ describe('WhereToBuy', () => {
           r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
       )
       .flush({ items: [], limit: 1, truncated: false });
+    http.expectOne('/profiles/patients/me').flush(PERFIL_SIN_LUGARES);
     harness.detectChanges();
 
     const consulta = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
@@ -502,6 +520,7 @@ describe('WhereToBuy', () => {
           r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
       )
       .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
+    http.expectOne('/profiles/patients/me').flush(PERFIL_SIN_LUGARES);
     http
       .expectOne(
         (r) =>
@@ -542,6 +561,80 @@ describe('WhereToBuy', () => {
 
     expect(harness.routeNativeElement?.querySelector('[data-testid="compra-items"]')).toBeNull();
     // `http.verify()` del afterEach confirma que no salió nada más.
+  });
+
+  /**
+   * La casa declarada en el perfil alimenta la búsqueda sin pedir el GPS
+   * (subtarea B.2).
+   */
+  describe('el domicilio guardado mide la primera búsqueda', () => {
+    it('con casa guardada, la primera consulta de disponibilidad ya lleva su origen', async () => {
+      await montar();
+      responderHastaProductos(PERFIL_CON_CASA);
+
+      const consulta = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      expect(consulta.request.params.get('lat')).toBe('-17.78');
+      expect(consulta.request.params.get('lng')).toBe('-63.18');
+      consulta.flush(DISPONIBILIDAD_FIXTURE);
+      harness.detectChanges();
+
+      expect(texto()).toContain('Distancias medidas desde tu casa');
+      // Con un origen ya elegido, la sección muestra el aviso y «Dejar de usar
+      // este punto» — no los botones de elección, que viven en la otra rama.
+      expect(
+        harness.routeNativeElement?.querySelector('[data-testid="where-to-buy-origin-home"]'),
+      ).toBeNull();
+      expect(harness.routeNativeElement?.querySelector('[data-testid="compra-origen"]')).not.toBeNull();
+    });
+
+    it('sin lugares guardados, las ciudades siguen intactas y sin origen por defecto', async () => {
+      await montar();
+      responderHastaProductos(PERFIL_SIN_LUGARES);
+
+      const consulta = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      expect(consulta.request.params.has('lat')).toBe(false);
+      consulta.flush(DISPONIBILIDAD_FIXTURE);
+      harness.detectChanges();
+
+      expect(
+        harness.routeNativeElement?.querySelector('[data-testid="where-to-buy-origin-home"]'),
+      ).toBeNull();
+      expect(
+        harness.routeNativeElement?.querySelector('[data-testid="where-to-buy-origin-work"]'),
+      ).toBeNull();
+      expect(texto()).toContain('Santa Cruz de la Sierra');
+    });
+
+    it('el perfil en error deja el recorrido tal como estaba, sin origen por defecto', async () => {
+      await montar();
+      http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+      http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/pharmacy/products' &&
+            r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
+        )
+        .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/pharmacy/products' &&
+            r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
+        )
+        .flush(productosDelConcepto(FIXTURE_IDS.conceptoIbuprofeno));
+      http
+        .expectOne('/profiles/patients/me')
+        .error(new ProgressEvent('error'), { status: 500 });
+      harness.detectChanges();
+
+      const consulta = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      expect(consulta.request.params.has('lat')).toBe(false);
+      consulta.flush(DISPONIBILIDAD_FIXTURE);
+      harness.detectChanges();
+
+      expect(texto()).toContain('Compartir mi ubicación');
+    });
   });
 
   /* ---- T-E2 · orden y variante con seguro ---------------------------------- */

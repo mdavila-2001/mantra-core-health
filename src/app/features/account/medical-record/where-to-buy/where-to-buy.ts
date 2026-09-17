@@ -25,6 +25,8 @@ import type {
   BorradorDePedido,
   LineaDePedido,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
+import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
+import { NO_SAVED_PLACES, savedPlacesOf, type SavedPlaces } from '../../../../core/data-access/profiles/saved-places';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
@@ -83,8 +85,9 @@ const CANTIDAD_POR_RENGLON = 1;
 /**
  * Puntos de referencia para medir distancias sin entregar la ubicación: las
  * plazas centrales de las ciudades donde la red opera. Son datos públicos del
- * mapa, no datos de la persona. Domicilio y trabajo van a sumarse acá cuando
- * el backend exponga las direcciones del paciente — hoy no hay contrato.
+ * mapa, no datos de la persona — el domicilio y el trabajo declarados por el
+ * paciente son otro juego de puntos, `lugaresGuardados` más abajo, que se
+ * ofrecen primero porque ya sabemos que le quedan cerca.
  */
 const CIUDADES: readonly PuntoDeReferencia[] = [
   { etiqueta: 'Santa Cruz de la Sierra', lat: -17.7833, lng: -63.1821 },
@@ -216,13 +219,15 @@ const SIN_SEDES: ResultadoDeSedes = { sedes: [], sinProducto: [], aprobadosInclu
  * existencias y precios siguen siendo los de la disponibilidad. El borrador
  * del pedido no se entera: el CTA arma el mismo borrador con o sin seguro.
  *
- * ## La ubicación se pide, no se toma
+ * ## La ubicación se pide, no se toma — salvo la que ya diste
  *
- * Mismo patrón que «Cerca mío» (P4): la consulta sale **sin coordenadas** al
- * entrar —la disponibilidad no las necesita— y la API de geolocalización del
- * navegador no se toca hasta que alguien aprieta el botón. La alternativa sin
- * entregar la ubicación es medir desde una ciudad; domicilio y trabajo se
- * suman cuando exista el contrato de direcciones del paciente.
+ * Mismo patrón que «Cerca mío» (P4): la API de geolocalización del navegador
+ * no se toca hasta que alguien aprieta «Compartir mi ubicación». Domicilio y
+ * trabajo (subtarea B.2) son la excepción, y no una contradicción: son datos
+ * que la persona **ya declaró** en su perfil, no algo que el navegador
+ * entregue sin que se sepa. Por eso la casa se preselecciona sin pedir
+ * permiso — la primera consulta de disponibilidad ya sale con ese origen —,
+ * y las ciudades siguen ahí para quien no declaró ninguno de los dos.
  *
  * ## El puente receta → producto
  *
@@ -266,6 +271,7 @@ export class WhereToBuy {
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly pharmacy = inject(PharmacyClient);
+  private readonly profiles = inject(ProfilesClient);
   private readonly campaigns = inject(PharmacyCampaignsClient);
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly route = inject(ActivatedRoute);
@@ -290,6 +296,13 @@ export class WhereToBuy {
   protected readonly ciudades = CIUDADES;
   protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
   protected readonly notaDeDemostracion = NOTA_DE_DEMOSTRACION;
+
+  /**
+   * El domicilio y el trabajo del paciente, como puntos de referencia
+   * (subtarea B.2). Vacío hasta que el perfil responde; si no declaró
+   * ninguno de los dos, se queda vacío y sólo quedan las ciudades.
+   */
+  protected readonly lugaresGuardados = signal<readonly PuntoDeReferencia[]>([]);
 
   /** La última respuesta cruda: el borrador necesita los precios por línea. */
   private ultimaConsulta: {
@@ -426,6 +439,14 @@ export class WhereToBuy {
               .readConceptLabels(filas.map((fila) => fila.medicationConceptId))
               .pipe(catchError(() => of<ConceptLabels>(new Map()))),
             productos: this.productosDe(filas.map((fila) => fila.medicationConceptId)),
+            // Domicilio y trabajo del paciente, para ofrecerlos como puntos
+            // de referencia sin pedirle el GPS (subtarea B.2). Un fallo acá
+            // no puede tumbar la consulta de disponibilidad: se degrada a
+            // «sin lugares guardados», que es exactamente lo que había antes.
+            places: this.profiles.getOwnPatientProfile().pipe(
+              map(savedPlacesOf),
+              catchError(() => of<SavedPlaces>(NO_SAVED_PLACES)),
+            ),
           });
         }),
       )
@@ -449,6 +470,7 @@ export class WhereToBuy {
             ),
           );
           this.lista.set(ready({ items }));
+          this.sembrarLugaresGuardados(carga.places);
           this.consultar();
         },
         error: (error: unknown) => {
@@ -622,6 +644,31 @@ export class WhereToBuy {
   }
 
   /* ---- la ubicación: se pide, no se toma ---------------------------------- */
+
+  /**
+   * Ofrece la casa y el trabajo del paciente como origen, y preselecciona la
+   * casa si existe.
+   *
+   * A diferencia de `compartirUbicacion`, esto **no pide nada al
+   * navegador**: la casa es un dato que la persona ya declaró en su perfil,
+   * así que usarla de entrada no es «tomar» su ubicación, es leer lo que ya
+   * dio. Si no hay casa pero sí trabajo, el trabajo queda ofrecido como
+   * botón — pero no se preselecciona: `casa` es la lectura por defecto más
+   * útil, no cualquiera de las dos.
+   */
+  private sembrarLugaresGuardados(places: SavedPlaces): void {
+    const referencias: PuntoDeReferencia[] = [];
+    if (places.home !== null) {
+      referencias.push({ etiqueta: 'tu casa', ...places.home });
+    }
+    if (places.work !== null) {
+      referencias.push({ etiqueta: 'tu trabajo', ...places.work });
+    }
+    this.lugaresGuardados.set(referencias);
+    if (places.home !== null) {
+      this.origen.set({ etiqueta: 'tu casa', ...places.home });
+    }
+  }
 
   /** Pide la ubicación al navegador. Sólo se llama desde el botón. */
   protected compartirUbicacion(): void {

@@ -101,19 +101,29 @@ function perfilPropioDe(p: PacienteSimulado) {
     ...(p.photoFileId === undefined ? {} : { photoFileId: p.photoFileId }),
     // El punto guardado manda sobre el de ejemplo: si no, editar la ubicación
     // «funcionaba» y al recargar volvía el de la plaza principal.
+    //
+    // `null` en los dos extremos es «lo quitaron» (subtarea B.2): a
+    // diferencia de `undefined` —«nunca se tocó», que en la casa cae al
+    // punto de ejemplo—, un punto quitado no vuelve a aparecer. Sin esta
+    // distinción, `PATCH` con `null`/`null` y el `mock-store.actualizar`
+    // (`{ ...actual, ...cambios }`) dejaban la columna en `undefined`, que es
+    // exactamente «nunca se tocó»: quitar el pin de la casa lo devolvía al
+    // punto de la plaza principal en el siguiente `GET`.
     homeAddress: {
       lines: p.direccion,
       city: displayDe(p.municipioId),
       municipalityConceptId: p.municipioId,
-      ...(p.homeLat === undefined || p.homeLng === undefined
-        ? { latitude: -17.78, longitude: -63.18 }
-        : { latitude: p.homeLat, longitude: p.homeLng }),
+      ...(p.homeLat === null && p.homeLng === null
+        ? {}
+        : p.homeLat === undefined || p.homeLng === undefined
+          ? { latitude: -17.78, longitude: -63.18 }
+          : { latitude: p.homeLat, longitude: p.homeLng }),
     },
     workAddress: {
       lines: p.direccionTrabajo ?? 'Av. Cañoto esq. Landívar, piso 3',
       city: displayDe(p.municipioId),
       municipalityConceptId: p.municipioId,
-      ...(p.workLat === undefined || p.workLng === undefined
+      ...(p.workLat === null || p.workLat === undefined || p.workLng === null || p.workLng === undefined
         ? {}
         : { latitude: p.workLat, longitude: p.workLng }),
     },
@@ -345,15 +355,24 @@ export function registrarPerfiles(router: MockRouter): void {
    * así que un cuerpo con sólo la latitud se ignora entero en vez de guardar un
    * punto imposible. `null` en los dos **quita** el punto, que es distinto de no
    * mandarlos —eso es «no lo toqué»— y por eso se distingue acá.
+   *
+   * **Devuelve `null`, no `undefined`, al quitar** (subtarea B.2). El
+   * docstring de arriba ya prometía la distinción y la implementación no la
+   * cumplía: `mock-store.actualizar` funde con `{ ...actual, ...cambios }`,
+   * y un `cambios.homeLat` en `undefined` pisa el valor guardado con
+   * `undefined` — que es EXACTAMENTE «no lo toqué» para quien lee
+   * `perfilPropioDe` después. El síntoma: quitar el pin de la casa y guardar
+   * hacía volver el punto de la plaza principal en el siguiente `GET`, en vez
+   * de dejar la dirección sin GPS.
    */
   function coordenadasDelCuerpo(
     cambios: Record<string, unknown>,
     cual: 'home' | 'work',
-  ): Record<string, number | undefined> {
+  ): Record<string, number | null | undefined> {
     const lat = cambios[`${cual}Latitude`];
     const lng = cambios[`${cual}Longitude`];
     if (lat === null && lng === null) {
-      return { [`${cual}Lat`]: undefined, [`${cual}Lng`]: undefined };
+      return { [`${cual}Lat`]: null, [`${cual}Lng`]: null };
     }
     if (typeof lat !== 'number' || typeof lng !== 'number') return {};
     return { [`${cual}Lat`]: lat, [`${cual}Lng`]: lng };
