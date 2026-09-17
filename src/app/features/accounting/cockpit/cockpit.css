@@ -363,8 +363,3 @@
 .dimension__resultado--negativo {
   color: var(--st-error-fg);
 }
-
-.nota-de-origen {
-  display: block;
-  margin-block-start: var(--sp-5);
-}

@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, of } from 'rxjs';
+import { forkJoin, of, throwError } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
+import { readApiError } from '../../../core/http/api-error';
 import type {
   AccrualRegister,
   BalanceSheet,
@@ -28,11 +30,12 @@ import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Select } from '../../../shared/components/atoms/select/select';
-import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -79,13 +82,12 @@ import {
  * pantalla con un importe es compararlo contra cero para elegir un color, y
  * formatearlo para mostrar.
  *
- * ## Lo que hoy sirve el simulador
+ * ## De dónde salen las seis lecturas nuevas
  *
- * `fiscal-years`, `open-items`, `dimensions` y `document-flow` son lecturas que
- * la API **todavía no publica**: tiene las escrituras equivalentes —cerrar
- * período, compensar, postear, revertir— y ninguna forma de leerlas. En la rama
- * `mockup` las contesta `finance.handlers.ts` con los nombres de las tablas del
- * modelo, para que el día que la API las abra sólo cambie el origen.
+ * `fiscal-years`, `open-items`, `dimensions`, `document-flow`, `assets` y
+ * `accrual-objects` las publica la API desde el PR #403
+ * (`accounting-cockpit.controller.ts`); el interceptor mock (`finance.handlers.ts`)
+ * las espeja con los mismos nombres para desarrollar sin la API arriba.
  */
 @Component({
   selector: 'app-accounting-cockpit',
@@ -96,6 +98,7 @@ import {
     AppButtonLink,
     Badge,
     Card,
+    EmptyState,
     FormField,
     Link,
     PageHeader,
@@ -152,18 +155,18 @@ export class Cockpit {
 
   /** El período que manda la barra de contexto. */
   readonly periodoActivo = computed<FiscalPeriod | null>(() => {
-    const datos = this.datos();
-    if (datos === null) return null;
+    const ejercicio = this.datos()?.ejercicio ?? null;
+    if (ejercicio === null) return null;
     const elegido = this.periodoElegido();
-    const porId = datos.ejercicio.periods.find((p) => p.id === elegido);
-    return porId ?? datos.ejercicio.periods.find((p) => p.id === datos.ejercicio.currentPeriodId) ?? null;
+    const porId = ejercicio.periods.find((p) => p.id === elegido);
+    return porId ?? ejercicio.periods.find((p) => p.id === ejercicio.currentPeriodId) ?? null;
   });
 
   readonly opcionesDePeriodo = computed(() => {
-    const datos = this.datos();
-    return datos === null
+    const ejercicio = this.datos()?.ejercicio ?? null;
+    return ejercicio === null
       ? []
-      : datos.ejercicio.periods.map((p) => ({
+      : ejercicio.periods.map((p) => ({
           value: p.id,
           label: `${String(p.periodNumber).padStart(2, '0')} · ${p.name}`,
         }));
@@ -246,7 +249,15 @@ export class Cockpit {
         switchMap(({ practiceId }) => {
           if (practiceId === null) return of(loading());
           return forkJoin({
-            ejercicio: this.accounting.fiscalYear(practiceId),
+            // Una práctica sin ejercicio fiscal todavía no rompe el tablero
+            // entero: esa tarjeta sola cae a `null` y ofrece volver a consultar
+            // (S3), en vez de arrastrar a S6 las otras ocho lecturas que sí
+            // tienen datos.
+            ejercicio: this.accounting.fiscalYear(practiceId).pipe(
+              catchError((error: unknown) =>
+                this.esEjercicioInexistente(error) ? of(null) : throwError(() => error),
+              ),
+            ),
             balance: this.accounting.trialBalance(practiceId),
             resultado: this.accounting.incomeStatement(practiceId, {}),
             situacion: this.accounting.balanceSheet(practiceId, {}),
@@ -427,6 +438,18 @@ export class Cockpit {
   claveDeDocumento(a: JournalTransaction): string {
     return a.id;
   }
+
+  /**
+   * ¿El 404 es «esta práctica todavía no tiene ejercicio fiscal»?
+   *
+   * Se ramifica por `body.code`, no por el estado HTTP, mismo criterio que
+   * `errorToViewState` (`core/http/error-to-view-state.ts:36-41`): el código
+   * es parte del contrato, el mensaje es texto humano que puede cambiar.
+   */
+  private esEjercicioInexistente(error: unknown): boolean {
+    if (!(error instanceof HttpErrorResponse)) return false;
+    return readApiError(error)?.code === 'NOT_FOUND';
+  }
 }
 
 /**
@@ -440,7 +463,8 @@ const CERRADOS_A_LA_VISTA = 5;
 
 /** Todo lo que el cockpit necesita para pintarse de una sola vez. */
 interface Tablero {
-  readonly ejercicio: FiscalYear;
+  /** `null` si la práctica todavía no tiene ejercicio fiscal abierto. */
+  readonly ejercicio: FiscalYear | null;
   readonly balance: TrialBalance;
   readonly resultado: IncomeStatement;
   readonly situacion: BalanceSheet;

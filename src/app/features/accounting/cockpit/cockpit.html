@@ -34,21 +34,45 @@
     </app-form-field>
 
     @if (datos(); as tablero) {
-      <app-form-field label="Ejercicio">
-        <p class="contexto__dato" data-testid="cockpit-ejercicio">
-          {{ tablero.ejercicio.name }}
-          <span class="contexto__rango">{{ tablero.ejercicio.startsOn }} → {{ tablero.ejercicio.endsOn }}</span>
-        </p>
-      </app-form-field>
+      @if (tablero.ejercicio; as ejercicio) {
+        <app-form-field label="Ejercicio">
+          <p class="contexto__dato" data-testid="cockpit-ejercicio">
+            {{ ejercicio.name }}
+            <span class="contexto__rango">{{ ejercicio.startsOn }} → {{ ejercicio.endsOn }}</span>
+          </p>
+        </app-form-field>
 
-      <app-form-field label="Período contable">
-        <app-select
-          testId="cockpit-periodo"
-          [options]="opcionesDePeriodo()"
-          [(value)]="periodoElegido"
-          placeholder="Período corriente"
-        />
-      </app-form-field>
+        <app-form-field label="Período contable">
+          <app-select
+            testId="cockpit-periodo"
+            [options]="opcionesDePeriodo()"
+            [(value)]="periodoElegido"
+            placeholder="Período corriente"
+          />
+        </app-form-field>
+      } @else {
+        <!-- S3: la práctica no rompió el tablero (las otras ocho lecturas
+             siguen abajo), sólo le falta abrir su primer ejercicio fiscal.
+             Abrirlo es de la administración de la organización (por API);
+             acá no hay pantalla que lo dé de alta, así que la acción es
+             volver a consultar, no un enlace a algo que no existe. -->
+        <app-empty-state
+          title="Esta práctica todavía no tiene un ejercicio fiscal"
+          description="Lo abre la administración de tu organización; cuando exista, el tablero lo muestra acá."
+          data-testid="fiscal-year-empty"
+        >
+          <button
+            app-button
+            empty-actions
+            type="button"
+            variant="secondary"
+            data-testid="fiscal-year-retry"
+            (clicked)="recargar()"
+          >
+            Volver a consultar
+          </button>
+        </app-empty-state>
+      }
     }
   </div>
 
@@ -90,6 +114,25 @@
 </app-card>
 
 <app-view-state-host [state]="estadoDelTablero()" (retry)="recargar()">
+  <!-- S4 propio: el 422 de «profesional sin vínculo con la práctica» no es
+       algo que la persona haya ingresado mal, así que no lleva el título por
+       defecto del host («Revisá lo ingresado»). -->
+  <ng-container vsh-validation>
+    @if (estadoDelTablero(); as estado) {
+      @if (estado.status === 'validation') {
+        <app-alert
+          tone="error"
+          title="No podés ver la contabilidad de esta práctica"
+          data-testid="practice-access-denied"
+        >
+          @for (issue of estado.issues; track issue.message) {
+            <p>{{ issue.message }}</p>
+          }
+        </app-alert>
+      }
+    }
+  </ng-container>
+
   @if (datos(); as tablero) {
     <!-- ─── Indicadores ──────────────────────────────────────────────────────
          Cada uno dice si algo está bien o mal, no sólo cuánto. Un número sin
@@ -385,10 +428,15 @@
                 <span class="dimension__nombre">
                   {{ activo.name }}
                   <span class="dimension__detalle">
-                    {{ activo.className }} · {{ activo.usefulLifeMonths }} meses ·
-                    {{ importe(activo.monthlyDepreciation) }}/mes
-                    @if (!activo.depreciable) {
-                      · <strong>no entra en la corrida</strong>
+                    {{ activo.className }} · {{ activo.usefulLifeMonths }} meses
+                    @if (activo.depreciable) {
+                      · {{ importe(activo.monthlyDepreciation) }}/mes
+                    } @else {
+                      ·
+                      <strong>
+                        {{ activo.status === 'RETIRED' ? 'dado de baja' : 'amortizado del todo' }}, no
+                        entra en la corrida
+                      </strong>
                     }
                   </span>
                 </span>
@@ -448,13 +496,5 @@
       </app-tab>
 
     </app-tabs>
-
-    <app-alert tone="info" class="nota-de-origen">
-      <p>
-        El ejercicio, las partidas abiertas y los centros los sirve hoy el simulador de
-        esta rama. La API ya tiene las escrituras equivalentes —cerrar período,
-        compensar, postear, revertir— y todavía no publica cómo leerlas.
-      </p>
-    </app-alert>
   }
 </app-view-state-host>

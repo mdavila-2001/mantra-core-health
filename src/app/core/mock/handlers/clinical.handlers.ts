@@ -26,7 +26,7 @@ import { MEDICA, PACIENTE, pacientePorId, profesionalPorId } from '../fixtures/p
 import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, isoDia, nuevoId, uuid } from '../mock-store';
 import { emitirNotificacion } from './notifications.handlers';
-import { enlazarArchivo } from './files.handlers';
+import { enlazarArchivo, pdfMinimo } from './files.handlers';
 import { FICHAS_ESTANDAR } from '../fixtures/fichas-estandar.generated';
 import { representaA } from './profiles.handlers';
 
@@ -332,6 +332,55 @@ export function registrarClinica(router: MockRouter): void {
     const r = recetas.get(params['id']!);
     if (r === undefined) return notFound();
     return registroReceta(recetas.actualizar(r.id, { issuedAt: ahora(), statusConceptId: ESTADO_RECETA['RX-ACTIVE']! })!);
+  });
+
+  /**
+   * `GET /clinical/prescriptions/:id/pdf` — el PDF oficial de la receta (B.3).
+   *
+   * Reusa `pdfMinimo` (mismo generador que ya sirve `/download-url`): alcanza
+   * para que el botón del portal descargue un archivo `%PDF` de verdad y
+   * ejercite el camino completo (blob autenticado → `data:` URL → guardado),
+   * que es lo que el barrido de Playwright del mock puede comprobar.
+   */
+  router.get('/clinical/prescriptions/:id/pdf', (request) => {
+    const r = recetas.get(request.params['id']!);
+    if (r === undefined) return notFound('Receta no encontrada');
+    if (!puedeLeer(request, r.patientProfileId)) return forbidden();
+
+    const esOficial = r.issuedAt !== null;
+    const texto = esOficial
+      ? `Receta oficial ${r.id}`
+      : `Copia de trabajo ${r.id} - sin validez farmaceutica`;
+    return {
+      status: 200,
+      body: new Blob([pdfMinimo(texto)], { type: 'application/pdf' }),
+      headers: {
+        'Content-Disposition': `attachment; filename*=UTF-8''receta-${r.id}.pdf`,
+        'Cache-Control': 'private, no-store',
+      },
+    };
+  });
+
+  /**
+   * `GET /public/prescriptions/:id/verify` — verificación pública, sin PHI
+   * (B.3). La maqueta no modela matrícula/jurisdicción, así que
+   * `prescriberLicense` viaja `null`; el contrato real se ejercita contra la
+   * API viva en `clinical-prescriptions-pdf.int-spec.ts` del backend.
+   */
+  router.get('/public/prescriptions/:id/verify', ({ params }) => {
+    const r = recetas.get(params['id']!);
+    if (r === undefined) return notFound('Receta no encontrada');
+    return {
+      status: 200,
+      body: {
+        id: r.id,
+        status: r.issuedAt !== null ? 'ISSUED' : 'DRAFT',
+        issuedAt: r.issuedAt,
+        contentHash: r.issuedAt !== null ? uuid(`sello-${r.id}`).replace(/-/g, '') : null,
+        prescriberLicense: null,
+      },
+      headers: { 'Cache-Control': 'no-store' },
+    };
   });
 
   router.post('/clinical/conditions', (request) => {

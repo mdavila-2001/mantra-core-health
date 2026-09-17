@@ -62,8 +62,12 @@ const archivos = new Coleccion<ArchivoSimulado>([
   { id: uuid('file-holter'), currentVersionId: uuid('v-file-holter'), originalName: 'holter-24h.png', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(0), dataUrl: imagenSvg('Holter 24 h', '#f0fdf4', '#166534') },
 ]);
 
-/** Un PDF de una página con una línea de texto. Lo justo para que un visor lo abra. */
-function pdfMinimo(texto: string): string {
+/**
+ * Un PDF de una página con una línea de texto. Lo justo para que un visor lo
+ * abra. Exportada: la reutiliza `clinical.handlers.ts` para el PDF simulado
+ * de la receta (B.3), en vez de escribir un segundo generador mínimo.
+ */
+export function pdfMinimo(texto: string): string {
   const limpio = texto.replace(/[^\x20-\x7e]/g, '?').replace(/[()\\]/g, '');
   const contenido = `BT /F1 18 Tf 60 740 Td (${limpio}) Tj ET`;
   const objetos = [

@@ -200,6 +200,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/account/pharmacy-orders/pharmacy-orders').then((m) => m.PharmacyOrders),
   'my-account/loyalty': () =>
     import('./features/account/loyalty/loyalty').then((m) => m.Loyalty),
+  'my-account/promotions': () =>
+    import('./features/account/promotions/promotions').then((m) => m.Promotions),
   'administration/pharmacy-orders': () =>
     import('./features/organization/pharmacy-inbox/pharmacy-inbox').then(
       (m) => m.PharmacyInbox,
@@ -389,6 +391,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/account/pharmacy-orders/new-order/new-order')
         .then((m) => m.NewOrder)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // El checkout del pedido (T-E3 · pantalla G): entrega, dirección, medio de
+    // pago y resumen. Sin `:orderId`: el pedido se crea recién en su
+    // confirmación final (D-FARMOCK-T-E1-01). Antes de `:orderId`, como `new`.
+    path: 'my-account/pharmacy-orders/checkout',
+    title: `${APP_TITLE} - Entrega y pago`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/account/pharmacy-orders/checkout/checkout')
+        .then((m) => m.Checkout)
         .catch(() => chunkFallido()),
   },
   {
