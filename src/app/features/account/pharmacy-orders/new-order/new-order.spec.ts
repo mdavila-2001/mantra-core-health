@@ -530,7 +530,7 @@ describe('NewOrder', () => {
 
   describe('«Continuar» hacia el checkout', () => {
     it('sin ruta de checkout se ofrece deshabilitado y no navega ni llama a la API', () => {
-      configurar();
+      configurar([{ provide: RUTA_DEL_CHECKOUT, useValue: null }]);
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
       const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
