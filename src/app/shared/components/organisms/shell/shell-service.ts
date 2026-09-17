@@ -72,6 +72,19 @@ export class ShellService {
     this.collapsedPreference.update((collapsed) => !collapsed);
   }
 
+  /**
+   * Fija el estado del nav fijo, sin preguntar en cuál estaba.
+   *
+   * Existe porque hay gestos que **no** son «alternar»: recogida la barra, el
+   * rótulo de un dominio es sólo un ícono y tocarlo tiene que desplegarla —una
+   * vez, y siempre en esa dirección—. Escrito con `toggleCollapsed()` eso
+   * dependería de leer el estado justo antes, que es como se llega a un botón
+   * que a veces hace lo contrario de lo que dice.
+   */
+  setCollapsed(collapsed: boolean): void {
+    this.collapsedPreference.set(collapsed);
+  }
+
   openDrawer(): void {
     this.drawerOpen.set(true);
   }

@@ -175,6 +175,18 @@ export interface NavMenuSection {
   readonly items: readonly NavMenuItem[];
 
   readonly blocks: readonly NavMenuBlock[];
+
+  /**
+   * Si el grupo se dibuja **sin contenedor**: sus destinos van sueltos en la
+   * barra, al mismo nivel que los fijos de arriba, y ni el dominio ni sus
+   * bloques ocupan un renglón plegable.
+   *
+   * Es presentación, no permiso: un grupo aplanado ofrece exactamente los
+   * mismos destinos que uno plegado. Quiénes lo son lo declara
+   * `GRUPOS_APLANADOS` en `navigation.subgroups.ts`, por la misma razón que el
+   * reparto en bloques vive ahí y no en el registro.
+   */
+  readonly aplanado: boolean;
 }
 
 /**
