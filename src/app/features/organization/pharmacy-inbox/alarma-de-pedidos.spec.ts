@@ -165,4 +165,86 @@ describe('AlarmaDePedidos', () => {
       vi.useRealTimers();
     }
   });
+  describe('insiste hasta que el mostrador acusa recibo (E.2)', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('vuelve a sonar sola mientras nadie toma el pedido', () => {
+      const alarma = crear();
+      alarma.notificar(1);
+      expect(reproducir).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(20_000);
+      expect(reproducir).toHaveBeenCalledTimes(2);
+      vi.advanceTimersByTime(20_000);
+      expect(reproducir).toHaveBeenCalledTimes(3);
+    });
+
+    it('acusar recibo la calla: es lo único que la detiene', () => {
+      const alarma = crear();
+      alarma.notificar(1);
+      alarma.acusarRecibo();
+
+      vi.advanceTimersByTime(20_000 * 5);
+      expect(reproducir).toHaveBeenCalledTimes(1);
+    });
+
+    it('VOLVER A LA PESTAÑA no la calla: mirar no es atender', () => {
+      // Si alcanzara con mirar, bastaría pasar por la bandeja para que un
+      // pedido quedara sin tomar y sin avisar — el modo exacto de perderlo.
+      const alarma = crear();
+      ocultarPestana(true);
+      alarma.notificar(1);
+
+      ocultarPestana(false);
+      document.dispatchEvent(new Event('visibilitychange'));
+
+      vi.advanceTimersByTime(20_000);
+      expect(reproducir).toHaveBeenCalledTimes(2);
+      alarma.acusarRecibo();
+    });
+
+    it('un pedido nuevo reinicia la cuenta: es un motivo nuevo para insistir', () => {
+      const alarma = crear();
+      alarma.notificar(1);
+      vi.advanceTimersByTime(20_000 * 14);
+      expect(reproducir).toHaveBeenCalledTimes(15);
+
+      // Llega otro: vuelve a arrancar de cero en vez de rendirse en el 15.
+      alarma.notificar(1);
+      vi.advanceTimersByTime(20_000 * 3);
+      expect(reproducir).toHaveBeenCalledTimes(19);
+      alarma.acusarRecibo();
+    });
+
+    it('se rinde tras quince repeticiones: un local vacío no necesita ruido toda la noche', () => {
+      const alarma = crear();
+      alarma.notificar(1);
+
+      vi.advanceTimersByTime(20_000 * 40);
+      // 1 del aviso + 15 repeticiones, y ni una más.
+      expect(reproducir).toHaveBeenCalledTimes(16);
+    });
+
+    it('apagar el interruptor calla lo que está sonando ahora, no sólo lo que venga', () => {
+      // Si no, quien lo apaga sigue escuchando el díng-dóng veinte segundos
+      // más y concluye que el interruptor no anda.
+      const alarma = crear();
+      alarma.notificar(1);
+      alarma.alternarSonido();
+
+      vi.advanceTimersByTime(20_000 * 3);
+      expect(reproducir).toHaveBeenCalledTimes(1);
+    });
+
+    it('con el sonido apagado no arranca ninguna insistencia', () => {
+      const alarma = crear();
+      alarma.alternarSonido();
+      alarma.notificar(1);
+
+      vi.advanceTimersByTime(20_000 * 3);
+      expect(reproducir).not.toHaveBeenCalled();
+    });
+  });
+
 });

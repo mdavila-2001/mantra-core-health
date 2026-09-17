@@ -20,6 +20,7 @@ describe('PharmacyInbox with the tenant API list', () => {
     alternarSonido: ReturnType<typeof vi.fn>;
     notificar: ReturnType<typeof vi.fn>;
     descartar: ReturnType<typeof vi.fn>;
+    acusarRecibo: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -28,6 +29,7 @@ describe('PharmacyInbox with the tenant API list', () => {
       alternarSonido: vi.fn(),
       notificar: vi.fn(),
       descartar: vi.fn(),
+      acusarRecibo: vi.fn(),
     };
     TestBed.configureTestingModule({
       providers: [
