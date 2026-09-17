@@ -42,6 +42,7 @@
     "mock:bolivia": "node scripts/gen-bolivia-corpus-fixture.mjs",
     "mock:glossary": "node scripts/gen-glossary-fixture.mjs",
     "mock:anatomy": "node scripts/gen-anatomy-fixture.mjs",
+    "mock:institutions": "node scripts/gen-institutions-fixture.mjs",
     "emoji:catalog": "node scripts/gen-emoji-catalog.mjs"
   },
   "private": true,

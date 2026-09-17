@@ -451,7 +451,13 @@ export const SEMILLAS_DE_VITRINA: readonly SemillaDeVitrina[] = [
 ];
 
 /** El avatar y la portada de una vitrina del corpus, para no repetirlo. */
-export function imagenesDeVitrina(semilla: SemillaDeVitrina): {
+/* El parámetro es estructural y no `SemillaDeVitrina` porque las
+   instituciones reales (`fixtures/instituciones.ts`) también las necesitan y
+   no son del corpus: lo único que esta función usa son el nombre y el color. */
+export function imagenesDeVitrina(semilla: {
+  readonly displayName: string;
+  readonly color: string;
+}): {
   readonly avatarUrl: string;
   readonly coverUrl: string;
 } {
