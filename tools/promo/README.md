@@ -75,11 +75,15 @@ con identificadores escritos a mano, para que sobrevivan a un cambio de semillas
 | **Paciente** | Crea la cuenta —cada nombre y cada apellido en su propio campo, como los separa el layout—, busca al profesional, pide el horario, ve la cita con su estado, mira sus resultados y sigue su receta hasta el pedido de farmacia. |
 | **Médico** | La agenda del día, registrar la llegada, iniciar la consulta, dejar el diagnóstico del catálogo CIE-10, la receta, y marcar el cobro sin salir de la agenda. |
 | **Farmacia** | La bandeja del mostrador, el pedido que llega con su receta electrónica, confirmarlo con lo que hay —tal cual, sustituto o no disponible— y ver la bandeja moverse. |
-| **Aseguradora** | El catálogo de la compañía con sus planes y coberturas —prestación por prestación: cobertura, copago, deducible, tope y autorización previa—, los corredores con su matrícula, lo presentado a cada compañía filtrando por aseguradora, el dictamen ítem por ítem (aprobado, denegado y su motivo) y el reclamo, que no borra el dictamen sino que lo referencia. |
+| **Aseguradora** | El **alta de una aseguradora**, los siete pasos: la empresa y su figura jurídica → cómo se la identifica (código, sigla, código de aseguradora) → NIT y domicilio → la documentación legal obligatoria en PDF → el certificado del SEDES → el usuario administrador, con cada nombre y apellido en su campo → la cuenta creada, con la organización pendiente de aprobación. |
 
 Cada módulo es un archivo aparte y termina con la marca.
 
 ## Cómo está grabado
+
+Los PDF que el alta adjunta en el paso 4 están en `flujos/documentos/`: cinco archivos mínimos de
+ejemplo, generados para la grabación, con el nombre del documento adentro. No son documentos reales
+de nadie.
 
 `flujos/motor.mjs` maneja la aplicación y anota, fotograma a fotograma, qué foto toca, dónde está el
 puntero y qué rótulo va encima; deja `app/*.png` (sin repetir lo que no cambia) y `guion.js`.
