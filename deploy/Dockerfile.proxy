@@ -1,0 +1,45 @@
+# Imagen del reverse proxy del despliegue en Coolify.
+#
+# ─── Por qué existe esta imagen en vez de montar la configuración ────────────
+#
+# Hasta el 2026-09-14 el servicio `proxy` de `docker-compose.coolify.yml` traía
+# los tres archivos de nginx por bind mount (`./deploy/nginx.coolify.conf` y
+# compañía). Eso no puede funcionar en Coolify: el repositorio se clona DENTRO
+# de un contenedor auxiliar (`/artifacts/<uuid>`) y el `docker compose up` se
+# lanza contra el socket del HOST, donde esa ruta no existe. Docker crea el
+# origen que falta como directorio vacío y runc se niega:
+#
+#   not a directory: Are you trying to mount a directory onto a file?
+#
+# El `web` llegaba a «healthy» y el despliegue moría igual, en el `proxy`.
+#
+# Lo que sí viaja bien a Coolify es el contexto de BUILD. Por eso la
+# configuración entra en una imagen: se copia al construir, no se monta al
+# arrancar.
+#
+# ─── El contexto es la RAÍZ del repositorio ──────────────────────────────────
+#
+# Las rutas de abajo llevan el prefijo `deploy/` a propósito. Coolify invoca
+# compose con `--project-directory <raíz del repo>`, así que el `context: .` del
+# compose es la raíz y no esta carpeta.
+FROM nginx:1.27-alpine
+
+# El enrutado completo: los prefijos de la API al `api:3000` de la red
+# `alovida`, `/otel/` y todo lo demás al servidor de renderizado `web:4000`.
+# `api-locations.conf` es el MISMO archivo que incluye el nginx de producción,
+# para que los dos proxies no puedan divergir.
+COPY deploy/nginx.coolify.conf /etc/nginx/conf.d/default.conf
+COPY deploy/api-locations.conf /etc/nginx/api-locations.conf
+
+# Falla el build, y no el arranque, si la configuración tiene un error de
+# sintaxis. Sin esto un `;` perdido se descubre cuando el contenedor ya está
+# reemplazando al anterior.
+RUN nginx -t
+
+EXPOSE 80
+
+# No pide `/` —que redirige al login— sino la comprobación del propio nginx:
+# que el proceso acepta conexiones. Si la que se quiere comprobar es la
+# aplicación, ésa la hace el healthcheck del `web`, que es quien la sirve.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1/nginx-salud || exit 1

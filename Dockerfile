@@ -49,13 +49,28 @@ ENV CYPRESS_INSTALL_BINARY=0 \
     # una construcción con techo de 4 GB moría con
     # `esbuild: all goroutines are asleep - deadlock` y salida 129 —que no dice
     # «me quedé sin memoria», pero es lo que era—.
-    NODE_OPTIONS=--max-old-space-size=3072 \
+    NODE_OPTIONS=--max-old-space-size=1536 \
     # Cuántos procesos de esbuild corren a la vez. Por omisión, uno por núcleo:
     # con doce núcleos y 447 fragmentos diferidos el pico se va por encima de los
     # 6 GB y el cgroup mata la construcción (`ng build` a 4,7 GB de RSS, medido).
     # Con dos trabajadores tarda algo más y cabe. En un portátil con memoria de
     # sobra no hace falta tocar nada: esto sólo aplica a la imagen.
-    NG_BUILD_MAX_WORKERS=2
+    # UN trabajador, no dos, y en esta máquina no es negociable.
+    #
+    # El H310 corre `h310-guardian.service`, que vigila la presión de memoria y
+    # MATA compilaciones: las frena con `memory.high` = RAM/4 y dispara
+    # `cgroup.kill` cuando coinciden PSI ≥20%, memoria disponible ≤10% y swap
+    # libre ≤20%. Tras matar deja 600 s de enfriamiento en los que todo build
+    # nuevo muere al nacer. En el log del despliegue eso se ve sólo como
+    # `exit code: 137`, sin una palabra sobre memoria; quien lo cuenta es
+    # `journalctl -t h310-guardian`.
+    #
+    # Cada trabajador es un proceso con su propio montón, así que bajar de dos a
+    # uno es lo que más recorta el pico —más que el `--max-old-space-size` de
+    # arriba—. Medido el 16/09/2026 en la rama `mockup`: con 1 trabajador y
+    # 1,5 GB de montón la compilación cabe y termina en ~4 min; con 2 y 3 GB la
+    # mataba el guardián.
+    NG_BUILD_MAX_WORKERS=1
 
 # `--immutable` falla si el lockfile no cuadra: es lo que garantiza que lo
 # instalado sea exactamente lo declarado.
