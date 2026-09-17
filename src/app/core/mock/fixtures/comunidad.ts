@@ -1,4 +1,5 @@
 import { imagenesDeVitrina, SEMILLAS_DE_VITRINA } from './bolivia-eje-central';
+import { SEMILLAS_DE_INSTITUCIONES } from './instituciones';
 import { ESPECIALIDAD, ESTADO } from './conceptos';
 import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from './personas';
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
@@ -278,7 +279,7 @@ export const VITRINAS: readonly VitrinaSimulada[] = [
 
      `acceptsReviews` sí queda abierto: que nadie haya opinado no significa que
      no se pueda. */
-  ...SEMILLAS_DE_VITRINA.map((semilla) => ({
+  ...[...SEMILLAS_DE_VITRINA, ...SEMILLAS_DE_INSTITUCIONES].map((semilla) => ({
     id: uuid(`public-profile-${semilla.clave}`),
     tenantId: semilla.tenantId,
     targetId: semilla.targetId,
