@@ -232,9 +232,17 @@ export class PharmacyInbox {
     return cantidad === 1 ? '1 pedido' : `${cantidad} pedidos`;
   }
 
-  /** El mostrador acusó recibo: por el botón de cerrar o abriendo el pedido. */
+  /**
+   * El mostrador acusó recibo: por el botón de cerrar o abriendo el pedido.
+   *
+   * Es también lo único que calla la alarma. Volver a la pestaña **no** la
+   * calla —eso apaga el parpadeo del título y nada más—: mirar no es
+   * atender, y si alcanzara con mirar, bastaría pasar por la bandeja para que
+   * un pedido quedara sin tomar y sin avisar.
+   */
   protected descartarAviso(): void {
     this.nuevosSinVer.set(0);
+    this.alarma.acusarRecibo();
   }
 
   protected esNuevo(pedido: PedidoFarmacia): boolean {
