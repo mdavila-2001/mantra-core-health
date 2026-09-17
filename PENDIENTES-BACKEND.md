@@ -1,6 +1,9 @@
 # Lo que el frontend espera del backend
 
-**Actualizado:** 2026-09-13 — **P33 es nuevo**: el QR bancario con el que el profesional cobra
+**Actualizado:** 2026-09-16 — **P32 y P33 están CERRADOS**: el backend publicó el consultorio
+propio y el QR bancario por sede, y **el campo viaja en inglés (`isOwnSite`), no como `esPropio`**
+— que es lo que sirve el simulador de esta rama. Ver las dos fichas de abajo. Antes,
+2026-09-13 — **P33 era nuevo**: el QR bancario con el que el profesional cobra
 **en cada sede** no existe en ninguna capa, y el pedido del cliente ya está construido contra la
 maqueta. Antes, 2026-09-12 — **P30 y P31 son nuevos**: la ficha de una clínica y la de una
 farmacia ya viven dentro del panel, y las dos lecturas que las llenan —qué servicios ofrece una
@@ -28,8 +31,8 @@ backend.
 | **P29** | `file_id` en `profiles.jurisdiction_authorizations` — la matrícula no puede llevar adjunto, y **esto empieza en el repo del modelo, no en la API** |
 | **P30** | `GET /public/profiles/o/:slug/services` — qué ofrece una organización, con precio de referencia. La ficha ya está construida y espera |
 | **P31** | `GET /public/profiles/f/:slug/products` — qué medicamentos tiene una farmacia, con marca, precio y si hay stock |
-| **P32** | Dos cosas del consultorio propio: `esPropio` en las sedes que devuelve `/practitioners/:id/sites`, y `PATCH /practitioners/me/sites/:id` para corregirlo |
-| **P33** | El **QR bancario por sede**: `bankQrFileId` en las sedes y `PUT /practitioners/me/sites/:id/bank-qr`. **Empieza en el repo del modelo, no en la API** |
+| ~~**P32**~~ | ~~Dos cosas del consultorio propio: `esPropio` en las sedes y `PATCH /practitioners/me/sites/:id`~~ — **CERRADO**, pero el campo se llama **`isOwnSite`**. Ver abajo |
+| ~~**P33**~~ | ~~El **QR bancario por sede**: `bankQrFileId` y `PUT /practitioners/me/sites/:id/bank-qr`~~ — **CERRADO**. Ver abajo |
 | **P34** | Ninguna capa sabe qué farmacia abre 24 h ni cuál está de turno — **empieza en el repo del modelo**, y la guardia rotativa tiene tres preguntas de producto sin responder |
 
 ---
@@ -1326,7 +1329,27 @@ Sin sesión, como el resto de `/public`. Nunca `reviewerProfileId`, `userId` ni 
 
 ---
 
-## P32 · El consultorio propio: cuál es, y cómo se corrige
+## ~~P32~~ · El consultorio propio: cuál es, y cómo se corrige — **CERRADO**
+
+> [!success] Cerrado el 2026-09-16, con la subtarea C.1.
+> El backend publicó las dos mitades: el campo en `GET /practitioners/:profileId/sites` y
+> `PATCH /practitioners/me/sites/:siteId` para corregir el consultorio propio.
+>
+> **Se llama `isOwnSite`, no `esPropio`.** Esta maqueta lo sirvió en castellano y la regla de
+> gobernanza pide los contratos en inglés técnico, así que el contrato real viaja en inglés.
+> **El simulador de esta rama sigue devolviendo `esPropio`**, que es lo que consume la pantalla
+> de acá: quien lleve estas pantallas a `dev` tiene que renombrarlo, y quien toque el simulador
+> conviene que sepa que ese nombre no es el del servidor.
+>
+> Dos cosas más que el contrato no dice solo:
+> **`isOwnSite` no es «la práctica es de tipo consultorio»** — sale de comparar la práctica de
+> la sede con la **práctica personal** del profesional. Un consultorio particular **ajeno** es
+> tan ajeno como un hospital, y darlo por propio ofrecería un «Editar» que el `PATCH` rechaza.
+> Y **lo que NO entró**: el teléfono de la sede (`common.contact_points` no declara ningún
+> miembro de `owner_type_concept_id` para una sede) ni el horario de atención (no hay tabla de
+> horarios en `practice`; lo único que la sede declara es su huso).
+
+Lo que sigue es la nota original, tal como se escribió:
 
 **Nace el 2026-09-13.** Son dos huecos de la misma pregunta, y los dos los destapó
 el mismo pedido del cliente: separar «crear mi consultorio» de «atiendo en un
@@ -1375,7 +1398,21 @@ ella, y lo que uno tiene con ella es una vinculación, no la sede.
 
 ---
 
-## P33 · El QR bancario con el que se cobra en cada sede
+## ~~P33~~ · El QR bancario con el que se cobra en cada sede — **CERRADO**
+
+> [!success] Cerrado el 2026-09-16, con la subtarea C.1.
+> `bankQrFileId` viaja en la lectura de sedes y se guarda con
+> `PUT /practitioners/me/sites/:siteId/bank-qr`.
+>
+> **El QR autoriza distinto que el `PATCH` del consultorio.** Aquél exige ser dueño; el QR sólo
+> exige **vinculación vigente con la sede**, porque también se cobra en la clínica donde el
+> profesional atiende sin ser dueño del lugar. Lo que se guarda ahí no es la sede: es con qué
+> cobra él en ella.
+>
+> **No acepta PDF**: se sube con categoría `IMAGE` (JPG, PNG, WEBP). Un QR dentro de un PDF no
+> se puede mostrar en el modal ni escanear desde la pantalla, que es lo único que esto hace.
+
+Lo que sigue es la nota original, tal como se escribió:
 
 **Nace el 2026-09-13**, del pedido del cliente sobre «Dónde atiendo»: cada sede
 tiene que poder mostrar el QR bancario que el profesional quiere usar **ahí**.
