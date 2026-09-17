@@ -28,8 +28,30 @@ FROM nginx:1.27-alpine
 # `alovida`, `/otel/` y todo lo demás al servidor de renderizado `web:4000`.
 # `api-locations.conf` es el MISMO archivo que incluye el nginx de producción,
 # para que los dos proxies no puedan divergir.
+# Son TRES archivos y no dos. `api-locations.conf` incluye `api-proxy.conf` en
+# cada una de sus ~60 reglas —las cabeceras de reenvío, que están una sola vez
+# para que no puedan divergir entre rutas—, así que olvidarlo no rompe el build:
+# rompe el ARRANQUE, con el despliegue ya dado por bueno y el proxy en bucle de
+# reinicio mientras Coolify informa «finished» (despliegue 719, 17/09).
 COPY deploy/nginx.coolify.conf /etc/nginx/conf.d/default.conf
 COPY deploy/api-locations.conf /etc/nginx/api-locations.conf
+COPY deploy/api-proxy.conf     /etc/nginx/api-proxy.conf
+
+# ─── Lo único que SÍ se puede validar aquí ───────────────────────────────────
+#
+# `nginx -t` no sirve en el build: arranca la configuración y resuelve por DNS
+# los `server` de cada `upstream`, y aquí no existe ningún `api` (ver abajo).
+# Pero el fallo de arriba —un `include` que apunta a un archivo que no se copió—
+# no necesita ni red ni nginx para detectarse: basta comprobar que cada ruta
+# incluida existe. Es exactamente la comprobación que faltaba.
+RUN set -eu; \
+    faltan=0; \
+    for f in $(grep -rhoE 'include[[:space:]]+/etc/nginx/[^;]+' \
+                 /etc/nginx/conf.d/default.conf /etc/nginx/api-locations.conf \
+               | awk '{print $2}' | sort -u); do \
+      [ -f "$f" ] || { echo "FALTA el archivo incluido: $f" >&2; faltan=1; }; \
+    done; \
+    [ "$faltan" -eq 0 ]
 
 # ─── Aquí NO se valida la configuración, y no por dejadez ────────────────────
 #
