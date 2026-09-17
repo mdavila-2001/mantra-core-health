@@ -24,6 +24,7 @@ backend.
 | ~~**P32**~~ | ~~`esPropio` por sede y `PATCH /practitioners/me/sites/:id`~~ — **CERRADO**, viaja como `isOwnSite`. Ver abajo |
 | ~~**P33**~~ | ~~QR bancario por sede~~ — **CERRADO**: `bankQrFileId` + `PUT /practitioners/me/sites/:id/bank-qr`. Ver abajo |
 | **P34** | Ninguna capa sabe qué farmacia abre 24 h ni cuál está de turno — **empieza en el repo del modelo**, y la guardia rotativa tiene tres preguntas de producto sin responder |
+| **P35** | No hay tendencias del muro: `PostListItem` no trae `hashtags` y no existe un recuento por período |
 
 ---
 
@@ -1253,3 +1254,39 @@ Los cuatro cierres están en uso y verificados contra la API viva, no sólo comp
 y `no-authenticated-user` ofrecen el trámite de verificación; **`no-person-linked` no**, porque
 verificar la identidad de una persona que todavía no está vinculada a la cuenta no es algo que quien
 mira pueda hacer. Ofrecérselo sería un callejón con cartel de salida.
+
+---
+
+## Abierto · P35 · El muro no puede decir de qué se está hablando
+
+**Levantado el 2026-09-17**, construyendo la tercera columna de `/posts` (subtarea E.1,
+AC-E1-03: «tendencias clínicas»).
+
+### Lo que falta
+
+Un recuento de etiquetas por período: qué hashtags aparecieron más en las publicaciones de
+los últimos N días, con su cuenta. Algo de la forma
+`GET /community/trends?tenantId=&days=&limit=` devolviendo `{ tag, posts }`.
+
+### Por qué no se puede hoy
+
+**`PostListItem` no declara `hashtags`.** Sólo los trae `PostDetail`
+(`GET /community/posts/:id`), que es una petición por publicación. Contar etiquetas desde el
+cliente costaría veinte peticiones —una por tarjeta de la página— para un recuento que igual
+sería el de *una página del muro de una persona*, no el del sistema. Eso no es una tendencia:
+es una estadística de lo que uno ya está mirando.
+
+Tampoco alcanza con agregar `hashtags` a `PostListItem`. El dato que la columna necesita es
+transversal al muro de cada uno —qué se está hablando en la organización— y el muro es
+personal por definición: lo arma el fan-out de a quién seguís.
+
+### Lo que la pantalla hace mientras tanto
+
+Muestra **las comunidades clínicas con más integrantes**, que sí es un dato real del servidor
+(`memberCount` en `GET /community/groups`) y sí es una tendencia clínica: cuánta gente se
+juntó alrededor de cada tema. El rótulo lo dice con esas palabras —«N integrantes»— para que
+nadie lea el número como si fuera volumen de publicaciones, y el orden lo pone el cliente
+porque el endpoint no ofrece `sort`.
+
+No es un sustituto permanente: responde «alrededor de qué se organizó la gente», no «de qué
+se está hablando esta semana», que es la pregunta del pedido.
