@@ -99,7 +99,9 @@ export function recursoDe(p: ProfesionalSimulado): string {
 }
 
 export const recursos = new Coleccion<RecursoSimulado>(
-  PROFESIONALES.filter((p) => p.especialidades.length > 0).flatMap((p, i) => {
+  // Los médicos de la red de las aseguradoras no tienen agenda: nadie publicó
+  // sus horarios, y fabricárselos sería ofrecer turnos que no existen.
+  PROFESIONALES.filter((p) => p.especialidades.length > 0 && p.origen === undefined).flatMap((p, i) => {
     const principal: RecursoSimulado = {
       id: recursoDe(p),
       name: `Agenda de ${p.displayName}`,

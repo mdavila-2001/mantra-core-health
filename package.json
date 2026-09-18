@@ -44,7 +44,8 @@
     "mock:glossary": "node scripts/gen-glossary-fixture.mjs",
     "mock:anatomy": "node scripts/gen-anatomy-fixture.mjs",
     "mock:institutions": "node scripts/gen-institutions-fixture.mjs",
-    "emoji:catalog": "node scripts/gen-emoji-catalog.mjs"
+    "emoji:catalog": "node scripts/gen-emoji-catalog.mjs",
+    "mock:markdown-catalogs": "node scripts/gen-markdown-catalogs-fixture.mjs"
   },
   "private": true,
   "packageManager": "yarn@4.18.0",

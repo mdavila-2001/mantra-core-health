@@ -1,0 +1,27 @@
+{
+  "package": "fee-schedules",
+  "extractedOn": "2026-09-18",
+  "sources": [
+    {
+      "file": "Arancel_Honorarios_Medicos_Santa_Cruz_2025_3_columnas.md",
+      "sha256": "85c68678b19d382b25affa50cc71f076581a2602d89db605ac2b376bd0adb040",
+      "issuer": "Colegio Médico de Santa Cruz — Comité Científico Departamental",
+      "edition": "Aranceles de Honorarios Médicos, julio 2025",
+      "unit": "UMA",
+      "items": 4762,
+      "ocrSuspect": 1686
+    },
+    {
+      "file": "LISTADO_ARANCEL_ODONTOLOGICO_2026_1.md",
+      "sha256": "6aded6ef0a76945eb270efb70306a2c061d4c1dc83533e62004136524b2b18b2",
+      "edition": "Listado arancel odontológico 2026",
+      "unit": "USD",
+      "items": 125,
+      "withoutPrice": 12
+    }
+  ],
+  "warnings": [
+    "El arancel médico es OCR de un PDF escaneado: el texto no se corrige, se marca ocrSuspect.",
+    "Los códigos no son del Colegio: la fuente de 3 columnas no los trae. Son la posición en la planilla."
+  ]
+}

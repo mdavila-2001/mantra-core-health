@@ -49,7 +49,8 @@ const archivos = new Coleccion<ArchivoSimulado>([
   // «Descargar» en las tablas de «Configurar tu perfil». Los ids se calculan con
   // la misma semilla que `credencialesDe`/`licenciasDe` en `personas.ts`, así que
   // la fila de la tabla y el archivo no pueden separarse.
-  ...PROFESIONALES.flatMap((p) => [
+  // Los médicos de la red no tienen diploma ni carnet: `credencialesDe` no los declara.
+  ...PROFESIONALES.filter((p) => p.origen === undefined).flatMap((p) => [
     { id: uuid(`file-diploma-${p.id}`), currentVersionId: uuid(`v-file-diploma-${p.id}`), originalName: `diploma-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Diploma de médico cirujano (PDF)'), ownerType: 'USER', ownerId: p.userId },
     { id: uuid(`file-matricula-${p.id}`), currentVersionId: uuid(`v-file-matricula-${p.id}`), originalName: `matricula-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Carnet del Colegio Médico (PDF)', '#eef2ff', '#3730a3'), ownerType: 'USER', ownerId: p.userId },
   ]),

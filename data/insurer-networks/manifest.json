@@ -1,0 +1,27 @@
+{
+  "package": "insurer-medical-networks",
+  "extractedOn": "2026-09-18",
+  "scope": "Médicos habilitados que Alianza Seguros y Nacional Seguros publican en Santa Cruz.",
+  "sources": [
+    {
+      "file": "Alianza_Medicos_Habilitados.md",
+      "sha256": "33e5ee63877963c7ceb983a4bc33855d963a93a85e32cf4aee77c06fc2e44605",
+      "rows": 671
+    },
+    {
+      "file": "Nacional_Seguros_Red_Medica_Bolivia.md",
+      "sha256": "c16a0498c02a26d904533b0e0f6bec0dd112765555b50a96fa54be0b4ecb8292",
+      "rows": 745
+    }
+  ],
+  "counts": {
+    "practitioners": 763,
+    "offices": 1282,
+    "locatedAtInstitution": 150,
+    "skippedOutsideKnownTowns": 0
+  },
+  "warnings": [
+    "Los nombres de Nacional Seguros no separan apellidos de nombres; la división es convencional (nameSplit=heuristic).",
+    "Sin coordenadas en la fuente: el punto es el de la clínica nombrada en la dirección o el centro de la ciudad."
+  ]
+}

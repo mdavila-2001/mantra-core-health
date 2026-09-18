@@ -251,7 +251,8 @@ function perfilPropioDe(p: PacienteSimulado) {
     patientCode: p.patientCode,
     nationalId: p.nationalId,
     issuerAdministrativeAreaConceptId: p.departamentoId,
-    taxId: `${p.nationalId}011`,
+    // Sin cédula no hay NIT que derivar: `011` solo no es un NIT.
+    taxId: p.nationalId === '' ? '' : `${p.nationalId}011`,
     taxHolderName: p.displayName,
     email: p.email,
     ...(p.photoFileId === undefined ? {} : { photoFileId: p.photoFileId }),
@@ -360,7 +361,12 @@ export function perfilProfesionalDe(p: ProfesionalSimulado) {
     licenses: visiblesDelPerfil(matriculasPropiasDe(p)),
     languages: idiomasDe(p),
     affiliations: afiliaciones.filtrar((a) => a.practitionerProfileId === p.id),
-    activity: { encounters: 312, medicationRequests: 208, clinicalNotes: 275, documents: 41 },
+    // Un médico real de la red de una aseguradora no atendió a nadie en
+    // AloVida: su actividad en la plataforma es cero, no una cifra de ejemplo.
+    activity:
+      p.origen !== undefined
+        ? { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 }
+        : { encounters: 312, medicationRequests: 208, clinicalNotes: 275, documents: 41 },
     createdAt: iso(-500),
   };
 }
@@ -377,7 +383,9 @@ function itemDeGuia(p: ProfesionalSimulado) {
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
     specialties: p.especialidades.map((specialtyConceptId, i) => ({ specialtyConceptId, isPrimary: i === 0 })),
-    workplaces: [p.organizacion, `Consultorio ${p.lastName}`],
+    // Para los de la red, el consultorio es la dirección que publica la
+    // aseguradora: «Consultorio Al» (de «Al Hamss») no existe en ningún lado.
+    workplaces: p.origen !== undefined ? [p.organizacion, p.direccion].filter((x) => x !== '') : [p.organizacion, `Consultorio ${p.lastName}`],
   };
 }
 

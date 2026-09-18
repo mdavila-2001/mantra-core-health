@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { PHARMACIES_AND_LABS, PRIMARY_CARE_CENTERS } from './markdown-institutions.generated';
+
 import {
   ASEGURADORAS_DE_SALUD,
   SEMILLAS_DE_INSTITUCIONES,
@@ -36,8 +38,14 @@ describe('las instituciones de salud reales portadas al simulador', () => {
     expect(CLINICAS_REALES).toHaveLength(counts['clinics']!);
     expect(HOSPITALES_REALES).toHaveLength(counts['hospitals']!);
     expect(ASEGURADORAS_REALES).toHaveLength(counts['insurers']!);
+    // Más las 7 farmacias y los 464 centros de primer nivel de
+    // `markdown_convertidos/` (ver `markdown-institutions.generated.ts`).
     expect(SEMILLAS_DE_INSTITUCIONES).toHaveLength(
-      counts['clinics']! + counts['hospitals']! + counts['insurers']!,
+      counts['clinics']! +
+        counts['hospitals']! +
+        counts['insurers']! +
+        PHARMACIES_AND_LABS.filter((f) => f.kind === 'PHARMACY').length +
+        PRIMARY_CARE_CENTERS.length,
     );
   });
 
@@ -98,17 +106,21 @@ describe('las instituciones de salud reales portadas al simulador', () => {
     }
     const generales = ASEGURADORAS_REALES.filter((a) => !a.coversHealth);
     for (const aseguradora of generales) {
-      const semilla = SEMILLAS_DE_INSTITUCIONES.find(
-        (s) => s.displayName === (aseguradora.shortName ?? aseguradora.name),
-      )!;
+      // Por su clave y no por el nombre: BISA y Fortaleza tienen el mismo
+      // nombre en los dos ramos, y buscar por nombre devolvía la de salud.
+      const semilla = SEMILLAS_DE_INSTITUCIONES.find((s) => s.clave === `institucion-${aseguradora.id}`)!;
       expect(semilla.headline).toContain('no cubre salud');
     }
   });
 
-  it('no trae las 464 postas rurales al directorio de la ciudad', () => {
-    const { counts } = leer<{ counts: Record<string, number> }>('manifest');
-    expect(counts['primaryCare']).toBeGreaterThan(400);
-    expect(SEMILLAS_DE_INSTITUCIONES.length).toBeLessThan(counts['primaryCare']!);
+  it('trae los 464 centros de primer nivel, cada uno con su aviso de ubicación', () => {
+    // Antes quedaban afuera; el propietario pidió todos los datos (18/09/2026).
+    const primerNivel = SEMILLAS_DE_INSTITUCIONES.filter((s) => s.headline.startsWith('Centro de salud de primer nivel'));
+    expect(primerNivel).toHaveLength(464);
+    for (const centro of primerNivel) {
+      expect(ubicacionAproximada(centro.precision)).toBe(true);
+      expect(centro.biography).toContain('Ubicación aproximada');
+    }
   });
 
   it('declara su alcance y sus advertencias, para poder citarlas', () => {
@@ -119,7 +131,9 @@ describe('las instituciones de salud reales portadas al simulador', () => {
 
   it('usa los nombres reales y no los inventados que reemplaza', () => {
     const nombres = SEMILLAS_DE_INSTITUCIONES.map((s) => s.displayName).join(' | ');
-    for (const inventado of ['Los Olivos', 'San Lucas', 'Nueva Esperanza']) {
+    // Con el nombre completo: hay un centro de primer nivel real llamado
+    // «Los Olivos», y ése sí va.
+    for (const inventado of ['Clínica Los Olivos', 'Hospital San Lucas', 'Clínica Nueva Esperanza']) {
       expect(nombres).not.toContain(inventado);
     }
     expect(nombres).toContain('Foianini');
