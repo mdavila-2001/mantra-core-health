@@ -145,6 +145,22 @@ thead .data-table__cell {
     letter-spacing: 0.04em;
 }
 
+/* ─── Columna fija al borde final (`sticky: 'end'`) ─────────────────────────
+      Queda a la vista mientras el resto se desplaza. Necesita fondo opaco —si no,
+      las celdas que pasan por debajo se leen a través— y una sombra que diga que
+      hay contenido corrido detrás. Hereda el hover de la fila. */
+.data-table__cell--sticky-end {
+    position: sticky;
+    inset-inline-end: 0;
+    z-index: 1;
+    background: var(--bg-surface);
+    box-shadow: -8px 0 8px -8px color-mix(in srgb, var(--text-secondary) 45%, transparent);
+}
+
+.data-table__row:hover .data-table__cell--sticky-end {
+    background: var(--bg-inset);
+}
+
 .data-table__row:hover {
     background: var(--bg-inset);
 }
