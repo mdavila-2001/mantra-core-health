@@ -158,7 +158,7 @@
       }
 
       @if (publicada()) {
-        <app-card variant="outlined" padding="lg" class="encuesta__card">
+        <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
           <h2 card-header>Asociar a un servicio</h2>
           <form [formGroup]="formularioAsignacion" (ngSubmit)="asignar()">
             <app-form-field
@@ -279,11 +279,15 @@
                       Sin enviar
                     }
                   </span>
-                  <ul class="encuesta__answers">
+                  <!-- Cada valor con su pregunta: «3» o «Sí» a secas no se entienden. -->
+                  <dl class="encuesta__answers">
                     @for (answer of respuesta.answers; track answer.questionId) {
-                      <li>{{ valorDe(answer) }}</li>
+                      <div class="encuesta__answer">
+                        <dt>{{ textoDePregunta().get(answer.questionId) ?? 'Pregunta retirada' }}</dt>
+                        <dd>{{ valorDe(answer) }}</dd>
+                      </div>
                     }
-                  </ul>
+                  </dl>
                 </li>
               }
             </ul>
