@@ -1,9 +1,26 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  afterRenderEffect,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DOCUMENT,
+  ElementRef,
+  inject,
+  input,
+  type OnDestroy,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 
-import type { AgendaSlot } from '../../../../core/data-access/scheduling/scheduling.types';
+import type {
+  AgendaSlot,
+  Booking,
+} from '../../../../core/data-access/scheduling/scheduling.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
+import { nextControlId } from '@shared/forms/form-control.context';
+import type { EstadoResuelto } from '../day-view/day-view';
 import {
   claveDelDia,
   DIAS_DE_LA_SEMANA,
@@ -42,7 +59,38 @@ export interface CeldaDelMes {
   /** Cómo se anuncia la celda entera a un lector de pantalla. */
   readonly etiqueta: string;
   /** El globo del día: a qué horas atiende y qué tiene bloqueado. */
-  readonly resumen: string;
+  readonly resumen: DaySummary;
+}
+
+/** La cabecera del globo del día, en frases ya armadas. */
+export interface DaySummary {
+  /** «martes, 11 de agosto». */
+  readonly title: string;
+  /** «Atendés 08:00–12:00.» o «No atendés.» */
+  readonly hours: string;
+  /** Una frase por bloqueo que toca el día. */
+  readonly blocks: readonly string[];
+}
+
+/**
+ * Qué detalla el globo de cada día.
+ *
+ * - `bookings`: todas las citas del día, con hora, paciente y estado — la
+ *   agenda de `/schedule`, donde la pregunta es «con quién».
+ * - `availability`: los turnos que el profesional publicó y siguen libres — la
+ *   solapa de horarios de atención, donde la pregunta es «qué ofrezco».
+ */
+export type DayDetail = 'bookings' | 'availability';
+
+/** Una fila del globo del día. */
+export interface DayDetailRow {
+  readonly id: string;
+  /** «08:00–08:30», o sólo «08:00» si la cita no trae fin. */
+  readonly time: string;
+  /** El paciente (citas) o cuántos lugares quedan (disponibles). */
+  readonly primary: string;
+  /** El estado de la cita, cuando está resuelto. */
+  readonly secondary: string | null;
 }
 
 /**
@@ -50,10 +98,11 @@ export interface CeldaDelMes {
  *
  * ## Qué muestra, y qué no
  *
- * **Ocupación, jamás los turnos.** La celda dice «6/8», no quién viene: los
- * nombres son la vista del día (MAC-6), y un mes con nombres es ilegible antes
- * de la segunda semana. Acá la pregunta es de un vistazo: ¿qué días tengo
- * llenos y cuáles vacíos?
+ * **La celda, ocupación; el globo, el detalle.** La celda dice «6/8», no quién
+ * viene: un mes con nombres es ilegible antes de la segunda semana. El detalle
+ * aparece al pasar el puntero —o llegar con Tab— en un globo con scroll
+ * (pedido del cliente, 18/09): en la agenda, **todas** las citas del día; en la
+ * solapa de horarios, los turnos que siguen disponibles. Ver `DayDetail`.
  *
  * ## Por qué no reusa el calendario del paciente como componente
  *
@@ -72,12 +121,14 @@ export interface CeldaDelMes {
  */
 @Component({
   selector: 'app-month-view',
-  imports: [AppButton, NgTemplateOutlet, Tooltip],
+  imports: [AppButton, NgTemplateOutlet],
   templateUrl: './month-view.html',
   styleUrl: './month-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MonthView {
+export class MonthView implements OnDestroy {
+  private readonly document = inject(DOCUMENT);
+
   /** El mes que se está mirando; cualquier fecha de ese mes sirve. */
   readonly mes = input.required<Date>();
 
@@ -99,6 +150,18 @@ export class MonthView {
 
   /** Tocaron un día, con `selectable` puesto. */
   readonly dayPicked = output<Date>();
+
+  /** Qué lista el globo de cada día. Ver `DayDetail`. */
+  readonly dayDetail = input<DayDetail>('availability');
+
+  /** Las citas del mes, para el detalle `bookings`. */
+  readonly citas = input<readonly Booking[]>([]);
+
+  /** Las etiquetas de los estados de las citas, ya resueltas. */
+  readonly etiquetas = input<ReadonlyMap<string, EstadoResuelto>>(new Map());
+
+  /** Si la lectura de las citas falló: el globo no puede decir «sin citas». */
+  readonly bookingsFailed = input(false);
 
   protected readonly encabezados = DIAS_DE_LA_SEMANA;
 
@@ -185,6 +248,206 @@ export class MonthView {
     return porDia;
   });
 
+  /* -- El globo del día ------------------------------------------------------ */
+
+  /** El día cuyo globo está abierto. */
+  protected readonly openDay = signal<CeldaDelMes | null>(null);
+
+  /** Dónde va el globo, en coordenadas de viewport. */
+  protected readonly popoverPlacement = signal<PopoverPlacement | null>(null);
+
+  protected readonly popoverId = nextControlId('month-day-detail');
+
+  private readonly popover = viewChild<ElementRef<HTMLElement>>('dayPopover');
+  private anchor: HTMLElement | null = null;
+  private pendingOpen: ReturnType<typeof setTimeout> | null = null;
+  private pendingClose: ReturnType<typeof setTimeout> | null = null;
+
+  /** Referencias estables: `removeEventListener` necesita la MISMA función. */
+  private readonly closeOnOutsideScroll = (event: Event): void => {
+    const panel = this.popover()?.nativeElement;
+    if (panel !== undefined && event.target instanceof Node && panel.contains(event.target)) return;
+    this.close();
+  };
+  private readonly closeOnResize = (): void => this.close();
+
+  /** Las filas del globo abierto: las citas o los turnos libres de ese día. */
+  protected readonly openDayRows = computed<readonly DayDetailRow[]>(() => {
+    const day = this.openDay();
+    if (day === null) return [];
+    return this.dayDetail() === 'bookings'
+      ? this.bookingRowsOf(day.fecha)
+      : this.availableRowsOf(day.fecha);
+  });
+
+  constructor() {
+    // El globo va a la capa superior (Popover API): así no lo recorta el
+    // `overflow` de ningún contenedor ni lo desplaza un `transform` de la
+    // celda. Donde no existe —jsdom— queda en el flujo, visible igual.
+    afterRenderEffect(() => {
+      const panel = this.popover()?.nativeElement;
+      if (panel === undefined || typeof panel.showPopover !== 'function') return;
+      if (!panel.matches(':popover-open')) panel.showPopover();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.close();
+  }
+
+  /** Con el puntero se espera un poco; pasar de un día a otro con el globo abierto, no. */
+  protected scheduleOpen(day: CeldaDelMes, event: Event): void {
+    this.cancelClose();
+    this.cancelOpen();
+    const target = event.currentTarget as HTMLElement;
+    if (this.openDay() !== null) {
+      this.open(day, target);
+      return;
+    }
+    this.pendingOpen = setTimeout(() => {
+      this.pendingOpen = null;
+      this.open(day, target);
+    }, POPOVER_OPEN_DELAY_MS);
+  }
+
+  /** Con el teclado no se espera: llegar al día ya es la intención. */
+  protected openNow(day: CeldaDelMes, event: Event): void {
+    this.cancelClose();
+    this.cancelOpen();
+    this.open(day, event.currentTarget as HTMLElement);
+  }
+
+  /**
+   * Se cierra con demora, para que el puntero alcance a cruzar del día al
+   * globo: ahí adentro es donde se hace scroll.
+   */
+  protected scheduleClose(): void {
+    this.cancelOpen();
+    if (this.pendingClose !== null || this.openDay() === null) return;
+    this.pendingClose = setTimeout(() => {
+      this.pendingClose = null;
+      this.close();
+    }, POPOVER_CLOSE_DELAY_MS);
+  }
+
+  protected cancelClose(): void {
+    if (this.pendingClose !== null) {
+      clearTimeout(this.pendingClose);
+      this.pendingClose = null;
+    }
+  }
+
+  protected close(): void {
+    this.cancelOpen();
+    this.cancelClose();
+    if (this.openDay() === null) return;
+    const panel = this.popover()?.nativeElement;
+    if (panel !== undefined && typeof panel.hidePopover === 'function' && panel.matches(':popover-open')) {
+      panel.hidePopover();
+    }
+    this.anchor?.removeAttribute('aria-describedby');
+    this.anchor = null;
+    this.listenToViewport(false);
+    this.openDay.set(null);
+    this.popoverPlacement.set(null);
+  }
+
+  private open(day: CeldaDelMes, target: HTMLElement): void {
+    const view = this.document.defaultView;
+    if (view === null) return;
+    if (this.anchor !== null && this.anchor !== target) {
+      this.anchor.removeAttribute('aria-describedby');
+    }
+    this.anchor = target;
+    target.setAttribute('aria-describedby', this.popoverId);
+    this.popoverPlacement.set(placePopover(target.getBoundingClientRect(), view));
+    if (this.openDay() === null) this.listenToViewport(true);
+    this.openDay.set(day);
+  }
+
+  private cancelOpen(): void {
+    if (this.pendingOpen !== null) {
+      clearTimeout(this.pendingOpen);
+      this.pendingOpen = null;
+    }
+  }
+
+  /**
+   * Un globo `fixed` se quedaría atrás si la página se mueve: se cierra. El
+   * scroll de adentro del globo no cuenta — es justo para lo que está.
+   */
+  private listenToViewport(listen: boolean): void {
+    const view = this.document.defaultView;
+    if (view === null) return;
+    if (listen) {
+      view.addEventListener('scroll', this.closeOnOutsideScroll, { passive: true, capture: true });
+      view.addEventListener('resize', this.closeOnResize, { passive: true });
+      return;
+    }
+    view.removeEventListener('scroll', this.closeOnOutsideScroll, { capture: true });
+    view.removeEventListener('resize', this.closeOnResize);
+  }
+
+  /**
+   * Todas las citas del día, en hora ascendente. Todas: el recorte a tres es
+   * de la semana, donde no hay lugar; el globo tiene scroll.
+   */
+  private bookingRowsOf(fecha: Date): readonly DayDetailRow[] {
+    const inicio = medianoche(fecha).getTime();
+    const fin = inicio + UN_DIA_MS;
+    return this.citas()
+      .filter((cita) => {
+        const desde = cita.startAt?.getTime();
+        return desde !== undefined && desde >= inicio && desde < fin;
+      })
+      .sort((a, b) => (a.startAt as Date).getTime() - (b.startAt as Date).getTime())
+      .map((cita) => ({
+        id: cita.id,
+        time:
+          cita.endAt === undefined
+            ? hora(cita.startAt as Date)
+            : `${hora(cita.startAt as Date)}–${hora(cita.endAt)}`,
+        // Mismas palabras que el día y la semana: sin nombre no se inventa uno.
+        primary: cita.patientName ?? 'Paciente sin nombre registrado',
+        secondary: this.etiquetas().get(cita.statusConceptId)?.display ?? null,
+      }));
+  }
+
+  /**
+   * Los turnos publicados que todavía se pueden dar ese día: con lugar, por
+   * venir y fuera de cualquier bloqueo. Uno bloqueado existe en la agenda
+   * pero no se ofrece, y listarlo diría lo contrario.
+   */
+  private availableRowsOf(fecha: Date): readonly DayDetailRow[] {
+    const inicio = medianoche(fecha).getTime();
+    const fin = inicio + UN_DIA_MS;
+    const ahora = Date.now();
+    const bloqueos = this.bloqueosDe(fecha);
+    return this.cupos()
+      .filter((cupo) => {
+        const desde = cupo.startAt.getTime();
+        return (
+          desde >= inicio &&
+          desde < fin &&
+          desde > ahora &&
+          cupo.remainingCapacity > 0 &&
+          !bloqueos.some(
+            (b) => b.desde.getTime() < cupo.endAt.getTime() && b.hasta.getTime() > desde,
+          )
+        );
+      })
+      .sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
+      .map((cupo) => ({
+        id: cupo.id,
+        time: `${hora(cupo.startAt)}–${hora(cupo.endAt)}`,
+        primary:
+          cupo.capacity === 1
+            ? 'Libre'
+            : `${cupo.remainingCapacity} de ${cupo.capacity} lugares libres`,
+        secondary: null,
+      }));
+  }
+
   /** Los bloqueos que tocan esa fecha, en orden. */
   private bloqueosDe(fecha: Date): readonly BloqueoDelMes[] {
     const inicio = medianoche(fecha).getTime();
@@ -206,6 +469,67 @@ export class MonthView {
 }
 
 const UN_DIA_MS = 24 * 60 * 60 * 1000;
+
+/** Espera del puntero antes de abrir: cruzar el mes no debe encender globos. */
+const POPOVER_OPEN_DELAY_MS = 250;
+
+/** Margen para cruzar del día al globo sin que se cierre en el camino. */
+const POPOVER_CLOSE_DELAY_MS = 200;
+
+/** Ancho del globo; en un teléfono, lo que entre con 16 px a cada lado. */
+const POPOVER_WIDTH_PX = 320;
+const POPOVER_GUTTER_PX = 16;
+const POPOVER_GAP_PX = 4;
+
+/** Alto máximo de la lista: más que esto se lee con scroll. */
+const POPOVER_MAX_HEIGHT_PX = 360;
+
+/** Por debajo de este alto libre, el globo va arriba del día si ahí hay más lugar. */
+const POPOVER_MIN_ROOM_PX = 200;
+
+/** Dónde se dibuja el globo. `top` o `bottom`, nunca los dos. */
+export interface PopoverPlacement {
+  readonly top: number | null;
+  readonly bottom: number | null;
+  readonly left: number;
+  readonly width: number;
+  readonly maxHeight: number;
+}
+
+/**
+ * Debajo del día si entra; si no, arriba — el lado con más lugar. Nunca se
+ * mide el globo: el alto lo fija `maxHeight` y el resto es scroll, así que la
+ * cuenta sale del día y del viewport solos.
+ */
+export function placePopover(
+  cell: DOMRect,
+  view: { innerWidth: number; innerHeight: number },
+): PopoverPlacement {
+  const width = Math.min(POPOVER_WIDTH_PX, view.innerWidth - 2 * POPOVER_GUTTER_PX);
+  const centered = cell.left + cell.width / 2 - width / 2;
+  const left = Math.max(
+    POPOVER_GUTTER_PX,
+    Math.min(centered, view.innerWidth - width - POPOVER_GUTTER_PX),
+  );
+  const below = view.innerHeight - cell.bottom - POPOVER_GAP_PX - POPOVER_GUTTER_PX;
+  const above = cell.top - POPOVER_GAP_PX - POPOVER_GUTTER_PX;
+  if (below >= POPOVER_MIN_ROOM_PX || below >= above) {
+    return {
+      top: cell.bottom + POPOVER_GAP_PX,
+      bottom: null,
+      left,
+      width,
+      maxHeight: Math.min(POPOVER_MAX_HEIGHT_PX, below),
+    };
+  }
+  return {
+    top: null,
+    bottom: view.innerHeight - cell.top + POPOVER_GAP_PX,
+    left,
+    width,
+    maxHeight: Math.min(POPOVER_MAX_HEIGHT_PX, above),
+  };
+}
 
 /** Un rato continuo del día. */
 interface Franja {
@@ -237,13 +561,10 @@ function resumenDelDia(
   fecha: Date,
   franjas: readonly Franja[],
   bloqueos: readonly BloqueoDelMes[],
-): string {
-  const partes = [fechaLarga(fecha)];
-  partes.push(franjas.length === 0 ? 'No atendés.' : `Atendés ${listaDeFranjas(franjas)}.`);
-
+): DaySummary {
   const inicio = medianoche(fecha).getTime();
   const fin = inicio + UN_DIA_MS;
-  for (const bloqueo of bloqueos) {
+  const blocks = bloqueos.map((bloqueo) => {
     const desde = Math.max(bloqueo.desde.getTime(), inicio);
     const hasta = Math.min(bloqueo.hasta.getTime(), fin);
     const cuando =
@@ -251,9 +572,13 @@ function resumenDelDia(
         ? 'todo el día'
         : listaDeFranjas([{ desde: new Date(desde), hasta: new Date(hasta) }]);
     const motivo = bloqueo.motivo === null ? '' : ` (${bloqueo.motivo})`;
-    partes.push(`Bloqueado ${cuando}${motivo}.`);
-  }
-  return partes.join(' · ');
+    return `Bloqueado ${cuando}${motivo}.`;
+  });
+  return {
+    title: fechaLarga(fecha),
+    hours: franjas.length === 0 ? 'No atendés.' : `Atendés ${listaDeFranjas(franjas)}.`,
+    blocks,
+  };
 }
 
 /**

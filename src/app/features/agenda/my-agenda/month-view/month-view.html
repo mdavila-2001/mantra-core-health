@@ -31,10 +31,9 @@
               [class.mes__celda--pasado]="celda.pasado"
               [attr.data-estado]="celda.estado"
             >
-              <!-- Sólo lectura: el mes es un vistazo. Pasar el puntero —o llegar
-                   con Tab— muestra el horario de atención del día y lo que
-                   esté bloqueado; tocarlo no abre nada (pedido del cliente,
-                   18/09: la versión cliqueable se va a otra pantalla). -->
+              <!-- Pasar el puntero —o llegar con Tab— abre el globo del día con
+                   su detalle (ver `DayDetail`). Tocarlo abre el día sólo con
+                   `selectable`; en la solapa de horarios es un vistazo. -->
               @if (celda.delMes) {
                 @if (selectable()) {
                   <button
@@ -42,8 +41,12 @@
                     class="mes__dia mes__dia--boton"
                     data-testid="mes-dia"
                     [attr.aria-label]="celda.etiqueta + '. Ver el día'"
-                    [appTooltip]="celda.resumen"
-                    (click)="dayPicked.emit(celda.fecha)"
+                    (mouseenter)="scheduleOpen(celda, $event)"
+                    (mouseleave)="scheduleClose()"
+                    (focus)="openNow(celda, $event)"
+                    (blur)="scheduleClose()"
+                    (keydown.escape)="close()"
+                    (click)="close(); dayPicked.emit(celda.fecha)"
                   >
                     <ng-container [ngTemplateOutlet]="contenido" [ngTemplateOutletContext]="{ $implicit: celda }" />
                   </button>
@@ -54,7 +57,11 @@
                     tabindex="0"
                     data-testid="mes-dia"
                     [attr.aria-label]="celda.etiqueta"
-                    [appTooltip]="celda.resumen"
+                    (mouseenter)="scheduleOpen(celda, $event)"
+                    (mouseleave)="scheduleClose()"
+                    (focus)="openNow(celda, $event)"
+                    (blur)="scheduleClose()"
+                    (keydown.escape)="close()"
                   >
                     <ng-container [ngTemplateOutlet]="contenido" [ngTemplateOutletContext]="{ $implicit: celda }" />
                   </div>
@@ -70,6 +77,84 @@
       }
     </tbody>
   </table>
+
+  <!-- El globo del día. Uno solo para todo el mes, en la capa superior. Se
+       queda abierto mientras el puntero esté encima: la lista se lee con
+       scroll. -->
+  @if (openDay(); as dia) {
+    @if (popoverPlacement(); as lugar) {
+      <div
+        #dayPopover
+        popover="manual"
+        class="mes__globo"
+        role="region"
+        data-testid="mes-globo"
+        [id]="popoverId"
+        [attr.aria-label]="'Detalle del ' + dia.resumen.title"
+        [style.top.px]="lugar.top"
+        [style.bottom.px]="lugar.bottom"
+        [style.left.px]="lugar.left"
+        [style.width.px]="lugar.width"
+        [style.max-height.px]="lugar.maxHeight"
+        (mouseenter)="cancelClose()"
+        (mouseleave)="scheduleClose()"
+      >
+        <div class="mes__globo-cabecera">
+          <p class="mes__globo-titulo">{{ dia.resumen.title }}</p>
+          <p class="mes__globo-linea">{{ dia.resumen.hours }}</p>
+          @for (bloqueo of dia.resumen.blocks; track $index) {
+            <p class="mes__globo-linea mes__globo-linea--bloqueo">{{ bloqueo }}</p>
+          }
+        </div>
+
+        @if (dayDetail() === 'bookings') {
+          <p class="mes__globo-subtitulo">
+            @switch (openDayRows().length) {
+              @case (0) {
+                {{ bookingsFailed() ? 'No se pudieron traer las citas de este día.' : 'Sin citas este día.' }}
+              }
+              @case (1) {
+                1 cita
+              }
+              @default {
+                {{ openDayRows().length }} citas
+              }
+            }
+          </p>
+        } @else {
+          <p class="mes__globo-subtitulo">
+            @switch (openDayRows().length) {
+              @case (0) {
+                Sin turnos disponibles.
+              }
+              @case (1) {
+                1 turno disponible
+              }
+              @default {
+                {{ openDayRows().length }} turnos disponibles
+              }
+            }
+          </p>
+        }
+
+        @if (openDayRows().length > 0) {
+          <ul class="mes__globo-lista" data-testid="mes-globo-lista">
+            @for (fila of openDayRows(); track fila.id) {
+              <li class="mes__globo-fila">
+                <span class="mes__globo-hora">{{ fila.time }}</span>
+                <span class="mes__globo-texto">
+                  <span class="mes__globo-primario">{{ fila.primary }}</span>
+                  @if (fila.secondary) {
+                    <span class="mes__globo-secundario">{{ fila.secondary }}</span>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  }
 </div>
 
 <!-- Lo de adentro de un día, igual se abra o no: el número y su ocupación. -->

@@ -78,6 +78,12 @@ const ORDEN_VISUAL = [1, 2, 3, 4, 5, 6, 0] as const;
 const DIAS_DE_MARGEN = 30;
 
 /**
+ * Tope de citas del mes: el mismo de la agenda en la API (`AGENDA_MAX_LIMIT`).
+ * Un mes de consultorio lleno —veinte jornadas de doce turnos— entra holgado.
+ */
+const MONTH_BOOKINGS_LIMIT = 500;
+
+/**
  * Lo más lejos que se puede mirar de una sola vez.
  *
  * `GET /scheduling/slots` rechaza con 422 cualquier ventana mayor —«La ventana
@@ -320,6 +326,17 @@ export class MyAgenda implements OnInit {
 
   protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
   protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);
+
+  /**
+   * Las citas del mes, para que el globo de cada día del calendario diga con
+   * quién es cada sesión (pedido del cliente, 18/09: «el detalle de todas las
+   * sesiones del día»). Señal aparte de las de la semana y el día por lo mismo
+   * que ellas: son otra ventana con otro ciclo de vida.
+   */
+  protected readonly citasDelMes = signal<readonly Booking[]>([]);
+
+  /** Si la lectura de las citas del mes falló: el globo lo dice en vez de «sin citas». */
+  protected readonly monthBookingsFailed = signal(false);
 
   /** Los bloqueos de la semana en curso, para la grilla del horario. */
   protected readonly bloqueosDeLaSemana = signal<readonly BloqueoDelMes[]>([]);
@@ -799,6 +816,22 @@ export class MyAgenda implements OnInit {
       // bloqueados se ven como sin agenda. Peor sería no mostrar nada.
       error: () => this.bloqueosDelMes.set([]),
     });
+
+    // Una llamada para todo el mes, igual que la semana. Si falla, el globo
+    // del día dice que no pudo traer las citas; la ocupación sigue en pie.
+    this.scheduling
+      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: MONTH_BOOKINGS_LIMIT })
+      .subscribe({
+        next: (pagina: { items: readonly Booking[] }) => {
+          this.citasDelMes.set(pagina.items);
+          this.monthBookingsFailed.set(false);
+          this.traducirEstados(pagina.items);
+        },
+        error: () => {
+          this.citasDelMes.set([]);
+          this.monthBookingsFailed.set(true);
+        },
+      });
   }
 
   /**

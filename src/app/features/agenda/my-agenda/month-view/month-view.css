@@ -191,3 +191,105 @@
     padding: var(--sp-2);
   }
 }
+
+/* ---- el globo del día ------------------------------------------------------- */
+
+/* Capa superior (Popover API). El UA centra los popovers con `inset: 0` y
+   `margin: auto`: se anulan, las coordenadas las pone el componente. */
+.mes__globo {
+  position: fixed;
+  inset: auto;
+  z-index: var(--z-tooltip);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-body);
+}
+
+.mes__globo-cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-3) var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mes__globo-titulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.mes__globo-titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.mes__globo-linea {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.mes__globo-linea--bloqueo {
+  color: var(--st-error-fg);
+}
+
+.mes__globo-subtitulo {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3) var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+/* La lista es lo que scrollea; la cabecera queda fija arriba. */
+.mes__globo-lista {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0 var(--sp-2) var(--sp-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.mes__globo-fila {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-1);
+  border-radius: var(--r-sm);
+}
+
+.mes__globo-fila + .mes__globo-fila {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.mes__globo-hora {
+  flex: none;
+  min-inline-size: 6.5em;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.mes__globo-texto {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.mes__globo-primario {
+  overflow-wrap: anywhere;
+}
+
+.mes__globo-secundario {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
