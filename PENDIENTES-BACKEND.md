@@ -1522,6 +1522,12 @@ Simulador: `core/mock/handlers/practice.handlers.ts`; cliente:
 
 ## P35 · Cotizaciones: plan de pagos flexible, sin interés — 18/09/2026
 
+> **En revisión (18/09/2026):** modelo v4.2.18 →
+> https://github.com/mantra-core-technologies/mantra-core-health-model/pull/28 · API →
+> https://github.com/mdavila-2001/mantra-core-health-api/pull/419. Falta, al integrar este front
+> a `dev`: mandar `offeredPrice`, `downPaymentAmount` y `installments[].amount` como **string**
+> con dos decimales, que es como la API recibe la plata.
+
 El propietario pidió **quitar por completo la tasa de interés y la simulación de
 crédito** de las cotizaciones: un consultorio no financia, reparte el precio de un
 tratamiento en cuotas a medida de la persona. El frontend (`mockup`) ya lo hace;
