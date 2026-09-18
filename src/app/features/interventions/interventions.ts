@@ -155,6 +155,8 @@ export class Interventions {
   ]);
 
   protected readonly porCaso = (fila: SurgicalCase): string => fila.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeCaso = (fila: SurgicalCase): string => `el caso ${fila.caseNumber}`;
   protected readonly porIntegrante = (fila: CaseTeamMember): string => fila.id;
 
   /** El motivo no puede ir vacío: el backend lo exige y la pantalla también. */

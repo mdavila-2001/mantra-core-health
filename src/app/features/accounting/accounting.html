@@ -198,6 +198,7 @@
     [state]="filasDelBalance()"
     [columns]="columnasDelBalance"
     [trackBy]="claveDeFila"
+    [rowLabel]="nombreDeCuenta"
     caption="Saldos por cuenta del plan contable"
   />
 
@@ -439,6 +440,7 @@
           [state]="filasDelEstadoDeResultados()"
           [columns]="columnasDelEstadoFinanciero"
           [trackBy]="claveDeLineaFinanciera"
+          [rowLabel]="nombreDeLineaFinanciera"
           caption="Cuentas de ingreso y gasto posteadas de la práctica"
         />
       }
@@ -494,6 +496,7 @@
           [state]="filasDelBalanceGeneral()"
           [columns]="columnasDelEstadoFinanciero"
           [trackBy]="claveDeLineaFinanciera"
+          [rowLabel]="nombreDeLineaFinanciera"
           caption="Cuentas de activo, pasivo y patrimonio a la fecha de corte"
         />
       }

@@ -371,6 +371,9 @@ export class Accounting {
   ];
 
   protected readonly claveDeFila = (fila: TrialBalanceRow): string => fila.accountId;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeCuenta = (fila: TrialBalanceRow): string =>
+    [fila.code, fila.name].filter(Boolean).join(' ');
   protected readonly claveDeAsiento = (fila: FilaDelDiario): string => fila.id;
 
   protected reintentar(): void {
@@ -710,6 +713,9 @@ export class Accounting {
   ];
 
   protected readonly claveDeLineaFinanciera = (fila: FinancialStatementLine): string => fila.accountId;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeLineaFinanciera = (fila: FinancialStatementLine): string =>
+    [fila.code, fila.name].filter(Boolean).join(' ');
 
   protected readonly balanceGeneral = toSignal(
     toObservable(this.practicaEIntentoYPestana).pipe(
