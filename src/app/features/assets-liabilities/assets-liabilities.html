@@ -99,6 +99,11 @@
                       size="sm"
                       type="button"
                       [disabled]="avanceDeActivoEnCurso() === activo.id"
+                      [attr.aria-label]="
+                        (avanceDeActivoEnCurso() === activo.id ? 'Registrando…' : 'Registrar avance') +
+                        ': ' +
+                        activo.name
+                      "
                       (clicked)="registrarAvanceDeActivo(activo)"
                     >
                       {{ avanceDeActivoEnCurso() === activo.id ? 'Registrando…' : 'Registrar avance' }}
@@ -191,6 +196,11 @@
                       size="sm"
                       type="button"
                       [disabled]="avanceDePasivoEnCurso() === pasivo.id"
+                      [attr.aria-label]="
+                        (avanceDePasivoEnCurso() === pasivo.id ? 'Registrando…' : 'Registrar avance') +
+                        ': ' +
+                        pasivo.name
+                      "
                       (clicked)="registrarAvanceDePasivo(pasivo)"
                     >
                       {{ avanceDePasivoEnCurso() === pasivo.id ? 'Registrando…' : 'Registrar avance' }}

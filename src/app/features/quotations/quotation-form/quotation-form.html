@@ -285,13 +285,25 @@
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaAccionPaciente let-paciente>
-  <button app-button type="button" variant="secondary" (clicked)="elegirPaciente(paciente)">
+  <button
+    app-button
+    type="button"
+    variant="secondary"
+    [attr.aria-label]="'Elegir: ' + (paciente.displayName ?? paciente.patientCode)"
+    (clicked)="elegirPaciente(paciente)"
+  >
     Elegir
   </button>
 </ng-template>
 
 <ng-template #celdaAccionServicio let-servicio>
-  <button app-button type="button" variant="secondary" (clicked)="elegirServicio(servicio)">
+  <button
+    app-button
+    type="button"
+    variant="secondary"
+    [attr.aria-label]="'Elegir: ' + servicio.name"
+    (clicked)="elegirServicio(servicio)"
+  >
     Elegir
   </button>
 </ng-template>

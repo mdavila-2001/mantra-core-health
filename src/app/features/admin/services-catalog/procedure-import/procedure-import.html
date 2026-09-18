@@ -87,6 +87,7 @@
             size="sm"
             type="button"
             data-testid="procedimiento-importar"
+            [attr.aria-label]="'Importar: ' + procedimiento.display"
             [disabled]="practicaElegida() === null || importando() !== null"
             (clicked)="importar(procedimiento)"
           >

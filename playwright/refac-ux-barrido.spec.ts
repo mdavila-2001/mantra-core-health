@@ -77,7 +77,8 @@ async function medirEnPagina(page: Page, ancho: number): Promise<Record<string, 
   return page.evaluate((anchoVp) => {
     const out: Record<string, string[]> = {};
     const add = (k: string, v: string) => {
-      (out[k] ??= []).length < 6 && out[k].push(v.replace(/\s+/g, ' ').trim().slice(0, 90));
+      const lista = (out[k] ??= []);
+      if (lista.length < 6) lista.push(v.replace(/\s+/g, ' ').trim().slice(0, 90));
     };
     const visible = (e: Element) => {
       const r = (e as HTMLElement).getBoundingClientRect();
@@ -142,6 +143,17 @@ async function medirEnPagina(page: Page, ancho: number): Promise<Record<string, 
     }
 
     for (const i of document.querySelectorAll('img:not([alt])')) if (visible(i)) add('img-sin-alt', (i as HTMLImageElement).src);
+
+    // El mismo nombre accesible repetido en varias filas («Descargar PDF» ×3):
+    // navegando por botones con lector de pantalla no se sabe de qué es cada uno.
+    const nombres = new Map<string, number>();
+    for (const e of main.querySelectorAll('button, a[href], [role=button]')) {
+      if (!visible(e) || e.closest('nav, [aria-hidden=true], .data-table__detail-toggle-cell')) continue;
+      const n = ((e.getAttribute('aria-label') ?? '').trim() || (e.textContent ?? '').replace(/\s+/g, ' ').trim()).toLowerCase();
+      if (n.length < 2) continue;
+      nombres.set(n, (nombres.get(n) ?? 0) + 1);
+    }
+    for (const [n, veces] of nombres) if (veces > 1) add('nombre-repetido', `${n} ×${veces}`);
 
     if (anchoVp <= 400) {
       for (const e of main.querySelectorAll('button, [role=button], a[app-button]')) {

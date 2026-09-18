@@ -46,6 +46,7 @@
     variant="neutral"
     size="sm"
     [attr.data-testid]="'cancel-' + fila.id"
+    [attr.aria-label]="'Cancelar: la visita del ' + fila.fecha"
     (click)="cancelar(fila.request)"
   >
     Cancelar

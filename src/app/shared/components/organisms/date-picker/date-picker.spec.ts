@@ -1,4 +1,7 @@
+import { Component } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+
+import { FormField } from '../../molecules/form-field/form-field';
 
 import { DatePicker } from './date-picker';
 
@@ -784,3 +787,33 @@ describe('DatePicker', () => {
   });
 });
 
+@Component({
+  imports: [DatePicker, FormField],
+  template: `
+    <app-form-field label="Desde"><app-date-picker /></app-form-field>
+    <app-form-field label="Hasta"><app-date-picker /></app-form-field>
+  `,
+})
+class DosFechas {}
+
+describe('DatePicker · nombre del disparador (refactor UX)', () => {
+  it('dentro de un campo, «Abrir calendario» lleva el rótulo: Desde y Hasta no se confunden', async () => {
+    await TestBed.configureTestingModule({ imports: [DosFechas] }).compileComponents();
+    const fixture = TestBed.createComponent(DosFechas);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    const nombres = [...raiz.querySelectorAll<HTMLButtonElement>('.date-picker-trigger')].map(
+      (boton) =>
+        (boton.getAttribute('aria-labelledby') ?? '')
+          .split(' ')
+          .map((id) => document.getElementById(id)?.textContent?.replace(/\s+/g, ' ').trim() ?? '')
+          .join(' '),
+    );
+
+    expect(nombres).toHaveLength(2);
+    expect(nombres[0]).toMatch(/^Abrir calendario Desde/);
+    expect(nombres[1]).toMatch(/^Abrir calendario Hasta/);
+  });
+});

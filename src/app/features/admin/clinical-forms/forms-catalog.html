@@ -78,6 +78,7 @@
           variant="primary"
           size="sm"
           [disabled]="asignando() === formulario.id"
+          [attr.aria-label]="'Usar esta plantilla: ' + formulario.name"
           (clicked)="usar(formulario)"
         >
           Usar esta plantilla
@@ -87,6 +88,7 @@
           type="button"
           variant="secondary"
           size="sm"
+          [attr.aria-label]="'Duplicar para adaptar: ' + formulario.name"
           (clicked)="adaptar(formulario)"
         >
           Duplicar para adaptar

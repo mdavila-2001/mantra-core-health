@@ -76,6 +76,12 @@
               variant="secondary"
               class="evoluciones__accion"
               [attr.data-testid]="'evoluciones-ver-' + atencion.id"
+              [attr.aria-label]="
+                'Ver evolución: ' +
+                atencion.paciente +
+                ', ' +
+                (atencion.cuando | date: &quot;d 'de' MMMM, HH:mm&quot;)
+              "
               (clicked)="verEvolucion(atencion)"
             >
               Ver evolución
