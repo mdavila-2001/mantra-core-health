@@ -111,12 +111,29 @@
  * todas en una. Con dos acciones nomás (el caso que describía el comentario
  * original) el resultado sigue siendo una sola línea: el wrap no hace nada
  * cuando ya entran.
+ *
+ * El 13/09 (a18d8e97, «acciones como íconos») volvió a `nowrap`. Con cinco
+ * íconos la columna exigía 256 px en una línea: a 1440 px la tabla medía
+ * 1 146 dentro de 1 081 y el último ícono de la fila —la acción que se viene a
+ * tocar— quedaba detrás de un scroll lateral, mientras «Paciente» se partía en
+ * tres renglones (hallazgo H-09 del refactor UX). Vuelve `wrap`: los íconos
+ * sólo bajan de línea en las filas que tienen más de los que entran.
  */
 .agenda__acciones {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
+}
+
+/* Desde tablet las acciones son una columna fija al borde (`sticky: 'end'`), y
+   la tabla la apretaba hasta partir los botones en tres renglones. En una fila
+   la columna mide lo que miden ellos; en el teléfono van al detalle y ahí sí
+   pueden partirse. */
+@media (min-width: 780px) {
+  .agenda__acciones {
+    flex-wrap: nowrap;
+  }
 }
 
 /* ---- avisar demora (P8) --------------------------------------------------
@@ -309,4 +326,11 @@
     padding: var(--sp-1) var(--sp-2);
     column-gap: var(--sp-1);
   }
+}
+
+/* «Ver como agenda» se va al extremo de la fila de filtros: es navegación,
+   no un filtro más. */
+.agenda__ver-agenda {
+  margin-inline-start: auto;
+  align-self: center;
 }

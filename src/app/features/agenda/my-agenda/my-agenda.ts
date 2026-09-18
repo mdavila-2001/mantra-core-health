@@ -3,8 +3,11 @@ import {
   Component,
   computed,
   inject,
+  input,
   LOCALE_ID,
+  output,
   signal,
+  type OnInit,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { formatDate } from '@angular/common';
@@ -38,7 +41,7 @@ import { ContentDialog } from '../../../shared/components/organisms/content-dial
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
-import { BlockForm, aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
+import { aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
 import {
   DayView,
   type EstadoResuelto,
@@ -73,6 +76,12 @@ const ORDEN_VISUAL = [1, 2, 3, 4, 5, 6, 0] as const;
  * exista el worker que lo haga solo.
  */
 const DIAS_DE_MARGEN = 30;
+
+/**
+ * Tope de citas del mes: el mismo de la agenda en la API (`AGENDA_MAX_LIMIT`).
+ * Un mes de consultorio lleno —veinte jornadas de doce turnos— entra holgado.
+ */
+const MONTH_BOOKINGS_LIMIT = 500;
 
 /**
  * Lo más lejos que se puede mirar de una sola vez.
@@ -147,10 +156,9 @@ const SIN_DATO = 'Sin registrar';
     AppButton,
     AppButtonLink,
     Tooltip,
-    BlockForm,
     DayView,
-    TarjetaDelDia,
     MonthView,
+    TarjetaDelDia,
     WeekView,
     ScheduleGrid,
     ContentDialog,
@@ -165,7 +173,23 @@ const SIN_DATO = 'Sin registrar';
     '(document:click)': 'cerrarAvisoSiAfuera($event)',
   },
 })
-export class MyAgenda {
+export class MyAgenda implements OnInit {
+  /**
+   * Qué pregunta responde esta agenda.
+   *
+   * - `schedule`: «¿qué horario tengo?» — la solapa «Mi agenda» de `/schedule`,
+   *   con el horario publicado y el mes de sólo lectura.
+   * - `calendar`: «¿qué tengo hoy?» — lo que `/schedule` muestra por defecto
+   *   (pedido del propietario, 18/09): el día, con Semana y Mes a un toque.
+   *
+   * Es la misma agenda y los mismos datos —recurso, cupos, citas, bloqueos—,
+   * así que partirla en dos componentes duplicaría toda la carga.
+   */
+  readonly mode = input<'schedule' | 'calendar'>('schedule');
+
+  /** «Ver como tabla»: quien contiene esta agenda sabe dónde vive la tabla. */
+  readonly tableRequested = output<void>();
+
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
@@ -227,34 +251,55 @@ export class MyAgenda {
   protected readonly mesVisible = signal(primerDiaDelMes(new Date()));
 
   /**
-   * Si se mira el mes o la semana — «un botón para ver la semana y otro para
-   * ver el mes» del pedido original.
+   * Qué se mira en el calendario: el día, la semana o el mes — «un botón para
+   * ver la semana y otro para ver el mes» del pedido original.
    *
-   * Son dos preguntas distintas: el mes responde «¿cuándo tengo hueco?», la
-   * semana responde «¿cómo viene esto?». Por eso conviven en vez de que una
-   * reemplace a la otra.
+   * Son preguntas distintas: el día responde «¿a quién atiendo?», la semana
+   * «¿cómo viene esto?» y el mes «¿cuándo tengo hueco?». Por eso conviven en
+   * vez de que una reemplace a la otra. Arranca en el día (propietario, 18/09).
    */
-  protected readonly vista = signal<'mes' | 'semana'>('mes');
+  protected readonly calendarView = signal<'day' | 'week' | 'month'>('day');
 
   /** Cualquier día de la semana mirada; el lunes lo calcula la vista. */
   protected readonly semanaVisible = signal(lunesDe(new Date()));
 
-  protected verMes(): void {
-    this.vista.set('mes');
+  /** El día que se estaba mirando, o hoy si todavía no se abrió ninguno. */
+  private diaDeReferencia(): Date {
+    return this.diaAbierto() ?? aMedianoche(new Date());
   }
 
-  protected verSemana(): void {
-    this.vista.set('semana');
-    // Se abre en la semana del mes que se está mirando, no en la de hoy: venir
-    // de octubre y aterrizar en septiembre se lee como un error.
-    const mes = this.mesVisible();
-    const hoy = new Date();
-    const lunes =
-      mes.getMonth() === hoy.getMonth() && mes.getFullYear() === hoy.getFullYear()
-        ? lunesDe(hoy)
-        : lunesDe(mes);
-    this.semanaVisible.set(lunes);
-    this.cargarSemana(lunes);
+  protected showDay(): void {
+    this.openDay(this.diaDeReferencia());
+  }
+
+  /** La semana del día que se estaba mirando: cambiar de vista no es viajar. */
+  protected showWeek(): void {
+    this.calendarView.set('week');
+    this.ratoParaCrear.set(null);
+    this.cambiarSemana(lunesDe(this.diaDeReferencia()));
+  }
+
+  protected showMonth(): void {
+    this.calendarView.set('month');
+    this.ratoParaCrear.set(null);
+    const mes = primerDiaDelMes(this.diaDeReferencia());
+    if (mes.getTime() !== this.mesVisible().getTime()) {
+      this.cambiarMes(mes);
+    }
+  }
+
+  /**
+   * Abre un día —el de hoy al llegar, o el que se tocó en la semana o el mes—
+   * y trae su mes si es otro: los bloqueos que pinta el día son los del mes.
+   */
+  protected openDay(fecha: Date): void {
+    this.calendarView.set('day');
+    const mes = primerDiaDelMes(fecha);
+    if (mes.getTime() !== this.mesVisible().getTime()) {
+      this.mesVisible.set(mes);
+      this.cargarMes();
+    }
+    this.abrirDia(fecha);
   }
 
   /**
@@ -281,6 +326,17 @@ export class MyAgenda {
 
   protected readonly cuposDelMes = signal<readonly AgendaSlot[]>([]);
   protected readonly bloqueosDelMes = signal<readonly BloqueoDelMes[]>([]);
+
+  /**
+   * Las citas del mes, para que el globo de cada día del calendario diga con
+   * quién es cada sesión (pedido del cliente, 18/09: «el detalle de todas las
+   * sesiones del día»). Señal aparte de las de la semana y el día por lo mismo
+   * que ellas: son otra ventana con otro ciclo de vida.
+   */
+  protected readonly citasDelMes = signal<readonly Booking[]>([]);
+
+  /** Si la lectura de las citas del mes falló: el globo lo dice en vez de «sin citas». */
+  protected readonly monthBookingsFailed = signal(false);
 
   /** Los bloqueos de la semana en curso, para la grilla del horario. */
   protected readonly bloqueosDeLaSemana = signal<readonly BloqueoDelMes[]>([]);
@@ -404,7 +460,11 @@ export class MyAgenda {
     return hasta === null ? '' : hasta.toLocaleDateString('es');
   });
 
-  constructor() {
+  /**
+   * En `ngOnInit` y no en el constructor: la carga decide qué abrir según
+   * `mode`, y un input todavía no tiene valor mientras se construye.
+   */
+  ngOnInit(): void {
     this.cargar();
   }
 
@@ -464,6 +524,10 @@ export class MyAgenda {
           return;
         }
         this.estado.set(ready(vigente));
+        if (this.mode() === 'calendar') {
+          this.cargarMes();
+          this.openDay(this.diaDeReferencia());
+        }
         // Los cupos se leen sólo si hay horario: sin plantilla no puede haber
         // ninguno, y preguntarlo sería un viaje para confirmar un cero.
         this.leerHastaCuandoHayCupos(resourceId);
@@ -752,6 +816,22 @@ export class MyAgenda {
       // bloqueados se ven como sin agenda. Peor sería no mostrar nada.
       error: () => this.bloqueosDelMes.set([]),
     });
+
+    // Una llamada para todo el mes, igual que la semana. Si falla, el globo
+    // del día dice que no pudo traer las citas; la ocupación sigue en pie.
+    this.scheduling
+      .searchBookings({ resourceId: recurso.id, from: desde, to: hasta, limit: MONTH_BOOKINGS_LIMIT })
+      .subscribe({
+        next: (pagina: { items: readonly Booking[] }) => {
+          this.citasDelMes.set(pagina.items);
+          this.monthBookingsFailed.set(false);
+          this.traducirEstados(pagina.items);
+        },
+        error: () => {
+          this.citasDelMes.set([]);
+          this.monthBookingsFailed.set(true);
+        },
+      });
   }
 
   /**

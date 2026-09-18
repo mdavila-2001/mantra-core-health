@@ -146,8 +146,13 @@
 
 .facturacion__mes-nombre {
     font-weight: 600;
-    /* El nombre del mes viene de `toLocaleDateString`, en minúscula. */
-    text-transform: capitalize;
+}
+
+/* El nombre del mes viene de `toLocaleDateString` en minúscula («septiembre de
+   2026»). Sólo la inicial: `capitalize` dejaba «Septiembre De 2026». Es ítem de
+   la rejilla `.facturacion__mes`, así que ya es caja de bloque. */
+.facturacion__mes-nombre::first-letter {
+    text-transform: uppercase;
 }
 
 .facturacion__mes-total {

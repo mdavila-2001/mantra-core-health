@@ -440,6 +440,69 @@ describe('AlovidaRuntimeService', () => {
       expect(document.querySelector('.app-side-nav .app-tenant-switcher')).not.toBeNull();
       expect(document.querySelector('.app-header .app-tenant-switcher')).toBeNull();
     });
+
+    it('baja al cajón también con la marca dentro de la cabecera del menú', () => {
+      // La estructura real: la marca no es hija directa del `nav` sino de su
+      // cabecera, y tiene al lado el botón de recoger. Con `nav.insertBefore`
+      // sobre `marca.nextSibling` esto lanzaba `NotFoundError` en cada ruta.
+      declararMatchMedia(true);
+      document.body.innerHTML = `
+        <nav class="app-side-nav">
+          <div class="app-side-nav__cabecera">
+            <p class="app-side-nav__marca">AloVida</p>
+            <button class="app-side-nav__recoger">«</button>
+          </div>
+          <ul class="app-side-nav__lista"></ul>
+        </nav>
+        <header class="app-header">
+          <label class="app-header__buscador"><input type="search" /></label>
+          <div class="app-header__derecha">
+            <button class="app-tenant-switcher">Clínica Norte</button>
+          </div>
+        </header>
+      `;
+
+      expect(() => servicio.refrescar()).not.toThrow();
+
+      const selector = document.querySelector('.app-side-nav .app-tenant-switcher');
+      expect(selector).not.toBeNull();
+      // Queda debajo de la cabecera, no metido dentro de ella.
+      expect(selector?.parentElement?.classList.contains('app-side-nav')).toBe(true);
+      expect(selector?.previousElementSibling?.classList.contains('app-side-nav__cabecera')).toBe(
+        true,
+      );
+    });
+
+    it('vuelve al header al ensanchar aunque su vecino original ya no esté', () => {
+      const oyentes: ((e: { matches: boolean }) => void)[] = [];
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: (query: string) => ({
+          matches: true,
+          media: query,
+          addEventListener: (_tipo: string, oyente: (e: { matches: boolean }) => void) =>
+            oyentes.push(oyente),
+          removeEventListener: () => undefined,
+        }),
+      });
+      document.body.innerHTML = `
+        <nav class="app-side-nav"><p class="app-side-nav__marca">AloVida</p></nav>
+        <header class="app-header">
+          <label class="app-header__buscador"><input type="search" /></label>
+          <div class="app-header__derecha">
+            <button class="app-tenant-switcher">Clínica Norte</button>
+            <span class="vecino">avatar</span>
+          </div>
+        </header>
+      `;
+      servicio.refrescar();
+      // Angular re-renderiza el header y el vecino de antes desaparece.
+      document.querySelector('.vecino')?.remove();
+
+      expect(() => oyentes.forEach((oyente) => oyente({ matches: false }))).not.toThrow();
+      expect(document.querySelector('.app-header .app-tenant-switcher')).not.toBeNull();
+    });
   });
 
   describe('secuencia de entrada', () => {

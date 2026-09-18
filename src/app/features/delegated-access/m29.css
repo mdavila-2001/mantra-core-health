@@ -53,9 +53,29 @@
 
 /* --- Repetidor de ítems (V29-08/09) --- */
 
+/* El editor entero es UNA celda de la grilla del form-section: sin esto
+   quedaba encajonado en un tercio del ancho (composition-rules §5). */
+.m29__items {
+    display: block;
+    grid-column: 1 / -1;
+}
+
 .m29__item {
     display: block;
     margin-bottom: var(--sp-4);
+}
+
+.m29__item-campos {
+    display: grid;
+    gap: var(--sp-3) var(--sp-4);
+    margin-bottom: var(--sp-3);
+}
+
+@media (min-width: 48rem) {
+    .m29__item-campos {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
 }
 
 .m29__item-encabezado {

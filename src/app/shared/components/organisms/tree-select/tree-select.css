@@ -31,7 +31,7 @@
   font-size: var(--fs-body);
   color: var(--text-primary);
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
   text-align: left;
 }
 
@@ -259,7 +259,7 @@
   display: flex;
   align-items: center;
   color: var(--text-secondary);
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 .branch-caret svg {

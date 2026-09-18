@@ -1,10 +1,12 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  Injector,
   signal,
   untracked,
 } from '@angular/core';
@@ -52,6 +54,7 @@ import { AppointmentCalendar } from './appointment-calendar/appointment-calendar
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
 import { reservaDelPortalRoute } from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
+import { splitUpcomingAndPast } from './upcoming-and-past';
 
 /**
  * Cuántos días hacia adelante se ofrecen.
@@ -142,6 +145,21 @@ const PARAM_DE_SECCION = 'seccion';
  * de hablar.
  */
 const PARAM_DE_TURNO = 'turno';
+
+/**
+ * Abre «Agendar una cita» con «En un laboratorio» ya elegido: `?resource=lab`.
+ *
+ * Es la salida de «Mis órdenes»: una orden de estudio dice «andá a hacerte
+ * esto», y su botón «Reservar hora» estaba deshabilitado con «Próximamente»
+ * aunque reservar en un laboratorio ya existe acá (J2). En inglés por la regla
+ * 29: es un nombre nuevo.
+ */
+export const RESOURCE_PARAM = 'resource';
+
+/** El vacío de horarios antes de elegir con quién; su par de laboratorio abajo. */
+const ELEGIR_CON_QUIEN = 'Elegí con quién te querés atender para ver los horarios libres.';
+const ELEGIR_LABORATORIO = 'Elegí un laboratorio para ver los horarios libres.';
+export const LAB_RESOURCE = 'lab';
 
 /* ---- FT-05 · los cuatro filtros, también en la URL ------------------------ */
 
@@ -316,6 +334,8 @@ export class Appointments {
   private readonly fecha = inject(DatePipe);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
+  private readonly injector = inject(Injector);
 
   /**
    * De quién son los turnos que se muestran.
@@ -496,6 +516,33 @@ export class Appointments {
   );
 
   /**
+   * Cuántos filtros de los que se pliegan en móvil están puestos (estado,
+   * desde, hasta). La búsqueda de texto queda siempre a la vista, así que no
+   * cuenta: el número dice qué hay escondido detrás de «Más filtros».
+   */
+  protected readonly filtrosPlegadosActivos = computed(
+    () =>
+      Number(this.filtroDeEstado() !== '') +
+      Number(this.filtroDesde() !== null) +
+      Number(this.filtroHasta() !== null),
+  );
+
+  /**
+   * En móvil los filtros secundarios se pliegan: apilados ocupaban la primera
+   * pantalla entera antes de la primera cita (H-05). Se abren solos si ya hay
+   * alguno puesto —un filtro activo escondido parecería una lista incompleta—.
+   * En escritorio el CSS los muestra siempre y el botón no se dibuja.
+   */
+  private readonly filtrosAbiertosAMano = signal<boolean | null>(null);
+  protected readonly filtrosAbiertos = computed(
+    () => this.filtrosAbiertosAMano() ?? this.filtrosPlegadosActivos() > 0,
+  );
+
+  protected alternarFiltros(): void {
+    this.filtrosAbiertosAMano.set(!this.filtrosAbiertos());
+  }
+
+  /**
    * Los estados por los que se puede filtrar.
    *
    * Salen de los turnos que la persona tiene, no de un catálogo fijo: ofrecer
@@ -642,7 +689,11 @@ export class Appointments {
    * una sala de toma de muestras. El filtro existe en la API desde siempre;
    * esta pantalla no lo estaba usando.
    */
-  protected readonly tipoDeRecurso = signal<'PRACTITIONER' | 'ROOM'>('PRACTITIONER');
+  protected readonly tipoDeRecurso = signal<'PRACTITIONER' | 'ROOM'>(
+    this.route.snapshot.queryParamMap.get(RESOURCE_PARAM) === LAB_RESOURCE
+      ? 'ROOM'
+      : 'PRACTITIONER',
+  );
 
   /** Se está pidiendo turno en un laboratorio, no con un profesional. */
   protected readonly esLaboratorio = computed(() => this.tipoDeRecurso() === 'ROOM');
@@ -821,13 +872,15 @@ export class Appointments {
   private readonly pasoElegirAgenda = { label: 'Elegí una agenda' } as const;
 
   protected readonly horarios = signal<ViewState<readonly HorarioVisible[]>>(
-    empty(this.pasoElegirAgenda, 'Elegí con quién te querés atender para ver los horarios libres.'),
+    empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN),
   );
 
   /** El mensaje del vacío, que la plantilla no puede sacar del estado tipada. */
   protected readonly mensajeDeHorariosVacios = computed(() => {
     const estado = this.horarios();
-    return estado.status === 'empty' ? (estado.message ?? '') : '';
+    const mensaje = estado.status === 'empty' ? (estado.message ?? '') : '';
+    // En modo laboratorio no se elige «con quién»: se elige un laboratorio.
+    return mensaje === ELEGIR_CON_QUIEN && this.esLaboratorio() ? ELEGIR_LABORATORIO : mensaje;
   });
 
   /** Todos los turnos del titular, **sin** filtrar. */
@@ -876,6 +929,48 @@ export class Appointments {
   protected readonly sinResultados = computed(
     () => this.hayFiltros() && this.todosLosTurnos().length > 0 && this.turnosListos().length === 0,
   );
+
+  /**
+   * El instante de la última lectura de turnos. Parte la lista en próximas y
+   * anteriores con la hora en que se trajeron los datos, no con un reloj que
+   * corre: una cita no cambia de grupo sola mientras la persona la está leyendo.
+   */
+  private readonly momentoDeLectura = signal(new Date());
+
+  /**
+   * Los mismos turnos filtrados, agrupados para leer primero lo que viene (R-02
+   * del mapa UX). `turnosListos` conserva el orden del servidor: lo consumen el
+   * calendario, el detalle y la cancelación, que no dependen del orden.
+   */
+  protected readonly turnosPorMomento = computed(() =>
+    splitUpcomingAndPast(this.turnosListos(), this.momentoDeLectura()),
+  );
+
+  /** Los dos grupos de la lista, en el orden en que se leen. */
+  protected readonly gruposDeLista = computed(() => {
+    const { upcoming, past } = this.turnosPorMomento();
+    return [
+      { clave: 'upcoming', titulo: 'Próximas', turnos: upcoming },
+      { clave: 'past', titulo: 'Anteriores', turnos: past },
+    ] as const;
+  });
+
+  /**
+   * «Pedir una cita» del encabezado: lleva a la sección que ya existe al pie y
+   * deja el foco en su título, para que el lector de pantalla anuncie dónde
+   * quedó y el teclado siga desde ahí (R-01 del mapa UX). Sin animación cuando
+   * la persona pidió reducir movimiento.
+   */
+  protected irAPedirTurno(): void {
+    const titulo = this.document.getElementById('pedir-turno');
+    if (titulo === null) {
+      return;
+    }
+    const reducir =
+      this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
+    titulo.scrollIntoView?.({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
+    titulo.focus({ preventScroll: true });
+  }
 
   /**
    * Los mismos turnos, en la forma que el calendario entiende.
@@ -956,6 +1051,23 @@ export class Appointments {
     if (this.auth.patientProfileId() !== null) {
       this.cargarRecursos();
     }
+    this.llevarAPedirSiVieneDeUnaOrden();
+  }
+
+  /**
+   * Con `?resource=lab` se llega a reservar, no a mirar la lista: el foco va a
+   * «Agendar una cita» una sola vez, cuando la lista de citas ya se pintó. Antes
+   * de eso, lo que carga arriba empujaría la sección fuera de la vista.
+   */
+  private llevarAPedirSiVieneDeUnaOrden(): void {
+    if (this.route.snapshot.queryParamMap.get(RESOURCE_PARAM) !== LAB_RESOURCE) {
+      return;
+    }
+    const alTerminarDeCargar = effect(() => {
+      if (this.turnos().status === 'loading') return;
+      alTerminarDeCargar.destroy();
+      afterNextRender(() => this.irAPedirTurno(), { injector: this.injector });
+    });
   }
 
   /* ---- lecturas ----------------------------------------------------------- */
@@ -980,6 +1092,7 @@ export class Appointments {
             return;
           }
           this.traducirEstados(pagina.items);
+          this.momentoDeLectura.set(new Date());
           this.turnos.set(ready(pagina.items.map((cita) => this.aTurnoVisible(cita))));
         },
         error: (error: unknown) =>
@@ -1053,12 +1166,7 @@ export class Appointments {
     // «ningún horario» por una sede que este profesional no atiende.
     this.sedeElegida.set(SEDE_CUALQUIERA);
     if (clave === null) {
-      this.horarios.set(
-        empty(
-          this.pasoElegirAgenda,
-          'Elegí con quién te querés atender para ver los horarios libres.',
-        ),
-      );
+      this.horarios.set(empty(this.pasoElegirAgenda, ELEGIR_CON_QUIEN));
       return;
     }
     this.cargarHorarios();

@@ -149,6 +149,30 @@ describe('DiagnosticResults', () => {
     expect(aviso?.textContent).toContain('consultá con el centro que lo emitió');
   });
 
+  it('refactor UX: descargar y compartir nombran el estudio para el lector de pantalla', () => {
+    // Con varios resultados, «Descargar Archivo 1» se repetía idéntico en cada
+    // tarjeta: navegando por botones no se sabía de qué estudio era cada uno.
+    configurar(PROFILE_ID);
+    mount();
+    responderResultados([RESULTADO]);
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    const titulo = raiz.querySelector('.resultados__titulo')?.textContent?.trim() ?? '';
+    const descargar = raiz.querySelector('.resultados__descargar') as HTMLElement;
+    const visible = (descargar.textContent ?? '').replace(/\s+/g, ' ').trim();
+    const nombre = descargar.getAttribute('aria-label') ?? '';
+
+    expect(titulo).not.toBe('');
+    // WCAG 2.5.3: el nombre contiene el texto visible, y agrega el estudio.
+    expect(nombre.startsWith(visible)).toBe(true);
+    expect(nombre.endsWith(` de ${titulo}`)).toBe(true);
+    const compartir = [...raiz.querySelectorAll('button')].find((boton) =>
+      boton.textContent?.includes('Compartir con un profesional'),
+    );
+    expect(compartir?.getAttribute('aria-label')).toBe(`Compartir con un profesional: ${titulo}`);
+  });
+
   it('shows the signed conclusion and offers its file', () => {
     configurar(PROFILE_ID);
     mount();

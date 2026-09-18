@@ -1,0 +1,81 @@
+/* ============================================================================
+    El plan de pago en la consulta. Sólo distribución: la tarjeta y la
+    insignia ya traen su pinta del sistema.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.plan {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.plan__encabezado,
+.plan__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.plan__titulo {
+  margin: 0;
+}
+
+.plan__lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan__tratamiento {
+  font-weight: 600;
+}
+
+.plan__resumen,
+.plan__proxima,
+.plan__fallo {
+  margin: var(--sp-2) 0 0;
+}
+
+.plan__resumen,
+.plan__fallo {
+  color: var(--text-secondary);
+}
+
+.plan__cuotas {
+  display: grid;
+  gap: var(--sp-1);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan__cuota {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-sm);
+}
+
+/* Lo vencido se apaga; la próxima se marca. Con palabras arriba, no sólo color. */
+.plan__cuota--vencida {
+  color: var(--text-secondary);
+}
+
+.plan__cuota--proxima {
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  font-weight: 600;
+}
+
+.plan__monto {
+  text-align: end;
+}

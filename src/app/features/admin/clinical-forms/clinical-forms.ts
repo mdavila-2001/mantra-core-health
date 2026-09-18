@@ -301,6 +301,8 @@ export class ClinicalForms {
   ];
 
   protected readonly porPlantilla = (fila: ChartTemplate): string => fila.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDePlantilla = (fila: ChartTemplate): string => fila.name;
 
   constructor() {
     this.cargarPlantillas();

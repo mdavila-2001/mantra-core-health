@@ -164,16 +164,20 @@
        (esas van con `.tabular-nums`, que conserva la Inter). */
     --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
 
-    /* escala ALOVIDA — tamaño / interlínea */
-    --fs-display: 44px; --lh-display: 50px;   /* Poppins 700 */
-    --fs-h1: 32px;      --lh-h1: 40px;        /* Poppins 600 */
-    --fs-h2: 26px;      --lh-h2: 34px;        /* Poppins 600 */
-    --fs-h3: 21px;      --lh-h3: 28px;        /* Poppins 500 */
-    --fs-body-lg: 17px; --lh-body-lg: 27px;   /* Inter 400 */
-    --fs-body: 15px;    --lh-body: 23px;      /* Inter 400 */
-    --fs-caption: 13px; --lh-caption: 18px;   /* Inter 500 */
+    /* escala ALOVIDA — tamaño / interlínea
+       Un escalón por debajo de la del manual (15 → 14 el cuerpo, 32 → 28 el
+       titular…): con la original la aplicación se leía como si el navegador
+       estuviera con zoom (propietario, 18/09/2026). Baja la escala entera, en
+       todos los anchos, así las proporciones entre niveles no cambian. */
+    --fs-display: 40px; --lh-display: 46px;   /* Poppins 700 */
+    --fs-h1: 28px;      --lh-h1: 36px;        /* Poppins 600 */
+    --fs-h2: 23px;      --lh-h2: 30px;        /* Poppins 600 */
+    --fs-h3: 19px;      --lh-h3: 26px;        /* Poppins 500 */
+    --fs-body-lg: 16px; --lh-body-lg: 25px;   /* Inter 400 */
+    --fs-body: 14px;    --lh-body: 21px;      /* Inter 400 */
+    --fs-caption: 12px; --lh-caption: 17px;   /* Inter 500 */
     --fs-overline: 11px;                      /* Inter 700 · +8 % · MAYÚSCULAS */
-    --fs-data: 15px;                          /* Inter 600 · tabular */
+    --fs-data: 14px;                          /* Inter 600 · tabular */
 
     /* ================= tokens semánticos — modo claro ===================== */
     --bg-base: #FFFFFF;

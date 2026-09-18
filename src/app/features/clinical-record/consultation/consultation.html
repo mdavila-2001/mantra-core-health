@@ -9,6 +9,16 @@
   >
     Ver expediente
   </a>
+  <a
+    app-button
+    page-actions
+    variant="outline"
+    [routerLink]="rutaDelPlanDePago"
+    [queryParams]="pacienteDelPlanDePago()"
+    data-testid="consulta-ofrecer-plan-de-pago"
+  >
+    Ofrecer plan de pago
+  </a>
 </app-page-header>
 
 <app-view-state-host [state]="consulta()" (retry)="recargar()">
@@ -97,6 +107,11 @@
         </form>
       }
     </section>
+
+    <!-- ─── El plan de pago ────────────────────────────────────────────────
+         Sólo si corresponde: si la persona tiene un plan por un tratamiento
+         en curso o propuesto. Sin plan no ocupa lugar. -->
+    <app-payment-plan-panel [patientProfileId]="pacienteDeLaFicha()" />
 
     <!-- ─── La rejilla ─────────────────────────────────────────────────────
          Todo lo que se puede registrar, a la vista. Cada casilla es un botón

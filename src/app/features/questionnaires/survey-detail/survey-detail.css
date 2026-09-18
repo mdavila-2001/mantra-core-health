@@ -200,7 +200,7 @@
   block-size: 100%;
   background: var(--brand-primary);
   border-radius: inherit;
-  transition: inline-size 0.2s ease;
+  transition: inline-size var(--dur-base) var(--ease-standard);
 }
 
 .encuesta__barra-cifra {
@@ -230,8 +230,19 @@
 }
 
 .encuesta__answers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--sp-2) var(--sp-4);
   margin: 0;
-  padding-inline-start: var(--sp-4);
+}
+
+.encuesta__answer dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.encuesta__answer dd {
+  margin: 0;
 }
 
 @media (max-width: 48rem) {

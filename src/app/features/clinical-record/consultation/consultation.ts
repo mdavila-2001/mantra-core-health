@@ -66,6 +66,11 @@ import {
 } from '../patient-chart/medication-block/medication-block';
 import { ObservationBlock } from '../patient-chart/observation-block/observation-block';
 import { SpecialtyFormBlock } from '../patient-chart/specialty-form-block/specialty-form-block';
+import {
+  QUOTATION_NEW_ROUTE,
+  QUOTATION_PATIENT_QUERY_PARAM,
+} from '../../quotations/quotations.routes';
+import { PaymentPlanPanel } from './payment-plan-panel/payment-plan-panel';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -256,6 +261,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     MedicationBlock,
     ObservationBlock,
     PageHeader,
+    PaymentPlanPanel,
     RouterLink,
     SpecialtyFormBlock,
     StatusSeal,
@@ -328,6 +334,13 @@ export class Consultation {
       ? 'Lo que se registra durante la consulta.'
       : 'Lo que se registra durante esta consulta.',
   );
+
+  /** Ofrecerle un plan de pago a esta persona: el alta de cotización, con ella ya elegida. */
+  protected readonly rutaDelPlanDePago = QUOTATION_NEW_ROUTE;
+
+  protected readonly pacienteDelPlanDePago = computed(() => ({
+    [QUOTATION_PATIENT_QUERY_PARAM]: this.profileId(),
+  }));
 
   /** El expediente de la misma persona: la lectura está a un clic. */
   protected readonly rutaDelExpediente = computed(() => patientChartRoute(this.profileId()));

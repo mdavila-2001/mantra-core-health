@@ -84,6 +84,19 @@ export class FileInput {
 
   /* -- Los textos, en plural cuando corresponde (§9.9 de la corrección) ----- */
 
+  /**
+   * `accept` dicho para una persona: «image/*,application/pdf» → «Imagen · PDF».
+   * Quitarle el prefijo a un comodín dejaba un «*» suelto en pantalla.
+   */
+  protected readonly tiposAceptados = computed(() =>
+    this.accept()
+      .split(',')
+      .map((tipo) => tipo.trim())
+      .filter((tipo) => tipo.length > 0)
+      .map(nombreDeTipo)
+      .join(' · '),
+  );
+
   protected readonly textoDeArrastre = computed(() => {
     if (this.isDragging()) {
       return this.multiple() ? 'Soltá los archivos acá' : 'Soltá el archivo acá';
@@ -236,4 +249,16 @@ export class FileInput {
   private isSameFile(a: File, b: File): boolean {
     return a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
   }
+}
+
+const NOMBRE_DE_COMODIN: Readonly<Record<string, string>> = {
+  'image/*': 'Imagen',
+  'audio/*': 'Audio',
+  'video/*': 'Video',
+};
+
+function nombreDeTipo(tipo: string): string {
+  const comodin = NOMBRE_DE_COMODIN[tipo.toLowerCase()];
+  if (comodin) return comodin;
+  return tipo.replace(/^(application|image|audio|video|text)\//i, '').replace(/^\./, '').toUpperCase();
 }

@@ -42,28 +42,27 @@ en vez de dejarlos girando a velocidad imperceptible.
 Y nada más. **No hay animaciones de transición entre rutas**, ni movimiento
 decorativo, ni desplazamiento con paralaje.
 
-## No hay tokens de movimiento
+## Tokens de movimiento
 
-`design-tokens.types.ts` **no declara duraciones ni curvas**. Cada componente
-escribe las suyas en su CSS.
+Existen y son **una sola escala**, en `src/styles.css` (espejo Flutter: `MantraMotion`):
 
-Con veinte componentes animados es manejable; con el sistema completo, dos
-componentes tendrán 150 ms y 200 ms para la misma clase de transición y nadie
-sabrá cuál es la correcta.
+| Token | Valor | Para qué |
+|---|---|---|
+| `--dur-fast` | 120 ms | eco de un clic: hover, foco, color de un control |
+| `--dur-base` | 200 ms | un cambio de estado que la vista tiene que seguir |
+| `--dur-slow` | 320 ms | algo que entra o sale de la pantalla (cajón) |
+| `--ease-standard` | `cubic-bezier(0.2, 0, 0.2, 1)` | entradas y salidas normales |
+| `--ease-out` | `cubic-bezier(0, 0, 0.2, 1)` | algo que aparece y se posa |
+| `--ease-spring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | sólo para confirmar un gesto, nunca para datos |
 
-Los tokens que faltarían:
+Normalizado el 2026-09-18 (refactor UX, fase 07): las 93 transiciones de
+`src/app/**` que escribían `0.15s ease`, `0.2s ease`, `120ms ease`… pasaron a
+`var(--dur-fast|base) var(--ease-standard)`, y los `--mov-*` del marco ALOVIDA
+(`styles/alovida.css`, que eran 110/190/320 ms) son ahora **alias** de
+`--dur-*`. Una transición nueva usa estos tokens; un literal nuevo es deuda.
 
-```css
---duration-fast: 120ms;    /* hover, foco */
---duration-base: 200ms;    /* entrada de capas */
---duration-slow: 320ms;    /* deslizamiento del cajón */
---ease-standard: cubic-bezier(0.2, 0, 0, 1);
---ease-decelerate: cubic-bezier(0, 0, 0, 1);
-```
-
-**No se añaden acá**: agregar tokens al sistema de diseño es un cambio de
-producto. Registrado como brecha `LOW` en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
+El detalle de la migración y la matriz de transiciones del piloto están en
+`docs/refactor-profesional/trabajo/MATRIZ_MOVIMIENTO.md`.
 
 ## El retardo del tooltip
 

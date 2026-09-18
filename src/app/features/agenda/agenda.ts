@@ -368,6 +368,16 @@ export interface CupoVisible {
 }
 
 /**
+ * `vista` de la lista de Consultas cuando `/schedule` a secas es la agenda del
+ * día. En inglés por la regla 29; los valores viejos (`agenda`, `cupos`,
+ * `citas`, `solicitudes`) siguen valiendo para no romper enlaces.
+ */
+const TABLE_VIEW = 'table';
+
+/** `vista` del horario publicado («Mi agenda»). Valor histórico: se conserva. */
+const SCHEDULE_VIEW = 'agenda';
+
+/**
  * **Agenda** (M41) — la sección que hasta ahora era un cartel.
  *
  * ## Por qué deja de ser un placeholder
@@ -402,6 +412,7 @@ export interface CupoVisible {
  * todavía sin resolver daría un 400 que se leería como «la agenda falló», cuando
  * lo que falta es un paso previo que la propia aplicación resuelve.
  */
+
 @Component({
   selector: 'app-agenda',
   imports: [
@@ -774,6 +785,36 @@ export class Agenda {
     return vista === 'agenda' && this.esQuienAtiende() ? 1 : 0;
   });
 
+  /**
+   * Si se muestra la agenda del día en vez de las listas.
+   *
+   * Es lo que `/schedule` abre por defecto a quien atiende (propietario,
+   * 18/09): el día de hoy, con Semana y Mes. Las listas —Consultas, Mi agenda,
+   * Cupos— siguen a un ícono de distancia, «Ver como tabla», en
+   * `vista=table`. Quien reparte turnos no tiene agenda propia y sigue
+   * entrando a la tabla, igual que quien todavía no publicó la suya: un
+   * calendario vacío no le dice nada que el aviso de arriba no diga mejor.
+   */
+  protected readonly enCalendario = computed(() => {
+    const vista = this.params()?.get('vista');
+    return (
+      this.esQuienAtiende() &&
+      !this.sinAgendaPropia() &&
+      (!vista || vista === SCHEDULE_VIEW)
+    );
+  });
+
+  /**
+   * Si en la vista inicial está abierta la solapa «Mi agenda» —el horario
+   * publicado— en vez del calendario. Antes el horario sólo se alcanzaba
+   * pasando a la tabla; el propietario lo quiere a un clic desde que se entra
+   * (18/09). Usa el mismo `vista=agenda` de siempre, así un enlace viejo
+   * sigue abriendo el horario.
+   */
+  protected readonly enHorario = computed(
+    () => this.enCalendario() && this.params()?.get('vista') === SCHEDULE_VIEW,
+  );
+
   /** Si la solapa abierta es «Mi agenda», que no usa los filtros de las listas. */
   protected readonly enMiAgenda = computed(() => this.esQuienAtiende() && this.pestana() === 1);
 
@@ -1044,6 +1085,10 @@ export class Agenda {
             // columna quedaban fuera de la pantalla, detrás de un scroll lateral
             // que nadie descubre.
             priority: 2,
+            // Desde tablet es columna, y con Seguro y Pago la tabla sigue
+            // pasándose del ancho: fija al borde, las acciones no se van con
+            // el scroll (propietario, 18/09).
+            sticky: 'end',
             cell: this.celdaAccionesCita(),
           } satisfies ColumnDef<CitaVisible>,
         ]
@@ -1098,6 +1143,9 @@ export class Agenda {
   protected readonly hayAgendaQueMirar = computed(() => this.recursoElegido() !== null);
 
   protected readonly porCita = (fila: CitaVisible): string => fila.id;
+  /** Cómo se nombra la fila para el lector de pantalla: el paciente, con la
+   *  misma compuerta de permisos que la celda (sin permiso, «Paciente asignado»). */
+  protected readonly nombreDeCita = (fila: CitaVisible): string => fila.paciente;
   protected readonly porCupo = (fila: CupoVisible): string => fila.id;
 
   constructor() {
@@ -1170,8 +1218,31 @@ export class Agenda {
         ? 'cupos'
         : conAgendaPropia && indice === 1
           ? 'agenda'
-          : null;
+          : this.vistaDeConsultas();
     this.publicar({ vista });
+  }
+
+  /**
+   * La URL de la lista de Consultas. Para quien atiende, `/schedule` a secas
+   * es la agenda del día, así que la lista necesita nombrarse.
+   */
+  private vistaDeConsultas(): string | null {
+    return this.esQuienAtiende() ? TABLE_VIEW : null;
+  }
+
+  /** «Ver como tabla», desde la agenda del día. */
+  protected verComoTabla(): void {
+    this.publicar({ vista: TABLE_VIEW });
+  }
+
+  /** Las solapas de la vista inicial: 0 = calendario, 1 = «Mi agenda». */
+  protected elegirPestanaInicial(indice: number): void {
+    this.publicar({ vista: indice === 1 ? SCHEDULE_VIEW : null });
+  }
+
+  /** «Ver como agenda», desde las listas: `/schedule` sin vista. */
+  protected verComoAgenda(): void {
+    this.publicar({ vista: null });
   }
 
   protected recargar(): void {
@@ -1323,7 +1394,7 @@ export class Agenda {
   protected cancelarReprogramacion(): void {
     this.reprogramando.set(null);
     this.cupoDestino.set(null);
-    this.publicar({ vista: null });
+    this.publicar({ vista: this.vistaDeConsultas() });
   }
 
   /**
@@ -1369,7 +1440,7 @@ export class Agenda {
         this.toast.success('La cita quedó en el horario nuevo.', 'Reprogramación');
         // De vuelta a «Consultas»: el resultado del movimiento se ve ahí, no en
         // la grilla de cupos desde la que se eligió el destino.
-        this.publicar({ vista: null });
+        this.publicar({ vista: this.vistaDeConsultas() });
         this.cargarAgenda();
       },
       error: (error: unknown) => {

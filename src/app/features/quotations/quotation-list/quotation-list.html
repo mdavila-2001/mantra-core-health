@@ -29,6 +29,7 @@
       [state]="cotizaciones()"
       [columns]="columnasDeCotizaciones()"
       [trackBy]="porCotizacion"
+      [rowLabel]="nombreDeCotizacion"
       caption="Cotizaciones del paciente"
       (retry)="recargarCotizaciones()"
     />
@@ -46,6 +47,7 @@
       [state]="resultadosDePacientes()"
       [columns]="columnasDePacientes()"
       [trackBy]="porPaciente"
+      [rowLabel]="nombreDePaciente"
       rowNavigable
       caption="Pacientes"
       (rowActivated)="elegirPaciente($event)"

@@ -88,7 +88,7 @@
                 [iconOnly]="true"
                 type="button"
                 data-testid="bloqueo-editar"
-                aria-label="Cambiar este bloqueo"
+                [attr.aria-label]="'Cambiar este bloqueo: ' + b.motivo + ', ' + b.cuando"
                 appTooltip="Cambiar este bloqueo"
                 (clicked)="editar(b)"
               >
@@ -105,7 +105,7 @@
                 [iconOnly]="true"
                 type="button"
                 data-testid="bloqueo-quitar"
-                aria-label="Quitar este bloqueo"
+                [attr.aria-label]="'Quitar este bloqueo: ' + b.motivo + ', ' + b.cuando"
                 appTooltip="Quitar este bloqueo"
                 [isLoading]="borrando() === b.id"
                 (clicked)="quitar(b)"

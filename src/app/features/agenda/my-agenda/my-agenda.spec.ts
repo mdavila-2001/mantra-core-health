@@ -131,154 +131,108 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
   }
 
-  /* -- La tarjeta: dar una cita desde el calendario (AG-5) ------------------- */
+  /* -- La agenda del día: lo que `/schedule` abre por defecto (18/09) -------- */
 
-  /**
-   * La prueba que faltaba, y que explica por qué «no se puede darle una cita a
-   * un paciente desde el calendario».
-   *
-   * La tarjeta estaba **escrita, importada y desconectada**: el componente
-   * existía con su formulario completo, `MyAgenda` lo declaraba en `imports`,
-   * y `abrirTarjeta`, `ratoParaCrear`, `tarjetaCreo` y `ratosTomadosDelDia`
-   * estaban todos en la clase. `day-view` emitía `ratoTocado`. Lo único que
-   * faltaba era que la plantilla dibujara `<app-tarjeta-del-dia>` y escuchara
-   * ese evento — así que tocar un hueco del día no hacía absolutamente nada.
-   *
-   * Todo compilaba. Todas las pruebas pasaban. Ninguna miraba la plantilla.
-   */
-  it('tocar un rato libre del día abre la tarjeta para dar la cita', () => {
-    crear();
-    conRecurso();
-    conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
-    conCuposHasta(new Date('2030-01-01'));
-
-    // `abrirTarjeta` es lo que la plantilla ahora conecta a `(ratoTocado)`.
-    const componente = fixture.componentInstance as unknown as {
-      solapa: { set(v: 'patron' | 'mes'): void };
-      diaAbierto: { set(v: Date | null): void };
-      abrirTarjeta(rato: { desde: Date; hasta: Date }): void;
-    };
-    // El día vive en la solapa del mes; la pantalla abre en «patrón».
-    componente.solapa.set('mes');
-    componente.diaAbierto.set(new Date(2026, 8, 10, 0, 0, 0));
-    componente.abrirTarjeta({
-      desde: new Date(2026, 8, 10, 10, 0),
-      hasta: new Date(2026, 8, 10, 10, 45),
-    });
-    fixture.detectChanges();
-
-    expect(
-      fixture.nativeElement.querySelector('app-tarjeta-del-dia'),
-      'la tarjeta no se dibuja: no hay forma de dar una cita desde el calendario',
-    ).not.toBeNull();
-  });
-
-  it('sin rato tocado la tarjeta no ocupa la pantalla', () => {
-    // No se dibuja siempre: el día abierto es para leerlo, y un formulario
-    // permanente empujaría la agenda hacia abajo cada vez que se abre un día.
-    crear();
-    conRecurso();
-    conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
-    conCuposHasta(new Date('2030-01-01'));
-    const componente = fixture.componentInstance as unknown as {
-      solapa: { set(v: 'patron' | 'mes'): void };
-      diaAbierto: { set(v: Date | null): void };
-    };
-    componente.solapa.set('mes');
-    componente.diaAbierto.set(new Date(2026, 8, 10));
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('app-tarjeta-del-dia')).toBeNull();
-  });
-
-  /* -- La semana con nombres ------------------------------------------------ */
-
-  /**
-   * «El médico puede revisar su calendario de citas con horarios y **nombre
-   * completo del paciente** de forma diaria, semanal y mensual.»
-   *
-   * La semana ya existía y sabía contar libres y tomados. Lo que no hacía era
-   * pedir las citas: sin esta lectura, `app-week-view` recibe una lista vacía y
-   * la mitad del pedido —con quién— no tiene de dónde salir.
-   */
-  describe('la semana trae a quién atiende', () => {
-    /** Deja la pantalla en la vista de semana y devuelve la petición de citas. */
-    function verLaSemana() {
-      const componente = fixture.componentInstance as unknown as {
-        solapa: { set(v: 'patron' | 'mes'): void };
-        verSemana(): void;
-      };
-      componente.solapa.set('mes');
-      componente.verSemana();
-      fixture.detectChanges();
-      return http.expectOne((r) => r.url === '/scheduling/bookings');
-    }
-
-    it('pide las citas de los siete días en UNA sola llamada, acotada por recurso', () => {
-      // Una y no siete: `searchBookings` acepta ventana, y pedir siete veces lo
-      // mismo para agrupar después en el cliente es cara la red por comodidad.
-      crear();
-      conRecurso();
-      conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
-      conCuposHasta(new Date('2030-01-01'));
-
-      const req = verLaSemana();
-      req.flush({ items: [], count: 0 });
-
-      // Acotada por recurso: sin filtro la API contesta 422, igual que el día.
-      expect(req.request.params.get('resourceId')).toBe('res-1');
-
-      const desde = new Date(req.request.params.get('from') as string);
-      const hasta = new Date(req.request.params.get('to') as string);
-      const dias = Math.round((hasta.getTime() - desde.getTime()) / 86_400_000);
-      expect(dias, 'la ventana tiene que ser de siete días').toBe(7);
-      expect(desde.getDay(), 'la ventana arranca un lunes').toBe(1);
-    });
-
-    it('las citas llegan a la vista de semana', () => {
-      crear();
-      conRecurso();
-      conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
-      conCuposHasta(new Date('2030-01-01'));
-
-      const req = verLaSemana();
-      const desde = new Date(req.request.params.get('from') as string);
-      req.flush({
-        items: [
+  describe('modo calendario', () => {
+    function crearCalendario(): void {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
           {
-            id: 'b-1',
-            statusConceptId: 'st-1',
-            startAt: new Date(
-              desde.getFullYear(),
-              desde.getMonth(),
-              desde.getDate(),
-              9,
-            ).toISOString(),
-            patientName: 'Ana Paz',
+            provide: AuthService,
+            useValue: {
+              practitionerProfileId: signal<string | null>(PERFIL),
+              activeTenantId: signal<string | null>(TENANT),
+              roles: signal<readonly string[]>(['PRACTITIONER']),
+            },
           },
         ],
-        count: 1,
       });
-      // La traducción de estados sale detrás de la lectura de citas.
-      http.expectOne((r) => r.url.includes('concept')).flush({ items: [] });
+      fixture = TestBed.createComponent(MyAgenda);
+      fixture.componentRef.setInput('mode', 'calendar');
+      http = TestBed.inject(HttpTestingController);
       fixture.detectChanges();
+    }
 
-      expect(fixture.nativeElement.textContent).toContain('Ana Paz');
+    /** Responde vacío todo lo que el calendario pide al abrir. */
+    function sinOcupacion(): void {
+      for (const req of http.match(
+        (r) =>
+          r.url === '/scheduling/slots' ||
+          r.url === '/scheduling/bookings' ||
+          r.url === '/scheduling/resources/res-1/exceptions',
+      )) {
+        req.flush({ items: [], count: 0 });
+      }
+      fixture.detectChanges();
+    }
+
+    function abrir(): void {
+      crearCalendario();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+      sinOcupacion();
+    }
+
+    const $ = (selector: string): HTMLElement | null =>
+      fixture.nativeElement.querySelector(selector);
+
+    it('abre en el día de hoy, con «Día» elegido', () => {
+      abrir();
+
+      const hoy = new Date().toLocaleDateString('es-BO', { weekday: 'long' });
+      expect($('app-day-view')).not.toBeNull();
+      expect($('.dia__titulo')?.textContent?.toLowerCase()).toContain(hoy);
+      expect($('[data-testid="ver-dia"]')?.getAttribute('aria-pressed')).toBe('true');
+      // No es la solapa del horario: ni sus pestañas ni su grilla.
+      expect($('.mi-agenda__solapas')).toBeNull();
+      expect($('app-schedule-grid')).toBeNull();
     });
 
-    it('si la lectura falla la semana sigue mostrando la ocupación, sin nombres', () => {
-      // Los libres y los tomados salen de los cupos del mes, que ya están
-      // cargados: perder los nombres no justifica perder la agenda.
-      crear();
-      conRecurso();
-      conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
-      conCuposHasta(new Date('2030-01-01'));
+    it('«Ver como tabla» es un ícono con nombre y avisa a quien la contiene', () => {
+      abrir();
+      let pedida = 0;
+      fixture.componentInstance.tableRequested.subscribe(() => pedida++);
 
-      verLaSemana().flush(null, { status: 500, statusText: 'Server Error' });
+      const boton = $('[data-testid="ver-como-tabla"]') as HTMLButtonElement;
+      expect(boton.getAttribute('aria-label')).toBe('Ver como tabla');
+      boton.click();
+
+      expect(pedida).toBe(1);
+    });
+
+    it('«Semana» muestra la semana, y tocar un día vuelve al día', () => {
+      abrir();
+
+      ($('[data-testid="ver-semana"]') as HTMLButtonElement).click();
       fixture.detectChanges();
+      sinOcupacion();
+      expect($('app-week-view')).not.toBeNull();
+      expect($('app-day-view')).toBeNull();
 
-      expect(fixture.nativeElement.querySelector('app-week-view')).not.toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-testid="semana-citas"]')).toBeNull();
+      ($('[data-testid="semana-dia"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      sinOcupacion();
+      expect($('app-day-view')).not.toBeNull();
+      expect($('[data-testid="ver-dia"]')?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('«Mes» muestra el mes con días que se abren', () => {
+      abrir();
+
+      ($('[data-testid="ver-mes"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      sinOcupacion();
+      const dia = $('[data-testid="mes-dia"]');
+      expect(dia?.tagName).toBe('BUTTON');
+
+      (dia as HTMLButtonElement).click();
+      fixture.detectChanges();
+      sinOcupacion();
+      expect($('app-day-view')).not.toBeNull();
     });
   });
 

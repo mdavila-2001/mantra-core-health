@@ -89,6 +89,18 @@ export class SpecialtyBrowser<T> {
   /** Si el consumidor sabe que hay más para traer: al pie, «Cargar más». */
   readonly hasMore = input(false);
 
+  /**
+   * Grupos plegables (refactor UX). Con el catálogo entero abierto, «Formularios
+   * clínicos» medía 26 792 px: la persona tenía que recorrer todas las
+   * especialidades para llegar a la suya. Plegados, la lista de especialidades
+   * con su cuenta ES el índice. `<details>` nativo: teclado y lector de pantalla
+   * sin código propio. El primero viene abierto.
+   */
+  readonly collapsible = input(false);
+
+  /** Abre todos los grupos: el consumidor lo prende mientras hay una búsqueda. */
+  readonly expandAll = input(false);
+
   /** Los códigos activos, incluido el término de búsqueda. Viene del filtro. */
   readonly filtersChanged = output<Readonly<Record<string, string>>>();
 

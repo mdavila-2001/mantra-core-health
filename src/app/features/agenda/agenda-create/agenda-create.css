@@ -13,7 +13,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
-  max-width: 46rem;
+  /* Sin tope propio (regla del cliente §5): con 46rem el formulario quedaba en
+     la mitad izquierda del área, con la otra mitad en blanco. */
 }
 
 .agenda-create__titular {
@@ -31,7 +32,6 @@
   border-radius: var(--r-sm);
   color: var(--text-primary);
   font-size: var(--fs-body);
-  max-width: 46rem;
 }
 
 /* Nota de ayuda simple (p.ej. «se crea una agenda aparte»): el mismo tono
@@ -339,4 +339,16 @@
 .agenda-create__fila-turnos {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* En escritorio los botones secundarios de las secciones miden su texto: se
+   estiraban a los 1 064 px de la sección (refactor UX). En el teléfono siguen a
+   lo ancho, que es el blanco cómodo para el pulgar. */
+@media (min-width: 40rem) {
+  .agenda-create__bloque > :is(button, a)[app-button],
+  [data-testid='agenda-create-nueva'],
+  [data-testid='agenda-create-masivo'] {
+    align-self: flex-start;
+    justify-self: start;
+  }
 }

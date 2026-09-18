@@ -170,6 +170,11 @@ export class ProcedureImport {
     { initialValue: { especialidad: '', texto: '' } },
   );
 
+  /** Con un filtro puesto, lo que quedó se muestra abierto (grupos plegables). */
+  protected readonly hayFiltro = computed(
+    () => this.parametros().especialidad !== '' || this.parametros().texto !== '',
+  );
+
   /**
    * Los tramos que el organismo dibuja.
    *

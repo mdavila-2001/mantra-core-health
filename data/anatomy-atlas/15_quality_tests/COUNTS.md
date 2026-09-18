@@ -1,0 +1,29 @@
+# Conteos
+
+- arteria: 375
+- articulacion: 46
+- cartilago: 7
+- cavidad_espacio: 114
+- condicion_clinica_indexada: 18
+- conducto: 34
+- conducto_canal: 21
+- estructura_anatomica_no_tipificada: 210
+- fascia: 28
+- foramen_abertura: 53
+- ganglio: 16
+- glandula: 31
+- hueso: 225
+- ligamento: 119
+- linfatico: 97
+- musculo: 287
+- nervio: 375
+- oido: 30
+- ojo: 46
+- organo_viscera: 296
+- plexo: 138
+- procedimiento_o_imagen: 130
+- signo_o_manifestacion_clinica: 1
+- sistema_nervioso_central: 101
+- tendon: 91
+- vaso: 59
+- vena: 213

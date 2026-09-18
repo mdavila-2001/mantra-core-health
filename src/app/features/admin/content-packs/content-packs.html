@@ -41,6 +41,7 @@
             variant="secondary"
             [disabled]="!puedeAplicar(paquete)"
             [isLoading]="aplicando() === paquete.code"
+            [attr.aria-label]="'Aplicar: ' + paquete.name"
             (clicked)="aplicar(paquete)"
           >
             {{ resultadoDe(paquete.code) ? 'Aplicar de nuevo' : 'Aplicar' }}

@@ -34,9 +34,26 @@
 .formularios__formulario {
   display: grid;
   gap: var(--sp-4);
-  /* La medida de un formulario, no el ancho entero de la tarjeta: un campo de
-     texto de mil píxeles no ayuda a escribir un código de plantilla. */
-  max-inline-size: 40rem;
+}
+
+/* Regla del cliente §5: a lo ancho, con los campos en columnas —no acotados a
+   40rem en la esquina de la tarjeta—. Lo que no es un campo (la lista de
+   campos propios, las acciones) ocupa la fila entera. */
+@media (min-width: 780px) {
+  .formularios__formulario {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--sp-6);
+  }
+
+  .formularios__formulario > :not(app-form-field) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1120px) {
+  .formularios__formulario {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .formularios__campos {
@@ -50,7 +67,10 @@
 
 .formularios__campo {
   display: grid;
-  gap: var(--sp-2);
+  /* Nombre, tipo, obligatorio y quitar en una fila cuando hay ancho. */
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  align-items: end;
+  gap: var(--sp-2) var(--sp-4);
   padding-block-end: var(--sp-3);
   border-block-end: 1px solid var(--border-default);
 }
@@ -62,4 +82,12 @@
 
 .formularios__listado {
   display: block;
+}
+
+/* «Agregar campo» y «Quitar campo» miden su texto: se estiraban a lo ancho de
+   la tarjeta (refactor UX). */
+.formularios__campos > button[app-button],
+.formularios__campo > button[app-button] {
+  justify-self: start;
+  align-self: end;
 }

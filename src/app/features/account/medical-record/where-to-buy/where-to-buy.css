@@ -201,3 +201,10 @@
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
+
+/* «Volver a…» mide su texto: como hijo de la rejilla se estiraba a los 1 100 px
+   del área (refactor UX). */
+.volver-al-origen {
+  justify-self: start;
+  align-self: flex-start;
+}

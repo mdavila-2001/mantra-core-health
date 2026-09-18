@@ -1,17 +1,11 @@
 <app-page-header
   title="Dependientes"
   subtitle="Las personas a tu cargo. Podés pedirles turno y ver su historia clínica en su nombre."
-/>
-
-<div class="dependents">
-  @if (sinPerfilDePaciente()) {
-    <app-alert tone="info">
-      Esta cuenta no tiene perfil de paciente, así que no puede registrar dependientes. Si
-      atendés en la plataforma, tus pacientes se gestionan desde
-      <a routerLink="/agenda">la agenda</a>.
-    </app-alert>
-  } @else {
-    <div class="dependents__acciones">
+>
+  <!-- La acción principal, en la ranura del encabezado como en el resto de la
+       aplicación: suelta debajo quedaba corrida del título (refactor UX). -->
+  @if (!sinPerfilDePaciente()) {
+    <div class="dependents__acciones" page-actions>
       <button
         app-button
         type="button"
@@ -33,6 +27,17 @@
         </button>
       }
     </div>
+  }
+</app-page-header>
+
+<div class="dependents">
+  @if (sinPerfilDePaciente()) {
+    <app-alert tone="info">
+      Esta cuenta no tiene perfil de paciente, así que no puede registrar dependientes. Si
+      atendés en la plataforma, tus pacientes se gestionan desde
+      <a routerLink="/agenda">la agenda</a>.
+    </app-alert>
+  } @else {
 
     @if (loading() && !loaded()) {
       <p class="dependents__estado" role="status">Buscando a quiénes representás…</p>

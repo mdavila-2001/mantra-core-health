@@ -15,8 +15,9 @@
 /* -- El equipo del caso abierto ------------------------------------------- */
 
 .intervenciones__equipo {
-  display: grid;
-  gap: var(--sp-4);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
 }
 
 .intervenciones__equipo-encabezado {
@@ -119,8 +120,9 @@
 /* -- La nota del pie ------------------------------------------------------ */
 
 .intervenciones__nota {
-  display: grid;
-  gap: var(--sp-3);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-3);
   /* Texto corrido: a lo ancho de la tabla la línea se vuelve ilegible. */
   max-inline-size: 68ch;
 }

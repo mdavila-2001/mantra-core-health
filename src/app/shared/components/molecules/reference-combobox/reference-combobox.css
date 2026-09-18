@@ -45,7 +45,7 @@
     /* una lista larga se desplaza en vez de salirse de la pantalla */
     max-height: 18rem;
     overflow-y: auto;
-    animation: reference-combobox-in 0.15s ease;
+    animation: reference-combobox-in var(--dur-fast) var(--ease-standard);
 }
 
 @keyframes reference-combobox-in {

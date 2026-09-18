@@ -2,6 +2,7 @@
    sube a dos columnas donde entra, nunca al revés. */
 
 .campanas__demo {
+  display: block;
   margin-block: var(--sp-3) var(--sp-4);
 }
 

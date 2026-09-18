@@ -227,6 +227,8 @@ export class InsuranceClaims {
   );
 
   protected readonly byId = (row: ClaimListItem): string => row.id;
+  /** Row name for screen readers (`rowLabel` of the table). */
+  protected readonly claimLabel = (row: ClaimListItem): string => row.patient.displayName ?? '';
 
   /* ---- ficha del paciente ------------------------------------------------- */
 

@@ -1,0 +1,100 @@
+<!-- De atrás hacia adelante: auroras, rayos, cuadrícula de monitor, motas, el
+     latido y el grano. Todas las capas son hermanas y absolutas sobre el host. -->
+<div class="auth-stage__aurora">
+  <span class="auth-stage__orb auth-stage__orb--1"></span>
+  <span class="auth-stage__orb auth-stage__orb--2"></span>
+  <span class="auth-stage__orb auth-stage__orb--3"></span>
+  <span class="auth-stage__orb auth-stage__orb--4"></span>
+  <span class="auth-stage__orb auth-stage__orb--5"></span>
+</div>
+<div class="auth-stage__rays"></div>
+<div class="auth-stage__floor"></div>
+<div class="auth-stage__motes">
+  @for (mote of motes; track $index) {
+    <span
+      class="auth-stage__mote"
+      [style.--x]="mote.x + '%'"
+      [style.--s]="mote.size + 'px'"
+      [style.--d]="mote.delay + 's'"
+      [style.--dur]="mote.duration + 's'"
+    ></span>
+  }
+</div>
+
+<!-- El latido, en 1920 × 1080: la tira se diseñó a resolución Full HD y
+     `slice` la recorta —sin deformarla— en cualquier otra proporción. La curva
+     la calculó un script a partir del gesto del logotipo con anatomía real
+     (P, QRS, T); los números NO se retocan a ojo: el pico R protagonista está
+     en (649, 150), al 36,5 % del largo, y de esa cifra sale la sincronía de las
+     ondas en el CSS. -->
+<svg
+  class="auth-stage__ecg"
+  viewBox="0 0 1920 1080"
+  preserveAspectRatio="xMidYMid slice"
+  focusable="false"
+>
+  <defs>
+    <linearGradient
+      id="auth-stage-ink"
+      x1="0"
+      y1="0"
+      x2="1920"
+      y2="0"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop offset="0" style="stop-color: var(--c-mint-200)" />
+      <stop offset="0.34" style="stop-color: #ffffff" />
+      <stop offset="0.62" style="stop-color: var(--c-aqua-200)" />
+      <stop offset="1" style="stop-color: var(--c-mint-300)" />
+    </linearGradient>
+    <radialGradient id="auth-stage-flash">
+      <stop offset="0" style="stop-color: var(--c-aqua-200); stop-opacity: 0.55" />
+      <stop offset="1" style="stop-color: var(--c-aqua-200); stop-opacity: 0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Destello: la escena entera se ilumina desde el pico cuando pasa el
+       cometa. Es el pulso sentido, no solo dibujado. -->
+  <circle class="auth-stage__flash" cx="649" cy="330" r="520" fill="url(#auth-stage-flash)" />
+
+  <!-- La onda expansiva de la ignición: una sola, desde el pico R. -->
+  <circle class="auth-stage__shock" cx="649" cy="150" r="50" />
+
+  <circle class="auth-stage__wave" cx="649" cy="150" r="46" />
+  <circle class="auth-stage__wave auth-stage__wave--echo" cx="649" cy="150" r="46" />
+  <circle class="auth-stage__wave auth-stage__wave--far" cx="1463" cy="232" r="40" />
+
+  @for (layer of ecgLayers; track layer) {
+    <path
+      [attr.class]="'auth-stage__ecg-' + layer"
+      pathLength="1000"
+      d="M-60 470 H90 q18.9 -46.2 37.8 0 l18.9 0 l8.4 14.7 l14.7 -157.5 l16.8 205.8 l12.6 -63 l35.7 0 q33.6 -73.5 67.2 0 H470 q42.3 -103.4 84.6 0 l42.3 0 l18.8 32.9 l32.9 -352.5 l37.6 460.6 l28.2 -141 l79.9 0 q75.2 -164.5 150.4 0 H1330 q31.5 -77 63 0 l31.5 0 l14 24.5 l24.5 -262.5 l28 343 l21 -105 l59.5 0 q56 -122.5 112 0 H1980"
+    />
+  }
+</svg>
+
+<!-- Encendido: el blanco que estalla desde el pico y el barrido que baja. -->
+<div class="auth-stage__power"></div>
+<div class="auth-stage__scan"></div>
+<div class="auth-stage__hud"></div>
+
+<!-- El título, al modo de una pantalla de inicio: la marca, el titular
+     palabra por palabra y la bajada. Decorativo como todo el escenario —el
+     host es `aria-hidden`—: lo que la persona tiene que leer está en la
+     tarjeta. -->
+<div class="auth-stage__brand">
+  <p class="auth-stage__wordmark">
+    <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
+    <span>AloVida</span>
+  </p>
+  <p class="auth-stage__claim">
+    @for (word of claimWords(); track $index) {
+      <span class="auth-stage__word" [style.--i]="$index">{{ word }}</span>
+    }
+  </p>
+  @if (tagline()) {
+    <p class="auth-stage__tagline">{{ tagline() }}</p>
+  }
+</div>
+
+<div class="auth-stage__grain"></div>

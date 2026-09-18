@@ -238,6 +238,7 @@
                         [variant]="accion.principal ? 'primary' : 'outline'"
                         size="sm"
                         [attr.data-testid]="'accion-' + accion.action"
+                        [attr.aria-label]="accion.rotulo + ': ' + doc.transactionNumber"
                         (clicked)="avanzar(doc.id, accion)"
                       >
                         {{ accion.rotulo }}

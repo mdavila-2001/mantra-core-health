@@ -1,63 +1,101 @@
 <div class="dia">
   <header class="dia__barra">
-    <button app-button variant="ghost" size="sm" type="button" (clicked)="volver.emit()">
-      ← Volver al mes
-    </button>
     <div class="dia__cabecera">
-      <h3 class="dia__titulo">{{ titulo() }}</h3>
+      <h3 class="dia__titulo">
+        {{ titulo() }}
+        @if (esHoy()) {
+          <span class="dia__hoy">Hoy</span>
+        }
+      </h3>
       <p class="dia__resumen" role="status">{{ resumen() }}</p>
+    </div>
 
+    <div class="dia__herramientas">
       <!-- «Un botón de ver mañana, y así sucesivamente» del pedido original.
-           Recorrer día por día es lo que uno hace mirando la agenda: volver al
-           mes para tocar el siguiente son dos gestos donde alcanzaba uno. -->
-      <div class="dia__paginacion">
+           Recorrer día por día es lo que uno hace mirando la agenda; «Hoy»
+           trae de vuelta sin contar los días que se avanzó. -->
+      <div class="dia__paginacion" role="group" aria-label="Cambiar de día">
         <button
-          app-button
-          variant="ghost"
-          size="sm"
           type="button"
+          class="dia__paso"
           data-testid="dia-anterior"
           aria-label="Ver el día anterior"
-          (clicked)="diaCambiado.emit(-1)"
+          (click)="diaCambiado.emit(-1)"
         >
-          ← Ayer
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+          <span>Ayer</span>
         </button>
+        <button
+          type="button"
+          class="dia__paso dia__paso--hoy"
+          data-testid="dia-hoy"
+          [disabled]="esHoy()"
+          (click)="irAHoy()"
+        >
+          Hoy
+        </button>
+        <button
+          type="button"
+          class="dia__paso"
+          data-testid="dia-siguiente"
+          aria-label="Ver el día siguiente"
+          (click)="diaCambiado.emit(1)"
+        >
+          <span>Mañana</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
+      </div>
+
+      <div class="dia__acciones-barra">
+        <!-- «Mover horario» del pedido. Va en la barra del día y no dentro de
+             una tarjeta: lo que se corre es la agenda, no una cita suelta. -->
         <button
           app-button
           variant="ghost"
           size="sm"
           type="button"
-          data-testid="dia-siguiente"
-          aria-label="Ver el día siguiente"
-          (clicked)="diaCambiado.emit(1)"
+          [iconOnly]="true"
+          data-testid="dia-mover"
+          aria-label="Mover horario"
+          appTooltip="Mover el horario del día"
+          (clicked)="abrirMover(null)"
         >
-          Mañana →
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+        </button>
+        <button
+          app-button
+          variant="secondary"
+          size="sm"
+          type="button"
+          [iconOnly]="true"
+          data-testid="dia-agregar"
+          aria-label="Agregar algo a este día"
+          appTooltip="Agregar una cita o un rato ocupado"
+          (clicked)="crear()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14M5 12h14" />
+          </svg>
         </button>
       </div>
-    </div>
-    <div class="dia__acciones-barra">
-      <!-- «Mover horario» del pedido. Va en la barra del día y no dentro de una
-           tarjeta: lo que se corre es la agenda, no una cita suelta. -->
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        type="button"
-        data-testid="dia-mover"
-        (clicked)="abrirMover(null)"
-      >
-        Mover horario
-      </button>
-      <button
-        app-button
-        variant="secondary"
-        size="sm"
-        type="button"
-        aria-label="Agregar algo a este día"
-        (clicked)="crear()"
-      >
-        +
-      </button>
     </div>
   </header>
 
@@ -132,6 +170,7 @@
           class="dia__bloque"
           [class.dia__bloque--cliqueable]="bloque.tipo === 'cita' || bloque.tipo === 'ocupado'"
           [attr.data-tipo]="bloque.tipo"
+          [attr.data-sello]="bloque.tipo === 'cita' ? bloque.statusVariant : null"
           [style.min-height.px]="bloque.alturaPx"
         >
           @if (bloque.tipo === 'cita' || bloque.tipo === 'ocupado') {
@@ -142,6 +181,18 @@
               [attr.aria-label]="'Ver el detalle de ' + (bloque.paciente || bloque.motivo || 'este rato')"
               (click)="detallePedido.emit(bloque)"
             >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
               <span aria-hidden="true">Ver detalle</span>
             </button>
           }
@@ -172,7 +223,7 @@
                      visual del carril 12, con «Ver detalle» encimado sobre el
                      estado en 768 y 1440 px. -->
                 <p class="dia__estado">
-                  <app-badge variant="primary">{{ bloque.estado }}</app-badge>
+                  <app-status-seal [variant]="bloque.statusVariant" [label]="bloque.estado" />
                 </p>
                 <!-- El motivo se muestra acá y NO en la agenda de la
                      organización: para quien va a recibir a esa persona en diez
@@ -244,7 +295,8 @@
               </span>
               <!-- El hueco invita: tocarlo abre la tarjeta con el rango puesto. -->
               <button class="dia__libre" type="button" (click)="tocar(bloque)">
-                — disponible —
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                Disponible
               </button>
               <!-- «Cerrar» un rato libre: lo bloquea Y deja la excepción, para
                    que volver a publicar el horario no lo devuelva. Sin esa
@@ -270,7 +322,11 @@
                 type="button"
                 aria-label="Agregar algo en este hueco"
                 (click)="tocar(bloque)"
-              ></button>
+              >
+                @if (rotuloDelHueco(bloque); as rotulo) {
+                  <span class="dia__hueco" aria-hidden="true">{{ rotulo }}</span>
+                }
+              </button>
             }
           }
         </li>

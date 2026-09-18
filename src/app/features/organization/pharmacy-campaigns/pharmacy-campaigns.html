@@ -12,11 +12,11 @@
   <!-- El chip va quemado, como en el pago (FAR-I5): no existe un input que lo
        cambie, y una promoción sin backend que la honre no puede pintarse sin
        decir qué es. -->
-  <p class="campanas__demo">
-    <app-badge variant="info" data-testid="campanas-chip-demo">
-      DEMO — las campañas viven en esta sesión: todavía no hay dónde guardarlas
-    </app-badge>
-  </p>
+  <!-- Un aviso y no un badge: el badge es para estados de una o dos palabras y
+       no parte línea; esta oración desbordaba la pantalla a 390 px (refactor UX). -->
+  <app-alert tone="info" title="DEMO" class="campanas__demo" data-testid="campanas-chip-demo">
+    Las campañas viven en esta sesión: todavía no hay dónde guardarlas.
+  </app-alert>
 
   <app-view-state-host [state]="farmacias()">
     @if (hayVariasFarmacias()) {

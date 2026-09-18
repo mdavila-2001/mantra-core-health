@@ -1,3 +1,4 @@
+import { ETIQUETAS_DE_REGION, TERMINOS_DE_LAMINA } from './anatomia-atlas';
 import { uuid } from '../mock-store';
 import {
   CATEGORIAS_DE_GLOSARIO,
@@ -57,14 +58,35 @@ function codigoDe(slug: string): string {
 export const CATEGORIAS: readonly ConjuntoDeGlosario[] = CATEGORIAS_DE_GLOSARIO.map(conConjunto);
 
 /** Las 15 etiquetas clínicas. */
-export const ETIQUETAS: readonly ConjuntoDeGlosario[] = ETIQUETAS_DE_GLOSARIO.map(conConjunto);
+/**
+ * Las 15 etiquetas clínicas del catálogo, más las 8 regiones del atlas.
+ *
+ * Las regiones se suman acá y no en el generador del glosario porque no son
+ * del mismo catálogo: salen de `data/anatomy-atlas/` y tienen su propio
+ * generador. Lo que comparten es la forma, que es lo que permite que el
+ * glosario las filtre sin enterarse de que vienen de otra parte.
+ */
+export const ETIQUETAS: readonly ConjuntoDeGlosario[] = [
+  ...ETIQUETAS_DE_GLOSARIO,
+  ...ETIQUETAS_DE_REGION,
+].map(conConjunto);
 
 /** El value set paraguas: todo término es miembro de éste. */
 export const PARAGUAS: ConjuntoDeGlosario = conConjunto(GLOSARIO_TODOS_LOS_TERMINOS);
 
-/** Los 69 términos, ordenados alfabéticamente por su nombre en castellano —
- *  el mismo orden que el backend aplica cuando se pide `lang`. */
-export const TERMINOS: readonly ConceptoDeGlosario[] = [...TERMINOS_DE_GLOSARIO]
+/**
+ * Los términos del glosario, ordenados alfabéticamente por su nombre en
+ * castellano — el mismo orden que el backend aplica cuando se pide `lang`.
+ *
+ * Son los 69 curados **más las 548 láminas** del atlas anatómico, que entran
+ * como términos de la categoría Anatomía. Comparten tipo y orden: para el
+ * glosario no hay dos clases de término, y por eso la búsqueda, la ficha y el
+ * filtro por etiqueta funcionan igual para los dos sin una línea de más.
+ */
+export const TERMINOS: readonly ConceptoDeGlosario[] = [
+  ...TERMINOS_DE_GLOSARIO,
+  ...TERMINOS_DE_LAMINA,
+]
   .map((termino) => ({
     ...termino,
     id: uuid(`concept-glossary-${termino.slug}`),

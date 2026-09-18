@@ -13,6 +13,13 @@ import type {
   AgendaSlot, Booking } from '../../../../core/data-access/scheduling/scheduling.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
+import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
+import {
+  UNKNOWN_STATUS_VARIANT,
+  type StatusSealVariant,
+} from '../../../../shared/components/organisms/status-seal/status-seal.types';
+import { statusVariantOf } from '../../booking-status';
 import type { BloqueoDelMes } from '../month-view/month-view';
 
 /** Un estado del catálogo, ya resuelto: su código y cómo se lee. */
@@ -75,6 +82,11 @@ export interface BloqueDelDia {
   /** El código del estado, para decidir qué acciones ofrecer. */
   readonly statusCode: string;
   /**
+   * Cómo se pinta el estado: el mismo sello que la tabla de Consultas. Una
+   * cita atendida no puede ser verde en la lista y azul en el día.
+   */
+  readonly statusVariant: StatusSealVariant;
+  /**
    * Qué clase de actividad es: consulta, procedimiento, control…
    *
    * El propietario lo pidió así: «con otros colores los otros procedimientos
@@ -98,6 +110,12 @@ export interface BloqueDelDia {
  * —el turno típico— tiene que alcanzar para dos líneas de texto.
  */
 const PX_POR_MINUTO = 1.6;
+
+/**
+ * Desde cuántos minutos un hueco deja de ser proporcional y se muestra
+ * comprimido, con su duración escrita.
+ */
+const HUECO_LARGO_MIN = 60;
 
 /**
  * La altura mínima de un bloque con contenido.
@@ -152,7 +170,7 @@ const YA_LLEGO: ReadonlySet<string> = new Set(['BOOKING_CHECKED_IN', 'BOOKING_CO
  */
 @Component({
   selector: 'app-day-view',
-  imports: [AppButton, Badge, DatePipe],
+  imports: [AppButton, Badge, DatePipe, StatusSeal, Tooltip],
   templateUrl: './day-view.html',
   styleUrl: './day-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -223,9 +241,6 @@ export class DayView {
   /** Pidieron quitar un tiempo ocupado. */
   readonly quitarOcupado = output<string>();
 
-  /** Volver al mes. */
-  readonly volver = output<void>();
-
   /**
    * Ir al día siguiente o al anterior — «un botón de ver mañana, y así
    * sucesivamente» del pedido original.
@@ -283,6 +298,35 @@ export class DayView {
     this.moverAbierto.set(false);
   }
 
+  /** Si el día mirado es hoy: «Hoy» no se ofrece para ir adonde ya se está. */
+  protected readonly esHoy = computed(() => {
+    const hoy = new Date();
+    const dia = this.dia();
+    return (
+      dia.getFullYear() === hoy.getFullYear() &&
+      dia.getMonth() === hoy.getMonth() &&
+      dia.getDate() === hoy.getDate()
+    );
+  });
+
+  /**
+   * Vuelve a hoy con el mismo `diaCambiado`: el desplazamiento se cuenta en
+   * días de calendario, no en horas, por el mismo motivo que Ayer y Mañana.
+   */
+  protected irAHoy(): void {
+    const dia = this.dia();
+    const hoy = new Date();
+    const desde = Date.UTC(dia.getFullYear(), dia.getMonth(), dia.getDate());
+    const hasta = Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+    this.diaCambiado.emit(Math.round((hasta - desde) / 86_400_000));
+  }
+
+  /** El tono del sello, con el mismo mapa que usa la tabla de Consultas. */
+  private selloDe(cita: Booking): StatusSealVariant {
+    const resuelto = this.etiquetas().get(cita.statusConceptId);
+    return resuelto === undefined ? UNKNOWN_STATUS_VARIANT : statusVariantOf(resuelto.code);
+  }
+
   protected readonly titulo = computed(() =>
     this.dia().toLocaleDateString('es-BO', {
       weekday: 'long',
@@ -319,6 +363,7 @@ export class DayView {
         paciente: '',
         estado: '',
         statusCode: '',
+        statusVariant: UNKNOWN_STATUS_VARIANT,
         tipologia: null,
         motivo: bloqueo.motivo,
         excepcionId: bloqueo.id ?? null,
@@ -345,6 +390,7 @@ export class DayView {
           paciente: '',
           estado: '',
           statusCode: '',
+          statusVariant: UNKNOWN_STATUS_VARIANT,
           tipologia: null,
           motivo: null,
           excepcionId: null,
@@ -364,6 +410,7 @@ export class DayView {
         paciente: cita.patientName ?? 'Paciente sin nombre registrado',
         estado: this.etiquetas().get(cita.statusConceptId)?.display ?? 'Reservado',
         statusCode: this.etiquetas().get(cita.statusConceptId)?.code ?? '',
+        statusVariant: this.selloDe(cita),
         tipologia: this.tipologiaDe(cita),
         motivo: null,
         excepcionId: null,
@@ -390,6 +437,7 @@ export class DayView {
             paciente: '',
             estado: '',
             statusCode: '',
+            statusVariant: UNKNOWN_STATUS_VARIANT,
             tipologia: null,
             motivo: null,
             excepcionId: null,
@@ -474,8 +522,25 @@ export class DayView {
 
   private altura(desde: Date, hasta: Date, conMinimo: boolean): number {
     const minutos = Math.max(0, (hasta.getTime() - desde.getTime()) / 60_000);
-    const px = Math.round(minutos * PX_POR_MINUTO);
-    return conMinimo ? Math.max(px, ALTURA_MINIMA_PX) : px;
+    if (!conMinimo) {
+      // El aire se comprime pasada la hora: siete horas de madrugada vacía
+      // empujaban la cita siguiente 650 px abajo y el día dejaba de leerse de
+      // un vistazo. El rótulo del hueco dice cuánto dura en realidad.
+      return Math.round(Math.min(minutos, HUECO_LARGO_MIN) * PX_POR_MINUTO);
+    }
+    return Math.max(Math.round(minutos * PX_POR_MINUTO), ALTURA_MINIMA_PX);
+  }
+
+  /**
+   * «6 h 49 min sin turnos» para el aire comprimido; `null` para el corto, que
+   * se ve con su altura real y no necesita rótulo.
+   */
+  protected rotuloDelHueco(bloque: BloqueDelDia): string | null {
+    const minutos = Math.round((bloque.hasta.getTime() - bloque.desde.getTime()) / 60_000);
+    if (minutos <= HUECO_LARGO_MIN) return null;
+    const horas = Math.floor(minutos / 60);
+    const resto = minutos % 60;
+    return `${horas} h${resto > 0 ? ` ${resto} min` : ''} sin turnos`;
   }
 
   /** Los bloqueos que tocan el día mirado, recortados a sus límites. */

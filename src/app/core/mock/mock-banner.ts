@@ -52,7 +52,7 @@ import { MOCK_USERS } from './mock-session';
        el menú no está fijo, vuelve al borde. */
     .mock {
       position: fixed;
-      inset-inline-start: calc(var(--w-nav, 264px) + 12px);
+      inset-inline-start: calc(var(--w-nav, 240px) + 12px);
       inset-block-end: 12px;
       z-index: 9999;
       max-inline-size: 22rem;
@@ -88,7 +88,7 @@ import { MOCK_USERS } from './mock-session';
       .mock:not(.mock--plegado) {
         inset-inline-start: 8px;
         inset-inline-end: 8px;
-        inset-block-start: calc(var(--h-header, 64px) + 8px);
+        inset-block-start: calc(var(--h-header, 56px) + 8px);
       }
       .mock__boton {
         padding: 5px 10px;
