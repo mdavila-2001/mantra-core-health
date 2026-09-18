@@ -1,8 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { PointerScene } from './pointer-scene.directive';
-import { SceneQuality } from './scene-quality';
 
 /**
  * Lo que estas pruebas fijan.
@@ -101,15 +100,8 @@ describe('PointerScene', () => {
     tomarElControlDeLosCuadros();
   };
 
-  /** La decisión de `SceneQuality`, controlada por la prueba en vez de medida. */
-  let escenaLiviana = signal(false);
-
   beforeEach(async () => {
-    escenaLiviana = signal(false);
-    await TestBed.configureTestingModule({
-      imports: [Anfitrion],
-      providers: [{ provide: SceneQuality, useValue: { lite: escenaLiviana.asReadonly() } }],
-    }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [Anfitrion] }).compileComponents();
   });
 
   afterEach(() => {
@@ -183,30 +175,6 @@ describe('PointerScene', () => {
       mover(150, 25);
 
       expect(cuadros.length).toBe(0);
-    });
-  });
-
-  describe('cuando la escena pasa a su versión liviana', () => {
-    beforeEach(async () => {
-      await montar({ reducido: false, punteroFino: true });
-      mover(150, 25);
-      dejarQueLaEscenaAlcance();
-      escenaLiviana.set(true);
-      TestBed.tick();
-    });
-
-    it('borra lo publicado: la hoja vuelve a su reposo', () => {
-      expect(variable('--pointer-x')).toBe('');
-      expect(variable('--pointer-tilt-x')).toBe('');
-      expect(variable('--pointer-on')).toBe('');
-    });
-
-    it('deja de seguir al puntero: inclinar la escena es recomponerla entera', () => {
-      cuadros = [];
-      mover(20, 80);
-
-      expect(cuadros.length).toBe(0);
-      expect(variable('--pointer-x')).toBe('');
     });
   });
 

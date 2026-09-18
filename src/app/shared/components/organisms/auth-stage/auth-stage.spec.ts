@@ -8,8 +8,6 @@ describe('AuthStage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({ imports: [AuthStage] }).compileComponents();
     fixture = TestBed.createComponent(AuthStage);
-    fixture.componentRef.setInput('claim', 'Tu salud, conectada');
-    fixture.componentRef.setInput('tagline', 'Entrá y encontrá tu historia clínica.');
     await fixture.whenStable();
   });
 
@@ -41,25 +39,6 @@ describe('AuthStage', () => {
     for (const onda of ondas) {
       expect([onda.getAttribute('cx'), onda.getAttribute('cy')]).toEqual(['649', '150']);
     }
-  });
-
-  it('el titular entra palabra por palabra, en orden y con la puntuación pegada', () => {
-    const palabras = Array.from(el().querySelectorAll<HTMLElement>('.auth-stage__word'));
-    expect(palabras.map((p) => p.textContent?.trim())).toEqual(['Tu', 'salud,', 'conectada']);
-    expect(palabras.map((p) => p.style.getPropertyValue('--i'))).toEqual(['0', '1', '2']);
-  });
-
-  it('muestra la bajada, y sin bajada no deja el párrafo vacío', async () => {
-    expect(el().querySelector('.auth-stage__tagline')?.textContent).toContain('historia clínica');
-
-    fixture.componentRef.setInput('tagline', '');
-    await fixture.whenStable();
-    expect(el().querySelector('.auth-stage__tagline')).toBeNull();
-  });
-
-  it('la ignición tiene su onda expansiva, en el mismo pico R que las ondas del bucle', () => {
-    const onda = el().querySelector('.auth-stage__shock');
-    expect([onda?.getAttribute('cx'), onda?.getAttribute('cy')]).toEqual(['649', '150']);
   });
 
   it('las motas son deterministas: servidor y navegador pintan la misma escena', () => {

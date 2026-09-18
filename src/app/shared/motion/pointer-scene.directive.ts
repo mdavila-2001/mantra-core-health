@@ -1,7 +1,6 @@
-import { afterNextRender, DestroyRef, Directive, effect, ElementRef, inject } from '@angular/core';
+import { afterNextRender, DestroyRef, Directive, ElementRef, inject } from '@angular/core';
 
 import { prefersReducedMotion } from './motion-tokens';
-import { SceneQuality } from './scene-quality';
 
 /**
  * Cuánto se acerca el valor pintado al del puntero en cada cuadro.
@@ -15,15 +14,6 @@ const APROXIMACION = 0.12;
 
 /** Debajo de esto la diferencia no se ve, así que el bucle se apaga. */
 const QUIETO = 0.0008;
-
-/** Las cinco variables que publica el directivo. */
-const VARIABLES = [
-  '--pointer-x',
-  '--pointer-y',
-  '--pointer-tilt-x',
-  '--pointer-tilt-y',
-  '--pointer-on',
-] as const;
 
 /** Coordenada de la escena: dónde está el puntero y hacia dónde tira. */
 interface Punto {
@@ -89,65 +79,33 @@ export class PointerScene {
   /** Dónde está la escena, que llega siempre unos cuadros después. */
   private readonly actual: Punto = { x: 0.5, y: 0.5, presencia: 0 };
 
-  private readonly sceneQuality = inject(SceneQuality);
-
   private cuadro = 0;
-
-  private enganchado = false;
 
   constructor() {
     afterNextRender(() => {
       if (!this.corresponde()) {
         return;
       }
-      this.enganchar();
+
+      const elemento = this.host.nativeElement;
+      elemento.addEventListener('pointermove', this.alMover, { passive: true });
+      elemento.addEventListener('pointerleave', this.alSalir, { passive: true });
+      elemento.addEventListener('pointercancel', this.alSalir, { passive: true });
+
+      this.destroyRef.onDestroy(() => {
+        elemento.removeEventListener('pointermove', this.alMover);
+        elemento.removeEventListener('pointerleave', this.alSalir);
+        elemento.removeEventListener('pointercancel', this.alSalir);
+        if (this.cuadro !== 0) {
+          cancelAnimationFrame(this.cuadro);
+          this.cuadro = 0;
+        }
+      });
     });
-
-    // Si la escena pasa a su versión liviana con el puntero ya enganchado, se
-    // suelta: la inclinación obliga a recomponer la escena entera en cada
-    // movimiento del ratón, que es justo el costo que el equipo no sostiene.
-    effect(() => {
-      if (this.sceneQuality.lite()) {
-        this.soltar();
-      }
-    });
-
-    this.destroyRef.onDestroy(() => this.soltar());
-  }
-
-  private enganchar(): void {
-    const elemento = this.host.nativeElement;
-    elemento.addEventListener('pointermove', this.alMover, { passive: true });
-    elemento.addEventListener('pointerleave', this.alSalir, { passive: true });
-    elemento.addEventListener('pointercancel', this.alSalir, { passive: true });
-    this.enganchado = true;
   }
 
   /**
-   * Suelta los escuchas y **borra** las variables publicadas, así la hoja
-   * vuelve a su reposo: el mismo estado que sin JavaScript.
-   */
-  private soltar(): void {
-    if (!this.enganchado) {
-      return;
-    }
-    this.enganchado = false;
-    const elemento = this.host.nativeElement;
-    elemento.removeEventListener('pointermove', this.alMover);
-    elemento.removeEventListener('pointerleave', this.alSalir);
-    elemento.removeEventListener('pointercancel', this.alSalir);
-    if (this.cuadro !== 0) {
-      cancelAnimationFrame(this.cuadro);
-      this.cuadro = 0;
-    }
-    for (const variable of VARIABLES) {
-      elemento.style.removeProperty(variable);
-    }
-  }
-
-  /**
-   * Movimiento decorativo, puntero fino, navegador y un equipo que sostenga
-   * la escena (`SceneQuality`): las cuatro condiciones.
+   * Movimiento decorativo, puntero fino y navegador: las tres condiciones.
    *
    * `prefers-reduced-motion` se consulta acá una sola vez y no en cada cuadro
    * porque lo que se decide es si **enganchar los escuchas**; quien cambie la
@@ -158,7 +116,7 @@ export class PointerScene {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return false;
     }
-    if (prefersReducedMotion() || this.sceneQuality.lite()) {
+    if (prefersReducedMotion()) {
       return false;
     }
     return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
