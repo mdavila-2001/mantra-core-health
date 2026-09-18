@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 /** Una mota de luz del escenario: columna, tamaño, retardo y duración. */
 interface StageMote {
@@ -59,19 +59,6 @@ const ECG_LAYERS = ['base', 'aura', 'halo', 'comet', 'spark'] as const;
   host: { 'aria-hidden': 'true' },
 })
 export class AuthStage {
-  /** Titular grande del escenario. Entra palabra por palabra. */
-  readonly claim = input.required<string>();
-
-  /** Bajada del titular. */
-  readonly tagline = input<string>('');
-
-  /**
-   * El titular partido en palabras, para que cada una entre por su cuenta.
-   * Se parte por espacios y nada más: la puntuación viaja pegada a su palabra
-   * («salud,»), que es como se lee.
-   */
-  protected readonly claimWords = computed(() => this.claim().split(/\s+/).filter(Boolean));
-
   protected readonly motes = STAGE_MOTES;
   protected readonly ecgLayers = ECG_LAYERS;
 }

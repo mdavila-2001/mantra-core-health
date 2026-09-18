@@ -13,19 +13,17 @@
          TODA la ventana —no de una columna—, así el trazo cruza de punta a
          punta y pasa por detrás de la tarjeta de vidrio. Es decorativo entero
          (el propio componente se marca `aria-hidden`). -->
-    <app-auth-stage class="auth-split__stage" [claim]="claim()" [tagline]="tagline()" />
+    <app-auth-stage class="auth-split__stage" />
   }
   <!-- Columna de marca. `aria-hidden` porque es decorativa: lo que importa está
        en el formulario, y anunciarla duplicaría el mensaje.
        El diseño original lleva una fotografía; usamos un degradado de marca
        porque el archivo no está aprobado todavía y así no dependemos de él. -->
-  <!-- En `stage` la columna de marca no existe: el título lo dibuja el
-       escenario, que ocupa la ventana entera. -->
-  @if (scene() === 'split') {
-    <aside class="auth-split__brand" aria-hidden="true">
-      <!-- Auroras: masas de color enormes y muy desenfocadas que derivan solas y
+  <aside class="auth-split__brand" aria-hidden="true">
+    <!-- Auroras: masas de color enormes y muy desenfocadas que derivan solas y
          además se corren con el puntero. Son el fondo VIVO; lo de abajo (red y
          latido) es el dibujo que va encima. -->
+    @if (scene() === 'split') {
       <div class="auth-split__aurora auth-split__aurora--brand">
         <span class="auth-split__velo auth-split__velo--a"></span>
         <span class="auth-split__velo auth-split__velo--b"></span>
@@ -233,24 +231,24 @@
           />
         </g>
       </svg>
+    }
 
-      <!-- `@for … track` sobre el propio texto: al cambiar de paciente a
+    <!-- `@for … track` sobre el propio texto: al cambiar de paciente a
          profesional el nodo se rehace y la animación de entrada vuelve a
          correr, en vez de que el titular se reemplace de golpe. -->
-      <div class="auth-split__brand-content">
-        <p class="auth-split__wordmark">
-          <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
-          <span>AloVida</span>
-        </p>
-        @for (texto of claimKeyed(); track texto) {
-          <h2 class="auth-split__claim">{{ texto }}</h2>
-        }
-        @for (texto of taglineKeyed(); track texto) {
-          <p class="auth-split__tagline">{{ texto }}</p>
-        }
-      </div>
-    </aside>
-  }
+    <div class="auth-split__brand-content">
+      <p class="auth-split__wordmark">
+        <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
+        <span>AloVida</span>
+      </p>
+      @for (texto of claimKeyed(); track texto) {
+        <h2 class="auth-split__claim">{{ texto }}</h2>
+      }
+      @for (texto of taglineKeyed(); track texto) {
+        <p class="auth-split__tagline">{{ texto }}</p>
+      }
+    </div>
+  </aside>
 
   <!-- Gemelo claro de la aurora, para la columna del formulario. Es una capa
        aparte y no la misma estirada porque los dos fondos son opuestos: sobre

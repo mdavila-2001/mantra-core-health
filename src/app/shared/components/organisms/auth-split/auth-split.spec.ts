@@ -150,9 +150,10 @@ describe('AuthSplit', () => {
       expect(el().querySelector('.auth-split--stage')).not.toBeNull();
       expect(escenario()).not.toBeNull();
       expect(el().querySelectorAll('.auth-split__aurora')).toHaveLength(0);
-      // El titular sigue, pero lo dibuja el escenario: la columna de marca no existe.
-      expect(el().querySelector('.auth-split__brand')).toBeNull();
-      expect(escenario()?.textContent).toContain('conectada');
+      // El titular sigue: el escenario cambia el fondo, no el mensaje.
+      expect(el().querySelector('.auth-split__claim')?.textContent).toContain(
+        'Tu salud, conectada',
+      );
     });
   });
 });
