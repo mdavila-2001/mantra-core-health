@@ -17,6 +17,12 @@ antes cada pantalla lanzaba un error y el selector se quedaba apretado en la bar
 sombra en el borde avisa que hay más columnas. Con lector de pantalla, cada fila se nombra por
 el paciente y no por un código interno.
 
+**Médica · panel.** «Ver mi agenda de hoy» es la acción principal, arriba a la derecha; las
+cifras («Secciones disponibles», «Organizaciones») pasan al final.
+
+**Paciente · órdenes y resultados.** «Reservar hora» ya no está apagado: lleva a «Mis citas»
+con «En un laboratorio» elegido. Los botones de descargar y compartir dicen de qué estudio son.
+
 **Todo el producto.** Las transiciones usan una sola escala de tiempos; con «reducir
 movimiento» siguen anuladas.
 

@@ -17,10 +17,10 @@
 que la fijan. Sin participantes, moverla sería cambiar hábitos sin evidencia.
 **Reabrir si:** hay pruebas con usuarios que muestren problemas de descubribilidad del menú.
 
-### D-05 · H-10 (métricas internas en el panel de la médica): registrado, no cambiado
-**Por qué:** quitar o mover «Secciones disponibles/Organizaciones» es una decisión de producto
-sobre qué muestra el panel. Propuesta concreta para el propietario: llevar «Ver mi agenda de
-hoy» y la próxima consulta al primer bloque y bajar las cifras al final.
+### D-05 · H-10 (métricas internas en el panel de la médica)
+Primero se registró como decisión de producto con una propuesta; **el propietario la aprobó**
+(«hazlo», 2026-09-18). Ejecutada en `9025e688`: «Ver mi agenda de hoy» en la ranura primaria del
+encabezado y las cifras después de los accesos. Nada se quitó.
 
 ### D-06 · Orden en presentación, no en `turnosListos`
 Ver `ARQUITECTURA.md`. Evita romper calendario, cancelación y pruebas existentes.
@@ -54,3 +54,20 @@ H-13 y H-17 fallan igual con el `src/` de la base; son reglas de negocio de otro
 El encargo no pidió instalarlas en `.claude/skills/`, y el repo ya tiene `project-design-system`,
 `visual-quality-gate` y `frontend-production-gate` que cubren lo mismo. Quedan legibles en
 `docs/refactor-profesional/skills/`.
+
+### D-14 · «Mis pedidos» no recibe un «Nuevo pedido»
+Un pedido nace desde una receta (`where-to-buy`), no desde la lista. Un botón acá llevaría a
+una pantalla sin contexto.
+
+### D-15 · `?resource=lab` en «Mis citas»
+Parámetro nuevo en inglés (regla 29) para abrir la reserva con «En un laboratorio» elegido. El
+foco se mueve cuando la lista terminó de cargar, para que el contenido no empuje la sección.
+
+### D-16 · H-14 se cierra sin cambiar la CSP
+Sólo ocurre bajo `ng serve` (sin `dist/` no hay hash del script del render). En producción
+está cubierto. Calcular en desarrollo hashes de contenido generado en vivo sería frágil y no
+cambia nada para usuarios.
+
+### D-17 · Prettier sólo donde la base ya cumplía
+Formatear un archivo que ya no cumplía reescribe cientos de líneas ajenas y esconde el cambio
+real. `cff3fdf9` devolvió `data-table` a su formato; el resto se verificó antes de formatear.

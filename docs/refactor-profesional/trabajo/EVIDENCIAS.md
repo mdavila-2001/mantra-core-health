@@ -20,6 +20,23 @@ Fecha: 2026-09-17/18.
 | `E2E_BASE_URL=http://localhost:4310 yarn pw <spec del refactor> --workers=1` | **9/9** (18–19 s) | dos corridas |
 | Kill-test H-01 (código base + mismo E2E) | **falla** con la base, **pasa** con el arreglo | |
 
+## Segunda tanda — candidato `e7261cb4`
+
+| Comando | Resultado |
+|---|---|
+| `yarn lint` · `yarn typecheck` · `yarn build` | 0 · 0 · 0 (22 avisos = base) |
+| `yarn test` | **6 346 ✅** · 10 ❌ preexistentes (las mismas H-13/H-17) |
+| E2E del refactor (`--workers=1`) | **11/11** |
+| SSR de producción (`serve:ssr`, :4311) | CSP con el hash del render; 0 errores de consola en `/posts`, `/auth`, `/directory` |
+
+| Qué | Antes | Después |
+|---|---|---|
+| Panel médica: «Ver mi agenda de hoy» (top, 1440 / 390) | dentro de «Tus accesos», debajo de las cifras | 104 / 186 px; cifras a 973 px |
+| Filtros de «Mis citas» a 1280 | «Hasta» sola en 2.ª fila | una fila |
+| «Descargar Archivo 1» (nombre accesible) | idéntico en cada tarjeta | «… de Hemograma completo» |
+| «Reservar hora» en «Mis órdenes» | deshabilitado · «Próximamente» | enlace a `?resource=lab`, foco en «Agendar una cita» |
+| Transición del menú (marco) | 0,16 s `ease` | 0,12 s `--curva`; 0,01 ms reducido |
+
 ## Mediciones en navegador
 
 | Qué | Antes | Después |

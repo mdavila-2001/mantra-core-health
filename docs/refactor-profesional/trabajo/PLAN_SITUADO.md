@@ -14,14 +14,23 @@
 
 Todos los incrementos son sólo de frontend; revertir no toca datos.
 
-## Siguiente (propuesto, por prioridad)
+## Segunda tanda (ejecutada)
 
-| ID | Resultado | Archivos probables | Tamaño · incertidumbre |
-|---|---|---|---|
-| N-01 | Confirmar H-14 en build SSR y, si ocurre, alinear el hash de la CSP | `src/server/security-headers.ts`, `index.html` | S · media |
-| N-02 | Llevar el patrón «próximas primero + acción arriba» a «Mis pedidos», «Mis resultados», «Mis órdenes» | `features/account/{pharmacy-orders,diagnostic-results,diagnostic-orders}` | M · baja — reutilizar `splitUpcomingAndPast` sólo si tienen fecha futura |
-| N-03 | Pasar `rowLabel` en las 23 tablas restantes | plantillas con `<app-data-table>` | M · baja |
-| N-04 | Panel de la médica (H-10) tras decisión D-05 | `features/dashboard/` | S · decisión de producto |
-| N-05 | «Hasta» sola a 1280 (H-15) | `appointments.css` | S · baja |
-| N-06 | Literales de movimiento de `styles/alovida.css` | 1 hoja | S · baja |
-| N-07 | Lector de pantalla + Safari/Firefox sobre el piloto | — | S |
+| ID | Resultado | Commit | Prueba | Estado |
+|---|---|---|---|---|
+| N-04 | Panel de la médica: agenda arriba, cifras al final | `9025e688` | unit + navegador 1440/390 | ✅ |
+| N-05 | Filtros de «Mis citas» parejos en todos los anchos | `9b157e5c` | E2E + medición 390–1440 | ✅ |
+| N-03 | `rowLabel` en 21 tablas más (+ limpieza de formato `cff3fdf9`) | `19a76565` | 87 unit + navegador en pacientes | ✅ |
+| N-02a | «Mis resultados»: botones con el estudio en el nombre accesible | `73ccd9e7` | unit + navegador | ✅ |
+| N-02b | «Mis órdenes» → reservar en laboratorio | `df1b8ab7` | unit + E2E | ✅ |
+| N-02c | «Mis pedidos»: sin cambios — ya ordena bien y el pedido nace desde una receta (D-14) | — | — | ✅ no aplica |
+| N-06 | Movimiento del marco `alovida.css` | `e7261cb4` | medición | ✅ |
+| N-01 | CSP en producción | — | SSR medido: 0 errores | ✅ cerrado (sólo dev) |
+
+## Siguiente
+
+| ID | Resultado | Tamaño |
+|---|---|---|
+| N-07 | Lector de pantalla (VoiceOver) + Safari/Firefox sobre el piloto | S |
+| N-08 | Consultas a 1280 px: 49 px todavía detrás del scroll (con indicio) | M — decisión sobre qué columna ceder |
+| N-09 | Las 10 pruebas rojas preexistentes (H-13, H-17), en sus carriles | — |

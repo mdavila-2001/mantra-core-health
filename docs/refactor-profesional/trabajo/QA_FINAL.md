@@ -1,6 +1,6 @@
 # QA final — fase 10
 
-**Candidato:** `36104a9d` (rama `justin/refac-ux-profesional`, base `origin/mockup` @ `1f8e8bfd`).
+**Candidato:** `e7261cb4` (segunda tanda; la primera fue `36104a9d`) (rama `justin/refac-ux-profesional`, base `origin/mockup` @ `1f8e8bfd`).
 Backend simulado; ningún dato real ni productivo.
 
 ## Checks
@@ -9,9 +9,9 @@ Backend simulado; ningún dato real ni productivo.
 |---|---|
 | `yarn lint` | ✅ 0 |
 | `yarn typecheck` | ✅ 0 |
-| `yarn build` | ✅ 0 · 332,81 kB inicial (base 332,73) · 22 avisos = base |
-| `yarn test` | ⚠️ 6 342 ✅ · **10 ❌ preexistentes** (idénticas en la base: H-13, H-17) |
-| E2E del refactor (9 casos, 1 worker) | ✅ 9/9 |
+| `yarn build` | ✅ 0 · 22 avisos = base |
+| `yarn test` | ⚠️ 6 346 ✅ · **10 ❌ preexistentes** (idénticas en la base: H-13, H-17) |
+| E2E del refactor (11 casos, 1 worker) | ✅ 11/11 |
 | Kill-test H-01 | ✅ la prueba detecta el defecto |
 
 ## Rúbrica (con incertidumbre explícita)
@@ -24,9 +24,9 @@ Backend simulado; ningún dato real ni productivo.
 | R04 Identidad consistente | Aprobado en alcance | `DIRECCION_VISUAL.md` |
 | R05 Contratos | Aprobado | `ARQUITECTURA.md`; ningún cliente de API tocado |
 | R06 Componentes completos | Aprobado en alcance | `data-table` + piloto, con pruebas |
-| R07 Flujo de extremo a extremo | **Parcial** | Llegar, leer, ubicar y pedir: verificado. Reservar y cancelar no cambiaron y no se re-ejecutaron de punta a punta en navegador |
+| R07 Flujo de extremo a extremo | **Parcial** | Llegar, leer, ubicar y pedir: verificado; orden → reserva en laboratorio: verificado. Confirmar la reserva y cancelar no cambiaron y no se re-ejecutaron de punta a punta |
 | R08 Movimiento | Aprobado en alcance | `MATRIZ_MOVIMIENTO.md`; sin perfilado de pintura |
-| R09 Cobertura del resto | **Parcial** | `MATRIZ_COBERTURA.md`: piloto + 3 familias |
+| R09 Cobertura del resto | **Parcial** | `MATRIZ_COBERTURA.md`: piloto + panel médica + órdenes/resultados + 4 familias |
 | R10 Accesibilidad | **Parcial** | Teclado, foco, `aria-expanded`, nombres accesibles verificados; **sin lector de pantalla real** ni auditoría axe completa |
 | R11 Rendimiento | Aprobado (laboratorio) | +0,08 kB; sin medición de campo |
 | R12 Entrega recuperable | Aprobado | commits atómicos, `ENTREGA.md` |
@@ -40,7 +40,6 @@ Backend simulado; ningún dato real ni productivo.
   `animation-timeline`, por diseño.
 - Perfilado de rendimiento de pintura / INP.
 - Pruebas con usuarios.
-- Build SSR de producción en navegador (H-14 sólo observado bajo `ng serve`).
 
 ## Decisión
 
