@@ -7,9 +7,9 @@
 
 form {
   margin-block-start: var(--sp-6);
-  /* Una línea larga rompe la lectura de un formulario: el ancho lo fija el
-     contenido, no la ventana. */
-  max-inline-size: 40rem;
+  /* Sin tope propio (regla del cliente §5): a lo ancho, con los campos en
+     columnas —eso lo resuelve app-form-section—. Con 40rem quedaba en la
+     esquina con medio área en blanco. */
 }
 
 .alta__alert {
