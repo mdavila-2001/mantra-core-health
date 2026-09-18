@@ -1,39 +1,22 @@
 /** Tipos de la vista para `quotations` (FT-24). Se mapean desde los DTOs, no son ellos. */
 
-/** Los dos métodos de cálculo de interés que ofrece el simulador. */
-export const INTEREST_CALCULATION_METHODS = ['FLAT', 'FRENCH'] as const;
-export type InterestCalculationMethod = (typeof INTEREST_CALCULATION_METHODS)[number];
+/**
+ * Cada cuánto vence una cuota. Es sólo el **punto de partida** del cronograma:
+ * cada fecha se puede mover después, una por una.
+ */
+export const PAYMENT_FREQUENCIES = ['WEEKLY', 'BIWEEKLY', 'MONTHLY'] as const;
+export type PaymentFrequency = (typeof PAYMENT_FREQUENCIES)[number];
 
 /**
- * Lo que se manda a simular: los mismos parámetros que el formulario ajusta en
- * vivo, sin guardar nada todavía.
- *
- * Las fechas viajan como `YYYY-MM-DD`: es el contrato asumido del backend
- * (FT-24, en desarrollo en paralelo) y evita la conversión de huso horario que
- * un `Date` completo arrastraría para un dato que sólo importa por día.
+ * Una cuota del plan de pagos. **Sin interés**: una fecha y un monto, nada más
+ * —el mismo par que guarda `payments.installment_schedules` (`due_date`,
+ * `amount`)—. Los montos no tienen por qué ser iguales: el plan es flexible.
  */
-export interface SimulatePaymentPlanRequest {
-  readonly offeredPrice: number;
-  readonly installmentCount: number;
-  readonly interestRatePercent: number;
-  readonly interestCalculationMethod: InterestCalculationMethod;
-  /** ISO `YYYY-MM-DD`. */
-  readonly attentionDate: string;
-}
-
-/** Una cuota del plan de pagos, simulada o ya guardada. */
 export interface Installment {
   readonly installmentNumber: number;
   /** ISO `YYYY-MM-DD`. */
   readonly dueDate: string;
-  readonly principalAmount: number;
-  readonly interestAmount: number;
-  readonly totalAmount: number;
-}
-
-/** La respuesta del simulador: sólo el plan, nada persiste todavía. */
-export interface SimulatePaymentPlanResponse {
-  readonly installments: readonly Installment[];
+  readonly amount: number;
 }
 
 /**
@@ -52,8 +35,15 @@ export interface NewQuotation {
   readonly offeredPrice: number;
   readonly currencyConceptId?: string;
   readonly paymentPlanInstallmentCount: number;
-  readonly interestRatePercent: number;
-  readonly interestCalculationMethod: InterestCalculationMethod;
+  /** Lo que se paga el día de la atención, antes de la primera cuota. Cero si no hay. */
+  readonly downPaymentAmount: number;
+  readonly paymentFrequency: PaymentFrequency;
+  /**
+   * El cronograma tal como quedó en pantalla, con los cambios a mano. Anticipo
+   * más cuotas suman exactamente `offeredPrice`: el formulario no deja guardar
+   * otra cosa.
+   */
+  readonly installments: readonly Installment[];
   /** ISO `YYYY-MM-DD`. */
   readonly validUntil: string;
 }
@@ -80,7 +70,6 @@ export interface Quotation extends NewQuotation {
   readonly id: string;
   readonly serviceNameSnapshot: string;
   readonly status: QuotationStatus;
-  readonly installments: readonly Installment[];
 }
 
 /**

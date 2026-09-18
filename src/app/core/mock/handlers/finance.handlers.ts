@@ -2,12 +2,12 @@ import { reservas } from '../fixtures/agenda';
 import { ESTADO } from '../fixtures/conceptos';
 import { PACIENTES, pacientePorId } from '../fixtures/personas';
 import { PRACTICAS, servicios } from './practice.handlers';
-import { notFound, preconditionFailed, type MockRouter } from '../mock-router';
+import { notFound, preconditionFailed, validation, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, hoy, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Contabilidad (plan de cuentas, diario, mayor, balances), cotizaciones con
-    simulador de cuotas y activos/pasivos del profesional.
+    plan de pagos flexible (sin interés) y activos/pasivos del profesional.
     ========================================================================== */
 
 const TIPO_CUENTA = { ACTIVO: uuid('concept-account-type-asset'), PASIVO: uuid('concept-account-type-liability'), PATRIMONIO: uuid('concept-account-type-equity'), INGRESO: uuid('concept-account-type-revenue'), GASTO: uuid('concept-account-type-expense') } as const;
@@ -184,32 +184,18 @@ function d(n: number): string {
 
 /* ---- cotizaciones ------------------------------------------------------------ */
 
-function simular(offeredPrice: number, installmentCount: number, interestRatePercent: number, method: 'FLAT' | 'FRENCH', attentionDate: string) {
-  const n = Math.max(1, installmentCount);
-  const tasa = interestRatePercent / 100 / 12;
-  const base = new Date(attentionDate === '' ? ahora() : attentionDate);
-  const cuotas = [];
-  if (method === 'FRENCH' && tasa > 0) {
-    const cuota = (offeredPrice * tasa) / (1 - Math.pow(1 + tasa, -n));
-    let saldo = offeredPrice;
-    for (let i = 1; i <= n; i++) {
-      const interes = saldo * tasa;
-      const capital = cuota - interes;
-      saldo -= capital;
-      const due = new Date(base);
-      due.setMonth(due.getMonth() + i);
-      cuotas.push({ installmentNumber: i, dueDate: due.toISOString().slice(0, 10), principalAmount: Number(capital.toFixed(2)), interestAmount: Number(interes.toFixed(2)), totalAmount: Number(cuota.toFixed(2)) });
-    }
-  } else {
-    const capital = offeredPrice / n;
-    const interes = (offeredPrice * tasa * n) / n;
-    for (let i = 1; i <= n; i++) {
-      const due = new Date(base);
-      due.setMonth(due.getMonth() + i);
-      cuotas.push({ installmentNumber: i, dueDate: due.toISOString().slice(0, 10), principalAmount: Number(capital.toFixed(2)), interestAmount: Number(interes.toFixed(2)), totalAmount: Number((capital + interes).toFixed(2)) });
-    }
-  }
-  return cuotas;
+/** El plan sin interés, en partes iguales: el que arma el formulario antes de tocar nada. */
+function planFlexible(offeredPrice: number, downPayment: number, installmentCount: number, attentionDate: string) {
+  const n = Math.max(0, installmentCount);
+  const saldo = Math.max(0, Math.round((offeredPrice - downPayment) * 100));
+  const base = Math.floor(saldo / Math.max(1, n));
+  const resto = saldo - base * n;
+  const inicio = new Date(attentionDate === '' ? ahora() : attentionDate);
+  return Array.from({ length: n }, (_, i) => {
+    const due = new Date(inicio);
+    due.setMonth(due.getMonth() + i + 1);
+    return { installmentNumber: i + 1, dueDate: due.toISOString().slice(0, 10), amount: (base + (i < resto ? 1 : 0)) / 100 };
+  });
 }
 
 interface CotizacionSimulada {
@@ -223,20 +209,20 @@ interface CotizacionSimulada {
   readonly offeredPrice: number;
   readonly currencyConceptId: string;
   readonly paymentPlanInstallmentCount: number;
-  readonly interestRatePercent: number;
-  readonly interestCalculationMethod: 'FLAT' | 'FRENCH';
+  readonly downPaymentAmount: number;
+  readonly paymentFrequency: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY';
   readonly validUntil: string;
   readonly status: string;
-  readonly installments: readonly { installmentNumber: number; dueDate: string; principalAmount: number; interestAmount: number; totalAmount: number }[];
+  readonly installments: readonly { installmentNumber: number; dueDate: string; amount: number }[];
 }
 
 const cotizaciones = new Coleccion<CotizacionSimulada>(
   [
-    [0, 'PAQ-PREV', 890, 3, 5, 'FLAT', -10, 20, 'ACCEPTED'],
-    [5, 'ECO-DOPPLER', 480, 2, 0, 'FLAT', -4, 26, 'DRAFT'],
-    [8, 'ERGO', 520, 4, 8, 'FRENCH', -20, -5, 'EXPIRED'],
-    [2, 'HOLTER', 350, 1, 0, 'FLAT', -1, 29, 'SENT'],
-  ].map(([pac, codigo, precio, cuotas, tasa, metodo, dias, validez, status], i) => {
+    [0, 'PAQ-PREV', 890, 3, 190, -10, 20, 'ACCEPTED'],
+    [5, 'ECO-DOPPLER', 480, 2, 0, -4, 26, 'DRAFT'],
+    [8, 'ERGO', 520, 4, 0, -20, -5, 'EXPIRED'],
+    [2, 'HOLTER', 350, 1, 0, -1, 29, 'SENT'],
+  ].map(([pac, codigo, precio, cuotas, anticipo, dias, validez, status], i) => {
     const servicio = servicios.todos().find((s) => s.code === codigo)!;
     return {
       id: uuid(`quotation-${i}`),
@@ -248,11 +234,11 @@ const cotizaciones = new Coleccion<CotizacionSimulada>(
       offeredPrice: precio as number,
       currencyConceptId: MONEDA_BOB,
       paymentPlanInstallmentCount: cuotas as number,
-      interestRatePercent: tasa as number,
-      interestCalculationMethod: metodo as 'FLAT' | 'FRENCH',
+      downPaymentAmount: anticipo as number,
+      paymentFrequency: 'MONTHLY' as const,
       validUntil: isoDia(validez as number),
       status: status as string,
-      installments: simular(precio as number, cuotas as number, tasa as number, metodo as 'FLAT' | 'FRENCH', isoDia(dias as number)),
+      installments: planFlexible(precio as number, anticipo as number, cuotas as number, isoDia(dias as number)),
     };
   }),
 );
@@ -1109,13 +1095,8 @@ export function registrarFinanzas(router: MockRouter): void {
 
   /* ---- cotizaciones -------------------------------------------------------- */
 
-  router.post('/quotations/simulate', (request) => {
-    const datos = cuerpo<{ offeredPrice: number; installmentCount: number; interestRatePercent: number; interestCalculationMethod: 'FLAT' | 'FRENCH'; attentionDate: string }>(request);
-    return { installments: simular(datos.offeredPrice ?? 0, datos.installmentCount ?? 1, datos.interestRatePercent ?? 0, datos.interestCalculationMethod ?? 'FLAT', datos.attentionDate ?? '') };
-  });
-
   router.post('/quotations', (request) => {
-    const datos = cuerpo<Omit<CotizacionSimulada, 'id' | 'serviceNameSnapshot' | 'status' | 'installments'>>(request);
+    const datos = cuerpo<Partial<Omit<CotizacionSimulada, 'id' | 'serviceNameSnapshot' | 'status'>>>(request);
     const servicio = servicios.get(datos.serviceCatalogId ?? '');
     if (servicio === undefined) return notFound('Servicio no encontrado');
     const nueva: CotizacionSimulada = {
@@ -1128,13 +1109,19 @@ export function registrarFinanzas(router: MockRouter): void {
       serviceNameSnapshot: servicio.name,
       offeredPrice: datos.offeredPrice ?? Number(servicio.defaultPrice),
       currencyConceptId: datos.currencyConceptId ?? MONEDA_BOB,
-      paymentPlanInstallmentCount: datos.paymentPlanInstallmentCount ?? 1,
-      interestRatePercent: datos.interestRatePercent ?? 0,
-      interestCalculationMethod: datos.interestCalculationMethod ?? 'FLAT',
+      paymentPlanInstallmentCount: datos.installments?.length ?? datos.paymentPlanInstallmentCount ?? 1,
+      downPaymentAmount: datos.downPaymentAmount ?? 0,
+      paymentFrequency: datos.paymentFrequency ?? 'MONTHLY',
       validUntil: datos.validUntil ?? isoDia(30),
       status: 'DRAFT',
-      installments: simular(datos.offeredPrice ?? Number(servicio.defaultPrice), datos.paymentPlanInstallmentCount ?? 1, datos.interestRatePercent ?? 0, datos.interestCalculationMethod ?? 'FLAT', datos.attentionDate ?? ''),
+      // El cronograma lo arma el formulario, con sus cambios a mano: se guarda tal cual.
+      installments: datos.installments ?? planFlexible(datos.offeredPrice ?? Number(servicio.defaultPrice), datos.downPaymentAmount ?? 0, datos.paymentPlanInstallmentCount ?? 1, datos.attentionDate ?? ''),
     };
+    const centavos = (n: number) => Math.round(n * 100);
+    const suma = centavos(nueva.downPaymentAmount) + nueva.installments.reduce((t, c) => t + centavos(c.amount), 0);
+    if (suma !== centavos(nueva.offeredPrice)) {
+      return validation('El anticipo más las cuotas tienen que sumar el precio ofrecido.');
+    }
     cotizaciones.agregar(nueva);
     return { status: 201, body: nueva };
   });

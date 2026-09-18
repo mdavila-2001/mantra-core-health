@@ -1,6 +1,6 @@
 <app-page-header
   title="Nueva cotización"
-  subtitle="Elegí paciente y servicio, ajustá el plan de pagos y guardá la oferta."
+  subtitle="Elegí paciente y tratamiento, armá un plan de pagos a su medida y guardá la oferta."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -119,68 +119,129 @@
     </app-form-field>
   </section>
 
-  <!-- ─── Simulador de financiamiento ───────────────────────────────────────
-       Cada cambio dispara `QuotationsClient.simulatePaymentPlan` con espera
-       (ver el constructor de `quotation-form.ts`). -->
-  <section class="cotizacion__bloque cotizacion__grilla" aria-labelledby="cotizacion-simulador-titulo">
-    <h2 id="cotizacion-simulador-titulo" class="cotizacion__titulo-ancho">Simulador de financiamiento</h2>
+  <!-- ─── Plan de pagos flexible ─────────────────────────────────────────────
+       Sin interés. Los parámetros arman el cronograma; después cada cuota se
+       edita sola (ver `flexible-payment-plan.ts`). -->
+  <section class="cotizacion__bloque" aria-labelledby="cotizacion-plan-titulo">
+    <div class="cotizacion__encabezado-plan">
+      <h2 id="cotizacion-plan-titulo">Plan de pagos</h2>
+      <p class="cotizacion__bajada">
+        Sin interés. Armá el plan con lo que le sirva a la persona: cambiá la fecha o el monto
+        de cualquier cuota, sacá o agregá cuotas.
+      </p>
+    </div>
 
-    <app-form-field label="Tasa de interés (%)">
-      <app-input
-        type="number"
-        testId="quotation-form-interest-rate"
-        [value]="tasaDeInteres()"
-        (valueChange)="fijarTasa($event)"
+    <div class="cotizacion__grilla">
+      <app-form-field label="Anticipo" hint="Lo que paga el día de la atención. Cero si no hay.">
+        <app-input
+          type="number"
+          testId="quotation-form-down-payment"
+          [value]="anticipo()"
+          (valueChange)="fijarAnticipo($event)"
+        />
+      </app-form-field>
+
+      <app-form-field label="Cantidad de cuotas" [hint]="'De 1 a ' + topeDeCuotas + '.'">
+        <app-input
+          type="number"
+          testId="quotation-form-installment-count"
+          [value]="plazoEnCuotas()"
+          (valueChange)="fijarPlazo($event)"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Primer vencimiento"
+        hint="Si lo dejás vacío, un período después de la atención."
+      >
+        <app-date-picker
+          [value]="primerVencimiento()"
+          (valueChange)="primerVencimiento.set($event)"
+        />
+      </app-form-field>
+    </div>
+
+    <div class="cotizacion__frecuencia">
+      <span class="cotizacion__rotulo" aria-hidden="true">Frecuencia</span>
+      <app-segmented-control
+        ariaLabel="Frecuencia de las cuotas"
+        size="md"
+        [options]="opcionesDeFrecuencia"
+        [value]="frecuencia()"
+        (valueChange)="frecuencia.set($event)"
       />
-    </app-form-field>
+    </div>
 
-    <app-form-field label="Plazo (cuotas)">
-      <app-input
-        type="number"
-        testId="quotation-form-installment-count"
-        [value]="plazoEnCuotas()"
-        (valueChange)="fijarPlazo($event)"
-      />
-    </app-form-field>
+    <div data-testid="quotation-form-plan">
+      @if (faltaParaElPlan(); as falta) {
+        <p class="cotizacion__bajada">{{ falta }}</p>
+      } @else {
+        <ol class="cotizacion__cuotas" aria-label="Cuotas del plan">
+          @for (fila of filas(); track fila.installmentNumber; let i = $index) {
+            <li class="cotizacion__cuota" [attr.data-testid]="'quotation-form-installment-' + fila.installmentNumber">
+              <span class="cotizacion__cuota-numero">Cuota {{ fila.installmentNumber }}</span>
+              <app-form-field [label]="'Vencimiento de la cuota ' + fila.installmentNumber">
+                <app-date-picker
+                  [value]="vencimientos()[i] ?? null"
+                  (valueChange)="fijarVencimiento(i, $event)"
+                />
+              </app-form-field>
+              <app-form-field
+                [label]="'Monto de la cuota ' + fila.installmentNumber"
+                [hint]="fila.pinned ? 'Fijado a mano' : 'Se reparte solo'"
+              >
+                <app-input
+                  type="number"
+                  [testId]="'quotation-form-installment-amount-' + fila.installmentNumber"
+                  [value]="fila.amount"
+                  (valueChange)="fijarMonto(i, $event)"
+                />
+              </app-form-field>
+              <div class="cotizacion__cuota-acciones">
+                @if (fila.pinned) {
+                  <button app-button type="button" variant="ghost" size="sm" (clicked)="soltarMonto(i)">
+                    Repartir de nuevo
+                  </button>
+                }
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  [attr.aria-label]="'Quitar la cuota ' + fila.installmentNumber"
+                  (clicked)="quitarCuota(i)"
+                >
+                  Quitar
+                </button>
+              </div>
+            </li>
+          }
+        </ol>
 
-    <app-form-field label="Método de cálculo">
-      <app-select
-        [value]="metodo()"
-        (valueChange)="metodo.set($event ?? 'FLAT')"
-        [options]="opcionesDeMetodo"
-      />
-    </app-form-field>
+        <div class="cotizacion__plan-pie">
+          <button
+            app-button
+            type="button"
+            variant="secondary"
+            data-testid="quotation-form-add-installment"
+            [disabled]="filas().length >= topeDeCuotas"
+            (clicked)="agregarCuota()"
+          >
+            Agregar cuota
+          </button>
+          @if (hayMontosFijados()) {
+            <button app-button type="button" variant="ghost" (clicked)="repartirEnPartesIguales()">
+              Volver a partes iguales
+            </button>
+          }
+          <p class="cotizacion__total" data-testid="quotation-form-plan-total">
+            Total del plan: <strong>{{ totalDelPlan() }}</strong>
+          </p>
+        </div>
 
-    <div class="cotizacion__titulo-ancho" data-testid="quotation-form-simulacion">
-      @if (simulando()) {
-        <p>Simulando…</p>
-      } @else if (simulacionVacia(); as vacia) {
-        <p>{{ vacia.message }}</p>
-      } @else if (simulacionConError()) {
-        <app-alert tone="error">No pudimos simular el plan de pagos. Probá de nuevo.</app-alert>
-      } @else if (cuotas().length > 0) {
-        <table class="cotizacion__cuotas">
-          <thead>
-            <tr>
-              <th scope="col">Cuota</th>
-              <th scope="col">Vencimiento</th>
-              <th scope="col">Capital</th>
-              <th scope="col">Interés</th>
-              <th scope="col">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (cuota of cuotas(); track cuota.installmentNumber) {
-              <tr>
-                <td>{{ cuota.installmentNumber }}</td>
-                <td>{{ cuota.dueDate }}</td>
-                <td>{{ cuota.principalAmount }}</td>
-                <td>{{ cuota.interestAmount }}</td>
-                <td>{{ cuota.totalAmount }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+        @if (descuadre(); as aviso) {
+          <app-alert tone="warning" data-testid="quotation-form-plan-mismatch">{{ aviso }}</app-alert>
+        }
       }
     </div>
   </section>

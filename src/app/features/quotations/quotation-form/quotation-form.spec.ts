@@ -124,88 +124,99 @@ describe('QuotationForm', () => {
     campo<Date | null>('fechaDeAtencion').set(new Date(2026, 8, 10));
     campo<Date | null>('validaHasta').set(new Date(2026, 9, 10));
     campo<number | null>('plazoEnCuotas').set(3);
-    campo<number | null>('tasaDeInteres').set(5);
+    // El cronograma lo rearma un efecto: corre en la detección de cambios.
+    harness.detectChanges();
   }
 
-  describe('el simulador', () => {
+  interface Fila {
+    installmentNumber: number;
+    dueDate: string;
+    amount: number;
+    pinned: boolean;
+  }
+
+  function filas(): readonly Fila[] {
+    return campo<readonly Fila[]>('filas')();
+  }
+
+  describe('el plan de pagos flexible', () => {
     beforeEach(() => {
       elegirPacienteYServicio();
       completarDatosDelPlan();
     });
 
-    it('simula con FLAT y renderiza la tabla que devuelve el backend', () => {
-      vi.useFakeTimers();
-      harness.detectChanges();
-      vi.advanceTimersByTime(500);
-
-      const req = http.expectOne((r) => r.url === '/quotations/simulate');
-      expect(req.request.body.interestCalculationMethod).toBe('FLAT');
-
-      req.flush({
-        installments: [
-          { installmentNumber: 1, dueDate: '2026-11-10', principalAmount: 33.33, interestAmount: 5, totalAmount: 38.33 },
-        ],
-      });
-      harness.detectChanges();
-
-      expect(campo<readonly unknown[]>('cuotas')()).toEqual([
-        { installmentNumber: 1, dueDate: '2026-11-10', principalAmount: 33.33, interestAmount: 5, totalAmount: 38.33 },
-      ]);
+    it('no pregunta tasa ni método: no hay simulador de crédito', () => {
+      const texto = (harness.routeNativeElement as HTMLElement).textContent ?? '';
+      expect(texto).not.toMatch(/tasa|inter[eé]s \(|franc[eé]s|simulador/i);
+      expect(texto).toContain('Sin interés');
+      // Tampoco va al servidor a «simular»: el plan se arma en pantalla.
+      http.expectNone((r) => r.url.includes('/simulate'));
     });
 
-    it('manda FRENCH cuando se elige ese método, y da una tabla distinta de la de FLAT', () => {
-      vi.useFakeTimers();
+    it('reparte el precio en cuotas mensuales iguales que suman exacto', () => {
+      expect(filas().map((f) => f.amount)).toEqual([33.34, 33.33, 33.33]);
+      // Sin primer vencimiento elegido, un mes después de la atención.
+      expect(filas().map((f) => f.dueDate)).toEqual(['2026-10-10', '2026-11-10', '2026-12-10']);
+      expect(campo<boolean>('planCierra')()).toBe(true);
+    });
 
-      // Primero FLAT, para tener con qué comparar.
+    it('con anticipo, reparte sólo el saldo', () => {
+      campo<number | null>('anticipo').set(40);
       harness.detectChanges();
-      vi.advanceTimersByTime(500);
-      http
-        .expectOne((r) => r.url === '/quotations/simulate')
-        .flush({
-          installments: [
-            { installmentNumber: 1, dueDate: '2026-11-10', principalAmount: 33.33, interestAmount: 5, totalAmount: 38.33 },
-          ],
-        });
+      expect(filas().map((f) => f.amount)).toEqual([20, 20, 20]);
+    });
+
+    it('cambia la frecuencia a quincenal', () => {
+      campo<string>('frecuencia').set('BIWEEKLY');
       harness.detectChanges();
-      const cuotasFlat = campo<readonly unknown[]>('cuotas')();
+      expect(filas().map((f) => f.dueDate)).toEqual(['2026-09-24', '2026-10-08', '2026-10-22']);
+    });
 
-      // Cambiar a FRENCH es un parámetro nuevo: dispara otra simulación.
-      campo<'FLAT' | 'FRENCH'>('metodo').set('FRENCH');
+    it('un monto escrito a mano queda fijado y las demás cuotas se reparten el resto', () => {
+      metodo<(i: number, v: number) => void>('fijarMonto')(0, 50);
+      expect(filas().map((f) => [f.amount, f.pinned])).toEqual([
+        [50, true],
+        [25, false],
+        [25, false],
+      ]);
+      expect(campo<boolean>('planCierra')()).toBe(true);
+    });
+
+    it('si todo está fijado y no suma el precio, avisa y no deja guardar', () => {
+      metodo<(i: number, v: number) => void>('fijarMonto')(0, 50);
+      metodo<(i: number, v: number) => void>('fijarMonto')(1, 20);
+      metodo<(i: number, v: number) => void>('fijarMonto')(2, 20);
       harness.detectChanges();
-      vi.advanceTimersByTime(500);
 
-      const req = http.expectOne((r) => r.url === '/quotations/simulate');
-      expect(req.request.body.interestCalculationMethod).toBe('FRENCH');
+      expect(campo<string | null>('descuadre')()).toContain('Faltan 10,00');
+      expect(campo<boolean>('puedeGuardar')()).toBe(false);
+    });
 
-      req.flush({
-        installments: [
-          { installmentNumber: 1, dueDate: '2026-11-10', principalAmount: 32.65, interestAmount: 5.68, totalAmount: 38.33 },
-        ],
-      });
+    it('agregar y quitar cuotas conserva lo escrito a mano y renumera', () => {
+      metodo<(i: number, v: Date) => void>('fijarVencimiento')(1, new Date(2026, 11, 24));
+      metodo<() => void>('agregarCuota')();
       harness.detectChanges();
-      const cuotasFrench = campo<readonly unknown[]>('cuotas')();
+      expect(filas()).toHaveLength(4);
+      expect(filas()[1]!.dueDate).toBe('2026-12-24');
+      expect(filas().map((f) => f.amount)).toEqual([25, 25, 25, 25]);
 
-      // Mismo total, reparto de capital/interés distinto: es lo que separa a
-      // los dos métodos, y es responsabilidad exclusiva del backend — el
-      // componente sólo tiene que pedir el método correcto y pintar lo que
-      // vuelva, sin recalcular nada acá.
-      expect(cuotasFrench).not.toEqual(cuotasFlat);
+      metodo<(i: number) => void>('quitarCuota')(0);
+      harness.detectChanges();
+      expect(filas().map((f) => f.installmentNumber)).toEqual([1, 2, 3]);
+      expect(filas()[0]!.dueDate).toBe('2026-12-24');
+      expect(filas().map((f) => f.amount)).toEqual([33.34, 33.33, 33.33]);
     });
   });
 
   describe('guardar', () => {
-    it('manda el id del servicio elegido (su nombre visible en pantalla) en el payload exacto', () => {
+    it('manda el plan tal como quedó en pantalla, sin tasa ni método', () => {
       elegirPacienteYServicio();
       completarDatosDelPlan();
+      metodo<(i: number, v: number) => void>('fijarMonto')(2, 50);
 
       metodo<() => void>('guardar')();
 
       const req = http.expectOne((r) => r.url === '/quotations' && r.method === 'POST');
-      // El contrato de FT-24 no manda `serviceNameSnapshot` en el alta —lo
-      // calcula y lo devuelve el backend—; lo que el formulario sí manda es
-      // el identificador del servicio que se mostró y se eligió en pantalla
-      // (`SERVICIO.name`), y este payload completo es la prueba de que es
-      // exactamente ese servicio el que viaja, sin mezclarse con otro campo.
       expect(req.request.body).toEqual({
         practiceId: 'pr1',
         patientProfileId: 'pac1',
@@ -213,8 +224,13 @@ describe('QuotationForm', () => {
         serviceCatalogId: 'srv1',
         offeredPrice: 100,
         paymentPlanInstallmentCount: 3,
-        interestRatePercent: 5,
-        interestCalculationMethod: 'FLAT',
+        downPaymentAmount: 0,
+        paymentFrequency: 'MONTHLY',
+        installments: [
+          { installmentNumber: 1, dueDate: '2026-10-10', amount: 25 },
+          { installmentNumber: 2, dueDate: '2026-11-10', amount: 25 },
+          { installmentNumber: 3, dueDate: '2026-12-10', amount: 50 },
+        ],
         validUntil: '2026-10-10',
       });
 
@@ -223,7 +239,6 @@ describe('QuotationForm', () => {
         ...req.request.body,
         serviceNameSnapshot: SERVICIO.name,
         status: 'DRAFT',
-        installments: [],
       });
     });
   });
@@ -241,13 +256,13 @@ describe('QuotationForm', () => {
           patientName: 'Ana Pérez',
           serviceName: 'Consulta general',
           offeredPrice: 100,
-          interestRatePercent: 5,
-          interestCalculationMethod: 'FLAT',
-          installmentCount: 3,
+          downPaymentAmount: 0,
+          paymentFrequency: 'MONTHLY',
           attentionDate: '2026-09-10',
           validUntil: '2026-10-10',
         }),
       );
+      expect(descargarPdf.mock.calls[0]![0].installments).toHaveLength(3);
     });
 
     it('sin paciente o sin servicio no exporta nada', () => {
@@ -258,6 +273,34 @@ describe('QuotationForm', () => {
       metodo<() => void>('exportar')();
 
       expect(descargarPdf).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('desde la consulta', () => {
+    it('abre con el paciente ya elegido', async () => {
+      responderPractica();
+      peticionDeServicios().flush(paginaDeServicios([]));
+
+      // Misma ruta con otro query param reusaría el componente: se sale y se vuelve.
+      await harness.navigateByUrl('/my-quotations');
+      componente = await harness.navigateByUrl(`${RUTA}?patient=pac1`, QuotationForm);
+      http.expectOne((r) => r.url === '/practices').flush([PRACTICA]);
+      harness.detectChanges();
+      http.expectOne((r) => r.url === '/billing/service-catalog').flush(paginaDeServicios([]));
+      http
+        .expectOne((r) => r.url === '/profiles/patients/pac1')
+        .flush({
+          profileId: 'pac1',
+          personId: 'per1',
+          patientCode: 'PAC-01',
+          displayName: 'Ana Pérez',
+          relatedPersons: [],
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        });
+      http.expectOne((r) => r.url === '/scheduling/bookings').flush(paginaDeCitas([]));
+
+      expect(campo<{ displayName?: string } | null>('pacienteElegido')()?.displayName).toBe('Ana Pérez');
     });
   });
 });
