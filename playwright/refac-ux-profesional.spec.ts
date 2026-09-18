@@ -159,6 +159,31 @@ test.describe('refactor UX · piloto «Mis citas»', () => {
     expect(recortados).toBe(0);
   });
 
+  test('H-15: filas parejas de filtros — 2 × 2 a 768 y una sola fila a 1280', async ({ page }) => {
+    await entrar(page, PACIENTE);
+    /** Cuántas filas distintas ocupan buscador, estado, desde y hasta. */
+    const filas = async (): Promise<number> =>
+      page.getByTestId('turnos-filtros').evaluate((barra) => {
+        const campos = [
+          barra.querySelector('.turnos__buscador'),
+          ...barra.querySelectorAll('.turnos__filtro-campo'),
+        ];
+        // Por el borde inferior: el buscador no tiene rótulo visible y su tope
+        // cae más abajo que el de los campos rotulados de la misma fila.
+        return new Set(
+          campos.map((campo) => Math.round(campo?.getBoundingClientRect().bottom ?? 0)),
+        ).size;
+      });
+
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await abrirMisCitas(page);
+    expect(await filas()).toBe(2);
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await abrirMisCitas(page);
+    expect(await filas()).toBe(1);
+  });
+
   test('oscuro: la vista se pinta con el tema del sistema', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.setViewportSize({ width: 1440, height: 900 });

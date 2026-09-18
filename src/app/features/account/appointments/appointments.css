@@ -20,6 +20,8 @@
 
 .turnos__bloque {
   margin-block-end: var(--sp-6);
+  /* Contenedor de la rejilla de filtros (ver FT-05 más abajo). */
+  container-type: inline-size;
 }
 
 /* La cabecera del bloque: el título y el conmutador de vista, que en pantalla
@@ -47,47 +49,47 @@
 }
 
 /* ─── FT-05 · la barra de búsqueda y filtros ────────────────────────────────
-   Una fila que envuelve, no una rejilla fija: los campos tienen anchos
-   naturales muy distintos —un buscador no mide lo que un selector de estado— y
-   una rejilla de columnas iguales los deja a todos del ancho del más largo. */
+   Una rejilla que decide por el ancho de SU contenedor, no de la ventana: el
+   espacio real depende de si el menú lateral está abierto. Con una fila flex que
+   envolvía por anchos fijos, «Hasta» quedaba sola en la segunda línea a 768 y a
+   1280 px (H-15). Ahora: una columna en teléfono, 2 × 2 desde 36rem y las
+   cuatro en una fila desde 56rem, con el buscador como único que crece. */
 .turnos__filtros {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  display: grid;
+  align-items: end;
   gap: var(--sp-3);
   margin-block: var(--sp-4);
 }
 
-/* El buscador es el control principal de la barra y por eso es el único que
-   crece: los filtros de estado y fecha tienen ancho suficiente con su contenido. */
-.turnos__buscador {
-  /* 24rem: a 768 px los cuatro forman 2 × 2 en vez de dejar «Hasta» solo; a
-     1440 siguen en una fila. */
-  flex: 1 1 24rem;
-  min-inline-size: 0;
+@container (min-width: 36rem) {
+  .turnos__filtros {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
+/* 13rem por campo: con 11rem «Todos los estados» y «DD/MM/AAAA» salían
+   recortados (H-06). El que cede ancho es el buscador. */
+@container (min-width: 56rem) {
+  .turnos__filtros {
+    grid-template-columns: minmax(12rem, 1fr) repeat(3, 13rem);
+  }
+}
+
+/* `margin-block-end: 0` cancela el aire que `.turnos__filtro` da a los campos
+   del formulario de abajo: acá desalinearía la fila. */
 .turnos__filtro-campo {
   display: block;
-  /* 13rem y sin encoger: con 11rem «Todos los estados» y «DD/MM/AAAA» salían
-     recortados a 1440 px (H-06). El que cede ancho es el buscador. */
-  flex: 0 0 13rem;
-  min-inline-size: 0;
-  /* Cancela el margen inferior que `.turnos__filtro` da a los campos del
-     formulario de abajo: acá los campos están en una fila y ese aire los
-     desalinearía respecto del botón de limpiar. */
   margin-block-end: 0;
 }
 
-/* Alineado con la base de los campos y no con su rótulo: es una acción sobre
-   la fila, no un campo más. */
-.turnos__limpiar {
-  flex: none;
-  margin-block-end: var(--sp-1);
+/* Acciones sobre la fila, no campos: no se estiran a la celda. */
+.turnos__limpiar,
+.turnos__mas-filtros {
+  justify-self: start;
 }
 
-/* R-03 · el envoltorio de los filtros secundarios no existe para el layout en
-   escritorio: sus campos siguen siendo parte de la misma fila. */
+/* R-03 · el envoltorio de los filtros secundarios no existe para el layout
+   fuera del teléfono: sus campos son celdas de la misma rejilla. */
 .turnos__filtros-plegables {
   display: contents;
 }
@@ -101,23 +103,15 @@
   margin-inline-start: var(--sp-1);
 }
 
+/* Apilados, los cuatro controles ocupaban la primera pantalla entera antes de
+   la primera cita (H-05): el texto queda a la vista y el resto se pliega. */
 @media (max-width: 40rem) {
-  /* En teléfono cada control ocupa la fila: cuatro campos de 11rem en 375 px
-     entran de a dos y quedan pares desalineados. */
-  .turnos__buscador,
-  .turnos__filtro-campo {
-    flex-basis: 100%;
-  }
-
-  /* Apilados, los cuatro controles ocupaban la primera pantalla entera antes
-     de la primera cita (H-05): el texto queda a la vista y el resto se pliega. */
   .turnos__mas-filtros {
     display: inline-flex;
   }
 
   .turnos__filtros-plegables {
     display: none;
-    flex-basis: 100%;
     gap: var(--sp-3);
   }
 
@@ -204,7 +198,6 @@
 .turnos__grupo-cuenta {
   margin-inline-start: var(--sp-2);
   color: var(--text-muted);
-  font-weight: 400;
 }
 
 .turnos__titulo {
