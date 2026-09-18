@@ -6,181 +6,259 @@
     ========================================================================== */
 
 :host {
-    display: block;
-    font-family: var(--font-body);
-    /* Sin esto, el `overflow-x` de más abajo no acota nada.
+  display: block;
+  font-family: var(--font-body);
+  /* Sin esto, el `overflow-x` de más abajo no acota nada.
        El ancho mínimo por defecto de un elemento —`auto`— es el de su
        contenido, así que dentro de un contenedor flex o grid el host crece
        hasta lo que mida la tabla y la caja con `overflow` nunca llega a ser más
        angosta que ella. Medido en el listado de solicitudes a 390 px: tabla de
        708 px y `document.scrollWidth` de 686 — la página entera se corría a lo
        ancho aunque la tabla declaraba su propio scroll. */
-    min-inline-size: 0;
+  min-inline-size: 0;
 }
 
 /* Una tabla ancha se desplaza dentro de su caja, no rompe la página. */
 .data-table__scroll {
-    overflow-x: auto;
-    /* Misma razón que en el host, un nivel más adentro. */
-    min-inline-size: 0;
-    /* `relative` para que esta caja sea el bloque contenedor de lo que tenga
+  overflow-x: auto;
+  /* Misma razón que en el host, un nivel más adentro. */
+  min-inline-size: 0;
+  /* `relative` para que esta caja sea el bloque contenedor de lo que tenga
        dentro con `position: absolute`.
        Sin él, `overflow` **no recorta** a un descendiente absoluto cuyo bloque
        contenedor esté más arriba: el texto sólo-lectores del encabezado de
        detalle (`.sr-only`, que es absoluto) quedaba en x=409 medido contra el
        marco de la aplicación y estiraba el ancho de scroll de la página a 410
        en un viewport de 390 — la tabla ya no desbordaba y la página sí. */
-    position: relative;
+  position: relative;
+}
+
+/* ─── Indicio de columnas ocultas (refactor UX, H-09) ─────────────────────
+   Una tabla más ancha que su contenedor escondía columnas enteras detrás de un
+   scroll lateral sin ninguna pista: en «Consultas» era la columna de acciones.
+   Una sombra en el borde por el que queda contenido lo dice.
+
+   Se calcula con una animación ligada al scroll del propio contenedor, no con
+   la técnica de «tapas» de color fijo: el fondo real es el del `body` —blanco
+   en claro, degradado en oscuro— y una tapa de otro color se vería como una
+   franja. Sin desbordamiento la línea de tiempo está inactiva y las sombras
+   valen 0; sin soporte del navegador, no hay sombras (mejora progresiva). */
+@property --data-table-sombra-inicio {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --data-table-sombra-fin {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@keyframes data-table-sombras {
+  from {
+    --data-table-sombra-inicio: 0;
+    --data-table-sombra-fin: 1;
+  }
+  4% {
+    --data-table-sombra-inicio: 1;
+  }
+  96% {
+    --data-table-sombra-fin: 1;
+  }
+  to {
+    --data-table-sombra-inicio: 1;
+    --data-table-sombra-fin: 0;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .data-table__scroll {
+    --data-table-sombra-tinta: var(--text-secondary);
+    background:
+      radial-gradient(
+          farthest-side at 0 50%,
+          color-mix(
+            in srgb,
+            var(--data-table-sombra-tinta) calc(var(--data-table-sombra-inicio) * 40%),
+            transparent
+          ),
+          transparent
+        )
+        left / 18px 100% no-repeat,
+      radial-gradient(
+          farthest-side at 100% 50%,
+          color-mix(
+            in srgb,
+            var(--data-table-sombra-tinta) calc(var(--data-table-sombra-fin) * 40%),
+            transparent
+          ),
+          transparent
+        )
+        right / 18px 100% no-repeat;
+    animation: data-table-sombras linear both;
+    animation-timeline: scroll(self inline);
+  }
+
+  /* No es movimiento: la sombra sigue la posición del scroll, no el tiempo.
+       El bloque global de movimiento reducido fija 0,01 ms a toda animación, y
+       en una línea de tiempo de scroll eso la dejaría clavada en su estado
+       final (sombra del inicio encendida, la del final apagada). */
+  @media (prefers-reduced-motion: reduce) {
+    .data-table__scroll {
+      animation-duration: auto !important;
+    }
+  }
 }
 
 .data-table__table {
-    inline-size: 100%;
-    border-collapse: collapse;
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
 }
 
 .data-table__cell {
-    /* Base móvil más apretada: con 12 px por lado, tres columnas ya no entran
+  /* Base móvil más apretada: con 12 px por lado, tres columnas ya no entran
        en 400 px y la tabla se va de la pantalla. Desde tablet vuelve a 12. */
-    padding: var(--sp-2);
-    text-align: start;
-    border-block-end: 1px solid var(--border-default);
-    vertical-align: top;
+  padding: var(--sp-2);
+  text-align: start;
+  border-block-end: 1px solid var(--border-default);
+  vertical-align: top;
 }
 
 .data-table__cell--center {
-    text-align: center;
+  text-align: center;
 }
 
 /* Cifras a la derecha y tabulares: así se comparan de un vistazo. */
 .data-table__cell--end {
-    text-align: end;
-    font-variant-numeric: tabular-nums;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
 }
 
 thead .data-table__cell {
-    font-size: var(--fs-caption);
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .data-table__row:hover {
-    background: var(--bg-inset);
+  background: var(--bg-inset);
 }
 
 /* Una fila que navega tiene que decirlo antes del clic: el cambio de fondo al
    pasar por encima lo hacen todas, así que por sí solo no distingue «se puede
    leer» de «se puede abrir». El cursor es lo que lo declara. */
 .data-table__row--navigable {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .data-table__sort {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--sp-1);
-    padding: 0;
-    border: none;
-    background: transparent;
-    font: inherit;
-    color: inherit;
-    text-transform: inherit;
-    letter-spacing: inherit;
-    cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
 }
 
 .data-table__sort-icon {
-    color: var(--text-muted);
+  color: var(--text-muted);
 }
 
 .data-table__select-cell,
 .data-table__detail-toggle-cell {
-    inline-size: var(--sp-12);
-    padding: var(--sp-2) var(--sp-1);
-    border-block-end: 1px solid var(--border-default);
+  inline-size: var(--sp-12);
+  padding: var(--sp-2) var(--sp-1);
+  border-block-end: 1px solid var(--border-default);
 }
 
 .data-table__detail-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    /* área táctil de 44 px aunque el triángulo sea chico */
-    inline-size: 44px;
-    block-size: 44px;
-    border: none;
-    border-radius: var(--r-sm);
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* área táctil de 44 px aunque el triángulo sea chico */
+  inline-size: 44px;
+  block-size: 44px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .data-table__detail-row td {
-    padding: 0 var(--sp-3) var(--sp-3);
-    background: var(--bg-inset);
-    border-block-end: 1px solid var(--border-default);
+  padding: 0 var(--sp-3) var(--sp-3);
+  background: var(--bg-inset);
+  border-block-end: 1px solid var(--border-default);
 }
 
 .data-table__detail {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--sp-2);
-    margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-2);
+  margin: 0;
 }
 
 .data-table__detail-item {
-    display: flex;
-    gap: var(--sp-2);
+  display: flex;
+  gap: var(--sp-2);
 }
 
 .data-table__detail dt {
-    font-weight: 600;
-    color: var(--text-secondary);
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .data-table__detail dd {
-    margin: 0;
+  margin: 0;
 }
 
 .data-table__cursor {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--sp-2);
-    margin-block-start: var(--sp-4);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
 }
 
 /* Base móvil: las secundarias no son columnas, viven en el detalle. */
 .data-table__secondary {
-    display: none;
+  display: none;
 }
 
 /* ≥ tablet: entran como columnas y el botón de detalle deja de hacer falta. */
 @media (min-width: 780px) {
-    .data-table__cell {
-        padding: var(--sp-3);
-    }
+  .data-table__cell {
+    padding: var(--sp-3);
+  }
 
-    /* En el teléfono el encabezado parte en dos líneas: sin eso, «FECHA Y
+  /* En el teléfono el encabezado parte en dos líneas: sin eso, «FECHA Y
        HORA» fijaba el ancho de la columna y la tabla se salía de la pantalla. */
-    thead .data-table__cell {
-        white-space: nowrap;
-    }
+  thead .data-table__cell {
+    white-space: nowrap;
+  }
 
-    .data-table__secondary {
-        display: table-cell;
-    }
+  .data-table__secondary {
+    display: table-cell;
+  }
 
-    .data-table__detail-toggle-cell {
-        display: none;
-    }
+  .data-table__detail-toggle-cell {
+    display: none;
+  }
 
-    .data-table__detail-row {
-        display: none;
-    }
+  .data-table__detail-row {
+    display: none;
+  }
 
-    .data-table__detail {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .data-table__detail {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
