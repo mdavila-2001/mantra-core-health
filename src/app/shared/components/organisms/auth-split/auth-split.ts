@@ -11,10 +11,7 @@ import {
 
 import type { ThemeMode } from '../../../../core/tokens/design-tokens.types';
 import { ThemeService } from '../../../../core/tokens/theme.service';
-import { prefersReducedMotion } from '../../../motion/motion-tokens';
 import { PointerScene } from '../../../motion/pointer-scene.directive';
-import { parkLoops, pauseLoops, resumeLoops } from '../../../motion/scene-loops';
-import { SceneQuality } from '../../../motion/scene-quality';
 import { AppButton } from '../../atoms/button/button';
 import { AuthStage } from '../auth-stage/auth-stage';
 
@@ -109,17 +106,12 @@ export class AuthSplit {
   private readonly themeService = inject(ThemeService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly sceneQuality = inject(SceneQuality);
 
   constructor() {
     // Solo en el navegador: bajo SSR no hay animaciones ni almacenamiento.
     afterNextRender(() => {
       if (this.scene() === 'stage') {
         this.armIntroSkip();
-      }
-      // Con «reducir movimiento» el CSS ya apagó todo: no hay bucles que cuidar.
-      if (!prefersReducedMotion()) {
-        this.armSceneBudget();
       }
     });
   }
@@ -241,55 +233,5 @@ export class AuthSplit {
     const timer = setTimeout(complete, INTRO_DURATION_MS);
     // Destruirse no es verla: solo se sueltan los oyentes.
     this.destroyRef.onDestroy(release);
-  }
-
-  /**
-   * Que el fondo no le cueste a la persona el formulario.
-   *
-   * Dos reglas, medidas el 2026-09-18 en `/auth` dibujando sin GPU: la escena
-   * completa va a 9–13 cuadros por segundo, y escribir 19 letras en el correo
-   * tardó 1 260 ms con el procesador lento contra 59 ms con la escena quieta.
-   *
-   * 1. **Equipo que no la sostiene → escena en reposo.** Lo decide
-   *    `SceneQuality`; acá se termina la secuencia de encendido (a nueve
-   *    cuadros son tres segundos de tirones) y se estacionan los bucles.
-   * 2. **Mientras el foco está en el formulario, el fondo se congela.** Vale
-   *    para todos los equipos: quien escribe no mira el fondo, y la mitad del
-   *    trabajo de cada cuadro se va en recomponerlo. Vuelve a moverse cuando
-   *    el foco sale de la pantalla.
-   */
-  private armSceneBudget(): void {
-    const root = this.host.nativeElement;
-    let destroyed = false;
-
-    void this.sceneQuality.assess().then((lite) => {
-      if (lite && !destroyed) {
-        finishIntro(root);
-        parkLoops(root);
-      }
-    });
-
-    const onFocusIn = (): void => {
-      pauseLoops(root);
-    };
-    const onFocusOut = (event: FocusEvent): void => {
-      const next = event.relatedTarget;
-      if (next instanceof Node && root.contains(next)) {
-        return;
-      }
-      // En versión liviana los bucles están estacionados: reanudarlos sería
-      // devolverle al equipo justo lo que no sostiene.
-      if (!this.sceneQuality.lite()) {
-        resumeLoops(root);
-      }
-    };
-    root.addEventListener('focusin', onFocusIn);
-    root.addEventListener('focusout', onFocusOut);
-
-    this.destroyRef.onDestroy(() => {
-      destroyed = true;
-      root.removeEventListener('focusin', onFocusIn);
-      root.removeEventListener('focusout', onFocusOut);
-    });
   }
 }
