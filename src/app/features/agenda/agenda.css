@@ -111,10 +111,17 @@
  * todas en una. Con dos acciones nomás (el caso que describía el comentario
  * original) el resultado sigue siendo una sola línea: el wrap no hace nada
  * cuando ya entran.
+ *
+ * El 13/09 (a18d8e97, «acciones como íconos») volvió a `nowrap`. Con cinco
+ * íconos la columna exigía 256 px en una línea: a 1440 px la tabla medía
+ * 1 146 dentro de 1 081 y el último ícono de la fila —la acción que se viene a
+ * tocar— quedaba detrás de un scroll lateral, mientras «Paciente» se partía en
+ * tres renglones (hallazgo H-09 del refactor UX). Vuelve `wrap`: los íconos
+ * sólo bajan de línea en las filas que tienen más de los que entran.
  */
 .agenda__acciones {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
 }

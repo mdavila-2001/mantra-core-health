@@ -62,14 +62,6 @@
   gap: var(--sp-3);
 }
 
-/* El aviso de que la reserva todavía no existe acompaña al botón apagado. Va
-   como texto y no como `title`: un tooltip nativo no existe para quien navega
-   con teclado ni para un lector de pantalla. */
-.ordenes__proximamente {
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-}
-
 /* El encabezado de cada atención. Separa los grupos sin cajas: la jerarquía la
    dan el espacio y el peso, que en una lista corta se lee mejor que un marco. */
 .ordenes__grupo + .ordenes__grupo {

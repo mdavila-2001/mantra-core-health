@@ -149,6 +149,9 @@ export class OrganizationList {
   ]);
 
   protected readonly porId = (row: TenantListItem): string => row.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeOrganizacion = (row: TenantListItem): string =>
+    row.tradeName ?? row.legalName;
 
   protected readonly cargando = computed(() => this.listado().status === 'loading');
 

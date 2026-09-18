@@ -59,7 +59,7 @@
       </thead>
 
       <tbody>
-        @for (row of rows(); track rowKey(row)) {
+        @for (row of rows(); track rowKey(row); let indice = $index) {
           <tr
             class="data-table__row"
             [class.data-table__row--navigable]="rowNavigable()"
@@ -70,7 +70,7 @@
               <td class="data-table__select-cell">
                 <app-checkbox
                   [checked]="isSelected(row)"
-                  [label]="'Seleccionar la fila ' + rowKey(row)"
+                  [label]="'Seleccionar ' + rowName(row, indice)"
                   [hideLabel]="true"
                   (checkedChange)="toggleRow(row)"
                 />
@@ -93,7 +93,7 @@
                   type="button"
                   class="data-table__detail-toggle"
                   [attr.aria-expanded]="isExpanded(row)"
-                  [attr.aria-label]="'Ver el detalle de ' + rowKey(row)"
+                  [attr.aria-label]="'Ver el detalle de ' + rowName(row, indice)"
                   (click)="toggleDetail(row)"
                 >
                   <span aria-hidden="true">{{ isExpanded(row) ? '▲' : '▼' }}</span>

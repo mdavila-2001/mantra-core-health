@@ -1098,6 +1098,9 @@ export class Agenda {
   protected readonly hayAgendaQueMirar = computed(() => this.recursoElegido() !== null);
 
   protected readonly porCita = (fila: CitaVisible): string => fila.id;
+  /** Cómo se nombra la fila para el lector de pantalla: el paciente, con la
+   *  misma compuerta de permisos que la celda (sin permiso, «Paciente asignado»). */
+  protected readonly nombreDeCita = (fila: CitaVisible): string => fila.paciente;
   protected readonly porCupo = (fila: CupoVisible): string => fila.id;
 
   constructor() {

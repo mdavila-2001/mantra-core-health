@@ -201,6 +201,8 @@ export class QuotationForm {
   ]);
 
   protected readonly porPaciente = (fila: PatientListItem): string => fila.profileId;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDePaciente = (fila: PatientListItem): string => fila.displayName ?? '';
 
   protected buscarPaciente(texto: string): void {
     this.busquedaDePaciente.set(texto);
@@ -284,6 +286,8 @@ export class QuotationForm {
   );
 
   protected readonly porServicio = (fila: ServiceCatalogItem): string => fila.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeServicio = (fila: ServiceCatalogItem): string => fila.name;
 
   protected buscarServicio(texto: string): void {
     this.busquedaDeServicio.set(texto);

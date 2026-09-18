@@ -37,6 +37,7 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
       [state]="state()"
       [columns]="columnas"
       [trackBy]="porId"
+      [rowLabel]="rotulo()"
       [caption]="caption()"
       [selectable]="selectable()"
       [sort]="sort()"
@@ -53,6 +54,7 @@ class HostComponent {
   readonly state = signal<ViewState<readonly Paciente[]>>(ready(FILAS));
   readonly columnas = COLUMNAS;
   readonly porId = (row: Paciente): string => row.id;
+  readonly rotulo = signal<((row: Paciente) => string) | null>(null);
   readonly caption = signal('Pacientes del servicio');
   readonly selectable = signal(false);
   readonly sort = signal<SortState | null>(null);
@@ -90,6 +92,42 @@ describe('DataTable', () => {
     fixture = TestBed.createComponent(HostComponent);
     host = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  describe('nombre accesible de cada fila', () => {
+    function nombresDelDetalle(): (string | null)[] {
+      return [...root().querySelectorAll('.data-table__detail-toggle')].map((boton) =>
+        boton.getAttribute('aria-label'),
+      );
+    }
+
+    it('sin rowLabel nombra por posición, nunca por el id técnico', () => {
+      expect(nombresDelDetalle()).toEqual([
+        'Ver el detalle de la fila 1',
+        'Ver el detalle de la fila 2',
+      ]);
+      expect(nombresDelDetalle().join(' ')).not.toContain('p-1');
+    });
+
+    it('con rowLabel usa el nombre legible en el detalle y en la selección', async () => {
+      host.rotulo.set((row) => row.apellido);
+      host.selectable.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(nombresDelDetalle()).toEqual(['Ver el detalle de Peña', 'Ver el detalle de Salas']);
+      const seleccion = root().querySelector('tbody .data-table__select-cell')?.textContent ?? '';
+      expect(seleccion).toContain('Seleccionar Peña');
+      expect(seleccion).not.toContain('p-1');
+    });
+
+    it('un rowLabel vacío cae a la posición', async () => {
+      host.rotulo.set(() => '   ');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(nombresDelDetalle()[0]).toBe('Ver el detalle de la fila 1');
+    });
   });
 
   describe('semántica de tabla', () => {

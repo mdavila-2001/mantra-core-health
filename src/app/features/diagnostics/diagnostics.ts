@@ -99,6 +99,9 @@ export class Diagnostics {
   ]);
 
   protected readonly porOrden = (fila: LabWorkOrder): string => fila.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeOrden = (fila: LabWorkOrder): string =>
+    `la orden ${fila.workOrderNumber}`;
 
   constructor() {
     effect(() => {

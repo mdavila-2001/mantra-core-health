@@ -146,6 +146,8 @@ export class PatientList {
   ]);
 
   protected readonly porPerfil = (row: PatientListItem): string => row.profileId;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDePaciente = (row: PatientListItem): string => row.displayName ?? '';
 
   protected readonly cargando = computed(() => this.listado().status === 'loading');
 

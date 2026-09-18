@@ -12,9 +12,9 @@
     border-radius: var(--r-md);
     border: 1px solid transparent;
     transition:
-        box-shadow 0.15s ease,
-        border-color 0.15s ease,
-        background 0.15s ease;
+        box-shadow var(--dur-fast) var(--ease-standard),
+        border-color var(--dur-fast) var(--ease-standard),
+        background var(--dur-fast) var(--ease-standard);
 }
 
 /* ---- variantes ----------------------------------------------------------- */

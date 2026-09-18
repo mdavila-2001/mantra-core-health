@@ -1235,23 +1235,27 @@ export class AlovidaRuntimeService {
     const casa = selector.parentElement;
     const vecino = selector.nextElementSibling;
     const marca = nav.querySelector('.app-side-nav__marca');
+    /* El hijo DIRECTO del `nav` que contiene la marca: hoy es su cabecera, no
+       la marca misma. `insertBefore` exige un nodo hijo del contenedor, y el
+       hermano de la marca vive un nivel más abajo — pasarlo lanzaba
+       `NotFoundError` en cada ruta y el selector nunca bajaba al cajón. */
+    const cabecera =
+      marca === null ? null : (Array.from(nav.children).find((hijo) => hijo.contains(marca)) ?? null);
 
     const ubicar = (angosto: boolean) => {
       if (angosto) {
         if (selector.parentElement === nav) {
           return;
         }
-        if (marca?.nextSibling) {
-          nav.insertBefore(selector, marca.nextSibling);
-        } else {
-          nav.appendChild(selector);
-        }
+        nav.insertBefore(selector, cabecera?.nextSibling ?? null);
         return;
       }
-      if (selector.parentElement === casa) {
+      if (casa === null || selector.parentElement === casa) {
         return;
       }
-      casa?.insertBefore(selector, vecino);
+      /* El vecino se anotó al montar; si el header se volvió a pintar ya no es
+         hijo de `casa`, y entonces el selector va al final de su sitio. */
+      casa.insertBefore(selector, vecino?.parentElement === casa ? vecino : null);
     };
 
     const consulta = this.consultaDeMedios(ANCHO_ORG);

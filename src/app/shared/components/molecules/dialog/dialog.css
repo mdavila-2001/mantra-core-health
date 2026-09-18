@@ -58,7 +58,7 @@
 /* Entrada corta; la regla global de prefers-reduced-motion la vuelve
    instantánea, que para un modal es exactamente lo correcto. */
 .dialog[open] .dialog__panel {
-  animation: dialog-in 0.15s ease;
+  animation: dialog-in var(--dur-fast) var(--ease-standard);
 }
 
 @keyframes dialog-in {

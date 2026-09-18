@@ -200,7 +200,7 @@
   block-size: 100%;
   background: var(--brand-primary);
   border-radius: inherit;
-  transition: inline-size 0.2s ease;
+  transition: inline-size var(--dur-base) var(--ease-standard);
 }
 
 .encuesta__barra-cifra {

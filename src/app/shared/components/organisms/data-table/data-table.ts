@@ -70,6 +70,13 @@ export class DataTable<Row> {
 
   /** Rótulo de la tabla. Va en `<caption>`, aunque sea solo para lectores. */
   readonly caption = input<string>('');
+  /**
+   * Cómo se nombra una fila para quien usa lector de pantalla: el «de quién»
+   * de «Ver el detalle de …» y «Seleccionar …». Sin él, la fila se nombra por
+   * su posición. Nunca por `trackBy`: es un id técnico —un uuid— y el lector
+   * lo deletreaba entero (refactor UX, fase 08).
+   */
+  readonly rowLabel = input<((row: Row) => string) | null>(null);
 
   readonly selectable = input(false, { transform: booleanAttribute });
   readonly sort = input<SortState | null>(null);
@@ -156,6 +163,12 @@ export class DataTable<Row> {
 
   protected rowKey(row: Row): string {
     return this.trackBy()(row);
+  }
+
+  /** El nombre legible de la fila, o su posición si no hay uno. */
+  protected rowName(row: Row, index: number): string {
+    const nombre = this.rowLabel()?.(row).trim() ?? '';
+    return nombre === '' ? `la fila ${index + 1}` : nombre;
   }
 
   /**
