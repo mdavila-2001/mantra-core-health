@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
-  margin-block-end: var(--sp-3);
+  margin-block-end: var(--sp-4);
 }
 
 .semana__cabecera {
@@ -13,6 +13,7 @@
 .semana__titulo {
   margin: 0;
   font-size: var(--fs-h3, 1.125rem);
+  text-transform: capitalize;
 }
 
 .semana__resumen {
@@ -40,25 +41,113 @@
 
 /* La celda es la tarjeta: el borde y el tono pasaron acá del botón, porque
    ahora el día tiene dos partes —la cabecera que se toca y los nombres, que se
-   leen— y las dos tienen que verse como una sola cosa. */
+   leen— y las dos tienen que verse como una sola cosa.
+
+   El tono del día vive en `--dia-tono`: lo toman el punto, la barra y el filo
+   superior, así que cambiar de estado es cambiar una sola variable. */
 .semana__dia {
+  --dia-tono: var(--border-default);
   display: flex;
   flex-direction: column;
+  min-width: 0;
   border: 1px solid var(--border-subtle);
+  border-block-start: 3px solid var(--dia-tono);
   border-radius: var(--r-md, 8px);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
+}
+
+.semana__dia--hoy {
+  border-color: var(--brand-primary);
+  border-block-start-color: var(--brand-primary);
+  box-shadow: 0 0 0 1px var(--brand-primary), var(--shadow-sm);
 }
 
 .semana__boton {
   width: 100%;
   display: grid;
-  gap: 2px;
-  padding: var(--sp-3) var(--sp-2);
+  gap: var(--sp-2);
+  padding: var(--sp-3);
   border: 0;
   background: none;
   color: inherit;
   cursor: pointer;
   text-align: left;
+  transition: background-color 150ms ease;
+}
+
+.semana__boton:hover {
+  background: var(--bg-hover, var(--bg-active));
+}
+
+.semana__boton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.semana__fecha {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1);
+}
+
+.semana__nombre {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.semana__numero {
+  font-size: 1.375rem;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hoy, además del borde, con el número en pastilla: se encuentra en la fila
+   sin leer las fechas. */
+.semana__dia--hoy .semana__numero {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--r-full, 999px);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.semana__estado {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  font-size: var(--fs-caption);
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.semana__punto {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--dia-tono);
+  transform: translateY(-0.05rem);
+}
+
+.semana__barra-ocupacion {
+  display: block;
+  height: 4px;
+  border-radius: var(--r-full, 999px);
+  background: var(--bg-active);
+  overflow: hidden;
+}
+
+.semana__barra-relleno {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--dia-tono);
 }
 
 /* Con quién viene el día. Sin viñetas: son datos en una celda, no una lista
@@ -68,24 +157,26 @@
   margin: 0;
   padding: 0 var(--sp-2) var(--sp-2);
   display: grid;
-  gap: 2px;
+  gap: var(--sp-1);
 }
 
 /* La hora arriba y el nombre debajo, para que el nombre disponga de la columna
    entera. En un renglón compartido, «09:30 Concepción Guadalupe Ávila Roque» en
-   una de siete columnas deja al nombre noventa píxeles. */
+   una de siete columnas deja al nombre noventa píxeles. Cada turno es una
+   fichita con filo de color: se cuentan de un vistazo. */
 .semana__cita {
   display: grid;
-  gap: 0;
+  gap: 1px;
+  padding: var(--sp-1) var(--sp-2);
+  border-inline-start: 3px solid var(--dia-tono);
+  border-radius: var(--r-xs, 4px);
+  background: var(--bg-active);
   font-size: var(--fs-caption);
-  padding-block: 2px;
-}
-
-.semana__cita + .semana__cita {
-  border-block-start: 1px solid var(--border-subtle);
+  line-height: 1.3;
 }
 
 .semana__hora {
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
 }
@@ -100,36 +191,41 @@
 }
 
 .semana__cita--resto {
+  border-inline-start-color: transparent;
+  background: none;
   color: var(--text-secondary);
-}
-
-.semana__nombre {
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
-  text-transform: capitalize;
-}
-
-.semana__numero {
-  font-size: 1.25rem;
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
 }
 
-.semana__estado {
-  font-size: var(--fs-caption);
+/* Sin agenda: la celda se apaga, no desaparece — la semana sigue teniendo
+   siete días. */
+.semana__dia[data-estado='sin-agenda'] {
+  background: transparent;
+  box-shadow: none;
+  border-style: dashed;
+  border-block-start-style: dashed;
+}
+
+.semana__dia[data-estado='sin-agenda'] .semana__numero {
   color: var(--text-secondary);
 }
 
 /* El color acompaña a la palabra, no la reemplaza. */
 .semana__dia[data-estado='bloqueado'] {
-  border-color: var(--st-error-bd, var(--border-subtle));
+  --dia-tono: var(--st-error-bd, var(--border-default));
 }
 
 .semana__dia[data-estado='lleno'] {
-  border-color: var(--st-warning-bd, var(--border-subtle));
+  --dia-tono: var(--st-warning-bd, var(--border-default));
 }
 
 .semana__dia[data-estado='libre'],
 .semana__dia[data-estado='con-reservas'] {
-  border-color: var(--st-success-bd, var(--border-subtle));
+  --dia-tono: var(--st-success-bd, var(--border-default));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .semana__boton {
+    transition: none;
+  }
 }

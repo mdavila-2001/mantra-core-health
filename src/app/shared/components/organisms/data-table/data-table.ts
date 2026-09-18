@@ -3,9 +3,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
+  type ElementRef,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 
 import { NgTemplateOutlet } from '@angular/common';
@@ -62,6 +65,33 @@ import {
   },
 })
 export class DataTable<Row> {
+  /**
+   * Si la tabla es más ancha que su caja y se desplaza de costado.
+   *
+   * La columna fija (`sticky: 'end'`) sólo necesita fondo opaco y sombra
+   * **cuando algo pasa por debajo**. Pintarla siempre dejaba, en una tabla que
+   * entra entera, un rectángulo de otro tono al final de cada fila —en oscuro
+   * se leía como un panel vacío (propietario, 18/09)—.
+   */
+  protected readonly overflowing = signal(false);
+  private readonly scrollBox = viewChild<ElementRef<HTMLElement>>('scrollBox');
+
+  constructor() {
+    effect((onCleanup) => {
+      const caja = this.scrollBox()?.nativeElement;
+      // Bajo SSR no hay `ResizeObserver`: se dibuja sin desborde y el cliente
+      // lo corrige al hidratar.
+      if (caja === undefined || typeof ResizeObserver === 'undefined') return;
+      const medir = (): void => this.overflowing.set(caja.scrollWidth > caja.clientWidth + 1);
+      const observador = new ResizeObserver(medir);
+      observador.observe(caja);
+      const tabla = caja.firstElementChild;
+      if (tabla !== null) observador.observe(tabla);
+      medir();
+      onCleanup(() => observador.disconnect());
+    });
+  }
+
   readonly state = input.required<ViewState<readonly Row[]>>();
   readonly columns = input.required<readonly ColumnDef<Row>[]>();
 

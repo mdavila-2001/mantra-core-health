@@ -2,12 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   LOCALE_ID,
-  output,
   signal,
   type OnInit,
+  type TemplateRef,
+  untracked,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { formatDate } from '@angular/common';
@@ -187,8 +189,28 @@ export class MyAgenda implements OnInit {
    */
   readonly mode = input<'schedule' | 'calendar'>('schedule');
 
-  /** «Ver como tabla»: quien contiene esta agenda sabe dónde vive la tabla. */
-  readonly tableRequested = output<void>();
+  /**
+   * Las acciones de cada cita del día, dibujadas por quien contiene esta
+   * agenda. `/schedule` le pasa la MISMA celda de su tabla de Consultas
+   * (propietario, 18/09): las dos vistas ofrecen los mismos botones y no hay
+   * una segunda copia que se desfase. Sin ella, el día ofrece las suyas.
+   */
+  readonly appointmentActions = input<TemplateRef<{ $implicit: Booking }> | null>(null);
+
+  /**
+   * Cambia cuando quien contiene la agenda operó una cita: las acciones son
+   * suyas, pero el día lo lee esta agenda, así que hay que avisarle que relea.
+   */
+  readonly reloadToken = input(0);
+
+  private readonly releerTrasOperar = effect(() => {
+    if (this.reloadToken() === 0) return;
+    untracked(() => {
+      const dia = this.diaAbierto();
+      if (dia !== null) this.cargarDia(dia);
+      this.cargarMes();
+    });
+  });
 
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);

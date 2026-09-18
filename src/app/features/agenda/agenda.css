@@ -327,10 +327,3 @@
     column-gap: var(--sp-1);
   }
 }
-
-/* «Ver como agenda» se va al extremo de la fila de filtros: es navegación,
-   no un filtro más. */
-.agenda__ver-agenda {
-  margin-inline-start: auto;
-  align-self: center;
-}

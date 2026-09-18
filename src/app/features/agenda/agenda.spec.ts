@@ -366,7 +366,7 @@ describe('Agenda', () => {
    * Todo compilaba y todas las pruebas pasaban, porque ninguna miraba si se
    * podía llegar. Ésta lo mira.
    */
-  it('ofrece la puerta a «Mi agenda»: sin esto la sección no se puede recorrer', async () => {
+  it('ofrece la puerta a «Mis horarios»: sin esto la sección no se puede recorrer', async () => {
     // Con `hpid`, que es como llega una sesión de médico de verdad: sin el
     // claim la pantalla no resuelve recurso y no llega a pedir las citas.
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
@@ -381,7 +381,7 @@ describe('Agenda', () => {
       ...harness.fixture.nativeElement.querySelectorAll('[role="tab"]'),
     ] as HTMLElement[];
 
-    expect(solapas.map((s) => s.textContent?.trim())).toContain('Mi agenda');
+    expect(solapas.map((s) => s.textContent?.trim())).toContain('Mis horarios');
   });
 
   /**
@@ -393,7 +393,7 @@ describe('Agenda', () => {
    * lectura de recursos sin que nadie abriera la solapa. Esta prueba es esa
    * lectura de más.
    */
-  it('«Mi agenda» no se construye mientras la solapa esté cerrada', async () => {
+  it('«Mis horarios» no se construye mientras la solapa esté cerrada', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
     await responderRecursos();
     responderResto();
@@ -435,7 +435,7 @@ describe('Agenda', () => {
     }
   }
 
-  it('a quien atiende, `/schedule` abre la agenda del día y no la tabla', async () => {
+  it('a quien atiende, `/schedule` abre la agenda del día, en una sola barra de cuatro', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
     await responderTodo();
 
@@ -443,57 +443,75 @@ describe('Agenda', () => {
     expect(interno<() => boolean>('enCalendario')()).toBe(true);
     expect(raiz.querySelector('[data-testid="agenda-calendario"]')).not.toBeNull();
     expect(raiz.querySelector('app-day-view')).not.toBeNull();
-    // Dos solapas y ninguna de las listas: «Mi agenda» está a un clic desde
-    // la entrada, sin pasar por la tabla (propietario, 18/09).
+    // Una sola barra, siempre la misma (propietario, 18/09): antes eran dos y
+    // cambiaba al pasar de la agenda a la tabla. El horario se llama «Mis
+    // horarios», no «Mi agenda».
     const solapas = [...raiz.querySelectorAll('[role="tab"]')] as HTMLElement[];
-    expect(solapas.map((s) => s.textContent?.trim())).toEqual(['Calendario', 'Mi agenda']);
+    expect(solapas.map((s) => s.textContent?.trim().replace(/\s*\(\d+\)$/, ''))).toEqual([
+      'Calendario',
+      'Consultas',
+      'Mis horarios',
+      'Cupos',
+    ]);
+    // Ni los filtros de las listas ni los íconos que cambiaban de vista.
+    expect(raiz.querySelector('.agenda__filtros')).toBeNull();
+    expect(raiz.querySelector('[data-testid="ver-como-tabla"]')).toBeNull();
+    expect(raiz.querySelector('[data-testid="ver-como-agenda"]')).toBeNull();
   });
 
-  it('la solapa «Mi agenda» abre el horario sin salir de la vista inicial', async () => {
+  it('la solapa «Mis horarios» abre el horario sin cambiar la barra', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
     await responderTodo();
     const router = TestBed.inject(Router);
     const raiz = harness.fixture.nativeElement as HTMLElement;
 
     const solapa = [...raiz.querySelectorAll('[role="tab"]')].find(
-      (s) => s.textContent?.trim() === 'Mi agenda',
+      (s) => s.textContent?.trim() === 'Mis horarios',
     ) as HTMLElement;
     solapa.click();
     await responderTodo();
 
     expect(router.url).toContain('vista=agenda');
-    expect(interno<() => boolean>('enCalendario')()).toBe(true);
     expect(interno<() => boolean>('enHorario')()).toBe(true);
+    expect(interno<() => number>('pestana')()).toBe(2);
     // El calendario no se construye mientras se mira el horario.
     expect(raiz.querySelector('[data-testid="agenda-calendario"]')).toBeNull();
     expect(raiz.querySelector('app-my-agenda')).not.toBeNull();
     // Ni los filtros de las listas: el horario no se filtra por ventana.
     expect(raiz.querySelector('.agenda__filtros')).toBeNull();
+    expect(interno<() => readonly string[]>('pestanas')()).toHaveLength(4);
   });
 
-  it('«Ver como tabla» lleva a Consultas, y desde ahí se vuelve a la agenda', async () => {
+  it('la solapa Consultas lleva a la tabla, con sus filtros, y Calendario vuelve', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
     await responderTodo();
     const router = TestBed.inject(Router);
+    const raiz = harness.fixture.nativeElement as HTMLElement;
+    const solapa = (rotulo: string): HTMLElement =>
+      [...raiz.querySelectorAll('[role="tab"]')].find((s) =>
+        s.textContent?.trim().startsWith(rotulo),
+      ) as HTMLElement;
 
-    (
-      harness.fixture.nativeElement.querySelector(
-        '[data-testid="ver-como-tabla"]',
-      ) as HTMLButtonElement
-    ).click();
+    solapa('Consultas').click();
     await responderTodo();
-
     expect(router.url).toContain('vista=table');
-    expect(interno<() => number>('pestana')()).toBe(0);
-    const volver = harness.fixture.nativeElement.querySelector(
-      '[data-testid="ver-como-agenda"]',
-    ) as HTMLButtonElement;
-    expect(volver.getAttribute('aria-label')).toBe('Ver como agenda');
+    expect(interno<() => number>('pestana')()).toBe(1);
+    expect(raiz.querySelector('.agenda__filtros')).not.toBeNull();
 
-    volver.click();
+    solapa('Calendario').click();
     await responderTodo();
     expect(router.url).not.toContain('vista=');
     expect(interno<() => boolean>('enCalendario')()).toBe(true);
+  });
+
+  it('las citas del día llevan las mismas acciones que la fila de Consultas', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
+    await responderTodo();
+    // La plantilla que recibe el día es la celda de la tabla, no una copia.
+    const dia = harness.fixture.debugElement.query(
+      (d) => d.name === 'app-day-view',
+    )?.componentInstance as { appointmentActions: () => unknown } | undefined;
+    expect(dia?.appointmentActions()).not.toBeNull();
   });
 
   it('quien reparte turnos no tiene agenda propia: `/schedule` sigue siendo la tabla', async () => {
@@ -503,11 +521,11 @@ describe('Agenda', () => {
 
     const raiz = harness.fixture.nativeElement as HTMLElement;
     expect(interno<() => boolean>('enCalendario')()).toBe(false);
-    expect(raiz.querySelectorAll('[role="tab"]').length).toBeGreaterThan(0);
-    expect(raiz.querySelector('[data-testid="ver-como-agenda"]')).toBeNull();
+    // Sin Calendario ni «Mis horarios»: Consultas y Cupos.
+    expect(raiz.querySelectorAll('[role="tab"]').length).toBe(2);
   });
 
-  it('a quien no atiende no le ofrece «Mi agenda», que no es suya', async () => {
+  it('a quien no atiende no le ofrece «Mis horarios», que no son suyos', async () => {
     // Mismo criterio que «Visitas de laboratorio»: no se ofrece una puerta que
     // la pantalla del otro lado no va a reconocer como propia.
     await montar({ roles: ['SCHEDULING_AGENT'] });
@@ -518,7 +536,7 @@ describe('Agenda', () => {
       ...harness.fixture.nativeElement.querySelectorAll('[role="tab"]'),
     ] as HTMLElement[];
 
-    expect(solapas.map((s) => s.textContent?.trim())).not.toContain('Mi agenda');
+    expect(solapas.map((s) => s.textContent?.trim())).not.toContain('Mis horarios');
   });
 
   it('sin rol de padrón no ofrece el enlace a la ficha del paciente', async () => {
@@ -1361,7 +1379,9 @@ describe('Agenda', () => {
    * la de arranque: la prueba dice sobre qué lista afirma.
    */
   async function verSolapaDeCitas(): Promise<void> {
-    interno<(i: number) => void>('elegirPestana')(0);
+    // Por nombre y no por índice: con Calendario delante, Consultas es la 1.
+    const indice = interno<() => readonly string[]>('pestanas')().indexOf('consultations');
+    interno<(i: number) => void>('elegirPestana')(indice);
     await harness.fixture.whenStable();
     harness.detectChanges();
   }
@@ -1463,7 +1483,7 @@ describe('Agenda', () => {
 
     expect(interno<() => boolean>('enReprogramacion')()).toBe(true);
     // Sin el salto a «Cupos» el botón no haría nada visible: los destinos
-    // posibles están ahí. Sin «Mi agenda» —no es quien atiende— es la solapa 1.
+    // posibles están ahí. Sin «Mis horarios» —no es quien atiende— es la solapa 1.
     expect(interno<() => number>('pestana')()).toBe(1);
     expect(boton('agenda-reprogramando')).not.toBeNull();
     expect(boton('agenda-mover-aca')).not.toBeNull();
@@ -1839,23 +1859,25 @@ describe('Agenda', () => {
       expect(interno<() => number>('cuantasEsperanRespuesta')()).toBe(1);
     });
 
-    it('`vista=cupos` llega a los cupos con y sin «Mi agenda» en el medio', async () => {
+    it('`vista=cupos` llega a los cupos con y sin «Mis horarios» en el medio', async () => {
       // Los enlaces que ya existen no se rompen, y el índice **depende del
-      // rol**: quien atiende tiene «Mi agenda» en el 1, así que sus cupos son
-      // el 2; quien reparte turnos no la tiene y sus cupos son el 1. Fijar el
-      // número suelto escondía esa diferencia.
+      // rol**: quien atiende tiene Calendario y «Mis horarios» antes, así que
+      // sus cupos son el 3; quien reparte turnos no los tiene y sus cupos son
+      // el 1. Fijar el número suelto escondía esa diferencia.
       await montar({}, '/schedule?vista=cupos');
       await responder();
 
       expect(interno<() => number>('pestana')()).toBe(1);
     });
 
-    it('con agenda propia los cupos corren un lugar: «Mi agenda» va en el medio', async () => {
+    it('con agenda propia los cupos son la última de cuatro', async () => {
       await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?vista=cupos');
       await responderRecursos();
       responderResto();
 
-      expect(interno<() => number>('pestana')()).toBe(2);
+      expect(interno<() => string>('pestanaActual')()).toBe('slots');
+      const pestanas = interno<() => readonly string[]>('pestanas')();
+      expect(interno<() => number>('pestana')()).toBe(pestanas.length - 1);
     });
   });
 
@@ -1963,14 +1985,16 @@ describe('Agenda', () => {
       expect(boton('agenda-detalle')).not.toBeNull();
     });
 
-    it('una cita ya agendada NO lo ofrece', async () => {
-      // No tiene nada oculto que justifique un modal: lo que hay de ella ya
-      // está en la fila.
+    it('una cita ya agendada también lo ofrece, sin «Aceptar»', async () => {
+      // Toda fila lleva «Ver detalle» (propietario, 18/09): en una atendida era
+      // lo único que quedaba, y sin él la columna de acciones se veía vacía.
+      // Pero no se la ofrece aceptar: ya está aceptada.
       await montar();
       await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
       await verSolapaDeCitas();
 
-      expect(boton('agenda-detalle')).toBeNull();
+      const detalle = boton('agenda-detalle');
+      expect(detalle?.getAttribute('aria-label')).toContain('Ver detalle de la cita');
     });
 
     it('muestra el nombre del paciente cuando la API lo mandó', async () => {

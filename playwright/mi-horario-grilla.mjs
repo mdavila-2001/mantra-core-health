@@ -47,8 +47,8 @@ const barra = pagina.getByTestId('horario-barra');
 await barra.waitFor({ timeout: 60_000 });
 await pagina.waitForTimeout(800);
 
-verificar('sin filtros de Consultas en Mi agenda', (await pagina.locator('.agenda__filtros').count()) === 0);
-verificar('sin «Se atiende en» en Mi agenda', (await pagina.getByTestId('agenda-ubicacion').count()) === 0);
+verificar('sin filtros de Consultas en Mis horarios', (await pagina.locator('.agenda__filtros').count()) === 0);
+verificar('sin «Se atiende en» en Mis horarios', (await pagina.getByTestId('agenda-ubicacion').count()) === 0);
 verificar('sin el renglón «Lunes, Martes…»', (await pagina.locator('.mi-agenda__franjas').count()) === 0);
 verificar('la grilla tiene 24 horas', (await pagina.locator('.mi-agenda__tarjeta .grilla__hora').count()) === 24);
 

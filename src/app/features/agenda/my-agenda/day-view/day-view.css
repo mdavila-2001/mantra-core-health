@@ -476,3 +476,30 @@
     transition: none;
   }
 }
+
+/* Con las acciones de la tabla la tarjeta no lleva «Ver detalle» en la
+   esquina: el nombre recupera ese ancho. */
+.dia__bloque--con-acciones .dia__paciente {
+  padding-inline-end: 0;
+}
+
+.dia__acciones--externas {
+  margin-block-start: var(--sp-1);
+}
+
+/* Desde tablet, las acciones van arriba a la derecha —donde estaba «Ver
+   detalle»— y la tarjeta no crece un renglón por ellas. El nombre reserva
+   ese ancho para no meterse debajo de los botones. */
+@media (min-width: 768px) {
+  .dia__bloque--con-acciones .dia__acciones--externas {
+    position: absolute;
+    inset-block-start: var(--sp-2);
+    inset-inline-end: var(--sp-3);
+    margin: 0;
+  }
+
+  .dia__bloque--con-acciones .dia__paciente,
+  .dia__bloque--con-acciones .dia__motivo {
+    padding-inline-end: 16rem;
+  }
+}

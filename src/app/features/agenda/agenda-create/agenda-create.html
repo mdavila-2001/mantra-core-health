@@ -203,18 +203,22 @@
 
                 @if (dia.activo) {
                   <td>
-                    <app-select
-                      [options]="horasDelDia"
+                    <app-input
+                      type="time"
+                      [step]="pasoDeHora"
                       [value]="grupoDe(dia.indice).controls['desde'].value"
                       [ariaLabel]="'Desde, ' + dia.largo"
+                      [testId]="'agenda-create-desde-' + dia.indice"
                       (valueChange)="fijarDeLaFila(dia.indice, 'desde', $event)"
                     />
                   </td>
                   <td>
-                    <app-select
-                      [options]="horasDelDia"
+                    <app-input
+                      type="time"
+                      [step]="pasoDeHora"
                       [value]="grupoDe(dia.indice).controls['hasta'].value"
                       [ariaLabel]="'Hasta, ' + dia.largo"
+                      [testId]="'agenda-create-hasta-' + dia.indice"
                       (valueChange)="fijarDeLaFila(dia.indice, 'hasta', $event)"
                     />
                   </td>
@@ -271,40 +275,56 @@
            Se recalcula sola al cambiar una hora o una duración. -->
       @if (!sinDias()) {
         <div class="agenda-create__previa" role="status">
-          <h3 class="agenda-create__previa-titulo">Así van a quedar tus turnos</h3>
+          <h3 class="agenda-create__previa-titulo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+            Así van a quedar tus turnos
+          </h3>
 
-          @for (dia of vistaPrevia().porDia; track dia.dia) {
-            <p class="agenda-create__previa-dia">
-              <strong class="agenda-create__previa-cuenta">{{ dia.dia | titlecase }}:</strong>
-              <!-- El rango, y no una tira de horas de inicio.
-                   Antes decía «08:00 · 08:30 · 09:00 · … · 11:30» para una
-                   franja de 08:00 a 12:00, y `11:30` es cuando **empieza** el
-                   último turno: se leía como que el día termina ahí. La hora
-                   que a nadie le da lo mismo es la de cierre. -->
-              @if (dia.turnos.length > 0) {
-                <span class="agenda-create__previa-horas">
-                  de {{ dia.turnos[0].desde }} a {{ dia.turnos[dia.turnos.length - 1].hasta }}
+          <!-- Una fila por día, en columnas: el día, el rango y la cuenta
+               alineados de un día al otro se comparan de un vistazo. En
+               renglones de texto corrido cada rango arrancaba en otra columna
+               (propietario, 18/09). -->
+          <ul class="agenda-create__previa-lista">
+            @for (dia of vistaPrevia().porDia; track dia.dia) {
+              <li class="agenda-create__previa-dia">
+                <strong class="agenda-create__previa-cuenta">{{ dia.dia | titlecase }}</strong>
+                <!-- El rango, y no una tira de horas de inicio.
+                     Antes decía «08:00 · 08:30 · 09:00 · … · 11:30» para una
+                     franja de 08:00 a 12:00, y `11:30` es cuando **empieza** el
+                     último turno: se leía como que el día termina ahí. La hora
+                     que a nadie le da lo mismo es la de cierre. -->
+                @if (dia.turnos.length > 0) {
+                  <span class="agenda-create__previa-horas">
+                    {{ dia.turnos[0].desde }} – {{ dia.turnos[dia.turnos.length - 1].hasta }}
+                  </span>
                   <span class="agenda-create__previa-detalle">
-                    · {{ dia.turnos.length }}
+                    {{ dia.turnos.length }}
                     {{ dia.turnos.length === 1 ? 'turno' : 'turnos' }} de
                     {{ dia.turnos[0].minutos }} min
                   </span>
-                </span>
-              } @else {
-                <span class="agenda-create__previa-horas">no entra ningún turno</span>
-              }
-            </p>
+                } @else {
+                  <span class="agenda-create__previa-horas agenda-create__previa-horas--vacia">
+                    No entra ningún turno
+                  </span>
+                }
 
-            <!-- El resto, dicho como información y no como pregunta: el backend
-                 trunca (verificado), así que no hay nada que decidir. -->
-            @if (dia.restoDesde !== null) {
-              <p class="agenda-create__previa-resto">
-                Te queda libre de {{ dia.restoDesde }} a
-                {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }} ({{ dia.resto }}
-                min): no alcanza para otra consulta.
-              </p>
+                <!-- El resto, dicho como información y no como pregunta: el
+                     backend trunca (verificado), así que no hay nada que
+                     decidir. -->
+                @if (dia.restoDesde !== null) {
+                  <p class="agenda-create__previa-resto">
+                    Te queda libre de {{ dia.restoDesde }} a
+                    {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }} ({{ dia.resto }}
+                    min): no alcanza para otra consulta.
+                  </p>
+                }
+              </li>
             }
-          }
+          </ul>
         </div>
       }
     </section>
@@ -318,13 +338,21 @@
              la lista de horarios ya etiqueta a éste como HORARIO PERMANENTE, y
              que las dos pantallas lo nombren distinto obliga a deducir que
              hablan de lo mismo. -->
-        <label class="agenda-create__opcion">
+        <label class="agenda-create__opcion agenda-create__opcion--tarjeta">
           <input type="radio" formControlName="tieneFin" value="no" />
-          <span>Nunca cambia — horario permanente</span>
+          <span class="agenda-create__opcion-texto">
+            <span class="agenda-create__opcion-titulo">Nunca cambia — horario permanente</span>
+            <span class="agenda-create__opcion-ayuda">Sigue vigente hasta que lo cambies vos.</span>
+          </span>
         </label>
-        <label class="agenda-create__opcion">
+        <label class="agenda-create__opcion agenda-create__opcion--tarjeta">
           <input type="radio" formControlName="tieneFin" value="si" />
-          <span>Sí, hasta una fecha</span>
+          <span class="agenda-create__opcion-texto">
+            <span class="agenda-create__opcion-titulo">Sí, hasta una fecha</span>
+            <span class="agenda-create__opcion-ayuda">
+              Para una temporada, un reemplazo o un horario de prueba.
+            </span>
+          </span>
         </label>
       </div>
 
@@ -352,19 +380,6 @@
 
       @if (avanzadasAbiertas()) {
         <div class="agenda-create__avanzadas">
-          @if (sedes().length > 1) {
-            <app-form-field label="¿En qué sede atendés?" hint="Si atendés en varias, elegí una">
-              <app-select formControlName="practiceId" [options]="sedes()" />
-            </app-form-field>
-          }
-
-          <app-form-field
-            label="¿Cuántos pacientes por turno?"
-            hint="Casi siempre es 1. Poné más sólo si atendés en grupo."
-          >
-            <app-input type="number" formControlName="capacidadPorTurno" />
-          </app-form-field>
-
           <app-form-field
             label="Zona horaria"
             hint="La detectamos sola. Cambiala sólo si atendés en otro huso."

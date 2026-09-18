@@ -26,6 +26,8 @@
     [attr.aria-required]="required() || null"
     [attr.aria-describedby]="describedBy()"
     [attr.data-testid]="testId()"
+    [attr.aria-label]="accessibleLabel()"
+    [attr.step]="step()"
     [attr.role]="comboboxAria() ? 'combobox' : null"
     [attr.aria-expanded]="comboboxAria()?.expanded ?? null"
     [attr.aria-controls]="comboboxAria()?.controls ?? null"

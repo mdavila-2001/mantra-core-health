@@ -153,11 +153,17 @@ thead .data-table__cell {
     position: sticky;
     inset-inline-end: 0;
     z-index: 1;
+}
+
+/* Fondo y sombra sólo cuando la tabla se desplaza de verdad: sin desborde no
+   pasa nada por debajo, y un fondo propio se veía como un bloque de otro tono
+   al final de cada fila. `overflowing` lo mide la tabla con un ResizeObserver. */
+.data-table__scroll--overflowing .data-table__cell--sticky-end {
     background: var(--bg-surface);
     box-shadow: -8px 0 8px -8px color-mix(in srgb, var(--text-secondary) 45%, transparent);
 }
 
-.data-table__row:hover .data-table__cell--sticky-end {
+.data-table__scroll--overflowing .data-table__row:hover .data-table__cell--sticky-end {
     background: var(--bg-inset);
 }
 

@@ -5,8 +5,9 @@ import {
   input,
   output,
   signal,
+  type TemplateRef,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 
 import type {
   ActivityTypeOption,
@@ -170,7 +171,7 @@ const YA_LLEGO: ReadonlySet<string> = new Set(['BOOKING_CHECKED_IN', 'BOOKING_CO
  */
 @Component({
   selector: 'app-day-view',
-  imports: [AppButton, Badge, DatePipe, StatusSeal, Tooltip],
+  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, StatusSeal, Tooltip],
   templateUrl: './day-view.html',
   styleUrl: './day-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -223,6 +224,13 @@ export class DayView {
    * va a fallar.
    */
   readonly puedeRegistrarLlegada = input<boolean>(false);
+
+  /**
+   * Las acciones de cada cita, dibujadas por quien contiene el día —en
+   * `/schedule`, la misma celda de la tabla de Consultas—. Con ellas, la
+   * tarjeta no ofrece las suyas ni su «Ver detalle»: la celda ya lo trae.
+   */
+  readonly appointmentActions = input<TemplateRef<{ $implicit: Booking }> | null>(null);
 
   /**
    * Los estados en palabras, por identificador de concepto.
