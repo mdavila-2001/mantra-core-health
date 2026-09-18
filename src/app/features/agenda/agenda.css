@@ -126,6 +126,16 @@
   gap: var(--sp-2);
 }
 
+/* Desde tablet las acciones son una columna fija al borde (`sticky: 'end'`), y
+   la tabla la apretaba hasta partir los botones en tres renglones. En una fila
+   la columna mide lo que miden ellos; en el teléfono van al detalle y ahí sí
+   pueden partirse. */
+@media (min-width: 780px) {
+  .agenda__acciones {
+    flex-wrap: nowrap;
+  }
+}
+
 /* ---- avisar demora (P8) --------------------------------------------------
    Una tarjeta al principio de la agenda, no un diálogo: la demora se avisa
    entre dos pacientes y con la agenda a la vista, que es lo que dice a quién
