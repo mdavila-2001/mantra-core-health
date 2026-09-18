@@ -149,6 +149,109 @@ describe('Appointments', () => {
     fixture.detectChanges();
   }
 
+  /* ---- Refactor UX · piloto «Mis citas» (docs/refactor-profesional) ------- */
+
+  describe('refactor UX: lo que viene primero y la acción a la vista', () => {
+    /** Una cita con fecha propia: la del helper `cita` es siempre la misma. */
+    function citaEn(id: string, inicio: string, fin: string): Record<string, unknown> {
+      return { ...cita(id, CONFIRMADO), startAt: inicio, endAt: fin };
+    }
+
+    function arrancarConCitas(citas: unknown[]): void {
+      montar();
+      responderArranque(citas);
+      responderTerminologia([
+        { conceptId: CONFIRMADO, code: 'BOOKING_CONFIRMED', display: 'Booking confirmed' },
+      ]);
+    }
+
+    function textoDe(selector: string): string[] {
+      const nodos = fixture.nativeElement.querySelectorAll(selector) as NodeListOf<HTMLElement>;
+      return Array.from(nodos, (nodo) => nodo.textContent?.trim() ?? '');
+    }
+
+    it('R-02 · las próximas encabezan la lista y las atendidas van debajo, la más reciente arriba', () => {
+      // El servidor las manda ascendentes: así, el historial enterraba la próxima (H-04).
+      arrancarConCitas([
+        citaEn('vieja', '2020-01-10T13:00:00.000Z', '2020-01-10T13:30:00.000Z'),
+        citaEn('reciente', '2021-05-10T13:00:00.000Z', '2021-05-10T13:30:00.000Z'),
+        citaEn('futura', '2099-03-01T13:00:00.000Z', '2099-03-01T13:30:00.000Z'),
+      ]);
+
+      expect(textoDe('.turnos__grupo-titulo').map((t) => t.replace(/\s+/g, ' '))).toEqual([
+        'Próximas 1',
+        'Anteriores 2',
+      ]);
+      const proximas = fixture.nativeElement.querySelector('[data-testid="turnos-lista-upcoming"]');
+      const anteriores = fixture.nativeElement.querySelector('[data-testid="turnos-lista-past"]');
+      // La fecha se pinta sin año; el 1 de marzo sólo existe en la futura.
+      expect(proximas.textContent).toMatch(/\b1 mar/i);
+      const fechas = Array.from(
+        anteriores.querySelectorAll('.turnos__fecha') as NodeListOf<HTMLElement>,
+        (nodo) => nodo.textContent ?? '',
+      );
+      // La más reciente (mayo de 2021) arriba; la más vieja (enero de 2020) abajo.
+      expect(fechas[0]).toMatch(/may/i);
+      expect(fechas[1]).toMatch(/jan|ene/i);
+      // El orden de `turnosListos` —del que cuelgan calendario y cancelación— no cambia.
+      expect(interno<() => readonly { id: string }[]>('turnosListos')().map((t) => t.id)).toEqual([
+        'vieja',
+        'reciente',
+        'futura',
+      ]);
+    });
+
+    it('R-02 · sin citas pasadas no dibuja un grupo «Anteriores» vacío', () => {
+      arrancarConCitas([
+        citaEn('a', '2099-03-01T13:00:00.000Z', '2099-03-01T13:30:00.000Z'),
+        citaEn('b', '2099-03-02T13:00:00.000Z', '2099-03-02T13:30:00.000Z'),
+      ]);
+
+      expect(textoDe('.turnos__grupo-titulo')).toHaveLength(1);
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-lista-past"]')).toBeNull();
+    });
+
+    it('R-01 · «Pedir una cita» está en el encabezado y deja el foco en «Agendar una cita»', () => {
+      arrancarConCitas([cita('b-1', CONFIRMADO)]);
+
+      const boton = fixture.nativeElement.querySelector(
+        'app-page-header [data-testid="turnos-pedir"]',
+      ) as HTMLButtonElement | null;
+      expect(boton).not.toBeNull();
+      expect(boton?.textContent?.trim()).toBe('Pedir una cita');
+
+      boton?.click();
+
+      expect(document.activeElement?.id).toBe('pedir-turno');
+      expect(document.activeElement?.textContent?.trim()).toBe('Agendar una cita');
+    });
+
+    it('R-01 · una cuenta sin perfil de paciente no recibe el botón', () => {
+      montar({});
+
+      expect(fixture.nativeElement.querySelector('[data-testid="turnos-pedir"]')).toBeNull();
+    });
+
+    it('R-03 · «Más filtros» anuncia si está abierto y cuántos filtros esconde', () => {
+      arrancarConCitas([cita('b-1', CONFIRMADO), cita('b-2', CONFIRMADO)]);
+      const boton = (): HTMLElement =>
+        fixture.nativeElement.querySelector('[data-testid="turnos-mas-filtros"]');
+
+      expect(boton().getAttribute('aria-expanded')).toBe('false');
+      expect(boton().getAttribute('aria-controls')).toBe('turnos-filtros-plegables');
+
+      boton().click();
+      fixture.detectChanges();
+
+      expect(boton().getAttribute('aria-expanded')).toBe('true');
+      expect(
+        fixture.nativeElement
+          .querySelector('[data-testid="turnos-filtros"]')
+          .classList.contains('turnos__filtros--abiertos'),
+      ).toBe(true);
+    });
+  });
+
   /* ---- TJ-2 · la ventana y la reprogramación ------------------------------ */
 
   describe('reglas finas de la cita (TJ-2)', () => {

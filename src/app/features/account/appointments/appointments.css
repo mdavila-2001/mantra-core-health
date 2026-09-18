@@ -38,6 +38,14 @@
   flex: none;
 }
 
+/* En teléfono «Tus citas» y el conmutador no entran lado a lado: el control se
+   encogía hasta cortar «Calen…». Baja a su propia fila, entero. */
+@media (max-width: 40rem) {
+  .turnos__vistas {
+    flex-basis: 100%;
+  }
+}
+
 /* ─── FT-05 · la barra de búsqueda y filtros ────────────────────────────────
    Una fila que envuelve, no una rejilla fija: los campos tienen anchos
    naturales muy distintos —un buscador no mide lo que un selector de estado— y
@@ -59,7 +67,9 @@
 
 .turnos__filtro-campo {
   display: block;
-  flex: 0 1 11rem;
+  /* 13rem y sin encoger: con 11rem «Todos los estados» y «DD/MM/AAAA» salían
+     recortados a 1440 px (H-06). El que cede ancho es el buscador. */
+  flex: 0 0 13rem;
   min-inline-size: 0;
   /* Cancela el margen inferior que `.turnos__filtro` da a los campos del
      formulario de abajo: acá los campos están en una fila y ese aire los
@@ -74,12 +84,44 @@
   margin-block-end: var(--sp-1);
 }
 
+/* R-03 · el envoltorio de los filtros secundarios no existe para el layout en
+   escritorio: sus campos siguen siendo parte de la misma fila. */
+.turnos__filtros-plegables {
+  display: contents;
+}
+
+/* El botón que los pliega sólo tiene sentido en teléfono. */
+.turnos__mas-filtros {
+  display: none;
+}
+
+.turnos__mas-filtros-cuenta {
+  margin-inline-start: var(--sp-1);
+  font-weight: 400;
+}
+
 @media (max-width: 40rem) {
   /* En teléfono cada control ocupa la fila: cuatro campos de 11rem en 375 px
      entran de a dos y quedan pares desalineados. */
   .turnos__buscador,
   .turnos__filtro-campo {
     flex-basis: 100%;
+  }
+
+  /* Apilados, los cuatro controles ocupaban la primera pantalla entera antes
+     de la primera cita (H-05): el texto queda a la vista y el resto se pliega. */
+  .turnos__mas-filtros {
+    display: inline-flex;
+  }
+
+  .turnos__filtros-plegables {
+    display: none;
+    flex-basis: 100%;
+    gap: var(--sp-3);
+  }
+
+  .turnos__filtros--abiertos .turnos__filtros-plegables {
+    display: grid;
   }
 }
 
@@ -103,7 +145,11 @@
   line-height: var(--lh-h4, var(--lh-h3));
   font-weight: 600;
   color: var(--text-primary);
-  text-transform: capitalize;
+}
+
+/* Sólo la inicial: `capitalize` dejaba «Viernes 18 De Sept A Las 09:30» (H-08). */
+.turnos__detalle-titulo::first-letter {
+  text-transform: uppercase;
 }
 
 .turnos__detalle-agenda {
@@ -139,6 +185,28 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption, var(--lh-body));
   color: var(--text-secondary);
+}
+
+/* R-02 · «Próximas» y «Anteriores». Subtítulos de la sección, no tarjetas:
+   separan dos momentos de la misma lista sin encerrarlos en otra caja. */
+.turnos__grupo + .turnos__grupo {
+  margin-block-start: var(--sp-6);
+}
+
+.turnos__grupo-titulo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin-block: 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.turnos__grupo-cuenta {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 
 .turnos__titulo {
@@ -204,8 +272,15 @@
 
 .turnos__fecha {
   color: var(--text-primary);
-  /* La primera letra del día viene en minúscula del locale. */
-  text-transform: capitalize;
+  /* Lo primero que se busca en la fila: es el único dato con peso (H-07). */
+  font-weight: 600;
+}
+
+/* La primera letra del día viene en minúscula del locale. Sólo la inicial:
+   `capitalize` pone mayúscula en cada palabra (H-08). La fecha es un ítem de
+   la rejilla `.turnos__cuando`, así que ya es caja de bloque. */
+.turnos__fecha::first-letter {
+  text-transform: uppercase;
 }
 
 .turnos__hora {

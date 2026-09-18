@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -52,6 +52,7 @@ import { AppointmentCalendar } from './appointment-calendar/appointment-calendar
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
 import { reservaDelPortalRoute } from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
+import { splitUpcomingAndPast } from './upcoming-and-past';
 
 /**
  * Cuántos días hacia adelante se ofrecen.
@@ -316,6 +317,7 @@ export class Appointments {
   private readonly fecha = inject(DatePipe);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
 
   /**
    * De quién son los turnos que se muestran.
@@ -494,6 +496,33 @@ export class Appointments {
   protected readonly hayTurnosParaFiltrar = computed(
     () => this.todosLosTurnos().length > 1 || this.hayFiltros(),
   );
+
+  /**
+   * Cuántos filtros de los que se pliegan en móvil están puestos (estado,
+   * desde, hasta). La búsqueda de texto queda siempre a la vista, así que no
+   * cuenta: el número dice qué hay escondido detrás de «Más filtros».
+   */
+  protected readonly filtrosPlegadosActivos = computed(
+    () =>
+      Number(this.filtroDeEstado() !== '') +
+      Number(this.filtroDesde() !== null) +
+      Number(this.filtroHasta() !== null),
+  );
+
+  /**
+   * En móvil los filtros secundarios se pliegan: apilados ocupaban la primera
+   * pantalla entera antes de la primera cita (H-05). Se abren solos si ya hay
+   * alguno puesto —un filtro activo escondido parecería una lista incompleta—.
+   * En escritorio el CSS los muestra siempre y el botón no se dibuja.
+   */
+  private readonly filtrosAbiertosAMano = signal<boolean | null>(null);
+  protected readonly filtrosAbiertos = computed(
+    () => this.filtrosAbiertosAMano() ?? this.filtrosPlegadosActivos() > 0,
+  );
+
+  protected alternarFiltros(): void {
+    this.filtrosAbiertosAMano.set(!this.filtrosAbiertos());
+  }
 
   /**
    * Los estados por los que se puede filtrar.
@@ -878,6 +907,48 @@ export class Appointments {
   );
 
   /**
+   * El instante de la última lectura de turnos. Parte la lista en próximas y
+   * anteriores con la hora en que se trajeron los datos, no con un reloj que
+   * corre: una cita no cambia de grupo sola mientras la persona la está leyendo.
+   */
+  private readonly momentoDeLectura = signal(new Date());
+
+  /**
+   * Los mismos turnos filtrados, agrupados para leer primero lo que viene (R-02
+   * del mapa UX). `turnosListos` conserva el orden del servidor: lo consumen el
+   * calendario, el detalle y la cancelación, que no dependen del orden.
+   */
+  protected readonly turnosPorMomento = computed(() =>
+    splitUpcomingAndPast(this.turnosListos(), this.momentoDeLectura()),
+  );
+
+  /** Los dos grupos de la lista, en el orden en que se leen. */
+  protected readonly gruposDeLista = computed(() => {
+    const { upcoming, past } = this.turnosPorMomento();
+    return [
+      { clave: 'upcoming', titulo: 'Próximas', turnos: upcoming },
+      { clave: 'past', titulo: 'Anteriores', turnos: past },
+    ] as const;
+  });
+
+  /**
+   * «Pedir una cita» del encabezado: lleva a la sección que ya existe al pie y
+   * deja el foco en su título, para que el lector de pantalla anuncie dónde
+   * quedó y el teclado siga desde ahí (R-01 del mapa UX). Sin animación cuando
+   * la persona pidió reducir movimiento.
+   */
+  protected irAPedirTurno(): void {
+    const titulo = this.document.getElementById('pedir-turno');
+    if (titulo === null) {
+      return;
+    }
+    const reducir =
+      this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? true;
+    titulo.scrollIntoView?.({ behavior: reducir ? 'auto' : 'smooth', block: 'start' });
+    titulo.focus({ preventScroll: true });
+  }
+
+  /**
    * Los mismos turnos, en la forma que el calendario entiende.
    *
    * **Los mismos**, no otra lectura: las dos vistas tienen que decir lo mismo o
@@ -980,6 +1051,7 @@ export class Appointments {
             return;
           }
           this.traducirEstados(pagina.items);
+          this.momentoDeLectura.set(new Date());
           this.turnos.set(ready(pagina.items.map((cita) => this.aTurnoVisible(cita))));
         },
         error: (error: unknown) =>
