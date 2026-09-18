@@ -72,7 +72,13 @@
               <p class="tutoriales__tarjeta-texto">{{ fila.definicion.description }}</p>
 
               <div class="tutoriales__tarjeta-acciones">
-                <button app-button variant="primary" type="button" (clicked)="abrir(fila)">
+                <button
+                  app-button
+                  variant="primary"
+                  type="button"
+                  [attr.aria-label]="fila.accion + ': ' + fila.definicion.title"
+                  (clicked)="abrir(fila)"
+                >
                   {{ fila.accion }}
                 </button>
               </div>
@@ -154,7 +160,13 @@
               }
 
               <div class="tutoriales__tarjeta-acciones">
-                <button app-button variant="primary" type="button" (clicked)="abrir(fila)">
+                <button
+                  app-button
+                  variant="primary"
+                  type="button"
+                  [attr.aria-label]="fila.accion + ': ' + fila.definicion.title"
+                  (clicked)="abrir(fila)"
+                >
                   {{ fila.accion }}
                 </button>
 

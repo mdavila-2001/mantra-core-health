@@ -50,10 +50,15 @@
 
 /* ── Ayuda ─────────────────────────────────────────────────────────────────*/
 
+/* La tarjeta va a lo ancho, como el resto de la página (composition-rules §5);
+   la medida de lectura se acota en el texto, no en la caja. */
 .catalogo__ayuda {
   display: block;
-  /* Es texto corrido: la medida de lectura manda sobre el ancho de la tabla. */
-  max-inline-size: 68ch;
+}
+
+.catalogo__ayuda-texto,
+.catalogo__ayuda-lista {
+  max-inline-size: 76ch;
 }
 
 .catalogo__ayuda-titulo {

@@ -124,6 +124,7 @@
                   variant="outline"
                   size="sm"
                   data-testid="my-services-price-edit"
+                  [attr.aria-label]="'Editar precio: ' + servicio.name"
                   (clicked)="editar(servicio)"
                 >
                   Editar precio

@@ -153,7 +153,13 @@
               </div>
             </div>
           } @else {
-            <button app-button variant="secondary" size="sm" (clicked)="decidir(entrada.id)">
+            <button
+              app-button
+              variant="secondary"
+              size="sm"
+              [attr.aria-label]="'Decidir: contenido ' + entrada.contentRefId.slice(0, 8)"
+              (clicked)="decidir(entrada.id)"
+            >
               Decidir
             </button>
           }

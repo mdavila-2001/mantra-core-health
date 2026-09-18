@@ -63,14 +63,26 @@
 }
 
 /* ---- indicadores ----------------------------------------------------------
-   Cuatro por fila en escritorio, dos en tableta, uno en teléfono. `auto-fit`
-   con un mínimo: una cifra apretada en una columna de 120 px no se compara con
-   nada, que es para lo único que sirve un indicador. */
+   Son siempre seis: tres por fila en escritorio, dos en tableta, uno en
+   teléfono, así la rejilla cierra sin huecos (con cuatro por fila quedaban dos
+   celdas vacías). */
 .tiles {
   display: grid;
   gap: var(--sp-4);
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  grid-template-columns: 1fr;
   margin-block: var(--sp-5);
+}
+
+@media (min-width: 40rem) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .tile {
@@ -255,6 +267,8 @@
 /* El número de documento abre su flujo. Es un botón y no un enlace porque no
    navega: despliega acá mismo. Se pinta como el texto que era. */
 .documento__numero--abrible {
+  /* Mínimo táctil WCAG 2.5.8: con el alto de la línea medía 23 px. */
+  min-block-size: 24px;
   background: none;
   border: none;
   color: var(--brand-primary);

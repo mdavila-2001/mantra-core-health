@@ -341,6 +341,18 @@ export class DatePicker {
 
   private readonly ownId = nextControlId('date');
   protected readonly controlId = computed(() => this.field?.controlId() ?? this.ownId);
+
+  /** Id del texto «Abrir calendario» del disparador. */
+  protected readonly triggerTextId = `${this.ownId}-abrir`;
+
+  /**
+   * El nombre del disparador: su texto más el rótulo del campo que lo envuelve.
+   * Sin campo, `null` y rige el `aria-label` de siempre.
+   */
+  protected readonly triggerLabelledBy = computed(() => {
+    const rotulo = this.field?.labelId();
+    return rotulo ? `${this.triggerTextId} ${rotulo}` : null;
+  });
   protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
   protected readonly invalid = computed(
     () => this.hasError() || this.field?.invalid() === true || this.parseError(),

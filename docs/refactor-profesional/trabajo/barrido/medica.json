@@ -1,0 +1,1071 @@
+[
+ {
+  "ruta": "/dashboard",
+  "abierta": "/dashboard",
+  "componente": "Dashboard",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/dashboard",
+  "abierta": "/dashboard",
+  "componente": "Dashboard",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/dashboard",
+  "abierta": "/dashboard",
+  "componente": "Dashboard",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/tutorials",
+  "abierta": "/tutorials",
+  "componente": "TutorialsCenter",
+  "ancho": 1440,
+  "problemas": {
+   "nombre-repetido": [
+    "empezar: primeros pasos en alovida ×2",
+    "empezar: tu agenda del día ×2",
+    "empezar: tu perfil profesional ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/tutorials",
+  "abierta": "/tutorials",
+  "componente": "TutorialsCenter",
+  "ancho": 768,
+  "problemas": {
+   "nombre-repetido": [
+    "empezar: primeros pasos en alovida ×2",
+    "empezar: tu agenda del día ×2",
+    "empezar: tu perfil profesional ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/tutorials",
+  "abierta": "/tutorials",
+  "componente": "TutorialsCenter",
+  "ancho": 390,
+  "problemas": {
+   "nombre-repetido": [
+    "empezar: primeros pasos en alovida ×2",
+    "empezar: tu agenda del día ×2",
+    "empezar: tu perfil profesional ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/messaging",
+  "abierta": "/messaging",
+  "componente": "Messaging",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/messaging",
+  "abierta": "/messaging",
+  "componente": "Messaging",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/messaging",
+  "abierta": "/messaging",
+  "componente": "Messaging",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directories",
+  "abierta": "/directories",
+  "componente": "DirectoriesOverview",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directories",
+  "abierta": "/directories",
+  "componente": "DirectoriesOverview",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/directories",
+  "abierta": "/directories",
+  "componente": "DirectoriesOverview",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/groups",
+  "abierta": "/groups",
+  "componente": "Groups",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/groups",
+  "abierta": "/groups",
+  "componente": "Groups",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/groups",
+  "abierta": "/groups",
+  "componente": "Groups",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/laboratory-directory",
+  "abierta": "/laboratory-directory",
+  "componente": "LaboratoryDirectory",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/laboratory-directory",
+  "abierta": "/laboratory-directory",
+  "componente": "LaboratoryDirectory",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/laboratory-directory",
+  "abierta": "/laboratory-directory",
+  "componente": "LaboratoryDirectory",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory",
+  "abierta": "/clinics-directory",
+  "componente": "ClinicsDirectory",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory",
+  "abierta": "/clinics-directory",
+  "componente": "ClinicsDirectory",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory",
+  "abierta": "/clinics-directory",
+  "componente": "ClinicsDirectory",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory",
+  "abierta": "/pharmacies-directory",
+  "componente": "PharmaciesDirectory",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory",
+  "abierta": "/pharmacies-directory",
+  "componente": "PharmaciesDirectory",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory",
+  "abierta": "/pharmacies-directory",
+  "componente": "PharmaciesDirectory",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule",
+  "abierta": "/schedule",
+  "componente": "Agenda",
+  "ancho": 1440,
+  "problemas": {
+   "nombre-repetido": [
+    "ver la solicitud de seguro clm-2026-0177 ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule",
+  "abierta": "/schedule",
+  "componente": "Agenda",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule",
+  "abierta": "/schedule",
+  "componente": "Agenda",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/medical-records",
+  "abierta": "/medical-records",
+  "componente": "ClinicalRecord",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/medical-records",
+  "abierta": "/medical-records",
+  "componente": "ClinicalRecord",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/medical-records",
+  "abierta": "/medical-records",
+  "componente": "ClinicalRecord",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/progress-notes",
+  "abierta": "/progress-notes",
+  "componente": "ProgressNotes",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/progress-notes",
+  "abierta": "/progress-notes",
+  "componente": "ProgressNotes",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/progress-notes",
+  "abierta": "/progress-notes",
+  "componente": "ProgressNotes",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/diagnostics",
+  "abierta": "/diagnostics",
+  "componente": "Diagnostics",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/diagnostics",
+  "abierta": "/diagnostics",
+  "componente": "Diagnostics",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/diagnostics",
+  "abierta": "/diagnostics",
+  "componente": "Diagnostics",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/lab-visits",
+  "abierta": "/lab-visits",
+  "componente": "DoctorVisits",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/lab-visits",
+  "abierta": "/lab-visits",
+  "componente": "DoctorVisits",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/lab-visits",
+  "abierta": "/lab-visits",
+  "componente": "DoctorVisits",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/glossary",
+  "abierta": "/glossary",
+  "componente": "Glossary",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/glossary",
+  "abierta": "/glossary",
+  "componente": "Glossary",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/glossary",
+  "abierta": "/glossary",
+  "componente": "Glossary",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/form-builder",
+  "abierta": "/form-builder",
+  "componente": "FormBuilder",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/form-builder",
+  "abierta": "/form-builder",
+  "componente": "FormBuilder",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/form-builder",
+  "abierta": "/form-builder",
+  "componente": "FormBuilder",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-services",
+  "abierta": "/my-services",
+  "componente": "MyServices",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-services",
+  "abierta": "/my-services",
+  "componente": "MyServices",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-services",
+  "abierta": "/my-services",
+  "componente": "MyServices",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations",
+  "abierta": "/my-quotations",
+  "componente": "QuotationList",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations",
+  "abierta": "/my-quotations",
+  "componente": "QuotationList",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations",
+  "abierta": "/my-quotations",
+  "componente": "QuotationList",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/questionnaires",
+  "abierta": "/questionnaires",
+  "componente": "SurveysHome",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/questionnaires",
+  "abierta": "/questionnaires",
+  "componente": "SurveysHome",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/questionnaires",
+  "abierta": "/questionnaires",
+  "componente": "SurveysHome",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance",
+  "abierta": "/dashboard",
+  "componente": "InsuranceCatalog",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance",
+  "abierta": "/dashboard",
+  "componente": "InsuranceCatalog",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance",
+  "abierta": "/dashboard",
+  "componente": "InsuranceCatalog",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance-analytics",
+  "abierta": "/dashboard",
+  "componente": "InsuranceAnalytics",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/insurance-analytics",
+  "abierta": "/dashboard",
+  "componente": "InsuranceAnalytics",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/insurance-analytics",
+  "abierta": "/dashboard",
+  "componente": "InsuranceAnalytics",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/medical-organization",
+  "abierta": "/administration/medical-organization",
+  "componente": "MedicalOrganization",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/medical-organization",
+  "abierta": "/administration/medical-organization",
+  "componente": "MedicalOrganization",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/medical-organization",
+  "abierta": "/administration/medical-organization",
+  "componente": "MedicalOrganization",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/accounting",
+  "abierta": "/administration/accounting",
+  "componente": "Cockpit",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/accounting",
+  "abierta": "/administration/accounting",
+  "componente": "Cockpit",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/accounting",
+  "abierta": "/administration/accounting",
+  "componente": "Cockpit",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/assets-liabilities",
+  "abierta": "/assets-liabilities",
+  "componente": "AssetsLiabilities",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/assets-liabilities",
+  "abierta": "/assets-liabilities",
+  "componente": "AssetsLiabilities",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/assets-liabilities",
+  "abierta": "/assets-liabilities",
+  "componente": "AssetsLiabilities",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/settings",
+  "abierta": "/settings",
+  "componente": "Settings",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/settings",
+  "abierta": "/settings",
+  "componente": "Settings",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/settings",
+  "abierta": "/settings",
+  "componente": "Settings",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/notification-center",
+  "abierta": "/notification-center",
+  "componente": "NotificationCenter",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/notification-center",
+  "abierta": "/notification-center",
+  "componente": "NotificationCenter",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/notification-center",
+  "abierta": "/notification-center",
+  "componente": "NotificationCenter",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/my-practice",
+  "abierta": "/administration/my-practice",
+  "componente": "MyPractice",
+  "ancho": 1440,
+  "problemas": {
+   "nombre-repetido": [
+    "retirar consultorio dra. rojas de tus consultorios ×2",
+    "dejar de atender en clínica los olivos · sede central ×2",
+    "dejar de atender en hospital san lucas ×2",
+    "dejar de atender en centro médico equipetrol ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-practice",
+  "abierta": "/administration/my-practice",
+  "componente": "MyPractice",
+  "ancho": 768,
+  "problemas": {
+   "nombre-repetido": [
+    "retirar consultorio dra. rojas de tus consultorios ×2",
+    "dejar de atender en clínica los olivos · sede central ×2",
+    "dejar de atender en hospital san lucas ×2",
+    "dejar de atender en centro médico equipetrol ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-practice",
+  "abierta": "/administration/my-practice",
+  "componente": "MyPractice",
+  "ancho": 390,
+  "problemas": {
+   "nombre-repetido": [
+    "retirar consultorio dra. rojas de tus consultorios ×2",
+    "dejar de atender en clínica los olivos · sede central ×2",
+    "dejar de atender en hospital san lucas ×2",
+    "dejar de atender en centro médico equipetrol ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-organization",
+  "abierta": "/dashboard",
+  "componente": "OrganizationPanel",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/my-organization",
+  "abierta": "/dashboard",
+  "componente": "OrganizationPanel",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/my-organization",
+  "abierta": "/dashboard",
+  "componente": "OrganizationPanel",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-orders",
+  "abierta": "/administration/pharmacy-orders",
+  "componente": "PharmacyInbox",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-orders",
+  "abierta": "/administration/pharmacy-orders",
+  "componente": "PharmacyInbox",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-orders",
+  "abierta": "/administration/pharmacy-orders",
+  "componente": "PharmacyInbox",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-campaigns",
+  "abierta": "/administration/pharmacy-campaigns",
+  "componente": "PharmacyCampaigns",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-campaigns",
+  "abierta": "/administration/pharmacy-campaigns",
+  "componente": "PharmacyCampaigns",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-campaigns",
+  "abierta": "/administration/pharmacy-campaigns",
+  "componente": "PharmacyCampaigns",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-profile",
+  "abierta": "/administration/pharmacy-profile",
+  "componente": "PharmacyProfile",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-profile",
+  "abierta": "/administration/pharmacy-profile",
+  "componente": "PharmacyProfile",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-profile",
+  "abierta": "/administration/pharmacy-profile",
+  "componente": "PharmacyProfile",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/accounting/libros",
+  "abierta": "/administration/accounting/libros",
+  "componente": "Accounting",
+  "ancho": 1440,
+  "problemas": {
+   "composicion": [
+    "button.libros-abrir.btn 28% izq 0 der 784",
+    "button.libros-abrir.btn 16% izq 0 der 918"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/accounting/libros",
+  "abierta": "/administration/accounting/libros",
+  "componente": "Accounting",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/accounting/libros",
+  "abierta": "/administration/accounting/libros",
+  "componente": "Accounting",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/getting-started",
+  "abierta": "/dashboard",
+  "componente": "GettingStarted",
+  "ancho": 1440,
+  "problemas": {
+   "rebota": [
+    "/dashboard"
+   ]
+  }
+ },
+ {
+  "ruta": "/administration/getting-started",
+  "abierta": "/dashboard",
+  "componente": "GettingStarted",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/getting-started",
+  "abierta": "/dashboard",
+  "componente": "GettingStarted",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations/new",
+  "abierta": "/my-quotations/new",
+  "componente": "QuotationForm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations/new",
+  "abierta": "/my-quotations/new",
+  "componente": "QuotationForm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/my-quotations/new",
+  "abierta": "/my-quotations/new",
+  "componente": "QuotationForm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/onboarding",
+  "abierta": "/onboarding",
+  "componente": "OnboardingPractitioner",
+  "ancho": 1440,
+  "problemas": {
+   "nombre-repetido": [
+    "publicar mi agenda ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/onboarding",
+  "abierta": "/onboarding",
+  "componente": "OnboardingPractitioner",
+  "ancho": 768,
+  "problemas": {
+   "nombre-repetido": [
+    "publicar mi agenda ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/onboarding",
+  "abierta": "/onboarding",
+  "componente": "OnboardingPractitioner",
+  "ancho": 390,
+  "problemas": {
+   "nombre-repetido": [
+    "publicar mi agenda ×2"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule/appointment/new",
+  "abierta": "/schedule/appointment/new",
+  "componente": "AppointmentNew",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/appointment/new",
+  "abierta": "/schedule/appointment/new",
+  "componente": "AppointmentNew",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/appointment/new",
+  "abierta": "/schedule/appointment/new",
+  "componente": "AppointmentNew",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/blocks",
+  "abierta": "/schedule/blocks",
+  "componente": "Blocks",
+  "ancho": 1440,
+  "problemas": {
+   "composicion": [
+    "p.bloqueos__alcance 63% izq 0 der 406"
+   ]
+  }
+ },
+ {
+  "ruta": "/schedule/blocks",
+  "abierta": "/schedule/blocks",
+  "componente": "Blocks",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/blocks",
+  "abierta": "/schedule/blocks",
+  "componente": "Blocks",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/edit",
+  "abierta": "/schedule/edit",
+  "componente": "AgendaCreate",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/edit",
+  "abierta": "/schedule/edit",
+  "componente": "AgendaCreate",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/edit",
+  "abierta": "/schedule/edit",
+  "componente": "AgendaCreate",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/new",
+  "abierta": "/schedule/new",
+  "componente": "AgendaCreate",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/new",
+  "abierta": "/schedule/new",
+  "componente": "AgendaCreate",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/new",
+  "abierta": "/schedule/new",
+  "componente": "AgendaCreate",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-orders/:orderId",
+  "abierta": "/administration/pharmacy-orders/26bed0b7-301f-4df5-a13a-841e58d1edfc",
+  "componente": "InboxOrder",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-orders/:orderId",
+  "abierta": "/administration/pharmacy-orders/26bed0b7-301f-4df5-a13a-841e58d1edfc",
+  "componente": "InboxOrder",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/administration/pharmacy-orders/:orderId",
+  "abierta": "/administration/pharmacy-orders/26bed0b7-301f-4df5-a13a-841e58d1edfc",
+  "componente": "InboxOrder",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory/:slug",
+  "abierta": "/clinics-directory/hospital-roberto-galindo-cob",
+  "componente": "ClinicDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory/:slug",
+  "abierta": "/clinics-directory/hospital-roberto-galindo-cob",
+  "componente": "ClinicDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/clinics-directory/:slug",
+  "abierta": "/clinics-directory/hospital-roberto-galindo-cob",
+  "componente": "ClinicDetail",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/glossary/:conceptId",
+  "abierta": "/glossary/9b7cb6d6-cb22-4f18-af3d-230218cfa76e",
+  "componente": "GlossaryTerm",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/glossary/:conceptId",
+  "abierta": "/glossary/9b7cb6d6-cb22-4f18-af3d-230218cfa76e",
+  "componente": "GlossaryTerm",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/glossary/:conceptId",
+  "abierta": "/glossary/9b7cb6d6-cb22-4f18-af3d-230218cfa76e",
+  "componente": "GlossaryTerm",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/groups/:groupId",
+  "abierta": "/groups/5163cb71-7f7f-4b73-aa94-ee22c8d7ce14",
+  "componente": "GroupDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/groups/:groupId",
+  "abierta": "/groups/5163cb71-7f7f-4b73-aa94-ee22c8d7ce14",
+  "componente": "GroupDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/groups/:groupId",
+  "abierta": "/groups/5163cb71-7f7f-4b73-aa94-ee22c8d7ce14",
+  "componente": "GroupDetail",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/laboratory-directory/:unitId",
+  "abierta": "",
+  "componente": "LaboratoryDetail",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records/:profileId",
+  "abierta": "/medical-records/8675f52f-6cfb-4f59-a543-e00ac3241a18",
+  "componente": "PatientChart",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/medical-records/:profileId",
+  "abierta": "/medical-records/8675f52f-6cfb-4f59-a543-e00ac3241a18",
+  "componente": "PatientChart",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/medical-records/:profileId",
+  "abierta": "/medical-records/8675f52f-6cfb-4f59-a543-e00ac3241a18",
+  "componente": "PatientChart",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/medical-records/:profileId/consultation",
+  "abierta": "",
+  "componente": "Consultation",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/medical-records/:profileId/request-access",
+  "abierta": "",
+  "componente": "RequestAccess",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ },
+ {
+  "ruta": "/pharmacies-directory/:slug",
+  "abierta": "/pharmacies-directory/farmacia-bolivia-cbba",
+  "componente": "PharmacyDetail",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory/:slug",
+  "abierta": "/pharmacies-directory/farmacia-bolivia-cbba",
+  "componente": "PharmacyDetail",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/pharmacies-directory/:slug",
+  "abierta": "/pharmacies-directory/farmacia-bolivia-cbba",
+  "componente": "PharmacyDetail",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/questionnaires/:surveyId",
+  "abierta": "/questionnaires/bafb1c09-2103-46f3-a56c-4c0aec3d722c",
+  "componente": "SurveyDetailScreen",
+  "ancho": 1440,
+  "problemas": {}
+ },
+ {
+  "ruta": "/questionnaires/:surveyId",
+  "abierta": "/questionnaires/bafb1c09-2103-46f3-a56c-4c0aec3d722c",
+  "componente": "SurveyDetailScreen",
+  "ancho": 768,
+  "problemas": {}
+ },
+ {
+  "ruta": "/questionnaires/:surveyId",
+  "abierta": "/questionnaires/bafb1c09-2103-46f3-a56c-4c0aec3d722c",
+  "componente": "SurveyDetailScreen",
+  "ancho": 390,
+  "problemas": {}
+ },
+ {
+  "ruta": "/schedule/book/:slotId",
+  "abierta": "",
+  "componente": "BookingNew",
+  "ancho": 0,
+  "problemas": {
+   "sin-enlace": [
+    "ningún enlace real a esta ruta en el barrido"
+   ]
+  }
+ }
+]

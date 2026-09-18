@@ -77,7 +77,13 @@
   border: none;
   color: var(--brand-primary);
   cursor: pointer;
-  height: 100%;
+  /* Alto del campo entero, no el del ícono: con `height: 100%` dentro de un
+     flex sin alto definido el botón se colapsaba a 42 × 18 px, por debajo del
+     mínimo táctil (WCAG 2.5.8 · 24 px). Visto en 5 formularios por el barrido
+     del refactor UX. */
+  align-self: stretch;
+  min-block-size: 24px;
+  min-inline-size: 24px;
   transition: color var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
 }
 

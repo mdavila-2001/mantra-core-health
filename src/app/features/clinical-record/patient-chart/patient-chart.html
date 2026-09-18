@@ -215,6 +215,7 @@
     size="sm"
     type="button"
     data-testid="expediente-acciones"
+    [attr.aria-label]="'Acciones: ' + fila.principal"
     [appMenuTrigger]="menuDeAcciones"
     [isLoading]="cambiandoEstado() === fila.id"
   >

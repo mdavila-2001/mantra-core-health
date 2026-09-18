@@ -1,8 +1,29 @@
 # Estado
 
-**Última tarea verificada:** candidato `e7261cb4` + documentación · 2026-09-18 (segunda tanda).
-**Fases:** 00–11 recorridas para el alcance declarado (piloto «Mis citas», panel de la médica,
-órdenes y resultados, y 4 familias transversales). R03, R07, R09 y R10 quedan **parciales** (ver `QA_FINAL.md`).
+**Última tarea verificada:** rama `justin/refac-ux-todo` · 2026-09-18 (tercera tanda: «todo pasa por el rediseño»).
+**Alcance:** las 139 (médica) + 151 (paciente) + 275 (superadmin) combinaciones ruta × ancho del barrido
+`playwright/refac-ux-barrido.spec.ts`, en 1440/768/390. Barrido fresco: médica 5/5, paciente 6/6,
+superadmin 10/10; lo que queda marcado está justificado en `HALLAZGOS.md` § «Tercera tanda».
+
+## Tercera tanda — qué se corrigió (verificado en navegador)
+
+| Pantalla | Defecto | Arreglo |
+|---|---|---|
+| Evoluciones | 64 tarjetas, 12 000 px | `app-data-table`, 5 000 px; la fila abre la evolución |
+| Encuesta (médico) | asociación a media página; respuestas sin su pregunta | a lo ancho; `<dl>` pregunta → respuesta |
+| Nueva cotización | `.cotizacion__grilla` sin `display:grid`; plan apilado | mitades y tercios; 1 columna en 390 |
+| Contabilidad | 6 indicadores en 4 columnas (2 huecos) | 3/2/1 columnas |
+| Formularios | código largo desbordaba la tarjeta | `overflow-wrap:anywhere` |
+| Solicitudes de vínculo | 64 casillas en una columna, 3 500 px | rejilla, 1 250 px |
+| `file-input` (átomo) | `image/*` se mostraba «*» | «Imagen · PDF», test nuevo |
+| Acceso delegado (sets) | editor de ítems en 1/3 del ancho | fila completa, campos a 2 columnas |
+| Terminología | nota de ayuda a media página | caja a lo ancho, texto acotado |
+| Agenda | aria-label del seguro sin el texto visible (WCAG 2.5.3) | «Aseguradora: ver la solicitud …, paciente» |
+
+## Gates (2026-09-18)
+
+`lint` 0 · `typecheck` 0 · `build` 0 (22 avisos de presupuesto, igual que la base) ·
+`yarn test` 522/524 archivos; los 9 fallos son los preexistentes (work-history 7, instituciones 2).
 
 ## Bloqueos
 

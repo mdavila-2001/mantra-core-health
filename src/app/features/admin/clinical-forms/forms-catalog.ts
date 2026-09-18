@@ -32,6 +32,9 @@ const CAMPOS_EN_EL_VISTAZO = 6;
 /** Una especialidad del catálogo, con los formularios que trae. */
 type GrupoDeEspecialidad = SpecialtyGroup<ChartTemplate>;
 
+/** El título de un grupo cuya especialidad no tiene nombre en terminología. */
+const SIN_NOMBRE_DE_ESPECIALIDAD = 'Especialidad sin nombre en el catálogo';
+
 /**
  * El catálogo navegable de formularios clínicos estándar — carril R2-5, punto 5
  * del reclamo.
@@ -78,6 +81,7 @@ type GrupoDeEspecialidad = SpecialtyGroup<ChartTemplate>;
   styleUrl: './forms-catalog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+
 export class FormsCatalog {
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly terminology = inject(TerminologyClient);
@@ -110,6 +114,8 @@ export class FormsCatalog {
 
   /** El término tecleado, ya comparable. Vacío ⇒ el catálogo entero. */
   private readonly busqueda = computed(() => normalizar(this.params()[SEARCH_PARAM] ?? ''));
+  /** Con una búsqueda puesta, los grupos que quedaron se muestran abiertos. */
+  protected readonly hayBusqueda = computed(() => this.busqueda() !== '');
 
   constructor() {
     this.cargar();
@@ -144,7 +150,9 @@ export class FormsCatalog {
     const busqueda = this.busqueda();
     return [...porEspecialidad.entries()]
       .map(([conceptId, formularios]) => {
-        const label = etiquetas.get(conceptId)?.display ?? conceptId;
+        // Nunca el uuid: si terminología no trae el nombre, se dice que falta.
+        // El identificador llegaba como título de grupo (barrido del refactor UX).
+        const label = etiquetas.get(conceptId)?.display ?? SIN_NOMBRE_DE_ESPECIALIDAD;
         return {
           conceptId,
           label,

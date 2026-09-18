@@ -139,13 +139,19 @@ describe('FormSection', () => {
   });
 
   describe('mobile-first', () => {
-    it('una columna en la base y dos desde tablet, sin max-width', () => {
+    it('una columna en la base, dos y tres a medida que la sección se ensancha, sin max-width', () => {
+      // Mobile-first por el ancho de la SECCIÓN (container queries): dentro de
+      // un diálogo angosto sigue en una columna. La tercera columna es la de
+      // la regla del cliente (composition-rules §5), refactor UX.
       const css = readFileSync(FORM_SECTION_CSS, 'utf8');
 
       expect(css).not.toContain('max-width:');
-      expect(css).toContain('@media (min-width: 780px)');
+      expect(css).toContain('container-type: inline-size');
+      expect(css).toContain('@container (min-width: 36rem)');
+      expect(css).toContain('@container (min-width: 60rem)');
+      expect(css).toContain('repeat(3, minmax(0, 1fr))');
 
-      const base = css.slice(0, css.indexOf('@media'));
+      const base = css.slice(0, css.indexOf('@container'));
       expect(base).toContain('grid-template-columns: 1fr');
     });
   });

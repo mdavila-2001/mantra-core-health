@@ -10,6 +10,9 @@
   gap: var(--sp-4);
   margin-block-start: var(--sp-6);
   max-inline-size: 68ch;
+  /* Texto para leer: conserva su medida, pero centrado. Pegado a la izquierda
+     dejaba una columna vacía al lado (regla del cliente §5). */
+  margin-inline: auto;
 }
 
 .termino__volver {

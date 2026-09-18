@@ -7,8 +7,9 @@
 }
 
 .historial {
-  display: grid;
-  gap: var(--sp-4);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
 }
 
 .historial__titulo {

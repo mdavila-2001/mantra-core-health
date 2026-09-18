@@ -1,10 +1,13 @@
 /* ============================================================================
-    Form section — MOBILE-FIRST (§0.1): una columna en teléfono, dos desde
-    tablet. Solo `min-width`.
+    Form section — MOBILE-FIRST (§0.1): una columna en teléfono, dos y tres a
+    medida que la sección se ensancha. Solo `min-width`.
     ========================================================================== */
 
 :host {
     display: block;
+    /* Las columnas dependen del ancho de la sección, no de la ventana: dentro
+       de un diálogo angosto sigue en una columna aunque la pantalla sea ancha. */
+    container-type: inline-size;
     margin-block-end: var(--sp-6);
     font-family: var(--font-body);
 }
@@ -74,9 +77,19 @@
     margin-block-start: var(--sp-4);
 }
 
-@media (min-width: 780px) {
+/* Regla del cliente (composition-rules §5): los campos se reparten en
+   columnas —1, 2, 3— en vez de acotar el formulario a una «medida» que lo deja
+   en la esquina. Umbrales por contenedor, equivalentes a los 780 / 1120 px de
+   la regla con el menú lateral abierto. */
+@container (min-width: 36rem) {
     .form-section__grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--sp-4) var(--sp-6);
+    }
+}
+
+@container (min-width: 60rem) {
+    .form-section__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }

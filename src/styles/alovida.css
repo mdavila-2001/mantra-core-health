@@ -4077,3 +4077,10 @@ html[data-js] .landing [data-aparece].visto  { opacity: 1; transform: none; }
 .app-form-grid.app-form-grid.app-form-grid > .app-form-grid__ancho {
   grid-column: 1 / -1;
 }
+
+/* Un botón suelto en la rejilla ocupa su fila pero mide su texto, al final de
+   la fila como la acción de envío de un formulario. Estirado medía 1 062 px en
+   «Libros contables» (refactor UX). */
+.app-form-grid.app-form-grid.app-form-grid > :is(button, a)[app-button] {
+  justify-self: end;
+}

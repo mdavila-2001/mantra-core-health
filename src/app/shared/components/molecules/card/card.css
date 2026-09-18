@@ -8,6 +8,12 @@
     --_card-padding: var(--sp-4);
 
     display: block;
+    /* Una tarjeta no es más ancha que su columna. Como ítem de una rejilla o
+       de un flex, por omisión tomaba el ancho mínimo de su contenido: una tira
+       de pestañas o una tabla adentro la estiraba a 606 px en un teléfono de
+       390 y la página entera se desplazaba de costado (barrido del refactor
+       UX). Lo ancho de adentro ya se desplaza en su propia caja. */
+    min-inline-size: 0;
     background: var(--bg-surface);
     border-radius: var(--r-md);
     border: 1px solid transparent;
@@ -53,6 +59,27 @@
 .card__body,
 .card__footer {
     padding: var(--_card-padding);
+}
+
+/* ---- disposición del cuerpo --------------------------------------------
+   El contenido proyectado vive en `.card__body`, no en el host. Una pantalla
+   que ponía `display: grid; gap` en la clase de su tarjeta maquetaba el host
+   —cuyo único hijo es el cuerpo— y los hijos quedaban apilados sin el aire
+   diseñado (12 tarjetas, refactor UX). Estas propiedades SÍ atraviesan el
+   encapsulado: `.mi-tarjeta { --card-body-display: grid; --card-body-gap: … }`.
+   El `:host` las reinicia para que una tarjeta anidada no herede las de afuera. */
+:host {
+    --card-body-display: initial;
+    --card-body-gap: initial;
+    --card-body-direction: initial;
+    --card-body-align-content: initial;
+}
+
+.card__body {
+    display: var(--card-body-display, block);
+    gap: var(--card-body-gap, normal);
+    flex-direction: var(--card-body-direction, row);
+    align-content: var(--card-body-align-content, normal);
 }
 
 /* Sin contenido proyectado el hueco desaparece — incluido su padding. */

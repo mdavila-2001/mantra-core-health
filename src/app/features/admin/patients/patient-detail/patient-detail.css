@@ -99,7 +99,8 @@
    es una columna simple, que es lo que pide una lista de contactos. */
 .ficha__pestana {
   margin-block-start: var(--sp-4);
-  max-inline-size: 40rem;
+  /* Sin tope propio (regla del cliente §5): con 40rem la pestaña quedaba en
+     la esquina de la tarjeta. */
 }
 
 .ficha__alta {

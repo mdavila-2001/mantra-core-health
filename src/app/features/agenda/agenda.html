@@ -508,7 +508,9 @@
       type="button"
       class="agenda__seguro-enlace"
       data-testid="agenda-seguro"
-      [attr.aria-label]="'Ver la solicitud de seguro ' + solicitud.numero"
+      [attr.aria-label]="
+        cita.cobertura + ': ver la solicitud de seguro ' + solicitud.numero + ', ' + cita.paciente
+      "
       appTooltip="Ver la solicitud de seguro"
       (click)="verSolicitudDeSeguro(cita)"
     >
@@ -549,7 +551,7 @@
         size="sm"
         [iconOnly]="true"
         data-testid="agenda-pago"
-        aria-label="Cambiar el estado del pago"
+        [attr.aria-label]="'Cambiar el estado del pago: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Cambiar el estado del pago"
         [appMenuTrigger]="menuDePago"
         [isLoading]="operando() === cita.id"
@@ -600,7 +602,7 @@
         size="sm"
         [iconOnly]="true"
         data-testid="agenda-detalle"
-        aria-label="Ver detalle de la solicitud"
+        [attr.aria-label]="'Ver detalle de la solicitud: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Ver detalle de la solicitud"
         (clicked)="verDetalle(cita)"
       >
@@ -619,7 +621,7 @@
           size="sm"
           [iconOnly]="true"
           data-testid="agenda-historial"
-          aria-label="Ver historial del paciente"
+          [attr.aria-label]="'Ver historial del paciente: ' + cita.paciente"
           appTooltip="Ver historial del paciente"
           [isLoading]="operando() === cita.id"
           (clicked)="verHistorialDelPaciente(cita)"
@@ -637,7 +639,7 @@
         size="sm"
         [iconOnly]="true"
         data-testid="agenda-aceptar"
-        aria-label="Aceptar solicitud"
+        [attr.aria-label]="'Aceptar solicitud: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Aceptar solicitud"
         [isLoading]="operando() === cita.id"
         (clicked)="aceptarCita(cita)"
@@ -653,7 +655,7 @@
         size="sm"
         [iconOnly]="true"
         data-testid="agenda-rechazar"
-        aria-label="Rechazar solicitud"
+        [attr.aria-label]="'Rechazar solicitud: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Rechazar solicitud"
         [isLoading]="operando() === cita.id"
         (clicked)="rechazarCita(cita)"
@@ -674,7 +676,7 @@
         size="sm"
         [iconOnly]="true"
         data-testid="agenda-iniciar"
-        aria-label="Iniciar consulta"
+        [attr.aria-label]="'Iniciar consulta: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Iniciar consulta"
         [isLoading]="operando() === cita.id"
         (clicked)="iniciarAtencion(cita)"
@@ -695,7 +697,7 @@
         size="sm"
         [iconOnly]="true"
         data-testid="agenda-continuar"
-        aria-label="Continuar consulta"
+        [attr.aria-label]="'Continuar consulta: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Continuar consulta"
         (clicked)="continuarAtencion(cita)"
       >
@@ -711,7 +713,7 @@
         size="sm"
         [iconOnly]="true"
         data-testid="agenda-completar"
-        aria-label="Completar cita"
+        [attr.aria-label]="'Completar cita: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Completar cita"
         [isLoading]="operando() === cita.id"
         (clicked)="completarCita(cita)"
@@ -732,7 +734,7 @@
           size="sm"
           [iconOnly]="true"
           data-testid="agenda-llegada"
-          aria-label="Registrar llegada"
+          [attr.aria-label]="'Registrar llegada: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
           appTooltip="Registrar llegada"
           [isLoading]="operando() === cita.id"
           (clicked)="registrarLlegada(cita)"
@@ -749,7 +751,7 @@
         <span
           class="agenda__llego"
           role="img"
-          aria-label="Llegó"
+          [attr.aria-label]="'Llegó: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
           appTooltip="Llegó"
           data-testid="agenda-llego"
         >
@@ -772,7 +774,7 @@
         size="sm"
         [iconOnly]="true"
         data-testid="agenda-demorar"
-        aria-label="Avisar demora de este turno"
+        [attr.aria-label]="'Avisar demora de este turno: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Avisar demora de este turno"
         (clicked)="abrirDemoraDeCita(cita)"
       >
@@ -795,7 +797,7 @@
         size="sm"
         [iconOnly]="true"
         data-testid="agenda-reprogramar"
-        aria-label="Mover la cita a otro horario"
+        [attr.aria-label]="'Mover la cita a otro horario: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Mover la cita a otro horario"
         [isLoading]="operando() === cita.id"
         (clicked)="iniciarReprogramacion(cita)"
@@ -808,26 +810,6 @@
       </button>
     }
 
-    @if (estaVigente(cita) || porResponder(cita)) {
-      <!-- Destructiva: lleva su etiqueta, pide confirmación y exige motivo. -->
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        [iconOnly]="true"
-        data-testid="agenda-reprogramar"
-        aria-label="Mover la cita a otro horario"
-        appTooltip="Mover la cita a otro horario"
-        [isLoading]="operando() === cita.id"
-        (clicked)="iniciarReprogramacion(cita)"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="4" width="18" height="17" rx="2" />
-          <path d="M3 9h18M8 2v4M16 2v4M8 15h7M12.5 12l3 3-3 3" />
-        </svg>
-      </button>
-    }
 
     @if (estaVigente(cita) || porResponder(cita)) {
       <!-- Destructiva: pide confirmación y exige motivo. -->
@@ -838,7 +820,7 @@
         [iconOnly]="true"
         class="agenda__accion-destructiva"
         data-testid="agenda-cancelar"
-        aria-label="Cancelar cita"
+        [attr.aria-label]="'Cancelar cita: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
         appTooltip="Cancelar cita"
         [isLoading]="operando() === cita.id"
         (clicked)="cancelarCita(cita)"
@@ -882,7 +864,7 @@
       size="sm"
       [iconOnly]="true"
       data-testid="agenda-reservar"
-      aria-label="Reservar este cupo"
+      [attr.aria-label]="'Reservar este cupo: ' + (cupo.desde | date: 'EEEE d MMM, HH:mm')"
       appTooltip="Reservar este cupo"
       [routerLink]="rutaDeReserva(cupo)"
       [queryParams]="paramsDeReserva(cupo)"

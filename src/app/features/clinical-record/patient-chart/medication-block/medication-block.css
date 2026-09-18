@@ -7,8 +7,9 @@
 }
 
 .receta {
-  display: grid;
-  gap: var(--sp-4);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
   /* Cuatro campos cortos: a lo ancho de la tabla, la línea de la dosis quedaría
      del largo de la pantalla y sería ilegible. */
   max-inline-size: 68ch;

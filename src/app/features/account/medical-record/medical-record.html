@@ -127,6 +127,7 @@
                     size="sm"
                     type="button"
                     data-testid="historia-descargar-atencion"
+                    [attr.aria-label]="'Descargar PDF: ' + atencion.motivo"
                     (clicked)="descargarAtencion(atencion)"
                   >
                     Descargar PDF
@@ -169,6 +170,7 @@
                     size="sm"
                     type="button"
                     data-testid="historia-descargar-receta"
+                    [attr.aria-label]="'Descargar receta oficial (PDF): ' + receta.medicamento"
                     [isLoading]="descargandoReceta() === receta.id"
                     (clicked)="descargarReceta(receta)"
                   >
@@ -193,6 +195,7 @@
                     variant="ghost"
                     size="sm"
                     data-testid="historia-donde-comprar"
+                    [attr.aria-label]="'Dónde comprarla: ' + receta.medicamento"
                     [routerLink]="['where-to-buy', receta.id]"
                   >
                     Dónde comprarla

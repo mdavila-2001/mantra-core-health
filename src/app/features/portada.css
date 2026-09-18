@@ -16,7 +16,8 @@
     display: block;
     margin-top: var(--sp-5);
     margin-bottom: var(--sp-5);
-    max-width: 72ch;
+    /* A lo ancho, como el resto de los avisos (regla del cliente §5): con
+       72ch quedaba al 62 % del área, pegado a la izquierda. */
 }
 
 /* Mobile-first: una columna; con lugar, tarjetas lado a lado. */

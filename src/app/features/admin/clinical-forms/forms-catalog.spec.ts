@@ -112,7 +112,7 @@ describe('FormsCatalog', () => {
     expect(interno<() => number>('total')()).toBe(3);
   });
 
-  it('si terminología no resuelve, agrupa igual y usa el id como título', () => {
+  it('si terminología no resuelve, agrupa igual y dice que falta el nombre (nunca el id)', () => {
     peticionDelCatalogo().flush([plantilla()]);
     peticionDeEtiquetas().error(new ProgressEvent('error'));
 
@@ -120,7 +120,10 @@ describe('FormsCatalog', () => {
     // Un fallo leyendo metadatos no puede dejar el catálogo en error: los
     // formularios están, y son lo que el cliente pidió ver.
     expect(grupos).toHaveLength(1);
-    expect(grupos[0].label).toBe('esp-cardio');
+    // Antes el título era el identificador (en datos reales, un uuid a la vista:
+    // barrido del refactor UX). Ahora se dice que el nombre falta.
+    expect(grupos[0].label).toBe('Especialidad sin nombre en el catálogo');
+    expect(grupos[0].label).not.toContain('esp-cardio');
   });
 
   it('«usar esta plantilla» la asigna como predeterminada', () => {

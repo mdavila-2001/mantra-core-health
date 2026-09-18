@@ -38,3 +38,16 @@
 rol más numeroso, concentra 5 hallazgos (H-03…H-07) de descubribilidad, orden, densidad
 móvil y jerarquía, tiene estados completos ya modelados (loading/ready/empty/error, sin
 resultados, lista de espera) y una suite de 1 475 líneas que protege el comportamiento.
+
+
+## Tercera tanda (2026-09-18) — marcas del barrido que se dejan, con motivo
+
+- **`paginated-form`** (≈60 formularios de operación de superadmin): una columna y marcador en la
+  barra de avance son decisiones documentadas en su CSS; páginas de 1–4 campos, §5 admite una columna.
+- **Aspectos médicos** (paciente): una columna documentada — respuestas libres de largo muy distinto.
+- **`work-history`** (my-practice): botones repetidos por sede; zona de otra sesión con 7 tests rojos
+  preexistentes. No se toca.
+- **Enlaces MINSA/OMS** en formularios clínicos: mismo destino (MINSA) o destino distinto dentro de la
+  tarjeta de su formulario (OMS ×3); observación menor.
+- **`rebota` / `sin-enlace`**: rutas fuera del rol del actor e hijas con parámetro sin enlace directo.
+- **Composición** en filtros, buscadores, títulos de cabecera y botones alineados al inicio: legítimo.

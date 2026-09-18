@@ -340,7 +340,10 @@ export function registrarPracticas(router: MockRouter): void {
   router.get('/billing/service-catalog/procedure-specialties', () => {
     const conteo = new Map<string, number>();
     for (const n of NOMENCLADOR) conteo.set(n.specialty, (conteo.get(n.specialty) ?? 0) + 1);
-    return [...conteo.entries()].map(([specialty, count]) => ({ specialty, count }));
+    // `{ items }` como la API (y como lo lee `listProcedureSpecialties`): con el
+    // arreglo pelado la pantalla de importar arancel reventaba al abrir con
+    // «Cannot read properties of undefined (reading 'map')».
+    return { items: [...conteo.entries()].map(([specialty, count]) => ({ specialty, count })) };
   });
 
   router.get('/billing/service-catalog/procedures', ({ query }) => {
