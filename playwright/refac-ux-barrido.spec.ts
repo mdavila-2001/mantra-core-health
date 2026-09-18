@@ -107,6 +107,8 @@ async function medirEnPagina(page: Page, ancho: number): Promise<Record<string, 
     for (const e of main.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=hidden]), button, select, a[app-button]')) {
       if (!visible(e)) continue;
       const h = e as HTMLElement;
+      // Los ocultos a propósito (solo para lectores, 1 px) no están «recortados».
+      if (h.matches('.sr-only, .solo-lectores') || h.clientWidth <= 2) continue;
       if (h.scrollWidth > h.clientWidth + 1 && getComputedStyle(h).overflow !== 'visible')
         add('recorte', (h.getAttribute('placeholder') ?? h.textContent ?? h.tagName) || h.tagName);
     }
