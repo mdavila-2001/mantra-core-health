@@ -3,14 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { Provider } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { NEVER, of, throwError } from 'rxjs';
 
 import { PharmacyCampaignsClient } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
 import { pharmacyOrderDtoFixture } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { NewOrder } from './new-order';
-import { DATOS_DE_EJEMPLO_DE_LA_RECETA, datosDeEjemploPara } from './new-order.fixtures';
 import {
   CLAVE_DEL_TRASPASO,
   RUTA_DEL_CHECKOUT,
@@ -136,21 +134,11 @@ describe('NewOrder', () => {
     return encontrado;
   }
 
-  function encenderSeguro(): void {
-    const interruptor = raiz().querySelector<HTMLInputElement>(
-      '[data-testid="pedido-seguro"] input[type="checkbox"]',
-    );
-    clic(interruptor);
-  }
-
   /**
-   * Toca cada botón de la pantalla, incluidos los que aparecen al abrir
-   * paneles, y el conmutador del seguro. Los enlaces quedan afuera: navegan y
-   * no pueden crear nada.
+   * Toca cada botón de la pantalla. Los enlaces quedan afuera: navegan y no
+   * pueden crear nada.
    */
   async function tocarTodo(): Promise<number> {
-    encenderSeguro();
-    encenderSeguro();
     let tocados = 0;
     for (let i = 0; i < 80; i += 1) {
       const botones = Array.from(
@@ -234,7 +222,9 @@ describe('NewOrder', () => {
 
   describe('ninguna acción de la pantalla crea el pedido', () => {
     it('no existe el envío directo: sin «Enviar pedido» y sin ruta, tocar todo no hace POST', async () => {
-      configurar();
+      // La ruta va explícita en `null`: el token la trae real desde que T-E3 la
+      // publicó, y esta prueba es la del caso «sin checkout todavía».
+      configurar([{ provide: RUTA_DEL_CHECKOUT, useValue: null }]);
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
       const enviar = vi.spyOn(client, 'enviar');
@@ -245,7 +235,10 @@ describe('NewOrder', () => {
 
       const tocados = await tocarTodo();
 
-      expect(tocados).toBeGreaterThan(5);
+      // La barrida es más chica desde que se fueron los controles de la
+      // maqueta (cantidad y alternativas); lo que importa es que recorra todo
+      // lo que hay y que nada de eso cree un pedido.
+      expect(tocados).toBeGreaterThan(0);
       http.expectNone('/pharmacy/orders');
       expect(enviar).not.toHaveBeenCalled();
       expect(navegar).not.toHaveBeenCalled();
@@ -315,177 +308,58 @@ describe('NewOrder', () => {
 
   /* ── T-E1 · la receta como pedido ──────────────────────────────────────── */
 
-  describe('la receta como pedido (T-E1)', () => {
-    it('la cabecera dice quién emitió la receta, cuándo y dónde, rotulada como ejemplo', () => {
+  describe('sólo se dibuja lo que el contrato demuestra (FAR-REAL-T-E1 · D-R1-1 = A)', () => {
+    it('no hay cabecera de receta inventada: el borrador no trae quién la emitió ni cuándo', () => {
       configurar();
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
 
-      const receta = uno('pedido-receta');
-      expect(receta?.textContent).toContain('Emitida por Dra. Mariana Suárez Rivero');
-      expect(receta?.textContent).toContain('12/09/2026');
-      expect(receta?.textContent).toContain('Datos de ejemplo');
-      expect(texto()).toContain('Farmacia Andina · Sucursal Centro');
+      expect(uno('pedido-receta')).toBeNull();
+      expect(texto()).not.toContain('Emitida por');
+      // El rótulo de maqueta sobra cuando no queda nada de maqueta que rotular.
+      expect(texto()).not.toContain('Datos de ejemplo');
     });
 
-    it('la cantidad se edita dentro de lo recetado, sin pasar el techo ni bajar de uno', () => {
+    it('la cantidad es la del borrador y no se puede subir: no hay techo demostrable', () => {
       configurar();
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
-      const primero = renglon(0);
 
-      expect(uno('pedido-linea-cantidad', primero)?.textContent?.trim()).toBe('1');
-      expect(uno('pedido-cantidad-menos', primero)?.getAttribute('aria-disabled')).toBe('true');
-      clic(uno('pedido-cantidad-menos', primero));
       expect(uno('pedido-linea-cantidad', renglon(0))?.textContent?.trim()).toBe('1');
-
-      clic(uno('pedido-cantidad-mas', renglon(0)));
-      clic(uno('pedido-cantidad-mas', renglon(0)));
-      expect(uno('pedido-linea-cantidad', renglon(0))?.textContent?.trim()).toBe('3');
-      expect(uno('pedido-cantidad-mas', renglon(0))?.getAttribute('aria-disabled')).toBe('true');
-
-      // Un clic más sobre el techo no cuenta.
-      clic(uno('pedido-cantidad-mas', renglon(0)));
-      expect(uno('pedido-linea-cantidad', renglon(0))?.textContent?.trim()).toBe('3');
-      expect(renglon(0).textContent).toContain('Recetado: hasta 3');
+      // Los controles de la maqueta ya no existen: el techo de 3 viajaba al
+      // POST real como `quantity` (DEV_CONTAMINATION_1).
+      expect(uno('pedido-cantidad-mas', renglon(0))).toBeNull();
+      expect(uno('pedido-cantidad-menos', renglon(0))).toBeNull();
+      expect(texto()).not.toContain('Recetado: hasta');
     });
 
-    it('subtotal y total se recalculan con la cantidad', () => {
+    it('sin contrato no hay alternativas ni variante con seguro', () => {
       configurar();
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
 
-      expect(uno('pedido-linea-subtotal', renglon(0))?.textContent).toContain('68.00 BOB');
-      expect(uno('pedido-total')?.textContent).toContain('108.00 BOB');
-
-      clic(uno('pedido-cantidad-mas', renglon(0)));
-
-      expect(uno('pedido-linea-subtotal', renglon(0))?.textContent).toContain('136.00 BOB');
-      expect(uno('pedido-total-con-cambios')?.textContent).toContain('176.00 BOB');
-    });
-
-    it('«Ver alternativas» abre el panel del renglón con marcas más económicas y su ahorro', () => {
-      configurar();
-      client.prepararBorrador(BORRADOR_COMPLETO);
-      montar();
-      const boton = uno('pedido-ver-alternativas', renglon(0));
-
-      expect(boton?.getAttribute('aria-expanded')).toBe('false');
-      expect(uno('pedido-alternativas')).toBeNull();
-
-      clic(boton);
-
-      expect(uno('pedido-ver-alternativas', renglon(0))?.getAttribute('aria-expanded')).toBe('true');
-      const panel = uno('pedido-alternativas', renglon(0));
-      expect(panel).not.toBeNull();
-      expect(todos('alternativa', panel!)).toHaveLength(3);
-      expect(panel?.textContent).toContain('Amoxicilina · Genérico');
-      expect(panel?.textContent).toContain('57.80 BOB');
-      expect(panel?.textContent).toContain('Ahorrás 10.20 BOB por unidad');
-      expect(panel?.textContent).toContain('Datos de ejemplo');
-    });
-
-    it('elegir una alternativa reemplaza el renglón, lo marca y recalcula el total', () => {
-      configurar();
-      client.prepararBorrador(BORRADOR_COMPLETO);
-      montar();
-
-      clic(uno('pedido-ver-alternativas', renglon(0)));
-      clic(todos('alternativa-elegir', renglon(0))[1]);
-
-      const primero = renglon(0);
-      expect(uno('pedido-linea-medicamento', primero)?.textContent).toContain(
-        'Amoxicilina · Marca de ejemplo A',
-      );
-      expect(uno('pedido-linea-alternativa-elegida', primero)?.textContent).toContain(
-        'Alternativa elegida',
-      );
-      expect(primero.textContent).toContain('En lugar de Amoxicilina 500 mg');
-      expect(uno('pedido-alternativas')).toBeNull();
-      expect(uno('pedido-total-con-cambios')?.textContent).toContain('87.60 BOB');
-      // El borrador real no se toca: la alternativa no tiene productId.
-      expect(client.borradorPreparado()).toBe(BORRADOR_COMPLETO);
-    });
-
-    it('volver a la recetada deshace la alternativa', () => {
-      configurar();
-      client.prepararBorrador(BORRADOR_COMPLETO);
-      montar();
-
-      clic(uno('pedido-ver-alternativas', renglon(0)));
-      clic(todos('alternativa-elegir', renglon(0))[0]);
-      clic(uno('pedido-ver-alternativas', renglon(0)));
-      clic(uno('alternativa-restaurar', renglon(0)));
-
-      expect(uno('pedido-linea-medicamento', renglon(0))?.textContent).toContain(
-        'Amoxicilina 500 mg',
-      );
-      expect(uno('pedido-linea-alternativa-elegida')).toBeNull();
-    });
-
-    it('con seguro, cada renglón dice si está aprobado y sólo los no aprobados ofrecen alternativas', () => {
-      configurar();
-      client.prepararBorrador(BORRADOR_COMPLETO);
-      montar();
-
-      expect(todos('pedido-ver-alternativas')).toHaveLength(2);
-      expect(uno('pedido-linea-seguro')).toBeNull();
-
-      encenderSeguro();
-
-      expect(uno('pedido-linea-seguro', renglon(0))?.textContent).toContain(
-        'Aprobado por el seguro',
-      );
-      expect(uno('pedido-linea-seguro', renglon(1))?.textContent).toContain('No aprobado');
       expect(uno('pedido-ver-alternativas', renglon(0))).toBeNull();
-      expect(uno('pedido-ver-alternativas', renglon(1))).not.toBeNull();
-      // El no aprobado muestra su precio; el aprobado no.
-      expect(uno('pedido-linea-subtotal', renglon(1))?.textContent).toContain('40.00 BOB');
-      expect(uno('pedido-linea-subtotal', renglon(0))).toBeNull();
-      expect(uno('pedido-total')?.textContent).toContain('Total estimado de lo no aprobado');
-      expect(uno('pedido-total-con-cambios')?.textContent).toContain('40.00 BOB');
-      expect(texto()).toContain('no la respuesta de tu aseguradora');
+      expect(uno('pedido-variante-seguro')).toBeNull();
+      expect(uno('pedido-seguro')).toBeNull();
+      for (const rotulo of [
+        'Ver alternativas',
+        'Alternativa elegida',
+        'Aprobado por el seguro',
+        'No aprobado',
+        'Demostración',
+      ]) {
+        expect(texto()).not.toContain(rotulo);
+      }
     });
 
-    it('con seguro, lo que la sede no tiene no se da por cubierto aunque figure aprobado', () => {
-      configurar();
-      // El primer renglón cae en la posición «aprobada» del patrón, pero la sede no lo tiene.
-      client.prepararBorrador({
-        ...BORRADOR_COMPLETO,
-        lineas: [{ ...BORRADOR_COMPLETO.lineas[0]!, disponible: false, precio: null }, BORRADOR_COMPLETO.lineas[1]!],
-        totalEstimado: '40.00',
-      });
-      montar();
-
-      encenderSeguro();
-
-      expect(renglon(0).textContent).toContain('La farmacia no la tiene');
-      expect(renglon(0).textContent).toContain('Sin precio publicado');
-      expect(renglon(0).textContent).not.toContain('Lo aprobado se reparte');
-      expect(uno('pedido-nota-seguro')).toBeNull();
-    });
-
-    it('con seguro, un aprobado vuelve a la recetada y la elección reaparece al apagarlo', () => {
+    it('el total es el del borrador: nada se recalcula con cambios de demostración', () => {
       configurar();
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
 
-      clic(uno('pedido-ver-alternativas', renglon(0)));
-      clic(todos('alternativa-elegir', renglon(0))[0]);
-      encenderSeguro();
-      expect(uno('pedido-linea-alternativa-elegida', renglon(0))).toBeNull();
-
-      encenderSeguro();
-      expect(uno('pedido-linea-alternativa-elegida', renglon(0))).not.toBeNull();
-    });
-
-    it('mientras llegan los datos de la receta se ve el esqueleto', () => {
-      configurar([{ provide: DATOS_DE_EJEMPLO_DE_LA_RECETA, useValue: () => NEVER }]);
-      client.prepararBorrador(BORRADOR_COMPLETO);
-      montar();
-
-      expect(uno('pedido-cargando')).not.toBeNull();
-      expect(uno('pedido-confirmacion')).toBeNull();
+      expect(uno('pedido-total')?.textContent).toContain(BORRADOR_COMPLETO.totalEstimado ?? '');
+      expect(uno('pedido-total-con-cambios')).toBeNull();
+      expect(texto()).not.toContain('Recalculado con tus cambios');
     });
 
     it('un borrador sin renglones es un vacío con la vuelta a las sucursales', () => {
@@ -497,36 +371,7 @@ describe('NewOrder', () => {
       expect(texto()).toContain('Volver a las sucursales');
       expect(uno('pedido-confirmacion')).toBeNull();
     });
-
-    it('si los datos de la receta fallan hay error con reintento, y el reintento se recupera', () => {
-      let intentos = 0;
-      configurar([
-        {
-          provide: DATOS_DE_EJEMPLO_DE_LA_RECETA,
-          useValue: (borrador: BorradorDePedido) => {
-            intentos += 1;
-            return intentos === 1
-              ? throwError(() => new Error('fuente caída'))
-              : of(datosDeEjemploPara(borrador));
-          },
-        },
-      ]);
-      client.prepararBorrador(BORRADOR_COMPLETO);
-      montar();
-
-      expect(texto()).toContain('Algo salió mal');
-      expect(uno('pedido-confirmacion')).toBeNull();
-
-      const reintentar = Array.from(raiz().querySelectorAll<HTMLButtonElement>('button')).find(
-        (boton) => boton.textContent?.includes('Reintentar'),
-      );
-      clic(reintentar);
-
-      expect(uno('pedido-confirmacion')).not.toBeNull();
-    });
   });
-
-  /* ── T-E1 · «Continuar» no crea el pedido (D-FARMOCK-T-E1-01) ──────────── */
 
   describe('«Continuar» hacia el checkout', () => {
     it('sin ruta de checkout se ofrece deshabilitado y no navega ni llama a la API', () => {
@@ -544,15 +389,12 @@ describe('NewOrder', () => {
       http.expectNone('/pharmacy/orders');
     });
 
-    it('con ruta, lleva las elecciones sin orderId, sin POST y sin perder el borrador', async () => {
+    it('con ruta, lleva la cantidad del borrador sin orderId, sin POST y sin perder el borrador', async () => {
       configurar([{ provide: RUTA_DEL_CHECKOUT, useValue: RUTA_DE_PRUEBA }]);
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
       const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-      clic(uno('pedido-cantidad-mas', renglon(0)));
-      clic(uno('pedido-ver-alternativas', renglon(1)));
-      clic(todos('alternativa-elegir', renglon(1))[1]);
       clic(uno('pedido-continuar'));
       await fixture.whenStable();
 
@@ -564,8 +406,14 @@ describe('NewOrder', () => {
         CLAVE_DEL_TRASPASO
       ] as TraspasoDeLaReceta;
       expect(traspaso.conSeguro).toBe(false);
-      expect(traspaso.renglones[0]).toMatchObject({ indice: 0, cantidad: 2, alternativa: null });
-      expect(traspaso.renglones[1]?.alternativa?.nombre).toBe('Losartán · Marca de ejemplo A');
+      // La cantidad es la del borrador y los dos campos de demostración van vacíos.
+      expect(traspaso.renglones[0]).toMatchObject({
+        indice: 0,
+        cantidad: 1,
+        alternativa: null,
+        aprobadoPorSeguro: false,
+      });
+      expect(traspaso.renglones[1]).toMatchObject({ cantidad: 1, alternativa: null });
       // Ningún identificador de pedido ni de producto viaja en el traspaso.
       expect(JSON.stringify(traspaso)).not.toMatch(/orderId|productId/);
 
