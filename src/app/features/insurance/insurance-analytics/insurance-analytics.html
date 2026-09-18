@@ -143,6 +143,7 @@
                 [state]="readyRows(dashboard.topMedications)"
                 [columns]="medicationColumns"
                 [trackBy]="medicationTrackBy"
+                [rowLabel]="medicationLabel"
                 caption="Top 10 medicamentos por gasto facturado"
               />
             </div>
@@ -168,6 +169,7 @@
                 [state]="readyRows(dashboard.specialties)"
                 [columns]="specialtyColumns"
                 [trackBy]="specialtyTrackBy"
+                [rowLabel]="specialtyLabel"
                 caption="Consultas por especialidad"
               />
             </div>
@@ -192,6 +194,7 @@
                 [state]="readyRows(dashboard.prevalentPathologies)"
                 [columns]="pathologyColumns"
                 [trackBy]="pathologyTrackBy"
+                [rowLabel]="pathologyLabel"
                 caption="Patologías prevalentes (CIE-10)"
               />
             </div>

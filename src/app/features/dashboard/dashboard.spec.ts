@@ -315,6 +315,20 @@ describe('Dashboard', () => {
       expect(atajo?.getAttribute('href')).toBe('/schedule');
     });
 
+    it('refactor UX (D-05): el atajo es la acción del encabezado y va antes que las cifras', () => {
+      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
+
+      const atajo = atajoDeAgenda() as HTMLAnchorElement;
+      expect(atajo.closest('app-page-header')).not.toBeNull();
+      const cifras = raiz().querySelector('.panel__cifras') as Element;
+      const accesos = raiz().querySelector('[data-testid="panel-accesos"]') as Element;
+      // Las cifras son contexto: quedan después de la tarea del día y de los accesos.
+      const despues = (a: Node, b: Node): boolean =>
+        (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+      expect(despues(atajo, cifras)).toBe(true);
+      expect(despues(accesos, cifras)).toBe(true);
+    });
+
     it('quien no atiende no ve el atajo: no se ofrece una puerta que da 403', () => {
       abrirPanel(['PATIENT']);
 

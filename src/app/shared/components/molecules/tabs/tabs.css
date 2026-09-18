@@ -90,7 +90,7 @@
     color: var(--text-secondary);
     cursor: pointer;
     border-radius: var(--r-sm);
-    transition: color 0.15s ease, background 0.15s ease;
+    transition: color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
 }
 
 .tabs__desplazar:hover:not(:disabled) {
@@ -121,7 +121,7 @@
     color: var(--text-secondary);
     cursor: pointer;
     border-radius: var(--r-sm) var(--r-sm) 0 0;
-    transition: color 0.15s ease, background 0.15s ease;
+    transition: color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
 }
 
 .tabs__tab:hover:not(:disabled) {
@@ -141,7 +141,7 @@
     border-radius: var(--r-full);
     background: var(--brand-primary);
     transform: scaleX(0);
-    transition: transform 0.15s ease;
+    transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 .tabs__tab.is-selected {

@@ -22,7 +22,7 @@
   background-color: var(--bg-surface);
   border: 1.5px solid var(--border-strong);
   border-radius: var(--r-sm);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
   overflow: hidden;
 }
 
@@ -78,7 +78,7 @@
   color: var(--brand-primary);
   cursor: pointer;
   height: 100%;
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition: color var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
 }
 
 .date-picker-btn:hover:not(:disabled) {
@@ -105,7 +105,7 @@
   font-size: var(--fs-body);
   color: var(--text-primary);
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
   text-align: left;
 }
 
@@ -252,7 +252,7 @@
   color: var(--text-primary);
   text-transform: capitalize;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
 }
 
 .view-switch:hover {
@@ -305,7 +305,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
 }
 
 .calendar-day-btn:hover:not(.is-selected):not(.is-disabled):not(:disabled) {

@@ -62,6 +62,14 @@ Revisores en `.claude/agents/`: `visual-reviewer`, `frontend-reviewer`,
    pestañas. `docs/components/composition-rules.md` §5 tiene la receta y la
    forma de medirlo.
 
+## Refactorización profesional UX/UI
+
+Kit y trabajo en `docs/refactor-profesional/` (alcance y criterios en
+`ESPECIFICACION_OBJETIVO.md`). Antes de continuar, leé `trabajo/ESTADO.md` y la
+fase vigente. Cada afirmación de validación enlaza evidencia real o dice que no
+se ejecutó. El kit se aplica **sobre** el protocolo de esta página, no en su
+lugar (`trabajo/DECISIONES.md` D-01).
+
 ## Git
 
 El merge a `dev` exige revisión humana: `gh pr merge` y el auto-merge están

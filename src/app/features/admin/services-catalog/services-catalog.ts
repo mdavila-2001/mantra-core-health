@@ -161,6 +161,8 @@ export class ServicesCatalog {
   ]);
 
   protected readonly porId = (row: ServiceCatalogItem): string => row.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeServicio = (row: ServiceCatalogItem): string => row.name;
   protected readonly cargando = computed(() => this.resultados().status === 'loading');
 
   constructor() {
