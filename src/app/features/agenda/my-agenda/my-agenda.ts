@@ -38,16 +38,15 @@ import { ContentDialog } from '../../../shared/components/organisms/content-dial
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { primerDiaDelMes, sumarMeses } from '../../../shared/date/calendario-mes';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
-import { BlockForm, aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
+import { aMedianoche, conHora, type BloqueoPedido } from './block-form/block-form';
 import {
-  DayView,
   type EstadoResuelto,
   type PedidoDeAccion,
   type RatoTocado,
 } from './day-view/day-view';
-import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
+import type { RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
-import { WeekView, lunesDe } from './week-view/week-view';
+import { lunesDe } from './week-view/week-view';
 import { ScheduleGrid } from './schedule-grid/schedule-grid';
 import { AGENDA_CREATE_ROUTE, APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
 
@@ -147,11 +146,7 @@ const SIN_DATO = 'Sin registrar';
     AppButton,
     AppButtonLink,
     Tooltip,
-    BlockForm,
-    DayView,
-    TarjetaDelDia,
     MonthView,
-    WeekView,
     ScheduleGrid,
     ContentDialog,
     RouterLink,

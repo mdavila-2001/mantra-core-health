@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 
 import type { AgendaSlot } from '../../../../core/data-access/scheduling/scheduling.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import {
   claveDelDia,
   DIAS_DE_LA_SEMANA,
@@ -39,6 +40,8 @@ export interface CeldaDelMes {
   readonly motivo: string | null;
   /** Cómo se anuncia la celda entera a un lector de pantalla. */
   readonly etiqueta: string;
+  /** El globo del día: a qué horas atiende y qué tiene bloqueado. */
+  readonly resumen: string;
 }
 
 /**
@@ -68,7 +71,7 @@ export interface CeldaDelMes {
  */
 @Component({
   selector: 'app-month-view',
-  imports: [AppButton],
+  imports: [AppButton, Tooltip],
   templateUrl: './month-view.html',
   styleUrl: './month-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,9 +88,6 @@ export class MonthView {
 
   /** Pidieron ver otro mes. */
   readonly mesElegido = output<Date>();
-
-  /** Tocaron un día: el contenedor decide si abre el día o el bloqueo. */
-  readonly diaElegido = output<Date>();
 
   protected readonly encabezados = DIAS_DE_LA_SEMANA;
 
@@ -106,7 +106,8 @@ export class MonthView {
       semana.map((fecha) => {
         const clave = claveDelDia(fecha);
         const cuenta = porDia.get(clave) ?? { total: 0, reservados: 0 };
-        const bloqueo = this.bloqueoDe(fecha);
+        const bloqueos = this.bloqueosDe(fecha);
+        const bloqueo = bloqueos[0] ?? null;
 
         const estado = decidirEstado(cuenta, bloqueo !== null);
         return {
@@ -120,6 +121,7 @@ export class MonthView {
           total: cuenta.total,
           motivo: bloqueo?.motivo ?? null,
           etiqueta: etiquetaDeLaCelda(fecha, estado, cuenta, bloqueo?.motivo ?? null),
+          resumen: resumenDelDia(fecha, this.franjasPorDia().get(clave) ?? [], bloqueos),
         };
       }),
     );
@@ -145,13 +147,40 @@ export class MonthView {
     return porDia;
   });
 
-  /** El bloqueo que cubre esa fecha, si hay alguno. */
-  private bloqueoDe(fecha: Date): BloqueoDelMes | null {
+  /**
+   * Las horas de atención de cada día, sacadas de los cupos publicados.
+   *
+   * Los cupos y no la plantilla: la plantilla dice qué rige «los martes», los
+   * cupos dicen qué se publicó ESTE martes —con la vigencia y los cambios ya
+   * aplicados—. Cupos pegados se funden en una sola franja: «08:00–12:00», no
+   * dieciséis turnos de quince minutos.
+   */
+  private readonly franjasPorDia = computed(() => {
+    const porDia = new Map<string, Franja[]>();
+    const ordenados = [...this.cupos()].sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+    for (const cupo of ordenados) {
+      const clave = claveDelDia(cupo.startAt);
+      const franjas = porDia.get(clave) ?? [];
+      const ultima = franjas.at(-1);
+      if (ultima !== undefined && cupo.startAt.getTime() <= ultima.hasta.getTime()) {
+        if (cupo.endAt.getTime() > ultima.hasta.getTime()) {
+          franjas[franjas.length - 1] = { desde: ultima.desde, hasta: cupo.endAt };
+        }
+      } else {
+        franjas.push({ desde: cupo.startAt, hasta: cupo.endAt });
+      }
+      porDia.set(clave, franjas);
+    }
+    return porDia;
+  });
+
+  /** Los bloqueos que tocan esa fecha, en orden. */
+  private bloqueosDe(fecha: Date): readonly BloqueoDelMes[] {
     const inicio = medianoche(fecha).getTime();
-    const fin = inicio + 24 * 60 * 60 * 1000;
-    return (
-      this.bloqueos().find((b) => b.desde.getTime() < fin && b.hasta.getTime() > inicio) ?? null
-    );
+    const fin = inicio + UN_DIA_MS;
+    return this.bloqueos()
+      .filter((b) => b.desde.getTime() < fin && b.hasta.getTime() > inicio)
+      .sort((a, b) => a.desde.getTime() - b.desde.getTime());
   }
 
   protected mesAnterior(): void {
@@ -163,10 +192,57 @@ export class MonthView {
     const m = this.mes();
     this.mesElegido.emit(new Date(m.getFullYear(), m.getMonth() + 1, 1));
   }
+}
 
-  protected elegir(celda: CeldaDelMes): void {
-    this.diaElegido.emit(celda.fecha);
+const UN_DIA_MS = 24 * 60 * 60 * 1000;
+
+/** Un rato continuo del día. */
+interface Franja {
+  readonly desde: Date;
+  readonly hasta: Date;
+}
+
+/** «08:00». */
+function hora(fecha: Date): string {
+  return fecha.toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+/** «08:00–12:00 y 14:00–18:00». */
+function listaDeFranjas(franjas: readonly Franja[]): string {
+  const textos = franjas.map((f) => `${hora(f.desde)}–${hora(f.hasta)}`);
+  if (textos.length <= 1) return textos.join('');
+  return `${textos.slice(0, -1).join(', ')} y ${textos.at(-1)}`;
+}
+
+/**
+ * El globo de un día del mes: el horario de atención y lo bloqueado.
+ *
+ * Un bloqueo se recorta al día que se mira: el de unas vacaciones de dos
+ * semanas no dice «del 3 al 17» en cada celda, dice «todo el día». Y el que
+ * cubre sólo una parte dice qué parte, que es justo lo que no se ve en la
+ * celda.
+ */
+function resumenDelDia(
+  fecha: Date,
+  franjas: readonly Franja[],
+  bloqueos: readonly BloqueoDelMes[],
+): string {
+  const partes = [fechaLarga(fecha)];
+  partes.push(franjas.length === 0 ? 'No atendés.' : `Atendés ${listaDeFranjas(franjas)}.`);
+
+  const inicio = medianoche(fecha).getTime();
+  const fin = inicio + UN_DIA_MS;
+  for (const bloqueo of bloqueos) {
+    const desde = Math.max(bloqueo.desde.getTime(), inicio);
+    const hasta = Math.min(bloqueo.hasta.getTime(), fin);
+    const cuando =
+      desde === inicio && hasta === fin
+        ? 'todo el día'
+        : listaDeFranjas([{ desde: new Date(desde), hasta: new Date(hasta) }]);
+    const motivo = bloqueo.motivo === null ? '' : ` (${bloqueo.motivo})`;
+    partes.push(`Bloqueado ${cuando}${motivo}.`);
   }
+  return partes.join(' · ');
 }
 
 /**

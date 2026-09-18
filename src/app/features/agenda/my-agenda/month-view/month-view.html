@@ -31,14 +31,18 @@
               [class.mes__celda--pasado]="celda.pasado"
               [attr.data-estado]="celda.estado"
             >
-              <!-- El día es un botón sólo cuando hay algo que mirar o que
-                   bloquear: una celda de relleno del mes vecino no lo es. -->
+              <!-- Sólo lectura: el mes es un vistazo. Pasar el puntero —o llegar
+                   con Tab— muestra el horario de atención del día y lo que
+                   esté bloqueado; tocarlo no abre nada (pedido del cliente,
+                   18/09: la versión cliqueable se va a otra pantalla). -->
               @if (celda.delMes) {
-                <button
-                  type="button"
+                <div
                   class="mes__dia"
+                  role="note"
+                  tabindex="0"
+                  data-testid="mes-dia"
                   [attr.aria-label]="celda.etiqueta"
-                  (click)="elegir(celda)"
+                  [appTooltip]="celda.resumen"
                 >
                   <span class="mes__numero" aria-hidden="true">{{ celda.numero }}</span>
 
@@ -54,7 +58,7 @@
                       celda.motivo ?? 'Bloqueado'
                     }}</span>
                   }
-                </button>
+                </div>
               } @else {
                 <span class="mes__numero mes__numero--fuera" aria-hidden="true">{{
                   celda.numero

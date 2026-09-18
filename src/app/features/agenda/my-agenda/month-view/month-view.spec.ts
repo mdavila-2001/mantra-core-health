@@ -167,14 +167,61 @@ describe('MonthView', () => {
     expect(vistos[1].getMonth()).toBe(11);
   });
 
-  it('tocar un día lo emite, para que el contenedor decida qué hacer', () => {
-    const elegidos: Date[] = [];
+  /* -- El globo del día (pedido del cliente, 18/09) ------------------------ */
+
+  /** Abre el globo de un día con el foco, como lo haría el teclado. */
+  async function globoDe(dia: number): Promise<string> {
+    celda(dia)?.dispatchEvent(new FocusEvent('focus'));
+    await fixture.whenStable();
+    return document.body.querySelector('app-tooltip-panel')?.textContent ?? '';
+  }
+
+  afterEach(() => fixture?.destroy());
+
+  it('el día no es un botón: el mes se mira, no se toca', () => {
     montar([cupo(11, 4, 4)]);
-    fixture.componentInstance.diaElegido.subscribe((d: Date) => elegidos.push(d));
 
-    celda(11)?.click();
+    expect(fixture.nativeElement.querySelector('.mes__grilla button')).toBeNull();
+    // Se sigue alcanzando con Tab, para que el globo no sea sólo del mouse.
+    expect(celda(11)?.getAttribute('tabindex')).toBe('0');
+  });
 
-    expect(elegidos).toHaveLength(1);
-    expect(elegidos[0].getDate()).toBe(11);
+  it('el globo dice a qué horas atiende, con los turnos pegados en una sola franja', async () => {
+    montar([
+      { ...cupo(11, 1, 1), startAt: new Date(2026, 7, 11, 8, 0), endAt: new Date(2026, 7, 11, 8, 30) },
+      { ...cupo(11, 1, 0), id: 'b', startAt: new Date(2026, 7, 11, 8, 30), endAt: new Date(2026, 7, 11, 9, 0) },
+      { ...cupo(11, 1, 1), id: 'c', startAt: new Date(2026, 7, 11, 14, 0), endAt: new Date(2026, 7, 11, 15, 0) },
+    ]);
+
+    const texto = await globoDe(11);
+    expect(texto).toContain('11 de agosto');
+    expect(texto).toContain('Atendés 08:00–09:00 y 14:00–15:00');
+    expect(texto).not.toContain('Bloqueado');
+  });
+
+  it('un día sin cupos dice en el globo que no atiende', async () => {
+    montar();
+
+    expect(await globoDe(12)).toContain('No atendés');
+  });
+
+  it('el globo dice qué parte del día está bloqueada, y por qué', async () => {
+    montar(
+      [{ ...cupo(11, 4, 4), startAt: new Date(2026, 7, 11, 8, 0), endAt: new Date(2026, 7, 11, 12, 0) }],
+      [{ desde: new Date(2026, 7, 11, 10, 0), hasta: new Date(2026, 7, 11, 11, 0), motivo: 'Trámite' }],
+    );
+
+    const texto = await globoDe(11);
+    expect(texto).toContain('Atendés 08:00–12:00');
+    expect(texto).toContain('Bloqueado 10:00–11:00 (Trámite)');
+  });
+
+  it('un bloqueo de varios días se dice «todo el día» en cada uno', async () => {
+    montar(
+      [],
+      [{ desde: new Date(2026, 6, 30), hasta: new Date(2026, 7, 3), motivo: 'Vacaciones' }],
+    );
+
+    expect(await globoDe(1)).toContain('Bloqueado todo el día (Vacaciones)');
   });
 });
