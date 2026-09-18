@@ -5,8 +5,9 @@
     se dibuja sola al entrar y después la recorre un cometa de luz. Cada vez
     que el cometa pasa por el pico R protagonista, de ahí salen ondas y un
     destello que ilumina la escena: el pulso se siente en todo el cuadro, no
-    solo en la línea. Detrás, auroras vibrantes, rayos que giran muy despacio,
-    la cuadrícula del papel de ECG y motas que suben.
+    solo en la línea. Detrás, auroras vibrantes y rayos —quietos—, la
+    cuadrícula del papel de ECG y motas que suben. Solo se mueve lo chico: es
+    lo que deja correr la escena en cualquier equipo, también sin GPU.
 
     Lenguaje de movimiento («Premium», ver skills motion-design y
     motion-art-direction): una sola curva de entrada (`--ease-out`), bucles
@@ -43,10 +44,12 @@
   inset: 0;
 }
 
-/* --- Auroras: cinco orbes de color pleno que ACLARAN el petróleo. --------- */
-.auth-stage__aurora {
-  translate: calc(var(--pointer-tilt-x) * 28px) calc(var(--pointer-tilt-y) * 20px);
-}
+/* --- Auroras: cinco orbes de color pleno que ACLARAN el petróleo. ---------
+   El fondo NO sigue al puntero. Tenía paralaje —aurora, cuadrícula, motas y
+   latido corridos cada uno a su profundidad—, y cada movimiento del ratón
+   recomponía la ventana entera: medido sin GPU a 1920×1080, la escena caía de
+   60 a 20 cuadros por segundo con el mouse en movimiento, y escribir en el
+   correo tardaba medio segundo. Lo que responde a la mano es la tarjeta. */
 
 .auth-stage__orb {
   position: absolute;
@@ -54,7 +57,10 @@
   border-radius: 50%;
   background: radial-gradient(circle, var(--orb-color), transparent 70%);
   mix-blend-mode: screen;
-  animation: auth-stage-orb-drift var(--orb-dur) ease-in-out var(--orb-delay, 0s) infinite;
+  /* QUIETAS a propósito. Derivaban en bucles de 19–37 s, y cinco capas de
+     40–70vmax mezcladas en `screen` que se mueven obligan a recomponer media
+     pantalla en cada cuadro: medido sin GPU a 1920×1080, el escenario iba a
+     22 cuadros por segundo. Quietas se pintan una vez y el color es el mismo. */
 }
 
 .auth-stage__orb--1 {
@@ -62,7 +68,6 @@
   left: -12%;
   width: 62vmax;
   --orb-color: color-mix(in srgb, var(--c-aqua-500) 88%, transparent);
-  --orb-dur: 23s;
 }
 
 .auth-stage__orb--2 {
@@ -70,8 +75,6 @@
   bottom: -34%;
   width: 70vmax;
   --orb-color: color-mix(in srgb, var(--c-aqua-400) 58%, transparent);
-  --orb-dur: 29s;
-  --orb-delay: -11s;
 }
 
 .auth-stage__orb--3 {
@@ -79,8 +82,6 @@
   right: 4%;
   width: 44vmax;
   --orb-color: color-mix(in srgb, var(--c-aqua-400) 72%, transparent);
-  --orb-dur: 19s;
-  --orb-delay: -6s;
 }
 
 .auth-stage__orb--4 {
@@ -92,8 +93,6 @@
      pone el azul profundo contra el que el aqua y la menta se ven vivos. */
   mix-blend-mode: normal;
   --orb-color: color-mix(in srgb, var(--c-petrol-500) 80%, transparent);
-  --orb-dur: 31s;
-  --orb-delay: -17s;
 }
 
 .auth-stage__orb--5 {
@@ -101,27 +100,9 @@
   right: -10%;
   width: 40vmax;
   --orb-color: color-mix(in srgb, var(--c-aqua-500) 55%, transparent);
-  --orb-dur: 37s;
-  --orb-delay: -4s;
 }
 
-@keyframes auth-stage-orb-drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  25% {
-    transform: translate3d(6%, 8%, 0) scale(1.12);
-  }
-  50% {
-    transform: translate3d(-4%, 12%, 0) scale(0.92);
-  }
-  75% {
-    transform: translate3d(-8%, -4%, 0) scale(1.06);
-  }
-}
-
-/* --- Rayos: un abanico de luz que gira una vuelta cada 110 s. ------------- */
+/* --- Rayos: un abanico de luz que sale del pico R. ------------------------ */
 .auth-stage__rays {
   /* Centrados en el pico R protagonista (649, 150 de 1920 × 1080): la luz
      sale de donde late. */
@@ -139,13 +120,9 @@
   );
   mix-blend-mode: screen;
   mask-image: radial-gradient(closest-side, #000000 4%, transparent 38%);
-  animation: auth-stage-rays-spin 110s linear infinite;
-}
-
-@keyframes auth-stage-rays-spin {
-  to {
-    transform: rotate(1turn);
-  }
+  /* Tampoco gira: una capa de 240vmax con máscara y mezcla que rota es de lo
+     más caro que puede pedírsele a un equipo sin GPU. El movimiento de la
+     escena lo llevan el cometa, las ondas y las motas, que son chicos. */
 }
 
 /* --- Monitor: el papel milimetrado del ECG — 5 mm finos, 25 mm marcados. --- */
@@ -164,14 +141,9 @@
      de arriba y se lee como un defecto del marco, no como papel. */
   background-position: center;
   mask-image: radial-gradient(ellipse 75% 60% at 38% 42%, #000000 15%, transparent 78%);
-  translate: calc(var(--pointer-tilt-x) * -8px) calc(var(--pointer-tilt-y) * -6px);
 }
 
 /* --- Motas: suben despacio, se encienden a mitad de camino y se apagan. --- */
-.auth-stage__motes {
-  translate: calc(var(--pointer-tilt-x) * 22px) calc(var(--pointer-tilt-y) * 14px);
-}
-
 .auth-stage__mote {
   position: absolute;
   left: var(--x);
@@ -217,7 +189,6 @@
   height: 40svh;
   aspect-ratio: 16 / 9;
   overflow: visible;
-  translate: calc(var(--pointer-tilt-x) * -14px) calc(var(--pointer-tilt-y) * -10px);
   /* Se apaga hacia los dos bordes: la tira sale de la nada y vuelve a ella,
      como en la pantalla de un monitor, en vez de cortarse contra el marco. */
   mask-image: linear-gradient(90deg, transparent, #000000 7%, #000000 93%, transparent);
@@ -391,22 +362,11 @@
   }
 }
 
-/* Grano: textura fina encima de todo. Quita el bandeado de los degradados
-   grandes —que en un monitor Full HD se ve en escalones— y es lo que hace
-   leer la escena como imagen y no como CSS. */
-.auth-stage__grain {
-  opacity: 0.09;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-}
-
 /* Con «reducir movimiento» el monitor queda encendido y quieto: la tira
    dibujada entera, sin cometa, ondas ni motas. El bloque global solo acorta
    duraciones, y un bucle infinito acortado es PEOR —parpadea—, así que acá se
    apaga cada animación del escenario por nombre de capa. */
 @media (prefers-reduced-motion: reduce) {
-  .auth-stage__orb,
-  .auth-stage__rays,
   .auth-stage__mote,
   .auth-stage__ecg-base,
   .auth-stage__ecg-aura,
