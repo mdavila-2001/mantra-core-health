@@ -869,36 +869,7 @@
   }
 }
 
-/* ==========================================================================
-    La escena crece con la ventana.
-
-    Todo lo de primer plano —la tarjeta, el título y la barra— tenía medidas
-    fijas (la tarjeta, 405 × 672 px en cualquier pantalla). En un monitor
-    grande, o con el zoom del navegador reducido, quedaban diminutos en las
-    esquinas de una escena de 5 000 px; en una ventana baja, la tarjeta se
-    cortaba por abajo. La composición buena es la de 1440 × 900: se escala
-    entera desde ahí con un solo factor, el menor de ancho/1440 y alto/900,
-    acotado a [0,75; 3]. `tan(atan2(a, b))` es la forma de dividir dos
-    longitudes y obtener un número sin JavaScript.
-
-    `zoom` y no `transform: scale`: escala también la CAJA, así que el hueco de
-    la grilla y el centrado siguen siendo reales, y el texto se rasteriza a su
-    tamaño final en vez de estirarse.
-    ========================================================================== */
 @media (min-width: 1024px) {
-  .auth-split--stage {
-    --stage-zoom: clamp(
-      0.75,
-      min(tan(atan2(100vw, 1440px)), tan(atan2(100vh, 900px))),
-      3
-    );
-  }
-
-  .auth-split--stage .auth-split__slot,
-  .auth-split--stage .auth-split__chrome {
-    zoom: var(--stage-zoom);
-  }
-
   .auth-split--stage .auth-split__content {
     padding-top: var(--sp-4);
   }
