@@ -3,11 +3,7 @@
   <div class="data-table__scroll">
     <table class="data-table__table" data-testid="tabla">
       @if (caption()) {
-        <caption class="sr-only">
-          {{
-            caption()
-          }}
-        </caption>
+        <caption class="sr-only">{{ caption() }}</caption>
       }
 
       <thead>
@@ -30,7 +26,11 @@
                tabla no podía poner una columna de detalle entre dos
                imprescindibles. -->
           @for (column of columns(); track column.key) {
-            <th scope="col" [class]="cellClassFor(column)" [attr.aria-sort]="ariaSortFor(column)">
+            <th
+              scope="col"
+              [class]="cellClassFor(column)"
+              [attr.aria-sort]="ariaSortFor(column)"
+            >
               @if (column.sortable) {
                 <button
                   type="button"
@@ -41,13 +41,7 @@
                 >
                   {{ column.header }}
                   <span class="data-table__sort-icon" aria-hidden="true">
-                    {{
-                      sortDirectionFor(column) === 'asc'
-                        ? '▲'
-                        : sortDirectionFor(column) === 'desc'
-                          ? '▼'
-                          : '↕'
-                    }}
+                    {{ sortDirectionFor(column) === 'asc' ? '▲' : sortDirectionFor(column) === 'desc' ? '▼' : '↕' }}
                   </span>
                 </button>
               } @else {
@@ -86,10 +80,7 @@
             @for (column of columns(); track column.key) {
               <td [class]="cellClassFor(column)">
                 @if (column.cell) {
-                  <ng-container
-                    [ngTemplateOutlet]="column.cell"
-                    [ngTemplateOutletContext]="{ $implicit: row }"
-                  />
+                  <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
                 } @else {
                   {{ cellValue(row, column) }}
                 }
@@ -123,10 +114,7 @@
                       <dt>{{ column.header }}</dt>
                       <dd>
                         @if (column.cell) {
-                          <ng-container
-                            [ngTemplateOutlet]="column.cell"
-                            [ngTemplateOutletContext]="{ $implicit: row }"
-                          />
+                          <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
                         } @else {
                           {{ cellValue(row, column) }}
                         }
@@ -152,27 +140,27 @@
        existe y hacen que la pantalla parezca rota. Un listado de una sola página
        tampoco los necesita. -->
   @if (hasPrevious() || hasNext()) {
-    <nav class="data-table__cursor" aria-label="Paginación del listado">
-      <button
-        app-button
-        variant="outline"
-        size="sm"
-        data-testid="tabla-anterior"
-        [disabled]="!hasPrevious()"
-        (clicked)="goPrevious()"
-      >
-        Anterior
-      </button>
-      <button
-        app-button
-        variant="outline"
-        size="sm"
-        data-testid="tabla-siguiente"
-        [disabled]="!hasNext()"
-        (clicked)="goNext()"
-      >
-        Siguiente
-      </button>
-    </nav>
+  <nav class="data-table__cursor" aria-label="Paginación del listado">
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      data-testid="tabla-anterior"
+      [disabled]="!hasPrevious()"
+      (clicked)="goPrevious()"
+    >
+      Anterior
+    </button>
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      data-testid="tabla-siguiente"
+      [disabled]="!hasNext()"
+      (clicked)="goNext()"
+    >
+      Siguiente
+    </button>
+  </nav>
   }
 </app-view-state-host>
