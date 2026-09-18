@@ -19,7 +19,7 @@ Backend simulado; ningún dato real ni productivo.
 | Criterio | Estado | Evidencia |
 |---|---|---|
 | R01 Contexto y alcance | Aprobado | `CONTEXTO_REAL.md`, `INVENTARIO.md` |
-| R02 Problemas priorizados | Aprobado | `HALLAZGOS.md` (18) |
+| R02 Problemas priorizados | Aprobado | `HALLAZGOS.md` (20) |
 | R03 Navegación comprensible | **Parcial** | Dentro de «Mis citas» sí; navegación global no tocada (D-04) |
 | R04 Identidad consistente | Aprobado en alcance | `DIRECCION_VISUAL.md` |
 | R05 Contratos | Aprobado | `ARQUITECTURA.md`; ningún cliente de API tocado |
@@ -28,7 +28,7 @@ Backend simulado; ningún dato real ni productivo.
 | R08 Movimiento | Aprobado en alcance | `MATRIZ_MOVIMIENTO.md`; sin perfilado de pintura |
 | R09 Cobertura del resto | **Parcial** | `MATRIZ_COBERTURA.md`: piloto + panel médica + órdenes/resultados + 4 familias |
 | R10 Accesibilidad | **Parcial** | Teclado, foco, `aria-expanded`, nombres accesibles verificados; **sin lector de pantalla real** ni auditoría axe completa |
-| R11 Rendimiento | Aprobado (laboratorio) | +0,08 kB; sin medición de campo |
+| R11 Rendimiento | Aprobado (laboratorio) | bundle inicial 332.77 kB transferido (base 332,73 kB); sin medición de campo |
 | R12 Entrega recuperable | Aprobado | commits atómicos, `ENTREGA.md` |
 | R13 Skills | Aprobado | uso por ruta (D-13) |
 | R14 Afirmaciones honestas | Aprobado | cada cifra con su fuente; lo no medido se dice |

@@ -1,8 +1,8 @@
 # Estado
 
 **Última tarea verificada:** candidato `e7261cb4` + documentación · 2026-09-18 (segunda tanda).
-**Fases:** 00–11 recorridas para el alcance declarado (piloto «Mis citas» + 3 familias
-transversales). R03, R07, R09 y R10 quedan **parciales** (ver `QA_FINAL.md`).
+**Fases:** 00–11 recorridas para el alcance declarado (piloto «Mis citas», panel de la médica,
+órdenes y resultados, y 4 familias transversales). R03, R07, R09 y R10 quedan **parciales** (ver `QA_FINAL.md`).
 
 ## Bloqueos
 
