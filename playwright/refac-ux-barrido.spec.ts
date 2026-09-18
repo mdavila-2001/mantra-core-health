@@ -149,7 +149,13 @@ async function medirEnPagina(page: Page, ancho: number): Promise<Record<string, 
     const nombres = new Map<string, number>();
     for (const e of main.querySelectorAll('button, a[href], [role=button]')) {
       if (!visible(e) || e.closest('nav, [aria-hidden=true], .data-table__detail-toggle-cell')) continue;
-      const n = ((e.getAttribute('aria-label') ?? '').trim() || (e.textContent ?? '').replace(/\s+/g, ' ').trim()).toLowerCase();
+      // Como el navegador: aria-labelledby manda sobre aria-label y el texto.
+      const porId = (e.getAttribute('aria-labelledby') ?? '')
+        .split(' ')
+        .map((id) => document.getElementById(id)?.textContent ?? '')
+        .join(' ')
+        .trim();
+      const n = (porId || (e.getAttribute('aria-label') ?? '').trim() || (e.textContent ?? '').replace(/\s+/g, ' ').trim()).toLowerCase();
       if (n.length < 2) continue;
       nombres.set(n, (nombres.get(n) ?? 0) + 1);
     }

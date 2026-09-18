@@ -76,6 +76,7 @@
               variant="ghost"
               size="sm"
               [disabled]="campos().length <= 1"
+              [attr.aria-label]="'Quitar campo ' + ($index + 1)"
               (clicked)="quitarCampo(campo.clave)"
             >
               Quitar campo

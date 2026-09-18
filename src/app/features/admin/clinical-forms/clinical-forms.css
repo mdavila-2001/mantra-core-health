@@ -67,7 +67,10 @@
 
 .formularios__campo {
   display: grid;
-  gap: var(--sp-2);
+  /* Nombre, tipo, obligatorio y quitar en una fila cuando hay ancho. */
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  align-items: end;
+  gap: var(--sp-2) var(--sp-4);
   padding-block-end: var(--sp-3);
   border-block-end: 1px solid var(--border-default);
 }
@@ -79,4 +82,12 @@
 
 .formularios__listado {
   display: block;
+}
+
+/* «Agregar campo» y «Quitar campo» miden su texto: se estiraban a lo ancho de
+   la tarjeta (refactor UX). */
+.formularios__campos > button[app-button],
+.formularios__campo > button[app-button] {
+  justify-self: start;
+  align-self: end;
 }
