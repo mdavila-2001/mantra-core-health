@@ -46,66 +46,24 @@
     title="Panel"
     subtitle="Tu organización, tus accesos y el estado del sistema."
     appTutorialTarget="panel-titulo"
-  />
-
-  <!-- ─── Cifras ──────────────────────────────────────────────────────────────
-     Cuatro tarjetas angostas en una fila propia. Van arriba porque son la
-     respuesta más corta a «¿cómo está esto hoy?», y separadas del resto porque
-     mezclarlas con las tarjetas de contenido las volvería una más. -->
-  <section class="panel__cifras" aria-label="Resumen" appStaggerList>
-    @if (puedeVerPacientes()) {
-      <app-card variant="outlined" padding="md" data-testid="panel-cifra-pacientes">
-        <p class="panel__cifra-rotulo">Pacientes registrados</p>
-        <p class="panel__cifra-valor">
-          @if (totalPacientes(); as total) {
-            {{ total }}
-          } @else {
-            <span class="panel__cifra-esperando">—</span>
-          }
-        </p>
-        <p class="panel__cifra-pie">En {{ tenantName() ?? 'esta organización' }}</p>
-      </app-card>
+  >
+    <!-- ALV-018 + refactor UX (D-05): la agenda, directa, como acción primaria
+         del encabezado —visible en todos los anchos— y no debajo de las cifras
+         y del texto de «Tus accesos». Es lo que quien atiende abre todos los
+         días. Sólo si la sesión tiene esa sección: no se ofrece una puerta que
+         después da 403. -->
+    @if (agendaDirecta(); as agenda) {
+      <a
+        app-button
+        page-actions
+        variant="primary"
+        data-testid="panel-agenda-directa"
+        [routerLink]="['/', agenda.path]"
+      >
+        Ver mi agenda de hoy
+      </a>
     }
-
-    <app-card variant="outlined" padding="md" data-testid="panel-cifra-secciones">
-      <p class="panel__cifra-rotulo">Secciones disponibles</p>
-      <p class="panel__cifra-valor">{{ seccionesDisponibles().length }}</p>
-      <p class="panel__cifra-pie">{{ seccionesPlanificadas().length }} más en construcción</p>
-    </app-card>
-
-    <app-card variant="outlined" padding="md" data-testid="panel-cifra-organizaciones">
-      <p class="panel__cifra-rotulo">Organizaciones</p>
-      <p class="panel__cifra-valor">{{ tenantCount() }}</p>
-      <p class="panel__cifra-pie">
-        @if (tenantCount() > 1) {
-          Podés cambiar desde el encabezado
-        } @else {
-          Tu única organización
-        }
-      </p>
-    </app-card>
-
-    <!-- La tarjeta saludaba con un sello «Sin verificar», que es pedir la
-         verificación desde el primer renglón del panel. Apagada de momento:
-         ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. -->
-    @if (verificacionOfrecida) {
-      <app-card variant="outlined" padding="md" data-testid="panel-cifra-identidad">
-        <p class="panel__cifra-rotulo">Tu identidad</p>
-        <!-- El sello y no una cifra: el estado de un trámite no es un número, y
-             forzarlo a serlo obligaría a inventar una escala que no existe. -->
-        <div class="panel__cifra-sello">
-          @if (selloDeIdentidad(); as sello) {
-            <app-status-seal [variant]="sello.variant" [label]="sello.label" />
-          } @else {
-            <app-status-seal variant="pending" label="Sin verificar" />
-          }
-        </div>
-        <p class="panel__cifra-pie">
-          <a routerLink="/my-account/identity/verify">Ver el trámite</a>
-        </p>
-      </app-card>
-    }
-  </section>
+  </app-page-header>
 
   <div class="panel__grid" appStaggerList>
     <!-- ─── Accesos ───────────────────────────────────────────────────────────
@@ -124,23 +82,6 @@
         Lo que tu cuenta habilita en esta organización, repartido por lo que vas a hacer con ello.
         Abrí una zona para ver sus secciones.
       </p>
-
-      <!-- ALV-018: la agenda, directa. Vive en la zona «Mi consulta» y seguía
-           viviendo ahí, pero abrirla costaba dos clics —desplegar la zona y
-           después elegir la sección— para lo que quien atiende abre todos los
-           días. El atajo sólo se dibuja si la sesión ya tiene esa sección
-           disponible: no se ofrece una puerta que después da 403. -->
-      @if (agendaDirecta(); as agenda) {
-        <a
-          app-button
-          variant="primary"
-          class="panel__acceso-directo"
-          data-testid="panel-agenda-directa"
-          [routerLink]="['/', agenda.path]"
-        >
-          Ver mi agenda de hoy
-        </a>
-      }
 
       <!-- Antes acá había una rejilla plana con TODAS las secciones. Con ocho
          se leía; con las treinta y dos de quien atiende era un cajón donde
@@ -235,4 +176,65 @@
       </app-view-state-host>
     </app-card>
   </div>
+
+  <!-- ─── Cifras ──────────────────────────────────────────────────────────────
+     Cuatro tarjetas angostas en una fila propia. Iban arriba del todo, antes
+     que la agenda y los accesos: «Secciones disponibles» y «Organizaciones»
+     son contexto, no la tarea con la que se abre el panel (refactor UX, H-10,
+     D-05). Bajan al final; separadas del resto porque mezclarlas con las
+     tarjetas de contenido las volvería una más. -->
+  <section class="panel__cifras" aria-label="Resumen" appStaggerList>
+    @if (puedeVerPacientes()) {
+      <app-card variant="outlined" padding="md" data-testid="panel-cifra-pacientes">
+        <p class="panel__cifra-rotulo">Pacientes registrados</p>
+        <p class="panel__cifra-valor">
+          @if (totalPacientes(); as total) {
+            {{ total }}
+          } @else {
+            <span class="panel__cifra-esperando">—</span>
+          }
+        </p>
+        <p class="panel__cifra-pie">En {{ tenantName() ?? 'esta organización' }}</p>
+      </app-card>
+    }
+
+    <app-card variant="outlined" padding="md" data-testid="panel-cifra-secciones">
+      <p class="panel__cifra-rotulo">Secciones disponibles</p>
+      <p class="panel__cifra-valor">{{ seccionesDisponibles().length }}</p>
+      <p class="panel__cifra-pie">{{ seccionesPlanificadas().length }} más en construcción</p>
+    </app-card>
+
+    <app-card variant="outlined" padding="md" data-testid="panel-cifra-organizaciones">
+      <p class="panel__cifra-rotulo">Organizaciones</p>
+      <p class="panel__cifra-valor">{{ tenantCount() }}</p>
+      <p class="panel__cifra-pie">
+        @if (tenantCount() > 1) {
+          Podés cambiar desde el encabezado
+        } @else {
+          Tu única organización
+        }
+      </p>
+    </app-card>
+
+    <!-- La tarjeta saludaba con un sello «Sin verificar», que es pedir la
+         verificación desde el primer renglón del panel. Apagada de momento:
+         ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. -->
+    @if (verificacionOfrecida) {
+      <app-card variant="outlined" padding="md" data-testid="panel-cifra-identidad">
+        <p class="panel__cifra-rotulo">Tu identidad</p>
+        <!-- El sello y no una cifra: el estado de un trámite no es un número, y
+             forzarlo a serlo obligaría a inventar una escala que no existe. -->
+        <div class="panel__cifra-sello">
+          @if (selloDeIdentidad(); as sello) {
+            <app-status-seal [variant]="sello.variant" [label]="sello.label" />
+          } @else {
+            <app-status-seal variant="pending" label="Sin verificar" />
+          }
+        </div>
+        <p class="panel__cifra-pie">
+          <a routerLink="/my-account/identity/verify">Ver el trámite</a>
+        </p>
+      </app-card>
+    }
+  </section>
 }
