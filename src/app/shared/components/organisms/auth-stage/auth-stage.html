@@ -8,7 +8,7 @@
   <span class="auth-stage__orb auth-stage__orb--5"></span>
 </div>
 <div class="auth-stage__rays"></div>
-<div class="auth-stage__monitor"></div>
+<div class="auth-stage__floor"></div>
 <div class="auth-stage__motes">
   @for (mote of motes; track $index) {
     <span
@@ -57,6 +57,9 @@
        cometa. Es el pulso sentido, no solo dibujado. -->
   <circle class="auth-stage__flash" cx="649" cy="330" r="520" fill="url(#auth-stage-flash)" />
 
+  <!-- La onda expansiva de la ignición: una sola, desde el pico R. -->
+  <circle class="auth-stage__shock" cx="649" cy="150" r="50" />
+
   <circle class="auth-stage__wave" cx="649" cy="150" r="46" />
   <circle class="auth-stage__wave auth-stage__wave--echo" cx="649" cy="150" r="46" />
   <circle class="auth-stage__wave auth-stage__wave--far" cx="1463" cy="232" r="40" />
@@ -69,4 +72,29 @@
     />
   }
 </svg>
+
+<!-- Encendido: el blanco que estalla desde el pico y el barrido que baja. -->
+<div class="auth-stage__power"></div>
+<div class="auth-stage__scan"></div>
+<div class="auth-stage__hud"></div>
+
+<!-- El título, al modo de una pantalla de inicio: la marca, el titular
+     palabra por palabra y la bajada. Decorativo como todo el escenario —el
+     host es `aria-hidden`—: lo que la persona tiene que leer está en la
+     tarjeta. -->
+<div class="auth-stage__brand">
+  <p class="auth-stage__wordmark">
+    <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
+    <span>AloVida</span>
+  </p>
+  <p class="auth-stage__claim">
+    @for (word of claimWords(); track $index) {
+      <span class="auth-stage__word" [style.--i]="$index">{{ word }}</span>
+    }
+  </p>
+  @if (tagline()) {
+    <p class="auth-stage__tagline">{{ tagline() }}</p>
+  }
+</div>
+
 <div class="auth-stage__grain"></div>
