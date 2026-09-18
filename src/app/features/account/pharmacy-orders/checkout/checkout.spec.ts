@@ -553,9 +553,6 @@ describe('Checkout', () => {
 
       const harness = await RouterTestingHarness.create('/my-account/pharmacy-orders/new');
       const pantalla = harness.fixture.nativeElement as HTMLElement;
-      const renglones = pantalla.querySelectorAll<HTMLElement>('[data-testid="pedido-linea"]');
-      renglones[0]?.querySelector<HTMLElement>('[data-testid="pedido-cantidad-mas"]')?.click();
-      harness.detectChanges();
       pantalla.querySelector<HTMLElement>('[data-testid="pedido-continuar"]')?.click();
       await harness.fixture.whenStable();
       harness.detectChanges();
@@ -564,7 +561,9 @@ describe('Checkout', () => {
       expect(pantalla.querySelector('[data-testid="checkout"]')).not.toBeNull();
       http.expectNone('/pharmacy/orders');
 
-      // El traspaso llegó: la cantidad elegida en E se ve en el resumen.
+      // El traspaso llegó: la cantidad del borrador se ve en el resumen. Ya no
+      // se elige cantidad en E (FAR-REAL-T-E1, D-R1-1 = A): el borrador trae un
+      // envase por renglón y así viaja.
       const siguiente = () =>
         pantalla.querySelector<HTMLElement>('[data-testid="checkout-siguiente"]')?.click();
       siguiente();
@@ -572,7 +571,7 @@ describe('Checkout', () => {
       siguiente();
       harness.detectChanges();
       expect(pantalla.querySelector('[data-testid="resumen"]')?.textContent).toContain(
-        '2 × Amoxicilina 500 mg',
+        '1 × Amoxicilina 500 mg',
       );
     });
   });
