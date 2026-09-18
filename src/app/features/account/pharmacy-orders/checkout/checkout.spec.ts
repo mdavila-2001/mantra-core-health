@@ -5,7 +5,6 @@ import type { Provider } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { NEVER, of, throwError } from 'rxjs';
 
 import { routes } from '../../../../app.routes';
 import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.client';
@@ -20,18 +19,19 @@ import {
 } from '../new-order/new-order.handoff';
 import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders.routes';
 import { Checkout, traspasoValido } from './checkout';
-import { DIRECCIONES_REGISTRADAS } from './checkout.fixtures';
 
 /**
- * El checkout (T-E3 · pantalla G). Lo que se fija:
+ * El checkout real (R-T-E3). Lo que se fija:
  *
  * - sin borrador hay salida honesta y ningún pedido;
- * - los pasos: recojo recorre tres, delivery cuatro, y no se saltea ninguno;
- * - el resumen dice sus líneas, con y sin seguro;
- * - **el pedido se crea una sola vez, en la confirmación final**, con el
- *   borrador vivo y las cantidades del traspaso, nunca con las alternativas;
- * - delivery se recorre pero no se confirma (no se disfraza de retiro);
- * - la orden médica (E) lleva de verdad hasta acá.
+ * - **no se ofrece nada que el backend no acepte**: ni envío a domicilio, ni
+ *   dirección, ni medio de pago (B-REAL-4/5/6);
+ * - el resumen sólo muestra precios publicados: sin descuento de red, sin
+ *   coaseguro, sin envío y sin puntos (AC-R3-04);
+ * - el pedido se crea una sola vez, con `RETIRO` y sin valores de ejemplo en el
+ *   cuerpo (AC-R3-01);
+ * - la orden médica lleva de verdad hasta acá, con el borrador que arma ella
+ *   (FAR-REAL-T-E1, `D-R1-1 = A`: un envase por renglón, sin editor de cantidad).
  */
 
 const BORRADOR: BorradorDePedido = {
@@ -65,22 +65,12 @@ const BORRADOR: BorradorDePedido = {
   moneda: 'BOB',
 };
 
-const TRASPASO_CON_SEGURO: TraspasoDeLaReceta = {
-  conSeguro: true,
+/** El estado que deja la orden médica hoy: la cantidad del borrador y nada más. */
+const TRASPASO: TraspasoDeLaReceta = {
+  conSeguro: false,
   renglones: [
-    { indice: 0, cantidad: 2, alternativa: null, aprobadoPorSeguro: true },
-    {
-      indice: 1,
-      cantidad: 1,
-      alternativa: {
-        id: 'ejemplo-1-0',
-        nombre: 'Losartán · Genérico',
-        presentacion: 'Caja x 30',
-        precio: '34.00',
-        ahorro: '6.00',
-      },
-      aprobadoPorSeguro: false,
-    },
+    { indice: 0, cantidad: 1, alternativa: null, aprobadoPorSeguro: false },
+    { indice: 1, cantidad: 1, alternativa: null, aprobadoPorSeguro: false },
   ],
 };
 
@@ -123,10 +113,6 @@ describe('Checkout', () => {
     fixture.detectChanges();
   }
 
-  function elegirRadio(grupo: string, posicion: number): void {
-    clic(uno(grupo)?.querySelectorAll<HTMLInputElement>('input[type="radio"]')[posicion]);
-  }
-
   function pasos(): string[] {
     return Array.from(
       raiz().querySelectorAll<HTMLElement>('[data-testid="checkout-stepper"] .stepper__label'),
@@ -145,7 +131,7 @@ describe('Checkout', () => {
     window.history.replaceState(null, '');
   });
 
-  /* ── Entrada: borrador, traspaso y salida honesta (AC-T-E3-09) ─────────── */
+  /* ── Entrada y salida honesta ──────────────────────────────────────────── */
 
   describe('entrada', () => {
     it('sin borrador sale honesto hacia la historia y no crea ningún pedido', () => {
@@ -166,42 +152,16 @@ describe('Checkout', () => {
       expect(raiz().textContent).toContain('Este pedido no tiene medicamentos para confirmar.');
     });
 
-    it('sin traspaso funciona con el borrador tal cual', () => {
-      configurar();
-      client.prepararBorrador(BORRADOR);
-      montar();
-
-      expect(uno('checkout')).not.toBeNull();
-      expect(raiz().textContent).toContain('Farmacia Andina · Sucursal Centro');
-    });
-
     it('un traspaso con forma ajena se ignora entero', () => {
       expect(traspasoValido({ conSeguro: 'sí', renglones: [] }, BORRADOR)).toBeNull();
       expect(
-        traspasoValido(
-          { conSeguro: false, renglones: [{ indice: 9, cantidad: 1, aprobadoPorSeguro: false }] },
-          BORRADOR,
-        ),
+        traspasoValido({ conSeguro: false, renglones: [{ indice: 9, cantidad: 1 }] }, BORRADOR),
       ).toBeNull();
       expect(
-        traspasoValido(
-          { conSeguro: false, renglones: [{ indice: 0, cantidad: 0, aprobadoPorSeguro: false }] },
-          BORRADOR,
-        ),
+        traspasoValido({ conSeguro: false, renglones: [{ indice: 0, cantidad: 0 }] }, BORRADOR),
       ).toBeNull();
-      expect(
-        traspasoValido(
-          {
-            conSeguro: false,
-            renglones: [
-              { indice: 0, cantidad: 1, aprobadoPorSeguro: false, alternativa: { nombre: 'X', precio: 12 } },
-            ],
-          },
-          BORRADOR,
-        ),
-      ).toBeNull();
-      expect(traspasoValido(TRASPASO_CON_SEGURO, null)).toBeNull();
-      expect(traspasoValido(TRASPASO_CON_SEGURO, BORRADOR)).toBe(TRASPASO_CON_SEGURO);
+      expect(traspasoValido(TRASPASO, null)).toBeNull();
+      expect(traspasoValido(TRASPASO, BORRADOR)).toBe(TRASPASO);
     });
 
     it('salir sin confirmar descarta el borrador; volver a la orden lo conserva', async () => {
@@ -221,219 +181,90 @@ describe('Checkout', () => {
     });
   });
 
-  /* ── Estados (AC-T-E3-07, AC-COMUN-01) ─────────────────────────────────── */
+  /* ── Nada que el backend no acepte (AC-R3-06) ──────────────────────────── */
 
-  describe('estados', () => {
-    it('mientras cargan las direcciones muestra el esqueleto', () => {
-      configurar([{ provide: DIRECCIONES_REGISTRADAS, useValue: () => NEVER }]);
-      client.prepararBorrador(BORRADOR);
-      montar();
-
-      expect(uno('checkout-cargando')).not.toBeNull();
-      expect(uno('checkout')).toBeNull();
-    });
-
-    it('si la carga falla, ofrece reintentar y se recupera', () => {
-      let fallar = true;
-      configurar([
-        {
-          provide: DIRECCIONES_REGISTRADAS,
-          useValue: () => (fallar ? throwError(() => new Error('caída')) : of([])),
-        },
-      ]);
-      client.prepararBorrador(BORRADOR);
-      montar();
-      expect(uno('checkout')).toBeNull();
-
-      fallar = false;
-      const reintentar = Array.from(raiz().querySelectorAll<HTMLElement>('button')).find((b) =>
-        /reintentar/i.test(b.textContent ?? ''),
-      );
-      expect(reintentar).toBeDefined();
-      clic(reintentar);
-
-      expect(uno('checkout')).not.toBeNull();
-    });
-
-    it('con delivery y sin direcciones dice «sin dirección registrada» y no deja seguir', () => {
-      configurar([{ provide: DIRECCIONES_REGISTRADAS, useValue: () => of([]) }]);
-      client.prepararBorrador(BORRADOR);
-      montar();
-
-      elegirRadio('checkout-entrega', 1);
-      clic(uno('checkout-siguiente'));
-
-      expect(uno('checkout-sin-direccion')).not.toBeNull();
-      expect(uno('checkout-siguiente')?.getAttribute('aria-disabled')).toBe('true');
-    });
-  });
-
-  /* ── Los pasos (AC-T-E3-01…04, AC-T-E3-08) ─────────────────────────────── */
-
-  describe('pasos', () => {
-    it('con recojo son tres pasos y se avanza y retrocede en orden', () => {
+  describe('no ofrece lo que el backend no tiene', () => {
+    it('sólo hay dos pasos: entrega y resumen', () => {
       configurar();
       client.prepararBorrador(BORRADOR);
       montar();
 
-      expect(pasos()).toEqual(['Entrega', 'Medio de pago', 'Resumen']);
+      expect(pasos()).toEqual(['Entrega', 'Resumen']);
       expect(tituloDelPaso()).toBe('Cómo lo recibís');
-
-      clic(uno('checkout-siguiente'));
-      expect(tituloDelPaso()).toBe('Medio de pago');
       clic(uno('checkout-siguiente'));
       expect(tituloDelPaso()).toBe('Revisá y confirmá');
       clic(uno('checkout-anterior'));
-      expect(tituloDelPaso()).toBe('Medio de pago');
-    });
-
-    it('al cambiar de paso el foco va al título del paso nuevo, no al body', async () => {
-      configurar();
-      client.prepararBorrador(BORRADOR);
-      montar();
-
-      clic(uno('checkout-siguiente'));
-      await fixture.whenStable();
-
-      const titulo = raiz().querySelector('#checkout-paso-titulo');
-      expect(titulo?.textContent?.trim()).toBe('Medio de pago');
-      expect(document.activeElement).toBe(titulo);
-    });
-
-    it('con delivery aparece el paso de dirección y exige elegir una', () => {
-      configurar();
-      client.prepararBorrador(BORRADOR);
-      montar();
-
-      elegirRadio('checkout-entrega', 1);
-      expect(pasos()).toEqual(['Entrega', 'Dirección', 'Medio de pago', 'Resumen']);
-      expect(uno('checkout-entrega-delivery')?.textContent).toContain('Sucursal Centro');
-
-      clic(uno('checkout-siguiente'));
-      expect(tituloDelPaso()).toBe('Dirección de entrega');
-      expect(todos('checkout-direccion')).toHaveLength(2);
-      expect(uno('checkout-siguiente')?.getAttribute('aria-disabled')).toBe('true');
-      expect(uno('checkout-agregar-direccion')?.getAttribute('aria-disabled')).toBe('true');
-
-      clic(todos('checkout-usar-direccion')[1]);
-      expect(uno('checkout-direccion-elegida')).not.toBeNull();
-      clic(uno('checkout-siguiente'));
-      expect(tituloDelPaso()).toBe('Medio de pago');
-    });
-
-    it('el stepper deja volver a un paso hecho pero no saltar hacia adelante', () => {
-      configurar();
-      client.prepararBorrador(BORRADOR);
-      montar();
-
-      clic(uno('stepper-paso-2'));
-      expect(tituloDelPaso()).toBe('Cómo lo recibís');
-
-      clic(uno('checkout-siguiente'));
-      clic(uno('checkout-siguiente'));
-      clic(uno('stepper-paso-0'));
       expect(tituloDelPaso()).toBe('Cómo lo recibís');
     });
 
-    it('el medio de pago ofrece QR de demostración y tarjeta como maqueta deshabilitada', () => {
+    it('la entrega es retiro y el envío se dice no disponible, sin ofrecerlo', () => {
+      configurar();
+      client.prepararBorrador(BORRADOR);
+      montar();
+
+      expect(texto('checkout-entrega')).toBe('Retiro en la farmacia');
+      expect(raiz().textContent).toContain('Farmacia Andina · Sucursal Centro');
+      expect(texto('checkout-envio-no-disponible')).toContain('todavía no está disponible');
+      // Ni radios de modalidad ni paso de dirección.
+      expect(raiz().querySelectorAll('input[type="radio"]')).toHaveLength(0);
+      expect(raiz().textContent).not.toMatch(/Delivery|Agregar otra/i);
+    });
+
+    it('no hay medio de pago ni QR ni tarjeta en ningún paso', () => {
       configurar();
       client.prepararBorrador(BORRADOR);
       montar();
       clic(uno('checkout-siguiente'));
 
-      expect(uno('checkout-pago-qr')).not.toBeNull();
-      expect(texto('checkout-pago-chip-demo')).toContain('DEMO');
-
-      elegirRadio('checkout-medio-de-pago', 1);
-      const tarjeta = uno('checkout-pago-tarjeta');
-      expect(tarjeta).not.toBeNull();
-      const campos = Array.from(tarjeta!.querySelectorAll<HTMLInputElement>('input'));
-      expect(campos.length).toBeGreaterThan(0);
-      expect(campos.every((campo) => campo.disabled)).toBe(true);
-      expect(texto('checkout-pago-nota')).toContain('no se procesa ningún pago');
+      expect(raiz().querySelector('canvas')).toBeNull();
+      expect(raiz().querySelectorAll('input')).toHaveLength(0);
+      expect(raiz().textContent).not.toMatch(/QR|tarjeta|DEMO|maqueta/i);
+      expect(texto('checkout-pago-nota')).toContain('Acá no se cobra nada');
     });
   });
 
-  /* ── El resumen (AC-T-E3-05) ───────────────────────────────────────────── */
+  /* ── El resumen sólo con datos publicados (AC-R3-04) ───────────────────── */
 
   describe('resumen', () => {
-    function irAlResumen(): void {
-      clic(uno('checkout-siguiente'));
-      clic(uno('checkout-siguiente'));
-    }
-
-    it('sin seguro: subtotal, descuento de red, total y puntos; sin coaseguro ni envío', () => {
+    it('muestra renglones y total, sin descuento, coaseguro, envío ni puntos', () => {
       configurar();
+      conTraspaso(TRASPASO);
       client.prepararBorrador(BORRADOR);
       montar();
-      irAlResumen();
+      clic(uno('checkout-siguiente'));
 
-      expect(texto('resumen-subtotal')).toContain('108.00 BOB');
-      expect(texto('resumen-descuento')).toContain('Descuento red AloVida');
-      expect(texto('resumen-descuento')).toContain('−10.80 BOB');
-      expect(uno('resumen-coaseguro')).toBeNull();
-      expect(uno('resumen-envio')).toBeNull();
-      expect(texto('resumen-total')).toContain('97.20 BOB');
-      expect(texto('resumen-puntos')).toContain('9');
-      expect(texto('resumen-puntos')).toContain('valor de ejemplo');
+      const resumen = texto('resumen');
+      expect(todos('resumen-renglon')).toHaveLength(2);
+      expect(resumen).toContain('1 × Amoxicilina 500 mg');
+      expect(resumen).toContain('1 × Losartán 50 mg');
+      expect(texto('resumen-total')).toContain('108.00 BOB');
+      expect(resumen).not.toMatch(/descuento|coaseguro|env[ií]o|puntos|alovida/i);
+      expect(resumen).not.toMatch(/%|aprobado por el seguro/i);
     });
 
-    it('con delivery suma la línea de envío', () => {
+    it('sin precio publicado no inventa el total', () => {
       configurar();
-      client.prepararBorrador(BORRADOR);
+      client.prepararBorrador({
+        ...BORRADOR,
+        lineas: [{ ...BORRADOR.lineas[0]!, precio: null }, BORRADOR.lineas[1]!],
+      });
       montar();
-      elegirRadio('checkout-entrega', 1);
       clic(uno('checkout-siguiente'));
-      clic(todos('checkout-usar-direccion')[0]);
-      irAlResumen();
 
-      expect(texto('resumen-envio')).toContain('15.00 BOB');
-      expect(texto('resumen-total')).toContain('112.20 BOB');
-    });
-
-    it('con seguro: dos bloques diferenciados, coaseguro y un solo total', () => {
-      configurar();
-      conTraspaso(TRASPASO_CON_SEGURO);
-      client.prepararBorrador(BORRADOR);
-      montar();
-      irAlResumen();
-
-      expect(texto('resumen-bloque-aprobados')).toContain('2 × Amoxicilina 500 mg');
-      expect(texto('resumen-bloque-no-aprobados')).toContain('1 × Losartán · Genérico');
-      expect(texto('resumen-coaseguro')).toContain('Coaseguro');
-      expect(todos('resumen-total')).toHaveLength(1);
-      // Aprobados 136.00 → coaseguro 27.20; no aprobados 34.00 → descuento 3.40.
-      expect(texto('resumen-coaseguro')).toContain('27.20 BOB');
-      expect(texto('resumen-total')).toContain('57.80 BOB');
-      expect(uno('checkout-nota-alternativas')).not.toBeNull();
+      expect(texto('resumen-total')).toContain('No disponible');
     });
   });
 
-  /* ── La confirmación final (AC-T-E3-06, AC-T-E3-07, AC-T-E3-08) ────────── */
+  /* ── La confirmación final (AC-R3-01) ──────────────────────────────────── */
 
   describe('confirmación final', () => {
     function irAlResumen(): void {
       clic(uno('checkout-siguiente'));
-      clic(uno('checkout-siguiente'));
     }
 
-    it('antes de confirmar no se llama a la API en ningún paso', () => {
+    it('crea el pedido una sola vez, con RETIRO y sin valores de ejemplo, y navega al detalle', async () => {
       configurar();
-      client.prepararBorrador(BORRADOR);
-      montar();
-      elegirRadio('checkout-entrega', 1);
-      clic(uno('checkout-siguiente'));
-      clic(todos('checkout-usar-direccion')[0]);
-      clic(uno('checkout-siguiente'));
-      elegirRadio('checkout-medio-de-pago', 1);
-      clic(uno('checkout-siguiente'));
-
-      http.expectNone('/pharmacy/orders');
-    });
-
-    it('con recojo crea el pedido una sola vez con el borrador vivo y navega a su detalle', async () => {
-      configurar();
-      conTraspaso(TRASPASO_CON_SEGURO);
+      conTraspaso(TRASPASO);
       client.prepararBorrador(BORRADOR);
       montar();
       const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -446,17 +277,48 @@ describe('Checkout', () => {
       const request = http.expectOne('/pharmacy/orders');
       expect(request.request.method).toBe('POST');
       expect(request.request.body.deliveryMode).toBe('RETIRO');
-      // Las cantidades del traspaso sí; la alternativa de demostración no.
       expect(request.request.body.lines).toEqual([
-        { productId: 'f0e1d2c3-0000-4000-8000-000000000002', quantity: 2 },
+        { productId: 'f0e1d2c3-0000-4000-8000-000000000002', quantity: 1 },
         { productId: 'f0e1d2c3-0000-4000-8000-000000000003', quantity: 1 },
       ]);
-      expect(JSON.stringify(request.request.body)).not.toMatch(/ejemplo/);
+      // Ni dirección ni pago ni nada de ejemplo viaja en el cuerpo.
+      expect(Object.keys(request.request.body).sort()).toEqual([
+        'deliveryMode',
+        'idempotencyKey',
+        'lines',
+        'medicationRequestId',
+        'siteId',
+      ]);
       request.flush(pharmacyOrderDtoFixture());
       await fixture.whenStable();
 
       expect(navegar).toHaveBeenCalledWith([MIS_PEDIDOS_ROUTE, pharmacyOrderDtoFixture().id]);
       expect(client.borradorPreparado()).toBeNull();
+    });
+
+    /**
+     * El handoff sigue declarando `cantidad` (`lines[].quantity`) aunque hoy la
+     * orden médica mande siempre la del borrador (un envase por renglón). Esto
+     * fija el contrato del checkout, no un editor de cantidad en E.
+     */
+    it('respeta la cantidad que declare el traspaso', () => {
+      configurar();
+      conTraspaso({
+        conSeguro: false,
+        renglones: [
+          { indice: 0, cantidad: 3, alternativa: null, aprobadoPorSeguro: false },
+          { indice: 1, cantidad: 1, alternativa: null, aprobadoPorSeguro: false },
+        ],
+      });
+      client.prepararBorrador(BORRADOR);
+      montar();
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      irAlResumen();
+      clic(uno('checkout-confirmar'));
+
+      const request = http.expectOne('/pharmacy/orders');
+      expect(request.request.body.lines[0].quantity).toBe(3);
+      request.flush(pharmacyOrderDtoFixture());
     });
 
     it('si la creación falla, avisa y el reintento reutiliza la misma clave: no duplica', () => {
@@ -480,23 +342,6 @@ describe('Checkout', () => {
       segundo.flush(pharmacyOrderDtoFixture());
     });
 
-    it('con delivery la confirmación no se ejecuta y lo explica', () => {
-      configurar();
-      client.prepararBorrador(BORRADOR);
-      montar();
-      elegirRadio('checkout-entrega', 1);
-      clic(uno('checkout-siguiente'));
-      clic(todos('checkout-usar-direccion')[0]);
-      irAlResumen();
-
-      expect(uno('checkout-delivery-no-disponible')).not.toBeNull();
-      const confirmar = uno('checkout-confirmar');
-      expect(confirmar?.getAttribute('aria-disabled')).toBe('true');
-      clic(confirmar);
-
-      http.expectNone('/pharmacy/orders');
-    });
-
     it('un renglón sin producto publicado bloquea la confirmación', () => {
       configurar();
       client.prepararBorrador({
@@ -513,7 +358,7 @@ describe('Checkout', () => {
     });
   });
 
-  /* ── La ruta y el traspaso desde E (AC-T-E3-01, AC-T-E3-09) ────────────── */
+  /* ── La ruta y el traspaso desde la orden médica ───────────────────────── */
 
   describe('ruta', () => {
     // Las pantallas hijas cuelgan del armazón: el que tiene el detalle del pedido.
@@ -536,7 +381,7 @@ describe('Checkout', () => {
       expect(TestBed.inject(RUTA_DEL_CHECKOUT)).toBe('/my-account/pharmacy-orders/checkout');
     });
 
-    it('E → checkout: «Continuar» llega con el borrador y el traspaso, sin crear el pedido', async () => {
+    it('orden médica → checkout: llega con el borrador, sin crear el pedido', async () => {
       TestBed.configureTestingModule({
         providers: [
           provideHttpClient(),
@@ -564,11 +409,7 @@ describe('Checkout', () => {
       // El traspaso llegó: la cantidad del borrador se ve en el resumen. Ya no
       // se elige cantidad en E (FAR-REAL-T-E1, D-R1-1 = A): el borrador trae un
       // envase por renglón y así viaja.
-      const siguiente = () =>
-        pantalla.querySelector<HTMLElement>('[data-testid="checkout-siguiente"]')?.click();
-      siguiente();
-      harness.detectChanges();
-      siguiente();
+      pantalla.querySelector<HTMLElement>('[data-testid="checkout-siguiente"]')?.click();
       harness.detectChanges();
       expect(pantalla.querySelector('[data-testid="resumen"]')?.textContent).toContain(
         '1 × Amoxicilina 500 mg',

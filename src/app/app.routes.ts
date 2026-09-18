@@ -398,7 +398,7 @@ const PANTALLAS_HIJAS: Routes = [
     // pago y resumen. Sin `:orderId`: el pedido se crea recién en su
     // confirmación final (D-FARMOCK-T-E1-01). Antes de `:orderId`, como `new`.
     path: 'my-account/pharmacy-orders/checkout',
-    title: `${APP_TITLE} - Entrega y pago`,
+    title: `${APP_TITLE} - Confirmá tu pedido`,
     canActivate: [seccionRolesGuard],
     loadComponent: () =>
       import('./features/account/pharmacy-orders/checkout/checkout')
