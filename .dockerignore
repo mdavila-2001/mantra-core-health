@@ -24,6 +24,18 @@ src/environments/env.generated.ts
 .env.*
 !.env.example
 
+# Evidencia, documentación y pruebas: el build no lee nada de acá (la app
+# compila solo `src/**`, y `env:generate` / `stock:generate` no los tocan).
+# Eran 350 de los 380 MB del contexto: en cada despliegue Docker los
+# empaquetaba y el `COPY . .` los copiaba y los hasheaba enteros.
+evidencias
+docs
+playwright
+playwright-report
+test-results
+cypress
+*.pdf
+
 .git
 .gitignore
 .vscode
