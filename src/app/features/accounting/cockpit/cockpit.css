@@ -255,6 +255,8 @@
 /* El número de documento abre su flujo. Es un botón y no un enlace porque no
    navega: despliega acá mismo. Se pinta como el texto que era. */
 .documento__numero--abrible {
+  /* Mínimo táctil WCAG 2.5.8: con el alto de la línea medía 23 px. */
+  min-block-size: 24px;
   background: none;
   border: none;
   color: var(--brand-primary);

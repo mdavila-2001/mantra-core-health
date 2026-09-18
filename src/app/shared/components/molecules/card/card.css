@@ -8,6 +8,12 @@
     --_card-padding: var(--sp-4);
 
     display: block;
+    /* Una tarjeta no es más ancha que su columna. Como ítem de una rejilla o
+       de un flex, por omisión tomaba el ancho mínimo de su contenido: una tira
+       de pestañas o una tabla adentro la estiraba a 606 px en un teléfono de
+       390 y la página entera se desplazaba de costado (barrido del refactor
+       UX). Lo ancho de adentro ya se desplaza en su propia caja. */
+    min-inline-size: 0;
     background: var(--bg-surface);
     border-radius: var(--r-md);
     border: 1px solid transparent;
