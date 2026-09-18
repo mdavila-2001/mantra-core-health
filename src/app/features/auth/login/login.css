@@ -24,16 +24,15 @@
     deja por encima de 12:1, muy lejos del 7:1 de AAA. Bajarlo a 80 % ya sería
     apostar el contraste a lo que haya debajo, y debajo hay algo que se mueve.
 
-    `backdrop-filter` es el efecto de vidrio real; donde no exista, la tarjeta
-    queda igual pero con el fondo nítido detrás, que también se lee.
+    Sin `backdrop-filter`: el desenfoque se recalculaba en cada cuadro, porque
+    detrás de la tarjeta pasa el cometa del latido. Al 92 % de opacidad el
+    vidrio apenas se notaba, y su costo sí, en los equipos sin GPU.
     ========================================================================== */
 .login {
   position: relative;
   display: flex;
   flex-direction: column;
   background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
-  backdrop-filter: blur(22px) saturate(1.35);
-  -webkit-backdrop-filter: blur(22px) saturate(1.35);
   border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
   border-radius: var(--r-2xl);
   padding: var(--sp-6);

@@ -35,8 +35,11 @@ const ECG_LAYERS = ['base', 'aura', 'halo', 'comet', 'spark'] as const;
  * complejo QRS, onda T, sobre el gesto del logotipo— que se dibuja sola al
  * entrar y después la recorre un cometa de luz. Cuando el cometa pasa por el
  * pico R protagonista, de ahí salen ondas y un destello. Detrás: auroras de la
- * paleta, rayos que giran muy despacio, la cuadrícula del papel de ECG, motas
- * que suben y un grano fino.
+ * paleta y rayos, quietos, la cuadrícula del papel de ECG y motas que suben.
+ *
+ * Solo se mueve lo chico —el cometa, las ondas, el destello, las motas—: las
+ * capas grandes quedan quietas para que la escena corra en cualquier equipo,
+ * también sin GPU (ver los comentarios de `.auth-stage__orb` y `__rays`).
  *
  * Es **puro CSS y SVG**: ni un `requestAnimationFrame`, y renderiza igual
  * bajo SSR. Entero `aria-hidden` —lo pone el host—, porque no dice nada que
@@ -48,8 +51,9 @@ const ECG_LAYERS = ['base', 'aura', 'halo', 'comet', 'spark'] as const;
  *   monta (`app-auth-split` en `scene="stage"`) porque también sincroniza con
  *   ellos piezas suyas —el logotipo que late, el resplandor de la tarjeta—, y
  *   a esas no les llegaría una variable declarada acá adentro.
- * - `--pointer-tilt-x` / `--pointer-tilt-y`: el paralaje, que publica
- *   `appPointerScene` en un ancestro. Sin él, la escena se queda quieta.
+ *
+ * No lee las variables `--pointer-*`: el fondo no sigue al puntero (ver la
+ * nota de `.auth-stage__aurora`).
  */
 @Component({
   selector: 'app-auth-stage',
