@@ -191,7 +191,25 @@
       <!-- La agenda del día: lo que `/schedule` abre por defecto a quien
            atiende (propietario, 18/09). Día, Semana y Mes viven adentro; la
            tabla de Consultas, detrás del ícono «Ver como tabla». -->
-      <app-my-agenda mode="calendar" (tableRequested)="verComoTabla()" />
+      <!-- «Mi agenda» —el horario publicado— es solapa desde la entrada y no
+           algo a lo que se llega pasando por la tabla (propietario, 18/09).
+           Como en las listas, el `@if` de adentro evita construir el panel que
+           no se mira: cada uno hace su propia lectura. -->
+      <app-tabs
+        [selectedIndex]="enHorario() ? 1 : 0"
+        (selectedIndexChange)="elegirPestanaInicial($event)"
+      >
+        <app-tab label="Calendario">
+          @if (!enHorario()) {
+            <app-my-agenda mode="calendar" (tableRequested)="verComoTabla()" />
+          }
+        </app-tab>
+        <app-tab label="Mi agenda">
+          @if (enHorario()) {
+            <app-my-agenda />
+          }
+        </app-tab>
+      </app-tabs>
     } @else {
     @if (!enMiAgenda()) {
     <form class="agenda__filtros" (submit)="$event.preventDefault()">

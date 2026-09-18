@@ -374,6 +374,9 @@ export interface CupoVisible {
  */
 const TABLE_VIEW = 'table';
 
+/** `vista` del horario publicado («Mi agenda»). Valor histórico: se conserva. */
+const SCHEDULE_VIEW = 'agenda';
+
 /**
  * **Agenda** (M41) — la sección que hasta ahora era un cartel.
  *
@@ -792,8 +795,24 @@ export class Agenda {
    * entrando a la tabla, igual que quien todavía no publicó la suya: un
    * calendario vacío no le dice nada que el aviso de arriba no diga mejor.
    */
-  protected readonly enCalendario = computed(
-    () => this.esQuienAtiende() && !this.sinAgendaPropia() && !this.params()?.get('vista'),
+  protected readonly enCalendario = computed(() => {
+    const vista = this.params()?.get('vista');
+    return (
+      this.esQuienAtiende() &&
+      !this.sinAgendaPropia() &&
+      (!vista || vista === SCHEDULE_VIEW)
+    );
+  });
+
+  /**
+   * Si en la vista inicial está abierta la solapa «Mi agenda» —el horario
+   * publicado— en vez del calendario. Antes el horario sólo se alcanzaba
+   * pasando a la tabla; el propietario lo quiere a un clic desde que se entra
+   * (18/09). Usa el mismo `vista=agenda` de siempre, así un enlace viejo
+   * sigue abriendo el horario.
+   */
+  protected readonly enHorario = computed(
+    () => this.enCalendario() && this.params()?.get('vista') === SCHEDULE_VIEW,
   );
 
   /** Si la solapa abierta es «Mi agenda», que no usa los filtros de las listas. */
@@ -1066,6 +1085,10 @@ export class Agenda {
             // columna quedaban fuera de la pantalla, detrás de un scroll lateral
             // que nadie descubre.
             priority: 2,
+            // Desde tablet es columna, y con Seguro y Pago la tabla sigue
+            // pasándose del ancho: fija al borde, las acciones no se van con
+            // el scroll (propietario, 18/09).
+            sticky: 'end',
             cell: this.celdaAccionesCita(),
           } satisfies ColumnDef<CitaVisible>,
         ]
@@ -1210,6 +1233,11 @@ export class Agenda {
   /** «Ver como tabla», desde la agenda del día. */
   protected verComoTabla(): void {
     this.publicar({ vista: TABLE_VIEW });
+  }
+
+  /** Las solapas de la vista inicial: 0 = calendario, 1 = «Mi agenda». */
+  protected elegirPestanaInicial(indice: number): void {
+    this.publicar({ vista: indice === 1 ? SCHEDULE_VIEW : null });
   }
 
   /** «Ver como agenda», desde las listas: `/schedule` sin vista. */

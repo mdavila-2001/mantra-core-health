@@ -443,7 +443,32 @@ describe('Agenda', () => {
     expect(interno<() => boolean>('enCalendario')()).toBe(true);
     expect(raiz.querySelector('[data-testid="agenda-calendario"]')).not.toBeNull();
     expect(raiz.querySelector('app-day-view')).not.toBeNull();
-    expect(raiz.querySelectorAll('[role="tab"]')).toHaveLength(0);
+    // Dos solapas y ninguna de las listas: «Mi agenda» está a un clic desde
+    // la entrada, sin pasar por la tabla (propietario, 18/09).
+    const solapas = [...raiz.querySelectorAll('[role="tab"]')] as HTMLElement[];
+    expect(solapas.map((s) => s.textContent?.trim())).toEqual(['Calendario', 'Mi agenda']);
+  });
+
+  it('la solapa «Mi agenda» abre el horario sin salir de la vista inicial', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
+    await responderTodo();
+    const router = TestBed.inject(Router);
+    const raiz = harness.fixture.nativeElement as HTMLElement;
+
+    const solapa = [...raiz.querySelectorAll('[role="tab"]')].find(
+      (s) => s.textContent?.trim() === 'Mi agenda',
+    ) as HTMLElement;
+    solapa.click();
+    await responderTodo();
+
+    expect(router.url).toContain('vista=agenda');
+    expect(interno<() => boolean>('enCalendario')()).toBe(true);
+    expect(interno<() => boolean>('enHorario')()).toBe(true);
+    // El calendario no se construye mientras se mira el horario.
+    expect(raiz.querySelector('[data-testid="agenda-calendario"]')).toBeNull();
+    expect(raiz.querySelector('app-my-agenda')).not.toBeNull();
+    // Ni los filtros de las listas: el horario no se filtra por ventana.
+    expect(raiz.querySelector('.agenda__filtros')).toBeNull();
   });
 
   it('«Ver como tabla» lleva a Consultas, y desde ahí se vuelve a la agenda', async () => {

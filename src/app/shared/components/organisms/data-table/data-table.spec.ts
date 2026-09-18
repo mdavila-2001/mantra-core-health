@@ -27,7 +27,7 @@ const FILAS: readonly Paciente[] = [
 const COLUMNAS: readonly ColumnDef<Paciente>[] = [
   { key: 'apellido', header: 'Apellido', priority: 1, sortable: true },
   { key: 'documento', header: 'Documento', priority: 1, align: 'end' },
-  { key: 'obraSocial', header: 'Obra social', priority: 2 },
+  { key: 'obraSocial', header: 'Obra social', priority: 2, sticky: 'end' },
 ];
 
 @Component({
@@ -92,6 +92,19 @@ describe('DataTable', () => {
     fixture = TestBed.createComponent(HostComponent);
     host = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  it('fija al borde final sólo la columna marcada, en encabezado y celdas', () => {
+    const fijas = (selector: string) =>
+      [...root().querySelectorAll(selector)].map((celda) =>
+        celda.classList.contains('data-table__cell--sticky-end'),
+      );
+    expect(fijas('thead th.data-table__cell')).toEqual([false, false, true]);
+    expect(fijas('tbody tr.data-table__row:first-child td.data-table__cell')).toEqual([
+      false,
+      false,
+      true,
+    ]);
   });
 
   describe('nombre accesible de cada fila', () => {
