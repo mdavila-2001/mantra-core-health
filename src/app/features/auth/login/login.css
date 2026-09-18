@@ -39,8 +39,13 @@
   padding: var(--sp-6);
   /* La sombra del sistema, más un filo de luz interior arriba: es lo que hace
      leer el borde como canto de vidrio y no como línea dibujada. */
+  /* Sobre el escenario oscuro del latido la sombra del sistema no alcanza a
+     despegar la tarjeta: se suma una caída larga y un canto de luz aqua, el
+     mismo color del trazo que pasa por detrás. */
   box-shadow:
     var(--shadow-lg),
+    0 48px 120px -24px rgb(0 0 0 / 0.55),
+    0 0 0 1px color-mix(in srgb, var(--c-aqua-300) 22%, transparent),
     inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
   /* Se inclina hacia el puntero. 1,1° es deliberadamente poco: lo suficiente
      para que la tarjeta responda a la mano, no tanto como para que el texto de
