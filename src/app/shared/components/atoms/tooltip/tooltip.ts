@@ -5,6 +5,7 @@ import {
   createComponent,
   Directive,
   DOCUMENT,
+  effect,
   ElementRef,
   EnvironmentInjector,
   inject,
@@ -74,6 +75,23 @@ export class Tooltip implements OnDestroy {
   private readonly repositionOnViewportChange = (): void => this.place();
 
   constructor() {
+    // El texto puede cambiar con el globo abierto —el resumen del paciente en la
+    // agenda dice «Buscando…» hasta que llega el historial—: se reescribe y se
+    // vuelve a ubicar, porque un texto más largo es un globo más alto.
+    effect(() => {
+      const text = this.appTooltip();
+      const panel = this.panel;
+      if (panel === null) {
+        return;
+      }
+      if (!text.trim()) {
+        this.hide();
+        return;
+      }
+      panel.setInput('text', text);
+      this.place();
+    });
+
     if (isDevMode()) {
       afterNextRender(() => this.warnIfUnreachable());
     }
@@ -149,6 +167,10 @@ export class Tooltip implements OnDestroy {
       return;
     }
 
+    // Primero se pinta el texto y después se mide: medido antes, el globo es una
+    // caja vacía de puro padding, queda corrido hacia abajo sobre el host y
+    // centrado con un ancho casi nulo.
+    panel.changeDetectorRef.detectChanges();
     const host = this.hostElement.nativeElement.getBoundingClientRect();
     const globe = (panel.location.nativeElement as HTMLElement).getBoundingClientRect();
     const position = this.fittingPosition(host, globe);
