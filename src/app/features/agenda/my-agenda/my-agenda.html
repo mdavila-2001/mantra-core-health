@@ -12,7 +12,7 @@
         [attr.aria-selected]="solapa() === 'patron'"
         (click)="verSolapa('patron')"
       >
-        Mi horario
+        Mis horarios de atención
       </button>
       <button
         type="button"
@@ -27,131 +27,17 @@
     </div>
 
     @if (solapa() === 'mes') {
-      <!-- D5 del plan de UX · el bloqueo, a la vista.
-
-           Antes el único botón vivía dentro de la vista de un día, a la que se
-           llega tocando ese día en el mes. Quien mira el mes para irse de
-           vacaciones no tiene por qué adivinar que la acción está un nivel más
-           abajo — y con el botón del día, dos semanas eran catorce viajes. El
-           botón del día se conserva: para tapar un martes suelto sigue siendo
-           el camino más corto. -->
-      @if (!diaAbierto()) {
-        @if (bloqueoAbierto()) {
-          <app-block-form
-            [motivos]="motivosDeBloqueo()"
-            (bloquear)="bloquearRango($event)"
-            (cancelar)="bloqueoAbierto.set(false)"
-          />
-        } @else {
-          <div class="mi-agenda__acciones-mes">
-            <button app-button variant="secondary" type="button" (clicked)="abrirBloqueo()">
-              Bloquear días u horarios
-            </button>
-          </div>
-        }
-      }
-
-      <!-- Tocar un día abre su detalle. -->
-      @if (diaAbierto(); as dia) {
-        <app-day-view
-          [dia]="dia"
-          [cupos]="cuposDelDia()"
-          [citas]="citasDelDia()"
-          [bloqueos]="bloqueosDelMes()"
-          [tipologias]="tipologias()"
-          [etiquetas]="estadosResueltos()"
-          [puedeRegistrarLlegada]="puedeRegistrarLlegada()"
-          (accionPedida)="ejecutar($event)"
-          (diaCambiado)="moverDia($event)"
-          (detallePedido)="verDetalleDelBloque($event)"
-          (movimientoPedido)="moverHorario($event)"
-          (cierrePedido)="cerrarRato($event)"
-          (ratoTocado)="abrirTarjeta($event)"
-          (quitarOcupado)="quitarOcupado($event)"
-          (volver)="volverAlMes()"
-        />
-
-        <!-- LA TARJETA (AG-5): el único gesto de creación del calendario.
-             Tocar un rato libre del día la abre con esa franja ya puesta.
-
-             Estuvo escrita y desconectada: el componente existía y estaba en
-             los `imports`, `abrirTarjeta`, `ratoParaCrear`, `tarjetaCreo` y
-             `ratosTomadosDelDia` estaban en el componente, y `day-view` emitía
-             `ratoTocado` — pero la plantilla nunca la dibujaba ni escuchaba ese
-             evento. Tocar un hueco no hacía nada, y no había forma de darle
-             una cita a un paciente desde el calendario. -->
-        @if (ratoParaCrear(); as rato) {
-          @if (recurso(); as elRecurso) {
-            <app-tarjeta-del-dia
-              [dia]="dia"
-              [resourceId]="elRecurso.id"
-              [desdeInicial]="rato.desde"
-              [hastaInicial]="rato.hasta"
-              [ratosTomados]="ratosTomadosDelDia()"
-              (creada)="tarjetaCreo(dia)"
-              (cerrada)="cerrarTarjeta()"
-            />
-          }
-        }
-        <div class="mi-agenda__acciones-dia">
-          <button
-            app-button
-            variant="secondary"
-            size="sm"
-            type="button"
-            (clicked)="bloquearDia(dia)"
-          >
-            Bloquear este día
-          </button>
-        </div>
-      } @else {
-        <!-- «Un botón para ver la semana y otro para ver el mes», del pedido
-             original. No se reemplazan: responden preguntas distintas. -->
-        <div class="mi-agenda__vistas" role="group" aria-label="Cómo mirar la agenda">
-          <button
-            app-button
-            [variant]="vista() === 'mes' ? 'secondary' : 'ghost'"
-            size="sm"
-            type="button"
-            data-testid="ver-mes"
-            [attr.aria-pressed]="vista() === 'mes'"
-            (clicked)="verMes()"
-          >
-            Mes
-          </button>
-          <button
-            app-button
-            [variant]="vista() === 'semana' ? 'secondary' : 'ghost'"
-            size="sm"
-            type="button"
-            data-testid="ver-semana"
-            [attr.aria-pressed]="vista() === 'semana'"
-            (clicked)="verSemana()"
-          >
-            Semana
-          </button>
-        </div>
-
-        @if (vista() === 'semana') {
-          <app-week-view
-            [semana]="semanaVisible()"
-            [cupos]="cuposDelMes()"
-            [citas]="citasDeLaSemana()"
-            [etiquetas]="estadosResueltos()"
-            [bloqueos]="bloqueosDelMes()"
-            (semanaElegida)="cambiarSemana($event)"
-            (diaElegido)="abrirDia($event)"
-          />
-        } @else {
-          <app-month-view
-            [mes]="mesVisible()"
-            [cupos]="cuposDelMes()"
-            [bloqueos]="bloqueosDelMes()"
-            (mesElegido)="cambiarMes($event)"
-            (diaElegido)="abrirDia($event)"
-          />
-        }
-      }
+      <!-- Un vistazo, no un calendario de trabajo (pedido del cliente, 18/09):
+           cada día muestra su ocupación y, al pasar el puntero o llegar con
+           Tab, un globo con el horario de atención y lo bloqueado. Abrir el
+           día, la semana y el bloqueo desde acá se sacaron: esa versión
+           cliqueable va a vivir en otra pantalla. -->
+      <app-month-view
+        [mes]="mesVisible()"
+        [cupos]="cuposDelMes()"
+        [bloqueos]="bloqueosDelMes()"
+        (mesElegido)="cambiarMes($event)"
+      />
     } @else {
       <section class="mi-agenda__tarjeta">
         <!-- Arriba de la tarjeta, una sola barra: los estados a la izquierda y

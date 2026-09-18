@@ -80,7 +80,8 @@
   border-radius: var(--r-sm);
   background: var(--bg-surface);
   color: var(--text-primary);
-  cursor: pointer;
+  /* se lee, no se toca: el globo es todo lo que hay detrás */
+  cursor: default;
 }
 
 .mes__dia:focus-visible {
