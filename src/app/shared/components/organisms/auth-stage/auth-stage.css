@@ -580,6 +580,10 @@
     display: block;
     inset: auto auto clamp(var(--sp-8), 7vh, var(--sp-20)) clamp(var(--sp-8), 5vw, 6rem);
     max-width: min(36rem, 42vw);
+    /* Crece con la escena, igual que la tarjeta (ver `--stage-zoom` en
+       auth-split.css). Medido: el ancho sigue al factor (556 px a 1440,
+       840 a 2560, 1669 a 5120), no se multiplica dos veces. */
+    zoom: var(--stage-zoom, 1);
     color: #ffffff;
     translate: calc(var(--pointer-tilt-x) * 9px) calc(var(--pointer-tilt-y) * 6px);
   }
