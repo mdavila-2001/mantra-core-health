@@ -137,6 +137,14 @@ describe('FileInput', () => {
     expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Supera el límite');
   });
 
+  it('dice los tipos aceptados con palabras, también los comodines', async () => {
+    // «image/*» se mostraba como un «*» suelto (barrido del refactor UX).
+    await setInputs({ accept: 'image/*,application/pdf,.docx' });
+    const texto = fixture.nativeElement.querySelector('.dropzone-subtext').textContent;
+    expect(texto).toContain('Imagen · PDF · DOCX');
+    expect(texto).not.toContain('*');
+  });
+
   it('deshabilitado ignora lo que se suelte', async () => {
     await setInputs({ disabled: true });
     await soltar([archivo('a.pdf', 'application/pdf')]);
