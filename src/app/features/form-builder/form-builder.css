@@ -87,9 +87,10 @@
 }
 
 .constructor__presupuesto {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: flex;
+  --card-body-direction: column;
+  --card-body-gap: var(--sp-3);
 }
 
 .constructor__presupuesto-texto {

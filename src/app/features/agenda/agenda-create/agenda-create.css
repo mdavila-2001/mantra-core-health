@@ -13,7 +13,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
-  max-width: 46rem;
+  /* Sin tope propio (regla del cliente §5): con 46rem el formulario quedaba en
+     la mitad izquierda del área, con la otra mitad en blanco. */
 }
 
 .agenda-create__titular {
@@ -31,7 +32,6 @@
   border-radius: var(--r-sm);
   color: var(--text-primary);
   font-size: var(--fs-body);
-  max-width: 46rem;
 }
 
 /* Nota de ayuda simple (p.ej. «se crea una agenda aparte»): el mismo tono

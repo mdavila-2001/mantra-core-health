@@ -8,8 +8,9 @@
 }
 
 .internacion {
-  display: grid;
-  gap: var(--sp-4);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-4);
   max-inline-size: 68ch;
 }
 

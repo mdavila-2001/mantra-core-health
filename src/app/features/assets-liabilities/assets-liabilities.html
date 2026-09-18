@@ -36,24 +36,29 @@
         </app-card>
 
         <h2 class="titulo-de-seccion">Cuentas para registrar avance</h2>
-        <app-card class="cuentas-de-avance">
-          <app-form-field icon="billing" label="Cuenta de gasto por depreciación">
-            <app-select
-              [options]="opcionesDeCuenta()"
-              [(value)]="cuentaDeGastoDepreciacion"
-              placeholder="Elegí una cuenta"
-            />
-          </app-form-field>
-          <app-form-field icon="billing" label="Cuenta de depreciación acumulada">
-            <app-select
-              [options]="opcionesDeCuenta()"
-              [(value)]="cuentaDeDepreciacionAcumulada"
-              placeholder="Elegí una cuenta"
-            />
-          </app-form-field>
-          <p class="nota">
-            Se usan para cualquier activo en el que toques "Registrar avance" — elegilas una vez.
-          </p>
+        <app-card>
+          <!-- El flex va en un contenedor propio: app-card proyecta su contenido en
+               un envoltorio interno, y con la clase en la tarjeta los campos nunca
+               eran ítems del flex — quedaban apilados a 528 px (refactor UX). -->
+          <div class="cuentas-de-avance">
+            <app-form-field icon="billing" label="Cuenta de gasto por depreciación">
+              <app-select
+                [options]="opcionesDeCuenta()"
+                [(value)]="cuentaDeGastoDepreciacion"
+                placeholder="Elegí una cuenta"
+              />
+            </app-form-field>
+            <app-form-field icon="billing" label="Cuenta de depreciación acumulada">
+              <app-select
+                [options]="opcionesDeCuenta()"
+                [(value)]="cuentaDeDepreciacionAcumulada"
+                placeholder="Elegí una cuenta"
+              />
+            </app-form-field>
+            <p class="nota">
+              Se usan para cualquier activo en el que toques "Registrar avance" — elegilas una vez.
+            </p>
+          </div>
         </app-card>
         @if (errorDeAvanceDeActivo(); as mensaje) {
           <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>

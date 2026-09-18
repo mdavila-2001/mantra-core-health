@@ -6,12 +6,13 @@
   display: grid;
   gap: var(--sp-4);
   margin-block-start: var(--sp-6);
-  max-inline-size: 48rem;
+  /* Sin tope propio (regla del cliente §5): con 48rem quedaba a la izquierda. */
 }
 
 .solicitud {
-  display: grid;
-  gap: var(--sp-3);
+  /* Layout del contenido vía el cuerpo de app-card (ver card.css). */
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-3);
 }
 
 .solicitud__quien {
