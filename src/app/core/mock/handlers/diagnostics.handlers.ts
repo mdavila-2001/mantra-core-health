@@ -6,6 +6,7 @@ import {
   pruebaDelCorpus,
 } from '../fixtures/bolivia-eje-central';
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
+import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
 import { ordenes } from '../fixtures/clinica';
 import { vitrinas } from '../fixtures/comunidad';
 import { ESTADO, ESTUDIO, PRIORIDAD, displayDe } from '../fixtures/conceptos';
@@ -122,6 +123,12 @@ interface UnidadSimulada {
   readonly lng: number;
   /** El id en `data/bolivia-salud-eje-central/`. Sólo los centros reales. */
   readonly corpusId?: string;
+  /** La sede que publica la planilla del propietario, con su dirección y teléfono. */
+  readonly sedePublicada?: {
+    readonly addressText: string | null;
+    readonly phone: string | null;
+    readonly locationAccuracy: string;
+  };
 }
 
 /**
@@ -173,7 +180,41 @@ const UNIDADES_DEL_CORPUS: readonly UnidadSimulada[] = LABORATORIOS_DEL_CORPUS.m
   }),
 );
 
-const UNIDADES: readonly UnidadSimulada[] = [...UNIDADES_DEL_CORPUS, ...UNIDADES_DE_MAQUETA];
+/**
+ * Los laboratorios y centros de análisis de la planilla del propietario
+ * (`markdown_convertidos/LISTA_DE_FARMACIAS__LABORATORIOS_Y_ANALISIS_MEDICOS.md`).
+ *
+ * Plexus y Zuna ya vienen en el corpus, con sus sedes: no se repiten. Van sin
+ * puntuación ni sellos, por lo mismo que los del corpus. Los tres «centros de
+ * análisis» son de diagnóstico por imagen y cardiológico, así que entran como
+ * `IMAGING`, el único tipo de centro no laboratorio que tiene la maqueta.
+ */
+const YA_EN_EL_CORPUS = /plexus|zuna/i;
+const UNIDADES_DE_LA_PLANILLA: readonly UnidadSimulada[] = PHARMACIES_AND_LABS.filter(
+  (u) => u.kind !== 'PHARMACY' && !YA_EN_EL_CORPUS.test(u.name),
+).map((u) => ({
+  id: uuid(`unit-${u.id}`),
+  tenantId: uuid(`tenant-${u.id}`),
+  code: u.id.replace(/^(laboratory|diagnostic_center)-/, '').toUpperCase().slice(0, 24),
+  name: u.name,
+  kind: u.kind === 'LABORATORY' ? ('LABORATORY' as const) : ('IMAGING' as const),
+  rating: 0,
+  ratingCount: 0,
+  walkIn: null,
+  home: false,
+  external: null,
+  publiclyListed: true,
+  verified: false,
+  lat: u.lat,
+  lng: u.lng,
+  sedePublicada: {
+    addressText: u.address,
+    phone: u.phone,
+    locationAccuracy: u.precision === 'direccion' ? 'Ubicación exacta' : 'Ubicación aproximada · centro de la ciudad',
+  },
+}));
+
+const UNIDADES: readonly UnidadSimulada[] = [...UNIDADES_DEL_CORPUS, ...UNIDADES_DE_LA_PLANILLA, ...UNIDADES_DE_MAQUETA];
 
 /** El laboratorio del corpus detrás de una unidad, si lo hay. */
 function corpusDe(u: UnidadSimulada) {
@@ -233,6 +274,16 @@ function construirSedes(u: UnidadSimulada) {
       role: c('MAIN', 'Sede principal'),
       sampleCollectionAvailable: u.kind === 'LABORATORY',
       imagingAvailable: u.kind === 'IMAGING',
+      ...(u.sedePublicada === undefined
+        ? {}
+        : {
+            addressText: u.sedePublicada.addressText,
+            city: 'Santa Cruz de la Sierra',
+            phone: u.sedePublicada.phone,
+            latitude: u.lat,
+            longitude: u.lng,
+            locationAccuracy: u.sedePublicada.locationAccuracy,
+          }),
     },
   ];
 }

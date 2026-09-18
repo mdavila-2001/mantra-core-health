@@ -291,7 +291,7 @@ export class LaboratoryDirectory {
       .pipe(
         tap(() => this.state.set(loading())),
         switchMap(() =>
-          this.units.search(aConsulta(this.activos())).pipe(
+          this.units.search({ ...aConsulta(this.activos()), limit: TOPE_DEL_DIRECTORIO }).pipe(
             map((pagina) =>
               pagina.items.length === 0
                 ? empty(
@@ -331,6 +331,17 @@ export class LaboratoryDirectory {
     this.peticiones.next();
   }
 }
+
+/**
+ * Cuántos centros se piden de una vez.
+ *
+ * La pantalla agrupa por categoría y no pagina, así que tiene que recibir el
+ * directorio entero. Sin `limit` el servidor devuelve **20** y el resto no se
+ * veía: con los laboratorios de la planilla del propietario son 25, y cinco
+ * quedaban afuera sin aviso. 100 es el tope que acepta el contrato
+ * (`CATALOG_MAX_LIMIT` en `diagnostic_units/dto/catalog.dto.ts` de la API).
+ */
+const TOPE_DEL_DIRECTORIO = 100;
 
 /** ¿Quedó algún filtro puesto? Decide qué texto muestra el vacío. */
 function hayFiltros(activos: Readonly<Record<string, string>>): boolean {

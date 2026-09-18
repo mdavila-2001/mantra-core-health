@@ -1,6 +1,7 @@
 import { ROLE_ASSIGNMENT_STATUS } from '../../data-access/practice-sites/role-assignment-concepts';
 import { PRACTICE_CONSULTORIO, PRACTICE_OLIVOS, PRACTICE_SANLUCAS, SITIO_CONSULTORIO, SITIO_OLIVOS, SITIO_SANLUCAS } from '../fixtures/agenda';
 import { CARGO, ESPECIALIDAD, ESTABLECIMIENTO, ESTADO, PROCEDIMIENTO, displayDe } from '../fixtures/conceptos';
+import { DENTAL_FEE_SCHEDULE, MEDICAL_FEE_SCHEDULE } from '../fixtures/fee-schedules.generated';
 import { MEDICA, PROFESIONALES, profesionalPorId } from '../fixtures/personas';
 import { noContent, notFound, type MockRouter } from '../mock-router';
 import { ahora, avatarSvg, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, paginar, texto, uuid } from '../mock-store';
@@ -62,36 +63,20 @@ export const servicios = new Coleccion<ServicioSimulado>([
   ...(i % 3 === 0 ? { imageFileId: uuid(`service-image-${code}`) } : {}),
 })));
 
-const NOMENCLADOR = [
-  ['Cardiología', 'CAR-001', 'Consulta cardiológica', '220.00'],
-  ['Cardiología', 'CAR-002', 'Electrocardiograma de 12 derivaciones', '110.00'],
-  ['Cardiología', 'CAR-003', 'Ecocardiograma bidimensional con Doppler', '450.00'],
-  ['Cardiología', 'CAR-004', 'Prueba de esfuerzo', '500.00'],
-  ['Cardiología', 'CAR-005', 'Holter 24 h', '330.00'],
-  ['Pediatría', 'PED-001', 'Consulta pediátrica', '180.00'],
-  ['Pediatría', 'PED-002', 'Control de niño sano', '150.00'],
-  ['Ginecología', 'GIN-001', 'Consulta ginecológica', '200.00'],
-  ['Ginecología', 'GIN-002', 'Papanicolaou', '120.00'],
-  ['Ginecología', 'GIN-003', 'Ecografía obstétrica', '280.00'],
-  ['Traumatología', 'TRA-001', 'Consulta traumatológica', '200.00'],
-  ['Traumatología', 'TRA-002', 'Infiltración articular', '350.00'],
-  ['Traumatología', 'TRA-003', 'Artroscopia de rodilla', '6500.00'],
-  ['Dermatología', 'DER-001', 'Consulta dermatológica', '190.00'],
-  ['Dermatología', 'DER-002', 'Crioterapia de lesiones', '260.00'],
-  ['Laboratorio', 'LAB-001', 'Hemograma completo', '60.00'],
-  ['Laboratorio', 'LAB-002', 'Perfil lipídico', '90.00'],
-  ['Laboratorio', 'LAB-003', 'Glucemia en ayunas', '35.00'],
-  ['Imagenología', 'IMG-001', 'Radiografía de tórax', '120.00'],
-  ['Imagenología', 'IMG-002', 'Tomografía de cráneo sin contraste', '850.00'],
-].map(([specialty, code, display, referencePrice], i) => ({
-  conceptId: uuid(`nomenclador-${code}`),
-  code: code!,
-  display: display!,
-  specialty: specialty!,
-  group: specialty!,
-  referencePrice: referencePrice!,
-  priceUnit: 'BOB',
-  ocrSuspect: i % 9 === 8,
+/* El nomenclador son los dos aranceles reales que entregó el propietario: el
+   de honorarios médicos del Colegio Médico de Santa Cruz (en UMA) y el
+   odontológico 2026 (en dólares). Antes eran veinte prestaciones inventadas en
+   bolivianos, con un `ocrSuspect` repartido cada nueve filas. Ver
+   `fee-schedules.generated.ts`. */
+const NOMENCLADOR = [...MEDICAL_FEE_SCHEDULE, ...DENTAL_FEE_SCHEDULE].map((item) => ({
+  conceptId: uuid(`nomenclador-${item.code}`),
+  code: item.code,
+  display: item.display,
+  specialty: item.specialty,
+  group: item.specialty,
+  referencePrice: item.referencePrice,
+  priceUnit: item.priceUnit,
+  ocrSuspect: item.ocrSuspect,
 }));
 
 /* ---- el catálogo que una organización publica en su ficha ---------------- */
@@ -340,7 +325,13 @@ export function registrarPracticas(router: MockRouter): void {
   router.get('/billing/service-catalog/procedure-specialties', () => {
     const conteo = new Map<string, number>();
     for (const n of NOMENCLADOR) conteo.set(n.specialty, (conteo.get(n.specialty) ?? 0) + 1);
-    return [...conteo.entries()].map(([specialty, count]) => ({ specialty, count }));
+    // Envuelto en `items`, como lo lee `listProcedureSpecialties()`: con el
+    // arreglo pelado el importador leía `body.items` → `undefined.map` y la
+    // pantalla del arancel se caía entera. Ordenado en español, como el servidor.
+    const items = [...conteo.entries()]
+      .map(([specialty, count]) => ({ specialty, count }))
+      .sort((a, b) => a.specialty.localeCompare(b.specialty, 'es'));
+    return { items };
   });
 
   router.get('/billing/service-catalog/procedures', ({ query }) => {

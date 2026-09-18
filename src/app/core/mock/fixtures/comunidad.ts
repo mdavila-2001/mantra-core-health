@@ -146,8 +146,9 @@ function vitrinaDeProfesional(p: ProfesionalSimulado): VitrinaSimulada {
     specialties: p.especialidades,
     ratingAverage: p.ratingCount === 0 ? null : p.ratingAverage,
     ratingCount: p.ratingCount,
-    hasPublishedAgenda: p.especialidades.length > 0,
-    seguidores: 40 + PROFESIONALES.indexOf(p) * 37,
+    hasPublishedAgenda: p.especialidades.length > 0 && p.origen === undefined,
+    // Un médico real de la red no tiene seguidores en una red que no usa.
+    seguidores: p.origen === undefined ? 40 + PROFESIONALES.indexOf(p) * 37 : 0,
   };
 }
 

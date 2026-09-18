@@ -7,6 +7,11 @@ import {
   type HospitalReal,
   type PrecisionDeInstitucion,
 } from './instituciones.generated';
+import {
+  PHARMACIES_AND_LABS,
+  PRIMARY_CARE_CENTERS,
+  type MarkdownInstitutionPrecision,
+} from './markdown-institutions.generated';
 
 /* ============================================================================
     Las instituciones de salud reales, con la forma de una vitrina pública.
@@ -36,7 +41,7 @@ import {
 /** Una institución lista para el directorio público. */
 export interface SemillaDeInstitucion {
   readonly clave: string;
-  readonly kind: 'ORGANIZATION' | 'INSURER';
+  readonly kind: 'ORGANIZATION' | 'INSURER' | 'PHARMACY';
   readonly tenantId: string;
   readonly targetId: string;
   readonly slug: string;
@@ -49,12 +54,17 @@ export interface SemillaDeInstitucion {
   readonly lng: number;
   readonly verified: boolean;
   readonly color: string;
-  readonly precision: PrecisionDeInstitucion;
+  readonly precision: PrecisionDeInstitucion | MarkdownInstitutionPrecision;
 }
 
-/** Si el punto es el centro de la ciudad y no la dirección publicada. */
-export function ubicacionAproximada(precision: PrecisionDeInstitucion): boolean {
-  return precision === 'ciudad';
+/** Si el punto es el centro de la ciudad o del municipio y no la dirección publicada. */
+export function ubicacionAproximada(precision: PrecisionDeInstitucion | MarkdownInstitutionPrecision): boolean {
+  return precision === 'ciudad' || precision === 'municipio';
+}
+
+/** La frase que avisa que el punto del mapa no es la puerta del lugar. */
+function avisoDeUbicacion(precision: PrecisionDeInstitucion | MarkdownInstitutionPrecision, lugar: string): string {
+  return ubicacionAproximada(precision) ? ` Ubicación aproximada en el mapa: centro de ${lugar}.` : '';
 }
 
 function slugDe(nombre: string): string {
@@ -138,7 +148,10 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     kind: 'INSURER' as const,
     tenantId: uuid(`tenant-${aseguradora.id}`),
     targetId: uuid(`insurer-${aseguradora.id}`),
-    slug: slugDe(aseguradora.name),
+    // BISA y Fortaleza figuran en los dos ramos con la misma razón social: con
+    // el nombre solo, las dos fichas compartían enlace y una tapaba a la otra.
+    // Las de salud conservan el enlace de siempre; las generales llevan el ramo.
+    slug: aseguradora.coversHealth ? slugDe(aseguradora.name) : `${slugDe(aseguradora.name)}-generales-y-fianzas`,
     displayName: aseguradora.shortName ?? aseguradora.name,
     headline: titularDeAseguradora(aseguradora),
     biography:
@@ -152,6 +165,49 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     verified: false,
     color: '#b45309',
     precision: aseguradora.precision,
+  })),
+  /* Las farmacias de la planilla del propietario. La planilla no trae su
+     dirección, así que el punto es el centro de la ciudad y la ficha lo dice. */
+  ...PHARMACIES_AND_LABS.filter((f) => f.kind === 'PHARMACY').map((farmacia) => ({
+    clave: `institucion-${farmacia.id}`,
+    kind: 'PHARMACY' as const,
+    tenantId: uuid(`tenant-${farmacia.id}`),
+    targetId: uuid(`organization-${farmacia.id}`),
+    slug: slugDe(farmacia.name),
+    displayName: farmacia.name,
+    headline: `Farmacia · ${farmacia.city}`,
+    biography:
+      [farmacia.legalName, farmacia.taxId === null ? null : `NIT ${farmacia.taxId}`].filter((x) => x !== null).join(' · ') +
+      '.' +
+      avisoDeUbicacion(farmacia.precision, farmacia.city),
+    city: farmacia.city,
+    address: farmacia.address ?? '',
+    lat: farmacia.lat,
+    lng: farmacia.lng,
+    verified: false,
+    color: '#16a34a',
+    precision: farmacia.precision,
+  })),
+  /* Los 464 centros de salud de primer nivel de Santa Cruz. Antes quedaban
+     afuera «para no llenar el directorio»; el propietario los quiere todos.
+     Se ubican en el centro de su municipio —sus direcciones son rurales— y
+     cada ficha lo dice. */
+  ...PRIMARY_CARE_CENTERS.map((centro) => ({
+    clave: `institucion-${centro.id}`,
+    kind: 'ORGANIZATION' as const,
+    tenantId: uuid(`tenant-${centro.id}`),
+    targetId: uuid(`organization-${centro.id}`),
+    slug: centro.id,
+    displayName: centro.name,
+    headline: `Centro de salud de primer nivel · ${centro.municipality}`,
+    biography: `Establecimiento público de primer nivel del municipio de ${centro.municipality}, ${centro.department}.${avisoDeUbicacion(centro.precision, centro.municipality)}`,
+    city: centro.municipality,
+    address: centro.address ?? '',
+    lat: centro.lat,
+    lng: centro.lng,
+    verified: false,
+    color: '#1d4ed8',
+    precision: centro.precision,
   })),
 ];
 
