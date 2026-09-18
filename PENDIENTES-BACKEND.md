@@ -1519,3 +1519,39 @@ URL firmada del backend no es una URL de navegador.
 Simulador: `core/mock/handlers/practice.handlers.ts`; cliente:
 `PracticeSitesClient.setSiteBankQr`; pantalla:
 `features/account/my-profile/work-history/site-bank-qr-dialog`.
+
+## P35 · Cotizaciones: plan de pagos flexible, sin interés — 18/09/2026
+
+El propietario pidió **quitar por completo la tasa de interés y la simulación de
+crédito** de las cotizaciones: un consultorio no financia, reparte el precio de un
+tratamiento en cuotas a medida de la persona. El frontend (`mockup`) ya lo hace;
+la API real (`dev`) todavía expone el contrato viejo.
+
+### Qué cambia en el contrato de `POST /quotations`
+
+- **Fuera:** `interestRatePercent`, `interestCalculationMethod`
+  (`create-quotation.dto.ts`) y el endpoint `POST /quotations/simulate`.
+- **Nuevo:** `downPaymentAmount` (número, ≥ 0), `paymentFrequency`
+  (`WEEKLY` · `BIWEEKLY` · `MONTHLY`, sólo punto de partida) e `installments`:
+  `[{ installmentNumber, dueDate: 'YYYY-MM-DD', amount }]`, **el cronograma
+  tal como lo dejó quien atiende** — montos y fechas pueden no ser parejos.
+- **Regla de servidor:** anticipo + Σ `amount` = `offeredPrice`, al centavo.
+  Si no, 422 `VALIDATION_FAILED` (el simulador ya responde así).
+- `GET /quotations/:id` devuelve lo mismo: `installments` sin
+  `principalAmount`/`interestAmount`/`totalAmount`, sólo `amount`.
+
+### Dónde guardarlo sin tocar el modelo
+
+`payments.installment_plans` + `payments.installment_schedules` ya declaran
+exactamente esto: `number_of_installments`, `total_amount`, y por cuota
+`sequence_no`, `due_date`, `amount`. `interest_rate` es **nullable**: queda
+en `NULL`. Falta decidir cómo se ata el plan a la cotización (hoy el plan
+cuelga de `payment_intent_id`) — decisión del modelo, no del front.
+
+### Lo que el frontend ya hace
+
+- Alta: `features/quotations/quotation-form` + `flexible-payment-plan.ts`.
+- Consulta: `features/clinical-record/consultation/payment-plan-panel`, lee
+  `GET /quotations?patientProfileId=` y el detalle de los `ACCEPTED`, `SENT`
+  y `DRAFT` vigentes.
+- Simulador: `core/mock/handlers/finance.handlers.ts`.
