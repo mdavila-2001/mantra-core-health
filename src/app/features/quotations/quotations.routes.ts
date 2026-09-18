@@ -8,9 +8,9 @@
 
     ## Por qué la sección se llama `my-quotations` y no `quotations`
 
-    El backend de FT-24 (en desarrollo en paralelo) expone sus cuatro
+    El backend de FT-24 (en desarrollo en paralelo) expone sus
     endpoints bajo el prefijo `/quotations` (`POST /quotations`,
-    `POST /quotations/simulate`, `GET /quotations/:id`,
+    `GET /quotations/:id`,
     `GET /quotations?patientProfileId=`). El proxy de `ng serve` compara por
     **inicio de ruta** (ver el comentario de `proxy.conf.json` y
     `scripts/check-route-prefixes.mjs`): una sección de Angular llamada
@@ -27,3 +27,9 @@ export const QUOTATIONS_ROUTE = '/my-quotations';
 
 /** Alta de una cotización nueva. */
 export const QUOTATION_NEW_ROUTE = `${QUOTATIONS_ROUTE}/new`;
+
+/**
+ * El paciente con el que abre el alta, cuando se llega desde la consulta. Lo
+ * que viaja es el `profileId`; el nombre lo relee el formulario.
+ */
+export const QUOTATION_PATIENT_QUERY_PARAM = 'patient';

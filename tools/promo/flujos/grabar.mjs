@@ -27,6 +27,18 @@ const FPS = 30;
 const arg = (n, pd) => { const i = process.argv.indexOf(n); return i > -1 ? process.argv[i + 1] : pd; };
 const BASE = arg('--base', 'http://localhost:4200').replace(/\/$/, '');
 const solo = arg('--solo', null);
+/* Ensayo: se recorre la aplicación igual pero sin fotografiar y sin armar el
+   video. Es para ajustar un guion largo —el alta del médico son trece páginas—
+   sin esperar la media hora que cuesta la corrida de verdad. */
+const SECO = process.argv.includes('--seco');
+/* Para un tramo que se empalma detrás de otro video: sin el fundido de entrada,
+   el corte no se nota. */
+const SIN_ENTRADA = process.argv.includes('--sin-entrada');
+/* Cuánto más rápido transcurre el video que el recorrido grabado. 1 es a ritmo
+   real; 1.2 —el de casa— lo apura lo justo para que un ejercicio largo no canse,
+   sin que deje de leerse lo que se escribe en cada campo. */
+const RITMO = Number(arg('--ritmo', '1.2'));
+if (!(RITMO > 0)) throw new Error(`--ritmo tiene que ser un número mayor que cero, no «${arg('--ritmo', '')}».`);
 const MODULOS = ['paciente', 'medico', 'farmacia', 'aseguradora'].filter((m) => !solo || m === solo);
 if (!MODULOS.length) throw new Error(`No conozco el módulo «${solo}». Son: paciente, medico, farmacia, aseguradora.`);
 
@@ -60,7 +72,12 @@ const navegador = await chromium.launch();
 for (const modulo of MODULOS) {
   const { grabar } = await import(`./${modulo}.mjs`);
   console.log(`\n== ${modulo}`);
-  await grabar({ navegador, base: BASE, dir: salida });
+  await grabar({ navegador, base: BASE, dir: salida, seco: SECO });
+}
+if (SECO) {
+  await navegador.close();
+  console.log('\nensayo terminado: el recorrido llega hasta el final. Sin --seco se graba de verdad.');
+  process.exit(0);
 }
 
 /* --- 2 · un servidor mínimo: el escenario lee lo grabado por http --- */
@@ -90,7 +107,7 @@ for (const modulo of MODULOS) {
   const pagina = await navegador.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   const fallos = [];
   pagina.on('pageerror', (e) => fallos.push(String(e).slice(0, 140)));
-  await pagina.goto(`http://127.0.0.1:${puerto}/flujo.html?f=${modulo}`);
+  await pagina.goto(`http://127.0.0.1:${puerto}/flujo.html?f=${modulo}${SIN_ENTRADA ? '&sin-entrada' : ''}`);
   await pagina.evaluate(() => window.__listo);
   const duracion = await pagina.evaluate(() => window.__dur);
   const total = Math.round(duracion * FPS);
@@ -105,8 +122,12 @@ for (const modulo of MODULOS) {
   if (fallos.length) throw new Error(`El escenario de ${modulo} falló: ` + [...new Set(fallos)].join(' | '));
   if (readdirSync(fotogramas).length !== total) throw new Error(`Faltan fotogramas de ${modulo}.`);
 
+  /* El ritmo se ajusta acá y no en el guion: los fotogramas ya están, así que
+     leerlos más rápido —y volver a 30 fps a la salida— acelera el video entero
+     sin volver a manejar la aplicación, que es la parte que tarda media hora. */
   const mp4 = join(salida, `alovida-flujo-${modulo}-1080p.mp4`);
-  codificar(['-y', '-framerate', String(FPS), '-i', join(fotogramas, 'f%05d.png'), '-c:v', 'libx264',
+  codificar(['-y', '-framerate', String(FPS * RITMO), '-i', join(fotogramas, 'f%05d.png'),
+    '-vf', `fps=${FPS}`, '-c:v', 'libx264',
     '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mp4], mp4);
   const mp4720 = join(salida, `alovida-flujo-${modulo}-720p.mp4`);
   codificar(['-y', '-i', mp4, '-vf', 'scale=1280:720:flags=lanczos', '-c:v', 'libx264', '-preset', 'slow',

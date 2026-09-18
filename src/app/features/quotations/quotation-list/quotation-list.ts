@@ -104,6 +104,8 @@ export class QuotationList {
   ]);
 
   protected readonly porPaciente = (fila: PatientListItem): string => fila.profileId;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDePaciente = (fila: PatientListItem): string => fila.displayName ?? '';
 
   protected elegirPaciente(paciente: PatientListItem): void {
     this.pacienteElegido.set(paciente);
@@ -130,6 +132,9 @@ export class QuotationList {
   );
 
   protected readonly porCotizacion = (fila: QuotationListItem): string => fila.id;
+  /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
+  protected readonly nombreDeCotizacion = (fila: QuotationListItem): string =>
+    fila.serviceNameSnapshot;
 
   protected recargarCotizaciones(): void {
     const paciente = this.pacienteElegido();

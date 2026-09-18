@@ -75,12 +75,16 @@ const $ = (s) => document.querySelector(s);
 const FLUJO = new URLSearchParams(location.search).get('f') ?? 'paciente';
 const TITULOS = { paciente: 'PACIENTE', medico: 'MÉDICO', farmacia: 'FARMACIA', aseguradora: 'ASEGURADORA' };
 const CIERRES = {
-  paciente: 'Pedir turno, ver la cita, seguir la receta.',
-  medico: 'Recibir, atender, diagnosticar y cobrar.',
+  paciente: 'Tu salud, en un solo lugar.',
+  medico: 'Tu consulta, tu agenda y tus precios.',
   farmacia: 'De la receta electrónica al mostrador.',
   aseguradora: 'Coberturas, corredores y dictámenes.',
 };
 const CIERRE = 6.4;          // segundos de marca al final
+/* La ventana entra con un fundido de 0,6 s. Eso está bien cuando el video
+   empieza por acá, y estorba cuando este tramo se EMPALMA detrás de otro: el
+   corte se vería como un parpadeo. `?sin-entrada` lo desactiva. */
+const SIN_ENTRADA = new URLSearchParams(location.search).has('sin-entrada');
 const mez = (a, b, p) => a + (b - a) * p;
 const suave = (p) => 1 - Math.pow(1 - p, 3);
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
@@ -117,7 +121,7 @@ window.__render = (t) => {
   const enApp = t < DUR_APP;
 
   /* la ventana con la aplicación */
-  const entrada = clamp01(t / .6), salida = clamp01((DUR_APP - t) / .5);
+  const entrada = SIN_ENTRADA ? 1 : clamp01(t / .6), salida = clamp01((DUR_APP - t) / .5);
   $('#ventana').style.opacity = enApp ? suave(entrada) * (t > DUR_APP - .5 ? salida : 1) : 0;
   if (enApp) {
     const src = imagenes.get(G.frames[i]);

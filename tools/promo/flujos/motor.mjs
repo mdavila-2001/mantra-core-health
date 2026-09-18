@@ -14,7 +14,7 @@ import { join } from 'node:path';
 export const VP = { width: 1520, height: 950 };
 export const FPS = 30;
 
-export function crearMotor({ navegador, base, dir, flujo }) {
+export function crearMotor({ navegador, base, dir, flujo, seco = false }) {
   const raiz = join(dir, flujo);
   rmSync(raiz, { recursive: true, force: true });
   mkdirSync(join(raiz, 'app'), { recursive: true });
@@ -30,9 +30,11 @@ export function crearMotor({ navegador, base, dir, flujo }) {
       if (pulso >= 0) { pulso++; if (p >= 1) pulso = -1; }
     }
   };
+  /* En seco no se fotografía: el recorrido es el mismo y tarda minutos en vez de
+     decenas. Sirve para ajustar un guion largo, no para armar el video. */
   const foto = async (veces = 1) => {
     const nombre = `f${String(nFoto++).padStart(5, '0')}.png`;
-    await pg.screenshot({ path: join(raiz, 'app', nombre) });
+    if (!seco) await pg.screenshot({ path: join(raiz, 'app', nombre) });
     ultima = nombre;
     empujar(veces);
   };
@@ -64,14 +66,54 @@ export function crearMotor({ navegador, base, dir, flujo }) {
     await loc.click();
     await animar(tras);
   };
-  /** Escribe en un campo, letra por letra, como lo haría una persona. */
-  const escribir = async (loc, texto, { cps = 22, apuntar = true } = {}) => {
+  /**
+   * Escribe en un campo, letra por letra, como lo haría una persona.
+   *
+   * `limpiar` selecciona antes lo que haya: a un campo que ya trae valor no se
+   * lo sobreescribe tecleando, se le pega el dígito al lado —el plazo venía en
+   * 1 y quedaba «13»—. Se hace con el atajo de seleccionar todo, que es lo que
+   * haría cualquiera, y así se ve en el video.
+   */
+  const escribir = async (loc, texto, { cps = 22, apuntar = true, limpiar = false } = {}) => {
     await loc.scrollIntoViewIfNeeded().catch(() => {});
     if (apuntar) { mover(await centro(loc), .42); pulso = 0; empujar(2); }
     await loc.click();
     await foto(2);
+    if (limpiar) {
+      await pg.keyboard.press(process.platform === 'darwin' ? 'Meta+a' : 'Control+a');
+      await foto(3);
+    }
     const porLetra = Math.max(1, Math.round(FPS / cps));
     for (const letra of texto) { await pg.keyboard.type(letra); await foto(porLetra); }
+  };
+  /**
+   * Escribe de un golpe en un campo con máscara, como quien pega.
+   *
+   * Los campos de fecha se repintan solos a `DD/MM/AAAA` al recibir el foco, así
+   * que ni `fill()` ni teclear dígito por dígito los llenan: lo primero deja
+   * `DD/MM/AAAA17/12/2002` y lo segundo se come la mitad. El camino que la
+   * máscara sí acepta es el del pegado —el `value` nativo más un `input`—, el
+   * mismo que usa la suite de la casa
+   * (`playwright/registro-doctor-universidad-y-profesiones.spec.ts`).
+   */
+  const pegar = async (loc, texto, { apuntar = true } = {}) => {
+    await loc.scrollIntoViewIfNeeded().catch(() => {});
+    if (apuntar) { mover(await centro(loc), .42); pulso = 0; empujar(2); }
+    await loc.click();
+    await foto(2);
+    await loc.evaluate((el, valor) => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      setter.call(el, valor);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }, texto);
+    await foto(4);
+  };
+  /** Elige en un desplegable: el puntero va y queda lo elegido a la vista. */
+  const elegir = async (loc, opcion, { apuntar = true } = {}) => {
+    await loc.scrollIntoViewIfNeeded().catch(() => {});
+    if (apuntar) { mover(await centro(loc), .45); pulso = 0; empujar(2); }
+    await loc.selectOption(opcion);
+    await foto(6);
   };
   /** Baja o sube la pantalla, fotografiando el recorrido. */
   const desplazar = async (hasta, segundos = 1.1) => {
@@ -84,7 +126,18 @@ export function crearMotor({ navegador, base, dir, flujo }) {
     }
   };
 
+  /**
+   * Corta acá los rótulos que sigan vivos.
+   *
+   * Un rótulo habla de la pantalla que está debajo; si la pantalla cambia y el
+   * rótulo sigue, el video dice una cosa y muestra otra. `ir()` lo llama solo
+   * —navegar siempre cambia la pantalla—; para un clic que también navega, el
+   * guion lo llama a mano antes.
+   */
+  const cortar = () => { for (const r of rotulos) if (r.hasta > frames.length) r.hasta = frames.length; };
+
   const ir = async (ruta, { espera = 2400, quieto = .35 } = {}) => {
+    cortar();
     await pg.goto(base + ruta, { waitUntil: 'domcontentloaded' });
     await pg.waitForTimeout(espera);
     await pg.addStyleTag({ content: 'aside.mock{display:none!important}' });
@@ -133,6 +186,6 @@ export function crearMotor({ navegador, base, dir, flujo }) {
 
   return {
     get pagina() { return pg; },
-    sesion, ir, foto, animar, sostener, mover, clic, escribir, desplazar, escena, rotulo, ocultarPuntero, guardar,
+    sesion, ir, foto, animar, sostener, mover, clic, escribir, pegar, elegir, desplazar, escena, rotulo, cortar, ocultarPuntero, guardar,
   };
 }
