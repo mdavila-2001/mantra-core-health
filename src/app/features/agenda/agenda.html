@@ -187,6 +187,12 @@
          La ventana, su navegación, las canceladas y la sede son de las listas
          de consultas y cupos. «Mi agenda» es el horario publicado: no se filtra
          por ventana, y mostrarlos ahí sugería que la cambiaban. -->
+    @if (enCalendario()) {
+      <!-- La agenda del día: lo que `/schedule` abre por defecto a quien
+           atiende (propietario, 18/09). Día, Semana y Mes viven adentro; la
+           tabla de Consultas, detrás del ícono «Ver como tabla». -->
+      <app-my-agenda mode="calendar" (tableRequested)="verComoTabla()" />
+    } @else {
     @if (!enMiAgenda()) {
     <form class="agenda__filtros" (submit)="$event.preventDefault()">
       <!-- Ya no se elige el recurso acá. El lugar donde se publica la agenda
@@ -215,6 +221,36 @@
         [checked]="incluirCanceladas()"
         (checkedChange)="alternarCanceladas($event)"
       />
+
+      @if (esQuienAtiende() && !sinAgendaPropia()) {
+        <!-- El camino de vuelta de «Ver como tabla»: la misma forma, el ícono
+             del calendario. -->
+        <button
+          app-button
+          class="agenda__ver-agenda"
+          variant="ghost"
+          type="button"
+          [iconOnly]="true"
+          data-testid="ver-como-agenda"
+          aria-label="Ver como agenda"
+          appTooltip="Ver como agenda del día"
+          (clicked)="verComoAgenda()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="3" y="4" width="18" height="17" rx="2" />
+            <path d="M3 9h18M8 2v4M16 2v4" />
+            <path d="M7 13h4M7 17h7" />
+          </svg>
+        </button>
+      }
     </form>
 
     <!-- ─── Dónde se atiende ────────────────────────────────────────────────
@@ -316,6 +352,7 @@
         <ng-container [ngTemplateOutlet]="navegacionVentana" />
       </app-tab>
     </app-tabs>
+    }
   }
 </div>
 

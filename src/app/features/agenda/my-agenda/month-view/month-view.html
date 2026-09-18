@@ -36,29 +36,29 @@
                    esté bloqueado; tocarlo no abre nada (pedido del cliente,
                    18/09: la versión cliqueable se va a otra pantalla). -->
               @if (celda.delMes) {
-                <div
-                  class="mes__dia"
-                  role="note"
-                  tabindex="0"
-                  data-testid="mes-dia"
-                  [attr.aria-label]="celda.etiqueta"
-                  [appTooltip]="celda.resumen"
-                >
-                  <span class="mes__numero" aria-hidden="true">{{ celda.numero }}</span>
-
-                  <!-- El número SIEMPRE visible: el color solo no alcanza. -->
-                  @if (celda.estado === 'con-reservas' || celda.estado === 'lleno') {
-                    <span class="mes__cuenta" aria-hidden="true"
-                      >{{ celda.reservados }}/{{ celda.total }}</span
-                    >
-                  } @else if (celda.estado === 'libre') {
-                    <span class="mes__cuenta" aria-hidden="true">0/{{ celda.total }}</span>
-                  } @else if (celda.estado === 'bloqueado') {
-                    <span class="mes__motivo" aria-hidden="true">{{
-                      celda.motivo ?? 'Bloqueado'
-                    }}</span>
-                  }
-                </div>
+                @if (selectable()) {
+                  <button
+                    type="button"
+                    class="mes__dia mes__dia--boton"
+                    data-testid="mes-dia"
+                    [attr.aria-label]="celda.etiqueta + '. Ver el día'"
+                    [appTooltip]="celda.resumen"
+                    (click)="dayPicked.emit(celda.fecha)"
+                  >
+                    <ng-container [ngTemplateOutlet]="contenido" [ngTemplateOutletContext]="{ $implicit: celda }" />
+                  </button>
+                } @else {
+                  <div
+                    class="mes__dia"
+                    role="note"
+                    tabindex="0"
+                    data-testid="mes-dia"
+                    [attr.aria-label]="celda.etiqueta"
+                    [appTooltip]="celda.resumen"
+                  >
+                    <ng-container [ngTemplateOutlet]="contenido" [ngTemplateOutletContext]="{ $implicit: celda }" />
+                  </div>
+                }
               } @else {
                 <span class="mes__numero mes__numero--fuera" aria-hidden="true">{{
                   celda.numero
@@ -71,3 +71,17 @@
     </tbody>
   </table>
 </div>
+
+<!-- Lo de adentro de un día, igual se abra o no: el número y su ocupación. -->
+<ng-template #contenido let-celda>
+  <span class="mes__numero" aria-hidden="true">{{ celda.numero }}</span>
+
+  <!-- El número SIEMPRE visible: el color solo no alcanza. -->
+  @if (celda.estado === 'con-reservas' || celda.estado === 'lleno') {
+    <span class="mes__cuenta" aria-hidden="true">{{ celda.reservados }}/{{ celda.total }}</span>
+  } @else if (celda.estado === 'libre') {
+    <span class="mes__cuenta" aria-hidden="true">0/{{ celda.total }}</span>
+  } @else if (celda.estado === 'bloqueado') {
+    <span class="mes__motivo" aria-hidden="true">{{ celda.motivo ?? 'Bloqueado' }}</span>
+  }
+</ng-template>

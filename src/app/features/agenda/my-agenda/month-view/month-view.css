@@ -84,6 +84,30 @@
   cursor: default;
 }
 
+/* Abrible: se ve y se siente tocable. */
+.mes__dia--boton {
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.mes__dia--boton:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mes__dia--boton {
+    transition: none;
+  }
+
+  .mes__dia--boton:hover {
+    transform: none;
+  }
+}
+
 .mes__dia:focus-visible {
   outline: 2px solid var(--st-primary-bd);
   outline-offset: 1px;

@@ -131,6 +131,111 @@ describe('MyAgenda', () => {
     fixture.detectChanges();
   }
 
+  /* -- La agenda del día: lo que `/schedule` abre por defecto (18/09) -------- */
+
+  describe('modo calendario', () => {
+    function crearCalendario(): void {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          provideRouter([]),
+          {
+            provide: AuthService,
+            useValue: {
+              practitionerProfileId: signal<string | null>(PERFIL),
+              activeTenantId: signal<string | null>(TENANT),
+              roles: signal<readonly string[]>(['PRACTITIONER']),
+            },
+          },
+        ],
+      });
+      fixture = TestBed.createComponent(MyAgenda);
+      fixture.componentRef.setInput('mode', 'calendar');
+      http = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+    }
+
+    /** Responde vacío todo lo que el calendario pide al abrir. */
+    function sinOcupacion(): void {
+      for (const req of http.match(
+        (r) =>
+          r.url === '/scheduling/slots' ||
+          r.url === '/scheduling/bookings' ||
+          r.url === '/scheduling/resources/res-1/exceptions',
+      )) {
+        req.flush({ items: [], count: 0 });
+      }
+      fixture.detectChanges();
+    }
+
+    function abrir(): void {
+      crearCalendario();
+      conRecurso();
+      conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+      sinOcupacion();
+    }
+
+    const $ = (selector: string): HTMLElement | null =>
+      fixture.nativeElement.querySelector(selector);
+
+    it('abre en el día de hoy, con «Día» elegido', () => {
+      abrir();
+
+      const hoy = new Date().toLocaleDateString('es-BO', { weekday: 'long' });
+      expect($('app-day-view')).not.toBeNull();
+      expect($('.dia__titulo')?.textContent?.toLowerCase()).toContain(hoy);
+      expect($('[data-testid="ver-dia"]')?.getAttribute('aria-pressed')).toBe('true');
+      // No es la solapa del horario: ni sus pestañas ni su grilla.
+      expect($('.mi-agenda__solapas')).toBeNull();
+      expect($('app-schedule-grid')).toBeNull();
+    });
+
+    it('«Ver como tabla» es un ícono con nombre y avisa a quien la contiene', () => {
+      abrir();
+      let pedida = 0;
+      fixture.componentInstance.tableRequested.subscribe(() => pedida++);
+
+      const boton = $('[data-testid="ver-como-tabla"]') as HTMLButtonElement;
+      expect(boton.getAttribute('aria-label')).toBe('Ver como tabla');
+      boton.click();
+
+      expect(pedida).toBe(1);
+    });
+
+    it('«Semana» muestra la semana, y tocar un día vuelve al día', () => {
+      abrir();
+
+      ($('[data-testid="ver-semana"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      sinOcupacion();
+      expect($('app-week-view')).not.toBeNull();
+      expect($('app-day-view')).toBeNull();
+
+      ($('[data-testid="semana-dia"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      sinOcupacion();
+      expect($('app-day-view')).not.toBeNull();
+      expect($('[data-testid="ver-dia"]')?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('«Mes» muestra el mes con días que se abren', () => {
+      abrir();
+
+      ($('[data-testid="ver-mes"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      sinOcupacion();
+      const dia = $('[data-testid="mes-dia"]');
+      expect(dia?.tagName).toBe('BUTTON');
+
+      (dia as HTMLButtonElement).click();
+      fixture.detectChanges();
+      sinOcupacion();
+      expect($('app-day-view')).not.toBeNull();
+    });
+  });
+
   /* -- El horario vigente, el retirado y el histórico (TAREA-10) ------------ */
 
   describe('vigente vs retirado', () => {
