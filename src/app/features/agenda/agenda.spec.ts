@@ -134,7 +134,15 @@ describe('Agenda', () => {
    * Abre sesión **antes** de montar: la agenda decide en su constructor si
    * puede pedir algo, y esa decisión sale de la organización del token.
    */
-  async function montar(claims: Record<string, unknown> = {}, url = '/schedule'): Promise<void> {
+  /**
+   * Monta la pantalla en la tabla de Consultas (`vista=table`): casi todo este
+   * archivo prueba las listas. `/schedule` a secas, para quien atiende, es la
+   * agenda del día — la prueban los casos de «la agenda del día por defecto».
+   */
+  async function montar(
+    claims: Record<string, unknown> = {},
+    url = '/schedule?vista=table',
+  ): Promise<void> {
     session.start({
       accessToken: jwt({
         sub: 'u-1',
@@ -396,6 +404,84 @@ describe('Agenda', () => {
     http.expectNone((r) => r.url === '/scheduling/resources');
   });
 
+  /* -- La agenda del día por defecto (propietario, 18/09) ------------------ */
+
+  /** Responde vacío todo lo que haya salido: la pantalla y el calendario. */
+  async function responderTodo(): Promise<void> {
+    for (let vuelta = 0; vuelta < 4; vuelta++) {
+      for (const req of http.match(() => true)) {
+        if (req.cancelled) continue;
+        const url = req.request.url;
+        req.flush(
+          url === '/scheduling/resources'
+            ? { items: [{ ...RECURSO, resourceRefId: 'hp-1' }], count: 1 }
+            : url.endsWith('/templates')
+              ? {
+                  items: [
+                    {
+                      id: 'tpl-1',
+                      name: 'Horario',
+                      statusConceptId: 'c',
+                      rules: [{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }],
+                    },
+                  ],
+                  count: 1,
+                }
+              : { items: [], count: 0, limit: 100, truncated: false },
+        );
+      }
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+    }
+  }
+
+  it('a quien atiende, `/schedule` abre la agenda del día y no la tabla', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
+    await responderTodo();
+
+    const raiz = harness.fixture.nativeElement as HTMLElement;
+    expect(interno<() => boolean>('enCalendario')()).toBe(true);
+    expect(raiz.querySelector('[data-testid="agenda-calendario"]')).not.toBeNull();
+    expect(raiz.querySelector('app-day-view')).not.toBeNull();
+    expect(raiz.querySelectorAll('[role="tab"]')).toHaveLength(0);
+  });
+
+  it('«Ver como tabla» lleva a Consultas, y desde ahí se vuelve a la agenda', async () => {
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
+    await responderTodo();
+    const router = TestBed.inject(Router);
+
+    (
+      harness.fixture.nativeElement.querySelector(
+        '[data-testid="ver-como-tabla"]',
+      ) as HTMLButtonElement
+    ).click();
+    await responderTodo();
+
+    expect(router.url).toContain('vista=table');
+    expect(interno<() => number>('pestana')()).toBe(0);
+    const volver = harness.fixture.nativeElement.querySelector(
+      '[data-testid="ver-como-agenda"]',
+    ) as HTMLButtonElement;
+    expect(volver.getAttribute('aria-label')).toBe('Ver como agenda');
+
+    volver.click();
+    await responderTodo();
+    expect(router.url).not.toContain('vista=');
+    expect(interno<() => boolean>('enCalendario')()).toBe(true);
+  });
+
+  it('quien reparte turnos no tiene agenda propia: `/schedule` sigue siendo la tabla', async () => {
+    await montar({ roles: ['SCHEDULING_AGENT'] }, '/schedule');
+    await responder();
+    harness.fixture.detectChanges();
+
+    const raiz = harness.fixture.nativeElement as HTMLElement;
+    expect(interno<() => boolean>('enCalendario')()).toBe(false);
+    expect(raiz.querySelectorAll('[role="tab"]').length).toBeGreaterThan(0);
+    expect(raiz.querySelector('[data-testid="ver-como-agenda"]')).toBeNull();
+  });
+
   it('a quien no atiende no le ofrece «Mi agenda», que no es suya', async () => {
     // Mismo criterio que «Visitas de laboratorio»: no se ofrece una puerta que
     // la pantalla del otro lado no va a reconocer como propia.
@@ -535,7 +621,7 @@ describe('Agenda', () => {
    * guarda vive en el componente y no en un `@if` de la plantilla.
    */
   it('a quien atiende, un `?recurso=` ajeno no le abre esa agenda', async () => {
-    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?recurso=r-0');
+    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?vista=table&recurso=r-0');
     await responderRecursos([RECURSO_AJENO, RECURSO]);
     await responderResto();
 

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 
 import type { AgendaSlot } from '../../../../core/data-access/scheduling/scheduling.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
@@ -71,7 +72,7 @@ export interface CeldaDelMes {
  */
 @Component({
   selector: 'app-month-view',
-  imports: [AppButton, Tooltip],
+  imports: [AppButton, NgTemplateOutlet, Tooltip],
   templateUrl: './month-view.html',
   styleUrl: './month-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,6 +89,16 @@ export class MonthView {
 
   /** Pidieron ver otro mes. */
   readonly mesElegido = output<Date>();
+
+  /**
+   * Si cada día se puede abrir. En «Cómo viene el mes» no (es un vistazo, con
+   * el globo como único detalle); en la agenda de `/schedule`, sí: tocar un
+   * día lleva a ese día.
+   */
+  readonly selectable = input(false);
+
+  /** Tocaron un día, con `selectable` puesto. */
+  readonly dayPicked = output<Date>();
 
   protected readonly encabezados = DIAS_DE_LA_SEMANA;
 

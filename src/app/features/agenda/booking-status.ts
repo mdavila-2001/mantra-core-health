@@ -136,6 +136,16 @@ export function sufijoDeCodigo(code: string): string {
 }
 
 /**
+ * El sello de un estado a partir de su código, con o sin prefijo de módulo.
+ *
+ * Lo usa la agenda del día, que ya tiene el código resuelto y sólo necesita
+ * el tono: una cita atendida se pinta igual en la lista y en el día.
+ */
+export function statusVariantOf(code: string): StatusSealVariant {
+  return VARIANTE_POR_CODIGO[sufijoDeCodigo(code)] ?? UNKNOWN_STATUS_VARIANT;
+}
+
+/**
  * Traduce el concepto de estado de una cita a sello y palabra.
  *
  * Nunca lanza y nunca devuelve vacío: un estado que el catálogo todavía no
@@ -157,7 +167,7 @@ export function toBookingStatusPresentation(
   const sufijo = sufijoDeCodigo(concepto.code);
 
   return {
-    variant: VARIANTE_POR_CODIGO[sufijo] ?? UNKNOWN_STATUS_VARIANT,
+    variant: statusVariantOf(sufijo),
     // La palabra la decide la interfaz; el `code` es la identidad semántica que
     // la ancla. Un estado que esta versión no sepa nombrar cae al texto de
     // reserva —en castellano— y nunca al `display` inglés del catálogo: cambiar
