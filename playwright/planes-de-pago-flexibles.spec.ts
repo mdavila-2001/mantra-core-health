@@ -88,6 +88,13 @@ test('la consulta muestra el plan de pago y el alta lo arma sin interés', async
   await page.setViewportSize({ width: 375, height: 812 });
   await esperarAQueSeAsiente(page);
   await page.screenshot({ path: join(FOTOS, 'alta-375.png'), fullPage: true });
+  // Ninguna frecuencia se corta con «…» en el ancho de un celular.
+  const cortados = await page
+    .locator('.segmentado__rotulo')
+    .evaluateAll((rotulos) =>
+      rotulos.filter((r) => r.scrollWidth > r.clientWidth).map((r) => r.textContent?.trim()),
+    );
+  expect(cortados).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
   // Excluidas sólo dos firmas, preexistentes y ajenas a este cambio (ninguno de

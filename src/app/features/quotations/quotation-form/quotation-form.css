@@ -45,11 +45,19 @@
   color: var(--text-secondary);
 }
 
+/* Mobile-first: rótulo arriba y control a lo ancho. Al lado, el rótulo le
+   quitaba ancho y «Quincenal» se cortaba en «Quince…» a 375 px. */
 .cotizacion__frecuencia {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-3);
+  display: grid;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 48rem) {
+  .cotizacion__frecuencia {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+  }
 }
 
 .cotizacion__rotulo {
