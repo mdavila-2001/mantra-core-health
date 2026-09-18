@@ -4,6 +4,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   PLATFORM_ID,
@@ -13,8 +14,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import type { Observable } from 'rxjs';
+import type { Observable, Subscription } from 'rxjs';
 
+import { NotificationsClient } from '../../../../core/data-access/notifications/notifications.client';
+import type { InAppNotification } from '../../../../core/data-access/notifications/notifications.types';
 import {
   estaPagado,
   PharmacyOrdersClient,
@@ -28,18 +31,13 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
-import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { Stepper } from '../../../../shared/components/molecules/stepper/stepper';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
-import {
-  conSeguimientoDeEjemplo,
-  facturaDelPedido,
-  NOTA_DE_EJEMPLO,
-} from '../order-invoice/order-invoice.fixtures';
+import { facturaDelPedido } from '../order-invoice/order-invoice.fixtures';
 import { TuFactura } from '../order-invoice/tu-factura/tu-factura';
 import {
   etiquetaDeMedioDePago,
@@ -56,6 +54,25 @@ const LADO_DEL_QR = 176;
 
 /** Los finales que cortan el recorrido: no tienen ni tendrán factura. */
 const SIN_FACTURA_POSIBLE: readonly PedidoFarmacia['estado'][] = ['RECHAZADO', 'VENCIDO', 'CANCELADO'];
+
+/**
+ * El destino con que el backend marca un aviso de pedido de farmacia
+ * (`api:pharmacy_inventory/services/pharmacy-order-notifications.service.ts:216`).
+ * Es el mismo tipo que la campana usa para navegar acá
+ * (`core/notifications/notification-routes.ts:37`).
+ */
+const DESTINO_DE_PEDIDO = 'PHARMACY_ORDER';
+
+/** Cuántos avisos se piden de la bandeja: una página alcanza para un pedido. */
+const TOPE_DE_AVISOS = 50;
+
+/** Un aviso de la bandeja, ya recortado a lo que la pantalla muestra. */
+interface AvisoDelPedido {
+  readonly id: string;
+  readonly titulo: string;
+  readonly detalle: string | null;
+  readonly fecha: Date;
+}
 
 /**
  * **El detalle del pedido** (carril FAR-I2): la línea de tiempo, la decisión
@@ -75,12 +92,23 @@ const SIN_FACTURA_POSIBLE: readonly PedidoFarmacia['estado'][] = ['RECHAZADO', '
  *    `RECHAZADO` dice el motivo y devuelve al mapa de sedes, y cancelar vale
  *    mientras el pedido no haya terminado, con confirmación.
  *
- * ## Seguimiento y factura (T-E4)
+ * ## Seguimiento real (R-T-E4)
  *
- * El pago, el hito del envío y la factura no viajan en el contrato. La
- * pantalla lee `vista`: el pedido del contrato más lo que la maqueta aporta
- * para un pedido conocido (`conSeguimientoDeEjemplo`), rotulado. Las acciones
- * siguen hablando con el cliente real por identificador: la maqueta sólo pinta.
+ * El seguimiento sale **entero del contrato**: estado, fechas, código de
+ * retiro, sustituciones y renglones. El pedido de ejemplo ya no se consulta —
+ * la pantalla no completa con la maqueta lo que el backend no publica, así que
+ * el pago (que el contrato deja en `null`, `pharmacy-orders.adapter.ts:98`) no
+ * se muestra en vez de mostrarse inventado.
+ *
+ * Los **avisos** son la única historia demostrable del pedido: los emite el
+ * backend en cada transición con destino `PHARMACY_ORDER`
+ * (`api:…/pharmacy-order-notifications.service.ts:216`) y se leen de la bandeja
+ * que ya existe. Es una lectura de una sola vez —la campana es la que sondea
+ * (`core/notifications/notifications.store.ts:20`)— y por eso el bloque se
+ * titula «Avisos de este pedido» y no «historial»: la bandeja es best-effort y
+ * paginada, y no prueba que estén todos.
+ *
+ * La factura sigue fuera de este carril: su bloque se alimenta como antes.
  *
  * Por `paramMap` y no snapshot: si el router reutiliza el componente para
  * otro pedido (re-pedir navega de un detalle a otro), la pantalla recarga.
@@ -92,7 +120,6 @@ const SIN_FACTURA_POSIBLE: readonly PedidoFarmacia['estado'][] = ['RECHAZADO', '
     AppButton,
     AppButtonLink,
     Badge,
-    Chip,
     DatePipe,
     PageHeader,
     RouterLink,
@@ -106,51 +133,53 @@ const SIN_FACTURA_POSIBLE: readonly PedidoFarmacia['estado'][] = ['RECHAZADO', '
 })
 export class OrderDetail {
   private readonly ordersClient = inject(PharmacyOrdersClient);
+  private readonly notificationsClient = inject(NotificationsClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly navigation = inject(NavigationService);
   private readonly dialogs = inject(DialogService);
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly documento = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly listaRoute = LISTA_ROUTE;
   protected readonly ladoDelQr = LADO_DEL_QR;
-  protected readonly notaDeEjemplo = NOTA_DE_EJEMPLO;
 
   protected readonly state = signal<ViewState<PedidoFarmacia>>(loading());
   protected readonly pedido = computed(() => dataOf(this.state()));
 
-  /** El pedido que se pinta: el del contrato, más lo que la maqueta aporta. */
-  protected readonly vista = computed(() => {
-    const pedido = this.pedido();
-    return pedido === null ? null : conSeguimientoDeEjemplo(pedido);
-  });
+  /**
+   * Los avisos que el backend emitió por este pedido. Vacío mientras no se
+   * leyeron, si la bandeja falla o si no hay ninguno: nunca se rellena.
+   */
+  protected readonly avisos = signal<readonly AvisoDelPedido[]>([]);
 
+  /**
+   * Sin pago en el contrato esto es siempre `false`; se conserva porque el
+   * tipo del pedido publica `pago` y el día que llegue, la pantalla ya lo dice.
+   */
   protected readonly pagado = computed(() => {
-    const vista = this.vista();
-    return vista !== null && estaPagado(vista);
+    const pedido = this.pedido();
+    return pedido !== null && estaPagado(pedido);
   });
 
-  /** El pago lo aportó la maqueta, no el contrato: se rotula. */
-  protected readonly pagoDeEjemplo = computed(
-    () => this.pedido()?.pago === null && this.vista()?.pago !== null,
+  protected readonly medioDePago = computed(() =>
+    etiquetaDeMedioDePago(this.pedido()?.pago ?? null),
   );
 
-  protected readonly medioDePago = computed(() => etiquetaDeMedioDePago(this.vista()?.pago ?? null));
-
   protected readonly presentacion = computed(() => {
-    const vista = this.vista();
+    const pedido = this.pedido();
     // Por pedido y no por estado: con envío, el cierre se dice «Entregado».
-    return vista === null ? null : presentacionDePedido(vista, this.pagado());
+    return pedido === null ? null : presentacionDePedido(pedido, this.pagado());
   });
   protected readonly pasos = computed(() => {
-    const vista = this.vista();
-    return vista === null ? [] : pasosDeLaLineaDeTiempo(vista, this.pagado());
+    const pedido = this.pedido();
+    return pedido === null ? [] : pasosDeLaLineaDeTiempo(pedido, this.pagado());
   });
   protected readonly modalidad = computed(() => {
-    const vista = this.vista();
-    return vista === null ? '' : etiquetaDeModalidad(vista.modalidad);
+    const pedido = this.pedido();
+    return pedido === null ? '' : etiquetaDeModalidad(pedido.modalidad);
   });
 
   /** La factura del pedido, o `null`: sin factura, el bloque lo dice. */
@@ -214,6 +243,10 @@ export class OrderDetail {
 
   private orderId: string | null = null;
 
+  /** Las lecturas en vuelo, para cancelarlas al cambiar de pedido. */
+  private pedidoEnVuelo: Subscription | null = null;
+  private avisosEnVuelo: Subscription | null = null;
+
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.orderId = params.get('orderId');
@@ -235,17 +268,49 @@ export class OrderDetail {
 
   }
 
+  /**
+   * Carga el pedido abierto y sus avisos.
+   *
+   * Las dos lecturas siguen la misma disciplina, y por el mismo motivo: el
+   * router **reutiliza** esta instancia al pasar de un pedido a otro, así que
+   * una respuesta del pedido anterior puede llegar después de la del nuevo.
+   * Cada carga cancela la anterior —lo que aborta su petición— y descarta
+   * cualquier respuesta cuyo pedido ya no sea el abierto. Sin esto, el detalle
+   * podría mostrar el pedido A bajo la URL de B mientras los avisos ya son de
+   * B: dos mitades de dos pedidos distintos en la misma pantalla.
+   */
   protected cargar(): void {
     const orderId = this.orderId;
     if (orderId === null || orderId === '') {
+      this.pedidoEnVuelo?.unsubscribe();
+      this.pedidoEnVuelo = null;
       this.state.set(notFound({ label: 'Volver a mis pedidos', route: LISTA_ROUTE }));
+      this.cargarAvisos(null);
       return;
     }
+    this.pedidoEnVuelo?.unsubscribe();
+    // Un pedido recién abierto nunca nace ocupado, aunque quedara una acción
+    // del anterior en vuelo: su resultado ya no se va a pintar acá.
+    this.ocupado.set(false);
     this.state.set(loading());
-    this.ordersClient.pedido(orderId).subscribe({
-      next: (pedido) => this.refrescar(pedido),
-      error: (error: unknown) => this.state.set(errorToViewState<PedidoFarmacia>(error)),
-    });
+    this.pedidoEnVuelo = this.ordersClient
+      .pedido(orderId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (pedido) => {
+          if (this.orderId !== orderId) {
+            return;
+          }
+          this.refrescar(pedido);
+        },
+        error: (error: unknown) => {
+          if (this.orderId !== orderId) {
+            return;
+          }
+          this.state.set(errorToViewState<PedidoFarmacia>(error));
+        },
+      });
+    this.cargarAvisos(orderId);
   }
 
   protected aceptarPropuesta(): void {
@@ -276,16 +341,25 @@ export class OrderDetail {
       return;
     }
     this.ocupado.set(true);
-    this.ordersClient.reintentar(id).subscribe({
-      next: (nuevo) => {
-        this.ocupado.set(false);
-        void this.router.navigate([LISTA_ROUTE, nuevo.id]);
-      },
-      error: (error: unknown) => {
-        this.ocupado.set(false);
-        this.state.set(errorToViewState<PedidoFarmacia>(error));
-      },
-    });
+    this.ordersClient
+      .reintentar(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (nuevo) => {
+          if (this.orderId !== id) {
+            return;
+          }
+          this.ocupado.set(false);
+          void this.router.navigate([LISTA_ROUTE, nuevo.id]);
+        },
+        error: (error: unknown) => {
+          if (this.orderId !== id) {
+            return;
+          }
+          this.ocupado.set(false);
+          this.state.set(errorToViewState<PedidoFarmacia>(error));
+        },
+      });
   }
 
   /** La ruta al mapa de sedes de la receta que originó este pedido. */
@@ -295,6 +369,16 @@ export class OrderDetail {
       : `/my-account/medical-record/where-to-buy/${pedido.requestId}`;
   }
 
+  /**
+   * Corre una acción sobre el pedido abierto y pinta lo que devuelve.
+   *
+   * La respuesta se descarta si mientras tanto se abrió otro pedido: la
+   * acción era de aquél, y su pedido bajo la URL de éste sería el mismo
+   * engaño que la lectura tardía. **La petición no se cancela**, a diferencia
+   * de las lecturas: aceptar, preferir o cancelar cambian datos en el
+   * servidor, y abortar la conexión no desharía nada — sólo dejaría de mirar
+   * el resultado. Lo que se descarta es pintarlo, no hacerlo.
+   */
   private ejecutar(
     accion: (id: string) => Observable<PedidoFarmacia | null>,
     alTerminar?: () => void,
@@ -304,17 +388,25 @@ export class OrderDetail {
       return;
     }
     this.ocupado.set(true);
-    accion(id).subscribe({
-      next: (pedido) => {
-        this.ocupado.set(false);
-        this.refrescar(pedido);
-        alTerminar?.();
-      },
-      error: (error: unknown) => {
-        this.ocupado.set(false);
-        this.state.set(errorToViewState<PedidoFarmacia>(error));
-      },
-    });
+    accion(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (pedido) => {
+          if (this.orderId !== id) {
+            return;
+          }
+          this.ocupado.set(false);
+          this.refrescar(pedido);
+          alTerminar?.();
+        },
+        error: (error: unknown) => {
+          if (this.orderId !== id) {
+            return;
+          }
+          this.ocupado.set(false);
+          this.state.set(errorToViewState<PedidoFarmacia>(error));
+        },
+      });
   }
 
   /**
@@ -337,4 +429,79 @@ export class OrderDetail {
     }
     this.state.set(ready(pedido));
   }
+
+  /**
+   * Los avisos de ESTE pedido, de la bandeja que ya existe.
+   *
+   * Una sola lectura por pedido y sólo en el navegador: quien sondea es la
+   * campana, y un sondeo paralelo acá sería la misma bandeja pedida dos veces.
+   * Un fallo se traga —el detalle no depende de la bandeja para existir— y
+   * deja la lista vacía: el bloque desaparece en vez de inventar avisos.
+   *
+   * ## Por qué hay cancelación y no sólo un `set([])`
+   *
+   * El router **reutiliza** este componente al pasar de un pedido a otro
+   * (cambia el `paramMap`, no la instancia). Vaciar la lista al empezar evita
+   * que los avisos del pedido anterior se queden a la vista, pero no impide lo
+   * otro: que la respuesta del pedido anterior llegue **después** de la del
+   * nuevo y lo pise. Por eso la lectura en vuelo se cancela —lo que además
+   * aborta la petición HTTP, que ya no le sirve a nadie— y, por si acaso, la
+   * respuesta se descarta si el pedido abierto dejó de ser el que la pidió. La
+   * invalidación es por `orderId`: no hay estado global de por medio.
+   *
+   * Sin pedido —una URL sin identificador— no hay bandeja que pedir, pero la
+   * lista igual se vacía: los avisos del anterior no sobreviven a un destino
+   * que no existe.
+   */
+  private cargarAvisos(orderId: string | null): void {
+    this.avisosEnVuelo?.unsubscribe();
+    this.avisosEnVuelo = null;
+    this.avisos.set([]);
+    if (!this.esBrowser || orderId === null) {
+      return;
+    }
+    this.avisosEnVuelo = this.notificationsClient
+      .listMine({ limit: TOPE_DE_AVISOS })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (pagina) => {
+          if (this.orderId !== orderId) {
+            return;
+          }
+          this.avisos.set(avisosDelPedido(pagina.items, orderId));
+        },
+        error: () => {
+          if (this.orderId !== orderId) {
+            return;
+          }
+          this.avisos.set([]);
+        },
+      });
+  }
+}
+
+/**
+ * Los avisos de la bandeja que pertenecen a este pedido.
+ *
+ * El filtro es el destino que el backend ya escribe —`PHARMACY_ORDER` más el
+ * id del pedido—, no el texto del aviso: un aviso de otro pedido, de una receta
+ * o de un mensaje no entra. Sin asunto ni cuerpo no hay nada que mostrar, así
+ * que ese aviso también queda fuera.
+ */
+function avisosDelPedido(
+  items: readonly InAppNotification[],
+  orderId: string,
+): readonly AvisoDelPedido[] {
+  return items
+    .filter(
+      (aviso) =>
+        aviso.destination?.type === DESTINO_DE_PEDIDO && aviso.destination.id === orderId,
+    )
+    .map((aviso) => ({
+      id: aviso.id,
+      titulo: aviso.subject ?? aviso.bodyText ?? '',
+      detalle: aviso.subject === undefined ? null : (aviso.bodyText ?? null),
+      fecha: aviso.availableAt,
+    }))
+    .filter((aviso) => aviso.titulo !== '');
 }
