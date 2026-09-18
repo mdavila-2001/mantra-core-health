@@ -163,6 +163,12 @@ async function medirEnPagina(page: Page, ancho: number): Promise<Record<string, 
       }
     }
     if (anchoVp >= 1400) {
+      // Botones que se estiran a lo ancho de su contenedor en escritorio.
+      for (const b of main.querySelectorAll('button[app-button], a[app-button]')) {
+        if (!visible(b)) continue;
+        const r = b.getBoundingClientRect();
+        if (r.width > 600) add('boton-a-lo-ancho', `${Math.round(r.width)}px ${(b.textContent ?? '').trim().slice(0, 40)}`);
+      }
       // Regla del cliente (composition-rules §5): cada bloque de la pantalla,
       // centrado (holguras ≤ 2 px de diferencia) y ≥ 85 % del área de contenido.
       const inner = document.querySelector('.app-main__inner');
@@ -276,7 +282,14 @@ for (const clave of Object.keys(ACTORES) as Clave[]) {
           const problemas = await medirEnPagina(page, vp.ancho);
           if (CAPTURAS) {
             const nombre = `${clave}${entrada.ruta.replace(/[/:]/g, '_')}-${vp.ancho}.png`;
-            await page.screenshot({ path: join(CAPTURAS, nombre), fullPage: true }).catch(() => undefined);
+            // Sin `fullPage`: esa opción cambia el alto sin avisar a la página y
+            // el menú lateral quedaba dibujado encima del contenido (sólo en la
+            // captura). Se agranda la ventana de verdad y se captura normal.
+            const alto = await page.evaluate(() => document.documentElement.scrollHeight);
+            await page.setViewportSize({ width: vp.ancho, height: Math.min(Math.max(alto, vp.alto), 6000) });
+            await page.waitForTimeout(400);
+            await page.screenshot({ path: join(CAPTURAS, nombre) }).catch(() => undefined);
+            await page.setViewportSize({ width: vp.ancho, height: vp.alto });
           }
           if (vp.ancho === 1440 && abierta !== destino.split(/[?#]/)[0]) (problemas['rebota'] ??= []).push(abierta);
           if (vp.ancho === 1440 && errores.length) problemas['consola'] = errores.slice(0, 4).map((t) => t.slice(0, 140));

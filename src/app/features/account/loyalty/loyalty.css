@@ -16,6 +16,15 @@
   margin-top: var(--sp-4);
 }
 
+/* En escritorio los botones miden lo que su texto, no los 1 000 px de la
+   tarjeta (refactor UX). En el teléfono siguen a lo ancho: es el blanco más
+   cómodo para el pulgar. */
+@media (min-width: 40rem) {
+  :is(.saldo, .canjear, .promocion, .movimientos) > :is(button, a)[app-button] {
+    align-self: flex-start;
+  }
+}
+
 .saldo__programa,
 .canjear__titulo,
 .promocion__titulo,
