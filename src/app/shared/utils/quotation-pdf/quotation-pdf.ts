@@ -1,7 +1,7 @@
 import { InjectionToken } from '@angular/core';
 import type { jsPDF } from 'jspdf';
 
-import type { Installment, InterestCalculationMethod } from '../../../core/data-access/quotations/quotations.types';
+import type { Installment, PaymentFrequency } from '../../../core/data-access/quotations/quotations.types';
 import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../pdf-export/pdf-export';
 
 /* ============================================================================
@@ -31,9 +31,8 @@ export interface QuotationPdfData {
   readonly patientName: string;
   readonly serviceName: string;
   readonly offeredPrice: number;
-  readonly interestRatePercent: number;
-  readonly interestCalculationMethod: InterestCalculationMethod;
-  readonly installmentCount: number;
+  readonly downPaymentAmount: number;
+  readonly paymentFrequency: PaymentFrequency;
   /** ISO `YYYY-MM-DD`, o cadena vacía si todavía no se eligió. */
   readonly attentionDate: string;
   /** ISO `YYYY-MM-DD`, o cadena vacía si todavía no se eligió. */
@@ -70,10 +69,11 @@ function fila(celdas: readonly string[], header = false): PdfBlock {
   return { kind: 'row', text: celdas.join('   '), cells: celdas, header };
 }
 
-/** «Cuota fija (FLAT)» o «Francés», para que el papel no repita el código. */
-function nombreDelMetodo(metodo: InterestCalculationMethod): string {
-  return metodo === 'FLAT' ? 'cuota fija (FLAT)' : 'francés (amortización)';
-}
+const NOMBRE_DE_FRECUENCIA: Readonly<Record<PaymentFrequency, string>> = {
+  WEEKLY: 'Semanal',
+  BIWEEKLY: 'Quincenal',
+  MONTHLY: 'Mensual',
+};
 
 /** `YYYY-MM-DD` en prosa, o el texto tal cual si no se pudo interpretar. */
 function formatoFecha(iso: string): string {
@@ -95,32 +95,33 @@ export function buildQuotationPdf(data: QuotationPdfData): jsPDF {
   bloques.push(campoDeBloque('Válida hasta', formatoFecha(data.validUntil)));
 
   bloques.push(seccion('Plan de pagos'));
-  bloques.push(campoDeBloque('Cuotas', `${data.installmentCount}`));
-  bloques.push(campoDeBloque('Tasa de interés', `${data.interestRatePercent}%`));
-  bloques.push(campoDeBloque('Método de cálculo', nombreDelMetodo(data.interestCalculationMethod)));
+  bloques.push(campoDeBloque('Interés', 'Sin interés'));
+  bloques.push(campoDeBloque('Anticipo', data.downPaymentAmount.toFixed(2)));
+  bloques.push(campoDeBloque('Cuotas', `${data.installments.length}`));
+  bloques.push(campoDeBloque('Frecuencia', NOMBRE_DE_FRECUENCIA[data.paymentFrequency]));
 
   bloques.push(seccion('Cuotas'));
   if (data.installments.length === 0) {
-    bloques.push(parrafo('Sin plan de pagos simulado todavía.'));
+    bloques.push(
+      parrafo(
+        data.downPaymentAmount > 0
+          ? 'Se paga completo el día de la atención.'
+          : 'Sin plan de pagos armado todavía.',
+      ),
+    );
   } else {
-    bloques.push(fila(['Cuota', 'Vencimiento', 'Capital', 'Interés', 'Total'], true));
+    bloques.push(fila(['Cuota', 'Vencimiento', 'Monto'], true));
     for (const cuota of data.installments) {
       bloques.push(
-        fila([
-          String(cuota.installmentNumber),
-          formatoFecha(cuota.dueDate),
-          cuota.principalAmount.toFixed(2),
-          cuota.interestAmount.toFixed(2),
-          cuota.totalAmount.toFixed(2),
-        ]),
+        fila([String(cuota.installmentNumber), formatoFecha(cuota.dueDate), cuota.amount.toFixed(2)]),
       );
     }
-    // La suma de las cuotas, que es lo que la persona termina pagando. Se
-    // calcula de las mismas filas que están impresas arriba: un total que
-    // saliera de otra cuenta podría no coincidir con lo que se ve.
-    const total = data.installments.reduce((suma, cuota) => suma + cuota.totalAmount, 0);
-    bloques.push({ kind: 'total', text: `Total del plan: ${total.toFixed(2)}` });
   }
+  // Anticipo más cuotas: lo que la persona termina pagando. Sale de las mismas
+  // filas impresas arriba, para que el total no pueda contradecirlas.
+  const total =
+    data.downPaymentAmount + data.installments.reduce((suma, cuota) => suma + cuota.amount, 0);
+  bloques.push({ kind: 'total', text: `Total del plan: ${total.toFixed(2)}` });
 
   bloques.push({
     kind: 'caption',

@@ -35,20 +35,78 @@
   flex-wrap: wrap;
 }
 
+.cotizacion__encabezado-plan {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.cotizacion__bajada {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.cotizacion__frecuencia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.cotizacion__rotulo {
+  font-weight: 600;
+}
+
 .cotizacion__cuotas {
-  inline-size: 100%;
-  border-collapse: collapse;
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.cotizacion__cuotas th,
-.cotizacion__cuotas td {
-  text-align: end;
-  padding: var(--sp-2);
+/* Mobile-first: una columna; en ancho, fecha y monto lado a lado. */
+.cotizacion__cuota {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
 }
 
-.cotizacion__cuotas th:first-child,
-.cotizacion__cuotas td:first-child {
-  text-align: start;
+.cotizacion__cuota-numero {
+  font-weight: 600;
+}
+
+.cotizacion__cuota-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+}
+
+@media (min-width: 48rem) {
+  .cotizacion__cuota {
+    /* Acciones de ancho fijo: si fuera `auto`, la fila con «Repartir de
+       nuevo» tendría otras columnas que las demás y no alinearían. */
+    grid-template-columns: 6rem 1fr 1fr 13rem;
+    align-items: end;
+  }
+
+  .cotizacion__cuota-numero {
+    align-self: center;
+  }
+}
+
+.cotizacion__plan-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.cotizacion__total {
+  margin: 0 0 0 auto;
+  font-variant-numeric: tabular-nums;
 }
 
 .cotizacion__acciones {
