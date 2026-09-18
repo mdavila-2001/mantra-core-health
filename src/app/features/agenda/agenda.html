@@ -508,7 +508,9 @@
       type="button"
       class="agenda__seguro-enlace"
       data-testid="agenda-seguro"
-      [attr.aria-label]="'Ver la solicitud de seguro ' + solicitud.numero"
+      [attr.aria-label]="
+        cita.cobertura + ': ver la solicitud de seguro ' + solicitud.numero + ', ' + cita.paciente
+      "
       appTooltip="Ver la solicitud de seguro"
       (click)="verSolicitudDeSeguro(cita)"
     >

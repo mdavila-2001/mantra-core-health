@@ -20,7 +20,6 @@ import { errorToViewState } from '@core/http/error-to-view-state';
 import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { AppButton } from '@shared/components/atoms/button/button';
-import { AppButtonLink } from '@shared/components/atoms/button/button-link';
 import { Link } from '@shared/components/atoms/link/link';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '@shared/components/organisms/data-table/data-table';
@@ -132,7 +131,6 @@ export interface NotaDeLaAtencion {
   selector: 'app-progress-notes',
   imports: [
     AppButton,
-    AppButtonLink,
     ContentDialog,
     DataTable,
     DatePipe,
