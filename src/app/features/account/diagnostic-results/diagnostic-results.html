@@ -85,6 +85,13 @@
                       size="sm"
                       class="resultados__descargar"
                       [attr.data-testid]="'resultado-descargar-' + archivo.id"
+                      [attr.aria-label]="
+                        'Descargar ' +
+                        archivo.rotulo +
+                        (archivo.formato !== '' ? ' · ' + archivo.formato : '') +
+                        ' de ' +
+                        resultado.titulo
+                      "
                       [isLoading]="operando() === archivo.id"
                       (clicked)="descargar(archivo)"
                     >
@@ -117,6 +124,11 @@
                 variant="secondary"
                 size="sm"
                 [attr.aria-expanded]="abierto() === resultado.reportId"
+                [attr.aria-label]="
+                  (abierto() === resultado.reportId ? 'Cerrar' : 'Compartir con un profesional') +
+                  ': ' +
+                  resultado.titulo
+                "
                 (clicked)="alternarCompartidos(resultado)"
               >
                 @if (abierto() === resultado.reportId) {
