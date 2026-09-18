@@ -97,7 +97,6 @@
 
 .turnos__mas-filtros-cuenta {
   margin-inline-start: var(--sp-1);
-  font-weight: 400;
 }
 
 @media (max-width: 40rem) {
@@ -194,9 +193,6 @@
 }
 
 .turnos__grupo-titulo {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
   margin-block: 0 var(--sp-3);
   font-size: var(--fs-body);
   font-weight: 600;
@@ -204,9 +200,9 @@
 }
 
 .turnos__grupo-cuenta {
+  margin-inline-start: var(--sp-2);
   color: var(--text-muted);
   font-weight: 400;
-  font-variant-numeric: tabular-nums;
 }
 
 .turnos__titulo {
