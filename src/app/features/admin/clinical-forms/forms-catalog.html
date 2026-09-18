@@ -17,6 +17,8 @@
 <app-specialty-browser
   [state]="catalogo()"
   [groups]="grupos()"
+  [collapsible]="true"
+  [expandAll]="hayBusqueda()"
   searchLabel="Buscar un formulario por nombre, código o especialidad"
   noMatchesText="Ningún formulario coincide con lo que buscaste. Probá con otra palabra."
   (retry)="recargar()"

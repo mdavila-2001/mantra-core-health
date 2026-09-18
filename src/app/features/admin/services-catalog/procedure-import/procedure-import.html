@@ -37,6 +37,8 @@
   [groups]="grupos()"
   [filters]="filtros()"
   [hasMore]="hayMas()"
+  [collapsible]="true"
+  [expandAll]="hayFiltro()"
   searchLabel="Buscar un procedimiento por nombre"
   noMatchesText="Ningún procedimiento del arancel coincide. Probá con otra palabra o quitá la especialidad."
   (filtersChanged)="filtrar($event)"

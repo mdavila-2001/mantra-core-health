@@ -51,6 +51,8 @@ class VistaPrueba {}
       [groups]="grupos()"
       [filters]="filtros()"
       [hasMore]="hayMas()"
+      [collapsible]="plegable()"
+      [expandAll]="abrirTodos()"
       noMatchesText="Nada coincide con lo que buscaste."
       (filtersChanged)="emisiones.push($event)"
       (retry)="reintentos = reintentos + 1"
@@ -69,6 +71,8 @@ class HostComponent {
   readonly grupos = signal<readonly SpecialtyGroup<Formulario>[]>(GRUPOS);
   readonly filtros = signal<readonly FilterDef[]>(FILTROS);
   readonly hayMas = signal(false);
+  readonly plegable = signal(false);
+  readonly abrirTodos = signal(false);
   readonly emisiones: Readonly<Record<string, string>>[] = [];
   reintentos = 0;
   pedidosDeMas = 0;
@@ -253,6 +257,37 @@ describe('SpecialtyBrowser', () => {
       await fixture.whenStable();
 
       expect(host.pedidosDeMas).toBe(1);
+    });
+  });
+
+  describe('grupos plegables (refactor UX)', () => {
+    function grupos(): HTMLDetailsElement[] {
+      return [...root().querySelectorAll<HTMLDetailsElement>('details.specialty-browser__group')];
+    }
+
+    it('sin collapsible no cambia nada: secciones abiertas como siempre', () => {
+      expect(grupos()).toHaveLength(0);
+      expect(root().querySelectorAll('section.specialty-browser__group')).toHaveLength(2);
+    });
+
+    it('plegables: el primero abierto, el resto cerrado, y el título con su cuenta en el resumen', async () => {
+      host.plegable.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(grupos().map((g) => g.open)).toEqual([true, false]);
+      expect(grupos()[1].querySelector('summary')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
+        'Pediatría 1',
+      );
+    });
+
+    it('con expandAll (una búsqueda activa) se abren todos', async () => {
+      host.plegable.set(true);
+      host.abrirTodos.set(true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(grupos().map((g) => g.open)).toEqual([true, true]);
     });
   });
 });
