@@ -73,6 +73,9 @@
 .constructor__campo-meta {
   color: var(--text-muted);
   font-size: var(--fs-caption);
+  /* Los códigos son una sola palabra con guiones bajos
+     («TRANSV_CONSENTIMIENTO_INFORMADO»): sin esto se salen de la tarjeta. */
+  overflow-wrap: anywhere;
 }
 
 .constructor__codigo {
