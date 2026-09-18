@@ -720,3 +720,173 @@
     }
   }
 }
+
+/* ==========================================================================
+    `scene="stage"` — lo que el escenario del latido cambia en ESTA plantilla.
+
+    El arte y el título viven en `app-auth-stage`. Acá queda lo que toca a las
+    piezas de esta plantilla: dónde va el escenario, el reloj de la secuencia,
+    la tarjeta que se ensambla como un panel de HUD, el resplandor que respira
+    con el latido y el selector de tema sobre vidrio.
+    ========================================================================== */
+.auth-split--stage {
+  /* El reloj de la secuencia, en un solo lugar porque lo leen las dos
+     plantillas y la pantalla proyectada:
+     - `--beat`: un barrido del monitor cada 5,2 s.
+     - `--beat-start`: la pluma sale casi enseguida, sobre negro.
+     - `--ignite`: el instante en que la pluma toca el pico R y el mundo se
+       enciende = `--beat-start` + 32,9 % de `--beat` (0,4 + 1,71 s).
+     - `--stage-content-delay`: cuándo entra el formulario, ya con la tarjeta
+       ensamblada. La pantalla proyectada lo suma a su propia cascada. */
+  --beat: 5.2s;
+  --beat-start: 0.4s;
+  --ignite: 2.11s;
+  --stage-content-delay: calc(var(--ignite) + 0.75s);
+  /* Por debajo del escenario, el mismo casi-negro: la cámara se inclina con
+     el puntero y un borde de `--bg-surface` asomaría blanco en claro. */
+  background: var(--c-petrol-900);
+}
+
+/* El escenario ocupa la grilla entera, detrás del panel. */
+.auth-split__stage {
+  position: relative;
+  z-index: 0;
+  grid-area: 1 / 1 / -1 / -1;
+}
+
+/* Teléfono: el contenido baja 18svh para dejarle al latido su franja propia
+   entre la barra y la tarjeta (ver `.auth-stage__ecg`). Con la tarjeta del
+   acceso eso cuesta un poco de scroll en un teléfono de 844 px, pero los dos
+   campos siguen arriba del pliegue. */
+.auth-split--stage .auth-split__content {
+  padding-top: 18svh;
+}
+
+/* La barra (marca y tema) aparece cuando el mundo ya está encendido. */
+.auth-split--stage .auth-split__chrome {
+  animation: auth-split-fade 0.8s var(--ease-out) calc(var(--ignite) + 0.9s) backwards;
+}
+
+@keyframes auth-split-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.auth-split--stage .auth-split__theme {
+  padding: 3px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--bg-surface) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in srgb, var(--border-default) 45%, transparent);
+}
+
+/* ==========================================================================
+    La tarjeta se ENSAMBLA como un panel de HUD: primero un punto, después una
+    línea que se abre de lado a lado y por último el panel entero, que se
+    despliega hacia arriba y hacia abajo. Los corchetes de las esquinas se
+    dibujan alrededor mientras tanto.
+
+    `backwards` y no `both`: al terminar la animación el `clip-path` deja de
+    existir, así que no recorta para siempre el resplandor, que se sale del
+    hueco a propósito.
+    ========================================================================== */
+.auth-split--stage .auth-split__slot {
+  position: relative;
+  animation: auth-split-assemble 1.1s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--ignite) + 0.35s)
+    backwards;
+}
+
+@keyframes auth-split-assemble {
+  0% {
+    opacity: 0;
+    clip-path: inset(49.6% 50% round var(--r-2xl));
+  }
+  30% {
+    opacity: 1;
+    clip-path: inset(49.6% 0 round var(--r-2xl));
+  }
+  100% {
+    clip-path: inset(0 round var(--r-2xl));
+  }
+}
+
+/* Resplandor detrás de la tarjeta, que respira con el latido. Va en el hueco
+   (`__slot`, de esta plantilla) y no en la tarjeta, que es de la pantalla. */
+.auth-split--stage .auth-split__slot::before {
+  content: '';
+  position: absolute;
+  inset: -14% -22%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--c-aqua-400) 34%, transparent),
+    transparent
+  );
+  pointer-events: none;
+  animation: auth-resplandor var(--beat) ease-in-out var(--beat-start) infinite;
+}
+
+@keyframes auth-resplandor {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  36% {
+    opacity: 0.95;
+  }
+}
+
+/* Corchetes del panel: cuatro «L» de 1,5 px apenas por fuera de las esquinas,
+   dibujadas con ocho degradados de un solo pseudo-elemento. */
+.auth-split--stage .auth-split__slot::after {
+  --arm: 22px;
+  --ink: color-mix(in srgb, var(--c-aqua-200) 70%, transparent);
+  content: '';
+  position: absolute;
+  inset: calc(var(--sp-3) * -1);
+  pointer-events: none;
+  background:
+    linear-gradient(var(--ink), var(--ink)) top left / var(--arm) 1.5px,
+    linear-gradient(var(--ink), var(--ink)) top left / 1.5px var(--arm),
+    linear-gradient(var(--ink), var(--ink)) top right / var(--arm) 1.5px,
+    linear-gradient(var(--ink), var(--ink)) top right / 1.5px var(--arm),
+    linear-gradient(var(--ink), var(--ink)) bottom left / var(--arm) 1.5px,
+    linear-gradient(var(--ink), var(--ink)) bottom left / 1.5px var(--arm),
+    linear-gradient(var(--ink), var(--ink)) bottom right / var(--arm) 1.5px,
+    linear-gradient(var(--ink), var(--ink)) bottom right / 1.5px var(--arm);
+  background-repeat: no-repeat;
+  animation: auth-split-brackets 0.9s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--ignite) + 0.25s)
+    backwards;
+}
+
+@keyframes auth-split-brackets {
+  from {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+@media (min-width: 1024px) {
+  .auth-split--stage .auth-split__content {
+    padding-top: var(--sp-4);
+  }
+
+  .auth-split--stage .auth-split__panel {
+    padding: var(--sp-6) clamp(var(--sp-6), 4vw, var(--sp-16));
+  }
+}
+
+/* Con «reducir movimiento» no hay secuencia: la tarjeta y la barra están ahí
+   desde el principio, y el resplandor queda quieto. El escenario apaga lo
+   suyo en su propia hoja. */
+@media (prefers-reduced-motion: reduce) {
+  .auth-split--stage .auth-split__chrome,
+  .auth-split--stage .auth-split__slot,
+  .auth-split--stage .auth-split__slot::before,
+  .auth-split--stage .auth-split__slot::after {
+    animation: none !important;
+  }
+}

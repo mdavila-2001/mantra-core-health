@@ -2,30 +2,50 @@
      arriba y no en cada capa para que TODA la escena mida contra el mismo
      rectángulo: si cada velo midiera contra el suyo, el paralaje tiraría de
      cada uno para un lado distinto y se perdería la sensación de profundidad. -->
-<div class="auth-split" [class.auth-split--full]="contentWidth() === 'full'" appPointerScene>
+<div
+  class="auth-split"
+  [class.auth-split--full]="contentWidth() === 'full'"
+  [class.auth-split--stage]="scene() === 'stage'"
+  appPointerScene
+>
+  @if (scene() === 'stage') {
+    <!-- Escenario del latido (`scene="stage"`): una sola capa por detrás de
+         TODA la ventana —no de una columna—, así el trazo cruza de punta a
+         punta y pasa por detrás de la tarjeta de vidrio. Es decorativo entero
+         (el propio componente se marca `aria-hidden`). -->
+    <app-auth-stage class="auth-split__stage" [claim]="claim()" [tagline]="tagline()" />
+  }
   <!-- Columna de marca. `aria-hidden` porque es decorativa: lo que importa está
        en el formulario, y anunciarla duplicaría el mensaje.
        El diseño original lleva una fotografía; usamos un degradado de marca
        porque el archivo no está aprobado todavía y así no dependemos de él. -->
-  <aside class="auth-split__brand" aria-hidden="true">
-    <!-- Auroras: masas de color enormes y muy desenfocadas que derivan solas y
+  <!-- En `stage` la columna de marca no existe: el título lo dibuja el
+       escenario, que ocupa la ventana entera. -->
+  @if (scene() === 'split') {
+    <aside class="auth-split__brand" aria-hidden="true">
+      <!-- Auroras: masas de color enormes y muy desenfocadas que derivan solas y
          además se corren con el puntero. Son el fondo VIVO; lo de abajo (red y
          latido) es el dibujo que va encima. -->
-    <div class="auth-split__aurora auth-split__aurora--brand">
-      <span class="auth-split__velo auth-split__velo--a"></span>
-      <span class="auth-split__velo auth-split__velo--b"></span>
-      <span class="auth-split__velo auth-split__velo--c"></span>
-    </div>
+      <div class="auth-split__aurora auth-split__aurora--brand">
+        <span class="auth-split__velo auth-split__velo--a"></span>
+        <span class="auth-split__velo auth-split__velo--b"></span>
+        <span class="auth-split__velo auth-split__velo--c"></span>
+      </div>
 
-    <!-- Lienzo vivo: la constelación y el trazo de latido, ver auth-split.css.
+      <!-- Lienzo vivo: la constelación y el trazo de latido, ver auth-split.css.
          Solo escritorio (el propio `.auth-split__brand` está oculto antes de
          eso), así que no anima nada en mobile. Todo el grupo lleva una
          máscara de desvanecido hacia abajo (ver `.auth-split__pulse` en el
          CSS): así el dibujo se apaga solo antes de llegar a la franja del
          texto, sea cual sea el largo del claim, en vez de depender de que las
          coordenadas de cada elemento nunca lo toquen. -->
-    <svg class="auth-split__pulse" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid slice" focusable="false">
-      <!-- Constelación: la parte «conectada» del claim, dicha en dibujo. Una
+      <svg
+        class="auth-split__pulse"
+        viewBox="0 0 400 520"
+        preserveAspectRatio="xMidYMid slice"
+        focusable="false"
+      >
+        <!-- Constelación: la parte «conectada» del claim, dicha en dibujo. Una
            red de verdad —un eje con cinco brazos y una cadena que serpentea
            hacia abajo— y no cinco puntos sueltos, para que se lea como cielo y
            no como decoración de relleno. Vive arriba, lejos del texto.
@@ -35,83 +55,214 @@
            transformación puesta en el propio elemento, `scale()` origina en
            SU centro y no en el del viewBox, así que cada astro puede latir
            (escala + opacidad) donde está sin dispararse en diagonal. -->
-      <g class="auth-split__constelacion">
-        <line class="auth-split__hilo" pathLength="100" style="--d:0s" x1="300" y1="90" x2="222" y2="48" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:.9s" x1="300" y1="90" x2="354" y2="54" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:1.8s" x1="300" y1="90" x2="366" y2="140" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:2.6s" x1="300" y1="90" x2="246" y2="150" />
-        <line class="auth-split__hilo auth-split__hilo--vivo" pathLength="100" style="--d:3.3s" x1="300" y1="90" x2="176" y2="100" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:4.1s" x1="176" y1="100" x2="150" y2="180" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:4.9s" x1="150" y1="180" x2="210" y2="220" />
-        <line class="auth-split__hilo auth-split__hilo--vivo" pathLength="100" style="--d:5.6s" x1="210" y1="220" x2="290" y2="210" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:6.2s" x1="290" y1="210" x2="330" y2="250" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:1.3s" x1="176" y1="100" x2="120" y2="60" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:2.1s" x1="366" y1="140" x2="380" y2="210" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:5s" x1="190" y1="30" x2="222" y2="48" />
-        <line class="auth-split__hilo" pathLength="100" style="--d:3.7s" x1="150" y1="180" x2="100" y2="140" />
+        <g class="auth-split__constelacion">
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 0s"
+            x1="300"
+            y1="90"
+            x2="222"
+            y2="48"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 0.9s"
+            x1="300"
+            y1="90"
+            x2="354"
+            y2="54"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 1.8s"
+            x1="300"
+            y1="90"
+            x2="366"
+            y2="140"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 2.6s"
+            x1="300"
+            y1="90"
+            x2="246"
+            y2="150"
+          />
+          <line
+            class="auth-split__hilo auth-split__hilo--vivo"
+            pathLength="100"
+            style="--d: 3.3s"
+            x1="300"
+            y1="90"
+            x2="176"
+            y2="100"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 4.1s"
+            x1="176"
+            y1="100"
+            x2="150"
+            y2="180"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 4.9s"
+            x1="150"
+            y1="180"
+            x2="210"
+            y2="220"
+          />
+          <line
+            class="auth-split__hilo auth-split__hilo--vivo"
+            pathLength="100"
+            style="--d: 5.6s"
+            x1="210"
+            y1="220"
+            x2="290"
+            y2="210"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 6.2s"
+            x1="290"
+            y1="210"
+            x2="330"
+            y2="250"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 1.3s"
+            x1="176"
+            y1="100"
+            x2="120"
+            y2="60"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 2.1s"
+            x1="366"
+            y1="140"
+            x2="380"
+            y2="210"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 5s"
+            x1="190"
+            y1="30"
+            x2="222"
+            y2="48"
+          />
+          <line
+            class="auth-split__hilo"
+            pathLength="100"
+            style="--d: 3.7s"
+            x1="150"
+            y1="180"
+            x2="100"
+            y2="140"
+          />
 
-        <circle class="auth-split__astro auth-split__astro--eje" style="--d:0s" cx="300" cy="90" r="3.6" />
-        <circle class="auth-split__astro auth-split__astro--brillante" style="--d:.7s" cx="222" cy="48" r="2.4" />
-        <circle class="auth-split__astro" style="--d:1.4s" cx="354" cy="54" r="2" />
-        <circle class="auth-split__astro auth-split__astro--brillante" style="--d:2.1s" cx="366" cy="140" r="2.8" />
-        <circle class="auth-split__astro" style="--d:2.8s" cx="246" cy="150" r="2.2" />
-        <circle class="auth-split__astro" style="--d:3.5s" cx="176" cy="100" r="1.8" />
-        <circle class="auth-split__astro" style="--d:.35s" cx="150" cy="180" r="2" />
-        <circle class="auth-split__astro" style="--d:1.05s" cx="210" cy="220" r="1.6" />
-        <circle class="auth-split__astro auth-split__astro--brillante" style="--d:1.75s" cx="290" cy="210" r="1.8" />
-        <circle class="auth-split__astro" style="--d:2.45s" cx="330" cy="250" r="2.4" />
-        <circle class="auth-split__astro" style="--d:3.15s" cx="120" cy="60" r="1.4" />
-        <circle class="auth-split__astro" style="--d:3.85s" cx="380" cy="210" r="1.6" />
-        <circle class="auth-split__astro" style="--d:4.55s" cx="190" cy="30" r="1.3" />
-        <circle class="auth-split__astro" style="--d:5.25s" cx="100" cy="140" r="1.5" />
-      </g>
+          <circle
+            class="auth-split__astro auth-split__astro--eje"
+            style="--d: 0s"
+            cx="300"
+            cy="90"
+            r="3.6"
+          />
+          <circle
+            class="auth-split__astro auth-split__astro--brillante"
+            style="--d: 0.7s"
+            cx="222"
+            cy="48"
+            r="2.4"
+          />
+          <circle class="auth-split__astro" style="--d: 1.4s" cx="354" cy="54" r="2" />
+          <circle
+            class="auth-split__astro auth-split__astro--brillante"
+            style="--d: 2.1s"
+            cx="366"
+            cy="140"
+            r="2.8"
+          />
+          <circle class="auth-split__astro" style="--d: 2.8s" cx="246" cy="150" r="2.2" />
+          <circle class="auth-split__astro" style="--d: 3.5s" cx="176" cy="100" r="1.8" />
+          <circle class="auth-split__astro" style="--d: 0.35s" cx="150" cy="180" r="2" />
+          <circle class="auth-split__astro" style="--d: 1.05s" cx="210" cy="220" r="1.6" />
+          <circle
+            class="auth-split__astro auth-split__astro--brillante"
+            style="--d: 1.75s"
+            cx="290"
+            cy="210"
+            r="1.8"
+          />
+          <circle class="auth-split__astro" style="--d: 2.45s" cx="330" cy="250" r="2.4" />
+          <circle class="auth-split__astro" style="--d: 3.15s" cx="120" cy="60" r="1.4" />
+          <circle class="auth-split__astro" style="--d: 3.85s" cx="380" cy="210" r="1.6" />
+          <circle class="auth-split__astro" style="--d: 4.55s" cx="190" cy="30" r="1.3" />
+          <circle class="auth-split__astro" style="--d: 5.25s" cx="100" cy="140" r="1.5" />
+        </g>
 
-      <!-- Latido: el mismo gesto que el logotipo de AloVida, cruzando la
+        <!-- Latido: el mismo gesto que el logotipo de AloVida, cruzando la
            columna por encima del texto (subido respecto de la versión
            anterior, y con la máscara de desvanecido como red de seguridad).
            `pathLength="1000"` normaliza el largo real del trazo, así el CSS
            puede animar el guion en centésimas sin que nadie tenga que medir
            la curva. -->
-      <g class="auth-split__latido">
-        <path
-          class="auth-split__latido-base"
-          pathLength="1000"
-          d="M-20 300 H92 l13-7 l10 15 l13-62 l15 101 l13-48 l11 12 H232 l11-5 l8 9 l9-32 l11 47 l9-19 H420"
-        />
-        <path
-          class="auth-split__latido-trazo"
-          pathLength="1000"
-          d="M-20 300 H92 l13-7 l10 15 l13-62 l15 101 l13-48 l11 12 H232 l11-5 l8 9 l9-32 l11 47 l9-19 H420"
-        />
-      </g>
-    </svg>
+        <g class="auth-split__latido">
+          <path
+            class="auth-split__latido-base"
+            pathLength="1000"
+            d="M-20 300 H92 l13-7 l10 15 l13-62 l15 101 l13-48 l11 12 H232 l11-5 l8 9 l9-32 l11 47 l9-19 H420"
+          />
+          <path
+            class="auth-split__latido-trazo"
+            pathLength="1000"
+            d="M-20 300 H92 l13-7 l10 15 l13-62 l15 101 l13-48 l11 12 H232 l11-5 l8 9 l9-32 l11 47 l9-19 H420"
+          />
+        </g>
+      </svg>
 
-    <!-- `@for … track` sobre el propio texto: al cambiar de paciente a
+      <!-- `@for … track` sobre el propio texto: al cambiar de paciente a
          profesional el nodo se rehace y la animación de entrada vuelve a
          correr, en vez de que el titular se reemplace de golpe. -->
-    <div class="auth-split__brand-content">
-      <p class="auth-split__wordmark">
-        <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
-        <span>AloVida</span>
-      </p>
-      @for (texto of claimKeyed(); track texto) {
-        <h2 class="auth-split__claim">{{ texto }}</h2>
-      }
-      @for (texto of taglineKeyed(); track texto) {
-        <p class="auth-split__tagline">{{ texto }}</p>
-      }
-    </div>
-  </aside>
+      <div class="auth-split__brand-content">
+        <p class="auth-split__wordmark">
+          <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
+          <span>AloVida</span>
+        </p>
+        @for (texto of claimKeyed(); track texto) {
+          <h2 class="auth-split__claim">{{ texto }}</h2>
+        }
+        @for (texto of taglineKeyed(); track texto) {
+          <p class="auth-split__tagline">{{ texto }}</p>
+        }
+      </div>
+    </aside>
+  }
 
   <!-- Gemelo claro de la aurora, para la columna del formulario. Es una capa
        aparte y no la misma estirada porque los dos fondos son opuestos: sobre
        el degradado oscuro los velos ACLARAN (`screen`), y sobre la superficie
        clara tiñen. Un solo elemento no puede hacer las dos cosas. -->
-  <div class="auth-split__aurora auth-split__aurora--panel" aria-hidden="true">
-    <span class="auth-split__velo auth-split__velo--a"></span>
-    <span class="auth-split__velo auth-split__velo--b"></span>
-    <span class="auth-split__velo auth-split__velo--c"></span>
-  </div>
+  @if (scene() === 'split') {
+    <div class="auth-split__aurora auth-split__aurora--panel" aria-hidden="true">
+      <span class="auth-split__velo auth-split__velo--a"></span>
+      <span class="auth-split__velo auth-split__velo--b"></span>
+      <span class="auth-split__velo auth-split__velo--c"></span>
+    </div>
+  }
 
   <main class="auth-split__panel">
     <div class="auth-split__chrome">
