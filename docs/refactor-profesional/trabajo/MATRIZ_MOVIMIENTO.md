@@ -24,8 +24,12 @@ sólo acompañan.
 | `--mov-rapido/medio/lento` = 110/190/320 ms | alias de `--dur-fast/base/slow` = 120/200/320 ms | `styles/alovida.css` |
 | `motion.md`: «no hay tokens de movimiento» | tabla de tokens reales | `docs/design-system/motion.md` |
 
-Quedan con literales: `styles/alovida.css` (23 líneas del marco portado, con su curva propia)
-— fuera del alcance de esta iteración.
+En `styles/alovida.css` (marco portado): las 18 transiciones de respuesta a la interacción
+(`.12s`/`.15s`/`.16s ease` en menú, encabezado, botones, campos, radios, filas de tabla) pasaron
+a `var(--mov-rapido) var(--curva)` —el alias de `--dur-fast` con la curva propia del marco—.
+Se **conservan a propósito** los tiempos de coreografía: entrada escalonada de la página
+(`.06s`…`.74s` de retardo), la gota (900 ms), el trazo del landing (2,2 s), el cajón
+(170/220/340 ms) y el pulso decorativo del menú (7 s, anulado con movimiento reducido).
 
 ## Verificación
 

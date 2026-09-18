@@ -654,7 +654,7 @@ app-shell-layout { display: block; }
   border: 1px solid var(--nav-recoger-borde);
   background: var(--nav-recoger-fondo); color: var(--nav-recoger-tinta);
   cursor: pointer;
-  transition: color .16s ease, background-color .16s ease, border-color .16s ease;
+  transition: color var(--mov-rapido) var(--curva), background-color var(--mov-rapido) var(--curva), border-color var(--mov-rapido) var(--curva);
 }
 .app-side-nav__recoger svg { width: 1.35rem; height: 1.35rem; }
 .app-side-nav__recoger:hover {
@@ -696,7 +696,7 @@ app-shell-layout { display: block; }
   border-radius: var(--r-ctrl);
   list-style: none; cursor: pointer;
   color: rgba(255, 255, 255, .5);
-  transition: color .16s ease, background-color .16s ease;
+  transition: color var(--mov-rapido) var(--curva), background-color var(--mov-rapido) var(--curva);
 }
 .app-side-nav__group-summary::-webkit-details-marker { display: none; }
 .app-side-nav__group-summary app-nav-icon {
@@ -722,7 +722,7 @@ app-shell-layout { display: block; }
   border-radius: var(--r-ctrl);
   color: rgba(255, 255, 255, .84);
   text-decoration: none; font-size: 15px;
-  transition: background-color .16s ease, color .16s ease;
+  transition: background-color var(--mov-rapido) var(--curva), color var(--mov-rapido) var(--curva);
 }
 .app-side-nav__item .icono,
 .app-side-nav__item app-nav-icon { opacity: .85; }
@@ -758,7 +758,7 @@ app-shell-layout { display: block; }
 /* La flecha del único escalón plegable que queda —el dominio—: gira al abrirse,
    y es la única señal de que el renglón despliega algo en vez de llevar a una
    pantalla. Va más chica que un ícono de destino, como su tipografía. */
-.app-side-nav__chevron { width: 1rem; height: 1rem; margin-left: auto; transition: transform .16s ease; }
+.app-side-nav__chevron { width: 1rem; height: 1rem; margin-left: auto; transition: transform var(--mov-rapido) var(--curva); }
 .app-side-nav__group-summary .app-side-nav__chevron { width: .85rem; height: .85rem; }
 .app-side-nav__group[open] > summary .app-side-nav__chevron { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) {
@@ -885,7 +885,7 @@ app-shell-layout { display: block; }
   display: inline-flex; align-items: center; justify-content: center;
   inline-size: 2.5rem; block-size: 2.5rem;
   border-radius: var(--r-full); color: inherit; text-decoration: none;
-  transition: background-color .15s ease;
+  transition: background-color var(--mov-rapido) var(--curva);
 }
 .app-header__ajustes:hover, .app-header__ajustes:focus-visible { background: var(--sup-hover, var(--sup-tarjeta)); }
 @media (prefers-reduced-motion: reduce) { .app-header__ajustes { transition: none; } }
@@ -1037,7 +1037,7 @@ app-shell-layout { display: block; }
   border-radius: var(--r-ctrl); border: 1px solid transparent;
   font: inherit; font-weight: 500; cursor: pointer; text-decoration: none;
   background: transparent; color: var(--tinta); white-space: nowrap;
-  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+  transition: background-color var(--mov-rapido) var(--curva), border-color var(--mov-rapido) var(--curva), box-shadow var(--mov-rapido) var(--curva);
 }
 [app-button][data-variante="primario"] {
   background: var(--petroleo); border-color: var(--petroleo); color: #fff;
@@ -1144,7 +1144,7 @@ a[app-link]:hover { border-bottom-color: currentColor; }
   background: var(--sup-inset); color: var(--tinta);
   font: inherit;
   box-shadow: var(--inset-ctrl);
-  transition: border-color .16s ease, box-shadow .16s ease;
+  transition: border-color var(--mov-rapido) var(--curva), box-shadow var(--mov-rapido) var(--curva);
 }
 .app-textarea { height: auto; min-height: 96px; padding: var(--e2) var(--e3); line-height: 23px; resize: vertical; }
 .app-textarea--mono { font-family: var(--f-mono); font-size: 13px; }
@@ -1179,7 +1179,7 @@ a[app-link]:hover { border-bottom-color: currentColor; }
   border: 1px solid var(--borde-ctrl); border-radius: var(--r-ctrl);
   background: var(--sup-inset); cursor: pointer; font-size: 15px;
   box-shadow: var(--inset-ctrl);
-  transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease;
+  transition: border-color var(--mov-rapido) var(--curva), background-color var(--mov-rapido) var(--curva), box-shadow var(--mov-rapido) var(--curva);
 }
 .app-radio:hover { border-color: var(--petroleo); }
 .app-radio input { accent-color: var(--aguamarina); width: 16px; height: 16px; margin: 0; }
@@ -1295,7 +1295,7 @@ a[app-link]:hover { border-bottom-color: currentColor; }
   vertical-align: middle; white-space: nowrap;
 }
 .app-data-table tbody tr:last-child td { border-bottom: 0; }
-.app-data-table tbody tr { transition: background-color .12s ease; }
+.app-data-table tbody tr { transition: background-color var(--mov-rapido) var(--curva); }
 .app-data-table .col-num, .app-data-table th.col-num { text-align: right; font-variant-numeric: tabular-nums; }
 .app-data-table td.col-num { font-weight: 600; color: var(--tinta-marca); }
 .app-data-table .col-codigo { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--tinta-marca); }
