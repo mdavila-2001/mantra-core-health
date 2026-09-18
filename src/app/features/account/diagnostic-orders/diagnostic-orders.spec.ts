@@ -139,6 +139,26 @@ describe('DiagnosticOrders', () => {
     expect(texto).toContain('Con resultado');
   });
 
+  it('refactor UX: «Reservar hora» lleva a Mis citas en modo laboratorio y dice de qué estudio', () => {
+    configurar(PROFILE_ID);
+    mount();
+    responderOrdenes([{ ...ORDEN, hasReleasedResult: true, reportId: REPORT_ID }]);
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    const reservar = raiz.querySelector('[data-testid="orden-reservar"]') as HTMLAnchorElement;
+    const estudio = raiz.querySelector('.ordenes__titulo')?.textContent?.trim() ?? '';
+    // Antes: botón deshabilitado con «Próximamente», aunque la reserva existía.
+    expect(reservar.tagName).toBe('A');
+    expect(reservar.getAttribute('aria-disabled')).not.toBe('true');
+    expect(reservar.getAttribute('href')).toBe('/my-account/appointments?resource=lab');
+    expect(reservar.getAttribute('aria-label')).toBe(`Reservar hora en un laboratorio: ${estudio}`);
+    expect(raiz.textContent).not.toContain('Próximamente');
+    const verResultado = [...raiz.querySelectorAll('a')].find((a) =>
+      a.textContent?.includes('Ver resultado'),
+    );
+    expect(verResultado?.getAttribute('aria-label')).toBe(`Ver resultado: ${estudio}`);
+  });
+
   it('agrupa por atención: tres estudios de una consulta son un pedido, no tres', () => {
     configurar(PROFILE_ID);
     mount();
@@ -196,15 +216,21 @@ describe('DiagnosticOrders', () => {
     expect(salida.textContent).toContain('Ver mis turnos');
   });
 
-  it('el botón de reservar se apaga con aria-disabled, no con el disabled nativo', () => {
+  it('reservar es enfocable y el lector lo anuncia: nunca un control apagado en nativo', () => {
+    // Invariante original (carril J1): el camino a reservar no se esconde ni
+    // deja de ser enfocable. Mientras la reserva no existía se apagaba con
+    // aria-disabled; desde el refactor UX es un enlace activo (ver el caso
+    // «Reservar hora lleva a Mis citas en modo laboratorio»).
     configurar(PROFILE_ID);
     mount();
     responderOrdenes([ORDEN]);
 
-    const boton = fixture.nativeElement.querySelector('button[app-button][variant="secondary"]');
-    expect(boton.getAttribute('aria-disabled')).toBe('true');
-    // Nativo apagado = no enfocable y el lector lo saltea.
-    expect(boton.disabled).toBe(false);
+    const reservar = fixture.nativeElement.querySelector(
+      '[data-testid="orden-reservar"]',
+    ) as HTMLAnchorElement;
+    expect(reservar.hasAttribute('href')).toBe(true);
+    expect(reservar.hasAttribute('disabled')).toBe(false);
+    expect(reservar.tabIndex).not.toBe(-1);
   });
 
   it('no muestra ningún uuid en pantalla', () => {

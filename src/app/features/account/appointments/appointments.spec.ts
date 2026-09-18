@@ -5,7 +5,7 @@ import {
   type TestRequest,
 } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -331,6 +331,19 @@ describe('Appointments', () => {
       // médica en una sala de toma de muestras.
       expect(pedido.request.params.get('resourceType')).toBe('PRACTITIONER');
       pedido.flush({ items: [], count: 0 });
+    });
+
+    it('refactor UX: con ?resource=lab (desde «Mis órdenes») arranca pidiendo laboratorios', async () => {
+      await TestBed.inject(Router).navigateByUrl('/?resource=lab');
+      montar();
+      http
+        .expectOne((r) => r.url === '/scheduling/bookings')
+        .flush({ items: [], count: 0, limit: 50, truncated: false });
+
+      const pedido = http.expectOne((r) => r.url === '/scheduling/resources');
+      expect(pedido.request.params.get('resourceType')).toBe('ROOM');
+      pedido.flush({ items: [], count: 0 });
+      expect(interno<() => boolean>('esLaboratorio')()).toBe(true);
     });
 
     it('al cambiar a laboratorio, vuelve a preguntar por recursos de tipo ROOM', () => {

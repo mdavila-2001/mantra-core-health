@@ -191,6 +191,28 @@ test.describe('refactor UX · piloto «Mis citas»', () => {
     await abrirMisCitas(page);
     await page.screenshot({ path: `${EVIDENCIA}/mis-citas-1440-oscuro.png` });
   });
+
+  test('Mis órdenes → «Reservar hora» abre Mis citas en modo laboratorio', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await entrar(page, PACIENTE);
+    await irA(page, '/my-account/diagnostic-orders');
+
+    const reservar = page.getByTestId('orden-reservar').first();
+    await expect(reservar).toBeVisible({ timeout: 20_000 });
+    await expect(reservar).toHaveAttribute('aria-label', /^Reservar hora en un laboratorio: .+/);
+    await reservar.focus();
+    await page.keyboard.press('Enter');
+
+    await expect(page).toHaveURL(/\/my-account\/appointments\?resource=lab/);
+    await expect(page.getByTestId('turnos-tipo-laboratorio')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByRole('heading', { name: 'Agendar una cita' })).toBeFocused();
+    await expect(
+      page.getByText('Elegí un laboratorio para ver los horarios libres.'),
+    ).toBeVisible();
+  });
 });
 
 test.describe('refactor UX · regresiones corregidas', () => {
