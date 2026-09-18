@@ -1,8 +1,9 @@
 import { resumirPedido, type RenglonACobrar } from './checkout.summary';
 
 /**
- * Las líneas del resumen (AC-T-E3-05): cuentas en centavos, un solo total con
- * seguro (F2.2.5) y `null` cuando falta un precio en vez de un total parcial.
+ * El resumen del checkout real (R-T-E3 · AC-R3-04): **sólo** aritmética sobre
+ * los precios que publica la farmacia. Nada de descuento de red, coaseguro,
+ * envío ni puntos: no existen en el contrato antes de crear el pedido.
  */
 
 const AMOXICILINA: RenglonACobrar = {
@@ -11,8 +12,6 @@ const AMOXICILINA: RenglonACobrar = {
   presentacion: 'Caja x 21 cápsulas',
   cantidad: 1,
   precioUnitario: '68.00',
-  esAlternativa: false,
-  aprobadoPorSeguro: true,
   disponible: true,
 };
 
@@ -22,87 +21,40 @@ const LOSARTAN: RenglonACobrar = {
   presentacion: 'Caja x 30',
   cantidad: 1,
   precioUnitario: '40.00',
-  esAlternativa: false,
-  aprobadoPorSeguro: false,
   disponible: true,
 };
 
 describe('resumirPedido', () => {
-  it('sin seguro y con recojo: subtotal, descuento de red, total y puntos; sin coaseguro ni envío', () => {
-    const resumen = resumirPedido({
-      renglones: [AMOXICILINA, LOSARTAN],
-      moneda: 'BOB',
-      conSeguro: false,
-      conEnvio: false,
-    });
-
-    expect(resumen.aprobados).toEqual([]);
-    expect(resumen.noAprobados.map((r) => r.subtotal)).toEqual(['68.00', '40.00']);
-    expect(resumen.subtotal).toBe('108.00');
-    expect(resumen.descuentoDeRed).toBe('10.80');
-    expect(resumen.coaseguro).toBeNull();
-    expect(resumen.cubreElSeguro).toBeNull();
-    expect(resumen.envio).toBeNull();
-    expect(resumen.total).toBe('97.20');
-    expect(resumen.puntos).toBe(9);
-  });
-
-  it('con delivery suma el envío de ejemplo', () => {
-    const resumen = resumirPedido({
-      renglones: [AMOXICILINA, LOSARTAN],
-      moneda: 'BOB',
-      conSeguro: false,
-      conEnvio: true,
-    });
-
-    expect(resumen.envio).toBe('15.00');
-    expect(resumen.total).toBe('112.20');
-    expect(resumen.puntos).toBe(11);
-  });
-
-  it('con seguro separa los dos bloques y consolida un solo total', () => {
+  it('suma los renglones publicados y no agrega ninguna línea que el contrato no produzca', () => {
     const resumen = resumirPedido({
       renglones: [{ ...AMOXICILINA, cantidad: 2 }, LOSARTAN],
       moneda: 'BOB',
-      conSeguro: true,
-      conEnvio: false,
     });
 
-    expect(resumen.aprobados.map((r) => r.medicamento)).toEqual(['Amoxicilina 500 mg']);
-    expect(resumen.noAprobados.map((r) => r.medicamento)).toEqual(['Losartán 50 mg']);
-    expect(resumen.subtotal).toBe('176.00');
-    // El descuento de red va sobre lo no aprobado; el coaseguro, sobre lo aprobado.
-    expect(resumen.descuentoDeRed).toBe('4.00');
-    expect(resumen.coaseguro).toBe('27.20');
-    expect(resumen.cubreElSeguro).toBe('108.80');
-    expect(resumen.total).toBe('63.20');
+    expect(resumen.renglones.map((r) => r.subtotal)).toEqual(['136.00', '40.00']);
+    expect(resumen.total).toBe('176.00');
+    // El resumen no tiene dónde meter un porcentaje inventado.
+    expect(Object.keys(resumen).sort()).toEqual(['moneda', 'renglones', 'total']);
+    expect(JSON.stringify(resumen)).not.toMatch(/descuento|coaseguro|envio|envío|puntos/i);
   });
 
-  it('lo que la farmacia no tiene no suma ni se cuenta como aprobado', () => {
+  it('lo que la farmacia no tiene no suma y se muestra sin subtotal', () => {
     const resumen = resumirPedido({
       renglones: [{ ...AMOXICILINA, disponible: false }, LOSARTAN],
       moneda: 'BOB',
-      conSeguro: true,
-      conEnvio: false,
     });
 
-    expect(resumen.aprobados).toEqual([]);
-    expect(resumen.noAprobados[0]?.subtotal).toBeNull();
-    expect(resumen.coaseguro).toBeNull();
-    expect(resumen.subtotal).toBe('40.00');
-    expect(resumen.total).toBe('36.00');
+    expect(resumen.renglones[0]?.subtotal).toBeNull();
+    expect(resumen.renglones[0]?.precioUnitario).toBeNull();
+    expect(resumen.total).toBe('40.00');
   });
 
   it('si falta un precio, el total no se afirma', () => {
     const resumen = resumirPedido({
       renglones: [AMOXICILINA, { ...LOSARTAN, precioUnitario: null }],
       moneda: 'BOB',
-      conSeguro: false,
-      conEnvio: false,
     });
 
-    expect(resumen.subtotal).toBeNull();
     expect(resumen.total).toBeNull();
-    expect(resumen.puntos).toBeNull();
   });
 });

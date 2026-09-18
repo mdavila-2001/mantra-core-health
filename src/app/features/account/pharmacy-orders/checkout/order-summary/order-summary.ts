@@ -1,23 +1,22 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
-import { ROTULOS_DE_FACTURA } from '../../order-invoice/order-invoice.types';
 import type { ResumenDelPedido } from './order-summary.types';
 
 /**
- * **El resumen del pedido** del checkout (T-E3 · F2.1.8, F2.2.3, F2.2.5, F4.2).
+ * **El resumen del pedido** del checkout.
  *
  * Presentacional: recibe el resumen ya calculado y lo pinta. Sin cliente, sin
- * pedido y sin identificadores, para que el supermercado (T-E5) lo monte con
- * sus renglones.
+ * pedido y sin identificadores.
  *
- * Los rótulos «Descuento red AloVida» y «Coaseguro» son los de la factura
- * (T-E4): el mismo concepto se nombra igual antes y después de pagar.
+ * **Sólo renglones y total** (R-T-E3): el backend no publica descuento de red,
+ * coaseguro, envío ni puntos antes de crear el pedido, así que acá no se pinta
+ * ninguna de esas líneas. El coaseguro llega con la liquidación del seguro,
+ * después de la adjudicación, y lo muestra el detalle del pedido.
  */
 @Component({
   selector: 'app-order-summary',
-  imports: [Badge, NgTemplateOutlet],
+  imports: [Badge],
   templateUrl: './order-summary.html',
   styleUrl: './order-summary.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,12 +24,10 @@ import type { ResumenDelPedido } from './order-summary.types';
 export class OrderSummary {
   readonly resumen = input.required<ResumenDelPedido>();
 
-  protected readonly rotulos = ROTULOS_DE_FACTURA;
-
-  /** «108.00 BOB», o «No disponible» cuando la cifra no se puede afirmar. */
-  protected importe(valor: string | null): string {
+  /** El importe con su moneda, o `null` cuando la cifra no se puede afirmar. */
+  protected importe(valor: string | null): string | null {
     if (valor === null) {
-      return 'No disponible';
+      return null;
     }
     const moneda = this.resumen().moneda;
     return moneda === null ? valor : `${valor} ${moneda}`;
