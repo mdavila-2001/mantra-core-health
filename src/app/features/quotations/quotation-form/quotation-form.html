@@ -49,28 +49,30 @@
   </section>
 
   <!-- ─── Fecha de atención y cita asociada ──────────────────────────────── -->
-  <section class="cotizacion__bloque cotizacion__grilla" aria-labelledby="cotizacion-atencion-titulo">
-    <h2 id="cotizacion-atencion-titulo" class="cotizacion__titulo-ancho">Atención</h2>
+  <section class="cotizacion__bloque" aria-labelledby="cotizacion-atencion-titulo">
+    <h2 id="cotizacion-atencion-titulo">Atención</h2>
 
-    <app-form-field label="Fecha de atención" [required]="true">
-      <app-date-picker
-        [value]="fechaDeAtencion()"
-        (valueChange)="fechaDeAtencion.set($event)"
-      />
-    </app-form-field>
+    <div class="cotizacion__grilla">
+      <app-form-field label="Fecha de atención" [required]="true">
+        <app-date-picker
+          [value]="fechaDeAtencion()"
+          (valueChange)="fechaDeAtencion.set($event)"
+        />
+      </app-form-field>
 
-    <app-form-field
-      label="Cita asociada"
-      hint="Opcional. Se ofrecen las reservas recientes del paciente elegido."
-    >
-      <app-select
-        [value]="citaElegida()"
-        (valueChange)="citaElegida.set($event)"
-        [options]="opcionesDeCita()"
-        [disabled]="pacienteElegido() === null"
-        placeholder="Sin cita asociada"
-      />
-    </app-form-field>
+      <app-form-field
+        label="Cita asociada"
+        hint="Opcional. Se ofrecen las reservas recientes del paciente elegido."
+      >
+        <app-select
+          [value]="citaElegida()"
+          (valueChange)="citaElegida.set($event)"
+          [options]="opcionesDeCita()"
+          [disabled]="pacienteElegido() === null"
+          placeholder="Sin cita asociada"
+        />
+      </app-form-field>
+    </div>
   </section>
 
   <!-- ─── Servicio médico (FT-22) ────────────────────────────────────────── -->
