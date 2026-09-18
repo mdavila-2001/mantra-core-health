@@ -179,9 +179,12 @@
 
   /* Movimiento — un solo lenguaje para todo el producto. Corto, suave y
      predecible: la animación dice «el sistema respondió», no «mirá esto». */
-  --mov-rapido: 110ms;
-  --mov-medio:  190ms;
-  --mov-lento:  320ms;
+  /* Alias de la escala canónica de styles.css (--dur-*): eran 110/190/320 ms
+     y convivían con 120/200/320, dos escalas para la misma clase de cambio.
+     La curva propia del marco se conserva. (refactor UX, fase 07) */
+  --mov-rapido: var(--dur-fast);
+  --mov-medio:  var(--dur-base);
+  --mov-lento:  var(--dur-slow);
   --curva:      cubic-bezier(.2, .7, .3, 1);
 
   /* Profundidad — cuatro capas, todas con sombra azulada muy leve.

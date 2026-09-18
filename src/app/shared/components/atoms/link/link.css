@@ -20,7 +20,7 @@
     text-decoration: underline;
     text-underline-offset: 2px;
     border-radius: var(--r-xs);
-    transition: color 0.15s ease;
+    transition: color var(--dur-fast) var(--ease-standard);
     cursor: pointer;
 }
 

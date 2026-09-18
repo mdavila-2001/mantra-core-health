@@ -87,7 +87,7 @@ app-map {
 
 @media (prefers-reduced-motion: no-preference) {
   .mapa__pin {
-    transition: transform 150ms ease, box-shadow 150ms ease;
+    transition: transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
   }
 }
 

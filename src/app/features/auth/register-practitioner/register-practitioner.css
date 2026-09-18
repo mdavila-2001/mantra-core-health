@@ -95,7 +95,7 @@
   border-radius: var(--r-sm);
   background-color: var(--brand-primary);
   color: var(--text-inverse);
-  transition: opacity 0.2s ease;
+  transition: opacity var(--dur-base) var(--ease-standard);
 }
 
 .registro-foto__label-btn:hover {
@@ -199,7 +199,7 @@
   border-radius: var(--r-sm);
   background-color: var(--brand-primary);
   color: var(--text-inverse);
-  transition: opacity 0.2s ease;
+  transition: opacity var(--dur-base) var(--ease-standard);
 }
 
 .registro-respaldo__label-btn:hover,

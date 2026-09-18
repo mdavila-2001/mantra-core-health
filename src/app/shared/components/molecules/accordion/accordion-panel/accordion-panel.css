@@ -32,7 +32,7 @@
     text-align: left;
     cursor: pointer;
     border-radius: var(--r-sm);
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
 }
 
 .accordion-panel__trigger:hover:not(:disabled) {
@@ -49,7 +49,7 @@
     width: var(--sp-5);
     height: var(--sp-5);
     color: var(--text-secondary);
-    transition: transform 0.15s ease;
+    transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 /* La flecha gira; el estado real lo dice `aria-expanded`, no el dibujo. */
@@ -62,7 +62,7 @@
    vuelve instantánea, que es exactamente lo que corresponde acá. */
 .accordion-panel__region {
     padding: 0 var(--sp-2) var(--sp-4);
-    animation: accordion-reveal 0.15s ease;
+    animation: accordion-reveal var(--dur-fast) var(--ease-standard);
 }
 
 @keyframes accordion-reveal {

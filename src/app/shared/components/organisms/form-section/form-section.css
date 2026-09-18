@@ -51,7 +51,7 @@
     inline-size: var(--sp-5);
     block-size: var(--sp-5);
     color: var(--text-secondary);
-    transition: transform 0.15s ease;
+    transition: transform var(--dur-fast) var(--ease-standard);
 }
 
 .form-section__toggle[aria-expanded='false'] .form-section__chevron {

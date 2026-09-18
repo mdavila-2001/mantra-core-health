@@ -54,7 +54,7 @@
     height: 100%;
     background: var(--_progress-fill);
     border-radius: var(--r-full);
-    transition: width 0.15s ease;
+    transition: width var(--dur-fast) var(--ease-standard);
 }
 
 /* Indeterminada: una banda corta que recorre el riel. El ancho no lo pone el
@@ -104,7 +104,7 @@
         0 0 0 2px var(--bg-surface),
         0 0 0 5px color-mix(in srgb, var(--_progress-fill) 28%, transparent);
     transform: translate(-50%, -50%);
-    transition: left 0.15s ease;
+    transition: left var(--dur-fast) var(--ease-standard);
 }
 
 /* El brillo: un halo que respira, no un destello. Lo que se pide es que la

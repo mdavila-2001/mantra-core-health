@@ -31,19 +31,19 @@
    prefers-reduced-motion la reduce a nada, que para una aparición —a
    diferencia de un spinner— es exactamente lo deseado. */
 :host(.tooltip--top) {
-    animation: tooltip-in-top 0.15s ease;
+    animation: tooltip-in-top var(--dur-fast) var(--ease-standard);
 }
 
 :host(.tooltip--bottom) {
-    animation: tooltip-in-bottom 0.15s ease;
+    animation: tooltip-in-bottom var(--dur-fast) var(--ease-standard);
 }
 
 :host(.tooltip--left) {
-    animation: tooltip-in-left 0.15s ease;
+    animation: tooltip-in-left var(--dur-fast) var(--ease-standard);
 }
 
 :host(.tooltip--right) {
-    animation: tooltip-in-right 0.15s ease;
+    animation: tooltip-in-right var(--dur-fast) var(--ease-standard);
 }
 
 @keyframes tooltip-in-top {
