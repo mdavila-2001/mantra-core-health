@@ -21,12 +21,10 @@ import { CARGADOR_DE_LEAFLET } from '../../../../shared/components/organisms/map
 import type { CargadorDeLeaflet } from '../../../../shared/components/organisms/map/map';
 import {
   borradorDePedido,
-  coberturaConSeguro,
   ordenarSedes,
   WhereToBuy,
   type ItemDeReceta,
 } from './where-to-buy';
-import { aprobadosPorElSeguroDeEjemplo } from './where-to-buy.fixtures';
 
 /**
  * Dónde comprar mi receta (carril E3).
@@ -46,11 +44,16 @@ import { aprobadosPorElSeguroDeEjemplo } from './where-to-buy.fixtures';
  * 5. **El CSS del componente usa solo tokens declarados**: cada `var(--…)`
  *    existe en `src/styles.css` y no hay colores a mano — la misma frontera
  *    de deriva que fija `design-tokens.types.spec.ts`.
- * 6. **El orden y la variante con seguro (T-E2)**: «Receta completa primero»
- *    es el orden del backend; «Más cerca» y «Más barato» reacomodan sin
- *    consultar, con ausentes al final y empates estables. Con seguro, tarjeta
- *    y mapa se evalúan sobre lo aprobado y parten el precio en «aprobado / a
- *    tu cargo»; el CTA arma el mismo borrador y no crea ningún pedido.
+ * 6. **El orden de las sucursales (T-E2)**: «Receta completa primero» es el
+ *    orden del backend; «Más cerca» y «Más barato» reacomodan sin consultar,
+ *    con ausentes al final y empates estables; el CTA arma el borrador de la
+ *    sede que se ve primera y no crea ningún pedido.
+ * 7. **Acá no se habla de cobertura del seguro (PD-2 = B, cierre de
+ *    `B-REAL-3`)**: no hay conmutador «con seguro», ni «Aprobado por el
+ *    seguro», ni «A tu cargo», ni desglose, ni chip de «Demostración» — esos
+ *    importes sólo existen tras la adjudicación real de la aseguradora, sobre
+ *    un pedido ya creado, y esta pantalla es anterior al pedido. La
+ *    disponibilidad, las existencias y los precios de farmacia siguen enteros.
  */
 
 /** base64url **sobre UTF-8**, como el token real. */
@@ -637,7 +640,7 @@ describe('WhereToBuy', () => {
     });
   });
 
-  /* ---- T-E2 · orden y variante con seguro ---------------------------------- */
+  /* ---- T-E2 · orden de las sucursales, sin variante de seguro -------------- */
 
   /** Monta la pantalla con las tres sedes ya pintadas. */
   async function montarConTresSedes(): Promise<void> {
@@ -671,12 +674,7 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
   }
 
-  function conmutarSeguro(): void {
-    consultar<HTMLInputElement>('[data-testid="compra-seguro"] input[type="checkbox"]')?.click();
-    harness.detectChanges();
-  }
-
-  it('sin seguro: abre con el orden del backend y la tarjeta no habla del seguro', async () => {
+  it('abre con el orden del backend y sin ninguna variante «con seguro»', async () => {
     await montarConTresSedes();
 
     expect(sedesEnPantalla()).toEqual([
@@ -687,14 +685,29 @@ describe('WhereToBuy', () => {
     expect(
       consultar('[data-testid="segmentado-receta-completa"]')?.getAttribute('aria-checked'),
     ).toBe('true');
-    expect(
-      consultar<HTMLInputElement>('[data-testid="compra-seguro"] input[type="checkbox"]')?.checked,
-    ).toBe(false);
-    // Ningún rastro de la variante: la pantalla de siempre.
+
+    // PD-2 = B: «aprobado / a tu cargo» sólo existe tras la adjudicación real
+    // de la aseguradora, sobre un pedido ya creado. Acá no se dibuja, ni
+    // simulado ni estimado — y no queda conmutador que lo devuelva.
+    expect(consultar('[data-testid="compra-seguro"]')).toBeNull();
+    expect(consultar('[data-testid="compra-variante-seguro"]')).toBeNull();
     expect(todas('[data-testid="compra-cobertura-seguro"]')).toHaveLength(0);
     expect(todas('[data-testid="compra-desglose-seguro"]')).toHaveLength(0);
     expect(todas('[data-testid="compra-item-seguro"]')).toHaveLength(0);
+    for (const rastro of [
+      'Aprobado por el seguro',
+      'A tu cargo',
+      'Cobertura de lo aprobado',
+      'Demostración',
+      'variante con seguro',
+      'aseguradora',
+    ]) {
+      expect(texto()).not.toContain(rastro);
+    }
+
+    // Lo real sigue entero: existencias, faltantes por su nombre y precios.
     expect(tarjetaDe('Sucursal Centro')?.textContent).toContain('Tiene todo');
+    expect(tarjetaDe('Sucursal Centro')?.textContent).toContain('Total estimado: 96.50 BOB');
     expect(tarjetaDe('Plan Tres Mil')?.textContent).toContain('Le falta: Amoxicilina');
   });
 
@@ -727,61 +740,13 @@ describe('WhereToBuy', () => {
     http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
   });
 
-  it('con seguro: cobertura de lo aprobado, desglose «aprobado / a tu cargo» y renglones rotulados', async () => {
-    await montarConTresSedes();
-    conmutarSeguro();
-
-    // De ejemplo: la amoxicilina entra en el seguro; el ibuprofeno (último renglón) no.
-    const renglones = todas('[data-testid="compra-item-seguro"]').map((nodo) =>
-      nodo.textContent?.trim(),
-    );
-    expect(renglones).toEqual(['Aprobado por el seguro', 'A tu cargo']);
-    expect(texto()).toContain('Demostración');
-
-    const centro = tarjetaDe('Sucursal Centro');
-    expect(centro?.textContent).toContain('Cobertura de lo aprobado: 1 de 1');
-    expect(centro?.textContent).toContain('Tiene todo lo aprobado');
-    expect(
-      centro
-        ?.querySelector('[data-testid="compra-desglose-seguro"]')
-        ?.textContent?.replace(/\s+/g, ' '),
-    ).toContain('Aprobado: 68.00 BOB A tu cargo: 28.50 BOB');
-
-    const planTresMil = tarjetaDe('Plan Tres Mil');
-    expect(planTresMil?.textContent).toContain('Cobertura de lo aprobado: 0 de 1');
-    expect(planTresMil?.textContent).toContain('Le falta de lo aprobado: Amoxicilina');
-    expect(planTresMil?.textContent).toContain('Le falta algo aprobado');
-    // El ibuprofeno está pero sin precio publicado: se dice, no se estima.
-    expect(planTresMil?.textContent).toContain('A tu cargo: no disponible, falta algún precio');
-    // La sede no publica moneda: el importe va sin ella, no con una supuesta.
-    expect(planTresMil?.textContent).toContain('Aprobado: 0.00');
-
-    const norte = tarjetaDe('Sucursal Norte');
-    expect(norte?.textContent).toContain('Cobertura de lo aprobado: 0 de 1');
-    expect(norte?.textContent).toContain('A tu cargo: 28.50 BOB');
-
-    // El total de la sede no cambia: el desglose se suma, no lo reemplaza.
-    expect(centro?.textContent).toContain('Total estimado: 96.50 BOB');
-    // Conmutar no consulta.
-    http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
-
-    // Apagarlo devuelve la pantalla de siempre.
-    conmutarSeguro();
-    expect(todas('[data-testid="compra-cobertura-seguro"]')).toHaveLength(0);
-    expect(tarjetaDe('Sucursal Centro')?.textContent).toContain('Tiene todo');
-  });
-
-  it('con seguro el mapa dice lo mismo que las tarjetas', async () => {
+  it('el mapa dice lo mismo que las tarjetas, sobre existencias reales', async () => {
     await montarConTresSedes();
     await Promise.resolve();
     await Promise.resolve();
     harness.detectChanges();
 
-    conmutarSeguro();
-    await Promise.resolve();
-    harness.detectChanges();
-
-    // El mapa se redibuja con los pines de la variante: los dos últimos.
+    // Las dos sedes ubicables; la de Plan Tres Mil no publica coordenadas.
     const pines = marcadoresDelMapa.slice(-2);
     expect(pines.map((pin) => pin.alt)).toEqual([
       'Farmacia Andina · Sucursal Centro',
@@ -791,50 +756,21 @@ describe('WhereToBuy', () => {
       const tarjeta = tarjetaDe(pin.alt.split(' · ')[1]);
       const estado = pin.popup?.querySelector('.mapa__popup-estado')?.textContent ?? '';
       const detalle = pin.popup?.querySelector('.mapa__popup-detalle')?.textContent ?? '';
-      const cobertura =
-        tarjeta?.querySelector('[data-testid="compra-cobertura-seguro"]')?.textContent?.trim() ??
-        '';
+      // El badge de la tarjeta y el estado del pin son la misma frase.
       expect(tarjeta?.querySelector('app-badge')?.textContent?.trim()).toBe(estado);
-      expect(detalle.startsWith(cobertura)).toBe(true);
+      // El detalle abre por la distancia, no por cobertura de seguro alguna.
+      expect(detalle).toContain('en línea recta');
+      expect(detalle).not.toContain('aprobado');
     }
-    expect(pines[0].popup?.querySelector('.mapa__popup-estado')?.textContent).toBe(
-      'Tiene todo lo aprobado',
-    );
+    expect(pines[0].popup?.querySelector('.mapa__popup-estado')?.textContent).toBe('Tiene todo');
+    expect(pines[1].popup?.querySelector('.mapa__popup-estado')?.textContent).toBe('Le falta algo');
     expect(pines[0].icono.className).toContain('mapa__pin--success');
     expect(pines[1].icono.className).toContain('mapa__pin--warning');
   });
 
-  it('con seguro y ningún renglón aprobado incluido: vacío honesto que deja apagar la variante', async () => {
-    await montarConTresSedes();
-    conmutarSeguro();
-
-    // Se destilda la amoxicilina, el único renglón aprobado de ejemplo.
-    const casillas = todas(
-      '[data-testid="compra-items"] input[type="checkbox"]',
-    ) as HTMLInputElement[];
-    casillas[0].checked = false;
-    casillas[0].dispatchEvent(new Event('change'));
-    harness.detectChanges();
-    http
-      .expectOne((r) => r.url === '/pharmacy-inventory/availability')
-      .flush(DISPONIBILIDAD_CON_NORTE);
-    harness.detectChanges();
-
-    expect(texto()).toContain('ninguno de los medicamentos que elegiste está aprobado');
-    expect(texto()).toContain('Volver a mi historia');
-    expect(todas('.compra__sede')).toHaveLength(0);
-    // El conmutador sigue a mano: el vacío no encierra a nadie.
-    expect(consultar('[data-testid="compra-seguro"]')).not.toBeNull();
-
-    conmutarSeguro();
-    expect(todas('.compra__sede')).toHaveLength(3);
-    http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
-  });
-
-  it('con seguro, ninguna sede que confirme sigue siendo el vacío de siempre', async () => {
+  it('ninguna sede que confirme es el vacío de siempre', async () => {
     await montar();
     responderHastaProductos();
-    conmutarSeguro();
     http
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush({ requestedProductIds: [], items: [], count: 0 });
@@ -843,13 +779,13 @@ describe('WhereToBuy', () => {
     expect(texto()).toContain(
       'Ninguna sucursal puede confirmar hoy los medicamentos de tu receta.',
     );
+    // Ya no existe el vacío propio de la variante con seguro.
     expect(texto()).not.toContain('ninguno de los medicamentos que elegiste está aprobado');
   });
 
-  it('con seguro, un error de disponibilidad queda como error recuperable', async () => {
+  it('un error de disponibilidad queda como error recuperable', async () => {
     await montar();
     responderHastaProductos();
-    conmutarSeguro();
     http
       .expectOne((r) => r.url === '/pharmacy-inventory/availability')
       .flush(
@@ -874,12 +810,11 @@ describe('WhereToBuy', () => {
       .flush(DISPONIBILIDAD_CON_NORTE);
     harness.detectChanges();
 
-    expect(tarjetaDe('Sucursal Centro')?.textContent).toContain('Cobertura de lo aprobado: 1 de 1');
+    expect(tarjetaDe('Sucursal Centro')?.textContent).toContain('Tiene todo');
   });
 
-  it('con seguro y otro orden, el CTA arma el borrador real de esa sede, navega y no crea el pedido', async () => {
+  it('con otro orden, el CTA arma el borrador real de esa sede, navega y no crea el pedido', async () => {
     await montarConTresSedes();
-    conmutarSeguro();
     elegirOrden('mas-barato');
 
     const ordersClient = TestBed.inject(PharmacyOrdersClient);
@@ -897,7 +832,7 @@ describe('WhereToBuy', () => {
     harness.detectChanges();
 
     // La primera tarjeta con «Más barato» es la Norte: el borrador es el suyo,
-    // idéntico al que arma la vista sin seguro — la variante no viaja.
+    // con los precios reales de la sede y sin dato alguno de cobertura.
     expect(ordersClient.borradorPreparado()).toEqual(
       borradorDePedido('m-1', SEDE_NORTE, CONSULTABLES, []),
     );
@@ -976,95 +911,6 @@ describe('ordenarSedes (T-E2)', () => {
     expect(ids(ordenadas)).toEqual(['cerca', 'lejos']);
     expect(ordenadas).not.toBe(sedes);
     expect(ids(sedes)).toEqual(antes);
-  });
-});
-
-describe('coberturaConSeguro (T-E2)', () => {
-  const [SEDE_COMPLETA, SEDE_PARCIAL] = DISPONIBILIDAD_FIXTURE.items;
-  const soloAmoxicilina = new Set([FIXTURE_IDS.conceptoAmoxicilina]);
-
-  it('parte el precio de lo disponible en aprobado y a tu cargo', () => {
-    const cobertura = coberturaConSeguro(SEDE_COMPLETA, CONSULTABLES, [], soloAmoxicilina);
-    expect(cobertura).toEqual({
-      aprobados: 1,
-      cubiertos: 1,
-      completa: true,
-      faltantes: [],
-      aprobado: '68.00 BOB',
-      aCargo: '28.50 BOB',
-    });
-  });
-
-  it('todo aprobado: nada a tu cargo es 0.00, no una ausencia', () => {
-    const todo = new Set(CONSULTABLES.map((item) => item.conceptId));
-    const cobertura = coberturaConSeguro(SEDE_COMPLETA, CONSULTABLES, [], todo);
-    expect(cobertura.aprobado).toBe('96.50 BOB');
-    expect(cobertura.aCargo).toBe('0.00 BOB');
-    expect(cobertura.cubiertos).toBe(2);
-  });
-
-  it('un aprobado faltante no suma y se nombra; un precio ausente deja la parte en null', () => {
-    const cobertura = coberturaConSeguro(SEDE_PARCIAL, CONSULTABLES, [], soloAmoxicilina);
-    expect(cobertura.completa).toBe(false);
-    expect(cobertura.cubiertos).toBe(0);
-    expect(cobertura.faltantes).toEqual(['Amoxicilina']);
-    expect(cobertura.aprobado).toBe('0.00');
-    expect(cobertura.aCargo).toBeNull();
-  });
-
-  it('un aprobado sin producto publicado cuenta en «de M» y falta', () => {
-    const paracetamol: ItemDeReceta = {
-      conceptId: 'concepto-paracetamol',
-      medicamento: 'Paracetamol',
-      indicacion: '',
-      emitida: true,
-      productId: null,
-    };
-    const cobertura = coberturaConSeguro(
-      SEDE_COMPLETA,
-      CONSULTABLES,
-      [paracetamol],
-      new Set([FIXTURE_IDS.conceptoAmoxicilina, 'concepto-paracetamol']),
-    );
-    expect(cobertura.aprobados).toBe(2);
-    expect(cobertura.cubiertos).toBe(1);
-    expect(cobertura.completa).toBe(false);
-    expect(cobertura.faltantes).toEqual(['Paracetamol']);
-  });
-
-  it('suma en centavos y no mezcla monedas', () => {
-    const conPrecios = (precios: readonly [string, string, string]): AvailabilitySite => ({
-      ...SEDE_COMPLETA,
-      products: SEDE_COMPLETA.products.map((producto, indice) => ({
-        ...producto,
-        price: {
-          unitAmount: precios[indice],
-          patientAmount: precios[indice],
-          currency: { code: indice === 1 ? precios[2] : 'BOB', display: '' },
-          priceListCode: 'X',
-        },
-      })),
-    });
-    const todo = new Set(CONSULTABLES.map((item) => item.conceptId));
-
-    expect(
-      coberturaConSeguro(conPrecios(['0.10', '0.20', 'BOB']), CONSULTABLES, [], todo).aprobado,
-    ).toBe('0.30 BOB');
-    expect(
-      coberturaConSeguro(conPrecios(['0.10', '0.20', 'USD']), CONSULTABLES, [], todo).aprobado,
-    ).toBeNull();
-    expect(
-      coberturaConSeguro(conPrecios(['10', 'no-es-importe', 'BOB']), CONSULTABLES, [], todo)
-        .aprobado,
-    ).toBeNull();
-  });
-});
-
-describe('aprobadosPorElSeguroDeEjemplo (T-E2, datos de ejemplo)', () => {
-  it('con un renglón lo aprueba; con más, el último queda a cargo de la persona', () => {
-    expect([...aprobadosPorElSeguroDeEjemplo([])]).toEqual([]);
-    expect([...aprobadosPorElSeguroDeEjemplo(['a'])]).toEqual(['a']);
-    expect([...aprobadosPorElSeguroDeEjemplo(['a', 'b', 'c'])]).toEqual(['a', 'b']);
   });
 });
 
