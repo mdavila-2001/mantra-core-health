@@ -227,6 +227,61 @@ describe('Tooltip', () => {
       // centrado sobre el host: 200 + 60/2 - 0/2
       expect(globo()?.style.left).toBe('230px');
     });
+
+    /**
+     * jsdom no hace layout: el globo mide lo que dicta su texto YA pintado. Si
+     * la directiva midiera antes de renderizarlo, mediría la caja vacía.
+     */
+    function globoQueMideSuTexto(): () => void {
+      const original = HTMLElement.prototype.getBoundingClientRect;
+      const spy = vi
+        .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+        .mockImplementation(function (this: HTMLElement) {
+          if (this.tagName !== 'APP-TOOLTIP-PANEL') {
+            return original.call(this);
+          }
+          const conTexto = (this.textContent ?? '').trim().length > 0;
+          const valores = conTexto
+            ? { top: 0, left: 0, bottom: 44, right: 200, width: 200, height: 44 }
+            : { top: 0, left: 0, bottom: 16, right: 24, width: 24, height: 16 };
+          return { ...valores, x: 0, y: 0, toJSON: () => valores };
+        });
+      return () => spy.mockRestore();
+    }
+
+    it('mide el globo con el texto ya pintado: no se monta sobre el host', async () => {
+      const restaurar = globoQueMideSuTexto();
+      fijarRectangulo({ top: 300, bottom: 340, left: 200, right: 260, width: 60 });
+      await abrirConFoco();
+
+      // 300 - 44 - 8: el borde inferior queda 8 px por encima del host.
+      expect(globo()?.style.top).toBe('248px');
+      // 200 + 60/2 - 200/2: centrado con su ancho real.
+      expect(globo()?.style.left).toBe('130px');
+      restaurar();
+    });
+
+    it('con el globo abierto, un texto nuevo se reescribe y se vuelve a ubicar', async () => {
+      const restaurar = globoQueMideSuTexto();
+      fixture.componentInstance.texto.set('Buscando…');
+      await fixture.whenStable();
+      await abrirConFoco();
+
+      fixture.componentInstance.texto.set('Diego · Última consulta: 4 sept 2026 · Chequeo anual');
+      await fixture.whenStable();
+
+      expect(globo()?.textContent).toContain('Última consulta');
+      expect(globo()?.style.top).toBe('248px');
+      restaurar();
+    });
+
+    it('si el texto se vacía con el globo abierto, el globo se va', async () => {
+      await abrirConFoco();
+      fixture.componentInstance.texto.set('');
+      await fixture.whenStable();
+
+      expect(globo()).toBeNull();
+    });
   });
 
   describe('SSR', () => {
