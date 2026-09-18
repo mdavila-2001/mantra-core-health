@@ -374,8 +374,14 @@ export interface CupoVisible {
  */
 const TABLE_VIEW = 'table';
 
-/** `vista` del horario publicado («Mi agenda»). Valor histórico: se conserva. */
+/** `vista` del horario publicado («Mis horarios»). Valor histórico: se conserva. */
 const SCHEDULE_VIEW = 'agenda';
+
+/** `vista` de los cupos. Valor histórico: se conserva. */
+const SLOTS_VIEW = 'cupos';
+
+/** Las cuatro solapas de `/schedule`, en el orden en que se muestran. */
+type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
 
 /**
  * **Agenda** (M41) — la sección que hasta ahora era un cartel.
@@ -764,59 +770,65 @@ export class Agenda {
   });
 
   /**
-   * Pestaña visible. En la URL para que un enlace pueda apuntar a una en
-   * concreto.
-   *
-   * Son **tres**: «Consultas» —el ciclo completo, ALV-019—, «Mi agenda» —el
-   * horario publicado, que era una pantalla aparte— y «Cupos», que es
-   * disponibilidad y sigue siendo lo suyo (ALV-020).
-   *
-   * `vista=cupos` sigue significando lo mismo. `vista=citas` y
-   * `vista=solicitudes` llevan a la lista unificada, que es donde vive lo que
-   * antes estaba partido: un enlace viejo sigue llegando a donde quería llegar.
+   * Si quien mira tiene la solapa «Calendario» —la agenda del día, con Semana y
+   * Mes—. Es lo que `/schedule` abre por defecto a quien atiende (propietario,
+   * 18/09). Quien reparte turnos no tiene agenda propia y entra a Consultas,
+   * igual que quien todavía no publicó la suya: un calendario vacío no le dice
+   * nada que el aviso de arriba no diga mejor.
    */
-  protected readonly pestana = computed(() => {
-    const vista = this.params()?.get('vista');
-    // «Mi agenda» sólo existe para quien atiende: quien reparte turnos no tiene
-    // agenda propia y no se le ofrece una puerta que la otra pantalla no va a
-    // reconocer como suya. Sin ella, «Cupos» corre un lugar.
-    const indiceDeCupos = this.esQuienAtiende() ? 2 : 1;
-    if (vista === 'cupos') return indiceDeCupos;
-    return vista === 'agenda' && this.esQuienAtiende() ? 1 : 0;
-  });
-
-  /**
-   * Si se muestra la agenda del día en vez de las listas.
-   *
-   * Es lo que `/schedule` abre por defecto a quien atiende (propietario,
-   * 18/09): el día de hoy, con Semana y Mes. Las listas —Consultas, Mi agenda,
-   * Cupos— siguen a un ícono de distancia, «Ver como tabla», en
-   * `vista=table`. Quien reparte turnos no tiene agenda propia y sigue
-   * entrando a la tabla, igual que quien todavía no publicó la suya: un
-   * calendario vacío no le dice nada que el aviso de arriba no diga mejor.
-   */
-  protected readonly enCalendario = computed(() => {
-    const vista = this.params()?.get('vista');
-    return (
-      this.esQuienAtiende() &&
-      !this.sinAgendaPropia() &&
-      (!vista || vista === SCHEDULE_VIEW)
-    );
-  });
-
-  /**
-   * Si en la vista inicial está abierta la solapa «Mi agenda» —el horario
-   * publicado— en vez del calendario. Antes el horario sólo se alcanzaba
-   * pasando a la tabla; el propietario lo quiere a un clic desde que se entra
-   * (18/09). Usa el mismo `vista=agenda` de siempre, así un enlace viejo
-   * sigue abriendo el horario.
-   */
-  protected readonly enHorario = computed(
-    () => this.enCalendario() && this.params()?.get('vista') === SCHEDULE_VIEW,
+  protected readonly tieneCalendario = computed(
+    () => this.esQuienAtiende() && !this.sinAgendaPropia(),
   );
 
-  /** Si la solapa abierta es «Mi agenda», que no usa los filtros de las listas. */
-  protected readonly enMiAgenda = computed(() => this.esQuienAtiende() && this.pestana() === 1);
+  /**
+   * Las solapas, en orden. **Una sola barra de cuatro** (propietario, 18/09):
+   * antes eran dos barras distintas —«Calendario · Mi agenda» al entrar y
+   * «Consultas · Mi agenda · Cupos» detrás de «Ver como tabla»— y la barra
+   * cambiaba bajo los pies al pasar de una vista a la otra.
+   *
+   * «Mis horarios» —el horario publicado— sólo existe para quien atiende: quien
+   * reparte turnos no tiene agenda propia y no se le ofrece una puerta que la
+   * otra pantalla no va a reconocer como suya.
+   */
+  protected readonly pestanas = computed<readonly AgendaTab[]>(() => [
+    ...(this.tieneCalendario() ? (['calendar'] as const) : []),
+    'consultations',
+    ...(this.esQuienAtiende() ? (['schedule'] as const) : []),
+    'slots',
+  ]);
+
+  /**
+   * La solapa abierta, leída de la URL para que un enlace pueda apuntar a una
+   * en concreto. Los valores viejos siguen valiendo: `vista=cupos`,
+   * `vista=agenda` (el horario) y `vista=citas`/`vista=solicitudes`, que llevan
+   * a la lista unificada de Consultas (ALV-019).
+   */
+  protected readonly pestanaActual = computed<AgendaTab>(() => {
+    const vista = this.params()?.get('vista');
+    if (vista === SLOTS_VIEW) return 'slots';
+    if (vista === SCHEDULE_VIEW && this.esQuienAtiende()) return 'schedule';
+    if (!vista && this.tieneCalendario()) return 'calendar';
+    return 'consultations';
+  });
+
+  /** El índice de la solapa abierta, para `app-tabs`. */
+  protected readonly pestana = computed(() => this.pestanas().indexOf(this.pestanaActual()));
+
+  /** Si está abierta la agenda del día (Día, Semana y Mes). */
+  protected readonly enCalendario = computed(() => this.pestanaActual() === 'calendar');
+
+  /** Si está abierta «Mis horarios», el horario publicado. */
+  protected readonly enHorario = computed(() => this.pestanaActual() === 'schedule');
+
+  /**
+   * Si la solapa abierta es una de las listas —Consultas o Cupos—, las únicas
+   * que usan la ventana, las canceladas y la sede: mostrarlos sobre el
+   * calendario o el horario sugería que los cambiaban.
+   */
+  protected readonly enListas = computed(() => {
+    const actual = this.pestanaActual();
+    return actual === 'consultations' || actual === 'slots';
+  });
 
   protected readonly incluirCanceladas = computed(() => this.params()?.get('canceladas') === 'si');
 
@@ -1044,7 +1056,7 @@ export class Agenda {
             : `Avisamos a ${resultado.notified} de ${resultado.affected} pacientes.`,
           'Demora informada',
         );
-        this.cargarAgenda();
+        this.trasOperar();
       },
       error: (error: unknown) => {
         this.avisandoDemora.set(false);
@@ -1209,44 +1221,63 @@ export class Agenda {
   }
 
   protected elegirPestana(indice: number): void {
-    // El espejo de `pestana()`: sin «Mi agenda» los índices corren, y publicar
-    // `vista=agenda` desde la solapa de cupos dejaría la URL diciendo una cosa
-    // y la pantalla mostrando otra.
-    const conAgendaPropia = this.esQuienAtiende();
-    const vista =
-      indice === (conAgendaPropia ? 2 : 1)
-        ? 'cupos'
-        : conAgendaPropia && indice === 1
-          ? 'agenda'
-          : this.vistaDeConsultas();
-    this.publicar({ vista });
+    const elegida = this.pestanas()[indice];
+    if (elegida === undefined) return;
+    this.publicar({ vista: this.vistaDe(elegida) });
+  }
+
+  /** El `vista=` de cada solapa, el espejo de `pestanaActual()`. */
+  private vistaDe(pestana: AgendaTab): string | null {
+    switch (pestana) {
+      case 'calendar':
+        return null;
+      case 'schedule':
+        return SCHEDULE_VIEW;
+      case 'slots':
+        return SLOTS_VIEW;
+      case 'consultations':
+        return this.vistaDeConsultas();
+    }
   }
 
   /**
-   * La URL de la lista de Consultas. Para quien atiende, `/schedule` a secas
-   * es la agenda del día, así que la lista necesita nombrarse.
+   * La URL de la lista de Consultas. Con calendario, `/schedule` a secas es la
+   * agenda del día, así que la lista necesita nombrarse.
    */
   private vistaDeConsultas(): string | null {
-    return this.esQuienAtiende() ? TABLE_VIEW : null;
-  }
-
-  /** «Ver como tabla», desde la agenda del día. */
-  protected verComoTabla(): void {
-    this.publicar({ vista: TABLE_VIEW });
-  }
-
-  /** Las solapas de la vista inicial: 0 = calendario, 1 = «Mi agenda». */
-  protected elegirPestanaInicial(indice: number): void {
-    this.publicar({ vista: indice === 1 ? SCHEDULE_VIEW : null });
-  }
-
-  /** «Ver como agenda», desde las listas: `/schedule` sin vista. */
-  protected verComoAgenda(): void {
-    this.publicar({ vista: null });
+    return this.tieneCalendario() ? TABLE_VIEW : null;
   }
 
   protected recargar(): void {
     this.cargarAgenda();
+  }
+
+  /**
+   * Cambia cada vez que una acción sobre una cita termina bien. El Calendario
+   * lo escucha para releer su día: las acciones son las de esta pantalla, pero
+   * el día lo lee el calendario por su cuenta.
+   */
+  protected readonly versionDeAcciones = signal(0);
+
+  /** Después de operar una cita: se relee la lista y se avisa al calendario. */
+  private trasOperar(): void {
+    this.cargarAgenda();
+    this.versionDeAcciones.update((v) => v + 1);
+  }
+
+  /**
+   * Una cita del día traducida como una fila de Consultas. Memorizada por
+   * objeto: la plantilla la pide en cada detección de cambios, y un contexto
+   * nuevo cada vez redibujaría los botones —y les haría perder el foco—.
+   */
+  private readonly citasDelDia = new WeakMap<Booking, CitaVisible>();
+
+  protected citaDelDia(booking: Booking): CitaVisible {
+    const guardada = this.citasDelDia.get(booking);
+    if (guardada !== undefined) return guardada;
+    const cita = this.aCitaVisible(booking);
+    this.citasDelDia.set(booking, cita);
+    return cita;
   }
 
   /* -- Acciones sobre una cita (UC-41-09 y UC-41-10) ----------------------- */
@@ -1268,7 +1299,7 @@ export class Agenda {
       next: () => {
         this.operando.set(null);
         this.toast.success('La llegada quedó registrada.', 'Check-in');
-        this.cargarAgenda();
+        this.trasOperar();
       },
       error: (error: unknown) => {
         this.operando.set(null);
@@ -1319,7 +1350,7 @@ export class Agenda {
               : 'La cita se canceló.',
             'Cancelación',
           );
-          this.cargarAgenda();
+          this.trasOperar();
         },
         error: (error: unknown) => {
           this.operando.set(null);
@@ -1384,7 +1415,7 @@ export class Agenda {
       return;
     }
     this.reprogramando.set(cita.id);
-    this.publicar({ vista: 'cupos' });
+    this.publicar({ vista: SLOTS_VIEW });
   }
 
   /**
@@ -1441,7 +1472,7 @@ export class Agenda {
         // De vuelta a «Consultas»: el resultado del movimiento se ve ahí, no en
         // la grilla de cupos desde la que se eligió el destino.
         this.publicar({ vista: this.vistaDeConsultas() });
-        this.cargarAgenda();
+        this.trasOperar();
       },
       error: (error: unknown) => {
         this.operando.set(null);
@@ -1515,7 +1546,7 @@ export class Agenda {
           estado.insuranceUsed ? `${estado.label}, con seguro.` : `${estado.label}.`,
           'Pago actualizado',
         );
-        this.cargarAgenda();
+        this.trasOperar();
       },
       error: (error: unknown) => {
         this.operando.set(null);
@@ -1544,7 +1575,7 @@ export class Agenda {
       next: () => {
         this.operando.set(null);
         this.toast.success('La cita quedó confirmada.', 'Solicitud aceptada');
-        this.cargarAgenda();
+        this.trasOperar();
       },
       error: (error: unknown) => {
         this.operando.set(null);
@@ -1586,15 +1617,32 @@ export class Agenda {
    * olvido.
    */
   protected async verDetalle(cita: CitaVisible): Promise<void> {
-    const aceptar = await this.dialogs.confirm({
-      title: 'Solicitud de consulta',
-      message: 'Todo lo que el paciente mandó con su pedido.',
+    if (this.porResponder(cita)) {
+      const aceptar = await this.dialogs.confirm({
+        title: 'Solicitud de consulta',
+        message: 'Todo lo que el paciente mandó con su pedido.',
+        details: this.detalleDeSolicitud(cita),
+        confirmLabel: 'Aceptar solicitud',
+        cancelLabel: 'Cerrar',
+      });
+      if (aceptar) {
+        this.aceptarCita(cita);
+      }
+      return;
+    }
+
+    // Una cita ya respondida: el mismo detalle, y el paso que sigue es abrir
+    // el expediente —si la sesión puede—, no aceptarla otra vez.
+    const expediente = cita.rutaExpediente;
+    const abrir = await this.dialogs.confirm({
+      title: 'Detalle de la cita',
+      message: 'Lo que se sabe de esta consulta.',
       details: this.detalleDeSolicitud(cita),
-      confirmLabel: 'Aceptar solicitud',
-      cancelLabel: 'Cerrar',
+      confirmLabel: expediente === null ? 'Cerrar' : 'Abrir expediente',
+      cancelLabel: expediente === null ? 'Volver' : 'Cerrar',
     });
-    if (aceptar) {
-      this.aceptarCita(cita);
+    if (abrir && expediente !== null) {
+      void this.router.navigate([expediente]);
     }
   }
 
@@ -1814,7 +1862,7 @@ export class Agenda {
       next: () => {
         this.operando.set(null);
         this.toast.success('La solicitud se rechazó y el cupo volvió a la agenda.', 'Solicitud');
-        this.cargarAgenda();
+        this.trasOperar();
       },
       error: (error: unknown) => {
         this.operando.set(null);
@@ -1867,7 +1915,7 @@ export class Agenda {
     if (ruta === null) {
       // Sin permiso para expedientes no hay a dónde ir: la cita quedó iniciada
       // igual y la tabla tiene que reflejarlo.
-      this.cargarAgenda();
+      this.trasOperar();
       return;
     }
     void this.router.navigate([ruta], { queryParams: cita.paramsDeLaAtencion });
@@ -1887,7 +1935,7 @@ export class Agenda {
       next: () => {
         this.operando.set(null);
         this.toast.success('La cita quedó completada.', 'Consulta');
-        this.cargarAgenda();
+        this.trasOperar();
       },
       error: (error: unknown) => {
         this.operando.set(null);

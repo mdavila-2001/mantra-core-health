@@ -136,6 +136,25 @@ export class WeekView {
     this.dias().reduce((suma, d) => suma + d.libres, 0),
   );
 
+  protected readonly totalTomados = computed(() =>
+    this.dias().reduce((suma, d) => suma + d.tomados, 0),
+  );
+
+  /** La medianoche de hoy, para marcar la columna del día en curso. */
+  protected readonly hoy = computed(() => {
+    const ahora = new Date();
+    return new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).getTime();
+  });
+
+  /**
+   * Qué parte del día ya tiene paciente, de 0 a 100, para la barra de la
+   * celda. Sin turnos no hay barra: un día que no se atiende no está «vacío».
+   */
+  protected ocupacion(dia: DiaDeLaSemana): number | null {
+    const total = dia.libres + dia.tomados;
+    return total === 0 ? null : Math.round((dia.tomados / total) * 100);
+  }
+
   protected anterior(): void {
     const l = this.lunes();
     this.semanaElegida.emit(new Date(l.getFullYear(), l.getMonth(), l.getDate() - 7));

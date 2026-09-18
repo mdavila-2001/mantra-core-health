@@ -183,6 +183,52 @@
   cursor: pointer;
 }
 
+/* Las dos respuestas de la vigencia como tarjetas: toda la superficie se
+   toca, y la elegida se distingue por el borde además del punto. */
+.agenda-create__opcion--tarjeta {
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.agenda-create__opcion--tarjeta:hover {
+  border-color: var(--border-default);
+}
+
+.agenda-create__opcion--tarjeta:has(input:checked) {
+  border-color: var(--brand-primary);
+  box-shadow: inset 0 0 0 1px var(--brand-primary);
+}
+
+.agenda-create__opcion--tarjeta input {
+  margin-block-start: 0.2rem;
+  accent-color: var(--brand-primary);
+}
+
+.agenda-create__opcion-texto {
+  display: grid;
+  gap: 2px;
+}
+
+.agenda-create__opcion-titulo {
+  font-weight: 600;
+}
+
+.agenda-create__opcion-ayuda {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agenda-create__opcion--tarjeta {
+    transition: none;
+  }
+}
+
 .agenda-create__avanzadas,
 .agenda-create__politica,
 .agenda-create__tecnico {
@@ -221,40 +267,89 @@
 /* ---- la vista previa -------------------------------------------------------- */
 
 .agenda-create__previa {
-  padding: var(--sp-3);
-  border: 1px dashed var(--border-default);
-  border-radius: var(--r-md);
+  margin-block-start: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg, var(--r-md));
   background: var(--bg-surface);
 }
 
 .agenda-create__previa-titulo {
-  margin: 0 0 var(--sp-2);
-  font-size: var(--fs-caption);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body, 1rem);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
+.agenda-create__previa-titulo svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+  color: var(--brand-primary);
+}
+
+.agenda-create__previa-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Tres columnas alineadas de un día al otro: el día, el rango y la cuenta.
+   En teléfono la cuenta baja debajo del rango. */
 .agenda-create__previa-dia {
-  margin: 0 0 var(--sp-1);
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  align-items: baseline;
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-1);
+  padding-block: var(--sp-2);
+}
+
+.agenda-create__previa-dia + .agenda-create__previa-dia {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 640px) {
+  .agenda-create__previa-dia {
+    grid-template-columns: 7rem 9rem 1fr;
+  }
 }
 
 .agenda-create__previa-cuenta {
-  margin-right: var(--sp-2);
+  font-weight: 600;
 }
 
 .agenda-create__previa-horas {
-  color: var(--text-secondary);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.agenda-create__previa-horas--vacia {
+  font-weight: 400;
+  color: var(--text-secondary);
 }
 
 /* La cuenta y la duración, en segundo plano: lo que se lee de un vistazo es el
    rango, y esto lo confirma. */
 .agenda-create__previa-detalle {
+  grid-column: 2;
+  justify-self: start;
   font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+@media (min-width: 640px) {
+  .agenda-create__previa-detalle {
+    grid-column: 3;
+  }
 }
 
 .agenda-create__previa-resto {
-  margin: 0 0 var(--sp-2);
+  grid-column: 1 / -1;
+  margin: 0;
   color: var(--text-secondary);
   font-size: var(--fs-caption);
 }

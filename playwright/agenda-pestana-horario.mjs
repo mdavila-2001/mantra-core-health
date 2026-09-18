@@ -48,11 +48,11 @@ for (const [nombre, ancho, alto, tema] of [
   process.stdout.write(`[${nombre}] solapas en la entrada: ${JSON.stringify(solapas)}\n`);
   await pg.screenshot({ path: `${OUT}/pestana-entrada-${nombre}.png` });
 
-  await pg.getByRole('tab', { name: 'Mi agenda' }).click();
+  await pg.getByRole('tab', { name: 'Mis horarios' }).click();
   await pg.locator('[data-testid=horario-barra]').waitFor({ timeout: 60000 });
   process.stdout.write(
     `[${nombre}] tras clic en «Mi agenda»: url=${pg.url().replace(B, '')} · ` +
-      `seleccionada=${await pg.getByRole('tab', { name: 'Mi agenda' }).getAttribute('aria-selected')} · ` +
+      `seleccionada=${await pg.getByRole('tab', { name: 'Mis horarios' }).getAttribute('aria-selected')} · ` +
       `calendario en pantalla=${await pg.getByTestId('agenda-calendario').count()}\n`,
   );
   await pg.screenshot({ path: `${OUT}/pestana-mi-agenda-${nombre}.png` });

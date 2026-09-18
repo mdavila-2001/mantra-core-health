@@ -1,6 +1,10 @@
 <!-- Los 9 estados los dibuja el view-state-host: acá no se reimplementa ninguno. -->
 <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="refresh.emit()">
-  <div class="data-table__scroll">
+  <div
+    #scrollBox
+    class="data-table__scroll"
+    [class.data-table__scroll--overflowing]="overflowing()"
+  >
     <table class="data-table__table" data-testid="tabla">
       @if (caption()) {
         <caption class="sr-only">{{ caption() }}</caption>

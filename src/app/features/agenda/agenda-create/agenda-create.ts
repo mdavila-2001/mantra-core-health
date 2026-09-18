@@ -11,7 +11,6 @@ import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } fr
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import { MedicalOrganizationClient } from '../../../core/data-access/medical-organization/medical-organization.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
   PublishedTemplate,
@@ -186,7 +185,6 @@ export class AgendaCreate {
   private readonly scheduling = inject(SchedulingClient);
   private readonly dialogs = inject(DialogService);
   private readonly router = inject(Router);
-  private readonly organizaciones = inject(MedicalOrganizationClient);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
 
@@ -205,21 +203,14 @@ export class AgendaCreate {
   /* -- La tabla, que es la forma que pidió el propietario ------------------- */
 
   /**
-   * Las horas del día, cada media hora.
+   * El paso de los campos Desde y Hasta: de a 5 minutos.
    *
-   * El pedido original dice «Desde (horas del día)» y «Hasta (horas del día)»
-   * como **selects**, no como texto. Media hora y no una: publicar de 8:30 a
-   * 12:30 es corriente en un consultorio, y una lista sólo de horas en punto
-   * obligaría a no poder expresarlo.
+   * Eran un select de medias horas, y el propietario pidió horarios flexibles
+   * (18/09): quien abre a las 08:15 o cierra a las 12:40 no podía decirlo. Un
+   * campo de hora acepta cualquier minuto escrito; el paso sólo ordena las
+   * flechas del teclado y la rueda del selector nativo.
    */
-  protected readonly horasDelDia: readonly SelectOption<string>[] = Array.from(
-    { length: 48 },
-    (_, i) => {
-      const hh = String(Math.floor(i / 2)).padStart(2, '0');
-      const mm = i % 2 === 0 ? '00' : '30';
-      return { value: `${hh}:${mm}`, label: `${hh}:${mm}` };
-    },
-  );
+  protected readonly pasoDeHora = 300;
 
   protected readonly opcionesDeDuracion: readonly SelectOption<number>[] = DURACIONES.map(
     (m) => ({ value: m, label: `${m} min` }),
@@ -395,11 +386,15 @@ export class AgendaCreate {
   private readonly templateId = signal<string | null>(null);
   protected readonly cuposCreados = signal<number | null>(null);
 
-  /* -- Avanzadas y sedes ---------------------------------------------------- */
+  /* -- Avanzadas ------------------------------------------------------------ */
 
   protected readonly avanzadasAbiertas = signal(false);
   protected readonly usarPolitica = signal(false);
-  protected readonly sedes = signal<readonly SelectOption<string>[]>([]);
+  // La sede y los pacientes por turno ya no se preguntan (propietario,
+  // 18/09): la sede la fija la agenda elegida en el conmutador de organización,
+  // y un turno es de un paciente. `practiceId` y `capacidadPorTurno` siguen en
+  // el formulario con su valor por omisión —o el del horario que se edita—,
+  // así que lo que ya estaba publicado no se pierde al guardar.
 
   /**
    * La organización activa es la **única** fuente del `tenantId`: elegir otra
@@ -531,7 +526,6 @@ export class AgendaCreate {
 
   constructor() {
     this.semana.valueChanges.subscribe(() => this.versionDeLaSemana.update((v) => v + 1));
-    this.cargarSedes();
     this.cargarHorarioVigente();
   }
 
@@ -1051,16 +1045,6 @@ export class AgendaCreate {
 
   private fallar(error: unknown): void {
     this.estado.set(errorToViewState<null>(error));
-  }
-
-  private cargarSedes(): void {
-    this.organizaciones.listPractices().subscribe({
-      next: (practicas) => this.sedes.set(practicas.map((p) => ({ value: p.id, label: p.name }))),
-      // Sin sedes el campo simplemente no se ofrece: `practiceId` es opcional
-      // en el contrato y no vale bloquear la publicación por una lectura
-      // accesoria.
-      error: () => this.sedes.set([]),
-    });
   }
 
   /* -- El resumen, en palabras ---------------------------------------------- */

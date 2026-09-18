@@ -135,9 +135,9 @@ async function main() {
 
   /* ── 3 · Mi agenda: horario como calendario, sin «Crear agenda» ────────── */
   await pagina.goto(`${BASE}/schedule`);
-  await pagina.getByRole('tab', { name: 'Mi agenda' }).waitFor({ timeout: 30_000 });
+  await pagina.getByRole('tab', { name: 'Mis horarios' }).waitFor({ timeout: 30_000 });
   ok('consultas: no hay «Crear agenda»', (await pagina.getByRole('link', { name: 'Crear agenda' }).count()) === 0);
-  await pagina.getByRole('tab', { name: 'Mi agenda' }).click();
+  await pagina.getByRole('tab', { name: 'Mis horarios' }).click();
   await pagina.locator('[data-testid="horario-bloque"]').first().waitFor({ timeout: 30_000 });
   ok('mi agenda: grilla calendario con la semana en curso', (await pagina.locator('.grilla__dia--hoy').count()) === 1);
   await capturar('mi-agenda-calendario', { fullPage: true });

@@ -192,16 +192,11 @@ describe('MyAgenda', () => {
       expect($('app-schedule-grid')).toBeNull();
     });
 
-    it('«Ver como tabla» es un ícono con nombre y avisa a quien la contiene', () => {
+    it('ya no ofrece «Ver como tabla»: Consultas es una solapa al lado', () => {
+      // Una sola barra de cuatro solapas (propietario, 18/09): el ícono que
+      // cambiaba de vista cambiaba también la barra bajo los pies.
       abrir();
-      let pedida = 0;
-      fixture.componentInstance.tableRequested.subscribe(() => pedida++);
-
-      const boton = $('[data-testid="ver-como-tabla"]') as HTMLButtonElement;
-      expect(boton.getAttribute('aria-label')).toBe('Ver como tabla');
-      boton.click();
-
-      expect(pedida).toBe(1);
+      expect($('[data-testid="ver-como-tabla"]')).toBeNull();
     });
 
     it('«Semana» muestra la semana, y tocar un día vuelve al día', () => {

@@ -168,12 +168,15 @@
              los clics. -->
         <li
           class="dia__bloque"
+          [class.dia__bloque--con-acciones]="appointmentActions() !== null"
           [class.dia__bloque--cliqueable]="bloque.tipo === 'cita' || bloque.tipo === 'ocupado'"
           [attr.data-tipo]="bloque.tipo"
           [attr.data-sello]="bloque.tipo === 'cita' ? bloque.statusVariant : null"
           [style.min-height.px]="bloque.alturaPx"
         >
-          @if (bloque.tipo === 'cita' || bloque.tipo === 'ocupado') {
+          @if (
+            bloque.tipo === 'ocupado' || (bloque.tipo === 'cita' && appointmentActions() === null)
+          ) {
             <button
               type="button"
               class="dia__detalle"
@@ -231,6 +234,16 @@
                 @if (bloque.cita?.reasonText; as motivo) {
                   <p class="dia__motivo">{{ motivo }}</p>
                 }
+                @if (appointmentActions(); as acciones) {
+                  @if (bloque.cita; as cita) {
+                    <div class="dia__acciones dia__acciones--externas" data-testid="dia-acciones">
+                      <ng-container
+                        [ngTemplateOutlet]="acciones"
+                        [ngTemplateOutletContext]="{ $implicit: cita }"
+                      />
+                    </div>
+                  }
+                } @else {
                 <div class="dia__acciones">
                   @if (puedeLlegar(bloque)) {
                     <button
@@ -264,6 +277,7 @@
                     </button>
                   }
                 </div>
+                }
               </div>
             }
 

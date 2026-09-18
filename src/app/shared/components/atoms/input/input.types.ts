@@ -14,6 +14,7 @@ export const INPUT_TYPES = [
   'search',
   'url',
   'date',
+  'time',
 ] as const;
 export type InputType = (typeof INPUT_TYPES)[number];
 

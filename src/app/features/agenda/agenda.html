@@ -183,116 +183,28 @@
       </section>
     }
 
-    <!-- ─── Filtros ───────────────────────────────────────────────────────
-         La ventana, su navegación, las canceladas y la sede son de las listas
-         de consultas y cupos. «Mi agenda» es el horario publicado: no se filtra
-         por ventana, y mostrarlos ahí sugería que la cambiaban. -->
-    @if (enCalendario()) {
-      <!-- La agenda del día: lo que `/schedule` abre por defecto a quien
-           atiende (propietario, 18/09). Día, Semana y Mes viven adentro; la
-           tabla de Consultas, detrás del ícono «Ver como tabla». -->
-      <!-- «Mi agenda» —el horario publicado— es solapa desde la entrada y no
-           algo a lo que se llega pasando por la tabla (propietario, 18/09).
-           Como en las listas, el `@if` de adentro evita construir el panel que
-           no se mira: cada uno hace su propia lectura. -->
-      <app-tabs
-        [selectedIndex]="enHorario() ? 1 : 0"
-        (selectedIndexChange)="elegirPestanaInicial($event)"
-      >
-        <app-tab label="Calendario">
-          @if (!enHorario()) {
-            <app-my-agenda mode="calendar" (tableRequested)="verComoTabla()" />
-          }
-        </app-tab>
-        <app-tab label="Mi agenda">
-          @if (enHorario()) {
-            <app-my-agenda />
-          }
-        </app-tab>
-      </app-tabs>
-    } @else {
-    @if (!enMiAgenda()) {
-    <form class="agenda__filtros" (submit)="$event.preventDefault()">
-      <!-- Ya no se elige el recurso acá. El lugar donde se publica la agenda
-           se elige en el conmutador de organización de la barra superior, así
-           que un segundo campo en este renglón era pedir dos veces lo mismo y
-           se comía el ancho de los filtros que sí se usan.
-
-           «Agenda de [nombre]» también se fue (propietario, 2026-09-13): de
-           quién es la agenda ya lo dicen el conmutador de la barra superior y
-           cada fila de la tabla.
-
-           Anterior/Siguiente tampoco viven acá: recorren la ventana como
-           páginas, así que van al pie de cada lista, donde se busca una
-           paginación (ver `#navegacionVentana`). -->
-      <app-form-field label="Ventana" class="agenda__filtro" appTutorialTarget="agenda-ventana">
-        <app-select
-          [options]="opcionesDeVentana()"
-          [value]="ventanaElegida()"
-          (valueChange)="elegirVentana($event)"
-        />
-      </app-form-field>
-
-      <app-switch
-        class="agenda__filtro agenda__filtro--interruptor"
-        label="Incluir canceladas"
-        [checked]="incluirCanceladas()"
-        (checkedChange)="alternarCanceladas($event)"
-      />
-
-      @if (esQuienAtiende() && !sinAgendaPropia()) {
-        <!-- El camino de vuelta de «Ver como tabla»: la misma forma, el ícono
-             del calendario. -->
-        <button
-          app-button
-          class="agenda__ver-agenda"
-          variant="ghost"
-          type="button"
-          [iconOnly]="true"
-          data-testid="ver-como-agenda"
-          aria-label="Ver como agenda"
-          appTooltip="Ver como agenda del día"
-          (clicked)="verComoAgenda()"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <rect x="3" y="4" width="18" height="17" rx="2" />
-            <path d="M3 9h18M8 2v4M16 2v4" />
-            <path d="M7 13h4M7 17h7" />
-          </svg>
-        </button>
-      }
-    </form>
-
-    <!-- ─── Dónde se atiende ────────────────────────────────────────────────
-         La agenda decía cuándo y no dónde, y un turno sin dirección obliga a
-         averiguarla por fuera del sistema. Llega resuelta en la misma lectura
-         de recursos: no cuesta una petición más. -->
-    @if (!sinRecursos()) {
-      <p class="agenda__ubicacion" data-testid="agenda-ubicacion">
-        @if (sedeDelRecurso()) {
-          <span class="agenda__ubicacion-rotulo">Se atiende en</span>
-          {{ ubicacionDelRecurso() }}
-        } @else {
-          <span class="agenda__ubicacion-rotulo">Sin consultorio registrado</span>
-          para este recurso. Se carga desde la asignación del profesional a una sede.
-        }
-      </p>
-    }
-    }
-
     <app-tabs
       [selectedIndex]="pestana()"
       (selectedIndexChange)="elegirPestana($event)"
       appTutorialTarget="agenda-pestanas"
     >
+      <!-- ─── Calendario ────────────────────────────────────────────────────
+           La agenda del día, con Semana y Mes: lo que `/schedule` abre por
+           defecto a quien atiende (propietario, 18/09). Las citas del día
+           llevan las MISMAS acciones que la fila de Consultas: se les pasa la
+           celda de la tabla, no una copia. -->
+      @if (tieneCalendario()) {
+        <app-tab label="Calendario">
+          @if (enCalendario()) {
+            <app-my-agenda
+              mode="calendar"
+              [appointmentActions]="accionesDeLaCitaDelDia"
+              [reloadToken]="versionDeAcciones()"
+            />
+          }
+        </app-tab>
+      }
+
       <!-- ─── Consultas ─────────────────────────────────────────────────────
            El ciclo completo en una sola lista (ALV-019): lo que espera
            respuesta y lo que ya está agendado eran dos solapas de la MISMA
@@ -300,6 +212,7 @@
            veces, y una solicitud aceptada parecía perderse. Los cupos siguen
            aparte: son disponibilidad, no consultas. -->
       <app-tab [label]="rotuloDeConsultas()">
+        <ng-container [ngTemplateOutlet]="filtrosDeListas" />
         @if (cuantasEsperanRespuesta() > 0) {
           <p class="agenda__aviso" role="status">
             Hay
@@ -330,22 +243,19 @@
         <ng-container [ngTemplateOutlet]="navegacionVentana" />
       </app-tab>
 
-      <!-- ─── Mi agenda ─────────────────────────────────────────────────────
-           El horario publicado, acá adentro y no a un viaje de distancia. Era
-           un botón del encabezado que llevaba a otra pantalla: para ver «a qué
-           hora atiendo» había que salir de la lista y volver. Ahora conviven,
-           que es como se usan — se mira el día y se mira el horario en la misma
-           vuelta.
+      <!-- ─── Mis horarios ──────────────────────────────────────────────────
+           El horario publicado. Se llama «Mis horarios» y no «Mi agenda»
+           (propietario, 18/09): la agenda es todo esto; lo de acá son los
+           horarios en que se atiende.
 
            **El `@if` va acá y no alcanza con el de `app-tab`.** El panel
            inactivo no se dibuja, pero el contenido PROYECTADO lo instancia el
-           padre igual: sin esta condición, «Mi agenda» se construía en cada
+           padre igual: sin esta condición, el horario se construía en cada
            visita a la lista y disparaba su propia lectura de recursos aunque
-           nadie abriera la solapa. Con la condición en la plantilla del padre,
-           el componente no existe hasta que se lo pide. -->
+           nadie abriera la solapa. -->
       @if (esQuienAtiende()) {
-        <app-tab label="Mi agenda">
-          @if (pestana() === 1) {
+        <app-tab label="Mis horarios">
+          @if (enHorario()) {
             <app-my-agenda />
           }
         </app-tab>
@@ -353,6 +263,7 @@
 
       <!-- ─── Cupos ─────────────────────────────────────────────────────── -->
       <app-tab [label]="rotuloDeCupos()">
+        <ng-container [ngTemplateOutlet]="filtrosDeListas" />
         @if (cuposRecortados()) {
           <p class="agenda__aviso" role="status">
             Se muestran los primeros {{ tope }} cupos de la ventana. Una agenda a la que le faltan
@@ -370,7 +281,6 @@
         <ng-container [ngTemplateOutlet]="navegacionVentana" />
       </app-tab>
     </app-tabs>
-    }
   }
 </div>
 
@@ -611,25 +521,28 @@
     <!-- Cada acción se ofrece SOLO en el estado en que el backend la acepta:
          un botón que va a volver con 422 es un error con forma de oferta. Con
          el estado sin resolver (código vacío) no se ofrece ninguna. -->
+    <!-- «Ver detalle» va PRIMERO y en TODA fila: en una solicitud, lo primero
+         que uno hace no es responder sino mirar qué le están pidiendo; en una
+         cita atendida es lo único que queda, y sin él la columna quedaba vacía
+         (propietario, 18/09). -->
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      [iconOnly]="true"
+      data-testid="agenda-detalle"
+      [attr.aria-label]="(porResponder(cita) ? 'Ver detalle de la solicitud: ' : 'Ver detalle de la cita: ') + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
+      [appTooltip]="porResponder(cita) ? 'Ver detalle de la solicitud' : 'Ver detalle de la cita'"
+      (clicked)="verDetalle(cita)"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    </button>
+
     @if (porResponder(cita)) {
-      <!-- «Ver detalle» va PRIMERO: en una solicitud, lo primero que uno hace
-           no es responder sino mirar qué le están pidiendo. -->
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        [iconOnly]="true"
-        data-testid="agenda-detalle"
-        [attr.aria-label]="'Ver detalle de la solicitud: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
-        appTooltip="Ver detalle de la solicitud"
-        (clicked)="verDetalle(cita)"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-      </button>
       <!-- El historial de esa persona, con las rechazadas y canceladas. Sólo si
            sabemos de quién: sin paciente no hay historial que mostrar. -->
       @if (cita.patientProfileId) {
@@ -853,6 +766,17 @@
   </div>
 </ng-template>
 
+<!-- Las acciones de una cita del Calendario: la MISMA celda de la tabla de
+     Consultas, sobre la cita traducida igual que una fila. Así Ver detalle,
+     Aceptar, Iniciar, Llegó, Demora, Mover y Cancelar son idénticos en las dos
+     vistas y no hay una segunda copia que se desfase (propietario, 18/09). -->
+<ng-template #accionesDeLaCitaDelDia let-booking>
+  <ng-container
+    [ngTemplateOutlet]="celdaAccionesCita"
+    [ngTemplateOutletContext]="{ $implicit: citaDelDia(booking) }"
+  />
+</ng-template>
+
 <ng-template #celdaReservar let-cupo>
   @if (cupo.disponible) {
     @if (enReprogramacion()) {
@@ -895,4 +819,56 @@
     </a>
     }
   }
+</ng-template>
+
+<!-- ─── Filtros de las listas ───────────────────────────────────────────────
+     La ventana, las canceladas y la sede son de Consultas y Cupos, y viven
+     DENTRO de esas dos solapas: arriba de la barra aparecían y desaparecían al
+     cambiar de solapa, y la barra saltaba bajo el puntero (propietario, 18/09).
+     El calendario y «Mis horarios» no se filtran por ventana. -->
+<ng-template #filtrosDeListas>
+    <form class="agenda__filtros" (submit)="$event.preventDefault()">
+      <!-- Ya no se elige el recurso acá. El lugar donde se publica la agenda
+           se elige en el conmutador de organización de la barra superior, así
+           que un segundo campo en este renglón era pedir dos veces lo mismo y
+           se comía el ancho de los filtros que sí se usan.
+
+           «Agenda de [nombre]» también se fue (propietario, 2026-09-13): de
+           quién es la agenda ya lo dicen el conmutador de la barra superior y
+           cada fila de la tabla.
+
+           Anterior/Siguiente tampoco viven acá: recorren la ventana como
+           páginas, así que van al pie de cada lista, donde se busca una
+           paginación (ver `#navegacionVentana`). -->
+      <app-form-field label="Ventana" class="agenda__filtro" appTutorialTarget="agenda-ventana">
+        <app-select
+          [options]="opcionesDeVentana()"
+          [value]="ventanaElegida()"
+          (valueChange)="elegirVentana($event)"
+        />
+      </app-form-field>
+
+      <app-switch
+        class="agenda__filtro agenda__filtro--interruptor"
+        label="Incluir canceladas"
+        [checked]="incluirCanceladas()"
+        (checkedChange)="alternarCanceladas($event)"
+      />
+    </form>
+
+    <!-- ─── Dónde se atiende ────────────────────────────────────────────────
+         La agenda decía cuándo y no dónde, y un turno sin dirección obliga a
+         averiguarla por fuera del sistema. Llega resuelta en la misma lectura
+         de recursos: no cuesta una petición más. -->
+    @if (!sinRecursos()) {
+      <p class="agenda__ubicacion" data-testid="agenda-ubicacion">
+        @if (sedeDelRecurso()) {
+          <span class="agenda__ubicacion-rotulo">Se atiende en</span>
+          {{ ubicacionDelRecurso() }}
+        } @else {
+          <span class="agenda__ubicacion-rotulo">Sin consultorio registrado</span>
+          para este recurso. Se carga desde la asignación del profesional a una sede.
+        }
+      </p>
+    }
 </ng-template>

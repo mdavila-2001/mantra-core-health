@@ -5,11 +5,15 @@
       variant="ghost"
       size="sm"
       type="button"
+      [iconOnly]="true"
       data-testid="semana-anterior"
       aria-label="Semana anterior"
       (clicked)="anterior()"
     >
-      ←
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m15 18-6-6 6-6" />
+      </svg>
     </button>
 
     <div class="semana__cabecera">
@@ -22,6 +26,11 @@
         } @else {
           {{ totalLibres() }} {{ totalLibres() === 1 ? 'turno libre' : 'turnos libres' }}.
         }
+        @if (totalTomados() > 0) {
+          <span class="semana__resumen-extra">
+            · {{ totalTomados() }} con paciente
+          </span>
+        }
       </p>
     </div>
 
@@ -30,46 +39,66 @@
       variant="ghost"
       size="sm"
       type="button"
+      [iconOnly]="true"
       data-testid="semana-siguiente"
       aria-label="Semana siguiente"
       (clicked)="siguiente()"
     >
-      →
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
     </button>
   </header>
 
   <ol class="semana__dias">
     @for (dia of dias(); track dia.fecha.getTime()) {
-      <li class="semana__dia" [attr.data-estado]="dia.estado">
+      <li
+        class="semana__dia"
+        [attr.data-estado]="dia.estado"
+        [class.semana__dia--hoy]="dia.fecha.getTime() === hoy()"
+      >
         <button
           type="button"
           class="semana__boton"
           [attr.data-testid]="'semana-dia'"
+          [attr.aria-current]="dia.fecha.getTime() === hoy() ? 'date' : null"
           (click)="diaElegido.emit(dia.fecha)"
         >
-          <span class="semana__nombre">{{ dia.fecha | date: 'EEE' }}</span>
-          <span class="semana__numero">{{ dia.fecha | date: 'd' }}</span>
+          <span class="semana__fecha">
+            <span class="semana__nombre">{{ dia.fecha | date: 'EEE' }}</span>
+            <span class="semana__numero">{{ dia.fecha | date: 'd' }}</span>
+          </span>
 
           <!-- El estado se dice con PALABRAS además de con color: quien no
                distingue tonos tiene que poder leer si el día está cerrado. -->
-          @switch (dia.estado) {
-            @case ('bloqueado') {
-              <span class="semana__estado">{{ dia.motivo ?? 'Cerrado' }}</span>
-            }
-            @case ('sin-agenda') {
-              <span class="semana__estado">No atendés</span>
-            }
-            @case ('lleno') {
-              <span class="semana__estado">Lleno · {{ dia.tomados }}</span>
-            }
-            @default {
-              <span class="semana__estado">
+          <span class="semana__estado">
+            <span class="semana__punto" aria-hidden="true"></span>
+            @switch (dia.estado) {
+              @case ('bloqueado') {
+                {{ dia.motivo ?? 'Cerrado' }}
+              }
+              @case ('sin-agenda') {
+                No atendés
+              }
+              @case ('lleno') {
+                Lleno · {{ dia.tomados }}
+              }
+              @default {
                 {{ dia.libres }} {{ dia.libres === 1 ? 'libre' : 'libres' }}
                 @if (dia.tomados > 0) {
                   · {{ dia.tomados }} con paciente
                 }
-              </span>
+              }
             }
+          </span>
+
+          <!-- Cuánto del día está tomado, de un vistazo. Decorativa: el número
+               ya está dicho en palabras justo arriba. -->
+          @if (ocupacion(dia) !== null) {
+            <span class="semana__barra-ocupacion" aria-hidden="true">
+              <span class="semana__barra-relleno" [style.width.%]="ocupacion(dia)"></span>
+            </span>
           }
         </button>
 

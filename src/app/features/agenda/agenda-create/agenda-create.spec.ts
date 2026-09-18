@@ -103,10 +103,6 @@ describe('AgendaCreate', () => {
     http = TestBed.inject(HttpTestingController);
     acc = fixture.componentInstance as unknown as Testable;
     fixture.detectChanges();
-    // Las sedes se leen al construir; sin responderla, `http.verify()` la
-    // denuncia como pendiente en cada prueba.
-    http.expectOne('/practices').flush([]);
-
     // Y desde D2 (plan de UX del 22/08/2026) también se busca el horario que ya
     // esté publicado, para poder **cambiarlo** en vez de crear una segunda
     // agenda. Por omisión se responde «no hay recurso», que es el caso del alta
@@ -159,7 +155,6 @@ describe('AgendaCreate', () => {
     http = TestBed.inject(HttpTestingController);
     acc = fixture.componentInstance as unknown as Testable;
     fixture.detectChanges();
-    http.expectOne('/practices').flush([]);
     http.expectOne((r) => r.url === '/scheduling/resources').flush({
       items: [{ id: 'res-1', name: 'Agenda', resourceRefId: PERFIL, stateConceptId: 'c' }],
       count: 1,
@@ -474,10 +469,11 @@ describe('AgendaCreate', () => {
       // El número de la fila y el de la vista previa son el MISMO cálculo. Lo
       // que esta prueba impide es que vuelvan a separarse.
       expect(acc.turnosDelDia(0)).toBe(5);
-      expect(texto).toContain('Lunes:');
+      const previa: HTMLElement = fixture.nativeElement.querySelector('.agenda-create__previa-dia');
+      expect(previa.textContent).toContain('Lunes');
       // Y el paso completo —30 + 15— se ve en el cierre: sin contar el
       // respiro, cinco turnos de 30 cerrarían a las 11:30, no a las 12:30.
-      expect(texto).toContain('de 09:00 a 12:30');
+      expect(texto).toContain('09:00 – 12:30');
       expect(texto).toContain('5 turnos de 30 min');
     });
 
@@ -1043,15 +1039,33 @@ describe('AgendaCreate', () => {
       expect(texto).toContain('Descanso');
     });
 
-    it('las horas son un select, no texto libre', () => {
-      // El original dice «Desde (horas del día)» como select. Media hora y no
-      // una: de 8:30 a 12:30 es corriente en un consultorio.
+    it('las horas aceptan cualquier minuto: el horario es flexible', () => {
+      // Eran un select de medias horas y quien abre a las 08:15 no podía
+      // decirlo (propietario, 18/09). Ahora es un campo de hora.
       crear();
       encenderLunes();
-      const texto: string = fixture.nativeElement.textContent;
+      const desde: HTMLInputElement = fixture.nativeElement.querySelector(
+        '[data-testid="agenda-create-desde-0"]',
+      );
+      expect(desde.type).toBe('time');
+      expect(desde.getAttribute('aria-label')).toBe('Desde, Lunes');
 
-      expect(texto).toContain('08:30');
-      expect(texto).toContain('23:30');
+      acc.fijarDeLaFila(0, 'desde', '08:15');
+      acc.fijarDeLaFila(0, 'hasta', '12:40');
+      fixture.detectChanges();
+
+      // 08:15 → 12:40 son 265 minutos: 8 turnos de 30 y sobran 25.
+      expect(acc.grupoDe(0).valid).toBe(true);
+      expect(acc.turnosDelDia(0)).toBe(8);
+    });
+
+    it('ya no pregunta la sede ni los pacientes por turno', () => {
+      crear();
+      acc.avanzadasAbiertas.set(true);
+      fixture.detectChanges();
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).not.toContain('¿En qué sede atendés?');
+      expect(texto).not.toContain('¿Cuántos pacientes por turno?');
     });
 
     it('elegir en la fila cambia el horario de ese día', () => {
