@@ -808,26 +808,6 @@
       </button>
     }
 
-    @if (estaVigente(cita) || porResponder(cita)) {
-      <!-- Destructiva: lleva su etiqueta, pide confirmación y exige motivo. -->
-      <button
-        app-button
-        variant="ghost"
-        size="sm"
-        [iconOnly]="true"
-        data-testid="agenda-reprogramar"
-        [attr.aria-label]="'Mover la cita a otro horario: ' + cita.paciente + ', ' + (cita.cuando | date: 'HH:mm')"
-        appTooltip="Mover la cita a otro horario"
-        [isLoading]="operando() === cita.id"
-        (clicked)="iniciarReprogramacion(cita)"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="4" width="18" height="17" rx="2" />
-          <path d="M3 9h18M8 2v4M16 2v4M8 15h7M12.5 12l3 3-3 3" />
-        </svg>
-      </button>
-    }
 
     @if (estaVigente(cita) || porResponder(cita)) {
       <!-- Destructiva: pide confirmación y exige motivo. -->
