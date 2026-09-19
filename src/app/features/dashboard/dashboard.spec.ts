@@ -307,7 +307,10 @@ describe('Dashboard', () => {
       const rutas = todasLasRutas();
       expect(rutas).toContain('/schedule');
       expect(rutas).toContain('/medical-records');
-      expect(rutas).toContain('/tutorials');
+      // «Mi cuenta» y los tutoriales no (19/09/2026): los abre el perfil y
+      // la pantalla que cada tutorial explica.
+      expect(rutas).not.toContain('/tutorials');
+      expect(rutas).not.toContain('/my-account');
       // El panel dentro del panel no: es un enlace a la pantalla en la que ya
       // estás, y ocupaba un lugar de los treinta y dos.
       expect(rutas).not.toContain('/dashboard');
