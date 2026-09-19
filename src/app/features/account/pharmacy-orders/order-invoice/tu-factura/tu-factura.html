@@ -20,7 +20,7 @@
         <dt class="tu-factura__etiqueta">{{ rotulos.total }}</dt>
         <dd class="tu-factura__valor cifras-tabulares" data-testid="tu-factura-total">
           @if (papel.total !== null) {
-            {{ papel.total }} {{ papel.moneda }}
+            {{ papel.total }} {{ moneda(papel.moneda) }}
           } @else {
             No disponible
           }

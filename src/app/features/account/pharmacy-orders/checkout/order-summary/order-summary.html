@@ -40,7 +40,7 @@
       <dt>{{ rotulos.descuentoDeRed }}</dt>
       <dd class="cifras-tabulares">
         @if (resumen().descuentoDeRed; as descuento) {
-          −{{ descuento }} {{ resumen().moneda }}
+          −{{ descuento }} {{ moneda(resumen().moneda) }}
         } @else {
           No disponible
         }
@@ -99,7 +99,7 @@
           @if (!renglon.disponible) {
             <app-badge variant="warning">La farmacia no la tiene</app-badge>
           } @else if (renglon.subtotal !== null) {
-            {{ renglon.subtotal }} {{ resumen().moneda }}
+            {{ renglon.subtotal }} {{ moneda(resumen().moneda) }}
           } @else {
             <span class="resumen__secundario">Sin precio publicado</span>
           }

@@ -120,22 +120,22 @@
                            escucha no sabe cuál va a pagar. -->
                       <s class="confirmacion__secundario cifras-tabulares">
                         <span class="sr-only">Antes:</span>
-                        {{ renglon.precioDeLista }} {{ renglon.linea.moneda }}
+                        {{ renglon.precioDeLista }} {{ moneda(renglon.linea.moneda) }}
                       </s>
                       <strong class="cifras-tabulares">
                         <span class="sr-only">Precio de campaña:</span>
-                        {{ promocional }} {{ renglon.linea.moneda }}
+                        {{ promocional }} {{ moneda(renglon.linea.moneda) }}
                       </strong>
                     } @else if (renglon.precioDeLista !== null) {
                       <span class="cifras-tabulares">
-                        {{ renglon.precioDeLista }} {{ renglon.linea.moneda }}
+                        {{ renglon.precioDeLista }} {{ moneda(renglon.linea.moneda) }}
                       </span>
                     } @else {
                       <span class="confirmacion__secundario">Sin precio publicado</span>
                     }
                     @if (renglon.subtotal !== null) {
                       <span class="confirmacion__subtotal cifras-tabulares" data-testid="pedido-linea-subtotal">
-                        Subtotal: {{ renglon.subtotal }} {{ renglon.linea.moneda }}
+                        Subtotal: {{ renglon.subtotal }} {{ moneda(renglon.linea.moneda) }}
                       </span>
                     }
                   }
@@ -222,15 +222,15 @@
               Total estimado:
               <s class="confirmacion__secundario cifras-tabulares">
                 <span class="sr-only">Antes:</span>
-                {{ precioNormalizado(pedido.totalEstimado) }} {{ pedido.moneda }}
+                {{ precioNormalizado(pedido.totalEstimado) }} {{ moneda(pedido.moneda) }}
               </s>
               <strong class="cifras-tabulares" data-testid="pedido-total-promo">
                 <span class="sr-only">Con la promoción:</span>
-                {{ conPromocion }} {{ pedido.moneda }}
+                {{ conPromocion }} {{ moneda(pedido.moneda) }}
               </strong>
             } @else if (pedido.totalEstimado !== null) {
               Total estimado:
-              <strong class="cifras-tabulares">{{ pedido.totalEstimado }} {{ pedido.moneda }}</strong>
+              <strong class="cifras-tabulares">{{ pedido.totalEstimado }} {{ moneda(pedido.moneda) }}</strong>
             } @else {
               Total no disponible: falta algún precio publicado.
             }
@@ -238,7 +238,7 @@
             @if (totalConCambios(); as total) {
               {{ conSeguro() ? 'Total estimado de lo no aprobado:' : 'Total estimado:' }}
               <strong class="cifras-tabulares" data-testid="pedido-total-con-cambios">
-                {{ total }} {{ pedido.moneda }}
+                {{ total }} {{ moneda(pedido.moneda) }}
               </strong>
             } @else {
               Total no disponible: falta algún precio publicado.

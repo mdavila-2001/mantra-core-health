@@ -185,7 +185,7 @@ describe('NewOrder', () => {
     expect(texto()).toContain('Farmacia Andina · Sucursal Centro');
     expect(texto()).toContain('Amoxicilina');
     expect(texto()).toContain('500 mg · Caja x 21 cápsulas');
-    expect(texto()).toContain('68.00 BOB');
+    expect(texto()).toContain('68.00 Bs');
     expect(texto()).toContain('La farmacia no la tiene');
     expect(texto()).toContain('Sin precio publicado');
     expect(uno('pedido-nota-sin-envio')?.textContent).toContain(
@@ -302,8 +302,8 @@ describe('NewOrder', () => {
     expect(uno('pedido-banner-promo')).not.toBeNull();
     const precio = raiz().querySelector('[data-testid="pedido-lineas"] .confirmacion__linea-precio');
     // Los dos con dos decimales, y no uno crudo y el otro formateado.
-    expect(precio?.textContent).toContain('22.50 BOB');
-    expect(precio?.textContent).toContain('14.62 BOB');
+    expect(precio?.textContent).toContain('22.50 Bs');
+    expect(precio?.textContent).toContain('14.62 Bs');
     // El tachado no se escucha: sin estas etiquetas, un lector de pantalla
     // anuncia dos precios seguidos y quien escucha no sabe cuál va a pagar.
     expect(precio?.querySelector('s .sr-only')?.textContent).toContain('Antes');
@@ -355,13 +355,13 @@ describe('NewOrder', () => {
       client.prepararBorrador(BORRADOR_COMPLETO);
       montar();
 
-      expect(uno('pedido-linea-subtotal', renglon(0))?.textContent).toContain('68.00 BOB');
-      expect(uno('pedido-total')?.textContent).toContain('108.00 BOB');
+      expect(uno('pedido-linea-subtotal', renglon(0))?.textContent).toContain('68.00 Bs');
+      expect(uno('pedido-total')?.textContent).toContain('108.00 Bs');
 
       clic(uno('pedido-cantidad-mas', renglon(0)));
 
-      expect(uno('pedido-linea-subtotal', renglon(0))?.textContent).toContain('136.00 BOB');
-      expect(uno('pedido-total-con-cambios')?.textContent).toContain('176.00 BOB');
+      expect(uno('pedido-linea-subtotal', renglon(0))?.textContent).toContain('136.00 Bs');
+      expect(uno('pedido-total-con-cambios')?.textContent).toContain('176.00 Bs');
     });
 
     it('«Ver alternativas» abre el panel del renglón con marcas más económicas y su ahorro', () => {
@@ -380,8 +380,8 @@ describe('NewOrder', () => {
       expect(panel).not.toBeNull();
       expect(todos('alternativa', panel!)).toHaveLength(3);
       expect(panel?.textContent).toContain('Amoxicilina · Genérico');
-      expect(panel?.textContent).toContain('57.80 BOB');
-      expect(panel?.textContent).toContain('Ahorrás 10.20 BOB por unidad');
+      expect(panel?.textContent).toContain('57.80 Bs');
+      expect(panel?.textContent).toContain('Ahorrás 10.20 Bs por unidad');
       expect(panel?.textContent).toContain('Datos de ejemplo');
     });
 
@@ -402,7 +402,7 @@ describe('NewOrder', () => {
       );
       expect(primero.textContent).toContain('En lugar de Amoxicilina 500 mg');
       expect(uno('pedido-alternativas')).toBeNull();
-      expect(uno('pedido-total-con-cambios')?.textContent).toContain('87.60 BOB');
+      expect(uno('pedido-total-con-cambios')?.textContent).toContain('87.60 Bs');
       // El borrador real no se toca: la alternativa no tiene productId.
       expect(client.borradorPreparado()).toBe(BORRADOR_COMPLETO);
     });
@@ -440,10 +440,10 @@ describe('NewOrder', () => {
       expect(uno('pedido-ver-alternativas', renglon(0))).toBeNull();
       expect(uno('pedido-ver-alternativas', renglon(1))).not.toBeNull();
       // El no aprobado muestra su precio; el aprobado no.
-      expect(uno('pedido-linea-subtotal', renglon(1))?.textContent).toContain('40.00 BOB');
+      expect(uno('pedido-linea-subtotal', renglon(1))?.textContent).toContain('40.00 Bs');
       expect(uno('pedido-linea-subtotal', renglon(0))).toBeNull();
       expect(uno('pedido-total')?.textContent).toContain('Total estimado de lo no aprobado');
-      expect(uno('pedido-total-con-cambios')?.textContent).toContain('40.00 BOB');
+      expect(uno('pedido-total-con-cambios')?.textContent).toContain('40.00 Bs');
       expect(texto()).toContain('no la respuesta de tu aseguradora');
     });
 

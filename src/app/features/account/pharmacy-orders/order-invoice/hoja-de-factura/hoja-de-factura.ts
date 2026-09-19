@@ -4,6 +4,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { ROTULOS_DE_FACTURA, type DocumentoDeFactura } from '../order-invoice.types';
+import { displayCurrency } from '../../../../../core/money/display-currency';
+import { withDisplayCurrency } from '../../../../../core/money/display-currency';
 
 /**
  * **La hoja de la factura** (T-E4): el documento entero, presentacional puro.
@@ -21,6 +23,14 @@ import { ROTULOS_DE_FACTURA, type DocumentoDeFactura } from '../order-invoice.ty
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HojaDeFactura {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   readonly documento = input.required<DocumentoDeFactura>();
   readonly nota = input<string | null>(null);
 
@@ -30,6 +40,6 @@ export class HojaDeFactura {
   protected importe(valor: string | null): string {
     return valor === null
       ? 'No disponible: falta algún precio publicado'
-      : `${valor} ${this.documento().moneda}`.trim();
+      : withDisplayCurrency(valor, this.documento().moneda);
   }
 }

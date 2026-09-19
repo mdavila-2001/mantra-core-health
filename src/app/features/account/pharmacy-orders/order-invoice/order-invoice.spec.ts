@@ -91,10 +91,10 @@ describe('OrderInvoice over the real pharmacy-orders contract', () => {
     expect(text()).toContain('Farmacia Andina');
     expect(text()).toContain('Ana Paciente');
     expect(text()).toContain('Descuento red AloVida');
-    expect(text()).toContain('61.20 BOB');
+    expect(text()).toContain('61.20 Bs');
     // El coaseguro sale de la liquidación real publicada.
     expect(text()).toContain('Seguros Bolívar');
-    expect(text()).toContain('13.60 BOB');
+    expect(text()).toContain('13.60 Bs');
     expect(text()).not.toContain('No es una factura');
     expect(text()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f-]{27}/i);
     expect(

@@ -342,7 +342,7 @@ describe('WhereToBuy', () => {
     // parcial dice qué le falta por su nombre y que el total no está.
     expect(sedes[0]?.textContent).toContain('Sucursal Centro');
     expect(sedes[0]?.textContent).toContain('Tiene todo');
-    expect(sedes[0]?.textContent).toContain('96.50 BOB');
+    expect(sedes[0]?.textContent).toContain('96.50 Bs');
     expect(sedes[0]?.textContent).toContain('1,2 km');
     expect(sedes[1]?.textContent).toContain('Le falta algo');
     expect(sedes[1]?.textContent).toContain('Le falta: Amoxicilina');
@@ -745,7 +745,7 @@ describe('WhereToBuy', () => {
       centro
         ?.querySelector('[data-testid="compra-desglose-seguro"]')
         ?.textContent?.replace(/\s+/g, ' '),
-    ).toContain('Aprobado: 68.00 BOB A tu cargo: 28.50 BOB');
+    ).toContain('Aprobado: 68.00 Bs A tu cargo: 28.50 Bs');
 
     const planTresMil = tarjetaDe('Plan Tres Mil');
     expect(planTresMil?.textContent).toContain('Cobertura de lo aprobado: 0 de 1');
@@ -758,10 +758,10 @@ describe('WhereToBuy', () => {
 
     const norte = tarjetaDe('Sucursal Norte');
     expect(norte?.textContent).toContain('Cobertura de lo aprobado: 0 de 1');
-    expect(norte?.textContent).toContain('A tu cargo: 28.50 BOB');
+    expect(norte?.textContent).toContain('A tu cargo: 28.50 Bs');
 
     // El total de la sede no cambia: el desglose se suma, no lo reemplaza.
-    expect(centro?.textContent).toContain('Total estimado: 96.50 BOB');
+    expect(centro?.textContent).toContain('Total estimado: 96.50 Bs');
     // Conmutar no consulta.
     http.expectNone((r) => r.url === '/pharmacy-inventory/availability');
 
@@ -990,16 +990,16 @@ describe('coberturaConSeguro (T-E2)', () => {
       cubiertos: 1,
       completa: true,
       faltantes: [],
-      aprobado: '68.00 BOB',
-      aCargo: '28.50 BOB',
+      aprobado: '68.00 Bs',
+      aCargo: '28.50 Bs',
     });
   });
 
   it('todo aprobado: nada a tu cargo es 0.00, no una ausencia', () => {
     const todo = new Set(CONSULTABLES.map((item) => item.conceptId));
     const cobertura = coberturaConSeguro(SEDE_COMPLETA, CONSULTABLES, [], todo);
-    expect(cobertura.aprobado).toBe('96.50 BOB');
-    expect(cobertura.aCargo).toBe('0.00 BOB');
+    expect(cobertura.aprobado).toBe('96.50 Bs');
+    expect(cobertura.aCargo).toBe('0.00 Bs');
     expect(cobertura.cubiertos).toBe(2);
   });
 
@@ -1049,7 +1049,7 @@ describe('coberturaConSeguro (T-E2)', () => {
 
     expect(
       coberturaConSeguro(conPrecios(['0.10', '0.20', 'BOB']), CONSULTABLES, [], todo).aprobado,
-    ).toBe('0.30 BOB');
+    ).toBe('0.30 Bs');
     expect(
       coberturaConSeguro(conPrecios(['0.10', '0.20', 'USD']), CONSULTABLES, [], todo).aprobado,
     ).toBeNull();

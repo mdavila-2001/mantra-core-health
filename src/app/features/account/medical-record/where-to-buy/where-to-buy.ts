@@ -53,6 +53,7 @@ import { PageHeader } from '../../../../shared/components/organisms/page-header/
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record.routes';
 import { aprobadosPorElSeguroDeEjemplo, NOTA_DE_DEMOSTRACION } from './where-to-buy.fixtures';
+import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 /** Los estudios que le pidieron a esta persona. Ya existe y ya se lee. */
 const MIS_ESTUDIOS_ROUTE = '/my-account/diagnostic-orders';
@@ -933,7 +934,7 @@ function evaluar(
       total:
         sede.totalAmount === null
           ? null
-          : `${sede.totalAmount} ${sede.currency?.code ?? ''}`.trim(),
+          : withDisplayCurrency(sede.totalAmount, sede.currency?.code),
       totalCentavos: sede.totalAmount === null ? null : aCentavos(sede.totalAmount),
       retiro: sede.pickupAvailable,
       delivery: sede.homeDeliveryAvailable,
@@ -1025,5 +1026,7 @@ function importeDeProductos(
     moneda = suMoneda;
     centavos += enCentavos * CANTIDAD_POR_RENGLON;
   }
-  return `${aTexto(centavos)} ${moneda ?? ''}`.trim();
+  // Sin moneda en el dato no se agrega ninguna: el contrato E2 deja esa parte
+  // en el número pelado y su prueba lo fija.
+  return moneda === null ? aTexto(centavos) : withDisplayCurrency(aTexto(centavos), moneda);
 }

@@ -252,7 +252,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
       for (const rotulo of ['Número', 'Emitida el', 'Total facturado', 'Estado']) {
         expect(factura).toContain(rotulo);
       }
-      expect(byTestId('tu-factura-total')?.textContent).toContain('61.20 BOB');
+      expect(byTestId('tu-factura-total')?.textContent).toContain('61.20 Bs');
       expect(byTestId('tu-factura-ver')?.getAttribute('href')).toBe(
         `/my-account/pharmacy-orders/${id}/invoice`,
       );

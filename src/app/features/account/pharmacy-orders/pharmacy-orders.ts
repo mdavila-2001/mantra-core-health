@@ -15,6 +15,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../medical-record/medical-record.routes';
 import { etiquetaDeModalidad, toPedidoStatusPresentation } from './pedido-status';
+import { displayCurrency } from '../../../core/money/display-currency';
 
 /**
  * **Mis pedidos** (carril FAR-I2): los pedidos de farmacia de la persona, del
@@ -38,6 +39,14 @@ import { etiquetaDeModalidad, toPedidoStatusPresentation } from './pedido-status
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyOrders {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);

@@ -8,6 +8,7 @@ import {
   NOTA_DE_DATOS_DE_EJEMPLO,
   type FacturaDeEjemplo,
 } from '../../pharmacy-inbox.fixtures';
+import { displayCurrency } from '../../../../../core/money/display-currency';
 
 /**
  * **El resumen de la factura del pedido** (carril FAR-I3) — el registro del
@@ -30,6 +31,14 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResumenDeFactura {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   readonly factura = input.required<FacturaDeEjemplo>();
 
   /** El mostrador pidió el PDF. Quien contiene a este componente resuelve. */

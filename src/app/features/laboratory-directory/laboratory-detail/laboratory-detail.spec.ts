@@ -111,7 +111,7 @@ describe('LaboratoryDetail', () => {
     // Con coma decimal: la API sirve `85.00` porque es un decimal exacto en
     // cadena, y la ficha lo escribe como se lee en es-BO — la misma coma que la
     // puntuación de al lado.
-    expect(text).toContain('85,00 Boliviano');
+    expect(text).toContain('85,00 Bs');
     expect(text).toContain('ISO-DEMO');
   });
 
@@ -137,7 +137,7 @@ describe('LaboratoryDetail', () => {
     // El precio vive en el pie de la tarjeta, con su rótulo — no en una fila de
     // tabla. `PUBLIC-LAB` no es la tarifa de maqueta, así que es público.
     const precio = host.querySelector('[data-testid="unit-study-price"]');
-    expect(precio?.textContent?.trim()).toBe('85,00 Boliviano');
+    expect(precio?.textContent?.trim()).toBe('85,00 Bs');
     expect(host.textContent).toContain('Precio público');
   });
 

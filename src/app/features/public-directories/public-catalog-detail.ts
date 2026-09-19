@@ -13,6 +13,7 @@ import { dataOf, loading, notFound, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import type { BreadcrumbItem } from '@shared/components/molecules/breadcrumb/breadcrumb.types';
 import type { Hecho } from '@shared/components/molecules/fact-list/fact-list.types';
+import { withDisplayCurrency } from '../../core/money/display-currency';
 
 /** Tarjetas que simula el esqueleto: una pantalla, no el catálogo entero. */
 const TARJETAS_DEL_ESQUELETO = 6;
@@ -198,7 +199,6 @@ export abstract class PublicCatalogDetail<T> implements OnInit {
    */
   protected importe(valor: string | null, moneda: string | null): string | null {
     if (valor === null) return null;
-    const monto = valor.replace('.', ',');
-    return moneda === null ? monto : `${monto} ${moneda}`;
+    return withDisplayCurrency(valor.replace('.', ','), moneda);
   }
 }
