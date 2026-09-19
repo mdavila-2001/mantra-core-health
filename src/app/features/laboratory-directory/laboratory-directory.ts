@@ -26,12 +26,13 @@ import type {
   GrupoDeDirectorio,
   SustantivoDelDirectorio,
 } from '../../shared/components/organisms/directory-page/directory-page.types';
-import { SEARCH_PARAM, type FilterDef } from '../../shared/components/organisms/filter-bar/filter-bar';
-import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import {
+  SEARCH_PARAM,
+  type FilterDef,
+} from '../../shared/components/organisms/filter-bar/filter-bar';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
-import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 
 /**
  * Un tramo del directorio de laboratorios.
@@ -156,7 +157,7 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
  */
 @Component({
   selector: 'app-laboratory-directory',
-  imports: [AppButtonLink, DirectoryPage, NavIcon, PageHeader, RouterLink, ViewStateHost],
+  imports: [AppButtonLink, DirectoryPage, NavIcon, RouterLink],
   templateUrl: './laboratory-directory.html',
   styleUrl: '../../shared/styles/rejilla-de-tarjetas.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -217,7 +218,8 @@ export class LaboratoryDirectory {
   });
 
   /**
-   * Sin categoría elegida se muestra la portada.
+   * Sin categoría elegida ni nada buscado se muestra la portada: escribir en
+   * su barra ya es elegir, y los centros aparecen agrupados por categoría.
    *
    * El mismo trato que la portada de especialidades del directorio de médicos,
    * y por el mismo motivo: la categoría se elige **antes** que el centro. Nadie
@@ -228,7 +230,19 @@ export class LaboratoryDirectory {
    * enlace que se puede pegar en un mensaje, y lo que deja que el «atrás» del
    * navegador devuelva a la portada en vez de sacar de la pantalla.
    */
-  protected readonly enPortada = computed(() => (this.activos()['kind'] ?? '') === '');
+  protected readonly enPortada = computed(
+    () => (this.activos()['kind'] ?? '') === '' && (this.activos()[SEARCH_PARAM] ?? '') === '',
+  );
+
+  /**
+   * La bajada de cada escalón. En la portada, qué hay que elegir y cuántos
+   * centros hay; adentro, qué se está mirando.
+   */
+  protected readonly subtitulo = computed(() =>
+    this.enPortada()
+      ? `Elegí qué necesitás hacerte o buscá el centro por su nombre. ${this.totalDeCentros()} centros verificados en la red.`
+      : 'Centros verificados de toda la red, agrupados por categoría. Tocá un chip para acotar.',
+  );
 
   /**
    * Las tarjetas de la portada: las categorías que **tienen** centros.
@@ -357,9 +371,7 @@ function hayFiltros(activos: Readonly<Record<string, string>>): boolean {
  * no se reconoce se descarta en vez de viajar: el backend valida con
  * `forbidNonWhitelisted` y la rechazaría con un 400.
  */
-export function aConsulta(
-  activos: Readonly<Record<string, string>>,
-): DiagnosticUnitSearchQuery {
+export function aConsulta(activos: Readonly<Record<string, string>>): DiagnosticUnitSearchQuery {
   const consulta: {
     -readonly [K in keyof DiagnosticUnitSearchQuery]: DiagnosticUnitSearchQuery[K];
   } = {};

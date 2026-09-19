@@ -46,11 +46,7 @@ const MINIMO_PARA_BUSCAR = 7;
 
 /** Baja a minúsculas y quita tildes, para que «Análisis» case con «analisis». */
 function normalizar(texto: string): string {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/gu, '')
-    .toLowerCase()
-    .trim();
+  return texto.normalize('NFD').replace(/[̀-ͯ]/gu, '').toLowerCase().trim();
 }
 
 /**

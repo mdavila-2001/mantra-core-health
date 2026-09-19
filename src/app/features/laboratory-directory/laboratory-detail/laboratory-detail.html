@@ -66,8 +66,8 @@
         </div>
 
         <p class="ficha-publica__nota">
-          Precios de referencia publicados por el centro. El importe final puede
-          cambiar según lo que incluya cada estudio.
+          Precios de referencia publicados por el centro. El importe final puede cambiar según lo
+          que incluya cada estudio.
         </p>
 
         @if (unit.studies.length === 0) {
@@ -145,11 +145,7 @@
 
       @if (unit.equipment.length > 0) {
         <section aria-label="Equipos">
-          <app-section-heading
-            icono="scan"
-            titulo="Equipos"
-            [cuantos]="unit.equipment.length"
-          />
+          <app-section-heading icono="scan" titulo="Equipos" [cuantos]="unit.equipment.length" />
 
           <ul class="rejilla ficha-publica__rejilla" data-testid="unit-equipment">
             @for (equipo of unit.equipment; track equipo.id) {

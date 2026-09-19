@@ -1,4 +1,29 @@
-@if (enPortada()) {
+<!-- Dentro de una categoría o con algo buscado, la vuelta a la portada limpia
+     los parámetros de la URL, que es exactamente lo que significa «ver
+     todas». Va afuera de `app-directory-page` para que aparecer y desaparecer
+     no rehaga la barra: quien está escribiendo no pierde el foco. -->
+@if (!enPortada()) {
+  <a app-button variant="ghost" class="rejilla__volver" [routerLink]="[]" [queryParams]="{}">
+    ← Todas las categorías
+  </a>
+}
+
+<!-- Un solo `app-directory-page` para los dos escalones: la barra de búsqueda
+     está en la portada **y** dentro de cada categoría (pedido del cliente,
+     19/09/2026). Escribir en la portada busca en todas las categorías a la
+     vez y muestra los centros agrupados por la suya. -->
+<app-directory-page
+  [embebido]="embebido()"
+  titulo="Directorio de laboratorios"
+  [subtitulo]="subtitulo()"
+  etiquetaBusqueda="Buscar por nombre o código del centro"
+  [filtros]="enPortada() ? [] : filtros"
+  [estado]="state()"
+  [grupos]="groups()"
+  [sustantivo]="sustantivo"
+  [portada]="enPortada()"
+  (reintentar)="retry()"
+>
   <!-- ─── La portada: elegir categoría antes que centro ──────────────────────
        El mismo patrón que la portada de especialidades del directorio de
        médicos, y por el mismo motivo: nadie busca «un centro», se busca dónde
@@ -8,61 +33,29 @@
 
        Las categorías salen de los centros ya cargados, con su cuenta: una que
        no tenga ninguno no se dibuja. -->
-  @if (!embebido()) {
-    <app-page-header
-      title="Directorio de laboratorios"
-      [subtitle]="
-        'Elegí qué necesitás hacerte. ' +
-        totalDeCentros() +
-        ' centros verificados en la red.'
-      "
-    />
-  }
-
-  <app-view-state-host [state]="state()" (retry)="retry()">
-    <ul class="rejilla" data-testid="portada-categorias">
-      @for (tarjeta of categorias(); track tarjeta.codigo) {
-        <li>
-          <!-- La categoría viaja en la URL, como la especialidad en el
-               directorio de médicos: hace compartible «los laboratorios
-               clínicos» y deja que el «atrás» del navegador vuelva acá. -->
-          <a
-            class="rejilla__tarjeta"
-            [routerLink]="[]"
-            [queryParams]="{ kind: filtroDe(tarjeta.codigo) }"
-            queryParamsHandling="merge"
-            [attr.data-testid]="'portada-categoria-' + tarjeta.codigo"
-          >
-            <!-- `aria-hidden` lo pone el propio átomo: la tarjeta ya se llama
-                 por su categoría, y anunciarlo lo diría dos veces. -->
-            <app-nav-icon class="rejilla__icono" [name]="tarjeta.icono" />
-            <span class="rejilla__nombre">{{ tarjeta.nombre }}</span>
-            <span class="rejilla__dato">
-              {{ tarjeta.cantidad }}
-              {{ tarjeta.cantidad === 1 ? 'centro' : 'centros' }}
-            </span>
-          </a>
-        </li>
-      }
-    </ul>
-  </app-view-state-host>
-} @else {
-  <!-- Dentro de una categoría: la anatomía común de los cuatro directorios
-       (A7 del plan de UX). La vuelta a la portada limpia el parámetro de la
-       URL, que es exactamente lo que significa «ver todas». -->
-  <a app-button variant="ghost" class="rejilla__volver" [routerLink]="[]" [queryParams]="{}">
-    ← Todas las categorías
-  </a>
-
-  <app-directory-page
-    [embebido]="embebido()"
-    titulo="Directorio de laboratorios"
-    subtitulo="Centros verificados de esta categoría, de toda la red. Tocá un chip para acotar."
-    etiquetaBusqueda="Buscar por nombre o código del centro"
-    [filtros]="filtros"
-    [estado]="state()"
-    [grupos]="groups()"
-    [sustantivo]="sustantivo"
-    (reintentar)="retry()"
-  />
-}
+  <ul slot="portada" class="rejilla" data-testid="portada-categorias">
+    @for (tarjeta of categorias(); track tarjeta.codigo) {
+      <li>
+        <!-- La categoría viaja en la URL, como la especialidad en el
+             directorio de médicos: hace compartible «los laboratorios
+             clínicos» y deja que el «atrás» del navegador vuelva acá. -->
+        <a
+          class="rejilla__tarjeta"
+          [routerLink]="[]"
+          [queryParams]="{ kind: filtroDe(tarjeta.codigo) }"
+          queryParamsHandling="merge"
+          [attr.data-testid]="'portada-categoria-' + tarjeta.codigo"
+        >
+          <!-- `aria-hidden` lo pone el propio átomo: la tarjeta ya se llama
+               por su categoría, y anunciarlo lo diría dos veces. -->
+          <app-nav-icon class="rejilla__icono" [name]="tarjeta.icono" />
+          <span class="rejilla__nombre">{{ tarjeta.nombre }}</span>
+          <span class="rejilla__dato">
+            {{ tarjeta.cantidad }}
+            {{ tarjeta.cantidad === 1 ? 'centro' : 'centros' }}
+          </span>
+        </a>
+      </li>
+    }
+  </ul>
+</app-directory-page>

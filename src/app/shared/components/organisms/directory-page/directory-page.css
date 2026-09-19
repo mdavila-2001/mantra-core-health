@@ -6,25 +6,25 @@
     ========================================================================== */
 
 :host {
-    display: block;
+  display: block;
 }
 
 .directorio__cuenta {
-    margin: 0 0 var(--sp-4);
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  margin: 0 0 var(--sp-4);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .directorio__aviso,
 .directorio__vacio {
-    margin: 0 0 var(--sp-4);
-    max-inline-size: 68ch;
-    color: var(--text-secondary);
+  margin: 0 0 var(--sp-4);
+  max-inline-size: 68ch;
+  color: var(--text-secondary);
 }
 
 .directorio__grupo + .directorio__grupo {
-    margin-block-start: var(--sp-6);
+  margin-block-start: var(--sp-6);
 }
 
 /* El encabezado se pega al desplazar: en un directorio largo, saber bajo qué
@@ -51,31 +51,31 @@
    encabeza. El horizontal es `--sp-4` justamente para que el rótulo caiga a
    plomo con el nombre de las tarjetas. */
 .directorio__rotulo {
-    position: sticky;
-    inset-block-start: 0;
-    z-index: 2;
-    display: flex;
-    align-items: baseline;
-    gap: var(--sp-2);
-    margin: 0 0 var(--sp-3);
-    padding: var(--sp-3) var(--sp-4);
-    border: 1px solid var(--border-subtle, var(--border-default));
-    border-radius: var(--r-md);
-    /* Opaco: si no, las tarjetas se leen a través del encabezado al desplazar.
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle, var(--border-default));
+  border-radius: var(--r-md);
+  /* Opaco: si no, las tarjetas se leen a través del encabezado al desplazar.
        `surface-alt` y no `surface`: con el mismo fondo que las tarjetas, el
        rótulo se leería como una tarjeta más de la grilla. */
-    background: var(--bg-surface-alt);
-    font-size: var(--fs-h3);
-    line-height: var(--lh-h3);
-    font-weight: 600;
+  background: var(--bg-surface-alt);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
 }
 
 .directorio__cantidad {
-    color: var(--text-secondary);
-    font-family: var(--font-mono);
-    font-size: var(--fs-caption);
-    font-variant-numeric: tabular-nums;
-    font-weight: 400;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
 }
 
 /* La grilla, que es el pedido concreto del cliente («Grilla de directorio de
@@ -87,20 +87,20 @@
    pantalla. El mínimo de 15rem es el ancho al que una tarjeta con nombre,
    tipo y dos líneas de contexto todavía se lee. */
 .directorio__grilla {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    gap: var(--sp-4);
-    margin: 0;
-    padding: 0;
-    list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 /* La bajada cuando el directorio va embebido en un modal: el título ya lo puso
    el diálogo, pero la línea que dice de qué es el directorio sigue haciendo
    falta. */
 .directorio__bajada-embebida {
-    margin: 0 0 var(--sp-4);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
-    color: var(--text-secondary);
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }

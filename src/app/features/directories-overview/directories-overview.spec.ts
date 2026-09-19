@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
@@ -82,5 +82,67 @@ describe('DirectoriesOverview', () => {
     const centro = root().querySelector('.mapa__centro');
     expect(centro?.getAttribute('aria-hidden')).toBe('true');
     expect(centro?.querySelector('a')).toBeNull();
+  });
+
+  describe('la barra de búsqueda (19/09/2026)', () => {
+    it('la portada tiene la misma barra que los directorios, encima de los nodos', () => {
+      abrirSesion(['PRACTITIONER']);
+      crear();
+
+      const barra = root().querySelector('app-filter-bar app-search-field');
+      expect(barra).not.toBeNull();
+      expect(barra?.textContent).toContain('laboratorios, clínicas y farmacias');
+      expect(root().querySelector('.mapa__nodos')).not.toBeNull();
+    });
+
+    it('un término busca en los tres directorios y agrupa lo encontrado por directorio', async () => {
+      abrirSesion(['PRACTITIONER']);
+      await TestBed.inject(Router).navigateByUrl('/directories?q=central');
+      crear();
+
+      const http = TestBed.inject(HttpTestingController);
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/diagnostic-units/search'))
+        .flush({ items: [], total: 0, limit: 50, offset: 0 });
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/public/search/organizations'))
+        .flush({ items: [], nextCursor: null, totalHint: 0, generatedAt: '2026-09-19T00:00:00Z' });
+      const farmacias = http.expectOne((pedido) =>
+        pedido.url.endsWith('/public/search/pharmacies'),
+      );
+      expect(farmacias.request.params.get('q')).toBe('central');
+      farmacias.flush({
+        items: [
+          {
+            kind: 'PHARMACY',
+            slug: 'farmacia-central',
+            displayName: 'Farmacia Central',
+            headline: null,
+            city: 'Sucre',
+            avatarUrl: null,
+            verified: true,
+            ratingAverage: null,
+            ratingCount: 0,
+            coverUrl: null,
+            address: null,
+            location: null,
+            hasPublishedAgenda: false,
+            nextAvailableDate: null,
+          },
+        ],
+        nextCursor: null,
+        totalHint: 1,
+        generatedAt: '2026-09-19T00:00:00Z',
+      });
+      fixture.detectChanges();
+
+      expect(root().querySelector('.mapa__nodos')).toBeNull();
+      const rotulos = [...root().querySelectorAll('.directorio__rotulo')];
+      expect(rotulos.map((rotulo) => rotulo.textContent)).toEqual([
+        expect.stringContaining('Directorio de farmacias'),
+      ]);
+      const tarjeta = root().querySelector<HTMLAnchorElement>('li[app-result-card] a');
+      expect(tarjeta?.getAttribute('href')).toBe('/pharmacies-directory/farmacia-central');
+    });
   });
 });

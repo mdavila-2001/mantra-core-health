@@ -118,6 +118,38 @@ describe('LaboratoryDirectory', () => {
       .flush({ items, total, limit: 20, offset: 0 });
   }
 
+  describe('the search bar on every level (19/09/2026)', () => {
+    it('shows the same search bar on the category cover, above the categories', () => {
+      mount();
+      responder([LAB, IMAGING]);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('app-filter-bar app-search-field')).not.toBeNull();
+      expect(raiz.querySelector('[data-testid="portada-categorias"]')).not.toBeNull();
+      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(0);
+    });
+
+    it('a term typed on the cover searches every category and lists the centres grouped', () => {
+      parametros.next({ q: 'central' });
+      mount();
+      const pedido = http.expectOne((request) => request.url === BUSQUEDA);
+      expect(pedido.request.params.get('q')).toBe('central');
+      expect(pedido.request.params.has('kind')).toBe(false);
+      pedido.flush({ items: [LAB, IMAGING], total: 2, limit: 20, offset: 0 });
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(raiz.querySelector('[data-testid="portada-categorias"]')).toBeNull();
+      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(2);
+      expect(
+        [...raiz.querySelectorAll('.directorio__rotulo')].map((rotulo) =>
+          rotulo.textContent?.replace(/\d+/g, '').trim(),
+        ),
+      ).toEqual(['Imagenología diagnóstica', 'Laboratorio clínico']);
+    });
+  });
+
   it('starts in loading state while the server is authoritative', () => {
     mount();
     expect(status()).toBe('loading');

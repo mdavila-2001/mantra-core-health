@@ -145,7 +145,12 @@ describe('LaboratoryDetail', () => {
     mount();
     http.expectOne(`/diagnostic-units/${UNIT_ID}`).flush({
       ...DETAIL,
-      studies: [{ ...DETAIL.studies[0], prices: [{ ...DETAIL.studies[0]!.prices[0], scheduleCode: 'MAQUETA' }] }],
+      studies: [
+        {
+          ...DETAIL.studies[0],
+          prices: [{ ...DETAIL.studies[0]!.prices[0], scheduleCode: 'MAQUETA' }],
+        },
+      ],
     });
     fixture.detectChanges();
 
@@ -189,9 +194,7 @@ describe('LaboratoryDetail', () => {
       http.expectOne(`/diagnostic-units/${UNIT_ID}`).flush(conEstudios(6));
       fixture.detectChanges();
 
-      expect(
-        (fixture.nativeElement as HTMLElement).querySelector('app-search-field'),
-      ).toBeNull();
+      expect((fixture.nativeElement as HTMLElement).querySelector('app-search-field')).toBeNull();
     });
 
     it('aparece desde siete y acota la rejilla', () => {

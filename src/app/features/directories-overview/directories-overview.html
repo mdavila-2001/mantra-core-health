@@ -1,27 +1,37 @@
-<app-page-header
-  title="Directorios"
-  subtitle="Elegí a quién o a dónde buscar. Cada directorio se abre completo, agrupado como una guía."
-/>
+<!-- La misma barra de búsqueda que los directorios (pedido del cliente,
+     19/09/2026): en todos los niveles, no sólo en la lista del último. Sin
+     nada escrito se ven los nodos; con un término, lo que coincide en cada
+     directorio, agrupado por directorio. -->
+<app-directory-page
+  titulo="Directorios"
+  subtitulo="Elegí a quién o a dónde buscar, o escribí el nombre de lo que buscás. Cada directorio se abre completo, agrupado como una guía."
+  [etiquetaBusqueda]="etiquetaBusqueda()"
+  [estado]="estado()"
+  [grupos]="grupos()"
+  [sustantivo]="sustantivo"
+  [portada]="enPortada()"
+  (reintentar)="reintentar()"
+>
+  <div slot="portada" class="mapa">
+    <div class="mapa__centro" aria-hidden="true">
+      <app-nav-icon name="directory" />
+    </div>
 
-<div class="mapa">
-  <div class="mapa__centro" aria-hidden="true">
-    <app-nav-icon name="directory" />
+    <!-- La misma rejilla y la misma tarjeta que la portada de cada directorio
+         —`shared/styles/rejilla-de-tarjetas.css`—: esta pantalla es la puerta de
+         las cuatro, y llegar a ella para encontrar otra clase de tarjeta se lee
+         como haber salido de la aplicación. Lo único propio de acá es el nodo
+         central y el filete que baja hasta cada tarjeta. -->
+    <ul class="rejilla mapa__nodos">
+      @for (nodo of nodos(); track nodo.path) {
+        <li class="mapa__item">
+          <a class="rejilla__tarjeta" [routerLink]="routeOf(nodo)">
+            <app-nav-icon class="rejilla__icono" [name]="nodo.icon" />
+            <span class="rejilla__nombre">{{ nodo.label }}</span>
+            <span class="rejilla__resumen">{{ nodo.summary }}</span>
+          </a>
+        </li>
+      }
+    </ul>
   </div>
-
-  <!-- La misma rejilla y la misma tarjeta que la portada de cada directorio
-       —`shared/styles/rejilla-de-tarjetas.css`—: esta pantalla es la puerta de
-       las cuatro, y llegar a ella para encontrar otra clase de tarjeta se lee
-       como haber salido de la aplicación. Lo único propio de acá es el nodo
-       central y el filete que baja hasta cada tarjeta. -->
-  <ul class="rejilla mapa__nodos">
-    @for (nodo of nodos(); track nodo.path) {
-      <li class="mapa__item">
-        <a class="rejilla__tarjeta" [routerLink]="routeOf(nodo)">
-          <app-nav-icon class="rejilla__icono" [name]="nodo.icon" />
-          <span class="rejilla__nombre">{{ nodo.label }}</span>
-          <span class="rejilla__resumen">{{ nodo.summary }}</span>
-        </a>
-      </li>
-    }
-  </ul>
-</div>
+</app-directory-page>
