@@ -67,3 +67,94 @@ export interface PublicPharmacyProduct {
   readonly inStock: boolean;
   readonly requiresPrescription: boolean;
 }
+
+/* ============================================================================
+    Las sucursales de una farmacia y la búsqueda de una receta entre ellas.
+
+    Pedido del propietario (19/09/2026): «debe mostrar todas sus sucursales y
+    pedirle ubicación para la más cercana recomendar dada una receta médica».
+
+    Como las dos lecturas de arriba, **la API real todavía no las publica**:
+    son P37 de `PENDIENTES-BACKEND.md` y sobre `mockup` las responde el
+    simulador. Contra la API real la sección se queda en su estado de error;
+    no inventa sucursales ni existencias.
+    ========================================================================== */
+
+/**
+ * Una sucursal de la cadena a la que pertenece la farmacia que se está
+ * mirando —ella incluida—.
+ *
+ * Es la unidad que le sirve a una persona: quien va a comprar una receta va a
+ * **un mostrador con una dirección**, no a una marca. Por eso cada sucursal
+ * tiene su propia ficha (`slug`) y este tipo trae lo que hace falta para
+ * elegir entre ellas sin abrir ninguna.
+ */
+export interface PublicPharmacyBranch {
+  /** El slug de su propia ficha pública. */
+  readonly slug: string;
+  /** «Farmacorp · San Miguel»: la cadena y la sucursal, que es como se nombra. */
+  readonly name: string;
+  /** Sólo la sucursal («San Miguel»), para no repetir la cadena en cada renglón. */
+  readonly siteName: string;
+  readonly city: string | null;
+  readonly addressText: string | null;
+  readonly phone: string | null;
+  /** «Lun a Sáb 08:00–22:00», tal como lo publica la cadena. `null` si no lo declara. */
+  readonly openingHours: string | null;
+  /** Sin punto no hay pin ni distancia: la sucursal se lista igual, con su dirección. */
+  readonly location: PublicGeoPoint | null;
+  /**
+   * Con cuánta precisión se conoce ese punto, ya en palabras («Ubicación
+   * aproximada · centro de la ciudad»). `null` cuando no se declara.
+   *
+   * Viaja resuelto y no como código porque es **una advertencia para quien
+   * mira**, no una faceta: una distancia medida contra el centroide de la
+   * ciudad no es la distancia a la puerta, y decirla sin esto sería precisión
+   * fingida.
+   */
+  readonly locationAccuracy: string | null;
+  /** Si es la sucursal cuya ficha se está mirando. */
+  readonly isCurrent: boolean;
+}
+
+/** Un punto en grados decimales, como lo sirve la superficie pública. */
+export interface PublicGeoPoint {
+  readonly lat: number;
+  readonly lng: number;
+}
+
+/** Un renglón de la receta que la sucursal **sí** tiene. */
+export interface PublicBranchMatch {
+  /** Lo que la persona escribió, para poder decir cuál de sus renglones es. */
+  readonly term: string;
+  readonly genericName: string;
+  readonly brandName: string | null;
+  readonly presentation: string | null;
+  /** Texto exacto, como el resto de los importes. `null` si no hay precio publicado. */
+  readonly price: string | null;
+  readonly currency: string | null;
+}
+
+/**
+ * Qué tiene una sucursal de una receta concreta.
+ *
+ * `complete` no se deduce de `missing.length` en la pantalla: lo dice el
+ * servidor, que es el que sabe qué se buscó. Una sucursal sin nada igual
+ * aparece, rotulada — esconderla dejaría a la persona sin saber que existe.
+ */
+export interface PublicBranchAvailability {
+  readonly branch: PublicPharmacyBranch;
+  readonly matches: readonly PublicBranchMatch[];
+  /** Los renglones de la receta que esta sucursal no tiene o tiene agotados. */
+  readonly missing: readonly string[];
+  readonly complete: boolean;
+  /** Suma de lo que sí tiene, en texto exacto. `null` cuando no tiene nada. */
+  readonly totalAmount: string | null;
+  readonly currency: string | null;
+  /**
+   * Distancia **en línea recta**, con una decimal, o `null` si no se entregó
+   * ubicación. No es distancia de recorrido y el rótulo lo dice igual que el
+   * campo (PAC-MED-005).
+   */
+  readonly distanceKm: number | null;
+}

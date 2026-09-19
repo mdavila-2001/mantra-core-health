@@ -1580,3 +1580,59 @@ suposición de la maqueta, no una regla—.
 **La hora de almuerzo no necesita backend:** un día con almuerzo se publica como
 dos franjas (mañana y tarde), y el generador real ya recorre todas las reglas de
 cada día (`scheduling-catalog.service.ts`).
+
+## P37 · Las sucursales de una farmacia y la receta entre ellas — 19/09/2026
+
+**Pedido del propietario:** en la ficha de una farmacia, «debe mostrar todas sus
+sucursales y pedirle ubicación para la más cercana recomendar dada una receta
+médica».
+
+**Qué hace hoy el front (`mockup`):** la ficha (`/pharmacies-directory/:slug`)
+lista las sucursales de la cadena, dibuja una por pin en el mapa, ofrece «Usar
+mi ubicación» —`navigator.geolocation`, nunca obligatorio— y, con los renglones
+de la receta escritos a mano, ordena las sucursales por «tiene todo» y cercanía
+y recomienda la primera. Las dos lecturas las responde el simulador
+(`core/mock/handlers/public.handlers.ts`); contra la API real la sección se
+queda en su estado de error y **no inventa sucursales ni existencias**.
+
+`GET /public/profiles/f/:slug/branches` → página pública de:
+
+| Campo | Tipo | Nota |
+| --- | --- | --- |
+| `slug` | string | la ficha pública de **esa** sucursal |
+| `name` | string | «Farmacorp · San Miguel» |
+| `siteName` | string | sólo la sucursal, para no repetir la cadena |
+| `city` / `addressText` / `phone` / `openingHours` | string \| null | |
+| `location` | `{ lat, lng }` \| null | sin punto no hay pin ni distancia |
+| `locationAccuracy` | string \| null | ya en palabras: «Ubicación aproximada · centro de la ciudad» |
+| `isCurrent` | boolean | si es la sucursal que se está mirando |
+
+La farmacia sin cadena devuelve **una**: ella. Vacío obligaría a la pantalla a
+distinguir «no tiene sucursales» de «la lectura falló».
+
+`GET /public/profiles/f/:slug/branch-availability?items=a|b|c&lat&lng` →
+`{ items, count, generatedAt }`, con un renglón por sucursal:
+`branch`, `matches[{ term, genericName, brandName, presentation, price, currency }]`,
+`missing[]`, `complete`, `totalAmount`, `currency`, `distanceKm`.
+
+Tres decisiones que el backend tiene que conservar:
+
+- **Los renglones viajan como texto**, separados por `|`: una receta en papel no
+  trae ids de producto, y la coma es parte de lo que la gente escribe.
+- **Sólo cuenta lo que está en stock.** Un agotado se cuenta como faltante — es
+  lo que le pasa a quien llega con la receta —, no se esconde.
+- **El orden lo decide el servidor** (primero las completas, después la más
+  cercana) y la pantalla no reordena: recomendar una y listar otras en otro
+  orden es contradecirse en la misma pantalla.
+
+`lat`/`lng` son opcionales: sin ellas la búsqueda sirve igual, sólo que sin
+distancias. La distancia es **en línea recta** (PAC-MED-005) y el rótulo de la
+pantalla dice lo mismo que el campo.
+
+**Lo que falta del lado del modelo:** hoy la cadena de una farmacia sale del
+corpus de Bolivia (`fixtures/bolivia-eje-central.ts`), no de la base.
+`directory` no declara el vínculo cadena → sucursal para farmacias, y
+`pharmacy_inventory` ya tiene el inventario por sede
+(`GET /pharmacy-inventory/availability`, que es el hermano **con sesión** de la
+segunda lectura de acá). El camino corto es exponer esa disponibilidad también
+en la superficie pública, acotada a las sedes de una cadena.
