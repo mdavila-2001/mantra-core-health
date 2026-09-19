@@ -22,8 +22,37 @@
   [grupos]="groups()"
   [sustantivo]="sustantivo"
   [portada]="enPortada()"
+  [textoSinCoincidencias]="sinCoincidencias()"
   (reintentar)="retry()"
 >
+  <!-- ─── El mapa de Bolivia como filtro ─────────────────────────────────────
+       El mismo que clínicas y farmacias. Sólo se dibuja si los centros traen
+       sus ciudades: sin ellas el mapa no acotaría nada. -->
+  <div slot="antes-de-filtros">
+  @if (catalogoGeoCaido()) {
+    <p class="mapa-directorio__caido" role="status">
+      No pudimos leer el catálogo de departamentos, así que el mapa no está.
+      El resto del directorio funciona igual.
+      <button app-button variant="ghost" size="sm" type="button" (click)="reintentarGeo()">
+        Reintentar
+      </button>
+    </p>
+  } @else if (departamentos().length > 0 && hayCiudades()) {
+    <section class="mapa-directorio" aria-label="Filtrar por departamento">
+      <app-department-map
+        testId="laboratorios-mapa"
+        [departamentos]="departamentos()"
+        [value]="departamentoElegido()"
+        (valueChange)="elegirDepartamento($event)"
+        etiqueta="Mapa de Bolivia: elegí el departamento donde buscás"
+      />
+      @if (resumenDelMapa(); as resumen) {
+        <p class="mapa-directorio__resumen" data-testid="laboratorios-mapa-resumen">{{ resumen }}</p>
+      }
+    </section>
+  }
+  </div>
+
   <!-- ─── La portada: elegir categoría antes que centro ──────────────────────
        El mismo patrón que la portada de especialidades del directorio de
        médicos, y por el mismo motivo: nadie busca «un centro», se busca dónde

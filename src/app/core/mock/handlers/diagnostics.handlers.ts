@@ -288,6 +288,17 @@ function construirSedes(u: UnidadSimulada) {
   ];
 }
 
+/**
+ * Las ciudades donde el centro tiene sede, sin repetir. Un centro de la maqueta
+ * sin sede publicada no tiene ninguna: no se le inventa una.
+ */
+function ciudadesDe(u: UnidadSimulada): readonly string[] {
+  const ciudades = sedesDe(u)
+    .map((sede) => ('city' in sede ? sede.city : undefined))
+    .filter((ciudad): ciudad is string => typeof ciudad === 'string' && ciudad !== '');
+  return [...new Set(ciudades)];
+}
+
 /** La sede principal: la que ancla precios, equipos y acreditaciones. */
 function sitioDe(u: UnidadSimulada) {
   return sedesDe(u)[0]!;
@@ -590,7 +601,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       .filter((u) => studyCode === null || estudiosDe(u).some((e) => e.code === studyCode || contiene(e.name, studyCode)))
       .filter((u) => (!home || u.home) && (!walkIn || u.walkIn) && (!external || u.external))
       .filter((u) => u.rating >= minRating)
-      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: Math.min(...estudiosDe(u).map((e) => Number(e.prices[0]!.amount))) }))
+      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: Math.min(...estudiosDe(u).map((e) => Number(e.prices[0]!.amount))), cities: ciudadesDe(u) }))
       .filter((u) => u.minAmount === null || u.minAmount <= maxAmount);
     return { items: todos.slice(offset, offset + limit), total: todos.length, limit, offset };
   });
