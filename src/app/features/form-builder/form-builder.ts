@@ -56,7 +56,10 @@ import type {
   PaginaDeFormulario,
   TipoDeControl,
 } from '../../shared/forms/paginated/paginated-form.types';
-import { validadorDeSeleccion } from '../../shared/forms/paginated/validadores-de-seleccion';
+import {
+  validadorDeCuadricula,
+  validadorDeSeleccion,
+} from '../../shared/forms/paginated/validadores-de-seleccion';
 import { FORM_TEMPLATE_PDF_DOWNLOADER } from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 /**
@@ -72,12 +75,16 @@ const CONTROL_POR_TIPO: Readonly<Record<TipoDeCampo, TipoDeControl>> = {
   text: 'textarea',
   integer: 'number',
   decimal: 'number',
-  boolean: 'checkbox',
+  // Dos botones y no una casilla: ver `TipoDeControl.'yes-no'`. Lo pidió el
+  // propietario, y es la misma corrección que ya se hizo en el alta de agenda.
+  boolean: 'yes-no',
   date: 'date',
   // Los de elección no llegan acá: `aCampoDelMotor` los resuelve antes, porque
   // su control depende de cuántas opciones tienen y de si admiten varias.
   choice: 'radio',
   checkboxes: 'checkboxes',
+  choiceGrid: 'grid-radio',
+  checkboxGrid: 'grid-checkboxes',
 };
 
 /**
@@ -591,6 +598,15 @@ export class FormBuilder {
               ...(campo.cardinalityMax === undefined ? {} : { cardinalityMax: campo.cardinalityMax }),
             }
           : {}),
+        // Una cuadrícula duplicada trae sus filas y sus dos restricciones: sin
+        // ellas la copia sería otra pregunta, no la misma.
+        ...(esCuadriculaDeCampo(campo)
+          ? {
+              rows: campo.rows ?? [],
+              requireEachRow: campo.requireEachRow ?? false,
+              oneResponsePerColumn: campo.oneResponsePerColumn ?? false,
+            }
+          : {}),
       },
       campo.required,
     );
@@ -994,7 +1010,13 @@ export class FormBuilder {
     const topes = new Map(
       (plantilla?.fields ?? []).map((campo) => [
         campo.fieldId,
-        { min: campo.cardinalityMin, max: campo.cardinalityMax, multiple: campo.multiple ?? false },
+        {
+          min: campo.cardinalityMin,
+          max: campo.cardinalityMax,
+          multiple: campo.multiple ?? false,
+          requerirCadaFila: campo.requireEachRow ?? false,
+          unaPorColumna: campo.oneResponsePerColumn ?? false,
+        },
       ]),
     );
 
@@ -1010,6 +1032,18 @@ export class FormBuilder {
           (tope.min !== undefined || tope.max !== undefined)
         ) {
           validadores.push(validadorDeSeleccion(tope.min, tope.max));
+        }
+        // Las dos restricciones de una cuadrícula. Van en la previa por lo
+        // mismo que los topes: es lo que la hace **responder** igual que el
+        // formulario servido, y no ser un resumen de cómo quedaría.
+        const cuadricula = campo.control === 'grid-radio' || campo.control === 'grid-checkboxes';
+        if (cuadricula && tope !== undefined && (tope.requerirCadaFila || tope.unaPorColumna)) {
+          validadores.push(
+            validadorDeCuadricula((campo.rows ?? []).map((fila) => fila.value), {
+              requerirCadaFila: tope.requerirCadaFila,
+              unaPorColumna: tope.unaPorColumna,
+            }),
+          );
         }
         grupo.addControl(
           campo.key,
@@ -1060,13 +1094,32 @@ function aCampoDelMotor(campo: ChartTemplateField): CampoDeFormulario {
   if (esEleccion && opciones.length > 0) {
     const multiple = campo.multiple ?? false;
     const otro = campo.allowOther ?? false;
+    const columnas = opciones.map((opcion) => ({ value: opcion, label: opcion }));
+
+    // La cuadrícula se resuelve primero: sus opciones son las **columnas**, y
+    // dejarla caer en el `radio` de abajo serviría la escala una sola vez y
+    // perdería las filas enteras, que es lo único que la hace una cuadrícula.
+    const filas = campo.rows ?? [];
+    if (filas.length > 0) {
+      return {
+        key: campo.fieldId,
+        label: campo.name,
+        control: multiple ? 'grid-checkboxes' : 'grid-radio',
+        required: campo.required,
+        options: columnas,
+        rows: filas.map((fila) => ({ value: fila, label: fila })),
+        ...(campo.oneResponsePerColumn === true ? { oneResponsePerColumn: true } : {}),
+        ...ayuda,
+      };
+    }
+
     const comoLista = multiple || otro || opciones.length <= OPCIONES_QUE_ENTRAN_A_LA_VISTA;
     return {
       key: campo.fieldId,
       label: campo.name,
       control: multiple ? 'checkboxes' : comoLista ? 'radio' : 'select',
       required: campo.required,
-      options: opciones.map((opcion) => ({ value: opcion, label: opcion })),
+      options: columnas,
       ...(otro ? { otro: true } : {}),
       ...ayuda,
     };
@@ -1091,24 +1144,48 @@ function aCampoDelMotor(campo: ChartTemplateField): CampoDeFormulario {
 function valorInicial(control: TipoDeControl): unknown {
   if (control === 'checkbox') return false;
   if (control === 'checkboxes') return [];
+  // `null` y no `false`: en un sí/no de dos botones «sin responder» es un
+  // estado, y arrancarlo en `false` mostraría «No» contestado por nadie —y
+  // dejaría pasar un obligatorio sin respuesta—.
+  if (control === 'yes-no') return null;
+  // Una cuadrícula guarda una entrada por fila respondida: arrancar en `''`
+  // dejaría a la validación leyendo propiedades de una cadena.
+  if (control === 'grid-radio' || control === 'grid-checkboxes') return {};
   return '';
 }
 
-/** `'eleccion'`, `'casillas'` o `null` si el campo no es de elección. */
-function familiaDeCampo(campo: ChartTemplateField): 'eleccion' | 'casillas' | null {
-  const familia = familiaDe(campo.dataType, campo.multiple ?? false);
-  return familia === 'eleccion' || familia === 'casillas' ? familia : null;
+/** La familia de elección del campo, o `null` si no es de elección. */
+function familiaDeCampo(
+  campo: ChartTemplateField,
+): 'eleccion' | 'casillas' | 'cuadricula' | 'cuadricula-casillas' | null {
+  const familia = familiaDe(
+    campo.dataType,
+    campo.multiple ?? false,
+    (campo.rows ?? []).length > 0,
+  );
+  return familia === 'eleccion' ||
+    familia === 'casillas' ||
+    familia === 'cuadricula' ||
+    familia === 'cuadricula-casillas'
+    ? familia
+    : null;
+}
+
+/** Si el campo se sirve como cuadrícula: lo que lo dice es tener filas. */
+function esCuadriculaDeCampo(campo: ChartTemplateField): boolean {
+  const familia = familiaDeCampo(campo);
+  return familia === 'cuadricula' || familia === 'cuadricula-casillas';
 }
 
 /** Si algo de la **definición** —lo global— cambió respecto del campo. */
 function definicionCambio(campo: ChartTemplateField, cambios: CambiosDelCampo): boolean {
-  const opcionesGuardadas = campo.options ?? [];
-  const opcionesNuevas = cambios.options ?? [];
-  const cambiaronOpciones =
-    opcionesNuevas.length !== opcionesGuardadas.length ||
-    opcionesNuevas.some((opcion, i) => opcion !== opcionesGuardadas[i]);
+  const cambiaronOpciones = listaCambio(campo.options, cambios.options);
+  const cambiaronFilas = listaCambio(campo.rows, cambios.rows);
 
   return (
+    cambiaronFilas ||
+    (cambios.requireEachRow ?? false) !== (campo.requireEachRow ?? false) ||
+    (cambios.oneResponsePerColumn ?? false) !== (campo.oneResponsePerColumn ?? false) ||
     cambios.name !== campo.name ||
     cambios.dataType !== campo.dataType.toLowerCase() ||
     (cambios.description ?? null) !== (campo.description ?? null) ||
@@ -1118,6 +1195,16 @@ function definicionCambio(campo: ChartTemplateField, cambios: CambiosDelCampo): 
     (cambios.cardinalityMax ?? null) !== (campo.cardinalityMax ?? null) ||
     cambiaronOpciones
   );
+}
+
+/** Si una lista de textos —opciones o filas— cambió, contando el orden. */
+function listaCambio(
+  guardada: readonly string[] | undefined,
+  nueva: readonly string[] | undefined,
+): boolean {
+  const antes = guardada ?? [];
+  const ahora = nueva ?? [];
+  return antes.length !== ahora.length || ahora.some((texto, i) => texto !== antes[i]);
 }
 
 /** Lo que viaja en el `PATCH` de la definición. */
@@ -1136,6 +1223,13 @@ function aCuerpoDeDefinicion(cambios: CambiosDelCampo): UpdateFieldDefinitionInp
           allowOther: cambios.allowOther ?? false,
           cardinalityMin: cambios.cardinalityMin ?? null,
           cardinalityMax: cambios.cardinalityMax ?? null,
+          // Las filas viajan **enteras** y con lista vacía incluida: es lo que
+          // deja de ser cuadrícula al volver a «Opción múltiple». Si no se
+          // mandaran, las filas quedarían colgadas de un campo que ya no las
+          // dibuja y volverían a aparecer al recargar.
+          rows: cambios.rows ?? [],
+          requireEachRow: cambios.requireEachRow ?? false,
+          oneResponsePerColumn: cambios.oneResponsePerColumn ?? false,
         }),
   };
 }
@@ -1149,6 +1243,9 @@ function conCambios(campo: ChartTemplateField, cambios: CambiosDelCampo): ChartT
     allowOther: _a,
     cardinalityMin: _min,
     cardinalityMax: _max,
+    rows: _r,
+    requireEachRow: _ref,
+    oneResponsePerColumn: _orc,
     ...base
   } = campo;
   return {
@@ -1165,6 +1262,13 @@ function conCambios(campo: ChartTemplateField, cambios: CambiosDelCampo): ChartT
           allowOther: cambios.allowOther ?? false,
           ...(cambios.cardinalityMin == null ? {} : { cardinalityMin: cambios.cardinalityMin }),
           ...(cambios.cardinalityMax == null ? {} : { cardinalityMax: cambios.cardinalityMax }),
+        }),
+    ...((cambios.rows ?? []).length === 0
+      ? {}
+      : {
+          rows: cambios.rows,
+          requireEachRow: cambios.requireEachRow ?? false,
+          oneResponsePerColumn: cambios.oneResponsePerColumn ?? false,
         }),
   };
 }

@@ -1,6 +1,8 @@
 import {
+  admiteVarias,
   aDataType,
   aTipoDeCampo,
+  esCuadricula,
   esDeEleccion,
   etiquetaDeTipo,
   reglaDe,
@@ -46,9 +48,36 @@ describe('los tipos del generador de formularios', () => {
   it('la vuelta desde el servidor conserva el tipo elegido', () => {
     // La ida y la vuelta tienen que cerrar: si no, abrir un formulario ya
     // guardado mostraría en el desplegable algo distinto de lo que se eligió.
+    //
+    // Los cuatro de elección viajan como el MISMO `code`: lo que los separa
+    // son los dos ejes que van aparte —admitir varias, y tener filas—, así que
+    // la vuelta tiene que mirarlos los dos. Con uno solo, una cuadrícula
+    // guardada volvería como «Opción múltiple» y perdería sus filas enteras.
     for (const { value } of TIPOS_DE_DATO) {
-      expect(aTipoDeCampo(aDataType(value), value === 'checkboxes')).toBe(value);
+      expect(aTipoDeCampo(aDataType(value), admiteVarias(value), esCuadricula(value))).toBe(
+        value,
+      );
     }
+  });
+
+  it('las dos cuadrículas son `code` con filas, no un tipo técnico nuevo', () => {
+    // Una cuadrícula es la misma pregunta repetida: el dato guardado sigue
+    // siendo uno de los códigos ofrecidos. Inventarle un `dataType` dejaría
+    // campos que el backend rechaza al completarse, igual que pasaría con
+    // «Opción múltiple».
+    expect(aDataType('choiceGrid')).toBe('code');
+    expect(aDataType('checkboxGrid')).toBe('code');
+    expect(aTipoDeCampo('code', false, true)).toBe('choiceGrid');
+    expect(aTipoDeCampo('code', true, true)).toBe('checkboxGrid');
+  });
+
+  it('sin filas, una cuadrícula vuelve como el campo de elección que es', () => {
+    // Es lo que pasa al cambiar el tipo de vuelta a «Opción múltiple»: las
+    // filas se mandan vacías y el campo deja de ser cuadrícula. Si la vuelta
+    // no lo respetara, el desplegable seguiría diciendo «Cuadrícula» sobre un
+    // campo que ya no tiene filas que mostrar.
+    expect(aTipoDeCampo('code', false, false)).toBe('choice');
+    expect(aTipoDeCampo('code', true, false)).toBe('checkboxes');
   });
 
   it('traduce el vocabulario del seed clínico, que no es el del contrato', () => {
@@ -69,8 +98,28 @@ describe('los tipos del generador de formularios', () => {
   it('sólo los de elección piden una lista de respuestas', () => {
     expect(esDeEleccion('choice')).toBe(true);
     expect(esDeEleccion('checkboxes')).toBe(true);
+    // Las cuadrículas también: sus respuestas ofrecidas son las columnas.
+    expect(esDeEleccion('choiceGrid')).toBe(true);
+    expect(esDeEleccion('checkboxGrid')).toBe(true);
     expect(esDeEleccion('string')).toBe(false);
     expect(esDeEleccion('boolean')).toBe(false);
+  });
+
+  it('sólo las cuadrículas piden además filas', () => {
+    expect(esCuadricula('choiceGrid')).toBe(true);
+    expect(esCuadricula('checkboxGrid')).toBe(true);
+    expect(esCuadricula('checkboxes')).toBe(false);
+    expect(esCuadricula('choice')).toBe(false);
+  });
+
+  it('admitir varias es un eje propio, y vale también dentro de una fila', () => {
+    // En una cuadrícula de casillas lo que admite varias es **cada fila**. Si
+    // esto mirara sólo `checkboxes`, la cuadrícula de casillas viajaría con
+    // `multiple: false` y volvería convertida en la de opción única.
+    expect(admiteVarias('checkboxes')).toBe(true);
+    expect(admiteVarias('checkboxGrid')).toBe(true);
+    expect(admiteVarias('choice')).toBe(false);
+    expect(admiteVarias('choiceGrid')).toBe(false);
   });
 
   it('el rótulo de un campo del estándar nombra el tipo que de verdad es', () => {
@@ -83,12 +132,23 @@ describe('los tipos del generador de formularios', () => {
     expect(etiquetaDeTipo('lo-que-sea')).toBe('Texto');
   });
 
+  it('el rótulo distingue las dos cuadrículas de los dos de elección', () => {
+    expect(etiquetaDeTipo('code', false, true)).toBe('Cuadrícula de opción única');
+    expect(etiquetaDeTipo('code', true, true)).toBe('Cuadrícula de casillas');
+  });
+
   it('el desplegable ofrece los dos de elección, que es lo que faltaba', () => {
     // Sin ellos el generador sólo sabía pedir texto y números, que es justo lo
     // que un formulario clínico menos usa.
     const etiquetas = TIPOS_DE_DATO.map((o) => o.label);
     expect(etiquetas).toContain('Opción múltiple');
     expect(etiquetas).toContain('Casillas de verificación');
+  });
+
+  it('el desplegable ofrece también las dos cuadrículas', () => {
+    const etiquetas = TIPOS_DE_DATO.map((o) => o.label);
+    expect(etiquetas).toContain('Cuadrícula de opción única');
+    expect(etiquetas).toContain('Cuadrícula de casillas');
   });
 });
 

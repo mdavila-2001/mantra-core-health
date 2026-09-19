@@ -440,6 +440,10 @@ export function registrarEncuestas(router: MockRouter): void {
     allowOther?: boolean;
     cardinalityMin?: number;
     cardinalityMax?: number;
+    /** Las filas de una cuadricula; con ellas, `options` son las columnas. */
+    rows?: string[];
+    requireEachRow?: boolean;
+    oneResponsePerColumn?: boolean;
   }
 
   /** Las definiciones declaradas, por id. Son globales, como en el backend. */
@@ -453,6 +457,14 @@ export function registrarEncuestas(router: MockRouter): void {
     ...(d.allowOther === undefined ? {} : { allowOther: d.allowOther }),
     ...(d.cardinalityMin === undefined ? {} : { cardinalityMin: d.cardinalityMin }),
     ...(d.cardinalityMax === undefined ? {} : { cardinalityMax: d.cardinalityMax }),
+    // Una lista de filas vacia NO se copia: es lo que deja de ser cuadricula
+    // al volver el campo a «Opcion multiple», y copiarla dejaria un `rows: []`
+    // que la pantalla lee igual que no tenerlo pero que viaja en cada lectura.
+    ...((d.rows ?? []).length === 0 ? {} : { rows: d.rows }),
+    ...(d.requireEachRow === undefined ? {} : { requireEachRow: d.requireEachRow }),
+    ...(d.oneResponsePerColumn === undefined
+      ? {}
+      : { oneResponsePerColumn: d.oneResponsePerColumn }),
   });
 
   /** La plantilla cuyo target coincide, o `undefined`. */
@@ -511,6 +523,9 @@ export function registrarEncuestas(router: MockRouter): void {
       allowOther?: boolean;
       cardinalityMin?: number | null;
       cardinalityMax?: number | null;
+      rows?: string[];
+      requireEachRow?: boolean;
+      oneResponsePerColumn?: boolean;
     }>(request);
     // Las opciones se reemplazan **enteras** y no por índice: el orden importa
     // y un parche por posición se rompe al insertar una en el medio.
@@ -520,6 +535,10 @@ export function registrarEncuestas(router: MockRouter): void {
       ...(datos.options === undefined ? {} : { options: datos.options }),
       ...(datos.multiple === undefined ? {} : { multiple: datos.multiple }),
       ...(datos.allowOther === undefined ? {} : { allowOther: datos.allowOther }),
+      ...(datos.requireEachRow === undefined ? {} : { requireEachRow: datos.requireEachRow }),
+      ...(datos.oneResponsePerColumn === undefined
+        ? {}
+        : { oneResponsePerColumn: datos.oneResponsePerColumn }),
     };
     // Con `null` se QUITA: es la única forma de sacar una descripción o un tope
     // que ya estaba, porque «no viene» significa «no cambió».
@@ -530,6 +549,17 @@ export function registrarEncuestas(router: MockRouter): void {
         const valor = datos[clave];
         if (valor === null) delete resultado[clave];
         else if (valor !== undefined) resultado[clave] = valor;
+      }
+      // Las filas se reemplazan enteras, igual que las opciones, y una lista
+      // vacia las QUITA: es como un campo deja de ser cuadricula.
+      if (datos.rows !== undefined) {
+        if (datos.rows.length === 0) {
+          delete resultado['rows'];
+          delete resultado['requireEachRow'];
+          delete resultado['oneResponsePerColumn'];
+        } else {
+          resultado['rows'] = datos.rows;
+        }
       }
       return resultado as T;
     };

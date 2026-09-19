@@ -11,7 +11,6 @@ import {
 
 import type { ChartTemplateField } from '@core/data-access/chart-templates/chart-templates.types';
 import { AppButton } from '@shared/components/atoms/button/button';
-import { Checkbox } from '@shared/components/atoms/checkbox/checkbox';
 import { DataTypeIcon, familiaDe } from '@shared/components/atoms/data-type-icon/data-type-icon';
 import { Input } from '@shared/components/atoms/input/input';
 import { Select } from '@shared/components/atoms/select/select';
@@ -19,6 +18,9 @@ import type { SelectOption } from '@shared/components/atoms/select/select.types'
 import { Switch } from '@shared/components/atoms/switch/switch';
 import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { Tooltip } from '@shared/components/atoms/tooltip/tooltip';
+import { GridGroup } from '@shared/components/molecules/grid-group/grid-group';
+import { SegmentedControl } from '@shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '@shared/components/molecules/segmented-control/segmented-control.types';
 
 /** Lo que el editor emite al guardar. */
 export interface CambiosDelCampo {
@@ -37,6 +39,12 @@ export interface CambiosDelCampo {
   /** Sólo en los de varias: los topes de respuestas. `null` quita el tope. */
   readonly cardinalityMin?: number | null;
   readonly cardinalityMax?: number | null;
+  /** Sólo en las cuadrículas: las filas enteras. Con ellas, `options` son las columnas. */
+  readonly rows?: readonly string[];
+  /** Sólo en las cuadrículas: si hay que responder todas las filas. */
+  readonly requireEachRow?: boolean;
+  /** Sólo en las cuadrículas: si una columna sólo se usa en una fila. */
+  readonly oneResponsePerColumn?: boolean;
 }
 
 /**
@@ -57,7 +65,9 @@ export type TipoDeCampo =
   | 'boolean'
   | 'date'
   | 'choice'
-  | 'checkboxes';
+  | 'checkboxes'
+  | 'choiceGrid'
+  | 'checkboxGrid';
 
 /**
  * Los tipos que el generador ofrece, en el orden del desplegable.
@@ -73,6 +83,8 @@ export const TIPOS_DE_DATO: readonly SelectOption<TipoDeCampo>[] = [
   { value: 'text', label: 'Párrafo' },
   { value: 'choice', label: 'Opción múltiple' },
   { value: 'checkboxes', label: 'Casillas de verificación' },
+  { value: 'choiceGrid', label: 'Cuadrícula de opción única' },
+  { value: 'checkboxGrid', label: 'Cuadrícula de casillas' },
   { value: 'integer', label: 'Número entero' },
   { value: 'decimal', label: 'Número decimal' },
   { value: 'boolean', label: 'Sí / No' },
@@ -96,9 +108,26 @@ export const REGLAS_DE_SELECCION: readonly SelectOption<ReglaDeSeleccion>[] = [
   { value: 'exacto', label: 'Seleccionar exactamente' },
 ];
 
-/** Los dos que piden una lista de respuestas. */
+/** Los cuatro que piden una lista de respuestas. En las dos cuadrículas, las columnas. */
 export function esDeEleccion(tipo: TipoDeCampo): boolean {
-  return tipo === 'choice' || tipo === 'checkboxes';
+  return tipo === 'choice' || tipo === 'checkboxes' || esCuadricula(tipo);
+}
+
+/**
+ * Las dos que además piden **filas**.
+ *
+ * Una cuadrícula es la misma pregunta repetida sobre varios sujetos: sus
+ * columnas son las opciones de siempre y lo que agrega son las filas. Por eso
+ * no tiene un tipo técnico propio —sigue siendo `code`— ni un desplegable
+ * aparte: es una forma de la pregunta, como lo es admitir varias respuestas.
+ */
+export function esCuadricula(tipo: TipoDeCampo): boolean {
+  return tipo === 'choiceGrid' || tipo === 'checkboxGrid';
+}
+
+/** Las dos que admiten marcar más de una respuesta (por fila, en una cuadrícula). */
+export function admiteVarias(tipo: TipoDeCampo): boolean {
+  return tipo === 'checkboxes' || tipo === 'checkboxGrid';
 }
 
 /** El tipo técnico que viaja, desde el que se eligió en pantalla. */
@@ -112,23 +141,31 @@ export function aDataType(tipo: TipoDeCampo): string {
  * `number` se traduce a `integer` porque es el vocabulario del seed del
  * catálogo clínico, no del contrato: son el mismo dato escrito distinto.
  */
-export function aTipoDeCampo(dataType: string, multiple = false): TipoDeCampo {
-  const familia = familiaDe(dataType, multiple);
+export function aTipoDeCampo(
+  dataType: string,
+  multiple = false,
+  cuadricula = false,
+): TipoDeCampo {
+  const familia = familiaDe(dataType, multiple, cuadricula);
   if (familia === 'eleccion') return 'choice';
   if (familia === 'casillas') return 'checkboxes';
+  if (familia === 'cuadricula') return 'choiceGrid';
+  if (familia === 'cuadricula-casillas') return 'checkboxGrid';
   const t = dataType.toLowerCase();
   if (t === 'number' || t === 'numeric') return 'integer';
   return TIPOS_DE_DATO.some((o) => o.value === t) ? (t as TipoDeCampo) : 'string';
 }
 
 /** Etiqueta legible de un tipo, para los campos del estándar. */
-export function etiquetaDeTipo(tipo: string, multiple = false): string {
+export function etiquetaDeTipo(tipo: string, multiple = false, cuadricula = false): string {
   const t = tipo.toLowerCase();
   // Los de elección primero: `code` no es uno de los valores del desplegable,
   // así que buscarlo ahí no lo encontraría.
-  const familia = familiaDe(t, multiple);
+  const familia = familiaDe(t, multiple, cuadricula);
   if (familia === 'eleccion') return 'Opción múltiple';
   if (familia === 'casillas') return 'Casillas de verificación';
+  if (familia === 'cuadricula') return 'Cuadrícula de opción única';
+  if (familia === 'cuadricula-casillas') return 'Cuadrícula de casillas';
 
   const delGenerador = TIPOS_DE_DATO.find((o) => o.value === t)?.label;
   if (delGenerador !== undefined) return delGenerador;
@@ -177,11 +214,36 @@ export function topesDe(
   }
 }
 
+/**
+ * Las dos respuestas del `Sí / No`, apagadas, para la muestra.
+ *
+ * Deshabilitadas porque la muestra es cómo se va a ver, no un lugar donde
+ * contestar — igual que el resto de los controles de esta tarjeta—. Y sin
+ * ninguna elegida, que es como nace la pregunta cuando se sirve.
+ */
+const SI_NO_DE_MUESTRA: readonly SegmentedOption<'si' | 'no'>[] = [
+  { value: 'si', label: 'Sí', disabled: true },
+  { value: 'no', label: 'No', disabled: true },
+];
+
 /** Con cuántas opciones nace un campo de elección. */
 const OPCIONES_INICIALES = ['Opción 1', 'Opción 2'] as const;
 
 /** Por debajo de esto un campo de elección no ofrece elegir nada. */
 const MINIMO_DE_OPCIONES = 2;
+
+/** Con cuántas filas nace una cuadrícula. */
+const FILAS_INICIALES = ['Fila 1', 'Fila 2'] as const;
+
+/**
+ * Por debajo de esto una cuadrícula no es una cuadrícula.
+ *
+ * Una sola fila es una pregunta de elección con la lista puesta de costado: no
+ * está mal, pero el tipo que le corresponde es «Opción múltiple». Se deja
+ * llegar hasta una —quitar la penúltima no debería quedar bloqueado a mitad de
+ * una corrección— y no más abajo.
+ */
+const MINIMO_DE_FILAS = 1;
 
 /** Cuánto se espera tras la última tecla antes de guardar. */
 const PAUSA_DE_GUARDADO_MS = 700;
@@ -249,7 +311,17 @@ const AVISO_GUARDADO_MS = 2000;
  */
 @Component({
   selector: 'app-field-editor',
-  imports: [AppButton, Checkbox, DataTypeIcon, Input, Select, Switch, Textarea, Tooltip],
+  imports: [
+    AppButton,
+    DataTypeIcon,
+    GridGroup,
+    Input,
+    SegmentedControl,
+    Select,
+    Switch,
+    Textarea,
+    Tooltip,
+  ],
   templateUrl: './field-editor.html',
   styleUrl: './field-editor.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -285,6 +357,7 @@ export class FieldEditor {
 
   protected readonly tipos = TIPOS_DE_DATO;
   protected readonly reglas = REGLAS_DE_SELECCION;
+  protected readonly siNo = SI_NO_DE_MUESTRA;
 
   /* -- el borrador local ---------------------------------------------------- */
 
@@ -296,6 +369,17 @@ export class FieldEditor {
   protected readonly conOtro = signal(false);
   protected readonly regla = signal<ReglaDeSeleccion>('ninguna');
   protected readonly cantidad = signal(1);
+
+  /* -- lo propio de una cuadrícula ------------------------------------------ */
+
+  /** Las filas. Las columnas son `opciones`: son las respuestas de siempre. */
+  protected readonly filas = signal<readonly string[]>([]);
+
+  /** «Requerir una respuesta en cada fila». */
+  protected readonly requerirCadaFila = signal(false);
+
+  /** «Limitar a una respuesta por columna». */
+  protected readonly unaPorColumna = signal(false);
 
   /**
    * Si se está escribiendo la descripción, aunque esté vacía.
@@ -310,7 +394,11 @@ export class FieldEditor {
   protected readonly guardado = signal(false);
 
   protected readonly etiquetaDelTipo = computed(() =>
-    etiquetaDeTipo(this.campo().dataType, this.campo().multiple ?? false),
+    etiquetaDeTipo(
+      this.campo().dataType,
+      this.campo().multiple ?? false,
+      (this.campo().rows ?? []).length > 0,
+    ),
   );
 
   /**
@@ -324,12 +412,24 @@ export class FieldEditor {
    */
   protected readonly familia = computed(() =>
     this.editable()
-      ? familiaDe(aDataType(this.tipo()), this.tipo() === 'checkboxes')
-      : familiaDe(this.campo().dataType, this.campo().multiple ?? false),
+      ? familiaDe(aDataType(this.tipo()), admiteVarias(this.tipo()), esCuadricula(this.tipo()))
+      : familiaDe(
+          this.campo().dataType,
+          this.campo().multiple ?? false,
+          (this.campo().rows ?? []).length > 0,
+        ),
   );
 
   /** Si el tipo elegido pide una lista de respuestas. */
   protected readonly pideOpciones = computed(() => esDeEleccion(this.tipo()));
+
+  /** Si el tipo elegido pide además filas: las dos cuadrículas. */
+  protected readonly pideFilas = computed(() => esCuadricula(this.tipo()));
+
+  /** En una cuadrícula las respuestas ofrecidas son las **columnas**. */
+  protected readonly rotuloDeOpciones = computed(() =>
+    this.pideFilas() ? 'Columnas' : 'Opciones',
+  );
 
   /** Sólo las casillas aceptan topes: en «una sola» el tope es siempre uno. */
   protected readonly pideValidacion = computed(() => this.tipo() === 'checkboxes');
@@ -343,6 +443,20 @@ export class FieldEditor {
    */
   protected readonly tipoTecnico = computed(() => aDataType(this.tipo()));
 
+  /** Las filas de un campo del estándar, para dibujar su cuadrícula. */
+  protected readonly filasDelEstandar = computed<readonly string[]>(
+    () => this.campo().rows ?? [],
+  );
+
+  /** Filas y columnas como las quiere `app-grid-group`, para la muestra. */
+  protected readonly filasDeMuestra = computed(() =>
+    this.filasDelEstandar().map((fila) => ({ value: fila, label: fila })),
+  );
+
+  protected readonly columnasDeMuestra = computed(() =>
+    this.opcionesDelEstandar().map((columna) => ({ value: columna, label: columna })),
+  );
+
   /** Las que se muestran en la tarjeta de un campo del estándar. */
   protected readonly opcionesDelEstandar = computed<readonly string[]>(
     () => this.campo().options ?? [],
@@ -352,6 +466,28 @@ export class FieldEditor {
   protected readonly puedeQuitarOpcion = computed(
     () => this.opciones().length > MINIMO_DE_OPCIONES,
   );
+
+  /** Con una sola fila no se puede quitar: dejaría una cuadrícula sin nada que preguntar. */
+  protected readonly puedeQuitarFila = computed(() => this.filas().length > MINIMO_DE_FILAS);
+
+  /**
+   * El aviso de la cuadrícula que **no se puede terminar de responder**.
+   *
+   * Con «una respuesta por columna» cada fila se lleva una columna distinta, así
+   * que con más filas que columnas la última se queda sin ninguna disponible. Si
+   * encima se exige responder todas, el formulario queda imposible. Es el mismo
+   * aviso que da Google Forms, y se da acá —al armarlo— y no cuando el paciente
+   * se queda trabado.
+   */
+  protected readonly avisoDeCuadricula = computed<string | null>(() => {
+    if (!this.pideFilas() || !this.unaPorColumna()) return null;
+    const faltan = this.filas().length - this.opciones().length;
+    if (faltan <= 0) return null;
+    const columnas = faltan === 1 ? 'una columna más' : `${faltan} columnas más`;
+    return this.requerirCadaFila()
+      ? `Con una respuesta por columna hace falta ${columnas} para poder responder todas las filas.`
+      : `Hay más filas que columnas: ${faltan === 1 ? 'una fila va a quedarse' : `${faltan} filas van a quedarse`} sin columna libre.`;
+  });
 
   /** La cantidad no puede pasar de las opciones que hay: «exactamente 5 de 3» no se cumple nunca. */
   protected readonly topeDeCantidad = computed(
@@ -397,10 +533,15 @@ export class FieldEditor {
       this.nombre.set(campo.name);
       this.descripcion.set(campo.description ?? '');
       this.editandoDescripcion.set((campo.description ?? '') !== '');
-      this.tipo.set(aTipoDeCampo(campo.dataType, campo.multiple ?? false));
+      this.tipo.set(
+        aTipoDeCampo(campo.dataType, campo.multiple ?? false, (campo.rows ?? []).length > 0),
+      );
       this.obligatorio.set(campo.required);
       this.opciones.set(campo.options ?? []);
       this.conOtro.set(campo.allowOther ?? false);
+      this.filas.set(campo.rows ?? []);
+      this.requerirCadaFila.set(campo.requireEachRow ?? false);
+      this.unaPorColumna.set(campo.oneResponsePerColumn ?? false);
       const { regla, cantidad } = reglaDe(campo.cardinalityMin, campo.cardinalityMax);
       this.regla.set(regla);
       this.cantidad.set(cantidad);
@@ -451,6 +592,19 @@ export class FieldEditor {
     if (esDeEleccion(tipo) && this.opciones().length < MINIMO_DE_OPCIONES) {
       this.opciones.set([...OPCIONES_INICIALES]);
     }
+    // Mismo criterio que con las opciones: una cuadrícula sin filas no
+    // pregunta nada, así que se siembran dos. Al revés tampoco se borran —
+    // volver a «Opción múltiple» por error y perder las ocho filas escritas
+    // sería un castigo por un clic—, pero sí dejan de viajar: ver `emitir`.
+    if (esCuadricula(tipo) && this.filas().length < MINIMO_DE_FILAS + 1) {
+      this.filas.set([...FILAS_INICIALES]);
+    }
+    // «Otro» no existe en una cuadrícula: no hay dónde escribirlo, y no lo
+    // ofrece ningún editor de formularios. Se apaga al pasar a cuadrícula en
+    // vez de dejarlo puesto y no dibujarlo, que sería un ajuste invisible.
+    if (esCuadricula(tipo)) {
+      this.conOtro.set(false);
+    }
     this.cancelarPausa();
     this.emitir();
   }
@@ -489,6 +643,42 @@ export class FieldEditor {
   protected alternarOtro(valor: boolean): void {
     this.conOtro.set(valor);
     this.acotarCantidad();
+    this.cancelarPausa();
+    this.emitir();
+  }
+
+  /* -- las filas de una cuadrícula ------------------------------------------ */
+
+  protected cambiarFila(indice: number, valor: string | number | null): void {
+    this.filas.update((actuales) =>
+      actuales.map((fila, i) => (i === indice ? String(valor ?? '') : fila)),
+    );
+    this.conPausa();
+  }
+
+  protected agregarFila(): void {
+    this.filas.update((actuales) => [...actuales, `Fila ${actuales.length + 1}`]);
+    this.cancelarPausa();
+    this.emitir();
+  }
+
+  protected quitarFila(indice: number): void {
+    if (!this.puedeQuitarFila()) {
+      return;
+    }
+    this.filas.update((actuales) => actuales.filter((_, i) => i !== indice));
+    this.cancelarPausa();
+    this.emitir();
+  }
+
+  protected cambiarRequerirCadaFila(valor: boolean): void {
+    this.requerirCadaFila.set(valor);
+    this.cancelarPausa();
+    this.emitir();
+  }
+
+  protected cambiarUnaPorColumna(valor: boolean): void {
+    this.unaPorColumna.set(valor);
     this.cancelarPausa();
     this.emitir();
   }
@@ -544,16 +734,27 @@ export class FieldEditor {
 
     const tipo = this.tipo();
     const eleccion = esDeEleccion(tipo);
+    const cuadricula = esCuadricula(tipo);
     const opciones = this.opciones().map((opcion) => opcion.trim());
     if (eleccion && (opciones.length < MINIMO_DE_OPCIONES || opciones.some((o) => o === ''))) {
       return;
     }
 
+    // Una cuadrícula sin filas, o con una en blanco, es un formulario que el
+    // paciente vería roto: mismo criterio que con las opciones.
+    const filas = cuadricula ? this.filas().map((fila) => fila.trim()) : [];
+    if (cuadricula && (filas.length < MINIMO_DE_FILAS || filas.some((f) => f === ''))) {
+      return;
+    }
+
     const descripcion = this.descripcion().trim();
-    const multiple = tipo === 'checkboxes';
-    const topes = multiple
-      ? topesDe(this.regla(), this.cantidad())
-      : { cardinalityMin: null, cardinalityMax: null };
+    const multiple = admiteVarias(tipo);
+    // Los topes son de las casillas sueltas: en una cuadrícula la cardinalidad
+    // se decide fila por fila, y Google Forms tampoco los ofrece ahí.
+    const topes =
+      multiple && !cuadricula
+        ? topesDe(this.regla(), this.cantidad())
+        : { cardinalityMin: null, cardinalityMax: null };
 
     const cambios: CambiosDelCampo = {
       name: nombre,
@@ -561,7 +762,22 @@ export class FieldEditor {
       required: this.obligatorio(),
       description: descripcion === '' ? null : descripcion,
       ...(eleccion
-        ? { options: opciones, multiple, allowOther: this.conOtro(), ...topes }
+        ? {
+            options: opciones,
+            multiple,
+            allowOther: cuadricula ? false : this.conOtro(),
+            ...topes,
+          }
+        : {}),
+      // Las filas viajan **siempre** que el campo sea de elección: una lista
+      // vacía es lo que deja de ser cuadrícula al volver a «Opción múltiple»,
+      // y no mandarla dejaría filas colgadas de un campo que ya no las dibuja.
+      ...(eleccion
+        ? {
+            rows: filas,
+            requireEachRow: cuadricula ? this.requerirCadaFila() : false,
+            oneResponsePerColumn: cuadricula ? this.unaPorColumna() : false,
+          }
         : {}),
     };
 
@@ -585,8 +801,14 @@ export class FieldEditor {
  * una función para cada una se separan en el primer arreglo.
  */
 function firmaDe(campo: ChartTemplateField): string {
-  const eleccion = familiaDe(campo.dataType, campo.multiple ?? false);
-  const deEleccion = eleccion === 'eleccion' || eleccion === 'casillas';
+  const filas = campo.rows ?? [];
+  const familia = familiaDe(campo.dataType, campo.multiple ?? false, filas.length > 0);
+  const deEleccion =
+    familia === 'eleccion' ||
+    familia === 'casillas' ||
+    familia === 'cuadricula' ||
+    familia === 'cuadricula-casillas';
+  const cuadricula = familia === 'cuadricula' || familia === 'cuadricula-casillas';
   return firmaDeCambios({
     name: campo.name,
     dataType: campo.dataType.toLowerCase(),
@@ -597,8 +819,11 @@ function firmaDe(campo: ChartTemplateField): string {
           options: campo.options ?? [],
           multiple: campo.multiple ?? false,
           allowOther: campo.allowOther ?? false,
-          cardinalityMin: campo.multiple ? (campo.cardinalityMin ?? null) : null,
-          cardinalityMax: campo.multiple ? (campo.cardinalityMax ?? null) : null,
+          cardinalityMin: campo.multiple && !cuadricula ? (campo.cardinalityMin ?? null) : null,
+          cardinalityMax: campo.multiple && !cuadricula ? (campo.cardinalityMax ?? null) : null,
+          rows: filas,
+          requireEachRow: cuadricula ? (campo.requireEachRow ?? false) : false,
+          oneResponsePerColumn: cuadricula ? (campo.oneResponsePerColumn ?? false) : false,
         }
       : {}),
   });
@@ -615,5 +840,8 @@ function firmaDeCambios(cambios: CambiosDelCampo): string {
     cambios.allowOther ?? null,
     cambios.cardinalityMin ?? null,
     cambios.cardinalityMax ?? null,
+    cambios.rows ?? null,
+    cambios.requireEachRow ?? null,
+    cambios.oneResponsePerColumn ?? null,
   ]);
 }

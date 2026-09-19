@@ -1,0 +1,250 @@
+/* ============================================================================
+    Cuadrícula de preguntas — Vanilla CSS con tokens ALOVIDA.
+
+    Las marcas son las mismas del `app-checkbox` y del `app-radio` —mismo
+    tamaño, mismo borde, mismo relleno de marca— dibujadas acá porque en una
+    celda no hay rótulo al lado y aquellos átomos lo llevan siempre.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+/* El marco es quien desplaza, no la tabla: una escala de siete columnas no
+   entra en un portátil y estrecharla hasta que los rótulos se partan letra a
+   letra es peor que desplazar. */
+.cuadricula__marco {
+  overflow-x: auto;
+}
+
+.cuadricula {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.cuadricula__columna,
+.cuadricula__rotulo {
+  font-weight: var(--fw-medium, 500);
+  text-align: start;
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.cuadricula__columna {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  white-space: nowrap;
+}
+
+.cuadricula__rotulo {
+  inline-size: 40%;
+  min-inline-size: 8rem;
+}
+
+.cuadricula__esquina {
+  border: 0;
+}
+
+/* Una línea por fila y rayado suave: son las dos cosas que evitan contestar en
+   la fila de al lado cuando la cuadrícula tiene ocho. */
+.cuadricula__fila:nth-child(odd) {
+  background-color: var(--bg-inset);
+}
+
+.cuadricula__fila + .cuadricula__fila {
+  border-block-start: 1px solid var(--border-default);
+}
+
+.cuadricula__celda {
+  text-align: center;
+  padding: var(--sp-1) var(--sp-3);
+}
+
+/* El área táctil es la celda entera, no la marca de 18px: es lo que hace que
+   se pueda contestar con el pulgar. */
+.cuadricula__control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px;
+  cursor: pointer;
+  position: relative;
+}
+
+.cuadricula__nativo {
+  position: absolute;
+  opacity: 0;
+  inline-size: 0;
+  block-size: 0;
+  margin: 0;
+}
+
+.cuadricula__marca {
+  inline-size: 22px;
+  block-size: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+  background-color: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+
+.cuadricula__marca--casilla {
+  border-radius: 5px;
+}
+
+/* El punto de la opción única y el tilde de la casilla: dibujados con el
+   pseudoelemento para no meter un SVG por celda —una cuadrícula de 8×5 son
+   cuarenta—. */
+.cuadricula__marca::after {
+  content: '';
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: 50%;
+  background-color: transparent;
+}
+
+.cuadricula__marca--casilla::after {
+  inline-size: 6px;
+  block-size: 11px;
+  border-radius: 0;
+  border-inline-end: 2px solid transparent;
+  border-block-end: 2px solid transparent;
+  transform: translateY(-1px) rotate(45deg);
+  background-color: transparent;
+}
+
+.cuadricula__nativo:checked + .cuadricula__marca {
+  border-color: var(--brand-primary);
+}
+
+.cuadricula__nativo:checked + .cuadricula__marca::after {
+  background-color: var(--brand-primary);
+}
+
+.cuadricula__nativo:checked + .cuadricula__marca--casilla {
+  background-color: var(--brand-primary);
+}
+
+.cuadricula__nativo:checked + .cuadricula__marca--casilla::after {
+  /* literal del spec del checkbox: el tilde es blanco en ambos temas. */
+  border-color: #ffffff;
+  background-color: transparent;
+}
+
+.cuadricula__nativo:focus-visible + .cuadricula__marca {
+  box-shadow: 0 0 0 4px var(--focus-ring);
+  border-color: var(--brand-primary);
+}
+
+.cuadricula--error .cuadricula__marca {
+  border-color: var(--c-error-500);
+}
+
+/* Apagada: o la cuadrícula entera, o la columna que otra fila ya se llevó. */
+.cuadricula__nativo:disabled + .cuadricula__marca {
+  background-color: var(--bg-inset);
+  border-color: var(--border-default);
+}
+
+.cuadricula__nativo:disabled {
+  cursor: not-allowed;
+}
+
+.cuadricula__nativo:disabled ~ * {
+  opacity: 0.55;
+}
+
+.cuadricula__regla {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+@media (min-width: 780px) {
+  .cuadricula__marca {
+    inline-size: 18px;
+    block-size: 18px;
+  }
+
+  .cuadricula__marca::after {
+    inline-size: 8px;
+    block-size: 8px;
+  }
+
+  .cuadricula__marca--casilla::after {
+    inline-size: 5px;
+    block-size: 9px;
+  }
+
+  .cuadricula__control {
+    min-block-size: 40px;
+  }
+}
+
+/* ─── Teléfono: la tabla se despliega en bloques ───────────────────────────
+   Una fila por tarjeta, con el rótulo de su columna al lado de cada control.
+   El nombre accesible ya viaja en el `aria-label` de cada control, así que
+   estos rótulos son decoración y salen por `::before`: no se duplica nada de
+   lo que se anuncia. */
+@media (max-width: 599px) {
+  .cuadricula,
+  .cuadricula tbody,
+  .cuadricula tr,
+  .cuadricula td,
+  .cuadricula th {
+    display: block;
+  }
+
+  .cuadricula thead {
+    /* La cabecera se esconde a la vista y **sigue en el árbol**: es la que
+       nombra cada celda para un lector de pantalla. */
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .cuadricula__fila {
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    padding: var(--sp-2);
+    margin-block-end: var(--sp-3);
+    background-color: var(--bg-surface);
+  }
+
+  .cuadricula__fila:nth-child(odd) {
+    background-color: var(--bg-surface);
+  }
+
+  .cuadricula__rotulo {
+    inline-size: auto;
+    padding: var(--sp-1) var(--sp-2);
+    color: var(--text-primary);
+  }
+
+  .cuadricula__celda {
+    padding: 0 var(--sp-2);
+    text-align: start;
+  }
+
+  .cuadricula__control {
+    justify-content: flex-start;
+    gap: var(--sp-3);
+  }
+
+  .cuadricula__control::after {
+    content: attr(data-columna);
+  }
+}

@@ -499,6 +499,96 @@ describe('FormBuilder', () => {
     expect(campo['otro']).toBe(true);
   });
 
+  it('una cuadrícula se sirve como cuadrícula, con sus filas y sus columnas', () => {
+    // Tener filas es lo único que la separa de un campo de elección. Si la
+    // previa la degradara a `radio`, serviría la escala una sola vez y
+    // perdería las filas enteras — y el doctor lo descubriría al verla servida.
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [{ ...ELECCION, rows: ['Tos', 'Fiebre'], options: ['Nunca', 'Siempre'] }],
+    });
+
+    const campo = camposDeLaPrevia()[0]!;
+    expect(campo['control']).toBe('grid-radio');
+    expect(campo['rows']).toEqual([
+      { value: 'Tos', label: 'Tos' },
+      { value: 'Fiebre', label: 'Fiebre' },
+    ]);
+    // Las columnas son las opciones de siempre: es lo que hace que el PDF y la
+    // validación las encuentren donde ya las buscan.
+    expect(campo['options']).toEqual([
+      { value: 'Nunca', label: 'Nunca' },
+      { value: 'Siempre', label: 'Siempre' },
+    ]);
+  });
+
+  it('la cuadrícula de casillas admite varias por fila', () => {
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [{ ...ELECCION, multiple: true, rows: ['Tos'], options: ['Nunca', 'Siempre'] }],
+    });
+
+    expect(camposDeLaPrevia()[0]!['control']).toBe('grid-checkboxes');
+  });
+
+  it('el control de una cuadrícula nace como objeto y no en cadena', () => {
+    // Guarda una entrada por fila respondida: con `''` la validación leería
+    // propiedades de una cadena y no fallaría nunca.
+    abrirPlantilla({ ...PLANTILLA, fields: [{ ...ELECCION, rows: ['Tos'] }] });
+
+    const grupo = interno<() => { get(k: string): { value: unknown } | null }>(
+      'formularioDeMuestra',
+    )();
+    expect(grupo.get('f-9')?.value).toEqual({});
+  });
+
+  it('las dos restricciones de la cuadrícula validan en la vista previa', () => {
+    // Mismo criterio que los topes de las casillas: la previa tiene que
+    // **responder** igual que el formulario servido, no resumirlo.
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [
+        {
+          ...ELECCION,
+          rows: ['Tos', 'Fiebre'],
+          options: ['Nunca', 'Siempre'],
+          requireEachRow: true,
+          oneResponsePerColumn: true,
+        },
+      ],
+    });
+
+    const grupo = interno<
+      () => { get(k: string): { setValue(v: unknown): void; errors: unknown } | null }
+    >('formularioDeMuestra')();
+    const control = grupo.get('f-9')!;
+
+    control.setValue({ Tos: 'Nunca' });
+    expect(control.errors).toEqual({ gridRowMissing: { missing: 1, total: 2 } });
+
+    control.setValue({ Tos: 'Nunca', Fiebre: 'Nunca' });
+    expect(control.errors).toEqual({ gridColumnRepeated: { column: 'Nunca' } });
+
+    control.setValue({ Tos: 'Nunca', Fiebre: 'Siempre' });
+    expect(control.errors).toBeNull();
+  });
+
+  it('un sí/no se sirve con los dos botones y arranca sin responder', () => {
+    // `false` de arranque diría «No» contestado por nadie, y además pasaría un
+    // obligatorio sin respuesta: `Validators.required` sólo rechaza lo vacío.
+    abrirPlantilla({
+      ...PLANTILLA,
+      fields: [{ ...ELECCION, dataType: 'boolean', options: undefined, multiple: undefined }],
+    });
+
+    expect(camposDeLaPrevia()[0]!['control']).toBe('yes-no');
+
+    const grupo = interno<() => { get(k: string): { value: unknown } | null }>(
+      'formularioDeMuestra',
+    )();
+    expect(grupo.get('f-9')?.value).toBeNull();
+  });
+
   it('los topes de un campo de varias validan en la vista previa', () => {
     // Marcar tres donde se pedían dos tiene que decirlo acá, no cuando el
     // paciente lo vea.

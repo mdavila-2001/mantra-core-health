@@ -82,6 +82,40 @@ export interface ChartTemplateField {
   /** Cuántas respuestas se pueden marcar, como máximo. Ver {@link cardinalityMin}. */
   readonly cardinalityMax?: number;
   /**
+   * Las **filas** de una cuadrícula, cuando la pregunta se repite sobre varios
+   * sujetos.
+   *
+   * Tenerlas es lo que convierte un campo de elección en una cuadrícula: las
+   * {@link options} pasan a ser las **columnas** —las respuestas que cada fila
+   * elige— y esto son las filas. No hay un `dataType` propio ni un interruptor
+   * aparte: el dato guardado sigue siendo uno de los códigos ofrecidos, igual
+   * que en cualquier campo `code`.
+   *
+   * Con {@link multiple} en falso es la «Cuadrícula de opción única» —una
+   * respuesta por fila—; en verdadero, la «Cuadrícula de casillas».
+   *
+   * **El backend real todavía no lo persiste.** Ver
+   * `docs/pendientes-backend-formularios.md`.
+   */
+  readonly rows?: readonly string[];
+  /**
+   * Cuadrículas: si hay que responder **todas** las filas.
+   *
+   * Es la restricción «Requerir una respuesta en cada fila». No es lo mismo que
+   * {@link required}, que sólo exige que la pregunta tenga alguna respuesta:
+   * una cuadrícula obligatoria con una sola fila contestada ya cumple
+   * `required`, y con esto no.
+   */
+  readonly requireEachRow?: boolean;
+  /**
+   * Cuadrículas: si una columna sólo puede usarse en **una** fila.
+   *
+   * Es la restricción «Limitar a una respuesta por columna», la que sirve para
+   * ordenar sin empates. Con ella puesta, una columna ya elegida deja de
+   * ofrecerse en las demás filas.
+   */
+  readonly oneResponsePerColumn?: boolean;
+  /**
    * Si el campo lo agregó esta organización, o viene del formulario estándar.
    *
    * El generador lo necesita para dos cosas que no puede adivinar: qué campos

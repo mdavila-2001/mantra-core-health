@@ -212,11 +212,15 @@
             >
               @switch (tipoDibujable(campo.dataType)) {
                 @case ('boolean') {
-                  <app-checkbox
-                    [checked]="valorBooleano(campo.fieldId)"
-                    (checkedChange)="actualizarValor(campo.fieldId, $event)"
-                    [label]="campo.name"
-                    [hideLabel]="true"
+                  <!-- Dos botones y no una casilla: en una ficha clínica
+                       «contestó que no» y «no se preguntó» no pueden guardarse
+                       igual, y una casilla desmarcada es las dos cosas. -->
+                  <app-segmented-control
+                    [options]="siNo"
+                    [value]="valorSiNo(campo.fieldId)"
+                    [ariaLabel]="campo.name"
+                    size="md"
+                    (valueChange)="responderSiNo(campo.fieldId, $event)"
                   />
                 }
                 @case ('integer') {
