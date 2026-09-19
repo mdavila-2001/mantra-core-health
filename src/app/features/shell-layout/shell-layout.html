@@ -355,11 +355,21 @@
           </div>
         }
 
-        <!-- Ajustes. Ocupa el lugar que tenía el conmutador de tema, y no por
-             ahorro de espacio: el tema es una preferencia entre varias —avisos,
-             permisos del navegador— y tenerlo suelto acá lo hacía parecer la
-             única. Ahora las tres viven juntas y el encabezado ofrece una sola
-             puerta a todas.
+        <!-- Interruptor de tema. Volvió al encabezado a pedido del cliente
+             (2026-09-18): claro/oscuro se cambia seguido y no debe exigir ir a
+             Ajustes. Es el mismo `switch` sol/luna del marco público y de
+             Ajustes › Apariencia; el dueño del estado es ThemeService. -->
+        <button class="app-theme-toggle" app-theme-toggle data-testid="header-theme-toggle">
+          <span class="app-theme-toggle__pista">
+            <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+            <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
+            <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
+          </span>
+        </button>
+
+        <!-- Ajustes. El tema es una preferencia entre varias —avisos, permisos
+             del navegador— y las tres viven juntas en Ajustes; el interruptor
+             de arriba es sólo el atajo para la que más se toca.
 
              Es un enlace y no un botón porque lleva a una pantalla: se puede
              abrir en otra pestaña y se puede copiar la dirección, que es lo que

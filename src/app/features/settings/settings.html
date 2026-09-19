@@ -25,34 +25,42 @@
         Se guarda en este dispositivo, no en tu cuenta: cada navegador que uses puede tener el suyo.
       </p>
 
-      <ul class="ajustes__lista" role="radiogroup" aria-label="Tema de la aplicación">
-        @for (theme of themes; track theme.value) {
-          <li class="ajustes__fila">
-            <label class="ajustes__control">
-              <input
-                type="radio"
-                name="theme"
-                [attr.data-testid]="'theme-' + theme.value"
-                [checked]="selectedTheme() === theme.value"
-                (change)="selectTheme(theme.value)"
-              />
-              <span class="ajustes__texto">
-                <span class="ajustes__nombre">{{ theme.label }}</span>
-                <span class="ajustes__detalle">{{ theme.detail }}</span>
-              </span>
-            </label>
-            <app-nav-icon class="ajustes__icono" [name]="theme.icon" />
-          </li>
-        }
-      </ul>
+      <!-- El mismo interruptor sol/luna del encabezado: un solo control para
+           claro/oscuro en toda la aplicación. -->
+      <div class="ajustes__fila ajustes__fila--tema">
+        <span class="ajustes__texto">
+          <span class="ajustes__nombre">Modo oscuro</span>
+          <span class="ajustes__detalle">
+            @if (followsSystem()) {
+              Sigue a tu dispositivo, que ahora pide el modo
+              {{ resolvedTheme() === 'dark' ? 'oscuro' : 'claro' }}.
+            } @else {
+              Elegido por vos: {{ resolvedTheme() === 'dark' ? 'activado' : 'desactivado' }}.
+            }
+          </span>
+        </span>
+        <button class="app-theme-toggle" app-theme-toggle data-testid="theme-switch">
+          <span class="app-theme-toggle__pista">
+            <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+            <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
+            <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
+          </span>
+        </button>
+      </div>
 
-      <!-- Con «el de mi dispositivo» elegido, lo elegido y lo que se ve no son
-           lo mismo. Decir cuál rige evita la duda de si la opción hizo algo. -->
-      @if (selectedTheme() === 'system') {
-        <p class="ajustes__nota" data-testid="theme-resolved">
-          Ahora mismo tu dispositivo pide el modo
-          {{ resolvedTheme() === 'dark' ? 'oscuro' : 'claro' }}.
-        </p>
+      <!-- Un interruptor tiene dos posiciones; «seguir al dispositivo» es una
+           tercera que no se pierde: una vez elegido a mano, se puede volver. -->
+      @if (!followsSystem()) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          class="ajustes__volver-al-sistema"
+          data-testid="theme-use-system"
+          (clicked)="useSystemTheme()"
+        >
+          Volver a seguir a mi dispositivo
+        </button>
       }
     </section>
   </app-tab>

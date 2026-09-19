@@ -10,7 +10,7 @@ import {
   type EstadoPermiso,
   type PermisoDelNavegador,
 } from '../../core/permissions/browser-permissions.service';
-import type { ThemeMode } from '../../core/tokens/design-tokens.types';
+import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 import { ThemeService } from '../../core/tokens/theme.service';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
@@ -23,33 +23,6 @@ import { ChatPreferences } from './chat-preferences/chat-preferences';
 
 /** Quién administra los permisos delegados del M29. Mismo rol que su sección. */
 const PERMISSION_ADMIN_ROLES: readonly string[] = ['SECURITY_ADMIN'];
-
-/** Las tres opciones de tema, en el orden en que se ofrecen. */
-const THEMES: readonly {
-  value: ThemeMode;
-  label: string;
-  detail: string;
-  icon: NavIconName;
-}[] = [
-  {
-    value: 'system',
-    label: 'El de mi dispositivo',
-    detail: 'Sigue la preferencia del sistema y cambia con ella.',
-    icon: 'monitor',
-  },
-  {
-    value: 'light',
-    label: 'Claro',
-    detail: 'Siempre claro, sin importar el sistema.',
-    icon: 'sun',
-  },
-  {
-    value: 'dark',
-    label: 'Oscuro',
-    detail: 'Siempre oscuro, sin importar el sistema.',
-    icon: 'moon',
-  },
-];
 
 /** Cómo se llama cada permiso del navegador y para qué lo usa el producto. */
 const BROWSER_PERMISSIONS: readonly {
@@ -120,7 +93,7 @@ const PERMISSION_STATES: Readonly<Record<EstadoPermiso, { text: string; tone: st
  */
 @Component({
   selector: 'app-settings',
-  imports: [AppButton, ChatPreferences, NavIcon, NotificationPreferences, PageHeader, RouterLink, Tab, Tabs],
+  imports: [AlovidaThemeToggleDirective, AppButton, ChatPreferences, NavIcon, NotificationPreferences, PageHeader, RouterLink, Tab, Tabs],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,13 +103,12 @@ export class Settings {
   private readonly session = inject(SessionStore);
   protected readonly permissions = inject(BrowserPermissionsService);
 
-  protected readonly themes = THEMES;
   protected readonly browserPermissions = BROWSER_PERMISSIONS;
 
-  /** Lo elegido, que puede ser «el del sistema» y no coincidir con lo pintado. */
-  protected readonly selectedTheme = this.theme.currentTheme;
+  /** Si nadie eligió a mano: el interruptor refleja lo que pide el dispositivo. */
+  protected readonly followsSystem = computed(() => this.theme.currentTheme() === 'system');
 
-  /** Lo que efectivamente se ve: es lo que hace legible la opción «el de mi dispositivo». */
+  /** Lo que efectivamente se ve, que es lo que el interruptor marca. */
   protected readonly resolvedTheme = this.theme.resolvedTheme;
 
   protected readonly roles = computed(() => etiquetasDeRoles(this.session.roles()));
@@ -153,8 +125,8 @@ export class Settings {
   /** La verificación de identidad sólo se ofrece si el producto la ofrece. */
   protected readonly verificationOffered = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
 
-  protected selectTheme(mode: ThemeMode): void {
-    this.theme.setTheme(mode);
+  protected useSystemTheme(): void {
+    this.theme.useSystemTheme();
   }
 
   protected stateOf(permission: PermisoDelNavegador): { text: string; tone: string } {

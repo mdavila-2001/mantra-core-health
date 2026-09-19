@@ -151,40 +151,53 @@ describe('Settings', () => {
     expect(headings[0].textContent).toContain('Ajustes');
   });
 
-  it('ofrece los tres temas, con el elegido marcado', () => {
+  it('ofrece el tema como un interruptor que refleja lo que se ve', () => {
     mount();
     goTo('Apariencia');
     theme.setTheme('dark');
     fixture.detectChanges();
 
-    expect((query('theme-dark') as HTMLInputElement).checked).toBe(true);
-    expect((query('theme-light') as HTMLInputElement).checked).toBe(false);
+    const toggle = query('theme-switch');
+    expect(toggle?.getAttribute('role')).toBe('switch');
+    expect(toggle?.getAttribute('aria-checked')).toBe('true');
+
+    theme.setTheme('light');
+    fixture.detectChanges();
+    expect(toggle?.getAttribute('aria-checked')).toBe('false');
   });
 
-  it('conserva un icono en cada opción de apariencia', () => {
+  it('apretar el interruptor aplica el tema de verdad, no sólo mueve la perilla', () => {
     mount();
     goTo('Apariencia');
-
-    expect(iconsPerRow()).toEqual([1, 1, 1]);
-  });
-
-  it('elegir un tema lo aplica de verdad, no sólo marca el control', () => {
-    mount();
-    goTo('Apariencia');
-
-    (query('theme-light') as HTMLInputElement).dispatchEvent(new Event('change'));
+    theme.setTheme('light');
     fixture.detectChanges();
 
-    expect(theme.currentTheme()).toBe('light');
+    query('theme-switch')?.click();
+    fixture.detectChanges();
+
+    expect(theme.currentTheme()).toBe('dark');
   });
 
-  it('con «el de mi dispositivo» dice cuál rige: elegido y pintado no son lo mismo', () => {
+  it('siguiendo al dispositivo dice cuál rige y no ofrece volver a él', () => {
     mount();
     goTo('Apariencia');
     theme.useSystemTheme();
     fixture.detectChanges();
 
-    expect(query('theme-resolved')?.textContent).toContain('modo');
+    expect(text()).toContain('Sigue a tu dispositivo');
+    expect(query('theme-use-system')).toBeNull();
+  });
+
+  it('elegido a mano, se puede volver a seguir al dispositivo', () => {
+    mount();
+    goTo('Apariencia');
+    theme.setTheme('dark');
+    fixture.detectChanges();
+
+    query('theme-use-system')?.click();
+    fixture.detectChanges();
+
+    expect(theme.currentTheme()).toBe('system');
   });
 
   it('cuenta el estado de cada permiso del navegador en palabras', () => {

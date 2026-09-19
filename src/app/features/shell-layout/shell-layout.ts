@@ -32,6 +32,7 @@ import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
 import { TutorialRegistry } from '../../core/tutorials/tutorial.registry';
 import { TUTORIALS } from '../../core/tutorials/definitions';
+import { AlovidaThemeToggleDirective } from '../../core/alovida/alovida-theme-toggle.directive';
 
 /**
  * Si un destino de la barra queda debajo de la URL actual.
@@ -70,6 +71,7 @@ const PANEL = '/dashboard';
     // Un solo marcado para el destino de la barra, esté suelto o dentro de un
     // bloque: ver la nota de la plantilla `#destino`.
     NgTemplateOutlet,
+    AlovidaThemeToggleDirective,
     RouterLink,
     RouterOutlet,
     TutorialOverlay,
