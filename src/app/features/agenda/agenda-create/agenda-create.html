@@ -636,5 +636,66 @@
         Cancelar
       </a>
     </div>
+
+    <!-- «Previsualizar horario»: el MISMO organismo que dibuja el horario ya
+         publicado en «Mi agenda» (`ScheduleGrid`), no una imitación en texto.
+         Es la misma decisión que el modal «Así era ese horario» del histórico:
+         si la previa no se parece a lo que previsualiza, no sirve de nada. -->
+    @if (previaAbierta()) {
+      <app-content-dialog
+        heading="Así va a quedar tu horario"
+        [description]="resumen()"
+        size="xl"
+        closeLabel="Cerrar"
+        (closed)="cerrarVistaPrevia()"
+      >
+        <!-- Sin fechas: un horario que todavía no se publicó no es de esta
+             semana ni de ninguna, así que la cabecera lleva sólo los días. -->
+        <app-schedule-grid
+          [reglas]="reglasDeLaPrevia()"
+          [slotMinutes]="flexible() ? null : (reglasDeLaPrevia()[0]?.slotMinutes ?? null)"
+          [conFechas]="false"
+          [nombre]="nombreDelRecurso()"
+          [vigencia]="vigenciaDeLaPrevia()"
+        />
+
+        <p class="agenda-create__previa-total">
+          <!-- En horario flexible no hay turnos que contar: la franja se
+               atiende entera y la hora la elige el paciente. -->
+          @if (flexible()) {
+            Horario flexible: sin turnos fijos, el paciente pide la hora que quiera.
+          } @else if (vistaPrevia().total === 0) {
+            Con estas horas no entra ningún turno: revisá las duraciones.
+          } @else {
+            {{ vistaPrevia().total }}
+            {{ vistaPrevia().total === 1 ? 'turno' : 'turnos' }} por semana.
+          }
+          {{ vigenciaDeLaPrevia() }}
+        </p>
+
+        <!-- Dos salidas y las dos cierran: el modal MIRA, no decide. Publicar
+             sigue siendo el botón del pie del formulario, que es donde estaba
+             antes de abrir esto. -->
+        <button
+          dialog-actions
+          app-button
+          type="button"
+          variant="outline"
+          data-testid="agenda-create-previa-volver"
+          (clicked)="cerrarVistaPrevia()"
+        >
+          Volver a editar
+        </button>
+        <button
+          dialog-actions
+          app-button
+          type="button"
+          data-testid="agenda-create-previa-ok"
+          (clicked)="cerrarVistaPrevia()"
+        >
+          Está bien
+        </button>
+      </app-content-dialog>
+    }
   </form>
 }

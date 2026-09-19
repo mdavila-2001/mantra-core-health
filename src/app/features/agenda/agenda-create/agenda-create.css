@@ -359,6 +359,13 @@
   }
 }
 
+/* El pie del modal de la previa: el total y la vigencia, bajo la grilla. Mismo
+   reparto que el resumen del histórico en «Mi agenda». */
+.agenda-create__previa-total {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+}
+
 .agenda-create__previa-resto {
   grid-column: 1 / -1;
   margin: 0;

@@ -4,15 +4,17 @@ import {
   computed,
   effect,
   inject,
+  LOCALE_ID,
   signal,
 } from '@angular/core';
-import { TitleCasePipe } from '@angular/common';
+import { formatDate, TitleCasePipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type {
+  PublishedRule,
   PublishedTemplate,
   ResourceType,
   ScheduleRule,
@@ -21,6 +23,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_ROUTE } from '../agenda.routes';
 import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
 import { misRecursosDeAgenda } from '../mi-recurso';
+import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
 import { calcularTurnos, type Calculo, type DiaCalculado } from './agenda-turnos';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
@@ -33,13 +36,13 @@ import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Switch } from '../../../shared/components/atoms/switch/switch';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
-import type { DialogDetail } from '../../../shared/components/molecules/dialog/dialog.types';
 import { Router } from '@angular/router';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { errorMessageOf, UUID_ERROR, UUID_PATTERN } from '../../../shared/forms/form-support';
@@ -187,11 +190,13 @@ interface DiaVisible {
     AppButton,
     AppButtonLink,
     Link,
+    ContentDialog,
     DatePicker,
     FormField,
     Input,
     PageHeader,
     RouterLink,
+    ScheduleGrid,
     SegmentedControl,
     Select,
     Switch,
@@ -207,6 +212,8 @@ export class AgendaCreate {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
+  /** El idioma activo, para escribir la vigencia fuera de la plantilla. */
+  private readonly idioma = inject(LOCALE_ID);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   /** A dónde vuelven «Ver mi agenda» y «Cancelar»: la agenda, que es de donde se vino. */
@@ -637,8 +644,20 @@ export class AgendaCreate {
   /** Un contador que cambia cuando la semana cambia, para que los `computed` la relean. */
   private readonly versionDeLaSemana = signal(0);
 
+  /**
+   * La capacidad por turno, espejada como señal.
+   *
+   * Va aparte de `versionDeLaSemana` porque no es de la semana: sin esto, la
+   * grilla de la previa seguiría contando «1 paciente por turno» después de
+   * haberlo cambiado a tres, que es peor que no decirlo.
+   */
+  private readonly capacidadDeclarada = signal(this.formGeneral.getRawValue().capacidadPorTurno);
+
   constructor() {
     this.semana.valueChanges.subscribe(() => this.versionDeLaSemana.update((v) => v + 1));
+    this.formGeneral.controls.capacidadPorTurno.valueChanges.subscribe((valor) =>
+      this.capacidadDeclarada.set(valor),
+    );
     this.cargarHorarioVigente();
   }
 
@@ -821,16 +840,45 @@ export class AgendaCreate {
     }
   }
 
-  /* -- Publicar ------------------------------------------------------------- */
+  /* -- Vista previa --------------------------------------------------------- */
+
+  /** Si el modal de la vista previa está abierto. */
+  protected readonly previaAbierta = signal(false);
 
   /**
-   * Manda los cuatro POST en cadena, salteando los que ya se hicieron.
+   * La semana del formulario dicha como la dice la API, para la grilla.
    *
-   * El anidamiento sigue el orden del contrato: cada respuesta aporta el
-   * identificador que necesita la siguiente. No hay operadores de RxJS a
-   * propósito —el resto del repo tampoco los usa en componentes— y el guardado
-   * parcial hace que un reintento retome donde falló.
+   * Es la **misma forma** que `ScheduleGrid` recibe en «Mi horario», y se arma
+   * con el mismo mapeo que usa `crearPlantilla()`: una regla por franja —con
+   * almuerzo, mañana y tarde—, sin duración ni respiro cuando el horario es
+   * flexible. Una previa armada con una conversión propia mostraría un horario
+   * que no es el que se va a publicar, que es justo lo que una vista previa
+   * promete que no pasa.
    */
+  protected readonly reglasDeLaPrevia = computed<readonly PublishedRule[]>(() => {
+    const capacidad = Number(this.capacidadDeclarada());
+    const flexible = this.flexible();
+    return this.diasActivos().flatMap((dia) => {
+      const v = this.semana.at(dia.indice).getRawValue();
+      return this.franjasDe(dia.indice).map((franja) => ({
+        dayOfWeek: DIAS[dia.indice].numero,
+        startTime: franja.desde.trim(),
+        endTime: franja.hasta.trim(),
+        ...(flexible ? {} : { slotMinutes: v.duracion }),
+        ...(!flexible && v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
+        ...(Number.isFinite(capacidad) && capacidad > 0 ? { capacityPerSlot: capacidad } : {}),
+      }));
+    });
+  });
+
+  /** Hasta cuándo va a regir, en una frase, para el globo de la grilla. */
+  protected readonly vigenciaDeLaPrevia = computed(() => {
+    const fin = this.fechaDeFin();
+    return fin === null
+      ? 'Sin fecha de fin: rige hasta que lo cambies.'
+      : `Rige hasta el ${formatDate(fin, "d 'de' MMMM yyyy", this.idioma)}.`;
+  });
+
   /**
    * «Previsualizar horario» — el modal del pedido original.
    *
@@ -839,31 +887,26 @@ export class AgendaCreate {
    * **al pie**, que es donde uno decide publicar, sin obligar a subir a
    * buscarla.
    *
-   * Se arma con el mismo `calcularTurnos` que la de arriba —no con una cuenta
-   * paralela— porque dos cálculos del mismo número terminan discrepando, y ya
-   * pasó una vez en esta pantalla.
+   * ## Por qué ya no es un `DialogService.confirm()`
+   *
+   * Porque aquél sólo sabe escribir rótulo y valor, y lo que salía era la
+   * semana contada en prosa: «Lunes — 8 turnos · 08:00 · 08:30 · 09:00 · …».
+   * Una tira de horas de inicio no se compara entre días, no dice a qué hora
+   * cierra el consultorio y no se parece en nada al horario que el médico ve
+   * después en «Mi agenda». Era una segunda manera de dibujar lo que ya dibuja
+   * `ScheduleGrid`, y dos dibujos del mismo concepto divergen siempre.
+   *
+   * Ahora el modal es el mismo que «Así era ese horario» del histórico:
+   * `ContentDialog` —que sí proyecta contenido— con la grilla real adentro.
+   * Previsualizar y mirar el horario publicado dejaron de ser dos pantallas
+   * parecidas: son la misma.
    */
-  protected async abrirVistaPrevia(): Promise<void> {
-    const calculo = this.vistaPrevia();
-    const detalles: DialogDetail[] = calculo.porDia.map((dia) => ({
-      label: dia.dia.charAt(0).toUpperCase() + dia.dia.slice(1),
-      value: this.flexible()
-        ? this.rangoDe(dia)
-        : dia.turnos.length === 0
-          ? 'Sin turnos'
-          : `${dia.turnos.length} ${dia.turnos.length === 1 ? 'turno' : 'turnos'} · ` +
-            dia.turnos.map((t) => t.desde).join(' · '),
-    }));
+  protected abrirVistaPrevia(): void {
+    this.previaAbierta.set(true);
+  }
 
-    await this.dialogs.confirm({
-      title: 'Así va a quedar tu horario',
-      message: this.flexible()
-        ? 'Horario flexible: sin turnos fijos, el paciente pide la hora que quiera.'
-        : `${calculo.total} ${calculo.total === 1 ? 'turno' : 'turnos'} por semana.`,
-      details: detalles,
-      confirmLabel: 'Está bien',
-      cancelLabel: 'Volver a editar',
-    });
+  protected cerrarVistaPrevia(): void {
+    this.previaAbierta.set(false);
   }
 
   /**
@@ -907,6 +950,16 @@ export class AgendaCreate {
     this.versionDeLaSemana.update((v) => v + 1);
   }
 
+  /* -- Publicar ------------------------------------------------------------- */
+
+  /**
+   * Manda los cuatro POST en cadena, salteando los que ya se hicieron.
+   *
+   * El anidamiento sigue el orden del contrato: cada respuesta aporta el
+   * identificador que necesita la siguiente. No hay operadores de RxJS a
+   * propósito —el resto del repo tampoco los usa en componentes— y el guardado
+   * parcial hace que un reintento retome donde falló.
+   */
   protected publicar(): void {
     if (this.cargando()) return;
 
