@@ -78,6 +78,16 @@ export interface OrganizationContactPerson {
   /** El cargo, en su código canónico (`LEGAL_REPRESENTATIVE`, `GENERAL_MANAGER`…). */
   readonly role: string;
   readonly fullName: string;
+  /**
+   * Las partes del nombre, si el alta las declaró (subtarea de segmentación
+   * del backend). Ausentes en un contacto registrado con la forma anterior
+   * (`fullName` suelto) o antes de esa subtarea: sólo tiene el compuesto, y
+   * no hay forma de partirlo sin adivinar.
+   */
+  readonly name?: string;
+  readonly middleName?: string;
+  readonly lastName?: string;
+  readonly motherLastName?: string;
   readonly email?: string;
   readonly phone?: string;
   /** Documento de identidad, si se declaró (sólo el representante legal). */
