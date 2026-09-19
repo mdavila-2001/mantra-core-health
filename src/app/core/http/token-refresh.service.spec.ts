@@ -2,9 +2,33 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { Observable, Subject, defer, switchMap } from 'rxjs';
+
 import { RefreshTokenStorage } from '../auth/refresh-token.storage';
 import { SessionStore } from '../auth/session.store';
+import { CrossTabLock } from './cross-tab-lock';
+import { SessionBroadcast } from './session-broadcast';
 import { TokenRefreshService } from './token-refresh.service';
+
+/**
+ * Lock que no concede el turno hasta que la prueba lo diga.
+ *
+ * En jsdom `navigator.locks` no existe, así que el `CrossTabLock` real devuelve
+ * la fuente sin envolver y **la espera entre pestañas desaparece**. Justamente
+ * lo que hay que poder simular es esa espera: lo que el servicio hace antes de
+ * entrar al lock y lo que hace ya dentro no son lo mismo, y sin una espera de
+ * verdad los dos casos se ven idénticos.
+ */
+class LockControlado {
+  /** Se emite cuando la prueba concede el turno. */
+  readonly turno = new Subject<void>();
+
+  withLock<T>(_name: string, source: Observable<T>): Observable<T> {
+    // `defer` es la clave: la fuente no se toca hasta que llega el turno, igual
+    // que con un lock de verdad en disputa.
+    return defer(() => this.turno).pipe(switchMap(() => source));
+  }
+}
 
 /**
  * La garantía de este servicio es **una sola petición de refresco en vuelo**, y
@@ -157,6 +181,144 @@ describe('TokenRefreshService', () => {
     peticion.flush({
       accessToken: TOKEN,
       refreshToken: 'r-3',
+      expiresAt: '2026-08-01T12:00:00.000Z',
+    });
+  });
+});
+
+/**
+ * Lo que pasa mientras esta pestaña **espera el lock**.
+ *
+ * Con el lock real no hay forma de que la otra pestaña rote antes que nosotros
+ * si no esperamos; con `LockControlado` la espera es explícita y se puede
+ * intercalar lo que hace la otra pestaña en el medio. Los dos casos de acá son
+ * los que distinguen «serializado» de «serializado y sin refrescos de más».
+ */
+describe('TokenRefreshService · lo que ocurre mientras se espera el lock', () => {
+  let refresher: TokenRefreshService;
+  let session: SessionStore;
+  let storage: RefreshTokenStorage;
+  let broadcast: SessionBroadcast;
+  let lock: LockControlado;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    lock = new LockControlado();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: CrossTabLock, useValue: lock as unknown as CrossTabLock },
+      ],
+    });
+
+    refresher = TestBed.inject(TokenRefreshService);
+    session = TestBed.inject(SessionStore);
+    storage = TestBed.inject(RefreshTokenStorage);
+    broadcast = TestBed.inject(SessionBroadcast);
+    http = TestBed.inject(HttpTestingController);
+
+    session.start({ accessToken: TOKEN, refreshToken: 'r-1' });
+    storage.write('r-1');
+  });
+
+  afterEach(() => {
+    http.verify();
+  });
+
+  /**
+   * El defecto: la relectura de `localStorage` ocurría al **construir** el
+   * observable, o sea antes de pedir el lock. Para cuando llegaba el turno, el
+   * token que iba a presentar ya estaba decidido — y si otra pestaña había
+   * rotado en el medio, era uno ya gastado. El servidor lo trata como reuso y
+   * revoca la sesión entera: exactamente lo que el lock venía a evitar.
+   *
+   * Serializar sin releer dentro del lock no sirve de nada.
+   */
+  it('relee el token DESPUÉS de obtener el turno, no antes de esperarlo', () => {
+    refresher.refresh().subscribe();
+
+    // Mientras esperamos el turno, la otra pestaña rota y deja el suyo.
+    storage.write('r-de-la-otra-pestana');
+
+    lock.turno.next();
+
+    const peticion = http.expectOne((request) => request.url.endsWith('/iam/auth/token/refresh'));
+    expect(peticion.request.body).toEqual({ refreshToken: 'r-de-la-otra-pestana' });
+    peticion.flush({
+      accessToken: TOKEN,
+      refreshToken: 'r-3',
+      expiresAt: '2026-08-01T12:00:00.000Z',
+    });
+  });
+
+  /**
+   * La otra mitad del criterio de aceptación: dos pestañas que refrescan a la
+   * vez terminan ambas con sesión válida **y con un solo refresco contra el
+   * backend**. Serializar sólo garantizaba lo primero; cada pestaña seguía
+   * gastando su propio viaje de red, y con veinte intentos por minuto eso se
+   * nota con varias pestañas abiertas.
+   *
+   * Si la pestaña que ganó el turno publicó su sesión y esa sesión es la que
+   * está vigente en `localStorage`, no hay nada que pedir: se adopta.
+   */
+  it('adopta la sesión que publicó otra pestaña sin gastar un refresco', () => {
+    const recibidas: string[] = [];
+    refresher.refresh().subscribe((s) => recibidas.push(s.refreshToken));
+
+    // La otra pestaña completó su refresco: persistió y publicó.
+    const nueva = {
+      accessToken: TOKEN,
+      refreshToken: 'r-de-la-otra-pestana',
+      expiresAt: new Date('2026-08-01T12:00:00.000Z'),
+    };
+    storage.write(nueva.refreshToken);
+    broadcast.recibir(nueva);
+
+    lock.turno.next();
+
+    // `http.verify()` en `afterEach` es la aserción: no salió ninguna petición.
+    expect(recibidas).toEqual(['r-de-la-otra-pestana']);
+    expect(session.refreshToken()).toBe('r-de-la-otra-pestana');
+  });
+
+  /**
+   * La adopción no puede ser un atajo silencioso: si lo publicado no es lo que
+   * está vigente —una publicación vieja, de una rotación anterior—, hay que
+   * pedir igual. Adoptar un token ya gastado sería el mismo fallo de reuso, y
+   * más difícil de ver.
+   */
+  it('no adopta una publicación que ya no es la vigente', () => {
+    refresher.refresh().subscribe();
+
+    broadcast.recibir({
+      accessToken: TOKEN,
+      refreshToken: 'r-viejo-publicado',
+      expiresAt: new Date('2026-08-01T12:00:00.000Z'),
+    });
+    storage.write('r-el-que-de-verdad-vale');
+
+    lock.turno.next();
+
+    const peticion = http.expectOne((request) => request.url.endsWith('/iam/auth/token/refresh'));
+    expect(peticion.request.body).toEqual({ refreshToken: 'r-el-que-de-verdad-vale' });
+    peticion.flush({
+      accessToken: TOKEN,
+      refreshToken: 'r-4',
+      expiresAt: '2026-08-01T12:00:00.000Z',
+    });
+  });
+
+  /** Sin nadie más rotando, el comportamiento de siempre: se pide. */
+  it('sin rotación ajena, refresca normalmente', () => {
+    refresher.refresh().subscribe();
+    lock.turno.next();
+
+    const peticion = http.expectOne((request) => request.url.endsWith('/iam/auth/token/refresh'));
+    expect(peticion.request.body).toEqual({ refreshToken: 'r-1' });
+    peticion.flush({
+      accessToken: TOKEN,
+      refreshToken: 'r-2',
       expiresAt: '2026-08-01T12:00:00.000Z',
     });
   });
