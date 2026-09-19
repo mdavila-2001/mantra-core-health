@@ -57,7 +57,11 @@
     class="claims__patient"
     data-testid="claim-patient"
     [attr.aria-label]="
-      'Ver los datos de ' + (claim.patient.displayName ?? claim.patient.patientCode ?? 'el paciente')
+      'Ver los datos de ' +
+      (claim.patient.displayName ?? claim.patient.patientCode ?? 'el paciente') +
+      ' (solicitud ' +
+      claim.claimIdentifier +
+      ')'
     "
     (click)="patientOnView.set(claim)"
   >
