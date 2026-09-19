@@ -317,7 +317,7 @@ describe('MyAgenda', () => {
       expect(fixture.nativeElement.textContent).not.toContain('HORARIO PERMANENTE');
     });
 
-    it('avisa que estos horarios no son para cirugías', () => {
+    it('ya no muestra el aviso de alcance (propietario, 19/09/2026)', () => {
       crear();
       conRecurso();
       conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }], {
@@ -325,10 +325,8 @@ describe('MyAgenda', () => {
       });
       conCuposHasta(new Date('2030-01-01'));
 
-      // Punto 8, textual del propietario: es una regla, no una nota al margen.
       const texto: string = fixture.nativeElement.textContent;
-      expect(texto).toContain('para consulta y cita');
-      expect(texto).toContain('quirúrgicas');
+      expect(texto).not.toContain('quirúrgicas');
     });
 
     it('ofrece retirar el horario, y dice retirar y no borrar (punto 6/7: ícono sobre la fila)', () => {
