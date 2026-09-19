@@ -1,4 +1,5 @@
 import type { InsuranceConcept, Money } from '../../core/data-access/insurance/insurance.types';
+import { withDisplayCurrency } from '../../core/money/display-currency';
 
 /**
  * Texto con el que se muestra la ausencia de un importe.
@@ -82,5 +83,5 @@ export function formatKpiAmount(amount: string, currency: InsuranceConcept | nul
   const agrupada = entera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   const numero = `${negativo ? '-' : ''}${agrupada},${decimal.slice(0, 2).padEnd(2, '0')}`;
   if (currency === null) return numero;
-  return `${numero} ${currency.code === 'BOB' ? 'Bs' : currency.code}`;
+  return withDisplayCurrency(numero, currency.code);
 }

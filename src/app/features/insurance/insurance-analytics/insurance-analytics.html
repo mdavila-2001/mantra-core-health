@@ -44,7 +44,7 @@
         <p class="analytics__period">
           Período: {{ dashboard.startDate }} a {{ dashboard.endDate }}
           @if (dashboard.currency) {
-            · Moneda de reporte: {{ dashboard.currency.display }}
+            · Moneda de reporte: {{ moneda(dashboard.currency.display) }}
           } @else {
             · Sin reclamos en el período: no hay moneda de reporte.
           }
