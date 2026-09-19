@@ -174,26 +174,26 @@ describe('AccessTree', () => {
     crear();
     abrir('consulta');
 
-    const salto = raiz().querySelector<HTMLButtonElement>('[data-zona-salto="cuenta"]');
+    const salto = raiz().querySelector<HTMLButtonElement>('[data-zona-salto="organizacion"]');
     expect(salto).not.toBeNull();
     salto?.click();
     fixture.detectChanges();
 
-    expect(raiz().querySelector('[data-zona-abierta="cuenta"]')).not.toBeNull();
+    expect(raiz().querySelector('[data-zona-abierta="organizacion"]')).not.toBeNull();
     // Y la zona en la que estabas ya no se ofrece como salto: sería un enlace
     // a donde ya estás.
-    expect(raiz().querySelector('[data-zona-salto="cuenta"]')).toBeNull();
+    expect(raiz().querySelector('[data-zona-salto="organizacion"]')).toBeNull();
   });
 
   it('el resumen de cada sección viaja en el nombre accesible, no sólo en el globo', () => {
     crear();
-    abrir('cuenta');
+    abrir('consulta');
 
     // Dos caminos a propósito: el globo aparece con el puntero **y con el
     // foco**, y el `aria-label` cubre a quien nunca llega a enfocar el enlace.
-    const tutoriales = accesos().find((a) => a.dataset['ruta'] === '/tutorials');
-    expect(tutoriales?.getAttribute('aria-label')).toBe(
-      'Tutoriales. Aprendé a usar cada sección con recorridos guiados sobre la aplicación real.',
+    const agenda = accesos().find((a) => a.dataset['ruta'] === '/schedule');
+    expect(agenda?.getAttribute('aria-label')).toBe(
+      'Consultas médicas. Gestioná disponibilidad, reservas y confirmaciones de turno.',
     );
   });
 
