@@ -45,6 +45,12 @@ interface Testable {
   volverAAgendaExistente(): void;
   /** «Limpiar campos» del pedido original. */
   limpiarCampos(): Promise<void>;
+  /** Horario flexible y almuerzo (propietario, 18/09). */
+  readonly flexible: WritableSignal<boolean>;
+  readonly conAlmuerzo: WritableSignal<boolean>;
+  readonly almuerzoDesde: WritableSignal<string>;
+  readonly almuerzoHasta: WritableSignal<string>;
+  readonly almuerzoInvalido: () => boolean;
 }
 
 /**
@@ -1096,6 +1102,151 @@ describe('AgendaCreate', () => {
         .expectOne('/scheduling/templates/tpl-1/generate-slots')
         .flush({ templateId: 'tpl-1', created: 8, skipped: 0 });
       fixture.detectChanges();
+    });
+  });
+  /* -- Horario flexible, almuerzo y «Sí / No» (propietario, 18/09) ---------- */
+
+  describe('horario flexible, almuerzo y botones Sí / No', () => {
+    /** Publica hasta la plantilla y devuelve su cuerpo; cierra el ciclo. */
+    function cuerpoDeLaPlantilla(): Record<string, unknown> {
+      acc.publicar();
+      http.expectOne('/scheduling/resources').flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
+      const plantilla = http.expectOne('/scheduling/resources/res-1/templates');
+      const cuerpo = plantilla.request.body as Record<string, unknown>;
+      plantilla.flush({ id: 'tpl-1', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-1/generate-slots')
+        .flush({ templateId: 'tpl-1', created: 1, skipped: 0 });
+      return cuerpo;
+    }
+
+    it('el almuerzo parte el día en dos franjas: mañana y tarde', () => {
+      crear();
+      encenderLunes();
+      acc.semana.at(0).patchValue({ desde: '08:00', hasta: '18:00', duracion: 30 });
+      acc.conAlmuerzo.set(true);
+      acc.almuerzoDesde.set('12:30');
+      acc.almuerzoHasta.set('14:00');
+      fixture.detectChanges();
+
+      expect(acc.turnosDelDia(0)).toBe(9 + 8);
+      expect(cuerpoDeLaPlantilla()['rules']).toEqual([
+        expect.objectContaining({ dayOfWeek: 1, startTime: '08:00', endTime: '12:30', slotMinutes: 30 }),
+        expect.objectContaining({ dayOfWeek: 1, startTime: '14:00', endTime: '18:00', slotMinutes: 30 }),
+      ]);
+    });
+
+    it('un almuerzo fuera del horario de ese día no lo corta', () => {
+      crear();
+      encenderLunes();
+      acc.semana.at(0).patchValue({ desde: '08:00', hasta: '12:00' });
+      acc.conAlmuerzo.set(true);
+      fixture.detectChanges();
+
+      expect(cuerpoDeLaPlantilla()['rules']).toEqual([
+        expect.objectContaining({ startTime: '08:00', endTime: '12:00' }),
+      ]);
+    });
+
+    it('un almuerzo al revés se avisa y no deja publicar', () => {
+      crear();
+      encenderLunes();
+      acc.conAlmuerzo.set(true);
+      acc.almuerzoDesde.set('14:00');
+      acc.almuerzoHasta.set('13:00');
+      fixture.detectChanges();
+
+      expect(acc.almuerzoInvalido()).toBe(true);
+      acc.publicar();
+      http.expectNone('/scheduling/resources');
+      expect(fixture.nativeElement.textContent).toContain('Tiene que terminar después de empezar.');
+    });
+
+    it('en horario flexible no viajan duración ni descanso, y la plantilla lo declara', () => {
+      crear();
+      encenderLunes();
+      acc.semana.at(0).patchValue({ respiro: 10 });
+      acc.flexible.set(true);
+      fixture.detectChanges();
+
+      const cuerpo = cuerpoDeLaPlantilla();
+      expect(cuerpo['flexibleHours']).toBe(true);
+      const reglas = cuerpo['rules'] as Record<string, unknown>[];
+      expect(reglas[0]).not.toHaveProperty('slotMinutes');
+      expect(reglas[0]).not.toHaveProperty('gapMinutes');
+    });
+
+    it('en horario flexible la tabla no pregunta duración ni descanso', () => {
+      crear();
+      encenderLunes();
+      acc.flexible.set(true);
+      fixture.detectChanges();
+
+      const encabezados = [...fixture.nativeElement.querySelectorAll('thead th')].map(
+        (th: Element) => th.textContent?.trim(),
+      );
+      expect(encabezados).toEqual(['Día', 'Desde', 'Hasta']);
+      expect(acc.resumen()).toContain('horario flexible sin turnos fijos');
+    });
+
+    it('con turnos fijos no se manda flexibleHours', () => {
+      crear();
+      encenderLunes();
+      expect(cuerpoDeLaPlantilla()).not.toHaveProperty('flexibleHours');
+    });
+
+    it('cada día se enciende con su botón «Sí» y se apaga con «No»', () => {
+      crear();
+      const fila = fixture.nativeElement.querySelector('[data-testid="agenda-create-dia-0"]');
+      expect(fila.querySelector('[role="radiogroup"]').getAttribute('aria-label')).toBe(
+        '¿Atendés el lunes?',
+      );
+      fila.querySelector('[data-value="si"]').click();
+      fixture.detectChanges();
+      expect(acc.semana.at(0).getRawValue().activo).toBe(true);
+
+      fila.querySelector('[data-value="no"]').click();
+      fixture.detectChanges();
+      expect(acc.semana.at(0).getRawValue().activo).toBe(false);
+      expect(fixture.nativeElement.querySelectorAll('input[type="checkbox"]').length).toBe(0);
+    });
+
+    it('las opciones avanzadas ya no tienen casillas: son «Sí / No»', () => {
+      crear(['SCHEDULING_ADMIN', 'PRACTITIONER']);
+      acc.avanzadasAbiertas.set(true);
+      fixture.detectChanges();
+
+      const raiz: HTMLElement = fixture.nativeElement;
+      expect(raiz.querySelectorAll('input[type="checkbox"]').length).toBe(0);
+      raiz
+        .querySelector<HTMLElement>('[data-testid="agenda-create-politica"] [data-value="si"]')!
+        .click();
+      fixture.detectChanges();
+      expect(acc.usarPolitica()).toBe(true);
+      expect(raiz.querySelector('[data-testid="agenda-create-otro-recurso"]')).not.toBeNull();
+    });
+
+    it('un horario con dos franjas el mismo día vuelve como un día con almuerzo', () => {
+      crearConHorarioVigente({
+        id: 'tpl-1',
+        retired: false,
+        name: 'Horario',
+        statusConceptId: 'c',
+        slotMinutes: 30,
+        rules: [
+          { dayOfWeek: 1, startTime: '14:00:00', endTime: '18:00:00', slotMinutes: 30 },
+          { dayOfWeek: 1, startTime: '08:00:00', endTime: '12:30:00', slotMinutes: 30 },
+        ],
+      });
+
+      expect(acc.semana.at(0).getRawValue()).toMatchObject({
+        activo: true,
+        desde: '08:00',
+        hasta: '18:00',
+      });
+      expect(acc.conAlmuerzo()).toBe(true);
+      expect(acc.almuerzoDesde()).toBe('12:30');
+      expect(acc.almuerzoHasta()).toBe('14:00');
     });
   });
 });

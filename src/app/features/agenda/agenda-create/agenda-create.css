@@ -447,3 +447,62 @@
     justify-self: start;
   }
 }
+
+/* ---- preguntas de «Sí / No» (propietario, 18/09) ------------------------- */
+
+/* La pregunta a la izquierda y los dos botones a la derecha, en una fila; en
+   el teléfono los botones bajan debajo del texto en vez de apretarlo. */
+.agenda-create__pregunta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.agenda-create__pregunta-texto {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 16rem;
+}
+
+.agenda-create__pregunta-titulo {
+  font-weight: 600;
+}
+
+.agenda-create__pregunta-ayuda {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* Desde y hasta del almuerzo lado a lado, como en la tabla. */
+.agenda-create__almuerzo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 14rem));
+  gap: var(--sp-3);
+}
+
+/* En la fila del día, el nombre y su «Sí / No» se reparten el ancho: el
+   nombre a la izquierda, los botones alineados en columna de una fila a otra. */
+.agenda-create__fila-check {
+  justify-content: space-between;
+  cursor: default;
+}
+
+/* En el teléfono el «Sí / No» baja y ocupa la fila entera: el control se
+   estira a lo ancho por debajo de 30 rem, y como ítem flex sin base quedaba en
+   su ancho mínimo, con el «No» cortado en «N.». Desde 30 rem vuelve a medir su
+   contenido, al lado de la pregunta. */
+.agenda-create__pregunta > app-segmented-control {
+  flex: 1 0 100%;
+}
+
+@media (min-width: 30rem) {
+  .agenda-create__pregunta > app-segmented-control {
+    flex: none;
+  }
+}

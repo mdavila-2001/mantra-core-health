@@ -396,7 +396,7 @@ export function registrarAgenda(router: MockRouter): void {
   });
 
   router.post('/scheduling/resources/:id/templates', (request) => {
-    const datos = cuerpo<{ name: string; rules: PlantillaSimulada['rules']; slotMinutes?: number; bookingPolicyId?: string; validFrom?: string; validTo?: string }>(request);
+    const datos = cuerpo<{ name: string; rules: PlantillaSimulada['rules']; slotMinutes?: number; bookingPolicyId?: string; validFrom?: string; validTo?: string; flexibleHours?: boolean }>(request);
     const nueva = plantillas.agregar({
       id: nuevoId('template'),
       resourceId: request.params['id']!,
@@ -406,6 +406,7 @@ export function registrarAgenda(router: MockRouter): void {
       slotMinutes: datos.slotMinutes ?? 30,
       validFrom: datos.validFrom ?? ahora().slice(0, 10),
       ...(datos.validTo === undefined ? {} : { validTo: datos.validTo }),
+      ...(datos.flexibleHours === true ? { flexibleHours: true } : {}),
       bookingPolicyId: datos.bookingPolicyId ?? POLITICA_ESTANDAR,
       statusConceptId: ESTADO['ST-PUBLISHED']!,
     });
@@ -467,31 +468,44 @@ export function registrarAgenda(router: MockRouter): void {
     let created = 0;
     let skipped = 0;
     for (let d = new Date(desde); d <= hasta; d.setDate(d.getDate() + 1)) {
-      const regla = t.rules.find((r) => r.dayOfWeek === d.getDay());
-      if (regla === undefined) continue;
-      const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
-      const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
-      const dur = regla.slotMinutes ?? t.slotMinutes;
-      for (let m = hi * 60 + mi; m + dur <= hf * 60 + mf; m += dur + (regla.gapMinutes ?? 0)) {
-        const inicio = new Date(d);
-        inicio.setHours(Math.floor(m / 60), m % 60, 0, 0);
-        const id = uuid(`slot-${t.id}-${inicio.toISOString()}`);
-        if (cupos.has(id) || cupos.filtrar((c) => c.resourceId === t.resourceId && c.startAt === inicio.toISOString()).length > 0) {
-          skipped++;
-          continue;
+      // TODAS las franjas del día, no la primera: con hora de almuerzo un día
+      // son dos franjas (mañana y tarde), igual que en el generador real, que
+      // recorre cada regla. Con `find` la tarde desaparecía en silencio.
+      for (const regla of t.rules.filter((r) => r.dayOfWeek === d.getDay())) {
+        const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
+        const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
+        const apertura = hi * 60 + mi;
+        const cierre = hf * 60 + mf;
+        // Horario flexible (P36): la franja entera es UN bloque abierto y el
+        // paciente pide dentro de ella la hora que quiera. La capacidad es una
+        // suposición de la maqueta —una consulta cada 15 min como techo— hasta
+        // que el backend defina el modo; está anotado en P36.
+        const flexible = t.flexibleHours === true;
+        const dur = flexible ? cierre - apertura : (regla.slotMinutes ?? t.slotMinutes);
+        const paso = flexible ? dur : dur + (regla.gapMinutes ?? 0);
+        const capacidad = flexible ? Math.max(1, Math.floor(dur / 15)) : (regla.capacityPerSlot ?? 1);
+        if (dur <= 0) continue;
+        for (let m = apertura; m + dur <= cierre; m += paso) {
+          const inicio = new Date(d);
+          inicio.setHours(Math.floor(m / 60), m % 60, 0, 0);
+          const id = uuid(`slot-${t.id}-${inicio.toISOString()}`);
+          if (cupos.has(id) || cupos.filtrar((c) => c.resourceId === t.resourceId && c.startAt === inicio.toISOString()).length > 0) {
+            skipped++;
+            continue;
+          }
+          cupos.agregar({
+            id,
+            resourceId: t.resourceId,
+            scheduleTemplateId: t.id,
+            startAt: inicio.toISOString(),
+            endAt: new Date(inicio.getTime() + dur * 60_000).toISOString(),
+            capacity: capacidad,
+            remainingCapacity: capacidad,
+            statusConceptId: ESTADO['ST-ACTIVE']!,
+            serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+          });
+          created++;
         }
-        cupos.agregar({
-          id,
-          resourceId: t.resourceId,
-          scheduleTemplateId: t.id,
-          startAt: inicio.toISOString(),
-          endAt: new Date(inicio.getTime() + dur * 60_000).toISOString(),
-          capacity: regla.capacityPerSlot ?? 1,
-          remainingCapacity: regla.capacityPerSlot ?? 1,
-          statusConceptId: ESTADO['ST-ACTIVE']!,
-          serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
-        });
-        created++;
       }
     }
     return { templateId: t.id, created, skipped };
