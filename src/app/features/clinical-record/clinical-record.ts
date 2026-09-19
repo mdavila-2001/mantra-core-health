@@ -110,6 +110,10 @@ export class ClinicalRecord {
     viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaPaciente');
   private readonly celdaAccion =
     viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaAccion');
+  private readonly celdaDocumento =
+    viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaDocumento');
+  private readonly celdaTelefono =
+    viewChild.required<TemplateRef<{ $implicit: PatientListItem }>>('celdaTelefono');
 
   protected readonly resultados = signal<ViewState<readonly PatientListItem[]>>(loading());
 
@@ -153,7 +157,12 @@ export class ClinicalRecord {
 
   protected readonly columnas = computed<readonly ColumnDef<PatientListItem>[]>(() => [
     { key: 'displayName', header: 'Paciente', priority: 1, cell: this.celdaPaciente() },
-    { key: 'patientCode', header: 'Código', priority: 2 },
+    // Documento y teléfono en lugar del código interno y del identificador del
+    // perfil (propietario, 19/09/2026): un uuid no le dice nada a quien
+    // atiende, y el carnet y el celular son con lo que reconoce y llama a la
+    // persona.
+    { key: 'nationalId', header: 'Documento', priority: 1, cell: this.celdaDocumento() },
+    { key: 'phone', header: 'Teléfono', priority: 2, cell: this.celdaTelefono() },
     // Contra el final de la fila: son las acciones, y una columna de acciones
     // alineada al principio deja un canalón vacío entre el dato y el botón.
     {

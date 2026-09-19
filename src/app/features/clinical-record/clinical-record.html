@@ -104,7 +104,26 @@
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPaciente let-paciente>
   <span class="archivo__nombre">{{ paciente.displayName ?? 'Sin nombre registrado' }}</span>
-  <span class="archivo__id">{{ paciente.profileId }}</span>
+</ng-template>
+
+<!-- El documento y el teléfono, en lugar del código interno y del uuid del
+     perfil (propietario, 19/09/2026). Cuando el dato falta se dice con
+     palabras: un guion suelto se lee como si el dato fuera ese. -->
+<ng-template #celdaDocumento let-paciente>
+  @if (paciente.nationalId) {
+    <span class="archivo__dato">{{ paciente.nationalId }}</span>
+  } @else {
+    <span class="archivo__sin-dato">Sin documento registrado</span>
+  }
+</ng-template>
+
+<ng-template #celdaTelefono let-paciente>
+  @if (paciente.phone; as telefono) {
+    <!-- Enlace `tel:`: en el teléfono del médico, tocarlo llama. -->
+    <a class="archivo__dato" [href]="'tel:' + telefono">{{ telefono }}</a>
+  } @else {
+    <span class="archivo__sin-dato">Sin teléfono registrado</span>
+  }
 </ng-template>
 
 <!-- Las dos acciones de la fila, cada una con SU color y su globo.

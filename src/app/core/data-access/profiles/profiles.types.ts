@@ -415,6 +415,17 @@ export interface PatientListItem {
   readonly personId: string;
   readonly patientCode: string;
   readonly displayName?: string;
+  /**
+   * El documento de identidad y el teléfono, que es lo que el médico usa para
+   * reconocer y llamar a la persona (propietario, 19/09/2026).
+   *
+   * **Opcionales porque hoy sólo los sirve la maqueta de `mockup`.** El
+   * listado de la API todavía no los devuelve (TODO: exponerlos en
+   * `profiles/dto` a partir de `person_identifiers` y del contacto). Donde
+   * falten, la celda lo dice con palabras en vez de dejar el hueco.
+   */
+  readonly nationalId?: string;
+  readonly phone?: string;
   readonly birthDate?: Date;
   readonly personStatusConceptId?: string;
   /**

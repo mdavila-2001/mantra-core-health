@@ -112,6 +112,46 @@ describe('ClinicalRecord', () => {
     expect(html.textContent).not.toContain('Abrir por identificador');
   });
 
+  /**
+   * Propietario, 19/09/2026: el médico no reconoce a nadie por un uuid ni por
+   * el código interno. En su lugar, el carnet y el celular.
+   */
+  it('la tabla muestra documento y teléfono, no el código ni el uuid del perfil', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+    peticion().flush({
+      items: [{ ...PACIENTE, nationalId: '5123456', phone: '+591 70011223' }],
+      count: 1,
+      limit: 25,
+      nextCursor: null,
+    });
+    harness.detectChanges();
+
+    const html = harness.fixture.nativeElement as HTMLElement;
+    const texto = html.textContent ?? '';
+    expect(texto).toContain('5123456');
+    expect(texto).toContain('+591 70011223');
+    expect(texto).not.toContain('PAC-00001');
+    expect(texto).not.toContain('p-001');
+    // El teléfono se puede tocar para llamar desde el móvil.
+    expect(html.querySelector('a[href="tel:+591 70011223"]')).not.toBeNull();
+  });
+
+  it('dice con palabras cuando falta el documento o el teléfono', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+    harness.detectChanges();
+
+    const texto = (harness.fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('Sin documento registrado');
+    expect(texto).toContain('Sin teléfono registrado');
+  });
+
   it('buscar publica el texto en la URL y pide con `q`', async () => {
     resolverCatalogoDeDepartamentosVacio();
 
