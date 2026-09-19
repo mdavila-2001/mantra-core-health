@@ -10,6 +10,10 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { FormBuilder } from './form-builder';
 import type { ChartTemplate } from '../../core/data-access/chart-templates/chart-templates.types';
 import { MAX_CAMPOS_POR_PAGINA } from '../../shared/forms/paginated/paginated-form.types';
+import {
+  FORM_TEMPLATE_PDF_DOWNLOADER,
+  type FormularioParaPdf,
+} from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 const RUTA = '/form-builder';
 
@@ -51,13 +55,24 @@ describe('FormBuilder', () => {
   let harness: RouterTestingHarness;
   let componente: FormBuilder;
   let http: HttpTestingController;
+  /** Lo último que se mandó a descargar, o `null` si nadie bajó nada. */
+  let bajado: FormularioParaPdf | null;
 
   beforeEach(async () => {
+    bajado = null;
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'form-builder', component: FormBuilder }]),
+        // La descarga se sustituye: comprobar qué exporta la pantalla no
+        // debería abrir un PDF real ni arrastrar `jspdf` a este archivo.
+        {
+          provide: FORM_TEMPLATE_PDF_DOWNLOADER,
+          useValue: (datos: FormularioParaPdf) => {
+            bajado = datos;
+          },
+        },
       ],
     });
 
@@ -712,6 +727,54 @@ describe('FormBuilder', () => {
       const html = harness.routeNativeElement?.textContent ?? '';
       expect(html).toContain('Ningún formulario coincide');
       expect(html).not.toContain('Todavía no hay formularios');
+    });
+  });
+  /* ---- bajarse el formulario en papel ------------------------------------- */
+
+  describe('descargar el formulario en PDF', () => {
+    /**
+     * El pedido del propietario: que el doctor se baje el formulario que armó
+     * o editó. Lo que se comprueba es **qué se manda a imprimir**, no cómo se
+     * dibuja: la maquetación tiene sus pruebas en `pdf-export.spec.ts` y el
+     * contenido del papel en `form-template-pdf.spec.ts`.
+     */
+    it('manda a imprimir el formulario abierto, con sus páginas y su conteo de campos', () => {
+      const propio = {
+        ...estandar(4),
+        assignmentId: 'as-4',
+        fieldId: 'f-4',
+        name: 'Fuma',
+        own: true,
+      };
+      abrirPlantilla({ ...PLANTILLA, fields: [...PLANTILLA.fields, propio] });
+
+      interno<() => void>('descargar')();
+
+      expect(bajado).not.toBeNull();
+      expect(bajado?.nombre).toBe('Anamnesis general');
+      expect(bajado?.codigo).toBe('ANAMNESIS');
+      expect(bajado?.camposEstandar).toBe(3);
+      expect(bajado?.camposPropios).toBe(1);
+      // Las páginas son las del motor, no una lista plana: cuatro campos
+      // entran en una sola página.
+      expect(bajado?.paginas.length).toBe(1);
+      expect(bajado?.paginas[0]?.campos.map((campo) => campo.label)).toEqual([
+        'Campo 1',
+        'Campo 2',
+        'Campo 3',
+        'Fuma',
+      ]);
+    });
+
+    it('sin formulario abierto no baja nada', () => {
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([PLANTILLA]);
+      harness.detectChanges();
+
+      interno<() => void>('descargar')();
+
+      expect(bajado).toBeNull();
     });
   });
 });
