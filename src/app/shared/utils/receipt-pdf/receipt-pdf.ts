@@ -2,6 +2,7 @@ import type { jsPDF } from 'jspdf';
 
 import { buildBlocksPdf, campoDeBloque, type PdfBlock } from '../pdf-export/pdf-export';
 import type { DocumentoDeComprobante } from './receipt-pdf.types';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
  * El comprobante interno de pago en PDF (carril FAR-I5), con el molde de los
@@ -93,7 +94,7 @@ function totalDicho(comprobante: DocumentoDeComprobante): string {
   if (comprobante.total === null) {
     return 'Total no disponible: falta algún precio publicado.';
   }
-  return `Total: ${comprobante.total} ${comprobante.moneda ?? ''}`.trim();
+  return `Total: ${withDisplayCurrency(comprobante.total, comprobante.moneda)}`;
 }
 
 function importeDicho(importe: string | null): string {

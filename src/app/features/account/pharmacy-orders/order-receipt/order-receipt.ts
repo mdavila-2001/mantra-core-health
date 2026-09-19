@@ -29,6 +29,7 @@ import { PageHeader } from '../../../../shared/components/organisms/page-header/
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { comprobanteDesdePedido } from '../../../../shared/utils/receipt-pdf/from-pedido';
 import { downloadReceiptPdf } from '../../../../shared/utils/receipt-pdf/receipt-pdf';
+import { displayCurrency } from '../../../../core/money/display-currency';
 
 /** A dónde vuelve quien llegó a un comprobante que no existe. */
 const LISTA_ROUTE = '/my-account/pharmacy-orders';
@@ -54,6 +55,14 @@ const LISTA_ROUTE = '/my-account/pharmacy-orders';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderReceipt {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly route = inject(ActivatedRoute);
   private readonly navigation = inject(NavigationService);

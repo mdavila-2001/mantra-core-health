@@ -43,6 +43,7 @@ import {
 } from '../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { withDisplayCurrency } from '../../core/money/display-currency';
 
 /**
  * Servicios por página. La grilla se arma en una, dos o tres columnas según el
@@ -307,11 +308,9 @@ export class MyServices {
     return Number(servicio.defaultPrice) === 0;
   }
 
-  /** El importe con su unidad, cuando la API pudo resolverla. */
+  /** El importe con la moneda visible («Bs»): ver `display-currency.ts`. */
   protected precio(servicio: ServiceCatalogItem): string {
-    return servicio.currencyCode === undefined
-      ? servicio.defaultPrice
-      : `${servicio.defaultPrice} ${servicio.currencyCode}`;
+    return withDisplayCurrency(servicio.defaultPrice, servicio.currencyCode);
   }
 
   protected editar(servicio: ServiceCatalogItem): void {

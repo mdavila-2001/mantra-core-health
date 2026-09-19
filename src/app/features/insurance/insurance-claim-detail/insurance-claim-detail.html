@@ -162,7 +162,7 @@
            una vez y las cifras quedan limpias para compararse entre sí. -->
       @if (currency(detail.lineBilledTotal)) {
         <p class="claim__legend">
-          Importes en {{ detail.lineBilledTotal.currency?.display }}.
+          Importes en {{ moneda(detail.lineBilledTotal.currency?.display) }}.
         </p>
       }
 

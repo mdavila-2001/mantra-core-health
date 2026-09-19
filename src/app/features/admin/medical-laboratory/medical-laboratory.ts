@@ -62,6 +62,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import type { TarifarioDeLaUnidad } from './medical-laboratory.types';
 import { TarifariosRecordados } from './tarifarios-recordados';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
  * El mismo concepto, dicho de las dos maneras en que puede llegar.
@@ -661,8 +662,7 @@ export class MedicalLaboratory {
    */
   protected importeDe(precio: DiagnosticUnitAdminPrice): string {
     const monto = precio.patientAmount ?? precio.baseAmount;
-    const moneda = precio.currency?.code;
-    return moneda === undefined ? monto : `${monto} ${moneda}`;
+    return withDisplayCurrency(monto, precio.currency?.code);
   }
 
   protected varianteDe(concepto: DiagnosticConcept | null | undefined): BadgeVariant {

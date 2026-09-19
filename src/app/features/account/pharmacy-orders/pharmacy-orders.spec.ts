@@ -85,7 +85,7 @@ describe('PharmacyOrders', () => {
     expect(texto()).toContain('Farmacia Andina · Sucursal Centro');
     expect(texto()).toContain('Retiro en la farmacia');
     expect(texto()).toContain('Enviado');
-    expect(texto()).toContain('68.00 BOB');
+    expect(texto()).toContain('68.00 Bs');
   });
 
   it('el estado llega mapeado a palabras del sistema, jamás como código ni uuid', () => {

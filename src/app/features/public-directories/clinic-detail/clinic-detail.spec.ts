@@ -96,9 +96,11 @@ describe('ClinicDetail', () => {
     expect(texto).toContain('Clínica Los Olivos');
     expect(texto).toContain('Santa Cruz de la Sierra');
     expect(texto).toContain('Consulta cardiológica');
-    expect(texto).toContain('CONS-CARDIO');
-    // Con coma decimal, como el resto de los importes del producto.
-    expect(texto).toContain('250,00 BOB');
+    // El código del nomenclador no se pinta (19/09/2026): no le dice nada a
+    // quien busca dónde atenderse, y sigue viajando en el dato.
+    expect(texto).not.toContain('CONS-CARDIO');
+    // Con coma decimal y en «Bs», la moneda visible de todo el producto.
+    expect(texto).toContain('250,00 Bs');
   });
 
   it('no ofrece editar el precio: el catálogo es de la clínica', () => {
@@ -122,7 +124,7 @@ describe('ClinicDetail', () => {
         '[data-testid="clinic-service-price"]',
       ) as NodeListOf<HTMLElement>),
     ].map((celda) => (celda.textContent ?? '').trim());
-    expect(precios).toEqual(['250,00 BOB', 'Sin precio publicado']);
+    expect(precios).toEqual(['250,00 Bs', 'Sin precio publicado']);
   });
 
   it('rotula el servicio dado de baja y no lo esconde', () => {

@@ -110,7 +110,7 @@ describe('PharmacyDetail', () => {
     expect(texto).toContain('Farmacia Vida');
     expect(texto).toContain('Losartán');
     expect(texto).toContain('Losartán Bagó · 50 mg comprimidos');
-    expect(texto).toContain('18,50 BOB');
+    expect(texto).toContain('18,50 Bs');
   });
 
   it('agrupa por grupo terapéutico y deja el resto al final, sin esconderlo', () => {

@@ -93,7 +93,7 @@ describe('OrderPayment', () => {
     montar(pedido());
 
     expect(texto()).toContain('A pagar:');
-    expect(texto()).toContain('60.00 BOB');
+    expect(texto()).toContain('60.00 Bs');
     expect(texto()).toContain('Pagás al retirar, en la farmacia.');
     // Las DOS pestañas existen (gate encendido en dev) y la abierta es la
     // del mostrador: sin esta aserción, un gate roto pasaría en silencio.
