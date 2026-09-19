@@ -89,7 +89,9 @@ test.describe('el panel del médico', () => {
       timeout: 20_000,
     });
     await expect(page.getByRole('button', { name: 'Guardar mi horario' })).toBeVisible();
-    await expect(page.getByText('Los turnos ya abiertos no se cierran solos')).toBeVisible();
+    // El aviso de «los turnos ya abiertos no se cierran solos» se retiró a
+    // pedido del propietario (19/09/2026), junto con el de alcance.
+    await expect(page.getByText('Los turnos ya abiertos no se cierran solos')).toHaveCount(0);
     await capturar(page, '06-cambiar-mi-horario-precargado');
 
     await page.goto(`${BASE}/schedule/mine`);

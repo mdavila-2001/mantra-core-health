@@ -22,18 +22,6 @@
   color: var(--text-secondary);
 }
 
-/* El aviso de alcance (AC-10-2): siempre visible, con borde propio para que
-   se note como regla y no como texto secundario cualquiera. */
-.agenda-create__alcance {
-  margin: 0 0 var(--sp-4);
-  padding: var(--sp-3) var(--sp-4);
-  border-left: 4px solid var(--st-warning-bd);
-  background: var(--bg-surface-alt);
-  border-radius: var(--r-sm);
-  color: var(--text-primary);
-  font-size: var(--fs-body);
-}
-
 /* Nota de ayuda simple (p.ej. «se crea una agenda aparte»): el mismo tono
    apagado que el resto de las notas de la pantalla. */
 .agenda-create__nota {

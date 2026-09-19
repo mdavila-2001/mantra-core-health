@@ -316,16 +316,12 @@ describe('AgendaCreate', () => {
       expect(martes.duracion).toBe(20);
     });
 
-    it('avisa que los turnos ya abiertos NO se cierran solos', () => {
-      // Es la limitación real de `M41 scheduling`: no hay forma de retirar una
-      // plantilla, así que publicar un cambio agrega el horario nuevo y deja
-      // los cupos del anterior en pie. Callarlo dejaría a alguien atendiendo un
-      // día que creía haber cerrado.
+    it('no muestra avisos arriba del formulario (propietario, 19/09/2026)', () => {
       crearConHorarioVigente(VIGENTE);
 
-      expect(fixture.nativeElement.textContent).toContain(
-        'Los turnos ya abiertos no se cierran solos',
-      );
+      const texto: string = fixture.nativeElement.textContent;
+      expect(texto).not.toContain('Los turnos ya abiertos no se cierran solos');
+      expect(texto).not.toContain('quirúrgicas');
     });
 
     /**

@@ -219,8 +219,6 @@ export class AgendaCreate {
   /** A dónde vuelven «Ver mi agenda» y «Cancelar»: la agenda, que es de donde se vino. */
   protected readonly rutaDeMiAgenda = AGENDA_ROUTE;
 
-  /** Donde se cierran días u horarios; el mes de «Mi agenda» ya sólo se mira. */
-  protected readonly rutaBloqueos = '/schedule/blocks';
   protected readonly uuidError = UUID_ERROR;
   protected readonly dias = DIAS;
 
