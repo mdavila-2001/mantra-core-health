@@ -20,6 +20,7 @@ function aseguradora(extra: Partial<PublicSearchResult> = {}): PublicSearchResul
     // `true`, la tarjeta **no** debe pintarlo.
     hasPublishedAgenda: true,
     nextAvailableDate: '2026-09-10',
+    category: null,
     ...extra,
   };
 }

@@ -32,6 +32,7 @@ describe('agruparPorEspecialidad', () => {
     location: null,
     hasPublishedAgenda: false,
     nextAvailableDate: null,
+    category: null,
   });
 
   it('reúne y ordena los profesionales por su especialidad visible', () => {

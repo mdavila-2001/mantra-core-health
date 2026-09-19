@@ -244,6 +244,9 @@ export function registrarComunidad(router: MockRouter): void {
       ratingAverage: null,
       ratingCount: 0,
       hasPublishedAgenda: false,
+      // Una vitrina recién creada desde «mi perfil» es de un profesional o de
+      // un paciente: ninguno de los dos lleva chip de categoría.
+      categoria: null,
       seguidores: 0,
     };
     const actualizada: VitrinaSimulada = {

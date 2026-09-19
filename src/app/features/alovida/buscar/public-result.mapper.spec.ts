@@ -28,6 +28,7 @@ describe('mapeador de resultados públicos', () => {
       location: null,
       hasPublishedAgenda: false,
       nextAvailableDate: null,
+      category: null,
       ...parcial,
     };
   }

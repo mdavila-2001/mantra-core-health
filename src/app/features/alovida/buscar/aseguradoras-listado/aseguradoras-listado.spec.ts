@@ -77,6 +77,7 @@ function aseguradora(nombre: string, city: string | null): PublicSearchResult {
     location: null,
     hasPublishedAgenda: false,
     nextAvailableDate: null,
+    category: null,
   };
 }
 
@@ -267,5 +268,82 @@ describe('BuscarAseguradorasListado · el lugar en dos pasos (subtarea 2.3)', ()
       expect(pedido.q).toBe('vida');
       expect(Object.keys(pedido)).not.toContain('departamento');
     }
+  });
+});
+
+/* ============================================================================
+    El chip de categoría: el ramo.
+
+    En la misma lista conviven las que cubren salud y las de generales y
+    fianzas, y hasta ahora la única forma de distinguirlas era leer el titular
+    de cada tarjeta. Es la primera pregunta de quien busca un seguro médico.
+    ========================================================================== */
+
+describe('BuscarAseguradorasListado · el chip de categoría', () => {
+  const SALUD = { code: 'seguro-de-salud', label: 'Seguro de salud' };
+  const GENERALES = { code: 'seguros-generales', label: 'Seguros generales y fianzas' };
+
+  function conRamo(
+    nombre: string,
+    city: string,
+    category: { readonly code: string; readonly label: string },
+  ): PublicSearchResult {
+    return { ...aseguradora(nombre, city), category };
+  }
+
+  const CATALOGO: readonly PublicSearchResult[] = [
+    conRamo('Seguros Illimani', 'La Paz', SALUD),
+    conRamo('Nacional Vida', 'El Alto', SALUD),
+    conRamo('Fianzas del Oriente', 'Santa Cruz de la Sierra', GENERALES),
+  ];
+
+  async function montar(parametros: Record<string, string> = {}): Promise<RouterTestingHarness> {
+    const directorio = {
+      searchInsurers: () => of(pagina(CATALOGO, null)),
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([{ path: RUTA, component: BuscarAseguradorasListado }]),
+        { provide: PublicDirectoryClient, useValue: directorio },
+        {
+          provide: BoMunicipalitiesCatalog,
+          useValue: { listar: () => of(RAMAS), olvidar: (): void => undefined },
+        },
+      ],
+    });
+
+    const harness = await RouterTestingHarness.create(direccion(parametros));
+    await harness.fixture.whenStable();
+    harness.fixture.detectChanges();
+    return harness;
+  }
+
+  function chips(harness: RouterTestingHarness): readonly string[] {
+    const pantalla = harness.routeDebugElement!.nativeElement as HTMLElement;
+    return [
+      ...pantalla.querySelectorAll<HTMLElement>('[data-testid="aseguradoras-chip-categoria"]'),
+    ].map((chip) => chip.textContent?.trim() ?? '');
+  }
+
+  function nombres(harness: RouterTestingHarness): readonly string[] {
+    const montada = harness.routeDebugElement!.componentInstance as unknown as {
+      tarjetas: () => readonly { readonly name: string }[];
+    };
+    return montada.tarjetas().map((tarjeta) => tarjeta.name);
+  }
+
+  it('dibuja los ramos que hay, el de más fichas primero', async () => {
+    const harness = await montar();
+
+    expect(chips(harness)).toEqual(['Seguro de salud', 'Seguros generales y fianzas']);
+  });
+
+  it('el ramo de la URL acota la grilla', async () => {
+    const harness = await montar({ categoria: SALUD.code });
+
+    expect(nombres(harness)).toEqual(['Seguros Illimani', 'Nacional Vida']);
+    // Y los dos chips siguen: se puede pasar al otro sin quitar el filtro.
+    expect(chips(harness).length).toBe(2);
   });
 });

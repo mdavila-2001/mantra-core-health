@@ -129,6 +129,40 @@ describe('las instituciones de salud reales portadas al simulador', () => {
     expect(INSTITUCIONES_META.warnings.join(' ')).toContain('coordenadas');
   });
 
+  /* ---- la categoría con la que el directorio acota ----------------------- */
+
+  it('cada institución declara su categoría, y sale del sector y no del nombre', () => {
+    for (const semilla of SEMILLAS_DE_INSTITUCIONES) {
+      expect(semilla.categoria.code).not.toBe('');
+      expect(semilla.categoria.label).not.toBe('');
+    }
+
+    const categoriaDe = (nombre: string): string | undefined =>
+      SEMILLAS_DE_INSTITUCIONES.find((s) => s.displayName.includes(nombre))?.categoria.code;
+
+    // Una caja de la seguridad social no es un hospital público: la planilla
+    // lo declara en `sector`, y el chip lo repite con esas palabras.
+    const cajas = HOSPITALES_REALES.filter((h) => h.sector === 'seguridad_social');
+    expect(cajas.length).toBeGreaterThan(0);
+    for (const caja of cajas) {
+      expect(categoriaDe(caja.name)).toBe('caja-de-salud');
+    }
+
+    // El ramo de la aseguradora, que es lo que separa a las que cubren salud.
+    const sinSalud = ASEGURADORAS_REALES.find((a) => !a.coversHealth);
+    expect(sinSalud).toBeDefined();
+    expect(
+      SEMILLAS_DE_INSTITUCIONES.filter((s) => s.kind === 'INSURER').every((s) =>
+        ['seguro-de-salud', 'seguros-generales'].includes(s.categoria.code),
+      ),
+    ).toBe(true);
+
+    // Las farmacias de la planilla son razones sociales; las que son de una
+    // cadena del corpus caen en su cadena y el resto quedan independientes.
+    expect(categoriaDe('FARMACORP')).toBe('cadena-farmacorp');
+    expect(categoriaDe('FARMACIA NOSTAS')).toBe('farmacia-independiente');
+  });
+
   it('usa los nombres reales y no los inventados que reemplaza', () => {
     const nombres = SEMILLAS_DE_INSTITUCIONES.map((s) => s.displayName).join(' | ');
     // Con el nombre completo: hay un centro de primer nivel real llamado
