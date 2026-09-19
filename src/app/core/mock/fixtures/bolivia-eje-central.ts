@@ -11,6 +11,11 @@ import {
   type SucursalDelCorpus,
 } from './bolivia-eje-central.generated';
 import { avatarSvg, portadaSvg, uuid } from '../mock-store';
+import {
+  CATEGORIA,
+  categoriaDeCadena,
+  type CategoriaSimulada,
+} from './categorias-publicas';
 
 /* ============================================================================
     El corpus «Bolivia Salud · Eje Central», con la forma que piden las
@@ -322,6 +327,16 @@ export interface FarmaciaDelCorpus {
   readonly name: string;
   readonly chainId: string;
   readonly chainName: string;
+  /**
+   * Si el corpus da la cadena por **reconciliada**.
+   *
+   * `farm_economica` no lo está: su `kind` es
+   * `farmacia_cadena_o_nombre_comercial_pendiente_reconciliacion`, o sea que la
+   * fuente dice expresamente que no sabe si esas sucursales son una cadena o
+   * nombres comerciales homónimos. Sus fichas van a «Cadena sin confirmar» y no
+   * a la de «Farmacias Económica», que sería afirmar lo que nadie verificó.
+   */
+  readonly cadenaReconciliada: boolean;
   readonly siteName: string;
   readonly addressText: string | null;
   readonly city: string;
@@ -363,6 +378,7 @@ export const FARMACIAS_DEL_CORPUS: readonly FarmaciaDelCorpus[] = SUCURSALES_DEL
     name: `${cadena.name} · ${sucursal.name}`,
     chainId: cadena.id,
     chainName: cadena.name,
+    cadenaReconciliada: cadena.kind === 'cadena_farmacias',
     siteName: sucursal.name,
     addressText: sucursal.addressText,
     city: sucursal.city,
@@ -399,6 +415,14 @@ export interface SemillaDeVitrina {
   readonly lng: number;
   readonly verified: boolean;
   readonly color: string;
+  /**
+   * Con qué chip se acota dentro del vertical. Ver `categorias-publicas.ts`.
+   *
+   * Obligatoria y no opcional: una vitrina sin categoría es una que el chip
+   * esconde, y la única forma de que eso sea deliberado es que alguien lo
+   * escriba.
+   */
+  readonly categoria: CategoriaSimulada;
 }
 
 /** El titular de un laboratorio: dónde está y en qué trabaja. */
@@ -428,6 +452,10 @@ export const SEMILLAS_DE_VITRINA: readonly SemillaDeVitrina[] = [
     lng: laboratorio.lng,
     verified: laboratorio.verified,
     color: '#4f46e5',
+    /* Los diez del corpus son laboratorios de análisis clínicos: ninguno
+       declara servicios de imagen. El día que el corpus traiga un centro de
+       imagenología, la categoría sale de sus servicios y no de esta constante. */
+    categoria: CATEGORIA.LABORATORIO_CLINICO,
   })),
   ...FARMACIAS_DEL_CORPUS.map((farmacia) => ({
     clave: `corpus-${farmacia.corpusId}`,
@@ -447,6 +475,7 @@ export const SEMILLAS_DE_VITRINA: readonly SemillaDeVitrina[] = [
     lng: farmacia.lng,
     verified: farmacia.vigencia === 'VERIFICADA',
     color: '#16a34a',
+    categoria: categoriaDeCadena(farmacia.chainName, farmacia.cadenaReconciliada),
   })),
 ];
 

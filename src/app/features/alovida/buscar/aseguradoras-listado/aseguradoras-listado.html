@@ -45,6 +45,35 @@
           (input)="alEscribir($any($event.target).value)"
         />
       </label>
+      <!-- La categoría: el ramo. Va antes que el lugar porque una aseguradora
+           de generales y fianzas no cubre salud, y eso no lo arregla tenerla
+           cerca. Con una sola categoría en pantalla no se dibuja: un chip que
+           no acota nada es un botón que miente. -->
+      @if (busqueda.categoriasDisponibles().length > 1) {
+        <div class="centros__chips" role="group" aria-label="Categoría" data-testid="aseguradoras-chips-categoria">
+          <button
+            type="button"
+            class="centros__chip"
+            [class.centros__chip--activo]="busqueda.categoria() === null"
+            [attr.aria-pressed]="busqueda.categoria() === null"
+            (click)="busqueda.elegirCategoria(null)"
+          >
+            Todas las categorías
+          </button>
+          @for (categoria of busqueda.categoriasDisponibles(); track categoria.code) {
+            <button
+              type="button"
+              class="centros__chip"
+              data-testid="aseguradoras-chip-categoria"
+              [class.centros__chip--activo]="busqueda.categoria() === categoria.code"
+              [attr.aria-pressed]="busqueda.categoria() === categoria.code"
+              (click)="busqueda.elegirCategoria(categoria.code)"
+            >
+              {{ categoria.label }}
+            </button>
+          }
+        </div>
+      }
       <!-- Los municipios del departamento elegido. Sin departamento no se dibuja
            ninguno: ofrecer las dos escalas a la vez es hacer dos preguntas para
            una sola decisión. Con uno solo tampoco: no acotaría nada. -->

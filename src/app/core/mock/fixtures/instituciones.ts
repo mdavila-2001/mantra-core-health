@@ -1,5 +1,12 @@
 import { uuid } from '../mock-store';
 import {
+  cadenaPorNombre,
+  CATEGORIA,
+  categoriaDeCadena,
+  type CategoriaSimulada,
+} from './categorias-publicas';
+import { CADENAS_DEL_CORPUS } from './bolivia-eje-central.generated';
+import {
   ASEGURADORAS_REALES,
   CLINICAS_REALES,
   HOSPITALES_REALES,
@@ -55,6 +62,15 @@ export interface SemillaDeInstitucion {
   readonly verified: boolean;
   readonly color: string;
   readonly precision: PrecisionDeInstitucion | MarkdownInstitutionPrecision;
+  /**
+   * Con qué chip se acota dentro del vertical.
+   *
+   * Sale de un campo que la planilla **ya declara** —el sector del hospital, el
+   * ramo de la aseguradora, el nombre comercial de la farmacia—, nunca de leer
+   * el titular que esta misma función acaba de escribir. Ver
+   * `categorias-publicas.ts`.
+   */
+  readonly categoria: CategoriaSimulada;
 }
 
 /** Si el punto es el centro de la ciudad o del municipio y no la dirección publicada. */
@@ -122,6 +138,7 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     verified: false,
     color: '#0f766e',
     precision: clinica.precision,
+    categoria: CATEGORIA.CLINICA_PRIVADA,
   })),
   ...HOSPITALES_REALES.map((hospital) => ({
     clave: `institucion-${hospital.id}`,
@@ -142,6 +159,13 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     verified: false,
     color: '#1d4ed8',
     precision: hospital.precision,
+    /* El sector lo trae la planilla; no se deduce del nombre. Una caja de
+       salud no es un hospital público: atiende a sus asegurados, y quien no lo
+       es no entra — que es justo lo que alguien necesita saber antes de ir. */
+    categoria:
+      hospital.sector === 'seguridad_social'
+        ? CATEGORIA.CAJA_DE_SALUD
+        : CATEGORIA.HOSPITAL_PUBLICO,
   })),
   ...ASEGURADORAS_REALES.map((aseguradora) => ({
     clave: `institucion-${aseguradora.id}`,
@@ -165,6 +189,9 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     verified: false,
     color: '#b45309',
     precision: aseguradora.precision,
+    categoria: aseguradora.coversHealth
+      ? CATEGORIA.SEGURO_DE_SALUD
+      : CATEGORIA.SEGUROS_GENERALES,
   })),
   /* Las farmacias de la planilla del propietario. La planilla no trae su
      dirección, así que el punto es el centro de la ciudad y la ficha lo dice. */
@@ -187,6 +214,7 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     verified: false,
     color: '#16a34a',
     precision: farmacia.precision,
+    categoria: categoriaDeCadena(cadenaPorNombre(farmacia.name, CADENAS_DEL_CORPUS)),
   })),
   /* Los 464 centros de salud de primer nivel de Santa Cruz. Antes quedaban
      afuera «para no llenar el directorio»; el propietario los quiere todos.
@@ -208,6 +236,7 @@ export const SEMILLAS_DE_INSTITUCIONES: readonly SemillaDeInstitucion[] = [
     verified: false,
     color: '#1d4ed8',
     precision: centro.precision,
+    categoria: CATEGORIA.CENTRO_DE_PRIMER_NIVEL,
   })),
 ];
 

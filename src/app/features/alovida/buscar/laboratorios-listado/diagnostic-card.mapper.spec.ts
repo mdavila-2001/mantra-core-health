@@ -18,6 +18,7 @@ function laboratorio(extra: Partial<PublicSearchResult> = {}): PublicSearchResul
     location: null,
     hasPublishedAgenda: true,
     nextAvailableDate: null,
+    category: null,
     ...extra,
   };
 }

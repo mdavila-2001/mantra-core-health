@@ -42,6 +42,63 @@ describe('PublicDirectoryClient', () => {
     generatedAt: '2026-08-17T21:03:50.687Z',
   };
 
+  // ─── La categoría, que la API viva todavía no manda ───────────────────────
+
+  /** Una fila del buscador tal como la sirve hoy la API: **sin** `category`. */
+  const filaSinCategoria = {
+    kind: 'PHARMACY',
+    slug: 'farmacia-vida',
+    displayName: 'Farmacia Vida',
+    headline: null,
+    city: 'Santa Cruz de la Sierra',
+    avatarUrl: null,
+    verified: false,
+    ratingAverage: null,
+    ratingCount: 0,
+    coverUrl: null,
+    address: null,
+    location: null,
+    hasPublishedAgenda: false,
+    nextAvailableDate: null,
+  };
+
+  /**
+   * El contrato público no declara `category` y la API no la manda; el
+   * simulador sí. Sin normalizar, la clave llegaría **sin declarar** mientras
+   * el tipo de la vista promete que está, y `'category' in fila` sería falso
+   * en producción y cierto en la maqueta — el peor de los dos mundos.
+   */
+  it('una fila sin category llega con category en null, no ausente', () => {
+    let fila: Record<string, unknown> | undefined;
+    client.searchPharmacies().subscribe((pagina) => {
+      fila = pagina.items[0] as unknown as Record<string, unknown>;
+    });
+
+    http.expectOne((r) => r.url === '/public/search/pharmacies').flush({
+      ...paginaVacia,
+      items: [filaSinCategoria],
+    });
+
+    expect(fila).toBeDefined();
+    expect('category' in fila!).toBe(true);
+    expect(fila!['category']).toBeNull();
+  });
+
+  it('la categoría que sí viene se conserva tal cual', () => {
+    const category = { code: 'cadena-farmacorp', label: 'Farmacorp' };
+    let fila: Record<string, unknown> | undefined;
+    client.searchPharmacies().subscribe((pagina) => {
+      fila = pagina.items[0] as unknown as Record<string, unknown>;
+    });
+
+    http.expectOne((r) => r.url === '/public/search/pharmacies').flush({
+      ...paginaVacia,
+      items: [{ ...filaSinCategoria, category }],
+    });
+
+    expect(fila!['category']).toEqual(category);
+  });
+
   // ─── Los filtros ausentes no viajan ────────────────────────────────────────
 
   /**

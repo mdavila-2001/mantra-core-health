@@ -73,6 +73,7 @@ function ficha(nombre: string, city: string | null, verified = false): PublicSea
     location: null,
     hasPublishedAgenda: false,
     nextAvailableDate: null,
+    category: null,
   };
 }
 
