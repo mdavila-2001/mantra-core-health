@@ -104,6 +104,42 @@ export interface PublicSearchResult {
    * que no promete nada.
    */
   readonly nextAvailableDate: string | null;
+  /**
+   * Qué **clase** de cosa es este resultado dentro de su vertical.
+   *
+   * El vertical ya lo dice `kind`: esto es el escalón de abajo, el que separa
+   * una clínica privada de una caja de salud, una sucursal de Farmacorp de la
+   * farmacia de la esquina, o un seguro de salud de uno de fianzas. Es la
+   * pregunta que alguien se hace **antes** que la ciudad, y hasta ahora los
+   * directorios no la podían ofrecer porque la fila no la traía: los 65
+   * resultados de farmacias se hojeaban de corrido.
+   *
+   * ## Por qué es `| null` y por qué no pasa nada si siempre lo es
+   *
+   * Porque la API viva todavía **no** la sirve —el simulador sí— y el contrato
+   * público no promete el campo. Un directorio cuyos resultados vuelven todos
+   * con `null` no dibuja la fila de chips, igual que no dibuja los chips de
+   * ciudad cuando el departamento elegido tiene una sola: un filtro que no
+   * acota nada es un botón que miente.
+   *
+   * `code` es la identidad estable —viaja a la URL— y `label` es presentación:
+   * cambia con el idioma y con el catálogo, y por eso no se guarda en el
+   * enlace que alguien pega en un mensaje.
+   */
+  readonly category: PublicCategory | null;
+}
+
+/**
+ * La categoría de un resultado dentro de su vertical: su código estable y cómo
+ * se escribe en pantalla.
+ *
+ * No es un `*ConceptId`: esta superficie es anónima y no reparte identificadores
+ * internos. El código es el del catálogo público —`clinica-privada`,
+ * `caja-de-salud`— y es lo único que viaja a `?categoria=`.
+ */
+export interface PublicCategory {
+  readonly code: string;
+  readonly label: string;
 }
 
 /** Una publicación en la ficha pública. */

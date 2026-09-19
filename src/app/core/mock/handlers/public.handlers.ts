@@ -29,6 +29,10 @@ function resultado(v: VitrinaSimulada) {
     location: { lat: v.lat, lng: v.lng },
     hasPublishedAgenda: v.hasPublishedAgenda,
     nextAvailableDate: v.hasPublishedAgenda ? isoDia(1 + (v.seguidores % 5)) : null,
+    /* La categoría con la que el directorio acota dentro del vertical. La
+       declara cada semilla; acá no se deduce de nada. Ver
+       `fixtures/categorias-publicas.ts`. */
+    category: v.categoria,
   };
 }
 
@@ -320,6 +324,12 @@ export function registrarPublico(router: MockRouter): void {
       slug: m.code.toLowerCase(),
       displayName: `${m.genericName} · ${m.presentations[0]}`,
       headline: m.therapeuticGroup,
+      /* Un medicamento no necesita que le inventen una categoría: el grupo
+         terapéutico **es** su categoría, y ya viaja en el titular. */
+      category: {
+        code: m.therapeuticGroup.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-'),
+        label: m.therapeuticGroup,
+      },
       city: null,
       avatarUrl: null,
       verified: true,

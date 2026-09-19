@@ -2,6 +2,7 @@ import {
   ACCESS_AREAS,
   ACCESS_AREA_TONES,
   buildAccessTree,
+  GRUPOS_FUERA_DEL_ARBOL,
   gruposSinZona,
   MAXIMO_DE_ZONAS,
   SECCIONES_FUERA_DEL_ARBOL,
@@ -76,6 +77,7 @@ describe('buildAccessTree', () => {
     'no pierde ninguna sección de %s por el camino',
     (rol) => {
       const esperadas = seccionesDe([rol])
+        .filter((seccion) => !GRUPOS_FUERA_DEL_ARBOL.includes(seccion.group))
         .map((seccion) => seccion.path)
         .filter((ruta) => !SECCIONES_FUERA_DEL_ARBOL.includes(ruta));
 
@@ -86,6 +88,20 @@ describe('buildAccessTree', () => {
   it('tampoco reparte la misma sección en dos zonas', () => {
     const rutas = rutasRepartidas(['SUPERADMIN']);
     expect(new Set(rutas).size).toBe(rutas.length);
+  });
+
+  /**
+   * Corrección del 19/09/2026 · la zona «Mi cuenta». Lo propio lo abre el
+   * perfil; el panel de trabajo no lo repite ni como zona ni suelto en otra.
+   */
+  it('no ofrece «Mi cuenta»: ni la zona ni sus secciones en otra', () => {
+    const arbol = buildAccessTree(seccionesDe(['PRACTITIONER']));
+
+    expect(arbol.map((zona) => zona.area.label)).not.toContain('Mi cuenta');
+    expect(arbol.flatMap((zona) => zona.sections).filter((s) => s.group === 'Mi cuenta')).toEqual(
+      [],
+    );
+    expect(rutasRepartidas(['PRACTITIONER'])).not.toContain('tutorials');
   });
 
   it('no ofrece el panel dentro del panel', () => {

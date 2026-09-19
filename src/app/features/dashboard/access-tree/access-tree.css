@@ -290,8 +290,7 @@
 
 /* ── Las secciones de la zona ─────────────────────────────────────────────
    9,5rem de mínimo: lo que hay que acomodar es un ícono con su rótulo, no un
-   párrafo. Entran cinco o seis por fila y la zona más cargada —las once de
-   «Mi cuenta»— cabe en dos. */
+   párrafo. Entran cinco o seis por fila y la zona más cargada cabe en dos. */
 .arbol__accesos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
@@ -326,7 +325,7 @@
 
 /* El ícono a tamaño de acción, no de adorno: es lo primero que se busca
    cuando la rejilla se recorre con la vista. Hereda el tono de la zona, así
-   que las once secciones de «Mi cuenta» se leen como un conjunto. */
+   que las secciones de una misma zona se leen como un conjunto. */
 .arbol__acceso-icono {
   display: inline-flex;
   align-items: center;
@@ -377,7 +376,7 @@ a.arbol__acceso:active {
 }
 
 /* ── Saltar de zona ───────────────────────────────────────────────────────
-   Sin esto, ir de «Mi consulta» a «Mi cuenta» son dos clics y un rebote por
+   Sin esto, ir de «Consultas» a «Administración» son dos clics y un rebote por
    la primera pantalla. Con esto es uno, y el árbol se recorre. */
 .arbol__saltos {
   display: flex;

@@ -53,6 +53,7 @@ describe('BusquedaPublica', () => {
       location: null,
       hasPublishedAgenda: false,
       nextAvailableDate: null,
+      category: null,
     };
   }
 
@@ -411,6 +412,7 @@ describe('BusquedaPublica · con corte territorial', () => {
       location: null,
       hasPublishedAgenda: false,
       nextAvailableDate: null,
+      category: null,
     };
   }
 
@@ -577,5 +579,158 @@ describe('BusquedaPublica · con corte territorial', () => {
       expect(Object.keys(llamada)).not.toContain('departamento');
       expect(llamada['city'] ?? '').toBe('');
     }
+  });
+});
+
+/* ============================================================================
+    El corte por categoría.
+
+    Es el chip que faltaba en los directorios públicos: `kind` dice de qué
+    vertical es una ficha, y hasta ahora nada decía **qué** es dentro de él.
+    Como el del lugar, se aplica en memoria sobre el directorio ya traído — el
+    contrato público no acepta el filtro — y por eso sólo se enciende junto con
+    `territorio`, que es lo que hace que el directorio esté entero en memoria.
+    ========================================================================== */
+
+describe('BusquedaPublica · con chip de categoría', () => {
+  const SALUD = { code: 'seguro-de-salud', label: 'Seguro de salud' };
+  const GENERALES = { code: 'seguros-generales', label: 'Seguros generales y fianzas' };
+
+  function pagina(items: readonly PublicSearchResult[]): PublicPage<PublicSearchResult> {
+    return { items, nextCursor: null, totalHint: null, generatedAt: new Date('2026-09-19T00:00:00Z') };
+  }
+
+  function fila(
+    slug: string,
+    category: { readonly code: string; readonly label: string } | null,
+  ): PublicSearchResult {
+    return {
+      kind: 'INSURER',
+      slug,
+      displayName: slug,
+      headline: null,
+      city: null,
+      avatarUrl: null,
+      verified: false,
+      ratingAverage: null,
+      ratingCount: 0,
+      coverUrl: null,
+      address: null,
+      location: null,
+      hasPublishedAgenda: false,
+      nextAvailableDate: null,
+      category,
+    };
+  }
+
+  /** Un corte territorial que no recorta: acá se prueba la otra dimensión. */
+  const TODO_EL_PAIS: CorteTerritorial = {
+    departamentoElegido: signal<string | null>(null),
+    ciudad: signal<string | null>(null),
+    nombreDelDepartamento: signal<string | null>(null),
+    recortar: <T extends FilaConCiudad>(filas: readonly T[]): readonly T[] => filas,
+    ciudades: () => [],
+    cuentaPorDepartamento: () => new Map<string, number>(),
+    sinUbicar: () => 0,
+  };
+
+  async function montar(filas: readonly PublicSearchResult[], url = '/search') {
+    const llamadas: Record<string, unknown>[] = [];
+
+    @Component({ template: '' })
+    class Anfitrion {
+      readonly busqueda = new BusquedaPublica(
+        (filtros) => {
+          llamadas.push({ ...filtros });
+          return of(pagina(filas));
+        },
+        [],
+        { territorio: TODO_EL_PAIS, categorias: true },
+      );
+    }
+
+    TestBed.configureTestingModule({
+      providers: [provideRouter([{ path: 'search', component: Anfitrion }])],
+    });
+    const harness = await RouterTestingHarness.create(url);
+    const busqueda = (harness.routeDebugElement!.componentInstance as Anfitrion).busqueda;
+    return { busqueda, llamadas, harness };
+  }
+
+  it('ofrece las categorías que hay, la que más filas tiene primero', async () => {
+    const { busqueda } = await montar([
+      fila('generales-1', GENERALES),
+      fila('salud-1', SALUD),
+      fila('salud-2', SALUD),
+    ]);
+
+    expect(busqueda.categoriasDisponibles()).toEqual([SALUD, GENERALES]);
+  });
+
+  it('la categoría de `?categoria=` acota la lista', async () => {
+    const { busqueda } = await montar(
+      [fila('salud-1', SALUD), fila('salud-2', SALUD), fila('generales-1', GENERALES)],
+      `/search?categoria=${SALUD.code}`,
+    );
+
+    expect(busqueda.categoria()).toBe(SALUD.code);
+    expect(busqueda.resultados().map((f) => f.slug)).toEqual(['salud-1', 'salud-2']);
+    // El total del rótulo es el de lo filtrado, no el del directorio entero.
+    expect(busqueda.rotuloDePagina()).toBe('2 de 2 · página 1 de 1');
+  });
+
+  it('elegir una categoría no vuelve a pedirle nada al servidor', async () => {
+    // El corte es en memoria: el directorio ya está entero. Volver a pedir
+    // devolvería exactamente las mismas filas y le costaría una vuelta de red
+    // a quien sólo tocó un chip.
+    const { busqueda, llamadas } = await montar([fila('salud-1', SALUD), fila('g-1', GENERALES)]);
+
+    busqueda.elegirCategoria(SALUD.code);
+    await Promise.resolve();
+
+    expect(llamadas.length).toBe(1);
+  });
+
+  it('las opciones no se achican al elegir una', async () => {
+    const { busqueda } = await montar(
+      [fila('salud-1', SALUD), fila('generales-1', GENERALES)],
+      `/search?categoria=${SALUD.code}`,
+    );
+
+    expect(busqueda.categoriasDisponibles().length).toBe(2);
+  });
+
+  it('sin categorías en las filas no ofrece ninguna: es lo que pasa contra la API viva', async () => {
+    const { busqueda } = await montar([fila('una', null), fila('otra', null)]);
+
+    expect(busqueda.categoriasDisponibles()).toEqual([]);
+    expect(busqueda.resultados().length).toBe(2);
+  });
+
+  it('sin encender la opción, el chip no existe aunque las filas traigan categoría', async () => {
+    const llamadas: Record<string, unknown>[] = [];
+
+    @Component({ template: '' })
+    class Anfitrion {
+      readonly busqueda = new BusquedaPublica(
+        (filtros) => {
+          llamadas.push({ ...filtros });
+          return of(pagina([fila('salud-1', SALUD), fila('generales-1', GENERALES)]));
+        },
+        [],
+        { territorio: TODO_EL_PAIS },
+      );
+    }
+
+    TestBed.configureTestingModule({
+      providers: [provideRouter([{ path: 'search', component: Anfitrion }])],
+    });
+    const harness = await RouterTestingHarness.create(`/search?categoria=${SALUD.code}`);
+    const busqueda = (harness.routeDebugElement!.componentInstance as Anfitrion).busqueda;
+
+    expect(busqueda.categoriasDisponibles()).toEqual([]);
+    // Y no acota: una pantalla que no encendió el chip no puede quedar
+    // filtrada por un parámetro que alguien pegó en la URL.
+    expect(busqueda.resultados().length).toBe(2);
   });
 });
