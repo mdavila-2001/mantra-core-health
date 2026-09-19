@@ -97,7 +97,7 @@
       "/insurance/analytics",
       "/insurance/portability"
     ],
-    "target": "http://localhost:3125",
+    "target": "http://localhost:3000",
     "secure": false,
     "changeOrigin": true
   },
@@ -121,7 +121,7 @@
     "context": [
       "/socket.io"
     ],
-    "target": "http://localhost:3125",
+    "target": "http://localhost:3000",
     "secure": false,
     "changeOrigin": true,
     "ws": true

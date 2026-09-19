@@ -38,9 +38,12 @@ import { resolve } from 'node:path';
 const RAIZ = resolve(import.meta.dirname, '..');
 const CARPETA = 'real';
 const EVIDENCIAS = resolve(RAIZ, 'artifacts', CARPETA);
-// El proxy de Angular apunta al puerto host 3125. La API escucha 3000 dentro
-// de su contenedor y el execution set real publica el mapping 3125:3000.
-const API = process.env.E2E_API_URL ?? 'http://localhost:3125';
+// El proxy de Angular apunta al puerto host 3000, que es donde el stack de
+// docker-compose publica la API (`mantra-redesa-api-1`). Antes eran 3125 acá y
+// en `proxy.conf.json`, heredado de un execution set que publicaba el mapping
+// 3125:3000; con el stack de este repo no había nadie escuchando ahí y toda
+// petición moría en el proxy con ECONNREFUSED.
+const API = process.env.E2E_API_URL ?? 'http://localhost:3000';
 const PUERTO_SERVE = process.env.E2E_SERVE_PORT ?? '4200';
 const BASE_URL = `http://localhost:${PUERTO_SERVE}`;
 
