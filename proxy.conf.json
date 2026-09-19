@@ -94,7 +94,8 @@
       "/admin/content-packs",
       "/insurance-plans",
       "/insurance-products",
-      "/insurance/analytics"
+      "/insurance/analytics",
+      "/insurance/portability"
     ],
     "target": "http://localhost:3125",
     "secure": false,
