@@ -52,6 +52,9 @@
               aria-label="Ver mis bloqueos"
               appTooltip="Ver mis bloqueos de agenda"
             >
+              <!-- El mismo candado que en la barra del horario: es la misma
+                 acción, y dos dibujos distintos para ella en la misma pantalla
+                 se leen como dos cosas distintas. -->
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -63,7 +66,8 @@
               >
                 <rect x="3" y="4" width="18" height="17" rx="2" />
                 <path d="M3 9h18M8 2v4M16 2v4" />
-                <path d="m9.5 12.5 5 5M14.5 12.5l-5 5" />
+                <rect x="9" y="14" width="6" height="4.5" rx="1" />
+                <path d="M10.4 14v-1.4a1.6 1.6 0 0 1 3.2 0V14" />
               </svg>
             </a>
             <a
@@ -238,6 +242,7 @@
                     variant="ghost"
                     size="sm"
                     type="button"
+                    class="mi-agenda__accion mi-agenda__accion--aviso"
                     [iconOnly]="true"
                     data-testid="aviso-agotan"
                     aria-label="Advertencia: tus turnos se están por agotar"
@@ -245,6 +250,9 @@
                     [attr.aria-expanded]="avisoAbierto()"
                     (clicked)="alternarAviso()"
                   >
+                    <!-- Triángulo de advertencia y no la «i» de información: lo
+                       que hay detrás es un aviso de que los turnos se agotan, y
+                       el triángulo lo dice sin tener que abrirlo. -->
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
@@ -254,8 +262,10 @@
                       stroke-linejoin="round"
                       aria-hidden="true"
                     >
-                      <circle cx="12" cy="12" r="9" />
-                      <path d="M12 11v5M12 8h.01" />
+                      <path
+                        d="M10.3 3.9 1.9 18.2A2 2 0 0 0 3.6 21.2h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"
+                      />
+                      <path d="M12 9.5v4.5M12 17.5h.01" />
                     </svg>
                   </button>
                   <!-- Oculto y no ausente: el texto sigue en el documento para el
@@ -297,6 +307,7 @@
                 app-button
                 variant="ghost"
                 size="sm"
+                class="mi-agenda__accion mi-agenda__accion--editar"
                 [iconOnly]="true"
                 data-testid="horario-editar"
                 [routerLink]="rutaEditarHorario"
@@ -326,6 +337,7 @@
                 variant="ghost"
                 size="sm"
                 type="button"
+                class="mi-agenda__accion mi-agenda__accion--retirar"
                 [iconOnly]="true"
                 data-testid="horario-retirar"
                 aria-label="Retirar horario"
@@ -353,12 +365,16 @@
                 app-button
                 variant="ghost"
                 size="sm"
+                class="mi-agenda__accion mi-agenda__accion--bloqueos"
                 [iconOnly]="true"
                 data-testid="ver-bloqueos"
                 [routerLink]="rutaBloqueos"
                 aria-label="Ver mis bloqueos"
                 appTooltip="Ver mis bloqueos de agenda"
               >
+                <!-- Candado sobre el calendario, no una cruz: la cruz se lee
+                   «cancelar» y la tenía a un pelo de distancia del calendario
+                   con «+» de al lado. Un candado dice cerrado. -->
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -370,21 +386,26 @@
                 >
                   <rect x="3" y="4" width="18" height="17" rx="2" />
                   <path d="M3 9h18M8 2v4M16 2v4" />
-                  <path d="m9.5 12.5 5 5M14.5 12.5l-5 5" />
+                  <rect x="9" y="14" width="6" height="4.5" rx="1" />
+                  <path d="M10.4 14v-1.4a1.6 1.6 0 0 1 3.2 0V14" />
                 </svg>
               </a>
               <!-- Agendar una cita sin ir a buscar el día: es lo que uno quiere
                  hacer justo después de acordarla en el consultorio. -->
               <a
                 app-button
-                variant="secondary"
+                variant="ghost"
                 size="sm"
+                class="mi-agenda__accion mi-agenda__accion--agendar"
                 [iconOnly]="true"
                 data-testid="agendar-cita"
                 [routerLink]="rutaAgendarCita"
                 aria-label="Agendar una cita"
                 appTooltip="Agendar una cita a un paciente"
               >
+                <!-- El «+» más grande y centrado en la caja del calendario: es
+                   lo único que distingue este ícono del de bloqueos, así que
+                   tiene que verse antes que el marco. -->
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
@@ -396,7 +417,7 @@
                 >
                   <rect x="3" y="4" width="18" height="17" rx="2" />
                   <path d="M3 9h18M8 2v4M16 2v4" />
-                  <path d="M12 12v6M9 15h6" />
+                  <path d="M12 12v6.5M8.75 15.25h6.5" />
                 </svg>
               </a>
             </div>
