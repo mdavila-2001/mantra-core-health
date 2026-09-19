@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MonthView, type BloqueoDelMes } from './month-view';
+import { MonthView, placePopover, type BloqueoDelMes } from './month-view';
 
 const MES = new Date(2026, 7, 1); // agosto de 2026
 
@@ -265,6 +265,37 @@ describe('MonthView', () => {
     const texto = await globoDe(15);
     expect(texto).toContain('2 turnos disponibles');
     expect(filasDelGlobo()).toEqual(['08:00–08:30 Libre', '09:00–09:30 1 de 2 lugares libres']);
+  });
+
+  it('el globo de un día pasado no contradice a la celda: dice lo reservado y que el día ya fue', async () => {
+    // Agosto de 2026 ya pasó: la celda dice «1/2» y el globo, antes, «Sin
+    // turnos disponibles» (propietario, 18/09).
+    montar([cupo(11, 2, 1)]);
+
+    const texto = await globoDe(11);
+    expect(texto).toContain('1 de 2 turnos reservados');
+    expect(texto).toContain('Día pasado: ya no se ofrecen turnos.');
+    expect(texto).not.toContain('Sin turnos disponibles');
+  });
+
+  /** Una caja de día, como la da `getBoundingClientRect`. */
+  function caja(left: number, top: number, width: number, height: number): DOMRect {
+    return { left, top, width, height, right: left + width, bottom: top + height, x: left, y: top } as DOMRect;
+  }
+
+  it('el globo va al costado del día, no encima de la semana siguiente', () => {
+    const dia = caja(500, 100, 140, 60);
+    const lugar = placePopover(dia, { innerWidth: 1280, innerHeight: 800 });
+    expect(lugar.left).toBe(644);
+    expect(lugar.top).toBe(100);
+
+    // Sin lugar a la derecha, a la izquierda.
+    const alBorde = placePopover(caja(1100, 100, 140, 60), { innerWidth: 1280, innerHeight: 800 });
+    expect(alBorde.left).toBe(1100 - 4 - 320);
+
+    // En un teléfono no entra a ningún costado: debajo.
+    const telefono = placePopover(caja(150, 100, 50, 50), { innerWidth: 390, innerHeight: 800 });
+    expect(telefono.top).toBe(154);
   });
 
   it('en horarios, un turno dentro de un bloqueo no se ofrece', async () => {

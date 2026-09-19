@@ -497,15 +497,22 @@ export interface PopoverPlacement {
 }
 
 /**
- * Debajo del día si entra; si no, arriba — el lado con más lugar. Nunca se
- * mide el globo: el alto lo fija `maxHeight` y el resto es scroll, así que la
- * cuenta sale del día y del viewport solos.
+ * Al costado del día —a la derecha, o a la izquierda si no entra—, con el
+ * borde de arriba a la altura del día. Debajo, centrado, tapaba la semana
+ * siguiente: el globo del viernes 11 quedaba encima del viernes 18 y parecía
+ * de ese día (propietario, 18/09). Sólo si no entra a ningún costado —un
+ * teléfono— va debajo o arriba, el lado con más lugar.
+ *
+ * Nunca se mide el globo: el alto lo fija `maxHeight` y el resto es scroll,
+ * así que la cuenta sale del día y del viewport solos.
  */
 export function placePopover(
   cell: DOMRect,
   view: { innerWidth: number; innerHeight: number },
 ): PopoverPlacement {
   const width = Math.min(POPOVER_WIDTH_PX, view.innerWidth - 2 * POPOVER_GUTTER_PX);
+  const beside = besideCell(cell, view, width);
+  if (beside !== null) return beside;
   const centered = cell.left + cell.width / 2 - width / 2;
   const left = Math.max(
     POPOVER_GUTTER_PX,
@@ -528,6 +535,34 @@ export function placePopover(
     left,
     width,
     maxHeight: Math.min(POPOVER_MAX_HEIGHT_PX, above),
+  };
+}
+
+/** Al costado del día, o `null` si a ningún lado entra entero. */
+function besideCell(
+  cell: DOMRect,
+  view: { innerWidth: number; innerHeight: number },
+  width: number,
+): PopoverPlacement | null {
+  const rightEdge = view.innerWidth - POPOVER_GUTTER_PX;
+  let left: number;
+  if (cell.right + POPOVER_GAP_PX + width <= rightEdge) {
+    left = cell.right + POPOVER_GAP_PX;
+  } else if (cell.left - POPOVER_GAP_PX - width >= POPOVER_GUTTER_PX) {
+    left = cell.left - POPOVER_GAP_PX - width;
+  } else {
+    return null;
+  }
+  // Pegado arriba al día, salvo que abajo no quede lugar: entonces sube lo
+  // justo para mostrar el alto mínimo.
+  const bottomEdge = view.innerHeight - POPOVER_GUTTER_PX;
+  const top = Math.max(POPOVER_GUTTER_PX, Math.min(cell.top, bottomEdge - POPOVER_MIN_ROOM_PX));
+  return {
+    top,
+    bottom: null,
+    left,
+    width,
+    maxHeight: Math.min(POPOVER_MAX_HEIGHT_PX, bottomEdge - top),
   };
 }
 
