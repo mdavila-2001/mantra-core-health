@@ -9,12 +9,16 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
+import { map } from 'rxjs';
 
 import { ServicesCatalogClient } from '../../core/data-access/services-catalog/services-catalog.client';
 import type {
   Practice,
   ServiceCatalogItem,
   ServiceCatalogPage,
+  ServiceCatalogQuery,
 } from '../../core/data-access/services-catalog/services-catalog.types';
 import { Input } from '../../shared/components/atoms/input/input';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
@@ -33,6 +37,10 @@ import type { SelectOption } from '../../shared/components/atoms/select/select.t
 import { ServiceIcon } from '../../shared/components/atoms/service-icon/service-icon';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
 import { FormField } from '../../shared/components/molecules/form-field/form-field';
+import {
+  FilterBar,
+  type FilterDef,
+} from '../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 
@@ -120,6 +128,7 @@ const SIN_PRACTICA_ELEGIDA = empty(
   imports: [
     AppButton,
     Badge,
+    FilterBar,
     FormField,
     Input,
     PageHeader,
@@ -143,6 +152,7 @@ const SIN_PRACTICA_ELEGIDA = empty(
 export class MyServices {
   private readonly catalog = inject(ServicesCatalogClient);
   private readonly navigation = inject(NavigationService);
+  private readonly route = inject(ActivatedRoute);
   private readonly toasts = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
@@ -181,10 +191,68 @@ export class MyServices {
   /** Con una sola práctica no hay nada que elegir, y el selector sobra. */
   protected readonly hayQueElegirPractica = computed(() => this.opcionesDePractica().length > 1);
 
+  /* ---- buscador y filtros --------------------------------------------------
+
+     El catálogo de una práctica grande son cientos de servicios apilados de a
+     veinticuatro: sin buscador, encontrar «Holter» es apretar «Cargar más»
+     hasta que aparezca. Los dos criterios los resuelve **el servidor** —`q` e
+     `isActive` ya existen en `GET /billing/service-catalog`—, así que filtrar
+     no es esconder tarjetas ya traídas: es pedir otra lista, y el conteo y el
+     «Cargar más» siguen diciendo la verdad.
+
+     El estado vive en la URL, que es la disciplina de `app-filter-bar` en
+     todos los listados: recargar o compartir el enlace reproduce lo mismo. Se
+     lee de `queryParams` y no del `filtersChanged` de la barra porque ésta
+     sólo avisa cuando ella misma cambia algo, y así un enlace que ya trae
+     `?q=` entra filtrado. */
+
+  private readonly criterios = toSignal(
+    this.route.queryParams.pipe(map((params) => params as Record<string, string>)),
+    { initialValue: {} as Record<string, string> },
+  );
+
+  protected readonly filtros: readonly FilterDef[] = [
+    {
+      key: 'estado',
+      label: 'Estado',
+      options: [
+        { value: 'activos', label: 'Activos' },
+        { value: 'inactivos', label: 'Inactivos' },
+      ],
+    },
+  ];
+
+  /** El texto buscado. Vacío es «sin filtro», no «buscar nada». */
+  private readonly texto = computed(() => this.criterios()['q'] ?? '');
+
+  /** `undefined` = los dos estados, que es lo que pide la pantalla sin filtro. */
+  private readonly soloActivos = computed<boolean | undefined>(() => {
+    const estado = this.criterios()['estado'] ?? '';
+    if (estado === 'activos') return true;
+    if (estado === 'inactivos') return false;
+    return undefined;
+  });
+
+  /** Si hay algo puesto: lo vacío del filtro no es lo vacío del catálogo. */
+  protected readonly hayCriterios = computed(
+    () => this.texto() !== '' || this.soloActivos() !== undefined,
+  );
+
   /* ---- catálogo ------------------------------------------------------------*/
 
   private readonly catalogo = signal<ViewState<readonly ServiceCatalogItem[]>>(loading());
   private readonly cursorSiguiente = signal<string | null>(null);
+
+  /**
+   * Qué lectura es la que vale. No es reactivo: es un sello.
+   *
+   * Con el buscador, dos lecturas de la **misma** práctica pueden estar en
+   * vuelo a la vez —«hol» y «holter»— y terminan en el orden que quiera la
+   * red. Comparar sólo la práctica ya no alcanza: sin este sello, la respuesta
+   * de «hol» pisa a la de «holter» y la pantalla muestra resultados que no
+   * corresponden a lo que quedó escrito.
+   */
+  private lectura = 0;
 
   protected readonly cargandoMas = signal(false);
 
@@ -315,10 +383,13 @@ export class MyServices {
   constructor() {
     this.cargarPracticas();
 
-    // Elegir otra práctica es otro catálogo: lo acumulado era de la anterior y
-    // el cursor sólo sabe seguir aquella lista.
+    // Elegir otra práctica, escribir en el buscador o tocar el filtro son, los
+    // tres, otra lista: se vuelve a la primera página y lo acumulado se
+    // descarta, porque el cursor sólo sabe seguir la lista de la que salió.
     effect(() => {
       this.practicaElegida();
+      this.texto();
+      this.soloActivos();
       untracked(() => this.cargarPrimeraPagina());
     });
   }
@@ -343,17 +414,18 @@ export class MyServices {
       return;
     }
 
+    const lectura = this.lectura;
     this.cargandoMas.set(true);
-    this.catalog.search(practiceId, { limit: SERVICIOS_POR_PAGINA, cursor }).subscribe({
+    this.catalog.search(practiceId, { ...this.consulta(), cursor }).subscribe({
       next: (pagina) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(practiceId, lectura)) {
           return;
         }
         this.cargandoMas.set(false);
         this.apilar(pagina);
       },
       error: (error: unknown) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(practiceId, lectura)) {
           return;
         }
         this.cargandoMas.set(false);
@@ -375,6 +447,7 @@ export class MyServices {
   }
 
   private cargarPrimeraPagina(): void {
+    const lectura = ++this.lectura;
     this.cursorSiguiente.set(null);
     // Una página en vuelo de la práctica anterior ya no cuenta: su respuesta se
     // descarta, y el botón no puede quedarse cargando por ella.
@@ -391,26 +464,53 @@ export class MyServices {
 
     this.catalogo.set(loading());
 
-    this.catalog.search(practiceId, { limit: SERVICIOS_POR_PAGINA }).subscribe({
+    this.catalog.search(practiceId, this.consulta()).subscribe({
       next: (pagina) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(practiceId, lectura)) {
           return;
         }
         this.cursorSiguiente.set(pagina.nextCursor);
         this.catalogo.set(
           pagina.items.length > 0
             ? ready(pagina.items)
-            : empty(SIN_SERVICIOS, 'Esta práctica todavía no tiene servicios en su catálogo.'),
+            : this.vacio(),
         );
       },
       error: (error: unknown) => {
-        if (this.llegoTarde(practiceId)) {
+        if (this.llegoTarde(practiceId, lectura)) {
           return;
         }
         this.cursorSiguiente.set(null);
         this.catalogo.set(errorToViewState<readonly ServiceCatalogItem[]>(error));
       },
     });
+  }
+
+  /** Los parámetros de la lectura: el tope de página más lo que se filtró. */
+  private consulta(): ServiceCatalogQuery {
+    const texto = this.texto();
+    const activos = this.soloActivos();
+    return {
+      limit: SERVICIOS_POR_PAGINA,
+      ...(texto === '' ? {} : { query: texto }),
+      ...(activos === undefined ? {} : { isActive: activos }),
+    };
+  }
+
+  /**
+   * Qué decir cuando no vino nada.
+   *
+   * Con un filtro puesto, «esta práctica todavía no tiene servicios» es falso
+   * —los tiene, ninguno coincide— y manda a pedirle un alta a una cuenta
+   * administradora que no hace falta.
+   */
+  private vacio(): ViewState<readonly ServiceCatalogItem[]> {
+    return this.hayCriterios()
+      ? empty(
+          { label: 'Probá con otra palabra o quitá el filtro.' },
+          'Ningún servicio de esta práctica coincide con lo que buscaste.',
+        )
+      : empty(SIN_SERVICIOS, 'Esta práctica todavía no tiene servicios en su catálogo.');
   }
 
   /**
@@ -420,8 +520,8 @@ export class MyServices {
    * página lenta de la práctica anterior pisa a la que ya se está mirando y la
    * pantalla muestra servicios de otra práctica bajo su nombre.
    */
-  private llegoTarde(practiceId: string): boolean {
-    return this.practicaElegida() !== practiceId;
+  private llegoTarde(practiceId: string, lectura: number): boolean {
+    return this.practicaElegida() !== practiceId || this.lectura !== lectura;
   }
 
   private apilar(pagina: ServiceCatalogPage): void {

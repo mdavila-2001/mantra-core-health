@@ -442,4 +442,63 @@ describe('MyServices', () => {
       expect(texto()).toContain('150.00');
     });
   });
+  /* ---- buscador y filtro de estado ---------------------------------------- */
+
+  describe('buscador y filtro', () => {
+    /** Navega publicando los filtros en la URL, que es como los publica la barra. */
+    async function irA(filtros: Record<string, string>): Promise<void> {
+      const query = new URLSearchParams(filtros).toString();
+      componente = await harness.navigateByUrl(`${RUTA}?${query}`, MyServices);
+      await harness.fixture.whenStable();
+    }
+
+    it('lo escrito viaja como `q` y vuelve a la primera página', async () => {
+      responderPracticas();
+      peticionDelCatalogo().flush(pagina([servicio()]));
+      harness.detectChanges();
+
+      await irA({ q: 'holter' });
+
+      const req = peticionDelCatalogo();
+      expect(req.request.params.get('q')).toBe('holter');
+      expect(req.request.params.get('practiceId')).toBe('pr1');
+      // La primera página de una lista nueva: el cursor de la anterior no vale.
+      expect(req.request.params.get('cursor')).toBeNull();
+      req.flush(pagina([servicio({ id: 's2', name: 'Holter de 24 horas' })]));
+    });
+
+    it('«Inactivos» viaja como `isActive=false`, y sin filtro no viaja nada', async () => {
+      responderPracticas();
+      peticionDelCatalogo().flush(pagina([servicio()]));
+      harness.detectChanges();
+
+      await irA({ estado: 'inactivos' });
+      const conFiltro = peticionDelCatalogo();
+      expect(conFiltro.request.params.get('isActive')).toBe('false');
+      conFiltro.flush(pagina([]));
+      harness.detectChanges();
+
+      await irA({});
+      const sinFiltro = peticionDelCatalogo();
+      // Un opcional presente en `undefined` viaja como clave declarada y el
+      // backend lo rechaza con 400.
+      expect(sinFiltro.request.params.keys().sort()).toEqual(['limit', 'practiceId']);
+      sinFiltro.flush(pagina([servicio()]));
+    });
+
+    it('lo vacío del filtro no se disfraza de catálogo vacío', async () => {
+      responderPracticas();
+      peticionDelCatalogo().flush(pagina([servicio()]));
+      harness.detectChanges();
+
+      await irA({ q: 'inexistente' });
+      peticionDelCatalogo().flush(pagina([]));
+      harness.detectChanges();
+
+      // Decir «esta práctica todavía no tiene servicios» sería falso —los
+      // tiene— y mandaría a pedirle un alta a una cuenta administradora.
+      expect(estado().status).toBe('empty');
+      expect(texto()).toContain('coincide');
+    });
+  });
 });

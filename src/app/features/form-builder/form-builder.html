@@ -203,27 +203,100 @@
       se tocan: son la parte que hace comparable una ficha entre consultorios.
     </p>
 
+    <!-- Buscador y filtros en el MISMO renglón, que es la disciplina de
+         `app-filter-bar` en todos los listados: el texto a la izquierda, el
+         desplegable de especialidad al lado, y debajo los chips. Con más de
+         cuarenta formularios en la rejilla, encontrar el propio sin buscador
+         es leerlos todos. -->
+    <app-filter-bar
+      [filters]="filtros()"
+      searchLabel="Buscar un formulario por nombre, código o especialidad"
+      data-testid="filtros-formularios"
+    />
+
     @if (cargandoListado()) {
       <p class="constructor__vacio">Cargando formularios…</p>
-    } @else if (listado(); as lista) {
+    } @else if (filtrados(); as lista) {
       @if (lista.length === 0) {
-        <app-empty-state
-          title="Todavía no hay formularios estándar"
-          description="Cuando tu organización tenga plantillas por especialidad, aparecen acá."
-        />
+        @if (hayCriterios()) {
+          <!-- Lo vacío del filtro NO es lo vacío del catálogo: decir «todavía
+               no hay formularios» cuando el catálogo está lleno y lo que no
+               coincide es el filtro manda a pedirle a la organización algo que
+               ya tiene. -->
+          <p class="constructor__vacio" role="status" data-testid="sin-coincidencias">
+            Ningún formulario coincide con lo que buscaste. Probá con otra palabra o quitá
+            algún filtro.
+          </p>
+        } @else {
+          <app-empty-state
+            title="Todavía no hay formularios estándar"
+            description="Cuando tu organización tenga plantillas por especialidad, aparecen acá."
+          />
+        }
       } @else {
-        <ul class="constructor__plantillas">
+        <p class="constructor__conteo" role="status" data-testid="conteo-formularios">
+          {{ lista.length }}
+          {{ lista.length === 1 ? 'formulario' : 'formularios' }}
+        </p>
+
+        <!-- La rejilla y la tarjeta salen de `rejilla-de-tarjetas.css`, la
+             misma hoja que pinta «Mis servicios» y las portadas de los
+             directorios: ícono que encabeza, nombre, y debajo el dato que
+             distingue una tarjeta de la de al lado. Antes esta pantalla tenía
+             su propia tarjeta —sin ícono, con el código en grande y sin altura
+             pareja— y se veía como otra aplicación. -->
+        <ul class="rejilla constructor__rejilla" data-testid="plantillas">
           @for (plantilla of lista; track porPlantilla(plantilla)) {
             <li>
               <button
                 type="button"
-                class="constructor__plantilla"
+                class="rejilla__tarjeta constructor__ficha"
                 data-testid="plantilla"
                 [disabled]="cargandoPlantilla()"
                 (click)="abrir(plantilla)"
               >
-                <span class="constructor__plantilla-nombre">{{ plantilla.name }}</span>
-                <span class="constructor__campo-meta">{{ plantilla.code }}</span>
+                <app-specialty-icon
+                  class="rejilla__icono"
+                  [especialidad]="iconoDe(plantilla)"
+                />
+
+                @if (especialidadDe(plantilla); as especialidad) {
+                  <span class="constructor__especialidad">{{ especialidad }}</span>
+                }
+
+                <span class="rejilla__nombre">{{ plantilla.name }}</span>
+
+                <!-- `span` y no `p`: el contenido de un `button` es contenido
+                     de frase, y un párrafo adentro es HTML inválido —el
+                     navegador lo saca del botón y la tarjeta se parte—. -->
+                <span
+                  class="rejilla__dato constructor__codigo-ficha"
+                  [attr.title]="plantilla.code"
+                >
+                  {{ plantilla.code }}
+                </span>
+
+                <!-- El pie queda abajo del todo aunque el nombre ocupe una
+                     línea o tres: es lo que hace que la fila se lea como una
+                     fila y no como tarjetas de alturas distintas. -->
+                <span class="constructor__pie">
+                  <span class="constructor__cifra">
+                    {{ cantidadDeCampos(plantilla) }}
+                    {{ cantidadDeCampos(plantilla) === 1 ? 'campo' : 'campos' }}
+                    @if (cuantosPropios(plantilla) > 0) {
+                      · {{ cuantosPropios(plantilla) }} {{ cuantosPropios(plantilla) === 1 ? 'mío' : 'míos' }}
+                    }
+                  </span>
+                  <span class="constructor__flecha" aria-hidden="true">
+                    <app-nav-icon name="arrow-right" />
+                  </span>
+                </span>
+
+                @if (plantilla.provenance; as origen) {
+                  <span class="constructor__origen" [attr.title]="origen.organization">
+                    {{ origen.organization }}
+                  </span>
+                }
               </button>
             </li>
           }

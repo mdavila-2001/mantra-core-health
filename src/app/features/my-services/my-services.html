@@ -17,6 +17,16 @@
     </app-form-field>
   }
 
+  <!-- Buscador y filtro en el MISMO renglón, igual que en el resto de los
+       listados: el texto a la izquierda, «Estado» al lado. Los dos los
+       resuelve el servidor (`q` e `isActive`), así que el conteo y el «Cargar
+       más» siguen hablando de la lista filtrada y no de otra. -->
+  <app-filter-bar
+    [filters]="filtros"
+    searchLabel="Buscar un servicio por nombre o código"
+    data-testid="my-services-filters"
+  />
+
   <app-view-state-host [state]="estado()" (retry)="recargar()">
     <!-- S2 con la forma de lo que viene: bloques de tarjeta, no renglones de
          texto. Un esqueleto que no se parece al contenido desorienta. -->

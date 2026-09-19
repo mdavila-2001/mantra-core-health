@@ -24,8 +24,12 @@
 
 .glosario__buscador {
   display: block;
-  /* Un campo de texto de mil píxeles no ayuda a escribir «hipertensión». */
-  max-inline-size: 34rem;
+  /* El renglón ya no es sólo el campo de texto: lleva además «Categoría» y
+     «Etiqueta». Con el tope viejo de 34rem los tres entraban apretados y el
+     texto de ejemplo del buscador se cortaba en «Por ejemplo «hiper». Sigue
+     habiendo tope, porque un renglón de mil píxeles tampoco ayuda a escribir
+     «hipertensión». */
+  max-inline-size: 62rem;
 }
 
 /* --- Títulos -------------------------------------------------------------- */

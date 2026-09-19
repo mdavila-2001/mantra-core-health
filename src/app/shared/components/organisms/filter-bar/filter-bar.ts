@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -104,6 +105,24 @@ export class FilterBar {
 
   readonly filters = input<readonly FilterDef[]>([]);
   readonly searchLabel = input<string>('Buscar en el listado');
+
+  /**
+   * El texto de ejemplo dentro del campo. Por omisión, el del átomo.
+   *
+   * No es decoración: en un glosario médico, «Por ejemplo "hipertensión",
+   * "disnea" o "paracetamol"» es lo que dice **por qué datos** se puede buscar,
+   * que es justo lo que un campo vacío rotulado «Buscar» no dice. El rótulo
+   * accesible sigue siendo `searchLabel`.
+   */
+  readonly searchPlaceholder = input<string>('Buscar');
+
+  /**
+   * Si la consulta está viajando. Pone el `app-spinner` del campo.
+   *
+   * Lo sabe quien muestra los resultados, no la barra: ella publica el filtro
+   * en la URL y ahí termina su trabajo.
+   */
+  readonly searchLoading = input(false, { transform: booleanAttribute });
 
   /** Los códigos activos, incluido el término de búsqueda bajo `q`. */
   readonly filtersChanged = output<Readonly<Record<string, string>>>();

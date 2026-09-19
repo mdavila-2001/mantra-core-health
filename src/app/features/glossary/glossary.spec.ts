@@ -31,8 +31,8 @@ import { Glossary } from './glossary';
  * según qué se estaba mirando y el cinturón contra el concepto parcial.
  *
  * Se monta con `RouterTestingHarness` y no con `TestBed.createComponent`
- * porque los filtros viven en la URL: sin un router de verdad, `buscar()`
- * navegaría al vacío y el efecto que recarga no se enteraría nunca.
+ * porque los filtros viven en la URL: los publica `app-filter-bar` navegando, y
+ * sin un router de verdad el efecto que recarga no se enteraría nunca.
  */
 const RUTA = '/glossary';
 
@@ -342,8 +342,7 @@ describe('Glossary', () => {
   it('escribir una búsqueda pide los términos filtrados y no vuelve a pedir el corpus', async () => {
     responderLanding();
 
-    interno<(texto: string) => void>('buscar')('hipertensión');
-    await harness.fixture.whenStable();
+    await irA({ q: 'hipertensión' });
 
     expect(interno<() => boolean>('hayFiltro')()).toBe(true);
 
@@ -382,8 +381,7 @@ describe('Glossary', () => {
   it('el texto y la categoría conviven: elegir una no borra lo que se escribió', async () => {
     responderLanding();
 
-    interno<(texto: string) => void>('buscar')('hiper');
-    await harness.fixture.whenStable();
+    await irA({ q: 'hiper' });
     responderTerminos([]);
 
     await irA({ q: 'hiper', category: 'glossary-category-disease' });
@@ -485,8 +483,7 @@ describe('Glossary', () => {
 
   it('con texto y sin resultados, el vacío nombra el texto que no encontró', async () => {
     responderLanding();
-    interno<(texto: string) => void>('buscar')('inexistente');
-    await harness.fixture.whenStable();
+    await irA({ q: 'inexistente' });
     responderTerminos([]);
 
     const actual = estadoDelCuerpo();
@@ -517,8 +514,7 @@ describe('Glossary', () => {
 
   it('un fallo de red al buscar se traduce a S8, no a una excepción', async () => {
     responderLanding();
-    interno<(texto: string) => void>('buscar')('hiper');
-    await harness.fixture.whenStable();
+    await irA({ q: 'hiper' });
     pedidoDeTerminos().error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
 
     expect(estadoDelCuerpo().status).toBe('offline');
@@ -530,8 +526,7 @@ describe('Glossary', () => {
 
     // Las categorías son la puerta principal, pero no la única forma de llegar
     // a un término: quedarse sin ellas no puede impedir buscar por texto.
-    interno<(texto: string) => void>('buscar')('hiper');
-    await harness.fixture.whenStable();
+    await irA({ q: 'hiper' });
     responderTerminos();
 
     expect(estadoDelCuerpo().status).toBe('ready');
@@ -547,5 +542,60 @@ describe('Glossary', () => {
     // El conteo de la tarjeta lo trae `listValueSets()`, no el corpus: la fila
     // sigue siendo navegable aunque el cuerpo no haya podido leerse.
     expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
+  });
+  /* ---- el filtro de etiqueta ---------------------------------------------- */
+
+  describe('filtro de etiqueta', () => {
+    it('ofrece las etiquetas del corpus, sin repetir y en orden', async () => {
+      responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
+      await harness.fixture.whenStable();
+
+      const filtros = interno<
+        () => readonly { key: string; options: readonly { value: string }[] }[]
+      >('filtros')();
+      expect(filtros.find((f) => f.key === 'tag')?.options.map((o) => o.value)).toEqual([
+        'Arritmia',
+        'Cardiovascular',
+        'Crónico',
+      ]);
+    });
+
+    it('acota lo que ya se está mostrando y no pide nada al servidor', async () => {
+      responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
+      await harness.fixture.whenStable();
+
+      await irA({ tag: 'Arritmia' });
+
+      // Sólo el segundo la lleva. Y no sale ninguna petición: `searchGlossary`
+      // no acepta etiqueta, así que el recorte lo hace la pantalla —lo
+      // comprueba `http.verify()` del afterEach—.
+      expect(interno<() => number>('cantidadVisible')()).toBe(1);
+      expect(textos('.glosario__entrada-enlace')).toEqual(['Bradicardia']);
+    });
+
+    it('si la etiqueta no deja nada, lo dice en vez de quedarse en blanco', async () => {
+      responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
+      await harness.fixture.whenStable();
+
+      await irA({ tag: 'Renal' });
+
+      // El servidor respondió bien y la lista quedó vacía por el recorte de
+      // acá: `app-view-state-host` sigue en «listo» y no dibuja ningún cartel.
+      expect(interno<() => boolean>('sinCoincidencias')()).toBe(true);
+      expect(html().textContent).toContain('Ningún término');
+    });
+
+    it('«Ver todo el glosario» también limpia la etiqueta', async () => {
+      responderLanding([CATEGORIA], [TERMINO, TERMINO_B]);
+      await irA({ tag: 'Arritmia' });
+
+      expect(interno<() => boolean>('hayAlgoPuesto')()).toBe(true);
+
+      interno<() => void>('verTodo')();
+      await harness.fixture.whenStable();
+
+      expect(interno<() => string>('etiquetaElegida')()).toBe('');
+      expect(interno<() => boolean>('hayAlgoPuesto')()).toBe(false);
+    });
   });
 });

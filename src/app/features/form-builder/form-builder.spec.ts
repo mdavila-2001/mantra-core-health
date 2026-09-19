@@ -66,7 +66,19 @@ describe('FormBuilder', () => {
     componente = await harness.navigateByUrl(RUTA, FormBuilder);
   });
 
-  afterEach(() => http.verify());
+  /**
+   * El listado resuelve el rótulo de cada especialidad en una lectura aparte
+   * (`GET /terminology/concepts?ids=`), que ninguna de estas pruebas mira: se
+   * responde vacía acá para que `verify()` siga denunciando lo que sí importa.
+   * Sin rótulos, la pantalla muestra las tarjetas igual y el filtro de
+   * especialidad queda deshabilitado con su motivo.
+   */
+  afterEach(() => {
+    for (const pendiente of http.match((r) => r.url === '/terminology/concepts')) {
+      pendiente.flush({ items: [], count: 0, limit: 0, nextCursor: null });
+    }
+    http.verify();
+  });
 
   function interno<T>(nombre: string): T {
     const valor = (componente as unknown as Record<string, unknown>)[nombre];
@@ -591,5 +603,115 @@ describe('FormBuilder', () => {
     expect(interno<() => string | null>('agarrado')()).toBe('p1');
     interno<(c: unknown, apretado: boolean) => void>('agarrar')(uno, false);
     expect(interno<() => string | null>('agarrado')()).toBeNull();
+  });
+  /* ---- buscador y filtros del catálogo ------------------------------------ */
+
+  describe('buscador y filtros del catálogo', () => {
+    const OTRA: ChartTemplate = {
+      ...PLANTILLA,
+      id: 'tpl-2',
+      specialtyConceptId: 'sp-2',
+      code: 'CARDIO_FICHA_BASE',
+      name: 'Ficha cardiológica',
+      fields: [estandar(4)],
+    };
+
+    /** Navega publicando los filtros en la URL, que es como los publica la barra. */
+    async function irA(filtros: Record<string, string>): Promise<void> {
+      const query = new URLSearchParams(filtros).toString();
+      componente = await harness.navigateByUrl(
+        query === '' ? RUTA : `${RUTA}?${query}`,
+        FormBuilder,
+      );
+      await harness.fixture.whenStable();
+    }
+
+    function listarDos(): void {
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([PLANTILLA, OTRA]);
+      harness.detectChanges();
+    }
+
+    /** Los rótulos de especialidad llegan en una lectura aparte. */
+    function responderEspecialidades(): void {
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({
+        items: [
+          { conceptId: 'sp-1', code: 'GEN', display: 'Medicina general', codeSystemVersionId: 'v1' },
+          { conceptId: 'sp-2', code: 'CARD', display: 'Cardiología', codeSystemVersionId: 'v1' },
+        ],
+        count: 2,
+        limit: 200,
+        nextCursor: null,
+      });
+      harness.detectChanges();
+    }
+
+    function filtrados(): readonly ChartTemplate[] | null {
+      return interno<() => readonly ChartTemplate[] | null>('filtrados')();
+    }
+
+    it('el catálogo se resuelve sin pedir nada más al escribir: filtra lo ya leído', async () => {
+      listarDos();
+      responderEspecialidades();
+
+      await irA({ q: 'cardio' });
+
+      expect(filtrados()?.map((p) => p.code)).toEqual(['CARDIO_FICHA_BASE']);
+      // `http.verify()` del afterEach falla si escribir hubiera pedido una
+      // lista nueva: `GET /charts/templates` no pagina y ya vino entera.
+    });
+
+    it('la búsqueda ignora tildes y encuentra por especialidad y por organismo', async () => {
+      listarDos();
+      responderEspecialidades();
+
+      await irA({ q: 'cardiologia' });
+
+      expect(filtrados()?.map((p) => p.id)).toEqual(['tpl-2']);
+    });
+
+    it('el filtro de especialidad sólo ofrece las que tienen formulario', async () => {
+      listarDos();
+      responderEspecialidades();
+
+      const filtros = interno<() => readonly { key: string; options: readonly unknown[] }[]>(
+        'filtros',
+      )();
+      const especialidad = filtros.find((f) => f.key === 'especialidad');
+      expect(especialidad?.options).toEqual([
+        { value: 'sp-2', label: 'Cardiología' },
+        { value: 'sp-1', label: 'Medicina general' },
+      ]);
+    });
+
+    it('sin rótulos de especialidad el listado sigue en pie, con el filtro sin opciones', () => {
+      listarDos();
+      http
+        .expectOne((r) => r.url === '/terminology/concepts')
+        .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+      harness.detectChanges();
+
+      // Lo que importa: las tarjetas siguen ahí. Perder el rótulo no puede
+      // dejar a nadie sin catálogo.
+      expect(filtrados()?.length).toBe(2);
+      const filtros = interno<() => readonly { key: string; options: readonly unknown[] }[]>(
+        'filtros',
+      )();
+      expect(filtros.find((f) => f.key === 'especialidad')?.options).toEqual([]);
+    });
+
+    it('lo vacío del filtro no es lo vacío del catálogo', async () => {
+      listarDos();
+      responderEspecialidades();
+
+      await irA({ q: 'no-existe-nada-asi' });
+
+      expect(filtrados()).toEqual([]);
+      expect(interno<() => boolean>('hayCriterios')()).toBe(true);
+      const html = harness.routeNativeElement?.textContent ?? '';
+      expect(html).toContain('Ningún formulario coincide');
+      expect(html).not.toContain('Todavía no hay formularios');
+    });
   });
 });

@@ -27,7 +27,10 @@ import type { ViewState } from '../../core/view-state/view-state.types';
 import { Chip } from '../../shared/components/atoms/chip/chip';
 import { Card } from '../../shared/components/molecules/card/card';
 import { Pagination } from '../../shared/components/molecules/pagination/pagination';
-import { SearchField } from '../../shared/components/molecules/search-field/search-field';
+import {
+  FilterBar,
+  type FilterDef,
+} from '../../shared/components/organisms/filter-bar/filter-bar';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import {
@@ -111,11 +114,11 @@ export interface TarjetaDeCategoria {
   imports: [
     Card,
     Chip,
+    FilterBar,
     GlossaryCategoryIcon,
     PageHeader,
     Pagination,
     RouterLink,
-    SearchField,
     ViewStateHost,
   ],
   templateUrl: './glossary.html',
@@ -152,9 +155,27 @@ export class Glossary {
     { initialValue: '' },
   );
 
-  /** Si hay algo que buscar o filtrar. */
+  /**
+   * La etiqueta clínica por la que se está acotando, si hay alguna.
+   *
+   * Es el segundo filtro de la barra. Se resuelve **acá y no en el servidor**
+   * porque `searchGlossary` no acepta etiqueta: acota lo que ya se está
+   * mostrando, que es exactamente lo que los chips de la tarjeta prometen al
+   * decir de qué habla una categoría.
+   */
+  protected readonly etiquetaElegida = toSignal(
+    this.route.queryParamMap.pipe(map((params) => params.get('tag') ?? '')),
+    { initialValue: '' },
+  );
+
+  /** Si hay algo que **el servidor** tenga que filtrar. */
   protected readonly hayFiltro = computed(
     () => this.busqueda() !== '' || this.categoriaCodigo() !== '',
+  );
+
+  /** Si hay algo puesto, incluida la etiqueta, que se resuelve en el cliente. */
+  protected readonly hayAlgoPuesto = computed(
+    () => this.hayFiltro() || this.etiquetaElegida() !== '',
   );
 
   /**
@@ -251,6 +272,40 @@ export class Glossary {
       }));
   });
 
+  /**
+   * Los dos filtros de la barra: la categoría y la etiqueta clínica.
+   *
+   * Las opciones salen del corpus y no de una lista escrita acá: una etiqueta
+   * fija quedaría desactualizada en cuanto el catálogo sume un término, y
+   * ofrecer una que ningún término lleva es prometer un filtro vacío.
+   */
+  protected readonly filtros = computed<readonly FilterDef[]>(() => {
+    const etiquetas = new Set<string>();
+    for (const termino of this.listaDelCorpus()) {
+      for (const etiqueta of termino.tags ?? []) etiquetas.add(etiqueta);
+    }
+
+    return [
+      {
+        key: 'category',
+        label: 'Categoría',
+        options: this.tarjetas().map((tarjeta) => ({
+          value: tarjeta.internalCode,
+          label: tarjeta.name,
+        })),
+        unavailableReason: 'No pudimos leer las categorías del glosario.',
+      },
+      {
+        key: 'tag',
+        label: 'Etiqueta',
+        options: [...etiquetas]
+          .sort((a, b) => a.localeCompare(b, 'es'))
+          .map((etiqueta) => ({ value: etiqueta, label: etiqueta })),
+        unavailableReason: 'Los términos cargados no traen etiquetas.',
+      },
+    ];
+  });
+
   /** La categoría activa resuelta contra el catálogo, o `null` si no hay filtro. */
   protected readonly categoriaActiva = computed<GlossaryTag | null>(() => {
     const codigo = this.categoriaCodigo();
@@ -258,10 +313,15 @@ export class Glossary {
     return this.listaDeCategorias().find((c) => c.internalCode === codigo) ?? null;
   });
 
-  /** Los términos que se están mostrando, ya leídos. */
+  /** Los términos que se están mostrando, ya leídos y ya acotados por etiqueta. */
   private readonly visibles = computed<readonly GlossaryTerm[]>(() => {
     const estado = this.cuerpo();
-    return estado.status === 'ready' ? estado.data : [];
+    const lista = estado.status === 'ready' ? estado.data : [];
+    const etiqueta = this.etiquetaElegida();
+    if (etiqueta === '') return lista;
+    // `?? []` por lo mismo que en `etiquetasPorCategoria`: hubo una época en la
+    // que el backend devolvía el concepto pelado, sin `tags`.
+    return lista.filter((termino) => (termino.tags ?? []).includes(etiqueta));
   });
 
   /** Todos los tramos por inicial, antes de paginar: de acá sale el abecedario. */
@@ -311,6 +371,22 @@ export class Glossary {
   protected readonly cantidadVisible = computed(() => this.visibles().length);
 
   /**
+   * La etiqueta dejó la lista en cero.
+   *
+   * Es un vacío que **no existe del lado del servidor**: la lectura trajo
+   * términos y el recorte lo hizo esta pantalla, así que `app-view-state-host`
+   * sigue en «listo» y no dibuja ningún cartel. Sin esto, combinar «Anatomía»
+   * con «Crónico» dejaba el cuerpo literalmente en blanco, sin una línea que
+   * dijera por qué.
+   */
+  protected readonly sinCoincidencias = computed(
+    () =>
+      this.cuerpo().status === 'ready' &&
+      this.etiquetaElegida() !== '' &&
+      this.cantidadVisible() === 0,
+  );
+
+  /**
    * Cuántas de las entradas visibles se muestran sin traducir.
    *
    * Se cuenta y se dice en pantalla en vez de disimularlo. Un término sin
@@ -331,6 +407,7 @@ export class Glossary {
     effect(() => {
       this.busqueda();
       this.categoriaCodigo();
+      this.etiquetaElegida();
       untracked(() => this.paginaPedida.set(1));
     });
 
@@ -354,14 +431,9 @@ export class Glossary {
     });
   }
 
-  /** La búsqueda se publica en la URL; el efecto hace el resto. */
-  protected buscar(texto: string): void {
-    this.navegar({ q: texto === '' ? null : texto });
-  }
-
-  /** Vuelve al índice completo: limpia categoría **y** texto. */
+  /** Vuelve al índice completo: limpia categoría, etiqueta **y** texto. */
   protected verTodo(): void {
-    this.navegar({ category: null, q: null });
+    this.navegar({ category: null, q: null, tag: null });
   }
 
   /** Cambia de página y lleva la lectura al principio del cuerpo, no al pie donde quedó. */

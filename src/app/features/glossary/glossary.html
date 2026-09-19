@@ -5,15 +5,20 @@
 />
 
 <div class="glosario">
-  <!-- El campo se nombra solo (publica su propio contexto de control): no va
-       dentro de un app-form-field, o quedarían dos nombres accesibles. -->
-  <app-search-field
+  <!-- Buscador y filtros en el MISMO renglón, que es la disciplina compartida
+       de los listados: el texto a la izquierda y, al lado, «Categoría» y
+       «Etiqueta». La rejilla de abajo sigue siendo el mapa de la enciclopedia
+       —se entra a una categoría tocando su tarjeta—, pero eso no es un filtro
+       a la vista: quien llega buscando «lo de cardiología entre las
+       enfermedades» no tenía dónde decirlo. El estado vive en la URL, así que
+       el desplegable y la tarjeta son dos caminos al mismo `?category=`. -->
+  <app-filter-bar
     class="glosario__buscador"
-    label="Buscar un término"
-    placeholder="Por ejemplo «hipertensión», «disnea» o «paracetamol»"
-    [value]="busqueda()"
-    [loading]="cargando()"
-    (searched)="buscar($event)"
+    [filters]="filtros()"
+    searchLabel="Buscar un término"
+    searchPlaceholder="Por ejemplo «hipertensión», «disnea» o «paracetamol»"
+    [searchLoading]="cargando()"
+    data-testid="glosario-filtros"
   />
 
   <!-- ── Rejilla de categorías ────────────────────────────────────────────
@@ -90,7 +95,7 @@
         }
       </h2>
 
-      @if (hayFiltro()) {
+      @if (hayAlgoPuesto()) {
         <button type="button" class="glosario__quitar" (click)="verTodo()">
           Ver todo el glosario
         </button>
@@ -145,6 +150,13 @@
             </button>
           }
         </nav>
+      }
+
+      @if (sinCoincidencias()) {
+        <p class="glosario__aviso" role="status" data-testid="glosario-sin-coincidencias">
+          Ningún término de lo que estás mirando lleva la etiqueta «{{ etiquetaElegida() }}».
+          Probá con otra o quitá el filtro.
+        </p>
       }
 
       @for (grupo of grupos(); track grupo.letra) {
