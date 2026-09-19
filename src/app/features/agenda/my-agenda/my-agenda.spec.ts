@@ -99,7 +99,13 @@ describe('MyAgenda', () => {
     conBloqueosDeLaSemana();
   }
 
-  /** Responde la lectura de bloqueos de la semana que la grilla pinta en rojo. */
+  /**
+   * Responde la lectura de bloqueos que la grilla pinta en rojo (AC-C3-02).
+   *
+   * Con `match` y no `expectOne`: la pantalla la dispara cada vez que relee la
+   * plantilla —reactivar o retirar un horario lo hace—, así que un test que
+   * recarga deja dos en vuelo y `expectOne` fallaría por la segunda.
+   */
   function conBloqueosDeLaSemana(items: unknown[] = []): void {
     for (const req of http.match((r) => r.url === '/scheduling/resources/res-1/exceptions')) {
       req.flush({ items, count: items.length });
@@ -130,6 +136,51 @@ describe('MyAgenda', () => {
     });
     fixture.detectChanges();
   }
+
+  /* -- El selector de cuánto día se ve en la grilla (AC-C3-01) ------------- */
+
+  it('ofrece elegir entre el horario de consulta y el día completo', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+    conCuposHasta(new Date('2030-01-01'));
+
+    const consulta: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="grilla-rango-atencion"]',
+    );
+    const completo: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="grilla-rango-completo"]',
+    );
+    expect(consulta, 'falta el selector de rango').not.toBeNull();
+    // El rótulo lleva las horas: «día completo» a secas no dice qué se gana.
+    expect(completo.textContent).toContain('00:00');
+    expect(completo.textContent).toContain('23:59');
+    // Arranca en el día completo, que es lo único que muestra un bloqueo de
+    // madrugada; y el que rige se anuncia, no sólo se pinta.
+    expect(completo.getAttribute('aria-pressed')).toBe('true');
+    expect(consulta.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('elegir «horario de consulta» recorta la grilla, y se puede volver', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 4, startTime: '09:00:00', endTime: '13:00:00' }]);
+    conCuposHasta(new Date('2030-01-01'));
+
+    function filas(): number {
+      return fixture.nativeElement.querySelectorAll('.grilla__hora').length;
+    }
+    expect(filas()).toBe(24);
+
+    fixture.nativeElement.querySelector('[data-testid="grilla-rango-atencion"]').click();
+    fixture.detectChanges();
+    // De 9 a 12:59 — el fin es exclusivo, así que las 13 no cuentan.
+    expect(filas()).toBe(4);
+
+    fixture.nativeElement.querySelector('[data-testid="grilla-rango-completo"]').click();
+    fixture.detectChanges();
+    expect(filas()).toBe(24);
+  });
 
   /* -- La agenda del día: lo que `/schedule` abre por defecto (18/09) -------- */
 

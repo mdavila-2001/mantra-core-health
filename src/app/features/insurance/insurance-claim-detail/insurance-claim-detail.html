@@ -137,7 +137,7 @@
         }
       </section>
     } @else {
-      <app-alert variant="info">
+      <app-alert tone="info">
         La aseguradora todavía no dictaminó esta solicitud.
       </app-alert>
     }
@@ -150,7 +150,7 @@
         <!-- Un descuadre entre lo declarado y la suma de los ítems es
              exactamente lo que alguien tiene que ver. No se redondea para que
              cierre. -->
-        <app-alert variant="warning" data-testid="claim-total-mismatch">
+        <app-alert tone="warning" data-testid="claim-total-mismatch">
           El monto declarado ({{ money(detail.header.billedTotal) }}) no coincide
           con la suma de los ítems ({{ money(detail.lineBilledTotal) }}).
         </app-alert>
@@ -189,26 +189,51 @@
                 <td>{{ line.lineSequence }}</td>
                 <td>{{ line.service?.display ?? 'Sin prestación registrada' }}</td>
                 <td>
-                  <!-- El id es un botón con globo de resumen. El globo se
-                       cuelga del `<body>` y se abre con el puntero **y** con el
-                       foco del teclado: la directiva ya resuelve las dos
-                       cosas, así que no queda recortado por el scroll de la
-                       tabla ni empuja las filas vecinas. -->
-                  @if (line.reference) {
-                    <button
-                      type="button"
-                      class="claim__reference"
-                      data-testid="claim-line-reference"
-                      [appTooltip]="referenceSummary(line)"
-                      [attr.aria-label]="'Resumen del documento de origen del ítem ' + line.lineSequence"
-                    >
-                      {{ referenceLabel(line) }}
-                    </button>
-                  } @else {
-                    <!-- Sin documento no hay resumen que abrir: un botón que no
-                         hace nada al tocarlo se lee como una aplicación rota. -->
-                    <span class="claim__absent">Sin documento</span>
-                  }
+                  <div class="claim__denial">
+                    <!-- El id es un botón con globo de resumen. El globo se
+                         cuelga del `<body>` y se abre con el puntero **y** con el
+                         foco del teclado: la directiva ya resuelve las dos
+                         cosas, así que no queda recortado por el scroll de la
+                         tabla ni empuja las filas vecinas. -->
+                    @if (line.reference) {
+                      <button
+                        type="button"
+                        class="claim__reference"
+                        data-testid="claim-line-reference"
+                        [appTooltip]="referenceSummary(line)"
+                        [attr.aria-label]="'Resumen del documento de origen del ítem ' + line.lineSequence"
+                      >
+                        {{ referenceLabel(line) }}
+                      </button>
+                    } @else {
+                      <!-- Sin documento no hay resumen que abrir: un botón que no
+                           hace nada al tocarlo se lee como una aplicación rota. -->
+                      <span class="claim__absent">Sin documento</span>
+                    }
+
+                    <!-- Antiduplicación de estudios (v4.2.17, T-26, subtarea
+                         3.2): metadatos y justificación, nunca el informe —
+                         eso lo lee sólo el profesional de la misma
+                         organización, no quien factura ni la aseguradora. -->
+                    @if (line.duplicateStudy; as duplicate) {
+                      <button
+                        type="button"
+                        class="claim__reference"
+                        data-testid="badge-duplicate-alert"
+                        [appTooltip]="duplicateSummary(duplicate)"
+                        [attr.aria-label]="
+                          'Posible estudio duplicado del ítem ' +
+                          line.lineSequence +
+                          ', estudio previo hace ' +
+                          duplicate.daysAgo +
+                          ' días'
+                        "
+                      >
+                        <app-badge variant="warning" size="sm">Posible duplicado</app-badge>
+                      </button>
+                      <span class="claim__absent">estudio previo hace {{ duplicate.daysAgo }} días</span>
+                    }
+                  </div>
                 </td>
                 <td class="claim__col-money claim__money">{{ amount(line.billedAmount) }}</td>
                 <td

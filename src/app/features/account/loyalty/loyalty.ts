@@ -1,7 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
-import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/auth/auth.service';
 import {
   LoyaltyClient,
@@ -22,18 +21,11 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
-import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { MIS_PEDIDOS_ROUTE } from '../pharmacy-orders/pharmacy-orders.routes';
 import {
-  DETALLE_DE_COMPRA_SIMULADA,
-  PUNTOS_DE_COMPRA_SIMULADA,
-  promocionActivaDeEjemplo,
-} from './loyalty.fixtures';
-import {
   etiquetaDeMotivo,
-  etiquetaDeMultiplicador,
   movimientoEnPalabras,
   signoDe,
   tonoDeMovimiento,
@@ -49,9 +41,9 @@ type PasoDeLaBilletera = 'saldo' | 'canjear' | 'comprobante';
  *
  * El cliente pidió el módulo aunque el porcentaje por compra sea negociación
  * abierta («pero el módulo tiene que estar disponible»), así que esta pantalla
- * **existe siempre**. Lo que decide `environment.loyaltyDemo` es si hay datos
- * sembrados: apagado, la billetera dice la verdad —que todavía no hay programa
- * activo— en vez de inventar un saldo.
+ * **existe siempre**. Lo que se ve depende de lo que el backend publique: hoy
+ * no hay lecturas de saldo ni de movimientos para el paciente, así que la
+ * billetera dice la verdad en vez de inventar un saldo.
  *
  * ## Qué es real acá
  *
@@ -61,12 +53,13 @@ type PasoDeLaBilletera = 'saldo' | 'canjear' | 'comprobante';
  * simulado es **el código de canje**, porque quien lo escanea —el lado
  * comercio— no existe todavía; por eso su comprobante lleva el chip DEMO.
  *
- * ## La demostración de T-E6
+ * ## De dónde salen los datos (R-T-E6B2)
  *
- * «Simular compra» (F4.3) y la promoción x2 (F4.5) son datos de ejemplo de
- * `loyalty.fixtures.ts`, encendidos con la misma llave que siembra la
- * billetera. La tarjeta de la promoción no enlaza a ninguna parte por la
- * decisión D-T-E6-01: el enlace lo completa T-E7.
+ * Del backend, por HTTP: `GET /loyalty/me` y `GET /loyalty/me/points`, y el
+ * canje por `POST /loyalty/me/points/redeem`. El titular no viaja desde acá:
+ * lo resuelve el servidor con el paciente del token. Sin membresía la lectura
+ * responde `enrolled: false` y la pantalla pinta su vacío, que es un estado
+ * normal y no un error. No hay datos de ejemplo ni «Simular compra».
  *
  * Cero identificadores visibles: lo que se lee es el saldo, el nivel y qué pasó.
  */
@@ -91,26 +84,12 @@ export class Loyalty {
   private readonly loyalty = inject(LoyaltyClient);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
-  private readonly toast = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly nombreDelPrograma = NOMBRE_PROGRAMA_PUNTOS;
 
   /** Sin perfil de paciente no hay membresía propia que mirar. */
   protected readonly sinPerfilDePaciente = this.auth.patientProfileId() === null;
-
-  /**
-   * Si se muestra la demostración de T-E6: simular compra y la promoción x2.
-   *
-   * Es la misma llave que siembra la billetera, pero la pantalla la mira por su
-   * cuenta: apagada, la demostración no aparece aunque llegue una membresía,
-   * porque una promoción sin backend que la honre sería una promesa falsa.
-   */
-  protected readonly demo = environment.loyaltyDemo;
-
-  /** La promoción de ejemplo de la tarjeta (F4.5). */
-  protected readonly promocion = promocionActivaDeEjemplo();
-  protected readonly etiquetaDePromocion = etiquetaDeMultiplicador(this.promocion.factor);
 
   protected readonly membresia = signal<ViewState<Membresia>>(loading());
   protected readonly movimientos = signal<readonly MovimientoDePuntos[]>([]);
@@ -163,6 +142,8 @@ export class Loyalty {
               // La salida es «Mis pedidos»: los puntos nacen de comprar, así
               // que la puerta correcta es donde vive la compra.
               { label: 'Ver mis pedidos', route: MIS_PEDIDOS_ROUTE },
+              // Ahora sí lo sabemos: la lectura real responde `enrolled: false`
+              // cuando la persona no tiene membresía en el programa del tenant.
               `Todavía no hay un programa de ${this.nombreDelPrograma} activo para tu cuenta. Cuando lo haya, vas a sumar puntos con cada compra en las farmacias de la red.`,
             ),
           );
@@ -263,51 +244,6 @@ export class Loyalty {
           );
         },
       });
-  }
-
-  /**
-   * «Simular compra» (F4.3): acredita un monto de ejemplo y lo avisa con un
-   * toast, que es como el cliente pidió enterarse sin que moleste.
-   *
-   * La acreditación pasa por el cliente —el puerto por el que entrará la
-   * real— y no por un saldo propio de la pantalla: una sola fuente. El
-   * movimiento queda arriba porque el ledger se relee desde el principio, igual
-   * que después de canjear.
-   */
-  protected simularCompra(): void {
-    const cuenta = this.cuenta();
-    if (!this.demo || cuenta === null) {
-      return;
-    }
-    this.loyalty
-      .acreditarPorCompra(PUNTOS_DE_COMPRA_SIMULADA, DETALLE_DE_COMPRA_SIMULADA)
-      .subscribe((actualizada) => {
-        // El cliente devuelve la misma billetera cuando no acreditó nada: sin
-        // puntos nuevos no hay nada que avisar.
-        if (actualizada === null || actualizada.saldo === cuenta.saldo) {
-          return;
-        }
-        this.membresia.set(ready(actualizada));
-        this.cargarMovimientos();
-        this.toast.success(
-          `Sumaste ${PUNTOS_DE_COMPRA_SIMULADA} ${this.nombreDelPrograma} por tu compra`,
-        );
-      });
-  }
-
-  /**
-   * El movimiento vino con la promoción de ejemplo y lleva su chip.
-   *
-   * Sólo la compra simulada: el ledger no guarda multiplicadores, así que
-   * marcar cualquier otro movimiento sería inventarle una historia.
-   */
-  protected conMultiplicador(movimiento: MovimientoDePuntos): boolean {
-    return (
-      this.demo &&
-      movimiento.direccion === 'CREDITO' &&
-      movimiento.motivo === 'COMPRA' &&
-      movimiento.detalle === DETALLE_DE_COMPRA_SIMULADA
-    );
   }
 
   /** «1 punto», no «1 puntos», cuando la cifra va destacada aparte. */

@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -13,6 +14,7 @@ import { InsuranceClient } from '../../../core/data-access/insurance/insurance.c
 import type {
   ClaimDetail,
   ClaimLine,
+  ClaimLineDuplicateStudy,
 } from '../../../core/data-access/insurance/insurance.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -81,6 +83,11 @@ import { displayCurrency } from '../../../core/money/display-currency';
     Tooltip,
     ViewStateHost,
   ],
+  // `imports` sólo habilita `| date` en la plantilla; `duplicateSummary()`
+  // arma el texto del globo en esta clase e inyecta `DatePipe` directo, que
+  // necesita el proveedor explícito (NG0201 si falta — visto en el diálogo
+  // de antiduplicación de `DiagnosticsBlock`).
+  providers: [DatePipe],
   templateUrl: './insurance-claim-detail.html',
   styleUrl: './insurance-claim-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -99,6 +106,7 @@ export class InsuranceClaimDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly dialogs = inject(DialogService);
   private readonly toast = inject(ToastService);
+  private readonly datePipe = inject(DatePipe);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -193,6 +201,23 @@ export class InsuranceClaimDetail {
     if (line.referenceType === 'DIAGNOSTIC_STUDY') return 'Estudio';
     if (line.referenceType === 'MEDICATION_DISPENSATION') return 'Dispensación';
     return 'Tipo no registrado';
+  }
+
+  /**
+   * El globo del badge «Posible duplicado» (antiduplicación de estudios,
+   * v4.2.17, T-26, subtarea 3.2): fecha, prestador y la justificación del
+   * médico si repitió el estudio. Nunca el informe en sí — eso es
+   * `duplicateStudy` sin más que metadatos, por diseño (FT-32-R02).
+   *
+   * @param duplicate - El estudio duplicado del ítem.
+   * @returns El texto del globo.
+   */
+  protected duplicateSummary(duplicate: ClaimLineDuplicateStudy): string {
+    const fecha = this.datePipe.transform(duplicate.performedAt, 'd MMM y') ?? '';
+    const base = `Estudio idéntico (${duplicate.studyName}) realizado el ${fecha} en ${duplicate.providerName}.`;
+    return duplicate.reused
+      ? `${base} Reutilizó el informe previo en vez de repetirlo.`
+      : `${base} Justificación médica: ${duplicate.justification ?? 'sin registrar'}`;
   }
 
   /**

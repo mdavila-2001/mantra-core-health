@@ -4,11 +4,14 @@ import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { normalizePatientSettlement } from '../insurance/patient-insurance-settlement.types';
+import { sinNulos, type ConNulos } from '../wire';
 import type {
   DiagnosticOrder,
   DiagnosticOrderCreated,
   DiagnosticReport,
   DiagnosticResultShare,
+  DuplicateStudyCheck,
+  DuplicateStudyCheckResult,
   ImagingStudy,
   LabWorkOrder,
   LabWorkOrderQuery,
@@ -19,6 +22,7 @@ import type {
   PatientDiagnostics,
   PatientOrder,
   PatientOwnOrders,
+  PreviousStudy,
 } from './diagnostics.types';
 
 /**
@@ -151,6 +155,26 @@ export class DiagnosticsClient {
         sinAusentes(orden),
       )
       .pipe(map(toOrderCreated));
+  }
+
+  /**
+   * `POST /clinical/service-requests/duplicate-check` — antiduplicación de
+   * estudios (v4.2.17, T-26). Se llama ANTES de {@link requestStudy}: si
+   * `isDuplicate` es `true`, la ficha tiene que pedirle una decisión al
+   * médico —reutilizar el informe previo o justificar la repetición— y
+   * recién ahí volver a llamar a `requestStudy` con esa decisión.
+   *
+   * @param chequeo - Paciente, estudio y el encuentro en curso.
+   */
+  checkDuplicateStudy(
+    chequeo: DuplicateStudyCheck,
+  ): Observable<DuplicateStudyCheckResult> {
+    return this.http
+      .post<WireDuplicateStudyCheckResult>(
+        this.url('/clinical/service-requests/duplicate-check'),
+        sinAusentes(chequeo),
+      )
+      .pipe(map(toDuplicateStudyCheckResult));
   }
 
   /* ---- el portal del paciente ---------------------------------------------
@@ -328,7 +352,19 @@ function filtrosDeCola(filtros: LabWorkOrderQuery): HttpParams {
 
 type Fechas<T, K extends keyof T> = Omit<T, K> & Partial<Readonly<Record<K, string>>>;
 
-type WireOrder = Omit<DiagnosticOrder, 'createdAt'> & { readonly createdAt: string };
+// `previousDiagnosticReportId`/`duplicateOverrideReason` (antiduplicación,
+// v4.2.17) son columnas nullable: MikroORM hidrata una fila sin valor como
+// `null`, no como propiedad ausente, así que el transporte también viaja con
+// `null` y hay que normalizarlo en `toOrder` — mismo motivo que el resto de
+// este archivo usa `Fechas<T, K>` en vez de confiar en el tipo de la vista.
+type WireOrder = Omit<
+  DiagnosticOrder,
+  'createdAt' | 'previousDiagnosticReportId' | 'duplicateOverrideReason'
+> & {
+  readonly createdAt: string;
+  readonly previousDiagnosticReportId?: string | null;
+  readonly duplicateOverrideReason?: string | null;
+};
 
 type WireReport = Omit<DiagnosticReport, 'createdAt'> & { readonly createdAt: string };
 
@@ -343,8 +379,18 @@ interface WirePatientDiagnostics extends Omit<PatientDiagnostics, 'orders' | 're
   readonly reports: readonly WireReport[];
 }
 
-function toOrder({ createdAt, ...resto }: WireOrder): DiagnosticOrder {
-  return { ...resto, createdAt: new Date(createdAt) };
+function toOrder({
+  createdAt,
+  previousDiagnosticReportId,
+  duplicateOverrideReason,
+  ...resto
+}: WireOrder): DiagnosticOrder {
+  return {
+    ...resto,
+    createdAt: new Date(createdAt),
+    ...(previousDiagnosticReportId == null ? {} : { previousDiagnosticReportId }),
+    ...(duplicateOverrideReason == null ? {} : { duplicateOverrideReason }),
+  };
 }
 
 function toReport({ createdAt, ...resto }: WireReport): DiagnosticReport {
@@ -353,6 +399,75 @@ function toReport({ createdAt, ...resto }: WireReport): DiagnosticReport {
 
 function toOrderCreated({ createdAt, ...resto }: WireOrderCreated): DiagnosticOrderCreated {
   return { ...resto, createdAt: new Date(createdAt) };
+}
+
+/* ---- antiduplicación de estudios, formas de transporte --------------------
+   El backend manda `null` en los opcionales vacíos (previousStudy,
+   warningMessage, y dentro del estudio previo conclusionText/
+   reportDownloadUrl/serviceRequestId), no los omite: se normaliza con
+   `sinNulos`, igual que el resto de los clientes. */
+
+type WirePreviousStudy = ConNulos<Omit<PreviousStudy, 'performedAt'>> & {
+  readonly performedAt: string;
+};
+
+interface WireDuplicateStudyCheckResult
+  extends ConNulos<Omit<DuplicateStudyCheckResult, 'previousStudy'>> {
+  readonly previousStudy: WirePreviousStudy | null;
+}
+
+function toPreviousStudy({ performedAt, ...resto }: WirePreviousStudy): PreviousStudy {
+  return {
+    ...sinNulos<Omit<PreviousStudy, 'performedAt'>>(resto),
+    // `performedAt` no es opcional en el contrato del backend: siempre viene
+    // como texto cuando `previousStudy` no es `null`.
+    performedAt: new Date(performedAt),
+  };
+}
+
+function toDuplicateStudyCheckResult({
+  previousStudy,
+  ...resto
+}: WireDuplicateStudyCheckResult): DuplicateStudyCheckResult {
+  return {
+    ...sinNulos<Omit<DuplicateStudyCheckResult, 'previousStudy'>>(resto),
+    ...(previousStudy === null ? {} : { previousStudy: toPreviousStudy(previousStudy) }),
+  };
+}
+
+/**
+ * Lee `details.previousStudy` de un 422 `DUPLICATE_STUDY_DETECTED` —la carrera
+ * entre el chequeo y el alta (antiduplicación de estudios, T-26): alguien
+ * liberó el informe entre que se mostró «sin duplicado» y que se mandó el
+ * pedido, y el alta lo rechaza con el mismo estudio previo que hubiera dado
+ * el chequeo. Es el único punto fuera de este cliente que necesita decodificar
+ * la forma de transporte de `PreviousStudy`, así que se expone acá en vez de
+ * hacer que quien la usa reimplemente `toPreviousStudy`.
+ *
+ * Devuelve `null` ante cualquier forma inesperada: no vale la pena fabricar un
+ * estudio previo a medias para un diálogo que lo va a mostrar como si fuera
+ * un dato real.
+ */
+export function previousStudyFromErrorDetails(
+  details: Record<string, unknown> | undefined,
+): PreviousStudy | null {
+  const candidato = details?.['previousStudy'];
+  if (typeof candidato !== 'object' || candidato === null) {
+    return null;
+  }
+  const wire = candidato as Partial<WirePreviousStudy>;
+  if (
+    typeof wire.reportId !== 'string' ||
+    typeof wire.studyName !== 'string' ||
+    typeof wire.providerName !== 'string' ||
+    typeof wire.performedAt !== 'string' ||
+    typeof wire.daysAgo !== 'number' ||
+    typeof wire.resultsAvailable !== 'boolean' ||
+    typeof wire.sameOrganization !== 'boolean'
+  ) {
+    return null;
+  }
+  return toPreviousStudy(wire as WirePreviousStudy);
 }
 
 function toWorkOrder({ scheduledAt, completedAt, ...resto }: WireLabWorkOrder): LabWorkOrder {

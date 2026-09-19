@@ -235,7 +235,13 @@ function fichaDe(p: PacienteSimulado) {
   };
 }
 
-function perfilPropioDe(p: PacienteSimulado) {
+/**
+ * Exportada para la portabilidad de póliza (subtarea 3.3): su informe
+ * necesita exactamente los mismos datos del afiliado y las mismas 3
+ * coberturas que ya arma `GET /profiles/patients/me` — reusarla evita un
+ * segundo juego de coberturas de maqueta que se desalinee del primero.
+ */
+export function perfilPropioDe(p: PacienteSimulado) {
   return {
     personId: p.personId,
     patientProfileId: p.id,

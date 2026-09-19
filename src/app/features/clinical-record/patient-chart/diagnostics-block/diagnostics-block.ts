@@ -1,3 +1,5 @@
+import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,15 +14,21 @@ import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
+import {
+  DiagnosticsClient,
+  previousStudyFromErrorDetails,
+} from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type {
   DiagnosticOrder,
   DiagnosticReport,
+  DuplicateStudyCheckResult,
+  NewDiagnosticOrder,
   PatientDiagnostics,
 } from '../../../../core/data-access/diagnostics/diagnostics.types';
 import { SystemContextClient } from '../../../../core/data-access/system-context/system-context.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import { readApiError } from '../../../../core/http/api-error';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -31,6 +39,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 
 /**
  * La columna que gobierna qué se pide.
@@ -79,6 +88,14 @@ const SIN_DATO = '—';
 /** Tope de filas del histórico. Alcanza para la ficha; el detalle vive en su sección. */
 const TOPE = 25;
 
+/**
+ * Antiduplicación de estudios (v4.2.17, T-26): la ventana que aplicó el
+ * detector cuando el 422 de la carrera check→alta no la informa de vuelta.
+ * Es el mismo default que fija `DuplicateStudyDetector` del lado del
+ * servidor — sólo se usa acá para reconstruir el diálogo, nunca para decidir.
+ */
+const DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS = 30;
+
 /** Una orden del histórico, ya sin uuid y con su estado resuelto. */
 export interface EstudioEnFicha {
   readonly id: string;
@@ -90,6 +107,16 @@ export interface EstudioEnFicha {
   readonly pedidoEl: Date;
   /** Si ya hay un informe liberado que cuelgue de esta orden. */
   readonly conResultado: boolean;
+  /**
+   * Antiduplicación de estudios (v4.2.17): `'reused'` si la orden nació
+   * satisfecha por un informe previo (no se llegó a pedir de nuevo),
+   * `'repeated'` si se repitió con justificación clínica, o `null` en
+   * cualquier otro caso. Gobierna qué línea reemplaza a «Sin resultado
+   * todavía» / «Resultado listo» en el histórico.
+   */
+  readonly duplicado: 'reused' | 'repeated' | null;
+  /** La fecha del informe previo. Sólo presente cuando `duplicado === 'reused'`. */
+  readonly informePrevioDel: Date | null;
 }
 
 /**
@@ -138,7 +165,7 @@ export interface EstudioEnFicha {
  */
 @Component({
   selector: 'app-diagnostics-block',
-  imports: [Alert, Card, ConceptSelect, FormActions, FormField],
+  imports: [Alert, Card, ConceptSelect, DatePipe, DuplicateStudyWarningDialog, FormActions, FormField],
   templateUrl: './diagnostics-block.html',
   styleUrl: './diagnostics-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -195,6 +222,25 @@ export class DiagnosticsBlock {
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
 
+  /* -- Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2) ------------ */
+
+  /**
+   * El chequeo previo está en vuelo.
+   *
+   * No alimenta `[pending]` de `FormActions`: ese estado ya gobierna el foco
+   * de las tres pantallas que lo usan, y esta espera es más corta y previa —
+   * mezclarla ahí correría el foco antes de que el diálogo, si aparece, pueda
+   * capturarlo. Se anuncia aparte, con su propio `role="status"`.
+   */
+  protected readonly checkingDuplicate = signal(false);
+
+  /**
+   * El resultado del chequeo cuando encontró un duplicado: monta el diálogo.
+   * `null` significa «sin diálogo abierto», nunca «sin duplicado» — eso lo
+   * dice `isDuplicate` adentro del propio resultado.
+   */
+  protected readonly duplicateCheck = signal<DuplicateStudyCheckResult | null>(null);
+
   /* -- El histórico -------------------------------------------------------- */
 
   protected readonly circuito = signal<ViewState<PatientDiagnostics>>(loading());
@@ -225,7 +271,11 @@ export class DiagnosticsBlock {
         .filter((id): id is string => id !== undefined),
     );
 
-    return state.data.orders.map((orden) => this.aFila(orden, conResultado));
+    // Sólo hace falta para el texto «Satisfecha por el informe del {fecha}»:
+    // el informe previo del paciente casi siempre está en esta misma lectura.
+    const informesPorId = new Map(state.data.reports.map((informe) => [informe.id, informe]));
+
+    return state.data.orders.map((orden) => this.aFila(orden, conResultado, informesPorId));
   });
 
   /**
@@ -267,7 +317,7 @@ export class DiagnosticsBlock {
    * Las cinco condiciones son del contrato o de esta pantalla, ninguna de
    * prudencia: encuentro en curso y categoría elegida (decisiones de acá, las
    * dos explicadas arriba), organización activa y estudio elegido (obligatorios
-   * del DTO), y nada en vuelo.
+   * del DTO), y nada en vuelo —ni el chequeo de duplicidad ni el alta misma—.
    */
   protected readonly puedePedir = computed(
     () =>
@@ -275,7 +325,8 @@ export class DiagnosticsBlock {
       !this.sinOrganizacion() &&
       this.estudio() !== null &&
       this.categoria() !== null &&
-      !this.pidiendo(),
+      !this.pidiendo() &&
+      !this.checkingDuplicate(),
   );
 
   /** El fallo de la escritura, en palabras. */
@@ -342,8 +393,56 @@ export class DiagnosticsBlock {
    * Sin confirmación previa: pedir un laboratorio no sella ni cierra nada, y el
    * paso que sí requiere cuidado —la lectura del resultado— es de otro rol y de
    * otro momento.
+   *
+   * Lo que sí antepone es la antiduplicación (v4.2.17, T-26): antes de
+   * escribir nada se pregunta si el paciente ya se hizo este mismo estudio
+   * hace poco. Sin duplicado, se manda directo. Con duplicado, se abre el
+   * diálogo y el pedido espera la decisión. Si la PREGUNTA misma falla —no si
+   * el pedido falla— no se manda nada: fail closed, el riesgo de un duplicado
+   * silencioso pesa más que la molestia de reintentar.
    */
   protected pedir(): void {
+    const patientProfileId = this.patientProfileId();
+    const codeConceptId = this.estudio();
+    const encounterId = this.encounterId();
+
+    if (codeConceptId === null || encounterId === null || encounterId === '' || !this.puedePedir()) {
+      return;
+    }
+
+    this.checkingDuplicate.set(true);
+    this.registro.set(loading());
+
+    this.diagnostics.checkDuplicateStudy({ patientProfileId, codeConceptId, encounterId }).subscribe({
+      next: (resultado) => {
+        this.checkingDuplicate.set(false);
+        if (resultado.isDuplicate) {
+          this.registro.set(ready(null));
+          this.duplicateCheck.set(resultado);
+          return;
+        }
+        this.submitOrder();
+      },
+      error: (error: unknown) => {
+        this.checkingDuplicate.set(false);
+        this.registro.set(errorToViewState<null>(error));
+      },
+    });
+  }
+
+  /**
+   * Escribe la orden.
+   *
+   * Sin `decision` es el camino directo —sin duplicado—; con ella es lo que
+   * decidió el diálogo de antiduplicación. Nunca `reusePreviousReport` y
+   * `duplicateOverrideReason` a la vez: eso lo separan {@link confirmReuse} y
+   * {@link confirmRepeat}, que arman la decisión cada uno por su lado.
+   */
+  private submitOrder(decision?: {
+    readonly previousDiagnosticReportId: string;
+    readonly reusePreviousReport?: true;
+    readonly duplicateOverrideReason?: string;
+  }): void {
     const patientProfileId = this.patientProfileId();
     const custodianTenantId = this.organizacion();
     const codeConceptId = this.estudio();
@@ -366,36 +465,92 @@ export class DiagnosticsBlock {
     this.pidiendo.set(true);
     this.registro.set(loading());
 
-    this.diagnostics
-      .requestStudy({
-        custodianTenantId,
-        patientProfileId,
-        codeConceptId,
-        categoryConceptId,
-        encounterId,
-        // Los opcionales sin elegir se **omiten**: el backend valida con
-        // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
-        ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
-      })
-      .subscribe({
-        next: () => {
-          this.pidiendo.set(false);
+    const cuerpo: NewDiagnosticOrder = {
+      custodianTenantId,
+      patientProfileId,
+      codeConceptId,
+      categoryConceptId,
+      encounterId,
+      // Los opcionales sin elegir se **omiten**: el backend valida con
+      // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
+      ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
+      ...decision,
+    };
+
+    this.diagnostics.requestStudy(cuerpo).subscribe({
+      next: () => {
+        this.pidiendo.set(false);
+        this.registro.set(ready(null));
+        this.duplicateCheck.set(null);
+        this.limpiar();
+        this.toasts.success(...mensajeDeAlta(decision ?? {}));
+        // Se relee en vez de agregar la fila a mano: un estudio que aparece
+        // porque lo pintamos nosotros y no porque el servidor lo tenga es
+        // exactamente la clase de mentira que el expediente no puede permitirse.
+        this.cargar(patientProfileId);
+      },
+      error: (error: unknown) => {
+        this.pidiendo.set(false);
+        this.handleSubmitError(error);
+      },
+    });
+  }
+
+  /**
+   * La carrera entre el chequeo y el alta: alguien liberó el informe justo
+   * entre medio, y el alta —que vuelve a correr el mismo detector antes de
+   * escribir— rechaza con el mismo `DUPLICATE_STUDY_DETECTED` que hubiera
+   * dado el chequeo. Reabre el diálogo con el estudio que vino en el propio
+   * error, en vez de mandar a pedir el estudio otra vez desde cero.
+   */
+  private handleSubmitError(error: unknown): void {
+    if (error instanceof HttpErrorResponse) {
+      const body = readApiError(error);
+      if (body?.code === 'PRECONDITION_FAILED' && body.details?.['reason'] === 'DUPLICATE_STUDY_DETECTED') {
+        const previousStudy = previousStudyFromErrorDetails(body.details);
+        if (previousStudy !== null) {
           this.registro.set(ready(null));
-          this.limpiar();
-          this.toasts.success(
-            'Queda pedido y vas a verlo acá abajo con su resultado.',
-            'Estudio solicitado',
+          this.duplicateCheck.set({
+            isDuplicate: true,
+            previousStudy,
+            requiresJustification: true,
+            pendingReport: false,
+            // El alta no manda su ventana de vuelta: el default del backend
+            // es el único que puede haber corrido para producir este 422.
+            windowDays: DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
+          });
+          this.toasts.info(
+            'Justo ahora apareció un estudio igual reciente. Revisá la alerta antes de seguir.',
+            'Duplicado detectado',
           );
-          // Se relee en vez de agregar la fila a mano: un estudio que aparece
-          // porque lo pintamos nosotros y no porque el servidor lo tenga es
-          // exactamente la clase de mentira que el expediente no puede permitirse.
-          this.cargar(patientProfileId);
-        },
-        error: (error: unknown) => {
-          this.pidiendo.set(false);
-          this.registro.set(errorToViewState<null>(error));
-        },
-      });
+          return;
+        }
+      }
+    }
+    this.registro.set(errorToViewState<null>(error));
+  }
+
+  /** El diálogo de antiduplicación pidió reutilizar el informe previo. */
+  protected confirmReuse(): void {
+    const previousDiagnosticReportId = this.duplicateCheck()?.previousStudy?.reportId;
+    if (previousDiagnosticReportId === undefined) {
+      return;
+    }
+    this.submitOrder({ previousDiagnosticReportId, reusePreviousReport: true });
+  }
+
+  /** El diálogo de antiduplicación pidió repetir el estudio, con justificación. */
+  protected confirmRepeat(duplicateOverrideReason: string): void {
+    const previousDiagnosticReportId = this.duplicateCheck()?.previousStudy?.reportId;
+    if (previousDiagnosticReportId === undefined) {
+      return;
+    }
+    this.submitOrder({ previousDiagnosticReportId, duplicateOverrideReason });
+  }
+
+  /** Se cerró el diálogo de antiduplicación sin decidir: no se pide nada. */
+  protected closeDuplicateDialog(): void {
+    this.duplicateCheck.set(null);
   }
 
   /** Vacía el formulario tras un pedido. El siguiente arranca limpio. */
@@ -417,7 +572,18 @@ export class DiagnosticsBlock {
   }
 
   /** Una orden traducida a la fila que la ficha muestra. */
-  private aFila(orden: DiagnosticOrder, conResultado: ReadonlySet<string>): EstudioEnFicha {
+  private aFila(
+    orden: DiagnosticOrder,
+    conResultado: ReadonlySet<string>,
+    informesPorId: ReadonlyMap<string, DiagnosticReport>,
+  ): EstudioEnFicha {
+    const duplicado =
+      orden.previousDiagnosticReportId === undefined
+        ? null
+        : orden.duplicateOverrideReason === undefined
+          ? 'reused'
+          : 'repeated';
+
     return {
       id: orden.id,
       estudio: this.etiquetaDe(orden.codeConceptId),
@@ -425,6 +591,11 @@ export class DiagnosticsBlock {
       estado: this.etiquetaDe(orden.statusConceptId),
       pedidoEl: orden.createdAt,
       conResultado: conResultado.has(orden.id),
+      duplicado,
+      informePrevioDel:
+        duplicado === 'reused' && orden.previousDiagnosticReportId !== undefined
+          ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
+          : null,
     };
   }
 
@@ -481,4 +652,25 @@ function conceptosDe(circuito: PatientDiagnostics): readonly string[] {
     ids.push(informe.codeConceptId, informe.lifecycleStatusConceptId);
   }
   return ids;
+}
+
+/**
+ * El toast de éxito, según qué decisión de antiduplicación se mandó (o
+ * ninguna). Devuelve `[mensaje, título]`, el orden que espera
+ * `ToastService.success`.
+ */
+function mensajeDeAlta(decision: {
+  readonly reusePreviousReport?: true;
+  readonly duplicateOverrideReason?: string;
+}): readonly [string, string] {
+  if (decision.reusePreviousReport === true) {
+    return [
+      'Quedó registrado como cubierto por el informe previo. No se pide un estudio nuevo.',
+      'Antiduplicación',
+    ];
+  }
+  if (decision.duplicateOverrideReason !== undefined) {
+    return ['Queda pedido con tu justificación; la aseguradora la va a ver.', 'Estudio solicitado'];
+  }
+  return ['Queda pedido y vas a verlo acá abajo con su resultado.', 'Estudio solicitado'];
 }

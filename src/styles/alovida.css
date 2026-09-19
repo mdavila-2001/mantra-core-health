@@ -713,6 +713,9 @@ app-shell-layout { display: block; }
 .app-side-nav__group-summary.tiene-la-pantalla app-nav-icon { opacity: 1; }
 .app-side-nav__group-cuerpo { display: flex; flex-direction: column; gap: 2px; }
 .app-side-nav__eyebrow { padding: 0; color: inherit; flex: 1 1 auto; }
+/* Acá vivían las reglas del segundo `<details>` —el bloque de cosas parecidas—.
+   Se retiran con él (AC-E1-02): el bloque ya no se dibuja, sólo decide en qué
+   orden salen los destinos que contiene. */
 
 .app-side-nav__item {
   position: relative;

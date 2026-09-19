@@ -90,8 +90,8 @@ export class ShellLayout {
   private readonly breakpoints = inject(Breakpoints);
   private readonly navigation = inject(NavigationService);
   /* El estado de la barra recogida no es de este componente: ya vivía en
-     `ShellService`, con su persistencia y su lectura diferida a después del
-     primer render. Acá se consume, no se reimplementa. */
+     `ShellService`, con su persistencia en `localStorage` y su lectura diferida
+     a después del primer render. Acá se consume, no se reimplementa. */
   private readonly shell = inject(ShellService);
   /* Inyectado, no global: bajo SSR no hay `document` y el armazón se renderiza
      igual en el servidor. */
@@ -238,18 +238,18 @@ export class ShellLayout {
       `Atención`, …). Adentro van los destinos, sueltos.
 
       Hubo un segundo escalón —el bloque de cosas parecidas: «Directorios», «Mi
-      salud»— y se retiró: con él, entrar a una pantalla costaba tres clics y
-      dos caían sobre rótulos que no llevan a ninguna parte. El reparto en
-      bloques sigue vivo en `core/navigation`, pero ahora sólo decide el
+      salud»— y se retiró (AC-E1-02): con él, entrar a una pantalla costaba tres
+      clics y dos caían sobre rótulos que no llevan a ninguna parte. El reparto
+      en bloques sigue vivo en `core/navigation`, pero ahora sólo decide el
       **orden** en que salen los destinos, no un renglón que haya que abrir.
 
       **Lo abierto se calcula, y sólo se recuerda lo que la persona toca.** El
       valor por omisión es «abierto si acá adentro está la pantalla en la que
       estás»: navegar a `/my-account/diagnostic-results` abre «Mi cuenta» sin
       que nadie la despliegue, que es lo que hace que la barra siempre muestre
-      dónde estás parado. Guardar el estado de los cinco dominios desde el
-      arranque haría lo contrario — congelaría el menú tal como quedó en la
-      primera pantalla.
+      dónde estás parado. Guardar el estado de los dominios desde el arranque
+      haría lo contrario — congelaría el menú tal como quedó en la primera
+      pantalla.
      ========================================================================== */
 
   /**
@@ -267,7 +267,7 @@ export class ShellLayout {
   /**
    * Clave estable de un desplegable.
    *
-   * Hoy es el rótulo del dominio y nada más —son cinco y no se repiten—. Sigue
+   * Hoy es el rótulo del dominio y nada más —son pocos y no se repiten—. Sigue
    * siendo una función y no el rótulo suelto en la plantilla porque es el único
    * lugar donde se decide de qué está hecha la clave del mapa de plegados: si
    * mañana hiciera falta prefijarla, se prefija acá y no en cada llamada.
@@ -299,7 +299,7 @@ export class ShellLayout {
   }
 
   /* ==========================================================================
-      La barra recogida
+      La barra recogida (AC-E1-01)
 
       Recogerla deja un carril de íconos: la marca sin su palabra, los destinos
       sueltos con su ícono y el rótulo de cada dominio, también sólo su ícono.
@@ -311,9 +311,9 @@ export class ShellLayout {
       texto y no hace falta duplicarlo en un `aria-label` que podría separarse
       de él. Para quien mira, el nombre vuelve como globo de ayuda.
 
-      El estado vive en `ShellService` —que ya lo persistía— y sólo manda por
-      encima de 900 px: más abajo la barra es un cajón, y recoger un cajón no
-      significa nada.
+      El estado vive en `ShellService` —que ya lo persistía en `localStorage`—
+      y sólo manda por encima de 900 px: más abajo la barra es un cajón, y
+      recoger un cajón no significa nada.
      ========================================================================== */
 
   /**
@@ -322,8 +322,9 @@ export class ShellLayout {
    * Son **dos** preguntas y las dos tienen que decir que sí: que la persona la
    * haya recogido, y que en este ancho exista un carril al que recogerla. Por
    * debajo de 901 px la barra es un cajón sobre el contenido, y un cajón
-   * recogido son ocho íconos sin nombre — que es exactamente lo que pasaba
-   * cuando esto era sólo `shell.isCollapsed`.
+   * recogido son ocho íconos sin nombre — que es exactamente lo que pasaría
+   * con sólo `shell.isCollapsed()`, porque la preferencia se guarda y viaja del
+   * escritorio al teléfono.
    */
   protected readonly navRecogido = computed(
     () => this.shell.isCollapsed() && this.breakpoints.canCollapseNav(),

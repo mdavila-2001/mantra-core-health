@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ScheduleGrid } from './schedule-grid';
+import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid';
 import type { PublishedRule } from '../../../../core/data-access/scheduling/scheduling.types';
 import type { BloqueoDelMes } from '../month-view/month-view';
 
@@ -34,6 +34,7 @@ describe('ScheduleGrid', () => {
       vigencia: string;
       slotMinutes: number;
       bloqueos: readonly BloqueoDelMes[];
+      rango: RangoDeGrilla;
     }> = {},
   ): void {
     TestBed.resetTestingModule();
@@ -41,7 +42,14 @@ describe('ScheduleGrid', () => {
     fixture = TestBed.createComponent(ScheduleGrid);
     fixture.componentRef.setInput('reglas', reglas);
     fixture.componentRef.setInput('semana', entradas.semana ?? MIERCOLES);
-    for (const clave of ['conFechas', 'nombre', 'vigencia', 'slotMinutes', 'bloqueos'] as const) {
+    for (const clave of [
+      'conFechas',
+      'nombre',
+      'vigencia',
+      'slotMinutes',
+      'bloqueos',
+      'rango',
+    ] as const) {
       if (entradas[clave] !== undefined) fixture.componentRef.setInput(clave, entradas[clave]);
     }
     fixture.detectChanges();
@@ -218,6 +226,90 @@ describe('ScheduleGrid', () => {
     fixture.detectChanges();
     const globo = fixture.nativeElement.querySelector('[data-testid="horario-globo"]');
     expect(globo?.textContent).toContain('Tamaño libre');
+  });
+
+  /* -- El selector de rango (AC-C3-01) -------------------------------------- */
+
+  it('con rango «atencion» recorta la grilla a las horas que se atienden', () => {
+    // De 9 a 13 el lunes y de 14 a 18 el miércoles: se dibuja de las 9 a las 17
+    // —el fin es exclusivo, así que las 18 no cuentan—, nueve filas.
+    montar([regla(1, '09:00:00', '13:00:00'), regla(3, '14:00:00', '18:00:00')], {
+      rango: 'atencion',
+    });
+
+    expect(horas()[0]).toBe(9);
+    expect(horas().at(-1)).toBe(17);
+    expect(horas()).toHaveLength(9);
+    expect(fixture.nativeElement.querySelectorAll('.grilla__hora')).toHaveLength(9);
+  });
+
+  it('el rango no cambia qué se atiende, sólo cuánto día se ve', () => {
+    // La misma pregunta, los dos rangos: recortar la grilla no puede volver
+    // atendida una hora que no lo es, ni al revés.
+    for (const rango of ['completo', 'atencion'] as const) {
+      montar([regla(1, '09:00:00', '13:00:00')], { rango });
+      expect(atiende(1, 9), rango).toBe(true);
+      expect(atiende(1, 13), rango).toBe(false);
+    }
+  });
+
+  it('recortado, el bloque se mide contra las horas visibles y no contra el día', () => {
+    // De 9 a 13 sobre una grilla de 9 a 12:59 (4 h = 240 min): el bloque
+    // arranca arriba del todo y ocupa el alto entero. Sobre 24 h ocuparía 17%.
+    montar([regla(1, '09:00:00', '13:00:00')], { rango: 'atencion' });
+
+    const [b] = bloques();
+    expect(parseFloat(b.style.top)).toBeCloseTo(0, 2);
+    expect(parseFloat(b.style.height)).toBeCloseTo(100, 2);
+  });
+
+  it('recortado, el bloqueo se mide igual — y el que queda fuera no se dibuja', () => {
+    // Grilla de 9 a 12:59 (240 min). El bloqueo de 10 a 11 arranca al 25% y
+    // ocupa el 25%; el de las 20:00 cae fuera de la ventana y no se pinta.
+    montar([regla(1, '09:00:00', '13:00:00')], {
+      rango: 'atencion',
+      bloqueos: [
+        {
+          id: 'dentro',
+          desde: new Date(2026, 8, 9, 10, 0),
+          hasta: new Date(2026, 8, 9, 11, 0),
+          motivo: 'Reunión',
+        },
+        {
+          id: 'fuera',
+          desde: new Date(2026, 8, 9, 20, 0),
+          hasta: new Date(2026, 8, 9, 22, 0),
+          motivo: 'Guardia',
+        },
+      ],
+    });
+
+    const pintados = bloqueosPintados();
+    expect(pintados).toHaveLength(1);
+    expect(pintados[0].textContent).toContain('Reunión');
+    expect(parseFloat(pintados[0].style.top)).toBeCloseTo(25, 2);
+    expect(parseFloat(pintados[0].style.height)).toBeCloseTo(25, 2);
+  });
+
+  it('el bloqueo recortado sigue diciendo sus horas reales, no las visibles', () => {
+    // Empieza a las 7 y termina a las 20, y la grilla va de 9 a 13. Lo que se
+    // dibuja es lo que entra; lo que se LEE es cuánto dura de verdad.
+    montar([regla(1, '09:00:00', '13:00:00')], {
+      rango: 'atencion',
+      bloqueos: [
+        {
+          id: 'largo',
+          desde: new Date(2026, 8, 9, 7, 0),
+          hasta: new Date(2026, 8, 9, 20, 0),
+          motivo: null,
+        },
+      ],
+    });
+
+    const [b] = bloqueosPintados();
+    expect(b.textContent).toContain('07:00 – 20:00');
+    expect(parseFloat(b.style.top)).toBeCloseTo(0, 2);
+    expect(parseFloat(b.style.height)).toBeCloseTo(100, 2);
   });
 
   /* -- Los bloqueos, en rojo ------------------------------------------------ */

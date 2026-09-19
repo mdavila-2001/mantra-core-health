@@ -23,7 +23,9 @@
  *     `production` no lo reemplaza, y los defaults no cambiaron;
  *   - el servidor de desarrollo sigue teniendo `proxyConfig`;
  *   - `yarn start:real-api` arranca esa configuración;
- *   - `real-api` declara `mockBackend: false` y los otros dos entornos `true`.
+ *   - `real-api` declara `mockBackend: false` y los otros dos entornos `true`;
+ *   - `real-api` declara `campaignsDemo: false` y `paymentDemo: false`: con la
+ *     API real ninguna demo fabrica campañas ni pagos (MOCKS OFF).
  *
  * Uso: node scripts/check-real-api-config.mjs
  */
@@ -80,6 +82,12 @@ exigir(
   /mockBackend:\s*false/.test(leer('src/environments/environment.real-api.ts')),
   'environment.real-api.ts tiene que declarar mockBackend: false',
 );
+for (const demo of ['campaignsDemo', 'paymentDemo']) {
+  exigir(
+    new RegExp(`\\b${demo}:\\s*false\\b`).test(leer('src/environments/environment.real-api.ts')),
+    `environment.real-api.ts tiene que declarar ${demo}: false`,
+  );
+}
 for (const archivo of [ENTORNO, 'src/environments/environment.development.ts']) {
   exigir(/mockBackend:\s*true/.test(leer(archivo)), `${archivo} tiene que seguir con mockBackend: true`);
 }
@@ -90,5 +98,5 @@ if (errores.length > 0) {
   process.exit(1);
 }
 console.log(
-  '[check-real-api-config] ✓ real-api apaga la maqueta y el SSR; development y production intactos.',
+  '[check-real-api-config] ✓ real-api apaga la maqueta, las demos de campañas y pago, y el SSR; development y production intactos.',
 );

@@ -44,18 +44,13 @@ async function abrirElAlta(page: Page): Promise<void> {
   ).toBeAttached({ timeout: 20_000 });
 }
 
-/** Completa los dos primeros pasos (subtarea 1.1) y llega a «Datos de la aseguradora». */
+/** Completa el primer paso (subtarea 1.1 + códigos desde la sigla) y llega a «Datos de la aseguradora». */
 async function llegarADatosDeAseguradora(page: Page): Promise<void> {
   await page.getByLabel('Nombre de la empresa').fill('Andina Salud S.A.');
+  await page.getByTestId('registro-organizacion-sigla').fill('ANDINA');
   await page
     .getByLabel('Tipo societario')
     .selectOption({ label: 'S.R.L. · Sociedad de Responsabilidad Limitada' });
-  await page.getByTestId('paginated-form-continuar').click();
-
-  await expect(page.locator('.paginated-form__titulo')).toHaveText('Cómo se la identifica');
-  await page.getByTestId('registro-organizacion-codigo').fill('ANDINA-SALUD');
-  await page.getByTestId('registro-organizacion-sigla').fill('AS');
-  await page.getByTestId('registro-organizacion-carrier').fill('CARRIER-AS');
   await page.getByTestId('paginated-form-continuar').click();
 
   await expect(page.locator('.paginated-form__titulo')).toHaveText('Datos de la aseguradora');

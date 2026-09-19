@@ -1,0 +1,42 @@
+<app-card
+  variant="outlined"
+  padding="lg"
+  class="portability-card"
+  data-testid="insurance-portability-card"
+>
+  <h3 card-header>Portabilidad de póliza y siniestros a 1 clic</h3>
+
+  <p class="portability-card__descripcion">
+    ¿Estás evaluando cambiar de aseguradora o necesitás tu histórico oficial? Descargá tu
+    expediente completo de coberturas, atenciones y siniestralidad certificado con firma digital.
+  </p>
+
+  @if (isActingForDependent()) {
+    <app-alert tone="info">
+      La portabilidad es un trámite personal: se exporta tu propio historial, no el de la persona
+      que estás mirando ahora.
+    </app-alert>
+  }
+
+  @if (ownPatientProfileId()) {
+    <div card-footer>
+      <button
+        app-button
+        type="button"
+        data-testid="btn-open-portability-dialog"
+        (clicked)="openDialog()"
+      >
+        Exportar mi historial
+      </button>
+    </div>
+  }
+</app-card>
+
+@if (dialogOpen()) {
+  @if (ownPatientProfileId(); as patientProfileId) {
+    <app-portability-export-dialog
+      [patientProfileId]="patientProfileId"
+      (closed)="closeDialog()"
+    />
+  }
+}

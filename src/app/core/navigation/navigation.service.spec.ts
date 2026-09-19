@@ -411,12 +411,12 @@ describe('NavigationService', () => {
     });
 
     it('sólo «Administración» sigue plegada; los otros cuatro dominios vienen aplanados', () => {
-      // Lo que la barra necesita para no dibujar un contenedor. El paciente
-      // llegaba a «Mis citas» abriendo dos desplegables que no llevan a
-      // ninguna pantalla; aplanado, el dominio suelta sus destinos en la barra
-      // y sigue ofreciendo exactamente los mismos. Desde el 13/09/2026 vale lo
-      // mismo para quien ejerce: «Atención» y «Facturación» son los dos únicos
-      // dominios de trabajo que ve, y eran lo único que le hacían abrir.
+      // Lo que la barra necesita para no dibujar un contenedor (AC-E1-02). El
+      // paciente llegaba a «Mis citas» abriendo dos desplegables que no llevan
+      // a ninguna pantalla; aplanado, el dominio suelta sus destinos en la
+      // barra y sigue ofreciendo exactamente los mismos. Desde el 13/09/2026
+      // vale lo mismo para quien ejerce: «Atención» y «Facturación» son los dos
+      // únicos dominios de trabajo que ve, y eran lo único que le hacían abrir.
       abrirSesion(['SECURITY_ADMIN', 'CLINICIAN', 'BILLING']);
 
       const aplanados = service

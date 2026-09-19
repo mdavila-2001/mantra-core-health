@@ -1,0 +1,114 @@
+@if (previousStudy(); as study) {
+  <app-content-dialog
+    data-testid="duplicate-study-warning-dialog"
+    [heading]="heading()"
+    [description]="description()"
+    [dismissible]="!sending()"
+    (dismissAttempt)="closed.emit()"
+    (closed)="closed.emit()"
+  >
+    <dl class="duplicate-study__facts">
+      <div class="duplicate-study__fact">
+        <dt>Estudio</dt>
+        <dd>{{ study.studyName }}</dd>
+      </div>
+      <div class="duplicate-study__fact">
+        <dt>Realizado</dt>
+        <dd>{{ study.performedAt | date: 'd MMM y' }}</dd>
+      </div>
+      <div class="duplicate-study__fact">
+        <dt>Prestador</dt>
+        <dd>{{ study.providerName }}</dd>
+      </div>
+      <div class="duplicate-study__fact">
+        <dt>Resultado</dt>
+        <dd>
+          @if (study.resultsAvailable) {
+            <app-badge variant="success">Resultados disponibles</app-badge>
+          } @else {
+            <app-badge variant="warning">Sin resultados liberados</app-badge>
+          }
+        </dd>
+      </div>
+    </dl>
+
+    @if (study.conclusionText) {
+      <blockquote class="duplicate-study__conclusion">{{ study.conclusionText }}</blockquote>
+    }
+
+    @if (!study.sameOrganization) {
+      <app-alert appAnuncio tone="info">
+        El informe está en otra organización. Si necesitás leerlo, decile a la persona paciente que
+        lo comparta desde su portal.
+      </app-alert>
+    }
+
+    @if (!study.resultsAvailable) {
+      <p class="duplicate-study__hint">
+        No se puede reutilizar un resultado que todavía no fue liberado.
+      </p>
+    }
+
+    <app-checkbox
+      data-testid="checkbox-repeat-required"
+      label="Es clínicamente necesario repetir el estudio hoy"
+      [checked]="repeatRequested()"
+      (checkedChange)="toggleRepeat($event)"
+    />
+
+    @if (repeatRequested()) {
+      <app-form-field
+        label="Justificación clínica formal para la aseguradora"
+        [hint]="counterHint()"
+        [errorMessage]="reasonErrorMessage()"
+        [required]="true"
+      >
+        <app-textarea
+          data-testid="textarea-duplicate-justification"
+          [rows]="3"
+          [maxLength]="1000"
+          [autoResize]="true"
+          [value]="reason()"
+          (valueChange)="reason.set($event)"
+          (blurred)="touchReason()"
+        />
+      </app-form-field>
+    }
+
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      variant="ghost"
+      data-testid="btn-cancel-duplicate-dialog"
+      [disabled]="sending()"
+      (clicked)="cancel()"
+    >
+      Cancelar
+    </button>
+    @if (study.resultsAvailable) {
+      <button
+        dialog-actions
+        app-button
+        type="button"
+        variant="outline"
+        data-testid="btn-reuse-previous-results"
+        [disabled]="sending()"
+        (clicked)="confirmReuse()"
+      >
+        Consultar y reutilizar resultados existentes
+      </button>
+    }
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      data-testid="btn-confirm-justified-duplicate"
+      [isLoading]="sending()"
+      [disabled]="!canConfirmRepeat()"
+      (clicked)="confirmRepeat()"
+    >
+      Confirmar prescripción justificada
+    </button>
+  </app-content-dialog>
+}

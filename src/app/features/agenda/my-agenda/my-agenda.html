@@ -430,10 +430,41 @@
                bloqueos de esta semana en rojo. La semanita de abajo se queda; el
                renglón «Lunes, Martes… de 08:00 a 12:00» se fue: repetía en
                palabras lo que la grilla ya dibuja. -->
+          <!-- El selector de cuánto día se dibuja (AC-C3-01). Dos botones y no un
+               `<select>`: son dos, se alternan de un vistazo y el que está puesto
+               se ve sin abrir nada. `aria-pressed` dice cuál rige; el rótulo
+               lleva el rango entre paréntesis porque «día completo» sin las horas
+               no dice qué se gana. -->
+          <div class="mi-agenda__rango" role="group" aria-label="Cuánto día mostrar en la grilla">
+            <button
+              app-button
+              size="sm"
+              type="button"
+              data-testid="grilla-rango-atencion"
+              [variant]="rangoDeGrilla() === 'atencion' ? 'primary' : 'ghost'"
+              [attr.aria-pressed]="rangoDeGrilla() === 'atencion'"
+              (clicked)="verRango('atencion')"
+            >
+              Horario de consulta
+            </button>
+            <button
+              app-button
+              size="sm"
+              type="button"
+              data-testid="grilla-rango-completo"
+              [variant]="rangoDeGrilla() === 'completo' ? 'primary' : 'ghost'"
+              [attr.aria-pressed]="rangoDeGrilla() === 'completo'"
+              (clicked)="verRango('completo')"
+            >
+              Día completo (00:00 – 23:59)
+            </button>
+          </div>
+
           <app-schedule-grid
             [reglas]="reglasVigentes()"
             [slotMinutes]="slotDelHorario()"
             [bloqueos]="bloqueosDeLaSemana()"
+            [rango]="rangoDeGrilla()"
             [nombre]="nombreDelHorario()"
             [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambies.'"
           />

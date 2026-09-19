@@ -65,7 +65,7 @@
         <span class="app-side-nav__palabra">AloVida</span>
       </a>
 
-      <!-- Recoger la barra.
+      <!-- Recoger la barra (AC-E1-01).
 
            Vive dentro de la barra y no en el encabezado por dos razones: es lo
            que gobierna, y recogida sigue estando donde estaba —si viviera en el
@@ -94,12 +94,12 @@
     <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
          que cambia es cómo se pintan, no de dónde vienen.
 
-         **Un solo escalón plegable, y es el tope.** El dominio pliega; adentro
-         van los destinos, y nada más. Es `<details>` y no un botón con
-         `aria-expanded` porque el elemento ya trae gratis lo que habría que
-         reimplementar —teclado, semántica de revelado, «buscar en la página»
-         que abre lo cerrado— y porque sin JavaScript la barra sigue siendo
-         navegable.
+         **Un solo escalón plegable, y es el tope** (AC-E1-02). El dominio
+         pliega; adentro van los destinos, y nada más. Es `<details>` y no un
+         botón con `aria-expanded` porque el elemento ya trae gratis lo que
+         habría que reimplementar —teclado, semántica de revelado, «buscar en la
+         página» que abre lo cerrado— y porque sin JavaScript la barra sigue
+         siendo navegable.
 
          Acá vivía un segundo `<details>` por bloque («Personas»,
          «Organizaciones», «Red de salud»…), y con él llegar a una pantalla
@@ -136,7 +136,7 @@
              bloque no se dibuje: sin él, lo único que sigue diciendo que «Mis
              citas», «Mis pedidos» y «Mis puntos» son la misma clase de cosa es
              que salgan seguidas. Por `items` salen en el orden del registro, y
-             ahí las cuatro pantallas clínicas se meten en el medio. -->
+             ahí las pantallas clínicas se meten en el medio. -->
         <div class="app-side-nav__sueltos" data-testid="nav-sueltos" [attr.data-grupo]="grupo.label">
           @for (bloque of grupo.blocks ?? []; track bloque.label) {
             @for (item of bloque.items; track item.route) {

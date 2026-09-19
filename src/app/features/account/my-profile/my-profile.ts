@@ -1,3 +1,4 @@
+import { InsurancePortabilityCard } from './insurance-portability-card/insurance-portability-card';
 import { PatientCoverageCard } from '../../../shared/components/molecules/patient-coverage-card/patient-coverage-card';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
@@ -115,6 +116,7 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
     Badge,
     Card,
     DatePipe,
+    InsurancePortabilityCard,
     Link,
     NavIcon,
     PageHeader,

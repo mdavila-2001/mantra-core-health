@@ -4,10 +4,21 @@ import { environment as desarrollo } from './environment.development';
 /**
  * Entorno de desarrollo **contra la API real**, sin el backend simulado.
  *
- * Es el de desarrollo con una sola diferencia: `mockBackend` apagado. El resto
- * —`apiBaseUrl` relativo, demos, telemetría— se hereda tal cual, así que las
+ * Es el de desarrollo con `mockBackend` apagado y, además, **sin las demos que
+ * fabrican datos**: `campaignsDemo` y `paymentDemo` en `false`. El resto
+ * —`apiBaseUrl` relativo, telemetría— se hereda tal cual, así que las
  * peticiones salen relativas y las resuelve `proxy.conf.json` contra la API que
  * ese archivo declara, igual que en desarrollo.
+ *
+ * ## Por qué también las demos
+ *
+ * Con la API real, una campaña sembrada en memoria o un «pago aprobado» por QR
+ * de demostración harían pasar por real algo que no lo es, y la regla MOCKS OFF
+ * no se podría certificar. Apagadas, cada consumidor tiene su vacío honesto:
+ * sin campañas las secciones de promoción no se pintan, el detalle público dice
+ * «no encontrado», el panel de la farmacia avisa que las promociones están
+ * apagadas y el pago queda en «En mostrador». Se fijan acá, sin leer el `.env`,
+ * por la misma razón que `mockBackend`.
  *
  * ## Por qué una configuración aparte y no una variable del `.env`
  *
@@ -31,4 +42,6 @@ import { environment as desarrollo } from './environment.development';
 export const environment: Environment = {
   ...desarrollo,
   mockBackend: false,
+  campaignsDemo: false,
+  paymentDemo: false,
 };

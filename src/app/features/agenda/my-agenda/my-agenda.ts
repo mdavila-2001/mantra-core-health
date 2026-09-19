@@ -53,7 +53,7 @@ import {
 import { TarjetaDelDia, type RatoDelDia } from './tarjeta-del-dia/tarjeta-del-dia';
 import { MonthView, type BloqueoDelMes } from './month-view/month-view';
 import { WeekView, lunesDe } from './week-view/week-view';
-import { ScheduleGrid } from './schedule-grid/schedule-grid';
+import { ScheduleGrid, type RangoDeGrilla } from './schedule-grid/schedule-grid';
 import { AGENDA_CREATE_ROUTE, APPOINTMENT_NEW_ROUTE } from '../agenda.routes';
 
 /** Los días de la semana en el orden en que se leen; el índice es `dayOfWeek`. */
@@ -360,8 +360,29 @@ export class MyAgenda implements OnInit {
   /** Si la lectura de las citas del mes falló: el globo lo dice en vez de «sin citas». */
   protected readonly monthBookingsFailed = signal(false);
 
-  /** Los bloqueos de la semana en curso, para la grilla del horario. */
+  /**
+   * Los bloqueos de la semana en curso, para pintarlos en rojo en la grilla
+   * del horario (AC-C3-02).
+   *
+   * Señal aparte de `bloqueosDelMes` y no la misma: la solapa del horario abre
+   * primero y **no** carga el mes, así que reusarla dejaría la grilla sin
+   * bloqueos hasta que alguien tocara «Ocupación».
+   */
   protected readonly bloqueosDeLaSemana = signal<readonly BloqueoDelMes[]>([]);
+
+  /**
+   * Cuánto día dibuja la grilla del horario — el selector de AC-C3-01.
+   *
+   * Arranca en `completo`: es lo único que muestra un bloqueo de madrugada o
+   * una guardia de fin de semana, y la caja abre igual en la primera hora
+   * atendida, así que el día entero no cuesta buscar nada. Quien prefiera ver
+   * sólo sus horas de consulta lo dice, y la grilla se recorta.
+   */
+  protected readonly rangoDeGrilla = signal<RangoDeGrilla>('completo');
+
+  protected verRango(rango: RangoDeGrilla): void {
+    this.rangoDeGrilla.set(rango);
+  }
 
   /**
    * Las tipologías de actividad, para pintar el día.
@@ -560,11 +581,13 @@ export class MyAgenda implements OnInit {
   }
 
   /**
-   * Los bloqueos de la semana en curso, para pintarlos en rojo en la grilla.
+   * Los bloqueos de la semana en curso, para pintarlos en rojo en la grilla
+   * del horario (AC-C3-02).
    *
    * Lectura aparte de la del mes: la solapa del horario abre primero y no
-   * carga el mes. Si falla, la grilla se ve sin bloqueos — el horario sigue
-   * sirviendo.
+   * carga el mes, así que esperar a `cargarMes()` dejaría la grilla sin
+   * bloqueos hasta que alguien tocara «Ocupación». Si falla, la grilla se ve
+   * sin ellos — el horario sigue sirviendo, que es lo que se vino a mirar.
    */
   private leerBloqueosDeLaSemana(resourceId: string): void {
     const lunes = lunesDe(new Date());
@@ -573,6 +596,8 @@ export class MyAgenda implements OnInit {
       next: (pagina) =>
         this.bloqueosDeLaSemana.set(
           pagina.items
+            // Las excepciones que ABREN disponibilidad no son bloqueos: pintarlas
+            // en rojo diría lo contrario de lo que pasa.
             .filter((e) => e.isAvailable !== true)
             .map((e) => ({
               id: e.id,

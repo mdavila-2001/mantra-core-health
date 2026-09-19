@@ -3,6 +3,21 @@
   subtitle="Las consultas comprometidas y los cupos que quedan por ofrecer."
   [breadcrumbs]="breadcrumbs()"
 >
+  @if (puedeIngresarPorMostrador()) {
+    <!-- AC-C3-03 · el ingreso por mostrador. Va en las acciones de la página y
+         no dentro del día: quien lo usa está atendiendo el mostrador y llega a
+         esta pantalla con alguien parado enfrente, así que el gesto tiene que
+         estar donde se entra, no donde se navega. -->
+    <button
+      app-button
+      page-actions
+      variant="secondary"
+      data-testid="agenda-ingreso-mostrador"
+      (clicked)="abrirMostrador()"
+    >
+      Ingreso Mostrador
+    </button>
+  }
   @if (puedeAvisarDemora()) {
     <!-- P8 · registro del cliente 4.2: «el médico informa a los pacientes que
          se va a demorar». Va en las acciones de la página porque la demora es

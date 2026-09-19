@@ -300,9 +300,9 @@ describe('ShellLayout', () => {
      * El único escalón plegable de la barra, y los dominios que no lo tienen.
      *
      * Cincuenta y cinco secciones no entran en una lista, así que el dominio
-     * pliega — y **ahí se termina**: adentro van los destinos, no otro
-     * desplegable. Lo que estas pruebas cuidan no es el `<details>` —eso lo hace
-     * el navegador— sino las tres decisiones que sí son nuestras: que no se
+     * pliega — y **ahí se termina** (AC-E1-02): adentro van los destinos, no
+     * otro desplegable. Lo que estas pruebas cuidan no es el `<details>` —eso lo
+     * hace el navegador— sino las tres decisiones que sí son nuestras: que no se
      * anide un segundo escalón, qué se dibuja abierto sin que nadie lo toque, y
      * qué dominios no se dibujan como contenedor en absoluto.
      *
@@ -343,9 +343,9 @@ describe('ShellLayout', () => {
       });
 
       it('ningún desplegable cuelga de otro: un nivel es el tope', () => {
-        // El guardia del pedido. Acá hubo un segundo escalón —el bloque de cosas
-        // parecidas— y con él entrar a una pantalla costaba tres clics, dos de
-        // ellos sobre rótulos que no llevan a ninguna parte.
+        // El guardia del pedido (AC-E1-02). Acá hubo un segundo escalón —el
+        // bloque de cosas parecidas— y con él entrar a una pantalla costaba tres
+        // clics, dos de ellos sobre rótulos que no llevan a ninguna parte.
         //
         // Se comprueba sobre el DOM y con el rol que más secciones ve, que es
         // donde un segundo nivel volvería a aparecer primero. Es una prueba de
@@ -400,6 +400,7 @@ describe('ShellLayout', () => {
         expect(enlaces).toContain('/my-account/appointments');
         expect(enlaces).toContain('/my-account/pharmacy-orders');
         expect(enlaces).toContain('/my-account/loyalty');
+        expect(enlaces).toContain('/my-account/dependents');
         expect(enlaces).toContain('/my-account/medical-record');
         expect(enlaces).toContain('/my-account/questionnaires');
         expect(enlaces).toContain('/messaging');
@@ -473,8 +474,7 @@ describe('ShellLayout', () => {
 
         expect(bloques.length, 'ningún bloque de más de uno se dibujó').toBeGreaterThan(0);
         for (const bloque of bloques) {
-          const rutas = bloque.items.map((item) => item.route);
-          expect(seguidas(enlaces, rutas)).toBe(true);
+          expect(seguidas(enlaces, bloque.items.map((item) => item.route))).toBe(true);
         }
       });
 
@@ -486,7 +486,7 @@ describe('ShellLayout', () => {
        * dominio de la pantalla actual se abre solo—, no el reparto, que tiene
        * sus propias pruebas.
        */
-      function primerGrupoDibujado() {
+      function primerGrupoDibujado(): { grupo: string; destino: string } {
         const grupo = raiz().querySelector('[data-testid="nav-grupo"]');
         const destino = grupo
           ?.querySelector('[data-testid="nav-enlace"]')
@@ -498,10 +498,12 @@ describe('ShellLayout', () => {
         // `navigateByUrl` rechaza y la prueba falla por el doble, no por el
         // código.
         router.resetConfig([...router.config, { path: (destino ?? '').slice(1), children: [] }]);
-        return {
-          grupo: grupo?.getAttribute('data-grupo') ?? '',
-          destino: destino ?? '',
-        };
+        return { grupo: grupo?.getAttribute('data-grupo') ?? '', destino: destino ?? '' };
+      }
+
+      /** El `<details>` de un dominio, por su rótulo. */
+      function dominio(grupo: string): HTMLDetailsElement | null {
+        return raiz().querySelector<HTMLDetailsElement>('[data-grupo="' + grupo + '"]');
       }
 
       it('el grupo de la pantalla actual se dibuja abierto', async () => {
@@ -513,7 +515,7 @@ describe('ShellLayout', () => {
 
         // Nadie lo desplegó: si no se abriera solo, la barra no diría dónde está
         // uno parado y habría que buscarlo abriendo dominios a mano.
-        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(true);
+        expect(dominio(grupo)?.open).toBe(true);
       });
 
       it('lo que la persona pliega a mano gana sobre eso, y navegar no lo reabre', async () => {
@@ -525,16 +527,142 @@ describe('ShellLayout', () => {
         interno<(clave: string, abierto: boolean) => void>('alPlegar')(grupo, false);
         fixture.detectChanges();
 
-        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(
-          false,
-        );
+        expect(dominio(grupo)?.open).toBe(false);
 
         // Volver a la misma pantalla no le discute la decisión a quien la tomó.
         await router.navigateByUrl(destino);
         fixture.detectChanges();
-        expect(raiz().querySelector<HTMLDetailsElement>(`[data-grupo="${grupo}"]`)?.open).toBe(
-          false,
+        expect(dominio(grupo)?.open).toBe(false);
+      });
+    });
+
+    /**
+     * Recoger la barra (AC-E1-01).
+     *
+     * Es un cambio de ancho, no de contenido: recogida sigue teniendo los
+     * mismos destinos, con el mismo nombre, en el mismo orden. Lo que estas
+     * pruebas cuidan es justamente eso —que al encogerse no se pierda ni un
+     * nombre accesible— más el gesto que la devuelve, que es lo único que no
+     * puede hacer la hoja de estilos sola.
+     */
+    describe('la barra recogida', () => {
+      beforeEach(() => {
+        // `ShellService` persiste la preferencia en `localStorage` y la lee
+        // tras el primer render. Sin limpiarla, el estado de una prueba se
+        // filtra a la siguiente y el orden de ejecución pasa a importar.
+        try {
+          localStorage.removeItem(NAV_STORAGE_KEY);
+        } catch {
+          // Sin storage no hay nada que limpiar, que es el mismo caso que el
+          // servicio ya tolera.
+        }
+        abrirSesion({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: [] });
+        fixture.detectChanges();
+      });
+
+      function boton(): HTMLButtonElement {
+        const control = raiz().querySelector<HTMLButtonElement>('[data-testid="nav-recoger"]');
+        expect(control, 'la barra no dibujó el botón de recoger').not.toBeNull();
+        return control as HTMLButtonElement;
+      }
+
+      function marco(): HTMLElement {
+        return raiz().querySelector('.app-shell') as HTMLElement;
+      }
+
+      function primerDominio(): string {
+        const grupo = raiz().querySelector('[data-testid="nav-grupo"]');
+        expect(grupo, 'la sesión de prueba no dibujó ningún dominio plegable').not.toBeNull();
+        return grupo?.getAttribute('data-grupo') ?? '';
+      }
+
+      function detalleDe(grupo: string): HTMLDetailsElement | null {
+        return raiz().querySelector<HTMLDetailsElement>('[data-grupo="' + grupo + '"]');
+      }
+
+      it('arranca desplegada y el botón lo dice', () => {
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-expanded')).toBe('true');
+        // Apunta a la barra que encoge, y ese id existe en el marcado: no lo
+        // inventa nadie al hidratar.
+        expect(boton().getAttribute('aria-controls')).toBe('app-side-nav');
+        expect(raiz().querySelector('#app-side-nav')?.classList.contains('app-side-nav')).toBe(true);
+      });
+
+      it('un clic la recoge y otro la devuelve', () => {
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(true);
+        expect(boton().getAttribute('aria-expanded')).toBe('false');
+        expect(boton().getAttribute('aria-label')).toBe('Desplegar el menú');
+
+        boton().click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(boton().getAttribute('aria-label')).toBe('Recoger el menú');
+      });
+
+      it('la preferencia se guarda, que es lo que la trae de vuelta mañana', () => {
+        boton().click();
+        fixture.detectChanges();
+
+        expect(localStorage.getItem(NAV_STORAGE_KEY)).toBe('true');
+      });
+
+      it('recogida no pierde ni un destino, ni el nombre de ninguno', () => {
+        const antes = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
         );
+
+        boton().click();
+        fixture.detectChanges();
+
+        const despues = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')];
+        expect(despues.map((a) => a.getAttribute('data-route'))).toEqual(antes);
+
+        // El rótulo no se borra: se esconde de la vista. Un ícono sin nombre es
+        // un destino mudo para quien usa lector de pantalla, y `display: none`
+        // lo saca del árbol de accesibilidad además de la pantalla.
+        for (const enlace of despues) {
+          const rotulo = enlace.querySelector('.side-nav__label');
+          expect(rotulo?.textContent?.trim(), enlace.getAttribute('data-route') ?? '').toBeTruthy();
+          expect(rotulo?.classList.contains('solo-lectores')).toBe(true);
+        }
+      });
+
+      it('recogida, el rótulo de un dominio la despliega y deja ese dominio abierto', () => {
+        // Recogida, el cuerpo del dominio no se dibuja: abrir el `<details>`
+        // ahí no mostraría nada. El gesto que sí sirve es desplegar la barra
+        // con ese dominio abierto, y es el que el rótulo tiene que hacer.
+        const grupo = primerDominio();
+        interno<(clave: string, abierto: boolean) => void>('alPlegar')(grupo, false);
+        boton().click();
+        fixture.detectChanges();
+
+        raiz().querySelector<HTMLElement>('[data-grupo="' + grupo + '"] > summary')?.click();
+        fixture.detectChanges();
+
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(detalleDe(grupo)?.open).toBe(true);
+      });
+
+      it('desplegada, el rótulo sigue plegando y nada más', () => {
+        const grupo = primerDominio();
+        const antes = detalleDe(grupo)?.open;
+
+        interno<(evento: Event, grupo: string) => void>('alTocarElDominio')(
+          new Event('click', { cancelable: true }),
+          grupo,
+        );
+        fixture.detectChanges();
+
+        // No tocó el ancho ni forzó el estado del dominio: con la barra
+        // desplegada el `<details>` se gobierna solo, que es por lo que es un
+        // `<details>`.
+        expect(marco().classList.contains('is-nav-recogido')).toBe(false);
+        expect(detalleDe(grupo)?.open).toBe(antes);
       });
     });
 
@@ -670,8 +798,8 @@ describe('ShellLayout', () => {
       )();
 
       // Los aplanados no cuentan: no dibujan contenedor, sueltan sus destinos.
-      // Lo que esta prueba cuida es que ninguna sección se quede sin pintar,
-      // no que todas se pinten igual.
+      // Lo que esta prueba cuida es que ninguna sección se quede sin pintar, no
+      // que todas se pinten igual.
       expect(grupos.length).toBe(secciones.filter((s) => s.aplanado !== true).length);
       expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(
         secciones.filter((s) => s.aplanado === true).length,

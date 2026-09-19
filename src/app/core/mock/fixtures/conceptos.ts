@@ -418,6 +418,14 @@ export const ESTADO = definir('VS_RECORD_STATUS', [
   ['ST-UNLINKED', 'Sin vincular'],
   ['ST-ALIVE', 'Con vida'],
   ['ST-DECEASED', 'Fallecido/a'],
+  /**
+   * Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2): el estado de
+   * una orden que el médico decidió NO repetir — nace satisfecha por el
+   * informe previo, sin ser facturable. Espejo del concepto dinámico
+   * `SERVICE_REQUEST_SATISFIED_BY_PRIOR` (`SR_SATISFIED_BY_PRIOR`) que la API
+   * siembra al arrancar.
+   */
+  ['ST-SATISFIED-BY-PRIOR', 'Satisfecha por informe previo'],
 ]);
 
 /* ---- profesionales ------------------------------------------------------- */

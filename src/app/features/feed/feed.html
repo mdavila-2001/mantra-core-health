@@ -7,64 +7,131 @@
   <app-alert tone="error" class="muro__alerta">{{ mensaje }}</app-alert>
 }
 
-@if (!perfilResuelto()) {
-  <p class="muro__cargando" role="status">Cargando tu muro…</p>
-} @else if (perfil() === null) {
-  <!-- Una puerta, no un error: el muro necesita un perfil público, que es una
-       entidad aparte del perfil de paciente que trae la sesión. -->
-  <app-empty-state
-    title="Todavía no tenés perfil público"
-    description="El muro muestra lo que publican los perfiles que seguís, y para eso hace falta tener el tuyo. Se crea desde «Mi perfil»."
-    variant="empty"
-  />
-} @else {
-  <!-- El composer va antes del listado y no dentro de la rama «hay
-       publicaciones»: un muro vacío es justamente cuando más hace falta poder
-       publicar. -->
-  <app-composer
-    class="muro__composer"
-    [profileId]="perfil()!"
-    (publicado)="recargar()"
-  />
+<!-- Tres columnas (AC-E1-03). El orden del DOM es el de lectura en teléfono:
+     primero el muro, después el acompañamiento. Las laterales se corren a los
+     costados con `grid-column` en escritorio, así que apilarse no las pone
+     encima de lo que la persona vino a hacer. -->
+<div class="muro">
+  <main class="muro__centro">
+    @if (!perfilResuelto()) {
+      <p class="muro__cargando" role="status">Cargando tu muro…</p>
+    } @else if (perfil() === null) {
+      <!-- Una puerta, no un error: el muro necesita un perfil público, que es una
+           entidad aparte del perfil de paciente que trae la sesión. -->
+      <app-empty-state
+        title="Todavía no tenés perfil público"
+        description="El muro muestra lo que publican los perfiles que seguís, y para eso hace falta tener el tuyo. Se crea desde «Mi perfil»."
+        variant="empty"
+      />
+    } @else {
+      <!-- El composer va antes del listado y no dentro de la rama «hay
+           publicaciones»: un muro vacío es justamente cuando más hace falta poder
+           publicar. -->
+      <app-composer
+        class="muro__composer"
+        [profileId]="perfil()!"
+        (publicado)="recargar()"
+      />
 
-  @if (vacio()) {
-    <app-empty-state
-      title="Tu muro está vacío"
-      description="Cuando sigas a otros profesionales, sus publicaciones van a aparecer acá."
-      variant="empty"
-    />
-  } @else {
-    <div class="muro__lista">
-      @for (entrada of entradas(); track entrada.id) {
-        <!-- `cambio` no recarga el muro: la tarjeta ya movió su propio contador
-             y recargar la lista entera en cada reacción perdería la posición de
-             lectura. El recuento del servidor vuelve a mandar en la próxima
-             carga, que es cuando importa. -->
-        @if (reportando() === entrada.post!.id) {
-          <app-report-post
-            [postId]="entrada.post!.id"
-            (reportado)="cerrarReporte()"
-            (cancelado)="cerrarReporte()"
-          />
-        } @else {
-          <app-post-card
-            [post]="entrada.post!"
-            [actorProfileId]="perfil()"
-            [puedeReportar]="true"
-            (reportar)="abrirReporte($event)"
-          />
+      @if (vacio()) {
+        <app-empty-state
+          title="Tu muro está vacío"
+          description="Cuando sigas a otros profesionales, sus publicaciones van a aparecer acá."
+          variant="empty"
+        />
+      } @else {
+        <div class="muro__lista">
+          @for (entrada of entradas(); track entrada.id) {
+            <!-- `cambio` no recarga el muro: la tarjeta ya movió su propio contador
+                 y recargar la lista entera en cada reacción perdería la posición de
+                 lectura. El recuento del servidor vuelve a mandar en la próxima
+                 carga, que es cuando importa. -->
+            @if (reportando() === entrada.post!.id) {
+              <app-report-post
+                [postId]="entrada.post!.id"
+                (reportado)="cerrarReporte()"
+                (cancelado)="cerrarReporte()"
+              />
+            } @else {
+              <app-post-card
+                [post]="entrada.post!"
+                [actorProfileId]="perfil()"
+                [puedeReportar]="true"
+                (reportar)="abrirReporte($event)"
+              />
+            }
+          }
+        </div>
+
+        @if (hayMas()) {
+          <div class="muro__mas">
+            <!-- «Ver más» y no «página 3 de 47»: el contrato del M34 no da totales,
+                 así que decir un número de páginas sería inventarlo. -->
+            <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
+              Ver más publicaciones
+            </button>
+          </div>
         }
       }
-    </div>
-
-    @if (hayMas()) {
-      <div class="muro__mas">
-        <!-- «Ver más» y no «página 3 de 47»: el contrato del M34 no da totales,
-             así que decir un número de páginas sería inventarlo. -->
-        <button app-button variant="outline" [isLoading]="cargando()" (clicked)="verMas()">
-          Ver más publicaciones
-        </button>
-      </div>
     }
+  </main>
+
+  <!-- ─── Izquierda · quién soy acá ──────────────────────────────────────
+       Sólo cuando hay vitrina: sin perfil público la columna no tendría qué
+       decir, y una tarjeta con el nombre en blanco se lee como un dato que no
+       cargó. Los accesos igual viven adentro porque es el mismo bloque de
+       «lo mío», y sin perfil la pantalla ya ofrece su única salida. -->
+  @if (perfilPublico(); as vitrina) {
+    <aside class="muro__perfil" aria-labelledby="muro-perfil-titulo">
+      <div class="muro__tarjeta">
+        <h2 id="muro-perfil-titulo" class="muro__perfil-nombre">{{ vitrina.displayName }}</h2>
+        @if (vitrina.headline) {
+          <p class="muro__perfil-titular">{{ vitrina.headline }}</p>
+        }
+        <!-- A la vitrina pública, que es la que ve el resto: desde el muro uno
+             quiere comprobar cómo se lo ve, no editar su ficha. -->
+        <a class="muro__perfil-enlace" [routerLink]="['/p', vitrina.slug]">
+          Ver mi perfil público
+        </a>
+      </div>
+
+      <nav class="muro__tarjeta" aria-label="Accesos">
+        <h3 class="muro__titulo-lateral">Accesos</h3>
+        <ul class="muro__accesos">
+          <li><a routerLink="/groups">Grupos y foros</a></li>
+          <li><a routerLink="/messaging">Mensajes</a></li>
+          <li><a routerLink="/directories">Directorios</a></li>
+          <li><a routerLink="/my-account">Mi cuenta</a></li>
+        </ul>
+      </nav>
+    </aside>
   }
-}
+
+  <!-- ─── Derecha · qué se está moviendo ─────────────────────────────────
+       No hay endpoint de tendencias y no se inventa uno: lo que el servidor sí
+       dice es cuánta gente se juntó alrededor de cada tema. El rótulo de cada
+       renglón es «N integrantes» y no un número suelto, para que nadie lea el
+       recuento como si fuera volumen de publicaciones. -->
+  @if (tendencias().length > 0) {
+    <aside class="muro__tendencias" aria-labelledby="muro-tendencias-titulo">
+      <div class="muro__tarjeta">
+        <h2 id="muro-tendencias-titulo" class="muro__titulo-lateral">Tendencias clínicas</h2>
+        <p class="muro__nota">Las comunidades con más gente adentro.</p>
+        <ul class="muro__tendencias-lista" data-testid="muro-tendencias">
+          @for (grupo of tendencias(); track grupo.id) {
+            <li>
+              <a class="muro__tendencia" [routerLink]="['/groups', grupo.id]">
+                <span class="muro__tendencia-nombre">{{ grupo.name }}</span>
+                <span class="muro__tendencia-cuenta">
+                  {{ grupo.memberCount ?? 0 }}
+                  {{ (grupo.memberCount ?? 0) === 1 ? 'integrante' : 'integrantes' }}
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+        <a class="muro__perfil-enlace" routerLink="/groups">Ver todos los grupos</a>
+      </div>
+    </aside>
+  }
+</div>
