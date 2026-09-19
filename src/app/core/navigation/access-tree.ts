@@ -117,6 +117,14 @@ export interface AccessArea {
  * propio registro dice que se llegan: los estudios desde el Archivo clínico,
  * las visitas desde Consultas médicas y la encuesta desde la consulta del
  * paciente al que se le asigna.
+ *
+ * **Cuatro de «Administración»** (19/09/2026) — `administration/my-practice`,
+ * `administration/pharmacy-orders`, `administration/pharmacy-campaigns` y
+ * `administration/pharmacy-profile`. Pedido del propietario mirando la zona del
+ * médico. «Mi consultorio propio» se abre desde «Mi perfil», que es donde
+ * alguien va a buscar «¿dónde atiendo?»; las tres de farmacia son del mostrador
+ * de una farmacia, no del consultorio, y quien lo atiende las sigue teniendo en
+ * su menú lateral. Ninguna ruta se cierra: esto decide sólo dónde no se ofrecen.
  */
 export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'dashboard',
@@ -128,6 +136,10 @@ export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
   'glossary',
   'my-services',
   'my-quotations',
+  'administration/my-practice',
+  'administration/pharmacy-orders',
+  'administration/pharmacy-campaigns',
+  'administration/pharmacy-profile',
 ];
 
 /**
@@ -212,7 +224,6 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
     tone: 'success',
     paths: [
       'administration/my-organization',
-      'administration/my-practice',
       'administration/medical-organization',
       'administration/accounting',
       'billing',
