@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
+import { RefreshTokenStorage } from '../auth/refresh-token.storage';
 import { SessionStore } from '../auth/session.store';
 import { TokenRefreshService } from './token-refresh.service';
 
@@ -35,6 +36,7 @@ const TOKEN = jwt({ sub: 'u-1', roles: [], tenants: ['t-1'] });
 describe('TokenRefreshService', () => {
   let refresher: TokenRefreshService;
   let session: SessionStore;
+  let storage: RefreshTokenStorage;
   let http: HttpTestingController;
 
   beforeEach(() => {
@@ -44,6 +46,7 @@ describe('TokenRefreshService', () => {
 
     refresher = TestBed.inject(TokenRefreshService);
     session = TestBed.inject(SessionStore);
+    storage = TestBed.inject(RefreshTokenStorage);
     http = TestBed.inject(HttpTestingController);
 
     session.start({ accessToken: TOKEN, refreshToken: 'r-1' });
@@ -120,5 +123,41 @@ describe('TokenRefreshService', () => {
 
     expect(error).toBeInstanceOf(Error);
     // `http.verify()` en `afterEach` comprueba que no salió ninguna petición.
+  });
+
+  /**
+   * El defecto que vivía suelto: `renew` sólo tocaba el store en memoria.
+   * Sin esto, recargar la página después de **cualquier** refresco normal
+   * —uno por sesión, no hace falta una segunda pestaña— presentaba el token
+   * anterior a esa rotación, ya usado, y el servidor lo rechazaba por reuso
+   * (MCH-005): la persona quedaba deslogueada al recargar.
+   */
+  it('persiste el refresh token nuevo, no sólo lo deja en memoria', () => {
+    refresher.refresh().subscribe();
+    responderRefresco('r-persistido');
+
+    expect(storage.read()).toBe('r-persistido');
+  });
+
+  /**
+   * El caso de dos pestañas (MCH-016/carril C): esta pestaña capturó `r-1`,
+   * pero mientras tanto otra ya rotó y dejó `r-de-otra-pestana` en
+   * `localStorage`. Presentar `r-1` de nuevo lo trataría el servidor como
+   * reuso y revocaría la sesión — por eso el tramo de red relee el storage
+   * antes de pedir, y presenta el más nuevo en vez del que esta pestaña tenía
+   * en memoria.
+   */
+  it('si storage ya tiene un token más nuevo que el capturado, presenta ése', () => {
+    storage.write('r-de-otra-pestana');
+
+    refresher.refresh().subscribe();
+
+    const peticion = http.expectOne((request) => request.url.endsWith('/iam/auth/token/refresh'));
+    expect(peticion.request.body).toEqual({ refreshToken: 'r-de-otra-pestana' });
+    peticion.flush({
+      accessToken: TOKEN,
+      refreshToken: 'r-3',
+      expiresAt: '2026-08-01T12:00:00.000Z',
+    });
   });
 });
