@@ -75,14 +75,24 @@ async function llegarARepresentanteLegal(page: Page): Promise<void> {
 test.describe('alta pública de aseguradora — representante legal y gerencias (subtarea 1.4)', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test('«Representante legal (1 de 2)» trae los cuatro campos', async ({ page }) => {
+  test('«Representante legal (1 de 2)» trae los cinco nombres y los tres datos de contacto', async ({
+    page,
+  }) => {
     await abrirElAlta(page);
     await llegarARepresentanteLegal(page);
 
-    await expect(page.getByTestId('registro-organizacion-representante-nombre')).toBeVisible();
-    await expect(page.getByTestId('registro-organizacion-representante-ci')).toBeVisible();
-    await expect(page.getByTestId('registro-organizacion-representante-correo')).toBeVisible();
-    await expect(page.getByTestId('registro-organizacion-representante-telefono')).toBeVisible();
+    for (const testId of [
+      'registro-organizacion-representante-nombre',
+      'registro-organizacion-representante-segundo-nombre',
+      'registro-organizacion-representante-tercer-nombre',
+      'registro-organizacion-representante-apellido-paterno',
+      'registro-organizacion-representante-apellido-materno',
+      'registro-organizacion-representante-ci',
+      'registro-organizacion-representante-correo',
+      'registro-organizacion-representante-telefono',
+    ]) {
+      await expect(page.getByTestId(testId)).toBeVisible();
+    }
 
     await capturar(page, 'representante-datos');
   });
@@ -90,7 +100,10 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
   test('«(2 de 2)» trae la zona del poder, rotulada con la ayuda de Bolivia', async ({ page }) => {
     await abrirElAlta(page);
     await llegarARepresentanteLegal(page);
-    await page.getByTestId('registro-organizacion-representante-nombre').fill('Mariana Siles');
+    await page.getByTestId('registro-organizacion-representante-nombre').fill('Mariana');
+    await page
+      .getByTestId('registro-organizacion-representante-apellido-paterno')
+      .fill('Siles');
     await page.getByTestId('registro-organizacion-representante-ci').fill('4872190 SC');
     await page
       .getByTestId('registro-organizacion-representante-correo')
@@ -111,7 +124,10 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
   test('sin el poder, «Continuar» no avanza y el campo marca el error', async ({ page }) => {
     await abrirElAlta(page);
     await llegarARepresentanteLegal(page);
-    await page.getByTestId('registro-organizacion-representante-nombre').fill('Mariana Siles');
+    await page.getByTestId('registro-organizacion-representante-nombre').fill('Mariana');
+    await page
+      .getByTestId('registro-organizacion-representante-apellido-paterno')
+      .fill('Siles');
     await page.getByTestId('registro-organizacion-representante-ci').fill('4872190 SC');
     await page
       .getByTestId('registro-organizacion-representante-correo')
@@ -149,7 +165,7 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await expect(marketing).toHaveAttribute('aria-expanded', 'false');
     // Plegado = ausente del DOM, no escondido con CSS.
     await expect(
-      page.getByTestId('registro-organizacion-executives-commercial-manager-fullName'),
+      page.getByTestId('registro-organizacion-executives-commercial-manager-name'),
     ).toHaveCount(0);
 
     await capturar(page, 'directorio-tres-paneles');
@@ -168,8 +184,11 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await completarRepresentanteLegal(page);
 
     await page
-      .getByTestId('registro-organizacion-executives-general-manager-fullName')
-      .fill('Carlos Mendoza');
+      .getByTestId('registro-organizacion-executives-general-manager-name')
+      .fill('Carlos');
+    await page
+      .getByTestId('registro-organizacion-executives-general-manager-lastName')
+      .fill('Mendoza');
     await page
       .getByTestId('registro-organizacion-executives-general-manager-phone')
       .fill('70000001');
@@ -178,8 +197,11 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
       .fill('gm@andina.test');
     await page.getByRole('button', { name: /Gerente Comercial/ }).click();
     await page
-      .getByTestId('registro-organizacion-executives-commercial-manager-fullName')
-      .fill('Ana Paz');
+      .getByTestId('registro-organizacion-executives-commercial-manager-name')
+      .fill('Ana');
+    await page
+      .getByTestId('registro-organizacion-executives-commercial-manager-lastName')
+      .fill('Paz');
     await page
       .getByTestId('registro-organizacion-executives-commercial-manager-phone')
       .fill('70000002');
@@ -197,6 +219,49 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await expect(page.getByText('Este dato es obligatorio.').first()).toBeVisible();
 
     await capturar(page, 'marketing-auto-abierto');
+  });
+
+  /**
+   * AC-02: nombre y apellido paterno son los dos únicos obligatorios de una
+   * gerencia — mismo criterio que `alRechazarPagina` para `executives`.
+   */
+  test('AC-02: sin apellido paterno el panel de una gerencia no deja avanzar', async ({
+    page,
+  }) => {
+    await abrirElAlta(page);
+    await llegarARepresentanteLegal(page);
+    await completarRepresentanteLegal(page);
+
+    await page
+      .getByTestId('registro-organizacion-executives-general-manager-name')
+      .fill('Carlos');
+    // Apellido paterno queda vacío a propósito: es el otro obligatorio.
+    await page
+      .getByTestId('registro-organizacion-executives-general-manager-phone')
+      .fill('70000001');
+    await page
+      .getByTestId('registro-organizacion-executives-general-manager-email')
+      .fill('gm@andina.test');
+    await page.getByTestId('paginated-form-continuar').click();
+
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
+    await expect(page.getByRole('button', { name: /Gerente General/ })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    await expect(page.getByText('Este dato es obligatorio.').first()).toBeVisible();
+  });
+
+  /** AC-01: la gerencia general lleva las cinco partes del nombre y avanza igual. */
+  test('AC-01: la gerencia general con las cinco partes del nombre permite avanzar', async ({
+    page,
+  }) => {
+    await abrirElAlta(page);
+    await llegarARepresentanteLegal(page);
+    await completarRepresentanteLegal(page);
+    await completarGerencias(page);
+
+    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
   });
 
   test('un correo de gerencia mal escrito se marca al salir del campo', async ({ page }) => {
@@ -243,7 +308,9 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     for (const [nombre, tamano] of [
       ['movil-390x844', { width: 390, height: 844 }],
       ['tablet-768x1024', { width: 768, height: 1024 }],
+      ['tablet-horizontal-1024x768', { width: 1024, height: 768 }],
       ['escritorio-1440x900', { width: 1440, height: 900 }],
+      ['escritorio-grande-1920x1080', { width: 1920, height: 1080 }],
     ] as const) {
       await page.setViewportSize(tamano);
       await expect(page.getByRole('button', { name: /Gerente de Marketing/ })).toBeVisible();
