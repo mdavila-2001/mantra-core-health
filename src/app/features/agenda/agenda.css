@@ -126,14 +126,45 @@
   gap: var(--sp-2);
 }
 
-/* Desde tablet las acciones son una columna fija al borde (`sticky: 'end'`), y
-   la tabla la apretaba hasta partir los botones en tres renglones. En una fila
-   la columna mide lo que miden ellos; en el teléfono van al detalle y ahí sí
-   pueden partirse. */
+/* En el día, desde tablet, las acciones van en una fila. */
 @media (min-width: 780px) {
   .agenda__acciones {
     flex-wrap: nowrap;
   }
+}
+
+/* En la tabla de Consultas, la tabla entra entera en su caja — sin columna fija
+   que se pinte encima de Pago (propietario, 18/09) ni scroll lateral que
+   esconda la acción.
+
+   Con seis íconos en fila, Acciones pedía 256 px y a 1280 la tabla medía 1 053
+   en 976: o se escondía detrás del scroll, o —fija al borde— tapaba Pago. De a
+   tres por renglón la columna mide lo de tres, y una fila con seis ocupa dos
+   renglones parejos, nunca tres. Cuando la caja da para todos en uno (desde
+   1 100 px de tabla), van en uno. */
+.agenda__tabla-consultas {
+  container-type: inline-size;
+}
+
+.agenda__tabla-consultas .agenda__acciones {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  justify-content: start;
+  gap: var(--sp-1);
+}
+
+@container (min-width: 1100px) {
+  .agenda__tabla-consultas .agenda__acciones {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+  }
+}
+
+/* El nombre en dos renglones como mucho, no en cuatro: la columna no se deja
+   apretar por debajo de lo que ocupa un nombre y un apellido. */
+.agenda__tabla-consultas .agenda__paciente-enlace,
+.agenda__tabla-consultas .agenda__paciente {
+  min-inline-size: 8.5rem;
 }
 
 /* ---- avisar demora (P8) --------------------------------------------------

@@ -102,6 +102,13 @@
         <div class="mes__globo-cabecera">
           <p class="mes__globo-titulo">{{ dia.resumen.title }}</p>
           <p class="mes__globo-linea">{{ dia.resumen.hours }}</p>
+          <!-- Lo mismo que dice la celda, en palabras: el globo no puede
+               contradecir al «4/8» que tiene al lado. -->
+          @if (dia.total > 0) {
+            <p class="mes__globo-linea" data-testid="mes-globo-ocupacion">
+              {{ dia.reservados }} de {{ dia.total }} {{ dia.total === 1 ? 'turno reservado' : 'turnos reservados' }}.
+            </p>
+          }
           @for (bloqueo of dia.resumen.blocks; track $index) {
             <p class="mes__globo-linea mes__globo-linea--bloqueo">{{ bloqueo }}</p>
           }
@@ -125,7 +132,14 @@
           <p class="mes__globo-subtitulo">
             @switch (openDayRows().length) {
               @case (0) {
-                Sin turnos disponibles.
+                <!-- Un día pasado no «se quedó sin turnos»: ya fue. -->
+                @if (dia.pasado && dia.total > 0) {
+                  Día pasado: ya no se ofrecen turnos.
+                } @else if (dia.estado === 'lleno') {
+                  Sin turnos libres: están todos reservados.
+                } @else {
+                  Sin turnos disponibles.
+                }
               }
               @case (1) {
                 1 turno disponible

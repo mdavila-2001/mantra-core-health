@@ -1097,10 +1097,11 @@ export class Agenda {
             // columna quedaban fuera de la pantalla, detrás de un scroll lateral
             // que nadie descubre.
             priority: 2,
-            // Desde tablet es columna, y con Seguro y Pago la tabla sigue
-            // pasándose del ancho: fija al borde, las acciones no se van con
-            // el scroll (propietario, 18/09).
-            sticky: 'end',
+            // Sin `sticky: 'end'`: fija al borde, la columna se pintaba ENCIMA
+            // de Pago —«Pagada» y «Sin registrar» cortados— y el paciente se
+            // partía en cuatro renglones (propietario, 18/09). Ahora la tabla
+            // entra entera: los íconos van de a tres por renglón cuando no hay
+            // ancho para todos (`agenda.css`, `.agenda__tabla-consultas`).
             cell: this.celdaAccionesCita(),
           } satisfies ColumnDef<CitaVisible>,
         ]
