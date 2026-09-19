@@ -59,6 +59,12 @@ También entran por número de documento (`4567890`, `7654321`, `1112223`,
   en cada recarga y en cada máquina, así que un enlace copiado sigue abriendo
   lo mismo. Añadir volumen no es cosmético: con quince profesionales no había
   segunda página que probar.
+
+  La médica atiende **los siete días**: mañanas en la clínica de lunes a
+  sábado y guardia corta los domingos. No es un capricho de horario — el panel
+  abre con la jornada del día, y con la semana de lunes a viernes la maqueta
+  amanecía vacía dos días de cada siete. Una maqueta que no se puede mostrar el
+  fin de semana no sirve para mostrar nada.
 - `handlers/`: un archivo por dominio de la API; `handlers/index.ts` los
   registra todos.
 
