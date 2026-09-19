@@ -58,3 +58,31 @@
     outline: none;
     box-shadow: none;
 }
+
+/* S3 · la indicación de próxima acción cuando NO lleva ruta.
+   Cápsula punteada, tinta secundaria y cuerpo de leyenda: se distingue de la
+   bajada del vacío —que es prosa— y a la vez no finge ser un botón. El punteado
+   es el que hace la diferencia: un borde continuo lo volvería pulsable a la
+   vista y no lo es. */
+.view-state-host__next-action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-4);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--r-full);
+    background: var(--bg-inset);
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    font-weight: 600;
+}
+
+.view-state-host__next-action svg {
+    width: var(--sp-4);
+    height: var(--sp-4);
+    flex-shrink: 0;
+    /* la flecha es el gesto, no la información: la palabra ya lo dice todo */
+    opacity: 0.7;
+}

@@ -95,7 +95,7 @@ describe('EmptyState', () => {
   describe('huecos', () => {
     /** El `@if` del consumidor deja un comentario; CSS lo ignora para `:empty`. */
     it('sin proyección quedan vacíos y el CSS los apaga', () => {
-      for (const hueco of ['.empty-state__icon', '.empty-state__actions']) {
+      for (const hueco of ['.empty-state__slot', '.empty-state__actions']) {
         const elemento = estado().querySelector(hueco);
         expect(elemento?.children).toHaveLength(0);
         expect(elemento?.textContent?.trim()).toBe('');
@@ -106,9 +106,11 @@ describe('EmptyState', () => {
       host.conIcono.set(true);
       await fixture.whenStable();
 
-      const hueco = estado().querySelector('.empty-state__icon');
+      const hueco = estado().querySelector('.empty-state__slot');
       expect(hueco?.querySelector('svg')).not.toBeNull();
-      expect(hueco?.getAttribute('aria-hidden')).toBe('true');
+      expect(estado().querySelector('.empty-state__icon')?.getAttribute('aria-hidden')).toBe(
+        'true',
+      );
     });
 
     it('las acciones se proyectan en su hueco', async () => {
@@ -118,6 +120,30 @@ describe('EmptyState', () => {
       expect(
         estado().querySelector('.empty-state__actions')?.querySelector('button'),
       ).not.toBeNull();
+    });
+  });
+
+  /* El vacío sin dibujo se leía como un título caído en medio de la página
+     (19/09/2026). El medallón de la casa es lo que lo convierte en pantalla. */
+  describe('medallón de la casa', () => {
+    it('cada variante trae su dibujo, sin que el consumidor proyecte nada', async () => {
+      for (const variant of EMPTY_STATE_VARIANTS) {
+        host.variant.set(variant);
+        await fixture.whenStable();
+
+        expect(estado().querySelector('.empty-state__medal svg')).not.toBeNull();
+      }
+    });
+
+    it('el dibujo propio del consumidor convive en el DOM y el CSS apaga el de la casa', async () => {
+      host.conIcono.set(true);
+      await fixture.whenStable();
+
+      // La regla es `.empty-state__slot:not(:empty) ~ .empty-state__medal`: el
+      // medallón sigue en el árbol y se oculta por estilo, que es lo que deja
+      // que un `@if` del consumidor lo encienda y lo apague sin recrear nada.
+      expect(estado().querySelector('.empty-state__slot svg')).not.toBeNull();
+      expect(estado().querySelector('.empty-state__medal')).not.toBeNull();
     });
   });
 });

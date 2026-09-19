@@ -1,6 +1,45 @@
-<!-- La ilustración nunca aporta información que no esté en el texto. -->
+<!-- La ilustración nunca aporta información que no esté en el texto.
+
+     El hueco `[empty-icon]` sigue mandando: si alguien proyecta su dibujo, el
+     de la casa se apaga con `:not(:empty) ~`. Pero cuando nadie proyecta nada
+     —77 de las 77 pantallas que usan esta molécula— ya NO queda un título
+     suelto flotando en un rectángulo blanco: cada variante trae su medallón.
+     Un vacío sin ancla visual se lee como texto caído, no como una pantalla. -->
 <div class="empty-state__icon" aria-hidden="true">
-  <ng-content select="[empty-icon]" />
+  <span class="empty-state__medal">
+    <!-- El dibujo del consumidor entra DENTRO del medallón, no al lado: así los
+         dos caminos —el de la casa y el propio— se ven igual de terminados. -->
+    <span class="empty-state__slot"><ng-content select="[empty-icon]" /></span>
+
+    <span class="empty-state__glyph">
+      @switch (variant()) {
+        <!-- «Tu búsqueda no encontró nada»: la lupa, el mismo gesto que hizo. -->
+        @case ('no-results') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="20.5" y1="20.5" x2="16.2" y2="16.2" />
+          </svg>
+        }
+        <!-- «Algo falló»: la nube tachada. El aspa a secas ya es del `app-alert`
+             de error, y dos aspas distintas para dos cosas distintas confunden. -->
+        @case ('error') {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22.6 17a4.5 4.5 0 0 0-4.1-6.5h-1.3A7.2 7.2 0 0 0 9.9 4.3" />
+            <path d="M5.1 5.2A7.2 7.2 0 0 0 8.5 19h9a4.5 4.5 0 0 0 1.6-.3" />
+            <line x1="2.5" y1="2.5" x2="21.5" y2="21.5" />
+          </svg>
+        }
+        <!-- «No hay nada todavía»: la bandeja de entrada vacía, que invita a que
+             caiga algo dentro en vez de anunciar una falta. -->
+        @default {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+            <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+          </svg>
+        }
+      }
+    </span>
+  </span>
 </div>
 
 <p class="empty-state__title">{{ title() }}</p>

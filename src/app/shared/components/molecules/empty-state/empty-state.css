@@ -1,6 +1,17 @@
 /* ============================================================================
     Empty state — centrado y con ancho de lectura acotado: un texto que cruza
     1 200 px de tabla vacía no se lee, se saltea.
+
+    Reforma del 19/09/2026 («se ve como un texto tirau»). Lo que había era un
+    título y un párrafo sueltos en medio de un rectángulo blanco: sin peso
+    visual, sin jerarquía y sin nada que dijera de qué estado se trata. Ahora
+    cada variante entra con su medallón —dibujo sobre disco tonal con halo—,
+    el título manda por tamaño y la bajada por color, y la franja tiene su
+    propio aire.
+
+    El tono NO se inventa acá: cada variante elige un trío `--st-*` del
+    sistema, así el modo oscuro lo resuelve el tema y no este archivo, igual
+    que en `tone.css`.
     ========================================================================== */
 
 :host {
@@ -10,56 +21,147 @@
     justify-content: center;
     text-align: center;
     gap: var(--sp-2);
-    padding: var(--sp-12) var(--sp-6);
+    /* el aire de arriba y abajo se encoge con la caja, no con la ventana */
+    padding: clamp(var(--sp-8), 6%, var(--sp-12)) var(--sp-6);
     font-family: var(--font-body);
+
+    /* por defecto, el vacío inicial: el azul de la casa invita a crear */
+    --es-bg: var(--st-primary-bg);
+    --es-fg: var(--st-primary-fg);
+    --es-bd: var(--st-primary-bd);
 }
 
+/* Una búsqueda sin resultados no es un estado de producto: es la respuesta
+   neutra a lo que la persona escribió. Pintarla de azul le daría categoría de
+   aviso. */
+:host(.empty-state--no-results) {
+    --es-bg: var(--bg-inset);
+    --es-fg: var(--text-secondary);
+    --es-bd: var(--border-default);
+}
+
+:host(.empty-state--error) {
+    --es-bg: var(--st-error-bg);
+    --es-fg: var(--st-error-fg);
+    --es-bd: var(--st-error-bd);
+}
+
+/* ─── el medallón ───────────────────────────────────────────────────────────
+   Disco tonal + aro + halo exterior. El halo va con `box-shadow` y no con un
+   segundo elemento: no ocupa caja, así que el dibujo sigue centrado con el
+   texto aunque el halo crezca. */
 .empty-state__icon {
-    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--sp-4);
+    color: var(--es-fg);
 }
 
-/* Sin ilustración proyectada no queda hueco. */
-.empty-state__icon:empty {
+.empty-state__medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(var(--sp-12), 18%, var(--sp-16));
+    aspect-ratio: 1;
+    border-radius: var(--r-full);
+    border: 1px solid var(--es-bd);
+    background: var(--es-bg);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--es-bg) 45%, transparent);
+}
+
+.empty-state__glyph,
+.empty-state__slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* la mitad del disco, en los dos caminos: el dibujo de la casa y el que
+       proyecta el consumidor tienen que salir del mismo tamaño */
+    width: 50%;
+    height: 50%;
+}
+
+.empty-state__glyph svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* El SVG lo escribe el consumidor, así que vive con el `_ngcontent` de ÉL y una
+   regla normal de esta hoja no lo alcanza: sin esto sale con su tamaño
+   intrínseco —o sin ninguno— y el medallón queda hueco. Va acotado con `:host`
+   para no pintarle los SVG a media aplicación; mismo recurso que `phone-input`. */
+:host ::ng-deep .empty-state__slot svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* El dibujo de la casa se apaga si el consumidor proyectó el suyo. Un `@if`
+   del consumidor deja sólo un comentario, y CSS lo ignora para `:empty`, así
+   que el hueco vacío sigue contando como vacío. */
+.empty-state__slot:empty {
     display: none;
 }
 
-.empty-state__icon svg {
-    width: var(--sp-12);
-    height: var(--sp-12);
+.empty-state__slot:not(:empty) ~ .empty-state__glyph {
+    display: none;
 }
 
+/* ─── el texto ────────────────────────────────────────────────────────────── */
 .empty-state__title {
     margin: 0;
+    /* un título de vacío que ocupa tres renglones deja de ser un título */
+    max-width: 32ch;
     font-family: var(--font-display);
     font-size: var(--fs-h3);
     line-height: var(--lh-h3);
-    font-weight: 500;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     color: var(--text-primary);
+    text-wrap: balance;
 }
 
 .empty-state__description {
-    margin: 0;
+    margin: var(--sp-1) 0 0;
     /* ancho de lectura: ~60 caracteres */
     max-width: 42ch;
     font-size: var(--fs-body);
     line-height: var(--lh-body);
     color: var(--text-secondary);
+    text-wrap: pretty;
 }
 
 .empty-state__actions {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
     gap: var(--sp-3);
-    margin-top: var(--sp-4);
+    margin-top: var(--sp-5);
 }
 
+/* Sin acciones proyectadas no queda un hueco de 20 px bajo el párrafo. */
 .empty-state__actions:empty {
-    display: none;
+    margin-top: 0;
 }
 
-/* El error se distingue del vacío por la tinta del ícono, además del texto:
-   el título ya lo dice, esto solo lo refuerza. */
-:host(.empty-state--error) .empty-state__icon {
-    color: var(--st-error-fg);
+/* ─── entrada ───────────────────────────────────────────────────────────────
+   Un vacío casi siempre releva a un esqueleto: sin transición el cambio se
+   lee como un parpadeo. 240 ms y nada más; quien pidió menos movimiento no
+   ve ninguno. */
+@media (prefers-reduced-motion: no-preference) {
+    :host {
+        animation: empty-state-entra 240ms ease-out both;
+    }
 }
+
+@keyframes empty-state-entra {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+}
+
+/* Nada de esto se mide en anchos de ventana: la molécula cae lo mismo en una
+   página entera que dentro de una tarjeta de 340 px, y una media query de
+   viewport partiría el medallón justo donde no toca. Los porcentajes se
+   resuelven contra la caja que la contiene, que es lo que hay que medir. */
