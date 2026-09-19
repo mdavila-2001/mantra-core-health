@@ -201,6 +201,8 @@ function itemDeLista(p: PacienteSimulado) {
     patientCode: p.patientCode,
     displayName: p.displayName,
     birthDate: p.birthDate,
+    nationalId: p.nationalId,
+    phone: p.phone,
     personStatusConceptId: p.deceased ? ESTADO['ST-INACTIVE']! : ESTADO['ST-ACTIVE']!,
     deceased: p.deceased,
   };

@@ -47,15 +47,18 @@
   font-weight: 500;
 }
 
-/* El identificador acompaña al nombre en la misma celda: es el mismo dato visto
-   por la máquina, no una columna aparte. */
-.archivo__id {
+/* El documento y el teléfono: cifras, así que van con `tabular-nums` para que
+   se puedan comparar de una fila a la otra. */
+.archivo__dato {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.archivo__sin-dato {
   display: block;
   color: var(--text-muted);
   font-size: var(--fs-caption);
-  font-variant-numeric: tabular-nums;
-  user-select: all;
-  overflow-wrap: anywhere;
 }
 
 /* Las dos acciones, separadas y contra el final de su celda: la columna está
