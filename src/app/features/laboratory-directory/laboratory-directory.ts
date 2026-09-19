@@ -8,7 +8,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, RouterLink, type Params } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, type Params } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, map, of, Subject, switchMap, tap } from 'rxjs';
 
@@ -18,7 +18,7 @@ import type {
   DiagnosticUnitSearchQuery,
 } from '../../core/data-access/diagnostic-units/diagnostic-units.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
-import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
+import { dataOf, empty, loading, mapData, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import type { SearchResultItem } from '../../shared/components/molecules/search-result/search-result.types';
 import { DirectoryPage } from '../../shared/components/organisms/directory-page/directory-page';
@@ -30,7 +30,17 @@ import {
   SEARCH_PARAM,
   type FilterDef,
 } from '../../shared/components/organisms/filter-bar/filter-bar';
+import { AppButton } from '../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
+import {
+  DepartmentMap,
+  type DepartamentoElegible,
+} from '../../shared/components/organisms/department-map/department-map';
+import {
+  BoMunicipalitiesCatalog,
+  type RamaDepartamento,
+} from '../../core/data-access/terminology/bo-municipalities.service';
+import { departamentoPorCiudad, normalizarLugar } from '../../shared/geo/departamento-de-ciudad';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
 
@@ -157,9 +167,13 @@ const ICONO_POR_CATEGORIA: Readonly<Record<string, NavIconName>> = {
  */
 @Component({
   selector: 'app-laboratory-directory',
-  imports: [AppButtonLink, DirectoryPage, NavIcon, RouterLink],
+  imports: [AppButton, AppButtonLink, DepartmentMap, DirectoryPage, NavIcon, RouterLink],
   templateUrl: './laboratory-directory.html',
-  styleUrl: '../../shared/styles/rejilla-de-tarjetas.css',
+  // El mapa comparte la hoja de clínicas y farmacias: es el mismo filtro.
+  styleUrls: [
+    '../../shared/styles/rejilla-de-tarjetas.css',
+    '../public-directories/mapa-directorio.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LaboratoryDirectory {
@@ -178,8 +192,129 @@ export class LaboratoryDirectory {
   protected readonly filtros = FILTROS;
   protected readonly sustantivo = SUSTANTIVO;
 
-  protected readonly state = signal<ViewState<readonly LaboratoryCategoryGroup[]>>(loading());
+  /** Lo que devolvió el buscador, sin agrupar: el mapa necesita las ciudades. */
+  private readonly unidades = signal<ViewState<readonly DiagnosticUnitSearchItem[]>>(loading());
+
+  /**
+   * Lo que se muestra: los centros del departamento elegido, agrupados por
+   * categoría. El departamento corta **en memoria** —la búsqueda no lo
+   * acepta—, igual que en clínicas y farmacias.
+   */
+  protected readonly state = computed<ViewState<readonly LaboratoryCategoryGroup[]>>(() =>
+    mapData(this.unidades(), (unidades) => groupUnits(this.delDepartamento(unidades))),
+  );
   protected readonly groups = computed(() => dataOf(this.state()) ?? []);
+
+  /* ---- el mapa de Bolivia como filtro ------------------------------------
+     Copia del de clínicas y farmacias (`PublicDirectoryListing`): mismo
+     organismo, mismo catálogo, mismo parámetro `departamento` en la URL. No se
+     hereda de aquella clase porque ésa lee otro contrato —el público, paginado
+     por cursor— y esta pantalla busca por `/diagnostic-units/search`. */
+
+  private readonly municipios = inject(BoMunicipalitiesCatalog);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** El árbol de departamentos y municipios. Vacío mientras no llegue. */
+  private readonly ramas = signal<readonly RamaDepartamento[]>([]);
+
+  /** El catálogo no llegó: el mapa no se dibuja y se ofrece reintentar. */
+  protected readonly catalogoGeoCaido = signal(false);
+
+  /** Los nueve departamentos, todos: ver `departamentos` en `PublicDirectoryListing`. */
+  protected readonly departamentos = computed<readonly DepartamentoElegible[]>(() =>
+    this.ramas().map((rama) => ({
+      conceptId: rama.conceptId,
+      sigla: rama.sigla,
+      nombre: rama.nombre,
+    })),
+  );
+
+  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+
+  /**
+   * Si los resultados traen ciudades. Hoy sólo la maqueta las sirve (ver
+   * `cities` en el tipo): sin ellas el mapa no acotaría nada, y un filtro que
+   * no filtra no se dibuja.
+   */
+  protected readonly hayCiudades = computed(() =>
+    (dataOf(this.unidades()) ?? []).some((unidad) => (unidad.cities?.length ?? 0) > 0),
+  );
+
+  protected readonly departamentoElegido = computed(() => {
+    const valor: unknown = this.parametros()[PARAM_DEPARTAMENTO];
+    return typeof valor === 'string' && valor !== '' ? valor : null;
+  });
+
+  /** Los departamentos donde el centro tiene alguna sede. */
+  private departamentosDe(unidad: DiagnosticUnitSearchItem): ReadonlySet<string> {
+    const porCiudad = this.porCiudad();
+    const departamentos = new Set<string>();
+    for (const ciudad of unidad.cities ?? []) {
+      const conceptId = porCiudad.get(normalizarLugar(ciudad));
+      if (conceptId !== undefined) departamentos.add(conceptId);
+    }
+    return departamentos;
+  }
+
+  private delDepartamento(
+    unidades: readonly DiagnosticUnitSearchItem[],
+  ): readonly DiagnosticUnitSearchItem[] {
+    const elegido = this.departamentoElegido();
+    return elegido === null
+      ? unidades
+      : unidades.filter((unidad) => this.departamentosDe(unidad).has(elegido));
+  }
+
+  /** El resumen bajo el mapa: cuántos centros hay en el departamento elegido. */
+  protected readonly resumenDelMapa = computed<string | null>(() => {
+    const elegido = this.departamentoElegido();
+    if (elegido === null) {
+      return null;
+    }
+    const nombre = this.ramas().find((rama) => rama.conceptId === elegido)?.nombre ?? '';
+    const cuantos = this.delDepartamento(dataOf(this.unidades()) ?? []).length;
+    if (cuantos === 0) {
+      return `Todavía no hay nada publicado en ${nombre}.`;
+    }
+    return `${cuantos} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+  });
+
+  /** Sin centros en el departamento elegido: lo dice la lista, no un vacío genérico. */
+  protected readonly sinCoincidencias = computed<string | null>(() =>
+    this.state().status === 'ready' && this.groups().length === 0
+      ? 'No hay centros publicados en ese departamento con los filtros que pusiste. Tocalo otra vez en el mapa para ver todo el país.'
+      : null,
+  );
+
+  /** Elegir en el mapa va a la URL; `null` quita el parámetro. */
+  protected elegirDepartamento(conceptId: string | null): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [PARAM_DEPARTAMENTO]: conceptId },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /** Reintenta la lectura del catálogo geográfico tras un fallo. */
+  protected reintentarGeo(): void {
+    this.municipios.olvidar();
+    this.leerGeografia();
+  }
+
+  private leerGeografia(): void {
+    this.catalogoGeoCaido.set(false);
+    this.municipios
+      .listar()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (ramas: readonly RamaDepartamento[]) => this.ramas.set(ramas),
+        error: () => {
+          this.ramas.set([]);
+          this.catalogoGeoCaido.set(true);
+        },
+      });
+  }
 
   /**
    * Todo lo que la URL trae como filtro, incluido `q`.
@@ -303,7 +438,7 @@ export class LaboratoryDirectory {
   constructor() {
     this.peticiones
       .pipe(
-        tap(() => this.state.set(loading())),
+        tap(() => this.unidades.set(loading())),
         switchMap(() =>
           this.units.search({ ...aConsulta(this.activos()), limit: TOPE_DEL_DIRECTORIO }).pipe(
             map((pagina) =>
@@ -314,19 +449,21 @@ export class LaboratoryDirectory {
                       ? 'Ningún centro verificado coincide con esa búsqueda. Probá quitando algún filtro.'
                       : 'Todavía no hay centros verificados publicados.',
                   )
-                : ready(groupUnits(pagina.items)),
+                : ready(pagina.items),
             ),
             // El error se convierte en valor para que el flujo siga vivo: un
             // `error` que sube mata la suscripción y «Reintentar» dejaría de
             // pedir sin decir por qué.
             catchError((error: unknown) =>
-              of(errorToViewState<readonly LaboratoryCategoryGroup[]>(error)),
+              of(errorToViewState<readonly DiagnosticUnitSearchItem[]>(error)),
             ),
           ),
         ),
-        takeUntilDestroyed(inject(DestroyRef)),
+        takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((estado) => this.state.set(estado));
+      .subscribe((estado) => this.unidades.set(estado));
+
+    this.leerGeografia();
 
     // La lectura la dispara el cambio de la dirección —incluido el primero, que
     // `queryParams` emite de forma síncrona al suscribirse—, así que no hace
@@ -356,6 +493,9 @@ export class LaboratoryDirectory {
  * (`CATALOG_MAX_LIMIT` en `diagnostic_units/dto/catalog.dto.ts` de la API).
  */
 const TOPE_DEL_DIRECTORIO = 100;
+
+/** Clave del departamento elegido en el mapa, en la URL. La misma que en clínicas y farmacias. */
+const PARAM_DEPARTAMENTO = 'departamento';
 
 /** ¿Quedó algún filtro puesto? Decide qué texto muestra el vacío. */
 function hayFiltros(activos: Readonly<Record<string, string>>): boolean {

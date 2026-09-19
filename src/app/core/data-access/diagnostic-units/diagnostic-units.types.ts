@@ -137,6 +137,17 @@ export interface DiagnosticUnitSearchItem extends DiagnosticUnitDirectoryItem {
   readonly rating: number | null;
   readonly ratingCount: number;
   readonly minAmount: number | null;
+  /**
+   * Las ciudades donde el centro tiene sede, sin repetir. Es lo que deja
+   * filtrar el directorio por el mapa de departamentos.
+   *
+   * **Opcional porque hoy sólo lo sirve la maqueta de `mockup`.** La búsqueda
+   * de la API no lo devuelve todavía (TODO: exponerlo en
+   * `diagnostic_units/dto/catalog.dto.ts`, a partir de las sedes). Sin el
+   * dato el directorio no dibuja el mapa: un filtro que no filtra nada es
+   * peor que no tenerlo.
+   */
+  readonly cities?: readonly string[];
 }
 
 /** Página del buscador. */
