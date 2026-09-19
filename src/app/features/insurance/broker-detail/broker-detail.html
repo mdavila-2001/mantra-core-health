@@ -86,35 +86,12 @@
         @if (dossier.clients.length === 0) {
           <p class="broker__hollow">Todavía no tiene clientes asignados.</p>
         } @else {
-          <table class="broker__clients">
-            <caption class="broker__clients-caption">
-              Clientes asignados al corredor
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Tipo de cliente</th>
-                <th scope="col">Colectivo</th>
-                <th scope="col">Desde</th>
-                <th scope="col">Hasta</th>
-                <th scope="col">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (cliente of dossier.clients; track cliente.id) {
-                <tr>
-                  <th scope="row">{{ cliente.clientType.display }}</th>
-                  <td>{{ cliente.employerGroupId ? 'Empresa afiliada' : 'Individual' }}</td>
-                  <td>
-                    {{ cliente.effectiveFrom ? (cliente.effectiveFrom | date: 'longDate') : '—' }}
-                  </td>
-                  <td>
-                    {{ cliente.effectiveTo ? (cliente.effectiveTo | date: 'longDate') : 'Sin fin' }}
-                  </td>
-                  <td>{{ cliente.status.display }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
+          <app-data-table
+            [state]="cartera()"
+            [columns]="columnasDeCartera"
+            [trackBy]="porId"
+            caption="Clientes asignados al corredor"
+          />
         }
       </app-card>
     </div>
