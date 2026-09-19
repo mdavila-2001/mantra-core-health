@@ -215,6 +215,58 @@ describe('ClinicalRecord', () => {
     req.flush({ items: [], count: 0, limit: 25, nextCursor: null });
   });
 
+  /**
+   * El defecto que esto fija (19/09/2026), visto en el navegador: **buscar por
+   * documento se deshacía solo** si antes se había buscado por nombre.
+   *
+   * La cadena: el botón publica el documento y limpia `q` → el campo de nombre
+   * está atado a `q`, así que se vacía de rebote → al vaciarse avisa con texto
+   * vacío → y ese aviso escribía el mapa de parámetros ENTERO, borrando el
+   * `nationalId` recién puesto. En pantalla se veía como que el botón no hacía
+   * nada: la URL quedaba pelada y la tabla volvía al vacío inicial.
+   */
+  it('el rebote del buscador por nombre al vaciarse no borra el documento', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+
+    interno<(valor: string) => void>('fijarDocumento')('1234567');
+    interno<() => void>('buscarPorDocumento')();
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+
+    // Esto es exactamente lo que emite `app-search-field` cuando `q`
+    // desaparece de la URL y su campo se vacía solo.
+    interno<(texto: string) => void>('buscar')('');
+    await harness.fixture.whenStable();
+
+    const router = TestBed.inject(Router);
+    expect(router.url).toContain('nationalId=1234567');
+    expect(estado().status).toBe('ready');
+  });
+
+  /** Y al revés: escribir un nombre sí deja sin efecto al documento. */
+  it('buscar por nombre limpia el documento de la URL', async () => {
+    resolverCatalogoDeDepartamentosVacio();
+
+    interno<(valor: string) => void>('fijarDocumento')('1234567');
+    interno<() => void>('buscarPorDocumento')();
+    await harness.fixture.whenStable();
+    peticion().flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+
+    interno<(texto: string) => void>('buscar')('peña');
+    await harness.fixture.whenStable();
+
+    const router = TestBed.inject(Router);
+    expect(router.url).not.toContain('nationalId');
+    const req = peticion();
+    expect(req.request.params.get('q')).toBe('peña');
+    expect(req.request.params.has('nationalId')).toBe(false);
+    req.flush({ items: [PACIENTE], count: 1, limit: 25, nextCursor: null });
+  });
+
   it('buscar por documento con el campo vacío no navega ni pide nada', async () => {
     resolverCatalogoDeDepartamentosVacio();
 

@@ -5,57 +5,88 @@
 />
 
 <div class="archivo">
-  <!-- El campo se nombra solo (publica su propio contexto de control): no va
-       dentro de un app-form-field, o quedarían dos nombres accesibles. -->
-  <app-search-field
-    class="archivo__buscador"
-    label="Buscar por nombre o código"
-    placeholder="Nombre o código de paciente"
-    [value]="busqueda()"
-    [loading]="cargando()"
-    (searched)="buscar($event)"
-  />
+  <!-- ─── Cómo encontrar a la persona ───────────────────────────────────────
+       Los tres campos responden UNA pregunta —«¿a quién buscás?»— y por eso
+       van en una sola rejilla, con el ícono de cada uno a su izquierda. Antes
+       el buscador flotaba solo sobre una fila suelta de dos campos y un botón
+       descolgado contra el borde derecho: tres bloques sin relación visible
+       para una sola pregunta.
 
-  <!-- ─── Buscar por documento ──────────────────────────────────────────────
-       AC-07-1 / AC-07-2: encontrar a alguien por su carnet aunque su nombre
-       o su código no contengan el texto buscado. El departamento es opcional
-       y sólo desempata: dos personas pueden compartir el mismo número
-       expedido en departamentos distintos. -->
+       El nombre filtra al teclear (AC del M34); el documento se ENVÍA, porque
+       un carnet a medio escribir no debe buscar (AC-07-1 / AC-07-2). Por eso
+       el bloque es un `<form>` y el Enter del buscador no lo envía. -->
   <form
-    class="archivo__documento"
-    aria-label="Buscar por documento de identidad"
+    class="archivo__filtros"
+    aria-label="Buscar a la persona"
     (submit)="$event.preventDefault(); buscarPorDocumento()"
   >
-    <app-form-field label="Documento de identidad" class="archivo__documento-campo">
-      <app-input
-        type="text"
-        testId="clinical-record-national-id"
-        placeholder="Número de carnet"
-        [value]="documentoTecleado()"
-        (valueChange)="fijarDocumento($event)"
-      />
-    </app-form-field>
+    <div class="app-form-grid">
+      <!-- El Enter de este campo ya buscó por nombre —lo emite `app-search-field`
+           al instante—; dejarlo además enviar el formulario buscaría por
+           documento y borraría la `q` recién escrita. -->
+      <app-form-field
+        icon="patients"
+        label="Nombre o código"
+        hint="Filtra la lista mientras escribís."
+        (keydown.enter)="$event.preventDefault()"
+      >
+        <app-search-field
+          placeholder="Nombre o código de paciente"
+          [value]="busqueda()"
+          [loading]="cargando()"
+          (searched)="buscar($event)"
+        />
+      </app-form-field>
 
-    <app-form-field
-      label="Departamento de expedición"
-      hint="Opcional. Desempata cuando el número se repite en otro departamento."
-      class="archivo__documento-campo"
-    >
-      <app-select
-        [(value)]="departamentoElegido"
-        [options]="opcionesDeDepartamento()"
-        placeholder="Cualquier departamento"
-      />
-    </app-form-field>
+      <!-- AC-07-1: encontrar a alguien por su carnet aunque su nombre o su
+           código no contengan el texto buscado. -->
+      <app-form-field
+        icon="labels"
+        label="Documento de identidad"
+        hint="El número exacto del carnet."
+      >
+        <app-input
+          type="text"
+          testId="clinical-record-national-id"
+          placeholder="Número de carnet"
+          [value]="documentoTecleado()"
+          (valueChange)="fijarDocumento($event)"
+        />
+      </app-form-field>
 
-    <button
-      app-button
-      type="submit"
-      variant="secondary"
-      data-testid="clinical-record-search-by-document"
-    >
-      Buscar por documento
-    </button>
+      <!-- AC-07-2: el departamento sólo desempata — dos personas pueden
+           compartir número expedido en departamentos distintos. -->
+      <app-form-field
+        icon="pin"
+        label="Departamento de expedición"
+        hint="Opcional. Desempata cuando el número se repite en otro departamento."
+      >
+        <app-select
+          [(value)]="departamentoElegido"
+          [options]="opcionesDeDepartamento()"
+          placeholder="Cualquier departamento"
+        />
+      </app-form-field>
+    </div>
+
+    <!-- El botón, en su propio renglón y fuera de la rejilla.
+
+         Fuera, y no como un hijo suyo a lo ancho, porque un hijo que ocupa
+         todas las columnas le impide a `auto-fit` plegar la que sobra: los
+         tres campos se quedaban en tres cuartos del bloque con un canalón
+         vacío a la derecha. Y en su propio renglón porque, como una cuarta
+         columna de la fila, había que empujarle un margen superior calculado
+         a mano para que su borde cuadrara con el de los controles. -->
+    <div class="archivo__acciones">
+      <button
+        app-button
+        type="submit"
+        variant="secondary"
+        data-testid="clinical-record-search-by-document"
+      >
+        Buscar por documento
+      </button>
+    </div>
   </form>
 
   <!-- Los 9 estados del M34 —incluido «forbidden», para un rol inesperado—
@@ -76,9 +107,45 @@
   <span class="archivo__id">{{ paciente.profileId }}</span>
 </ng-template>
 
+<!-- Las dos acciones de la fila, cada una con SU color y su globo.
+     Eran dos enlaces de texto pegados —«Ver expedienteSolicitar
+     vinculación»— sin separación ni jerarquía: no se veía que fueran dos.
+
+     Son anclas y no botones porque navegan: así siguen valiendo el clic con
+     la rueda, «abrir en pestaña nueva» y el destino en la barra de estado.
+     El nombre accesible va en el host y nombra a la persona, que es lo que
+     un lector de pantalla necesita para no leer «Ver expediente» veinte
+     veces seguidas. -->
 <ng-template #celdaAccion let-paciente>
-  <a app-link [routerLink]="rutaDe(paciente.profileId)">Ver expediente</a>
-  <!-- FT-07-R05: sin turno confirmado hoy, "Ver expediente" da 403 — este es
-       el camino para pedirle el vínculo al paciente. -->
-  <a app-link [routerLink]="rutaSolicitarAcceso(paciente.profileId)">Solicitar vinculación</a>
+  <div class="archivo__fila-acciones">
+    <a
+      app-button
+      variant="primary"
+      size="sm"
+      [iconOnly]="true"
+      data-testid="paciente-ver-expediente"
+      [routerLink]="rutaDe(paciente.profileId)"
+      [attr.aria-label]="'Ver el expediente de ' + nombreDe(paciente)"
+      appTooltip="Ver expediente"
+    >
+      <app-nav-icon name="folder" />
+    </a>
+
+    <!-- FT-07-R05: sin turno confirmado hoy, «Ver expediente» da 403 — este es
+         el camino para pedirle el vínculo al paciente. Va en secundario: es la
+         salida cuando la primera no está disponible, no la acción de todos los
+         días. -->
+    <a
+      app-button
+      variant="secondary"
+      size="sm"
+      [iconOnly]="true"
+      data-testid="paciente-solicitar-vinculacion"
+      [routerLink]="rutaSolicitarAcceso(paciente.profileId)"
+      [attr.aria-label]="'Solicitar la vinculación con ' + nombreDe(paciente)"
+      appTooltip="Solicitar vinculación"
+    >
+      <app-nav-icon name="link" />
+    </a>
+  </div>
 </ng-template>
