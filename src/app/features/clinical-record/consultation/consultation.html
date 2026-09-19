@@ -76,8 +76,9 @@
       } @else {
         <form class="consulta__apertura" (submit)="$event.preventDefault()">
           <div class="consulta__apertura-campo">
+            <!-- Sin ícono: al lado de un textarea de tres filas quedaba suelto
+                 en la esquina, fuera del campo. -->
             <app-form-field
-              icon="note"
               label="Motivo de consulta"
               [hint]="
                 citaDeOrigen()

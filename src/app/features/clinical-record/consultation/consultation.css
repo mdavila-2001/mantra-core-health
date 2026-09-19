@@ -70,16 +70,21 @@
 
 /* El motivo y el botón en la misma línea: el campo toma el ancho que sobra y
    el botón se alinea con su base. En angosto se apilan. */
+/* El motivo a todo el ancho y el botón debajo, a la derecha: al lado del
+   textarea el botón quedaba flotando a la altura del contador, sin alinearse
+   con nada, y el campo no llegaba al borde. */
 .consulta__apertura {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-3) var(--sp-4);
-  align-items: flex-end;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
 
 .consulta__apertura-campo {
-  flex: 1 1 28ch;
   min-inline-size: 0;
+}
+
+.consulta__apertura > [app-button] {
+  align-self: flex-end;
 }
 
 .consulta__principal {

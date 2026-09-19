@@ -1208,7 +1208,7 @@ describe('AgendaCreate', () => {
       fila.querySelector('[data-value="no"]').click();
       fixture.detectChanges();
       expect(acc.semana.at(0).getRawValue().activo).toBe(false);
-      expect(fixture.nativeElement.querySelectorAll('input[type="checkbox"]').length).toBe(0);
+      expect(fixture.nativeElement.querySelectorAll('input[type="checkbox"]:not([role="switch"])').length).toBe(0);
     });
 
     it('las opciones avanzadas ya no tienen casillas: son «Sí / No»', () => {
@@ -1217,13 +1217,34 @@ describe('AgendaCreate', () => {
       fixture.detectChanges();
 
       const raiz: HTMLElement = fixture.nativeElement;
-      expect(raiz.querySelectorAll('input[type="checkbox"]').length).toBe(0);
+      expect(raiz.querySelectorAll('input[type="checkbox"]:not([role="switch"])').length).toBe(0);
       raiz
         .querySelector<HTMLElement>('[data-testid="agenda-create-politica"] [data-value="si"]')!
         .click();
       fixture.detectChanges();
       expect(acc.usarPolitica()).toBe(true);
       expect(raiz.querySelector('[data-testid="agenda-create-otro-recurso"]')).not.toBeNull();
+    });
+
+    it('la fecha de fin es un interruptor: encendido pide la fecha, apagado es permanente', () => {
+      crear();
+      const raiz: HTMLElement = fixture.nativeElement;
+      const vigencia = raiz.querySelector<HTMLElement>('[data-testid="agenda-create-vigencia"]')!;
+      const interruptor = vigencia.querySelector<HTMLInputElement>('input[role="switch"]')!;
+
+      expect(interruptor.checked).toBe(false);
+      expect(vigencia.textContent).toContain('Nunca cambia — horario permanente');
+      expect(raiz.querySelector('app-date-picker')).toBeNull();
+
+      interruptor.click();
+      fixture.detectChanges();
+      expect(acc.formGeneral.getRawValue().tieneFin).toBe('si');
+      expect(vigencia.textContent).toContain('Sí, hasta una fecha');
+      expect(raiz.querySelector('app-date-picker')).not.toBeNull();
+
+      interruptor.click();
+      fixture.detectChanges();
+      expect(acc.formGeneral.getRawValue().tieneFin).toBe('no');
     });
 
     it('un horario con dos franjas el mismo día vuelve como un día con almuerzo', () => {

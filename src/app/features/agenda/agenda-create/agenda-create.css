@@ -170,74 +170,86 @@
 
 /* ---- opciones y avanzadas -------------------------------------------------- */
 
-.agenda-create__opciones {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.agenda-create__opcion {
+/* La vigencia como interruptor: el texto a la izquierda dice qué significa
+   la posición actual, el interruptor a la derecha. Encendido, la tarjeta toma
+   el borde de marca, igual que una opción elegida. */
+.agenda-create__interruptor {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
-  cursor: pointer;
-}
-
-/* Las dos respuestas de la vigencia como tarjetas: toda la superficie se
-   toca, y la elegida se distingue por el borde además del punto. */
-.agenda-create__opcion--tarjeta {
-  align-items: flex-start;
-  gap: var(--sp-3);
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-4);
   padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   background: var(--bg-surface);
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-.agenda-create__opcion--tarjeta:hover {
-  border-color: var(--border-default);
-}
-
-.agenda-create__opcion--tarjeta:has(input:checked) {
+.agenda-create__interruptor:has(input:checked) {
   border-color: var(--brand-primary);
   box-shadow: inset 0 0 0 1px var(--brand-primary);
 }
 
-.agenda-create__opcion--tarjeta input {
-  margin-block-start: 0.2rem;
-  accent-color: var(--brand-primary);
-}
-
-.agenda-create__opcion-texto {
-  display: grid;
-  gap: 2px;
-}
-
-.agenda-create__opcion-titulo {
-  font-weight: 600;
-}
-
-.agenda-create__opcion-ayuda {
-  font-size: var(--fs-caption);
-  color: var(--text-secondary);
+.agenda-create__interruptor > app-switch {
+  flex: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .agenda-create__opcion--tarjeta {
+  .agenda-create__interruptor {
     transition: none;
   }
 }
 
 .agenda-create__avanzadas,
-.agenda-create__politica,
 .agenda-create__tecnico {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
 }
 
-.agenda-create__politica,
+/* Las cuatro reglas de reserva: una columna en el teléfono, dos en cuanto
+   entran. Cada regla es una tarjeta, y el campo mide lo que mide un número
+   —no el ancho entero de la pantalla—. */
+.agenda-create__politica {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 40rem) {
+  .agenda-create__politica {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.agenda-create__regla {
+  display: block;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* El número y su unidad en una fila: «60 min», «30 días». */
+.agenda-create__con-unidad {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 14rem;
+}
+
+.agenda-create__con-unidad > app-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.agenda-create__unidad {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
 .agenda-create__tecnico {
   padding: var(--sp-3);
   border-left: 2px solid var(--border-subtle);

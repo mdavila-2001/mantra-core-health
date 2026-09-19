@@ -417,27 +417,30 @@
     <section class="agenda-create__bloque">
       <h2 class="agenda-create__titulo">¿Este horario tiene fecha de fin?</h2>
 
-      <div class="agenda-create__opciones" role="radiogroup" aria-label="Vigencia del horario">
-        <!-- «NUNCA CAMBIAR» son las palabras del pedido, y se usan tal cual:
-             la lista de horarios ya etiqueta a éste como HORARIO PERMANENTE, y
-             que las dos pantallas lo nombren distinto obliga a deducir que
-             hablan de lo mismo. -->
-        <label class="agenda-create__opcion agenda-create__opcion--tarjeta">
-          <input type="radio" formControlName="tieneFin" value="no" />
-          <span class="agenda-create__opcion-texto">
-            <span class="agenda-create__opcion-titulo">Nunca cambia — horario permanente</span>
-            <span class="agenda-create__opcion-ayuda">Sigue vigente hasta que lo cambies vos.</span>
-          </span>
-        </label>
-        <label class="agenda-create__opcion agenda-create__opcion--tarjeta">
-          <input type="radio" formControlName="tieneFin" value="si" />
-          <span class="agenda-create__opcion-texto">
-            <span class="agenda-create__opcion-titulo">Sí, hasta una fecha</span>
-            <span class="agenda-create__opcion-ayuda">
+      <!-- Un interruptor y no dos tarjetas (propietario, 19/09): la pregunta
+           es de sí o no, y el texto de la izquierda dice en palabras qué
+           significa la posición actual. «Nunca cambia — horario permanente»
+           sigue siendo el nombre del estado apagado: la lista de horarios ya
+           lo etiqueta HORARIO PERMANENTE. -->
+      <div class="agenda-create__interruptor" data-testid="agenda-create-vigencia">
+        <span class="agenda-create__pregunta-texto" aria-live="polite">
+          @if (formGeneral.controls.tieneFin.value === 'si') {
+            <span class="agenda-create__pregunta-titulo">Sí, hasta una fecha</span>
+            <span class="agenda-create__pregunta-ayuda">
               Para una temporada, un reemplazo o un horario de prueba.
             </span>
-          </span>
-        </label>
+          } @else {
+            <span class="agenda-create__pregunta-titulo">Nunca cambia — horario permanente</span>
+            <span class="agenda-create__pregunta-ayuda">
+              Sigue vigente hasta que lo cambies vos.
+            </span>
+          }
+        </span>
+        <app-switch
+          label="Tiene fecha de fin"
+          [checked]="formGeneral.controls.tieneFin.value === 'si'"
+          (checkedChange)="formGeneral.controls.tieneFin.setValue($event ? 'si' : 'no')"
+        />
       </div>
 
       @if (formGeneral.controls.tieneFin.value === 'si') {
@@ -485,24 +488,53 @@
           </div>
 
           @if (usarPolitica()) {
+            <!-- Cada regla en su tarjeta, con la unidad pegada al número: el
+                 médico escribe «60» y lee «60 min», sin ir a buscar la unidad
+                 a la ayuda de abajo. -->
             <div class="agenda-create__politica" [formGroup]="formPolitica">
               <app-form-field
+                class="agenda-create__regla"
                 label="Anticipación mínima"
-                hint="Minutos antes del turno hasta cuándo se puede pedir"
+                hint="Hasta cuánto antes del turno se puede pedir."
               >
-                <app-input type="number" formControlName="minNoticeMinutes" />
-              </app-form-field>
-              <app-form-field label="Se puede reservar con hasta" hint="Días de anticipación">
-                <app-input type="number" formControlName="maxAdvanceDays" />
+                <div class="agenda-create__con-unidad">
+                  <app-input type="number" placeholder="Ej.: 60" formControlName="minNoticeMinutes" />
+                  <span class="agenda-create__unidad" aria-hidden="true">min</span>
+                </div>
               </app-form-field>
               <app-form-field
-                label="Se puede cancelar hasta"
-                hint="Minutos antes del turno"
+                class="agenda-create__regla"
+                label="Se puede reservar con hasta"
+                hint="Cuántos días hacia adelante se ve la agenda."
               >
-                <app-input type="number" formControlName="cancellationWindowMinutes" />
+                <div class="agenda-create__con-unidad">
+                  <app-input type="number" placeholder="Ej.: 30" formControlName="maxAdvanceDays" />
+                  <span class="agenda-create__unidad" aria-hidden="true">días</span>
+                </div>
               </app-form-field>
-              <app-form-field label="Turnos activos por paciente" hint="Máximo simultáneo">
-                <app-input type="number" formControlName="maxActivePerPatient" />
+              <app-form-field
+                class="agenda-create__regla"
+                label="Se puede cancelar hasta"
+                hint="Minutos antes del turno."
+              >
+                <div class="agenda-create__con-unidad">
+                  <app-input
+                    type="number"
+                    placeholder="Ej.: 120"
+                    formControlName="cancellationWindowMinutes"
+                  />
+                  <span class="agenda-create__unidad" aria-hidden="true">min</span>
+                </div>
+              </app-form-field>
+              <app-form-field
+                class="agenda-create__regla"
+                label="Turnos activos por paciente"
+                hint="Máximo de turnos pendientes a la vez."
+              >
+                <div class="agenda-create__con-unidad">
+                  <app-input type="number" placeholder="Ej.: 2" formControlName="maxActivePerPatient" />
+                  <span class="agenda-create__unidad" aria-hidden="true">turnos</span>
+                </div>
               </app-form-field>
             </div>
           }

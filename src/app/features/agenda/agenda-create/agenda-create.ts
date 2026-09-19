@@ -31,6 +31,7 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
+import { Switch } from '../../../shared/components/atoms/switch/switch';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import type { DialogDetail } from '../../../shared/components/molecules/dialog/dialog.types';
 import { Router } from '@angular/router';
@@ -193,6 +194,7 @@ interface DiaVisible {
     RouterLink,
     SegmentedControl,
     Select,
+    Switch,
     TitleCasePipe,
   ],
   templateUrl: './agenda-create.html',
