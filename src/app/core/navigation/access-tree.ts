@@ -99,8 +99,36 @@ export interface AccessArea {
  * Va acá y no sacándola de {@link AccessArea.paths}: la zona `red` declara
  * `catchAllGroups: ['General']`, así que quitarla de `paths` la habría dejado
  * caer en la misma zona por el cajón —mismo resultado, más difícil de encontrar—.
+ *
+ * **Las siete de «Consultas»** (19/09/2026) — `diagnostics`, `lab-visits`,
+ * `questionnaires`, `form-builder`, `glossary`, `my-services` y
+ * `my-quotations`. La zona le abría diez tarjetas al médico y la pregunta que
+ * la zona existe para responder —«¿a qué vine hoy?»— no se contesta con diez
+ * opciones: se contesta con la agenda, lo que se escribe y el expediente. Las
+ * otras siete son tareas que se hacen **desde** una de esas tres o una vez al
+ * mes, y competían de igual a igual con las que se usan todos los días.
+ * Pedido del propietario del producto mirando la zona del médico.
+ *
+ * Ninguna se vuelve inalcanzable, y por eso salen del árbol y no del registro:
+ * «Formularios», «Glosario», «Mis servicios» y «Cotizaciones» conservan su
+ * renglón en el menú lateral —es la lista cerrada que fija
+ * `navigation.service.spec.ts`—, y las tres que el médico nunca tuvo en el menú
+ * (`diagnostics`, `lab-visits`, `questionnaires`) se llegan desde donde su
+ * propio registro dice que se llegan: los estudios desde el Archivo clínico,
+ * las visitas desde Consultas médicas y la encuesta desde la consulta del
+ * paciente al que se le asigna.
  */
-export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = ['dashboard', 'directories'];
+export const SECCIONES_FUERA_DEL_ARBOL: readonly string[] = [
+  'dashboard',
+  'directories',
+  'diagnostics',
+  'lab-visits',
+  'questionnaires',
+  'form-builder',
+  'glossary',
+  'my-services',
+  'my-quotations',
+];
 
 /**
  * Los accesos que, desde el panel, abren en un **modal** en vez de navegar.
@@ -145,18 +173,15 @@ export const ACCESS_AREAS: readonly AccessArea[] = [
   {
     id: 'consulta',
     label: 'Consultas',
-    tagline: 'Tu agenda, tus evoluciones, tus estudios y los formularios de cada atención.',
+    tagline: 'Tu agenda, lo que escribís y el expediente de cada paciente.',
     icon: 'stethoscope',
     tone: 'info',
-    paths: [
-      'schedule',
-      'progress-notes',
-      'medical-records',
-      'diagnostics',
-      'interventions',
-      'form-builder',
-      'questionnaires',
-    ],
+    // Tres y no diez (19/09/2026): lo que se abre con un paciente delante. El
+    // resto de «Atención» está en SECCIONES_FUERA_DEL_ARBOL, que explica por
+    // dónde se sigue llegando a cada una. `interventions` sale de `paths` pero
+    // no del árbol: no la ve el médico —es de los cinco roles perioperatorios—
+    // y le llega por el cajón, igual que «Mis visitas médicas» al visitador.
+    paths: ['schedule', 'progress-notes', 'medical-records'],
     catchAllGroups: ['Atención'],
   },
   {

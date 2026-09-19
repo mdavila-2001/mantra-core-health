@@ -141,14 +141,68 @@ describe('buildAccessTree', () => {
   });
 
   it('el cajón recoge lo que ninguna zona nombró', () => {
-    // «Glosario» no está declarada en ningún `paths`: llega a «Mi consulta»
+    // «Intervenciones» no está declarada en ningún `paths`: llega a «Consultas»
     // por ser del grupo `Atención`, y eso es lo que hace que una sección nueva
     // aparezca sin tocar el registro de zonas.
+    //
+    // El ejemplo era «Glosario» hasta el 19/09/2026, cuando las siete tarjetas
+    // que sobraban en la zona del médico salieron del árbol. El cajón sigue
+    // siendo la red de seguridad: se mira desde una silla que no es la suya.
+    const consulta = buildAccessTree(seccionesDe(['SURGEON'])).find(
+      (zona) => zona.area.id === 'consulta',
+    );
+
+    expect(consulta?.sections.map((s) => s.path)).toContain('interventions');
+  });
+
+  /**
+   * El pedido del 19/09/2026: la zona del médico abre tres tarjetas, no diez.
+   *
+   * La aserción nombra las tres **y** las siete que salieron: sin la segunda
+   * mitad, agregar una sección de `Atención` al registro la devolvería a la
+   * zona por el cajón sin que nada se queje, que es exactamente lo que este
+   * archivo existe para impedir.
+   */
+  it('la zona de Consultas le abre tres tarjetas al médico', () => {
     const consulta = buildAccessTree(seccionesDe(['PRACTITIONER'])).find(
       (zona) => zona.area.id === 'consulta',
     );
 
-    expect(consulta?.sections.map((s) => s.path)).toContain('glossary');
+    expect(consulta?.sections.map((s) => s.path)).toEqual([
+      'schedule',
+      'progress-notes',
+      'medical-records',
+    ]);
+  });
+
+  /**
+   * La otra mitad del mismo pedido: sacarlas del panel no las saca del producto.
+   *
+   * Cuatro conservan su renglón en el menú lateral y las otras tres se llegan
+   * desde la pantalla que las usa; lo que ninguna puede es desaparecer del
+   * registro, que sería quitar la función en vez de ordenar el panel.
+   */
+  it('las siete que salieron de la zona siguen en el registro', () => {
+    const fuera = [
+      'diagnostics',
+      'lab-visits',
+      'questionnaires',
+      'form-builder',
+      'glossary',
+      'my-services',
+      'my-quotations',
+    ];
+
+    for (const ruta of fuera) {
+      expect(APP_SECTIONS.find((seccion) => seccion.path === ruta)).toBeDefined();
+    }
+
+    // Las cuatro que el médico abre por el menú lateral no pueden quedar sin
+    // puerta: si alguien les pusiera `fueraDelMenuPara`, se volverían huérfanas.
+    for (const ruta of ['form-builder', 'glossary', 'my-services', 'my-quotations']) {
+      const seccion = APP_SECTIONS.find((s) => s.path === ruta)!;
+      expect(seccion.fueraDelMenuPara ?? []).not.toContain('PRACTITIONER');
+    }
   });
 
   it('una zona sin nada adentro no se dibuja', () => {

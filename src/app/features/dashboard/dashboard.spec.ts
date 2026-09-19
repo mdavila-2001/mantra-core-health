@@ -306,7 +306,7 @@ describe('Dashboard', () => {
 
       const rutas = todasLasRutas();
       expect(rutas).toContain('/schedule');
-      expect(rutas).toContain('/glossary');
+      expect(rutas).toContain('/medical-records');
       expect(rutas).toContain('/tutorials');
       // El panel dentro del panel no: es un enlace a la pantalla en la que ya
       // estás, y ocupaba un lugar de los treinta y dos.
