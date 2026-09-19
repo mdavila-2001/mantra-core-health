@@ -15,6 +15,7 @@ import { ThemeService } from '../../core/tokens/theme.service';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-icon.types';
+import { Switch } from '../../shared/components/atoms/switch/switch';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
@@ -34,31 +35,23 @@ const BROWSER_PERMISSIONS: readonly {
   {
     key: 'avisos',
     label: 'Avisos del navegador',
-    purpose: 'Para verlos aunque tengas AloVida en otra pestaña. Tu bandeja funciona igual sin esto.',
+    purpose: 'Para verlos aunque tengas AloVida en otra pestaña.',
     icon: 'bell',
   },
   {
     key: 'ubicacion',
     label: 'Ubicación',
-    purpose: 'Para buscar farmacias y consultorios cerca tuyo sin escribir la dirección.',
+    purpose: 'Para buscar farmacias y consultorios cerca tuyo.',
     icon: 'pin',
   },
   {
     key: 'camara',
     label: 'Cámara',
-    purpose: 'Para adjuntar una foto de un estudio o un documento sin salir del navegador.',
+    purpose: 'Para adjuntar la foto de un estudio o un documento.',
     icon: 'camera',
   },
 ];
 
-/** Cómo se dice cada estado, y con qué tono se pinta. */
-const PERMISSION_STATES: Readonly<Record<EstadoPermiso, { text: string; tone: string }>> = {
-  concedido: { text: 'Permitido', tone: 'exito' },
-  denegado: { text: 'Bloqueado', tone: 'alerta' },
-  'sin-decidir': { text: 'Sin decidir', tone: 'neutro' },
-  desconocido: { text: 'Tu navegador no lo informa', tone: 'neutro' },
-  'no-disponible': { text: 'Este navegador no lo ofrece', tone: 'neutro' },
-};
 
 /**
  * Ajustes — todo lo que la persona configura sobre su propia cuenta, junto.
@@ -93,7 +86,7 @@ const PERMISSION_STATES: Readonly<Record<EstadoPermiso, { text: string; tone: st
  */
 @Component({
   selector: 'app-settings',
-  imports: [AlovidaThemeToggleDirective, AppButton, ChatPreferences, NavIcon, NotificationPreferences, PageHeader, RouterLink, Tab, Tabs],
+  imports: [AlovidaThemeToggleDirective, AppButton, ChatPreferences, NavIcon, NotificationPreferences, PageHeader, RouterLink, Switch, Tab, Tabs],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -129,8 +122,21 @@ export class Settings {
     this.theme.useSystemTheme();
   }
 
-  protected stateOf(permission: PermisoDelNavegador): { text: string; tone: string } {
-    return PERMISSION_STATES[this.permissions.estado()[permission]];
+  protected stateOf(permission: PermisoDelNavegador): EstadoPermiso {
+    return this.permissions.estado()[permission];
+  }
+
+  /**
+   * Si el interruptor va encendido.
+   *
+   * Cuenta también la petición en curso, y no por adorno: mientras el cartel
+   * está en pantalla el interruptor ya se pintó encendido solo, y si la persona
+   * dice que no, este valor vuelve a `false` —cambia de verdad— y Angular lo
+   * devuelve a su sitio. Sin ese ida y vuelta quedaría encendido afirmando un
+   * permiso que nadie concedió.
+   */
+  protected isOn(permission: PermisoDelNavegador): boolean {
+    return this.permissions.estado()[permission] === 'concedido' || this.requesting(permission);
   }
 
   protected canRequest(permission: PermisoDelNavegador): boolean {
@@ -141,12 +147,14 @@ export class Settings {
     return this.permissions.enCurso(permission);
   }
 
-  /** Un permiso bloqueado sólo se recupera desde el navegador, no desde acá. */
-  protected isBlocked(permission: PermisoDelNavegador): boolean {
-    return this.permissions.estado()[permission] === 'denegado';
-  }
-
-  protected request(permission: PermisoDelNavegador): void {
-    void this.permissions.pedir(permission);
+  /**
+   * Encender pide el permiso; apagar no existe y por eso el interruptor está
+   * inerte cuando ya está concedido: ninguna página puede quitarse un permiso
+   * a sí misma.
+   */
+  protected toggle(permission: PermisoDelNavegador, encendido: boolean): void {
+    if (encendido && this.canRequest(permission)) {
+      void this.permissions.pedir(permission);
+    }
   }
 }

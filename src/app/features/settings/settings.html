@@ -69,45 +69,34 @@
     <section class="ajustes__bloque">
       <h2 class="ajustes__titulo">Permisos del navegador</h2>
       <p class="ajustes__detalle">
-        Los concede tu navegador, no AloVida. Podemos pedírtelos; quitarlos se hace desde el
-        navegador —ninguna página puede quitarse un permiso a sí misma—.
+        Los concede tu navegador, no AloVida: para quitarlos, cambialos en la configuración de este
+        sitio en tu navegador.
       </p>
 
       <ul class="ajustes__lista">
         @for (permission of browserPermissions; track permission.key) {
           <li class="ajustes__fila ajustes__fila--permiso">
+            <app-nav-icon class="ajustes__icono" [name]="permission.icon" />
+
             <span class="ajustes__texto">
               <span class="ajustes__nombre">{{ permission.label }}</span>
               <span class="ajustes__detalle">{{ permission.purpose }}</span>
-              @if (isBlocked(permission.key)) {
-                <span class="ajustes__detalle">
-                  Lo bloqueaste antes. Para volver a permitirlo, cambialo en la configuración de
-                  este sitio en tu navegador: desde acá el cartel ya no vuelve a aparecer.
-                </span>
-              }
             </span>
 
-            <span class="ajustes__estado">
-              <span
-                class="ajustes__pastilla"
-                [attr.data-tono]="stateOf(permission.key).tone"
-                [attr.data-testid]="'permission-' + permission.key"
-                >{{ stateOf(permission.key).text }}</span
-              >
-              @if (canRequest(permission.key)) {
-                <button
-                  app-button
-                  variant="outline"
-                  size="sm"
-                  [attr.data-testid]="'request-' + permission.key"
-                  [isLoading]="requesting(permission.key)"
-                  (clicked)="request(permission.key)"
-                >
-                  Permitir
-                </button>
-              }
-            </span>
-            <app-nav-icon class="ajustes__icono" [name]="permission.icon" />
+            <!-- Interruptor y no botón: es el control que la persona espera para
+                 algo que está encendido o apagado. Queda inerte cuando el
+                 navegador ya no acepta que se lo pidamos —concedido, bloqueado
+                 o inexistente—, porque ninguna página puede quitarse un permiso
+                 a sí misma ni resucitar un cartel que ya no vuelve a aparecer. -->
+            <app-switch
+              class="ajustes__interruptor"
+              [ariaLabel]="permission.label"
+              [checked]="isOn(permission.key)"
+              [disabled]="!canRequest(permission.key)"
+              [attr.data-testid]="'permission-' + permission.key"
+              [attr.data-estado]="stateOf(permission.key)"
+              (checkedChange)="toggle(permission.key, $event)"
+            />
           </li>
         }
       </ul>
@@ -116,8 +105,7 @@
     <section class="ajustes__bloque">
       <h2 class="ajustes__titulo">Tu sesión</h2>
       <p class="ajustes__detalle">
-        Con qué permisos entrás. Salen del token de tu sesión; quien los concede y los hace cumplir
-        es el servidor, en cada pedido.
+        Los roles con los que entrás. Los concede y los hace cumplir el servidor.
       </p>
 
       @if (roles().length > 0) {
@@ -137,9 +125,8 @@
            porque la API no se la responde a la propia persona. Ver la nota del
            componente. Una lista vacía acá se leería como «nadie tiene acceso». -->
       <p class="ajustes__detalle" data-testid="settings-access-note">
-        Todavía no podemos mostrarte quién tiene acceso a tu historia clínica: hoy el servidor sólo
-        le responde esa consulta a quien atiende y a quien administra la seguridad. Mientras tanto,
-        pedile la baja del acceso a la organización donde te atendiste.
+        Todavía no podemos mostrarte quién tiene acceso a tu historia clínica: el servidor sólo le
+        responde esa consulta a quien atiende y a quien administra la seguridad.
       </p>
 
       @if (managesPermissions()) {
