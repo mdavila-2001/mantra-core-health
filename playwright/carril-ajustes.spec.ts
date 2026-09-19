@@ -49,14 +49,21 @@ test.describe('Ajustes', () => {
     await page?.close();
   });
 
-  test('el encabezado ofrece Ajustes, y el tema dejó de estar suelto ahí', async () => {
+  test('el encabezado ofrece Ajustes y, a su lado, el interruptor de tema', async () => {
     const settingsLink = page.getByTestId('header-ajustes');
 
     await expect(settingsLink).toBeVisible();
     await expect(settingsLink).toHaveAttribute('aria-label', 'Ajustes');
-    // El conmutador se mudó adentro: suelto en el encabezado parecía la única
-    // preferencia que el producto tiene.
-    await expect(page.locator('[app-theme-toggle]')).toHaveCount(0);
+    // El interruptor volvió al encabezado a pedido del cliente (2026-09-18):
+    // es el atajo; Ajustes sigue siendo la puerta a todas las preferencias.
+    const toggle = page.getByTestId('header-theme-toggle');
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute('role', 'switch');
+    const before = await toggle.getAttribute('aria-checked');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', before === 'true' ? 'false' : 'true');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', before ?? 'false');
     // La campana se queda: es lo único del encabezado que trae información
     // nueva, y no es una preferencia.
     await expect(page.getByTestId('campana')).toBeVisible();
@@ -98,17 +105,27 @@ test.describe('Ajustes', () => {
     await expect(page.getByTestId('pref-save')).toBeVisible();
   });
 
-  test('elegir un tema estampa el atributo que lee la hoja de estilos', async () => {
+  test('el interruptor de Apariencia estampa el atributo que lee la hoja de estilos', async () => {
     await irA(page, '/settings');
     await esperarAplicacionLista(page);
     await page.getByRole('tab', { name: 'Apariencia' }).click();
 
-    await page.getByTestId('theme-dark').click();
-    await expect(page.locator('html')).toHaveAttribute('data-tema', 'oscuro');
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    const toggle = page.getByTestId('theme-switch');
+    const html = page.locator('html');
+    if ((await toggle.getAttribute('aria-checked')) === 'true') {
+      await toggle.click();
+    }
+    await expect(html).toHaveAttribute('data-tema', 'claro');
 
-    await page.getByTestId('theme-light').click();
-    await expect(page.locator('html')).toHaveAttribute('data-tema', 'claro');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await expect(html).toHaveAttribute('data-tema', 'oscuro');
+    await expect(html).toHaveAttribute('data-theme', 'dark');
+    // El del encabezado es el mismo estado: se movió con éste.
+    await expect(page.getByTestId('header-theme-toggle')).toHaveAttribute('aria-checked', 'true');
+
+    await page.getByTestId('theme-use-system').click();
+    await expect(page.getByTestId('theme-use-system')).toHaveCount(0);
   });
 
   test('los permisos del navegador se muestran con su estado real', async () => {

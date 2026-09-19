@@ -809,10 +809,14 @@ describe('ShellLayout', () => {
       expect(ajustes?.getAttribute('aria-label')).toBe('Ajustes');
     });
 
-    it('el conmutador de tema ya no vive suelto en el encabezado', () => {
-      // Se mudó a Ajustes. Suelto acá, el tema parecía la única preferencia
-      // que el producto tiene; ahora es una de tres y viven juntas.
-      expect(raiz().querySelector('[app-theme-toggle]')).toBeNull();
+    it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {
+      // Volvió a pedido del cliente (2026-09-18): claro/oscuro es un atajo;
+      // Ajustes sigue siendo la puerta a todas las preferencias.
+      const toggle = raiz().querySelector<HTMLButtonElement>('[data-testid="header-theme-toggle"]');
+
+      expect(toggle?.getAttribute('role')).toBe('switch');
+      expect(toggle?.getAttribute('aria-label')).toMatch(/^Cambiar a modo (claro|oscuro)$/);
+      expect(raiz().querySelector('[data-testid="header-ajustes"]')).not.toBeNull();
     });
 
     it('el enlace de salto apunta al contenido, que es enfocable por script', () => {
