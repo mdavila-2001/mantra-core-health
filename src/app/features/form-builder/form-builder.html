@@ -19,6 +19,21 @@
         <p class="constructor__codigo">{{ plantilla.code }} · versión {{ plantilla.version }}</p>
       </div>
       <div class="constructor__encabezado-acciones">
+        <!-- El formulario en papel, en blanco y listo para completar a mano.
+             Sale por el mismo maquetador que la receta y la historia clínica,
+             así que la hoja se reconoce como de AloVida. Está en el
+             encabezado y no dentro de la vista previa a propósito: se baja
+             igual mientras se edita, que es cuando hace falta imprimir lo que
+             se acaba de armar. -->
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          (clicked)="descargar()"
+          data-testid="descargar-pdf"
+        >
+          Descargar PDF
+        </button>
         <button
           app-button
           type="button"
