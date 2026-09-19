@@ -1081,6 +1081,28 @@ paciente cruza esta ruta.
 |---|---|---|
 | `GET` | `/insurance/analytics/loss-ratio` | `InsuranceAnalytics` |
 
+### `InsurancePortabilityClient` — 4 operaciones · subtarea 3.3, v4.2.19
+
+Portabilidad de póliza e historial de siniestralidad a 1 clic: el titular
+exporta su propio historial (pólizas, siniestros, adjudicaciones,
+diagnósticos), sellado en SHA-256 sobre módulo 52 (`health_export_jobs` +
+`health_export_manifests`), y cualquiera puede verificar el certificado por su
+hash sin sesión.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/insurance/portability/export` | `PortabilityExportDialog` |
+| `GET` | `/insurance/portability/certificates/:certificateId/pdf` | `PortabilityExportDialog` |
+| `GET` | `/insurance/portability/certificates/:certificateId/json` | `PortabilityExportDialog` |
+| `GET` | `/public/portability/verify/:manifestHash` | `PortabilityVerify` |
+
+**La última es pública** (sin sesión, `Cache-Control: no-store`): a ella apunta
+el QR impreso en el certificado PDF, y la atiende
+`/verify/portability/:manifestHash` en el front — ver
+[su ficha](../routes/verify-portability.md). Las otras tres autorizan por
+titularidad del perfil de paciente (`ProfileOwnershipService`); un
+`patientProfileId` ajeno responde `403` y queda auditado.
+
 ### `PharmaLabClient` — 21 operaciones · carril 17
 
 Laboratorio farmacéutico, visitadores médicos y visitas (M62 `pharma_lab`).

@@ -56,7 +56,8 @@
       "/admin/content-packs",
       "/insurance-plans",
       "/insurance-products",
-      "/insurance/analytics"
+      "/insurance/analytics",
+      "/insurance/portability"
     ],
     "target": "__BACKEND_ORIGIN__",
     "secure": false,

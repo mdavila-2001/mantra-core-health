@@ -427,7 +427,7 @@ function resumenDeCorredor(b: (typeof CORREDORES)[number], i: number) {
   };
 }
 
-interface SolicitudSimulada {
+export interface SolicitudSimulada {
   readonly id: string;
   readonly claimIdentifier: string;
   readonly patientProfileId: string;
@@ -992,4 +992,18 @@ export function registrarSeguros(router: MockRouter): void {
       },
     };
   });
+}
+
+/**
+ * Exportada para portabilidad de póliza (subtarea 3.3): sus reclamos reales,
+ * reusados en el informe en vez de un segundo juego que se desalinee del que
+ * ya lee `GET /insurance-claims`.
+ */
+export function reclamosDePaciente(patientProfileId: string): readonly SolicitudSimulada[] {
+  return solicitudes.filtrar((s) => s.patientProfileId === patientProfileId);
+}
+
+/** El nombre de la aseguradora de una solicitud, por su índice en `ASEGURADORAS`. */
+export function nombreDeAseguradora(carrierIndex: number): string {
+  return ASEGURADORAS[carrierIndex]!.name;
 }

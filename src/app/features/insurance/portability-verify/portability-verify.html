@@ -1,0 +1,49 @@
+<div class="verify" data-testid="portability-verify-page">
+  @switch (state()) {
+    @case ('loading') {
+      <div role="status" aria-label="Verificando certificado">
+        <app-skeleton variant="text" [lines]="3" />
+      </div>
+    }
+    @case ('ready') {
+      @if (result(); as certificado) {
+        <app-alert tone="success" title="Certificado válido" data-testid="portability-verify-valid">
+          <p>
+            Este es un certificado oficial de portabilidad de póliza y siniestralidad, emitido por
+            AloVida.
+          </p>
+          <dl class="verify__datos">
+            <dt>Emitido</dt>
+            <dd>{{ certificado.generatedAt | date: "d 'de' MMMM 'de' y, HH:mm" }}</dd>
+            <dt>Registros incluidos</dt>
+            <dd>{{ certificado.recordCount }}</dd>
+            <dt>Algoritmo de sello</dt>
+            <dd>{{ certificado.algorithm }}</dd>
+          </dl>
+          <p class="verify__rotulo">Sello digital</p>
+          <code class="verify__hash" data-testid="portability-verify-hash">{{ certificado.manifestHash }}</code>
+        </app-alert>
+      }
+    }
+    @case ('notFound') {
+      <app-alert tone="warning" title="Certificado no encontrado" data-testid="portability-verify-not-found">
+        No encontramos un certificado con ese sello. Puede haber sido escrito mal, o el certificado
+        no fue emitido por AloVida.
+      </app-alert>
+    }
+    @case ('invalid') {
+      <app-alert tone="warning" title="Sello inválido" data-testid="portability-verify-invalid">
+        El código de la dirección no tiene la forma de un sello SHA-256 válido.
+      </app-alert>
+    }
+    @default {
+      <app-alert tone="error" title="No pudimos verificar el certificado" data-testid="portability-verify-error">
+        Intentá de nuevo en unos minutos.
+      </app-alert>
+    }
+  }
+
+  <p class="verify__volver">
+    <a app-button variant="ghost" routerLink="/">Ir a AloVida</a>
+  </p>
+</div>
