@@ -518,6 +518,15 @@ export interface NewScheduleTemplate {
   readonly bookingPolicyId?: string;
   readonly validFrom?: string;
   readonly validTo?: string;
+  /**
+   * Horario flexible: la plantilla declara cuándo se atiende, pero **no lo
+   * corta en turnos fijos** — el paciente pide la hora que quiera dentro de la
+   * franja (propietario, 18/09).
+   *
+   * **Todavía no existe en la API real** (P36 de `PENDIENTES-BACKEND.md`): hoy
+   * sólo lo entiende el simulador de `mockup`. Ausente ≡ turnos fijos.
+   */
+  readonly flexibleHours?: boolean;
 }
 
 export interface ScheduleTemplateCreated {
@@ -828,6 +837,8 @@ export interface PublishedTemplate {
   readonly validTo?: string;
   readonly bookingPolicyId?: string;
   readonly statusConceptId: string;
+  /** Ver {@link NewScheduleTemplate.flexibleHours}. */
+  readonly flexibleHours?: boolean;
 }
 
 /** La respuesta del listado de plantillas de un recurso. */

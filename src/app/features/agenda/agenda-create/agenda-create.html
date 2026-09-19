@@ -155,6 +155,28 @@
     <section class="agenda-create__bloque">
       <h2 class="agenda-create__titulo">¿Qué días atendés?</h2>
 
+      <!-- Horario flexible (propietario, 18/09): la franja se atiende sin
+           cortarla en turnos fijos. Va ANTES de la tabla porque cambia qué
+           columnas tiene: sin turnos no hay duración ni descanso que elegir. -->
+      <div class="agenda-create__pregunta">
+        <div class="agenda-create__pregunta-texto">
+          <span class="agenda-create__pregunta-titulo" id="agenda-create-flexible-titulo">
+            Horario flexible, sin turnos fijos
+          </span>
+          <span class="agenda-create__pregunta-ayuda">
+            Atendés dentro de tu horario y el paciente pide la hora que quiera, sin turnos de
+            duración fija.
+          </span>
+        </div>
+        <app-segmented-control
+          data-testid="agenda-create-flexible"
+          ariaLabel="Horario flexible, sin turnos fijos"
+          [options]="siNo"
+          [value]="flexible() ? 'si' : 'no'"
+          (valueChange)="flexible.set($event === 'si')"
+        />
+      </div>
+
       <!-- LA TABLA. El pedido original la describe así: «una tabla donde cada
            día de la semana es una fila, las columnas que son selects son:
            Desde, Hasta, Tamaño del slot». Antes esto eran fichas por día y un
@@ -169,16 +191,18 @@
       <div class="agenda-create__tabla-scroll">
         <table class="agenda-create__tabla">
           <caption class="agenda-create__tabla-caption">
-            Un día por fila. Encendé los que atendés y completá su horario.
+            Un día por fila. Marcá «Sí» en los que atendés y completá su horario.
           </caption>
           <thead>
             <tr>
               <th scope="col">Día</th>
               <th scope="col">Desde</th>
               <th scope="col">Hasta</th>
-              <th scope="col">Dura</th>
-              <th scope="col">Descanso</th>
-              <th scope="col">Turnos</th>
+              @if (!flexible()) {
+                <th scope="col">Dura</th>
+                <th scope="col">Descanso</th>
+                <th scope="col">Turnos</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -189,16 +213,16 @@
                 [formGroup]="grupoDe(dia.indice)"
               >
                 <th scope="row" class="agenda-create__fila-dia">
-                  <label class="agenda-create__fila-check">
-                    <input
-                      type="checkbox"
-                      [attr.data-testid]="'agenda-create-dia-' + dia.indice"
-                      [checked]="dia.activo"
-                      [attr.aria-label]="dia.largo"
-                      (change)="alternarDia(dia.indice)"
-                    />
+                  <div class="agenda-create__fila-check">
                     <span>{{ dia.largo }}</span>
-                  </label>
+                    <app-segmented-control
+                      [attr.data-testid]="'agenda-create-dia-' + dia.indice"
+                      [ariaLabel]="'¿Atendés el ' + dia.largo.toLowerCase() + '?'"
+                      [options]="siNo"
+                      [value]="dia.activo ? 'si' : 'no'"
+                      (valueChange)="fijarDia(dia.indice, $event)"
+                    />
+                  </div>
                 </th>
 
                 @if (dia.activo) {
@@ -222,6 +246,7 @@
                       (valueChange)="fijarDeLaFila(dia.indice, 'hasta', $event)"
                     />
                   </td>
+                  @if (!flexible()) {
                   <td>
                     <app-select
                       [options]="opcionesDeDuracion"
@@ -243,8 +268,11 @@
                   <td class="agenda-create__fila-turnos" aria-live="polite">
                     <strong>{{ turnosDelDia(dia.indice) }}</strong>
                   </td>
+                  }
                 } @else {
-                  <td colspan="5" class="agenda-create__fila-apagada">No atendés</td>
+                  <td [attr.colspan]="flexible() ? 2 : 5" class="agenda-create__fila-apagada">
+                    No atendés
+                  </td>
                 }
               </tr>
             }
@@ -253,7 +281,52 @@
       </div>
 
       @if (sinDias()) {
-        <p class="agenda-create__vacio">Encendé los días en los que atendés para cargar su horario.</p>
+        <p class="agenda-create__vacio">Marcá «Sí» en los días que atendés para cargar su horario.</p>
+      }
+
+      <!-- La hora de almuerzo: una para toda la semana. Por dentro, cada día
+           que la atraviesa se publica como dos franjas —mañana y tarde—, que
+           es lo que el contrato ya sabe guardar. -->
+      <div class="agenda-create__pregunta">
+        <div class="agenda-create__pregunta-texto">
+          <span class="agenda-create__pregunta-titulo">¿Tenés hora de almuerzo?</span>
+          <span class="agenda-create__pregunta-ayuda">
+            En ese rato no se ofrecen consultas, en ninguno de los días que atendés.
+          </span>
+        </div>
+        <app-segmented-control
+          data-testid="agenda-create-almuerzo"
+          ariaLabel="¿Tenés hora de almuerzo?"
+          [options]="siNo"
+          [value]="conAlmuerzo() ? 'si' : 'no'"
+          (valueChange)="conAlmuerzo.set($event === 'si')"
+        />
+      </div>
+
+      @if (conAlmuerzo()) {
+        <div class="agenda-create__almuerzo">
+          <app-form-field label="Almuerzo desde">
+            <app-input
+              type="time"
+              [step]="pasoDeHora"
+              [value]="almuerzoDesde()"
+              testId="agenda-create-almuerzo-desde"
+              (valueChange)="fijarAlmuerzo('desde', $event)"
+            />
+          </app-form-field>
+          <app-form-field
+            label="Hasta"
+            [errorMessage]="almuerzoInvalido() ? 'Tiene que terminar después de empezar.' : ''"
+          >
+            <app-input
+              type="time"
+              [step]="pasoDeHora"
+              [value]="almuerzoHasta()"
+              testId="agenda-create-almuerzo-hasta"
+              (valueChange)="fijarAlmuerzo('hasta', $event)"
+            />
+          </app-form-field>
+        </div>
       }
 
       @if (diasActivos().length > 1) {
@@ -297,7 +370,13 @@
                      franja de 08:00 a 12:00, y `11:30` es cuando **empieza** el
                      último turno: se leía como que el día termina ahí. La hora
                      que a nadie le da lo mismo es la de cierre. -->
-                @if (dia.turnos.length > 0) {
+                @if (flexible()) {
+                  <span class="agenda-create__previa-horas">
+                    {{ grupoDe(diasActivos()[$index].indice).controls.desde.value }} –
+                    {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }}
+                  </span>
+                  <span class="agenda-create__previa-detalle">Sin turnos fijos</span>
+                } @else if (dia.turnos.length > 0) {
                   <span class="agenda-create__previa-horas">
                     {{ dia.turnos[0].desde }} – {{ dia.turnos[dia.turnos.length - 1].hasta }}
                   </span>
@@ -315,7 +394,12 @@
                 <!-- El resto, dicho como información y no como pregunta: el
                      backend trunca (verificado), así que no hay nada que
                      decidir. -->
-                @if (dia.restoDesde !== null) {
+                @if (almuerzaEse(diasActivos()[$index].indice)) {
+                  <p class="agenda-create__previa-resto">
+                    Almuerzo de {{ almuerzoDesde() }} a {{ almuerzoHasta() }}: sin consultas.
+                  </p>
+                }
+                @if (!flexible() && dia.restoDesde !== null) {
                   <p class="agenda-create__previa-resto">
                     Te queda libre de {{ dia.restoDesde }} a
                     {{ grupoDe(diasActivos()[$index].indice).controls.hasta.value }} ({{ dia.resto }}
@@ -387,14 +471,18 @@
             <app-input formControlName="timeZone" />
           </app-form-field>
 
-          <label class="agenda-create__opcion">
-            <input
-              type="checkbox"
-              [checked]="usarPolitica()"
-              (change)="usarPolitica.set(!usarPolitica())"
+          <div class="agenda-create__pregunta">
+            <span class="agenda-create__pregunta-titulo">
+              ¿Poner reglas de reserva? (anticipación, cancelación…)
+            </span>
+            <app-segmented-control
+              data-testid="agenda-create-politica"
+              ariaLabel="¿Poner reglas de reserva?"
+              [options]="siNo"
+              [value]="usarPolitica() ? 'si' : 'no'"
+              (valueChange)="usarPolitica.set($event === 'si')"
             />
-            <span>Poner reglas de reserva (anticipación, cancelación…)</span>
-          </label>
+          </div>
 
           @if (usarPolitica()) {
             <div class="agenda-create__politica" [formGroup]="formPolitica">
@@ -420,14 +508,18 @@
           }
 
           @if (puedePublicarParaOtro()) {
-            <label class="agenda-create__opcion">
-              <input
-                type="checkbox"
-                [checked]="publicarParaOtro()"
-                (change)="publicarParaOtro.set(!publicarParaOtro())"
+            <div class="agenda-create__pregunta">
+              <span class="agenda-create__pregunta-titulo">
+                ¿Publicar la agenda de otro recurso? (formulario técnico)
+              </span>
+              <app-segmented-control
+                data-testid="agenda-create-otro-recurso"
+                ariaLabel="¿Publicar la agenda de otro recurso?"
+                [options]="siNo"
+                [value]="publicarParaOtro() ? 'si' : 'no'"
+                (valueChange)="publicarParaOtro.set($event === 'si')"
               />
-              <span>Publicar la agenda de otro recurso (formulario técnico)</span>
-            </label>
+            </div>
           }
 
           @if (!publicaSoloLaPropia()) {
@@ -469,7 +561,12 @@
     }
 
     <div class="agenda-create__acciones">
-      <button app-button type="submit" [isLoading]="cargando()" [disabled]="sinDias()">
+      <button
+        app-button
+        type="submit"
+        [isLoading]="cargando()"
+        [disabled]="sinDias() || almuerzoInvalido()"
+      >
         {{ esCambio() ? 'Guardar mi horario' : 'Publicar mi agenda' }}
       </button>
 

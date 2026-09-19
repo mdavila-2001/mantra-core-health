@@ -21,7 +21,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_ROUTE } from '../agenda.routes';
 import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
 import { misRecursosDeAgenda } from '../mi-recurso';
-import { calcularTurnos, type Calculo } from './agenda-turnos';
+import { calcularTurnos, type Calculo, type DiaCalculado } from './agenda-turnos';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -35,6 +35,8 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import type { DialogDetail } from '../../../shared/components/molecules/dialog/dialog.types';
 import { Router } from '@angular/router';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
@@ -88,6 +90,21 @@ const RESPIROS = [0, 5, 10, 15, 20, 30] as const;
  * marcada al abrirse en blanco.
  */
 const DURACION_POR_OMISION = 30;
+
+/**
+ * Las dos respuestas de todo interruptor de esta pantalla.
+ *
+ * Eran casillas de verificación y el propietario las pidió como botones de
+ * «Sí / No» (18/09): una casilla sola no dice qué pasa si no la marcás, y dos
+ * botones dicen las dos cosas.
+ */
+const SI_NO: readonly SegmentedOption<'si' | 'no'>[] = [
+  { value: 'si', label: 'Sí' },
+  { value: 'no', label: 'No' },
+];
+
+/** El almuerzo que se propone al encenderlo: una hora, al mediodía. */
+const ALMUERZO_POR_OMISION = { desde: '13:00', hasta: '14:00' } as const;
 
 /** Entero positivo o vacío: los numéricos opcionales viajan como texto. */
 const ENTERO_POSITIVO = /^\d+$/;
@@ -174,6 +191,7 @@ interface DiaVisible {
     Input,
     PageHeader,
     RouterLink,
+    SegmentedControl,
     Select,
     TitleCasePipe,
   ],
@@ -197,6 +215,7 @@ export class AgendaCreate {
   protected readonly uuidError = UUID_ERROR;
   protected readonly dias = DIAS;
 
+  protected readonly siNo = SI_NO;
   protected readonly duraciones = DURACIONES;
   protected readonly respiros = RESPIROS;
 
@@ -389,6 +408,104 @@ export class AgendaCreate {
   /* -- Avanzadas ------------------------------------------------------------ */
 
   protected readonly avanzadasAbiertas = signal(false);
+
+  /* -- Horario flexible y almuerzo (propietario, 18/09) --------------------- */
+
+  /**
+   * Horario flexible: se atiende en la franja, pero **sin turnos fijos**.
+   *
+   * Con esto encendido la tabla deja de preguntar cuánto dura una consulta y
+   * cuánto descanso hay entre una y otra —son preguntas de turnos— y el
+   * paciente pide la hora que quiera dentro de la franja. Es un modo de toda
+   * la agenda, no de un día: una misma semana con lunes a turnos y martes libre
+   * no la pidió nadie y confundiría al paciente.
+   */
+  protected readonly flexible = signal(false);
+
+  /**
+   * La hora de almuerzo, una para toda la semana.
+   *
+   * No es una columna más de la tabla: el almuerzo es de la persona, no del
+   * día, y repetirlo en siete filas es la forma de que un día quede distinto
+   * sin querer. Sólo corta los días cuya franja lo atraviesa.
+   */
+  protected readonly conAlmuerzo = signal(false);
+  protected readonly almuerzoDesde = signal<string>(ALMUERZO_POR_OMISION.desde);
+  protected readonly almuerzoHasta = signal<string>(ALMUERZO_POR_OMISION.hasta);
+
+  /** El almuerzo está al revés o vacío: se avisa y no se publica. */
+  protected readonly almuerzoInvalido = computed(() => {
+    if (!this.conAlmuerzo()) return false;
+    const desde = aMinutos(this.almuerzoDesde());
+    const hasta = aMinutos(this.almuerzoHasta());
+    return desde === null || hasta === null || hasta <= desde;
+  });
+
+  protected fijarAlmuerzo(extremo: 'desde' | 'hasta', valor: string | number | null): void {
+    if (valor === null) return;
+    (extremo === 'desde' ? this.almuerzoDesde : this.almuerzoHasta).set(String(valor));
+  }
+
+  /**
+   * Las franjas reales de un día: la del formulario, partida por el almuerzo.
+   *
+   * El almuerzo no es un campo del contrato y no hace falta que lo sea: un día
+   * con almuerzo son **dos franjas** —mañana y tarde— y el generador de la API
+   * ya recorre todas las reglas de cada día. Si el almuerzo no cae dentro del
+   * horario de ese día, el día queda entero.
+   */
+  protected franjasDe(indice: number): { desde: string; hasta: string }[] {
+    this.versionDeLaSemana();
+    const v = this.semana.at(indice).getRawValue();
+    const inicio = aMinutos(v.desde);
+    const fin = aMinutos(v.hasta);
+    const corteDesde = aMinutos(this.almuerzoDesde());
+    const corteHasta = aMinutos(this.almuerzoHasta());
+    if (
+      !this.conAlmuerzo() ||
+      this.almuerzoInvalido() ||
+      inicio === null ||
+      fin === null ||
+      corteDesde === null ||
+      corteHasta === null ||
+      corteHasta <= inicio ||
+      corteDesde >= fin
+    ) {
+      return [{ desde: v.desde, hasta: v.hasta }];
+    }
+    const partes: { desde: string; hasta: string }[] = [];
+    if (corteDesde > inicio) partes.push({ desde: v.desde, hasta: this.almuerzoDesde() });
+    if (corteHasta < fin) partes.push({ desde: this.almuerzoHasta(), hasta: v.hasta });
+    return partes;
+  }
+
+  /** Si el almuerzo corta el horario de este día. */
+  protected almuerzaEse(indice: number): boolean {
+    const partes = this.franjasDe(indice);
+    const v = this.semana.at(indice).getRawValue();
+    return partes.length !== 1 || partes[0].desde !== v.desde || partes[0].hasta !== v.hasta;
+  }
+
+  /** Un día calculado a partir de sus franjas, sumando lo de cada una. */
+  private calcularDia(indice: number, nombre: string): DiaCalculado {
+    const v = this.semana.at(indice).getRawValue();
+    const partes = calcularTurnos(
+      this.franjasDe(indice).map((franja) => ({
+        dia: nombre,
+        desde: franja.desde,
+        hasta: franja.hasta,
+        duracion: v.duracion,
+        receso: v.respiro,
+      })),
+    ).porDia;
+    const ultima = partes.at(-1);
+    return {
+      dia: nombre,
+      turnos: partes.flatMap((parte) => parte.turnos),
+      resto: ultima?.resto ?? 0,
+      restoDesde: ultima?.restoDesde ?? null,
+    };
+  }
   protected readonly usarPolitica = signal(false);
   // La sede y los pacientes por turno ya no se preguntan (propietario,
   // 18/09): la sede la fija la agenda elegida en el conmutador de organización,
@@ -483,24 +600,18 @@ export class AgendaCreate {
    * un viaje de red. El contraste contra lo que el backend generó de verdad se
    * hace después de publicar, en {@link compararConLoGenerado}.
    */
-  protected readonly vistaPrevia = computed<Calculo>(() =>
-    calcularTurnos(
-      this.diasActivos().map((dia) => {
-        const v = this.semana.at(dia.indice).getRawValue();
-        return {
-          dia: dia.largo.toLowerCase(),
-          desde: v.desde,
-          hasta: v.hasta,
-          duracion: v.duracion,
-          // `calcularTurnos` ya sabía contar el respiro (AG-4) y nadie se lo
-          // pasaba: la vista previa mostraba los turnos SIN él. Con el campo
-          // en pantalla eso se volvía una contradicción visible — «entran 5»
-          // arriba y «8 turnos» abajo, sobre la misma franja.
-          receso: v.respiro,
-        };
-      }),
-    ),
-  );
+  protected readonly vistaPrevia = computed<Calculo>(() => {
+    // El almuerzo vive en señales y la semana en el formulario: se leen las
+    // dos para que cambiar cualquiera recalcule. Cada día pasa por
+    // `calcularTurnos` franja por franja — el respiro (AG-4) incluido.
+    this.conAlmuerzo();
+    this.almuerzoDesde();
+    this.almuerzoHasta();
+    const porDia = this.diasActivos().map((dia) =>
+      this.calcularDia(dia.indice, dia.largo.toLowerCase()),
+    );
+    return { porDia, total: porDia.reduce((suma, dia) => suma + dia.turnos.length, 0) };
+  });
 
   /**
    * El nombre del recurso, derivado.
@@ -591,18 +702,32 @@ export class AgendaCreate {
     for (const indice of DIAS.keys()) {
       this.semana.at(indice).patchValue({ activo: false });
     }
-    for (const regla of plantilla.rules) {
-      const indice = DIAS.findIndex((dia) => dia.numero === regla.dayOfWeek);
-      if (indice === -1) continue;
+    this.flexible.set(plantilla.flexibleHours === true);
+    this.conAlmuerzo.set(false);
+    for (const [indice, dia] of DIAS.entries()) {
+      // Un día con almuerzo vuelve como DOS franjas: el horario es de la
+      // primera apertura al último cierre, y el hueco entre ellas es el
+      // almuerzo que se había declarado.
+      const reglas = plantilla.rules
+        .filter((regla) => regla.dayOfWeek === dia.numero)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+      const primera = reglas[0];
+      const ultima = reglas.at(-1);
+      if (primera === undefined || ultima === undefined) continue;
       this.semana.at(indice).patchValue({
         activo: true,
-        desde: sinSegundos(regla.startTime),
-        hasta: sinSegundos(regla.endTime),
-        duracion: regla.slotMinutes ?? plantilla.slotMinutes ?? DURACION_POR_OMISION,
+        desde: sinSegundos(primera.startTime),
+        hasta: sinSegundos(ultima.endTime),
+        duracion: primera.slotMinutes ?? plantilla.slotMinutes ?? DURACION_POR_OMISION,
         // `?? 0` acá y no en el envío: leyendo, ausente ES cero; escribiendo,
         // ausente y cero son cosas distintas.
-        respiro: regla.gapMinutes ?? 0,
+        respiro: primera.gapMinutes ?? 0,
       });
+      if (reglas.length > 1 && !this.conAlmuerzo()) {
+        this.conAlmuerzo.set(true);
+        this.almuerzoDesde.set(sinSegundos(primera.endTime));
+        this.almuerzoHasta.set(sinSegundos(reglas[1].startTime));
+      }
     }
     if (plantilla.validTo !== undefined) {
       this.formGeneral.controls.tieneFin.setValue('si');
@@ -642,6 +767,11 @@ export class AgendaCreate {
     control.setValue(!control.value);
   }
 
+  /** El «Sí / No» de cada fila: atiende ese día o no. */
+  protected fijarDia(indice: number, respuesta: 'si' | 'no'): void {
+    this.semana.at(indice).controls.activo.setValue(respuesta === 'si');
+  }
+
   protected grupoDe(indice: number): DiaGroup {
     return this.semana.at(indice);
   }
@@ -665,17 +795,7 @@ export class AgendaCreate {
    * @param indice - El día de la semana, por su posición.
    */
   protected turnosDelDia(indice: number): number {
-    const v = this.semana.at(indice).getRawValue();
-    const { total } = calcularTurnos([
-      {
-        dia: DIAS[indice].largo,
-        desde: v.desde,
-        hasta: v.hasta,
-        duracion: v.duracion,
-        receso: v.respiro,
-      },
-    ]);
-    return total;
+    return this.calcularDia(indice, DIAS[indice].largo).turnos.length;
   }
 
   /**
@@ -725,8 +845,9 @@ export class AgendaCreate {
     const calculo = this.vistaPrevia();
     const detalles: DialogDetail[] = calculo.porDia.map((dia) => ({
       label: dia.dia.charAt(0).toUpperCase() + dia.dia.slice(1),
-      value:
-        dia.turnos.length === 0
+      value: this.flexible()
+        ? this.rangoDe(dia)
+        : dia.turnos.length === 0
           ? 'Sin turnos'
           : `${dia.turnos.length} ${dia.turnos.length === 1 ? 'turno' : 'turnos'} · ` +
             dia.turnos.map((t) => t.desde).join(' · '),
@@ -734,7 +855,9 @@ export class AgendaCreate {
 
     await this.dialogs.confirm({
       title: 'Así va a quedar tu horario',
-      message: `${calculo.total} ${calculo.total === 1 ? 'turno' : 'turnos'} por semana.`,
+      message: this.flexible()
+        ? 'Horario flexible: sin turnos fijos, el paciente pide la hora que quiera.'
+        : `${calculo.total} ${calculo.total === 1 ? 'turno' : 'turnos'} por semana.`,
       details: detalles,
       confirmLabel: 'Está bien',
       cancelLabel: 'Volver a editar',
@@ -775,6 +898,10 @@ export class AgendaCreate {
       timeZone: '',
     });
     this.fechaDeFin.set(null);
+    this.flexible.set(false);
+    this.conAlmuerzo.set(false);
+    this.almuerzoDesde.set(ALMUERZO_POR_OMISION.desde);
+    this.almuerzoHasta.set(ALMUERZO_POR_OMISION.hasta);
     this.versionDeLaSemana.update((v) => v + 1);
   }
 
@@ -784,6 +911,7 @@ export class AgendaCreate {
     this.semana.markAllAsTouched();
     this.formGeneral.markAllAsTouched();
     if (this.sinDias() || this.semana.invalid || this.formGeneral.invalid) return;
+    if (this.almuerzoInvalido()) return;
 
     const tenantId = this.organizacion();
     if (tenantId === null) return;
@@ -912,18 +1040,25 @@ export class AgendaCreate {
     }
 
     const capacidad = this.formGeneral.getRawValue().capacidadPorTurno;
-    const rules: ScheduleRule[] = this.diasActivos().map((dia) => {
+    const flexible = this.flexible();
+    const rules: ScheduleRule[] = this.diasActivos().flatMap((dia) => {
       const v = this.semana.at(dia.indice).getRawValue();
-      return {
-        dayOfWeek: DIAS[dia.indice].numero,
-        startTime: v.desde.trim(),
-        endTime: v.hasta.trim(),
-        slotMinutes: v.duracion,
-        // Sólo si eligió alguno: mandar `0` escribiría un cero que nadie
-        // declaró, y borraría la diferencia el día que el default cambie.
-        ...(v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
-        ...opcEntero('capacityPerSlot', capacidad),
-      } as ScheduleRule;
+      // Una regla por franja: con almuerzo, mañana y tarde.
+      return this.franjasDe(dia.indice).map(
+        (franja) =>
+          ({
+            dayOfWeek: DIAS[dia.indice].numero,
+            startTime: franja.desde.trim(),
+            endTime: franja.hasta.trim(),
+            // En horario flexible no hay turnos que medir: ni duración ni
+            // respiro viajan, porque no los declaró nadie.
+            ...(flexible ? {} : { slotMinutes: v.duracion }),
+            // Sólo si eligió alguno: mandar `0` escribiría un cero que nadie
+            // declaró, y borraría la diferencia el día que el default cambie.
+            ...(!flexible && v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
+            ...opcEntero('capacityPerSlot', capacidad),
+          }) as ScheduleRule,
+      );
     });
 
     this.scheduling
@@ -935,6 +1070,7 @@ export class AgendaCreate {
         // El contrato lo pide también a nivel plantilla; va el de la primera
         // franja, que es el que gobierna cuando una regla no trae el suyo.
         slotMinutes: rules[0]?.slotMinutes,
+        ...(flexible ? { flexibleHours: true } : {}),
         ...(policyId === null ? {} : { bookingPolicyId: policyId }),
         ...opcFecha('validTo', this.fechaDeFin()),
       })
@@ -1043,6 +1179,17 @@ export class AgendaCreate {
     );
   }
 
+  /** «08:00 – 18:00 (almuerzo 13:00 – 14:00)»: el día dicho como rango. */
+  private rangoDe(dia: DiaCalculado): string {
+    const indice = DIAS.findIndex((d) => d.largo.toLowerCase() === dia.dia.toLowerCase());
+    if (indice === -1) return '';
+    const v = this.semana.at(indice).getRawValue();
+    const almuerzo = this.almuerzaEse(indice)
+      ? ` (almuerzo ${this.almuerzoDesde()} – ${this.almuerzoHasta()})`
+      : '';
+    return `${v.desde} – ${v.hasta}${almuerzo}`;
+  }
+
   private fallar(error: unknown): void {
     this.estado.set(errorToViewState<null>(error));
   }
@@ -1056,6 +1203,10 @@ export class AgendaCreate {
    * uuids: el médico no tiene por qué ver un identificador nunca.
    */
   protected readonly resumen = computed(() => {
+    this.conAlmuerzo();
+    this.almuerzoDesde();
+    this.almuerzoHasta();
+    this.flexible();
     const activos = this.diasActivos();
     if (activos.length === 0) return '';
 
@@ -1081,7 +1232,12 @@ export class AgendaCreate {
       primero.respiro > 0 && mismoRespiro
         ? ` y ${primero.respiro} minutos de descanso entre una y otra`
         : '';
-    return `${dias}${horario}, consultas de ${primero.duracion} minutos${respiro}`;
+    const almuerzo =
+      this.conAlmuerzo() && !this.almuerzoInvalido()
+        ? `, almuerzo de ${enHoras(this.almuerzoDesde())} a ${enHoras(this.almuerzoHasta())}`
+        : '';
+    if (this.flexible()) return `${dias}${horario}${almuerzo}, horario flexible sin turnos fijos`;
+    return `${dias}${horario}${almuerzo}, consultas de ${primero.duracion} minutos${respiro}`;
   });
 }
 
@@ -1102,6 +1258,13 @@ function nuevoDia(_dayOfWeek: number): DiaGroup {
     // existiera, así que abrir el formulario no cambia nada de lo que ya había.
     respiro: new FormControl(0, { nonNullable: true, validators: [Validators.required] }),
   });
+}
+
+/** `09:30` → 570; `null` si no es una hora. */
+function aMinutos(hora: string): number | null {
+  const partes = /^(\d{1,2}):(\d{2})/.exec(hora.trim());
+  if (partes === null) return null;
+  return Number(partes[1]) * 60 + Number(partes[2]);
 }
 
 /** `09:00:00` → `09:00`: los segundos de una regla nunca son distintos de cero. */

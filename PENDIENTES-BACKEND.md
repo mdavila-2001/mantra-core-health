@@ -1555,3 +1555,28 @@ cuelga de `payment_intent_id`) — decisión del modelo, no del front.
   `GET /quotations?patientProfileId=` y el detalle de los `ACCEPTED`, `SENT`
   y `DRAFT` vigentes.
 - Simulador: `core/mock/handlers/finance.handlers.ts`.
+
+## P36 · Horario flexible, sin turnos fijos — 18/09/2026
+
+**Pedido del propietario:** poder publicar un horario **sin turnos**: el médico
+declara cuándo atiende y el paciente pide la hora que quiera dentro de la franja.
+
+**Qué hace hoy el front (`mockup`):** «Publicá tu agenda» tiene la pregunta
+«Horario flexible, sin turnos fijos · Sí / No». Con «Sí», la plantilla viaja con
+`flexibleHours: true` y sus reglas **sin** `slotMinutes` ni `gapMinutes`
+(`POST /scheduling/resources/:id/templates`). El simulador genera **un bloque
+abierto por franja**, con capacidad = 1 consulta cada 15 min como techo —una
+suposición de la maqueta, no una regla—.
+
+**Qué falta en la API real:**
+
+- Columna en el modelo (`schedule_templates`, módulo 41) que diga el modo; hoy
+  no existe y el DTO descartaría `flexibleHours`. Empieza en el `.puml`.
+- Decidir cómo reserva el paciente en ese modo: bloque con capacidad (orden de
+  llegada) o pedido de una hora libre que el médico confirma.
+- Mientras tanto, contra la API real el horario se publicaría **con turnos** de
+  la duración por omisión: no llevar esta pantalla a `dev` sin cerrar P36.
+
+**La hora de almuerzo no necesita backend:** un día con almuerzo se publica como
+dos franjas (mañana y tarde), y el generador real ya recorre todas las reglas de
+cada día (`scheduling-catalog.service.ts`).

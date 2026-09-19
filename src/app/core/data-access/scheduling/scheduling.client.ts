@@ -297,6 +297,7 @@ export class SchedulingClient {
           : { bookingPolicyId: template.bookingPolicyId }),
         ...(template.validFrom === undefined ? {} : { validFrom: template.validFrom }),
         ...(template.validTo === undefined ? {} : { validTo: template.validTo }),
+        ...(template.flexibleHours === true ? { flexibleHours: true } : {}),
       },
     );
   }
