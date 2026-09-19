@@ -300,6 +300,21 @@
   }
 </div>
 
+<!-- ─── Ingreso por mostrador (AC-C3-03) ──────────────────────────────────
+     Entra y sale del DOM en vez de esconderse: el modal monta un `<dialog>`
+     nativo con su trampa de foco, y dejarlo montado y cerrado deja sus campos
+     en el orden de tabulación de la página de atrás.
+
+     `recursoElegido()` no puede ser nulo acá: `puedeIngresarPorMostrador()` lo
+     exige antes de ofrecer el botón, y sin botón nadie abre el modal. -->
+@if (mostradorAbierto() && recursoElegido(); as recurso) {
+  <app-walk-in-form
+    [resourceId]="recurso"
+    (cerrado)="cerrarMostrador()"
+    (creado)="mostradorCreado($event)"
+  />
+}
+
 <!-- ─── Paginación de la ventana (ALV-024) ─────────────────────────────────
      Al pie de la lista, como cualquier paginación. Un tramo es el tamaño de la
      ventana elegida: con «Próximos 7 días», el siguiente salta 7 días. El rango
