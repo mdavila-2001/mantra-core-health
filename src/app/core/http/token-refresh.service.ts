@@ -1,11 +1,12 @@
 import { inject, Injectable } from '@angular/core';
-import { finalize, shareReplay, tap, throwError, type Observable } from 'rxjs';
+import { defer, finalize, of, shareReplay, tap, throwError, type Observable } from 'rxjs';
 
 import { IamClient } from '../data-access/iam/iam.client';
 import type { Session } from '../data-access/iam/iam.types';
 import { RefreshTokenStorage } from '../auth/refresh-token.storage';
 import { SessionStore } from '../auth/session.store';
 import { CrossTabLock } from './cross-tab-lock';
+import { SessionBroadcast } from './session-broadcast';
 
 /** Nombre del lock: uno solo, todas las pestañas de este origen lo comparten. */
 const LOCK_NAME = 'mantra-refresh-token';
@@ -28,13 +29,17 @@ const LOCK_NAME = 'mantra-refresh-token';
  * primera ya rotó, y el servidor lo trata como reuso y **revoca la sesión
  * entera** — quien tenía dos pestañas abiertas queda deslogueado de las dos.
  *
- * `CrossTabLock` serializa el tramo de red entre pestañas, y el propio tramo
- * relee el refresh token de `localStorage` en vez de usar el que esta pestaña
- * tenía capturado: si otra pestaña ya rotó mientras se esperaba el lock, ahí
- * está su token nuevo, todavía sin usar. Cada pestaña que contienda gasta su
- * propio refresco —esto no reduce a un solo viaje de red entre pestañas—,
- * pero ninguna presenta jamás un token ya gastado, así que ninguna dispara la
- * revocación por reuso.
+ * `CrossTabLock` serializa el tramo de red entre pestañas, y el tramo relee el
+ * refresh token de `localStorage` **ya dentro del lock** —no antes de ponerse a
+ * esperarlo, que era leer justo el valor que iba a quedar viejo—: si otra
+ * pestaña rotó mientras tanto, ahí está su token nuevo, todavía sin usar.
+ * Ninguna presenta jamás uno gastado, así que ninguna dispara la revocación por
+ * reuso.
+ *
+ * `SessionBroadcast` cierra la otra mitad: la pestaña que gana el turno publica
+ * la sesión que obtuvo, y la que venía detrás la adopta en vez de pedir la suya.
+ * Dos pestañas que refrescan a la vez terminan ambas con sesión válida y con
+ * **un solo** refresco contra el backend.
  */
 @Injectable({
   providedIn: 'root',
@@ -44,6 +49,7 @@ export class TokenRefreshService {
   private readonly session = inject(SessionStore);
   private readonly storage = inject(RefreshTokenStorage);
   private readonly lock = inject(CrossTabLock);
+  private readonly broadcast = inject(SessionBroadcast);
 
   /** Refresco en curso, compartido por todos los que lleguen mientras dure. */
   private inFlight: Observable<Session> | null = null;
@@ -78,28 +84,57 @@ export class TokenRefreshService {
   }
 
   /**
-   * El tramo de red, listo para correr dentro (o fuera) del lock entre
-   * pestañas — es un `Observable`, no se ejecuta hasta que algo se suscribe.
+   * Lo que pasa **una vez conseguido el turno**, que no es lo mismo que lo que
+   * se sabía antes de pedirlo.
    *
-   * Relee `localStorage` en vez de confiar en `capturedToken`: si otra pestaña
-   * rotó mientras ésta esperaba el lock, el valor persistido es el que
-   * corresponde presentar. `RefreshTokenStorage` es la fuente de verdad entre
-   * pestañas a propósito — es lo único que sobrevive fuera de la memoria de
-   * cada una.
+   * Todo el cuerpo va dentro de `defer` a propósito. Sin él, mirar el storage y
+   * el canal ocurriría al *construir* el observable, o sea antes de ponerse a
+   * esperar el lock: para cuando llegara el turno, el token a presentar ya
+   * estaría decidido, y si otra pestaña rotó en el medio sería uno gastado. El
+   * servidor lo trata como reuso y revoca la sesión entera — exactamente lo que
+   * el lock viene a evitar. Serializar sin releer dentro del lock no sirve de
+   * nada.
    */
   private exchange(capturedToken: string): Observable<Session> {
-    const refreshToken = this.storage.read() ?? capturedToken;
+    return defer(() => {
+      const almacenado = this.storage.read();
+      const publicada = this.broadcast.ultimaPublicada();
 
-    return this.iam.refresh(refreshToken).pipe(
-      tap((session) => {
-        this.session.renew(session);
-        // Sin esto, el refresh token vigente sólo vivía en memoria: una
-        // recarga de página volvía a presentar el que ya estaba en
-        // `localStorage` —el anterior a esta misma rotación—, y el servidor
-        // lo rechazaba por reuso. Persistirlo acá es lo mismo que hace
-        // `AuthService.open()` tras el login; acá faltaba.
-        this.storage.write(session.refreshToken);
-      }),
-    );
+      // Otra pestaña ya rotó mientras ésta esperaba, y publicó el resultado. Si
+      // lo publicado es lo que está vigente en `localStorage`, no hay nada que
+      // pedir: se adopta y se ahorra el viaje de red. Ésa es la mitad del
+      // criterio que el lock por sí solo no daba —un solo refresco contra el
+      // backend—, y por eso se compara contra el almacenado en vez de confiar
+      // en la publicación a secas: una publicación vieja, de una rotación
+      // anterior, traería un token ya gastado y sería el mismo fallo de reuso,
+      // sólo que más difícil de ver.
+      if (
+        publicada !== null &&
+        almacenado !== null &&
+        publicada.refreshToken === almacenado &&
+        almacenado !== capturedToken
+      ) {
+        this.session.renew(publicada);
+        return of(publicada);
+      }
+
+      // Si no hay nada que adoptar, se presenta el más nuevo que se conozca:
+      // el persistido si lo hay, que es lo único que sobrevive fuera de la
+      // memoria de cada pestaña.
+      return this.iam.refresh(almacenado ?? capturedToken).pipe(
+        tap((session) => {
+          this.session.renew(session);
+          // Sin esto, el refresh token vigente sólo vivía en memoria: una
+          // recarga de página volvía a presentar el que ya estaba en
+          // `localStorage` —el anterior a esta misma rotación—, y el servidor
+          // lo rechazaba por reuso. Persistirlo acá es lo mismo que hace
+          // `AuthService.open()` tras el login; acá faltaba.
+          this.storage.write(session.refreshToken);
+          // Y se avisa, para que la pestaña que venga detrás adopte en vez de
+          // gastar su propio refresco.
+          this.broadcast.publicar(session);
+        }),
+      );
+    });
   }
 }
