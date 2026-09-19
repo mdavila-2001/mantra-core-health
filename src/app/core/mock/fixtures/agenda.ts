@@ -147,7 +147,13 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
     resourceId: RECURSO_MEDICA,
     retired: false,
     name: 'Mañanas en la clínica',
-    rules: [1, 2, 3, 4, 5].map((dayOfWeek) => ({ dayOfWeek, startTime: '08:00', endTime: '12:00', slotMinutes: 30, capacityPerSlot: 1 })),
+    // Lunes a SÁBADO. El sábado entró el 19/09/2026 y no es cosmético: con la
+    // semana de lunes a viernes, la maqueta abierta un fin de semana mostraba
+    // un día sin una sola consulta —y el panel abre con la jornada—. Una
+    // maqueta que se ve vacía dos días de cada siete no sirve para mostrar
+    // nada. Además es lo que hace media Santa Cruz: consultorio el sábado por
+    // la mañana.
+    rules: [1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({ dayOfWeek, startTime: '08:00', endTime: '12:00', slotMinutes: 30, capacityPerSlot: 1 })),
     slotMinutes: 30,
     validFrom: isoDia(-60),
     bookingPolicyId: POLITICA_ESTANDAR,
@@ -158,7 +164,14 @@ export const plantillas = new Coleccion<PlantillaSimulada>([
     resourceId: RECURSO_CONSULTORIO_MEDICA,
     retired: false,
     name: 'Tardes en el consultorio',
-    rules: [1, 3, 5].map((dayOfWeek) => ({ dayOfWeek, startTime: '15:00', endTime: '19:00', slotMinutes: 20, capacityPerSlot: 1, gapMinutes: 10 })),
+    // Lunes, miércoles y viernes por la tarde; el DOMINGO, guardia corta. La
+    // guardia existe por el mismo motivo que el sábado de arriba —que la
+    // maqueta tenga jornada los siete días— y se parece a lo que pasa de
+    // verdad: tres horas de guardia, no una tarde entera de consultorio.
+    rules: [
+      ...[1, 3, 5].map((dayOfWeek) => ({ dayOfWeek, startTime: '15:00', endTime: '19:00', slotMinutes: 20, capacityPerSlot: 1, gapMinutes: 10 })),
+      { dayOfWeek: 0, startTime: '10:00', endTime: '13:00', slotMinutes: 20, capacityPerSlot: 1, gapMinutes: 10 },
+    ],
     slotMinutes: 20,
     validFrom: isoDia(-30),
     bookingPolicyId: POLITICA_ESTANDAR,

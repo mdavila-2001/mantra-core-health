@@ -1,0 +1,475 @@
+/* ============================================================================
+    «Lo que toca hoy» — la primera franja del panel de quien atiende.
+
+    Mobile-first: todo lo de acá se lee en una columna, y las dos consultas de
+    medios (650 y 780 px, los `--bp-*` del sistema copiados a mano porque CSS
+    no admite variables en la condición) sólo reparten en columnas lo que ya
+    funcionaba apilado.
+
+    Sin un color, un radio ni un tamaño que no salga de `styles.css`: lo que
+    cambia con el tema son los tokens, y por eso esta franja sirve igual en
+    claro y en oscuro sin una sola regla duplicada.
+   ========================================================================== */
+
+:host {
+  display: block;
+}
+
+/* ── La franja ────────────────────────────────────────────────────────────
+   `--bg-surface-alt` y no `--bg-surface`: las tarjetas del resto del panel
+   son blancas, y con el mismo fondo esta franja sería una más. Un tono de
+   diferencia alcanza para que se lea como el encabezado de la pantalla, sin
+   sombras ni degradados.
+
+   El radio de firma va **acá y en ningún otro lado del panel**: el sistema
+   pide UN elemento por pantalla con esa esquina, y desde este carril es éste
+   —la jornada— y ya no la zona abierta del árbol de accesos. */
+.hoy {
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-signature);
+  padding: var(--sp-5);
+}
+
+@media (min-width: 780px) {
+  .hoy {
+    padding: var(--sp-8);
+  }
+}
+
+.hoy__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+
+.hoy__titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+@media (min-width: 650px) {
+  .hoy__titulo {
+    font-size: var(--fs-h2);
+    line-height: var(--lh-h2);
+  }
+}
+
+/* El calendario es el ícono de la agenda en el menú y en los accesos. El mismo
+   dibujo para la misma idea es lo que la hace reconocible sin leerla. */
+.hoy__titulo-icono {
+  display: inline-flex;
+  color: var(--brand-primary);
+}
+
+/* En el teléfono el botón ocupa el ancho —es la acción de la franja y no hay
+   con qué compartir el renglón—; desde la tablet vuelve a su tamaño y se va al
+   extremo opuesto del título. */
+.hoy__ir {
+  inline-size: 100%;
+  justify-content: center;
+}
+
+@media (min-width: 650px) {
+  .hoy__ir {
+    inline-size: auto;
+  }
+}
+
+/* ── La cinta de la jornada ───────────────────────────────────────────────
+   Cada consulta es un tramo a escala entre la primera hora en punto y la
+   última: los huecos de la tira son huecos de verdad. Es lo único de esta
+   pantalla que se entiende sin leer.
+
+   El color NO porta información solo: la leyenda de abajo repite cada tono en
+   palabras y la lista trae el sello de cada cita. */
+.cinta {
+  margin-block-start: var(--sp-6);
+}
+
+.cinta__riel {
+  position: relative;
+  block-size: 18px;
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+}
+
+/* `inset-block: 3px` deja el tramo más fino que el riel: así el riel se sigue
+   viendo por arriba y por abajo, y los huecos del día se leen como huecos y no
+   como un borde. */
+.cinta__tramo {
+  position: absolute;
+  inset-block: 3px;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+}
+
+.cinta__tramo--hecha {
+  background: var(--st-success-bd);
+}
+
+.cinta__tramo--curso {
+  background: var(--brand-accent);
+}
+
+.cinta__tramo--sala {
+  background: var(--st-warning-bd);
+}
+
+/* Lo pedido y todavía sin responder se dibuja hueco: ocupa el lugar pero no
+   está confirmado, y eso es exactamente lo que significa. */
+.cinta__tramo--pedida {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+}
+
+.cinta__tramo--firme {
+  background: var(--brand-primary);
+}
+
+/* El reloj. Sobresale del riel a propósito: tiene que leerse por encima de
+   cualquier tramo, incluso del más oscuro. */
+.cinta__ahora {
+  position: absolute;
+  inset-block: -5px;
+  inline-size: 2px;
+  margin-inline-start: -1px;
+  background: var(--text-primary);
+  border-radius: var(--r-full);
+  box-shadow: 0 0 0 2px var(--bg-surface-alt);
+}
+
+.cinta__escala {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+/* ── La leyenda, que es el resumen ────────────────────────────────────────
+   El punto de color y la palabra, juntos: la misma información que la cinta,
+   en el canal que la cinta no tiene. Lo que está en cero no se dibuja — «0 en
+   sala» no es un dato, es ruido. */
+.cifras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.cifras__dato {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.cifras__dato::before {
+  content: '';
+  flex: 0 0 auto;
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+}
+
+/* El total no es un estado: no lleva punto, y así se lee como el encabezado de
+   la leyenda en vez de como un color más. */
+.cifras__dato:first-child::before {
+  display: none;
+}
+
+.cifras__dato--hecha::before {
+  background: var(--st-success-bd);
+}
+
+.cifras__dato--curso::before {
+  background: var(--brand-accent);
+}
+
+.cifras__dato--sala::before {
+  background: var(--st-warning-bd);
+}
+
+.cifras__dato--pedida::before {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+}
+
+.cifras__valor {
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* ── Ahora / A continuación ───────────────────────────────────────────────
+   Una sola cita y en tamaño de titular. Apilada en el teléfono; desde la
+   tablet, la hora a la izquierda, quién viene al medio y el estado a la
+   derecha, que es el orden en que se pregunta. */
+.ahora {
+  display: grid;
+  grid-template-areas:
+    'rotulo'
+    'hora'
+    'paciente'
+    'datos'
+    'sello';
+  row-gap: var(--sp-2);
+  margin-block-start: var(--sp-6);
+  padding: var(--sp-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+}
+
+@media (min-width: 650px) {
+  .ahora {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      'rotulo rotulo   sello'
+      'hora   paciente sello'
+      'hora   datos    sello';
+    column-gap: var(--sp-6);
+  }
+}
+
+/* Que la consulta esté ocurriendo es el único punto de atención de la
+   pantalla, y por eso es lo único que se tiñe. La identidad limita el ámbar a
+   un punto por pantalla: éste es. */
+.ahora--en-curso {
+  background: var(--st-warning-bg);
+  border-color: var(--st-warning-bd);
+}
+
+.ahora__rotulo {
+  grid-area: rotulo;
+  justify-self: start;
+  margin: 0;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.ahora--en-curso .ahora__rotulo {
+  background: var(--st-warning-bd);
+  color: var(--st-warning-fg);
+}
+
+.ahora__hora {
+  grid-area: hora;
+  align-self: center;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 780px) {
+  .ahora__hora {
+    display: block;
+    font-size: var(--fs-h1);
+    line-height: var(--lh-h1);
+  }
+}
+
+.ahora__hasta {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.ahora__paciente {
+  grid-area: paciente;
+  align-self: end;
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+}
+
+.ahora__datos {
+  grid-area: datos;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.ahora__dato {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.ahora__dato-icono {
+  display: inline-flex;
+  color: var(--text-muted);
+}
+
+.ahora__sello {
+  grid-area: sello;
+  justify-self: start;
+  align-self: start;
+}
+
+@media (min-width: 650px) {
+  .ahora__sello {
+    justify-self: end;
+  }
+}
+
+/* ── El resto del día ─────────────────────────────────────────────────────
+   Renglones separados por una línea fina y no tarjetas apiladas: son piezas de
+   una misma secuencia —las horas de una jornada— y cada una en su caja rompe
+   justo eso. */
+.lista {
+  margin: var(--sp-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista__fila {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'hora quien'
+    '.    sello';
+  gap: var(--sp-2) var(--sp-4);
+  align-items: center;
+  padding-block: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}
+
+@media (min-width: 650px) {
+  .lista__fila {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'hora quien sello';
+  }
+}
+
+.lista__fila:first-child {
+  border-block-start: 0;
+  padding-block-start: 0;
+}
+
+/* Lo que ya pasó no se esconde ni se aclara hasta perder contraste: se dice en
+   el color secundario, que el sistema declara accesible sobre cualquier
+   superficie. */
+.lista__fila--pasada .lista__paciente {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.lista__hora {
+  grid-area: hora;
+  min-inline-size: 5ch;
+  font-size: var(--fs-data);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.lista__quien {
+  grid-area: quien;
+  min-inline-size: 0;
+}
+
+.lista__paciente {
+  margin: 0;
+  font-weight: 600;
+}
+
+.lista__motivo,
+.lista__sede {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.lista__fila app-status-seal {
+  grid-area: sello;
+  justify-self: start;
+}
+
+@media (min-width: 650px) {
+  .lista__fila app-status-seal {
+    justify-self: end;
+  }
+}
+
+/* ── Cierres ──────────────────────────────────────────────────────────────*/
+
+.hoy__cierre,
+.hoy__resto {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.hoy__cierre {
+  margin-block-start: var(--sp-6);
+}
+
+/* ── Esqueleto (S2) ───────────────────────────────────────────────────────
+   Con la forma de lo que viene —la cinta y la banda de «ahora»— y no tres
+   renglones de texto: un esqueleto que no se parece al contenido hace que la
+   pantalla salte cuando llega el dato. */
+.hoy__esqueleto {
+  display: grid;
+  gap: var(--sp-6);
+  margin-block-start: var(--sp-6);
+}
+
+.hoy__esqueleto-cinta,
+.hoy__esqueleto-banda {
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+}
+
+.hoy__esqueleto-cinta {
+  block-size: 18px;
+}
+
+.hoy__esqueleto-banda {
+  block-size: 96px;
+  border-radius: var(--r-lg);
+}

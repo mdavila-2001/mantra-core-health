@@ -5,19 +5,21 @@ import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
 import { MAXIMO_DE_ZONAS } from '../../core/navigation/access-tree';
-import { resolverEstadosDeCaso } from '../../../testing/case-status';
 import { Dashboard } from './dashboard';
 
 /**
  * El panel concentra **cuatro reglas de producto** que nada más fija, y son las
  * que un refactor rompería en silencio:
  *
- * 1. **Vacío gana sobre atrasado.** Una proyección sin registros no tiene nada
- *    que mostrar, así que anunciar su antigüedad sería decirle a la persona
- *    cuán viejo es un dato que no está viendo.
- * 2. **Sin `refreshedAt` es `ready`, no `stale`.** La vista nunca se refrescó,
- *    así que no hay antigüedad que declarar — y S7 exige una. Inventar
- *    `new Date()` sería afirmar que se calculó recién.
+ * 1. **El panel abre con el trabajo, no con el sistema.** El 19/09/2026 el
+ *    propietario mandó sacar del inicio de sesión del médico «Tu cuenta», el
+ *    conteo del directorio público y las cifras de secciones y organizaciones.
+ *    Ninguno volvió a colarse: acá se comprueba por el texto y por el
+ *    identificador de prueba, que es lo único que sobrevive a un renombre de
+ *    clase.
+ * 2. **La jornada es de quien atiende.** Se dibuja con el perfil profesional
+ *    del token, no con el rol: una cuenta con `PRACTITIONER` y sin perfil no
+ *    tiene agenda que buscar y se quedaría mirando un hueco.
  * 3. **El listado de pacientes se pide sólo con el rol que lo permite.** Sin
  *    `SECURITY_ADMIN` la API responde 403, así que pedirlo sería provocar un
  *    error para después esconderlo.
@@ -48,15 +50,17 @@ describe('Dashboard', () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
-      // El aviso de puesta en marcha cuelga de un `@defer (on immediate)`, y con
-      // el comportamiento por defecto —`Playthrough`— su carga es un `import()`
-      // real: según cuánto tarde, la petición que hace al construirse cae
-      // adentro o afuera de la prueba. Local resolvía tarde y no se notaba; en
-      // CI, con la máquina cargada, resolvía a tiempo y volteaba la primera
-      // prueba del bloque con un `timeout` de 5 s.
+      // El aviso de puesta en marcha y la jornada cuelgan de sendos
+      // `@defer (on immediate)`, y con el comportamiento por defecto
+      // —`Playthrough`— su carga es un `import()` real: según cuánto tarde, la
+      // petición que hacen al construirse cae adentro o afuera de la prueba.
+      // Local resolvía tarde y no se notaba; en CI, con la máquina cargada,
+      // resolvía a tiempo y volteaba la primera prueba del bloque con un
+      // `timeout` de 5 s.
       //
       // `Manual` no es esquivar el problema: estas pruebas hablan del panel, no
-      // del aviso, cuya conducta fijan sus propias pruebas en `setup-notice`.
+      // de lo diferido, cuya conducta fijan sus propias pruebas —las de
+      // `setup-notice` y las de `agenda-de-hoy`—.
       deferBlockBehavior: DeferBlockBehavior.Manual,
     }).compileComponents();
 
@@ -91,86 +95,104 @@ describe('Dashboard', () => {
     }
     fixture = TestBed.createComponent(Dashboard);
     component = fixture.componentInstance;
-
-    // El historial de verificación **ya no se pide**: la tarjeta «Tu identidad»
-    // está apagada mientras `VERIFICACION_DE_IDENTIDAD_OFRECIDA` sea `false`, y
-    // una lectura para una tarjeta que no se dibuja es una petición para nadie.
-    http.expectNone((request) => request.url.endsWith('/identity/me/verification-cases'));
-    // El sello de ese trámite sale de terminología, y su búsqueda sigue saliendo
-    // sola: la escribe `case-status`, que no sabe de esta pantalla.
-    resolverEstadosDeCaso(http);
   }
 
-  /** Acceso al estado protegido sin abrirlo en el componente. */
-  function estado() {
-    return (component as unknown as { directory: () => { status: string } }).directory();
+  function raiz(): HTMLElement {
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
   }
 
-  function responder(records: unknown[], refreshedAt: string | null) {
-    http
-      .expectOne((request) => request.url.endsWith('/public/directory'))
-      .flush({
-        slug: 'directory',
-        records,
-        refreshedAt,
-        generatedAt: '2026-08-01T12:00:00.000Z',
+  /* -- 1 · lo que el propietario mandó sacar (19/09/2026) -------------------- */
+
+  describe('el panel abre con el trabajo, no con el sistema', () => {
+    /**
+     * Los cuatro bloques retirados, por su identificador de prueba.
+     *
+     * Por `data-testid` y no sólo por el texto: el texto se puede reescribir
+     * sin que el bloque desaparezca, y al revés —un bloque que vuelva con otro
+     * título seguiría siendo el mismo bloque—. Se comprueban los dos.
+     */
+    const RETIRADOS: readonly string[] = [
+      'panel-sesion',
+      'panel-directorio',
+      'panel-cifra-secciones',
+      'panel-cifra-organizaciones',
+      'panel-cifra-identidad',
+    ];
+
+    it('ni «Tu cuenta», ni el directorio, ni las cifras de sistema', () => {
+      crear({
+        sub: '11111111-1111-4111-8111-111111111111',
+        roles: ['PRACTITIONER', 'CLINICIAN'],
+        tenants: ['22222222-2222-4222-8222-222222222222'],
+        tenantNames: { '22222222-2222-4222-8222-222222222222': 'Clínica Norte' },
       });
-  }
 
-  it('pide el directorio al construirse y arranca en S2', () => {
-    crear();
+      const panel = raiz();
+      for (const testid of RETIRADOS) {
+        expect(panel.querySelector(`[data-testid="${testid}"]`), testid).toBeNull();
+      }
 
-    expect(estado().status).toBe('loading');
-    responder([], null);
+      const texto = panel.textContent ?? '';
+      expect(texto).not.toContain('Tu cuenta');
+      expect(texto).not.toContain('Directorio público');
+      expect(texto).not.toContain('Secciones disponibles');
+      expect(texto).not.toContain('Organizaciones');
+    });
+
+    it('y tampoco pide el directorio: una tarjeta que no se dibuja no gasta una lectura', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+      raiz();
+
+      // El `verify()` del teardown es el que ata esto: una petición de más
+      // dejaría la prueba en rojo.
+      http.expectNone((request) => request.url.endsWith('/public/directory'));
+      http.expectNone((request) => request.url.endsWith('/identity/me/verification-cases'));
+    });
   });
 
-  it('sin registros muestra S3 vacío, aunque la proyección declare antigüedad', () => {
-    crear();
-    // El caso que distingue las dos reglas: hay `refreshedAt`, y aun así gana
-    // el vacío. Si el orden se invirtiera, esto pasaría a `stale`.
-    responder([], '2026-07-31T00:00:00.000Z');
+  /* -- 2 · la jornada es de quien atiende ----------------------------------- */
 
-    expect(estado().status).toBe('empty');
+  describe('la franja de hoy', () => {
+    function hayJornada(): boolean {
+      return (component as unknown as { atiendePacientes: () => boolean }).atiendePacientes();
+    }
+
+    it('con perfil profesional en el token, el panel monta la jornada', () => {
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'], hpid: 'hp-1' });
+      raiz();
+
+      expect(hayJornada()).toBe(true);
+      // Diferida: el bloque existe aunque su contenido todavía no se haya
+      // cargado, que es lo que `DeferBlockBehavior.Manual` deja ver.
+      expect(fixture.getDeferBlocks()).resolves.not.toHaveLength(0);
+    });
+
+    it('sin perfil profesional no hay jornada, aunque el rol diga que atiende', () => {
+      // El caso que separa las dos preguntas: el rol está, el perfil no. Buscar
+      // la agenda por rol dejaría a esta cuenta mirando una franja vacía para
+      // siempre.
+      crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+      raiz();
+
+      expect(hayJornada()).toBe(false);
+    });
+
+    it('a una cuenta administrativa se le habla de sus accesos, no de su jornada', () => {
+      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+      http
+        .expectOne((request) => request.url.includes('/profiles/patients'))
+        .flush({ items: [], count: 0, limit: 5, nextCursor: null });
+
+      expect(hayJornada()).toBe(false);
+      expect(raiz().textContent).toContain('Todo lo que tu cuenta habilita');
+    });
   });
 
-  it('con registros y antigüedad declarada muestra S7', () => {
-    crear();
-    responder([{ nombre: 'Clínica' }], '2026-07-31T00:00:00.000Z');
-
-    const state = estado() as { status: string; asOf?: Date };
-    expect(state.status).toBe('stale');
-    expect(state.asOf).toEqual(new Date('2026-07-31T00:00:00.000Z'));
-  });
-
-  it('con registros y sin antigüedad muestra el camino feliz, no S7', () => {
-    crear();
-    // `refreshedAt: null` es «nunca se refrescó», que NO es «se refrescó
-    // recién». Resolverlo como `stale` obligaría a inventar una fecha.
-    responder([{ nombre: 'Clínica' }], null);
-
-    expect(estado().status).toBe('ready');
-  });
-
-  it('un fallo de red se traduce a S8, no a una excepción', () => {
-    crear();
-    http
-      .expectOne((request) => request.url.endsWith('/public/directory'))
-      .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
-
-    expect(estado().status).toBe('offline');
-  });
-
-  it('cuenta los registros solo cuando el estado transporta datos', () => {
-    crear();
-    responder([{ a: 1 }, { a: 2 }], null);
-
-    const conteo = (component as unknown as { recordCount: () => number | null }).recordCount();
-    expect(conteo).toBe(2);
-  });
+  /* -- 3 y 4 · los pacientes de la organización ----------------------------- */
 
   it('sin rol de administración NO pide el listado de pacientes', () => {
     crear({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
-    responder([], null);
 
     // `verify()` en el afterEach es el que ata esto: si el panel hubiera pedido
     // el listado, quedaría una petición abierta y la prueba fallaría.
@@ -179,7 +201,6 @@ describe('Dashboard', () => {
 
   it('con SECURITY_ADMIN pide el listado y toma el total de `count`, no de las filas', () => {
     crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
-    responder([], null);
 
     http
       .expectOne((request) => request.url.includes('/profiles/patients'))
@@ -199,11 +220,16 @@ describe('Dashboard', () => {
       component as unknown as { totalPacientes: () => number | null }
     ).totalPacientes();
     expect(total).toBe(140);
+
+    // Y el total se dice al lado del título, que es donde quedó al desaparecer
+    // la tarjeta de cifra: si sólo viviera en la señal, nadie lo vería.
+    expect(raiz().querySelector('[data-testid="panel-total-pacientes"]')?.textContent).toContain(
+      '140',
+    );
   });
 
   it('el listado vacío es S3, no una lista de cero filas', () => {
     crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
-    responder([], null);
 
     http
       .expectOne((request) => request.url.includes('/profiles/patients'))
@@ -218,12 +244,6 @@ describe('Dashboard', () => {
   describe('Tus accesos', () => {
     function abrirPanel(roles: readonly string[]): void {
       crear({ sub: 'u-1', roles, tenants: ['t-1'] });
-      responder([], null);
-    }
-
-    function raiz(): HTMLElement {
-      fixture.detectChanges();
-      return fixture.nativeElement as HTMLElement;
     }
 
     function zonas(): readonly HTMLButtonElement[] {
@@ -301,107 +321,14 @@ describe('Dashboard', () => {
       expect(todasLasRutas()).not.toContain('/directory');
     });
 
-    /* -- ALV-018: la agenda, a un clic ------------------------------------- */
-
-    function atajoDeAgenda(): HTMLAnchorElement | null {
-      return raiz().querySelector<HTMLAnchorElement>('[data-testid="panel-agenda-directa"]');
-    }
-
-    it('quien atiende tiene la agenda directa, sin abrir la zona', () => {
+    it('el atajo a la agenda ya no vive acá: la jornada trae el suyo', () => {
+      // ALV-018 puso un «Ver mi agenda de hoy» dentro de esta tarjeta. Con la
+      // franja de hoy encabezando el panel —y su botón a la agenda completa—,
+      // dos puertas a lo mismo en la misma pantalla se leen como dos destinos.
       abrirPanel(['PRACTITIONER', 'CLINICIAN']);
 
-      const atajo = atajoDeAgenda();
-      expect(atajo).not.toBeNull();
-      expect(atajo?.getAttribute('href')).toBe('/schedule');
+      expect(raiz().querySelector('[data-testid="panel-agenda-directa"]')).toBeNull();
     });
-
-    it('refactor UX (D-05): el atajo es la acción del encabezado y va antes que las cifras', () => {
-      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
-
-      const atajo = atajoDeAgenda() as HTMLAnchorElement;
-      expect(atajo.closest('app-page-header')).not.toBeNull();
-      const cifras = raiz().querySelector('.panel__cifras') as Element;
-      const accesos = raiz().querySelector('[data-testid="panel-accesos"]') as Element;
-      // Las cifras son contexto: quedan después de la tarea del día y de los accesos.
-      const despues = (a: Node, b: Node): boolean =>
-        (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
-      expect(despues(atajo, cifras)).toBe(true);
-      expect(despues(accesos, cifras)).toBe(true);
-    });
-
-    it('quien no atiende no ve el atajo: no se ofrece una puerta que da 403', () => {
-      abrirPanel(['PATIENT']);
-
-      expect(atajoDeAgenda()).toBeNull();
-    });
-  });
-
-  /* -- H-07: la tarjeta «Tu cuenta» no filtra vocabulario de sistema --------- */
-
-  describe('Tu cuenta', () => {
-    const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
-
-    function tarjeta(): HTMLElement {
-      fixture.detectChanges();
-      const raiz = fixture.nativeElement as HTMLElement;
-      return raiz.querySelector<HTMLElement>('[data-testid="panel-sesion"]') as HTMLElement;
-    }
-
-    it('nombra el rol en palabras y no muestra ningún identificador ni habla del token', () => {
-      crear({
-        sub: '11111111-1111-4111-8111-111111111111',
-        roles: ['USER', 'PRACTITIONER'],
-        tenants: ['22222222-2222-4222-8222-222222222222'],
-        tenantNames: { '22222222-2222-4222-8222-222222222222': 'Clínica Norte' },
-      });
-      responder([], null);
-
-      const texto = tarjeta().textContent ?? '';
-      expect(texto).not.toMatch(UUID);
-      expect(texto).not.toMatch(/token/i);
-      expect(texto).not.toContain('PRACTITIONER');
-      expect(texto).not.toContain('USER');
-      expect(texto).toContain('Clínica Norte');
-
-      // El código sigue disponible para las pruebas de extremo a extremo, pero
-      // fuera del texto: en `data-role`.
-      const insignias = [...tarjeta().querySelectorAll('[data-testid="panel-roles"] app-badge')];
-      expect(insignias.map((i) => i.textContent?.trim())).toEqual(['Profesional sanitario']);
-      expect(insignias.map((i) => i.getAttribute('data-role'))).toEqual(['PRACTITIONER']);
-    });
-
-    it('sin roles sigue diciendo que no hay ninguno', () => {
-      crear({ sub: 'u-1', roles: [], tenants: ['t-1'] });
-      responder([], null);
-
-      expect(tarjeta().querySelectorAll('app-badge')).toHaveLength(0);
-      expect(tarjeta().querySelector('[data-testid="panel-roles"] .panel__vacio')).not.toBeNull();
-    });
-  });
-
-  it('sin verificación ofrecida, el panel no pide el historial ni pinta el sello', () => {
-    // El pedido del 26/08/2026 fue «no pida verificación de momento», y una
-    // tarjeta que saluda con un sello «Sin verificar» es pedirla desde el primer
-    // renglón del panel. Apagada, la pantalla no la dibuja **y** no gasta la
-    // lectura: ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
-    session.start({
-      accessToken: jwt({ sub: 'u-1', roles: [], tenants: [] }),
-      refreshToken: 'r-1',
-    });
-    fixture = TestBed.createComponent(Dashboard);
-    component = fixture.componentInstance;
-
-    http.expectNone((request) => request.url.endsWith('/identity/me/verification-cases'));
-    resolverEstadosDeCaso(http);
-    responder([{ a: 1 }], null);
-    fixture.detectChanges();
-
-    expect(estado().status).toBe('ready');
-    const sello = (component as unknown as { selloDeIdentidad: () => unknown }).selloDeIdentidad();
-    expect(sello).toBeNull();
-    expect(
-      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="panel-cifra-identidad"]'),
-    ).toBeNull();
   });
 
   describe('el aviso del alta incompleta (TJ-1)', () => {
@@ -424,7 +351,6 @@ describe('Dashboard', () => {
 
     it('un profesional con el alta a medias ve el aviso, con cuánto le falta', () => {
       crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
-      responder([], null);
       responderAlta(2, 'organizations');
 
       const texto: string = fixture.nativeElement.textContent;
@@ -434,7 +360,6 @@ describe('Dashboard', () => {
 
     it('con el alta completa no hay aviso: no se le recuerda algo que ya hizo', () => {
       crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
-      responder([], null);
       responderAlta(5, 'done');
 
       expect(fixture.nativeElement.textContent).not.toContain('Completá tu perfil');
@@ -442,7 +367,6 @@ describe('Dashboard', () => {
 
     it('si la lectura falla no inventa un aviso', () => {
       crear({ sub: 'u-1', roles: ['PRACTITIONER'], tenants: ['t-1'] });
-      responder([], null);
       http
         .expectOne((request) => request.url.endsWith('/practitioners/me/onboarding'))
         .flush(null, { status: 500, statusText: 'Server Error' });
@@ -454,7 +378,6 @@ describe('Dashboard', () => {
 
     it('a quien no atiende no se le pregunta siquiera', () => {
       crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
-      responder([], null);
       // Este rol sí lista pacientes; se responde para que el `verify()` del
       // teardown hable sólo de lo que esta prueba mira.
       http

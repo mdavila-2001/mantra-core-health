@@ -2,32 +2,24 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { rolesConEtiqueta } from '../../core/auth/role-labels';
-import { GETTING_STARTED_ROUTE } from '../admin/getting-started/getting-started.routes';
 import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Alert } from '../../shared/components/molecules/alert/alert';
-import { IdentityClient } from '../../core/data-access/identity/identity.client';
-import type { VerificationCase } from '../../core/data-access/identity/identity.types';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
-import { PublicClient, type PublicProjection } from '../../core/data-access/public/public.client';
 import { errorToViewState } from '../../core/http/error-to-view-state';
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../core/identity-assurance/verificacion-ofrecida';
 import { NavigationService } from '../../core/navigation/navigation.service';
-import { rolesAlcanzan, type AppSection } from '../../core/navigation/navigation.types';
-import { dataOf, empty, loading, ready, stale } from '../../core/view-state/view-state';
+import { rolesAlcanzan } from '../../core/navigation/navigation.types';
+import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
-import { Badge } from '../../shared/components/atoms/badge/badge';
 import { Skeleton } from '../../shared/components/atoms/skeleton/skeleton';
 import { StaggerList } from '../../shared/motion/stagger-list.directive';
 import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
-import { StatusSeal } from '../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
-import { CaseStatusCatalog, toCaseStatusPresentation } from '../identity-verification/case-status';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
 import { AccessTree } from './access-tree/access-tree';
+import { AgendaDeHoy } from './agenda-de-hoy/agenda-de-hoy';
 import { PatientHome } from './patient-home/patient-home';
 
 /**
@@ -48,38 +40,44 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 /**
  * Panel de inicio de la aplicación autenticada.
  *
- * ## Qué era y por qué cambió
+ * ## Qué era y por qué cambió (dos veces)
  *
- * Era una pantalla de diagnóstico: dos tarjetas, una con los claims del token y
- * otra que pedía el directorio público «para comprobar de punta a punta que hay
- * API del otro lado». Cumplía su función cuando lo único que había era el
- * armazón, y para quien entra a trabajar era media pantalla en blanco que no le
- * decía qué hacer ni dónde estaba nada.
+ * Nació como pantalla de diagnóstico: dos tarjetas, una con los claims del
+ * token y otra que pedía el directorio público «para comprobar de punta a punta
+ * que hay API del otro lado». Después se le sumaron cuatro cifras —pacientes,
+ * secciones habilitadas, organizaciones alcanzadas, estado de la identidad—.
  *
- * Ahora responde las cuatro preguntas con las que alguien abre un panel:
+ * El 19/09/2026 el propietario mandó sacar todo eso del inicio de sesión del
+ * médico, con el argumento que se sostiene solo: **ninguno de esos bloques
+ * contesta la pregunta con la que alguien abre el panel a las siete de la
+ * mañana.** «Tu cuenta» enumeraba los roles del propio token, el directorio
+ * público contaba registros que no son de nadie que mire esta pantalla, y las
+ * dos cifras que quedaban —cuántas secciones habilita la cuenta y cuántas
+ * organizaciones alcanza— describen la aplicación, no el trabajo.
  *
- * 1. **¿Cuánto hay?** — el conteo real de pacientes de la organización, que sale
- *    del `count` del listado y no de contar la página que se trajo.
- * 2. **¿A dónde puedo ir?** — las secciones que los roles de la sesión habilitan,
- *    cada una con el resumen que ya declara el registro de navegación. Es la
- *    misma lista que arma el menú lateral, así que no puede desincronizarse.
- * 3. **¿Qué pasó último?** — los últimos pacientes registrados, con enlace a su
- *    ficha.
- * 4. **¿Está todo bien?** — el estado de la identidad propia y el del directorio,
- *    que era lo único que había antes y ahora ocupa el lugar que le corresponde.
+ * Lo que quedó responde tres preguntas, en este orden:
+ *
+ * 1. **¿Qué toca hoy?** — `app-agenda-de-hoy`: la jornada de quien atiende, con
+ *    su forma, lo que pasa ahora y salida a la agenda completa.
+ * 2. **¿A dónde puedo ir?** — las secciones que los roles de la sesión
+ *    habilitan, repartidas por zonas. Es la misma lista que arma el menú
+ *    lateral, así que no puede desincronizarse.
+ * 3. **¿Quién entró último?** — los últimos pacientes registrados, con el total
+ *    de la organización en el propio encabezado. Sólo para quien administra.
  *
  * ## Por qué cada bloque decide solo si aparece
  *
  * El panel lo ven roles muy distintos. Un `PATIENT` no puede listar pacientes
  * —el backend responde 403— así que pedirlo sería provocar un error para
- * después esconderlo. Cada bloque se pide **sólo si la sesión lo permite**, y el
- * que no corresponde no deja hueco: la rejilla se cierra sola.
+ * después esconderlo. Una cuenta administrativa no tiene perfil profesional y
+ * por lo tanto no tiene jornada. Cada bloque se pide **sólo si la sesión lo
+ * permite**, y el que no corresponde no deja hueco: la rejilla se cierra sola.
  */
 @Component({
   selector: 'app-dashboard',
   imports: [
     AccessTree,
-    Badge,
+    AgendaDeHoy,
     Card,
     Alert,
     AppButtonLink,
@@ -87,7 +85,6 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     RouterLink,
     Skeleton,
     StaggerList,
-    StatusSeal,
     // Faltaba de la lista aunque la plantilla lo usa en dos elementos: el
     // atributo `appTutorialTarget` se renderizaba como un atributo cualquiera,
     // la directiva no aplicaba, y el tutorial del panel no encontraba ni el
@@ -105,30 +102,11 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 })
 export class Dashboard {
   private readonly auth = inject(AuthService);
-  private readonly publicClient = inject(PublicClient);
   private readonly profiles = inject(ProfilesClient);
-  // El panel muestra el sello del trámite de identidad: necesita los estados
-  // resueltos contra terminología.
-  //
-  // **No se lee, y aun así no sobra**: inyectarlo es lo que dispara la
-  // resolución del catálogo desde su constructor, y de eso depende que
-  // `toCaseStatusPresentation` devuelva la palabra en vez de «Desconocido».
-  // Borrarlo por parecer sin uso rompe el sello sin romper ninguna prueba.
-  private readonly estadosDeCaso = inject(CaseStatusCatalog);
-  private readonly identity = inject(IdentityClient);
   private readonly navigation = inject(NavigationService);
 
   protected readonly roles = this.auth.roles;
   protected readonly activeTenantId = this.auth.activeTenantId;
-  protected readonly displayName = this.auth.displayName;
-
-  /**
-   * Los roles con etiqueta, para las insignias de «Tu cuenta».
-   *
-   * El código crudo no se pinta —es vocabulario de sistema— pero sigue viajando en
-   * `data-role` para quien lo lea por máquina; el rol sin etiqueta se omite.
-   */
-  protected readonly rolesLegibles = computed(() => rolesConEtiqueta(this.roles()));
 
   /** La organización activa por su nombre. */
   protected readonly tenantName = computed(() => {
@@ -136,16 +114,6 @@ export class Dashboard {
     return id === null ? null : this.auth.tenantName(id);
   });
 
-  /** Cuántas organizaciones alcanza esta sesión. */
-  protected readonly tenantCount = computed(() => this.auth.tenants().length);
-
-  /**
-   * Las secciones que la sesión puede abrir, separadas por si ya tienen pantalla.
-   *
-   * Salen de `NavigationService`, que es el mismo origen del menú lateral: una
-   * sección nueva aparece acá sin tocar este archivo, y una que se apaga
-   * desaparece de los dos lados a la vez.
-   */
   /**
    * Todo lo que la sesión alcanza, sin filtrar por disponibilidad.
    *
@@ -156,28 +124,22 @@ export class Dashboard {
    */
   protected readonly seccionesVisibles = computed(() => this.navigation.visibleSections());
 
-  protected readonly seccionesDisponibles = computed<readonly AppSection[]>(() =>
-    this.seccionesVisibles().filter((s) => s.availability === 'disponible'),
-  );
-
-  protected readonly seccionesPlanificadas = computed<readonly AppSection[]>(() =>
-    this.seccionesVisibles().filter((s) => s.availability === 'planificada'),
-  );
-
   /**
-   * La agenda, a un clic del panel (ALV-018).
+   * Si esta sesión atiende pacientes, que es lo que decide si hay jornada.
    *
-   * Estaba dentro de la zona «Mi consulta», que hay que abrir para ver lo que
-   * tiene: dos clics para llegar a lo que quien atiende abre todos los días y
-   * varias veces por día. Las zonas siguen ahí —ordenan las treinta y dos
-   * secciones—, pero la agenda además se ofrece directa.
-   *
-   * Sale de las secciones que la sesión YA tiene visibles y sólo si está
-   * `disponible`: no se dibuja un atajo a algo que esta cuenta no puede abrir,
-   * ni a una sección en construcción. Quien no atiende no lo ve.
+   * Se pregunta por el **perfil profesional** y no por el rol: es el mismo dato
+   * con el que se busca el recurso de agenda (`resourceRefId`), así que una
+   * cuenta que pase esta puerta tiene con qué buscar su día. Preguntar por
+   * `PRACTITIONER` dibujaría la franja para una cuenta con el rol y sin perfil,
+   * que se quedaría siempre en el vacío.
    */
-  protected readonly agendaDirecta = computed<AppSection | undefined>(() =>
-    this.seccionesDisponibles().find((seccion) => seccion.path === 'schedule'),
+  protected readonly atiendePacientes = computed(() => this.auth.practitionerProfileId() !== null);
+
+  /** El subtítulo dice lo que la pantalla trae, y eso depende de quién entró. */
+  protected readonly subtituloDelPanel = computed(() =>
+    this.atiendePacientes()
+      ? 'Tu jornada de hoy y todo lo que tu cuenta habilita.'
+      : 'Todo lo que tu cuenta habilita en esta organización.',
   );
 
   /**
@@ -206,6 +168,46 @@ export class Dashboard {
    * siempre. Al revés dejaría a un profesional sin su tablero el día que alguien
    * le cargue una ficha de paciente.
    */
+  protected readonly esPaciente = computed(() => {
+    const roles = this.roles();
+    if (!roles.includes('PATIENT')) return false;
+    return !ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
+  });
+
+  /**
+   * Cuánto le falta al profesional para completar su alta (TJ-1).
+   *
+   * `null` = no aplica: la sesión no es de quien atiende, o ya terminó, o la
+   * lectura falló. En los tres casos el aviso no se muestra — un banner que
+   * aparece por un error de red sería peor que no avisar.
+   */
+  protected readonly altaPendiente = signal<{
+    /** Cuántas etapas cumplió. */
+    readonly cumplidas: number;
+    /** De cuántas. */
+    readonly total: number;
+  } | null>(null);
+
+  protected readonly pacientes = signal<ViewState<PatientPageResumen>>(loading());
+
+  /** El total de pacientes de la organización, o `null` si todavía no se sabe. */
+  protected readonly totalPacientes = computed<number | null>(() => {
+    const datos = dataOf(this.pacientes());
+    return datos === null ? null : datos.total;
+  });
+
+  protected readonly ultimosPacientes = computed<readonly PatientListItem[]>(() => {
+    const datos = dataOf(this.pacientes());
+    return datos === null ? [] : datos.ultimos;
+  });
+
+  constructor() {
+    this.cargarAltaPendiente();
+    if (this.puedeVerPacientes()) {
+      this.loadPacientes();
+    }
+  }
+
   /**
    * Pregunta por el alta sólo si la sesión es de quien atiende.
    *
@@ -229,82 +231,6 @@ export class Dashboard {
       // decirle a alguien que le falta algo sin saberlo.
       error: () => this.altaPendiente.set(null),
     });
-  }
-
-  protected readonly esPaciente = computed(() => {
-    const roles = this.roles();
-    if (!roles.includes('PATIENT')) return false;
-    return !ROLES_DE_TRABAJO.some((rol) => roles.includes(rol));
-  });
-
-  /**
-   * Cuánto le falta al profesional para completar su alta (TJ-1).
-   *
-   * `null` = no aplica: la sesión no es de quien atiende, o ya terminó, o la
-   * lectura falló. En los tres casos el aviso no se muestra — un banner que
-   * aparece por un error de red sería peor que no avisar.
-   */
-  protected readonly altaPendiente = signal<{
-    /** Cuántas etapas cumplió. */
-    readonly cumplidas: number;
-    /** De cuántas. */
-    readonly total: number;
-  } | null>(null);
-
-  protected readonly pacientes = signal<ViewState<PatientPageResumen>>(loading());
-  protected readonly directory = signal<ViewState<PublicProjection>>(loading());
-
-  /**
-   * Si el panel muestra la tarjeta «Tu identidad».
-   *
-   * Va como campo y no como import suelto en la plantilla porque una plantilla
-   * de Angular sólo lee miembros de la clase. Ver
-   * `VERIFICACION_DE_IDENTIDAD_OFRECIDA` sobre por qué está apagada.
-   */
-  protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
-
-  /** Los casos de verificación propios. Sin estado de vista: es un adorno, no una pantalla. */
-  protected readonly casos = signal<readonly VerificationCase[]>([]);
-
-  /** El caso más reciente, que es el que responde «¿en qué quedó mi trámite?». */
-  protected readonly casoVigente = computed<VerificationCase | null>(() => {
-    const todos = this.casos();
-    return todos.length === 0 ? null : todos[todos.length - 1];
-  });
-
-  protected readonly selloDeIdentidad = computed(() => {
-    const caso = this.casoVigente();
-    return caso === null ? null : toCaseStatusPresentation(caso.status);
-  });
-
-  /** El total de pacientes de la organización, o `null` si todavía no se sabe. */
-  protected readonly totalPacientes = computed<number | null>(() => {
-    const datos = dataOf(this.pacientes());
-    return datos === null ? null : datos.total;
-  });
-
-  protected readonly ultimosPacientes = computed<readonly PatientListItem[]>(() => {
-    const datos = dataOf(this.pacientes());
-    return datos === null ? [] : datos.ultimos;
-  });
-
-  protected readonly recordCount = computed<number | null>(() => {
-    const data = dataOf(this.directory());
-    return data === null ? null : data.records.length;
-  });
-
-  constructor() {
-    this.loadDirectory();
-    // Sin verificación ofrecida no hay tarjeta que llenar, así que tampoco hay
-    // petición que hacer: pedir un trámite que nadie va a ver es gastar una
-    // llamada por cada panel que se abre. Ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
-    if (this.verificacionOfrecida) {
-      this.loadCasos();
-    }
-    this.cargarAltaPendiente();
-    if (this.puedeVerPacientes()) {
-      this.loadPacientes();
-    }
   }
 
   /** La ruta de la ficha de un paciente. Se arma acá para no repetirla en la plantilla. */
@@ -337,63 +263,10 @@ export class Dashboard {
       error: (error: unknown) => this.pacientes.set(errorToViewState<PatientPageResumen>(error)),
     });
   }
-
-  /**
-   * Pide los casos de verificación propios.
-   *
-   * El fallo se traga a propósito: es información de contexto, y un panel que se
-   * rompe entero porque el módulo de identidad no contestó sería peor que un
-   * panel sin ese dato.
-   */
-  protected loadCasos(): void {
-    this.identity.listVerificationCases().subscribe({
-      next: (casos) => this.casos.set(casos),
-      error: () => this.casos.set([]),
-    });
-  }
-
-  protected loadDirectory(): void {
-    this.directory.set(loading());
-
-    this.publicClient.searchDirectory().subscribe({
-      next: (projection) =>
-        this.directory.set(toState(projection, this.puedeCrearOrganizacion())),
-      error: (error: unknown) => this.directory.set(errorToViewState<PublicProjection>(error)),
-    });
-  }
 }
 
 /** Lo que el panel necesita del listado: el total y las últimas filas. */
 interface PatientPageResumen {
   readonly total: number;
   readonly ultimos: readonly PatientListItem[];
-}
-
-/**
- * De la proyección al estado.
- *
- * El orden importa: **vacío gana sobre atrasado**. Una proyección sin registros
- * no tiene nada que mostrar, así que anunciar su antigüedad sería decirle a la
- * persona cuán viejo es un dato que no está viendo.
- */
-function toState(
-  projection: PublicProjection,
-  puedeCrearOrganizacion: boolean,
-): ViewState<PublicProjection> {
-  if (projection.records.length === 0) {
-    // A quien puede poner la plataforma en marcha, el directorio vacío le está
-    // diciendo exactamente eso: que todavía no hay ninguna organización. Ese es
-    // el momento de ofrecerle el recorrido, y no un enlace al sistema de
-    // diseño, que no es una respuesta a nada de lo que vino a hacer.
-    return empty(
-      puedeCrearOrganizacion
-        ? { label: 'Poner la plataforma en marcha', route: GETTING_STARTED_ROUTE }
-        : { label: 'Ver el sistema de diseño', route: '/design-system' },
-      'El directorio público todavía no tiene registros publicados.',
-    );
-  }
-
-  return projection.refreshedAt === null
-    ? ready(projection)
-    : stale(projection, projection.refreshedAt);
 }

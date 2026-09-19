@@ -191,12 +191,15 @@
 }
 
 /* ── Segunda pantalla: la zona abierta ────────────────────────────────────
-   El radio de firma va acá y en ningún otro lado del panel: el sistema pide
-   UN elemento por pantalla con esa esquina, y éste es el bloque que cambia
-   cuando alguien actúa — el que tiene que verse que es otra cosa. */
+   Acá vivía el radio de firma del panel. Se lo llevó «Lo que toca hoy» el
+   19/09/2026: el sistema pide UN elemento por pantalla con esa esquina, y
+   entre una zona que aparece al abrirla y la franja que se ve al entrar, la
+   firma le corresponde a la que está siempre. El bloque sigue distinguiéndose
+   por lo que ya lo distinguía —su borde teñido por zona y su entrada—, que es
+   lo que dice que algo cambió al actuar. */
 .arbol__abierta {
   border: 1px solid var(--zona-bd);
-  border-radius: var(--r-signature);
+  border-radius: var(--r-lg);
   background: var(--bg-surface);
   padding: var(--sp-5);
   animation: arbol-abre var(--dur-base) var(--ease-out) both;

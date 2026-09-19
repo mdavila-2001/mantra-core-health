@@ -1,0 +1,207 @@
+<!-- La sección entera es UNA pieza y no una rejilla de tarjetas: la jornada se
+     lee de arriba abajo —la forma del día, lo que pasa ahora, lo que sigue— y
+     cortarla en cuatro cajas iguales pondría «cuántas atendí» al mismo peso que
+     «quién está esperando en la sala». -->
+<section class="hoy" data-testid="panel-hoy" aria-labelledby="hoy-titulo">
+  <header class="hoy__cabecera">
+    <h2 class="hoy__titulo" id="hoy-titulo">
+      <span class="hoy__titulo-icono" aria-hidden="true">
+        <app-nav-icon name="calendar" />
+      </span>
+      <!-- El día escrito entero y no «Hoy» a secas: el panel queda abierto
+           toda la jornada y a veces se mira a las once de la noche. -->
+      Hoy, {{ hoy() | date: "EEEE d 'de' MMMM" }}
+    </h2>
+
+    <a
+      app-button
+      variant="primary"
+      class="hoy__ir"
+      data-testid="panel-hoy-ver-agenda"
+      [routerLink]="rutaDeLaAgenda"
+    >
+      Ver agenda completa
+    </a>
+  </header>
+
+  <app-view-state-host [state]="estado()" (retry)="cargar()" (refresh)="cargar()">
+    <div vsh-skeleton class="hoy__esqueleto">
+      <div class="hoy__esqueleto-cinta"></div>
+      <div class="hoy__esqueleto-banda"></div>
+    </div>
+
+    <!-- ─── La cinta de la jornada ─────────────────────────────────────────
+         El día entero en una tira: cada consulta es un tramo a escala, los
+         huecos son huecos de verdad y la marca fina es el reloj. Es lo único
+         de esta pantalla que dice, sin leer, si la tarde está libre.
+
+         `role="img"` con su descripción: para quien no la ve, la tira sola no
+         significa nada, y las mismas citas están enumeradas más abajo con su
+         estado en palabras. -->
+    <div
+      class="cinta"
+      role="img"
+      data-testid="panel-hoy-cinta"
+      [attr.aria-label]="resumenDeLaCinta()"
+    >
+      <div class="cinta__riel">
+        @for (tramo of tramos(); track tramo.id) {
+          <span
+            [class]="'cinta__tramo cinta__tramo--' + tramo.tono"
+            [style.left.%]="tramo.izquierda"
+            [style.width.%]="tramo.ancho"
+            [title]="tramo.titulo"
+          ></span>
+        }
+
+        @if (marcaDeAhora() !== null) {
+          <span class="cinta__ahora" [style.left.%]="marcaDeAhora()" aria-hidden="true"></span>
+        }
+      </div>
+
+      <p class="cinta__escala" aria-hidden="true">
+        <span>{{ desdeLasHoras() | date: 'HH:mm' }}</span>
+        <span>{{ hastaLasHoras() | date: 'HH:mm' }}</span>
+      </p>
+    </div>
+
+    <!-- La leyenda de la cinta ES el resumen en números: el color de arriba y
+         la palabra de abajo son lo mismo dicho dos veces, que es exactamente lo
+         que hace falta para que la tira no dependa del color. Se omite lo que
+         está en cero — «0 en sala» no es información. -->
+    <ul class="cifras" data-testid="panel-hoy-cifras">
+      <li class="cifras__dato">
+        <b class="cifras__valor">{{ cifras().total }}</b>
+        {{ cifras().total === 1 ? 'consulta' : 'consultas' }}
+      </li>
+
+      @if (cifras().atendidas > 0) {
+        <li class="cifras__dato cifras__dato--hecha">
+          <b class="cifras__valor">{{ cifras().atendidas }}</b>
+          {{ cifras().atendidas === 1 ? 'atendida' : 'atendidas' }}
+        </li>
+      }
+      @if (cifras().enCurso > 0) {
+        <li class="cifras__dato cifras__dato--curso">
+          <b class="cifras__valor">{{ cifras().enCurso }}</b>
+          en curso
+        </li>
+      }
+      @if (cifras().enSala > 0) {
+        <li class="cifras__dato cifras__dato--sala">
+          <b class="cifras__valor">{{ cifras().enSala }}</b>
+          esperando
+        </li>
+      }
+      @if (cifras().porVenir > 0) {
+        <li class="cifras__dato cifras__dato--firme">
+          <b class="cifras__valor">{{ cifras().porVenir }}</b>
+          por venir
+        </li>
+      }
+      @if (cifras().solicitudes > 0) {
+        <li class="cifras__dato cifras__dato--pedida">
+          <b class="cifras__valor">{{ cifras().solicitudes }}</b>
+          sin responder
+        </li>
+      }
+    </ul>
+
+    <!-- ─── Lo que manda ahora mismo ───────────────────────────────────────
+         Una sola cita, en tamaño de titular. Es la respuesta a la única
+         pregunta que se hace mirando el reloj. -->
+    @if (destacada(); as cita) {
+      <article
+        class="ahora"
+        data-testid="panel-hoy-destacada"
+        [attr.data-estado]="cita.estado.code"
+        [class.ahora--en-curso]="destacadaEnCurso()"
+      >
+        <p class="ahora__rotulo">
+          {{ destacadaEnCurso() ? 'Ahora' : 'A continuación' }}
+        </p>
+
+        <p class="ahora__hora">
+          <time [attr.datetime]="cita.desde | date: 'yyyy-MM-ddTHH:mm'">{{ cita.desde | date: 'HH:mm' }}</time>
+          @if (cita.hasta) {
+            <span class="ahora__hasta">a {{ cita.hasta | date: 'HH:mm' }}</span>
+          }
+        </p>
+
+        <p class="ahora__paciente">{{ cita.paciente }}</p>
+
+        <ul class="ahora__datos">
+          @if (cita.motivo) {
+            <li class="ahora__dato">
+              <span class="ahora__dato-icono" aria-hidden="true">
+                <app-nav-icon name="note" />
+              </span>
+              <span>{{ cita.motivo }}</span>
+            </li>
+          }
+          @if (cita.porVideo) {
+            <li class="ahora__dato">
+              <span class="ahora__dato-icono" aria-hidden="true">
+                <app-nav-icon name="monitor" />
+              </span>
+              <span>Por videollamada</span>
+            </li>
+          } @else if (cita.sede) {
+            <li class="ahora__dato">
+              <span class="ahora__dato-icono" aria-hidden="true">
+                <app-nav-icon name="pin" />
+              </span>
+              <span>{{ cita.sede }}</span>
+            </li>
+          }
+        </ul>
+
+        <div class="ahora__sello">
+          <app-status-seal [variant]="cita.estado.variant" [label]="cita.estado.label" />
+        </div>
+      </article>
+    }
+
+    <!-- La jornada se terminó: hay citas, pero todas quedaron atrás. Decir «no
+         tenés consultas» a las ocho de la noche sería falso, y dejar el hueco
+         en blanco, peor. -->
+    @if (jornadaTerminada()) {
+      <p class="hoy__cierre" data-testid="panel-hoy-terminada">
+        Terminaste la jornada. Mañana te espera en la agenda.
+      </p>
+    }
+
+    <!-- ─── El resto del día ───────────────────────────────────────────────
+         Cinco renglones: hora, quién, por qué y en qué estado. Es un resumen,
+         y lo que no entra se dice por su número. -->
+    @if (siguientes().length > 0) {
+      <ol class="lista" data-testid="panel-hoy-lista">
+        @for (cita of siguientes(); track cita.id) {
+          <li class="lista__fila" [class.lista__fila--pasada]="cita.pasada">
+            <time class="lista__hora" [attr.datetime]="cita.desde | date: 'yyyy-MM-ddTHH:mm'">
+              {{ cita.desde | date: 'HH:mm' }}
+            </time>
+
+            <div class="lista__quien">
+              <p class="lista__paciente">{{ cita.paciente }}</p>
+              @if (cita.motivo) {
+                <p class="lista__motivo">{{ cita.motivo }}</p>
+              }
+              @if (cita.sede) {
+                <p class="lista__sede">{{ cita.sede }}</p>
+              }
+            </div>
+
+            <app-status-seal [variant]="cita.estado.variant" [label]="cita.estado.label" />
+          </li>
+        }
+      </ol>
+    }
+
+    @if (restantes() > 0) {
+      <p class="hoy__resto" data-testid="panel-hoy-resto">
+        Y {{ restantes() }} más en la agenda de hoy.
+      </p>
+    }
+  </app-view-state-host>
+</section>
