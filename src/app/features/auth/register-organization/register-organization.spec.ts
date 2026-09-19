@@ -138,15 +138,32 @@ describe('RegisterOrganization', () => {
     },
   };
 
-  /** El cuerpo esperado de cada gerencia: el `fullName` compuesto de sus partes. */
+  /**
+   * El cuerpo esperado de cada gerencia: sus partes, tal como las arma
+   * `partesDeNombre` (`thirdName` plegado en `middleName`, opcionales
+   * ausentes cuando quedan vacíos — nunca `fullName`).
+   */
   const GERENCIAS_ESPERADAS = {
     generalManager: {
-      fullName: 'Carlos Eduardo Andrés Mendoza Rivero',
+      name: 'Carlos',
+      middleName: 'Eduardo Andrés',
+      lastName: 'Mendoza',
+      motherLastName: 'Rivero',
       phone: '+591 70000001',
       email: 'gm@andina.test',
     },
-    commercialManager: { fullName: 'Ana Paz', phone: '+591 70000002', email: 'cm@andina.test' },
-    marketingManager: { fullName: 'Luis Rojas', phone: '+591 70000003', email: 'mm@andina.test' },
+    commercialManager: {
+      name: 'Ana',
+      lastName: 'Paz',
+      phone: '+591 70000002',
+      email: 'cm@andina.test',
+    },
+    marketingManager: {
+      name: 'Luis',
+      lastName: 'Rojas',
+      phone: '+591 70000003',
+      email: 'mm@andina.test',
+    },
   };
 
   function completar(
@@ -315,7 +332,9 @@ describe('RegisterOrganization', () => {
         },
         legalDocuments: DOCUMENTOS_DE_PRUEBA,
         legalRepresentative: {
-          fullName: 'Mariana Siles Justiniano',
+          name: 'Mariana',
+          lastName: 'Siles',
+          motherLastName: 'Justiniano',
           idNumber: REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
           email: REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
           powerOfAttorneyFileId: REPRESENTANTE_DE_PRUEBA.powerOfAttorneyFileId,
@@ -634,7 +653,9 @@ describe('RegisterOrganization', () => {
 
       const req = http.expectOne('/iam/auth/register-organization');
       expect(req.request.body.organization.legalRepresentative).toEqual({
-        fullName: 'Mariana Siles Justiniano',
+        name: 'Mariana',
+        lastName: 'Siles',
+        motherLastName: 'Justiniano',
         idNumber: REPRESENTANTE_DE_PRUEBA.legalRepresentativeIdNumber,
         email: REPRESENTANTE_DE_PRUEBA.legalRepresentativeEmail,
         phone: '+591 70099999',
@@ -785,7 +806,7 @@ describe('RegisterOrganization', () => {
   });
 
   describe('nombre en cinco partes del representante legal y las gerencias', () => {
-    it('el representante legal compone su fullName con las cinco partes', () => {
+    it('el representante legal manda sus cinco partes (thirdName plegado en middleName, nunca fullName)', () => {
       fixture.detectChanges();
       completar({
         legalRepresentativeNombre: {
@@ -799,14 +820,19 @@ describe('RegisterOrganization', () => {
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-organization');
-      expect(req.request.body.organization.legalRepresentative.fullName).toBe(
-        'Mariana Elena Sofía Siles Justiniano',
-      );
+      expect(req.request.body.organization.legalRepresentative).toMatchObject({
+        name: 'Mariana',
+        middleName: 'Elena Sofía',
+        lastName: 'Siles',
+        motherLastName: 'Justiniano',
+      });
+      expect('fullName' in req.request.body.organization.legalRepresentative).toBe(false);
+      expect('thirdName' in req.request.body.organization.legalRepresentative).toBe(false);
 
       req.flush(RESPUESTA);
     });
 
-    it('el representante legal sin los opcionales compone sólo nombre y apellido paterno', () => {
+    it('el representante legal sin los opcionales manda sólo nombre y apellido paterno', () => {
       fixture.detectChanges();
       completar({
         legalRepresentativeNombre: {
@@ -820,36 +846,46 @@ describe('RegisterOrganization', () => {
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-organization');
-      expect(req.request.body.organization.legalRepresentative.fullName).toBe('Mariana Siles');
+      expect(req.request.body.organization.legalRepresentative).toMatchObject({
+        name: 'Mariana',
+        lastName: 'Siles',
+      });
+      expect('middleName' in req.request.body.organization.legalRepresentative).toBe(false);
+      expect('motherLastName' in req.request.body.organization.legalRepresentative).toBe(false);
 
       req.flush(RESPUESTA);
     });
 
-    it('AC-01: la gerencia general compone su fullName con las cinco partes', () => {
+    it('AC-01: la gerencia general manda sus cinco partes', () => {
       fixture.detectChanges();
       completar();
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-organization');
-      expect(req.request.body.organization.executives.generalManager.fullName).toBe(
-        'Carlos Eduardo Andrés Mendoza Rivero',
-      );
+      expect(req.request.body.organization.executives.generalManager).toMatchObject({
+        name: 'Carlos',
+        middleName: 'Eduardo Andrés',
+        lastName: 'Mendoza',
+        motherLastName: 'Rivero',
+      });
 
       req.flush(RESPUESTA);
     });
 
-    it('AC-02: las gerencias comercial y de marketing componen su fullName con los opcionales vacíos', () => {
+    it('AC-02: las gerencias comercial y de marketing mandan sólo nombre y apellido paterno', () => {
       fixture.detectChanges();
       completar();
       component.submit();
 
       const req = http.expectOne('/iam/auth/register-organization');
-      expect(req.request.body.organization.executives.commercialManager.fullName).toBe(
-        'Ana Paz',
-      );
-      expect(req.request.body.organization.executives.marketingManager.fullName).toBe(
-        'Luis Rojas',
-      );
+      expect(req.request.body.organization.executives.commercialManager).toMatchObject({
+        name: 'Ana',
+        lastName: 'Paz',
+      });
+      expect(req.request.body.organization.executives.marketingManager).toMatchObject({
+        name: 'Luis',
+        lastName: 'Rojas',
+      });
 
       req.flush(RESPUESTA);
     });
@@ -888,23 +924,18 @@ describe('RegisterOrganization', () => {
       expect(grupo.invalid).toBe(true);
     });
 
-    it('un nombre compuesto de más de 200 caracteres marca el grupo inválido, aunque cada parte cumpla su propio tope', () => {
+    it('cada parte respeta su propio tope de 100 caracteres, sin depender de un compuesto', () => {
       fixture.detectChanges();
       completar();
 
       const grupo = component.form.controls.legalRepresentative;
-      grupo.controls.name.setValue('A'.repeat(60));
-      grupo.controls.middleName.setValue('B'.repeat(60));
-      grupo.controls.thirdName.setValue('C'.repeat(60));
-      grupo.controls.lastName.setValue('D'.repeat(60));
-      grupo.controls.motherLastName.setValue('');
+      grupo.controls.name.setValue('A'.repeat(100));
+      grupo.controls.lastName.setValue('D'.repeat(100));
+      expect(grupo.valid).toBe(true);
 
-      // Cada parte, sola, respeta su propio tope de 100.
-      expect(grupo.controls.name.valid).toBe(true);
-      expect(grupo.controls.lastName.valid).toBe(true);
-      // El compuesto (60*4 + 3 espacios = 243) supera el `@MaxLength(200)` de `fullName`.
-      expect(grupo.hasError('nombreCompletoLargo')).toBe(true);
-      expect(component.form.invalid).toBe(true);
+      grupo.controls.name.setValue('A'.repeat(101));
+      expect(grupo.controls.name.invalid).toBe(true);
+      expect(grupo.invalid).toBe(true);
     });
   });
 

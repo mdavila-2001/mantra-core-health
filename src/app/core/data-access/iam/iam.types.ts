@@ -483,16 +483,30 @@ export interface OrganizationRegistration {
   readonly executives?: OrganizationExecutives;
 }
 
+/**
+ * El nombre de una persona de contacto de la organización, en partes.
+ *
+ * Mismo desglose que el resto de las altas: `name`/`lastName` obligatorios,
+ * `middleName`/`motherLastName` opcionales. Sin `thirdName`: el backend no
+ * tiene esa columna (ni acá ni en el owner de este mismo alta), así que un
+ * tercer nombre se pliega en `middleName` en el cliente — ver
+ * `unirNombres` y `partesDeNombre` en `register-organization.ts`.
+ */
+export interface NombreDePersonaDeContacto {
+  readonly name: string;
+  readonly middleName?: string;
+  readonly lastName: string;
+  readonly motherLastName?: string;
+}
+
 /** Nombre, celular y correo de una gerencia de contacto (subtarea 1.4). */
-export interface OrganizationContactPerson {
-  readonly fullName: string;
+export interface OrganizationContactPerson extends NombreDePersonaDeContacto {
   readonly phone: string;
   readonly email: string;
 }
 
 /** El representante legal declarado en el alta, con su poder notariado ya subido. */
-export interface OrganizationLegalRepresentative {
-  readonly fullName: string;
+export interface OrganizationLegalRepresentative extends NombreDePersonaDeContacto {
   readonly idNumber: string;
   readonly email: string;
   /** Opcional: el registro de procesos no lo pide, pero si se captura no se tira. */

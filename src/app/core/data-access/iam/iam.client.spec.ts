@@ -358,26 +358,32 @@ describe('IamClient', () => {
       req.flush(RESPUESTA);
     });
 
-    /** El representante legal y las tres gerencias (subtarea 1.4). */
+    /** El representante legal y las tres gerencias, con el nombre en partes. */
     const LEGAL_REPRESENTATIVE = {
-      fullName: 'Mariana Siles Justiniano',
+      name: 'Mariana',
+      middleName: 'Elena',
+      lastName: 'Siles',
+      motherLastName: 'Justiniano',
       idNumber: '4872190 SC',
       email: 'legal@aseguradora.com',
       powerOfAttorneyFileId: 'file-poder',
     };
     const EXECUTIVES = {
       generalManager: {
-        fullName: 'Carlos Mendoza',
+        name: 'Carlos',
+        lastName: 'Mendoza',
         phone: '+591 70000001',
         email: 'gm@aseguradora.com',
       },
       commercialManager: {
-        fullName: 'Ana Paz',
+        name: 'Ana',
+        lastName: 'Paz',
         phone: '+591 70000002',
         email: 'cm@aseguradora.com',
       },
       marketingManager: {
-        fullName: 'Luis Rojas',
+        name: 'Luis',
+        lastName: 'Rojas',
         phone: '+591 70000003',
         email: 'mm@aseguradora.com',
       },
