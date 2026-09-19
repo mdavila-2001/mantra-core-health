@@ -1,7 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+  type AbstractControl,
+  type ValidationErrors,
+  type ValidatorFn,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
@@ -44,6 +52,7 @@ import {
   type Coordenadas,
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { unirNombres } from '../../../core/profesion/nombres-adicionales';
 
 /** Mínimos que exigen los DTO del backend. */
 const MIN_PASSWORD = 8;
@@ -59,40 +68,138 @@ const MAX_NIT = 100;
 const MAX_SIGLA = 20;
 const MAX_DIRECCION = 300;
 
-/** Largos del representante legal y las gerencias (subtarea 1.4), iguales a los del DTO del backend. */
-const MIN_NOMBRE_CONTACTO = 3;
+/** Tope del `fullName` compuesto (subtarea 1.4), igual al del DTO del backend. */
 const MAX_NOMBRE_CONTACTO = 200;
 const MIN_CI_REPRESENTANTE = 4;
 const MAX_CI_REPRESENTANTE = 50;
 const MAX_CORREO = 320;
 
+/**
+ * Topes por parte del nombre (representante, gerencias y owner): sólo los ve
+ * el cliente — el backend recibe siempre el compuesto, nunca las partes.
+ */
+const MIN_PARTE_NOMBRE = 2;
+const MAX_PARTE_NOMBRE = 100;
+
 /** Mismo patrón que el DTO del backend para el código único del tenant. */
 const CODIGO_VALIDO = /^[A-Za-z0-9._-]+$/;
 
-/** Los tres campos de una gerencia de contacto (subtarea 1.4): nombre, celular, correo. */
-function grupoDeGerente(): FormGroup<{
-  fullName: FormControl<string>;
-  phone: FormControl<string>;
-  email: FormControl<string>;
-}> {
-  return new FormGroup({
-    fullName: new FormControl('', {
+/** Los cinco controles con los que se declara el nombre de una persona en este alta. */
+interface ControlesDeNombre {
+  name: FormControl<string>;
+  middleName: FormControl<string>;
+  thirdName: FormControl<string>;
+  lastName: FormControl<string>;
+  motherLastName: FormControl<string>;
+}
+
+/**
+ * Los cinco controles de nombre, en blanco: primer nombre y apellido paterno
+ * obligatorios, los otros tres opcionales — mismo desglose que paciente y
+ * médico (`register-patient.ts`/`register-practitioner.ts`).
+ */
+function controlesDeNombre(): ControlesDeNombre {
+  return {
+    name: new FormControl('', {
       nonNullable: true,
       validators: [
         Validators.required,
-        Validators.minLength(MIN_NOMBRE_CONTACTO),
-        Validators.maxLength(MAX_NOMBRE_CONTACTO),
+        Validators.minLength(MIN_PARTE_NOMBRE),
+        Validators.maxLength(MAX_PARTE_NOMBRE),
       ],
     }),
-    phone: new FormControl('', {
+    middleName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, telefonoCompleto],
+      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
     }),
-    email: new FormControl('', {
+    thirdName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
+      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
     }),
+    lastName: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.minLength(MIN_PARTE_NOMBRE),
+        Validators.maxLength(MAX_PARTE_NOMBRE),
+      ],
+    }),
+    motherLastName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
+    }),
+  };
+}
+
+/**
+ * Compone el nombre completo tal como lo espera `fullName` en el backend
+ * (`RegisterOrganizationLegalRepresentativeDto`/`RegisterOrganizationExecutiveContactDto`):
+ * las partes no vacías, recortadas y separadas por un espacio. Reusa
+ * `unirNombres`, la misma función que ya concilia esto entre el alta de
+ * médico y su editor de perfil — ver su JSDoc.
+ */
+function componerNombreCompleto(p: {
+  name: string;
+  middleName: string;
+  thirdName: string;
+  lastName: string;
+  motherLastName: string;
+}): string {
+  return unirNombres([p.name, p.middleName, p.thirdName, p.lastName, p.motherLastName]);
+}
+
+/**
+ * El nombre compuesto no puede pasar el `@MaxLength(200)` de `fullName` en el
+ * backend. Vive a nivel de GRUPO (no de un control) porque depende de las
+ * cinco partes juntas.
+ *
+ * El mínimo de 3 caracteres del mismo decorador queda garantizado por
+ * `name`/`lastName` (2 + 2 + el espacio que los separa): no hace falta
+ * repetirlo acá.
+ */
+const nombreCompletoCabe: ValidatorFn = (grupo: AbstractControl): ValidationErrors | null => {
+  const valor = grupo.value as Partial<{
+    name: string;
+    middleName: string;
+    thirdName: string;
+    lastName: string;
+    motherLastName: string;
+  }>;
+  const compuesto = componerNombreCompleto({
+    name: valor.name ?? '',
+    middleName: valor.middleName ?? '',
+    thirdName: valor.thirdName ?? '',
+    lastName: valor.lastName ?? '',
+    motherLastName: valor.motherLastName ?? '',
   });
+  return compuesto.length > MAX_NOMBRE_CONTACTO
+    ? { nombreCompletoLargo: { max: MAX_NOMBRE_CONTACTO, actual: compuesto.length } }
+    : null;
+};
+
+/** El nombre del representante legal: sus cinco partes, como un único grupo. */
+function grupoDeNombre(): FormGroup<ControlesDeNombre> {
+  return new FormGroup(controlesDeNombre(), { validators: [nombreCompletoCabe] });
+}
+
+/** Los siete campos de una gerencia de contacto (subtarea 1.4): nombre en cinco partes, celular, correo. */
+function grupoDeGerente(): FormGroup<
+  ControlesDeNombre & { phone: FormControl<string>; email: FormControl<string> }
+> {
+  return new FormGroup(
+    {
+      ...controlesDeNombre(),
+      phone: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, telefonoCompleto],
+      }),
+      email: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
+      }),
+    },
+    { validators: [nombreCompletoCabe] },
+  );
 }
 
 /**
@@ -244,17 +351,12 @@ export class RegisterOrganization {
       nonNullable: true,
       validators: [Validators.required],
     }),
-    // Representante legal (subtarea 1.4). El teléfono es el único opcional:
-    // el registro de procesos no lo pide, y `telefonoCompleto` deja pasar la
-    // cadena vacía (ver su JSDoc).
-    legalRepresentativeFullName: new FormControl('', {
-      nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.minLength(MIN_NOMBRE_CONTACTO),
-        Validators.maxLength(MAX_NOMBRE_CONTACTO),
-      ],
-    }),
+    // Representante legal (subtarea 1.4 + desglose de nombre): sus cinco
+    // partes como un único grupo (`grupoDeNombre`), igual que el resto del
+    // alta. El teléfono es el único dato de contacto opcional: el registro
+    // de procesos no lo pide, y `telefonoCompleto` deja pasar la cadena
+    // vacía (ver su JSDoc).
+    legalRepresentative: grupoDeNombre(),
     legalRepresentativeIdNumber: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -285,10 +387,16 @@ export class RegisterOrganization {
       commercialManager: grupoDeGerente(),
       marketingManager: grupoDeGerente(),
     }),
-    // Datos del owner. El nombre va en sus cuatro partes, igual que en el
-    // resto de las altas: el backend compone con ellas el nombre que muestra.
+    // Datos del owner. El nombre va en sus cinco partes, igual que el
+    // resto de las personas de este alta: el backend sigue sin columna de
+    // tercer nombre, así que `thirdName` se pliega en `middleName` al
+    // enviar — ver `datos()` y `unirNombres`.
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     middleName: new FormControl('', { nonNullable: true }),
+    thirdName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
+    }),
     lastName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     motherLastName: new FormControl('', { nonNullable: true }),
     email: new FormControl('', {
@@ -468,12 +576,16 @@ export class RegisterOrganization {
         hint: 'Quien está facultado para firmar en nombre de la aseguradora.',
         campos: [
           {
-            key: 'legalRepresentativeFullName',
-            label: 'Nombre completo del representante legal',
-            control: 'text' as const,
-            required: true,
-            testId: 'registro-organizacion-representante-nombre',
-            mensajeDeError: 'Escribí el nombre del representante legal.',
+            // Sin rótulo, mismo motivo que `executives` más abajo: el
+            // `app-form-field` externo de un campo `custom` pintaría un
+            // `<label for>` hacia un control que no existe, y el título de
+            // la página ya dice de qué se trata.
+            key: 'legalRepresentative',
+            label: '',
+            control: 'custom' as const,
+            ancho: 'completo' as const,
+            mensajeDeError:
+              'Completá el nombre y el apellido paterno del representante legal.',
           },
           {
             key: 'legalRepresentativeIdNumber',
@@ -540,6 +652,12 @@ export class RegisterOrganization {
           control: 'text' as const,
           autocomplete: 'additional-name',
           testId: 'registro-organizacion-owner-segundo-nombre',
+        },
+        {
+          key: 'thirdName',
+          label: 'Tercer nombre u otros (opcional)',
+          control: 'text' as const,
+          testId: 'registro-organizacion-owner-tercer-nombre',
         },
         {
           key: 'lastName',
@@ -768,15 +886,65 @@ export class RegisterOrganization {
     },
   ];
 
-  /** Los tres campos de cada gerencia, iguales para las tres. */
-  protected readonly camposDeGerencia: readonly {
-    readonly key: 'fullName' | 'phone' | 'email';
+  /**
+   * Los cinco campos de nombre, iguales para el representante legal y las
+   * tres gerencias — mismo desglose que paciente, médico y el owner de este
+   * alta. `ancho` decide cuánto ocupa cada uno en `register-org__nombres`.
+   */
+  protected readonly camposDeNombre: readonly {
+    readonly key: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName';
+    readonly label: string;
+    readonly autocomplete?: string;
+    readonly testId: string;
+    readonly ancho: 'tercio' | 'mitad';
+    readonly required?: boolean;
+  }[] = [
+    {
+      key: 'name',
+      label: 'Primer nombre',
+      autocomplete: 'given-name',
+      testId: 'nombre',
+      ancho: 'tercio',
+      required: true,
+    },
+    {
+      key: 'middleName',
+      label: 'Segundo nombre (opcional)',
+      autocomplete: 'additional-name',
+      testId: 'segundo-nombre',
+      ancho: 'tercio',
+    },
+    {
+      key: 'thirdName',
+      label: 'Tercer nombre u otros (opcional)',
+      testId: 'tercer-nombre',
+      ancho: 'tercio',
+    },
+    {
+      key: 'lastName',
+      label: 'Apellido paterno',
+      autocomplete: 'family-name',
+      testId: 'apellido-paterno',
+      ancho: 'mitad',
+      required: true,
+    },
+    {
+      key: 'motherLastName',
+      label: 'Apellido materno (opcional)',
+      autocomplete: 'family-name',
+      testId: 'apellido-materno',
+      ancho: 'mitad',
+    },
+  ];
+
+  /** Celular y correo de una gerencia (subtarea 1.4): lo único que no es nombre. */
+  protected readonly camposDeContactoDeGerencia: readonly {
+    readonly key: 'phone' | 'email';
     readonly label: string;
     readonly hint?: string;
-    readonly control: 'text' | 'tel' | 'email';
+    readonly control: 'tel' | 'email';
     readonly autocomplete?: string;
   }[] = [
-    { key: 'fullName', label: 'Nombre completo', control: 'text', autocomplete: 'name' },
     {
       key: 'phone',
       label: 'Celular',
@@ -796,20 +964,71 @@ export class RegisterOrganization {
    */
   protected controlDeGerencia(
     gerenciaKey: 'generalManager' | 'commercialManager' | 'marketingManager',
-    campoKey: 'fullName' | 'phone' | 'email',
+    campoKey:
+      | 'name'
+      | 'middleName'
+      | 'thirdName'
+      | 'lastName'
+      | 'motherLastName'
+      | 'phone'
+      | 'email',
   ): FormControl<string> {
     return this.form.controls.executives.controls[gerenciaKey].controls[campoKey];
+  }
+
+  /** El `FormControl` de un campo de nombre del representante legal. */
+  protected controlDelRepresentante(
+    campoKey: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName',
+  ): FormControl<string> {
+    return this.form.controls.legalRepresentative.controls[campoKey];
+  }
+
+  /**
+   * El error de un nombre compuesto (>200 caracteres en total), a nivel de
+   * `FormGroup` — nunca del `FormControl` de una parte: el validador vive
+   * en el grupo porque depende de las cinco partes juntas. Se muestra bajo
+   * el apellido paterno, que es donde ya se lee cuando el resto del nombre
+   * está completo.
+   */
+  private errorDeNombreLargo(grupo: AbstractControl): string {
+    return grupo.touched && grupo.hasError('nombreCompletoLargo')
+      ? 'El nombre completo no puede pasar de 200 caracteres.'
+      : '';
   }
 
   /** Reusa los mismos textos de error que el resto del alta. */
   protected errorDeGerencia(
     gerenciaKey: 'generalManager' | 'commercialManager' | 'marketingManager',
-    campo: { readonly key: 'fullName' | 'phone' | 'email'; readonly label: string },
+    campo: {
+      readonly key:
+        | 'name'
+        | 'middleName'
+        | 'thirdName'
+        | 'lastName'
+        | 'motherLastName'
+        | 'phone'
+        | 'email';
+      readonly label: string;
+    },
   ): string {
-    return mensajeDeError(this.controlDeGerencia(gerenciaKey, campo.key), {
+    const mensajePropio = mensajeDeError(this.controlDeGerencia(gerenciaKey, campo.key), {
       label: campo.label,
       mensajeDeError: campo.key === 'phone' ? 'Completá el número.' : undefined,
     });
+    if (mensajePropio !== '' || campo.key !== 'lastName') return mensajePropio;
+    return this.errorDeNombreLargo(this.form.controls.executives.controls[gerenciaKey]);
+  }
+
+  /** Mismo criterio que {@link errorDeGerencia}, para el representante legal. */
+  protected errorDelRepresentante(campo: {
+    readonly key: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName';
+    readonly label: string;
+  }): string {
+    const mensajePropio = mensajeDeError(this.controlDelRepresentante(campo.key), {
+      label: campo.label,
+    });
+    if (mensajePropio !== '' || campo.key !== 'lastName') return mensajePropio;
+    return this.errorDeNombreLargo(this.form.controls.legalRepresentative);
   }
 
   /**
@@ -822,6 +1041,12 @@ export class RegisterOrganization {
    * que esto viva acá y no escuchando el propio `FormGroup`.
    */
   protected alRechazarPagina(pagina: PaginaDeFormulario): void {
+    if (pagina.clave === 'legal-representative') {
+      // Mismo motivo que para `executives`: el motor sólo marca el GRUPO
+      // (`markAsTouched`), no a sus cinco hijos.
+      this.form.controls.legalRepresentative.markAllAsTouched();
+      return;
+    }
     if (pagina.clave !== 'executives') return;
 
     const grupo = this.form.controls.executives;
@@ -870,12 +1095,22 @@ export class RegisterOrganization {
     const raw = this.form.getRawValue();
     const tradeName = raw.tradeName.trim();
     const timeZone = raw.timeZone.trim();
-    const segundoNombre = raw.middleName.trim();
+    // El backend no tiene columna de tercer nombre: se pliega en
+    // `middleName`, igual que en el alta de paciente y de médico.
+    const segundoNombre = unirNombres([raw.middleName, raw.thirdName]);
     const apellidoMaterno = raw.motherLastName.trim();
     const casaMatriz = this.gpsCasaMatriz();
     const telefonoRepresentante = raw.legalRepresentativePhone.trim();
-    const gerente = (g: { fullName: string; phone: string; email: string }) => ({
-      fullName: g.fullName.trim(),
+    const gerente = (g: {
+      name: string;
+      middleName: string;
+      thirdName: string;
+      lastName: string;
+      motherLastName: string;
+      phone: string;
+      email: string;
+    }) => ({
+      fullName: componerNombreCompleto(g),
       phone: g.phone.trim(),
       email: g.email.trim(),
     });
@@ -913,7 +1148,7 @@ export class RegisterOrganization {
       // Representante legal y gerencias (subtarea 1.4): al nivel de
       // `organization`, nunca dentro de `payer` — ver el JSDoc de la clase.
       legalRepresentative: {
-        fullName: raw.legalRepresentativeFullName.trim(),
+        fullName: componerNombreCompleto(raw.legalRepresentative),
         idNumber: raw.legalRepresentativeIdNumber.trim(),
         email: raw.legalRepresentativeEmail.trim(),
         ...(telefonoRepresentante === '' ? {} : { phone: telefonoRepresentante }),
