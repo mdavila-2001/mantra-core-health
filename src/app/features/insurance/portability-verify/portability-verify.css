@@ -1,0 +1,46 @@
+:host {
+  display: block;
+}
+
+.verify {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  max-width: 60ch;
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-4);
+}
+
+.verify__datos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-1);
+  margin: var(--sp-3) 0;
+}
+
+.verify__datos dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.verify__datos dd {
+  margin: 0;
+}
+
+.verify__rotulo {
+  margin: var(--sp-3) 0 var(--sp-1);
+  font-weight: 600;
+}
+
+.verify__hash {
+  display: block;
+  font-family: var(--font-mono);
+  word-break: break-all;
+  user-select: all;
+}
+
+.verify__volver {
+  margin-top: var(--sp-2);
+}

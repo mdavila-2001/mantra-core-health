@@ -1772,6 +1772,19 @@ export const routes: Routes = [
     title: 'AloVida - Stock de componentes',
   },
   {
+    // Verificación pública del certificado de portabilidad de póliza y
+    // siniestralidad (subtarea 3.3): a donde apunta el código QR del PDF.
+    // Va fuera del armazón, igual que la vitrina — quien escanea el QR (una
+    // aseguradora, un auditor) no tiene ni necesita sesión en AloVida — y sin
+    // entrada de menú: se llega por el QR, nunca por navegación.
+    path: 'verify/portability/:manifestHash',
+    loadComponent: () =>
+      import('./features/insurance/portability-verify/portability-verify').then(
+        (m) => m.PortabilityVerify,
+      ),
+    title: 'AloVida - Verificar certificado',
+  },
+  {
     path: 'auth',
     component: Login,
     pathMatch: 'full',
