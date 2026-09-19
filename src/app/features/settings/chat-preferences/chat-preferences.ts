@@ -22,6 +22,7 @@ import {
 } from '../../../core/messaging/message-templates';
 import { ChatStore } from '../../../core/messaging/chat.store';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Switch } from '../../../shared/components/atoms/switch/switch';
 
 /** Las esperas que se ofrecen de un toque. El campo admite cualquier otra. */
 const ESPERAS = [5, 15, 30, 60, 120] as const;
@@ -44,7 +45,7 @@ const ESPERAS = [5, 15, 30, 60, 120] as const;
  */
 @Component({
   selector: 'app-chat-preferences',
-  imports: [AppButton, FormsModule],
+  imports: [AppButton, FormsModule, Switch],
   templateUrl: './chat-preferences.html',
   styleUrl: './chat-preferences.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

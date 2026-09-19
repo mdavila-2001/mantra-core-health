@@ -22,20 +22,25 @@
     </p>
   }
 
-  <label class="chat-prefs__interruptor">
-    <input
-      type="checkbox"
-      data-testid="chat-prefs-activa"
-      [checked]="config().activa"
-      (change)="alternarActiva($any($event.target).checked)"
-    />
+  <!-- Interruptor y no casilla: esto no es un dato que se declara al enviar un
+       formulario, es algo que queda encendido o apagado en el momento y se
+       guarda solo. `app-switch` es el mismo control que usan los permisos y
+       los avisos, en la misma pantalla de Ajustes. -->
+  <div class="chat-prefs__interruptor">
     <span class="chat-prefs__interruptor-texto">
       <span class="ajustes__nombre">Contestar sola cuando no estoy</span>
       <span class="ajustes__detalle">
         {{ config().activa ? 'Encendida.' : 'Apagada: nadie recibe respuestas automáticas.' }}
       </span>
     </span>
-  </label>
+    <app-switch
+      class="chat-prefs__switch"
+      data-testid="chat-prefs-activa"
+      ariaLabel="Contestar sola cuando no estoy"
+      [checked]="config().activa"
+      (checkedChange)="alternarActiva($event)"
+    />
+  </div>
 
   <!-- Lo de abajo sólo existe encendida: configurar una respuesta que no se
        manda es pedirle a alguien que decida algo que no tiene efecto. -->
@@ -121,20 +126,21 @@
         </span>
       </div>
 
-      <label class="chat-prefs__interruptor">
-        <input
-          type="checkbox"
-          data-testid="chat-prefs-horario"
-          [checked]="config().soloFueraDeHorario"
-          (change)="alternarHorario($any($event.target).checked)"
-        />
+      <div class="chat-prefs__interruptor">
         <span class="chat-prefs__interruptor-texto">
           <span class="ajustes__nombre">Sólo fuera de mi horario de atención</span>
           <span class="ajustes__detalle">
             Dentro del horario no contesta sola, aunque no estés mirando.
           </span>
         </span>
-      </label>
+        <app-switch
+          class="chat-prefs__switch"
+          data-testid="chat-prefs-horario"
+          ariaLabel="Sólo fuera de mi horario de atención"
+          [checked]="config().soloFueraDeHorario"
+          (checkedChange)="alternarHorario($event)"
+        />
+      </div>
 
       @if (config().soloFueraDeHorario) {
         <div class="chat-prefs__franja">
