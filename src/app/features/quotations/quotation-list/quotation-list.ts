@@ -11,6 +11,10 @@ import { NavigationService } from '../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+// El encabezado lleva un `<a app-button>`, y `AppButton` es `button[app-button]`:
+// sin esta pieza el atributo no engancha nada y la acción principal se dibuja como
+// texto suelto, sin el color de las demás pantallas de listado.
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
@@ -37,7 +41,7 @@ const TOPE_PACIENTES = 25;
  */
 @Component({
   selector: 'app-quotation-list',
-  imports: [AppButton, Badge, DataTable, PageHeader, RouterLink, SearchField],
+  imports: [AppButton, AppButtonLink, Badge, DataTable, PageHeader, RouterLink, SearchField],
   templateUrl: './quotation-list.html',
   styleUrl: './quotation-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
