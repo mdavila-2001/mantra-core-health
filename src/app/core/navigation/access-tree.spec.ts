@@ -93,6 +93,21 @@ describe('buildAccessTree', () => {
   });
 
   /**
+   * Pedido del 19/09/2026 · la zona «Administración» del médico. Salen del
+   * árbol, no del registro: la ruta sigue abriendo —«Mi consultorio propio» se
+   * llega desde «Mi perfil»—.
+   */
+  it.each([
+    ['administration/my-practice'],
+    ['administration/pharmacy-orders'],
+    ['administration/pharmacy-campaigns'],
+    ['administration/pharmacy-profile'],
+  ])('no ofrece %s en «Tus accesos» aunque la sesión lo alcance', (ruta) => {
+    expect(seccionesDe(['PRACTITIONER']).map((s) => s.path)).toContain(ruta);
+    expect(rutasRepartidas(['PRACTITIONER'])).not.toContain(ruta);
+  });
+
+  /**
    * Corrección del 10/09/2026 · la tarjeta genérica «Directorios».
    *
    * La aserción es **localizada** a propósito: no dice «no existe el texto
