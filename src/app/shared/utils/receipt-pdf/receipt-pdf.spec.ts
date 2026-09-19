@@ -188,7 +188,7 @@ describe('bloquesDeComprobante', () => {
     expect(textos).toContain('Farmacia: Farmacia Andina — Sucursal Centro');
     expect(textos).toContain('Paciente: Ana Pérez');
     expect(textos).toContain('Medio de pago: Pagado en mostrador');
-    expect(textos).toContain('Total: 111.00 BOB');
+    expect(textos).toContain('Total: 111.00 Bs');
     // La fecha del pago, en palabras locales — no la de generación.
     expect(textos.some((texto) => texto.startsWith('Pagado el: '))).toBe(true);
   });

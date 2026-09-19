@@ -18,6 +18,7 @@ import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { MIS_PEDIDOS_ROUTE } from '../../pharmacy-orders.routes';
 import { NOTA_DE_EJEMPLO } from '../order-invoice.fixtures';
 import { ROTULOS_DE_FACTURA, type DocumentoDeFactura } from '../order-invoice.types';
+import { displayCurrency } from '../../../../../core/money/display-currency';
 
 /**
  * **«Tu factura», dentro del detalle del pedido** (T-E4 · AC-T-E4-02).
@@ -38,6 +39,14 @@ import { ROTULOS_DE_FACTURA, type DocumentoDeFactura } from '../order-invoice.ty
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TuFactura {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   private readonly esBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   readonly orderId = input.required<string>();

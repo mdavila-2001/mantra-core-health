@@ -61,7 +61,9 @@
                   }
                 </div>
 
-                <p class="rejilla__dato">{{ servicio.code }}</p>
+                <!-- Sin el código del nomenclador (19/09/2026): «SCZ25-C-0070»
+                     no le dice nada a quien busca dónde atenderse. Sigue en el
+                     dato —lo usan la orden y el presupuesto—, sólo no se pinta. -->
 
                 @if (servicio.description) {
                   <p class="rejilla__resumen">{{ servicio.description }}</p>

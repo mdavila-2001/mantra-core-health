@@ -39,6 +39,7 @@ import {
 } from './bandeja-status';
 import { entregaEnPantalla, type EntregaEnPantalla } from './entrega-status';
 import { NOTA_DE_DATOS_DE_EJEMPLO } from './pharmacy-inbox.fixtures';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
  * Cada cuánto se refresca la bandeja sola. La campana ya avisa; esto es el
@@ -267,7 +268,7 @@ export class PharmacyInbox {
   protected totalDe(pedido: PedidoFarmacia): string {
     return pedido.totalEstimado === null
       ? 'Total no disponible'
-      : `${pedido.totalEstimado} ${pedido.moneda ?? ''}`.trim();
+      : withDisplayCurrency(pedido.totalEstimado, pedido.moneda);
   }
 
   /** «hace 5 min», o `null` para caer al formato de fecha de siempre. */

@@ -4,6 +4,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
 import { ROTULOS_DE_FACTURA } from '../../order-invoice/order-invoice.types';
 import type { ResumenDelPedido } from './order-summary.types';
+import { displayCurrency } from '../../../../../core/money/display-currency';
+import { withDisplayCurrency } from '../../../../../core/money/display-currency';
 
 /**
  * **El resumen del pedido** del checkout (T-E3 · F2.1.8, F2.2.3, F2.2.5, F4.2).
@@ -23,6 +25,14 @@ import type { ResumenDelPedido } from './order-summary.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderSummary {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   readonly resumen = input.required<ResumenDelPedido>();
 
   protected readonly rotulos = ROTULOS_DE_FACTURA;
@@ -33,6 +43,6 @@ export class OrderSummary {
       return 'No disponible';
     }
     const moneda = this.resumen().moneda;
-    return moneda === null ? valor : `${valor} ${moneda}`;
+    return withDisplayCurrency(valor, moneda);
   }
 }

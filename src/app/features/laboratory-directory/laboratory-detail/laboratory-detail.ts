@@ -25,6 +25,7 @@ import { SectionHeading } from '../../../shared/components/molecules/section-hea
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { categoryName } from '../laboratory-directory';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 
 /**
  * El código de tarifa con el que el simulador marca una cifra inventada.
@@ -239,7 +240,7 @@ export class LaboratoryDetail {
   protected precioDe(study: DiagnosticStudy): string | null {
     const precio = study.prices[0];
     if (precio === undefined) return null;
-    return `${precio.amount.replace('.', ',')} ${precio.currency.display}`;
+    return withDisplayCurrency(precio.amount.replace('.', ','), precio.currency.display);
   }
 
   /** El plazo de entrega, para el distintivo. `null` si el centro no lo declaró. */

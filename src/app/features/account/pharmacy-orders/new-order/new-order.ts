@@ -51,6 +51,7 @@ import {
   type TraspasoDeLaReceta,
 } from './new-order.handoff';
 import { OrderAlternatives } from './order-alternatives/order-alternatives';
+import { displayCurrency } from '../../../../core/money/display-currency';
 
 /** Menos de una unidad no es un renglón: para no pedirlo está «Volver». */
 const CANTIDAD_MINIMA = 1;
@@ -147,6 +148,14 @@ interface RenglonVisible {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewOrder {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly router = inject(Router);
   private readonly navigation = inject(NavigationService);

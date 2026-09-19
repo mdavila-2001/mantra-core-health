@@ -70,6 +70,7 @@ function ficha(nombre: string, city: string | null): PublicSearchResult {
     location: null,
     hasPublishedAgenda: false,
     nextAvailableDate: null,
+    category: null,
   };
 }
 
@@ -251,5 +252,143 @@ describe('BuscarHospitalesListado · los chips de ciudad cuelgan del departament
     // Un centro que no cargó su ciudad existe igual y tiene que poder
     // encontrarse; lo que no puede es colgar de un departamento que no declaró.
     expect(nombresEnLaGrilla()).toContain('Centro sin domicilio');
+  });
+});
+
+/* ============================================================================
+    El chip de categoría.
+
+    Bajo «organizaciones» conviven cuatro cosas distintas —clínicas privadas,
+    hospitales públicos de referencia, cajas de salud y centros de primer
+    nivel— y hasta ahora la grilla las mezclaba, ordenadas sólo por ciudad. La
+    diferencia no es de matiz: a una caja de salud no entra quien no es su
+    asegurado.
+    ========================================================================== */
+
+describe('BuscarHospitalesListado · el chip de categoría', () => {
+  const PRIVADA = { code: 'clinica-privada', label: 'Clínica privada' };
+  const PUBLICO = { code: 'hospital-publico', label: 'Hospital público' };
+  const CAJA = { code: 'caja-de-salud', label: 'Caja de salud' };
+
+  function conCategoria(
+    nombre: string,
+    city: string,
+    category: { readonly code: string; readonly label: string } | null,
+  ): PublicSearchResult {
+    return { ...ficha(nombre, city), category };
+  }
+
+  const CATALOGO: readonly PublicSearchResult[] = [
+    conCategoria('Clínica del Sur', 'La Paz', PRIVADA),
+    conCategoria('Clínica Belga', 'Cochabamba', PRIVADA),
+    conCategoria('Hospital Viedma', 'Cochabamba', PUBLICO),
+    conCategoria('Hospital Obrero', 'La Paz', CAJA),
+    conCategoria('Centro sin clasificar', 'Sucre', null),
+  ];
+
+  let fixture: ComponentFixture<BuscarHospitalesListado>;
+  let component: BuscarHospitalesListado;
+  let http: HttpTestingController;
+  let parametros: BehaviorSubject<Record<string, string>>;
+
+  beforeEach(() => {
+    parametros = new BehaviorSubject<Record<string, string>>({});
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            queryParams: parametros,
+            queryParamMap: parametros.pipe(map((p) => convertToParamMap(p))),
+          },
+        },
+        {
+          provide: BoMunicipalitiesCatalog,
+          useValue: { listar: () => of(RAMAS), olvidar: () => undefined },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    http
+      .match(() => true)
+      .forEach((peticion) => peticion.flush({ items: [], nextCursor: null, totalHint: 0 }));
+    http.verify();
+  });
+
+  function montar(url: Record<string, string> = {}): void {
+    parametros.next(url);
+    fixture = TestBed.createComponent(BuscarHospitalesListado);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    http.expectOne((peticion) => peticion.url.endsWith(BUSQUEDA)).flush({
+      items: CATALOGO,
+      nextCursor: null,
+      totalHint: CATALOGO.length,
+      generatedAt: new Date().toISOString(),
+    });
+    fixture.detectChanges();
+  }
+
+  /** Los chips **dibujados**, que son los que la persona ve. */
+  function chipsEnPantalla(): readonly string[] {
+    const renglon = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      '[data-testid="hospitales-chips-categoria"]',
+    );
+    return renglon === null
+      ? []
+      : [
+          ...renglon.querySelectorAll<HTMLElement>('[data-testid="hospitales-chip-categoria"]'),
+        ].map((chip) => chip.textContent?.trim() ?? '');
+  }
+
+  function nombresEnLaGrilla(): readonly string[] {
+    const centros = (component as unknown as Record<string, unknown>)['centros'] as () => readonly {
+      readonly name: string;
+    }[];
+    return centros().map((c) => c.name);
+  }
+
+  it('dibuja las categorías que hay, la que más centros tiene primero', () => {
+    montar();
+
+    expect(chipsEnPantalla()).toEqual(['Clínica privada', 'Caja de salud', 'Hospital público']);
+  });
+
+  it('elegir una acota la grilla', () => {
+    montar({ categoria: PRIVADA.code });
+
+    expect(nombresEnLaGrilla()).toEqual(['Clínica del Sur', 'Clínica Belga']);
+  });
+
+  it('el mapa cuenta con la categoría puesta', () => {
+    montar({ categoria: PRIVADA.code });
+
+    // «Cuánto hay ahí si voy» pasa a ser «cuántas clínicas privadas hay ahí si
+    // voy»: contar las cinco fichas dejaría el mapa contradiciendo a la grilla.
+    const cuenta = (
+      (component as unknown as Record<string, unknown>)[
+        'cuentaPorDepartamento'
+      ] as () => ReadonlyMap<string, number>
+    )();
+    expect(cuenta.get(LP)).toBe(1);
+    expect(cuenta.get(CB)).toBe(1);
+  });
+
+  it('las opciones no se achican al elegir una', () => {
+    montar({ categoria: PRIVADA.code });
+
+    expect(chipsEnPantalla().length).toBe(3);
+  });
+
+  it('un centro sin categoría no desaparece cuando no hay ninguna elegida', () => {
+    montar();
+
+    expect(nombresEnLaGrilla()).toContain('Centro sin clasificar');
   });
 });

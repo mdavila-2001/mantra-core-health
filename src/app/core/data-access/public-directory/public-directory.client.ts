@@ -5,6 +5,7 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import { PUBLIC_PROFILE_PREFIX } from './public-directory.types';
 import type {
+  PublicCategory,
   PublicComment,
   PublicFeedPost,
   PublicNearbyQuery,
@@ -31,9 +32,22 @@ interface WirePage<T> {
   readonly generatedAt: string;
 }
 
-type WireSearchResult = PublicSearchResult;
+/**
+ * Una fila del buscador, tal como viaja.
+ *
+ * `category` es **opcional en el cable y obligatoria en la vista**: la API viva
+ * todavía no la manda y el simulador sí, igual que `practiceSites` en la ficha.
+ * Que el tipo de la pantalla prometa siempre la clave —con `null` cuando no
+ * hay— es lo que evita que cada consumidor tenga que acordarse de que puede
+ * faltar; {@link normalizarCategoria} lo garantiza.
+ */
+type WireSearchResult = Omit<PublicSearchResult, 'category'> & {
+  readonly category?: PublicCategory | null;
+};
 
-type WireNearbyResult = PublicNearbyResult;
+type WireNearbyResult = Omit<PublicNearbyResult, 'category'> & {
+  readonly category?: PublicCategory | null;
+};
 
 type WirePost = Omit<PublicPostSummary, 'publishedAt'> & {
   readonly publishedAt: string;
@@ -128,7 +142,7 @@ export class PublicDirectoryClient {
 
   /** `GET /public/search` — la búsqueda unificada sobre los seis verticales. */
   search(filtros: PublicSearchQuery = {}): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>('/public/search', this.searchParams(filtros));
+    return this.getSearchPage('/public/search', this.searchParams(filtros));
   }
 
   /**
@@ -149,14 +163,14 @@ export class PublicDirectoryClient {
     if (filtros.verified !== undefined) {
       params = params.set('verified', String(filtros.verified));
     }
-    return this.getPage<WireSearchResult>('/public/search/practitioners', params);
+    return this.getSearchPage('/public/search/practitioners', params);
   }
 
   /** `GET /public/search/organizations` — hospitales, clínicas y centros. */
   searchOrganizations(
     filtros: PublicSearchQuery = {},
   ): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>(
+    return this.getSearchPage(
       '/public/search/organizations',
       this.searchParams(filtros),
     );
@@ -166,7 +180,7 @@ export class PublicDirectoryClient {
   searchDiagnosticUnits(
     filtros: PublicSearchQuery = {},
   ): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>(
+    return this.getSearchPage(
       '/public/search/diagnostic-units',
       this.searchParams(filtros),
     );
@@ -174,17 +188,17 @@ export class PublicDirectoryClient {
 
   /** `GET /public/search/insurers`. */
   searchInsurers(filtros: PublicSearchQuery = {}): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>('/public/search/insurers', this.searchParams(filtros));
+    return this.getSearchPage('/public/search/insurers', this.searchParams(filtros));
   }
 
   /** `GET /public/search/pharmacies`. */
   searchPharmacies(filtros: PublicSearchQuery = {}): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>('/public/search/pharmacies', this.searchParams(filtros));
+    return this.getSearchPage('/public/search/pharmacies', this.searchParams(filtros));
   }
 
   /** `GET /public/search/medications` — medicamentos ofertados. */
   searchMedications(filtros: PublicSearchQuery = {}): Observable<PublicPage<PublicSearchResult>> {
-    return this.getPage<WireSearchResult>(
+    return this.getSearchPage(
       '/public/search/medications',
       this.searchParams(filtros),
     );
@@ -211,7 +225,7 @@ export class PublicDirectoryClient {
     if (consulta.limit !== undefined) {
       params = params.set('limit', String(consulta.limit));
     }
-    return this.getPage<WireNearbyResult>('/public/nearby', params);
+    return this.getNearbyPage(params);
   }
 
   /**
@@ -382,6 +396,28 @@ export class PublicDirectoryClient {
     return params;
   }
 
+  /**
+   * Una página del buscador, con la categoría ya normalizada.
+   *
+   * La usan las siete búsquedas. Nada más que eso: el resto de la superficie
+   * pública no tiene categorías que normalizar.
+   */
+  private getSearchPage(
+    path: string,
+    params: HttpParams,
+  ): Observable<PublicPage<PublicSearchResult>> {
+    return this.getPage<WireSearchResult>(path, params).pipe(
+      map((pagina) => ({ ...pagina, items: pagina.items.map(normalizarCategoria) })),
+    );
+  }
+
+  /** Lo mismo para `nearby`, que devuelve la misma fila con su distancia. */
+  private getNearbyPage(params: HttpParams): Observable<PublicPage<PublicNearbyResult>> {
+    return this.getPage<WireNearbyResult>('/public/nearby', params).pipe(
+      map((pagina) => ({ ...pagina, items: pagina.items.map(normalizarCategoria) })),
+    );
+  }
+
   private getPage<T>(path: string, params: HttpParams): Observable<PublicPage<T>> {
     return this.http
       .get<WirePage<T>>(this.url(path), { params })
@@ -391,6 +427,19 @@ export class PublicDirectoryClient {
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+/**
+ * `category` ausente ⇒ `null`.
+ *
+ * No es un adorno defensivo: sin esto, una fila de la API viva llegaría con la
+ * clave **sin declarar**, y `'category' in fila` sería falso mientras el tipo
+ * promete que está. Ver `PublicSearchResult.category`.
+ */
+function normalizarCategoria<T extends { readonly category?: PublicCategory | null }>(
+  fila: T,
+): T & { readonly category: PublicCategory | null } {
+  return { ...fila, category: fila.category ?? null };
 }
 
 /** La envoltura de página, con su instante convertido. */

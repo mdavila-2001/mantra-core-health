@@ -61,8 +61,9 @@
         >{{ procedimiento.group }}</p>
       }
 
-      <!-- El precio SIEMPRE con su unidad: «20» a secas invita a cobrar
-           veinte bolivianos por algo que el arancel valúa en veinte UMA. -->
+      <!-- El precio siempre con moneda, y la moneda es «Bs» por ahora:
+           ver `core/money/display-currency.ts`, que explica por qué no se
+           convierte la UMA. -->
       <p class="procedimiento__precio">{{ precio(procedimiento) }}</p>
 
       @if (procedimiento.ocrSuspect) {

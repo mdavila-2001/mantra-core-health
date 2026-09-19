@@ -16,6 +16,7 @@ import type {
   CampanaPublica,
   ProductoEnCampana,
 } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
+import { displayCurrency } from '../../../core/money/display-currency';
 
 /** Un producto de la campaña con su ahorro ya derivado. */
 interface ProductoVisible {
@@ -53,6 +54,14 @@ interface ProductoVisible {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CampaignDetail {
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
   private readonly campaigns = inject(PharmacyCampaignsClient);
 
   /**

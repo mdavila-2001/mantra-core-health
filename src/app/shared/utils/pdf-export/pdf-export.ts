@@ -96,7 +96,32 @@ export interface PdfBlock {
     | 'note'
     | 'total'
     | 'divider'
-    | 'caption';
+    | 'caption'
+    /**
+     * Un hueco para escribir a mano: uno o varios renglones vacíos.
+     *
+     * Es el único bloque que **no dice nada**, y existe porque hay documentos
+     * que se imprimen para completarse en papel —un formulario en blanco es el
+     * caso— y no para leerse. Antes había que fingirlo con `divider`, que es
+     * otra cosa: un separador anuncia que cambia el asunto, y una pila de
+     * separadores seguidos se lee como un documento roto.
+     *
+     * Cuántos renglones, en {@link PdfBlock.lines}.
+     */
+    | 'blank'
+    /**
+     * Corta acá y sigue en una hoja nueva.
+     *
+     * El maquetador reparte solo: pasa de página cuando lo que viene no entra,
+     * y eso es lo correcto para un documento que se lee corrido. No lo es para
+     * uno cuyas partes **son** hojas —un formulario que en pantalla se sirve de
+     * a una página—: ahí el corte es del contenido, no del espacio que quedó
+     * libre.
+     *
+     * No abre una hoja en blanco: si la actual está recién empezada, no hace
+     * nada.
+     */
+    | 'pagebreak';
   /** La línea completa, tal como se lee. Presente en todos los tipos. */
   readonly text: string;
   /** Nivel de encabezado (1–6); sólo en `kind === 'heading'`. */
@@ -109,10 +134,27 @@ export interface PdfBlock {
   readonly cells?: readonly string[];
   /** Marca la fila de encabezado de una tabla; sólo en `kind === 'row'`. */
   readonly header?: boolean;
+  /**
+   * Cuántos renglones vacíos deja; sólo en `kind === 'blank'`. Por omisión, uno.
+   *
+   * Se declara según lo que se va a escribir encima: una fecha entra en un
+   * renglón y un motivo de consulta no. Un campo de texto largo con un solo
+   * renglón obliga a escribir en el margen, que es el defecto que este número
+   * evita.
+   */
+  readonly lines?: number;
 }
 
 /** La línea del pie cuando el documento no pide otra. */
 const PIE_POR_OMISION = 'Documento confidencial · AloVida';
+
+/**
+ * Lo que mide un renglón escrito a mano, en puntos (≈ 7,8 mm).
+ *
+ * Sale de lo que ocupa una letra manuscrita corriente con su holgura, no de lo
+ * que se ve prolijo en pantalla: estos renglones se llenan con una lapicera.
+ */
+const ALTO_DE_RENGLON = 22;
 
 /** Tamaño de fuente por nivel de encabezado. */
 const TAMANO_DE_ENCABEZADO: Readonly<Record<number, number>> = {
@@ -203,6 +245,15 @@ interface Hoja {
   readonly util: number;
   /** La última línea que se puede escribir antes de pasar de página. */
   readonly fondo: number;
+  /**
+   * Dónde empieza el contenido de la hoja **en curso**, bajo su membrete.
+   *
+   * Cambia al pasar de página —el membrete de continuación es más chico—, y es
+   * lo que distingue una hoja recién abierta de una a medio escribir: con la
+   * constante de la continuación, una hoja primera y vacía daba `y` mayor y se
+   * leía como escrita.
+   */
+  inicio: number;
   /** Dónde va la próxima línea. Lo único que se mueve. */
   y: number;
 }
@@ -222,11 +273,13 @@ function abrirHoja(doc: jsPDF, opciones: PdfExportOptions): Hoja {
     izquierda,
     util,
     fondo: alto - MARGEN_INFERIOR_PT,
+    inicio: INICIO_DE_CONTENIDO_PT,
     y: 0,
   };
 
   dibujarFiligrana(hoja);
   hoja.y = dibujarMembrete(hoja, true);
+  hoja.inicio = hoja.y;
   return hoja;
 }
 
@@ -241,6 +294,7 @@ function pasarDePagina(hoja: Hoja): void {
   hoja.doc.addPage();
   dibujarFiligrana(hoja);
   hoja.y = dibujarMembrete(hoja, false);
+  hoja.inicio = hoja.y;
 }
 
 /**
@@ -251,8 +305,7 @@ function pasarDePagina(hoja: Hoja): void {
  * preferible que se corte a que el documento no termine de generarse nunca.
  */
 function abrirEspacio(hoja: Hoja, alto: number): void {
-  const inicio = INICIO_DE_CONTENIDO_CONTINUACION_PT;
-  if (hoja.y + alto > hoja.fondo && hoja.y > inicio) {
+  if (hoja.y + alto > hoja.fondo && hoja.y > hoja.inicio) {
     pasarDePagina(hoja);
   }
 }
@@ -497,6 +550,12 @@ function dibujarBloque(hoja: Hoja, bloque: PdfBlock): void {
     case 'divider':
       dibujarSeparador(hoja);
       return;
+    case 'blank':
+      dibujarRenglones(hoja, bloque);
+      return;
+    case 'pagebreak':
+      cortarHoja(hoja);
+      return;
     case 'caption':
       dibujarPieDeBloque(hoja, bloque);
       return;
@@ -690,6 +749,41 @@ function dibujarPieDeBloque(hoja: Hoja, bloque: PdfBlock): void {
     interlineado: TIPOGRAFIA.nota + 3.5,
   });
   hoja.y += alto + RITMO.entreBloques;
+}
+
+/**
+ * Cierra la hoja y sigue en la siguiente.
+ *
+ * Sobre una hoja recién abierta no hace nada: un corte pedido dos veces
+ * seguidas —o justo después de que el contenido pasara de página por su
+ * cuenta— dejaría una carilla en blanco, que en un documento impreso se lee
+ * como una falla de la impresora.
+ */
+function cortarHoja(hoja: Hoja): void {
+  if (hoja.y <= hoja.inicio) {
+    return;
+  }
+  pasarDePagina(hoja);
+}
+
+/**
+ * Los renglones en blanco de un documento que se completa a mano.
+ *
+ * El alto no es decorativo: {@link ALTO_DE_RENGLON} es lo que mide una línea
+ * de escritura a mano en papel. Un renglón más apretado se ve bien en pantalla
+ * y no se puede llenar con una lapicera, que es lo único para lo que existe.
+ *
+ * Cada renglón pide su propio espacio, así que un corte de página cae **entre**
+ * dos renglones y no encima de uno.
+ */
+function dibujarRenglones(hoja: Hoja, bloque: PdfBlock): void {
+  const cuantos = Math.max(1, Math.trunc(bloque.lines ?? 1));
+  for (let i = 0; i < cuantos; i += 1) {
+    abrirEspacio(hoja, ALTO_DE_RENGLON);
+    hoja.y += ALTO_DE_RENGLON - 5;
+    filete(hoja, hoja.y, COLOR_FILETE_FUERTE, 0.5);
+  }
+  hoja.y += RITMO.entreBloques;
 }
 
 /** Un respiro con un filete al medio, cuando cambia el asunto sin cambiar de sección. */

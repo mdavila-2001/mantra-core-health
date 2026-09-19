@@ -317,7 +317,7 @@ describe('MyAgenda', () => {
       expect(fixture.nativeElement.textContent).not.toContain('HORARIO PERMANENTE');
     });
 
-    it('avisa que estos horarios no son para cirugías', () => {
+    it('ya no muestra el aviso de alcance (propietario, 19/09/2026)', () => {
       crear();
       conRecurso();
       conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }], {
@@ -325,10 +325,8 @@ describe('MyAgenda', () => {
       });
       conCuposHasta(new Date('2030-01-01'));
 
-      // Punto 8, textual del propietario: es una regla, no una nota al margen.
       const texto: string = fixture.nativeElement.textContent;
-      expect(texto).toContain('para consulta y cita');
-      expect(texto).toContain('quirúrgicas');
+      expect(texto).not.toContain('quirúrgicas');
     });
 
     it('ofrece retirar el horario, y dice retirar y no borrar (punto 6/7: ícono sobre la fila)', () => {
@@ -422,6 +420,35 @@ describe('MyAgenda', () => {
       expect(icono?.hasAttribute('appTooltip'), `${testId} sin tooltip`).toBe(true);
       expect(icono?.querySelector('svg'), `${testId} no es ícono`).not.toBeNull();
     }
+  });
+
+  it('cada acción del horario lleva su propio recuadro de color', () => {
+    crear();
+    conRecurso();
+    conPlantilla([{ dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00' }]);
+    // Con cupos por agotarse aparece también el aviso, que es la quinta acción.
+    conCuposHasta(new Date(Date.now() + 10 * 24 * 60 * 60 * 1000));
+
+    const acciones: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="horario-acciones"]',
+    );
+    // El tono es sólo el refuerzo visual —el nombre accesible ya lo verifica la
+    // prueba de arriba—, pero volver a los cinco íconos grises de antes era
+    // justo lo que el propietario pidió corregir: cada uno distinto del resto.
+    const tonos = [
+      ['aviso-agotan', 'mi-agenda__accion--aviso'],
+      ['horario-editar', 'mi-agenda__accion--editar'],
+      ['horario-retirar', 'mi-agenda__accion--retirar'],
+      ['ver-bloqueos', 'mi-agenda__accion--bloqueos'],
+      ['agendar-cita', 'mi-agenda__accion--agendar'],
+    ];
+    for (const [testId, tono] of tonos) {
+      const boton: HTMLElement | null = acciones.querySelector(`[data-testid="${testId}"]`);
+      expect(boton, testId).not.toBeNull();
+      expect(boton?.classList.contains('mi-agenda__accion'), `${testId} sin recuadro`).toBe(true);
+      expect(boton?.classList.contains(tono), `${testId} sin su tono`).toBe(true);
+    }
+    expect(new Set(tonos.map(([, tono]) => tono)).size).toBe(tonos.length);
   });
 
   it('pide los bloqueos de esta semana y los pinta en rojo en la grilla', () => {

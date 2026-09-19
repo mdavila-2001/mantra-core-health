@@ -6,6 +6,7 @@ import type {
 import { dialable, whatsappUrl } from '../../../utils/telephone/telephone';
 import { Badge } from '../../atoms/badge/badge';
 import { Link } from '../../atoms/link/link';
+import { withDisplayCurrency } from '../../../../core/money/display-currency';
 
 @Component({
   selector: 'app-patient-coverage-card',
@@ -59,6 +60,9 @@ export class PatientCoverageCard {
   protected amount(value?: string): string {
     if (value == null) return 'No informado';
     const code = this.coverage().currencyCode;
-    return `${value} ${code === 'BOB' ? 'Bs' : (code ?? '(moneda no informada)')}`;
+    // Sin moneda en el dato se dice así y no «Bs»: la tarjeta no inventa en
+    // qué moneda está un tope de cobertura.
+    if (code === null || code === undefined) return `${value} (moneda no informada)`;
+    return withDisplayCurrency(value, code);
   }
 }

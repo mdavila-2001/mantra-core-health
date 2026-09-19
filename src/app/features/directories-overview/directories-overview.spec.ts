@@ -128,6 +128,7 @@ describe('DirectoriesOverview', () => {
             location: null,
             hasPublishedAgenda: false,
             nextAvailableDate: null,
+            category: null,
           },
         ],
         nextCursor: null,

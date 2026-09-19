@@ -35,11 +35,11 @@
                   <div class="promo__precios">
                     <s class="promo__antes cifras-tabulares">
                       <span class="sr-only">Antes:</span>
-                      {{ fila.producto.precioNormal }} {{ fila.producto.moneda }}
+                      {{ fila.producto.precioNormal }} {{ moneda(fila.producto.moneda) }}
                     </s>
                     <strong class="promo__ahora cifras-tabulares">
                       <span class="sr-only">Precio de campaña:</span>
-                      {{ fila.producto.precioPromocional }} {{ fila.producto.moneda }}
+                      {{ fila.producto.precioPromocional }} {{ moneda(fila.producto.moneda) }}
                     </strong>
                     @if (fila.ahorro !== null) {
                       <app-badge variant="success">{{ fila.ahorro }} % menos</app-badge>

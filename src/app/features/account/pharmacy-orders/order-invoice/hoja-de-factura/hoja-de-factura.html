@@ -77,13 +77,13 @@
       @if (documento().descuentoDeRed; as descuento) {
         <div class="factura__cuenta" data-testid="factura-descuento">
           <dt>{{ rotulos.descuentoDeRed }}</dt>
-          <dd>−{{ descuento }} {{ documento().moneda }}</dd>
+          <dd>−{{ descuento }} {{ moneda(documento().moneda) }}</dd>
         </div>
       }
       @if (documento().coaseguro; as coaseguro) {
         <div class="factura__cuenta" data-testid="factura-coaseguro">
           <dt>{{ rotulos.coaseguro }} · {{ coaseguro.aseguradora }}</dt>
-          <dd>{{ coaseguro.importe }} {{ coaseguro.moneda }}</dd>
+          <dd>{{ coaseguro.importe }} {{ moneda(coaseguro.moneda) }}</dd>
         </div>
       }
       <div class="factura__cuenta factura__cuenta--total" data-testid="factura-total">

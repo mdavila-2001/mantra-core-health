@@ -44,6 +44,7 @@ import type {
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { displayCurrency } from '../../../core/money/display-currency';
 
 /** Filas por página. El backend admite hasta 500 y aplica 50 por omisión. */
 const TAMANO_DE_PAGINA = 25;
@@ -163,6 +164,8 @@ export class ServicesCatalog {
   protected readonly porId = (row: ServiceCatalogItem): string => row.id;
   /** Nombre de la fila para el lector de pantalla (`rowLabel` de la tabla). */
   protected readonly nombreDeServicio = (row: ServiceCatalogItem): string => row.name;
+  /** La moneda de la columna de precio: «Bs», ver `display-currency.ts`. */
+  protected readonly moneda = displayCurrency();  // la tabla no trae moneda por fila
   protected readonly cargando = computed(() => this.resultados().status === 'loading');
 
   constructor() {

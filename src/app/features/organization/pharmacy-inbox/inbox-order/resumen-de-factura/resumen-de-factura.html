@@ -21,7 +21,7 @@
     <div class="factura__dato">
       <dt class="factura__etiqueta">Total facturado</dt>
       <dd class="factura__valor cifras-tabulares">
-        {{ factura().total }} {{ factura().moneda }}
+        {{ factura().total }} {{ moneda(factura().moneda) }}
       </dd>
     </div>
     <div class="factura__dato">

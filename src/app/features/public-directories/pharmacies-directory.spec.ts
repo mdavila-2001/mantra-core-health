@@ -41,6 +41,7 @@ function ficha(nombre: string, city: string | null): PublicSearchResult {
     location: null,
     hasPublishedAgenda: false,
     nextAvailableDate: null,
+    category: null,
   };
 }
 

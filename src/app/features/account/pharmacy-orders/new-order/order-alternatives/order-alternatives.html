@@ -21,9 +21,9 @@
           }
         </div>
         <div class="alternativas__precio">
-          <strong class="cifras-tabulares">{{ alternativa.precio }} {{ moneda() }}</strong>
+          <strong class="cifras-tabulares">{{ alternativa.precio }} {{ monedaVisible() }}</strong>
           <span class="alternativas__ahorro cifras-tabulares">
-            Ahorrás {{ alternativa.ahorro }} {{ moneda() }} por unidad
+            Ahorrás {{ alternativa.ahorro }} {{ monedaVisible() }} por unidad
           </span>
         </div>
         @if (alternativa.id === elegidaId()) {

@@ -459,6 +459,62 @@ describe('las tablas', () => {
     expect(veces).toBe(1);
   });
 
+  /**
+   * Los renglones en blanco son de los documentos que se completan a mano —un
+   * formulario impreso—. Se cuentan contra el mismo documento sin ellos: el
+   * membrete y el pie también dibujan filetes, y un conteo absoluto se
+   * rompería con el próximo retoque del membrete.
+   */
+  it('dibuja un filete por cada renglón en blanco que se le pida', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Motivo de consulta' }]);
+    const sinRenglones = ultimoDocumento().llamadas.line.length;
+
+    buildBlocksPdf([
+      { kind: 'paragraph', text: 'Motivo de consulta' },
+      { kind: 'blank', text: '', lines: 3 },
+    ]);
+
+    expect(ultimoDocumento().llamadas.line).toHaveLength(sinRenglones + 3);
+  });
+
+  it('un renglón en blanco sin cantidad declarada es uno solo', () => {
+    buildBlocksPdf([{ kind: 'paragraph', text: 'Alergias' }]);
+    const sinRenglones = ultimoDocumento().llamadas.line.length;
+
+    buildBlocksPdf([
+      { kind: 'paragraph', text: 'Alergias' },
+      { kind: 'blank', text: '' },
+    ]);
+
+    expect(ultimoDocumento().llamadas.line).toHaveLength(sinRenglones + 1);
+  });
+
+  it('un corte de hoja abre una página nueva', () => {
+    buildBlocksPdf([
+      { kind: 'paragraph', text: 'Primera hoja' },
+      { kind: 'pagebreak', text: '' },
+      { kind: 'paragraph', text: 'Segunda hoja' },
+    ]);
+
+    expect(ultimoDocumento().llamadas.addPage).toBe(1);
+  });
+
+  /**
+   * Un corte sobre una hoja recién abierta dejaría una carilla en blanco, que
+   * en un documento impreso se lee como una falla de la impresora.
+   */
+  it('un corte de hoja sobre una hoja vacía no hace nada', () => {
+    buildBlocksPdf([
+      { kind: 'pagebreak', text: '' },
+      { kind: 'paragraph', text: 'Única hoja' },
+      { kind: 'pagebreak', text: '' },
+      { kind: 'pagebreak', text: '' },
+      { kind: 'paragraph', text: 'Segunda hoja' },
+    ]);
+
+    expect(ultimoDocumento().llamadas.addPage).toBe(1);
+  });
+
   it('no manda a la derecha una columna que no es de números', () => {
     buildBlocksPdf([
       { kind: 'row', text: 'Estudio\tPreparación', cells: ['Estudio', 'Preparación'], header: true },

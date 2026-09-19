@@ -350,12 +350,14 @@ describe('MyServices', () => {
       expect(texto()).not.toContain('0.00');
     });
 
-    it('el importe se muestra con su moneda cuando la API la resolvió', () => {
+    it('el importe se muestra en «Bs», el código de moneda que traiga el dato', () => {
       responderPracticas();
-      peticionDelCatalogo().flush(pagina([servicio({ currencyCode: 'BOB' })]));
+      // `UMA` a propósito: el arancel de referencia no está en bolivianos y la
+      // pantalla igual dice «Bs». Ver `core/money/display-currency.ts`.
+      peticionDelCatalogo().flush(pagina([servicio({ currencyCode: 'UMA' })]));
       harness.detectChanges();
 
-      expect(texto()).toContain('150.00 BOB');
+      expect(texto()).toContain('150.00 Bs');
     });
 
     it('guardar manda un PATCH con el importe y actualiza la tarjeta con lo que devolvió la API', () => {
@@ -371,7 +373,7 @@ describe('MyServices', () => {
       req.flush(servicio({ defaultPrice: '200.50', currencyCode: 'BOB' }));
       harness.detectChanges();
 
-      expect(texto()).toContain('200.50 BOB');
+      expect(texto()).toContain('200.50 Bs');
       expect(boton('my-services-price-input')).toBeNull();
     });
 

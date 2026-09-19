@@ -10,6 +10,8 @@ import { FormControl, FormGroup, Validators, type ValidatorFn } from '@angular/f
 import { ActivatedRoute } from '@angular/router';
 import { concatMap, map, of } from 'rxjs';
 
+import { AuthService } from '@core/auth/auth.service';
+
 import { ChartTemplatesClient } from '../../core/data-access/chart-templates/chart-templates.client';
 import type {
   ChartTemplate,
@@ -55,6 +57,7 @@ import type {
   TipoDeControl,
 } from '../../shared/forms/paginated/paginated-form.types';
 import { validadorDeSeleccion } from '../../shared/forms/paginated/validadores-de-seleccion';
+import { FORM_TEMPLATE_PDF_DOWNLOADER } from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 /**
  * Cómo se dibuja cada tipo de dato cuando el formulario se sirve.
@@ -166,6 +169,8 @@ export class FormBuilder {
   private readonly route = inject(ActivatedRoute);
   private readonly terminology = inject(TerminologyClient);
   private readonly toasts = inject(ToastService);
+  private readonly auth = inject(AuthService);
+  private readonly descargarPdf = inject(FORM_TEMPLATE_PDF_DOWNLOADER);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -908,6 +913,50 @@ export class FormBuilder {
         this.cargarPresupuesto(detalle);
       },
       error: (error: unknown) => this.alta.set(errorToViewState<null>(error)),
+    });
+  }
+
+  /* -- Bajarse el formulario en papel --------------------------------------- */
+
+  /**
+   * Baja el formulario abierto en PDF, **en blanco y para completar a mano**.
+   *
+   * Lo pidió el propietario: que el doctor pueda descargar el formulario que
+   * armó o editó, «en el formato en que se bajan nuestros PDF». Sale por el
+   * mismo maquetador que la receta y la historia clínica —membrete, filigrana
+   * y numeración de páginas—, así que la hoja se reconoce como de AloVida sin
+   * leerla.
+   *
+   * Se baja lo que hay **en la pantalla**, no lo que haya en el servidor: si
+   * se agregó una pregunta hace diez segundos, el papel la trae. Las páginas
+   * que imprime son las de `paginas()`, las mismas que sirve el motor, para
+   * que el papel y lo que ve el paciente no discrepen en cuántas hojas tiene
+   * el formulario.
+   */
+  protected descargar(): void {
+    const plantilla = this.abierta();
+    if (plantilla === null) {
+      return;
+    }
+
+    const procedencia = plantilla.provenance;
+    this.descargarPdf({
+      nombre: plantilla.name,
+      codigo: plantilla.code,
+      version: plantilla.version,
+      especialidad: this.especialidadDe(plantilla),
+      paginas: this.paginas(),
+      camposEstandar: this.camposEstandar().length,
+      camposPropios: this.camposPropios().length,
+      procedencia:
+        procedencia === undefined
+          ? null
+          : {
+              titulo: procedencia.sourceTitle,
+              organizacion: procedencia.organization,
+              licencia: procedencia.license,
+            },
+      profesional: this.auth.displayName() ?? '',
     });
   }
 

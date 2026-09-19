@@ -8,8 +8,8 @@
     ========================================================================== */
 
 import { DestroyRef, computed, inject, signal, type Signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, type Params } from '@angular/router';
 import {
   Subject,
   catchError,
@@ -101,7 +101,22 @@ export interface OpcionesDeBusqueda {
    * de la subtarea 2.3: una página por petición, avanzando por cursor.
    */
   readonly territorio?: CorteTerritorial;
+
+  /**
+   * Enciende el corte por **categoría**: qué clase de cosa es cada resultado
+   * dentro de su vertical (`PublicSearchResult.category`).
+   *
+   * Sólo tiene efecto junto con `territorio`, y no por capricho: el corte es en
+   * memoria, y en memoria sólo está el directorio entero cuando el store lo
+   * recorre —que es lo que enciende `territorio`—. Recortar **una página** de
+   * veinticinco por categoría escondería lo que esa categoría tiene en la
+   * página siguiente; el mismo defecto que ya se corrigió con el lugar.
+   */
+  readonly categorias?: boolean;
 }
+
+/** La clave del chip de categoría en la URL. */
+export const PARAM_CATEGORIA = 'categoria';
 
 /** Cuántos resultados pide cada petición al recorrer el directorio entero. Es el tope del servidor. */
 export const POR_PETICION_TERRITORIAL = 50;
@@ -206,6 +221,23 @@ export class BusquedaPublica {
   /** El corte territorial, o `null` si la pantalla no lo encendió. */
   private readonly territorio: CorteTerritorial | null;
 
+  /** Si la pantalla encendió el chip de categoría. Ver `OpcionesDeBusqueda`. */
+  private readonly conCategorias: boolean;
+
+  /**
+   * Los parámetros de la dirección, leídos **aparte** de `nombresDeParametros`.
+   *
+   * La categoría no es un filtro del servidor: el contrato público no la
+   * acepta, y el corte es en memoria sobre el directorio ya traído. Meterla en
+   * `nombresDeParametros` la habría metido también en el canal que dispara una
+   * lectura nueva, o sea que tocar un chip volvería a recorrer el cursor
+   * entero para devolver exactamente las mismas filas.
+   *
+   * Lo asigna el constructor, antes de la primera lectura: `llaveDelLugar` la
+   * consulta durante ese primer `recibir()`.
+   */
+  private parametrosDeRuta: Signal<Params> = signal({} as Params);
+
   /** El directorio entero, tal como llegó. Los cortes de lugar se aplican encima. */
   private readonly _todos = signal<readonly PublicSearchResult[]>([]);
 
@@ -229,7 +261,7 @@ export class BusquedaPublica {
   private readonly llaveDelLugar = computed(() =>
     this.territorio === null
       ? ''
-      : `${this.territorio.departamentoElegido() ?? ''}|${this.territorio.ciudad() ?? ''}`,
+      : `${this.territorio.departamentoElegido() ?? ''}|${this.territorio.ciudad() ?? ''}|${this.categoria() ?? ''}`,
   );
 
   private readonly indiceLocal = computed(() => {
@@ -237,9 +269,64 @@ export class BusquedaPublica {
     return pagina.llave === this.llaveDelLugar() ? pagina.indice : 0;
   });
 
-  /** Lo que queda del directorio después del corte de lugar. */
+  /**
+   * La categoría elegida —el código, nunca la etiqueta—, o `null`.
+   *
+   * Vive en la URL como los demás filtros: un directorio acotado tiene que
+   * poder pegarse en un mensaje, y el SSR sólo tiene la dirección que leer.
+   */
+  readonly categoria = computed<string | null>(() => {
+    const valor: unknown = this.parametrosDeRuta()[PARAM_CATEGORIA];
+    return typeof valor === 'string' && valor !== '' ? valor : null;
+  });
+
+  /** Lo que queda del directorio después del corte de categoría. */
+  private readonly deLaCategoria = computed<readonly PublicSearchResult[]>(() => {
+    const categoria = this.categoria();
+    if (!this.conCategorias || categoria === null) {
+      return this._todos();
+    }
+    return this._todos().filter((fila) => fila.category?.code === categoria);
+  });
+
+  /**
+   * Las categorías que de verdad hay delante, de la que más tiene a la que
+   * menos y a igualdad por nombre.
+   *
+   * Se cuentan sobre lo que el **lugar** deja ver pero sin el corte de la
+   * propia categoría: con él, elegir una dejaría un solo chip y no habría cómo
+   * pasar a otra sin quitar el filtro primero. Una fila sin categoría no
+   * inventa una «Otras»: contra la API viva vuelven todas en `null`, no hay
+   * dos categorías y la fila de chips no se dibuja.
+   */
+  readonly categoriasDisponibles = computed<
+    readonly { readonly code: string; readonly label: string }[]
+  >(() => {
+    if (!this.conCategorias) {
+      return [];
+    }
+    const base =
+      this.territorio === null ? this._todos() : this.territorio.recortar(this._todos());
+    const cuenta = new Map<string, { label: string; total: number }>();
+    for (const fila of base) {
+      const categoria = fila.category;
+      if (categoria === null) continue;
+      const anterior = cuenta.get(categoria.code);
+      cuenta.set(categoria.code, { label: categoria.label, total: (anterior?.total ?? 0) + 1 });
+    }
+    return [...cuenta.entries()]
+      .sort(([, a], [, b]) => b.total - a.total || a.label.localeCompare(b.label, 'es'))
+      .map(([code, { label }]) => ({ code, label }));
+  });
+
+  /** Elegir categoría va a la URL, como los chips de lugar. */
+  elegirCategoria(code: string | null): void {
+    this.filtrarPor(PARAM_CATEGORIA, code ?? '');
+  }
+
+  /** Lo que queda del directorio después de los cortes de lugar y categoría. */
   private readonly filtradas = computed<readonly PublicSearchResult[]>(() =>
-    this.territorio === null ? [] : this.territorio.recortar(this._todos()),
+    this.territorio === null ? [] : this.territorio.recortar(this.deLaCategoria()),
   );
 
   /* ---- lo que lee la pantalla ------------------------------------------- */
@@ -396,6 +483,8 @@ export class BusquedaPublica {
     // Antes de cualquier suscripción: la primera lectura ocurre en este mismo
     // constructor y ya tiene que saber si recorre el directorio entero.
     this.territorio = opciones.territorio ?? null;
+    this.conCategorias = opciones.categorias ?? false;
+    this.parametrosDeRuta = toSignal(this.ruta.queryParams, { initialValue: {} as Params });
 
     const destroyRef = inject(DestroyRef);
     const ruta = this.ruta;

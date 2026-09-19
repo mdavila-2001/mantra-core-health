@@ -4,7 +4,13 @@ import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type { PublicPage } from '../public-directory/public-directory.types';
-import type { PublicOfferedService, PublicPharmacyProduct } from './public-catalog.types';
+import type {
+  PublicBranchAvailability,
+  PublicGeoPoint,
+  PublicOfferedService,
+  PublicPharmacyBranch,
+  PublicPharmacyProduct,
+} from './public-catalog.types';
 
 /** La envoltura de página tal como viaja: el instante todavía es texto. */
 interface WirePage<T> {
@@ -66,6 +72,51 @@ export class PublicCatalogClient {
       `/public/profiles/f/${encodeURIComponent(slug)}/products`,
       opciones,
     );
+  }
+
+  /**
+   * `GET /public/profiles/f/:slug/branches` — las sucursales de la cadena a la
+   * que pertenece esta farmacia, **con ella adentro**.
+   *
+   * La farmacia que no pertenece a ninguna cadena devuelve una sola: ella. Es
+   * la respuesta honesta —«ésta es la única»— y evita que la sección tenga que
+   * adivinar la diferencia entre «no tiene sucursales» y «falló la lectura».
+   */
+  pharmacyBranches(slug: string): Observable<PublicPage<PublicPharmacyBranch>> {
+    return this.getPage<PublicPharmacyBranch>(
+      `/public/profiles/f/${encodeURIComponent(slug)}/branches`,
+      {},
+    );
+  }
+
+  /**
+   * `GET /public/profiles/f/:slug/branch-availability` — qué sucursal tiene lo
+   * de una receta, y a cuánto.
+   *
+   * Los renglones viajan como **texto**, que es lo que una persona tiene en la
+   * mano: una receta en papel no trae ids de producto. El punto de origen es
+   * opcional —sin él no hay distancias, pero la búsqueda sirve igual— y va en
+   * la consulta y no en el cuerpo porque esto es una lectura.
+   *
+   * El orden lo decide el servidor: primero las que tienen todo, y entre ésas
+   * la más cercana. La pantalla no reordena, para que las dos superficies digan
+   * lo mismo.
+   */
+  prescriptionAvailability(
+    slug: string,
+    renglones: readonly string[],
+    origen: PublicGeoPoint | null = null,
+  ): Observable<readonly PublicBranchAvailability[]> {
+    let params = new HttpParams().set('items', renglones.join('|'));
+    if (origen !== null) {
+      params = params.set('lat', String(origen.lat)).set('lng', String(origen.lng));
+    }
+    return this.http
+      .get<{ readonly items: readonly PublicBranchAvailability[] }>(
+        apiUrl(this.baseUrl, `/public/profiles/f/${encodeURIComponent(slug)}/branch-availability`),
+        { params },
+      )
+      .pipe(map((body) => body.items));
   }
 
   private getPage<T>(

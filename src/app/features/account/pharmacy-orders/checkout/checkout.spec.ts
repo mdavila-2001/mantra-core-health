@@ -368,12 +368,12 @@ describe('Checkout', () => {
       montar();
       irAlResumen();
 
-      expect(texto('resumen-subtotal')).toContain('108.00 BOB');
+      expect(texto('resumen-subtotal')).toContain('108.00 Bs');
       expect(texto('resumen-descuento')).toContain('Descuento red AloVida');
-      expect(texto('resumen-descuento')).toContain('−10.80 BOB');
+      expect(texto('resumen-descuento')).toContain('−10.80 Bs');
       expect(uno('resumen-coaseguro')).toBeNull();
       expect(uno('resumen-envio')).toBeNull();
-      expect(texto('resumen-total')).toContain('97.20 BOB');
+      expect(texto('resumen-total')).toContain('97.20 Bs');
       expect(texto('resumen-puntos')).toContain('9');
       expect(texto('resumen-puntos')).toContain('valor de ejemplo');
     });
@@ -387,8 +387,8 @@ describe('Checkout', () => {
       clic(todos('checkout-usar-direccion')[0]);
       irAlResumen();
 
-      expect(texto('resumen-envio')).toContain('15.00 BOB');
-      expect(texto('resumen-total')).toContain('112.20 BOB');
+      expect(texto('resumen-envio')).toContain('15.00 Bs');
+      expect(texto('resumen-total')).toContain('112.20 Bs');
     });
 
     it('con seguro: dos bloques diferenciados, coaseguro y un solo total', () => {
@@ -403,8 +403,8 @@ describe('Checkout', () => {
       expect(texto('resumen-coaseguro')).toContain('Coaseguro');
       expect(todos('resumen-total')).toHaveLength(1);
       // Aprobados 136.00 → coaseguro 27.20; no aprobados 34.00 → descuento 3.40.
-      expect(texto('resumen-coaseguro')).toContain('27.20 BOB');
-      expect(texto('resumen-total')).toContain('57.80 BOB');
+      expect(texto('resumen-coaseguro')).toContain('27.20 Bs');
+      expect(texto('resumen-total')).toContain('57.80 Bs');
       expect(uno('checkout-nota-alternativas')).not.toBeNull();
     });
   });

@@ -68,6 +68,9 @@ const PARAM_DEPARTAMENTO = 'departamento';
 /** Clave de la ciudad elegida por chip, en la URL. */
 const PARAM_CIUDAD = 'ciudad';
 
+/** Clave de la categoría elegida por chip, en la URL. */
+const PARAM_CATEGORIA = 'categoria';
+
 /** Los cuatro estados que la maqueta conmuta desde su `data-estado`. */
 type EstadoDeBusqueda = 'carga' | 'datos' | 'vacio' | 'error';
 
@@ -200,6 +203,18 @@ export class BuscarHospitalesListado {
   protected readonly departamentoElegido = computed(() => this.parametro(PARAM_DEPARTAMENTO));
   protected readonly ciudad = computed(() => this.parametro(PARAM_CIUDAD));
 
+  /**
+   * La categoría elegida: el código, nunca la etiqueta.
+   *
+   * Es el corte que esta pantalla más necesitaba y no tenía. Bajo
+   * «organizaciones» conviven cuatro cosas distintas —clínicas privadas,
+   * hospitales públicos de referencia, cajas de salud y centros de primer
+   * nivel— y la diferencia no es de matiz: a una caja de salud no se entra sin
+   * ser asegurado. Verlas mezcladas en la misma grilla, ordenadas sólo por
+   * ciudad, era la grilla contestando una pregunta que nadie hizo.
+   */
+  protected readonly categoriaElegida = computed(() => this.parametro(PARAM_CATEGORIA));
+
   /* ---- el mapa ----------------------------------------------------------- */
 
   /** El árbol de departamentos y municipios. Vacío mientras no llegue. */
@@ -237,7 +252,10 @@ export class BuscarHospitalesListado {
   private readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(() => {
     const porCiudad = this.porCiudad();
     const cuenta = new Map<string, number>();
-    for (const fila of this.todos()) {
+    // Con la categoría aplicada y sin los cortes de lugar: la cuenta que sirve
+    // es «cuántas clínicas privadas hay ahí si voy», no cuántas fichas de
+    // cualquier clase.
+    for (const fila of this.deLaCategoria()) {
       const conceptId = fila.city === null ? undefined : porCiudad.get(normalizarLugar(fila.city));
       if (conceptId === undefined) continue;
       cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
@@ -268,6 +286,56 @@ export class BuscarHospitalesListado {
   /* ---- los cortes en memoria --------------------------------------------- */
 
   /**
+   * Lo traído con el corte de categoría puesto y **ningún** corte de lugar.
+   *
+   * Es la base de todo lo demás: el mapa cuenta sobre ella, los chips de
+   * ciudad salen de ella y la grilla la recorta por departamento y ciudad. La
+   * categoría va arriba de los dos porque es la pregunta más gruesa —qué clase
+   * de centro— y las otras dos acotan dentro de la respuesta.
+   */
+  private readonly deLaCategoria = computed<readonly PublicSearchResult[]>(() => {
+    const categoria = this.categoriaElegida();
+    if (categoria === null) {
+      return this.todos();
+    }
+    return this.todos().filter((fila) => fila.category?.code === categoria);
+  });
+
+  /**
+   * Las categorías que de verdad hay, de la que más centros tiene a la que
+   * menos — el mismo orden que los chips de ciudad y por el mismo motivo.
+   *
+   * Se cuentan sobre **todo** lo traído y no sobre `deLaCategoria()`: si no,
+   * tocar «Clínica privada» dejaría un solo chip y no habría cómo pasar a
+   * «Caja de salud» sin quitar el filtro primero. El corte de lugar sí entra,
+   * porque una categoría sin nada en el departamento que se está mirando es un
+   * chip que devuelve cero.
+   */
+  protected readonly categorias = computed<
+    readonly { readonly code: string; readonly label: string }[]
+  >(() => {
+    const departamento = this.departamentoElegido();
+    const porCiudad = this.porCiudad();
+    const ciudad = this.ciudad();
+    const buscada = ciudad === null ? null : normalizarLugar(ciudad);
+    const cuenta = new Map<string, { label: string; total: number }>();
+    for (const fila of this.todos()) {
+      const categoria = fila.category;
+      if (categoria === null) continue;
+      const lugar = fila.city === null ? null : normalizarLugar(fila.city);
+      if (departamento !== null && (lugar === null || porCiudad.get(lugar) !== departamento)) {
+        continue;
+      }
+      if (buscada !== null && lugar !== buscada) continue;
+      const anterior = cuenta.get(categoria.code);
+      cuenta.set(categoria.code, { label: categoria.label, total: (anterior?.total ?? 0) + 1 });
+    }
+    return [...cuenta.entries()]
+      .sort(([, a], [, b]) => b.total - a.total || a.label.localeCompare(b.label, 'es'))
+      .map(([code, { label }]) => ({ code, label }));
+  });
+
+  /**
    * Las filas del departamento elegido, **sin** el corte de ciudad.
    *
    * Es la base con la que se arman los chips, y por eso no puede llevar el
@@ -277,7 +345,7 @@ export class BuscarHospitalesListado {
    */
   private readonly delDepartamento = computed<readonly PublicSearchResult[]>(() => {
     const departamento = this.departamentoElegido();
-    const todas = this.todos();
+    const todas = this.deLaCategoria();
     if (departamento === null) {
       return todas;
     }
@@ -406,11 +474,15 @@ export class BuscarHospitalesListado {
         this.cargar();
       });
 
-    // Cambiar cualquiera de los dos cortes de lugar vuelve a la primera página:
-    // la página 3 de La Paz no es la página 3 de Cochabamba.
+    // Cambiar cualquiera de los tres cortes vuelve a la primera página: la
+    // página 3 de La Paz no es la página 3 de Cochabamba, y la página 3 de las
+    // clínicas privadas no es la de las cajas de salud.
     this.ruta.queryParamMap
       .pipe(
-        map((params) => `${params.get(PARAM_DEPARTAMENTO) ?? ''}|${params.get(PARAM_CIUDAD) ?? ''}`),
+        map(
+          (params) =>
+            `${params.get(PARAM_DEPARTAMENTO) ?? ''}|${params.get(PARAM_CIUDAD) ?? ''}|${params.get(PARAM_CATEGORIA) ?? ''}`,
+        ),
         distinctUntilChanged(),
         takeUntilDestroyed(this.destroyRef),
       )
@@ -437,6 +509,22 @@ export class BuscarHospitalesListado {
     void this.router.navigate([], {
       relativeTo: this.ruta,
       queryParams: { [PARAM_DEPARTAMENTO]: conceptId, [PARAM_CIUDAD]: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /**
+   * Elegir categoría va a la URL, como los chips de ciudad.
+   *
+   * **No suelta el lugar**, al revés que el mapa suelta la ciudad: una
+   * categoría existe en todos los departamentos, así que conservar dónde se
+   * estaba mirando es lo que esperaba quien tocó el chip. Si en ese
+   * departamento no hay ninguna, la pantalla lo dice.
+   */
+  protected alElegirCategoria(code: string | null): void {
+    void this.router.navigate([], {
+      relativeTo: this.ruta,
+      queryParams: { [PARAM_CATEGORIA]: code },
       queryParamsHandling: 'merge',
     });
   }
