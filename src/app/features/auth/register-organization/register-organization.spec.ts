@@ -32,6 +32,8 @@ const CATALOGO_TIPO_SOCIETARIO = {
     { conceptId: 'c-srl', code: 'SRL', display: 'Limited liability company (S.R.L.)', ordinal: 1, isDefault: false },
     { conceptId: 'c-br-ltda', code: 'BR_LTDA', display: 'Sociedade Limitada (Brazil)', ordinal: 8, isDefault: false },
     { conceptId: 'c-br-sa', code: 'BR_SA', display: 'Sociedade Anônima (Brazil)', ordinal: 9, isDefault: false },
+    { conceptId: 'c-us-llc', code: 'US_LLC', display: 'Limited Liability Company (US)', ordinal: 12, isDefault: false },
+    { conceptId: 'c-ar-sas', code: 'AR_SAS', display: 'Sociedad por Acciones Simplificada (Argentina)', ordinal: 16, isDefault: false },
   ],
 };
 
@@ -170,16 +172,19 @@ describe('RegisterOrganization', () => {
     } = {},
   ): void {
     component.form.setValue({
-      code: 'ANDINA-SALUD',
       legalName: 'Andina Salud S.A.',
       incorporationCountry: extra.incorporationCountry ?? 'BO',
       legalEntityType: extra.legalEntityType ?? 'SRL',
       tradeName: extra.tradeName ?? '',
-      sigla: 'AS',
+      // `code`/`carrierCode` derivan de esto: no son controles del form. La
+      // sigla necesita al menos 3 caracteres (MIN_SIGLA); 'AS' ya no alcanza.
+      sigla: 'ANDINA',
       regulatorIdentifier: 'NIT-123456',
       address: 'Av. Siempre Viva 123',
-      carrierCode: 'CARRIER-AS',
-      timeZone: extra.timeZone ?? '',
+      // `incorporationCountry` se declara antes que `timeZone` en el form:
+      // el valor explícito de acá siempre gana sobre el default que dispara
+      // la suscripción al cambiar de país (ver `acomodarPaisYTipoSocietario`).
+      timeZone: extra.timeZone ?? 'America/La_Paz',
       name: 'Ana',
       middleName: extra.middleName ?? '',
       thirdName: extra.thirdName ?? '',
@@ -253,7 +258,6 @@ describe('RegisterOrganization', () => {
     expect(component.form.controls.sigla.touched).toBe(true);
     expect(component.form.controls.regulatorIdentifier.touched).toBe(true);
     expect(component.form.controls.address.touched).toBe(true);
-    expect(component.form.controls.carrierCode.touched).toBe(true);
     // `http.verify()` del afterEach falla si algo hubiera salido a la red.
   });
 
@@ -266,12 +270,15 @@ describe('RegisterOrganization', () => {
     expect(component.form.invalid).toBe(true);
   });
 
-  it('rechaza un código con caracteres que el backend no admite', () => {
+  it('una sigla que no deriva en un código válido queda inválida', () => {
     fixture.detectChanges();
     completar();
-    component.form.controls.code.setValue('ANDINA SALUD*');
+    // Tres guiones cumplen el largo mínimo (3) pero derivan en un código sin
+    // ningún carácter alfanumérico: lo rechaza `siglaDerivaCodigo`, no `minLength`.
+    component.form.controls.sigla.setValue('---');
 
-    expect(component.form.controls.code.invalid).toBe(true);
+    expect(component.form.controls.sigla.invalid).toBe(true);
+    expect(component.form.controls.sigla.hasError('siglaSinCodigo')).toBe(true);
   });
 
   it('exige los 8 caracteres de contraseña que pide el backend', () => {
@@ -291,14 +298,19 @@ describe('RegisterOrganization', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
       organization: {
-        code: 'ANDINA-SALUD',
+        code: 'ANDINA',
         legalName: 'Andina Salud S.A.',
         legalEntityType: 'SRL',
         tenantType: 'PAYER',
+        // Zona única (Bolivia, país por defecto): viaja siempre, asignada
+        // en segundo plano — nadie la eligió en pantalla.
+        timeZone: 'America/La_Paz',
         payer: {
-          carrierCode: 'CARRIER-AS',
+          // `code` y `carrierCode` son el mismo valor: los dos se derivan
+          // de la sigla con `codigoDesdeSigla`.
+          carrierCode: 'ANDINA',
           regulatorIdentifier: 'NIT-123456',
-          sigla: 'AS',
+          sigla: 'ANDINA',
           address: 'Av. Siempre Viva 123',
         },
         legalDocuments: DOCUMENTOS_DE_PRUEBA,
@@ -374,9 +386,9 @@ describe('RegisterOrganization', () => {
     const req = http.expectOne('/iam/auth/register-organization');
     expect(req.request.body.organization.tenantType).toBe('PAYER');
     expect(req.request.body.organization.payer).toEqual({
-      carrierCode: 'CARRIER-AS',
+      carrierCode: 'ANDINA',
       regulatorIdentifier: 'NIT-123456',
-      sigla: 'AS',
+      sigla: 'ANDINA',
       address: 'Av. Siempre Viva 123',
     });
 
@@ -553,9 +565,9 @@ describe('RegisterOrganization', () => {
 
       const req = http.expectOne('/iam/auth/register-organization');
       expect(req.request.body.organization.payer).toEqual({
-        carrierCode: 'CARRIER-AS',
+        carrierCode: 'ANDINA',
         regulatorIdentifier: 'NIT-123456',
-        sigla: 'AS',
+        sigla: 'ANDINA',
         address: 'Av. Siempre Viva 123',
         latitude: -17.7833,
         longitude: -63.1821,
@@ -955,6 +967,27 @@ describe('RegisterOrganization', () => {
       expect(component.registered()).toBe(false);
     });
 
+    it('el 409 de código en uso se traduce nombrando la sigla, no el código invisible', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.sigla.setValue('ANDINA');
+      component.submit();
+      http.expectOne('/iam/auth/register-organization').flush(
+        {
+          code: 'CONFLICT',
+          // Mensaje literal de `iam-organization-self-registration.service.ts`.
+          message: 'El código de organización ya existe',
+          timestamp: 't',
+          path: '/iam/auth/register-organization',
+        },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+      expect(component.errorMessage()).toBe(
+        'La sigla «ANDINA» ya está en uso en la plataforma. Elegí otra.',
+      );
+    });
+
     it('sin conexión lo dice como tal', () => {
       fixture.detectChanges();
       completar();
@@ -964,6 +997,170 @@ describe('RegisterOrganization', () => {
         .error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
 
       expect(component.errorMessage()).toContain('conexión');
+    });
+  });
+
+  describe('códigos desde la sigla y zona horaria por país', () => {
+    /** El total de páginas del asistente, leído del anuncio `aria-live` (siempre en el DOM). */
+    function totalDePaginas(): number {
+      const texto =
+        fixture.nativeElement.querySelector('.paginated-form__anuncio')?.textContent ?? '';
+      const match = /de (\d+)/.exec(texto);
+      if (match === null) {
+        throw new Error(`No se pudo leer el total de páginas del anuncio: "${texto}"`);
+      }
+      return Number(match[1]);
+    }
+
+    /** Los títulos de TODAS las páginas del recorrido, sin navegar (los pinta el stepper). */
+    function titulosDeLosPasos(): string[] {
+      const elementos: NodeListOf<HTMLElement> =
+        fixture.nativeElement.querySelectorAll('.stepper__label');
+      return Array.from(elementos).map((el) => el.textContent?.trim() ?? '');
+    }
+
+    it('AC-01: la sigla «APT» autogenera code y carrierCode iguales a «APT»', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.sigla.setValue('APT');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.code).toBe('APT');
+      expect(req.request.body.organization.payer.carrierCode).toBe('APT');
+
+      req.flush(RESPUESTA);
+    });
+
+    it('normaliza la sigla de punta a punta: espacios y minúsculas se vuelven guion bajo y mayúsculas', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.sigla.setValue('la vitalicia');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.code).toBe('LA_VITALICIA');
+      expect(req.request.body.organization.payer.carrierCode).toBe('LA_VITALICIA');
+
+      req.flush(RESPUESTA);
+    });
+
+    it('una sigla de 2 caracteres queda inválida y el envío no sale a la red', () => {
+      fixture.detectChanges();
+      completar();
+      component.form.controls.sigla.setValue('AS');
+      component.submit();
+
+      expect(component.form.controls.sigla.invalid).toBe(true);
+      http.expectNone('/iam/auth/register-organization');
+    });
+
+    it('AC-02 y AC-04: Bolivia (zona única) queda en 9 páginas, sin «Cómo se la identifica» y sin selector de zona', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+
+      expect(totalDePaginas()).toBe(9);
+      expect(titulosDeLosPasos().some((titulo) => titulo.includes('identifica'))).toBe(false);
+
+      // «La empresa»: nombre, sigla, país, tipo societario — sin código ni
+      // código de aseguradora, que ya no son campos.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-sigla"]'),
+      ).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-codigo"]'),
+      ).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-carrier"]'),
+      ).toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-comercial"]'),
+      ).toBeNull();
+
+      avanzarHasta('Datos de la aseguradora');
+      // El nombre comercial se mudó acá; la zona horaria no se pregunta.
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-comercial"]'),
+      ).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-organizacion-zona"]'),
+      ).toBeNull();
+
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.timeZone).toBe('America/La_Paz');
+      req.flush(RESPUESTA);
+    });
+
+    it('AC-03: Estados Unidos (multizona) ofrece el selector de zona horaria, preseleccionado en la del Este', () => {
+      fixture.detectChanges();
+      completar({ incorporationCountry: 'US', legalEntityType: 'US_LLC' });
+      // `completar()` fija `timeZone` en 'America/La_Paz' de forma explícita
+      // (su valor por defecto para cualquier país, para no tener que
+      // repetirlo en cada llamada): eso pisa el default que la suscripción
+      // ya había puesto para EE. UU. Un re-disparo del cambio de país dispara
+      // el default de nuevo, sin nada después que lo vuelva a pisar — así es
+      // como lo vive una persona real, que nunca pasa por `completar()`.
+      component.form.controls.incorporationCountry.setValue('US');
+      fixture.detectChanges();
+
+      expect(totalDePaginas()).toBe(10);
+
+      avanzarHasta('Datos de la aseguradora');
+      // `[data-testid]` va en el host `<app-select>`; el `<select>` nativo
+      // (donde vive `aria-required`, ver `select.html`) es su descendiente.
+      const contenedor: HTMLElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="registro-organizacion-zona"]',
+      );
+      const nativo: HTMLSelectElement | null | undefined = contenedor?.querySelector('select');
+      expect(contenedor).not.toBeNull();
+      expect(nativo?.getAttribute('aria-required')).toBe('true');
+      expect(contenedor?.querySelectorAll('option:not([hidden])').length).toBe(7);
+      expect(component.form.controls.timeZone.value).toBe('America/New_York');
+
+      // Elegir el Pacífico y enviar: el valor viaja en el cuerpo.
+      component.form.controls.timeZone.setValue('America/Los_Angeles');
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/register-organization');
+      expect(req.request.body.organization.timeZone).toBe('America/Los_Angeles');
+      req.flush(RESPUESTA);
+    });
+
+    it('AC-03: la zona horaria elegida sobrevive a ir a «La empresa» y volver', () => {
+      fixture.detectChanges();
+      completar({ incorporationCountry: 'US', legalEntityType: 'US_LLC' });
+      fixture.detectChanges();
+      avanzarHasta('Datos de la aseguradora');
+      component.form.controls.timeZone.setValue('America/Los_Angeles');
+      fixture.detectChanges();
+
+      const atras: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+        '[data-testid="paginated-form-atras"]',
+      );
+      atras?.click();
+      fixture.detectChanges();
+      avanzarHasta('Datos de la aseguradora');
+
+      expect(component.form.controls.timeZone.value).toBe('America/Los_Angeles');
+    });
+
+    it('cambiar de país reasigna la zona horaria a la del país nuevo', () => {
+      fixture.detectChanges();
+
+      component.form.controls.incorporationCountry.setValue('US');
+      expect(component.form.controls.timeZone.value).toBe('America/New_York');
+
+      component.form.controls.incorporationCountry.setValue('BR');
+      expect(component.form.controls.timeZone.value).toBe('America/Sao_Paulo');
+
+      // Bolivia es zona única: el valor vuelve al de siempre.
+      component.form.controls.incorporationCountry.setValue('BO');
+      expect(component.form.controls.timeZone.value).toBe('America/La_Paz');
+
+      component.form.controls.incorporationCountry.setValue('AR');
+      expect(component.form.controls.timeZone.value).toBe('America/Argentina/Buenos_Aires');
     });
   });
 });

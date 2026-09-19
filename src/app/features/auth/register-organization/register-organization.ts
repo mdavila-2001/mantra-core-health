@@ -53,19 +53,22 @@ import {
   type IdsDePrueba,
 } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
 import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+import {
+  esPaisMultizona,
+  obtenerZonaHorariaDefectoDePais,
+  obtenerZonasHorariasDePais,
+} from '../../../core/i18n/timezone-by-country';
+import { codigoDesdeSigla, MAX_SIGLA, MIN_SIGLA, siglaDerivaCodigo } from './codigo-desde-sigla';
 
 /** Mínimos que exigen los DTO del backend. */
 const MIN_PASSWORD = 8;
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
-const MAX_CODIGO = 100;
 const MAX_NOMBRE = 300;
 const MAX_ZONA_HORARIA = 100;
 
 /** Largos del bloque `payer`, iguales a los del alta administrativa. */
-const MAX_CARRIER_CODE = 60;
 const MAX_NIT = 100;
-const MAX_SIGLA = 20;
 const MAX_DIRECCION = 300;
 
 /** Tope del `fullName` compuesto (subtarea 1.4), igual al del DTO del backend. */
@@ -81,8 +84,21 @@ const MAX_CORREO = 320;
 const MIN_PARTE_NOMBRE = 2;
 const MAX_PARTE_NOMBRE = 100;
 
-/** Mismo patrón que el DTO del backend para el código único del tenant. */
-const CODIGO_VALIDO = /^[A-Za-z0-9._-]+$/;
+/**
+ * El país con el que arranca el formulario: Bolivia, zona única. Fija el
+ * valor inicial de `incorporationCountry`, de la señal espejo que lo sigue y
+ * de la zona horaria por defecto — los tres tienen que nacer de acuerdo.
+ */
+const PAIS_POR_DEFECTO = 'BO';
+
+/**
+ * El mensaje literal que manda la API cuando el código derivado de la sigla
+ * ya pertenece a otra organización (`ConflictException` en
+ * `iam-organization-self-registration.service.ts`). Como la pantalla ya no
+ * muestra ningún «código», ese 409 genérico se reescribe nombrando la sigla,
+ * que es lo único que la persona escribió.
+ */
+const MENSAJE_CODIGO_EN_USO_API = 'El código de organización ya existe';
 
 /** Los cinco controles con los que se declara el nombre de una persona en este alta. */
 interface ControlesDeNombre {
@@ -280,14 +296,6 @@ export class RegisterOrganization {
     'Sumate a la red de salud y conectá con miles de pacientes y prestadores.';
 
   readonly form = new FormGroup({
-    code: new FormControl('', {
-      nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.maxLength(MAX_CODIGO),
-        Validators.pattern(CODIGO_VALIDO),
-      ],
-    }),
     legalName: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
@@ -296,20 +304,29 @@ export class RegisterOrganization {
       nonNullable: true,
       validators: [Validators.maxLength(MAX_NOMBRE)],
     }),
+    // El código de tenant y el de aseguradora (`code`/`carrierCode`) DEJARON
+    // de ser controles: no hay nada que la persona tenga que escribir dos
+    // veces. `datos()` los deriva de `sigla` con `codigoDesdeSigla` al armar
+    // el cuerpo — ver su JSDoc y el de `siglaDerivaCodigo`.
+    sigla: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.minLength(MIN_SIGLA),
+        Validators.maxLength(MAX_SIGLA),
+        siglaDerivaCodigo,
+      ],
+    }),
     // País de constitución y tipo societario (subtarea 1.1). El país nunca
     // viaja al backend: sólo filtra qué figuras ofrece el segundo campo. Ver
     // el JSDoc de la clase.
-    incorporationCountry: new FormControl('BO', {
+    incorporationCountry: new FormControl(PAIS_POR_DEFECTO, {
       nonNullable: true,
       validators: [Validators.required],
     }),
     legalEntityType: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
-    }),
-    sigla: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_SIGLA)],
     }),
     regulatorIdentifier: new FormControl('', {
       nonNullable: true,
@@ -319,13 +336,12 @@ export class RegisterOrganization {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
-    carrierCode: new FormControl('', {
+    // Siempre tiene un valor: para países de zona única lo asigna
+    // `acomodarPaisYTipoSocietario` sin que la persona la vea; para
+    // multizona, el `select` de «Datos de la aseguradora» la deja elegir.
+    timeZone: new FormControl(obtenerZonaHorariaDefectoDePais(PAIS_POR_DEFECTO), {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_CARRIER_CODE)],
-    }),
-    timeZone: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(MAX_ZONA_HORARIA)],
+      validators: [Validators.required, Validators.maxLength(MAX_ZONA_HORARIA)],
     }),
     // Documentos legales de afiliación (subtarea 1.2): guardan el `fileId`
     // que devuelve la pre-carga, no el archivo. Obligatorio en el
@@ -433,20 +449,46 @@ export class RegisterOrganization {
    * SEÑAL que leyó — el valor de un `FormControl` no lo despierta. Mismo
    * patrón que `tituloProfesionalElegido` en `RegisterPractitioner`.
    */
-  private readonly incorporationCountryElegido = signal('BO');
+  private readonly incorporationCountryElegido = signal(PAIS_POR_DEFECTO);
+
+  /**
+   * Si el país elegido reparte su territorio en más de una zona horaria
+   * real (EE. UU., Brasil, México…). Determina si «Datos de la aseguradora»
+   * muestra el selector de zona horaria: un país de zona única (Bolivia,
+   * Argentina) no tiene nada que preguntar ahí.
+   */
+  protected readonly esMultizona = computed(() =>
+    esPaisMultizona(this.incorporationCountryElegido()),
+  );
+
+  /** Las zonas horarias del país elegido, traducidas a las opciones que espera `app-select`. */
+  protected readonly opcionesZonaHoraria = computed<readonly SelectOption<string>[]>(() =>
+    obtenerZonasHorariasDePais(this.incorporationCountryElegido()).map((zona) => ({
+      value: zona.iana,
+      label: zona.label,
+    })),
+  );
 
   /**
    * El alta, servida de a una página.
    *
-   * Catorce campos en una pantalla es lo que hace abandonar un registro a la
-   * mitad, y este es el alta pública de una aseguradora: quien la abre no tiene
-   * ninguna obligación de terminarla. Las tres secciones son las que ya
-   * separaban visualmente el formulario —la empresa, su identificación ante la
-   * plataforma, y la cuenta de quien la administra—; el motor las parte en
-   * páginas de cuatro conservando el nombre.
+   * Muchos campos en una pantalla es lo que hace abandonar un registro a la
+   * mitad, y este es el alta pública de una aseguradora: quien la abre no
+   * tiene ninguna obligación de terminarla. Las secciones son las que ya
+   * separaban visualmente el formulario —la empresa, sus datos, su
+   * documentación, sus personas, y la cuenta de quien la administra—; el
+   * motor las parte en páginas de cuatro conservando el nombre.
    *
-   * `computed`, y no una constante: las opciones del tipo societario cambian
-   * con el país elegido (subtarea 1.1).
+   * Ya no hay un paso de «Cómo se la identifica»: el código de tenant y el
+   * de aseguradora se derivan de la sigla (`codigoDesdeSigla`, en `datos()`)
+   * y no son algo que la persona escriba. Para un país de zona única
+   * (Bolivia, Argentina…) el alta queda en **9 páginas**; para uno
+   * multizona (Estados Unidos, Brasil, México) el selector de zona horaria
+   * en «Datos de la aseguradora» suma un quinto campo a esa sección, que el
+   * motor parte en dos — **10 páginas** sólo ahí.
+   *
+   * `computed`, y no una constante: las opciones del tipo societario y de
+   * zona horaria cambian con el país elegido (subtareas 1.1 y ésta).
    */
   protected readonly paginas = computed(() =>
     paginarCampos([
@@ -461,6 +503,18 @@ export class RegisterOrganization {
             required: true,
             testId: 'registro-organizacion-nombre',
             mensajeDeError: 'Escribí el nombre de la empresa.',
+          },
+          {
+            // La sigla es lo único que la persona escribe para identificarse
+            // ante la plataforma: `code` y `carrierCode` ya no son campos —
+            // `datos()` los deriva de esto con `codigoDesdeSigla`.
+            key: 'sigla',
+            label: 'Sigla',
+            hint: 'Las pocas letras con las que se la nombra en tablas y comprobantes; de ella sale su código en la plataforma.',
+            control: 'text' as const,
+            required: true,
+            testId: 'registro-organizacion-sigla',
+            mensajeDeError: 'Escribí la sigla: de 3 a 20 letras o números.',
           },
           {
             key: 'incorporationCountry',
@@ -481,54 +535,6 @@ export class RegisterOrganization {
             required: true,
             testId: 'registro-organizacion-tipo-societario',
             mensajeDeError: 'Elegí el tipo societario.',
-          },
-          {
-            key: 'tradeName',
-            label: 'Nombre comercial (opcional)',
-            hint: 'Con el que la conocen los afiliados. Es el que se ve en el directorio.',
-            control: 'text' as const,
-            testId: 'registro-organizacion-comercial',
-          },
-        ],
-      },
-      {
-        titulo: 'Cómo se la identifica',
-        hint: 'El código y la sigla con los que aparece en la plataforma.',
-        campos: [
-          {
-            key: 'code',
-            label: 'Código',
-            hint: 'Identificador único en toda la plataforma.',
-            control: 'text' as const,
-            required: true,
-            testId: 'registro-organizacion-codigo',
-            mensajeDeError: 'Escribí un código: letras, números, punto, guion o guion bajo.',
-          },
-          {
-            key: 'sigla',
-            label: 'Sigla',
-            hint: 'Las pocas letras con las que se la nombra en tablas y comprobantes.',
-            control: 'text' as const,
-            required: true,
-            testId: 'registro-organizacion-sigla',
-            mensajeDeError: 'Escribí la sigla (hasta 20 caracteres).',
-          },
-          {
-            key: 'carrierCode',
-            label: 'Código de aseguradora',
-            hint: 'El código interno con el que la plataforma la identifica.',
-            control: 'text' as const,
-            required: true,
-            testId: 'registro-organizacion-carrier',
-            mensajeDeError: 'Escribí el código de aseguradora (hasta 60 caracteres).',
-          },
-          {
-            key: 'timeZone',
-            label: 'Zona horaria (opcional)',
-            hint: 'Formato IANA, por ejemplo America/La_Paz.',
-            control: 'text' as const,
-            testId: 'registro-organizacion-zona',
-            mensajeDeError: 'La zona horaria no puede superar los 100 caracteres.',
           },
         ],
       },
@@ -553,6 +559,30 @@ export class RegisterOrganization {
             required: true,
             testId: 'registro-organizacion-direccion',
             mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
+          },
+          // Sólo en países multizona: uno de zona única (Bolivia, Argentina)
+          // no tiene nada que preguntar acá — `acomodarPaisYTipoSocietario`
+          // ya le asignó la única zona que tiene, en segundo plano.
+          ...(this.esMultizona()
+            ? [
+                {
+                  key: 'timeZone',
+                  label: 'Zona horaria de la casa matriz',
+                  hint: 'Elegí el huso horario en el que opera la sede principal.',
+                  control: 'select' as const,
+                  options: this.opcionesZonaHoraria(),
+                  required: true,
+                  testId: 'registro-organizacion-zona',
+                  mensajeDeError: 'Elegí la zona horaria de la casa matriz.',
+                },
+              ]
+            : []),
+          {
+            key: 'tradeName',
+            label: 'Nombre comercial (opcional)',
+            hint: 'Con el que la conocen los afiliados. Es el que se ve en el directorio.',
+            control: 'text' as const,
+            testId: 'registro-organizacion-comercial',
           },
           {
             key: 'gpsCasaMatriz',
@@ -709,7 +739,17 @@ export class RegisterOrganization {
   readonly errorMessage = computed<string | null>(() => {
     const state = this.state();
     if (state.status === 'validation') {
-      return state.issues[0]?.message ?? null;
+      const mensaje = state.issues[0]?.message ?? null;
+      // El 409 de `code` en uso nombra un campo que la pantalla ya no
+      // muestra («código»): se reescribe nombrando la sigla, que es lo
+      // único que la persona escribió y puede cambiar. Cualquier otro 409
+      // (el correo del owner, por ejemplo) se muestra tal como lo manda
+      // la API.
+      if (mensaje === MENSAJE_CODIGO_EN_USO_API) {
+        const sigla = this.form.controls.sigla.value.trim();
+        return `La sigla «${sigla}» ya está en uso en la plataforma. Elegí otra.`;
+      }
+      return mensaje;
     }
     if (state.status === 'offline') {
       return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
@@ -755,7 +795,12 @@ export class RegisterOrganization {
   /**
    * Cambiar el país recalcula las opciones del tipo societario y limpia la
    * elección si dejó de pertenecer a la lista nueva — un desplegable con un
-   * valor que no está entre sus opciones muestra un vacío que miente. Se
+   * valor que no está entre sus opciones muestra un vacío que miente. Y
+   * reasigna la zona horaria a la que corresponde al país nuevo: la de
+   * antes podía ser la de un país distinto (`America/Los_Angeles` no tiene
+   * sentido si el país pasó a ser Bolivia), y si el país nuevo es de zona
+   * única, el selector desaparece de la página y el valor visible en
+   * pantalla dejaría de coincidir con lo que se manda si no se reasigna. Se
    * llama desde el constructor: `takeUntilDestroyed` pide contexto de
    * inyección.
    */
@@ -764,6 +809,7 @@ export class RegisterOrganization {
     const tipoSocietario = this.form.controls.legalEntityType;
     pais.valueChanges.pipe(takeUntilDestroyed()).subscribe((valor) => {
       this.incorporationCountryElegido.set(valor);
+      this.form.controls.timeZone.setValue(obtenerZonaHorariaDefectoDePais(valor));
 
       const validos = new Set(this.opcionesTipoSocietario().map((o) => o.value));
       if (tipoSocietario.value !== '' && !validos.has(tipoSocietario.value)) {
@@ -1094,7 +1140,13 @@ export class RegisterOrganization {
   private datos(): OrganizationRegistration {
     const raw = this.form.getRawValue();
     const tradeName = raw.tradeName.trim();
+    // Siempre tiene valor: para zona única lo puso
+    // `acomodarPaisYTipoSocietario` sin que la persona lo viera; para
+    // multizona, es lo que eligió en el selector. Nunca queda vacío.
     const timeZone = raw.timeZone.trim();
+    // El código de tenant y el de aseguradora nacen de la sigla: la persona
+    // ya no escribe ninguno de los dos. Ver el JSDoc de `codigoDesdeSigla`.
+    const codigo = codigoDesdeSigla(raw.sigla);
     // El backend no tiene columna de tercer nombre: se pliega en
     // `middleName`, igual que en el alta de paciente y de médico.
     const segundoNombre = unirNombres([raw.middleName, raw.thirdName]);
@@ -1116,13 +1168,13 @@ export class RegisterOrganization {
     });
 
     return {
-      code: raw.code.trim(),
+      code: codigo,
       legalName: raw.legalName.trim(),
       legalEntityType: raw.legalEntityType,
       ...(tradeName === '' ? {} : { tradeName }),
-      ...(timeZone === '' ? {} : { timeZone }),
+      timeZone,
       payer: {
-        carrierCode: raw.carrierCode.trim(),
+        carrierCode: codigo,
         regulatorIdentifier: raw.regulatorIdentifier.trim(),
         sigla: raw.sigla.trim(),
         address: raw.address.trim(),
