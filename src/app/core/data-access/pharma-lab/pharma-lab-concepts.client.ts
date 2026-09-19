@@ -18,6 +18,14 @@ export interface ConceptDictionary {
   label(conceptId: string | undefined): string;
   /** Identificador del concepto por su nombre lógico (`VISIT_CONFIRMED`). */
   id(key: string): string | undefined;
+  /**
+   * El **código** de catálogo de un concepto (`PHL_VISIT_CONFIRMED`).
+   *
+   * Es lo que permite pintar un estado sin atarse ni al uuid —que cambia con
+   * cada re-seed— ni al rótulo, que cambia con el idioma. `undefined` mientras
+   * el diccionario no resolvió el concepto: en ese caso no se decide nada.
+   */
+  code(conceptId: string | undefined): string | undefined;
 }
 
 /**
@@ -49,6 +57,8 @@ export class PharmaLabConcepts {
               ? '—'
               : (byId.get(conceptId)?.display ?? conceptId),
           id: (key: string): string | undefined => byKey.get(key)?.id,
+          code: (conceptId: string | undefined): string | undefined =>
+            conceptId === undefined ? undefined : byId.get(conceptId)?.code,
         };
       }),
       shareReplay({ bufferSize: 1, refCount: false }),
