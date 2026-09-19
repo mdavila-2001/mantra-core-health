@@ -11,8 +11,9 @@ import { Consultation } from './consultation';
  *
  * Lo que fijan estas pruebas:
  *
- * 1. **Están todas las posibilidades.** Las siete altas del expediente más el
- *    formulario clínico y la internación, cada una con su cantidad leída.
+ * 1. **Están todas las posibilidades.** Las siete altas del expediente, el
+ *    formulario clínico y la internación —cada una con su cantidad leída— y
+ *    «Pagos», que no da de alta nada y por eso no lleva cifra.
  * 2. **Cada casilla abre su formulario en modal**, y uno solo a la vez.
  * 3. **El check-in manda lo que el contrato pide y nada más.** Un motivo en
  *    blanco no viaja, y el turno de origen viaja sólo si existe.
@@ -53,6 +54,8 @@ const CLAVES = [
   'documentos',
   'formulario',
   'internacion',
+  // La décima, y la única de sólo lectura: lo que la persona ya pagó.
+  'pagos',
 ];
 
 describe('Consultation', () => {
@@ -96,7 +99,7 @@ describe('Consultation', () => {
     componente = await harness.navigateByUrl('/medical-records/p-1/consultation', Consultation);
   });
 
-  it('ofrece las nueve posibilidades en la rejilla, con su cantidad', async () => {
+  it('ofrece las diez posibilidades en la rejilla, con su cantidad', async () => {
     await responderLectura();
 
     const casillas = interno<() => readonly { clave: string; cantidad: number | null }[]>(
@@ -106,11 +109,31 @@ describe('Consultation', () => {
     expect(casillas.find((c) => c.clave === 'diagnosticos')?.cantidad).toBe(2);
     expect(casillas.find((c) => c.clave === 'documentos')?.cantidad).toBe(1);
     expect(casillas.find((c) => c.clave === 'formulario')?.cantidad).toBeNull();
+    // Pagos no lleva cifra: son de la caja y no de las dos lecturas del
+    // expediente, y un número pedido acá podría discrepar del que muestra el
+    // propio bloque al abrirse.
+    expect(casillas.find((c) => c.clave === 'pagos')?.cantidad).toBeNull();
 
     const botones = harness.routeNativeElement!.querySelectorAll(
       '[data-testid^="consulta-casilla-"]',
     );
-    expect(botones).toHaveLength(9);
+    expect(botones).toHaveLength(10);
+  });
+
+  /**
+   * Pagos es la única casilla que no escribe, y la bajada del modal es la
+   * única línea que dice qué va a pasar al confirmar. Prometer que «se
+   * registra» ahí sería mentir en el peor lugar posible.
+   */
+  it('el modal de pagos no promete que se registre nada', async () => {
+    await responderLectura();
+
+    const abrir = interno<(clave: string) => void>('abrir').bind(componente);
+    abrir('pagos');
+
+    expect(interno<() => string>('tituloDelModal')()).toBe('Pagos de la persona');
+    expect(interno<() => string>('descripcionDelModal')()).toContain('ya pagó');
+    expect(interno<() => string>('descripcionDelModal')()).not.toContain('Se registra');
   });
 
   it('abre el modal de la casilla elegida y lo cierra', async () => {

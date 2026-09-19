@@ -168,9 +168,10 @@
 </app-view-state-host>
 
 <!-- ─── El formulario de la casilla elegida ──────────────────────────────
-     Un solo modal para las nueve, con el bloque elegido adentro. Cada bloque
+     Un solo modal para las diez, con el bloque elegido adentro. Cada bloque
      es EL MISMO que usa el expediente, atado al encuentro en curso cuando lo
-     hay y a una cita ya existente cuando no. -->
+     hay y a una cita ya existente cuando no. La décima —Pagos— no escribe:
+     muestra lo cobrado. -->
 @if (casillaAbierta(); as casilla) {
   <app-content-dialog
     [heading]="tituloDelModal()"
@@ -262,6 +263,11 @@
           [internaciones]="internaciones()"
           (cambio)="recargar()"
         />
+      }
+      @case ('pagos') {
+        <!-- La única casilla que no registra: muestra lo que la persona ya
+             pagó. No emite `cambio` porque no hay nada que releer. -->
+        <app-payments-block [patientProfileId]="pacienteDeLaFicha()" />
       }
     }
   </app-content-dialog>

@@ -1,0 +1,89 @@
+<!-- ─── Pagos de la persona ─────────────────────────────────────────────────
+     Sólo lectura: lo que ya pagó, con su comprobante. No usa
+     `app-view-state-host` por lo mismo que los demás bloques de la ficha —el
+     anfitrión resuelve los nueve estados de una lectura que ocupa la pantalla
+     entera, y esto vive dentro de un modal—, así que cada estado se dice acá. -->
+<section class="pagos" aria-labelledby="pagos-titulo">
+  <h2 id="pagos-titulo" class="sr-only">Pagos de la persona</h2>
+
+  @switch (estado().status) {
+    @case ('loading') {
+      <p class="pagos__secundario" data-testid="pagos-cargando">Buscando los pagos…</p>
+    }
+    @case ('forbidden') {
+      <!-- S5, separado de S3 a propósito: «no pagó nada» y «no podés ver lo
+           que pagó» son estados opuestos para quien mira. -->
+      <app-alert tone="info" title="No podés ver los pagos">
+        Tu rol no incluye la caja de esta práctica. El resto de la consulta sigue disponible.
+      </app-alert>
+    }
+    @case ('offline') {
+      <app-alert tone="warning" title="Sin conexión">
+        No pudimos leer los pagos de esta persona.
+        <button app-button variant="outline" type="button" (clicked)="recargar()">
+          Reintentar
+        </button>
+      </app-alert>
+    }
+    @case ('error') {
+      <app-alert tone="error" title="No pudimos leer los pagos">
+        <button app-button variant="outline" type="button" (clicked)="recargar()">
+          Reintentar
+        </button>
+      </app-alert>
+    }
+    @default {
+      @if (sinPractica()) {
+        <app-alert tone="info" title="Todavía no hay una caja abierta">
+          Esta organización no tiene una práctica con contabilidad, así que no hay pagos que
+          mostrar. Se configura una vez, en Administración.
+        </app-alert>
+      } @else if (!hayPagos()) {
+        <p class="pagos__vacio" data-testid="pagos-vacio">
+          Esta persona todavía no tiene pagos registrados. Los pagos aparecen acá cuando se
+          cobra el comprobante y queda asentado en Contabilidad.
+        </p>
+      } @else {
+        <!-- La cifra primero: es la pregunta que se hace con el paciente
+             enfrente, antes de mirar comprobante por comprobante. -->
+        <div class="pagos__resumen" data-testid="pagos-resumen">
+          <p class="pagos__total-rotulo">Lleva pagado</p>
+          <p class="pagos__total" data-testid="pagos-total">{{ datos()?.total }}</p>
+          <p class="pagos__secundario">
+            {{ datos()?.pagos?.length }}
+            {{ datos()?.pagos?.length === 1 ? 'comprobante' : 'comprobantes' }}
+            @if (datos()?.recortados) {
+              · se muestran los {{ topeDePagos }} más recientes
+            }
+          </p>
+        </div>
+
+        <ol class="pagos__lista" data-testid="pagos-lista">
+          @for (pago of datos()?.pagos ?? []; track pago.id) {
+            <li class="pagos__pago">
+              <div class="pagos__cabecera">
+                <span class="pagos__comprobante">{{ pago.comprobante }}</span>
+                <app-badge variant="success" value="Pagado" />
+              </div>
+              <span class="pagos__fecha">
+                @if (pago.cuando) {
+                  {{ pago.cuando | date: 'd MMM y' }}
+                } @else {
+                  Sin fecha
+                }
+              </span>
+              <span class="pagos__importe">{{ pago.importe }}</span>
+            </li>
+          }
+        </ol>
+
+        @if (datos()?.recortados) {
+          <p class="pagos__secundario" data-testid="pagos-recorte">
+            Quedaron {{ datos()?.recortados }} pagos más atrás. El historial completo está en
+            Contabilidad.
+          </p>
+        }
+      }
+    }
+  }
+</section>

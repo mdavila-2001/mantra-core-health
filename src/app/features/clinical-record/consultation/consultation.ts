@@ -65,6 +65,7 @@ import {
   type RecetaEnFicha,
 } from '../patient-chart/medication-block/medication-block';
 import { ObservationBlock } from '../patient-chart/observation-block/observation-block';
+import { PaymentsBlock } from '../patient-chart/payments-block/payments-block';
 import { SpecialtyFormBlock } from '../patient-chart/specialty-form-block/specialty-form-block';
 import {
   QUOTATION_NEW_ROUTE,
@@ -85,6 +86,10 @@ const TOPE_DEL_MOTIVO = 500;
  * Las casillas de la rejilla. Son **todas** las posibilidades del expediente
  * —una por pestaña de la historia que admite alta— más las dos que sólo tienen
  * sentido atendiendo: el formulario clínico de la especialidad y la internación.
+ *
+ * Y una décima que no registra nada, «Pagos»: la respuesta a «¿esto ya está
+ * pagado?», que se necesita en la consulta misma cuando quien atiende también
+ * ejecuta el tratamiento.
  */
 export type CasillaDeConsulta =
   | 'diagnosticos'
@@ -95,7 +100,8 @@ export type CasillaDeConsulta =
   | 'planes'
   | 'documentos'
   | 'formulario'
-  | 'internacion';
+  | 'internacion'
+  | 'pagos';
 
 /** Lo que dice cada casilla antes de abrirse. */
 export interface CasillaVisible {
@@ -135,9 +141,10 @@ interface DefinicionDeCasilla {
 }
 
 /**
- * Las nueve casillas, en el orden en que se atiende: primero lo que se
+ * Las diez casillas, en el orden en que se atiende: primero lo que se
  * diagnostica, después lo que se indica, y al final lo que sólo pasa en una
- * consulta con cama o con una ficha de especialidad.
+ * consulta con cama o con una ficha de especialidad. Cierra «Pagos», que es lo
+ * único que se mira en vez de escribirse.
  */
 const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
   diagnosticos: {
@@ -203,6 +210,13 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     icono: 'M3 18V9h18v9M3 13h18M7 9V6h4v3',
     testId: 'consulta-casilla-internacion',
   },
+  pagos: {
+    titulo: 'Pagos',
+    descripcion: 'Lo que ya pagó: comprobantes, fechas e importes.',
+    tituloDelModal: 'Pagos de la persona',
+    icono: 'M3 7h18v10H3V7Zm0 4h18M7 15h3',
+    testId: 'consulta-casilla-pagos',
+  },
 };
 
 const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
@@ -215,6 +229,11 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   'documentos',
   'formulario',
   'internacion',
+  // Última y a propósito: es la única que **no** registra nada. Quien ejecuta
+  // el tratamiento en el mismo acto —odontología, dermatología— decide la
+  // sesión siguiente con esto a la vista, y hasta ahora la respuesta sólo
+  // estaba en Contabilidad, con el paciente sentado enfrente.
+  'pagos',
 ];
 
 /**
@@ -227,7 +246,8 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
  * puede registrar está **todo a la vista**, una casilla por posibilidad —las
  * mismas ocho de la historia clínica más el formulario de especialidad y la
  * internación—, y cada una abre su propio formulario en modal, que es lo que la
- * regla de la casa pide para toda edición que pida datos.
+ * regla de la casa pide para toda edición que pida datos. La décima, «Pagos»,
+ * no registra: contesta si lo hecho ya está cobrado.
  *
  * ## El encuentro sigue mandando
  *
@@ -260,6 +280,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     FreeNoteBlock,
     MedicationBlock,
     ObservationBlock,
+    PaymentsBlock,
     PageHeader,
     PaymentPlanPanel,
     RouterLink,
@@ -423,7 +444,7 @@ export class Consultation {
   /* -- La rejilla ----------------------------------------------------------- */
 
   /**
-   * Las nueve casillas con su cantidad. La cantidad sale de lo ya leído y no
+   * Las diez casillas con su cantidad. La cantidad sale de lo ya leído y no
    * de una petición por casilla: dos lecturas de la misma lista pueden
    * discrepar.
    */
@@ -441,6 +462,10 @@ export class Consultation {
       // termina en diagnósticos, procedimientos o laboratorio.
       formulario: null,
       internacion: datos?.resumen.careEpisodes.length ?? 0,
+      // Los pagos no están en las dos lecturas del expediente —son de la caja,
+      // no de la historia— y pedirlos acá sería una tercera petición cuyo
+      // número podría discrepar del que muestra el propio bloque al abrirse.
+      pagos: null,
     };
     return ORDEN_DE_CASILLAS.map((clave) => ({
       clave,
@@ -450,7 +475,7 @@ export class Consultation {
   });
 
   /**
-   * La casilla cuyo modal está abierto, o `null`. Una señal para las nueve:
+   * La casilla cuyo modal está abierto, o `null`. Una señal para las diez:
    * sólo puede haber un modal a la vez.
    */
   protected readonly casillaAbierta = signal<CasillaDeConsulta | null>(null);
@@ -475,6 +500,11 @@ export class Consultation {
    */
   protected readonly descripcionDelModal = computed(() => {
     const quien = this.nombre() === '' ? 'esta persona' : this.nombre();
+    // Pagos no escribe nada, así que prometer que «se registra» sería mentir
+    // en la única línea que explica qué va a pasar al confirmar.
+    if (this.casillaAbierta() === 'pagos') {
+      return `Lo que ${quien} ya pagó, tal como quedó asentado en la caja de la práctica.`;
+    }
     return this.encuentroActual() === null
       ? `Se registra en la historia de ${quien}.`
       : `Se registra en el encuentro en curso de ${quien}.`;
