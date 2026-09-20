@@ -381,6 +381,52 @@ describe('PractitionerProfileEdit', () => {
     req.flush(PERFIL_BASE);
   });
 
+  /* ---- facturación: el NIT, que el alta no pregunta ------------------------
+     El médico emite comprobantes y no tenía dónde declarar a nombre de quién
+     salen (propietario, 19/09/2026). Viajan en el MISMO `PATCH` que el resto de
+     la presentación, y con el mismo criterio: sólo si cambiaron. */
+
+  it('siembra el NIT y la razón social que ya tenía el perfil', () => {
+    montarYCargar({ taxId: '5414404011', taxHolderName: 'Consultorio Dra. Salas S.R.L.' });
+
+    expect(interno<() => string>('nit')()).toBe('5414404011');
+    expect(interno<() => string>('razonSocial')()).toBe('Consultorio Dra. Salas S.R.L.');
+  });
+
+  it('guardarPresentacion manda el NIT nuevo, y sólo el NIT', () => {
+    montarYCargar();
+
+    señal<string>('nit').set('5414404011');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ taxId: '5414404011' });
+    req.flush({ ...PERFIL_BASE, taxId: '5414404011' });
+  });
+
+  it('vaciar el NIT lo BORRA: viaja la cadena vacía, no se descarta', () => {
+    // Es la única forma de sacar un NIT cargado mal. Descartar los vacíos
+    // dejaría el número viejo para siempre.
+    montarYCargar({ taxId: '5414404011' });
+
+    señal<string>('nit').set('');
+    interno<() => void>('guardarPresentacion')();
+
+    const req = http.expectOne('/profiles/practitioners/me');
+    expect(req.request.body).toEqual({ taxId: '' });
+    req.flush({ ...PERFIL_BASE, taxId: '' });
+  });
+
+  it('el botón de guardar también se ofrece en la pestaña «Facturación»', () => {
+    // Los tres paneles son un solo formulario: si el botón no se dibuja ahí,
+    // el NIT se escribe y no hay cómo guardarlo.
+    montarYCargar();
+
+    señal<number>('pestana').set(2);
+    expect(interno<() => boolean>('editandoPresentacion')()).toBe(true);
+  });
+
   /* ---- teléfonos: el campo del alta, con país ------------------------------ */
 
   it('no guarda con un teléfono a medias y lleva a «Contacto»', () => {

@@ -102,6 +102,58 @@
   margin-block: var(--sp-4) 0;
 }
 
+/* --- El recuadro de facturación --------------------------------------------
+   Los datos de factura no son dos renglones más de la ficha: son lo que hay que
+   copiar en un comprobante, y se consultan juntos. Por eso salen de la lista
+   `dt`/`dd` y viven en su propia caja, con filete y fondo sutil, como pide el
+   propietario (19/09/2026).
+
+   El NIT va en grande y con cifras tabulares: es el dato que se busca y el que
+   se transcribe, y una cifra de ancho variable se copia peor. La razón social
+   va debajo, al tamaño del cuerpo — lo completa, no compite con él. */
+.mi-perfil__factura {
+  display: grid;
+  gap: var(--sp-1);
+  margin-block-start: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-subtle, var(--surface-2, transparent));
+}
+
+.mi-perfil__factura-rotulo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+/* El segundo rótulo separa los dos hechos dentro de la misma caja: sin este
+   aire, «A nombre de» se lee como el pie del NIT. */
+.mi-perfil__factura-rotulo + * + .mi-perfil__factura-rotulo {
+  margin-block-start: var(--sp-3);
+}
+
+.mi-perfil__factura-nit {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.mi-perfil__factura-titular {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* Sin dato, la caja no grita: «Sin registrar» se lee al tamaño del cuerpo y en
+   la tinta terciaria de `.mi-perfil__ausente`, no en el cuerpo de un titular. */
+.mi-perfil__factura-nit .mi-perfil__ausente {
+  font-size: var(--fs-body);
+  font-weight: 400;
+}
+
 /* --- Listas de la ficha ----------------------------------------------------
    Van fuera de la lista `dt`/`dd` porque cada elemento tiene varios datos y una
    fila de dos columnas los apretaría. */

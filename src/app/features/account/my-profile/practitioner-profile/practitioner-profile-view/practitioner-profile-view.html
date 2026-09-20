@@ -332,10 +332,64 @@
         }
       </app-tab>
 
+      <!-- ─── Facturación ──────────────────────────────────────────────────
+           El médico también emite comprobantes y el perfil no se lo preguntaba
+           (propietario, 19/09/2026). Es la misma pestaña que la ficha del
+           paciente ya tenía, en el mismo lugar.
+
+           `facturacion` es `null` en la ficha de OTRO profesional: su NIT no es
+           de quien la mira. La pestaña entera se suprime, y no se dibuja vacía:
+           una pestaña «Facturación» que al abrirla no dice nada promete un dato
+           que esa ficha nunca va a tener. -->
+      @if (perfil().facturacion; as facturacion) {
+        <app-tab [label]="pestanas[2]">
+          <section class="mi-perfil__seccion" data-testid="perfil-facturacion">
+            <p class="mi-perfil__nota mi-perfil__nota--primera">
+              A nombre de quién salen los comprobantes que emitís.
+            </p>
+
+            <!-- Los dos datos van en un recuadro propio y no en la lista
+                 `dt`/`dd` del resto de la ficha: no son otro par de datos del
+                 profesional, son lo que hay que copiar en una factura, y se
+                 consultan juntos. El NIT es la cifra que se busca, así que va
+                 primero y en grande; la razón social lo completa. -->
+            <div class="mi-perfil__factura" data-testid="perfil-factura-recuadro">
+              <p class="mi-perfil__factura-rotulo">NIT</p>
+              <p class="mi-perfil__factura-nit" data-testid="perfil-factura-nit">
+                @if (facturacion.nit) {
+                  {{ facturacion.nit }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </p>
+
+              <p class="mi-perfil__factura-rotulo">A nombre de</p>
+              <p class="mi-perfil__factura-titular" data-testid="perfil-factura-titular">
+                @if (facturacion.razonSocial) {
+                  {{ facturacion.razonSocial }}
+                } @else {
+                  <span class="mi-perfil__ausente">Sin registrar</span>
+                }
+              </p>
+            </div>
+
+            <!-- Sin NIT no hay comprobante que emitir, así que el renglón dice
+                 dónde cargarlo en vez de dejar el hueco. Mismo criterio que
+                 «Dónde atiendo»: la ficha muestra, y el camino se dice. -->
+            @if (!facturacion.nit) {
+              <p class="mi-perfil__nota" data-testid="perfil-factura-falta">
+                Todavía no cargaste tu NIT. Se carga desde «Editar tu info», en
+                «Facturación».
+              </p>
+            }
+          </section>
+        </app-tab>
+      }
+
       <!-- ─── Dónde atiendo ────────────────────────────────────────────────
            Paso 7 del alta («tu consultorio propio») más la disponibilidad.
            Es la pregunta que la trayectoria no contesta: dónde encontrarlo HOY. -->
-      <app-tab [label]="pestanas[2]">
+      <app-tab [label]="pestanas[3]">
         <section class="mi-perfil__seccion" data-testid="perfil-sedes">
           <h3 class="mi-perfil__subtitulo">Tus consultorios y sedes</h3>
           <!-- La ficha MUESTRA; no da de alta. El botón de agregar vivía acá
@@ -383,7 +437,7 @@
       <!-- ─── Trayectoria ──────────────────────────────────────────────────
            Dónde se formó, dónde ejerció antes y dónde ejerce hoy (UC-05-16),
            más los títulos del paso 11 del alta. -->
-      <app-tab [label]="pestanas[3]" appTutorialTarget="perfil-trayectoria">
+      <app-tab [label]="pestanas[4]" appTutorialTarget="perfil-trayectoria">
         <app-tab-help-block helpId="perfil-trayectoria-ayuda" tutorialId="perfil-profesional">
           <p>
             Acá se arma la línea de tiempo profesional: dónde se formó, dónde ejerció antes y dónde
@@ -544,7 +598,7 @@
       <!-- ─── Credenciales ─────────────────────────────────────────────────
            Pasos 9, 10 y 12 del alta: la habilitación para ejercer, sus
            respaldos y las especialidades. -->
-      <app-tab [label]="pestanas[4]" appTutorialTarget="perfil-credenciales">
+      <app-tab [label]="pestanas[5]" appTutorialTarget="perfil-credenciales">
         <!-- Eran cinco listas apiladas con cada credencial dicha DOS veces
              —una en la lista de su clase y otra en «Verificado»/«Declarado»—.
              Ahora es una rejilla de tarjetas con el ícono de su clase y un
@@ -566,7 +620,7 @@
            cuenta. Vivía en una tarjeta suelta y se conserva como pestaña —
            tirarlo para «parecerse más al paciente» sería perder un dato que ya
            se mostraba. -->
-      <app-tab [label]="pestanas[5]">
+      <app-tab [label]="pestanas[6]">
         <!-- Contadores, no renglones de ficha (pedido del cliente del
              13/09/2026). Viven en su propio componente: el dibujo es el de las
              cifras del panel y el CSS no entraba acá —esta hoja estaba a 20

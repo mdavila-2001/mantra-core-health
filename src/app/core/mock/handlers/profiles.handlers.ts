@@ -371,7 +371,32 @@ const CALIDAD_DEMO = {
   ratingCount: 128,
 } as const;
 
+/** Una corrección guardada del perfil profesional: su id y lo que se cambió. */
+type EdicionDeProfesional = { readonly id: string } & Record<string, string | boolean>;
+
+/**
+ * Lo que se editó del perfil profesional, por perfil.
+ *
+ * `PROFESIONALES` es un arreglo de fixture, no una `Coleccion`: no tiene dónde
+ * guardar una corrección. Hasta el 19/09/2026 el `PATCH` devolvía el cuerpo
+ * mezclado y no lo anotaba en ningún lado, así que editar el título —o el NIT—
+ * «funcionaba» hasta la siguiente lectura, que es el defecto que este archivo
+ * ya documenta para la dirección de trabajo del paciente.
+ *
+ * Con clave, como las otras dos tablas de este módulo: así sobrevive a la
+ * recarga, que es donde el defecto se notaba.
+ */
+const edicionesDeProfesional = new Coleccion<EdicionDeProfesional>(
+  [],
+  'mock.perfil-medico.ediciones',
+);
+
 export function perfilProfesionalDe(p: ProfesionalSimulado) {
+  const { id: _id, ...editado } = edicionesDeProfesional.get(p.id) ?? { id: p.id };
+  return { ...perfilProfesionalBase(p), ...editado };
+}
+
+function perfilProfesionalBase(p: ProfesionalSimulado) {
   return {
     profileId: p.id,
     personId: p.personId,
@@ -386,7 +411,12 @@ export function perfilProfesionalDe(p: ProfesionalSimulado) {
     personalEmail: `${p.slug}@gmail.mock`,
     mobilePhone: p.phone,
     workMobilePhone: p.phone.replace(/\d$/, '9'),
-    workLandline: '+591 3 3456789',
+    // Sin el espacio interno: `esTelefonoCompleto` pide «+591 » + OCHO dígitos
+    // seguidos. Con `'+591 3 3456789'` el editor del médico nacía con el fijo
+    // del trabajo en rojo y **se negaba a guardar cualquier cosa** —«Hay un
+    // teléfono incompleto. Revisalo en Contacto»—, aunque nadie hubiera tocado
+    // ese campo. Medido el 19/09/2026 al intentar cargar un NIT.
+    workLandline: '+591 33456789',
     name: p.name,
     lastName: p.lastName,
     motherLastName: p.motherLastName,
@@ -394,6 +424,10 @@ export function perfilProfesionalDe(p: ProfesionalSimulado) {
     nationalId: p.nationalId,
     issuerAdministrativeAreaConceptId: p.departamentoId,
     residenceMunicipalityConceptId: p.municipioId,
+    // Facturación, igual que el paciente: sin cédula no hay NIT que derivar,
+    // porque `011` solo no es un NIT.
+    taxId: p.nationalId === '' ? '' : `${p.nationalId}011`,
+    taxHolderName: p.displayName,
     homeAddress: { lines: p.direccion, city: p.ciudad, municipalityConceptId: p.municipioId, latitude: p.lat, longitude: p.lng },
     practitionerCategoryConceptId: CATEGORIA_MEDICO,
     verificationStatusConceptId: p.verified ? ESTADO['ST-VERIFIED']! : ESTADO['ST-PENDING']!,
@@ -872,7 +906,13 @@ export function registrarPerfiles(router: MockRouter): void {
     const p = profesionalDeSesion(request);
     if (p === undefined) return notFound();
     const cambios = cuerpo<Record<string, unknown>>(request);
-    return { ...perfilProfesionalDe(p), ...soloTextos(cambios) };
+    const anotados = soloTextos(cambios);
+    if (edicionesDeProfesional.has(p.id)) {
+      edicionesDeProfesional.actualizar(p.id, anotados);
+    } else {
+      edicionesDeProfesional.agregar({ id: p.id, ...anotados });
+    }
+    return perfilProfesionalDe(p);
   });
 
   router.get('/profiles/practitioners/specialty-counts', () => {

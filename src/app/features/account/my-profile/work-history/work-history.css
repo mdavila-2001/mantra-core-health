@@ -204,6 +204,18 @@
   align-self: center;
 }
 
+/* El aviso en palabras de que a esa sede le falta el QR. Nació sin regla
+   propia —quedó huérfano en la reconciliación del 19/09/2026— y se pintaba con
+   el cuerpo de texto de la tarjeta, así que «Sin QR de cobro configurado» se
+   leía con el mismo peso que la dirección. Va como las otras líneas menores de
+   la fila (`.historial__sede`) pero en el ámbar del botón al que acompaña: son
+   una sola advertencia dicha dos veces, para quien mira y para quien lee. */
+.historial__aviso-qr {
+  color: var(--c-warning-600);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 /* El QR sin configurar, en ámbar: es lo único de esta fila que está a medias, y
    el médico tiene que poder verlo de un vistazo entre cuatro sedes. El color no
    lo dice solo —el globo y el nombre accesible dicen «Configurar el QR bancario

@@ -479,6 +479,10 @@ export class ProfilesClient {
       readonly workLandline: string;
       readonly personalEmail: string;
       readonly residenceMunicipalityConceptId: string;
+      /* Facturación. Como en el paciente, `''` BORRA el dato: es la única
+         forma de sacar un NIT que se cargó mal. */
+      readonly taxId: string;
+      readonly taxHolderName: string;
       /* El domicilio (ALV-009): mismo contrato que
          `OwnPatientProfileChanges.homeAddressLines`. Sólo el texto y, si se
          marcó un punto, las dos coordenadas juntas — el municipio ya viaja

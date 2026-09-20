@@ -21,6 +21,7 @@
  * |---|---|
  * | nombre · documento · sexo y nacimiento · título profesional | Datos personales |
  * | contacto privado · contacto del trabajo · dónde vivís | Contacto |
+ * | — (a nombre de quién factura) | Facturación |
  * | tu consultorio propio | Dónde atiendo |
  * | dónde estudió el título · tus títulos | Trayectoria |
  * | habilitación · respaldos · especialidades | Credenciales |
@@ -31,6 +32,15 @@
  * mostraban en la ficha vieja, y quitarlos para «parecerse más al paciente»
  * habría sido perder información con la excusa de un rediseño.
  *
+ * ## «Facturación» tampoco sale del alta, y es la que faltaba
+ *
+ * El alta de médico no pregunta el NIT, así que la ficha no lo mostraba y el
+ * editor no lo pedía: un profesional que emite comprobantes no tenía dónde
+ * declarar a nombre de quién salen. El paciente sí lo tenía desde el 09/09/2026
+ * ({@link PESTANAS_DEL_PERFIL}), y esta es la misma pestaña en el mismo lugar
+ * —tercera, después de Contacto— para que las dos fichas se lean igual. Pedido
+ * del propietario del 19/09/2026.
+ *
  * ## Por qué una constante y no cinco literales en la plantilla
  *
  * Igual que en el paciente: el índice se comparte con quien edite, y una lista
@@ -39,20 +49,22 @@
 export const PESTANAS_DEL_PERFIL_MEDICO = [
   'Datos personales',
   'Contacto',
+  'Facturación',
   'Dónde atiendo',
   'Trayectoria',
   'Credenciales',
   'Actividad',
 ] as const;
 
-/** Los índices con nombre, para no escribir `3` donde se quiere decir «Credenciales». */
+/** Los índices con nombre, para no escribir `4` donde se quiere decir «Credenciales». */
 export const PESTANA_MEDICO = {
   personales: 0,
   contacto: 1,
-  dondeAtiendo: 2,
-  trayectoria: 3,
-  credenciales: 4,
-  actividad: 5,
+  facturacion: 2,
+  dondeAtiendo: 3,
+  trayectoria: 4,
+  credenciales: 5,
+  actividad: 6,
 } as const;
 
 /**
@@ -93,18 +105,20 @@ export const PESTANA_MEDICO = {
 export const PESTANAS_DEL_EDITOR_MEDICO = [
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.personales],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.contacto],
+  PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.facturacion],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.dondeAtiendo],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria],
   PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales],
 ] as const;
 
-/** Los índices con nombre del editor. No son los de la ficha: son cinco. */
+/** Los índices con nombre del editor. No son los de la ficha: son seis. */
 export const PESTANA_EDITOR = {
   personales: 0,
   contacto: 1,
-  dondeAtiendo: 2,
-  trayectoria: 3,
-  credenciales: 4,
+  facturacion: 2,
+  dondeAtiendo: 3,
+  trayectoria: 4,
+  credenciales: 5,
 } as const;
 
 /**

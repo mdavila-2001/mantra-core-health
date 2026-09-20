@@ -458,16 +458,19 @@
          a «¿por qué no veo tal cosa?» no justificaba una columna al lado del
          perfil. `my-profile.spec.ts` lo fija.
 
-         Estos dos enlaces vivían al pie de aquella tarjeta y se quedan, ahora
-         bajo el perfil: son los únicos accesos a esas dos pantallas —salieron
-         del menú del médico en §4.H del plan de UX del 22/08/2026— y borrarlos
-         con la tarjeta habría convertido una limpieza visual en una pérdida de
-         acceso. Van FUERA del lateral a propósito: no dependen de que haya
-         verificación que mostrar. -->
+         Ahí vivían dos enlaces; queda uno. «Organización médica» la sacó el
+         propietario el 19/09/2026: el médico administra dónde atiende ÉL, y la
+         organización es de la organización. La pantalla sigue existiendo en
+         `/administration/medical-organization` —no se borró nada— pero ya no se
+         ofrece desde el perfil.
+
+         «Mi consultorio propio» se queda: es su único acceso desde que salió
+         del menú del médico en §4.H del plan de UX del 22/08/2026, y borrarlo
+         convertiría una limpieza visual en una pérdida de acceso. Va FUERA del
+         lateral a propósito: no depende de que haya verificación que mostrar. -->
     @if (esProfesional()) {
       <nav class="mi-perfil__enlaces" aria-label="Dónde ejercés">
         <a app-link routerLink="/administration/my-practice">Mi consultorio propio</a>
-        <a app-link routerLink="/administration/medical-organization">Organización médica</a>
       </nav>
     }
   </div>

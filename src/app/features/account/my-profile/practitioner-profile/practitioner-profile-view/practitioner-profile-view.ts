@@ -60,6 +60,17 @@ const TAB = { TRAYECTORIA: 0, CREDENCIALES: 1, PREVIEW: 2 } as const;
  */
 const AYUDA_DE_CREDENCIALES = 'perfil-credenciales-ayuda';
 
+/**
+ * La etiqueta de «Credenciales», para reconocer la pestaña por su nombre.
+ *
+ * **No por su índice.** «Facturación» sólo se dibuja en la ficha propia con
+ * datos de facturación, así que el índice de todo lo que va después se corre
+ * en uno cuando falta: con el índice fijo, el aviso no salía nunca en una
+ * ficha sin facturación y salía en «Actividad» en una con ella. Lo destapó el
+ * spec al juntar las dos correcciones del 19/09/2026.
+ */
+const ETIQUETA_DE_CREDENCIALES = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales];
+
 /** Lo que dice ese aviso. Es el texto del bloque que reemplaza, sin el ejemplo. */
 const AVISO_DE_CREDENCIALES =
   'Acá se separa lo que declaraste de lo que ya fue verificado contra una fuente ' +
@@ -214,7 +225,7 @@ export class PractitionerProfileView {
       if (!this.enNavegador || !this.esPropio() || this.previewMode()) {
         return;
       }
-      if (this.pestanaSeleccionada() !== PESTANA_MEDICO.credenciales) {
+      if (this.pestanaVisibleSeleccionada() !== ETIQUETA_DE_CREDENCIALES) {
         return;
       }
       if (this.ayudas.isDismissed(AYUDA_DE_CREDENCIALES)) {
@@ -366,6 +377,27 @@ export class PractitionerProfileView {
    * plantilla: son otra pregunta, la de quien mira a un colega.
    */
   protected readonly pestanas = PESTANAS_DEL_PERFIL_MEDICO;
+
+  /**
+   * Las pestañas que de verdad se dibujan, en el orden en que se dibujan.
+   *
+   * `pestanas` es la lista completa y sirve para rotular; ésta es la que
+   * corresponde con el índice que informa `app-tabs`, porque «Facturación» se
+   * suprime cuando el perfil no la tiene (ficha ajena). Sin esta distinción,
+   * cualquier lógica que mire el índice seleccionado se corre en uno.
+   */
+  protected readonly pestanasVisibles = computed<readonly string[]>(() =>
+    this.perfil().facturacion
+      ? PESTANAS_DEL_PERFIL_MEDICO
+      : PESTANAS_DEL_PERFIL_MEDICO.filter(
+          (pestana) => pestana !== PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.facturacion],
+        ),
+  );
+
+  /** La etiqueta de la pestaña abierta, o `undefined` si el índice no existe. */
+  protected readonly pestanaVisibleSeleccionada = computed<string | undefined>(
+    () => this.pestanasVisibles()[this.pestanaSeleccionada()],
+  );
 
   /**
    * Adónde va «Cambiar contraseña».

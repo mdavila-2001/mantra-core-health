@@ -395,6 +395,16 @@ export interface OwnPractitionerProfile {
   readonly nationalId?: string;
   readonly issuerAdministrativeAreaConceptId?: string;
   readonly residenceMunicipalityConceptId?: string;
+
+  /* --- facturación -------------------------------------------------------
+     Mismo par que el paciente ya tenía (`OwnPatientProfile`): el médico
+     también emite comprobantes, y el perfil no se lo preguntaba. Pedido del
+     propietario del 19/09/2026. */
+
+  /** NIT para facturación. */
+  readonly taxId?: string;
+  /** A nombre de quién sale el comprobante — la razón social del NIT. */
+  readonly taxHolderName?: string;
   /**
    * Su domicilio, si lo declaró (ALV-009). Ausente y no un objeto vacío
    * cuando no hay fila vigente — mismo contrato que {@link OwnPatientProfile}.

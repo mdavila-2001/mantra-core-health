@@ -266,6 +266,13 @@ export class PractitionerProfile {
         direccion: perfil.homeAddress?.lines ?? '',
         mapaDomicilio: enlaceAlMapa(perfil.homeAddress),
       },
+      // A nombre de quién factura. Va sólo en la ficha propia: el contenedor
+      // de la guía lo deja en `null` porque el NIT de un colega no es de quien
+      // lo mira.
+      facturacion: {
+        nit: perfil.taxId ?? '',
+        razonSocial: perfil.taxHolderName ?? '',
+      },
       actividadActual: afiliaciones.actual,
       experienciaHistorica: afiliaciones.historica,
       desde: perfil.createdAt ?? null,

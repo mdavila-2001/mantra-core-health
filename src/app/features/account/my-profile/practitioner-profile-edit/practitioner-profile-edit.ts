@@ -273,14 +273,18 @@ export class PractitionerProfileEdit {
   /**
    * Si la pestaña abierta es de las que se corrigen.
    *
-   * «Datos personales» y «Contacto» son un solo formulario repartido en dos
-   * paneles y comparten el botón de guardar. «Trayectoria» y «Credenciales» no
-   * corrigen nada: agregan, y cada bloque tiene su propio «Agregar». Mostrar ahí
-   * «Guardar cambios» prometería guardar algo que ese botón no guarda.
+   * «Datos personales», «Contacto» y «Facturación» son un solo formulario
+   * repartido en tres paneles y comparten el botón de guardar: los tres viajan
+   * en el mismo `PATCH /profiles/practitioners/me`. «Trayectoria» y
+   * «Credenciales» no corrigen nada: agregan, y cada bloque tiene su propio
+   * «Agregar». Mostrar ahí «Guardar cambios» prometería guardar algo que ese
+   * botón no guarda.
    */
   protected readonly editandoPresentacion = computed(
     () =>
-      this.pestana() === PESTANA_EDITOR.personales || this.pestana() === PESTANA_EDITOR.contacto,
+      this.pestana() === PESTANA_EDITOR.personales ||
+      this.pestana() === PESTANA_EDITOR.contacto ||
+      this.pestana() === PESTANA_EDITOR.facturacion,
   );
 
   private readonly municipios = inject(BoMunicipalitiesCatalog);
@@ -356,6 +360,15 @@ export class PractitionerProfileEdit {
   /** El mismo texto que el alta pone bajo un teléfono incompleto. */
   protected readonly mensajeTelefonoIncompleto = 'El número está incompleto para el país elegido.';
   protected readonly correoPersonal = signal('');
+
+  /* -- Facturación: a nombre de quién salen los comprobantes que emite ------
+     El alta de médico no los pregunta, así que acá es donde se cargan por
+     primera vez. Mismo par y mismo contrato que el editor del paciente. */
+
+  /** El NIT. Vaciarlo lo BORRA: es la única forma de sacar uno mal cargado. */
+  protected readonly nit = signal('');
+  /** A nombre de quién sale el comprobante. */
+  protected readonly razonSocial = signal('');
   /**
    * La calle, ALV-009.
    *
@@ -877,6 +890,8 @@ export class PractitionerProfileEdit {
     this.celularTrabajo.reset(perfil.workMobilePhone ?? '');
     this.fijoTrabajo.reset(perfil.workLandline ?? '');
     this.correoPersonal.set(perfil.personalEmail ?? '');
+    this.nit.set(perfil.taxId ?? '');
+    this.razonSocial.set(perfil.taxHolderName ?? '');
     this.telemedicina.set(perfil.telehealthAvailable);
     // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
     // ofrecía. Se siembran desde el perfil, igual que el resto.
@@ -960,6 +975,8 @@ export class PractitionerProfileEdit {
       homeAddressLines: string;
       homeLatitude: number | null;
       homeLongitude: number | null;
+      taxId: string;
+      taxHolderName: string;
     }> = {};
     // ALV-003/009: los dos campos nuevos viajan sólo si cambiaron, como el
     // resto. La fecha se compara por día local (`toISOString` la pasaría por
@@ -1029,6 +1046,15 @@ export class PractitionerProfileEdit {
     }
     if (this.correoPersonal() !== (original.personalEmail ?? '')) {
       cambios.personalEmail = this.correoPersonal();
+    }
+    // Facturación. Se comparan contra el original y no se descartan los
+    // vacíos: `''` es cómo se saca un NIT cargado mal, igual que en el editor
+    // del paciente.
+    if (this.nit() !== (original.taxId ?? '')) {
+      cambios.taxId = this.nit();
+    }
+    if (this.razonSocial() !== (original.taxHolderName ?? '')) {
+      cambios.taxHolderName = this.razonSocial();
     }
 
     if (Object.keys(cambios).length === 0) {
