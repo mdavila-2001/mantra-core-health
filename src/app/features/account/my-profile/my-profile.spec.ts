@@ -1074,11 +1074,17 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
  * uno, y el spec lo fija como lista exacta para que reaparecer sea un cambio
  * deliberado y no el resultado de otra reconciliación.
  *
+ * El mismo día pidió que ese único acceso fuera **botón de ícono arriba a la
+ * izquierda** y se llamara «Mis organizaciones». Sin texto visible, el nombre
+ * accesible es lo único que queda: por eso el spec mira `aria-label` y no el
+ * contenido, y comprueba además que el `nav` va ANTES del perfil en el orden
+ * del documento —que es lo que lo pone arriba, no una regla de CSS—.
+ *
  * Describe propio porque `esProfesional()` decide en el constructor qué resumen
  * se pide: la sesión tiene que estar abierta antes de crear la pantalla.
  */
 describe('MyProfile · los accesos de quien atiende', () => {
-  it('al profesional le queda «Mi consultorio propio», y sólo ése', () => {
+  it('al profesional le queda «Mis organizaciones», en ícono y arriba del perfil', () => {
     TestBed.configureTestingModule({
       imports: [MyProfile],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
@@ -1104,13 +1110,23 @@ describe('MyProfile · los accesos de quien atiende', () => {
     });
     fixture.detectChanges();
 
+    const raiz = fixture.nativeElement as HTMLElement;
     const destinos = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
-        'nav[aria-label="Dónde ejercés"] a',
-      ),
+      ...raiz.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Dónde ejercés"] a'),
     ];
-    expect(destinos.map((a) => a.textContent?.trim())).toEqual(['Mi consultorio propio']);
+    expect(destinos.map((a) => a.getAttribute('aria-label'))).toEqual(['Mis organizaciones']);
     expect(destinos.map((a) => a.getAttribute('href'))).toEqual(['/administration/my-practice']);
+
+    // En ícono: sin texto visible, y con el ícono adentro.
+    expect(destinos[0].textContent?.trim()).toBe('');
+    expect(destinos[0].querySelector('svg')).not.toBeNull();
+
+    // Arriba: el acceso precede al perfil en el orden del documento.
+    const navegacion = raiz.querySelector('nav[aria-label="Dónde ejercés"]')!;
+    const perfil = raiz.querySelector('app-practitioner-profile')!;
+    expect(navegacion.compareDocumentPosition(perfil) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
     http.verify();
   });
 });

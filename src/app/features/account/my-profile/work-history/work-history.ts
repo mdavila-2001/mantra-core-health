@@ -159,7 +159,7 @@ export class WorkHistory implements OnInit {
    *
    * Quién usa cada uno:
    *
-   * - `'consultorios'` — «Mi consultorio propio» (`administration/my-practice`)
+   * - `'consultorios'` — «Mis organizaciones» (`administration/my-practice`)
    *   y la pestaña «Dónde atiendo» del editor del perfil. No se copió el
    *   formulario a ninguna de las dos: crear, ubicar en el mapa y retirar un
    *   consultorio vive acá —con su catálogo de municipios, su confirmación y

@@ -15,6 +15,38 @@
      REGLA DE LA CASA, ver `docs/components/composition-rules.md` §5. -->
 <div class="mi-perfil" [class.mi-perfil--sin-lateral]="!hayLateral()">
   <div class="mi-perfil__principal">
+    <!-- ─── El acceso a «Mis organizaciones» ─────────────────────────────────
+       Arriba y a la izquierda del perfil, en ícono (propietario, 19/09/2026).
+
+       Antes era un enlace de texto al pie de la tarjeta, donde vivían los dos
+       restos de «Tu acceso» —esa tarjeta se fue el 13/09/2026 y ellos se
+       quedaron—. Al pie no lo veía nadie, y es el ÚNICO acceso a esa pantalla
+       desde que salió del menú del médico en §4.H del plan de UX del
+       22/08/2026: borrarlo o esconderlo convierte una limpieza visual en una
+       pérdida de acceso.
+
+       En ícono y sin texto visible, el nombre lo ponen `aria-label` y el globo
+       —el mismo par que usa «Ver expediente» en el archivo clínico—: el ícono
+       solo es geometría, no nombra. Va FUERA de la tarjeta del perfil a
+       propósito, igual que antes: no depende de que el resumen profesional
+       cargue, y con el resumen en error el acceso sigue en pie. -->
+    @if (esProfesional()) {
+      <nav class="mi-perfil__enlaces" aria-label="Dónde ejercés">
+        <a
+          app-button
+          variant="secondary"
+          size="sm"
+          [iconOnly]="true"
+          data-testid="mi-perfil-mis-organizaciones"
+          routerLink="/administration/my-practice"
+          aria-label="Mis organizaciones"
+          appTooltip="Mis organizaciones"
+        >
+          <app-nav-icon name="hospital" />
+        </a>
+      </nav>
+    }
+
     <!-- ─── El perfil, según quién entró ──────────────────────────────────────
        Con perfil profesional se muestra la trayectoria; si no, el resumen de
        paciente. No es una preferencia de presentación: son dos endpoints
@@ -451,27 +483,6 @@
         </app-view-state-host>
         }
       </app-card>
-    }
-
-    <!-- «Tu acceso» —organización y roles— salió de esta pantalla por pedido
-         del cliente del 13/09/2026: son vocabulario de sistema, y la respuesta
-         a «¿por qué no veo tal cosa?» no justificaba una columna al lado del
-         perfil. `my-profile.spec.ts` lo fija.
-
-         Ahí vivían dos enlaces; queda uno. «Organización médica» la sacó el
-         propietario el 19/09/2026: el médico administra dónde atiende ÉL, y la
-         organización es de la organización. La pantalla sigue existiendo en
-         `/administration/medical-organization` —no se borró nada— pero ya no se
-         ofrece desde el perfil.
-
-         «Mi consultorio propio» se queda: es su único acceso desde que salió
-         del menú del médico en §4.H del plan de UX del 22/08/2026, y borrarlo
-         convertiría una limpieza visual en una pérdida de acceso. Va FUERA del
-         lateral a propósito: no depende de que haya verificación que mostrar. -->
-    @if (esProfesional()) {
-      <nav class="mi-perfil__enlaces" aria-label="Dónde ejercés">
-        <a app-link routerLink="/administration/my-practice">Mi consultorio propio</a>
-      </nav>
     }
   </div>
 

@@ -96,7 +96,7 @@ export const PESTANA_MEDICO = {
  * acá, que es donde alguien que quiere cambiar dónde atiende lo va a buscar.
  *
  * **No se duplica nada**: las tres superficies montan el MISMO
- * `app-work-history` —esta pestaña, «Mi consultorio propio» y Trayectoria— con
+ * `app-work-history` —esta pestaña, «Mis organizaciones» y Trayectoria— con
  * distinto valor de su input `secciones`. Un arreglo llega a las tres.
  *
  * El orden importa: quien viene de la ficha encuentra las pestañas donde las
