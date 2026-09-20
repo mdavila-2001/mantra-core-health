@@ -1025,30 +1025,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // es la suya lo hace la API, que responde 403 ante la de otra organización.
     roles: ['SECURITY_ADMIN', 'ACCOUNTING_APPROVER', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Revisá el balance de sumas y saldos y el libro diario de tu práctica.',
+    summary: 'Cuánto entró hoy, esta semana y este mes; en qué se te va; quién te debe y a quién le debés.',
     module: 'M16 accounting',
   },
 
-  {
-    // FT-26 (05/09/2026) — activos fijos y pasivos de la práctica, en
-    // auto-servicio del doctor. Va junto a Contabilidad por el mismo motivo
-    // que ese registro: los dos leen y escriben el mismo `practiceId`, y son
-    // la misma persona —quien ejerce— la que entra a los dos.
-    //
-    // Sólo `PRACTITIONER`: a diferencia de Contabilidad, no hay todavía un
-    // motor admin equivalente para dar de alta activos/pasivos (el que existe,
-    // `AccountingAssetController`/`AccountingLiabilityController`, es
-    // `SECURITY_ADMIN` puro y no comparte pantalla con éste — ver el reporte
-    // del carril). Cuando eso cambie, se suma el rol acá.
-    path: 'assets-liabilities',
-    label: 'Activos y pasivos',
-    group: 'Facturación',
-    icon: 'chart',
-    roles: ['PRACTITIONER'],
-    availability: 'disponible',
-    summary: 'Tus activos fijos y tus deudas: alta, avance y automatización.',
-    module: 'M16 accounting',
-  },
+  // FT-26 (05/09/2026) — activos fijos y pasivos de la práctica. **Dejó de ser
+  // sección del menú el 2026-09-19**, por pedido del propietario: «esto debe
+  // estar integrado en contabilidad (lo de activos y pasivos)».
+  //
+  // Tenía sentido como entrada aparte para quien sabe contabilidad y no para
+  // quien no: «activo», «pasivo» y «gasto» son tres palabras que hay que
+  // conocer para elegir entre dos renglones del menú que se llaman casi igual y
+  // llevan el mismo ícono. Ahora es un bloque del resumen de Contabilidad —«Lo
+  // que tenés y lo que debés»—, que lo explica en castellano y lleva a la
+  // pantalla de alta.
+  //
+  // La pantalla sigue entera en `administration/accounting/assets-liabilities`
+  // (`PANTALLAS_HIJAS`), con los mismos roles que tenía acá, y la dirección
+  // vieja `assets-liabilities` redirige.
 
   /* -- Mi cuenta · autoservicio, con navegación propia --------------------
      El vault lo pide separado: son datos de la persona sobre sí misma, no

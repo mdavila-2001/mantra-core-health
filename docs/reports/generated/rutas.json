@@ -675,27 +675,11 @@
         "PRACTITIONER"
       ],
       "rolesExclusivos": false,
-      "componente": "Cockpit",
+      "componente": "Resumen",
       "apis": [
         "AccountingClient"
       ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/assets-liabilities",
-      "etiqueta": "Activos y pasivos",
-      "grupo": "Facturación",
-      "roles": [
-        "PRACTITIONER"
-      ],
-      "rolesExclusivos": false,
-      "componente": "AssetsLiabilities",
-      "apis": [
-        "AccountingClient",
-        "AssetsLiabilitiesClient"
-      ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -958,6 +942,37 @@
   ],
   "hijas": [
     {
+      "ruta": "/administration/accounting/assets-liabilities",
+      "seccion": "Contabilidad",
+      "roles": [
+        "SECURITY_ADMIN",
+        "ACCOUNTING_APPROVER",
+        "PRACTITIONER"
+      ],
+      "componente": "AssetsLiabilities",
+      "apis": [
+        "AccountingClient",
+        "AssetsLiabilitiesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/accounting/cockpit",
+      "seccion": "Contabilidad",
+      "roles": [
+        "SECURITY_ADMIN",
+        "ACCOUNTING_APPROVER",
+        "PRACTITIONER"
+      ],
+      "componente": "Cockpit",
+      "apis": [
+        "AccountingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/accounting/libros",
       "seccion": "Contabilidad",
       "roles": [
@@ -969,7 +984,7 @@
       "apis": [
         "AccountingClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {

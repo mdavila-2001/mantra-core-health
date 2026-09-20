@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 63 secciones del registro, 108 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 62 secciones del registro, 110 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -63,8 +63,7 @@ Carril 01. 63 secciones del registro, 108 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN | `/administration/clinical-forms` | `ClinicalForms` | ChartTemplatesClient, TerminologyClient | conectada | ninguna |
 | BILLING · FINANCE · CASHIER · PAYMENTS_ADMIN | `/billing` | `SectionPlaceholder` | — | placeholder | ninguna — declarada planificada |
 | PHARMA_LAB_ADMIN · BUSINESS_ADMIN · PLATFORM_ADMIN | `/administration/pharma-lab` | `PharmaLabHome` | PharmaLabClient | conectada | ninguna |
-| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting` | `Cockpit` | AccountingClient | conectada | ninguna |
-| PRACTITIONER | `/assets-liabilities` | `AssetsLiabilities` | AccountingClient, AssetsLiabilitiesClient | conectada | ninguna |
+| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting` | `Resumen` | AccountingClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | cualquier sesión | `/my-account/dependents` | `Dependents` | ProfilesClient | conectada | ninguna |
 | cualquier sesión | `/my-account` | `MyProfile` | CommunityClient, FilesClient, IdentityClient, InsurancePortabilityClient, PracticeSitesClient, ProfilesClient, TerminologyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
 | cualquier sesión | `/my-account/appointments` | `Appointments` | SchedulingClient, TerminologyClient | conectada con deuda | resolver: promesa sin pantalla |
@@ -88,7 +87,9 @@ Carril 01. 63 secciones del registro, 108 pantallas hijas o de operación y 126 
 
 | Rol | Ruta | Vista actual | API que usa | Estado |
 |---|---|---|---|---|
-| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/libros` | `Accounting` | AccountingClient | conectada |
+| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/assets-liabilities` | `AssetsLiabilities` | AccountingClient, AssetsLiabilitiesClient | conectada |
+| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/cockpit` | `Cockpit` | AccountingClient | conectada |
+| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/libros` | `Accounting` | AccountingClient | conectada con deuda |
 | SECURITY_ADMIN | `/administration/brokers/:brokerId` | `BrokerDetail` | InsuranceClient | conectada |
 | SECURITY_ADMIN | `/administration/delegated-access/assignments/edit` | `OrgAssignmentUpdate` | DelegatedAccessClient | conectada |
 | SECURITY_ADMIN | `/administration/delegated-access/assignments/new` | `OrgAssignmentForm` | DelegatedAccessClient | conectada |
@@ -334,9 +335,9 @@ Las 126 pantallas de `features/alovida/`, generadas por `scripts/port-vistas-alo
 
 | Estado | Pantallas |
 |---|---|
-| conectada | 149 |
+| conectada | 148 |
 | maqueta portada | 119 |
-| conectada con deuda | 17 |
+| conectada con deuda | 19 |
 | presentacional | 10 |
 | placeholder | 1 |
 | con deuda | 1 |

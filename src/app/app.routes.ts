@@ -160,18 +160,17 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/insurance/insurance-analytics/insurance-analytics').then(
       (m) => m.InsuranceAnalytics,
     ),
-  // Contabilidad abre en el **cockpit**: el estado del ejercicio, los documentos
-  // frenados y la cartera. Los libros —balance, diario y el registro de
-  // movimientos— viven en `administration/accounting/libros`, a un clic. El
-  // orden es el que pidió el propietario el 2026-09-12: primero cómo va el
-  // ejercicio, después el renglón por renglón.
+  // Contabilidad abre en el **resumen llano**: cuánto entró hoy, esta semana y
+  // este mes; en qué se va la plata; quién te debe y a quién le debés. Es lo
+  // que el propietario pidió el 2026-09-19 —«se supone que es contabilidad
+  // para no contadores»— después de que la ruta abriera nueve meses en el
+  // cockpit, que es la vista del contador.
+  //
+  // Nada se borró, sólo cambió el orden: el cockpit está en
+  // `administration/accounting/cockpit` y los libros en `.../libros`, los dos
+  // enlazados al pie del resumen.
   'administration/accounting': () =>
-    import('./features/accounting/cockpit/cockpit').then((m) => m.Cockpit),
-  // FT-26 · activos y pasivos, en auto-servicio del doctor.
-  'assets-liabilities': () =>
-    import('./features/assets-liabilities/assets-liabilities').then(
-      (m) => m.AssetsLiabilities,
-    ),
+    import('./features/accounting/resumen/resumen').then((m) => m.Resumen),
   'my-organizations': () =>
     import('./features/organizations/my-organizations').then((m) => m.MyOrganizations),
   'administration/terminology': () =>
@@ -318,6 +317,42 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
+  {
+    // El **cockpit contable**: estado del ejercicio, bandeja de documentos por
+    // estado del flujo, cartera por antigüedad y cierre del período. Abría en
+    // `administration/accounting` hasta el 2026-09-19; desde esa fecha esa
+    // dirección es el resumen llano y el cockpit queda un clic más adentro,
+    // enlazado desde su pie. No entra al menú, por lo mismo que los libros.
+    path: 'administration/accounting/cockpit',
+    title: `${APP_TITLE} - Vista contable`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/accounting/cockpit/cockpit')
+        .then((m) => m.Cockpit)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // FT-26 · activos y pasivos, en auto-servicio del doctor. Era la entrada
+    // suelta `assets-liabilities` del menú hasta el 2026-09-19, cuando el
+    // propietario pidió que estuviera «integrado en contabilidad»: son los
+    // mismos libros de la misma práctica, y tenerlos como sección aparte
+    // obligaba a saber de antemano que «activo» y «gasto» no son lo mismo.
+    // Se llega desde el bloque «Lo que tenés y lo que debés» del resumen.
+    //
+    // Declara sus roles en `data` en vez de heredar los de Contabilidad: la
+    // sección padre abre también para `SECURITY_ADMIN` y `ACCOUNTING_APPROVER`,
+    // pero los endpoints de FT-26 son de `PRACTITIONER` puro y un admin
+    // llegaría a una pantalla que sólo sabe devolverle 403. Se conserva
+    // exactamente la autorización que tenía como sección propia.
+    path: 'administration/accounting/assets-liabilities',
+    title: `${APP_TITLE} - Activos y pasivos`,
+    canActivate: [seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ['PRACTITIONER'] },
+    loadComponent: () =>
+      import('./features/assets-liabilities/assets-liabilities')
+        .then((m) => m.AssetsLiabilities)
+        .catch(() => chunkFallido()),
+  },
   {
     // Los libros: balance de sumas y saldos, diario y el registro de ingresos y
     // gastos. Era la pantalla de Contabilidad hasta el 2026-09-12; ahora esa
@@ -1049,6 +1084,10 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   clinico: '/medical-records',
   facturacion: '/billing',
   contabilidad: '/administration/accounting',
+  // Activos y pasivos dejó de ser sección propia el 2026-09-19 y pasó a
+  // colgar de Contabilidad. La dirección vieja está en historiales y en
+  // favoritos, así que redirige en vez de dar 404.
+  'assets-liabilities': '/administration/accounting/assets-liabilities',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
   'identidad/verificar': '/my-account/identity',

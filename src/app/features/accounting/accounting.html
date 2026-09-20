@@ -9,13 +9,15 @@
      Así que la misma pantalla ordena distinto según quién mira: al médico,
      su facturación primero y los libros a un clic; a quien administra la
      contabilidad, los libros de entrada. Nada se borra. -->
-<!-- El **título no cambia**: «Contabilidad» es uno de los ocho nombres exactos
-     de la lista del cliente, y una sección que en el menú se llama de una
-     forma y en su pantalla de otra le agrega una duda a quien acaba de tocar
-     el renglón. Lo que cambia es el subtítulo —que es donde una sección se
-     explica— y qué se muestra primero. -->
+<!-- El título lleva sufijo desde el 2026-09-19, por lo mismo que el del
+     cockpit: `administration/accounting` es ahora el resumen llano, y tres
+     pantallas del módulo con el `h1` «Contabilidad» a secas no se distinguen
+     en una pestaña del navegador, en el historial ni para un lector de
+     pantalla que navega por encabezados. El nombre de la sección sigue siendo
+     el de la lista del cliente; lo que se le agrega es de qué pantalla se
+     trata. -->
 <app-page-header
-  title="Contabilidad"
+  title="Contabilidad · libros"
   [subtitle]="
     esMedico()
       ? 'Lo que cobraste y todavía no pasaste a los libros, mes por mes.'
@@ -23,20 +25,30 @@
   "
 />
 
-<!-- La vuelta al cockpit. Desde el 2026-09-12 Contabilidad abre ahí y estos son
-     los libros, un clic más adentro: quien lleva la contabilidad entra a mirar
-     cómo va el ejercicio, no a leer el diario renglón por renglón. -->
+<!-- La vuelta. Desde el 2026-09-19 `administration/accounting` es el resumen
+     llano —cuánto entró, en qué se va, quién debe— y el cockpit pasó a
+     `.../cockpit`: los dos se ofrecen acá, porque desde los libros se vuelve a
+     cualquiera de los dos según por dónde se haya entrado. -->
 <p class="acceso-al-cockpit">
   <a
     app-button
     variant="outline"
     routerLink="/administration/accounting"
+    data-testid="volver-al-resumen"
+  >
+    Volver a Contabilidad
+  </a>
+  <a
+    app-button
+    variant="outline"
+    routerLink="/administration/accounting/cockpit"
     data-testid="volver-al-cockpit"
   >
-    Volver al cockpit
+    Vista contable
   </a>
   <span class="acceso-al-cockpit__nota">
-    Estado del ejercicio, documentos frenados en el flujo, cartera y cierre del período.
+    El resumen contesta cuánto entró y qué está pendiente; la vista contable, el
+    estado del ejercicio, los documentos frenados en el flujo y el cierre del período.
   </span>
 </p>
 

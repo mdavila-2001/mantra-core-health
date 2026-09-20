@@ -260,6 +260,19 @@ describe('NavigationService', () => {
       // NO entra: cumplía `requiresTenant` porque el médico pertenece a su
       // clínica, no porque atienda un mostrador. Sale por `fueraDelMenuPara`,
       // y se sigue llegando por la ruta —lo fija la prueba de abajo—.
+      //
+      // **«Activos y pasivos» SALIÓ el 19/09/2026, y la lista baja a diez.**
+      // Lo pidió el propietario con esas palabras: «esto debe estar integrado
+      // en contabilidad (lo de activos y pasivos)». Es la dirección que §4.H
+      // persigue —el panel no crece—, y además arregla un defecto propio de
+      // esta lista: «Contabilidad» y «Activos y pasivos» eran dos renglones
+      // seguidos, con el mismo ícono, que sólo se distinguen si uno ya sabe
+      // que «activo» no es «gasto». Ahora es un bloque del resumen de
+      // Contabilidad, y la pantalla de alta vive en
+      // `administration/accounting/assets-liabilities` con los mismos roles.
+      //
+      // Bajar un renglón no afloja la regla: quien quiera agregar la
+      // undécima la sigue teniendo que discutir.
       abrirSesion(['PRACTITIONER']);
 
       const fueraDeMiCuenta = service
@@ -278,7 +291,6 @@ describe('NavigationService', () => {
         'Mis servicios',
         'Cotizaciones',
         'Contabilidad',
-        'Activos y pasivos',
       ]);
     });
 
