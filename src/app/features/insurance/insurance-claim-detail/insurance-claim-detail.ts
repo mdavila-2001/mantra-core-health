@@ -31,7 +31,6 @@ import { ViewStateHost } from '../../../shared/components/organisms/view-state-h
 import { currencySuffix, formatAmount, formatMoney } from '../money-format';
 import { displayCurrency } from '../../../core/money/display-currency';
 import { InsuranceContactChannels } from './insurance-contact-channels/insurance-contact-channels';
-import { displayCurrency } from '../../../core/money/display-currency';
 
 /**
  * Detalle de una solicitud de seguro — `administration/insurance-claims/:claimId`.
@@ -95,13 +94,6 @@ import { displayCurrency } from '../../../core/money/display-currency';
 })
 export class InsuranceClaimDetail {
 
-  /**
-   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
-   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
-   */
-  protected moneda(code?: string | null): string {
-    return displayCurrency(code);
-  }
   private readonly insurance = inject(InsuranceClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);

@@ -40,7 +40,6 @@ import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-expo
 import { formatKpiAmount } from '../money-format';
 import { displayCurrency } from '../../../core/money/display-currency';
 import { MonthlyTrendChart } from './monthly-trend-chart/monthly-trend-chart';
-import { displayCurrency } from '../../../core/money/display-currency';
 
 /** Las cinco ventanas del filtro de periodo. `'all'` envía un `startDate` muy anterior. */
 type RangeOption = '30d' | '90d' | '180d' | '1y' | 'all';
@@ -144,13 +143,6 @@ interface FilaDeExportacion {
 })
 export class InsuranceAnalytics {
 
-  /**
-   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
-   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
-   */
-  protected moneda(code?: string | null): string {
-    return displayCurrency(code);
-  }
   private readonly analytics = inject(InsuranceAnalyticsClient);
   private readonly insurance = inject(InsuranceClient);
   private readonly csv = inject(CsvExportService);
