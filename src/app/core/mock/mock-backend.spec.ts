@@ -99,12 +99,16 @@ describe('backend simulado', () => {
         isDefault: boolean;
       }[];
     };
+    // Los cinco códigos, en su orden y con el primero por defecto, son los del
+    // API. El rótulo es la designación en castellano que el API sirve
+    // (`terminology-designations.es.ts`): la maqueta ya no repite el nombre en
+    // inglés del sistema de codificación.
     const opcionesCanonicas = [
-      ['CREDENTIAL_TYPE_DEGREE', 'Academic degree credential'],
-      ['CREDENTIAL_TYPE_DIPLOMA', 'Diploma course credential'],
-      ['CREDENTIAL_TYPE_MASTER', "Master's degree credential"],
-      ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorate degree credential'],
-      ['CREDENTIAL_TYPE_SPECIALTY', 'Specialty degree credential'],
+      ['CREDENTIAL_TYPE_DEGREE', 'Título universitario'],
+      ['CREDENTIAL_TYPE_DIPLOMA', 'Diplomado'],
+      ['CREDENTIAL_TYPE_MASTER', 'Maestría'],
+      ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorado'],
+      ['CREDENTIAL_TYPE_SPECIALTY', 'Título de especialidad'],
     ] as const;
 
     expect(respuesta.options).toEqual(
