@@ -1,11 +1,21 @@
+<!-- El título dice «Contabilidad · vista contable» desde el 2026-09-19: esta
+     pantalla dejó de ser la portada del módulo —ahora lo es el resumen llano—
+     y dos pantallas con el mismo nombre exacto no se distinguen en una pestaña
+     del navegador ni en el historial. El prefijo se mantiene porque el nombre
+     de la sección sigue siendo el de la lista del cliente. -->
 <app-page-header
-  title="Contabilidad"
+  title="Contabilidad · vista contable"
   subtitle="Cómo va el ejercicio, qué documentos están frenados y qué falta cobrar."
 >
-  <!-- El título sigue siendo «Contabilidad»: es uno de los nombres exactos de
-       la lista del cliente, y una sección que en el menú se llama de una forma
-       y en su pantalla de otra le agrega una duda a quien acaba de tocar el
-       renglón. Lo que cambió es qué se muestra primero. -->
+  <a
+    app-button
+    page-actions
+    variant="outline"
+    routerLink="/administration/accounting"
+    data-testid="volver-al-resumen"
+  >
+    Volver al resumen
+  </a>
   <a
     app-button
     page-actions

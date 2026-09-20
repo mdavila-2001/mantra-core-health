@@ -8,7 +8,9 @@ import { entrar, estable, irA } from './support/sesion';
  *
  * ## Qué cubre
  *
- * El cockpit (`/administration/accounting`) lee 9 endpoints reales desde el
+ * El cockpit (`/administration/accounting/cockpit` desde el 2026-09-19, que es
+ * cuando la raíz del módulo pasó a ser el resumen llano) lee 9 endpoints reales
+ * desde el
  * PR #403; esta suite lo verifica contra la API viva, no contra el
  * interceptor mock: (a) datos sembrados por API, (b) la tarjeta del ejercicio
  * sin ejercicio fiscal, (c) el 403 de un paciente por los GET
@@ -19,7 +21,7 @@ import { entrar, estable, irA } from './support/sesion';
  * (`playwright.config.ts:43`), no la API.
  */
 
-const RUTA_COCKPIT = '/administration/accounting';
+const RUTA_COCKPIT = '/administration/accounting/cockpit';
 const ANCHOS = [
   { nombre: '390x844 (móvil)', width: 390, height: 844 },
   { nombre: '1440x900 (escritorio)', width: 1440, height: 900 },

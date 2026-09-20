@@ -10,10 +10,9 @@
       "componente": "Dashboard",
       "apis": [
         "ClinicalClient",
-        "IdentityClient",
         "ProfilesClient",
-        "PublicClient",
-        "SchedulingClient"
+        "SchedulingClient",
+        "TerminologyClient"
       ],
       "estado": "conectada con deuda",
       "parametrizada": false
@@ -49,8 +48,11 @@
       "roles": [],
       "rolesExclusivos": false,
       "componente": "DirectoriesOverview",
-      "apis": [],
-      "estado": "presentacional",
+      "apis": [
+        "DiagnosticUnitsClient",
+        "PublicDirectoryClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -153,7 +155,6 @@
       "rolesExclusivos": false,
       "componente": "Agenda",
       "apis": [
-        "MedicalOrganizationClient",
         "ProfilesClient",
         "SchedulingClient",
         "TerminologyClient"
@@ -172,6 +173,7 @@
       "rolesExclusivos": false,
       "componente": "ClinicalRecord",
       "apis": [
+        "AccountingClient",
         "AuthzClient",
         "ChartCarePlansClient",
         "ChartDocumentsClient",
@@ -184,6 +186,7 @@
         "PrescriptionFavoritesClient",
         "ProceduresClient",
         "ProfilesClient",
+        "QuotationsClient",
         "SystemContextClient",
         "TerminologyClient"
       ],
@@ -298,9 +301,10 @@
       "componente": "FormBuilder",
       "apis": [
         "ChartTemplatesClient",
-        "FormsClient"
+        "FormsClient",
+        "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -671,27 +675,11 @@
         "PRACTITIONER"
       ],
       "rolesExclusivos": false,
-      "componente": "Cockpit",
+      "componente": "Resumen",
       "apis": [
         "AccountingClient"
       ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/assets-liabilities",
-      "etiqueta": "Activos y pasivos",
-      "grupo": "Facturación",
-      "roles": [
-        "PRACTITIONER"
-      ],
-      "rolesExclusivos": false,
-      "componente": "AssetsLiabilities",
-      "apis": [
-        "AccountingClient",
-        "AssetsLiabilitiesClient"
-      ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -718,6 +706,7 @@
         "CommunityClient",
         "FilesClient",
         "IdentityClient",
+        "InsurancePortabilityClient",
         "PracticeSitesClient",
         "ProfilesClient",
         "TerminologyClient"
@@ -736,7 +725,7 @@
         "SchedulingClient",
         "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -847,6 +836,7 @@
       "rolesExclusivos": false,
       "componente": "PharmacyOrders",
       "apis": [
+        "NotificationsClient",
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
@@ -883,7 +873,7 @@
     },
     {
       "ruta": "/administration/my-practice",
-      "etiqueta": "Mi consultorio propio",
+      "etiqueta": "Mis organizaciones",
       "grupo": "Administración",
       "roles": [
         "PRACTITIONER"
@@ -952,6 +942,37 @@
   ],
   "hijas": [
     {
+      "ruta": "/administration/accounting/assets-liabilities",
+      "seccion": "Contabilidad",
+      "roles": [
+        "SECURITY_ADMIN",
+        "ACCOUNTING_APPROVER",
+        "PRACTITIONER"
+      ],
+      "componente": "AssetsLiabilities",
+      "apis": [
+        "AccountingClient",
+        "AssetsLiabilitiesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/accounting/cockpit",
+      "seccion": "Contabilidad",
+      "roles": [
+        "SECURITY_ADMIN",
+        "ACCOUNTING_APPROVER",
+        "PRACTITIONER"
+      ],
+      "componente": "Cockpit",
+      "apis": [
+        "AccountingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/accounting/libros",
       "seccion": "Contabilidad",
       "roles": [
@@ -963,7 +984,7 @@
       "apis": [
         "AccountingClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -2091,6 +2112,7 @@
       ],
       "componente": "PatientChart",
       "apis": [
+        "AccountingClient",
         "ChartCarePlansClient",
         "ChartDocumentsClient",
         "ChartNotesClient",
@@ -2119,6 +2141,7 @@
       "apis": [
         "ClinicalClient",
         "ProfilesClient",
+        "QuotationsClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -2222,6 +2245,7 @@
       ],
       "componente": "OrderDetail",
       "apis": [
+        "NotificationsClient",
         "PharmacyOrdersClient"
       ],
       "estado": "conectada",
@@ -2410,7 +2434,6 @@
       ],
       "componente": "AgendaCreate",
       "apis": [
-        "MedicalOrganizationClient",
         "SchedulingClient"
       ],
       "estado": "conectada",
@@ -2426,7 +2449,6 @@
       ],
       "componente": "AgendaCreate",
       "apis": [
-        "MedicalOrganizationClient",
         "SchedulingClient"
       ],
       "estado": "conectada",

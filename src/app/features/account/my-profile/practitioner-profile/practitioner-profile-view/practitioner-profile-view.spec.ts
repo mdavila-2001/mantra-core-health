@@ -116,6 +116,8 @@ const PERFIL: PerfilProfesionalVisible = {
   // Sin datos personales por defecto: es la ficha de un colega, que es lo que
   // miran casi todas estas pruebas. Las que hablan del bloque lo declaran.
   datosPersonales: null,
+  // Y sin facturación, por lo mismo: el NIT de un colega no es de quien mira.
+  facturacion: null,
   actividadActual: [
     afiliacion({ id: 'af-2', organizacion: 'Sede Central Sopocachi', hasta: null, actual: true }),
   ],
@@ -297,7 +299,10 @@ describe('PractitionerProfileView', () => {
     // del paciente —una tarjeta con pestañas— y sus pestañas son los pasos de
     // su propio registro. La vista previa del perfil público salió antes
     // (CORR-10) y no vuelve por esta puerta.
-    const host = montar(PERFIL, true);
+    // Con `facturacion` declarada: es la ficha PROPIA, y esa pestaña sólo
+    // existe ahí. El fixture base la deja en `null` porque casi todas estas
+    // pruebas miran la ficha de un colega.
+    const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
 
     const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
       (boton) => boton.textContent?.trim() ?? '',
@@ -747,7 +752,10 @@ describe('PractitionerProfileView', () => {
     });
 
     it('y no se repite: una sola lista de matrículas, sin sub-pestañas', () => {
-      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+      const host = montar(
+        { ...PERFIL, datosPersonales: DATOS, facturacion: { nit: '', razonSocial: '' } },
+        true,
+      );
       // Sin abrirla no probaría nada: el panel de una pestaña inactiva no se
       // renderiza, así que sus sub-pestañas tampoco están en el DOM.
       seleccionarPestana(host, 'Credenciales');
@@ -978,6 +986,63 @@ describe('PractitionerProfileView', () => {
       const host = montar(PERFIL, false);
 
       expect(host.querySelector('[data-testid="perfil-foto"]')).toBeNull();
+    });
+  });
+
+  /**
+   * Facturación (propietario, 19/09/2026).
+   *
+   * El médico emite comprobantes y la ficha no decía a nombre de quién salen.
+   * Los dos datos van en un recuadro propio, no en la lista `dt`/`dd`: es lo
+   * que se copia en una factura, y se consulta junto.
+   */
+  describe('el recuadro de facturación', () => {
+    const FACTURA = { nit: '8812345011', razonSocial: 'Consultorio Dra. Rojas S.R.L.' };
+
+    it('en la ficha propia muestra el NIT y a nombre de quién factura', () => {
+      const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent?.trim()).toBe(
+        '8812345011',
+      );
+      expect(
+        host.querySelector('[data-testid="perfil-factura-titular"]')?.textContent?.trim(),
+      ).toBe('Consultorio Dra. Rojas S.R.L.');
+    });
+
+    it('los dos datos van en un recuadro propio, separado de la lista de datos', () => {
+      // Si mañana alguien los devuelve a la lista `dt`/`dd` de la ficha, esto
+      // se pone rojo: el pedido era justamente que fueran un recuadro aparte.
+      const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
+      seleccionarPestana(host, 'Facturación');
+      const recuadro = host.querySelector('[data-testid="perfil-factura-recuadro"]');
+
+      expect(recuadro).not.toBeNull();
+      expect(recuadro?.querySelector('[data-testid="perfil-factura-nit"]')).not.toBeNull();
+      expect(recuadro?.querySelector('[data-testid="perfil-factura-titular"]')).not.toBeNull();
+      expect(recuadro?.closest('dl')).toBeNull();
+    });
+
+    it('sin NIT dice dónde cargarlo, en vez de dejar el hueco', () => {
+      const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent).toContain(
+        'Sin registrar',
+      );
+      expect(host.querySelector('[data-testid="perfil-factura-falta"]')?.textContent).toContain(
+        'Editar tu info',
+      );
+    });
+
+    it('en la ficha de OTRO no existe ni la pestaña: su NIT no es de quien mira', () => {
+      const host = montar({ ...PERFIL, facturacion: null }, false);
+      const rotulos = [...host.querySelectorAll('[role="tab"]')].map((b) => b.textContent?.trim());
+
+      expect(rotulos).not.toContain('Facturación');
+      expect(host.querySelector('[data-testid="perfil-facturacion"]')).toBeNull();
+      expect(host.textContent).not.toContain('8812345011');
     });
   });
 });

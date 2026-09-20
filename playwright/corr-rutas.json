@@ -192,8 +192,12 @@
       "nombre": "administration_accounting"
     },
     {
-      "ruta": "/assets-liabilities",
-      "nombre": "assets-liabilities"
+      "ruta": "/administration/accounting/cockpit",
+      "nombre": "administration_accounting_cockpit"
+    },
+    {
+      "ruta": "/administration/accounting/assets-liabilities",
+      "nombre": "administration_accounting_assets-liabilities"
     },
     {
       "ruta": "/my-account",

@@ -110,7 +110,7 @@ describe('buildAccessTree', () => {
 
   /**
    * Pedido del 19/09/2026 · la zona «Administración» del médico. Salen del
-   * árbol, no del registro: la ruta sigue abriendo —«Mi consultorio propio» se
+   * árbol, no del registro: la ruta sigue abriendo —«Mis organizaciones» se
    * llega desde «Mi perfil»—.
    */
   it.each([

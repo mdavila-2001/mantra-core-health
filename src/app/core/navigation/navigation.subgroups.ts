@@ -274,7 +274,9 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Facturación',
     icon: 'billing',
     // Lo que se cobra y cómo se asienta.
-    paths: ['billing', 'administration/accounting', 'assets-liabilities'],
+    // «Activos y pasivos» salió de acá el 2026-09-19: dejó de ser sección y
+    // pasó a ser un bloque dentro de Contabilidad (ver `navigation.map.ts`).
+    paths: ['billing', 'administration/accounting'],
   },
 
   /* -- Mi cuenta ---------------------------------------------------------- */

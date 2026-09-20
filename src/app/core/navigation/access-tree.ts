@@ -121,7 +121,7 @@ export interface AccessArea {
  * **Cuatro de «Administración»** (19/09/2026) — `administration/my-practice`,
  * `administration/pharmacy-orders`, `administration/pharmacy-campaigns` y
  * `administration/pharmacy-profile`. Pedido del propietario mirando la zona del
- * médico. «Mi consultorio propio» se abre desde «Mi perfil», que es donde
+ * médico. «Mis organizaciones» se abre desde «Mi perfil», que es donde
  * alguien va a buscar «¿dónde atiendo?»; las tres de farmacia son del mostrador
  * de una farmacia, no del consultorio, y quien lo atiende las sigue teniendo en
  * su menú lateral. Ninguna ruta se cierra: esto decide sólo dónde no se ofrecen.

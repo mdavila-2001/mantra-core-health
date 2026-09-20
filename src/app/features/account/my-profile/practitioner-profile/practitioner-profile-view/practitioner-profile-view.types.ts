@@ -95,6 +95,21 @@ export interface ActividadVisible {
   readonly valor: number;
 }
 
+/**
+ * A nombre de quién factura el profesional.
+ *
+ * Los dos campos van juntos porque son **un solo hecho**: un NIT sin razón
+ * social no dice a nombre de quién sale el comprobante, y una razón social sin
+ * NIT no sirve para emitirlo. Vacío es «no lo declaró», y la ficha lo dice con
+ * palabras en vez de dejar el hueco.
+ */
+export interface FacturacionVisible {
+  /** El NIT, tal como lo declaró. Vacío si no lo cargó. */
+  readonly nit: string;
+  /** A nombre de quién sale el comprobante. Vacío si no lo cargó. */
+  readonly razonSocial: string;
+}
+
 /** El estado de habilitación, con su sello ya decidido. */
 export interface VerificacionVisible {
   readonly label: string;
@@ -143,6 +158,14 @@ export interface PerfilProfesionalVisible {
    * mostrando lo que siempre mostró.
    */
   readonly datosPersonales: DatosPersonalesVisibles | null;
+  /**
+   * Sus datos de facturación, **sólo en la ficha propia**.
+   *
+   * `null` cuando se mira la ficha de otro profesional, por la misma razón que
+   * {@link datosPersonales}: el NIT de alguien no es de quien lo mira. La ficha
+   * de la guía nunca lo mostró y no empieza a mostrarlo ahora.
+   */
+  readonly facturacion: FacturacionVisible | null;
   readonly desde: Date | null;
 }
 

@@ -163,12 +163,49 @@ const asientos = new Coleccion<AsientoSimulado>([
   asiento(22, -4, 'Honorarios de anestesista externo', '5.4', '2.3', '2100.00', true, FLUJO.PENDING_REVIEW),
   asiento(23, -6, 'Compra de sillas para sala de espera', '1.4', '2.3', '3400.00', true, FLUJO.APPROVED),
   asiento(24, -12, 'Consultas de la semana (anulado por error de cuenta)', '1.1', '4.1', '1900.00', true, FLUJO.REVERSED),
+  // ---- El movimiento de los últimos días, día por día ----------------------
+  // El resumen llano abre con «cuánto entró hoy, esta semana y este mes», y
+  // hasta el 20/09/2026 la maqueta no tenía con qué contestar las dos
+  // primeras: el asiento posteado más reciente era de hace dos días, y el de
+  // hoy era un borrador —que no cuenta, porque un documento sin postear no
+  // existe para el mayor—. Una pantalla que abre en «Hoy: Bs 0,00» parece
+  // rota aunque esté bien.
+  //
+  // Son cobros y gastos de consultorio, del tamaño que tienen de verdad: la
+  // consulta del día, los insumos que se compran sueltos, un estudio. Van
+  // posteados porque ya ocurrieron.
+  asiento(25, 0, 'Consultas del día (efectivo)', '1.1', '4.1', '1450.00'),
+  asiento(26, 0, 'Guantes, jeringas y gasas', '5.2', '1.1', '180.00'),
+  asiento(27, -1, 'Consultas del día (efectivo)', '1.1', '4.1', '1250.00'),
+  asiento(28, -1, 'Ecografía Doppler', '1.1', '4.2', '480.00'),
+  asiento(29, -3, 'Consultas del día (efectivo)', '1.1', '4.1', '980.00'),
+  asiento(30, -4, 'Certificados de aptitud deportiva', '1.1', '4.3', '300.00'),
+  asiento(31, -5, 'Consultas del día (efectivo)', '1.1', '4.1', '1320.00'),
+  asiento(32, -6, 'Taxi de urgencia y cafetería del turno', '5.2', '1.1', '95.00'),
 ]);
 
-function saldoDe(accountId: string, hasta: string | null = null): { debit: number; credit: number } {
+/**
+ * Lo que movió una cuenta dentro de una ventana de fechas.
+ *
+ * `desde` existe desde el resumen llano de Contabilidad (20/09/2026): la
+ * pantalla pregunta «cuánto entró **hoy**, esta semana y este mes», y eso es
+ * el mismo estado de resultados pedido tres veces con tres ventanas. Sin
+ * `desde`, las tres respuestas eran la misma —todo el ejercicio acumulado— y
+ * «hoy» daba el total del año.
+ */
+function saldoDe(
+  accountId: string,
+  hasta: string | null = null,
+  desde: string | null = null,
+): { debit: number; credit: number } {
   let debit = 0;
   let credit = 0;
-  for (const a of asientos.filtrar((x) => x.statusConceptId === ESTADO['ST-COMPLETED'] && (hasta === null || x.transactionDate <= hasta))) {
+  for (const a of asientos.filtrar(
+    (x) =>
+      x.statusConceptId === ESTADO['ST-COMPLETED'] &&
+      (hasta === null || x.transactionDate <= hasta) &&
+      (desde === null || x.transactionDate >= desde),
+  )) {
     for (const l of a.lines) {
       if (l.accountId !== accountId) continue;
       if (l.directionConceptId === DIRECCION.DEBIT) debit += Number(l.amountBase);
@@ -1066,9 +1103,9 @@ export function registrarFinanzas(router: MockRouter): void {
     return { accountId, code: c.code, name: c.name, normalBalanceConceptId: c.normalBalanceConceptId, currencyConceptId: c.currencyConceptId, openingBalance: d(apertura), items, count: items.length, limit: 200, nextCursor: null };
   });
 
-  const lineas = (tipo: keyof typeof TIPO_CUENTA, hasta: string | null) =>
+  const lineas = (tipo: keyof typeof TIPO_CUENTA, hasta: string | null, desde: string | null = null) =>
     CUENTAS.filter((c) => c.accountTypeConceptId === TIPO_CUENTA[tipo] && c.parentAccountId !== null).map((c) => {
-      const { debit, credit } = saldoDe(c.id, hasta);
+      const { debit, credit } = saldoDe(c.id, hasta, desde);
       const monto = c.normalBalanceConceptId === SALDO.DEUDOR ? debit - credit : credit - debit;
       return { accountId: c.id, code: c.code, name: c.name, accountTypeConceptId: c.accountTypeConceptId, amount: d(monto) };
     });
@@ -1076,8 +1113,10 @@ export function registrarFinanzas(router: MockRouter): void {
 
   router.get('/accounting/income-statement', ({ query }) => {
     const hasta = texto(query, 'to');
-    const revenueItems = lineas('INGRESO', hasta);
-    const expenseItems = lineas('GASTO', hasta);
+    // `from` se honra: es lo que separa «hoy» de «este mes» en el resumen.
+    const desde = texto(query, 'from');
+    const revenueItems = lineas('INGRESO', hasta, desde);
+    const expenseItems = lineas('GASTO', hasta, desde);
     return { revenueItems, expenseItems, totalRevenue: d(total(revenueItems)), totalExpense: d(total(expenseItems)), netIncome: d(total(revenueItems) - total(expenseItems)), count: revenueItems.length + expenseItems.length, limit: 200, nextCursor: null, truncated: false };
   });
 

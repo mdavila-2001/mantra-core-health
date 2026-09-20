@@ -51,47 +51,6 @@
                   </span>
                 }
               </div>
-              <div class="historial__acciones-sede">
-                <!-- El QR va en todas: también se cobra en la clínica donde
-                     atiende sin ser dueño de la sede. -->
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="sede-qr"
-                  [attr.aria-label]="'QR bancario de ' + sede.name"
-                  (clicked)="abrirQrDeSede(sede)"
-                >
-                  QR bancario
-                </button>
-                <!-- Corregir sólo alcanza al propio: la sede de un hospital es
-                     de él, y lo que se tiene con él es una vinculación. -->
-                @if (sede.isOwnSite) {
-                  <button
-                    app-button
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    data-testid="sede-editar"
-                    [attr.aria-label]="'Corregir ' + sede.name"
-                    (clicked)="abrirEdicionDeSede(sede)"
-                  >
-                    Editar
-                  </button>
-                }
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="sede-quitar"
-                  [attr.aria-label]="etiquetaDeRetiro(sede)"
-                  (clicked)="quitarSede(sede)"
-                >
-                  Retirar
-                </button>
-              </div>
               <!-- Tres acciones por sede, las tres en ícono: con el texto
                    completo («Editar», «Retirar», «QR bancario») la fila se
                    partía en dos renglones en cuanto el nombre del hospital era
@@ -281,8 +240,8 @@
           </h3>
           @if (sedeEnEdicion()) {
             <p class="historial__intro" data-testid="sede-edicion-aviso">
-              Lo que dejes en blanco queda como está. Para cambiar la dirección,
-              escribila entera de nuevo.
+              Los campos vienen con lo que ya tenías cargado: corregí lo que haga
+              falta. Lo que dejes en blanco queda como está.
             </p>
           }
 
@@ -393,19 +352,8 @@
     </section>
     }
 
-    <!-- El QR bancario de una sede. Fuera del `@for` a propósito: montado
-         dentro habría uno por fila —cuatro `<dialog>` en el DOM para uno que se
-         abre— y cada uno pidiendo su imagen al abrirse la tarjeta. -->
-    @if (sedeConQrAbierto(); as sede) {
-      <app-site-bank-qr-dialog
-        [site]="sede"
-        (saved)="registrarQrDeSede(sede, $event)"
-        (closed)="cerrarQrDeSede()"
-      />
-    }
-
     <!-- El historial laboral. Se suprime entero cuando esta pantalla se monta
-         como «Mi consultorio propio» o como la pestaña «Dónde atiendo» del
+         como «Mis organizaciones» o como la pestaña «Dónde atiendo» del
          editor: allá la pregunta es dónde atiende hoy, no dónde ejerció antes. -->
     @if (muestraHistorial()) {
       @if (layout() === 'flat') {

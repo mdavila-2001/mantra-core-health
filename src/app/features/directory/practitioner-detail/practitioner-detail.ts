@@ -205,6 +205,9 @@ function convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
     // La ficha de otro profesional no muestra sus datos personales: el
     // documento y la fecha de nacimiento de un colega no son de quien mira.
     datosPersonales: null,
+    // Por lo mismo que `datosPersonales`: el NIT de un colega no es de quien
+    // mira su ficha en la guía.
+    facturacion: null,
     actividadActual: afiliaciones.actual,
     experienciaHistorica: afiliaciones.historica,
     desde: perfil.createdAt ?? null,

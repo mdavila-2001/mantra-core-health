@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import {
   CAMPO_DEL_ALTA_EN_PESTANA,
   CAMPOS_DEL_ALTA_SIN_PESTANA,
+  PESTANAS_DEL_EDITOR_MEDICO,
   PESTANAS_DEL_PERFIL_MEDICO,
+  PESTANA_EDITOR,
   PESTANA_MEDICO,
 } from './pestanas-del-perfil-medico';
 
@@ -74,19 +76,33 @@ describe('las pestañas de la ficha del médico', () => {
   it('los índices con nombre coinciden con el orden de la tira', () => {
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.personales]).toBe('Datos personales');
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.contacto]).toBe('Contacto');
+    expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.facturacion]).toBe('Facturación');
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.dondeAtiendo]).toBe('Dónde atiendo');
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria]).toBe('Trayectoria');
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales]).toBe('Credenciales');
     expect(PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.actividad]).toBe('Actividad');
   });
 
-  it('las dos primeras pestañas se llaman igual que las del paciente', async () => {
+  it('las tres primeras pestañas se llaman igual que las del paciente', async () => {
     // El pedido es que las dos fichas se lean igual. Donde el dato es el mismo,
-    // el rótulo tiene que ser el mismo: «Datos personales» y «Contacto» no
-    // pueden llamarse distinto de un lado y del otro.
-    const { PESTANAS_DEL_PERFIL } = await import('./pestanas-del-perfil');
+    // el rótulo tiene que ser el mismo: «Datos personales», «Contacto» y
+    // «Facturación» no pueden llamarse distinto de un lado y del otro, ni caer
+    // en otro lugar de la tira.
+    const { PESTANAS_DEL_PERFIL, PESTANA } = await import('./pestanas-del-perfil');
 
     expect(PESTANAS_DEL_PERFIL_MEDICO[0]).toBe(PESTANAS_DEL_PERFIL[0]);
     expect(PESTANAS_DEL_PERFIL_MEDICO[1]).toBe(PESTANAS_DEL_PERFIL[1]);
+    expect(PESTANAS_DEL_PERFIL_MEDICO[2]).toBe(PESTANAS_DEL_PERFIL[2]);
+    expect(PESTANA_MEDICO.facturacion).toBe(PESTANA.facturacion);
+  });
+
+  /**
+   * El editor tiene que ofrecer la pestaña, no sólo la ficha: el NIT no se
+   * pregunta en el alta, así que si el editor no lo pide no hay ningún lugar
+   * donde cargarlo.
+   */
+  it('el editor también pide la facturación, y sigue sin ofrecer «Actividad»', () => {
+    expect(PESTANAS_DEL_EDITOR_MEDICO[PESTANA_EDITOR.facturacion]).toBe('Facturación');
+    expect([...PESTANAS_DEL_EDITOR_MEDICO]).not.toContain('Actividad');
   });
 });
