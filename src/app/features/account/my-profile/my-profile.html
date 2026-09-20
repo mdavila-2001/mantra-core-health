@@ -441,7 +441,7 @@
                   <!-- Portabilidad de póliza y siniestralidad a 1 clic (subtarea 3.3):
                        siempre visible, tengas o no coberturas declaradas — el derecho
                        de portabilidad no depende de eso. -->
-                  <app-insurance-portability-card />
+                  <app-insurance-portability-card [coverages]="p.coverages" />
                 } @else {
                   <p class="mi-perfil__nota">Todavía no pudimos traer estos datos.</p>
                 }

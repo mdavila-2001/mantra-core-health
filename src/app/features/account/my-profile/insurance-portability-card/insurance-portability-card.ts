@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import type { OwnCoverage } from '../../../../core/data-access/profiles/profiles.types';
 import { PatientContextService } from '../../../../core/patient-context/patient-context.service';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
@@ -15,6 +16,17 @@ import { PortabilityExportDialog } from './portability-export-dialog/portability
  * Va al pie de la pestaña «Seguros y tutores» de `/my-account`, **siempre
  * visible** — el derecho de portabilidad existe aunque el titular no haya
  * declarado ninguna cobertura todavía.
+ *
+ * Dice de entrada **en qué estado están las coberturas** de quien mira: es
+ * la primera pregunta de alguien que está por llevarse su historial a otra
+ * aseguradora. No las vuelve a pedir a la API —`my-profile` ya las tiene
+ * cargadas y las baja por `coverages`—, y el resumen es una línea, no la
+ * lista: las tarjetas de cada cobertura ya están arriba, en la misma
+ * pestaña, y repetirlas acá sería ruido.
+ *
+ * El botón sigue apareciendo **con o sin coberturas**: el derecho de
+ * portabilidad no depende de haber declarado alguna, y el certificado de
+ * quien no tiene ninguna igual deja constancia de su historial.
  *
  * Exporta **siempre el perfil propio** del titular (`auth.patientProfileId()`),
  * nunca el de un dependiente elegido en `PatientContextService`: la
@@ -34,8 +46,37 @@ export class InsurancePortabilityCard {
   private readonly auth = inject(AuthService);
   private readonly patientContext = inject(PatientContextService);
 
+  /** Las coberturas declaradas del titular, tal como ya las cargó `my-profile`. */
+  readonly coverages = input<readonly OwnCoverage[]>([]);
+
   protected readonly ownPatientProfileId = this.auth.patientProfileId;
   protected readonly isActingForDependent = this.patientContext.isActingForDependent;
+
+  /**
+   * El estado de las coberturas en una línea.
+   *
+   * «Vigente» es `validityStatus === 'CURRENT'` y nada más: `UPCOMING`,
+   * `EXPIRED`, `INACTIVE` y `UNKNOWN` se cuentan como no vigentes, sin
+   * inventarles una categoría propia que la tarjeta no podría sostener.
+   */
+  protected readonly coverageSummary = computed(() => {
+    const total = this.coverages().length;
+    if (total === 0) return 'No tenés coberturas declaradas.';
+
+    const vigentes = this.coverages().filter(
+      (coverage) => coverage.validityStatus === 'CURRENT',
+    ).length;
+
+    if (vigentes === total) {
+      return total === 1 ? '1 cobertura vigente.' : `${total} coberturas vigentes.`;
+    }
+    if (vigentes === 0) {
+      return total === 1
+        ? '1 cobertura declarada, ninguna vigente.'
+        : `${total} coberturas declaradas, ninguna vigente.`;
+    }
+    return `${vigentes} de ${total} coberturas vigentes.`;
+  });
 
   protected readonly dialogOpen = signal(false);
 
