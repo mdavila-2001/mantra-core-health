@@ -196,8 +196,8 @@
       "nombre": "administration_accounting_cockpit"
     },
     {
-      "ruta": "/administration/accounting/activos-y-pasivos",
-      "nombre": "administration_accounting_activos-y-pasivos"
+      "ruta": "/administration/accounting/assets-liabilities",
+      "nombre": "administration_accounting_assets-liabilities"
     },
     {
       "ruta": "/my-account",

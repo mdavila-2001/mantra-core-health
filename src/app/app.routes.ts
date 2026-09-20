@@ -344,7 +344,7 @@ const PANTALLAS_HIJAS: Routes = [
     // pero los endpoints de FT-26 son de `PRACTITIONER` puro y un admin
     // llegaría a una pantalla que sólo sabe devolverle 403. Se conserva
     // exactamente la autorización que tenía como sección propia.
-    path: 'administration/accounting/activos-y-pasivos',
+    path: 'administration/accounting/assets-liabilities',
     title: `${APP_TITLE} - Activos y pasivos`,
     canActivate: [seccionRolesGuard],
     data: { [ROLES_ROUTE_DATA]: ['PRACTITIONER'] },
@@ -1087,7 +1087,7 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   // Activos y pasivos dejó de ser sección propia el 2026-09-19 y pasó a
   // colgar de Contabilidad. La dirección vieja está en historiales y en
   // favoritos, así que redirige en vez de dar 404.
-  'assets-liabilities': '/administration/accounting/activos-y-pasivos',
+  'assets-liabilities': '/administration/accounting/assets-liabilities',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
   'identidad/verificar': '/my-account/identity',

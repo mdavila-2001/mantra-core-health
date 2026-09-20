@@ -1040,7 +1040,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
   // que tenés y lo que debés»—, que lo explica en castellano y lleva a la
   // pantalla de alta.
   //
-  // La pantalla sigue entera en `administration/accounting/activos-y-pasivos`
+  // La pantalla sigue entera en `administration/accounting/assets-liabilities`
   // (`PANTALLAS_HIJAS`), con los mismos roles que tenía acá, y la dirección
   // vieja `assets-liabilities` redirige.
 

@@ -167,10 +167,10 @@ test.describe('Contabilidad en cristiano', () => {
     await expect(menu.getByRole('link', { name: 'Contabilidad' })).toBeVisible();
 
     // Y se llega desde acá.
-    await page.getByTestId('ir-a-activos-y-pasivos').click();
-    await expect(page).toHaveURL(/\/administration\/accounting\/activos-y-pasivos$/);
+    await page.getByTestId('go-to-assets-liabilities').click();
+    await expect(page).toHaveURL(/\/administration\/accounting\/assets-liabilities$/);
     await expect(page.getByRole('heading', { name: 'Activos y pasivos', level: 1 })).toBeVisible();
-    await capturar(page, '02-activos-y-pasivos-dentro');
+    await capturar(page, '02-assets-liabilities-dentro');
 
     /* ---- nada se borró: el cockpit y los libros siguen ahí ----------------- */
 
