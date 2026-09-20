@@ -722,6 +722,11 @@ export class WorkHistory implements OnInit {
     this.limpiarSede();
     this.sedeEnEdicion.set(sede);
     this.nombreDeSedeNueva.set(sede.name);
+    // La dirección arranca con la que la sede ya tiene. Abrir el formulario en
+    // blanco y pedir «escribila entera de nuevo» era una regresión de la
+    // reconciliación del 19/09/2026: corregir el nombre obligaba a retipear la
+    // calle, y quien no lo hacía la dejaba como estaba sin saberlo.
+    this.direccionDeSede.set(sede.addressText ?? '');
     if (sede.latitude !== null && sede.longitude !== null) {
       this.puntoDeSede.set({ lat: sede.latitude, lng: sede.longitude });
     }
@@ -894,25 +899,6 @@ export class WorkHistory implements OnInit {
 
   protected cerrarQrDeSede(): void {
     this.sedeConQrAbiertoId.set(null);
-  }
-
-  /**
-   * Anota el QR recién guardado en la sede que lo recibió.
-   *
-   * Se actualiza la lista en memoria en vez de releerla del servidor: la única
-   * consecuencia visible es que el botón de esa fila deja de estar en ámbar, y
-   * pedir las cuatro sedes otra vez para enterarse de eso es una vuelta
-   * completa por un dato que ya tenemos en la mano.
-   *
-   * @param sede - La sede que recibió el QR.
-   * @param fileId - El archivo que quedó como su QR.
-   */
-  protected registrarQrDeSede(sede: PracticeSite, fileId: string): void {
-    this.sedes.update((sedes) =>
-      sedes.map((actual) =>
-        actual.id === sede.id ? { ...actual, bankQrFileId: fileId } : actual,
-      ),
-    );
   }
 
   /**

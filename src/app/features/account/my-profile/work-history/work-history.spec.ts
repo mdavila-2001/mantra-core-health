@@ -1020,15 +1020,21 @@ describe('WorkHistory — las acciones de cada sede (13/09/2026)', () => {
     http.expectOne(SITIOS).flush({ items: [sinQr()], count: 1 });
     fixture.detectChanges();
 
-    (
-      api(fixture)['registrarQrDeSede'] as unknown as (s: unknown, f: string) => void
-    )(sinQr(), 'file-nuevo');
+    const componente = api(fixture);
+    (componente['abrirQrDeSede'] as unknown as (s: unknown) => void)(sinQr());
+    (componente['qrGuardado'] as unknown as (f: string) => void)('file-nuevo');
     fixture.detectChanges();
 
     expect(filas(fixture)[0]!.querySelector('[data-testid="sede-qr"]')!.classList).not.toContain(
       'historial__qr--sin-configurar',
     );
-    // Y no se volvió a pedir nada.
+    // Y no se volvió a pedir la lista de sedes.
+    expect(http.match(SITIOS).length).toBe(0);
+    // El modal, que sigue abierto, sí baja la imagen nueva: es el contenido del
+    // archivo, no la lista.
+    http
+      .expectOne('/common/files/file-nuevo/content')
+      .flush(new Blob(['qr'], { type: 'image/png' }));
     http.verify();
   });
 });
@@ -1103,6 +1109,9 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     expect(leer<string>(componente, 'nombreDeSedeNueva')).toBe('Consultorio Dra. Pérez');
 
     componente['nombreDeSedeNueva'].set('Consultorio Sur');
+    // Vaciarla a propósito: el formulario ya no abre en blanco, así que «en
+    // blanco» es una decisión de quien edita y no el estado inicial.
+    componente['direccionDeSede'].set('');
     componente['guardarSede']();
 
     const req = http.expectOne(

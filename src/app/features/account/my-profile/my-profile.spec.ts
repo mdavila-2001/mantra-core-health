@@ -1067,14 +1067,18 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
  *
  * «Mi consultorio propio» y «Organización médica» vivían al pie de la tarjeta
  * «Tu acceso». La tarjeta se fue el 13/09/2026 y ellos se quedaron, ahora bajo
- * el perfil: son los únicos accesos a esas dos pantallas, y borrarlos con la
- * tarjeta habría convertido una limpieza visual en una pérdida de acceso.
+ * el perfil, porque eran los únicos accesos a esas dos pantallas.
+ *
+ * El 19/09/2026 el propietario sacó «Organización médica» del perfil: el médico
+ * administra dónde atiende él, y la organización es de la organización. Queda
+ * uno, y el spec lo fija como lista exacta para que reaparecer sea un cambio
+ * deliberado y no el resultado de otra reconciliación.
  *
  * Describe propio porque `esProfesional()` decide en el constructor qué resumen
  * se pide: la sesión tiene que estar abierta antes de crear la pantalla.
  */
 describe('MyProfile · los accesos de quien atiende', () => {
-  it('el profesional conserva «Mi consultorio propio» y «Organización médica»', () => {
+  it('al profesional le queda «Mi consultorio propio», y sólo ése', () => {
     TestBed.configureTestingModule({
       imports: [MyProfile],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
@@ -1105,14 +1109,8 @@ describe('MyProfile · los accesos de quien atiende', () => {
         'nav[aria-label="Dónde ejercés"] a',
       ),
     ];
-    expect(destinos.map((a) => a.textContent?.trim())).toEqual([
-      'Mi consultorio propio',
-      'Organización médica',
-    ]);
-    expect(destinos.map((a) => a.getAttribute('href'))).toEqual([
-      '/administration/my-practice',
-      '/administration/medical-organization',
-    ]);
+    expect(destinos.map((a) => a.textContent?.trim())).toEqual(['Mi consultorio propio']);
+    expect(destinos.map((a) => a.getAttribute('href'))).toEqual(['/administration/my-practice']);
     http.verify();
   });
 });

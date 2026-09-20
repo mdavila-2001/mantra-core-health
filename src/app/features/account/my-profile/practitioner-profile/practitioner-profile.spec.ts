@@ -286,6 +286,30 @@ describe('PractitionerProfile', () => {
       expect(visible().datosPersonales?.departamento).toBe('');
     });
 
+    /**
+     * Facturación (propietario, 19/09/2026): el contenedor propio es el único
+     * que la arma. El de la guía la deja en `null` — el NIT de un colega no es
+     * de quien mira su ficha.
+     */
+    it('lleva el NIT y la razón social del contrato a la ficha propia', () => {
+      montar();
+      responder({ taxId: '5414404011', taxHolderName: 'Consultorio Dra. Rojas S.R.L.' });
+
+      expect(visible().facturacion).toEqual({
+        nit: '5414404011',
+        razonSocial: 'Consultorio Dra. Rojas S.R.L.',
+      });
+    });
+
+    it('sin facturación declarada los dos quedan vacíos, no ausentes', () => {
+      // Vacío y no `null`: `null` es «esta ficha no es tuya», que es otra cosa
+      // que la ficha dibuja distinto (ni siquiera muestra la pestaña).
+      montar();
+      responder({});
+
+      expect(visible().facturacion).toEqual({ nit: '', razonSocial: '' });
+    });
+
     it('un perfil sin departamento declarado no mete «undefined» en la petición', () => {
       montar();
       http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
