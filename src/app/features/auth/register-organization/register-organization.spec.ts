@@ -185,11 +185,13 @@ describe('RegisterOrganization', () => {
       // el valor explícito de acá siempre gana sobre el default que dispara
       // la suscripción al cambiar de país (ver `acomodarPaisYTipoSocietario`).
       timeZone: extra.timeZone ?? 'America/La_Paz',
-      name: 'Ana',
-      middleName: extra.middleName ?? '',
-      thirdName: extra.thirdName ?? '',
-      lastName: 'Paz',
-      motherLastName: extra.motherLastName ?? '',
+      ownerName: {
+        name: 'Ana',
+        middleName: extra.middleName ?? '',
+        thirdName: extra.thirdName ?? '',
+        lastName: 'Paz',
+        motherLastName: extra.motherLastName ?? '',
+      },
       email: 'admin@andina.test',
       password: 'secreto12',
       constitutionFileId: extra.constitutionFileId ?? DOCUMENTOS_DE_PRUEBA.constitutionFileId,
@@ -738,7 +740,7 @@ describe('RegisterOrganization', () => {
       completar();
       fixture.detectChanges();
       avanzarHasta('Directorio ejecutivo');
-      avanzarHasta('Tu cuenta (1 de 2)');
+      avanzarHasta('Tu cuenta');
       fixture.debugElement
         .query(By.css('[data-testid="paginated-form-atras"]'))
         .nativeElement.click();
@@ -908,6 +910,110 @@ describe('RegisterOrganization', () => {
     });
   });
 
+  describe('nombre en cinco partes del owner', () => {
+    it('«Tu cuenta» es UNA sola página y trae las cinco partes del nombre juntas', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Tu cuenta');
+
+      // Era la sección que el motor partía en dos, con el apellido materno
+      // huérfano al principio de la segunda página. Las cinco casillas —y el
+      // correo y la contraseña— tienen que verse a la vez.
+      for (const testId of [
+        'registro-organizacion-owner-nombre',
+        'registro-organizacion-owner-segundo-nombre',
+        'registro-organizacion-owner-tercer-nombre',
+        'registro-organizacion-owner-apellido-paterno',
+        'registro-organizacion-owner-apellido-materno',
+        'registro-organizacion-owner-correo',
+        'registro-organizacion-owner-password',
+      ]) {
+        expect(
+          fixture.nativeElement.querySelector(`[data-testid="${testId}"]`),
+        ).not.toBeNull();
+      }
+
+      // Y el título no lleva numeración: «(1 de 2)» era justamente el síntoma.
+      const titulo = fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent;
+      expect(titulo).toContain('Tu cuenta');
+      expect(titulo).not.toContain('de 2');
+    });
+
+    it('los tres nombres ocupan un tercio y los dos apellidos una mitad', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Tu cuenta');
+
+      const grilla: HTMLElement = fixture.nativeElement.querySelector(
+        '[data-testid="registro-organizacion-owner-nombres"]',
+      );
+      expect(grilla).not.toBeNull();
+      expect(grilla.querySelectorAll('.register-org__nombre--tercio').length).toBe(3);
+      expect(grilla.querySelectorAll('.register-org__nombre--mitad').length).toBe(2);
+    });
+
+    it('con los nombres vacíos, «Continuar» no avanza y las cinco casillas quedan marcadas', () => {
+      fixture.detectChanges();
+      completar();
+      fixture.detectChanges();
+      avanzarHasta('Tu cuenta');
+
+      const grupo = component.form.controls.ownerName;
+      grupo.reset({ name: '', middleName: '', thirdName: '', lastName: '', motherLastName: '' });
+      fixture.detectChanges();
+
+      fixture.nativeElement
+        .querySelector('[data-testid="paginated-form-continuar"]')
+        ?.click();
+      fixture.detectChanges();
+
+      // El motor sólo marca el GRUPO; `alRechazarPagina` es quien alcanza a
+      // sus cinco hijos — sin eso las casillas vacías no se pintarían.
+      expect(grupo.controls.name.touched).toBe(true);
+      expect(grupo.controls.motherLastName.touched).toBe(true);
+      expect(
+        fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent,
+      ).toContain('Tu cuenta');
+    });
+
+    it('el owner compone su nombre en las claves del contrato, sin fullName', () => {
+      fixture.detectChanges();
+      completar({ middleName: 'María', thirdName: 'José', motherLastName: 'Quiroga' });
+
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-organization');
+
+      expect(req.request.body.owner.name).toBe('Ana');
+      expect(req.request.body.owner.lastName).toBe('Paz');
+      // El backend no tiene columna de tercer nombre: se pliega en `middleName`.
+      expect(req.request.body.owner.middleName).toBe('María José');
+      expect(req.request.body.owner.motherLastName).toBe('Quiroga');
+      // El owner viaja en partes, no compuesto: `fullName` es de los contactos
+      // (representante legal y gerencias), no de la cuenta.
+      expect('fullName' in req.request.body.owner).toBe(false);
+      req.flush(RESPUESTA);
+    });
+
+    it('el tope de 200 caracteres del nombre compuesto alcanza también al owner', () => {
+      fixture.detectChanges();
+      completar();
+
+      const grupo = component.form.controls.ownerName;
+      grupo.controls.name.setValue('A'.repeat(60));
+      grupo.controls.middleName.setValue('B'.repeat(60));
+      grupo.controls.thirdName.setValue('C'.repeat(60));
+      grupo.controls.lastName.setValue('D'.repeat(60));
+
+      // Antes no había dónde ponerlo: eran cinco controles sueltos, y el tope
+      // depende de las cinco partes juntas. Como grupo, lo hereda de
+      // `grupoDeNombre()` igual que el representante legal.
+      expect(grupo.hasError('nombreCompletoLargo')).toBe(true);
+      expect(component.form.invalid).toBe(true);
+    });
+  });
+
   describe('tipo societario y país de constitución (subtarea 1.1)', () => {
     it('Bolivia es el país de constitución por defecto', () => {
       fixture.detectChanges();
@@ -1055,12 +1161,15 @@ describe('RegisterOrganization', () => {
       http.expectNone('/iam/auth/register-organization');
     });
 
-    it('AC-02 y AC-04: Bolivia (zona única) queda en 9 páginas, sin «Cómo se la identifica» y sin selector de zona', () => {
+    it('AC-02 y AC-04: Bolivia (zona única) queda en 8 páginas, sin «Cómo se la identifica» y sin selector de zona', () => {
       fixture.detectChanges();
       completar();
       fixture.detectChanges();
 
-      expect(totalDePaginas()).toBe(9);
+      // Ocho, no nueve: «Tu cuenta» dejó de partirse en dos cuando los cinco
+      // nombres del owner pasaron a viajar como un único campo (`ownerName`),
+      // que es lo que los deja en una sola pantalla con su reparto de anchos.
+      expect(totalDePaginas()).toBe(8);
       expect(titulosDeLosPasos().some((titulo) => titulo.includes('identifica'))).toBe(false);
 
       // «La empresa»: nombre, sigla, país, tipo societario — sin código ni
@@ -1105,7 +1214,9 @@ describe('RegisterOrganization', () => {
       component.form.controls.incorporationCountry.setValue('US');
       fixture.detectChanges();
 
-      expect(totalDePaginas()).toBe(10);
+      // Una más que Bolivia: el selector de zona horaria es el quinto campo
+      // de «Datos de la aseguradora», y el motor parte esa sección en dos.
+      expect(totalDePaginas()).toBe(9);
 
       avanzarHasta('Datos de la aseguradora');
       // `[data-testid]` va en el host `<app-select>`; el `<select>` nativo

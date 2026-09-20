@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 import { subirLosCincoDocumentos } from './helpers/documentos-legales';
+import { completarCuentaDelOwner } from './helpers/owner';
 import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
@@ -278,19 +279,60 @@ test.describe('alta pública de aseguradora — representante legal y gerencias 
     await completarGerencias(page);
 
     await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page.getByTestId('registro-organizacion-owner-nombre').fill('Ana');
-    await page.getByTestId('registro-organizacion-owner-apellido-paterno').fill('Paz');
-    await page.getByTestId('paginated-form-continuar').click();
-
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await page
-      .getByTestId('registro-organizacion-owner-correo')
-      .fill('con-representante@andina.test');
-    await page.getByTestId('registro-organizacion-owner-password').fill('secreto12');
-    await page.getByTestId('paginated-form-continuar').click();
+    await completarCuentaDelOwner(page, { email: 'con-representante@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-con-representante');
+  });
+
+  test('«Tu cuenta» trae los cinco nombres del owner en una sola página', async ({ page }) => {
+    await abrirElAlta(page);
+    await llegarARepresentanteLegal(page);
+    await completarRepresentanteLegal(page);
+    await completarGerencias(page);
+
+    await expect(page.locator('.paginated-form__titulo')).toHaveText('Tu cuenta');
+
+    // Las cinco partes del nombre, el correo y la contraseña, a la vez: era
+    // la sección que el motor partía en dos por el tope de cuatro campos, y
+    // dejaba el apellido materno solo al principio de la segunda página.
+    for (const testId of [
+      'registro-organizacion-owner-nombre',
+      'registro-organizacion-owner-segundo-nombre',
+      'registro-organizacion-owner-tercer-nombre',
+      'registro-organizacion-owner-apellido-paterno',
+      'registro-organizacion-owner-apellido-materno',
+      'registro-organizacion-owner-correo',
+      'registro-organizacion-owner-password',
+    ]) {
+      await expect(page.getByTestId(testId)).toBeVisible();
+    }
+  });
+
+  test('«Tu cuenta» no se desborda en teléfono ni en tablet', async ({ page }) => {
+    await abrirElAlta(page);
+    await llegarARepresentanteLegal(page);
+    await completarRepresentanteLegal(page);
+    await completarGerencias(page);
+
+    await expect(page.locator('.paginated-form__titulo')).toHaveText('Tu cuenta');
+
+    for (const [nombre, tamano] of [
+      ['movil-390x844', { width: 390, height: 844 }],
+      ['tablet-768x1024', { width: 768, height: 1024 }],
+      ['tablet-horizontal-1024x768', { width: 1024, height: 768 }],
+      ['escritorio-1440x900', { width: 1440, height: 900 }],
+      ['escritorio-grande-1920x1080', { width: 1920, height: 1080 }],
+    ] as const) {
+      await page.setViewportSize(tamano);
+      await expect(page.getByTestId('registro-organizacion-owner-apellido-materno')).toBeVisible();
+
+      const desborde = await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      );
+      expect(desborde).toBe(false);
+      await capturar(page, `owner-responsive-${nombre}`);
+    }
   });
 
   test('el directorio ejecutivo no se desborda en teléfono ni en tablet', async ({ page }) => {
