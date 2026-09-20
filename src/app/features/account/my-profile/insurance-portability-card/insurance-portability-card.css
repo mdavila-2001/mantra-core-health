@@ -3,6 +3,14 @@
   margin-top: var(--sp-4);
 }
 
+/* El estado de las coberturas: lo primero que se lee de la tarjeta, así que
+   va con la tinta principal y algo más de peso que la explicación de abajo. */
+.portability-card__estado {
+  margin: 0 0 var(--sp-2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .portability-card__descripcion {
   margin: 0;
   color: var(--text-secondary);

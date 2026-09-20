@@ -72,6 +72,7 @@ export class PortabilityExportDialog {
         next: (result) => {
           this.result.set(result);
           this.state.set('ready');
+          this.copied.set(false);
           this.downloadChosen(result);
         },
         error: (error: unknown) => {
@@ -150,6 +151,10 @@ export class PortabilityExportDialog {
     if (!hash || typeof navigator === 'undefined' || !navigator.clipboard) return;
     try {
       await navigator.clipboard.writeText(hash);
+      // Se reinicia antes de volver a marcarlo: si ya decía «copiado», un
+      // segundo clic no cambiaría el contenido de la región viva y el lector
+      // de pantalla no anunciaría nada.
+      this.copied.set(false);
       this.copied.set(true);
     } catch {
       // El hash queda a la vista, seleccionable a mano: no hay nada más que
