@@ -121,6 +121,42 @@
                     [formControlName]="campo.key"
                   />
                 }
+                @case ('yes-no') {
+                  <!-- Dos botones y no una casilla: una casilla marcada dice
+                       «sí» y desmarcada no dice nada, así que «contestó que no»
+                       y «no contestó» se ven igual. Sin respuesta, ninguno de
+                       los dos aparece apretado. -->
+                  <app-segmented-control
+                    [options]="siNo"
+                    [value]="siNoDe(campo)"
+                    [ariaLabel]="campo.label"
+                    size="md"
+                    (valueChange)="escribirSiNo(campo, $event)"
+                  />
+                }
+                @case ('grid-radio') {
+                  <!-- La misma pregunta sobre varias filas, con una respuesta
+                       por fila. Las columnas son `options`; las filas, `rows`. -->
+                  <app-grid-group
+                    [attr.data-testid]="campo.testId ?? null"
+                    [formControlName]="campo.key"
+                    [rows]="campo.rows ?? []"
+                    [columns]="campo.options ?? []"
+                    [oneResponsePerColumn]="campo.oneResponsePerColumn ?? false"
+                    [hasError]="errorDe(campo) !== ''"
+                  />
+                }
+                @case ('grid-checkboxes') {
+                  <app-grid-group
+                    [attr.data-testid]="campo.testId ?? null"
+                    [formControlName]="campo.key"
+                    multiple
+                    [rows]="campo.rows ?? []"
+                    [columns]="campo.options ?? []"
+                    [oneResponsePerColumn]="campo.oneResponsePerColumn ?? false"
+                    [hasError]="errorDe(campo) !== ''"
+                  />
+                }
                 @case ('checkboxes') {
                   <!-- Varias respuestas de una lista. El grupo es el control
                        —igual que `app-radio-group`—: el formulario ve uno solo

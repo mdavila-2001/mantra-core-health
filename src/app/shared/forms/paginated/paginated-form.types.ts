@@ -51,11 +51,50 @@ export type TipoDeControl =
   | 'switch'
   | 'checkbox'
   /**
+   * Sí o no, como **dos botones** y no como una casilla.
+   *
+   * Lo pidió el propietario, y es la misma corrección que ya se hizo en el alta
+   * de agenda (18/09): una casilla sola dice «sí» cuando está marcada y no dice
+   * nada cuando no lo está — no se distingue «contestó que no» de «no
+   * contestó». Dos botones dicen las dos cosas, y dejan además el tercer
+   * estado que un formulario necesita: todavía sin responder.
+   *
+   * El control guarda `true`, `false` o `null`; `null` es «sin responder», y es
+   * lo que hace que `Validators.required` funcione en una pregunta de sí/no
+   * —con una casilla, `false` pasa el obligatorio sin que nadie haya
+   * contestado—.
+   */
+  | 'yes-no'
+  /**
    * Varias respuestas de una lista. El control guarda un **array** de los
    * valores marcados, no un booleano: `checkbox` es «sí o no» sobre una sola
    * cosa, y esto es «cuáles de éstas», que es otra pregunta.
    */
   | 'checkboxes'
+  /**
+   * Cuadrícula de opción única: una tabla de filas por columnas donde cada
+   * **fila** se responde eligiendo **una** columna.
+   *
+   * Es la misma pregunta repetida sobre varios sujetos —«¿con qué frecuencia?»
+   * sobre ocho síntomas— y por eso no son ocho preguntas sueltas: la escala se
+   * escribe una vez y se lee de corrido, que es de lo que vive una escala
+   * clínica.
+   *
+   * El control guarda un objeto `{ [fila]: columna }`. Las filas van en
+   * {@link CampoDeFormulario.rows} y las columnas en
+   * {@link CampoDeFormulario.options}, que es lo que hace que el resto del
+   * motor —el PDF, sin ir más lejos— las encuentre donde ya las busca.
+   */
+  | 'grid-radio'
+  /**
+   * Cuadrícula de casillas: igual que {@link TipoDeControl}`.'grid-radio'`,
+   * pero cada fila admite **varias** columnas.
+   *
+   * Guarda `{ [fila]: columna[] }`. Es a `grid-radio` lo que `checkboxes` es a
+   * `radio`, y por eso son dos controles y no uno con un interruptor: lo que
+   * cambia es qué se puede contestar, no cómo se ve.
+   */
+  | 'grid-checkboxes'
   | 'textarea'
   | 'custom';
 
@@ -80,14 +119,45 @@ export interface CampoDeFormulario {
   readonly control: TipoDeControl;
 
   /**
-   * Sólo para `select` y `radio`.
+   * Las respuestas ofrecidas: `select`, `radio`, `checkboxes` y, en una
+   * cuadrícula, **sus columnas**.
    *
-   * Son el mismo dato con dos formas de mostrarlo: la lista desplegable ahorra
-   * espacio y el grupo de opciones las deja todas a la vista. La regla que
-   * siguen las pantallas migradas es la de siempre — hasta cuatro opciones se
-   * ven, más de cuatro se despliegan— y por eso ambos leen de acá.
+   * `select` y `radio` son el mismo dato con dos formas de mostrarlo: la lista
+   * desplegable ahorra espacio y el grupo de opciones las deja todas a la
+   * vista. La regla que siguen las pantallas migradas es la de siempre —hasta
+   * cuatro opciones se ven, más de cuatro se despliegan— y por eso ambos leen
+   * de acá.
+   *
+   * En una cuadrícula son las columnas, y las filas van en {@link rows}.
    */
   readonly options?: readonly SelectOption<string>[];
+
+  /**
+   * Sólo para las cuadrículas: **las filas**, en el orden en que se preguntan.
+   *
+   * Las columnas de una cuadrícula son {@link options} —las mismas que un
+   * `radio` ofrece— y las filas son esto. Se separan así, y no en una
+   * estructura propia, para que todo lo que ya recorre `options` —el PDF, la
+   * validación, el editor— siga encontrándolas donde las busca.
+   *
+   * Una cuadrícula sin filas no es una cuadrícula: el motor la dibuja vacía y
+   * el editor no deja guardarla.
+   */
+  readonly rows?: readonly SelectOption<string>[];
+
+  /**
+   * Sólo para las cuadrículas: **limitar a una respuesta por columna**.
+   *
+   * Es la restricción de Google Forms, con la misma redacción. Sirve para
+   * ordenar sin empates —«poné estas cinco cosas de la más a la menos
+   * importante»—: una columna ya usada en una fila deja de ofrecerse en las
+   * demás.
+   *
+   * Con esto puesto, una cuadrícula con más filas que columnas **no se puede
+   * terminar de responder** si además se exige respuesta en cada fila; el
+   * editor lo avisa antes de guardar.
+   */
+  readonly oneResponsePerColumn?: boolean;
 
   /**
    * Sólo para `radio` y `checkboxes`: ofrece además «Otro», con un texto libre.

@@ -215,6 +215,14 @@ function bloquesDePregunta(campo: CampoDeFormulario, numero: number): readonly P
 function espacioParaContestar(campo: CampoDeFormulario): readonly PdfBlock[] {
   const opciones = campo.options ?? [];
 
+  // La cuadrícula, primero: sus opciones son las **columnas**, y tratarlas como
+  // una lista imprimiría la escala una sola vez y perdería las filas, que es lo
+  // único que hay que contestar.
+  const filas = campo.rows ?? [];
+  if (filas.length > 0 && opciones.length > 0) {
+    return cuadriculaEnPapel(campo, filas, opciones);
+  }
+
   if (opciones.length > 0) {
     const casilla = campo.control === 'checkboxes' ? '[ ]' : '( )';
     const bloques: PdfBlock[] = opciones.map((opcion) => ({
@@ -231,7 +239,11 @@ function espacioParaContestar(campo: CampoDeFormulario): readonly PdfBlock[] {
     return bloques;
   }
 
-  if (campo.control === 'checkbox' || campo.control === 'switch') {
+  if (
+    campo.control === 'checkbox' ||
+    campo.control === 'switch' ||
+    campo.control === 'yes-no'
+  ) {
     return [{ kind: 'paragraph', text: '[ ] Sí    [ ] No' }];
   }
 
@@ -248,6 +260,40 @@ function espacioParaContestar(campo: CampoDeFormulario): readonly PdfBlock[] {
       lines: RENGLONES_POR_CONTROL[campo.control] ?? RENGLONES_POR_OMISION,
     },
   ];
+}
+
+/**
+ * La cuadrícula en papel: una tabla con las columnas de cabecera y una casilla
+ * por celda.
+ *
+ * Cuadrada o redonda según cuántas admita cada fila, igual que en la lista de
+ * opciones. La restricción de «una respuesta por columna» se dice debajo: en
+ * papel no hay nada que la impida, así que hay que leerla.
+ */
+function cuadriculaEnPapel(
+  campo: CampoDeFormulario,
+  filas: readonly { readonly label: string }[],
+  columnas: readonly { readonly label: string }[],
+): readonly PdfBlock[] {
+  const casilla = campo.control === 'grid-checkboxes' ? '[ ]' : '( )';
+  const bloques: PdfBlock[] = [
+    {
+      kind: 'row',
+      header: true,
+      text: ['', ...columnas.map((columna) => columna.label)].join(' · '),
+      cells: ['', ...columnas.map((columna) => columna.label)],
+    },
+    ...filas.map<PdfBlock>((fila) => ({
+      kind: 'row',
+      text: `${fila.label}: ${columnas.map(() => casilla).join(' ')}`,
+      cells: [fila.label, ...columnas.map(() => casilla)],
+    })),
+  ];
+
+  if (campo.oneResponsePerColumn === true) {
+    bloques.push({ kind: 'caption', text: 'Sólo una respuesta por columna.' });
+  }
+  return bloques;
 }
 
 /** «14 preguntas · 11 del estándar y 3 de tu organización». */

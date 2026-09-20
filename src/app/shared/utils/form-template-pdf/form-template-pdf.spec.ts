@@ -141,6 +141,82 @@ describe('bloquesDeFormulario', () => {
     expect(texto(bloques)).toContain('Este formulario todavía no tiene preguntas.');
   });
 
+  it('una cuadrícula sale como tabla, con una casilla por celda', () => {
+    // Imprimirla como una lista de opciones sacaría la escala una sola vez y
+    // dejaría las filas —que es lo que hay que contestar— fuera del papel.
+    const bloques = bloquesDeFormulario({
+      ...FORMULARIO,
+      paginas: [
+        {
+          titulo: 'Síntomas',
+          campos: [
+            {
+              key: 'frecuencia',
+              label: '¿Con qué frecuencia?',
+              control: 'grid-radio',
+              rows: [
+                { value: 'tos', label: 'Tos' },
+                { value: 'fiebre', label: 'Fiebre' },
+              ],
+              options: [
+                { value: 'nunca', label: 'Nunca' },
+                { value: 'siempre', label: 'Siempre' },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const filas = bloques.filter((bloque) => bloque.kind === 'row');
+    expect(filas[0]?.cells).toEqual(['', 'Nunca', 'Siempre']);
+    expect(filas[0]?.header).toBe(true);
+    expect(filas[1]?.cells).toEqual(['Tos', '( )', '( )']);
+    expect(filas[2]?.cells).toEqual(['Fiebre', '( )', '( )']);
+  });
+
+  it('la cuadrícula de casillas usa el cuadrado, y la restricción se dice', () => {
+    // En papel no hay nada que impida repetir una columna: si la regla no está
+    // escrita, el formulario impreso pide algo distinto del servido.
+    const bloques = bloquesDeFormulario({
+      ...FORMULARIO,
+      paginas: [
+        {
+          titulo: 'Prioridades',
+          campos: [
+            {
+              key: 'orden',
+              label: 'Ordená estas tres',
+              control: 'grid-checkboxes',
+              oneResponsePerColumn: true,
+              rows: [{ value: 'a', label: 'Dolor' }],
+              options: [{ value: '1', label: 'Primero' }],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(bloques.filter((b) => b.kind === 'row')[1]?.cells).toEqual(['Dolor', '[ ]']);
+    expect(texto(bloques)).toContain('Sólo una respuesta por columna.');
+  });
+
+  it('un sí/no en botones sigue saliendo como dos casillas en papel', () => {
+    // En papel no hay botones. Lo que importa es que las dos respuestas estén
+    // impresas, que es justamente lo que la casilla suelta no daba.
+    const bloques = bloquesDeFormulario({
+      ...FORMULARIO,
+      paginas: [
+        {
+          titulo: 'Antecedentes',
+          campos: [{ key: 'fuma', label: '¿Fumás?', control: 'yes-no' }],
+        },
+      ],
+    });
+
+    expect(texto(bloques)).toContain('[ ] Sí    [ ] No');
+  });
+
   it('no inventa un renglón para un campo que sólo se completa en el sistema', () => {
     const bloques = bloquesDeFormulario({
       ...FORMULARIO,

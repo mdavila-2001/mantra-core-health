@@ -799,3 +799,112 @@ describe('PaginatedForm · casillas de varias respuestas', () => {
     expect(guardado()).toEqual(['Hipertensión']);
   });
 });
+
+/* ─── Sí / No en botones, y las dos cuadrículas ────────────────────────────
+   Las tres piezas que el propietario pidió para los formularios: que un sí/no
+   se conteste con dos botones —una casilla desmarcada no distingue «contestó
+   que no» de «no contestó»— y que la misma pregunta se pueda hacer sobre
+   varias filas. */
+
+const PAGINAS_DE_SI_NO: readonly PaginaDeFormulario[] = [
+  {
+    titulo: 'Antecedentes',
+    campos: [
+      { key: 'fuma', label: '¿Fumás?', control: 'yes-no', required: true },
+      {
+        key: 'frecuencia',
+        label: '¿Con qué frecuencia?',
+        control: 'grid-radio',
+        rows: [
+          { value: 'Tos', label: 'Tos' },
+          { value: 'Fiebre', label: 'Fiebre' },
+        ],
+        options: [
+          { value: 'Nunca', label: 'Nunca' },
+          { value: 'A veces', label: 'A veces' },
+        ],
+      },
+    ],
+  },
+];
+
+@Component({
+  imports: [PaginatedForm],
+  template: `
+    <app-paginated-form [paginas]="paginas" [form]="form" label="Antecedentes" />
+  `,
+})
+class HostDeSiNo {
+  readonly paginas = PAGINAS_DE_SI_NO;
+  readonly form = new FormGroup({
+    fuma: new FormControl<boolean | null>(null, { validators: [Validators.required] }),
+    frecuencia: new FormControl<Record<string, unknown>>({}),
+  });
+}
+
+describe('PaginatedForm · sí/no en botones y cuadrículas', () => {
+  let fixture: ComponentFixture<HostDeSiNo>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [HostDeSiNo] }).compileComponents();
+    fixture = TestBed.createComponent(HostDeSiNo);
+    fixture.detectChanges();
+  });
+
+  function botones(): HTMLButtonElement[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('app-segmented-control [role="radio"]'),
+    );
+  }
+
+  it('el sí/no se dibuja como dos botones y no como una casilla', () => {
+    const rotulos = botones().map((b) => b.textContent?.trim());
+    expect(rotulos).toEqual(['Sí', 'No']);
+    expect(fixture.nativeElement.querySelector('app-checkbox')).toBeNull();
+  });
+
+  it('sin responder, ninguno de los dos aparece apretado', () => {
+    // Es lo que separa «contestó que no» de «no contestó», y lo único que hace
+    // que un sí/no obligatorio pueda exigir respuesta: con una casilla,
+    // `false` pasa el `required` sin que nadie haya contestado.
+    expect(botones().every((b) => b.getAttribute('aria-checked') === 'false')).toBe(true);
+    expect(fixture.componentInstance.form.controls.fuma.value).toBeNull();
+    expect(fixture.componentInstance.form.controls.fuma.valid).toBe(false);
+  });
+
+  it('«No» guarda `false`, que es una respuesta y no la falta de una', () => {
+    botones()[1]!.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls.fuma.value).toBe(false);
+    expect(fixture.componentInstance.form.controls.fuma.valid).toBe(true);
+    expect(botones()[1]!.getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('«Sí» guarda `true` y marca el control como tocado', () => {
+    botones()[0]!.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls.fuma.value).toBe(true);
+    expect(fixture.componentInstance.form.controls.fuma.touched).toBe(true);
+  });
+
+  it('la cuadrícula sale como tabla, con las columnas de cabecera', () => {
+    const cabeceras = Array.from(
+      fixture.nativeElement.querySelectorAll('app-grid-group th[scope="col"]'),
+    ).map((th) => (th as HTMLElement).textContent?.trim());
+    expect(cabeceras).toEqual(['Nunca', 'A veces']);
+  });
+
+  it('contestar una fila escribe en el control de la pantalla', () => {
+    const celda: HTMLInputElement = fixture.nativeElement.querySelector(
+      '[data-testid="cuadricula-Tos-A veces"]',
+    );
+    celda.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls.frecuencia.value).toEqual({
+      Tos: 'A veces',
+    });
+  });
+});

@@ -104,6 +104,37 @@ describe('SegmentedControl', () => {
     expect(anfitrion.vista()).toBe('lista');
   });
 
+  /**
+   * Sin respuesta, ninguna puesta.
+   *
+   * Un valor que no está entre las opciones es un estado legítimo —una pregunta
+   * de sí/no todavía sin contestar— y no un error. Antes caía en la primera,
+   * así que el control decía `aria-checked="true"` sobre algo que nadie eligió:
+   * la persona veía contestado lo que no contestó.
+   */
+  it('con un valor que no está en la lista no marca ninguna, y sigue tabulable', () => {
+    anfitrion.vista.set('');
+    fixture.detectChanges();
+
+    const [lista, calendario] = opciones();
+    expect(lista.getAttribute('aria-checked')).toBe('false');
+    expect(calendario.getAttribute('aria-checked')).toBe('false');
+    // Y el control no se cae del recorrido del teclado: un radiogroup sin nada
+    // marcado se tabula por su primer radio.
+    expect(lista.getAttribute('tabindex')).toBe('0');
+    expect(calendario.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('desde «ninguna puesta» el clic elige, sin tener que pasar por otra', () => {
+    anfitrion.vista.set('');
+    fixture.detectChanges();
+
+    opciones()[1].click();
+    fixture.detectChanges();
+
+    expect(anfitrion.cambios).toEqual(['calendario']);
+  });
+
   it('Home y End van a los extremos', () => {
     opciones()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }));
     fixture.detectChanges();

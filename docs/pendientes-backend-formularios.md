@@ -90,6 +90,77 @@ PATCH /forms/field-definitions/:id
   quita el tope. La cantidad nunca supera las opciones ofrecidas (más «Otro»
   si lo hay): el front lo acota, el servidor debería rechazarlo.
 
+### 1c. Las cuadrículas (19/09)
+
+El propietario pidió, además del `Sí / No` en botones, los dos tipos de
+**cuadrícula** que ofrece cualquier editor de formularios: la de opción única
+—una respuesta por fila— y la de casillas —varias—, «con las mismas
+restricciones». Son la misma pregunta repetida sobre varios sujetos: la clase
+funcional sobre ocho síntomas, una escala de frecuencia sobre seis hábitos.
+Servidas como ocho preguntas sueltas, la escala se repite ocho veces y hay que
+releerla en cada una.
+
+**No son un `dataType` nuevo.** El dato guardado sigue siendo uno de los códigos
+ofrecidos: `code`, igual que «Opción múltiple». Lo que las distingue es tener
+filas, y eso viaja aparte —como ya viaja `multiple`—:
+
+```
+POST  /forms/field-definitions
+PATCH /forms/field-definitions/:id
+{
+  "dataType": "code",
+  "options": string[],                  // las COLUMNAS
+  "rows"?: string[],                    // las FILAS; tenerlas es ser cuadrícula
+  "multiple"?: boolean,                 // varias respuestas POR FILA
+  "requireEachRow"?: boolean,           // «Requerir una respuesta en cada fila»
+  "oneResponsePerColumn"?: boolean      // «Limitar a una respuesta por columna»
+}
+```
+
+- `rows` se reemplaza **entera**, con la misma regla que `options`, y una lista
+  **vacía la quita**: es como un campo deja de ser cuadrícula al volver a
+  «Opción múltiple». Por eso el front la manda siempre que el campo sea de
+  elección, incluso vacía; si sólo se mandara cuando hay filas, quedarían
+  colgadas de un campo que ya no las dibuja y volverían a aparecer al recargar.
+- `requireEachRow` **no es** `required` de la asignación. `required` exige que
+  la pregunta tenga alguna respuesta; una cuadrícula obligatoria con una sola
+  fila contestada ya lo cumple. Esto exige las ocho.
+- `oneResponsePerColumn` es la de ordenar sin empates. El front la hace cumplir
+  **apagando** la columna ya usada en las demás filas, y la valida además como
+  red por si un valor viene de antes de que la restricción existiera.
+- Con las dos puestas y más filas que columnas la cuadrícula **no se puede
+  terminar de responder**. El editor lo avisa al armarla; el servidor debería
+  rechazarlo.
+
+Sugerencia de esquema: junto a `options jsonb`, un `rows jsonb` y dos columnas
+booleanas. Si se prefiere una tabla `dynamic_field_options` con `ordinal`, las
+filas piden su propio eje —`axis` con `row`/`column`—, no una tabla más.
+
+#### Lo capturado
+
+Una cuadrícula responde **una fila por vez**, así que lo natural contra el
+contrato actual de `POST /forms/instances/:id/values` es **una fila por
+respuesta**, con la fila identificada y su columna como valor —y varias filas
+con el mismo `ordinal` distinto en la de casillas—. Un único valor con un objeto
+`{ fila: columna }` dentro obligaría a parsearlo en cada lectura y dejaría fuera
+lo que `field_values` sabe hacer.
+
+El servidor debería rechazar una fila que no esté declarada y una columna que no
+esté entre las opciones, por lo mismo que con un campo de elección: si no, el
+campo cerrado no cierra nada.
+
+### 1d. El `Sí / No` se contesta con dos botones, y eso cambia qué se guarda
+
+No es sólo maqueta. Una casilla marcada dice «sí» y desmarcada **no dice nada**:
+«contestó que no» y «no se preguntó» se guardaban igual, que en una ficha
+clínica no es un detalle. Con dos botones el campo tiene tres estados —`true`,
+`false` y sin responder— y `required` vuelve a significar algo: con una casilla,
+`false` pasa el obligatorio sin que nadie haya contestado.
+
+No hace falta nada nuevo del contrato: `dataType: "boolean"` ya lo admite. Lo
+que sí hace falta es que el backend **no** trate «ausente» como `false` al
+capturar el valor.
+
 ### 2. Corregirlas
 
 ```
@@ -137,9 +208,10 @@ si no, el campo cerrado no cierra nada.
 
 ## Mientras tanto
 
-`src/app/core/mock/handlers/surveys-forms.handlers.ts` guarda `options` y
-`multiple` en la definición y los cuelga de la plantilla, así que la pantalla se
-puede recorrer entera contra el simulador. Contra el backend real, las claves
+`src/app/core/mock/handlers/surveys-forms.handlers.ts` guarda `options`,
+`multiple`, `rows` y las dos restricciones de cuadrícula en la definición y los
+cuelga de la plantilla, así que la pantalla se puede recorrer entera contra el
+simulador. Contra el backend real, las claves
 viajan y **se ignoran**: el campo se crea como `code` sin opciones y la tarjeta
 vuelve sin ellas. No rompe nada, pero tampoco guarda lo que se escribió.
 

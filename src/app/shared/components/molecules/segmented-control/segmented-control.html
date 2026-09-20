@@ -15,7 +15,7 @@
       [attr.data-value]="opcion.value"
       [attr.aria-checked]="i === activo()"
       [attr.aria-label]="opcion.description ?? null"
-      [attr.tabindex]="i === activo() ? 0 : -1"
+      [attr.tabindex]="i === enfocable() ? 0 : -1"
       [disabled]="opcion.disabled === true"
       (click)="elegir(opcion)"
       (keydown)="alTeclado($event, i)"
