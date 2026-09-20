@@ -108,6 +108,15 @@ describe('InsuranceClaims', () => {
     expect(texto).toContain('1615.125');
     // Y no se filtra el uuid de la solicitud a la vista.
     expect(texto).not.toContain(CLAIM_ID);
+
+    // WCAG 2.5.3: el nombre accesible empieza por el texto visible y es
+    // único por fila (agrega la solicitud), no repite «Ver los datos» a secas.
+    const boton: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="claim-patient"]',
+    );
+    expect(boton.getAttribute('aria-label')).toBe(
+      'Ver los datos de Rosa Quispe Mamani (solicitud CLM-m6guv-004)',
+    );
   });
 
   /**

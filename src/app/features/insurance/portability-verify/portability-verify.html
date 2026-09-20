@@ -9,14 +9,18 @@
       @if (result(); as certificado) {
         <app-alert tone="success" title="Certificado válido" data-testid="portability-verify-valid">
           <p>
-            Este es un certificado oficial de portabilidad de póliza y siniestralidad, emitido por
-            AloVida.
+            Este es un certificado oficial de portabilidad de póliza y siniestralidad.
           </p>
           <dl class="verify__datos">
-            <dt>Emitido</dt>
+            <!-- El emisor lo dice el servidor, no la plantilla: quien verifica
+                 necesita saber QUIÉN selló este certificado, y darlo por
+                 sentado sería afirmar algo que la respuesta no confirmó. -->
+            <dt>Emitido por</dt>
+            <dd data-testid="portability-verify-issuer">{{ certificado.issuer }}</dd>
+            <dt>Fecha de emisión</dt>
             <dd>{{ certificado.generatedAt | date: "d 'de' MMMM 'de' y, HH:mm" }}</dd>
             <dt>Registros incluidos</dt>
-            <dd>{{ certificado.recordCount }}</dd>
+            <dd data-testid="portability-verify-record-count">{{ certificado.recordCount }}</dd>
             <dt>Algoritmo de sello</dt>
             <dd>{{ certificado.algorithm }}</dd>
           </dl>
