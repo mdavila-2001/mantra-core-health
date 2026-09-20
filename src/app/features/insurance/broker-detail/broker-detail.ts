@@ -43,6 +43,16 @@ export interface BrokerDossier {
   readonly clients: readonly BrokerClient[];
 }
 
+/** Una fila de la cartera tal como la pinta `app-data-table`. */
+interface FilaDeCliente {
+  readonly id: string;
+  readonly tipo: string;
+  readonly colectivo: string;
+  readonly desde: string;
+  readonly hasta: string;
+  readonly estado: string;
+}
+
 /**
  * Perfil de un corredor: credenciales, historial de vinculaciones y cartera.
  *

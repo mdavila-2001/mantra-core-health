@@ -153,6 +153,9 @@ describe('InsuranceAnalytics', () => {
     for (const testId of tiles) {
       expect(fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
     }
+
+    // El boliviano se muestra como «Bs», no como «Boliviano» (display-currency.ts).
+    expect(texto).toContain('Moneda de reporte: Bs');
   });
 
   it('cambiar a «90 días» vuelve a pedir el tablero con la ventana correcta', async () => {

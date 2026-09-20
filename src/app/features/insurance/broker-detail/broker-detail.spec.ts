@@ -154,6 +154,13 @@ describe('BrokerDetail', () => {
     expect(texto).toContain('Cliente individual');
     expect(texto).not.toContain(PATIENT_ID);
     expect(texto).toContain('no accede al historial médico');
+
+    // La cartera se pinta con el organismo del sistema, no con una `<table>`
+    // a mano (refactor UX): sin colapso a 390 px, sin duplicar el markup.
+    expect(fixture.nativeElement.querySelector('app-data-table')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('table.broker__clients')).toBeNull();
+    expect(texto).toContain('Individual');
+    expect(texto).toContain('Sin fin');
   });
 
   /**

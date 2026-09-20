@@ -29,6 +29,7 @@ import { ToastService } from '../../../shared/components/molecules/toast/toast.s
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { currencySuffix, formatAmount, formatMoney } from '../money-format';
+import { displayCurrency } from '../../../core/money/display-currency';
 import { InsuranceContactChannels } from './insurance-contact-channels/insurance-contact-channels';
 import { displayCurrency } from '../../../core/money/display-currency';
 
@@ -161,6 +162,14 @@ export class InsuranceClaimDetail {
 
   /** Sufijo de moneda del encabezado, tomado del propio importe. */
   protected currency = currencySuffix;
+
+  /**
+   * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
+   * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
+   */
+  protected moneda(code?: string | null): string {
+    return displayCurrency(code);
+  }
 
   /**
    * Resumen del documento clínico que respalda un ítem.

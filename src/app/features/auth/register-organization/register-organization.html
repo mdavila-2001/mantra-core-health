@@ -127,6 +127,26 @@
               }
             </div>
           </ng-template>
+          <ng-template appCampoPersonalizado="ownerName">
+            <div class="register-org__nombres" data-testid="registro-organizacion-owner-nombres">
+              @for (campo of camposDeNombre; track campo.key) {
+                <app-form-field
+                  [label]="campo.label"
+                  [required]="campo.required ?? false"
+                  [errorMessage]="errorDelOwner(campo)"
+                  [class]="'register-org__nombre--' + campo.ancho"
+                >
+                  <app-input
+                    type="text"
+                    [formControl]="controlDelOwner(campo.key)"
+                    [hasError]="errorDelOwner(campo) !== ''"
+                    [autocomplete]="campo.autocomplete ?? null"
+                    [testId]="'registro-organizacion-owner-' + campo.testId"
+                  />
+                </app-form-field>
+              }
+            </div>
+          </ng-template>
           <ng-template appCampoPersonalizado="powerOfAttorneyFileId">
             <ng-container
               [ngTemplateOutlet]="bloqueDocumento"

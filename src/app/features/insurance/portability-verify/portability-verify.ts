@@ -8,7 +8,18 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 
-const SHA256_HEX_PATTERN = /^[0-9a-f]{64}$/;
+/**
+ * Un SHA-256 en hexadecimal: 64 dígitos, **sin distinguir mayúsculas**.
+ *
+ * El QR del certificado siempre trae el sello en minúsculas, que es como lo
+ * emite y lo guarda el servidor. Pero la dirección también se escribe a mano
+ * —el PDF muestra el sello para poder copiarlo, y quien lo teclea o lo pega
+ * desde una planilla lo trae tan seguido en mayúsculas como en minúsculas—,
+ * y un sello legítimo en mayúsculas no es inválido: es el mismo número. Se
+ * acepta, se pasa a minúsculas y recién ahí se consulta, para que no termine
+ * en un 404 que diría «no existe» de algo que sí existe.
+ */
+const SHA256_HEX_PATTERN = /^[0-9a-fA-F]{64}$/;
 
 type VerifyState = 'loading' | 'invalid' | 'ready' | 'notFound' | 'error';
 
@@ -42,13 +53,14 @@ export class PortabilityVerify {
   protected readonly result = signal<PortabilityVerification | null>(null);
 
   constructor() {
-    const manifestHash = this.route.snapshot.paramMap.get('manifestHash') ?? '';
+    const enLaDireccion = this.route.snapshot.paramMap.get('manifestHash') ?? '';
 
-    if (!SHA256_HEX_PATTERN.test(manifestHash)) {
+    if (!SHA256_HEX_PATTERN.test(enLaDireccion)) {
       this.state.set('invalid');
       return;
     }
 
+    const manifestHash = enLaDireccion.toLowerCase();
     const subscription = this.portability.verifyCertificate(manifestHash).subscribe({
       next: (result) => {
         this.result.set(result);
