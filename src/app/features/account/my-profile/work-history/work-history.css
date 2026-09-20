@@ -271,3 +271,10 @@
 .historial__nota-propia {
   margin-block-start: var(--sp-4);
 }
+
+/* El botón que abre el alta de un vínculo. Va suelto bajo la línea de tiempo
+   —no dentro de una tarjeta— porque es la acción de la sección entera, no de
+   ninguno de sus renglones. */
+.historial__alta {
+  margin: var(--sp-4) 0 0;
+}

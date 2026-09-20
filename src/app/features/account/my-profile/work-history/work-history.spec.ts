@@ -145,7 +145,11 @@ describe('WorkHistory', () => {
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Agregar un vínculo');
+    // El formulario vive en un modal desde el 19/09/2026: lo que tiene que
+    // seguir en pie tras un 500 es la PUERTA para cargarlo.
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="abrir-alta-vinculo"]'),
+    ).not.toBeNull();
 
     http.verify();
   });
@@ -246,7 +250,7 @@ describe('WorkHistory', () => {
     const texto: string = fixture.nativeElement.textContent;
     expect(texto).not.toContain('Historial laboral');
     expect(texto).not.toContain('Hospital Obrero N.º 1');
-    expect(texto).toContain('Agregar un vínculo');
+    expect(texto).toContain('Añadir elemento a tu historial');
 
     http.verify();
   });
@@ -261,6 +265,96 @@ describe('WorkHistory', () => {
     expect(fixture.nativeElement.textContent).toContain('Historial laboral');
 
     http.verify();
+  });
+
+  describe('el alta de un vínculo es un modal (19/09/2026)', () => {
+    /** Monta el bloque con las dos lecturas de arranque ya resueltas. */
+    async function listo() {
+      const montado = await montar('prac-1');
+      montado.http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+      montado.http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+      montado.fixture.detectChanges();
+      return montado;
+    }
+
+    it('no dibuja el formulario hasta que se pide, y entonces es uno solo', async () => {
+      const { fixture, http } = await listo();
+
+      // Cerrado: ni el modal ni sus campos existen en el DOM. Es la diferencia
+      // con un panel plegable, que los deja montados y sólo los esconde.
+      expect(fixture.nativeElement.querySelector('app-content-dialog')).toBeNull();
+      expect(fixture.nativeElement.textContent).not.toContain('Cuándo empezaste');
+
+      fixture.nativeElement.querySelector('[data-testid="abrir-alta-vinculo"]').click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelectorAll('app-content-dialog')).toHaveLength(1);
+      expect(fixture.nativeElement.textContent).toContain('Cuándo empezaste');
+
+      http.verify();
+    });
+
+    it('en «Trayectoria» el botón NO va dentro de una tarjeta', async () => {
+      // Ahí el bloque es sólo la puerta: la línea de tiempo la pinta la ficha
+      // y los consultorios viven en otra pestaña. Una tarjeta del alto de
+      // media pantalla alrededor de un botón es una caja vacía.
+      const { fixture, http } = await montar('prac-1');
+      fixture.componentRef.setInput('layout', 'timeline');
+      fixture.componentRef.setInput('secciones', 'historial');
+      http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+      http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-card')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="abrir-alta-vinculo"]')).not.toBeNull();
+
+      http.verify();
+    });
+
+    it('al pie del perfil sí es una tarjeta, como siempre', async () => {
+      const { fixture, http } = await montar('prac-1');
+      http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+      http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('app-card')).not.toBeNull();
+
+      http.verify();
+    });
+
+    it('un alta exitosa lo cierra; una fallida lo deja abierto con el error', async () => {
+      const { fixture, http } = await listo();
+      const componente = api(fixture);
+
+      componente['abrirAltaDeVinculo']();
+      componente['escribirAMano']();
+      componente['institucion'].set('Clínica del Sur');
+      componente['desde'].set(new Date(2021, 2, 1));
+      fixture.detectChanges();
+
+      // Primero el camino que falla: el modal NO puede cerrarse, porque
+      // cerrarlo tiraría lo escrito y dejaría el error sin dónde leerse.
+      componente['registrar']();
+      http
+        .expectOne((r) => r.url === AFILIACIONES && r.method === 'POST')
+        .flush('boom', { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      expect(leer<boolean>(componente, 'altaDeVinculoAbierta')).toBe(true);
+      expect(fixture.nativeElement.querySelector('[data-testid="afiliacion-error"]')).not.toBeNull();
+
+      componente['registrar']();
+      http
+        .expectOne((r) => r.url === AFILIACIONES && r.method === 'POST')
+        .flush(enCable({ id: 'af-2' }));
+      http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      expect(leer<boolean>(componente, 'altaDeVinculoAbierta')).toBe(false);
+      expect(fixture.nativeElement.querySelector('app-content-dialog')).toBeNull();
+
+      http.verify();
+    });
   });
 
   it('emite `added` tras un alta exitosa', async () => {
@@ -775,7 +869,7 @@ describe('WorkHistory — las dos puertas de «Dónde atiendo» (13/09/2026)', (
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="sedes-propias"]')).not.toBeNull();
-    expect(fixture.nativeElement.textContent).not.toContain('Agregar un vínculo');
+    expect(fixture.nativeElement.textContent).not.toContain('Añadir elemento a tu historial');
     http.verify();
   });
 

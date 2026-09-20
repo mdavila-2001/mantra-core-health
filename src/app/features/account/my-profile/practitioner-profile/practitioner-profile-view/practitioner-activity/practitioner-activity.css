@@ -32,3 +32,12 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
+
+/* Qué cuenta la cifra. En `caption` y no en el cuerpo: acompaña al número, no
+   compite con él. */
+.actividad__pie {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

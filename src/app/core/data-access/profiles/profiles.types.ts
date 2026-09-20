@@ -298,6 +298,54 @@ export interface PractitionerActivity {
   readonly medicationRequests: number;
   readonly clinicalNotes: number;
   readonly documents: number;
+  /**
+   * Consultas atendidas mes a mes, de la más vieja a la más nueva.
+   *
+   * Opcional: cuatro totales sin serie no dicen si la práctica crece, se
+   * mantiene o se apagó, que es lo que un profesional mira de su propia
+   * actividad. Ausente se lee como «esta instalación todavía no lo calcula» y
+   * la ficha sencillamente no dibuja el gráfico.
+   */
+  readonly monthlyEncounters?: readonly MonthlyCount[];
+  /** Indicadores de calidad de la atención. Opcional, por el mismo motivo. */
+  readonly quality?: PractitionerQualityMetrics;
+}
+
+/** Cuántas veces pasó algo en un mes. `month` va en ISO `yyyy-MM`. */
+export interface MonthlyCount {
+  readonly month: string;
+  readonly count: number;
+}
+
+/**
+ * Los indicadores de calidad de la atención.
+ *
+ * **Son pares, no porcentajes.** Cada indicador viaja como «cuántas de
+ * cuántas» y el cociente lo saca la vista: un 88 % sin su denominador no
+ * distingue 7 de 8 de 880 de 1 000, y la ficha tiene que poder mostrar los dos
+ * números. La única excepción es la valoración, que ya es una media.
+ */
+export interface PractitionerQualityMetrics {
+  /** Personas distintas atendidas. */
+  readonly uniquePatients: number;
+  /** Cuántas de ellas volvieron al menos una vez. */
+  readonly returningPatients: number;
+  /** Citas agendadas en el período. */
+  readonly scheduledAppointments: number;
+  /** De ésas, a cuántas se presentó el paciente. */
+  readonly attendedAppointments: number;
+  /** De las atendidas, cuántas empezaron dentro de los 10 minutos acordados. */
+  readonly onTimeAppointments: number;
+  /** Encuentros cerrados en el período. */
+  readonly closedEncounters: number;
+  /** De ésos, cuántos quedaron con su nota clínica dentro de las 24 horas. */
+  readonly notesWithin24h: number;
+  /** Minutos que dura una consulta, en promedio. `null` si no hay con qué. */
+  readonly averageDurationMinutes: number | null;
+  /** Media de las valoraciones de pacientes (1 a 5), o `null` si no hay ninguna. */
+  readonly ratingAverage: number | null;
+  /** Cuántas valoraciones sostienen esa media. */
+  readonly ratingCount: number;
 }
 
 /** El perfil profesional que la persona ve de sí misma. */

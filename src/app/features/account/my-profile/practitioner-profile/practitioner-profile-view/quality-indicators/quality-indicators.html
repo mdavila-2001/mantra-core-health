@@ -1,0 +1,27 @@
+<section class="calidad">
+  <h4 class="calidad__titulo">Calidad de la atención</h4>
+
+  <ul class="calidad__lista" data-testid="calidad-indicadores">
+    @for (fila of filas(); track fila.clave) {
+      <li class="calidad__item" [attr.data-testid]="'calidad-' + fila.clave">
+        <p class="calidad__rotulo">{{ fila.rotulo }}</p>
+        <p class="calidad__valor" [class.is-logrado]="fila.logrado">{{ fila.valor }}</p>
+
+        <!-- La barra es `aria-hidden` y el dato viaja en el texto de arriba y
+             en el detalle de abajo: un ancho no se lee en voz alta, y un
+             `role="meter"` prometería un rango que estos números no declaran. -->
+        @if (fila.porcentaje !== null) {
+          <div class="calidad__pista" aria-hidden="true">
+            <div
+              class="calidad__barra"
+              [class.is-logrado]="fila.logrado"
+              [style.width.%]="fila.porcentaje"
+            ></div>
+          </div>
+        }
+
+        <p class="calidad__detalle">{{ fila.detalle }}</p>
+      </li>
+    }
+  </ul>
+</section>

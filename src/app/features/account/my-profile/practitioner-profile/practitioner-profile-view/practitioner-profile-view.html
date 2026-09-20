@@ -152,6 +152,32 @@
             </dd>
           </div>
 
+          <!-- Las especialidades, en chips de color (pedido del 19/09/2026).
+               Van con la identidad y no en «Credenciales»: contestan «¿de qué
+               es médico?», la pregunta que se hace antes que ninguna. En
+               «Credenciales» siguen, con su vigencia y su sello.
+
+               El color lo reparte un hash del nombre, así que una misma
+               especialidad sale siempre del mismo tono; la principal se lleva
+               el de marca. Y como el color no comunica solo, el chip dice su
+               estado en palabras en el nombre accesible. -->
+          <div class="mi-perfil__dato mi-perfil__dato--ancho">
+            <dt>Especialidades</dt>
+            <dd>
+              @if (especialidadesEnChips().length > 0) {
+                <span class="mi-perfil__chips" data-testid="perfil-especialidades-chips">
+                  @for (especialidad of especialidadesEnChips(); track especialidad.id) {
+                    <app-chip size="sm" [variant]="especialidad.tono" [label]="especialidad.etiqueta">
+                      {{ especialidad.nombre }}
+                    </app-chip>
+                  }
+                </span>
+              } @else {
+                <span class="mi-perfil__ausente">Sin registrar</span>
+              }
+            </dd>
+          </div>
+
           <!-- El estado de habilitación es lo que decide si puede ejercer: va
                con la identidad, no escondido en una pestaña de trámites. -->
           <div class="mi-perfil__dato">
@@ -374,31 +400,12 @@
             Se agregan y se retiran desde «Editar tu info», en «Dónde atiendo».
           </p>
           @if (perfil().sedes?.length) {
-            <ul class="mi-perfil__lista">
-              @for (sede of perfil().sedes; track sede.id) {
-                <li class="mi-perfil__item" data-testid="perfil-sede">
-                  <span class="mi-perfil__item-nombre">{{ sede.nombre }}</span>
-                  @if (sede.direccion) {
-                    <span class="mi-perfil__item-detalle">{{ sede.direccion }}</span>
-                  }
-                  @if (sede.punto; as punto) {
-                    <a
-                      class="mi-perfil__mapa"
-                      [href]="
-                        'https://www.google.com/maps/search/?api=1&query=' +
-                        punto.lat +
-                        ',' +
-                        punto.lng
-                      "
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Ver en el mapa
-                    </a>
-                  }
-                </li>
-              }
-            </ul>
+            <!-- El mapa y su índice, en un componente propio: son cuatro
+                 direcciones de la misma ciudad y la pregunta es dónde caen
+                 unas respecto de otras, que una lista no contesta (pedido del
+                 19/09/2026). Vive aparte porque trae su propia hoja de
+                 estilos, y ésta ya no tiene margen. -->
+            <app-practice-sites-map [sedes]="perfil().sedes ?? []" />
           } @else {
             <p class="mi-perfil__nota">
               Todavía no registraste dónde atendés. Es lo que un paciente usa para llegar a tu
@@ -407,19 +414,24 @@
           }
         </section>
 
-        <h3 class="mi-perfil__subtitulo">Cómo atendés</h3>
-        <dl class="mi-perfil__datos">
-          <div class="mi-perfil__dato">
-            <dt>Telemedicina</dt>
-            <dd>{{ perfil().telemedicina ? 'Atendés por telemedicina' : 'No la ofrecés' }}</dd>
-          </div>
-          <div class="mi-perfil__dato">
-            <dt>Pacientes nuevos</dt>
-            <dd>
-              {{ perfil().aceptaPacientesNuevos ? 'Aceptás pacientes nuevos' : 'No los aceptás' }}
-            </dd>
-          </div>
-        </dl>
+        <!-- «Cómo atendés» es otra pregunta que «dónde»: va en su propio
+             bloque, fuera del de las sedes y en la misma pestaña (pedido del
+             19/09/2026). Pegado al mapa se leía como un pie de la lista. -->
+        <app-card class="mi-perfil__bloque-interno" variant="outlined" padding="md">
+          <h3 class="mi-perfil__subtitulo mi-perfil__subtitulo--primero">Cómo atendés</h3>
+          <dl class="mi-perfil__datos">
+            <div class="mi-perfil__dato">
+              <dt>Telemedicina</dt>
+              <dd>{{ perfil().telemedicina ? 'Atendés por telemedicina' : 'No la ofrecés' }}</dd>
+            </div>
+            <div class="mi-perfil__dato">
+              <dt>Pacientes nuevos</dt>
+              <dd>
+                {{ perfil().aceptaPacientesNuevos ? 'Aceptás pacientes nuevos' : 'No los aceptás' }}
+              </dd>
+            </div>
+          </dl>
+        </app-card>
       </app-tab>
 
       <!-- ─── Trayectoria ──────────────────────────────────────────────────
@@ -587,128 +599,20 @@
            Pasos 9, 10 y 12 del alta: la habilitación para ejercer, sus
            respaldos y las especialidades. -->
       <app-tab [label]="pestanas[5]" appTutorialTarget="perfil-credenciales">
-        <app-tab-help-block helpId="perfil-credenciales-ayuda" tutorialId="perfil-profesional">
-          <p>
-            Acá se separa lo que declaraste de lo que ya fue
-            <strong>verificado</strong> contra una fuente — el colegio médico, el registro de
-            matrículas. Declarar no exige verificación previa.
-          </p>
-          <p>
-            <strong>Ejemplo:</strong> un título de posgrado recién cargado aparece en «Declarado»;
-            una vez que un administrador lo verifica contra una fuente, pasa a «Verificado».
-          </p>
-        </app-tab-help-block>
-
-        <h3 class="mi-perfil__subtitulo">Tu habilitación</h3>
-        @if (perfil().matriculas.length > 0) {
-          <ul class="mi-perfil__lista" appTutorialTarget="perfil-matriculas">
-            @for (matricula of perfil().matriculas; track matricula.id) {
-              <li class="mi-perfil__item">
-                <span class="mi-perfil__item-nombre">{{ matricula.jurisdiccion }}</span>
-                <app-status-seal [variant]="matricula.sello" [label]="matricula.estado" />
-                <span class="mi-perfil__item-nota">
-                  Matrícula <span class="mi-perfil__cifra">{{ matricula.numero }}</span>
-                  @if (matricula.autoridad) {
-                    · {{ matricula.autoridad }}
-                  }
-                  @if (matricula.hasta) {
-                    · vigente hasta {{ matricula.hasta | date: 'dd/MM/yyyy' }}
-                  }
-                </span>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="mi-perfil__nota">
-            Todavía no registraste ninguna matrícula. Es lo que declara en qué jurisdicción está
-            habilitado tu ejercicio.
-          </p>
-        }
-
-        <h3 class="mi-perfil__subtitulo">Especialidades ({{ perfil().especialidades.length }})</h3>
-        @if (perfil().especialidades.length > 0) {
-          <ul class="mi-perfil__lista">
-            @for (especialidad of perfil().especialidades; track especialidad.id) {
-              <li class="mi-perfil__item">
-                <span class="mi-perfil__item-nombre">{{ especialidad.nombre }}</span>
-                @if (especialidad.principal) {
-                  <app-badge variant="primary" value="Principal" />
-                }
-                @if (especialidad.certificada) {
-                  <app-badge variant="success" value="Certificada" />
-                }
-                <span class="mi-perfil__item-nota">
-                  @if (especialidad.desde) {
-                    Desde {{ especialidad.desde | date: 'MMM y' }}
-                  }
-                  @if (especialidad.hasta) {
-                    · hasta {{ especialidad.hasta | date: 'MMM y' }}
-                  } @else if (especialidad.desde) {
-                    · en ejercicio
-                  }
-                  · {{ especialidad.estado }}
-                </span>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="mi-perfil__nota">
-            Todavía no hay especialidades registradas. Las carga quien administra la organización
-            junto con la credencial que las respalda.
-          </p>
-        }
-
-        <h3 class="mi-perfil__subtitulo">Idiomas</h3>
-        @if (perfil().idiomas.length > 0) {
-          <ul class="mi-perfil__lista">
-            @for (idioma of perfil().idiomas; track idioma.id) {
-              <li class="mi-perfil__item">
-                <span class="mi-perfil__item-nombre">{{ idioma.nombre }}</span>
-                @if (idioma.nivel) {
-                  <span class="mi-perfil__item-detalle">{{ idioma.nivel }}</span>
-                }
-                @if (idioma.interpreta) {
-                  <app-badge variant="info" value="Interpreta en consulta" />
-                }
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="mi-perfil__nota">Todavía no declaraste ningún idioma.</p>
-        }
-
-        <h3 class="mi-perfil__subtitulo">Verificado ({{ credenciales().verificados.length }})</h3>
-        @if (credenciales().verificados.length > 0) {
-          <ul class="mi-perfil__lista">
-            @for (fila of credenciales().verificados; track fila.id) {
-              <li class="mi-perfil__item">
-                <app-badge variant="secondary" [value]="fila.categoria" />
-                <span class="mi-perfil__item-nombre">{{ fila.nombre }}</span>
-                <span class="mi-perfil__item-detalle">{{ fila.detalle }}</span>
-                @if (fila.fuente) {
-                  <span class="mi-perfil__item-nota">Fuente: {{ fila.fuente }}</span>
-                }
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="mi-perfil__nota">Todavía no hay nada verificado.</p>
-        }
-
-        <h3 class="mi-perfil__subtitulo">Declarado ({{ credenciales().declarados.length }})</h3>
-        @if (credenciales().declarados.length > 0) {
-          <ul class="mi-perfil__lista">
-            @for (fila of credenciales().declarados; track fila.id) {
-              <li class="mi-perfil__item">
-                <app-badge variant="secondary" [value]="fila.categoria" />
-                <span class="mi-perfil__item-nombre">{{ fila.nombre }}</span>
-                <span class="mi-perfil__item-detalle">{{ fila.detalle }}</span>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="mi-perfil__nota">No hay nada pendiente de verificación.</p>
-        }
+        <!-- Eran cinco listas apiladas con cada credencial dicha DOS veces
+             —una en la lista de su clase y otra en «Verificado»/«Declarado»—.
+             Ahora es una rejilla de tarjetas con el ícono de su clase y un
+             filtro por estado, y la explicación de la pestaña sale como toast
+             en vez de empujar el contenido con una caja de cinco renglones
+             (pedido del 19/09/2026). Vive en su propio componente: trae su
+             hoja de estilos y ésta ya no tiene margen. -->
+        <app-credentials-panel
+          appTutorialTarget="perfil-matriculas"
+          [matriculas]="perfil().matriculas"
+          [especialidades]="perfil().especialidades"
+          [formacion]="perfil().formacion"
+          [idiomas]="perfil().idiomas"
+        />
       </app-tab>
 
       <!-- ─── Actividad ────────────────────────────────────────────────────
@@ -723,6 +627,8 @@
              bytes del techo que `angular.json` pone por componente—. -->
         <app-practitioner-activity
           [actividad]="perfil().actividad"
+          [mensual]="perfil().actividadMensual ?? []"
+          [calidad]="perfil().calidad ?? []"
           appTutorialTarget="perfil-actividad"
         />
 

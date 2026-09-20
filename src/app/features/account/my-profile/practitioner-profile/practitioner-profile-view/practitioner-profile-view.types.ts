@@ -93,6 +93,43 @@ export interface ActividadVisible {
   readonly clave: string;
   readonly rotulo: string;
   readonly valor: number;
+  /**
+   * Qué cuenta la cifra, en una línea.
+   *
+   * «275» no dice nada; «275 · una por encuentro cerrado» sí. Opcional para no
+   * romper a quien ya arma la lista sin él.
+   */
+  readonly pie?: string;
+}
+
+/** Un mes de la serie de consultas, ya con sus etiquetas resueltas. */
+export interface PuntoDeSerie {
+  /** Clave estable del punto (ISO `yyyy-MM`): sirve de `track`. */
+  readonly clave: string;
+  /** Lo que se dibuja bajo la barra: «sep». */
+  readonly etiqueta: string;
+  /** Lo que se dice en palabras: «septiembre de 2026». */
+  readonly etiquetaLarga: string;
+  readonly valor: number;
+}
+
+/**
+ * Un indicador de calidad, ya resuelto.
+ *
+ * `proporcion` es `null` cuando el indicador **no es una proporción** —la
+ * valoración media, la duración de la consulta—: esos se muestran con su
+ * cifra y sin barra, porque una barra sin denominador miente sobre qué
+ * fracción de qué representa.
+ */
+export interface IndicadorDeCalidad {
+  readonly clave: string;
+  readonly rotulo: string;
+  /** La cifra grande: «91 %», «4,7 / 5», «27 min». */
+  readonly valor: string;
+  /** De dónde sale: «312 de 341 citas». */
+  readonly detalle: string;
+  /** Entre 0 y 1 para dibujar la barra, o `null` si no es una proporción. */
+  readonly proporcion: number | null;
 }
 
 /**
@@ -136,6 +173,13 @@ export interface PerfilProfesionalVisible {
   readonly telemedicina: boolean;
   readonly bio: string;
   readonly actividad: readonly ActividadVisible[];
+  /**
+   * Las consultas mes a mes, de la más vieja a la más nueva. Vacío o ausente
+   * cuando no hay serie que mostrar, y entonces la ficha no dibuja el gráfico.
+   */
+  readonly actividadMensual?: readonly PuntoDeSerie[];
+  /** Los indicadores de calidad, ya resueltos. Ausentes si no se calculan. */
+  readonly calidad?: readonly IndicadorDeCalidad[];
   readonly especialidades: readonly EspecialidadVisible[];
   readonly formacion: readonly FormacionVisible[];
   readonly matriculas: readonly MatriculaVisible[];

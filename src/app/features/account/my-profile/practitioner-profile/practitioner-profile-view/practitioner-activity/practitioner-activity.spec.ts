@@ -49,4 +49,42 @@ describe('PractitionerActivity', () => {
   it('sin cuentas no dibuja ninguna tarjeta', () => {
     expect(montar([]).querySelectorAll('app-card')).toHaveLength(0);
   });
+
+  /* -- La serie y los indicadores (pedido del 19/09/2026) ----------------- */
+
+  it('sin serie ni indicadores no dibuja el gráfico ni el bloque de calidad', () => {
+    // Un gráfico de doce meses en cero, o un «0 %» sobre cero citas, dicen
+    // menos que el silencio y encima mienten.
+    const raiz = montar(ACTIVIDAD);
+
+    expect(raiz.querySelector('app-activity-chart')).toBeNull();
+    expect(raiz.querySelector('app-quality-indicators')).toBeNull();
+  });
+
+  it('con serie e indicadores los monta, y el pie dice qué cuenta cada cifra', () => {
+    TestBed.configureTestingModule({ imports: [PractitionerActivity] });
+    const fixture = TestBed.createComponent(PractitionerActivity);
+    fixture.componentRef.setInput('actividad', [
+      { clave: 'encuentros', rotulo: 'Encuentros atendidos', valor: 312, pie: 'Consultas cerradas.' },
+    ]);
+    fixture.componentRef.setInput('mensual', [
+      { clave: '2026-08', etiqueta: 'ago', etiquetaLarga: 'agosto de 2026', valor: 31 },
+      { clave: '2026-09', etiqueta: 'sep', etiquetaLarga: 'septiembre de 2026', valor: 33 },
+    ]);
+    fixture.componentRef.setInput('calidad', [
+      {
+        clave: 'asistencia',
+        rotulo: 'Asistencia de pacientes',
+        valor: '91 %',
+        detalle: '312 de 341 citas agendadas',
+        proporcion: 312 / 341,
+      },
+    ]);
+    fixture.detectChanges();
+    const raiz = fixture.nativeElement as HTMLElement;
+
+    expect(raiz.querySelector('app-activity-chart')).not.toBeNull();
+    expect(raiz.querySelector('app-quality-indicators')).not.toBeNull();
+    expect(raiz.querySelector('.actividad__pie')?.textContent?.trim()).toBe('Consultas cerradas.');
+  });
 });

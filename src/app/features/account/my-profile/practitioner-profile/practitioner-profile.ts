@@ -7,8 +7,10 @@ import { PracticeSitesClient } from '../../../../core/data-access/practice-sites
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
 import type {
+  MonthlyCount,
   OwnAddress,
   OwnPractitionerProfile,
+  PractitionerQualityMetrics,
   PractitionerAffiliation,
   PractitionerCredential,
   PractitionerLanguage,
@@ -28,8 +30,10 @@ import type {
   EspecialidadVisible,
   FormacionVisible,
   IdiomaVisible,
+  IndicadorDeCalidad,
   MatriculaVisible,
   PerfilProfesionalVisible,
+  PuntoDeSerie,
   SedeVisible,
 } from './practitioner-profile-view/practitioner-profile-view.types';
 
@@ -207,15 +211,33 @@ export class PractitionerProfile {
       telemedicina: perfil.telehealthAvailable,
       bio: perfil.professionalBio ?? '',
       actividad: [
-        { clave: 'encuentros', rotulo: 'Encuentros atendidos', valor: perfil.activity.encounters },
+        {
+          clave: 'encuentros',
+          rotulo: 'Encuentros atendidos',
+          valor: perfil.activity.encounters,
+          pie: 'Consultas que cerraste con una persona atendida.',
+        },
         {
           clave: 'recetas',
           rotulo: 'Recetas emitidas',
           valor: perfil.activity.medicationRequests,
+          pie: 'Prescripciones firmadas desde tu cuenta.',
         },
-        { clave: 'notas', rotulo: 'Notas clínicas', valor: perfil.activity.clinicalNotes },
-        { clave: 'documentos', rotulo: 'Documentos publicados', valor: perfil.activity.documents },
+        {
+          clave: 'notas',
+          rotulo: 'Notas clínicas',
+          valor: perfil.activity.clinicalNotes,
+          pie: 'Evoluciones asentadas en el expediente.',
+        },
+        {
+          clave: 'documentos',
+          rotulo: 'Documentos publicados',
+          valor: perfil.activity.documents,
+          pie: 'Informes, certificados y adjuntos que emitiste.',
+        },
       ],
+      actividadMensual: serieMensual(perfil.activity.monthlyEncounters),
+      calidad: indicadoresDeCalidad(perfil.activity.quality),
       especialidades,
       formacion: this.formacion(perfil, etiquetas),
       matriculas: this.matriculas(perfil, etiquetas),
@@ -449,6 +471,126 @@ function enlaceAlMapa(direccion: OwnAddress | undefined): string | null {
   if (latitude == null || longitude == null) return null;
   if (latitude === 0 && longitude === 0) return null;
   return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+}
+
+/* ============================================================================
+    La pestaña «Actividad»
+
+    Cuatro contadores sueltos no contestan nada: no dicen si la práctica crece
+    ni cómo se atiende. Estas dos funciones convierten lo que el backend
+    manda —una serie mensual y pares «cuántas de cuántas»— en lo que la ficha
+    dibuja. Los cocientes se calculan acá, UNA vez, y no en la plantilla.
+    ========================================================================== */
+
+/** Cómo se rotula un mes: «sep» bajo la barra, «septiembre de 2026» al oírla. */
+const MES_CORTO = new Intl.DateTimeFormat('es-BO', { month: 'short' });
+const MES_LARGO = new Intl.DateTimeFormat('es-BO', { month: 'long', year: 'numeric' });
+
+/**
+ * La serie mensual, con sus etiquetas resueltas.
+ *
+ * El mes se arma con `new Date(año, mes - 1, 1)` y no parseando `'2026-09'`
+ * como fecha ISO: eso último se interpreta en UTC y en Bolivia (UTC-4)
+ * retrocede al mes anterior — septiembre se rotularía «ago».
+ */
+function serieMensual(serie: readonly MonthlyCount[] | undefined): readonly PuntoDeSerie[] {
+  if (serie === undefined) {
+    return [];
+  }
+  return serie.map(({ month, count }) => {
+    const [anio, mes] = month.split('-').map(Number);
+    const fecha = new Date(anio ?? 1970, (mes ?? 1) - 1, 1);
+    return {
+      clave: month,
+      etiqueta: MES_CORTO.format(fecha).replace('.', ''),
+      etiquetaLarga: MES_LARGO.format(fecha),
+      valor: count,
+    };
+  });
+}
+
+/** Un porcentaje entero, en palabras. */
+function porcentaje(parte: number, total: number): string {
+  return `${Math.round((parte / total) * 100)} %`;
+}
+
+/**
+ * Los indicadores de calidad, ya resueltos.
+ *
+ * **Un indicador sin denominador no se muestra.** «91 % de asistencia» sobre
+ * cero citas no es un 91 %: es una división por cero disfrazada de logro. Cada
+ * bloque comprueba su total antes de agregarse.
+ */
+function indicadoresDeCalidad(
+  calidad: PractitionerQualityMetrics | undefined,
+): readonly IndicadorDeCalidad[] {
+  if (calidad === undefined) {
+    return [];
+  }
+  const indicadores: IndicadorDeCalidad[] = [];
+
+  if (calidad.scheduledAppointments > 0) {
+    indicadores.push({
+      clave: 'asistencia',
+      rotulo: 'Asistencia de pacientes',
+      valor: porcentaje(calidad.attendedAppointments, calidad.scheduledAppointments),
+      detalle: `${calidad.attendedAppointments} de ${calidad.scheduledAppointments} citas agendadas`,
+      proporcion: calidad.attendedAppointments / calidad.scheduledAppointments,
+    });
+  }
+
+  if (calidad.attendedAppointments > 0) {
+    indicadores.push({
+      clave: 'puntualidad',
+      rotulo: 'Consultas iniciadas a horario',
+      valor: porcentaje(calidad.onTimeAppointments, calidad.attendedAppointments),
+      detalle: `${calidad.onTimeAppointments} de ${calidad.attendedAppointments}, dentro de los 10 minutos acordados`,
+      proporcion: calidad.onTimeAppointments / calidad.attendedAppointments,
+    });
+  }
+
+  if (calidad.closedEncounters > 0) {
+    indicadores.push({
+      clave: 'documentacion',
+      rotulo: 'Notas clínicas dentro de 24 h',
+      valor: porcentaje(calidad.notesWithin24h, calidad.closedEncounters),
+      detalle: `${calidad.notesWithin24h} de ${calidad.closedEncounters} encuentros cerrados`,
+      proporcion: calidad.notesWithin24h / calidad.closedEncounters,
+    });
+  }
+
+  if (calidad.uniquePatients > 0) {
+    indicadores.push({
+      clave: 'retencion',
+      rotulo: 'Pacientes que vuelven',
+      valor: porcentaje(calidad.returningPatients, calidad.uniquePatients),
+      detalle: `${calidad.returningPatients} de ${calidad.uniquePatients} personas atendidas volvieron`,
+      proporcion: calidad.returningPatients / calidad.uniquePatients,
+    });
+  }
+
+  // Los dos últimos NO son proporciones: van con su cifra y sin barra.
+  if (calidad.ratingAverage !== null && calidad.ratingCount > 0) {
+    indicadores.push({
+      clave: 'valoracion',
+      rotulo: 'Valoración de pacientes',
+      valor: `${calidad.ratingAverage.toLocaleString('es-BO', { minimumFractionDigits: 1 })} / 5`,
+      detalle: `${calidad.ratingCount} valoraciones`,
+      proporcion: null,
+    });
+  }
+
+  if (calidad.averageDurationMinutes !== null) {
+    indicadores.push({
+      clave: 'duracion',
+      rotulo: 'Duración media de la consulta',
+      valor: `${calidad.averageDurationMinutes} min`,
+      detalle: 'Desde que empieza hasta que la cerrás',
+      proporcion: null,
+    });
+  }
+
+  return indicadores;
 }
 
 /**
