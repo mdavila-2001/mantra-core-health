@@ -226,9 +226,12 @@ export function contentSecurityPolicy(options: SecurityHeadersOptions = {}): str
     // Las tipografías están autoalojadas: no hace falta abrir ningún CDN.
     "font-src 'self'",
     // `data:` cubre los SVG en línea del sistema de diseño. Los mosaicos de
-    // CARTO son el único origen de imagen ajeno y el mapa los pide directo del
-    // navegador; el comodín cubre los subdominios `a` a `d` del proveedor.
-    "img-src 'self' data: https://*.basemaps.cartocdn.com",
+    // OpenStreetMap son el único origen de imagen ajeno y el mapa los pide
+    // directo del navegador. Un solo host, sin comodín: OSM ya no reparte por
+    // subdominios. Estuvo abierto a `*.basemaps.cartocdn.com` hasta el
+    // 19/09/2026, cuando CARTO empezó a estampar «API KEY REQUIRED» sobre
+    // cada mosaico.
+    "img-src 'self' data: https://tile.openstreetmap.org",
     `connect-src 'self'${apiOrigin === null ? '' : ` ${apiOrigin}`}`,
     "frame-ancestors 'none'",
     "object-src 'none'",

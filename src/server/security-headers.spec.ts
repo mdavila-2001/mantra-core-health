@@ -137,10 +137,12 @@ describe('security-headers', () => {
 
       // El mapa (Leaflet sin clave de API) pide sus tiles directo del
       // navegador; sin este origen queda un rectángulo gris.
-      expect(csp).toContain("img-src 'self' data: https://*.basemaps.cartocdn.com");
+      expect(csp).toContain("img-src 'self' data: https://tile.openstreetmap.org");
       // El permiso es de imágenes: scripts y conexiones no se abren con él.
-      expect(csp).not.toContain('script-src \'self\' https://*.basemaps.cartocdn.com');
-      expect(csp).not.toContain('connect-src \'self\' https://*.basemaps.cartocdn.com');
+      expect(csp).not.toContain('script-src \'self\' https://tile.openstreetmap.org');
+      expect(csp).not.toContain('connect-src \'self\' https://tile.openstreetmap.org');
+      // CARTO quedó cerrado: sus mosaicos llegan con marca de agua.
+      expect(csp).not.toContain('cartocdn');
     });
 
     it('con la API en el mismo origen, `connect-src` se queda en `self`', () => {
