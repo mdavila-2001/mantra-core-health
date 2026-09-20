@@ -26,10 +26,13 @@ async function montar(
   return fixture;
 }
 
+/** `nativeElement` viene como `any`: se tipa una sola vez acá. */
+function raiz(fixture: ComponentFixture<MonthlyTrendChart>): HTMLElement {
+  return fixture.nativeElement as HTMLElement;
+}
+
 function barras(fixture: ComponentFixture<MonthlyTrendChart>): readonly SVGRectElement[] {
-  return Array.from(
-    fixture.nativeElement.querySelectorAll<SVGRectElement>('.trend-chart__bar'),
-  );
+  return Array.from(raiz(fixture).querySelectorAll<SVGRectElement>('.trend-chart__bar'));
 }
 
 describe('MonthlyTrendChart', () => {
@@ -67,7 +70,7 @@ describe('MonthlyTrendChart', () => {
   */
   it('el gráfico es un grupo, no una imagen: si no, las barras no se anuncian', async () => {
     const fixture = await montar(TRES_MESES);
-    const svg = fixture.nativeElement.querySelector('svg');
+    const svg = raiz(fixture).querySelector('svg');
 
     expect(svg?.getAttribute('role')).toBe('group');
     expect(svg?.getAttribute('aria-label')).toContain('mayor facturado');
@@ -87,7 +90,7 @@ describe('MonthlyTrendChart', () => {
 
   it('mantiene la tabla oculta con la cifra exacta de cada mes', async () => {
     const fixture = await montar(TRES_MESES);
-    const filas = fixture.nativeElement.querySelectorAll('table.sr-only tbody tr');
+    const filas = raiz(fixture).querySelectorAll('table.sr-only tbody tr');
 
     expect(filas.length).toBe(3);
     expect(filas[1].textContent).toContain('40.000,00 Bs');
@@ -105,13 +108,13 @@ describe('MonthlyTrendChart', () => {
     const fixture = await montar([]);
 
     expect(barras(fixture).length).toBe(0);
-    expect(fixture.nativeElement.querySelector('svg')?.getAttribute('aria-label')).toBe(
+    expect(raiz(fixture).querySelector('svg')?.getAttribute('aria-label')).toBe(
       'Tendencia mensual sin datos en el periodo.',
     );
   });
 
   it('no tiene violaciones mecánicas de accesibilidad', async () => {
     const fixture = await montar(TRES_MESES);
-    await esperarSinViolaciones(fixture.nativeElement);
+    await esperarSinViolaciones(raiz(fixture));
   });
 });
