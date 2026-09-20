@@ -441,12 +441,22 @@ export const CATEGORIA_PROFESIONAL = definir('VS_PRACTITIONER_CATEGORY', [
 ]);
 
 conjunto('VS_CREDENTIAL_TYPE', 'Tipos de credencial', 'Títulos y certificaciones.');
+/*
+ * Los rótulos son los que la API sirve en castellano, copiados de
+ * `src/common/seed/terminology-designations.es.ts` del backend. Hasta el
+ * 20/09/2026 la maqueta repetía el rótulo del **sistema de codificación**
+ * —«Academic degree credential», «Specialty degree credential»—, que está en
+ * inglés a propósito porque es el catálogo, no la interfaz: el perfil del
+ * profesional los mostraba así, en inglés, contra la regla 29. La designación
+ * en castellano existía en el catálogo desde siempre y es la que el cliente de
+ * terminología pide con `lang`.
+ */
 export const TIPO_CREDENCIAL = definir('VS_CREDENTIAL_TYPE', [
-  ['CREDENTIAL_TYPE_DEGREE', 'Academic degree credential'],
-  ['CREDENTIAL_TYPE_DIPLOMA', 'Diploma course credential'],
-  ['CREDENTIAL_TYPE_MASTER', "Master's degree credential"],
-  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorate degree credential'],
-  ['CREDENTIAL_TYPE_SPECIALTY', 'Specialty degree credential'],
+  ['CREDENTIAL_TYPE_DEGREE', 'Título universitario'],
+  ['CREDENTIAL_TYPE_DIPLOMA', 'Diplomado'],
+  ['CREDENTIAL_TYPE_MASTER', 'Maestría'],
+  ['CREDENTIAL_TYPE_DOCTORATE', 'Doctorado'],
+  ['CREDENTIAL_TYPE_SPECIALTY', 'Título de especialidad'],
 ], 0);
 
 conjunto('VS_JURISDICTION', 'Jurisdicciones', 'Ámbito de la matrícula.');

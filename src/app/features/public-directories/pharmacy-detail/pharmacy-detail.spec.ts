@@ -519,7 +519,11 @@ describe('PharmacyDetail', () => {
     const texto = fixture.nativeElement.textContent as string;
     expect(texto).toContain('Tiene todo');
     expect(texto).toContain('No tiene: Paracetamol');
-    expect(texto).toContain('8,00 BOB');
+    // El dato viaja como `BOB` y la pantalla lo escribe «Bs» desde el pedido
+    // del 19/09/2026 (ver `core/money/display-currency.ts`). Se exige el
+    // rótulo visible y se prohíbe el código, que es lo que se pidió sacar.
+    expect(texto).toContain('8,00 Bs');
+    expect(texto).not.toContain('BOB');
   });
 
   it('manda la ubicación con la búsqueda cuando ya la tiene', () => {
