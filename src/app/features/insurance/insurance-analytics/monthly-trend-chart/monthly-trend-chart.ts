@@ -19,6 +19,10 @@ interface BarGroup {
   readonly billedAmount: string;
   readonly approvedAmount: string;
   readonly claimsCount: number;
+  /** Lo que anuncia el lector al parar en la barra de facturado. */
+  readonly billedAriaLabel: string;
+  /** Ídem, para la de aprobado. */
+  readonly approvedAriaLabel: string;
 }
 
 const MESES = [
@@ -47,9 +51,19 @@ const MESES = [
  * vuelve a calcular — los importes que se MUESTRAN (leyenda, tabla oculta)
  * siguen viniendo tal cual los devolvió la API, vía {@link formatKpiAmount}.
  *
- * Accesible por dos caminos independientes: `role="img"` + `aria-label` con el
- * resumen, y una tabla `.sr-only` con la cifra exacta de cada mes — un lector
- * de pantalla nunca depende de interpretar geometría.
+ * Accesible por tres caminos independientes, y ninguno depende de interpretar
+ * geometría:
+ *
+ * 1. el `<svg>` es un `role="group"` rotulado con el resumen del periodo;
+ * 2. **cada barra es una parada de teclado** (`tabindex="0"`) que dice su mes y
+ *    su cifra al recibir el foco;
+ * 3. una tabla `.sr-only` con el dato exacto de cada mes.
+ *
+ * El grupo no puede ser `role="img"`: una imagen es un nodo hoja para el árbol
+ * de accesibilidad y su contenido no se expone, así que las etiquetas de las
+ * barras no se anunciarían. La tabla oculta sobrevive al punto 2 a propósito —
+ * con doce meses son veinticuatro tabuladores, y quien sólo quiere la cifra
+ * merece un atajo.
  */
 @Component({
   selector: 'app-monthly-trend-chart',
@@ -91,6 +105,11 @@ export class MonthlyTrendChart {
         billedAmount: mes.billedAmount,
         approvedAmount: mes.approvedAmount,
         claimsCount: mes.claimsCount,
+        billedAriaLabel:
+          `${etiquetaDeMes(mes.period)}, facturado ${this.formatear(mes.billedAmount)}, ` +
+          `${mes.claimsCount} reclamo${mes.claimsCount === 1 ? '' : 's'}.`,
+        approvedAriaLabel:
+          `${etiquetaDeMes(mes.period)}, aprobado ${this.formatear(mes.approvedAmount)}.`,
       };
     }),
   );

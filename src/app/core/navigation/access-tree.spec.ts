@@ -93,6 +93,37 @@ describe('buildAccessTree', () => {
   });
 
   /**
+   * El tablero de siniestralidad — carril `insurance-analytics`.
+   *
+   * Dos afirmaciones que se sostienen mutuamente: si alguien quita
+   * `hiddenFor` del registro para «que lo vea todo el mundo», falla la segunda;
+   * si alguien lo saca de `paths` creyendo que el cajón basta, falla la primera
+   * —el cajón lo pondría en la zona, pero al final, y para quien administra una
+   * aseguradora es a lo que viene—.
+   */
+  describe('el tablero de siniestralidad', () => {
+    const TABLERO = 'administration/insurance-analytics';
+
+    it('encabeza la zona de administración de quien administra', () => {
+      const zona = buildAccessTree(seccionesDe(['SUPERADMIN'])).find(
+        (z) => z.area.id === 'organizacion',
+      );
+      const rutas = zona?.sections.map((seccion) => seccion.path) ?? [];
+
+      expect(rutas).toContain(TABLERO);
+      expect(rutas[0]).toBe(TABLERO);
+    });
+
+    it('no estorba el «¿a qué vine hoy?» del médico', () => {
+      expect(rutasRepartidas(['PRACTITIONER'])).not.toContain(TABLERO);
+    });
+
+    it('tampoco lo ve el paciente', () => {
+      expect(rutasRepartidas(['PATIENT'])).not.toContain(TABLERO);
+    });
+  });
+
+  /**
    * Corrección del 10/09/2026 · la tarjeta genérica «Directorios».
    *
    * La aserción es **localizada** a propósito: no dice «no existe el texto
