@@ -7,6 +7,19 @@
     <app-card variant="outlined" padding="md" [attr.data-testid]="'actividad-' + dato.clave">
       <p class="actividad__rotulo">{{ dato.rotulo }}</p>
       <p class="actividad__valor">{{ dato.valor }}</p>
+      <!-- Qué cuenta la cifra. Sin esto, cuatro números en fila obligan a
+           adivinar si «41 documentos» son los que emitió o los que recibió. -->
+      @if (dato.pie; as pie) {
+        <p class="actividad__pie">{{ pie }}</p>
+      }
     </app-card>
   }
 </div>
+
+@if (mensual().length > 0) {
+  <app-activity-chart [puntos]="mensual()" />
+}
+
+@if (calidad().length > 0) {
+  <app-quality-indicators [indicadores]="calidad()" />
+}

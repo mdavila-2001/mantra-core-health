@@ -1,35 +1,51 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { Card } from '../../../../../../shared/components/molecules/card/card';
-import type { ActividadVisible } from '../practitioner-profile-view.types';
+import { ActivityChart } from '../activity-chart/activity-chart';
+import { QualityIndicators } from '../quality-indicators/quality-indicators';
+import type {
+  ActividadVisible,
+  IndicadorDeCalidad,
+  PuntoDeSerie,
+} from '../practitioner-profile-view.types';
 
 /**
- * Los contadores de la pestaña «Actividad» de la ficha del médico.
+ * La pestaña «Actividad» de la ficha del médico.
  *
- * ## Qué dibuja
+ * ## Qué dibuja, y por qué esto y no cuatro números
  *
- * Contadores, no renglones de ficha. Vivían en la rejilla `dt`/`dd` de «Tus
- * datos» —rótulo chico, valor al tamaño del cuerpo— y cuatro cifras sueltas en
- * media pestaña se leían como el pie de una lista. El cliente pidió el
- * 13/09/2026 que se vieran como lo que son: cada una su caja y el número al
- * tamaño de un titular.
+ * Tres bloques, de lo más grueso a lo más fino:
  *
- * Es el mismo dibujo que las cifras del panel (`panel__cifra-*`): `app-card`
- * `outlined` para la caja, rótulo en «overline» y valor en tipografía de
- * titular con cifras tabulares. Se repite el patrón y no el componente porque
- * el panel tiene además un pie por tarjeta que acá no existe; unificarlos es
- * trabajo aparte y está anotado.
+ * 1. **Cifras de tu práctica** — los cuatro contadores de siempre, ahora con
+ *    una línea que dice **qué cuenta cada uno**. «275» no significa nada;
+ *    «275 · evoluciones asentadas en el expediente» sí.
+ * 2. **Consultas mes a mes** ({@link ActivityChart}) — un total acumulado no
+ *    distingue una práctica que crece de una que se apagó hace medio año.
+ * 3. **Calidad de la atención** ({@link QualityIndicators}) — asistencia,
+ *    puntualidad, documentación al día, pacientes que vuelven, valoración y
+ *    duración media.
+ *
+ * Los cuatro contadores solos fueron lo que el cliente rechazó el 19/09/2026.
+ * Lo que faltaba no era formato: era la serie y los indicadores, que son las
+ * dos preguntas que un profesional se hace de su propia práctica —«¿voy para
+ * arriba?» y «¿cómo estoy atendiendo?»— y que un acumulado no contesta.
+ *
+ * ## Los bloques que no tienen dato no se dibujan
+ *
+ * `mensual` y `calidad` son opcionales: una instalación que todavía no los
+ * calcula muestra los contadores y nada más. Un gráfico de doce meses en cero
+ * o un «0 % de asistencia» sobre cero citas dicen menos que el silencio, y
+ * encima mienten.
  *
  * ## Por qué es un componente y no unas reglas más en la ficha
  *
- * Porque `practitioner-profile-view.css` ya estaba a **20 bytes** del techo de
- * 9 kB que `angular.json` pone por hoja de componente: cualquier regla nueva
- * volteaba el build. Un componente propio trae su propia hoja y su propio
- * presupuesto, y de paso deja el CSS al lado del marcado que lo usa.
+ * Porque `practitioner-profile-view.css` está a un pelo del techo que
+ * `angular.json` pone por hoja de componente. Por lo mismo el gráfico y los
+ * indicadores son componentes propios: cada uno trae su presupuesto.
  */
 @Component({
   selector: 'app-practitioner-activity',
-  imports: [Card],
+  imports: [ActivityChart, Card, QualityIndicators],
   templateUrl: './practitioner-activity.html',
   styleUrl: './practitioner-activity.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,4 +53,10 @@ import type { ActividadVisible } from '../practitioner-profile-view.types';
 export class PractitionerActivity {
   /** Las cuentas a mostrar, en el orden en que vienen. */
   readonly actividad = input.required<readonly ActividadVisible[]>();
+
+  /** Las consultas mes a mes. Vacío: no se dibuja el gráfico. */
+  readonly mensual = input<readonly PuntoDeSerie[]>([]);
+
+  /** Los indicadores de calidad. Vacío: no se dibuja el bloque. */
+  readonly calidad = input<readonly IndicadorDeCalidad[]>([]);
 }

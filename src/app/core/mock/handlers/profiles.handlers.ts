@@ -335,6 +335,42 @@ export function perfilPropioDe(p: PacienteSimulado) {
   };
 }
 
+/**
+ * Las doce cifras mensuales de la maqueta. Suman 312, que es el total de
+ * `encounters`: dos cifras que hablan de lo mismo y no coinciden se leen como
+ * un error del producto, no de los datos de ejemplo.
+ */
+const ENCUENTROS_POR_MES = [18, 21, 24, 19, 26, 28, 23, 27, 31, 29, 30, 36] as const;
+
+/** La serie, anclada al mes en curso: el último punto es siempre «hoy». */
+function serieMensualDemo(): readonly { month: string; count: number }[] {
+  const hoy = new Date();
+  return ENCUENTROS_POR_MES.map((count, indice) => {
+    const mes = new Date(hoy.getFullYear(), hoy.getMonth() - (ENCUENTROS_POR_MES.length - 1 - indice), 1);
+    return { month: `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, '0')}`, count };
+  });
+}
+
+/**
+ * Los indicadores de calidad de la maqueta.
+ *
+ * Coherentes entre sí a propósito: las 312 citas atendidas son los 312
+ * encuentros, y las 275 notas dentro de 24 h son las 275 notas clínicas. Un
+ * juego de cifras que no cierra convierte la pantalla en un rompecabezas.
+ */
+const CALIDAD_DEMO = {
+  uniquePatients: 187,
+  returningPatients: 96,
+  scheduledAppointments: 341,
+  attendedAppointments: 312,
+  onTimeAppointments: 268,
+  closedEncounters: 312,
+  notesWithin24h: 275,
+  averageDurationMinutes: 27,
+  ratingAverage: 4.7,
+  ratingCount: 128,
+} as const;
+
 export function perfilProfesionalDe(p: ProfesionalSimulado) {
   return {
     profileId: p.id,
@@ -371,10 +407,19 @@ export function perfilProfesionalDe(p: ProfesionalSimulado) {
     affiliations: afiliaciones.filtrar((a) => a.practitionerProfileId === p.id),
     // Un médico real de la red de una aseguradora no atendió a nadie en
     // AloVida: su actividad en la plataforma es cero, no una cifra de ejemplo.
+    // Y sin actividad tampoco hay serie ni indicadores: un gráfico de doce
+    // meses en cero dice menos que no dibujarlo.
     activity:
       p.origen !== undefined
         ? { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 }
-        : { encounters: 312, medicationRequests: 208, clinicalNotes: 275, documents: 41 },
+        : {
+            encounters: 312,
+            medicationRequests: 208,
+            clinicalNotes: 275,
+            documents: 41,
+            monthlyEncounters: serieMensualDemo(),
+            quality: CALIDAD_DEMO,
+          },
     createdAt: iso(-500),
   };
 }

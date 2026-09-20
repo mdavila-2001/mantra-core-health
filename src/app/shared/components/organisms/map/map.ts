@@ -192,6 +192,9 @@ export class AppMap implements OnDestroy {
   private readonly marcadores = new Map<string, Leaflet.Marker>();
   private pinesDibujados: readonly PinMapa[] | null = null;
   private destruido = false;
+  private observadorDeTamano: ResizeObserver | null = null;
+  /** Si el lienzo llegó a medir algo alguna vez. Ver {@link vigilarElTamano}. */
+  private tuvoTamano = false;
 
   constructor() {
     if (!this.isBrowser) {
@@ -215,6 +218,8 @@ export class AppMap implements OnDestroy {
 
   ngOnDestroy(): void {
     this.destruido = true;
+    this.observadorDeTamano?.disconnect();
+    this.observadorDeTamano = null;
     this.mapa?.remove();
     this.mapa = null;
     this.leaflet = null;
@@ -231,7 +236,19 @@ export class AppMap implements OnDestroy {
     const L = modulo.default ?? modulo;
     this.leaflet = L;
 
-    const mapa = L.map(this.lienzo().nativeElement, { maxZoom: ZOOM_MAXIMO });
+    const lienzo = this.lienzo().nativeElement;
+    // Leaflet mide el contenedor al montarse y, si lo encuentra `static`, le
+    // escribe `position: relative` EN LÍNEA — y una regla en línea le gana a
+    // `map.css`, así que `inset: 0` deja de aplicar, el lienzo queda de alto 0
+    // y el mapa se dibuja al zoom máximo sobre un punto, en blanco.
+    //
+    // Pasa cuando el mapa se monta en el mismo ciclo en que se insertan sus
+    // estilos —un mapa dentro de una pestaña que recién se abre—. La geometría
+    // se fija acá, antes de que Leaflet la mire: es la misma que declara
+    // `map.css`, escrita donde el orden de carga no la puede perder.
+    lienzo.style.position = 'absolute';
+    lienzo.style.inset = '0';
+    const mapa = L.map(lienzo, { maxZoom: ZOOM_MAXIMO });
     mapa.setView(CENTRO_POR_DEFECTO, ZOOM_POR_DEFECTO);
     L.tileLayer(DEMO_TILES, {
       attribution: DEMO_ATTRIBUTION,
@@ -250,6 +267,41 @@ export class AppMap implements OnDestroy {
 
     this.dibujar(this.pines());
     this.resaltar(this.seleccionado());
+    this.vigilarElTamano(lienzo);
+  }
+
+  /**
+   * Corrige el encuadre cuando el lienzo cambia de tamaño.
+   *
+   * Leaflet mide UNA vez, al montarse, y no vuelve a mirar: un mapa que nació
+   * en una caja de alto 0 —dentro de una pestaña que todavía no se abrió, de
+   * un modal que no se mostró, de un acordeón plegado— se queda encuadrado al
+   * zoom máximo sobre un punto y se ve gris para siempre.
+   *
+   * La primera vez que el lienzo mide algo se reencuadra: ése es el momento en
+   * que el mapa recién puede saber qué entra en pantalla. De ahí en más sólo
+   * se le avisa del cambio de tamaño (`invalidateSize`), sin tocar el encuadre
+   * —quien arrastró el mapa no quiere que una rotación de pantalla se lo
+   * devuelva al principio—.
+   */
+  private vigilarElTamano(lienzo: HTMLElement): void {
+    if (typeof ResizeObserver !== 'function') {
+      return;
+    }
+    this.tuvoTamano = lienzo.clientHeight > 0 && lienzo.clientWidth > 0;
+    this.observadorDeTamano = new ResizeObserver(() => {
+      const L = this.leaflet;
+      const mapa = this.mapa;
+      if (L === null || mapa === null || typeof mapa.invalidateSize !== 'function') {
+        return;
+      }
+      mapa.invalidateSize();
+      if (!this.tuvoTamano && lienzo.clientHeight > 0 && lienzo.clientWidth > 0) {
+        this.tuvoTamano = true;
+        this.encuadrar(L, mapa, this.pines());
+      }
+    });
+    this.observadorDeTamano.observe(lienzo);
   }
 
   /** Engancha el CSS de Leaflet una sola vez por documento. */

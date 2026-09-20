@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -44,6 +44,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { AppMap } from '../../../../shared/components/organisms/map/map';
+import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/map/pin-mapa.types';
 
 /**
@@ -112,6 +113,7 @@ import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/
     AppMap,
     Badge,
     Card,
+    ContentDialog,
     DatePicker,
     DatePipe,
     DecimalPipe,
@@ -119,6 +121,7 @@ import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/
     FormField,
     Input,
     LocationPicker,
+    NgTemplateOutlet,
     ReferenceCombobox,
     Select,
     SiteBankQrDialog,
@@ -175,6 +178,18 @@ export class WorkHistory implements OnInit {
 
   /** Si toca dibujar el historial laboral. */
   protected readonly muestraHistorial = computed(() => this.secciones() !== 'consultorios');
+
+  /**
+   * Si lo único que este bloque dibuja es el botón que abre el alta.
+   *
+   * Pasa en la pestaña «Trayectoria» de la ficha: la línea de tiempo la pinta
+   * la ficha y los consultorios viven en otra pestaña, así que acá no queda
+   * más que la puerta. Sin esto, el botón aparecía solo dentro de una tarjeta
+   * del alto de media pantalla.
+   */
+  protected readonly soloElAltaDeVinculo = computed(
+    () => this.secciones() === 'historial' && this.layout() === 'timeline',
+  );
 
   /** Se emite tras un alta exitosa, para que quien embebe el formulario recargue lo que ya tenía leído. */
   readonly added = output<void>();
@@ -253,6 +268,22 @@ export class WorkHistory implements OnInit {
   protected readonly sede = signal<string | null>(null);
 
   protected readonly registrando = signal(false);
+
+  /**
+   * Si el alta de un vínculo está abierta **como modal**.
+   *
+   * El formulario vivía desplegado al pie de «Trayectoria»: ocho campos
+   * siempre visibles debajo de la línea de tiempo, de modo que la pestaña que
+   * contesta «qué hiciste» se leía como un formulario de carga con un resumen
+   * arriba. El cliente lo pidió al revés el 19/09/2026 —primero el botón,
+   * después el formulario— y es lo correcto: cargar un vínculo es una
+   * operación puntual, no el contenido de la pantalla.
+   *
+   * El modal es {@link ContentDialog} y no un panel plegable: la trampa de
+   * foco, el `Escape` y la inertización de lo que queda atrás ya están
+   * resueltos ahí por el `<dialog>` nativo.
+   */
+  protected readonly altaDeVinculoAbierta = signal(false);
 
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
@@ -478,6 +509,25 @@ export class WorkHistory implements OnInit {
    * ni sella nada. Después se relee, porque la lista sale del servidor y no de
    * lo que acabamos de escribir.
    */
+  /**
+   * Abre el alta de un vínculo, en limpio.
+   *
+   * Se limpia al ABRIR y no al cerrar: quien cerró sin querer y vuelve a
+   * entrar esperaría encontrar lo que estaba escribiendo sólo si el cierre fue
+   * accidental, y no hay forma de distinguirlo. Limpiar acá deja una sola
+   * regla —el modal siempre empieza vacío— en vez de dos que se contradicen.
+   */
+  protected abrirAltaDeVinculo(): void {
+    this.limpiar();
+    this.registro.set(ready(null));
+    this.altaDeVinculoAbierta.set(true);
+  }
+
+  /** Cierra el alta de un vínculo sin guardar nada. */
+  protected cerrarAltaDeVinculo(): void {
+    this.altaDeVinculoAbierta.set(false);
+  }
+
   protected registrar(): void {
     const desde = this.desde();
     if (!this.puedeRegistrar() || desde === null) {
@@ -506,6 +556,7 @@ export class WorkHistory implements OnInit {
           this.registrando.set(false);
           this.registro.set(ready(null));
           this.limpiar();
+          this.altaDeVinculoAbierta.set(false);
           this.toasts.success('Quedó en tu historial laboral.', 'Vínculo registrado');
           this.cargar();
           this.added.emit();

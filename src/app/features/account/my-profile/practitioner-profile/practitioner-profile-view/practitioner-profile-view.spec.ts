@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthService } from '../../../../../core/auth/auth.service';
+import { ToastService } from '../../../../../shared/components/molecules/toast/toast.service';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
 import { PESTANAS_DEL_PERFIL_MEDICO } from '../../pestanas-del-perfil-medico';
 import { PractitionerProfileView } from './practitioner-profile-view';
@@ -420,7 +421,9 @@ describe('PractitionerProfileView', () => {
     const host = montar(PERFIL, true);
     seleccionarPestana(host, 'Trayectoria');
 
-    expect(host.textContent).toContain('Agregar un vínculo');
+    // Desde el 19/09/2026 el formulario vive en un modal: lo embebido es la
+    // puerta, no los ocho campos.
+    expect(host.textContent).toContain('Añadir elemento a tu historial');
     // No debe repetir su propio listado plano: ya está la línea de tiempo arriba.
     expect(host.querySelectorAll('.historial__lista')).toHaveLength(0);
   });
@@ -428,7 +431,7 @@ describe('PractitionerProfileView', () => {
   it('un visitante no ve el formulario de alta', () => {
     const host = montar(PERFIL, false);
 
-    expect(host.textContent).not.toContain('Agregar un vínculo');
+    expect(host.textContent).not.toContain('Añadir elemento a tu historial');
   });
 
   /* -- I-D (F-31): la ayuda es de quien arma su perfil, no de quien lo mira -- */
@@ -438,8 +441,55 @@ describe('PractitionerProfileView', () => {
 
     seleccionarPestana(host, 'Trayectoria');
     expect(host.querySelector('app-tab-help-block')).not.toBeNull();
+    // En «Credenciales» la explicación dejó de ser una caja arriba de todo y
+    // pasó a un toast (19/09/2026): lo que se comprueba acá es que la pestaña
+    // ya no la dibuja como bloque.
     seleccionarPestana(host, 'Credenciales');
-    expect(host.textContent).toContain('Declarar no exige verificación previa');
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
+  });
+
+  describe('el aviso de «Credenciales» es un toast (19/09/2026)', () => {
+    // Qué ayudas se cerraron vive en `localStorage`, que jsdom comparte entre
+    // las pruebas del archivo: sin limpiarlo, la prueba de arriba —que abre
+    // «Credenciales»— deja el aviso marcado como visto y acá no volvería a
+    // salir nunca.
+    beforeEach(() => localStorage.clear());
+
+    /** Los avisos encolados, sin pasar por el contenedor que los pinta. */
+    function avisos(): readonly { readonly title?: string; readonly message: string }[] {
+      return TestBed.inject(ToastService).toasts();
+    }
+
+    it('no sale al abrir la ficha: sale al abrir esa pestaña', () => {
+      // El contenido proyectado de una pestaña se INSTANCIA aunque la pestaña
+      // esté cerrada, así que lanzarlo desde el panel hacía saltar el aviso de
+      // «Credenciales» estando en «Datos personales». Éste es ese defecto.
+      const host = montar(PERFIL, true);
+
+      expect(avisos()).toHaveLength(0);
+
+      seleccionarPestana(host, 'Credenciales');
+      expect(avisos()).toHaveLength(1);
+      expect(avisos()[0]?.title).toBe('Credenciales');
+      expect(avisos()[0]?.message).toContain('verificado contra una fuente');
+    });
+
+    it('no se repite al volver a la pestaña', () => {
+      const host = montar(PERFIL, true);
+
+      seleccionarPestana(host, 'Credenciales');
+      seleccionarPestana(host, 'Actividad');
+      seleccionarPestana(host, 'Credenciales');
+
+      expect(avisos()).toHaveLength(1);
+    });
+
+    it('a un visitante no se le habla: la explicación es para el dueño', () => {
+      const host = montar(PERFIL, false);
+      seleccionarPestana(host, 'Credenciales y verificaciones');
+
+      expect(avisos()).toHaveLength(0);
+    });
   });
 
   it('un visitante no ve ninguna ayuda: le hablaba al dueño y a quien prueba', () => {
@@ -758,8 +808,9 @@ describe('PractitionerProfileView', () => {
       expect(pestanas).toEqual([...PESTANAS_DEL_PERFIL_MEDICO]);
       // El número, con su rótulo: a secas aparecería también dentro de la URL
       // de la fuente de verificación de la formación, que es otro dato.
+      // Desde el 19/09/2026 el rótulo lo pone la tarjeta: «Matrícula N.º LIC-3».
       const texto = (host.textContent ?? '').replace(/\s+/g, ' ');
-      expect(texto.match(/Matrícula LIC-3/g) ?? []).toHaveLength(1);
+      expect(texto.match(/Matrícula N\.º LIC-3/g) ?? []).toHaveLength(1);
     });
 
     /* ---- la trayectoria como nodos (propietario, 13/09/2026) ------------- */

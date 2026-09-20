@@ -246,3 +246,26 @@ app-tab > .mi-perfil__seccion:first-child > .mi-perfil__subtitulo:first-child {
 .mi-perfil__dato--ancho {
   grid-column: 1 / -1;
 }
+
+/* Los chips de un renglón —hoy las especialidades del médico—. Envuelven en
+   vez de recortarse: quien tiene cuatro especialidades las tiene que ver todas,
+   y un `overflow` escondido las convertiría en una lista incompleta sin decirlo. */
+.mi-perfil__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* Un bloque con caja propia DENTRO de una pestaña. Lo usa «Cómo atendés», que
+   contesta otra pregunta que el mapa de sedes de arriba y pegado a él se leía
+   como su pie. */
+.mi-perfil__bloque-interno {
+  display: block;
+  margin-block-start: var(--sp-5);
+}
+
+/* Un subtítulo que abre su propia caja: el aire de arriba ya lo pone el
+   `padding` de la tarjeta. */
+.mi-perfil__subtitulo--primero {
+  margin-block-start: 0;
+}
